@@ -78,6 +78,9 @@ const lightPalette: ThemeOptions = {
       light: '#B2F0C5',
 
     },
+    text: {
+      primary: '#545454'
+    },
     background: {
       default: '#F8F8F9',
       stone: '#DCDAE9',

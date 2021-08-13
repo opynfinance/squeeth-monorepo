@@ -4,6 +4,7 @@ import { AppProps } from 'next/app'
 import CssBaseline from '@material-ui/core/CssBaseline'
 import { ThemeProvider } from '@material-ui/core/styles'
 import getTheme, { Mode } from '../src/theme'
+import { WorldProvider } from '../src/context/world'
 
 export default function MyApp(props: AppProps) {
   const { Component, pageProps } = props
@@ -24,10 +25,12 @@ export default function MyApp(props: AppProps) {
         <link rel="icon" href="/favicon.ico" />
         <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width" />
       </Head>
-        <ThemeProvider theme={getTheme(Mode.DARK)}>
+        <ThemeProvider theme={getTheme(Mode.LIGHT)}>
           {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
           <CssBaseline />
-          <Component {...pageProps} />
+          <WorldProvider>
+            <Component {...pageProps} />
+          </WorldProvider>
         </ThemeProvider>
     </React.Fragment>
   )
