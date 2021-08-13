@@ -1,5 +1,5 @@
 {
-  "name": "@scaffold-eth/hardhat",
+  "name": "@squeeth/hardhat",
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
