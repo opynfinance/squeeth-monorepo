@@ -260,7 +260,7 @@ export default function Vault() {
             {getVaultDetail(vault)}
             <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
             <Typography className={classes.cardTitle} variant="h6">
-              Historical PNL
+              Historical PNL Backtest 
             </Typography>
             <FormControlLabel
               control={<Switch

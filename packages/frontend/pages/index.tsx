@@ -98,7 +98,7 @@ export default function Home() {
         <div className={classes.cardContainer}>
           <Card className={classes.card}>
             <Typography className={classes.cardTitle} variant="h6">
-              Historical PNL
+              Historical PNL Backtest
             </Typography>
             <LongChart />
             <Typography className={classes.cardTitle} variant="h6">
