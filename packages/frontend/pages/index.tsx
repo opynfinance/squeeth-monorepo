@@ -112,7 +112,7 @@ export default function Home() {
               Advanced
             </Typography>
             <Typography variant="body2" className={classes.cardSubTxt}>
-              Continuous call gives you a constant gamma exposure, meaning you always hold a position similar to an at the money call option.
+              Continuous call gives you an ETH&sup2; payoff. This means you have constant gamma exposure, so you always hold a position similar to an at the money call option. This functions similar to a perpetual swap, where you are targeting ETH&sup2; rather than ETH. 
             </Typography>
           </Card>
           <div className={classes.buyCard}>
