@@ -2,6 +2,8 @@ import React from 'react'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Typography from '@material-ui/core/Typography';
 import Link from 'next/link'
+import Image from 'next/image'
+import logo from '../../public/images/logo.svg'
 import { useRouter } from "next/router";
 
 
@@ -55,8 +57,9 @@ const Nav: React.FC = () => {
 
   return (
     <div className={classes.nav}>
+      {/* <Image src={logo} alt="logo"/> */}
       <Typography variant="h5" className={classes.logo}>
-        Squeeth
+        Opyn
       </Typography>
       <div className={classes.navDiv}>
         <NavLink path="/" name="Continuous Call" />
