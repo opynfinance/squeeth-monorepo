@@ -83,8 +83,15 @@ const getAdvancedDetail = (vault: Vaults) => {
   if (vault === Vaults.CrabVault) return (
     <>
       <p>       
-        This vault is short 1 continuous call, which is where you earn funding from. The vault is also long 2 ETH. This 2ETH - ETH&sup2; payoff gives you 0 delta exposure. 
-        The vault is rebalancing daily to maintain this 0 delta exposure, meaning that you constantly have 0 ETH exposure. You have a constant negative gamma exposure.
+        This vault is short 1 continuous call, which is where you earn yield from. The vault is also long 2 ETH. This 2ETH - ETH&sup2; payoff gives you 0 delta exposure. 
+        The vault is rebalancing daily to maintain this 0 delta exposure, meaning that you constantly have 0 ETH 
+        exposure. You have a constant negative gamma exposure.
+
+        <br /> 
+        <br /> 
+        You can deposit and withdraw from the vault at any time. You could potentially be liquidated if ETH hits the liquidation price. 
+        This liquidation risk comes from the portion of the vault which is selling the continuous call (also where the yield comes from).
+
       </p>
       <Image src={crabpayoff} alt="crab payoff"/>
     </>
@@ -92,16 +99,26 @@ const getAdvancedDetail = (vault: Vaults) => {
   if (vault === Vaults.ETHBull) return (
     <>
       <p>       
-      This vault is short 1 continuous call, which is where you earn funding from. The vault is also long 3 ETH. This 3ETH - ETH&sup2; payoff gives you 1 delta exposure.
+      This vault is short 1 continuous call, which is where you earn yield from. The vault is also long 3 ETH. This 3ETH - ETH&sup2; payoff gives you 1 delta exposure.
       This vault is rebalancing daily to maintain this 1 delta exposure, meaning that you constantly have exposure to long 1 ETH. You have a constant negative gamma exposure.
+
+      <br />
+      <br />  
+        You can deposit and withdraw from the vault at any time. You could potentially be liquidated if ETH hits the liquidation price. 
+        This liquidation risk comes from the portion of the vault which is selling the continuous call (also where the yield comes from).
       </p>
       <Image src={ethbullpayoff} alt="eth bull payoff"/>
     </>
   )
   if (vault === Vaults.ETHBear) return (
     <p>       
-    This vault is short 1 continuous call, which is where you earn funding from. The vault is also long 1 ETH. This ETH - ETH&sup2; payoff gives you -1 delta exposure. 
+    This vault is short 1 continuous call, which is where you earn yield from. The vault is also long 1 ETH. This ETH - ETH&sup2; payoff gives you -1 delta exposure. 
     The vault is rebalancing daily to maintain this -1 delta exposure, meaning that you constantly have exposure to short 1 ETH. You have a constant negative gamma exposure.
+
+    <br /> 
+    <br /> 
+    You can deposit and withdraw from the vault at any time. You could potentially be liquidated if ETH hits the liquidation price. 
+        This liquidation risk comes from the portion of the vault which is selling the continuous call (also where the yield comes from).
     </p>
   )
   else return (<p></p>)
