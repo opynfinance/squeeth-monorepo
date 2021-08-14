@@ -10,6 +10,9 @@ import { useWorldContext } from '../src/context/world'
 import { useETHPriceCharts } from '../src/hooks/useETHPriceCharts'
 import { getCost, getFairSqueethAsk, getVolForTimestamp } from '../src/utils'
 import useAsyncMemo from '../src/hooks/useAsyncMemo'
+import Image from 'next/image'
+import ccpayoff from '../public/images/ccpayoff.png';
+
 
 const useStyles = makeStyles(theme => (createStyles({
   header: {
@@ -104,12 +107,7 @@ export default function Home() {
             <Typography variant="body2" className={classes.cardSubTxt}>
               Long continuous call gives you a leveraged position with unlimited upside, protected downside, and no liquidations. Compared to a 2x leveraged position, you make more when ETH goes up and lose less when ETH goes down. You pay a daily premium rate for this position. To enter the position you simply purchase an ERC20 token.
             </Typography>
-            <Typography className={classes.cardTitle} variant="h6">
-              Strategy Details
-            </Typography>
-            <Typography variant="body2" className={classes.cardSubTxt}>
-              % Change in ETH vs % Return
-            </Typography>
+            <Image src={ccpayoff} alt="cc payoff"/>
             <Typography className={classes.cardTitle} variant="h6">
               Advanced
             </Typography>
