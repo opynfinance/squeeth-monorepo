@@ -1,5 +1,6 @@
 import Typography from '@material-ui/core/Typography'
 import Box from '@material-ui/core/Box'
+import Tooltip from '@material-ui/core/Tooltip';
 import { Button, createStyles, FormControlLabel, InputAdornment, makeStyles, Switch, Tab, Tabs, TextField } from '@material-ui/core'
 import Image from 'next/image'
 import Card from '@material-ui/core/Card'
@@ -260,7 +261,7 @@ export default function Vault() {
             {getVaultDetail(vault)}
             <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
             <Typography className={classes.cardTitle} variant="h6">
-              Historical PNL Backtest 
+              Historical PNL 
             </Typography>
             <FormControlLabel
               control={<Switch
@@ -288,14 +289,17 @@ export default function Vault() {
               <Typography className={classes.cardTitle} variant="body1">
                 Deposit in {vault}
               </Typography>
-              <Typography data-tip="Funding Payment Annualized APY. This APY is calculated based on the minimal initial collateral (1 ETH)." style={{fontSize: 16}}>
-                Estimated APY: {((1 + dailyInterestRate)^365)} %
-              </Typography> 
-              <Typography 
-                data-tip="APY from backtest result. You can change the number in 'back test days' under the graph to run different stimulation. This APY is calculated based on the minimal initial collateral (1 ETH)" 
-                style={{fontSize: 16}}> 
-                  Realized APY: {backTestAPY.toFixed(0)} % 
-              </Typography>
+              <Tooltip title="Funding Payment Annualized APY. This APY is calculated based on the minimal initial collateral (1 ETH).">
+                  <Typography style={{fontSize: 16}}>
+                  Estimated APY: {((1 + dailyInterestRate)^365)} %
+                </Typography> 
+              </Tooltip>
+              <Tooltip title="APY from backtest result. You can change the number in 'back test days' under the graph to run different stimulation. This APY is calculated based on the minimal initial collateral (1 ETH)">
+                <Typography 
+                  style={{fontSize: 16}}> 
+                    Realized APY: {backTestAPY.toFixed(0)} % 
+                </Typography>
+              </Tooltip>
               <div className={classes.amountInput}>
                 <TextField
                   size="small" 
@@ -346,23 +350,25 @@ export default function Vault() {
                 />
               </div>
               <div className={classes.amountInput}>
-              <TextField 
-                size="small" 
-                value={liqPrice.toFixed(0)} 
-                onChange={(event) => setCollateral(Number(event.target.value))} 
-                type="number" 
-                style={{ width: 300 }} 
-                id="filled-basic" 
-                disabled
-                label="24h Liquidation Price"
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      ETH
-                    </InputAdornment>
-                  ),
-                }}
-                variant="outlined" />
+              <Tooltip title={`If ETH price spike above ${liqPrice.toFixed(0)}, your position will get liquidated`}>
+                <TextField 
+                  size="small" 
+                  value={liqPrice.toFixed(0)} 
+                  onChange={(event) => setCollateral(Number(event.target.value))} 
+                  type="number" 
+                  style={{ width: 300 }} 
+                  id="filled-basic" 
+                  disabled
+                  label="24h Liquidation Price"
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        ETH
+                      </InputAdornment>
+                    ),
+                  }}
+                  variant="outlined" />
+                </Tooltip>
               </div>
               <Button className={classes.amountInput} style={{ width: 300 }} variant="contained" color="primary"> {'Deposit'} </Button>
             </Card>
