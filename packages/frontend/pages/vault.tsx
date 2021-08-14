@@ -335,7 +335,7 @@ export default function Vault() {
               <div className={classes.amountInput}>
                 <TextField 
                   size="small" 
-                  value={(dailyFundingPayment * amount).toFixed(4) } 
+                  value={(dailyFundingPayment * amount).toFixed(2) } 
                   type="number" style={{ width: 300 }} 
                   disabled id="filled-basic" 
                   label="Daily Funding Received" 

@@ -83,7 +83,7 @@ export default function Home() {
     return (getFairSqueethAsk(ethPrice, 1, vol) / startingETHPrice)
   }, [ethPrices, startingETHPrice, vol])
 
-  const cost = useMemo(() => getCost(amount, price).toFixed(4), [amount, price])
+  const cost = useMemo(() => getCost(amount, price).toFixed(2), [amount, price])
 
   return (
     <div>
@@ -152,9 +152,9 @@ export default function Home() {
                   {'Buy'}
                 </Button>
                 <div data-tip="Daily funding is paid out of your position, no collateral required." className={classes.amountInput}>
-                  Daily Funding to Pay: ${(amount * accFunding / startingETHPrice).toFixed(2)} (-{(accFunding / startingETHPrice / price * 100).toFixed(3)} %)
+                  Daily Funding to Pay: ${(amount * accFunding / startingETHPrice).toFixed(2)} (-{(accFunding / startingETHPrice / price * 100).toFixed(2)} %)
                 </div>
-                <span style={{ fontSize: 12 }}> 24h Vol: {(vol * 100).toFixed(4)} % </span>
+                <span style={{ fontSize: 12 }}> 24h Vol: {(vol * 100).toFixed(2)} % </span>
             </Card>
           </div>
         </div>
