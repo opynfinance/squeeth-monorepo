@@ -22,7 +22,7 @@
     "start": "yarn workspace @squeeth/frontend start",
     "compile": "yarn workspace @squeeth/hardhat compile",
     "deploy": "yarn workspace @squeeth/hardhat deploy",
-    "verify": "yarn workspace @squeeth/hardhat etherscan-verify", 
+    "verify": "yarn workspace @squeeth/hardhat etherscan-verify",
     "watch": "yarn workspace @squeeth/hardhat watch",
     "accounts": "yarn workspace @squeeth/hardhat accounts",
     "balance": "yarn workspace @squeeth/hardhat balance",
