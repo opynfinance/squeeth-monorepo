@@ -14,6 +14,11 @@ import { VaultChart } from '../src/components/Charts/VaultChart'
 import { useETHPriceCharts } from '../src/hooks/useETHPriceCharts'
 import useAsyncMemo from '../src/hooks/useAsyncMemo'
 import { calculateLiquidationPrice, getFairSqueethBid, getVolForTimestamp } from '../src/utils'
+import clsx from 'clsx';
+import IconButton from '@material-ui/core/IconButton';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import Collapse from '@material-ui/core/Collapse';
+import Grid from '@material-ui/core/Grid';
 
 const useStyles = makeStyles(theme => (createStyles({
   header: {
@@ -21,12 +26,14 @@ const useStyles = makeStyles(theme => (createStyles({
   },
   expand: {
     transform: 'rotate(270deg)',
+    color: theme.palette.primary.main,
     transition: theme.transitions.create('transform', {
       duration: theme.transitions.duration.shortest,
     }),
   },
   expandOpen: {
     transform: 'rotate(180deg)',
+    color: theme.palette.primary.main,
   },
   body: {
     padding: theme.spacing(2, 8),
@@ -277,12 +284,31 @@ export default function Vault() {
               setCustomLong={setCustomLong} 
               showPercentage={showPercentage} 
             />
-            <Typography className={classes.cardTitle} variant="h6">
-              Advanced
-            </Typography>
-            <Typography variant="body2" className={classes.cardSubTxt}>
-              {getAdvancedDetail(vault)}
-            </Typography>
+
+            <br /> 
+            <Grid container alignItems={'flex-start'} direction="row">
+              <Typography className={classes.cardTitle} variant="h6">
+                Advanced
+              </Typography>  
+                <IconButton
+                  className={clsx(classes.expand, {
+                    [classes.expandOpen]: expanded,
+                  })}
+                  onClick={handleExpandClick}
+                  aria-expanded={expanded}
+                  aria-label="show more"
+                >
+                <ExpandMoreIcon fontSize="large" />
+              </IconButton>
+              <Collapse in={expanded} timeout="auto" unmountOnExit>
+                <Typography variant="body2" className={classes.cardSubTxt}>
+                  {getAdvancedDetail(vault)}
+                </Typography>
+              </Collapse>  
+            </Grid>
+
+
+
           </Card>
           <div className={classes.buyCard}>
             <Card className={classes.innerCard}>

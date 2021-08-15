@@ -12,6 +12,11 @@ import { getCost, getFairSqueethAsk, getVolForTimestamp } from '../src/utils'
 import useAsyncMemo from '../src/hooks/useAsyncMemo'
 import Image from 'next/image'
 import ccpayoff from '../public/images/ccpayoff.png';
+import clsx from 'clsx';
+import IconButton from '@material-ui/core/IconButton';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import Collapse from '@material-ui/core/Collapse';
+import Grid from '@material-ui/core/Grid';
 
 
 const useStyles = makeStyles(theme => (createStyles({
@@ -51,7 +56,18 @@ const useStyles = makeStyles(theme => (createStyles({
   },
   innerCard: {
     paddingBottom: theme.spacing(8)
-  }
+  },
+  expand: {
+    transform: 'rotate(270deg)',
+    color: theme.palette.primary.main,
+    transition: theme.transitions.create('transform', {
+      duration: theme.transitions.duration.shortest,
+    }),
+  },
+  expandOpen: {
+    transform: 'rotate(180deg)',
+    color: theme.palette.primary.main,
+  },
 })))
 
 export default function Home() {
@@ -66,6 +82,12 @@ export default function Home() {
       setIsConfirmed(true);
     }
   }
+
+  const [expanded, setExpanded] = useState(false);
+
+  const handleExpandClick = () => {
+    setExpanded(!expanded);
+  };
 
   const { volMultiplier: globalVolMultiplier } = useWorldContext()
   // use hook because we only calculate accFunding based on 24 hour performance
@@ -108,12 +130,37 @@ export default function Home() {
               Long continuous call gives you a leveraged position with unlimited upside, protected downside, and no liquidations. Compared to a 2x leveraged position, you make more when ETH goes up and lose less when ETH goes down. You pay a daily premium rate for this position. To enter the position you simply purchase an ERC20 token.
             </Typography>
             <Image src={ccpayoff} alt="cc payoff"/>
-            <Typography className={classes.cardTitle} variant="h6">
+
+
+            {/* <Typography className={classes.cardTitle} variant="h6">
               Advanced
             </Typography>
             <Typography variant="body2" className={classes.cardSubTxt}>
               Continuous call gives you an ETH&sup2; payoff. This means you have constant gamma exposure, so you always hold a position similar to an at the money call option. This functions similar to a perpetual swap, where you are targeting ETH&sup2; rather than ETH. 
-            </Typography>
+            </Typography> */}
+            
+            <Grid container alignItems={'flex-start'} direction="row">
+            <Typography className={classes.cardTitle} variant="h6">
+              Advanced
+            </Typography>  
+              <IconButton
+                className={clsx(classes.expand, {
+                  [classes.expandOpen]: expanded,
+                })}
+                onClick={handleExpandClick}
+                aria-expanded={expanded}
+                aria-label="show more"
+              >
+              <ExpandMoreIcon fontSize="large" />
+            </IconButton>
+            <Collapse in={expanded} timeout="auto" unmountOnExit>
+              <Typography variant="body2" className={classes.cardSubTxt}>
+                Continuous call gives you an ETH&sup2; payoff. This means you have constant gamma exposure, so you always hold a position similar to an at the money call option. This functions similar to a perpetual swap, where you are targeting ETH&sup2; rather than ETH. 
+              </Typography>
+            </Collapse>  
+            </Grid>
+
+
           </Card>
           <div className={classes.buyCard}>
             <Card className={classes.innerCard}>
