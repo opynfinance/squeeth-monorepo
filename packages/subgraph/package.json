@@ -16,5 +16,8 @@
   },
   "devDependencies": {
     "mustache": "^3.1.0"
+  },
+  "resolutions": {
+    "assemblyscript": "git+https://github.com/AssemblyScript/assemblyscript.git#v0.6"
   }
 }
