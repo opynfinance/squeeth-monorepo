@@ -21,8 +21,9 @@ export const graphOptions = {
   },
   localization: {
     priceFormatter: function (price: any) {
-      return '$' + price
+      return '$' + Number(price.toFixed(2)).toLocaleString()
     },
+    locale: 'en-US',
   },
   layout: {
     fontSize: 12,

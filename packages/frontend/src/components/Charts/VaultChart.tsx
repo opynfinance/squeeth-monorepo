@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import Alert from '@material-ui/lab/Alert';
 import { useWorldContext } from '../../context/world'
 import { graphOptions, Vaults } from '../../constants'
+import IV from '../IV';
 
 const Chart = dynamic(
   () => import('kaktana-react-lightweight-charts'),
@@ -56,7 +57,7 @@ export function VaultChart({ vault, longAmount, setCustomLong, showPercentage }:
       ...graphOptions,
       priceScale: { mode: 2 },
       localization: {
-        priceFormatter: (num) => num + '%'
+        priceFormatter: (num: number) => num + '%'
       }
     }
     else return graphOptions
@@ -75,15 +76,17 @@ export function VaultChart({ vault, longAmount, setCustomLong, showPercentage }:
         height={300}
       />
       <br />
-      <TextField
-        onChange={(event) => setDays(parseInt(event.target.value))}
-        size="small"
-        value={days}
-        type="number"
-        style={{ width: 300 }}
-        label="Back Test Days"
-        variant="outlined"
-      />
+      <div style={{ marginBottom: '16px'}}>
+        <TextField
+          onChange={(event) => setDays(parseInt(event.target.value))}
+          size="small"
+          value={days}
+          type="number"
+          style={{ width: 300 }}
+          label="Back Test Days"
+          variant="outlined" />
+      </div>
+      <IV />
       {vault === Vaults.Custom &&
         <TextField
           onChange={(event) => setCustomLong(parseFloat(event.target.value))}

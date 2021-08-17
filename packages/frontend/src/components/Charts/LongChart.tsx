@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 
 import { useWorldContext } from '../../context/world'
 import { graphOptions } from '../../constants/diagram'
+import IV from '../IV'
 
 enum ChartType {
   PNL = 'LONG PNL',
@@ -78,14 +79,17 @@ export function LongChart() {
         height={300}
       />
       <br />
-      <TextField
-        onChange={(event) => setDays(parseInt(event.target.value))}
-        size="small"
-        value={days}
-        type="number"
-        style={{ width: 300 }}
-        label="Back Test Days"
-        variant="outlined" />
+      <div style={{ marginBottom: '16px'}}>
+        <TextField
+          onChange={(event) => setDays(parseInt(event.target.value))}
+          size="small"
+          value={days}
+          type="number"
+          style={{ width: 300 }}
+          label="Back Test Days"
+          variant="outlined" />
+      </div>
+      <IV />
     </div>
   )
 }

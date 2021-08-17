@@ -15,9 +15,7 @@ const useStyles = makeStyles(theme => (createStyles({
     alignItems: 'center'
   },
   logo: {
-    background: '-webkit-linear-gradient(#00fff9,#009cf9)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent'
+    marginRight: theme.spacing(2)
   },
   navDiv: {
     marginLeft: theme.spacing(2),
@@ -57,13 +55,11 @@ const Nav: React.FC = () => {
 
   return (
     <div className={classes.nav}>
-      {/* <Image src={logo} alt="logo"/> */}
-      <Typography variant="h5" className={classes.logo}>
-        Opyn
-      </Typography>
+      <Image src={logo} alt="logo" width={75} height={75} className={classes.logo} />
       <div className={classes.navDiv}>
-        <NavLink path="/" name="Continuous Call" />
+        <NavLink path="/" name="Squeeth" />
         <NavLink path="/vault" name="Vaults" />
+        <NavLink path="/lp" name="LP" />
       </div>
     </div>
   )

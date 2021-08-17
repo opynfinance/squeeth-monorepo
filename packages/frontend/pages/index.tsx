@@ -1,6 +1,6 @@
 import Typography from '@material-ui/core/Typography'
 import Card from '@material-ui/core/Card'
-import TextField from '@material-ui/core/TextField'
+import { TextField } from '@material-ui/core'
 import Button from '@material-ui/core/Button'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Nav from '../src/components/Nav'
@@ -17,6 +17,7 @@ import IconButton from '@material-ui/core/IconButton';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Collapse from '@material-ui/core/Collapse';
 import Grid from '@material-ui/core/Grid';
+import { useEffect } from 'react'
 
 
 const useStyles = makeStyles(theme => (createStyles({
@@ -93,11 +94,15 @@ export default function Home() {
   // use hook because we only calculate accFunding based on 24 hour performance
   const { ethPrices, accFunding, startingETHPrice, setVolMultiplier, volMultiplier } = useETHPriceCharts(1, globalVolMultiplier)
 
+  useEffect(() => {
+    setVolMultiplier(globalVolMultiplier)
+  }, [globalVolMultiplier])
+
   const vol = useAsyncMemo(async () => {
     const ethPrice = ethPrices.length > 0 ? ethPrices[ethPrices.length - 1].value : 0
     const timestamp = ethPrices.length > 0 ? ethPrices[ethPrices.length - 1].time : Date.now() / 1000
-    const vol = await getVolForTimestamp(timestamp, ethPrice)
-    return vol * volMultiplier
+    const _vol = await getVolForTimestamp(timestamp, ethPrice)
+    return _vol * volMultiplier
   }, 0, [ethPrices, volMultiplier])
 
   const price = useMemo(() => {
@@ -129,7 +134,7 @@ export default function Home() {
             <Typography variant="body2" className={classes.cardSubTxt}>
               Long continuous call gives you a leveraged position with unlimited upside, protected downside, and no liquidations. Compared to a 2x leveraged position, you make more when ETH goes up and lose less when ETH goes down. You pay a daily premium rate for this position. To enter the position you simply purchase an ERC20 token.
             </Typography>
-            <Image src={ccpayoff} alt="cc payoff"/>
+            <Image src={ccpayoff} alt="cc payoff" width={450} height={300} />
 
 
             {/* <Typography className={classes.cardTitle} variant="h6">

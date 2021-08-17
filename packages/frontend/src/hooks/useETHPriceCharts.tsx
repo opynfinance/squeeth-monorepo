@@ -192,7 +192,7 @@ async function getCUSDCPrices(day = 1): Promise<{ time: number, value: number }[
   const response = await fetch(url)
   const prices = (await response.json()).exchange_rates
 
-  var output = []
+  var output: any = []
   for (var i in prices)
     output[i] = { "time": prices[i].block_timestamp, "value": prices[i].rate }
   return output

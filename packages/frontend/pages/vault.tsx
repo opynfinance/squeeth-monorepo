@@ -101,7 +101,7 @@ const getAdvancedDetail = (vault: Vaults) => {
         This liquidation risk comes from the portion of the vault which is selling the continuous call (also where the yield comes from).
 
       </p>
-      <Image src={crabpayoff} alt="crab payoff"/>
+      <Image src={crabpayoff} alt="crab payoff" width={450} height={300} />
     </>
   )
   if (vault === Vaults.ETHBull) return (
@@ -115,7 +115,7 @@ const getAdvancedDetail = (vault: Vaults) => {
         You can deposit and withdraw from the vault at any time. You could potentially be liquidated if ETH hits the liquidation price. 
         This liquidation risk comes from the portion of the vault which is selling the continuous call (also where the yield comes from).
       </p>
-      <Image src={ethbullpayoff} alt="eth bull payoff"/>
+      <Image src={ethbullpayoff} alt="eth bull payoff" width={450} height={300} />
     </>
   )
   if (vault === Vaults.ETHBear) return (
