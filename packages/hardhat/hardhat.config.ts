@@ -1,17 +1,18 @@
-import '@nomiclabs/hardhat-waffle';
+import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-etherscan";
-import '@typechain/hardhat';
-import 'solidity-coverage';
-import 'hardhat-contract-sizer';
-import "hardhat-gas-reporter"
+import "@typechain/hardhat";
+import "solidity-coverage";
+import "hardhat-contract-sizer";
+import "hardhat-gas-reporter";
 import "hardhat-prettier";
 import "@tenderly/hardhat-tenderly";
 import "hardhat-deploy";
 import "@eth-optimism/hardhat-ovm";
 import "@nomiclabs/hardhat-ethers";
 import { HardhatUserConfig } from "hardhat/config";
+// import tasks
 
-
+import "./tasks/default";
 
 const fs = require("fs");
 
@@ -42,6 +43,16 @@ function mnemonic() {
   return "";
 }
 
+const UNISWAP_SETTING = {
+  version: "0.7.6",
+  settings: {
+    optimizer: {
+      enabled: true,
+      runs: 2_000,
+    },
+  },
+};
+
 const config: HardhatUserConfig = {
   defaultNetwork,
 
@@ -51,6 +62,7 @@ const config: HardhatUserConfig = {
   // (you will need to restart the `yarn run start` dev server after editing the .env)
 
   networks: {
+    hardhat: {},
     localhost: {
       url: "http://localhost:8545",
       /*
@@ -200,6 +212,7 @@ const config: HardhatUserConfig = {
           },
         },
       },
+      UNISWAP_SETTING,
       {
         version: "0.6.7",
         settings: {
@@ -210,6 +223,11 @@ const config: HardhatUserConfig = {
         },
       },
     ],
+    overrides: {
+      "@uniswap/v3-core/contracts/libraries/FullMath.sol": UNISWAP_SETTING,
+      "@uniswap/v3-core/contracts/libraries/TickMath.sol": UNISWAP_SETTING,
+      "@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol": UNISWAP_SETTING,
+    },
   },
   ovm: {
     solcVersion: "0.7.6",
@@ -220,8 +238,8 @@ const config: HardhatUserConfig = {
     },
   },
   typechain: {
-    outDir: 'typechain',
-    target: 'ethers-v5',
+    outDir: "typechain",
+    target: "ethers-v5",
   },
   // contractSizer: {
   //   alphaSort: true,
@@ -230,14 +248,11 @@ const config: HardhatUserConfig = {
   //   apiKey: etherscanKey
   // },
   gasReporter: {
-    currency: 'USD',
+    currency: "USD",
     gasPrice: 100,
     coinmarketcap: process.env.COINMARKETCAP,
-    enabled: process.env.REPORT_GAS === 'true'
-  }
+    enabled: process.env.REPORT_GAS === "true",
+  },
 };
 
-export default config
-// import tasks
-
-import './tasks/default'
+export default config;

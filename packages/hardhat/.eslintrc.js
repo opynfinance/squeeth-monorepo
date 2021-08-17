@@ -4,6 +4,7 @@ module.exports = {
   },
   extends: ["airbnb", "plugin:prettier/recommended"],
   plugins: ["babel"],
+  parser: "@typescript-eslint/parser",
   rules: {
     "prettier/prettier": ["error"],
     "import/extensions": [
@@ -19,5 +20,13 @@ module.exports = {
     "prefer-template": "off",
     "no-console": "off",
     "func-names": "off",
+  },
+  ignorePatterns: ["package.json", "contracts/*"],
+  settings: {
+    "import/resolver": {
+      node: {
+        extensions: [".js", ".jsx", ".ts", ".tsx"],
+      },
+    },
   },
 };

@@ -1,0 +1,5 @@
+{
+  "packages/hardhat/**/*.+(js|ts|json|sol)": [
+    "yarn lint-contracts"
+  ]
+}

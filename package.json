@@ -50,7 +50,8 @@
     "graph-ship-local": "yarn graph-prepare && yarn graph-codegen && yarn graph-deploy-local",
     "deploy-and-graph": "yarn deploy && yarn graph-ship-local",
     "theme": "yarn workspace @squeeth/frontend theme",
-    "watch-theme": "yarn workspace @squeeth/frontend watch"
+    "watch-theme": "yarn workspace @squeeth/frontend watch",
+    "lint-contracts": "yarn workspace @squeeth/hardhat lint"
   },
   "workspaces": {
     "packages": [
@@ -63,5 +64,9 @@
       "**/hardhat/**"
     ]
   },
-  "dependencies": {}
+  "dependencies": {},
+  "devDependencies": {
+    "husky": "^7.0.1",
+    "lint-staged": "^11.1.2"
+  }
 }
