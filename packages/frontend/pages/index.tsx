@@ -47,10 +47,12 @@ const useStyles = makeStyles(theme => (createStyles({
   },
   cardTitle: {
     color: theme.palette.primary.main,
-    marginTop: theme.spacing(2)
+    marginTop: theme.spacing(8)
   },
   cardSubTxt: {
-    color: theme.palette.text.secondary
+    color: theme.palette.text.secondary,
+    lineHeight: '1.75rem',
+    fontSize: '16px'
   },
   amountInput: {
     marginTop: theme.spacing(4),
@@ -64,6 +66,7 @@ const useStyles = makeStyles(theme => (createStyles({
     transition: theme.transitions.create('transform', {
       duration: theme.transitions.duration.shortest,
     }),
+    marginTop: theme.spacing(6)
   },
   expandOpen: {
     transform: 'rotate(180deg)',
@@ -134,8 +137,9 @@ export default function Home() {
             <Typography variant="body2" className={classes.cardSubTxt}>
               Long continuous call gives you a leveraged position with unlimited upside, protected downside, and no liquidations. Compared to a 2x leveraged position, you make more when ETH goes up and lose less when ETH goes down. You pay a daily premium rate for this position. To enter the position you simply purchase an ERC20 token.
             </Typography>
-            <Image src={ccpayoff} alt="cc payoff" width={450} height={300} />
-
+            <div className={classes.cardTitle}>
+              <Image src={ccpayoff} alt="cc payoff" width={450} height={300} />
+            </div>
 
             {/* <Typography className={classes.cardTitle} variant="h6">
               Advanced
@@ -143,11 +147,11 @@ export default function Home() {
             <Typography variant="body2" className={classes.cardSubTxt}>
               Continuous call gives you an ETH&sup2; payoff. This means you have constant gamma exposure, so you always hold a position similar to an at the money call option. This functions similar to a perpetual swap, where you are targeting ETH&sup2; rather than ETH. 
             </Typography> */}
-            
+
             <Grid container alignItems={'flex-start'} direction="row">
-            <Typography className={classes.cardTitle} variant="h6">
-              Advanced
-            </Typography>  
+              <Typography className={classes.cardTitle} variant="h6">
+                Advanced
+              </Typography>
               <IconButton
                 className={clsx(classes.expand, {
                   [classes.expandOpen]: expanded,
@@ -156,13 +160,13 @@ export default function Home() {
                 aria-expanded={expanded}
                 aria-label="show more"
               >
-              <ExpandMoreIcon fontSize="large" />
-            </IconButton>
-            <Collapse in={expanded} timeout="auto" unmountOnExit>
-              <Typography variant="body2" className={classes.cardSubTxt}>
-                Continuous call gives you an ETH&sup2; payoff. This means you have constant gamma exposure, so you always hold a position similar to an at the money call option. This functions similar to a perpetual swap, where you are targeting ETH&sup2; rather than ETH. 
-              </Typography>
-            </Collapse>  
+                <ExpandMoreIcon fontSize="large" />
+              </IconButton>
+              <Collapse in={expanded} timeout="auto" unmountOnExit>
+                <Typography variant="body2" className={classes.cardSubTxt}>
+                  Continuous call gives you an ETH&sup2; payoff. This means you have constant gamma exposure, so you always hold a position similar to an at the money call option. This functions similar to a perpetual swap, where you are targeting ETH&sup2; rather than ETH.
+                </Typography>
+              </Collapse>
             </Grid>
 
 
@@ -173,14 +177,14 @@ export default function Home() {
                 Buy
               </Typography>
               <div className={classes.amountInput}>
-                <TextField 
-                  size="small" 
-                  value={amount} 
-                  type="number" 
-                  style={{ width: 300 }} 
-                  onChange={(event) => setAmount(Number(event.target.value))} 
-                  id="filled-basic" 
-                  label="Long Size" 
+                <TextField
+                  size="small"
+                  value={amount}
+                  type="number"
+                  style={{ width: 300 }}
+                  onChange={(event) => setAmount(Number(event.target.value))}
+                  id="filled-basic"
+                  label="Long Size"
                   variant="outlined"
                 />
               </div>
@@ -192,21 +196,21 @@ export default function Home() {
                   disabled
                   label="Cost"
                   variant="outlined"
-                  />
+                />
               </div>
-                <Button
-                  style={{ width: 300 }}
-                  variant="contained" 
-                  color="primary"
-                  onClick={setModalStep}
-                  className={classes.amountInput}
-                >
-                  {'Buy'}
-                </Button>
-                <div data-tip="Daily funding is paid out of your position, no collateral required." className={classes.amountInput}>
-                  Daily Funding to Pay: ${(amount * accFunding / startingETHPrice).toFixed(2)} (-{(accFunding / startingETHPrice / price * 100).toFixed(2)} %)
-                </div>
-                <span style={{ fontSize: 12 }}> 24h Vol: {(vol * 100).toFixed(2)} % </span>
+              <Button
+                style={{ width: 300 }}
+                variant="contained"
+                color="primary"
+                onClick={setModalStep}
+                className={classes.amountInput}
+              >
+                {'Buy'}
+              </Button>
+              <div data-tip="Daily funding is paid out of your position, no collateral required." className={classes.amountInput}>
+                Daily Funding to Pay: ${(amount * accFunding / startingETHPrice).toFixed(2)} (-{(accFunding / startingETHPrice / price * 100).toFixed(2)} %)
+              </div>
+              <span style={{ fontSize: 12 }}> 24h Vol: {(vol * 100).toFixed(2)} % </span>
             </Card>
           </div>
         </div>

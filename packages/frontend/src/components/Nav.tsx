@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import logo from '../../public/images/logo.svg'
 import { useRouter } from "next/router";
+import WalletButton from './WalletButton';
 
 
 const useStyles = makeStyles(theme => (createStyles({
@@ -12,7 +13,8 @@ const useStyles = makeStyles(theme => (createStyles({
     height: '64px',
     padding: theme.spacing(2),
     display: 'flex',
-    alignItems: 'center'
+    alignItems: 'center',
+    justifyContent: 'space-between'
   },
   logo: {
     marginRight: theme.spacing(2)
@@ -21,28 +23,28 @@ const useStyles = makeStyles(theme => (createStyles({
     marginLeft: theme.spacing(2),
     display: 'flex',
     justifyContent: 'center',
-    width: '100%'
   },
   navLink: {
-    margin: theme.spacing(0,1),
+    margin: theme.spacing(0, 3),
     textDecoration: 'none',
     cursor: 'pointer',
     color: theme.palette.text.secondary,
+    fontWeight: 400,
   },
   navActive: {
     color: theme.palette.primary.main,
   }
 })))
 
-const NavLink: React.FC<{ path: string, name: string}> = ({ path, name }) => {
-  const classes= useStyles();
+const NavLink: React.FC<{ path: string, name: string }> = ({ path, name }) => {
+  const classes = useStyles();
   const router = useRouter();
 
   return (
     <Link href={path}>
-      <Typography 
-        className={router.pathname === path ? `${classes.navLink} ${classes.navActive}` : classes.navLink }
-        variant="body1"
+      <Typography
+        className={router.pathname === path ? `${classes.navLink} ${classes.navActive}` : classes.navLink}
+        variant="h6"
       >
         {name}
       </Typography>
@@ -61,6 +63,7 @@ const Nav: React.FC = () => {
         <NavLink path="/vault" name="Vaults" />
         <NavLink path="/lp" name="LP" />
       </div>
+      <WalletButton />
     </div>
   )
 }

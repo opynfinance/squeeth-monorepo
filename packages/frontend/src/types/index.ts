@@ -6,4 +6,7 @@ declare module "@material-ui/core/styles/createPalette" {
   }
 }
 
-export {}
+export enum Networks {
+  MAINNET = 1,
+  ROPSTEN = 3,
+}

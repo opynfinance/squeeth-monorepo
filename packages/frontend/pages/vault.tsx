@@ -61,7 +61,9 @@ const useStyles = makeStyles(theme => (createStyles({
     marginTop: theme.spacing(2)
   },
   cardSubTxt: {
-    color: theme.palette.text.secondary
+    color: theme.palette.text.secondary,
+    lineHeight: '1.75rem',
+    fontSize: '16px'
   },
   innerCard: {
     paddingBottom: theme.spacing(8)
@@ -73,16 +75,16 @@ const useStyles = makeStyles(theme => (createStyles({
 
 const getVaultDetail = (vault: Vaults) => {
   if (vault === Vaults.CrabVault) return (
-    <p> 
-      This high yield position is similar to selling a strangle. You are profitable as long as ETH moves less than 6.8% in either direction <b>in a single day</b>. The strategy rebalances daily to be delta neutral by buying or selling ETH. <br/><br/>
+    <p>
+      This high yield position is similar to selling a strangle. You are profitable as long as ETH moves less than 6.8% in either direction <b>in a single day</b>. The strategy rebalances daily to be delta neutral by buying or selling ETH. <br /><br />
     </p>
   )
   if (vault === Vaults.ETHBull) return (
-    <p> This yielding position is profitable when ETH goes up any amount less than 100% <b>in a single day</b>. This strategy is not profitable when ETH goes down. <br/><br/>
+    <p> This yielding position is profitable when ETH goes up any amount less than 100% <b>in a single day</b>. This strategy is not profitable when ETH goes down. <br /><br />
     </p>
   )
   if (vault === Vaults.ETHBear) return (
-    <p> This yielding position is profitable when ETH goes down any amount less than 100% <b>in a single day</b>.<br/><br/> </p>
+    <p> This yielding position is profitable when ETH goes down any amount less than 100% <b>in a single day</b>.<br /><br /> </p>
   )
   else return (<p></p>)
 }
@@ -90,14 +92,14 @@ const getVaultDetail = (vault: Vaults) => {
 const getAdvancedDetail = (vault: Vaults) => {
   if (vault === Vaults.CrabVault) return (
     <>
-      <p>       
-        This vault is short 1 continuous call, which is where you earn yield from. The vault is also long 2 ETH. This 2ETH - ETH&sup2; payoff gives you 0 delta exposure. 
-        The vault is rebalancing daily to maintain this 0 delta exposure, meaning that you constantly have 0 ETH 
+      <p>
+        This vault is short 1 continuous call, which is where you earn yield from. The vault is also long 2 ETH. This 2ETH - ETH&sup2; payoff gives you 0 delta exposure.
+        The vault is rebalancing daily to maintain this 0 delta exposure, meaning that you constantly have 0 ETH
         exposure. You have a constant negative gamma exposure.
 
-        <br /> 
-        <br /> 
-        You can deposit and withdraw from the vault at any time. You could potentially be liquidated if ETH hits the liquidation price. 
+        <br />
+        <br />
+        You can deposit and withdraw from the vault at any time. You could potentially be liquidated if ETH hits the liquidation price.
         This liquidation risk comes from the portion of the vault which is selling the continuous call (also where the yield comes from).
 
       </p>
@@ -106,27 +108,27 @@ const getAdvancedDetail = (vault: Vaults) => {
   )
   if (vault === Vaults.ETHBull) return (
     <>
-      <p>       
-      This vault is short 1 continuous call, which is where you earn yield from. The vault is also long 3 ETH. This 3ETH - ETH&sup2; payoff gives you 1 delta exposure.
-      This vault is rebalancing daily to maintain this 1 delta exposure, meaning that you constantly have exposure to long 1 ETH. You have a constant negative gamma exposure.
+      <p>
+        This vault is short 1 continuous call, which is where you earn yield from. The vault is also long 3 ETH. This 3ETH - ETH&sup2; payoff gives you 1 delta exposure.
+        This vault is rebalancing daily to maintain this 1 delta exposure, meaning that you constantly have exposure to long 1 ETH. You have a constant negative gamma exposure.
 
-      <br />
-      <br />  
-        You can deposit and withdraw from the vault at any time. You could potentially be liquidated if ETH hits the liquidation price. 
+        <br />
+        <br />
+        You can deposit and withdraw from the vault at any time. You could potentially be liquidated if ETH hits the liquidation price.
         This liquidation risk comes from the portion of the vault which is selling the continuous call (also where the yield comes from).
       </p>
       <Image src={ethbullpayoff} alt="eth bull payoff" width={450} height={300} />
     </>
   )
   if (vault === Vaults.ETHBear) return (
-    <p>       
-    This vault is short 1 continuous call, which is where you earn yield from. The vault is also long 1 ETH. This ETH - ETH&sup2; payoff gives you -1 delta exposure. 
-    The vault is rebalancing daily to maintain this -1 delta exposure, meaning that you constantly have exposure to short 1 ETH. You have a constant negative gamma exposure.
+    <p>
+      This vault is short 1 continuous call, which is where you earn yield from. The vault is also long 1 ETH. This ETH - ETH&sup2; payoff gives you -1 delta exposure.
+      The vault is rebalancing daily to maintain this -1 delta exposure, meaning that you constantly have exposure to short 1 ETH. You have a constant negative gamma exposure.
 
-    <br /> 
-    <br /> 
-    You can deposit and withdraw from the vault at any time. You could potentially be liquidated if ETH hits the liquidation price. 
-        This liquidation risk comes from the portion of the vault which is selling the continuous call (also where the yield comes from).
+      <br />
+      <br />
+      You can deposit and withdraw from the vault at any time. You could potentially be liquidated if ETH hits the liquidation price.
+      This liquidation risk comes from the portion of the vault which is selling the continuous call (also where the yield comes from).
     </p>
   )
   else return (<p></p>)
@@ -191,9 +193,9 @@ export default function Vault() {
 
 
   const rebalancePNLSeries = getVaultPNLWithRebalance(longAmount)
-  
+
   const backTestAPY = useMemo(() => {
-    if (rebalancePNLSeries.length === 0 ) return 0
+    if (rebalancePNLSeries.length === 0) return 0
     const pnl = rebalancePNLSeries[rebalancePNLSeries.length - 1].value
     const multiplier = pnl > 0 ? 1 : -1
     const apy = Math.pow(1 + (pnl / globalStartingETHPrice), 365 / globalDays)
@@ -204,10 +206,10 @@ export default function Vault() {
     return ethPrices.length > 0 ? ethPrices[ethPrices.length - 1].value : 0
   }, [ethPrices])
 
-  const vol = useAsyncMemo(async() => {
+  const vol = useAsyncMemo(async () => {
     const ethPrice = ethPrices.length > 0 ? ethPrices[ethPrices.length - 1].value : 0
     const timestamp = ethPrices.length > 0 ? ethPrices[ethPrices.length - 1].time : Date.now() / 1000
-    const vol = await getVolForTimestamp(timestamp, ethPrice) 
+    const vol = await getVolForTimestamp(timestamp, ethPrice)
     return vol * vMultiplier
   }, 0, [ethPrices, vMultiplier])
 
@@ -216,7 +218,7 @@ export default function Vault() {
   }, [currentEthPrice, startingETHPrice, vol])
 
   // scaled down by starting eth
-  const dailyFundingPayment = useMemo(() => (accFunding / startingETHPrice ), [accFunding, startingETHPrice])
+  const dailyFundingPayment = useMemo(() => (accFunding / startingETHPrice), [accFunding, startingETHPrice])
 
   const dailyInterestRate = useMemo(() => (dailyFundingPayment / price), [dailyFundingPayment, price])
 
@@ -238,7 +240,7 @@ export default function Vault() {
         </Typography>
         <div className={classes.cardContainer}>
           <Card className={classes.card}>
-          <Tabs
+            <Tabs
               variant="fullWidth"
               value={selectedIdx}
               indicatorColor="primary"
@@ -267,44 +269,44 @@ export default function Vault() {
             <h3> Detail </h3>
             {getVaultDetail(vault)}
             <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-            <Typography className={classes.cardTitle} variant="h6">
-              Historical PNL 
-            </Typography>
-            <FormControlLabel
-              control={<Switch
-                checked={showPercentage}
-                onChange={(event, checked) => setShowPercentage(checked)}
-              />}
-              label={<div style={{ fontSize: 12 }}> show percentage </div>}
-            />
+              <Typography className={classes.cardTitle} variant="h6">
+                Historical PNL
+              </Typography>
+              <FormControlLabel
+                control={<Switch
+                  checked={showPercentage}
+                  onChange={(event, checked) => setShowPercentage(checked)}
+                />}
+                label={<div style={{ fontSize: 12 }}> show percentage </div>}
+              />
             </div>
             <VaultChart
-              vault={vault} 
-              longAmount={longAmount} 
-              setCustomLong={setCustomLong} 
-              showPercentage={showPercentage} 
+              vault={vault}
+              longAmount={longAmount}
+              setCustomLong={setCustomLong}
+              showPercentage={showPercentage}
             />
 
-            <br /> 
+            <br />
             <Grid container alignItems={'flex-start'} direction="row">
               <Typography className={classes.cardTitle} variant="h6">
                 Advanced
-              </Typography>  
-                <IconButton
-                  className={clsx(classes.expand, {
-                    [classes.expandOpen]: expanded,
-                  })}
-                  onClick={handleExpandClick}
-                  aria-expanded={expanded}
-                  aria-label="show more"
-                >
+              </Typography>
+              <IconButton
+                className={clsx(classes.expand, {
+                  [classes.expandOpen]: expanded,
+                })}
+                onClick={handleExpandClick}
+                aria-expanded={expanded}
+                aria-label="show more"
+              >
                 <ExpandMoreIcon fontSize="large" />
               </IconButton>
               <Collapse in={expanded} timeout="auto" unmountOnExit>
                 <Typography variant="body2" className={classes.cardSubTxt}>
                   {getAdvancedDetail(vault)}
                 </Typography>
-              </Collapse>  
+              </Collapse>
             </Grid>
 
 
@@ -316,36 +318,36 @@ export default function Vault() {
                 Deposit in {vault}
               </Typography>
               <Tooltip title="Funding Payment Annualized APY. This APY is calculated based on the minimal initial collateral (1 ETH).">
-                  <Typography style={{fontSize: 16}}>
-                  Estimated APY: {((1 + dailyInterestRate)^365)} %
-                </Typography> 
+                <Typography style={{ fontSize: 16 }}>
+                  Estimated APY: {((1 + dailyInterestRate) ^ 365)} %
+                </Typography>
               </Tooltip>
               <Tooltip title="APY from backtest result. You can change the number in 'back test days' under the graph to run different stimulation. This APY is calculated based on the minimal initial collateral (1 ETH)">
-                <Typography 
-                  style={{fontSize: 16}}> 
-                    Realized APY: {backTestAPY.toFixed(0)} % 
+                <Typography
+                  style={{ fontSize: 16 }}>
+                  Realized APY: {backTestAPY.toFixed(0)} %
                 </Typography>
               </Tooltip>
               <div className={classes.amountInput}>
                 <TextField
-                  size="small" 
-                  value={amount} 
-                  type="number" 
-                  style={{ width: 300 }} 
-                  onChange={(event) => setAmount(Number(event.target.value))} 
-                  id="filled-basic" 
-                  label="Amount" 
+                  size="small"
+                  value={amount}
+                  type="number"
+                  style={{ width: 300 }}
+                  onChange={(event) => setAmount(Number(event.target.value))}
+                  id="filled-basic"
+                  label="Amount"
                   variant="outlined" />
               </div>
               <div className={classes.amountInput}>
-                <TextField 
-                  size="small" 
+                <TextField
+                  size="small"
                   value={amount * longAmount}
                   // value={collateral} 
                   // onChange={(event) => setCollateral(Number(event.target.value))} 
-                  type="number" 
-                  style={{ width: 300 }} 
-                  disabled id="filled-basic" 
+                  type="number"
+                  style={{ width: 300 }}
+                  disabled id="filled-basic"
                   label="Collateral"
                   // helperText={collateral < minCollateral ? `Min collateral is ${minCollateral}` : undefined} 
                   // error={collateral < minCollateral}
@@ -359,12 +361,12 @@ export default function Vault() {
                   variant="outlined" />
               </div>
               <div className={classes.amountInput}>
-                <TextField 
-                  size="small" 
-                  value={(dailyFundingPayment * amount).toFixed(2) } 
-                  type="number" style={{ width: 300 }} 
-                  disabled id="filled-basic" 
-                  label="Daily Funding Received" 
+                <TextField
+                  size="small"
+                  value={(dailyFundingPayment * amount).toFixed(2)}
+                  type="number" style={{ width: 300 }}
+                  disabled id="filled-basic"
+                  label="Daily Funding Received"
                   variant="outlined"
                   InputProps={{
                     endAdornment: (
@@ -376,24 +378,24 @@ export default function Vault() {
                 />
               </div>
               <div className={classes.amountInput}>
-              <Tooltip title={`If ETH price spike above ${liqPrice.toFixed(0)}, your position will get liquidated`}>
-                <TextField 
-                  size="small" 
-                  value={liqPrice.toFixed(0)} 
-                  onChange={(event) => setCollateral(Number(event.target.value))} 
-                  type="number" 
-                  style={{ width: 300 }} 
-                  id="filled-basic" 
-                  disabled
-                  label="24h Liquidation Price"
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        ETH
-                      </InputAdornment>
-                    ),
-                  }}
-                  variant="outlined" />
+                <Tooltip title={`If ETH price spike above ${liqPrice.toFixed(0)}, your position will get liquidated`}>
+                  <TextField
+                    size="small"
+                    value={liqPrice.toFixed(0)}
+                    onChange={(event) => setCollateral(Number(event.target.value))}
+                    type="number"
+                    style={{ width: 300 }}
+                    id="filled-basic"
+                    disabled
+                    label="24h Liquidation Price"
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          ETH
+                        </InputAdornment>
+                      ),
+                    }}
+                    variant="outlined" />
                 </Tooltip>
               </div>
               <Button className={classes.amountInput} style={{ width: 300 }} variant="contained" color="primary"> {'Deposit'} </Button>

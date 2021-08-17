@@ -1,8 +1,8 @@
 import db from './firestore';
 
-const apiKey = process.env.REACT_APP_TARDIS_API_KEY as string;
+const apiKey = process.env.NEXT_PUBLIC_TARDIS_API_KEY as string;
 
-const updateDB = process.env.REACT_APP_UPDATE_DB === 'true';
+const updateDB = process.env.NEXT_PUBLIC_UPDATE_DB === 'true';
 
 export function getFairSqueethMarkBefore(
   price: number,

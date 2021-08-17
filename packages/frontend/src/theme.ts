@@ -49,6 +49,11 @@ const getTheme = (mode: Mode) => {
         root: {
           boxShadow: mode === 'light' ? '0px 4px 10px rgba(222, 222, 222, 0.5)' : '0px 4px 10px rgb(37 37 37 / 50%)',
         }
+      },
+      MuiButton: {
+        root: {
+          borderRadius: '10px'
+        }
       }
     }
   });
