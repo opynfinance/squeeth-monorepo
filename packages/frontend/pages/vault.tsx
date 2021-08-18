@@ -58,6 +58,10 @@ const useStyles = makeStyles(theme => (createStyles({
   },
   cardTitle: {
     color: theme.palette.primary.main,
+    marginTop: theme.spacing(8)
+  },
+  cardHeader: {
+    color: theme.palette.primary.main,
     marginTop: theme.spacing(2)
   },
   cardSubTxt: {
@@ -76,7 +80,7 @@ const useStyles = makeStyles(theme => (createStyles({
 const getVaultDetail = (vault: Vaults) => {
   if (vault === Vaults.CrabVault) return (
     <p>
-      This high yield position is similar to selling a strangle. You are profitable as long as ETH moves less than 6.8% in either direction <b>in a single day</b>. The strategy rebalances daily to be delta neutral by buying or selling ETH. <br /><br />
+      This high yield position is similar to selling a strangle. You are profitable as long as ETH moves less than approximately 6% in either direction <b>in a single day</b>. The strategy rebalances daily to be delta neutral by buying or selling ETH. <br /><br />
     </p>
   )
   if (vault === Vaults.ETHBull) return (
@@ -93,15 +97,18 @@ const getAdvancedDetail = (vault: Vaults) => {
   if (vault === Vaults.CrabVault) return (
     <>
       <p>
-        This vault is short 1 continuous call, which is where you earn yield from. The vault is also long 2 ETH. This 2ETH - ETH&sup2; payoff gives you 0 delta exposure.
+        This vault is short 1 squeeth, which is where you earn yield from. The vault is also long 2 ETH. This 2ETH - ETH&sup2; payoff gives you 0 delta exposure.
         The vault is rebalancing daily to maintain this 0 delta exposure, meaning that you constantly have 0 ETH
         exposure. You have a constant negative gamma exposure.
 
         <br />
         <br />
         You can deposit and withdraw from the vault at any time. You could potentially be liquidated if ETH hits the liquidation price.
-        This liquidation risk comes from the portion of the vault which is selling the continuous call (also where the yield comes from).
+        This liquidation risk comes from the portion of the vault which is selling the squeeth (also where the yield comes from).
+        <a style={{color:"#4DADF3"}} href="https://www.paradigm.xyz/2021/08/power-perpetuals/"> Learn more. </a>  
 
+        <br />
+        Note that the 6% threshold is dynamic, changing each day based on the daily implied volatility and funding. 
       </p>
       <Image src={crabpayoff} alt="crab payoff" width={450} height={300} />
     </>
@@ -109,26 +116,28 @@ const getAdvancedDetail = (vault: Vaults) => {
   if (vault === Vaults.ETHBull) return (
     <>
       <p>
-        This vault is short 1 continuous call, which is where you earn yield from. The vault is also long 3 ETH. This 3ETH - ETH&sup2; payoff gives you 1 delta exposure.
+        This vault is short 1 squeeth, which is where you earn yield from. The vault is also long 3 ETH. This 3ETH - ETH&sup2; payoff gives you 1 delta exposure.
         This vault is rebalancing daily to maintain this 1 delta exposure, meaning that you constantly have exposure to long 1 ETH. You have a constant negative gamma exposure.
 
         <br />
         <br />
         You can deposit and withdraw from the vault at any time. You could potentially be liquidated if ETH hits the liquidation price.
-        This liquidation risk comes from the portion of the vault which is selling the continuous call (also where the yield comes from).
+        This liquidation risk comes from the portion of the vault which is selling the squeeth (also where the yield comes from).
+        <a style={{color:"#4DADF3"}} href="https://www.paradigm.xyz/2021/08/power-perpetuals/"> Learn more. </a>  
       </p>
       <Image src={ethbullpayoff} alt="eth bull payoff" width={450} height={300} />
     </>
   )
   if (vault === Vaults.ETHBear) return (
     <p>
-      This vault is short 1 continuous call, which is where you earn yield from. The vault is also long 1 ETH. This ETH - ETH&sup2; payoff gives you -1 delta exposure.
+      This vault is short 1 squeeth, which is where you earn yield from. The vault is also long 1 ETH. This ETH - ETH&sup2; payoff gives you -1 delta exposure.
       The vault is rebalancing daily to maintain this -1 delta exposure, meaning that you constantly have exposure to short 1 ETH. You have a constant negative gamma exposure.
 
       <br />
       <br />
       You can deposit and withdraw from the vault at any time. You could potentially be liquidated if ETH hits the liquidation price.
-      This liquidation risk comes from the portion of the vault which is selling the continuous call (also where the yield comes from).
+      This liquidation risk comes from the portion of the vault which is selling the squeeth (also where the yield comes from).
+      <a style={{color:"#4DADF3"}} href="https://www.paradigm.xyz/2021/08/power-perpetuals/"> Learn more. </a>  
     </p>
   )
   else return (<p></p>)
@@ -136,7 +145,7 @@ const getAdvancedDetail = (vault: Vaults) => {
 
 const getVaultIntro = (vault: Vaults) => {
   if (vault === Vaults.CrabVault) return (
-    <p> Earn high yield by selling volatility </p>
+    <p> Earn yield by selling volatility </p>
   )
   if (vault === Vaults.ETHBull) return (
     <p> Earn yield while being long ETH </p>
@@ -235,9 +244,7 @@ export default function Vault() {
         <Typography variant="h5">
           Yield Vaults
         </Typography>
-        <Typography variant="body1" className={classes.subHeading}>
-          Earn daily funding by depositing into a vault and short vol.
-        </Typography>
+
         <div className={classes.cardContainer}>
           <Card className={classes.card}>
             <Tabs
@@ -262,15 +269,19 @@ export default function Vault() {
                 />
               }
             </Tabs>
-            <Typography className={classes.cardTitle} variant="h6">
+            <Typography className={classes.cardHeader} variant="h6">
               {vault}
             </Typography>
-            {getVaultIntro(vault)}
-            <h3> Detail </h3>
-            {getVaultDetail(vault)}
+            <Typography variant="body1" className={classes.subHeading}>
+              {getVaultIntro(vault)}
+            </Typography>
+            <Typography variant="body2" className={classes.cardSubTxt}>
+              {getVaultDetail(vault)}
+            </Typography>
+
             <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-              <Typography className={classes.cardTitle} variant="h6">
-                Historical PNL
+              <Typography className={classes.header} variant="h6">
+                Historical PNL Backtest
               </Typography>
               <FormControlLabel
                 control={<Switch
@@ -287,28 +298,12 @@ export default function Vault() {
               showPercentage={showPercentage}
             />
 
-            <br />
-            <Grid container alignItems={'flex-start'} direction="row">
-              <Typography className={classes.cardTitle} variant="h6">
-                Advanced
-              </Typography>
-              <IconButton
-                className={clsx(classes.expand, {
-                  [classes.expandOpen]: expanded,
-                })}
-                onClick={handleExpandClick}
-                aria-expanded={expanded}
-                aria-label="show more"
-              >
-                <ExpandMoreIcon fontSize="large" />
-              </IconButton>
-              <Collapse in={expanded} timeout="auto" unmountOnExit>
-                <Typography variant="body2" className={classes.cardSubTxt}>
-                  {getAdvancedDetail(vault)}
-                </Typography>
-              </Collapse>
-            </Grid>
-
+            <Typography className={classes.cardTitle} variant="h6">
+              Strategy Detail
+            </Typography>
+            <Typography variant="body2" className={classes.cardSubTxt}>
+                {getAdvancedDetail(vault)}
+            </Typography>
 
 
           </Card>

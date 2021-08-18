@@ -1,6 +1,6 @@
 import Typography from '@material-ui/core/Typography'
 import Card from '@material-ui/core/Card'
-import { TextField } from '@material-ui/core'
+import { TextField, InputAdornment, Tooltip } from '@material-ui/core'
 import Button from '@material-ui/core/Button'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Nav from '../src/components/Nav'
@@ -18,6 +18,7 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Collapse from '@material-ui/core/Collapse';
 import Grid from '@material-ui/core/Grid';
 import { useEffect } from 'react'
+import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 
 
 const useStyles = makeStyles(theme => (createStyles({
@@ -120,14 +121,14 @@ export default function Home() {
       <Nav />
       <div className={classes.body}>
         <Typography variant="h5">
-          Long Continuous Calls
+          Long Squeeth - ETH&sup2; Token
         </Typography>
         <Typography variant="body1" className={classes.subHeading}>
           Perpetual leverage without liquidations
         </Typography>
         <div className={classes.cardContainer}>
           <Card className={classes.card}>
-            <Typography className={classes.cardTitle} variant="h6">
+            <Typography className={classes.header} variant="h6">
               Historical PNL Backtest
             </Typography>
             <LongChart />
@@ -135,40 +136,21 @@ export default function Home() {
               Strategy Details
             </Typography>
             <Typography variant="body2" className={classes.cardSubTxt}>
-              Long continuous call gives you a leveraged position with unlimited upside, protected downside, and no liquidations. Compared to a 2x leveraged position, you make more when ETH goes up and lose less when ETH goes down. You pay a daily premium rate for this position. To enter the position you simply purchase an ERC20 token.
+              Long squeeth (ETH&sup2;) gives you a leveraged position with unlimited upside, protected downside, and no liquidations. Compared to a 2x leveraged position, you make more when ETH goes up and lose less when ETH goes down. You pay a daily funding rate for this position. Enter the position by purchasing an ERC20 token.
             </Typography>
-            <div className={classes.cardTitle}>
+            <br /> 
+            <div >
               <Image src={ccpayoff} alt="cc payoff" width={450} height={300} />
             </div>
-
-            {/* <Typography className={classes.cardTitle} variant="h6">
-              Advanced
-            </Typography>
             <Typography variant="body2" className={classes.cardSubTxt}>
-              Continuous call gives you an ETH&sup2; payoff. This means you have constant gamma exposure, so you always hold a position similar to an at the money call option. This functions similar to a perpetual swap, where you are targeting ETH&sup2; rather than ETH. 
-            </Typography> */}
-
-            <Grid container alignItems={'flex-start'} direction="row">
-              <Typography className={classes.cardTitle} variant="h6">
-                Advanced
-              </Typography>
-              <IconButton
-                className={clsx(classes.expand, {
-                  [classes.expandOpen]: expanded,
-                })}
-                onClick={handleExpandClick}
-                aria-expanded={expanded}
-                aria-label="show more"
-              >
-                <ExpandMoreIcon fontSize="large" />
-              </IconButton>
-              <Collapse in={expanded} timeout="auto" unmountOnExit>
-                <Typography variant="body2" className={classes.cardSubTxt}>
-                  Continuous call gives you an ETH&sup2; payoff. This means you have constant gamma exposure, so you always hold a position similar to an at the money call option. This functions similar to a perpetual swap, where you are targeting ETH&sup2; rather than ETH.
-                </Typography>
-              </Collapse>
-            </Grid>
-
+                  Squeeth gives you an ETH&sup2; payoff. This means you have constant gamma exposure, so you always hold a position similar to an at the money call option. This functions similar to a perpetual swap, where you are targeting ETH&sup2; rather than ETH.
+                  <a className={classes.header} href="https://www.paradigm.xyz/2021/08/power-perpetuals/"> Learn more. </a>  
+            </Typography>
+            <br /> 
+            <Typography variant="body2" className={classes.cardSubTxt}>
+              Funding is calculated as your position size multiplied by the TWAP (time weighted average price) of Mark - Index, where Mark is the price squeeth is trading at and Index is ETH&sup2;.
+              We use <a className={classes.header} href="https://uniswap.org/whitepaper-v3.pdf"> Uniswap V3 GMA (geometric moving average) TWAP. </a>
+            </Typography> 
 
           </Card>
           <div className={classes.buyCard}>
@@ -186,6 +168,15 @@ export default function Home() {
                   id="filled-basic"
                   label="Long Size"
                   variant="outlined"
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Tooltip title="1 squeeth = ETH&sup2;. Each ERC20 token represents &radic;(squeeth) worth of squeeth ">
+                          <InfoOutlinedIcon fontSize="small" />
+                        </Tooltip>
+                      </InputAdornment>
+                    ),
+                  }}
                 />
               </div>
               <div className={classes.amountInput}>
