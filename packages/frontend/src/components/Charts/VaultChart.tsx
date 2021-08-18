@@ -74,6 +74,7 @@ export function VaultChart({ vault, longAmount, setCustomLong, showPercentage }:
         lineSeries={showPercentage ? lineSeriesPercentage : lineSeries}
         autoWidth
         height={300}
+        darkTheme
       />
       <br />
       <div style={{ marginBottom: '16px'}}>

@@ -14,7 +14,12 @@ const useStyles = makeStyles(theme => (createStyles({
     padding: theme.spacing(2),
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
+    position: 'sticky',
+    top: '0px',
+    zIndex: 10,
+    background: theme.palette.background.default,
+    borderBottom: `1px solid ${theme.palette.background.stone}`
   },
   logo: {
     marginRight: theme.spacing(2)

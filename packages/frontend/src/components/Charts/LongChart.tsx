@@ -77,6 +77,7 @@ export function LongChart() {
         lineSeries={lineSeries}
         autoWidth
         height={300}
+        darkTheme
       />
       <br />
       <div style={{ marginBottom: '16px'}}>

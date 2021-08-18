@@ -37,13 +37,12 @@ const useStyles = makeStyles(theme => (createStyles({
   },
   body: {
     padding: theme.spacing(2, 8),
-    margin: 'auto'
+    margin: 'auto',
+    display: 'flex',
+    justifyContent: 'space-around'
   },
   subHeading: {
     color: theme.palette.text.secondary,
-  },
-  cardContainer: {
-    display: 'flex'
   },
   card: {
     marginTop: theme.spacing(2),
@@ -105,10 +104,10 @@ const getAdvancedDetail = (vault: Vaults) => {
         <br />
         You can deposit and withdraw from the vault at any time. You could potentially be liquidated if ETH hits the liquidation price.
         This liquidation risk comes from the portion of the vault which is selling the squeeth (also where the yield comes from).
-        <a style={{color:"#4DADF3"}} href="https://www.paradigm.xyz/2021/08/power-perpetuals/"> Learn more. </a>  
+        <a style={{ color: "#4DADF3" }} href="https://www.paradigm.xyz/2021/08/power-perpetuals/"> Learn more. </a>
 
         <br />
-        Note that the 6% threshold is dynamic, changing each day based on the daily implied volatility and funding. 
+        Note that the 6% threshold is dynamic, changing each day based on the daily implied volatility and funding.
       </p>
       <Image src={crabpayoff} alt="crab payoff" width={450} height={300} />
     </>
@@ -123,7 +122,7 @@ const getAdvancedDetail = (vault: Vaults) => {
         <br />
         You can deposit and withdraw from the vault at any time. You could potentially be liquidated if ETH hits the liquidation price.
         This liquidation risk comes from the portion of the vault which is selling the squeeth (also where the yield comes from).
-        <a style={{color:"#4DADF3"}} href="https://www.paradigm.xyz/2021/08/power-perpetuals/"> Learn more. </a>  
+        <a style={{ color: "#4DADF3" }} href="https://www.paradigm.xyz/2021/08/power-perpetuals/"> Learn more. </a>
       </p>
       <Image src={ethbullpayoff} alt="eth bull payoff" width={450} height={300} />
     </>
@@ -137,7 +136,7 @@ const getAdvancedDetail = (vault: Vaults) => {
       <br />
       You can deposit and withdraw from the vault at any time. You could potentially be liquidated if ETH hits the liquidation price.
       This liquidation risk comes from the portion of the vault which is selling the squeeth (also where the yield comes from).
-      <a style={{color:"#4DADF3"}} href="https://www.paradigm.xyz/2021/08/power-perpetuals/"> Learn more. </a>  
+      <a style={{ color: "#4DADF3" }} href="https://www.paradigm.xyz/2021/08/power-perpetuals/"> Learn more. </a>
     </p>
   )
   else return (<p></p>)
@@ -241,111 +240,145 @@ export default function Vault() {
     <div>
       <Nav />
       <div className={classes.body}>
-        <Typography variant="h5">
-          Yield Vaults
-        </Typography>
+        <div className={classes.card}>
+          <Typography variant="h5">
+            Yield Vaults
+          </Typography>
 
-        <div className={classes.cardContainer}>
-          <Card className={classes.card}>
-            <Tabs
-              variant="fullWidth"
-              value={selectedIdx}
-              indicatorColor="primary"
-              textColor="primary"
-              onChange={(event, value) => {
-                setSelectedIdx(value)
-              }}
-              aria-label="disabled tabs example"
-            >
-              <Tab style={{ textTransform: 'none' }} label={Vaults.ETHBull} icon={<div>🐂</div>} />
-              <Tab style={{ textTransform: 'none' }} label={Vaults.CrabVault} icon={<div>🦀</div>} />
-              <Tab style={{ textTransform: 'none' }} label={Vaults.ETHBear} icon={<div>🐻</div>} />
+          <Tabs
+            variant="fullWidth"
+            value={selectedIdx}
+            indicatorColor="primary"
+            textColor="primary"
+            onChange={(event, value) => {
+              setSelectedIdx(value)
+            }}
+            aria-label="disabled tabs example"
+          >
+            <Tab style={{ textTransform: 'none' }} label={Vaults.ETHBull} icon={<div>🐂</div>} />
+            <Tab style={{ textTransform: 'none' }} label={Vaults.CrabVault} icon={<div>🦀</div>} />
+            <Tab style={{ textTransform: 'none' }} label={Vaults.ETHBear} icon={<div>🐻</div>} />
 
-              {researchMode &&
-                <Tab
-                  style={{ textTransform: 'none' }}
-                  label={Vaults.Custom}
-                  icon={<div>🥙</div>}
-                />
-              }
-            </Tabs>
-            <Typography className={classes.cardHeader} variant="h6">
-              {vault}
-            </Typography>
-            <Typography variant="body1" className={classes.subHeading}>
-              {getVaultIntro(vault)}
-            </Typography>
-            <Typography variant="body2" className={classes.cardSubTxt}>
-              {getVaultDetail(vault)}
-            </Typography>
+            {researchMode &&
+              <Tab
+                style={{ textTransform: 'none' }}
+                label={Vaults.Custom}
+                icon={<div>🥙</div>}
+              />
+            }
+          </Tabs>
+          <Typography className={classes.cardHeader} variant="h6">
+            {vault}
+          </Typography>
+          <Typography variant="body1" className={classes.subHeading}>
+            {getVaultIntro(vault)}
+          </Typography>
+          <Typography variant="body2" className={classes.cardSubTxt}>
+            {getVaultDetail(vault)}
+          </Typography>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-              <Typography className={classes.header} variant="h6">
-                Historical PNL Backtest
+          <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+            <Typography className={classes.header} variant="h6">
+              Historical PNL Backtest
+            </Typography>
+            <FormControlLabel
+              control={<Switch
+                checked={showPercentage}
+                onChange={(event, checked) => setShowPercentage(checked)}
+              />}
+              label={<div style={{ fontSize: 12 }}> show percentage </div>}
+            />
+          </div>
+          <VaultChart
+            vault={vault}
+            longAmount={longAmount}
+            setCustomLong={setCustomLong}
+            showPercentage={showPercentage}
+          />
+
+          <Typography className={classes.cardTitle} variant="h6">
+            Strategy Detail
+          </Typography>
+          <Typography variant="body2" className={classes.cardSubTxt}>
+            {getAdvancedDetail(vault)}
+          </Typography>
+        </div>
+        <div className={classes.buyCard}>
+          <Card className={classes.innerCard}>
+            <Typography className={classes.cardTitle} variant="body1">
+              Deposit in {vault}
+            </Typography>
+            <Tooltip title="Funding Payment Annualized APY. This APY is calculated based on the minimal initial collateral (1 ETH).">
+              <Typography style={{ fontSize: 16 }}>
+                Estimated APY: {((1 + dailyInterestRate) ^ 365)} %
               </Typography>
-              <FormControlLabel
-                control={<Switch
-                  checked={showPercentage}
-                  onChange={(event, checked) => setShowPercentage(checked)}
-                />}
-                label={<div style={{ fontSize: 12 }}> show percentage </div>}
+            </Tooltip>
+            <Tooltip title="APY from backtest result. You can change the number in 'back test days' under the graph to run different stimulation. This APY is calculated based on the minimal initial collateral (1 ETH)">
+              <Typography
+                style={{ fontSize: 16 }}>
+                Realized APY: {backTestAPY.toFixed(0)} %
+              </Typography>
+            </Tooltip>
+            <div className={classes.amountInput}>
+              <TextField
+                size="small"
+                value={amount}
+                type="number"
+                style={{ width: 300 }}
+                onChange={(event) => setAmount(Number(event.target.value))}
+                id="filled-basic"
+                label="Amount"
+                variant="outlined" />
+            </div>
+            <div className={classes.amountInput}>
+              <TextField
+                size="small"
+                value={amount * longAmount}
+                // value={collateral} 
+                // onChange={(event) => setCollateral(Number(event.target.value))} 
+                type="number"
+                style={{ width: 300 }}
+                disabled id="filled-basic"
+                label="Collateral"
+                // helperText={collateral < minCollateral ? `Min collateral is ${minCollateral}` : undefined} 
+                // error={collateral < minCollateral}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      ETH
+                    </InputAdornment>
+                  ),
+                }}
+                variant="outlined" />
+            </div>
+            <div className={classes.amountInput}>
+              <TextField
+                size="small"
+                value={(dailyFundingPayment * amount).toFixed(2)}
+                type="number" style={{ width: 300 }}
+                disabled id="filled-basic"
+                label="Daily Funding Received"
+                variant="outlined"
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      USDC
+                    </InputAdornment>
+                  ),
+                }}
               />
             </div>
-            <VaultChart
-              vault={vault}
-              longAmount={longAmount}
-              setCustomLong={setCustomLong}
-              showPercentage={showPercentage}
-            />
-
-            <Typography className={classes.cardTitle} variant="h6">
-              Strategy Detail
-            </Typography>
-            <Typography variant="body2" className={classes.cardSubTxt}>
-                {getAdvancedDetail(vault)}
-            </Typography>
-
-
-          </Card>
-          <div className={classes.buyCard}>
-            <Card className={classes.innerCard}>
-              <Typography className={classes.cardTitle} variant="body1">
-                Deposit in {vault}
-              </Typography>
-              <Tooltip title="Funding Payment Annualized APY. This APY is calculated based on the minimal initial collateral (1 ETH).">
-                <Typography style={{ fontSize: 16 }}>
-                  Estimated APY: {((1 + dailyInterestRate) ^ 365)} %
-                </Typography>
-              </Tooltip>
-              <Tooltip title="APY from backtest result. You can change the number in 'back test days' under the graph to run different stimulation. This APY is calculated based on the minimal initial collateral (1 ETH)">
-                <Typography
-                  style={{ fontSize: 16 }}>
-                  Realized APY: {backTestAPY.toFixed(0)} %
-                </Typography>
-              </Tooltip>
-              <div className={classes.amountInput}>
+            <div className={classes.amountInput}>
+              <Tooltip title={`If ETH price spike above ${liqPrice.toFixed(0)}, your position will get liquidated`}>
                 <TextField
                   size="small"
-                  value={amount}
+                  value={liqPrice.toFixed(0)}
+                  onChange={(event) => setCollateral(Number(event.target.value))}
                   type="number"
                   style={{ width: 300 }}
-                  onChange={(event) => setAmount(Number(event.target.value))}
                   id="filled-basic"
-                  label="Amount"
-                  variant="outlined" />
-              </div>
-              <div className={classes.amountInput}>
-                <TextField
-                  size="small"
-                  value={amount * longAmount}
-                  // value={collateral} 
-                  // onChange={(event) => setCollateral(Number(event.target.value))} 
-                  type="number"
-                  style={{ width: 300 }}
-                  disabled id="filled-basic"
-                  label="Collateral"
-                  // helperText={collateral < minCollateral ? `Min collateral is ${minCollateral}` : undefined} 
-                  // error={collateral < minCollateral}
+                  disabled
+                  label="24h Liquidation Price"
                   InputProps={{
                     endAdornment: (
                       <InputAdornment position="end">
@@ -354,48 +387,10 @@ export default function Vault() {
                     ),
                   }}
                   variant="outlined" />
-              </div>
-              <div className={classes.amountInput}>
-                <TextField
-                  size="small"
-                  value={(dailyFundingPayment * amount).toFixed(2)}
-                  type="number" style={{ width: 300 }}
-                  disabled id="filled-basic"
-                  label="Daily Funding Received"
-                  variant="outlined"
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        USDC
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </div>
-              <div className={classes.amountInput}>
-                <Tooltip title={`If ETH price spike above ${liqPrice.toFixed(0)}, your position will get liquidated`}>
-                  <TextField
-                    size="small"
-                    value={liqPrice.toFixed(0)}
-                    onChange={(event) => setCollateral(Number(event.target.value))}
-                    type="number"
-                    style={{ width: 300 }}
-                    id="filled-basic"
-                    disabled
-                    label="24h Liquidation Price"
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          ETH
-                        </InputAdornment>
-                      ),
-                    }}
-                    variant="outlined" />
-                </Tooltip>
-              </div>
-              <Button className={classes.amountInput} style={{ width: 300 }} variant="contained" color="primary"> {'Deposit'} </Button>
-            </Card>
-          </div>
+              </Tooltip>
+            </div>
+            <Button className={classes.amountInput} style={{ width: 300 }} variant="contained" color="primary"> {'Deposit'} </Button>
+          </Card>
         </div>
       </div>
     </div>

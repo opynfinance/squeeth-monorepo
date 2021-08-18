@@ -26,25 +26,22 @@ const useStyles = makeStyles(theme => (createStyles({
     color: theme.palette.primary.main,
   },
   body: {
-    padding: theme.spacing(2, 8),
-    margin: 'auto'
+    padding: theme.spacing(2, 12),
+    margin: 'auto',
+    display: 'flex',
+    justifyContent: 'space-around'
   },
   subHeading: {
     color: theme.palette.text.secondary,
   },
-  cardContainer: {
-    display: 'flex'
-  },
-  card: {
-    marginTop: theme.spacing(2),
-    padding: theme.spacing(2),
-    width: '60%'
+  details: {
+    marginTop: theme.spacing(4),
+    width: '65%'
   },
   buyCard: {
-    marginLeft: theme.spacing(2),
-    padding: theme.spacing(2),
-    width: '30%',
-    textAlign: 'center'
+    textAlign: 'center',
+    marginTop: theme.spacing(4),
+    marginLeft: theme.spacing(2)
   },
   cardTitle: {
     color: theme.palette.primary.main,
@@ -59,7 +56,10 @@ const useStyles = makeStyles(theme => (createStyles({
     marginTop: theme.spacing(4),
   },
   innerCard: {
-    paddingBottom: theme.spacing(8)
+    padding: theme.spacing(2),
+    paddingBottom: theme.spacing(8),
+    background: theme.palette.background.default,
+    border: `1px solid ${theme.palette.background.stone}`
   },
   expand: {
     transform: 'rotate(270deg)',
@@ -120,90 +120,80 @@ export default function Home() {
     <div>
       <Nav />
       <div className={classes.body}>
-        <Typography variant="h5">
-          Long Squeeth - ETH&sup2; Token
-        </Typography>
-        <Typography variant="body1" className={classes.subHeading}>
-          Perpetual leverage without liquidations
-        </Typography>
-        <div className={classes.cardContainer}>
-          <Card className={classes.card}>
-            <Typography className={classes.header} variant="h6">
-              Historical PNL Backtest
-            </Typography>
+        <div>
+          <Typography variant="h5">
+            Long Squeeth - ETH&sup2; Token
+          </Typography>
+          <Typography variant="body1" className={classes.subHeading}>
+            Perpetual leverage without liquidations
+          </Typography>
+          <Typography className={classes.header} variant="h6">
+            Historical PNL Backtest
+          </Typography>
+          <div className={classes.amountInput}>
             <LongChart />
-            <Typography className={classes.cardTitle} variant="h6">
-              Strategy Details
-            </Typography>
-            <Typography variant="body2" className={classes.cardSubTxt}>
-              Long squeeth (ETH&sup2;) gives you a leveraged position with unlimited upside, protected downside, and no liquidations. Compared to a 2x leveraged position, you make more when ETH goes up and lose less when ETH goes down. You pay a daily funding rate for this position. Enter the position by purchasing an ERC20 token.
-            </Typography>
-            <br /> 
-            <div >
-              <Image src={ccpayoff} alt="cc payoff" width={450} height={300} />
-            </div>
-            <Typography variant="body2" className={classes.cardSubTxt}>
-                  Squeeth gives you an ETH&sup2; payoff. This means you have constant gamma exposure, so you always hold a position similar to an at the money call option. This functions similar to a perpetual swap, where you are targeting ETH&sup2; rather than ETH.
-                  <a className={classes.header} href="https://www.paradigm.xyz/2021/08/power-perpetuals/"> Learn more. </a>  
-            </Typography>
-            <br /> 
-            <Typography variant="body2" className={classes.cardSubTxt}>
-              Funding is calculated as your position size multiplied by the TWAP (time weighted average price) of Mark - Index, where Mark is the price squeeth is trading at and Index is ETH&sup2;.
-              We use <a className={classes.header} href="https://uniswap.org/whitepaper-v3.pdf"> Uniswap V3 GMA (geometric moving average) TWAP. </a>
-            </Typography> 
-
-          </Card>
-          <div className={classes.buyCard}>
-            <Card className={classes.innerCard}>
-              <Typography className={classes.cardTitle} variant="h6">
-                Buy
-              </Typography>
-              <div className={classes.amountInput}>
-                <TextField
-                  size="small"
-                  value={amount}
-                  type="number"
-                  style={{ width: 300 }}
-                  onChange={(event) => setAmount(Number(event.target.value))}
-                  id="filled-basic"
-                  label="Long Size"
-                  variant="outlined"
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <Tooltip title="1 squeeth = ETH&sup2;. Each ERC20 token represents &radic;(squeeth) worth of squeeth ">
-                          <InfoOutlinedIcon fontSize="small" />
-                        </Tooltip>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </div>
-              <div className={classes.amountInput}>
-                <TextField
-                  size="small" value={cost}
-                  type="number"
-                  style={{ width: 300 }}
-                  disabled
-                  label="Cost"
-                  variant="outlined"
-                />
-              </div>
-              <Button
-                style={{ width: 300 }}
-                variant="contained"
-                color="primary"
-                onClick={setModalStep}
-                className={classes.amountInput}
-              >
-                {'Buy'}
-              </Button>
-              <div data-tip="Daily funding is paid out of your position, no collateral required." className={classes.amountInput}>
-                Daily Funding to Pay: ${(amount * accFunding / startingETHPrice).toFixed(2)} (-{(accFunding / startingETHPrice / price * 100).toFixed(2)} %)
-              </div>
-              <span style={{ fontSize: 12 }}> 24h Vol: {(vol * 100).toFixed(2)} % </span>
-            </Card>
           </div>
+          <Typography className={classes.cardTitle} variant="h6">
+            Strategy Details
+          </Typography>
+          <Typography variant="body2" className={classes.cardSubTxt}>
+            Long squeeth (ETH&sup2;) gives you a leveraged position with unlimited upside, protected downside, and no liquidations. Compared to a 2x leveraged position, you make more when ETH goes up and lose less when ETH goes down. You pay a daily funding rate for this position. Enter the position by purchasing an ERC20 token.
+          </Typography>
+          <br />
+          <div >
+            <Image src={ccpayoff} alt="cc payoff" width={450} height={300} />
+          </div>
+          <Typography variant="body2" className={classes.cardSubTxt}>
+            Squeeth gives you an ETH&sup2; payoff. This means you have constant gamma exposure, so you always hold a position similar to an at the money call option. This functions similar to a perpetual swap, where you are targeting ETH&sup2; rather than ETH.
+            <a className={classes.header} href="https://www.paradigm.xyz/2021/08/power-perpetuals/"> Learn more. </a>
+          </Typography>
+          <br />
+          <Typography variant="body2" className={classes.cardSubTxt}>
+            Funding is calculated as your position size multiplied by the TWAP (time weighted average price) of Mark - Index, where Mark is the price squeeth is trading at and Index is ETH&sup2;.
+            We use <a className={classes.header} href="https://uniswap.org/whitepaper-v3.pdf"> Uniswap V3 GMA (geometric moving average) TWAP. </a>
+          </Typography>
+        </div>
+        <div className={classes.buyCard}>
+          <Card className={classes.innerCard}>
+            <Typography className={classes.cardTitle} variant="h6">
+              Buy
+            </Typography>
+            <div className={classes.amountInput}>
+              <TextField
+                size="small"
+                value={amount}
+                type="number"
+                style={{ width: 300 }}
+                onChange={(event) => setAmount(Number(event.target.value))}
+                id="filled-basic"
+                label="Long Size"
+                variant="outlined"
+              />
+            </div>
+            <div className={classes.amountInput}>
+              <TextField
+                size="small" value={cost}
+                type="number"
+                style={{ width: 300 }}
+                disabled
+                label="Cost"
+                variant="outlined"
+              />
+            </div>
+            <Button
+              style={{ width: 300 }}
+              variant="contained"
+              color="primary"
+              onClick={setModalStep}
+              className={classes.amountInput}
+            >
+              {'Buy'}
+            </Button>
+            <div data-tip="Daily funding is paid out of your position, no collateral required." className={classes.amountInput}>
+              Daily Funding to Pay: ${(amount * accFunding / startingETHPrice).toFixed(2)} (-{(accFunding / startingETHPrice / price * 100).toFixed(2)} %)
+            </div>
+            <span style={{ fontSize: 12 }}> 24h Vol: {(vol * 100).toFixed(2)} % </span>
+          </Card>
         </div>
       </div>
     </div>

@@ -47,7 +47,8 @@ const getTheme = (mode: Mode) => {
       },
       MuiCard: {
         root: {
-          boxShadow: mode === 'light' ? '0px 4px 10px rgba(222, 222, 222, 0.5)' : '0px 4px 10px rgb(37 37 37 / 50%)',
+          boxShadow: 'none',
+          borderRadius: '10px'
         }
       },
       MuiButton: {
@@ -99,7 +100,7 @@ const darkPalete: ThemeOptions = {
   palette: {
     type: 'dark',
     primary: {
-      main: '#4DADF3',
+      main: '#2CE6F9',
       contrastText: '#FFFFFF',
     },
     secondary: {
@@ -121,7 +122,8 @@ const darkPalete: ThemeOptions = {
     background: {
       stone: 'rgba(255, 255, 255, 0.12)',
       lightStone: 'rgba(255, 255, 255, 0.08)',
-      tooltip: 'rgba(255, 255, 255, 0.12)'
+      tooltip: 'rgba(255, 255, 255, 0.12)',
+      default: '#181B1C'
     }
   },
 }

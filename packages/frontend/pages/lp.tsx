@@ -168,6 +168,7 @@ export function LPCalculator() {
           lineSeries={lineSeries}
           autoWidth
           height={300}
+          darkTheme
         />
 
         <div>

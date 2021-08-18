@@ -28,7 +28,7 @@ export default function MyApp(props: AppProps) {
         <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width" />
       </Head>
       <WalletProvider>
-        <ThemeProvider theme={getTheme(Mode.LIGHT)}>
+        <ThemeProvider theme={getTheme(Mode.DARK)}>
           {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
           <CssBaseline />
           <WorldProvider>

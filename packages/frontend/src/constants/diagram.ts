@@ -25,7 +25,18 @@ export const graphOptions = {
     },
     locale: 'en-US',
   },
+  grid: {
+    vertLines: {
+        color: 'rgba(255, 255, 255, 0.12)',
+        visible: true,
+    },
+    horzLines: {
+        color: 'rgba(255, 255, 255, 0.12)',
+        visible: true,
+    },
+  },
   layout: {
     fontSize: 12,
+    backgroundColor: '#181B1C',
   },
 }
