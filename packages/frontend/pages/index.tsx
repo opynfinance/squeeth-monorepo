@@ -19,6 +19,9 @@ import Collapse from '@material-ui/core/Collapse';
 import Grid from '@material-ui/core/Grid';
 import { useEffect } from 'react'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemText from '@material-ui/core/ListItemText';
 
 
 const useStyles = makeStyles(theme => (createStyles({
@@ -34,6 +37,9 @@ const useStyles = makeStyles(theme => (createStyles({
   subHeading: {
     color: theme.palette.text.secondary,
   },
+  thirdHeading: {
+    marginTop: theme.spacing(2),
+  },
   details: {
     marginTop: theme.spacing(4),
     width: '65%'
@@ -45,12 +51,18 @@ const useStyles = makeStyles(theme => (createStyles({
   },
   cardTitle: {
     color: theme.palette.primary.main,
-    marginTop: theme.spacing(8)
+    marginTop: theme.spacing(4),
   },
   cardSubTxt: {
     color: theme.palette.text.secondary,
     lineHeight: '1.75rem',
     fontSize: '16px'
+  },
+  cardDetail: {
+    color: theme.palette.text.secondary,
+    lineHeight: '1.75rem',
+    fontSize: '16px', 
+    marginTop: theme.spacing(4)
   },
   amountInput: {
     marginTop: theme.spacing(4),
@@ -124,10 +136,13 @@ export default function Home() {
           <Typography variant="h5">
             Long Squeeth - ETH&sup2; Token
           </Typography>
-          <Typography variant="body1" className={classes.subHeading}>
+          <Typography variant="body1">
             Perpetual leverage without liquidations
           </Typography>
-          <Typography className={classes.header} variant="h6">
+          <Typography variant="body2" className={classes.cardDetail}>
+            Long squeeth (ETH&sup2;) gives you a leveraged position with unlimited upside, protected downside, and no liquidations. Compared to a 2x leveraged position, you make more when ETH goes up and lose less when ETH goes down. You pay a daily funding rate for this position. Enter the position by purchasing an ERC20 token.
+          </Typography>
+          <Typography className={classes.cardTitle} variant="h6">
             Historical PNL Backtest
           </Typography>
           <div className={classes.amountInput}>
@@ -136,13 +151,29 @@ export default function Home() {
           <Typography className={classes.cardTitle} variant="h6">
             Strategy Details
           </Typography>
-          <Typography variant="body2" className={classes.cardSubTxt}>
-            Long squeeth (ETH&sup2;) gives you a leveraged position with unlimited upside, protected downside, and no liquidations. Compared to a 2x leveraged position, you make more when ETH goes up and lose less when ETH goes down. You pay a daily funding rate for this position. Enter the position by purchasing an ERC20 token.
+          <Typography className={classes.thirdHeading} variant="h6">
+            How it works
           </Typography>
-          <br />
-          <div >
+          <List >
+            <ListItem >
+              <ListItemText primary="1. Buy Squeeth ERC20" secondary="via Uniswap" />
+            </ListItem>
+            <ListItem>
+              <ListItemText primary="2. Pay daily funding out of squeeth ERC20 position" secondary="Can think about this like selling some of your squeeth ERC20 each day to pay funding" />
+            </ListItem>
+            <ListItem>
+              <ListItemText primary="3. Exit position by selling squeeth ERC20" secondary="via Uniswap" />
+            </ListItem>
+          </List>
+          <Typography className={classes.thirdHeading} variant="h6">
+            Payoff
+          </Typography>
+          <div className={classes.thirdHeading} >
             <Image src={ccpayoff} alt="cc payoff" width={450} height={300} />
           </div>
+          <Typography className={classes.thirdHeading} variant="h6">
+            Properties
+          </Typography>
           <Typography variant="body2" className={classes.cardSubTxt}>
             Squeeth gives you an ETH&sup2; payoff. This means you have constant gamma exposure, so you always hold a position similar to an at the money call option. This functions similar to a perpetual swap, where you are targeting ETH&sup2; rather than ETH.
             <a className={classes.header} href="https://www.paradigm.xyz/2021/08/power-perpetuals/"> Learn more. </a>
@@ -152,6 +183,11 @@ export default function Home() {
             Funding is calculated as your position size multiplied by the TWAP (time weighted average price) of Mark - Index, where Mark is the price squeeth is trading at and Index is ETH&sup2;.
             We use <a className={classes.header} href="https://uniswap.org/whitepaper-v3.pdf"> Uniswap V3 GMA (geometric moving average) TWAP. </a>
           </Typography>
+          {/* <br />
+          <Typography variant="body2" className={classes.cardSubTxt}>
+            Funding is paid in-kind (using the squeeth token), so you cannot be liquidated. Note that the squeeth ERC20 amount will remain constant eg. if you bought 1 squeeth you will still have 1 squeeth after funding in kind. 
+            What will change is how much value you can redeem for each squeeth. The amount of value you can redeem per squeeth depends on how much funding you have paid and the mark price of squeeth. [insert diagram of square with dotted lines, value being area of square]
+          </Typography> */}
         </div>
         <div className={classes.buyCard}>
           <Card className={classes.innerCard}>

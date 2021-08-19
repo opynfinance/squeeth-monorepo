@@ -26,8 +26,8 @@ export function LongChart() {
 
   // plot line data
   const lineSeries = useMemo(() => {
-    if (mode === ChartType.Price) return [{ data: ethPrices, legend: 'ETH' }, { data: squeethPrices, legend: 'Continuous Call' }]
-    if (mode === ChartType.PNL) return [{ data: longEthPNL, legend: 'Long 1 ETH' }, { data: longSeries, legend: 'Long 1 Continuous Call' }]
+    if (mode === ChartType.Price) return [{ data: ethPrices, legend: 'ETH' }, { data: squeethPrices, legend: 'Squeeth' }]
+    if (mode === ChartType.PNL) return [{ data: longEthPNL, legend: 'Long 1 ETH' }, { data: longSeries, legend: 'Long 1 Squeeth' }]
     if (mode === ChartType.PositionSize) return [{ data: positionSizeSeries, legend: 'Position Size' }]
     if (mode === ChartType.Funding) return [{ data: fundingPercentageSeries, legend: 'Daily Funding' }]
     return []

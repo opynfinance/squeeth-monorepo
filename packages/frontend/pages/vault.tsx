@@ -19,6 +19,9 @@ import IconButton from '@material-ui/core/IconButton';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Collapse from '@material-ui/core/Collapse';
 import Grid from '@material-ui/core/Grid';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemText from '@material-ui/core/ListItemText';
 
 const useStyles = makeStyles(theme => (createStyles({
   header: {
@@ -57,7 +60,7 @@ const useStyles = makeStyles(theme => (createStyles({
   },
   cardTitle: {
     color: theme.palette.primary.main,
-    marginTop: theme.spacing(8)
+    marginTop: theme.spacing(4)
   },
   cardHeader: {
     color: theme.palette.primary.main,
@@ -74,12 +77,17 @@ const useStyles = makeStyles(theme => (createStyles({
   amountInput: {
     marginTop: theme.spacing(4),
   },
+  thirdHeading: {
+    marginTop: theme.spacing(2),
+  },
 })))
 
 const getVaultDetail = (vault: Vaults) => {
   if (vault === Vaults.CrabVault) return (
     <p>
-      This high yield position is similar to selling a strangle. You are profitable as long as ETH moves less than approximately 6% in either direction <b>in a single day</b>. The strategy rebalances daily to be delta neutral by buying or selling ETH. <br /><br />
+      This high yield position is similar to selling a strangle. You are profitable as long as ETH moves less than approximately 6% in either direction <b>in a single day</b>. The strategy rebalances daily to be delta neutral by buying or selling ETH.  
+      {/* <br /> <br /> Note that the 6% threshold is dynamic, changing each day based on the daily implied volatility and funding. */}
+      <br /><br />
     </p>
   )
   if (vault === Vaults.ETHBull) return (
@@ -95,47 +103,46 @@ const getVaultDetail = (vault: Vaults) => {
 const getAdvancedDetail = (vault: Vaults) => {
   if (vault === Vaults.CrabVault) return (
     <>
+     <Typography style={{ color: "#FFFFFF" }}  variant="h6">
+            Properties
+      </Typography>
       <p>
         This vault is short 1 squeeth, which is where you earn yield from. The vault is also long 2 ETH. This 2ETH - ETH&sup2; payoff gives you 0 delta exposure.
         The vault is rebalancing daily to maintain this 0 delta exposure, meaning that you constantly have 0 ETH
         exposure. You have a constant negative gamma exposure.
-
-        <br />
-        <br />
-        You can deposit and withdraw from the vault at any time. You could potentially be liquidated if ETH hits the liquidation price.
-        This liquidation risk comes from the portion of the vault which is selling the squeeth (also where the yield comes from).
         <a style={{ color: "#4DADF3" }} href="https://www.paradigm.xyz/2021/08/power-perpetuals/"> Learn more. </a>
 
         <br />
-        Note that the 6% threshold is dynamic, changing each day based on the daily implied volatility and funding.
       </p>
+      <Typography style={{ color: "#FFFFFF" }}  variant="h6">
+            Payoff
+      </Typography>
       <Image src={crabpayoff} alt="crab payoff" width={450} height={300} />
     </>
   )
   if (vault === Vaults.ETHBull) return (
     <>
+      <Typography style={{ color: "#FFFFFF" }} variant="h6">
+            Properties
+      </Typography>
       <p>
         This vault is short 1 squeeth, which is where you earn yield from. The vault is also long 3 ETH. This 3ETH - ETH&sup2; payoff gives you 1 delta exposure.
         This vault is rebalancing daily to maintain this 1 delta exposure, meaning that you constantly have exposure to long 1 ETH. You have a constant negative gamma exposure.
-
-        <br />
-        <br />
-        You can deposit and withdraw from the vault at any time. You could potentially be liquidated if ETH hits the liquidation price.
-        This liquidation risk comes from the portion of the vault which is selling the squeeth (also where the yield comes from).
         <a style={{ color: "#4DADF3" }} href="https://www.paradigm.xyz/2021/08/power-perpetuals/"> Learn more. </a>
       </p>
+      <Typography style={{ color: "#FFFFFF" }}  variant="h6">
+            Payoff
+      </Typography>
       <Image src={ethbullpayoff} alt="eth bull payoff" width={450} height={300} />
     </>
   )
   if (vault === Vaults.ETHBear) return (
     <p>
+       <Typography style={{ color: "#FFFFFF" }} variant="h6">
+            Properties
+      </Typography>
       This vault is short 1 squeeth, which is where you earn yield from. The vault is also long 1 ETH. This ETH - ETH&sup2; payoff gives you -1 delta exposure.
       The vault is rebalancing daily to maintain this -1 delta exposure, meaning that you constantly have exposure to short 1 ETH. You have a constant negative gamma exposure.
-
-      <br />
-      <br />
-      You can deposit and withdraw from the vault at any time. You could potentially be liquidated if ETH hits the liquidation price.
-      This liquidation risk comes from the portion of the vault which is selling the squeeth (also where the yield comes from).
       <a style={{ color: "#4DADF3" }} href="https://www.paradigm.xyz/2021/08/power-perpetuals/"> Learn more. </a>
     </p>
   )
@@ -270,7 +277,7 @@ export default function Vault() {
           <Typography className={classes.cardHeader} variant="h6">
             {vault}
           </Typography>
-          <Typography variant="body1" className={classes.subHeading}>
+          <Typography variant="body1" >
             {getVaultIntro(vault)}
           </Typography>
           <Typography variant="body2" className={classes.cardSubTxt}>
@@ -299,9 +306,26 @@ export default function Vault() {
           <Typography className={classes.cardTitle} variant="h6">
             Strategy Detail
           </Typography>
+            <Typography className={classes.thirdHeading} variant="h6">
+              How it works
+            </Typography>
+            <List >
+              <ListItem >
+                <ListItemText primary="1. Deposit ETH funds in the vault" secondary="Behind the scenes the vault is minting and selling squeeth, and holding long ETH" />
+              </ListItem>
+              <ListItem>
+                <ListItemText primary="2. Earn yield by being short squeeth and long ETH." secondary="Yield is paid out by reducing your squeeth debt" />
+              </ListItem>
+              <ListItem>
+                <ListItemText primary="3. Withdraw funds at anytime" secondary="Note there is liquidation risk from being short squeeth" />
+              </ListItem>
+            </List>
+
           <Typography variant="body2" className={classes.cardSubTxt}>
             {getAdvancedDetail(vault)}
           </Typography>
+
+
         </div>
         <div className={classes.buyCard}>
           <Card className={classes.innerCard}>
