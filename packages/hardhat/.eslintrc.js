@@ -20,6 +20,7 @@ module.exports = {
     "prefer-template": "off",
     "no-console": "off",
     "func-names": "off",
+    "no-unused-expressions": "off",
   },
   ignorePatterns: ["package.json", "contracts/*"],
   settings: {

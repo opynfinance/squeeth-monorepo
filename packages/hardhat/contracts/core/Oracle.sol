@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-// uniswap Library only works under 0.7.5
+// uniswap Library only works under 0.7.6
 pragma solidity =0.7.6;
 
 import {OracleLibrary} from "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol";

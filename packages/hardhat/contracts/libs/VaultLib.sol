@@ -14,6 +14,10 @@ library VaultLib {
         uint128 shortAmount;
     }
 
+    function isEmpty(Vault storage _vault) internal view returns (bool) {
+        return _vault.collateralAmount == 0 && _vault.shortAmount == 0;
+    }
+
     function isProperlyCollateralized(
         Vault memory _vault,
         uint128 _ethPrice,

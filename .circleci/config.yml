@@ -22,7 +22,7 @@ jobs:
   checkout-and-install:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: circleci/node:12.22.4
+      - image: circleci/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -43,7 +43,7 @@ jobs:
   compile-and-test-contracts:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: circleci/node:12.22.4
+      - image: circleci/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -57,7 +57,7 @@ jobs:
           command: npx hardhat compile
       - run: 
           name: Unit tests
-          command: npx hardhat test --network hardhat
+          command: yarn coverage # run coverage so we can see report while checking all the test passes
       - save_cache: 
           key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
           paths:
@@ -79,7 +79,7 @@ jobs:
   lint:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: circleci/node:12.22.4
+      - image: circleci/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -94,7 +94,7 @@ jobs:
   contract-size:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: circleci/node:12.22.4
+      - image: circleci/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth

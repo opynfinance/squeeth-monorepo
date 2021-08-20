@@ -61,7 +61,8 @@
     "lint": "yarn lint:contracts && yarn lint:tests",
     "lint:check:contracts": "prettier --check contracts/**/*.sol",
     "lint:check:tests": "eslint test/**/*.ts",
-    "lint:check": "yarn lint:check:contracts && yarn lint:check:tests"
+    "lint:check": "yarn lint:check:contracts && yarn lint:check:tests",
+    "coverage": "hardhat coverage --testfiles 'test/**/*.ts' --network hardhat"
   },
   "resolutions": {
     "assemblyscript": "git+https://github.com/AssemblyScript/assemblyscript.git#v0.6"
