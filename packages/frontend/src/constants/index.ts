@@ -1,2 +1,2 @@
-export * from './enums'
 export * from './diagram'
+export * from './enums'

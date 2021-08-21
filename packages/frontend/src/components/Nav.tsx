@@ -1,49 +1,51 @@
-import React from 'react'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import Typography from '@material-ui/core/Typography';
-import Link from 'next/link'
+import Typography from '@material-ui/core/Typography'
 import Image from 'next/image'
+import Link from 'next/link'
+import { useRouter } from 'next/router'
+import React from 'react'
+
 import logo from '../../public/images/logo.svg'
-import { useRouter } from "next/router";
-import WalletButton from './WalletButton';
+import WalletButton from './WalletButton'
 
+const useStyles = makeStyles((theme) =>
+  createStyles({
+    nav: {
+      height: '64px',
+      padding: theme.spacing(2),
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      position: 'sticky',
+      top: '0px',
+      zIndex: 10,
+      background: theme.palette.background.default,
+      borderBottom: `1px solid ${theme.palette.background.stone}`,
+    },
+    logo: {
+      marginRight: theme.spacing(2),
+    },
+    navDiv: {
+      marginLeft: theme.spacing(2),
+      display: 'flex',
+      justifyContent: 'center',
+    },
+    navLink: {
+      margin: theme.spacing(0, 3),
+      textDecoration: 'none',
+      cursor: 'pointer',
+      color: theme.palette.text.secondary,
+      fontWeight: 400,
+    },
+    navActive: {
+      color: theme.palette.primary.main,
+    },
+  }),
+)
 
-const useStyles = makeStyles(theme => (createStyles({
-  nav: {
-    height: '64px',
-    padding: theme.spacing(2),
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    position: 'sticky',
-    top: '0px',
-    zIndex: 10,
-    background: theme.palette.background.default,
-    borderBottom: `1px solid ${theme.palette.background.stone}`
-  },
-  logo: {
-    marginRight: theme.spacing(2)
-  },
-  navDiv: {
-    marginLeft: theme.spacing(2),
-    display: 'flex',
-    justifyContent: 'center',
-  },
-  navLink: {
-    margin: theme.spacing(0, 3),
-    textDecoration: 'none',
-    cursor: 'pointer',
-    color: theme.palette.text.secondary,
-    fontWeight: 400,
-  },
-  navActive: {
-    color: theme.palette.primary.main,
-  }
-})))
-
-const NavLink: React.FC<{ path: string, name: string }> = ({ path, name }) => {
-  const classes = useStyles();
-  const router = useRouter();
+const NavLink: React.FC<{ path: string; name: string }> = ({ path, name }) => {
+  const classes = useStyles()
+  const router = useRouter()
 
   return (
     <Link href={path}>
@@ -58,7 +60,7 @@ const NavLink: React.FC<{ path: string, name: string }> = ({ path, name }) => {
 }
 
 const Nav: React.FC = () => {
-  const classes = useStyles();
+  const classes = useStyles()
 
   return (
     <div className={classes.nav}>

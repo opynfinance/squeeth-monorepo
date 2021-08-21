@@ -1,20 +1,20 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import Web3 from 'web3'
-import { ethers } from 'ethers';
+import BigNumber from 'bignumber.js'
 import Onboard from 'bnc-onboard'
 import { API } from 'bnc-onboard/dist/src/interfaces'
-import BigNumber from 'bignumber.js';
-import { Networks } from '../types';
+import { ethers } from 'ethers'
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import Web3 from 'web3'
 
+import { Networks } from '../types'
 
 type WalletType = {
   web3: Web3 | null
-  address: string | null,
-  networkId: Networks,
-  signer: any,
-  selectWallet: () => void,
-  connected: boolean,
-  balance: BigNumber,
+  address: string | null
+  networkId: Networks
+  signer: any
+  selectWallet: () => void
+  connected: boolean
+  balance: BigNumber
 }
 
 const initialState: WalletType = {
@@ -35,57 +35,58 @@ const WalletProvider: React.FC = ({ children }) => {
   const [address, setAddress] = useState('')
   const [networkId, setNetworkId] = useState(0)
   const [onboard, setOnboard] = useState<API | null>(null)
-  const [signer, setSigner] = useState<any>(null);
-  const [balance, setBalance] = useState<BigNumber>(new BigNumber(0));
-
+  const [signer, setSigner] = useState<any>(null)
+  const [balance, setBalance] = useState<BigNumber>(new BigNumber(0))
 
   const onWalletSelect = useCallback(async () => {
-    if (!onboard) return;
-    onboard.walletSelect().then(success => {
-      if (success)
-        onboard.walletCheck()
-    });
+    if (!onboard) return
+    onboard.walletSelect().then((success) => {
+      if (success) onboard.walletCheck()
+    })
   }, [onboard])
 
-
-  const store: WalletType = useMemo(() => ({
-    web3,
-    address,
-    networkId,
-    signer,
-    connected: !!address,
-    balance,
-    selectWallet: onWalletSelect
-  }), [web3, address, networkId, signer, balance, onWalletSelect])
+  const store: WalletType = useMemo(
+    () => ({
+      web3,
+      address,
+      networkId,
+      signer,
+      connected: !!address,
+      balance,
+      selectWallet: onWalletSelect,
+    }),
+    [web3, address, networkId, signer, balance, onWalletSelect],
+  )
 
   useEffect(() => {
-
     const onNetworkChange = (updateNetwork: number) => {
       if (updateNetwork in Networks) {
         setNetworkId(updateNetwork)
         if (onboard !== null) {
-          localStorage.setItem('networkId', updateNetwork.toString());
-          console.log('Updating', updateNetwork)
+          const network = updateNetwork === 1337 ? 31337 : updateNetwork
+          localStorage.setItem('networkId', network.toString())
           onboard.config({
-            networkId: updateNetwork
+            networkId: network,
           })
-          console.log('Updated', updateNetwork)
         }
       }
-    };
+    }
 
     const onWalletUpdate = (wallet: any) => {
       if (wallet.provider) {
-        window.localStorage.setItem('selectedWallet', wallet.name);
-        const provider = new ethers.providers.Web3Provider(wallet.provider);
-        setWeb3(new Web3(wallet.provider));
-        setSigner(() => provider.getSigner());
+        window.localStorage.setItem('selectedWallet', wallet.name)
+        const provider = new ethers.providers.Web3Provider(wallet.provider)
+        setWeb3(new Web3(wallet.provider))
+        setSigner(() => provider.getSigner())
       }
-    };
+    }
 
-    const _network = networkId !== 0 ? networkId : parseInt(localStorage.getItem('networkId') || '1');
-    const network = networkId === 1 ? 'mainnet' : networkId === 42 ? 'kovan' : 'ropsten';
-    const RPC_URL = `https://${network}.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY}`;
+    const _network = networkId !== 0 ? networkId : parseInt(localStorage.getItem('networkId') || '1')
+    const network = networkId === 1 ? 'mainnet' : networkId === 42 ? 'kovan' : 'ropsten'
+    const RPC_URL =
+      networkId === Networks.LOCAL
+        ? 'http://127.0.0.1:8545/'
+        : `https://${network}.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY}`
 
     const onboard = Onboard({
       dappId: process.env.NEXT_PUBLIC_BLOCKNATIVE_DAPP_ID,
@@ -95,7 +96,7 @@ const WalletProvider: React.FC = ({ children }) => {
         address: setAddress,
         network: onNetworkChange,
         wallet: onWalletUpdate,
-        balance: balance => setBalance(new BigNumber(balance))
+        balance: (balance) => setBalance(new BigNumber(balance)),
       },
       walletSelect: {
         wallets: [
@@ -118,25 +119,21 @@ const WalletProvider: React.FC = ({ children }) => {
             rpcUrl: RPC_URL,
           },
         ],
-      }
+      },
     })
 
-    setOnboard(onboard);
+    setOnboard(onboard)
 
-    const previouslySelectedWallet = window.localStorage.getItem('selectedWallet');
+    const previouslySelectedWallet = window.localStorage.getItem('selectedWallet')
 
     if (previouslySelectedWallet && onboard) {
-      onboard.walletSelect(previouslySelectedWallet).then(success => {
+      onboard.walletSelect(previouslySelectedWallet).then((success) => {
         console.log('Connected to wallet', success)
       })
     }
   }, [networkId])
 
-  return (
-    <walletContext.Provider value={store}>
-      {children}
-    </walletContext.Provider>
-  )
-};
+  return <walletContext.Provider value={store}>{children}</walletContext.Provider>
+}
 
-export { useWallet, WalletProvider };
+export { useWallet, WalletProvider }

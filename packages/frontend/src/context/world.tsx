@@ -1,8 +1,10 @@
+/* eslint-disable prettier/prettier */
 import React, { useContext, useState } from 'react'
+
 import { useETHPriceCharts } from '../hooks/useETHPriceCharts'
 
 type point = {
-  value: number,
+  value: number
   time: number
 }
 
@@ -23,12 +25,12 @@ type WorldContextProps = {
   positionSizeSeries: point[]
   fundingPercentageSeries: point[]
 
-  accFunding: number,
-  volMultiplier: number,
+  accFunding: number
+  volMultiplier: number
   days: number
-  setVolMultiplier: Function,
+  setVolMultiplier: Function
   setDays: Function
-  
+
   getVaultPNLWithRebalance: (longAmount: number) => point[]
   getStableYieldPNL: (comparedlongAmount: number) => point[]
 }
@@ -36,14 +38,13 @@ type WorldContextProps = {
 const initialContext = {
   researchMode: false,
   usePriceSeries: false,
-  setResearchMode: () => {},
-  setUsePriceSeries: () => {},
-
+  setResearchMode: () => { },
+  setUsePriceSeries: () => { },
 
   ethPrices: [],
   startingETHPrice: 0,
   longEthPNL: [],
-  shortEthPNL:[],
+  shortEthPNL: [],
   squeethPrices: [],
   longSeries: [],
   shortSeries: [],
@@ -52,8 +53,8 @@ const initialContext = {
   accFunding: 0,
   volMultiplier: 1.2,
   days: 180,
-  setVolMultiplier: () => {},
-  setDays: () => {},
+  setVolMultiplier: () => { },
+  setDays: () => { },
 
   getVaultPNLWithRebalance: () => [],
   getStableYieldPNL: () => [],
@@ -63,11 +64,11 @@ const worldContext = React.createContext<WorldContextProps>(initialContext)
 const useWorldContext = () => useContext(worldContext)
 
 const WorldProvider: React.FC = ({ children }) => {
-
-  const [ researchMode, setResearchMode ] = useState(false)
+  const [researchMode, setResearchMode] = useState(false)
   // const [ usePriceSeries, setUsePriceSeries ] = useState(false) // default to show PNL.
 
-  const { ethPrices,
+  const {
+    ethPrices,
     startingETHPrice,
     longEthPNL,
     shortEthPNL,
@@ -82,7 +83,7 @@ const WorldProvider: React.FC = ({ children }) => {
     getStableYieldPNL,
     accFunding,
     positionSizeSeries,
-    fundingPercentageSeries
+    fundingPercentageSeries,
   } = useETHPriceCharts()
 
   return (
@@ -107,7 +108,7 @@ const WorldProvider: React.FC = ({ children }) => {
         longSeries,
         shortSeries,
         positionSizeSeries,
-        fundingPercentageSeries
+        fundingPercentageSeries,
       }}
     >
       {children}
@@ -115,4 +116,4 @@ const WorldProvider: React.FC = ({ children }) => {
   )
 }
 
-export { WorldProvider, useWorldContext }
+export { useWorldContext, WorldProvider }

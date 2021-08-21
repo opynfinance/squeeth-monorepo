@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
-import { TextField, Modal, Button, Checkbox, InputAdornment, Tooltip } from '@material-ui/core'
+import { InputAdornment, TextField, Tooltip } from '@material-ui/core'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
+import React from 'react'
+
 import { useWorldContext } from '../context/world'
 
 const IV: React.FC = () => {
@@ -14,7 +15,7 @@ const IV: React.FC = () => {
         value={volMultiplier}
         style={{ width: 300 }}
         size="small"
-        onChange={event => setVolMultiplier(event.target.value)}
+        onChange={(event) => setVolMultiplier(event.target.value)}
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">
@@ -29,4 +30,4 @@ const IV: React.FC = () => {
   )
 }
 
-export default IV;
+export default IV

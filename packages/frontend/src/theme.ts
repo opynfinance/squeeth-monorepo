@@ -1,12 +1,12 @@
-import { createTheme, ThemeOptions } from '@material-ui/core/styles';
+import { createTheme, ThemeOptions } from '@material-ui/core/styles'
 
 export enum Mode {
-  LIGHT='light',
-  DARK='DARK',
+  LIGHT = 'light',
+  DARK = 'DARK',
 }
 
 const getTheme = (mode: Mode) => {
-  const palette = mode === 'light' ? lightPalette : darkPalete;
+  const palette = mode === 'light' ? lightPalette : darkPalete
 
   return createTheme({
     ...palette,
@@ -35,7 +35,7 @@ const getTheme = (mode: Mode) => {
     props: {
       MuiButtonBase: {
         disableRipple: true,
-      }
+      },
     },
     overrides: {
       MuiTableCell: {
@@ -43,21 +43,25 @@ const getTheme = (mode: Mode) => {
           fontSize: '.7rem',
           padding: '8px',
           border: 'none',
-        }
+        },
       },
       MuiCard: {
         root: {
           boxShadow: 'none',
-          borderRadius: '10px'
-        }
+          borderRadius: '10px',
+        },
       },
       MuiButton: {
         root: {
-          borderRadius: '10px'
-        }
-      }
-    }
-  });
+          borderRadius: '10px',
+          color: '#000',
+        },
+        text: {
+          color: '#000',
+        },
+      },
+    },
+  })
 }
 
 const lightPalette: ThemeOptions = {
@@ -82,17 +86,16 @@ const lightPalette: ThemeOptions = {
     success: {
       main: '#49D273',
       light: '#B2F0C5',
-
     },
     text: {
-      primary: '#545454'
+      primary: '#545454',
     },
     background: {
       default: '#F8F8F9',
       stone: '#DCDAE9',
       lightStone: '#DCDAE94D',
-      tooltip: '#77757E80'
-    }
+      tooltip: '#77757E80',
+    },
   },
 }
 
@@ -117,14 +120,14 @@ const darkPalete: ThemeOptions = {
     },
     success: {
       main: '#49D273',
-      light: '#B2F0C5'
+      light: '#B2F0C5',
     },
     background: {
       stone: 'rgba(255, 255, 255, 0.12)',
       lightStone: 'rgba(255, 255, 255, 0.08)',
       tooltip: 'rgba(255, 255, 255, 0.12)',
-      default: '#181B1C'
-    }
+      default: '#181B1C',
+    },
   },
 }
 

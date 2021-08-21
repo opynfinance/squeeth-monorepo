@@ -1,19 +1,21 @@
-import React from 'react'
-import Head from 'next/head'
-import { AppProps } from 'next/app'
+import '../styles/globals.css'
+
 import CssBaseline from '@material-ui/core/CssBaseline'
 import { ThemeProvider } from '@material-ui/core/styles'
-import '../styles/globals.css'
-import getTheme, { Mode } from '../src/theme'
-import { WorldProvider } from '../src/context/world'
+import { AppProps } from 'next/app'
+import Head from 'next/head'
+import React from 'react'
+
 import { WalletProvider } from '../src/context/wallet'
+import { WorldProvider } from '../src/context/world'
+import getTheme, { Mode } from '../src/theme'
 
 export default function MyApp(props: AppProps) {
   const { Component, pageProps } = props
 
   React.useEffect(() => {
     // Remove the server-side injected CSS.
-    const jssStyles = document.querySelector('#jss-server-side');
+    const jssStyles = document.querySelector('#jss-server-side')
     if (jssStyles) {
       jssStyles.parentElement!.removeChild(jssStyles)
     }

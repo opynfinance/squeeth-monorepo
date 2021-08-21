@@ -1,18 +1,21 @@
-import React from 'react'
 import Button from '@material-ui/core/Button'
-import { useWallet } from '../context/wallet';
-import { useMemo } from 'react';
-import { Networks } from '../types';
+import React from 'react'
+import { useMemo } from 'react'
+
+import { useWallet } from '../context/wallet'
+import { Networks } from '../types'
+import { toTokenAmount } from '../utils/calculations'
 
 const WalletButton: React.FC = () => {
-  const { selectWallet, connected, address, networkId } = useWallet()
+  const { selectWallet, connected, address, networkId, balance } = useWallet()
 
-  const shortAddress = useMemo(() =>
-    address ? address.slice(0, 8) + '…' + address.slice(address.length - 8, address.length) : ''
-    , [address])
+  const shortAddress = useMemo(
+    () => (address ? address.slice(0, 8) + '…' + address.slice(address.length - 8, address.length) : ''),
+    [address],
+  )
 
   const Circle = ({ networkId }: { networkId: Networks }) => {
-    const color = (networkId === Networks.MAINNET ? '#05b169' : '#8F7FFE')
+    const color = networkId === Networks.MAINNET ? '#05b169' : '#8F7FFE'
     return (
       <div
         style={{
@@ -24,8 +27,8 @@ const WalletButton: React.FC = () => {
           height: '.6rem',
         }}
       />
-    );
-  };
+    )
+  }
 
   return (
     <div>
@@ -34,13 +37,18 @@ const WalletButton: React.FC = () => {
           Connect wallet
         </Button>
       ) : (
-        <Button variant="outlined" color="primary" onClick={selectWallet}>
-          <Circle networkId={networkId} />
-          {shortAddress}
-        </Button>
+        <div>
+          <Button variant="text" color="primary">
+            {toTokenAmount(balance, 18).toFixed(2)} ETH
+          </Button>
+          <Button variant="outlined" color="primary" onClick={selectWallet}>
+            <Circle networkId={networkId} />
+            {shortAddress}
+          </Button>
+        </div>
       )}
     </div>
   )
-};
+}
 
 export default WalletButton

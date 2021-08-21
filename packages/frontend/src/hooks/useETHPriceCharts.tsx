@@ -1,9 +1,9 @@
-import { useAsyncMemo } from './useAsyncMemo'
-import { useMemo, useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
+
 import { getSqueethChartWithFunding } from '../utils/pricer'
+import { useAsyncMemo } from './useAsyncMemo'
 
 export function useETHPriceCharts(initDays = 180, initVolMultiplier = 1.2) {
-
   const [volMultiplier, setVolMultiplier] = useState(initVolMultiplier)
   const [days, setDays] = useState(initDays)
 
@@ -17,23 +17,24 @@ export function useETHPriceCharts(initDays = 180, initVolMultiplier = 1.2) {
     return ethPrices.length === 0 ? 1 : ethPrices[0].value
   }, [ethPrices])
 
-
   /**
    * cUSDC yield as PNL
    */
-  const getStableYieldPNL = useCallback((comparedLongAmount: number) => {
-    if (cusdcPrices.length === 0) return []
-    // price of one unit of cUSDC 
-    const startCUSDCPrice = cusdcPrices[0].value
-    const amountCUSDC = startingETHPrice * comparedLongAmount / startCUSDCPrice;
-    return cusdcPrices.map(({ time, value }) => {
-      return {
-        time,
-        value: (amountCUSDC * value) - startingETHPrice * comparedLongAmount
-      }
-    })
-
-  }, [startingETHPrice, cusdcPrices])
+  const getStableYieldPNL = useCallback(
+    (comparedLongAmount: number) => {
+      if (cusdcPrices.length === 0) return []
+      // price of one unit of cUSDC
+      const startCUSDCPrice = cusdcPrices[0].value
+      const amountCUSDC = (startingETHPrice * comparedLongAmount) / startCUSDCPrice
+      return cusdcPrices.map(({ time, value }) => {
+        return {
+          time,
+          value: amountCUSDC * value - startingETHPrice * comparedLongAmount,
+        }
+      })
+    },
+    [startingETHPrice, cusdcPrices],
+  )
 
   const longEthPNL = useMemo(() => {
     return ethPrices.map(({ time, value }) => {
@@ -53,102 +54,109 @@ export function useETHPriceCharts(initDays = 180, initVolMultiplier = 1.2) {
     })
   }, [ethPrices, startingETHPrice])
 
-  const squeethSeries = useAsyncMemo(() => {
-    return getSqueethChartWithFunding(ethPrices, volMultiplier)
-  }, { series: [], accFunding: 0 }, [ethPrices, volMultiplier])
+  const squeethSeries = useAsyncMemo(
+    () => {
+      return getSqueethChartWithFunding(ethPrices, volMultiplier)
+    },
+    { series: [], accFunding: 0 },
+    [ethPrices, volMultiplier],
+  )
 
   /**
    * long squeeth pnl series, (squeeth price over time - start price);
    */
   const longSeries = useMemo(() => {
-    return squeethSeries.series.map(({ time, longPNL }) => { return { time, value: longPNL } })
+    return squeethSeries.series.map(({ time, longPNL }) => {
+      return { time, value: longPNL }
+    })
   }, [squeethSeries])
 
   /**
    * short squeeth pnl series. (start price - squeeth price over time)
    */
   const shortSeries = useMemo(() => {
-    return squeethSeries.series.map(({ time, shortPNL }) => { return { time, value: shortPNL } })
+    return squeethSeries.series.map(({ time, shortPNL }) => {
+      return { time, value: shortPNL }
+    })
   }, [squeethSeries])
 
   /**
    * position size over time, decreasing from 1
    */
   const positionSizePercentageSeries = useMemo(() => {
-    return squeethSeries.series.map(({ time, positionSize }) => { return { time, value: positionSize * 100 } })
-
+    return squeethSeries.series.map(({ time, positionSize }) => {
+      return { time, value: positionSize * 100 }
+    })
   }, [squeethSeries])
 
   const fundingPercentageSeries = useMemo(() => {
-    return squeethSeries.series.map(({ time, fundingPerSqueeth, mark, timeElapsed: timeElapsedInDay }) => {       
-      const fundingPercentageDay = fundingPerSqueeth / mark / (timeElapsedInDay);
-      return { time, value: fundingPercentageDay * 100 } 
+    return squeethSeries.series.map(({ time, fundingPerSqueeth, mark, timeElapsed: timeElapsedInDay }) => {
+      const fundingPercentageDay = fundingPerSqueeth / mark / timeElapsedInDay
+      return { time, value: fundingPercentageDay * 100 }
     })
-  
   }, [squeethSeries])
 
   /**
    * used to generate vault pnl, considering
-   * user's portfolio will be nx - m(x)^2 
+   * user's portfolio will be nx - m(x)^2
    * delta: n - 2mx
-   * 
+   *
    * m: short size
    * n: long size
-   * 
+   *
    */
-  const getVaultPNLWithRebalance = useCallback((n: number, rebalanceInterval = 86400) => {
+  const getVaultPNLWithRebalance = useCallback(
+    (n: number, rebalanceInterval = 86400) => {
+      if (squeethSeries.series.length === 0) return []
+      if (squeethSeries.series.length !== ethPrices.length) return []
 
-    if (squeethSeries.series.length === 0) return []
-    if (squeethSeries.series.length !== ethPrices.length) return []
+      const delta = n - 2 // fix delta we want to hedge to. (n - 2)
+      const normalizedFactor = startingETHPrice
 
-    const delta = n - 2; // fix delta we want to hedge to. (n - 2)
-    let normalizedFactor = startingETHPrice;
+      // how much eth holding throughout the time
+      let longAmount = n
+      const data: { time: number; value: number }[] = []
+      let nextRebalanceTime = ethPrices[0].time + rebalanceInterval
 
-    // how much eth holding throughout the time
-    let longAmount = n;
-    const data: { time: number, value: number }[] = []
-    let nextRebalanceTime = ethPrices[0].time + rebalanceInterval
+      // accumulate total cost of buying (or selling) eth
+      let totalLongCost = startingETHPrice * longAmount
+      ethPrices.forEach(({ time, value: price }, i) => {
+        if (time > nextRebalanceTime) {
+          const m = squeethSeries.series[i].positionSize
 
-    // accumulate total cost of buying (or selling) eth
-    let totalLongCost = startingETHPrice * longAmount;
-    ethPrices.forEach(({ time, value: price }, i) => {
-      if (time > nextRebalanceTime) {
+          // rebalance
+          const x = price / normalizedFactor
 
-        const m = squeethSeries.series[i].positionSize
+          // solve n for formula:
+          // n - 2mx = m * delta
+          const newN = m * delta + 2 * x * m
+          const buyAmount = newN - longAmount
+          const buyCost = buyAmount * price
+          //console.log(`Date ${new Date(time * 1000).toDateString()}, price ${price.toFixed(3)} Rebalance: short squeeth ${m.toFixed(4)}, desired ETH long ${newN.toFixed(4)}, buy ${buyAmount.toFixed(4)} more eth`)
 
-        // rebalance
-        const x = price / normalizedFactor
+          totalLongCost += buyCost
+          longAmount = newN
 
-        // solve n for formula:
-        // n - 2mx = m * delta
-        const newN = m * delta + 2 * x * m
-        const buyAmount = newN - longAmount
-        const buyCost = buyAmount * price
-        //console.log(`Date ${new Date(time * 1000).toDateString()}, price ${price.toFixed(3)} Rebalance: short squeeth ${m.toFixed(4)}, desired ETH long ${newN.toFixed(4)}, buy ${buyAmount.toFixed(4)} more eth`)
+          //console.log('total long cost', totalLongCost, 'longAmount', longAmount)
 
-        totalLongCost += buyCost
-        longAmount = newN;
+          //normalizedFactor = price
+          nextRebalanceTime = nextRebalanceTime + rebalanceInterval
+        }
 
-        //console.log('total long cost', totalLongCost, 'longAmount', longAmount)
+        const longValue = price * longAmount - totalLongCost // should probably be be named something like ethDeltaPnL
+        const realizedPNL = shortSeries[i].value + longValue
 
-        //normalizedFactor = price
-        nextRebalanceTime = nextRebalanceTime + rebalanceInterval;
-
-      }
-
-      const longValue = (price) * longAmount - totalLongCost  // should probably be be named something like ethDeltaPnL
-      const realizedPNL = shortSeries[i].value + longValue
-
-      // calculate how much eth to buy
-      data.push({
-        time: time,
-        value: realizedPNL
+        // calculate how much eth to buy
+        data.push({
+          time: time,
+          value: realizedPNL,
+        })
       })
 
-    })
-
-    return data
-  }, [ethPrices, startingETHPrice, shortSeries, squeethSeries])
+      return data
+    },
+    [ethPrices, startingETHPrice, shortSeries, squeethSeries],
+  )
 
   return {
     getVaultPNLWithRebalance,
@@ -166,12 +174,11 @@ export function useETHPriceCharts(initDays = 180, initVolMultiplier = 1.2) {
     shortSeries,
     positionSizeSeries: positionSizePercentageSeries,
     fundingPercentageSeries,
-    accFunding: squeethSeries.accFunding
+    accFunding: squeethSeries.accFunding,
   }
 }
 
-
-async function getETHPrices(day = 1): Promise<{ time: number, value: number }[]> {
+async function getETHPrices(day = 1): Promise<{ time: number; value: number }[]> {
   const url = `https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=${day}`
   const response = await fetch(url)
   const prices = (await response.json()).prices
@@ -179,22 +186,20 @@ async function getETHPrices(day = 1): Promise<{ time: number, value: number }[]>
   return prices.map(([timestamp, price]: number[]) => {
     return {
       time: timestamp / 1000,
-      value: price
+      value: price,
     }
   })
 }
 
-async function getCUSDCPrices(day = 1): Promise<{ time: number, value: number }[]> {
+async function getCUSDCPrices(day = 1): Promise<{ time: number; value: number }[]> {
   const secondsInDay = 24 * 60 * 60
   const endTime = Math.round(Date.now() / 1000)
-  const startTime = Math.round(endTime - (day * secondsInDay))
+  const startTime = Math.round(endTime - day * secondsInDay)
   const url = `https://api.compound.finance/api/v2/market_history/graph?asset=0x39aa39c021dfbae8fac545936693ac917d5e7563&min_block_timestamp=${startTime}&max_block_timestamp=${endTime}&num_buckets=${day}`
   const response = await fetch(url)
   const prices = (await response.json()).exchange_rates
 
-  var output: any = []
-  for (var i in prices)
-    output[i] = { "time": prices[i].block_timestamp, "value": prices[i].rate }
+  const output: any = []
+  for (const i in prices) output[i] = { time: prices[i].block_timestamp, value: prices[i].rate }
   return output
 }
-
