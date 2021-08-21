@@ -13,6 +13,8 @@ import { HardhatUserConfig } from "hardhat/config";
 // import tasks
 
 import "./tasks/default";
+import './tasks/addLiquidity'
+import './tasks/buySqueeth'
 
 const fs = require("fs");
 
@@ -252,7 +254,7 @@ const config: HardhatUserConfig = {
     gasPrice: 100,
     coinmarketcap: process.env.COINMARKETCAP,
     enabled: process.env.REPORT_GAS === "true",
-  },
+  }
 };
 
 export default config;

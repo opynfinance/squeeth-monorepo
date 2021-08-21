@@ -4,7 +4,7 @@ import { expect } from "chai";
 import { BigNumber, providers } from "ethers";
 import { Controller, MockWSqueeth, MockVaultNFTManager } from "../../typechain";
 
-import { isEmptyVault, UNDERFLOW_ERROR } from '../utils'
+import { isEmptyVault, UNDERFLOW_ERROR } from '../vault-utils'
 
 describe("Controller", function () {
   let squeeth: MockWSqueeth;

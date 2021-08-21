@@ -22,7 +22,7 @@ module.exports = {
     "func-names": "off",
     "no-unused-expressions": "off",
   },
-  ignorePatterns: ["package.json", "contracts/*"],
+  ignorePatterns: ["package.json", "contracts/*", "tasks/default.ts"],
   settings: {
     "import/resolver": {
       node: {

@@ -2100,7 +2100,7 @@
   resolved "https://registry.yarnpkg.com/@uniswap/v2-core/-/v2-core-1.0.1.tgz#af8f508bf183204779938969e2e54043e147d425"
   integrity sha512-MtybtkUPSyysqLY2U210NBDeCHX+ltHt3oADGdjqoThZaFRDKwM6k1Nb3F0A3hk5hwuQvytFWhrWHOEq6nVJ8Q==
 
-"@uniswap/v3-core@1.0.0":
+"@uniswap/v3-core@1.0.0", "@uniswap/v3-core@^1.0.0":
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/@uniswap/v3-core/-/v3-core-1.0.0.tgz#6c24adacc4c25dceee0ba3ca142b35adbd7e359d"
   integrity sha512-kSC4djMGKMHj7sLMYVnn61k9nu+lHjMIxgg9CDQT+s2QYLoA56GbSK9Oxr+qJXzzygbkrmuY6cwgP6cW2JXPFA==
@@ -2699,9 +2699,9 @@ asn1@~0.2.3:
   dependencies:
     safer-buffer "~2.1.0"
 
-"assemblyscript@git+https://github.com/AssemblyScript/assemblyscript.git#36040d5b5312f19a025782b5e36663823494c2f3":
+"assemblyscript@git+https://github.com/AssemblyScript/assemblyscript.git#v0.6", "assemblyscript@https://github.com/AssemblyScript/assemblyscript#36040d5b5312f19a025782b5e36663823494c2f3":
   version "0.6.0"
-  resolved "git+https://github.com/AssemblyScript/assemblyscript.git#36040d5b5312f19a025782b5e36663823494c2f3"
+  resolved "git+https://github.com/AssemblyScript/assemblyscript.git#3ed76a97f05335504166fce1653da75f4face28f"
   dependencies:
     "@protobufjs/utf8" "^1.1.0"
     binaryen "77.0.0-nightly.20190407"
@@ -6607,13 +6607,6 @@ faye-websocket@0.11.3:
   dependencies:
     websocket-driver ">=0.5.1"
 
-faye-websocket@>=0.6.0:
-  version "0.11.4"
-  resolved "https://registry.yarnpkg.com/faye-websocket/-/faye-websocket-0.11.4.tgz#7f0d9275cfdd86a1c963dc8b65fcc451edcbb1da"
-  integrity sha512-CzbClwlXAuiRQAlUyfqPgvPoNKTckTPGfwZV4ZdAhVcP2lh9KUxJg2b5GkE7XbjKQ3YJnQ9z6D9ntLAlB+tP8g==
-  dependencies:
-    websocket-driver ">=0.5.1"
-
 fetch-ponyfill@^4.0.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/fetch-ponyfill/-/fetch-ponyfill-4.1.0.tgz#ae3ce5f732c645eab87e4ae8793414709b239893"
@@ -6725,11 +6718,6 @@ find-yarn-workspace-root@^2.0.0:
   dependencies:
     micromatch "^4.0.2"
 
-firebase-token-generator@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/firebase-token-generator/-/firebase-token-generator-2.0.0.tgz#9767d759ec13abdc99ba115fd5ea99d8b93d1206"
-  integrity sha1-l2fXWewTq9yZuhFf1eqZ2Lk9EgY=
-
 firebase@*, firebase@^8.8.0:
   version "8.9.1"
   resolved "https://registry.yarnpkg.com/firebase/-/firebase-8.9.1.tgz#9b3bc8e69830cd8bcabd3d296068e9d9ff481f35"
@@ -6750,22 +6738,6 @@ firebase@*, firebase@^8.8.0:
     "@firebase/remote-config" "0.1.42"
     "@firebase/storage" "0.6.2"
     "@firebase/util" "1.2.0"
-
-firebase@^2.1.2:
-  version "2.4.2"
-  resolved "https://registry.yarnpkg.com/firebase/-/firebase-2.4.2.tgz#4e1119ec0396ca561d8a7acbff1630feac6c0a31"
-  integrity sha1-ThEZ7AOWylYdinrL/xYw/qxsCjE=
-  dependencies:
-    faye-websocket ">=0.6.0"
-
-firestore@^1.1.6:
-  version "1.1.6"
-  resolved "https://registry.yarnpkg.com/firestore/-/firestore-1.1.6.tgz#73284bce9fe9b08bdad6c18278d25b696e123cc2"
-  integrity sha1-cyhLzp/psIva1sGCeNJbaW4SPMI=
-  dependencies:
-    firebase "^2.1.2"
-    firebase-token-generator "^2.0.0"
-    lodash "^3.1.0"
 
 flat-cache@^3.0.4:
   version "3.0.4"
@@ -9521,11 +9493,6 @@ lodash@4.17.20:
   version "4.17.20"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.20.tgz#b44a9b6297bcb698f1c51a3545a2b3b368d59c52"
   integrity sha512-PlhdFcillOINfeV7Ni6oF1TAEayyZBoZ8bcshTHqOYJYlrqzRK5hagpagky5o4HfCzzd1TRkXPMFq6cKk9rGmA==
-
-lodash@^3.1.0:
-  version "3.10.1"
-  resolved "https://registry.yarnpkg.com/lodash/-/lodash-3.10.1.tgz#5bf45e8e49ba4189e17d482789dfd15bd140b7b6"
-  integrity sha1-W/Rejkm6QYnhfUgnid/RW9FAt7Y=
 
 lodash@^4.17.11, lodash@^4.17.13, lodash@^4.17.14, lodash@^4.17.15, lodash@^4.17.19, lodash@^4.17.20, lodash@^4.17.21, lodash@^4.17.4:
   version "4.17.21"
