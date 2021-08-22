@@ -171,8 +171,8 @@ const getAdvancedDetail = (vault: Vaults) => {
         <p>
           This vault is short 1 squeeth, which is where you earn yield from. The vault is also long 3 ETH. This 3ETH -
           ETH&sup2; payoff gives you 1 delta exposure. This vault is rebalancing daily to maintain this 1 delta
-          exposure, meaning that you constantly have exposure to long 1 ETH. You have a constant negative gamma
-          exposure.
+          exposure, meaning that you constantly have exposure to long 1 ETH while you earn funding yields. You have a
+          constant negative gamma exposure.
           <a style={{ color: '#4DADF3' }} href="https://www.paradigm.xyz/2021/08/power-perpetuals/">
             {' '}
             Learn more.{' '}
@@ -401,14 +401,15 @@ export default function Vault() {
         </div>
         <div className={classes.buyCard}>
           <Card className={classes.innerCard}>
-            <Typography className={classes.cardTitle} variant="body1">
+            <Typography className={classes.cardTitle} variant="h6">
               Deposit in {vault}
             </Typography>
+            <br />
             <Tooltip title="Funding Payment Annualized APY. This APY is calculated based on the minimal initial collateral (1 ETH).">
-              <Typography style={{ fontSize: 16 }}>Estimated APY: {(1 + dailyInterestRate) ^ 365} %</Typography>
+              <Typography style={{ fontSize: 18 }}>Estimated APY: {(1 + dailyInterestRate) ^ 365}%</Typography>
             </Tooltip>
             <Tooltip title="APY from backtest result. You can change the number in 'back test days' under the graph to run different stimulation. This APY is calculated based on the minimal initial collateral (1 ETH)">
-              <Typography style={{ fontSize: 16 }}>Realized APY: {backTestAPY.toFixed(0)} %</Typography>
+              <Typography style={{ fontSize: 18 }}>Realized APY: {backTestAPY.toFixed(0)}%</Typography>
             </Tooltip>
             <div className={classes.amountInput}>
               <TextField
@@ -448,6 +449,7 @@ export default function Vault() {
               {' '}
               {'Deposit'}{' '}
             </Button>
+            <br />
             <div className={classes.txItem}>
               <Typography>Squeeth Balance</Typography>
               <VaultValue value={toTokenAmount(squeethBal, 18).toFixed(2)} label="SQE" />

@@ -127,7 +127,8 @@ export default function Home() {
 
   const price = useMemo(() => {
     const ethPrice = ethPrices.length > 0 ? ethPrices[ethPrices.length - 1].value : 0
-    return getFairSqueethAsk(ethPrice, 1, vol) / startingETHPrice
+    // return (getFairSqueethAsk(ethPrice, 1, vol) / startingETHPrice)
+    return getFairSqueethAsk(ethPrice, 1, vol) * 0.000001
   }, [ethPrices, startingETHPrice, vol])
 
   const cost = useMemo(() => getCost(amount, price).toFixed(2), [amount, price])
@@ -137,12 +138,13 @@ export default function Home() {
       <Nav />
       <div className={classes.body}>
         <div>
-          <Typography variant="h5">Long Squeeth - ETH&sup2; Token</Typography>
+          <Typography variant="h5">Long Squeeth - ETH&sup2; Position</Typography>
           <Typography variant="body1">Perpetual leverage without liquidations</Typography>
           <Typography variant="body2" className={classes.cardDetail}>
             Long squeeth (ETH&sup2;) gives you a leveraged position with unlimited upside, protected downside, and no
             liquidations. Compared to a 2x leveraged position, you make more when ETH goes up and lose less when ETH
-            goes down. You pay a daily funding rate for this position. Enter the position by purchasing an ERC20 token.
+            goes down. Eg. If ETH goes up 5x, squeeth goes up 25x. You pay a daily funding rate for this position. Enter
+            the position by purchasing an ERC20 token.
           </Typography>
           <Typography className={classes.cardTitle} variant="h6">
             Historical PNL Backtest
@@ -196,6 +198,8 @@ export default function Home() {
               {' '}
               Uniswap V3 GMA (geometric moving average) TWAP.{' '}
             </a>
+            Daily funding is paid out of your squeeth position. You can think about this as selling a small amount of
+            your squeeth each day to pay funding.
           </Typography>
           {/* <br />
           <Typography variant="body2" className={classes.cardSubTxt}>
@@ -216,8 +220,17 @@ export default function Home() {
                 style={{ width: 300 }}
                 onChange={(event) => setAmount(Number(event.target.value))}
                 id="filled-basic"
-                label="Long Size"
+                label="Long Size (Squeeth)"
                 variant="outlined"
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Tooltip title="The index price of the asset is ETH&sup2;. Each squeeth ERC20 token is 0.000001 of that index price.">
+                        <InfoOutlinedIcon fontSize="small" />
+                      </Tooltip>
+                    </InputAdornment>
+                  ),
+                }}
               />
             </div>
             <div className={classes.amountInput}>
@@ -227,10 +240,17 @@ export default function Home() {
                 type="number"
                 style={{ width: 300 }}
                 disabled
-                label="Cost"
+                label="Cost (USDC)"
                 variant="outlined"
               />
             </div>
+            <Tooltip title="Daily funding is paid out of your position, no collateral required.">
+              <div className={classes.amountInput}>
+                Daily Funding to Pay: ${(amount * accFunding * 0.000001).toFixed(2)} (-
+                {(((accFunding * 0.000001) / price) * 100).toFixed(2)} %)
+              </div>
+            </Tooltip>
+            <span style={{ fontSize: 12 }}> 24h Vol: {(vol * 100).toFixed(2)} % </span>
             <Button
               style={{ width: 300 }}
               variant="contained"
@@ -240,14 +260,6 @@ export default function Home() {
             >
               {'Buy'}
             </Button>
-            <div
-              data-tip="Daily funding is paid out of your position, no collateral required."
-              className={classes.amountInput}
-            >
-              Daily Funding to Pay: ${((amount * accFunding) / startingETHPrice).toFixed(2)} (-
-              {((accFunding / startingETHPrice / price) * 100).toFixed(2)} %)
-            </div>
-            <span style={{ fontSize: 12 }}> 24h Vol: {(vol * 100).toFixed(2)} % </span>
           </Card>
         </div>
       </div>
