@@ -34,7 +34,6 @@ task("addLiquidity", "Add liquidity to pool")
   }
 
   if (squeethBalance.lt(liquiditySqueethAmount)) {
-
     // use 10 eth to mint 10 squeeth
     await controller.mint(0, liquiditySqueethAmount, {value: ethers.utils.parseEther('10')}) 
     console.log(`Minted ${ethers.utils.formatUnits(liquiditySqueethAmount.toString())} new SQU`)  

@@ -43,12 +43,13 @@ contract Controller is Initializable {
     /**
      * put down collateral and mint squeeth.
      */
-    function mint(uint256 _vaultId, uint128 _mintAmount) external payable {
+    function mint(uint256 _vaultId, uint128 _mintAmount) external payable returns (uint256) {
         _applyFunding();
         if (_vaultId == 0) _vaultId = _openVault(msg.sender);
         if (msg.value > 0) _depositETHCollateral(_vaultId, msg.value);
         if (_mintAmount > 0) _mintSqueeth(msg.sender, _vaultId, _mintAmount);
         _checkVault(_vaultId);
+        return _vaultId;
     }
 
     /**
@@ -64,7 +65,7 @@ contract Controller is Initializable {
      */
     function withdraw(uint256 _vaultId, uint256 _amount) external payable {
         _applyFunding();
-        _withdrawCollateral(_vaultId, _amount);
+        _withdrawCollateral(msg.sender, _vaultId, _amount);
         _checkVault(_vaultId);
     }
 
@@ -75,12 +76,17 @@ contract Controller is Initializable {
         uint256 _vaultId,
         uint128 _amount,
         uint128 _withdrawAmount
-    ) external {
+    ) external returns (uint256) {
         _applyFunding();
         if (_amount > 0) _burnSqueeth(msg.sender, _vaultId, _amount);
-        if (_withdrawAmount > 0) _withdrawCollateral(_vaultId, _withdrawAmount);
-        if (vaults[_vaultId].isEmpty()) _closeVault(_vaultId);
+        if (_withdrawAmount > 0) _withdrawCollateral(msg.sender, _vaultId, _withdrawAmount);
+        if (vaults[_vaultId].isEmpty()) {
+            _closeVault(_vaultId);
+            _vaultId = 0;
+        }
         _checkVault(_vaultId);
+
+        return _vaultId;
     }
 
     /**
@@ -117,10 +123,14 @@ contract Controller is Initializable {
     /**
      * remove collateral from the vault
      */
-    function _withdrawCollateral(uint256 _vaultId, uint256 _amount) internal {
-        require(vaultNFT.ownerOf(_vaultId) == msg.sender, "not allowed");
+    function _withdrawCollateral(
+        address _account,
+        uint256 _vaultId,
+        uint256 _amount
+    ) internal {
+        require(vaultNFT.ownerOf(_vaultId) == _account, "not allowed");
         vaults[_vaultId].collateralAmount -= uint128(_amount);
-        payable(msg.sender).sendValue(_amount);
+        payable(_account).sendValue(_amount);
         emit WithdrawCollateral(_vaultId, uint128(_amount), 0);
     }
 
