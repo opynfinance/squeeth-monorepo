@@ -15,6 +15,12 @@ import {
   abi as FACTORY_ABI,
   bytecode as FACTORY_BYTECODE,
 } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json'
+
+import {
+  abi as QUOTER_ABI,
+  bytecode as QUOTER_BYTECODE,
+} from '@uniswap/v3-periphery/artifacts/contracts/lens/QuoterV2.sol/QuoterV2.json'
+
 import { convertNormalPriceToSqrtX96Price, convertSqrtX96ToEthPrice } from '../test/calculator'
 
 
@@ -93,7 +99,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const pool = await uniswapFactory.getPool(weth9.address, squeeth.address, 3000)
   console.log(`Uniswap Pool created 🐑. Address: ${pool}`)
-  
+
+  await deploy("Quoter", {
+    from: deployer,
+    log: true,
+    contract: {
+      abi: QUOTER_ABI,
+      bytecode: QUOTER_BYTECODE,
+    },
+    args: [uniswapFactory.address, weth9.address]
+  });
+
+  console.log(`Quoter Deployed  🥦\n`)  
   // next: deploy oracle with the SQUEETH/ETH Pool and ETH/DAI Pool addresses
 }
 

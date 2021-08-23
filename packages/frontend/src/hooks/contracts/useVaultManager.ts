@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 
-import erc20Abi from '../abis/vaultManager.json'
-import { useWallet } from '../context/wallet'
-import { Vault } from '../types'
-import { useAddresses } from './useAddress'
+import erc20Abi from '../../abis/vaultManager.json'
+import { useWallet } from '../../context/wallet'
+import { Vault } from '../../types'
+import { useAddresses } from '../useAddress'
+import useInterval from '../useInterval'
 import { useController } from './useController'
-import useInterval from './useInterval'
 
 /**
  * get user vaults.

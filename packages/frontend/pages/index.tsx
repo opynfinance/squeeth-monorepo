@@ -7,6 +7,7 @@ import ListItemText from '@material-ui/core/ListItemText'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Typography from '@material-ui/core/Typography'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
+import BigNumber from 'bignumber.js'
 import Image from 'next/image'
 import { useMemo, useState } from 'react'
 import { useEffect } from 'react'
@@ -14,10 +15,23 @@ import { useEffect } from 'react'
 import ccpayoff from '../public/images/ccpayoff.png'
 import { LongChart } from '../src/components/Charts/LongChart'
 import Nav from '../src/components/Nav'
+import TradeInfoItem from '../src/components/Trade/TradeInfoItem'
 import { useWorldContext } from '../src/context/world'
+import { useUserAllowance } from '../src/hooks/contracts/useAllowance'
+import { useSqueethPool } from '../src/hooks/contracts/useSqueethPool'
+import { useTokenBalance } from '../src/hooks/contracts/useTokenBalance'
+import { useWeth } from '../src/hooks/contracts/useWeth'
+import { useAddresses } from '../src/hooks/useAddress'
 import useAsyncMemo from '../src/hooks/useAsyncMemo'
 import { useETHPriceCharts } from '../src/hooks/useETHPriceCharts'
-import { getCost, getFairSqueethAsk, getVolForTimestamp } from '../src/utils'
+import { getFairSqueethAsk, getVolForTimestamp } from '../src/utils'
+
+enum BuyStep {
+  WRAP,
+  APPROVE,
+  BUY,
+  Done,
+}
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -87,21 +101,35 @@ const useStyles = makeStyles((theme) =>
 export default function Home() {
   const classes = useStyles()
   const [amount, setAmount] = useState(1)
-  const [isConfirmed, setIsConfirmed] = useState(false)
+  const [step, setStep] = useState(BuyStep.WRAP)
+  const [cost, setCost] = useState(new BigNumber(0))
 
-  const setModalStep = () => {
-    if (isConfirmed) {
-      setIsConfirmed(false)
+  const { weth, swapRouter, wSqueeth } = useAddresses()
+  const wethBal = useTokenBalance(weth, 5)
+  const wSqueethBal = useTokenBalance(wSqueeth, 5)
+  const { squeethPrice, buy, getBuyQuote } = useSqueethPool()
+  const { wrap } = useWeth()
+  const { allowance, approve } = useUserAllowance(weth, swapRouter)
+
+  useEffect(() => {
+    getBuyQuote(amount).then((val) => setCost(val))
+  }, [amount])
+
+  const transact = () => {
+    if (step === BuyStep.WRAP) {
+      wrap(new BigNumber(cost).minus(wethBal)).then(() => setStep(BuyStep.APPROVE))
+    } else if (step === BuyStep.APPROVE) {
+      approve().then(() => setStep(BuyStep.BUY))
     } else {
-      setIsConfirmed(true)
+      buy(amount).then(() => setStep(BuyStep.Done))
     }
   }
 
-  const [expanded, setExpanded] = useState(false)
-
-  const handleExpandClick = () => {
-    setExpanded(!expanded)
-  }
+  useEffect(() => {
+    if (cost.gt(wethBal)) setStep(BuyStep.WRAP)
+    else if (allowance.lt(cost)) setStep(BuyStep.APPROVE)
+    else setStep(BuyStep.BUY)
+  }, [wethBal.toNumber(), cost.toNumber(), allowance.toNumber()])
 
   const { volMultiplier: globalVolMultiplier } = useWorldContext()
   // use hook because we only calculate accFunding based on 24 hour performance
@@ -130,8 +158,6 @@ export default function Home() {
     // return (getFairSqueethAsk(ethPrice, 1, vol) / startingETHPrice)
     return getFairSqueethAsk(ethPrice, 1, vol) * 0.000001
   }, [ethPrices, startingETHPrice, vol])
-
-  const cost = useMemo(() => getCost(amount, price).toFixed(2), [amount, price])
 
   return (
     <div>
@@ -233,17 +259,6 @@ export default function Home() {
                 }}
               />
             </div>
-            <div className={classes.amountInput}>
-              <TextField
-                size="small"
-                value={cost}
-                type="number"
-                style={{ width: 300 }}
-                disabled
-                label="Cost (USDC)"
-                variant="outlined"
-              />
-            </div>
             <Tooltip title="Daily funding is paid out of your position, no collateral required.">
               <div className={classes.amountInput}>
                 Daily Funding to Pay: ${(amount * accFunding * 0.000001).toFixed(2)} (-
@@ -251,15 +266,21 @@ export default function Home() {
               </div>
             </Tooltip>
             <span style={{ fontSize: 12 }}> 24h Vol: {(vol * 100).toFixed(2)} % </span>
+            <TradeInfoItem label="Price" value={squeethPrice.toFixed(4)} unit="WETH" />
+            <TradeInfoItem label="WETH Balance" value={wethBal.toFixed(4)} unit="WETH" />
+            <TradeInfoItem label="Total cost" value={cost.toFixed(4)} unit="WETH" />
             <Button
-              style={{ width: 300 }}
+              style={{ width: 300, color: '#000' }}
               variant="contained"
               color="primary"
-              onClick={setModalStep}
+              onClick={transact}
               className={classes.amountInput}
             >
-              {'Buy'}
+              {step === BuyStep.BUY ? 'Buy' : step === BuyStep.APPROVE ? 'Approve' : 'Wrap'}
             </Button>
+            <Typography variant="h6" color="primary" style={{ marginTop: '8px' }}>
+              Your Position: {wSqueethBal.toFixed(2)} SQE
+            </Typography>
           </Card>
         </div>
       </div>

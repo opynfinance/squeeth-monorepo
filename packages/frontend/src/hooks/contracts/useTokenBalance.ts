@@ -2,9 +2,10 @@ import BigNumber from 'bignumber.js'
 import { useCallback, useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 
-import erc20Abi from '../abis/erc20.json'
-import { useWallet } from '../context/wallet'
-import useInterval from './useInterval'
+import erc20Abi from '../../abis/erc20.json'
+import { useWallet } from '../../context/wallet'
+import { toTokenAmount } from '../../utils/calculations'
+import useInterval from '../useInterval'
 
 /**
  * get token balance.
@@ -19,7 +20,7 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 20): BigNumb
   const { address, web3 } = useWallet()
 
   useEffect(() => {
-    if (!web3) return
+    if (!web3 || !token) return
     setContract(new web3.eth.Contract(erc20Abi as any, token))
   }, [web3, token])
 
@@ -33,7 +34,7 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 20): BigNumb
     const _bal = await contract.methods.balanceOf(address).call({
       from: address,
     })
-    return new BigNumber(_bal.toString())
+    return toTokenAmount(new BigNumber(_bal.toString()), 18)
   }, [contract, address])
 
   const updateBalance = useCallback(async () => {

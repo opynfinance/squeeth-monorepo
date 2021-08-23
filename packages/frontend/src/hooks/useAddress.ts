@@ -1,6 +1,15 @@
 import { useMemo } from 'react'
 
-import { CONTROLLER, VAULT_MANAGER, WSQUEETH, ZERO_ADDR } from '../constants/address'
+import {
+  CONTROLLER,
+  QUOTER,
+  SQUEETH_UNI_POOL,
+  SWAP_ROUTER,
+  VAULT_MANAGER,
+  WETH,
+  WSQUEETH,
+  ZERO_ADDR,
+} from '../constants/address'
 import { useWallet } from '../context/wallet'
 
 const useAddresses = () => {
@@ -12,6 +21,10 @@ const useAddresses = () => {
       controller: CONTROLLER[networkId],
       vaultManager: VAULT_MANAGER[networkId],
       wSqueeth: WSQUEETH[networkId],
+      weth: WETH[networkId],
+      swapRouter: SWAP_ROUTER[networkId],
+      squeethPool: SQUEETH_UNI_POOL[networkId],
+      quoter: QUOTER[networkId],
     }),
     [networkId],
   )

@@ -2,12 +2,12 @@ import BigNumber from 'bignumber.js'
 import { useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 
-import abi from '../abis/controller.json'
-import { Vaults } from '../constants'
-import { useWallet } from '../context/wallet'
-import { Vault } from '../types'
-import { fromTokenAmount } from '../utils/calculations'
-import { useAddresses } from './useAddress'
+import abi from '../../abis/controller.json'
+import { Vaults } from '../../constants'
+import { useWallet } from '../../context/wallet'
+import { Vault } from '../../types'
+import { fromTokenAmount, toTokenAmount } from '../../utils/calculations'
+import { useAddresses } from '../useAddress'
 
 const getMultiplier = (type: Vaults) => {
   if (type === Vaults.ETHBull) return 3
@@ -53,8 +53,8 @@ export const useController = () => {
     return {
       id: vaultId,
       NFTCollateralId,
-      collateralAmount: new BigNumber(collateralAmount),
-      shortAmount: new BigNumber(shortAmount),
+      collateralAmount: toTokenAmount(new BigNumber(collateralAmount), 18),
+      shortAmount: toTokenAmount(new BigNumber(shortAmount), 18),
     }
   }
 

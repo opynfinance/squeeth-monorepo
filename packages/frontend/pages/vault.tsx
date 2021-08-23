@@ -1,16 +1,11 @@
 import { Button, createStyles, FormControlLabel, makeStyles, Switch, Tab, Tabs, TextField } from '@material-ui/core'
 import Card from '@material-ui/core/Card'
-import Collapse from '@material-ui/core/Collapse'
-import Grid from '@material-ui/core/Grid'
-import IconButton from '@material-ui/core/IconButton'
 import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemText from '@material-ui/core/ListItemText'
 import Tooltip from '@material-ui/core/Tooltip'
 import Typography from '@material-ui/core/Typography'
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import BigNumber from 'bignumber.js'
-import clsx from 'clsx'
 import Image from 'next/image'
 import { useEffect, useMemo, useState } from 'react'
 
@@ -19,16 +14,14 @@ import ethbullpayoff from '../public/images/ethbullpayoff.png'
 import { VaultChart } from '../src/components/Charts/VaultChart'
 import Nav from '../src/components/Nav'
 import { Vaults } from '../src/constants'
-import { VAULT_MANAGER, WSQUEETH } from '../src/constants/address'
 import { useWorldContext } from '../src/context/world'
+import { useController } from '../src/hooks/contracts/useController'
+import { useTokenBalance } from '../src/hooks/contracts/useTokenBalance'
+import { useVaultManager } from '../src/hooks/contracts/useVaultManager'
 import { useAddresses } from '../src/hooks/useAddress'
 import useAsyncMemo from '../src/hooks/useAsyncMemo'
-import { useController } from '../src/hooks/useController'
 import { useETHPriceCharts } from '../src/hooks/useETHPriceCharts'
-import { useTokenBalance } from '../src/hooks/useTokenBalance'
-import { useVaultManager } from '../src/hooks/useVaultManager'
 import { calculateLiquidationPrice, getFairSqueethBid, getVolForTimestamp } from '../src/utils'
-import { toTokenAmount } from '../src/utils/calculations'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -452,7 +445,7 @@ export default function Vault() {
             <br />
             <div className={classes.txItem}>
               <Typography>Squeeth Balance</Typography>
-              <VaultValue value={toTokenAmount(squeethBal, 18).toFixed(2)} label="SQE" />
+              <VaultValue value={squeethBal.toFixed(2)} label="SQE" />
             </div>
           </Card>
           <Card className={classes.innerCard} style={{ marginTop: '8px' }}>
@@ -469,8 +462,8 @@ export default function Vault() {
                 {shortVaults?.map((vault) => (
                   <div className={classes.txItem} key={vault.id}>
                     <Typography>{vault.id}</Typography>
-                    <TxValue value={toTokenAmount(vault.collateralAmount, 18).toFixed(2)} label="ETH" />
-                    <TxValue value={toTokenAmount(vault.shortAmount, 18).toFixed(2)} label="SQE" />
+                    <TxValue value={vault.collateralAmount.toFixed(2)} label="ETH" />
+                    <TxValue value={vault.shortAmount.toFixed(2)} label="SQE" />
                   </div>
                 ))}
               </>
