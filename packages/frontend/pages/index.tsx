@@ -55,7 +55,6 @@ const useStyles = makeStyles((theme) =>
       width: '65%',
     },
     buyCard: {
-      textAlign: 'center',
       marginTop: theme.spacing(4),
       marginLeft: theme.spacing(2),
     },
@@ -64,6 +63,12 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(4),
     },
     cardSubTxt: {
+      color: theme.palette.text.secondary,
+      lineHeight: '1.75rem',
+      fontSize: '16px',
+      width: '90%',
+    },
+    payoff: {
       color: theme.palette.text.secondary,
       lineHeight: '1.75rem',
       fontSize: '16px',
@@ -78,6 +83,7 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(4),
     },
     innerCard: {
+      textAlign: 'center',
       padding: theme.spacing(2),
       paddingBottom: theme.spacing(8),
       background: theme.palette.background.default,
@@ -101,6 +107,8 @@ const useStyles = makeStyles((theme) =>
 export default function Home() {
   const classes = useStyles()
   const [amount, setAmount] = useState(1)
+  const [leverage, setLeverage] = useState(4)
+  const [isConfirmed, setIsConfirmed] = useState(false)
   const [step, setStep] = useState(BuyStep.WRAP)
   const [cost, setCost] = useState(new BigNumber(0))
 
@@ -198,12 +206,7 @@ export default function Home() {
               <ListItemText primary="3. Exit position by selling squeeth ERC20" secondary="via Uniswap" />
             </ListItem>
           </List>
-          <Typography className={classes.thirdHeading} variant="h6">
-            Payoff
-          </Typography>
-          <div className={classes.thirdHeading}>
-            <Image src={ccpayoff} alt="cc payoff" width={450} height={300} />
-          </div>
+
           <Typography className={classes.thirdHeading} variant="h6">
             Properties
           </Typography>
@@ -282,6 +285,32 @@ export default function Home() {
               Your Position: {wSqueethBal.toFixed(2)} SQE
             </Typography>
           </Card>
+          <Typography className={classes.thirdHeading} variant="h6">
+            Payoff
+          </Typography>
+          <div className={classes.thirdHeading}>
+            <Image src={ccpayoff} alt="cc payoff" width={450} height={300} />
+          </div>
+          <Typography variant="body2" className={classes.payoff}>
+            If ETH goes up &nbsp;
+            <TextField
+              size="small"
+              value={leverage.toString()}
+              type="number"
+              style={{ width: 75 }}
+              onChange={(event) => setLeverage(Number(event.target.value))}
+              // label="Leverage"
+              variant="outlined"
+              InputProps={{
+                endAdornment: <InputAdornment position="end">x</InputAdornment>,
+              }}
+            />
+            &nbsp;, squeeth goes up {leverage * leverage}x, and your position is worth $
+            {(leverage * leverage * Number(cost)).toFixed(2)}
+            <br /> <br />
+            If ETH goes down 100% or more, your position is worth $0. With squeeth you can never lose more than you put
+            in, giving you protected downside.
+          </Typography>
         </div>
       </div>
     </div>
