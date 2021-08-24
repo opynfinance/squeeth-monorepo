@@ -3,32 +3,36 @@
 // uniswap Library only works under 0.7.6
 pragma solidity =0.7.6;
 
+import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {OracleLibrary} from "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol";
 
 contract Oracle {
     using OracleLibrary for address;
 
-    address public ethUSDPool;
-    address public squeethETHPool;
-
-    constructor(address _ethUSDPool, address _squeethETHPool) {
-        // todo: non address(0) checks
-        // confirm it is a uniswap pool and that the assets match
-        // the expected squeeth + eth + usdc token addresses?
-
-        address ethUsdPool = _ethUSDPool;
-        address squeethETHPool = _squeethETHPool;
+    function getTwaPrice(address _pool, uint32 _period) external view returns (uint256) {
+        return _fetchTwap(_pool, _period, uint256(1e18));
     }
 
-    function getETHTwapSince(uint32 period) external returns (int24) {
-        int24 tick = ethUSDPool.consult(period);
-        // todo: convert it to price
-        return tick;
+    function _fetchTwap(
+        address _pool,
+        uint32 _twapPeriod,
+        uint256 _amountIn
+    ) internal view returns (uint256 amountOut) {
+        int24 twapTick = OracleLibrary.consult(_pool, _twapPeriod);
+        
+        return
+            OracleLibrary.getQuoteAtTick(
+                twapTick,
+                toUint128(_amountIn),
+                IUniswapV3Pool(_pool).token0(),
+                IUniswapV3Pool(_pool).token1()
+            );
     }
 
-    function getSqueethTwapSince(uint32 period) external returns (int24) {
-        int24 tick = squeethETHPool.consult(period);
-        // todo: convert it to price
-        return tick;
+    /// @notice Cast a uint256 to a uint128, revert on overflow
+    /// @param y The uint256 to be downcasted
+    /// @return z The downcasted integer, now type uint128
+    function toUint128(uint256 y) internal pure returns (uint128 z) {
+        require((z = uint128(y)) == y);
     }
 }

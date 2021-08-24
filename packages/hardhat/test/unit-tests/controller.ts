@@ -13,12 +13,18 @@ describe("Controller", function () {
   let provider: providers.JsonRpcProvider;
   let seller1: SignerWithAddress
   let random: SignerWithAddress
+  let pool1: SignerWithAddress
+  let pool2: SignerWithAddress
+  let oracle: SignerWithAddress
 
   this.beforeAll("Prepare accounts", async() => {
     const accounts = await ethers.getSigners();
-    const [,_seller1, _random] = accounts;
+    const [,_seller1, _random, _pool1, _pool2, _oracle] = accounts;
     seller1 = _seller1
     random = _random
+    pool1 = _pool1
+    pool2 = _pool2
+    oracle = _oracle
     provider = ethers.provider
   })
 
@@ -39,7 +45,7 @@ describe("Controller", function () {
 
   describe("Initialization", async () => {
     it("Should be able to init contract", async () => {
-      await controller.init(shortNFT.address, squeeth.address);
+      await controller.init(oracle.address, shortNFT.address, squeeth.address, pool1.address, pool2.address);
       const squeethAddr = await controller.squeeth();
       const nftAddr = await controller.vaultNFT();
       expect(squeethAddr).to.be.eq(
@@ -51,7 +57,7 @@ describe("Controller", function () {
 
     it("Should revert when init is called again", async () => {
       await expect(
-        controller.init(shortNFT.address, squeeth.address)
+        controller.init(oracle.address, shortNFT.address, squeeth.address, pool1.address, pool2.address)
       ).to.be.revertedWith("Initializable: contract is already initialized");
     });
   });

@@ -2,14 +2,23 @@
 
 pragma solidity >=0.8.0 <0.9.0;
 
-import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import {VaultLib} from "../libs/VaultLib.sol";
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
-import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IWSqueeth} from "../interfaces/IWSqueeth.sol";
 import {IVaultManagerNFT} from "../interfaces/IVaultManagerNFT.sol";
+import {IOracle} from "../interfaces/IOracle.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+
+import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {VaultLib} from "../libs/VaultLib.sol";
+
+/// Errors
+error InvalidOracleAddress(address oracle);
+error InvalidEthUsdPoolAddress(address ethUSDPool);
+error InvalidwSqueethEthPoolAddress(address wSqueethEthPool);
+error InvalidSqueethAddress(address squeethAddress);
+error InvalidVaultManagerNftAddress(address vaultManagerNFTAddress);
 
 contract Controller is Initializable {
     using VaultLib for VaultLib.Vault;
@@ -18,11 +27,15 @@ contract Controller is Initializable {
     /// @dev The token ID vault data
     mapping(uint256 => VaultLib.Vault) public vaults;
 
-    IVaultManagerNFT public vaultNFT;
-    IWSqueeth public squeeth;
+    address public ethUSDPool;
+    address public wSqueethEthPool;
 
     uint256 public normalizedFactor;
     uint256 public lastUpdateTimestamp;
+
+    IVaultManagerNFT public vaultNFT;
+    IWSqueeth public squeeth;
+    IOracle public oracle;
 
     /// Events
     event OpenVault(uint256 vaultId);
@@ -31,14 +44,6 @@ contract Controller is Initializable {
     event WithdrawCollateral(uint256 vaultId, uint128 amount, uint128 collateralId);
     event MintSqueeth(uint128 amount, uint256 vaultId);
     event BurnSqueeth(uint128 amount, uint256 vaultId);
-
-    /**
-     * init controller with squeeth and short NFT address.
-     */
-    function init(address _vaultNFT, address _squeeth) public initializer {
-        squeeth = IWSqueeth(_squeeth);
-        vaultNFT = IVaultManagerNFT(_vaultNFT);
-    }
 
     /**
      * put down collateral and mint squeeth.
@@ -87,6 +92,38 @@ contract Controller is Initializable {
         _checkVault(_vaultId);
 
         return _vaultId;
+    }
+
+    /**
+     * init controller with squeeth and short NFT address
+     */
+    function init(address _oracle, address _vaultNFT, address _squeeth, address _ethUsdPool, address _wSqueethEthPool) public initializer {
+        if (_oracle == address(0)) revert InvalidOracleAddress({oracle: _oracle});
+        if (_vaultNFT == address(0)) revert InvalidVaultManagerNftAddress({vaultManagerNFTAddress: _vaultNFT});
+        if (_squeeth == address(0)) revert InvalidSqueethAddress({squeethAddress: _squeeth});
+        if (_ethUsdPool == address(0)) revert InvalidEthUsdPoolAddress({ethUSDPool: _ethUsdPool});
+        if (_wSqueethEthPool == address(0)) revert InvalidwSqueethEthPoolAddress({wSqueethEthPool: _wSqueethEthPool});
+
+        oracle = IOracle(oracle);
+        vaultNFT = IVaultManagerNFT(_vaultNFT);
+        squeeth = IWSqueeth(_squeeth);
+
+        ethUSDPool = _ethUsdPool;
+        wSqueethEthPool = _wSqueethEthPool;
+
+        normalizedFactor = 1e18;
+    }
+
+    function getIndex(uint32 _period) public view returns (uint256) {
+        uint256 ethUSDPrice = _getTwap(ethUSDPool, _period);
+        return ethUSDPrice * ethUSDPrice;
+    }
+
+    function getNormalizedMark(uint32 _period) public view returns (uint256) {
+        uint256 ethUSDPrice = _getTwap(ethUSDPool, _period);
+        uint256 squeethEthPrice = _getTwap(wSqueethEthPool, _period);
+
+        return squeethEthPrice * ethUSDPrice / normalizedFactor;
     }
 
     /**
@@ -181,5 +218,9 @@ contract Controller is Initializable {
         uint128 _ethPrice = 1000;
         uint128 _squeethPriceInEth = 1100;
         require(_vault.isProperlyCollateralized(_ethPrice, _squeethPriceInEth), "Invalid state");
+    }
+
+    function _getTwap(address _pool, uint32 _period) internal view returns (uint256) {
+        return oracle.getTwaPrice(_pool, _period);
     }
 }

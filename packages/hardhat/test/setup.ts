@@ -14,7 +14,7 @@ import {
   abi as FACTORY_ABI,
   bytecode as FACTORY_BYTECODE,
 } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json'
-import { Controller, VaultNFTManager, WETH9, WSqueeth } from "../typechain";
+import { Controller, Oracle, VaultNFTManager, WETH9, WSqueeth, MockErc20 } from "../typechain";
 import { convertNormalPriceToSqrtX96Price } from "./calculator";
 
 
@@ -73,20 +73,54 @@ export const deploySqueethCoreContracts= async() => {
   const { deployer } = await getNamedAccounts();
   const { deploy } = deployments;
   await deploy("Controller", { from: deployer });
-
+  await deploy("Oracle", { from: deployer });
   await deploy("VaultNFTManager", { from: deployer });
-
   await deploy("WSqueeth", { from: deployer });
+  await deploy("MockErc20", { from: deployer, args: ["DAI", "DAI"] });
 
   const controller = await ethers.getContract("Controller", deployer) as  Controller;
+  const oracle = await ethers.getContract("Oracle", deployer) as  Oracle;
   const vaultNft = await ethers.getContract("VaultNFTManager", deployer) as VaultNFTManager;
   const squeeth = await ethers.getContract("WSqueeth", deployer) as WSqueeth;
+  const dai = await ethers.getContract("MockErc20", deployer) as MockErc20;
 
-  await controller.init(vaultNft.address, squeeth.address, { from: deployer });
+  const uniDeployments = await deployUniswapV3()
+  const uniWsqueethPool = await createUniPool(0.3, squeeth, uniDeployments.weth, uniDeployments.positionManager, uniDeployments.uniswapFactory)
+  const ethUsdPool = await createUniPool(0.3, dai, uniDeployments.weth, uniDeployments.positionManager, uniDeployments.uniswapFactory)
+
+  await controller.init(oracle.address, vaultNft.address, squeeth.address, ethUsdPool, uniWsqueethPool, { from: deployer });
   await squeeth.init(controller.address, { from: deployer });
   await vaultNft.init(controller.address, { from: deployer });
 
   return { controller, squeeth, vaultNft }
+}
+
+export const createUniPool = async(
+  tokenPriceInEth: number, 
+  token0: Contract, 
+  token1: Contract,
+  positionManager: Contract,
+  univ3Factory: Contract
+) => {
+  const isWethToken0 = parseInt(token1.address, 16) < parseInt(token0.address, 16)
+
+  const sqrtX96Price = isWethToken0 
+    ? convertNormalPriceToSqrtX96Price(tokenPriceInEth.toString()).toFixed(0)
+    : convertNormalPriceToSqrtX96Price((1 / tokenPriceInEth).toFixed()).toFixed(0)
+   
+
+  const token0Add = isWethToken0 ? token1.address : token0.address
+  const token1Add = isWethToken0 ? token0.address : token1.address
+
+  await positionManager.createAndInitializePoolIfNecessary(
+    token0Add,
+    token1Add,
+    3000, // fee = 0.3%
+    sqrtX96Price
+  )
+
+  const pool = await univ3Factory.getPool(token0Add, token1Add, 3000)
+  return pool
 }
 
 export const createPoolAndAddLiquidity = async(

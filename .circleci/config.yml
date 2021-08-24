@@ -7,16 +7,19 @@ workflows:
   build-test-report:
     jobs:
       - checkout-and-install
-      - compile-and-test-contracts:
+      - compile:
           requires:
             - checkout-and-install
           # context: BUILD_KEYS
       - lint:
           requires:
-            - compile-and-test-contracts
+            - compile
+      - unit-test-contracts:
+          requires:
+            - compile
       - contract-size:
           requires:
-            - compile-and-test-contracts
+            - compile
 
 jobs:
   checkout-and-install:
@@ -40,7 +43,7 @@ jobs:
           paths:
             - ~/squeeth
 
-  compile-and-test-contracts:
+  compile:
     working_directory: ~/squeeth/packages/hardhat
     docker:
       - image: circleci/node:16.6.0
@@ -50,32 +53,17 @@ jobs:
       - restore_cache:
           key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
       - run:
-          name: Install packages
-          command: yarn install
-      - run:
           name: Compile Contracts
           command: npx hardhat compile
-      - run: 
-          name: Unit tests
-          command: yarn coverage # run coverage so we can see report while checking all the test passes
       - save_cache: 
-          key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
-          paths:
-            - typechain
+         key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
+         paths:
+           - typechain
       - save_cache: 
-          key: artifacts-cache-{{ .Environment.CIRCLE_SHA1 }}
-          paths:
-            - artifacts
-      # - run:
-      #     name: Coverage Report
-      #     command: npx hardhat coverage
-      # - coveralls/upload:
-      #     path_to_lcov: ./coverage/lcov.info
-      # - store_artifacts:
-      #     path: /coverage
-      # - store_artifacts:
-      #     path: /coverage.json
-  
+         key: artifacts-cache-{{ .Environment.CIRCLE_SHA1 }}
+         paths:
+           - artifacts
+
   lint:
     working_directory: ~/squeeth/packages/hardhat
     docker:
@@ -91,6 +79,32 @@ jobs:
           name: Lint
           command: yarn lint:check
   
+  unit-test-contracts:
+    working_directory: ~/squeeth/packages/hardhat
+    docker:
+      - image: circleci/node:16.6.0
+    steps:
+      - checkout:
+          path: ~/squeeth
+      - restore_cache:
+          key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
+      - run: 
+          name: Unit tests
+          command: yarn test 
+  
+  coverage:
+    working_directory: ~/squeeth/packages/hardhat
+    docker:
+      - image: circleci/node:16.6.0
+    steps:
+      - checkout:
+          path: ~/squeeth
+      - restore_cache:
+          key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
+      - run: 
+          name: Coverage
+          command: yarn coverage 
+
   contract-size:
     working_directory: ~/squeeth/packages/hardhat
     docker:

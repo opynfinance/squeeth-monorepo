@@ -9,6 +9,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log(`Deployer: ${deployer}`)
 
+  await deploy("Oracle", {
+    from: deployer,
+    log: true,
+  });
+
   await deploy("Controller", {
     from: deployer,
     log: true,
@@ -24,11 +29,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     log: true,
   });
 
+  const oracle = await ethers.getContract("Oracle", deployer);
   const controller = await ethers.getContract("Controller", deployer);
   const vaultNft = await ethers.getContract("VaultNFTManager", deployer);
   const squeeth = await ethers.getContract("WSqueeth", deployer);
 
-  await controller.init(vaultNft.address, squeeth.address, { from: deployer });
+  await controller.init(oracle.address, vaultNft.address, squeeth.address, { from: deployer });
   console.log(`Controller init done 🥝`);
 
   await squeeth.init(controller.address, { from: deployer });
