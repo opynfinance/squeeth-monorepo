@@ -88,6 +88,8 @@ jobs:
           path: ~/squeeth
       - restore_cache:
           key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
       - run: 
           name: Unit tests
           command: yarn test 
@@ -101,6 +103,8 @@ jobs:
           path: ~/squeeth
       - restore_cache:
           key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
       - run: 
           name: Coverage
           command: yarn coverage 

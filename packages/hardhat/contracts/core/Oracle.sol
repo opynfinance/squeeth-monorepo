@@ -19,7 +19,7 @@ contract Oracle {
         uint256 _amountIn
     ) internal view returns (uint256 amountOut) {
         int24 twapTick = OracleLibrary.consult(_pool, _twapPeriod);
-        
+
         return
             OracleLibrary.getQuoteAtTick(
                 twapTick,

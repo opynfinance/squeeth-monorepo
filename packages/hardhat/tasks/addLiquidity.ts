@@ -6,64 +6,62 @@ import "@nomiclabs/hardhat-waffle";
  npx hardhat addLiquidity
  */
 task("addLiquidity", "Add liquidity to pool")
-  // .addParam('token0', 'default: weth address', undefined, types.string)
-  // .addParam('token1', 'default: squeeth address', undefined, types.string)
-  // .addParam('fee', 'fee (uint24)', 3000, types.int)
   .setAction(async (_, hre) => {
-
 
   const { getNamedAccounts, ethers } = hre;
   const { deployer } = await getNamedAccounts();
-  const uniV3PositionManager = await ethers.getContract("NonfungibleTokenPositionManager", deployer);
+  const positionManager = await ethers.getContract("NonfungibleTokenPositionManager", deployer);
 
   const controller = await ethers.getContract("Controller", deployer);
   const squeeth = await ethers.getContract("WSqueeth", deployer);
   const weth = await ethers.getContract("WETH9", deployer);
 
-  const liquiditySqueethAmount = ethers.utils.parseEther('10') // each squeeth worth 0.3 eth
-  const liquidityWethAmount = ethers.utils.parseEther('3') 
+  const initLiquiditySqueethAmount = '10'
+  const collateralAmount = '20'
+  const squeethPriceInETH = 0.3
+
+  const isWethToken0 = parseInt(weth.address, 16) < parseInt(squeeth.address, 16)
+  const token0 = isWethToken0 ? weth.address : squeeth.address
+  const token1 = isWethToken0 ? squeeth.address : weth.address
+  
+  const liquiditySqueethAmount = ethers.utils.parseEther(initLiquiditySqueethAmount) 
+  const wethAmount = parseFloat(initLiquiditySqueethAmount) * squeethPriceInETH
+  const liquidityWethAmount = ethers.utils.parseEther(wethAmount.toString()) 
+
+  const minWeth = liquidityWethAmount.mul(8).div(10) 
+  const minSqueeth = liquiditySqueethAmount.mul(8).div(10) 
 
   let squeethBalance = await squeeth.balanceOf(deployer)
   let wethBalance = await weth.balanceOf(deployer)
-  console.log(`SQU Balance: ${ethers.utils.formatUnits(squeethBalance.toString())}`)  
 
   if (wethBalance.lt(liquidityWethAmount)) {
-    console.log(`Minting new WETH`)
-    await weth.deposit({value: liquidityWethAmount})
+    await weth.deposit({value: liquidityWethAmount, from: deployer})
     wethBalance = await weth.balanceOf(deployer)
   }
 
   if (squeethBalance.lt(liquiditySqueethAmount)) {
-    // use 10 eth to mint 10 squeeth
-    await controller.mint(0, liquiditySqueethAmount, {value: ethers.utils.parseEther('10')}) 
-    console.log(`Minted ${ethers.utils.formatUnits(liquiditySqueethAmount.toString())} new SQU`)  
+    // use {collateralAmount} eth to mint squeeth
+    await controller.mint(0, liquiditySqueethAmount, {value: ethers.utils.parseEther(collateralAmount)}) 
     squeethBalance = await squeeth.balanceOf(deployer)
   }
-  
-  await weth.approve(uniV3PositionManager.address, ethers.constants.MaxUint256)
-  await squeeth.approve(uniV3PositionManager.address, ethers.constants.MaxUint256)
-  console.log(`Approve done`)
+
+  await weth.approve(positionManager.address, ethers.constants.MaxUint256)
+  await squeeth.approve(positionManager.address, ethers.constants.MaxUint256)
   
   const mintParam = {
-    token0: weth.address,// address
-    token1: squeeth.address,// address
-    fee: 3000,// uint24
+    token0,
+    token1,
+    fee: 3000,
     tickLower: -887220,// int24 min tick used when selecting full range
     tickUpper: 887220,// int24 max tick used when selecting full range
-    amount0Desired: liquidityWethAmount.toString(),// uint256 
-    amount1Desired: liquiditySqueethAmount.toString(),// uint256
-    amount0Min: liquidityWethAmount.mul(9).div(10).toString(),// uint256
-    amount1Min: liquiditySqueethAmount.mul(9).div(10).toString(),// uint256
+    amount0Desired: isWethToken0 ? liquidityWethAmount : liquiditySqueethAmount,
+    amount1Desired: isWethToken0 ? liquiditySqueethAmount : liquidityWethAmount,
+    amount0Min: isWethToken0 ? minWeth : minSqueeth,
+    amount1Min: isWethToken0 ? minSqueeth : minWeth,
     recipient: deployer,// address
     deadline: Math.floor(Date.now() / 1000 + 86400),// uint256
   }
 
-  await uniV3PositionManager.mint(mintParam)
+  await positionManager.mint(mintParam)
 
-  const squeethBalanceAfter = await squeeth.balanceOf(deployer)
-  const wethBalanceAfter = await weth.balanceOf(deployer)
-
-  console.log(`Added ${ethers.utils.formatUnits(squeethBalance.sub(squeethBalanceAfter))} SQU to Pool`)
-  console.log(`Added ${ethers.utils.formatUnits(wethBalance.sub(wethBalanceAfter))} WETH to pool`)
-  
 });

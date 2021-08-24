@@ -97,7 +97,13 @@ contract Controller is Initializable {
     /**
      * init controller with squeeth and short NFT address
      */
-    function init(address _oracle, address _vaultNFT, address _squeeth, address _ethUsdPool, address _wSqueethEthPool) public initializer {
+    function init(
+        address _oracle,
+        address _vaultNFT,
+        address _squeeth,
+        address _ethUsdPool,
+        address _wSqueethEthPool
+    ) public initializer {
         if (_oracle == address(0)) revert InvalidOracleAddress({oracle: _oracle});
         if (_vaultNFT == address(0)) revert InvalidVaultManagerNftAddress({vaultManagerNFTAddress: _vaultNFT});
         if (_squeeth == address(0)) revert InvalidSqueethAddress({squeethAddress: _squeeth});
@@ -123,7 +129,7 @@ contract Controller is Initializable {
         uint256 ethUSDPrice = _getTwap(ethUSDPool, _period);
         uint256 squeethEthPrice = _getTwap(wSqueethEthPool, _period);
 
-        return squeethEthPrice * ethUSDPrice / normalizedFactor;
+        return (squeethEthPrice * ethUSDPrice) / normalizedFactor;
     }
 
     /**

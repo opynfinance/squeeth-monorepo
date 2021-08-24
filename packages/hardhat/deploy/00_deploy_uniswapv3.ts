@@ -21,8 +21,6 @@ import {
   bytecode as QUOTER_BYTECODE,
 } from '@uniswap/v3-periphery/artifacts/contracts/lens/QuoterV2.sol/QuoterV2.json'
 
-import { convertNormalPriceToSqrtX96Price, convertSqrtX96ToEthPrice } from '../test/calculator'
-
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, ethers } = hre;
@@ -31,6 +29,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const {deploy} = deployments;
 
   // Deploy WETH9 and UniswapV3Factory for SwapRouter.
+
+  await deploy("MockErc20", { from: deployer, args: ["DAI", "DAI"], skipIfAlreadyDeployed: false });
 
   await deploy("WETH9", {
     from: deployer,
@@ -77,29 +77,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 
   console.log(`NonfungibleTokenPositionManager Deployed 🥑\n`)
-  const positionManager = await ethers.getContract("NonfungibleTokenPositionManager", deployer);
   
-  // Create ETH/SQUEETH Pool with positionManager
-  const squeeth = await ethers.getContract("WSqueeth", deployer);
-  
-  // update this number to initial price we want to start the pool with.
-  const price = '0.3'; // can sell 1 squeeth = 0.3 eth
-  
-  const sqrtX96Price = convertNormalPriceToSqrtX96Price(price).toFixed(0)
-  console.log(`sqrtX96Price`, sqrtX96Price)
-  console.log(`Human readable price is ${convertSqrtX96ToEthPrice(sqrtX96Price).toString()} eth / squeeth\n`)
-
-  // https://docs.uniswap.org/protocol/reference/periphery/base/PoolInitializer
-  await positionManager.createAndInitializePoolIfNecessary(
-    weth9.address, // token0
-    squeeth.address, // token1
-    3000, // fee = 0.3%
-    sqrtX96Price
-  )
-
-  const pool = await uniswapFactory.getPool(weth9.address, squeeth.address, 3000)
-  console.log(`Uniswap Pool created 🐑. Address: ${pool}`)
-
   await deploy("Quoter", {
     from: deployer,
     log: true,

@@ -5,7 +5,7 @@ import { expect } from "chai";
 import { Contract, providers } from "ethers";
 import { Controller, VaultNFTManager, WSqueeth, ShortHelper, WETH9 } from "../../typechain";
 
-import { deployUniswapV3, deploySqueethCoreContracts, createPoolAndAddLiquidity } from '../setup'
+import { deployUniswapV3, deploySqueethCoreContracts, addLiquidity } from '../setup'
 
 describe("ShortHelper", function () {
   let shortHelper: ShortHelper
@@ -14,7 +14,6 @@ describe("ShortHelper", function () {
   let vaultNFT: VaultNFTManager
   let controller: Controller
   let swapRouter: Contract
-  let positionManager: Contract
   let weth: WETH9
 
   let poolAddress: string
@@ -36,20 +35,32 @@ describe("ShortHelper", function () {
   })
 
   this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async() => {
+    const uniDeployments = await deployUniswapV3();
+
+    const coreDeployments = await deploySqueethCoreContracts(uniDeployments.weth, uniDeployments.positionManager, uniDeployments.uniswapFactory)
+
     const { deployer } = await getNamedAccounts();
     
-    const uniDeployments = await deployUniswapV3()
-    const coreDeployments = await deploySqueethCoreContracts()
+    // init uniswap pool: price = 0.3, seed with 5 squeeth (20 eth as collateral)
+    await addLiquidity(
+      0.3, 
+      '5',
+      '20', 
+      deployer, 
+      coreDeployments.squeeth, 
+      uniDeployments.weth, 
+      uniDeployments.positionManager, 
+      coreDeployments.controller, 
+      uniDeployments.uniswapFactory
+    )
 
     swapRouter = uniDeployments.swapRouter
     weth = uniDeployments.weth
-    positionManager = uniDeployments.positionManager
+    // positionManager = uniDeployments.positionManager
     squeeth = coreDeployments.squeeth
     vaultNFT = coreDeployments.vaultNft
     controller = coreDeployments.controller
-
-    // init uniswap pool: price = 0.3, seed with 5 squeeth (20 eth as collateral)
-    poolAddress = await createPoolAndAddLiquidity(0.3, '5', '20', deployer, squeeth, weth, positionManager, controller, uniDeployments.uniswapFactory)
+    poolAddress = coreDeployments.wsqueethEthPool
   })
 
   describe('Basic settings', async() => {
