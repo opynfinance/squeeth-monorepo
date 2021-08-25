@@ -39,6 +39,16 @@ describe("Oracle", function () {
         expectedPrice.toFixed(1),
         "initial pool price mismatch"
       );
-    })    
+    })
+    it("fetch initial price", async () => {
+      const price = new BigNumberJs((await oracle.getTwaPrice(squeethPool, 10)).toString())
+
+      const expectedPrice = new BigNumberJs(0.3)
+
+      expect(price.div(1e18).toFixed(1)).to.be.eq(
+        expectedPrice.toFixed(1),
+        "initial pool price mismatch"
+      );
+    })  
   })
 })

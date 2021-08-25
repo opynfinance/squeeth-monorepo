@@ -97,8 +97,14 @@ export const createUniPool = async(
     3000, // fee = 0.3%
     sqrtX96Price
   )
-  const pool = await univ3Factory.getPool(token0Addr, token1Addr, 3000)
-  return pool
+  const poolAddr = await univ3Factory.getPool(token0Addr, token1Addr, 3000)
+
+  const pool = await ethers.getContractAt("IUniswapV3Pool", poolAddr);
+
+  // init storage slot
+  await pool.increaseObservationCardinalityNext(512) // anything more than 512 will run out of gas
+
+  return poolAddr
 }
 
 /**

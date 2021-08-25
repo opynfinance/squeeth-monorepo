@@ -70,7 +70,7 @@ contract ShortHelper {
      */
     function closeShort(
         uint256 _vaultId,
-        uint128 _burnSqueethAmount,
+        uint256 _burnSqueethAmount,
         uint128 _withdrawAmount,
         ISwapRouter.ExactOutputSingleParams memory _exactOutputParams
     ) external payable {

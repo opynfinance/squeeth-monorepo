@@ -27,7 +27,12 @@ interface IController {
      */
     function burn(
         uint256 _vaultId,
-        uint128 _amount,
-        uint128 _withdrawAmount
+        uint256 _amount,
+        uint256 _withdrawAmount
     ) external returns (uint256);
+
+    /**
+     * External function to update the normalized factor as a way to pay funding.
+     */
+    function applyFunding() external;
 }

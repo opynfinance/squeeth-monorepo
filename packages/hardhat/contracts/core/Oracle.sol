@@ -18,6 +18,13 @@ contract Oracle {
         uint32 _twapPeriod,
         uint256 _amountIn
     ) internal view returns (uint256 amountOut) {
+        // todo: check that the pool is up for at least _twapPeriod seconds. Otherwise the consult will revert.
+
+        // if the pool is not initialized, use the initial price of squeeth
+        uint128 liquidity = IUniswapV3Pool(_pool).liquidity();
+        if (liquidity == 0) {
+            _twapPeriod = 1;
+        }
         int24 twapTick = OracleLibrary.consult(_pool, _twapPeriod);
 
         return
