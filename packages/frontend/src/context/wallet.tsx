@@ -1,4 +1,5 @@
 import BigNumber from 'bignumber.js'
+import Notify from 'bnc-notify'
 import Onboard from 'bnc-onboard'
 import { API } from 'bnc-onboard/dist/src/interfaces'
 import { ethers } from 'ethers'
@@ -15,6 +16,7 @@ type WalletType = {
   selectWallet: () => void
   connected: boolean
   balance: BigNumber
+  handleTransaction: any
 }
 
 const initialState: WalletType = {
@@ -25,6 +27,7 @@ const initialState: WalletType = {
   selectWallet: () => null,
   connected: false,
   balance: new BigNumber(0),
+  handleTransaction: () => null,
 }
 
 const walletContext = React.createContext<WalletType>(initialState)
@@ -35,6 +38,7 @@ const WalletProvider: React.FC = ({ children }) => {
   const [address, setAddress] = useState('')
   const [networkId, setNetworkId] = useState(0)
   const [onboard, setOnboard] = useState<API | null>(null)
+  const [notify, setNotify] = useState<any>(null)
   const [signer, setSigner] = useState<any>(null)
   const [balance, setBalance] = useState<BigNumber>(new BigNumber(0))
 
@@ -45,6 +49,13 @@ const WalletProvider: React.FC = ({ children }) => {
     })
   }, [onboard])
 
+  const handleTransaction = (tx: any) => {
+    if (!notify) return
+
+    tx.on('transactionHash', (hash: string) => notify.hash(hash))
+    return tx
+  }
+
   const store: WalletType = useMemo(
     () => ({
       web3,
@@ -54,6 +65,7 @@ const WalletProvider: React.FC = ({ children }) => {
       connected: !!address,
       balance,
       selectWallet: onWalletSelect,
+      handleTransaction,
     }),
     [web3, address, networkId, signer, balance, onWalletSelect],
   )
@@ -122,7 +134,14 @@ const WalletProvider: React.FC = ({ children }) => {
       },
     })
 
+    const notify = Notify({
+      dappId: process.env.NEXT_PUBLIC_BLOCKNATIVE_DAPP_ID, // [String] The API key created by step one above
+      networkId: networkId, // [Integer] The Ethereum network ID your Dapp uses.
+      darkMode: true, // (default: false)
+    })
+
     setOnboard(onboard)
+    setNotify(notify)
 
     const previouslySelectedWallet = window.localStorage.getItem('selectedWallet')
 

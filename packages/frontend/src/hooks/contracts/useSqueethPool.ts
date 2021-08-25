@@ -26,7 +26,7 @@ export const useSqueethPool = () => {
   const [squeethPrice, setSqueethPrice] = useState<BigNumber>(new BigNumber(0))
   const [wethPrice, setWethPrice] = useState<BigNumber>(new BigNumber(0))
 
-  const { address, web3, networkId } = useWallet()
+  const { address, web3, networkId, handleTransaction } = useWallet()
   const { squeethPool, swapRouter, quoter, weth, wSqueeth } = useAddresses()
 
   useEffect(() => {
@@ -98,16 +98,18 @@ export const useSqueethPool = () => {
 
   const buy = async (amount: number) => {
     const exactOutputParam = await getBuyParam(new BigNumber(amount))
-    await swapRouterContract?.methods.exactOutputSingle(exactOutputParam).send({
+
+    await handleTransaction(swapRouterContract?.methods.exactOutputSingle(exactOutputParam).send({
       from: address,
-    })
+    }))
   }
 
   const sell = async (amount: number) => {
     const exactInputParam = getSellParam(new BigNumber(amount))
-    await swapRouterContract?.methods.exactInputSingle(exactInputParam).send({
+
+    await handleTransaction(swapRouterContract?.methods.exactInputSingle(exactInputParam).send({
       from: address
-    })
+    }))
   }
 
   const getSellParam = (amount: BigNumber) => {

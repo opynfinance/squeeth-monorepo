@@ -17,7 +17,7 @@ const getMultiplier = (type: Vaults) => {
 }
 
 export const useController = () => {
-  const { web3, address } = useWallet()
+  const { web3, address, handleTransaction } = useWallet()
   const [contract, setContract] = useState<Contract>()
   const { controller } = useAddresses()
 
@@ -37,13 +37,12 @@ export const useController = () => {
     if (!contract || !address) return
 
     const _amount = fromTokenAmount(amount, 18)
-    contract.methods
-      .mint(vaultId, _amount.toString())
-      .send({
+    handleTransaction(
+      contract.methods.mint(vaultId, _amount.toString()).send({
         from: address,
         value: _amount.multipliedBy(getMultiplier(vaultType)),
-      })
-      .then(console.log)
+      }),
+    )
   }
 
   /**
@@ -54,9 +53,11 @@ export const useController = () => {
   const updateOperator = async (vaultId: number, operator: string) => {
     if (!contract || !address) return
 
-    await contract.methods.updateOperator(vaultId, operator).send({
-      from: address,
-    })
+    await handleTransaction(
+      contract.methods.updateOperator(vaultId, operator).send({
+        from: address,
+      }),
+    )
   }
 
   const getVault = async (vaultId: number): Promise<Vault | null> => {

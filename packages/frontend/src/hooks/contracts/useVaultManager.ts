@@ -18,7 +18,7 @@ export const useVaultManager = (refetchIntervalSec = 20) => {
   const [vaults, setVaults] = useState<Array<any>>([])
   const [contract, setContract] = useState<Contract>()
 
-  const { address, web3 } = useWallet()
+  const { address, web3, handleTransaction } = useWallet()
   const { vaultManager, shortHelper } = useAddresses()
   const { getVault } = useController()
 
@@ -69,9 +69,11 @@ export const useVaultManager = (refetchIntervalSec = 20) => {
   const approve = async (toAddress: string, vaultId: number) => {
     if (!contract) return
 
-    await contract.methods.approve(toAddress, vaultId).send({
-      from: address,
-    })
+    await handleTransaction(
+      contract.methods.approve(toAddress, vaultId).send({
+        from: address,
+      }),
+    )
   }
 
   useInterval(updateBalance, refetchIntervalSec * 1000)

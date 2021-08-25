@@ -10,7 +10,7 @@ import { useAddresses } from '../useAddress'
 import { useSqueethPool } from './useSqueethPool'
 
 export const useShortHelper = () => {
-  const { web3, address } = useWallet()
+  const { web3, address, handleTransaction } = useWallet()
   const [contract, setContract] = useState<Contract>()
 
   const { getSellParam, getBuyParam } = useSqueethPool()
@@ -33,10 +33,12 @@ export const useShortHelper = () => {
 
     const actualAmt = amount.dividedBy(10000)
     const _amount = fromTokenAmount(actualAmt, 18)
-    await contract.methods.openShort(vaultId, _amount.toString(), getSellParam(amount)).send({
-      from: address,
-      value: _amount.multipliedBy(1.5).multipliedBy(10000), // Min collat, Should be changed based on user input type post MVP
-    })
+    await handleTransaction(
+      contract.methods.openShort(vaultId, _amount.toString(), getSellParam(amount)).send({
+        from: address,
+        value: _amount.multipliedBy(1.5).multipliedBy(10000), // Min collat, Should be changed based on user input type post MVP
+      }),
+    )
   }
 
   /**
@@ -55,10 +57,12 @@ export const useShortHelper = () => {
     _exactOutputParams.recipient = shortHelper
 
     // _burnSqueethAmount and _withdrawAmount will be same as we are putting 1:1 collat now
-    contract.methods.closeShort(vaultId, _amount.toString(), _amount.toString(), _exactOutputParams).send({
-      from: address,
-      value: _exactOutputParams.amountInMaximum,
-    })
+    await handleTransaction(
+      contract.methods.closeShort(vaultId, _amount.toString(), _amount.toString(), _exactOutputParams).send({
+        from: address,
+        value: _exactOutputParams.amountInMaximum,
+      }),
+    )
   }
 
   return {

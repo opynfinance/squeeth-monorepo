@@ -8,7 +8,7 @@ import { toTokenAmount } from '../../utils/calculations'
 const MAX_UINT = '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
 
 export function useUserAllowance(token: string, spenderAddess: string) {
-  const { web3, address } = useWallet()
+  const { web3, address, handleTransaction } = useWallet()
 
   const [allowance, setAllowance] = useState(new BigNumber(0))
   const [isLoadingAllowance, setIsLoadingAllowance] = useState(true)
@@ -21,10 +21,7 @@ export function useUserAllowance(token: string, spenderAddess: string) {
 
     if (spenderAddess === '') throw new Error('Unkown Spender')
 
-    await erc.methods
-      .approve(spenderAddess, approveAmount)
-      .send({ from: address })
-      .on('transactionHash', () => {})
+    await handleTransaction(erc.methods.approve(spenderAddess, approveAmount).send({ from: address }))
     const newAllowance = await erc.methods.allowance(address, spenderAddess).call()
     setAllowance(toTokenAmount(new BigNumber(newAllowance.toString()), 18))
   }, [web3, token, address, spenderAddess])

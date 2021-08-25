@@ -13,7 +13,7 @@ import { useAddresses } from '../useAddress'
 export const useWeth = () => {
   const [contract, setContract] = useState<Contract>()
 
-  const { address, web3 } = useWallet()
+  const { address, web3, handleTransaction } = useWallet()
   const { weth } = useAddresses()
 
   useEffect(() => {
@@ -31,13 +31,12 @@ export const useWeth = () => {
     if (!contract || !address) return Promise.resolve()
 
     const _amount = fromTokenAmount(amount, 18)
-    return contract.methods
-      .deposit()
-      .send({
+    return handleTransaction(
+      contract.methods.deposit().send({
         from: address,
         value: _amount,
-      })
-      .then(console.log)
+      }),
+    )
   }
 
   const getAllowance = async (spenderAddress: string) => {
