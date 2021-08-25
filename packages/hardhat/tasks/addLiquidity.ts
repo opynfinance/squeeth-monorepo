@@ -16,8 +16,8 @@ task("addLiquidity", "Add liquidity to pool")
   const squeeth = await ethers.getContract("WSqueeth", deployer);
   const weth = await getWETH(ethers, deployer, network.name)
 
-  const initLiquiditySqueethAmount = '0.0001'
-  const collateralAmount = '1'
+  const initLiquiditySqueethAmount = '0.0005'
+  const collateralAmount = '3'
   const squeethPriceInETH = 3000
 
   const isWethToken0 = parseInt(weth.address, 16) < parseInt(squeeth.address, 16)

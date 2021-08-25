@@ -46,20 +46,37 @@ export const useController = () => {
       .then(console.log)
   }
 
+  /**
+   * Authorize an address to modify the vault
+   * @param vaultId
+   * @param operator
+   */
+  const updateOperator = async (vaultId: number, operator: string) => {
+    if (!contract || !address) return
+
+    await contract.methods.updateOperator(vaultId, operator).send({
+      from: address,
+    })
+  }
+
   const getVault = async (vaultId: number): Promise<Vault | null> => {
     if (!contract) return null
 
-    const { NFTCollateralId, collateralAmount, shortAmount } = await contract.methods.vaults(vaultId).call()
+    const vault = await contract.methods.vaults(vaultId).call()
+    const { NFTCollateralId, collateralAmount, shortAmount, operator } = vault
+
     return {
       id: vaultId,
       NFTCollateralId,
       collateralAmount: toTokenAmount(new BigNumber(collateralAmount), 18),
       shortAmount: toTokenAmount(new BigNumber(shortAmount), 18),
+      operator,
     }
   }
 
   return {
     openDepositAndMint,
     getVault,
+    updateOperator,
   }
 }

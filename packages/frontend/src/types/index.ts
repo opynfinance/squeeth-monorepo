@@ -19,4 +19,5 @@ export type Vault = {
   NFTCollateralId: string
   collateralAmount: BigNumber
   shortAmount: BigNumber
+  operator: string
 }

@@ -36,6 +36,9 @@ const getTheme = (mode: Mode) => {
       MuiButtonBase: {
         disableRipple: true,
       },
+      MuiButtonGroup: {
+        disableRipple: true,
+      },
     },
     overrides: {
       MuiTableCell: {
@@ -110,9 +113,7 @@ const darkPalete: ThemeOptions = {
       main: '#00fff9',
     },
     error: {
-      light: '#F2F2F2',
       main: '#EC7987',
-      dark: '#BDBDBD',
     },
     warning: {
       light: '#F5B07326',

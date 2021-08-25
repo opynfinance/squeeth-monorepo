@@ -1,10 +1,22 @@
-import { Button, createStyles, FormControlLabel, makeStyles, Switch, Tab, Tabs, TextField } from '@material-ui/core'
+import {
+  Button,
+  createStyles,
+  FormControlLabel,
+  IconButton,
+  makeStyles,
+  Switch,
+  Tab,
+  Tabs,
+  TextField,
+} from '@material-ui/core'
 import Card from '@material-ui/core/Card'
 import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemText from '@material-ui/core/ListItemText'
 import Tooltip from '@material-ui/core/Tooltip'
 import Typography from '@material-ui/core/Typography'
+import WhatshotIcon from '@material-ui/icons/Whatshot'
+import { validateAndParseAddress } from '@uniswap/sdk-core'
 import BigNumber from 'bignumber.js'
 import Image from 'next/image'
 import { useEffect, useMemo, useState } from 'react'
@@ -16,6 +28,7 @@ import Nav from '../src/components/Nav'
 import { Vaults } from '../src/constants'
 import { useWorldContext } from '../src/context/world'
 import { useController } from '../src/hooks/contracts/useController'
+import useShortHelper from '../src/hooks/contracts/useShortHelper'
 import { useTokenBalance } from '../src/hooks/contracts/useTokenBalance'
 import { useVaultManager } from '../src/hooks/contracts/useVaultManager'
 import { useAddresses } from '../src/hooks/useAddress'
@@ -208,12 +221,16 @@ export default function Vault() {
   const [selectedIdx, setSelectedIdx] = useState(0)
   const [amount, setAmount] = useState(1)
   const [collateral] = useState(1)
+  const [vaultId, setVaultId] = useState(0)
+  const [isVaultApproved, setIsVaultApproved] = useState(true)
 
   const { researchMode } = useWorldContext()
-  const { openDepositAndMint } = useController()
-  const { wSqueeth } = useAddresses()
+  const { openShort, closeShort } = useShortHelper()
+  const { updateOperator } = useController()
+  const { wSqueeth, weth, shortHelper } = useAddresses()
   const squeethBal = useTokenBalance(wSqueeth, 5)
-  const shortVaults = useVaultManager(5)
+  const wethBal = useTokenBalance(weth, 5)
+  const { vaults: shortVaults } = useVaultManager(5)
 
   const vault = useMemo(() => {
     if (selectedIdx === 0) return Vaults.ETHBull
@@ -250,6 +267,21 @@ export default function Vault() {
   useEffect(() => {
     setVolMultiplier(globalVMultiplier)
   }, [globalVMultiplier, setVolMultiplier])
+
+  useEffect(() => {
+    if (!shortVaults.length) {
+      setVaultId(0)
+      return
+    }
+
+    setVaultId(shortVaults[0].id)
+  }, [shortVaults.length])
+
+  useEffect(() => {
+    if (!vaultId) return
+
+    setIsVaultApproved(shortVaults[0].operator.toLowerCase() === shortHelper.toLowerCase())
+  }, [vaultId])
 
   const rebalancePNLSeries = getVaultPNLWithRebalance(longAmount)
 
@@ -289,6 +321,14 @@ export default function Vault() {
     const ethPrice = ethPrices.length > 0 ? ethPrices[ethPrices.length - 1].value : 0
     return calculateLiquidationPrice(amount, collateral, vol, ethPrice)
   }, [ethPrices, collateral, amount, vol])
+
+  const depositAndShort = () => {
+    if (vaultId && !isVaultApproved) {
+      updateOperator(vaultId, shortHelper).then(() => setIsVaultApproved(true))
+    } else {
+      openShort(vaultId, new BigNumber(amount), vault)
+    }
+  }
 
   const TxValue: React.FC<{ value: string | number; label: string }> = ({ value, label }) => {
     return (
@@ -431,21 +471,22 @@ export default function Vault() {
               </div>
             </Tooltip>
             <Button
-              onClick={() =>
-                openDepositAndMint(shortVaults.length ? shortVaults[0].id : 0, new BigNumber(amount), vault)
-              }
+              onClick={depositAndShort}
               className={classes.amountInput}
               style={{ width: 300, color: '#000' }}
               variant="contained"
               color="primary"
             >
-              {' '}
-              {'Deposit'}{' '}
+              {isVaultApproved ? 'Deposit and sell' : 'Add operator to deposit / Burn'}
             </Button>
             <br />
             <div className={classes.txItem}>
               <Typography>Squeeth Balance</Typography>
-              <VaultValue value={squeethBal.toFixed(2)} label="SQE" />
+              <TxValue value={squeethBal.toFixed(2)} label="SQE" />
+            </div>
+            <div className={classes.txItem}>
+              <Typography>WETH Balance</Typography>
+              <VaultValue value={wethBal.toFixed(2)} label="WETH" />
             </div>
           </Card>
           <Card className={classes.innerCard} style={{ marginTop: '8px' }}>
@@ -458,12 +499,16 @@ export default function Vault() {
                   <Typography>Id</Typography>
                   <Typography>Collateral</Typography>
                   <Typography>Amount</Typography>
+                  <Typography>Buyback</Typography>
                 </div>
                 {shortVaults?.map((vault) => (
                   <div className={classes.txItem} key={vault.id}>
                     <Typography>{vault.id}</Typography>
                     <TxValue value={vault.collateralAmount.toFixed(2)} label="ETH" />
                     <TxValue value={vault.shortAmount.toFixed(2)} label="SQE" />
+                    <IconButton aria-label="Burn and withdraw" onClick={() => closeShort(vault.id, vault.shortAmount)}>
+                      <WhatshotIcon color="error" />
+                    </IconButton>
                   </div>
                 ))}
               </>

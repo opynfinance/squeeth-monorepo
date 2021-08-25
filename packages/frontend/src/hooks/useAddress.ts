@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 import {
   CONTROLLER,
   QUOTER,
+  SHORT_HELPER,
   SQUEETH_UNI_POOL,
   SWAP_ROUTER,
   VAULT_MANAGER,
@@ -25,6 +26,7 @@ const useAddresses = () => {
       swapRouter: SWAP_ROUTER[networkId],
       squeethPool: SQUEETH_UNI_POOL[networkId],
       quoter: QUOTER[networkId],
+      shortHelper: SHORT_HELPER[networkId],
     }),
     [networkId],
   )

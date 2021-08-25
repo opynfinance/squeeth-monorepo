@@ -8,6 +8,7 @@ import { Contract } from 'web3-eth-contract'
 import quoterABI from '../../abis/quoter.json'
 import routerABI from '../../abis/swapRouter.json'
 import uniABI from '../../abis/uniswapPool.json'
+import { UNI_POOL_FEES } from '../../constants'
 import { useWallet } from '../../context/wallet'
 import { fromTokenAmount, toTokenAmount } from '../../utils/calculations'
 import { useAddresses } from '../useAddress'
@@ -26,7 +27,7 @@ export const useSqueethPool = () => {
   const [wethPrice, setWethPrice] = useState<BigNumber>(new BigNumber(0))
 
   const { address, web3, networkId } = useWallet()
-  const { squeethPool, swapRouter, quoter } = useAddresses()
+  const { squeethPool, swapRouter, quoter, weth, wSqueeth } = useAddresses()
 
   useEffect(() => {
     if (!web3 || !squeethPool || !swapRouter) return
@@ -51,10 +52,12 @@ export const useSqueethPool = () => {
 
   const updateData = async () => {
     const { token0, token1, fee } = await getImmutables()
+    const isWethToken0 = parseInt(weth, 16) < parseInt(wSqueeth, 16)
+    
     const state = await getPoolState()
-    const TokenA = new Token(networkId, token0, 18, 'WETH', 'Wrapped Ether')
-    const TokenB = new Token(networkId, token1, 18, 'SQE', 'wSqueeth')
-
+    const TokenA = new Token(networkId, token0, 18, isWethToken0 ? 'WETH' : 'SQE', isWethToken0 ? 'Wrapped Ether' : 'wSqueeth')
+    const TokenB = new Token(networkId, token1, 18, isWethToken0 ? 'SQE' : 'WETH', isWethToken0 ? 'wSqueeth' : 'Wrapped Ether')
+    
     const pool = new Pool(
       TokenA,
       TokenB,
@@ -64,8 +67,8 @@ export const useSqueethPool = () => {
       Number(state.tick),
     )
     setPool(pool)
-    setWethToken(TokenA)
-    setSqueethToken(TokenB)
+    setWethToken(isWethToken0 ? TokenA : TokenB)
+    setSqueethToken(isWethToken0 ? TokenB : TokenA)
   }
 
   const getImmutables = async () => {
@@ -94,39 +97,69 @@ export const useSqueethPool = () => {
   }
 
   const buy = async (amount: number) => {
-    const amountMax = fromTokenAmount((await getBuyQuote(amount)).integerValue(BigNumber.ROUND_CEIL), 18)
-
-    const exactOutputParam = {
-      tokenIn: wethToken?.address, // address
-      tokenOut: squeethToken?.address, // address
-      fee: 3000, // uint24
-      recipient: address, // address
-      deadline: Math.floor(Date.now() / 1000 + 86400), // uint256
-      amountOut: ethers.utils.parseEther(amount.toString()), // uint256
-      amountInMaximum: amountMax.toString(),
-      sqrtPriceLimitX96: 0, // uint160
-    }
-
+    const exactOutputParam = await getBuyParam(new BigNumber(amount))
     await swapRouterContract?.methods.exactOutputSingle(exactOutputParam).send({
       from: address,
     })
   }
 
+  const sell = async (amount: number) => {
+    const exactInputParam = getSellParam(new BigNumber(amount))
+    await swapRouterContract?.methods.exactInputSingle(exactInputParam).send({
+      from: address
+    })
+  }
+
+  const getSellParam = (amount: BigNumber) => {
+    const _amount = amount.dividedBy(10000)
+    return {
+      tokenIn: squeethToken?.address,
+      tokenOut: wethToken?.address,
+      fee: UNI_POOL_FEES,
+      recipient: address,
+      deadline: Math.floor(Date.now() / 1000 + 86400), // uint256
+      amountIn: ethers.utils.parseEther(_amount.toString()),
+      amountOutMinimum: 0, // Should be updated
+      sqrtPriceLimitX96: 0
+    }
+  }
+
+  const getBuyParam = async (amount: BigNumber) => {
+    const _amount = amount.dividedBy(10000)
+    const amountMax = fromTokenAmount((await getBuyQuote(amount.toNumber())).integerValue(BigNumber.ROUND_CEIL), 18)
+
+    return {
+      tokenIn: wethToken?.address, // address
+      tokenOut: squeethToken?.address, // address
+      fee: UNI_POOL_FEES, // uint24
+      recipient: address, // address
+      deadline: Math.floor(Date.now() / 1000 + 86400), // uint256
+      amountOut: ethers.utils.parseEther(_amount.toString()), // uint256
+      amountInMaximum: amountMax.toString(),
+      sqrtPriceLimitX96: 0, // uint160
+    }
+  }
+
   const getBuyQuote = async (amount: number) => {
     if (!amount) return new BigNumber(0)
+    const _amount = amount / 10000
 
     const params = {
       tokenIn: wethToken?.address, // address
       tokenOut: squeethToken?.address, // address
-      fee: 3000, // uint24
-      amount: ethers.utils.parseEther(amount.toString()), // uint256
+      fee: UNI_POOL_FEES, // uint24
+      amount: ethers.utils.parseEther(_amount.toString()), // uint256
       sqrtPriceLimitX96: 0, // uint160
     }
+
+    console.log(params, _amount)
     const input = await quoterContract?.methods.quoteExactOutputSingle(params).call({
       gas: 470000,
     })
 
+
     if (!input?.amountIn) return new BigNumber(0)
+    console.log(toTokenAmount(new BigNumber(input.amountIn), 18).toNumber())
     return toTokenAmount(new BigNumber(input.amountIn), 18)
   }
 
@@ -137,6 +170,9 @@ export const useSqueethPool = () => {
     squeethPrice,
     wethPrice,
     buy,
+    sell,
     getBuyQuote,
+    getSellParam,
+    getBuyParam,
   }
 }

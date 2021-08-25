@@ -1,12 +1,67 @@
 [
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "ethUSDPool",
+        "type": "address"
+      }
+    ],
+    "name": "InvalidEthUsdPoolAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "oracle",
+        "type": "address"
+      }
+    ],
+    "name": "InvalidOracleAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "squeethAddress",
+        "type": "address"
+      }
+    ],
+    "name": "InvalidSqueethAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "vaultManagerNFTAddress",
+        "type": "address"
+      }
+    ],
+    "name": "InvalidVaultManagerNftAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "wSqueethEthPool",
+        "type": "address"
+      }
+    ],
+    "name": "InvalidwSqueethEthPoolAddress",
+    "type": "error"
+  },
+  {
     "anonymous": false,
     "inputs": [
       {
         "indexed": false,
-        "internalType": "uint128",
+        "internalType": "uint256",
         "name": "amount",
-        "type": "uint128"
+        "type": "uint256"
       },
       {
         "indexed": false,
@@ -16,6 +71,19 @@
       }
     ],
     "name": "BurnSqueeth",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "vaultId",
+        "type": "uint256"
+      }
+    ],
+    "name": "CloseVault",
     "type": "event"
   },
   {
@@ -48,9 +116,34 @@
     "inputs": [
       {
         "indexed": false,
-        "internalType": "uint128",
+        "internalType": "uint256",
+        "name": "vaultId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "debtAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "collateralToSell",
+        "type": "uint256"
+      }
+    ],
+    "name": "Liquidate",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
         "name": "amount",
-        "type": "uint128"
+        "type": "uint256"
       },
       {
         "indexed": false,
@@ -70,12 +163,44 @@
         "internalType": "uint256",
         "name": "vaultId",
         "type": "uint256"
+      }
+    ],
+    "name": "OpenVault",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "vaultId",
+        "type": "uint256"
       },
       {
         "indexed": false,
-        "internalType": "uint128",
+        "internalType": "address",
+        "name": "operator",
+        "type": "address"
+      }
+    ],
+    "name": "UpdateOperator",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "vaultId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
         "name": "amount",
-        "type": "uint128"
+        "type": "uint256"
       },
       {
         "indexed": false,
@@ -90,28 +215,129 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "_vaultId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint128",
-        "name": "_amount",
-        "type": "uint128"
-      },
-      {
-        "internalType": "uint128",
-        "name": "_withdrawAmount",
-        "type": "uint128"
+        "internalType": "uint32",
+        "name": "_period",
+        "type": "uint32"
       }
     ],
-    "name": "burn",
+    "name": "_getDenormalizedMark",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "applyFunding",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_vaultId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_withdrawAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "burn",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_vaultId",
+        "type": "uint256"
+      }
+    ],
+    "name": "deposit",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "ethUSDPool",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint32",
+        "name": "_period",
+        "type": "uint32"
+      }
+    ],
+    "name": "getDenormalizedMark",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint32",
+        "name": "_period",
+        "type": "uint32"
+      }
+    ],
+    "name": "getIndex",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_oracle",
+        "type": "address"
+      },
       {
         "internalType": "address",
         "name": "_vaultNFT",
@@ -120,6 +346,16 @@
       {
         "internalType": "address",
         "name": "_squeeth",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_ethUsdPool",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_wSqueethEthPool",
         "type": "address"
       }
     ],
@@ -130,7 +366,7 @@
   },
   {
     "inputs": [],
-    "name": "lastUpdateTimestamp",
+    "name": "lastFundingUpdateTimestamp",
     "outputs": [
       {
         "internalType": "uint256",
@@ -139,6 +375,24 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_vaultId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_debtAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "liquidate",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -155,18 +409,37 @@
       }
     ],
     "name": "mint",
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "normalizedFactor",
     "outputs": [
       {
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "normalizationFactor",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "oracle",
+    "outputs": [
+      {
+        "internalType": "contract IOracle",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -183,6 +456,24 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_vaultId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "_operator",
+        "type": "address"
+      }
+    ],
+    "name": "updateOperator",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -209,22 +500,58 @@
     "name": "vaults",
     "outputs": [
       {
-        "internalType": "uint128",
+        "internalType": "address",
+        "name": "operator",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
         "name": "NFTCollateralId",
-        "type": "uint128"
+        "type": "uint256"
       },
       {
-        "internalType": "uint128",
+        "internalType": "uint256",
         "name": "collateralAmount",
-        "type": "uint128"
+        "type": "uint256"
       },
       {
-        "internalType": "uint128",
+        "internalType": "uint256",
         "name": "shortAmount",
-        "type": "uint128"
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "wSqueethEthPool",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_vaultId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "withdraw",
+    "outputs": [],
+    "stateMutability": "payable",
     "type": "function"
   }
 ]

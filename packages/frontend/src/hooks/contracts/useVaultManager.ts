@@ -14,12 +14,12 @@ import { useController } from './useController'
  * @param refetchIntervalSec refetch interval in seconds
  * @returns {Vault[]}
  */
-export const useVaultManager = (refetchIntervalSec = 20): Array<Vault> => {
+export const useVaultManager = (refetchIntervalSec = 20) => {
   const [vaults, setVaults] = useState<Array<any>>([])
   const [contract, setContract] = useState<Contract>()
 
   const { address, web3 } = useWallet()
-  const { vaultManager } = useAddresses()
+  const { vaultManager, shortHelper } = useAddresses()
   const { getVault } = useController()
 
   useEffect(() => {
@@ -39,17 +39,42 @@ export const useVaultManager = (refetchIntervalSec = 20): Array<Vault> => {
         toBlock: 'latest',
       })
       .then(async (events) => {
-        const tokens = events
-          .filter((event) => event.returnValues.to.toLowerCase() === address?.toLowerCase())
-          .map((event) => event.returnValues.tokenId)
-        const vaultPromise = tokens.map((tokenId) => getVault(tokenId))
-        const _vaults = await Promise.all(vaultPromise)
+        const tokens = new Set(
+          events
+            .filter((event) => event.returnValues.to.toLowerCase() === address?.toLowerCase())
+            .map((event) => event.returnValues.tokenId),
+        )
+        const vaultPromise = Array.from(tokens).map((tokenId) => getVault(tokenId))
+        const _vaults = (await Promise.all(vaultPromise)).filter((v) => v?.shortAmount.gt(0))
+        console.log(_vaults)
 
         setVaults(_vaults)
       })
   }
 
+  const getOwner = async (vaultId: number) => {
+    if (!contract) return
+
+    return await contract.methods.ownerOf(vaultId).call()
+  }
+
+  const isApproved = async (toAddress: string, vaultId: number) => {
+    if (!contract) return false
+
+    const approval = await contract.methods.getApproved(vaultId).call()
+    console.log(approval, 'hello')
+    return toAddress.toLowerCase() === approval.toLowerCase()
+  }
+
+  const approve = async (toAddress: string, vaultId: number) => {
+    if (!contract) return
+
+    await contract.methods.approve(toAddress, vaultId).send({
+      from: address,
+    })
+  }
+
   useInterval(updateBalance, refetchIntervalSec * 1000)
 
-  return vaults
+  return { vaults, getOwner, approve, isApproved }
 }
