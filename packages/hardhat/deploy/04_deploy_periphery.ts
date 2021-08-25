@@ -1,18 +1,21 @@
 import {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {DeployFunction} from 'hardhat-deploy/types';
+import { getWETH } from '../tasks/utils'
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const { deployments, getNamedAccounts, ethers } = hre;
+  const { deployments, getNamedAccounts, ethers, network } = hre;
   const { deploy } = deployments;
 
   const { deployer } = await getNamedAccounts();
 
   const controller = await ethers.getContract("Controller", deployer);
-  const weth = await ethers.getContract("WETH9", deployer);
+  const weth = await getWETH(ethers, deployer, network.name)
+
   const swapRouter = await ethers.getContract("SwapRouter", deployer);
 
   await deploy("ShortHelper", {
     from: deployer,
+    log: true,
     args: [controller.address, swapRouter.address, weth.address]
   });
 

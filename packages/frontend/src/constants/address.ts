@@ -4,50 +4,52 @@ type Address = { [key in Networks]: string }
 
 export const CONTROLLER: Address = {
   1: '',
-  3: '',
+  3: '0xDb2347594b5d06924F7c7cA65e577E478DA382d0',
   31337: '0x5fbdb2315678afecb367f032d93f642f64180aa3',
 }
 
 export const VAULT_MANAGER: Address = {
   1: '',
-  3: '',
+  3: '0xBB1C3878c63576a7A89AF1b361362eAfbaAE67CF',
   31337: '0xe7f1725e7734ce288f8367e1bb143e90bb3f0512',
 }
 
 export const WSQUEETH: Address = {
   1: '',
-  3: '',
+  3: '0x0cE00679b40D5ef4Dca5946fFBa471AbC0214729',
   31337: '0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0',
 }
 
 export const WETH: Address = {
   1: '',
-  3: '',
+  3: '0xc778417e063141139fce010982780140aa0cd5ab',
   31337: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
 }
 
 export const UNI_V3_FACTORY: Address = {
   1: '',
-  3: '',
+  3: '0x4894EB5002d0CB15292f95ea8681c6E2612D9EC3',
   31337: '0xa513E6E4b8f2a923D98304ec87F64353C4D5C853',
 }
 
 export const SWAP_ROUTER: Address = {
   1: '',
-  3: '',
+  3: '0x91362D4695D92B8fB02907BF0E4690dE1B0f6a94',
   31337: '0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6',
 }
 
 export const SQUEETH_UNI_POOL: Address = {
   1: '',
-  3: '',
+  3: '0xA55917934FfE3F5607a5e11D267FD12E6D60E917',
   31337: '0xf49a09b12d6D09485A77620Cf49A5bc40a679002',
 }
 
 export const QUOTER: Address = {
   1: '',
-  3: '',
+  3: '0x521a1f8a58450Be8c7F1D65726A3fC191649C20A',
   31337: '0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e',
 }
+
+export const shortHelperRopsten = '0x7377B0C65ffDb814fA220b12699a9c42F45bfb8e'
 
 export const ZERO_ADDR = '0x0000000000000000000000000000000000000000'

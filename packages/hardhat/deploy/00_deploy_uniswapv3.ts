@@ -20,25 +20,31 @@ import {
   abi as QUOTER_ABI,
   bytecode as QUOTER_BYTECODE,
 } from '@uniswap/v3-periphery/artifacts/contracts/lens/QuoterV2.sol/QuoterV2.json'
+import { Contract } from 'ethers';
 
+import { networkNameToWeth } from '../tasks/utils'
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const { deployments, getNamedAccounts, ethers } = hre;
+  const { deployments, getNamedAccounts, ethers, network } = hre;
   const { deployer } = await getNamedAccounts();
 
-  const {deploy} = deployments;
+  console.log(`Start deploying with ${deployer}`)
 
+  const {deploy} = deployments;
   // Deploy WETH9 and UniswapV3Factory for SwapRouter.
 
-  await deploy("MockErc20", { from: deployer, args: ["DAI", "DAI"], skipIfAlreadyDeployed: false });
-
-  await deploy("WETH9", {
-    from: deployer,
-    log: true,
-  });
-
+  // Deploy WETH9 
+  let weth9: Contract
+  const wethAddr = networkNameToWeth(network.name as string)
+  if (wethAddr === undefined) {
+    await deploy("WETH9", { from: deployer, log: true });
+    weth9 = await ethers.getContract("WETH9", deployer);
+  } else {
+    weth9 = await ethers.getContractAt('WETH9', wethAddr)
+  }
   console.log(`WETH9 Deployed 🍇`)
 
+  // Deploy Uniswap Factory
   await deploy("UniswapV3Factory", {
     from: deployer,
     log: true,
@@ -48,9 +54,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     }
   });
   console.log(`UniswapV3Factory Deployed 🍹`)
-
   const uniswapFactory = await ethers.getContract("UniswapV3Factory", deployer);
-  const weth9 = await ethers.getContract("WETH9", deployer);
+  
+  // Deploy Dai
+  await deploy("MockErc20", { from: deployer, args: ["DAI", "DAI"], skipIfAlreadyDeployed: false });
 
   await deploy("SwapRouter", {
     from: deployer,

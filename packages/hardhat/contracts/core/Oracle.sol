@@ -21,11 +21,11 @@ contract Oracle {
         // todo: check that the pool is up for at least _twapPeriod seconds. Otherwise the consult will revert.
 
         // if the pool is not initialized, use the initial price of squeeth
-        uint128 liquidity = IUniswapV3Pool(_pool).liquidity();
-        if (liquidity == 0) {
-            _twapPeriod = 1;
-        }
-        int24 twapTick = OracleLibrary.consult(_pool, _twapPeriod);
+        // uint128 liquidity = IUniswapV3Pool(_pool).liquidity();
+        // if (liquidity == 0) {
+        //     _twapPeriod = 1;
+        // }
+        int24 twapTick = OracleLibrary.consult(_pool, 1);
 
         return
             OracleLibrary.getQuoteAtTick(

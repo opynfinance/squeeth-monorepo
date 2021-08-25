@@ -1,6 +1,6 @@
 import { ethers, getNamedAccounts, deployments } from "hardhat"
 import { expect } from "chai";
-import { BigNumber } from "ethers";
+import BigNumber, { BigNumber as BigNumberJs } from "bignumber.js";
 import {
   abi as SWAP_ROUTER_ABI,
   bytecode as SWAP_ROUTER_BYTECODE,
@@ -13,13 +13,12 @@ import {
   abi as FACTORY_ABI,
   bytecode as FACTORY_BYTECODE,
 } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json'
-import { BigNumber as BigNumberJs } from "bignumber.js"
 import { convertNormalPriceToSqrtX96Price } from '../calculator'
 
 import { Oracle, MockWSqueeth } from "../../typechain";
 
 describe("Oracle", function () {
-  const squeethPriceInETH = 0.3; // can sell 1 squeeth = 0.3 eth
+  const squeethPriceInETH = 2000; // can sell 1 squeeth = 2000 eth
 
   let squeeth: MockWSqueeth;
   let oracle: Oracle;
@@ -74,7 +73,7 @@ describe("Oracle", function () {
 
     const sqrtX96Price = isWethToken0 
       ? convertNormalPriceToSqrtX96Price(squeethPriceInETH.toString()).toFixed(0)
-      : convertNormalPriceToSqrtX96Price((1 / squeethPriceInETH).toFixed()).toFixed(0)
+      : convertNormalPriceToSqrtX96Price((new BigNumber(1).div(squeethPriceInETH)).toString()).toFixed(0)
      
 
     const token0 = isWethToken0 ? weth.address : squeeth.address
@@ -96,12 +95,12 @@ describe("Oracle", function () {
 
   describe("TWAP", async () => {
     it("fetch initial price", async () => {
-      const price = new BigNumberJs((await oracle.getTwaPrice(squeethPool, BigNumber.from("1"))).toString())
+      const price = new BigNumberJs((await oracle.getTwaPrice(squeethPool, 1)).toString())
 
-      const expectedPrice = new BigNumberJs(0.3)
+      const expectedPrice = new BigNumberJs(squeethPriceInETH)
 
-      expect(price.div(1e18).toFixed(1)).to.be.eq(
-        expectedPrice.toFixed(1),
+      expect(price.div(1e18).toFixed(0)).to.be.eq(
+        expectedPrice.toFixed(0),
         "initial pool price mismatch"
       );
     })    

@@ -2,9 +2,10 @@ import {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {DeployFunction} from 'hardhat-deploy/types';
 
 import { getPoolAddress } from '../test/setup'
+import { getWETH } from '../tasks/utils'
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const { getNamedAccounts, ethers } = hre;
+  const { getNamedAccounts, ethers, network } = hre;
   const { deployer } = await getNamedAccounts();
 
   // Load contracts
@@ -12,7 +13,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const controller = await ethers.getContract("Controller", deployer);
   const vaultNft = await ethers.getContract("VaultNFTManager", deployer);
   const wsqueeth = await ethers.getContract("WSqueeth", deployer);
-  const weth9 = await ethers.getContract("WETH9", deployer);
+  
+  const weth9 = await getWETH(ethers, deployer, network.name)
+
   const dai = await ethers.getContract("MockErc20", deployer);
   const uniswapFactory = await ethers.getContract("UniswapV3Factory", deployer);
 

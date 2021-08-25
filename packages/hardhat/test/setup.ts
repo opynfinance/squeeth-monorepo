@@ -1,5 +1,5 @@
 import { ethers, getNamedAccounts, deployments } from "hardhat"
-
+import BigNumber from 'bignumber.js'
 import { Contract } from "ethers";
 
 import {
@@ -86,10 +86,13 @@ export const createUniPool = async(
 
   const sqrtX96Price = isTokenAToken0 
     ? convertNormalPriceToSqrtX96Price(tokenBPriceInA.toString()).toFixed(0)
-    : convertNormalPriceToSqrtX96Price((1 / tokenBPriceInA).toFixed()).toFixed(0)
+    : convertNormalPriceToSqrtX96Price((new BigNumber(1).div(tokenBPriceInA)).toString()).toFixed(0)
 
   const token0Addr = isTokenAToken0 ? tokenA.address : tokenB.address
   const token1Addr = isTokenAToken0 ? tokenB.address : tokenA.address
+
+  const poolAddrFirstTry = await univ3Factory.getPool(token0Addr, token1Addr, 3000)
+  if (poolAddrFirstTry !== ethers.constants.AddressZero) return poolAddrFirstTry
 
   await positionManager.createAndInitializePoolIfNecessary(
     token0Addr,
@@ -147,11 +150,11 @@ export const getPoolAddress = async (
   const squeeth = await ethers.getContract("WSqueeth", deployer) as WSqueeth;
   const dai = await ethers.getContract("MockErc20", deployer) as MockErc20;
 
-  // 1 squeeth is 0.3 eth
-  const squeethPriceInEth = wsqueethEthPrice || 0.3 
+  // 1 squeeth is 3000 eth
+  const squeethPriceInEth = wsqueethEthPrice || 3000
   const wsqueethEthPool = await createUniPool(squeethPriceInEth, weth, squeeth, positionManager, uniswapFactory) as string
-  // 1 weth is 0.3 dai
-  const ethPriceInDai = ethDaiPrice || 0.3 
+  // 1 weth is 3000 dai
+  const ethPriceInDai = ethDaiPrice || 3000
   const ethUsdPool = await createUniPool(ethPriceInDai, dai, weth, positionManager, uniswapFactory) as string
 
   if (res.newlyDeployed) {

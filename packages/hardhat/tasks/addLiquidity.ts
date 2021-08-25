@@ -1,6 +1,6 @@
 import { task } from "hardhat/config";
 import "@nomiclabs/hardhat-waffle";
-
+import { getWETH } from './utils'
 // Example execution
 /**
  npx hardhat addLiquidity
@@ -8,17 +8,17 @@ import "@nomiclabs/hardhat-waffle";
 task("addLiquidity", "Add liquidity to pool")
   .setAction(async (_, hre) => {
 
-  const { getNamedAccounts, ethers } = hre;
+  const { getNamedAccounts, ethers, network } = hre;
   const { deployer } = await getNamedAccounts();
   const positionManager = await ethers.getContract("NonfungibleTokenPositionManager", deployer);
 
   const controller = await ethers.getContract("Controller", deployer);
   const squeeth = await ethers.getContract("WSqueeth", deployer);
-  const weth = await ethers.getContract("WETH9", deployer);
+  const weth = await getWETH(ethers, deployer, network.name)
 
-  const initLiquiditySqueethAmount = '10'
-  const collateralAmount = '20'
-  const squeethPriceInETH = 0.3
+  const initLiquiditySqueethAmount = '0.0001'
+  const collateralAmount = '1'
+  const squeethPriceInETH = 3000
 
   const isWethToken0 = parseInt(weth.address, 16) < parseInt(squeeth.address, 16)
   const token0 = isWethToken0 ? weth.address : squeeth.address
@@ -27,10 +27,10 @@ task("addLiquidity", "Add liquidity to pool")
   const liquiditySqueethAmount = ethers.utils.parseEther(initLiquiditySqueethAmount) 
   const wethAmount = parseFloat(initLiquiditySqueethAmount) * squeethPriceInETH
   const liquidityWethAmount = ethers.utils.parseEther(wethAmount.toString()) 
-
-  const minWeth = liquidityWethAmount.mul(8).div(10) 
-  const minSqueeth = liquiditySqueethAmount.mul(8).div(10) 
-
+  
+  const minWeth = 0
+  const minSqueeth = 0
+  
   let squeethBalance = await squeeth.balanceOf(deployer)
   let wethBalance = await weth.balanceOf(deployer)
 
@@ -65,3 +65,4 @@ task("addLiquidity", "Add liquidity to pool")
   await positionManager.mint(mintParam)
 
 });
+

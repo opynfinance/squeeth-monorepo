@@ -21,6 +21,7 @@ module.exports = {
     "no-console": "off",
     "func-names": "off",
     "no-unused-expressions": "off",
+    "no-use-before-define": "off"
   },
   ignorePatterns: ["package.json", "contracts/*", "tasks/default.ts"],
   settings: {
