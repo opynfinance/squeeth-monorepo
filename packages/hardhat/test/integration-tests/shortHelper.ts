@@ -247,7 +247,7 @@ describe("ShortHelper", function () {
       const sellerEthAfter = await provider.getBalance(seller2.address)
       const poolWethAfter = await weth.balanceOf(poolAddress)
   
-      expect(nftBalanceAfter.eq(nftBalanceBefore.sub(1))).to.be.true
+      expect(nftBalanceAfter.eq(nftBalanceBefore)).to.be.true // nft amount stay the same
       expect(poolSqueethAfter.toString()).to.be.eq(poolSqueethBefore.sub(buyBackSqueethAmount), "squeeth mismatch")
       expect(poolWethAfter.sub(poolWethBefore).toString()).to.be.eq(
         sellerEthBefore.add(withdrawCollateralAmount).sub(sellerEthAfter), "weth mismatch"

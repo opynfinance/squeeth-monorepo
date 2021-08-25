@@ -28,11 +28,4 @@ contract VaultNFTManager is ERC721Upgradeable {
         // mint NFT
         _mint(_recipient, (tokenId = nextId++));
     }
-
-    /**
-     * burn the nft
-     */
-    function burnNFT(uint256 _tokenId) external onlyController {
-        _burn(_tokenId);
-    }
 }

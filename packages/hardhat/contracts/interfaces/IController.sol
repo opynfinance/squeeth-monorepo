@@ -29,7 +29,7 @@ interface IController {
         uint256 _vaultId,
         uint256 _amount,
         uint256 _withdrawAmount
-    ) external returns (uint256);
+    ) external;
 
     /**
      * External function to update the normalized factor as a way to pay funding.

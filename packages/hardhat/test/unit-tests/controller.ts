@@ -206,12 +206,10 @@ describe("Controller", function () {
         await controller.connect(seller1).burn(vaultId, burnAmount, withdrawAmount)
         
         const controllerBalanceAfter = await provider.getBalance(controller.address)
-        // const vaultAfter = await controller.vaults(vaultId)
         const nftBalanceAfter = await shortNFT.balanceOf(seller1.address)
 
         expect(controllerBalanceBefore.sub(withdrawAmount).eq(controllerBalanceAfter)).to.be.true
-        // expect(vaultBefore.collateralAmount.sub(withdrawAmount).eq(vaultAfter.collateralAmount)).to.be.true
-        expect(nftBalanceAfter.eq(nftBalanceBefore.sub(1)), "vault not closed!").to.be.true
+        expect(nftBalanceAfter.eq(nftBalanceBefore)).to.be.true // nft is not burned
       });
     });
   });

@@ -87,17 +87,11 @@ contract Controller is Initializable {
         uint256 _vaultId,
         uint256 _amount,
         uint256 _withdrawAmount
-    ) external returns (uint256) {
+    ) external {
         _applyFunding();
         if (_amount > 0) _burnSqueeth(msg.sender, _vaultId, _amount);
         if (_withdrawAmount > 0) _withdrawCollateral(msg.sender, _vaultId, _withdrawAmount);
-        if (vaults[_vaultId].isEmpty()) {
-            _closeVault(_vaultId);
-            _vaultId = 0;
-        }
         _checkVault(_vaultId);
-
-        return _vaultId;
     }
 
     function liquidate(uint256 _vaultId, uint256 _debtAmount) external {
@@ -179,16 +173,6 @@ contract Controller is Initializable {
             operator: address(0)
         });
         emit OpenVault(vaultId);
-    }
-
-    /**
-     * remove vault data and burn corresponding NFT
-     */
-    function _closeVault(uint256 _vaultId) internal {
-        require(_canModifyVault(_vaultId, msg.sender), "not allowed");
-        vaultNFT.burnNFT(_vaultId);
-        delete vaults[_vaultId];
-        emit CloseVault(_vaultId);
     }
 
     /**
