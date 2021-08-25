@@ -182,12 +182,13 @@ describe("ShortHelper", function () {
         sqrtPriceLimitX96: 0,
       }
   
+      // add short helper as operator
+      await controller.connect(seller1).updateOperator(seller1VaultId,shortHelper.address, {gasPrice: 0})
+
       const nftBalanceBefore = await vaultNFT.balanceOf(seller1.address)
       const poolSqueethBefore = await squeeth.balanceOf(poolAddress)
       const sellerEthBefore = await provider.getBalance(seller1.address)
       const poolWethBefore = await weth.balanceOf(poolAddress)
-  
-      await vaultNFT.connect(seller1).approve(shortHelper.address, seller1VaultId, {gasPrice: 0})
 
       // buy and close
       await shortHelper.connect(seller1).closeShort(seller1VaultId, buyBackSqueethAmount, withdrawCollateralAmount, exactOutputParam, {
@@ -225,14 +226,14 @@ describe("ShortHelper", function () {
         amountOut: buyBackSqueethAmount,
         amountInMaximum,
         sqrtPriceLimitX96: 0,
-      }
-  
+      }    
+      // add short helper as operator
+      await controller.connect(seller2).updateOperator(seller2VaultId, shortHelper.address)
+
       const nftBalanceBefore = await vaultNFT.balanceOf(seller2.address)
       const poolSqueethBefore = await squeeth.balanceOf(poolAddress)
       const sellerEthBefore = await provider.getBalance(seller2.address)
       const poolWethBefore = await weth.balanceOf(poolAddress)
-  
-      await vaultNFT.connect(seller2).approve(shortHelper.address, seller2VaultId, {gasPrice: 0})
 
       // buy and close
       await shortHelper.connect(seller2).closeShort(seller2VaultId, buyBackSqueethAmount, withdrawCollateralAmount, exactOutputParam, {

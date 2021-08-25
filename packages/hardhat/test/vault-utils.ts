@@ -1,9 +1,11 @@
 import {BigNumber} from 'ethers'
 
-type Vault = [BigNumber, BigNumber, BigNumber] & {
+type Vault = [string, BigNumber, BigNumber, BigNumber] & {
+  operator: string
   NFTCollateralId: BigNumber;
   collateralAmount: BigNumber;
   shortAmount: BigNumber;
+  
 }
 
 export const isEmptyVault = (vault: Vault): boolean => {

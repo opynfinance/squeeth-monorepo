@@ -50,6 +50,7 @@ contract ShortHelper {
         uint128 _shortSqueethAmount,
         ISwapRouter.ExactInputSingleParams memory _exactInputParams
     ) external payable {
+        // vaultNFT.transferFrom(msg.sender, address(this), _vaultId);
         uint256 vaultId = controller.mint{value: msg.value}(_vaultId, _shortSqueethAmount);
 
         uint256 amountOut = router.exactInputSingle(_exactInputParams);
@@ -60,7 +61,8 @@ contract ShortHelper {
             payable(msg.sender).sendValue(amountOut);
         }
 
-        vaultNFT.transferFrom(address(this), msg.sender, vaultId);
+        // this is a newly open vault, transfer to the user.
+        if (_vaultId == 0) vaultNFT.transferFrom(address(this), msg.sender, vaultId);
     }
 
     /**
@@ -72,18 +74,13 @@ contract ShortHelper {
         uint128 _withdrawAmount,
         ISwapRouter.ExactOutputSingleParams memory _exactOutputParams
     ) external payable {
-        vaultNFT.transferFrom(msg.sender, address(this), _vaultId);
         // wrap eth to weth
         weth.deposit{value: msg.value}();
 
         // pay weth and get squeeth in return.
         uint256 amountIn = router.exactOutputSingle(_exactOutputParams);
 
-        uint256 vaultId = controller.burn(_vaultId, _burnSqueethAmount, _withdrawAmount);
-
-        if (vaultId != 0) {
-            vaultNFT.transferFrom(address(this), msg.sender, _vaultId);
-        }
+        controller.burn(_vaultId, _burnSqueethAmount, _withdrawAmount);
 
         // send back unused eth and withdrawn collateral
         weth.withdraw(msg.value - amountIn);

@@ -44,6 +44,7 @@ contract Controller is Initializable {
     event WithdrawCollateral(uint256 vaultId, uint128 amount, uint128 collateralId);
     event MintSqueeth(uint128 amount, uint256 vaultId);
     event BurnSqueeth(uint128 amount, uint256 vaultId);
+    event UpdateOperator(uint256 vaultId, address operator);
 
     /**
      * put down collateral and mint squeeth.
@@ -95,6 +96,15 @@ contract Controller is Initializable {
     }
 
     /**
+     * Authorize an address to modify the vault. Can be revoke by setting address to 0.
+     */
+    function updateOperator(uint256 _vaultId, address _operator) external {
+        require(_canModifyVault(_vaultId, msg.sender), "not allowed");
+        vaults[_vaultId].operator = _operator;
+        emit UpdateOperator(_vaultId, _operator);
+    }
+
+    /**
      * init controller with squeeth and short NFT address
      */
     function init(
@@ -136,12 +146,21 @@ contract Controller is Initializable {
      * Internal functions
      */
 
+    function _canModifyVault(uint256 _vaultId, address _account) internal view returns (bool) {
+        return vaultNFT.ownerOf(_vaultId) == _account || vaults[_vaultId].operator == _account;
+    }
+
     /**
      * create a new vault and bind it with a new NFT id.
      */
     function _openVault(address _recipient) internal returns (uint256 vaultId) {
         vaultId = vaultNFT.mintNFT(_recipient);
-        vaults[vaultId] = VaultLib.Vault({NFTCollateralId: 0, collateralAmount: 0, shortAmount: 0});
+        vaults[vaultId] = VaultLib.Vault({
+            NFTCollateralId: 0,
+            collateralAmount: 0,
+            shortAmount: 0,
+            operator: address(0)
+        });
         emit OpenVault(vaultId);
     }
 
@@ -149,7 +168,7 @@ contract Controller is Initializable {
      * remove vault data and burn corresponding NFT
      */
     function _closeVault(uint256 _vaultId) internal {
-        require(vaultNFT.ownerOf(_vaultId) == msg.sender, "not allowed");
+        require(_canModifyVault(_vaultId, msg.sender), "not allowed");
         vaultNFT.burnNFT(_vaultId);
         delete vaults[_vaultId];
         emit CloseVault(_vaultId);
@@ -171,7 +190,7 @@ contract Controller is Initializable {
         uint256 _vaultId,
         uint256 _amount
     ) internal {
-        require(vaultNFT.ownerOf(_vaultId) == _account, "not allowed");
+        require(_canModifyVault(_vaultId, _account), "not allowed");
         vaults[_vaultId].collateralAmount -= uint128(_amount);
         payable(_account).sendValue(_amount);
         emit WithdrawCollateral(_vaultId, uint128(_amount), 0);
@@ -185,7 +204,7 @@ contract Controller is Initializable {
         uint256 _vaultId,
         uint128 _amount
     ) internal {
-        require(vaultNFT.ownerOf(_vaultId) == _account, "not allowed");
+        require(_canModifyVault(_vaultId, _account), "not allowed");
         vaults[_vaultId].shortAmount += _amount;
         emit MintSqueeth(_amount, _vaultId);
 

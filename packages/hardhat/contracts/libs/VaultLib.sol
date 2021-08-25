@@ -8,6 +8,7 @@ library VaultLib {
      while we can also add a Uniswap V3 NFT in to the vault to reduce collateral amount.
     */
     struct Vault {
+        address operator;
         // address NFTCollateralAddress; // the uni v3 pool address, may not need this if we only support ETH / SQUEETH;
         uint128 NFTCollateralId; // the uni v3 pool NFT id
         uint128 collateralAmount;

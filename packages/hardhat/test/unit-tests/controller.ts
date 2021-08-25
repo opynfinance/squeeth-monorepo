@@ -249,5 +249,34 @@ describe("Controller", function () {
         expect(vaultBefore.shortAmount.add(mintAmount).eq(vaultAfter.shortAmount)).to.be.true
       })
     })
+
+    describe('Deposit and mint By operator', () => {
+      it('should add an operator', async () => {
+        await controller.connect(seller1).updateOperator(vaultId, random.address)
+        const vault = await controller.vaults(vaultId)
+        expect(vault.operator).to.be.eq(random.address)
+      })
+      it('should deposit and mint in the same tx', async() => {
+        // mint some other squeeth in vault 2.
+        const mintAmount = ethers.utils.parseUnits('0.2')
+        const collateralAmount = ethers.utils.parseUnits('2')
+
+        const controllerBalanceBefore = await provider.getBalance(controller.address)
+        const squeethBalanceBefore = await squeeth.balanceOf(random.address)
+        const vaultBefore = await controller.vaults(vaultId)
+
+        await controller.connect(random).mint(vaultId, mintAmount, {value: collateralAmount})
+
+        const controllerBalanceAfter = await provider.getBalance(controller.address)
+        const squeethBalanceAfter = await squeeth.balanceOf(random.address)
+        const vaultAfter = await controller.vaults(vaultId)
+
+        expect(controllerBalanceBefore.add(collateralAmount).eq(controllerBalanceAfter)).to.be.true
+        expect(squeethBalanceBefore.add(mintAmount).eq(squeethBalanceAfter)).to.be.true
+
+        expect(vaultBefore.collateralAmount.add(collateralAmount).eq(vaultAfter.collateralAmount)).to.be.true
+        expect(vaultBefore.shortAmount.add(mintAmount).eq(vaultAfter.shortAmount)).to.be.true
+      })
+    })
   })
 });
