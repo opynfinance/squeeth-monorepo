@@ -13,13 +13,6 @@ import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.s
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {VaultLib} from "../libs/VaultLib.sol";
 
-/// Errors
-error InvalidOracleAddress(address oracle);
-error InvalidEthUsdPoolAddress(address ethUSDPool);
-error InvalidwSqueethEthPoolAddress(address wSqueethEthPool);
-error InvalidSqueethAddress(address squeethAddress);
-error InvalidVaultManagerNftAddress(address vaultManagerNFTAddress);
-
 contract Controller is Initializable {
     using VaultLib for VaultLib.Vault;
     using Address for address payable;
@@ -136,11 +129,11 @@ contract Controller is Initializable {
         address _ethUsdPool,
         address _wSqueethEthPool
     ) public initializer {
-        if (_oracle == address(0)) revert InvalidOracleAddress({oracle: _oracle});
-        if (_vaultNFT == address(0)) revert InvalidVaultManagerNftAddress({vaultManagerNFTAddress: _vaultNFT});
-        if (_squeeth == address(0)) revert InvalidSqueethAddress({squeethAddress: _squeeth});
-        if (_ethUsdPool == address(0)) revert InvalidEthUsdPoolAddress({ethUSDPool: _ethUsdPool});
-        if (_wSqueethEthPool == address(0)) revert InvalidwSqueethEthPoolAddress({wSqueethEthPool: _wSqueethEthPool});
+        require(_oracle != address(0), "Invalid oracle address");
+        require(_vaultNFT != address(0), "Invalid vaultNFT address");
+        require(_squeeth != address(0), "Invalid squeeth address");
+        require(_ethUsdPool != address(0), "Invalid eth:usd pool address");
+        require(_wSqueethEthPool != address(0), "Invalid wsqueeth:usd pool address");
 
         oracle = IOracle(_oracle);
         vaultNFT = IVaultManagerNFT(_vaultNFT);

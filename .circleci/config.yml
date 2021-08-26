@@ -17,6 +17,9 @@ workflows:
       - unit-test-contracts:
           requires:
             - compile
+      - coverage:
+          requires:
+            - compile
       - contract-size:
           requires:
             - compile
