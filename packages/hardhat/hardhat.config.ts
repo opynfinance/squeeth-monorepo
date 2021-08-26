@@ -68,7 +68,9 @@ const config: HardhatUserConfig = {
   // (you will need to restart the `yarn run start` dev server after editing the .env)
 
   networks: {
-    hardhat: {},
+    hardhat: {
+      saveDeployments: false, // only used in cicd to test deployments
+    },
     localhost: {
       url: "http://localhost:8545",
       /*
