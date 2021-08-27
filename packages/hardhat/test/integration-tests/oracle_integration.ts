@@ -48,8 +48,8 @@ describe("Oracle Integration Test", function () {
   describe('Get TWAP right after setup', async( )=> {
     describe("TWAP for squeeth/eth", async () => {
       this.beforeEach(async () => {
-        // increase storage slot to store observations
-        await squeethPool.increaseObservationCardinalityNext(512);
+        await provider.send("evm_increaseTime", [10]) // go 10 seconds minutes
+        await provider.send("evm_mine", [])
       })
   
       it("fetch initial price", async () => {
@@ -68,12 +68,7 @@ describe("Oracle Integration Test", function () {
       })  
     })
   
-    describe("TWAP for eth/dai", async () => {
-      this.beforeEach(async () => {
-        // increase storage slot to store observations
-        await ethDaiPool.increaseObservationCardinalityNext(512);
-      })
-  
+    describe("TWAP for eth/dai", async () => {  
       it("fetch initial price", async () => {
         const price = await oracle.getTwaPrice(ethDaiPool.address, weth.address, dai.address, 1)
         expect(isSimilar(price.toString(), (startingPrice * 1e18).toString())).to.be.true

@@ -15,20 +15,28 @@ import {
 } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json'
 import { Contract } from "ethers";
 import { convertNormalPriceToSqrtX96Price } from '../calculator'
-
-import { Oracle, MockWSqueeth } from "../../typechain";
+import { isSimilar } from '../utils'
+import { Oracle, MockWSqueeth, OracleTester, WETH9 } from "../../typechain";
 
 describe("Oracle", function () {
-  const squeethPriceInETH = 2000; // can sell 1 squeeth = 2000 eth
-
+  const squeethPriceInETH = 2000; // can sell 1 squeeth for 2000 eth
+  const squeethPriceInETH1e18 = (squeethPriceInETH * 1e18).toString()
+  const provider = ethers.provider;
   let squeeth: MockWSqueeth;
   let oracle: Oracle;
-  let squeethPool: string
+  let positionManager: Contract
+  let oracleTester: OracleTester
+  let squeethPool: Contract
+  let deployer: string
+  // store list of timestamp that's the pool is touched. [0] = init time, [1] = first interaction ...
+  const interactionTimestamps: number[] = []
 
-  let weth: Contract
+  let weth: WETH9
 
   this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async() => {
-    const { deployer } = await getNamedAccounts();
+    const { deployer: _deployer } = await getNamedAccounts();
+    deployer = _deployer
+
     const { deploy } = deployments;
   
     await deploy("UniswapV3Factory", {
@@ -45,7 +53,7 @@ describe("Oracle", function () {
       from: deployer,
       log: true,
     });
-    weth = await ethers.getContract("WETH9", deployer);
+    weth = await ethers.getContract("WETH9", deployer) as WETH9;
   
     await deploy("SwapRouter", {
       from: deployer,
@@ -68,7 +76,7 @@ describe("Oracle", function () {
       },
       args: [uniswapFactory.address, weth.address, tokenDescriptorAddress]
     });
-    const positionManager = await ethers.getContract("NonfungibleTokenPositionManager", deployer);
+    positionManager = await ethers.getContract("NonfungibleTokenPositionManager", deployer);
 
     // Create ETH/SQUEETH Pool with positionManager
     squeeth = (await (await ethers.getContractFactory("MockWSqueeth")).deploy()) as MockWSqueeth;
@@ -83,29 +91,175 @@ describe("Oracle", function () {
     const token1 = isWethToken0 ? squeeth.address : weth.address
 
     // https://docs.uniswap.org/protocol/reference/periphery/base/PoolInitializer
-    await positionManager.createAndInitializePoolIfNecessary(
+    const res = await positionManager.createAndInitializePoolIfNecessary(
       token0,
       token1,
       3000, // fee = 0.3%
       sqrtX96Price
     )
 
-    squeethPool = await uniswapFactory.getPool(token0, token1, 3000)
+    // keep track of init block timestamp
+    const initBlockNumber = res.blockNumber
+    const block = await provider.getBlock(initBlockNumber)
+    // add init timestamp to array
+    interactionTimestamps.push(block.timestamp)
+
+    // set pool
+    const squeethPoolAddr = await uniswapFactory.getPool(token0, token1, 3000)
+    squeethPool = await ethers.getContractAt("IUniswapV3Pool", squeethPoolAddr);
 
     // deploy oracle
     oracle = (await (await ethers.getContractFactory("Oracle")).deploy()) as Oracle;
+
+    await deploy("OracleTester", { args: [oracle.address], from: deployer })
+    oracleTester = (await (await ethers.getContractFactory("OracleTester")).deploy(oracle.address)) as OracleTester;
+    
   })
 
-  describe("TWAP", async () => {
-    it("fetch initial price", async () => {
-      const price = new BigNumberJs((await oracle.getTwaPrice(squeethPool, squeeth.address, weth.address, 1)).toString())
+  describe("Fetch price before right after initialization", async () => {
+    it("should return initial price with period = 1", async () => {
+      const price = new BigNumberJs((await oracle.getTwaPrice(squeethPool.address, squeeth.address, weth.address, 1)).toString())
+      expect(isSimilar(price.toString(), squeethPriceInETH1e18)).to.be.true;
+    })
+    it('should be able to get TWAP since init time', async() => {
+      const price = new BigNumberJs((
+        await oracleTester.testGetTwapSince(interactionTimestamps[0], squeethPool.address, squeeth.address, weth.address))
+        .toString())
+      expect(isSimilar(price.toString(), squeethPriceInETH1e18)).to.be.true;
+    })
+    it('should be able to get TWAP since init time after time goes by', async() => {
+      await provider.send("evm_increaseTime", [50]) // go 50 seconds minutes
+      await provider.send("evm_mine", [])
+      const price = new BigNumberJs((
+        await oracleTester.testGetTwapSince(interactionTimestamps[0], squeethPool.address, squeeth.address, weth.address))
+        .toString())
+      expect(isSimilar(price.toString(), squeethPriceInETH1e18)).to.be.true;
+    })
+    it("should revert if trying to request twap since a time before initialization", async () => {
+      await expect(
+        oracleTester.testGetTwapSince(interactionTimestamps[0] - 1, squeethPool.address, squeeth.address, weth.address)
+      ).to.be.revertedWith("OLD");
+    })
+  })
+  
+  describe("Fetch price after touching the pool", async () => {
+    before('add liquidity to the pool', async() => {
+      const squeethAmount = 1
+      const wethAmount = squeethPriceInETH * squeethAmount
 
-      const expectedPrice = new BigNumberJs(squeethPriceInETH)
+      const liquiditySqueethAmount = ethers.utils.parseEther(squeethAmount.toString())
+      const liquidityWethAmount = ethers.utils.parseEther(wethAmount.toString())
 
-      expect(price.div(1e18).toFixed(0)).to.be.eq(
-        expectedPrice.toFixed(0),
-        "initial pool price mismatch"
-      );
-    })    
+      await squeeth.mint(deployer, liquiditySqueethAmount)
+      await weth.deposit({value: liquidityWethAmount})
+
+      await weth.approve(positionManager.address, ethers.constants.MaxUint256)
+      await squeeth.approve(positionManager.address, ethers.constants.MaxUint256)
+      
+      const isWethToken0 = parseInt(weth.address, 16) < parseInt(squeeth.address, 16)
+      const token0 = isWethToken0 ? weth.address : squeeth.address
+      const token1 = isWethToken0 ? squeeth.address : weth.address
+
+      const mintParam = {
+        token0,
+        token1,
+        fee: 3000,
+        tickLower: -887220,// int24 min tick used when selecting full range
+        tickUpper: 887220,// int24 max tick used when selecting full range
+        amount0Desired: isWethToken0 ? liquidityWethAmount : liquiditySqueethAmount,
+        amount1Desired: isWethToken0 ? liquiditySqueethAmount : liquidityWethAmount,
+        amount0Min: 0,
+        amount1Min: 0,
+        recipient: deployer,// address
+        deadline: Math.floor(Date.now() / 1000 + 86400),// uint256
+      }
+      const res = await positionManager.mint(mintParam)
+      const initBlockNumber = res.blockNumber
+      const block = await provider.getBlock(initBlockNumber)
+      interactionTimestamps.push(block.timestamp)
+    })
+    it('should revert if requesting TWAP from init timestamp', async() => {
+      await expect(
+        oracleTester.testGetTwapSince(interactionTimestamps[0], squeethPool.address, squeeth.address, weth.address)
+      ).to.be.revertedWith("OLD");
+    })
+    it('should be able to get TWAP since last touch', async() => {
+      await provider.send("evm_increaseTime", [50]) // go 50 seconds minutes
+      await provider.send("evm_mine", [])
+      const price = new BigNumberJs((
+        await oracleTester.testGetTwapSince(interactionTimestamps[1], squeethPool.address, squeeth.address, weth.address))
+        .toString())
+      expect(isSimilar(price.toString(), squeethPriceInETH1e18)).to.be.true;
+    })
+    it("should revert if trying to request twap since a time before last touch", async () => {
+      await expect(
+        oracleTester.testGetTwapSince(interactionTimestamps[1] - 1, squeethPool.address, squeeth.address, weth.address)
+      ).to.be.revertedWith("OLD");
+    })
+  })
+  
+  describe("Fetch price after adding storage slot", async () => {
+    before('increase storage slot', async() => {
+      // increase storage slot to 2
+      await squeethPool.increaseObservationCardinalityNext(2)
+    })
+    before('add liquidity to the pool', async() => {
+      const squeethAmount = 1
+      const wethAmount = squeethPriceInETH * squeethAmount
+      const liquiditySqueethAmount = ethers.utils.parseEther(squeethAmount.toString())
+      const liquidityWethAmount = ethers.utils.parseEther(wethAmount.toString())
+      await squeeth.mint(deployer, liquiditySqueethAmount)
+      await weth.deposit({value: liquidityWethAmount})
+
+      const isWethToken0 = parseInt(weth.address, 16) < parseInt(squeeth.address, 16)
+      const token0 = isWethToken0 ? weth.address : squeeth.address
+      const token1 = isWethToken0 ? squeeth.address : weth.address
+
+      const mintParam = {
+        token0,
+        token1,
+        fee: 3000,
+        tickLower: -887220,// int24 min tick used when selecting full range
+        tickUpper: 887220,// int24 max tick used when selecting full range
+        amount0Desired: isWethToken0 ? liquidityWethAmount : liquiditySqueethAmount,
+        amount1Desired: isWethToken0 ? liquiditySqueethAmount : liquidityWethAmount,
+        amount0Min: 0,
+        amount1Min: 0,
+        recipient: deployer,// address
+        deadline: Math.floor(Date.now() / 1000 + 86400),// uint256
+      }
+      const res = await positionManager.mint(mintParam)
+      const initBlockNumber = res.blockNumber
+      const block = await provider.getBlock(initBlockNumber)
+      
+      // interactionTimestamps[2] = second touch timestamp
+      interactionTimestamps.push(block.timestamp)
+    })
+    before('increase timestamp', async () => {
+      await provider.send("evm_increaseTime", [50]) // go 50 seconds minutes
+      await provider.send("evm_mine", [])
+    })
+    it('should revert if requesting TWAP from init timestamp', async() => {
+      await expect(
+        oracleTester.testGetTwapSince(interactionTimestamps[0], squeethPool.address, squeeth.address, weth.address)
+      ).to.be.revertedWith("OLD");
+    })
+    it('should be able to get TWAP since first touch', async() => {
+      const price = new BigNumberJs((
+        await oracleTester.testGetTwapSince(interactionTimestamps[1], squeethPool.address, squeeth.address, weth.address))
+        .toString())
+      expect(isSimilar(price.toString(), squeethPriceInETH1e18)).to.be.true;
+    })
+    it("should revert if trying to request twap since a time before first touch", async () => {
+      await expect(
+        oracleTester.testGetTwapSince(interactionTimestamps[1] - 1, squeethPool.address, squeeth.address, weth.address)
+      ).to.be.revertedWith("OLD");
+    })
+    it('should be able to get TWAP since second touch', async() => {
+      const price = new BigNumberJs((
+        await oracleTester.testGetTwapSince(interactionTimestamps[2], squeethPool.address, squeeth.address, weth.address))
+        .toString())
+      expect(isSimilar(price.toString(), squeethPriceInETH1e18)).to.be.true;
+    })
   })
 })
