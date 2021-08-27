@@ -3,37 +3,31 @@
 // uniswap Library only works under 0.7.6
 pragma solidity =0.7.6;
 
-import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+// import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {OracleLibrary} from "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol";
 
 contract Oracle {
     using OracleLibrary for address;
 
-    function getTwaPrice(address _pool, uint32 _period) external view returns (uint256) {
-        return _fetchTwap(_pool, _period, uint256(1e18));
+    function getTwaPrice(
+        address _pool,
+        address _base,
+        address _quote,
+        uint32 _period
+    ) external view returns (uint256) {
+        return _fetchTwap(_pool, _base, _quote, _period, uint256(1e18));
     }
 
     function _fetchTwap(
         address _pool,
+        address _base,
+        address _quote,
         uint32 _twapPeriod,
         uint256 _amountIn
     ) internal view returns (uint256 amountOut) {
-        // todo: check that the pool is up for at least _twapPeriod seconds. Otherwise the consult will revert.
+        int24 twapTick = OracleLibrary.consult(_pool, _twapPeriod);
 
-        // if the pool is not initialized, use the initial price of squeeth
-        // uint128 liquidity = IUniswapV3Pool(_pool).liquidity();
-        // if (liquidity == 0) {
-        //     _twapPeriod = 1;
-        // }
-        int24 twapTick = OracleLibrary.consult(_pool, 1);
-
-        return
-            OracleLibrary.getQuoteAtTick(
-                twapTick,
-                toUint128(_amountIn),
-                IUniswapV3Pool(_pool).token0(),
-                IUniswapV3Pool(_pool).token1()
-            );
+        return OracleLibrary.getQuoteAtTick(twapTick, toUint128(_amountIn), _base, _quote);
     }
 
     /// @notice Cast a uint256 to a uint128, revert on overflow

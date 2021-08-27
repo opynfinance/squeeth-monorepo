@@ -73,7 +73,7 @@ export const deployUniswapV3 = async() => {
  * @param tokenB 
  * @param positionManager 
  * @param univ3Factory 
- * @returns 
+ * @returns {Contract}
  */
 export const createUniPool = async(
   tokenBPriceInA: number, 
@@ -81,7 +81,7 @@ export const createUniPool = async(
   tokenB: Contract,
   positionManager: Contract,
   univ3Factory: Contract
-) => {
+): Promise<Contract> => {
   const isTokenAToken0 = parseInt(tokenA.address, 16) < parseInt(tokenB.address, 16)
 
   const sqrtX96Price = isTokenAToken0 
@@ -92,7 +92,9 @@ export const createUniPool = async(
   const token1Addr = isTokenAToken0 ? tokenB.address : tokenA.address
 
   const poolAddrFirstTry = await univ3Factory.getPool(token0Addr, token1Addr, 3000)
-  if (poolAddrFirstTry !== ethers.constants.AddressZero) return poolAddrFirstTry
+  if (poolAddrFirstTry !== ethers.constants.AddressZero) {
+    return ethers.getContractAt("IUniswapV3Pool", poolAddrFirstTry);
+  }
 
   await positionManager.createAndInitializePoolIfNecessary(
     token0Addr,
@@ -106,8 +108,9 @@ export const createUniPool = async(
 
   // init storage slot
   await pool.increaseObservationCardinalityNext(512) // anything more than 512 will run out of gas
+  await pool.increaseObservationCardinalityNext(512) // anything more than 512 will run out of gas
 
-  return poolAddr
+  return pool
 }
 
 /**
@@ -152,18 +155,27 @@ export const getPoolAddress = async (
 
   // 1 squeeth is 3000 eth
   const squeethPriceInEth = wsqueethEthPrice || 3000
-  const wsqueethEthPool = await createUniPool(squeethPriceInEth, weth, squeeth, positionManager, uniswapFactory) as string
+  const wsqueethEthPool = await createUniPool(squeethPriceInEth, weth, squeeth, positionManager, uniswapFactory) as Contract
   // 1 weth is 3000 dai
   const ethPriceInDai = ethDaiPrice || 3000
-  const ethUsdPool = await createUniPool(ethPriceInDai, dai, weth, positionManager, uniswapFactory) as string
+  const ethUsdPool = await createUniPool(ethPriceInDai, dai, weth, positionManager, uniswapFactory) as Contract
 
   if (res.newlyDeployed) {
-    await controller.init(oracle.address, vaultNft.address, squeeth.address, ethUsdPool, wsqueethEthPool, { from: deployer });
+    await controller.init(
+      oracle.address, 
+      vaultNft.address, 
+      squeeth.address,
+      weth.address, 
+      dai.address, 
+      ethUsdPool.address, 
+      wsqueethEthPool.address, 
+      { from: deployer }
+    );
     await squeeth.init(controller.address, { from: deployer });
     await vaultNft.init(controller.address, { from: deployer });
   }
   
-  return { controller, squeeth, vaultNft, ethUsdPool, wsqueethEthPool }
+  return { controller, squeeth, vaultNft, ethUsdPool, wsqueethEthPool, dai }
 }
 
 export const addLiquidity = async(

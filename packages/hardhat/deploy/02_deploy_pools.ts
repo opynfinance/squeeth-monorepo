@@ -27,8 +27,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const ethPriceInDai = 3000
   const ethDaiPool = await createUniPool(ethPriceInDai, dai, weth9, positionManager, uniswapFactory)
 
-  console.log(`SQU/ETH Pool created 🐑. Address: ${squeethWethPool}`)
-  console.log(`ETH/USD Pool created 🐑. Address: ${ethDaiPool}`)
+  console.log(`SQU/ETH Pool created 🐑. Address: ${squeethWethPool.address}`)
+  console.log(`ETH/USD Pool created 🐑. Address: ${ethDaiPool.address}`)
 
 }
 

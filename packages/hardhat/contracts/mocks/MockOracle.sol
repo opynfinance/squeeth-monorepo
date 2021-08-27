@@ -13,7 +13,12 @@ contract MockOracle {
         poolPeriodPrice[_pool] = _price;
     }
 
-    function getTwaPrice(address _pool, uint32 _period) external view returns (uint256) {
+    function getTwaPrice(
+        address _pool,
+        address _base,
+        address _quote,
+        uint32 _period
+    ) external view returns (uint256) {
         return poolPeriodPrice[_pool];
     }
 }

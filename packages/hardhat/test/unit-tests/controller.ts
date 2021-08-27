@@ -61,7 +61,7 @@ describe("Controller", function () {
 
   describe("Initialization", async () => {
     it("Should be able to init contract", async () => {
-      await controller.init(oracle.address, shortNFT.address, squeeth.address, ethUSDPool.address, squeethEthPool.address);
+      await controller.init(oracle.address, shortNFT.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address);
       const squeethAddr = await controller.squeeth();
       const nftAddr = await controller.vaultNFT();
       expect(squeethAddr).to.be.eq(
@@ -73,7 +73,7 @@ describe("Controller", function () {
 
     it("Should revert when init is called again", async () => {
       await expect(
-        controller.init(oracle.address, shortNFT.address, squeeth.address, ethUSDPool.address, squeethEthPool.address)
+        controller.init(oracle.address, shortNFT.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address)
       ).to.be.revertedWith("Initializable: contract is already initialized");
     });
   });

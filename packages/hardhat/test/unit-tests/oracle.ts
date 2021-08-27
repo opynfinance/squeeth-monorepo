@@ -13,6 +13,7 @@ import {
   abi as FACTORY_ABI,
   bytecode as FACTORY_BYTECODE,
 } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json'
+import { Contract } from "ethers";
 import { convertNormalPriceToSqrtX96Price } from '../calculator'
 
 import { Oracle, MockWSqueeth } from "../../typechain";
@@ -23,6 +24,8 @@ describe("Oracle", function () {
   let squeeth: MockWSqueeth;
   let oracle: Oracle;
   let squeethPool: string
+
+  let weth: Contract
 
   this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async() => {
     const { deployer } = await getNamedAccounts();
@@ -42,7 +45,7 @@ describe("Oracle", function () {
       from: deployer,
       log: true,
     });
-    const weth = await ethers.getContract("WETH9", deployer);
+    weth = await ethers.getContract("WETH9", deployer);
   
     await deploy("SwapRouter", {
       from: deployer,
@@ -95,7 +98,7 @@ describe("Oracle", function () {
 
   describe("TWAP", async () => {
     it("fetch initial price", async () => {
-      const price = new BigNumberJs((await oracle.getTwaPrice(squeethPool, 1)).toString())
+      const price = new BigNumberJs((await oracle.getTwaPrice(squeethPool, squeeth.address, weth.address, 1)).toString())
 
       const expectedPrice = new BigNumberJs(squeethPriceInETH)
 

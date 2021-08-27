@@ -19,11 +19,15 @@ contract Controller is Initializable {
 
     uint256 internal constant secInDay = 86400;
 
+    address public weth;
+    address public dai;
+
     address public ethUSDPool;
     address public wSqueethEthPool;
 
     uint256 public normalizationFactor;
     uint256 public lastFundingUpdateTimestamp;
+    uint256 public initializationTimestamp;
 
     /// @dev The token ID vault data
     mapping(uint256 => VaultLib.Vault) public vaults;
@@ -90,7 +94,7 @@ contract Controller is Initializable {
     function liquidate(uint256 _vaultId, uint256 _debtAmount) external {
         _applyFunding();
 
-        require(!isVaultSafe(vaults[_vaultId]), "Can not liquidate");
+        require(!_isVaultSafe(vaults[_vaultId]), "Can not liquidate");
 
         uint256 indexPrice = _getIndex(600); // get index price using TWAP furing last 10min
         uint256 collateralToSell = (indexPrice * _debtAmount) / 1e18;
@@ -126,6 +130,8 @@ contract Controller is Initializable {
         address _oracle,
         address _vaultNFT,
         address _squeeth,
+        address _weth,
+        address _dai,
         address _ethUsdPool,
         address _wSqueethEthPool
     ) public initializer {
@@ -142,8 +148,12 @@ contract Controller is Initializable {
         ethUSDPool = _ethUsdPool;
         wSqueethEthPool = _wSqueethEthPool;
 
+        weth = _weth;
+        dai = _dai;
+
         normalizationFactor = 1e18;
         lastFundingUpdateTimestamp = block.timestamp;
+        initializationTimestamp = block.timestamp;
     }
 
     /**
@@ -236,7 +246,7 @@ contract Controller is Initializable {
     function _applyFunding() internal {
         uint32 period = uint32(block.timestamp - lastFundingUpdateTimestamp);
 
-        if (period == 0) return;
+        if (period == 0 || (block.timestamp - initializationTimestamp < 600)) return;
 
         uint256 mark = _getDenormalizedMark(period);
         uint256 index = _getIndex(period);
@@ -255,29 +265,35 @@ contract Controller is Initializable {
 
         VaultLib.Vault memory vault = vaults[_vaultId];
 
-        require(isVaultSafe(vault), "Invalid state");
+        require(_isVaultSafe(vault), "Invalid state");
     }
 
-    function isVaultSafe(VaultLib.Vault memory _vault) internal view returns (bool) {
-        uint256 ethUsdPrice = _getTwap(ethUSDPool, 600);
+    function _isVaultSafe(VaultLib.Vault memory _vault) internal view returns (bool) {
+        uint32 period = block.timestamp - initializationTimestamp < 600 ? 1 : 600;
+        uint256 ethUsdPrice = _getTwap(ethUSDPool, weth, dai, period);
 
         return VaultLib.isProperlyCollateralized(_vault, normalizationFactor, ethUsdPrice);
     }
 
     function _getIndex(uint32 _period) internal view returns (uint256) {
-        uint256 ethUSDPrice = _getTwap(ethUSDPool, _period);
+        uint256 ethUSDPrice = _getTwap(ethUSDPool, weth, dai, _period);
         return (ethUSDPrice * ethUSDPrice) / 1e18;
     }
 
     function _getDenormalizedMark(uint32 _period) public view returns (uint256) {
-        uint256 ethUSDPrice = _getTwap(ethUSDPool, _period);
-        uint256 squeethEthPrice = _getTwap(wSqueethEthPool, _period);
+        uint256 ethUSDPrice = _getTwap(ethUSDPool, weth, dai, _period);
+        uint256 squeethEthPrice = _getTwap(wSqueethEthPool, address(squeeth), weth, _period);
 
         return (squeethEthPrice * ethUSDPrice) / normalizationFactor;
     }
 
-    function _getTwap(address _pool, uint32 _period) internal view returns (uint256) {
-        uint256 twap = oracle.getTwaPrice(_pool, _period);
+    function _getTwap(
+        address _pool,
+        address _base,
+        address _quote,
+        uint32 _period
+    ) internal view returns (uint256) {
+        uint256 twap = oracle.getTwaPrice(_pool, _base, _quote, _period);
         require(twap != 0, "WAP WAP WAP");
 
         return twap;

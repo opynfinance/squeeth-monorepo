@@ -22,7 +22,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const ethDaiPool = await getPoolAddress(weth9, dai, uniswapFactory)
   const squeethEthPool = await getPoolAddress(weth9, wsqueeth, uniswapFactory)
 
-  await controller.init(oracle.address, vaultNft.address, wsqueeth.address, ethDaiPool, squeethEthPool, { from: deployer });
+  await controller.init(oracle.address, vaultNft.address, wsqueeth.address, weth9.address, dai.address,  ethDaiPool, squeethEthPool, { from: deployer });
   console.log(`Controller init done 🥝`);
 
   await wsqueeth.init(controller.address, { from: deployer });

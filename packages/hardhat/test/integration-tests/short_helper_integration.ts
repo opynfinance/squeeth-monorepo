@@ -7,7 +7,7 @@ import { Controller, VaultNFTManager, WSqueeth, ShortHelper, WETH9 } from "../..
 
 import { deployUniswapV3, deploySqueethCoreContracts, addLiquidity } from '../setup'
 
-describe("ShortHelper", function () {
+describe("ShortHelper Integration Test", function () {
   let shortHelper: ShortHelper
   // peer contracts
   let squeeth: WSqueeth
@@ -41,11 +41,11 @@ describe("ShortHelper", function () {
 
     const { deployer } = await getNamedAccounts();
     
-    // init uniswap pool: price = 0.3, seed with 5 squeeth (20 eth as collateral)
+    // init uniswap pool: price = 3000, seed with 0.005 squeeth (30 eth as collateral)
     await addLiquidity(
-      0.3, 
-      '5',
-      '20', 
+      3000, 
+      '0.005',
+      '30', 
       deployer, 
       coreDeployments.squeeth, 
       uniDeployments.weth, 
@@ -60,7 +60,7 @@ describe("ShortHelper", function () {
     squeeth = coreDeployments.squeeth
     vaultNFT = coreDeployments.vaultNft
     controller = coreDeployments.controller
-    poolAddress = coreDeployments.wsqueethEthPool
+    poolAddress = coreDeployments.wsqueethEthPool.address    
   })
 
   describe('Basic settings', async() => {
@@ -85,9 +85,8 @@ describe("ShortHelper", function () {
 
   describe('Create short position', async() => {
     it ('should open new vault and sell squeeth, receive weth in return', async () => {
-      const squeethAmount = ethers.utils.parseEther('0.1')
-      const collateralAmount = ethers.utils.parseEther('2')
-  
+      const squeethAmount = ethers.utils.parseEther('0.001')
+      const collateralAmount = ethers.utils.parseEther('20')
       const exactInputParam = {
         tokenIn: squeeth.address,
         tokenOut: weth.address,
@@ -103,9 +102,7 @@ describe("ShortHelper", function () {
       const poolSqueethBefore = await squeeth.balanceOf(poolAddress)
       const sellerWethBefore = await weth.balanceOf(seller1.address)
       const poolWethBefore = await weth.balanceOf(poolAddress)
-
       seller1VaultId = (await vaultNFT.nextId()).toNumber()
-  
       // mint and trade
       await shortHelper.connect(seller1).openShort(0, squeethAmount, exactInputParam, {value: collateralAmount} )
   
@@ -120,8 +117,8 @@ describe("ShortHelper", function () {
     })
 
     it ('should open new vault and sell squeeth, receive eth at the end', async () => {
-      const squeethAmount = ethers.utils.parseEther('0.1')
-      const collateralAmount = ethers.utils.parseEther('2')
+      const squeethAmount = ethers.utils.parseEther('0.001')
+      const collateralAmount = ethers.utils.parseEther('20')
   
       const exactInputParam = {
         tokenIn: squeeth.address,
@@ -165,11 +162,11 @@ describe("ShortHelper", function () {
   describe('Close short position', async() => {
 
     it ('should partially close a short position and get back eth', async () => {
-      const buyBackSqueethAmount = ethers.utils.parseEther('0.1')
-      const withdrawCollateralAmount = ethers.utils.parseEther('1')
+      const buyBackSqueethAmount = ethers.utils.parseEther('0.0005')
+      const withdrawCollateralAmount = ethers.utils.parseEther('10')
 
       // max amount to buy back 0.1 squeeth
-      const amountInMaximum = ethers.utils.parseEther('0.5')
+      const amountInMaximum = ethers.utils.parseEther('5')
   
       const exactOutputParam = {
         tokenIn: weth.address,
@@ -215,7 +212,7 @@ describe("ShortHelper", function () {
       const withdrawCollateralAmount = vaultToClose.collateralAmount
 
       // max amount to buy back 0.1 squeeth
-      const amountInMaximum = ethers.utils.parseEther('0.5')
+      const amountInMaximum = ethers.utils.parseEther('10')
   
       const exactOutputParam = {
         tokenIn: weth.address,
