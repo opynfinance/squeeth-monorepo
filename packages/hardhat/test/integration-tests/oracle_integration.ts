@@ -1,17 +1,20 @@
-import { ethers } from "hardhat"
+import { ethers, getNamedAccounts } from "hardhat"
 import { expect } from "chai";
 import { Contract } from "ethers";
-import { Oracle } from "../../typechain";
+import { Controller, Oracle, WETH9, WSqueeth } from "../../typechain";
 import { isSimilar } from '../utils'
-import { deployUniswapV3, deploySqueethCoreContracts } from '../setup'
+import { deployUniswapV3, deploySqueethCoreContracts, addLiquidity } from '../setup'
 
 describe("Oracle Integration Test", function () {
   let oracle: Oracle;
   let dai: Contract
-  let weth: Contract
-  let squeeth: Contract
+  let weth: WETH9
+  let squeeth: WSqueeth
   let squeethPool: Contract
   let ethDaiPool: Contract
+  let positionManager: Contract
+  let controller: Controller
+  let uniFactory: Contract
   const startingPrice = 3000
   const provider = ethers.provider
 
@@ -31,7 +34,9 @@ describe("Oracle Integration Test", function () {
     weth = uniDeployments.weth
     dai = coreDeployments.dai
     squeeth = coreDeployments.squeeth
-    
+    positionManager = uniDeployments.positionManager
+    uniFactory = uniDeployments.uniswapFactory
+    controller = coreDeployments.controller
 
     squeethPool = coreDeployments.wsqueethEthPool
     ethDaiPool = coreDeployments.ethUsdPool
@@ -97,5 +102,17 @@ describe("Oracle Integration Test", function () {
       const price = await oracle.getTwaPrice(ethDaiPool.address, weth.address, dai.address, 600)
       expect(isSimilar(price.toString(), (startingPrice * 1e18).toString())).to.be.true
     })  
+  })
+
+  describe('Adding liquidity mess up things', async() => {
+    it('add liquidity', async() => {
+      const { deployer } = await getNamedAccounts();
+      
+      await addLiquidity(3000, '0.001', '10', deployer, squeeth, weth, positionManager, controller, uniFactory)
+    })
+    it("fetch squeeth twap for last 10 mins", async () => {
+      const price = await oracle.getTwaPrice(squeethPool.address, squeeth.address, weth.address, 605)
+      expect(isSimilar(price.toString(), (startingPrice * 1e18).toString())).to.be.true
+    })
   })
 })

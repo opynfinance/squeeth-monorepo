@@ -6,6 +6,7 @@ import {IWSqueeth} from "../interfaces/IWSqueeth.sol";
 import {IVaultManagerNFT} from "../interfaces/IVaultManagerNFT.sol";
 import {IOracle} from "../interfaces/IOracle.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
@@ -27,7 +28,6 @@ contract Controller is Initializable {
 
     uint256 public normalizationFactor;
     uint256 public lastFundingUpdateTimestamp;
-    uint256 public initializationTimestamp;
 
     /// @dev The token ID vault data
     mapping(uint256 => VaultLib.Vault) public vaults;
@@ -153,7 +153,6 @@ contract Controller is Initializable {
 
         normalizationFactor = 1e18;
         lastFundingUpdateTimestamp = block.timestamp;
-        initializationTimestamp = block.timestamp;
     }
 
     /**
@@ -244,17 +243,16 @@ contract Controller is Initializable {
      * Update the normalized factor as a way to pay funding.
      */
     function _applyFunding() internal {
-        uint32 period = uint32(block.timestamp - lastFundingUpdateTimestamp);
+        // todo: fix period
+        uint32 periodForFunding = uint32(block.timestamp - lastFundingUpdateTimestamp);
+        uint32 periodForOracle = 1;
 
-        if (period == 0 || (block.timestamp - initializationTimestamp < 600)) return;
-
-        uint256 mark = _getDenormalizedMark(period);
-        uint256 index = _getIndex(period);
-        uint256 rFunding = period / secInDay;
+        uint256 mark = _getDenormalizedMark(periodForOracle);
+        uint256 index = _getIndex(periodForOracle);
+        uint256 rFunding = periodForFunding / secInDay;
         uint256 newNormalizationFactor = (mark * 1e18) / ((1 + rFunding) * mark - index * rFunding);
 
         normalizationFactor = (normalizationFactor * newNormalizationFactor) / 1e18;
-        lastFundingUpdateTimestamp = block.timestamp;
     }
 
     /**
@@ -269,7 +267,9 @@ contract Controller is Initializable {
     }
 
     function _isVaultSafe(VaultLib.Vault memory _vault) internal view returns (bool) {
-        uint32 period = block.timestamp - initializationTimestamp < 600 ? 1 : 600;
+        // todo: make sure the period here is safe to request in oracle.
+        // need to be shorter than the max that oracle can handle
+        uint32 period = 1;
         uint256 ethUsdPrice = _getTwap(ethUSDPool, weth, dai, period);
 
         return VaultLib.isProperlyCollateralized(_vault, normalizationFactor, ethUsdPrice);

@@ -1,6 +1,7 @@
 import { task } from "hardhat/config";
 import "@nomiclabs/hardhat-waffle";
 import { getWETH } from './utils'
+
 // Example execution
 /**
  npx hardhat addLiquidity
@@ -9,6 +10,7 @@ task("addLiquidity", "Add liquidity to pool")
   .setAction(async (_, hre) => {
 
   const { getNamedAccounts, ethers, network } = hre;
+  
   const { deployer } = await getNamedAccounts();
   const positionManager = await ethers.getContract("NonfungibleTokenPositionManager", deployer);
 
@@ -16,9 +18,13 @@ task("addLiquidity", "Add liquidity to pool")
   const squeeth = await ethers.getContract("WSqueeth", deployer);
   const weth = await getWETH(ethers, deployer, network.name)
 
-  const initLiquiditySqueethAmount = '0.0005'
-  const collateralAmount = '3'
+  const initLiquiditySqueethAmount = '0.0001'
+  const collateralAmount = '1'
   const squeethPriceInETH = 3000
+
+  // const initLiquiditySqueethAmount = '0.01'
+  // const collateralAmount = '60'
+  // const squeethPriceInETH = 3000
 
   const isWethToken0 = parseInt(weth.address, 16) < parseInt(squeeth.address, 16)
   const token0 = isWethToken0 ? weth.address : squeeth.address

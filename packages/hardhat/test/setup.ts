@@ -102,12 +102,18 @@ export const createUniPool = async(
     3000, // fee = 0.3%
     sqrtX96Price
   )
-  const poolAddr = await univ3Factory.getPool(token0Addr, token1Addr, 3000)
+
+  // avoid poolAddr being address(0) because requested too fast after last transaction. 
+  let poolAddr: string 
+  while(true) {
+    await delay(5000)
+    poolAddr = await univ3Factory.getPool(token0Addr, token1Addr, 3000)
+    if (poolAddr !== ethers.constants.AddressZero) break;
+  }
 
   const pool = await ethers.getContractAt("IUniswapV3Pool", poolAddr);
 
   // init storage slot
-  await pool.increaseObservationCardinalityNext(512) // anything more than 512 will run out of gas
   await pool.increaseObservationCardinalityNext(512) // anything more than 512 will run out of gas
 
   return pool
@@ -233,4 +239,8 @@ export const addLiquidity = async(
 
     const pool = await univ3Factory.getPool(token0, token1, 3000)
     return pool
+}
+
+function delay(ms: number) {
+  return new Promise( resolve => setTimeout(resolve, ms) );
 }
