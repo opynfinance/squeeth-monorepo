@@ -1,5 +1,7 @@
+import { Tooltip } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Typography from '@material-ui/core/Typography'
+import InfoIcon from '@material-ui/icons/InfoOutlined'
 import React from 'react'
 
 const useStyles = makeStyles((theme) =>
@@ -11,23 +13,46 @@ const useStyles = makeStyles((theme) =>
       alignItems: 'center',
     },
     txLabel: {
-      fontSize: '14px',
+      fontSize: '.9rem',
       color: theme.palette.text.secondary,
+      display: 'flex',
+      alignItems: 'center',
     },
     txUnit: {
       fontSize: '12px',
       color: theme.palette.text.secondary,
       marginLeft: theme.spacing(1),
     },
+    txLabelDiv: {
+      display: 'flex',
+      alignItems: 'center',
+    },
+    infoIcon: {
+      fontSize: '1rem',
+      marginLeft: theme.spacing(0.5),
+      marginTop: '2px',
+    },
   }),
 )
 
-const TradeInfoItem: React.FC<{ value?: string | number; unit: string; label: string }> = ({ value, unit, label }) => {
+const TradeInfoItem: React.FC<{ value?: string | number; unit: string; label: string; tooltip?: string }> = ({
+  value,
+  unit,
+  label,
+  tooltip,
+}) => {
   const classes = useStyles()
 
   return (
     <div className={classes.txItem}>
-      <Typography className={classes.txLabel}>{label}</Typography>
+      <Typography variant="body1" className={classes.txLabel}>
+        {label}
+        {tooltip ? (
+          <Tooltip title={tooltip}>
+            <InfoIcon className={classes.infoIcon} />
+          </Tooltip>
+        ) : null}
+      </Typography>
       <div>
         <Typography component="span">{value}</Typography>
         <Typography component="span" variant="caption" className={classes.txUnit}>

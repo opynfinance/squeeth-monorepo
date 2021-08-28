@@ -323,11 +323,7 @@ export default function Vault() {
   }, [ethPrices, collateral, amount, vol])
 
   const depositAndShort = () => {
-    if (vaultId && !isVaultApproved) {
-      updateOperator(vaultId, shortHelper).then(() => setIsVaultApproved(true))
-    } else {
-      openShort(vaultId, new BigNumber(amount), vault)
-    }
+    console.log('Deposit short')
   }
 
   const TxValue: React.FC<{ value: string | number; label: string }> = ({ value, label }) => {
@@ -488,35 +484,6 @@ export default function Vault() {
               <Typography>WETH Balance</Typography>
               <VaultValue value={wethBal.toFixed(2)} label="WETH" />
             </div>
-          </Card>
-          <Card className={classes.innerCard} style={{ marginTop: '8px' }}>
-            {shortVaults?.length ? (
-              <>
-                <Typography className={classes.cardTitle} variant="body1">
-                  Vaults
-                </Typography>
-                <div className={classes.txItem}>
-                  <Typography>Id</Typography>
-                  <Typography>Collateral</Typography>
-                  <Typography>Amount</Typography>
-                  <Typography>Buyback</Typography>
-                </div>
-                {shortVaults?.map((vault) => (
-                  <div className={classes.txItem} key={vault.id}>
-                    <Typography>{vault.id}</Typography>
-                    <TxValue value={vault.collateralAmount.toFixed(2)} label="ETH" />
-                    <TxValue value={vault.shortAmount.toFixed(2)} label="SQE" />
-                    <IconButton aria-label="Burn and withdraw" onClick={() => closeShort(vault.id, vault.shortAmount)}>
-                      <WhatshotIcon color="error" />
-                    </IconButton>
-                  </div>
-                ))}
-              </>
-            ) : (
-              <Typography className={classes.cardTitle} variant="body1">
-                No vaults
-              </Typography>
-            )}
           </Card>
         </div>
       </div>

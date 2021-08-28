@@ -1,7 +1,7 @@
-import { Button, createStyles, InputAdornment, makeStyles, TextField, Tooltip, Typography } from '@material-ui/core'
+import { createStyles, InputAdornment, makeStyles, TextField, Tooltip, Typography } from '@material-ui/core'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 import { useWorldContext } from '../../context/world'
 import { useUserAllowance } from '../../hooks/contracts/useAllowance'
@@ -11,7 +11,7 @@ import { useWeth } from '../../hooks/contracts/useWeth'
 import { useAddresses } from '../../hooks/useAddress'
 import useAsyncMemo from '../../hooks/useAsyncMemo'
 import { useETHPriceCharts } from '../../hooks/useETHPriceCharts'
-import { getFairSqueethAsk, getVolForTimestamp } from '../../utils'
+import { getVolForTimestamp } from '../../utils'
 import { ErrorButton, PrimaryButton } from '../Buttons'
 import TradeInfoItem from './TradeInfoItem'
 
@@ -155,7 +155,10 @@ const Buy: React.FC = () => {
 
   return (
     <div>
-      <div className={classes.amountInput}>
+      <Typography variant="caption" className={classes.thirdHeading} component="div">
+        Pay ETH to buy squeeth exposure
+      </Typography>
+      <div className={classes.thirdHeading}>
         <TextField
           size="small"
           value={amount}
@@ -179,9 +182,12 @@ const Buy: React.FC = () => {
       {/* <TradeInfoItem label="Price" value={squeethPrice.toFixed(4)} unit="WETH" /> */}
       <TradeInfoItem label="Squeeth you get" value={cost.toFixed(8)} unit="SQE" />
       <TradeInfoItem label="WETH Balance" value={wethBal.toFixed(4)} unit="WETH" />
-      <Tooltip title="Daily funding is paid out of your position, no collateral required.">
-        <TradeInfoItem label="Daily Funding to Pay" value={(amount * accFunding * 0.000001).toFixed(2)} unit="USDC" />
-      </Tooltip>
+      <TradeInfoItem
+        label="Daily Funding to Pay"
+        value={(amount * accFunding * 0.000001).toFixed(2)}
+        unit="%"
+        tooltip="Daily funding is paid out of your position, no collateral required."
+      />
       {/* <span style={{ fontSize: 12 }}> 24h Vol: {(vol * 100).toFixed(2)} % </span> */}
       <PrimaryButton style={{ width: 300 }} variant="contained" onClick={transact} className={classes.amountInput}>
         Buy

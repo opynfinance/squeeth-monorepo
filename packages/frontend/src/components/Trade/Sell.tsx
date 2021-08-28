@@ -1,4 +1,5 @@
-import { Button, createStyles, makeStyles, TextField, Typography } from '@material-ui/core'
+import { Button, createStyles, InputAdornment, makeStyles, TextField, Tooltip, Typography } from '@material-ui/core'
+import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useMemo, useState } from 'react'
 
@@ -124,7 +125,10 @@ const Sell: React.FC = () => {
 
   return (
     <div>
-      <div className={classes.amountInput}>
+      <Typography variant="caption" className={classes.thirdHeading} component="div">
+        Sell Squeeth to receive premium
+      </Typography>
+      <div className={classes.thirdHeading}>
         <TextField
           size="small"
           value={amount}
@@ -132,8 +136,17 @@ const Sell: React.FC = () => {
           style={{ width: 300 }}
           onChange={(event) => setAmount(Number(event.target.value))}
           id="filled-basic"
-          label="Amount"
+          label="Squeeth Amount"
           variant="outlined"
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <Tooltip title="Amount of Squeeth you want to spend to get premium">
+                  <InfoOutlinedIcon fontSize="small" />
+                </Tooltip>
+              </InputAdornment>
+            ),
+          }}
         />
       </div>
       <div className={classes.txItem}>
@@ -147,10 +160,6 @@ const Sell: React.FC = () => {
       <div className={classes.txItem}>
         <Typography className={classes.txLabel}>WETH Balance</Typography>
         <TxValue value={wethBal.toFixed(2)} label="WETH" />
-      </div>
-      <div className={classes.txItem}>
-        <Typography className={classes.txLabel}>Squeeth Balance</Typography>
-        <TxValue value={squeethBal.toFixed(8)} label="SQE" />
       </div>
       <Button
         onClick={depositAndShort}

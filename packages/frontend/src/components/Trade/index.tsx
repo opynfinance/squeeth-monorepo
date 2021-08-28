@@ -22,7 +22,7 @@ const Trade: React.FC = () => {
           variant={tradeType === TradeType.BUY ? 'contained' : 'outlined'}
         >
           {' '}
-          BUY{' '}
+          Long{' '}
         </Button>
         <Button
           style={{ textTransform: 'none' }}
@@ -30,7 +30,7 @@ const Trade: React.FC = () => {
           variant={tradeType === TradeType.SELL ? 'contained' : 'outlined'}
         >
           {' '}
-          SELL{' '}
+          Short{' '}
         </Button>
       </ButtonGroup>
       <div>{tradeType === TradeType.BUY ? <Buy /> : <Sell />}</div>
