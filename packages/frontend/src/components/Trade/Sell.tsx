@@ -55,7 +55,7 @@ const useStyles = makeStyles((theme) =>
 )
 
 const Sell: React.FC = () => {
-  const [amount, setAmount] = useState(1)
+  const [amount, setAmount] = useState(0.00001)
   const [vaultId, setVaultId] = useState(0)
   const [isVaultApproved, setIsVaultApproved] = useState(true)
 
@@ -63,11 +63,11 @@ const Sell: React.FC = () => {
   const { openShort, closeShort } = useShortHelper()
   const { updateOperator } = useController()
   const { wSqueeth, weth, shortHelper } = useAddresses()
-  const wSqueethBalO = useTokenBalance(wSqueeth, 5)
+  const squeethBal = useTokenBalance(wSqueeth, 5)
   const wethBal = useTokenBalance(weth, 5)
   const { vaults: shortVaults } = useVaultManager(5)
 
-  const squeethBal = useMemo(() => wSqueethBalO.multipliedBy(10000), [wSqueethBalO.toNumber()])
+  // const squeethBal = useMemo(() => wSqueethBalO.multipliedBy(10000), [wSqueethBalO.toNumber()])
 
   useEffect(() => {
     if (!shortVaults.length) {
@@ -138,7 +138,7 @@ const Sell: React.FC = () => {
       </div>
       <div className={classes.txItem}>
         <Typography className={classes.txLabel}>Collateral Required</Typography>
-        <TxValue value={amount * 1.5} label="ETH" />
+        <TxValue value={(amount * 10000 * 1.5).toFixed(4)} label="ETH" />
       </div>
       <div className={classes.txItem}>
         <Typography className={classes.txLabel}>Daily Funding Received</Typography>
@@ -150,7 +150,7 @@ const Sell: React.FC = () => {
       </div>
       <div className={classes.txItem}>
         <Typography className={classes.txLabel}>Squeeth Balance</Typography>
-        <TxValue value={squeethBal.toFixed(2)} label="SQE" />
+        <TxValue value={squeethBal.toFixed(8)} label="SQE" />
       </div>
       <Button
         onClick={depositAndShort}
@@ -161,15 +161,15 @@ const Sell: React.FC = () => {
       >
         {isVaultApproved ? 'Deposit and sell' : 'Add operator to deposit / Burn'}
       </Button>
-      <Typography variant="h6" color="primary" style={{ marginTop: '16px', marginBottom: '8px' }}>
-        Your short Position: {shortVaults.length ? shortVaults[0].shortAmount.multipliedBy(10000).toFixed(2) : 0}
+      <Typography variant="body1" color="primary" style={{ marginTop: '16px', marginBottom: '8px' }}>
+        Your short Position: {shortVaults.length ? shortVaults[0].shortAmount.toFixed(8) : 0}
       </Typography>
       <ErrorButton
         disabled={!shortVaults.length || !isVaultApproved}
         style={{ width: 300 }}
         variant="contained"
         color="secondary"
-        onClick={() => closeShort(vaultId, shortVaults[0].shortAmount.multipliedBy(10000))}
+        onClick={() => closeShort(vaultId, shortVaults[0].shortAmount)}
       >
         Buy back and close
       </ErrorButton>{' '}

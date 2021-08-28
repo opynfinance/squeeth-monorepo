@@ -101,29 +101,31 @@ const Buy: React.FC = () => {
   const classes = useStyles()
   const { weth, swapRouter, wSqueeth } = useAddresses()
   const wethBal = useTokenBalance(weth, 5)
-  const wSqueethBalO = useTokenBalance(wSqueeth, 5)
-  const { squeethPrice, buy, getBuyQuote, sell } = useSqueethPool()
+  const wSqueethBal = useTokenBalance(wSqueeth, 5)
+  const { ready, buy, sell, getBuyQuoteForETH, buyForWETH } = useSqueethPool()
   const { wrap } = useWeth()
   const { allowance: wethAllowance, approve: wethApprove } = useUserAllowance(weth, swapRouter)
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(wSqueeth, swapRouter)
   const { volMultiplier: globalVolMultiplier } = useWorldContext()
 
-  const { ethPrices, accFunding, startingETHPrice, volMultiplier } = useETHPriceCharts(1, globalVolMultiplier)
+  const { ethPrices, accFunding, volMultiplier } = useETHPriceCharts(1, globalVolMultiplier)
 
   useEffect(() => {
-    getBuyQuote(amount).then((val) => setCost(val))
-  }, [amount])
+    if (!ready) return
+    getBuyQuoteForETH(amount).then((val) => setCost(val))
+  }, [amount, ready])
 
-  const wSqueethBal = useMemo(() => wSqueethBalO.multipliedBy(10000), [wSqueethBalO.toNumber()])
+  // const wSqueethBal = useMemo(() => wSqueethBalO.multipliedBy(10000), [wSqueethBalO.toNumber()])
 
   const transact = () => {
-    if (step === BuyStep.WRAP) {
-      wrap(new BigNumber(cost).minus(wethBal)).then(() => setStep(BuyStep.APPROVE))
-    } else if (step === BuyStep.APPROVE) {
-      wethApprove().then(() => setStep(BuyStep.BUY))
-    } else {
-      buy(amount).then(() => setStep(BuyStep.Done))
-    }
+    buyForWETH(amount).then(() => setStep(BuyStep.Done))
+    // if (step === BuyStep.WRAP) {
+    //   wrap(new BigNumber(cost).minus(wethBal)).then(() => setStep(BuyStep.APPROVE))
+    // } else if (step === BuyStep.APPROVE) {
+    //   wethApprove().then(() => setStep(BuyStep.BUY))
+    // } else {
+    //   buy(amount).then(() => setStep(BuyStep.Done))
+    // }
   }
 
   const sellAndClose = () => {
@@ -161,12 +163,12 @@ const Buy: React.FC = () => {
           style={{ width: 300 }}
           onChange={(event) => setAmount(Number(event.target.value))}
           id="filled-basic"
-          label="Long Size (Squeeth)"
+          label="ETH Amount"
           variant="outlined"
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
-                <Tooltip title="The index price of the asset is ETH&sup2;. Each squeeth ERC20 token is 0.000001 of that index price.">
+                <Tooltip title="Amount of ETH you want to spend to get Squeeth exposure">
                   <InfoOutlinedIcon fontSize="small" />
                 </Tooltip>
               </InputAdornment>
@@ -174,18 +176,18 @@ const Buy: React.FC = () => {
           }}
         />
       </div>
-      <TradeInfoItem label="Price" value={squeethPrice.toFixed(4)} unit="WETH" />
+      {/* <TradeInfoItem label="Price" value={squeethPrice.toFixed(4)} unit="WETH" /> */}
+      <TradeInfoItem label="Squeeth you get" value={cost.toFixed(8)} unit="SQE" />
       <TradeInfoItem label="WETH Balance" value={wethBal.toFixed(4)} unit="WETH" />
-      <TradeInfoItem label="Total cost" value={cost.toFixed(4)} unit="WETH" />
       <Tooltip title="Daily funding is paid out of your position, no collateral required.">
         <TradeInfoItem label="Daily Funding to Pay" value={(amount * accFunding * 0.000001).toFixed(2)} unit="USDC" />
       </Tooltip>
       {/* <span style={{ fontSize: 12 }}> 24h Vol: {(vol * 100).toFixed(2)} % </span> */}
       <PrimaryButton style={{ width: 300 }} variant="contained" onClick={transact} className={classes.amountInput}>
-        {step === BuyStep.BUY ? 'Buy' : step === BuyStep.APPROVE ? 'Approve' : 'Wrap'}
+        Buy
       </PrimaryButton>
-      <Typography variant="h6" color="primary" style={{ marginTop: '16px', marginBottom: '8px' }}>
-        Your long Position: {wSqueethBal.toFixed(2)} SQE
+      <Typography variant="body1" color="primary" style={{ marginTop: '16px', marginBottom: '8px' }}>
+        Your long Position: {wSqueethBal.toFixed(8)} SQE
       </Typography>
       <ErrorButton
         disabled={wSqueethBal.eq(0)}

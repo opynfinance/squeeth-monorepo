@@ -31,8 +31,7 @@ export const useShortHelper = () => {
   const openShort = async (vaultId: number, amount: BigNumber, vaultType?: Vaults) => {
     if (!contract || !address) return
 
-    const actualAmt = amount.dividedBy(10000)
-    const _amount = fromTokenAmount(actualAmt, 18)
+    const _amount = fromTokenAmount(amount, 18)
     await handleTransaction(
       contract.methods.openShort(vaultId, _amount.toString(), getSellParam(amount)).send({
         from: address,
@@ -50,8 +49,7 @@ export const useShortHelper = () => {
   const closeShort = async (vaultId: number, amount: BigNumber) => {
     if (!contract || !address) return
 
-    const actualAmt = amount.dividedBy(10000)
-    const _amount = fromTokenAmount(actualAmt, 18)
+    const _amount = fromTokenAmount(amount, 18)
     const _exactOutputParams = await getBuyParam(amount)
 
     _exactOutputParams.recipient = shortHelper
