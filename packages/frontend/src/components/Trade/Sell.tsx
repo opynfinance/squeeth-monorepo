@@ -6,6 +6,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useWorldContext } from '../../context/world'
 import { useController } from '../../hooks/contracts/useController'
 import useShortHelper from '../../hooks/contracts/useShortHelper'
+import { useSqueethPool } from '../../hooks/contracts/useSqueethPool'
 import { useTokenBalance } from '../../hooks/contracts/useTokenBalance'
 import { useVaultManager } from '../../hooks/contracts/useVaultManager'
 import { useAddresses } from '../../hooks/useAddress'
@@ -59,13 +60,13 @@ const Sell: React.FC = () => {
   const [amount, setAmount] = useState(0.00001)
   const [vaultId, setVaultId] = useState(0)
   const [isVaultApproved, setIsVaultApproved] = useState(true)
+  const [premium, setPremium] = useState(new BigNumber(0))
 
   const classes = useStyles()
   const { openShort, closeShort } = useShortHelper()
+  const { getSellQuote, ready } = useSqueethPool()
   const { updateOperator } = useController()
-  const { wSqueeth, weth, shortHelper } = useAddresses()
-  const squeethBal = useTokenBalance(wSqueeth, 5)
-  const wethBal = useTokenBalance(weth, 5)
+  const { shortHelper } = useAddresses()
   const { vaults: shortVaults } = useVaultManager(5)
 
   // const squeethBal = useMemo(() => wSqueethBalO.multipliedBy(10000), [wSqueethBalO.toNumber()])
@@ -78,6 +79,11 @@ const Sell: React.FC = () => {
 
     setVaultId(shortVaults[0].id)
   }, [shortVaults.length])
+
+  useEffect(() => {
+    if (!ready) return
+    getSellQuote(amount).then((val) => setPremium(val))
+  }, [amount, ready])
 
   useEffect(() => {
     if (!vaultId) return
@@ -96,8 +102,6 @@ const Sell: React.FC = () => {
   const { volMultiplier: globalVMultiplier } = useWorldContext()
 
   const { accFunding, startingETHPrice } = useETHPriceCharts(1, globalVMultiplier)
-
-  const dailyFundingPayment = useMemo(() => accFunding / startingETHPrice, [accFunding, startingETHPrice])
 
   const TxValue: React.FC<{ value: string | number; label: string }> = ({ value, label }) => {
     return (
@@ -150,16 +154,16 @@ const Sell: React.FC = () => {
         />
       </div>
       <div className={classes.txItem}>
+        <Typography className={classes.txLabel}>Premium you get</Typography>
+        <TxValue value={premium.toFixed(4)} label="ETH" />
+      </div>
+      <div className={classes.txItem}>
         <Typography className={classes.txLabel}>Collateral Required</Typography>
         <TxValue value={(amount * 10000 * 1.5).toFixed(4)} label="ETH" />
       </div>
       <div className={classes.txItem}>
         <Typography className={classes.txLabel}>Daily Funding Received</Typography>
-        <TxValue value={(dailyFundingPayment * amount).toFixed(2)} label="USDC" />
-      </div>
-      <div className={classes.txItem}>
-        <Typography className={classes.txLabel}>WETH Balance</Typography>
-        <TxValue value={wethBal.toFixed(2)} label="WETH" />
+        <TxValue value={(accFunding * 0.000001).toFixed(2)} label="%" />
       </div>
       <Button
         onClick={depositAndShort}
@@ -168,7 +172,15 @@ const Sell: React.FC = () => {
         variant="contained"
         color="primary"
       >
-        {isVaultApproved ? 'Deposit and sell' : 'Add operator to deposit / Burn'}
+        {isVaultApproved ? 'Deposit and sell' : 'Add operator'}
+        {!isVaultApproved ? (
+          <Tooltip
+            style={{ marginLeft: '2px' }}
+            title="Operator is a contract that mint squeeth, deposit collateral and sell squeeth in single TX. Similarly it also buy back and burn squeeth, withdraw collateral in single TX"
+          >
+            <InfoOutlinedIcon fontSize="small" />
+          </Tooltip>
+        ) : null}
       </Button>
       <Typography variant="body1" color="primary" style={{ marginTop: '16px', marginBottom: '8px' }}>
         Your short Position: {shortVaults.length ? shortVaults[0].shortAmount.toFixed(8) : 0}

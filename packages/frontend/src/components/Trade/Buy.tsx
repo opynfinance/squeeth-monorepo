@@ -1,5 +1,16 @@
-import { createStyles, InputAdornment, makeStyles, TextField, Tooltip, Typography } from '@material-ui/core'
+import {
+  Button,
+  createStyles,
+  Dialog,
+  DialogActions,
+  InputAdornment,
+  makeStyles,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@material-ui/core'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
+import WarningIcon from '@material-ui/icons/Warning'
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useState } from 'react'
 
@@ -7,9 +18,7 @@ import { useWorldContext } from '../../context/world'
 import { useUserAllowance } from '../../hooks/contracts/useAllowance'
 import { useSqueethPool } from '../../hooks/contracts/useSqueethPool'
 import { useTokenBalance } from '../../hooks/contracts/useTokenBalance'
-import { useWeth } from '../../hooks/contracts/useWeth'
 import { useAddresses } from '../../hooks/useAddress'
-import useAsyncMemo from '../../hooks/useAsyncMemo'
 import { useETHPriceCharts } from '../../hooks/useETHPriceCharts'
 import { getVolForTimestamp } from '../../utils'
 import { ErrorButton, PrimaryButton } from '../Buttons'
@@ -90,25 +99,34 @@ const useStyles = makeStyles((theme) =>
       transform: 'rotate(180deg)',
       color: theme.palette.primary.main,
     },
+    dialog: {
+      padding: theme.spacing(2),
+    },
+    dialogHeader: {
+      display: 'flex',
+      alignItems: 'center',
+    },
+    dialogIcon: {
+      marginRight: theme.spacing(1),
+      color: theme.palette.warning.main,
+    },
   }),
 )
 
 const Buy: React.FC = () => {
   const [amount, setAmount] = useState(1)
-  const [step, setStep] = useState(BuyStep.WRAP)
   const [cost, setCost] = useState(new BigNumber(0))
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   const classes = useStyles()
   const { weth, swapRouter, wSqueeth } = useAddresses()
   const wethBal = useTokenBalance(weth, 5)
   const wSqueethBal = useTokenBalance(wSqueeth, 5)
-  const { ready, buy, sell, getBuyQuoteForETH, buyForWETH } = useSqueethPool()
-  const { wrap } = useWeth()
-  const { allowance: wethAllowance, approve: wethApprove } = useUserAllowance(weth, swapRouter)
+  const { ready, sell, getBuyQuoteForETH, buyForWETH } = useSqueethPool()
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(wSqueeth, swapRouter)
   const { volMultiplier: globalVolMultiplier } = useWorldContext()
 
-  const { ethPrices, accFunding, volMultiplier } = useETHPriceCharts(1, globalVolMultiplier)
+  const { accFunding } = useETHPriceCharts(1, globalVolMultiplier)
 
   useEffect(() => {
     if (!ready) return
@@ -118,40 +136,19 @@ const Buy: React.FC = () => {
   // const wSqueethBal = useMemo(() => wSqueethBalO.multipliedBy(10000), [wSqueethBalO.toNumber()])
 
   const transact = () => {
-    buyForWETH(amount).then(() => setStep(BuyStep.Done))
-    // if (step === BuyStep.WRAP) {
-    //   wrap(new BigNumber(cost).minus(wethBal)).then(() => setStep(BuyStep.APPROVE))
-    // } else if (step === BuyStep.APPROVE) {
-    //   wethApprove().then(() => setStep(BuyStep.BUY))
-    // } else {
-    //   buy(amount).then(() => setStep(BuyStep.Done))
-    // }
+    buyForWETH(amount)
   }
 
   const sellAndClose = () => {
     if (squeethAllowance.lt(amount)) {
       squeethApprove()
+    } else if (!dialogOpen) {
+      setDialogOpen(true)
     } else {
       sell(wSqueethBal.toNumber())
+      setDialogOpen(false)
     }
   }
-
-  useEffect(() => {
-    if (cost.gt(wethBal)) setStep(BuyStep.WRAP)
-    else if (wethAllowance.lt(cost)) setStep(BuyStep.APPROVE)
-    else setStep(BuyStep.BUY)
-  }, [wethBal.toNumber(), cost.toNumber(), wethAllowance.toNumber()])
-
-  const vol = useAsyncMemo(
-    async () => {
-      const ethPrice = ethPrices.length > 0 ? ethPrices[ethPrices.length - 1].value : 0
-      const timestamp = ethPrices.length > 0 ? ethPrices[ethPrices.length - 1].time : Date.now() / 1000
-      const _vol = await getVolForTimestamp(timestamp, ethPrice)
-      return _vol * volMultiplier
-    },
-    0,
-    [ethPrices, volMultiplier],
-  )
 
   return (
     <div>
@@ -181,10 +178,9 @@ const Buy: React.FC = () => {
       </div>
       {/* <TradeInfoItem label="Price" value={squeethPrice.toFixed(4)} unit="WETH" /> */}
       <TradeInfoItem label="Squeeth you get" value={cost.toFixed(8)} unit="SQE" />
-      <TradeInfoItem label="WETH Balance" value={wethBal.toFixed(4)} unit="WETH" />
       <TradeInfoItem
         label="Daily Funding to Pay"
-        value={(amount * accFunding * 0.000001).toFixed(2)}
+        value={(accFunding * 0.000001).toFixed(2)}
         unit="%"
         tooltip="Daily funding is paid out of your position, no collateral required."
       />
@@ -204,6 +200,22 @@ const Buy: React.FC = () => {
       >
         {squeethAllowance.lt(wSqueethBal) ? 'Approve to sell' : 'Sell to close'}
       </ErrorButton>
+      <Dialog onClose={() => setDialogOpen(false)} aria-labelledby="simple-dialog-title" open={dialogOpen}>
+        <div className={classes.dialog}>
+          <div className={classes.dialogHeader}>
+            <WarningIcon fontSize="small" className={classes.dialogIcon} />
+            <Typography variant="body1">Premium for selling squeeth will be paid as WETH</Typography>
+          </div>
+          <DialogActions className={classes.amountInput}>
+            <Button color="primary" size="small" onClick={sellAndClose}>
+              Proceed
+            </Button>
+            <Button color="primary" size="small" onClick={() => setDialogOpen(false)}>
+              Cancel
+            </Button>
+          </DialogActions>
+        </div>
+      </Dialog>
     </div>
   )
 }

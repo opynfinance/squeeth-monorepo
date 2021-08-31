@@ -17,7 +17,7 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 20): BigNumb
   const [balance, setBalance] = useState(new BigNumber(0))
   const [contract, setContract] = useState<Contract>()
 
-  const { address, web3 } = useWallet()
+  const { address, web3, networkId, connected } = useWallet()
 
   useEffect(() => {
     if (!web3 || !token) return
@@ -29,17 +29,17 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 20): BigNumb
   }, [address, token, contract])
 
   const getBalance = useCallback(async () => {
-    if (!contract || !address) return balance
+    if (!contract || !connected) return balance
 
     const _bal = await contract.methods.balanceOf(address).call({
       from: address,
     })
     return toTokenAmount(new BigNumber(_bal.toString()), 18)
-  }, [contract, address])
+  }, [contract, connected])
 
   const updateBalance = useCallback(async () => {
     if (!token) return
-    if (!address) return
+    if (!connected) return
     const balance = await getBalance()
     setBalance(balance)
   }, [address, token, getBalance])

@@ -31,9 +31,12 @@ export const useShortHelper = () => {
   const openShort = async (vaultId: number, amount: BigNumber, vaultType?: Vaults) => {
     if (!contract || !address) return
 
+    const _exactInputParams = await getSellParam(amount)
+    _exactInputParams.recipient = shortHelper
+
     const _amount = fromTokenAmount(amount, 18)
     await handleTransaction(
-      contract.methods.openShort(vaultId, _amount.toString(), getSellParam(amount)).send({
+      contract.methods.openShort(vaultId, _amount.toString(), _exactInputParams).send({
         from: address,
         value: _amount.multipliedBy(1.5).multipliedBy(10000), // Min collat, Should be changed based on user input type post MVP
       }),

@@ -181,7 +181,6 @@ export const useSqueethPool = () => {
 
 
     if (!input?.amountIn) return new BigNumber(0)
-    console.log(toTokenAmount(new BigNumber(input.amountIn), 18).toNumber())
     return toTokenAmount(new BigNumber(input.amountIn), 18)
   }
 
@@ -200,9 +199,26 @@ export const useSqueethPool = () => {
       gas: 470000,
     })
 
+    if (!input?.amountOut) return new BigNumber(0)
+    return toTokenAmount(new BigNumber(input.amountOut), 18)
+  }
+
+  const getSellQuote = async (amount: number) => {
+    if (!amount) return new BigNumber(0)
+
+    const params = {
+      tokenIn: squeethToken?.address, // address
+      tokenOut: wethToken?.address, // address
+      fee: UNI_POOL_FEES, // uint24
+      amountIn: ethers.utils.parseEther(amount.toString()), // uint256
+      sqrtPriceLimitX96: 0, // uint160
+    }
+
+    const input = await quoterContract?.methods.quoteExactInputSingle(params).call({
+      gas: 470000,
+    })
 
     if (!input?.amountOut) return new BigNumber(0)
-    console.log(toTokenAmount(new BigNumber(input.amountOut), 18).toNumber())
     return toTokenAmount(new BigNumber(input.amountOut), 18)
   }
 
@@ -219,6 +235,7 @@ export const useSqueethPool = () => {
     getBuyQuote,
     getSellParam,
     getBuyParam,
-    getBuyQuoteForETH
+    getBuyQuoteForETH,
+    getSellQuote,
   }
 }

@@ -3,7 +3,6 @@ import { Contract } from 'web3-eth-contract'
 
 import erc20Abi from '../../abis/vaultManager.json'
 import { useWallet } from '../../context/wallet'
-import { Vault } from '../../types'
 import { useAddresses } from '../useAddress'
 import useInterval from '../useInterval'
 import { useController } from './useController'
@@ -46,8 +45,6 @@ export const useVaultManager = (refetchIntervalSec = 20) => {
         )
         const vaultPromise = Array.from(tokens).map((tokenId) => getVault(tokenId))
         const _vaults = (await Promise.all(vaultPromise)).filter((v) => v?.shortAmount.gt(0))
-        console.log(_vaults)
-
         setVaults(_vaults)
       })
   }
@@ -62,7 +59,6 @@ export const useVaultManager = (refetchIntervalSec = 20) => {
     if (!contract) return false
 
     const approval = await contract.methods.getApproved(vaultId).call()
-    console.log(approval, 'hello')
     return toAddress.toLowerCase() === approval.toLowerCase()
   }
 

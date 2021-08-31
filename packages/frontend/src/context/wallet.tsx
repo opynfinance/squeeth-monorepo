@@ -22,7 +22,7 @@ type WalletType = {
 const initialState: WalletType = {
   web3: null,
   address: null,
-  networkId: Networks.MAINNET,
+  networkId: Networks.ROPSTEN,
   signer: null,
   selectWallet: () => null,
   connected: false,
@@ -35,8 +35,8 @@ const useWallet = () => useContext(walletContext)
 
 const WalletProvider: React.FC = ({ children }) => {
   const [web3, setWeb3] = useState<Web3 | null>(null)
-  const [address, setAddress] = useState('')
-  const [networkId, setNetworkId] = useState(0)
+  const [address, setAddress] = useState<string | null>(null)
+  const [networkId, setNetworkId] = useState(Networks.ROPSTEN)
   const [onboard, setOnboard] = useState<API | null>(null)
   const [notify, setNotify] = useState<any>(null)
   const [signer, setSigner] = useState<any>(null)
@@ -62,7 +62,7 @@ const WalletProvider: React.FC = ({ children }) => {
       address,
       networkId,
       signer,
-      connected: !!address,
+      connected: !!address && networkId in Networks && networkId !== Networks.MAINNET,
       balance,
       selectWallet: onWalletSelect,
       handleTransaction,
@@ -72,7 +72,8 @@ const WalletProvider: React.FC = ({ children }) => {
 
   useEffect(() => {
     const onNetworkChange = (updateNetwork: number) => {
-      if (updateNetwork in Networks) {
+      // Should be removed once mainnet is released
+      if (updateNetwork in Networks && updateNetwork !== Networks.MAINNET) {
         setNetworkId(updateNetwork)
         if (onboard !== null) {
           const network = updateNetwork === 1337 ? 31337 : updateNetwork
@@ -81,6 +82,9 @@ const WalletProvider: React.FC = ({ children }) => {
             networkId: network,
           })
         }
+      } else {
+        onboard.walletCheck()
+        console.log('Unsupported network')
       }
     }
 
@@ -93,8 +97,7 @@ const WalletProvider: React.FC = ({ children }) => {
       }
     }
 
-    const _network = networkId !== 0 ? networkId : parseInt(localStorage.getItem('networkId') || '1')
-    const network = networkId === 1 ? 'mainnet' : networkId === 42 ? 'kovan' : 'ropsten'
+    const network = networkId === 1 ? 'mainnet' : 'ropsten'
     const RPC_URL =
       networkId === Networks.LOCAL
         ? 'http://127.0.0.1:8545/'
@@ -102,7 +105,7 @@ const WalletProvider: React.FC = ({ children }) => {
 
     const onboard = Onboard({
       dappId: process.env.NEXT_PUBLIC_BLOCKNATIVE_DAPP_ID,
-      networkId: _network,
+      networkId: networkId,
       darkMode: true,
       subscriptions: {
         address: setAddress,
@@ -132,6 +135,13 @@ const WalletProvider: React.FC = ({ children }) => {
           },
         ],
       },
+      // walletCheck: [networkCheckResult],
+      walletCheck: [
+        { checkName: 'derivationPath' },
+        { checkName: 'connect' },
+        { checkName: 'accounts' },
+        { checkName: 'network' },
+      ],
     })
 
     const notify = Notify({
