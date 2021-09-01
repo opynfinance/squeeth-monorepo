@@ -70,6 +70,9 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       saveDeployments: false, // only used in cicd to test deployments
+      mining: {
+        auto: true
+      }
     },
     localhost: {
       url: "http://localhost:8545",

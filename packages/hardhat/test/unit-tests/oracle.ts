@@ -41,7 +41,6 @@ describe("Oracle", function () {
   
     await deploy("UniswapV3Factory", {
       from: deployer,
-      log: true,
       contract: {
         abi: FACTORY_ABI,
         bytecode: FACTORY_BYTECODE
@@ -49,15 +48,11 @@ describe("Oracle", function () {
     });
     const uniswapFactory = await ethers.getContract("UniswapV3Factory", deployer);
     
-    await deploy("WETH9", {
-      from: deployer,
-      log: true,
-    });
+    await deploy("WETH9", { from: deployer });
     weth = await ethers.getContract("WETH9", deployer) as WETH9;
   
     await deploy("SwapRouter", {
       from: deployer,
-      log: true,
       contract: {
         abi: SWAP_ROUTER_ABI,
         bytecode: SWAP_ROUTER_BYTECODE
@@ -69,7 +64,6 @@ describe("Oracle", function () {
     const tokenDescriptorAddress = ethers.constants.AddressZero
     await deploy("NonfungibleTokenPositionManager", {
       from: deployer,
-      log: true,
       contract: {
         abi: POSITION_MANAGER_ABI,
         bytecode: POSITION_MANAGER_BYTECODE,
@@ -113,10 +107,10 @@ describe("Oracle", function () {
 
     await deploy("OracleTester", { args: [oracle.address], from: deployer })
     oracleTester = (await (await ethers.getContractFactory("OracleTester")).deploy(oracle.address)) as OracleTester;
-    
+
   })
 
-  describe("Fetch price before right after initialization", async () => {
+  describe("Fetch price right after initialization", async () => {
     it("should return initial price with period = 1", async () => {
       const price = new BigNumberJs((await oracle.getTwaPrice(squeethPool.address, squeeth.address, weth.address, 1)).toString())
       expect(isSimilar(price.toString(), squeethPriceInETH1e18)).to.be.true;
@@ -139,6 +133,13 @@ describe("Oracle", function () {
       await expect(
         oracleTester.testGetTwapSince(interactionTimestamps[0] - 1, squeethPool.address, squeeth.address, weth.address)
       ).to.be.revertedWith("OLD");
+    })
+
+    it("should NOT revert if trying to request twap since a time before initialization, with #getTwapSafe", async () => {
+      const price = new BigNumberJs((
+        await oracleTester.testGetTwapSafeSince(interactionTimestamps[0] - 1, squeethPool.address, squeeth.address, weth.address)
+      ).toString());
+      expect(isSimilar(price.toString(), squeethPriceInETH1e18)).to.be.true;
     })
   })
   
@@ -174,14 +175,33 @@ describe("Oracle", function () {
         deadline: Math.floor(Date.now() / 1000 + 86400),// uint256
       }
       const res = await positionManager.mint(mintParam)
-      const initBlockNumber = res.blockNumber
-      const block = await provider.getBlock(initBlockNumber)
+      const addLiquidityBlock = res.blockNumber
+      const block = await provider.getBlock(addLiquidityBlock)
       interactionTimestamps.push(block.timestamp)
+
+      
     })
     it('should revert if requesting TWAP from init timestamp', async() => {
       await expect(
         oracleTester.testGetTwapSince(interactionTimestamps[0], squeethPool.address, squeeth.address, weth.address)
       ).to.be.revertedWith("OLD");
+    })
+    // todo: Fix this!
+    // it will be good if the test fail in the future, which means that we solve this potential bug.
+    it("should be fix in the future: if first observation is updated in the same block, the max duration will be 0 causing the library to revert.", async () => {
+      await expect(
+        oracleTester.testGetTwapSafeSince(interactionTimestamps[0], squeethPool.address, squeeth.address, weth.address)
+      ).to.be.revertedWith("BP"); // revert by OracleLibrary.
+    })
+    it("should NOT revert if requesting TWAP from init timestamp, with #getTwapSafe", async () => {
+      // fix view function stimulation on hardhat that the blocktime will be same as latest block
+      // causing max period to request = 0;
+      await provider.send("evm_mine", [])
+      
+      const price = new BigNumberJs((
+        await oracleTester.testGetTwapSafeSince(interactionTimestamps[0], squeethPool.address, squeeth.address, weth.address)
+      ).toString());
+      expect(isSimilar(price.toString(), squeethPriceInETH1e18)).to.be.true;
     })
     it('should be able to get TWAP since last touch', async() => {
       await provider.send("evm_increaseTime", [50]) // go 50 seconds minutes
@@ -196,12 +216,19 @@ describe("Oracle", function () {
         oracleTester.testGetTwapSince(interactionTimestamps[1] - 1, squeethPool.address, squeeth.address, weth.address)
       ).to.be.revertedWith("OLD");
     })
+    it("should NOT revert if trying to request twap since a time before last touch, with #getTwapSafe", async () => {
+      const price = new BigNumberJs((
+        await oracleTester.testGetTwapSafeSince(interactionTimestamps[1] - 1, squeethPool.address, squeeth.address, weth.address)
+      ).toString());
+      expect(isSimilar(price.toString(), squeethPriceInETH1e18)).to.be.true;
+    })
   })
   
   describe("Fetch price after adding storage slot", async () => {
     before('increase storage slot', async() => {
-      // increase storage slot to 2
-      await squeethPool.increaseObservationCardinalityNext(2)
+      // increase storage slot to 16
+      await squeethPool.increaseObservationCardinalityNext(16)
+      await provider.send("evm_mine", [])
     })
     before('add liquidity to the pool', async() => {
       const squeethAmount = 1
@@ -234,6 +261,7 @@ describe("Oracle", function () {
       
       // interactionTimestamps[2] = second touch timestamp
       interactionTimestamps.push(block.timestamp)
+      await provider.send("evm_mine", [])
     })
     before('increase timestamp', async () => {
       await provider.send("evm_increaseTime", [50]) // go 50 seconds minutes
@@ -243,6 +271,12 @@ describe("Oracle", function () {
       await expect(
         oracleTester.testGetTwapSince(interactionTimestamps[0], squeethPool.address, squeeth.address, weth.address)
       ).to.be.revertedWith("OLD");
+    })
+    it("should NOT revert if requesting TWAP from init timestamp, with #getTwapSafe", async () => {
+      const price = new BigNumberJs((
+        await oracleTester.testGetTwapSafeSince(interactionTimestamps[0], squeethPool.address, squeeth.address, weth.address)
+      ).toString());
+      expect(isSimilar(price.toString(), squeethPriceInETH1e18)).to.be.true;
     })
     it('should be able to get TWAP since first touch', async() => {
       const price = new BigNumberJs((
@@ -255,9 +289,28 @@ describe("Oracle", function () {
         oracleTester.testGetTwapSince(interactionTimestamps[1] - 1, squeethPool.address, squeeth.address, weth.address)
       ).to.be.revertedWith("OLD");
     })
+    it("should NOT revert if trying to request twap since a time before first touch, with #getTwapSafe", async () => {
+      const price = new BigNumberJs((
+        await oracleTester.testGetTwapSafeSince(interactionTimestamps[1] - 1, squeethPool.address, squeeth.address, weth.address)
+      ).toString());
+      expect(isSimilar(price.toString(), squeethPriceInETH1e18)).to.be.true;
+    })
     it('should be able to get TWAP since second touch', async() => {
       const price = new BigNumberJs((
         await oracleTester.testGetTwapSince(interactionTimestamps[2], squeethPool.address, squeeth.address, weth.address))
+        .toString())
+      expect(isSimilar(price.toString(), squeethPriceInETH1e18)).to.be.true;
+    })
+    it('should be able to get TWAP since time between first touch and second touch with #getTwapSafe', async() => {
+      const period = Math.floor((interactionTimestamps[2] + interactionTimestamps[1]) / 2)
+      const price = new BigNumberJs((
+        await oracleTester.testGetTwapSafeSince(period, squeethPool.address, squeeth.address, weth.address))
+        .toString())
+      expect(isSimilar(price.toString(), squeethPriceInETH1e18)).to.be.true;
+    })
+    it('should be able to get TWAP since second touch with #getTwapSafe', async() => {
+      const price = new BigNumberJs((
+        await oracleTester.testGetTwapSafeSince(interactionTimestamps[2], squeethPool.address, squeeth.address, weth.address))
         .toString())
       expect(isSimilar(price.toString(), squeethPriceInETH1e18)).to.be.true;
     })

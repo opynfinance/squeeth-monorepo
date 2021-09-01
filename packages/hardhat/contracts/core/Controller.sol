@@ -243,13 +243,14 @@ contract Controller is Initializable {
      * Update the normalized factor as a way to pay funding.
      */
     function _applyFunding() internal {
-        // todo: fix period
-        uint32 periodForFunding = uint32(block.timestamp - lastFundingUpdateTimestamp);
-        uint32 periodForOracle = 1;
+        uint32 period = uint32(block.timestamp - lastFundingUpdateTimestamp);
 
-        uint256 mark = _getDenormalizedMark(periodForOracle);
-        uint256 index = _getIndex(periodForOracle);
-        uint256 rFunding = periodForFunding / secInDay;
+        // make sure we use the same period for mark and index, and this period won't cause revert.
+        uint32 fairPeriod = _getFairPeriodForOracle(period);
+        uint256 mark = _getDenormalizedMark(fairPeriod);
+        uint256 index = _getIndex(fairPeriod);
+
+        uint256 rFunding = uint256(period) / secInDay;
         uint256 newNormalizationFactor = (mark * 1e18) / ((1 + rFunding) * mark - index * rFunding);
 
         normalizationFactor = (normalizationFactor * newNormalizationFactor) / 1e18;
@@ -287,12 +288,27 @@ contract Controller is Initializable {
         return (squeethEthPrice * ethUSDPrice) / normalizationFactor;
     }
 
+    function _getFairPeriodForOracle(uint32 _period) internal view returns (uint32) {
+        uint32 maxSafePeriod = _getMaxSafePeriod();
+        return _period > maxSafePeriod ? maxSafePeriod : _period;
+    }
+
+    /**
+     * return the smaller of the max periods of 2 pools
+     */
+    function _getMaxSafePeriod() internal view returns (uint32) {
+        uint32 maxPeriodPool1 = oracle.getMaxPeriod(ethUSDPool);
+        uint32 maxPeriodPool2 = oracle.getMaxPeriod(wSqueethEthPool);
+        return maxPeriodPool1 > maxPeriodPool2 ? maxPeriodPool2 : maxPeriodPool1;
+    }
+
     function _getTwap(
         address _pool,
         address _base,
         address _quote,
         uint32 _period
     ) internal view returns (uint256) {
+        // period reaching this point should be check, otherwise might revert
         uint256 twap = oracle.getTwaPrice(_pool, _base, _quote, _period);
         require(twap != 0, "WAP WAP WAP");
 
