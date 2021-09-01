@@ -1,17 +1,17 @@
-import { Button, createStyles, InputAdornment, makeStyles, TextField, Tooltip, Typography } from '@material-ui/core'
+import { CircularProgress } from '@material-ui/core'
+import { createStyles, InputAdornment, makeStyles, TextField, Tooltip, Typography } from '@material-ui/core'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 import { useWorldContext } from '../../context/world'
 import { useController } from '../../hooks/contracts/useController'
 import useShortHelper from '../../hooks/contracts/useShortHelper'
 import { useSqueethPool } from '../../hooks/contracts/useSqueethPool'
-import { useTokenBalance } from '../../hooks/contracts/useTokenBalance'
 import { useVaultManager } from '../../hooks/contracts/useVaultManager'
 import { useAddresses } from '../../hooks/useAddress'
 import { useETHPriceCharts } from '../../hooks/useETHPriceCharts'
-import { ErrorButton } from '../Buttons'
+import { ErrorButton, PrimaryButton } from '../Buttons'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -61,6 +61,8 @@ const Sell: React.FC = () => {
   const [vaultId, setVaultId] = useState(0)
   const [isVaultApproved, setIsVaultApproved] = useState(true)
   const [premium, setPremium] = useState(new BigNumber(0))
+  const [shortLoading, setShortLoading] = useState(false)
+  const [buyLoading, setBuyLoading] = useState(false)
 
   const classes = useStyles()
   const { openShort, closeShort } = useShortHelper()
@@ -91,17 +93,34 @@ const Sell: React.FC = () => {
     setIsVaultApproved(shortVaults[0].operator.toLowerCase() === shortHelper.toLowerCase())
   }, [vaultId])
 
-  const depositAndShort = () => {
-    if (vaultId && !isVaultApproved) {
-      updateOperator(vaultId, shortHelper).then(() => setIsVaultApproved(true))
-    } else {
-      openShort(vaultId, new BigNumber(amount))
+  const depositAndShort = async () => {
+    setShortLoading(true)
+    try {
+      if (vaultId && !isVaultApproved) {
+        await updateOperator(vaultId, shortHelper)
+        setIsVaultApproved(true)
+      } else {
+        await openShort(vaultId, new BigNumber(amount))
+      }
+    } catch (e) {
+      console.log(e)
     }
+    setShortLoading(false)
+  }
+
+  const buyBackAndClose = async () => {
+    setBuyLoading(true)
+    try {
+      await closeShort(vaultId, shortVaults[0].shortAmount)
+    } catch (e) {
+      console.log(e)
+    }
+    setBuyLoading(false)
   }
 
   const { volMultiplier: globalVMultiplier } = useWorldContext()
 
-  const { accFunding, startingETHPrice } = useETHPriceCharts(1, globalVMultiplier)
+  const { accFunding } = useETHPriceCharts(1, globalVMultiplier)
 
   const TxValue: React.FC<{ value: string | number; label: string }> = ({ value, label }) => {
     return (
@@ -165,34 +184,39 @@ const Sell: React.FC = () => {
         <Typography className={classes.txLabel}>Daily Funding Received</Typography>
         <TxValue value={(accFunding * 0.000001).toFixed(2)} label="%" />
       </div>
-      <Button
+      <PrimaryButton
         onClick={depositAndShort}
         className={classes.amountInput}
-        style={{ width: 300, color: '#000' }}
+        disabled={shortLoading}
         variant="contained"
-        color="primary"
       >
-        {isVaultApproved ? 'Deposit and sell' : 'Add operator'}
-        {!isVaultApproved ? (
-          <Tooltip
-            style={{ marginLeft: '2px' }}
-            title="Operator is a contract that mint squeeth, deposit collateral and sell squeeth in single TX. Similarly it also buy back and burn squeeth, withdraw collateral in single TX"
-          >
-            <InfoOutlinedIcon fontSize="small" />
-          </Tooltip>
-        ) : null}
-      </Button>
+        {shortLoading ? (
+          <CircularProgress color="primary" size="1.5rem" />
+        ) : (
+          <>
+            {isVaultApproved ? 'Deposit and sell (2/2)' : 'Add operator (1/2)'}
+            {!isVaultApproved ? (
+              <Tooltip
+                style={{ marginLeft: '2px' }}
+                title="Operator is a contract that mints squeeth, deposits collateral and sells squeeth in single TX. Similarly it also buys back + burns squeeth and withdraws collateral in single TX"
+              >
+                <InfoOutlinedIcon fontSize="small" />
+              </Tooltip>
+            ) : null}
+          </>
+        )}
+      </PrimaryButton>
       <Typography variant="body1" color="primary" style={{ marginTop: '16px', marginBottom: '8px' }}>
         Your short Position: {shortVaults.length ? shortVaults[0].shortAmount.toFixed(8) : 0}
       </Typography>
       <ErrorButton
-        disabled={!shortVaults.length || !isVaultApproved}
+        disabled={!shortVaults.length || !isVaultApproved || buyLoading}
         style={{ width: 300 }}
         variant="contained"
         color="secondary"
-        onClick={() => closeShort(vaultId, shortVaults[0].shortAmount)}
+        onClick={buyBackAndClose}
       >
-        Buy back and close
+        {buyLoading ? <CircularProgress color="primary" size="1.5rem" /> : 'Buy back and close'}
       </ErrorButton>{' '}
     </div>
   )

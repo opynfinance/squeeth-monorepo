@@ -8,6 +8,8 @@ export const PrimaryButton = withStyles((theme) => ({
     '&:hover': {
       backgroundColor: theme.palette.primary.dark,
     },
+    minHeight: '2rem',
+    minWidth: '300px',
   },
 }))(Button)
 
@@ -18,5 +20,7 @@ export const ErrorButton = withStyles((theme) => ({
     '&:hover': {
       backgroundColor: theme.palette.error.dark,
     },
+    minHeight: '2rem',
+    minWidth: '300px',
   },
 }))(Button)

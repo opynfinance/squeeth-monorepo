@@ -1,5 +1,6 @@
 import {
   Button,
+  CircularProgress,
   createStyles,
   Dialog,
   DialogActions,
@@ -20,7 +21,6 @@ import { useSqueethPool } from '../../hooks/contracts/useSqueethPool'
 import { useTokenBalance } from '../../hooks/contracts/useTokenBalance'
 import { useAddresses } from '../../hooks/useAddress'
 import { useETHPriceCharts } from '../../hooks/useETHPriceCharts'
-import { getVolForTimestamp } from '../../utils'
 import { ErrorButton, PrimaryButton } from '../Buttons'
 import TradeInfoItem from './TradeInfoItem'
 
@@ -117,10 +117,11 @@ const Buy: React.FC = () => {
   const [amount, setAmount] = useState(1)
   const [cost, setCost] = useState(new BigNumber(0))
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [buyLoading, setBuyLoading] = useState(false)
+  const [sellLoading, setSellLoading] = useState(false)
 
   const classes = useStyles()
-  const { weth, swapRouter, wSqueeth } = useAddresses()
-  const wethBal = useTokenBalance(weth, 5)
+  const { swapRouter, wSqueeth } = useAddresses()
   const wSqueethBal = useTokenBalance(wSqueeth, 5)
   const { ready, sell, getBuyQuoteForETH, buyForWETH } = useSqueethPool()
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(wSqueeth, swapRouter)
@@ -133,21 +134,31 @@ const Buy: React.FC = () => {
     getBuyQuoteForETH(amount).then((val) => setCost(val))
   }, [amount, ready])
 
-  // const wSqueethBal = useMemo(() => wSqueethBalO.multipliedBy(10000), [wSqueethBalO.toNumber()])
-
-  const transact = () => {
-    buyForWETH(amount)
+  const transact = async () => {
+    setBuyLoading(true)
+    try {
+      await buyForWETH(amount)
+    } catch (e) {
+      console.log(e)
+    }
+    setBuyLoading(false)
   }
 
   const sellAndClose = () => {
-    if (squeethAllowance.lt(amount)) {
-      squeethApprove()
-    } else if (!dialogOpen) {
-      setDialogOpen(true)
-    } else {
-      sell(wSqueethBal.toNumber())
-      setDialogOpen(false)
+    setSellLoading(true)
+    try {
+      if (squeethAllowance.lt(amount)) {
+        squeethApprove()
+      } else if (!dialogOpen) {
+        setDialogOpen(true)
+      } else {
+        sell(wSqueethBal)
+        setDialogOpen(false)
+      }
+    } catch (e) {
+      console.log(e)
     }
+    setSellLoading(false)
   }
 
   return (
@@ -185,20 +196,25 @@ const Buy: React.FC = () => {
         tooltip="Daily funding is paid out of your position, no collateral required."
       />
       {/* <span style={{ fontSize: 12 }}> 24h Vol: {(vol * 100).toFixed(2)} % </span> */}
-      <PrimaryButton style={{ width: 300 }} variant="contained" onClick={transact} className={classes.amountInput}>
-        Buy
+      <PrimaryButton variant="contained" onClick={transact} className={classes.amountInput} disabled={!!buyLoading}>
+        {buyLoading ? <CircularProgress color="primary" size="1.5rem" /> : 'Buy'}
       </PrimaryButton>
       <Typography variant="body1" color="primary" style={{ marginTop: '16px', marginBottom: '8px' }}>
         Your long Position: {wSqueethBal.toFixed(8)} SQE
       </Typography>
       <ErrorButton
-        disabled={wSqueethBal.eq(0)}
-        style={{ width: 300 }}
+        disabled={wSqueethBal.eq(0) || sellLoading}
         variant="contained"
         color="secondary"
         onClick={sellAndClose}
       >
-        {squeethAllowance.lt(wSqueethBal) ? 'Approve to sell' : 'Sell to close'}
+        {sellLoading ? (
+          <CircularProgress color="primary" size="1.5rem" />
+        ) : squeethAllowance.lt(wSqueethBal) ? (
+          'Approve to sell (1/2)'
+        ) : (
+          'Sell to close (2/2)'
+        )}
       </ErrorButton>
       <Dialog onClose={() => setDialogOpen(false)} aria-labelledby="simple-dialog-title" open={dialogOpen}>
         <div className={classes.dialog}>

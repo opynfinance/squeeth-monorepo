@@ -115,8 +115,8 @@ export const useSqueethPool = () => {
     }))
   }
 
-  const sell = async (amount: number) => {
-    const exactInputParam = getSellParam(new BigNumber(amount))
+  const sell = async (amount: BigNumber) => {
+    const exactInputParam = getSellParam(amount)
 
     await handleTransaction(swapRouterContract?.methods.exactInputSingle(exactInputParam).send({
       from: address
