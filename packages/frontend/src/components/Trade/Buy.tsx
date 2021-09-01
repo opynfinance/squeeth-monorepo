@@ -1,9 +1,6 @@
 import {
-  Button,
   CircularProgress,
   createStyles,
-  Dialog,
-  DialogActions,
   InputAdornment,
   makeStyles,
   TextField,
@@ -116,7 +113,6 @@ const useStyles = makeStyles((theme) =>
 const Buy: React.FC = () => {
   const [amount, setAmount] = useState(1)
   const [cost, setCost] = useState(new BigNumber(0))
-  const [dialogOpen, setDialogOpen] = useState(false)
   const [buyLoading, setBuyLoading] = useState(false)
   const [sellLoading, setSellLoading] = useState(false)
 
@@ -149,11 +145,8 @@ const Buy: React.FC = () => {
     try {
       if (squeethAllowance.lt(amount)) {
         squeethApprove()
-      } else if (!dialogOpen) {
-        setDialogOpen(true)
       } else {
         sell(wSqueethBal)
-        setDialogOpen(false)
       }
     } catch (e) {
       console.log(e)
@@ -216,22 +209,6 @@ const Buy: React.FC = () => {
           'Sell to close (2/2)'
         )}
       </ErrorButton>
-      <Dialog onClose={() => setDialogOpen(false)} aria-labelledby="simple-dialog-title" open={dialogOpen}>
-        <div className={classes.dialog}>
-          <div className={classes.dialogHeader}>
-            <WarningIcon fontSize="small" className={classes.dialogIcon} />
-            <Typography variant="body1">Premium for selling squeeth will be paid as WETH</Typography>
-          </div>
-          <DialogActions className={classes.amountInput}>
-            <Button color="primary" size="small" onClick={sellAndClose}>
-              Proceed
-            </Button>
-            <Button color="primary" size="small" onClick={() => setDialogOpen(false)}>
-              Cancel
-            </Button>
-          </DialogActions>
-        </div>
-      </Dialog>
     </div>
   )
 }

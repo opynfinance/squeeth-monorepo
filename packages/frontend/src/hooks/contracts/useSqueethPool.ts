@@ -116,11 +116,24 @@ export const useSqueethPool = () => {
   }
 
   const sell = async (amount: BigNumber) => {
-    const exactInputParam = getSellParam(amount)
+    const callData = await sellAndUnwrapData(amount)
 
-    await handleTransaction(swapRouterContract?.methods.exactInputSingle(exactInputParam).send({
+    await handleTransaction(swapRouterContract?.methods.multicall(callData).send({
       from: address
     }))
+  }
+
+  const sellAndUnwrapData = async (amount: BigNumber) => {
+    if (!web3) return
+    const exactInputParam = getSellParam(amount)
+    exactInputParam.recipient = swapRouter
+    const tupleInput = Object.values(exactInputParam).map(v => v?.toString() || '')
+
+    const amountOut = await getSellQuote(amount.toNumber())
+    const swapIface = new ethers.utils.Interface(routerABI)
+    const encodedSwapCall = swapIface.encodeFunctionData('exactInputSingle', [tupleInput])
+    const encodedUnwrapCall = swapIface.encodeFunctionData('unwrapWETH9', [fromTokenAmount(amountOut, 18).toString(), address])
+    return [encodedSwapCall, encodedUnwrapCall]
   }
 
   const getSellParam = (amount: BigNumber) => {
