@@ -75,7 +75,7 @@ describe("ShortHelper Integration Test", function () {
       // deploy short helper
       shortHelper = await ethers.getContract("ShortHelper", deployer);
   
-      expect(await shortHelper.squeeth()).to.be.eq(squeeth.address, "squeeth address mismatch")
+      expect(await shortHelper.wsqueeth()).to.be.eq(squeeth.address, "squeeth address mismatch")
       expect(await shortHelper.vaultNFT()).to.be.eq(vaultNFT.address, "vaultNFT address mismatch")
       expect(await shortHelper.controller()).to.be.eq(controller.address, "controller address mismatch")
       expect(await shortHelper.router()).to.be.eq(swapRouter.address, "swapRouter address mismatch")
@@ -106,13 +106,16 @@ describe("ShortHelper Integration Test", function () {
       // mint and trade
       await shortHelper.connect(seller1).openShort(0, squeethAmount, exactInputParam, {value: collateralAmount} )
   
+      const normalizationFactor = await controller.normalizationFactor()
+      const wSqueethAmount = squeethAmount.mul(ethers.utils.parseUnits('1')).div(normalizationFactor)
+
       const nftBalanceAfter = await vaultNFT.balanceOf(seller1.address)
       const poolSqueethAfter = await squeeth.balanceOf(poolAddress)
       const sellerWethAfter = await weth.balanceOf(seller1.address)
       const poolWethAfter = await weth.balanceOf(poolAddress)
   
       expect(nftBalanceAfter.eq(nftBalanceBefore.add(1))).to.be.true
-      expect(poolSqueethAfter.toString()).to.be.eq(poolSqueethBefore.add(squeethAmount), "squeeth mismatch")
+      expect(poolSqueethAfter.toString()).to.be.eq(poolSqueethBefore.add(wSqueethAmount), "squeeth mismatch")
       expect(poolWethBefore.sub(poolWethAfter).toString()).to.be.eq(sellerWethAfter.sub(sellerWethBefore), "weth mismatch")
     })
 
@@ -144,14 +147,17 @@ describe("ShortHelper Integration Test", function () {
           gasPrice: 0 // won't cost gas so we can calculate eth recieved
         }
       )
-  
+
+      const normalizationFactor = await controller.normalizationFactor()
+      const wSqueethAmount = squeethAmount.mul(ethers.utils.parseUnits('1')).div(normalizationFactor)
+
       const nftBalanceAfter = await vaultNFT.balanceOf(seller2.address)
       const poolSqueethAfter = await squeeth.balanceOf(poolAddress)
       const sellerEthAfter = await provider.getBalance(seller2.address)
       const poolWethAfter = await weth.balanceOf(poolAddress)
   
       expect(nftBalanceAfter.eq(nftBalanceBefore.add(1))).to.be.true
-      expect(poolSqueethAfter.toString()).to.be.eq(poolSqueethBefore.add(squeethAmount), "squeeth mismatch")
+      expect(poolSqueethAfter.toString()).to.be.eq(poolSqueethBefore.add(wSqueethAmount), "squeeth mismatch")
       expect(poolWethBefore.sub(poolWethAfter).toString()).to.be.eq(
         sellerEthAfter.add(collateralAmount).sub(sellerEthBefore), "weth mismatch"
       )

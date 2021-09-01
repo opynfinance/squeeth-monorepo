@@ -2,6 +2,8 @@
 
 pragma solidity >=0.8.0 <0.9.0;
 
+import "hardhat/console.sol";
+
 import {IWSqueeth} from "../interfaces/IWSqueeth.sol";
 import {IVaultManagerNFT} from "../interfaces/IVaultManagerNFT.sol";
 import {IOracle} from "../interfaces/IOracle.sol";
@@ -33,7 +35,7 @@ contract Controller is Initializable {
     mapping(uint256 => VaultLib.Vault) public vaults;
 
     IVaultManagerNFT public vaultNFT;
-    IWSqueeth public squeeth;
+    IWSqueeth public wsqueeth;
     IOracle public oracle;
 
     /// Events
@@ -50,13 +52,15 @@ contract Controller is Initializable {
      * put down collateral and mint squeeth.
      * This mints an amount of rSqueeth.
      */
-    function mint(uint256 _vaultId, uint128 _mintAmount) external payable returns (uint256) {
+    function mint(uint256 _vaultId, uint128 _mintAmount) external payable returns (uint256, uint256 _wSqueethMinted) {
         _applyFunding();
         if (_vaultId == 0) _vaultId = _openVault(msg.sender);
         if (msg.value > 0) _depositETHCollateral(_vaultId, msg.value);
-        if (_mintAmount > 0) _mintSqueeth(msg.sender, _vaultId, _mintAmount);
+        if (_mintAmount > 0) {
+            _wSqueethMinted = _mintSqueeth(msg.sender, _vaultId, _mintAmount);
+        }
         _checkVault(_vaultId);
-        return _vaultId;
+        return (_vaultId, _wSqueethMinted);
     }
 
     /**
@@ -91,6 +95,15 @@ contract Controller is Initializable {
         _checkVault(_vaultId);
     }
 
+    /**
+     * Authorize an address to modify the vault. Can be revoke by setting address to 0.
+     */
+    function updateOperator(uint256 _vaultId, address _operator) external {
+        require(_canModifyVault(_vaultId, msg.sender), "not allowed");
+        vaults[_vaultId].operator = _operator;
+        emit UpdateOperator(_vaultId, _operator);
+    }
+
     function liquidate(uint256 _vaultId, uint256 _debtAmount) external {
         _applyFunding();
 
@@ -100,7 +113,7 @@ contract Controller is Initializable {
         uint256 collateralToSell = (indexPrice * _debtAmount) / 1e18;
         // tood: add 10% of collateral
 
-        squeeth.burn(msg.sender, _debtAmount);
+        wsqueeth.burn(msg.sender, _debtAmount);
         payable(msg.sender).sendValue(collateralToSell);
 
         emit Liquidate(_vaultId, _debtAmount, collateralToSell);
@@ -112,15 +125,6 @@ contract Controller is Initializable {
 
     function getDenormalizedMark(uint32 _period) external view returns (uint256) {
         return _getDenormalizedMark(_period);
-    }
-
-    /**
-     * Authorize an address to modify the vault. Can be revoke by setting address to 0.
-     */
-    function updateOperator(uint256 _vaultId, address _operator) external {
-        require(_canModifyVault(_vaultId, msg.sender), "not allowed");
-        vaults[_vaultId].operator = _operator;
-        emit UpdateOperator(_vaultId, _operator);
     }
 
     /**
@@ -143,7 +147,7 @@ contract Controller is Initializable {
 
         oracle = IOracle(_oracle);
         vaultNFT = IVaultManagerNFT(_vaultNFT);
-        squeeth = IWSqueeth(_squeeth);
+        wsqueeth = IWSqueeth(_squeeth);
 
         ethUSDPool = _ethUsdPool;
         wSqueethEthPool = _wSqueethEthPool;
@@ -200,26 +204,26 @@ contract Controller is Initializable {
     }
 
     /**
-     * mint squeeth (ERC20) to an account
+     * mint wsqueeth (ERC20) to an account
      */
     function _mintSqueeth(
         address _account,
         uint256 _vaultId,
-        uint256 _amount
-    ) internal {
+        uint256 _squeethAmount
+    ) internal returns (uint256 amountToMint) {
         require(_canModifyVault(_vaultId, _account), "not allowed");
 
-        uint256 amountToMint = (_amount * 1e18) / normalizationFactor;
+        amountToMint = (_squeethAmount * 1e18) / normalizationFactor;
 
         vaults[_vaultId].mintSqueeth(amountToMint);
 
         emit MintSqueeth(amountToMint, _vaultId);
 
-        squeeth.mint(_account, amountToMint);
+        wsqueeth.mint(_account, amountToMint);
     }
 
     /**
-     * burn squeeth (ERC20) from an account.
+     * burn wsqueeth (ERC20) from an account.
      */
     function _burnSqueeth(
         address _account,
@@ -229,7 +233,7 @@ contract Controller is Initializable {
         vaults[_vaultId].burnSqueeth(_amount);
         emit BurnSqueeth(_amount, _vaultId);
 
-        squeeth.burn(_account, _amount);
+        wsqueeth.burn(_account, _amount);
     }
 
     /**
@@ -247,13 +251,16 @@ contract Controller is Initializable {
 
         // make sure we use the same period for mark and index, and this period won't cause revert.
         uint32 fairPeriod = _getFairPeriodForOracle(period);
+
         uint256 mark = _getDenormalizedMark(fairPeriod);
         uint256 index = _getIndex(fairPeriod);
+        uint256 rFunding = (1e18 * uint256(period)) / secInDay;
 
-        uint256 rFunding = uint256(period) / secInDay;
-        uint256 newNormalizationFactor = (mark * 1e18) / ((1 + rFunding) * mark - index * rFunding);
+        // mul by 1e36 to keep newNormalizationFactor in 18 decimals
+        uint256 newNormalizationFactor = (mark * 1e36) / (((1e18 + rFunding) * mark - index * rFunding));
 
         normalizationFactor = (normalizationFactor * newNormalizationFactor) / 1e18;
+        lastFundingUpdateTimestamp = block.timestamp;
     }
 
     /**
@@ -261,7 +268,6 @@ contract Controller is Initializable {
      */
     function _checkVault(uint256 _vaultId) internal view {
         if (_vaultId == 0) return;
-
         VaultLib.Vault memory vault = vaults[_vaultId];
 
         require(_isVaultSafe(vault), "Invalid state");
@@ -283,7 +289,7 @@ contract Controller is Initializable {
 
     function _getDenormalizedMark(uint32 _period) public view returns (uint256) {
         uint256 ethUSDPrice = _getTwap(ethUSDPool, weth, dai, _period);
-        uint256 squeethEthPrice = _getTwap(wSqueethEthPool, address(squeeth), weth, _period);
+        uint256 squeethEthPrice = _getTwap(wSqueethEthPool, address(wsqueeth), weth, _period);
 
         return (squeethEthPrice * ethUSDPrice) / normalizationFactor;
     }

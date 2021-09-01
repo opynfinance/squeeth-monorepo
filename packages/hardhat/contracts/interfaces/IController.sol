@@ -5,12 +5,15 @@ pragma solidity >=0.8.0 <0.9.0;
 interface IController {
     function vaultNFT() external view returns (address);
 
-    function squeeth() external view returns (address);
+    function wsqueeth() external view returns (address);
 
     /**
      * put down collateral and mint squeeth.
      */
-    function mint(uint256 _vaultId, uint128 _mintAmount) external payable returns (uint256);
+    function mint(uint256 _vaultId, uint128 _mintAmount)
+        external
+        payable
+        returns (uint256 vaultId, uint256 _wSqueethMinted);
 
     /**
      * Deposit collateral into a vault

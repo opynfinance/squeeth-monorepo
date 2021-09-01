@@ -41,7 +41,6 @@ library VaultLib {
         uint256 _ethUsdPrice
     ) internal pure returns (bool) {
         if (_vault.shortAmount == 0) return true;
-
         return _isProperlyCollateralized(_vault, _normalizedFactor, _ethUsdPrice);
     }
 
@@ -51,7 +50,6 @@ library VaultLib {
         uint256 _ethUsdPrice
     ) internal pure returns (bool) {
         uint256 debtValueInETH = (_vault.shortAmount * _normalizedFactor * _ethUsdPrice) / 1e36;
-
         return _vault.collateralAmount * 2 >= debtValueInETH * 3;
     }
 }

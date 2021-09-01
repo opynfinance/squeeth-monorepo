@@ -18,7 +18,7 @@ contract ShortHelper {
 
     IController public immutable controller;
     ISwapRouter public immutable router;
-    IWSqueeth public immutable squeeth;
+    IWSqueeth public immutable wsqueeth;
     IWETH9 public immutable weth;
     IVaultManagerNFT public immutable vaultNFT;
 
@@ -30,16 +30,16 @@ contract ShortHelper {
         IController _controller = IController(_controllerAddr);
         router = ISwapRouter(_swapRouter);
 
-        IWSqueeth _squeeth = IWSqueeth(_controller.squeeth());
+        IWSqueeth _wsqueeth = IWSqueeth(_controller.wsqueeth());
         IWETH9 _weth = IWETH9(_wethAddr);
-        _squeeth.approve(_swapRouter, type(uint256).max);
+        _wsqueeth.approve(_swapRouter, type(uint256).max);
         _weth.approve(_swapRouter, type(uint256).max);
 
         // assign immutable variables
         vaultNFT = IVaultManagerNFT(_controller.vaultNFT());
         weth = _weth;
         controller = _controller;
-        squeeth = _squeeth;
+        wsqueeth = _wsqueeth;
     }
 
     /**
@@ -51,7 +51,8 @@ contract ShortHelper {
         ISwapRouter.ExactInputSingleParams memory _exactInputParams
     ) external payable {
         // vaultNFT.transferFrom(msg.sender, address(this), _vaultId);
-        uint256 vaultId = controller.mint{value: msg.value}(_vaultId, _shortSqueethAmount);
+        (uint256 vaultId, uint256 wsqueethAmount) = controller.mint{value: msg.value}(_vaultId, _shortSqueethAmount);
+        _exactInputParams.amountIn = wsqueethAmount;
 
         uint256 amountOut = router.exactInputSingle(_exactInputParams);
 

@@ -204,33 +204,37 @@ export const addLiquidity = async(
     const wethAmount = parseFloat(initLiquiditySqueethAmount) * squeethPriceInETH
     const liquidityWethAmount = ethers.utils.parseEther(wethAmount.toString()) 
 
-    let squeethBalance = await squeeth.balanceOf(deployer)
+    let wsqueethBalance = await squeeth.balanceOf(deployer)
     let wethBalance = await weth.balanceOf(deployer)
 
     if (wethBalance.lt(liquidityWethAmount)) {
       await weth.deposit({value: liquidityWethAmount, from: deployer})
       wethBalance = await weth.balanceOf(deployer)
+      console.log(`wethBalance`, wethBalance.toString())
     }
   
-    if (squeethBalance.lt(liquiditySqueethAmount)) {
+    if (wsqueethBalance.lt(liquiditySqueethAmount)) {
       // use {collateralAmount} eth to mint squeeth
-      await controller.mint(0, liquiditySqueethAmount, {value: ethers.utils.parseEther(collateralAmount)}) 
-      squeethBalance = await squeeth.balanceOf(deployer)
+      await controller.mint(0, liquiditySqueethAmount.sub(wsqueethBalance), {value: ethers.utils.parseEther(collateralAmount)}) 
+      wsqueethBalance = await squeeth.balanceOf(deployer)
     }
 
+    
     await weth.approve(positionManager.address, ethers.constants.MaxUint256)
     await squeeth.approve(positionManager.address, ethers.constants.MaxUint256)
     
+    const liquidityWSqueethAmount = wsqueethBalance
+
     const mintParam = {
       token0,
       token1,
       fee: 3000,
       tickLower: -887220,// int24 min tick used when selecting full range
       tickUpper: 887220,// int24 max tick used when selecting full range
-      amount0Desired: isWethToken0 ? liquidityWethAmount : liquiditySqueethAmount,
-      amount1Desired: isWethToken0 ? liquiditySqueethAmount : liquidityWethAmount,
-      amount0Min: 0,
-      amount1Min: 0,
+      amount0Desired: isWethToken0 ? liquidityWethAmount : liquidityWSqueethAmount,
+      amount1Desired: isWethToken0 ? liquidityWSqueethAmount : liquidityWethAmount,
+      amount0Min: 1,
+      amount1Min: 1,
       recipient: deployer,// address
       deadline: Math.floor(Date.now() / 1000 + 86400),// uint256
     }
