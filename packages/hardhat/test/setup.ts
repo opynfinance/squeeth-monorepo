@@ -210,7 +210,6 @@ export const addLiquidity = async(
     if (wethBalance.lt(liquidityWethAmount)) {
       await weth.deposit({value: liquidityWethAmount, from: deployer})
       wethBalance = await weth.balanceOf(deployer)
-      console.log(`wethBalance`, wethBalance.toString())
     }
   
     if (wsqueethBalance.lt(liquiditySqueethAmount)) {

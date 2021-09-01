@@ -12,15 +12,18 @@ import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Po
 
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {VaultLib} from "../libs/VaultLib.sol";
 
-contract Controller is Initializable {
+contract Controller is Initializable, Ownable {
     using VaultLib for VaultLib.Vault;
     using Address for address payable;
 
     uint256 internal constant secInDay = 86400;
+    bool public isShutDown = false;
+    uint256 public shutDownEthPriceSnapshot;
 
     address public weth;
     address public dai;
@@ -48,84 +51,16 @@ contract Controller is Initializable {
     event UpdateOperator(uint256 vaultId, address operator);
     event Liquidate(uint256 vaultId, uint256 debtAmount, uint256 collateralToSell);
 
-    /**
-     * put down collateral and mint squeeth.
-     * This mints an amount of rSqueeth.
-     */
-    function mint(uint256 _vaultId, uint128 _mintAmount) external payable returns (uint256, uint256 _wSqueethMinted) {
-        _applyFunding();
-        if (_vaultId == 0) _vaultId = _openVault(msg.sender);
-        if (msg.value > 0) _depositETHCollateral(_vaultId, msg.value);
-        if (_mintAmount > 0) {
-            _wSqueethMinted = _mintSqueeth(msg.sender, _vaultId, _mintAmount);
-        }
-        _checkVault(_vaultId);
-        return (_vaultId, _wSqueethMinted);
+    modifier notShutdown() {
+        require(!isShutDown, "shutdown");
+        _;
     }
 
     /**
-     * Deposit collateral into a vault
+     * ======================
+     * | External Functions |
+     * ======================
      */
-    function deposit(uint256 _vaultId) external payable {
-        _applyFunding();
-        _depositETHCollateral(_vaultId, msg.value);
-    }
-
-    /**
-     * Withdraw collateral from a vault.
-     */
-    function withdraw(uint256 _vaultId, uint256 _amount) external payable {
-        _applyFunding();
-        _withdrawCollateral(msg.sender, _vaultId, _amount);
-        _checkVault(_vaultId);
-    }
-
-    /**
-     * burn squueth and remove collateral from a vault.
-     * This burns an amount of wSqueeth.
-     */
-    function burn(
-        uint256 _vaultId,
-        uint256 _amount,
-        uint256 _withdrawAmount
-    ) external {
-        _applyFunding();
-        if (_amount > 0) _burnSqueeth(msg.sender, _vaultId, _amount);
-        if (_withdrawAmount > 0) _withdrawCollateral(msg.sender, _vaultId, _withdrawAmount);
-        _checkVault(_vaultId);
-    }
-
-    /**
-     * Authorize an address to modify the vault. Can be revoke by setting address to 0.
-     */
-    function updateOperator(uint256 _vaultId, address _operator) external {
-        require(_canModifyVault(_vaultId, msg.sender), "not allowed");
-        vaults[_vaultId].operator = _operator;
-        emit UpdateOperator(_vaultId, _operator);
-    }
-
-    function liquidate(uint256 _vaultId, uint256 _debtAmount) external {
-        _applyFunding();
-
-        require(!_isVaultSafe(vaults[_vaultId]), "Can not liquidate");
-
-        uint256 indexPrice = _getIndex(600); // get index price using TWAP furing last 10min
-        uint256 collateralToSell = (indexPrice * _debtAmount) / 1e18;
-        // tood: add 10% of collateral
-
-        wsqueeth.burn(msg.sender, _debtAmount);
-        payable(msg.sender).sendValue(collateralToSell);
-
-        emit Liquidate(_vaultId, _debtAmount, collateralToSell);
-    }
-
-    function getIndex(uint32 _period) external view returns (uint256) {
-        return _getIndex(_period);
-    }
-
-    function getDenormalizedMark(uint32 _period) external view returns (uint256) {
-        return _getDenormalizedMark(_period);
-    }
 
     /**
      * init controller with squeeth and short NFT address
@@ -160,7 +95,139 @@ contract Controller is Initializable {
     }
 
     /**
-     * Internal functions
+     * put down collateral and mint squeeth.
+     * This mints an amount of rSqueeth.
+     */
+    function mint(uint256 _vaultId, uint128 _mintAmount)
+        external
+        payable
+        notShutdown
+        returns (uint256, uint256 _wSqueethMinted)
+    {
+        _applyFunding();
+        if (_vaultId == 0) _vaultId = _openVault(msg.sender);
+        if (msg.value > 0) _depositETHCollateral(_vaultId, msg.value);
+        if (_mintAmount > 0) {
+            _wSqueethMinted = _mintSqueeth(msg.sender, _vaultId, _mintAmount);
+        }
+        _checkVault(_vaultId);
+        return (_vaultId, _wSqueethMinted);
+    }
+
+    /**
+     * Deposit collateral into a vault
+     */
+    function deposit(uint256 _vaultId) external payable notShutdown {
+        _applyFunding();
+        _depositETHCollateral(_vaultId, msg.value);
+    }
+
+    /**
+     * Withdraw collateral from a vault.
+     */
+    function withdraw(uint256 _vaultId, uint256 _amount) external payable notShutdown {
+        _applyFunding();
+        _withdrawCollateral(msg.sender, _vaultId, _amount);
+        _checkVault(_vaultId);
+    }
+
+    /**
+     * burn squueth and remove collateral from a vault.
+     * This burns an amount of wSqueeth.
+     */
+    function burn(
+        uint256 _vaultId,
+        uint256 _amount,
+        uint256 _withdrawAmount
+    ) external notShutdown {
+        _applyFunding();
+        if (_amount > 0) _burnSqueeth(msg.sender, _vaultId, _amount);
+        if (_withdrawAmount > 0) _withdrawCollateral(msg.sender, _vaultId, _withdrawAmount);
+        _checkVault(_vaultId);
+    }
+
+    function liquidate(uint256 _vaultId, uint256 _debtAmount) external notShutdown {
+        _applyFunding();
+
+        require(!_isVaultSafe(vaults[_vaultId]), "Can not liquidate");
+
+        uint256 indexPrice = _getIndex(600); // get index price using TWAP furing last 10min
+        uint256 collateralToSell = (indexPrice * _debtAmount) / 1e18;
+        // tood: add 10% of collateral
+
+        wsqueeth.burn(msg.sender, _debtAmount);
+        payable(msg.sender).sendValue(collateralToSell);
+
+        emit Liquidate(_vaultId, _debtAmount, collateralToSell);
+    }
+
+    function getIndex(uint32 _period) external view returns (uint256) {
+        return _getIndex(_period);
+    }
+
+    function getDenormalizedMark(uint32 _period) external view returns (uint256) {
+        return _getDenormalizedMark(_period);
+    }
+
+    /**
+     * Authorize an address to modify the vault. Can be revoke by setting address to 0.
+     */
+    function updateOperator(uint256 _vaultId, address _operator) external {
+        require(_canModifyVault(_vaultId, msg.sender), "not allowed");
+        vaults[_vaultId].operator = _operator;
+        emit UpdateOperator(_vaultId, _operator);
+    }
+
+    /**
+     * shutdown the system and enable redeeming long and short
+     */
+    function shutDown() external onlyOwner {
+        require(!isShutDown, "shutdown");
+        isShutDown = true;
+        shutDownEthPriceSnapshot = oracle.getTwaPriceSafe(ethUSDPool, weth, dai, 600);
+    }
+
+    function redeemLong(uint256 _wsqueethAmount) external {
+        require(isShutDown, "!shutdown");
+        wsqueeth.burn(msg.sender, _wsqueethAmount);
+        // convert wSqueeth amount to real short position with normalizationFactor
+        uint256 longValue = (_wsqueethAmount * normalizationFactor * shutDownEthPriceSnapshot) / 1e36;
+        payable(msg.sender).sendValue(longValue);
+    }
+
+    function redeemShort(uint256 _vaultId) external {
+        require(isShutDown, "!shutdown");
+        require(_canModifyVault(_vaultId, msg.sender), "not allowed");
+
+        uint256 _shortSqueethAmount = vaults[_vaultId].shortAmount;
+        uint256 debt = (_shortSqueethAmount * shutDownEthPriceSnapshot * normalizationFactor) / 1e36;
+        uint256 excess = vaults[_vaultId].collateralAmount - debt;
+
+        // reset the vault but don't burn the nft, just because people may want to keep it.
+        vaults[_vaultId].shortAmount = 0;
+        vaults[_vaultId].collateralAmount = 0;
+
+        // todo: handle uni nft collateral
+
+        payable(msg.sender).sendValue(excess);
+    }
+
+    /**
+     * Update the normalized factor as a way to pay funding.
+     */
+    function applyFunding() external {
+        _applyFunding();
+    }
+
+    /**
+     * a function to add eth into a contract, in case it got insolvent and have ensufficient eth to pay out.
+     */
+    function donate() external payable {}
+
+    /*
+     * ======================
+     * | Internal Functions |
+     * ======================
      */
 
     function _canModifyVault(uint256 _vaultId, address _account) internal view returns (bool) {
@@ -234,13 +301,6 @@ contract Controller is Initializable {
         emit BurnSqueeth(_amount, _vaultId);
 
         wsqueeth.burn(_account, _amount);
-    }
-
-    /**
-     * External function to update the normalized factor as a way to pay funding.
-     */
-    function applyFunding() external {
-        _applyFunding();
     }
 
     /**
