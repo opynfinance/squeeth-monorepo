@@ -8,7 +8,6 @@ import {
   Typography,
 } from '@material-ui/core'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
-import WarningIcon from '@material-ui/icons/Warning'
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useState } from 'react'
 
@@ -20,13 +19,6 @@ import { useAddresses } from '../../hooks/useAddress'
 import { useETHPriceCharts } from '../../hooks/useETHPriceCharts'
 import { ErrorButton, PrimaryButton } from '../Buttons'
 import TradeInfoItem from './TradeInfoItem'
-
-enum BuyStep {
-  WRAP,
-  APPROVE,
-  BUY,
-  Done,
-}
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -180,7 +172,6 @@ const Buy: React.FC = () => {
           }}
         />
       </div>
-      {/* <TradeInfoItem label="Price" value={squeethPrice.toFixed(4)} unit="WETH" /> */}
       <TradeInfoItem label="Squeeth you get" value={cost.toFixed(8)} unit="SQE" />
       <TradeInfoItem
         label="Daily Funding to Pay"
@@ -188,7 +179,6 @@ const Buy: React.FC = () => {
         unit="%"
         tooltip="Daily funding is paid out of your position, no collateral required."
       />
-      {/* <span style={{ fontSize: 12 }}> 24h Vol: {(vol * 100).toFixed(2)} % </span> */}
       <PrimaryButton variant="contained" onClick={transact} className={classes.amountInput} disabled={!!buyLoading}>
         {buyLoading ? <CircularProgress color="primary" size="1.5rem" /> : 'Buy'}
       </PrimaryButton>

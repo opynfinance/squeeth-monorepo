@@ -6,6 +6,7 @@ import { ethers } from 'ethers'
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import Web3 from 'web3'
 
+import { EtherscanPrefix } from '../constants'
 import { Networks } from '../types'
 
 type WalletType = {
@@ -49,10 +50,20 @@ const WalletProvider: React.FC = ({ children }) => {
     })
   }, [onboard])
 
+  function addEtherscan(transaction: any) {
+    if (networkId === Networks.LOCAL) return
+    return {
+      link: `${EtherscanPrefix[networkId]}${transaction.hash}`,
+    }
+  }
+
   const handleTransaction = (tx: any) => {
     if (!notify) return
 
-    tx.on('transactionHash', (hash: string) => notify.hash(hash))
+    tx.on('transactionHash', (hash: string) => {
+      const { emitter } = notify.hash(hash)
+      emitter.on('all', addEtherscan)
+    })
     return tx
   }
 

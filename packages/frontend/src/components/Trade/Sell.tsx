@@ -133,19 +133,6 @@ const Sell: React.FC = () => {
     )
   }
 
-  const VaultValue: React.FC<{ value: string | number; label: string }> = ({ value, label }) => {
-    return (
-      <div>
-        <Typography component="span" color="primary">
-          {value}
-        </Typography>
-        <Typography component="span" variant="caption" className={classes.txUnit}>
-          {label}
-        </Typography>
-      </div>
-    )
-  }
-
   return (
     <div>
       <Typography variant="caption" className={classes.thirdHeading} component="div">
