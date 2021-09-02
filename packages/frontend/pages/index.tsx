@@ -96,6 +96,7 @@ enum TradeType {
 export default function Home() {
   const classes = useStyles()
   const [leverage, setLeverage] = useState(4)
+  const [amount, setAmount] = useState(1)
   const [tradeType, setTradeType] = useState(TradeType.BUY)
   const [customLong, setCustomLong] = useState(0)
 
@@ -181,7 +182,7 @@ export default function Home() {
           </div>
           <div className={classes.buyCard}>
             <Card className={classes.innerCard}>
-              <Trade setTradeType={setTradeType} tradeType={tradeType} />
+              <Trade setTradeType={setTradeType} tradeType={tradeType} amount={amount} setAmount={setAmount} />
             </Card>
             <Typography className={classes.thirdHeading} variant="h6">
               Payoff
@@ -203,10 +204,10 @@ export default function Home() {
                   endAdornment: <InputAdornment position="end">x</InputAdornment>,
                 }}
               />
-              &nbsp;, squeeth goes up {leverage * leverage}x, and your position is worth $
-              {(leverage * leverage * Number(1)).toFixed(2)}
+              &nbsp;, squeeth goes up {leverage * leverage}x, and your position is worth &nbsp;
+              {(leverage * leverage * amount).toFixed(2)} ETH
               <br /> <br />
-              If ETH goes down 100% or more, your position is worth $0. With squeeth you can never lose more than you
+              If ETH goes down 100% or more, your position is worth 0 ETH. With squeeth you can never lose more than you
               put in, giving you protected downside.
             </Typography>
           </div>
@@ -277,7 +278,7 @@ export default function Home() {
           </div>
           <div className={classes.buyCard}>
             <Card className={classes.innerCard}>
-              <Trade setTradeType={setTradeType} tradeType={tradeType} />
+              <Trade setTradeType={setTradeType} tradeType={tradeType} amount={amount} setAmount={setAmount} />
             </Card>
             {/* <Typography className={classes.thirdHeading} variant="h6">
               Payoff

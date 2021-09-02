@@ -102,8 +102,13 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const Buy: React.FC = () => {
-  const [amount, setAmount] = useState(1)
+type BuyProps = {
+  setAmount: (arg0: number) => void
+  amount: number
+}
+
+const Buy: React.FC<BuyProps> = ({ setAmount, amount }) => {
+  // const [amount, setAmount] = useState(1)
   const [cost, setCost] = useState(new BigNumber(0))
   const [buyLoading, setBuyLoading] = useState(false)
   const [sellLoading, setSellLoading] = useState(false)
@@ -154,7 +159,7 @@ const Buy: React.FC = () => {
       <div className={classes.thirdHeading}>
         <TextField
           size="small"
-          value={amount}
+          value={amount.toString()}
           type="number"
           style={{ width: 300 }}
           onChange={(event) => setAmount(Number(event.target.value))}

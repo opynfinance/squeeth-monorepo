@@ -141,7 +141,7 @@ const Sell: React.FC = () => {
       <div className={classes.thirdHeading}>
         <TextField
           size="small"
-          value={amount}
+          value={amount.toString()}
           type="number"
           style={{ width: 300 }}
           onChange={(event) => setAmount(Number(event.target.value))}

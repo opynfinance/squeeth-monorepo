@@ -443,7 +443,7 @@ export default function Vault() {
             <div className={classes.amountInput}>
               <TextField
                 size="small"
-                value={amount}
+                value={amount.toString()}
                 type="number"
                 style={{ width: 300 }}
                 onChange={(event) => setAmount(Number(event.target.value))}
