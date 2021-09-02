@@ -10,8 +10,10 @@ import { useEffect, useState } from 'react'
 
 import ccpayoff from '../public/images/ccpayoff.png'
 import { LongChart } from '../src/components/Charts/LongChart'
+import { VaultChart } from '../src/components/Charts/VaultChart'
 import Nav from '../src/components/Nav'
 import Trade from '../src/components/Trade'
+import { Vaults } from '../src/constants'
 import { useWorldContext } from '../src/context/world'
 import { useETHPriceCharts } from '../src/hooks/useETHPriceCharts'
 
@@ -86,9 +88,16 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
+enum TradeType {
+  BUY,
+  SELL,
+}
+
 export default function Home() {
   const classes = useStyles()
   const [leverage, setLeverage] = useState(4)
+  const [tradeType, setTradeType] = useState(TradeType.BUY)
+  const [customLong, setCustomLong] = useState(0)
 
   const { volMultiplier: globalVolMultiplier } = useWorldContext()
   // use hook because we only calculate accFunding based on 24 hour performance
@@ -101,104 +110,204 @@ export default function Home() {
   return (
     <div>
       <Nav />
-      <div className={classes.body}>
-        <div>
-          <Typography variant="h5">Long Squeeth - ETH&sup2; Position</Typography>
-          <Typography variant="body1">Perpetual leverage without liquidations</Typography>
-          <Typography variant="body2" className={classes.cardDetail}>
-            Long squeeth (ETH&sup2;) gives you a leveraged position with unlimited upside, protected downside, and no
-            liquidations. Compared to a 2x leveraged position, you make more when ETH goes up and lose less when ETH
-            goes down. Eg. If ETH goes up 5x, squeeth goes up 25x. You pay a daily funding rate for this position. Enter
-            the position by purchasing an ERC20 token.
-          </Typography>
-          <Typography className={classes.cardTitle} variant="h6">
-            Historical PNL Backtest
-          </Typography>
-          <div className={classes.amountInput}>
-            <LongChart />
-          </div>
-          <Typography className={classes.cardTitle} variant="h6">
-            Strategy Details
-          </Typography>
-          <Typography className={classes.thirdHeading} variant="h6">
-            How it works
-          </Typography>
-          <List>
-            <ListItem>
-              <ListItemText primary="1. Buy Squeeth ERC20" secondary="via Uniswap" />
-            </ListItem>
-            <ListItem>
-              <ListItemText
-                primary="2. Pay daily funding out of squeeth ERC20 position"
-                secondary="Can think about this like selling some of your squeeth ERC20 each day to pay funding"
-              />
-            </ListItem>
-            <ListItem>
-              <ListItemText primary="3. Exit position by selling squeeth ERC20" secondary="via Uniswap" />
-            </ListItem>
-          </List>
 
-          <Typography className={classes.thirdHeading} variant="h6">
-            Properties
-          </Typography>
-          <Typography variant="body2" className={classes.cardSubTxt}>
-            Squeeth gives you an ETH&sup2; payoff. This means you have constant gamma exposure, so you always hold a
-            position similar to an at the money call option. This functions similar to a perpetual swap, where you are
-            targeting ETH&sup2; rather than ETH.
-            <a className={classes.header} href="https://www.paradigm.xyz/2021/08/power-perpetuals/">
-              {' '}
-              Learn more.{' '}
-            </a>
-          </Typography>
-          <br />
-          <Typography variant="body2" className={classes.cardSubTxt}>
-            Funding is calculated as your position size multiplied by the TWAP (time weighted average price) of Mark -
-            Index, where Mark is the price squeeth is trading at and Index is ETH&sup2;. We use{' '}
-            <a className={classes.header} href="https://uniswap.org/whitepaper-v3.pdf">
-              {' '}
-              Uniswap V3 GMA (geometric moving average) TWAP.{' '}
-            </a>
-            Daily funding is paid out of your squeeth position. You can think about this as selling a small amount of
-            your squeeth each day to pay funding.
-          </Typography>
-          {/* <br />
+      {tradeType === TradeType.BUY ? (
+        //long side
+        <div className={classes.body}>
+          <div>
+            <Typography variant="h5">Long Squeeth - ETH&sup2; Position</Typography>
+            <Typography variant="body1">Perpetual leverage without liquidations</Typography>
+            <Typography variant="body2" className={classes.cardDetail}>
+              Long squeeth (ETH&sup2;) gives you a leveraged position with unlimited upside, protected downside, and no
+              liquidations. Compared to a 2x leveraged position, you make more when ETH goes up and lose less when ETH
+              goes down. Eg. If ETH goes up 5x, squeeth goes up 25x. You pay a daily funding rate for this position.
+              Enter the position by purchasing an ERC20 token.
+            </Typography>
+            <Typography className={classes.cardTitle} variant="h6">
+              Historical PNL Backtest
+            </Typography>
+            <div className={classes.amountInput}>
+              <LongChart />
+            </div>
+            <Typography className={classes.cardTitle} variant="h6">
+              Strategy Details
+            </Typography>
+            <Typography className={classes.thirdHeading} variant="h6">
+              How it works
+            </Typography>
+            <List>
+              <ListItem>
+                <ListItemText primary="1. Buy Squeeth ERC20" secondary="via Uniswap" />
+              </ListItem>
+              <ListItem>
+                <ListItemText
+                  primary="2. Pay daily funding out of squeeth ERC20 position"
+                  secondary="Can think about this like selling some of your squeeth ERC20 each day to pay funding"
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemText primary="3. Exit position by selling squeeth ERC20" secondary="via Uniswap" />
+              </ListItem>
+            </List>
+
+            <Typography className={classes.thirdHeading} variant="h6">
+              Properties
+            </Typography>
+            <Typography variant="body2" className={classes.cardSubTxt}>
+              Squeeth gives you an ETH&sup2; payoff. This means you have constant gamma exposure, so you always hold a
+              position similar to an at the money call option. This functions similar to a perpetual swap, where you are
+              targeting ETH&sup2; rather than ETH.
+              <a className={classes.header} href="https://www.paradigm.xyz/2021/08/power-perpetuals/">
+                {' '}
+                Learn more.{' '}
+              </a>
+            </Typography>
+            <br />
+            <Typography variant="body2" className={classes.cardSubTxt}>
+              Funding is calculated as your position size multiplied by the TWAP (time weighted average price) of Mark -
+              Index, where Mark is the price squeeth is trading at and Index is ETH&sup2;. We use{' '}
+              <a className={classes.header} href="https://uniswap.org/whitepaper-v3.pdf">
+                {' '}
+                Uniswap V3 GMA (geometric moving average) TWAP.{' '}
+              </a>
+              Daily funding is paid out of your squeeth position. You can think about this as selling a small amount of
+              your squeeth each day to pay funding.
+            </Typography>
+            {/* <br />
           <Typography variant="body2" className={classes.cardSubTxt}>
             Funding is paid in-kind (using the squeeth token), so you cannot be liquidated. Note that the squeeth ERC20 amount will remain constant eg. if you bought 1 squeeth you will still have 1 squeeth after funding in kind. 
             What will change is how much value you can redeem for each squeeth. The amount of value you can redeem per squeeth depends on how much funding you have paid and the mark price of squeeth. [insert diagram of square with dotted lines, value being area of square]
           </Typography> */}
-        </div>
-        <div className={classes.buyCard}>
-          <Card className={classes.innerCard}>
-            <Trade />
-          </Card>
-          <Typography className={classes.thirdHeading} variant="h6">
-            Payoff
-          </Typography>
-          <div className={classes.thirdHeading}>
-            <Image src={ccpayoff} alt="cc payoff" width={450} height={300} />
           </div>
-          <Typography variant="body2" className={classes.payoff}>
-            If ETH goes up &nbsp;
-            <TextField
-              size="small"
-              value={leverage.toString()}
-              type="number"
-              style={{ width: 75 }}
-              onChange={(event) => setLeverage(Number(event.target.value))}
-              // label="Leverage"
-              variant="outlined"
-              InputProps={{
-                endAdornment: <InputAdornment position="end">x</InputAdornment>,
-              }}
-            />
-            &nbsp;, squeeth goes up {leverage * leverage}x, and your position is worth $
-            {(leverage * leverage * Number(1)).toFixed(2)}
-            <br /> <br />
-            If ETH goes down 100% or more, your position is worth $0. With squeeth you can never lose more than you put
-            in, giving you protected downside.
-          </Typography>
+          <div className={classes.buyCard}>
+            <Card className={classes.innerCard}>
+              <Trade setTradeType={setTradeType} tradeType={tradeType} />
+            </Card>
+            <Typography className={classes.thirdHeading} variant="h6">
+              Payoff
+            </Typography>
+            <div className={classes.thirdHeading}>
+              <Image src={ccpayoff} alt="cc payoff" width={450} height={300} />
+            </div>
+            <Typography variant="body2" className={classes.payoff}>
+              If ETH goes up &nbsp;
+              <TextField
+                size="small"
+                value={leverage.toString()}
+                type="number"
+                style={{ width: 75 }}
+                onChange={(event) => setLeverage(Number(event.target.value))}
+                // label="Leverage"
+                variant="outlined"
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">x</InputAdornment>,
+                }}
+              />
+              &nbsp;, squeeth goes up {leverage * leverage}x, and your position is worth $
+              {(leverage * leverage * Number(1)).toFixed(2)}
+              <br /> <br />
+              If ETH goes down 100% or more, your position is worth $0. With squeeth you can never lose more than you
+              put in, giving you protected downside.
+            </Typography>
+          </div>
         </div>
-      </div>
+      ) : (
+        //short side
+        <div className={classes.body}>
+          <div>
+            <Typography variant="h5">Short Squeeth - short ETH&sup2; Position</Typography>
+            <Typography variant="body1">Earn funding for selling ETH&sup2;</Typography>
+            <Typography variant="body2" className={classes.cardDetail}>
+              Short squeeth (ETH&sup2;) is short an ETH&sup2; position. You earn a daily funding rate for taking on this
+              position. You enter the position by putting down collateral, minting, and selling squeeth. If you become
+              undercollateralized, you could be liquidated.
+            </Typography>
+            <Typography className={classes.cardTitle} variant="h6">
+              Historical PNL Backtest
+            </Typography>
+            <div className={classes.amountInput}>
+              <VaultChart vault={Vaults.Short} longAmount={0} showPercentage={false} setCustomLong={setCustomLong} />
+            </div>
+            <Typography className={classes.cardTitle} variant="h6">
+              Strategy Details
+            </Typography>
+            <Typography className={classes.thirdHeading} variant="h6">
+              How it works
+            </Typography>
+            <List>
+              <ListItem>
+                <ListItemText primary="1. Put down ETH collateral" secondary="at least 1.5x collateralized" />
+              </ListItem>
+              <ListItem>
+                <ListItemText primary="2. Mint Squeeth" secondary="Earn daily funding for being short squeeth" />
+              </ListItem>
+              <ListItem>
+                <ListItemText primary="3. Sell Squeeth" secondary="via Uniswap" />
+              </ListItem>
+            </List>
+
+            <Typography className={classes.thirdHeading} variant="h6">
+              Properties
+            </Typography>
+            <Typography variant="body2" className={classes.cardSubTxt}>
+              Short squeeth gives you a short ETH&sup2; payoff. This means you have constant negative gamma exposure, so
+              you always hold a position similar to selling an at the money call option. This functions similar to a
+              perpetual swap, where you are targeting ETH&sup2; rather than ETH.
+              <a className={classes.header} href="https://www.paradigm.xyz/2021/08/power-perpetuals/">
+                {' '}
+                Learn more.{' '}
+              </a>
+            </Typography>
+            <br />
+            <Typography variant="body2" className={classes.cardSubTxt}>
+              Funding is calculated as your position size multiplied by the TWAP (time weighted average price) of Mark -
+              Index, where Mark is the price squeeth is trading at and Index is ETH&sup2;. We use{' '}
+              <a className={classes.header} href="https://uniswap.org/whitepaper-v3.pdf">
+                {' '}
+                Uniswap V3 GMA (geometric moving average) TWAP.{' '}
+              </a>
+              Daily funding is paid out of your squeeth position. You can think about this as selling a small amount of
+              your squeeth each day to pay funding.
+            </Typography>
+            {/* <br />
+          <Typography variant="body2" className={classes.cardSubTxt}>
+            Funding is paid in-kind (using the squeeth token), so you cannot be liquidated. Note that the squeeth ERC20 amount will remain constant eg. if you bought 1 squeeth you will still have 1 squeeth after funding in kind. 
+            What will change is how much value you can redeem for each squeeth. The amount of value you can redeem per squeeth depends on how much funding you have paid and the mark price of squeeth. [insert diagram of square with dotted lines, value being area of square]
+          </Typography> */}
+          </div>
+          <div className={classes.buyCard}>
+            <Card className={classes.innerCard}>
+              <Trade setTradeType={setTradeType} tradeType={tradeType} />
+            </Card>
+            {/* <Typography className={classes.thirdHeading} variant="h6">
+              Payoff
+            </Typography>
+            <div className={classes.thirdHeading}>
+              <Image src={ccpayoff} alt="cc payoff" width={450} height={300} />
+            </div>
+            <Typography variant="body2" className={classes.payoff}>
+              If ETH goes up &nbsp;
+              <TextField
+                size="small"
+                value={leverage.toString()}
+                type="number"
+                style={{ width: 75 }}
+                onChange={(event) => setLeverage(Number(event.target.value))}
+                // label="Leverage"
+                variant="outlined"
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">x</InputAdornment>,
+                }}
+              />
+              &nbsp;, squeeth goes up {leverage * leverage}x, and your position is worth $
+              {(leverage * leverage * Number(1)).toFixed(2)}
+              <br /> <br />
+              If ETH goes down 100% or more, your position is worth $0. With squeeth you can never lose more than you
+              put in, giving you protected downside.
+            </Typography> */}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

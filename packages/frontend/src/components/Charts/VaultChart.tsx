@@ -15,7 +15,7 @@ export function VaultChart({
   setCustomLong,
   showPercentage,
 }: {
-  vault: Vaults
+  vault?: Vaults
   longAmount: number
   setCustomLong: Function
   showPercentage: boolean
@@ -47,6 +47,11 @@ export function VaultChart({
         { data: shortEthPNL, legend: 'Short ETH' },
         { data: seriesRebalance, legend: 'ETH Bear Vault' },
       ]
+    if (vault === Vaults.Short)
+      return [
+        { data: shortEthPNL, legend: 'Short ETH' },
+        { data: seriesRebalance, legend: 'Short Squeeth' },
+      ]
     return [{ data: seriesRebalance, legend: 'PNL' }]
   }, [vault, longEthPNL, shortEthPNL, seriesRebalance, getStableYieldPNL, longAmount])
 
@@ -68,6 +73,11 @@ export function VaultChart({
       return [
         { data: convertPNLToPriceChart(shortEthPNL, startingETHPrice), legend: 'Short ETH' },
         { data: convertPNLToPriceChart(seriesRebalance, startingETHPrice), legend: 'ETH Bear Vault' },
+      ]
+    if (vault === Vaults.Short)
+      return [
+        { data: convertPNLToPriceChart(shortEthPNL, startingETHPrice), legend: 'Short ETH' },
+        { data: convertPNLToPriceChart(seriesRebalance, startingETHPrice), legend: 'Short Squeeth' },
       ]
     return [{ data: seriesRebalance, legend: 'PNL' }]
   }, [vault, longEthPNL, shortEthPNL, seriesRebalance, getStableYieldPNL, longAmount, startingETHPrice])

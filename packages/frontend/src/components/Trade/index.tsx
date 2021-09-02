@@ -10,8 +10,13 @@ enum TradeType {
   SELL,
 }
 
-const Trade: React.FC = () => {
-  const [tradeType, setTradeType] = useState(TradeType.BUY)
+type TradeProps = {
+  setTradeType: (arg0: TradeType) => void
+  tradeType: TradeType
+}
+
+const Trade: React.FC<TradeProps> = ({ setTradeType, tradeType }) => {
+  // const [tradeType, setTradeType] = useState(TradeType.BUY)
 
   return (
     <div>

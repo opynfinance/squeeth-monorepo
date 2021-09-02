@@ -8,4 +8,5 @@ export enum Vaults {
   CrabVault = 'Crab Vault', // long 2 eth + short squeeth
   ETHBull = 'ETH Bull Yield Vault', // long 3 eth + short squeeth
   Custom = 'Custom Vault', // long x eth + short squeeth
+  Short = 'Short Squeeth', //pure short squeeth
 }
