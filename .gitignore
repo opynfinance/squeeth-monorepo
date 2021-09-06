@@ -8,7 +8,8 @@ packages/hardhat/*.txt
 **/node_modules
 packages/hardhat/artifacts*
 packages/hardhat/typechain*
-packages/hardhat/deployments
+# ignore localhost, but keep other deployment record on git
+packages/hardhat/deployments/localhost 
 packages/react-app/src/contracts/*
 !packages/react-app/src/contracts/external_contracts.js
 packages/hardhat/cache*
