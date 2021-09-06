@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 
-pragma solidity >=0.8.0 <0.9.0;
-
+pragma solidity =0.7.6;
+pragma abicoder v2;
 // Interfaces
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";

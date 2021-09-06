@@ -4,7 +4,7 @@ import { expect } from "chai";
 import { BigNumber, providers } from "ethers";
 import { Controller, MockWSqueeth, MockVaultNFTManager, MockOracle, MockUniswapV3Pool, MockErc20 } from "../../typechain";
 
-import { isEmptyVault, UNDERFLOW_ERROR } from '../vault-utils'
+import { isEmptyVault } from '../vault-utils'
 
 const squeethETHPrice = ethers.utils.parseUnits('3010')
 const ethUSDPrice = ethers.utils.parseUnits('3000')
@@ -162,7 +162,7 @@ describe("Controller", function () {
     describe("#Burn: Burn Squeeth", async () => {
       it("Should revert if trying to burn more than minted", async () => {
         const vault = await controller.vaults(vaultId)
-        await expect(controller.connect(seller1).burn(vaultId, vault.shortAmount.add(1), 0)).to.be.revertedWith(UNDERFLOW_ERROR)
+        await expect(controller.connect(seller1).burn(vaultId, vault.shortAmount.add(1), 0)).to.be.revertedWith('SafeMath: subtraction overflow')
       });
       // todo: add another case to test burning someone else squeeth while being a seller
       it("Should revert if trying to burn without having squeeth", async () => {
@@ -196,7 +196,7 @@ describe("Controller", function () {
       })
       it("Should revert if trying to remove more collateral than deposited", async () => {
         const vault = await controller.vaults(vaultId)
-        await expect(controller.connect(seller1).burn(vaultId, 0, vault.collateralAmount.add(1))).to.be.revertedWith(UNDERFLOW_ERROR)
+        await expect(controller.connect(seller1).burn(vaultId, 0, vault.collateralAmount.add(1))).to.be.revertedWith('SafeMath: subtraction overflow')
       })
       it("Should be able to remove collateral", async () => {
         const vaultBefore = await controller.vaults(vaultId)
@@ -679,7 +679,7 @@ describe("Controller", function () {
       it('should revert when a underwater vault (seller2) is trying to redeem', async() => {
         await expect(
           controller.connect(seller2).redeemShort(seller2VaultId)
-        ).to.be.revertedWith(UNDERFLOW_ERROR)
+        ).to.be.revertedWith('SafeMath: subtraction overflow')
       })
       it("should redeem fair value for short side (seller 3)", async () => {
         const vaultBefore = await controller.vaults(seller3VaultId)

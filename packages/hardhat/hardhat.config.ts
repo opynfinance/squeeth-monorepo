@@ -208,31 +208,8 @@ const config: HardhatUserConfig = {
   },
   solidity: {
     compilers: [
-      {
-        version: "0.8.4",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 2000,
-          },
-        },
-      },
       UNISWAP_SETTING,
-      {
-        version: "0.6.7",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 2000,
-          },
-        },
-      },
-    ],
-    overrides: {
-      "@uniswap/v3-core/contracts/libraries/FullMath.sol": UNISWAP_SETTING,
-      "@uniswap/v3-core/contracts/libraries/TickMath.sol": UNISWAP_SETTING,
-      "@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol": UNISWAP_SETTING,
-    },
+    ]
   },
   ovm: {
     solcVersion: "0.7.6",

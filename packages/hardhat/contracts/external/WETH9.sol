@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GNU
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity =0.7.6;
 
 // copied from https://github.com/gnosis/canonical-weth/blob/master/contracts/WETH9.sol
 

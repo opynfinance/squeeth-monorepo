@@ -1,6 +1,6 @@
 //SPDX-License-Identifier: MIT
 
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity =0.7.6;
 
 import "hardhat/console.sol";
 
@@ -11,13 +11,14 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/Initializable.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-
+import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {VaultLib} from "../libs/VaultLib.sol";
 
 contract Controller is Initializable, Ownable {
+    using SafeMath for uint256;
     using VaultLib for VaultLib.Vault;
     using Address for address payable;
 
@@ -191,7 +192,7 @@ contract Controller is Initializable, Ownable {
         require(isShutDown, "!shutdown");
         wsqueeth.burn(msg.sender, _wsqueethAmount);
         // convert wSqueeth amount to real short position with normalizationFactor
-        uint256 longValue = (_wsqueethAmount * normalizationFactor * shutDownEthPriceSnapshot) / 1e36;
+        uint256 longValue = _wsqueethAmount.mul(normalizationFactor).mul(shutDownEthPriceSnapshot).div(1e36);
         payable(msg.sender).sendValue(longValue);
     }
 
@@ -200,8 +201,9 @@ contract Controller is Initializable, Ownable {
         require(_canModifyVault(_vaultId, msg.sender), "not allowed");
 
         uint256 _shortSqueethAmount = vaults[_vaultId].shortAmount;
-        uint256 debt = (_shortSqueethAmount * shutDownEthPriceSnapshot * normalizationFactor) / 1e36;
-        uint256 excess = vaults[_vaultId].collateralAmount - debt;
+        uint256 debt = _shortSqueethAmount.mul(shutDownEthPriceSnapshot).mul(normalizationFactor).div(1e36);
+        // if the debt is more than collateral, this line will revert
+        uint256 excess = vaults[_vaultId].collateralAmount.sub(debt);
 
         // reset the vault but don't burn the nft, just because people may want to keep it.
         vaults[_vaultId].shortAmount = 0;
@@ -280,7 +282,7 @@ contract Controller is Initializable, Ownable {
     ) internal returns (uint256 amountToMint) {
         require(_canModifyVault(_vaultId, _account), "not allowed");
 
-        amountToMint = (_squeethAmount * 1e18) / normalizationFactor;
+        amountToMint = _squeethAmount.mul(1e18).div(normalizationFactor);
 
         vaults[_vaultId].mintSqueeth(amountToMint);
 
@@ -314,12 +316,15 @@ contract Controller is Initializable, Ownable {
 
         uint256 mark = _getDenormalizedMark(fairPeriod);
         uint256 index = _getIndex(fairPeriod);
-        uint256 rFunding = (1e18 * uint256(period)) / secInDay;
+        uint256 rFunding = (uint256(1e18).mul(uint256(period))).div(secInDay);
 
         // mul by 1e36 to keep newNormalizationFactor in 18 decimals
-        uint256 newNormalizationFactor = (mark * 1e36) / (((1e18 + rFunding) * mark - index * rFunding));
+        // uint256 newNormalizationFactor = (mark * 1e36) / (((1e18 + rFunding) * mark - index * rFunding));
+        uint256 newNormalizationFactor = (mark.mul(1e36)).div(
+            ((uint256(1e18).add(rFunding)).mul(mark).sub(index.mul(rFunding)))
+        );
 
-        normalizationFactor = (normalizationFactor * newNormalizationFactor) / 1e18;
+        normalizationFactor = normalizationFactor.mul(newNormalizationFactor).div(1e18);
         lastFundingUpdateTimestamp = block.timestamp;
     }
 
@@ -344,14 +349,14 @@ contract Controller is Initializable, Ownable {
 
     function _getIndex(uint32 _period) internal view returns (uint256) {
         uint256 ethUSDPrice = _getTwap(ethUSDPool, weth, dai, _period);
-        return (ethUSDPrice * ethUSDPrice) / 1e18;
+        return ethUSDPrice.mul(ethUSDPrice).div(1e18);
     }
 
     function _getDenormalizedMark(uint32 _period) public view returns (uint256) {
         uint256 ethUSDPrice = _getTwap(ethUSDPool, weth, dai, _period);
         uint256 squeethEthPrice = _getTwap(wSqueethEthPool, address(wsqueeth), weth, _period);
 
-        return (squeethEthPrice * ethUSDPrice) / normalizationFactor;
+        return squeethEthPrice.mul(ethUSDPrice).div(normalizationFactor);
     }
 
     function _getFairPeriodForOracle(uint32 _period) internal view returns (uint32) {

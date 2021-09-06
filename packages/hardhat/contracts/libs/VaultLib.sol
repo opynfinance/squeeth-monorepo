@@ -1,8 +1,10 @@
 //SPDX-License-Identifier: MIT
+pragma solidity =0.7.6;
 
-pragma solidity >=0.8.0 <0.9.0;
+import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 
 library VaultLib {
+    using SafeMath for uint256;
     /** 
      collateral is always eth, 
      while we can also add a Uniswap V3 NFT in to the vault to reduce collateral amount.
@@ -20,19 +22,19 @@ library VaultLib {
     }
 
     function depositETHCollateral(Vault storage _vault, uint256 _amount) internal {
-        _vault.collateralAmount += _amount;
+        _vault.collateralAmount = _vault.collateralAmount.add(_amount);
     }
 
     function withdrawETHCollateral(Vault storage _vault, uint256 _amount) internal {
-        _vault.collateralAmount -= _amount;
+        _vault.collateralAmount = _vault.collateralAmount.sub(_amount);
     }
 
     function mintSqueeth(Vault storage _vault, uint256 _amount) internal {
-        _vault.shortAmount += _amount;
+        _vault.shortAmount = _vault.shortAmount.add(_amount);
     }
 
     function burnSqueeth(Vault storage _vault, uint256 _amount) internal {
-        _vault.shortAmount -= _amount;
+        _vault.shortAmount = _vault.shortAmount.sub(_amount);
     }
 
     function isProperlyCollateralized(
@@ -49,7 +51,7 @@ library VaultLib {
         uint256 _normalizedFactor,
         uint256 _ethUsdPrice
     ) internal pure returns (bool) {
-        uint256 debtValueInETH = (_vault.shortAmount * _normalizedFactor * _ethUsdPrice) / 1e36;
-        return _vault.collateralAmount * 2 >= debtValueInETH * 3;
+        uint256 debtValueInETH = _vault.shortAmount.mul(_normalizedFactor).mul(_ethUsdPrice).div(1e36);
+        return _vault.collateralAmount.mul(2) >= debtValueInETH.mul(3);
     }
 }
