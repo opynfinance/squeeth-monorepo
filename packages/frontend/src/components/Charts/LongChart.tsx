@@ -40,7 +40,7 @@ export function LongChart() {
     if (mode === ChartType.PNL)
       return [
         { data: longEthPNL, legend: 'Long 1 ETH' },
-        { data: longSeries, legend: 'Long 1 Squeeth' },
+        { data: longSeries, legend: 'Long 1 Squeeth (incl. funding)' },
       ]
     if (mode === ChartType.PositionSize) return [{ data: positionSizeSeries, legend: 'Position Size' }]
     if (mode === ChartType.Funding) return [{ data: fundingPercentageSeries, legend: 'Daily Funding' }]
@@ -74,42 +74,42 @@ export function LongChart() {
   return (
     <div>
       {/* show button tabs and enable price chart only during research mode */}
-      {researchMode && (
-        <ButtonGroup color="primary" aria-label="outlined primary button group">
-          <Button
-            style={{ textTransform: 'none' }}
-            onClick={() => setMode(ChartType.PNL)}
-            variant={mode === ChartType.PNL ? 'contained' : 'outlined'}
-          >
-            {' '}
-            {days}D PNL{' '}
-          </Button>
-          <Button
-            style={{ textTransform: 'none' }}
-            onClick={() => setMode(ChartType.Price)}
-            variant={mode === ChartType.Price ? 'contained' : 'outlined'}
-          >
-            {' '}
-            Price{' '}
-          </Button>
-          <Button
-            style={{ textTransform: 'none' }}
-            onClick={() => setMode(ChartType.PositionSize)}
-            variant={mode === ChartType.PositionSize ? 'contained' : 'outlined'}
-          >
-            {' '}
-            Size{' '}
-          </Button>
-          <Button
-            style={{ textTransform: 'none' }}
-            onClick={() => setMode(ChartType.Funding)}
-            variant={mode === ChartType.Funding ? 'contained' : 'outlined'}
-          >
-            {' '}
-            Funding{' '}
-          </Button>
-        </ButtonGroup>
-      )}
+      {/* {researchMode && ( */}
+      <ButtonGroup color="primary" aria-label="outlined primary button group">
+        <Button
+          style={{ textTransform: 'none' }}
+          onClick={() => setMode(ChartType.PNL)}
+          variant={mode === ChartType.PNL ? 'contained' : 'outlined'}
+        >
+          {' '}
+          {days}D PNL{' '}
+        </Button>
+        <Button
+          style={{ textTransform: 'none' }}
+          onClick={() => setMode(ChartType.Price)}
+          variant={mode === ChartType.Price ? 'contained' : 'outlined'}
+        >
+          {' '}
+          Price{' '}
+        </Button>
+        {/* <Button
+          style={{ textTransform: 'none' }}
+          onClick={() => setMode(ChartType.PositionSize)}
+          variant={mode === ChartType.PositionSize ? 'contained' : 'outlined'}
+        >
+          {' '}
+          Size{' '}
+        </Button> */}
+        <Button
+          style={{ textTransform: 'none' }}
+          onClick={() => setMode(ChartType.Funding)}
+          variant={mode === ChartType.Funding ? 'contained' : 'outlined'}
+        >
+          {' '}
+          Funding{' '}
+        </Button>
+      </ButtonGroup>
+      {/* )} */}
       <Chart
         from={startTimestamp}
         to={endTimestamp}

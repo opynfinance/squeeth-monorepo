@@ -138,7 +138,9 @@ const getVaultDetail = (vault: Vaults) => {
     return (
       <>
         {' '}
-        This yielding position is profitable when ETH goes down any amount less than 100% <b>in a single day</b>.<br />
+        This yielding position is profitable when ETH goes down any amount <b>in a single day</b>. This strategy is not
+        profitable when ETH goes up.
+        <br />
         <br />{' '}
       </>
     )

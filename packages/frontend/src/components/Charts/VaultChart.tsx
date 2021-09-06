@@ -20,8 +20,16 @@ export function VaultChart({
   setCustomLong: Function
   showPercentage: boolean
 }) {
-  const { startingETHPrice, getVaultPNLWithRebalance, days, setDays, longEthPNL, shortEthPNL, getStableYieldPNL } =
-    useWorldContext()
+  const {
+    startingETHPrice,
+    getVaultPNLWithRebalance,
+    days,
+    setDays,
+    longEthPNL,
+    shortEthPNL,
+    getStableYieldPNL,
+    shortSeries,
+  } = useWorldContext()
 
   const seriesRebalance = getVaultPNLWithRebalance(longAmount)
 
@@ -35,31 +43,31 @@ export function VaultChart({
     if (vault === Vaults.ETHBull)
       return [
         { data: longEthPNL, legend: 'Long ETH' },
-        { data: seriesRebalance, legend: 'ETH Bull Vault' },
+        { data: seriesRebalance, legend: 'ETH Bull Vault (incl. funding)' },
       ]
     if (vault === Vaults.CrabVault)
       return [
-        { data: seriesRebalance, legend: 'Crab Vault PNL' },
+        { data: seriesRebalance, legend: 'Crab Vault PNL (incl. funding)' },
         { data: getStableYieldPNL(longAmount), legend: 'Compound Interest yield' },
       ]
     if (vault === Vaults.ETHBear)
       return [
         { data: shortEthPNL, legend: 'Short ETH' },
-        { data: seriesRebalance, legend: 'ETH Bear Vault' },
+        { data: seriesRebalance, legend: 'ETH Bear Vault (incl. funding)' },
       ]
     if (vault === Vaults.Short)
       return [
         { data: shortEthPNL, legend: 'Short ETH' },
-        { data: seriesRebalance, legend: 'Short Squeeth' },
+        { data: shortSeries, legend: 'Short Squeeth (incl. funding)' },
       ]
     return [{ data: seriesRebalance, legend: 'PNL' }]
-  }, [vault, longEthPNL, shortEthPNL, seriesRebalance, getStableYieldPNL, longAmount])
+  }, [vault, longEthPNL, shortEthPNL, seriesRebalance, getStableYieldPNL, longAmount, shortSeries])
 
   const lineSeriesPercentage = useMemo(() => {
     if (vault === Vaults.ETHBull)
       return [
         { data: convertPNLToPriceChart(longEthPNL, startingETHPrice), legend: 'Long ETH' },
-        { data: convertPNLToPriceChart(seriesRebalance, startingETHPrice), legend: 'ETH Bull Vault' },
+        { data: convertPNLToPriceChart(seriesRebalance, startingETHPrice), legend: 'ETH Bull Vault (incl. funding)' },
       ]
     if (vault === Vaults.CrabVault)
       return [
@@ -67,20 +75,20 @@ export function VaultChart({
           data: convertPNLToPriceChart(getStableYieldPNL(longAmount), startingETHPrice),
           legend: 'Compound Interest Yield',
         },
-        { data: convertPNLToPriceChart(seriesRebalance, startingETHPrice), legend: 'Crab Vault PNL' },
+        { data: convertPNLToPriceChart(seriesRebalance, startingETHPrice), legend: 'Crab Vault PNL (incl. funding)' },
       ]
     if (vault === Vaults.ETHBear)
       return [
         { data: convertPNLToPriceChart(shortEthPNL, startingETHPrice), legend: 'Short ETH' },
-        { data: convertPNLToPriceChart(seriesRebalance, startingETHPrice), legend: 'ETH Bear Vault' },
+        { data: convertPNLToPriceChart(seriesRebalance, startingETHPrice), legend: 'ETH Bear Vault (incl. funding)' },
       ]
     if (vault === Vaults.Short)
       return [
         { data: convertPNLToPriceChart(shortEthPNL, startingETHPrice), legend: 'Short ETH' },
-        { data: convertPNLToPriceChart(seriesRebalance, startingETHPrice), legend: 'Short Squeeth' },
+        { data: convertPNLToPriceChart(shortSeries, startingETHPrice), legend: 'Short Squeeth (incl. funding)' },
       ]
     return [{ data: seriesRebalance, legend: 'PNL' }]
-  }, [vault, longEthPNL, shortEthPNL, seriesRebalance, getStableYieldPNL, longAmount, startingETHPrice])
+  }, [vault, longEthPNL, shortEthPNL, seriesRebalance, getStableYieldPNL, longAmount, startingETHPrice, shortSeries])
 
   const chartOptions = useMemo(() => {
     if (showPercentage)

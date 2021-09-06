@@ -171,8 +171,13 @@ export default function Home() {
                 {' '}
                 Uniswap V3 GMA (geometric moving average) TWAP.{' '}
               </a>
-              Daily funding is paid out of your squeeth position. You can think about this as selling a small amount of
-              your squeeth each day to pay funding.
+              Funding happens everytime the contract is touched and is paid out of your squeeth position. You can think
+              about this as selling a small amount of your squeeth each day to pay funding.
+              <br />
+              <br />
+              Even though funding is paid out of your squeeth position, your squeeth balance is always constant. Your
+              squeeth exposure changes through a normalization factor that takes into account the reduced exposure due
+              to funding.
             </Typography>
             {/* <br />
           <Typography variant="body2" className={classes.cardSubTxt}>
@@ -224,7 +229,7 @@ export default function Home() {
               undercollateralized, you could be liquidated.
             </Typography>
             <Typography className={classes.cardTitle} variant="h6">
-              Historical PNL Backtest
+              Historical Backtests
             </Typography>
             <div className={classes.amountInput}>
               <VaultChart vault={Vaults.Short} longAmount={0} showPercentage={false} setCustomLong={setCustomLong} />
@@ -267,8 +272,8 @@ export default function Home() {
                 {' '}
                 Uniswap V3 GMA (geometric moving average) TWAP.{' '}
               </a>
-              Daily funding is paid out of your squeeth position. You can think about this as selling a small amount of
-              your squeeth each day to pay funding.
+              Funding happens everytime the contract is touched and is paid out of your squeeth position. You can think
+              about this as selling a small amount of your squeeth each day to pay funding.
             </Typography>
             {/* <br />
           <Typography variant="body2" className={classes.cardSubTxt}>

@@ -168,7 +168,7 @@ const Sell: React.FC = () => {
         <TxValue value={(amount * 10000 * 1.5).toFixed(4)} label="ETH" />
       </div>
       <div className={classes.txItem}>
-        <Typography className={classes.txLabel}>Daily Funding Received</Typography>
+        <Typography className={classes.txLabel}>Daily Funding Received </Typography>
         <TxValue value={(accFunding * 0.000001).toFixed(2)} label="%" />
       </div>
       <PrimaryButton

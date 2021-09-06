@@ -179,10 +179,10 @@ const Buy: React.FC<BuyProps> = ({ setAmount, amount }) => {
       </div>
       <TradeInfoItem label="Squeeth you get" value={cost.toFixed(8)} unit="SQE" />
       <TradeInfoItem
-        label="Daily Funding to Pay"
+        label="Daily Funding (paid continuously)"
         value={(accFunding * 0.000001).toFixed(2)}
         unit="%"
-        tooltip="Daily funding is paid out of your position, no collateral required."
+        tooltip="Funding is paid out of your position, no collateral required. Funding happens everytime the contract is touched."
       />
       <PrimaryButton variant="contained" onClick={transact} className={classes.amountInput} disabled={!!buyLoading}>
         {buyLoading ? <CircularProgress color="primary" size="1.5rem" /> : 'Buy'}
