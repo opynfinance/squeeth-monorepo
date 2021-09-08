@@ -54,7 +54,7 @@ const TradeInfoItem: React.FC<{ value?: string | number; unit: string; label: st
         ) : null}
       </Typography>
       <div>
-        <Typography component="span" style={{ marginLeft: '8px' }}>
+        <Typography component="span" style={{ marginLeft: '8px', fontSize: '.9rem' }}>
           {value}
         </Typography>
         <Typography component="span" variant="caption" className={classes.txUnit}>

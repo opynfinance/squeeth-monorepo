@@ -151,7 +151,10 @@ const Buy: React.FC<BuyProps> = ({ setAmount, amount, setCost, cost, setSqueethE
 
   useEffect(() => {
     if (!ready) return
-    getBuyQuoteForETH(amount).then((val) => setCost(Number(val)))
+    getBuyQuoteForETH(amount).then((val) => {
+      setQuote(val)
+      setCost(val.amountOut.toNumber())
+    })
   }, [amount, ready])
 
   useEffect(() => {
@@ -208,7 +211,11 @@ const Buy: React.FC<BuyProps> = ({ setAmount, amount, setCost, cost, setSqueethE
           }}
         />
       </div>
-      <TradeInfoItem label="Squeeth Exposure" value={squeethExposure.toFixed(2)} unit="$$ of SQTH" />
+      <TradeInfoItem
+        label="Squeeth Exposure"
+        value={Number(squeethExposure.toFixed(2)).toLocaleString()}
+        unit="$$ of SQTH"
+      />
       <TradeInfoItem
         label="Funding (paid continuously)"
         value={(accFunding * 0.000001).toFixed(2)}
@@ -217,13 +224,20 @@ const Buy: React.FC<BuyProps> = ({ setAmount, amount, setCost, cost, setSqueethE
       />
       <TradeInfoItem label="Slippage tolerance" value="0.5" unit="%" />
       <TradeInfoItem label="Price Impact" value={quote.priceImpact} unit="%" />
-      <TradeInfoItem label="Minimum received" value={quote.minimumAmountOut.toFixed(6)} unit="SQE" />
+      <TradeInfoItem
+        label="Minimum received"
+        value={Number(
+          quote.minimumAmountOut.times(ethPrice).times(ethPrice).times(normalizationFactor).toFixed(2),
+        ).toLocaleString()}
+        unit="$$ of SQTH"
+      />
       <PrimaryButton variant="contained" onClick={transact} className={classes.amountInput} disabled={!!buyLoading}>
         {buyLoading ? <CircularProgress color="primary" size="1.5rem" /> : 'Buy'}
       </PrimaryButton>
       <Typography variant="body1" color="primary" style={{ marginTop: '16px', marginBottom: '8px' }}>
-        Your long Position: {wSqueethBal.times(ethPrice).times(ethPrice).times(normalizationFactor).toFixed(2)} $$ of
-        SQTH
+        Your long Position:{' '}
+        {Number(wSqueethBal.times(ethPrice).times(ethPrice).times(normalizationFactor).toFixed(2)).toLocaleString()} $$
+        of SQTH
       </Typography>
       <ErrorButton
         disabled={wSqueethBal.eq(0) || sellLoading}
