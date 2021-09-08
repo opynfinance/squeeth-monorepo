@@ -5,6 +5,7 @@ import ListItem from '@material-ui/core/ListItem'
 import ListItemText from '@material-ui/core/ListItemText'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Typography from '@material-ui/core/Typography'
+import BigNumber from 'bignumber.js'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 
@@ -15,6 +16,7 @@ import Nav from '../src/components/Nav'
 import Trade from '../src/components/Trade'
 import { Vaults } from '../src/constants'
 import { useWorldContext } from '../src/context/world'
+import { useETHPrice } from '../src/hooks/useETHPrice'
 import { useETHPriceCharts } from '../src/hooks/useETHPriceCharts'
 
 const useStyles = makeStyles((theme) =>
@@ -97,8 +99,11 @@ export default function Home() {
   const classes = useStyles()
   const [leverage, setLeverage] = useState(4)
   const [amount, setAmount] = useState(1)
+  const [cost, setCost] = useState(0)
+  const [squeethExposure, setSqueethExposure] = useState(0)
   const [tradeType, setTradeType] = useState(TradeType.BUY)
   const [customLong, setCustomLong] = useState(0)
+  const ethPrice = useETHPrice()
 
   const { volMultiplier: globalVolMultiplier } = useWorldContext()
   // use hook because we only calculate accFunding based on 24 hour performance
@@ -187,16 +192,23 @@ export default function Home() {
           </div>
           <div className={classes.buyCard}>
             <Card className={classes.innerCard}>
-              <Trade setTradeType={setTradeType} tradeType={tradeType} amount={amount} setAmount={setAmount} />
+              <Trade
+                setTradeType={setTradeType}
+                tradeType={tradeType}
+                amount={amount}
+                setAmount={setAmount}
+                cost={cost}
+                setCost={setCost}
+                squeethExposure={squeethExposure}
+                setSqueethExposure={setSqueethExposure}
+              />
             </Card>
             <Typography className={classes.thirdHeading} variant="h6">
               Payoff
             </Typography>
-            <div className={classes.thirdHeading}>
-              <Image src={ccpayoff} alt="cc payoff" width={450} height={300} />
-            </div>
             <Typography variant="body2" className={classes.payoff}>
-              If ETH goes up &nbsp;
+              You are putting down {amount} ETH to get ${squeethExposure.toFixed(2)} of squeeth exposure. If ETH goes up
+              &nbsp;
               <TextField
                 size="small"
                 value={leverage.toString()}
@@ -209,12 +221,15 @@ export default function Home() {
                   endAdornment: <InputAdornment position="end">x</InputAdornment>,
                 }}
               />
-              &nbsp;, squeeth goes up {leverage * leverage}x, and your position is worth &nbsp;
-              {(leverage * leverage * amount).toFixed(2)} ETH
+              &nbsp;, squeeth goes up {leverage * leverage}x, and your position is worth &nbsp; $
+              {(cost * (leverage * Number(ethPrice)) ** 2).toFixed(2)}.
               <br /> <br />
               If ETH goes down 100% or more, your position is worth 0 ETH. With squeeth you can never lose more than you
               put in, giving you protected downside.
             </Typography>
+            <div className={classes.thirdHeading}>
+              <Image src={ccpayoff} alt="cc payoff" width={450} height={300} />
+            </div>
           </div>
         </div>
       ) : (
@@ -283,7 +298,16 @@ export default function Home() {
           </div>
           <div className={classes.buyCard}>
             <Card className={classes.innerCard}>
-              <Trade setTradeType={setTradeType} tradeType={tradeType} amount={amount} setAmount={setAmount} />
+              <Trade
+                setTradeType={setTradeType}
+                tradeType={tradeType}
+                amount={amount}
+                setAmount={setAmount}
+                setCost={setCost}
+                cost={cost}
+                setSqueethExposure={setSqueethExposure}
+                squeethExposure={squeethExposure}
+              />
             </Card>
             {/* <Typography className={classes.thirdHeading} variant="h6">
               Payoff

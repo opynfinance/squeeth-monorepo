@@ -15,9 +15,11 @@ import React, { useEffect, useState } from 'react'
 import { WSQUEETH_DECIMALS } from '../../constants'
 import { useWorldContext } from '../../context/world'
 import { useUserAllowance } from '../../hooks/contracts/useAllowance'
+import { useController } from '../../hooks/contracts/useController'
 import { useSqueethPool } from '../../hooks/contracts/useSqueethPool'
 import { useTokenBalance } from '../../hooks/contracts/useTokenBalance'
 import { useAddresses } from '../../hooks/useAddress'
+import { useETHPrice } from '../../hooks/useETHPrice'
 import { useETHPriceCharts } from '../../hooks/useETHPriceCharts'
 import { ErrorButton, PrimaryButton } from '../Buttons'
 import TradeInfoItem from './TradeInfoItem'
@@ -117,15 +119,21 @@ const useStyles = makeStyles((theme) =>
 type BuyProps = {
   setAmount: (arg0: number) => void
   amount: number
+  setCost: (arg0: number) => void
+  cost: number
+  setSqueethExposure: (arg0: number) => void
+  squeethExposure: number
 }
 
-const Buy: React.FC<BuyProps> = ({ setAmount, amount }) => {
+const Buy: React.FC<BuyProps> = ({ setAmount, amount, setCost, cost, setSqueethExposure, squeethExposure }) => {
   // const [amount, setAmount] = useState(1)
   const [quote, setQuote] = useState({
     amountOut: new BigNumber(0),
     minimumAmountOut: new BigNumber(0),
     priceImpact: '0',
   })
+  // const [cost, setCost] = useState(new BigNumber(0))
+  // const [squeethExposure, setSqueethExposure] = useState(new BigNumber(0))
   const [buyLoading, setBuyLoading] = useState(false)
   const [sellLoading, setSellLoading] = useState(false)
 
@@ -135,15 +143,20 @@ const Buy: React.FC<BuyProps> = ({ setAmount, amount }) => {
   const { ready, sell, getBuyQuoteForETH, buyForWETH, squeethPrice } = useSqueethPool()
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(wSqueeth, swapRouter)
   const { volMultiplier: globalVolMultiplier } = useWorldContext()
+  const { normFactor: normalizationFactor } = useController()
 
   const { accFunding } = useETHPriceCharts(1, globalVolMultiplier)
 
+  const ethPrice = useETHPrice()
+
   useEffect(() => {
     if (!ready) return
-    getBuyQuoteForETH(amount).then((val) => {
-      setQuote(val)
-    })
+    getBuyQuoteForETH(amount).then((val) => setCost(Number(val)))
   }, [amount, ready])
+
+  useEffect(() => {
+    setSqueethExposure(cost * Number(ethPrice) * Number(ethPrice) * Number(normalizationFactor))
+  }, [cost, ethPrice, normalizationFactor])
 
   const transact = async () => {
     setBuyLoading(true)
@@ -195,8 +208,7 @@ const Buy: React.FC<BuyProps> = ({ setAmount, amount }) => {
           }}
         />
       </div>
-      {/* <TradeInfoItem label="Price" value={squeethPrice.toFixed(18)} unit="SQE" /> */}
-      <TradeInfoItem label="Squeeth you get" value={quote.amountOut.toFixed(6)} unit="SQE" />
+      <TradeInfoItem label="Squeeth Exposure" value={squeethExposure.toFixed(2)} unit="$$ of SQTH" />
       <TradeInfoItem
         label="Funding (paid continuously)"
         value={(accFunding * 0.000001).toFixed(2)}
@@ -210,7 +222,8 @@ const Buy: React.FC<BuyProps> = ({ setAmount, amount }) => {
         {buyLoading ? <CircularProgress color="primary" size="1.5rem" /> : 'Buy'}
       </PrimaryButton>
       <Typography variant="body1" color="primary" style={{ marginTop: '16px', marginBottom: '8px' }}>
-        Your long Position: {wSqueethBal.toFixed(6)} SQE
+        Your long Position: {wSqueethBal.times(ethPrice).times(ethPrice).times(normalizationFactor).toFixed(2)} $$ of
+        SQTH
       </Typography>
       <ErrorButton
         disabled={wSqueethBal.eq(0) || sellLoading}

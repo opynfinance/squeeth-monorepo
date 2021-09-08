@@ -19,12 +19,23 @@ const getMultiplier = (type: Vaults) => {
 export const useController = () => {
   const { web3, address, handleTransaction } = useWallet()
   const [contract, setContract] = useState<Contract>()
+  const [normFactor, setNormFactor] = useState(new BigNumber(1))
   const { controller } = useAddresses()
 
   useEffect(() => {
     if (!web3) return
     setContract(new web3.eth.Contract(abi as any, controller))
-  }, [web3])
+    const controllerContract = new web3.eth.Contract(abi as any, controller)
+    controllerContract.methods
+      .normalizationFactor()
+      .call()
+      .then((normFactor: any) => {
+        setNormFactor(toTokenAmount(new BigNumber(normFactor.toString()), 18))
+      })
+      .catch(() => {
+        console.log('normFactor error')
+      })
+  }, [controller, web3])
 
   /**
    *
@@ -79,5 +90,6 @@ export const useController = () => {
     openDepositAndMint,
     getVault,
     updateOperator,
+    normFactor,
   }
 }

@@ -1,4 +1,5 @@
 import { Button, ButtonGroup } from '@material-ui/core'
+import BigNumber from 'bignumber.js'
 import React from 'react'
 import { useState } from 'react'
 
@@ -15,9 +16,22 @@ type TradeProps = {
   tradeType: TradeType
   setAmount: (arg0: number) => void
   amount: number
+  setCost: (arg0: number) => void
+  cost: number
+  setSqueethExposure: (arg0: number) => void
+  squeethExposure: number
 }
 
-const Trade: React.FC<TradeProps> = ({ setTradeType, tradeType, setAmount, amount }) => {
+const Trade: React.FC<TradeProps> = ({
+  setTradeType,
+  tradeType,
+  setAmount,
+  amount,
+  setCost,
+  cost,
+  setSqueethExposure,
+  squeethExposure,
+}) => {
   // const [tradeType, setTradeType] = useState(TradeType.BUY)
 
   return (
@@ -40,7 +54,20 @@ const Trade: React.FC<TradeProps> = ({ setTradeType, tradeType, setAmount, amoun
           Short{' '}
         </Button>
       </ButtonGroup>
-      <div>{tradeType === TradeType.BUY ? <Buy amount={amount} setAmount={setAmount} /> : <Sell />}</div>
+      <div>
+        {tradeType === TradeType.BUY ? (
+          <Buy
+            amount={amount}
+            setAmount={setAmount}
+            cost={cost}
+            setCost={setCost}
+            squeethExposure={squeethExposure}
+            setSqueethExposure={setSqueethExposure}
+          />
+        ) : (
+          <Sell />
+        )}
+      </div>
     </div>
   )
 }
