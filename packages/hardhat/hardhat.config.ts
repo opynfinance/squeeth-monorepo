@@ -61,12 +61,6 @@ const UNISWAP_SETTING = {
 
 const config: HardhatUserConfig = {
   defaultNetwork,
-
-  // don't forget to set your provider like:
-  // REACT_APP_PROVIDER=https://dai.poa.network in packages/react-app/.env
-  // (then your frontend will talk to your contracts on the live network!)
-  // (you will need to restart the `yarn run start` dev server after editing the .env)
-
   networks: {
     hardhat: {
       saveDeployments: false, // only used in cicd to test deployments
@@ -223,12 +217,6 @@ const config: HardhatUserConfig = {
     outDir: "typechain",
     target: "ethers-v5",
   },
-  // contractSizer: {
-  //   alphaSort: true,
-  // },
-  // etherscan: {
-  //   apiKey: etherscanKey
-  // },
   gasReporter: {
     currency: "USD",
     gasPrice: 100,

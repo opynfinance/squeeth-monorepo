@@ -57,7 +57,7 @@ const useStyles = makeStyles((theme) =>
 )
 
 const Sell: React.FC = () => {
-  const [amount, setAmount] = useState(0.00001)
+  const [amount, setAmount] = useState(1)
   const [vaultId, setVaultId] = useState(0)
   const [isVaultApproved, setIsVaultApproved] = useState(true)
   const [premium, setPremium] = useState(new BigNumber(0))
@@ -165,7 +165,7 @@ const Sell: React.FC = () => {
       </div>
       <div className={classes.txItem}>
         <Typography className={classes.txLabel}>Collateral Required</Typography>
-        <TxValue value={(amount * 10000 * 1.5).toFixed(4)} label="ETH" />
+        <TxValue value={(amount * 2).toFixed(4)} label="ETH" />
       </div>
       <div className={classes.txItem}>
         <Typography className={classes.txLabel}>Daily Funding Received </Typography>

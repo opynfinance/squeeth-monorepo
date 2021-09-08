@@ -11,6 +11,7 @@ declare module '@material-ui/core/styles/createPalette' {
 export enum Networks {
   MAINNET = 1,
   ROPSTEN = 3,
+  ARBITRUM_RINKEBY = 421611,
   LOCAL = 31337,
 }
 

@@ -8,10 +8,16 @@ import { Contract } from 'web3-eth-contract'
 import quoterABI from '../../abis/quoter.json'
 import routerABI from '../../abis/swapRouter.json'
 import uniABI from '../../abis/uniswapPool.json'
-import { UNI_POOL_FEES } from '../../constants'
+import { UNI_POOL_FEES, WSQUEETH_DECIMALS } from '../../constants'
 import { useWallet } from '../../context/wallet'
 import { fromTokenAmount, toTokenAmount } from '../../utils/calculations'
 import { useAddresses } from '../useAddress'
+import { Networks } from '../../types'
+
+const NETWORK_QUOTE_GAS_OVERRIDE: { [chainId: number]: number } = {
+  [Networks.ARBITRUM_RINKEBY] : 6_000_000
+}
+const DEFAULT_GAS_QUOTE = 2_000_000
 
 /**
  * Hook to interact with WETH contract
@@ -128,8 +134,9 @@ export const useSqueethPool = () => {
     const exactInputParam = getSellParam(amount)
     exactInputParam.recipient = swapRouter
     const tupleInput = Object.values(exactInputParam).map(v => v?.toString() || '')
-
+    
     const amountOut = await getSellQuote(amount.toNumber())
+    console.log(amount.toNumber(), amountOut.toNumber())
     const swapIface = new ethers.utils.Interface(routerABI)
     const encodedSwapCall = swapIface.encodeFunctionData('exactInputSingle', [tupleInput])
     const encodedUnwrapCall = swapIface.encodeFunctionData('unwrapWETH9', [fromTokenAmount(amountOut, 18).toString(), address])
@@ -143,7 +150,7 @@ export const useSqueethPool = () => {
       fee: UNI_POOL_FEES,
       recipient: address,
       deadline: Math.floor(Date.now() / 1000 + 86400), // uint256
-      amountIn: ethers.utils.parseEther(amount.toString()),
+      amountIn: fromTokenAmount(amount, WSQUEETH_DECIMALS).toString(),
       amountOutMinimum: 0, // Should be updated
       sqrtPriceLimitX96: 0
     }
@@ -158,7 +165,7 @@ export const useSqueethPool = () => {
       fee: UNI_POOL_FEES, // uint24
       recipient: address, // address
       deadline: Math.floor(Date.now() / 1000 + 86400), // uint256
-      amountOut: ethers.utils.parseEther(amount.toString()), // uint256
+      amountOut: fromTokenAmount(amount, WSQUEETH_DECIMALS).toString(), // uint256
       amountInMaximum: amountMax.toString(),
       sqrtPriceLimitX96: 0, // uint160
     }
@@ -184,14 +191,13 @@ export const useSqueethPool = () => {
       tokenIn: wethToken?.address, // address
       tokenOut: squeethToken?.address, // address
       fee: UNI_POOL_FEES, // uint24
-      amount: ethers.utils.parseEther(amount.toString()), // uint256
+      amount: fromTokenAmount(amount, WSQUEETH_DECIMALS).toString(), // uint256
       sqrtPriceLimitX96: 0, // uint160
     }
 
     const input = await quoterContract?.methods.quoteExactOutputSingle(params).call({
-      gas: 470000,
+      gas: NETWORK_QUOTE_GAS_OVERRIDE[networkId] ?? DEFAULT_GAS_QUOTE
     })
-
 
     if (!input?.amountIn) return new BigNumber(0)
     return toTokenAmount(new BigNumber(input.amountIn), 18)
@@ -209,11 +215,12 @@ export const useSqueethPool = () => {
     }
 
     const input = await quoterContract?.methods.quoteExactInputSingle(params).call({
-      gas: 470000,
+      gas: NETWORK_QUOTE_GAS_OVERRIDE[networkId] ?? DEFAULT_GAS_QUOTE
     })
 
     if (!input?.amountOut) return new BigNumber(0)
-    return toTokenAmount(new BigNumber(input.amountOut), 18)
+    return toTokenAmount(new BigNumber(input.amountOut), WSQUEETH_DECIMALS)
+    
   }
 
   const getSellQuote = async (amount: number) => {
@@ -223,12 +230,12 @@ export const useSqueethPool = () => {
       tokenIn: squeethToken?.address, // address
       tokenOut: wethToken?.address, // address
       fee: UNI_POOL_FEES, // uint24
-      amountIn: ethers.utils.parseEther(amount.toString()), // uint256
+      amountIn: fromTokenAmount(amount, WSQUEETH_DECIMALS).toString(), // uint256
       sqrtPriceLimitX96: 0, // uint160
     }
 
     const input = await quoterContract?.methods.quoteExactInputSingle(params).call({
-      gas: 470000,
+      gas: NETWORK_QUOTE_GAS_OVERRIDE[networkId] ?? DEFAULT_GAS_QUOTE
     })
 
     if (!input?.amountOut) return new BigNumber(0)

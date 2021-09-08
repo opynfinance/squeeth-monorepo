@@ -6,25 +6,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deploy } = deployments;
 
   const { deployer } = await getNamedAccounts();
-  await deploy("Oracle", {
-    from: deployer,
-    log: true,
-  });
-
-  await deploy("Controller", {
-    from: deployer,
-    log: true,
-  });
-
-  await deploy("VaultNFTManager", {
-    from: deployer,
-    log: true,
-  });
-
-  await deploy("WSqueeth", {
-    from: deployer,
-    log: true,
-  });
+  await deploy("Oracle", { from: deployer, log: true,});
+  await deploy("Controller", { from: deployer, log: true,});
+  await deploy("VaultNFTManager", { from: deployer, log: true,});
+  await deploy("WSqueeth", { from: deployer, log: true,});
 }
 
 export default func;

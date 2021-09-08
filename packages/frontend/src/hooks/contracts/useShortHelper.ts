@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 
 import shortAbi from '../../abis/shortHelper.json'
-import { Vaults } from '../../constants'
+import { Vaults, WSQUEETH_DECIMALS } from '../../constants'
 import { useWallet } from '../../context/wallet'
 import { fromTokenAmount } from '../../utils/calculations'
 import { useAddresses } from '../useAddress'
@@ -31,14 +31,15 @@ export const useShortHelper = () => {
   const openShort = async (vaultId: number, amount: BigNumber, vaultType?: Vaults) => {
     if (!contract || !address) return
 
-    const _exactInputParams = await getSellParam(amount)
+    const _exactInputParams = getSellParam(amount)
     _exactInputParams.recipient = shortHelper
 
-    const _amount = fromTokenAmount(amount, 18)
+    const _amount = fromTokenAmount(amount, WSQUEETH_DECIMALS)
+    const ethAmt = fromTokenAmount(amount, 18).multipliedBy(2)
     await handleTransaction(
       contract.methods.openShort(vaultId, _amount.toString(), _exactInputParams).send({
         from: address,
-        value: _amount.multipliedBy(1.5).multipliedBy(10000), // Min collat, Should be changed based on user input type post MVP
+        value: ethAmt.toString(), // Already scaled to 14 so multiplied with 10000
       }),
     )
   }
@@ -52,7 +53,7 @@ export const useShortHelper = () => {
   const closeShort = async (vaultId: number, amount: BigNumber) => {
     if (!contract || !address) return
 
-    const _amount = fromTokenAmount(amount, 18)
+    const _amount = fromTokenAmount(amount, WSQUEETH_DECIMALS)
     const _exactOutputParams = await getBuyParam(amount)
 
     _exactOutputParams.recipient = shortHelper

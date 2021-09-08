@@ -13,7 +13,7 @@ import useInterval from '../useInterval'
  * @param refetchIntervalSec refetch interval in seconds
  * @returns {BigNumber} raw balance
  */
-export const useTokenBalance = (token: string, refetchIntervalSec = 20): BigNumber => {
+export const useTokenBalance = (token: string, refetchIntervalSec = 20, decimals = 18): BigNumber => {
   const [balance, setBalance] = useState(new BigNumber(0))
   const [contract, setContract] = useState<Contract>()
 
@@ -34,7 +34,7 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 20): BigNumb
     const _bal = await contract.methods.balanceOf(address).call({
       from: address,
     })
-    return toTokenAmount(new BigNumber(_bal.toString()), 18)
+    return toTokenAmount(new BigNumber(_bal.toString()), decimals)
   }, [contract, connected])
 
   const updateBalance = useCallback(async () => {

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 
 import abi from '../../abis/controller.json'
-import { Vaults } from '../../constants'
+import { Vaults, WSQUEETH_DECIMALS } from '../../constants'
 import { useWallet } from '../../context/wallet'
 import { Vault } from '../../types'
 import { fromTokenAmount, toTokenAmount } from '../../utils/calculations'
@@ -70,7 +70,7 @@ export const useController = () => {
       id: vaultId,
       NFTCollateralId,
       collateralAmount: toTokenAmount(new BigNumber(collateralAmount), 18),
-      shortAmount: toTokenAmount(new BigNumber(shortAmount), 18),
+      shortAmount: toTokenAmount(new BigNumber(shortAmount), WSQUEETH_DECIMALS),
       operator,
     }
   }

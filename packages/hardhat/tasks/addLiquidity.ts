@@ -1,6 +1,6 @@
 import { task } from "hardhat/config";
 import "@nomiclabs/hardhat-waffle";
-import { getWETH } from './utils'
+import { getWETH, getUniswapDeployments } from './utils'
 
 // Example execution
 /**
@@ -12,7 +12,7 @@ task("addLiquidity", "Add liquidity to pool")
   const { getNamedAccounts, ethers, network } = hre;
   
   const { deployer } = await getNamedAccounts();
-  const positionManager = await ethers.getContract("NonfungibleTokenPositionManager", deployer);
+  const { positionManager } = await getUniswapDeployments(ethers, deployer, network.name)
 
   const controller = await ethers.getContract("Controller", deployer);
   const squeeth = await ethers.getContract("WSqueeth", deployer);

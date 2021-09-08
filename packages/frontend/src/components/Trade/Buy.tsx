@@ -11,6 +11,7 @@ import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useState } from 'react'
 
+import { WSQUEETH_DECIMALS } from '../../constants'
 import { useWorldContext } from '../../context/world'
 import { useUserAllowance } from '../../hooks/contracts/useAllowance'
 import { useSqueethPool } from '../../hooks/contracts/useSqueethPool'
@@ -115,7 +116,7 @@ const Buy: React.FC<BuyProps> = ({ setAmount, amount }) => {
 
   const classes = useStyles()
   const { swapRouter, wSqueeth } = useAddresses()
-  const wSqueethBal = useTokenBalance(wSqueeth, 5)
+  const wSqueethBal = useTokenBalance(wSqueeth, 5, WSQUEETH_DECIMALS)
   const { ready, sell, getBuyQuoteForETH, buyForWETH } = useSqueethPool()
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(wSqueeth, swapRouter)
   const { volMultiplier: globalVolMultiplier } = useWorldContext()

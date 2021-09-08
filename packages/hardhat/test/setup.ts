@@ -90,7 +90,7 @@ export const createUniPool = async(
 
   const token0Addr = isTokenAToken0 ? tokenA.address : tokenB.address
   const token1Addr = isTokenAToken0 ? tokenB.address : tokenA.address
-
+  
   const poolAddrFirstTry = await univ3Factory.getPool(token0Addr, token1Addr, 3000)
   if (poolAddrFirstTry !== ethers.constants.AddressZero) {
     return ethers.getContractAt("IUniswapV3Pool", poolAddrFirstTry);
@@ -112,9 +112,6 @@ export const createUniPool = async(
   }
 
   const pool = await ethers.getContractAt("IUniswapV3Pool", poolAddr);
-
-  // init storage slot
-  await pool.increaseObservationCardinalityNext(512) // anything more than 512 will run out of gas
 
   return pool
 }
@@ -165,6 +162,9 @@ export const getPoolAddress = async (
   // 1 weth is 3000 dai
   const ethPriceInDai = ethDaiPrice || 3000
   const ethUsdPool = await createUniPool(ethPriceInDai, dai, weth, positionManager, uniswapFactory) as Contract
+
+  await wsqueethEthPool.increaseObservationCardinalityNext(128) 
+  await ethUsdPool.increaseObservationCardinalityNext(128) 
 
   if (res.newlyDeployed) {
     await controller.init(

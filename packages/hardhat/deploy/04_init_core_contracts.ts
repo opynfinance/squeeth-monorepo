@@ -2,7 +2,7 @@ import {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {DeployFunction} from 'hardhat-deploy/types';
 
 import { getPoolAddress } from '../test/setup'
-import { getWETH } from '../tasks/utils'
+import { getUniswapDeployments, getWETH } from '../tasks/utils'
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { getNamedAccounts, ethers, network } = hre;
@@ -17,7 +17,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const weth9 = await getWETH(ethers, deployer, network.name)
 
   const dai = await ethers.getContract("MockErc20", deployer);
-  const uniswapFactory = await ethers.getContract("UniswapV3Factory", deployer);
+
+  const { uniswapFactory } = await getUniswapDeployments(ethers, deployer, network.name)
 
   const ethDaiPool = await getPoolAddress(weth9, dai, uniswapFactory)
   const squeethEthPool = await getPoolAddress(weth9, wsqueeth, uniswapFactory)
@@ -26,7 +27,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await controller.init(oracle.address, vaultNft.address, wsqueeth.address, weth9.address, dai.address,  ethDaiPool, squeethEthPool, { from: deployer });
     console.log(`Controller init done 🥝`);
   } catch (error) {
-    console.log(`Controller already init.`)
+    console.log(`Controller already init or encountered error`)
   }
 
   try {

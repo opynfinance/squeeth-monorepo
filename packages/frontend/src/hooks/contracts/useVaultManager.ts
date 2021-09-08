@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 
-import erc20Abi from '../../abis/vaultManager.json'
+import erc721Abi from '../../abis/vaultManager.json'
 import { useWallet } from '../../context/wallet'
 import { useAddresses } from '../useAddress'
 import useInterval from '../useInterval'
@@ -23,7 +23,7 @@ export const useVaultManager = (refetchIntervalSec = 20) => {
 
   useEffect(() => {
     if (!web3 || !vaultManager) return
-    setContract(new web3.eth.Contract(erc20Abi as any, vaultManager))
+    setContract(new web3.eth.Contract(erc721Abi as any, vaultManager))
   }, [web3])
 
   useEffect(() => {
@@ -32,21 +32,25 @@ export const useVaultManager = (refetchIntervalSec = 20) => {
 
   async function updateBalance() {
     if (!contract) return
-    contract
-      .getPastEvents('Transfer', {
-        fromBlock: 0, // Should be moved to constant and changed based on network id
-        toBlock: 'latest',
-      })
-      .then(async (events) => {
-        const tokens = new Set(
-          events
-            .filter((event) => event.returnValues.to.toLowerCase() === address?.toLowerCase())
-            .map((event) => event.returnValues.tokenId),
-        )
-        const vaultPromise = Array.from(tokens).map((tokenId) => getVault(tokenId))
-        const _vaults = (await Promise.all(vaultPromise)).filter((v) => v?.shortAmount.gt(0))
-        setVaults(_vaults)
-      })
+    try {
+      contract
+        .getPastEvents('Transfer', {
+          fromBlock: 0, // Should be moved to constant and changed based on network id
+          toBlock: 'latest',
+        })
+        .then(async (events) => {
+          const tokens = new Set(
+            events
+              .filter((event) => event.returnValues.to.toLowerCase() === address?.toLowerCase())
+              .map((event) => event.returnValues.tokenId),
+          )
+          const vaultPromise = Array.from(tokens).map((tokenId) => getVault(tokenId))
+          const _vaults = (await Promise.all(vaultPromise)).filter((v) => v?.shortAmount.gt(0))
+          setVaults(_vaults)
+        })
+    } catch (error) {
+      console.log(`updateBalance error`)
+    }
   }
 
   const getOwner = async (vaultId: number) => {
