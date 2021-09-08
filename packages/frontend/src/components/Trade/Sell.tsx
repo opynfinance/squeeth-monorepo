@@ -4,6 +4,7 @@ import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useState } from 'react'
 
+import { Vaults } from '../../constants'
 import { useWorldContext } from '../../context/world'
 import { useController } from '../../hooks/contracts/useController'
 import useShortHelper from '../../hooks/contracts/useShortHelper'
@@ -12,6 +13,7 @@ import { useVaultManager } from '../../hooks/contracts/useVaultManager'
 import { useAddresses } from '../../hooks/useAddress'
 import { useETHPriceCharts } from '../../hooks/useETHPriceCharts'
 import { ErrorButton, PrimaryButton } from '../Buttons'
+import TradeInfoItem from './TradeInfoItem'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -41,7 +43,7 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       padding: theme.spacing(0, 1),
       marginTop: theme.spacing(1),
-      justifyContent: 'space-between',
+      justifyContent: 'center',
       alignItems: 'center',
     },
     txLabel: {
@@ -53,6 +55,10 @@ const useStyles = makeStyles((theme) =>
       color: theme.palette.text.secondary,
       marginLeft: theme.spacing(1),
     },
+    infoIcon: {
+      marginLeft: theme.spacing(0.5),
+      color: theme.palette.text.secondary,
+    },
   }),
 )
 
@@ -60,14 +66,18 @@ const Sell: React.FC = () => {
   const [amount, setAmount] = useState(1)
   const [vaultId, setVaultId] = useState(0)
   const [isVaultApproved, setIsVaultApproved] = useState(true)
-  const [premium, setPremium] = useState(new BigNumber(0))
+  const [quote, setQuote] = useState({
+    amountOut: new BigNumber(0),
+    minimumAmountOut: new BigNumber(0),
+    priceImpact: '0',
+  })
   const [shortLoading, setShortLoading] = useState(false)
   const [buyLoading, setBuyLoading] = useState(false)
 
   const classes = useStyles()
   const { openShort, closeShort } = useShortHelper()
-  const { getSellQuote, ready } = useSqueethPool()
-  const { updateOperator } = useController()
+  const { getSellQuote, ready, squeethPrice } = useSqueethPool()
+  const { updateOperator, openDepositAndMint } = useController()
   const { shortHelper } = useAddresses()
   const { vaults: shortVaults } = useVaultManager(5)
 
@@ -84,7 +94,7 @@ const Sell: React.FC = () => {
 
   useEffect(() => {
     if (!ready) return
-    getSellQuote(amount).then((val) => setPremium(val))
+    getSellQuote(amount).then((val) => setQuote(val))
   }, [amount, ready])
 
   useEffect(() => {
@@ -100,7 +110,8 @@ const Sell: React.FC = () => {
         await updateOperator(vaultId, shortHelper)
         setIsVaultApproved(true)
       } else {
-        await openShort(vaultId, new BigNumber(amount))
+        await openDepositAndMint(vaultId, new BigNumber(amount), Vaults.ETHBear)
+        // await openShort(vaultId, new BigNumber(amount))
       }
     } catch (e) {
       console.log(e)
@@ -159,18 +170,12 @@ const Sell: React.FC = () => {
           }}
         />
       </div>
-      <div className={classes.txItem}>
-        <Typography className={classes.txLabel}>Premium you get</Typography>
-        <TxValue value={premium.toFixed(4)} label="ETH" />
-      </div>
-      <div className={classes.txItem}>
-        <Typography className={classes.txLabel}>Collateral Required</Typography>
-        <TxValue value={(amount * 2).toFixed(4)} label="ETH" />
-      </div>
-      <div className={classes.txItem}>
-        <Typography className={classes.txLabel}>Daily Funding Received </Typography>
-        <TxValue value={(accFunding * 0.000001).toFixed(2)} label="%" />
-      </div>
+      <TradeInfoItem label="Premium you get" value={quote.amountOut.toFixed(4)} unit="ETH" />
+      <TradeInfoItem label="Collateral Required" value={(amount * 2).toFixed(4)} unit="ETH" />
+      <TradeInfoItem label="Daily Funding Received" value={(accFunding * 0.000001).toFixed(2)} unit="%" />
+      <TradeInfoItem label="Slippage tolerance" value="0.5" unit="%" />
+      <TradeInfoItem label="Price Impact" value={quote.priceImpact} unit="%" />
+      <TradeInfoItem label="Minimum received" value={quote.minimumAmountOut.toFixed(4)} unit="ETH" />
       <PrimaryButton
         onClick={depositAndShort}
         className={classes.amountInput}
@@ -194,7 +199,7 @@ const Sell: React.FC = () => {
         )}
       </PrimaryButton>
       <Typography variant="body1" color="primary" style={{ marginTop: '16px', marginBottom: '8px' }}>
-        Your short Position: {shortVaults.length ? shortVaults[0].shortAmount.toFixed(8) : 0}
+        Your short Position: {shortVaults.length ? shortVaults[0].shortAmount.toFixed(6) : 0}
       </Typography>
       <ErrorButton
         disabled={!shortVaults.length || !isVaultApproved || buyLoading}

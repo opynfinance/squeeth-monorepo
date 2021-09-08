@@ -6,6 +6,7 @@ import {
   TextField,
   Tooltip,
   Typography,
+  withStyles,
 } from '@material-ui/core'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
@@ -100,6 +101,16 @@ const useStyles = makeStyles((theme) =>
       marginRight: theme.spacing(1),
       color: theme.palette.warning.main,
     },
+    txItem: {
+      marginTop: theme.spacing(1),
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    infoIcon: {
+      marginLeft: theme.spacing(0.5),
+      color: theme.palette.text.secondary,
+    },
   }),
 )
 
@@ -110,14 +121,18 @@ type BuyProps = {
 
 const Buy: React.FC<BuyProps> = ({ setAmount, amount }) => {
   // const [amount, setAmount] = useState(1)
-  const [cost, setCost] = useState(new BigNumber(0))
+  const [quote, setQuote] = useState({
+    amountOut: new BigNumber(0),
+    minimumAmountOut: new BigNumber(0),
+    priceImpact: '0',
+  })
   const [buyLoading, setBuyLoading] = useState(false)
   const [sellLoading, setSellLoading] = useState(false)
 
   const classes = useStyles()
   const { swapRouter, wSqueeth } = useAddresses()
   const wSqueethBal = useTokenBalance(wSqueeth, 5, WSQUEETH_DECIMALS)
-  const { ready, sell, getBuyQuoteForETH, buyForWETH } = useSqueethPool()
+  const { ready, sell, getBuyQuoteForETH, buyForWETH, squeethPrice } = useSqueethPool()
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(wSqueeth, swapRouter)
   const { volMultiplier: globalVolMultiplier } = useWorldContext()
 
@@ -125,7 +140,9 @@ const Buy: React.FC<BuyProps> = ({ setAmount, amount }) => {
 
   useEffect(() => {
     if (!ready) return
-    getBuyQuoteForETH(amount).then((val) => setCost(val))
+    getBuyQuoteForETH(amount).then((val) => {
+      setQuote(val)
+    })
   }, [amount, ready])
 
   const transact = async () => {
@@ -178,18 +195,22 @@ const Buy: React.FC<BuyProps> = ({ setAmount, amount }) => {
           }}
         />
       </div>
-      <TradeInfoItem label="Squeeth you get" value={cost.toFixed(8)} unit="SQE" />
+      {/* <TradeInfoItem label="Price" value={squeethPrice.toFixed(18)} unit="SQE" /> */}
+      <TradeInfoItem label="Squeeth you get" value={quote.amountOut.toFixed(6)} unit="SQE" />
       <TradeInfoItem
-        label="Daily Funding (paid continuously)"
+        label="Funding (paid continuously)"
         value={(accFunding * 0.000001).toFixed(2)}
         unit="%"
         tooltip="Funding is paid out of your position, no collateral required. Funding happens everytime the contract is touched."
       />
+      <TradeInfoItem label="Slippage tolerance" value="0.5" unit="%" />
+      <TradeInfoItem label="Price Impact" value={quote.priceImpact} unit="%" />
+      <TradeInfoItem label="Minimum received" value={quote.minimumAmountOut.toFixed(6)} unit="SQE" />
       <PrimaryButton variant="contained" onClick={transact} className={classes.amountInput} disabled={!!buyLoading}>
         {buyLoading ? <CircularProgress color="primary" size="1.5rem" /> : 'Buy'}
       </PrimaryButton>
       <Typography variant="body1" color="primary" style={{ marginTop: '16px', marginBottom: '8px' }}>
-        Your long Position: {wSqueethBal.toFixed(8)} SQE
+        Your long Position: {wSqueethBal.toFixed(6)} SQE
       </Typography>
       <ErrorButton
         disabled={wSqueethBal.eq(0) || sellLoading}

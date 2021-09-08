@@ -35,7 +35,7 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const TradeInfoItem: React.FC<{ value?: string | number; unit: string; label: string; tooltip?: string }> = ({
+const TradeInfoItem: React.FC<{ value?: string | number; unit: string; label: string; tooltip?: React.ReactNode }> = ({
   value,
   unit,
   label,
@@ -54,7 +54,9 @@ const TradeInfoItem: React.FC<{ value?: string | number; unit: string; label: st
         ) : null}
       </Typography>
       <div>
-        <Typography component="span">{value}</Typography>
+        <Typography component="span" style={{ marginLeft: '8px' }}>
+          {value}
+        </Typography>
         <Typography component="span" variant="caption" className={classes.txUnit}>
           {unit}
         </Typography>

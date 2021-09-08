@@ -40,7 +40,7 @@ export const useController = () => {
     handleTransaction(
       contract.methods.mint(vaultId, _amount.toString()).send({
         from: address,
-        value: _amount.multipliedBy(getMultiplier(vaultType)),
+        value: _amount.multipliedBy(getMultiplier(vaultType)).multipliedBy(10000),
       }),
     )
   }

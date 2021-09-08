@@ -63,6 +63,12 @@ const getTheme = (mode: Mode) => {
           color: '#000',
         },
       },
+      MuiTooltip: {
+        tooltip: {
+          backgroundColor: '#383838',
+          opacity: '1',
+        },
+      },
     },
   })
 }
@@ -126,7 +132,7 @@ const darkPalete: ThemeOptions = {
     background: {
       stone: 'rgba(255, 255, 255, 0.12)',
       lightStone: 'rgba(255, 255, 255, 0.08)',
-      tooltip: 'rgba(255, 255, 255, 0.12)',
+      tooltip: 'rgba(255, 255, 255)',
       default: '#181B1C',
     },
   },
