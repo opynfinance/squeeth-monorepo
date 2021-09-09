@@ -25,7 +25,7 @@ const useStyles = makeStyles((theme) =>
       color: theme.palette.primary.main,
     },
     body: {
-      padding: theme.spacing(2, 12),
+      padding: theme.spacing(2, 8),
       margin: 'auto',
       display: 'flex',
       justifyContent: 'space-around',
@@ -222,7 +222,7 @@ export default function Home() {
                 }}
               />
               &nbsp;, squeeth goes up {leverage * leverage}x, and your position is worth &nbsp; $
-              {(cost * (leverage * Number(ethPrice)) ** 2).toFixed(2)}.
+              {((cost * (leverage * Number(ethPrice)) ** 2) / 10000).toFixed(2)}.
               <br /> <br />
               If ETH goes down 100% or more, your position is worth 0 ETH. With squeeth you can never lose more than you
               put in, giving you protected downside.

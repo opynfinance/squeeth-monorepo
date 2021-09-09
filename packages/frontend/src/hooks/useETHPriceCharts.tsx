@@ -17,6 +17,11 @@ export function useETHPriceCharts(initDays = 180, initVolMultiplier = 1.2) {
     return ethPrices.length === 0 ? 1 : ethPrices[0].value
   }, [ethPrices])
 
+  const ethPriceMap = ethPrices.reduce((acc: any, p) => {
+    acc[p.time] = p.value
+    return acc
+  }, {})
+
   /**
    * cUSDC yield as PNL
    */
@@ -175,6 +180,7 @@ export function useETHPriceCharts(initDays = 180, initVolMultiplier = 1.2) {
     positionSizeSeries: positionSizePercentageSeries,
     fundingPercentageSeries,
     accFunding: squeethSeries.accFunding,
+    ethPriceMap,
   }
 }
 

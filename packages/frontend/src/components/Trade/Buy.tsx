@@ -6,7 +6,6 @@ import {
   TextField,
   Tooltip,
   Typography,
-  withStyles,
 } from '@material-ui/core'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
@@ -21,6 +20,7 @@ import { useTokenBalance } from '../../hooks/contracts/useTokenBalance'
 import { useAddresses } from '../../hooks/useAddress'
 import { useETHPrice } from '../../hooks/useETHPrice'
 import { useETHPriceCharts } from '../../hooks/useETHPriceCharts'
+import { useLongPositions } from '../../hooks/usePositions'
 import { ErrorButton, PrimaryButton } from '../Buttons'
 import TradeInfoItem from './TradeInfoItem'
 
@@ -132,6 +132,11 @@ const Buy: React.FC<BuyProps> = ({ setAmount, amount, setCost, cost, setSqueethE
     minimumAmountOut: new BigNumber(0),
     priceImpact: '0',
   })
+  const [sellQuote, setSellQuote] = useState({
+    amountOut: new BigNumber(0),
+    minimumAmountOut: new BigNumber(0),
+    priceImpact: '0',
+  })
   // const [cost, setCost] = useState(new BigNumber(0))
   // const [squeethExposure, setSqueethExposure] = useState(new BigNumber(0))
   const [buyLoading, setBuyLoading] = useState(false)
@@ -140,10 +145,11 @@ const Buy: React.FC<BuyProps> = ({ setAmount, amount, setCost, cost, setSqueethE
   const classes = useStyles()
   const { swapRouter, wSqueeth } = useAddresses()
   const wSqueethBal = useTokenBalance(wSqueeth, 5, WSQUEETH_DECIMALS)
-  const { ready, sell, getBuyQuoteForETH, buyForWETH, squeethPrice } = useSqueethPool()
+  const { ready, sell, getBuyQuoteForETH, buyForWETH, squeethPrice, getSellQuote } = useSqueethPool()
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(wSqueeth, swapRouter)
-  const { volMultiplier: globalVolMultiplier } = useWorldContext()
+  const { volMultiplier: globalVolMultiplier, ethPriceMap } = useWorldContext()
   const { normFactor: normalizationFactor } = useController()
+  const { squeethAmount, wethAmount, usdAmount } = useLongPositions()
 
   const { accFunding } = useETHPriceCharts(1, globalVolMultiplier)
 
@@ -158,7 +164,13 @@ const Buy: React.FC<BuyProps> = ({ setAmount, amount, setCost, cost, setSqueethE
   }, [amount, ready])
 
   useEffect(() => {
-    setSqueethExposure(cost * Number(ethPrice) * Number(ethPrice) * Number(normalizationFactor))
+    if (!ready) return
+
+    getSellQuote(wSqueethBal.toNumber()).then(setSellQuote)
+  }, [wSqueethBal.toNumber(), ready])
+
+  useEffect(() => {
+    setSqueethExposure((cost * Number(ethPrice) * Number(ethPrice) * Number(normalizationFactor)) / 10000)
   }, [cost, ethPrice, normalizationFactor])
 
   const transact = async () => {
@@ -195,7 +207,7 @@ const Buy: React.FC<BuyProps> = ({ setAmount, amount, setCost, cost, setSqueethE
           size="small"
           value={amount.toString()}
           type="number"
-          style={{ width: 300 }}
+          style={{ width: 325 }}
           onChange={(event) => setAmount(Number(event.target.value))}
           id="filled-basic"
           label="ETH Amount"
@@ -227,22 +239,49 @@ const Buy: React.FC<BuyProps> = ({ setAmount, amount, setCost, cost, setSqueethE
       <TradeInfoItem
         label="Minimum received"
         value={Number(
-          quote.minimumAmountOut.times(ethPrice).times(ethPrice).times(normalizationFactor).toFixed(2),
+          quote.minimumAmountOut.times(ethPrice).times(ethPrice).dividedBy(10000).times(normalizationFactor).toFixed(2),
         ).toLocaleString()}
         unit="$$ of SQTH"
       />
-      <PrimaryButton variant="contained" onClick={transact} className={classes.amountInput} disabled={!!buyLoading}>
+      <PrimaryButton
+        variant="contained"
+        onClick={transact}
+        className={classes.amountInput}
+        disabled={!!buyLoading}
+        style={{ width: '325px' }}
+      >
         {buyLoading ? <CircularProgress color="primary" size="1.5rem" /> : 'Buy'}
       </PrimaryButton>
-      <Typography variant="body1" color="primary" style={{ marginTop: '16px', marginBottom: '8px' }}>
-        Your long Position:{' '}
-        {Number(wSqueethBal.times(ethPrice).times(ethPrice).times(normalizationFactor).toFixed(2)).toLocaleString()} $$
-        of SQTH
-      </Typography>
+      <div style={{ marginTop: '20px', marginBottom: '4px' }}>
+        <TradeInfoItem
+          label="Long Position"
+          value={Number(
+            wSqueethBal.times(ethPrice).times(ethPrice).dividedBy(10000).times(normalizationFactor).toFixed(2),
+          ).toLocaleString()}
+          unit="$$ of SQTH"
+          color="primary"
+        />
+        <TradeInfoItem
+          label="Amount spent"
+          value={wSqueethBal.toNumber() ? Number(usdAmount.toFixed(2)).toLocaleString() : 0}
+          unit="$$ of ETH"
+          tooltip={`${wethAmount.absoluteValue().toFixed(4)} ETH spent`}
+          color="red"
+        />
+        <TradeInfoItem
+          label="Current Value"
+          value={Number(sellQuote.amountOut.times(ethPrice).toFixed(2)).toLocaleString()}
+          unit="$$ of ETH"
+          tooltip={`you get ${sellQuote.amountOut.toFixed(4)} ETH`}
+          color="green"
+        />
+      </div>
+
       <ErrorButton
         disabled={wSqueethBal.eq(0) || sellLoading}
         variant="contained"
         color="secondary"
+        style={{ width: '325px', marginTop: '4px' }}
         onClick={sellAndClose}
       >
         {sellLoading ? (

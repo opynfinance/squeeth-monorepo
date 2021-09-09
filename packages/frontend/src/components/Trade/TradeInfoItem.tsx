@@ -2,7 +2,7 @@ import { Tooltip } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Typography from '@material-ui/core/Typography'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
-import React from 'react'
+import React, { useMemo } from 'react'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -32,16 +32,34 @@ const useStyles = makeStyles((theme) =>
       marginLeft: theme.spacing(0.5),
       marginTop: '2px',
     },
+    red: {
+      color: theme.palette.error.main,
+    },
+    green: {
+      color: theme.palette.success.main,
+    },
+    primary: {
+      color: theme.palette.primary.main,
+    },
   }),
 )
 
-const TradeInfoItem: React.FC<{ value?: string | number; unit: string; label: string; tooltip?: React.ReactNode }> = ({
-  value,
-  unit,
-  label,
-  tooltip,
-}) => {
+type tradeType = {
+  value?: string | number
+  unit: string
+  label: string
+  tooltip?: React.ReactNode
+  color?: 'primary' | 'red' | 'green'
+}
+
+const TradeInfoItem: React.FC<tradeType> = ({ value, unit, label, tooltip, color }) => {
   const classes = useStyles()
+  const clrClass = useMemo(() => {
+    if (color === 'primary') return classes.primary
+    if (color === 'green') return classes.green
+    if (color === 'red') return classes.red
+    return ''
+  }, [color])
 
   return (
     <div className={classes.txItem}>
@@ -54,7 +72,7 @@ const TradeInfoItem: React.FC<{ value?: string | number; unit: string; label: st
         ) : null}
       </Typography>
       <div>
-        <Typography component="span" style={{ marginLeft: '8px', fontSize: '.9rem' }}>
+        <Typography component="span" style={{ marginLeft: '8px', fontSize: '.9rem' }} className={clrClass}>
           {value}
         </Typography>
         <Typography component="span" variant="caption" className={classes.txUnit}>

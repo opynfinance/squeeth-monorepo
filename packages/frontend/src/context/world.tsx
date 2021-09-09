@@ -31,6 +31,8 @@ type WorldContextProps = {
   setVolMultiplier: Function
   setDays: Function
 
+  ethPriceMap: { [key: number]: number }
+
   getVaultPNLWithRebalance: (longAmount: number) => point[]
   getStableYieldPNL: (comparedlongAmount: number) => point[]
 }
@@ -53,6 +55,7 @@ const initialContext = {
   accFunding: 0,
   volMultiplier: 1.2,
   days: 180,
+  ethPriceMap: {},
   setVolMultiplier: () => { },
   setDays: () => { },
 
@@ -84,6 +87,7 @@ const WorldProvider: React.FC = ({ children }) => {
     accFunding,
     positionSizeSeries,
     fundingPercentageSeries,
+    ethPriceMap,
   } = useETHPriceCharts()
 
   return (
@@ -109,6 +113,7 @@ const WorldProvider: React.FC = ({ children }) => {
         shortSeries,
         positionSizeSeries,
         fundingPercentageSeries,
+        ethPriceMap
       }}
     >
       {children}

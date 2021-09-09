@@ -11,7 +11,9 @@ import useShortHelper from '../../hooks/contracts/useShortHelper'
 import { useSqueethPool } from '../../hooks/contracts/useSqueethPool'
 import { useVaultManager } from '../../hooks/contracts/useVaultManager'
 import { useAddresses } from '../../hooks/useAddress'
+import { useETHPrice } from '../../hooks/useETHPrice'
 import { useETHPriceCharts } from '../../hooks/useETHPriceCharts'
+import { useShortPositions } from '../../hooks/usePositions'
 import { ErrorButton, PrimaryButton } from '../Buttons'
 import TradeInfoItem from './TradeInfoItem'
 
@@ -71,15 +73,18 @@ const Sell: React.FC = () => {
     minimumAmountOut: new BigNumber(0),
     priceImpact: '0',
   })
+  const [buyQuote, setBuyQuote] = useState(new BigNumber(0))
   const [shortLoading, setShortLoading] = useState(false)
   const [buyLoading, setBuyLoading] = useState(false)
 
   const classes = useStyles()
   const { openShort, closeShort } = useShortHelper()
-  const { getSellQuote, ready, squeethPrice } = useSqueethPool()
-  const { updateOperator, openDepositAndMint } = useController()
+  const { getSellQuote, ready, getBuyQuote } = useSqueethPool()
+  const { updateOperator } = useController()
   const { shortHelper } = useAddresses()
   const { vaults: shortVaults } = useVaultManager(5)
+  const { squeethAmount, wethAmount, usdAmount } = useShortPositions()
+  const ethPrice = useETHPrice()
 
   // const squeethBal = useMemo(() => wSqueethBalO.multipliedBy(10000), [wSqueethBalO.toNumber()])
 
@@ -98,6 +103,12 @@ const Sell: React.FC = () => {
   }, [amount, ready])
 
   useEffect(() => {
+    if (!ready) return
+
+    getBuyQuote(squeethAmount.negated().toNumber()).then(setBuyQuote)
+  }, [squeethAmount.toNumber(), ready])
+
+  useEffect(() => {
     if (!vaultId) return
 
     setIsVaultApproved(shortVaults[0].operator.toLowerCase() === shortHelper.toLowerCase())
@@ -110,8 +121,7 @@ const Sell: React.FC = () => {
         await updateOperator(vaultId, shortHelper)
         setIsVaultApproved(true)
       } else {
-        await openDepositAndMint(vaultId, new BigNumber(amount), Vaults.ETHBear)
-        // await openShort(vaultId, new BigNumber(amount))
+        await openShort(vaultId, new BigNumber(amount))
       }
     } catch (e) {
       console.log(e)
@@ -154,7 +164,7 @@ const Sell: React.FC = () => {
           size="small"
           value={amount.toString()}
           type="number"
-          style={{ width: 300 }}
+          style={{ width: 325 }}
           onChange={(event) => setAmount(Number(event.target.value))}
           id="filled-basic"
           label="Squeeth Amount"
@@ -181,6 +191,7 @@ const Sell: React.FC = () => {
         className={classes.amountInput}
         disabled={shortLoading}
         variant="contained"
+        style={{ width: '325px' }}
       >
         {shortLoading ? (
           <CircularProgress color="primary" size="1.5rem" />
@@ -198,12 +209,26 @@ const Sell: React.FC = () => {
           </>
         )}
       </PrimaryButton>
-      <Typography variant="body1" color="primary" style={{ marginTop: '16px', marginBottom: '8px' }}>
-        Your short Position: {shortVaults.length ? shortVaults[0].shortAmount.toFixed(6) : 0}
-      </Typography>
+      <div style={{ marginTop: '20px', marginBottom: '4px' }}>
+        <TradeInfoItem label="Short Position" value={squeethAmount.negated().toFixed(6)} unit="SQTH" color="primary" />
+        <TradeInfoItem
+          label="Premium Got"
+          value={Number(usdAmount.toFixed(2)).toLocaleString()}
+          unit="$$ of ETH"
+          tooltip={`${wethAmount.absoluteValue().toFixed(4)} ETH`}
+          color="green"
+        />
+        <TradeInfoItem
+          label="Current Value"
+          value={Number(buyQuote.times(ethPrice).toFixed(2)).toLocaleString()}
+          unit="$$ of ETH"
+          tooltip={`you have to spend ${buyQuote.toFixed(4)} ETH`}
+          color="red"
+        />
+      </div>
       <ErrorButton
         disabled={!shortVaults.length || !isVaultApproved || buyLoading}
-        style={{ width: 300 }}
+        style={{ width: '325px', marginTop: '4px' }}
         variant="contained"
         color="secondary"
         onClick={buyBackAndClose}
