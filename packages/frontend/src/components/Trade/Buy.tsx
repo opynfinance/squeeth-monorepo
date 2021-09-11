@@ -22,6 +22,7 @@ import { useETHPrice } from '../../hooks/useETHPrice'
 import { useETHPriceCharts } from '../../hooks/useETHPriceCharts'
 import { useLongPositions } from '../../hooks/usePositions'
 import { ErrorButton, PrimaryButton } from '../Buttons'
+import History from './History'
 import TradeInfoItem from './TradeInfoItem'
 
 const useStyles = makeStyles((theme) =>

@@ -10,3 +10,10 @@ export enum Vaults {
   Custom = 'Custom Vault', // long x eth + short squeeth
   Short = 'Short Squeeth', //pure short squeeth
 }
+
+export enum TransactionType {
+  BUY = 'Bought',
+  SELL = 'Sold',
+  MINT_SHORT = 'Minted and sold',
+  BURN_SHORT = 'Bought back and burned',
+}

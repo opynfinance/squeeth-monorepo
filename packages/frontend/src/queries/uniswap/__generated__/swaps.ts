@@ -7,6 +7,11 @@
 // GraphQL query operation: swaps
 // ====================================================
 
+export interface swaps_swaps_transaction {
+  __typename: "Transaction";
+  id: string;
+}
+
 export interface swaps_swaps {
   __typename: "Swap";
   id: string;
@@ -15,6 +20,7 @@ export interface swaps_swaps {
   amount1: any;
   timestamp: any;
   origin: any;
+  transaction: swaps_swaps_transaction;
 }
 
 export interface swaps {
@@ -25,4 +31,5 @@ export interface swapsVariables {
   poolAddress: string;
   origin: string;
   recipients: string[];
+  orderDirection: string;
 }

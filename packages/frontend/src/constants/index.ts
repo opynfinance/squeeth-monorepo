@@ -7,6 +7,7 @@ export const EtherscanPrefix = {
   1: 'http://etherscan.io/tx/',
   3: 'http://ropsten.etherscan.io/tx/',
   421611: 'https://rinkeby-explorer.arbitrum.io/tx/',
+  31337: '/',
 }
 
 export const WSQUEETH_DECIMALS = 14

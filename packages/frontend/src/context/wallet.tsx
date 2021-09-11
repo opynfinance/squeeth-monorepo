@@ -113,8 +113,8 @@ const WalletProvider: React.FC = ({ children }) => {
       networkId === Networks.LOCAL
         ? 'http://127.0.0.1:8545/'
         : networkId === Networks.ARBITRUM_RINKEBY
-        ? 'https://rinkeby.arbitrum.io/rpc'
-        : `https://${network}.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY}`
+          ? 'https://rinkeby.arbitrum.io/rpc'
+          : `https://${network}.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY}`
 
     const onboard = Onboard({
       dappId: process.env.NEXT_PUBLIC_BLOCKNATIVE_DAPP_ID,

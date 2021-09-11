@@ -19,6 +19,7 @@ export const useLongPositions = () => {
       poolAddress: squeethPool.toLowerCase(),
       origin: address || '',
       recipients: [address || '', swapRouter],
+      orderDirection: 'asc',
     },
     fetchPolicy: 'cache-and-network',
   })
@@ -32,7 +33,7 @@ export const useLongPositions = () => {
     (acc, s) => {
       acc.squeethAmount = acc.squeethAmount.plus(new BigNumber(isWethToken0 ? s.amount1 : s.amount0).negated())
       acc.wethAmount = acc.wethAmount.plus(new BigNumber(isWethToken0 ? s.amount0 : s.amount1).negated())
-      const time = new Date(Number(s.timestamp) * 1000).setHours(5, 30, 0, 0) / 1000
+      const time = new Date(Number(s.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
       acc.usdAmount = acc.usdAmount.plus(
         new BigNumber(isWethToken0 ? s.amount0 : s.amount1).negated().multipliedBy(ethPriceMap[time]),
       )
@@ -59,7 +60,12 @@ export const useShortPositions = () => {
   const { address } = useWallet()
   const { ethPriceMap } = useWorldContext()
   const { data, loading, refetch } = useQuery<swaps, swapsVariables>(SWAPS_QUERY, {
-    variables: { poolAddress: squeethPool.toLowerCase(), origin: address || '', recipients: [shortHelper] },
+    variables: {
+      poolAddress: squeethPool.toLowerCase(),
+      origin: address || '',
+      recipients: [shortHelper],
+      orderDirection: 'asc',
+    },
     fetchPolicy: 'cache-and-network',
   })
 
@@ -72,7 +78,7 @@ export const useShortPositions = () => {
     (acc, s) => {
       acc.squeethAmount = acc.squeethAmount.plus(new BigNumber(isWethToken0 ? s.amount1 : s.amount0).negated())
       acc.wethAmount = acc.wethAmount.plus(new BigNumber(isWethToken0 ? s.amount0 : s.amount1).negated())
-      const time = new Date(Number(s.timestamp) * 1000).setHours(5, 30, 0, 0) / 1000
+      const time = new Date(Number(s.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
       acc.usdAmount = acc.usdAmount.plus(
         new BigNumber(isWethToken0 ? s.amount0 : s.amount1).negated().multipliedBy(ethPriceMap[time]),
       )
