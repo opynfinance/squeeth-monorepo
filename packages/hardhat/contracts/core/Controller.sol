@@ -13,6 +13,7 @@ import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Po
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/Initializable.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {VaultLib} from "../libs/VaultLib.sol";
@@ -23,15 +24,15 @@ contract Controller is Initializable, Ownable {
     using Address for address payable;
 
     uint256 internal constant secInDay = 86400;
+
     bool public isShutDown = false;
-    uint256 public shutDownEthPriceSnapshot;
 
     address public weth;
     address public dai;
-
-    address public ethUSDPool;
+    address public ethDaiPool;
     address public wSqueethEthPool;
 
+    uint256 public shutDownEthPriceSnapshot;
     uint256 public normalizationFactor;
     uint256 public lastFundingUpdateTimestamp;
 
@@ -47,8 +48,8 @@ contract Controller is Initializable, Ownable {
     event CloseVault(uint256 vaultId);
     event DepositCollateral(uint256 vaultId, uint128 amount, uint128 collateralId);
     event WithdrawCollateral(uint256 vaultId, uint256 amount, uint128 collateralId);
-    event MintSqueeth(uint256 amount, uint256 vaultId);
-    event BurnSqueeth(uint256 amount, uint256 vaultId);
+    event MintShort(uint256 amount, uint256 vaultId);
+    event BurnShort(uint256 amount, uint256 vaultId);
     event UpdateOperator(uint256 vaultId, address operator);
     event Liquidate(uint256 vaultId, uint256 debtAmount, uint256 collateralToSell);
 
@@ -72,22 +73,21 @@ contract Controller is Initializable, Ownable {
         address _squeeth,
         address _weth,
         address _dai,
-        address _ethUsdPool,
+        address _ethDaiPool,
         address _wSqueethEthPool
     ) public initializer {
         require(_oracle != address(0), "Invalid oracle address");
         require(_vaultNFT != address(0), "Invalid vaultNFT address");
         require(_squeeth != address(0), "Invalid squeeth address");
-        require(_ethUsdPool != address(0), "Invalid eth:usd pool address");
-        require(_wSqueethEthPool != address(0), "Invalid wsqueeth:usd pool address");
+        require(_ethDaiPool != address(0), "Invalid eth:dai pool address");
+        require(_wSqueethEthPool != address(0), "Invalid wsqueeth:eth pool address");
 
         oracle = IOracle(_oracle);
         vaultNFT = IVaultManagerNFT(_vaultNFT);
         wsqueeth = IWSqueeth(_squeeth);
 
-        ethUSDPool = _ethUsdPool;
+        ethDaiPool = _ethDaiPool;
         wSqueethEthPool = _wSqueethEthPool;
-
         weth = _weth;
         dai = _dai;
 
@@ -107,9 +107,9 @@ contract Controller is Initializable, Ownable {
     {
         _applyFunding();
         if (_vaultId == 0) _vaultId = _openVault(msg.sender);
-        if (msg.value > 0) _depositETHCollateral(_vaultId, msg.value);
+        if (msg.value > 0) _addEthCollateral(_vaultId, msg.value);
         if (_mintAmount > 0) {
-            _wSqueethMinted = _mintSqueeth(msg.sender, _vaultId, _mintAmount);
+            _wSqueethMinted = _addShort(msg.sender, _vaultId, _mintAmount);
         }
         _checkVault(_vaultId);
         return (_vaultId, _wSqueethMinted);
@@ -120,7 +120,7 @@ contract Controller is Initializable, Ownable {
      */
     function deposit(uint256 _vaultId) external payable notShutdown {
         _applyFunding();
-        _depositETHCollateral(_vaultId, msg.value);
+        _addEthCollateral(_vaultId, msg.value);
     }
 
     /**
@@ -142,7 +142,7 @@ contract Controller is Initializable, Ownable {
         uint256 _withdrawAmount
     ) external notShutdown {
         _applyFunding();
-        if (_amount > 0) _burnSqueeth(msg.sender, _vaultId, _amount);
+        if (_amount > 0) _removeShort(msg.sender, _vaultId, _amount);
         if (_withdrawAmount > 0) _withdrawCollateral(msg.sender, _vaultId, _withdrawAmount);
         _checkVault(_vaultId);
     }
@@ -185,7 +185,7 @@ contract Controller is Initializable, Ownable {
     function shutDown() external onlyOwner {
         require(!isShutDown, "shutdown");
         isShutDown = true;
-        shutDownEthPriceSnapshot = oracle.getTwaPriceSafe(ethUSDPool, weth, dai, 600);
+        shutDownEthPriceSnapshot = oracle.getTwaPriceSafe(ethDaiPool, weth, dai, 600);
     }
 
     function redeemLong(uint256 _wsqueethAmount) external {
@@ -253,8 +253,8 @@ contract Controller is Initializable, Ownable {
     /**
      * add collateral to a vault
      */
-    function _depositETHCollateral(uint256 _vaultId, uint256 _amount) internal {
-        vaults[_vaultId].depositETHCollateral(uint128(_amount));
+    function _addEthCollateral(uint256 _vaultId, uint256 _amount) internal {
+        vaults[_vaultId].addEthCollateral(uint128(_amount));
         emit DepositCollateral(_vaultId, uint128(_amount), 0);
     }
 
@@ -267,7 +267,7 @@ contract Controller is Initializable, Ownable {
         uint256 _amount
     ) internal {
         require(_canModifyVault(_vaultId, _account), "not allowed");
-        vaults[_vaultId].withdrawETHCollateral(_amount);
+        vaults[_vaultId].removeEthCollateral(_amount);
         payable(_account).sendValue(_amount);
         emit WithdrawCollateral(_vaultId, _amount, 0);
     }
@@ -275,7 +275,7 @@ contract Controller is Initializable, Ownable {
     /**
      * mint wsqueeth (ERC20) to an account
      */
-    function _mintSqueeth(
+    function _addShort(
         address _account,
         uint256 _vaultId,
         uint256 _squeethAmount
@@ -283,26 +283,24 @@ contract Controller is Initializable, Ownable {
         require(_canModifyVault(_vaultId, _account), "not allowed");
 
         amountToMint = _squeethAmount.mul(1e18).div(normalizationFactor);
-
-        vaults[_vaultId].mintSqueeth(amountToMint);
-
-        emit MintSqueeth(amountToMint, _vaultId);
-
+        vaults[_vaultId].addShort(amountToMint);
         wsqueeth.mint(_account, amountToMint);
+
+        emit MintShort(amountToMint, _vaultId);
     }
 
     /**
      * burn wsqueeth (ERC20) from an account.
      */
-    function _burnSqueeth(
+    function _removeShort(
         address _account,
         uint256 _vaultId,
         uint256 _amount
     ) internal {
-        vaults[_vaultId].burnSqueeth(_amount);
-        emit BurnSqueeth(_amount, _vaultId);
-
+        vaults[_vaultId].removeShort(_amount);
         wsqueeth.burn(_account, _amount);
+
+        emit BurnShort(_amount, _vaultId);
     }
 
     /**
@@ -342,21 +340,21 @@ contract Controller is Initializable, Ownable {
         // todo: make sure the period here is safe to request in oracle.
         // need to be shorter than the max that oracle can handle
         uint32 period = 1;
-        uint256 ethUsdPrice = _getTwap(ethUSDPool, weth, dai, period);
+        uint256 ethDaiPrice = _getTwap(ethDaiPool, weth, dai, period);
 
-        return VaultLib.isProperlyCollateralized(_vault, normalizationFactor, ethUsdPrice);
+        return VaultLib.isProperlyCollateralized(_vault, normalizationFactor, ethDaiPrice);
     }
 
     function _getIndex(uint32 _period) internal view returns (uint256) {
-        uint256 ethUSDPrice = _getTwap(ethUSDPool, weth, dai, _period);
-        return ethUSDPrice.mul(ethUSDPrice).div(1e18);
+        uint256 ethDaiPrice = _getTwap(ethDaiPool, weth, dai, _period);
+        return ethDaiPrice.mul(ethDaiPrice).div(1e18);
     }
 
     function _getDenormalizedMark(uint32 _period) public view returns (uint256) {
-        uint256 ethUSDPrice = _getTwap(ethUSDPool, weth, dai, _period);
+        uint256 ethDaiPrice = _getTwap(ethDaiPool, weth, dai, _period);
         uint256 squeethEthPrice = _getTwap(wSqueethEthPool, address(wsqueeth), weth, _period);
 
-        return squeethEthPrice.mul(ethUSDPrice).div(normalizationFactor);
+        return squeethEthPrice.mul(ethDaiPrice).div(normalizationFactor);
     }
 
     function _getFairPeriodForOracle(uint32 _period) internal view returns (uint32) {
@@ -368,7 +366,7 @@ contract Controller is Initializable, Ownable {
      * return the smaller of the max periods of 2 pools
      */
     function _getMaxSafePeriod() internal view returns (uint32) {
-        uint32 maxPeriodPool1 = oracle.getMaxPeriod(ethUSDPool);
+        uint32 maxPeriodPool1 = oracle.getMaxPeriod(ethDaiPool);
         uint32 maxPeriodPool2 = oracle.getMaxPeriod(wSqueethEthPool);
         return maxPeriodPool1 > maxPeriodPool2 ? maxPeriodPool2 : maxPeriodPool1;
     }

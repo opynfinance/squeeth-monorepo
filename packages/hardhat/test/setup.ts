@@ -161,10 +161,10 @@ export const getPoolAddress = async (
   const wsqueethEthPool = await createUniPool(squeethPriceInEth, weth, squeeth, positionManager, uniswapFactory) as Contract
   // 1 weth is 3000 dai
   const ethPriceInDai = ethDaiPrice || 3000
-  const ethUsdPool = await createUniPool(ethPriceInDai, dai, weth, positionManager, uniswapFactory) as Contract
+  const ethDaiPool = await createUniPool(ethPriceInDai, dai, weth, positionManager, uniswapFactory) as Contract
 
   await wsqueethEthPool.increaseObservationCardinalityNext(128) 
-  await ethUsdPool.increaseObservationCardinalityNext(128) 
+  await ethDaiPool.increaseObservationCardinalityNext(128) 
 
   if (res.newlyDeployed) {
     await controller.init(
@@ -173,7 +173,7 @@ export const getPoolAddress = async (
       squeeth.address,
       weth.address, 
       dai.address, 
-      ethUsdPool.address, 
+      ethDaiPool.address, 
       wsqueethEthPool.address, 
       { from: deployer }
     );
@@ -181,7 +181,7 @@ export const getPoolAddress = async (
     await vaultNft.init(controller.address, { from: deployer });
   }
   
-  return { controller, squeeth, vaultNft, ethUsdPool, wsqueethEthPool, dai }
+  return { controller, squeeth, vaultNft, ethDaiPool, wsqueethEthPool, dai }
 }
 
 export const addLiquidity = async(

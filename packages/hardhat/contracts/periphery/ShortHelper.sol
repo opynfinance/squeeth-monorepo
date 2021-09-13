@@ -71,7 +71,7 @@ contract ShortHelper {
      */
     function closeShort(
         uint256 _vaultId,
-        uint256 _burnSqueethAmount,
+        uint256 _removeShortAmount,
         uint128 _withdrawAmount,
         ISwapRouter.ExactOutputSingleParams memory _exactOutputParams
     ) external payable {
@@ -81,7 +81,7 @@ contract ShortHelper {
         // pay weth and get squeeth in return.
         uint256 amountIn = router.exactOutputSingle(_exactOutputParams);
 
-        controller.burn(_vaultId, _burnSqueethAmount, _withdrawAmount);
+        controller.burn(_vaultId, _removeShortAmount, _withdrawAmount);
 
         // send back unused eth and withdrawn collateral
         weth.withdraw(msg.value - amountIn);

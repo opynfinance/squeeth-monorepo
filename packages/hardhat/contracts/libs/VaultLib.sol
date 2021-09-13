@@ -21,37 +21,37 @@ library VaultLib {
         return _vault.collateralAmount == 0 && _vault.shortAmount == 0;
     }
 
-    function depositETHCollateral(Vault storage _vault, uint256 _amount) internal {
+    function addEthCollateral(Vault storage _vault, uint256 _amount) internal {
         _vault.collateralAmount = _vault.collateralAmount.add(_amount);
     }
 
-    function withdrawETHCollateral(Vault storage _vault, uint256 _amount) internal {
+    function removeEthCollateral(Vault storage _vault, uint256 _amount) internal {
         _vault.collateralAmount = _vault.collateralAmount.sub(_amount);
     }
 
-    function mintSqueeth(Vault storage _vault, uint256 _amount) internal {
+    function addShort(Vault storage _vault, uint256 _amount) internal {
         _vault.shortAmount = _vault.shortAmount.add(_amount);
     }
 
-    function burnSqueeth(Vault storage _vault, uint256 _amount) internal {
+    function removeShort(Vault storage _vault, uint256 _amount) internal {
         _vault.shortAmount = _vault.shortAmount.sub(_amount);
     }
 
     function isProperlyCollateralized(
         Vault memory _vault,
         uint256 _normalizedFactor,
-        uint256 _ethUsdPrice
+        uint256 _ethDaiPrice
     ) internal pure returns (bool) {
         if (_vault.shortAmount == 0) return true;
-        return _isProperlyCollateralized(_vault, _normalizedFactor, _ethUsdPrice);
+        return _isProperlyCollateralized(_vault, _normalizedFactor, _ethDaiPrice);
     }
 
     function _isProperlyCollateralized(
         Vault memory _vault,
         uint256 _normalizedFactor,
-        uint256 _ethUsdPrice
+        uint256 _ethDaiPrice
     ) internal pure returns (bool) {
-        uint256 debtValueInETH = _vault.shortAmount.mul(_normalizedFactor).mul(_ethUsdPrice).div(1e36);
+        uint256 debtValueInETH = _vault.shortAmount.mul(_normalizedFactor).mul(_ethDaiPrice).div(1e36);
         return _vault.collateralAmount.mul(2) >= debtValueInETH.mul(3);
     }
 }

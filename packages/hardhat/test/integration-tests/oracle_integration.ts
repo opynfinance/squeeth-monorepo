@@ -39,7 +39,7 @@ describe("Oracle Integration Test", function () {
     controller = coreDeployments.controller
 
     squeethPool = coreDeployments.wsqueethEthPool
-    ethDaiPool = coreDeployments.ethUsdPool
+    ethDaiPool = coreDeployments.ethDaiPool
 
     // deploy oracle
     oracle = (await (await ethers.getContractFactory("Oracle")).deploy()) as Oracle;

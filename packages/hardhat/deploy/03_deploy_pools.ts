@@ -28,7 +28,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await ethDaiPool.increaseObservationCardinalityNext(128)
 
   console.log(`SQU/ETH Pool created 🐑. Address: ${squeethWethPool.address}`)
-  console.log(`ETH/USD Pool created 🐑. Address: ${ethDaiPool.address}`)
+  console.log(`ETH/DAI Pool created 🐑. Address: ${ethDaiPool.address}`)
 }
 
 export default func;

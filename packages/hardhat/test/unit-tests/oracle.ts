@@ -22,6 +22,7 @@ describe("Oracle", function () {
   const squeethPriceInETH = 2000; // can sell 1 squeeth for 2000 eth
   const squeethPriceInETH1e18 = (squeethPriceInETH * 1e18).toString()
   const provider = ethers.provider;
+  
   let squeeth: MockWSqueeth;
   let oracle: Oracle;
   let positionManager: Contract
