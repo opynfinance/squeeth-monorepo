@@ -67,7 +67,7 @@ const Nav: React.FC = () => {
       <Image src={logo} alt="logo" width={75} height={75} className={classes.logo} />
       <div className={classes.navDiv}>
         <NavLink path="/" name="Squeeth" />
-        <NavLink path="/vault" name="Vaults" />
+        <NavLink path="/strategies" name="Strategies" />
         <NavLink path="/lp" name="LP" />
       </div>
       <WalletButton />

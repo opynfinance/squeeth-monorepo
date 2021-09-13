@@ -155,9 +155,9 @@ const getAdvancedDetail = (vault: Vaults) => {
           Properties
         </Typography>
         <p>
-          This vault is short 1 squeeth, which is where you earn yield from. The vault is also long 2 ETH. This 2ETH -
-          ETH&sup2; payoff gives you 0 delta exposure. The vault is rebalancing daily to maintain this 0 delta exposure,
-          meaning that you constantly have 0 ETH exposure. You have a constant negative gamma exposure.
+          This strategy is short 1 squeeth, which is where you earn yield from. The strategy is also long 2 ETH. This
+          2ETH - ETH&sup2; payoff gives you 0 delta exposure. The strategy is rebalancing daily to maintain this 0 delta
+          exposure, meaning that you constantly have 0 ETH exposure. You have a constant negative gamma exposure.
           <a style={{ color: '#4DADF3' }} href="https://www.paradigm.xyz/2021/08/power-perpetuals/">
             {' '}
             Learn more.{' '}
@@ -168,6 +168,18 @@ const getAdvancedDetail = (vault: Vaults) => {
           Payoff
         </Typography>
         <Image src={crabpayoff} alt="crab payoff" width={450} height={300} />
+        <br /> <br />
+        <br />
+        <Typography style={{ color: '#FFFFFF' }} variant="h6">
+          Risks
+        </Typography>
+        <p>
+          If you fall below the safe collateralization threshold (150%), you are at risk of liquidation. If ETH moves
+          more than approximately 6% in a given day, the strategy is unprofitable.
+          <br /> <br />
+          Squeeth smart contracts are currently unaudited. This is experimental technology and we encourage caution only
+          risking funds you can afford to lose.
+        </p>
       </>
     )
   if (vault === Vaults.ETHBull)
@@ -177,10 +189,10 @@ const getAdvancedDetail = (vault: Vaults) => {
           Properties
         </Typography>
         <p>
-          This vault is short 1 squeeth, which is where you earn yield from. The vault is also long 3 ETH. This 3ETH -
-          ETH&sup2; payoff gives you 1 delta exposure. This vault is rebalancing daily to maintain this 1 delta
-          exposure, meaning that you constantly have exposure to long 1 ETH while you earn funding yields. You have a
-          constant negative gamma exposure.
+          This strategy is short 1 squeeth, which is where you earn yield from. The strategy is also long 3 ETH. This
+          3ETH - ETH&sup2; payoff gives you 1 delta exposure. This strategy is rebalancing daily to maintain this 1
+          delta exposure, meaning that you constantly have exposure to long 1 ETH while you earn funding yields. You
+          have a constant negative gamma exposure.
           <a style={{ color: '#4DADF3' }} href="https://www.paradigm.xyz/2021/08/power-perpetuals/">
             {' '}
             Learn more.{' '}
@@ -190,6 +202,18 @@ const getAdvancedDetail = (vault: Vaults) => {
           Payoff
         </Typography>
         <Image src={ethbullpayoff} alt="eth bull payoff" width={450} height={300} />
+        <br />
+        <br />
+        <Typography style={{ color: '#FFFFFF' }} variant="h6">
+          Risks
+        </Typography>
+        <p>
+          If you fall below the safe collateralization threshold (150%), you are at risk of liquidation. If ETH goes up
+          more than approximately 100% in a given day, or if ETH goes down the strategy is unprofitable.
+          <br /> <br />
+          Squeeth smart contracts are currently unaudited. This is experimental technology and we encourage caution only
+          risking funds you can afford to lose.
+        </p>
       </>
     )
   if (vault === Vaults.ETHBear)
@@ -198,13 +222,25 @@ const getAdvancedDetail = (vault: Vaults) => {
         <Typography style={{ color: '#FFFFFF' }} variant="h6">
           Properties
         </Typography>
-        This vault is short 1 squeeth, which is where you earn yield from. The vault is also long 1 ETH. This ETH -
-        ETH&sup2; payoff gives you -1 delta exposure. The vault is rebalancing daily to maintain this -1 delta exposure,
-        meaning that you constantly have exposure to short 1 ETH. You have a constant negative gamma exposure.
+        This strategy is short 1 squeeth, which is where you earn yield from. The strategy is also long 1 ETH. This ETH
+        - ETH&sup2; payoff gives you -1 delta exposure. The strategy is rebalancing daily to maintain this -1 delta
+        exposure, meaning that you constantly have exposure to short 1 ETH. You have a constant negative gamma exposure.
         <a style={{ color: '#4DADF3' }} href="https://www.paradigm.xyz/2021/08/power-perpetuals/">
           {' '}
           Learn more.{' '}
         </a>
+        <br />
+        <br />
+        <Typography style={{ color: '#FFFFFF' }} variant="h6">
+          Risks
+        </Typography>
+        <p>
+          If you fall below the safe collateralization threshold (150%), you are at risk of liquidation. If ETH goes up
+          any amount, the strategy is unprofitable.
+          <br /> <br />
+          Squeeth smart contracts are currently unaudited. This is experimental technology and we encourage caution only
+          risking funds you can afford to lose.
+        </p>
       </p>
     )
   else return ''
@@ -357,7 +393,7 @@ export default function Vault() {
       <Nav />
       <div className={classes.body}>
         <div className={classes.card}>
-          <Typography variant="h5">Yield Vaults</Typography>
+          <Typography variant="h5">Yield Strategies</Typography>
 
           <Tabs
             variant="fullWidth"
@@ -408,8 +444,8 @@ export default function Vault() {
           <List>
             <ListItem>
               <ListItemText
-                primary="1. Deposit ETH funds in the vault"
-                secondary="Behind the scenes the vault is minting and selling squeeth, and holding long ETH"
+                primary="1. Deposit ETH funds in the strategy"
+                secondary="Behind the scenes the strategy is minting and selling squeeth, and holding long ETH"
               />
             </ListItem>
             <ListItem>

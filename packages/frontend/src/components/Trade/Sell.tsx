@@ -157,7 +157,7 @@ const Sell: React.FC = () => {
   return (
     <div>
       <Typography variant="caption" className={classes.thirdHeading} component="div">
-        Sell Squeeth to receive premium
+        Mint and sell Squeeth to receive premium
       </Typography>
       <div className={classes.thirdHeading}>
         <TextField
@@ -180,9 +180,19 @@ const Sell: React.FC = () => {
           }}
         />
       </div>
-      <TradeInfoItem label="Premium you get" value={quote.amountOut.toFixed(4)} unit="ETH" />
       <TradeInfoItem label="Collateral Required" value={(amount * 2).toFixed(4)} unit="ETH" />
-      <TradeInfoItem label="Daily Funding Received" value={(accFunding * 0.000001).toFixed(2)} unit="%" />
+      <TradeInfoItem
+        label="Initial Premium to Receive"
+        value={quote.amountOut.toFixed(4)}
+        unit="ETH"
+        tooltip={'Initial payment you get for selling squeeth on Uniswap'}
+      />
+      <TradeInfoItem
+        label="Est. Funding To Receive"
+        tooltip={'Funding happens everytime the contract is touched. It is paid in kind, reducing your squeeth debt'}
+        value={(accFunding * 0.000001).toFixed(2)}
+        unit="%"
+      />
       <TradeInfoItem label="Slippage tolerance" value="0.5" unit="%" />
       <TradeInfoItem label="Price Impact" value={quote.priceImpact} unit="%" />
       <TradeInfoItem label="Minimum received" value={quote.minimumAmountOut.toFixed(4)} unit="ETH" />
@@ -212,7 +222,7 @@ const Sell: React.FC = () => {
       <div style={{ marginTop: '20px', marginBottom: '4px' }}>
         <TradeInfoItem label="Short Position" value={squeethAmount.negated().toFixed(6)} unit="SQTH" color="primary" />
         <TradeInfoItem
-          label="Premium Got"
+          label="Total Premium Received"
           value={Number(usdAmount.toFixed(2)).toLocaleString()}
           unit="$$ of ETH"
           tooltip={`${wethAmount.absoluteValue().toFixed(4)} ETH`}

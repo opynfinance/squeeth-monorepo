@@ -43,17 +43,17 @@ export function VaultChart({
     if (vault === Vaults.ETHBull)
       return [
         { data: longEthPNL, legend: 'Long ETH' },
-        { data: seriesRebalance, legend: 'ETH Bull Vault (incl. funding)' },
+        { data: seriesRebalance, legend: 'ETH Bull Strategy (incl. funding)' },
       ]
     if (vault === Vaults.CrabVault)
       return [
-        { data: seriesRebalance, legend: 'Crab Vault PNL (incl. funding)' },
+        { data: seriesRebalance, legend: 'Crab Strategy PNL (incl. funding)' },
         { data: getStableYieldPNL(longAmount), legend: 'Compound Interest yield' },
       ]
     if (vault === Vaults.ETHBear)
       return [
         { data: shortEthPNL, legend: 'Short ETH' },
-        { data: seriesRebalance, legend: 'ETH Bear Vault (incl. funding)' },
+        { data: seriesRebalance, legend: 'ETH Bear Strategy (incl. funding)' },
       ]
     if (vault === Vaults.Short)
       return [
@@ -67,7 +67,10 @@ export function VaultChart({
     if (vault === Vaults.ETHBull)
       return [
         { data: convertPNLToPriceChart(longEthPNL, startingETHPrice), legend: 'Long ETH' },
-        { data: convertPNLToPriceChart(seriesRebalance, startingETHPrice), legend: 'ETH Bull Vault (incl. funding)' },
+        {
+          data: convertPNLToPriceChart(seriesRebalance, startingETHPrice),
+          legend: 'ETH Bull Strategy (incl. funding)',
+        },
       ]
     if (vault === Vaults.CrabVault)
       return [
@@ -75,12 +78,18 @@ export function VaultChart({
           data: convertPNLToPriceChart(getStableYieldPNL(longAmount), startingETHPrice),
           legend: 'Compound Interest Yield',
         },
-        { data: convertPNLToPriceChart(seriesRebalance, startingETHPrice), legend: 'Crab Vault PNL (incl. funding)' },
+        {
+          data: convertPNLToPriceChart(seriesRebalance, startingETHPrice),
+          legend: 'Crab Strategy PNL (incl. funding)',
+        },
       ]
     if (vault === Vaults.ETHBear)
       return [
         { data: convertPNLToPriceChart(shortEthPNL, startingETHPrice), legend: 'Short ETH' },
-        { data: convertPNLToPriceChart(seriesRebalance, startingETHPrice), legend: 'ETH Bear Vault (incl. funding)' },
+        {
+          data: convertPNLToPriceChart(seriesRebalance, startingETHPrice),
+          legend: 'ETH Bear Strategy (incl. funding)',
+        },
       ]
     if (vault === Vaults.Short)
       return [

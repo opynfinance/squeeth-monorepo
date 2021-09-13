@@ -16,6 +16,7 @@ import Nav from '../src/components/Nav'
 import Trade from '../src/components/Trade'
 import { Vaults } from '../src/constants'
 import { useWorldContext } from '../src/context/world'
+import { useController } from '../src/hooks/contracts/useController'
 import { useETHPrice } from '../src/hooks/useETHPrice'
 import { useETHPriceCharts } from '../src/hooks/useETHPriceCharts'
 
@@ -104,6 +105,7 @@ export default function Home() {
   const [tradeType, setTradeType] = useState(TradeType.BUY)
   const [customLong, setCustomLong] = useState(0)
   const ethPrice = useETHPrice()
+  const { normFactor: normalizationFactor } = useController()
 
   const { volMultiplier: globalVolMultiplier } = useWorldContext()
   // use hook because we only calculate accFunding based on 24 hour performance
@@ -126,8 +128,8 @@ export default function Home() {
             <Typography variant="body2" className={classes.cardDetail}>
               Long squeeth (ETH&sup2;) gives you a leveraged position with unlimited upside, protected downside, and no
               liquidations. Compared to a 2x leveraged position, you make more when ETH goes up and lose less when ETH
-              goes down. Eg. If ETH goes up 5x, squeeth goes up 25x. You pay a daily funding rate for this position.
-              Enter the position by purchasing an ERC20 token.
+              goes down. Eg. If ETH goes up 5x, squeeth goes up 25x. You pay a funding rate for this position. Enter the
+              position by purchasing an ERC20 token.
             </Typography>
             <Typography className={classes.cardTitle} variant="h6">
               Historical PNL Backtest
@@ -143,16 +145,16 @@ export default function Home() {
             </Typography>
             <List>
               <ListItem>
-                <ListItemText primary="1. Buy Squeeth ERC20" secondary="via Uniswap" />
+                <ListItemText primary="1. Buy Squeeth ERC20" secondary="Trades on Uniswap" />
               </ListItem>
               <ListItem>
                 <ListItemText
-                  primary="2. Pay daily funding out of squeeth ERC20 position"
-                  secondary="Can think about this like selling some of your squeeth ERC20 each day to pay funding"
+                  primary="2. Pay continuous funding out of squeeth ERC20 position"
+                  secondary="Sell some of your squeeth ERC20 to pay funding"
                 />
               </ListItem>
               <ListItem>
-                <ListItemText primary="3. Exit position by selling squeeth ERC20" secondary="via Uniswap" />
+                <ListItemText primary="3. Exit position by selling squeeth ERC20" secondary="Trades on Uniswap" />
               </ListItem>
             </List>
 
@@ -176,13 +178,23 @@ export default function Home() {
                 {' '}
                 Uniswap V3 GMA (geometric moving average) TWAP.{' '}
               </a>
-              Funding happens everytime the contract is touched and is paid out of your squeeth position. You can think
-              about this as selling a small amount of your squeeth each day to pay funding.
+              Funding happens everytime the contract is touched.
               <br />
               <br />
-              Even though funding is paid out of your squeeth position, your squeeth balance is always constant. Your
+              {/* Even though funding is paid out of your squeeth position, your squeeth balance is always constant. Your
               squeeth exposure changes through a normalization factor that takes into account the reduced exposure due
-              to funding.
+              to funding. */}
+            </Typography>
+            <Typography className={classes.thirdHeading} variant="h6">
+              Risks
+            </Typography>
+            <Typography variant="body2" className={classes.cardSubTxt}>
+              Daily funding is paid in kind, which means you sell a small amount of squeeth at funding, which reduces
+              your position size. Holding the position for a long period of time without upward movements in ETH can
+              lose considerable funds to funding payments.
+              <br /> <br />
+              Squeeth smart contracts are currently unaudited. This is experimental technology and we encourage caution
+              only risking funds you can afford to lose.
             </Typography>
             {/* <br />
           <Typography variant="body2" className={classes.cardSubTxt}>
@@ -222,14 +234,13 @@ export default function Home() {
                 }}
               />
               &nbsp;, squeeth goes up {leverage * leverage}x, and your position is worth &nbsp; $
-              {((cost * (leverage * Number(ethPrice)) ** 2) / 10000).toFixed(2)}.
+              {((cost * Number(normalizationFactor) * (leverage * Number(ethPrice)) ** 2) / 10000).toFixed(2)}.
               <br /> <br />
               If ETH goes down 100% or more, your position is worth 0 ETH. With squeeth you can never lose more than you
               put in, giving you protected downside.
             </Typography>
-            <div className={classes.thirdHeading}>
-              <Image src={ccpayoff} alt="cc payoff" width={450} height={300} />
-            </div>
+            <br />
+            <Image src={ccpayoff} alt="cc payoff" width={450} height={300} />
           </div>
         </div>
       ) : (
@@ -239,7 +250,7 @@ export default function Home() {
             <Typography variant="h5">Short Squeeth - short ETH&sup2; Position</Typography>
             <Typography variant="body1">Earn funding for selling ETH&sup2;</Typography>
             <Typography variant="body2" className={classes.cardDetail}>
-              Short squeeth (ETH&sup2;) is short an ETH&sup2; position. You earn a daily funding rate for taking on this
+              Short squeeth (ETH&sup2;) is short an ETH&sup2; position. You earn a funding rate for taking on this
               position. You enter the position by putting down collateral, minting, and selling squeeth. If you become
               undercollateralized, you could be liquidated.
             </Typography>
@@ -260,13 +271,12 @@ export default function Home() {
                 <ListItemText primary="1. Put down ETH collateral" secondary="at least 1.5x collateralized" />
               </ListItem>
               <ListItem>
-                <ListItemText primary="2. Mint Squeeth" secondary="Earn daily funding for being short squeeth" />
+                <ListItemText primary="2. Mint Squeeth" secondary="Earn continuous funding for being short squeeth" />
               </ListItem>
               <ListItem>
                 <ListItemText primary="3. Sell Squeeth" secondary="via Uniswap" />
               </ListItem>
             </List>
-
             <Typography className={classes.thirdHeading} variant="h6">
               Properties
             </Typography>
@@ -285,10 +295,20 @@ export default function Home() {
               Index, where Mark is the price squeeth is trading at and Index is ETH&sup2;. We use{' '}
               <a className={classes.header} href="https://uniswap.org/whitepaper-v3.pdf">
                 {' '}
-                Uniswap V3 GMA (geometric moving average) TWAP.{' '}
+                Uniswap V3 GMA (geometric moving average) TWAP.
               </a>
-              Funding happens everytime the contract is touched and is paid out of your squeeth position. You can think
-              about this as selling a small amount of your squeeth each day to pay funding.
+              &nbsp; Funding happens everytime the contract is touched.{' '}
+            </Typography>
+            <br /> <br />
+            <Typography className={classes.thirdHeading} variant="h6">
+              Risks
+            </Typography>
+            <Typography variant="body2" className={classes.cardSubTxt}>
+              If you fall below the safe collateralization threshold (150%), you are at risk of liquidation. If ETH
+              moves upwards, you could lose considerable funds.
+              <br /> <br />
+              Squeeth smart contracts are currently unaudited. This is experimental technology and we encourage caution
+              only risking funds you can afford to lose.
             </Typography>
             {/* <br />
           <Typography variant="body2" className={classes.cardSubTxt}>
