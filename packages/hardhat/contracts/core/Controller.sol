@@ -150,13 +150,19 @@ contract Controller is Initializable, Ownable {
     function liquidate(uint256 _vaultId, uint256 _debtAmount) external notShutdown {
         _applyFunding();
 
-        require(!_isVaultSafe(vaults[_vaultId]), "Can not liquidate");
+        VaultLib.Vault storage vault = vaults[_vaultId];
 
-        uint256 indexPrice = _getIndex(600); // get index price using TWAP furing last 10min
-        uint256 collateralToSell = (indexPrice * _debtAmount) / 1e18;
-        // tood: add 10% of collateral
+        require(!_isVaultSafe(vault), "Can not liquidate safe vault");
+
+        require(_debtAmount <= vault.shortAmount.div(2), "Can not repay more than 50% of vault debt");
+
+        uint256 collateralPriceUSD = oracle.getTwaPriceSafe(ethDaiPool, weth, dai, 600);
+        uint256 collateralToSell = _debtAmount.mul(normalizationFactor).mul(collateralPriceUSD).div(1e36);
+        collateralToSell = collateralToSell.add(collateralToSell.div(10));
 
         wsqueeth.burn(msg.sender, _debtAmount);
+        vault.removeShort(_debtAmount);
+        vault.removeEthCollateral(collateralToSell);
         payable(msg.sender).sendValue(collateralToSell);
 
         emit Liquidate(_vaultId, _debtAmount, collateralToSell);
@@ -337,10 +343,7 @@ contract Controller is Initializable, Ownable {
     }
 
     function _isVaultSafe(VaultLib.Vault memory _vault) internal view returns (bool) {
-        // todo: make sure the period here is safe to request in oracle.
-        // need to be shorter than the max that oracle can handle
-        uint32 period = 1;
-        uint256 ethDaiPrice = _getTwap(ethDaiPool, weth, dai, period);
+        uint256 ethDaiPrice = oracle.getTwaPriceSafe(ethDaiPool, weth, dai, 600);
 
         return VaultLib.isProperlyCollateralized(_vault, normalizationFactor, ethDaiPrice);
     }
