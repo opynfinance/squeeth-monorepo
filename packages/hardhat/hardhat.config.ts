@@ -115,7 +115,7 @@ const config: HardhatUserConfig = {
     },
     rinkebyArbitrum: {
       url: "https://rinkeby.arbitrum.io/rpc",
-      gasPrice: 0,
+      gasPrice: 30000000, // 0.03 gwei
       accounts: {
         mnemonic: mnemonic(),
       },
