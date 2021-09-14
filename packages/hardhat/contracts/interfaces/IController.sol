@@ -5,7 +5,7 @@ pragma solidity =0.7.6;
 interface IController {
     function vaultNFT() external view returns (address);
 
-    function wsqueeth() external view returns (address);
+    function wPowerPerp() external view returns (address);
 
     /**
      * put down collateral and mint squeeth.

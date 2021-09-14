@@ -3,14 +3,14 @@
 pragma solidity =0.7.6;
 
 interface IOracle {
-    function getTwaPrice(
+    function getTwap(
         address _pool,
         address _base,
         address _quote,
         uint32 _period
     ) external view returns (uint256);
 
-    function getTwaPriceSafe(
+    function getTwapSafe(
         address _pool,
         address _base,
         address _quote,

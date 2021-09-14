@@ -67,7 +67,7 @@ describe("Controller: liquidation unit test", function () {
       const ControllerContract = await ethers.getContractFactory("Controller");
       controller = (await ControllerContract.deploy()) as Controller;
       await controller.init(oracle.address, shortNFT.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address);
-      const squeethAddr = await controller.wsqueeth();
+      const squeethAddr = await controller.wPowerPerp();
       const nftAddr = await controller.vaultNFT();
       expect(squeethAddr).to.be.eq(
         squeeth.address,

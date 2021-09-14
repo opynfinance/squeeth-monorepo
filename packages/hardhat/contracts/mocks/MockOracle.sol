@@ -14,7 +14,7 @@ contract MockOracle {
         poolTick[_pool] = _poolTick;
     }
 
-    function getTwaPriceSafe(
+    function getTwapSafe(
         address _pool,
         address,
         address,
@@ -30,7 +30,7 @@ contract MockOracle {
         return poolTick[_pool];
     }
 
-    function getTwaPrice(
+    function getTwap(
         address _pool,
         address,
         address,

@@ -6,7 +6,7 @@ pragma abicoder v2;
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
-import {IWSqueeth} from "../interfaces/IWSqueeth.sol";
+import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
 import {IWETH9} from "../interfaces/IWETH9.sol";
 import {IVaultManagerNFT} from "../interfaces/IVaultManagerNFT.sol";
 import {IController} from "../interfaces/IController.sol";
@@ -18,7 +18,7 @@ contract ShortHelper {
 
     IController public immutable controller;
     ISwapRouter public immutable router;
-    IWSqueeth public immutable wsqueeth;
+    IWPowerPerp public immutable wsqueeth;
     IWETH9 public immutable weth;
     IVaultManagerNFT public immutable vaultNFT;
 
@@ -30,7 +30,7 @@ contract ShortHelper {
         IController _controller = IController(_controllerAddr);
         router = ISwapRouter(_swapRouter);
 
-        IWSqueeth _wsqueeth = IWSqueeth(_controller.wsqueeth());
+        IWPowerPerp _wsqueeth = IWPowerPerp(_controller.wPowerPerp());
         IWETH9 _weth = IWETH9(_wethAddr);
         _wsqueeth.approve(_swapRouter, type(uint256).max);
         _weth.approve(_swapRouter, type(uint256).max);

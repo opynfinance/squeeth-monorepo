@@ -4,7 +4,7 @@ pragma solidity =0.7.6;
 
 import "hardhat/console.sol";
 
-import {IWSqueeth} from "../interfaces/IWSqueeth.sol";
+import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
 import {IVaultManagerNFT} from "../interfaces/IVaultManagerNFT.sol";
 import {IOracle} from "../interfaces/IOracle.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -18,6 +18,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {VaultLib} from "../libs/VaultLib.sol";
+import {Power2Base} from "../libs/Power2Base.sol";
 
 contract Controller is Initializable, Ownable {
     using SafeMath for uint256;
@@ -31,7 +32,10 @@ contract Controller is Initializable, Ownable {
     address public weth;
     address public dai;
     address public ethDaiPool;
-    address public wSqueethEthPool;
+
+    /// @dev address of the powerPerp/weth pool
+    address public powerPerpPool;
+
     address public uniswapPositionManager;
 
     uint256 public shutDownEthPriceSnapshot;
@@ -44,7 +48,7 @@ contract Controller is Initializable, Ownable {
     mapping(uint256 => VaultLib.Vault) public vaults;
 
     IVaultManagerNFT public vaultNFT;
-    IWSqueeth public wsqueeth;
+    IWPowerPerp public wPowerPerp;
     IOracle public oracle;
 
     /// Events
@@ -76,25 +80,25 @@ contract Controller is Initializable, Ownable {
     function init(
         address _oracle,
         address _vaultNFT,
-        address _squeeth,
+        address _wPowerPerp,
         address _weth,
         address _dai,
         address _ethDaiPool,
-        address _wSqueethEthPool,
+        address _powerPerpPool,
         address _uniPositionManager
     ) public initializer {
         require(_oracle != address(0), "Invalid oracle address");
         require(_vaultNFT != address(0), "Invalid vaultNFT address");
-        require(_squeeth != address(0), "Invalid squeeth address");
+        require(_wPowerPerp != address(0), "Invalid power perp address");
         require(_ethDaiPool != address(0), "Invalid eth:dai pool address");
-        require(_wSqueethEthPool != address(0), "Invalid wsqueeth:eth pool address");
+        require(_powerPerpPool != address(0), "Invalid powerperp:eth pool address");
 
         oracle = IOracle(_oracle);
         vaultNFT = IVaultManagerNFT(_vaultNFT);
-        wsqueeth = IWSqueeth(_squeeth);
+        wPowerPerp = IWPowerPerp(_wPowerPerp);
 
         ethDaiPool = _ethDaiPool;
-        wSqueethEthPool = _wSqueethEthPool;
+        powerPerpPool = _powerPerpPool;
         uniswapPositionManager = _uniPositionManager;
 
         weth = _weth;
@@ -103,7 +107,7 @@ contract Controller is Initializable, Ownable {
         normalizationFactor = 1e18;
         lastFundingUpdateTimestamp = block.timestamp;
 
-        isWethToken0 = weth < _squeeth;
+        isWethToken0 = weth < _wPowerPerp;
     }
 
     /**
@@ -184,11 +188,16 @@ contract Controller is Initializable, Ownable {
 
         require(_debtAmount <= vault.shortAmount.div(2), "Can not repay more than 50% of vault debt");
 
-        uint256 collateralPriceUSD = oracle.getTwaPriceSafe(ethDaiPool, weth, dai, 600);
-        uint256 collateralToSell = _debtAmount.mul(normalizationFactor).mul(collateralPriceUSD).div(1e36);
-        collateralToSell = collateralToSell.add(collateralToSell.div(10));
+        uint256 collateralToSell = Power2Base._getCollateralToSell(
+            _debtAmount,
+            address(oracle),
+            ethDaiPool,
+            weth,
+            dai,
+            normalizationFactor
+        );
 
-        wsqueeth.burn(msg.sender, _debtAmount);
+        wPowerPerp.burn(msg.sender, _debtAmount);
         vault.removeShort(_debtAmount);
         vault.removeEthCollateral(collateralToSell);
         payable(msg.sender).sendValue(collateralToSell);
@@ -197,11 +206,21 @@ contract Controller is Initializable, Ownable {
     }
 
     function getIndex(uint32 _period) external view returns (uint256) {
-        return _getIndex(_period);
+        return Power2Base._getIndex(_period, address(oracle), ethDaiPool, weth, dai);
     }
 
     function getDenormalizedMark(uint32 _period) external view returns (uint256) {
-        return _getDenormalizedMark(_period);
+        return
+            Power2Base._getDenormalizedMark(
+                _period,
+                address(oracle),
+                powerPerpPool,
+                ethDaiPool,
+                weth,
+                dai,
+                address(wPowerPerp),
+                normalizationFactor
+            );
     }
 
     /**
@@ -219,14 +238,14 @@ contract Controller is Initializable, Ownable {
     function shutDown() external onlyOwner {
         require(!isShutDown, "shutdown");
         isShutDown = true;
-        shutDownEthPriceSnapshot = oracle.getTwaPriceSafe(ethDaiPool, weth, dai, 600);
+        shutDownEthPriceSnapshot = oracle.getTwapSafe(ethDaiPool, weth, dai, 600);
     }
 
-    function redeemLong(uint256 _wsqueethAmount) external {
+    function redeemLong(uint256 _wPerpAmount) external {
         require(isShutDown, "!shutdown");
-        wsqueeth.burn(msg.sender, _wsqueethAmount);
+        wPowerPerp.burn(msg.sender, _wPerpAmount);
         // convert wSqueeth amount to real short position with normalizationFactor
-        uint256 longValue = _wsqueethAmount.mul(normalizationFactor).mul(shutDownEthPriceSnapshot).div(1e36);
+        uint256 longValue = _wPerpAmount.mul(normalizationFactor).mul(shutDownEthPriceSnapshot).div(1e36);
         payable(msg.sender).sendValue(longValue);
     }
 
@@ -338,7 +357,7 @@ contract Controller is Initializable, Ownable {
 
         amountToMint = _squeethAmount.mul(1e18).div(normalizationFactor);
         vaults[_vaultId].addShort(amountToMint);
-        wsqueeth.mint(_account, amountToMint);
+        wPowerPerp.mint(_account, amountToMint);
 
         emit MintShort(amountToMint, _vaultId);
     }
@@ -352,22 +371,33 @@ contract Controller is Initializable, Ownable {
         uint256 _amount
     ) internal {
         vaults[_vaultId].removeShort(_amount);
-        wsqueeth.burn(_account, _amount);
+        wPowerPerp.burn(_account, _amount);
 
         emit BurnShort(_amount, _vaultId);
     }
 
-    /**
-     * Update the normalized factor as a way to pay funding.
-     */
+    /// @notice Update the normalized factor as a way to pay funding.
+    /// @dev funding is calculated as mark - index.
     function _applyFunding() internal {
         uint32 period = uint32(block.timestamp - lastFundingUpdateTimestamp);
 
         // make sure we use the same period for mark and index, and this period won't cause revert.
         uint32 fairPeriod = _getFairPeriodForOracle(period);
 
-        uint256 mark = _getDenormalizedMark(fairPeriod);
-        uint256 index = _getIndex(fairPeriod);
+        // avoid reading normalizationFactor  from storage multiple times
+        uint256 cacheNormFactor = normalizationFactor;
+
+        uint256 mark = Power2Base._getDenormalizedMark(
+            fairPeriod,
+            address(oracle),
+            powerPerpPool,
+            ethDaiPool,
+            weth,
+            dai,
+            address(wPowerPerp),
+            cacheNormFactor
+        );
+        uint256 index = Power2Base._getIndex(fairPeriod, address(oracle), ethDaiPool, weth, dai);
         uint256 rFunding = (uint256(1e18).mul(uint256(period))).div(secInDay);
 
         // mul by 1e36 to keep newNormalizationFactor in 18 decimals
@@ -376,7 +406,7 @@ contract Controller is Initializable, Ownable {
             ((uint256(1e18).add(rFunding)).mul(mark).sub(index.mul(rFunding)))
         );
 
-        normalizationFactor = normalizationFactor.mul(newNormalizationFactor).div(1e18);
+        normalizationFactor = cacheNormFactor.mul(newNormalizationFactor).div(1e18);
         lastFundingUpdateTimestamp = block.timestamp;
     }
 
@@ -388,7 +418,7 @@ contract Controller is Initializable, Ownable {
             .positions(_tokenId);
         // only check token0 and token1, ignore fee.
         // If there are multiple wsqueeth/eth pools with different fee rate, we accept LP tokens from all of them.
-        address wsqueethAddr = address(wsqueeth); // cache storage variable
+        address wsqueethAddr = address(wPowerPerp); // cache storage variable
         address wethAddr = weth; // cache storage variable
         require(
             (token0 == wsqueethAddr && token1 == wethAddr) || (token1 == wsqueethAddr && token0 == wethAddr),
@@ -407,29 +437,17 @@ contract Controller is Initializable, Ownable {
     }
 
     function _isVaultSafe(VaultLib.Vault memory _vault) internal view returns (bool) {
-        uint256 ethDaiPrice = oracle.getTwaPriceSafe(ethDaiPool, weth, dai, 300);
-        int24 squeethPoolTick = oracle.getTimeWeightedAverageTickSafe(wSqueethEthPool, 300);
+        uint256 ethDaiPrice = oracle.getTwapSafe(ethDaiPool, weth, dai, 300);
+        int24 perpPoolTick = oracle.getTimeWeightedAverageTickSafe(powerPerpPool, 300);
         return
             VaultLib.isProperlyCollateralized(
                 _vault,
                 uniswapPositionManager,
                 normalizationFactor,
                 ethDaiPrice,
-                squeethPoolTick,
+                perpPoolTick,
                 isWethToken0
             );
-    }
-
-    function _getIndex(uint32 _period) internal view returns (uint256) {
-        uint256 ethDaiPrice = _getTwap(ethDaiPool, weth, dai, _period);
-        return ethDaiPrice.mul(ethDaiPrice).div(1e18);
-    }
-
-    function _getDenormalizedMark(uint32 _period) public view returns (uint256) {
-        uint256 ethDaiPrice = _getTwap(ethDaiPool, weth, dai, _period);
-        uint256 squeethEthPrice = _getTwap(wSqueethEthPool, address(wsqueeth), weth, _period);
-
-        return squeethEthPrice.mul(ethDaiPrice).div(normalizationFactor);
     }
 
     function _getFairPeriodForOracle(uint32 _period) internal view returns (uint32) {
@@ -442,20 +460,7 @@ contract Controller is Initializable, Ownable {
      */
     function _getMaxSafePeriod() internal view returns (uint32) {
         uint32 maxPeriodPool1 = oracle.getMaxPeriod(ethDaiPool);
-        uint32 maxPeriodPool2 = oracle.getMaxPeriod(wSqueethEthPool);
+        uint32 maxPeriodPool2 = oracle.getMaxPeriod(powerPerpPool);
         return maxPeriodPool1 > maxPeriodPool2 ? maxPeriodPool2 : maxPeriodPool1;
-    }
-
-    function _getTwap(
-        address _pool,
-        address _base,
-        address _quote,
-        uint32 _period
-    ) internal view returns (uint256) {
-        // period reaching this point should be check, otherwise might revert
-        uint256 twap = oracle.getTwaPrice(_pool, _base, _quote, _period);
-        require(twap != 0, "WAP WAP WAP");
-
-        return twap;
     }
 }

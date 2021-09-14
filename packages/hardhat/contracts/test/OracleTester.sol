@@ -23,7 +23,7 @@ contract OracleTester {
     address _quote
   ) view external returns (uint256) {
     uint32 period = uint32(block.timestamp - _sinceTimestamp);
-    return oracle.getTwaPrice(_pool, _base, _quote, period);
+    return oracle.getTwap(_pool, _base, _quote, period);
   }
 
   function testGetTwapSafeSince(
@@ -33,6 +33,6 @@ contract OracleTester {
     address _quote
   ) view external returns (uint256) {
     uint32 period = uint32(block.timestamp - _sinceTimestamp);
-    return oracle.getTwaPriceSafe(_pool, _base, _quote, period);
+    return oracle.getTwapSafe(_pool, _base, _quote, period);
   }
 }

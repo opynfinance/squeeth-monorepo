@@ -113,7 +113,7 @@ describe("Oracle", function () {
 
   describe("Fetch price right after initialization", async () => {
     it("should return initial price with period = 1", async () => {
-      const price = new BigNumberJs((await oracle.getTwaPrice(squeethPool.address, squeeth.address, weth.address, 1)).toString())
+      const price = new BigNumberJs((await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 1)).toString())
       expect(isSimilar(price.toString(), squeethPriceInETH1e18)).to.be.true;
     })
     it('should be able to get TWAP since init time', async() => {
