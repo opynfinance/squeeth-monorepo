@@ -47,7 +47,7 @@ task("addLiquidity", "Add liquidity to pool")
 
   if (squeethBalance.lt(liquiditySqueethAmount)) {
     // use {collateralAmount} eth to mint squeeth
-    await controller.mint(0, liquiditySqueethAmount, {value: ethers.utils.parseEther(collateralAmount)}) 
+    await controller.mint(0, liquiditySqueethAmount, 0, {value: ethers.utils.parseEther(collateralAmount)}) 
     squeethBalance = await squeeth.balanceOf(deployer)
   }
 

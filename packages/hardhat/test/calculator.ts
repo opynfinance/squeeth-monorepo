@@ -34,12 +34,45 @@ export function convertSqrtX96ToEthPrice(sqrtPriceX96: string) {
   return new BigNumber(1e18).div(rawPrice)
 }
 
-/**
- * convert human readable eth price to sqrtX96. 
- * Assuming token0 is USD and token1 is ETH.
- * @param ethPriceInUSD 
- */
-export function convertNormalPriceToSqrtX96Price(ethPriceInUSD: string) {
-  const rawPrice = new BigNumber(1e18).div(ethPriceInUSD)
+export function convertToken1PriceToSqrtX96Price(token1PriceInToken0: string) {
+  const rawPrice = new BigNumber(1e18).div(token1PriceInToken0)
   return convertRawPriceToSqrtX96(rawPrice)
+}
+
+export function convertToken0PriceToSqrtX96Price(token1PriceInToken0: string) {
+  const rawPrice = new BigNumber(token1PriceInToken0).times(1e18)
+  return convertRawPriceToSqrtX96(rawPrice)
+}
+
+export function getTickFromToken0Price(price: string) {
+  return log1_0001(new BigNumber(price).toNumber())
+}
+
+export function getTickFromNormalPrice(price: string) {
+  return log1_0001(new BigNumber(1).div(price).toNumber())
+}
+
+function log1_0001(num: number) { // eslint-disable-line
+  return Math.log2(num) / Math.log2(1.0001)
+}
+
+export function getSqrtPriceAndTickBySqueethPrice(price: string, wethIsToken0: boolean) {
+  const newToken0Price = wethIsToken0 
+    ? new BigNumber(1).div(price).toString()
+    : price 
+  const sqrtPrice = convertToken0PriceToSqrtX96Price(newToken0Price).toFixed(0)
+  const tick =  getTickFromToken0Price(newToken0Price).toFixed(0)
+  return { tick, sqrtPrice }
+}
+
+export function getYAmountAboveRange (pa:number, pb: number, liquidity: string) {
+  const sqrtA = new BigNumber(pa).squareRoot()
+  const sqrtB = new BigNumber(pb).squareRoot()
+  return new BigNumber(liquidity).times(sqrtB.minus(sqrtA)).integerValue()
+}
+
+export function getXAmountBelowRange (pa:number, pb: number, liquidity: string) {
+  const sqrtA = new BigNumber(pa).squareRoot()
+  const sqrtB = new BigNumber(pb).squareRoot()
+  return new BigNumber(liquidity).times(sqrtB.minus(sqrtA)).div(sqrtB.times(sqrtA)).integerValue()
 }

@@ -2,7 +2,7 @@ import {BigNumber} from 'ethers'
 
 type Vault = [string, BigNumber, BigNumber, BigNumber] & {
   operator: string
-  NFTCollateralId: BigNumber;
+  NftCollateralId: BigNumber;
   collateralAmount: BigNumber;
   shortAmount: BigNumber;
   

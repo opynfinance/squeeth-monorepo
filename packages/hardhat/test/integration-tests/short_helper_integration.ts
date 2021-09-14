@@ -104,7 +104,7 @@ describe("ShortHelper Integration Test", function () {
       const poolWethBefore = await weth.balanceOf(poolAddress)
       seller1VaultId = (await vaultNFT.nextId()).toNumber()
       // mint and trade
-      await shortHelper.connect(seller1).openShort(0, squeethAmount, exactInputParam, {value: collateralAmount} )
+      await shortHelper.connect(seller1).openShort(0, squeethAmount, 0, exactInputParam, {value: collateralAmount} )
   
       const normalizationFactor = await controller.normalizationFactor()
       const wSqueethAmount = squeethAmount.mul(ethers.utils.parseUnits('1')).div(normalizationFactor)
@@ -142,7 +142,7 @@ describe("ShortHelper Integration Test", function () {
       seller2VaultId = (await vaultNFT.nextId()).toNumber()
 
       // mint and trade
-      await shortHelper.connect(seller2).openShort(0, squeethAmount, exactInputParam, {
+      await shortHelper.connect(seller2).openShort(0, squeethAmount, 0, exactInputParam, {
           value: collateralAmount, 
           gasPrice: 0 // won't cost gas so we can calculate eth recieved
         }

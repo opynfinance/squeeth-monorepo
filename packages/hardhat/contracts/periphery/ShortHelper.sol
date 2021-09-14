@@ -48,10 +48,14 @@ contract ShortHelper {
     function openShort(
         uint256 _vaultId,
         uint128 _shortSqueethAmount,
+        uint256 _uniNftId,
         ISwapRouter.ExactInputSingleParams memory _exactInputParams
     ) external payable {
-        // vaultNFT.transferFrom(msg.sender, address(this), _vaultId);
-        (uint256 vaultId, uint256 wsqueethAmount) = controller.mint{value: msg.value}(_vaultId, _shortSqueethAmount);
+        (uint256 vaultId, uint256 wsqueethAmount) = controller.mint{value: msg.value}(
+            _vaultId,
+            _shortSqueethAmount,
+            _uniNftId
+        );
         _exactInputParams.amountIn = wsqueethAmount;
 
         uint256 amountOut = router.exactInputSingle(_exactInputParams);

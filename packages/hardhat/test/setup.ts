@@ -1,5 +1,4 @@
 import { ethers, getNamedAccounts, deployments } from "hardhat"
-import BigNumber from 'bignumber.js'
 import { Contract } from "ethers";
 
 import {
@@ -14,8 +13,8 @@ import {
   abi as FACTORY_ABI,
   bytecode as FACTORY_BYTECODE,
 } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json'
-import { Controller, Oracle, VaultNFTManager, WETH9, WSqueeth, MockErc20 } from "../typechain";
-import { convertNormalPriceToSqrtX96Price } from "./calculator";
+import { Controller, Oracle, VaultNFTManager, WETH9, WSqueeth, MockErc20, INonfungiblePositionManager } from "../typechain";
+import { convertToken0PriceToSqrtX96Price, convertToken1PriceToSqrtX96Price } from "./calculator";
 
 
 
@@ -85,8 +84,8 @@ export const createUniPool = async(
   const isTokenAToken0 = parseInt(tokenA.address, 16) < parseInt(tokenB.address, 16)
 
   const sqrtX96Price = isTokenAToken0 
-    ? convertNormalPriceToSqrtX96Price(tokenBPriceInA.toString()).toFixed(0)
-    : convertNormalPriceToSqrtX96Price((new BigNumber(1).div(tokenBPriceInA)).toString()).toFixed(0)
+    ? convertToken1PriceToSqrtX96Price(tokenBPriceInA.toString()).toFixed(0)
+    : convertToken0PriceToSqrtX96Price(tokenBPriceInA.toString()).toFixed(0)
 
   const token0Addr = isTokenAToken0 ? tokenA.address : tokenB.address
   const token1Addr = isTokenAToken0 ? tokenB.address : tokenA.address
@@ -175,6 +174,7 @@ export const getPoolAddress = async (
       dai.address, 
       ethDaiPool.address, 
       wsqueethEthPool.address, 
+      positionManager.address,
       { from: deployer }
     );
     await squeeth.init(controller.address, { from: deployer });
@@ -197,6 +197,7 @@ export const addLiquidity = async(
   ) => {
 
     const isWethToken0 = parseInt(weth.address, 16) < parseInt(squeeth.address, 16)
+
     const token0 = isWethToken0 ? weth.address : squeeth.address
     const token1 = isWethToken0 ? squeeth.address : weth.address
     
@@ -214,7 +215,7 @@ export const addLiquidity = async(
   
     if (wsqueethBalance.lt(liquiditySqueethAmount)) {
       // use {collateralAmount} eth to mint squeeth
-      await controller.mint(0, liquiditySqueethAmount.sub(wsqueethBalance), {value: ethers.utils.parseEther(collateralAmount)}) 
+      await controller.mint(0, liquiditySqueethAmount.sub(wsqueethBalance), 0, {value: ethers.utils.parseEther(collateralAmount)}) 
       wsqueethBalance = await squeeth.balanceOf(deployer)
     }
 
@@ -238,7 +239,7 @@ export const addLiquidity = async(
       deadline: Math.floor(Date.now() / 1000 + 86400),// uint256
     }
 
-    await positionManager.mint(mintParam)
+    await (positionManager as INonfungiblePositionManager).mint(mintParam)
 
     const pool = await univ3Factory.getPool(token0, token1, 3000)
     return pool

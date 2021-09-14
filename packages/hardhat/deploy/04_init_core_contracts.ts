@@ -18,13 +18,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const dai = await ethers.getContract("MockErc20", deployer);
 
-  const { uniswapFactory } = await getUniswapDeployments(ethers, deployer, network.name)
+  const { uniswapFactory, positionManager } = await getUniswapDeployments(ethers, deployer, network.name)
 
   const ethDaiPool = await getPoolAddress(weth9, dai, uniswapFactory)
   const squeethEthPool = await getPoolAddress(weth9, wsqueeth, uniswapFactory)
 
   try {
-    await controller.init(oracle.address, vaultNft.address, wsqueeth.address, weth9.address, dai.address,  ethDaiPool, squeethEthPool, { from: deployer });
+    await controller.init(oracle.address, vaultNft.address, wsqueeth.address, weth9.address, dai.address,  ethDaiPool, squeethEthPool, positionManager.address, { from: deployer });
     console.log(`Controller init done 🥝`);
   } catch (error) {
     console.log(`Controller already init or encountered error`)

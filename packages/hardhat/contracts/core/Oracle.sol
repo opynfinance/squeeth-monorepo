@@ -32,6 +32,21 @@ contract Oracle {
         return _getMaxPeriod(_pool);
     }
 
+    /// @notice get time weighed average tick, not converted to price
+    /// @dev this function will not revert
+    /// @param _pool address of the pool
+    /// @param _period period in second that we want to calculate average on
+    /// @return timeWeightedAverageTick the time weighted average tick
+    function getTimeWeightedAverageTickSafe(address _pool, uint32 _period)
+        external
+        view
+        returns (int24 timeWeightedAverageTick)
+    {
+        uint32 maxPeriod = _getMaxPeriod(_pool);
+        uint32 requestPeriod = _period > maxPeriod ? maxPeriod : _period;
+        return OracleLibrary.consult(_pool, requestPeriod);
+    }
+
     /**
      * request TWAP from uni v3 pool
      * if the period requested is too long, capped at max period we can go back

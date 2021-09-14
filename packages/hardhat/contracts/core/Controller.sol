@@ -9,6 +9,7 @@ import {IVaultManagerNFT} from "../interfaces/IVaultManagerNFT.sol";
 import {IOracle} from "../interfaces/IOracle.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
 
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/Initializable.sol";
@@ -31,10 +32,13 @@ contract Controller is Initializable, Ownable {
     address public dai;
     address public ethDaiPool;
     address public wSqueethEthPool;
+    address public uniswapPositionManager;
 
     uint256 public shutDownEthPriceSnapshot;
     uint256 public normalizationFactor;
     uint256 public lastFundingUpdateTimestamp;
+
+    bool public isWethToken0;
 
     /// @dev The token ID vault data
     mapping(uint256 => VaultLib.Vault) public vaults;
@@ -47,7 +51,9 @@ contract Controller is Initializable, Ownable {
     event OpenVault(uint256 vaultId);
     event CloseVault(uint256 vaultId);
     event DepositCollateral(uint256 vaultId, uint128 amount, uint128 collateralId);
+    event DepositUniNftCollateral(uint256 vaultId, uint256 tokenId);
     event WithdrawCollateral(uint256 vaultId, uint256 amount, uint128 collateralId);
+    event WithdrawUniNftCollateral(uint256 vaultId, uint256 tokenId);
     event MintShort(uint256 amount, uint256 vaultId);
     event BurnShort(uint256 amount, uint256 vaultId);
     event UpdateOperator(uint256 vaultId, address operator);
@@ -74,7 +80,8 @@ contract Controller is Initializable, Ownable {
         address _weth,
         address _dai,
         address _ethDaiPool,
-        address _wSqueethEthPool
+        address _wSqueethEthPool,
+        address _uniPositionManager
     ) public initializer {
         require(_oracle != address(0), "Invalid oracle address");
         require(_vaultNFT != address(0), "Invalid vaultNFT address");
@@ -88,26 +95,30 @@ contract Controller is Initializable, Ownable {
 
         ethDaiPool = _ethDaiPool;
         wSqueethEthPool = _wSqueethEthPool;
+        uniswapPositionManager = _uniPositionManager;
+
         weth = _weth;
         dai = _dai;
 
         normalizationFactor = 1e18;
         lastFundingUpdateTimestamp = block.timestamp;
+
+        isWethToken0 = weth < _squeeth;
     }
 
     /**
      * put down collateral and mint squeeth.
      * This mints an amount of rSqueeth.
      */
-    function mint(uint256 _vaultId, uint128 _mintAmount)
-        external
-        payable
-        notShutdown
-        returns (uint256, uint256 _wSqueethMinted)
-    {
+    function mint(
+        uint256 _vaultId,
+        uint128 _mintAmount,
+        uint256 _nftTokenId
+    ) external payable notShutdown returns (uint256, uint256 _wSqueethMinted) {
         _applyFunding();
         if (_vaultId == 0) _vaultId = _openVault(msg.sender);
         if (msg.value > 0) _addEthCollateral(_vaultId, msg.value);
+        if (_nftTokenId != 0) _depositUniNFT(msg.sender, _vaultId, _nftTokenId);
         if (_mintAmount > 0) {
             _wSqueethMinted = _addShort(msg.sender, _vaultId, _mintAmount);
         }
@@ -124,11 +135,28 @@ contract Controller is Initializable, Ownable {
     }
 
     /**
+     * Deposit Uni NFT as collateral
+     */
+    function depositUniNFT(uint256 _vaultId, uint256 _tokenId) external notShutdown {
+        _applyFunding();
+        _depositUniNFT(msg.sender, _vaultId, _tokenId);
+    }
+
+    /**
      * Withdraw collateral from a vault.
      */
     function withdraw(uint256 _vaultId, uint256 _amount) external payable notShutdown {
         _applyFunding();
         _withdrawCollateral(msg.sender, _vaultId, _amount);
+        _checkVault(_vaultId);
+    }
+
+    /**
+     * Withdraw Uni NFT from a vault
+     */
+    function withdrawUniNFT(uint256 _vaultId) external notShutdown {
+        _applyFunding();
+        _withdrawUniNFT(msg.sender, _vaultId);
         _checkVault(_vaultId);
     }
 
@@ -248,12 +276,23 @@ contract Controller is Initializable, Ownable {
     function _openVault(address _recipient) internal returns (uint256 vaultId) {
         vaultId = vaultNFT.mintNFT(_recipient);
         vaults[vaultId] = VaultLib.Vault({
-            NFTCollateralId: 0,
+            NftCollateralId: 0,
             collateralAmount: 0,
             shortAmount: 0,
             operator: address(0)
         });
         emit OpenVault(vaultId);
+    }
+
+    function _depositUniNFT(
+        address _account,
+        uint256 _vaultId,
+        uint256 _tokenId
+    ) internal {
+        _checkUniNFT(_tokenId);
+        vaults[_vaultId].addUniNftCollateral(_tokenId);
+        INonfungiblePositionManager(uniswapPositionManager).transferFrom(_account, address(this), _tokenId);
+        emit DepositUniNftCollateral(_vaultId, _tokenId);
     }
 
     /**
@@ -262,6 +301,15 @@ contract Controller is Initializable, Ownable {
     function _addEthCollateral(uint256 _vaultId, uint256 _amount) internal {
         vaults[_vaultId].addEthCollateral(uint128(_amount));
         emit DepositCollateral(_vaultId, uint128(_amount), 0);
+    }
+
+    /**
+     * withdraw uni nft
+     */
+    function _withdrawUniNFT(address _account, uint256 _vaultId) internal {
+        uint256 tokenId = vaults[_vaultId].removeUniNftCollateral();
+        INonfungiblePositionManager(uniswapPositionManager).transferFrom(address(this), _account, tokenId);
+        emit WithdrawUniNftCollateral(_vaultId, tokenId);
     }
 
     /**
@@ -333,6 +381,22 @@ contract Controller is Initializable, Ownable {
     }
 
     /**
+     * check that the specified tokenId is a valid squeeth/weth lp token.
+     */
+    function _checkUniNFT(uint256 _tokenId) internal view {
+        (, , address token0, address token1, , , , , , , , ) = INonfungiblePositionManager(uniswapPositionManager)
+            .positions(_tokenId);
+        // only check token0 and token1, ignore fee.
+        // If there are multiple wsqueeth/eth pools with different fee rate, we accept LP tokens from all of them.
+        address wsqueethAddr = address(wsqueeth); // cache storage variable
+        address wethAddr = weth; // cache storage variable
+        require(
+            (token0 == wsqueethAddr && token1 == wethAddr) || (token1 == wsqueethAddr && token0 == wethAddr),
+            "Invalid nft"
+        );
+    }
+
+    /**
      * @dev check that the vault is solvent and has enough collateral.
      */
     function _checkVault(uint256 _vaultId) internal view {
@@ -343,9 +407,17 @@ contract Controller is Initializable, Ownable {
     }
 
     function _isVaultSafe(VaultLib.Vault memory _vault) internal view returns (bool) {
-        uint256 ethDaiPrice = oracle.getTwaPriceSafe(ethDaiPool, weth, dai, 600);
-
-        return VaultLib.isProperlyCollateralized(_vault, normalizationFactor, ethDaiPrice);
+        uint256 ethDaiPrice = oracle.getTwaPriceSafe(ethDaiPool, weth, dai, 300);
+        int24 squeethPoolTick = oracle.getTimeWeightedAverageTickSafe(wSqueethEthPool, 300);
+        return
+            VaultLib.isProperlyCollateralized(
+                _vault,
+                uniswapPositionManager,
+                normalizationFactor,
+                ethDaiPrice,
+                squeethPoolTick,
+                isWethToken0
+            );
     }
 
     function _getIndex(uint32 _period) internal view returns (uint256) {

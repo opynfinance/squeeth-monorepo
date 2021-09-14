@@ -37,7 +37,7 @@ export const useShortHelper = () => {
     const _amount = fromTokenAmount(amount, WSQUEETH_DECIMALS)
     const ethAmt = fromTokenAmount(amount, 18).multipliedBy(2)
     await handleTransaction(
-      contract.methods.openShort(vaultId, _amount.toString(), _exactInputParams).send({
+      contract.methods.openShort(vaultId, _amount.toString(), 0, _exactInputParams).send({
         from: address,
         value: ethAmt.toString(), // Already scaled to 14 so multiplied with 10000
       }),

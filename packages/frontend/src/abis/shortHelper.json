@@ -116,6 +116,11 @@
         "type": "uint128"
       },
       {
+        "internalType": "uint256",
+        "name": "_uniNftId",
+        "type": "uint256"
+      },
+      {
         "components": [
           {
             "internalType": "address",
@@ -183,19 +188,6 @@
   },
   {
     "inputs": [],
-    "name": "squeeth",
-    "outputs": [
-      {
-        "internalType": "contract IWSqueeth",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "vaultNFT",
     "outputs": [
       {
@@ -213,6 +205,19 @@
     "outputs": [
       {
         "internalType": "contract IWETH9",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "wsqueeth",
+    "outputs": [
+      {
+        "internalType": "contract IWSqueeth",
         "name": "",
         "type": "address"
       }

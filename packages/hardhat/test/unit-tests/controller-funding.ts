@@ -2,7 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber, providers } from "ethers";
-import { Controller, MockWSqueeth, MockVaultNFTManager, MockOracle, MockUniswapV3Pool, MockErc20 } from "../../typechain";
+import { Controller, MockWSqueeth, MockVaultNFTManager, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager } from "../../typechain";
 
 const squeethETHPrice = ethers.utils.parseUnits('3010')
 const ethUSDPrice = ethers.utils.parseUnits('3000')
@@ -14,6 +14,7 @@ describe("Controller Funding tests", function () {
   let controller: Controller;
   let squeethEthPool: MockUniswapV3Pool;
   let ethUSDPool: MockUniswapV3Pool;
+  let uniPositionManager: MockUniPositionManager
   let oracle: MockOracle;
   let weth: MockErc20;
   let usdc: MockErc20;
@@ -47,12 +48,15 @@ describe("Controller Funding tests", function () {
     squeethEthPool = (await MockUniswapV3PoolContract.deploy()) as MockUniswapV3Pool;
     ethUSDPool = (await MockUniswapV3PoolContract.deploy()) as MockUniswapV3Pool;
 
+    const MockPositionManager = await ethers.getContractFactory("MockUniPositionManager");
+    uniPositionManager = (await MockPositionManager.deploy()) as MockUniPositionManager;
+
     await squeethEthPool.setPoolTokens(weth.address, squeeth.address);
     await ethUSDPool.setPoolTokens(weth.address, usdc.address);
 
 
-    await oracle.connect(random).setPrice(squeethEthPool.address, "1" , squeethETHPrice) // eth per 1 squeeth
-    await oracle.connect(random).setPrice(ethUSDPool.address, "1" , ethUSDPrice)  // usdc per 1 eth
+    await oracle.connect(random).setPrice(squeethEthPool.address , squeethETHPrice) // eth per 1 squeeth
+    await oracle.connect(random).setPrice(ethUSDPool.address , ethUSDPrice)  // usdc per 1 eth
   });
 
   describe("Deployment", async () => {
@@ -64,7 +68,7 @@ describe("Controller Funding tests", function () {
 
   describe("Initialization", async () => {
     it("Should be able to init contract", async () => {
-      await controller.init(oracle.address, shortNFT.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address);
+      await controller.init(oracle.address, shortNFT.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address);
       const squeethAddr = await controller.wsqueeth();
       const nftAddr = await controller.vaultNFT();
       expect(squeethAddr).to.be.eq(
@@ -123,7 +127,7 @@ describe("Controller Funding tests", function () {
         const collateralAmount = ethers.utils.parseUnits('450')
   
         // put vaultId as 0 to open vault
-        await controller.connect(seller1).mint(0, mintAmount, {value: collateralAmount})
+        await controller.connect(seller1).mint(0, mintAmount, 0, {value: collateralAmount})
 
         mark = await controller.getDenormalizedMark(1)
         index = await controller.getIndex(1)
@@ -153,7 +157,7 @@ describe("Controller Funding tests", function () {
 
         
         await provider.send("evm_increaseTime", [10800]) // (3/24) * 60*60 = 3600s = 3 hour
-        await controller.connect(seller1).mint(vaultId, expectedAmountCanMint.sub(3), {value: 0}) 
+        await controller.connect(seller1).mint(vaultId, expectedAmountCanMint.sub(3), 0, {value: 0}) 
         // seems we have some rounding issues here where we round up the expected amount to mint, but we round down elsewhere
         // some times tests pass with add(0), sometimes we
         // seems to be based on the index and not consistent, started passing after I added an earlier test (which would change the index here)
@@ -177,7 +181,7 @@ describe("Controller Funding tests", function () {
         const collateralAmount = ethers.utils.parseUnits('450')
   
         // put vaultId as 0 to open vault
-        await controller.connect(seller1).mint(0, mintAmount, {value: collateralAmount})
+        await controller.connect(seller1).mint(0, mintAmount, 0, {value: collateralAmount})
 
         mark = await controller.getDenormalizedMark(1)
         index = await controller.getIndex(1)
@@ -211,7 +215,7 @@ describe("Controller Funding tests", function () {
 
 
         await provider.send("evm_increaseTime", [(secondsElapsed.div(one)).toNumber()]) // (3/24) * 60*60 = 3600s = 3 hour
-        await expect(controller.connect(seller1).mint(vaultId, expectedAmountCanMint.add(200), {value: 0})).to.be.revertedWith(
+        await expect(controller.connect(seller1).mint(vaultId, expectedAmountCanMint.add(200), 0, {value: 0})).to.be.revertedWith(
           'Invalid state'
         ) 
         // seems we have some rounding issues here where we round up the expected amount to mint, but we round down elsewhere
@@ -226,7 +230,7 @@ describe("Controller Funding tests", function () {
         const collateralAmount = ethers.utils.parseUnits('450')
   
         // put vaultId as 0 to open vault
-        await controller.connect(seller1).mint(0, mintAmount, {value: collateralAmount})
+        await controller.connect(seller1).mint(0, mintAmount,0, {value: collateralAmount})
 
         mark = await controller.getDenormalizedMark(1)
         index = await controller.getIndex(1)
@@ -271,7 +275,7 @@ describe("Controller Funding tests", function () {
         const collateralAmount = ethers.utils.parseUnits('450')
   
         // put vaultId as 0 to open vault
-        await controller.connect(seller1).mint(0, mintAmount, {value: collateralAmount})
+        await controller.connect(seller1).mint(0, mintAmount,0, {value: collateralAmount})
 
         mark = await controller.getDenormalizedMark(1)
         index = await controller.getIndex(1)

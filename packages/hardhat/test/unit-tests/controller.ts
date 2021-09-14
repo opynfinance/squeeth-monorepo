@@ -2,7 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber, providers } from "ethers";
-import { Controller, MockWSqueeth, MockVaultNFTManager, MockOracle, MockUniswapV3Pool, MockErc20 } from "../../typechain";
+import { Controller, MockWSqueeth, MockVaultNFTManager, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager } from "../../typechain";
 
 import { isEmptyVault } from '../vault-utils'
 
@@ -16,6 +16,7 @@ describe("Controller", function () {
   let controller: Controller;
   let squeethEthPool: MockUniswapV3Pool;
   let ethUSDPool: MockUniswapV3Pool;
+  let uniPositionManager: MockUniPositionManager
   let oracle: MockOracle;
   let weth: MockErc20;
   let usdc: MockErc20;
@@ -55,12 +56,15 @@ describe("Controller", function () {
     squeethEthPool = (await MockUniswapV3PoolContract.deploy()) as MockUniswapV3Pool;
     ethUSDPool = (await MockUniswapV3PoolContract.deploy()) as MockUniswapV3Pool;
 
+    const MockPositionManager = await ethers.getContractFactory("MockUniPositionManager");
+    uniPositionManager = (await MockPositionManager.deploy()) as MockUniPositionManager;
+
     await squeethEthPool.setPoolTokens(weth.address, squeeth.address);
     await ethUSDPool.setPoolTokens(weth.address, usdc.address);
 
 
-    await oracle.connect(random).setPrice(squeethEthPool.address, "1" , squeethETHPrice) // eth per 1 squeeth
-    await oracle.connect(random).setPrice(ethUSDPool.address, "1" , ethUSDPrice)  // usdc per 1 eth
+    await oracle.connect(random).setPrice(squeethEthPool.address , squeethETHPrice) // eth per 1 squeeth
+    await oracle.connect(random).setPrice(ethUSDPool.address , ethUSDPrice)  // usdc per 1 eth
   });
 
   describe("Deployment", async () => {
@@ -72,7 +76,7 @@ describe("Controller", function () {
 
   describe("Initialization", async () => {
     it("Should be able to init contract", async () => {
-      await controller.init(oracle.address, shortNFT.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address);
+      await controller.init(oracle.address, shortNFT.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address);
       const squeethAddr = await controller.wsqueeth();
       const nftAddr = await controller.vaultNFT();
       expect(squeethAddr).to.be.eq(
@@ -84,7 +88,7 @@ describe("Controller", function () {
 
     it("Should revert when init is called again", async () => {
       await expect(
-        controller.init(oracle.address, shortNFT.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address)
+        controller.init(oracle.address, shortNFT.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
       ).to.be.revertedWith("Initializable: contract is already initialized");
     });
   });
@@ -97,7 +101,7 @@ describe("Controller", function () {
       it("Should be able to open vaults", async () => {
         vaultId = await shortNFT.nextId()
         const nftBalanceBefore = await shortNFT.balanceOf(seller1.address)
-        await controller.connect(seller1).mint(0, 0) // putting vaultId = 0 to open vault
+        await controller.connect(seller1).mint(0, 0, 0) // putting vaultId = 0 to open vault
 
         // total short position nft should increase
         const nftBalanceAfter = await shortNFT.balanceOf(seller1.address)
@@ -129,7 +133,7 @@ describe("Controller", function () {
       it("Should revert if not called by owner", async () => {
         const mintAmount = ethers.utils.parseUnits('0.01')
         
-        await expect(controller.connect(random).mint(vaultId, mintAmount)).to.be.revertedWith(
+        await expect(controller.connect(random).mint(vaultId, mintAmount, 0)).to.be.revertedWith(
           'not allowed'
         )
       });
@@ -139,7 +143,7 @@ describe("Controller", function () {
         const vaultBefore = await controller.vaults(vaultId)
         const squeethBalanceBefore = await squeeth.balanceOf(seller1.address)
         
-        await controller.connect(seller1).mint(vaultId, mintAmount)
+        await controller.connect(seller1).mint(vaultId, mintAmount, 0)
 
         const squeethBalanceAfter = await squeeth.balanceOf(seller1.address)
         const vaultAfter = await controller.vaults(vaultId)
@@ -152,7 +156,7 @@ describe("Controller", function () {
       it("Should revert when minting more than allowed", async () => {
         const mintAmount = ethers.utils.parseUnits('0.01')
                 
-        await expect(controller.connect(seller1).mint(vaultId, mintAmount)).to.be.revertedWith(
+        await expect(controller.connect(seller1).mint(vaultId, mintAmount, 0)).to.be.revertedWith(
           'Invalid state'
         )
       });
@@ -245,7 +249,7 @@ describe("Controller", function () {
         const squeethBalanceBefore = await squeeth.balanceOf(seller1.address)
 
         // put vaultId as 0 to open vault
-        await controller.connect(seller1).mint(0, mintAmount, {value: collateralAmount})
+        await controller.connect(seller1).mint(0, mintAmount, 0, {value: collateralAmount})
 
         const normFactor = await controller.normalizationFactor()
         const controllerBalanceAfter = await provider.getBalance(controller.address)
@@ -272,7 +276,7 @@ describe("Controller", function () {
         const squeethBalanceBefore = await squeeth.balanceOf(seller1.address)
         const vaultBefore = await controller.vaults(vaultId)
 
-        await controller.connect(seller1).mint(vaultId, mintAmount, {value: collateralAmount})
+        await controller.connect(seller1).mint(vaultId, mintAmount, 0, {value: collateralAmount})
 
         const normFactor = await controller.normalizationFactor()
         const controllerBalanceAfter = await provider.getBalance(controller.address)
@@ -302,7 +306,7 @@ describe("Controller", function () {
         const squeethBalanceBefore = await squeeth.balanceOf(random.address)
         const vaultBefore = await controller.vaults(vaultId)
 
-        await controller.connect(random).mint(vaultId, mintAmount, {value: collateralAmount})
+        await controller.connect(random).mint(vaultId, mintAmount, 0, {value: collateralAmount})
 
         const controllerBalanceAfter = await provider.getBalance(controller.address)
         const squeethBalanceAfter = await squeeth.balanceOf(random.address)
@@ -346,17 +350,17 @@ describe("Controller", function () {
       // prepare a vault that's gonna go underwater
       seller2VaultId = await shortNFT.nextId()
       const mintAmount = ethers.utils.parseUnits('0.01')
-      await controller.connect(seller2).mint(0, mintAmount, { value: collateralAmount })
+      await controller.connect(seller2).mint(0, mintAmount, 0, { value: collateralAmount })
 
       // prepare a vault that's not gonna go insolvent
       seller3VaultId = await shortNFT.nextId()
       const s3MintAmount = ethers.utils.parseUnits('0.004')
-      await controller.connect(seller3).mint(0, s3MintAmount, { value: collateralAmount })
+      await controller.connect(seller3).mint(0, s3MintAmount, 0, { value: collateralAmount })
       seller3TotalSqueeth = await squeeth.balanceOf(seller3.address)
 
       // mint a lot of squeeth from seller1 that system can't payout to.
       const collateral = ethers.utils.parseUnits('450')
-      await controller.connect(seller1).mint(0, ethers.utils.parseUnits('0.1'), {value: collateral})
+      await controller.connect(seller1).mint(0, ethers.utils.parseUnits('0.1'), 0, {value: collateral})
 
       normalizationFactor = await controller.normalizationFactor()
     })
@@ -369,7 +373,7 @@ describe("Controller", function () {
       });
       it("Should shutdown the system at a price that it will go insolvent", async () => {
         const ethPrice = ethers.utils.parseUnits(settlementPrice)
-        await oracle.connect(random).setPrice(ethUSDPool.address, 1 , ethPrice) // eth per 1 squeeth
+        await oracle.connect(random).setPrice(ethUSDPool.address , ethPrice) // eth per 1 squeeth
         await controller.connect(owner).shutDown()
         const snapshot = await controller.shutDownEthPriceSnapshot();
         expect(snapshot.toString()).to.be.eq(ethPrice)
@@ -385,7 +389,7 @@ describe("Controller", function () {
     describe("Basic operations should be banned", async () => {
       it("Should revert when calling mint", async () => {
         await expect(
-          controller.connect(seller1).mint(0, 0)
+          controller.connect(seller1).mint(0, 0, 0)
         ).to.be.revertedWith("shutdown");
       });
       it("Should revert when calling deposit", async () => {

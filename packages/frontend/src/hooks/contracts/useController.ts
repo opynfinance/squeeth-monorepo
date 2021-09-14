@@ -49,7 +49,7 @@ export const useController = () => {
 
     const _amount = fromTokenAmount(amount, 18)
     handleTransaction(
-      contract.methods.mint(vaultId, _amount.toString()).send({
+      contract.methods.mint(vaultId, _amount.toString(), 0).send({
         from: address,
         value: _amount.multipliedBy(getMultiplier(vaultType)).multipliedBy(10000),
       }),

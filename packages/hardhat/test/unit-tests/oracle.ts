@@ -14,7 +14,7 @@ import {
   bytecode as FACTORY_BYTECODE,
 } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json'
 import { Contract } from "ethers";
-import { convertNormalPriceToSqrtX96Price } from '../calculator'
+import { convertToken0PriceToSqrtX96Price } from '../calculator'
 import { isSimilar } from '../utils'
 import { Oracle, MockWSqueeth, OracleTester, WETH9 } from "../../typechain";
 
@@ -78,8 +78,8 @@ describe("Oracle", function () {
     const isWethToken0 = parseInt(weth.address, 16) < parseInt(squeeth.address, 16)
 
     const sqrtX96Price = isWethToken0 
-      ? convertNormalPriceToSqrtX96Price(squeethPriceInETH.toString()).toFixed(0)
-      : convertNormalPriceToSqrtX96Price((new BigNumber(1).div(squeethPriceInETH)).toString()).toFixed(0)
+      ? convertToken0PriceToSqrtX96Price((new BigNumber(1).div(squeethPriceInETH)).toString()).toFixed(0)
+      : convertToken0PriceToSqrtX96Price(squeethPriceInETH.toString()).toFixed(0)
      
 
     const token0 = isWethToken0 ? weth.address : squeeth.address

@@ -2,7 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber, providers } from "ethers";
-import { Controller, MockWSqueeth, MockVaultNFTManager, MockOracle, MockUniswapV3Pool, MockErc20 } from "../../typechain";
+import { Controller, MockWSqueeth, MockVaultNFTManager, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager } from "../../typechain";
 import { isSimilar } from '../utils'
 
 const squeethETHPrice = ethers.utils.parseUnits('3010')
@@ -14,6 +14,7 @@ describe("Controller: liquidation unit test", function () {
   let shortNFT: MockVaultNFTManager;
   let controller: Controller;
   let squeethEthPool: MockUniswapV3Pool;
+  let uniPositionManager: MockUniPositionManager
   let ethUSDPool: MockUniswapV3Pool;
   let oracle: MockOracle;
   let weth: MockErc20;
@@ -50,19 +51,22 @@ describe("Controller: liquidation unit test", function () {
     squeethEthPool = (await MockUniswapV3PoolContract.deploy()) as MockUniswapV3Pool;
     ethUSDPool = (await MockUniswapV3PoolContract.deploy()) as MockUniswapV3Pool;
 
+    const MockPositionManager = await ethers.getContractFactory("MockUniPositionManager");
+    uniPositionManager = (await MockPositionManager.deploy()) as MockUniPositionManager;
+
     await squeethEthPool.setPoolTokens(weth.address, squeeth.address);
     await ethUSDPool.setPoolTokens(weth.address, usdc.address);
 
 
-    await oracle.connect(random).setPrice(squeethEthPool.address, "1" , squeethETHPrice) // eth per 1 squeeth
-    await oracle.connect(random).setPrice(ethUSDPool.address, "1" , ethUSDPrice)  // usdc per 1 eth
+    await oracle.connect(random).setPrice(squeethEthPool.address , squeethETHPrice) // eth per 1 squeeth
+    await oracle.connect(random).setPrice(ethUSDPool.address , ethUSDPrice)  // usdc per 1 eth
   });
 
   describe("Deployment", async () => {
     it("Deployment", async function () {
       const ControllerContract = await ethers.getContractFactory("Controller");
       controller = (await ControllerContract.deploy()) as Controller;
-      await controller.init(oracle.address, shortNFT.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address);
+      await controller.init(oracle.address, shortNFT.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address);
       const squeethAddr = await controller.wsqueeth();
       const nftAddr = await controller.vaultNFT();
       expect(squeethAddr).to.be.eq(
@@ -85,7 +89,7 @@ describe("Controller: liquidation unit test", function () {
       const vaultBefore = await controller.vaults(vaultId)
       const squeethBalanceBefore = await squeeth.balanceOf(seller1.address)
       
-      await controller.connect(seller1).mint(0, mintAmount, {value: depositAmount})
+      await controller.connect(seller1).mint(0, mintAmount, 0, {value: depositAmount})
 
       const squeethBalanceAfter = await squeeth.balanceOf(seller1.address)
       const vaultAfter = await controller.vaults(vaultId)
@@ -109,7 +113,7 @@ describe("Controller: liquidation unit test", function () {
     it("Should revert liquidating vault when repaying more than half of debt", async () => {
       // change oracle price to make vault liquidatable
       const newEthUsdPrice = ethers.utils.parseUnits('4000')
-      await oracle.connect(random).setPrice(ethUSDPool.address, "1" , newEthUsdPrice)
+      await oracle.connect(random).setPrice(ethUSDPool.address, newEthUsdPrice)
 
       const vaultBefore = await controller.vaults(vaultId)
 
