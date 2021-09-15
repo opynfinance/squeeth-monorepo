@@ -241,20 +241,35 @@ contract Controller is Initializable, Ownable {
         shutDownEthPriceSnapshot = oracle.getTwapSafe(ethDaiPool, weth, dai, 600);
     }
 
+    /**
+     * @dev redeem wPowerPerp for its index value when the system is shutdown
+     * @param _wPerpAmount amount of wPowerPerp to burn
+     */
     function redeemLong(uint256 _wPerpAmount) external {
         require(isShutDown, "!shutdown");
         wPowerPerp.burn(msg.sender, _wPerpAmount);
-        // convert wSqueeth amount to real short position with normalizationFactor
-        uint256 longValue = _wPerpAmount.mul(normalizationFactor).mul(shutDownEthPriceSnapshot).div(1e36);
+
+        uint256 longValue = Power2Base._getLongSettlementValue(
+            _wPerpAmount,
+            shutDownEthPriceSnapshot,
+            normalizationFactor
+        );
         payable(msg.sender).sendValue(longValue);
     }
 
+    /**
+     * @dev redeem additional collateral from the vault when the system is shutdown
+     * @param _vaultId vauld id
+     */
     function redeemShort(uint256 _vaultId) external {
         require(isShutDown, "!shutdown");
         require(_canModifyVault(_vaultId, msg.sender), "not allowed");
 
-        uint256 _shortSqueethAmount = vaults[_vaultId].shortAmount;
-        uint256 debt = _shortSqueethAmount.mul(shutDownEthPriceSnapshot).mul(normalizationFactor).div(1e36);
+        uint256 debt = Power2Base._getLongSettlementValue(
+            vaults[_vaultId].shortAmount,
+            shutDownEthPriceSnapshot,
+            normalizationFactor
+        );
         // if the debt is more than collateral, this line will revert
         uint256 excess = vaults[_vaultId].collateralAmount.sub(debt);
 

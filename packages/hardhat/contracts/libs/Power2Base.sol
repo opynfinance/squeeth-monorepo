@@ -81,4 +81,19 @@ library Power2Base {
 
         return twap;
     }
+
+    /**
+     * @notice get the index value of wsqueeth when system settles
+     * @dev the index of squeeth is ethPrice^2, so each squeeth will need to pay out {ethPrice} eth
+     * @param _wsqueethAmount amount of wsqueeth used in settlement
+     * @param _ethSettlementPrice eth price used for settlement. scaled with 1e18
+     * @return amount in wei that should be paid to the token holder
+     */
+    function _getLongSettlementValue(
+        uint256 _wsqueethAmount,
+        uint256 _ethSettlementPrice,
+        uint256 _normalizationFactor
+    ) internal pure returns (uint256) {
+        return _wsqueethAmount.mul(_normalizationFactor).mul(_ethSettlementPrice).div(1e36);
+    }
 }
