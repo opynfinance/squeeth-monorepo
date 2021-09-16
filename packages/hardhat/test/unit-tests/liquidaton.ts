@@ -147,4 +147,53 @@ describe("Controller: liquidation unit test", function () {
       expect(squeethLiquidatorBalanceBefore.sub(squeethLiquidatorBalanceAfter).eq(debtToRepay)).to.be.true
     })
   })
+
+  describe("Liquidation: un-profitable scenario", async () => {
+    let vaultId: BigNumber;
+    const newEthPrice = '9000'
+
+    before("open vault", async () => {
+      const oldEthPrice = ethers.utils.parseUnits('3000')
+      await oracle.connect(random).setPrice(ethUSDPool.address, oldEthPrice)
+      vaultId = await shortNFT.nextId()
+      const depositAmount = ethers.utils.parseUnits('45')
+      const mintAmount = ethers.utils.parseUnits('0.01')
+      await controller.connect(seller1).mint(0, mintAmount, 0, {value: depositAmount})
+    });
+    
+    before("set price to a number where vault will become insolvent", async () => {
+      // change oracle price to make vault liquidatable
+      const newEthUsdPrice = ethers.utils.parseUnits(newEthPrice)
+      await oracle.connect(random).setPrice(ethUSDPool.address, newEthUsdPrice)
+    })
+
+    it("can liquidate a underwater vault, even it's not profitable", async () => {
+      const vaultBefore = await controller.vaults(vaultId)
+      const liquidatorBalanceBefore = await provider.getBalance(liquidator.address)
+      const squeethLiquidatorBalanceBefore = await squeeth.balanceOf(liquidator.address)
+
+      // pay back 0.005 squeeth. which worth 4500 eth.
+      const debtToRepay = vaultBefore.shortAmount.div(2)
+      const tx = await controller.connect(liquidator).liquidate(vaultId, debtToRepay);
+      const receipt = await tx.wait();
+      
+      const normFactor = await controller.normalizationFactor()
+      let collateralToSell : BigNumber = BigNumber.from(newEthPrice).mul(BigNumber.from(10).pow(18)).mul(normFactor).mul(debtToRepay).div(BigNumber.from(10).pow(36))
+      collateralToSell = collateralToSell.add(collateralToSell.div(10))
+
+      // paying this amount will reduce total eth 
+      expect(collateralToSell.gt(vaultBefore.collateralAmount)).to.be.true
+
+      const vaultAfter = await controller.vaults(vaultId)
+      const liquidatorBalanceAfter = await provider.getBalance(liquidator.address)
+      const actualAmountPaidForLiquidator : BigNumber = (receipt.events?.find(event => event.event === 'Liquidate'))?.args?.collateralToSell;
+      const squeethLiquidatorBalanceAfter = await squeeth.balanceOf(liquidator.address)
+
+      expect(vaultAfter.collateralAmount.isZero()).to.be.true
+      expect(isSimilar(liquidatorBalanceAfter.sub(liquidatorBalanceBefore).toString(), actualAmountPaidForLiquidator.toString())).to.be.true
+      expect(vaultBefore.shortAmount.sub(vaultAfter.shortAmount).eq(debtToRepay)).to.be.true
+      expect(vaultBefore.collateralAmount.eq(actualAmountPaidForLiquidator)).to.be.true
+      expect(squeethLiquidatorBalanceBefore.sub(squeethLiquidatorBalanceAfter).eq(debtToRepay)).to.be.true
+    })
+  })
 });

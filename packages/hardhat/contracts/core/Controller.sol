@@ -179,6 +179,12 @@ contract Controller is Initializable, Ownable {
         _checkVault(_vaultId);
     }
 
+    /**
+     * @notice if a vault is under the 150% collateral ratio, anyone can liquidate the vault by burning wPowerPerp
+     * @dev liquidator can get back (powerPerp burned) * (index price) * 110% in collateral
+     * @param _vaultId the vault you want to liquidate
+     * @param _debtAmount amount of wPowerPerpetual you want to repay.
+     */
     function liquidate(uint256 _vaultId, uint256 _debtAmount) external notShutdown {
         _applyFunding();
 
@@ -188,7 +194,7 @@ contract Controller is Initializable, Ownable {
 
         require(_debtAmount <= vault.shortAmount.div(2), "Can not repay more than 50% of vault debt");
 
-        uint256 collateralToSell = Power2Base._getCollateralToSell(
+        uint256 collateralToPay = Power2Base._getCollateralToSell(
             _debtAmount,
             address(oracle),
             ethDaiPool,
@@ -197,12 +203,17 @@ contract Controller is Initializable, Ownable {
             normalizationFactor
         );
 
+        // if collateralToPay is higher than the total collateral in the vault
+        // the system only pays out the amount the vault has, which may not be profitable
+        uint256 collateralInVault = vault.collateralAmount;
+        if (collateralToPay > collateralInVault) collateralToPay = collateralInVault;
+
         wPowerPerp.burn(msg.sender, _debtAmount);
         vault.removeShort(_debtAmount);
-        vault.removeEthCollateral(collateralToSell);
-        payable(msg.sender).sendValue(collateralToSell);
+        vault.removeEthCollateral(collateralToPay);
+        payable(msg.sender).sendValue(collateralToPay);
 
-        emit Liquidate(_vaultId, _debtAmount, collateralToSell);
+        emit Liquidate(_vaultId, _debtAmount, collateralToPay);
     }
 
     function getIndex(uint32 _period) external view returns (uint256) {
