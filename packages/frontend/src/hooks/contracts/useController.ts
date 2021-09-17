@@ -20,6 +20,7 @@ export const useController = () => {
   const { web3, address, handleTransaction } = useWallet()
   const [contract, setContract] = useState<Contract>()
   const [normFactor, setNormFactor] = useState(new BigNumber(1))
+  const [fundingPerDay, setFundingPerDay] = useState(0)
   const { controller } = useAddresses()
 
   useEffect(() => {
@@ -36,6 +37,11 @@ export const useController = () => {
         console.log('normFactor error')
       })
   }, [controller, web3])
+
+  useEffect(() => {
+    if (!contract) return
+    getFundingForDay().then(setFundingPerDay)
+  }, [address, contract])
 
   /**
    *
@@ -86,10 +92,33 @@ export const useController = () => {
     }
   }
 
+  const getIndex = async (period: number) => {
+    if (!contract) return new BigNumber(0)
+
+    const indexPrice = await contract.methods.getIndex(period.toString()).call()
+    return new BigNumber(indexPrice)
+  }
+
+  const getMark = async (period: number) => {
+    if (!contract) return new BigNumber(0)
+
+    const markPrice = await contract.methods.getDenormalizedMark(period.toString()).call()
+    return new BigNumber(markPrice)
+  }
+
+  const getFundingForDay = async () => {
+    const index = await getIndex(86400)
+    const mark = await getMark(86400)
+
+    const nF = mark.dividedBy(mark.multipliedBy(2).minus(index))
+    return 1 - nF.toNumber()
+  }
+
   return {
     openDepositAndMint,
     getVault,
     updateOperator,
     normFactor,
+    fundingPerDay,
   }
 }

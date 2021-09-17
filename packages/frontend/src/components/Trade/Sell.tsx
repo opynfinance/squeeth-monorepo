@@ -80,7 +80,7 @@ const Sell: React.FC = () => {
   const classes = useStyles()
   const { openShort, closeShort } = useShortHelper()
   const { getSellQuote, ready, getBuyQuote } = useSqueethPool()
-  const { updateOperator } = useController()
+  const { updateOperator, fundingPerDay } = useController()
   const { shortHelper } = useAddresses()
   const { vaults: shortVaults } = useVaultManager(5)
   const { squeethAmount, wethAmount, usdAmount } = useShortPositions()
@@ -187,12 +187,7 @@ const Sell: React.FC = () => {
         unit="ETH"
         tooltip={'Initial payment you get for selling squeeth on Uniswap'}
       />
-      <TradeInfoItem
-        label="Est. Funding To Receive"
-        tooltip={'Funding happens everytime the contract is touched. It is paid in kind, reducing your squeeth debt'}
-        value={(accFunding * 0.000001).toFixed(2)}
-        unit="%"
-      />
+      <TradeInfoItem label="Est. Daily Funding to Receive" value={(fundingPerDay * 100).toFixed(2)} unit="%" />
       <TradeInfoItem label="Slippage tolerance" value="0.5" unit="%" />
       <TradeInfoItem label="Price Impact" value={quote.priceImpact} unit="%" />
       <TradeInfoItem label="Minimum received" value={quote.minimumAmountOut.toFixed(4)} unit="ETH" />

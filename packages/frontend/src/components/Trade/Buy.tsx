@@ -149,7 +149,7 @@ const Buy: React.FC<BuyProps> = ({ setAmount, amount, setCost, cost, setSqueethE
   const { ready, sell, getBuyQuoteForETH, buyForWETH, squeethPrice, getSellQuote } = useSqueethPool()
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(wSqueeth, swapRouter)
   const { volMultiplier: globalVolMultiplier, ethPriceMap } = useWorldContext()
-  const { normFactor: normalizationFactor } = useController()
+  const { normFactor: normalizationFactor, fundingPerDay } = useController()
   const { squeethAmount, wethAmount, usdAmount } = useLongPositions()
 
   const { accFunding } = useETHPriceCharts(1, globalVolMultiplier)
@@ -231,7 +231,7 @@ const Buy: React.FC<BuyProps> = ({ setAmount, amount, setCost, cost, setSqueethE
       />
       <TradeInfoItem
         label="Funding (paid continuously)"
-        value={(accFunding * 0.000001).toFixed(2)}
+        value={(fundingPerDay * 100).toFixed(2)}
         unit="%"
         tooltip="Funding is paid out of your position, no collateral required. Funding happens everytime the contract is touched."
       />
