@@ -233,3 +233,64 @@ export function calculateLiquidationPrice(
   // mock
   return (ethPrice * (shortAmount / collateralAmount + 2)) / (shortAmount / collateralAmount + 1)
 }
+
+export function getSqueethPayOffGraph(ethPrice: number) {
+  const unitPerTrade = 2 / (2 * ethPrice) // Took from the sheet
+  const indexAtTrade = ethPrice ** 2 // Squeeeeeeth
+
+  const getEthPrices = () => {
+    let inc = 0
+    return Array(245)
+      .fill(0)
+      .map((_, i) => {
+        if (i === 0) return inc
+        inc += 20
+        return inc
+      })
+  }
+
+  const getWeightedPrice = (index: number) => {
+    let inc = 0
+    const days = Array(20)
+      .fill(0)
+      .map((_, i) => {
+        if (i === 0) return inc
+        inc += 1
+        return inc
+      })
+    const texps = days.map((d) => d / 365)
+    const weights = days.map((d) => 0.5 ** (1 + d))
+    const prices = texps.map((tx) => {
+      return index * Math.exp(1.44 * tx) // Sigma is 1.2
+    })
+    const weightedPrice = prices.reduce((acc, p, i) => acc + p * weights[i], 0)
+    return weightedPrice
+  }
+
+  const ethPrices = getEthPrices()
+  const markAtTrade = getWeightedPrice(indexAtTrade)
+  const powerPrices = ethPrices.map((p) => (p ** 2 * markAtTrade) / indexAtTrade)
+  const powerTokenPayout = powerPrices.map((p, i) => {
+    return (((unitPerTrade * (powerPrices[i] - markAtTrade)) / ethPrice) * 100).toFixed(2)
+  })
+  const ethPercents = ethPrices.map((p) => (100 * (p / ethPrice - 1)).toFixed(0))
+
+  const twoXLeverage = ethPrices.map((p) => {
+    const res = (((p - ethPrice) * 2) / ethPrice) * 100
+    if (res < -100) return null
+    return res
+  })
+
+  const twoXLeverageImaginary = ethPrices.map((p) => {
+    const res = (((p - ethPrice) * 2) / ethPrice) * 100
+    if (res <= -100) return res
+    return null
+  })
+
+  return {
+    ethPercents,
+    powerTokenPayout,
+    twoXLeverage,
+    twoXLeverageImaginary,
+  }
+}

@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react'
 
 import ccpayoff from '../public/images/ccpayoff.png'
 import { LongChart } from '../src/components/Charts/LongChart'
+import LongSqueethPayoff from '../src/components/Charts/LongSqueethPayoff'
 import { VaultChart } from '../src/components/Charts/VaultChart'
 import Nav from '../src/components/Nav'
 import Trade from '../src/components/Trade'
@@ -19,6 +20,7 @@ import { useWorldContext } from '../src/context/world'
 import { useController } from '../src/hooks/contracts/useController'
 import { useETHPrice } from '../src/hooks/useETHPrice'
 import { useETHPriceCharts } from '../src/hooks/useETHPriceCharts'
+import { getSqueethPayOffGraph } from '../src/utils'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -240,7 +242,7 @@ export default function Home() {
               put in, giving you protected downside.
             </Typography>
             <br />
-            <Image src={ccpayoff} alt="cc payoff" width={450} height={300} />
+            <LongSqueethPayoff ethPrice={ethPrice.toNumber()} />
           </div>
         </div>
       ) : (
