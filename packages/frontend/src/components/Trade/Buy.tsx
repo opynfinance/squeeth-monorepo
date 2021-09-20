@@ -42,6 +42,9 @@ const useStyles = makeStyles((theme) =>
     thirdHeading: {
       marginTop: theme.spacing(2),
     },
+    caption: {
+      marginTop: theme.spacing(1),
+    },
     details: {
       marginTop: theme.spacing(4),
       width: '65%',
@@ -253,6 +256,9 @@ const Buy: React.FC<BuyProps> = ({ setAmount, amount, setCost, cost, setSqueethE
       >
         {buyLoading ? <CircularProgress color="primary" size="1.5rem" /> : 'Buy'}
       </PrimaryButton>
+      <Typography variant="caption" className={classes.caption} component="div">
+        Trades on Uniswap 🦄
+      </Typography>
       <div style={{ marginTop: '20px', marginBottom: '4px' }}>
         <TradeInfoItem
           label="Long Position"

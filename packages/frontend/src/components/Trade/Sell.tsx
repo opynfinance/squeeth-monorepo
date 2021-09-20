@@ -41,6 +41,9 @@ const useStyles = makeStyles((theme) =>
     thirdHeading: {
       marginTop: theme.spacing(2),
     },
+    caption: {
+      marginTop: theme.spacing(1),
+    },
     txItem: {
       display: 'flex',
       padding: theme.spacing(0, 1),
@@ -187,7 +190,12 @@ const Sell: React.FC = () => {
         unit="ETH"
         tooltip={'Initial payment you get for selling squeeth on Uniswap'}
       />
-      <TradeInfoItem label="Est. Daily Funding to Receive" value={(fundingPerDay * 100).toFixed(2)} unit="%" />
+      <TradeInfoItem
+        label="Funding (received continuously)"
+        value={(fundingPerDay * 100).toFixed(2)}
+        unit="%"
+        tooltip="Funding is paid in kind, reducing your squeeth debt. Funding happens everytime the contract is touched."
+      />
       <TradeInfoItem label="Slippage tolerance" value="0.5" unit="%" />
       <TradeInfoItem label="Price Impact" value={quote.priceImpact} unit="%" />
       <TradeInfoItem label="Minimum received" value={quote.minimumAmountOut.toFixed(4)} unit="ETH" />
@@ -202,7 +210,7 @@ const Sell: React.FC = () => {
           <CircularProgress color="primary" size="1.5rem" />
         ) : (
           <>
-            {isVaultApproved ? 'Deposit and sell (2/2)' : 'Add operator (1/2)'}
+            {isVaultApproved ? 'Deposit and sell' : 'Add operator (1/2)'}
             {!isVaultApproved ? (
               <Tooltip
                 style={{ marginLeft: '2px' }}
@@ -214,6 +222,9 @@ const Sell: React.FC = () => {
           </>
         )}
       </PrimaryButton>
+      <Typography variant="caption" className={classes.caption} component="div">
+        Trades on Uniswap 🦄
+      </Typography>
       <div style={{ marginTop: '20px', marginBottom: '4px' }}>
         <TradeInfoItem label="Short Position" value={squeethAmount.negated().toFixed(6)} unit="SQTH" color="primary" />
         <TradeInfoItem

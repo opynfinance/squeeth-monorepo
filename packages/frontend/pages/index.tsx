@@ -164,9 +164,9 @@ export default function Home() {
               Properties
             </Typography>
             <Typography variant="body2" className={classes.cardSubTxt}>
-              Squeeth gives you an ETH&sup2; payoff. This means you have constant gamma exposure, so you always hold a
-              position similar to an at the money call option. This functions similar to a perpetual swap, where you are
-              targeting ETH&sup2; rather than ETH.
+              Squeeth gives you an ETH&sup2; payoff. You always hold a position similar to an at the money call option -
+              you have constant gamma exposure. This functions similar to a perpetual swap, where you are targeting
+              ETH&sup2; rather than ETH.
               <a className={classes.header} href="https://www.paradigm.xyz/2021/08/power-perpetuals/">
                 {' '}
                 Learn more.{' '}
@@ -221,8 +221,7 @@ export default function Home() {
               Payoff
             </Typography>
             <Typography variant="body2" className={classes.payoff}>
-              You are putting down {amount} ETH to get ${squeethExposure.toFixed(2)} of squeeth exposure. If ETH goes up
-              &nbsp;
+              You are getting ${squeethExposure.toFixed(2)} of squeeth exposure. If ETH goes up &nbsp;
               <TextField
                 size="small"
                 value={leverage.toString()}
@@ -238,8 +237,7 @@ export default function Home() {
               &nbsp;, squeeth goes up {leverage * leverage}x, and your position is worth &nbsp; $
               {((cost * Number(normalizationFactor) * (leverage * Number(ethPrice)) ** 2) / 10000).toFixed(2)}.
               <br /> <br />
-              If ETH goes down 100% or more, your position is worth 0 ETH. With squeeth you can never lose more than you
-              put in, giving you protected downside.
+              If ETH goes down, you lose less compared to 2x leverage.
             </Typography>
             <br />
             <LongSqueethPayoff ethPrice={ethPrice.toNumber()} />
@@ -276,16 +274,21 @@ export default function Home() {
                 <ListItemText primary="2. Mint Squeeth" secondary="Earn continuous funding for being short squeeth" />
               </ListItem>
               <ListItem>
-                <ListItemText primary="3. Sell Squeeth" secondary="via Uniswap" />
+                <ListItemText primary="3. Sell Squeeth" secondary="Trades on Uniswap" />
               </ListItem>
             </List>
             <Typography className={classes.thirdHeading} variant="h6">
               Properties
             </Typography>
             <Typography variant="body2" className={classes.cardSubTxt}>
-              Short squeeth gives you a short ETH&sup2; payoff. This means you have constant negative gamma exposure, so
-              you always hold a position similar to selling an at the money call option. This functions similar to a
-              perpetual swap, where you are targeting ETH&sup2; rather than ETH.
+              Short squeeth gives you a short ETH&sup2; payoff. You always hold a position similar to selling an at the
+              money{' '}
+              <a className={classes.header} href="https://www.investopedia.com/terms/s/straddle.asp">
+                {' '}
+                straddle,{' '}
+              </a>{' '}
+              where you have constant negative gamma exposure. This functions similar to a perpetual swap, where you are
+              targeting ETH&sup2; rather than ETH.
               <a className={classes.header} href="https://www.paradigm.xyz/2021/08/power-perpetuals/">
                 {' '}
                 Learn more.{' '}
@@ -306,8 +309,8 @@ export default function Home() {
               Risks
             </Typography>
             <Typography variant="body2" className={classes.cardSubTxt}>
-              If you fall below the safe collateralization threshold (150%), you are at risk of liquidation. If ETH
-              moves upwards, you could lose considerable funds.
+              If you fall below the minimum collateralization threshold (150%), you are at risk of liquidation. If ETH
+              moves approximately 6% in either direction, you are unprofitable.
               <br /> <br />
               Squeeth smart contracts are currently unaudited. This is experimental technology and we encourage caution
               only risking funds you can afford to lose.
