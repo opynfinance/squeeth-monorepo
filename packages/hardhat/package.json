@@ -10,6 +10,7 @@
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-babel": "^5.3.1",
     "eslint-plugin-prettier": "^3.4.0",
+    "hardhat-docgen": "^1.1.2",
     "typescript": "^4.3.5"
   },
   "dependencies": {
@@ -67,7 +68,8 @@
     "lint:check:tests": "eslint test/**/*.ts",
     "lint:check:ts": "eslint **/*.ts",
     "lint:check": "yarn lint:check:contracts && yarn lint:check:tests && yarn lint:check:ts",
-    "coverage": "hardhat coverage --testfiles 'test/**/*.ts' --network hardhat"
+    "coverage": "hardhat coverage --testfiles 'test/**/*.ts' --network hardhat",
+    "docgen": "yarn run hardhat docgen"
   },
   "resolutions": {
     "assemblyscript": "git+https://github.com/AssemblyScript/assemblyscript.git#v0.6"
