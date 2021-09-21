@@ -216,6 +216,14 @@ contract Controller is Initializable, Ownable {
         emit Liquidate(_vaultId, _debtAmount, collateralToPay);
     }
 
+    /**
+     * @notice returns the expected normalization factor, if the funding is paid right now.
+     * @dev can be used for on-chain and off-chain calculations
+     */
+    function getExpectedNormalizationFactor() external view returns (uint256) {
+        return _getNewNormalizationFactor();
+    }
+
     function getIndex(uint32 _period) external view returns (uint256) {
         return Power2Base._getIndex(_period, address(oracle), ethDaiPool, weth, dai);
     }
@@ -405,6 +413,17 @@ contract Controller is Initializable, Ownable {
     /// @notice Update the normalized factor as a way to pay funding.
     /// @dev funding is calculated as mark - index.
     function _applyFunding() internal {
+        // only update the norm factor once per block
+        if (lastFundingUpdateTimestamp == block.timestamp) return;
+
+        normalizationFactor = _getNewNormalizationFactor();
+        lastFundingUpdateTimestamp = block.timestamp;
+    }
+
+    /**
+     * @dev calculate new normalization factor base on the current timestamp.
+     */
+    function _getNewNormalizationFactor() internal view returns (uint256) {
         uint32 period = uint32(block.timestamp - lastFundingUpdateTimestamp);
 
         // make sure we use the same period for mark and index, and this period won't cause revert.
@@ -432,8 +451,7 @@ contract Controller is Initializable, Ownable {
             ((uint256(1e18).add(rFunding)).mul(mark).sub(index.mul(rFunding)))
         );
 
-        normalizationFactor = cacheNormFactor.mul(newNormalizationFactor).div(1e18);
-        lastFundingUpdateTimestamp = block.timestamp;
+        return cacheNormFactor.mul(newNormalizationFactor).div(1e18);
     }
 
     /**

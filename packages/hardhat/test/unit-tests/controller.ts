@@ -97,6 +97,36 @@ describe("Controller", function () {
 
     let vaultId: BigNumber;
 
+    describe('#Read basic properties', async() => {
+      
+      const one = ethers.utils.parseUnits('1')
+
+      it('should be able to get normalization factor', async() => {
+        const normFactor = await controller.normalizationFactor()
+        const expectedNormFactor = await controller.getExpectedNormalizationFactor()
+        // norm factor should be init as 1e18
+        expect(normFactor.eq(one)).to.be.true
+        // expected norm factor should be smaller than 1, cuz time has pass since function started
+        expect(expectedNormFactor.lt(normFactor)).to.be.true
+
+
+        // update block.timestamp in solidity
+        await provider.send("evm_increaseTime", [30])
+        await provider.send("evm_mine", [])
+        // expected norm factor should go down again
+        const expectedNormFactorAfter = await controller.getExpectedNormalizationFactor()
+        expect(expectedNormFactorAfter.lt(expectedNormFactor)).to.be.true
+      })
+      
+      it('should be able to get index and mark price', async() => {
+        const markPrice = await controller.getDenormalizedMark(30)
+        expect(markPrice.eq(squeethETHPrice.mul(ethUSDPrice).div(one))).to.be.true
+
+        const index = await controller.getIndex(30)
+        expect(index.eq(ethUSDPrice.mul(ethUSDPrice).div(one))).to.be.true
+      })
+    })
+
     describe("#Mint: Open vault", async () => {
       it("Should be able to open vaults", async () => {
         vaultId = await shortNFT.nextId()
