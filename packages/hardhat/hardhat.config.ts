@@ -9,7 +9,6 @@ import "@tenderly/hardhat-tenderly";
 import "hardhat-deploy";
 import "@eth-optimism/hardhat-ovm";
 import "@nomiclabs/hardhat-ethers";
-import "hardhat-docgen";
 import { HardhatUserConfig } from "hardhat/config";
 import * as dotenv from 'dotenv'
 
@@ -59,12 +58,6 @@ const UNISWAP_SETTING = {
     },
   },
 };
-
-const docgen = {
-  path: './docs',
-  clear: true,
-  runOnCompile: false,
-}
 
 const config: HardhatUserConfig = {
   defaultNetwork,
@@ -229,8 +222,7 @@ const config: HardhatUserConfig = {
     gasPrice: 100,
     coinmarketcap: process.env.COINMARKETCAP,
     enabled: process.env.REPORT_GAS === "true",
-  },
-  docgen
+  }
 };
 
 export default config;
