@@ -123,6 +123,9 @@ export function useETHPriceCharts(initDays = 180, initVolMultiplier = 1.2) {
       const data: { time: number; value: number }[] = []
       let nextRebalanceTime = ethPrices[0].time + rebalanceInterval
 
+      // set uniswap fee
+      const UNISWAP_FEE = 0.003
+
       // accumulate total cost of buying (or selling) eth
       let totalLongCost = startingETHPrice * longAmount
       ethPrices.forEach(({ time, value: price }, i) => {
@@ -136,7 +139,7 @@ export function useETHPriceCharts(initDays = 180, initVolMultiplier = 1.2) {
           // n - 2mx = m * delta
           const newN = m * delta + 2 * x * m
           const buyAmount = newN - longAmount
-          const buyCost = buyAmount * price
+          const buyCost = buyAmount * price + Math.abs(buyAmount*price*UNISWAP_FEE) 
           //console.log(`Date ${new Date(time * 1000).toDateString()}, price ${price.toFixed(3)} Rebalance: short squeeth ${m.toFixed(4)}, desired ETH long ${newN.toFixed(4)}, buy ${buyAmount.toFixed(4)} more eth`)
 
           totalLongCost += buyCost
