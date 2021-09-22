@@ -3,9 +3,10 @@ import { useCallback, useMemo, useState } from 'react'
 import { getSqueethChartWithFunding } from '../utils/pricer'
 import { useAsyncMemo } from './useAsyncMemo'
 
-export function useETHPriceCharts(initDays = 180, initVolMultiplier = 1.2) {
+export function useETHPriceCharts(initDays = 180, initVolMultiplier = 1.2, initCollatRatio = 1.5) {
   const [volMultiplier, setVolMultiplier] = useState(initVolMultiplier)
   const [days, setDays] = useState(initDays)
+  const [collatRatio, setCollatRatio] = useState(initCollatRatio)
 
   const ethPrices = useAsyncMemo(async () => await getETHPrices(days), [], [days])
 
@@ -61,10 +62,10 @@ export function useETHPriceCharts(initDays = 180, initVolMultiplier = 1.2) {
 
   const squeethSeries = useAsyncMemo(
     () => {
-      return getSqueethChartWithFunding(ethPrices, volMultiplier)
+      return getSqueethChartWithFunding(ethPrices, volMultiplier, collatRatio)
     },
     { series: [], accFunding: 0 },
-    [ethPrices, volMultiplier],
+    [ethPrices, volMultiplier, collatRatio],
   )
 
   /**
@@ -184,6 +185,8 @@ export function useETHPriceCharts(initDays = 180, initVolMultiplier = 1.2) {
     fundingPercentageSeries,
     accFunding: squeethSeries.accFunding,
     ethPriceMap,
+    setCollatRatio,
+    collatRatio,
   }
 }
 

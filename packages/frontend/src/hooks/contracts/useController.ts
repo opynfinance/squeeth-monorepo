@@ -8,6 +8,7 @@ import { useWallet } from '../../context/wallet'
 import { Vault } from '../../types'
 import { fromTokenAmount, toTokenAmount } from '../../utils/calculations'
 import { useAddresses } from '../useAddress'
+import { useOracle } from './useOracle'
 
 const getMultiplier = (type: Vaults) => {
   if (type === Vaults.ETHBull) return 3
@@ -21,7 +22,8 @@ export const useController = () => {
   const [contract, setContract] = useState<Contract>()
   const [normFactor, setNormFactor] = useState(new BigNumber(1))
   const [fundingPerDay, setFundingPerDay] = useState(0)
-  const { controller } = useAddresses()
+  const { controller, ethDaiPool, weth, dai } = useAddresses()
+  const { getTwapSafe } = useOracle()
 
   useEffect(() => {
     if (!web3) return
@@ -114,11 +116,30 @@ export const useController = () => {
     return 1 - nF.toNumber()
   }
 
+  const getDebtAmount = async (shortAmount: BigNumber) => {
+    if (!contract) return new BigNumber(0)
+
+    const ethDaiPrice = await getTwapSafe(ethDaiPool, weth, dai, 3000)
+    const _shortAmt = fromTokenAmount(shortAmount, WSQUEETH_DECIMALS)
+    const ethDebt = new BigNumber(_shortAmt).multipliedBy(normFactor).multipliedBy(ethDaiPrice)
+    return toTokenAmount(ethDebt, 18)
+  }
+
+  const getShortAmountFromDebt = async (debtAmount: BigNumber) => {
+    if (!contract) return new BigNumber(0)
+
+    const ethDaiPrice = await getTwapSafe(ethDaiPool, weth, dai, 3000)
+    const shortAmount = fromTokenAmount(debtAmount, 18).div(normFactor).div(ethDaiPrice)
+    return toTokenAmount(shortAmount.toFixed(0), WSQUEETH_DECIMALS)
+  }
+
   return {
     openDepositAndMint,
     getVault,
     updateOperator,
     normFactor,
     fundingPerDay,
+    getDebtAmount,
+    getShortAmountFromDebt,
   }
 }

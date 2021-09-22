@@ -30,6 +30,8 @@ type WorldContextProps = {
   days: number
   setVolMultiplier: Function
   setDays: Function
+  collatRatio: number
+  setCollatRatio: Function
 
   ethPriceMap: { [key: number]: number }
 
@@ -56,6 +58,8 @@ const initialContext = {
   volMultiplier: 1.2,
   days: 180,
   ethPriceMap: {},
+  collatRatio: 1.5,
+  setCollatRatio: () => { },
   setVolMultiplier: () => { },
   setDays: () => { },
 
@@ -88,6 +92,8 @@ const WorldProvider: React.FC = ({ children }) => {
     positionSizeSeries,
     fundingPercentageSeries,
     ethPriceMap,
+    collatRatio,
+    setCollatRatio
   } = useETHPriceCharts()
 
   return (
@@ -113,7 +119,9 @@ const WorldProvider: React.FC = ({ children }) => {
         shortSeries,
         positionSizeSeries,
         fundingPercentageSeries,
-        ethPriceMap
+        ethPriceMap,
+        collatRatio,
+        setCollatRatio
       }}
     >
       {children}

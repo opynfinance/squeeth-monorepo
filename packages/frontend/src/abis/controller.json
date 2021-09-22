@@ -15,7 +15,7 @@
         "type": "uint256"
       }
     ],
-    "name": "BurnSqueeth",
+    "name": "BurnShort",
     "type": "event"
   },
   {
@@ -72,7 +72,7 @@
         "type": "uint256"
       }
     ],
-    "name": "DepositUniNFTCollateral",
+    "name": "DepositUniNftCollateral",
     "type": "event"
   },
   {
@@ -116,7 +116,7 @@
         "type": "uint256"
       }
     ],
-    "name": "MintSqueeth",
+    "name": "MintShort",
     "type": "event"
   },
   {
@@ -211,7 +211,7 @@
         "type": "uint256"
       }
     ],
-    "name": "WithdrawUniNFTCollateral",
+    "name": "WithdrawUniNftCollateral",
     "type": "event"
   },
   {
@@ -316,7 +316,7 @@
   },
   {
     "inputs": [],
-    "name": "ethUSDPool",
+    "name": "ethDaiPool",
     "outputs": [
       {
         "internalType": "address",
@@ -394,7 +394,7 @@
       },
       {
         "internalType": "address",
-        "name": "_ethUsdPool",
+        "name": "_ethDaiPool",
         "type": "address"
       },
       {
@@ -670,7 +670,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "NFTCollateralId",
+        "name": "NftCollateralId",
         "type": "uint256"
       },
       {

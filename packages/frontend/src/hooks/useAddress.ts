@@ -2,6 +2,9 @@ import { useMemo } from 'react'
 
 import {
   CONTROLLER,
+  DAI,
+  ETH_DAI_POOL,
+  ORACLE,
   QUOTER,
   SHORT_HELPER,
   SQUEETH_UNI_POOL,
@@ -27,6 +30,9 @@ const useAddresses = () => {
       squeethPool: SQUEETH_UNI_POOL[networkId],
       quoter: QUOTER[networkId],
       shortHelper: SHORT_HELPER[networkId],
+      oracle: ORACLE[networkId],
+      ethDaiPool: ETH_DAI_POOL[networkId],
+      dai: DAI[networkId],
     }),
     [networkId],
   )

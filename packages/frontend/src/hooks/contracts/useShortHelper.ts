@@ -1,12 +1,14 @@
 import BigNumber from 'bignumber.js'
+import { ethers } from 'ethers'
 import { useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 
 import shortAbi from '../../abis/shortHelper.json'
-import { Vaults, WSQUEETH_DECIMALS } from '../../constants'
+import { Vaults, WETH_DECIMALS, WSQUEETH_DECIMALS } from '../../constants'
 import { useWallet } from '../../context/wallet'
-import { fromTokenAmount } from '../../utils/calculations'
+import { fromTokenAmount, toTokenAmount } from '../../utils/calculations'
 import { useAddresses } from '../useAddress'
+import { useController } from './useController'
 import { useSqueethPool } from './useSqueethPool'
 
 export const useShortHelper = () => {
@@ -14,6 +16,7 @@ export const useShortHelper = () => {
   const [contract, setContract] = useState<Contract>()
 
   const { getSellParam, getBuyParam } = useSqueethPool()
+  const { normFactor: normalizationFactor } = useController()
   const { shortHelper } = useAddresses()
 
   useEffect(() => {
@@ -28,18 +31,18 @@ export const useShortHelper = () => {
    * @param vaultType
    * @returns
    */
-  const openShort = async (vaultId: number, amount: BigNumber, vaultType?: Vaults) => {
+  const openShort = async (vaultId: number, amount: BigNumber, collatAmount: BigNumber) => {
     if (!contract || !address) return
 
     const _exactInputParams = getSellParam(amount)
     _exactInputParams.recipient = shortHelper
 
-    const _amount = fromTokenAmount(amount, WSQUEETH_DECIMALS)
-    const ethAmt = fromTokenAmount(amount, 18).multipliedBy(2)
+    const _amount = fromTokenAmount(amount, WSQUEETH_DECIMALS).multipliedBy(normalizationFactor)
+    const ethAmt = fromTokenAmount(collatAmount, 18)
     await handleTransaction(
-      contract.methods.openShort(vaultId, _amount.toString(), 0, _exactInputParams).send({
+      contract.methods.openShort(vaultId, _amount.toFixed(0), 0, _exactInputParams).send({
         from: address,
-        value: ethAmt.toString(), // Already scaled to 14 so multiplied with 10000
+        value: ethAmt.toNumber(), // Already scaled to 14 so multiplied with 10000
       }),
     )
   }

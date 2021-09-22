@@ -2,7 +2,7 @@ import { CircularProgress } from '@material-ui/core'
 import { createStyles, InputAdornment, makeStyles, TextField, Tooltip, Typography } from '@material-ui/core'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 
 import { Vaults } from '../../constants'
 import { useWorldContext } from '../../context/world'
@@ -15,6 +15,7 @@ import { useETHPrice } from '../../hooks/useETHPrice'
 import { useETHPriceCharts } from '../../hooks/useETHPriceCharts'
 import { useShortPositions } from '../../hooks/usePositions'
 import { ErrorButton, PrimaryButton } from '../Buttons'
+import CollatRange from '../CollatRange'
 import TradeInfoItem from './TradeInfoItem'
 
 const useStyles = makeStyles((theme) =>
@@ -69,6 +70,8 @@ const useStyles = makeStyles((theme) =>
 
 const Sell: React.FC = () => {
   const [amount, setAmount] = useState(1)
+  const [collateral, setCollateral] = useState(1)
+  const [collatPercent, setCollatPercent] = useState(200)
   const [vaultId, setVaultId] = useState(0)
   const [isVaultApproved, setIsVaultApproved] = useState(true)
   const [quote, setQuote] = useState({
@@ -83,13 +86,17 @@ const Sell: React.FC = () => {
   const classes = useStyles()
   const { openShort, closeShort } = useShortHelper()
   const { getSellQuote, ready, getBuyQuote } = useSqueethPool()
-  const { updateOperator, fundingPerDay } = useController()
+  const { updateOperator, normFactor: normalizationFactor, fundingPerDay, getShortAmountFromDebt } = useController()
   const { shortHelper } = useAddresses()
   const { vaults: shortVaults } = useVaultManager(5)
   const { squeethAmount, wethAmount, usdAmount } = useShortPositions()
   const ethPrice = useETHPrice()
 
-  // const squeethBal = useMemo(() => wSqueethBalO.multipliedBy(10000), [wSqueethBalO.toNumber()])
+  const liqPrice = useMemo(() => {
+    const rSqueeth = normalizationFactor.multipliedBy(amount).dividedBy(10000)
+    // console.log(amount, rSqueeth.toNumber(), normalizationFactor.toNumber())
+    return collateral / rSqueeth.multipliedBy(1.5).toNumber()
+  }, [amount, collatPercent, collateral, normalizationFactor.toNumber()])
 
   useEffect(() => {
     if (!shortVaults.length) {
@@ -99,6 +106,11 @@ const Sell: React.FC = () => {
 
     setVaultId(shortVaults[0].id)
   }, [shortVaults.length])
+
+  useEffect(() => {
+    const debt = new BigNumber((collateral * 100) / collatPercent)
+    getShortAmountFromDebt(debt).then((s) => setAmount(s.toNumber()))
+  }, [collatPercent, collateral, normalizationFactor.toNumber()])
 
   useEffect(() => {
     if (!ready) return
@@ -124,7 +136,7 @@ const Sell: React.FC = () => {
         await updateOperator(vaultId, shortHelper)
         setIsVaultApproved(true)
       } else {
-        await openShort(vaultId, new BigNumber(amount))
+        await openShort(vaultId, new BigNumber(amount), new BigNumber(collateral))
       }
     } catch (e) {
       console.log(e)
@@ -142,9 +154,13 @@ const Sell: React.FC = () => {
     setBuyLoading(false)
   }
 
-  const { volMultiplier: globalVMultiplier } = useWorldContext()
+  const { volMultiplier: globalVMultiplier, setCollatRatio } = useWorldContext()
 
   const { accFunding } = useETHPriceCharts(1, globalVMultiplier)
+
+  useEffect(() => {
+    setCollatRatio(collatPercent / 100)
+  }, [collatPercent])
 
   const TxValue: React.FC<{ value: string | number; label: string }> = ({ value, label }) => {
     return (
@@ -165,17 +181,18 @@ const Sell: React.FC = () => {
       <div className={classes.thirdHeading}>
         <TextField
           size="small"
-          value={amount.toString()}
+          value={collateral.toString()}
           type="number"
           style={{ width: 325 }}
-          onChange={(event) => setAmount(Number(event.target.value))}
+          onChange={(event) => setCollateral(Number(event.target.value))}
           id="filled-basic"
-          label="Squeeth Amount"
+          label="Collateral"
           variant="outlined"
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
-                <Tooltip title="Amount of Squeeth you want to spend to get premium">
+                <Typography variant="caption">ETH</Typography>
+                <Tooltip title="Amount of ETH collateral" style={{ marginLeft: '4px' }}>
                   <InfoOutlinedIcon fontSize="small" />
                 </Tooltip>
               </InputAdornment>
@@ -183,7 +200,44 @@ const Sell: React.FC = () => {
           }}
         />
       </div>
-      <TradeInfoItem label="Collateral Required" value={(amount * 2).toFixed(4)} unit="ETH" />
+      <div className={classes.thirdHeading}>
+        <TextField
+          size="small"
+          value={collatPercent.toString()}
+          type="number"
+          style={{ width: 325 }}
+          onChange={(event) => setCollatPercent(Number(event.target.value))}
+          id="filled-basic"
+          label="Collateral Ratio"
+          variant="outlined"
+          error={collatPercent < 150}
+          helperText="Minimum is 150%"
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <Typography variant="caption">%</Typography>
+                <Tooltip title="If 200% you will get 1 wSqueeth for 2 ETH " style={{ marginLeft: '4px' }}>
+                  <InfoOutlinedIcon fontSize="small" />
+                </Tooltip>
+              </InputAdornment>
+            ),
+          }}
+        />
+      </div>
+      <div className={classes.thirdHeading}>
+        <CollatRange />
+      </div>
+      <TradeInfoItem
+        label="Squeeth exposure you short"
+        value={ethPrice.times(ethPrice).times(amount).dividedBy(10000).times(normalizationFactor).toFixed(2)}
+        unit="$$ of SQTH"
+      />
+      <TradeInfoItem
+        label="Liquidation Price"
+        value={liqPrice.toFixed(2)}
+        unit="USDC"
+        tooltip="Price of ETH when liquidation occurs"
+      />
       <TradeInfoItem
         label="Initial Premium to Receive"
         value={quote.amountOut.toFixed(4)}
@@ -202,7 +256,7 @@ const Sell: React.FC = () => {
       <PrimaryButton
         onClick={depositAndShort}
         className={classes.amountInput}
-        disabled={shortLoading}
+        disabled={shortLoading || collatPercent < 150}
         variant="contained"
         style={{ width: '325px' }}
       >

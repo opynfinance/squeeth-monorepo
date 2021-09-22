@@ -31,6 +31,7 @@ export function getFairSqueethBid(price: number, timeElapsedInDay: number, vol: 
 export async function getSqueethChartWithFunding(
   ethPrices: { time: number; value: number }[],
   volMultiplier: number,
+  collatRatio = 1.5,
 ): Promise<{
   series: {
     time: number
@@ -85,7 +86,7 @@ export async function getSqueethChartWithFunding(
     positionSize = positionSize * fundingRatio
 
     const longPNL = (markAfter * positionSize) / scale - cost
-    const shortPNL = premium - (markAfter * positionSize) / scale
+    const shortPNL = premium - (markAfter * positionSize) / scale + collatRatio * (price - startPrice)
 
     charts.push({ shortPNL, longPNL, mark: markAfter, positionSize, time, fundingPerSqueeth, timeElapsed })
 
