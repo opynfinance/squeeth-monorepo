@@ -25,6 +25,7 @@ import crabpayoff from '../public/images/crabpayoff.png'
 import ethbullpayoff from '../public/images/ethbullpayoff.png'
 import { VaultChart } from '../src/components/Charts/VaultChart'
 import Nav from '../src/components/Nav'
+import TradeInfoItem from '../src/components/Trade/TradeInfoItem'
 import { Vaults } from '../src/constants'
 import { useWorldContext } from '../src/context/world'
 import { useController } from '../src/hooks/contracts/useController'
@@ -67,10 +68,8 @@ const useStyles = makeStyles((theme) =>
       width: '60%',
     },
     buyCard: {
+      marginTop: theme.spacing(4),
       marginLeft: theme.spacing(2),
-      padding: theme.spacing(2),
-      width: '30%',
-      textAlign: 'center',
     },
     cardTitle: {
       color: theme.palette.primary.main,
@@ -86,7 +85,11 @@ const useStyles = makeStyles((theme) =>
       fontSize: '16px',
     },
     innerCard: {
+      textAlign: 'center',
+      padding: theme.spacing(2),
       paddingBottom: theme.spacing(8),
+      background: theme.palette.background.default,
+      border: `1px solid ${theme.palette.background.stone}`,
     },
     amountInput: {
       marginTop: theme.spacing(4),
@@ -264,7 +267,7 @@ export default function Vault() {
 
   const { researchMode } = useWorldContext()
   const { openShort, closeShort } = useShortHelper()
-  const { updateOperator } = useController()
+  const { updateOperator, fundingPerDay } = useController()
   const { wSqueeth, weth, shortHelper } = useAddresses()
   const squeethBal = useTokenBalance(wSqueeth, 5)
   const wethBal = useTokenBalance(weth, 5)
@@ -351,9 +354,9 @@ export default function Vault() {
   }, [currentEthPrice, startingETHPrice, vol])
 
   // scaled down by starting eth
-  const dailyFundingPayment = useMemo(() => accFunding / startingETHPrice, [accFunding, startingETHPrice])
+  // const dailyFundingPayment = useMemo(() => accFunding / startingETHPrice, [accFunding, startingETHPrice])
 
-  const dailyInterestRate = useMemo(() => dailyFundingPayment / price, [dailyFundingPayment, price])
+  const dailyInterestRate = useMemo(() => (fundingPerDay * 100) / price, [fundingPerDay, price])
 
   const liqPrice = useMemo(() => {
     const ethPrice = ethPrices.length > 0 ? ethPrices[ethPrices.length - 1].value : 0
@@ -486,24 +489,26 @@ export default function Vault() {
                 style={{ width: 300 }}
                 onChange={(event) => setAmount(Number(event.target.value))}
                 id="filled-basic"
-                label="Amount"
+                label="ETH Amount"
                 variant="outlined"
               />
             </div>
-            <div className={classes.txItem}>
+            {/* <div className={classes.txItem}>
               <Typography className={classes.txLabel}>Collateral Required</Typography>
               <TxValue value={amount * longAmount} label="ETH" />
-            </div>
-            <div className={classes.txItem}>
-              <Typography className={classes.txLabel}>Daily Funding Received</Typography>
-              <TxValue value={(dailyFundingPayment * amount).toFixed(2)} label="USDC" />
-            </div>
-            <Tooltip title={`If ETH price spike above ${liqPrice.toFixed(0)}, your position will get liquidated`}>
-              <div className={classes.txItem}>
-                <Typography className={classes.txLabel}>24h Liquidation Price</Typography>
-                <TxValue value={liqPrice.toFixed(0)} label="USDC" />
-              </div>
-            </Tooltip>
+            </div> */}
+            <TradeInfoItem
+              label="Funding (received continuously)"
+              value={(fundingPerDay * 100).toFixed(2)}
+              unit="%"
+              tooltip="Funding is paid in kind, reducing your squeeth debt. Funding happens everytime the contract is touched."
+            />
+            <TradeInfoItem
+              label="24h Liquidation Price"
+              value={liqPrice.toFixed(0)}
+              unit="USDC"
+              tooltip="The liquidation price changes each day when the strategy adjusts to maintain its exposure"
+            />
             <Button
               onClick={depositAndShort}
               className={classes.amountInput}
