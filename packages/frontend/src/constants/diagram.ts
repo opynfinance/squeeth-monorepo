@@ -28,15 +28,16 @@ export const graphOptions = {
   grid: {
     vertLines: {
       color: 'rgba(255, 255, 255, 0.12)',
-      visible: true,
+      visible: false,
     },
     horzLines: {
       color: 'rgba(255, 255, 255, 0.12)',
-      visible: true,
+      visible: false,
     },
   },
   layout: {
     fontSize: 12,
     backgroundColor: '#181B1C',
+    fontFamily: 'Mulish',
   },
 }

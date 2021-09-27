@@ -1,15 +1,13 @@
-import { InputAdornment, TextField, Tooltip } from '@material-ui/core'
+import { Grid, InputAdornment, TextField, Tooltip } from '@material-ui/core'
 import Card from '@material-ui/core/Card'
 import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemText from '@material-ui/core/ListItemText'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Typography from '@material-ui/core/Typography'
-import BigNumber from 'bignumber.js'
-import Image from 'next/image'
+import InfoIcon from '@material-ui/icons/InfoOutlined'
 import { useEffect, useState } from 'react'
 
-import ccpayoff from '../public/images/ccpayoff.png'
 import { LongChart } from '../src/components/Charts/LongChart'
 import LongSqueethPayoff from '../src/components/Charts/LongSqueethPayoff'
 import { VaultChart } from '../src/components/Charts/VaultChart'
@@ -20,18 +18,24 @@ import { useWorldContext } from '../src/context/world'
 import { useController } from '../src/hooks/contracts/useController'
 import { useETHPrice } from '../src/hooks/useETHPrice'
 import { useETHPriceCharts } from '../src/hooks/useETHPriceCharts'
-import { getSqueethPayOffGraph } from '../src/utils'
+import { useLongPositions, useShortPositions } from '../src/hooks/usePositions'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
     header: {
       color: theme.palette.primary.main,
     },
-    body: {
-      padding: theme.spacing(2, 8),
-      margin: 'auto',
-      display: 'flex',
-      justifyContent: 'space-around',
+    mainSection: {
+      width: '50vw',
+    },
+    grid: {
+      padding: theme.spacing(8, 0),
+    },
+    mainGrid: {
+      maxWidth: '50%',
+    },
+    ticketGrid: {
+      maxWidth: '350px',
     },
     subHeading: {
       color: theme.palette.text.secondary,
@@ -39,13 +43,9 @@ const useStyles = makeStyles((theme) =>
     thirdHeading: {
       marginTop: theme.spacing(2),
     },
-    details: {
-      marginTop: theme.spacing(4),
-      width: '65%',
-    },
     buyCard: {
-      marginTop: theme.spacing(4),
       marginLeft: theme.spacing(2),
+      width: '400px',
     },
     cardTitle: {
       color: theme.palette.primary.main,
@@ -55,12 +55,12 @@ const useStyles = makeStyles((theme) =>
       color: theme.palette.text.secondary,
       lineHeight: '1.75rem',
       fontSize: '16px',
-      width: '90%',
     },
     payoff: {
       color: theme.palette.text.secondary,
       lineHeight: '1.75rem',
       fontSize: '16px',
+      marginTop: theme.spacing(2),
     },
     cardDetail: {
       color: theme.palette.text.secondary,
@@ -75,8 +75,7 @@ const useStyles = makeStyles((theme) =>
       textAlign: 'center',
       padding: theme.spacing(2),
       paddingBottom: theme.spacing(8),
-      background: theme.palette.background.default,
-      border: `1px solid ${theme.palette.background.stone}`,
+      background: theme.palette.background.stone,
     },
     expand: {
       transform: 'rotate(270deg)',
@@ -89,6 +88,17 @@ const useStyles = makeStyles((theme) =>
     expandOpen: {
       transform: 'rotate(180deg)',
       color: theme.palette.primary.main,
+    },
+    squeethInfo: {
+      display: 'flex',
+      marginTop: theme.spacing(4),
+    },
+    infoIcon: {
+      fontSize: '10px',
+      marginLeft: theme.spacing(0.5),
+    },
+    infoItem: {
+      marginRight: theme.spacing(4),
     },
   }),
 )
@@ -107,7 +117,9 @@ export default function Home() {
   const [tradeType, setTradeType] = useState(TradeType.BUY)
   const [customLong, setCustomLong] = useState(0)
   const ethPrice = useETHPrice()
-  const { normFactor: normalizationFactor } = useController()
+  const { normFactor: normalizationFactor, fundingPerDay } = useController()
+  const { squeethAmount: lngAmt } = useLongPositions()
+  const { squeethAmount: shrtAmt } = useShortPositions()
 
   const { volMultiplier: globalVolMultiplier } = useWorldContext()
   // use hook because we only calculate accFunding based on 24 hour performance
@@ -117,22 +129,65 @@ export default function Home() {
     setVolMultiplier(globalVolMultiplier)
   }, [globalVolMultiplier])
 
+  const SqueethInfo = () => {
+    return (
+      <div className={classes.squeethInfo}>
+        <div className={classes.infoItem}>
+          <Typography color="textSecondary" variant="body2">
+            ETH Price
+          </Typography>
+          <Typography>${ethPrice.toNumber()}</Typography>
+        </div>
+        <div className={classes.infoItem}>
+          <Typography color="textSecondary" variant="body2">
+            24h Funding
+            <Tooltip title={'Funding happens every time the contract is touched.'}>
+              <InfoIcon fontSize="small" className={classes.infoIcon} />
+            </Tooltip>
+          </Typography>
+          <Typography>{(fundingPerDay * 100).toFixed(2)}%</Typography>
+        </div>
+        <div className={classes.infoItem}>
+          <Typography color="textSecondary" variant="body2">
+            Index Price
+          </Typography>
+          <Typography>${ethPrice.multipliedBy(ethPrice).toFixed(2)}</Typography>
+        </div>
+        <div className={classes.infoItem}>
+          {tradeType === TradeType.BUY ? (
+            <>
+              <Typography color="textSecondary" variant="body2">
+                Long Position
+              </Typography>
+              <Typography>{lngAmt.toFixed(8)} WSQTH</Typography>
+            </>
+          ) : (
+            <>
+              <Typography color="textSecondary" variant="body2">
+                Short Position
+              </Typography>
+              <Typography>{shrtAmt.negated().toFixed(8)} WSQTH</Typography>
+            </>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div>
       <Nav />
 
       {tradeType === TradeType.BUY ? (
         //long side
-        <div className={classes.body}>
-          <div>
+        <Grid container className={classes.grid}>
+          <Grid item xs={1} />
+          <Grid item xs={7} className={classes.mainGrid}>
             <Typography variant="h5">Long Squeeth - ETH&sup2; Position</Typography>
-            <Typography variant="body1">Perpetual leverage without liquidations</Typography>
-            <Typography variant="body2" className={classes.cardDetail}>
-              Long squeeth (ETH&sup2;) gives you a leveraged position with unlimited upside, protected downside, and no
-              liquidations. Compared to a 2x leveraged position, you make more when ETH goes up and lose less when ETH
-              goes down. Eg. If ETH goes up 5x, squeeth goes up 25x. You pay a funding rate for this position. Enter the
-              position by purchasing an ERC20 token.
+            <Typography variant="body1" color="textSecondary">
+              Perpetual leverage without liquidations
             </Typography>
+            <SqueethInfo />
             <Typography className={classes.cardTitle} variant="h6">
               Historical PNL Backtest
             </Typography>
@@ -140,6 +195,22 @@ export default function Home() {
               <LongChart />
             </div>
             <Typography className={classes.cardTitle} variant="h6">
+              What is squeeth?
+            </Typography>
+            <Typography variant="body2" className={classes.cardDetail}>
+              Long squeeth (ETH&sup2;) gives you a leveraged position with unlimited upside, protected downside, and no
+              liquidations. Compared to a 2x leveraged position, you make more when ETH goes up and lose less when ETH
+              goes down. Eg. If ETH goes up 5x, squeeth goes up 25x. You pay a funding rate for this position. Enter the
+              position by purchasing an ERC20 token.{' '}
+              <a
+                className={classes.header}
+                href="https://opynopyn.notion.site/Squeeth-FAQ-4b6a054ab011454cbbd60cb3ee23a37c"
+              >
+                {' '}
+                Learn more.{' '}
+              </a>
+            </Typography>
+            {/* <Typography className={classes.cardTitle} variant="h6">
               Strategy Details
             </Typography>
             <Typography className={classes.thirdHeading} variant="h6">
@@ -183,17 +254,14 @@ export default function Home() {
               Funding happens everytime the contract is touched.
               <br />
               <br />
-              {/* Even though funding is paid out of your squeeth position, your squeeth balance is always constant. Your
-              squeeth exposure changes through a normalization factor that takes into account the reduced exposure due
-              to funding. */}
-            </Typography>
-            <Typography className={classes.thirdHeading} variant="h6">
+            </Typography> */}
+            <Typography className={classes.cardTitle} variant="h6">
               Risks
             </Typography>
-            <Typography variant="body2" className={classes.cardSubTxt}>
-              Daily funding is paid in kind, which means you sell a small amount of squeeth at funding, which reduces
-              your position size. Holding the position for a long period of time without upward movements in ETH can
-              lose considerable funds to funding payments.
+            <Typography variant="body2" className={classes.cardDetail}>
+              Funding is paid in kind, meaning you sell a small amount of squeeth at funding, reducing your position
+              size. Holding the position for a long period of time without upward movements in ETH can lose considerable
+              funds to funding payments.
               <br /> <br />
               Squeeth smart contracts are currently unaudited. This is experimental technology and we encourage caution
               only risking funds you can afford to lose.
@@ -203,8 +271,9 @@ export default function Home() {
             Funding is paid in-kind (using the squeeth token), so you cannot be liquidated. Note that the squeeth ERC20 amount will remain constant eg. if you bought 1 squeeth you will still have 1 squeeth after funding in kind. 
             What will change is how much value you can redeem for each squeeth. The amount of value you can redeem per squeeth depends on how much funding you have paid and the mark price of squeeth. [insert diagram of square with dotted lines, value being area of square]
           </Typography> */}
-          </div>
-          <div className={classes.buyCard}>
+          </Grid>
+          <Grid item xs={1} />
+          <Grid item xs={4} className={classes.ticketGrid}>
             <Card className={classes.innerCard}>
               <Trade
                 setTradeType={setTradeType}
@@ -220,6 +289,7 @@ export default function Home() {
             <Typography className={classes.thirdHeading} variant="h6">
               Payoff
             </Typography>
+            <LongSqueethPayoff ethPrice={ethPrice.toNumber()} />
             <Typography variant="body2" className={classes.payoff}>
               You are getting ${squeethExposure.toFixed(2)} of squeeth exposure. If ETH goes up &nbsp;
               <TextField
@@ -240,20 +310,18 @@ export default function Home() {
               If ETH goes down, you lose less compared to 2x leverage.
             </Typography>
             <br />
-            <LongSqueethPayoff ethPrice={ethPrice.toNumber()} />
-          </div>
-        </div>
+          </Grid>
+        </Grid>
       ) : (
         //short side
-        <div className={classes.body}>
-          <div>
+        <Grid container className={classes.grid}>
+          <Grid item xs={1} />
+          <Grid item xs={7} className={classes.mainGrid}>
             <Typography variant="h5">Short Squeeth - short ETH&sup2; Position</Typography>
-            <Typography variant="body1">Earn funding for selling ETH&sup2;</Typography>
-            <Typography variant="body2" className={classes.cardDetail}>
-              Short squeeth (ETH&sup2;) is short an ETH&sup2; position. You earn a funding rate for taking on this
-              position. You enter the position by putting down collateral, minting, and selling squeeth. If you become
-              undercollateralized, you could be liquidated.
+            <Typography variant="body1" color="textSecondary">
+              Earn funding for selling ETH&sup2;
             </Typography>
+            <SqueethInfo />
             <Typography className={classes.cardTitle} variant="h6">
               Historical Backtests
             </Typography>
@@ -261,6 +329,21 @@ export default function Home() {
               <VaultChart vault={Vaults.Short} longAmount={0} showPercentage={false} setCustomLong={setCustomLong} />
             </div>
             <Typography className={classes.cardTitle} variant="h6">
+              What is short squeeth?
+            </Typography>
+            <Typography variant="body2" className={classes.cardDetail}>
+              Short squeeth (ETH&sup2;) is short an ETH&sup2; position. You earn a funding rate for taking on this
+              position. You enter the position by putting down collateral, minting, and selling squeeth. If you become
+              undercollateralized, you could be liquidated.{' '}
+              <a
+                className={classes.header}
+                href="https://opynopyn.notion.site/Squeeth-FAQ-4b6a054ab011454cbbd60cb3ee23a37c"
+              >
+                {' '}
+                Learn more.{' '}
+              </a>
+            </Typography>
+            {/* <Typography className={classes.cardTitle} variant="h6">
               Strategy Details
             </Typography>
             <Typography className={classes.thirdHeading} variant="h6">
@@ -304,24 +387,20 @@ export default function Home() {
               </a>
               &nbsp; Funding happens everytime the contract is touched.{' '}
             </Typography>
-            <br /> <br />
-            <Typography className={classes.thirdHeading} variant="h6">
+            <br /> <br /> */}
+            <Typography className={classes.cardTitle} variant="h6">
               Risks
             </Typography>
-            <Typography variant="body2" className={classes.cardSubTxt}>
+            <Typography variant="body2" className={classes.cardDetail}>
               If you fall below the minimum collateralization threshold (150%), you are at risk of liquidation. If ETH
               moves approximately 6% in either direction, you are unprofitable.
               <br /> <br />
               Squeeth smart contracts are currently unaudited. This is experimental technology and we encourage caution
               only risking funds you can afford to lose.
             </Typography>
-            {/* <br />
-          <Typography variant="body2" className={classes.cardSubTxt}>
-            Funding is paid in-kind (using the squeeth token), so you cannot be liquidated. Note that the squeeth ERC20 amount will remain constant eg. if you bought 1 squeeth you will still have 1 squeeth after funding in kind. 
-            What will change is how much value you can redeem for each squeeth. The amount of value you can redeem per squeeth depends on how much funding you have paid and the mark price of squeeth. [insert diagram of square with dotted lines, value being area of square]
-          </Typography> */}
-          </div>
-          <div className={classes.buyCard}>
+          </Grid>
+          <Grid item xs={1} />
+          <Grid item xs={3} className={classes.ticketGrid}>
             <Card className={classes.innerCard}>
               <Trade
                 setTradeType={setTradeType}
@@ -334,34 +413,8 @@ export default function Home() {
                 squeethExposure={squeethExposure}
               />
             </Card>
-            {/* <Typography className={classes.thirdHeading} variant="h6">
-              Payoff
-            </Typography>
-            <div className={classes.thirdHeading}>
-              <Image src={ccpayoff} alt="cc payoff" width={450} height={300} />
-            </div>
-            <Typography variant="body2" className={classes.payoff}>
-              If ETH goes up &nbsp;
-              <TextField
-                size="small"
-                value={leverage.toString()}
-                type="number"
-                style={{ width: 75 }}
-                onChange={(event) => setLeverage(Number(event.target.value))}
-                // label="Leverage"
-                variant="outlined"
-                InputProps={{
-                  endAdornment: <InputAdornment position="end">x</InputAdornment>,
-                }}
-              />
-              &nbsp;, squeeth goes up {leverage * leverage}x, and your position is worth $
-              {(leverage * leverage * Number(1)).toFixed(2)}
-              <br /> <br />
-              If ETH goes down 100% or more, your position is worth $0. With squeeth you can never lose more than you
-              put in, giving you protected downside.
-            </Typography> */}
-          </div>
-        </div>
+          </Grid>
+        </Grid>
       )}
     </div>
   )

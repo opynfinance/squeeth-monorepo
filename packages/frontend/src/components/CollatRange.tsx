@@ -5,9 +5,11 @@ import React from 'react'
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
-      width: '100%',
+      width: '300px',
       display: 'flex',
       height: '6px',
+      marginLeft: 'auto',
+      marginRight: 'auto',
     },
     danger: {
       width: '30%',

@@ -1,27 +1,17 @@
-import {
-  CircularProgress,
-  createStyles,
-  InputAdornment,
-  makeStyles,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@material-ui/core'
-import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
+import { CircularProgress, createStyles, makeStyles, Typography } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useState } from 'react'
 
 import { WSQUEETH_DECIMALS } from '../../constants'
-import { useWorldContext } from '../../context/world'
+import { useWallet } from '../../context/wallet'
 import { useUserAllowance } from '../../hooks/contracts/useAllowance'
 import { useController } from '../../hooks/contracts/useController'
 import { useSqueethPool } from '../../hooks/contracts/useSqueethPool'
 import { useTokenBalance } from '../../hooks/contracts/useTokenBalance'
 import { useAddresses } from '../../hooks/useAddress'
 import { useETHPrice } from '../../hooks/useETHPrice'
-import { useETHPriceCharts } from '../../hooks/useETHPriceCharts'
-import { useLongPositions } from '../../hooks/usePositions'
-import { ErrorButton, PrimaryButton } from '../Buttons'
+import { PrimaryButton } from '../Buttons'
+import { PrimaryInput } from '../Inputs'
 import History from './History'
 import TradeInfoItem from './TradeInfoItem'
 
@@ -127,36 +117,34 @@ type BuyProps = {
   cost: number
   setSqueethExposure: (arg0: number) => void
   squeethExposure: number
+  balance: number
 }
 
-const Buy: React.FC<BuyProps> = ({ setAmount, amount, setCost, cost, setSqueethExposure, squeethExposure }) => {
-  // const [amount, setAmount] = useState(1)
+const Buy: React.FC<BuyProps> = ({
+  setAmount,
+  amount,
+  setCost,
+  cost,
+  setSqueethExposure,
+  squeethExposure,
+  balance,
+}) => {
   const [quote, setQuote] = useState({
     amountOut: new BigNumber(0),
     minimumAmountOut: new BigNumber(0),
     priceImpact: '0',
   })
-  const [sellQuote, setSellQuote] = useState({
-    amountOut: new BigNumber(0),
-    minimumAmountOut: new BigNumber(0),
-    priceImpact: '0',
-  })
-  // const [cost, setCost] = useState(new BigNumber(0))
-  // const [squeethExposure, setSqueethExposure] = useState(new BigNumber(0))
+
   const [buyLoading, setBuyLoading] = useState(false)
   const [sellLoading, setSellLoading] = useState(false)
 
   const classes = useStyles()
   const { swapRouter, wSqueeth } = useAddresses()
   const wSqueethBal = useTokenBalance(wSqueeth, 5, WSQUEETH_DECIMALS)
-  const { ready, sell, getBuyQuoteForETH, buyForWETH, squeethPrice, getSellQuote } = useSqueethPool()
+  const { ready, sell, getBuyQuoteForETH, buyForWETH } = useSqueethPool()
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(wSqueeth, swapRouter)
-  const { volMultiplier: globalVolMultiplier, ethPriceMap } = useWorldContext()
-  const { normFactor: normalizationFactor, fundingPerDay } = useController()
-  const { squeethAmount, wethAmount, usdAmount } = useLongPositions()
-
-  const { accFunding } = useETHPriceCharts(1, globalVolMultiplier)
-
+  const { normFactor: normalizationFactor } = useController()
+  const { selectWallet, connected } = useWallet()
   const ethPrice = useETHPrice()
 
   useEffect(() => {
@@ -166,12 +154,6 @@ const Buy: React.FC<BuyProps> = ({ setAmount, amount, setCost, cost, setSqueethE
       setCost(val.amountOut.toNumber())
     })
   }, [amount, ready])
-
-  useEffect(() => {
-    if (!ready) return
-
-    getSellQuote(wSqueethBal.toNumber()).then(setSellQuote)
-  }, [wSqueethBal.toNumber(), ready])
 
   useEffect(() => {
     setSqueethExposure((cost * Number(ethPrice) * Number(ethPrice) * Number(normalizationFactor)) / 10000)
@@ -206,37 +188,19 @@ const Buy: React.FC<BuyProps> = ({ setAmount, amount, setCost, cost, setSqueethE
       <Typography variant="caption" className={classes.thirdHeading} component="div">
         Pay ETH to buy squeeth exposure
       </Typography>
-      <div className={classes.thirdHeading}>
-        <TextField
-          size="small"
-          value={amount.toString()}
-          type="number"
-          style={{ width: 325 }}
-          onChange={(event) => setAmount(Number(event.target.value))}
-          id="filled-basic"
-          label="ETH Amount"
-          variant="outlined"
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <Tooltip title="Amount of ETH you want to spend to get Squeeth exposure">
-                  <InfoOutlinedIcon fontSize="small" />
-                </Tooltip>
-              </InputAdornment>
-            ),
-          }}
-        />
-      </div>
+      <div className={classes.thirdHeading} />
+      <PrimaryInput
+        value={amount.toString()}
+        onChange={(v) => setAmount(Number(v))}
+        label="ETH Amount"
+        tooltip="Amount of ETH you want to spend to get Squeeth exposure"
+        actionTxt="Max"
+        onActionClicked={() => setAmount(balance)}
+      />
       <TradeInfoItem
         label="Squeeth Exposure"
         value={Number(squeethExposure.toFixed(2)).toLocaleString()}
         unit="$$ of SQTH"
-      />
-      <TradeInfoItem
-        label="Funding (paid continuously)"
-        value={(fundingPerDay * 100).toFixed(2)}
-        unit="%"
-        tooltip="Funding is paid out of your position, no collateral required. Funding happens everytime the contract is touched."
       />
       <TradeInfoItem label="Slippage tolerance" value="0.5" unit="%" />
       <TradeInfoItem label="Price Impact" value={quote.priceImpact} unit="%" />
@@ -247,58 +211,30 @@ const Buy: React.FC<BuyProps> = ({ setAmount, amount, setCost, cost, setSqueethE
         ).toLocaleString()}
         unit="$$ of SQTH"
       />
-      <PrimaryButton
-        variant="contained"
-        onClick={transact}
-        className={classes.amountInput}
-        disabled={!!buyLoading}
-        style={{ width: '325px' }}
-      >
-        {buyLoading ? <CircularProgress color="primary" size="1.5rem" /> : 'Buy'}
-      </PrimaryButton>
+      {!connected ? (
+        <PrimaryButton
+          variant="contained"
+          onClick={selectWallet}
+          className={classes.amountInput}
+          disabled={!!buyLoading}
+          style={{ width: '300px' }}
+        >
+          {'Connect Wallet'}
+        </PrimaryButton>
+      ) : (
+        <PrimaryButton
+          variant="contained"
+          onClick={transact}
+          className={classes.amountInput}
+          disabled={!!buyLoading}
+          style={{ width: '300px' }}
+        >
+          {buyLoading ? <CircularProgress color="primary" size="1.5rem" /> : 'Buy'}
+        </PrimaryButton>
+      )}
       <Typography variant="caption" className={classes.caption} component="div">
         Trades on Uniswap 🦄
       </Typography>
-      <div style={{ marginTop: '20px', marginBottom: '4px' }}>
-        <TradeInfoItem
-          label="Long Position"
-          value={Number(
-            wSqueethBal.times(ethPrice).times(ethPrice).dividedBy(10000).times(normalizationFactor).toFixed(2),
-          ).toLocaleString()}
-          unit="$$ of SQTH"
-          color="primary"
-        />
-        <TradeInfoItem
-          label="Amount spent"
-          value={wSqueethBal.toNumber() ? Number(usdAmount.toFixed(2)).toLocaleString() : 0}
-          unit="$$ of ETH"
-          tooltip={`${wethAmount.absoluteValue().toFixed(4)} ETH spent`}
-          color="red"
-        />
-        <TradeInfoItem
-          label="Current Value"
-          value={Number(sellQuote.amountOut.times(ethPrice).toFixed(2)).toLocaleString()}
-          unit="$$ of ETH"
-          tooltip={`you get ${sellQuote.amountOut.toFixed(4)} ETH`}
-          color="green"
-        />
-      </div>
-
-      <ErrorButton
-        disabled={wSqueethBal.eq(0) || sellLoading}
-        variant="contained"
-        color="secondary"
-        style={{ width: '325px', marginTop: '4px' }}
-        onClick={sellAndClose}
-      >
-        {sellLoading ? (
-          <CircularProgress color="primary" size="1.5rem" />
-        ) : squeethAllowance.lt(wSqueethBal) ? (
-          'Approve to sell (1/2)'
-        ) : (
-          'Sell to close (2/2)'
-        )}
-      </ErrorButton>
     </div>
   )
 }

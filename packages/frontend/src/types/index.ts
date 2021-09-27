@@ -8,6 +8,19 @@ declare module '@material-ui/core/styles/createPalette' {
   }
 }
 
+declare module '@material-ui/core/styles' {
+  interface TypographyVariants {
+    number: React.CSSProperties
+  }
+}
+
+// Update the Typography's variant prop options
+declare module '@material-ui/core/Typography' {
+  interface TypographyPropsVariantOverrides {
+    number: true
+  }
+}
+
 export enum Networks {
   MAINNET = 1,
   ROPSTEN = 3,

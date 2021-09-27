@@ -13,6 +13,8 @@ const getTheme = (mode: Mode) => {
     typography: {
       fontWeightBold: 500,
       fontFamily: [
+        'Mulish',
+        'Roboto Mono',
         'Inter',
         '-apple-system',
         'BlinkMacSystemFont',

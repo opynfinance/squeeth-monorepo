@@ -26,7 +26,6 @@ const useStyles = makeStyles((theme) =>
       marginRight: theme.spacing(2),
     },
     navDiv: {
-      marginLeft: theme.spacing(2),
       display: 'flex',
       justifyContent: 'center',
     },
@@ -68,6 +67,7 @@ const Nav: React.FC = () => {
       <div className={classes.navDiv}>
         <NavLink path="/" name="Squeeth" />
         <NavLink path="/strategies" name="Strategies" />
+        <NavLink path="/positions" name="Positions" />
         <NavLink path="/lp" name="LP" />
       </div>
       <WalletButton />

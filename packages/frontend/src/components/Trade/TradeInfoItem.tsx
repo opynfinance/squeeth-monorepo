@@ -11,6 +11,9 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(1),
       justifyContent: 'space-between',
       alignItems: 'center',
+      width: '300px',
+      marginRight: 'auto',
+      marginLeft: 'auto',
     },
     txLabel: {
       fontSize: '.9rem',

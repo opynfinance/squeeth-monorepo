@@ -5,6 +5,7 @@ import BigNumber from 'bignumber.js'
 import React, { useEffect, useMemo, useState } from 'react'
 
 import { Vaults } from '../../constants'
+import { useWallet } from '../../context/wallet'
 import { useWorldContext } from '../../context/world'
 import { useController } from '../../hooks/contracts/useController'
 import useShortHelper from '../../hooks/contracts/useShortHelper'
@@ -14,8 +15,10 @@ import { useAddresses } from '../../hooks/useAddress'
 import { useETHPrice } from '../../hooks/useETHPrice'
 import { useETHPriceCharts } from '../../hooks/useETHPriceCharts'
 import { useShortPositions } from '../../hooks/usePositions'
+import { toTokenAmount } from '../../utils/calculations'
 import { ErrorButton, PrimaryButton } from '../Buttons'
 import CollatRange from '../CollatRange'
+import { PrimaryInput } from '../Inputs'
 import TradeInfoItem from './TradeInfoItem'
 
 const useStyles = makeStyles((theme) =>
@@ -68,7 +71,7 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const Sell: React.FC = () => {
+const Sell: React.FC<{ balance: number }> = ({ balance }) => {
   const [amount, setAmount] = useState(1)
   const [collateral, setCollateral] = useState(1)
   const [collatPercent, setCollatPercent] = useState(200)
@@ -91,6 +94,7 @@ const Sell: React.FC = () => {
   const { vaults: shortVaults } = useVaultManager(5)
   const { squeethAmount, wethAmount, usdAmount } = useShortPositions()
   const ethPrice = useETHPrice()
+  const { selectWallet, connected } = useWallet()
 
   const liqPrice = useMemo(() => {
     const rSqueeth = normalizationFactor.multipliedBy(amount).dividedBy(10000)
@@ -179,25 +183,13 @@ const Sell: React.FC = () => {
         Mint and sell Squeeth to receive premium
       </Typography>
       <div className={classes.thirdHeading}>
-        <TextField
-          size="small"
+        <PrimaryInput
           value={collateral.toString()}
-          type="number"
-          style={{ width: 325 }}
-          onChange={(event) => setCollateral(Number(event.target.value))}
-          id="filled-basic"
-          label="Collateral"
-          variant="outlined"
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <Typography variant="caption">ETH</Typography>
-                <Tooltip title="Amount of ETH collateral" style={{ marginLeft: '4px' }}>
-                  <InfoOutlinedIcon fontSize="small" />
-                </Tooltip>
-              </InputAdornment>
-            ),
-          }}
+          onChange={(v) => setCollateral(Number(v))}
+          label="ETH Collateral"
+          tooltip="Amount of ETH collateral"
+          actionTxt="Max"
+          onActionClicked={() => setCollateral(balance)}
         />
       </div>
       <div className={classes.thirdHeading}>
@@ -205,7 +197,7 @@ const Sell: React.FC = () => {
           size="small"
           value={collatPercent.toString()}
           type="number"
-          style={{ width: 325 }}
+          style={{ width: 300 }}
           onChange={(event) => setCollatPercent(Number(event.target.value))}
           id="filled-basic"
           label="Collateral Ratio"
@@ -224,11 +216,10 @@ const Sell: React.FC = () => {
           }}
         />
       </div>
-      <div className={classes.thirdHeading}>
-        <CollatRange />
-      </div>
+      <div className={classes.thirdHeading}></div>
+      <CollatRange />
       <TradeInfoItem
-        label="Squeeth exposure you short"
+        label="Squeeth exposure"
         value={ethPrice.times(ethPrice).times(amount).dividedBy(10000).times(normalizationFactor).toFixed(2)}
         unit="$$ of SQTH"
       />
@@ -239,47 +230,54 @@ const Sell: React.FC = () => {
         tooltip="Price of ETH when liquidation occurs"
       />
       <TradeInfoItem
-        label="Initial Premium to Receive"
+        label="Initial Premium"
         value={quote.amountOut.toFixed(4)}
         unit="ETH"
         tooltip={'Initial payment you get for selling squeeth on Uniswap'}
       />
-      <TradeInfoItem
-        label="Funding (received continuously)"
-        value={(fundingPerDay * 100).toFixed(2)}
-        unit="%"
-        tooltip="Funding is paid in kind, reducing your squeeth debt. Funding happens everytime the contract is touched."
-      />
       <TradeInfoItem label="Slippage tolerance" value="0.5" unit="%" />
       <TradeInfoItem label="Price Impact" value={quote.priceImpact} unit="%" />
       <TradeInfoItem label="Minimum received" value={quote.minimumAmountOut.toFixed(4)} unit="ETH" />
-      <PrimaryButton
-        onClick={depositAndShort}
-        className={classes.amountInput}
-        disabled={shortLoading || collatPercent < 150}
-        variant="contained"
-        style={{ width: '325px' }}
-      >
-        {shortLoading ? (
-          <CircularProgress color="primary" size="1.5rem" />
-        ) : (
-          <>
-            {isVaultApproved ? 'Deposit and sell' : 'Add operator (1/2)'}
-            {!isVaultApproved ? (
-              <Tooltip
-                style={{ marginLeft: '2px' }}
-                title="Operator is a contract that mints squeeth, deposits collateral and sells squeeth in single TX. Similarly it also buys back + burns squeeth and withdraws collateral in single TX"
-              >
-                <InfoOutlinedIcon fontSize="small" />
-              </Tooltip>
-            ) : null}
-          </>
-        )}
-      </PrimaryButton>
+
+      {!connected ? (
+        <PrimaryButton
+          variant="contained"
+          onClick={selectWallet}
+          className={classes.amountInput}
+          disabled={!!buyLoading}
+          style={{ width: '300px' }}
+        >
+          {'Connect Wallet'}
+        </PrimaryButton>
+      ) : (
+        <PrimaryButton
+          onClick={depositAndShort}
+          className={classes.amountInput}
+          disabled={shortLoading || collatPercent < 150}
+          variant="contained"
+          style={{ width: '300px' }}
+        >
+          {shortLoading ? (
+            <CircularProgress color="primary" size="1.5rem" />
+          ) : (
+            <>
+              {isVaultApproved ? 'Deposit and sell' : 'Add operator (1/2)'}
+              {!isVaultApproved ? (
+                <Tooltip
+                  style={{ marginLeft: '2px' }}
+                  title="Operator is a contract that mints squeeth, deposits collateral and sells squeeth in single TX. Similarly it also buys back + burns squeeth and withdraws collateral in single TX"
+                >
+                  <InfoOutlinedIcon fontSize="small" />
+                </Tooltip>
+              ) : null}
+            </>
+          )}
+        </PrimaryButton>
+      )}
       <Typography variant="caption" className={classes.caption} component="div">
         Trades on Uniswap 🦄
       </Typography>
-      <div style={{ marginTop: '20px', marginBottom: '4px' }}>
+      {/* <div style={{ marginTop: '20px', marginBottom: '4px' }}>
         <TradeInfoItem label="Short Position" value={squeethAmount.negated().toFixed(6)} unit="SQTH" color="primary" />
         <TradeInfoItem
           label="Total Premium Received"
@@ -304,7 +302,7 @@ const Sell: React.FC = () => {
         onClick={buyBackAndClose}
       >
         {buyLoading ? <CircularProgress color="primary" size="1.5rem" /> : 'Buy back and close'}
-      </ErrorButton>{' '}
+      </ErrorButton>{' '} */}
     </div>
   )
 }

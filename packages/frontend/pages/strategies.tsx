@@ -27,6 +27,7 @@ import { VaultChart } from '../src/components/Charts/VaultChart'
 import Nav from '../src/components/Nav'
 import TradeInfoItem from '../src/components/Trade/TradeInfoItem'
 import { Vaults } from '../src/constants'
+import { useWallet } from '../src/context/wallet'
 import { useWorldContext } from '../src/context/world'
 import { useController } from '../src/hooks/contracts/useController'
 import useShortHelper from '../src/hooks/contracts/useShortHelper'
@@ -120,7 +121,7 @@ const getVaultDetail = (vault: Vaults) => {
   if (vault === Vaults.CrabVault)
     return (
       <p>
-        This high yield position is similar to selling a strangle. You are profitable as long as ETH moves less than
+        This yielding position is similar to selling a strangle. You are profitable as long as ETH moves less than
         approximately 6% in either direction <b>in a single day</b>. The strategy rebalances daily to be delta neutral
         by buying or selling ETH.
         {/* <br /> <br /> Note that the 6% threshold is dynamic, changing each day based on the daily implied volatility and funding. */}
@@ -154,22 +155,34 @@ const getAdvancedDetail = (vault: Vaults) => {
   if (vault === Vaults.CrabVault)
     return (
       <>
-        <Typography style={{ color: '#FFFFFF' }} variant="h6">
+        {/* <Typography style={{ color: '#FFFFFF' }} variant="h6">
           Properties
         </Typography>
         <p>
           This strategy is short 1 squeeth, which is where you earn yield from. The strategy is also long 2 ETH. This
-          2ETH - ETH&sup2; payoff gives you 0 delta exposure. The strategy is rebalancing daily to maintain this 0 delta
-          exposure, meaning that you constantly have 0 ETH exposure. You have a constant negative gamma exposure.
-          <a style={{ color: '#4DADF3' }} href="https://www.paradigm.xyz/2021/08/power-perpetuals/">
+          2ETH - ETH&sup2; payoff gives you 0 ETH exposure.
+          <a
+            style={{ color: '#4DADF3' }}
+            href="https://www.notion.so/opynopyn/Squeeth-FAQ-4b6a054ab011454cbbd60cb3ee23a37c"
+          >
             {' '}
             Learn more.{' '}
           </a>
-          <br />
-        </p>
+        </p> */}
         <Typography style={{ color: '#FFFFFF' }} variant="h6">
           Payoff
         </Typography>
+        <p>
+          This strategy is short 1 squeeth, which is where you earn yield from. The strategy is also long 2 ETH. This
+          2ETH - ETH&sup2; payoff gives you 0 ETH exposure, while you earn funding yields.
+          <a
+            style={{ color: '#4DADF3' }}
+            href="https://www.notion.so/opynopyn/Squeeth-FAQ-4b6a054ab011454cbbd60cb3ee23a37c"
+          >
+            {' '}
+            Learn more.{' '}
+          </a>
+        </p>
         <Image src={crabpayoff} alt="crab payoff" width={450} height={300} />
         <br /> <br />
         <br />
@@ -188,22 +201,34 @@ const getAdvancedDetail = (vault: Vaults) => {
   if (vault === Vaults.ETHBull)
     return (
       <>
-        <Typography style={{ color: '#FFFFFF' }} variant="h6">
+        {/* <Typography style={{ color: '#FFFFFF' }} variant="h6">
           Properties
         </Typography>
         <p>
           This strategy is short 1 squeeth, which is where you earn yield from. The strategy is also long 3 ETH. This
-          3ETH - ETH&sup2; payoff gives you 1 delta exposure. This strategy is rebalancing daily to maintain this 1
-          delta exposure, meaning that you constantly have exposure to long 1 ETH while you earn funding yields. You
-          have a constant negative gamma exposure.
-          <a style={{ color: '#4DADF3' }} href="https://www.paradigm.xyz/2021/08/power-perpetuals/">
+          3ETH - ETH&sup2; payoff gives you exposure to long 1 ETH while you earn funding yields.
+          <a
+            style={{ color: '#4DADF3' }}
+            href="https://www.notion.so/opynopyn/Squeeth-FAQ-4b6a054ab011454cbbd60cb3ee23a37c"
+          >
+            {' '}
+            Learn more.{' '}
+          </a>
+        </p> */}
+        <Typography style={{ color: '#FFFFFF' }} variant="h6">
+          Payoff
+        </Typography>
+        <p>
+          This strategy is short 1 squeeth, which is where you earn yield from. The strategy is also long 3 ETH. This
+          3ETH - ETH&sup2; payoff gives you exposure to long 1 ETH while you earn funding yields.
+          <a
+            style={{ color: '#4DADF3' }}
+            href="https://www.notion.so/opynopyn/Squeeth-FAQ-4b6a054ab011454cbbd60cb3ee23a37c"
+          >
             {' '}
             Learn more.{' '}
           </a>
         </p>
-        <Typography style={{ color: '#FFFFFF' }} variant="h6">
-          Payoff
-        </Typography>
         <Image src={ethbullpayoff} alt="eth bull payoff" width={450} height={300} />
         <br />
         <br />
@@ -226,9 +251,11 @@ const getAdvancedDetail = (vault: Vaults) => {
           Properties
         </Typography>
         This strategy is short 1 squeeth, which is where you earn yield from. The strategy is also long 1 ETH. This ETH
-        - ETH&sup2; payoff gives you -1 delta exposure. The strategy is rebalancing daily to maintain this -1 delta
-        exposure, meaning that you constantly have exposure to short 1 ETH. You have a constant negative gamma exposure.
-        <a style={{ color: '#4DADF3' }} href="https://www.paradigm.xyz/2021/08/power-perpetuals/">
+        - ETH&sup2; payoff gives you exposure to short 1 ETH, while you earn funding yields.
+        <a
+          style={{ color: '#4DADF3' }}
+          href="https://www.notion.so/opynopyn/Squeeth-FAQ-4b6a054ab011454cbbd60cb3ee23a37c"
+        >
           {' '}
           Learn more.{' '}
         </a>
@@ -358,6 +385,8 @@ export default function Vault() {
 
   const dailyInterestRate = useMemo(() => (fundingPerDay * 100) / price, [fundingPerDay, price])
 
+  const { selectWallet, connected } = useWallet()
+
   const liqPrice = useMemo(() => {
     const ethPrice = ethPrices.length > 0 ? ethPrices[ethPrices.length - 1].value : 0
     return calculateLiquidationPrice(amount, collateral, vol, ethPrice)
@@ -441,7 +470,8 @@ export default function Vault() {
           <Typography className={classes.cardTitle} variant="h6">
             Strategy Detail
           </Typography>
-          <Typography className={classes.thirdHeading} variant="h6">
+          <br />
+          {/* <Typography className={classes.thirdHeading} variant="h6">
             How it works
           </Typography>
           <List>
@@ -463,7 +493,7 @@ export default function Vault() {
                 secondary="Note there is liquidation risk from being short squeeth"
               />
             </ListItem>
-          </List>
+          </List> */}
 
           <Typography variant="body2" className={classes.cardSubTxt}>
             {getAdvancedDetail(vault)}
@@ -509,15 +539,28 @@ export default function Vault() {
               unit="USDC"
               tooltip="The liquidation price changes each day when the strategy adjusts to maintain its exposure"
             />
-            <Button
-              onClick={depositAndShort}
-              className={classes.amountInput}
-              style={{ width: 300, color: '#000' }}
-              variant="contained"
-              color="primary"
-            >
-              {isVaultApproved ? 'Deposit and sell' : 'Add operator to deposit / Burn'}
-            </Button>
+
+            {!connected ? (
+              <Button
+                onClick={selectWallet}
+                className={classes.amountInput}
+                style={{ width: 300, color: '#000' }}
+                variant="contained"
+                color="primary"
+              >
+                {'Connect Wallet'}
+              </Button>
+            ) : (
+              <Button
+                onClick={depositAndShort}
+                className={classes.amountInput}
+                style={{ width: 300, color: '#000' }}
+                variant="contained"
+                color="primary"
+              >
+                {isVaultApproved ? 'Deposit and sell' : 'Add operator to deposit / Burn'}
+              </Button>
+            )}
             <br />
             <div className={classes.txItem}>
               <Typography>Squeeth Balance</Typography>
