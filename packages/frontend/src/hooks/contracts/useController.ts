@@ -109,8 +109,15 @@ export const useController = () => {
   }
 
   const getFundingForDay = async () => {
-    const index = await getIndex(86400)
-    const mark = await getMark(86400)
+    let index
+    let mark
+    try {
+      index = await getIndex(86400)
+      mark = await getMark(86400)
+    } catch (error) {
+      index = await getIndex(1)
+      mark = await getMark(1)
+    }
 
     const nF = mark.dividedBy(mark.multipliedBy(2).minus(index))
     return 1 - nF.toNumber()

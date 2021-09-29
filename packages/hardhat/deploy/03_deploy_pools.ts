@@ -21,11 +21,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   
   const squeethPriceInEth = 3000; // can sell 1 squeeth = 0.3 eth
   const squeethWethPool = await createUniPool(squeethPriceInEth, weth9, squeeth, positionManager, uniswapFactory)
-  await squeethWethPool.increaseObservationCardinalityNext(128) 
+  const tx1 = await squeethWethPool.increaseObservationCardinalityNext(128) 
+  await ethers.provider.waitForTransaction(tx1.hash, 1)
 
   const ethPriceInDai = 3000
   const ethDaiPool = await createUniPool(ethPriceInDai, dai, weth9, positionManager, uniswapFactory)
-  await ethDaiPool.increaseObservationCardinalityNext(128)
+  const tx2 = await ethDaiPool.increaseObservationCardinalityNext(128)
+  await ethers.provider.waitForTransaction(tx2.hash, 1)
 
   console.log(`SQU/ETH Pool created 🐑. Address: ${squeethWethPool.address}`)
   console.log(`ETH/DAI Pool created 🐑. Address: ${ethDaiPool.address}`)

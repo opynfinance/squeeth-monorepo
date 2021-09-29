@@ -11,7 +11,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const controller = await ethers.getContract("Controller", deployer);
   const weth = await getWETH(ethers, deployer, network.name)
 
-  const {swapRouter} = await  getUniswapDeployments(ethers, deployer, network.name)
+  const {swapRouter} = await getUniswapDeployments(ethers, deployer, network.name)
 
   await deploy("ShortHelper", {
     from: deployer,

@@ -6,17 +6,17 @@ export function convertPriceToSqrtX96 (sqrtPriceX96: string) {
   
 }
 
-/**
- * token0: USD
- * token1: ETH
- * @param sqrtPriceX96 
- * @returns price of token1 per token0. scaled by 1e18
- */
-function convertSqrtX96ToRawPrice (sqrtPriceX96: string) {
-  const priceToken1InToken0 = new BigNumber(sqrtPriceX96).times(sqrtPriceX96).times(1e18).div(new BigNumber(2).pow(96 * 2))
-  // price = sqrtPriceX96 * sqrtPriceX96 * 1e18 >> (96 * 2)
-  return priceToken1InToken0
-}
+// /**
+//  * token0: USD
+//  * token1: ETH
+//  * @param sqrtPriceX96 
+//  * @returns price of token1 per token0. scaled by 1e18
+//  */
+// function convertSqrtX96ToRawPrice (sqrtPriceX96: string) {
+//   const priceToken1InToken0 = new BigNumber(sqrtPriceX96).times(sqrtPriceX96).times(1e18).div(new BigNumber(2).pow(96 * 2))
+//   // price = sqrtPriceX96 * sqrtPriceX96 * 1e18 >> (96 * 2)
+//   return priceToken1InToken0
+// }
 
 /**
  * token0: USD
@@ -27,11 +27,6 @@ function convertSqrtX96ToRawPrice (sqrtPriceX96: string) {
  function convertRawPriceToSqrtX96 (rawPrice: BigNumber) {
   const sqrtX96Price = rawPrice.times(new BigNumber(2).pow(96 * 2)).div(1e18).squareRoot()
   return sqrtX96Price
-}
-
-export function convertSqrtX96ToEthPrice(sqrtPriceX96: string) {
-  const rawPrice = convertSqrtX96ToRawPrice(sqrtPriceX96)
-  return new BigNumber(1e18).div(rawPrice)
 }
 
 export function convertToken1PriceToSqrtX96Price(token1PriceInToken0: string) {

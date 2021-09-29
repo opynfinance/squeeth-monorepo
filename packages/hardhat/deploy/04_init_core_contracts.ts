@@ -24,21 +24,24 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const squeethEthPool = await getPoolAddress(weth9, wsqueeth, uniswapFactory)
 
   try {
-    await controller.init(oracle.address, vaultNft.address, wsqueeth.address, weth9.address, dai.address,  ethDaiPool, squeethEthPool, positionManager.address, { from: deployer });
+    const tx = await controller.init(oracle.address, vaultNft.address, wsqueeth.address, weth9.address, dai.address,  ethDaiPool, squeethEthPool, positionManager.address, { from: deployer });
+    await ethers.provider.waitForTransaction(tx.hash, 1)
     console.log(`Controller init done 🥝`);
   } catch (error) {
     console.log(`Controller already init or encountered error`)
   }
 
   try {
-    await wsqueeth.init(controller.address, { from: deployer });
+    const tx = await wsqueeth.init(controller.address, { from: deployer });
+    await ethers.provider.waitForTransaction(tx.hash, 1)
     console.log(`Squeeth init done 🍋`);
   } catch (error) {
     console.log(`Squeeth already init.`)
   }
   
   try {
-    await vaultNft.init(controller.address, { from: deployer });
+    const tx = await vaultNft.init(controller.address, { from: deployer });
+    await ethers.provider.waitForTransaction(tx.hash, 1)
     console.log(`VaultNFTManager init done 🥭`);
   } catch (error) {
     console.log(`VaultNFTManager already init.`)

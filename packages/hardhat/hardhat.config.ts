@@ -14,7 +14,8 @@ import * as dotenv from 'dotenv'
 
 // Import Tasks
 import "./tasks/default";
-import './tasks/addLiquidity'
+import './tasks/addSqueethLiquidity'
+import './tasks/addWethLiquidity'
 import './tasks/buySqueeth'
 
 // Load env variables
@@ -116,6 +117,7 @@ const config: HardhatUserConfig = {
     rinkebyArbitrum: {
       url: "https://rinkeby.arbitrum.io/rpc",
       gasPrice: 30000000, // 0.03 gwei
+      gas: 30_000_000,
       accounts: {
         mnemonic: mnemonic(),
       },
@@ -222,6 +224,9 @@ const config: HardhatUserConfig = {
     gasPrice: 100,
     coinmarketcap: process.env.COINMARKETCAP,
     enabled: process.env.REPORT_GAS === "true",
+  },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_KEY
   }
 };
 

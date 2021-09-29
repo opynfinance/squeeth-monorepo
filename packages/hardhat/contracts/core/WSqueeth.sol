@@ -11,7 +11,7 @@ import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
 contract WSqueeth is ERC20, Initializable, IWPowerPerp {
     address public controller;
 
-    constructor() ERC20("Wrapped Squeeth", "WSqueeth") {}
+    constructor() ERC20("Wrapped Squeeth", "WSQTH") {}
 
     modifier onlyController() {
         require(msg.sender == controller, "not controller");
