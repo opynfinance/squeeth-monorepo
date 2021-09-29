@@ -64,6 +64,7 @@ contract Controller is Initializable, Ownable {
     event BurnShort(uint256 amount, uint256 vaultId);
     event UpdateOperator(uint256 vaultId, address operator);
     event Liquidate(uint256 vaultId, uint256 debtAmount, uint256 collateralPaid);
+    event NormalizationFactorUpdated(uint256 oldNormFactor, uint256 newNormFactor, uint256 timestamp);
 
     modifier notShutdown() {
         require(!isShutDown, "shutdown");
@@ -575,7 +576,11 @@ contract Controller is Initializable, Ownable {
         // only update the norm factor once per block
         if (lastFundingUpdateTimestamp == block.timestamp) return;
 
-        normalizationFactor = _getNewNormalizationFactor();
+        uint256 newNormalizationFactor = _getNewNormalizationFactor();
+
+        emit NormalizationFactorUpdated(normalizationFactor, newNormalizationFactor, block.timestamp);
+
+        normalizationFactor = newNormalizationFactor;
         lastFundingUpdateTimestamp = block.timestamp;
     }
 
