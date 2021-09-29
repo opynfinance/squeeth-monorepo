@@ -110,19 +110,10 @@ describe("Controller: liquidation unit test", function () {
       )
     })
 
-    it("Should revert liquidating vault when repaying more than half of debt", async () => {
-      // change oracle price to make vault liquidatable
+    it("Liquidate unsafe vault", async () => {
       const newEthUsdPrice = ethers.utils.parseUnits('4000')
       await oracle.connect(random).setPrice(ethUSDPool.address, newEthUsdPrice)
 
-      const vaultBefore = await controller.vaults(vaultId)
-
-      await expect(controller.connect(liquidator).liquidate(vaultId, vaultBefore.shortAmount)).to.be.revertedWith(
-        'Can not repay more than 50% of vault debt'
-      )
-    })
-
-    it("Liquidate unsafe vault", async () => {
       const vaultBefore = await controller.vaults(vaultId)
       const liquidatorBalanceBefore = await provider.getBalance(liquidator.address)
       const squeethLiquidatorBalanceBefore = await squeeth.balanceOf(liquidator.address)
@@ -137,7 +128,7 @@ describe("Controller: liquidation unit test", function () {
 
       const vaultAfter = await controller.vaults(vaultId)
       const liquidatorBalanceAfter = await provider.getBalance(liquidator.address)
-      const liquidateEventCollateralToSell : BigNumber = (receipt.events?.find(event => event.event === 'Liquidate'))?.args?.collateralToSell;
+      const liquidateEventCollateralToSell : BigNumber = (receipt.events?.find(event => event.event === 'Liquidate'))?.args?.collateralPaid;
       const squeethLiquidatorBalanceAfter = await squeeth.balanceOf(liquidator.address)
 
       expect(isSimilar(liquidatorBalanceAfter.sub(liquidatorBalanceBefore).toString(), collateralToSell.toString())).to.be.true
@@ -186,7 +177,7 @@ describe("Controller: liquidation unit test", function () {
 
       const vaultAfter = await controller.vaults(vaultId)
       const liquidatorBalanceAfter = await provider.getBalance(liquidator.address)
-      const actualAmountPaidForLiquidator : BigNumber = (receipt.events?.find(event => event.event === 'Liquidate'))?.args?.collateralToSell;
+      const actualAmountPaidForLiquidator : BigNumber = (receipt.events?.find(event => event.event === 'Liquidate'))?.args?.collateralPaid;
       const squeethLiquidatorBalanceAfter = await squeeth.balanceOf(liquidator.address)
 
       expect(vaultAfter.collateralAmount.isZero()).to.be.true

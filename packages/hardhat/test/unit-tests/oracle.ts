@@ -15,7 +15,7 @@ import {
 } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json'
 import { Contract } from "ethers";
 import { convertToken0PriceToSqrtX96Price } from '../calculator'
-import { isSimilar } from '../utils'
+import { getNow, isSimilar } from '../utils'
 import { Oracle, MockWSqueeth, OracleTester, WETH9 } from "../../typechain";
 
 describe("Oracle", function () {
@@ -173,7 +173,7 @@ describe("Oracle", function () {
         amount0Min: 0,
         amount1Min: 0,
         recipient: deployer,// address
-        deadline: Math.floor(Date.now() / 1000 + 86400),// uint256
+        deadline: await getNow(provider) + 86400
       }
       const res = await positionManager.mint(mintParam)
       const addLiquidityBlock = res.blockNumber
@@ -254,7 +254,7 @@ describe("Oracle", function () {
         amount0Min: 0,
         amount1Min: 0,
         recipient: deployer,// address
-        deadline: Math.floor(Date.now() / 1000 + 86400),// uint256
+        deadline: await getNow(provider) + 86400
       }
       const res = await positionManager.mint(mintParam)
       const initBlockNumber = res.blockNumber

@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract } from "ethers";
 import { Controller, Oracle, WETH9, WSqueeth } from "../../typechain";
 import { isSimilar } from '../utils'
-import { deployUniswapV3, deploySqueethCoreContracts, addLiquidity } from '../setup'
+import { deployUniswapV3, deploySqueethCoreContracts, addSqueethLiquidity, deployWETHAndDai } from '../setup'
 
 describe("Oracle Integration Test", function () {
   let oracle: Oracle;
@@ -14,41 +14,41 @@ describe("Oracle Integration Test", function () {
   let ethDaiPool: Contract
   let positionManager: Contract
   let controller: Controller
-  let uniFactory: Contract
   const startingPrice = 3000
   const provider = ethers.provider
 
   this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async() => {
   
-    const uniDeployments = await deployUniswapV3()
+    const { dai: daiToken, weth: wethToken } = await deployWETHAndDai()
+
+    dai = daiToken
+    weth = wethToken
+
+    const uniDeployments = await deployUniswapV3(weth)
 
     // this will not deploy a new pool, only reuse old onces
     const coreDeployments = await deploySqueethCoreContracts(
-      uniDeployments.weth, 
+      weth,
+      dai, 
       uniDeployments.positionManager, 
       uniDeployments.uniswapFactory,
       startingPrice,
       startingPrice
     )
 
-    weth = uniDeployments.weth
-    dai = coreDeployments.dai
-    squeeth = coreDeployments.squeeth
     positionManager = uniDeployments.positionManager
-    uniFactory = uniDeployments.uniswapFactory
-    controller = coreDeployments.controller
 
+    squeeth = coreDeployments.squeeth
+    controller = coreDeployments.controller
     squeethPool = coreDeployments.wsqueethEthPool
     ethDaiPool = coreDeployments.ethDaiPool
-
-    // deploy oracle
-    oracle = (await (await ethers.getContractFactory("Oracle")).deploy()) as Oracle;
+    oracle = coreDeployments.oracle
   })
 
   describe('Get TWAP right after setup', async( )=> {
     describe("TWAP for squeeth/eth", async () => {
       this.beforeEach(async () => {
-        await provider.send("evm_increaseTime", [10]) // go 10 seconds minutes
+        await provider.send("evm_increaseTime", [10])
         await provider.send("evm_mine", [])
       })
   
@@ -102,7 +102,7 @@ describe("Oracle Integration Test", function () {
   describe('Adding liquidity mess up things', async() => {
     it('add liquidity', async() => {
       const { deployer } = await getNamedAccounts();
-      await addLiquidity(3000, '0.001', '10', deployer, squeeth, weth, positionManager, controller, uniFactory)
+      await addSqueethLiquidity(3000, '0.001', '10', deployer, squeeth, weth, positionManager, controller)
     })
     it("fetch squeeth twap for last 10 mins", async () => {
       const price = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 605)

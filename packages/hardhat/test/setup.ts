@@ -1,5 +1,5 @@
-import { ethers, getNamedAccounts, deployments } from "hardhat"
-import { Contract } from "ethers";
+import { ethers } from "hardhat"
+import { Contract, BigNumber } from "ethers";
 
 import {
   abi as SWAP_ROUTER_ABI,
@@ -16,52 +16,38 @@ import {
 import { Controller, Oracle, VaultNFTManager, WETH9, WSqueeth, MockErc20, INonfungiblePositionManager } from "../typechain";
 import { convertToken0PriceToSqrtX96Price, convertToken1PriceToSqrtX96Price } from "./calculator";
 
+export const deployWETHAndDai = async() => {
+  const MockErc20Contract = await ethers.getContractFactory("MockErc20");
+  const dai = (await MockErc20Contract.deploy("Dai", "Dai")) as MockErc20;
 
+  const WETH9Contract = await ethers.getContractFactory("WETH9");
+  const weth = (await WETH9Contract.deploy()) as WETH9;
+
+  return { dai, weth }
+}
 
 /**
  * Deploy Uniswap factory, swapRouter, nftPositionManager and WETH9
  * @returns 
  */
-export const deployUniswapV3 = async() => {
-  const { deployer } = await getNamedAccounts();
-  const { deploy } = deployments;
+export const deployUniswapV3 = async(weth: Contract) => {
+  const accounts = await ethers.getSigners();
+  
+  // Deploy UniswapV3Factory
+  const UniswapV3FactoryFactory = new ethers.ContractFactory(FACTORY_ABI, FACTORY_BYTECODE, accounts[0]);
+  const uniswapFactory = await UniswapV3FactoryFactory.deploy();
 
-  await deploy("UniswapV3Factory", {
-    from: deployer,
-    contract: {
-      abi: FACTORY_ABI,
-      bytecode: FACTORY_BYTECODE
-    }
-  });
-  const uniswapFactory = await ethers.getContract("UniswapV3Factory", deployer);
-
-  await deploy("WETH9", { from: deployer });
-  const weth = await ethers.getContract("WETH9", deployer) as WETH9;
-
-  await deploy("SwapRouter", {
-    from: deployer,
-    contract: {
-      abi: SWAP_ROUTER_ABI,
-      bytecode: SWAP_ROUTER_BYTECODE
-    },
-    args: [uniswapFactory.address, weth.address]
-  });
-
-  const swapRouter = await ethers.getContract("SwapRouter", deployer);
+  // Deploy UniswapV3SwapRouter
+  const SwapRouterFactory = new ethers.ContractFactory(SWAP_ROUTER_ABI, SWAP_ROUTER_BYTECODE, accounts[0]);
+  const swapRouter = await SwapRouterFactory.deploy(uniswapFactory.address, weth.address);
 
   // tokenDescriptor is only used to query tokenURI() on NFT. Don't need that in our deployment
   const tokenDescriptorAddress = ethers.constants.AddressZero
-  await deploy("NonfungibleTokenPositionManager", {
-    from: deployer,
-    contract: {
-      abi: POSITION_MANAGER_ABI,
-      bytecode: POSITION_MANAGER_BYTECODE,
-    },
-    args: [uniswapFactory.address, weth.address, tokenDescriptorAddress]
-  });
-  const positionManager = await ethers.getContract("NonfungibleTokenPositionManager", deployer);
+  // Deploy NonfungibleTokenManager
+  const positionManagerFactory = new ethers.ContractFactory(POSITION_MANAGER_ABI, POSITION_MANAGER_BYTECODE, accounts[0]);
+  const positionManager = await positionManagerFactory.deploy(uniswapFactory.address, weth.address, tokenDescriptorAddress);
 
-  return { positionManager, uniswapFactory, weth, swapRouter }
+  return { positionManager, uniswapFactory, swapRouter }
 }
 
 
@@ -139,21 +125,20 @@ export const getPoolAddress = async (
  * Deploy controller, squeeth token and vaultNFT
  * @returns 
  */
- export const deploySqueethCoreContracts= async(weth: Contract, positionManager: Contract, uniswapFactory: Contract, wsqueethEthPrice?: number, ethDaiPrice?: number ) => {
-  const { deployer } = await getNamedAccounts();
-  const { deploy } = deployments;
+ export const deploySqueethCoreContracts= async(weth: Contract, dai: Contract, positionManager: Contract, uniswapFactory: Contract, wsqueethEthPrice?: number, ethDaiPrice?: number ) => {
+  // const { deployer } = await getNamedAccounts();
 
-  const res = await deploy("Controller", { from: deployer, skipIfAlreadyDeployed: false });
-  await deploy("Oracle", { from: deployer, skipIfAlreadyDeployed: false });
-  await deploy("VaultNFTManager", { from: deployer, skipIfAlreadyDeployed: false });
-  await deploy("WSqueeth", { from: deployer, skipIfAlreadyDeployed: false });
-  await deploy("MockErc20", { from: deployer, args: ["DAI", "DAI"], skipIfAlreadyDeployed: false });
+  const ControllerContract = await ethers.getContractFactory("Controller");
+  const controller = (await ControllerContract.deploy()) as Controller;
 
-  const controller = await ethers.getContract("Controller", deployer) as  Controller;
-  const oracle = await ethers.getContract("Oracle", deployer) as  Oracle;
-  const vaultNft = await ethers.getContract("VaultNFTManager", deployer) as VaultNFTManager;
-  const squeeth = await ethers.getContract("WSqueeth", deployer) as WSqueeth;
-  const dai = await ethers.getContract("MockErc20", deployer) as MockErc20;
+  const OracleContract = await ethers.getContractFactory("Oracle");
+  const oracle = (await OracleContract.deploy()) as Oracle;
+
+  const NFTContract = await ethers.getContractFactory("VaultNFTManager");
+  const vaultNft = (await NFTContract.deploy()) as VaultNFTManager;
+
+  const WSqueethContract = await ethers.getContractFactory("WSqueeth");
+  const squeeth = (await WSqueethContract.deploy()) as WSqueeth;
 
   // 1 squeeth is 3000 eth
   const squeethPriceInEth = wsqueethEthPrice || 3000
@@ -165,26 +150,23 @@ export const getPoolAddress = async (
   await wsqueethEthPool.increaseObservationCardinalityNext(128) 
   await ethDaiPool.increaseObservationCardinalityNext(128) 
 
-  if (res.newlyDeployed) {
-    await controller.init(
-      oracle.address, 
-      vaultNft.address, 
-      squeeth.address,
-      weth.address, 
-      dai.address, 
-      ethDaiPool.address, 
-      wsqueethEthPool.address, 
-      positionManager.address,
-      { from: deployer }
-    );
-    await squeeth.init(controller.address, { from: deployer });
-    await vaultNft.init(controller.address, { from: deployer });
-  }
+  await controller.init(
+    oracle.address, 
+    vaultNft.address, 
+    squeeth.address,
+    weth.address, 
+    dai.address, 
+    ethDaiPool.address, 
+    wsqueethEthPool.address, 
+    positionManager.address,
+  );
+  await squeeth.init(controller.address);
+  await vaultNft.init(controller.address);
   
-  return { controller, squeeth, vaultNft, ethDaiPool, wsqueethEthPool, dai }
+  return { controller, squeeth, vaultNft, ethDaiPool, wsqueethEthPool, oracle }
 }
 
-export const addLiquidity = async(
+export const addSqueethLiquidity = async(
   squeethPriceInETH: number, 
   initLiquiditySqueethAmount: string, 
   collateralAmount: string,
@@ -192,8 +174,7 @@ export const addLiquidity = async(
   squeeth: WSqueeth, 
   weth: WETH9,
   positionManager: Contract,
-  controller: Controller,
-  univ3Factory: Contract,
+  controller: Controller
   ) => {
 
     const isWethToken0 = parseInt(weth.address, 16) < parseInt(squeeth.address, 16)
@@ -219,7 +200,6 @@ export const addLiquidity = async(
       wsqueethBalance = await squeeth.balanceOf(deployer)
     }
 
-    
     await weth.approve(positionManager.address, ethers.constants.MaxUint256)
     await squeeth.approve(positionManager.address, ethers.constants.MaxUint256)
     
@@ -239,10 +219,75 @@ export const addLiquidity = async(
       deadline: Math.floor(Date.now() / 1000 + 86400),// uint256
     }
 
-    await (positionManager as INonfungiblePositionManager).mint(mintParam)
+    const tx = await (positionManager as INonfungiblePositionManager).mint(mintParam)
+    const receipt = await tx.wait();
+    const tokenId : BigNumber = (receipt.events?.find(event => event.event === 'IncreaseLiquidity'))?.args?.tokenId;
 
-    const pool = await univ3Factory.getPool(token0, token1, 3000)
-    return pool
+    return tokenId.toNumber()
+}
+
+export const addWethDaiLiquidity = async(
+  ethPrice: number, 
+  ethAmount: BigNumber, 
+  deployer: string,
+  dai: MockErc20, 
+  weth: WETH9,
+  positionManager: Contract
+  ) => {
+
+    const isWethToken0 = parseInt(weth.address, 16) < parseInt(dai.address, 16)
+
+    const token0 = isWethToken0 ? weth.address : dai.address
+    const token1 = isWethToken0 ? dai.address : weth.address
+    
+    const daiAmount = ethAmount.mul(ethPrice)
+    
+    const daiBalance = await dai.balanceOf(deployer)
+    const wethBalance = await weth.balanceOf(deployer)
+
+    if (wethBalance.lt(ethAmount)) {
+      await weth.deposit({value: ethAmount, from: deployer})
+    }
+  
+    if (daiBalance.lt(daiAmount)) {
+      await dai.mint(deployer,daiAmount ) 
+    }
+
+    await dai.approve(positionManager.address, ethers.constants.MaxUint256)
+    await weth.approve(positionManager.address, ethers.constants.MaxUint256)
+    
+    const mintParam = {
+      token0,
+      token1,
+      fee: 3000,
+      tickLower: -887220,// int24 min tick used when selecting full range
+      tickUpper: 887220,// int24 max tick used when selecting full range
+      amount0Desired: isWethToken0 ? ethAmount : daiAmount,
+      amount1Desired: isWethToken0 ? daiAmount : ethAmount,
+      amount0Min: 1,
+      amount1Min: 1,
+      recipient: deployer,// address
+      deadline: Math.floor(Date.now() / 1000 + 86400),// uint256
+    }
+
+    const tx = await (positionManager as INonfungiblePositionManager).mint(mintParam)
+    const receipt = await tx.wait();
+    const tokenId : BigNumber = (receipt.events?.find(event => event.event === 'IncreaseLiquidity'))?.args?.tokenId;
+
+    return tokenId.toNumber()
+}
+
+export const removeAllLiquidity = async(tokenId: number, positionManager: any) => {
+  const res = await positionManager.positions(tokenId)
+  const liquidity = res.liquidity as BigNumber
+  const burnParam = {
+    tokenId,
+    liquidity,
+    amount0Min: 0,
+    amount1Min: 0,
+    deadline: Math.floor(Date.now() / 1000 + 86400)
+  }
+  await (positionManager as INonfungiblePositionManager).decreaseLiquidity(burnParam)
 }
 
 function delay(ms: number) {

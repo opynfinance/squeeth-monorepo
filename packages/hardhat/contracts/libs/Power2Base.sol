@@ -11,7 +11,7 @@ library Power2Base {
     using SafeMath for uint256;
 
     /**
-     * @dev return the index of the power perp
+     * @dev return the index of the power perp in DAI, scaled by 18 decimals
      * @return for squeeth, return ethPrice^2
      */
     function _getIndex(
@@ -26,7 +26,7 @@ library Power2Base {
     }
 
     /**
-     * @dev return the mark price of the power perp
+     * @dev return the mark price of power perp in DAI, scaled by 18 decimals
      * @return for squeeth, return ethPrice * squeethPriceInEth
      */
     function _getDenormalizedMark(
@@ -46,22 +46,21 @@ library Power2Base {
     }
 
     /**
-     * @dev get how much collateral can be given out to the liquidator
+     * @dev get fair collateral amount to pay out to a liquidator repaying _debtAmount debt
+     * @dev the actual amount liquidator can get should have a x% bonus on top of this value.
      * @param _debtAmount wSqueeth amount paid by liquidator
-     * @return collateralToSell amount the liquidator can get.
+     * @return
      */
-    function _getCollateralToSell(
+    function _getCollateralByRepayAmount(
         uint256 _debtAmount,
         address _oracle,
         address _ethDaiPool,
         address _weth,
         address _dai,
         uint256 _normalizationFactor
-    ) internal view returns (uint256 collateralToSell) {
+    ) internal view returns (uint256) {
         uint256 ethDaiPrice = IOracle(_oracle).getTwapSafe(_ethDaiPool, _weth, _dai, 600);
-        collateralToSell = _debtAmount.mul(_normalizationFactor).mul(ethDaiPrice).div(1e36);
-        // add a 10% on top of debt * index price.
-        collateralToSell = collateralToSell.add(collateralToSell.div(10));
+        return _debtAmount.mul(_normalizationFactor).mul(ethDaiPrice).div(1e36);
     }
 
     /**
@@ -83,7 +82,7 @@ library Power2Base {
     }
 
     /**
-     * @notice get the index value of wsqueeth when system settles
+     * @notice get the index value of wsqueeth in wei, used when system settles
      * @dev the index of squeeth is ethPrice^2, so each squeeth will need to pay out {ethPrice} eth
      * @param _wsqueethAmount amount of wsqueeth used in settlement
      * @param _ethSettlementPrice eth price used for settlement. scaled with 1e18

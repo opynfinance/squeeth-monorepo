@@ -5,7 +5,8 @@ import { expect } from "chai";
 import { Contract, providers } from "ethers";
 import { Controller, VaultNFTManager, WSqueeth, ShortHelper, WETH9 } from "../../typechain";
 
-import { deployUniswapV3, deploySqueethCoreContracts, addLiquidity } from '../setup'
+import { deployUniswapV3, deploySqueethCoreContracts, addSqueethLiquidity, deployWETHAndDai } from '../setup'
+import { getNow } from "../utils";
 
 describe("ShortHelper Integration Test", function () {
   let shortHelper: ShortHelper
@@ -35,27 +36,30 @@ describe("ShortHelper Integration Test", function () {
   })
 
   this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async() => {
-    const uniDeployments = await deployUniswapV3();
 
-    const coreDeployments = await deploySqueethCoreContracts(uniDeployments.weth, uniDeployments.positionManager, uniDeployments.uniswapFactory)
+    const { dai, weth: wethToken } = await deployWETHAndDai()
+
+    weth = wethToken
+
+    const uniDeployments = await deployUniswapV3(weth);
+
+    const coreDeployments = await deploySqueethCoreContracts(weth, dai, uniDeployments.positionManager, uniDeployments.uniswapFactory)
 
     const { deployer } = await getNamedAccounts();
     
     // init uniswap pool: price = 3000, seed with 0.005 squeeth (30 eth as collateral)
-    await addLiquidity(
+    await addSqueethLiquidity(
       3000, 
       '0.005',
       '30', 
       deployer, 
       coreDeployments.squeeth, 
-      uniDeployments.weth, 
+      weth, 
       uniDeployments.positionManager, 
       coreDeployments.controller, 
-      uniDeployments.uniswapFactory
     )
 
     swapRouter = uniDeployments.swapRouter
-    weth = uniDeployments.weth
     // positionManager = uniDeployments.positionManager
     squeeth = coreDeployments.squeeth
     vaultNFT = coreDeployments.vaultNft
@@ -92,7 +96,7 @@ describe("ShortHelper Integration Test", function () {
         tokenOut: weth.address,
         fee: 3000,
         recipient: seller1.address,
-        deadline: Math.floor(Date.now() / 1000 + 86400),
+        deadline: await getNow(provider) + 86400,
         amountIn: squeethAmount,
         amountOutMinimum: 0, // no slippage control now
         sqrtPriceLimitX96: 0,
@@ -128,7 +132,7 @@ describe("ShortHelper Integration Test", function () {
         tokenOut: weth.address,
         fee: 3000,
         recipient: shortHelper.address, // specify shortHelper as recipient to unwrap weth.
-        deadline: Math.floor(Date.now() / 1000 + 86400),
+        deadline: await getNow(provider) + 86400,
         amountIn: squeethAmount,
         amountOutMinimum: 0,
         sqrtPriceLimitX96: 0,
@@ -179,7 +183,7 @@ describe("ShortHelper Integration Test", function () {
         tokenOut: squeeth.address,
         fee: 3000,
         recipient: shortHelper.address,
-        deadline: Math.floor(Date.now() / 1000 + 86400),
+        deadline: await getNow(provider) + 86400,
         amountOut: buyBackSqueethAmount,
         amountInMaximum,
         sqrtPriceLimitX96: 0,
@@ -225,7 +229,7 @@ describe("ShortHelper Integration Test", function () {
         tokenOut: squeeth.address,
         fee: 3000,
         recipient: shortHelper.address,
-        deadline: Math.floor(Date.now() / 1000 + 86400),
+        deadline: await getNow(provider) + 86400,
         amountOut: buyBackSqueethAmount,
         amountInMaximum,
         sqrtPriceLimitX96: 0,

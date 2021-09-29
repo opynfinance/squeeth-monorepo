@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 
 pragma solidity =0.7.6;
+pragma abicoder v2;
 
 import "hardhat/console.sol";
 
@@ -10,6 +11,7 @@ import {IOracle} from "../interfaces/IOracle.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
+import {IWETH9} from "../interfaces/IWETH9.sol";
 
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/Initializable.sol";
@@ -61,7 +63,7 @@ contract Controller is Initializable, Ownable {
     event MintShort(uint256 amount, uint256 vaultId);
     event BurnShort(uint256 amount, uint256 vaultId);
     event UpdateOperator(uint256 vaultId, address operator);
-    event Liquidate(uint256 vaultId, uint256 debtAmount, uint256 collateralToSell);
+    event Liquidate(uint256 vaultId, uint256 debtAmount, uint256 collateralPaid);
 
     modifier notShutdown() {
         require(!isShutDown, "shutdown");
@@ -180,40 +182,50 @@ contract Controller is Initializable, Ownable {
     }
 
     /**
+     * @notice if a vault is unsafe, but has a UNI NFT in it, owner call redeem the NFT to pay back some debt.
+     * @notice the caller won't get any bounty. this is expected to be used by vault owner
+     * @param _vaultId the vault you want to save
+     */
+    function reduceDebt(uint256 _vaultId) external notShutdown {
+        require(_canModifyVault(_vaultId, msg.sender), "not allowed");
+        _applyFunding();
+        VaultLib.Vault storage vault = vaults[_vaultId];
+
+        _reduceDebt(vault, vaultNFT.ownerOf(_vaultId), false);
+    }
+
+    /**
      * @notice if a vault is under the 150% collateral ratio, anyone can liquidate the vault by burning wPowerPerp
      * @dev liquidator can get back (powerPerp burned) * (index price) * 110% in collateral
      * @param _vaultId the vault you want to liquidate
-     * @param _debtAmount amount of wPowerPerpetual you want to repay.
+     * @param _maxDebtAmount max amount of wPowerPerpetual you want to repay.
+     * @return amount of wSqueeth repaid.
      */
-    function liquidate(uint256 _vaultId, uint256 _debtAmount) external notShutdown {
+    function liquidate(uint256 _vaultId, uint256 _maxDebtAmount) external notShutdown returns (uint256) {
         _applyFunding();
 
         VaultLib.Vault storage vault = vaults[_vaultId];
 
         require(!_isVaultSafe(vault), "Can not liquidate safe vault");
 
-        require(_debtAmount <= vault.shortAmount.div(2), "Can not repay more than 50% of vault debt");
+        // try to save target vault before liquidation by reducing debt
+        uint256 bounty = _reduceDebt(vault, vaultNFT.ownerOf(_vaultId), true);
 
-        uint256 collateralToPay = Power2Base._getCollateralToSell(
-            _debtAmount,
-            address(oracle),
-            ethDaiPool,
-            weth,
-            dai,
-            normalizationFactor
-        );
+        // if vault is safe after saving, pay bounty and return early.
+        if (_isVaultSafe(vault)) {
+            payable(msg.sender).sendValue(bounty);
+            return 0;
+        }
 
-        // if collateralToPay is higher than the total collateral in the vault
-        // the system only pays out the amount the vault has, which may not be profitable
-        uint256 collateralInVault = vault.collateralAmount;
-        if (collateralToPay > collateralInVault) collateralToPay = collateralInVault;
+        // add back the bounty amount, liquidators are only getting reward from liquidation.
+        vault.addEthCollateral(bounty);
 
-        wPowerPerp.burn(msg.sender, _debtAmount);
-        vault.removeShort(_debtAmount);
-        vault.removeEthCollateral(collateralToPay);
-        payable(msg.sender).sendValue(collateralToPay);
+        // if the vault is still not safe after saving, liquidate it.
+        (uint256 debtAmount, uint256 collateralPaid) = _liquidate(vault, _maxDebtAmount, msg.sender);
 
-        emit Liquidate(_vaultId, _debtAmount, collateralToPay);
+        emit Liquidate(_vaultId, debtAmount, collateralPaid);
+
+        return debtAmount;
     }
 
     /**
@@ -313,6 +325,13 @@ contract Controller is Initializable, Ownable {
      */
     function donate() external payable {}
 
+    /**
+     * fallback function to accept eth
+     */
+    receive() external payable {
+        require(msg.sender == weth, "Cannot receive eth");
+    }
+
     /*
      * ======================
      * | Internal Functions |
@@ -408,6 +427,146 @@ contract Controller is Initializable, Ownable {
         wPowerPerp.burn(_account, _amount);
 
         emit BurnShort(_amount, _vaultId);
+    }
+
+    /**
+     * @dev liquidate a vault, pay the liquidator
+     * @param _vault the vault storage
+     * @param _maxDebtAmount max debt amount liquidator is willing to repay
+     * @param _liquidator address which will receive eth
+     * @return debtAmount amount of wPowerPerp repaid (burn from the vault)
+     * @return collateralToPay amount of collateral paid to liquidator
+     */
+    function _liquidate(
+        VaultLib.Vault storage _vault,
+        uint256 _maxDebtAmount,
+        address _liquidator
+    ) internal returns (uint256, uint256) {
+        uint256 maxLiquidationAmount = _vault.shortAmount.div(2);
+
+        uint256 debtAmount = _maxDebtAmount > maxLiquidationAmount ? maxLiquidationAmount : _maxDebtAmount;
+
+        uint256 collateralToPay = Power2Base._getCollateralByRepayAmount(
+            debtAmount,
+            address(oracle),
+            ethDaiPool,
+            weth,
+            dai,
+            normalizationFactor
+        );
+
+        // 10% bonus for liquidators
+        collateralToPay = collateralToPay.add(collateralToPay.div(10));
+
+        // if collateralToPay is higher than the total collateral in the vault
+        // the system only pays out the amount the vault has, which may not be profitable
+        uint256 collateralInVault = _vault.collateralAmount;
+        if (collateralToPay > collateralInVault) collateralToPay = collateralInVault;
+
+        wPowerPerp.burn(_liquidator, debtAmount);
+        _vault.removeShort(debtAmount);
+        _vault.removeEthCollateral(collateralToPay);
+
+        // pay the liquidator
+        payable(_liquidator).sendValue(collateralToPay);
+
+        return (debtAmount, collateralToPay);
+    }
+
+    /**
+     * @notice this function will redeem the NFT in a vault
+     * @notice and reduce debt in the target vault if there's a nft in the vault
+     * @dev this function will be executed before liquidation if there's a NFT in the vault.
+     * @dev when it's called by liquidate(), it pays out a small bounty to the liquidator.
+     * @param _vault the vault storage we're saving
+     * @param _owner where should the excess go to
+     * @param _isLiquidation whether we're paying to the recipient the 2% discount or not.
+     * @return bounty amount of bounty paid for liquidator
+     */
+    function _reduceDebt(
+        VaultLib.Vault storage _vault,
+        address _owner,
+        bool _isLiquidation
+    ) internal returns (uint256) {
+        uint256 nftId = _vault.NftCollateralId;
+        if (nftId == 0) return 0;
+
+        (uint256 withdrawnEthAmount, uint256 withdrawnWPowerPerpAmount) = _redeemUniNFT(nftId);
+
+        // change weth back to eth
+        if (withdrawnEthAmount > 0) IWETH9(weth).withdraw(withdrawnEthAmount);
+
+        // the bounty is 2% on top of total value withdrawn from the NFT.
+        uint256 bounty;
+        if (_isLiquidation) {
+            uint256 totalValue = Power2Base
+                ._getCollateralByRepayAmount(
+                    withdrawnWPowerPerpAmount,
+                    address(oracle),
+                    ethDaiPool,
+                    weth,
+                    dai,
+                    normalizationFactor
+                )
+                .add(withdrawnEthAmount);
+
+            bounty = totalValue.mul(2).div(100);
+        }
+
+        _vault.removeUniNftCollateral();
+        // todo: batch SSTORE
+        _vault.addEthCollateral(withdrawnEthAmount);
+        _vault.removeEthCollateral(bounty);
+
+        // burn min of (shortAmount, withdrawnWPowerPerpAmount) from the vault.
+        uint256 cachedShortAmount = _vault.shortAmount;
+
+        if (withdrawnWPowerPerpAmount > cachedShortAmount) {
+            uint256 excess = withdrawnWPowerPerpAmount.sub(cachedShortAmount);
+            withdrawnWPowerPerpAmount = cachedShortAmount;
+            wPowerPerp.transfer(_owner, excess);
+        }
+
+        _vault.removeShort(withdrawnWPowerPerpAmount);
+        wPowerPerp.burn(address(this), withdrawnWPowerPerpAmount);
+
+        return bounty;
+    }
+
+    /**
+     * @dev redeem a uni v3 nft and get back wPerp and eth.
+     */
+    function _redeemUniNFT(uint256 _nftId) internal returns (uint256 wethAmount, uint256 wPowerPerpAmount) {
+        INonfungiblePositionManager positionManager = INonfungiblePositionManager(uniswapPositionManager);
+
+        (, , uint128 liquidity) = VaultLib._getUniswapPositionInfo(uniswapPositionManager, _nftId);
+
+        // prepare parameters to withdraw liquidity from Uniswap V3 Position Manager.
+        INonfungiblePositionManager.DecreaseLiquidityParams memory decreaseParams = INonfungiblePositionManager
+            .DecreaseLiquidityParams({
+                tokenId: _nftId,
+                liquidity: liquidity,
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: block.timestamp
+            });
+
+        // the decreaseLiquidity function returns the amount collectable by the owner.
+        (uint256 amount0, uint256 amount1) = positionManager.decreaseLiquidity(decreaseParams);
+
+        // withdraw weth and wPowerPerp from Uniswap V3.
+        INonfungiblePositionManager.CollectParams memory collectParams = INonfungiblePositionManager.CollectParams({
+            tokenId: _nftId,
+            recipient: address(this),
+            amount0Max: uint128(amount0),
+            amount1Max: uint128(amount1)
+        });
+
+        (uint256 collectedToken0, uint256 collectedToken1) = positionManager.collect(collectParams);
+
+        bool cacheIsWethToken0 = isWethToken0; // cache storage variable
+        wethAmount = cacheIsWethToken0 ? collectedToken0 : collectedToken1;
+        wPowerPerpAmount = cacheIsWethToken0 ? collectedToken1 : collectedToken0;
     }
 
     /// @notice Update the normalized factor as a way to pay funding.

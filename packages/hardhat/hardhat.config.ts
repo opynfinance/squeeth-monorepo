@@ -1,7 +1,7 @@
 import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-etherscan";
 import "@typechain/hardhat";
-import "solidity-coverage";
+import "@float-capital/solidity-coverage" // fix compiler bug when abi encoder is enabled 
 import "hardhat-contract-sizer";
 import "hardhat-gas-reporter";
 import "hardhat-prettier";

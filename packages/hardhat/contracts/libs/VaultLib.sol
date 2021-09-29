@@ -125,25 +125,52 @@ library VaultLib {
         int24 _wsqueethPoolTick,
         bool _isWethToken0
     ) internal view returns (uint256 ethAmount, uint256 squeethAmount) {
-        (uint256 amount0, uint256 amount1) = _getToken0Token1Balances(_positionManager, _tokenId, _wsqueethPoolTick);
+        (int24 tickLower, int24 tickUpper, uint128 liquidity) = _getUniswapPositionInfo(_positionManager, _tokenId);
+        (uint256 amount0, uint256 amount1) = _getToken0Token1Balances(
+            tickLower,
+            tickUpper,
+            _wsqueethPoolTick,
+            liquidity
+        );
         return (_isWethToken0 ? amount0 : amount1, _isWethToken0 ? amount1 : amount0);
     }
 
-    /// @notice get how much token0 / token1 a LP position is worth.
-    /// @param _positionManager address of the uni v3 position manager
-    /// @param _tokenId LP token id
-    /// @param _tick current price tick used for calculation
-    /// @return amount0 the amount of token0 this LP token is worth
-    /// @return amount1 the amount of token1 this LP token is worth
-    function _getToken0Token1Balances(
-        address _positionManager,
-        uint256 _tokenId,
-        int24 _tick
-    ) internal view returns (uint256 amount0, uint256 amount1) {
-        // get the LP info and tick bond of the LP position.
+    /**
+     * @notice get the LP info and tick bond of the LP position.
+     * @param _positionManager address of the uni v3 position manager
+     * @param _tokenId LP token id
+     * @return tickLower lower tick of the position
+     * @return tickUpper upper tick of the position
+     * @return liquidity raw liquidity amount of the position
+     */
+    function _getUniswapPositionInfo(address _positionManager, uint256 _tokenId)
+        internal
+        view
+        returns (
+            int24,
+            int24,
+            uint128
+        )
+    {
         INonfungiblePositionManager positionManager = INonfungiblePositionManager(_positionManager);
         (, , , , , int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) = positionManager.positions(_tokenId);
+        return (tickLower, tickUpper, liquidity);
+    }
 
+    /**
+     * @notice get how much token0 / token1 a LP position is worth.
+     * @param _tickLower address of the uni v3 position manager
+     * @param _tickUpper LP token id
+     * @param _tick current price tick used for calculation
+     * @return amount0 the amount of token0 this LP token is worth
+     * @return amount1 the amount of token1 this LP token is worth
+     */
+    function _getToken0Token1Balances(
+        int24 _tickLower,
+        int24 _tickUpper,
+        int24 _tick,
+        uint128 _liquidity
+    ) internal pure returns (uint256 amount0, uint256 amount1) {
         // get the current price and tick from squeethPool
         uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(_tick);
 
@@ -155,31 +182,31 @@ library VaultLib {
         // getAmount0Delta: https://github.com/Uniswap/uniswap-v3-core/blob/b2c5555d696428c40c4b236069b3528b2317f3c1/contracts/libraries/SqrtPriceMath.sol#L209
         // getAmount1Delta: https://github.com/Uniswap/uniswap-v3-core/blob/b2c5555d696428c40c4b236069b3528b2317f3c1/contracts/libraries/SqrtPriceMath.sol#L225
 
-        if (_tick < tickLower) {
+        if (_tick < _tickLower) {
             amount0 = SqrtPriceMath.getAmount0Delta(
-                TickMath.getSqrtRatioAtTick(tickLower),
-                TickMath.getSqrtRatioAtTick(tickUpper),
-                liquidity,
+                TickMath.getSqrtRatioAtTick(_tickLower),
+                TickMath.getSqrtRatioAtTick(_tickUpper),
+                _liquidity,
                 true
             );
-        } else if (_tick < tickUpper) {
+        } else if (_tick < _tickUpper) {
             amount0 = SqrtPriceMath.getAmount0Delta(
                 sqrtPriceX96,
-                TickMath.getSqrtRatioAtTick(tickUpper),
-                liquidity,
+                TickMath.getSqrtRatioAtTick(_tickUpper),
+                _liquidity,
                 true
             );
             amount1 = SqrtPriceMath.getAmount1Delta(
-                TickMath.getSqrtRatioAtTick(tickLower),
+                TickMath.getSqrtRatioAtTick(_tickLower),
                 sqrtPriceX96,
-                liquidity,
+                _liquidity,
                 true
             );
         } else {
             amount1 = SqrtPriceMath.getAmount1Delta(
-                TickMath.getSqrtRatioAtTick(tickLower),
-                TickMath.getSqrtRatioAtTick(tickUpper),
-                liquidity,
+                TickMath.getSqrtRatioAtTick(_tickLower),
+                TickMath.getSqrtRatioAtTick(_tickUpper),
+                _liquidity,
                 true
             );
         }

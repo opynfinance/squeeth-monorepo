@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.7.6;
+pragma abicoder v2;
 
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
 
 contract MockUniPositionManager is ERC721 {
     int24 public tickLower;
@@ -9,6 +12,9 @@ contract MockUniPositionManager is ERC721 {
     uint128 public liquidity;
     address public token0;
     address public token1;
+
+    uint256 token0ToCollect;
+    uint256 token1ToCollect;
 
     constructor() ERC721("Uniswap Position", "UNIP") {}
 
@@ -63,5 +69,28 @@ contract MockUniPositionManager is ERC721 {
             0, //tokensOwed0,
             0 //tokensOwed1
         );
+    }
+
+    function setAmount0Amount1ToDecrease(uint256 amount0, uint256 amount1) external {
+        token0ToCollect = amount0;
+        token1ToCollect = amount1;
+    }
+
+    function decreaseLiquidity(
+        INonfungiblePositionManager.DecreaseLiquidityParams memory /*params*/
+    ) external view returns (uint256, uint256) {
+        return (token0ToCollect, token1ToCollect);
+    }
+
+    function collect(INonfungiblePositionManager.CollectParams memory params) external returns (uint256, uint256) {
+        uint256 cachedAmount0 = token0ToCollect;
+        uint256 cachedAmount1 = token1ToCollect;
+        uint256 token0Amount = cachedAmount0 > params.amount0Max ? params.amount0Max : cachedAmount0;
+        uint256 token1Amount = cachedAmount1 > params.amount1Max ? params.amount1Max : cachedAmount1;
+        IERC20(token0).transfer(params.recipient, token0Amount);
+        IERC20(token1).transfer(params.recipient, token1Amount);
+        token0ToCollect = 0;
+        token1ToCollect = 0;
+        return (token0Amount, token1Amount);
     }
 }

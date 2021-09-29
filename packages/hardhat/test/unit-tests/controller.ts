@@ -125,6 +125,10 @@ describe("Controller", function () {
         const index = await controller.getIndex(30)
         expect(index.eq(ethUSDPrice.mul(ethUSDPrice).div(one))).to.be.true
       })
+
+      it('should revert when sending eth to controller from an EOA', async() => {
+        await expect(random.sendTransaction({to: controller.address, value:1})).to.be.revertedWith('Cannot receive eth')
+      })
     })
 
     describe("#Mint: Open vault", async () => {
