@@ -19,8 +19,9 @@ const useStyles = makeStyles((theme) =>
       position: 'sticky',
       top: '0px',
       zIndex: 10,
-      background: theme.palette.background.default,
+      //background: theme.palette.background.default,
       borderBottom: `1px solid ${theme.palette.background.stone}`,
+      backdropFilter: 'blur(30px)',
     },
     logo: {
       marginRight: theme.spacing(2),
@@ -65,7 +66,7 @@ const Nav: React.FC = () => {
     <div className={classes.nav}>
       <Image src={logo} alt="logo" width={75} height={75} className={classes.logo} />
       <div className={classes.navDiv}>
-        <NavLink path="/" name="Squeeth" />
+        <NavLink path="/" name="Trade" />
         <NavLink path="/strategies" name="Strategies" />
         <NavLink path="/positions" name="Positions" />
         <NavLink path="/lp" name="LP" />

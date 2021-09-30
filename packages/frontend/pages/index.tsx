@@ -94,11 +94,15 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(4),
     },
     infoIcon: {
-      fontSize: '10px',
+      fontSize: '14px',
       marginLeft: theme.spacing(0.5),
     },
     infoItem: {
       marginRight: theme.spacing(4),
+    },
+    infoLabel: {
+      display: 'flex',
+      alignItems: 'center',
     },
   }),
 )
@@ -136,39 +140,34 @@ export default function Home() {
           <Typography color="textSecondary" variant="body2">
             ETH Price
           </Typography>
-          <Typography>${ethPrice.toNumber()}</Typography>
+          <Typography>${ethPrice.toNumber().toLocaleString()}</Typography>
         </div>
         <div className={classes.infoItem}>
-          <Typography color="textSecondary" variant="body2">
-            24h Funding
-            <Tooltip title={'Funding happens every time the contract is touched.'}>
+          <div className={classes.infoLabel}>
+            <Typography color="textSecondary" variant="body2">
+              Implied 24h Funding
+            </Typography>
+            <Tooltip title={'Estimated amount of funding paid in next 24 hours. Funding will happen in kind.'}>
               <InfoIcon fontSize="small" className={classes.infoIcon} />
             </Tooltip>
-          </Typography>
+          </div>
           <Typography>{(fundingPerDay * 100).toFixed(2)}%</Typography>
         </div>
         <div className={classes.infoItem}>
-          <Typography color="textSecondary" variant="body2">
-            Index Price
-          </Typography>
-          <Typography>${ethPrice.multipliedBy(ethPrice).toFixed(2)}</Typography>
+          <div className={classes.infoLabel}>
+            <Typography color="textSecondary" variant="body2">
+              ETH&sup2; Price
+            </Typography>
+          </div>
+          <Typography>${Number(ethPrice.multipliedBy(ethPrice).toFixed(2)).toLocaleString()}</Typography>
         </div>
         <div className={classes.infoItem}>
-          {tradeType === TradeType.BUY ? (
-            <>
-              <Typography color="textSecondary" variant="body2">
-                Long Position
-              </Typography>
-              <Typography>{lngAmt.toFixed(8)} WSQTH</Typography>
-            </>
-          ) : (
-            <>
-              <Typography color="textSecondary" variant="body2">
-                Short Position
-              </Typography>
-              <Typography>{shrtAmt.negated().toFixed(8)} WSQTH</Typography>
-            </>
-          )}
+          <Typography color="textSecondary" variant="body2">
+            My Position
+          </Typography>
+          <Typography>
+            {tradeType === TradeType.BUY ? lngAmt.toFixed(8) : shrtAmt.negated().toFixed(8)} WSQTH
+          </Typography>
         </div>
       </div>
     )
@@ -189,7 +188,7 @@ export default function Home() {
             </Typography>
             <SqueethInfo />
             <Typography className={classes.cardTitle} variant="h6">
-              Historical PNL Backtest
+              Historical Predicted Performance
             </Typography>
             <div className={classes.amountInput}>
               <LongChart />
@@ -290,7 +289,7 @@ export default function Home() {
               Payoff
             </Typography>
             <LongSqueethPayoff ethPrice={ethPrice.toNumber()} />
-            <Typography variant="body2" className={classes.payoff}>
+            {/* <Typography variant="body2" className={classes.payoff}>
               You are getting ${squeethExposure.toFixed(2)} of squeeth exposure. If ETH goes up &nbsp;
               <TextField
                 size="small"
@@ -309,7 +308,7 @@ export default function Home() {
               <br /> <br />
               If ETH goes down, you lose less compared to 2x leverage.
             </Typography>
-            <br />
+            <br /> */}
           </Grid>
         </Grid>
       ) : (

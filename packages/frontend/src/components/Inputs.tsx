@@ -11,7 +11,7 @@ const useStyles = makeStyles((theme) =>
       textAlign: 'left',
       border: `1px solid ${theme.palette.background.stone}`,
       borderRadius: theme.spacing(1),
-      padding: theme.spacing(1),
+      padding: theme.spacing(1.5),
       display: 'flex',
       alignItems: 'flex-end',
       boxSizing: 'border-box',
@@ -22,9 +22,9 @@ const useStyles = makeStyles((theme) =>
       },
     },
     rightContainer: {
-      width: '65%',
+      width: '55%',
     },
-    actionContainer: {},
+    unitsContainer: {},
     label: {
       color: theme.palette.text.secondary,
     },
@@ -49,6 +49,9 @@ const useStyles = makeStyles((theme) =>
     inputContainer: {
       margin: theme.spacing(0.5, 0),
     },
+    unit: {
+      fontSize: '22px',
+    },
   }),
 )
 
@@ -56,9 +59,11 @@ type PrimaryInputType = {
   value: number | string
   onChange: (value: number | string) => void
   label: string
+  unit: string
   tooltip?: string
   actionTxt?: string
   onActionClicked?: () => void
+  convertedValue: number | string
 }
 
 export const PrimaryInput: React.FC<PrimaryInputType> = ({
@@ -68,6 +73,8 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
   tooltip,
   actionTxt,
   onActionClicked,
+  unit,
+  convertedValue,
 }) => {
   const classes = useStyles()
 
@@ -94,12 +101,16 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
           ></input>
         </div>
       </div>
-      <div className={classes.actionContainer}>
+      <div>
         {actionTxt && onActionClicked ? (
-          <Button size="small" color="primary" onClick={onActionClicked}>
+          <Button size="small" color="primary" onClick={onActionClicked} variant="text">
             {actionTxt}
           </Button>
         ) : null}
+      </div>
+      <div className={classes.unitsContainer}>
+        <Typography variant="caption">${convertedValue}</Typography>
+        <Typography className={classes.unit}>{unit}</Typography>
       </div>
     </div>
   )

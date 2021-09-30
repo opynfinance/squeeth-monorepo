@@ -128,11 +128,11 @@ export function LongChart() {
           value={days}
           type="number"
           style={{ width: 300 }}
-          label="Back Test Days"
+          label="Historical Days"
           variant="outlined"
         />
       </div>
-      <IV />
+      {/* <IV /> */}
     </div>
   )
 }

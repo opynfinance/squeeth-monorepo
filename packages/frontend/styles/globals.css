@@ -1,9 +1,21 @@
-html,
 body {
   padding: 0;
   margin: 0;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
     Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+
+    background: #181B1C;  /* fallback for old browsers */
+    background: -webkit-linear-gradient(to bottom, #3296fa11, #181B1C); /* Chrome 10-25, Safari 5.1-6 */
+    background: linear-gradient(to bottom, #3296fa11, #181B1C); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */ 
+    height: 100vh;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+html {
+  padding: 0;
+  margin: 0;
+  background: 'none';
 }
 
 input[type=number]::-webkit-inner-spin-button, 

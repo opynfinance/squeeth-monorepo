@@ -453,7 +453,7 @@ export default function Vault() {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
             <Typography className={classes.header} variant="h6">
-              Historical PNL Backtest
+              Historical Predicted Performance
             </Typography>
             <FormControlLabel
               control={<Switch checked={showPercentage} onChange={(event, checked) => setShowPercentage(checked)} />}

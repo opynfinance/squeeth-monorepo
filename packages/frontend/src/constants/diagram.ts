@@ -37,7 +37,7 @@ export const graphOptions = {
   },
   layout: {
     fontSize: 12,
-    backgroundColor: '#181B1C',
+    backgroundColor: '#181B1C00',
     fontFamily: 'Mulish',
   },
 }

@@ -1,4 +1,4 @@
-import { CircularProgress, createStyles, makeStyles, Typography } from '@material-ui/core'
+import { CircularProgress, createStyles, Divider, makeStyles, Typography } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useState } from 'react'
 
@@ -34,6 +34,10 @@ const useStyles = makeStyles((theme) =>
     },
     caption: {
       marginTop: theme.spacing(1),
+    },
+    divider: {
+      marginTop: theme.spacing(2),
+      marginButtom: theme.spacing(2),
     },
     details: {
       marginTop: theme.spacing(4),
@@ -106,6 +110,21 @@ const useStyles = makeStyles((theme) =>
     infoIcon: {
       marginLeft: theme.spacing(0.5),
       color: theme.palette.text.secondary,
+    },
+    squeethExp: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      borderRadius: theme.spacing(1),
+      padding: theme.spacing(1.5),
+      width: '300px',
+      marginLeft: 'auto',
+      marginRight: 'auto',
+      marginTop: theme.spacing(2),
+      textAlign: 'left',
+      backgroundColor: theme.palette.background.stone,
+    },
+    squeethExpTxt: {
+      fontSize: '20px',
     },
   }),
 )
@@ -192,25 +211,36 @@ const Buy: React.FC<BuyProps> = ({
       <PrimaryInput
         value={amount.toString()}
         onChange={(v) => setAmount(Number(v))}
-        label="ETH Amount"
+        label="Amount"
         tooltip="Amount of ETH you want to spend to get Squeeth exposure"
         actionTxt="Max"
         onActionClicked={() => setAmount(balance)}
+        unit="ETH"
+        convertedValue={(amount * Number(ethPrice)).toFixed(2).toLocaleString()}
       />
+      {/* <TradeInfoItem label="Squeeth you get" value={cost.toFixed(8)} unit="WSQTH" /> */}
+      <div className={classes.squeethExp}>
+        <div>
+          <Typography variant="caption">Buy</Typography>
+          <Typography className={classes.squeethExpTxt}>{cost.toFixed(6)}</Typography>
+        </div>
+        <div>
+          <Typography variant="caption">${Number(squeethExposure.toFixed(2)).toLocaleString()}</Typography>
+          <Typography className={classes.squeethExpTxt}>wSQTH</Typography>
+        </div>
+      </div>
+
+      <TradeInfoItem label="If ETH up 2x" value={Number((squeethExposure * 4).toFixed(2)).toLocaleString()} unit="$" />
+      {/* if ETH down 50%, squeeth down 75%, so multiply amount by 0.25 to get what would remain  */}
       <TradeInfoItem
-        label="Squeeth Exposure"
-        value={Number(squeethExposure.toFixed(2)).toLocaleString()}
-        unit="$$ of SQTH"
+        label="If ETH down 50%"
+        value={(amount * Number(ethPrice) * 0.25).toFixed(2).toLocaleString()}
+        unit="$"
       />
+      <Divider className={classes.divider} />
       <TradeInfoItem label="Slippage tolerance" value="0.5" unit="%" />
       <TradeInfoItem label="Price Impact" value={quote.priceImpact} unit="%" />
-      <TradeInfoItem
-        label="Minimum received"
-        value={Number(
-          quote.minimumAmountOut.times(ethPrice).times(ethPrice).dividedBy(10000).times(normalizationFactor).toFixed(2),
-        ).toLocaleString()}
-        unit="$$ of SQTH"
-      />
+      <TradeInfoItem label="Minimum received" value={quote.minimumAmountOut.toFixed(6)} unit="wSQTH" />
       {!connected ? (
         <PrimaryButton
           variant="contained"

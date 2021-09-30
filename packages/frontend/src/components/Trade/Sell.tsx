@@ -1,5 +1,5 @@
 import { CircularProgress } from '@material-ui/core'
-import { createStyles, InputAdornment, makeStyles, TextField, Tooltip, Typography } from '@material-ui/core'
+import { createStyles, Divider, InputAdornment, makeStyles, TextField, Tooltip, Typography } from '@material-ui/core'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useMemo, useState } from 'react'
@@ -67,6 +67,25 @@ const useStyles = makeStyles((theme) =>
     infoIcon: {
       marginLeft: theme.spacing(0.5),
       color: theme.palette.text.secondary,
+    },
+    squeethExp: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      borderRadius: theme.spacing(1),
+      padding: theme.spacing(1.5),
+      width: '300px',
+      marginLeft: 'auto',
+      marginRight: 'auto',
+      marginTop: theme.spacing(2),
+      textAlign: 'left',
+      backgroundColor: theme.palette.background.stone,
+    },
+    squeethExpTxt: {
+      fontSize: '20px',
+    },
+    divider: {
+      marginTop: theme.spacing(2),
+      marginButtom: theme.spacing(2),
     },
   }),
 )
@@ -186,10 +205,12 @@ const Sell: React.FC<{ balance: number }> = ({ balance }) => {
         <PrimaryInput
           value={collateral.toString()}
           onChange={(v) => setCollateral(Number(v))}
-          label="ETH Collateral"
+          label="Collateral"
           tooltip="Amount of ETH collateral"
           actionTxt="Max"
           onActionClicked={() => setCollateral(balance)}
+          unit="ETH"
+          convertedValue={(collateral * Number(ethPrice)).toFixed(2).toLocaleString()}
         />
       </div>
       <div className={classes.thirdHeading}>
@@ -218,11 +239,21 @@ const Sell: React.FC<{ balance: number }> = ({ balance }) => {
       </div>
       <div className={classes.thirdHeading}></div>
       <CollatRange />
-      <TradeInfoItem
-        label="Squeeth exposure"
-        value={ethPrice.times(ethPrice).times(amount).dividedBy(10000).times(normalizationFactor).toFixed(2)}
-        unit="$$ of SQTH"
-      />
+      <div className={classes.squeethExp}>
+        <div>
+          <Typography variant="caption">Sell</Typography>
+          <Typography className={classes.squeethExpTxt}>{amount.toFixed(6)}</Typography>
+        </div>
+        <div>
+          <Typography variant="caption">
+            $
+            {Number(
+              ethPrice.times(ethPrice).times(amount).dividedBy(10000).times(normalizationFactor).toFixed(2),
+            ).toLocaleString()}
+          </Typography>
+          <Typography className={classes.squeethExpTxt}>wSQTH</Typography>
+        </div>
+      </div>
       <TradeInfoItem
         label="Liquidation Price"
         value={liqPrice.toFixed(2)}
@@ -235,6 +266,7 @@ const Sell: React.FC<{ balance: number }> = ({ balance }) => {
         unit="ETH"
         tooltip={'Initial payment you get for selling squeeth on Uniswap'}
       />
+      <Divider className={classes.divider} />
       <TradeInfoItem label="Slippage tolerance" value="0.5" unit="%" />
       <TradeInfoItem label="Price Impact" value={quote.priceImpact} unit="%" />
       <TradeInfoItem label="Minimum received" value={quote.minimumAmountOut.toFixed(4)} unit="ETH" />

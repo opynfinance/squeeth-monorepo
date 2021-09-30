@@ -132,11 +132,11 @@ export function VaultChart({
           value={days}
           type="number"
           style={{ width: 300 }}
-          label="Back Test Days"
+          label="Historical Days"
           variant="outlined"
         />
       </div>
-      <IV />
+      {/* <IV /> */}
       {vault === Vaults.Custom && (
         <TextField
           onChange={(event) => setCustomLong(parseFloat(event.target.value))}
