@@ -65,7 +65,7 @@
         "type": "uint32"
       }
     ],
-    "name": "getTwaPrice",
+    "name": "getTwap",
     "outputs": [
       {
         "internalType": "uint256",
@@ -99,7 +99,7 @@
         "type": "uint32"
       }
     ],
-    "name": "getTwaPriceSafe",
+    "name": "getTwapSafe",
     "outputs": [
       {
         "internalType": "uint256",
