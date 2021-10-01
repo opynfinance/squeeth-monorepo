@@ -23,6 +23,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import crabpayoff from '../public/images/crabpayoff.png'
 import ethbullpayoff from '../public/images/ethbullpayoff.png'
+import ShortSqueethPayoff from '../src/components/Charts/ShortSqueethPayoff'
 import { VaultChart } from '../src/components/Charts/VaultChart'
 import Nav from '../src/components/Nav'
 import TradeInfoItem from '../src/components/Trade/TradeInfoItem'
@@ -36,7 +37,7 @@ import { useVaultManager } from '../src/hooks/contracts/useVaultManager'
 import { useAddresses } from '../src/hooks/useAddress'
 import useAsyncMemo from '../src/hooks/useAsyncMemo'
 import { useETHPriceCharts } from '../src/hooks/useETHPriceCharts'
-import { calculateLiquidationPrice, getFairSqueethBid, getVolForTimestamp } from '../src/utils'
+import { calculateLiquidationPrice, getCrabVaultPayoff, getFairSqueethBid, getVolForTimestamp } from '../src/utils'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -183,7 +184,8 @@ const getAdvancedDetail = (vault: Vaults) => {
             Learn more.{' '}
           </a>
         </p>
-        <Image src={crabpayoff} alt="crab payoff" width={450} height={300} />
+        {/* <Image src={crabpayoff} alt="crab payoff" width={450} height={300} /> */}
+        <ShortSqueethPayoff ethPrice={3000} collatRatio={2} vaultType={Vaults.CrabVault} />
         <br /> <br />
         <br />
         <Typography style={{ color: '#FFFFFF' }} variant="h6">

@@ -2,10 +2,12 @@ import { createStyles, makeStyles } from '@material-ui/core'
 import React, { useCallback, useEffect, useState } from 'react'
 import { Line } from 'react-chartjs-2'
 
-import { getSqueethLongPayOffGraph } from '../../utils'
+import { Vaults } from '../../constants'
+import { getCrabVaultPayoff, getSqueethShortPayOffGraph } from '../../utils'
 
-const primaryColor = '#2CE6F9'
-const errorColor = '#EC7987'
+const color0 = '#6df7e7'
+const color14 = '#6d78f7'
+const color28 = '#F5B073'
 
 const chartOptions = {
   maintainAspectRatio: false,
@@ -13,21 +15,15 @@ const chartOptions = {
   title: { display: true },
   legend: {
     display: true,
-    labels: {
-      filter: (legendItem: any) => {
-        const label = legendItem.text
-        if (label === '2xLeverage') return false
-        return true
-      },
-    },
   },
   scales: {
     yAxes: [
       {
         display: true,
         gridLines: {
-          zeroLineWidth: 0,
+          zeroLineWidth: 2,
           lineWidth: 0,
+          zeroLineColor: '#77757E80',
         },
         ticks: {
           display: true,
@@ -42,7 +38,7 @@ const chartOptions = {
       {
         display: true,
         scaleLabel: {
-          labelString: '% Change in ETH price',
+          labelString: 'ETH price',
           display: true,
         },
         ticks: {
@@ -66,7 +62,7 @@ const chartOptions = {
         return `${data.datasets[tooltipItem.datasetIndex].label}: ${tooltipItem.yLabel} %`
       },
       title: function (tooltipItem: any, data: any) {
-        return `${tooltipItem[0].xLabel} % ETH Change`
+        return `ETH Price: $${tooltipItem[0].xLabel}`
       },
     },
   },
@@ -108,58 +104,69 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const LongSqueethPayoff: React.FC<{ ethPrice: number }> = ({ ethPrice }) => {
-  const [labels, setLabels] = useState<Array<string>>([])
-  const [values, setValues] = useState<Array<string>>([])
-  const [twoXValues, setTwoXvalues] = useState<Array<number | null>>([])
-  const [twoXImgValues, setTwoXImgvalues] = useState<Array<number | null>>([])
+const ShortSqueethPayoff: React.FC<{ ethPrice: number; collatRatio: number; vaultType?: Vaults }> = ({
+  ethPrice,
+  collatRatio,
+  vaultType,
+}) => {
+  const [labels, setLabels] = useState<Array<number>>([])
+  const [values0, setValues0] = useState<Array<string>>([])
+  const [values14, setValues14] = useState<Array<string | null>>([])
+  const [values28, setValues28] = useState<Array<string | null>>([])
 
   const classes = useStyles()
 
   useEffect(() => {
-    const { ethPercents, powerTokenPayout, twoXLeverage, twoXLeverageImaginary } = getSqueethLongPayOffGraph(ethPrice)
-    setLabels(ethPercents)
-    setValues(powerTokenPayout)
-    setTwoXvalues(twoXLeverage)
-    setTwoXImgvalues(twoXLeverageImaginary)
-  }, [ethPrice])
+    if (!vaultType) {
+      const { ethPrices, payout0, payout14, payout28 } = getSqueethShortPayOffGraph(ethPrice, collatRatio)
+      setLabels(ethPrices)
+      setValues0(payout0)
+      setValues14(payout14)
+      setValues28(payout28)
+    } else if (vaultType === Vaults.CrabVault) {
+      const { ethPrices, payout0, payout14, payout28 } = getCrabVaultPayoff(ethPrice, collatRatio)
+      setLabels(ethPrices)
+      setValues0(payout0)
+      setValues14(payout14)
+      setValues28(payout28)
+    }
+  }, [ethPrice, collatRatio])
 
   const getData = useCallback(() => {
     return {
       labels,
       datasets: [
         {
-          label: 'Squeeth',
-          data: values,
+          label: '28 day return',
+          data: values28,
           fill: false,
-          borderColor: primaryColor,
-          pointHoverBorderColor: primaryColor,
-          pointHoverBackgroundColor: primaryColor,
+          borderColor: color28,
+          pointHoverBorderColor: color28,
+          pointHoverBackgroundColor: color28,
           pointBackgroundColor: 'rgba(0, 0, 0, 0)',
           pointBorderColor: 'rgba(0, 0, 0, 0)',
           pointHoverRadius: 5,
           pointHitRadius: 30,
         },
         {
-          label: '2x Leverage',
-          data: twoXValues,
+          label: '14 day return',
+          data: values14,
           fill: false,
-          borderColor: errorColor,
-          pointHoverBorderColor: errorColor,
-          pointHoverBackgroundColor: errorColor,
+          borderColor: color14,
+          pointHoverBorderColor: color14,
+          pointHoverBackgroundColor: color14,
           pointBackgroundColor: 'rgba(0, 0, 0, 0)',
           pointBorderColor: 'rgba(0, 0, 0, 0)',
           pointHoverRadius: 5,
           pointHitRadius: 30,
         },
         {
-          label: '2xLeverage',
-          data: twoXImgValues,
+          label: '0 day return',
+          data: values0,
           fill: false,
-          borderDash: [5, 5],
-          borderColor: errorColor,
-          pointHoverBorderColor: errorColor,
-          pointHoverBackgroundColor: errorColor,
+          borderColor: color0,
+          pointHoverBorderColor: color0,
+          pointHoverBackgroundColor: color0,
           pointBackgroundColor: 'rgba(0, 0, 0, 0)',
           pointBorderColor: 'rgba(0, 0, 0, 0)',
           pointHoverRadius: 5,
@@ -167,7 +174,7 @@ const LongSqueethPayoff: React.FC<{ ethPrice: number }> = ({ ethPrice }) => {
         },
       ],
     }
-  }, [labels, values, twoXValues])
+  }, [labels, values0, values14, values28])
 
   return (
     <div style={{ width: '350px', marginLeft: '-30px' }}>
@@ -176,4 +183,4 @@ const LongSqueethPayoff: React.FC<{ ethPrice: number }> = ({ ethPrice }) => {
   )
 }
 
-export default LongSqueethPayoff
+export default ShortSqueethPayoff

@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react'
 
 import { LongChart } from '../src/components/Charts/LongChart'
 import LongSqueethPayoff from '../src/components/Charts/LongSqueethPayoff'
+import ShortSqueethPayoff from '../src/components/Charts/ShortSqueethPayoff'
 import { VaultChart } from '../src/components/Charts/VaultChart'
 import Nav from '../src/components/Nav'
 import Trade from '../src/components/Trade'
@@ -125,7 +126,7 @@ export default function Home() {
   const { squeethAmount: lngAmt } = useLongPositions()
   const { squeethAmount: shrtAmt } = useShortPositions()
 
-  const { volMultiplier: globalVolMultiplier } = useWorldContext()
+  const { volMultiplier: globalVolMultiplier, collatRatio } = useWorldContext()
   // use hook because we only calculate accFunding based on 24 hour performance
   const { setVolMultiplier } = useETHPriceCharts(1, globalVolMultiplier)
 
@@ -412,6 +413,10 @@ export default function Home() {
                 squeethExposure={squeethExposure}
               />
             </Card>
+            <Typography className={classes.thirdHeading} variant="h6">
+              Payoff
+            </Typography>
+            <ShortSqueethPayoff ethPrice={ethPrice.toNumber()} collatRatio={collatRatio} />
           </Grid>
         </Grid>
       )}

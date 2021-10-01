@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import db from './firestore'
 
 const apiKey = process.env.NEXT_PUBLIC_TARDIS_API_KEY as string
@@ -235,13 +236,13 @@ export function calculateLiquidationPrice(
   return (ethPrice * (shortAmount / collateralAmount + 2)) / (shortAmount / collateralAmount + 1)
 }
 
-export function getSqueethPayOffGraph(ethPrice: number) {
+export function getSqueethLongPayOffGraph(ethPrice: number) {
   const unitPerTrade = 2 / (2 * ethPrice) // Took from the sheet
   const indexAtTrade = ethPrice ** 2 // Squeeeeeeth
 
   const getEthPrices = () => {
     let inc = 0
-    return Array(245)
+    return Array(300)
       .fill(0)
       .map((_, i) => {
         if (i === 0) return inc
@@ -279,12 +280,12 @@ export function getSqueethPayOffGraph(ethPrice: number) {
   const twoXLeverage = ethPrices.map((p) => {
     const res = (((p - ethPrice) * 2) / ethPrice) * 100
     if (res < -100) return null
-    return res
+    return Number(res.toFixed(2))
   })
 
   const twoXLeverageImaginary = ethPrices.map((p) => {
     const res = (((p - ethPrice) * 2) / ethPrice) * 100
-    if (res <= -100) return res
+    if (res <= -100) return Number(res.toFixed(2))
     return null
   })
 
@@ -293,5 +294,92 @@ export function getSqueethPayOffGraph(ethPrice: number) {
     powerTokenPayout,
     twoXLeverage,
     twoXLeverageImaginary,
+  }
+}
+
+function getShortParams(ethPrice: number, collatRatio: number) {
+  const squeethIndex = ethPrice ** 2
+  const markRatio = 1.0035
+  const squeethMark = squeethIndex * markRatio
+  const dailyNormFactor = squeethMark / (2 * squeethMark - squeethIndex)
+  const initialCollat = collatRatio * ethPrice
+  const depositValue = initialCollat * ethPrice - squeethMark
+
+  const cuNF0 = dailyNormFactor ** 0
+  const cuNF14 = dailyNormFactor ** 14
+  const cuNF28 = dailyNormFactor ** 28
+  const getEthPrices = () => {
+    let inc = Math.floor(ethPrice / 2)
+    return Array(120)
+      .fill(0)
+      .map((_, i) => {
+        if (i === 0) return inc
+        inc += 30
+        return inc
+      })
+  }
+
+  return {
+    squeethIndex,
+    markRatio,
+    squeethMark,
+    initialCollat,
+    depositValue,
+    cuNF0,
+    cuNF14,
+    cuNF28,
+    ethPrices: getEthPrices(),
+  }
+}
+
+export function getSqueethShortPayOffGraph(ethPrice: number, collatRatio: number) {
+  const { markRatio, initialCollat, depositValue, cuNF0, cuNF14, cuNF28, ethPrices } = getShortParams(
+    ethPrice,
+    collatRatio,
+  )
+
+  const payout0 = ethPrices.map((p) => {
+    return (((-1 * cuNF0 * p ** 2 * markRatio + initialCollat * p) / depositValue - 1) * 100).toFixed(2)
+  })
+
+  const payout14 = ethPrices.map((p) => {
+    return (((-1 * cuNF14 * p ** 2 * markRatio + initialCollat * p) / depositValue - 1) * 100).toFixed(2)
+  })
+
+  const payout28 = ethPrices.map((p) => {
+    return (((-1 * cuNF28 * p ** 2 * markRatio + initialCollat * p) / depositValue - 1) * 100).toFixed(2)
+  })
+
+  return {
+    ethPrices,
+    payout0,
+    payout14,
+    payout28,
+  }
+}
+
+export function getCrabVaultPayoff(ethPrice: number, collatRatio: number) {
+  const { markRatio, initialCollat, depositValue, cuNF0, cuNF14, cuNF28, ethPrices } = getShortParams(
+    ethPrice,
+    collatRatio,
+  )
+
+  const payout0 = ethPrices.map((p) => {
+    return (((-(cuNF0 + ((initialCollat - 2 * cuNF0 * ethPrice) / ethPrice)) * p ** 2 * markRatio + (initialCollat + (((initialCollat - 2 * cuNF0 * ethPrice) / ethPrice) * markRatio * ethPrice)) * p) / depositValue - 1) * 100).toFixed(2)
+  })
+
+  const payout14 = ethPrices.map((p) => {
+    return (((-(cuNF14 + ((initialCollat - 2 * cuNF14 * ethPrice) / ethPrice)) * p ** 2 * markRatio + (initialCollat + (((initialCollat - 2 * cuNF14 * ethPrice) / ethPrice) * markRatio * ethPrice)) * p) / depositValue - 1) * 100).toFixed(2)
+  })
+
+  const payout28 = ethPrices.map((p) => {
+    return (((-(cuNF28 + ((initialCollat - 2 * cuNF28 * ethPrice) / ethPrice)) * p ** 2 * markRatio + (initialCollat + (((initialCollat - 2 * cuNF28 * ethPrice) / ethPrice) * markRatio * ethPrice)) * p) / depositValue - 1) * 100).toFixed(2)
+  })
+
+  return {
+    ethPrices,
+    payout0,
+    payout14,
+    payout28,
   }
 }
