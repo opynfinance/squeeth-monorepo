@@ -21,6 +21,8 @@ export const useController = () => {
   const { web3, address, handleTransaction } = useWallet()
   const [contract, setContract] = useState<Contract>()
   const [normFactor, setNormFactor] = useState(new BigNumber(1))
+  const [mark, setMark] = useState(new BigNumber(0))
+  const [index, setIndex] = useState(new BigNumber(0))
   const [fundingPerDay, setFundingPerDay] = useState(0)
   const { controller, ethDaiPool, weth, dai } = useAddresses()
   const { getTwapSafe } = useOracle()
@@ -39,6 +41,13 @@ export const useController = () => {
         console.log('normFactor error')
       })
   }, [controller, web3])
+
+  useEffect(() => {
+    if (!contract) return
+    //TODO: 3000 not a magic number
+    getMark(3000).then(setMark)
+    getIndex(3000).then(setIndex)
+  }, [address, contract])
 
   useEffect(() => {
     if (!contract) return
@@ -143,6 +152,8 @@ export const useController = () => {
   return {
     openDepositAndMint,
     getVault,
+    mark,
+    index,
     updateOperator,
     normFactor,
     fundingPerDay,

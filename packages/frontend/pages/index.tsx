@@ -20,6 +20,7 @@ import { useController } from '../src/hooks/contracts/useController'
 import { useETHPrice } from '../src/hooks/useETHPrice'
 import { useETHPriceCharts } from '../src/hooks/useETHPriceCharts'
 import { useLongPositions, useShortPositions } from '../src/hooks/usePositions'
+import { toTokenAmount } from '../src/utils/calculations'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -105,6 +106,19 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       alignItems: 'center',
     },
+    position: {
+      display: 'flex',
+      marginTop: theme.spacing(1),
+    },
+    positionToken: {
+      fontSize: '16px',
+      fontWeight: 600,
+      marginRight: theme.spacing(4),
+    },
+    positionUSD: {
+      fontSize: '16px',
+      marginRight: theme.spacing(4),
+    },
   }),
 )
 
@@ -122,7 +136,7 @@ export default function Home() {
   const [tradeType, setTradeType] = useState(TradeType.BUY)
   const [customLong, setCustomLong] = useState(0)
   const ethPrice = useETHPrice()
-  const { normFactor: normalizationFactor, fundingPerDay } = useController()
+  const { normFactor: normalizationFactor, fundingPerDay, mark, index } = useController()
   const { squeethAmount: lngAmt } = useLongPositions()
   const { squeethAmount: shrtAmt } = useShortPositions()
 
@@ -160,16 +174,25 @@ export default function Home() {
               ETH&sup2; Price
             </Typography>
           </div>
-          <Typography>${Number(ethPrice.multipliedBy(ethPrice).toFixed(2)).toLocaleString()}</Typography>
+          {/* <Typography>${Number(ethPrice.multipliedBy(ethPrice).toFixed(2)).toLocaleString()}</Typography> */}
+          <Typography>${Number(toTokenAmount(index, 18).toFixed(2)).toLocaleString()}</Typography>
         </div>
         <div className={classes.infoItem}>
+          <div className={classes.infoLabel}>
+            <Typography color="textSecondary" variant="body2">
+              Mark Price
+            </Typography>
+          </div>
+          <Typography>${Number(toTokenAmount(mark, 18).toFixed(2)).toLocaleString()}</Typography>
+        </div>
+        {/* <div className={classes.infoItem}>
           <Typography color="textSecondary" variant="body2">
             My Position
           </Typography>
           <Typography>
             {tradeType === TradeType.BUY ? lngAmt.toFixed(8) : shrtAmt.negated().toFixed(8)} WSQTH
           </Typography>
-        </div>
+        </div> */}
       </div>
     )
   }
@@ -193,6 +216,18 @@ export default function Home() {
             </Typography>
             <div className={classes.amountInput}>
               <LongChart />
+            </div>
+            <Typography className={classes.cardTitle} variant="h6">
+              My Position
+            </Typography>
+            <div className={classes.position}>
+              <Typography className={classes.positionToken}>{lngAmt.toFixed(4)} wSQTH</Typography>
+              <Typography>
+                $
+                {((Number(lngAmt) * Number(ethPrice) * Number(ethPrice) * Number(normalizationFactor)) / 10000).toFixed(
+                  4,
+                )}
+              </Typography>
             </div>
             <Typography className={classes.cardTitle} variant="h6">
               What is squeeth?
@@ -323,10 +358,23 @@ export default function Home() {
             </Typography>
             <SqueethInfo />
             <Typography className={classes.cardTitle} variant="h6">
-              Historical Backtests
+              Historical Predicted Performance
             </Typography>
             <div className={classes.amountInput}>
               <VaultChart vault={Vaults.Short} longAmount={0} showPercentage={false} setCustomLong={setCustomLong} />
+            </div>
+            <Typography className={classes.cardTitle} variant="h6">
+              My Position
+            </Typography>
+            <div className={classes.position}>
+              <Typography className={classes.positionToken}>{shrtAmt.negated().toFixed(4)} wSQTH</Typography>
+              <Typography>
+                $
+                {(
+                  (Number(shrtAmt) * Number(ethPrice) * Number(ethPrice) * Number(normalizationFactor)) /
+                  10000
+                ).toFixed(4)}
+              </Typography>
             </div>
             <Typography className={classes.cardTitle} variant="h6">
               What is short squeeth?
