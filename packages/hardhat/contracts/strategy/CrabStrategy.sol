@@ -1,5 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity =0.7.6;
+pragma abicoder v2;
+
+import "hardhat/console.sol";
 
 // interface
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";

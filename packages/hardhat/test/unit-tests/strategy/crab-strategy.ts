@@ -38,8 +38,8 @@ describe("Crab Strategy", function () {
     const MockUniswapV3PoolContract = await ethers.getContractFactory("MockUniswapV3Pool");
     wSqueethEthPool = (await MockUniswapV3PoolContract.deploy()) as MockUniswapV3Pool;
 
-    const MockStrategyUniOracleContract = await ethers.getContractFactory("MockOracle");
-    oracle = (await MockStrategyUniOracleContract.deploy()) as MockOracle;
+    const MockOracle = await ethers.getContractFactory("MockOracle");
+    oracle = (await MockOracle.deploy()) as MockOracle;
 
     const NFTContract = await ethers.getContractFactory("MockVaultNFTManager");
     shortNFT = (await NFTContract.deploy()) as MockVaultNFTManager;
@@ -167,7 +167,5 @@ describe("Crab Strategy", function () {
       expect(depositorSqueethBalance.eq(depositorSqueethBalanceBefore)).to.be.true
       expect(strategyContractSqueeth.eq(expectedMintedWsqueeth)).to.be.true
     })
-
-
   })
 })
