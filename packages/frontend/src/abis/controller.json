@@ -93,7 +93,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "collateralToSell",
+        "name": "collateralPaid",
         "type": "uint256"
       }
     ],
@@ -117,6 +117,31 @@
       }
     ],
     "name": "MintShort",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "oldNormFactor",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newNormFactor",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "NormalizationFactorUpdated",
     "type": "event"
   },
   {
@@ -213,25 +238,6 @@
     ],
     "name": "WithdrawUniNftCollateral",
     "type": "event"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint32",
-        "name": "_period",
-        "type": "uint32"
-      }
-    ],
-    "name": "_getDenormalizedMark",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
   },
   {
     "inputs": [],
@@ -347,6 +353,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "getExpectedNormalizationFactor",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint32",
@@ -379,7 +398,7 @@
       },
       {
         "internalType": "address",
-        "name": "_squeeth",
+        "name": "_wPowerPerp",
         "type": "address"
       },
       {
@@ -399,7 +418,7 @@
       },
       {
         "internalType": "address",
-        "name": "_wSqueethEthPool",
+        "name": "_powerPerpPool",
         "type": "address"
       },
       {
@@ -461,12 +480,18 @@
       },
       {
         "internalType": "uint256",
-        "name": "_debtAmount",
+        "name": "_maxDebtAmount",
         "type": "uint256"
       }
     ],
     "name": "liquidate",
-    "outputs": [],
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -544,10 +569,23 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "powerPerpPool",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_wsqueethAmount",
+        "name": "_wPerpAmount",
         "type": "uint256"
       }
     ],
@@ -565,6 +603,19 @@
       }
     ],
     "name": "redeemShort",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_vaultId",
+        "type": "uint256"
+      }
+    ],
+    "name": "reduceDebt",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -689,10 +740,10 @@
   },
   {
     "inputs": [],
-    "name": "wSqueethEthPool",
+    "name": "wPowerPerp",
     "outputs": [
       {
-        "internalType": "address",
+        "internalType": "contract IWPowerPerp",
         "name": "",
         "type": "address"
       }
@@ -745,16 +796,7 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "wsqueeth",
-    "outputs": [
-      {
-        "internalType": "contract IWSqueeth",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
+    "stateMutability": "payable",
+    "type": "receive"
   }
 ]

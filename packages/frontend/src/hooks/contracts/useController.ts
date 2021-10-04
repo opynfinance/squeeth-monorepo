@@ -32,13 +32,21 @@ export const useController = () => {
     setContract(new web3.eth.Contract(abi as any, controller))
     const controllerContract = new web3.eth.Contract(abi as any, controller)
     controllerContract.methods
-      .normalizationFactor()
+      .getExpectedNormalizationFactor()
       .call()
       .then((normFactor: any) => {
         setNormFactor(toTokenAmount(new BigNumber(normFactor.toString()), 18))
       })
       .catch(() => {
-        console.log('normFactor error')
+        controllerContract.methods
+          .normalizationFactor()
+          .call()
+          .then((normFactor: any) => {
+            setNormFactor(toTokenAmount(new BigNumber(normFactor.toString()), 18))
+          })
+          .catch(() => {
+            console.log('normFactor error')
+          })
       })
   }, [controller, web3])
 
