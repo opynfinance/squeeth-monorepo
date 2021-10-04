@@ -27,7 +27,7 @@ contract StrategyBase is ERC20 {
     IController public powerTokenController;
 
     /// @dev Strategy vault ID
-    uint256 private _vaultId;
+    uint256 internal _vaultId;
 
     /// @dev emit when strategy open short position
     event OpenVault(uint256 vaultId);
