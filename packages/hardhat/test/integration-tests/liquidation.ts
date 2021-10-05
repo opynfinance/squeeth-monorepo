@@ -135,7 +135,7 @@ describe("Liquidation Integration Test", function () {
     await (positionManager as INonfungiblePositionManager).connect(liquidityProvider).transferFrom(liquidityProvider.address, seller2.address, vault1LPTokenId)
     await (positionManager as INonfungiblePositionManager).connect(seller2).approve(controller.address, vault1LPTokenId)
 
-    await controller.connect(seller2).depositUniNFT(vault1Id, vault1LPTokenId)
+    await controller.connect(seller2).depositUniPositionToken(vault1Id, vault1LPTokenId)
     const vault = await controller.vaults(vault1Id)
     expect(vault.NftCollateralId.eq(vault1LPTokenId)).to.be.true
   })
@@ -160,7 +160,7 @@ describe("Liquidation Integration Test", function () {
     await (positionManager as INonfungiblePositionManager).connect(liquidityProvider).transferFrom(liquidityProvider.address, seller3.address, vault2LPTokenId)
     await (positionManager as INonfungiblePositionManager).connect(seller3).approve(controller.address, vault2LPTokenId)
 
-    await controller.connect(seller3).depositUniNFT(vault2Id, vault2LPTokenId)
+    await controller.connect(seller3).depositUniPositionToken(vault2Id, vault2LPTokenId)
     const vault = await controller.vaults(vault2Id)
     expect(vault.NftCollateralId.eq(vault2LPTokenId)).to.be.true
   })

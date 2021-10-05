@@ -72,7 +72,7 @@
         "type": "uint256"
       }
     ],
-    "name": "DepositUniNftCollateral",
+    "name": "DepositUniPositionToken",
     "type": "event"
   },
   {
@@ -236,7 +236,7 @@
         "type": "uint256"
       }
     ],
-    "name": "WithdrawUniNftCollateral",
+    "name": "WithdrawUniPositionToken",
     "type": "event"
   },
   {
@@ -255,7 +255,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "_amount",
+        "name": "_wPowerPerpAmount",
         "type": "uint256"
       },
       {
@@ -304,11 +304,11 @@
       },
       {
         "internalType": "uint256",
-        "name": "_tokenId",
+        "name": "_uniTokenId",
         "type": "uint256"
       }
     ],
-    "name": "depositUniNFT",
+    "name": "depositUniPositionToken",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -504,12 +504,12 @@
       },
       {
         "internalType": "uint128",
-        "name": "_mintAmount",
+        "name": "_rPowerPerpAmount",
         "type": "uint128"
       },
       {
         "internalType": "uint256",
-        "name": "_nftTokenId",
+        "name": "_uniTokenId",
         "type": "uint256"
       }
     ],
@@ -522,7 +522,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "_wSqueethMinted",
+        "name": "",
         "type": "uint256"
       }
     ],
@@ -790,7 +790,7 @@
         "type": "uint256"
       }
     ],
-    "name": "withdrawUniNFT",
+    "name": "withdrawUniPositionToken",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

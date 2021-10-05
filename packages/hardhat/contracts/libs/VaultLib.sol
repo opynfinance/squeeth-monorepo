@@ -16,7 +16,6 @@ library VaultLib {
     */
     struct Vault {
         address operator;
-        // address NFTCollateralAddress; // the uni v3 pool address, may not need this if we only support ETH / SQUEETH;
         uint256 NftCollateralId; // the uni v3 pool NFT id
         uint256 collateralAmount;
         uint256 shortAmount;

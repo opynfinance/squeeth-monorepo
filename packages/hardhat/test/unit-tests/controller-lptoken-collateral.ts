@@ -127,7 +127,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
         await uniPositionManager.connect(seller1).approve(controller.address, uniNFTId)
         await uniPositionManager.setMockedProperties(dai.address, squeeth.address, 0, 0, 0)
 
-        await expect(controller.connect(seller1).depositUniNFT(vaultId, uniNFTId)).to.be.revertedWith('Invalid nft')
+        await expect(controller.connect(seller1).depositUniPositionToken(vaultId, uniNFTId)).to.be.revertedWith('Invalid nft')
         // set the tokens back
         await uniPositionManager.setMockedProperties(token0, token1, 0, 0, 0)
       })
@@ -135,7 +135,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       it('should revert when trying to deposit a LP token with id 0', async ()=> {
         await uniPositionManager.mint(seller1.address, 0)
         await uniPositionManager.connect(seller1).approve(controller.address, 0)
-        await expect(controller.connect(seller1).depositUniNFT(vaultId, 0)).to.be.revertedWith('invalid id')
+        await expect(controller.connect(seller1).depositUniPositionToken(vaultId, 0)).to.be.revertedWith('invalid id')
       })
 
       it('should deposit and NFT to an existing vault.', async() => {
@@ -164,7 +164,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
         await uniPositionManager.connect(seller1).approve(controller.address, uniNFTId)
         const ownerBefore = await uniPositionManager.ownerOf(uniNFTId);
 
-        await controller.connect(seller1).depositUniNFT(vaultId, uniNFTId)
+        await controller.connect(seller1).depositUniPositionToken(vaultId, uniNFTId)
         
         const ownerAfter = await uniPositionManager.ownerOf(uniNFTId);  
         expect(ownerBefore === seller1.address).to.be.true
@@ -174,7 +174,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       it('should withdraw the nft successfully', async () => {
         const ownerBefore = await uniPositionManager.ownerOf(uniNFTId);
 
-        await controller.connect(seller1).withdrawUniNFT(vaultId)
+        await controller.connect(seller1).withdrawUniPositionToken(vaultId)
 
         const ownerAfter = await uniPositionManager.ownerOf(uniNFTId);        
         expect(ownerBefore === controller.address).to.be.true
@@ -182,7 +182,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       })
 
       it('should revert when trying to withdraw from a empty vault', async () => {
-        await expect(controller.connect(seller1).withdrawUniNFT(vaultId)).to.be.revertedWith('Vault has no NFT')
+        await expect(controller.connect(seller1).withdrawUniPositionToken(vaultId)).to.be.revertedWith('Vault has no NFT')
       })
   })
 
@@ -210,7 +210,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
   
       before('deposit NFT into the vault', async() => {
         await uniPositionManager.connect(seller1).approve(controller.address, uniNFTId)
-        await controller.connect(seller1).depositUniNFT(vaultId, uniNFTId)
+        await controller.connect(seller1).depositUniPositionToken(vaultId, uniNFTId)
       })
 
       before('set LP token properties', async() => {
@@ -263,7 +263,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       })
   
       it('should revert if trying to remove LP token from the vault.', async() => {
-        await expect(controller.connect(seller1).withdrawUniNFT(vaultId)).to.be.revertedWith('Invalid state')
+        await expect(controller.connect(seller1).withdrawUniPositionToken(vaultId)).to.be.revertedWith('Invalid state')
       })
 
       // only got NFT left in the vault
@@ -420,7 +420,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
   
       before('deposit NFT into the vault', async() => {
         await uniPositionManager.connect(seller1).approve(controller.address, uniNFTId)
-        await controller.connect(seller1).depositUniNFT(vaultId, uniNFTId)
+        await controller.connect(seller1).depositUniPositionToken(vaultId, uniNFTId)
       })
 
       before('set LP token properties', async() => {
@@ -557,7 +557,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       before('deposit NFT into the vault, withdraw some collateral', async() => {
         await uniPositionManager.mint(seller1.address, newNFTId)
         await uniPositionManager.connect(seller1).approve(controller.address, newNFTId)
-        await controller.connect(seller1).depositUniNFT(vaultId, newNFTId)
+        await controller.connect(seller1).depositUniPositionToken(vaultId, newNFTId)
 
         const vault = await controller.vaults(vaultId)
         const totalCollateralRequired = vault.shortAmount.mul(oldEthPrice).mul(3).div(2)
