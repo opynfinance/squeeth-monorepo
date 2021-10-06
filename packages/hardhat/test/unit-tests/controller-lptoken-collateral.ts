@@ -171,6 +171,10 @@ describe("Controller: Uni LP tokens collateralization", function () {
         expect(ownerAfter === controller.address).to.be.true      
       })
 
+      it('should revert if non owner withdraws the nft', async () => {
+        await expect(controller.connect(random).withdrawUniPositionToken(vaultId)).to.be.revertedWith("not allowed")
+      })
+
       it('should withdraw the nft successfully', async () => {
         const ownerBefore = await uniPositionManager.ownerOf(uniNFTId);
 

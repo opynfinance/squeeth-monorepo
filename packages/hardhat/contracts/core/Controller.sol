@@ -420,6 +420,8 @@ contract Controller is Initializable, Ownable {
      * @dev remove uniswap v3 position token from the vault
      */
     function _withdrawUniPositionToken(address _account, uint256 _vaultId) internal {
+        require(_canModifyVault(_vaultId, _account), "not allowed");
+
         uint256 tokenId = vaults[_vaultId].removeUniNftCollateral();
         INonfungiblePositionManager(uniswapPositionManager).transferFrom(address(this), _account, tokenId);
         emit WithdrawUniPositionToken(_vaultId, tokenId);
