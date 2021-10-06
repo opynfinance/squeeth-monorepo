@@ -1,8 +1,8 @@
 import {BigNumber} from 'ethers'
 
-type Vault = [string, BigNumber, BigNumber, BigNumber] & {
+type Vault = [string, number, BigNumber, BigNumber] & {
   operator: string
-  NftCollateralId: BigNumber;
+  NftCollateralId: number;
   collateralAmount: BigNumber;
   shortAmount: BigNumber;
   

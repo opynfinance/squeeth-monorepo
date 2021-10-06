@@ -1,15 +1,4 @@
-import {BigNumber} from 'ethers'
 import { BigNumber as BigNumberJs } from "bignumber.js"
-
-type Vault = [BigNumber, BigNumber, BigNumber] & {
-  NftCollateralId: BigNumber;
-  collateralAmount: BigNumber;
-  shortAmount: BigNumber;
-}
-
-export const isEmptyVault = (vault: Vault): boolean => {
-  return vault.collateralAmount.isZero() && vault.shortAmount.isZero()
-}
 
 export const isSimilar = (number1: string, number2: string, precision: number= 4) => {
   const error = 1/(10 ** precision)

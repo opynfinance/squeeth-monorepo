@@ -56,7 +56,7 @@ contract Controller is Initializable, Ownable {
     /// Events
     event OpenVault(uint256 vaultId);
     event CloseVault(uint256 vaultId);
-    event DepositCollateral(uint256 vaultId, uint128 amount, uint128 collateralId);
+    event DepositCollateral(uint256 vaultId, uint256 amount, uint128 collateralId);
     event DepositUniPositionToken(uint256 vaultId, uint256 tokenId);
     event WithdrawCollateral(uint256 vaultId, uint256 amount, uint128 collateralId);
     event WithdrawUniPositionToken(uint256 vaultId, uint256 tokenId);
@@ -170,15 +170,31 @@ contract Controller is Initializable, Ownable {
         uint128 _rPowerPerpAmount,
         uint256 _uniTokenId
     ) external payable notShutdown returns (uint256, uint256) {
-        _applyFunding();
+        uint256 cachedNormFactor = _applyFunding();
         uint256 wPowerPerpMinted;
-        if (_vaultId == 0) _vaultId = _openVault(msg.sender);
-        if (msg.value > 0) _addEthCollateral(_vaultId, msg.value);
-        if (_uniTokenId != 0) _depositUniPositionToken(msg.sender, _vaultId, _uniTokenId);
-        if (_rPowerPerpAmount > 0) {
-            wPowerPerpMinted = _addShort(msg.sender, _vaultId, _rPowerPerpAmount);
+        VaultLib.Vault memory cachedVault;
+
+        // load vault or create new a new one
+        if (_vaultId == 0) {
+            (uint256 newVaultId, VaultLib.Vault memory vault) = _openVault(msg.sender);
+            _vaultId = newVaultId;
+            cachedVault = vault;
+        } else {
+            cachedVault = vaults[_vaultId];
         }
-        _checkVault(_vaultId);
+
+        if (msg.value > 0) _addEthCollateral(cachedVault, _vaultId, msg.value);
+
+        if (_uniTokenId != 0) _depositUniPositionToken(cachedVault, msg.sender, _vaultId, _uniTokenId);
+
+        if (_rPowerPerpAmount > 0) {
+            (wPowerPerpMinted) = _addShort(cachedVault, msg.sender, _vaultId, _rPowerPerpAmount, cachedNormFactor);
+        }
+
+        _checkVault(cachedVault, cachedNormFactor);
+
+        _writeVault(_vaultId, cachedVault);
+
         return (_vaultId, wPowerPerpMinted);
     }
 
@@ -188,7 +204,10 @@ contract Controller is Initializable, Ownable {
      */
     function deposit(uint256 _vaultId) external payable notShutdown {
         _applyFunding();
-        _addEthCollateral(_vaultId, msg.value);
+        VaultLib.Vault memory cachedVault = vaults[_vaultId];
+        _addEthCollateral(cachedVault, _vaultId, msg.value);
+
+        _writeVault(_vaultId, cachedVault);
     }
 
     /**
@@ -198,7 +217,10 @@ contract Controller is Initializable, Ownable {
      */
     function depositUniPositionToken(uint256 _vaultId, uint256 _uniTokenId) external notShutdown {
         _applyFunding();
-        _depositUniPositionToken(msg.sender, _vaultId, _uniTokenId);
+        VaultLib.Vault memory cachedVault = vaults[_vaultId];
+
+        _depositUniPositionToken(cachedVault, msg.sender, _vaultId, _uniTokenId);
+        _writeVault(_vaultId, cachedVault);
     }
 
     /**
@@ -207,9 +229,12 @@ contract Controller is Initializable, Ownable {
      * @param _amount amount of eth to withdraw
      */
     function withdraw(uint256 _vaultId, uint256 _amount) external payable notShutdown {
-        _applyFunding();
-        _withdrawCollateral(msg.sender, _vaultId, _amount);
-        _checkVault(_vaultId);
+        uint256 cachedNormFactor = _applyFunding();
+        VaultLib.Vault memory cachedVault = vaults[_vaultId];
+
+        _withdrawCollateral(cachedVault, msg.sender, _vaultId, _amount);
+        _checkVault(cachedVault, cachedNormFactor);
+        _writeVault(_vaultId, cachedVault);
     }
 
     /**
@@ -217,9 +242,11 @@ contract Controller is Initializable, Ownable {
      * @param _vaultId id of the vault
      */
     function withdrawUniPositionToken(uint256 _vaultId) external notShutdown {
-        _applyFunding();
-        _withdrawUniPositionToken(msg.sender, _vaultId);
-        _checkVault(_vaultId);
+        uint256 cachedNormFactor = _applyFunding();
+        VaultLib.Vault memory cachedVault = vaults[_vaultId];
+        _withdrawUniPositionToken(cachedVault, msg.sender, _vaultId);
+        _checkVault(cachedVault, cachedNormFactor);
+        _writeVault(_vaultId, cachedVault);
     }
 
     /**
@@ -233,10 +260,12 @@ contract Controller is Initializable, Ownable {
         uint256 _wPowerPerpAmount,
         uint256 _withdrawAmount
     ) external notShutdown {
-        _applyFunding();
-        if (_wPowerPerpAmount > 0) _removeShort(msg.sender, _vaultId, _wPowerPerpAmount);
-        if (_withdrawAmount > 0) _withdrawCollateral(msg.sender, _vaultId, _withdrawAmount);
-        _checkVault(_vaultId);
+        uint256 cachedNormFactor = _applyFunding();
+        VaultLib.Vault memory cachedVault = vaults[_vaultId];
+        if (_wPowerPerpAmount > 0) _removeShort(cachedVault, msg.sender, _vaultId, _wPowerPerpAmount);
+        if (_withdrawAmount > 0) _withdrawCollateral(cachedVault, msg.sender, _vaultId, _withdrawAmount);
+        _checkVault(cachedVault, cachedNormFactor);
+        _writeVault(_vaultId, cachedVault);
     }
 
     /**
@@ -246,10 +275,12 @@ contract Controller is Initializable, Ownable {
      */
     function reduceDebt(uint256 _vaultId) external notShutdown {
         require(_canModifyVault(_vaultId, msg.sender), "not allowed");
-        _applyFunding();
-        VaultLib.Vault storage vault = vaults[_vaultId];
+        uint256 cachedNormFactor = _applyFunding();
+        VaultLib.Vault memory cachedVault = vaults[_vaultId];
 
-        _reduceDebt(vault, vaultNFT.ownerOf(_vaultId), false);
+        _reduceDebt(cachedVault, vaultNFT.ownerOf(_vaultId), cachedNormFactor, false);
+
+        _writeVault(_vaultId, cachedVault);
     }
 
     /**
@@ -260,28 +291,36 @@ contract Controller is Initializable, Ownable {
      * @return amount of wPowerPerp repaid.
      */
     function liquidate(uint256 _vaultId, uint256 _maxDebtAmount) external notShutdown returns (uint256) {
-        _applyFunding();
+        uint256 cachedNormFactor = _applyFunding();
 
-        VaultLib.Vault storage vault = vaults[_vaultId];
+        VaultLib.Vault memory cachedVault = vaults[_vaultId];
 
-        require(!_isVaultSafe(vault), "Can not liquidate safe vault");
+        require(!_isVaultSafe(cachedVault, cachedNormFactor), "Can not liquidate safe vault");
 
         // try to save target vault before liquidation by reducing debt
-        uint256 bounty = _reduceDebt(vault, vaultNFT.ownerOf(_vaultId), true);
+        uint256 bounty = _reduceDebt(cachedVault, vaultNFT.ownerOf(_vaultId), cachedNormFactor, true);
 
         // if vault is safe after saving, pay bounty and return early.
-        if (_isVaultSafe(vault)) {
+        if (_isVaultSafe(cachedVault, cachedNormFactor)) {
             payable(msg.sender).sendValue(bounty);
+            _writeVault(_vaultId, cachedVault);
             return 0;
         }
 
         // add back the bounty amount, liquidators are only getting reward from liquidation.
-        vault.addEthCollateral(bounty);
+        cachedVault.addEthCollateral(bounty);
 
         // if the vault is still not safe after saving, liquidate it.
-        (uint256 debtAmount, uint256 collateralPaid) = _liquidate(vault, _maxDebtAmount, msg.sender);
+        (uint256 debtAmount, uint256 collateralPaid) = _liquidate(
+            cachedVault,
+            _maxDebtAmount,
+            cachedNormFactor,
+            msg.sender
+        );
 
         emit Liquidate(_vaultId, debtAmount, collateralPaid);
+
+        _writeVault(_vaultId, cachedVault);
 
         return debtAmount;
     }
@@ -337,7 +376,7 @@ contract Controller is Initializable, Ownable {
             normalizationFactor
         );
         // if the debt is more than collateral, this line will revert
-        uint256 excess = vaults[_vaultId].collateralAmount.sub(debt);
+        uint256 excess = uint256(vaults[_vaultId].collateralAmount).sub(debt);
 
         // reset the vault but don't burn the nft, just because people may want to keep it.
         vaults[_vaultId].shortAmount = 0;
@@ -379,83 +418,118 @@ contract Controller is Initializable, Ownable {
 
     /**
      * @dev create a new vault and bind it with a new short vault id.
+     * @return id of the newly created vault
+     * @return newly created vault memory
      */
-    function _openVault(address _recipient) internal returns (uint256 vaultId) {
-        vaultId = vaultNFT.mintNFT(_recipient);
-        vaults[vaultId] = VaultLib.Vault({
+    function _openVault(address _recipient) internal returns (uint256, VaultLib.Vault memory) {
+        uint256 vaultId = vaultNFT.mintNFT(_recipient);
+
+        VaultLib.Vault memory vault = VaultLib.Vault({
             NftCollateralId: 0,
             collateralAmount: 0,
             shortAmount: 0,
             operator: address(0)
         });
         emit OpenVault(vaultId);
+        return (vaultId, vault);
     }
 
     /**
      * @dev deposit uni v3 position token into a vault.
+     * @dev this function will update the vault memory in-place
+     * @param _vault the Vault memory to update.
      * @param _account account we should transfer the uni nft from
      * @param _vaultId id of the vault
      * @param _uniTokenId uniswap v3 position token id
      */
     function _depositUniPositionToken(
+        VaultLib.Vault memory _vault,
         address _account,
         uint256 _vaultId,
         uint256 _uniTokenId
     ) internal {
         _checkUniNFT(_uniTokenId);
-        vaults[_vaultId].addUniNftCollateral(_uniTokenId);
+        _vault.addUniNftCollateral(_uniTokenId);
         INonfungiblePositionManager(uniswapPositionManager).transferFrom(_account, address(this), _uniTokenId);
         emit DepositUniPositionToken(_vaultId, _uniTokenId);
     }
 
     /**
      * @dev add eth collateral into a vault
+     * @dev this function will update the vault memory in-place
+     * @param _vault the Vault memory to update.
+     * @param _amount amount of eth adding to the vault
      */
-    function _addEthCollateral(uint256 _vaultId, uint256 _amount) internal {
-        vaults[_vaultId].addEthCollateral(uint128(_amount));
-        emit DepositCollateral(_vaultId, uint128(_amount), 0);
+    function _addEthCollateral(
+        VaultLib.Vault memory _vault,
+        uint256 _vaultId,
+        uint256 _amount
+    ) internal {
+        _vault.addEthCollateral(_amount);
+        emit DepositCollateral(_vaultId, _amount, 0);
     }
 
     /**
      * @dev remove uniswap v3 position token from the vault
+     * @param _vault the Vault memory to update.
+     * @param _account where to send the uni position token to
+     * @param _vaultId id of the vault
      */
-    function _withdrawUniPositionToken(address _account, uint256 _vaultId) internal {
+    function _withdrawUniPositionToken(
+        VaultLib.Vault memory _vault,
+        address _account,
+        uint256 _vaultId
+    ) internal {
         require(_canModifyVault(_vaultId, _account), "not allowed");
 
-        uint256 tokenId = vaults[_vaultId].removeUniNftCollateral();
+        uint256 tokenId = _vault.NftCollateralId;
+        _vault.removeUniNftCollateral();
         INonfungiblePositionManager(uniswapPositionManager).transferFrom(address(this), _account, tokenId);
         emit WithdrawUniPositionToken(_vaultId, tokenId);
     }
 
     /**
      * @dev remove eth collateral from the vault
+     * @dev this function will update the vault memory in-place
+     * @param _vault the Vault memory to update.
+     * @param _account where to send collateral to
+     * @param _vaultId id of the vault
+     * @param _amount amount of eth to withdraw
      */
     function _withdrawCollateral(
+        VaultLib.Vault memory _vault,
         address _account,
         uint256 _vaultId,
         uint256 _amount
     ) internal {
         require(_canModifyVault(_vaultId, _account), "not allowed");
-        vaults[_vaultId].removeEthCollateral(_amount);
+
+        _vault.removeEthCollateral(_amount);
         payable(_account).sendValue(_amount);
+
         emit WithdrawCollateral(_vaultId, _amount, 0);
     }
 
     /**
      * @dev mint wPowerPerp (ERC20) to an account
+     * @dev this function will update the vault memory in-place
+     * @param _vault the Vault memory to update.
      * @param _account who should receive wPowerPerp
      * @param _vaultId id of the vault
      * @param _rPowerPerpAmount rPowerPerp amount to mint
+     * @return wPowerPerpAmount amount of wPowerPerp minted
      */
     function _addShort(
+        VaultLib.Vault memory _vault,
         address _account,
         uint256 _vaultId,
-        uint256 _rPowerPerpAmount
+        uint256 _rPowerPerpAmount,
+        uint256 _normalizationFactor
     ) internal returns (uint256) {
         require(_canModifyVault(_vaultId, _account), "not allowed");
 
-        uint256 wPowerPerpAmount = _rPowerPerpAmount.mul(1e18).div(normalizationFactor);
-        vaults[_vaultId].addShort(wPowerPerpAmount);
+        uint256 wPowerPerpAmount = _rPowerPerpAmount.mul(1e18).div(_normalizationFactor);
+        _vault.addShort(wPowerPerpAmount);
         wPowerPerp.mint(_account, wPowerPerpAmount);
 
         emit MintShort(wPowerPerpAmount, _vaultId);
@@ -465,16 +539,19 @@ contract Controller is Initializable, Ownable {
 
     /**
      * @dev burn wPowerPerp (ERC20) from an account.
+     * @dev this function will update the vault memory in-place
+     * @param _vault the Vault memory to update.
      * @param _account who pay the wPowerPerp
      * @param _vaultId id of the vault
      * @param _wPowerPerpAmount wPowerPerp amount to burn
      */
     function _removeShort(
+        VaultLib.Vault memory _vault,
         address _account,
         uint256 _vaultId,
         uint256 _wPowerPerpAmount
     ) internal {
-        vaults[_vaultId].removeShort(_wPowerPerpAmount);
+        _vault.removeShort(_wPowerPerpAmount);
         wPowerPerp.burn(_account, _wPowerPerpAmount);
 
         emit BurnShort(_wPowerPerpAmount, _vaultId);
@@ -483,18 +560,20 @@ contract Controller is Initializable, Ownable {
     /**
      * @notice liquidate a vault, pay the liquidator
      * @dev liquidator can only liquidate at most 1/2 of the vault in 1 transaction
-     * @param _vault the vault storage
+     * @dev this function will update the vault memory in-place
+     * @param _vault the Vault memory to update.
      * @param _maxWPowerPerpAmount max debt amount liquidator is willing to repay
      * @param _liquidator address which will receive eth
      * @return debtAmount amount of wPowerPerp repaid (burn from the vault)
      * @return collateralToPay amount of collateral paid to liquidator
      */
     function _liquidate(
-        VaultLib.Vault storage _vault,
+        VaultLib.Vault memory _vault,
         uint256 _maxWPowerPerpAmount,
+        uint256 _normalizationFactor,
         address _liquidator
     ) internal returns (uint256, uint256) {
-        uint256 maxLiquidationAmount = _vault.shortAmount.div(2);
+        uint256 maxLiquidationAmount = uint256(_vault.shortAmount).div(2);
 
         uint256 wAmountToLiquidate = _maxWPowerPerpAmount > maxLiquidationAmount
             ? maxLiquidationAmount
@@ -506,7 +585,7 @@ contract Controller is Initializable, Ownable {
             ethDaiPool,
             weth,
             dai,
-            normalizationFactor
+            _normalizationFactor
         );
 
         // 10% bonus for liquidators
@@ -514,8 +593,7 @@ contract Controller is Initializable, Ownable {
 
         // if collateralToPay is higher than the total collateral in the vault
         // the system only pays out the amount the vault has, which may not be profitable
-        uint256 collateralInVault = _vault.collateralAmount;
-        if (collateralToPay > collateralInVault) collateralToPay = collateralInVault;
+        if (collateralToPay > _vault.collateralAmount) collateralToPay = _vault.collateralAmount;
 
         wPowerPerp.burn(_liquidator, wAmountToLiquidate);
         _vault.removeShort(wAmountToLiquidate);
@@ -532,14 +610,16 @@ contract Controller is Initializable, Ownable {
      * @notice and reduce debt in the target vault if there's a nft in the vault
      * @dev this function will be executed before liquidation if there's a NFT in the vault.
      * @dev when it's called by liquidate(), it pays out a small bounty to the liquidator.
-     * @param _vault the vault storage we're saving
+     * @dev this function will update the vault memory in-place
+     * @param _vault the Vault memory to update.
      * @param _owner where should the excess go to
      * @param _isLiquidation whether we're paying to the recipient the 2% discount or not.
      * @return bounty amount of bounty paid for liquidator
      */
     function _reduceDebt(
-        VaultLib.Vault storage _vault,
+        VaultLib.Vault memory _vault,
         address _owner,
+        uint256 _normalizationFactor,
         bool _isLiquidation
     ) internal returns (uint256) {
         uint256 nftId = _vault.NftCollateralId;
@@ -560,7 +640,7 @@ contract Controller is Initializable, Ownable {
                     ethDaiPool,
                     weth,
                     dai,
-                    normalizationFactor
+                    _normalizationFactor
                 )
                 .add(withdrawnEthAmount);
 
@@ -568,16 +648,13 @@ contract Controller is Initializable, Ownable {
         }
 
         _vault.removeUniNftCollateral();
-        // todo: batch SSTORE
         _vault.addEthCollateral(withdrawnEthAmount);
         _vault.removeEthCollateral(bounty);
 
         // burn min of (shortAmount, withdrawnWPowerPerpAmount) from the vault.
-        uint256 cachedShortAmount = _vault.shortAmount;
-
-        if (withdrawnWPowerPerpAmount > cachedShortAmount) {
-            uint256 excess = withdrawnWPowerPerpAmount.sub(cachedShortAmount);
-            withdrawnWPowerPerpAmount = cachedShortAmount;
+        if (withdrawnWPowerPerpAmount > _vault.shortAmount) {
+            uint256 excess = withdrawnWPowerPerpAmount.sub(_vault.shortAmount);
+            withdrawnWPowerPerpAmount = _vault.shortAmount;
             wPowerPerp.transfer(_owner, excess);
         }
 
@@ -585,6 +662,13 @@ contract Controller is Initializable, Ownable {
         wPowerPerp.burn(address(this), withdrawnWPowerPerpAmount);
 
         return bounty;
+    }
+
+    /**
+     * @dev write new vault structure to storage.
+     */
+    function _writeVault(uint256 _vaultId, VaultLib.Vault memory _vault) private {
+        vaults[_vaultId] = _vault;
     }
 
     /**
@@ -631,9 +715,9 @@ contract Controller is Initializable, Ownable {
     /**
      * @notice Update the normalization factor as a way to pay funding.
      **/
-    function _applyFunding() internal {
+    function _applyFunding() internal returns (uint256) {
         // only update the norm factor once per block
-        if (lastFundingUpdateTimestamp == block.timestamp) return;
+        if (lastFundingUpdateTimestamp == block.timestamp) return normalizationFactor;
 
         uint256 newNormalizationFactor = _getNewNormalizationFactor();
 
@@ -641,6 +725,8 @@ contract Controller is Initializable, Ownable {
 
         normalizationFactor = newNormalizationFactor;
         lastFundingUpdateTimestamp = block.timestamp;
+
+        return newNormalizationFactor;
     }
 
     /**
@@ -697,25 +783,22 @@ contract Controller is Initializable, Ownable {
     /**
      * @dev check that the vault is solvent and has enough collateral.
      */
-    function _checkVault(uint256 _vaultId) internal view {
-        if (_vaultId == 0) return;
-        VaultLib.Vault memory vault = vaults[_vaultId];
-
-        require(_isVaultSafe(vault), "Invalid state");
+    function _checkVault(VaultLib.Vault memory _vault, uint256 _normalizationFactor) internal view {
+        require(_isVaultSafe(_vault, _normalizationFactor), "Invalid state");
     }
 
     /**
      * @dev check that the vault is properly collateralized
      * @return if the vault is properly collateralized.
      */
-    function _isVaultSafe(VaultLib.Vault memory _vault) internal view returns (bool) {
+    function _isVaultSafe(VaultLib.Vault memory _vault, uint256 _normalizationFactor) internal view returns (bool) {
         uint256 ethDaiPrice = oracle.getTwapSafe(ethDaiPool, weth, dai, 300);
         int24 perpPoolTick = oracle.getTimeWeightedAverageTickSafe(powerPerpPool, 300);
         return
             VaultLib.isProperlyCollateralized(
                 _vault,
                 uniswapPositionManager,
-                normalizationFactor,
+                _normalizationFactor,
                 ethDaiPrice,
                 perpPoolTick,
                 isWethToken0

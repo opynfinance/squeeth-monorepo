@@ -67,7 +67,8 @@ const config: HardhatUserConfig = {
       saveDeployments: false, // only used in cicd to test deployments
       mining: {
         auto: true
-      }
+      },
+      hardfork: "berlin"
     },
     localhost: {
       url: "http://localhost:8545",

@@ -137,7 +137,7 @@ describe("Liquidation Integration Test", function () {
 
     await controller.connect(seller2).depositUniPositionToken(vault1Id, vault1LPTokenId)
     const vault = await controller.vaults(vault1Id)
-    expect(vault.NftCollateralId.eq(vault1LPTokenId)).to.be.true
+    expect(vault.NftCollateralId === vault1LPTokenId).to.be.true
   })
 
   this.beforeAll('Prepare vault2 (with nft), for liquidation', async() => {
@@ -162,7 +162,7 @@ describe("Liquidation Integration Test", function () {
 
     await controller.connect(seller3).depositUniPositionToken(vault2Id, vault2LPTokenId)
     const vault = await controller.vaults(vault2Id)
-    expect(vault.NftCollateralId.eq(vault2LPTokenId)).to.be.true
+    expect(vault.NftCollateralId === vault2LPTokenId).to.be.true
   })
 
   describe('Liquidate normal vault when price is 2x', async( )=> {
@@ -374,7 +374,7 @@ describe("Liquidation Integration Test", function () {
       const bounty = withdrawWSqueethInEth.add(ethAmount).mul(2).div(100);
       
       expect(isSimilar(liquidatorEthAfter.sub(liquidatorEthBalance).toString(), bounty.toString())).to.be.true      
-      expect(vaultAfter.NftCollateralId.isZero()).to.be.true
+      expect(vaultAfter.NftCollateralId === 0).to.be.true
       expect(isSimilar(vaultBefore.collateralAmount.add(ethAmount).sub(bounty).toString(), vaultAfter.collateralAmount.toString())).to.be.true
 
       // the debt in the vault is reduced by squeethAmount.
@@ -476,7 +476,7 @@ describe("Liquidation Integration Test", function () {
       const reward = newEthPrice.mul(normFactor).mul(wSqueethAmountToLiquidate).div(BigNumber.from(10).pow(36)).mul(11).div(10)
 
       expect(isSimilar(liquidatorEthAfter.sub(liquidatorEthBalance).toString(), reward.toString())).to.be.true      
-      expect(vaultAfter.NftCollateralId.isZero()).to.be.true
+      expect(vaultAfter.NftCollateralId === 0).to.be.true
       expect(isSimilar(vaultBefore.collateralAmount.add(ethAmount).sub(reward).toString(), vaultAfter.collateralAmount.toString())).to.be.true
 
       // the debt in the vault is reduced by squeethAmount.

@@ -262,7 +262,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       it('should be able to remove all collateral after lp token deposit, because the lp token is worth 2x the debt amount.', async() => {
         await controller.connect(seller1).withdraw(vaultId, collateralAmount)
         const vaultAfter = await controller.vaults(vaultId)
-        expect(vaultAfter.NftCollateralId.eq(uniNFTId)).to.be.true
+        expect(vaultAfter.NftCollateralId === uniNFTId).to.be.true
         expect(vaultAfter.collateralAmount.isZero()).to.be.true
       })
   
@@ -326,7 +326,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
         const ethCollateral = liquidationAmount.mul(newSqueethPrice).mul(2) // with 2 collateral ratio
         await controller.connect(liquidator).mint(0, liquidationAmount, 0, {value: ethCollateral})
 
-        expect(vaultBefore.NftCollateralId.isZero()).to.be.false
+        expect(vaultBefore.NftCollateralId === 0).to.be.false
 
         const token0ToSet = wethIsToken0InSqueethPool ? ethAmount : squeethAmount
         const token1ToSet = wethIsToken0InSqueethPool ? squeethAmount : ethAmount
@@ -342,7 +342,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
         const reward = liquidationAmount.mul(newSqueethPrice).mul(11).div(10)
         
         expect(balanceAfter.sub(balanceBefore).eq(reward)).to.be.true
-        expect(vaultAfter.NftCollateralId.isZero()).to.be.true // nft is liquidated
+        expect(vaultAfter.NftCollateralId === 0).to.be.true // nft is liquidated
         expect(vaultAfter.shortAmount.eq(vaultBefore.shortAmount.sub(liquidationAmount))).to.be.true
         expect(vaultAfter.collateralAmount.eq(vaultBefore.collateralAmount.add(ethAmount).sub(reward))).to.be.true
       })
@@ -455,7 +455,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       it('should be able to remove all collateral after lp token deposit, because the lp token is worth 2x the debt amount.', async() => {
         await controller.connect(seller1).withdraw(vaultId, collateralAmount)
         const vaultAfter = await controller.vaults(vaultId)
-        expect(vaultAfter.NftCollateralId.eq(uniNFTId)).to.be.true
+        expect(vaultAfter.NftCollateralId === uniNFTId).to.be.true
         expect(vaultAfter.collateralAmount.isZero()).to.be.true
         // only got NFT left in the vault
       })
@@ -522,7 +522,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
         await controller.connect(seller1).liquidate(vaultId, 0, {gasPrice: 0})
         
         const vaultAfter = await controller.vaults(vaultId)
-        expect(vaultAfter.NftCollateralId.isZero()).to.be.true // nft is redeemed
+        expect(vaultAfter.NftCollateralId === 0).to.be.true // nft is redeemed
         expect(vaultAfter.shortAmount.eq(vaultBefore.shortAmount.sub(squeethAmount))).to.be.true
         expect(vaultAfter.collateralAmount.eq(vaultBefore.collateralAmount.add(ethAmount))).to.be.true
       })
@@ -608,7 +608,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
 
         const wsqueethExcess = nftSqueethAmount.sub(vaultBefore.shortAmount)
         expect(ownerWSqueethAfter.sub(ownerWSqueethBefore).eq(wsqueethExcess)).to.be.true
-        expect(vaultAfter.NftCollateralId.isZero()).to.be.true
+        expect(vaultAfter.NftCollateralId === 0).to.be.true
         expect(vaultAfter.shortAmount.isZero()).to.be.true
       })
     })

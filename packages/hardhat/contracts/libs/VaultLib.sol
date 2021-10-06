@@ -10,43 +10,46 @@ import "@uniswap/v3-core/contracts/libraries/SqrtPriceMath.sol";
 
 library VaultLib {
     using SafeMath for uint256;
-    /** 
-     collateral is always eth, 
-     while we can also add a Uniswap V3 NFT in to the vault to reduce collateral amount.
-    */
+
     struct Vault {
+        // the address who can update the vault.
         address operator;
-        uint256 NftCollateralId; // the uni v3 pool NFT id
-        uint256 collateralAmount;
-        uint256 shortAmount;
+        // uniswap v3 position token id deposited into the vault to increase collateral ratio
+        // 2^32 is 4,294,967,296. If Uniswap has more than 4 billion positions, our vault structure might stop working.
+        uint32 NftCollateralId;
+        // amount of eth (wei) used in the vault as collateral
+        // uint96 is safe enough cuz 2^96 / 1e18 = 79,228,162,514, which means a vault can store up to 79 billion eth.
+        // when we need to do calculations, we always cast this number to uint256 to avoid overflow.
+        uint96 collateralAmount;
+        // amount of wPowerPerp minted from the vault
+        uint128 shortAmount;
     }
 
-    function addEthCollateral(Vault storage _vault, uint256 _amount) internal {
-        _vault.collateralAmount = _vault.collateralAmount.add(_amount);
+    function addEthCollateral(Vault memory _vault, uint256 _amount) internal pure {
+        _vault.collateralAmount = uint96(uint256(_vault.collateralAmount).add(_amount));
     }
 
-    function addUniNftCollateral(Vault storage _vault, uint256 _tokenId) internal {
+    function addUniNftCollateral(Vault memory _vault, uint256 _tokenId) internal pure {
         require(_vault.NftCollateralId == 0, "Vault already had nft");
         require(_tokenId != 0, "invalid id");
-        _vault.NftCollateralId = _tokenId;
+        _vault.NftCollateralId = uint32(_tokenId);
     }
 
-    function removeEthCollateral(Vault storage _vault, uint256 _amount) internal {
-        _vault.collateralAmount = _vault.collateralAmount.sub(_amount);
+    function removeEthCollateral(Vault memory _vault, uint256 _amount) internal pure {
+        _vault.collateralAmount = uint96(uint256(_vault.collateralAmount).sub(_amount));
     }
 
-    function removeUniNftCollateral(Vault storage _vault) internal returns (uint256 tokenId) {
+    function removeUniNftCollateral(Vault memory _vault) internal pure {
         require(_vault.NftCollateralId != 0, "Vault has no NFT");
-        tokenId = _vault.NftCollateralId;
         _vault.NftCollateralId = 0;
     }
 
-    function addShort(Vault storage _vault, uint256 _amount) internal {
-        _vault.shortAmount = _vault.shortAmount.add(_amount);
+    function addShort(Vault memory _vault, uint256 _amount) internal pure {
+        _vault.shortAmount = uint128(uint256(_vault.shortAmount).add(_amount));
     }
 
-    function removeShort(Vault storage _vault, uint256 _amount) internal {
-        _vault.shortAmount = _vault.shortAmount.sub(_amount);
+    function removeShort(Vault memory _vault, uint256 _amount) internal pure {
+        _vault.shortAmount = uint128(uint256(_vault.shortAmount).sub(_amount));
     }
 
     /// @dev see if a vault is properly collateralized
@@ -107,7 +110,7 @@ library VaultLib {
             // add ETH value from NFT as collateral.
             totalCollateral = totalCollateral.add(equivalentCollateral).add(nftEthAmount);
         }
-        uint256 debtValueInETH = _vault.shortAmount.mul(_normalizationFactor).mul(_ethDaiPrice).div(1e36);
+        uint256 debtValueInETH = uint256(_vault.shortAmount).mul(_normalizationFactor).mul(_ethDaiPrice).div(1e36);
         return totalCollateral.mul(2) >= debtValueInETH.mul(3);
     }
 
