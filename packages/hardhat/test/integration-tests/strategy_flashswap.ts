@@ -50,6 +50,16 @@ describe("Flashswap test", function () {
       positionManager
     )
 
+    // add liquidity
+    await addWethDaiLiquidity(
+      startingPrice,
+      ethers.utils.parseUnits('10'), // eth amount
+      owner.address,
+      dai,
+      weth,
+      positionManager
+    )
+
     // deploy strategy flashswap
     const StrategyFlashswap = await ethers.getContractFactory("StrategyFlashSwapTester");
     strategyFlashswap = (await StrategyFlashswap.deploy(uniswapFactory.address, weth.address)) as StrategyFlashSwapTester;

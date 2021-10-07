@@ -1,4 +1,17 @@
+import {BigNumber} from 'ethers'
 import { BigNumber as BigNumberJs } from "bignumber.js"
+
+const one = BigNumber.from(10).pow(18)
+
+type Vault = [BigNumber, BigNumber, BigNumber] & {
+  NftCollateralId: BigNumber;
+  collateralAmount: BigNumber;
+  shortAmount: BigNumber;
+}
+
+export const isEmptyVault = (vault: Vault): boolean => {
+  return vault.collateralAmount.isZero() && vault.shortAmount.isZero()
+}
 
 export const isSimilar = (number1: string, number2: string, precision: number= 4) => {
   const error = 1/(10 ** precision)
@@ -12,3 +25,13 @@ export const getNow = async(provider: any) => {
 }
 
 export const UNDERFLOW_ERROR = "reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)"
+
+export const wmul = (x: BigNumber, y:BigNumber): BigNumber => {
+  const z = (x.mul(y).add(one.div(2))).div(one);
+  return z;
+}
+
+export const wdiv = (x: BigNumber, y: BigNumber): BigNumber => {
+  const z = (x.mul(one).add(y.div(2))).div(y);
+  return z;
+}
