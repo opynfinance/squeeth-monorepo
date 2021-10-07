@@ -196,7 +196,7 @@ export const addSqueethLiquidity = async(
   
     if (wsqueethBalance.lt(liquiditySqueethAmount)) {
       // use {collateralAmount} eth to mint squeeth
-      await controller.mint(0, liquiditySqueethAmount.sub(wsqueethBalance), 0, {value: ethers.utils.parseEther(collateralAmount)}) 
+      await controller.mintWPowerPerpAmount(0, liquiditySqueethAmount.sub(wsqueethBalance), 0, {value: ethers.utils.parseEther(collateralAmount)}) 
       wsqueethBalance = await squeeth.balanceOf(deployer)
     }
 

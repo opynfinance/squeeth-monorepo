@@ -89,7 +89,7 @@ describe("Controller: liquidation unit test", function () {
       const vaultBefore = await controller.vaults(vaultId)
       const squeethBalanceBefore = await squeeth.balanceOf(seller1.address)
       
-      await controller.connect(seller1).mint(0, mintAmount, 0, {value: depositAmount})
+      await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount, 0, {value: depositAmount})
 
       const squeethBalanceAfter = await squeeth.balanceOf(seller1.address)
       const vaultAfter = await controller.vaults(vaultId)
@@ -149,7 +149,7 @@ describe("Controller: liquidation unit test", function () {
       vaultId = await shortNFT.nextId()
       const depositAmount = ethers.utils.parseUnits('45')
       const mintAmount = ethers.utils.parseUnits('0.01')
-      await controller.connect(seller1).mint(0, mintAmount, 0, {value: depositAmount})
+      await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount, 0, {value: depositAmount})
     });
     
     before("set price to a number where vault will become insolvent", async () => {

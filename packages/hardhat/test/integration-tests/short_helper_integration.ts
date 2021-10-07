@@ -79,7 +79,6 @@ describe("ShortHelper Integration Test", function () {
       // deploy short helper
       shortHelper = await ethers.getContract("ShortHelper", deployer);
   
-      expect(await shortHelper.wsqueeth()).to.be.eq(squeeth.address, "squeeth address mismatch")
       expect(await shortHelper.vaultNFT()).to.be.eq(vaultNFT.address, "vaultNFT address mismatch")
       expect(await shortHelper.controller()).to.be.eq(controller.address, "controller address mismatch")
       expect(await shortHelper.router()).to.be.eq(swapRouter.address, "swapRouter address mismatch")

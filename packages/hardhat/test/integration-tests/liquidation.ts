@@ -112,7 +112,7 @@ describe("Liquidation Integration Test", function () {
 
     const depositAmount = ethers.utils.parseUnits('45.1')
     const mintAmount = ethers.utils.parseUnits(humanReadableMintAmount)
-    await controller.connect(seller1).mint(0, mintAmount, 0, {value: depositAmount})
+    await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount, 0, {value: depositAmount})
   })
 
   this.beforeAll('Prepare vault1 (with nft), dealing with cases when\'s safe after saving', async() => {
@@ -120,7 +120,7 @@ describe("Liquidation Integration Test", function () {
 
     const depositAmount = ethers.utils.parseUnits('45.1')
     const mintAmount = ethers.utils.parseUnits(humanReadableMintAmount)
-    await controller.connect(seller2).mint(0, mintAmount, 0, {value: depositAmount})
+    await controller.connect(seller2).mintPowerPerpAmount(0, mintAmount, 0, {value: depositAmount})
 
     vault1LPTokenId = await addSqueethLiquidity(
       startingPrice,
@@ -145,7 +145,7 @@ describe("Liquidation Integration Test", function () {
 
     const depositAmount = ethers.utils.parseUnits('45.1')
     const mintAmount = ethers.utils.parseUnits(humanReadableMintAmount)
-    await controller.connect(seller2).mint(0, mintAmount, 0, {value: depositAmount})
+    await controller.connect(seller2).mintPowerPerpAmount(0, mintAmount, 0, {value: depositAmount})
 
     vault2LPTokenId = await addSqueethLiquidity(
       startingPrice,
@@ -244,7 +244,7 @@ describe("Liquidation Integration Test", function () {
       const collateralRequired = mintAmount.mul(newEthPrice).mul(2).div(BigNumber.from(10).pow(18))
 
       // mint squeeth to liquidate vault0!
-      await controller.connect(liquidator).mint(0, mintAmount, 0, {value: collateralRequired})
+      await controller.connect(liquidator).mintPowerPerpAmount(0, mintAmount, 0, {value: collateralRequired})
       
     })
     

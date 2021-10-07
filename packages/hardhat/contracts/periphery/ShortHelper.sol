@@ -12,13 +12,14 @@ import {IVaultManagerNFT} from "../interfaces/IVaultManagerNFT.sol";
 import {IController} from "../interfaces/IController.sol";
 // Libraries
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 
 contract ShortHelper {
+    using SafeMath for uint256;
     using Address for address payable;
 
     IController public immutable controller;
     ISwapRouter public immutable router;
-    IWPowerPerp public immutable wsqueeth;
     IWETH9 public immutable weth;
     IVaultManagerNFT public immutable vaultNFT;
 
@@ -30,33 +31,32 @@ contract ShortHelper {
         IController _controller = IController(_controllerAddr);
         router = ISwapRouter(_swapRouter);
 
-        IWPowerPerp _wsqueeth = IWPowerPerp(_controller.wPowerPerp());
+        IWPowerPerp _wPowerPerp = IWPowerPerp(_controller.wPowerPerp());
         IWETH9 _weth = IWETH9(_wethAddr);
-        _wsqueeth.approve(_swapRouter, type(uint256).max);
+        _wPowerPerp.approve(_swapRouter, type(uint256).max);
         _weth.approve(_swapRouter, type(uint256).max);
 
         // assign immutable variables
         vaultNFT = IVaultManagerNFT(_controller.vaultNFT());
         weth = _weth;
         controller = _controller;
-        wsqueeth = _wsqueeth;
     }
 
     /**
-     * mint squeeth, trade with uniswap and send back premium in eth.
+     * mint power perp, trade with uniswap and send back premium in eth.
      */
     function openShort(
         uint256 _vaultId,
-        uint128 _shortSqueethAmount,
+        uint128 _powerPerpAmount,
         uint256 _uniNftId,
         ISwapRouter.ExactInputSingleParams memory _exactInputParams
     ) external payable {
-        (uint256 vaultId, uint256 wsqueethAmount) = controller.mint{value: msg.value}(
+        (uint256 vaultId, uint256 wPowerPerpAmount) = controller.mintPowerPerpAmount{value: msg.value}(
             _vaultId,
-            _shortSqueethAmount,
+            _powerPerpAmount,
             _uniNftId
         );
-        _exactInputParams.amountIn = wsqueethAmount;
+        _exactInputParams.amountIn = wPowerPerpAmount;
 
         uint256 amountOut = router.exactInputSingle(_exactInputParams);
 
@@ -75,7 +75,7 @@ contract ShortHelper {
      */
     function closeShort(
         uint256 _vaultId,
-        uint256 _removeShortAmount,
+        uint256 _wPowerPerpAmount,
         uint128 _withdrawAmount,
         ISwapRouter.ExactOutputSingleParams memory _exactOutputParams
     ) external payable {
@@ -85,10 +85,10 @@ contract ShortHelper {
         // pay weth and get squeeth in return.
         uint256 amountIn = router.exactOutputSingle(_exactOutputParams);
 
-        controller.burn(_vaultId, _removeShortAmount, _withdrawAmount);
+        controller.burnWPowerPerpAmount(_vaultId, _wPowerPerpAmount, _withdrawAmount);
 
         // send back unused eth and withdrawn collateral
-        weth.withdraw(msg.value - amountIn);
+        weth.withdraw(msg.value.sub(amountIn));
         payable(msg.sender).sendValue(address(this).balance);
     }
 

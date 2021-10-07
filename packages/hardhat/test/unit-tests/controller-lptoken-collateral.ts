@@ -112,7 +112,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
     
       before("Open vault and mint perfect amount of squeeth", async () => {
         vaultId = await shortNFT.nextId()
-        await controller.connect(seller1).mint(0, mintAmount, 0, {value: collateralAmount})
+        await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount, 0, {value: collateralAmount})
         // mint uni nft for users
         await uniPositionManager.mint(seller1.address, uniNFTId)
       });
@@ -203,7 +203,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       let currentTick: string;
       before("open vault and mint perfect amount of squeeth", async () => {
         vaultId = await shortNFT.nextId()
-        await controller.connect(seller1).mint(0, mintAmount,0, {value: collateralAmount})
+        await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount,0, {value: collateralAmount})
         await uniPositionManager.mint(seller1.address, uniNFTId)
       });
   
@@ -251,12 +251,12 @@ describe("Controller: Uni LP tokens collateralization", function () {
         
         const squeethToMint = equivalentCollateral.div(ethDaiPrice).mul(2).div(3)
         
-        await controller.connect(seller1).mint(vaultId, squeethToMint, 0)
+        await controller.connect(seller1).mintPowerPerpAmount(vaultId, squeethToMint, 0)
         const vaultAfter = await controller.vaults(vaultId)
         
         // burn the minted amount 
         const wSqueethMinted = vaultAfter.shortAmount.sub(vaultBefore.shortAmount)
-        await controller.connect(seller1).burn(vaultId, wSqueethMinted, 0)
+        await controller.connect(seller1).burnWPowerPerpAmount(vaultId, wSqueethMinted, 0)
       })
   
       it('should be able to remove all collateral after lp token deposit, because the lp token is worth 2x the debt amount.', async() => {
@@ -324,7 +324,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
         // mint squeeth for liquidator
         const liquidationAmount = vaultBefore.shortAmount.sub(squeethAmount).div(2)
         const ethCollateral = liquidationAmount.mul(newSqueethPrice).mul(2) // with 2 collateral ratio
-        await controller.connect(liquidator).mint(0, liquidationAmount, 0, {value: ethCollateral})
+        await controller.connect(liquidator).mintPowerPerpAmount(0, liquidationAmount, 0, {value: ethCollateral})
 
         expect(vaultBefore.NftCollateralId === 0).to.be.false
 
@@ -372,7 +372,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
         expect(result.squeethAmount.gt(mintAmount)).to.be.true
         
         const vaultBefore = await controller.vaults(vaultId)
-        await controller.connect(seller1).mint(vaultId, 10, 0,)
+        await controller.connect(seller1).mintPowerPerpAmount(vaultId, 10, 0)
         const vaultAfter = await controller.vaults(vaultId)
         expect(vaultAfter.shortAmount.gt(vaultBefore.shortAmount)).to.be.true
       })
@@ -413,7 +413,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       
       before("open vault and mint perfect amount of squeeth", async () => {
         vaultId = await shortNFT.nextId()
-        await controller.connect(seller1).mint(0, mintAmount,0, {value: collateralAmount})
+        await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount,0, {value: collateralAmount})
         await uniPositionManager.mint(seller1.address, uniNFTId)
       });
   
@@ -595,7 +595,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
 
       it('anyone can safe the vault, the owner will receive extra wsqueeth withdrawn from Uniswap', async() => {
         // the vault should be underwater now
-        await expect(controller.connect(seller1).mint(vaultId, 1, 0)).to.be.revertedWith('Invalid state')
+        await expect(controller.connect(seller1).mintPowerPerpAmount(vaultId, 1, 0)).to.be.revertedWith('Invalid state')
         const vaultBefore = await controller.vaults(vaultId)
         const { squeethAmount: nftSqueethAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, newNFTId, newTick, wethIsToken0InSqueethPool)
 

@@ -32,10 +32,10 @@ contract MockController {
         normalizationFactor = 1e18;
     }
 
-    function mint(
+    function mintWPowerPerpAmount(
         uint256 _vaultId,
         uint128 _mintAmount,
-        uint256 _nftTokenId
+        uint256 /*_nftTokenId*/
     ) external payable returns (uint256, uint256) {
         uint256 wSqueethMinted;
 
@@ -60,7 +60,7 @@ contract MockController {
         return vaultId;
     }
 
-    function _addEthCollateral(uint256 _vaultId, uint256 _amount) internal {
+    function _addEthCollateral(uint256 _vaultId, uint256 _amount) internal view {
         vaults[_vaultId].addEthCollateral(uint128(_amount));
     }
 

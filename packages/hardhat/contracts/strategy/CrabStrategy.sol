@@ -140,19 +140,19 @@ contract CrabStrategy is StrategyBase {
      * @notice mint wSqueeth
      * @dev this function will keep minted wSqueeth in this contract if _keepWsqueeth == true
      * @param _receiver receiver address
-     * @param _amount amount of wSqueeth to mint
+     * @param _wAmount amount of wSqueeth to mint
      * @param _keepWsqueeth keep minted wSqueeth in this contract if it is set to true
      */
     function _mintWsqueeth(
         address _receiver,
-        uint256 _amount,
+        uint256 _wAmount,
         bool _keepWsqueeth
     ) internal {
-        (, uint256 mintedWsqueeth) = powerTokenController.mint(_vaultId, uint128(_amount), 0);
+        powerTokenController.mintWPowerPerpAmount(_vaultId, uint128(_wAmount), 0);
 
         if (!_keepWsqueeth) {
             IWPowerPerp wSqueeth = IWPowerPerp(powerTokenController.wPowerPerp());
-            wSqueeth.transfer(_receiver, mintedWsqueeth);
+            wSqueeth.transfer(_receiver, _wAmount);
         }
     }
 

@@ -61,7 +61,7 @@ contract StrategyBase is ERC20 {
      * @dev Should only be called at constructor
      */
     function _openVault() internal {
-        (uint256 shortVaultId, ) = powerTokenController.mint(0, 0, 0);
+        uint256 shortVaultId = powerTokenController.mintWPowerPerpAmount(0, 0, 0);
 
         _vaultId = shortVaultId;
 

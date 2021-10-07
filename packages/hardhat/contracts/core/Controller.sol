@@ -160,42 +160,33 @@ contract Controller is Initializable, Ownable {
     /**
      * @notice put down collateral and mint wPowerPerp.
      * @param _vaultId the vault where you want to mint wPowerPerp in
-     * @param _rPowerPerpAmount amount of rPowerPerp you wish to mint
+     * @param _powerPerpAmount amount of powerPerp you wish to mint
      * @param _uniTokenId uniswap v3 position token id want to use to increase collateral ratio
      * @return vaultId
      * @return amount of wPowerPerp minted
      */
-    function mint(
+    function mintPowerPerpAmount(
         uint256 _vaultId,
-        uint128 _rPowerPerpAmount,
+        uint128 _powerPerpAmount,
         uint256 _uniTokenId
     ) external payable notShutdown returns (uint256, uint256) {
-        uint256 cachedNormFactor = _applyFunding();
-        uint256 wPowerPerpMinted;
-        VaultLib.Vault memory cachedVault;
+        return _openDepositMint(msg.sender, _vaultId, _powerPerpAmount, msg.value, _uniTokenId, false);
+    }
 
-        // load vault or create new a new one
-        if (_vaultId == 0) {
-            (uint256 newVaultId, VaultLib.Vault memory vault) = _openVault(msg.sender);
-            _vaultId = newVaultId;
-            cachedVault = vault;
-        } else {
-            cachedVault = vaults[_vaultId];
-        }
-
-        if (msg.value > 0) _addEthCollateral(cachedVault, _vaultId, msg.value);
-
-        if (_uniTokenId != 0) _depositUniPositionToken(cachedVault, msg.sender, _vaultId, _uniTokenId);
-
-        if (_rPowerPerpAmount > 0) {
-            (wPowerPerpMinted) = _addShort(cachedVault, msg.sender, _vaultId, _rPowerPerpAmount, cachedNormFactor);
-        }
-
-        _checkVault(cachedVault, cachedNormFactor);
-
-        _writeVault(_vaultId, cachedVault);
-
-        return (_vaultId, wPowerPerpMinted);
+    /**
+     * @notice put down collateral and mint wPowerPerp.
+     * @param _vaultId the vault where you want to mint wPowerPerp in
+     * @param _wPowerPerpAmount amount of wPowerPerp you wish to mint
+     * @param _uniTokenId uniswap v3 position token id want to use to increase collateral ratio
+     * @return vaultId
+     */
+    function mintWPowerPerpAmount(
+        uint256 _vaultId,
+        uint128 _wPowerPerpAmount,
+        uint256 _uniTokenId
+    ) external payable notShutdown returns (uint256) {
+        (uint256 vaultId, ) = _openDepositMint(msg.sender, _vaultId, _wPowerPerpAmount, msg.value, _uniTokenId, true);
+        return vaultId;
     }
 
     /**
@@ -255,17 +246,27 @@ contract Controller is Initializable, Ownable {
      * @param _wPowerPerpAmount amount of wPowerPerp to burn
      * @param _withdrawAmount amount of eth to withdraw
      */
-    function burn(
+    function burnWPowerPerpAmount(
         uint256 _vaultId,
         uint256 _wPowerPerpAmount,
         uint256 _withdrawAmount
     ) external notShutdown {
-        uint256 cachedNormFactor = _applyFunding();
-        VaultLib.Vault memory cachedVault = vaults[_vaultId];
-        if (_wPowerPerpAmount > 0) _removeShort(cachedVault, msg.sender, _vaultId, _wPowerPerpAmount);
-        if (_withdrawAmount > 0) _withdrawCollateral(cachedVault, msg.sender, _vaultId, _withdrawAmount);
-        _checkVault(cachedVault, cachedNormFactor);
-        _writeVault(_vaultId, cachedVault);
+        _burnAndWithdraw(msg.sender, _vaultId, _wPowerPerpAmount, _withdrawAmount, true);
+    }
+
+    /**
+     * @notice burn powerPerp and remove collateral from a vault.
+     * @param _vaultId id of the vault
+     * @param _powerPerpAmount amount of powerPerp to burn
+     * @param _withdrawAmount amount of eth to withdraw
+     * @return amount of wPowerPerp burned
+     */
+    function burnOnPowerPerpAmount(
+        uint256 _vaultId,
+        uint256 _powerPerpAmount,
+        uint256 _withdrawAmount
+    ) external notShutdown returns (uint256) {
+        return _burnAndWithdraw(msg.sender, _vaultId, _powerPerpAmount, _withdrawAmount, false);
     }
 
     /**
@@ -413,7 +414,79 @@ contract Controller is Initializable, Ownable {
      */
 
     function _canModifyVault(uint256 _vaultId, address _account) internal view returns (bool) {
+        if (_vaultId == 0) return true; // create a new vault
         return vaultNFT.ownerOf(_vaultId) == _account || vaults[_vaultId].operator == _account;
+    }
+
+    /**
+     * @notice wrapper function which open a vault, add collateral and mint wPowerPerp
+     * @param _account who should receive wPowerPerp
+     * @param _vaultId id of the vault
+     * @param _mintAmount amount to mint
+     * @param _depositAmount amount of eth as collateral
+     * @param _isWAmount if the input amount is wPowerPerp
+     * @return vaultId
+     * @return total minted wPowerPower amount
+     */
+    function _openDepositMint(
+        address _account,
+        uint256 _vaultId,
+        uint256 _mintAmount,
+        uint256 _depositAmount,
+        uint256 _uniTokenId,
+        bool _isWAmount
+    ) internal returns (uint256, uint256) {
+        uint256 cachedNormFactor = _applyFunding();
+
+        uint256 wPowerPerpAmount = _isWAmount ? _mintAmount : _mintAmount.mul(1e18).div(cachedNormFactor);
+
+        VaultLib.Vault memory cachedVault;
+
+        // load vault or create new a new one
+        if (_vaultId == 0) {
+            (_vaultId, cachedVault) = _openVault(_account);
+        } else {
+            cachedVault = vaults[_vaultId];
+        }
+
+        if (_depositAmount > 0) _addEthCollateral(cachedVault, _vaultId, _depositAmount);
+        if (_uniTokenId != 0) _depositUniPositionToken(cachedVault, _account, _vaultId, _uniTokenId);
+
+        if (wPowerPerpAmount > 0) _mintWPowerPerp(cachedVault, _account, _vaultId, wPowerPerpAmount);
+
+        _checkVault(cachedVault, cachedNormFactor);
+        _writeVault(_vaultId, cachedVault);
+
+        return (_vaultId, wPowerPerpAmount);
+    }
+
+    /**
+     * @notice wrapper function which burn wPowerPerp and redeem collateral
+     * @param _account who should receive wPowerPerp
+     * @param _vaultId id of the vault
+     * @param _burnAmount amount to mint
+     * @param _withdrawAmount amount of eth as collateral
+     * @param _isWAmount true if the amount is wPowerPerp
+     * @return total burned wPowerPower amount
+     */
+    function _burnAndWithdraw(
+        address _account,
+        uint256 _vaultId,
+        uint256 _burnAmount,
+        uint256 _withdrawAmount,
+        bool _isWAmount
+    ) internal returns (uint256) {
+        uint256 cachedNormFactor = _applyFunding();
+
+        uint256 wBurnAmount = _isWAmount ? _burnAmount : _burnAmount.mul(1e18).div(cachedNormFactor);
+
+        VaultLib.Vault memory cachedVault = vaults[_vaultId];
+        if (wBurnAmount > 0) _burnWPowerPerp(cachedVault, _account, _vaultId, wBurnAmount);
+        if (_withdrawAmount > 0) _withdrawCollateral(cachedVault, _account, _vaultId, _withdrawAmount);
+        _checkVault(cachedVault, cachedNormFactor);
+        _writeVault(_vaultId, cachedVault);
+
+        return wBurnAmount;
     }
 
     /**
@@ -481,7 +554,6 @@ contract Controller is Initializable, Ownable {
         uint256 _vaultId
     ) internal {
         require(_canModifyVault(_vaultId, _account), "not allowed");
-
         uint256 tokenId = _vault.NftCollateralId;
         _vault.removeUniNftCollateral();
         INonfungiblePositionManager(uniswapPositionManager).transferFrom(address(this), _account, tokenId);
@@ -516,25 +588,20 @@ contract Controller is Initializable, Ownable {
      * @param _vault the Vault memory to update.
      * @param _account who should receive wPowerPerp
      * @param _vaultId id of the vault
-     * @param _rPowerPerpAmount rPowerPerp amount to mint
-     * @return wPowerPerpAmount amount of wPowerPerp minted
+     * @param _wPowerPerpAmount wPowerPerp amount to mint
      */
-    function _addShort(
+    function _mintWPowerPerp(
         VaultLib.Vault memory _vault,
         address _account,
         uint256 _vaultId,
-        uint256 _rPowerPerpAmount,
-        uint256 _normalizationFactor
-    ) internal returns (uint256) {
+        uint256 _wPowerPerpAmount
+    ) internal {
         require(_canModifyVault(_vaultId, _account), "not allowed");
 
-        uint256 wPowerPerpAmount = _rPowerPerpAmount.mul(1e18).div(_normalizationFactor);
-        _vault.addShort(wPowerPerpAmount);
-        wPowerPerp.mint(_account, wPowerPerpAmount);
+        _vault.addShort(_wPowerPerpAmount);
+        wPowerPerp.mint(_account, _wPowerPerpAmount);
 
-        emit MintShort(wPowerPerpAmount, _vaultId);
-
-        return wPowerPerpAmount;
+        emit MintShort(_wPowerPerpAmount, _vaultId);
     }
 
     /**
@@ -545,7 +612,7 @@ contract Controller is Initializable, Ownable {
      * @param _vaultId id of the vault
      * @param _wPowerPerpAmount wPowerPerp amount to burn
      */
-    function _removeShort(
+    function _burnWPowerPerp(
         VaultLib.Vault memory _vault,
         address _account,
         uint256 _vaultId,

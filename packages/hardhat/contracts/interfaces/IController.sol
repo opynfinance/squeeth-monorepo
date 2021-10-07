@@ -7,14 +7,17 @@ interface IController {
 
     function wPowerPerp() external view returns (address);
 
-    /**
-     * put down collateral and mint squeeth.
-     */
-    function mint(
+    function mintPowerPerpAmount(
         uint256 _vaultId,
-        uint128 _mintAmount,
-        uint256 _nftId
-    ) external payable returns (uint256 vaultId, uint256 _wSqueethMinted);
+        uint128 _powerPerpAmount,
+        uint256 _uniTokenId
+    ) external payable returns (uint256 vaultId, uint256 wPowerPerpAmount);
+
+    function mintWPowerPerpAmount(
+        uint256 _vaultId,
+        uint128 _wPowerPerpAmount,
+        uint256 _uniTokenId
+    ) external payable returns (uint256 vaultId);
 
     /**
      * Deposit collateral into a vault
@@ -26,14 +29,17 @@ interface IController {
      */
     function withdraw(uint256 _vaultId, uint256 _amount) external payable;
 
-    /**
-     * burn squueth and remove collateral from a vault.
-     */
-    function burn(
+    function burnWPowerPerpAmount(
         uint256 _vaultId,
-        uint256 _amount,
+        uint256 _wPowerPerpAmount,
         uint256 _withdrawAmount
     ) external;
+
+    function burnOnPowerPerpAmount(
+        uint256 _vaultId,
+        uint256 _powerPerpAmount,
+        uint256 _withdrawAmount
+    ) external returns (uint256 wPowerPerpAmount);
 
     /**
      * External function to update the normalized factor as a way to pay funding.

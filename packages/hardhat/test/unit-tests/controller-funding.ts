@@ -130,7 +130,7 @@ describe("Controller Funding tests", function () {
         const collateralAmount = ethers.utils.parseUnits('450')
   
         // put vaultId as 0 to open vault
-        await controller.connect(seller1).mint(0, mintAmount, 0, {value: collateralAmount})
+        await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount, 0, {value: collateralAmount})
 
         mark = await controller.getDenormalizedMark(1)
         index = await controller.getIndex(1)
@@ -160,7 +160,7 @@ describe("Controller Funding tests", function () {
 
         
         await provider.send("evm_increaseTime", [10800]) // (3/24) * 60*60 = 3600s = 3 hour
-        await controller.connect(seller1).mint(vaultId, expectedAmountCanMint.sub(3), 0, {value: 0}) 
+        await controller.connect(seller1).mintPowerPerpAmount(vaultId, expectedAmountCanMint.sub(3), 0, {value: 0}) 
         // seems we have some rounding issues here where we round up the expected amount to mint, but we round down elsewhere
         // some times tests pass with add(0), sometimes we
         // seems to be based on the index and not consistent, started passing after I added an earlier test (which would change the index here)
@@ -184,7 +184,7 @@ describe("Controller Funding tests", function () {
         const collateralAmount = ethers.utils.parseUnits('450')
   
         // put vaultId as 0 to open vault
-        await controller.connect(seller1).mint(0, mintAmount, 0, {value: collateralAmount})
+        await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount, 0, {value: collateralAmount})
 
         mark = await controller.getDenormalizedMark(1)
         index = await controller.getIndex(1)
@@ -216,7 +216,7 @@ describe("Controller Funding tests", function () {
         await provider.send("evm_increaseTime", [10800])
 
         // use amount multiplied by a threshold (1.001) to avoid time-dependent precision issues.
-        await expect(controller.connect(seller1).mint(vaultId, expectedAmountCanMint.mul(1001).div(1000), 0, {value: 0})).to.be.revertedWith(
+        await expect(controller.connect(seller1).mintPowerPerpAmount(vaultId, expectedAmountCanMint.mul(1001).div(1000), 0, {value: 0})).to.be.revertedWith(
           'Invalid state'
         )
         // seems we have some rounding issues here where we round up the expected amount to mint, but we round down elsewhere
@@ -231,7 +231,7 @@ describe("Controller Funding tests", function () {
         const collateralAmount = ethers.utils.parseUnits('450')
   
         // put vaultId as 0 to open vault
-        await controller.connect(seller1).mint(0, mintAmount,0, {value: collateralAmount})
+        await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount,0, {value: collateralAmount})
 
         mark = await controller.getDenormalizedMark(1)
         index = await controller.getIndex(1)
@@ -276,7 +276,7 @@ describe("Controller Funding tests", function () {
         const collateralAmount = ethers.utils.parseUnits('450')
   
         // put vaultId as 0 to open vault
-        await controller.connect(seller1).mint(0, mintAmount,0, {value: collateralAmount})
+        await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount,0, {value: collateralAmount})
 
         mark = await controller.getDenormalizedMark(1)
         index = await controller.getIndex(1)
