@@ -114,6 +114,17 @@ contract Controller is Initializable, Ownable {
     }
 
     /**
+     * @dev return if the vault is properly collateralized.
+     * @param _vaultId id of the vault
+     * @return true if the vault is safe.
+     */
+    function isVaultSafe(uint256 _vaultId) external view returns (bool) {
+        VaultLib.Vault memory vault = vaults[_vaultId];
+        uint256 expectednormalizationFactor = _getNewNormalizationFactor();
+        return _isVaultSafe(vault, expectednormalizationFactor);
+    }
+
+    /**
      * @notice initialize the contract
      * @param _oracle oracle address
      * @param _vaultNFT erc721 token address representing the short position

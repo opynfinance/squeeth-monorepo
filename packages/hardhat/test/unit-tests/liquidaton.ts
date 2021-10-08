@@ -94,7 +94,7 @@ describe("Controller: liquidation unit test", function () {
       const squeethBalanceAfter = await squeeth.balanceOf(seller1.address)
       const vaultAfter = await controller.vaults(vaultId)
       const normFactor = await controller.normalizationFactor()
-
+      expect(await controller.isVaultSafe(vaultId)).to.be.true
       expect(vaultBefore.shortAmount.add(mintAmount.mul(ethers.utils.parseUnits('1')).div(normFactor)).eq(vaultAfter.shortAmount)).to.be.true
       expect(squeethBalanceBefore.add(mintAmount.mul(ethers.utils.parseUnits('1')).div(normFactor)).eq(squeethBalanceAfter)).to.be.true
     });
@@ -113,10 +113,11 @@ describe("Controller: liquidation unit test", function () {
     it("Liquidate unsafe vault", async () => {
       const newEthUsdPrice = ethers.utils.parseUnits('4000')
       await oracle.connect(random).setPrice(ethUSDPool.address, newEthUsdPrice)
-
+      const isVaultSafeBefore = await controller.isVaultSafe(vaultId)
       const vaultBefore = await controller.vaults(vaultId)
       const liquidatorBalanceBefore = await provider.getBalance(liquidator.address)
       const squeethLiquidatorBalanceBefore = await squeeth.balanceOf(liquidator.address)
+      expect(isVaultSafeBefore).to.be.false
 
       const debtToRepay = vaultBefore.shortAmount.div(2)
       const tx = await controller.connect(liquidator).liquidate(vaultId, debtToRepay);
