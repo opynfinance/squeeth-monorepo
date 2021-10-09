@@ -24,3 +24,14 @@ export const ErrorButton = withStyles((theme) => ({
     minWidth: '300px',
   },
 }))(Button)
+
+export const LinkButton = withStyles((theme) => ({
+  root: {
+    color: theme.palette.primary.main,
+    background: 'transparent',
+    '&:hover': {
+      background: 'transparent',
+    },
+    padding: '0',
+  },
+}))(Button)

@@ -1,8 +1,8 @@
-import { CircularProgress } from '@material-ui/core'
+import { Backdrop, Button, CircularProgress, Fade, Modal } from '@material-ui/core'
 import { createStyles, Divider, InputAdornment, makeStyles, TextField, Tooltip, Typography } from '@material-ui/core'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Vaults } from '../../constants'
 import { useWallet } from '../../context/wallet'
@@ -84,16 +84,37 @@ const useStyles = makeStyles((theme) =>
       fontSize: '20px',
     },
     divider: {
-      marginTop: theme.spacing(2),
-      marginButtom: theme.spacing(2),
+      margin: theme.spacing(2, 3),
+    },
+    closePosition: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      padding: theme.spacing(0, 1),
+    },
+    closeBtn: {
+      color: theme.palette.error.main,
+    },
+    paper: {
+      backgroundColor: theme.palette.background.paper,
+      boxShadow: theme.shadows[5],
+      borderRadius: theme.spacing(1),
+      width: '350px',
+      textAlign: 'center',
+      paddingBottom: theme.spacing(2),
+    },
+    modal: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
     },
   }),
 )
 
-const Sell: React.FC<{ balance: number }> = ({ balance }) => {
+const Sell: React.FC<{ balance: number; open: boolean; newVersion: boolean }> = ({ balance, open, newVersion }) => {
   const [amount, setAmount] = useState(1)
   const [collateral, setCollateral] = useState(1)
   const [collatPercent, setCollatPercent] = useState(200)
+  const [existingCollatPercent, setExistingCollatPercent] = useState(0)
   const [vaultId, setVaultId] = useState(0)
   const [isVaultApproved, setIsVaultApproved] = useState(true)
   const [quote, setQuote] = useState({
@@ -101,14 +122,27 @@ const Sell: React.FC<{ balance: number }> = ({ balance }) => {
     minimumAmountOut: new BigNumber(0),
     priceImpact: '0',
   })
-  const [buyQuote, setBuyQuote] = useState(new BigNumber(0))
+  const [buyQuote, setBuyQuote] = useState({
+    amountIn: new BigNumber(0),
+    maximumAmountIn: new BigNumber(0),
+    priceImpact: '0',
+  })
   const [shortLoading, setShortLoading] = useState(false)
   const [buyLoading, setBuyLoading] = useState(false)
+  const [closeAmount, setCloseAmount] = useState(1)
+  const [withdrawCollat, setWithdrawCollat] = useState(new BigNumber(0))
+  const [modelOpen, setModelOpen] = useState(false)
 
   const classes = useStyles()
   const { openShort, closeShort } = useShortHelper()
-  const { getSellQuote, ready, getBuyQuote } = useSqueethPool()
-  const { updateOperator, normFactor: normalizationFactor, fundingPerDay, getShortAmountFromDebt } = useController()
+  const { getSellQuote, ready, getBuyQuote, getWSqueethPositionValue } = useSqueethPool()
+  const {
+    updateOperator,
+    normFactor: normalizationFactor,
+    fundingPerDay,
+    getShortAmountFromDebt,
+    getDebtAmount,
+  } = useController()
   const { shortHelper } = useAddresses()
   const { vaults: shortVaults } = useVaultManager(5)
   const { squeethAmount, wethAmount, usdAmount } = useShortPositions()
@@ -120,6 +154,12 @@ const Sell: React.FC<{ balance: number }> = ({ balance }) => {
     // console.log(amount, rSqueeth.toNumber(), normalizationFactor.toNumber())
     return collateral / rSqueeth.multipliedBy(1.5).toNumber()
   }, [amount, collatPercent, collateral, normalizationFactor.toNumber()])
+
+  useEffect(() => {
+    if (!open && squeethAmount.lt(closeAmount)) {
+      setCloseAmount(squeethAmount.toNumber())
+    }
+  }, [squeethAmount.toNumber(), open])
 
   useEffect(() => {
     if (!shortVaults.length) {
@@ -141,10 +181,23 @@ const Sell: React.FC<{ balance: number }> = ({ balance }) => {
   }, [amount, ready])
 
   useEffect(() => {
+    if (!vaultId) {
+      return
+    }
+
+    getDebtAmount(squeethAmount).then((debt) => {
+      const _collat: BigNumber = shortVaults[0].collateralAmount
+      if (debt && debt.isPositive()) {
+        setExistingCollatPercent(Number(_collat.div(debt).times(100).toFixed(1)))
+      }
+    })
+  }, [vaultId])
+
+  useEffect(() => {
     if (!ready) return
 
-    getBuyQuote(squeethAmount.negated().toNumber()).then(setBuyQuote)
-  }, [squeethAmount.toNumber(), ready])
+    getBuyQuote(closeAmount).then(setBuyQuote)
+  }, [closeAmount, ready])
 
   useEffect(() => {
     if (!vaultId) return
@@ -167,15 +220,45 @@ const Sell: React.FC<{ balance: number }> = ({ balance }) => {
     setShortLoading(false)
   }
 
-  const buyBackAndClose = async () => {
+  useEffect(() => {
+    if (shortVaults.length) {
+      const _collat: BigNumber = shortVaults[0].collateralAmount
+      const restOfShort = new BigNumber(shortVaults[0].shortAmount).minus(closeAmount)
+      getDebtAmount(new BigNumber(restOfShort)).then((debt) => {
+        const neededCollat = debt.times(collatPercent / 100)
+        setWithdrawCollat(_collat.minus(neededCollat))
+      })
+    }
+  }, [closeAmount, collatPercent, shortVaults])
+
+  const buyBackAndClose = useCallback(async () => {
     setBuyLoading(true)
     try {
-      await closeShort(vaultId, shortVaults[0].shortAmount)
+      if (vaultId && !isVaultApproved) {
+        await updateOperator(vaultId, shortHelper)
+        setIsVaultApproved(true)
+      } else {
+        const _collat: BigNumber = shortVaults[0].collateralAmount
+        const restOfShort = new BigNumber(shortVaults[0].shortAmount).minus(closeAmount)
+        const _debt: BigNumber = await getDebtAmount(new BigNumber(restOfShort))
+        const neededCollat = _debt.times(collatPercent / 100)
+        await closeShort(vaultId, new BigNumber(closeAmount), _collat.minus(neededCollat))
+      }
     } catch (e) {
       console.log(e)
     }
     setBuyLoading(false)
-  }
+  }, [
+    closeAmount,
+    closeShort,
+    collatPercent,
+    getDebtAmount,
+    isVaultApproved,
+    shortHelper,
+    shortVaults,
+    updateOperator,
+    vaultId,
+  ])
 
   const { volMultiplier: globalVMultiplier, setCollatRatio } = useWorldContext()
 
@@ -196,6 +279,152 @@ const Sell: React.FC<{ balance: number }> = ({ balance }) => {
     )
   }
 
+  const ClosePosition = useMemo(() => {
+    return (
+      <div>
+        <Typography variant="caption" className={classes.thirdHeading} component="div">
+          Buy back and close position
+        </Typography>
+        <div className={classes.thirdHeading}>
+          <PrimaryInput
+            value={closeAmount}
+            onChange={(v) => setCloseAmount(Number(v))}
+            label="Amount"
+            tooltip="Amount of wSQTH to buy"
+            actionTxt="Max"
+            onActionClicked={() => setCloseAmount(Number(squeethAmount))}
+            unit="wSQTH"
+            error={squeethAmount.lt(closeAmount)}
+            convertedValue={getWSqueethPositionValue(closeAmount).toFixed(2).toLocaleString()}
+            hint={
+              squeethAmount.lt(closeAmount)
+                ? 'Close amount exceeds position'
+                : `Position ${squeethAmount.toFixed(6)} wSQTH`
+            }
+          />
+        </div>
+        <div className={classes.thirdHeading}>
+          <TextField
+            size="small"
+            value={collatPercent.toString()}
+            type="number"
+            style={{ width: 300 }}
+            onChange={(event) => setCollatPercent(Number(event.target.value))}
+            id="filled-basic"
+            label="Collateral Ratio"
+            variant="outlined"
+            error={collatPercent < 150}
+            helperText="Minimum is 150%"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Typography variant="caption">%</Typography>
+                  <Tooltip title="If 200% you will get 1 wSqueeth for 2 ETH " style={{ marginLeft: '4px' }}>
+                    <InfoOutlinedIcon fontSize="small" />
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </div>
+        <div className={classes.thirdHeading}></div>
+        <CollatRange />
+        <div className={classes.squeethExp}>
+          <div>
+            <Typography variant="caption">Spend</Typography>
+            <Typography className={classes.squeethExpTxt}>{buyQuote.amountIn.toFixed(6)}</Typography>
+          </div>
+          <div>
+            <Typography variant="caption">
+              ${Number(ethPrice.times(buyQuote.amountIn).toFixed(2)).toLocaleString()}
+            </Typography>
+            <Typography className={classes.squeethExpTxt}>ETH</Typography>
+          </div>
+        </div>
+        <TradeInfoItem
+          label="Collateral you redeem"
+          value={withdrawCollat.isPositive() ? withdrawCollat.toFixed(4) : 0}
+          unit="ETH"
+        />
+        <TradeInfoItem
+          label="Current Collateral ratio"
+          value={existingCollatPercent}
+          unit="%"
+          tooltip={'Collateral ratio for current short position'}
+        />
+        <Divider className={classes.divider} />
+        <TradeInfoItem label="Slippage tolerance" value="0.5" unit="%" />
+        <TradeInfoItem label="Price Impact" value={buyQuote.priceImpact} unit="%" />
+        <TradeInfoItem label="Minimum to send" value={buyQuote.maximumAmountIn.toFixed(4)} unit="ETH" />
+
+        {!connected ? (
+          <PrimaryButton
+            variant="contained"
+            onClick={selectWallet}
+            className={classes.amountInput}
+            disabled={!!buyLoading}
+            style={{ width: '300px' }}
+          >
+            {'Connect Wallet'}
+          </PrimaryButton>
+        ) : (
+          <PrimaryButton
+            onClick={buyBackAndClose}
+            className={classes.amountInput}
+            disabled={shortLoading || collatPercent < 150}
+            variant="contained"
+            style={{ width: '300px' }}
+          >
+            {buyLoading ? (
+              <CircularProgress color="primary" size="1.5rem" />
+            ) : (
+              <>
+                {isVaultApproved ? 'Buy back and close' : 'Add operator (1/2)'}
+                {!isVaultApproved ? (
+                  <Tooltip
+                    style={{ marginLeft: '2px' }}
+                    title="Operator is a contract that mints squeeth, deposits collateral and sells squeeth in single TX. Similarly it also buys back + burns squeeth and withdraws collateral in single TX"
+                  >
+                    <InfoOutlinedIcon fontSize="small" />
+                  </Tooltip>
+                ) : null}
+              </>
+            )}
+          </PrimaryButton>
+        )}
+        <Typography variant="caption" className={classes.caption} component="div">
+          Trades on Uniswap 🦄
+        </Typography>
+      </div>
+    )
+  }, [
+    buyBackAndClose,
+    buyLoading,
+    buyQuote.amountIn,
+    buyQuote.maximumAmountIn,
+    buyQuote.priceImpact,
+    classes.amountInput,
+    classes.caption,
+    classes.divider,
+    classes.squeethExp,
+    classes.squeethExpTxt,
+    classes.thirdHeading,
+    closeAmount,
+    collatPercent,
+    connected,
+    ethPrice,
+    isVaultApproved,
+    normalizationFactor,
+    selectWallet,
+    shortLoading,
+    squeethAmount,
+    withdrawCollat,
+  ])
+
+  if (!open) {
+    return ClosePosition
+  }
+
   return (
     <div>
       <Typography variant="caption" className={classes.thirdHeading} component="div">
@@ -211,6 +440,7 @@ const Sell: React.FC<{ balance: number }> = ({ balance }) => {
           onActionClicked={() => setCollateral(balance)}
           unit="ETH"
           convertedValue={(collateral * Number(ethPrice)).toFixed(2).toLocaleString()}
+          hint={`Balance ${balance} ETH`}
         />
       </div>
       <div className={classes.thirdHeading}>
@@ -246,10 +476,7 @@ const Sell: React.FC<{ balance: number }> = ({ balance }) => {
         </div>
         <div>
           <Typography variant="caption">
-            $
-            {Number(
-              ethPrice.times(ethPrice).times(amount).dividedBy(10000).times(normalizationFactor).toFixed(2),
-            ).toLocaleString()}
+            ${Number(getWSqueethPositionValue(amount).toFixed(2)).toLocaleString()}
           </Typography>
           <Typography className={classes.squeethExpTxt}>wSQTH</Typography>
         </div>
@@ -265,6 +492,12 @@ const Sell: React.FC<{ balance: number }> = ({ balance }) => {
         value={quote.amountOut.toFixed(4)}
         unit="ETH"
         tooltip={'Initial payment you get for selling squeeth on Uniswap'}
+      />
+      <TradeInfoItem
+        label="Current Collateral ratio"
+        value={existingCollatPercent}
+        unit="%"
+        tooltip={'Collateral ratio for current short position'}
       />
       <Divider className={classes.divider} />
       <TradeInfoItem label="Slippage tolerance" value="0.5" unit="%" />
@@ -309,32 +542,33 @@ const Sell: React.FC<{ balance: number }> = ({ balance }) => {
       <Typography variant="caption" className={classes.caption} component="div">
         Trades on Uniswap 🦄
       </Typography>
-      {/* <div style={{ marginTop: '20px', marginBottom: '4px' }}>
-        <TradeInfoItem label="Short Position" value={squeethAmount.negated().toFixed(6)} unit="SQTH" color="primary" />
-        <TradeInfoItem
-          label="Total Premium Received"
-          value={Number(usdAmount.toFixed(2)).toLocaleString()}
-          unit="$$ of ETH"
-          tooltip={`${wethAmount.absoluteValue().toFixed(4)} ETH`}
-          color="green"
-        />
-        <TradeInfoItem
-          label="Current Value"
-          value={Number(buyQuote.times(ethPrice).toFixed(2)).toLocaleString()}
-          unit="$$ of ETH"
-          tooltip={`you have to spend ${buyQuote.toFixed(4)} ETH`}
-          color="red"
-        />
-      </div>
-      <ErrorButton
-        disabled={!shortVaults.length || !isVaultApproved || buyLoading}
-        style={{ width: '325px', marginTop: '4px' }}
-        variant="contained"
-        color="secondary"
-        onClick={buyBackAndClose}
-      >
-        {buyLoading ? <CircularProgress color="primary" size="1.5rem" /> : 'Buy back and close'}
-      </ErrorButton>{' '} */}
+      {!newVersion ? (
+        <>
+          <div className={classes.closePosition}>
+            <Typography className={classes.caption} color="primary">
+              Current position: {squeethAmount.toFixed(6)}
+            </Typography>
+            <Button className={classes.closeBtn} onClick={() => setModelOpen(true)}>
+              close
+            </Button>
+          </div>
+          <Modal
+            aria-labelledby="enable-notification"
+            open={modelOpen}
+            className={classes.modal}
+            onClose={() => setModelOpen(false)}
+            closeAfterTransition
+            BackdropComponent={Backdrop}
+            BackdropProps={{
+              timeout: 500,
+            }}
+          >
+            <Fade in={modelOpen}>
+              <div className={classes.paper}>{ClosePosition}</div>
+            </Fade>
+          </Modal>
+        </>
+      ) : null}
     </div>
   )
 }

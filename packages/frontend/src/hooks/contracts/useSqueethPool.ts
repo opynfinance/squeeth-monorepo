@@ -14,9 +14,10 @@ import { fromTokenAmount, toTokenAmount } from '../../utils/calculations'
 import { useAddresses } from '../useAddress'
 import { Networks } from '../../types'
 import useUniswapTicks from '../useUniswapTicks'
+import { useETHPrice } from '../../hooks/useETHPrice'
 
 const NETWORK_QUOTE_GAS_OVERRIDE: { [chainId: number]: number } = {
-  [Networks.ARBITRUM_RINKEBY] : 6_000_000
+  [Networks.ARBITRUM_RINKEBY]: 6_000_000
 }
 const DEFAULT_GAS_QUOTE = 2_000_000
 
@@ -30,9 +31,12 @@ export const useSqueethPool = () => {
   const [pool, setPool] = useState<Pool>()
   const [wethToken, setWethToken] = useState<Token>()
   const [squeethToken, setSqueethToken] = useState<Token>()
+  const [squeethInitialPrice, setSqueethInitialPrice] = useState<BigNumber>(new BigNumber(0))
   const [squeethPrice, setSqueethPrice] = useState<BigNumber>(new BigNumber(0))
   const [wethPrice, setWethPrice] = useState<BigNumber>(new BigNumber(0))
   const [ready, setReady] = useState(false)
+  const ethPrice = useETHPrice()
+
 
   const { address, web3, networkId, handleTransaction } = useWallet()
   const { squeethPool, swapRouter, quoter, weth, wSqueeth } = useAddresses()
@@ -55,6 +59,8 @@ export const useSqueethPool = () => {
     if (!squeethToken?.address) return
     getBuyQuoteForETH(1).then((val) => {
       setSqueethPrice(val.amountOut)
+      setSqueethInitialPrice(new BigNumber(squeethToken ? (pool?.token0Price.toSignificant(18) || 0) : (pool?.token1Price.toSignificant(18) || 0)))
+      
     }).catch(console.log)
     const isWethToken0 = parseInt(weth, 16) < parseInt(wSqueeth, 16)
     setReady(true)
@@ -64,11 +70,11 @@ export const useSqueethPool = () => {
   const updateData = async () => {
     const { token0, token1, fee } = await getImmutables()
     const isWethToken0 = parseInt(weth, 16) < parseInt(wSqueeth, 16)
-    
+
     const state = await getPoolState()
     const TokenA = new Token(networkId, token0, isWethToken0 ? 18 : WSQUEETH_DECIMALS, isWethToken0 ? 'WETH' : 'SQE', isWethToken0 ? 'Wrapped Ether' : 'wSqueeth')
     const TokenB = new Token(networkId, token1, isWethToken0 ? WSQUEETH_DECIMALS : 18, isWethToken0 ? 'SQE' : 'WETH', isWethToken0 ? 'wSqueeth' : 'Wrapped Ether')
-    
+
     const pool = new Pool(
       TokenA,
       TokenB,
@@ -78,6 +84,11 @@ export const useSqueethPool = () => {
       Number(state.tick),
       ticks || []
     )
+
+
+
+    //const setBeginningPrice =  pool.token0Price
+
     setPool(pool)
     setWethToken(isWethToken0 ? TokenA : TokenB)
     setSqueethToken(isWethToken0 ? TokenB : TokenA)
@@ -91,6 +102,10 @@ export const useSqueethPool = () => {
       tickSpacing: await squeethContract?.methods.tickSpacing().call(),
       maxLiquidityPerTick: await squeethContract?.methods.maxLiquidityPerTick().call(),
     }
+  }
+
+  function getWSqueethPositionValue(amount: BigNumber | number) {
+    return new BigNumber(amount).times(squeethInitialPrice).times(ethPrice)
   }
 
   async function getPoolState() {
@@ -160,7 +175,7 @@ export const useSqueethPool = () => {
   }
 
   const getBuyParam = async (amount: BigNumber) => {
-    const amountMax = fromTokenAmount((await getBuyQuote(amount.toNumber())).integerValue(BigNumber.ROUND_CEIL), 18)
+    const amountMax = fromTokenAmount((await getBuyQuote(amount.toNumber())).maximumAmountIn, 18)
 
     return {
       tokenIn: wethToken?.address, // address
@@ -190,22 +205,30 @@ export const useSqueethPool = () => {
   }
 
   const getBuyQuote = async (amount: number) => {
-    if (!amount) return new BigNumber(0)
-
-    const params = {
-      tokenIn: wethToken?.address, // address
-      tokenOut: squeethToken?.address, // address
-      fee: UNI_POOL_FEES, // uint24
-      amount: fromTokenAmount(amount, WSQUEETH_DECIMALS).toString(), // uint256
-      sqrtPriceLimitX96: 0, // uint160
+    const emptyState = {
+      amountIn: new BigNumber(0),
+      maximumAmountIn: new BigNumber(0),
+      priceImpact: '0'
     }
 
-    const input = await quoterContract?.methods.quoteExactOutputSingle(params).call({
-      gas: NETWORK_QUOTE_GAS_OVERRIDE[networkId] ?? DEFAULT_GAS_QUOTE
-    })
+    if (!amount || !pool) return emptyState
 
-    if (!input?.amountIn) return new BigNumber(0)
-    return toTokenAmount(new BigNumber(input.amountIn), 18)
+    try {
+      const route = new Route([pool], wethToken!, squeethToken!)
+      const trade = await Trade.exactOut(
+        route, CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(amount, WSQUEETH_DECIMALS).toString())
+      )
+
+      return {
+        amountIn: new BigNumber(trade.inputAmount.toSignificant(18)),
+        maximumAmountIn: new BigNumber(trade.maximumAmountIn(new Percent(5, 10000)).toSignificant(18)),
+        priceImpact: trade.priceImpact.toFixed(2)
+      }
+    } catch (e) {
+      console.log(e)
+    }
+
+    return emptyState
   }
 
   const getBuyQuoteForETH = async (amount: number) => {
@@ -228,7 +251,7 @@ export const useSqueethPool = () => {
         minimumAmountOut: new BigNumber(trade.minimumAmountOut(new Percent(5, 10000)).toSignificant(WSQUEETH_DECIMALS)),
         priceImpact: trade.priceImpact.toFixed(2)
       }
-    } catch(e) {
+    } catch (e) {
       console.log(e)
     }
 
@@ -254,7 +277,7 @@ export const useSqueethPool = () => {
         minimumAmountOut: new BigNumber(trade.minimumAmountOut(new Percent(5, 10000)).toSignificant(18)),
         priceImpact: trade.priceImpact.toFixed(2)
       }
-    } catch(e) {
+    } catch (e) {
       console.log(e)
     }
 
@@ -265,6 +288,7 @@ export const useSqueethPool = () => {
     pool,
     squeethToken,
     wethToken,
+    squeethInitialPrice,
     squeethPrice,
     wethPrice,
     ready,
@@ -276,5 +300,6 @@ export const useSqueethPool = () => {
     getBuyParam,
     getBuyQuoteForETH,
     getSellQuote,
+    getWSqueethPositionValue,
   }
 }

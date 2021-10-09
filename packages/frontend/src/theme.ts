@@ -13,9 +13,10 @@ const getTheme = (mode: Mode) => {
     typography: {
       fontWeightBold: 500,
       fontFamily: [
+        'Open Sans',
         'Mulish',
-        'Roboto Mono',
         'Inter',
+        'Roboto Mono',
         '-apple-system',
         'BlinkMacSystemFont',
         '"Segoe UI"',

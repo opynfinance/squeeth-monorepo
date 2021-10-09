@@ -1,7 +1,10 @@
 import { Button, Tooltip, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
+import clsx from 'clsx'
 import React from 'react'
+
+import { LinkButton } from './Buttons'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -12,17 +15,25 @@ const useStyles = makeStyles((theme) =>
       border: `1px solid ${theme.palette.background.stone}`,
       borderRadius: theme.spacing(1),
       padding: theme.spacing(1.5),
-      display: 'flex',
-      alignItems: 'flex-end',
-      boxSizing: 'border-box',
-      justifyContent: 'space-between',
       margin: 'auto',
       '&:focus-within': {
         border: `1px solid ${theme.palette.secondary.main}30`,
       },
     },
+    errorBorder: {
+      border: `1px solid ${theme.palette.error.main}`,
+      '&:focus-within': {
+        border: `1px solid ${theme.palette.error.main}`,
+      },
+    },
+    innerContainer: {
+      display: 'flex',
+      alignItems: 'flex-end',
+      boxSizing: 'border-box',
+      justifyContent: 'space-between',
+    },
     rightContainer: {
-      width: '55%',
+      width: '50%',
     },
     unitsContainer: {},
     label: {
@@ -45,6 +56,7 @@ const useStyles = makeStyles((theme) =>
       color: theme.palette.text.primary,
       fontWeight: theme.typography.fontWeightBold,
       fontFamily: theme.typography.fontFamily,
+      width: '100%',
     },
     inputContainer: {
       margin: theme.spacing(0.5, 0),
@@ -64,6 +76,8 @@ type PrimaryInputType = {
   actionTxt?: string
   onActionClicked?: () => void
   convertedValue: number | string
+  hint?: string
+  error?: boolean
 }
 
 export const PrimaryInput: React.FC<PrimaryInputType> = ({
@@ -75,42 +89,56 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
   onActionClicked,
   unit,
   convertedValue,
+  hint,
+  error,
 }) => {
   const classes = useStyles()
 
   return (
-    <div className={classes.container}>
-      <div className={classes.rightContainer}>
-        <div className={classes.labelContainer}>
-          <Typography variant="caption" className={classes.label}>
-            {label}
-          </Typography>
-          {tooltip ? (
-            <Tooltip title={tooltip}>
-              <InfoOutlinedIcon fontSize="small" className={classes.tooltipIcon} />
-            </Tooltip>
+    <div className={clsx(classes.container, error && classes.errorBorder)}>
+      <div className={classes.innerContainer}>
+        <div className={classes.rightContainer}>
+          <div className={classes.labelContainer}>
+            <Typography variant="caption" className={classes.label}>
+              {label}
+            </Typography>
+            {tooltip ? (
+              <Tooltip title={tooltip}>
+                <InfoOutlinedIcon fontSize="small" className={classes.tooltipIcon} />
+              </Tooltip>
+            ) : null}
+          </div>
+          <div className={classes.inputContainer}>
+            <input
+              className={classes.input}
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder="label"
+              type="number"
+            ></input>
+          </div>
+        </div>
+        {/* <div>
+          {actionTxt && onActionClicked ? (
+            <Button size="small" color="primary" onClick={onActionClicked} variant="text">
+              {actionTxt}
+            </Button>
           ) : null}
-        </div>
-        <div className={classes.inputContainer}>
-          <input
-            className={classes.input}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder="label"
-            type="number"
-          ></input>
+        </div> */}
+        <div className={classes.unitsContainer}>
+          <Typography variant="caption">${convertedValue}</Typography>
+          <Typography className={classes.unit}>{unit}</Typography>
         </div>
       </div>
-      <div>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <Typography variant="caption" color={error ? 'error' : 'textSecondary'}>
+          {hint || ''}
+        </Typography>
         {actionTxt && onActionClicked ? (
-          <Button size="small" color="primary" onClick={onActionClicked} variant="text">
+          <LinkButton size="small" color="primary" onClick={onActionClicked} variant="text">
             {actionTxt}
-          </Button>
+          </LinkButton>
         ) : null}
-      </div>
-      <div className={classes.unitsContainer}>
-        <Typography variant="caption">${convertedValue}</Typography>
-        <Typography className={classes.unit}>{unit}</Typography>
       </div>
     </div>
   )

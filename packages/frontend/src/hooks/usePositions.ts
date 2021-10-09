@@ -94,7 +94,7 @@ export const useShortPositions = () => {
   return {
     swaps,
     loading,
-    squeethAmount,
+    squeethAmount: squeethAmount.absoluteValue(),
     wethAmount,
     usdAmount,
   }

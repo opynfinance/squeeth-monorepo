@@ -1,10 +1,11 @@
-import { Button, ButtonGroup, TextField } from '@material-ui/core'
+import { Button, ButtonGroup, createStyles, makeStyles, TextField } from '@material-ui/core'
 import dynamic from 'next/dynamic'
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 
 import { graphOptions } from '../../constants/diagram'
 import { useWorldContext } from '../../context/world'
 import IV from '../IV'
+import { SqueethTab, SqueethTabs } from '../Tabs'
 
 enum ChartType {
   PNL = 'LONG PNL',
@@ -15,8 +16,29 @@ enum ChartType {
 
 const Chart = dynamic(() => import('kaktana-react-lightweight-charts'), { ssr: false })
 
+const useStyles = makeStyles((theme) =>
+  createStyles({
+    navDiv: {
+      display: 'flex',
+      marginBottom: theme.spacing(3),
+    },
+    chartNav: {
+      border: `1px solid ${theme.palette.primary.main}30`,
+    },
+  }),
+)
+
 export function LongChart() {
   const [mode, setMode] = useState<ChartType>(ChartType.PNL)
+  const [tradeType, setTradeType] = useState(0)
+
+  const classes = useStyles()
+
+  useEffect(() => {
+    if (tradeType === 0) setMode(ChartType.PNL)
+    else if (tradeType === 1) setMode(ChartType.Price)
+    else if (tradeType === 2) setMode(ChartType.Funding)
+  }, [tradeType])
 
   const {
     researchMode,
@@ -75,11 +97,25 @@ export function LongChart() {
     <div>
       {/* show button tabs and enable price chart only during research mode */}
       {/* {researchMode && ( */}
-      <ButtonGroup color="primary" aria-label="outlined primary button group">
+      <div className={classes.navDiv}>
+        <SqueethTabs
+          style={{ background: 'transparent' }}
+          className={classes.chartNav}
+          value={tradeType}
+          onChange={(evt, val) => setTradeType(val)}
+          aria-label="Sub nav tabs"
+        >
+          <SqueethTab label={`${days}D PNL`} />
+          <SqueethTab label="Price" />
+          <SqueethTab label="Funding" />
+        </SqueethTabs>
+      </div>
+
+      {/* <ButtonGroup color="primary" aria-label="outlined primary button group">
         <Button
           style={{ textTransform: 'none' }}
           onClick={() => setMode(ChartType.PNL)}
-          variant={mode === ChartType.PNL ? 'contained' : 'outlined'}
+          variant={mode === ChartType.PNL ? 'outlined' : 'contained'}
         >
           {' '}
           {days}D PNL{' '}
@@ -87,29 +123,20 @@ export function LongChart() {
         <Button
           style={{ textTransform: 'none' }}
           onClick={() => setMode(ChartType.Price)}
-          variant={mode === ChartType.Price ? 'contained' : 'outlined'}
+          variant={mode === ChartType.Price ? 'outlined' : 'contained'}
         >
           {' '}
           Price{' '}
         </Button>
-        {/* <Button
-          style={{ textTransform: 'none' }}
-          onClick={() => setMode(ChartType.PositionSize)}
-          variant={mode === ChartType.PositionSize ? 'contained' : 'outlined'}
-        >
-          {' '}
-          Size{' '}
-        </Button> */}
         <Button
           style={{ textTransform: 'none' }}
           onClick={() => setMode(ChartType.Funding)}
-          variant={mode === ChartType.Funding ? 'contained' : 'outlined'}
+          variant={mode === ChartType.Funding ? 'outlined' : 'contained'}
         >
           {' '}
           Funding{' '}
         </Button>
-      </ButtonGroup>
-      {/* )} */}
+      </ButtonGroup> */}
       <Chart
         from={startTimestamp}
         to={endTimestamp}

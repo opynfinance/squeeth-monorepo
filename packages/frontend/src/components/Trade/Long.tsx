@@ -1,6 +1,16 @@
-import { CircularProgress, createStyles, Divider, makeStyles, Typography } from '@material-ui/core'
+import {
+  Backdrop,
+  Button,
+  CircularProgress,
+  createStyles,
+  Divider,
+  Fade,
+  makeStyles,
+  Modal,
+  Typography,
+} from '@material-ui/core'
 import BigNumber from 'bignumber.js'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { WSQUEETH_DECIMALS } from '../../constants'
 import { useWallet } from '../../context/wallet'
@@ -36,8 +46,7 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(1),
     },
     divider: {
-      marginTop: theme.spacing(2),
-      marginButtom: theme.spacing(2),
+      margin: theme.spacing(2, 3),
     },
     details: {
       marginTop: theme.spacing(4),
@@ -126,6 +135,27 @@ const useStyles = makeStyles((theme) =>
     squeethExpTxt: {
       fontSize: '20px',
     },
+    closePosition: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      padding: theme.spacing(0, 1),
+    },
+    closeBtn: {
+      color: theme.palette.error.main,
+    },
+    paper: {
+      backgroundColor: theme.palette.background.paper,
+      boxShadow: theme.shadows[5],
+      borderRadius: theme.spacing(1),
+      width: '350px',
+      textAlign: 'center',
+      paddingBottom: theme.spacing(2),
+    },
+    modal: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
   }),
 )
 
@@ -137,6 +167,8 @@ type BuyProps = {
   setSqueethExposure: (arg0: number) => void
   squeethExposure: number
   balance: number
+  open: boolean
+  newVersion: boolean
 }
 
 const Buy: React.FC<BuyProps> = ({
@@ -147,8 +179,15 @@ const Buy: React.FC<BuyProps> = ({
   setSqueethExposure,
   squeethExposure,
   balance,
+  open,
+  newVersion,
 }) => {
   const [quote, setQuote] = useState({
+    amountOut: new BigNumber(0),
+    minimumAmountOut: new BigNumber(0),
+    priceImpact: '0',
+  })
+  const [sellQuote, setSellQuote] = useState({
     amountOut: new BigNumber(0),
     minimumAmountOut: new BigNumber(0),
     priceImpact: '0',
@@ -156,27 +195,40 @@ const Buy: React.FC<BuyProps> = ({
 
   const [buyLoading, setBuyLoading] = useState(false)
   const [sellLoading, setSellLoading] = useState(false)
+  const [modelOpen, setModelOpen] = useState(false)
 
   const classes = useStyles()
   const { swapRouter, wSqueeth } = useAddresses()
   const wSqueethBal = useTokenBalance(wSqueeth, 5, WSQUEETH_DECIMALS)
-  const { ready, sell, getBuyQuoteForETH, buyForWETH } = useSqueethPool()
+  const { ready, sell, getBuyQuoteForETH, buyForWETH, getSellQuote, getWSqueethPositionValue } = useSqueethPool()
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(wSqueeth, swapRouter)
   const { normFactor: normalizationFactor } = useController()
   const { selectWallet, connected } = useWallet()
   const ethPrice = useETHPrice()
 
   useEffect(() => {
-    if (!ready) return
-    getBuyQuoteForETH(amount).then((val) => {
-      setQuote(val)
-      setCost(val.amountOut.toNumber())
-    })
-  }, [amount, ready])
+    if (!open && wSqueethBal.lt(amount)) {
+      setAmount(wSqueethBal.toNumber())
+    }
+  }, [wSqueethBal.toNumber(), open])
 
   useEffect(() => {
-    setSqueethExposure((cost * Number(ethPrice) * Number(ethPrice) * Number(normalizationFactor)) / 10000)
-  }, [cost, ethPrice, normalizationFactor])
+    if (!ready) return
+    if (open) {
+      getBuyQuoteForETH(amount).then((val) => {
+        setQuote(val)
+        setCost(val.amountOut.toNumber())
+      })
+    } else {
+      getSellQuote(amount).then((val) => {
+        setSellQuote(val)
+      })
+    }
+  }, [amount, ready, open])
+
+  useEffect(() => {
+    setSqueethExposure(Number(getWSqueethPositionValue(cost)))
+  }, [cost])
 
   const transact = async () => {
     setBuyLoading(true)
@@ -188,18 +240,110 @@ const Buy: React.FC<BuyProps> = ({
     setBuyLoading(false)
   }
 
-  const sellAndClose = () => {
+  const sellAndClose = useCallback(async () => {
     setSellLoading(true)
+    console.log(squeethAllowance.lt(amount))
     try {
       if (squeethAllowance.lt(amount)) {
-        squeethApprove()
+        await squeethApprove()
       } else {
-        sell(wSqueethBal)
+        await sell(wSqueethBal)
       }
     } catch (e) {
       console.log(e)
     }
     setSellLoading(false)
+  }, [amount, sell, squeethAllowance, squeethApprove, wSqueethBal])
+
+  const ClosePosition = useMemo(() => {
+    return (
+      <div>
+        <Typography variant="caption" className={classes.thirdHeading} component="div">
+          Close squeeth position and redeem ETH
+        </Typography>
+        <div className={classes.thirdHeading} />
+        <PrimaryInput
+          value={amount.toString()}
+          onChange={(v) => setAmount(Number(v))}
+          label="Amount"
+          tooltip="Amount of wSqueeth you want to close"
+          actionTxt="Max"
+          onActionClicked={() => setAmount(Number(wSqueethBal))}
+          unit="wSQTH"
+          convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
+          error={wSqueethBal.lt(amount)}
+          hint={wSqueethBal.lt(amount) ? 'Amount exceeds available balance' : `Balance ${wSqueethBal.toFixed(6)} wSQTH`}
+        />
+        <div className={classes.squeethExp}>
+          <div>
+            <Typography variant="caption">Get</Typography>
+            <Typography className={classes.squeethExpTxt}>{sellQuote.amountOut.toFixed(6)}</Typography>
+          </div>
+          <div>
+            <Typography variant="caption">
+              ${Number(sellQuote.amountOut.times(ethPrice).toFixed(4)).toLocaleString()}
+            </Typography>
+            <Typography className={classes.squeethExpTxt}>ETH</Typography>
+          </div>
+        </div>
+        <TradeInfoItem label="Slippage tolerance" value="0.5" unit="%" />
+        <TradeInfoItem label="Price Impact" value={sellQuote.priceImpact} unit="%" />
+        <TradeInfoItem label="Minimum received" value={sellQuote.minimumAmountOut.toFixed(4)} unit="ETH" />
+        {!connected ? (
+          <PrimaryButton
+            variant="contained"
+            onClick={selectWallet}
+            className={classes.amountInput}
+            disabled={!!sellLoading}
+            style={{ width: '300px' }}
+          >
+            {'Connect Wallet'}
+          </PrimaryButton>
+        ) : (
+          <PrimaryButton
+            variant="contained"
+            onClick={sellAndClose}
+            className={classes.amountInput}
+            disabled={!!sellLoading}
+            style={{ width: '300px' }}
+          >
+            {sellLoading ? (
+              <CircularProgress color="primary" size="1.5rem" />
+            ) : squeethAllowance.lt(amount) ? (
+              'Approve wSQTH'
+            ) : (
+              'Sell to close'
+            )}
+          </PrimaryButton>
+        )}
+        <Typography variant="caption" className={classes.caption} component="div">
+          Trades on Uniswap 🦄
+        </Typography>
+      </div>
+    )
+  }, [
+    amount,
+    classes.amountInput,
+    classes.caption,
+    classes.squeethExp,
+    classes.squeethExpTxt,
+    classes.thirdHeading,
+    connected,
+    ethPrice,
+    selectWallet,
+    sellAndClose,
+    sellLoading,
+    sellQuote.amountOut,
+    sellQuote.minimumAmountOut,
+    sellQuote.priceImpact,
+    setAmount,
+    squeethAllowance,
+    wSqueethBal,
+    getWSqueethPositionValue,
+  ])
+
+  if (!open) {
+    return ClosePosition
   }
 
   return (
@@ -217,6 +361,7 @@ const Buy: React.FC<BuyProps> = ({
         onActionClicked={() => setAmount(balance)}
         unit="ETH"
         convertedValue={(amount * Number(ethPrice)).toFixed(2).toLocaleString()}
+        hint={`Balance ${balance} ETH`}
       />
       {/* <TradeInfoItem label="Squeeth you get" value={cost.toFixed(8)} unit="WSQTH" /> */}
       <div className={classes.squeethExp}>
@@ -234,7 +379,7 @@ const Buy: React.FC<BuyProps> = ({
       {/* if ETH down 50%, squeeth down 75%, so multiply amount by 0.25 to get what would remain  */}
       <TradeInfoItem
         label="If ETH down 50%"
-        value={(amount * Number(ethPrice) * 0.25).toFixed(2).toLocaleString()}
+        value={Number((squeethExposure * 0.25).toFixed(2)).toLocaleString()}
         unit="$"
       />
       <Divider className={classes.divider} />
@@ -265,6 +410,33 @@ const Buy: React.FC<BuyProps> = ({
       <Typography variant="caption" className={classes.caption} component="div">
         Trades on Uniswap 🦄
       </Typography>
+      {!newVersion ? (
+        <>
+          <div className={classes.closePosition}>
+            <Typography className={classes.caption} color="primary">
+              Current balance: {wSqueethBal.toFixed(6)}
+            </Typography>
+            <Button className={classes.closeBtn} onClick={() => setModelOpen(true)}>
+              close
+            </Button>
+          </div>
+          <Modal
+            aria-labelledby="enable-notification"
+            open={modelOpen}
+            className={classes.modal}
+            onClose={() => setModelOpen(false)}
+            closeAfterTransition
+            BackdropComponent={Backdrop}
+            BackdropProps={{
+              timeout: 500,
+            }}
+          >
+            <Fade in={modelOpen}>
+              <div className={classes.paper}>{ClosePosition}</div>
+            </Fade>
+          </Modal>
+        </>
+      ) : null}
     </div>
   )
 }

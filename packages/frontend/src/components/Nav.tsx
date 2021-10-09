@@ -12,10 +12,8 @@ const useStyles = makeStyles((theme) =>
   createStyles({
     nav: {
       height: '64px',
-      padding: theme.spacing(2),
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'space-between',
       position: 'sticky',
       top: '0px',
       zIndex: 10,
@@ -24,11 +22,15 @@ const useStyles = makeStyles((theme) =>
       backdropFilter: 'blur(30px)',
     },
     logo: {
-      marginRight: theme.spacing(2),
+      marginRight: 'auto',
+      marginLeft: theme.spacing(2),
     },
     navDiv: {
       display: 'flex',
+      alignItems: 'center',
+      position: 'absolute',
       justifyContent: 'center',
+      width: '100%',
     },
     navLink: {
       margin: theme.spacing(0, 3),
@@ -39,6 +41,9 @@ const useStyles = makeStyles((theme) =>
     },
     navActive: {
       color: theme.palette.primary.main,
+    },
+    wallet: {
+      marginRight: theme.spacing(2),
     },
   }),
 )
@@ -64,14 +69,21 @@ const Nav: React.FC = () => {
 
   return (
     <div className={classes.nav}>
-      <Image src={logo} alt="logo" width={75} height={75} className={classes.logo} />
-      <div className={classes.navDiv}>
-        <NavLink path="/" name="Trade" />
-        <NavLink path="/strategies" name="Strategies" />
-        <NavLink path="/positions" name="Positions" />
-        <NavLink path="/lp" name="LP" />
+      <div className={classes.logo}>
+        <Image src={logo} alt="logo" width={75} height={75} />
       </div>
-      <WalletButton />
+      <div className={classes.navDiv}>
+        <div style={{ display: 'flex' }}>
+          <NavLink path="/" name="Trade" />
+          <NavLink path="/trade" name="Trade 1" />
+          <NavLink path="/strategies" name="Strategies" />
+          <NavLink path="/positions" name="Positions" />
+          <NavLink path="/lp" name="LP" />
+        </div>
+      </div>
+      <div className={classes.wallet}>
+        <WalletButton />
+      </div>
     </div>
   )
 }

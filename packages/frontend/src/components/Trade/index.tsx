@@ -5,9 +5,10 @@ import { useState } from 'react'
 
 import { useWallet } from '../../context/wallet'
 import { toTokenAmount } from '../../utils/calculations'
-import Buy from './Buy'
+import { SecondaryTab, SecondaryTabs } from '../Tabs'
 import History from './History'
-import Sell from './Sell'
+import Long from './Long'
+import Short from './Short'
 
 enum TradeType {
   BUY,
@@ -23,6 +24,7 @@ type TradeProps = {
   cost: number
   setSqueethExposure: (arg0: number) => void
   squeethExposure: number
+  showLongTab: boolean
 }
 
 const useStyles = makeStyles((theme) =>
@@ -52,21 +54,36 @@ const Trade: React.FC<TradeProps> = ({
   cost,
   setSqueethExposure,
   squeethExposure,
+  showLongTab,
 }) => {
   // const [tradeType, setTradeType] = useState(TradeType.BUY)
   const [modelOpen, setModelOpen] = useState(false)
+  const [openPosition, setOpenPosition] = useState(0)
   const classes = useStyles()
   const { balance } = useWallet()
 
   return (
     <div>
-      <Tabs value={tradeType} onChange={(evt, val) => setTradeType(val)} aria-label="simple tabs example" centered>
-        <Tab label="Long" />
-        <Tab label="Short" />
-      </Tabs>
+      {showLongTab ? (
+        <Tabs value={tradeType} onChange={(evt, val) => setTradeType(val)} aria-label="simple tabs example" centered>
+          <Tab label="Long" />
+          <Tab label="Short" />
+        </Tabs>
+      ) : (
+        <SecondaryTabs
+          value={openPosition}
+          onChange={(evt, val) => setOpenPosition(val)}
+          aria-label="simple tabs example"
+          centered
+          variant="fullWidth"
+        >
+          <SecondaryTab label="Open" />
+          <SecondaryTab label="Close" />
+        </SecondaryTabs>
+      )}
       <div>
         {tradeType === TradeType.BUY ? (
-          <Buy
+          <Long
             amount={amount}
             setAmount={setAmount}
             cost={cost}
@@ -74,9 +91,15 @@ const Trade: React.FC<TradeProps> = ({
             squeethExposure={squeethExposure}
             setSqueethExposure={setSqueethExposure}
             balance={Number(toTokenAmount(balance, 18).toFixed(4))}
+            open={showLongTab || openPosition === 0}
+            newVersion={!showLongTab}
           />
         ) : (
-          <Sell balance={Number(toTokenAmount(balance, 18).toFixed(4))} />
+          <Short
+            balance={Number(toTokenAmount(balance, 18).toFixed(4))}
+            open={showLongTab || openPosition === 0}
+            newVersion={!showLongTab}
+          />
         )}
         {/* <Button
           color="primary"

@@ -8,11 +8,7 @@ export default class MyDocument extends Document {
       <Html lang="en">
         <Head>
           <link
-            rel="stylesheet"
-            href="https://fonts.googleapis.com/css?family=Mulish:wght:100,300,400,500,700&display=swap"
-          />
-          <link
-            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@100;300;400;500;700&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@100;300;400;500;700&display=swap"
             rel="stylesheet"
           />
         </Head>

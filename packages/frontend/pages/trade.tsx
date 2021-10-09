@@ -1,4 +1,4 @@
-import { Grid, InputAdornment, Tab, Tabs, TextField, Tooltip } from '@material-ui/core'
+import { Grid, InputAdornment, TextField, Tooltip } from '@material-ui/core'
 import Card from '@material-ui/core/Card'
 import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
@@ -13,16 +13,13 @@ import LongSqueethPayoff from '../src/components/Charts/LongSqueethPayoff'
 import ShortSqueethPayoff from '../src/components/Charts/ShortSqueethPayoff'
 import { VaultChart } from '../src/components/Charts/VaultChart'
 import Nav from '../src/components/Nav'
-import { SqueethTab, SqueethTabs } from '../src/components/Tabs'
 import Trade from '../src/components/Trade'
 import { Vaults } from '../src/constants'
 import { useWorldContext } from '../src/context/world'
 import { useController } from '../src/hooks/contracts/useController'
-import { useSqueethPool } from '../src/hooks/contracts/useSqueethPool'
 import { useETHPrice } from '../src/hooks/useETHPrice'
 import { useETHPriceCharts } from '../src/hooks/useETHPriceCharts'
 import { useLongPositions, useShortPositions } from '../src/hooks/usePositions'
-import { toTokenAmount } from '../src/utils/calculations'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -84,8 +81,9 @@ const useStyles = makeStyles((theme) =>
     },
     innerCard: {
       textAlign: 'center',
-      paddingBottom: theme.spacing(4),
-      background: theme.palette.background.lightStone,
+      padding: theme.spacing(2),
+      paddingBottom: theme.spacing(8),
+      background: theme.palette.background.stone,
     },
     expand: {
       transform: 'rotate(270deg)',
@@ -114,22 +112,6 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       alignItems: 'center',
     },
-    position: {
-      display: 'flex',
-      marginTop: theme.spacing(1),
-    },
-    positionToken: {
-      fontSize: '16px',
-      fontWeight: 600,
-      marginRight: theme.spacing(4),
-    },
-    positionUSD: {
-      fontSize: '16px',
-      marginRight: theme.spacing(4),
-    },
-    subNavTabs: {
-      marginTop: theme.spacing(4),
-    },
   }),
 )
 
@@ -147,10 +129,9 @@ export default function Home() {
   const [tradeType, setTradeType] = useState(TradeType.BUY)
   const [customLong, setCustomLong] = useState(0)
   const ethPrice = useETHPrice()
-  const { normFactor: normalizationFactor, fundingPerDay, mark, index } = useController()
+  const { normFactor: normalizationFactor, fundingPerDay } = useController()
   const { squeethAmount: lngAmt } = useLongPositions()
   const { squeethAmount: shrtAmt } = useShortPositions()
-  const { getWSqueethPositionValue } = useSqueethPool()
 
   const { volMultiplier: globalVolMultiplier, collatRatio } = useWorldContext()
   // use hook because we only calculate accFunding based on 24 hour performance
@@ -186,16 +167,15 @@ export default function Home() {
               ETH&sup2; Price
             </Typography>
           </div>
-          {/* <Typography>${Number(ethPrice.multipliedBy(ethPrice).toFixed(2)).toLocaleString()}</Typography> */}
-          <Typography>${Number(toTokenAmount(index, 18).toFixed(2)).toLocaleString()}</Typography>
+          <Typography>${Number(ethPrice.multipliedBy(ethPrice).toFixed(2)).toLocaleString()}</Typography>
         </div>
         <div className={classes.infoItem}>
-          <div className={classes.infoLabel}>
-            <Typography color="textSecondary" variant="body2">
-              Mark Price
-            </Typography>
-          </div>
-          <Typography>${Number(toTokenAmount(mark, 18).toFixed(2)).toLocaleString()}</Typography>
+          <Typography color="textSecondary" variant="body2">
+            My Position
+          </Typography>
+          <Typography>
+            {tradeType === TradeType.BUY ? lngAmt.toFixed(8) : shrtAmt.negated().toFixed(8)} WSQTH
+          </Typography>
         </div>
       </div>
     )
@@ -204,17 +184,6 @@ export default function Home() {
   return (
     <div>
       <Nav />
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <SqueethTabs
-          value={tradeType}
-          onChange={(evt, val) => setTradeType(val)}
-          aria-label="Sub nav tabs"
-          className={classes.subNavTabs}
-        >
-          <SqueethTab label="Long" />
-          <SqueethTab label="Short" />
-        </SqueethTabs>
-      </div>
 
       {tradeType === TradeType.BUY ? (
         //long side
@@ -233,13 +202,6 @@ export default function Home() {
               <LongChart />
             </div>
             <Typography className={classes.cardTitle} variant="h6">
-              My Position
-            </Typography>
-            <div className={classes.position}>
-              <Typography className={classes.positionToken}>{lngAmt.toFixed(4)} wSQTH</Typography>
-              <Typography>${getWSqueethPositionValue(lngAmt).toFixed(2)}</Typography>
-            </div>
-            <Typography className={classes.cardTitle} variant="h6">
               What is squeeth?
             </Typography>
             <Typography variant="body2" className={classes.cardDetail}>
@@ -255,6 +217,51 @@ export default function Home() {
                 Learn more.{' '}
               </a>
             </Typography>
+            {/* <Typography className={classes.cardTitle} variant="h6">
+              Strategy Details
+            </Typography>
+            <Typography className={classes.thirdHeading} variant="h6">
+              How it works
+            </Typography>
+            <List>
+              <ListItem>
+                <ListItemText primary="1. Buy Squeeth ERC20" secondary="Trades on Uniswap" />
+              </ListItem>
+              <ListItem>
+                <ListItemText
+                  primary="2. Pay continuous funding out of squeeth ERC20 position"
+                  secondary="Sell some of your squeeth ERC20 to pay funding"
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemText primary="3. Exit position by selling squeeth ERC20" secondary="Trades on Uniswap" />
+              </ListItem>
+            </List>
+
+            <Typography className={classes.thirdHeading} variant="h6">
+              Properties
+            </Typography>
+            <Typography variant="body2" className={classes.cardSubTxt}>
+              Squeeth gives you an ETH&sup2; payoff. You always hold a position similar to an at the money call option -
+              you have constant gamma exposure. This functions similar to a perpetual swap, where you are targeting
+              ETH&sup2; rather than ETH.
+              <a className={classes.header} href="https://www.paradigm.xyz/2021/08/power-perpetuals/">
+                {' '}
+                Learn more.{' '}
+              </a>
+            </Typography>
+            <br />
+            <Typography variant="body2" className={classes.cardSubTxt}>
+              Funding is calculated as your position size multiplied by the TWAP (time weighted average price) of Mark -
+              Index, where Mark is the price squeeth is trading at and Index is ETH&sup2;. We use{' '}
+              <a className={classes.header} href="https://uniswap.org/whitepaper-v3.pdf">
+                {' '}
+                Uniswap V3 GMA (geometric moving average) TWAP.{' '}
+              </a>
+              Funding happens everytime the contract is touched.
+              <br />
+              <br />
+            </Typography> */}
             <Typography className={classes.cardTitle} variant="h6">
               Risks
             </Typography>
@@ -266,6 +273,11 @@ export default function Home() {
               Squeeth smart contracts are currently unaudited. This is experimental technology and we encourage caution
               only risking funds you can afford to lose.
             </Typography>
+            {/* <br />
+          <Typography variant="body2" className={classes.cardSubTxt}>
+            Funding is paid in-kind (using the squeeth token), so you cannot be liquidated. Note that the squeeth ERC20 amount will remain constant eg. if you bought 1 squeeth you will still have 1 squeeth after funding in kind. 
+            What will change is how much value you can redeem for each squeeth. The amount of value you can redeem per squeeth depends on how much funding you have paid and the mark price of squeeth. [insert diagram of square with dotted lines, value being area of square]
+          </Typography> */}
           </Grid>
           <Grid item xs={1} />
           <Grid item xs={4} className={classes.ticketGrid}>
@@ -279,13 +291,33 @@ export default function Home() {
                 setCost={setCost}
                 squeethExposure={squeethExposure}
                 setSqueethExposure={setSqueethExposure}
-                showLongTab={false}
+                showLongTab
               />
             </Card>
             <Typography className={classes.thirdHeading} variant="h6">
               Payoff
             </Typography>
             <LongSqueethPayoff ethPrice={ethPrice.toNumber()} />
+            {/* <Typography variant="body2" className={classes.payoff}>
+              You are getting ${squeethExposure.toFixed(2)} of squeeth exposure. If ETH goes up &nbsp;
+              <TextField
+                size="small"
+                value={leverage.toString()}
+                type="number"
+                style={{ width: 75 }}
+                onChange={(event) => setLeverage(Number(event.target.value))}
+                // label="Leverage"
+                variant="outlined"
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">x</InputAdornment>,
+                }}
+              />
+              &nbsp;, squeeth goes up {leverage * leverage}x, and your position is worth &nbsp; $
+              {((cost * Number(normalizationFactor) * (leverage * Number(ethPrice)) ** 2) / 10000).toFixed(2)}.
+              <br /> <br />
+              If ETH goes down, you lose less compared to 2x leverage.
+            </Typography>
+            <br /> */}
           </Grid>
         </Grid>
       ) : (
@@ -299,17 +331,10 @@ export default function Home() {
             </Typography>
             <SqueethInfo />
             <Typography className={classes.cardTitle} variant="h6">
-              Historical Predicted Performance
+              Historical Backtests
             </Typography>
             <div className={classes.amountInput}>
               <VaultChart vault={Vaults.Short} longAmount={0} showPercentage={false} setCustomLong={setCustomLong} />
-            </div>
-            <Typography className={classes.cardTitle} variant="h6">
-              My Position
-            </Typography>
-            <div className={classes.position}>
-              <Typography className={classes.positionToken}>{shrtAmt.negated().toFixed(4)} wSQTH</Typography>
-              <Typography>${getWSqueethPositionValue(shrtAmt).toFixed(2)}</Typography>
             </div>
             <Typography className={classes.cardTitle} variant="h6">
               What is short squeeth?
@@ -326,6 +351,51 @@ export default function Home() {
                 Learn more.{' '}
               </a>
             </Typography>
+            {/* <Typography className={classes.cardTitle} variant="h6">
+              Strategy Details
+            </Typography>
+            <Typography className={classes.thirdHeading} variant="h6">
+              How it works
+            </Typography>
+            <List>
+              <ListItem>
+                <ListItemText primary="1. Put down ETH collateral" secondary="at least 1.5x collateralized" />
+              </ListItem>
+              <ListItem>
+                <ListItemText primary="2. Mint Squeeth" secondary="Earn continuous funding for being short squeeth" />
+              </ListItem>
+              <ListItem>
+                <ListItemText primary="3. Sell Squeeth" secondary="Trades on Uniswap" />
+              </ListItem>
+            </List>
+            <Typography className={classes.thirdHeading} variant="h6">
+              Properties
+            </Typography>
+            <Typography variant="body2" className={classes.cardSubTxt}>
+              Short squeeth gives you a short ETH&sup2; payoff. You always hold a position similar to selling an at the
+              money{' '}
+              <a className={classes.header} href="https://www.investopedia.com/terms/s/straddle.asp">
+                {' '}
+                straddle,{' '}
+              </a>{' '}
+              where you have constant negative gamma exposure. This functions similar to a perpetual swap, where you are
+              targeting ETH&sup2; rather than ETH.
+              <a className={classes.header} href="https://www.paradigm.xyz/2021/08/power-perpetuals/">
+                {' '}
+                Learn more.{' '}
+              </a>
+            </Typography>
+            <br />
+            <Typography variant="body2" className={classes.cardSubTxt}>
+              Funding is calculated as your position size multiplied by the TWAP (time weighted average price) of Mark -
+              Index, where Mark is the price squeeth is trading at and Index is ETH&sup2;. We use{' '}
+              <a className={classes.header} href="https://uniswap.org/whitepaper-v3.pdf">
+                {' '}
+                Uniswap V3 GMA (geometric moving average) TWAP.
+              </a>
+              &nbsp; Funding happens everytime the contract is touched.{' '}
+            </Typography>
+            <br /> <br /> */}
             <Typography className={classes.cardTitle} variant="h6">
               Risks
             </Typography>
@@ -349,7 +419,7 @@ export default function Home() {
                 cost={cost}
                 setSqueethExposure={setSqueethExposure}
                 squeethExposure={squeethExposure}
-                showLongTab={false}
+                showLongTab
               />
             </Card>
             <Typography className={classes.thirdHeading} variant="h6">

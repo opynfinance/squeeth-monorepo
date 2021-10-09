@@ -64,7 +64,7 @@ export default function Positions() {
     if (!ready) return
 
     getSellQuote(wSqueethBal.toNumber()).then(setSellQuote)
-    getBuyQuote(shortSqueethAmt.negated().toNumber()).then(setBuyQuote)
+    getBuyQuote(shortSqueethAmt.toNumber()).then((val) => setBuyQuote(val.amountIn))
   }, [wSqueethBal.toNumber(), ready])
 
   useEffect(() => {
@@ -116,7 +116,7 @@ export default function Positions() {
             </div>
           </div>
         ) : null}
-        {shortSqueethAmt.isNegative() ? (
+        {shortSqueethAmt.isPositive() ? (
           <div className={classes.position}>
             <Typography>Short Squeeth</Typography>
             <div>

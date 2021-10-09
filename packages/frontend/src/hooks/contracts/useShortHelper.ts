@@ -53,17 +53,18 @@ export const useShortHelper = () => {
    * @param amount - Amount of squeeth to buy back
    * @returns
    */
-  const closeShort = async (vaultId: number, amount: BigNumber) => {
+  const closeShort = async (vaultId: number, amount: BigNumber, withdrawAmt: BigNumber) => {
     if (!contract || !address) return
 
     const _amount = fromTokenAmount(amount, WSQUEETH_DECIMALS)
+    const _withdrawAmt = fromTokenAmount(withdrawAmt.isPositive() ? withdrawAmt : 0, WETH_DECIMALS)
     const _exactOutputParams = await getBuyParam(amount)
 
     _exactOutputParams.recipient = shortHelper
 
     // _burnSqueethAmount and _withdrawAmount will be same as we are putting 1:1 collat now
     await handleTransaction(
-      contract.methods.closeShort(vaultId, _amount.toString(), _amount.toString(), _exactOutputParams).send({
+      contract.methods.closeShort(vaultId, _amount.toString(), _withdrawAmt.toFixed(0), _exactOutputParams).send({
         from: address,
         value: _exactOutputParams.amountInMaximum,
       }),
