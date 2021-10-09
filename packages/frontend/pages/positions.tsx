@@ -10,7 +10,7 @@ import { useSqueethPool } from '../src/hooks/contracts/useSqueethPool'
 import { useTokenBalance } from '../src/hooks/contracts/useTokenBalance'
 import { useAddresses } from '../src/hooks/useAddress'
 import { useETHPrice } from '../src/hooks/useETHPrice'
-import { useLongPositions, useShortPositions } from '../src/hooks/usePositions'
+import { useLongPositions, usePnL, useShortPositions } from '../src/hooks/usePositions'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -45,45 +45,10 @@ const useStyles = makeStyles((theme) =>
 
 export default function Positions() {
   const classes = useStyles()
-  const { wethAmount: longWethAmt, usdAmount: longUsdAmt, squeethAmount: wSqueethBal } = useLongPositions()
-  const { wethAmount: shortWethAmt, usdAmount: shortUsdAmt, squeethAmount: shortSqueethAmt } = useShortPositions()
+  const { wethAmount: longWethAmt, squeethAmount: wSqueethBal } = useLongPositions()
+  const { wethAmount: shortWethAmt, squeethAmount: shortSqueethAmt } = useShortPositions()
+  const { longGain, shortGain, buyQuote, sellQuote } = usePnL()
   const ethPrice = useETHPrice()
-  const { normFactor: normalizationFactor } = useController()
-  const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
-
-  const [sellQuote, setSellQuote] = useState({
-    amountOut: new BigNumber(0),
-    minimumAmountOut: new BigNumber(0),
-    priceImpact: '0',
-  })
-  const [buyQuote, setBuyQuote] = useState(new BigNumber(0))
-  const [longGain, setLongGain] = useState(0)
-  const [shortGain, setShortGain] = useState(0)
-
-  useEffect(() => {
-    if (!ready) return
-
-    getSellQuote(wSqueethBal.toNumber()).then(setSellQuote)
-    getBuyQuote(shortSqueethAmt.toNumber()).then((val) => setBuyQuote(val.amountIn))
-  }, [wSqueethBal.toNumber(), ready])
-
-  useEffect(() => {
-    const _currentValue = sellQuote.amountOut
-      .times(ethPrice || 0)
-      .div(longUsdAmt.absoluteValue())
-      .times(100)
-    const _gain = _currentValue.minus(100)
-    setLongGain(_gain.toNumber())
-  }, [wSqueethBal.toNumber(), sellQuote.amountOut.toNumber(), ethPrice.toNumber(), longUsdAmt.toNumber()])
-
-  useEffect(() => {
-    const _currentValue = buyQuote
-      .times(ethPrice || 0)
-      .div(shortUsdAmt.absoluteValue())
-      .times(100)
-    const _gain = _currentValue.minus(100)
-    setShortGain(_gain.toNumber())
-  }, [shortSqueethAmt.toNumber(), buyQuote.toNumber(), ethPrice.toNumber(), shortUsdAmt.toNumber()])
 
   return (
     <div>

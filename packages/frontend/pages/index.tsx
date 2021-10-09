@@ -21,7 +21,7 @@ import { useController } from '../src/hooks/contracts/useController'
 import { useSqueethPool } from '../src/hooks/contracts/useSqueethPool'
 import { useETHPrice } from '../src/hooks/useETHPrice'
 import { useETHPriceCharts } from '../src/hooks/useETHPriceCharts'
-import { useLongPositions, useShortPositions } from '../src/hooks/usePositions'
+import { useLongPositions, usePnL, useShortPositions } from '../src/hooks/usePositions'
 import { toTokenAmount } from '../src/utils/calculations'
 
 const useStyles = makeStyles((theme) =>
@@ -130,6 +130,16 @@ const useStyles = makeStyles((theme) =>
     subNavTabs: {
       marginTop: theme.spacing(4),
     },
+    green: {
+      color: theme.palette.success.main,
+      marginRight: theme.spacing(4),
+      fontSize: '16px',
+    },
+    red: {
+      color: theme.palette.error.main,
+      marginRight: theme.spacing(4),
+      fontSize: '16px',
+    },
   }),
 )
 
@@ -151,6 +161,7 @@ export default function Home() {
   const { squeethAmount: lngAmt } = useLongPositions()
   const { squeethAmount: shrtAmt } = useShortPositions()
   const { getWSqueethPositionValue } = useSqueethPool()
+  const { longGain, shortGain } = usePnL()
 
   const { volMultiplier: globalVolMultiplier, collatRatio } = useWorldContext()
   // use hook because we only calculate accFunding based on 24 hour performance
@@ -174,7 +185,9 @@ export default function Home() {
             <Typography color="textSecondary" variant="body2">
               Implied 24h Funding
             </Typography>
-            <Tooltip title={'Estimated amount of funding paid in next 24 hours. Funding will happen in kind.'}>
+            <Tooltip
+              title={'Estimated amount of funding paid in next 24 hours. Funding will happen out of your position.'}
+            >
               <InfoIcon fontSize="small" className={classes.infoIcon} />
             </Tooltip>
           </div>
@@ -237,7 +250,10 @@ export default function Home() {
             </Typography>
             <div className={classes.position}>
               <Typography className={classes.positionToken}>{lngAmt.toFixed(4)} wSQTH</Typography>
-              <Typography>${getWSqueethPositionValue(lngAmt).toFixed(2)}</Typography>
+              <Typography className={classes.positionUSD}>${getWSqueethPositionValue(lngAmt).toFixed(2)}</Typography>
+              <Typography variant="body1" className={longGain < 0 ? classes.red : classes.green}>
+                {(longGain || 0).toFixed(2)}%
+              </Typography>
             </div>
             <Typography className={classes.cardTitle} variant="h6">
               What is squeeth?
@@ -259,9 +275,9 @@ export default function Home() {
               Risks
             </Typography>
             <Typography variant="body2" className={classes.cardDetail1}>
-              Funding is paid in kind, meaning you sell a small amount of squeeth at funding, reducing your position
-              size. Holding the position for a long period of time without upward movements in ETH can lose considerable
-              funds to funding payments.
+              Funding is paid out of your position, meaning you sell a small amount of squeeth at funding, reducing your
+              position size. Holding the position for a long period of time without upward movements in ETH can lose
+              considerable funds to funding payments.
               <br /> <br />
               Squeeth smart contracts are currently unaudited. This is experimental technology and we encourage caution
               only risking funds you can afford to lose.
@@ -309,7 +325,10 @@ export default function Home() {
             </Typography>
             <div className={classes.position}>
               <Typography className={classes.positionToken}>{shrtAmt.negated().toFixed(4)} wSQTH</Typography>
-              <Typography>${getWSqueethPositionValue(shrtAmt).toFixed(2)}</Typography>
+              <Typography className={classes.positionUSD}>${getWSqueethPositionValue(shrtAmt).toFixed(2)}</Typography>
+              <Typography variant="body1" className={shortGain < 0 ? classes.red : classes.green}>
+                {(shortGain || 0).toFixed(2)}%
+              </Typography>
             </div>
             <Typography className={classes.cardTitle} variant="h6">
               What is short squeeth?

@@ -5,6 +5,7 @@ import BigNumber from 'bignumber.js'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Vaults } from '../../constants'
+import { UNI_POOL_FEES } from '../../constants'
 import { useWallet } from '../../context/wallet'
 import { useWorldContext } from '../../context/world'
 import { useController } from '../../hooks/contracts/useController'
@@ -319,9 +320,9 @@ const Sell: React.FC<{ balance: number; open: boolean; newVersion: boolean }> = 
               endAdornment: (
                 <InputAdornment position="end">
                   <Typography variant="caption">%</Typography>
-                  <Tooltip title="If 200% you will get 1 wSqueeth for 2 ETH " style={{ marginLeft: '4px' }}>
+                  {/* <Tooltip title="If 200% you will get 1 wSqueeth for 2 ETH " style={{ marginLeft: '4px' }}>
                     <InfoOutlinedIcon fontSize="small" />
-                  </Tooltip>
+                  </Tooltip> */}
                 </InputAdornment>
               ),
             }}
@@ -353,9 +354,10 @@ const Sell: React.FC<{ balance: number; open: boolean; newVersion: boolean }> = 
           tooltip={'Collateral ratio for current short position'}
         />
         <Divider className={classes.divider} />
-        <TradeInfoItem label="Slippage tolerance" value="0.5" unit="%" />
+        <TradeInfoItem label="Slippage Tolerance" value="0.5" unit="%" />
         <TradeInfoItem label="Price Impact" value={buyQuote.priceImpact} unit="%" />
         <TradeInfoItem label="Minimum to send" value={buyQuote.maximumAmountIn.toFixed(4)} unit="ETH" />
+        <TradeInfoItem label="Liquidity Provider Fee" value={UNI_POOL_FEES / 1000000} unit="ETH" />
 
         {!connected ? (
           <PrimaryButton
@@ -414,11 +416,12 @@ const Sell: React.FC<{ balance: number; open: boolean; newVersion: boolean }> = 
     connected,
     ethPrice,
     isVaultApproved,
-    normalizationFactor,
     selectWallet,
     shortLoading,
     squeethAmount,
     withdrawCollat,
+    getWSqueethPositionValue,
+    existingCollatPercent,
   ])
 
   if (!open) {
@@ -459,9 +462,9 @@ const Sell: React.FC<{ balance: number; open: boolean; newVersion: boolean }> = 
             endAdornment: (
               <InputAdornment position="end">
                 <Typography variant="caption">%</Typography>
-                <Tooltip title="If 200% you will get 1 wSqueeth for 2 ETH " style={{ marginLeft: '4px' }}>
+                {/* <Tooltip title="If 200% you will get 1 wSqueeth for 2 ETH " style={{ marginLeft: '4px' }}>
                   <InfoOutlinedIcon fontSize="small" />
-                </Tooltip>
+                </Tooltip> */}
               </InputAdornment>
             ),
           }}
@@ -503,6 +506,7 @@ const Sell: React.FC<{ balance: number; open: boolean; newVersion: boolean }> = 
       <TradeInfoItem label="Slippage tolerance" value="0.5" unit="%" />
       <TradeInfoItem label="Price Impact" value={quote.priceImpact} unit="%" />
       <TradeInfoItem label="Minimum received" value={quote.minimumAmountOut.toFixed(4)} unit="ETH" />
+      <TradeInfoItem label="Liquidity Provider Fee" value={UNI_POOL_FEES / 1000000} unit="ETH" />
 
       {!connected ? (
         <PrimaryButton

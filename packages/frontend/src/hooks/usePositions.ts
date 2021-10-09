@@ -1,11 +1,14 @@
 import { useQuery } from '@apollo/client'
 import BigNumber from 'bignumber.js'
+import { useEffect, useState } from 'react'
 
 import { useWallet } from '../context/wallet'
 import { useWorldContext } from '../context/world'
 import { swaps, swapsVariables } from '../queries/uniswap/__generated__/swaps'
 import SWAPS_QUERY from '../queries/uniswap/swapsQuery'
+import { useSqueethPool } from './contracts/useSqueethPool'
 import { useAddresses } from './useAddress'
+import { useETHPrice } from './useETHPrice'
 import useInterval from './useInterval'
 
 const bigZero = new BigNumber(0)
@@ -97,5 +100,53 @@ export const useShortPositions = () => {
     squeethAmount: squeethAmount.absoluteValue(),
     wethAmount,
     usdAmount,
+  }
+}
+
+export const usePnL = () => {
+  const { usdAmount: longUsdAmt, squeethAmount: wSqueethBal } = useLongPositions()
+  const { usdAmount: shortUsdAmt, squeethAmount: shortSqueethAmt } = useShortPositions()
+  const ethPrice = useETHPrice()
+  const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
+
+  const [sellQuote, setSellQuote] = useState({
+    amountOut: new BigNumber(0),
+    minimumAmountOut: new BigNumber(0),
+    priceImpact: '0',
+  })
+  const [buyQuote, setBuyQuote] = useState(new BigNumber(0))
+  const [longGain, setLongGain] = useState(0)
+  const [shortGain, setShortGain] = useState(0)
+
+  useEffect(() => {
+    if (!ready) return
+
+    getSellQuote(wSqueethBal.toNumber()).then(setSellQuote)
+    getBuyQuote(shortSqueethAmt.toNumber()).then((val) => setBuyQuote(val.amountIn))
+  }, [wSqueethBal.toNumber(), ready])
+
+  useEffect(() => {
+    const _currentValue = sellQuote.amountOut
+      .times(ethPrice || 0)
+      .div(longUsdAmt.absoluteValue())
+      .times(100)
+    const _gain = _currentValue.minus(100)
+    setLongGain(_gain.toNumber())
+  }, [wSqueethBal.toNumber(), sellQuote.amountOut.toNumber(), ethPrice.toNumber(), longUsdAmt.toNumber()])
+
+  useEffect(() => {
+    const _currentValue = buyQuote
+      .times(ethPrice || 0)
+      .div(shortUsdAmt.absoluteValue())
+      .times(100)
+    const _gain = _currentValue.minus(100)
+    setShortGain(_gain.toNumber())
+  }, [shortSqueethAmt.toNumber(), buyQuote.toNumber(), ethPrice.toNumber(), shortUsdAmt.toNumber()])
+
+  return {
+    longGain,
+    shortGain,
+    buyQuote,
+    sellQuote,
   }
 }

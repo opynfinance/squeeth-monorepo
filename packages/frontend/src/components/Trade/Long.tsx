@@ -13,6 +13,7 @@ import BigNumber from 'bignumber.js'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { WSQUEETH_DECIMALS } from '../../constants'
+import { UNI_POOL_FEES } from '../../constants'
 import { useWallet } from '../../context/wallet'
 import { useUserAllowance } from '../../hooks/contracts/useAllowance'
 import { useController } from '../../hooks/contracts/useController'
@@ -286,9 +287,10 @@ const Buy: React.FC<BuyProps> = ({
             <Typography className={classes.squeethExpTxt}>ETH</Typography>
           </div>
         </div>
-        <TradeInfoItem label="Slippage tolerance" value="0.5" unit="%" />
+        <TradeInfoItem label="Slippage Tolerance" value="0.5" unit="%" />
         <TradeInfoItem label="Price Impact" value={sellQuote.priceImpact} unit="%" />
         <TradeInfoItem label="Minimum received" value={sellQuote.minimumAmountOut.toFixed(4)} unit="ETH" />
+        <TradeInfoItem label="Liquidity Provider Fee" value={UNI_POOL_FEES / 1000000} unit="ETH" />
         {!connected ? (
           <PrimaryButton
             variant="contained"
@@ -383,9 +385,10 @@ const Buy: React.FC<BuyProps> = ({
         unit="$"
       />
       <Divider className={classes.divider} />
-      <TradeInfoItem label="Slippage tolerance" value="0.5" unit="%" />
+      <TradeInfoItem label="Slippage Tolerance" value="0.5" unit="%" />
       <TradeInfoItem label="Price Impact" value={quote.priceImpact} unit="%" />
       <TradeInfoItem label="Minimum received" value={quote.minimumAmountOut.toFixed(6)} unit="wSQTH" />
+      <TradeInfoItem label="Liquidity Provider Fee" value={UNI_POOL_FEES / 1000000} unit="ETH" />
       {!connected ? (
         <PrimaryButton
           variant="contained"

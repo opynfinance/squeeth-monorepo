@@ -273,9 +273,9 @@ export function getSqueethLongPayOffGraph(ethPrice: number) {
   const markAtTrade = getWeightedPrice(indexAtTrade)
   const powerPrices = ethPrices.map((p) => (p ** 2 * markAtTrade) / indexAtTrade)
   const powerTokenPayout = powerPrices.map((p, i) => {
-    return (((unitPerTrade * (powerPrices[i] - markAtTrade)) / ethPrice) * 100).toFixed(2)
+    return (((unitPerTrade * (powerPrices[i] - markAtTrade)) / ethPrice) * 100).toFixed(0)
   })
-  const ethPercents = ethPrices.map((p) => (100 * (p / ethPrice - 1)).toFixed(0))
+  const ethPercents = ethPrices.map((p) => (100 * (p / ethPrice - 1)).toFixed(2))
 
   const twoXLeverage = ethPrices.map((p) => {
     const res = (((p - ethPrice) * 2) / ethPrice) * 100
