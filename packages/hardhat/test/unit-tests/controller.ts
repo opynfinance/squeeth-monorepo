@@ -405,6 +405,11 @@ describe("Controller", function () {
         controller.connect(seller1).redeemShort(1)
       ).to.be.revertedWith("!shutdown");
     });
+    it("Should revert when calling donate", async () => {
+      await expect(
+        controller.connect(random).donate({value: 1})
+      ).to.be.revertedWith("!shutdown");
+    });
   });
   
   describe("Emergency Shutdown", function () {

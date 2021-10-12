@@ -71,6 +71,11 @@ contract Controller is Initializable, Ownable {
         _;
     }
 
+    modifier isShutdown() {
+        require(isShutDown, "!shutdown");
+        _;
+    }
+
     /**
      * ======================
      * | External Functions |
@@ -353,8 +358,7 @@ contract Controller is Initializable, Ownable {
     /**
      * @dev shutdown the system and enable system settlement
      */
-    function shutDown() external onlyOwner {
-        require(!isShutDown, "shutdown");
+    function shutDown() external notShutdown onlyOwner {
         isShutDown = true;
         shutDownEthPriceSnapshot = oracle.getTwapSafe(ethDaiPool, weth, dai, 600);
     }
@@ -363,8 +367,7 @@ contract Controller is Initializable, Ownable {
      * @dev redeem wPowerPerp for its index value when the system is shutdown
      * @param _wPerpAmount amount of wPowerPerp to burn
      */
-    function redeemLong(uint256 _wPerpAmount) external {
-        require(isShutDown, "!shutdown");
+    function redeemLong(uint256 _wPerpAmount) external isShutdown {
         wPowerPerp.burn(msg.sender, _wPerpAmount);
 
         uint256 longValue = Power2Base._getLongSettlementValue(
@@ -379,8 +382,7 @@ contract Controller is Initializable, Ownable {
      * @dev redeem additional collateral from the vault when the system is shutdown
      * @param _vaultId vauld id
      */
-    function redeemShort(uint256 _vaultId) external {
-        require(isShutDown, "!shutdown");
+    function redeemShort(uint256 _vaultId) external isShutdown {
         require(_canModifyVault(_vaultId, msg.sender), "not allowed");
 
         uint256 debt = Power2Base._getLongSettlementValue(
@@ -408,9 +410,9 @@ contract Controller is Initializable, Ownable {
     }
 
     /**
-     * @notice a function to add eth into a contract, in case it got insolvent and have ensufficient eth to pay out.
+     * @notice a function to add eth into a contract, in case it got insolvent and have ensufficient eth to pay out for settlement.
      */
-    function donate() external payable {}
+    function donate() external payable isShutdown {}
 
     /**
      * fallback function to accept eth
