@@ -100,6 +100,7 @@ contract Controller is Initializable, Ownable {
      * @return mark price denominated in $USD, scaled by 1e18
      */
     function getDenormalizedMark(uint32 _period) external view returns (uint256) {
+        uint256 expectedNormalizationFactor = _getNewNormalizationFactor();
         return
             Power2Base._getDenormalizedMark(
                 _period,
@@ -109,7 +110,7 @@ contract Controller is Initializable, Ownable {
                 weth,
                 dai,
                 address(wPowerPerp),
-                normalizationFactor
+                expectedNormalizationFactor
             );
     }
 

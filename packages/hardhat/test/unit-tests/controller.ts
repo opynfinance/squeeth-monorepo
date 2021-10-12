@@ -5,6 +5,7 @@ import { BigNumber, providers } from "ethers";
 import { Controller, MockWSqueeth, MockVaultNFTManager, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager } from "../../typechain";
 
 import { isEmptyVault } from '../vault-utils'
+import { isSimilar } from "../utils";
 
 const squeethETHPrice = ethers.utils.parseUnits('3010')
 const ethUSDPrice = ethers.utils.parseUnits('3000')
@@ -122,7 +123,7 @@ describe("Controller", function () {
       
       it('should be able to get index and mark price', async() => {
         const markPrice = await controller.getDenormalizedMark(30)
-        expect(markPrice.eq(squeethETHPrice.mul(ethUSDPrice).div(one))).to.be.true
+        expect(isSimilar(markPrice.toString(), squeethETHPrice.mul(ethUSDPrice).div(one).toString())).to.be.true
 
         const index = await controller.getIndex(30)
         expect(index.eq(ethUSDPrice.mul(ethUSDPrice).div(one))).to.be.true
