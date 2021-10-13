@@ -100,7 +100,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
     await controller.init(oracle.address, shortNFT.address, squeeth.address, weth.address, dai.address, ethDaiPool.address, squeethEthPool.address, uniPositionManager.address);
   })
 
-  describe("Vault1: Basic Flow", function () {
+  describe("Vault1 and Vault2: Basic Flow", function () {
 
     let vaultId: BigNumber;
     const uniNFTId = 1;
@@ -115,6 +115,12 @@ describe("Controller: Uni LP tokens collateralization", function () {
         await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount, 0, {value: collateralAmount})
         // mint uni nft for users
         await uniPositionManager.mint(seller1.address, uniNFTId)
+        
+        // mint 2nd nft for user to test reverting
+        const nextUniNFTId = 2
+        await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount, 0, {value: collateralAmount})
+        // mint uni nft for users
+        await uniPositionManager.mint(seller1.address, nextUniNFTId)
       });
 
       before('Prepare shared variables', async() => {
@@ -171,6 +177,37 @@ describe("Controller: Uni LP tokens collateralization", function () {
         expect(ownerAfter === controller.address).to.be.true      
       })
 
+      it('should revert if a user tries to deposit a second nft.', async() => {
+        
+        const newUniNFTId = 2
+        
+        // infinite price range
+        const nftTickUpper = 887220
+        const nftTickLower = -887220
+        const { sqrtPrice: sqrtX96Price, tick: currentTick } = getSqrtPriceAndTickBySqueethPrice(squeethETHPrice, wethIsToken0InSqueethPool)
+
+        // how much to stimulate as LP deposit
+        const ethLiquidityAmount = ethers.utils.parseUnits('30')
+        const squeethLiquidityAmount = ethers.utils.parseUnits('0.01')
+
+        // nft ticks
+        const liquidity = await vaultLib.getLiquidity(
+          sqrtX96Price,
+          nftTickLower,
+          nftTickUpper,
+          wethIsToken0InSqueethPool ? ethLiquidityAmount : squeethLiquidityAmount,
+          wethIsToken0InSqueethPool ? squeethLiquidityAmount: ethLiquidityAmount,
+        )
+        
+        await squeethEthPool.setSlot0Data(sqrtX96Price, currentTick)
+        await uniPositionManager.setMockedProperties(token0, token1, nftTickLower, nftTickUpper, liquidity)
+
+        // // deposit NFT
+        await uniPositionManager.connect(seller1).approve(controller.address, newUniNFTId)
+
+        await expect(controller.connect(seller1).depositUniPositionToken(vaultId, newUniNFTId)).to.be.revertedWith("Vault already had nft")        
+      })
+
       it('should revert if non owner withdraws the nft', async () => {
         await expect(controller.connect(random).withdrawUniPositionToken(vaultId)).to.be.revertedWith("not allowed")
       })
@@ -188,11 +225,25 @@ describe("Controller: Uni LP tokens collateralization", function () {
       it('should revert when trying to withdraw from a empty vault', async () => {
         await expect(controller.connect(seller1).withdrawUniPositionToken(vaultId)).to.be.revertedWith('Vault has no NFT')
       })
+
+      it('should deposit an NFT to an existing vault using _openDepositMint', async() => {
+
+        // // deposit NFT
+        await uniPositionManager.connect(seller1).approve(controller.address, uniNFTId)
+        const ownerBefore = await uniPositionManager.ownerOf(uniNFTId);
+
+        await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount, uniNFTId)
+        
+        const ownerAfter = await uniPositionManager.ownerOf(uniNFTId);  
+        expect(ownerBefore === seller1.address).to.be.true
+        expect(ownerAfter === controller.address).to.be.true      
+      })
+
   })
 
-  describe('Vault2: Basic Collateralization checks', async() => {
+  describe('Vault3: Basic Collateralization checks', async() => {
     let vaultId: BigNumber;
-    const uniNFTId = 2;
+    const uniNFTId = 3;
     const mintAmount = ethers.utils.parseUnits('0.01')
     const collateralAmount = ethers.utils.parseUnits('45')
 
@@ -385,12 +436,12 @@ describe("Controller: Uni LP tokens collateralization", function () {
     })
   });
 
-  describe('Vault3: Saving vault by burning NFT', async() => {
+  describe('Vault4: Saving vault by burning NFT', async() => {
     // We use the exact setup as Vault2:
     // open vault => mint squeeth => add uni NFT => withdraw all collateral from the vault
     // so the price scenario should be identical, we're just testing saving vaults here.
     let vaultId: BigNumber;
-    const uniNFTId = 3;
+    const uniNFTId = 4;
     const mintAmount = ethers.utils.parseUnits('0.01')
     const collateralAmount = ethers.utils.parseUnits('45')
 
@@ -536,7 +587,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
        */
       const oldEthPrice = '5000'
       let newTick: string
-      const newNFTId = 4
+      const newNFTId = 5
 
       before('set LP token properties: range order [10000 - 15000]', async() => {
         const vault = await controller.vaults(vaultId)

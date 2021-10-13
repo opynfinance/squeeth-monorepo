@@ -11,7 +11,7 @@ contract VaultNFTManager is ERC721Upgradeable {
     address public controller;
 
     modifier onlyController() {
-        require(msg.sender == controller);
+        require(msg.sender == controller, "not controller");
         _;
     }
 

@@ -161,8 +161,11 @@ contract Controller is Initializable, Ownable {
         require(_oracle != address(0), "Invalid oracle address");
         require(_vaultNFT != address(0), "Invalid vaultNFT address");
         require(_wPowerPerp != address(0), "Invalid power perp address");
-        require(_ethDaiPool != address(0), "Invalid eth:dai pool address");
+        require(_weth != address(0), "Invalid weth address");
+        require(_dai != address(0), "Invalid quote currency address");
+        require(_ethDaiPool != address(0), "Invalid eth:usd pool address");
         require(_powerPerpPool != address(0), "Invalid powerperp:eth pool address");
+        require(_uniPositionManager != address(0), "Invalid uni position manager");
 
         oracle = IOracle(_oracle);
         vaultNFT = IVaultManagerNFT(_vaultNFT);

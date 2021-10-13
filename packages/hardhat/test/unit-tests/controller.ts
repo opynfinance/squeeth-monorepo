@@ -2,8 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber, providers, constants } from "ethers";
-import { Controller, MockWSqueeth, MockVaultNFTManager, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester, WETH9 } from "../../typechain";
-
+import { Controller, MockWSqueeth, MockVaultNFTManager, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester, WETH9, ControllerTester } from '../../typechain'
 import { isEmptyVault } from '../vault-utils'
 import { isSimilar } from "../utils";
 import { getSqrtPriceAndTickBySqueethPrice } from "../calculator";
@@ -16,6 +15,7 @@ describe("Controller", function () {
   let squeeth: MockWSqueeth;
   let shortNFT: MockVaultNFTManager;
   let controller: Controller;
+  let controllerTester: ControllerTester
   let squeethEthPool: MockUniswapV3Pool;
   let ethUSDPool: MockUniswapV3Pool;
   let uniPositionManager: MockUniPositionManager
@@ -83,13 +83,61 @@ describe("Controller", function () {
   });
 
   describe("Deployment", async () => {
-    it("Deployment", async function () {
+    it("Controller deployment", async function () {
       const ControllerContract = await ethers.getContractFactory("Controller");
       controller = (await ControllerContract.deploy()) as Controller;
     });
   });
 
   describe("Initialization", async () => {
+    it("Should revert when oracle is address(0)", async () => {
+      await expect(
+        controller.init(ethers.constants.AddressZero, shortNFT.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
+      ).to.be.revertedWith("Invalid oracle address");
+    });
+
+    it("Should revert when shortNFT is address(0)", async () => {
+      await expect(
+        controller.init(oracle.address, ethers.constants.AddressZero, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
+      ).to.be.revertedWith("Invalid vaultNFT address");
+    });
+
+    it("Should revert when powerperp is address(0)", async () => {
+      await expect(
+        controller.init(oracle.address, shortNFT.address, ethers.constants.AddressZero, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
+      ).to.be.revertedWith("Invalid power perp address");
+    });
+
+    it("Should revert when weth is address(0)", async () => {
+      await expect(
+        controller.init(oracle.address, shortNFT.address, squeeth.address, ethers.constants.AddressZero, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
+      ).to.be.revertedWith("Invalid weth address");
+    });
+    
+    it("Should revert when quote currency is address(0)", async () => {
+      await expect(
+        controller.init(oracle.address, shortNFT.address, squeeth.address, weth.address, ethers.constants.AddressZero, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
+      ).to.be.revertedWith("Invalid quote currency address");
+    });
+
+    it("Should revert when ethUSDPool is address(0)", async () => {
+      await expect(
+        controller.init(oracle.address, shortNFT.address, squeeth.address, weth.address, usdc.address, ethers.constants.AddressZero, squeethEthPool.address, uniPositionManager.address)
+      ).to.be.revertedWith("Invalid eth:usd pool address");
+    });
+
+    it("Should revert when squeethEthPool is address(0)", async () => {
+      await expect(
+        controller.init(oracle.address, shortNFT.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, ethers.constants.AddressZero, uniPositionManager.address)
+      ).to.be.revertedWith("Invalid powerperp:eth pool address");
+    });
+
+    it("Should revert when uniPositionManager is address(0)", async () => {
+      await expect(
+        controller.init(oracle.address, shortNFT.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, ethers.constants.AddressZero)
+      ).to.be.revertedWith("Invalid uni position manager");
+    });
+
     it("Should be able to init contract", async () => {
       await controller.init(oracle.address, shortNFT.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address);
       const squeethAddr = await controller.wPowerPerp();
@@ -105,6 +153,13 @@ describe("Controller", function () {
       await expect(
         controller.init(oracle.address, shortNFT.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
       ).to.be.revertedWith("Initializable: contract is already initialized");
+    }); 
+  });
+
+  describe("Deployment", async () => {
+    it("Controller tester deployment", async function () {
+      const ControllerTesterContract = await ethers.getContractFactory("ControllerTester");
+      controllerTester = (await ControllerTesterContract.deploy(controller.address)) as ControllerTester;
     });
   });
 
@@ -160,12 +215,36 @@ describe("Controller", function () {
         expect(expectedNormFactorAfter.lt(expectedNormFactor)).to.be.true
       })
       
+      it('should allow anyone to call applyFunding and update funding', async()=>{
+        const normFactor = await controller.normalizationFactor()
+        const expectedNormFactor = await controller.getExpectedNormalizationFactor()
+        
+        await controller.connect(random).applyFunding()
+
+        const normFactorAfterFunding = await controller.normalizationFactor()
+        expect(isSimilar(expectedNormFactor.toString(),normFactorAfterFunding.toString())).to.be.true
+        expect(normFactor.gt(normFactorAfterFunding)).to.be.true
+        
+      })
+
+      it('should not update funding two times in one block', async()=>{        
+        await controllerTester.connect(random).testDoubleFunding()
+      })
+
       it('should be able to get index and mark price', async() => {
         const markPrice = await controller.getDenormalizedMark(30)
         expect(isSimilar(markPrice.toString(), squeethETHPrice.mul(ethUSDPrice).div(one).toString())).to.be.true
 
         const index = await controller.getIndex(30)
         expect(index.eq(ethUSDPrice.mul(ethUSDPrice).div(one))).to.be.true
+      })
+
+      it('should revert if a _getTwap price from index (or mark) is 0', async() => {
+        await oracle.connect(random).setPrice(ethUSDPool.address , 0)  // usdc per 1 eth
+        await expect(controller.getIndex(30)).to.be.revertedWith("WAP WAP WAP")
+        // reset the price
+        await oracle.connect(random).setPrice(ethUSDPool.address , ethUSDPrice)  // usdc per 1 eth
+
       })
 
       it('should revert when sending eth to controller from an EOA', async() => {
@@ -375,6 +454,9 @@ describe("Controller", function () {
     })
 
     describe('Deposit and mint By operator', () => {
+      it('should not allow a non owner or operator to update an operator', async () => {        
+        await expect(controller.connect(seller2).updateOperator(vaultId, random.address)).to.be.revertedWith("not allowed")
+      })      
       it('should add an operator', async () => {
         await controller.connect(seller1).updateOperator(vaultId, random.address)
         const vault = await controller.vaults(vaultId)
@@ -683,6 +765,13 @@ describe("Controller", function () {
           controller.connect(seller2).redeemShort(seller2VaultId)
         ).to.be.revertedWith('SafeMath: subtraction overflow')
       })
+
+      it('should revert when a random user is trying to redeem', async() => {
+        await expect(
+          controller.connect(random).redeemShort(seller3VaultId)
+        ).to.be.revertedWith('not allowed')
+      })
+
       it("should redeem fair value for short side (seller 3)", async () => {
         const vaultBefore = await controller.vaults(seller3VaultId)
         const sellerEthBefore = await provider.getBalance(seller3.address)

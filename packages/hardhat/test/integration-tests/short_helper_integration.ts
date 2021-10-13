@@ -122,6 +122,53 @@ describe("ShortHelper Integration Test", function () {
       expect(poolWethBefore.sub(poolWethAfter).toString()).to.be.eq(sellerWethAfter.sub(sellerWethBefore), "weth mismatch")
     })
 
+    it('should add ShortHelper as an operator', async() =>{
+      // it needs to set the ShortHelper as an operator to allow interactions past minting a new vault
+      // there is no access control here now, we need to fix!
+      
+      await controller.connect(seller1).updateOperator(seller1VaultId,shortHelper.address)
+      const vault = await controller.vaults(seller1VaultId)
+      expect(vault.operator).to.be.eq(shortHelper.address, "Operator not set correctly")
+    })
+
+    it ('should add collateral to an existing vault and sell squeeth, receive weth in return', async () => {
+      const squeethAmount = ethers.utils.parseEther('0.001')
+      const collateralAmount = ethers.utils.parseEther('20')
+      const exactInputParam = {
+        tokenIn: squeeth.address,
+        tokenOut: weth.address,
+        fee: 3000,
+        recipient: seller1.address,
+        deadline: await getNow(provider) + 86400,
+        amountIn: squeethAmount,
+        amountOutMinimum: 0, // no slippage control now
+        sqrtPriceLimitX96: 0,
+      }
+  
+      const nftBalanceBefore = await vaultNFT.balanceOf(seller1.address)
+      const poolSqueethBefore = await squeeth.balanceOf(poolAddress)
+      const sellerWethBefore = await weth.balanceOf(seller1.address)
+      const poolWethBefore = await weth.balanceOf(poolAddress)
+      
+
+      expect
+
+      // mint and trade
+      await shortHelper.connect(seller1).openShort(seller1VaultId, squeethAmount, 0, exactInputParam, {value: collateralAmount} )
+  
+      const normalizationFactor = await controller.normalizationFactor()
+      const wSqueethAmount = squeethAmount.mul(ethers.utils.parseUnits('1')).div(normalizationFactor)
+
+      const nftBalanceAfter = await vaultNFT.balanceOf(seller1.address)
+      const poolSqueethAfter = await squeeth.balanceOf(poolAddress)
+      const sellerWethAfter = await weth.balanceOf(seller1.address)
+      const poolWethAfter = await weth.balanceOf(poolAddress)
+  
+      expect(nftBalanceAfter.eq(nftBalanceBefore)).to.be.true
+      expect(poolSqueethAfter.toString()).to.be.eq(poolSqueethBefore.add(wSqueethAmount), "squeeth mismatch")
+      expect(poolWethBefore.sub(poolWethAfter).toString()).to.be.eq(sellerWethAfter.sub(sellerWethBefore), "weth mismatch")
+    })
+
     it ('should open new vault and sell squeeth, receive eth at the end', async () => {
       const squeethAmount = ethers.utils.parseEther('0.001')
       const collateralAmount = ethers.utils.parseEther('20')
@@ -166,6 +213,12 @@ describe("ShortHelper Integration Test", function () {
       )
     })
 
+  })
+
+  describe('Checking eth payable reverts', async() => {
+    it ('should revert if ETH is sent from a contract other than weth or the controller', async () => {
+      await expect(seller1.sendTransaction({to: shortHelper.address, value:1})).to.be.revertedWith("can't receive eth")
+    })
   })
 
   describe('Close short position', async() => {

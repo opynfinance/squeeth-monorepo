@@ -7,6 +7,8 @@ interface IController {
 
     function wPowerPerp() external view returns (address);
 
+    function getExpectedNormalizationFactor() external view returns (uint256);
+
     function mintPowerPerpAmount(
         uint256 _vaultId,
         uint128 _powerPerpAmount,

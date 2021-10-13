@@ -10,7 +10,6 @@ workflows:
       - compile:
           requires:
             - checkout-and-install
-          # context: BUILD_KEYS
       - lint:
           requires:
             - compile
@@ -20,6 +19,7 @@ workflows:
       - coverage:
           requires:
             - compile
+          context: BUILD_KEYS
       - contract-size:
           requires:
             - compile
@@ -129,6 +129,12 @@ jobs:
       - run: 
           name: Coverage
           command: yarn coverage 
+      - coveralls/upload:
+          path_to_lcov: ./coverage/lcov.info
+      - store_artifacts:
+          path: /coverage
+      - store_artifacts:
+          path: /coverage.json
 
   contract-size:
     working_directory: ~/squeeth/packages/hardhat
