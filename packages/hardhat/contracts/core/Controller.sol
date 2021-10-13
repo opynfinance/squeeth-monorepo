@@ -386,19 +386,23 @@ contract Controller is Initializable, Ownable {
     function redeemShort(uint256 _vaultId) external isShutdown {
         require(_canModifyVault(_vaultId, msg.sender), "not allowed");
 
+        VaultLib.Vault memory cachedVault = vaults[_vaultId];
+        uint256 cachedNormFactor = normalizationFactor;
+
+        _reduceDebt(cachedVault, msg.sender, cachedNormFactor, false);
+
         uint256 debt = Power2Base._getLongSettlementValue(
-            vaults[_vaultId].shortAmount,
+            cachedVault.shortAmount,
             shutDownEthPriceSnapshot,
             normalizationFactor
         );
         // if the debt is more than collateral, this line will revert
-        uint256 excess = uint256(vaults[_vaultId].collateralAmount).sub(debt);
+        uint256 excess = uint256(cachedVault.collateralAmount).sub(debt);
 
         // reset the vault but don't burn the nft, just because people may want to keep it.
-        vaults[_vaultId].shortAmount = 0;
-        vaults[_vaultId].collateralAmount = 0;
-
-        // todo: handle uni nft collateral
+        cachedVault.shortAmount = 0;
+        cachedVault.collateralAmount = 0;
+        _writeVault(_vaultId, cachedVault);
 
         payable(msg.sender).sendValue(excess);
     }
