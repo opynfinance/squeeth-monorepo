@@ -52,75 +52,118 @@ library VaultLib {
         _vault.shortAmount = uint128(uint256(_vault.shortAmount).sub(_amount));
     }
 
-    /// @dev see if a vault is properly collateralized
-    /// @param _vault the vault we want to check
-    /// @param _positionManager address of the uni v3 position manager
-    /// @param _normalizationFactor current _normalizationFactor
-    /// @param _ethDaiPrice current eth price scaled by 1e18
-    /// @param _wsqueethPoolTick current price tick for wsqueeth pool
-    /// @param _isWethToken0 whether weth is token0 in the wsqueeth pool
-    /// @return true if the vault is above water.
-    function isProperlyCollateralized(
+    /**
+     * @dev see if a vault is properly collateralized
+     * @param _vault the vault we want to check
+     * @param _positionManager address of the uni v3 position manager
+     * @param _normalizationFactor current _normalizationFactor
+     * @param _ethDaiPrice current eth price scaled by 1e18
+     * @param _minCollateral min collateral need to be in a vault
+     * @param _wsqueethPoolTick current price tick for wsqueeth pool
+     * @param _isWethToken0 whether weth is token0 in the wsqueeth pool
+     * @return true if the vault is above water.
+     * @return true if the vault is considered as a dust vault.
+     */
+    function getVaultStatus(
         Vault memory _vault,
         address _positionManager,
         uint256 _normalizationFactor,
         uint256 _ethDaiPrice,
+        uint256 _minCollateral,
         int24 _wsqueethPoolTick,
         bool _isWethToken0
-    ) internal view returns (bool) {
-        if (_vault.shortAmount == 0) return true;
+    ) internal view returns (bool, bool) {
+        if (_vault.shortAmount == 0) return (true, false);
         return
-            _isProperlyCollateralized(
+            _getVaultStatus(
                 _vault,
                 _positionManager,
                 _normalizationFactor,
                 _ethDaiPrice,
+                _minCollateral,
                 _wsqueethPoolTick,
                 _isWethToken0
             );
     }
 
-    /// @dev see if a vault is properly collateralized
-    /// @param _vault the vault we want to check
-    /// @param _positionManager address of the uni v3 position manager
-    /// @param _normalizationFactor current _normalizationFactor
-    /// @param _ethDaiPrice current eth price scaled by 1e18
-    /// @param _wsqueethPoolTick current price tick for wsqueeth pool
-    /// @param _isWethToken0 whether weth is token0 in the wsqueeth pool
-    /// @return true if the vault is above water.
-    function _isProperlyCollateralized(
+    /**
+     * @dev see if a vault is properly collateralized
+     * @param _vault the vault we want to check
+     * @param _positionManager address of the uni v3 position manager
+     * @param _normalizationFactor current _normalizationFactor
+     * @param _ethDaiPrice current eth price scaled by 1e18
+     * @param _minCollateral min collateral need to be in a vault
+     * @param _wsqueethPoolTick current price tick for wsqueeth pool
+     * @param _isWethToken0 whether weth is token0 in the wsqueeth pool
+     * @return true if the vault is above water.
+     * @return true if the vault is considered as a dust vault.
+     */
+    function _getVaultStatus(
+        Vault memory _vault,
+        address _positionManager,
+        uint256 _normalizationFactor,
+        uint256 _ethDaiPrice,
+        uint256 _minCollateral,
+        int24 _wsqueethPoolTick,
+        bool _isWethToken0
+    ) internal view returns (bool, bool) {
+        uint256 debtValueInETH = uint256(_vault.shortAmount).mul(_normalizationFactor).mul(_ethDaiPrice).div(1e36);
+        uint256 totalCollateral = _getEffectiveCollateral(
+            _vault,
+            _positionManager,
+            _normalizationFactor,
+            _ethDaiPrice,
+            _wsqueethPoolTick,
+            _isWethToken0
+        );
+        bool isDust = totalCollateral < _minCollateral;
+        bool isAboveWater = totalCollateral.mul(2) >= debtValueInETH.mul(3);
+        return (isAboveWater, isDust);
+    }
+
+    /**
+     * @notice get the total effective collateral of a vault, which is:
+     *         collateral amount + uni position token equivelent amount of eth.
+     * @param _vault the vault we want to check
+     * @param _positionManager address of the uni v3 position manager
+     * @param _normalizationFactor current _normalizationFactor
+     * @param _ethDaiPrice current eth price scaled by 1e18
+     * @param _wsqueethPoolTick current price tick for wsqueeth pool
+     * @param _isWethToken0 whether weth is token0 in the wsqueeth pool
+     * @return the total worth of collateral in the vault
+     */
+    function _getEffectiveCollateral(
         Vault memory _vault,
         address _positionManager,
         uint256 _normalizationFactor,
         uint256 _ethDaiPrice,
         int24 _wsqueethPoolTick,
         bool _isWethToken0
-    ) internal view returns (bool) {
-        uint256 totalCollateral = _vault.collateralAmount;
-        if (_vault.NftCollateralId != 0) {
-            // if user deposit univ3 nft as collateral, see how much eth / squeeth the LP token has.
-            (uint256 nftEthAmount, uint256 nftWsqueethAmount) = _getUniPositionBalances(
-                _positionManager,
-                _vault.NftCollateralId,
-                _wsqueethPoolTick,
-                _isWethToken0
-            );
-            // convert squeeth amount from NFT as equivalent amount of collateral.
-            uint256 equivalentCollateral = nftWsqueethAmount.mul(_normalizationFactor).mul(_ethDaiPrice).div(1e36);
-            // add ETH value from NFT as collateral.
-            totalCollateral = totalCollateral.add(equivalentCollateral).add(nftEthAmount);
-        }
-        uint256 debtValueInETH = uint256(_vault.shortAmount).mul(_normalizationFactor).mul(_ethDaiPrice).div(1e36);
-        return totalCollateral.mul(2) >= debtValueInETH.mul(3);
+    ) internal view returns (uint256) {
+        if (_vault.NftCollateralId == 0) return _vault.collateralAmount;
+
+        // the user has deposit univ3 position token as collateral, see how much eth / squeeth the LP token has.
+        (uint256 nftEthAmount, uint256 nftWsqueethAmount) = _getUniPositionBalances(
+            _positionManager,
+            _vault.NftCollateralId,
+            _wsqueethPoolTick,
+            _isWethToken0
+        );
+        // convert squeeth amount from NFT as equivalent amount of collateral.
+        uint256 equivalentCollateral = nftWsqueethAmount.mul(_normalizationFactor).mul(_ethDaiPrice).div(1e36);
+        // add ETH value from NFT as collateral.
+        return nftEthAmount.add(equivalentCollateral).add(_vault.collateralAmount);
     }
 
-    /// @notice get how much eth / squeeth the LP position is worth.
-    /// @param _positionManager address of the uni v3 position manager
-    /// @param _tokenId lp token id
-    /// @param _wsqueethPoolTick current price tick
-    /// @param _isWethToken0 whether weth is token0 in the pool
-    /// @return ethAmount the eth amount thie LP token is worth
-    /// @return squeethAmount the squeeth amount this LP token is worth
+    /**
+     * @notice get how much eth / squeeth the LP position is worth.
+     * @param _positionManager address of the uni v3 position manager
+     * @param _tokenId lp token id
+     * @param _wsqueethPoolTick current price tick
+     * @param _isWethToken0 whether weth is token0 in the pool
+     * @return ethAmount the eth amount thie LP token is worth
+     * @return squeethAmount the squeeth amount this LP token is worth
+     */
     function _getUniPositionBalances(
         address _positionManager,
         uint256 _tokenId,

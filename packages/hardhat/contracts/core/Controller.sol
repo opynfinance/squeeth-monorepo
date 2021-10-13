@@ -28,6 +28,7 @@ contract Controller is Initializable, Ownable {
     using Address for address payable;
 
     uint256 internal constant secInDay = 86400;
+    uint256 internal constant minCollateral = 0.5 ether;
 
     bool public isShutDown = false;
 
@@ -278,7 +279,7 @@ contract Controller is Initializable, Ownable {
      * @param _withdrawAmount amount of eth to withdraw
      * @return amount of wPowerPerp burned
      */
-    function burnOnPowerPerpAmount(
+    function burnPowerPerpAmount(
         uint256 _vaultId,
         uint256 _powerPerpAmount,
         uint256 _withdrawAmount
@@ -428,7 +429,6 @@ contract Controller is Initializable, Ownable {
      */
 
     function _canModifyVault(uint256 _vaultId, address _account) internal view returns (bool) {
-        if (_vaultId == 0) return true; // create a new vault
         return vaultNFT.ownerOf(_vaultId) == _account || vaults[_vaultId].operator == _account;
     }
 
@@ -654,31 +654,44 @@ contract Controller is Initializable, Ownable {
         uint256 _normalizationFactor,
         address _liquidator
     ) internal returns (uint256, uint256) {
-        uint256 maxLiquidationAmount = uint256(_vault.shortAmount).div(2);
+        // cast numbers to uint256 and cache them
+        uint256 vaultShortAmount = uint256(_vault.shortAmount);
+        uint256 vaultCollateralAmount = uint256(_vault.collateralAmount);
 
-        uint256 wAmountToLiquidate = _maxWPowerPerpAmount > maxLiquidationAmount
-            ? maxLiquidationAmount
-            : _maxWPowerPerpAmount;
-
-        uint256 collateralToPay = Power2Base._getCollateralByRepayAmount(
-            wAmountToLiquidate,
-            address(oracle),
-            ethDaiPool,
-            weth,
-            dai,
+        // try limiting max liquidatable amount to half of the vault
+        (uint256 wAmountToLiquidate, uint256 collateralToPay) = _getLiquidationAmount(
+            _maxWPowerPerpAmount,
+            vaultShortAmount.div(2),
             _normalizationFactor
         );
 
-        // 10% bonus for liquidators
-        collateralToPay = collateralToPay.add(collateralToPay.div(10));
+        if (vaultCollateralAmount > collateralToPay) {
+            if (vaultCollateralAmount.sub(collateralToPay) < minCollateral) {
+                // the vault is left with dust after liquidation, allow liquidating full vault.
+                // calculate the new liquidation amount and collateral again based on the new limit
+                (wAmountToLiquidate, collateralToPay) = _getLiquidationAmount(
+                    _maxWPowerPerpAmount,
+                    vaultShortAmount,
+                    _normalizationFactor
+                );
+            }
+        }
 
-        // if collateralToPay is higher than the total collateral in the vault
-        // the system only pays out the amount the vault has, which may not be profitable
-        if (collateralToPay > _vault.collateralAmount) collateralToPay = _vault.collateralAmount;
+        // check if final collateral to pay is greater than vault amount.
+        // if so the system only pays out the amount the vault has, which may not be profitable
+        if (collateralToPay > vaultCollateralAmount) {
+            // force liquidator to pay full debt amount
+            require(_maxWPowerPerpAmount >= vaultShortAmount, "need full liquidation");
+            collateralToPay = vaultCollateralAmount;
+            wAmountToLiquidate = vaultShortAmount;
+        }
 
         wPowerPerp.burn(_liquidator, wAmountToLiquidate);
         _vault.removeShort(wAmountToLiquidate);
         _vault.removeEthCollateral(collateralToPay);
+
+        (, bool isDust) = _getVaultStatus(_vault, _normalizationFactor);
+        require(!isDust, "dust vault left");
 
         // pay the liquidator
         payable(_liquidator).sendValue(collateralToPay);
@@ -847,6 +860,7 @@ contract Controller is Initializable, Ownable {
 
     /**
      * @dev check that the specified uni tokenId is a valid powerPerp/weth lp token.
+     * @param _uniTokenId uniswap v3 position token id
      */
     function _checkUniNFT(uint256 _uniTokenId) internal view {
         (, , address token0, address token1, , , , , , , , ) = INonfungiblePositionManager(uniswapPositionManager)
@@ -862,10 +876,14 @@ contract Controller is Initializable, Ownable {
     }
 
     /**
-     * @dev check that the vault is solvent and has enough collateral.
+     * @dev revert if the vault is insolvent, or a dust vault
+     * @param _vault the Vault memory to update.
+     * @param _normalizationFactor normalization factor
      */
     function _checkVault(VaultLib.Vault memory _vault, uint256 _normalizationFactor) internal view {
-        require(_isVaultSafe(_vault, _normalizationFactor), "Invalid state");
+        (bool isSafe, bool isDust) = _getVaultStatus(_vault, _normalizationFactor);
+        require(isSafe, "Invalid state");
+        require(!isDust, "dust vault");
     }
 
     /**
@@ -873,22 +891,71 @@ contract Controller is Initializable, Ownable {
      * @return if the vault is properly collateralized.
      */
     function _isVaultSafe(VaultLib.Vault memory _vault, uint256 _normalizationFactor) internal view returns (bool) {
+        (bool isSafe, ) = _getVaultStatus(_vault, _normalizationFactor);
+        return isSafe;
+    }
+
+    /**
+     * @dev get the vault latest status, if it's above water or a dust vault
+     * @param _vault the Vault memory to update.
+     * @param _normalizationFactor normalization factor
+     * @return if the vault is safe
+     * @return if the vault is a dust vault
+     */
+    function _getVaultStatus(VaultLib.Vault memory _vault, uint256 _normalizationFactor)
+        internal
+        view
+        returns (bool, bool)
+    {
         uint256 ethDaiPrice = oracle.getTwapSafe(ethDaiPool, weth, dai, 300);
         int24 perpPoolTick = oracle.getTimeWeightedAverageTickSafe(powerPerpPool, 300);
         return
-            VaultLib.isProperlyCollateralized(
+            VaultLib.getVaultStatus(
                 _vault,
                 uniswapPositionManager,
                 _normalizationFactor,
                 ethDaiPrice,
+                minCollateral,
                 perpPoolTick,
                 isWethToken0
             );
     }
 
     /**
+     * @dev get how much wPowerPerp will be exchanged for collateral given a max wPowerPerp amount and debt ceiling
+     * @param _maxInputWAmount max wPowerPerp amount liquidator is willing to pay
+     * @param _maxLiquidatableWAmount max wPowerPerp amount a liquidator can take out from a vault
+     * @param _normalizationFactor normalization factor
+     * @return finalWAmountToLiquidate amount of wPowerPerp the liquidator will burn
+     * @return collateralToPay total collateral the liquidator will get
+     */
+    function _getLiquidationAmount(
+        uint256 _maxInputWAmount,
+        uint256 _maxLiquidatableWAmount,
+        uint256 _normalizationFactor
+    ) internal view returns (uint256, uint256) {
+        uint256 finalWAmountToLiquidate = _maxInputWAmount > _maxLiquidatableWAmount
+            ? _maxLiquidatableWAmount
+            : _maxInputWAmount;
+
+        uint256 collateralToPay = Power2Base._getCollateralByRepayAmount(
+            finalWAmountToLiquidate,
+            address(oracle),
+            ethDaiPool,
+            weth,
+            dai,
+            _normalizationFactor
+        );
+
+        // add 10% bonus for liquidators
+        collateralToPay = collateralToPay.add(collateralToPay.div(10));
+
+        return (finalWAmountToLiquidate, collateralToPay);
+    }
+
+    /**
      * @notice get a fair period that should be used to request twap for 2 pools
-     * @dev if the period we want to use is greator than min(max_pool_1, max_pool_2),
+     * @dev if the period we want to use is greater than min(max_pool_1, max_pool_2),
      *      return min(max_pool_1, max_pool_2)
      * @param _period max period that we intend to use
      * @return fair period not greator than _period to be used for both pools.

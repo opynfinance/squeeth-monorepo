@@ -276,6 +276,12 @@ describe("Controller", function () {
     let vaultId: BigNumber
 
     describe('Open, deposit and mint', () => {
+      it('should revert if the vault has too little collateral', async() => {
+        const mintAmount = ethers.utils.parseUnits('0.00001')
+        const collateralAmount = ethers.utils.parseUnits('0.45')
+        await expect(controller.connect(random).mintPowerPerpAmount(0, mintAmount, 0, {value: collateralAmount}))
+          .to.be.revertedWith('dust vault')
+      })
       it('should open vault, deposit and mint in the same tx', async() => {
         vaultId = await shortNFT.nextId()
         const mintAmount = ethers.utils.parseUnits('0.01')
@@ -372,24 +378,28 @@ describe("Controller", function () {
         const vaultBefore = await controller.vaults(seller4VaultId)
         
         // the real rSqueeth amount will decrease after funding.
-        const burnRSqueethAmount = ethers.utils.parseUnits('0.01').mul(99).div(100)
-        const collateralAmount = ethers.utils.parseUnits('45').mul(99).div(100)
+        const burnRSqueethAmount = ethers.utils.parseUnits('0.01').div(2)
+        const withdrawCollateralAmount = ethers.utils.parseUnits('45').div(2)
 
         const controllerBalanceBefore = await provider.getBalance(controller.address)
         const wsqueethBalanceBefore = await squeeth.balanceOf(seller4.address)
 
-        await controller.connect(seller4).burnOnPowerPerpAmount(seller4VaultId, burnRSqueethAmount, collateralAmount)
+        await controller.connect(seller4).burnPowerPerpAmount(seller4VaultId, burnRSqueethAmount, withdrawCollateralAmount)
 
         const controllerBalanceAfter = await provider.getBalance(controller.address)
         const wsqueethBalanceAfter = await squeeth.balanceOf(seller4.address)
         const vaultAfter = await controller.vaults(seller4VaultId)        
         const normFactor = await controller.normalizationFactor()
 
-        expect(controllerBalanceBefore.sub(collateralAmount).eq(controllerBalanceAfter)).to.be.true
+        expect(controllerBalanceBefore.sub(withdrawCollateralAmount).eq(controllerBalanceAfter)).to.be.true
         expect(wsqueethBalanceBefore.sub(burnRSqueethAmount.mul(ethers.utils.parseUnits('1')).div(normFactor)).eq(wsqueethBalanceAfter)).to.be.true
 
-        expect(vaultBefore.collateralAmount.sub(collateralAmount).eq(vaultAfter.collateralAmount)).to.be.true
+        expect(vaultBefore.collateralAmount.sub(withdrawCollateralAmount).eq(vaultAfter.collateralAmount)).to.be.true
         expect(vaultBefore.shortAmount.sub(burnRSqueethAmount.mul(ethers.utils.parseUnits('1')).div(normFactor)).eq(vaultAfter.shortAmount)).to.be.true
+      })
+      after('clean up vault4', async() => {
+        const vault = await controller.vaults(seller4VaultId)
+        await controller.connect(seller4).burnWPowerPerpAmount(seller4VaultId, vault.shortAmount, vault.collateralAmount)
       })
     })
   })

@@ -78,56 +78,97 @@ describe("Controller: liquidation unit test", function () {
   });
 
   describe("Liquidation", async () => {
-    let vaultId: BigNumber;
+    let vault1Id: BigNumber;
 
-    before("open vault", async () => {
-      vaultId = await shortNFT.nextId()
+    // small vault that will become a dust vault after liquidation
+    let vault2Id: BigNumber
+
+    before("open vault 1", async () => {
+      vault1Id = await shortNFT.nextId()
 
       const depositAmount = ethers.utils.parseUnits('45')
       const mintAmount = ethers.utils.parseUnits('0.01')
         
-      const vaultBefore = await controller.vaults(vaultId)
+      const vaultBefore = await controller.vaults(vault1Id)
       const squeethBalanceBefore = await squeeth.balanceOf(seller1.address)
       
       await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount, 0, {value: depositAmount})
 
       const squeethBalanceAfter = await squeeth.balanceOf(seller1.address)
-      const vaultAfter = await controller.vaults(vaultId)
+      const vaultAfter = await controller.vaults(vault1Id)
       const normFactor = await controller.normalizationFactor()
-      expect(await controller.isVaultSafe(vaultId)).to.be.true
+
       expect(vaultBefore.shortAmount.add(mintAmount.mul(ethers.utils.parseUnits('1')).div(normFactor)).eq(vaultAfter.shortAmount)).to.be.true
       expect(squeethBalanceBefore.add(mintAmount.mul(ethers.utils.parseUnits('1')).div(normFactor)).eq(squeethBalanceAfter)).to.be.true
     });
 
+    before("open vault 2", async () => {
+      vault2Id = await shortNFT.nextId()
+
+      const depositAmount = ethers.utils.parseUnits('0.9')
+      const mintAmount = ethers.utils.parseUnits('0.0002')
+        
+      const vaultBefore = await controller.vaults(vault2Id)
+      const squeethBalanceBefore = await squeeth.balanceOf(seller1.address)
+      
+      await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount, 0, {value: depositAmount})
+
+      const squeethBalanceAfter = await squeeth.balanceOf(seller1.address)
+      const vaultAfter = await controller.vaults(vault2Id)
+      const normFactor = await controller.normalizationFactor()
+      expect(await controller.isVaultSafe(vault2Id)).to.be.true
+      expect(vaultBefore.shortAmount.add(mintAmount.mul(ethers.utils.parseUnits('1')).div(normFactor)).eq(vaultAfter.shortAmount)).to.be.true
+      expect(squeethBalanceBefore.add(mintAmount.mul(ethers.utils.parseUnits('1')).div(normFactor)).eq(squeethBalanceAfter)).to.be.true
+
+      // give all wsqueeth to liquidator
+      await squeeth.connect(seller1).transfer(liquidator.address, squeethBalanceAfter)
+    });
+
     it("Should revert liquidating a safe vault", async () => {
-      const vaultBefore = await controller.vaults(vaultId)
+      const vaultBefore = await controller.vaults(vault1Id)
 
       // liquidator mint wSqueeth
       await squeeth.connect(liquidator).mint(liquidator.address, vaultBefore.shortAmount)
 
-      await expect(controller.connect(liquidator).liquidate(vaultId, vaultBefore.shortAmount)).to.be.revertedWith(
+      await expect(controller.connect(liquidator).liquidate(vault1Id, vaultBefore.shortAmount)).to.be.revertedWith(
         'Can not liquidate safe vault'
       )
     })
 
-    it("Liquidate unsafe vault", async () => {
+    it('set eth price to make the vault underwater', async() => {
       const newEthUsdPrice = ethers.utils.parseUnits('4000')
       await oracle.connect(random).setPrice(ethUSDPool.address, newEthUsdPrice)
-      const isVaultSafeBefore = await controller.isVaultSafe(vaultId)
-      const vaultBefore = await controller.vaults(vaultId)
+    })
+    it("should revert if the vault become a dust vault after liquidation", async () => {
+      const vaultBefore = await controller.vaults(vault2Id)
+      const debtToRepay = vaultBefore.shortAmount.sub(1) // not burning all the the short
+      await expect(controller.connect(liquidator).liquidate(vault2Id, debtToRepay)).to.be.revertedWith('dust vault left');
+    })
+    it("should allow liquidating a whole vault if only liquidating half of it is gonna make it a dust vault", async () => {
+      const vaultBefore = await controller.vaults(vault2Id)
+      const debtToRepay = vaultBefore.shortAmount
+      await controller.connect(liquidator).liquidate(vault2Id, debtToRepay)
+      const vaultAfter = await controller.vaults(vault2Id)
+      expect(vaultAfter.shortAmount.isZero()).to.be.true
+    })
+
+    it("Liquidate unsafe vault (vault 1)", async () => {
+      const vaultBefore = await controller.vaults(vault1Id)
       const liquidatorBalanceBefore = await provider.getBalance(liquidator.address)
       const squeethLiquidatorBalanceBefore = await squeeth.balanceOf(liquidator.address)
+
+      const isVaultSafeBefore = await controller.isVaultSafe(vault1Id)
       expect(isVaultSafeBefore).to.be.false
 
       const debtToRepay = vaultBefore.shortAmount.div(2)
-      const tx = await controller.connect(liquidator).liquidate(vaultId, debtToRepay);
+      const tx = await controller.connect(liquidator).liquidate(vault1Id, debtToRepay);
       const receipt = await tx.wait();
       
       const normFactor = await controller.normalizationFactor()
       let collateralToSell : BigNumber = BigNumber.from(4000).mul(BigNumber.from(10).pow(18)).mul(normFactor).mul(debtToRepay).div(BigNumber.from(10).pow(36))
       collateralToSell = collateralToSell.add(collateralToSell.div(10))
 
-      const vaultAfter = await controller.vaults(vaultId)
+      const vaultAfter = await controller.vaults(vault1Id)
       const liquidatorBalanceAfter = await provider.getBalance(liquidator.address)
       const liquidateEventCollateralToSell : BigNumber = (receipt.events?.find(event => event.event === 'Liquidate'))?.args?.collateralPaid;
       const squeethLiquidatorBalanceAfter = await squeeth.balanceOf(liquidator.address)
@@ -159,18 +200,25 @@ describe("Controller: liquidation unit test", function () {
       await oracle.connect(random).setPrice(ethUSDPool.address, newEthUsdPrice)
     })
 
-    it("can liquidate a underwater vault, even it's not profitable", async () => {
+    it("should revert if the vault is paying out all collateral, but there are still debt", async () => {
+      const vault = await controller.vaults(vaultId)
+      // liquidator specify amount that would take all collateral, but not clearing all the debt
+      const debtToRepay = vault.shortAmount.sub(1)
+      await expect(controller.connect(liquidator).liquidate(vaultId, debtToRepay)).to.be.revertedWith('need full liquidation');
+    })
+
+    it("can fully liquidate a underwater vault, even it's not profitable", async () => {
       const vaultBefore = await controller.vaults(vaultId)
       const liquidatorBalanceBefore = await provider.getBalance(liquidator.address)
       const squeethLiquidatorBalanceBefore = await squeeth.balanceOf(liquidator.address)
 
-      // pay back 0.005 squeeth. which worth 4500 eth.
-      const debtToRepay = vaultBefore.shortAmount.div(2)
+      // fully liquidate a vault
+      const debtToRepay = vaultBefore.shortAmount
       const tx = await controller.connect(liquidator).liquidate(vaultId, debtToRepay);
       const receipt = await tx.wait();
       
       const normFactor = await controller.normalizationFactor()
-      let collateralToSell : BigNumber = BigNumber.from(newEthPrice).mul(BigNumber.from(10).pow(18)).mul(normFactor).mul(debtToRepay).div(BigNumber.from(10).pow(36))
+      let collateralToSell = BigNumber.from(newEthPrice).mul(BigNumber.from(10).pow(18)).mul(normFactor).mul(debtToRepay).div(BigNumber.from(10).pow(36))
       collateralToSell = collateralToSell.add(collateralToSell.div(10))
 
       // paying this amount will reduce total eth 
