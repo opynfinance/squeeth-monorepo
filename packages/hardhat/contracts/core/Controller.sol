@@ -35,11 +35,15 @@ contract Controller is Initializable, Ownable {
     address public weth;
     address public dai;
     address public ethDaiPool;
+    address public feeRecipient;
 
     /// @dev address of the powerPerp/weth pool
     address public powerPerpPool;
 
     address public uniswapPositionManager;
+
+    /// @dev fee rate in basis point. feeRate of 1 = 0.01%
+    uint256 public feeRate;
 
     uint256 public shutDownEthPriceSnapshot;
     uint256 public normalizationFactor;
@@ -64,6 +68,8 @@ contract Controller is Initializable, Ownable {
     event MintShort(uint256 amount, uint256 vaultId);
     event BurnShort(uint256 amount, uint256 vaultId);
     event UpdateOperator(uint256 vaultId, address operator);
+    event FeeRateUpdated(uint256 oldFee, uint256 newFee);
+    event FeeRecipientUpdated(address oldFeeRecipient, address newFeeRecipient);
     event Liquidate(uint256 vaultId, uint256 debtAmount, uint256 collateralPaid);
     event NormalizationFactorUpdated(uint256 oldNormFactor, uint256 newNormFactor, uint256 timestamp);
 
@@ -357,6 +363,28 @@ contract Controller is Initializable, Ownable {
     }
 
     /**
+     * @dev set the recipient who will receive the fee. this should be a contract handling insurance.
+     * @param _newFeeRecipient new fee recipient
+     */
+    function setFeeRecipient(address _newFeeRecipient) external onlyOwner {
+        require(_newFeeRecipient != address(0), "invalid address");
+        emit FeeRecipientUpdated(feeRecipient, _newFeeRecipient);
+        feeRecipient = _newFeeRecipient;
+    }
+
+    /**
+     * @dev set the fee rate when user deposit or withdraw collateral
+     * @dev this function cannot be called if the feeRecipient is still un-set
+     * @param _newFeeRate new fee rate in basis point. can't be higher than 2%
+     */
+    function setFeeRate(uint256 _newFeeRate) external onlyOwner {
+        require(feeRecipient != address(0), "set fee recipient first");
+        require(_newFeeRate <= 100, "fee too high");
+        emit FeeRateUpdated(feeRate, _newFeeRate);
+        feeRate = _newFeeRate;
+    }
+
+    /**
      * @dev shutdown the system and enable system settlement
      */
     function shutDown() external notShutdown onlyOwner {
@@ -549,15 +577,17 @@ contract Controller is Initializable, Ownable {
      * @dev add eth collateral into a vault
      * @dev this function will update the vault memory in-place
      * @param _vault the Vault memory to update.
-     * @param _amount amount of eth adding to the vault
+     * @param _totalAmount amount of eth adding to the vault
      */
     function _addEthCollateral(
         VaultLib.Vault memory _vault,
         uint256 _vaultId,
-        uint256 _amount
+        uint256 _totalAmount
     ) internal {
-        _vault.addEthCollateral(_amount);
-        emit DepositCollateral(_vaultId, _amount, 0);
+        uint256 depositAmount = _payFee(_totalAmount);
+
+        _vault.addEthCollateral(depositAmount);
+        emit DepositCollateral(_vaultId, depositAmount, 0);
     }
 
     /**
@@ -595,7 +625,9 @@ contract Controller is Initializable, Ownable {
         require(_canModifyVault(_vaultId, _account), "not allowed");
 
         _vault.removeEthCollateral(_amount);
-        payable(_account).sendValue(_amount);
+        uint256 withdrawAmount = _payFee(_amount);
+
+        payable(_account).sendValue(withdrawAmount);
 
         emit WithdrawCollateral(_vaultId, _amount, 0);
     }
@@ -760,6 +792,20 @@ contract Controller is Initializable, Ownable {
         wPowerPerp.burn(address(this), withdrawnWPowerPerpAmount);
 
         return bounty;
+    }
+
+    /**
+     * @dev pay the fee to the fee recipient in eth.
+     * @param _amount the amount depositing or withdrawing
+     * @return the remaining amount after charging fee.
+     */
+    function _payFee(uint256 _amount) internal returns (uint256) {
+        uint256 cachedFeeRate = feeRate;
+        if (cachedFeeRate == 0) return _amount;
+
+        uint256 feeAmount = _amount.mul(cachedFeeRate).div(10000);
+        payable(feeRecipient).sendValue(feeAmount);
+        return _amount.sub(feeAmount);
     }
 
     /**

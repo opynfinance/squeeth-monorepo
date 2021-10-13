@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { ethers } from "hardhat"
 import { expect } from "chai";
-import { BigNumber, providers } from "ethers";
+import { BigNumber, providers, constants } from "ethers";
 import { Controller, MockWSqueeth, MockVaultNFTManager, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester, WETH9 } from "../../typechain";
 
 import { isEmptyVault } from '../vault-utils'
@@ -31,10 +31,11 @@ describe("Controller", function () {
   let seller4: SignerWithAddress // use for burnRSqueeth tests
   let seller5: SignerWithAddress // settle short vault with nft in it
   let random: SignerWithAddress
+  let feeRecipient: SignerWithAddress
 
   this.beforeAll("Prepare accounts", async() => {
     const accounts = await ethers.getSigners();
-    const [_owner,_seller1, _seller2, _seller3, _seller4, _seller5, _random] = accounts;
+    const [_owner,_seller1, _seller2, _seller3, _seller4, _seller5, _random, _feeRecipient] = accounts;
     seller1 = _seller1
     seller2 = _seller2
     seller3 = _seller3
@@ -42,6 +43,7 @@ describe("Controller", function () {
     seller5 = _seller5
     random = _random
     owner = _owner
+    feeRecipient = _feeRecipient
     provider = ethers.provider
   })
 
@@ -103,6 +105,33 @@ describe("Controller", function () {
       await expect(
         controller.init(oracle.address, shortNFT.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
       ).to.be.revertedWith("Initializable: contract is already initialized");
+    });
+  });
+
+  describe("Owner only functions", async () => {
+    it("Should revert if trying to set fee rate before setting fee recipient", async () => {
+      await expect(controller.connect(owner).setFeeRate(100)).to.be.revertedWith('set fee recipient first')
+    });
+
+    it("Should revert if trying to set address(0) as fee recipient", async () => {
+      await expect(controller.connect(owner).setFeeRecipient(constants.AddressZero)).to.be.revertedWith("invalid address");
+    });
+
+    it("Should set the fee recipient", async () => {
+      await controller.connect(owner).setFeeRecipient(feeRecipient.address);
+      expect((await controller.feeRecipient()) === feeRecipient.address).to.be.true
+    });
+
+    it("Should revert if trying to set fee rate that is too high", async () => {
+      await expect(controller.connect(owner).setFeeRate(500)).to.be.revertedWith("fee too high")
+    });
+
+    it("Should revert if set fee rate is call by random address", async () => {
+      await expect(controller.connect(random).setFeeRate(500)).to.be.revertedWith("Ownable: caller is not the owner")
+    });
+
+    it("Should revert if set fee recipient is call by random address", async () => {
+      await expect(controller.connect(random).setFeeRecipient(constants.AddressZero)).to.be.revertedWith("Ownable: caller is not the owner")
     });
   });
 
@@ -414,6 +443,45 @@ describe("Controller", function () {
     })
   })
 
+  describe('Deposit and withdraw with Fee', async() => {
+    let vaultId: BigNumber
+    it('should be able to set fee rate', async() => {
+      // set 1% fee
+      await controller.connect(owner).setFeeRate(100)
+      expect((await controller.feeRate()).eq(100)).to.be.true
+    })
+    it('should charge fee on mintPowerPerpAmount', async() => {
+      vaultId = await shortNFT.nextId()
+
+      const totalWeiToSend = 10000
+      const expectedFee = totalWeiToSend / 100
+      const expectedDeposit = totalWeiToSend - expectedFee
+
+      const feeRecipientBalanceBefore = await provider.getBalance(feeRecipient.address)
+
+      await controller.connect(random).mintPowerPerpAmount(0, 0, 0, { value: totalWeiToSend })
+
+      const feeRecipientBalanceAfter = await provider.getBalance(feeRecipient.address)
+      const vault = await controller.vaults(vaultId)
+
+      expect(vault.collateralAmount.eq(expectedDeposit)).to.be.true
+      expect(feeRecipientBalanceAfter.sub(feeRecipientBalanceBefore).eq(expectedFee)).to.be.true
+    })
+    it('should charge fee on withdraw', async() => {
+      const vault = await controller.vaults(vaultId)
+      const feeRecipientBalanceBefore = await provider.getBalance(feeRecipient.address)
+
+      await controller.connect(random).burnWPowerPerpAmount(vaultId, vault.shortAmount, vault.collateralAmount)
+
+      const feeRecipientBalanceAfter = await provider.getBalance(feeRecipient.address)
+      const expectedFee = vault.collateralAmount.div(100) // 1% fees
+      expect(feeRecipientBalanceAfter.sub(feeRecipientBalanceBefore).eq(expectedFee)).to.be.true
+    })
+    after('should the fee back to 0', async() => {
+      await controller.connect(owner).setFeeRate(0)
+    })
+  })
+
   describe("Settlement operations should be banned", async () => {
     it("Should revert when calling redeemLong", async () => {
       await expect(
@@ -453,9 +521,8 @@ describe("Controller", function () {
       const token1 = wethIsToken0 ? squeeth.address : weth.address
       await uniPositionManager.setMockedProperties(token0, token1, 0, 0, 0)
     })
-
-    this.beforeAll('Prepare new vaults for this test set', async() => {
-
+    
+    this.beforeAll('Prepare a new vault for this test set', async() => {
       // prepare a vault that's gonna go underwater
       seller2VaultId = await shortNFT.nextId()
       const mintAmount = ethers.utils.parseUnits('0.01')
