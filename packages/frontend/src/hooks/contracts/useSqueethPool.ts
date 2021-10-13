@@ -60,7 +60,7 @@ export const useSqueethPool = () => {
     getBuyQuoteForETH(1).then((val) => {
       setSqueethPrice(val.amountOut)
       setSqueethInitialPrice(new BigNumber(squeethToken ? (pool?.token0Price.toSignificant(18) || 0) : (pool?.token1Price.toSignificant(18) || 0)))
-      
+
     }).catch(console.log)
     const isWethToken0 = parseInt(weth, 16) < parseInt(wSqueeth, 16)
     setReady(true)
@@ -120,6 +120,8 @@ export const useSqueethPool = () => {
       feeProtocol: slot[5],
       unlocked: slot[6],
     }
+
+    console.log(PoolState)
     return PoolState
   }
 
@@ -216,7 +218,7 @@ export const useSqueethPool = () => {
     try {
       const route = new Route([pool], wethToken!, squeethToken!)
       const trade = await Trade.exactOut(
-        route, CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(amount, WSQUEETH_DECIMALS).toString())
+        route, CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(amount, WSQUEETH_DECIMALS).toNumber())
       )
 
       return {
@@ -243,7 +245,7 @@ export const useSqueethPool = () => {
     try {
       const route = new Route([pool], wethToken!, squeethToken!)
       const trade = await Trade.exactIn(
-        route, CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(amount, 18).toString())
+        route, CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(amount, 18).toNumber())
       )
 
       return {
@@ -269,7 +271,7 @@ export const useSqueethPool = () => {
     try {
       const route = new Route([pool], squeethToken!, wethToken!)
       const trade = await Trade.exactIn(
-        route, CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(amount, WSQUEETH_DECIMALS).toString())
+        route, CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(amount, WSQUEETH_DECIMALS).toNumber())
       )
 
       return {

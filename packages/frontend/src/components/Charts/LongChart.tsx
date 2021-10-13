@@ -61,8 +61,8 @@ export function LongChart() {
       ]
     if (mode === ChartType.PNL)
       return [
-        { data: longEthPNL, legend: 'Long 1 ETH' },
-        { data: longSeries, legend: 'Long 1 Squeeth (incl. funding)' },
+        { data: longEthPNL, legend: 'Long 1 ETH PNL' },
+        { data: longSeries, legend: 'Long 1 Squeeth PNL (incl. funding)' },
       ]
     if (mode === ChartType.PositionSize) return [{ data: positionSizeSeries, legend: 'Position Size' }]
     if (mode === ChartType.Funding) return [{ data: fundingPercentageSeries, legend: 'Daily Funding' }]

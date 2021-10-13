@@ -1,9 +1,10 @@
 import { Button, ButtonGroup, createStyles, Fade, makeStyles, Modal, Tab, Tabs } from '@material-ui/core'
 import Backdrop from '@material-ui/core/Backdrop'
 import React from 'react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import { useWallet } from '../../context/wallet'
+import { useLongPositions, useShortPositions } from '../../hooks/usePositions'
 import { toTokenAmount } from '../../utils/calculations'
 import { SecondaryTab, SecondaryTabs } from '../Tabs'
 import History from './History'
@@ -61,15 +62,16 @@ const Trade: React.FC<TradeProps> = ({
   const [openPosition, setOpenPosition] = useState(0)
   const classes = useStyles()
   const { balance } = useWallet()
+  const { squeethAmount: lngAmt } = useLongPositions()
+  const { squeethAmount: shrtAmt } = useShortPositions()
+
+  const showOpenCloseTabs = useMemo(() => {
+    return (tradeType === TradeType.BUY && shrtAmt.isZero()) || (tradeType === TradeType.SELL && lngAmt.isZero())
+  }, [tradeType, lngAmt.toNumber(), shrtAmt.toNumber()])
 
   return (
     <div>
-      {showLongTab ? (
-        <Tabs value={tradeType} onChange={(evt, val) => setTradeType(val)} aria-label="simple tabs example" centered>
-          <Tab label="Long" />
-          <Tab label="Short" />
-        </Tabs>
-      ) : (
+      {showOpenCloseTabs ? (
         <SecondaryTabs
           value={openPosition}
           onChange={(evt, val) => setOpenPosition(val)}
@@ -80,9 +82,38 @@ const Trade: React.FC<TradeProps> = ({
           <SecondaryTab label="Open" />
           <SecondaryTab label="Close" />
         </SecondaryTabs>
-      )}
+      ) : null}
       <div>
         {tradeType === TradeType.BUY ? (
+          shrtAmt.isZero() ? (
+            <Long
+              amount={amount}
+              setAmount={setAmount}
+              cost={cost}
+              setCost={setCost}
+              squeethExposure={squeethExposure}
+              setSqueethExposure={setSqueethExposure}
+              balance={Number(toTokenAmount(balance, 18).toFixed(4))}
+              open={showLongTab || openPosition === 0}
+              newVersion={!showLongTab}
+              closeTitle="Close squeeth position and redeem ETH"
+            />
+          ) : (
+            <Short
+              balance={Number(toTokenAmount(balance, 18).toFixed(4))}
+              open={false}
+              newVersion={!showLongTab}
+              closeTitle="You already have short position, close it to open a long position"
+            />
+          )
+        ) : lngAmt.isZero() ? (
+          <Short
+            balance={Number(toTokenAmount(balance, 18).toFixed(4))}
+            open={showLongTab || openPosition === 0}
+            newVersion={!showLongTab}
+            closeTitle="Buy back and close position"
+          />
+        ) : (
           <Long
             amount={amount}
             setAmount={setAmount}
@@ -91,14 +122,9 @@ const Trade: React.FC<TradeProps> = ({
             squeethExposure={squeethExposure}
             setSqueethExposure={setSqueethExposure}
             balance={Number(toTokenAmount(balance, 18).toFixed(4))}
-            open={showLongTab || openPosition === 0}
+            open={false}
             newVersion={!showLongTab}
-          />
-        ) : (
-          <Short
-            balance={Number(toTokenAmount(balance, 18).toFixed(4))}
-            open={showLongTab || openPosition === 0}
-            newVersion={!showLongTab}
+            closeTitle="You already have long position, close it to open short position"
           />
         )}
         {/* <Button

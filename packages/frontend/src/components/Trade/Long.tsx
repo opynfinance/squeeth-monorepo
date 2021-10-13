@@ -42,6 +42,8 @@ const useStyles = makeStyles((theme) =>
     },
     thirdHeading: {
       marginTop: theme.spacing(2),
+      paddingLeft: theme.spacing(1),
+      paddingRight: theme.spacing(1),
     },
     caption: {
       marginTop: theme.spacing(1),
@@ -170,6 +172,7 @@ type BuyProps = {
   balance: number
   open: boolean
   newVersion: boolean
+  closeTitle: string
 }
 
 const Buy: React.FC<BuyProps> = ({
@@ -182,6 +185,7 @@ const Buy: React.FC<BuyProps> = ({
   balance,
   open,
   newVersion,
+  closeTitle,
 }) => {
   const [quote, setQuote] = useState({
     amountOut: new BigNumber(0),
@@ -231,6 +235,20 @@ const Buy: React.FC<BuyProps> = ({
     setSqueethExposure(Number(getWSqueethPositionValue(cost)))
   }, [cost])
 
+  const { openError, closeError } = useMemo(() => {
+    let openError = null
+    let closeError = null
+
+    if (wSqueethBal.lt(amount)) {
+      closeError = 'Insufficient wSQTH balance'
+    }
+    if (amount > balance) {
+      openError = 'Insufficient ETH balance'
+    }
+
+    return { openError, closeError }
+  }, [amount, balance, wSqueethBal])
+
   const transact = async () => {
     setBuyLoading(true)
     try {
@@ -260,7 +278,7 @@ const Buy: React.FC<BuyProps> = ({
     return (
       <div>
         <Typography variant="caption" className={classes.thirdHeading} component="div">
-          Close squeeth position and redeem ETH
+          {closeTitle}
         </Typography>
         <div className={classes.thirdHeading} />
         <PrimaryInput
@@ -272,8 +290,8 @@ const Buy: React.FC<BuyProps> = ({
           onActionClicked={() => setAmount(Number(wSqueethBal))}
           unit="wSQTH"
           convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
-          error={wSqueethBal.lt(amount)}
-          hint={wSqueethBal.lt(amount) ? 'Amount exceeds available balance' : `Balance ${wSqueethBal.toFixed(6)} wSQTH`}
+          error={!!closeError}
+          hint={closeError ? closeError : `Balance ${wSqueethBal.toFixed(6)} wSQTH`}
         />
         <div className={classes.squeethExp}>
           <div>
@@ -306,7 +324,7 @@ const Buy: React.FC<BuyProps> = ({
             variant="contained"
             onClick={sellAndClose}
             className={classes.amountInput}
-            disabled={!!sellLoading}
+            disabled={!!sellLoading || !!closeError}
             style={{ width: '300px' }}
           >
             {sellLoading ? (
@@ -324,24 +342,26 @@ const Buy: React.FC<BuyProps> = ({
       </div>
     )
   }, [
-    amount,
-    classes.amountInput,
-    classes.caption,
+    classes.thirdHeading,
     classes.squeethExp,
     classes.squeethExpTxt,
-    classes.thirdHeading,
-    connected,
-    ethPrice,
-    selectWallet,
-    sellAndClose,
-    sellLoading,
-    sellQuote.amountOut,
-    sellQuote.minimumAmountOut,
-    sellQuote.priceImpact,
-    setAmount,
-    squeethAllowance,
-    wSqueethBal,
+    classes.amountInput,
+    classes.caption,
+    closeTitle,
+    amount,
     getWSqueethPositionValue,
+    closeError,
+    wSqueethBal,
+    sellQuote.amountOut,
+    sellQuote.priceImpact,
+    sellQuote.minimumAmountOut,
+    ethPrice,
+    connected,
+    selectWallet,
+    sellLoading,
+    sellAndClose,
+    squeethAllowance,
+    setAmount,
   ])
 
   if (!open) {
@@ -363,7 +383,8 @@ const Buy: React.FC<BuyProps> = ({
         onActionClicked={() => setAmount(balance)}
         unit="ETH"
         convertedValue={(amount * Number(ethPrice)).toFixed(2).toLocaleString()}
-        hint={`Balance ${balance} ETH`}
+        error={!!openError}
+        hint={openError ? openError : `Balance ${balance} ETH`}
       />
       {/* <TradeInfoItem label="Squeeth you get" value={cost.toFixed(8)} unit="WSQTH" /> */}
       <div className={classes.squeethExp}>
@@ -404,7 +425,7 @@ const Buy: React.FC<BuyProps> = ({
           variant="contained"
           onClick={transact}
           className={classes.amountInput}
-          disabled={!!buyLoading}
+          disabled={!!buyLoading || !!openError}
           style={{ width: '300px' }}
         >
           {buyLoading ? <CircularProgress color="primary" size="1.5rem" /> : 'Buy'}

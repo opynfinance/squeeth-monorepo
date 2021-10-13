@@ -39,7 +39,7 @@ const WalletButton: React.FC = () => {
       ) : (
         <div>
           <Button variant="text" color="primary">
-            {toTokenAmount(balance, 18).toFixed(2)} ETH
+            {toTokenAmount(balance, 18).toFixed(4)} ETH
           </Button>
           <Button variant="outlined" color="primary" onClick={selectWallet}>
             <Circle networkId={networkId} />

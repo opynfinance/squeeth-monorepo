@@ -57,8 +57,8 @@ export function VaultChart({
       ]
     if (vault === Vaults.Short)
       return [
-        { data: shortEthPNL, legend: 'Short ETH' },
-        { data: shortSeries, legend: 'Short Squeeth (incl. funding)' },
+        { data: shortEthPNL, legend: 'Short ETH PNL' },
+        { data: shortSeries, legend: 'Short Squeeth PNL (incl. funding)' },
       ]
     return [{ data: seriesRebalance, legend: 'PNL' }]
   }, [vault, longEthPNL, shortEthPNL, seriesRebalance, getStableYieldPNL, longAmount, shortSeries])

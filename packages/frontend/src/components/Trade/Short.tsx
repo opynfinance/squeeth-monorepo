@@ -111,7 +111,14 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const Sell: React.FC<{ balance: number; open: boolean; newVersion: boolean }> = ({ balance, open, newVersion }) => {
+type SellType = {
+  balance: number
+  open: boolean
+  newVersion: boolean
+  closeTitle: string
+}
+
+const Sell: React.FC<SellType> = ({ balance, open, newVersion, closeTitle }) => {
   const [amount, setAmount] = useState(1)
   const [collateral, setCollateral] = useState(1)
   const [collatPercent, setCollatPercent] = useState(200)
@@ -265,26 +272,29 @@ const Sell: React.FC<{ balance: number; open: boolean; newVersion: boolean }> = 
 
   const { accFunding } = useETHPriceCharts(1, globalVMultiplier)
 
+  const { openError, closeError } = useMemo(() => {
+    let openError = null
+    let closeError = null
+
+    if (squeethAmount.lt(closeAmount)) {
+      closeError = 'Close amount exceeds position'
+    }
+    if (amount > balance) {
+      openError = 'Insufficient ETH balance'
+    }
+
+    return { openError, closeError }
+  }, [amount, balance, squeethAmount.toNumber(), closeAmount])
+
   useEffect(() => {
     setCollatRatio(collatPercent / 100)
   }, [collatPercent])
-
-  const TxValue: React.FC<{ value: string | number; label: string }> = ({ value, label }) => {
-    return (
-      <div>
-        <Typography component="span">{value}</Typography>
-        <Typography component="span" variant="caption" className={classes.txUnit}>
-          {label}
-        </Typography>
-      </div>
-    )
-  }
 
   const ClosePosition = useMemo(() => {
     return (
       <div>
         <Typography variant="caption" className={classes.thirdHeading} component="div">
-          Buy back and close position
+          {closeTitle}
         </Typography>
         <div className={classes.thirdHeading}>
           <PrimaryInput
@@ -295,7 +305,7 @@ const Sell: React.FC<{ balance: number; open: boolean; newVersion: boolean }> = 
             actionTxt="Max"
             onActionClicked={() => setCloseAmount(Number(squeethAmount))}
             unit="wSQTH"
-            error={squeethAmount.lt(closeAmount)}
+            error={!!closeError}
             convertedValue={getWSqueethPositionValue(closeAmount).toFixed(2).toLocaleString()}
             hint={
               squeethAmount.lt(closeAmount)
@@ -373,7 +383,7 @@ const Sell: React.FC<{ balance: number; open: boolean; newVersion: boolean }> = 
           <PrimaryButton
             onClick={buyBackAndClose}
             className={classes.amountInput}
-            disabled={shortLoading || collatPercent < 150}
+            disabled={shortLoading || collatPercent < 150 || !!closeError}
             variant="contained"
             style={{ width: '300px' }}
           >
@@ -443,7 +453,8 @@ const Sell: React.FC<{ balance: number; open: boolean; newVersion: boolean }> = 
           onActionClicked={() => setCollateral(balance)}
           unit="ETH"
           convertedValue={(collateral * Number(ethPrice)).toFixed(2).toLocaleString()}
-          hint={`Balance ${balance} ETH`}
+          hint={!!openError ? openError : `Balance ${balance} ETH`}
+          error={!!openError}
         />
       </div>
       <div className={classes.thirdHeading}>
@@ -522,7 +533,7 @@ const Sell: React.FC<{ balance: number; open: boolean; newVersion: boolean }> = 
         <PrimaryButton
           onClick={depositAndShort}
           className={classes.amountInput}
-          disabled={shortLoading || collatPercent < 150}
+          disabled={shortLoading || collatPercent < 150 || !!openError}
           variant="contained"
           style={{ width: '300px' }}
         >
