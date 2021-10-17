@@ -50,10 +50,9 @@ export const useSqueethPool = () => {
   }, [web3])
 
   useEffect(() => {
-    if (!squeethContract || !address) return
-
+    if (!squeethContract) return
     updateData()
-  }, [squeethContract, address, ticks?.length])
+  }, [squeethContract, ticks?.length])
 
   useEffect(() => {
     if (!squeethToken?.address) return

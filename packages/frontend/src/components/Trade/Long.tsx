@@ -239,15 +239,15 @@ const Buy: React.FC<BuyProps> = ({
     let openError = null
     let closeError = null
 
-    if (wSqueethBal.lt(amount)) {
+    if (connected && wSqueethBal.lt(amount)) {
       closeError = 'Insufficient wSQTH balance'
     }
-    if (amount > balance) {
+    if (connected && amount > balance) {
       openError = 'Insufficient ETH balance'
     }
 
     return { openError, closeError }
-  }, [amount, balance, wSqueethBal])
+  }, [amount, balance, wSqueethBal, connected])
 
   const transact = async () => {
     setBuyLoading(true)

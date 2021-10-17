@@ -9,8 +9,10 @@ import Web3 from 'web3'
 import { EtherscanPrefix } from '../constants'
 import { Networks } from '../types'
 
+const defaultWeb3 = new Web3(`https://ropsten.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY}`)
+
 type WalletType = {
-  web3: Web3 | null
+  web3: Web3
   address: string | null
   networkId: Networks
   signer: any
@@ -21,7 +23,7 @@ type WalletType = {
 }
 
 const initialState: WalletType = {
-  web3: null,
+  web3: defaultWeb3,
   address: null,
   networkId: Networks.ROPSTEN,
   signer: null,
@@ -35,7 +37,7 @@ const walletContext = React.createContext<WalletType>(initialState)
 const useWallet = () => useContext(walletContext)
 
 const WalletProvider: React.FC = ({ children }) => {
-  const [web3, setWeb3] = useState<Web3 | null>(null)
+  const [web3, setWeb3] = useState<Web3>(defaultWeb3)
   const [address, setAddress] = useState<string | null>(null)
   const [networkId, setNetworkId] = useState(Networks.ROPSTEN)
   const [onboard, setOnboard] = useState<API | null>(null)
@@ -113,8 +115,8 @@ const WalletProvider: React.FC = ({ children }) => {
       networkId === Networks.LOCAL
         ? 'http://127.0.0.1:8545/'
         : networkId === Networks.ARBITRUM_RINKEBY
-          ? 'https://rinkeby.arbitrum.io/rpc'
-          : `https://${network}.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY}`
+        ? 'https://rinkeby.arbitrum.io/rpc'
+        : `https://${network}.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY}`
 
     const onboard = Onboard({
       dappId: process.env.NEXT_PUBLIC_BLOCKNATIVE_DAPP_ID,
