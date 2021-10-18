@@ -532,32 +532,45 @@ describe("Controller", function () {
       await controller.connect(owner).setFeeRate(100)
       expect((await controller.feeRate()).eq(100)).to.be.true
     })
-    it('should charge fee on mintPowerPerpAmount', async() => {
+    it('should charge fee on mintPowerPerpAmount from deposit amount', async() => {
       vaultId = await shortNFT.nextId()
 
-      const totalWeiToSend = 10000
-      const expectedFee = totalWeiToSend / 100
-      const expectedDeposit = totalWeiToSend - expectedFee
-
+      const powerPerpToMint = ethers.utils.parseUnits('0.00005')
+      const collateralDeposited = ethers.utils.parseUnits('0.55')
+      const powerPerpInEth =  ethUSDPrice.mul(powerPerpToMint).div(ethers.utils.parseUnits("1"))
+      const expectedFee = powerPerpInEth.div(100)
+      const totalEthAttached = expectedFee.add(collateralDeposited)
+    
       const feeRecipientBalanceBefore = await provider.getBalance(feeRecipient.address)
 
-      await controller.connect(random).mintPowerPerpAmount(0, 0, 0, { value: totalWeiToSend })
+      await controller.connect(random).mintPowerPerpAmount(0, powerPerpToMint, 0, { value: totalEthAttached })
 
       const feeRecipientBalanceAfter = await provider.getBalance(feeRecipient.address)
       const vault = await controller.vaults(vaultId)
 
-      expect(vault.collateralAmount.eq(expectedDeposit)).to.be.true
-      expect(feeRecipientBalanceAfter.sub(feeRecipientBalanceBefore).eq(expectedFee)).to.be.true
+      expect(isSimilar(vault.collateralAmount.toString(),collateralDeposited.toString())).to.be.true
+      expect(isSimilar((feeRecipientBalanceAfter.sub(feeRecipientBalanceBefore)).toString(),(expectedFee.toString()))).to.be.true
+
     })
-    it('should charge fee on withdraw', async() => {
-      const vault = await controller.vaults(vaultId)
+
+    it('should charge fee on mintPowerPerpAmount from vault collateral', async() => {
+
+      const vaultBefore = await controller.vaults(vaultId)
+
+      const powerPerpToMint = ethers.utils.parseUnits('0.00005')
+      const powerPerpInEth =  ethUSDPrice.mul(powerPerpToMint).div(ethers.utils.parseUnits("1"))
+      const expectedFee = powerPerpInEth.div(100)
+    
       const feeRecipientBalanceBefore = await provider.getBalance(feeRecipient.address)
 
-      await controller.connect(random).burnWPowerPerpAmount(vaultId, vault.shortAmount, vault.collateralAmount)
+      await controller.connect(random).mintPowerPerpAmount(vaultId, powerPerpToMint, 0)
 
       const feeRecipientBalanceAfter = await provider.getBalance(feeRecipient.address)
-      const expectedFee = vault.collateralAmount.div(100) // 1% fees
-      expect(feeRecipientBalanceAfter.sub(feeRecipientBalanceBefore).eq(expectedFee)).to.be.true
+      const vaultAfter = await controller.vaults(vaultId)
+
+      expect(isSimilar(vaultAfter.collateralAmount.toString(),((vaultBefore.collateralAmount).sub(expectedFee)).toString())).to.be.true
+      expect(isSimilar((feeRecipientBalanceAfter.sub(feeRecipientBalanceBefore)).toString(),(expectedFee.toString()))).to.be.true
+
     })
     after('should the fee back to 0', async() => {
       await controller.connect(owner).setFeeRate(0)

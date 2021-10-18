@@ -486,7 +486,8 @@ contract Controller is Initializable, Ownable {
         bool _isWAmount
     ) internal returns (uint256, uint256) {
         uint256 cachedNormFactor = _applyFunding();
-
+        uint256 ethMintFee;
+        uint256 depositAmountWithFee = _depositAmount;
         uint256 wPowerPerpAmount = _isWAmount ? _mintAmount : _mintAmount.mul(1e18).div(cachedNormFactor);
 
         VaultLib.Vault memory cachedVault;
@@ -498,7 +499,10 @@ contract Controller is Initializable, Ownable {
             cachedVault = vaults[_vaultId];
         }
 
-        if (_depositAmount > 0) _addEthCollateral(cachedVault, _vaultId, _depositAmount);
+        if (wPowerPerpAmount > 0) {
+            depositAmountWithFee = _payFee(cachedVault, _account, _vaultId, wPowerPerpAmount, _depositAmount);
+        }
+        if (_depositAmount > 0) _addEthCollateral(cachedVault, _vaultId, depositAmountWithFee);
         if (_uniTokenId != 0) _depositUniPositionToken(cachedVault, _account, _vaultId, _uniTokenId);
 
         if (wPowerPerpAmount > 0) _mintWPowerPerp(cachedVault, _account, _vaultId, wPowerPerpAmount);
@@ -580,17 +584,15 @@ contract Controller is Initializable, Ownable {
      * @dev add eth collateral into a vault
      * @dev this function will update the vault memory in-place
      * @param _vault the Vault memory to update.
-     * @param _totalAmount amount of eth adding to the vault
+     * @param _amount amount of eth adding to the vault
      */
     function _addEthCollateral(
         VaultLib.Vault memory _vault,
         uint256 _vaultId,
-        uint256 _totalAmount
+        uint256 _amount
     ) internal {
-        uint256 depositAmount = _payFee(_totalAmount);
-
-        _vault.addEthCollateral(depositAmount);
-        emit DepositCollateral(_vaultId, depositAmount, 0);
+        _vault.addEthCollateral(_amount);
+        emit DepositCollateral(_vaultId, _amount, 0);
     }
 
     /**
@@ -605,6 +607,7 @@ contract Controller is Initializable, Ownable {
         uint256 _vaultId
     ) internal {
         require(_canModifyVault(_vaultId, _account), "not allowed");
+
         uint256 tokenId = _vault.NftCollateralId;
         _vault.removeUniNftCollateral();
         INonfungiblePositionManager(uniswapPositionManager).transferFrom(address(this), _account, tokenId);
@@ -628,9 +631,7 @@ contract Controller is Initializable, Ownable {
         require(_canModifyVault(_vaultId, _account), "not allowed");
 
         _vault.removeEthCollateral(_amount);
-        uint256 withdrawAmount = _payFee(_amount);
-
-        payable(_account).sendValue(withdrawAmount);
+        payable(_account).sendValue(_amount);
 
         emit WithdrawCollateral(_vaultId, _amount, 0);
     }
@@ -798,17 +799,46 @@ contract Controller is Initializable, Ownable {
     }
 
     /**
-     * @dev pay the fee to the fee recipient in eth.
-     * @param _amount the amount depositing or withdrawing
-     * @return the remaining amount after charging fee.
+     * @dev pay the fee to the fee recipient in eth from either the vault or the deposit amount
+     * @param _vault the Vault memory to update.
+     * @param _account the user address that pays the fee (either from transferred eth or vault eth)
+     * @param _vaultId the user vault Id
+     * @param _wSqueethAmount the amount of wSqueeth to mint
+     * @param _depositAmount the amount depositing or withdrawing
+     * @return the amount of actual deposited eth into the vault, this is less than the original amount if a fee was removed from it
      */
-    function _payFee(uint256 _amount) internal returns (uint256) {
+    function _payFee(
+        VaultLib.Vault memory _vault,
+        address _account,
+        uint256 _vaultId,
+        uint256 _wSqueethAmount,
+        uint256 _depositAmount
+    ) internal returns (uint256) {
         uint256 cachedFeeRate = feeRate;
-        if (cachedFeeRate == 0) return _amount;
+        if (cachedFeeRate == 0) return _depositAmount;
+        uint256 depositAmountAfterFee;
+        uint256 ethEquivalentMinted = Power2Base._getCollateralByRepayAmount(
+            _wSqueethAmount,
+            address(oracle),
+            ethDaiPool,
+            weth,
+            dai,
+            normalizationFactor
+        );
+        uint256 feeAmount = ethEquivalentMinted.mul(cachedFeeRate).div(10000);
 
-        uint256 feeAmount = _amount.mul(cachedFeeRate).div(10000);
-        payable(feeRecipient).sendValue(feeAmount);
-        return _amount.sub(feeAmount);
+        // if fee can be paid from deposited collateral, pay from _depositAmount
+        if (_depositAmount > feeAmount) {
+            depositAmountAfterFee = _depositAmount.sub(feeAmount);
+            payable(feeRecipient).sendValue(feeAmount);
+            // if not, adjust the vault to pay from the vault collateral
+        } else {
+            _vault.removeEthCollateral(feeAmount);
+            payable(feeRecipient).sendValue(feeAmount);
+            depositAmountAfterFee = _depositAmount;
+        }
+        //return the deposit amount, which has only been reduced by a fee if it is paid out of the deposit amount
+        return depositAmountAfterFee;
     }
 
     /**
