@@ -595,7 +595,7 @@ describe("Controller", function () {
     });
   });
   
-  describe("Emergency Shutdown", function () {
+  describe("Emergency Shutdown and pausing", function () {
     const settlementPrice = '6500';
     let seller2VaultId: BigNumber;
     let seller3VaultId: BigNumber;
@@ -643,20 +643,123 @@ describe("Controller", function () {
 
       normalizationFactor = await controller.normalizationFactor()
     })
-  
-    describe("Shut down the system", async () => {
+
+    describe("Pause the system", async () => {
+      let pausesLeft = 4;
       it("Should revert when called by non-owner", async () => {
         await expect(
-          controller.connect(random).shutDown()
+          controller.connect(random).pause()
+        ).to.be.revertedWith("Ownable: caller is not the owner");
+      });
+      it("Should allow owner to pause the system", async () => {
+        await controller.connect(owner).pause()
+        pausesLeft-=1;
+        expect(await controller.isSystemPaused()).to.be.true;
+        expect((await controller.pausesLeft()).eq(pausesLeft)).to.be.true 
+
+        // how to ensure that all variables are updated ie lastPauseTime, need block.timestamp here
+      });
+      it("Should revert when a random person tries to unpause immediately afterwards", async () => {
+        await expect(
+          controller.connect(random).unPauseAnyone()
+        ).to.be.revertedWith("not enough paused time has passed");
+      });
+      it("Should allow the owner to un-pause", async () => {
+        await controller.connect(owner).unPauseOwner()
+        expect(await controller.isSystemPaused()).to.be.false 
+        expect((await controller.pausesLeft()).eq(pausesLeft)).to.be.true 
+
+      });
+      it("Should allow the owner to re-pause", async () => {
+        await controller.connect(owner).pause()
+        pausesLeft-=1;
+        expect(await controller.isSystemPaused()).to.be.true 
+        expect((await controller.pausesLeft()).eq(pausesLeft)).to.be.true 
+
+      });
+      it("Should allow the anyone to unpause after sufficient time has passed", async () => {
+        await provider.send("evm_increaseTime", [86400])
+        await provider.send("evm_mine", [])
+        await controller.connect(random).unPauseAnyone()
+        expect(await controller.isSystemPaused()).to.be.false 
+      });
+      it("Should allow the owner to re-pause", async () => {
+        await controller.connect(owner).pause()
+        pausesLeft-=1;
+        expect(await controller.isSystemPaused()).to.be.true 
+        expect((await controller.pausesLeft()).eq(pausesLeft)).to.be.true 
+      });
+      it("Should revert when calling mint", async () => {
+        await expect(
+          controller.connect(seller1).mintPowerPerpAmount(0, 0, 0)
+        ).to.be.revertedWith("paused");
+      });
+      it("Should revert when calling deposit", async () => {
+        await expect(
+          controller.connect(seller1).deposit(1, { value: 1})
+        ).to.be.revertedWith("paused");
+      });
+      it("Should revert when calling burn", async () => {
+        await expect(
+          controller.connect(seller1).burnWPowerPerpAmount(1, 1, 1)
+        ).to.be.revertedWith("paused");
+      });
+      it("Should revert when calling withdraw", async () => {
+        await expect(
+          controller.connect(seller1).withdraw(1, 1)
+        ).to.be.revertedWith("paused");
+      });
+      // probably should add all notPaused functions
+
+      it("Should allow the owner to un-pause", async () => {
+        await controller.connect(owner).unPauseOwner()
+        expect(await controller.isSystemPaused()).to.be.false 
+      });
+
+      it("Should revert when a owner tries to shutdown when system is not paused", async () => {
+        await expect(
+          controller.connect(owner).shutDown()
+        ).to.be.revertedWith("!paused");
+      });
+      
+      it("Should allow the owner to re-pause", async () => {
+        await controller.connect(owner).pause()
+        pausesLeft-=1;
+        expect(await controller.isSystemPaused()).to.be.true 
+        expect((await controller.pausesLeft()).eq(pausesLeft)).to.be.true 
+      });
+
+      it("Should revert when a owner tries to pauseAndShutDown the system when it is already paused", async () => {
+        await expect(
+          controller.connect(owner).pauseAndShutDown()
+        ).to.be.revertedWith("paused");
+      });
+
+      it("Should allow the owner to un-pause", async () => {
+        await controller.connect(owner).unPauseOwner()
+        expect(await controller.isSystemPaused()).to.be.false 
+      });
+
+      it("Should revert when a owner tries to pause the system after it has been paused 4 times before", async () => {
+        await expect(
+          controller.connect(owner).pause()
+        ).to.be.revertedWith("paused too many times");
+      });
+    });
+    describe("Shut down the system using pauseAndShutdown", async () => {
+      it("Should revert when called by non-owner", async () => {
+        await expect(
+          controller.connect(random).pauseAndShutDown()
         ).to.be.revertedWith("Ownable: caller is not the owner");
       });
       it("Should shutdown the system at a price that it will go insolvent", async () => {
         const ethPrice = ethers.utils.parseUnits(settlementPrice)
         await oracle.connect(random).setPrice(ethUSDPool.address , ethPrice) // eth per 1 squeeth
-        await controller.connect(owner).shutDown()
+        await controller.connect(owner).pauseAndShutDown()
         const snapshot = await controller.shutDownEthPriceSnapshot();
         expect(snapshot.toString()).to.be.eq(ethPrice)
         expect(await controller.isShutDown()).to.be.true;
+        expect(await controller.isSystemPaused()).to.be.true;
       });
       it("Should revert when called again after system is shutdown", async () => {
         await expect(
@@ -665,28 +768,6 @@ describe("Controller", function () {
       });
     });
   
-    describe("Basic operations should be banned", async () => {
-      it("Should revert when calling mint", async () => {
-        await expect(
-          controller.connect(seller1).mintPowerPerpAmount(0, 0, 0)
-        ).to.be.revertedWith("shutdown");
-      });
-      it("Should revert when calling deposit", async () => {
-        await expect(
-          controller.connect(seller1).deposit(1, { value: 1})
-        ).to.be.revertedWith("shutdown");
-      });
-      it("Should revert when calling burn", async () => {
-        await expect(
-          controller.connect(seller1).burnWPowerPerpAmount(1, 1, 1)
-        ).to.be.revertedWith("shutdown");
-      });
-      it("Should revert when calling withdraw", async () => {
-        await expect(
-          controller.connect(seller1).withdraw(1, 1)
-        ).to.be.revertedWith("shutdown");
-      });
-    });
   
     describe("Settlement: redeemLong", async () => {
       it("should go insolvent while trying to redeem fair value for seller1 (big holder)", async () => {
