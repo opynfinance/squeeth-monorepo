@@ -689,9 +689,14 @@ describe("Controller", function () {
         expect(await controller.isSystemPaused()).to.be.true 
         expect((await controller.pausesLeft()).eq(pausesLeft)).to.be.true 
       });
-      it("Should revert when calling mint", async () => {
+      it("Should revert when calling mintPowerPerpAmount", async () => {
         await expect(
           controller.connect(seller1).mintPowerPerpAmount(0, 0, 0)
+        ).to.be.revertedWith("paused");
+      });
+      it("Should revert when calling mintWPowerPerpAmount", async () => {
+        await expect(
+          controller.connect(seller1).mintWPowerPerpAmount(0, 0, 0)
         ).to.be.revertedWith("paused");
       });
       it("Should revert when calling deposit", async () => {
@@ -699,9 +704,14 @@ describe("Controller", function () {
           controller.connect(seller1).deposit(1, { value: 1})
         ).to.be.revertedWith("paused");
       });
-      it("Should revert when calling burn", async () => {
+      it("Should revert when calling burnWPowerPerpAmount", async () => {
         await expect(
           controller.connect(seller1).burnWPowerPerpAmount(1, 1, 1)
+        ).to.be.revertedWith("paused");
+      });
+      it("Should revert when calling burnPowerPerpAmount", async () => {
+        await expect(
+          controller.connect(seller1).burnPowerPerpAmount(1, 1, 1)
         ).to.be.revertedWith("paused");
       });
       it("Should revert when calling withdraw", async () => {
@@ -709,7 +719,16 @@ describe("Controller", function () {
           controller.connect(seller1).withdraw(1, 1)
         ).to.be.revertedWith("paused");
       });
+      it("Should revert when calling applyFunding", async () => {
+        await expect(
+          controller.connect(seller1).applyFunding()
+        ).to.be.revertedWith("paused");
+      });
+
+
+
       // probably should add all notPaused functions
+      // add in reduceDebt, liquidate, add and remove uniposition token
 
       it("Should allow the owner to un-pause", async () => {
         await controller.connect(owner).unPauseOwner()

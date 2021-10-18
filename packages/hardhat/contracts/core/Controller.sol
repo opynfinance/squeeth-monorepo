@@ -497,7 +497,7 @@ contract Controller is Initializable, Ownable {
     /**
      * @dev update the normalization factor as a way to pay funding.
      */
-    function applyFunding() external {
+    function applyFunding() external notPaused {
         _applyFunding();
     }
 
