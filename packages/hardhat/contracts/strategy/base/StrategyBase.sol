@@ -3,14 +3,15 @@ pragma solidity =0.7.6;
 
 // interface
 import {IController} from "../../interfaces/IController.sol";
-import {IWETH9} from "../../interfaces/IWETH9.sol";
+import {IWPowerPerp} from "../../interfaces/IWPowerPerp.sol";
 
 // contract
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // lib
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+// import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {StrategyMath} from "./StrategyMath.sol";
 
 /**
  * @dev StrategyBase contract
@@ -18,19 +19,22 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
  * @author Opyn team
  */
 contract StrategyBase is ERC20 {
-    using SafeMath for uint256;
+    using StrategyMath for uint256;
     using Address for address payable;
 
-    /// @dev WETH token
-    IWETH9 public weth;
     /// @dev Power token controller
     IController public powerTokenController;
 
-    /// @dev Strategy vault ID
-    uint256 internal _vaultId;
+    /// @dev WETH token
+    address public immutable weth;
+    address public immutable wPowerPerp;
 
-    /// @dev emit when strategy open short position
-    event OpenVault(uint256 vaultId);
+    /// @dev Strategy vault ID
+    uint256 internal immutable _vaultId;
+    /// @dev strategy debt amount
+    uint256 internal _strategyDebt;
+    /// @dev strategy collateral amount
+    uint256 internal _strategyCollateral;
 
     /**
      * @notice Strategy base constructor
@@ -42,12 +46,11 @@ contract StrategyBase is ERC20 {
         require(_powerTokenController != address(0), "invalid power token controller address");
         require(_weth != address(0), "invalid weth address");
 
-        weth = IWETH9(_weth);
+        weth = _weth;
         powerTokenController = IController(_powerTokenController);
-
-        _openVault();
+        wPowerPerp = address(powerTokenController.wPowerPerp());
+        _vaultId = powerTokenController.mintWPowerPerpAmount(0, 0, 0);
     }
-
     /**
      * @notice Get strategy vault ID in Squeeth contract
      * @return vauld ID
@@ -55,17 +58,80 @@ contract StrategyBase is ERC20 {
     function getStrategyVaultId() external view returns (uint256) {
         return _vaultId;
     }
-    
+
     /**
-     * @notice Open a short vault
-     * @dev Should only be called at constructor
+     * @notice get strategy debt amount
+     * @return debt amount
      */
-    function _openVault() internal {
-        uint256 shortVaultId = powerTokenController.mintWPowerPerpAmount(0, 0, 0);
+    function getStrategyDebt() external view returns (uint256) {
+        return _strategyDebt;
+    }
 
-        _vaultId = shortVaultId;
+    /**
+     * @notice get strategy collateral amount
+     * @return collateral amount
+     */
+    function getStrategyCollateral() external view returns (uint256) {
+        return _strategyCollateral;
+    }
 
-        emit OpenVault(shortVaultId);
+    /**
+     * @notice mint WPowerPerp
+     * @param _to receiver address
+     * @param _wAmount amount of wPowerPerp to mint
+     * @param _collateral amount of collateral to deposit
+     * @param _keepWsqueeth keep minted wSqueeth in this contract if it is set to true
+     */
+    function _mintWPowerPerp(
+        address _to,
+        uint256 _wAmount,
+        uint256 _collateral,
+        bool _keepWsqueeth
+    ) internal {
+        powerTokenController.mintWPowerPerpAmount{value: _collateral}(_vaultId, uint128(_wAmount), 0);
+
+        if (!_keepWsqueeth) {
+            IWPowerPerp(wPowerPerp).transfer(_to, _wAmount);
+        }
+    }
+
+    /**
+     * @notice burn WPowerPerp
+     * @dev this function will not take wSqueeth from msg.sender if _isOwnedWSqueeth == true
+     * @param _from WPowerPerp holder address
+     * @param _amount amount to burn
+     * @param _collateralToWithdraw amount of collateral to unlock from WPowerPerp vault
+     * @param _isOwnedWSqueeth transfer WPowerPerp from holder if it is set to false
+     */
+    function _burnWPowerPerp(
+        address _from,
+        uint256 _amount,
+        uint256 _collateralToWithdraw,
+        bool _isOwnedWSqueeth
+    ) internal {
+        if (!_isOwnedWSqueeth) {
+            IWPowerPerp(wPowerPerp).transferFrom(_from, address(this), _amount);
+        }
+
+        powerTokenController.burnWPowerPerpAmount(_vaultId, _amount, _collateralToWithdraw);
+    }
+
+    /**
+     * @notice mint strategy token
+     * @param _to recepient address
+     * @param _amount token amount
+     */
+    function _mintStrategyToken(address _to, uint256 _amount) internal {
+        _mint(_to, _amount);
+    }
+
+    /**
+     * @notice get strategy debt amount from specific startegy token amount
+     * @notice _strategyAmount strategy amount
+     * @return debt amount
+     */
+    function _getDebtFromStrategyAmount(uint256 _strategyAmount) internal view returns (uint256) {
+        return _strategyDebt.wmul(_strategyAmount).wdiv(totalSupply());
     }
 }
 

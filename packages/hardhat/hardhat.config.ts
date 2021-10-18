@@ -68,7 +68,10 @@ const config: HardhatUserConfig = {
       mining: {
         auto: true
       },
-      hardfork: "berlin"
+      hardfork: "berlin",
+      accounts: {
+        accountsBalance: '1000000000000000000000000000'
+      }
     },
     localhost: {
       url: "http://localhost:8545",

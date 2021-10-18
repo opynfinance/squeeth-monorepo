@@ -2,99 +2,187 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-// interface
-import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3FlashCallback.sol";
+import "hardhat/console.sol";
 
-// contract
-import "@uniswap/v3-periphery/contracts/base/PeripheryPayments.sol";
-import '@uniswap/v3-periphery/contracts/base/PeripheryImmutableState.sol';
+// interface
+import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
+import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
 // lib
 import '@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol';
+import '@uniswap/v3-periphery/contracts/libraries/Path.sol';
 import '@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol';
 import '@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol';
-import '@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol';
+import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
+import '@uniswap/v3-core/contracts/libraries/SafeCast.sol';
 
-contract StrategyFlashSwap is IUniswapV3FlashCallback, PeripheryPayments {
+contract StrategyFlashSwap is IUniswapV3SwapCallback {
+    using Path for bytes;
+    using SafeCast for uint256;
     using LowGasSafeMath for uint256;
     using LowGasSafeMath for int256;
 
-    struct FlashParams {
-        address token0;
-        address token1;
-        uint24 fee1;
-        uint256 amount0;
-        uint256 amount1;
-        uint24 fee2;
-        uint24 fee3;
-        uint8 flashSource;
+    /// @dev Uniswap v3 factory address
+    address public immutable factory;
+
+    struct SwapCallbackData {
+        bytes path;
+        address caller;
+        uint8 callSource;
+        uint256 callAmount;
     }
 
-    struct FlashCallbackData {
-        uint256 amount0;
-        uint256 amount1;
-        address payer;
-        PoolAddress.PoolKey poolKey;
-        uint24 poolFee2;
-        uint24 poolFee3;
-        uint8 flashSource;
-    }
-
+    /**
+     * @dev constructor
+     */
     constructor(
-        address _factory,
-        address _weth
-    ) PeripheryImmutableState(_factory, _weth) {
+        address _factory
+    ) {
+        factory = _factory;
     }
 
-    function uniswapV3FlashCallback(
-        uint256 fee0,
-        uint256 fee1,
-        bytes calldata data
+    /**
+     * @notice Uniswap v3 swap callback function
+     * @param amount0Delta amount of token0
+     * @param amount1Delta amount of token1
+     * @param _data callback data encoded as SwapCallbackData struct
+     */
+    function uniswapV3SwapCallback(
+        int256 amount0Delta,
+        int256 amount1Delta,
+        bytes calldata _data
     ) external override {
-        FlashCallbackData memory decoded = abi.decode(data, (FlashCallbackData));
+        require(amount0Delta > 0 || amount1Delta > 0); // swaps entirely within 0-liquidity regions are not supported
 
-        CallbackValidation.verifyCallback(factory, decoded.poolKey);
+        SwapCallbackData memory data = abi.decode(_data, (SwapCallbackData));
+        (address tokenIn, address tokenOut, uint24 fee) = data.path.decodeFirstPool();
+        CallbackValidation.verifyCallback(factory, tokenIn, tokenOut, fee);
 
-        address token0 = decoded.poolKey.token0;
-        address token1 = decoded.poolKey.token1;
-        uint256 amount0 = decoded.amount0;
-        uint256 amount1 = decoded.amount1;
-
-        _strategyFlash(token0, token1, amount0, amount1, decoded.flashSource);
-
-        uint256 amount0Owed = LowGasSafeMath.add(amount0, fee0);
-        uint256 amount1Owed = LowGasSafeMath.add(amount1, fee1);
-
-        TransferHelper.safeApprove(token0, address(this), amount0Owed);
-        TransferHelper.safeApprove(token1, address(this), amount1Owed);
-
-        if (amount0Owed > 0) pay(token0, address(this), msg.sender, amount0Owed);
-        if (amount1Owed > 0) pay(token1, address(this), msg.sender, amount1Owed);
+        uint256 amountToPay =
+            amount0Delta > 0
+                ?  uint256(amount0Delta)
+                :  uint256(amount1Delta);
+        
+        _strategyFlash(data.caller, tokenIn, tokenOut, fee, amountToPay, data.callAmount, data.callSource);
     }
 
-    function initFlash(FlashParams memory params) internal {
-        PoolAddress.PoolKey memory poolKey =
-            PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee1});
-
-        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
-
-        pool.flash(
+    /**
+     * @notice execute an exact in flash swap
+     * @param _tokenIn token address to sell
+     * @param _tokenOut token address to get
+     * @param _fee pool fee
+     * @param _amountIn amount to sell
+     * @param _amountOutMinimum minimum amount to get
+     * @param _callSource function call source
+     * @param _callAmount arbitrary amount assigned with the call 
+     */
+    function _exactInFlashSwap(address _tokenIn, address _tokenOut, uint24 _fee, uint256 _amountIn, uint256 _amountOutMinimum, uint8 _callSource, uint256 _callAmount) internal {
+        uint256 amountOut = _exactInputInternal(
+            _amountIn,
             address(this),
-            params.amount0,
-            params.amount1,
-            abi.encode(
-                FlashCallbackData({
-                    amount0: params.amount0,
-                    amount1: params.amount1,
-                    payer: msg.sender,
-                    poolKey: poolKey,
-                    poolFee2: params.fee2,
-                    poolFee3: params.fee3,
-                    flashSource: params.flashSource
-                })
-            )
+            uint160(0),
+            SwapCallbackData({path: abi.encodePacked(_tokenIn, _fee, _tokenOut), caller: msg.sender, callSource: _callSource, callAmount: _callAmount})
         );
+
+        require(amountOut >= _amountOutMinimum, "amount out less than min");
     }
 
-    function _strategyFlash(address _token0, address _token1, uint256 _amount0, uint256 _amount1, uint8 _flashSource) internal virtual {}
+    /**
+     * @notice execute an exact out flash swap
+     * @param _tokenIn token address to sell
+     * @param _tokenOut token address to get
+     * @param _fee pool fee
+     * @param _amountOut exact amount to get
+     * @param _amountInMaximum maximum amount to sell
+     * @param _callSource function call source
+     * @param _callAmount arbitrary amount assigned with the call 
+     */
+    function _exactOutFlashSwap(address _tokenIn, address _tokenOut, uint24 _fee, uint256 _amountOut, uint256 _amountInMaximum, uint8 _callSource, uint256 _callAmount) internal {
+        uint256 amountIn = _exactOutputInternal(
+            _amountOut,
+            address(this),
+            uint160(0),
+            SwapCallbackData({path: abi.encodePacked(_tokenOut, _fee, _tokenIn), caller: msg.sender, callSource: _callSource, callAmount: _callAmount})
+        );
+
+        require(amountIn <= _amountInMaximum, "amount in greater than max");
+    }
+
+    /**
+     * @dev function to get called by uniswap callback
+     * @param _caller initial strategy function caller
+     * @param _tokenIn token address sold
+     * @param _tokenOut token address bought
+     * @param _fee pool fee
+     * @param _amountToPay amount to pay for the pool second token
+     * @param _callAmount arbitrary amount assigned with the flashswap call 
+     * @param _callSource function call source
+     */
+    function _strategyFlash(address _caller, address _tokenIn, address _tokenOut, uint24 _fee, uint256 _amountToPay, uint256 _callAmount, uint8 _callSource) internal virtual {}
+
+    /// @dev Performs a single exact input swap
+    function _exactInputInternal(
+        uint256 amountIn,
+        address recipient,
+        uint160 sqrtPriceLimitX96,
+        SwapCallbackData memory data
+    ) private returns (uint256) {
+        (address tokenIn, address tokenOut, uint24 fee) = data.path.decodeFirstPool();
+
+        bool zeroForOne = tokenIn < tokenOut;
+
+        (int256 amount0, int256 amount1) =
+            _getPool(tokenIn, tokenOut, fee).swap(
+                recipient,
+                zeroForOne,
+                amountIn.toInt256(),
+                sqrtPriceLimitX96 == 0
+                    ? (zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1)
+                    : sqrtPriceLimitX96,
+                abi.encode(data)
+            );
+
+        return uint256(-(zeroForOne ? amount1 : amount0));
+    }
+
+    /// @dev Performs a single exact output swap
+    function _exactOutputInternal(
+        uint256 amountOut,
+        address recipient,
+        uint160 sqrtPriceLimitX96,
+        SwapCallbackData memory data
+    ) private returns (uint256) {
+        (address tokenOut, address tokenIn, uint24 fee) = data.path.decodeFirstPool();
+
+        bool zeroForOne = tokenIn < tokenOut;
+
+        (int256 amount0Delta, int256 amount1Delta) =
+            _getPool(tokenIn, tokenOut, fee).swap(
+                recipient,
+                zeroForOne,
+                -amountOut.toInt256(),
+                sqrtPriceLimitX96 == 0
+                    ? (zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1)
+                    : sqrtPriceLimitX96,
+                abi.encode(data)
+            );
+
+        (uint256 amountIn, uint256 amountOutReceived) = zeroForOne
+            ? (uint256(amount0Delta), uint256(-amount1Delta))
+            : (uint256(amount1Delta), uint256(-amount0Delta));
+        // it's technically possible to not receive the full output amount,
+        // so if no price limit has been specified, require this possibility away
+        if (sqrtPriceLimitX96 == 0) require(amountOutReceived == amountOut);
+
+        return amountIn;
+    }
+
+    /// @dev Returns the pool for the given token pair and fee. The pool contract may or may not exist.
+    function _getPool(
+        address tokenA,
+        address tokenB,
+        uint24 fee
+    ) private view returns (IUniswapV3Pool) {
+        return IUniswapV3Pool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee)));
+    }
 }

@@ -1,5 +1,6 @@
 import { ethers } from "hardhat"
 import { Contract, BigNumber } from "ethers";
+import { BigNumber as BigNumberJs} from "bignumber.js"
 
 import {
   abi as SWAP_ROUTER_ABI,
@@ -240,17 +241,17 @@ export const addWethDaiLiquidity = async(
     const token0 = isWethToken0 ? weth.address : dai.address
     const token1 = isWethToken0 ? dai.address : weth.address
     
-    const daiAmount = ethAmount.mul(ethPrice)
+    const daiAmount = new BigNumberJs(ethAmount.toString()).multipliedBy(ethPrice)
     
-    const daiBalance = await dai.balanceOf(deployer)
-    const wethBalance = await weth.balanceOf(deployer)
+    const daiBalance = new BigNumberJs((await dai.balanceOf(deployer)).toString())
+    const wethBalance = new BigNumberJs((await weth.balanceOf(deployer)).toString())
 
-    if (wethBalance.lt(ethAmount)) {
-      await weth.deposit({value: ethAmount, from: deployer})
+    if (wethBalance.isLessThan(ethAmount.toString())) {
+      await weth.deposit({value: ethAmount.toString(), from: deployer})
     }
   
     if (daiBalance.lt(daiAmount)) {
-      await dai.mint(deployer,daiAmount ) 
+      await dai.mint(deployer,daiAmount.toString() ) 
     }
 
     await dai.approve(positionManager.address, ethers.constants.MaxUint256)
@@ -262,8 +263,8 @@ export const addWethDaiLiquidity = async(
       fee: 3000,
       tickLower: -887220,// int24 min tick used when selecting full range
       tickUpper: 887220,// int24 max tick used when selecting full range
-      amount0Desired: isWethToken0 ? ethAmount : daiAmount,
-      amount1Desired: isWethToken0 ? daiAmount : ethAmount,
+      amount0Desired: isWethToken0 ? ethAmount.toString() : daiAmount.toString(),
+      amount1Desired: isWethToken0 ? daiAmount.toString() : ethAmount.toString(),
       amount0Min: 1,
       amount1Min: 1,
       recipient: deployer,// address

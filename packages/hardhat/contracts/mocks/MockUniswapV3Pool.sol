@@ -19,6 +19,7 @@ contract MockUniswapV3Pool {
 
     address public token0;
     address public token1;
+    uint256 public fee;
 
     struct PoolKey {
         address token0;

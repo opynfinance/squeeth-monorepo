@@ -5,29 +5,38 @@ pragma abicoder v2;
 import "hardhat/console.sol";
 
 // interface
+import {IController} from "../interfaces/IController.sol";
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
 import {IOracle} from "../interfaces/IOracle.sol";
+import {IWETH9} from "../interfaces/IWETH9.sol";
+import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
 // contract
 import {StrategyBase} from "./base/StrategyBase.sol";
+import {StrategyFlashSwap} from "./base/StrategyFlashSwap.sol";
 
 // lib
-import {StrategyMath} from "./base/StrategyMath.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {StrategyMath} from "./base/StrategyMath.sol";
 
 /**
  * @dev CrabStrategy contract
  * @notice Contract for Crab strategy
  * @author Opyn team
  */
-contract CrabStrategy is StrategyBase {
+contract CrabStrategy is StrategyBase, StrategyFlashSwap {
     using StrategyMath for uint256;
     using Address for address payable;
 
     uint32 public constant TWAP_PERIOD = 600;
 
-    /// @dev ETH:DAI uniswap V3 pool
-    address public wSqueethEthPool;
+    enum FLASH_SOURCE {
+        FLASH_DEPOSIT,
+        FLASH_WITHDRAW
+    }
+
+    /// @dev ETH:WSqueeth uniswap V3 pool
+    address public ethWSqueethPool;
     /// @dev startegy UNI v3 oracle
     address public oracle;
 
@@ -35,13 +44,17 @@ contract CrabStrategy is StrategyBase {
     uint256 internal _latestRebalanceTimestamp;
     /// @dev trading slippage limit for Uni v3
     uint256 internal _slippageLimit;
-    /// @dev strategy debt amount
-    uint256 internal _wSqueethDebt;
-    /// @dev strategy collateral amount
-    uint256 internal _ethCollateral;
 
     event Deposit(address indexed depositor, uint256 wSqueethAmount, uint256 lpAmount);
     event Withdraw(address indexed withdrawer, uint256 crabAmount, uint256 wSqueethAmount, uint256 ethWithdrawn);
+    event FlashDeposit(
+        address indexed depositor,
+        uint256 depositedAmount,
+        uint256 borrowedAmount,
+        uint256 totalDepositedAmount,
+        uint256 tradedAmountOut
+    );
+    event FlashWithdraw(address indexed withdrawer, uint256 crabAmount, uint256 wSqueethAmount);
 
     /**
      * @notice Strategy base constructor
@@ -49,7 +62,8 @@ contract CrabStrategy is StrategyBase {
      * @param _wSqueethController power token controller address
      * @param _oracle oracle address
      * @param _weth weth address
-     * @param _wSqueethEthPool eth:dai uniswap v3 address
+     * @param _uniswapFactory uniswap factory address
+     * @param _ethWSqueethPool eth:dai uniswap v3 address
      * @param _name strategy name
      * @param _symbol strategy symbol
      */
@@ -57,45 +71,70 @@ contract CrabStrategy is StrategyBase {
         address _wSqueethController,
         address _oracle,
         address _weth,
-        address _wSqueethEthPool,
+        address _uniswapFactory,
+        address _ethWSqueethPool,
         string memory _name,
         string memory _symbol
-    ) StrategyBase(_wSqueethController, _weth, _name, _symbol) {
+    ) StrategyBase(_wSqueethController, _weth, _name, _symbol) StrategyFlashSwap(_uniswapFactory) {
         require(_oracle != address(0), "invalid oracle address");
-        require(_wSqueethEthPool != address(0), "invalid ETH:DAI address");
+        require(_ethWSqueethPool != address(0), "invalid ETH:WSqueeth address");
 
         oracle = _oracle;
-        wSqueethEthPool = _wSqueethEthPool;
+        ethWSqueethPool = _ethWSqueethPool;
     }
 
     /**
-     * fallback function to accept eth
+     * @notice receive function to allow ETH transfer to this contract
      */
     receive() external payable {}
 
-    /// TODO: implement flashswap in diff PR
-    function flashDeposit() external payable returns (uint256, uint256) {
-        uint256 amount = msg.value;
+    /**
+     * @notice flash deposit
+     * @dev this function sell minted WSqueeth for _ethToBorrow
+     * @param _ethToDeposit ETH sent from depositor
+     * @param _ethToBorrow ETH to flashswap on uni v3
+     */
+    function flashDeposit(uint256 _ethToDeposit, uint256 _ethToBorrow) external payable {
+        require(msg.value > _ethToDeposit, "Need some buffer");
 
-        // load vars for gas optimization
-        uint256 strategyCollateral = _ethCollateral;
-        uint256 strategyDebt = _wSqueethDebt;
+        uint256 wSqueethToMint = _calcWsqueethToMint(
+            _ethToDeposit.add(_ethToBorrow),
+            _strategyDebt,
+            _strategyCollateral
+        );
 
-        uint256 wSqueethToMint = calcWsqueethToMint(amount, strategyDebt, strategyCollateral);
-        uint256 depositorStrategyShare = calcSharesToMint(amount, strategyCollateral, totalSupply());
+        _exactInFlashSwap(
+            wPowerPerp,
+            weth,
+            IUniswapV3Pool(ethWSqueethPool).fee(),
+            wSqueethToMint,
+            _ethToDeposit.add(_ethToBorrow).sub(msg.value),
+            uint8(FLASH_SOURCE.FLASH_DEPOSIT),
+            _ethToDeposit.add(_ethToBorrow)
+        );
 
-        // update strategy state
-        _ethCollateral = strategyCollateral.add(amount);
-        _wSqueethDebt = strategyDebt.add(wSqueethToMint);
+        emit FlashDeposit(msg.sender, _ethToDeposit, _ethToBorrow, msg.value, wSqueethToMint);
+    }
 
-        // mint wSqueeth
-        _mintWsqueeth(msg.sender, wSqueethToMint, 0, true);
-        // mint LP to depositor
-        _mint(msg.sender, depositorStrategyShare);
+    /**
+     * @notice flash withdraw
+     * @dev this function will borrow wSqueeth amount and repay for selling some of the ETH collateral
+     * @param _crabAmount crab token amount to burn
+     */
+    function flashWithdraw(uint256 _crabAmount, uint256 _maxEthToPay) external {
+        uint256 exactWSqueethNeeded = _strategyDebt.wmul(_crabAmount).wdiv(totalSupply());
 
-        emit Deposit(msg.sender, wSqueethToMint, depositorStrategyShare);
+        _exactOutFlashSwap(
+            weth,
+            wPowerPerp,
+            IUniswapV3Pool(ethWSqueethPool).fee(),
+            exactWSqueethNeeded,
+            _maxEthToPay,
+            uint8(FLASH_SOURCE.FLASH_WITHDRAW),
+            _crabAmount
+        );
 
-        return (wSqueethToMint, depositorStrategyShare);
+        emit FlashWithdraw(msg.sender, _crabAmount, exactWSqueethNeeded);
     }
 
     /**
@@ -106,152 +145,166 @@ contract CrabStrategy is StrategyBase {
     function deposit() external payable returns (uint256, uint256) {
         uint256 amount = msg.value;
 
-        // load vars for gas optimization
-        uint256 strategyCollateral = _ethCollateral;
-        uint256 strategyDebt = _wSqueethDebt;
+        (uint256 wSqueethToMint, uint256 depositorCrabAmount) = _deposit(msg.sender, amount, false);
 
-        uint256 wSqueethToMint = calcWsqueethToMint(amount, strategyDebt, strategyCollateral);
-        uint256 depositorStrategyShare = calcSharesToMint(amount, strategyCollateral, totalSupply());
+        emit Deposit(msg.sender, wSqueethToMint, depositorCrabAmount);
 
-        // update strategy state
-        _ethCollateral = strategyCollateral.add(amount);
-        _wSqueethDebt = strategyDebt.add(wSqueethToMint);
-
-        // mint wSqueeth and send it to msg.sender
-        _mintWsqueeth(msg.sender, wSqueethToMint, amount, false);
-        // mint LP to depositor
-        _mint(msg.sender, depositorStrategyShare);
-
-        emit Deposit(msg.sender, wSqueethToMint, depositorStrategyShare);
-
-        return (wSqueethToMint, depositorStrategyShare);
+        return (wSqueethToMint, depositorCrabAmount);
     }
 
     /**
      * @notice withdraw WETH from strategy
      * @dev this function do not use flashswap
-     * @param _crabAmountAmount amount of crab token to burn
+     * @param _crabAmount amount of crab token to burn
      * @param _wSqueethAmount amount of wSqueeth to burn
      */
-    function withdraw(uint256 _crabAmountAmount, uint256 _wSqueethAmount) external {
-        // load vars for gas optimization
-        uint256 strategyCollateral = _ethCollateral;
-        uint256 strategyDebt = _wSqueethDebt;
+    function withdraw(uint256 _crabAmount, uint256 _wSqueethAmount) external payable {
+        uint256 ethToWithdraw = _withdraw(msg.sender, _crabAmount, _wSqueethAmount, false);
 
-        (uint256 strategyShare, uint256 ethToWithdraw) = calcCrabPercentageAndEthToWithdraw(
-            _crabAmountAmount,
-            strategyCollateral,
-            totalSupply()
-        );
+        // send back ETH collateral
+        payable(msg.sender).sendValue(ethToWithdraw);
+
+        emit Withdraw(msg.sender, _crabAmount, _wSqueethAmount, ethToWithdraw);
+    }
+
+    /**
+     * @notice startegy uniswap flash swap
+     * @dev this function will be called by flashswap callback function uniswapV3SwapCallback()
+     * @param _tokenIn token IN address
+     * @param _tokenOut token OUT address
+     * @param _fee uniswap pool fee
+     * @param _amountToPay amount to pay back for flashswap
+     */
+    function _strategyFlash(
+        address _caller,
+        address _tokenIn,
+        address _tokenOut,
+        uint24 _fee,
+        uint256 _amountToPay,
+        uint256 _callAmount,
+        uint8 _callSource
+    ) internal override {
+        if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_DEPOSIT) {
+            // convert WETH to ETH as Uniswap use WETH
+            IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
+
+            _deposit(_caller, _callAmount, true);
+
+            IWPowerPerp(wPowerPerp).transfer(ethWSqueethPool, _amountToPay);
+
+            if (address(this).balance > 0) {
+                payable(_caller).sendValue(address(this).balance);
+            }
+        }
+        if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_WITHDRAW) {
+            uint256 ethToWithdraw = _withdraw(
+                _caller,
+                _callAmount,
+                IWPowerPerp(wPowerPerp).balanceOf(address(this)),
+                true
+            );
+
+            IWETH9(weth).deposit{value: _amountToPay}();
+            IWETH9(weth).transfer(ethWSqueethPool, _amountToPay);
+
+            uint256 proceeds = ethToWithdraw.sub(_amountToPay);
+            if (proceeds > 0) {
+                payable(_caller).sendValue(proceeds);
+            }
+        }
+    }
+
+    /**
+     * @dev deposit into strategy
+     * @param _amount amount of ETH collateral to deposit
+     * @param _isFlashDeposit true if this function is called by flash deposit
+     * @return minted amount of WSqueeth and minted CRAB token amount
+     */
+    function _deposit(
+        address _depositor,
+        uint256 _amount,
+        bool _isFlashDeposit
+    ) internal returns (uint256, uint256) {
+        // load vars for gas optimization
+        uint256 strategyCollateral = _strategyCollateral;
+        uint256 strategyDebt = _strategyDebt;
+
+        uint256 wSqueethToMint = _calcWsqueethToMint(_amount, strategyDebt, strategyCollateral);
+        uint256 depositorCrabAmount = _calcSharesToMint(_amount, strategyCollateral, totalSupply());
+
+        // update strategy state
+        _strategyCollateral = strategyCollateral.add(_amount);
+        _strategyDebt = strategyDebt.add(wSqueethToMint);
+
+        // mint wSqueeth and send it to msg.sender
+        _mintWPowerPerp(_depositor, wSqueethToMint, _amount, _isFlashDeposit);
+        // mint LP to depositor
+        _mintStrategyToken(_depositor, depositorCrabAmount);
+
+        return (wSqueethToMint, depositorCrabAmount);
+    }
+
+    /**
+     * @notice withdraw WETH from strategy
+     * @dev this function do not use flashswap
+     * @param _crabAmount amount of crab token to burn
+     * @param _wSqueethAmount amount of wSqueeth to burn
+     * @return ETH amount to withdraw
+     */
+    function _withdraw(
+        address _from,
+        uint256 _crabAmount,
+        uint256 _wSqueethAmount,
+        bool _isFlashWithdraw
+    ) internal returns (uint256) {
+        // load vars for gas optimization
+        uint256 strategyCollateral = _strategyCollateral;
+        uint256 strategyDebt = _strategyDebt;
+
+        uint256 strategyShare = _calcCrabRatio(_crabAmount, totalSupply());
+        uint256 ethToWithdraw = _calcEthToWithdraw(strategyShare, strategyCollateral);
 
         require(_wSqueethAmount.wdiv(strategyDebt) == strategyShare, "invalid ratio");
 
         // update strategy state
-        _wSqueethDebt = strategyDebt.sub(_wSqueethAmount);
-        _ethCollateral = strategyCollateral.sub(ethToWithdraw);
+        _strategyDebt = strategyDebt.sub(_wSqueethAmount);
+        _strategyCollateral = strategyCollateral.sub(ethToWithdraw);
 
-        _burnWsqueeth(msg.sender, _wSqueethAmount, ethToWithdraw, false);
-        _burn(msg.sender, _crabAmountAmount);
+        _burnWPowerPerp(_from, _wSqueethAmount, ethToWithdraw, _isFlashWithdraw);
+        _burn(_from, _crabAmount);
 
-        payable(msg.sender).sendValue(ethToWithdraw);
-
-        emit Withdraw(msg.sender, _crabAmountAmount, _wSqueethAmount, ethToWithdraw);
+        return ethToWithdraw;
     }
 
     /**
-     * @notice return strategy debt amount
-     */
-    function getStrategyDebt() external view returns (uint256) {
-        return _wSqueethDebt;
-    }
-
-    /**
-     * @notice return strategy collateral amount
-     */
-    function getStrategyCollateral() external view returns (uint256) {
-        return _ethCollateral;
-    }
-
-    /**
-     * @notice get wSqueeth debt amount from specific startegy token amount
-     * @notice _crabAmountAmount strategy token amount
+     * @notice get wSqueeth debt amount from crab token amount
+     * @notice _crabAmount strategy token amount
      * @return wSqueeth amount
      */
-    function getWsqueethFromStrategyAmount(uint256 _crabAmountAmount) external view returns (uint256) {
-        return _wSqueethDebt.wmul(_crabAmountAmount).wdiv(totalSupply());
-    }
-
-    /**
-     * @notice mint wSqueeth
-     * @dev this function will keep minted wSqueeth in this contract if _keepWsqueeth == true
-     * @param _receiver receiver address
-     * @param _wAmount amount of wSqueeth to mint
-     * @param _collateral amount of ETH collateral to deposit
-     * @param _keepWsqueeth keep minted wSqueeth in this contract if it is set to true
-     */
-    function _mintWsqueeth(
-        address _receiver,
-        uint256 _wAmount,
-        uint256 _collateral,
-        bool _keepWsqueeth
-    ) internal {
-        powerTokenController.mintWPowerPerpAmount{value: _collateral}(_vaultId, uint128(_wAmount), 0);
-
-        if (!_keepWsqueeth) {
-            IWPowerPerp wSqueeth = IWPowerPerp(powerTokenController.wPowerPerp());
-            wSqueeth.transfer(_receiver, _wAmount);
-        }
-    }
-
-    /**
-     * @notice burn Wsqueeth
-     * @dev this function will not take wSqueeth from msg.sender if _isFlashSwap == true
-     * @param _from wSqueeth holder address
-     * @param _amount amount to burn
-     * @param _collateralToWithdraw amount of collateral to unlock from wSqueeth vault
-     * @param _isFlashSwap transfer wSqueeth from holder if it is set to false
-     */
-    function _burnWsqueeth(
-        address _from,
-        uint256 _amount,
-        uint256 _collateralToWithdraw,
-        bool _isFlashSwap
-    ) internal {
-        IWPowerPerp wSqueeth = IWPowerPerp(powerTokenController.wPowerPerp());
-
-        if (!_isFlashSwap) {
-            wSqueeth.transferFrom(_from, address(this), _amount);
-        }
-
-        powerTokenController.burnWPowerPerpAmount(_vaultId, _amount, _collateralToWithdraw);
+    function getWsqueethFromCrabAmount(uint256 _crabAmount) external view returns (uint256) {
+        return _getDebtFromStrategyAmount(_crabAmount);
     }
 
     /**
      * @dev calculate amount of debt to mint
      * @param _depositedAmount amount of deposited WETH
-     * @param _strategyDebt amount of strategy debt
-     * @param _strategyCollateral collateral amount in strategy
+     * @param _strategyDebtAmount amount of strategy debt
+     * @param _strategyCollateralAmount collateral amount in strategy
      * @return amount of minted wSqueeth
      */
-    function calcWsqueethToMint(
+    function _calcWsqueethToMint(
         uint256 _depositedAmount,
-        uint256 _strategyDebt,
-        uint256 _strategyCollateral
+        uint256 _strategyDebtAmount,
+        uint256 _strategyCollateralAmount
     ) internal view returns (uint256) {
         uint256 wSqueethToMint;
 
-        if (_strategyDebt == 0) {
-            IWPowerPerp wSqueeth = IWPowerPerp(powerTokenController.wPowerPerp());
-            uint256 wSqueethEthPrice = IOracle(oracle).getTwapSafe(
-                wSqueethEthPool,
-                address(weth),
-                address(wSqueeth),
-                TWAP_PERIOD
-            );
+        if (_strategyDebtAmount == 0) {
+            uint256 wSqueethEthPrice = IOracle(oracle).getTwapSafe(ethWSqueethPool, wPowerPerp, weth, TWAP_PERIOD);
             uint256 squeethDelta = wSqueethEthPrice.mul(2);
             wSqueethToMint = _depositedAmount.wdiv(squeethDelta);
         } else {
-            wSqueethToMint = _depositedAmount.wmul(_strategyDebt).wdiv(_strategyCollateral);
+            wSqueethToMint = _depositedAmount.wmul(_strategyDebtAmount).wdiv(_strategyCollateralAmount);
         }
 
         return wSqueethToMint;
@@ -260,42 +313,44 @@ contract CrabStrategy is StrategyBase {
     /**
      * @dev calculate amount of LP to mint for depositor
      * @param _amount amount of WETH deposited
-     * @param _strategyCollateral amount of strategy collateral
+     * @param _strategyCollateralAmount amount of strategy collateral
      * @param _crabTotalSupply amount of crab token total supply
      * @return amount of new minted LP token
      */
-    function calcSharesToMint(
+    function _calcSharesToMint(
         uint256 _amount,
-        uint256 _strategyCollateral,
+        uint256 _strategyCollateralAmount,
         uint256 _crabTotalSupply
     ) internal pure returns (uint256) {
-        uint256 depositorShare = _amount.wdiv(_strategyCollateral.add(_amount));
+        uint256 depositorShare = _amount.wdiv(_strategyCollateralAmount.add(_amount));
 
-        uint256 depositorStrategyShare;
+        uint256 depositorCrabAmount;
         if (_crabTotalSupply != 0) {
-            depositorStrategyShare = (_crabTotalSupply.wmul(depositorShare)).wdiv(uint256(1e18).sub(depositorShare));
+            depositorCrabAmount = (_crabTotalSupply.wmul(depositorShare)).wdiv(uint256(1e18).sub(depositorShare));
         } else {
-            depositorStrategyShare = _amount;
+            depositorCrabAmount = _amount;
         }
 
-        return depositorStrategyShare;
+        return depositorCrabAmount;
     }
 
     /**
-     * @dev calculate amount of crab shares and ETH to withdraw
-     * @param _crabAmountAmount crab token amount
-     * @param _strategyCollateral strategy total collateral amount
-     * @param _totalSupply crab total supply amount
-     * @return withdrawer strategy share and weth amount to withdraw
+     * @notice calc crab ratio
+     * @param _crabAmount crab token amount
+     * @param _totalSupply crab total supply
+     * @return ratio
      */
-    function calcCrabPercentageAndEthToWithdraw(
-        uint256 _crabAmountAmount,
-        uint256 _strategyCollateral,
-        uint256 _totalSupply
-    ) internal pure returns (uint256, uint256) {
-        uint256 strategyShare = _crabAmountAmount.wdiv(_totalSupply);
-        uint256 ethToWithdraw = _strategyCollateral.wmul(strategyShare);
+    function _calcCrabRatio(uint256 _crabAmount, uint256 _totalSupply) internal pure returns (uint256) {
+        return _crabAmount.wdiv(_totalSupply);
+    }
 
-        return (strategyShare, ethToWithdraw);
+    /**
+     * @notice calc ETH to withdraw from strategy
+     * @param _crabRatio crab ratio
+     * @param _strategyCollateralAmount amount of collateral in strategy
+     * @return amount of ETH allowed to withdraw
+     */
+    function _calcEthToWithdraw(uint256 _crabRatio, uint256 _strategyCollateralAmount) internal pure returns (uint256) {
+        return _strategyCollateralAmount.wmul(_crabRatio);
     }
 }

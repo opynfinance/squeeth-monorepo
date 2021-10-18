@@ -17,8 +17,7 @@
 
 pragma solidity >0.4.13;
 
-/// @dev This is copied from DSMath contract
-/// @dev changed contract to library
+/// @dev This is copied from DSMath contract, changed contract to library
 library StrategyMath {
     function add(uint x, uint y) internal pure returns (uint z) {
         require((z = x + y) >= x, "ds-math-add-overflow");
