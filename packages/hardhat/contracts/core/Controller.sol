@@ -988,6 +988,14 @@ contract Controller is Initializable, Ownable {
         uint256 index = Power2Base._getIndex(fairPeriod, address(oracle), ethDaiPool, weth, dai);
         uint256 rFunding = (uint256(1e18).mul(uint256(period))).div(SEC_IN_DAY);
 
+        // Truncate mark to be at least 80% of index
+        uint256 lowerBound = index.mul(4).div(5);
+        if (mark < lowerBound) mark = lowerBound;
+
+        // Truncate mark to be at most 120% of index
+        uint256 upperBound = index.mul(5).div(4);
+        if (mark > upperBound) mark = upperBound;
+
         // mul by 1e36 to keep newNormalizationFactor in 18 decimals
         // uint256 newNormalizationFactor = (mark * 1e36) / (((1e18 + rFunding) * mark - index * rFunding));
         uint256 newNormalizationFactor = (mark.mul(1e36)).div(

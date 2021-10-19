@@ -116,6 +116,100 @@ describe("Controller Funding tests", function () {
         // maybe caused by inconsistent process time by hardhat
         expect(isSimilar(expectedNormalizationFactor.toString(), normalizationFactorAfter.toString(), 14)).to.be.true
       })
+
+      it('nomalization factor changes should be bounded above', async() => {
+
+        // Get norm factor
+        const normalizationFactorBefore = await controller.connect(seller1).normalizationFactor()
+
+        // Set very low mark price
+        const squeethETHPriceNew = ethers.utils.parseUnits('2000')
+        const ethUSDPriceNew= ethers.utils.parseUnits('3000')
+
+        // Set prices
+        await oracle.connect(random).setPrice(squeethEthPool.address , squeethETHPriceNew) // eth per 1 squeeth
+        await oracle.connect(random).setPrice(ethUSDPool.address, ethUSDPriceNew)  // usdc per 1 eth
+
+        // Get new mark and index
+        mark = await controller.getDenormalizedMark(1)
+        index = await controller.getIndex(1)  
+
+        // + 3 hours 
+        const secondsElapsed = ethers.utils.parseUnits("10800") // 3hrs
+        const secondsInDay = ethers.utils.parseUnits("86400")
+
+        await provider.send("evm_increaseTime", [(secondsElapsed.sub(ethers.utils.parseUnits("2")).div(one)).toNumber()]) // (3/24) * 60*60 = 3600s = 3 hour
+        await controller.connect(seller1).applyFunding()   
+        
+        // Get new new norm factor
+        const normalizationFactorAfter = await controller.connect(seller1).normalizationFactor()
+
+        // Mark should be bounded 4/5, 5/4
+        const expectedFloorMark = ethUSDPriceNew.mul(ethUSDPriceNew).mul(4).div(5).div(one)
+
+        // Expected bounded norm factor
+        const top = one.mul(one).mul(expectedFloorMark)
+        const fractionalDayElapsed = one.mul(secondsElapsed).div(secondsInDay)
+        const bot = one.add(fractionalDayElapsed).mul(expectedFloorMark).sub(index.mul(fractionalDayElapsed))
+        const expectedNormFactor = top.div(bot)
+        const expectedNormalizationFactor = normalizationFactorBefore.mul(expectedNormFactor).div(one)
+
+        // use isSimilar because sometimes the expectedNormFactor will be a little bit off, 
+        // maybe caused by inconsistent process time by hardhat
+        expect(isSimilar(expectedNormalizationFactor.toString(), normalizationFactorAfter.toString(), 14)).to.be.true
+
+        // set prices back
+        await oracle.connect(random).setPrice(squeethEthPool.address , squeethETHPrice) // eth per 1 squeeth
+        await oracle.connect(random).setPrice(ethUSDPool.address , ethUSDPrice)  // usdc per 1 eth
+
+      })
+      it('nomalization factor changes should be bounded below', async() => {
+
+        // Get norm factor
+        const normalizationFactorBefore = await controller.connect(seller1).normalizationFactor()
+
+        // Set very high mark price
+        const squeethETHPriceNew = ethers.utils.parseUnits('6000')
+        const ethUSDPriceNew = ethers.utils.parseUnits('3000')
+
+        // Set prices
+        await oracle.connect(random).setPrice(squeethEthPool.address , squeethETHPriceNew) // eth per 1 squeeth
+        await oracle.connect(random).setPrice(ethUSDPool.address , ethUSDPriceNew)  // usdc per 1 eth
+
+        // Get new mark and index
+        mark = await controller.getDenormalizedMark(1)
+        index = await controller.getIndex(1)  
+
+        // + 3 hours
+        const secondsElapsed = ethers.utils.parseUnits("10800") // 3hrs
+        const secondsInDay = ethers.utils.parseUnits("86400")
+
+        await provider.send("evm_increaseTime", [(secondsElapsed.sub(ethers.utils.parseUnits("4")).div(one)).toNumber()]) // (3/24) * 60*60 = 3600s = 3 hour
+        await controller.connect(seller1).applyFunding()   
+        
+        // Get new new norm factor
+        const normalizationFactorAfter = await controller.connect(seller1).normalizationFactor()
+
+        // Mark should be bounded 4/5, 5/4
+        const expectedCeilMark = ethUSDPriceNew.mul(ethUSDPriceNew).mul(5).div(4).div(one)
+
+        // Expected bounded norm factor
+        const top = one.mul(one).mul(expectedCeilMark)
+        const fractionalDayElapsed = one.mul(secondsElapsed).div(secondsInDay)
+        const bot = one.add(fractionalDayElapsed).mul(expectedCeilMark).sub(index.mul(fractionalDayElapsed))
+        const expectedNormFactor = top.div(bot)
+        const expectedNormalizationFactor = normalizationFactorBefore.mul(expectedNormFactor).div(one)
+
+        // use isSimilar because sometimes the expectedNormFactor will be a little bit off, 
+        // maybe caused by inconsistent process time by hardhat
+        expect(isSimilar(expectedNormalizationFactor.toString(), normalizationFactorAfter.toString(), 14)).to.be.true
+
+        // set prices back
+        await oracle.connect(random).setPrice(squeethEthPool.address , squeethETHPrice) // eth per 1 squeeth
+        await oracle.connect(random).setPrice(ethUSDPool.address , ethUSDPrice)  // usdc per 1 eth
+
+      })
+
     })
     describe('Funding collateralization tests', () => {
       let mark: BigNumber
@@ -127,7 +221,7 @@ describe("Controller Funding tests", function () {
 
         vaultId = await shortNFT.nextId()
         const mintAmount = ethers.utils.parseUnits('0.1')
-        const collateralAmount = ethers.utils.parseUnits('450')
+        const collateralAmount = ethers.utils.parseUnits("500")
   
         // put vaultId as 0 to open vault
         await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount, 0, {value: collateralAmount})
@@ -181,7 +275,7 @@ describe("Controller Funding tests", function () {
 
         vaultId = await shortNFT.nextId()
         const mintAmount = ethers.utils.parseUnits('0.1')
-        const collateralAmount = ethers.utils.parseUnits('450')
+        const collateralAmount = ethers.utils.parseUnits('500')
   
         // put vaultId as 0 to open vault
         await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount, 0, {value: collateralAmount})
@@ -228,7 +322,7 @@ describe("Controller Funding tests", function () {
 
         vaultId = await shortNFT.nextId()
         const mintAmount = ethers.utils.parseUnits('0.1')
-        const collateralAmount = ethers.utils.parseUnits('450')
+        const collateralAmount = ethers.utils.parseUnits('500')
   
         // put vaultId as 0 to open vault
         await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount,0, {value: collateralAmount})
@@ -273,7 +367,7 @@ describe("Controller Funding tests", function () {
 
         vaultId = await shortNFT.nextId()
         const mintAmount = ethers.utils.parseUnits('0.1')
-        const collateralAmount = ethers.utils.parseUnits('450')
+        const collateralAmount = ethers.utils.parseUnits('500')
   
         // put vaultId as 0 to open vault
         await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount,0, {value: collateralAmount})
@@ -307,6 +401,7 @@ describe("Controller Funding tests", function () {
         )  
       })
     })
+
   })
   
 });
