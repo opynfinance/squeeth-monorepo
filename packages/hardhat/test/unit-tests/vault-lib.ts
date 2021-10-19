@@ -4,7 +4,7 @@ import { parseEther } from "ethers/lib/utils";
 import { BigNumber } from "ethers";
 import { MockWSqueeth, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester } from "../../typechain";
 import { getSqrtPriceAndTickBySqueethPrice, getYAmountAboveRange, getXAmountBelowRange } from "../calculator";
-import { isSimilar } from "../utils";
+import { isSimilar, one, oracleScaleFactor } from "../utils";
 
 
 describe("VaultLib", function () {
@@ -20,7 +20,7 @@ describe("VaultLib", function () {
     squeeth = (await MockSQUContract.deploy()) as MockWSqueeth;
 
     const MockErc20Contract = await ethers.getContractFactory("MockErc20");
-    weth = (await MockErc20Contract.deploy("WETH", "WETH")) as MockErc20;
+    weth = (await MockErc20Contract.deploy("WETH", "WETH", 18)) as MockErc20;
 
     const MockUniswapV3PoolContract = await ethers.getContractFactory("MockUniswapV3Pool");
     squeethEthPool = (await MockUniswapV3PoolContract.deploy()) as MockUniswapV3Pool;
@@ -48,10 +48,11 @@ describe("VaultLib", function () {
 
     describe('case: infinite range, price is always within range', async() => {
       const nftTokenId = 1
-      const squeethETHPrice = '3000'
+      const ethPrice = BigNumber.from('3000').mul(one)
+      const scaledSqueethEthPrice = ethPrice.div(oracleScaleFactor)
       let currentSqrtX96Price: string
       let currentTick: string
-      const squeethLiquidityAmount = parseEther('0.001')
+      const wsqueethLiquidityAmount = parseEther('10')
       const ethLiquidityAmount = parseEther('3')
 
       before('calculate shared variables', async( )=> {
@@ -60,7 +61,7 @@ describe("VaultLib", function () {
       })
 
       before('calculate prices', async() => {
-        const { sqrtPrice, tick } = getSqrtPriceAndTickBySqueethPrice(squeethETHPrice, wethIsToken0)
+        const { sqrtPrice, tick } = getSqrtPriceAndTickBySqueethPrice(scaledSqueethEthPrice, wethIsToken0)
         currentSqrtX96Price = sqrtPrice
         currentTick = tick
       })
@@ -74,8 +75,8 @@ describe("VaultLib", function () {
           currentSqrtX96Price,
           nftTickLower,
           nftTickUpper,
-          wethIsToken0 ? ethLiquidityAmount : squeethLiquidityAmount,
-          wethIsToken0 ? squeethLiquidityAmount: ethLiquidityAmount,
+          wethIsToken0 ? ethLiquidityAmount : wsqueethLiquidityAmount,
+          wethIsToken0 ? wsqueethLiquidityAmount: ethLiquidityAmount,
         )
         await uniPositionManager.setMockedProperties(token0, token1, nftTickLower, nftTickUpper, liquidity)
       })
@@ -87,14 +88,15 @@ describe("VaultLib", function () {
       it('should get the squeeth / eth amount similar to our deposit amount', async() => {        
         const result = await vaultLib.getUniPositionBalances(uniPositionManager.address, nftTokenId, currentTick, wethIsToken0)
         // about 0.001 squeeth
-        expect(isSimilar(result.squeethAmount.toString(), squeethLiquidityAmount.toString())).to.be.true
+        expect(isSimilar(result.squeethAmount.toString(), wsqueethLiquidityAmount.toString())).to.be.true
         // about 3 eth
         expect(isSimilar(result.ethAmount.toString(), ethLiquidityAmount.toString())).to.be.true
       })
 
       it('should get the correct squeeth / eth amount after price changes', async() => {
-        const newPrice = '5000'
-        const { sqrtPrice, tick: newTick } = getSqrtPriceAndTickBySqueethPrice(newPrice, wethIsToken0)
+        const newPrice = BigNumber.from('5000')
+        const newScaledSqueethPrice = newPrice.mul(one).div(oracleScaleFactor)
+        const { sqrtPrice, tick: newTick } = getSqrtPriceAndTickBySqueethPrice(newScaledSqueethPrice, wethIsToken0)
         await squeethEthPool.setSlot0Data(sqrtPrice, newTick)
         
         const { ethAmount, squeethAmount } = await vaultLib.getUniPositionBalances(
@@ -103,21 +105,20 @@ describe("VaultLib", function () {
           newTick,
           wethIsToken0
         )
-
         // x * y = k
-        expect(isSimilar(ethAmount.mul(squeethAmount).toString(), ethLiquidityAmount.mul(squeethLiquidityAmount).toString())).to.be.true
+        expect(isSimilar(ethAmount.mul(squeethAmount).toString(), ethLiquidityAmount.mul(wsqueethLiquidityAmount).toString())).to.be.true
         // eth / squeeth is similar to new price
-        expect(isSimilar(ethAmount.div(squeethAmount).toString(), newPrice, 3)).to.be.true
+        expect(isSimilar(ethAmount.mul(oracleScaleFactor).toString(), newPrice.mul(squeethAmount).toString(), 3)).to.be.true
       })
     })
     
     describe('case: LP only in a certain range', async() => {
       const nftTokenId = 1
-      const initSqueethPrice = '3000'
+      const initSqueethPrice = BigNumber.from('3000').mul(one).div(oracleScaleFactor)
       let initSqrtX96Price: string
       let initTick: string
 
-      let squeethLiquidityAmount: BigNumber
+      let wsqueethLiquidityAmount: BigNumber
       const ethLiquidityAmount = parseEther('30')
 
       let liquidity: BigNumber
@@ -135,8 +136,12 @@ describe("VaultLib", function () {
 
       before('set LP token properties, assuming with enter with init price.', async() => {
         const { sqrtPrice: sqrtPriceInit } = getSqrtPriceAndTickBySqueethPrice(initSqueethPrice, wethIsToken0)
-        const { sqrtPrice: sqrtPrice4500, tick: tick4000 } = getSqrtPriceAndTickBySqueethPrice('4500', wethIsToken0)
-        const { sqrtPrice: sqrtPrice2000, tick: tick2000 } = getSqrtPriceAndTickBySqueethPrice('2000', wethIsToken0)
+
+        const scaledSqueethPrice4500 = BigNumber.from('4500').mul(one).div(oracleScaleFactor)
+        const scaledSqueethPrice2000 = BigNumber.from('2000').mul(one).div(oracleScaleFactor)
+
+        const { sqrtPrice: sqrtPrice4500, tick: tick4000 } = getSqrtPriceAndTickBySqueethPrice(scaledSqueethPrice4500, wethIsToken0)
+        const { sqrtPrice: sqrtPrice2000, tick: tick2000 } = getSqrtPriceAndTickBySqueethPrice(scaledSqueethPrice2000, wethIsToken0)
 
         // get approximate liquidity value, with 30 eth deposit
         liquidity = wethIsToken0
@@ -149,7 +154,7 @@ describe("VaultLib", function () {
         const result = await vaultLib.getAmountsForLiquidity(sqrtPriceInit, sqrtPrice2000, sqrtPrice4500, liquidity)
 
         // set reasonable squeeth liquidity amount
-        squeethLiquidityAmount = wethIsToken0 
+        wsqueethLiquidityAmount = wethIsToken0 
           ? result.amount1
           : result.amount0
 
@@ -169,14 +174,14 @@ describe("VaultLib", function () {
             wethIsToken0
           )
           // about 0.01 squeeth
-          expect(isSimilar(result.squeethAmount.toString(), squeethLiquidityAmount.toString(), 3)).to.be.true
+          expect(isSimilar(result.squeethAmount.toString(), wsqueethLiquidityAmount.toString(), 3)).to.be.true
           // about 30 eth
           expect(isSimilar(result.ethAmount.toString(), ethLiquidityAmount.toString(), 3)).to.be.true
         })
       })
 
       describe('case: current price is 5000, above the LP range', async() => {
-        const highPrice = '5000'
+        const highPrice = BigNumber.from('5000').mul(one)
         let newTick: string;
         before('set price', async() => {
           const { sqrtPrice, tick } = getSqrtPriceAndTickBySqueethPrice(highPrice, wethIsToken0)
@@ -192,16 +197,19 @@ describe("VaultLib", function () {
           )
           expect(result.squeethAmount.isZero()).to.be.true
 
+          const upperBound = 4500 / oracleScaleFactor.toNumber()
+          const lowerBound = 2000 / oracleScaleFactor.toNumber()
+
           const expectedEthAmount = wethIsToken0
-            ? getXAmountBelowRange((1/4500), (1/2000), liquidity.toString())
-            : getYAmountAboveRange(2000, 4500, liquidity.toString())                
+            ? getXAmountBelowRange((1/upperBound), (1/lowerBound), liquidity.toString())
+            : getYAmountAboveRange(lowerBound, upperBound, liquidity.toString())                
           
           expect(isSimilar(result.ethAmount.toString(), expectedEthAmount.toString())).to.be.true
         })
       })
 
       describe('case: current price 1900, below the LP range', async() => {
-        const lowPrice = '1900'
+        const lowPrice = BigNumber.from('1900').mul(one).div(oracleScaleFactor)
         let newTick: string;
         before('set price', async() => {
           const { sqrtPrice, tick } = getSqrtPriceAndTickBySqueethPrice(lowPrice, wethIsToken0)
@@ -217,9 +225,12 @@ describe("VaultLib", function () {
           )
           expect(result.ethAmount.isZero()).to.be.true
 
+          const upperBound = 4500 / oracleScaleFactor.toNumber()
+          const lowerBound = 2000 / oracleScaleFactor.toNumber()
+
           const expectedSqueethAmount = wethIsToken0
-            ? getYAmountAboveRange((1/4500), (1/2000), liquidity.toString()) // price 1/1900 is above 1/2000
-            : getXAmountBelowRange(2000, 4500, liquidity.toString()) // price 1900 is below 2000
+            ? getYAmountAboveRange((1/upperBound), (1/lowerBound), liquidity.toString())
+            : getXAmountBelowRange(lowerBound, upperBound, liquidity.toString())
         
           expect(isSimilar(result.squeethAmount.toString(), expectedSqueethAmount.toString())).to.be.true             
 
@@ -227,7 +238,7 @@ describe("VaultLib", function () {
       })
 
       describe('case: current price 2200, within LP range', async() => {
-        const newPrice = '2200'
+        const newPrice = BigNumber.from('2200').mul(one).div(oracleScaleFactor)
         let newTick: string
         before('set price', async() => {
           const { sqrtPrice, tick } = getSqrtPriceAndTickBySqueethPrice(newPrice, wethIsToken0)
@@ -242,16 +253,22 @@ describe("VaultLib", function () {
             newTick,
             wethIsToken0
           )
+
+          const upperBound = 4500 / oracleScaleFactor.toNumber()
+          const currentPrice = 2200 / oracleScaleFactor.toNumber()
+          const lowerBound = 2000 / oracleScaleFactor.toNumber()
           
           const expectedEthAmount = wethIsToken0
-            ? getXAmountBelowRange((1/2200), (1/2000), liquidity.toString())
-            : getYAmountAboveRange(2000, 2200, liquidity.toString())    
+            ? getXAmountBelowRange((1/currentPrice), (1/lowerBound), liquidity.toString())
+            : getYAmountAboveRange(lowerBound, currentPrice, liquidity.toString())    
           
           expect(isSimilar(result.ethAmount.toString(), expectedEthAmount.toString(), 3)).to.be.true
           
+          
+
           const expectedSqueethAmount = wethIsToken0
-            ? getYAmountAboveRange((1/4500), (1/2200), liquidity.toString())
-            : getXAmountBelowRange(2200, 4500, liquidity.toString())
+            ? getYAmountAboveRange((1/upperBound), (1/currentPrice), liquidity.toString())
+            : getXAmountBelowRange(currentPrice, upperBound, liquidity.toString())
 
           expect(isSimilar(result.squeethAmount.toString(), expectedSqueethAmount.toString())).to.be.true
         })

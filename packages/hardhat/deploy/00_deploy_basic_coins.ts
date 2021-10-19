@@ -25,7 +25,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Deploy Dai
   const daiAddr = networkNameToDai(network.name as string)
   if (daiAddr === undefined) {
-    await deploy("MockErc20", { from: deployer, args: ["DAI", "DAI"], skipIfAlreadyDeployed: false });  
+    await deploy("MockErc20", { from: deployer, args: ["DAI", "DAI", 18], skipIfAlreadyDeployed: false });  
     const dai = await ethers.getContract("MockErc20", deployer);
     console.log(`Dai Deployed at ${dai.address} 🍇`)
   } else {

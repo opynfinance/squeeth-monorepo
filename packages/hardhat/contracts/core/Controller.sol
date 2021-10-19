@@ -44,14 +44,16 @@ contract Controller is Initializable, Ownable {
     address public feeRecipient;
 
     /// @dev address of the powerPerp/weth pool
-    address public powerPerpPool;
+    address public wPowerPerpPool;
 
     address public uniswapPositionManager;
 
     /// @dev fee rate in basis point. feeRate of 1 = 0.01%
     uint256 public feeRate;
 
-    uint256 public shutDownEthPriceSnapshot;
+    /// @dev the settlement price for each wPowerPerp for settlement
+    uint256 public indexForSettlement;
+
     uint256 public normalizationFactor;
     uint256 public lastFundingUpdateTimestamp;
     uint256 public deployTimestamp;
@@ -134,7 +136,7 @@ contract Controller is Initializable, Ownable {
             Power2Base._getDenormalizedMark(
                 _period,
                 address(oracle),
-                powerPerpPool,
+                wPowerPerpPool,
                 ethDaiPool,
                 weth,
                 dai,
@@ -162,7 +164,7 @@ contract Controller is Initializable, Ownable {
      * @param _weth weth address
      * @param _dai dai address
      * @param _ethDaiPool uniswap v3 pool for weth / dai
-     * @param _powerPerpPool uniswap v3 pool for wPowerPerp / weth
+     * @param _wPowerPerpPool uniswap v3 pool for wPowerPerp / weth
      * @param _uniPositionManager uniswap v3 nonfungible position manager address
      */
     function init(
@@ -172,7 +174,7 @@ contract Controller is Initializable, Ownable {
         address _weth,
         address _dai,
         address _ethDaiPool,
-        address _powerPerpPool,
+        address _wPowerPerpPool,
         address _uniPositionManager
     ) public initializer {
         require(_oracle != address(0), "Invalid oracle address");
@@ -181,7 +183,7 @@ contract Controller is Initializable, Ownable {
         require(_weth != address(0), "Invalid weth address");
         require(_dai != address(0), "Invalid quote currency address");
         require(_ethDaiPool != address(0), "Invalid eth:usd pool address");
-        require(_powerPerpPool != address(0), "Invalid powerperp:eth pool address");
+        require(_wPowerPerpPool != address(0), "Invalid powerperp:eth pool address");
         require(_uniPositionManager != address(0), "Invalid uni position manager");
 
         oracle = IOracle(_oracle);
@@ -189,7 +191,7 @@ contract Controller is Initializable, Ownable {
         wPowerPerp = IWPowerPerp(_wPowerPerp);
 
         ethDaiPool = _ethDaiPool;
-        powerPerpPool = _powerPerpPool;
+        wPowerPerpPool = _wPowerPerpPool;
         uniswapPositionManager = _uniPositionManager;
 
         weth = _weth;
@@ -412,7 +414,7 @@ contract Controller is Initializable, Ownable {
     function pauseAndShutDown() external notShutdown notPaused onlyOwner {
         isSystemPaused = true;
         isShutDown = true;
-        shutDownEthPriceSnapshot = oracle.getTwapSafe(ethDaiPool, weth, dai, SHUTDOWN_PERIOD);
+        indexForSettlement = Power2Base._getScaledTwap(address(oracle), ethDaiPool, weth, dai, 600);
     }
 
     /**
@@ -420,7 +422,7 @@ contract Controller is Initializable, Ownable {
      */
     function shutDown() external notShutdown isPaused onlyOwner {
         isShutDown = true;
-        shutDownEthPriceSnapshot = oracle.getTwapSafe(ethDaiPool, weth, dai, SHUTDOWN_PERIOD);
+        indexForSettlement = Power2Base._getScaledTwap(address(oracle), ethDaiPool, weth, dai, 600);
     }
 
     /**
@@ -458,11 +460,7 @@ contract Controller is Initializable, Ownable {
     function redeemLong(uint256 _wPerpAmount) external isShutdown {
         wPowerPerp.burn(msg.sender, _wPerpAmount);
 
-        uint256 longValue = Power2Base._getLongSettlementValue(
-            _wPerpAmount,
-            shutDownEthPriceSnapshot,
-            normalizationFactor
-        );
+        uint256 longValue = Power2Base._getLongSettlementValue(_wPerpAmount, indexForSettlement, normalizationFactor);
         payable(msg.sender).sendValue(longValue);
     }
 
@@ -480,7 +478,7 @@ contract Controller is Initializable, Ownable {
 
         uint256 debt = Power2Base._getLongSettlementValue(
             cachedVault.shortAmount,
-            shutDownEthPriceSnapshot,
+            indexForSettlement,
             normalizationFactor
         );
         // if the debt is more than collateral, this line will revert
@@ -542,7 +540,6 @@ contract Controller is Initializable, Ownable {
         bool _isWAmount
     ) internal returns (uint256, uint256) {
         uint256 cachedNormFactor = _applyFunding();
-        uint256 ethMintFee;
         uint256 depositAmountWithFee = _depositAmount;
         uint256 wPowerPerpAmount = _isWAmount ? _mintAmount : _mintAmount.mul(1e18).div(cachedNormFactor);
 
@@ -978,7 +975,7 @@ contract Controller is Initializable, Ownable {
         uint256 mark = Power2Base._getDenormalizedMark(
             fairPeriod,
             address(oracle),
-            powerPerpPool,
+            wPowerPerpPool,
             ethDaiPool,
             weth,
             dai,
@@ -1054,14 +1051,14 @@ contract Controller is Initializable, Ownable {
         view
         returns (bool, bool)
     {
-        uint256 ethDaiPrice = oracle.getTwapSafe(ethDaiPool, weth, dai, 300);
-        int24 perpPoolTick = oracle.getTimeWeightedAverageTickSafe(powerPerpPool, 300);
+        uint256 scaledEthPrice = Power2Base._getScaledTwapSafe(address(oracle), ethDaiPool, weth, dai, 300);
+        int24 perpPoolTick = oracle.getTimeWeightedAverageTickSafe(wPowerPerpPool, 300);
         return
             VaultLib.getVaultStatus(
                 _vault,
                 uniswapPositionManager,
                 _normalizationFactor,
-                ethDaiPrice,
+                scaledEthPrice,
                 MIN_COLLATERAL,
                 perpPoolTick,
                 isWethToken0
@@ -1118,7 +1115,7 @@ contract Controller is Initializable, Ownable {
      */
     function _getMaxSafePeriod() internal view returns (uint32) {
         uint32 maxPeriodPool1 = oracle.getMaxPeriod(ethDaiPool);
-        uint32 maxPeriodPool2 = oracle.getMaxPeriod(powerPerpPool);
+        uint32 maxPeriodPool2 = oracle.getMaxPeriod(wPowerPerpPool);
         return maxPeriodPool1 > maxPeriodPool2 ? maxPeriodPool2 : maxPeriodPool1;
     }
 }

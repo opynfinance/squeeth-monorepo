@@ -6,9 +6,12 @@ import { Contract, providers } from "ethers";
 import { Controller, VaultNFTManager, WSqueeth, ShortHelper, WETH9 } from "../../typechain";
 
 import { deployUniswapV3, deploySqueethCoreContracts, addSqueethLiquidity, deployWETHAndDai } from '../setup'
-import { getNow } from "../utils";
+import { getNow, one, oracleScaleFactor } from "../utils";
 
 describe("ShortHelper Integration Test", function () {
+  const startingEthPrice = 3000
+  const startingScaledSqueethPrice = startingEthPrice / oracleScaleFactor.toNumber()
+
   let shortHelper: ShortHelper
   // peer contracts
   let squeeth: WSqueeth
@@ -26,6 +29,9 @@ describe("ShortHelper Integration Test", function () {
 
   let seller1VaultId = 0;
   let seller2VaultId = 0; 
+
+  const squeethAmount = ethers.utils.parseEther('10')
+  const collateralAmount = ethers.utils.parseEther('20')
 
   this.beforeAll("Prepare accounts", async() => {
     const accounts = await ethers.getSigners();
@@ -49,8 +55,8 @@ describe("ShortHelper Integration Test", function () {
     
     // init uniswap pool: price = 3000, seed with 0.005 squeeth (30 eth as collateral)
     await addSqueethLiquidity(
-      3000, 
-      '0.005',
+      startingScaledSqueethPrice, 
+      '50',
       '30', 
       deployer, 
       coreDeployments.squeeth, 
@@ -88,8 +94,7 @@ describe("ShortHelper Integration Test", function () {
 
   describe('Create short position', async() => {
     it ('should open new vault and sell squeeth, receive weth in return', async () => {
-      const squeethAmount = ethers.utils.parseEther('0.001')
-      const collateralAmount = ethers.utils.parseEther('20')
+
       const exactInputParam = {
         tokenIn: squeeth.address,
         tokenOut: weth.address,
@@ -110,7 +115,7 @@ describe("ShortHelper Integration Test", function () {
       await shortHelper.connect(seller1).openShort(0, squeethAmount, 0, exactInputParam, {value: collateralAmount} )
   
       const normalizationFactor = await controller.normalizationFactor()
-      const wSqueethAmount = squeethAmount.mul(ethers.utils.parseUnits('1')).div(normalizationFactor)
+      const wSqueethAmount = squeethAmount.mul(one).div(normalizationFactor)
 
       const nftBalanceAfter = await vaultNFT.balanceOf(seller1.address)
       const poolSqueethAfter = await squeeth.balanceOf(poolAddress)
@@ -132,8 +137,7 @@ describe("ShortHelper Integration Test", function () {
     })
 
     it ('should add collateral to an existing vault and sell squeeth, receive weth in return', async () => {
-      const squeethAmount = ethers.utils.parseEther('0.001')
-      const collateralAmount = ethers.utils.parseEther('20')
+      
       const exactInputParam = {
         tokenIn: squeeth.address,
         tokenOut: weth.address,
@@ -170,9 +174,7 @@ describe("ShortHelper Integration Test", function () {
     })
 
     it ('should open new vault and sell squeeth, receive eth at the end', async () => {
-      const squeethAmount = ethers.utils.parseEther('0.001')
-      const collateralAmount = ethers.utils.parseEther('20')
-  
+      
       const exactInputParam = {
         tokenIn: squeeth.address,
         tokenOut: weth.address,
@@ -199,7 +201,7 @@ describe("ShortHelper Integration Test", function () {
       )
 
       const normalizationFactor = await controller.normalizationFactor()
-      const wSqueethAmount = squeethAmount.mul(ethers.utils.parseUnits('1')).div(normalizationFactor)
+      const wSqueethAmount = squeethAmount.mul(one).div(normalizationFactor)
 
       const nftBalanceAfter = await vaultNFT.balanceOf(seller2.address)
       const poolSqueethAfter = await squeeth.balanceOf(poolAddress)

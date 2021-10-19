@@ -19,7 +19,7 @@ import { convertToken0PriceToSqrtX96Price, convertToken1PriceToSqrtX96Price } fr
 
 export const deployWETHAndDai = async() => {
   const MockErc20Contract = await ethers.getContractFactory("MockErc20");
-  const dai = (await MockErc20Contract.deploy("Dai", "Dai")) as MockErc20;
+  const dai = (await MockErc20Contract.deploy("Dai", "Dai", 18)) as MockErc20;
 
   const WETH9Contract = await ethers.getContractFactory("WETH9");
   const weth = (await WETH9Contract.deploy()) as WETH9;

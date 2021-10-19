@@ -5,16 +5,20 @@ pragma solidity =0.7.6;
 
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {OracleLibrary} from "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol";
+import {IERC20Detailed} from "../interfaces/IERC20Detailed.sol";
+import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 
 contract Oracle {
+    using SafeMath for uint256;
+
     /**
-     * @notice get twap from the uniswap pool
+     * @notice get twap converted with base & quote token decimals
      * @dev if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD".
      * @param _pool uniswap pool address
      * @param _base base currency. to get eth/dai price, eth is base token
      * @param _quote quote currency. to get eth/dai price, dai is the quote currency
      * @param _period number of seconds in the past to start calculating time-weighted average
-     * @return price scaled by 1e18
+     * @return price of 1 base currency in quote currency. scaled by 1e18
      */
     function getTwap(
         address _pool,
@@ -22,17 +26,16 @@ contract Oracle {
         address _quote,
         uint32 _period
     ) external view returns (uint256) {
-        return _fetchTwap(_pool, _base, _quote, _period, uint256(1e18));
+        return _fetchTwap(_pool, _base, _quote, _period);
     }
 
     /**
-     * @notice get twap from the uniswap pool, never revert
-     * @dev if period is larger than the max period stored by the pool, default to the max period.
+     * @notice get twap converted with base & quote token decimals, never reverts
      * @param _pool uniswap pool address
      * @param _base base currency. to get eth/dai price, eth is base token
      * @param _quote quote currency. to get eth/dai price, dai is the quote currency
      * @param _period number of seconds in the past to start calculating time-weighted average
-     * @return price scaled by 1e18
+     * @return price of 1 base currency in quote currency. scaled by 1e18
      */
     function getTwapSafe(
         address _pool,
@@ -40,7 +43,7 @@ contract Oracle {
         address _quote,
         uint32 _period
     ) external view returns (uint256) {
-        return _fetchTwapSafe(_pool, _base, _quote, _period, uint256(1e18));
+        return _fetchTwapSafe(_pool, _base, _quote, _period);
     }
 
     /**
@@ -70,38 +73,63 @@ contract Oracle {
     }
 
     /**
-     * @notice get twap from the uniswap pool, never revert
-     * @dev if period is larger than the max period stored by the pool, default to the max period.
-     * @param _pool uniswap pool address
-     * @param _base base currency. to get eth/dai price, eth is base token
-     * @param _quote quote currency. to get eth/dai price, dai is the quote currency
-     * @param _period number of seconds in the past to start calculating time-weighted average
-     * @param _amountIn Amount of token to be converted
-     * @return amountOut Amount of quoteToken received for baseAmount of baseToken
-     */
-    function _fetchTwapSafe(
-        address _pool,
-        address _base,
-        address _quote,
-        uint32 _period,
-        uint256 _amountIn
-    ) internal view returns (uint256 amountOut) {
-        // make sure the max period we use is reasonable
-        uint32 maxPeriod = _getMaxPeriod(_pool);
-        uint32 requestPeriod = _period > maxPeriod ? maxPeriod : _period;
-        return _fetchTwap(_pool, _base, _quote, requestPeriod, _amountIn);
-    }
-
-    /**
-     * @notice get twap from the uniswap pool
+     * @notice get twap converted with base & quote token decimals, never reverts.
      * @dev if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD".
      * @param _pool uniswap pool address
      * @param _base base currency. to get eth/dai price, eth is base token
      * @param _quote quote currency. to get eth/dai price, dai is the quote currency
      * @param _period number of seconds in the past to start calculating time-weighted average
-     * @return price scaled by 1e18
+     * @return twap price which is scaled
+     */
+    function _fetchTwapSafe(
+        address _pool,
+        address _base,
+        address _quote,
+        uint32 _period
+    ) internal view returns (uint256) {
+        uint32 maxPeriod = _getMaxPeriod(_pool);
+        uint32 requestPeriod = _period > maxPeriod ? maxPeriod : _period;
+        return _fetchTwap(_pool, _base, _quote, requestPeriod);
+    }
+
+    /**
+     * @notice get twap converted with base & quote token decimals
+     * @dev if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD".
+     * @param _pool uniswap pool address
+     * @param _base base currency. to get eth/dai price, eth is base token
+     * @param _quote quote currency. to get eth/dai price, dai is the quote currency
+     * @param _period number of seconds in the past to start calculating time-weighted average
+     * @return twap price which is scaled
      */
     function _fetchTwap(
+        address _pool,
+        address _base,
+        address _quote,
+        uint32 _period
+    ) internal view returns (uint256) {
+        uint256 quoteAmountOut = _fetchRawTwap(_pool, _base, _quote, _period, uint256(1e18));
+
+        uint8 baseDecimals = IERC20Detailed(_base).decimals();
+        uint8 quoteDecimals = IERC20Detailed(_quote).decimals();
+        if (baseDecimals == quoteDecimals) return quoteAmountOut;
+
+        // if quote token has less decimals, the returned quoteAmountOut will be lower, need to scale up by decimal difference
+        if (baseDecimals > quoteDecimals) return quoteAmountOut.mul(10**(baseDecimals - quoteDecimals));
+
+        // if quote token has more decimals, the returned quoteAmountOut will be higher, need to scale down by decimal difference
+        return quoteAmountOut.div(10**(quoteDecimals - baseDecimals));
+    }
+
+    /**
+     * @notice get raw twap from the uniswap pool
+     * @dev if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD".
+     * @param _pool uniswap pool address
+     * @param _base base currency. to get eth/dai price, eth is base token
+     * @param _quote quote currency. to get eth/dai price, dai is the quote currency
+     * @param _period number of seconds in the past to start calculating time-weighted average
+     * @return Amount of quoteToken received for _amountIn of baseToken
+     */
+    function _fetchRawTwap(
         address _pool,
         address _base,
         address _quote,
@@ -109,7 +137,6 @@ contract Oracle {
         uint256 _amountIn
     ) internal view returns (uint256) {
         int24 twapTick = OracleLibrary.consult(_pool, _period);
-
         return OracleLibrary.getQuoteAtTick(twapTick, toUint128(_amountIn), _base, _quote);
     }
 

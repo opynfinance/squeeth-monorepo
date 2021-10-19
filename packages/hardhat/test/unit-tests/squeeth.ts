@@ -25,8 +25,8 @@ describe("WSqueeth", function () {
     it('should revert when trying to init again', async() => {
       await expect(wsqueeth.init(controller.address)).to.be.revertedWith('Initializable: contract is already initialized')
     })
-    it("should have decimals 14", async () => {
-      expect(await wsqueeth.decimals()).to.be.eq(14)
+    it("should have decimals 18", async () => {
+      expect(await wsqueeth.decimals()).to.be.eq(18)
     })
   })
   describe("Minting and burning", async () => {

@@ -1,7 +1,8 @@
 import {BigNumber} from 'ethers'
 import { BigNumber as BigNumberJs } from "bignumber.js"
 
-const one = BigNumber.from(10).pow(18)
+export const one = BigNumber.from(10).pow(18)
+export const oracleScaleFactor = BigNumber.from(10).pow(4)
 
 type Vault = [BigNumber, BigNumber, BigNumber] & {
   NftCollateralId: BigNumber;

@@ -5,12 +5,15 @@ import { BigNumber } from "ethers";
 import { parseEther } from "ethers/lib/utils";
 import { Controller, MockWSqueeth, MockVaultNFTManager, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester, IWETH9 } from "../../typechain";
 import { getSqrtPriceAndTickBySqueethPrice } from "../calculator";
+import { oracleScaleFactor, one } from "../utils";
 
 // use the same price at first, so there's no funding.
-const squeethETHPrice = '3000'
-const squeethEthPrice1e18 = ethers.utils.parseUnits(squeethETHPrice)
-const ethDaiPrice = '3000'
-const ethDaiPrice1e18 = ethers.utils.parseUnits(ethDaiPrice)
+const squeethETHPrice = BigNumber.from('3000').mul(one)
+const scaledSqueethPrice = squeethETHPrice.div(oracleScaleFactor)
+
+
+// eth dai price
+const ethDaiPrice = BigNumber.from('3000').mul(one)
 
 
 describe("Controller: Uni LP tokens collateralization", function () {
@@ -52,7 +55,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
     oracle = (await OracleContract.deploy()) as MockOracle;
 
     const MockErc20Contract = await ethers.getContractFactory("MockErc20");
-    dai = (await MockErc20Contract.deploy("Dai", "Dai")) as MockErc20;
+    dai = (await MockErc20Contract.deploy("Dai", "Dai", 18)) as MockErc20;
 
     const WETH9Contract = await ethers.getContractFactory("WETH9");
     weth = (await WETH9Contract.deploy()) as IWETH9;
@@ -86,11 +89,11 @@ describe("Controller: Uni LP tokens collateralization", function () {
     } else {
       await ethDaiPool.setPoolTokens(weth.address, dai.address);
     }
+    await oracle.connect(random).setPrice(squeethEthPool.address, scaledSqueethPrice)
 
-    await oracle.connect(random).setPrice(squeethEthPool.address, squeethEthPrice1e18)
-    await oracle.connect(random).setPrice(ethDaiPool.address, ethDaiPrice1e18)
+    await oracle.connect(random).setPrice(ethDaiPool.address, ethDaiPrice)
 
-    const { tick } = getSqrtPriceAndTickBySqueethPrice(squeethETHPrice, wethIsToken0InSqueethPool)
+    const { tick } = getSqrtPriceAndTickBySqueethPrice(scaledSqueethPrice, wethIsToken0InSqueethPool)
     await oracle.setAverageTick(squeethEthPool.address, tick)
   });
 
@@ -104,7 +107,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
 
     let vaultId: BigNumber;
     const uniNFTId = 1;
-    const mintAmount = ethers.utils.parseUnits('0.01')
+    const mintAmount = ethers.utils.parseUnits('100')
     const collateralAmount = ethers.utils.parseUnits('45')
 
     let token0: string
@@ -148,11 +151,11 @@ describe("Controller: Uni LP tokens collateralization", function () {
         // infinite price range
         const nftTickUpper = 887220
         const nftTickLower = -887220
-        const { sqrtPrice: sqrtX96Price, tick: currentTick } = getSqrtPriceAndTickBySqueethPrice(squeethETHPrice, wethIsToken0InSqueethPool)
+        const { sqrtPrice: sqrtX96Price, tick: currentTick } = getSqrtPriceAndTickBySqueethPrice(scaledSqueethPrice, wethIsToken0InSqueethPool)
 
         // how much to stimulate as LP deposit
         const ethLiquidityAmount = ethers.utils.parseUnits('30')
-        const squeethLiquidityAmount = ethers.utils.parseUnits('0.01')
+        const squeethLiquidityAmount = ethers.utils.parseUnits('100')
 
         // nft ticks
         const liquidity = await vaultLib.getLiquidity(
@@ -184,11 +187,11 @@ describe("Controller: Uni LP tokens collateralization", function () {
         // infinite price range
         const nftTickUpper = 887220
         const nftTickLower = -887220
-        const { sqrtPrice: sqrtX96Price, tick: currentTick } = getSqrtPriceAndTickBySqueethPrice(squeethETHPrice, wethIsToken0InSqueethPool)
+        const { sqrtPrice: sqrtX96Price, tick: currentTick } = getSqrtPriceAndTickBySqueethPrice(scaledSqueethPrice, wethIsToken0InSqueethPool)
 
         // how much to stimulate as LP deposit
         const ethLiquidityAmount = ethers.utils.parseUnits('30')
-        const squeethLiquidityAmount = ethers.utils.parseUnits('0.01')
+        const squeethLiquidityAmount = ethers.utils.parseUnits('100')
 
         // nft ticks
         const liquidity = await vaultLib.getLiquidity(
@@ -244,7 +247,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
   describe('Vault3: Basic Collateralization checks', async() => {
     let vaultId: BigNumber;
     const uniNFTId = 3;
-    const mintAmount = ethers.utils.parseUnits('0.01')
+    const mintAmount = ethers.utils.parseUnits('100')
     const collateralAmount = ethers.utils.parseUnits('45')
 
     let token0: string
@@ -270,12 +273,12 @@ describe("Controller: Uni LP tokens collateralization", function () {
 
       before('set LP token properties', async() => {
         
-        const { sqrtPrice: sqrtX96Price, tick } = getSqrtPriceAndTickBySqueethPrice(squeethETHPrice, wethIsToken0InSqueethPool)
+        const { sqrtPrice: sqrtX96Price, tick } = getSqrtPriceAndTickBySqueethPrice(scaledSqueethPrice, wethIsToken0InSqueethPool)
         currentTick = tick
 
         // how much to stimulate as LP deposit
         const ethLiquidityAmount = ethers.utils.parseUnits('30')
-        const squeethLiquidityAmount = ethers.utils.parseUnits('0.01')
+        const squeethLiquidityAmount = ethers.utils.parseUnits('100')
 
         // infinite price range
         const nftTickUpper = 887220
@@ -325,18 +328,22 @@ describe("Controller: Uni LP tokens collateralization", function () {
     })
     describe('Case: price increase, vault should go underwater', async() => {
       let newTick: string;
-      let newSqueethPrice: string
+      let newSqueethPrice: BigNumber
       before("assume we start LPing when price was 3000. with range 2000 - 4000", async () => {
         // the let's assume price range is only 2000 -> 4000, so if squeeth price > 4000
         // we will only have eth left in LP token.
-        // old price was 3000        
-        const { sqrtPrice: oldSqrtPrice } = getSqrtPriceAndTickBySqueethPrice(squeethETHPrice, wethIsToken0InSqueethPool)
+        // old price was 3000
+        
+        const { sqrtPrice: oldSqrtPrice } = getSqrtPriceAndTickBySqueethPrice(scaledSqueethPrice, wethIsToken0InSqueethPool)
 
         // fix deposit eth amount at 30
         const ethLiquidityAmount = ethers.utils.parseUnits('30')
 
-        const { tick: tick4000 } = getSqrtPriceAndTickBySqueethPrice('4000', wethIsToken0InSqueethPool)
-        const { sqrtPrice: sqrtPrice2000, tick: tick2000 } = getSqrtPriceAndTickBySqueethPrice('2000', wethIsToken0InSqueethPool)
+        const scaledPrice4000 = BigNumber.from('4000').mul(one).div(oracleScaleFactor)
+        const scaledPrice2000 = BigNumber.from('2000').mul(one).div(oracleScaleFactor)
+
+        const { tick: tick4000 } = getSqrtPriceAndTickBySqueethPrice(scaledPrice4000, wethIsToken0InSqueethPool)
+        const { sqrtPrice: sqrtPrice2000, tick: tick2000 } = getSqrtPriceAndTickBySqueethPrice(scaledPrice2000, wethIsToken0InSqueethPool)
 
         // get approximate liquidity value, with 30 eth deposit
         const liquidity = wethIsToken0InSqueethPool
@@ -349,14 +356,17 @@ describe("Controller: Uni LP tokens collateralization", function () {
         await uniPositionManager.setMockedProperties(token0, token1, tickLower, tickUpper, liquidity) // use the same liquidity
       })
       before('set price to 4500', async() => {
-        newSqueethPrice = '4500'
+        const ethPrice = BigNumber.from('4500').mul(one)
+        newSqueethPrice = ethPrice.div(oracleScaleFactor)
         const { tick, sqrtPrice: newSqrtPrice } = getSqrtPriceAndTickBySqueethPrice(newSqueethPrice, wethIsToken0InSqueethPool)
         // update prices in pool and oracle.
         newTick = tick
         await squeethEthPool.setSlot0Data(newSqrtPrice, newTick)
-        await oracle.setPrice(squeethEthPool.address, parseEther(newSqueethPrice))
-        await oracle.setPrice(ethDaiPool.address, parseEther(newSqueethPrice))
+        await oracle.setPrice(squeethEthPool.address, newSqueethPrice)
         await oracle.setAverageTick(squeethEthPool.address, newTick)
+
+        
+        await oracle.setPrice(ethDaiPool.address, ethPrice)
       })
       it('should become underwater if squeeth price increase, and LP token has no enough eth to cover short position.', async () => {
         const result = await vaultLib.getUniPositionBalances(uniPositionManager.address, uniNFTId, newTick, wethIsToken0InSqueethPool)
@@ -374,7 +384,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
         
         // mint squeeth for liquidator
         const liquidationAmount = vaultBefore.shortAmount.sub(squeethAmount).div(2)
-        const ethCollateral = liquidationAmount.mul(newSqueethPrice).mul(2) // with 2 collateral ratio
+        const ethCollateral = liquidationAmount.mul(newSqueethPrice).div(one).mul(2) // with 2 collateral ratio
         await controller.connect(liquidator).mintPowerPerpAmount(0, liquidationAmount, 0, {value: ethCollateral})
 
         expect(vaultBefore.NftCollateralId === 0).to.be.false
@@ -390,7 +400,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
         const vaultAfter = await controller.vaults(vaultId)
         const balanceAfter = await provider.getBalance(liquidator.address)
         
-        const reward = liquidationAmount.mul(newSqueethPrice).mul(11).div(10)
+        const reward = liquidationAmount.mul(newSqueethPrice).div(one).mul(11).div(10)
         
         expect(balanceAfter.sub(balanceBefore).eq(reward)).to.be.true
         expect(vaultAfter.NftCollateralId === 0).to.be.true // nft is liquidated
@@ -401,14 +411,16 @@ describe("Controller: Uni LP tokens collateralization", function () {
     describe('Case: price decrease, vault should above water', async() => {
       let newTick:string
       before('set price to 1500', async() => {
-        const newSqueethPrice = '1500'
-        const { tick, sqrtPrice: newSqrtPrice } = getSqrtPriceAndTickBySqueethPrice(newSqueethPrice, wethIsToken0InSqueethPool)
+        const ethPrice = BigNumber.from('1500').mul(one)
+        const newScaledSqueethPrice = ethPrice.div(oracleScaleFactor)
+        const { tick, sqrtPrice: newSqrtPrice } = getSqrtPriceAndTickBySqueethPrice(newScaledSqueethPrice, wethIsToken0InSqueethPool)
         newTick = tick 
         // update prices in pool and oracle.
         await squeethEthPool.setSlot0Data(newSqrtPrice, newTick)
-        await oracle.setPrice(squeethEthPool.address , parseEther(newSqueethPrice))
-        await oracle.setPrice(ethDaiPool.address , parseEther(newSqueethPrice))
+        await oracle.setPrice(squeethEthPool.address , newScaledSqueethPrice)
         await oracle.setAverageTick(squeethEthPool.address, newTick)
+
+        await oracle.setPrice(ethDaiPool.address , ethPrice)
       })
       it('should be able to collateralize the vault', async () => {
 
@@ -428,7 +440,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
         expect(vaultAfter.shortAmount.gt(vaultBefore.shortAmount)).to.be.true
       })
       it('should revert when trying to liquidate the NFT', async() => {
-        const liquidationAmount = ethers.utils.parseUnits('0.005')
+        const liquidationAmount = ethers.utils.parseUnits('50')
         await expect(controller.connect(liquidator).liquidate(vaultId, liquidationAmount)).to.be.revertedWith(
           'Can not liquidate safe vault'
         )
@@ -442,7 +454,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
     // so the price scenario should be identical, we're just testing saving vaults here.
     let vaultId: BigNumber;
     const uniNFTId = 4;
-    const mintAmount = ethers.utils.parseUnits('0.01')
+    const mintAmount = ethers.utils.parseUnits('100')
     const collateralAmount = ethers.utils.parseUnits('45')
 
     let token0: string
@@ -453,12 +465,13 @@ describe("Controller: Uni LP tokens collateralization", function () {
       let currentTick: string;
 
       before('set price back to 3000', async() => {
-        const { tick, sqrtPrice: newSqrtPrice } = getSqrtPriceAndTickBySqueethPrice(squeethETHPrice, wethIsToken0InSqueethPool)
+        const { tick, sqrtPrice: newSqrtPrice } = getSqrtPriceAndTickBySqueethPrice(scaledSqueethPrice.toString(), wethIsToken0InSqueethPool)
         const newTick = tick 
         // update prices in pool and oracle.
         await squeethEthPool.setSlot0Data(newSqrtPrice, newTick)
-        await oracle.setPrice(squeethEthPool.address , parseEther(squeethETHPrice))
-        await oracle.setPrice(ethDaiPool.address , parseEther(squeethETHPrice))
+        await oracle.setPrice(squeethEthPool.address , scaledSqueethPrice)
+
+        await oracle.setPrice(ethDaiPool.address , ethDaiPrice)
         await oracle.setAverageTick(squeethEthPool.address, newTick)
       })
       
@@ -479,12 +492,12 @@ describe("Controller: Uni LP tokens collateralization", function () {
       })
 
       before('set LP token properties', async() => {
-        const { sqrtPrice: sqrtX96Price, tick } = getSqrtPriceAndTickBySqueethPrice(squeethETHPrice, wethIsToken0InSqueethPool)
+        const { sqrtPrice: sqrtX96Price, tick } = getSqrtPriceAndTickBySqueethPrice(scaledSqueethPrice, wethIsToken0InSqueethPool)
         currentTick = tick
 
         // how much to stimulate as LP deposit
         const ethLiquidityAmount = ethers.utils.parseUnits('30')
-        const squeethLiquidityAmount = ethers.utils.parseUnits('0.01')
+        const squeethLiquidityAmount = ethers.utils.parseUnits('100')
 
         // infinite price range
         const nftTickUpper = 887220
@@ -517,18 +530,21 @@ describe("Controller: Uni LP tokens collateralization", function () {
     })
     describe('Case: price increase, vault should go underwater and people can save it', async() => {
       let newTick: string;
-      let newSqueethPrice: string
+      let newSqueethPrice: BigNumber
       before("assume we start LPing when price was 3000. with range 2000 - 4000", async () => {
         // the let's assume price range is only 2000 -> 4000, so if squeeth price > 4000
         // we will only have eth left in LP token.
         // old price was 3000
-        const { sqrtPrice: oldSqrtPrice } = getSqrtPriceAndTickBySqueethPrice(squeethETHPrice, wethIsToken0InSqueethPool)
+        const { sqrtPrice: oldSqrtPrice } = getSqrtPriceAndTickBySqueethPrice(scaledSqueethPrice, wethIsToken0InSqueethPool)
         
+        const scaledPrice4000 = BigNumber.from('4000').mul(one).div(oracleScaleFactor).toString()
+        const scaledPrice2000 = BigNumber.from('2000').mul(one).div(oracleScaleFactor).toString()
+
         // fix deposit eth amount at 30
         const ethLiquidityAmount = ethers.utils.parseUnits('30')
 
-        const { tick: tick4000 } = getSqrtPriceAndTickBySqueethPrice('4000', wethIsToken0InSqueethPool)
-        const { sqrtPrice: sqrtPrice2000, tick: tick2000 } = getSqrtPriceAndTickBySqueethPrice('2000', wethIsToken0InSqueethPool)
+        const { tick: tick4000 } = getSqrtPriceAndTickBySqueethPrice(scaledPrice4000, wethIsToken0InSqueethPool)
+        const { sqrtPrice: sqrtPrice2000, tick: tick2000 } = getSqrtPriceAndTickBySqueethPrice(scaledPrice2000, wethIsToken0InSqueethPool)
 
         // get approximate liquidity value, with 30 eth deposit
         const liquidity = wethIsToken0InSqueethPool
@@ -541,14 +557,18 @@ describe("Controller: Uni LP tokens collateralization", function () {
         await uniPositionManager.setMockedProperties(token0, token1, tickLower, tickUpper, liquidity) // use the same liquidity
       })
       before('set price to 5000', async() => {
-        newSqueethPrice = '5000'
-        const { tick, sqrtPrice: newSqrtPrice } = getSqrtPriceAndTickBySqueethPrice(newSqueethPrice, wethIsToken0InSqueethPool)
+        newSqueethPrice = BigNumber.from('5000').mul(one)     
+        const newScaledSqueethPrice = newSqueethPrice.div(oracleScaleFactor)
+
+        const { tick, sqrtPrice: newSqrtPrice } = getSqrtPriceAndTickBySqueethPrice(newScaledSqueethPrice, wethIsToken0InSqueethPool)
         // update prices in pool and oracle.
         newTick = tick
         await squeethEthPool.setSlot0Data(newSqrtPrice, newTick)
-        await oracle.setPrice(squeethEthPool.address, parseEther(newSqueethPrice))
-        await oracle.setPrice(ethDaiPool.address, parseEther(newSqueethPrice))
+        await oracle.setPrice(squeethEthPool.address, newScaledSqueethPrice.mul(one))
         await oracle.setAverageTick(squeethEthPool.address, newTick)
+
+        // set eth dai pool price to 5000
+        await oracle.setPrice(ethDaiPool.address, newSqueethPrice)
       })
       it('should become underwater if squeeth price increase, and LP token has no enough eth', async () => {
         const result = await vaultLib.getUniPositionBalances(uniPositionManager.address, uniNFTId, newTick, wethIsToken0InSqueethPool)
@@ -585,7 +605,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
        * Deposit NFT: range order
        * 
        */
-      const oldEthPrice = '5000'
+      const oldEthPrice = BigNumber.from('5000').mul(one).div(oracleScaleFactor)
       let newTick: string
       const newNFTId = 5
 
@@ -595,8 +615,11 @@ describe("Controller: Uni LP tokens collateralization", function () {
         // assume there's a NFT has wSqueethAmount value of 110% * shortAmount
         const wsqueethLiquidityAmount = vault.shortAmount.mul(11).div(10);
 
-        const { sqrtPrice: sqrtPrice10000, tick: tick10000 } = getSqrtPriceAndTickBySqueethPrice('10000', wethIsToken0InSqueethPool)
-        const { sqrtPrice: sqrtPrice1500, tick: tick15000 } = getSqrtPriceAndTickBySqueethPrice('15000', wethIsToken0InSqueethPool)
+        const scaledSqueethPrice10000 = BigNumber.from('10000').mul(one).div(oracleScaleFactor)
+        const scaledSqueethPrice15000 = BigNumber.from('15000').mul(one).div(oracleScaleFactor)
+
+        const { sqrtPrice: sqrtPrice10000, tick: tick10000 } = getSqrtPriceAndTickBySqueethPrice(scaledSqueethPrice10000, wethIsToken0InSqueethPool)
+        const { sqrtPrice: sqrtPrice1500, tick: tick15000 } = getSqrtPriceAndTickBySqueethPrice(scaledSqueethPrice15000, wethIsToken0InSqueethPool)
 
         // get approximate liquidity value, with fixed wsqueeth amount
         const liquidity = wethIsToken0InSqueethPool
@@ -615,11 +638,11 @@ describe("Controller: Uni LP tokens collateralization", function () {
         await controller.connect(seller1).depositUniPositionToken(vaultId, newNFTId)
 
         const vault = await controller.vaults(vaultId)
-        const totalCollateralRequired = vault.shortAmount.mul(oldEthPrice).mul(3).div(2)
-        
+        const totalCollateralRequired = vault.shortAmount.mul(oldEthPrice).div(one).mul(3).div(2)
+
         // nft is equivalent as 110% short amount * index
-        const nftEquivalentEthValue = vault.shortAmount.mul(11).div(10).mul(oldEthPrice)
-        
+        const nftEquivalentEthValue = vault.shortAmount.mul(11).div(10).mul(oldEthPrice).div(one)
+
         const minEthRequired = totalCollateralRequired.sub(nftEquivalentEthValue)
         const maxWithdrawableEth = vault.collateralAmount.sub(minEthRequired)
 
@@ -627,14 +650,18 @@ describe("Controller: Uni LP tokens collateralization", function () {
       })
 
       before('set price to 8000', async() => {
-        const newSqueethPrice = '8000'
-        const { tick, sqrtPrice: newSqrtPrice } = getSqrtPriceAndTickBySqueethPrice(newSqueethPrice, wethIsToken0InSqueethPool)
+        const newSqueethPrice = BigNumber.from('8000').mul(one)
+        
+        const scaledNewSqueethPrice = newSqueethPrice.div(oracleScaleFactor)
+        const { tick, sqrtPrice: newSqrtPrice } = getSqrtPriceAndTickBySqueethPrice(scaledNewSqueethPrice, wethIsToken0InSqueethPool)
         // update prices in pool and oracle.
         newTick = tick
         await squeethEthPool.setSlot0Data(newSqrtPrice, newTick)
-        await oracle.setPrice(squeethEthPool.address, parseEther(newSqueethPrice))
-        await oracle.setPrice(ethDaiPool.address, parseEther(newSqueethPrice))
+        await oracle.setPrice(squeethEthPool.address, scaledNewSqueethPrice)
         await oracle.setAverageTick(squeethEthPool.address, newTick)
+
+        // set eth price to 8000
+        await oracle.setPrice(ethDaiPool.address, newSqueethPrice)
       })
 
       before('set NFT redemption amount', async () => {

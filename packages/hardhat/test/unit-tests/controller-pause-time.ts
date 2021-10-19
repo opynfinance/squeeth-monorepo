@@ -3,6 +3,7 @@ import { ethers } from "hardhat"
 import { expect } from "chai";
 import {providers } from "ethers";
 import { Controller, MockWSqueeth, MockVaultNFTManager, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, WETH9 } from '../../typechain'
+import { oracleScaleFactor } from "../utils";
 
 const squeethETHPrice = ethers.utils.parseUnits('3010')
 const ethUSDPrice = ethers.utils.parseUnits('3000')
@@ -41,7 +42,7 @@ describe("Controller", function () {
     oracle = (await OracleContract.deploy()) as MockOracle;
 
     const MockErc20Contract = await ethers.getContractFactory("MockErc20");
-    usdc = (await MockErc20Contract.deploy("USDC", "USDC")) as MockErc20;
+    usdc = (await MockErc20Contract.deploy("USDC", "USDC", 6)) as MockErc20;
 
     const WETHContract = await ethers.getContractFactory("WETH9");
     weth = (await WETHContract.deploy()) as WETH9;
@@ -98,8 +99,8 @@ describe("Controller", function () {
         const ethPrice = ethers.utils.parseUnits(settlementPrice)
         await oracle.connect(random).setPrice(ethUSDPool.address , ethPrice) // eth per 1 squeeth
         await controller.connect(owner).pauseAndShutDown()
-        const snapshot = await controller.shutDownEthPriceSnapshot();
-        expect(snapshot.toString()).to.be.eq(ethPrice)
+        const snapshot = await controller.indexForSettlement();
+        expect(snapshot.toString()).to.be.eq(ethPrice.div(oracleScaleFactor))
         expect(await controller.isShutDown()).to.be.true;
       });
     });

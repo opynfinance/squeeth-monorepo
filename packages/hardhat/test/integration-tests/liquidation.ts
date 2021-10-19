@@ -5,7 +5,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { expect } from "chai";
 import { Controller, INonfungiblePositionManager, ISwapRouter, IUniswapV3Pool, MockErc20, Oracle, VaultLibTester, VaultNFTManager, WETH9, WSqueeth } from "../../typechain";
 import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addSqueethLiquidity, addWethDaiLiquidity } from '../setup'
-import { isSimilar, getNow } from "../utils";
+import { isSimilar, getNow, one, oracleScaleFactor } from "../utils";
 
 // make sure .toString won't return string like 3.73e+22
 BigNumberJs.set({EXPONENTIAL_AT: 30})
@@ -26,7 +26,14 @@ describe("Liquidation Integration Test", function () {
 
   let vaultLib: VaultLibTester
 
-  const startingPrice = 3000
+  const startingEthPrice = 3000
+  const startingEthPrice1e18 = BigNumber.from(startingEthPrice).mul(one) // 3000 * 1e18
+
+  const scaledStartingSqueethPrice1e18 = startingEthPrice1e18.div(oracleScaleFactor) // 0.3 * 1e18
+  
+  const scaledStartingSqueethPrice = startingEthPrice / oracleScaleFactor.toNumber() // 0.3
+  
+
   // const provider = ethers.provider
   let liquidityProvider: SignerWithAddress
   let seller1: SignerWithAddress
@@ -34,7 +41,7 @@ describe("Liquidation Integration Test", function () {
   let seller3: SignerWithAddress
   let liquidator: SignerWithAddress
 
-  const humanReadableMintAmount = '0.01'
+  const humanReadableMintAmount = '100'
 
   let vault0Id: BigNumber
   let vault1Id: BigNumber
@@ -42,8 +49,6 @@ describe("Liquidation Integration Test", function () {
 
   let vault1LPTokenId: number
   let vault2LPTokenId: number
-
-  const one = ethers.utils.parseUnits('1')
 
   this.beforeAll("Prepare accounts", async() => {
     const accounts = await ethers.getSigners()
@@ -67,8 +72,8 @@ describe("Liquidation Integration Test", function () {
       dai, 
       uniDeployments.positionManager, 
       uniDeployments.uniswapFactory,
-      startingPrice,
-      startingPrice
+      scaledStartingSqueethPrice,
+      startingEthPrice
     )
 
     positionManager = uniDeployments.positionManager
@@ -87,8 +92,8 @@ describe("Liquidation Integration Test", function () {
 
   this.beforeAll('Add liquidity to both pools', async() => {
     await addSqueethLiquidity(
-      startingPrice, 
-      '0.005',
+      scaledStartingSqueethPrice, 
+      '5',
       '30', 
       liquidityProvider.address, 
       squeeth, 
@@ -98,7 +103,7 @@ describe("Liquidation Integration Test", function () {
     )
 
     await addWethDaiLiquidity(
-      startingPrice,
+      startingEthPrice,
       ethers.utils.parseUnits('10'), // eth amount
       liquidityProvider.address,
       dai,
@@ -123,7 +128,7 @@ describe("Liquidation Integration Test", function () {
     await controller.connect(seller2).mintPowerPerpAmount(0, mintAmount, 0, {value: depositAmount})
 
     vault1LPTokenId = await addSqueethLiquidity(
-      startingPrice,
+      scaledStartingSqueethPrice,
       humanReadableMintAmount,
       '45.1',
       liquidityProvider.address,
@@ -148,7 +153,7 @@ describe("Liquidation Integration Test", function () {
     await controller.connect(seller2).mintPowerPerpAmount(0, mintAmount, 0, {value: depositAmount})
 
     vault2LPTokenId = await addSqueethLiquidity(
-      startingPrice,
+      scaledStartingSqueethPrice,
       humanReadableMintAmount,
       '45.1',
       liquidityProvider.address,
@@ -170,7 +175,7 @@ describe("Liquidation Integration Test", function () {
       // set squeeth price higher by buying half of squeeth in the pool
       const poolSqueethBalance = await squeeth.balanceOf(squeethPool.address)
 
-      const maxWeth = poolSqueethBalance.mul(startingPrice).mul(5)
+      const maxWeth = poolSqueethBalance.mul(scaledStartingSqueethPrice1e18).mul(5).div(one)
       
       // how much squeeth to buy to make the price 2x
       const newPoolSqueethBalance = new BigNumberJs(poolSqueethBalance.toString()).div(Math.SQRT2).integerValue().toString()
@@ -195,13 +200,13 @@ describe("Liquidation Integration Test", function () {
       await provider.send("evm_increaseTime", [10]) // increase time by 10 sec
       await provider.send("evm_mine", [])
       const newSqueethPrice = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 1)
-      expect(isSimilar(newSqueethPrice.toString(), one.mul(startingPrice).mul(2).toString())).to.be.true
+      expect(isSimilar(newSqueethPrice.toString(), (scaledStartingSqueethPrice1e18.mul(2)).toString())).to.be.true
     })
     before('push weth price higher 2x', async() => {
       // set weth price higher by buying half of weth in the pool
       const poolWethBalance = await weth.balanceOf(ethDaiPool.address)
 
-      const maxDai = poolWethBalance.mul(startingPrice).mul(5)
+      const maxDai = poolWethBalance.mul(startingEthPrice).mul(5)
 
       const newPoolBalance = new BigNumberJs(poolWethBalance.toString()).div(Math.SQRT2).integerValue().toString()
       const amountWethToBuy = poolWethBalance.sub(newPoolBalance)
@@ -225,7 +230,7 @@ describe("Liquidation Integration Test", function () {
       await provider.send("evm_increaseTime", [10]) // increase time by 10 sec
       await provider.send("evm_mine", [])
       const newWethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 1)
-      expect(isSimilar(newWethPrice.toString(), one.mul(startingPrice).mul(2).toString())).to.be.true
+      expect(isSimilar(newWethPrice.toString(), startingEthPrice1e18.mul(2).toString())).to.be.true
     })
     before('increase block time to make sure TWAP is updated', async() => {
       await provider.send("evm_increaseTime", [3600]) // increase time by 60 mins
@@ -233,7 +238,7 @@ describe("Liquidation Integration Test", function () {
 
       const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 3600)
       const newSqueethPrice = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 3600)
-      expect(isSimilar(newEthPrice.toString(), newSqueethPrice.toString(), 3)).to.be.true
+      expect(isSimilar(newEthPrice.toString(), newSqueethPrice.mul(oracleScaleFactor).toString(), 3)).to.be.true
     })
 
     before('prepare liquidator to liquidate vault 0', async() => {
@@ -241,7 +246,7 @@ describe("Liquidation Integration Test", function () {
       const vaultBefore = await controller.vaults(vault0Id)
       
       const mintAmount = vaultBefore.shortAmount
-      const collateralRequired = mintAmount.mul(newEthPrice).mul(2).div(BigNumber.from(10).pow(18))
+      const collateralRequired = mintAmount.mul(newEthPrice).mul(2).div(oracleScaleFactor).div(one)
 
       // mint squeeth to liquidate vault0!
       await controller.connect(liquidator).mintPowerPerpAmount(0, mintAmount, 0, {value: collateralRequired})
@@ -262,7 +267,7 @@ describe("Liquidation Integration Test", function () {
       await controller.connect(liquidator).liquidate(vault0Id, wSqueethAmountToLiquidate, {gasPrice: 0});
       
       const normFactor = await controller.normalizationFactor()
-      const collateralToGet = newEthPrice.mul(normFactor).mul(wSqueethAmountToLiquidate).div(BigNumber.from(10).pow(36)).mul(11).div(10)
+      const collateralToGet = newEthPrice.div(oracleScaleFactor).mul(normFactor).mul(wSqueethAmountToLiquidate).div(one).div(one).mul(11).div(10)
 
       const vaultAfter = await controller.vaults(vault0Id)
       const liquidatorBalanceAfter = await provider.getBalance(liquidator.address)
@@ -284,7 +289,7 @@ describe("Liquidation Integration Test", function () {
       // set squeeth price higher by buying half of squeeth in the pool
       const poolSqueethBalance = await squeeth.balanceOf(squeethPool.address)
 
-      const maxWeth = poolSqueethBalance.mul(startingPrice).mul(5)
+      const maxWeth = poolSqueethBalance.mul(scaledStartingSqueethPrice1e18).mul(5).div(one)
       
       // how much squeeth to buy to make the price 2x
       const newPoolSqueethBalance = new BigNumberJs(poolSqueethBalance.toString()).div(Math.SQRT2).integerValue().toString()
@@ -309,14 +314,14 @@ describe("Liquidation Integration Test", function () {
       await provider.send("evm_increaseTime", [10]) // increase time by 10 sec
       await provider.send("evm_mine", [])
       const newSqueethPrice = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 1)
-      expect(isSimilar(newSqueethPrice.toString(), one.mul(startingPrice).mul(4).toString())).to.be.true
+      expect(isSimilar(newSqueethPrice.toString(), scaledStartingSqueethPrice1e18.mul(4).toString())).to.be.true
 
     })
     before('push weth price higher 2x', async() => {
       // set weth price higher by buying half of weth in the pool
       const poolWethBalance = await weth.balanceOf(ethDaiPool.address)
 
-      const maxDai = poolWethBalance.mul(startingPrice).mul(5)
+      const maxDai = poolWethBalance.mul(startingEthPrice).mul(5)
 
       const newPoolBalance = new BigNumberJs(poolWethBalance.toString()).div(Math.SQRT2).integerValue().toString()
       const amountWethToBuy = poolWethBalance.sub(newPoolBalance)
@@ -340,7 +345,7 @@ describe("Liquidation Integration Test", function () {
       await provider.send("evm_increaseTime", [10]) // increase time by 10 sec
       await provider.send("evm_mine", [])
       const newWethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 1)
-      expect(isSimilar(newWethPrice.toString(), one.mul(startingPrice).mul(4).toString())).to.be.true
+      expect(isSimilar(newWethPrice.toString(), startingEthPrice1e18.mul(4).toString())).to.be.true
     })
     before('increase block time to make sure TWAP is updated', async() => {
       await provider.send("evm_increaseTime", [3600]) // increase time by 60 mins
@@ -348,7 +353,7 @@ describe("Liquidation Integration Test", function () {
 
       const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 3600)
       const newSqueethPrice = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 3600)
-      expect(isSimilar(newEthPrice.toString(), newSqueethPrice.toString(), 3)).to.be.true
+      expect(isSimilar(newEthPrice.toString(), newSqueethPrice.mul(oracleScaleFactor).toString(), 3)).to.be.true
     })
     it("calling liquidation now will save vault 1 and get bounty", async () => {
       const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600)
@@ -370,7 +375,7 @@ describe("Liquidation Integration Test", function () {
       const normFactor = await controller.normalizationFactor()
       
       // paying a 2% bounty on top of total value withdrawn from NFT.
-      const withdrawWSqueethInEth = newEthPrice.mul(normFactor).mul(squeethAmount).div(BigNumber.from(10).pow(36))
+      const withdrawWSqueethInEth = newEthPrice.mul(normFactor).mul(squeethAmount).div(one).div(one).div(oracleScaleFactor)
       const bounty = withdrawWSqueethInEth.add(ethAmount).mul(2).div(100);
       
       expect(isSimilar(liquidatorEthAfter.sub(liquidatorEthBalance).toString(), bounty.toString())).to.be.true      
@@ -414,7 +419,7 @@ describe("Liquidation Integration Test", function () {
       await provider.send("evm_increaseTime", [10]) // increase time by 10 sec
       await provider.send("evm_mine", [])
       const newSqueethPrice = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 1)
-      expect(isSimilar(newSqueethPrice.toString(), one.mul(startingPrice).mul(8).toString())).to.be.true
+      expect(isSimilar(newSqueethPrice.toString(), scaledStartingSqueethPrice1e18.mul(8).toString())).to.be.true
 
     })
     before('push weth price higher 2x', async() => {
@@ -447,7 +452,7 @@ describe("Liquidation Integration Test", function () {
       await provider.send("evm_increaseTime", [10]) // increase time by 10 sec
       await provider.send("evm_mine", [])
       const newWethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 1)
-      expect(isSimilar(newWethPrice.toString(), one.mul(startingPrice).mul(8).toString())).to.be.true
+      expect(isSimilar(newWethPrice.toString(), startingEthPrice1e18.mul(8).toString())).to.be.true
     })
     before('increase block time to make sure TWAP is updated', async() => {
       await provider.send("evm_increaseTime", [3600]) // increase time by 60 mins
@@ -455,7 +460,7 @@ describe("Liquidation Integration Test", function () {
 
       const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 3600)
       const newSqueethPrice = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 3600)
-      expect(isSimilar(newEthPrice.toString(), newSqueethPrice.toString(), 3)).to.be.true
+      expect(isSimilar(newEthPrice.toString(), newSqueethPrice.mul(oracleScaleFactor).toString(), 3)).to.be.true
     })
     it("calling liquidation now will save vault2 + liquidate half of the remaining debt", async () => {
       const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600)
@@ -473,7 +478,7 @@ describe("Liquidation Integration Test", function () {
       const vaultAfter = await controller.vaults(vault2Id)
       const normFactor = await controller.normalizationFactor()
       
-      const reward = newEthPrice.mul(normFactor).mul(wSqueethAmountToLiquidate).div(BigNumber.from(10).pow(36)).mul(11).div(10)
+      const reward = newEthPrice.div(oracleScaleFactor).mul(normFactor).mul(wSqueethAmountToLiquidate).div(BigNumber.from(10).pow(36)).mul(11).div(10)
 
       expect(isSimilar(liquidatorEthAfter.sub(liquidatorEthBalance).toString(), reward.toString())).to.be.true      
       expect(vaultAfter.NftCollateralId === 0).to.be.true

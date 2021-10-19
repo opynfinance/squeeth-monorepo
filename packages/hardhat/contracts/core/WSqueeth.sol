@@ -18,13 +18,6 @@ contract WSqueeth is ERC20, Initializable, IWPowerPerp {
         _;
     }
 
-    /**
-     * override decimals with 14.
-     */
-    function decimals() public pure override returns (uint8) {
-        return 14;
-    }
-
     function init(address _controller) external initializer {
         controller = _controller;
     }

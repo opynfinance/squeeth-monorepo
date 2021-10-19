@@ -4,12 +4,14 @@ import { expect } from "chai";
 import { BigNumber, providers, constants } from "ethers";
 import { Controller, MockWSqueeth, MockVaultNFTManager, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester, WETH9, ControllerTester } from '../../typechain'
 import { isEmptyVault } from '../vault-utils'
-import { isSimilar } from "../utils";
+import { isSimilar, oracleScaleFactor, one } from "../utils";
 import { getSqrtPriceAndTickBySqueethPrice } from "../calculator";
 
-const squeethETHPrice = ethers.utils.parseUnits('3010')
-const ethUSDPrice = ethers.utils.parseUnits('3000')
+const squeethETHPrice = BigNumber.from('3010').mul(one)
+const scaledSqueethPrice = squeethETHPrice.div(oracleScaleFactor)
 
+const ethUSDPrice = BigNumber.from('3000').mul(one)
+const scaledEthPrice = ethUSDPrice.div(oracleScaleFactor)
 
 describe("Controller", function () {
   let squeeth: MockWSqueeth;
@@ -58,7 +60,7 @@ describe("Controller", function () {
     oracle = (await OracleContract.deploy()) as MockOracle;
 
     const MockErc20Contract = await ethers.getContractFactory("MockErc20");
-    usdc = (await MockErc20Contract.deploy("USDC", "USDC")) as MockErc20;
+    usdc = (await MockErc20Contract.deploy("USDC", "USDC", 6)) as MockErc20;
 
     const WETHContract = await ethers.getContractFactory("WETH9");
     weth = (await WETHContract.deploy()) as WETH9;
@@ -78,7 +80,9 @@ describe("Controller", function () {
     await ethUSDPool.setPoolTokens(weth.address, usdc.address);
 
 
-    await oracle.connect(random).setPrice(squeethEthPool.address , squeethETHPrice) // eth per 1 squeeth
+    await oracle.connect(random).setPrice(squeethEthPool.address , scaledSqueethPrice) // eth per 1 squeeth
+
+    // the oracle should return the exact ETH / USDC price (without scale)
     await oracle.connect(random).setPrice(ethUSDPool.address , ethUSDPrice)  // usdc per 1 eth
   });
 
@@ -196,8 +200,6 @@ describe("Controller", function () {
 
     describe('#Read basic properties', async() => {
       
-      const one = ethers.utils.parseUnits('1')
-
       it('should be able to get normalization factor', async() => {
         const normFactor = await controller.normalizationFactor()
         const expectedNormFactor = await controller.getExpectedNormalizationFactor()
@@ -233,10 +235,10 @@ describe("Controller", function () {
 
       it('should be able to get index and mark price', async() => {
         const markPrice = await controller.getDenormalizedMark(30)
-        expect(isSimilar(markPrice.toString(), squeethETHPrice.mul(ethUSDPrice).div(one).toString())).to.be.true
+        expect(isSimilar(markPrice.toString(), scaledSqueethPrice.mul(scaledEthPrice).div(one).toString())).to.be.true
 
         const index = await controller.getIndex(30)
-        expect(index.eq(ethUSDPrice.mul(ethUSDPrice).div(one))).to.be.true
+        expect(index.eq(scaledEthPrice.mul(scaledEthPrice).div(one))).to.be.true
       })
 
       it('should revert if a _getTwap price from index (or mark) is 0', async() => {
@@ -244,7 +246,6 @@ describe("Controller", function () {
         await expect(controller.getIndex(30)).to.be.revertedWith("WAP WAP WAP")
         // reset the price
         await oracle.connect(random).setPrice(ethUSDPool.address , ethUSDPrice)  // usdc per 1 eth
-
       })
 
       it('should revert when sending eth to controller from an EOA', async() => {
@@ -286,14 +287,14 @@ describe("Controller", function () {
 
     describe("#Mint: Mint Squeeth", async () => {
       it("Should revert if not called by owner", async () => {
-        const mintAmount = ethers.utils.parseUnits('0.01')
+        const mintAmount = ethers.utils.parseUnits('100')
         
         await expect(controller.connect(random).mintPowerPerpAmount(vaultId, mintAmount, 0)).to.be.revertedWith(
           'not allowed'
         )
       });
       it("Should be able to mint squeeth", async () => {
-        const mintAmount = ethers.utils.parseUnits('0.01')
+        const mintAmount = ethers.utils.parseUnits('100')
         
         const vaultBefore = await controller.vaults(vaultId)
         const squeethBalanceBefore = await squeeth.balanceOf(seller1.address)
@@ -304,12 +305,12 @@ describe("Controller", function () {
         const vaultAfter = await controller.vaults(vaultId)
         const normFactor = await controller.normalizationFactor()
 
-        expect(vaultBefore.shortAmount.add(mintAmount.mul(ethers.utils.parseUnits('1')).div(normFactor)).eq(vaultAfter.shortAmount)).to.be.true
-        expect(squeethBalanceBefore.add(mintAmount.mul(ethers.utils.parseUnits('1')).div(normFactor)).eq(squeethBalanceAfter)).to.be.true
+        expect(vaultBefore.shortAmount.add(mintAmount.mul(one).div(normFactor)).eq(vaultAfter.shortAmount)).to.be.true
+        expect(squeethBalanceBefore.add(mintAmount.mul(one).div(normFactor)).eq(squeethBalanceAfter)).to.be.true
       });
       
       it("Should revert when minting more than allowed", async () => {
-        const mintAmount = ethers.utils.parseUnits('0.01')
+        const mintAmount = ethers.utils.parseUnits('100')
                 
         await expect(controller.connect(seller1).mintPowerPerpAmount(vaultId, mintAmount, 0)).to.be.revertedWith(
           'Invalid state'
@@ -395,14 +396,14 @@ describe("Controller", function () {
 
     describe('Open, deposit and mint', () => {
       it('should revert if the vault has too little collateral', async() => {
-        const mintAmount = ethers.utils.parseUnits('0.00001')
+        const mintAmount = ethers.utils.parseUnits('0.1')
         const collateralAmount = ethers.utils.parseUnits('0.45')
         await expect(controller.connect(random).mintPowerPerpAmount(0, mintAmount, 0, {value: collateralAmount}))
           .to.be.revertedWith('dust vault')
       })
       it('should open vault, deposit and mint in the same tx', async() => {
         vaultId = await shortNFT.nextId()
-        const mintAmount = ethers.utils.parseUnits('0.01')
+        const mintAmount = ethers.utils.parseUnits('100')
         const collateralAmount = ethers.utils.parseUnits('45') 
 
         const controllerBalanceBefore = await provider.getBalance(controller.address)
@@ -420,10 +421,10 @@ describe("Controller", function () {
 
         expect(nftBalanceBefore.add(1).eq(nftBalanceAfter)).to.be.true
         expect(controllerBalanceBefore.add(collateralAmount).eq(controllerBalanceAfter)).to.be.true
-        expect(squeethBalanceBefore.add(mintAmount.mul(ethers.utils.parseUnits('1')).div(normFactor)).eq(squeethBalanceAfter)).to.be.true
+        expect(squeethBalanceBefore.add(mintAmount.mul(one).div(normFactor)).eq(squeethBalanceAfter)).to.be.true
 
         expect(newVault.collateralAmount.eq(collateralAmount)).to.be.true
-        expect(newVault.shortAmount.eq(mintAmount.mul(ethers.utils.parseUnits('1')).div(normFactor))).to.be.true
+        expect(newVault.shortAmount.eq(mintAmount.mul(one).div(normFactor))).to.be.true
       })
     })
 
@@ -431,8 +432,8 @@ describe("Controller", function () {
       it('should deposit and mint in the same tx', async() => {
         // mint some other squeeth in vault 2.
         const normFactor = await controller.normalizationFactor()
-        const mintRSqueethAmount = ethers.utils.parseUnits('0.001')
-        const mintWSqueethAmount = mintRSqueethAmount.mul(ethers.utils.parseUnits('1')).div(normFactor)
+        const mintRSqueethAmount = ethers.utils.parseUnits('1')
+        const mintWSqueethAmount = mintRSqueethAmount.mul(one).div(normFactor)
         const collateralAmount = ethers.utils.parseUnits('4.5')
 
         const controllerBalanceBefore = await provider.getBalance(controller.address)
@@ -464,7 +465,7 @@ describe("Controller", function () {
       })
       it('should deposit and mint in the same tx', async() => {
         // mint some other squeeth in vault 2.
-        const mintAmount = ethers.utils.parseUnits('0.01')
+        const mintAmount = ethers.utils.parseUnits('100')
         const collateralAmount = ethers.utils.parseUnits('45')
 
         const controllerBalanceBefore = await provider.getBalance(controller.address)
@@ -479,10 +480,10 @@ describe("Controller", function () {
         const normFactor = await controller.normalizationFactor()
 
         expect(controllerBalanceBefore.add(collateralAmount).eq(controllerBalanceAfter)).to.be.true
-        expect(squeethBalanceBefore.add(mintAmount.mul(ethers.utils.parseUnits('1')).div(normFactor)).eq(squeethBalanceAfter)).to.be.true
+        expect(squeethBalanceBefore.add(mintAmount.mul(one).div(normFactor)).eq(squeethBalanceAfter)).to.be.true
 
         expect(vaultBefore.collateralAmount.add(collateralAmount).eq(vaultAfter.collateralAmount)).to.be.true
-        expect(vaultBefore.shortAmount.add(mintAmount.mul(ethers.utils.parseUnits('1')).div(normFactor)).eq(vaultAfter.shortAmount)).to.be.true
+        expect(vaultBefore.shortAmount.add(mintAmount.mul(one).div(normFactor)).eq(vaultAfter.shortAmount)).to.be.true
       })
     })
 
@@ -490,7 +491,7 @@ describe("Controller", function () {
       let seller4VaultId: BigNumber
       before('mint squeeth for seller4 to withdraw', async() => {
         seller4VaultId = await shortNFT.nextId()
-        const mintRAmount = ethers.utils.parseUnits('0.01')
+        const mintRAmount = ethers.utils.parseUnits('100')
         const collateralAmount = ethers.utils.parseUnits('45')
         await controller.connect(seller4).mintPowerPerpAmount(0, mintRAmount, 0, {value: collateralAmount})
       })
@@ -499,7 +500,7 @@ describe("Controller", function () {
         const vaultBefore = await controller.vaults(seller4VaultId)
         
         // the real rSqueeth amount will decrease after funding.
-        const burnRSqueethAmount = ethers.utils.parseUnits('0.01').div(2)
+        const burnRSqueethAmount = ethers.utils.parseUnits('100').div(2)
         const withdrawCollateralAmount = ethers.utils.parseUnits('45').div(2)
 
         const controllerBalanceBefore = await provider.getBalance(controller.address)
@@ -513,10 +514,10 @@ describe("Controller", function () {
         const normFactor = await controller.normalizationFactor()
 
         expect(controllerBalanceBefore.sub(withdrawCollateralAmount).eq(controllerBalanceAfter)).to.be.true
-        expect(wsqueethBalanceBefore.sub(burnRSqueethAmount.mul(ethers.utils.parseUnits('1')).div(normFactor)).eq(wsqueethBalanceAfter)).to.be.true
+        expect(wsqueethBalanceBefore.sub(burnRSqueethAmount.mul(one).div(normFactor)).eq(wsqueethBalanceAfter)).to.be.true
 
         expect(vaultBefore.collateralAmount.sub(withdrawCollateralAmount).eq(vaultAfter.collateralAmount)).to.be.true
-        expect(vaultBefore.shortAmount.sub(burnRSqueethAmount.mul(ethers.utils.parseUnits('1')).div(normFactor)).eq(vaultAfter.shortAmount)).to.be.true
+        expect(vaultBefore.shortAmount.sub(burnRSqueethAmount.mul(one).div(normFactor)).eq(vaultAfter.shortAmount)).to.be.true
       })
       after('clean up vault4', async() => {
         const vault = await controller.vaults(seller4VaultId)
@@ -535,9 +536,9 @@ describe("Controller", function () {
     it('should charge fee on mintPowerPerpAmount from deposit amount', async() => {
       vaultId = await shortNFT.nextId()
 
-      const powerPerpToMint = ethers.utils.parseUnits('0.00005')
+      const powerPerpToMint = ethers.utils.parseUnits('0.5')
       const collateralDeposited = ethers.utils.parseUnits('0.55')
-      const powerPerpInEth =  ethUSDPrice.mul(powerPerpToMint).div(ethers.utils.parseUnits("1"))
+      const powerPerpInEth =  ethUSDPrice.mul(powerPerpToMint).div(one).div(oracleScaleFactor)
       const expectedFee = powerPerpInEth.div(100)
       const totalEthAttached = expectedFee.add(collateralDeposited)
     
@@ -557,8 +558,8 @@ describe("Controller", function () {
 
       const vaultBefore = await controller.vaults(vaultId)
 
-      const powerPerpToMint = ethers.utils.parseUnits('0.00005')
-      const powerPerpInEth =  ethUSDPrice.mul(powerPerpToMint).div(ethers.utils.parseUnits("1"))
+      const powerPerpToMint = ethers.utils.parseUnits('0.5')
+      const powerPerpInEth =  ethUSDPrice.mul(powerPerpToMint).div(one).div(oracleScaleFactor)
       const expectedFee = powerPerpInEth.div(100)
     
       const feeRecipientBalanceBefore = await provider.getBalance(feeRecipient.address)
@@ -596,7 +597,7 @@ describe("Controller", function () {
   });
   
   describe("Emergency Shutdown and pausing", function () {
-    const settlementPrice = '6500';
+    const settlementPrice = BigNumber.from('6500').mul(one);
     let seller2VaultId: BigNumber;
     let seller3VaultId: BigNumber;
 
@@ -620,22 +621,22 @@ describe("Controller", function () {
     this.beforeAll('Prepare a new vault for this test set', async() => {
       // prepare a vault that's gonna go underwater
       seller2VaultId = await shortNFT.nextId()
-      const mintAmount = ethers.utils.parseUnits('0.01')
+      const mintAmount = ethers.utils.parseUnits('100')
       await controller.connect(seller2).mintPowerPerpAmount(0, mintAmount, 0, { value: collateralAmount })
 
       // prepare a vault that's not gonna go insolvent
       seller3VaultId = await shortNFT.nextId()
-      const s3MintAmount = ethers.utils.parseUnits('0.004')
+      const s3MintAmount = ethers.utils.parseUnits('4')
       await controller.connect(seller3).mintPowerPerpAmount(0, s3MintAmount, 0, { value: collateralAmount })
       seller3TotalSqueeth = await squeeth.balanceOf(seller3.address)
 
       // mint a lot of squeeth from seller1 that system can't payout to.
       const collateral = ethers.utils.parseUnits('450')
-      await controller.connect(seller1).mintPowerPerpAmount(0, ethers.utils.parseUnits('0.1'), 0, {value: collateral})
+      await controller.connect(seller1).mintPowerPerpAmount(0, ethers.utils.parseUnits('1000'), 0, {value: collateral})
 
       // prepare a vault with nft
       seller5VaultId = await shortNFT.nextId()
-      const s5MintAmount = ethers.utils.parseUnits('0.01')
+      const s5MintAmount = ethers.utils.parseUnits('1')
       // mint fake nft for seller5
       await uniPositionManager.mint(seller5.address, seller5NFTId)
       await uniPositionManager.connect(seller5).approve(controller.address, seller5NFTId)
@@ -656,9 +657,8 @@ describe("Controller", function () {
         pausesLeft-=1;
         expect(await controller.isSystemPaused()).to.be.true;
         expect((await controller.pausesLeft()).eq(pausesLeft)).to.be.true 
-
+      })
         // how to ensure that all variables are updated ie lastPauseTime, need block.timestamp here
-      });
       it("Should revert when a random person tries to unpause immediately afterwards", async () => {
         await expect(
           controller.connect(random).unPauseAnyone()
@@ -772,11 +772,11 @@ describe("Controller", function () {
         ).to.be.revertedWith("Ownable: caller is not the owner");
       });
       it("Should shutdown the system at a price that it will go insolvent", async () => {
-        const ethPrice = ethers.utils.parseUnits(settlementPrice)
+        const ethPrice = settlementPrice
         await oracle.connect(random).setPrice(ethUSDPool.address , ethPrice) // eth per 1 squeeth
         await controller.connect(owner).pauseAndShutDown()
-        const snapshot = await controller.shutDownEthPriceSnapshot();
-        expect(snapshot.toString()).to.be.eq(ethPrice)
+        const snapshot = await controller.indexForSettlement();
+        expect(snapshot.toString()).to.be.eq(ethPrice.div(oracleScaleFactor))
         expect(await controller.isShutDown()).to.be.true;
         expect(await controller.isSystemPaused()).to.be.true;
       });
@@ -797,10 +797,12 @@ describe("Controller", function () {
       });
       it("should accept donation from random address", async() => {
         const settleAmount = await squeeth.totalSupply()
-        const expectedPayout = settleAmount.mul(normalizationFactor).mul(settlementPrice).div(BigNumber.from(10).pow(18))
+        const expectedPayout = settleAmount.mul(normalizationFactor).mul(settlementPrice).div(one).div(one)
         const controllerEthBalance = await provider.getBalance(controller.address)
-        const ethNeeded =  expectedPayout.sub(controllerEthBalance)  
-        await controller.connect(random).donate({value: ethNeeded})
+        const donorBalance = await provider.getBalance(random.address)
+        const ethNeeded = expectedPayout.sub(controllerEthBalance) 
+        const donateAmount = donorBalance.gt(ethNeeded) ?  ethNeeded : donorBalance 
+        await controller.connect(random).donate({value: donateAmount, gasPrice: 0})
       })
       it("should be able to redeem long value for seller2", async () => {
         const controllerEthBefore = await provider.getBalance(controller.address)
@@ -809,7 +811,7 @@ describe("Controller", function () {
         await controller.connect(seller2).redeemLong(redeemAmount, {gasPrice: 0})
         
         // this test works because ES doesn't apply funding, so normalizationFactor won't change after shutdown
-        const expectedPayout = redeemAmount.mul(normalizationFactor).mul(settlementPrice).div(BigNumber.from(10).pow(18))
+        const expectedPayout = redeemAmount.mul(normalizationFactor).mul(settlementPrice).div(one).div(one).div(oracleScaleFactor)
         const sellerEthAfter = await provider.getBalance(seller2.address)
         const controllerEthAfter = await provider.getBalance(controller.address)
         const squeethBalanceAfter = await squeeth.balanceOf(seller2.address)
@@ -824,7 +826,7 @@ describe("Controller", function () {
         await controller.connect(seller3).redeemLong(redeemAmount, {gasPrice: 0})
         
         // this test works because ES doesn't apply funding, so normalizationFactor won't change after shutdown
-        const expectedPayout = redeemAmount.mul(normalizationFactor).mul(settlementPrice).div(BigNumber.from(10).pow(18))
+        const expectedPayout = redeemAmount.mul(normalizationFactor).mul(settlementPrice).div(one).div(one).div(oracleScaleFactor)
         const sellerEthAfter = await provider.getBalance(seller3.address)
         const controllerEthAfter = await provider.getBalance(controller.address)
         const squeethBalanceAfter = await squeeth.balanceOf(seller3.address)
@@ -837,7 +839,7 @@ describe("Controller", function () {
     describe('Settlement: redeemShort', async() => {
       // stimulated LP deposits
       const ethLiquidityAmount = ethers.utils.parseUnits('30')
-      const squeethLiquidityAmount = ethers.utils.parseUnits('0.01')
+      const squeethLiquidityAmount = ethers.utils.parseUnits('100')
       let currentTick: string
 
       before('set LP token properties', async() => {
@@ -881,7 +883,7 @@ describe("Controller", function () {
 
       it('should revert when a random user is trying to redeem', async() => {
         await expect(
-          controller.connect(random).redeemShort(seller3VaultId)
+          controller.connect(random).redeemShort(seller3VaultId, {gasPrice: 0})
         ).to.be.revertedWith('not allowed')
       })
 
@@ -893,7 +895,7 @@ describe("Controller", function () {
         await controller.connect(seller3).redeemShort(seller3VaultId, {gasPrice: 0})
         const vaultAfter = await controller.vaults(seller3VaultId)
         
-        const squeethDebt = seller3TotalSqueeth.mul(normalizationFactor).mul(settlementPrice).div(BigNumber.from(10).pow(18))
+        const squeethDebt = seller3TotalSqueeth.mul(normalizationFactor).mul(settlementPrice).div(one).div(one).div(oracleScaleFactor)
         const shortPayout = vaultBefore.collateralAmount.sub(squeethDebt)
         const sellerEthAfter = await provider.getBalance(seller3.address)
         const controllerEthAfter = await provider.getBalance(controller.address)
@@ -911,7 +913,7 @@ describe("Controller", function () {
         await controller.connect(seller5).redeemShort(seller5VaultId, {gasPrice: 0})
         const vaultAfter = await controller.vaults(seller5VaultId)
         
-        const squeethDebt = vaultBefore.shortAmount.sub(nftWSqueethAmount).mul(normalizationFactor).mul(settlementPrice).div(BigNumber.from(10).pow(18))
+        const squeethDebt = vaultBefore.shortAmount.sub(nftWSqueethAmount).mul(normalizationFactor).mul(settlementPrice).div(oracleScaleFactor).div(one).div(one)
         const shortPayout = vaultBefore.collateralAmount.add(nftEthAmount).sub(squeethDebt)
         const sellerEthAfter = await provider.getBalance(seller5.address)
 
