@@ -35,3 +35,14 @@ export type Vault = {
   shortAmount: BigNumber
   operator: string
 }
+
+export enum PositionType {
+  NONE = 'None',
+  LONG = 'Long',
+  SHORT = 'Short',
+}
+
+export enum TradeType {
+  LONG,
+  SHORT,
+}

@@ -1,32 +1,17 @@
-import { Button, ButtonGroup, createStyles, Fade, makeStyles, Modal, Tab, Tabs } from '@material-ui/core'
+import { createStyles, Fade, makeStyles, Modal } from '@material-ui/core'
 import Backdrop from '@material-ui/core/Backdrop'
 import React from 'react'
 import { useMemo, useState } from 'react'
 
+import { useTrade } from '../../context/trade'
 import { useWallet } from '../../context/wallet'
 import { useLongPositions, useShortPositions } from '../../hooks/usePositions'
+import { TradeType } from '../../types'
 import { toTokenAmount } from '../../utils/calculations'
 import { SecondaryTab, SecondaryTabs } from '../Tabs'
 import History from './History'
 import Long from './Long'
 import Short from './Short'
-
-enum TradeType {
-  BUY,
-  SELL,
-}
-
-type TradeProps = {
-  setTradeType: (arg0: TradeType) => void
-  tradeType: TradeType
-  setAmount: (arg0: number) => void
-  amount: number
-  setCost: (arg0: number) => void
-  cost: number
-  setSqueethExposure: (arg0: number) => void
-  squeethExposure: number
-  showLongTab: boolean
-}
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -46,27 +31,16 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const Trade: React.FC<TradeProps> = ({
-  setTradeType,
-  tradeType,
-  setAmount,
-  amount,
-  setCost,
-  cost,
-  setSqueethExposure,
-  squeethExposure,
-  showLongTab,
-}) => {
-  // const [tradeType, setTradeType] = useState(TradeType.BUY)
+const Trade: React.FC = () => {
   const [modelOpen, setModelOpen] = useState(false)
-  const [openPosition, setOpenPosition] = useState(0)
   const classes = useStyles()
   const { balance } = useWallet()
   const { squeethAmount: lngAmt } = useLongPositions()
   const { squeethAmount: shrtAmt } = useShortPositions()
+  const { tradeType, openPosition, setOpenPosition } = useTrade()
 
   const showOpenCloseTabs = useMemo(() => {
-    return (tradeType === TradeType.BUY && shrtAmt.isZero()) || (tradeType === TradeType.SELL && lngAmt.isZero())
+    return (tradeType === TradeType.LONG && shrtAmt.isZero()) || (tradeType === TradeType.SHORT && lngAmt.isZero())
   }, [tradeType, lngAmt.toNumber(), shrtAmt.toNumber()])
 
   return (
@@ -84,57 +58,33 @@ const Trade: React.FC<TradeProps> = ({
         </SecondaryTabs>
       ) : null}
       <div>
-        {tradeType === TradeType.BUY ? (
+        {tradeType === TradeType.LONG ? (
           shrtAmt.isZero() ? (
             <Long
-              amount={amount}
-              setAmount={setAmount}
-              cost={cost}
-              setCost={setCost}
-              squeethExposure={squeethExposure}
-              setSqueethExposure={setSqueethExposure}
               balance={Number(toTokenAmount(balance, 18).toFixed(4))}
-              open={showLongTab || openPosition === 0}
-              newVersion={!showLongTab}
+              open={openPosition === 0}
               closeTitle="Close squeeth position and redeem ETH"
             />
           ) : (
             <Short
               balance={Number(toTokenAmount(balance, 18).toFixed(4))}
               open={false}
-              newVersion={!showLongTab}
               closeTitle="You already have short position, close it to open a long position"
             />
           )
         ) : lngAmt.isZero() ? (
           <Short
             balance={Number(toTokenAmount(balance, 18).toFixed(4))}
-            open={showLongTab || openPosition === 0}
-            newVersion={!showLongTab}
+            open={openPosition === 0}
             closeTitle="Buy back and close position"
           />
         ) : (
           <Long
-            amount={amount}
-            setAmount={setAmount}
-            cost={cost}
-            setCost={setCost}
-            squeethExposure={squeethExposure}
-            setSqueethExposure={setSqueethExposure}
             balance={Number(toTokenAmount(balance, 18).toFixed(4))}
             open={false}
-            newVersion={!showLongTab}
             closeTitle="You already have long position, close it to open short position"
           />
         )}
-        {/* <Button
-          color="primary"
-          size="small"
-          style={{ marginTop: '4px', background: 'none' }}
-          onClick={() => setModelOpen(true)}
-        >
-          Transaction history
-        </Button> */}
         <Modal
           aria-labelledby="enable-notification"
           open={modelOpen}

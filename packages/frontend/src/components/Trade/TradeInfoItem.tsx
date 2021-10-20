@@ -11,7 +11,7 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(1),
       justifyContent: 'space-between',
       alignItems: 'center',
-      width: '300px',
+      width: '100%',
       marginRight: 'auto',
       marginLeft: 'auto',
     },
@@ -49,13 +49,14 @@ const useStyles = makeStyles((theme) =>
 
 type tradeType = {
   value?: string | number
-  unit: string
+  unit?: string
+  frontUnit?: string
   label: string
   tooltip?: React.ReactNode
   color?: 'primary' | 'red' | 'green'
 }
 
-const TradeInfoItem: React.FC<tradeType> = ({ value, unit, label, tooltip, color }) => {
+const TradeInfoItem: React.FC<tradeType> = ({ value, unit, frontUnit, label, tooltip, color }) => {
   const classes = useStyles()
   const clrClass = useMemo(() => {
     if (color === 'primary') return classes.primary
@@ -75,6 +76,9 @@ const TradeInfoItem: React.FC<tradeType> = ({ value, unit, label, tooltip, color
         ) : null}
       </Typography>
       <div>
+        <Typography component="span" variant="caption" className={classes.txUnit}>
+          {frontUnit}
+        </Typography>
         <Typography component="span" style={{ marginLeft: '8px', fontSize: '.9rem' }} className={clrClass}>
           {value}
         </Typography>

@@ -1,11 +1,11 @@
-import { Backdrop, Button, CircularProgress, Fade, Modal } from '@material-ui/core'
+import { CircularProgress } from '@material-ui/core'
 import { createStyles, Divider, InputAdornment, makeStyles, TextField, Tooltip, Typography } from '@material-ui/core'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { Vaults } from '../../constants'
 import { UNI_POOL_FEES } from '../../constants'
+import { useTrade } from '../../context/trade'
 import { useWallet } from '../../context/wallet'
 import { useWorldContext } from '../../context/world'
 import { useController } from '../../hooks/contracts/useController'
@@ -14,13 +14,12 @@ import { useSqueethPool } from '../../hooks/contracts/useSqueethPool'
 import { useVaultManager } from '../../hooks/contracts/useVaultManager'
 import { useAddresses } from '../../hooks/useAddress'
 import { useETHPrice } from '../../hooks/useETHPrice'
-import { useETHPriceCharts } from '../../hooks/useETHPriceCharts'
 import { useShortPositions } from '../../hooks/usePositions'
-import { toTokenAmount } from '../../utils/calculations'
-import { ErrorButton, PrimaryButton } from '../Buttons'
+import { PrimaryButton } from '../Buttons'
 import CollatRange from '../CollatRange'
 import { PrimaryInput } from '../Inputs'
 import TradeInfoItem from './TradeInfoItem'
+import UniswapData from './UniswapData'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -41,7 +40,7 @@ const useStyles = makeStyles((theme) =>
       paddingBottom: theme.spacing(8),
     },
     amountInput: {
-      marginTop: theme.spacing(4),
+      marginTop: theme.spacing(1),
     },
     thirdHeading: {
       marginTop: theme.spacing(2),
@@ -114,58 +113,39 @@ const useStyles = makeStyles((theme) =>
 type SellType = {
   balance: number
   open: boolean
-  newVersion: boolean
   closeTitle: string
 }
 
-const Sell: React.FC<SellType> = ({ balance, open, newVersion, closeTitle }) => {
-  const [amount, setAmount] = useState(1)
+const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   const [collateral, setCollateral] = useState(1)
   const [collatPercent, setCollatPercent] = useState(200)
   const [existingCollatPercent, setExistingCollatPercent] = useState(0)
   const [vaultId, setVaultId] = useState(0)
   const [isVaultApproved, setIsVaultApproved] = useState(true)
-  const [quote, setQuote] = useState({
-    amountOut: new BigNumber(0),
-    minimumAmountOut: new BigNumber(0),
-    priceImpact: '0',
-  })
-  const [buyQuote, setBuyQuote] = useState({
-    amountIn: new BigNumber(0),
-    maximumAmountIn: new BigNumber(0),
-    priceImpact: '0',
-  })
   const [shortLoading, setShortLoading] = useState(false)
   const [buyLoading, setBuyLoading] = useState(false)
-  const [closeAmount, setCloseAmount] = useState(1)
   const [withdrawCollat, setWithdrawCollat] = useState(new BigNumber(0))
-  const [modelOpen, setModelOpen] = useState(false)
 
   const classes = useStyles()
   const { openShort, closeShort } = useShortHelper()
-  const { getSellQuote, ready, getBuyQuote, getWSqueethPositionValue } = useSqueethPool()
-  const {
-    updateOperator,
-    normFactor: normalizationFactor,
-    fundingPerDay,
-    getShortAmountFromDebt,
-    getDebtAmount,
-  } = useController()
+  const { getWSqueethPositionValue } = useSqueethPool()
+  const { updateOperator, normFactor: normalizationFactor, getShortAmountFromDebt, getDebtAmount } = useController()
   const { shortHelper } = useAddresses()
   const { vaults: shortVaults } = useVaultManager(5)
-  const { squeethAmount, wethAmount, usdAmount } = useShortPositions()
+  const { squeethAmount } = useShortPositions()
   const ethPrice = useETHPrice()
   const { selectWallet, connected } = useWallet()
+  const { tradeAmount: amount, setTradeAmount: setAmount, quote, sellCloseQuote } = useTrade()
 
   const liqPrice = useMemo(() => {
     const rSqueeth = normalizationFactor.multipliedBy(amount).dividedBy(10000)
-    // console.log(amount, rSqueeth.toNumber(), normalizationFactor.toNumber())
+
     return collateral / rSqueeth.multipliedBy(1.5).toNumber()
   }, [amount, collatPercent, collateral, normalizationFactor.toNumber()])
 
   useEffect(() => {
-    if (!open && squeethAmount.lt(closeAmount)) {
-      setCloseAmount(squeethAmount.toNumber())
+    if (!open && squeethAmount.lt(amount)) {
+      setAmount(squeethAmount.toNumber())
     }
   }, [squeethAmount.toNumber(), open])
 
@@ -184,11 +164,6 @@ const Sell: React.FC<SellType> = ({ balance, open, newVersion, closeTitle }) => 
   }, [collatPercent, collateral, normalizationFactor.toNumber()])
 
   useEffect(() => {
-    if (!ready) return
-    getSellQuote(amount).then((val) => setQuote(val))
-  }, [amount, ready])
-
-  useEffect(() => {
     if (!vaultId) {
       return
     }
@@ -200,12 +175,6 @@ const Sell: React.FC<SellType> = ({ balance, open, newVersion, closeTitle }) => 
       }
     })
   }, [vaultId])
-
-  useEffect(() => {
-    if (!ready) return
-
-    getBuyQuote(closeAmount).then(setBuyQuote)
-  }, [closeAmount, ready])
 
   useEffect(() => {
     if (!vaultId) return
@@ -231,13 +200,13 @@ const Sell: React.FC<SellType> = ({ balance, open, newVersion, closeTitle }) => 
   useEffect(() => {
     if (shortVaults.length) {
       const _collat: BigNumber = shortVaults[0].collateralAmount
-      const restOfShort = new BigNumber(shortVaults[0].shortAmount).minus(closeAmount)
+      const restOfShort = new BigNumber(shortVaults[0].shortAmount).minus(amount)
       getDebtAmount(new BigNumber(restOfShort)).then((debt) => {
         const neededCollat = debt.times(collatPercent / 100)
         setWithdrawCollat(_collat.minus(neededCollat))
       })
     }
-  }, [closeAmount, collatPercent, shortVaults])
+  }, [amount, collatPercent, shortVaults])
 
   const buyBackAndClose = useCallback(async () => {
     setBuyLoading(true)
@@ -247,17 +216,17 @@ const Sell: React.FC<SellType> = ({ balance, open, newVersion, closeTitle }) => 
         setIsVaultApproved(true)
       } else {
         const _collat: BigNumber = shortVaults[0].collateralAmount
-        const restOfShort = new BigNumber(shortVaults[0].shortAmount).minus(closeAmount)
+        const restOfShort = new BigNumber(shortVaults[0].shortAmount).minus(amount)
         const _debt: BigNumber = await getDebtAmount(new BigNumber(restOfShort))
         const neededCollat = _debt.times(collatPercent / 100)
-        await closeShort(vaultId, new BigNumber(closeAmount), _collat.minus(neededCollat))
+        await closeShort(vaultId, new BigNumber(amount), _collat.minus(neededCollat))
       }
     } catch (e) {
       console.log(e)
     }
     setBuyLoading(false)
   }, [
-    closeAmount,
+    amount,
     closeShort,
     collatPercent,
     getDebtAmount,
@@ -268,15 +237,13 @@ const Sell: React.FC<SellType> = ({ balance, open, newVersion, closeTitle }) => 
     vaultId,
   ])
 
-  const { volMultiplier: globalVMultiplier, setCollatRatio } = useWorldContext()
-
-  const { accFunding } = useETHPriceCharts(1, globalVMultiplier)
+  const { setCollatRatio } = useWorldContext()
 
   const { openError, closeError } = useMemo(() => {
     let openError = null
     let closeError = null
 
-    if (squeethAmount.lt(closeAmount)) {
+    if (squeethAmount.lt(amount)) {
       closeError = 'Close amount exceeds position'
     }
     if (amount > balance) {
@@ -284,7 +251,7 @@ const Sell: React.FC<SellType> = ({ balance, open, newVersion, closeTitle }) => 
     }
 
     return { openError, closeError }
-  }, [amount, balance, squeethAmount.toNumber(), closeAmount])
+  }, [amount, balance, squeethAmount.toNumber(), amount])
 
   useEffect(() => {
     setCollatRatio(collatPercent / 100)
@@ -298,19 +265,17 @@ const Sell: React.FC<SellType> = ({ balance, open, newVersion, closeTitle }) => 
         </Typography>
         <div className={classes.thirdHeading}>
           <PrimaryInput
-            value={closeAmount}
-            onChange={(v) => setCloseAmount(Number(v))}
+            value={amount}
+            onChange={(v) => setAmount(Number(v))}
             label="Amount"
-            tooltip="Amount of wSQTH to buy"
+            tooltip="Amount of oSQTH to buy"
             actionTxt="Max"
-            onActionClicked={() => setCloseAmount(Number(squeethAmount))}
-            unit="wSQTH"
+            onActionClicked={() => setAmount(Number(squeethAmount))}
+            unit="oSQTH"
             error={!!closeError}
-            convertedValue={getWSqueethPositionValue(closeAmount).toFixed(2).toLocaleString()}
+            convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
             hint={
-              squeethAmount.lt(closeAmount)
-                ? 'Close amount exceeds position'
-                : `Position ${squeethAmount.toFixed(6)} wSQTH`
+              squeethAmount.lt(amount) ? 'Close amount exceeds position' : `Position ${squeethAmount.toFixed(6)} oSQTH`
             }
           />
         </div>
@@ -330,9 +295,6 @@ const Sell: React.FC<SellType> = ({ balance, open, newVersion, closeTitle }) => 
               endAdornment: (
                 <InputAdornment position="end">
                   <Typography variant="caption">%</Typography>
-                  {/* <Tooltip title="If 200% you will get 1 wSqueeth for 2 ETH " style={{ marginLeft: '4px' }}>
-                    <InfoOutlinedIcon fontSize="small" />
-                  </Tooltip> */}
                 </InputAdornment>
               ),
             }}
@@ -343,31 +305,36 @@ const Sell: React.FC<SellType> = ({ balance, open, newVersion, closeTitle }) => 
         <div className={classes.squeethExp}>
           <div>
             <Typography variant="caption">Spend</Typography>
-            <Typography className={classes.squeethExpTxt}>{buyQuote.amountIn.toFixed(6)}</Typography>
+            <Typography className={classes.squeethExpTxt}>{sellCloseQuote.amountIn.toFixed(6)}</Typography>
           </div>
           <div>
             <Typography variant="caption">
-              ${Number(ethPrice.times(buyQuote.amountIn).toFixed(2)).toLocaleString()}
+              ${Number(ethPrice.times(sellCloseQuote.amountIn).toFixed(2)).toLocaleString()}
             </Typography>
             <Typography className={classes.squeethExpTxt}>ETH</Typography>
           </div>
         </div>
-        <TradeInfoItem
-          label="Collateral you redeem"
-          value={withdrawCollat.isPositive() ? withdrawCollat.toFixed(4) : 0}
-          unit="ETH"
-        />
-        <TradeInfoItem
-          label="Current Collateral ratio"
-          value={existingCollatPercent}
-          unit="%"
-          tooltip={'Collateral ratio for current short position'}
-        />
-        <Divider className={classes.divider} />
-        <TradeInfoItem label="Slippage Tolerance" value="0.5" unit="%" />
-        <TradeInfoItem label="Price Impact" value={buyQuote.priceImpact} unit="%" />
-        <TradeInfoItem label="Minimum to send" value={buyQuote.maximumAmountIn.toFixed(4)} unit="ETH" />
-        <TradeInfoItem label="Liquidity Provider Fee" value={UNI_POOL_FEES / 1000000} unit="ETH" />
+        <div className={classes.divider}>
+          <TradeInfoItem
+            label="Collateral you redeem"
+            value={withdrawCollat.isPositive() ? withdrawCollat.toFixed(4) : 0}
+            unit="ETH"
+          />
+          <TradeInfoItem
+            label="Current Collateral ratio"
+            value={existingCollatPercent}
+            unit="%"
+            tooltip={'Collateral ratio for current short position'}
+          />
+          <div style={{ marginTop: '10px' }}>
+            <UniswapData
+              slippage="0.5"
+              priceImpact={sellCloseQuote.priceImpact}
+              minReceived={sellCloseQuote.maximumAmountIn.toFixed(4)}
+              minReceivedUnit="ETH"
+            />
+          </div>
+        </div>
 
         {!connected ? (
           <PrimaryButton
@@ -383,7 +350,7 @@ const Sell: React.FC<SellType> = ({ balance, open, newVersion, closeTitle }) => 
           <PrimaryButton
             onClick={buyBackAndClose}
             className={classes.amountInput}
-            disabled={shortLoading || collatPercent < 150 || !!closeError}
+            disabled={buyLoading || collatPercent < 150 || !!closeError}
             variant="contained"
             style={{ width: '300px' }}
           >
@@ -405,33 +372,35 @@ const Sell: React.FC<SellType> = ({ balance, open, newVersion, closeTitle }) => 
           </PrimaryButton>
         )}
         <Typography variant="caption" className={classes.caption} component="div">
-          Trades on Uniswap 🦄
+          Trades on Uniswap V3 🦄
         </Typography>
       </div>
     )
   }, [
-    buyBackAndClose,
-    buyLoading,
-    buyQuote.amountIn,
-    buyQuote.maximumAmountIn,
-    buyQuote.priceImpact,
-    classes.amountInput,
-    classes.caption,
-    classes.divider,
+    classes.thirdHeading,
     classes.squeethExp,
     classes.squeethExpTxt,
-    classes.thirdHeading,
-    closeAmount,
-    collatPercent,
-    connected,
-    ethPrice,
-    isVaultApproved,
-    selectWallet,
-    shortLoading,
-    squeethAmount,
-    withdrawCollat,
+    classes.divider,
+    classes.amountInput,
+    classes.caption,
+    closeTitle,
+    amount,
+    closeError,
     getWSqueethPositionValue,
+    squeethAmount,
+    collatPercent,
+    sellCloseQuote.amountIn,
+    sellCloseQuote.priceImpact,
+    sellCloseQuote.maximumAmountIn,
+    ethPrice,
+    withdrawCollat,
     existingCollatPercent,
+    connected,
+    selectWallet,
+    buyLoading,
+    buyBackAndClose,
+    isVaultApproved,
+    setAmount,
   ])
 
   if (!open) {
@@ -473,9 +442,6 @@ const Sell: React.FC<SellType> = ({ balance, open, newVersion, closeTitle }) => 
             endAdornment: (
               <InputAdornment position="end">
                 <Typography variant="caption">%</Typography>
-                {/* <Tooltip title="If 200% you will get 1 wSqueeth for 2 ETH " style={{ marginLeft: '4px' }}>
-                  <InfoOutlinedIcon fontSize="small" />
-                </Tooltip> */}
               </InputAdornment>
             ),
           }}
@@ -492,32 +458,37 @@ const Sell: React.FC<SellType> = ({ balance, open, newVersion, closeTitle }) => 
           <Typography variant="caption">
             ${Number(getWSqueethPositionValue(amount).toFixed(2)).toLocaleString()}
           </Typography>
-          <Typography className={classes.squeethExpTxt}>wSQTH</Typography>
+          <Typography className={classes.squeethExpTxt}>oSQTH</Typography>
         </div>
       </div>
-      <TradeInfoItem
-        label="Liquidation Price"
-        value={liqPrice.toFixed(2)}
-        unit="USDC"
-        tooltip="Price of ETH when liquidation occurs"
-      />
-      <TradeInfoItem
-        label="Initial Premium"
-        value={quote.amountOut.toFixed(4)}
-        unit="ETH"
-        tooltip={'Initial payment you get for selling squeeth on Uniswap'}
-      />
-      <TradeInfoItem
-        label="Current Collateral ratio"
-        value={existingCollatPercent}
-        unit="%"
-        tooltip={'Collateral ratio for current short position'}
-      />
-      <Divider className={classes.divider} />
-      <TradeInfoItem label="Slippage tolerance" value="0.5" unit="%" />
-      <TradeInfoItem label="Price Impact" value={quote.priceImpact} unit="%" />
-      <TradeInfoItem label="Minimum received" value={quote.minimumAmountOut.toFixed(4)} unit="ETH" />
-      <TradeInfoItem label="Liquidity Provider Fee" value={UNI_POOL_FEES / 1000000} unit="ETH" />
+      <div className={classes.divider}>
+        <TradeInfoItem
+          label="Liquidation Price"
+          value={liqPrice.toFixed(2)}
+          unit="USDC"
+          tooltip="Price of ETH when liquidation occurs"
+        />
+        <TradeInfoItem
+          label="Initial Premium"
+          value={quote.amountOut.toFixed(4)}
+          unit="ETH"
+          tooltip={'Initial payment you get for selling squeeth on Uniswap'}
+        />
+        <TradeInfoItem
+          label="Current Collateral ratio"
+          value={existingCollatPercent}
+          unit="%"
+          tooltip={'Collateral ratio for current short position'}
+        />
+        <div style={{ marginTop: '10px' }}>
+          <UniswapData
+            slippage="0.5"
+            priceImpact={quote.priceImpact}
+            minReceived={quote.minimumAmountOut.toFixed(6)}
+            minReceivedUnit="oSQTH"
+          />
+        </div>
+      </div>
 
       {!connected ? (
         <PrimaryButton
@@ -557,33 +528,6 @@ const Sell: React.FC<SellType> = ({ balance, open, newVersion, closeTitle }) => 
       <Typography variant="caption" className={classes.caption} component="div">
         Trades on Uniswap 🦄
       </Typography>
-      {!newVersion ? (
-        <>
-          <div className={classes.closePosition}>
-            <Typography className={classes.caption} color="primary">
-              Current position: {squeethAmount.toFixed(6)}
-            </Typography>
-            <Button className={classes.closeBtn} onClick={() => setModelOpen(true)}>
-              close
-            </Button>
-          </div>
-          <Modal
-            aria-labelledby="enable-notification"
-            open={modelOpen}
-            className={classes.modal}
-            onClose={() => setModelOpen(false)}
-            closeAfterTransition
-            BackdropComponent={Backdrop}
-            BackdropProps={{
-              timeout: 500,
-            }}
-          >
-            <Fade in={modelOpen}>
-              <div className={classes.paper}>{ClosePosition}</div>
-            </Fade>
-          </Modal>
-        </>
-      ) : null}
     </div>
   )
 }

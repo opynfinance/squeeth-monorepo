@@ -1,11 +1,12 @@
 import { useQuery } from '@apollo/client'
 import BigNumber from 'bignumber.js'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { useWallet } from '../context/wallet'
 import { useWorldContext } from '../context/world'
 import { swaps, swapsVariables } from '../queries/uniswap/__generated__/swaps'
 import SWAPS_QUERY from '../queries/uniswap/swapsQuery'
+import { PositionType } from '../types'
 import { useSqueethPool } from './contracts/useSqueethPool'
 import { useAddresses } from './useAddress'
 import { useETHPrice } from './useETHPrice'
@@ -118,6 +119,14 @@ export const usePnL = () => {
   const [longGain, setLongGain] = useState(0)
   const [shortGain, setShortGain] = useState(0)
 
+  const positionType = useMemo(() => {
+    if (wSqueethBal.isGreaterThan(0)) return PositionType.LONG
+    if (shortSqueethAmt.isGreaterThan(0)) return PositionType.SHORT
+    else return PositionType.NONE
+  }, [wSqueethBal.toNumber(), shortSqueethAmt.toNumber()])
+
+  //console.log(positionType)
+
   useEffect(() => {
     if (!ready) return
 
@@ -148,5 +157,10 @@ export const usePnL = () => {
     shortGain,
     buyQuote,
     sellQuote,
+    longUsdAmt,
+    shortUsdAmt,
+    wSqueethBal,
+    shortSqueethAmt,
+    positionType,
   }
 }

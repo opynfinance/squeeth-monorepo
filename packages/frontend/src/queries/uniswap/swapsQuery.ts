@@ -15,6 +15,7 @@ export const SWAPS_QUERY = gql`
       origin
       transaction {
         id
+        blockNumber
       }
     }
   }

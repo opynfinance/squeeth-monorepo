@@ -10,6 +10,7 @@
 export interface swaps_swaps_transaction {
   __typename: "Transaction";
   id: string;
+  blockNumber: any;
 }
 
 export interface swaps_swaps {

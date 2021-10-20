@@ -72,7 +72,7 @@ const History: React.FC = () => {
                   : classes.red
               }
             >
-              {tx.squeethAmount.toFixed(8)}&nbsp; WSQTH
+              {tx.squeethAmount.toFixed(8)}&nbsp; oSQTH
             </Typography>
             <Typography variant="caption" color="textSecondary">
               ${tx.squeethAmount.times(ethPrice).times(ethPrice).div(10000).times(normalizationFactor).toFixed(2)}

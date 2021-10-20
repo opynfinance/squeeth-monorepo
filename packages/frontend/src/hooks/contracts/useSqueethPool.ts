@@ -120,7 +120,6 @@ export const useSqueethPool = () => {
       unlocked: slot[6],
     }
 
-    console.log(PoolState)
     return PoolState
   }
 

@@ -47,7 +47,7 @@ export default function Positions() {
   const classes = useStyles()
   const { wethAmount: longWethAmt, squeethAmount: wSqueethBal } = useLongPositions()
   const { wethAmount: shortWethAmt, squeethAmount: shortSqueethAmt } = useShortPositions()
-  const { longGain, shortGain, buyQuote, sellQuote } = usePnL()
+  const { longGain, shortGain, buyQuote, sellQuote, longUsdAmt, shortUsdAmt } = usePnL()
   const ethPrice = useETHPrice()
 
   return (
@@ -66,37 +66,61 @@ export default function Positions() {
           <div className={classes.position}>
             <Typography>Long Squeeth</Typography>
             <div>
-              <Typography variant="body1">{wSqueethBal.toFixed(8)}&nbsp; WSQTH</Typography>
-              <Typography variant="body2" color="textSecondary">
-                {longWethAmt.toFixed(4)} &nbsp; WETH
+              <Typography variant="caption" component="span" color="textSecondary">
+                Position
               </Typography>
+              <Typography variant="body1">{wSqueethBal.toFixed(8)}&nbsp; oSQTH</Typography>
+              <Typography variant="body2" color="textSecondary">
+                ${sellQuote.amountOut.times(ethPrice).toFixed(2)}
+              </Typography>
+              {/* <Typography variant="body2" color="textSecondary">
+                {longWethAmt.toFixed(4)} &nbsp; WETH
+              </Typography> */}
             </div>
             <div>
+              <Typography variant="caption" color="textSecondary">
+                Unrealized P&L
+              </Typography>
               <Typography variant="body1" className={longGain < 0 ? classes.red : classes.green}>
                 {(longGain || 0).toFixed(2)}%
               </Typography>
-              <Typography variant="body2" color="textSecondary">
-                ${sellQuote.amountOut.times(ethPrice).toFixed(4)}
+              <Typography variant="caption" className={longGain < 0 ? classes.red : classes.green}>
+                ${sellQuote.amountOut.times(ethPrice).minus(longUsdAmt.abs()).toFixed(2)}
               </Typography>
+              {/* <Typography variant="body2" color="textSecondary">
+                ${sellQuote.amountOut.times(ethPrice).toFixed(4)}
+              </Typography> */}
             </div>
           </div>
         ) : null}
-        {shortSqueethAmt.isPositive() ? (
+        {shortSqueethAmt.isGreaterThan(0) ? (
           <div className={classes.position}>
             <Typography>Short Squeeth</Typography>
             <div>
-              <Typography variant="body1">{shortSqueethAmt.toFixed(8)}&nbsp; WSQTH</Typography>
-              <Typography variant="body2" color="textSecondary">
-                {shortWethAmt.toFixed(4)} &nbsp; WETH
+              <Typography variant="caption" component="span" color="textSecondary">
+                Position
               </Typography>
+              <Typography variant="body1">{shortSqueethAmt.toFixed(8)}&nbsp; oSQTH</Typography>
+              <Typography variant="body2" color="textSecondary">
+                ${buyQuote.times(ethPrice).toFixed(2)}
+              </Typography>
+              {/* <Typography variant="body2" color="textSecondary">
+                {shortWethAmt.toFixed(4)} &nbsp; WETH
+              </Typography> */}
             </div>
             <div>
+              <Typography variant="caption" color="textSecondary">
+                Unrealized P&L
+              </Typography>
               <Typography variant="body1" className={shortGain < 0 ? classes.red : classes.green}>
                 {(shortGain || 0).toFixed(2)}%
               </Typography>
-              <Typography variant="body2" color="textSecondary">
-                ${buyQuote.times(ethPrice).toFixed(4)}
+              <Typography variant="caption" className={longGain < 0 ? classes.red : classes.green}>
+                ${buyQuote.times(ethPrice).minus(shortUsdAmt.abs()).toFixed(2)}
               </Typography>
+              {/* <Typography variant="body2" color="textSecondary">
+                ${buyQuote.times(ethPrice).toFixed(4)}
+              </Typography> */}
             </div>
           </div>
         ) : null}
