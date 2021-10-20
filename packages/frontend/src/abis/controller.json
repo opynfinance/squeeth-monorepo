@@ -42,9 +42,9 @@
       },
       {
         "indexed": false,
-        "internalType": "uint128",
+        "internalType": "uint256",
         "name": "amount",
-        "type": "uint128"
+        "type": "uint256"
       },
       {
         "indexed": false,
@@ -73,6 +73,44 @@
       }
     ],
     "name": "DepositUniPositionToken",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "oldFee",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newFee",
+        "type": "uint256"
+      }
+    ],
+    "name": "FeeRateUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "oldFeeRecipient",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "newFeeRecipient",
+        "type": "address"
+      }
+    ],
+    "name": "FeeRecipientUpdated",
     "type": "event"
   },
   {
@@ -255,6 +293,35 @@
       },
       {
         "internalType": "uint256",
+        "name": "_powerPerpAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_withdrawAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "burnPowerPerpAmount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_vaultId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
         "name": "_wPowerPerpAmount",
         "type": "uint256"
       },
@@ -264,7 +331,7 @@
         "type": "uint256"
       }
     ],
-    "name": "burn",
+    "name": "burnWPowerPerpAmount",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -323,6 +390,32 @@
   {
     "inputs": [],
     "name": "ethDaiPool",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "feeRate",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "feeRecipient",
     "outputs": [
       {
         "internalType": "address",
@@ -446,6 +539,25 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_vaultId",
+        "type": "uint256"
+      }
+    ],
+    "name": "isVaultSafe",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "isWethToken0",
     "outputs": [
@@ -504,7 +616,7 @@
       },
       {
         "internalType": "uint128",
-        "name": "_rPowerPerpAmount",
+        "name": "_powerPerpAmount",
         "type": "uint128"
       },
       {
@@ -513,13 +625,42 @@
         "type": "uint256"
       }
     ],
-    "name": "mint",
+    "name": "mintPowerPerpAmount",
     "outputs": [
       {
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
       },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_vaultId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint128",
+        "name": "_wPowerPerpAmount",
+        "type": "uint128"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_uniTokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "mintWPowerPerpAmount",
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "",
@@ -628,6 +769,32 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_newFeeRate",
+        "type": "uint256"
+      }
+    ],
+    "name": "setFeeRate",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_newFeeRecipient",
+        "type": "address"
+      }
+    ],
+    "name": "setFeeRecipient",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "shutDown",
     "outputs": [],
@@ -720,19 +887,19 @@
         "type": "address"
       },
       {
-        "internalType": "uint256",
+        "internalType": "uint32",
         "name": "NftCollateralId",
-        "type": "uint256"
+        "type": "uint32"
       },
       {
-        "internalType": "uint256",
+        "internalType": "uint96",
         "name": "collateralAmount",
-        "type": "uint256"
+        "type": "uint96"
       },
       {
-        "internalType": "uint256",
+        "internalType": "uint128",
         "name": "shortAmount",
-        "type": "uint256"
+        "type": "uint128"
       }
     ],
     "stateMutability": "view",

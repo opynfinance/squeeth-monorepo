@@ -4,11 +4,6 @@ import { useEffect, useState } from 'react'
 
 import Nav from '../src/components/Nav'
 import History from '../src/components/Trade/History'
-import { WSQUEETH_DECIMALS } from '../src/constants'
-import { useController } from '../src/hooks/contracts/useController'
-import { useSqueethPool } from '../src/hooks/contracts/useSqueethPool'
-import { useTokenBalance } from '../src/hooks/contracts/useTokenBalance'
-import { useAddresses } from '../src/hooks/useAddress'
 import { useETHPrice } from '../src/hooks/useETHPrice'
 import { useLongPositions, usePnL, useShortPositions } from '../src/hooks/usePositions'
 

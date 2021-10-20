@@ -16,6 +16,7 @@ import {
 } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json'
 import { Controller, Oracle, VaultNFTManager, WETH9, WSqueeth, MockErc20, INonfungiblePositionManager } from "../typechain";
 import { convertToken0PriceToSqrtX96Price, convertToken1PriceToSqrtX96Price } from "./calculator";
+import { getNow } from './utils'
 
 export const deployWETHAndDai = async() => {
   const MockErc20Contract = await ethers.getContractFactory("MockErc20");
@@ -217,7 +218,7 @@ export const addSqueethLiquidity = async(
       amount0Min: 1,
       amount1Min: 1,
       recipient: deployer,// address
-      deadline: Math.floor(Date.now() / 1000 + 86400),// uint256
+      deadline: Math.floor(await getNow(ethers.provider) + 8640000),// uint256
     }
 
     const tx = await (positionManager as INonfungiblePositionManager).mint(mintParam)
@@ -268,7 +269,7 @@ export const addWethDaiLiquidity = async(
       amount0Min: 1,
       amount1Min: 1,
       recipient: deployer,// address
-      deadline: Math.floor(Date.now() / 1000 + 86400),// uint256
+      deadline: Math.floor(await getNow(ethers.provider) + 8640000),// uint256
     }
 
     const tx = await (positionManager as INonfungiblePositionManager).mint(mintParam)
@@ -286,7 +287,7 @@ export const removeAllLiquidity = async(tokenId: number, positionManager: any) =
     liquidity,
     amount0Min: 0,
     amount1Min: 0,
-    deadline: Math.floor(Date.now() / 1000 + 86400)
+    deadline: Math.floor(await getNow(ethers.provider) + 8640000)
   }
   await (positionManager as INonfungiblePositionManager).decreaseLiquidity(burnParam)
 }

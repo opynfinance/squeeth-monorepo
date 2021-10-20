@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 
 import abi from '../../abis/controller.json'
-import { Vaults, WSQUEETH_DECIMALS } from '../../constants'
+import { INDEX_SCALE, Vaults, WSQUEETH_DECIMALS } from '../../constants'
 import { useWallet } from '../../context/wallet'
 import { Vault } from '../../types'
 import { fromTokenAmount, toTokenAmount } from '../../utils/calculations'
@@ -53,8 +53,8 @@ export const useController = () => {
   useEffect(() => {
     if (!contract) return
     //TODO: 3000 not a magic number
-    getMark(3000).then(setMark)
-    getIndex(3000).then(setIndex)
+    getMark(1).then(setMark)
+    getIndex(1).then(setIndex)
   }, [address, contract])
 
   useEffect(() => {
@@ -74,7 +74,7 @@ export const useController = () => {
 
     const _amount = fromTokenAmount(amount, 18)
     handleTransaction(
-      contract.methods.mint(vaultId, _amount.toString(), 0).send({
+      contract.methods.mintWPowerPerpAmount(vaultId, _amount.toString(), 0).send({
         from: address,
         value: _amount.multipliedBy(getMultiplier(vaultType)).multipliedBy(10000),
       }),
@@ -115,14 +115,14 @@ export const useController = () => {
     if (!contract) return new BigNumber(0)
 
     const indexPrice = await contract.methods.getIndex(period.toString()).call()
-    return new BigNumber(indexPrice)
+    return new BigNumber(indexPrice).times(INDEX_SCALE).times(INDEX_SCALE)
   }
 
   const getMark = async (period: number) => {
     if (!contract) return new BigNumber(0)
-
     const markPrice = await contract.methods.getDenormalizedMark(period.toString()).call()
-    return new BigNumber(markPrice)
+
+    return new BigNumber(markPrice).times(INDEX_SCALE).times(INDEX_SCALE)
   }
 
   const getFundingForDay = async () => {
@@ -145,7 +145,7 @@ export const useController = () => {
 
     const ethDaiPrice = await getTwapSafe(ethDaiPool, weth, dai, 3000)
     const _shortAmt = fromTokenAmount(shortAmount, WSQUEETH_DECIMALS)
-    const ethDebt = new BigNumber(_shortAmt).multipliedBy(normFactor).multipliedBy(ethDaiPrice)
+    const ethDebt = new BigNumber(_shortAmt).div(INDEX_SCALE).multipliedBy(normFactor).multipliedBy(ethDaiPrice)
     return toTokenAmount(ethDebt, 18)
   }
 
@@ -153,7 +153,7 @@ export const useController = () => {
     if (!contract) return new BigNumber(0)
 
     const ethDaiPrice = await getTwapSafe(ethDaiPool, weth, dai, 3000)
-    const shortAmount = fromTokenAmount(debtAmount, 18).div(normFactor).div(ethDaiPrice)
+    const shortAmount = fromTokenAmount(debtAmount, 18).times(INDEX_SCALE).div(normFactor).div(ethDaiPrice)
     return toTokenAmount(shortAmount.toFixed(0), WSQUEETH_DECIMALS)
   }
 

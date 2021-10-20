@@ -29,7 +29,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "_burnSqueethAmount",
+        "name": "_wPowerPerpAmount",
         "type": "uint256"
       },
       {
@@ -112,7 +112,7 @@
       },
       {
         "internalType": "uint128",
-        "name": "_shortSqueethAmount",
+        "name": "_powerPerpAmount",
         "type": "uint128"
       },
       {
@@ -205,19 +205,6 @@
     "outputs": [
       {
         "internalType": "contract IWETH9",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "wsqueeth",
-    "outputs": [
-      {
-        "internalType": "contract IWSqueeth",
         "name": "",
         "type": "address"
       }

@@ -14,9 +14,9 @@ const estimated1_5xTickDelta = 4020 // 1.0001 ^ 4020 ~= 1.5 this number need to 
   npx hardhat addSqueethLiquidity --network ropsten --wsqueeth-amount 0.0004 --collateral-amount 2 --base-price 3300 --range 2x
  */
 task("addSqueethLiquidity", "Add liquidity to wsqueeth pool")
-  .addParam('wsqueethAmount', 'amount of wsqueeth minting to add liquidity', '0.001', types.string)
+  .addParam('wsqueethAmount', 'amount of wsqueeth minting to add liquidity', '10', types.string)
   .addParam('collateralAmount', 'amount used as collateral to mint squeeth', '6', types.string)
-  .addParam('basePrice', 'estimated wsqueeth/weth price', 3000, types.int)
+  .addParam('basePrice', 'estimated wsqueeth/weth price', '0.3', types.string)
   .addParam('range', 'either full, 1.5x or 2x', '1.5x', types.string)
   .setAction(async ({
     wsqueethAmount,
@@ -44,7 +44,7 @@ task("addSqueethLiquidity", "Add liquidity to wsqueeth pool")
   const poolContract = await ethers.getContractAt("IUniswapV3Pool", poolAddr)
   const {tick} = await poolContract.slot0()
 
-  const squeethPriceInETH = basePrice
+  const squeethPriceInETH = parseFloat(basePrice)
 
   console.log(`estimated Squeeth Price in ETH: ${squeethPriceInETH}`)
   

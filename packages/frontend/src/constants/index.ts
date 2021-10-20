@@ -9,6 +9,6 @@ export const EtherscanPrefix = {
   421611: 'https://rinkeby-explorer.arbitrum.io/tx/',
   31337: '/',
 }
-
-export const WSQUEETH_DECIMALS = 14
+export const INDEX_SCALE = 10000
+export const WSQUEETH_DECIMALS = 18
 export const WETH_DECIMALS = 18

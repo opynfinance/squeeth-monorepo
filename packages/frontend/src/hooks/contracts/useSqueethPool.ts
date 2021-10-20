@@ -8,7 +8,7 @@ import { Contract } from 'web3-eth-contract'
 import quoterABI from '../../abis/quoter.json'
 import routerABI from '../../abis/swapRouter.json'
 import uniABI from '../../abis/uniswapPool.json'
-import { UNI_POOL_FEES, WSQUEETH_DECIMALS } from '../../constants'
+import { INDEX_SCALE, UNI_POOL_FEES, WSQUEETH_DECIMALS } from '../../constants'
 import { useWallet } from '../../context/wallet'
 import { fromTokenAmount, toTokenAmount } from '../../utils/calculations'
 import { useAddresses } from '../useAddress'
@@ -56,12 +56,13 @@ export const useSqueethPool = () => {
 
   useEffect(() => {
     if (!squeethToken?.address) return
+    const isWethToken0 = parseInt(weth, 16) < parseInt(wSqueeth, 16)
     getBuyQuoteForETH(1).then((val) => {
       setSqueethPrice(val.amountOut)
-      setSqueethInitialPrice(new BigNumber(squeethToken ? (pool?.token0Price.toSignificant(18) || 0) : (pool?.token1Price.toSignificant(18) || 0)))
+      setSqueethInitialPrice(new BigNumber(isWethToken0 ? (pool?.token0Price.toSignificant(18) || 0) : (pool?.token1Price.toSignificant(18) || 0)))
 
     }).catch(console.log)
-    const isWethToken0 = parseInt(weth, 16) < parseInt(wSqueeth, 16)
+    
     setReady(true)
     setWethPrice(toTokenAmount(new BigNumber(isWethToken0 ? (pool?.token1Price.toSignificant(18) || 0) : (pool?.token0Price.toSignificant(18) || 0)), 18))
   }, [squeethToken?.address, pool?.token1Price.toFixed(18)])

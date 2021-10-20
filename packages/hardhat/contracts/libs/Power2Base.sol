@@ -42,9 +42,9 @@ library Power2Base {
         uint256 _normalizationFactor
     ) internal view returns (uint256) {
         uint256 ethDaiPrice = _getScaledTwap(_oracle, _ethDaiPool, _weth, _dai, _period);
-        uint256 squeethEthPrice = _getTwap(_oracle, _wSqueethEthPool, address(_wsqueeth), _weth, _period);
+        uint256 wsqueethEthPrice = _getTwap(_oracle, _wSqueethEthPool, address(_wsqueeth), _weth, _period);
 
-        return squeethEthPrice.mul(ethDaiPrice).div(_normalizationFactor);
+        return wsqueethEthPrice.mul(ethDaiPrice).div(_normalizationFactor);
     }
 
     /**
