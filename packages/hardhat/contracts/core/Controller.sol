@@ -431,7 +431,7 @@ contract Controller is Initializable, Ownable {
      */
     function pause() external notShutdown notPaused onlyOwner {
         require(pausesLeft > 0, "paused too many times");
-        uint256 timeSinceDeploy = block.timestamp - deployTimestamp;
+        uint256 timeSinceDeploy = block.timestamp.sub(deployTimestamp);
         require(timeSinceDeploy < PAUSE_TIME_LIMIT, "pause time limit exceeded");
         isSystemPaused = true;
         pausesLeft -= 1;
@@ -964,7 +964,7 @@ contract Controller is Initializable, Ownable {
      * @return new normalization factor if funding happens in the current block.
      */
     function _getNewNormalizationFactor() internal view returns (uint256) {
-        uint32 period = uint32(block.timestamp - lastFundingUpdateTimestamp);
+        uint32 period = uint32(block.timestamp.sub(lastFundingUpdateTimestamp));
 
         // make sure we use the same period for mark and index, and this period won't cause revert.
         uint32 fairPeriod = _getFairPeriodForOracle(period);
