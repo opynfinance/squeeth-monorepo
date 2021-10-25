@@ -1,13 +1,43 @@
-import { TextField } from '@material-ui/core'
+import { createStyles, makeStyles, TextField, Typography } from '@material-ui/core'
 import Alert from '@material-ui/lab/Alert'
 import dynamic from 'next/dynamic'
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 
 import { graphOptions, Vaults } from '../../constants'
 import { useWorldContext } from '../../context/world'
+import { useETHPrice } from '../../hooks/useETHPrice'
 import IV from '../IV'
+import { SqueethTab, SqueethTabs } from '../Tabs'
+import ShortSqueethPayoff from './ShortSqueethPayoff'
 
 const Chart = dynamic(() => import('kaktana-react-lightweight-charts'), { ssr: false })
+
+const useStyles = makeStyles((theme) =>
+  createStyles({
+    navDiv: {
+      display: 'flex',
+      marginBottom: theme.spacing(2),
+      alignItems: 'center',
+    },
+    chartNav: {
+      border: `1px solid ${theme.palette.primary.main}30`,
+    },
+    cardDetail: {
+      color: theme.palette.text.secondary,
+      lineHeight: '1.75rem',
+      fontSize: '16px',
+      marginTop: theme.spacing(4),
+      maxWidth: '800px',
+    },
+    cardTitle: {
+      color: theme.palette.primary.main,
+      marginTop: theme.spacing(2),
+    },
+    header: {
+      color: theme.palette.primary.main,
+    },
+  }),
+)
 
 export function VaultChart({
   vault,
@@ -29,9 +59,14 @@ export function VaultChart({
     shortEthPNL,
     getStableYieldPNL,
     shortSeries,
+    collatRatio,
   } = useWorldContext()
 
+  const ethPrice = useETHPrice()
+
   const seriesRebalance = getVaultPNLWithRebalance(longAmount)
+  const classes = useStyles()
+  const [chartType, setChartType] = useState(0)
 
   const startTimestamp = useMemo(() => (seriesRebalance.length > 0 ? seriesRebalance[0].time : 0), [seriesRebalance])
   const endTimestamp = useMemo(
@@ -113,29 +148,72 @@ export function VaultChart({
 
   return (
     <div>
-      {seriesRebalance.length === 0 && <Alert severity="info"> Loading historical data, this could take a while</Alert>}
-      <Chart
-        from={Math.floor(startTimestamp)}
-        to={endTimestamp}
-        // legend={`${vault} PNL`}
-        options={chartOptions}
-        lineSeries={showPercentage ? lineSeriesPercentage : lineSeries}
-        autoWidth
-        height={300}
-        darkTheme
-      />
-      <br />
-      <div style={{ marginBottom: '16px' }}>
+      <div className={classes.navDiv}>
+        <SqueethTabs
+          style={{ background: 'transparent' }}
+          className={classes.chartNav}
+          value={chartType}
+          onChange={(evt, val) => setChartType(val)}
+          aria-label="Sub nav tabs"
+        >
+          <SqueethTab label={`Predicted ${days}D PNL`} />
+          <SqueethTab label="Payoff" />
+          <SqueethTab label="Details" />
+        </SqueethTabs>
         <TextField
           onChange={(event) => setDays(parseInt(event.target.value))}
           size="small"
           value={days}
           type="number"
-          style={{ width: 300 }}
+          style={{ width: 150, marginLeft: '16px' }}
           label="Historical Days"
           variant="outlined"
         />
       </div>
+      {seriesRebalance.length === 0 && <Alert severity="info"> Loading historical data, this could take a while</Alert>}
+      {chartType === 0 ? (
+        <Chart
+          from={Math.floor(startTimestamp)}
+          to={endTimestamp}
+          // legend={`${vault} PNL`}
+          options={chartOptions}
+          lineSeries={showPercentage ? lineSeriesPercentage : lineSeries}
+          autoWidth
+          height={300}
+          darkTheme
+        />
+      ) : chartType === 1 ? (
+        <ShortSqueethPayoff ethPrice={ethPrice.toNumber()} collatRatio={collatRatio} />
+      ) : (
+        <div style={{ overflow: 'auto', maxHeight: '300px' }}>
+          <Typography className={classes.cardTitle} variant="h6">
+            What is short squeeth?
+          </Typography>
+          <Typography variant="body2" className={classes.cardDetail}>
+            Short squeeth (ETH&sup2;) is short an ETH&sup2; position. You earn a funding rate for taking on this
+            position. You enter the position by putting down collateral, minting, and selling squeeth. If you become
+            undercollateralized, you could be liquidated.{' '}
+            <a
+              className={classes.header}
+              href="https://opynopyn.notion.site/Squeeth-FAQ-4b6a054ab011454cbbd60cb3ee23a37c"
+            >
+              {' '}
+              Learn more.{' '}
+            </a>
+          </Typography>
+          <Typography className={classes.cardTitle} variant="h6">
+            Risks
+          </Typography>
+          <Typography variant="body2" className={classes.cardDetail}>
+            If you fall below the minimum collateralization threshold (150%), you are at risk of liquidation. If ETH
+            moves approximately 6% in either direction, you are unprofitable.
+            <br /> <br />
+            Squeeth smart contracts are currently unaudited. This is experimental technology and we encourage caution
+            only risking funds you can afford to lose.
+          </Typography>
+        </div>
+      )}
+      <br />
       {/* <IV /> */}
       {vault === Vaults.Custom && (
         <TextField

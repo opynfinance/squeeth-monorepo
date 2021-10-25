@@ -1,7 +1,8 @@
-import { Grid, Tooltip } from '@material-ui/core'
+import { Accordion, AccordionDetails, AccordionSummary, Grid, Tooltip } from '@material-ui/core'
 import Card from '@material-ui/core/Card'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Typography from '@material-ui/core/Typography'
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import { useEffect, useState } from 'react'
 
@@ -13,14 +14,14 @@ import Nav from '../src/components/Nav'
 import PositionCard from '../src/components/PositionCard'
 import { SqueethTab, SqueethTabs } from '../src/components/Tabs'
 import Trade from '../src/components/Trade'
+import TradeInfoItem from '../src/components/Trade/TradeInfoItem'
 import { Vaults } from '../src/constants'
-import { TradeProvider } from '../src/context/trade'
+import { TradeProvider, useTrade } from '../src/context/trade'
 import { useWorldContext } from '../src/context/world'
 import { useController } from '../src/hooks/contracts/useController'
-import { useSqueethPool } from '../src/hooks/contracts/useSqueethPool'
 import { useETHPrice } from '../src/hooks/useETHPrice'
 import { useETHPriceCharts } from '../src/hooks/useETHPriceCharts'
-import { useLongPositions, usePnL, useShortPositions } from '../src/hooks/usePositions'
+import { TradeType } from '../src/types'
 import { toTokenAmount } from '../src/utils/calculations'
 
 const useStyles = makeStyles((theme) =>
@@ -32,7 +33,8 @@ const useStyles = makeStyles((theme) =>
       width: '50vw',
     },
     grid: {
-      padding: theme.spacing(8, 0),
+      padding: theme.spacing(4, 0),
+      paddingBottom: theme.spacing(5),
     },
     mainGrid: {
       maxWidth: '50%',
@@ -84,7 +86,6 @@ const useStyles = makeStyles((theme) =>
     innerCard: {
       textAlign: 'center',
       paddingBottom: theme.spacing(4),
-      marginTop: theme.spacing(3),
       background: theme.palette.background.lightStone,
     },
     expand: {
@@ -102,7 +103,13 @@ const useStyles = makeStyles((theme) =>
     squeethInfo: {
       display: 'flex',
       marginTop: theme.spacing(4),
-      marginBottom: theme.spacing(4),
+    },
+    squeethInfoSubGroup: {
+      display: 'flex',
+      marginBottom: theme.spacing(8),
+    },
+    subGroupHeader: {
+      marginBottom: theme.spacing(1),
     },
     infoIcon: {
       fontSize: '14px',
@@ -141,32 +148,40 @@ const useStyles = makeStyles((theme) =>
       marginRight: theme.spacing(4),
       fontSize: '16px',
     },
+    pi: {
+      marginLeft: theme.spacing(2),
+    },
+    container: {
+      // border: `1px solid ${theme.palette.background.stone}`,
+      borderRadius: theme.spacing(1),
+    },
+    accordionRoot: {
+      backgroundColor: 'transparent',
+      // borderRadius: theme.spacing(4),
+      boxShadow: 'none',
+      padding: theme.spacing(0),
+    },
+    accordionExpanded: {
+      minHeight: '0px',
+    },
+    detailsRoot: {
+      padding: theme.spacing(0, 2, 2, 2),
+    },
   }),
 )
 
-enum TradeType {
-  BUY,
-  SELL,
-}
-
-function Home() {
+function TradePage() {
   const classes = useStyles()
-  const [leverage, setLeverage] = useState(4)
-  const [amount, setAmount] = useState(1)
   const [cost, setCost] = useState(0)
   const [squeethExposure, setSqueethExposure] = useState(0)
-  const [tradeType, setTradeType] = useState(TradeType.BUY)
   const [customLong, setCustomLong] = useState(0)
   const ethPrice = useETHPrice()
-  const { normFactor: normalizationFactor, fundingPerDay, mark, index } = useController()
-  const { squeethAmount: lngAmt } = useLongPositions()
-  const { squeethAmount: shrtAmt } = useShortPositions()
-  const { getWSqueethPositionValue } = useSqueethPool()
-  const { longGain, shortGain } = usePnL()
+  const { fundingPerDay, mark, index } = useController()
 
   const { volMultiplier: globalVolMultiplier, collatRatio } = useWorldContext()
-  // use hook because we only calculate accFunding based on 24 hour performance
   const { setVolMultiplier } = useETHPriceCharts(1, globalVolMultiplier)
+  const { tradeType, setTradeType } = useTrade()
+  const [expanded, setExpanded] = useState(false)
 
   useEffect(() => {
     setVolMultiplier(globalVolMultiplier)
@@ -175,41 +190,75 @@ function Home() {
   const SqueethInfo = () => {
     return (
       <div className={classes.squeethInfo}>
-        <div className={classes.infoItem}>
-          <Typography color="textSecondary" variant="body2">
-            ETH Price
-          </Typography>
-          <Typography>${ethPrice.toNumber().toLocaleString()}</Typography>
-        </div>
-        <div className={classes.infoItem}>
-          <div className={classes.infoLabel}>
-            <Typography color="textSecondary" variant="body2">
-              Implied 24h Funding
-            </Typography>
-            <Tooltip
-              title={'Estimated amount of funding paid in next 24 hours. Funding will happen out of your position.'}
-            >
-              <InfoIcon fontSize="small" className={classes.infoIcon} />
-            </Tooltip>
+        <div>
+          <div className={classes.squeethInfoSubGroup}>
+            <div className={classes.infoItem}>
+              <Typography color="textSecondary" variant="body2">
+                ETH Price
+              </Typography>
+              <Typography>${ethPrice.toNumber().toLocaleString()}</Typography>
+            </div>
+
+            <div className={classes.infoItem}>
+              <div className={classes.infoLabel}>
+                <Typography color="textSecondary" variant="body2">
+                  Implied 24h Funding
+                </Typography>
+                <Tooltip
+                  title={'Estimated amount of funding paid in next 24 hours. Funding will happen out of your position.'}
+                >
+                  <InfoIcon fontSize="small" className={classes.infoIcon} />
+                </Tooltip>
+              </div>
+              <Typography>{(fundingPerDay * 100).toFixed(2)}%</Typography>
+            </div>
+
+            <div className={classes.infoItem}>
+              <div className={classes.infoLabel}>
+                <Typography color="textSecondary" variant="body2">
+                  Funding Frequency
+                </Typography>
+                <Tooltip title={'Funding happens every time the contract is touched'}>
+                  <InfoIcon fontSize="small" className={classes.infoIcon} />
+                </Tooltip>
+              </div>
+              <Typography>Variable</Typography>
+            </div>
           </div>
-          <Typography>{(fundingPerDay * 100).toFixed(2)}%</Typography>
         </div>
-        <div className={classes.infoItem}>
-          <div className={classes.infoLabel}>
-            <Typography color="textSecondary" variant="body2">
-              ETH&sup2; Price
-            </Typography>
+
+        <div>
+          <div className={classes.squeethInfoSubGroup}>
+            <div className={classes.container}>
+              <Accordion
+                classes={{ root: classes.accordionRoot, expanded: classes.accordionExpanded }}
+                square={false}
+                onChange={(_, e) => setExpanded(e)}
+                expanded={expanded}
+              >
+                <AccordionSummary aria-controls="panel1a-content" id="panel1a-header">
+                  <Typography color="textSecondary" variant="body2">
+                    Advanced Details
+                  </Typography>
+                  <ExpandMoreIcon />
+                </AccordionSummary>
+                <AccordionDetails classes={{ root: classes.detailsRoot }}>
+                  <div style={{ width: '100%' }}>
+                    <TradeInfoItem
+                      label="Index Price"
+                      value={Number(toTokenAmount(index, 18).toFixed(2)).toLocaleString()}
+                      frontUnit="$"
+                    />
+                    <TradeInfoItem
+                      label="Mark Price"
+                      value={Number(toTokenAmount(mark, 18).toFixed(2)).toLocaleString()}
+                      frontUnit="$"
+                    />
+                  </div>
+                </AccordionDetails>
+              </Accordion>
+            </div>
           </div>
-          {/* <Typography>${Number(ethPrice.multipliedBy(ethPrice).toFixed(2)).toLocaleString()}</Typography> */}
-          <Typography>${Number(toTokenAmount(index, 18).toFixed(2)).toLocaleString()}</Typography>
-        </div>
-        <div className={classes.infoItem}>
-          <div className={classes.infoLabel}>
-            <Typography color="textSecondary" variant="body2">
-              Mark Price
-            </Typography>
-          </div>
-          <Typography>${Number(toTokenAmount(mark, 18).toFixed(2)).toLocaleString()}</Typography>
         </div>
       </div>
     )
@@ -230,7 +279,7 @@ function Home() {
         </SqueethTabs>
       </div>
 
-      {tradeType === TradeType.BUY ? (
+      {tradeType === TradeType.LONG ? (
         //long side
         <Grid container className={classes.grid}>
           <Grid item xs={1} />
@@ -240,6 +289,7 @@ function Home() {
               Perpetual leverage without liquidations
             </Typography>
             <SqueethInfo />
+            <PositionCard />
             <Typography className={classes.cardTitle} variant="h6">
               Historical Predicted Performance
             </Typography>
@@ -276,7 +326,6 @@ function Home() {
           </Grid>
           <Grid item xs={1} />
           <Grid item xs={4} className={classes.ticketGrid}>
-            <PositionCard big />
             <Card className={classes.innerCard}>
               <Trade />
             </Card>
@@ -296,6 +345,7 @@ function Home() {
               Earn funding for selling ETH&sup2;
             </Typography>
             <SqueethInfo />
+            <PositionCard />
             <Typography className={classes.cardTitle} variant="h6">
               Historical Predicted Performance
             </Typography>
@@ -330,7 +380,6 @@ function Home() {
           </Grid>
           <Grid item xs={1} />
           <Grid item xs={3} className={classes.ticketGrid}>
-            <PositionCard big />
             <Card className={classes.innerCard}>
               <Trade />
             </Card>
@@ -348,7 +397,7 @@ function Home() {
 export default function App() {
   return (
     <TradeProvider>
-      <Home />
+      <TradePage />
     </TradeProvider>
   )
 }

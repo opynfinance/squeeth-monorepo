@@ -242,7 +242,7 @@ export function getSqueethLongPayOffGraph(ethPrice: number) {
 
   const getEthPrices = () => {
     let inc = 0
-    return Array(300)
+    return Array(400)
       .fill(0)
       .map((_, i) => {
         if (i === 0) return inc

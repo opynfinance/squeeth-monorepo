@@ -175,7 +175,7 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
               </>
             ) : null}
             <Typography color="textSecondary" component="span" variant="body2" className={classes.unit}>
-              wSQTH
+              oSQTH
             </Typography>
           </div>
           <Typography variant="caption" color="textSecondary">

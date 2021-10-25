@@ -14,7 +14,7 @@ import { useSqueethPool } from '../../hooks/contracts/useSqueethPool'
 import { useVaultManager } from '../../hooks/contracts/useVaultManager'
 import { useAddresses } from '../../hooks/useAddress'
 import { useETHPrice } from '../../hooks/useETHPrice'
-import { useShortPositions } from '../../hooks/usePositions'
+import { useLongPositions, useShortPositions } from '../../hooks/usePositions'
 import { PrimaryButton } from '../Buttons'
 import CollatRange from '../CollatRange'
 import { PrimaryInput } from '../Inputs'
@@ -117,9 +117,10 @@ type SellType = {
 }
 
 const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
-  const [collateral, setCollateral] = useState(1)
+  const [collateral, setCollateral] = useState(0)
   const [collatPercent, setCollatPercent] = useState(200)
   const [existingCollatPercent, setExistingCollatPercent] = useState(0)
+  const [existingCollat, setExistingCollat] = useState(0)
   const [vaultId, setVaultId] = useState(0)
   const [isVaultApproved, setIsVaultApproved] = useState(true)
   const [shortLoading, setShortLoading] = useState(false)
@@ -132,10 +133,11 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   const { updateOperator, normFactor: normalizationFactor, getShortAmountFromDebt, getDebtAmount } = useController()
   const { shortHelper } = useAddresses()
   const { vaults: shortVaults } = useVaultManager(5)
-  const { squeethAmount } = useShortPositions()
   const ethPrice = useETHPrice()
   const { selectWallet, connected } = useWallet()
   const { tradeAmount: amount, setTradeAmount: setAmount, quote, sellCloseQuote } = useTrade()
+  const { squeethAmount: lngAmt } = useLongPositions()
+  const { squeethAmount: shrtAmt } = useShortPositions()
 
   const liqPrice = useMemo(() => {
     const rSqueeth = normalizationFactor.multipliedBy(amount).dividedBy(10000)
@@ -144,10 +146,10 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   }, [amount, collatPercent, collateral, normalizationFactor.toNumber()])
 
   useEffect(() => {
-    if (!open && squeethAmount.lt(amount)) {
-      setAmount(squeethAmount.toNumber())
+    if (!open && shrtAmt.lt(amount)) {
+      setAmount(shrtAmt.toNumber())
     }
-  }, [squeethAmount.toNumber(), open])
+  }, [shrtAmt.toNumber(), open])
 
   useEffect(() => {
     if (!shortVaults.length) {
@@ -168,7 +170,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
       return
     }
 
-    getDebtAmount(squeethAmount).then((debt) => {
+    getDebtAmount(shrtAmt).then((debt) => {
       const _collat: BigNumber = shortVaults[0].collateralAmount
       if (debt && debt.isPositive()) {
         setExistingCollatPercent(Number(_collat.div(debt).times(100).toFixed(1)))
@@ -200,6 +202,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   useEffect(() => {
     if (shortVaults.length) {
       const _collat: BigNumber = shortVaults[0].collateralAmount
+      setExistingCollat(_collat.toNumber())
       const restOfShort = new BigNumber(shortVaults[0].shortAmount).minus(amount)
       getDebtAmount(new BigNumber(restOfShort)).then((debt) => {
         const neededCollat = debt.times(collatPercent / 100)
@@ -243,15 +246,17 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
     let openError = null
     let closeError = null
 
-    if (squeethAmount.lt(amount)) {
+    if (shrtAmt.lt(amount)) {
       closeError = 'Close amount exceeds position'
     }
     if (amount > balance) {
       openError = 'Insufficient ETH balance'
+    } else if (amount > 0 && collateral + existingCollat < 0.5) {
+      openError = 'Minimum collateral is 0.5 ETH'
     }
 
     return { openError, closeError }
-  }, [amount, balance, squeethAmount.toNumber(), amount])
+  }, [amount, balance, shrtAmt.toNumber(), amount])
 
   useEffect(() => {
     setCollatRatio(collatPercent / 100)
@@ -270,13 +275,11 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
             label="Amount"
             tooltip="Amount of oSQTH to buy"
             actionTxt="Max"
-            onActionClicked={() => setAmount(Number(squeethAmount))}
+            onActionClicked={() => setAmount(Number(shrtAmt))}
             unit="oSQTH"
             error={!!closeError}
             convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
-            hint={
-              squeethAmount.lt(amount) ? 'Close amount exceeds position' : `Position ${squeethAmount.toFixed(6)} oSQTH`
-            }
+            hint={shrtAmt.lt(amount) ? 'Close amount exceeds position' : `Position ${shrtAmt.toFixed(6)} oSQTH`}
           />
         </div>
         <div className={classes.thirdHeading}>
@@ -350,7 +353,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
           <PrimaryButton
             onClick={buyBackAndClose}
             className={classes.amountInput}
-            disabled={buyLoading || collatPercent < 150 || !!closeError}
+            disabled={buyLoading || collatPercent < 150 || !!closeError || lngAmt.gt(0) || shrtAmt.isZero()}
             variant="contained"
             style={{ width: '300px' }}
           >
@@ -387,7 +390,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
     amount,
     closeError,
     getWSqueethPositionValue,
-    squeethAmount,
+    shrtAmt,
     collatPercent,
     sellCloseQuote.amountIn,
     sellCloseQuote.priceImpact,
@@ -410,7 +413,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   return (
     <div>
       <Typography variant="caption" className={classes.thirdHeading} component="div">
-        Mint and sell Squeeth to receive premium
+        Mint and sell squeeth ERC20 to receive premium
       </Typography>
       <div className={classes.thirdHeading}>
         <PrimaryInput
@@ -504,7 +507,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
         <PrimaryButton
           onClick={depositAndShort}
           className={classes.amountInput}
-          disabled={shortLoading || collatPercent < 150 || !!openError}
+          disabled={shortLoading || collatPercent < 150 || !!openError || lngAmt.gt(0)}
           variant="contained"
           style={{ width: '300px' }}
         >

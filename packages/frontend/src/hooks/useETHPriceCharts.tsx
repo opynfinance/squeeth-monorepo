@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { getSqueethChartWithFunding } from '../utils/pricer'
 import { useAsyncMemo } from './useAsyncMemo'
 
-export function useETHPriceCharts(initDays = 180, initVolMultiplier = 1.2, initCollatRatio = 1.5) {
+export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initCollatRatio = 1.5) {
   const [volMultiplier, setVolMultiplier] = useState(initVolMultiplier)
   const [days, setDays] = useState(initDays)
   const [collatRatio, setCollatRatio] = useState(initCollatRatio)
@@ -140,7 +140,7 @@ export function useETHPriceCharts(initDays = 180, initVolMultiplier = 1.2, initC
           // n - 2mx = m * delta
           const newN = m * delta + 2 * x * m
           const buyAmount = newN - longAmount
-          const buyCost = buyAmount * price + Math.abs(buyAmount*price*UNISWAP_FEE) 
+          const buyCost = buyAmount * price + Math.abs(buyAmount * price * UNISWAP_FEE)
           //console.log(`Date ${new Date(time * 1000).toDateString()}, price ${price.toFixed(3)} Rebalance: short squeeth ${m.toFixed(4)}, desired ETH long ${newN.toFixed(4)}, buy ${buyAmount.toFixed(4)} more eth`)
 
           totalLongCost += buyCost

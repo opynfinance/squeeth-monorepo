@@ -177,8 +177,8 @@ const ShortSqueethPayoff: React.FC<{ ethPrice: number; collatRatio: number; vaul
   }, [labels, values0, values14, values28])
 
   return (
-    <div style={{ width: '350px', marginLeft: '-30px' }}>
-      <Line data={getData} type="line" height={375} width={380} options={chartOptions} />
+    <div style={{ width: '350px' }}>
+      <Line data={getData} type="line" height={300} width={380} options={chartOptions} />
     </div>
   )
 }

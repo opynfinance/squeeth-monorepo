@@ -7,7 +7,7 @@ export const SqueethTabs = withStyles((theme) => {
     root: {
       borderRadius: theme.spacing(1),
       background: theme.palette.background.lightStone,
-      padding: theme.spacing(1),
+      padding: theme.spacing(0.75),
     },
     indicator: {
       height: '100%',

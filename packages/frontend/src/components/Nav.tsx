@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import React from 'react'
 
-import logo from '../../public/images/logo.svg'
+// import logo from '../../public/images/logo.svg'
+import logo from '../../public/images/SqueethLogo.png'
 import WalletButton from './WalletButton'
 
 const useStyles = makeStyles((theme) =>
@@ -70,7 +71,7 @@ const Nav: React.FC = () => {
   return (
     <div className={classes.nav}>
       <div className={classes.logo}>
-        <Image src={logo} alt="logo" width={75} height={75} />
+        <Image src={logo} alt="logo" width={127} height={55} />
       </div>
       <div className={classes.navDiv}>
         <div style={{ display: 'flex' }}>

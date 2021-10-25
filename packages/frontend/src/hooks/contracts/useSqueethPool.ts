@@ -59,10 +59,10 @@ export const useSqueethPool = () => {
     const isWethToken0 = parseInt(weth, 16) < parseInt(wSqueeth, 16)
     getBuyQuoteForETH(1).then((val) => {
       setSqueethPrice(val.amountOut)
-      setSqueethInitialPrice(new BigNumber(isWethToken0 ? (pool?.token0Price.toSignificant(18) || 0) : (pool?.token1Price.toSignificant(18) || 0)))
+      setSqueethInitialPrice(new BigNumber(!isWethToken0 ? (pool?.token0Price.toSignificant(18) || 0) : (pool?.token1Price.toSignificant(18) || 0)))
 
     }).catch(console.log)
-    
+
     setReady(true)
     setWethPrice(toTokenAmount(new BigNumber(isWethToken0 ? (pool?.token1Price.toSignificant(18) || 0) : (pool?.token0Price.toSignificant(18) || 0)), 18))
   }, [squeethToken?.address, pool?.token1Price.toFixed(18)])

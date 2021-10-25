@@ -141,7 +141,8 @@ export const usePnL = () => {
       .times(100)
     const _gain = _currentValue.minus(100)
     setLongGain(_gain.toNumber())
-  }, [wSqueethBal.toNumber(), sellQuote.amountOut.toNumber(), ethPrice.toNumber(), longUsdAmt.toNumber()])
+  }, [ethPrice.toNumber(), longUsdAmt.toNumber(), sellQuote.amountOut.toNumber()])
+  // }, [wSqueethBal.toNumber(), sellQuote.amountOut.toNumber(), ethPrice.toNumber(), longUsdAmt.toNumber()])
 
   useEffect(() => {
     const _currentValue = buyQuote
@@ -150,7 +151,8 @@ export const usePnL = () => {
       .times(100)
     const _gain = _currentValue.minus(100)
     setShortGain(_gain.toNumber())
-  }, [shortSqueethAmt.toNumber(), buyQuote.toNumber(), ethPrice.toNumber(), shortUsdAmt.toNumber()])
+  }, [buyQuote.toNumber(), ethPrice.toNumber(), shortUsdAmt.toNumber()])
+  // }, [shortSqueethAmt.toNumber(), buyQuote.toNumber(), ethPrice.toNumber(), shortUsdAmt.toNumber()])
 
   return {
     longGain,

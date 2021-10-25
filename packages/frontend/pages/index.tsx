@@ -1,20 +1,20 @@
-import { Accordion, AccordionDetails, AccordionSummary, Grid, Tooltip } from '@material-ui/core'
+import { IconButton, Tooltip } from '@material-ui/core'
 import Card from '@material-ui/core/Card'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Typography from '@material-ui/core/Typography'
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
-import { useEffect, useState } from 'react'
+import ExpandLessIcon from '@material-ui/icons/NavigateBefore'
+import ExpandMoreIcon from '@material-ui/icons/NavigateNext'
+import Image from 'next/image'
+import { useCallback, useEffect, useState } from 'react'
 
+import squeethTokenSymbol from '../public/images/Squeeth.png'
 import { LongChart } from '../src/components/Charts/LongChart'
-import LongSqueethPayoff from '../src/components/Charts/LongSqueethPayoff'
-import ShortSqueethPayoff from '../src/components/Charts/ShortSqueethPayoff'
 import { VaultChart } from '../src/components/Charts/VaultChart'
 import Nav from '../src/components/Nav'
 import PositionCard from '../src/components/PositionCard'
 import { SqueethTab, SqueethTabs } from '../src/components/Tabs'
 import Trade from '../src/components/Trade'
-import TradeInfoItem from '../src/components/Trade/TradeInfoItem'
 import { Vaults } from '../src/constants'
 import { TradeProvider, useTrade } from '../src/context/trade'
 import { useWorldContext } from '../src/context/world'
@@ -29,32 +29,51 @@ const useStyles = makeStyles((theme) =>
     header: {
       color: theme.palette.primary.main,
     },
-    mainSection: {
-      width: '50vw',
+    container: {
+      display: 'flex',
+      height: 'calc(100vh - 64px)',
+      maxHeight: '1000px',
+      margin: '0 auto',
+      width: '95%',
+      maxWidth: '1400px',
     },
-    grid: {
-      padding: theme.spacing(4, 0),
-      paddingBottom: theme.spacing(5),
+    main: {
+      display: 'flex',
+      flexDirection: 'column',
+      marginRight: theme.spacing(3),
+      marginBottom: theme.spacing(3),
+      marginTop: theme.spacing(3),
+      flexGrow: 1,
     },
-    mainGrid: {
-      maxWidth: '50%',
+    ticket: {
+      width: '350px',
+      position: 'sticky',
+      margin: theme.spacing(3, 0, 3, 0),
+      textAlign: 'center',
+      borderRadius: theme.spacing(2),
+      top: '88px',
+      display: 'flex',
+      flexDirection: 'column',
     },
-    ticketGrid: {
-      maxWidth: '350px',
+    innerTicket: {
+      background: theme.palette.background.lightStone,
+      paddingBottom: theme.spacing(3),
+      overflow: 'auto',
+      flexGrow: 1,
     },
     subHeading: {
       color: theme.palette.text.secondary,
     },
     thirdHeading: {
-      marginTop: theme.spacing(2),
+      marginTop: theme.spacing(3),
     },
     buyCard: {
-      marginLeft: theme.spacing(2),
+      marginLeft: theme.spacing(3),
       width: '400px',
     },
     cardTitle: {
       color: theme.palette.primary.main,
-      marginTop: theme.spacing(4),
+      marginTop: theme.spacing(2),
     },
     cardSubTxt: {
       color: theme.palette.text.secondary,
@@ -73,15 +92,8 @@ const useStyles = makeStyles((theme) =>
       fontSize: '16px',
       marginTop: theme.spacing(4),
     },
-    cardDetail1: {
-      color: theme.palette.text.secondary,
-      lineHeight: '1.75rem',
-      fontSize: '16px',
-      marginTop: theme.spacing(4),
-      fontFamily: 'Open Sans',
-    },
     amountInput: {
-      marginTop: theme.spacing(4),
+      marginTop: theme.spacing(3),
     },
     innerCard: {
       textAlign: 'center',
@@ -101,12 +113,13 @@ const useStyles = makeStyles((theme) =>
       color: theme.palette.primary.main,
     },
     squeethInfo: {
-      display: 'flex',
-      marginTop: theme.spacing(4),
+      // make it fixed when advanced options are shown or hidden
+      minWidth: '58%',
     },
     squeethInfoSubGroup: {
       display: 'flex',
-      marginBottom: theme.spacing(8),
+      marginBottom: theme.spacing(2),
+      alignItems: 'center',
     },
     subGroupHeader: {
       marginBottom: theme.spacing(1),
@@ -116,27 +129,42 @@ const useStyles = makeStyles((theme) =>
       marginLeft: theme.spacing(0.5),
     },
     infoItem: {
-      marginRight: theme.spacing(4),
+      // minWidth: '22%',
+      paddingRight: theme.spacing(1.5),
+      //borderRight: `1px solid ${theme.palette.background.lightStone}`,
     },
     infoLabel: {
       display: 'flex',
       alignItems: 'center',
     },
     position: {
+      borderRadius: theme.spacing(2),
+      // position: 'sticky',
+      top: '88px',
+      // zIndex: 20,
+    },
+    positionContainer: {
       display: 'flex',
       marginTop: theme.spacing(1),
     },
-    positionToken: {
-      fontSize: '16px',
-      fontWeight: 600,
-      marginRight: theme.spacing(4),
+    logoContainer: {
+      display: 'flex',
     },
-    positionUSD: {
-      fontSize: '16px',
-      marginRight: theme.spacing(4),
+    logoTitle: {
+      marginLeft: theme.spacing(1),
+    },
+    positionH: {},
+    tradeDetails: {
+      flexGrow: 1,
+      marginTop: theme.spacing(3),
+      paddingLeft: theme.spacing(2),
+      paddingRight: theme.spacing(2),
+      paddingBottom: theme.spacing(3),
+      borderRadius: theme.spacing(1),
+      background: theme.palette.background.lightStone,
     },
     subNavTabs: {
-      marginTop: theme.spacing(4),
+      marginBottom: theme.spacing(3),
     },
     green: {
       color: theme.palette.success.main,
@@ -151,7 +179,7 @@ const useStyles = makeStyles((theme) =>
     pi: {
       marginLeft: theme.spacing(2),
     },
-    container: {
+    squeethContainer: {
       // border: `1px solid ${theme.palette.background.stone}`,
       borderRadius: theme.spacing(1),
     },
@@ -167,39 +195,40 @@ const useStyles = makeStyles((theme) =>
     detailsRoot: {
       padding: theme.spacing(0, 2, 2, 2),
     },
+    arrowBtn: {
+      borderRadius: theme.spacing(1),
+      marginLeft: theme.spacing(1),
+    },
   }),
 )
 
 function TradePage() {
   const classes = useStyles()
-  const [cost, setCost] = useState(0)
-  const [squeethExposure, setSqueethExposure] = useState(0)
-  const [customLong, setCustomLong] = useState(0)
   const ethPrice = useETHPrice()
-  const { fundingPerDay, mark, index } = useController()
+  const { fundingPerDay, mark, index, impliedVol } = useController()
 
-  const { volMultiplier: globalVolMultiplier, collatRatio } = useWorldContext()
+  const { volMultiplier: globalVolMultiplier } = useWorldContext()
   const { setVolMultiplier } = useETHPriceCharts(1, globalVolMultiplier)
-  const { tradeType, setTradeType } = useTrade()
-  const [expanded, setExpanded] = useState(false)
+  const { tradeType, setTradeType, actualTradeType } = useTrade()
+  const [showAdvanced, setShowAdvanced] = useState(false)
 
   useEffect(() => {
     setVolMultiplier(globalVolMultiplier)
   }, [globalVolMultiplier])
 
-  const SqueethInfo = () => {
+  const SqueethInfo = useCallback(() => {
     return (
       <div className={classes.squeethInfo}>
         <div>
           <div className={classes.squeethInfoSubGroup}>
-            <div className={classes.infoItem}>
+            {/* hard coded width layout to align with the next line */}
+            <div className={classes.infoItem} style={{ width: '18%' }}>
               <Typography color="textSecondary" variant="body2">
                 ETH Price
               </Typography>
               <Typography>${ethPrice.toNumber().toLocaleString()}</Typography>
             </div>
-
-            <div className={classes.infoItem}>
+            <div className={classes.infoItem} style={{ width: '30%' }}>
               <div className={classes.infoLabel}>
                 <Typography color="textSecondary" variant="body2">
                   Implied 24h Funding
@@ -212,184 +241,181 @@ function TradePage() {
               </div>
               <Typography>{(fundingPerDay * 100).toFixed(2)}%</Typography>
             </div>
-
-            <div className={classes.infoItem}>
+            <div className={classes.infoItem} style={{ width: '30%' }}>
               <div className={classes.infoLabel}>
                 <Typography color="textSecondary" variant="body2">
-                  Funding Frequency
+                  Funding Payments
                 </Typography>
                 <Tooltip title={'Funding happens every time the contract is touched'}>
                   <InfoIcon fontSize="small" className={classes.infoIcon} />
                 </Tooltip>
               </div>
-              <Typography>Variable</Typography>
+              <Typography>Continuous</Typography>
             </div>
+            <div className={classes.infoItem} style={{ width: '15%' }}></div>
+            <div className={classes.infoItem} style={{ width: '5%' }}></div>
           </div>
         </div>
-
         <div>
           <div className={classes.squeethInfoSubGroup}>
-            <div className={classes.container}>
-              <Accordion
-                classes={{ root: classes.accordionRoot, expanded: classes.accordionExpanded }}
-                square={false}
-                onChange={(_, e) => setExpanded(e)}
-                expanded={expanded}
-              >
-                <AccordionSummary aria-controls="panel1a-content" id="panel1a-header">
-                  <Typography color="textSecondary" variant="body2">
-                    Advanced Details
-                  </Typography>
-                  <ExpandMoreIcon />
-                </AccordionSummary>
-                <AccordionDetails classes={{ root: classes.detailsRoot }}>
-                  <div style={{ width: '100%' }}>
-                    <TradeInfoItem
-                      label="Index Price"
-                      value={Number(toTokenAmount(index, 18).toFixed(2)).toLocaleString()}
-                      frontUnit="$"
-                    />
-                    <TradeInfoItem
-                      label="Mark Price"
-                      value={Number(toTokenAmount(mark, 18).toFixed(2)).toLocaleString()}
-                      frontUnit="$"
-                    />
+            {/* hard coded width layout to align with the prev line */}
+            {!showAdvanced ? (
+              <>
+                <div className={classes.infoItem}>
+                  <div className={classes.infoLabel}>
+                    <Typography color="textSecondary" variant="body2">
+                      Advanced details
+                    </Typography>
                   </div>
-                </AccordionDetails>
-              </Accordion>
-            </div>
+                </div>
+                <IconButton className={classes.arrowBtn} onClick={() => setShowAdvanced(true)}>
+                  <ExpandMoreIcon />
+                </IconButton>
+              </>
+            ) : (
+              <>
+                <div className={classes.infoItem} style={{ width: '18%' }}>
+                  <div className={classes.infoLabel}>
+                    <Typography color="textSecondary" variant="body2">
+                      ETH&sup2; Price
+                    </Typography>
+                  </div>
+                  <Typography>${Number(toTokenAmount(index, 18).toFixed(0)).toLocaleString()}</Typography>
+                </div>
+                <div className={classes.infoItem} style={{ width: '30%' }}>
+                  <div className={classes.infoLabel}>
+                    <Typography color="textSecondary" variant="body2">
+                      Mark Price
+                    </Typography>
+                  </div>
+                  <Typography>${Number(toTokenAmount(mark, 18).toFixed(0)).toLocaleString()}</Typography>
+                </div>
+                <div className={classes.infoItem} style={{ width: '25%' }}>
+                  <div className={classes.infoLabel}>
+                    <Typography color="textSecondary" variant="body2">
+                      Implied Volatility
+                    </Typography>
+                  </div>
+                  <Typography>{(impliedVol * 100).toFixed(2)}%</Typography>
+                </div>
+                <div className={classes.infoItem} style={{ width: '15%' }}>
+                  <div className={classes.infoLabel}>
+                    <Typography color="textSecondary" variant="body2">
+                      Funding
+                    </Typography>
+                    <Tooltip
+                      title={
+                        actualTradeType === TradeType.LONG
+                          ? 'Funding is paid out of your position'
+                          : 'Funding is paid continuously to you from oSQTH token holders'
+                      }
+                    >
+                      <InfoIcon fontSize="small" className={classes.infoIcon} />
+                    </Tooltip>
+                  </div>
+                  <Typography>In-Kind</Typography>
+                </div>
+                <div className={classes.infoItem}>
+                  <IconButton className={classes.arrowBtn} onClick={() => setShowAdvanced(false)}>
+                    <ExpandLessIcon />
+                  </IconButton>
+                </div>
+                {/*  */}
+                {/* <div className={classes.infoItem}></div> */}
+              </>
+            )}
           </div>
         </div>
       </div>
     )
-  }
+  }, [
+    actualTradeType,
+    classes.infoIcon,
+    classes.infoItem,
+    classes.infoLabel,
+    classes.squeethInfo,
+    classes.squeethInfoSubGroup,
+    classes.arrowBtn,
+    ethPrice.toNumber(),
+    fundingPerDay,
+    showAdvanced,
+    impliedVol.toString(),
+    ethPrice.toString(),
+    mark.toString(),
+    index.toString(),
+  ])
 
   return (
     <div>
       <Nav />
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <SqueethTabs
-          value={tradeType}
-          onChange={(evt, val) => setTradeType(val)}
-          aria-label="Sub nav tabs"
-          className={classes.subNavTabs}
-        >
-          <SqueethTab label="Long" />
-          <SqueethTab label="Short" />
-        </SqueethTabs>
-      </div>
+      <div className={classes.container}>
+        <div className={classes.main}>
+          <div className={classes.position}>
+            {tradeType === TradeType.LONG ? (
+              <>
+                <div className={classes.logoContainer}>
+                  <Image src={squeethTokenSymbol} alt="squeeth token" width={37} height={37} />
+                  <Typography variant="h5" className={classes.logoTitle}>
+                    Long Squeeth - ETH&sup2; Position
+                  </Typography>
+                </div>
+                <Typography variant="body1" color="textSecondary">
+                  Perpetual leverage without liquidations
+                </Typography>
+              </>
+            ) : (
+              <>
+                <div className={classes.logoContainer}>
+                  <Image src={squeethTokenSymbol} alt="squeeth token" width={37} height={37} />
+                  <Typography variant="h5" className={classes.logoTitle}>
+                    Short Squeeth - short ETH&sup2; Position
+                  </Typography>
+                </div>
+                <Typography variant="body1" color="textSecondary">
+                  Earn funding for selling ETH&sup2;
+                </Typography>
+              </>
+            )}
+            <div className={classes.positionContainer}>
+              <SqueethInfo />
+              <PositionCard />
+            </div>
+          </div>
+          <div className={classes.tradeDetails}>
+            {tradeType === TradeType.LONG ? (
+              <>
+                <div className={classes.amountInput}>
+                  <LongChart />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className={classes.amountInput}>
+                  <VaultChart vault={Vaults.Short} longAmount={0} showPercentage={false} setCustomLong={() => null} />
+                </div>
+              </>
+            )}
+          </div>
+        </div>
 
-      {tradeType === TradeType.LONG ? (
-        //long side
-        <Grid container className={classes.grid}>
-          <Grid item xs={1} />
-          <Grid item xs={7} className={classes.mainGrid}>
-            <Typography variant="h5">Long Squeeth - ETH&sup2; Position</Typography>
-            <Typography variant="body1" color="textSecondary">
-              Perpetual leverage without liquidations
-            </Typography>
-            <SqueethInfo />
-            <PositionCard />
-            <Typography className={classes.cardTitle} variant="h6">
-              Historical Predicted Performance
-            </Typography>
-            <div className={classes.amountInput}>
-              <LongChart />
-            </div>
-            <Typography className={classes.cardTitle} variant="h6">
-              What is squeeth?
-            </Typography>
-            <Typography variant="body2" className={classes.cardDetail}>
-              Long squeeth (ETH&sup2;) gives you a leveraged position with unlimited upside, protected downside, and no
-              liquidations. Compared to a 2x leveraged position, you make more when ETH goes up and lose less when ETH
-              goes down. Eg. If ETH goes up 5x, squeeth goes up 25x. You pay a funding rate for this position. Enter the
-              position by purchasing an ERC20 token.{' '}
-              <a
-                className={classes.header}
-                href="https://opynopyn.notion.site/Squeeth-FAQ-4b6a054ab011454cbbd60cb3ee23a37c"
-              >
-                {' '}
-                Learn more.{' '}
-              </a>
-            </Typography>
-            <Typography className={classes.cardTitle} variant="h6">
-              Risks
-            </Typography>
-            <Typography variant="body2" className={classes.cardDetail1}>
-              Funding is paid out of your position, meaning you sell a small amount of squeeth at funding, reducing your
-              position size. Holding the position for a long period of time without upward movements in ETH can lose
-              considerable funds to funding payments.
-              <br /> <br />
-              Squeeth smart contracts are currently unaudited. This is experimental technology and we encourage caution
-              only risking funds you can afford to lose.
-            </Typography>
-          </Grid>
-          <Grid item xs={1} />
-          <Grid item xs={4} className={classes.ticketGrid}>
-            <Card className={classes.innerCard}>
-              <Trade />
-            </Card>
-            <Typography className={classes.thirdHeading} variant="h6">
-              Payoff
-            </Typography>
-            <LongSqueethPayoff ethPrice={ethPrice.toNumber()} />
-          </Grid>
-        </Grid>
-      ) : (
-        //short side
-        <Grid container className={classes.grid}>
-          <Grid item xs={1} />
-          <Grid item xs={7} className={classes.mainGrid}>
-            <Typography variant="h5">Short Squeeth - short ETH&sup2; Position</Typography>
-            <Typography variant="body1" color="textSecondary">
-              Earn funding for selling ETH&sup2;
-            </Typography>
-            <SqueethInfo />
-            <PositionCard />
-            <Typography className={classes.cardTitle} variant="h6">
-              Historical Predicted Performance
-            </Typography>
-            <div className={classes.amountInput}>
-              <VaultChart vault={Vaults.Short} longAmount={0} showPercentage={false} setCustomLong={setCustomLong} />
-            </div>
-            <Typography className={classes.cardTitle} variant="h6">
-              What is short squeeth?
-            </Typography>
-            <Typography variant="body2" className={classes.cardDetail}>
-              Short squeeth (ETH&sup2;) is short an ETH&sup2; position. You earn a funding rate for taking on this
-              position. You enter the position by putting down collateral, minting, and selling squeeth. If you become
-              undercollateralized, you could be liquidated.{' '}
-              <a
-                className={classes.header}
-                href="https://opynopyn.notion.site/Squeeth-FAQ-4b6a054ab011454cbbd60cb3ee23a37c"
-              >
-                {' '}
-                Learn more.{' '}
-              </a>
-            </Typography>
-            <Typography className={classes.cardTitle} variant="h6">
-              Risks
-            </Typography>
-            <Typography variant="body2" className={classes.cardDetail}>
-              If you fall below the minimum collateralization threshold (150%), you are at risk of liquidation. If ETH
-              moves approximately 6% in either direction, you are unprofitable.
-              <br /> <br />
-              Squeeth smart contracts are currently unaudited. This is experimental technology and we encourage caution
-              only risking funds you can afford to lose.
-            </Typography>
-          </Grid>
-          <Grid item xs={1} />
-          <Grid item xs={3} className={classes.ticketGrid}>
-            <Card className={classes.innerCard}>
-              <Trade />
-            </Card>
-            <Typography className={classes.thirdHeading} variant="h6">
-              Payoff
-            </Typography>
-            <ShortSqueethPayoff ethPrice={ethPrice.toNumber()} collatRatio={collatRatio} />
-          </Grid>
-        </Grid>
-      )}
+        <div className={classes.ticket}>
+          <div>
+            <SqueethTabs
+              value={tradeType}
+              onChange={(evt, val) => setTradeType(val)}
+              aria-label="Sub nav tabs"
+              className={classes.subNavTabs}
+              centered
+            >
+              <SqueethTab style={{ width: '50%' }} label="Long" />
+              <SqueethTab style={{ width: '50%' }} label="Short" />
+            </SqueethTabs>
+          </div>
+          <Card className={classes.innerTicket}>
+            <Trade />
+          </Card>
+        </div>
+      </div>
     </div>
   )
 }

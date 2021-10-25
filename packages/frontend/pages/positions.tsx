@@ -77,10 +77,10 @@ export default function Positions() {
                 Unrealized P&L
               </Typography>
               <Typography variant="body1" className={longGain < 0 ? classes.red : classes.green}>
-                {(longGain || 0).toFixed(2)}%
+                ${sellQuote.amountOut.times(ethPrice).minus(longUsdAmt.abs()).toFixed(2)}
               </Typography>
               <Typography variant="caption" className={longGain < 0 ? classes.red : classes.green}>
-                ${sellQuote.amountOut.times(ethPrice).minus(longUsdAmt.abs()).toFixed(2)}
+                {(longGain || 0).toFixed(2)}%
               </Typography>
               {/* <Typography variant="body2" color="textSecondary">
                 ${sellQuote.amountOut.times(ethPrice).toFixed(4)}
@@ -108,10 +108,10 @@ export default function Positions() {
                 Unrealized P&L
               </Typography>
               <Typography variant="body1" className={shortGain < 0 ? classes.red : classes.green}>
-                {(shortGain || 0).toFixed(2)}%
+                ${buyQuote.times(ethPrice).minus(shortUsdAmt.abs()).toFixed(2)}
               </Typography>
               <Typography variant="caption" className={longGain < 0 ? classes.red : classes.green}>
-                ${buyQuote.times(ethPrice).minus(shortUsdAmt.abs()).toFixed(2)}
+                {(shortGain || 0).toFixed(2)}%
               </Typography>
               {/* <Typography variant="body2" color="textSecondary">
                 ${buyQuote.times(ethPrice).toFixed(4)}

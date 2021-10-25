@@ -11,6 +11,7 @@ import { useSqueethPool } from '../../hooks/contracts/useSqueethPool'
 import { useTokenBalance } from '../../hooks/contracts/useTokenBalance'
 import { useAddresses } from '../../hooks/useAddress'
 import { useETHPrice } from '../../hooks/useETHPrice'
+import { useLongPositions, useShortPositions } from '../../hooks/usePositions'
 import { PrimaryButton } from '../Buttons'
 import { PrimaryInput } from '../Inputs'
 import TradeInfoItem from './TradeInfoItem'
@@ -170,6 +171,8 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(wSqueeth, swapRouter)
   const { selectWallet, connected } = useWallet()
   const ethPrice = useETHPrice()
+  const { squeethAmount: shrtAmt } = useShortPositions()
+  const { squeethAmount: lngAmt } = useLongPositions()
 
   useEffect(() => {
     if (!open && wSqueethBal.lt(amount)) {
@@ -269,7 +272,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
             variant="contained"
             onClick={sellAndClose}
             className={classes.amountInput}
-            disabled={!!sellLoading || !!closeError}
+            disabled={!!sellLoading || !!closeError || shrtAmt.gt(0) || lngAmt.isZero()}
             style={{ width: '300px' }}
           >
             {sellLoading ? (
@@ -316,7 +319,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
   return (
     <div>
       <Typography variant="caption" className={classes.thirdHeading} component="div">
-        Pay ETH to buy squeeth exposure
+        Pay ETH to buy squeeth ERC20
       </Typography>
       <div className={classes.thirdHeading} />
       <PrimaryInput
@@ -346,12 +349,14 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
         <TradeInfoItem
           label="Value if ETH up 2x"
           value={Number((squeethExposure * 4).toFixed(2)).toLocaleString()}
+          tooltip="The value of your position if ETH goes up 2x, not including funding"
           frontUnit="$"
         />
         {/* if ETH down 50%, squeeth down 75%, so multiply amount by 0.25 to get what would remain  */}
         <TradeInfoItem
           label="Value if ETH down 50%"
           value={Number((squeethExposure * 0.25).toFixed(2)).toLocaleString()}
+          tooltip="The value of your position if ETH goes down 50%, not including funding"
           frontUnit="$"
         />
         <div style={{ marginTop: '10px' }}>
@@ -383,7 +388,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
           variant="contained"
           onClick={transact}
           className={classes.amountInput}
-          disabled={!!buyLoading || !!openError}
+          disabled={!!buyLoading || !!openError || shrtAmt.gt(0)}
           style={{ width: '300px' }}
         >
           {buyLoading ? <CircularProgress color="primary" size="1.5rem" /> : 'Buy'}

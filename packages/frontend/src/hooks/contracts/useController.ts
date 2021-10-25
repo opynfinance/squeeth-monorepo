@@ -1,9 +1,10 @@
 import BigNumber from 'bignumber.js'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 
 import abi from '../../abis/controller.json'
-import { INDEX_SCALE, Vaults, WSQUEETH_DECIMALS } from '../../constants'
+import { INDEX_SCALE, SWAP_EVENT_TOPIC, Vaults, WSQUEETH_DECIMALS } from '../../constants'
+import { ETH_DAI_POOL, SQUEETH_UNI_POOL } from '../../constants/address'
 import { useWallet } from '../../context/wallet'
 import { Vault } from '../../types'
 import { fromTokenAmount, toTokenAmount } from '../../utils/calculations'
@@ -18,7 +19,7 @@ const getMultiplier = (type: Vaults) => {
 }
 
 export const useController = () => {
-  const { web3, address, handleTransaction } = useWallet()
+  const { web3, address, handleTransaction, networkId } = useWallet()
   const [contract, setContract] = useState<Contract>()
   const [normFactor, setNormFactor] = useState(new BigNumber(1))
   const [mark, setMark] = useState(new BigNumber(0))
@@ -49,13 +50,6 @@ export const useController = () => {
           })
       })
   }, [controller, web3])
-
-  useEffect(() => {
-    if (!contract) return
-    //TODO: 3000 not a magic number
-    getMark(1).then(setMark)
-    getIndex(1).then(setIndex)
-  }, [address, contract])
 
   useEffect(() => {
     if (!contract) return
@@ -111,20 +105,67 @@ export const useController = () => {
     }
   }
 
-  const getIndex = async (period: number) => {
-    if (!contract) return new BigNumber(0)
+  const getIndex = useCallback(
+    async (period: number) => {
+      if (!contract) return new BigNumber(0)
 
-    const indexPrice = await contract.methods.getIndex(period.toString()).call()
-    return new BigNumber(indexPrice).times(INDEX_SCALE).times(INDEX_SCALE)
-  }
+      const indexPrice = await contract.methods.getIndex(period.toString()).call()
+      return new BigNumber(indexPrice).times(INDEX_SCALE).times(INDEX_SCALE)
+    },
+    [contract],
+  )
 
-  const getMark = async (period: number) => {
-    if (!contract) return new BigNumber(0)
-    const markPrice = await contract.methods.getDenormalizedMark(period.toString()).call()
+  const getMark = useCallback(
+    async (period: number) => {
+      if (!contract) return new BigNumber(0)
+      const markPrice = await contract.methods.getDenormalizedMark(period.toString()).call()
 
-    return new BigNumber(markPrice).times(INDEX_SCALE).times(INDEX_SCALE)
-  }
+      return new BigNumber(markPrice).times(INDEX_SCALE).times(INDEX_SCALE)
+    },
+    [contract],
+  )
 
+  useEffect(() => {
+    if (!contract) return
+    //TODO: 3000 not a magic number
+    getMark(1).then(setMark)
+    getIndex(1).then(setIndex)
+  }, [address, contract, getIndex, getMark])
+
+  // setup mark listener
+  useEffect(() => {
+    if (!web3) return
+    const sub = web3.eth.subscribe(
+      'logs',
+      {
+        address: [SQUEETH_UNI_POOL[networkId]],
+        topics: [SWAP_EVENT_TOPIC],
+      },
+      () => {
+        console.log(`someone traded wsqueeth, mark update!`)
+        getMark(3).then(setMark)
+      },
+    )
+    // cleanup function
+    // return () => sub.unsubscribe()
+  }, [web3, networkId, getMark])
+
+  // setup index listender
+  useEffect(() => {
+    if (!web3) return
+    const sub = web3.eth.subscribe(
+      'logs',
+      {
+        address: [ETH_DAI_POOL[networkId]],
+        topics: [SWAP_EVENT_TOPIC],
+      },
+      () => {
+        console.log(`someone traded weth, mark update!`)
+        getIndex(3).then(setIndex)
+      },
+    )
+    // return () => sub.unsubscribe()
+  }, [web3, networkId, getIndex])
   const getFundingForDay = async () => {
     let index
     let mark
@@ -139,6 +180,14 @@ export const useController = () => {
     const nF = mark.dividedBy(mark.multipliedBy(2).minus(index))
     return 1 - nF.toNumber()
   }
+
+  // implied variance = - log ((index/mark +1)/2 ) / f
+  const impliedVol = useMemo(() => {
+    if (mark.isZero()) return 0
+    const f = 1 / 365
+    const v2 = Math.log((index.div(mark).toNumber() + 1) / 2) / -f
+    return Math.sqrt(v2)
+  }, [mark, index])
 
   const getDebtAmount = async (shortAmount: BigNumber) => {
     if (!contract) return new BigNumber(0)
@@ -162,6 +211,7 @@ export const useController = () => {
     getVault,
     mark,
     index,
+    impliedVol,
     updateOperator,
     normFactor,
     fundingPerDay,

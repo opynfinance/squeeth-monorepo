@@ -45,7 +45,8 @@ const Trade: React.FC = () => {
 
   return (
     <div>
-      {showOpenCloseTabs ? (
+      {
+        // showOpenCloseTabs ? (
         <SecondaryTabs
           value={openPosition}
           onChange={(evt, val) => setOpenPosition(val)}
@@ -56,35 +57,40 @@ const Trade: React.FC = () => {
           <SecondaryTab label="Open" />
           <SecondaryTab label="Close" />
         </SecondaryTabs>
-      ) : null}
+        // ) : null
+      }
       <div>
-        {tradeType === TradeType.LONG ? (
-          shrtAmt.isZero() ? (
+        {
+          tradeType === TradeType.LONG ? (
+            // shrtAmt.isZero() ? (
             <Long
               balance={Number(toTokenAmount(balance, 18).toFixed(4))}
               open={openPosition === 0}
-              closeTitle="Close squeeth position and redeem ETH"
+              closeTitle="Sell squeeth ERC20"
             />
           ) : (
+            //   ) : (
+            //     <Short
+            //       balance={Number(toTokenAmount(balance, 18).toFixed(4))}
+            //       open={false}
+            //       closeTitle="You already have short position, close it to open a long position"
+            //     />
+            //   )
+            // lngAmt.isZero() ?
             <Short
               balance={Number(toTokenAmount(balance, 18).toFixed(4))}
-              open={false}
-              closeTitle="You already have short position, close it to open a long position"
+              open={openPosition === 0}
+              closeTitle="Buy back squeeth ERC20 and close position"
             />
           )
-        ) : lngAmt.isZero() ? (
-          <Short
-            balance={Number(toTokenAmount(balance, 18).toFixed(4))}
-            open={openPosition === 0}
-            closeTitle="Buy back and close position"
-          />
-        ) : (
-          <Long
-            balance={Number(toTokenAmount(balance, 18).toFixed(4))}
-            open={false}
-            closeTitle="You already have long position, close it to open short position"
-          />
-        )}
+          // : (
+          //   <Long
+          //     balance={Number(toTokenAmount(balance, 18).toFixed(4))}
+          //     open={false}
+          //     closeTitle="You already have long position, close it to open short position"
+          //   />
+          // )
+        }
         <Modal
           aria-labelledby="enable-notification"
           open={modelOpen}

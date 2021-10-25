@@ -170,8 +170,8 @@ const LongSqueethPayoff: React.FC<{ ethPrice: number }> = ({ ethPrice }) => {
   }, [labels, values, twoXValues])
 
   return (
-    <div style={{ width: '350px', marginLeft: '-30px' }}>
-      <Line data={getData} type="line" height={375} width={380} options={chartOptions} />
+    <div style={{ width: '350px' }}>
+      <Line data={getData} type="line" height={330} width={380} options={chartOptions} />
     </div>
   )
 }
