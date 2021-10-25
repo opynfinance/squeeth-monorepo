@@ -2,7 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber, providers } from "ethers";
-import { Controller, MockWSqueeth, MockVaultNFTManager, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager } from "../../typechain";
+import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager } from "../../typechain";
 import { isSimilar, one, oracleScaleFactor } from '../utils'
 
 const squeethETHPrice = ethers.utils.parseUnits('3010')
@@ -10,8 +10,8 @@ const ethUSDPrice = ethers.utils.parseUnits('3000')
 
 
 describe("Controller: liquidation unit test", function () {
-  let squeeth: MockWSqueeth;
-  let shortNFT: MockVaultNFTManager;
+  let squeeth: MockWPowerPerp;
+  let shortSqueeth: MockShortPowerPerp;
   let controller: Controller;
   let squeethEthPool: MockUniswapV3Pool;
   let uniPositionManager: MockUniPositionManager
@@ -34,11 +34,11 @@ describe("Controller: liquidation unit test", function () {
   })
 
   this.beforeAll("Setup environment", async () => {
-    const MockSQUContract = await ethers.getContractFactory("MockWSqueeth");
-    squeeth = (await MockSQUContract.deploy()) as MockWSqueeth;
+    const MockSQUContract = await ethers.getContractFactory("MockWPowerPerp");
+    squeeth = (await MockSQUContract.deploy()) as MockWPowerPerp;
 
-    const NFTContract = await ethers.getContractFactory("MockVaultNFTManager");
-    shortNFT = (await NFTContract.deploy()) as MockVaultNFTManager;
+    const NFTContract = await ethers.getContractFactory("MockShortPowerPerp");
+    shortSqueeth = (await NFTContract.deploy()) as MockShortPowerPerp;
 
     const OracleContract = await ethers.getContractFactory("MockOracle");
     oracle = (await OracleContract.deploy()) as MockOracle;
@@ -66,14 +66,14 @@ describe("Controller: liquidation unit test", function () {
     it("Deployment", async function () {
       const ControllerContract = await ethers.getContractFactory("Controller");
       controller = (await ControllerContract.deploy()) as Controller;
-      await controller.init(oracle.address, shortNFT.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address);
+      await controller.init(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address);
       const squeethAddr = await controller.wPowerPerp();
-      const nftAddr = await controller.vaultNFT();
+      const nftAddr = await controller.shortPowerPerp();
       expect(squeethAddr).to.be.eq(
         squeeth.address,
         "squeeth address mismatch"
       );
-      expect(nftAddr).to.be.eq(shortNFT.address, "nft address mismatch");
+      expect(nftAddr).to.be.eq(shortSqueeth.address, "nft address mismatch");
     });
   });
 
@@ -87,7 +87,7 @@ describe("Controller: liquidation unit test", function () {
     let newEthUsdPrice: BigNumber
 
     before("open vault 1", async () => {
-      vault1Id = await shortNFT.nextId()
+      vault1Id = await shortSqueeth.nextId()
 
       const depositAmount = ethers.utils.parseUnits('45')
       const mintAmount = ethers.utils.parseUnits('100')
@@ -106,7 +106,7 @@ describe("Controller: liquidation unit test", function () {
     });
 
     before("open vault 2", async () => {
-      vault2Id = await shortNFT.nextId()
+      vault2Id = await shortSqueeth.nextId()
 
       const depositAmount = ethers.utils.parseUnits('0.9')
       const mintAmount = ethers.utils.parseUnits('2')
@@ -145,7 +145,7 @@ describe("Controller: liquidation unit test", function () {
     it("should revert if the vault become a dust vault after liquidation", async () => {
       const vaultBefore = await controller.vaults(vault2Id)
       const debtToRepay = vaultBefore.shortAmount.sub(1) // not burning all the the short
-      await expect(controller.connect(liquidator).liquidate(vault2Id, debtToRepay)).to.be.revertedWith('dust vault left');
+      await expect(controller.connect(liquidator).liquidate(vault2Id, debtToRepay)).to.be.revertedWith('Dust vault left');
     })
     it("should allow liquidating a whole vault if only liquidating half of it is gonna make it a dust vault", async () => {
       const vaultBefore = await controller.vaults(vault2Id)
@@ -191,7 +191,7 @@ describe("Controller: liquidation unit test", function () {
     before("open vault", async () => {
       const oldEthPrice = BigNumber.from('3000').mul(one)
       await oracle.connect(random).setPrice(ethUSDPool.address, oldEthPrice)
-      vaultId = await shortNFT.nextId()
+      vaultId = await shortSqueeth.nextId()
       const depositAmount = ethers.utils.parseUnits('45')
       const mintAmount = ethers.utils.parseUnits('100')
       await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount, 0, {value: depositAmount})
@@ -207,7 +207,7 @@ describe("Controller: liquidation unit test", function () {
       const vault = await controller.vaults(vaultId)
       // liquidator specify amount that would take all collateral, but not clearing all the debt
       const debtToRepay = vault.shortAmount.sub(1)
-      await expect(controller.connect(liquidator).liquidate(vaultId, debtToRepay)).to.be.revertedWith('need full liquidation');
+      await expect(controller.connect(liquidator).liquidate(vaultId, debtToRepay)).to.be.revertedWith('Need full liquidation');
     })
 
     it("can fully liquidate a underwater vault, even it's not profitable", async () => {

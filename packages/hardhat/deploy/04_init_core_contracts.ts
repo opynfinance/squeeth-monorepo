@@ -11,8 +11,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Load contracts
   const oracle = await ethers.getContract("Oracle", deployer);
   const controller = await ethers.getContract("Controller", deployer);
-  const vaultNft = await ethers.getContract("VaultNFTManager", deployer);
-  const wsqueeth = await ethers.getContract("WSqueeth", deployer);
+  const shortSqueeth = await ethers.getContract("ShortPowerPerp", deployer);
+  const wsqueeth = await ethers.getContract("WPowerPerp", deployer);
   
   const weth9 = await getWETH(ethers, deployer, network.name)
 
@@ -24,7 +24,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const squeethEthPool = await getPoolAddress(weth9, wsqueeth, uniswapFactory)
 
   try {
-    const tx = await controller.init(oracle.address, vaultNft.address, wsqueeth.address, weth9.address, dai.address,  ethDaiPool, squeethEthPool, positionManager.address, { from: deployer });
+    const tx = await controller.init(oracle.address, shortSqueeth.address, wsqueeth.address, weth9.address, dai.address,  ethDaiPool, squeethEthPool, positionManager.address, { from: deployer });
     await ethers.provider.waitForTransaction(tx.hash, 1)
     console.log(`Controller init done 🥝`);
   } catch (error) {
@@ -40,11 +40,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   }
   
   try {
-    const tx = await vaultNft.init(controller.address, { from: deployer });
+    const tx = await shortSqueeth.init(controller.address, { from: deployer });
     await ethers.provider.waitForTransaction(tx.hash, 1)
-    console.log(`VaultNFTManager init done 🥭`);
+    console.log(`ShortPowerPerp init done 🥭`);
   } catch (error) {
-    console.log(`VaultNFTManager already init.`)
+    console.log(`ShortPowerPerp already init.`)
   }
 
   

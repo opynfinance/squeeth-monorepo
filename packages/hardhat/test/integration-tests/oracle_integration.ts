@@ -1,7 +1,7 @@
 import { ethers, getNamedAccounts } from "hardhat"
 import { expect } from "chai";
 import { Contract } from "ethers";
-import { Controller, Oracle, WETH9, WSqueeth } from "../../typechain";
+import { Controller, Oracle, WETH9, WPowerPerp } from "../../typechain";
 import { isSimilar } from '../utils'
 import { deployUniswapV3, deploySqueethCoreContracts, addSqueethLiquidity, deployWETHAndDai } from '../setup'
 
@@ -9,7 +9,7 @@ describe("Oracle Integration Test", function () {
   let oracle: Oracle;
   let dai: Contract
   let weth: WETH9
-  let squeeth: WSqueeth
+  let squeeth: WPowerPerp
   let squeethPool: Contract
   let ethDaiPool: Contract
   let positionManager: Contract
@@ -38,7 +38,7 @@ describe("Oracle Integration Test", function () {
 
     positionManager = uniDeployments.positionManager
 
-    squeeth = coreDeployments.squeeth
+    squeeth = coreDeployments.wsqueeth
     controller = coreDeployments.controller
     squeethPool = coreDeployments.wsqueethEthPool
     ethDaiPool = coreDeployments.ethDaiPool

@@ -2,13 +2,13 @@ import { ethers } from "hardhat"
 import { expect } from "chai";
 import { parseEther } from "ethers/lib/utils";
 import { BigNumber } from "ethers";
-import { MockWSqueeth, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester } from "../../typechain";
+import { MockWPowerPerp, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester } from "../../typechain";
 import { getSqrtPriceAndTickBySqueethPrice, getYAmountAboveRange, getXAmountBelowRange } from "../calculator";
 import { isSimilar, one, oracleScaleFactor } from "../utils";
 
 
 describe("VaultLib", function () {
-  let squeeth: MockWSqueeth;
+  let squeeth: MockWPowerPerp;
   let vaultLib: VaultLibTester
   let squeethEthPool: MockUniswapV3Pool;
   let uniPositionManager: MockUniPositionManager
@@ -16,8 +16,8 @@ describe("VaultLib", function () {
   let wethIsToken0: boolean
 
   this.beforeAll("Setup environment", async () => {
-    const MockSQUContract = await ethers.getContractFactory("MockWSqueeth");
-    squeeth = (await MockSQUContract.deploy()) as MockWSqueeth;
+    const MockSQUContract = await ethers.getContractFactory("MockWPowerPerp");
+    squeeth = (await MockSQUContract.deploy()) as MockWPowerPerp;
 
     const MockErc20Contract = await ethers.getContractFactory("MockErc20");
     weth = (await MockErc20Contract.deploy("WETH", "WETH", 18)) as MockErc20;

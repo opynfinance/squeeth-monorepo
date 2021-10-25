@@ -8,7 +8,7 @@ import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Po
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
 import {IWETH9} from "../interfaces/IWETH9.sol";
-import {IVaultManagerNFT} from "../interfaces/IVaultManagerNFT.sol";
+import {IShortPowerPerp} from "../interfaces/IShortPowerPerp.sol";
 import {IController} from "../interfaces/IController.sol";
 // Libraries
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
@@ -21,7 +21,7 @@ contract ShortHelper {
     IController public immutable controller;
     ISwapRouter public immutable router;
     IWETH9 public immutable weth;
-    IVaultManagerNFT public immutable vaultNFT;
+    IShortPowerPerp public immutable shortPowerPerp;
 
     constructor(
         address _controllerAddr,
@@ -37,7 +37,7 @@ contract ShortHelper {
         _weth.approve(_swapRouter, type(uint256).max);
 
         // assign immutable variables
-        vaultNFT = IVaultManagerNFT(_controller.vaultNFT());
+        shortPowerPerp = IShortPowerPerp(_controller.shortPowerPerp());
         weth = _weth;
         controller = _controller;
     }
@@ -67,7 +67,7 @@ contract ShortHelper {
         }
 
         // this is a newly open vault, transfer to the user.
-        if (_vaultId == 0) vaultNFT.transferFrom(address(this), msg.sender, vaultId);
+        if (_vaultId == 0) shortPowerPerp.transferFrom(address(this), msg.sender, vaultId);
     }
 
     /**

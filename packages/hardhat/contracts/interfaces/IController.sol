@@ -3,7 +3,7 @@
 pragma solidity =0.7.6;
 
 interface IController {
-    function vaultNFT() external view returns (address);
+    function shortPowerPerp() external view returns (address);
 
     function wPowerPerp() external view returns (address);
 

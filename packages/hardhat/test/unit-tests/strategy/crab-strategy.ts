@@ -2,7 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber, providers } from "ethers";
-import { MockController, WETH9, MockVaultNFTManager, MockUniswapV3Pool, MockOracle, MockWSqueeth, CrabStrategy } from "../../../typechain";
+import { MockController, WETH9, MockShortPowerPerp, MockUniswapV3Pool, MockOracle, MockWPowerPerp, CrabStrategy } from "../../../typechain";
 import { isSimilar, wmul, wdiv } from "../../utils"
 
 describe("Crab Strategy", function () {
@@ -12,10 +12,10 @@ describe("Crab Strategy", function () {
   let depositor: SignerWithAddress;
   let depositor2: SignerWithAddress;
 
-  let squeeth: MockWSqueeth;
+  let squeeth: MockWPowerPerp;
   let weth: WETH9;
   let wSqueethEthPool: MockUniswapV3Pool;
-  let shortNFT: MockVaultNFTManager;
+  let shortSqueeth: MockShortPowerPerp;
   let controller: MockController;
   let oracle: MockOracle;
   let crabStrategy: CrabStrategy;
@@ -34,8 +34,8 @@ describe("Crab Strategy", function () {
     const WETH9Contract = await ethers.getContractFactory("WETH9");
     weth = (await WETH9Contract.deploy()) as WETH9;
 
-    const MockSQUContract = await ethers.getContractFactory("MockWSqueeth");
-    squeeth = (await MockSQUContract.deploy()) as MockWSqueeth;
+    const MockSQUContract = await ethers.getContractFactory("MockWPowerPerp");
+    squeeth = (await MockSQUContract.deploy()) as MockWPowerPerp;
 
     const MockUniswapV3PoolContract = await ethers.getContractFactory("MockUniswapV3Pool");
     wSqueethEthPool = (await MockUniswapV3PoolContract.deploy()) as MockUniswapV3Pool;
@@ -43,13 +43,13 @@ describe("Crab Strategy", function () {
     const MockOracle = await ethers.getContractFactory("MockOracle");
     oracle = (await MockOracle.deploy()) as MockOracle;
 
-    const NFTContract = await ethers.getContractFactory("MockVaultNFTManager");
-    shortNFT = (await NFTContract.deploy()) as MockVaultNFTManager;
+    const NFTContract = await ethers.getContractFactory("MockShortPowerPerp");
+    shortSqueeth = (await NFTContract.deploy()) as MockShortPowerPerp;
 
     const ControllerContract = await ethers.getContractFactory("MockController");
     controller = (await ControllerContract.deploy()) as MockController;
 
-    await controller.connect(owner).init(shortNFT.address, squeeth.address);
+    await controller.connect(owner).init(shortSqueeth.address, squeeth.address);
   })
 
   describe("Deployment", async () => {

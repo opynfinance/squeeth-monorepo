@@ -2,9 +2,8 @@ import { ethers } from "hardhat"
 import { expect } from "chai";
 import { Contract, BigNumber, providers } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
-import { WETH9, MockErc20, Controller, Oracle, WSqueeth, VaultNFTManager, CrabStrategy } from "../../../typechain";
+import { WETH9, MockErc20, Controller, Oracle, WPowerPerp, CrabStrategy } from "../../../typechain";
 import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addWethDaiLiquidity, addSqueethLiquidity } from '../../setup'
-import { MockController, MockVaultNFTManager, MockUniswapV3Pool, MockOracle, MockWSqueeth } from "../../../typechain";
 import { isSimilar, wmul, wdiv } from "../../utils"
 
 describe("Crab flashswap integration test", function () {
@@ -17,13 +16,13 @@ describe("Crab flashswap integration test", function () {
   let weth: WETH9
   let positionManager: Contract
   let uniswapFactory: Contract
-  let swapRouter: Contract
+  // let swapRouter: Contract
   let oracle: Oracle
   let controller: Controller
   let wSqueethPool: Contract
-  let ethDaiPool: Contract
-  let wSqueeth: WSqueeth
-  let vaultNft: VaultNFTManager
+  // let ethDaiPool: Contract
+  let wSqueeth: WPowerPerp
+  // let shortSqueeth: ShortPowerPerp
   let crabStrategy: CrabStrategy
 
   this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async() => {
@@ -41,7 +40,7 @@ describe("Crab flashswap integration test", function () {
     const uniDeployments = await deployUniswapV3(weth)
     positionManager = uniDeployments.positionManager
     uniswapFactory = uniDeployments.uniswapFactory
-    swapRouter = uniDeployments.swapRouter
+    // swapRouter = uniDeployments.swapRouter
 
     // this will not deploy a new pool, only reuse old onces
     const squeethDeployments = await deploySqueethCoreContracts(
@@ -53,11 +52,11 @@ describe("Crab flashswap integration test", function () {
       startingPrice
     )
     controller = squeethDeployments.controller
-    wSqueeth = squeethDeployments.squeeth
+    wSqueeth = squeethDeployments.wsqueeth
     oracle = squeethDeployments.oracle
-    vaultNft = squeethDeployments.vaultNft
+    // shortSqueeth = squeethDeployments.shortSqueeth
     wSqueethPool = squeethDeployments.wsqueethEthPool
-    ethDaiPool = squeethDeployments.ethDaiPool
+    // ethDaiPool = squeethDeployments.ethDaiPool
 
     const CrabStrategyContract = await ethers.getContractFactory("CrabStrategy");
     crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, uniswapFactory.address, wSqueethPool.address, "Opyn Crab Strategy", "Crab")) as CrabStrategy;

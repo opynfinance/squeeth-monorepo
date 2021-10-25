@@ -16,14 +16,14 @@ import {
 import { Contract } from "ethers";
 import { convertToken0PriceToSqrtX96Price } from '../calculator'
 import { getNow, isSimilar } from '../utils'
-import { Oracle, MockWSqueeth, OracleTester, WETH9 } from "../../typechain";
+import { Oracle, MockWPowerPerp, OracleTester, WETH9 } from "../../typechain";
 
 describe("Oracle", function () {
   const squeethPriceInETH = 2000; // can sell 1 squeeth for 2000 eth
   const squeethPriceInETH1e18 = (squeethPriceInETH * 1e18).toString()
   const provider = ethers.provider;
   
-  let squeeth: MockWSqueeth;
+  let squeeth: MockWPowerPerp;
   let oracle: Oracle;
   let positionManager: Contract
   let oracleTester: OracleTester
@@ -74,7 +74,7 @@ describe("Oracle", function () {
     positionManager = await ethers.getContract("NonfungibleTokenPositionManager", deployer);
 
     // Create ETH/SQUEETH Pool with positionManager
-    squeeth = (await (await ethers.getContractFactory("MockWSqueeth")).deploy()) as MockWSqueeth;
+    squeeth = (await (await ethers.getContractFactory("MockWPowerPerp")).deploy()) as MockWPowerPerp;
     const isWethToken0 = parseInt(weth.address, 16) < parseInt(squeeth.address, 16)
 
     const sqrtX96Price = isWethToken0 
@@ -113,7 +113,7 @@ describe("Oracle", function () {
 
   describe("Math checks for overflow", async () => {
     it("should revert if casting oversize uint256 to uint128 overflows", async () => {
-      await expect(oracleTester.testToUint128(ethers.constants.MaxUint256.sub(1))).to.be.revertedWith("overflow")
+      await expect(oracleTester.testToUint128(ethers.constants.MaxUint256.sub(1))).to.be.revertedWith("Overflow")
     })
   })
 

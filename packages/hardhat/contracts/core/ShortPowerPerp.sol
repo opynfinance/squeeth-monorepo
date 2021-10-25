@@ -2,22 +2,26 @@
 
 pragma solidity =0.7.6;
 
-import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/Initializable.sol";
 
-contract VaultNFTManager is ERC721Upgradeable {
+/**
+ * @notice ERC721 NFT representing ownership of a vault (short position)
+ */
+contract ShortPowerPerp is ERC721, Initializable {
     /// @dev tokenId for the next vault opened
     uint256 public nextId = 1;
 
     address public controller;
 
     modifier onlyController() {
-        require(msg.sender == controller, "not controller");
+        require(msg.sender == controller, "Not controller");
         _;
     }
 
+    constructor(string memory _name, string memory _symbol) ERC721(_name, _symbol) {}
+
     function init(address _controller) public initializer {
-        // init nft
-        __ERC721_init("Short Opyn Squeeth Position", "sSqueeth");
         controller = _controller;
     }
 

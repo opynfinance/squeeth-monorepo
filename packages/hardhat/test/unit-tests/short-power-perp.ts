@@ -1,10 +1,10 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { ethers } from "hardhat"
 import { expect } from "chai";
-import { VaultNFTManager} from "../../typechain";
+import { ShortPowerPerp} from "../../typechain";
 
-describe("VaultNFTManager", function () {
-  let vaultNftManager: VaultNFTManager;
+describe("ShortPowerPerp", function () {
+  let shortSqueethManager: ShortPowerPerp;
   let random: SignerWithAddress
   let controller: SignerWithAddress
   let address1: SignerWithAddress
@@ -19,22 +19,22 @@ describe("VaultNFTManager", function () {
 
   describe("Deployment", async () => {
     it("Deployment", async function () {
-      const VaultNFTManagerContract = await ethers.getContractFactory("VaultNFTManager");
-      vaultNftManager = (await VaultNFTManagerContract.deploy()) as VaultNFTManager;
+      const ShortPowerPerpContract = await ethers.getContractFactory("ShortPowerPerp");
+      shortSqueethManager = (await ShortPowerPerpContract.deploy('Short Squeeth', 'sSQU')) as ShortPowerPerp;
     });
   });
 
   describe("Initialization", async () => {
     it("Should be able to init contract", async () => {
-      await vaultNftManager.init(controller.address);
-      const controllerAddress = await vaultNftManager.controller();
+      await shortSqueethManager.init(controller.address);
+      const controllerAddress = await shortSqueethManager.controller();
       expect(controllerAddress).to.be.eq(controller.address,"Controller address mismatch");
     });
   });
 
   describe("Access control", async () => {
     it("Should revert if mint called by an address other than controller ", async () => {
-        await expect(vaultNftManager.connect(random).mintNFT(address1.address)).to.be.revertedWith("not controller")
+        await expect(shortSqueethManager.connect(random).mintNFT(address1.address)).to.be.revertedWith("Not controller")
     });
   });
 

@@ -8,6 +8,10 @@ import {OracleLibrary} from "@uniswap/v3-periphery/contracts/libraries/OracleLib
 import {IERC20Detailed} from "../interfaces/IERC20Detailed.sol";
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 
+/**
+ * @notice read UniswapV3 pool TWAP prices, and convert to human readable term with (18 decimals)
+ * @dev if ETH price is $3000, both ETH/USDC pirce and ETH/DAI price will be reported as 3000 * 1e18 by this oracle
+ */
 contract Oracle {
     using SafeMath for uint256;
 
@@ -172,6 +176,6 @@ contract Oracle {
      * @return z The downcasted integer, now type uint128
      */
     function toUint128(uint256 y) internal pure returns (uint128 z) {
-        require((z = uint128(y)) == y, "overflow");
+        require((z = uint128(y)) == y, "Overflow");
     }
 }

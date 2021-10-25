@@ -5,16 +5,17 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/Initializable.sol";
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
 
-/// @notice this is the ERC20 contract for long position of Squeeth
-/// @dev this contract implements IWPowerPerp interface, makes it controllable by Controller.
-/// @dev decimals of squeeth is chosen as 14.
-contract WSqueeth is ERC20, Initializable, IWPowerPerp {
+/**
+ * @notice ERC20 Token representing wrapped long squeeth position.
+ * @dev value of wPowerPerp is expected to go down in time
+ */
+contract WPowerPerp is ERC20, Initializable, IWPowerPerp {
     address public controller;
 
-    constructor() ERC20("Wrapped Squeeth", "WSQTH") {}
+    constructor(string memory _name, string memory _symbol) ERC20(_name, _symbol) {}
 
     modifier onlyController() {
-        require(msg.sender == controller, "not controller");
+        require(msg.sender == controller, "Not controller");
         _;
     }
 

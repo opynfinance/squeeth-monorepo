@@ -3,7 +3,7 @@
 pragma solidity =0.7.6;
 import "hardhat/console.sol";
 
-import {IVaultManagerNFT} from "../interfaces/IVaultManagerNFT.sol";
+import {IShortPowerPerp} from "../interfaces/IShortPowerPerp.sol";
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
 
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
@@ -23,13 +23,13 @@ contract MockController {
     mapping(uint256 => VaultLib.Vault) public vaults;
 
     IWPowerPerp public wPowerPerp;
-    IVaultManagerNFT public vaultNFT;
+    IShortPowerPerp public shortPowerPerp;
 
-    function init(address _vaultNFT, address _wPowerPerp) public {
-        require(_vaultNFT != address(0), "Invalid vaultNFT address");
+    function init(address _shortPowerPerp, address _wPowerPerp) public {
+        require(_shortPowerPerp != address(0), "Invalid shortPowerPerp address");
         require(_wPowerPerp != address(0), "Invalid wPowerPerp address");
 
-        vaultNFT = IVaultManagerNFT(_vaultNFT);
+        shortPowerPerp = IShortPowerPerp(_shortPowerPerp);
         wPowerPerp = IWPowerPerp(_wPowerPerp);
 
         normalizationFactor = 1e18;
@@ -61,7 +61,7 @@ contract MockController {
     }
 
     function _openVault(address _recipient) internal returns (uint256) {
-        uint256 vaultId = vaultNFT.mintNFT(_recipient);
+        uint256 vaultId = shortPowerPerp.mintNFT(_recipient);
         vaults[vaultId] = VaultLib.Vault({
             NftCollateralId: 0,
             collateralAmount: 0,
@@ -119,6 +119,6 @@ contract MockController {
     }
 
     function _canModifyVault(uint256 _vaultId, address _account) internal view returns (bool) {
-        return vaultNFT.ownerOf(_vaultId) == _account || vaults[_vaultId].operator == _account;
+        return shortPowerPerp.ownerOf(_vaultId) == _account || vaults[_vaultId].operator == _account;
     }
 }

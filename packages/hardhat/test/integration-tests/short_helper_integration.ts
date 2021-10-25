@@ -3,7 +3,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { ethers, getNamedAccounts, deployments } from "hardhat"
 import { expect } from "chai";
 import { Contract, providers } from "ethers";
-import { Controller, VaultNFTManager, WSqueeth, ShortHelper, WETH9 } from "../../typechain";
+import { Controller, ShortPowerPerp, WPowerPerp, ShortHelper, WETH9 } from "../../typechain";
 
 import { deployUniswapV3, deploySqueethCoreContracts, addSqueethLiquidity, deployWETHAndDai } from '../setup'
 import { getNow, one, oracleScaleFactor } from "../utils";
@@ -14,8 +14,8 @@ describe("ShortHelper Integration Test", function () {
 
   let shortHelper: ShortHelper
   // peer contracts
-  let squeeth: WSqueeth
-  let vaultNFT: VaultNFTManager
+  let squeeth: WPowerPerp
+  let shortPowerPerp: ShortPowerPerp
   let controller: Controller
   let swapRouter: Contract
   let weth: WETH9
@@ -59,7 +59,7 @@ describe("ShortHelper Integration Test", function () {
       '50',
       '30', 
       deployer, 
-      coreDeployments.squeeth, 
+      coreDeployments.wsqueeth, 
       weth, 
       uniDeployments.positionManager, 
       coreDeployments.controller, 
@@ -67,8 +67,8 @@ describe("ShortHelper Integration Test", function () {
 
     swapRouter = uniDeployments.swapRouter
     // positionManager = uniDeployments.positionManager
-    squeeth = coreDeployments.squeeth
-    vaultNFT = coreDeployments.vaultNft
+    squeeth = coreDeployments.wsqueeth
+    shortPowerPerp = coreDeployments.shortSqueeth
     controller = coreDeployments.controller
     poolAddress = coreDeployments.wsqueethEthPool.address    
   })
@@ -85,7 +85,7 @@ describe("ShortHelper Integration Test", function () {
       // deploy short helper
       shortHelper = await ethers.getContract("ShortHelper", deployer);
   
-      expect(await shortHelper.vaultNFT()).to.be.eq(vaultNFT.address, "vaultNFT address mismatch")
+      expect(await shortHelper.shortPowerPerp()).to.be.eq(shortPowerPerp.address, "shortPowerPerp address mismatch")
       expect(await shortHelper.controller()).to.be.eq(controller.address, "controller address mismatch")
       expect(await shortHelper.router()).to.be.eq(swapRouter.address, "swapRouter address mismatch")
       expect(await shortHelper.weth()).to.be.eq(weth.address, "weth address mismatch")
@@ -106,18 +106,18 @@ describe("ShortHelper Integration Test", function () {
         sqrtPriceLimitX96: 0,
       }
   
-      const nftBalanceBefore = await vaultNFT.balanceOf(seller1.address)
+      const nftBalanceBefore = await shortPowerPerp.balanceOf(seller1.address)
       const poolSqueethBefore = await squeeth.balanceOf(poolAddress)
       const sellerWethBefore = await weth.balanceOf(seller1.address)
       const poolWethBefore = await weth.balanceOf(poolAddress)
-      seller1VaultId = (await vaultNFT.nextId()).toNumber()
+      seller1VaultId = (await shortPowerPerp.nextId()).toNumber()
       // mint and trade
       await shortHelper.connect(seller1).openShort(0, squeethAmount, 0, exactInputParam, {value: collateralAmount} )
   
       const normalizationFactor = await controller.normalizationFactor()
       const wSqueethAmount = squeethAmount.mul(one).div(normalizationFactor)
 
-      const nftBalanceAfter = await vaultNFT.balanceOf(seller1.address)
+      const nftBalanceAfter = await shortPowerPerp.balanceOf(seller1.address)
       const poolSqueethAfter = await squeeth.balanceOf(poolAddress)
       const sellerWethAfter = await weth.balanceOf(seller1.address)
       const poolWethAfter = await weth.balanceOf(poolAddress)
@@ -149,7 +149,7 @@ describe("ShortHelper Integration Test", function () {
         sqrtPriceLimitX96: 0,
       }
   
-      const nftBalanceBefore = await vaultNFT.balanceOf(seller1.address)
+      const nftBalanceBefore = await shortPowerPerp.balanceOf(seller1.address)
       const poolSqueethBefore = await squeeth.balanceOf(poolAddress)
       const sellerWethBefore = await weth.balanceOf(seller1.address)
       const poolWethBefore = await weth.balanceOf(poolAddress)
@@ -163,7 +163,7 @@ describe("ShortHelper Integration Test", function () {
       const normalizationFactor = await controller.normalizationFactor()
       const wSqueethAmount = squeethAmount.mul(ethers.utils.parseUnits('1')).div(normalizationFactor)
 
-      const nftBalanceAfter = await vaultNFT.balanceOf(seller1.address)
+      const nftBalanceAfter = await shortPowerPerp.balanceOf(seller1.address)
       const poolSqueethAfter = await squeeth.balanceOf(poolAddress)
       const sellerWethAfter = await weth.balanceOf(seller1.address)
       const poolWethAfter = await weth.balanceOf(poolAddress)
@@ -186,12 +186,12 @@ describe("ShortHelper Integration Test", function () {
         sqrtPriceLimitX96: 0,
       }
   
-      const nftBalanceBefore = await vaultNFT.balanceOf(seller2.address)
+      const nftBalanceBefore = await shortPowerPerp.balanceOf(seller2.address)
       const poolSqueethBefore = await squeeth.balanceOf(poolAddress)
       const sellerEthBefore = await provider.getBalance(seller2.address)
       const poolWethBefore = await weth.balanceOf(poolAddress)
   
-      seller2VaultId = (await vaultNFT.nextId()).toNumber()
+      seller2VaultId = (await shortPowerPerp.nextId()).toNumber()
 
       // mint and trade
       await shortHelper.connect(seller2).openShort(0, squeethAmount, 0, exactInputParam, {
@@ -203,7 +203,7 @@ describe("ShortHelper Integration Test", function () {
       const normalizationFactor = await controller.normalizationFactor()
       const wSqueethAmount = squeethAmount.mul(one).div(normalizationFactor)
 
-      const nftBalanceAfter = await vaultNFT.balanceOf(seller2.address)
+      const nftBalanceAfter = await shortPowerPerp.balanceOf(seller2.address)
       const poolSqueethAfter = await squeeth.balanceOf(poolAddress)
       const sellerEthAfter = await provider.getBalance(seller2.address)
       const poolWethAfter = await weth.balanceOf(poolAddress)
@@ -246,7 +246,7 @@ describe("ShortHelper Integration Test", function () {
       // add short helper as operator
       await controller.connect(seller1).updateOperator(seller1VaultId,shortHelper.address, {gasPrice: 0})
 
-      const nftBalanceBefore = await vaultNFT.balanceOf(seller1.address)
+      const nftBalanceBefore = await shortPowerPerp.balanceOf(seller1.address)
       const poolSqueethBefore = await squeeth.balanceOf(poolAddress)
       const sellerEthBefore = await provider.getBalance(seller1.address)
       const poolWethBefore = await weth.balanceOf(poolAddress)
@@ -258,7 +258,7 @@ describe("ShortHelper Integration Test", function () {
         }
       )
   
-      const nftBalanceAfter = await vaultNFT.balanceOf(seller1.address)
+      const nftBalanceAfter = await shortPowerPerp.balanceOf(seller1.address)
       const poolSqueethAfter = await squeeth.balanceOf(poolAddress)
       const sellerEthAfter = await provider.getBalance(seller1.address)
       const poolWethAfter = await weth.balanceOf(poolAddress)
@@ -291,7 +291,7 @@ describe("ShortHelper Integration Test", function () {
       // add short helper as operator
       await controller.connect(seller2).updateOperator(seller2VaultId, shortHelper.address)
 
-      const nftBalanceBefore = await vaultNFT.balanceOf(seller2.address)
+      const nftBalanceBefore = await shortPowerPerp.balanceOf(seller2.address)
       const poolSqueethBefore = await squeeth.balanceOf(poolAddress)
       const sellerEthBefore = await provider.getBalance(seller2.address)
       const poolWethBefore = await weth.balanceOf(poolAddress)
@@ -303,7 +303,7 @@ describe("ShortHelper Integration Test", function () {
         }
       )
   
-      const nftBalanceAfter = await vaultNFT.balanceOf(seller2.address)
+      const nftBalanceAfter = await shortPowerPerp.balanceOf(seller2.address)
       const poolSqueethAfter = await squeeth.balanceOf(poolAddress)
       const sellerEthAfter = await provider.getBalance(seller2.address)
       const poolWethAfter = await weth.balanceOf(poolAddress)

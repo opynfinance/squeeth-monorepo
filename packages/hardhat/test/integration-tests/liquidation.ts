@@ -3,7 +3,7 @@ import BigNumberJs from 'bignumber.js'
 import { Contract, BigNumber } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { expect } from "chai";
-import { Controller, INonfungiblePositionManager, ISwapRouter, IUniswapV3Pool, MockErc20, Oracle, VaultLibTester, VaultNFTManager, WETH9, WSqueeth } from "../../typechain";
+import { Controller, INonfungiblePositionManager, ISwapRouter, IUniswapV3Pool, MockErc20, Oracle, VaultLibTester, ShortPowerPerp, WETH9, WPowerPerp } from "../../typechain";
 import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addSqueethLiquidity, addWethDaiLiquidity } from '../setup'
 import { isSimilar, getNow, one, oracleScaleFactor } from "../utils";
 
@@ -14,8 +14,8 @@ describe("Liquidation Integration Test", function () {
   let oracle: Oracle;
   let dai: MockErc20
   let weth: WETH9
-  let squeeth: WSqueeth
-  let shortNFT: VaultNFTManager
+  let squeeth: WPowerPerp
+  let shortSqueeth: ShortPowerPerp
   let positionManager: Contract
   let controller: Controller
   let swapRouter: Contract
@@ -79,8 +79,8 @@ describe("Liquidation Integration Test", function () {
     positionManager = uniDeployments.positionManager
     swapRouter = uniDeployments.swapRouter
 
-    squeeth = coreDeployments.squeeth
-    shortNFT = coreDeployments.vaultNft
+    squeeth = coreDeployments.wsqueeth
+    shortSqueeth = coreDeployments.shortSqueeth
     controller = coreDeployments.controller
     squeethPool = coreDeployments.wsqueethEthPool
     ethDaiPool = coreDeployments.ethDaiPool
@@ -113,7 +113,7 @@ describe("Liquidation Integration Test", function () {
   })
 
   this.beforeAll('Prepare vault0 (normal)', async() => {
-    vault0Id = await shortNFT.nextId()
+    vault0Id = await shortSqueeth.nextId()
 
     const depositAmount = ethers.utils.parseUnits('45.1')
     const mintAmount = ethers.utils.parseUnits(humanReadableMintAmount)
@@ -121,7 +121,7 @@ describe("Liquidation Integration Test", function () {
   })
 
   this.beforeAll('Prepare vault1 (with nft), dealing with cases when\'s safe after saving', async() => {
-    vault1Id = await shortNFT.nextId()
+    vault1Id = await shortSqueeth.nextId()
 
     const depositAmount = ethers.utils.parseUnits('45.1')
     const mintAmount = ethers.utils.parseUnits(humanReadableMintAmount)
@@ -146,7 +146,7 @@ describe("Liquidation Integration Test", function () {
   })
 
   this.beforeAll('Prepare vault2 (with nft), for liquidation', async() => {
-    vault2Id = await shortNFT.nextId()
+    vault2Id = await shortSqueeth.nextId()
 
     const depositAmount = ethers.utils.parseUnits('45.1')
     const mintAmount = ethers.utils.parseUnits(humanReadableMintAmount)

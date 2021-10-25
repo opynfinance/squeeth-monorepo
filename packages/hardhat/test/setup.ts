@@ -14,7 +14,7 @@ import {
   abi as FACTORY_ABI,
   bytecode as FACTORY_BYTECODE,
 } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json'
-import { Controller, Oracle, VaultNFTManager, WETH9, WSqueeth, MockErc20, INonfungiblePositionManager } from "../typechain";
+import { Controller, Oracle, ShortPowerPerp, WETH9, WPowerPerp, MockErc20, INonfungiblePositionManager } from "../typechain";
 import { convertToken0PriceToSqrtX96Price, convertToken1PriceToSqrtX96Price } from "./calculator";
 import { getNow } from './utils'
 
@@ -136,15 +136,15 @@ export const getPoolAddress = async (
   const OracleContract = await ethers.getContractFactory("Oracle");
   const oracle = (await OracleContract.deploy()) as Oracle;
 
-  const NFTContract = await ethers.getContractFactory("VaultNFTManager");
-  const vaultNft = (await NFTContract.deploy()) as VaultNFTManager;
+  const NFTContract = await ethers.getContractFactory("ShortPowerPerp");
+  const shortSqueeth = (await NFTContract.deploy('short Squeeth', 'sSQU')) as ShortPowerPerp;
 
-  const WSqueethContract = await ethers.getContractFactory("WSqueeth");
-  const squeeth = (await WSqueethContract.deploy()) as WSqueeth;
+  const WPowerPerpContract = await ethers.getContractFactory("WPowerPerp");
+  const wsqueeth = (await WPowerPerpContract.deploy('Wrapped Squeeth', 'wSQU')) as WPowerPerp;
 
   // 1 squeeth is 3000 eth
   const squeethPriceInEth = wsqueethEthPrice || 3000
-  const wsqueethEthPool = await createUniPool(squeethPriceInEth, weth, squeeth, positionManager, uniswapFactory) as Contract
+  const wsqueethEthPool = await createUniPool(squeethPriceInEth, weth, wsqueeth, positionManager, uniswapFactory) as Contract
   // 1 weth is 3000 dai
   const ethPriceInDai = ethDaiPrice || 3000
   const ethDaiPool = await createUniPool(ethPriceInDai, dai, weth, positionManager, uniswapFactory) as Contract
@@ -154,18 +154,18 @@ export const getPoolAddress = async (
 
   await controller.init(
     oracle.address, 
-    vaultNft.address, 
-    squeeth.address,
+    shortSqueeth.address, 
+    wsqueeth.address,
     weth.address, 
     dai.address, 
     ethDaiPool.address, 
     wsqueethEthPool.address, 
     positionManager.address,
   );
-  await squeeth.init(controller.address);
-  await vaultNft.init(controller.address);
+  await wsqueeth.init(controller.address);
+  await shortSqueeth.init(controller.address);
   
-  return { controller, squeeth, vaultNft, ethDaiPool, wsqueethEthPool, oracle }
+  return { controller, wsqueeth, shortSqueeth, ethDaiPool, wsqueethEthPool, oracle }
 }
 
 export const addSqueethLiquidity = async(
@@ -173,7 +173,7 @@ export const addSqueethLiquidity = async(
   initLiquiditySqueethAmount: string, 
   collateralAmount: string,
   deployer: string,
-  squeeth: WSqueeth, 
+  squeeth: WPowerPerp, 
   weth: WETH9,
   positionManager: Contract,
   controller: Controller

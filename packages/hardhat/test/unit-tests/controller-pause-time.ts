@@ -2,7 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import {providers } from "ethers";
-import { Controller, MockWSqueeth, MockVaultNFTManager, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, WETH9 } from '../../typechain'
+import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, WETH9 } from '../../typechain'
 import { oracleScaleFactor } from "../utils";
 
 const squeethETHPrice = ethers.utils.parseUnits('3010')
@@ -10,8 +10,8 @@ const ethUSDPrice = ethers.utils.parseUnits('3000')
 
 
 describe("Controller", function () {
-  let squeeth: MockWSqueeth;
-  let shortNFT: MockVaultNFTManager;
+  let squeeth: MockWPowerPerp;
+  let shortSqueeth: MockShortPowerPerp;
   let controller: Controller;
   let squeethEthPool: MockUniswapV3Pool;
   let ethUSDPool: MockUniswapV3Pool;
@@ -32,11 +32,11 @@ describe("Controller", function () {
   })
 
   this.beforeAll("Setup environment", async () => {
-    const MockSQUContract = await ethers.getContractFactory("MockWSqueeth");
-    squeeth = (await MockSQUContract.deploy()) as MockWSqueeth;
+    const MockSQUContract = await ethers.getContractFactory("MockWPowerPerp");
+    squeeth = (await MockSQUContract.deploy()) as MockWPowerPerp;
 
-    const NFTContract = await ethers.getContractFactory("MockVaultNFTManager");
-    shortNFT = (await NFTContract.deploy()) as MockVaultNFTManager;
+    const NFTContract = await ethers.getContractFactory("MockShortPowerPerp");
+    shortSqueeth = (await NFTContract.deploy()) as MockShortPowerPerp;
 
     const OracleContract = await ethers.getContractFactory("MockOracle");
     oracle = (await OracleContract.deploy()) as MockOracle;
@@ -62,7 +62,7 @@ describe("Controller", function () {
     
     const ControllerContract = await ethers.getContractFactory("Controller");
     controller = (await ControllerContract.deploy()) as Controller;
-    await controller.init(oracle.address, shortNFT.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address);
+    await controller.init(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address);
 
   });
   
@@ -90,7 +90,7 @@ describe("Controller", function () {
         await provider.send("evm_mine", [])
         await expect(
           controller.connect(owner).pause()
-        ).to.be.revertedWith("pause time limit exceeded");
+        ).to.be.revertedWith("Pause time limit exceeded");
       });
 
     });  

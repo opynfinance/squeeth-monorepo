@@ -13,7 +13,7 @@ task("buySqueeth", "Buy Squeeth from the pool")
   
   const swapRouter = await ethers.getContract("SwapRouter", deployer);
 
-  const squeeth = await ethers.getContract("WSqueeth", deployer);
+  const squeeth = await ethers.getContract("WPowerPerp", deployer);
   const weth = await ethers.getContract("WETH9", deployer);
 
   const inputWETHAmount = ethers.utils.parseEther(inputAmount) 

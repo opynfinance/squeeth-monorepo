@@ -1,15 +1,15 @@
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
-import { WSqueeth } from "../../typechain";
+import { WPowerPerp } from "../../typechain";
 
-describe("WSqueeth", function () {
-  let wsqueeth: WSqueeth;
+describe("WPowerPerp", function () {
+  let wsqueeth: WPowerPerp;
   let controller: SignerWithAddress
   let random: SignerWithAddress
   
   this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async() => {
-    wsqueeth = (await (await ethers.getContractFactory("WSqueeth")).deploy()) as WSqueeth;
+    wsqueeth = (await (await ethers.getContractFactory("WPowerPerp")).deploy('Wrapped Squeeth', 'WSQU')) as WPowerPerp;
 
     const accounts = await ethers.getSigners();
     const [_controller, _random] = accounts;
@@ -37,11 +37,11 @@ describe("WSqueeth", function () {
     })
     it("should revert when minted from non-controller", async () => {
       const mintAmount = 10
-      await expect(wsqueeth.connect(random).mint(random.address, mintAmount)).to.be.revertedWith('not controller');
+      await expect(wsqueeth.connect(random).mint(random.address, mintAmount)).to.be.revertedWith('Not controller');
     })
     it("should revert when burned from non-controller", async () => {
         const burnAmount = 10
-        await expect(wsqueeth.connect(random).burn(random.address, burnAmount)).to.be.revertedWith('not controller');
+        await expect(wsqueeth.connect(random).burn(random.address, burnAmount)).to.be.revertedWith('Not controller');
     })
       
     it("should burn from controler", async () => {

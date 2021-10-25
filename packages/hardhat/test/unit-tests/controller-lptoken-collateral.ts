@@ -3,7 +3,7 @@ import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber } from "ethers";
 import { parseEther } from "ethers/lib/utils";
-import { Controller, MockWSqueeth, MockVaultNFTManager, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester, IWETH9 } from "../../typechain";
+import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester, IWETH9 } from "../../typechain";
 import { getSqrtPriceAndTickBySqueethPrice } from "../calculator";
 import { oracleScaleFactor, one } from "../utils";
 
@@ -17,8 +17,8 @@ const ethDaiPrice = BigNumber.from('3000').mul(one)
 
 
 describe("Controller: Uni LP tokens collateralization", function () {
-  let squeeth: MockWSqueeth;
-  let shortNFT: MockVaultNFTManager;
+  let squeeth: MockWPowerPerp;
+  let shortSqueeth: MockShortPowerPerp;
   let controller: Controller;
   let squeethEthPool: MockUniswapV3Pool;
   let ethDaiPool: MockUniswapV3Pool;
@@ -45,11 +45,11 @@ describe("Controller: Uni LP tokens collateralization", function () {
   })
 
   this.beforeAll("Setup environment", async () => {
-    const MockSQUContract = await ethers.getContractFactory("MockWSqueeth");
-    squeeth = (await MockSQUContract.deploy()) as MockWSqueeth;
+    const MockSQUContract = await ethers.getContractFactory("MockWPowerPerp");
+    squeeth = (await MockSQUContract.deploy()) as MockWPowerPerp;
 
-    const NFTContract = await ethers.getContractFactory("MockVaultNFTManager");
-    shortNFT = (await NFTContract.deploy()) as MockVaultNFTManager;
+    const NFTContract = await ethers.getContractFactory("MockShortPowerPerp");
+    shortSqueeth = (await NFTContract.deploy()) as MockShortPowerPerp;
 
     const OracleContract = await ethers.getContractFactory("MockOracle");
     oracle = (await OracleContract.deploy()) as MockOracle;
@@ -100,7 +100,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
   this.beforeAll("Deploy Controller", async () => {
     const ControllerContract = await ethers.getContractFactory("Controller");
     controller = (await ControllerContract.deploy()) as Controller;
-    await controller.init(oracle.address, shortNFT.address, squeeth.address, weth.address, dai.address, ethDaiPool.address, squeethEthPool.address, uniPositionManager.address);
+    await controller.init(oracle.address, shortSqueeth.address, squeeth.address, weth.address, dai.address, ethDaiPool.address, squeethEthPool.address, uniPositionManager.address);
   })
 
   describe("Vault1 and Vault2: Basic Flow", function () {
@@ -114,7 +114,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
     let token1: string
     
       before("Open vault and mint perfect amount of squeeth", async () => {
-        vaultId = await shortNFT.nextId()
+        vaultId = await shortSqueeth.nextId()
         await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount, 0, {value: collateralAmount})
         // mint uni nft for users
         await uniPositionManager.mint(seller1.address, uniNFTId)
@@ -144,7 +144,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       it('should revert when trying to deposit a LP token with id 0', async ()=> {
         await uniPositionManager.mint(seller1.address, 0)
         await uniPositionManager.connect(seller1).approve(controller.address, 0)
-        await expect(controller.connect(seller1).depositUniPositionToken(vaultId, 0)).to.be.revertedWith('invalid id')
+        await expect(controller.connect(seller1).depositUniPositionToken(vaultId, 0)).to.be.revertedWith('Invalid token id')
       })
 
       it('should deposit and NFT to an existing vault.', async() => {
@@ -212,7 +212,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       })
 
       it('should revert if non owner withdraws the nft', async () => {
-        await expect(controller.connect(random).withdrawUniPositionToken(vaultId)).to.be.revertedWith("not allowed")
+        await expect(controller.connect(random).withdrawUniPositionToken(vaultId)).to.be.revertedWith("Not allowed")
       })
 
       it('should withdraw the nft successfully', async () => {
@@ -256,7 +256,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
     describe('Case: price is at the same', async () => {
       let currentTick: string;
       before("open vault and mint perfect amount of squeeth", async () => {
-        vaultId = await shortNFT.nextId()
+        vaultId = await shortSqueeth.nextId()
         await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount,0, {value: collateralAmount})
         await uniPositionManager.mint(seller1.address, uniNFTId)
       });
@@ -476,7 +476,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       })
       
       before("open vault and mint perfect amount of squeeth", async () => {
-        vaultId = await shortNFT.nextId()
+        vaultId = await shortSqueeth.nextId()
         await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount,0, {value: collateralAmount})
         await uniPositionManager.mint(seller1.address, uniNFTId)
       });
@@ -525,7 +525,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       })
   
       it('should revert when calling from random address', async() => {
-        await expect(controller.connect(random).reduceDebt(vaultId)).to.be.revertedWith('not allowed')
+        await expect(controller.connect(random).reduceDebt(vaultId)).to.be.revertedWith('Not allowed')
       })
     })
     describe('Case: price increase, vault should go underwater and people can save it', async() => {

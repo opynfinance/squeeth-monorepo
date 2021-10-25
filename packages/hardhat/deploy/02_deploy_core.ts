@@ -8,8 +8,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployer } = await getNamedAccounts();
   await deploy("Oracle", { from: deployer, log: true,});
   await deploy("Controller", { from: deployer, log: true,});
-  await deploy("VaultNFTManager", { from: deployer, log: true,});
-  await deploy("WSqueeth", { from: deployer, log: true,});
+  await deploy("ShortPowerPerp", { 
+    args: ['Short Squeeth', 'SSQU'],
+    from: deployer, 
+    log: true
+  });
+  await deploy("WPowerPerp", { 
+    args: ['Wrapped Squeeth', 'WSQU'],
+    from: deployer, 
+    log: true
+  });
 }
 
 export default func;

@@ -31,7 +31,7 @@ library VaultLib {
 
     function addUniNftCollateral(Vault memory _vault, uint256 _tokenId) internal pure {
         require(_vault.NftCollateralId == 0, "Vault already had nft");
-        require(_tokenId != 0, "invalid id");
+        require(_tokenId != 0, "Invalid token id");
         _vault.NftCollateralId = uint32(_tokenId);
     }
 

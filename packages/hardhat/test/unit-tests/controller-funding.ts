@@ -2,13 +2,11 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber, providers } from "ethers";
-import { Controller, MockWSqueeth, MockVaultNFTManager, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager } from "../../typechain";
 import { getNow, isSimilar, one, oracleScaleFactor } from "../utils";
+import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager } from "../../typechain";
 
 const squeethETHPrice = BigNumber.from('3030').mul(one).div(oracleScaleFactor)
-
 const ethUSDPrice = BigNumber.from('3000').mul(one)
-
 const scaledEthPrice = ethUSDPrice.div(oracleScaleFactor)
 
 const mintAmount = BigNumber.from('100').mul(one)
@@ -17,8 +15,8 @@ const collateralAmount = BigNumber.from('50').mul(one)
 const secondsInDay = 86400
 
 describe("Controller Funding tests", function () {
-  let squeeth: MockWSqueeth;
-  let shortNFT: MockVaultNFTManager;
+  let squeeth: MockWPowerPerp;
+  let shortSqueeth: MockShortPowerPerp;
   let controller: Controller;
   let squeethEthPool: MockUniswapV3Pool;
   let ethUSDPool: MockUniswapV3Pool;
@@ -41,11 +39,11 @@ describe("Controller Funding tests", function () {
   })
 
   this.beforeAll("Setup environment", async () => {
-    const MockSQUContract = await ethers.getContractFactory("MockWSqueeth");
-    squeeth = (await MockSQUContract.deploy()) as MockWSqueeth;
+    const MockSQUContract = await ethers.getContractFactory("MockWPowerPerp");
+    squeeth = (await MockSQUContract.deploy()) as MockWPowerPerp;
 
-    const NFTContract = await ethers.getContractFactory("MockVaultNFTManager");
-    shortNFT = (await NFTContract.deploy()) as MockVaultNFTManager;
+    const NFTContract = await ethers.getContractFactory("MockShortPowerPerp");
+    shortSqueeth = (await NFTContract.deploy()) as MockShortPowerPerp;
 
     const OracleContract = await ethers.getContractFactory("MockOracle");
     oracle = (await OracleContract.deploy()) as MockOracle;
@@ -73,7 +71,7 @@ describe("Controller Funding tests", function () {
     it("Deployment", async function () {
       const ControllerContract = await ethers.getContractFactory("Controller");
       controller = (await ControllerContract.deploy()) as Controller;
-      await controller.init(oracle.address, shortNFT.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address);
+      await controller.init(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address);
     });
   });
 
@@ -203,7 +201,7 @@ describe("Controller Funding tests", function () {
           await oracle.connect(random).setPrice(ethUSDPool.address , ethUSDPrice)  // usdc per 1 eth
           await controller.applyFunding()
           
-          vaultId = await shortNFT.nextId()
+          vaultId = await shortSqueeth.nextId()
           // mint max amount of rSqueeth
           maxSqueethToMint = collateralAmount.mul(one).mul(one).div(collatRatio).div(scaledEthPrice)
 
@@ -252,7 +250,7 @@ describe("Controller Funding tests", function () {
         let vaultId: BigNumber
         let maxCollatToRemove: BigNumber
         before('prepare a vault and stimulate time passes', async() => {
-          vaultId = await shortNFT.nextId()  
+          vaultId = await shortSqueeth.nextId()  
           // put vaultId as 0 to open vault
           await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount,0, {value: collateralAmount})
           const now = await getNow(provider)

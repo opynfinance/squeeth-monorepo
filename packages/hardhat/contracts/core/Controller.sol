@@ -6,7 +6,7 @@ pragma abicoder v2;
 import "hardhat/console.sol";
 
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
-import {IVaultManagerNFT} from "../interfaces/IVaultManagerNFT.sol";
+import {IShortPowerPerp} from "../interfaces/IShortPowerPerp.sol";
 import {IOracle} from "../interfaces/IOracle.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
@@ -27,16 +27,16 @@ contract Controller is Initializable, Ownable {
     using VaultLib for VaultLib.Vault;
     using Address for address payable;
 
-    uint32 internal constant SHUTDOWN_PERIOD = 600;
-    uint256 internal constant SEC_IN_DAY = 86400;
+    uint32 internal constant SHUTDOWN_PERIOD = 10 minutes;
     uint256 internal constant MIN_COLLATERAL = 0.5 ether;
-    /// @dev system can only be paused for 365 days from deployment
+    /// @dev system can only be paused for 182 days from deployment
     uint256 public constant PAUSE_TIME_LIMIT = 182 days;
+    uint256 public constant FUNDING_PERIOD = 1 days;
 
-    bool public isShutDown = false;
-    bool public isSystemPaused = false;
+    bool public isShutDown; // default to false
+    bool public isSystemPaused; // default to false
     uint256 public pausesLeft = 4;
-    uint256 public lastPauseTime = 0;
+    uint256 public lastPauseTime; // default to 0
 
     address public weth;
     address public dai;
@@ -63,7 +63,7 @@ contract Controller is Initializable, Ownable {
     /// @dev The token ID vault data
     mapping(uint256 => VaultLib.Vault) public vaults;
 
-    IVaultManagerNFT public vaultNFT;
+    IShortPowerPerp public shortPowerPerp;
     IWPowerPerp public wPowerPerp;
     IOracle public oracle;
 
@@ -83,22 +83,22 @@ contract Controller is Initializable, Ownable {
     event NormalizationFactorUpdated(uint256 oldNormFactor, uint256 newNormFactor, uint256 timestamp);
 
     modifier notPaused() {
-        require(!isSystemPaused, "paused");
+        require(!isSystemPaused, "Paused");
         _;
     }
 
     modifier isPaused() {
-        require(isSystemPaused, "!paused");
+        require(isSystemPaused, "Not paused");
         _;
     }
 
     modifier notShutdown() {
-        require(!isShutDown, "shutdown");
+        require(!isShutDown, "Shutdown");
         _;
     }
 
     modifier isShutdown() {
-        require(isShutDown, "!shutdown");
+        require(isShutDown, "Not shutdown");
         _;
     }
 
@@ -159,7 +159,7 @@ contract Controller is Initializable, Ownable {
     /**
      * @notice initialize the contract
      * @param _oracle oracle address
-     * @param _vaultNFT erc721 token address representing the short position
+     * @param _shortPowerPerp erc721 token address representing the short position
      * @param _wPowerPerp erc20 token address representing non-rebasing long position
      * @param _weth weth address
      * @param _dai dai address
@@ -169,7 +169,7 @@ contract Controller is Initializable, Ownable {
      */
     function init(
         address _oracle,
-        address _vaultNFT,
+        address _shortPowerPerp,
         address _wPowerPerp,
         address _weth,
         address _dai,
@@ -178,7 +178,7 @@ contract Controller is Initializable, Ownable {
         address _uniPositionManager
     ) public initializer {
         require(_oracle != address(0), "Invalid oracle address");
-        require(_vaultNFT != address(0), "Invalid vaultNFT address");
+        require(_shortPowerPerp != address(0), "Invalid shortPowerPerp address");
         require(_wPowerPerp != address(0), "Invalid power perp address");
         require(_weth != address(0), "Invalid weth address");
         require(_dai != address(0), "Invalid quote currency address");
@@ -187,7 +187,7 @@ contract Controller is Initializable, Ownable {
         require(_uniPositionManager != address(0), "Invalid uni position manager");
 
         oracle = IOracle(_oracle);
-        vaultNFT = IVaultManagerNFT(_vaultNFT);
+        shortPowerPerp = IShortPowerPerp(_shortPowerPerp);
         wPowerPerp = IWPowerPerp(_wPowerPerp);
 
         ethDaiPool = _ethDaiPool;
@@ -322,11 +322,11 @@ contract Controller is Initializable, Ownable {
      * @param _vaultId the vault you want to save
      */
     function reduceDebt(uint256 _vaultId) external notPaused {
-        require(_canModifyVault(_vaultId, msg.sender), "not allowed");
+        require(_canModifyVault(_vaultId, msg.sender), "Not allowed");
         uint256 cachedNormFactor = _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
 
-        _reduceDebt(cachedVault, vaultNFT.ownerOf(_vaultId), cachedNormFactor, false);
+        _reduceDebt(cachedVault, shortPowerPerp.ownerOf(_vaultId), cachedNormFactor, false);
 
         _writeVault(_vaultId, cachedVault);
     }
@@ -346,7 +346,7 @@ contract Controller is Initializable, Ownable {
         require(!_isVaultSafe(cachedVault, cachedNormFactor), "Can not liquidate safe vault");
 
         // try to save target vault before liquidation by reducing debt
-        uint256 bounty = _reduceDebt(cachedVault, vaultNFT.ownerOf(_vaultId), cachedNormFactor, true);
+        uint256 bounty = _reduceDebt(cachedVault, shortPowerPerp.ownerOf(_vaultId), cachedNormFactor, true);
 
         // if vault is safe after saving, pay bounty and return early.
         if (_isVaultSafe(cachedVault, cachedNormFactor)) {
@@ -380,7 +380,7 @@ contract Controller is Initializable, Ownable {
      * @param _operator new operator address
      */
     function updateOperator(uint256 _vaultId, address _operator) external {
-        require(_canModifyVault(_vaultId, msg.sender), "not allowed");
+        require(_canModifyVault(_vaultId, msg.sender), "Not allowed");
         vaults[_vaultId].operator = _operator;
         emit UpdateOperator(_vaultId, _operator);
     }
@@ -390,7 +390,7 @@ contract Controller is Initializable, Ownable {
      * @param _newFeeRecipient new fee recipient
      */
     function setFeeRecipient(address _newFeeRecipient) external onlyOwner {
-        require(_newFeeRecipient != address(0), "invalid address");
+        require(_newFeeRecipient != address(0), "Invalid address");
         emit FeeRecipientUpdated(feeRecipient, _newFeeRecipient);
         feeRecipient = _newFeeRecipient;
     }
@@ -401,8 +401,8 @@ contract Controller is Initializable, Ownable {
      * @param _newFeeRate new fee rate in basis point. can't be higher than 2%
      */
     function setFeeRate(uint256 _newFeeRate) external onlyOwner {
-        require(feeRecipient != address(0), "set fee recipient first");
-        require(_newFeeRate <= 100, "fee too high");
+        require(feeRecipient != address(0), "Set fee recipient first");
+        require(_newFeeRate <= 100, "Fee too high");
         emit FeeRateUpdated(feeRate, _newFeeRate);
         feeRate = _newFeeRate;
     }
@@ -430,9 +430,9 @@ contract Controller is Initializable, Ownable {
      * @dev can only be called for 365 days since the contract was launched or 4 times, without triggering shutdown atomically
      */
     function pause() external notShutdown notPaused onlyOwner {
-        require(pausesLeft > 0, "paused too many times");
+        require(pausesLeft > 0, "Paused too many times");
         uint256 timeSinceDeploy = block.timestamp.sub(deployTimestamp);
-        require(timeSinceDeploy < PAUSE_TIME_LIMIT, "pause time limit exceeded");
+        require(timeSinceDeploy < PAUSE_TIME_LIMIT, "Pause time limit exceeded");
         isSystemPaused = true;
         pausesLeft -= 1;
         lastPauseTime = block.timestamp;
@@ -442,7 +442,7 @@ contract Controller is Initializable, Ownable {
      * @dev anyone can unpause the contract after 24 hours
      */
     function unPauseAnyone() external notShutdown isPaused {
-        require(block.timestamp > (lastPauseTime + 1 days), "not enough paused time has passed");
+        require(block.timestamp > (lastPauseTime + 1 days), "Not enough paused time has passed");
         isSystemPaused = false;
     }
 
@@ -469,7 +469,7 @@ contract Controller is Initializable, Ownable {
      * @param _vaultId vauld id
      */
     function redeemShort(uint256 _vaultId) external isShutdown {
-        require(_canModifyVault(_vaultId, msg.sender), "not allowed");
+        require(_canModifyVault(_vaultId, msg.sender), "Not allowed");
 
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
         uint256 cachedNormFactor = normalizationFactor;
@@ -518,7 +518,7 @@ contract Controller is Initializable, Ownable {
      */
 
     function _canModifyVault(uint256 _vaultId, address _account) internal view returns (bool) {
-        return vaultNFT.ownerOf(_vaultId) == _account || vaults[_vaultId].operator == _account;
+        return shortPowerPerp.ownerOf(_vaultId) == _account || vaults[_vaultId].operator == _account;
     }
 
     /**
@@ -553,7 +553,7 @@ contract Controller is Initializable, Ownable {
         }
 
         if (wPowerPerpAmount > 0) {
-            depositAmountWithFee = _payFee(cachedVault, _account, _vaultId, wPowerPerpAmount, _depositAmount);
+            depositAmountWithFee = _payFee(cachedVault, wPowerPerpAmount, _depositAmount);
         }
         if (_depositAmount > 0) _addEthCollateral(cachedVault, _vaultId, depositAmountWithFee);
         if (_uniTokenId != 0) _depositUniPositionToken(cachedVault, _account, _vaultId, _uniTokenId);
@@ -601,7 +601,7 @@ contract Controller is Initializable, Ownable {
      * @return newly created vault memory
      */
     function _openVault(address _recipient) internal returns (uint256, VaultLib.Vault memory) {
-        uint256 vaultId = vaultNFT.mintNFT(_recipient);
+        uint256 vaultId = shortPowerPerp.mintNFT(_recipient);
 
         VaultLib.Vault memory vault = VaultLib.Vault({
             NftCollateralId: 0,
@@ -659,7 +659,7 @@ contract Controller is Initializable, Ownable {
         address _account,
         uint256 _vaultId
     ) internal {
-        require(_canModifyVault(_vaultId, _account), "not allowed");
+        require(_canModifyVault(_vaultId, _account), "Not allowed");
 
         uint256 tokenId = _vault.NftCollateralId;
         _vault.removeUniNftCollateral();
@@ -681,7 +681,7 @@ contract Controller is Initializable, Ownable {
         uint256 _vaultId,
         uint256 _amount
     ) internal {
-        require(_canModifyVault(_vaultId, _account), "not allowed");
+        require(_canModifyVault(_vaultId, _account), "Not allowed");
 
         _vault.removeEthCollateral(_amount);
         payable(_account).sendValue(_amount);
@@ -703,7 +703,7 @@ contract Controller is Initializable, Ownable {
         uint256 _vaultId,
         uint256 _wPowerPerpAmount
     ) internal {
-        require(_canModifyVault(_vaultId, _account), "not allowed");
+        require(_canModifyVault(_vaultId, _account), "Not allowed");
 
         _vault.addShort(_wPowerPerpAmount);
         wPowerPerp.mint(_account, _wPowerPerpAmount);
@@ -774,7 +774,7 @@ contract Controller is Initializable, Ownable {
         // if so the system only pays out the amount the vault has, which may not be profitable
         if (collateralToPay > vaultCollateralAmount) {
             // force liquidator to pay full debt amount
-            require(_maxWPowerPerpAmount >= vaultShortAmount, "need full liquidation");
+            require(_maxWPowerPerpAmount >= vaultShortAmount, "Need full liquidation");
             collateralToPay = vaultCollateralAmount;
             wAmountToLiquidate = vaultShortAmount;
         }
@@ -784,7 +784,7 @@ contract Controller is Initializable, Ownable {
         _vault.removeEthCollateral(collateralToPay);
 
         (, bool isDust) = _getVaultStatus(_vault, _normalizationFactor);
-        require(!isDust, "dust vault left");
+        require(!isDust, "Dust vault left");
 
         // pay the liquidator
         payable(_liquidator).sendValue(collateralToPay);
@@ -854,16 +854,12 @@ contract Controller is Initializable, Ownable {
     /**
      * @dev pay the fee to the fee recipient in eth from either the vault or the deposit amount
      * @param _vault the Vault memory to update.
-     * @param _account the user address that pays the fee (either from transferred eth or vault eth)
-     * @param _vaultId the user vault Id
      * @param _wSqueethAmount the amount of wSqueeth to mint
      * @param _depositAmount the amount depositing or withdrawing
      * @return the amount of actual deposited eth into the vault, this is less than the original amount if a fee was removed from it
      */
     function _payFee(
         VaultLib.Vault memory _vault,
-        address _account,
-        uint256 _vaultId,
         uint256 _wSqueethAmount,
         uint256 _depositAmount
     ) internal returns (uint256) {
@@ -983,7 +979,7 @@ contract Controller is Initializable, Ownable {
             cacheNormFactor
         );
         uint256 index = Power2Base._getIndex(fairPeriod, address(oracle), ethDaiPool, weth, dai);
-        uint256 rFunding = (uint256(1e18).mul(uint256(period))).div(SEC_IN_DAY);
+        uint256 rFunding = (uint256(1e18).mul(uint256(period))).div(FUNDING_PERIOD);
 
         // Truncate mark to be at least 80% of index
         uint256 lowerBound = index.mul(4).div(5);
@@ -1027,7 +1023,7 @@ contract Controller is Initializable, Ownable {
     function _checkVault(VaultLib.Vault memory _vault, uint256 _normalizationFactor) internal view {
         (bool isSafe, bool isDust) = _getVaultStatus(_vault, _normalizationFactor);
         require(isSafe, "Invalid state");
-        require(!isDust, "dust vault");
+        require(!isDust, "Dust vault");
     }
 
     /**
