@@ -22,6 +22,7 @@ contract ShortPowerPerp is ERC721, Initializable {
     constructor(string memory _name, string memory _symbol) ERC721(_name, _symbol) {}
 
     function init(address _controller) public initializer {
+        require(_controller != address(0), "Invalid controller address");
         controller = _controller;
     }
 

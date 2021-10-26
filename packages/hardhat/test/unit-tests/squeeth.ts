@@ -1,6 +1,7 @@
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
+import { constants } from "ethers";
 import { WPowerPerp } from "../../typechain";
 
 describe("WPowerPerp", function () {
@@ -18,6 +19,9 @@ describe("WPowerPerp", function () {
   })
 
   describe("Initialization", async () => {
+    it("should revert when calling init with invalid address", async () => {
+      await expect(wsqueeth.init(constants.AddressZero)).to.be.revertedWith('Invalid controller address')
+    })
     it("should return initial with controller address", async () => {
       await wsqueeth.init(controller.address)
       expect(await wsqueeth.controller()).to.be.eq(controller.address)

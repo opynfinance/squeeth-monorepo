@@ -20,6 +20,7 @@ contract WPowerPerp is ERC20, Initializable, IWPowerPerp {
     }
 
     function init(address _controller) external initializer {
+        require(_controller != address(0), "Invalid controller address");
         controller = _controller;
     }
 
