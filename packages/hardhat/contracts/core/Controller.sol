@@ -517,6 +517,12 @@ contract Controller is Initializable, Ownable {
      * ======================
      */
 
+    /**
+     * @notice returns if an address can modify a vault
+     * @param _vaultId the id of the vault to check if can be modified by _account
+     * @param _account the address to check if can modify the vault
+     * @return true if the address can modify the vault
+     */
     function _canModifyVault(uint256 _vaultId, address _account) internal view returns (bool) {
         return shortPowerPerp.ownerOf(_vaultId) == _account || vaults[_vaultId].operator == _account;
     }

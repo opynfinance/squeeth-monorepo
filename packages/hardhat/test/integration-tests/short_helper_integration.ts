@@ -173,6 +173,24 @@ describe("ShortHelper Integration Test", function () {
       expect(poolWethBefore.sub(poolWethAfter).toString()).to.be.eq(sellerWethAfter.sub(sellerWethBefore), "weth mismatch")
     })
 
+    it ('should revert if a random address tries to mint and sell squeeth on someone elses vault', async () => {
+
+      const attackAmount = squeethAmount.div(10)
+      const exactInputParam = {
+        tokenIn: squeeth.address,
+        tokenOut: weth.address,
+        fee: 3000,
+        recipient: seller2.address,
+        deadline: await getNow(provider) + 86400,
+        amountIn: attackAmount,
+        amountOutMinimum: 0, // no slippage control now
+        sqrtPriceLimitX96: 0,
+      }
+  
+      // mint and trade
+      await expect(shortHelper.connect(seller2).openShort(seller1VaultId, attackAmount, 0, exactInputParam, {value: 0} )).to.be.revertedWith("Not allowed")
+    })
+
     it ('should open new vault and sell squeeth, receive eth at the end', async () => {
       
       const exactInputParam = {
@@ -224,7 +242,35 @@ describe("ShortHelper Integration Test", function () {
   })
 
   describe('Close short position', async() => {
+    
+    it ('should revert if a random user to withdraw ETH from someone elses vault', async () => {
+      const buyBackSqueethAmount = ethers.utils.parseEther('0.0000001')
+      const withdrawCollateralAmount = ethers.utils.parseEther('2.5')
 
+      // max amount to buy back 0.1 squeeth
+      const amountInMaximum = ethers.utils.parseEther('5')
+  
+      const exactOutputParam = {
+        tokenIn: weth.address,
+        tokenOut: squeeth.address,
+        fee: 3000,
+        recipient: shortHelper.address,
+        deadline: await getNow(provider) + 86400,
+        amountOut: buyBackSqueethAmount,
+        amountInMaximum,
+        sqrtPriceLimitX96: 0,
+      }
+  
+      // short helper already added as operator for seller1
+      // buy and close
+      await expect(shortHelper.connect(seller2).closeShort(seller1VaultId, buyBackSqueethAmount, withdrawCollateralAmount, exactOutputParam, {
+          value: amountInMaximum, // max amount used to buy back eth
+          gasPrice: 0 // won't cost gas so we can calculate eth received
+        }
+      )).to.be.revertedWith("Not allowed")
+    })
+
+    
     it ('should partially close a short position and get back eth', async () => {
       const buyBackSqueethAmount = ethers.utils.parseEther('0.0005')
       const withdrawCollateralAmount = ethers.utils.parseEther('10')
@@ -243,8 +289,7 @@ describe("ShortHelper Integration Test", function () {
         sqrtPriceLimitX96: 0,
       }
   
-      // add short helper as operator
-      await controller.connect(seller1).updateOperator(seller1VaultId,shortHelper.address, {gasPrice: 0})
+      // short helper already added as operator for seller1
 
       const nftBalanceBefore = await shortPowerPerp.balanceOf(seller1.address)
       const poolSqueethBefore = await squeeth.balanceOf(poolAddress)

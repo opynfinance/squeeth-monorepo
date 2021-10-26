@@ -51,6 +51,8 @@ contract ShortHelper {
         uint256 _uniNftId,
         ISwapRouter.ExactInputSingleParams memory _exactInputParams
     ) external payable {
+        if (_vaultId != 0) require(shortPowerPerp.ownerOf(_vaultId) == msg.sender, "Not allowed");
+
         (uint256 vaultId, uint256 wPowerPerpAmount) = controller.mintPowerPerpAmount{value: msg.value}(
             _vaultId,
             _powerPerpAmount,
@@ -79,6 +81,8 @@ contract ShortHelper {
         uint128 _withdrawAmount,
         ISwapRouter.ExactOutputSingleParams memory _exactOutputParams
     ) external payable {
+        require(shortPowerPerp.ownerOf(_vaultId) == msg.sender, "Not allowed");
+
         // wrap eth to weth
         weth.deposit{value: msg.value}();
 
