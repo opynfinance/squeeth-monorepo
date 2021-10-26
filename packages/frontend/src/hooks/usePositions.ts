@@ -118,6 +118,7 @@ export const usePnL = () => {
   const [buyQuote, setBuyQuote] = useState(new BigNumber(0))
   const [longGain, setLongGain] = useState(0)
   const [shortGain, setShortGain] = useState(0)
+  const [loading, setLoading] = useState(true)
 
   const positionType = useMemo(() => {
     if (wSqueethBal.isGreaterThan(0)) return PositionType.LONG
@@ -130,8 +131,9 @@ export const usePnL = () => {
   useEffect(() => {
     if (!ready) return
 
-    getSellQuote(wSqueethBal.toNumber()).then(setSellQuote)
-    getBuyQuote(shortSqueethAmt.toNumber()).then((val) => setBuyQuote(val.amountIn))
+    const p1 = getSellQuote(wSqueethBal.toNumber()).then(setSellQuote)
+    const p2 = getBuyQuote(shortSqueethAmt.toNumber()).then((val) => setBuyQuote(val.amountIn))
+    Promise.all([p1, p2]).then(() => setLoading(false))
   }, [wSqueethBal.toNumber(), ready])
 
   useEffect(() => {
@@ -164,5 +166,6 @@ export const usePnL = () => {
     wSqueethBal,
     shortSqueethAmt,
     positionType,
+    loading,
   }
 }

@@ -9,6 +9,7 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
   const [collatRatio, setCollatRatio] = useState(initCollatRatio)
 
   const ethPrices = useAsyncMemo(async () => await getETHPrices(days), [], [days])
+  const allEthPrices = useAsyncMemo(async () => await getETHPrices(initDays), [], [initDays])
 
   const cusdcPrices = useAsyncMemo(async () => await getCUSDCPrices(days), [], [days])
 
@@ -18,7 +19,7 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
     return ethPrices.length === 0 ? 1 : ethPrices[0].value
   }, [ethPrices])
 
-  const ethPriceMap = ethPrices.reduce((acc: any, p) => {
+  const ethPriceMap = allEthPrices.reduce((acc: any, p) => {
     acc[p.time] = p.value
     return acc
   }, {})

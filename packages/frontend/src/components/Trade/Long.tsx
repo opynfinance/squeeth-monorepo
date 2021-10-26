@@ -150,6 +150,12 @@ const useStyles = makeStyles((theme) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
+    buttonDiv: {
+      position: 'sticky',
+      bottom: '0',
+      background: '#2A2D2E',
+      paddingBottom: theme.spacing(3),
+    },
   }),
 )
 
@@ -257,36 +263,38 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
             minReceivedUnit="ETH"
           />
         </div>
-        {!connected ? (
-          <PrimaryButton
-            variant="contained"
-            onClick={selectWallet}
-            className={classes.amountInput}
-            disabled={!!sellLoading}
-            style={{ width: '300px' }}
-          >
-            {'Connect Wallet'}
-          </PrimaryButton>
-        ) : (
-          <PrimaryButton
-            variant="contained"
-            onClick={sellAndClose}
-            className={classes.amountInput}
-            disabled={!!sellLoading || !!closeError || shrtAmt.gt(0) || lngAmt.isZero()}
-            style={{ width: '300px' }}
-          >
-            {sellLoading ? (
-              <CircularProgress color="primary" size="1.5rem" />
-            ) : squeethAllowance.lt(amount) ? (
-              'Approve oSQTH'
-            ) : (
-              'Sell to close'
-            )}
-          </PrimaryButton>
-        )}
-        <Typography variant="caption" className={classes.caption} component="div">
-          Trades on Uniswap 🦄
-        </Typography>
+        <div className={classes.buttonDiv}>
+          {!connected ? (
+            <PrimaryButton
+              variant="contained"
+              onClick={selectWallet}
+              className={classes.amountInput}
+              disabled={!!sellLoading}
+              style={{ width: '300px' }}
+            >
+              {'Connect Wallet'}
+            </PrimaryButton>
+          ) : (
+            <PrimaryButton
+              variant="contained"
+              onClick={sellAndClose}
+              className={classes.amountInput}
+              disabled={!!sellLoading || !!closeError || shrtAmt.gt(0) || lngAmt.isZero()}
+              style={{ width: '300px' }}
+            >
+              {sellLoading ? (
+                <CircularProgress color="primary" size="1.5rem" />
+              ) : squeethAllowance.lt(amount) ? (
+                'Approve oSQTH'
+              ) : (
+                'Sell to close'
+              )}
+            </PrimaryButton>
+          )}
+          <Typography variant="caption" className={classes.caption} component="div">
+            Trades on Uniswap 🦄
+          </Typography>
+        </div>
       </div>
     )
   }, [
@@ -334,7 +342,6 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
         error={!!openError}
         hint={openError ? openError : `Balance ${balance} ETH`}
       />
-      {/* <TradeInfoItem label="Squeeth you get" value={cost.toFixed(8)} unit="WSQTH" /> */}
       <div className={classes.squeethExp}>
         <div>
           <Typography variant="caption">Buy</Typography>
@@ -373,30 +380,32 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
       <TradeInfoItem label="Price Impact" value={quote.priceImpact} unit="%" />
       <TradeInfoItem label="Minimum received" value={quote.minimumAmountOut.toFixed(6)} unit="wSQTH" />
       <TradeInfoItem label="Liquidity Provider Fee" value={UNI_POOL_FEES / 1000000} unit="ETH" /> */}
-      {!connected ? (
-        <PrimaryButton
-          variant="contained"
-          onClick={selectWallet}
-          className={classes.amountInput}
-          disabled={!!buyLoading}
-          style={{ width: '300px' }}
-        >
-          {'Connect Wallet'}
-        </PrimaryButton>
-      ) : (
-        <PrimaryButton
-          variant="contained"
-          onClick={transact}
-          className={classes.amountInput}
-          disabled={!!buyLoading || !!openError || shrtAmt.gt(0)}
-          style={{ width: '300px' }}
-        >
-          {buyLoading ? <CircularProgress color="primary" size="1.5rem" /> : 'Buy'}
-        </PrimaryButton>
-      )}
-      <Typography variant="caption" className={classes.caption} component="div">
-        Trades on Uniswap V3 🦄
-      </Typography>
+      <div className={classes.buttonDiv}>
+        {!connected ? (
+          <PrimaryButton
+            variant="contained"
+            onClick={selectWallet}
+            className={classes.amountInput}
+            disabled={!!buyLoading}
+            style={{ width: '300px' }}
+          >
+            {'Connect Wallet'}
+          </PrimaryButton>
+        ) : (
+          <PrimaryButton
+            variant="contained"
+            onClick={transact}
+            className={classes.amountInput}
+            disabled={!!buyLoading || !!openError || shrtAmt.gt(0)}
+            style={{ width: '300px' }}
+          >
+            {buyLoading ? <CircularProgress color="primary" size="1.5rem" /> : 'Buy'}
+          </PrimaryButton>
+        )}
+        <Typography variant="caption" className={classes.caption} component="div">
+          Trades on Uniswap V3 🦄
+        </Typography>
+      </div>
     </div>
   )
 }

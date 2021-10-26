@@ -50,7 +50,7 @@ export const useSqueethPool = () => {
   }, [web3])
 
   useEffect(() => {
-    if (!squeethContract) return
+    if (!squeethContract || !ticks) return
     updateData()
   }, [squeethContract, ticks?.length])
 

@@ -98,6 +98,7 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
     positionType,
     longUsdAmt,
     shortUsdAmt,
+    loading,
   } = usePnL()
   const { tradeAmount, actualTradeType, isOpenPosition, quote } = useTrade()
   const ethPrice = useETHPrice()
@@ -116,12 +117,13 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
   }, [positionType, longGain, shortGain])
 
   const getPositionBasedValue = useCallback(
-    (long: any, short: any, none: any) => {
+    (long: any, short: any, none: any, loadingMsg?: any) => {
+      if (loadingMsg && loading) return loadingMsg
       if (positionType === PositionType.LONG) return long
       if (positionType === PositionType.SHORT) return short
       return none
     },
-    [positionType],
+    [positionType, loading],
   )
 
   const { postTradeAmt, postPosition } = useMemo(() => {
@@ -138,7 +140,7 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
     }
 
     return { postTradeAmt, postPosition }
-  }, [wSqueethBal.toNumber(), shortSqueethAmt.toNumber(), tradeAmount, positionType, quote.amountOut.toNumber()])
+  }, [wSqueethBal.toNumber(), shortSqueethAmt.toNumber(), tradeAmount, actualTradeType, quote.amountOut.toNumber()])
 
   const postTitleClass = useMemo(() => {
     if (postPosition === PositionType.LONG) return classes.longTitle
@@ -178,9 +180,15 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
               oSQTH
             </Typography>
           </div>
-          <Typography variant="caption" color="textSecondary">
-            $ {getPositionBasedValue(sellQuote.amountOut, buyQuote, new BigNumber(0)).times(ethPrice).toFixed(2)}
-          </Typography>
+          {loading ? (
+            <Typography variant="caption" color="textSecondary">
+              Loading
+            </Typography>
+          ) : (
+            <Typography variant="caption" color="textSecondary">
+              $ {getPositionBasedValue(sellQuote.amountOut, buyQuote, new BigNumber(0)).times(ethPrice).toFixed(2)}
+            </Typography>
+          )}
         </div>
         <div style={{ marginLeft: '16px' }}>
           <Typography variant="caption" color="textSecondary">
@@ -192,10 +200,11 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
                 `$${sellQuote.amountOut.times(ethPrice).minus(longUsdAmt.abs()).toFixed(2)}`,
                 `$${buyQuote.times(ethPrice).minus(shortUsdAmt.abs()).toFixed(2)}`,
                 '--',
+                'Loading',
               )}
             </Typography>
             <Typography variant="caption" className={pnlClass} style={{ marginLeft: '4px' }}>
-              {getPositionBasedValue(`(${longGain.toFixed(2)}%)`, `(${shortGain.toFixed(2)}%)`, null)}
+              {getPositionBasedValue(`(${longGain.toFixed(2)}%)`, `(${shortGain.toFixed(2)}%)`, null, ' ')}
             </Typography>
           </div>
         </div>

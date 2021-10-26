@@ -57,7 +57,6 @@ const useStyles = makeStyles((theme) =>
     },
     innerTicket: {
       background: theme.palette.background.lightStone,
-      paddingBottom: theme.spacing(3),
       overflow: 'auto',
       flexGrow: 1,
     },

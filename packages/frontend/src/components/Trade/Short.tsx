@@ -37,7 +37,7 @@ const useStyles = makeStyles((theme) =>
       fontSize: '16px',
     },
     innerCard: {
-      paddingBottom: theme.spacing(8),
+      paddingBottom: theme.spacing(0),
     },
     amountInput: {
       marginTop: theme.spacing(1),
@@ -107,6 +107,12 @@ const useStyles = makeStyles((theme) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
+    buttonDiv: {
+      position: 'sticky',
+      bottom: '0',
+      background: '#2A2D2E',
+      paddingBottom: theme.spacing(3),
+    },
   }),
 )
 
@@ -140,7 +146,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   const { squeethAmount: shrtAmt } = useShortPositions()
 
   const liqPrice = useMemo(() => {
-    const rSqueeth = normalizationFactor.multipliedBy(amount).dividedBy(10000)
+    const rSqueeth = normalizationFactor.multipliedBy(amount || 1).dividedBy(10000)
 
     return collateral / rSqueeth.multipliedBy(1.5).toNumber()
   }, [amount, collatPercent, collateral, normalizationFactor.toNumber()])
@@ -339,44 +345,46 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
           </div>
         </div>
 
-        {!connected ? (
-          <PrimaryButton
-            variant="contained"
-            onClick={selectWallet}
-            className={classes.amountInput}
-            disabled={!!buyLoading}
-            style={{ width: '300px' }}
-          >
-            {'Connect Wallet'}
-          </PrimaryButton>
-        ) : (
-          <PrimaryButton
-            onClick={buyBackAndClose}
-            className={classes.amountInput}
-            disabled={buyLoading || collatPercent < 150 || !!closeError || lngAmt.gt(0) || shrtAmt.isZero()}
-            variant="contained"
-            style={{ width: '300px' }}
-          >
-            {buyLoading ? (
-              <CircularProgress color="primary" size="1.5rem" />
-            ) : (
-              <>
-                {isVaultApproved ? 'Buy back and close' : 'Add operator (1/2)'}
-                {!isVaultApproved ? (
-                  <Tooltip
-                    style={{ marginLeft: '2px' }}
-                    title="Operator is a contract that mints squeeth, deposits collateral and sells squeeth in single TX. Similarly it also buys back + burns squeeth and withdraws collateral in single TX"
-                  >
-                    <InfoOutlinedIcon fontSize="small" />
-                  </Tooltip>
-                ) : null}
-              </>
-            )}
-          </PrimaryButton>
-        )}
-        <Typography variant="caption" className={classes.caption} component="div">
-          Trades on Uniswap V3 🦄
-        </Typography>
+        <div className={classes.buttonDiv}>
+          {!connected ? (
+            <PrimaryButton
+              variant="contained"
+              onClick={selectWallet}
+              className={classes.amountInput}
+              disabled={!!buyLoading}
+              style={{ width: '300px' }}
+            >
+              {'Connect Wallet'}
+            </PrimaryButton>
+          ) : (
+            <PrimaryButton
+              onClick={buyBackAndClose}
+              className={classes.amountInput}
+              disabled={buyLoading || collatPercent < 150 || !!closeError || lngAmt.gt(0) || shrtAmt.isZero()}
+              variant="contained"
+              style={{ width: '300px' }}
+            >
+              {buyLoading ? (
+                <CircularProgress color="primary" size="1.5rem" />
+              ) : (
+                <>
+                  {isVaultApproved ? 'Buy back and close' : 'Add operator (1/2)'}
+                  {!isVaultApproved ? (
+                    <Tooltip
+                      style={{ marginLeft: '2px' }}
+                      title="Operator is a contract that mints squeeth, deposits collateral and sells squeeth in single TX. Similarly it also buys back + burns squeeth and withdraws collateral in single TX"
+                    >
+                      <InfoOutlinedIcon fontSize="small" />
+                    </Tooltip>
+                  ) : null}
+                </>
+              )}
+            </PrimaryButton>
+          )}
+          <Typography variant="caption" className={classes.caption} component="div">
+            Trades on Uniswap V3 🦄
+          </Typography>
+        </div>
       </div>
     )
   }, [
@@ -492,45 +500,46 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
           />
         </div>
       </div>
-
-      {!connected ? (
-        <PrimaryButton
-          variant="contained"
-          onClick={selectWallet}
-          className={classes.amountInput}
-          disabled={!!buyLoading}
-          style={{ width: '300px' }}
-        >
-          {'Connect Wallet'}
-        </PrimaryButton>
-      ) : (
-        <PrimaryButton
-          onClick={depositAndShort}
-          className={classes.amountInput}
-          disabled={shortLoading || collatPercent < 150 || !!openError || lngAmt.gt(0)}
-          variant="contained"
-          style={{ width: '300px' }}
-        >
-          {shortLoading ? (
-            <CircularProgress color="primary" size="1.5rem" />
-          ) : (
-            <>
-              {isVaultApproved ? 'Deposit and sell' : 'Add operator (1/2)'}
-              {!isVaultApproved ? (
-                <Tooltip
-                  style={{ marginLeft: '2px' }}
-                  title="Operator is a contract that mints squeeth, deposits collateral and sells squeeth in single TX. Similarly it also buys back + burns squeeth and withdraws collateral in single TX"
-                >
-                  <InfoOutlinedIcon fontSize="small" />
-                </Tooltip>
-              ) : null}
-            </>
-          )}
-        </PrimaryButton>
-      )}
-      <Typography variant="caption" className={classes.caption} component="div">
-        Trades on Uniswap 🦄
-      </Typography>
+      <div className={classes.buttonDiv}>
+        {!connected ? (
+          <PrimaryButton
+            variant="contained"
+            onClick={selectWallet}
+            className={classes.amountInput}
+            disabled={!!buyLoading}
+            style={{ width: '300px' }}
+          >
+            {'Connect Wallet'}
+          </PrimaryButton>
+        ) : (
+          <PrimaryButton
+            onClick={depositAndShort}
+            className={classes.amountInput}
+            disabled={shortLoading || collatPercent < 150 || !!openError || lngAmt.gt(0)}
+            variant="contained"
+            style={{ width: '300px' }}
+          >
+            {shortLoading ? (
+              <CircularProgress color="primary" size="1.5rem" />
+            ) : (
+              <>
+                {isVaultApproved ? 'Deposit and sell' : 'Add operator (1/2)'}
+                {!isVaultApproved ? (
+                  <Tooltip
+                    style={{ marginLeft: '2px' }}
+                    title="Operator is a contract that mints squeeth, deposits collateral and sells squeeth in single TX. Similarly it also buys back + burns squeeth and withdraws collateral in single TX"
+                  >
+                    <InfoOutlinedIcon fontSize="small" />
+                  </Tooltip>
+                ) : null}
+              </>
+            )}
+          </PrimaryButton>
+        )}
+        <Typography variant="caption" className={classes.caption} component="div">
+          Trades on Uniswap 🦄
+        </Typography>
+      </div>
     </div>
   )
 }
