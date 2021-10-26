@@ -106,9 +106,7 @@ library Power2Base {
         uint32 _period
     ) internal view returns (uint256) {
         // period reaching this point should be check, otherwise might revert
-        uint256 twap = IOracle(_oracle).getTwap(_pool, _base, _quote, _period);
-        require(twap != 0, "WAP WAP WAP");
-        return twap;
+        return IOracle(_oracle).getTwap(_pool, _base, _quote, _period);
     }
 
     /**

@@ -241,13 +241,6 @@ describe("Controller", function () {
         expect(index.eq(scaledEthPrice.mul(scaledEthPrice).div(one))).to.be.true
       })
 
-      it('should revert if a _getTwap price from index (or mark) is 0', async() => {
-        await oracle.connect(random).setPrice(ethUSDPool.address , 0)  // usdc per 1 eth
-        await expect(controller.getIndex(30)).to.be.revertedWith("WAP WAP WAP")
-        // reset the price
-        await oracle.connect(random).setPrice(ethUSDPool.address , ethUSDPrice)  // usdc per 1 eth
-      })
-
       it('should revert when sending eth to controller from an EOA', async() => {
         await expect(random.sendTransaction({to: controller.address, value:1})).to.be.revertedWith('Cannot receive eth')
       })
