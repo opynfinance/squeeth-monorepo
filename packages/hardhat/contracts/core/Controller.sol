@@ -317,7 +317,19 @@ contract Controller is Initializable, Ownable {
     }
 
     /**
-     * @notice if a vault is unsafe and has a UNI NFT in it, owner call redeem the NFT to pay back some debt.
+     * @notice after the system is shutdown, insolvent vaults need to be force redeemed
+     * @notice if a vault has a UNI NFT in it, anyone can call to redeem the NFT to pay back some debt.
+     * @dev the caller won't get any bounty. this is expected to be used for insolvent vaults if shut down.
+     * @param _vaultId the vault you want to save
+     */
+    function reduceDebtShutdown(uint256 _vaultId) external isShutdown {
+        VaultLib.Vault memory cachedVault = vaults[_vaultId];
+        _reduceDebt(cachedVault, shortPowerPerp.ownerOf(_vaultId), normalizationFactor, false);
+        _writeVault(_vaultId, cachedVault);
+    }
+
+    /**
+     * @notice if a vault has a UNI NFT in it, owner can call to redeem the NFT to pay back some debt.
      * @dev the caller won't get any bounty. this is expected to be used by vault owner
      * @param _vaultId the vault you want to save
      */
@@ -325,9 +337,7 @@ contract Controller is Initializable, Ownable {
         require(_canModifyVault(_vaultId, msg.sender), "Not allowed");
         uint256 cachedNormFactor = _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
-
         _reduceDebt(cachedVault, shortPowerPerp.ownerOf(_vaultId), cachedNormFactor, false);
-
         _writeVault(_vaultId, cachedVault);
     }
 
@@ -806,14 +816,14 @@ contract Controller is Initializable, Ownable {
      * @dev this function will update the vault memory in-place
      * @param _vault the Vault memory to update.
      * @param _owner where should the excess go to
-     * @param _isLiquidation whether we're paying to the recipient the 2% discount or not.
+     * @param _payBounty whether we're paying to the recipient the 2% discount or not.
      * @return bounty amount of bounty paid for liquidator
      */
     function _reduceDebt(
         VaultLib.Vault memory _vault,
         address _owner,
         uint256 _normalizationFactor,
-        bool _isLiquidation
+        bool _payBounty
     ) internal returns (uint256) {
         uint256 nftId = _vault.NftCollateralId;
         if (nftId == 0) return 0;
@@ -825,7 +835,7 @@ contract Controller is Initializable, Ownable {
 
         // the bounty is 2% on top of total value withdrawn from the NFT.
         uint256 bounty;
-        if (_isLiquidation) {
+        if (_payBounty) {
             uint256 totalValue = Power2Base
                 ._getCollateralByRepayAmount(
                     withdrawnWPowerPerpAmount,

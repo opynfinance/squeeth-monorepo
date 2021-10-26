@@ -47,4 +47,6 @@ interface IController {
      * External function to update the normalized factor as a way to pay funding.
      */
     function applyFunding() external;
+
+    function reduceDebtShutdown(uint256 _vaultId) external;
 }
