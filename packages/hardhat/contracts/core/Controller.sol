@@ -531,6 +531,7 @@ contract Controller is Initializable, Ownable {
      */
 
     /**
+<<<<<<< HEAD
      * @notice check if a vaultId is valid, reverts  if it's not valid
      * @param _vaultId the id to check
      */
@@ -539,6 +540,8 @@ contract Controller is Initializable, Ownable {
     }
 
     /**
+=======
+>>>>>>> 8ecf55b2 (fix to contracts)
      * @notice returns if an address can modify a vault
      * @param _vaultId the id of the vault to check if can be modified by _account
      * @param _account the address to check if can modify the vault

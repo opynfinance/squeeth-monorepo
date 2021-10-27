@@ -22,6 +22,7 @@ contract ShortHelper {
     ISwapRouter public immutable router;
     IWETH9 public immutable weth;
     IShortPowerPerp public immutable shortPowerPerp;
+    address public immutable wPowerPerp;
 
     constructor(
         address _controllerAddr,
@@ -30,7 +31,7 @@ contract ShortHelper {
     ) {
         IController _controller = IController(_controllerAddr);
         router = ISwapRouter(_swapRouter);
-
+        wPowerPerp = _controller.wPowerPerp();
         IWPowerPerp _wPowerPerp = IWPowerPerp(_controller.wPowerPerp());
         IWETH9 _weth = IWETH9(_wethAddr);
         _wPowerPerp.approve(_swapRouter, type(uint256).max);
@@ -52,6 +53,10 @@ contract ShortHelper {
         ISwapRouter.ExactInputSingleParams memory _exactInputParams
     ) external payable {
         if (_vaultId != 0) require(shortPowerPerp.ownerOf(_vaultId) == msg.sender, "Not allowed");
+        require(
+            _exactInputParams.tokenOut == address(weth) && _exactInputParams.tokenIn == wPowerPerp,
+            "Wrong swap tokens"
+        );
 
         (uint256 vaultId, uint256 wPowerPerpAmount) = controller.mintPowerPerpAmount{value: msg.value}(
             _vaultId,
@@ -63,7 +68,7 @@ contract ShortHelper {
         uint256 amountOut = router.exactInputSingle(_exactInputParams);
 
         // if the recipient is this address: unwrap eth and send back to msg.sender
-        if (_exactInputParams.recipient == address(this) && _exactInputParams.tokenOut == address(weth)) {
+        if (_exactInputParams.recipient == address(this)) {
             weth.withdraw(amountOut);
             payable(msg.sender).sendValue(amountOut);
         }
@@ -82,6 +87,10 @@ contract ShortHelper {
         ISwapRouter.ExactOutputSingleParams memory _exactOutputParams
     ) external payable {
         require(shortPowerPerp.ownerOf(_vaultId) == msg.sender, "Not allowed");
+        require(
+            _exactOutputParams.tokenOut == wPowerPerp && _exactOutputParams.tokenIn == address(weth),
+            "Wrong swap tokens"
+        );
 
         // wrap eth to weth
         weth.deposit{value: msg.value}();
