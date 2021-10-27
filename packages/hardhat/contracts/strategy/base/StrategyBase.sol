@@ -88,6 +88,9 @@ contract StrategyBase is ERC20 {
         uint256 _collateral,
         bool _keepWsqueeth
     ) internal {
+        _strategyCollateral = _strategyCollateral.add(_collateral);
+        _strategyDebt = _strategyDebt.add(_wAmount);
+
         powerTokenController.mintWPowerPerpAmount{value: _collateral}(_vaultId, uint128(_wAmount), 0);
 
         if (!_keepWsqueeth) {
@@ -109,6 +112,9 @@ contract StrategyBase is ERC20 {
         uint256 _collateralToWithdraw,
         bool _isOwnedWSqueeth
     ) internal {
+        _strategyDebt = _strategyDebt.sub(_amount);
+        _strategyCollateral = _strategyCollateral.sub(_collateralToWithdraw);
+
         if (!_isOwnedWSqueeth) {
             IWPowerPerp(wPowerPerp).transferFrom(_from, address(this), _amount);
         }

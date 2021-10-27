@@ -23,24 +23,6 @@ contract MockOracle {
         return poolPeriodPrice[_pool];
     }
 
-    function getDecimalisedTwap(
-        address _pool,
-        address,
-        address,
-        uint32
-    ) external view returns (uint256) {
-        return poolPeriodPrice[_pool];
-    }
-
-    function getDecimalisedTwapSafe(
-        address _pool,
-        address,
-        address,
-        uint32
-    ) external view returns (uint256) {
-        return poolPeriodPrice[_pool];
-    }
-
     function getTimeWeightedAverageTickSafe(
         address _pool,
         uint32 /*_period*/

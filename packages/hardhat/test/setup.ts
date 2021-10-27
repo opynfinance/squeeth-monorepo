@@ -295,3 +295,38 @@ export const removeAllLiquidity = async(tokenId: number, positionManager: any) =
 function delay(ms: number) {
   return new Promise( resolve => setTimeout(resolve, ms) );
 }
+
+export const buyWSqueeth = async(router: Contract, wsqueeth: Contract, weth: Contract, recipient: string, amountIn: BigNumber, deadline: number) => {
+  const swapParam = {
+    tokenIn: weth.address,
+    tokenOut: wsqueeth.address,
+    fee: 3000,
+    recipient,
+    deadline,
+    amountIn,
+    amountOutMinimum: 0,
+    sqrtPriceLimitX96: 0
+  }
+  
+  await weth.deposit({value: amountIn});
+  await weth.approve(router.address, amountIn);
+
+  await router.exactInputSingle(swapParam);
+}
+
+export const buyWeth = async(router: Contract, wsqueeth: Contract, weth: Contract, recipient: string, amountIn: BigNumber, deadline: number) => {
+  const swapParam = {
+    tokenIn: wsqueeth.address,
+    tokenOut: weth.address,
+    fee: 3000,
+    recipient,
+    deadline,
+    amountIn,
+    amountOutMinimum: 0,
+    sqrtPriceLimitX96: 0
+  }
+  
+  await wsqueeth.approve(router.address, amountIn);
+
+  await router.exactInputSingle(swapParam);
+}

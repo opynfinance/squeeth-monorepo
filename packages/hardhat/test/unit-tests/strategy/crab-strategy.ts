@@ -6,6 +6,12 @@ import { MockController, WETH9, MockShortPowerPerp, MockUniswapV3Pool, MockOracl
 import { isSimilar, wmul, wdiv } from "../../utils"
 
 describe("Crab Strategy", function () {
+  const hedgeTimeTolerance = 86400  // 24h
+  const hedgePriceTolerance = ethers.utils.parseUnits('0.15')
+  const auctionTime = 3600
+  const minAuctionSlippage = ethers.utils.parseUnits('0.95')
+  const maxAuctionSlippage = ethers.utils.parseUnits('1.05')
+
   let provider: providers.JsonRpcProvider;
   let owner: SignerWithAddress;
   let random: SignerWithAddress;
@@ -55,7 +61,7 @@ describe("Crab Strategy", function () {
   describe("Deployment", async () => {
     it("Deployment", async function () {
       const CrabStrategyContract = await ethers.getContractFactory("CrabStrategy");
-      crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, ethers.constants.AddressZero, wSqueethEthPool.address, "Opyn Crab Strategy", "OCS")) as CrabStrategy;
+      crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, ethers.constants.AddressZero, wSqueethEthPool.address, hedgeTimeTolerance, hedgePriceTolerance, auctionTime, minAuctionSlippage, maxAuctionSlippage)) as CrabStrategy;
     });
   });
 
@@ -64,8 +70,8 @@ describe("Crab Strategy", function () {
       const name = await crabStrategy.name()
       const symbol = await crabStrategy.symbol()
 
-      expect(name).to.be.eq("Opyn Crab Strategy")
-      expect(symbol).to.be.eq("OCS")
+      expect(name).to.be.eq("Crab Strategy")
+      expect(symbol).to.be.eq("Crab")
     })
     it("Check crab strategy opened vault", async () => {
       const openedVaultId = await crabStrategy.getStrategyVaultId()

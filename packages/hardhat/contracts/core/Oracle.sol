@@ -4,9 +4,10 @@
 pragma solidity =0.7.6;
 
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {OracleLibrary} from "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol";
 import {IERC20Detailed} from "../interfaces/IERC20Detailed.sol";
+
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {OracleLibrary} from "../libs/OracleLibrary.sol";
 
 /**
  * @notice read UniswapV3 pool TWAP prices, and convert to human readable term with (18 decimals)
@@ -31,6 +32,17 @@ contract Oracle {
         uint32 _period
     ) external view returns (uint256) {
         return _fetchTwap(_pool, _base, _quote, _period);
+    }
+
+    function getHistoricalTwap(
+        address _pool,
+        address _base,
+        address _quote,
+        uint32 _secondsAgoToStartOfTwap,
+        uint32 _secondsAgoToEndOfTwap
+    ) external view returns (uint256) {
+        return
+            _fetchHistoricTwap(_pool, _base, _quote, _secondsAgoToStartOfTwap, _secondsAgoToEndOfTwap, uint256(1e18));
     }
 
     /**
@@ -141,6 +153,19 @@ contract Oracle {
         uint256 _amountIn
     ) internal view returns (uint256) {
         int24 twapTick = OracleLibrary.consult(_pool, _period);
+        return OracleLibrary.getQuoteAtTick(twapTick, toUint128(_amountIn), _base, _quote);
+    }
+
+    function _fetchHistoricTwap(
+        address _pool,
+        address _base,
+        address _quote,
+        uint32 _secondsAgoToStartOfTwap,
+        uint32 _secondsAgoToEndOfTwap,
+        uint256 _amountIn
+    ) internal view returns (uint256) {
+        int24 twapTick = OracleLibrary.consultAtHistoricTime(_pool, _secondsAgoToStartOfTwap, _secondsAgoToEndOfTwap);
+
         return OracleLibrary.getQuoteAtTick(twapTick, toUint128(_amountIn), _base, _quote);
     }
 
