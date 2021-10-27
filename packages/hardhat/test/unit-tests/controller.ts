@@ -32,19 +32,25 @@ describe("Controller", function () {
   let seller3: SignerWithAddress
   let seller4: SignerWithAddress // use for burnRSqueeth tests
   let seller5: SignerWithAddress // settle short vault with nft in it
-  let seller6: SignerWithAddress // fail to settle short vault with nft in it, but able to reduceDebt
+  let seller6: SignerWithAddress // settle short vault with one-sided nft in it
+  let seller7: SignerWithAddress // settle short vault with 0 short
+  let seller8: SignerWithAddress // fail to settle short vault with nft in it, but able to reduceDebt
   let random: SignerWithAddress
   let feeRecipient: SignerWithAddress
 
   this.beforeAll("Prepare accounts", async() => {
     const accounts = await ethers.getSigners();
-    const [_owner,_seller1, _seller2, _seller3, _seller4, _seller5, _seller6, _random, _feeRecipient] = accounts;
+    const [_owner,_seller1, _seller2, _seller3, _seller4, _seller5, _seller6, _seller7, _seller8, _random, _feeRecipient] = accounts;
+    
     seller1 = _seller1
     seller2 = _seller2
     seller3 = _seller3
     seller4 = _seller4
     seller5 = _seller5
     seller6 = _seller6
+    seller7 = _seller7
+    seller8 = _seller8
+    
     random = _random
     owner = _owner
     feeRecipient = _feeRecipient
@@ -599,19 +605,34 @@ describe("Controller", function () {
 
     // seller 5 is the seller with nft as collateral
     let seller5VaultId: BigNumber
-    let seller6VaultId: BigNumber
     const seller5NFTId = 1
-    const seller6NFTId = 2
+    
     let seller3TotalSqueeth: BigNumber
 
-    let normalizationFactor: BigNumber
-    let wethIsToken0: boolean
     let initialTick: string
 
     const ethLiquidityAmount = ethers.utils.parseUnits('30')
     const squeethLiquidityAmount = ethers.utils.parseUnits('100')
-  
+    
+    let normalizationFactor: BigNumber
+    let wethIsToken0: boolean  
     const collateralAmount = ethers.utils.parseEther('50')
+    
+
+    // seller 6 is the seller with nft with all squeeth
+    let seller6VaultId: BigNumber
+    const seller6NFTId = 2
+    const s6MintAmount = ethers.utils.parseUnits('0.0001')
+    const seller6Collateral = ethers.utils.parseEther('0.5')
+    
+    // seller 7 is the seller with no short
+    let seller7VaultId: BigNumber
+    const vault7Collateral = ethers.utils.parseEther('0.5')
+
+    // seller8 fail to settle short vault with nft in it, but able to reduceDebt
+    let seller8VaultId: BigNumber
+    const seller8NFTId = 3
+    
 
     before('set LP token properties', async() => {
       wethIsToken0 = parseInt(weth.address, 16) < parseInt(squeeth.address, 16)
@@ -653,7 +674,7 @@ describe("Controller", function () {
 
     })
     
-    this.beforeAll('Prepare a new vault for this test set', async() => {
+    before('Prepare a new vault for this test set', async() => {
       // prepare a vault that's gonna go underwater
       seller2VaultId = await shortSqueeth.nextId()
       const mintAmount = ethers.utils.parseUnits('100')
@@ -669,7 +690,6 @@ describe("Controller", function () {
       const collateral = ethers.utils.parseUnits('450')
       await controller.connect(seller1).mintPowerPerpAmount(0, ethers.utils.parseUnits('1000'), 0, {value: collateral})
 
-      // prepare a vault with nft
       seller5VaultId = await shortSqueeth.nextId()
       const s5MintAmount = ethers.utils.parseUnits('1')
       // mint fake nft for seller5
@@ -677,14 +697,25 @@ describe("Controller", function () {
       await uniPositionManager.connect(seller5).approve(controller.address, seller5NFTId)
       await controller.connect(seller5).mintPowerPerpAmount(0, s5MintAmount, seller5NFTId, { value: collateralAmount })   
 
-      // prepare an insolvent vault with nft
+      // prepare a vault with nft for seller 6
       seller6VaultId = await shortSqueeth.nextId()
-      const s6MintAmount = ethers.utils.parseUnits('133')
-      // mint fake nft for seller6
 
       await uniPositionManager.mint(seller6.address, seller6NFTId)
       await uniPositionManager.connect(seller6).approve(controller.address, seller6NFTId)
-      await controller.connect(seller6).mintPowerPerpAmount(0, s6MintAmount, seller6NFTId, { value: 0 })   
+      await controller.connect(seller6).mintWPowerPerpAmount(0, s6MintAmount, seller6NFTId, { value: seller6Collateral })      
+
+      // prepare a vault with no short for seller 7
+      seller7VaultId = await shortSqueeth.nextId()
+      await controller.connect(seller7).mintPowerPerpAmount(0, 0, 0, { value: vault7Collateral })      
+
+      // prepare an insolvent vault with nft (seller8)
+      seller8VaultId = await shortSqueeth.nextId()
+      const s8MintAmount = ethers.utils.parseUnits('133')
+      await uniPositionManager.mint(seller8.address, seller8NFTId)
+      await uniPositionManager.connect(seller8).approve(controller.address, seller8NFTId)
+      await controller.connect(seller8).mintPowerPerpAmount(0, s8MintAmount, seller8NFTId, { value: 0 })   
+      
+
       normalizationFactor = await controller.normalizationFactor()
     })
 
@@ -788,7 +819,7 @@ describe("Controller", function () {
 
       it("Should revert when a random address tries to reduce debt on a NFT containing vault and the system isnt shut down", async () => {
         await expect(
-          controller.connect(random).reduceDebtShutdown(seller6NFTId)
+          controller.connect(random).reduceDebtShutdown(seller8NFTId)
         ).to.be.revertedWith("Not shutdown");
       });
 
@@ -841,7 +872,7 @@ describe("Controller", function () {
         // update prices in pool and oracle.
         const newTick = tick
 
-        const { ethAmount, squeethAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, seller6NFTId, newTick, wethIsToken0)
+        const { ethAmount, squeethAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, seller8NFTId, newTick, wethIsToken0)
         const token0ToSet = wethIsToken0 ? ethAmount : squeethAmount
         const token1ToSet = wethIsToken0 ? squeethAmount : ethAmount
         await uniPositionManager.setAmount0Amount1ToDecrease(token0ToSet, token1ToSet)
@@ -930,7 +961,6 @@ describe("Controller", function () {
         expect(sellerEthAfter.sub(sellerEthBefore).eq(expectedPayout)).to.be.true
       });
     })
-
     describe('Settlement: redeemShort', async() => {
       // stimulated LP deposits
       let currentTick: string
@@ -966,21 +996,21 @@ describe("Controller", function () {
         ).to.be.revertedWith('SafeMath: subtraction overflow')
       })
 
-      it('should revert when a underwater vault with nft (seller6) is trying to redeem', async() => {
+      it('should revert when a underwater vault with nft (seller8) is trying to redeem', async() => {
         await expect(
-          controller.connect(seller6).redeemShort(seller6VaultId)
+          controller.connect(seller8).redeemShort(seller8VaultId)
         ).to.be.revertedWith('SafeMath: subtraction overflow')
       })
 
 
       it("should allow anyone to reduceDebt in the insolvent vault", async () => {
-        const vaultBefore = await controller.vaults(seller6VaultId)
+        const vaultBefore = await controller.vaults(seller8VaultId)
         const sellerEthBefore = await provider.getBalance(seller6.address)
         const controllerEthBefore = await provider.getBalance(controller.address)
-        const { ethAmount, squeethAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, seller6NFTId, currentTick, wethIsToken0)
+        const { ethAmount, squeethAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, seller8NFTId, currentTick, wethIsToken0)
 
-        await controller.connect(random).reduceDebtShutdown(seller6VaultId, {gasPrice: 0})
-        const vaultAfter = await controller.vaults(seller6VaultId)
+        await controller.connect(random).reduceDebtShutdown(seller8VaultId, {gasPrice: 0})
+        const vaultAfter = await controller.vaults(seller8VaultId)
         const sellerEthAfter = await provider.getBalance(seller6.address)
 
         const controllerEthAfter = await provider.getBalance(controller.address)
@@ -990,9 +1020,9 @@ describe("Controller", function () {
         expect(sellerEthBefore.eq(sellerEthAfter)).to.be.true
       });
 
-      it('should still revert when a underwater vault with nft (seller6) is trying to redeem', async() => {
+      it('should still revert when a underwater vault with nft (seller8) is trying to redeem', async() => {
         await expect(
-          controller.connect(seller6).redeemShort(seller6VaultId)
+          controller.connect(seller8).redeemShort(seller8VaultId)
         ).to.be.revertedWith('SafeMath: subtraction overflow')
       })
 
@@ -1002,7 +1032,7 @@ describe("Controller", function () {
         ).to.be.revertedWith('Not allowed')
       })
 
-      it("should redeem fair value for short side (seller 3)", async () => {
+      it("should redeem fair value for normal vault (seller 3)", async () => {
         const vaultBefore = await controller.vaults(seller3VaultId)
         const sellerEthBefore = await provider.getBalance(seller3.address)
         const controllerEthBefore = await provider.getBalance(controller.address)
@@ -1041,6 +1071,49 @@ describe("Controller", function () {
         
         expect(squeethBalanceAfter.sub(squeethBalanceBefore).eq(nftWSqueethAmount.sub(amountToReduceDebtBy))).to.be.true
         expect(sellerEthAfter.sub(sellerEthBefore).eq(shortPayout)).to.be.true
+        expect(isEmptyVault(vaultAfter)).to.be.true;
+      });
+
+      it('set seller6 LP token properties', async() => {
+        // amount of wsqueeth worth is now 3x of amount needed
+        const lpWSqueethAmount = s6MintAmount.mul(3)
+        const lpWethAmount = BigNumber.from(0)
+        const token0ToSet = wethIsToken0 ? lpWethAmount : lpWSqueethAmount
+        const token1ToSet = wethIsToken0 ? lpWSqueethAmount : lpWethAmount
+        await uniPositionManager.setAmount0Amount1ToDecrease(token0ToSet, token1ToSet)
+
+        await squeeth.mint(uniPositionManager.address, lpWSqueethAmount);
+      })
+
+      it("should redeem fair value for seller 6 with one-sided nft", async () => {
+        // nft has 3x wsqueeth minted
+        // redeemShort should remove the whole debt in vault
+        // and send the amount left (2/3) back to seller6 in wsqueeth
+        const vaultBefore = await controller.vaults(seller6VaultId)
+        const sellerEthBefore = await provider.getBalance(seller6.address)
+        const sellerWsqueethBefore = await squeeth.balanceOf(seller6.address)
+
+        await controller.connect(seller6).redeemShort(seller6VaultId, {gasPrice: 0})
+        const vaultAfter = await controller.vaults(seller6VaultId)
+        
+        const sellerEthAfter = await provider.getBalance(seller6.address)
+        const sellerWsqueethAfter = await squeeth.balanceOf(seller6.address)
+
+        expect(sellerEthAfter.sub(sellerEthBefore).eq(vaultBefore.collateralAmount)).to.be.true
+        // get the remaining 2/3 (2x the initial minted amount) in wsqueeth
+        expect(sellerWsqueethAfter.sub(sellerWsqueethBefore).eq(s6MintAmount.mul(2))).to.be.true
+        expect(isEmptyVault(vaultAfter)).to.be.true;
+      });
+
+      it("should redeem fair value for short vault with no debt (seller7)", async () => {
+        const sellerEthBefore = await provider.getBalance(seller7.address)
+
+        await controller.connect(seller7).redeemShort(seller7VaultId, {gasPrice: 0})
+        const vaultAfter = await controller.vaults(seller7VaultId)
+        
+        const sellerEthAfter = await provider.getBalance(seller7.address)
+
+        expect(sellerEthAfter.sub(sellerEthBefore).eq(vault7Collateral)).to.be.true
         expect(isEmptyVault(vaultAfter)).to.be.true;
       });
     });
