@@ -695,6 +695,14 @@ describe("Controller", function () {
           controller.connect(random).pause()
         ).to.be.revertedWith("Ownable: caller is not the owner");
       });
+      it("Should revert when calling unpause before system is paused", async () => {
+        await expect(
+          controller.connect(random).unPauseAnyone()
+        ).to.be.revertedWith("Not paused");
+        await expect(
+          controller.connect(random).unPauseOwner()
+        ).to.be.revertedWith("Not paused");
+      });
       it("Should allow owner to pause the system", async () => {
         await controller.connect(owner).pause()
         pausesLeft-=1;
@@ -803,6 +811,12 @@ describe("Controller", function () {
         ).to.be.revertedWith("Paused");
       });
 
+      it("Should revert if shutdown is called by non-owner", async () => {
+        await expect(
+          controller.connect(random).shutDown()
+        ).to.be.revertedWith("Ownable: caller is not the owner");
+      });
+
       it("Should allow the owner to un-pause", async () => {
         await controller.connect(owner).unPauseOwner()
         expect(await controller.isSystemPaused()).to.be.false 
@@ -847,12 +861,28 @@ describe("Controller", function () {
       });
       it("Should revert when called again after system is shutdown", async () => {
         await expect(
+          controller.connect(owner).pauseAndShutDown()
+        ).to.be.revertedWith("Shutdown");
+      });
+      it("Should revert when calling shutdown after system is shutdown", async () => {
+        await expect(
           controller.connect(owner).shutDown()
         ).to.be.revertedWith("Shutdown");
       });
+      it("Should revert when calling pause after system is shutdown", async () => {
+        await expect(
+          controller.connect(owner).pause()
+        ).to.be.revertedWith("Shutdown");
+      });
+      it("Should revert when calling unPause after system is shutdown", async () => {
+        await expect(
+          controller.connect(random).unPauseAnyone()
+        ).to.be.revertedWith("Shutdown");
+        await expect(
+          controller.connect(owner).unPauseOwner()
+        ).to.be.revertedWith("Shutdown");
+      });
     });
-  
-  
     describe("Settlement: redeemLong", async () => {
       it("should go insolvent while trying to redeem fair value for seller1 (big holder)", async () => {
         const seller1Amount = await squeeth.balanceOf(seller1.address)
