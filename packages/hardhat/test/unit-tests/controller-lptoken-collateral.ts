@@ -131,6 +131,18 @@ describe("Controller: Uni LP tokens collateralization", function () {
         token1 = wethIsToken0InSqueethPool ? squeeth.address : weth.address
       })
 
+      it('should revert when trying to deposit a LP token to vault 0', async() => {
+        await expect(controller.connect(seller1).depositUniPositionToken(0, 0)).to.be.revertedWith(
+          'Invalid vault id'
+        )
+      })
+
+      it('should revert when trying to deposit a LP token to non-existent vault', async() => {
+        await expect(controller.connect(seller1).depositUniPositionToken(100, 0)).to.be.revertedWith(
+          'Invalid vault id'
+        )
+      })
+
       it('should revert when trying to deposit a LP token from a different pool', async ()=> {
         // set token0 and token to dai and squeeth
         await uniPositionManager.connect(seller1).approve(controller.address, uniNFTId)
@@ -209,6 +221,18 @@ describe("Controller: Uni LP tokens collateralization", function () {
         await uniPositionManager.connect(seller1).approve(controller.address, newUniNFTId)
 
         await expect(controller.connect(seller1).depositUniPositionToken(vaultId, newUniNFTId)).to.be.revertedWith("Vault already had nft")        
+      })
+
+      it('should revert if vault id is 0', async() => {
+        await expect(controller.connect(seller1).withdrawUniPositionToken(0)).to.be.revertedWith(
+          'ERC721: owner query for nonexistent token'
+        )
+      })
+
+      it('should revert if vault id is too high', async() => {
+        await expect(controller.connect(seller1).withdrawUniPositionToken(100)).to.be.revertedWith(
+          'ERC721: owner query for nonexistent token'
+        )
       })
 
       it('should revert if non owner withdraws the nft', async () => {

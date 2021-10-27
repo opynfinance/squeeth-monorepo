@@ -241,6 +241,7 @@ contract Controller is Initializable, Ownable {
      * @param _vaultId id of the vault
      */
     function deposit(uint256 _vaultId) external payable notPaused {
+        _checkVaultId(_vaultId);
         _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
         _addEthCollateral(cachedVault, _vaultId, msg.value);
@@ -254,6 +255,7 @@ contract Controller is Initializable, Ownable {
      * @param _uniTokenId uniswap v3 position token id
      */
     function depositUniPositionToken(uint256 _vaultId, uint256 _uniTokenId) external notPaused {
+        _checkVaultId(_vaultId);
         _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
 
@@ -276,7 +278,7 @@ contract Controller is Initializable, Ownable {
     }
 
     /**
-     * @dev withdraw uniswap v3 position token from a vault
+     * @notice withdraw uniswap v3 position token from a vault
      * @param _vaultId id of the vault
      */
     function withdrawUniPositionToken(uint256 _vaultId) external notPaused {
@@ -349,6 +351,7 @@ contract Controller is Initializable, Ownable {
      * @return amount of wPowerPerp repaid.
      */
     function liquidate(uint256 _vaultId, uint256 _maxDebtAmount) external notPaused returns (uint256) {
+        _checkVaultId(_vaultId);
         uint256 cachedNormFactor = _applyFunding();
 
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
@@ -528,6 +531,14 @@ contract Controller is Initializable, Ownable {
      */
 
     /**
+     * @notice check if a vaultId is valid, reverts  if it's not valid
+     * @param _vaultId the id to check
+     */
+    function _checkVaultId(uint256 _vaultId) internal view {
+        require(_vaultId > 0 && _vaultId < shortPowerPerp.nextId(), "Invalid vault id");
+    }
+
+    /**
      * @notice returns if an address can modify a vault
      * @param _vaultId the id of the vault to check if can be modified by _account
      * @param _account the address to check if can modify the vault
@@ -598,8 +609,9 @@ contract Controller is Initializable, Ownable {
         uint256 _withdrawAmount,
         bool _isWAmount
     ) internal returns (uint256) {
-        uint256 cachedNormFactor = _applyFunding();
+        _checkVaultId(_vaultId);
 
+        uint256 cachedNormFactor = _applyFunding();
         uint256 wBurnAmount = _isWAmount ? _burnAmount : _burnAmount.mul(1e18).div(cachedNormFactor);
 
         VaultLib.Vault memory cachedVault = vaults[_vaultId];

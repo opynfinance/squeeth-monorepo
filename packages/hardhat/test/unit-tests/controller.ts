@@ -271,6 +271,16 @@ describe("Controller", function () {
     });
 
     describe("#Deposit: Deposit collateral", async () => {
+      it("Should revert when trying to deposit to vault 0", async() => {
+        await expect(controller.connect(seller1).deposit(0)).to.be.revertedWith(
+          'Invalid vault id'
+        )
+      })
+      it("Should revert when trying to access non-existent vault", async() => {
+        await expect(controller.connect(seller1).deposit(100, {value: 100})).to.be.revertedWith(
+          'Invalid vault id'
+        )
+      })
       it("Should be able to deposit collateral", async () => {
         const depositAmount = ethers.utils.parseUnits('45')
         const controllerBalanceBefore = await provider.getBalance(controller.address)
@@ -311,8 +321,7 @@ describe("Controller", function () {
       });
       
       it("Should revert when minting more than allowed", async () => {
-        const mintAmount = ethers.utils.parseUnits('100')
-                
+        const mintAmount = ethers.utils.parseUnits('100')        
         await expect(controller.connect(seller1).mintPowerPerpAmount(vaultId, mintAmount, 0)).to.be.revertedWith(
           'Invalid state'
         )
@@ -321,6 +330,27 @@ describe("Controller", function () {
     });
 
     describe("#Burn: Burn Squeeth", async () => {
+      it("Should revert when trying to burn for vault 0", async() => {
+        await expect(controller.connect(seller1).burnPowerPerpAmount(0, 0, 0)).to.be.revertedWith(
+          'Invalid vault id'
+        )
+      })
+      it("Should revert when trying to burn wrapped amount for vault 0", async() => {
+        await expect(controller.connect(seller1).burnWPowerPerpAmount(0, 0, 0)).to.be.revertedWith(
+          'Invalid vault id'
+        )
+      })
+
+      it("Should revert when trying to burn for non-existent vault", async() => {
+        await expect(controller.connect(seller1).burnPowerPerpAmount(100, 0, 0)).to.be.revertedWith(
+          'Invalid vault id'
+        )
+      })
+      it("Should revert when trying to burn wrapped amount for non-existent vault", async() => {
+        await expect(controller.connect(seller1).burnWPowerPerpAmount(100, 0, 0)).to.be.revertedWith(
+          'Invalid vault id'
+        )
+      })
       it("Should revert if trying to burn more than minted", async () => {
         const vault = await controller.vaults(vaultId)
         await expect(controller.connect(seller1).burnWPowerPerpAmount(vaultId, vault.shortAmount.add(1), 0)).to.be.revertedWith('SafeMath: subtraction overflow')
@@ -349,6 +379,11 @@ describe("Controller", function () {
     });
 
     describe("#Withdraw: Remove Collateral", async () => {
+      it("Should revert when trying to remove from vault 0", async() => {
+        await expect(controller.connect(seller1).withdraw(0, 0)).to.be.revertedWith(
+          'ERC721: owner query for nonexistent token'
+        )
+      })
       it("Should revert if caller is not the owner", async () => {
         const vault = await controller.vaults(vaultId)
         await expect(controller.connect(random).withdraw(vaultId, vault.collateralAmount)).to.be.revertedWith(
