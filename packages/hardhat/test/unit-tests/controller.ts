@@ -568,7 +568,7 @@ describe("Controller", function () {
     })
 
     describe('Deposit and mint By operator', () => {
-      it('should not allow a non owner or operator to update an operator', async () => {        
+      it('should not allow a non owner to update an operator', async () => {        
         await expect(controller.connect(seller2).updateOperator(vaultId, random.address)).to.be.revertedWith("Not allowed")
       })      
       it('should add an operator', async () => {
@@ -597,6 +597,11 @@ describe("Controller", function () {
 
         expect(vaultBefore.collateralAmount.add(collateralAmount).eq(vaultAfter.collateralAmount)).to.be.true
         expect(vaultBefore.shortAmount.add(mintAmount.mul(one).div(normFactor)).eq(vaultAfter.shortAmount)).to.be.true
+      })
+      it('should not allow an operator to update the operator associated with an account', async () => {
+        const vault = await controller.vaults(vaultId)
+        expect(vault.operator).to.be.eq(random.address)
+        await expect(controller.connect(random).updateOperator(vaultId, seller2.address)).to.be.revertedWith("Not allowed")
       })
     })
 

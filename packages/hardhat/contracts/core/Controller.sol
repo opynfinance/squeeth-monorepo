@@ -393,7 +393,7 @@ contract Controller is Initializable, Ownable {
      * @param _operator new operator address
      */
     function updateOperator(uint256 _vaultId, address _operator) external {
-        require(_canModifyVault(_vaultId, msg.sender), "Not allowed");
+        require(shortPowerPerp.ownerOf(_vaultId) == msg.sender, "Not allowed");
         vaults[_vaultId].operator = _operator;
         emit UpdateOperator(_vaultId, _operator);
     }
