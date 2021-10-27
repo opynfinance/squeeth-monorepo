@@ -159,6 +159,12 @@ describe("Controller: Uni LP tokens collateralization", function () {
         await expect(controller.connect(seller1).depositUniPositionToken(vaultId, 0)).to.be.revertedWith('Invalid token id')
       })
 
+      it('should revert when depositor do not own the NFT', async ()=> {
+        const tokenId = 77;
+        await uniPositionManager.mint(random.address, tokenId)
+        await expect(controller.connect(seller1).depositUniPositionToken(vaultId, tokenId)).to.be.revertedWith('ERC721: transfer caller is not owner nor approved')
+      })
+
       it('should deposit and NFT to an existing vault.', async() => {
         // infinite price range
         const nftTickUpper = 887220
@@ -346,6 +352,32 @@ describe("Controller: Uni LP tokens collateralization", function () {
   
       it('should revert if trying to remove LP token from the vault.', async() => {
         await expect(controller.connect(seller1).withdrawUniPositionToken(vaultId)).to.be.revertedWith('Invalid state')
+      })
+
+      it('update nft property to stimulate losses in Uni LP', async() => {
+        const { sqrtPrice: sqrtX96Price } = getSqrtPriceAndTickBySqueethPrice(scaledSqueethPrice, wethIsToken0InSqueethPool)
+        // how much to stimulate as LP deposit
+        const ethLiquidityAmount = ethers.utils.parseUnits('0.3')
+        const squeethLiquidityAmount = ethers.utils.parseUnits('1')
+        const nftTickUpper = 887220
+        const nftTickLower = -887220
+        const liquidity = await vaultLib.getLiquidity(
+          sqrtX96Price,
+          nftTickLower,
+          nftTickUpper,
+          wethIsToken0InSqueethPool ? ethLiquidityAmount : squeethLiquidityAmount,
+          wethIsToken0InSqueethPool ? squeethLiquidityAmount: ethLiquidityAmount,
+        )
+        
+        await squeethEthPool.setSlot0Data(sqrtX96Price, currentTick)
+        await uniPositionManager.setMockedProperties(token0, token1, nftTickLower, nftTickUpper, liquidity)
+      })
+
+      it('should revert when effective collateral after withdraw < dust limit', async() => {
+        it('should revert if trying to remove LP token from the vault.', async() => {
+          const vault = await controller.vaults(vaultId)
+          await expect(controller.connect(seller1).withdraw(vaultId, vault.collateralAmount)).to.be.revertedWith('Dust vault')
+        })
       })
 
       // only got NFT left in the vault
@@ -715,4 +747,58 @@ describe("Controller: Uni LP tokens collateralization", function () {
       })
     })
   });
+
+  describe('Vault5: test combined actions', async() => {
+    let vaultId: BigNumber;
+    const uniNFTId = 99;
+
+    const testDepositAmount = ethers.utils.parseUnits('10')
+
+    before('prepare vault and nft for user', async() => {
+      vaultId = await shortSqueeth.nextId()
+      await controller.connect(seller1).mintPowerPerpAmount(0, 0, 0, {value: testDepositAmount})
+
+      await uniPositionManager.mint(seller1.address, uniNFTId)
+      await uniPositionManager.connect(seller1).approve(controller.address, uniNFTId)
+    })
+
+    it('should just deposit lp token and mint if deposit amount is 0', async() => {
+      const testMintWAmount = ethers.utils.parseUnits('0.001')
+      const vaultBefore = await controller.vaults(vaultId)
+      await controller.connect(seller1).mintWPowerPerpAmount(vaultId, testMintWAmount, uniNFTId)
+      const vaultAfter = await controller.vaults(vaultId)
+
+      expect(vaultAfter.collateralAmount.sub(vaultBefore.collateralAmount).isZero()).to.be.true
+      expect(vaultAfter.shortAmount.sub(vaultBefore.shortAmount).eq(testMintWAmount)).to.be.true
+      expect(vaultAfter.NftCollateralId === uniNFTId).to.be.true
+
+      // withdraw nft
+      await controller.connect(seller1).withdrawUniPositionToken(vaultId)
+    })
+
+    it('should just deposit lp token and deposit eth if mint amount is 0', async() => {
+      const vaultBefore = await controller.vaults(vaultId)
+      await uniPositionManager.connect(seller1).approve(controller.address, uniNFTId)        
+      await controller.connect(seller1).mintWPowerPerpAmount(vaultId, 0, uniNFTId, {value: testDepositAmount})
+      const vaultAfter = await controller.vaults(vaultId)
+
+      expect(vaultAfter.collateralAmount.sub(vaultBefore.collateralAmount).eq(testDepositAmount)).to.be.true
+      expect(vaultAfter.shortAmount.sub(vaultBefore.shortAmount).isZero()).to.be.true
+      expect(vaultAfter.NftCollateralId === uniNFTId).to.be.true
+
+      await controller.connect(seller1).withdrawUniPositionToken(vaultId)
+    })
+    it('should do nothing but deposit uni nft if both deposit and mint amount are 0', async() => {
+      const vaultBefore = await controller.vaults(vaultId)
+      await uniPositionManager.connect(seller1).approve(controller.address, uniNFTId)     
+      await controller.connect(seller1).mintWPowerPerpAmount(vaultId, 0, uniNFTId)
+      const vaultAfter = await controller.vaults(vaultId)
+
+      expect(vaultAfter.collateralAmount.sub(vaultBefore.collateralAmount).isZero()).to.be.true
+      expect(vaultAfter.shortAmount.sub(vaultBefore.shortAmount).isZero()).to.be.true
+      expect(vaultAfter.NftCollateralId === uniNFTId).to.be.true
+
+      await controller.connect(seller1).withdrawUniPositionToken(vaultId)
+    })
+  })
 });

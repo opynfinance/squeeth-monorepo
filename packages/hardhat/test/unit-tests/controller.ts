@@ -4,7 +4,7 @@ import { expect } from "chai";
 import { BigNumber, providers, constants } from "ethers";
 import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester, WETH9, ControllerTester } from '../../typechain'
 import { isEmptyVault } from '../vault-utils'
-import { isSimilar, oracleScaleFactor, one } from "../utils";
+import { isSimilar, oracleScaleFactor, one, getNow } from "../utils";
 import { getSqrtPriceAndTickBySqueethPrice } from "../calculator";
 
 const squeethETHPrice = BigNumber.from('3010').mul(one)
@@ -294,6 +294,13 @@ describe("Controller", function () {
         expect(controllerBalanceBefore.add(depositAmount).eq(controllerBalanceAfter)).to.be.true
         expect(vaultBefore.collateralAmount.add(depositAmount).eq(vaultAfter.collateralAmount)).to.be.true
       });
+      it("Should be able to deposit 0 collateral", async () => {
+        const vaultBefore = await controller.vaults(vaultId)
+        await controller.connect(seller1).deposit(vaultId)
+        const vaultAfter = await controller.vaults(vaultId)
+        
+        expect(vaultBefore.collateralAmount.eq(vaultAfter.collateralAmount)).to.be.true
+      });
     });
 
     describe("#Mint: Mint Squeeth", async () => {
@@ -362,11 +369,37 @@ describe("Controller", function () {
           'ERC20: burn amount exceeds balance'
         )
       });
+      it('should revert if vault after burning is underwater', async() => {
+        const vault = await controller.vaults(vaultId)
+        await expect(controller.connect(seller1).burnWPowerPerpAmount(vaultId, vault.shortAmount.div(2), vault.collateralAmount)).to.be.revertedWith('Invalid state')
+      })
+      it('should revert if vault after burning is dust', async() => {
+        const vault = await controller.vaults(vaultId)
+        await expect(controller.connect(seller1).burnWPowerPerpAmount(vaultId, vault.shortAmount.sub(1), vault.collateralAmount.sub(1))).to.be.revertedWith('Dust vault')
+      })
+
+      it("Should revert if trying to withdraw and put make vault underwater", async () => {
+        const vault = await controller.vaults(vaultId)
+        await expect(controller.connect(seller1).withdraw(vaultId, vault.collateralAmount)).to.be.revertedWith('Invalid state')
+      })
+
+      it('anyone can burn squeeth for vault1', async() => {
+        const vaultBefore = await controller.vaults(vaultId)
+        await squeeth.mint(random.address, 1000)
+        await controller.connect(random).burnWPowerPerpAmount(vaultId, 1000, 0)
+        const vaultAfter = await controller.vaults(vaultId)
+        expect(vaultBefore.shortAmount.sub(vaultAfter.shortAmount).eq(1000)).to.be.true
+      })
+
+      it('should revert when non-owner try to burn and withdraw from vault', async() => {
+        await expect(controller.connect(random).burnWPowerPerpAmount(vaultId, 0, 1000)).to.be.revertedWith('Not allowed')
+      })
+      
       it("Should be able to burn squeeth", async () => {
         const vaultBefore = await controller.vaults(vaultId)
         const burnAmount = vaultBefore.shortAmount;
         const squeethBalanceBefore = await squeeth.balanceOf(seller1.address)
-        const withdrawAmount = 0
+        const withdrawAmount = 5
 
         await controller.connect(seller1).burnWPowerPerpAmount(vaultId, burnAmount, withdrawAmount)
 
@@ -374,6 +407,7 @@ describe("Controller", function () {
         const vaultAfter = await controller.vaults(vaultId)
 
         expect(vaultBefore.shortAmount.sub(burnAmount).eq(vaultAfter.shortAmount)).to.be.true
+        expect(vaultBefore.collateralAmount.sub(withdrawAmount).eq(vaultAfter.collateralAmount)).to.be.true
         expect(squeethBalanceBefore.sub(burnAmount).eq(squeethBalanceAfter)).to.be.true
       });
     });
@@ -394,18 +428,33 @@ describe("Controller", function () {
         const vault = await controller.vaults(vaultId)
         await expect(controller.connect(seller1).burnWPowerPerpAmount(vaultId, 0, vault.collateralAmount.add(1))).to.be.revertedWith('SafeMath: subtraction overflow')
       })
+
+      it('should revert if trying to remove collateral which produce a vault dust', async() => {
+        // mint little wsqueeth
+        const mintAmount = 1000
+        await controller.connect(seller1).mintWPowerPerpAmount(vaultId, mintAmount, 0)
+
+        const vault = await controller.vaults(vaultId)
+        await expect(controller.connect(seller1).burnWPowerPerpAmount(vaultId, 0, vault.collateralAmount.sub(2))).to.be.revertedWith('Invalid state')
+        
+        // burn the minted amount
+        await controller.connect(seller1).burnWPowerPerpAmount(vaultId, mintAmount, 0)
+      })
+      
       it("Should be able to remove collateral", async () => {
         const vaultBefore = await controller.vaults(vaultId)
         const withdrawAmount = vaultBefore.collateralAmount.div(2)
-        const burnAmount = 0
+        const userBalanceBefore = await provider.getBalance(seller1.address)
         const controllerBalanceBefore = await provider.getBalance(controller.address)
         
-        await controller.connect(seller1).burnWPowerPerpAmount(vaultId, burnAmount, withdrawAmount)
+        await controller.connect(seller1).withdraw(vaultId, withdrawAmount, {gasPrice: 0})
         
+        const userBalanceAfter = await provider.getBalance(seller1.address)
         const controllerBalanceAfter = await provider.getBalance(controller.address)
         const vaultAfter = await controller.vaults(vaultId)
 
         expect(controllerBalanceBefore.sub(withdrawAmount).eq(controllerBalanceAfter)).to.be.true
+        expect(userBalanceAfter.sub(userBalanceBefore).eq(withdrawAmount)).to.be.true
         expect(vaultBefore.collateralAmount.sub(withdrawAmount).eq(vaultAfter.collateralAmount)).to.be.true
       });
       it("Should close the vault when it's empty", async () => {
@@ -488,6 +537,34 @@ describe("Controller", function () {
         expect(vaultBefore.collateralAmount.add(collateralAmount).eq(vaultAfter.collateralAmount)).to.be.true
         expect(vaultBefore.shortAmount.add(mintWSqueethAmount).eq(vaultAfter.shortAmount)).to.be.true
       })
+
+      it('should just mint if deposit amount is 0', async() => {
+        const testMintWAmount = ethers.utils.parseUnits('0.001')
+        const vaultBefore = await controller.vaults(vaultId)        
+        await controller.connect(seller1).mintWPowerPerpAmount(vaultId, testMintWAmount, 0)
+        const vaultAfter = await controller.vaults(vaultId)
+
+        expect(vaultAfter.collateralAmount.sub(vaultBefore.collateralAmount).isZero()).to.be.true
+        expect(vaultAfter.shortAmount.sub(vaultBefore.shortAmount).eq(testMintWAmount)).to.be.true
+      })
+      it('should just deposit if mint amount is 0', async() => {
+        
+        const testDepositAmount = ethers.utils.parseUnits('0.1')
+        const vaultBefore = await controller.vaults(vaultId)        
+        await controller.connect(seller1).mintWPowerPerpAmount(vaultId, 0, 0, {value: testDepositAmount})
+        const vaultAfter = await controller.vaults(vaultId)
+
+        expect(vaultAfter.collateralAmount.sub(vaultBefore.collateralAmount).eq(testDepositAmount)).to.be.true
+        expect(vaultAfter.shortAmount.sub(vaultBefore.shortAmount).isZero()).to.be.true
+      })
+      it('should do nothing if both deposit and mint amount are 0', async() => {
+        const vaultBefore = await controller.vaults(vaultId)        
+        await controller.connect(seller1).mintWPowerPerpAmount(vaultId, 0, 0)
+        const vaultAfter = await controller.vaults(vaultId)
+
+        expect(vaultAfter.collateralAmount.sub(vaultBefore.collateralAmount).isZero()).to.be.true
+        expect(vaultAfter.shortAmount.sub(vaultBefore.shortAmount).isZero()).to.be.true
+      })
     })
 
     describe('Deposit and mint By operator', () => {
@@ -569,6 +646,12 @@ describe("Controller", function () {
       await controller.connect(owner).setFeeRate(100)
       expect((await controller.feeRate()).eq(100)).to.be.true
     })
+    it('should revert if vault is unable to pay fee amount from attach amount or vault collateral', async() => {
+      vaultId = await shortSqueeth.nextId()
+      const powerPerpToMint = ethers.utils.parseUnits('0.5')
+      await expect(controller.connect(random).mintPowerPerpAmount(0, powerPerpToMint, 0)).to.be.revertedWith('SafeMath: subtraction overflow')
+
+    })
     it('should charge fee on mintPowerPerpAmount from deposit amount', async() => {
       vaultId = await shortSqueeth.nextId()
 
@@ -609,7 +692,55 @@ describe("Controller", function () {
       expect(isSimilar((feeRecipientBalanceAfter.sub(feeRecipientBalanceBefore)).toString(),(expectedFee.toString()))).to.be.true
 
     })
-    after('should the fee back to 0', async() => {
+
+    it('should charge fee on mintWPowerPerpAmount from deposit amount', async() => {
+      vaultId = await shortSqueeth.nextId()
+
+      const wSqueethToMint = ethers.utils.parseUnits('0.1')
+      const collateralDeposited = ethers.utils.parseUnits('0.55')
+      
+      const feeRecipientBalanceBefore = await provider.getBalance(feeRecipient.address)
+
+      const normFactor = await controller.normalizationFactor()
+      const powerPerpInEth =  ethUSDPrice.mul(wSqueethToMint).mul(normFactor).div(one).div(one).div(oracleScaleFactor)
+      const expectedFee = powerPerpInEth.div(100)
+      const totalEthAttached = expectedFee.add(collateralDeposited)
+
+      const now = await getNow(provider)
+      await provider.send("evm_setNextBlockTimestamp", [now+1]) 
+
+      await controller.connect(random).mintWPowerPerpAmount(0, wSqueethToMint, 0, { value: totalEthAttached })
+      
+
+      const feeRecipientBalanceAfter = await provider.getBalance(feeRecipient.address)
+      const vault = await controller.vaults(vaultId)
+
+      expect(isSimilar(vault.collateralAmount.toString(),collateralDeposited.toString())).to.be.true
+      expect(isSimilar((feeRecipientBalanceAfter.sub(feeRecipientBalanceBefore)).toString(),(expectedFee.toString()))).to.be.true
+
+    })
+
+    it('should charge fee on mintWPowerPerpAmount from vault collateral', async() => {
+
+      const vaultBefore = await controller.vaults(vaultId)
+      const wSqueethToMint = ethers.utils.parseUnits('0.1')
+    
+      const feeRecipientBalanceBefore = await provider.getBalance(feeRecipient.address)
+
+      await controller.connect(random).mintWPowerPerpAmount(vaultId, wSqueethToMint, 0)
+      
+      const normFactor = await controller.normalizationFactor()
+      const powerPerpInEth = ethUSDPrice.mul(wSqueethToMint).mul(normFactor).div(one).div(one).div(oracleScaleFactor)
+      const expectedFee = powerPerpInEth.div(100)
+
+      const feeRecipientBalanceAfter = await provider.getBalance(feeRecipient.address)
+      const vaultAfter = await controller.vaults(vaultId)
+
+      expect(isSimilar(vaultAfter.collateralAmount.toString(),((vaultBefore.collateralAmount).sub(expectedFee)).toString())).to.be.true
+      expect(isSimilar((feeRecipientBalanceAfter.sub(feeRecipientBalanceBefore)).toString(),(expectedFee.toString()))).to.be.true
+
+    })
+    after('set the fee back to 0', async() => {
       await controller.connect(owner).setFeeRate(0)
     })
   })
@@ -821,6 +952,11 @@ describe("Controller", function () {
           controller.connect(seller1).deposit(1, { value: 1})
         ).to.be.revertedWith("Paused");
       });
+      it("Should revert when calling depositUniPositionToken", async () => {
+        await expect(
+          controller.connect(seller1).depositUniPositionToken(1, 1,)
+        ).to.be.revertedWith("Paused");
+      });
       it("Should revert when calling burnWPowerPerpAmount", async () => {
         await expect(
           controller.connect(seller1).burnWPowerPerpAmount(1, 1, 1)
@@ -834,6 +970,16 @@ describe("Controller", function () {
       it("Should revert when calling withdraw", async () => {
         await expect(
           controller.connect(seller1).withdraw(1, 1)
+        ).to.be.revertedWith("Paused");
+      });
+      it("Should revert when calling withdrawUniPositionToken", async () => {
+        await expect(
+          controller.connect(seller1).withdrawUniPositionToken(1)
+        ).to.be.revertedWith("Paused");
+      });
+      it("Should revert when calling reduceDebt", async () => {
+        await expect(
+          controller.connect(seller1).reduceDebt(1)
         ).to.be.revertedWith("Paused");
       });
       it("Should revert when calling applyFunding", async () => {
