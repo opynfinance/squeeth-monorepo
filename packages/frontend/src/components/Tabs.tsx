@@ -2,7 +2,6 @@ import { Tab, Tabs } from '@material-ui/core'
 import { withStyles } from '@material-ui/core/styles'
 
 export const SqueethTabs = withStyles((theme) => {
-  const borderRadius = theme.spacing(1)
   return {
     root: {
       borderRadius: theme.spacing(1),
@@ -19,8 +18,6 @@ export const SqueethTabs = withStyles((theme) => {
 })(Tabs)
 
 export const SqueethTab = withStyles((theme) => {
-  const tabsGutter = theme.spacing(1)
-  const labelColor = theme.palette.primary.main
   return {
     root: {
       textTransform: 'initial',

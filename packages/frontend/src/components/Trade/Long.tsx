@@ -1,4 +1,5 @@
 import { CircularProgress, createStyles, Divider, makeStyles, Typography } from '@material-ui/core'
+import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import BigNumber from 'bignumber.js'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -14,6 +15,7 @@ import { useETHPrice } from '../../hooks/useETHPrice'
 import { useLongPositions, useShortPositions } from '../../hooks/usePositions'
 import { PrimaryButton } from '../Buttons'
 import { PrimaryInput } from '../Inputs'
+import TradeDetails from './TradeDetails'
 import TradeInfoItem from './TradeInfoItem'
 import UniswapData from './UniswapData'
 
@@ -159,6 +161,15 @@ const useStyles = makeStyles((theme) =>
       background: '#2A2D2E',
       paddingBottom: theme.spacing(3),
     },
+    hint: {
+      display: 'flex',
+      alignItems: 'center',
+    },
+    arrowIcon: {
+      marginLeft: '4px',
+      marginRight: '4px',
+      fontSize: '20px',
+    },
   }),
 )
 
@@ -185,7 +196,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
 
   useEffect(() => {
     if (!open && wSqueethBal.lt(amount)) {
-      setAmount(wSqueethBal.toNumber())
+      setAmount(wSqueethBal)
     }
   }, [wSqueethBal.toNumber(), open])
 
@@ -197,7 +208,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
     if (connected && wSqueethBal.lt(amount)) {
       closeError = 'Insufficient oSQTH balance'
     }
-    if (connected && amount > balance) {
+    if (connected && amount.gt(balance)) {
       openError = 'Insufficient ETH balance'
     }
 
@@ -237,28 +248,34 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
         <div className={classes.thirdHeading} />
         <PrimaryInput
           value={amount.toString()}
-          onChange={(v) => setAmount(Number(v))}
+          onChange={(v) => setAmount(new BigNumber(v))}
           label="Amount"
           tooltip="Amount of wSqueeth you want to close"
           actionTxt="Max"
-          onActionClicked={() => setAmount(Number(wSqueethBal))}
+          onActionClicked={() => setAmount(wSqueethBal)}
           unit="oSQTH"
           convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
           error={!!closeError}
           hint={closeError ? closeError : `Balance ${wSqueethBal.toFixed(6)} oSQTH`}
         />
-        <div className={classes.squeethExp}>
-          <div>
-            <Typography variant="caption">Get</Typography>
-            <Typography className={classes.squeethExpTxt}>{quote.amountOut.toFixed(6)}</Typography>
-          </div>
-          <div>
-            <Typography variant="caption">
-              ${Number(quote.amountOut.times(ethPrice).toFixed(4)).toLocaleString()}
-            </Typography>
-            <Typography className={classes.squeethExpTxt}>ETH</Typography>
-          </div>
-        </div>
+        <TradeDetails
+          actionTitle="Get"
+          amount={quote.amountOut.toFixed(6)}
+          unit="ETH"
+          value={Number(quote.amountOut.times(ethPrice).toFixed(4)).toLocaleString()}
+          hint={
+            <div className={classes.hint}>
+              <span>Position {wSqueethBal.toFixed(6)}</span>
+              {quote.amountOut.gt(0) ? (
+                <>
+                  <ArrowRightAltIcon className={classes.arrowIcon} />
+                  <span>{wSqueethBal.minus(amount).toFixed(6)}</span>
+                </>
+              ) : null}{' '}
+              <span style={{ marginLeft: '4px' }}>oSQTH</span>
+            </div>
+          }
+        />
         <div className={classes.divider}>
           <UniswapData
             slippage="0.5"
@@ -336,26 +353,34 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
       <div className={classes.thirdHeading} />
       <PrimaryInput
         value={amount.toString()}
-        onChange={(v) => setAmount(Number(v))}
+        onChange={(v) => setAmount(new BigNumber(v))}
         label="Amount"
         tooltip="Amount of ETH you want to spend to get Squeeth exposure"
         actionTxt="Max"
-        onActionClicked={() => setAmount(balance)}
+        onActionClicked={() => setAmount(new BigNumber(balance))}
         unit="ETH"
-        convertedValue={(amount * Number(ethPrice)).toFixed(2).toLocaleString()}
+        convertedValue={amount.times(ethPrice).toFixed(2).toLocaleString()}
         error={!!openError}
         hint={openError ? openError : `Balance ${balance} ETH`}
       />
-      <div className={classes.squeethExp}>
-        <div>
-          <Typography variant="caption">Buy</Typography>
-          <Typography className={classes.squeethExpTxt}>{quote.amountOut.toFixed(6)}</Typography>
-        </div>
-        <div>
-          <Typography variant="caption">${Number(squeethExposure.toFixed(2)).toLocaleString()}</Typography>
-          <Typography className={classes.squeethExpTxt}>oSQTH</Typography>
-        </div>
-      </div>
+      <TradeDetails
+        actionTitle="Buy"
+        amount={quote.amountOut.toFixed(6)}
+        unit="oSQTH"
+        value={Number(squeethExposure.toFixed(2)).toLocaleString()}
+        hint={
+          <div className={classes.hint}>
+            <span>Position {wSqueethBal.toFixed(6)}</span>
+            {quote.amountOut.gt(0) ? (
+              <>
+                <ArrowRightAltIcon className={classes.arrowIcon} />
+                <span>{wSqueethBal.plus(quote.amountOut).toFixed(6)}</span>
+              </>
+            ) : null}{' '}
+            <span style={{ marginLeft: '4px' }}>oSQTH</span>
+          </div>
+        }
+      />
       <div className={classes.divider}>
         <TradeInfoItem
           label="Value if ETH up 2x"
@@ -379,11 +404,6 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
           />
         </div>
       </div>
-      {/* <Divider className={classes.divider} />
-      <TradeInfoItem label="Slippage Tolerance" value="0.5" unit="%" />
-      <TradeInfoItem label="Price Impact" value={quote.priceImpact} unit="%" />
-      <TradeInfoItem label="Minimum received" value={quote.minimumAmountOut.toFixed(6)} unit="wSQTH" />
-      <TradeInfoItem label="Liquidity Provider Fee" value={UNI_POOL_FEES / 1000000} unit="ETH" /> */}
       <div className={classes.buttonDiv}>
         {!connected ? (
           <PrimaryButton

@@ -122,7 +122,7 @@ const darkPalete: ThemeOptions = {
       main: '#00fff9',
     },
     error: {
-      main: '#EC7987',
+      main: '#f5475c',
     },
     warning: {
       light: '#F5B07326',

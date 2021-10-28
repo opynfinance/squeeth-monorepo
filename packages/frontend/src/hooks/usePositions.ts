@@ -155,8 +155,8 @@ export const usePnL = () => {
   useEffect(() => {
     if (!ready) return
 
-    const p1 = getSellQuote(wSqueethBal.toNumber()).then(setSellQuote)
-    const p2 = getBuyQuote(shortSqueethAmt.toNumber()).then((val) => setBuyQuote(val.amountIn))
+    const p1 = getSellQuote(wSqueethBal).then(setSellQuote)
+    const p2 = getBuyQuote(shortSqueethAmt).then((val) => setBuyQuote(val.amountIn))
     Promise.all([p1, p2]).then(() => setLoading(false))
   }, [wSqueethBal.toNumber(), ready])
 

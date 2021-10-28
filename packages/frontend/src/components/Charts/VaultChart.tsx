@@ -159,7 +159,7 @@ export function VaultChart({
           onChange={(evt, val) => setChartType(val)}
           aria-label="Sub nav tabs"
         >
-          <SqueethTab label={`Predicted ${days}D PNL`} />
+          <SqueethTab label={`Historical ${days}D PNL`} />
           <SqueethTab label="Payoff" />
           <SqueethTab label="Details" />
         </SqueethTabs>

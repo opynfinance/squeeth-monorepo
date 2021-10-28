@@ -57,7 +57,7 @@ export const useSqueethPool = () => {
   useEffect(() => {
     if (!squeethToken?.address) return
     const isWethToken0 = parseInt(weth, 16) < parseInt(wSqueeth, 16)
-    getBuyQuoteForETH(1).then((val) => {
+    getBuyQuoteForETH(new BigNumber(1)).then((val) => {
       setSqueethPrice(val.amountOut)
       setSqueethInitialPrice(new BigNumber(!isWethToken0 ? (pool?.token0Price.toSignificant(18) || 0) : (pool?.token1Price.toSignificant(18) || 0)))
 
@@ -124,15 +124,15 @@ export const useSqueethPool = () => {
     return PoolState
   }
 
-  const buy = async (amount: number) => {
-    const exactOutputParam = await getBuyParam(new BigNumber(amount))
+  const buy = async (amount: BigNumber) => {
+    const exactOutputParam = await getBuyParam(amount)
 
     await handleTransaction(swapRouterContract?.methods.exactOutputSingle(exactOutputParam).send({
       from: address,
     }))
   }
 
-  const buyForWETH = async (amount: number) => {
+  const buyForWETH = async (amount: BigNumber) => {
     const exactInputParam = await getBuyParamForETH(new BigNumber(amount))
 
     await handleTransaction(swapRouterContract?.methods.exactInputSingle(exactInputParam).send({
@@ -155,7 +155,7 @@ export const useSqueethPool = () => {
     exactInputParam.recipient = swapRouter
     const tupleInput = Object.values(exactInputParam).map(v => v?.toString() || '')
 
-    const { amountOut } = await getSellQuote(amount.toNumber())
+    const { amountOut } = await getSellQuote(amount)
     const swapIface = new ethers.utils.Interface(routerABI)
     const encodedSwapCall = swapIface.encodeFunctionData('exactInputSingle', [tupleInput])
     const encodedUnwrapCall = swapIface.encodeFunctionData('unwrapWETH9', [fromTokenAmount(amountOut, 18).toString(), address])
@@ -176,7 +176,7 @@ export const useSqueethPool = () => {
   }
 
   const getBuyParam = async (amount: BigNumber) => {
-    const amountMax = fromTokenAmount((await getBuyQuote(amount.toNumber())).maximumAmountIn, 18)
+    const amountMax = fromTokenAmount((await getBuyQuote(amount)).maximumAmountIn, 18)
 
     return {
       tokenIn: wethToken?.address, // address
@@ -191,7 +191,7 @@ export const useSqueethPool = () => {
   }
 
   const getBuyParamForETH = async (amount: BigNumber) => {
-    const quote = await getBuyQuoteForETH(amount.toNumber())
+    const quote = await getBuyQuoteForETH(amount)
 
     return {
       tokenIn: wethToken?.address,
@@ -205,7 +205,7 @@ export const useSqueethPool = () => {
     }
   }
 
-  const getBuyQuote = async (amount: number) => {
+  const getBuyQuote = async (amount: BigNumber) => {
     const emptyState = {
       amountIn: new BigNumber(0),
       maximumAmountIn: new BigNumber(0),
@@ -232,7 +232,7 @@ export const useSqueethPool = () => {
     return emptyState
   }
 
-  const getBuyQuoteForETH = async (amount: number) => {
+  const getBuyQuoteForETH = async (amount: BigNumber) => {
     const emptyState = {
       amountOut: new BigNumber(0),
       minimumAmountOut: new BigNumber(0),
@@ -259,7 +259,7 @@ export const useSqueethPool = () => {
     return emptyState
   }
 
-  const getSellQuote = async (amount: number) => {
+  const getSellQuote = async (amount: BigNumber) => {
     const emptyState = {
       amountOut: new BigNumber(0),
       minimumAmountOut: new BigNumber(0),

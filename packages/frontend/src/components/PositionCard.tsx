@@ -171,7 +171,7 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
             <Typography component="span">
               {getPositionBasedValue(wSqueethBal.toFixed(6), shortSqueethAmt.toFixed(6), 0)}
             </Typography>
-            {tradeAmount > 0 ? (
+            {tradeAmount.isGreaterThan(0) ? (
               <>
                 <ArrowRightAltIcon className={classes.arrow} />
                 <Typography component="span" className={classes.postTradeAmt}>

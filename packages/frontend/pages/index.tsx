@@ -46,7 +46,7 @@ const useStyles = makeStyles((theme) =>
     main: {
       display: 'flex',
       flexDirection: 'column',
-      marginRight: theme.spacing(3),
+      marginRight: theme.spacing(2),
       marginBottom: theme.spacing(3),
       marginTop: theme.spacing(3),
       flexGrow: 1,
@@ -178,7 +178,7 @@ const useStyles = makeStyles((theme) =>
     positionH: {},
     tradeDetails: {
       flexGrow: 1,
-      marginTop: theme.spacing(3),
+      marginTop: theme.spacing(2),
       paddingLeft: theme.spacing(2),
       paddingRight: theme.spacing(2),
       paddingBottom: theme.spacing(3),
@@ -186,7 +186,7 @@ const useStyles = makeStyles((theme) =>
       background: theme.palette.background.lightStone,
     },
     subNavTabs: {
-      marginBottom: theme.spacing(3),
+      marginBottom: theme.spacing(2),
       [theme.breakpoints.down('sm')]: {
         marginBottom: 0,
       },
@@ -239,6 +239,30 @@ const useStyles = makeStyles((theme) =>
       justifyContent: 'space-around',
       alignItems: 'center',
       background: theme.palette.background.default,
+    },
+    longIndicator: {
+      background: theme.palette.success.main,
+      borderRadius: theme.spacing(0.7),
+      opacity: '.1',
+    },
+    shortIndicator: {
+      background: theme.palette.error.main,
+      borderRadius: theme.spacing(0.7),
+      opacity: '.1',
+    },
+    longTab: {
+      color: theme.palette.success.main,
+      '&$selected': {
+        color: theme.palette.success.main,
+        fontWeight: theme.typography.fontWeightMedium,
+      },
+    },
+    shortTab: {
+      color: theme.palette.error.main,
+      '&$selected': {
+        color: theme.palette.error.main,
+        fontWeight: theme.typography.fontWeightMedium,
+      },
     },
   }),
 )
@@ -424,9 +448,18 @@ function TradePage() {
           aria-label="Sub nav tabs"
           className={classes.subNavTabs}
           centered
+          classes={{ indicator: tradeType === TradeType.SHORT ? classes.shortIndicator : classes.longIndicator }}
         >
-          <SqueethTab style={{ width: '50%' }} label="Long" />
-          <SqueethTab style={{ width: '50%' }} label="Short" />
+          <SqueethTab
+            style={{ width: '50%', color: '#49D273' }}
+            classes={{ root: classes.longTab, selected: classes.longTab }}
+            label="Long"
+          />
+          <SqueethTab
+            style={{ width: '50%', color: '#f5475c' }}
+            classes={{ root: classes.shortTab, selected: classes.shortTab }}
+            label="Short"
+          />
         </SqueethTabs>
       </div>
     )

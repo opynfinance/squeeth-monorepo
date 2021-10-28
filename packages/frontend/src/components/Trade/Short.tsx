@@ -1,5 +1,6 @@
 import { CircularProgress } from '@material-ui/core'
 import { createStyles, Divider, InputAdornment, makeStyles, TextField, Tooltip, Typography } from '@material-ui/core'
+import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
@@ -16,6 +17,7 @@ import { useLongPositions, useShortPositions } from '../../hooks/usePositions'
 import { PrimaryButton } from '../Buttons'
 import CollatRange from '../CollatRange'
 import { PrimaryInput } from '../Inputs'
+import TradeDetails from './TradeDetails'
 import TradeInfoItem from './TradeInfoItem'
 import UniswapData from './UniswapData'
 
@@ -114,6 +116,15 @@ const useStyles = makeStyles((theme) =>
       background: '#2A2D2E',
       paddingBottom: theme.spacing(3),
     },
+    hint: {
+      display: 'flex',
+      alignItems: 'center',
+    },
+    arrowIcon: {
+      marginLeft: '4px',
+      marginRight: '4px',
+      fontSize: '20px',
+    },
   }),
 )
 
@@ -152,7 +163,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
 
   useEffect(() => {
     if (!open && shrtAmt.lt(amount)) {
-      setAmount(shrtAmt.toNumber())
+      setAmount(shrtAmt)
     }
   }, [shrtAmt.toNumber(), open])
 
@@ -167,7 +178,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
 
   useEffect(() => {
     const debt = new BigNumber((collateral * 100) / collatPercent)
-    getShortAmountFromDebt(debt).then((s) => setAmount(s.toNumber()))
+    getShortAmountFromDebt(debt).then((s) => setAmount(s))
   }, [collatPercent, collateral, normalizationFactor.toNumber()])
 
   useEffect(() => {
@@ -243,7 +254,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
     }
     if (collateral > balance) {
       openError = 'Insufficient ETH balance'
-    } else if (amount > 0 && collateral + existingCollat < 0.5) {
+    } else if (amount.isGreaterThan(0) && collateral + existingCollat < 0.5) {
       openError = 'Minimum collateral is 0.5 ETH'
     }
 
@@ -262,12 +273,12 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
         </Typography>
         <div className={classes.thirdHeading}>
           <PrimaryInput
-            value={amount}
-            onChange={(v) => setAmount(Number(v))}
+            value={amount.toString()}
+            onChange={(v) => setAmount(new BigNumber(v))}
             label="Amount"
             tooltip="Amount of oSQTH to buy"
             actionTxt="Max"
-            onActionClicked={() => setAmount(Number(shrtAmt))}
+            onActionClicked={() => setAmount(shrtAmt)}
             unit="oSQTH"
             error={!!closeError}
             convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
@@ -297,18 +308,24 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
         </div>
         <div className={classes.thirdHeading}></div>
         <CollatRange />
-        <div className={classes.squeethExp}>
-          <div>
-            <Typography variant="caption">Spend</Typography>
-            <Typography className={classes.squeethExpTxt}>{sellCloseQuote.amountIn.toFixed(6)}</Typography>
-          </div>
-          <div>
-            <Typography variant="caption">
-              ${Number(ethPrice.times(sellCloseQuote.amountIn).toFixed(2)).toLocaleString()}
-            </Typography>
-            <Typography className={classes.squeethExpTxt}>ETH</Typography>
-          </div>
-        </div>
+        <TradeDetails
+          actionTitle="Spend"
+          amount={sellCloseQuote.amountIn.toFixed(6)}
+          unit="ETH"
+          value={Number(ethPrice.times(sellCloseQuote.amountIn).toFixed(2)).toLocaleString()}
+          hint={
+            <div className={classes.hint}>
+              <span>Position {shrtAmt.toFixed(6)}</span>
+              {quote.amountOut.gt(0) ? (
+                <>
+                  <ArrowRightAltIcon className={classes.arrowIcon} />
+                  <span>{shrtAmt.minus(amount).toFixed(6)}</span>
+                </>
+              ) : null}{' '}
+              <span style={{ marginLeft: '4px' }}>oSQTH</span>
+            </div>
+          }
+        />
         <div className={classes.divider}>
           <TradeInfoItem
             label="Collateral you redeem"
@@ -446,18 +463,24 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
       </div>
       <div className={classes.thirdHeading}></div>
       <CollatRange />
-      <div className={classes.squeethExp}>
-        <div>
-          <Typography variant="caption">Sell</Typography>
-          <Typography className={classes.squeethExpTxt}>{amount.toFixed(6)}</Typography>
-        </div>
-        <div>
-          <Typography variant="caption">
-            ${Number(getWSqueethPositionValue(amount).toFixed(2)).toLocaleString()}
-          </Typography>
-          <Typography className={classes.squeethExpTxt}>oSQTH</Typography>
-        </div>
-      </div>
+      <TradeDetails
+        actionTitle="Sell"
+        amount={amount.toFixed(6)}
+        unit="oSQTH"
+        value={Number(getWSqueethPositionValue(amount).toFixed(2)).toLocaleString()}
+        hint={
+          <div className={classes.hint}>
+            <span>Position {shrtAmt.toFixed(6)}</span>
+            {quote.amountOut.gt(0) ? (
+              <>
+                <ArrowRightAltIcon className={classes.arrowIcon} />
+                <span>{shrtAmt.plus(amount).toFixed(6)}</span>
+              </>
+            ) : null}{' '}
+            <span style={{ marginLeft: '4px' }}>oSQTH</span>
+          </div>
+        }
+      />
       <div className={classes.divider}>
         <TradeInfoItem
           label="Liquidation Price"

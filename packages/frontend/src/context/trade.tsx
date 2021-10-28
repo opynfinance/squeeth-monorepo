@@ -18,8 +18,8 @@ type SellCloseQuote = {
 }
 
 type tradeContextType = {
-  tradeAmount: number
-  setTradeAmount: (amt: number) => void
+  tradeAmount: BigNumber
+  setTradeAmount: (amt: BigNumber) => void
   tradeType: TradeType
   setTradeType: (type: TradeType) => void
   tradeLoading: boolean
@@ -46,7 +46,7 @@ const sellCloseEmptyState = {
 }
 
 const initialState: tradeContextType = {
-  tradeAmount: 1,
+  tradeAmount: new BigNumber(1),
   setTradeAmount: () => null,
   tradeType: TradeType.LONG,
   setTradeType: () => null,
@@ -65,7 +65,7 @@ const tradeContext = React.createContext<tradeContextType>(initialState)
 const useTrade = () => useContext(tradeContext)
 
 const TradeProvider: React.FC = ({ children }) => {
-  const [tradeAmount, setTradeAmount] = useState(0)
+  const [tradeAmount, setTradeAmount] = useState(new BigNumber(0))
   const [tradeType, setTradeType] = useState(TradeType.LONG)
   const [tradeLoading, setTradeLoading] = useState(false)
   const [openPosition, setOpenPosition] = useState(0)
@@ -101,7 +101,7 @@ const TradeProvider: React.FC = ({ children }) => {
         getBuyQuote(tradeAmount).then(setSellCloseQuote)
       }
     }
-  }, [tradeAmount, tradeType, isPositionOpen, ready, positionType])
+  }, [tradeAmount.toNumber(), tradeType, isPositionOpen, ready, positionType])
 
   useEffect(() => {
     if (tradeType === TradeType.LONG) {
