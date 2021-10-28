@@ -73,3 +73,8 @@ export function getXAmountBelowRange (pa:number, pb: number, liquidity: string) 
   const sqrtB = new BigNumber(pb).squareRoot()
   return new BigNumber(liquidity).times(sqrtB.minus(sqrtA)).div(sqrtB.times(sqrtA)).integerValue()
 }
+
+export function tickToPrice1e18(tick: number) {
+  // calculate x = 1.0001 ^ tick
+  return new BigNumber(1.0001).pow(tick).times(1e18).toFixed(0)
+}

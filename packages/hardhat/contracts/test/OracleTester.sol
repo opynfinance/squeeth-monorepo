@@ -37,6 +37,14 @@ contract OracleTester is Oracle{
     return oracle.getTwapSafe(_pool, _base, _quote, period);
   }
 
+  function testGetWeightedTickSafe(
+    uint256 _sinceTimestamp,
+    address _pool
+  ) view external returns (int24) {
+    uint32 period = uint32(block.timestamp - _sinceTimestamp);
+    return oracle.getTimeWeightedAverageTickSafe(_pool, period);
+  }
+
   function testToUint128(uint256 y) external returns (uint128 z) {
       toUint128(y);
   }
