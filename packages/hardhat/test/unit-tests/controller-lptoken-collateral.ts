@@ -745,6 +745,15 @@ describe("Controller: Uni LP tokens collateralization", function () {
         expect(vaultAfter.NftCollateralId === 0).to.be.true
         expect(vaultAfter.shortAmount.isZero()).to.be.true
       })
+      it('calling reduceDebt will not take effect if the vault has not nft', async() => {
+        
+        const vaultBefore = await controller.vaults(vaultId)
+        await controller.connect(seller1).reduceDebt(vaultId)
+        const vaultAfter = await controller.vaults(vaultId)
+
+        expect(vaultAfter.collateralAmount.eq(vaultBefore.collateralAmount)).to.be.true
+        expect(vaultAfter.shortAmount.eq(vaultBefore.shortAmount)).to.be.true
+      })
     })
   });
 

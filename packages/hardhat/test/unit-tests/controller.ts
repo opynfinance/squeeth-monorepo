@@ -992,12 +992,18 @@ describe("Controller", function () {
           controller.connect(seller1).applyFunding()
         ).to.be.revertedWith("Paused");
       });
-
-
-
-      // probably should add all notPaused functions
-      // add in reduceDebt, liquidate, add and remove uniposition token
-
+      it("Should revert when calling liquidate", async () => {
+        await expect(
+          controller.connect(seller1).liquidate(0, 0)
+        ).to.be.revertedWith("Paused");
+      });
+      it("Should revert when calling reduceDebt", async () => {
+        await expect(
+          controller.connect(seller1).reduceDebt(0)
+        ).to.be.revertedWith("Paused");
+      });
+      
+      
       it("Should allow the owner to un-pause", async () => {
         await controller.connect(owner).unPauseOwner()
         expect(await controller.isSystemPaused()).to.be.false 

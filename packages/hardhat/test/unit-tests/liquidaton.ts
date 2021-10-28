@@ -164,7 +164,9 @@ describe("Controller: liquidation unit test", function () {
       expect(isVaultSafeBefore).to.be.false
 
       const debtToRepay = vaultBefore.shortAmount.div(2)
-      const tx = await controller.connect(liquidator).liquidate(vault1Id, debtToRepay);
+      // specifying a higher maxDebtToRepay number, which won't be used
+      const maxDebtToRepay = debtToRepay.add(10)
+      const tx = await controller.connect(liquidator).liquidate(vault1Id, maxDebtToRepay);
       const receipt = await tx.wait();
       
       const normFactor = await controller.normalizationFactor()
