@@ -1,8 +1,8 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 
-import { ethers, getNamedAccounts, deployments } from "hardhat"
+import { ethers, getNamedAccounts } from "hardhat"
 import { expect } from "chai";
-import { Contract, providers } from "ethers";
+import { constants, Contract, providers } from "ethers";
 import { Controller, ShortPowerPerp, WPowerPerp, ShortHelper, WETH9 } from "../../typechain";
 
 import { deployUniswapV3, deploySqueethCoreContracts, addSqueethLiquidity, deployWETHAndDai } from '../setup'
@@ -76,22 +76,34 @@ describe("ShortHelper Integration Test", function () {
   })
 
   describe('Basic settings', async() => {
-    it('should deploy ShortHelper', async () => {
-      const { deployer } = await getNamedAccounts();
-      const { deploy } = deployments;
-      await deploy("ShortHelper", {
-        from: deployer,
-        args: [controller.address, swapRouter.address, weth.address]
-      });
-  
-      // deploy short helper
-      shortHelper = await ethers.getContract("ShortHelper", deployer);
-  
-      expect(await shortHelper.shortPowerPerp()).to.be.eq(shortPowerPerp.address, "shortPowerPerp address mismatch")
-      expect(await shortHelper.controller()).to.be.eq(controller.address, "controller address mismatch")
-      expect(await shortHelper.router()).to.be.eq(swapRouter.address, "swapRouter address mismatch")
-      expect(await shortHelper.weth()).to.be.eq(weth.address, "weth address mismatch")
+    describe('deployment', async() => {
+      it('should revert if argument address is invalid', async() => {
+        const ShortHelperFactory = await ethers.getContractFactory("ShortHelper");
+        await expect(ShortHelperFactory.deploy(
+          constants.AddressZero, swapRouter.address, weth.address
+        )).to.be.revertedWith('Invalid controller address');
+
+        await expect(ShortHelperFactory.deploy(
+          controller.address, constants.AddressZero, weth.address
+        )).to.be.revertedWith('Invalid swap router address');
+
+        await expect(ShortHelperFactory.deploy(
+          controller.address, swapRouter.address, constants.AddressZero
+        )).to.be.revertedWith('Invalid weth address');
+      })
+      it('should deploy ShortHelper', async () => {
+        const ShortHelperFactory = await ethers.getContractFactory("ShortHelper");
+
+        // deploy short helper
+        shortHelper = (await ShortHelperFactory.deploy(controller.address, swapRouter.address, weth.address)) as ShortHelper
+    
+        expect(await shortHelper.shortPowerPerp()).to.be.eq(shortPowerPerp.address, "shortPosition address mismatch")
+        expect(await shortHelper.controller()).to.be.eq(controller.address, "controller address mismatch")
+        expect(await shortHelper.router()).to.be.eq(swapRouter.address, "swapRouter address mismatch")
+        expect(await shortHelper.weth()).to.be.eq(weth.address, "weth address mismatch")
+      })
     })
+    
   })
 
   describe('Create short position', async() => {

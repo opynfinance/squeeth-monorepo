@@ -29,6 +29,9 @@ contract ShortHelper {
         address _swapRouter,
         address _wethAddr
     ) {
+        require(_controllerAddr != address(0), "Invalid controller address");
+        require(_swapRouter != address(0), "Invalid swap router address");
+        require(_wethAddr != address(0), "Invalid weth address");
         IController _controller = IController(_controllerAddr);
         router = ISwapRouter(_swapRouter);
         wPowerPerp = _controller.wPowerPerp();
