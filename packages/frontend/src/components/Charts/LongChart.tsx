@@ -1,4 +1,4 @@
-import { Button, ButtonGroup, createStyles, makeStyles, TextField, Typography } from '@material-ui/core'
+import { Button, ButtonGroup, createStyles, Hidden, makeStyles, TextField, Typography } from '@material-ui/core'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import React, { useEffect, useMemo, useState } from 'react'
@@ -134,6 +134,8 @@ export function LongChart() {
           value={tradeType}
           onChange={(evt, val) => setTradeType(val)}
           aria-label="Sub nav tabs"
+          scrollButtons="auto"
+          variant="scrollable"
         >
           <SqueethTab label={`Historical ${days}D PNL`} />
           {/* <SqueethTab label="Price" /> */}
@@ -142,21 +144,25 @@ export function LongChart() {
           {/* <SqueethTab label="Comparison" /> */}
           <SqueethTab label="Details" />
         </SqueethTabs>
-        <TextField
-          onChange={(event) => setDays(parseInt(event.target.value))}
-          size="small"
-          value={days}
-          type="number"
-          style={{ width: 150, marginLeft: '16px' }}
-          label="Historical Days"
-          variant="outlined"
-        />
+        <Hidden smDown>
+          <TextField
+            onChange={(event) => setDays(parseInt(event.target.value))}
+            size="small"
+            value={days}
+            type="number"
+            style={{ width: 150, marginLeft: '16px' }}
+            label="Historical Days"
+            variant="outlined"
+          />
+        </Hidden>
       </div>
 
       {mode === ChartType.Payoff ? (
         <div className={classes.payoffContainer}>
           <LongSqueethPayoff ethPrice={ethPrice.toNumber()} />
-          <Image src={ComparisonChart} alt="Comparison Chart" height={340} width={600} />
+          <Hidden smDown>
+            <Image src={ComparisonChart} alt="Comparison Chart" height={340} width={600} />
+          </Hidden>
         </div>
       ) : mode === ChartType.Details ? (
         <div style={{ overflow: 'auto', maxHeight: '310px' }}>

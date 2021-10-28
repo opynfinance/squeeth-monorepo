@@ -1,4 +1,4 @@
-import { createStyles, makeStyles, TextField, Typography } from '@material-ui/core'
+import { createStyles, Hidden, makeStyles, TextField, Typography } from '@material-ui/core'
 import Alert from '@material-ui/lab/Alert'
 import dynamic from 'next/dynamic'
 import React, { useMemo, useState } from 'react'
@@ -21,12 +21,15 @@ const useStyles = makeStyles((theme) =>
     },
     chartNav: {
       border: `1px solid ${theme.palette.primary.main}30`,
+      [theme.breakpoints.down('sm')]: {
+        width: '100%',
+      },
     },
     cardDetail: {
       color: theme.palette.text.secondary,
       lineHeight: '1.75rem',
       fontSize: '16px',
-      marginTop: theme.spacing(4),
+      marginTop: theme.spacing(2),
       maxWidth: '800px',
     },
     cardTitle: {
@@ -160,15 +163,17 @@ export function VaultChart({
           <SqueethTab label="Payoff" />
           <SqueethTab label="Details" />
         </SqueethTabs>
-        <TextField
-          onChange={(event) => setDays(parseInt(event.target.value))}
-          size="small"
-          value={days}
-          type="number"
-          style={{ width: 150, marginLeft: '16px' }}
-          label="Historical Days"
-          variant="outlined"
-        />
+        <Hidden smDown>
+          <TextField
+            onChange={(event) => setDays(parseInt(event.target.value))}
+            size="small"
+            value={days}
+            type="number"
+            style={{ width: 150, marginLeft: '16px' }}
+            label="Historical Days"
+            variant="outlined"
+          />
+        </Hidden>
       </div>
       {seriesRebalance.length === 0 && <Alert severity="info"> Loading historical data, this could take a while</Alert>}
       {chartType === 0 ? (

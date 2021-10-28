@@ -19,6 +19,9 @@ const useStyles = makeStyles((theme) =>
       borderRadius: theme.spacing(1),
       display: 'flex',
       flexDirection: 'column',
+      [theme.breakpoints.down('sm')]: {
+        width: '100%',
+      },
     },
     header: {
       display: 'flex',

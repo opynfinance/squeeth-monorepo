@@ -1,4 +1,4 @@
-import { IconButton, Tooltip } from '@material-ui/core'
+import { Button, Hidden, IconButton, Tooltip } from '@material-ui/core'
 import Card from '@material-ui/core/Card'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Typography from '@material-ui/core/Typography'
@@ -9,8 +9,10 @@ import Image from 'next/image'
 import { useCallback, useEffect, useState } from 'react'
 
 import squeethTokenSymbol from '../public/images/Squeeth.png'
+import { PrimaryButton } from '../src/components/Buttons'
 import { LongChart } from '../src/components/Charts/LongChart'
 import { VaultChart } from '../src/components/Charts/VaultChart'
+import MobileModal from '../src/components/MobileModal'
 import Nav from '../src/components/Nav'
 import PositionCard from '../src/components/PositionCard'
 import { SqueethTab, SqueethTabs } from '../src/components/Tabs'
@@ -29,13 +31,17 @@ const useStyles = makeStyles((theme) =>
     header: {
       color: theme.palette.primary.main,
     },
+    mobileContainer: {
+      padding: theme.spacing(2),
+      paddingBottom: '68px',
+    },
     container: {
       display: 'flex',
       height: 'calc(100vh - 64px)',
       maxHeight: '1000px',
       margin: '0 auto',
       width: '95%',
-      maxWidth: '1400px',
+      maxWidth: '1600px',
     },
     main: {
       display: 'flex',
@@ -114,6 +120,10 @@ const useStyles = makeStyles((theme) =>
     squeethInfo: {
       // make it fixed when advanced options are shown or hidden
       minWidth: '58%',
+      [theme.breakpoints.down('sm')]: {
+        width: '100%',
+        marginTop: theme.spacing(2),
+      },
     },
     squeethInfoSubGroup: {
       display: 'flex',
@@ -151,6 +161,19 @@ const useStyles = makeStyles((theme) =>
     },
     logoTitle: {
       marginLeft: theme.spacing(1),
+      [theme.breakpoints.down('sm')]: {
+        fontSize: 18,
+      },
+    },
+    logoSubTitle: {
+      marginLeft: theme.spacing(1),
+      [theme.breakpoints.down('sm')]: {
+        fontSize: 16,
+      },
+    },
+    logo: {
+      marginTop: theme.spacing(0.5),
+      alignSelf: 'flex-start',
     },
     positionH: {},
     tradeDetails: {
@@ -164,6 +187,9 @@ const useStyles = makeStyles((theme) =>
     },
     subNavTabs: {
       marginBottom: theme.spacing(3),
+      [theme.breakpoints.down('sm')]: {
+        marginBottom: 0,
+      },
     },
     green: {
       color: theme.palette.success.main,
@@ -198,6 +224,22 @@ const useStyles = makeStyles((theme) =>
       borderRadius: theme.spacing(1),
       marginLeft: theme.spacing(1),
     },
+    mobileSpacer: {
+      marginTop: theme.spacing(2),
+    },
+    mobileAction: {
+      position: 'fixed',
+      height: '64px',
+      bottom: 0,
+      width: '100%',
+      zIndex: 20,
+      display: 'flex',
+      borderTop: `1px solid ${theme.palette.background.lightStone}`,
+      padding: theme.spacing(0.5),
+      justifyContent: 'space-around',
+      alignItems: 'center',
+      background: theme.palette.background.default,
+    },
   }),
 )
 
@@ -210,6 +252,7 @@ function TradePage() {
   const { setVolMultiplier } = useETHPriceCharts(1, globalVolMultiplier)
   const { tradeType, setTradeType, actualTradeType } = useTrade()
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [showMobileTrade, setShowMobileTrade] = useState(false)
 
   useEffect(() => {
     setVolMultiplier(globalVolMultiplier)
@@ -344,77 +387,118 @@ function TradePage() {
     index.toString(),
   ])
 
+  const Header = useCallback(() => {
+    return (
+      <>
+        <div className={classes.logoContainer}>
+          <div className={classes.logo}>
+            <Image src={squeethTokenSymbol} alt="squeeth token" width={37} height={37} />
+          </div>
+          <div>
+            <Typography variant="h5" className={classes.logoTitle}>
+              {tradeType === TradeType.LONG ? (
+                <>Long Squeeth - ETH&sup2; Position</>
+              ) : (
+                <>Short Squeeth - short ETH&sup2; Position</>
+              )}
+            </Typography>
+            <Typography className={classes.logoSubTitle} variant="body1" color="textSecondary">
+              {tradeType === TradeType.LONG ? (
+                <>Perpetual leverage without liquidations</>
+              ) : (
+                <>Earn funding for selling ETH&sup2;</>
+              )}
+            </Typography>
+          </div>
+        </div>
+      </>
+    )
+  }, [classes.logoContainer, classes.logoTitle, tradeType])
+
+  const TabComponent = useCallback(() => {
+    return (
+      <div>
+        <SqueethTabs
+          value={tradeType}
+          onChange={(evt, val) => setTradeType(val)}
+          aria-label="Sub nav tabs"
+          className={classes.subNavTabs}
+          centered
+        >
+          <SqueethTab style={{ width: '50%' }} label="Long" />
+          <SqueethTab style={{ width: '50%' }} label="Short" />
+        </SqueethTabs>
+      </div>
+    )
+  }, [classes.subNavTabs, setTradeType, tradeType])
+
   return (
     <div>
       <Nav />
-      <div className={classes.container}>
-        <div className={classes.main}>
-          <div className={classes.position}>
-            {tradeType === TradeType.LONG ? (
-              <>
-                <div className={classes.logoContainer}>
-                  <Image src={squeethTokenSymbol} alt="squeeth token" width={37} height={37} />
-                  <Typography variant="h5" className={classes.logoTitle}>
-                    Long Squeeth - ETH&sup2; Position
-                  </Typography>
-                </div>
-                <Typography variant="body1" color="textSecondary">
-                  Perpetual leverage without liquidations
-                </Typography>
-              </>
-            ) : (
-              <>
-                <div className={classes.logoContainer}>
-                  <Image src={squeethTokenSymbol} alt="squeeth token" width={37} height={37} />
-                  <Typography variant="h5" className={classes.logoTitle}>
-                    Short Squeeth - short ETH&sup2; Position
-                  </Typography>
-                </div>
-                <Typography variant="body1" color="textSecondary">
-                  Earn funding for selling ETH&sup2;
-                </Typography>
-              </>
-            )}
-            <div className={classes.positionContainer}>
-              <SqueethInfo />
-              <PositionCard />
+      <Hidden smDown>
+        <div className={classes.container}>
+          <div className={classes.main}>
+            <div className={classes.position}>
+              <Header />
+              <div className={classes.positionContainer}>
+                <SqueethInfo />
+                <PositionCard />
+              </div>
+            </div>
+            <div className={classes.tradeDetails}>
+              {tradeType === TradeType.LONG ? (
+                <>
+                  <div className={classes.amountInput}>
+                    <LongChart />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className={classes.amountInput}>
+                    <VaultChart vault={Vaults.Short} longAmount={0} showPercentage={false} setCustomLong={() => null} />
+                  </div>
+                </>
+              )}
             </div>
           </div>
-          <div className={classes.tradeDetails}>
+
+          <div className={classes.ticket}>
+            <TabComponent />
+            <Card className={classes.innerTicket}>
+              <Trade />
+            </Card>
+          </div>
+        </div>
+      </Hidden>
+      <Hidden mdUp>
+        <div className={classes.mobileContainer}>
+          <Header />
+          <div className={classes.mobileSpacer}>
             {tradeType === TradeType.LONG ? (
-              <>
-                <div className={classes.amountInput}>
-                  <LongChart />
-                </div>
-              </>
+              <LongChart />
             ) : (
-              <>
-                <div className={classes.amountInput}>
-                  <VaultChart vault={Vaults.Short} longAmount={0} showPercentage={false} setCustomLong={() => null} />
-                </div>
-              </>
+              <VaultChart vault={Vaults.Short} longAmount={0} showPercentage={false} setCustomLong={() => null} />
             )}
           </div>
-        </div>
-
-        <div className={classes.ticket}>
-          <div>
-            <SqueethTabs
-              value={tradeType}
-              onChange={(evt, val) => setTradeType(val)}
-              aria-label="Sub nav tabs"
-              className={classes.subNavTabs}
-              centered
-            >
-              <SqueethTab style={{ width: '50%' }} label="Long" />
-              <SqueethTab style={{ width: '50%' }} label="Short" />
-            </SqueethTabs>
+          <div className={classes.mobileSpacer}>
+            <PositionCard />
           </div>
-          <Card className={classes.innerTicket}>
+        </div>
+        <div className={classes.mobileAction}>
+          <div style={{ width: '65%' }}>
+            <TabComponent />
+          </div>
+          <PrimaryButton style={{ minWidth: '30%' }} onClick={() => setShowMobileTrade(true)}>
+            Trade
+          </PrimaryButton>
+        </div>
+        <MobileModal title="TRADE" isOpen={showMobileTrade} onClose={() => setShowMobileTrade(false)}>
+          <TabComponent />
+          <Card className={classes.innerTicket} style={{ textAlign: 'center', marginTop: '8px' }}>
             <Trade />
           </Card>
-        </div>
-      </div>
+        </MobileModal>
+      </Hidden>
     </div>
   )
 }

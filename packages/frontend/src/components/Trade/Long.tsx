@@ -40,7 +40,10 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(1),
     },
     divider: {
-      margin: theme.spacing(2, 3),
+      margin: theme.spacing(2, 0),
+      width: '300px',
+      marginLeft: 'auto',
+      marginRight: 'auto',
     },
     details: {
       marginTop: theme.spacing(4),
@@ -190,6 +193,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
     let openError = null
     let closeError = null
 
+    console.log(wSqueethBal.toNumber(), amount, wSqueethBal)
     if (connected && wSqueethBal.lt(amount)) {
       closeError = 'Insufficient oSQTH balance'
     }
@@ -198,7 +202,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
     }
 
     return { openError, closeError }
-  }, [amount, balance, wSqueethBal, connected])
+  }, [amount, balance, wSqueethBal.toNumber(), connected])
 
   const transact = async () => {
     setBuyLoading(true)

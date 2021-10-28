@@ -1,3 +1,4 @@
+import { Hidden, Typography } from '@material-ui/core'
 import Button from '@material-ui/core/Button'
 import React from 'react'
 import { useMemo } from 'react'
@@ -38,9 +39,11 @@ const WalletButton: React.FC = () => {
         </Button>
       ) : (
         <div>
-          <Button variant="text" color="primary">
-            {toTokenAmount(balance, 18).toFixed(4)} ETH
-          </Button>
+          <Hidden smDown>
+            <Button variant="text" color="primary">
+              {toTokenAmount(balance, 18).toFixed(4)} ETH
+            </Button>
+          </Hidden>
           <Button variant="outlined" color="primary" onClick={selectWallet}>
             <Circle networkId={networkId} />
             {shortAddress}

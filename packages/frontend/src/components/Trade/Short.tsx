@@ -4,14 +4,12 @@ import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { UNI_POOL_FEES } from '../../constants'
 import { useTrade } from '../../context/trade'
 import { useWallet } from '../../context/wallet'
 import { useWorldContext } from '../../context/world'
 import { useController } from '../../hooks/contracts/useController'
 import useShortHelper from '../../hooks/contracts/useShortHelper'
 import { useSqueethPool } from '../../hooks/contracts/useSqueethPool'
-import { useVaultManager } from '../../hooks/contracts/useVaultManager'
 import { useAddresses } from '../../hooks/useAddress'
 import { useETHPrice } from '../../hooks/useETHPrice'
 import { useLongPositions, useShortPositions } from '../../hooks/usePositions'
@@ -84,7 +82,10 @@ const useStyles = makeStyles((theme) =>
       fontSize: '20px',
     },
     divider: {
-      margin: theme.spacing(2, 3),
+      margin: theme.spacing(2, 0),
+      width: '300px',
+      marginLeft: 'auto',
+      marginRight: 'auto',
     },
     closePosition: {
       display: 'flex',
@@ -125,7 +126,6 @@ type SellType = {
 const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   const [collateral, setCollateral] = useState(0)
   const [collatPercent, setCollatPercent] = useState(200)
-  const [existingCollatPercent, setExistingCollatPercent] = useState(0)
   const [existingCollat, setExistingCollat] = useState(0)
   const [vaultId, setVaultId] = useState(0)
   const [isVaultApproved, setIsVaultApproved] = useState(true)
@@ -138,12 +138,11 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   const { getWSqueethPositionValue } = useSqueethPool()
   const { updateOperator, normFactor: normalizationFactor, getShortAmountFromDebt, getDebtAmount } = useController()
   const { shortHelper } = useAddresses()
-  const { vaults: shortVaults } = useVaultManager(5)
   const ethPrice = useETHPrice()
   const { selectWallet, connected } = useWallet()
   const { tradeAmount: amount, setTradeAmount: setAmount, quote, sellCloseQuote } = useTrade()
   const { squeethAmount: lngAmt } = useLongPositions()
-  const { squeethAmount: shrtAmt } = useShortPositions()
+  const { squeethAmount: shrtAmt, shortVaults, existingCollatPercent } = useShortPositions()
 
   const liqPrice = useMemo(() => {
     const rSqueeth = normalizationFactor.multipliedBy(amount || 1).dividedBy(10000)
@@ -170,19 +169,6 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
     const debt = new BigNumber((collateral * 100) / collatPercent)
     getShortAmountFromDebt(debt).then((s) => setAmount(s.toNumber()))
   }, [collatPercent, collateral, normalizationFactor.toNumber()])
-
-  useEffect(() => {
-    if (!vaultId) {
-      return
-    }
-
-    getDebtAmount(shrtAmt).then((debt) => {
-      const _collat: BigNumber = shortVaults[0].collateralAmount
-      if (debt && debt.isPositive()) {
-        setExistingCollatPercent(Number(_collat.div(debt).times(100).toFixed(1)))
-      }
-    })
-  }, [vaultId])
 
   useEffect(() => {
     if (!vaultId) return
@@ -255,7 +241,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
     if (shrtAmt.lt(amount)) {
       closeError = 'Close amount exceeds position'
     }
-    if (amount > balance) {
+    if (collateral > balance) {
       openError = 'Insufficient ETH balance'
     } else if (amount > 0 && collateral + existingCollat < 0.5) {
       openError = 'Minimum collateral is 0.5 ETH'

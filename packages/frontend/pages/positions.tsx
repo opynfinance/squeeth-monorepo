@@ -14,6 +14,14 @@ const useStyles = makeStyles((theme) =>
       width: '800px',
       marginLeft: 'auto',
       marginRight: 'auto',
+      [theme.breakpoints.down('sm')]: {
+        width: '100%',
+        padding: theme.spacing(0, 2),
+      },
+    },
+    header: {
+      display: 'flex',
+      justifyContent: 'space-between',
     },
     position: {
       padding: theme.spacing(2),
@@ -22,6 +30,35 @@ const useStyles = makeStyles((theme) =>
       borderRadius: theme.spacing(1),
       display: 'flex',
       justifyContent: 'space-between',
+      [theme.breakpoints.down('sm')]: {
+        display: 'block',
+      },
+    },
+    positionData: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      width: '65%',
+      [theme.breakpoints.down('sm')]: {
+        marginTop: theme.spacing(1),
+        width: '100%',
+      },
+    },
+    shortPositionData: {
+      width: '65%',
+      [theme.breakpoints.down('sm')]: {
+        marginTop: theme.spacing(1),
+        width: '100%',
+      },
+    },
+    innerPositionData: {
+      display: 'flex',
+      width: '100%',
+    },
+    positionTitle: {
+      width: '30%',
+      [theme.breakpoints.down('sm')]: {
+        width: '100%',
+      },
     },
     empty: {
       marginTop: theme.spacing(2),
@@ -41,7 +78,13 @@ const useStyles = makeStyles((theme) =>
 export default function Positions() {
   const classes = useStyles()
   const { wethAmount: longWethAmt, squeethAmount: wSqueethBal } = useLongPositions()
-  const { wethAmount: shortWethAmt, squeethAmount: shortSqueethAmt } = useShortPositions()
+  const {
+    wethAmount: shortWethAmt,
+    squeethAmount: shortSqueethAmt,
+    existingCollat,
+    existingCollatPercent,
+    liquidationPrice,
+  } = useShortPositions()
   const { longGain, shortGain, buyQuote, sellQuote, longUsdAmt, shortUsdAmt } = usePnL()
   const ethPrice = useETHPrice()
 
@@ -49,9 +92,17 @@ export default function Positions() {
     <div>
       <Nav />
       <div className={classes.container}>
-        <Typography color="primary" variant="h6">
-          Your positions
-        </Typography>
+        <div className={classes.header}>
+          <Typography color="primary" variant="h6">
+            Your positions
+          </Typography>
+          <div>
+            <Typography component="span" color="textSecondary">
+              ETH Price:{' '}
+            </Typography>
+            <Typography component="span">$ {ethPrice.toFixed(2)}</Typography>
+          </div>
+        </div>
         {wSqueethBal.isZero() && shortSqueethAmt.isZero() ? (
           <div className={classes.empty}>
             <Typography>No active positions</Typography>
@@ -59,63 +110,77 @@ export default function Positions() {
         ) : null}
         {wSqueethBal.isGreaterThan(0) ? (
           <div className={classes.position}>
-            <Typography>Long Squeeth</Typography>
-            <div>
-              <Typography variant="caption" component="span" color="textSecondary">
-                Position
-              </Typography>
-              <Typography variant="body1">{wSqueethBal.toFixed(8)}&nbsp; oSQTH</Typography>
-              <Typography variant="body2" color="textSecondary">
-                ${sellQuote.amountOut.times(ethPrice).toFixed(2)}
-              </Typography>
-              {/* <Typography variant="body2" color="textSecondary">
-                {longWethAmt.toFixed(4)} &nbsp; WETH
-              </Typography> */}
+            <div className={classes.positionTitle}>
+              <Typography>Long Squeeth</Typography>
             </div>
-            <div>
-              <Typography variant="caption" color="textSecondary">
-                Unrealized P&L
-              </Typography>
-              <Typography variant="body1" className={longGain < 0 ? classes.red : classes.green}>
-                ${sellQuote.amountOut.times(ethPrice).minus(longUsdAmt.abs()).toFixed(2)}
-              </Typography>
-              <Typography variant="caption" className={longGain < 0 ? classes.red : classes.green}>
-                {(longGain || 0).toFixed(2)}%
-              </Typography>
-              {/* <Typography variant="body2" color="textSecondary">
-                ${sellQuote.amountOut.times(ethPrice).toFixed(4)}
-              </Typography> */}
+            <div className={classes.positionData}>
+              <div style={{ width: '50%' }}>
+                <Typography variant="caption" component="span" color="textSecondary">
+                  Position
+                </Typography>
+                <Typography variant="body1">{wSqueethBal.toFixed(8)}&nbsp; oSQTH</Typography>
+                <Typography variant="body2" color="textSecondary">
+                  ${sellQuote.amountOut.times(ethPrice).toFixed(2)}
+                </Typography>
+              </div>
+              <div style={{ width: '50%' }}>
+                <Typography variant="caption" color="textSecondary">
+                  Unrealized P&L
+                </Typography>
+                <Typography variant="body1" className={longGain < 0 ? classes.red : classes.green}>
+                  ${sellQuote.amountOut.times(ethPrice).minus(longUsdAmt.abs()).toFixed(2)}
+                </Typography>
+                <Typography variant="caption" className={longGain < 0 ? classes.red : classes.green}>
+                  {(longGain || 0).toFixed(2)}%
+                </Typography>
+              </div>
             </div>
           </div>
         ) : null}
         {shortSqueethAmt.isGreaterThan(0) ? (
           <div className={classes.position}>
-            <Typography>Short Squeeth</Typography>
-            <div>
-              <Typography variant="caption" component="span" color="textSecondary">
-                Position
-              </Typography>
-              <Typography variant="body1">{shortSqueethAmt.toFixed(8)}&nbsp; oSQTH</Typography>
-              <Typography variant="body2" color="textSecondary">
-                ${buyQuote.times(ethPrice).toFixed(2)}
-              </Typography>
-              {/* <Typography variant="body2" color="textSecondary">
-                {shortWethAmt.toFixed(4)} &nbsp; WETH
-              </Typography> */}
+            <div className={classes.positionTitle}>
+              <Typography>Short Squeeth</Typography>
             </div>
-            <div>
-              <Typography variant="caption" color="textSecondary">
-                Unrealized P&L
-              </Typography>
-              <Typography variant="body1" className={shortGain < 0 ? classes.red : classes.green}>
-                ${buyQuote.times(ethPrice).minus(shortUsdAmt.abs()).toFixed(2)}
-              </Typography>
-              <Typography variant="caption" className={longGain < 0 ? classes.red : classes.green}>
-                {(shortGain || 0).toFixed(2)}%
-              </Typography>
-              {/* <Typography variant="body2" color="textSecondary">
-                ${buyQuote.times(ethPrice).toFixed(4)}
-              </Typography> */}
+            <div className={classes.shortPositionData}>
+              <div className={classes.innerPositionData}>
+                <div style={{ width: '50%' }}>
+                  <Typography variant="caption" component="span" color="textSecondary">
+                    Position
+                  </Typography>
+                  <Typography variant="body1">{shortSqueethAmt.toFixed(6)}&nbsp; oSQTH</Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    ${buyQuote.times(ethPrice).toFixed(2)}
+                  </Typography>
+                </div>
+                <div style={{ width: '50%' }}>
+                  <Typography variant="caption" color="textSecondary">
+                    Unrealized P&L
+                  </Typography>
+                  <Typography variant="body1" className={shortGain < 0 ? classes.red : classes.green}>
+                    ${buyQuote.times(ethPrice).minus(shortUsdAmt.abs()).toFixed(2)}
+                  </Typography>
+                  <Typography variant="caption" className={longGain < 0 ? classes.red : classes.green}>
+                    {(shortGain || 0).toFixed(2)}%
+                  </Typography>
+                </div>
+              </div>
+              <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
+                <div style={{ width: '50%' }}>
+                  <Typography variant="caption" component="span" color="textSecondary">
+                    Liquidation Price
+                  </Typography>
+                  <Typography variant="body1">${liquidationPrice.toFixed(2)}</Typography>
+                </div>
+                <div style={{ width: '50%' }}>
+                  <Typography variant="caption" component="span" color="textSecondary">
+                    Collateral (Amt / Ratio)
+                  </Typography>
+                  <Typography variant="body1">
+                    {existingCollat.toFixed(4)} ETH ({existingCollatPercent}%)
+                  </Typography>
+                </div>
+              </div>
             </div>
           </div>
         ) : null}

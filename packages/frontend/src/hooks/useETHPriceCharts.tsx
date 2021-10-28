@@ -99,7 +99,7 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
   const fundingPercentageSeries = useMemo(() => {
     return squeethSeries.series.map(({ time, fundingPerSqueeth, mark, timeElapsed: timeElapsedInDay }) => {
       const fundingPercentageDay = fundingPerSqueeth / mark / timeElapsedInDay
-      return { time, value: fundingPercentageDay * 100 }
+      return { time, value: Number((fundingPercentageDay * 100).toFixed(4)) }
     })
   }, [squeethSeries])
 
