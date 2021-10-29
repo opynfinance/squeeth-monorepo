@@ -143,7 +143,7 @@ export const getPoolAddress = async (
   const wsqueeth = (await WPowerPerpContract.deploy('Wrapped Squeeth', 'wSQU')) as WPowerPerp;
 
   // 1 squeeth is 3000 eth
-  const squeethPriceInEth = wsqueethEthPrice || 3000
+  const squeethPriceInEth = wsqueethEthPrice || 0.3
   const wsqueethEthPool = await createUniPool(squeethPriceInEth, weth, wsqueeth, positionManager, uniswapFactory) as Contract
   // 1 weth is 3000 dai
   const ethPriceInDai = ethDaiPrice || 3000

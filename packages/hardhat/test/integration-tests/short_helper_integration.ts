@@ -2,8 +2,8 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 
 import { ethers, getNamedAccounts } from "hardhat"
 import { expect } from "chai";
-import { constants, Contract, providers } from "ethers";
-import { Controller, ShortPowerPerp, WPowerPerp, ShortHelper, WETH9 } from "../../typechain";
+import { Contract, providers, constants } from "ethers";
+import { Controller, ShortPowerPerp, WPowerPerp, ShortHelper, WETH9, IUniswapV3Pool } from "../../typechain";
 
 import { deployUniswapV3, deploySqueethCoreContracts, addSqueethLiquidity, deployWETHAndDai } from '../setup'
 import { getNow, one, oracleScaleFactor } from "../utils";
@@ -72,7 +72,8 @@ describe("ShortHelper Integration Test", function () {
     squeeth = coreDeployments.wsqueeth
     shortPowerPerp = coreDeployments.shortSqueeth
     controller = coreDeployments.controller
-    poolAddress = coreDeployments.wsqueethEthPool.address    
+    poolAddress = coreDeployments.wsqueethEthPool.address 
+    
   })
 
   describe('Basic settings', async() => {
@@ -140,6 +141,49 @@ describe("ShortHelper Integration Test", function () {
       await expect(shortHelper.connect(seller1).openShort(0, squeethAmount, 0, exactInputParam, {value: collateralAmount} )).to.be.revertedWith("Wrong swap tokens")
     })
 
+    it('should revert is slippage is too high', async() => {
+      const expectedOutIfNoSlippage = squeethAmount.mul(startingEthPrice).div(oracleScaleFactor)
+
+      const exactInputParam = {
+        tokenIn: squeeth.address,
+        tokenOut: weth.address,
+        fee: 3000,
+        recipient: shortHelper.address, // specify shortHelper as recipient to unwrap weth.
+        deadline: await getNow(provider) + 86400,
+        amountIn: 0,
+        amountOutMinimum: expectedOutIfNoSlippage,
+        sqrtPriceLimitX96: 0,
+      }
+      await expect(shortHelper.connect(seller2).openShort(seller2VaultId, squeethAmount, 0, exactInputParam, {
+        value: collateralAmount
+      })).to.be.revertedWith('Too little received')
+    })
+
+    it('should revert if end price is lower than limit', async() => {
+      
+      // set the min price to be same as current price
+      const pool = await ethers.getContractAt('IUniswapV3Pool', poolAddress) as IUniswapV3Pool
+      const { sqrtPriceX96 } = await pool.slot0()
+      
+      const exactInputParam = {
+        tokenIn: squeeth.address,
+        tokenOut: weth.address,
+        fee: 3000,
+        recipient: shortHelper.address, // specify shortHelper as recipient to unwrap weth.
+        deadline: await getNow(provider) + 86400,
+        amountIn: 0,
+        amountOutMinimum: 0,
+        sqrtPriceLimitX96: sqrtPriceX96,
+      }
+
+      const largeSqueethAMount = ethers.utils.parseEther('10')
+
+      await expect(shortHelper.connect(seller1).openShort(0, largeSqueethAMount, 0, exactInputParam, {
+        value: collateralAmount
+      })).to.be.revertedWith('SPL')
+      
+    })
+
     it ('should open new vault and sell squeeth, receive weth in return', async () => {
 
       const exactInputParam = {
@@ -200,9 +244,6 @@ describe("ShortHelper Integration Test", function () {
       const poolSqueethBefore = await squeeth.balanceOf(poolAddress)
       const sellerWethBefore = await weth.balanceOf(seller1.address)
       const poolWethBefore = await weth.balanceOf(poolAddress)
-      
-
-      expect
 
       // mint and trade
       await shortHelper.connect(seller1).openShort(seller1VaultId, squeethAmount, 0, exactInputParam, {value: collateralAmount} )
@@ -234,6 +275,47 @@ describe("ShortHelper Integration Test", function () {
       }
   
       await expect(shortHelper.connect(seller2).openShort(seller1VaultId, attackAmount, 0, exactInputParam, {value: 0} )).to.be.revertedWith("Not allowed")
+    })
+
+    it ('should revert if collateral amount put down is dust', async () => {
+      const smallSqueethAmount = ethers.utils.parseEther('0.1')
+      const smallCollateralAmount = ethers.utils.parseEther('0.2')
+      
+      const exactInputParam = {
+        tokenIn: squeeth.address,
+        tokenOut: weth.address,
+        fee: 3000,
+        recipient: shortHelper.address, // specify shortHelper as recipient to unwrap weth.
+        deadline: await getNow(provider) + 86400,
+        amountIn: 0, // should be replaced by real wsqueeth minted
+        amountOutMinimum: 0,
+        sqrtPriceLimitX96: 0,
+      }
+  
+      await expect(shortHelper.connect(seller2).openShort(0, smallSqueethAmount, 0, exactInputParam, {
+          value: smallCollateralAmount, 
+        }
+      )).to.be.revertedWith('Dust vault')
+
+    })
+
+    it ('should revert if user does not put enough collateral', async () => {
+      const exactInputParam = {
+        tokenIn: squeeth.address,
+        tokenOut: weth.address,
+        fee: 3000,
+        recipient: shortHelper.address,
+        deadline: await getNow(provider) + 86400,
+        amountIn: 0, // should be replaced by real wsqueeth minted
+        amountOutMinimum: 0,
+        sqrtPriceLimitX96: 0,
+      }
+  
+      await expect(shortHelper.connect(seller2).openShort(0, squeethAmount, 0, exactInputParam, {
+          value: collateralAmount.div(5),  // not enough collateral
+        }
+      )).to.be.revertedWith('Invalid state')
+
     })
 
     it ('should open new vault and sell squeeth, receive eth at the end', async () => {
@@ -276,6 +358,24 @@ describe("ShortHelper Integration Test", function () {
       expect(poolWethBefore.sub(poolWethAfter).toString()).to.be.eq(
         sellerEthAfter.add(collateralAmount).sub(sellerEthBefore), "weth mismatch"
       )
+    })
+
+    it ('should revert if trying to short more from the current vault', async () => {
+      
+      await controller.connect(seller2).updateOperator(seller2VaultId, shortHelper.address)
+      
+      const exactInputParam = {
+        tokenIn: squeeth.address,
+        tokenOut: weth.address,
+        fee: 3000,
+        recipient: shortHelper.address,
+        deadline: await getNow(provider) + 86400,
+        amountIn: 0, // should be replaced by real wsqueeth minted
+        amountOutMinimum: 0,
+        sqrtPriceLimitX96: 0,
+      }
+  
+      await expect(shortHelper.connect(seller2).openShort(seller2VaultId, squeethAmount.mul(5), 0, exactInputParam)).to.be.revertedWith('Invalid state')
     })
 
   })
@@ -365,6 +465,111 @@ describe("ShortHelper Integration Test", function () {
           gasPrice: 0 // won't cost gas so we can calculate eth received
         }
       )).to.be.revertedWith('Wrong swap tokens')
+    })
+
+    it('should revert if slippage is too high', async() => {      
+      const vaultToClose = await controller.vaults(seller1VaultId)
+      const buyBackSqueethAmount = vaultToClose.shortAmount
+      const withdrawCollateralAmount = vaultToClose.collateralAmount
+      const maxWethToPay = squeethAmount.mul(startingEthPrice).div(oracleScaleFactor)
+
+      const exactOutputParam = {
+        tokenIn: weth.address,
+        tokenOut: squeeth.address,
+        fee: 3000,
+        recipient: shortHelper.address,
+        deadline: await getNow(provider) + 86400,
+        amountOut: buyBackSqueethAmount,
+        amountInMaximum: maxWethToPay,
+        sqrtPriceLimitX96: 0,
+      }    
+      
+      // revert with STF cuz the short helper won't have enough weth to pay for it
+      await expect(shortHelper.connect(seller1).closeShort(seller1VaultId, buyBackSqueethAmount, withdrawCollateralAmount, exactOutputParam, {
+          value: maxWethToPay, 
+        }
+      )).to.be.revertedWith('STF')
+    })
+
+    it('should revert if end price is too high', async() => {  
+      const pool = await ethers.getContractAt('IUniswapV3Pool', poolAddress) as IUniswapV3Pool
+      const { sqrtPriceX96 } = await pool.slot0()
+      
+      const vaultToClose = await controller.vaults(seller2VaultId)
+      const buyBackSqueethAmount = vaultToClose.shortAmount
+      const withdrawCollateralAmount = vaultToClose.collateralAmount
+
+      // max amount to buy back squeeth
+      const amountInMaximum = ethers.utils.parseEther('10')
+  
+      const exactOutputParam = {
+        tokenIn: weth.address,
+        tokenOut: squeeth.address,
+        fee: 3000,
+        recipient: shortHelper.address,
+        deadline: await getNow(provider) + 86400,
+        amountOut: buyBackSqueethAmount,
+        amountInMaximum,
+        sqrtPriceLimitX96: sqrtPriceX96, // set the limit as current price
+      }    
+      
+      await controller.connect(seller2).updateOperator(seller2VaultId, shortHelper.address)
+      await expect(shortHelper.connect(seller2).closeShort(seller2VaultId, buyBackSqueethAmount, withdrawCollateralAmount, exactOutputParam, {
+          value: amountInMaximum
+        }
+      )).to.be.revertedWith('SPL')
+      
+    })
+
+    it ('should revert when leaving vault with dust collateral and debt', async () => {
+      const vault = await controller.vaults(seller1VaultId)
+      
+      const buyBackWsqueethAmount = vault.shortAmount.sub(10) // leaving 10 wei wsqueeth
+      
+      // leaving the vault with 1 wei less than 0.5
+      const withdrawCollateralAmount = vault.collateralAmount.sub(ethers.utils.parseEther('0.5')).add(1)
+      
+      const amountInMaximum = ethers.utils.parseEther('20')
+  
+      const exactOutputParam = {
+        tokenIn: weth.address,
+        tokenOut: squeeth.address,
+        fee: 3000,
+        recipient: shortHelper.address,
+        deadline: await getNow(provider) + 86400,
+        amountOut: buyBackWsqueethAmount,
+        amountInMaximum,
+        sqrtPriceLimitX96: 0,
+      }
+  
+      await expect(shortHelper.connect(seller1)
+        .closeShort(seller1VaultId, buyBackWsqueethAmount, withdrawCollateralAmount, exactOutputParam, {value: amountInMaximum}
+      )).to.be.revertedWith('Dust vault')  
+    })
+
+    it ('should revert if remove too much collateral vs debt bought back', async () => {
+      const vault = await controller.vaults(seller1VaultId)
+      
+      const buyBackWsqueethAmount = 10
+      
+      const withdrawCollateralAmount = vault.collateralAmount.sub(ethers.utils.parseEther('0.5'))
+      
+      const amountInMaximum = ethers.utils.parseEther('0.02')
+  
+      const exactOutputParam = {
+        tokenIn: weth.address,
+        tokenOut: squeeth.address,
+        fee: 3000,
+        recipient: shortHelper.address,
+        deadline: await getNow(provider) + 86400,
+        amountOut: buyBackWsqueethAmount,
+        amountInMaximum,
+        sqrtPriceLimitX96: 0,
+      }
+  
+      await expect(shortHelper.connect(seller1)
+        .closeShort(seller1VaultId, buyBackWsqueethAmount, withdrawCollateralAmount, exactOutputParam, {value: amountInMaximum}
+      )).to.be.revertedWith('Invalid state')  
     })
     
     it ('should partially close a short position and get back eth', async () => {

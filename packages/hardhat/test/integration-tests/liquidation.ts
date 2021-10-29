@@ -50,6 +50,8 @@ describe("Liquidation Integration Test", function () {
 
   // vault0: normal vault to be liquidated
   let vault0Id: BigNumber
+  const vault0Collateral = ethers.utils.parseUnits('45.1')
+  const vault0MintAmount = ethers.utils.parseUnits(humanReadableMintAmount)
   
   // vault1: normal vault need to be fully liquidated, don't have enough collateral to payout all debt
   let vault1Id: BigNumber
@@ -64,15 +66,21 @@ describe("Liquidation Integration Test", function () {
   // vault3: with NFT; safe after reduceDebt
   let vault3Id: BigNumber
   let vault3LPTokenId: number
+  const vault3Collateral = ethers.utils.parseUnits('45.1')
+  const vault3MintAmount = ethers.utils.parseUnits(humanReadableMintAmount)
 
   // vault4: with NFT; safe after reduceDebt (same as vault 3, for user to save)
   let vault4Id: BigNumber
   let vault4LPTokenId: number
+  const vault4Collateral = ethers.utils.parseUnits('45.1')
+  const vault4MintAmount = ethers.utils.parseUnits(humanReadableMintAmount)
   
   // vault5: with NFT; not safe after reduceDebt, can be liquidated when price 8x
   // can only be liquidated by 50% in each tx. 
   let vault5Id: BigNumber
   let vault5LPTokenId: number
+  const vault5Collateral = ethers.utils.parseUnits('45.1')
+  const vault5MintAmount = ethers.utils.parseUnits(humanReadableMintAmount)
 
   // vault6: with NFT full eth; not safe after reduceDebt, need full liquidation, have enough collateral to pay all debt
   let vault6Id: BigNumber
@@ -151,9 +159,8 @@ describe("Liquidation Integration Test", function () {
   this.beforeAll('Prepare vault0 (normal)', async() => {
     vault0Id = await shortSqueeth.nextId()
 
-    const depositAmount = ethers.utils.parseUnits('45.1')
-    const mintAmount = ethers.utils.parseUnits(humanReadableMintAmount)
-    await controller.connect(seller0).mintPowerPerpAmount(0, mintAmount, 0, {value: depositAmount})
+    
+    await controller.connect(seller0).mintPowerPerpAmount(0, vault0MintAmount, 0, {value: vault0Collateral})
   })
 
   this.beforeAll('Prepare vault1 (normal)', async() => {
@@ -169,9 +176,8 @@ describe("Liquidation Integration Test", function () {
   this.beforeAll('Prepare vault3 (with nft), dealing with cases when it\'s safe after saving', async() => {
     vault3Id = await shortSqueeth.nextId()
 
-    const depositAmount = ethers.utils.parseUnits('45.1')
-    const mintAmount = ethers.utils.parseUnits(humanReadableMintAmount)
-    await controller.connect(seller3).mintPowerPerpAmount(0, mintAmount, 0, {value: depositAmount})
+    
+    await controller.connect(seller3).mintPowerPerpAmount(0, vault3MintAmount, 0, {value: vault3Collateral})
 
     vault3LPTokenId = await addSqueethLiquidity(
       scaledStartingSqueethPrice,
@@ -195,9 +201,7 @@ describe("Liquidation Integration Test", function () {
     // vault4 is identical to vault3
     vault4Id = await shortSqueeth.nextId()
 
-    const depositAmount = ethers.utils.parseUnits('45.1')
-    const mintAmount = ethers.utils.parseUnits(humanReadableMintAmount)
-    await controller.connect(seller4).mintPowerPerpAmount(0, mintAmount, 0, {value: depositAmount})
+    await controller.connect(seller4).mintPowerPerpAmount(0, vault4MintAmount, 0, {value: vault4Collateral})
 
     vault4LPTokenId = await addSqueethLiquidity(
       scaledStartingSqueethPrice,
@@ -220,9 +224,7 @@ describe("Liquidation Integration Test", function () {
   this.beforeAll('Prepare vault5 (with nft), for liquidation', async() => {
     vault5Id = await shortSqueeth.nextId()
 
-    const depositAmount = ethers.utils.parseUnits('45.1')
-    const mintAmount = ethers.utils.parseUnits(humanReadableMintAmount)
-    await controller.connect(seller3).mintPowerPerpAmount(0, mintAmount, 0, {value: depositAmount})
+    await controller.connect(seller3).mintPowerPerpAmount(0, vault5MintAmount, 0, {value: vault5Collateral})
 
     vault5LPTokenId = await addSqueethLiquidity(
       scaledStartingSqueethPrice,
