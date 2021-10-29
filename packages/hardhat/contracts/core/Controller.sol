@@ -132,6 +132,7 @@ contract Controller is Initializable, Ownable {
      */
     function getDenormalizedMark(uint32 _period) external view returns (uint256) {
         uint256 expectedNormalizationFactor = _getNewNormalizationFactor();
+
         return
             Power2Base._getDenormalizedMark(
                 _period,
@@ -531,7 +532,6 @@ contract Controller is Initializable, Ownable {
      */
 
     /**
-<<<<<<< HEAD
      * @notice check if a vaultId is valid, reverts  if it's not valid
      * @param _vaultId the id to check
      */
@@ -540,8 +540,6 @@ contract Controller is Initializable, Ownable {
     }
 
     /**
-=======
->>>>>>> 8ecf55b2 (fix to contracts)
      * @notice returns if an address can modify a vault
      * @param _vaultId the id of the vault to check if can be modified by _account
      * @param _account the address to check if can modify the vault
@@ -992,6 +990,10 @@ contract Controller is Initializable, Ownable {
      */
     function _getNewNormalizationFactor() internal view returns (uint256) {
         uint32 period = uint32(block.timestamp.sub(lastFundingUpdateTimestamp));
+
+        if (period == 0) {
+            return normalizationFactor;
+        }
 
         // make sure we use the same period for mark and index, and this period won't cause revert.
         uint32 fairPeriod = _getFairPeriodForOracle(period);

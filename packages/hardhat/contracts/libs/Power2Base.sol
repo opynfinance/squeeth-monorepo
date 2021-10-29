@@ -2,6 +2,8 @@
 
 pragma solidity =0.7.6;
 
+import "hardhat/console.sol";
+
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {IOracle} from "../interfaces/IOracle.sol";
@@ -40,8 +42,8 @@ library Power2Base {
         address _wsqueeth,
         uint256 _normalizationFactor
     ) internal view returns (uint256) {
-        uint256 ethDaiPrice = _getScaledTwap(_oracle, _ethDaiPool, _weth, _dai, _period);
-        uint256 wsqueethEthPrice = _getTwap(_oracle, _wSqueethEthPool, address(_wsqueeth), _weth, _period);
+        uint256 ethDaiPrice = _getScaledTwapSafe(_oracle, _ethDaiPool, _weth, _dai, _period);
+        uint256 wsqueethEthPrice = _getTwapSafe(_oracle, _wSqueethEthPool, address(_wsqueeth), _weth, _period);
 
         return wsqueethEthPrice.mul(ethDaiPrice).div(_normalizationFactor);
     }
@@ -106,7 +108,7 @@ library Power2Base {
         uint32 _period
     ) internal view returns (uint256) {
         // period reaching this point should be check, otherwise might revert
-        return IOracle(_oracle).getTwap(_pool, _base, _quote, _period);
+        return IOracle(_oracle).getTwapSafe(_pool, _base, _quote, _period);
     }
 
     /**

@@ -7,6 +7,7 @@ import "hardhat/console.sol";
 // interface
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {IWETH9} from "../../interfaces/IWETH9.sol";
 
 // lib
 import '@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol';
@@ -29,7 +30,7 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
         bytes path;
         address caller;
         uint8 callSource;
-        uint256 callAmount;
+        bytes callData;
     }
 
     /**
@@ -63,7 +64,7 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
                 ?  uint256(amount0Delta)
                 :  uint256(amount1Delta);
         
-        _strategyFlash(data.caller, tokenIn, tokenOut, fee, amountToPay, data.callAmount, data.callSource);
+        _strategyFlash(data.caller, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource);
     }
 
     /**
@@ -74,18 +75,19 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
      * @param _amountIn amount to sell
      * @param _amountOutMinimum minimum amount to get
      * @param _callSource function call source
-     * @param _callAmount arbitrary amount assigned with the call 
+     * @param _data arbitrary data assigned with the call 
      */
-    function _exactInFlashSwap(address _tokenIn, address _tokenOut, uint24 _fee, uint256 _amountIn, uint256 _amountOutMinimum, uint8 _callSource, uint256 _callAmount) internal {
+    function _exactInFlashSwap(address _tokenIn, address _tokenOut, uint24 _fee, uint256 _amountIn, uint256 _amountOutMinimum, uint8 _callSource, bytes memory _data) internal {
         uint256 amountOut = _exactInputInternal(
             _amountIn,
             address(this),
             uint160(0),
-            SwapCallbackData({path: abi.encodePacked(_tokenIn, _fee, _tokenOut), caller: msg.sender, callSource: _callSource, callAmount: _callAmount})
+            SwapCallbackData({path: abi.encodePacked(_tokenIn, _fee, _tokenOut), caller: msg.sender, callSource: _callSource, callData: _data})
         );
 
         require(amountOut >= _amountOutMinimum, "amount out less than min");
     }
+
 
     /**
      * @notice execute an exact out flash swap
@@ -95,18 +97,19 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
      * @param _amountOut exact amount to get
      * @param _amountInMaximum maximum amount to sell
      * @param _callSource function call source
-     * @param _callAmount arbitrary amount assigned with the call 
+     * @param _data arbitrary data assigned with the call 
      */
-    function _exactOutFlashSwap(address _tokenIn, address _tokenOut, uint24 _fee, uint256 _amountOut, uint256 _amountInMaximum, uint8 _callSource, uint256 _callAmount) internal {
+    function _exactOutFlashSwap(address _tokenIn, address _tokenOut, uint24 _fee, uint256 _amountOut, uint256 _amountInMaximum, uint8 _callSource, bytes memory _data) internal {
         uint256 amountIn = _exactOutputInternal(
             _amountOut,
             address(this),
             uint160(0),
-            SwapCallbackData({path: abi.encodePacked(_tokenOut, _fee, _tokenIn), caller: msg.sender, callSource: _callSource, callAmount: _callAmount})
+            SwapCallbackData({path: abi.encodePacked(_tokenOut, _fee, _tokenIn), caller: msg.sender, callSource: _callSource, callData: _data})
         );
 
         require(amountIn <= _amountInMaximum, "amount in greater than max");
     }
+
 
     /**
      * @dev function to get called by uniswap callback
@@ -115,10 +118,10 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
      * @param _tokenOut token address bought
      * @param _fee pool fee
      * @param _amountToPay amount to pay for the pool second token
-     * @param _callAmount arbitrary amount assigned with the flashswap call 
+     * @param _callData arbitrary data assigned with the flashswap call 
      * @param _callSource function call source
      */
-    function _strategyFlash(address _caller, address _tokenIn, address _tokenOut, uint24 _fee, uint256 _amountToPay, uint256 _callAmount, uint8 _callSource) internal virtual {}
+    function _strategyFlash(address _caller, address _tokenIn, address _tokenOut, uint24 _fee, uint256 _amountToPay, bytes memory _callData, uint8 _callSource) internal virtual {}
 
     /// @dev Performs a single exact input swap
     function _exactInputInternal(

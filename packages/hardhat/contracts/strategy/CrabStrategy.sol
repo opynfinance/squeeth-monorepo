@@ -34,7 +34,9 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
     /// @dev enum to differenciate between uniswap swap callback function source
     enum FLASH_SOURCE {
         FLASH_DEPOSIT,
-        FLASH_WITHDRAW
+        FLASH_WITHDRAW,
+        FLASH_HEDGE_SELL,
+        FLASH_HEDGE_BUY
     }
 
     /// @dev ETH:WSqueeth uniswap V3 pool
@@ -59,7 +61,18 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
     uint256 public priceAtLastHedge;
     uint256 public auctionStartTime;
 
-    bool public isAuctionRunning;
+    struct FlashDepositData {
+        uint256 totalDeposit;
+    }
+
+    struct FlashWithdrawData {
+        uint256 crabAmount;
+    }
+
+    struct FlashHedgeData {
+        uint256 wSqueethAmount;
+        uint256 ethProceeds;
+    }
 
     event Deposit(address indexed depositor, uint256 wSqueethAmount, uint256 lpAmount);
     event Withdraw(address indexed withdrawer, uint256 crabAmount, uint256 wSqueethAmount, uint256 ethWithdrawn);
@@ -71,6 +84,27 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
         uint256 tradedAmountOut
     );
     event FlashWithdraw(address indexed withdrawer, uint256 crabAmount, uint256 wSqueethAmount);
+    event TimeHedgeOnUniswap(address indexed hedger, uint256 hedgeTimestamp, uint256 auctionTriggerTimestamp);
+    event PriceHedgeOnUniswap(address indexed hedger, uint256 hedgeTimestamp, uint256 auctionTriggerTimestamp);
+    event TimeHedge(address indexed hedger, bool auctionType, uint256 hedgerPrice, uint256 auctionTriggerTimestamp);
+    event PriceHedge(address indexed hedger, bool auctionType, uint256 hedgerPrice, uint256 auctionTriggerTimestamp);
+    event Hedge(
+        address indexed hedger,
+        bool auctionType,
+        uint256 hedgerPrice,
+        uint256 auctionPrice,
+        uint256 wSqueethHedgeTargetAmount,
+        uint256 ethHedgetargetAmount
+    );
+    event HedgeOnUniswap(
+        address indexed hedger,
+        bool auctionType,
+        uint256 auctionPrice,
+        uint256 wSqueethHedgeTargetAmount,
+        uint256 ethHedgetargetAmount
+    );
+    event ExecuteSellAuction(address indexed buyer, uint256 wSqueethSold, uint256 ethBought, bool isHedgingOnUniswap);
+    event ExecuteBuyAuction(address indexed seller, uint256 wSqueethBought, uint256 ethSold, bool isHedgingOnUniswap);
 
     /**
      * @notice Strategy base constructor
@@ -129,11 +163,19 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
     function flashDeposit(uint256 _ethToDeposit, uint256 _ethToBorrow) external payable {
         require(msg.value > _ethToDeposit, "Need some buffer");
 
-        uint256 wSqueethToMint = _calcWsqueethToMint(
+        uint256 cachedStrategyDebt = _strategyDebt;
+
+        (uint256 wSqueethToMint, uint256 wSqueethEthPrice) = _calcWsqueethToMint(
             _ethToDeposit.add(_ethToBorrow),
-            _strategyDebt,
+            cachedStrategyDebt,
             _strategyCollateral
         );
+
+        if (cachedStrategyDebt == 0) {
+            // store hedge data as strategy is delta neutral at this point
+            timeAtLastHedge = block.timestamp;
+            priceAtLastHedge = wSqueethEthPrice;
+        }
 
         _exactInFlashSwap(
             wPowerPerp,
@@ -142,7 +184,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
             wSqueethToMint,
             _ethToDeposit.add(_ethToBorrow).sub(msg.value),
             uint8(FLASH_SOURCE.FLASH_DEPOSIT),
-            _ethToDeposit.add(_ethToBorrow)
+            abi.encodePacked(_ethToDeposit.add(_ethToBorrow))
         );
 
         emit FlashDeposit(msg.sender, _ethToDeposit, _ethToBorrow, msg.value, wSqueethToMint);
@@ -163,7 +205,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
             exactWSqueethNeeded,
             _maxEthToPay,
             uint8(FLASH_SOURCE.FLASH_WITHDRAW),
-            _crabAmount
+            abi.encodePacked(_crabAmount)
         );
 
         emit FlashWithdraw(msg.sender, _crabAmount, exactWSqueethNeeded);
@@ -200,15 +242,43 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
     }
 
     /**
+     * @notice hedge startegy based on time threshold with uniswap arbing
+     */
+    function timeHedgeOnUniswap() external {
+        uint256 auctionTriggerTime = timeAtLastHedge.add(hedgeTimeThreshold);
+
+        require(block.timestamp >= auctionTriggerTime, "Time hedging is not allowed");
+
+        _hedgeOnUniswap(auctionTriggerTime);
+
+        emit TimeHedgeOnUniswap(msg.sender, block.timestamp, auctionTriggerTime);
+    }
+
+    /**
+     * @notice hedge startegy based on price threshold with uniswap arbing
+     */
+    function priceHedgeOnUniswap(uint256 _auctionTriggerTime) external payable {
+        require(_isPriceHedge(_auctionTriggerTime), "Price hedging not allowed");
+
+        _hedgeOnUniswap(_auctionTriggerTime);
+
+        emit PriceHedgeOnUniswap(msg.sender, block.timestamp, _auctionTriggerTime);
+    }
+
+    /**
      * @notice strategy hedging based on time threshold
      * @dev need to attach msg.value if buying WSqueeth
+     * @param _isStrategySellingWSqueeth sell or buy auction, true for sell auction
+     * @param _limitPrice hedger limit auction price, should be the max price when auction is sell auction, min price when it is a buy auction
      */
-    function timeHedge() external payable {
+    function timeHedge(bool _isStrategySellingWSqueeth, uint256 _limitPrice) external payable {
         (bool isTimeHedgeAllowed, uint256 auctionTriggerTime) = _isTimeHedge();
 
         require(isTimeHedgeAllowed, "Time hedging is not allowed");
 
-        _hedge(auctionTriggerTime);
+        _hedge(auctionTriggerTime, _isStrategySellingWSqueeth, _limitPrice);
+
+        emit TimeHedge(msg.sender, _isStrategySellingWSqueeth, _limitPrice, auctionTriggerTime);
     }
 
     /**
@@ -216,10 +286,16 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
      * @dev need to attach msg.value if buying WSqueeth
      * @param _auctionTriggerTime timestamp where auction started
      */
-    function priceHedge(uint256 _auctionTriggerTime) external payable {
+    function priceHedge(
+        uint256 _auctionTriggerTime,
+        bool _isStrategySellingWSqueeth,
+        uint256 _limitPrice
+    ) external payable {
         require(_isPriceHedge(_auctionTriggerTime), "Price hedging not allowed");
 
-        _hedge(_auctionTriggerTime);
+        _hedge(_auctionTriggerTime, _isStrategySellingWSqueeth, _limitPrice);
+
+        emit PriceHedge(msg.sender, _isStrategySellingWSqueeth, _limitPrice, _auctionTriggerTime);
     }
 
     /**
@@ -264,14 +340,16 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
         address _tokenOut,
         uint24 _fee,
         uint256 _amountToPay,
-        uint256 _callAmount,
+        bytes memory _callData,
         uint8 _callSource
     ) internal override {
         if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_DEPOSIT) {
+            FlashDepositData memory data = abi.decode(_callData, (FlashDepositData));
+
             // convert WETH to ETH as Uniswap use WETH
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
 
-            _deposit(_caller, _callAmount, true);
+            _deposit(_caller, data.totalDeposit, true);
 
             IWPowerPerp(wPowerPerp).transfer(ethWSqueethPool, _amountToPay);
 
@@ -280,9 +358,10 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
             }
         }
         if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_WITHDRAW) {
+            FlashWithdrawData memory data = abi.decode(_callData, (FlashWithdrawData));
             uint256 ethToWithdraw = _withdraw(
                 _caller,
-                _callAmount,
+                data.crabAmount,
                 IWPowerPerp(wPowerPerp).balanceOf(address(this)),
                 true
             );
@@ -294,6 +373,20 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
             if (proceeds > 0) {
                 payable(_caller).sendValue(proceeds);
             }
+        }
+        if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_HEDGE_SELL) {
+            FlashHedgeData memory data = abi.decode(_callData, (FlashHedgeData));
+            IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
+            _executeSellAuction(_caller, data.ethProceeds, data.wSqueethAmount, data.ethProceeds, true);
+            IWPowerPerp(wPowerPerp).transfer(ethWSqueethPool, _amountToPay);
+            IWPowerPerp(wPowerPerp).transfer(_caller, data.wSqueethAmount.sub(_amountToPay));
+        }
+        if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_HEDGE_BUY) {
+            FlashHedgeData memory data = abi.decode(_callData, (FlashHedgeData));
+            _executeBuyAuction(_caller, data.wSqueethAmount, data.ethProceeds, true);
+            IWETH9(weth).deposit{value: _amountToPay}();
+            IWETH9(weth).transfer(ethWSqueethPool, _amountToPay);
+            payable(_caller).sendValue(data.ethProceeds.sub(_amountToPay));
         }
     }
 
@@ -310,9 +403,20 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
     ) internal returns (uint256, uint256) {
         // load vars for gas optimization
         uint256 strategyCollateral = _strategyCollateral;
+        uint256 strategyDebt = _strategyDebt;
 
-        uint256 wSqueethToMint = _calcWsqueethToMint(_amount, _strategyDebt, strategyCollateral);
+        (uint256 wSqueethToMint, uint256 wSqueethEthPrice) = _calcWsqueethToMint(
+            _amount,
+            strategyDebt,
+            strategyCollateral
+        );
         uint256 depositorCrabAmount = _calcSharesToMint(_amount, strategyCollateral, totalSupply());
+
+        if (strategyDebt == 0) {
+            // store hedge data as strategy is delta neutral at this point
+            timeAtLastHedge = block.timestamp;
+            priceAtLastHedge = wSqueethEthPrice;
+        }
 
         // mint wSqueeth and send it to msg.sender
         _mintWPowerPerp(_depositor, wSqueethToMint, _amount, _isFlashDeposit);
@@ -349,65 +453,168 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
     /**
      * @notice hedging function to achieve delta neutral strategy
      * @param _auctionTriggerTime timestamp where auction started
+     * @param _isStrategySellingWSqueeth auction type, true for sell auction
+     * @param _limitPrice hedger accepted auction price, should be the max price when auction is sell auction, min price when it is a buy auction
      */
-    function _hedge(uint256 _auctionTriggerTime) internal {
-        uint256 ethDelta = _strategyCollateral;
-        uint256 currentWSqueethPrice = IOracle(oracle).getTwapSafe(ethWSqueethPool, wPowerPerp, weth, TWAP_PERIOD);
-        uint256 wSqueethDelta = _strategyDebt.wmul(2e18).wmul(currentWSqueethPrice);
-        (uint256 wSqueethTargetHedge, bool isSellingWSqueethAuction) = _getTargetHedgeAndAuctionType(
-            wSqueethDelta,
-            ethDelta,
-            currentWSqueethPrice
-        );
+    function _hedge(
+        uint256 _auctionTriggerTime,
+        bool _isStrategySellingWSqueeth,
+        uint256 _limitPrice
+    ) internal {
+        (
+            bool isSellingAuction,
+            uint256 wSqueethToAuction,
+            uint256 ethProceeds,
+            uint256 auctionWSqueethEthPrice
+        ) = _startAuction(_auctionTriggerTime);
 
-        require(wSqueethTargetHedge != 0, "strategy is delta neutral");
+        require(_isStrategySellingWSqueeth == isSellingAuction, "wrong auction type");
 
-        uint256 priceMultiplier;
-        uint256 auctionWSqueethEthPrice;
-        uint256 auctionExecution = block.timestamp.sub(_auctionTriggerTime) >= auctionTime
-            ? 1e18
-            : (block.timestamp.sub(_auctionTriggerTime)).wdiv(auctionTime);
+        if (isSellingAuction) {
+            // Receiving ETH and paying wSqueeth
+            require(auctionWSqueethEthPrice <= _limitPrice, "Auction price greater than max accepted price");
+            require(msg.value >= ethProceeds, "Low ETH amount received");
 
-        if (isSellingWSqueethAuction) {
-            priceMultiplier = maxPriceMultiplier.sub(auctionExecution.wmul(maxPriceMultiplier.sub(minPriceMultiplier)));
+            _executeSellAuction(msg.sender, msg.value, wSqueethToAuction, ethProceeds, false);
         } else {
-            priceMultiplier = minPriceMultiplier.add(auctionExecution.wmul(maxPriceMultiplier.sub(minPriceMultiplier)));
+            require(msg.value == 0, "ETH attached for buy auction");
+            // Receiving wSqueeth and paying ETH
+            require(auctionWSqueethEthPrice >= _limitPrice, "Auction price greater than min accepted price");
+            _executeBuyAuction(msg.sender, wSqueethToAuction, ethProceeds, false);
         }
 
-        auctionWSqueethEthPrice = currentWSqueethPrice.wmul(priceMultiplier);
-        wSqueethDelta = _strategyDebt.mul(2).wmul(auctionWSqueethEthPrice);
-        (uint256 auctionWSqueethTargetHedge, bool isStillSellingWSqueethAuction) = _getTargetHedgeAndAuctionType(
-            wSqueethDelta,
+        emit Hedge(
+            msg.sender,
+            _isStrategySellingWSqueeth,
+            _limitPrice,
+            auctionWSqueethEthPrice,
+            wSqueethToAuction,
+            ethProceeds
+        );
+    }
+
+    /**
+     * @notice execute arb between auction price and uniswap price
+     * @param _auctionTriggerTime auction starting time
+     */
+    function _hedgeOnUniswap(uint256 _auctionTriggerTime) internal {
+        (
+            bool isSellingAuction,
+            uint256 wSqueethToAuction,
+            uint256 ethProceeds,
+            uint256 auctionWSqueethEthPrice
+        ) = _startAuction(_auctionTriggerTime);
+
+        if (isSellingAuction) {
+            _exactOutFlashSwap(
+                wPowerPerp,
+                weth,
+                IUniswapV3Pool(ethWSqueethPool).fee(),
+                ethProceeds,
+                wSqueethToAuction,
+                uint8(FLASH_SOURCE.FLASH_HEDGE_SELL),
+                abi.encodePacked(wSqueethToAuction, ethProceeds)
+            );
+        } else {
+            _exactOutFlashSwap(
+                weth,
+                wPowerPerp,
+                IUniswapV3Pool(ethWSqueethPool).fee(),
+                wSqueethToAuction,
+                ethProceeds,
+                uint8(FLASH_SOURCE.FLASH_HEDGE_BUY),
+                abi.encodePacked(wSqueethToAuction, ethProceeds)
+            );
+        }
+
+        emit HedgeOnUniswap(msg.sender, isSellingAuction, auctionWSqueethEthPrice, wSqueethToAuction, ethProceeds);
+    }
+
+    /**
+     * @notice execute sell auction
+     * @param _buyer buyer address
+     * @param _buyerAmount buyer ETH amount sent
+     * @param _wSqueethToSell wSqueeth amount to sell
+     * @param _ethToBuy ETH amount to buy
+     * @param _isHedgingOnUniswap true if arbing with uniswap price
+     */
+    function _executeSellAuction(
+        address _buyer,
+        uint256 _buyerAmount,
+        uint256 _wSqueethToSell,
+        uint256 _ethToBuy,
+        bool _isHedgingOnUniswap
+    ) internal {
+        if (_isHedgingOnUniswap) {
+            _mintWPowerPerp(_buyer, _wSqueethToSell, _ethToBuy, true);
+        } else {
+            _mintWPowerPerp(_buyer, _wSqueethToSell, _ethToBuy, false);
+
+            uint256 remainingEth = _buyerAmount.sub(_ethToBuy);
+
+            if (remainingEth > 0) {
+                payable(_buyer).sendValue(remainingEth);
+            }
+        }
+
+        emit ExecuteSellAuction(_buyer, _wSqueethToSell, _ethToBuy, _isHedgingOnUniswap);
+    }
+
+    /**
+     * @notice execute buy auction
+     * @param _seller seller address
+     * @param _wSqueethToBuy wSqueeth amount to buy
+     * @param _ethToSell ETH amount to sell
+     * @param _isHedgingOnUniswap true if arbing with uniswap price
+     */
+    function _executeBuyAuction(
+        address _seller,
+        uint256 _wSqueethToBuy,
+        uint256 _ethToSell,
+        bool _isHedgingOnUniswap
+    ) internal {
+        _burnWPowerPerp(_seller, _wSqueethToBuy, _ethToSell, _isHedgingOnUniswap);
+
+        if (!_isHedgingOnUniswap) {
+            payable(_seller).sendValue(_ethToSell);
+        }
+
+        emit ExecuteBuyAuction(_seller, _wSqueethToBuy, _ethToSell, _isHedgingOnUniswap);
+    }
+
+    /**
+     * @notice start auction
+     * @param _auctionTriggerTime auction starting time
+     * @return auction type, WSqueeth amount to sell or buy, ETH to sell/buy, auction WSqueeth/ETH price
+     */
+    function _startAuction(uint256 _auctionTriggerTime)
+        internal
+        returns (
+            bool,
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        uint256 strategyDebt = _strategyDebt;
+        uint256 ethDelta = _strategyCollateral;
+        uint256 currentWSqueethPrice = IOracle(oracle).getTwapSafe(ethWSqueethPool, wPowerPerp, weth, TWAP_PERIOD);
+        (bool isSellingAuction, ) = _checkAuctionType(strategyDebt, ethDelta, currentWSqueethPrice);
+        uint256 auctionWSqueethEthPrice = _getAuctionPrice(_auctionTriggerTime, currentWSqueethPrice, isSellingAuction);
+        (bool isStillSellingAuction, uint256 wSqueethToAuction) = _checkAuctionType(
+            strategyDebt,
             ethDelta,
             auctionWSqueethEthPrice
         );
 
-        require(
-            isSellingWSqueethAuction == isStillSellingWSqueethAuction,
-            "can not execute hedging trade as auction type changed"
-        );
+        require(isSellingAuction == isStillSellingAuction, "can not execute hedging trade as auction type changed");
 
-        uint256 ethProceeds = auctionWSqueethTargetHedge.wmul(auctionWSqueethEthPrice);
-
-        if (isSellingWSqueethAuction) {
-            // Receiving ETH and paying wSqueeth
-            require(msg.value >= ethProceeds, "Low ETH amount received");
-
-            _mintWPowerPerp(msg.sender, auctionWSqueethTargetHedge, ethProceeds, false);
-
-            uint256 remainingEth = uint256(msg.value).sub(ethProceeds);
-
-            if (remainingEth > 0) {
-                payable(msg.sender).sendValue(remainingEth);
-            }
-        } else {
-            // Receiving wSqueeth and paying ETH
-            _burnWPowerPerp(msg.sender, auctionWSqueethTargetHedge, ethProceeds, false);
-            payable(msg.sender).sendValue(ethProceeds);
-        }
+        uint256 ethProceeds = wSqueethToAuction.wmul(auctionWSqueethEthPrice);
 
         timeAtLastHedge = block.timestamp;
         priceAtLastHedge = currentWSqueethPrice;
+
+        return (isSellingAuction, wSqueethToAuction, ethProceeds, auctionWSqueethEthPrice);
     }
 
     /**
@@ -415,36 +622,41 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
      * @param _depositedAmount amount of deposited WETH
      * @param _strategyDebtAmount amount of strategy debt
      * @param _strategyCollateralAmount collateral amount in strategy
-     * @return amount of minted wSqueeth
+     * @return amount of minted wSqueeth and WSqueeth/ETH price
      */
     function _calcWsqueethToMint(
         uint256 _depositedAmount,
         uint256 _strategyDebtAmount,
         uint256 _strategyCollateralAmount
-    ) internal returns (uint256) {
+    ) internal view returns (uint256, uint256) {
         uint256 wSqueethToMint;
+        uint256 wSqueethEthPrice;
 
         if (_strategyDebtAmount == 0) {
-            uint256 wSqueethEthPrice = IOracle(oracle).getTwapSafe(ethWSqueethPool, wPowerPerp, weth, TWAP_PERIOD);
+            wSqueethEthPrice = IOracle(oracle).getTwapSafe(ethWSqueethPool, wPowerPerp, weth, TWAP_PERIOD);
             uint256 squeethDelta = wSqueethEthPrice.wmul(2e18);
             wSqueethToMint = _depositedAmount.wdiv(squeethDelta);
-
-            // store hedge data as strategy is delta neutral at this point
-            timeAtLastHedge = block.timestamp;
-            priceAtLastHedge = wSqueethEthPrice;
         } else {
             wSqueethToMint = _depositedAmount.wmul(_strategyDebtAmount).wdiv(_strategyCollateralAmount);
         }
 
-        return wSqueethToMint;
+        return (wSqueethToMint, wSqueethEthPrice);
     }
 
+    /**
+     * @notice check if hedging based on time threshold is allowed
+     * @return true if time hedging is allowed, and auction trigger timestamp
+     */
     function _isTimeHedge() internal view returns (bool, uint256) {
         uint256 auctionTriggerTime = timeAtLastHedge.add(hedgeTimeThreshold);
 
         return (block.timestamp >= auctionTriggerTime, auctionTriggerTime);
     }
 
+    /**
+     * @notice check if hedging based on price threshold is allowed
+     * @return true if hedging is allowed
+     */
     function _isPriceHedge(uint256 _auctionTriggerTime) internal view returns (bool) {
         uint32 secondsToPriceHedgeTrigger = uint32(block.timestamp.sub(_auctionTriggerTime));
         uint256 wSqueethEthPriceAtTriggerTime = IOracle(oracle).getHistoricalTwap(
@@ -455,9 +667,60 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
             secondsToPriceHedgeTrigger
         );
         uint256 cachedRatio = wSqueethEthPriceAtTriggerTime.wdiv(priceAtLastHedge);
-        uint256 priceTolerance = cachedRatio > 1e18 ? (cachedRatio).sub(1e18) : uint256(1e18).sub(cachedRatio);
+        uint256 priceThreshold = cachedRatio > 1e18 ? (cachedRatio).sub(1e18) : uint256(1e18).sub(cachedRatio);
 
-        return priceTolerance >= hedgePriceThreshold;
+        return priceThreshold >= hedgePriceThreshold;
+    }
+
+    /**
+     * @notice Get auction price
+     * @param _auctionTriggerTime timestamp where auction started
+     * @param _wSqueethEthPrice WSqueeth/ETH price
+     * @param _isSellingAuction auction type (true for selling, false for buying auction)
+     * @return auction price
+     */
+    function _getAuctionPrice(
+        uint256 _auctionTriggerTime,
+        uint256 _wSqueethEthPrice,
+        bool _isSellingAuction
+    ) internal view returns (uint256) {
+        uint256 auctionExecution = block.timestamp.sub(_auctionTriggerTime) >= auctionTime
+            ? 1e18
+            : (block.timestamp.sub(_auctionTriggerTime)).wdiv(auctionTime);
+
+        uint256 priceMultiplier;
+        if (_isSellingAuction) {
+            priceMultiplier = maxPriceMultiplier.sub(auctionExecution.wmul(maxPriceMultiplier.sub(minPriceMultiplier)));
+        } else {
+            priceMultiplier = minPriceMultiplier.add(auctionExecution.wmul(maxPriceMultiplier.sub(minPriceMultiplier)));
+        }
+
+        return _wSqueethEthPrice.wmul(priceMultiplier);
+    }
+
+    /**
+     * @notice Check running auction type
+     * @param _debt strategy debt
+     * @param _ethDelta ETH delta (= amount of ETH in strategy)
+     * @param _wSqueethEthPrice WSqueeth/ETH price
+     * @return auction type(sell or buy) and auction initial target hedge
+     */
+    function _checkAuctionType(
+        uint256 _debt,
+        uint256 _ethDelta,
+        uint256 _wSqueethEthPrice
+    ) internal pure returns (bool, uint256) {
+        uint256 wSqueethDelta = _debt.wmul(2e18).wmul(_wSqueethEthPrice);
+
+        (uint256 targetHedge, bool isSellingAuction) = _getTargetHedgeAndAuctionType(
+            wSqueethDelta,
+            _ethDelta,
+            _wSqueethEthPrice
+        );
+
+        require(targetHedge != 0, "strategy is delta neutral");
+
+        return (isSellingAuction, targetHedge);
     }
 
     /**
