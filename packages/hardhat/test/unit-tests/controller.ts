@@ -249,6 +249,13 @@ describe("Controller", function () {
         expect(index.eq(scaledEthPrice.mul(scaledEthPrice).div(one))).to.be.true
       })
 
+      it('should be able to get unscaled index price', async() => {
+
+        const index = await controller.getUnscaledIndex(30)
+        expect(index.eq(ethUSDPrice.mul(ethUSDPrice).div(one))).to.be.true
+      })
+
+
       it('should revert when sending eth to controller from an EOA', async() => {
         await expect(random.sendTransaction({to: controller.address, value:1})).to.be.revertedWith('Cannot receive eth')
       })

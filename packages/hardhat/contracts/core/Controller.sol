@@ -116,12 +116,25 @@ contract Controller is Initializable, Ownable {
     }
 
     /**
-     * @notice get the index price of the powerPerp
-     * @param _period period of time for the twap in seconds
+     * @notice get the index price of the powerPerp, scaled down
+     * @dev the index price is scaled down by INDEX_SCALE in the associated PowerXBase library
+     * @dev this is the index price used when calculating funding and for collateralization
+     * @param _period period which you want to calculate twap with
      * @return index price denominated in $USD, scaled by 1e18
      */
     function getIndex(uint32 _period) external view returns (uint256) {
         return Power2Base._getIndex(_period, address(oracle), ethDaiPool, weth, dai);
+    }
+
+    /**
+     * @notice get the index price of the powerPerp, not scaled down
+     * @dev the index price here is not is scaled down by INDEX_SCALE in the associated PowerXBase library
+     * @dev this is provided for convenience but is not used for funding or collateralization
+     * @param _period period which you want to calculate twap with
+     * @return index price denominated in $USD, scaled by 1e18
+     */
+    function getUnscaledIndex(uint32 _period) external view returns (uint256) {
+        return Power2Base._getUnscaledIndex(_period, address(oracle), ethDaiPool, weth, dai);
     }
 
     /**

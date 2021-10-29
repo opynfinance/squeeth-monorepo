@@ -14,7 +14,7 @@ library Power2Base {
     uint256 constant INDEX_SCALE = 1e4;
 
     /**
-     * @notice return the index of the power perp in quote currency, scaled by 18 decimals
+     * @notice return the scaled down index of the power perp in USD, scaled by 18 decimals
      * @param _period period of time for the twap in seconds
      * @param _oracle oracle address
      * @param _ethDaiPool uniswap v3 pool for weth / dai
@@ -30,6 +30,26 @@ library Power2Base {
         address _dai
     ) internal view returns (uint256) {
         uint256 ethDaiPrice = _getScaledTwap(_oracle, _ethDaiPool, _weth, _dai, _period);
+        return ethDaiPrice.mul(ethDaiPrice).div(1e18);
+    }
+
+    /**
+     * @notice return the unscaled index of the power perp in USD, scaled by 18 decimals
+     * @param _period period of time for the twap in seconds
+     * @param _oracle oracle address
+     * @param _ethDaiPool uniswap v3 pool for weth / dai
+     * @param _weth weth address
+     * @param _dai dai address
+     * @return for squeeth, return ethPrice^2
+     */
+    function _getUnscaledIndex(
+        uint32 _period,
+        address _oracle,
+        address _ethDaiPool,
+        address _weth,
+        address _dai
+    ) internal view returns (uint256) {
+        uint256 ethDaiPrice = _getTwap(_oracle, _ethDaiPool, _weth, _dai, _period);
         return ethDaiPrice.mul(ethDaiPrice).div(1e18);
     }
 
