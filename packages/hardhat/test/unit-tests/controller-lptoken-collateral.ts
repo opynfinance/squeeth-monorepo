@@ -393,8 +393,8 @@ describe("Controller: Uni LP tokens collateralization", function () {
         const { sqrtPrice: oldSqrtPrice } = getSqrtPriceAndTickBySqueethPrice(scaledSqueethPrice, wethIsToken0InSqueethPool)
 
         // fix deposit eth amount at 30
-        const ethLiquidityAmount = ethers.utils.parseUnits('30')
 
+        const ethLiquidityAmount = ethers.utils.parseUnits('30')
         const scaledPrice4000 = BigNumber.from('4000').mul(one).div(oracleScaleFactor)
         const scaledPrice2000 = BigNumber.from('2000').mul(one).div(oracleScaleFactor)
 
