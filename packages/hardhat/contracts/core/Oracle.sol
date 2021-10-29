@@ -13,14 +13,14 @@ import {OracleLibrary} from "../libs/OracleLibrary.sol";
 
 /**
  * @notice read UniswapV3 pool TWAP prices, and convert to human readable term with (18 decimals)
- * @dev if ETH price is $3000, both ETH/USDC pirce and ETH/DAI price will be reported as 3000 * 1e18 by this oracle
+ * @dev if ETH price is $3000, both ETH/USDC price and ETH/DAI price will be reported as 3000 * 1e18 by this oracle
  */
 contract Oracle {
     using SafeMath for uint256;
 
     /**
      * @notice get twap converted with base & quote token decimals
-     * @dev if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD".
+     * @dev if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD"
      * @param _pool uniswap pool address
      * @param _base base currency. to get eth/dai price, eth is base token
      * @param _quote quote currency. to get eth/dai price, dai is the quote currency
@@ -65,7 +65,7 @@ contract Oracle {
     }
 
     /**
-     * @notice get the max period that can be used to request twap.
+     * @notice get the max period that can be used to request twap
      * @param _pool uniswap pool address
      * @return max period can be used to request twap
      */
@@ -91,8 +91,8 @@ contract Oracle {
     }
 
     /**
-     * @notice get twap converted with base & quote token decimals, never reverts.
-     * @dev if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD".
+     * @notice get twap converted with base & quote token decimals, never reverts
+     * @dev if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD"
      * @param _pool uniswap pool address
      * @param _base base currency. to get eth/dai price, eth is base token
      * @param _quote quote currency. to get eth/dai price, dai is the quote currency
@@ -112,7 +112,7 @@ contract Oracle {
 
     /**
      * @notice get twap converted with base & quote token decimals
-     * @dev if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD".
+     * @dev if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD"
      * @param _pool uniswap pool address
      * @param _base base currency. to get eth/dai price, eth is base token
      * @param _quote quote currency. to get eth/dai price, dai is the quote currency
@@ -145,7 +145,8 @@ contract Oracle {
      * @param _base base currency. to get eth/dai price, eth is base token
      * @param _quote quote currency. to get eth/dai price, dai is the quote currency
      * @param _period number of seconds in the past to start calculating time-weighted average
-     * @return Amount of quoteToken received for _amountIn of baseToken
+     * @param _amountIn amount of base currency provided in exchange for quote currency
+     * @return amount of quote currency received for _amountIn of base currency
      */
     function _fetchRawTwap(
         address _pool,
@@ -172,14 +173,14 @@ contract Oracle {
     }
 
     /**
-     * @notice get the max period that can be used to request twap.
+     * @notice get the max period that can be used to request twap
      * @param _pool uniswap pool address
      * @return max period can be used to request twap
      */
     function _getMaxPeriod(address _pool) internal view returns (uint32) {
         IUniswapV3Pool pool = IUniswapV3Pool(_pool);
         // observationIndex: the index of the last oracle observation that was written
-        // cardinality: The current maximum number of observations stored in the pool
+        // cardinality: the current maximum number of observations stored in the pool
         (, , uint16 observationIndex, uint16 cardinality, , , ) = pool.slot0();
 
         // first observation index
@@ -189,7 +190,7 @@ contract Oracle {
 
         if (initialized) return uint32(block.timestamp) - oldestObservationTimestamp;
 
-        // index + 1 % cardinality is not the oldest index,
+        // (index + 1) % cardinality is not the oldest index,
         // probably because cardinality is increased after last observation.
         // in this case, observation at index 0 should be the oldest.
         (oldestObservationTimestamp, , , ) = pool.observations(0);
@@ -198,9 +199,9 @@ contract Oracle {
     }
 
     /**
-     * @notice Cast a uint256 to a uint128, revert on overflow
-     * @param y The uint256 to be downcasted
-     * @return z The downcasted integer, now type uint128
+     * @notice cast a uint256 to a uint128, revert on overflow
+     * @param y the uint256 to be downcasted
+     * @return z the downcasted integer, now type uint128
      */
     function toUint128(uint256 y) internal pure returns (uint128 z) {
         require((z = uint128(y)) == y, "Overflow");

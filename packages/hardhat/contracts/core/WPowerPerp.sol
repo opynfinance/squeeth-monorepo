@@ -6,12 +6,17 @@ import {Initializable} from "@openzeppelin/contracts/proxy/Initializable.sol";
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
 
 /**
- * @notice ERC20 Token representing wrapped long squeeth position.
- * @dev value of wPowerPerp is expected to go down in time
+ * @notice ERC20 Token representing wrapped long power perpetual position
+ * @dev value of power perpetual is expected to go down over time through the impact of funding
  */
 contract WPowerPerp is ERC20, Initializable, IWPowerPerp {
     address public controller;
 
+    /**
+     * @notice long power perpetual constructor
+     * @param _name token name for ERC20
+     * @param _symbol token symbol for ERC20
+     */
     constructor(string memory _name, string memory _symbol) ERC20(_name, _symbol) {}
 
     modifier onlyController() {
@@ -19,15 +24,29 @@ contract WPowerPerp is ERC20, Initializable, IWPowerPerp {
         _;
     }
 
+    /**
+     * @notice init wPowerPerp contract
+     * @param _controller controller address
+     */
     function init(address _controller) external initializer {
         require(_controller != address(0), "Invalid controller address");
         controller = _controller;
     }
 
+    /**
+     * @notice mint wPowerPerp
+     * @param _account account to mint to
+     * @param _amount amount to mint
+     */
     function mint(address _account, uint256 _amount) external override onlyController {
         _mint(_account, _amount);
     }
 
+    /**
+     * @notice burn wPowerPerp
+     * @param _account account to burn from
+     * @param _amount amount to burn
+     */
     function burn(address _account, uint256 _amount) external override onlyController {
         _burn(_account, _amount);
     }

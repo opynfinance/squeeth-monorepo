@@ -9,13 +9,13 @@ import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol";
 import "@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol";
 
-/// @title Oracle library
-/// @notice Provides functions to integrate with V3 pool oracle
-/// @author Uniswap team other than consultAtHistoricTime(), built by Opyn
+/// @title oracle library
+/// @notice provides functions to integrate with uniswap v3 oracle
+/// @author uniswap team other than consultAtHistoricTime(), built by opyn
 library OracleLibrary {
-    /// @notice Fetches time-weighted average tick using Uniswap V3 oracle
-    /// @param pool Address of Uniswap V3 pool that we want to observe
-    /// @param period Number of seconds in the past to start calculating time-weighted average
+    /// @notice fetches time-weighted average tick using uniswap v3 oracle
+    /// @param pool address of uniswap v3 pool to observe
+    /// @param period number of seconds in the past to start calculating time-weighted average
     /// @return timeWeightedAverageTick The time-weighted average tick from (block.timestamp - period) to block.timestamp
     function consult(address pool, uint32 period) internal view returns (int24 timeWeightedAverageTick) {
         require(period != 0, "BP");
@@ -29,13 +29,13 @@ library OracleLibrary {
 
         timeWeightedAverageTick = int24(tickCumulativesDelta / period);
 
-        // Always round to negative infinity
+        // always round to negative infinity
         if (tickCumulativesDelta < 0 && (tickCumulativesDelta % period != 0)) timeWeightedAverageTick--;
     }
 
-    /// @notice Fetches time-weighted average tick using Uniswap V3 oracle
-    /// @dev written by z Opyn team
-    /// @param pool Address of Uniswap V3 pool that we want to observe
+    /// @notice fetches time-weighted average tick using uniswap v3 oracle
+    /// @dev written by opyn team
+    /// @param pool Address of uniswap v3 pool that we want to observe
     /// @param _secondsAgoToStartOfTwap number of seconds to start of TWAP period
     /// @param _secondsAgoToEndOfTwap number of seconds to end of TWAP period
     /// @return timeWeightedAverageTick The time-weighted average tick from (block.timestamp - _secondsAgoToStartOfTwap) to _secondsAgoToEndOfTwap
@@ -68,11 +68,11 @@ library OracleLibrary {
         return timeWeightedAverageTick;
     }
 
-    /// @notice Given a tick and a token amount, calculates the amount of token received in exchange
-    /// @param tick Tick value used to calculate the quote
-    /// @param baseAmount Amount of token to be converted
-    /// @param baseToken Address of an ERC20 token contract used as the baseAmount denomination
-    /// @param quoteToken Address of an ERC20 token contract used as the quoteAmount denomination
+    /// @notice given a tick and a token amount, calculates the amount of token received in exchange
+    /// @param tick tick value used to calculate the quote
+    /// @param baseAmount amount of token to be converted
+    /// @param baseToken address of an ERC20 token contract used as the baseAmount denomination
+    /// @param quoteToken address of an ERC20 token contract used as the quoteAmount denomination
     /// @return quoteAmount Amount of quoteToken received for baseAmount of baseToken
     function getQuoteAtTick(
         int24 tick,

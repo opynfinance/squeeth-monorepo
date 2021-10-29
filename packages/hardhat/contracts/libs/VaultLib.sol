@@ -14,57 +14,86 @@ library VaultLib {
     using SafeMath for uint256;
 
     struct Vault {
-        // the address who can update the vault.
+        // the address that can update the vault
         address operator;
-        // uniswap v3 position token id deposited into the vault to increase collateral ratio
-        // 2^32 is 4,294,967,296. If Uniswap has more than 4 billion positions, our vault structure might stop working.
+        // uniswap position token id deposited into the vault as collateral
+        // 2^32 is 4,294,967,296, which means the vault structure will work with up to 4 billion positions
         uint32 NftCollateralId;
         // amount of eth (wei) used in the vault as collateral
-        // uint96 is safe enough cuz 2^96 / 1e18 = 79,228,162,514, which means a vault can store up to 79 billion eth.
-        // when we need to do calculations, we always cast this number to uint256 to avoid overflow.
+        // 2^96 / 1e18 = 79,228,162,514, which means a vault can store up to 79 billion eth
+        // when we need to do calculations, we always cast this number to uint256 to avoid overflow
         uint96 collateralAmount;
         // amount of wPowerPerp minted from the vault
         uint128 shortAmount;
     }
 
+    /**
+     * @notice add eth collateral to a vault
+     * @param _vault in-memory vault
+     * @param _amount amount of eth to add
+     */
     function addEthCollateral(Vault memory _vault, uint256 _amount) internal pure {
         _vault.collateralAmount = uint96(uint256(_vault.collateralAmount).add(_amount));
     }
 
+    /**
+     * @notice add uniswap position token collateral to a vault
+     * @param _vault in-memory vault
+     * @param _tokenId uniswap position token id
+     */
     function addUniNftCollateral(Vault memory _vault, uint256 _tokenId) internal pure {
         require(_vault.NftCollateralId == 0, "Vault already had nft");
         require(_tokenId != 0, "Invalid token id");
         _vault.NftCollateralId = uint32(_tokenId);
     }
 
+    /**
+     * @notice remove eth collateral from a vault
+     * @param _vault in-memory vault
+     * @param _amount amount of eth to remove
+     */
     function removeEthCollateral(Vault memory _vault, uint256 _amount) internal pure {
         _vault.collateralAmount = uint96(uint256(_vault.collateralAmount).sub(_amount));
     }
 
+    /**
+     * @notice remove uniswap position token collateral from a vault
+     * @param _vault in-memory vault
+     */
     function removeUniNftCollateral(Vault memory _vault) internal pure {
         require(_vault.NftCollateralId != 0, "Vault has no NFT");
         _vault.NftCollateralId = 0;
     }
 
+    /**
+     * @notice add debt to vault
+     * @param _vault in-memory vault
+     * @param _amount amount of debt to add
+     */
     function addShort(Vault memory _vault, uint256 _amount) internal pure {
         _vault.shortAmount = uint128(uint256(_vault.shortAmount).add(_amount));
     }
 
+    /**
+     * @notice remove debt from vault
+     * @param _vault in-memory vault
+     * @param _amount amount of debt to remove
+     */
     function removeShort(Vault memory _vault, uint256 _amount) internal pure {
         _vault.shortAmount = uint128(uint256(_vault.shortAmount).sub(_amount));
     }
 
     /**
-     * @dev see if a vault is properly collateralized
+     * @notice check if a vault is properly collateralized
      * @param _vault the vault we want to check
-     * @param _positionManager address of the uni v3 position manager
+     * @param _positionManager address of the uniswap position manager
      * @param _normalizationFactor current _normalizationFactor
      * @param _ethDaiPrice current eth price scaled by 1e18
-     * @param _minCollateral min collateral need to be in a vault
+     * @param _minCollateral minimum collateral that needs to be in a vault
      * @param _wsqueethPoolTick current price tick for wsqueeth pool
      * @param _isWethToken0 whether weth is token0 in the wsqueeth pool
-     * @return true if the vault is above water.
-     * @return true if the vault is considered as a dust vault.
+     * @return true if the vault is sufficiently collateralized
+     * @return true if the vault is considered as a dust vault
      */
     function getVaultStatus(
         Vault memory _vault,
@@ -89,16 +118,16 @@ library VaultLib {
     }
 
     /**
-     * @dev see if a vault is properly collateralized
+     * @notice check if a vault is properly collateralized
      * @param _vault the vault we want to check
-     * @param _positionManager address of the uni v3 position manager
+     * @param _positionManager address of the uniswap position manager
      * @param _normalizationFactor current _normalizationFactor
      * @param _ethDaiPrice current eth price scaled by 1e18
-     * @param _minCollateral min collateral need to be in a vault
+     * @param _minCollateral minimum collateral that needs to be in a vault
      * @param _wsqueethPoolTick current price tick for wsqueeth pool
      * @param _isWethToken0 whether weth is token0 in the wsqueeth pool
-     * @return true if the vault is above water.
-     * @return true if the vault is considered as a dust vault.
+     * @return true if the vault is sufficiently collateralized
+     * @return true if the vault is considered as a dust vault
      */
     function _getVaultStatus(
         Vault memory _vault,
@@ -126,9 +155,9 @@ library VaultLib {
 
     /**
      * @notice get the total effective collateral of a vault, which is:
-     *         collateral amount + uni position token equivelent amount of eth.
+     *         collateral amount + uniswap position token equivelent amount in eth
      * @param _vault the vault we want to check
-     * @param _positionManager address of the uni v3 position manager
+     * @param _positionManager address of the uniswap position manager
      * @param _normalizationFactor current _normalizationFactor
      * @param _ethDaiPrice current eth price scaled by 1e18
      * @param _wsqueethPoolTick current price tick for wsqueeth pool
@@ -145,34 +174,34 @@ library VaultLib {
     ) internal view returns (uint256) {
         if (_vault.NftCollateralId == 0) return _vault.collateralAmount;
 
-        // the user has deposit univ3 position token as collateral, see how much eth / squeeth the LP token has.
+        // the user has deposited uniswap position token as collateral, see how much eth / wSqueeth the uniswap position token has
         (uint256 nftEthAmount, uint256 nftWsqueethAmount) = _getUniPositionBalances(
             _positionManager,
             _vault.NftCollateralId,
             _wsqueethPoolTick,
             _isWethToken0
         );
-        // convert squeeth amount from NFT as equivalent amount of collateral.
+        // convert squeeth amount from uniswap position token as equivalent amount of collateral
         uint256 equivalentCollateral = nftWsqueethAmount.mul(_normalizationFactor).mul(_ethDaiPrice).div(1e36);
-        // add ETH value from NFT as collateral.
+        // add eth value from uniswap position token as collateral
         return nftEthAmount.add(equivalentCollateral).add(_vault.collateralAmount);
     }
 
     /**
-     * @notice get how much eth / squeeth the LP position is worth.
-     * @param _positionManager address of the uni v3 position manager
-     * @param _tokenId lp token id
+     * @notice determine how much eth / wSqueeth the uniswap position contains
+     * @param _positionManager address of the uniswap position manager
+     * @param _tokenId uniswap position token id
      * @param _wsqueethPoolTick current price tick
      * @param _isWethToken0 whether weth is token0 in the pool
      * @return ethAmount the eth amount thie LP token is worth
-     * @return squeethAmount the squeeth amount this LP token is worth
+     * @return wSqueethAmount the squeeth amount this LP token is worth
      */
     function _getUniPositionBalances(
         address _positionManager,
         uint256 _tokenId,
         int24 _wsqueethPoolTick,
         bool _isWethToken0
-    ) internal view returns (uint256 ethAmount, uint256 squeethAmount) {
+    ) internal view returns (uint256 ethAmount, uint256 wSqueethAmount) {
         (int24 tickLower, int24 tickUpper, uint128 liquidity) = _getUniswapPositionInfo(_positionManager, _tokenId);
         (uint256 amount0, uint256 amount1) = _getToken0Token1Balances(
             tickLower,
@@ -184,9 +213,9 @@ library VaultLib {
     }
 
     /**
-     * @notice get the LP info and tick bond of the LP position.
-     * @param _positionManager address of the uni v3 position manager
-     * @param _tokenId LP token id
+     * @notice get uniswap position token info
+     * @param _positionManager address of the uniswap position position manager
+     * @param _tokenId uniswap position token id
      * @return tickLower lower tick of the position
      * @return tickUpper upper tick of the position
      * @return liquidity raw liquidity amount of the position
@@ -206,12 +235,13 @@ library VaultLib {
     }
 
     /**
-     * @notice get how much token0 / token1 a LP position is worth.
-     * @param _tickLower address of the uni v3 position manager
-     * @param _tickUpper LP token id
+     * @notice get balances of token0 / token1 in a uniswap position
+     * @dev knowing liquidity, tick range, and current tick gives balances
+     * @param _tickLower address of the uniswap position manager
+     * @param _tickUpper uniswap position token id
      * @param _tick current price tick used for calculation
-     * @return amount0 the amount of token0 this LP token is worth
-     * @return amount1 the amount of token1 this LP token is worth
+     * @return amount0 the amount of token0 in the uniswap position token
+     * @return amount1 the amount of token1 in the uniswap position token
      */
     function _getToken0Token1Balances(
         int24 _tickLower,
@@ -222,11 +252,11 @@ library VaultLib {
         // get the current price and tick from squeethPool
         uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(_tick);
 
-        // the following line is copied from the _modifyPosition function implemented by Uniswap core.
+        // the following line is copied from the _modifyPosition function implemented by Uniswap core
         // we use the same logic to determine how much token0, token1 equals to given "liquidity"
         // https://github.com/Uniswap/uniswap-v3-core/blob/b2c5555d696428c40c4b236069b3528b2317f3c1/contracts/UniswapV3Pool.sol#L306
 
-        // use these 2 functions directly, cuz liquidity is always positive
+        // use these 2 functions directly, because liquidity is always positive
         // getAmount0Delta: https://github.com/Uniswap/uniswap-v3-core/blob/b2c5555d696428c40c4b236069b3528b2317f3c1/contracts/libraries/SqrtPriceMath.sol#L209
         // getAmount1Delta: https://github.com/Uniswap/uniswap-v3-core/blob/b2c5555d696428c40c4b236069b3528b2317f3c1/contracts/libraries/SqrtPriceMath.sol#L225
 

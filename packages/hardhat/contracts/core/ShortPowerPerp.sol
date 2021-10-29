@@ -19,15 +19,26 @@ contract ShortPowerPerp is ERC721, Initializable {
         _;
     }
 
+    /**
+     * @notice short power perpetual constructor
+     * @param _name token name for ERC721
+     * @param _symbol token symbol for ERC721
+     */
     constructor(string memory _name, string memory _symbol) ERC721(_name, _symbol) {}
 
+    /**
+     * @notice initialize short contract
+     * @param _controller controller address
+     */
     function init(address _controller) public initializer {
         require(_controller != address(0), "Invalid controller address");
         controller = _controller;
     }
 
     /**
-     * mint new NFT, create a new vault struct
+     * @notice mint new NFT
+     * @dev autoincrement tokenId starts at 1
+     * @param _recipient recipient address for NFT
      */
     function mintNFT(address _recipient) external onlyController returns (uint256 tokenId) {
         // mint NFT

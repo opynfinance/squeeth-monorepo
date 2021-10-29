@@ -14,6 +14,9 @@ import {IController} from "../interfaces/IController.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 
+/**
+ * @notice contract simplifies opening a short wPowerPerp position by selling wPowerPerp on uniswap v3 and returning eth to user
+ */
 contract ShortHelper {
     using SafeMath for uint256;
     using Address for address payable;
@@ -24,6 +27,12 @@ contract ShortHelper {
     IShortPowerPerp public immutable shortPowerPerp;
     address public immutable wPowerPerp;
 
+    /**
+     * @notice constructor for short helper
+     * @param _controllerAddr controller address for wPowerPerp
+     * @param _swapRouter uniswap v3 swap router address
+     * @param _wethAddr weth address
+     */
     constructor(
         address _controllerAddr,
         address _swapRouter,
@@ -47,7 +56,10 @@ contract ShortHelper {
     }
 
     /**
-     * mint power perp, trade with uniswap and send back premium in eth.
+     * @notice mint power perp, trade with uniswap v3 and send back premium in eth
+     * @param _vaultId short wPowerPerp vault id
+     * @param _powerPerpAmount amount of powerPerp to mint/sell
+     * @param _uniNftId uniswap v3 position token id
      */
     function openShort(
         uint256 _vaultId,
@@ -81,7 +93,10 @@ contract ShortHelper {
     }
 
     /**
-     * buy back some squeeth and close the position.
+     * @notice buy back wPowerPerp with eth on uniswap v3 and close position
+     * @param _vaultId short wPowerPerp vault id
+     * @param _wPowerPerpAmount amount of wPowerPerp to mint/sell
+     * @param _withdrawAmount amount to withdraw
      */
     function closeShort(
         uint256 _vaultId,
