@@ -155,7 +155,7 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
     <div className={classes.container}>
       <div className={classes.header}>
         <Typography variant="caption" component="span" color="textSecondary">
-          POSITION
+          MY POSITION
         </Typography>
         <span className={clsx(classes.title, titleClass)}>{positionType.toUpperCase()}</span>
         {postPosition !== positionType ? (

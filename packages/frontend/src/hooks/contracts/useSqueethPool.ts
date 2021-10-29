@@ -135,18 +135,22 @@ export const useSqueethPool = () => {
   const buyForWETH = async (amount: BigNumber) => {
     const exactInputParam = await getBuyParamForETH(new BigNumber(amount))
 
-    await handleTransaction(swapRouterContract?.methods.exactInputSingle(exactInputParam).send({
+    const txHash = await handleTransaction(swapRouterContract?.methods.exactInputSingle(exactInputParam).send({
       from: address,
       value: ethers.utils.parseEther(amount.toString()),
     }))
+
+    return txHash 
   }
 
   const sell = async (amount: BigNumber) => {
     const callData = await sellAndUnwrapData(amount)
 
-    await handleTransaction(swapRouterContract?.methods.multicall(callData).send({
+    const txHash = await handleTransaction(swapRouterContract?.methods.multicall(callData).send({
       from: address
     }))
+
+    return txHash
   }
 
   const sellAndUnwrapData = async (amount: BigNumber) => {

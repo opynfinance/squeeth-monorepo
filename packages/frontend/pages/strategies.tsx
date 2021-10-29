@@ -135,7 +135,7 @@ const getVaultDetail = (vault: Vaults) => {
       <>
         {' '}
         This yielding position is profitable when ETH goes up any amount less than 100% <b>in a single day</b>. This
-        strategy is not profitable when ETH goes down. <br />
+        strategy loses money when ETH goes down. <br />
         <br />
       </>
     )
@@ -143,8 +143,8 @@ const getVaultDetail = (vault: Vaults) => {
     return (
       <>
         {' '}
-        This yielding position is profitable when ETH goes down any amount <b>in a single day</b>. This strategy is not
-        profitable when ETH goes up.
+        This yielding position is profitable when ETH goes down any amount <b>in a single day</b>. This strategy loses
+        money when ETH goes up.
         <br />
         <br />{' '}
       </>
@@ -193,7 +193,7 @@ const getAdvancedDetail = (vault: Vaults) => {
         </Typography>
         <p>
           If you fall below the safe collateralization threshold (150%), you are at risk of liquidation. If ETH moves
-          more than approximately 6% in a given day, the strategy is unprofitable.
+          more than approximately 6% in a given day, the strategy loses money.
           <br /> <br />
           Squeeth smart contracts are currently unaudited. This is experimental technology and we encourage caution only
           risking funds you can afford to lose.
@@ -239,7 +239,7 @@ const getAdvancedDetail = (vault: Vaults) => {
         </Typography>
         <p>
           If you fall below the safe collateralization threshold (150%), you are at risk of liquidation. If ETH goes up
-          more than approximately 100% in a given day, or if ETH goes down the strategy is unprofitable.
+          more than approximately 100% in a given day, or if ETH goes down the strategy loses money.
           <br /> <br />
           Squeeth smart contracts are currently unaudited. This is experimental technology and we encourage caution only
           risking funds you can afford to lose.
@@ -268,7 +268,7 @@ const getAdvancedDetail = (vault: Vaults) => {
         </Typography>
         <p>
           If you fall below the safe collateralization threshold (150%), you are at risk of liquidation. If ETH goes up
-          any amount, the strategy is unprofitable.
+          any amount, the strategy loses money.
           <br /> <br />
           Squeeth smart contracts are currently unaudited. This is experimental technology and we encourage caution only
           risking funds you can afford to lose.

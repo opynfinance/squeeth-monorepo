@@ -17,6 +17,7 @@ import { useLongPositions, useShortPositions } from '../../hooks/usePositions'
 import { PrimaryButton } from '../Buttons'
 import CollatRange from '../CollatRange'
 import { PrimaryInput } from '../Inputs'
+import Confirmed from './Confirmed'
 import TradeDetails from './TradeDetails'
 import TradeInfoItem from './TradeInfoItem'
 import UniswapData from './UniswapData'
@@ -142,6 +143,8 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   const [isVaultApproved, setIsVaultApproved] = useState(true)
   const [shortLoading, setShortLoading] = useState(false)
   const [buyLoading, setBuyLoading] = useState(false)
+  const [confirmed, setConfirmed] = useState(false)
+  const [txHash, setTxHash] = useState('')
   const [withdrawCollat, setWithdrawCollat] = useState(new BigNumber(0))
 
   const classes = useStyles()
@@ -194,7 +197,9 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
         await updateOperator(vaultId, shortHelper)
         setIsVaultApproved(true)
       } else {
-        await openShort(vaultId, new BigNumber(amount), new BigNumber(collateral))
+        const confirmedHash = await openShort(vaultId, new BigNumber(amount), new BigNumber(collateral))
+        setConfirmed(true)
+        setTxHash(confirmedHash.transactionHash)
       }
     } catch (e) {
       console.log(e)
@@ -225,7 +230,9 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
         const restOfShort = new BigNumber(shortVaults[0].shortAmount).minus(amount)
         const _debt: BigNumber = await getDebtAmount(new BigNumber(restOfShort))
         const neededCollat = _debt.times(collatPercent / 100)
-        await closeShort(vaultId, new BigNumber(amount), _collat.minus(neededCollat))
+        const confirmedHash = await closeShort(vaultId, new BigNumber(amount), _collat.minus(neededCollat))
+        setConfirmed(true)
+        setTxHash(confirmedHash.transactionHash)
       }
     } catch (e) {
       console.log(e)
@@ -245,21 +252,25 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
 
   const { setCollatRatio } = useWorldContext()
 
-  const { openError, closeError } = useMemo(() => {
+  const { openError, closeError, existingLongError } = useMemo(() => {
     let openError = null
     let closeError = null
+    let existingLongError = null
 
-    if (shrtAmt.lt(amount)) {
+    if (connected && (shrtAmt.lt(amount) || shrtAmt.isZero())) {
       closeError = 'Close amount exceeds position'
     }
-    if (collateral > balance) {
+    if (connected && collateral > balance) {
       openError = 'Insufficient ETH balance'
-    } else if (amount.isGreaterThan(0) && collateral + existingCollat < 0.5) {
+    } else if (connected && amount.isGreaterThan(0) && collateral + existingCollat < 0.5) {
       openError = 'Minimum collateral is 0.5 ETH'
     }
+    if (connected && lngAmt.gt(0)) {
+      existingLongError = 'Close your long position to open a short'
+    }
 
-    return { openError, closeError }
-  }, [amount, balance, shrtAmt.toNumber(), amount])
+    return { openError, closeError, existingLongError }
+  }, [amount, balance, shrtAmt.toNumber(), amount, lngAmt.toNumber(), connected])
 
   useEffect(() => {
     setCollatRatio(collatPercent / 100)
@@ -268,126 +279,147 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   const ClosePosition = useMemo(() => {
     return (
       <div>
-        <Typography variant="caption" className={classes.thirdHeading} component="div">
-          {closeTitle}
-        </Typography>
-        <div className={classes.thirdHeading}>
-          <PrimaryInput
-            value={amount.toString()}
-            onChange={(v) => setAmount(new BigNumber(v))}
-            label="Amount"
-            tooltip="Amount of oSQTH to buy"
-            actionTxt="Max"
-            onActionClicked={() => setAmount(shrtAmt)}
-            unit="oSQTH"
-            error={!!closeError}
-            convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
-            hint={shrtAmt.lt(amount) ? 'Close amount exceeds position' : `Position ${shrtAmt.toFixed(6)} oSQTH`}
-          />
-        </div>
-        <div className={classes.thirdHeading}>
-          <TextField
-            size="small"
-            value={collatPercent.toString()}
-            type="number"
-            style={{ width: 300 }}
-            onChange={(event) => setCollatPercent(Number(event.target.value))}
-            id="filled-basic"
-            label="Collateral Ratio"
-            variant="outlined"
-            error={collatPercent < 150}
-            helperText="Minimum is 150%"
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <Typography variant="caption">%</Typography>
-                </InputAdornment>
-              ),
-            }}
-          />
-        </div>
-        <div className={classes.thirdHeading}></div>
-        <CollatRange />
-        <TradeDetails
-          actionTitle="Spend"
-          amount={sellCloseQuote.amountIn.toFixed(6)}
-          unit="ETH"
-          value={Number(ethPrice.times(sellCloseQuote.amountIn).toFixed(2)).toLocaleString()}
-          hint={
-            <div className={classes.hint}>
-              <span>Position {shrtAmt.toFixed(6)}</span>
-              {quote.amountOut.gt(0) ? (
-                <>
-                  <ArrowRightAltIcon className={classes.arrowIcon} />
-                  <span>{shrtAmt.minus(amount).toFixed(6)}</span>
-                </>
-              ) : null}{' '}
-              <span style={{ marginLeft: '4px' }}>oSQTH</span>
+        {!confirmed ? (
+          <div>
+            <Typography variant="caption" className={classes.thirdHeading} component="div">
+              {closeTitle}
+            </Typography>
+            <div className={classes.thirdHeading}>
+              <PrimaryInput
+                value={amount.toNumber()}
+                onChange={(v) => setAmount(new BigNumber(v))}
+                label="Amount"
+                tooltip="Amount of oSQTH to buy"
+                actionTxt="Max"
+                onActionClicked={() => setAmount(shrtAmt)}
+                unit="oSQTH"
+                error={!!closeError}
+                convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
+                hint={shrtAmt.lt(amount) ? 'Close amount exceeds position' : `Position ${shrtAmt.toFixed(6)} oSQTH`}
+              />
             </div>
-          }
-        />
-        <div className={classes.divider}>
-          <TradeInfoItem
-            label="Collateral you redeem"
-            value={withdrawCollat.isPositive() ? withdrawCollat.toFixed(4) : 0}
-            unit="ETH"
-          />
-          <TradeInfoItem
-            label="Current Collateral ratio"
-            value={existingCollatPercent}
-            unit="%"
-            tooltip={'Collateral ratio for current short position'}
-          />
-          <div style={{ marginTop: '10px' }}>
-            <UniswapData
-              slippage="0.5"
-              priceImpact={sellCloseQuote.priceImpact}
-              minReceived={sellCloseQuote.maximumAmountIn.toFixed(4)}
-              minReceivedUnit="ETH"
+            <div className={classes.thirdHeading}>
+              <TextField
+                size="small"
+                value={collatPercent}
+                type="number"
+                style={{ width: 300 }}
+                onChange={(event) => setCollatPercent(Number(event.target.value))}
+                id="filled-basic"
+                label="Collateral Ratio"
+                variant="outlined"
+                error={collatPercent < 150}
+                helperText="Minimum is 150%"
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Typography variant="caption">%</Typography>
+                    </InputAdornment>
+                  ),
+                }}
+                inputProps={{
+                  min: '0',
+                }}
+              />
+            </div>
+            <div className={classes.thirdHeading}></div>
+            <CollatRange />
+            <TradeDetails
+              actionTitle="Spend"
+              amount={sellCloseQuote.amountIn.toFixed(6)}
+              unit="ETH"
+              value={Number(ethPrice.times(sellCloseQuote.amountIn).toFixed(2)).toLocaleString()}
+              hint={
+                <div className={classes.hint}>
+                  <span>Position {shrtAmt.toFixed(6)}</span>
+                  {quote.amountOut.gt(0) ? (
+                    <>
+                      <ArrowRightAltIcon className={classes.arrowIcon} />
+                      <span>{shrtAmt.minus(amount).toFixed(6)}</span>
+                    </>
+                  ) : null}{' '}
+                  <span style={{ marginLeft: '4px' }}>oSQTH</span>
+                </div>
+              }
             />
-          </div>
-        </div>
+            <div className={classes.divider}>
+              <TradeInfoItem
+                label="Collateral you redeem"
+                value={withdrawCollat.isPositive() ? withdrawCollat.toFixed(4) : 0}
+                unit="ETH"
+              />
+              <TradeInfoItem
+                label="Current Collateral ratio"
+                value={existingCollatPercent}
+                unit="%"
+                tooltip={'Collateral ratio for current short position'}
+              />
+              <div style={{ marginTop: '10px' }}>
+                <UniswapData
+                  slippage="0.5"
+                  priceImpact={sellCloseQuote.priceImpact}
+                  minReceived={sellCloseQuote.maximumAmountIn.toFixed(4)}
+                  minReceivedUnit="ETH"
+                />
+              </div>
+            </div>
 
-        <div className={classes.buttonDiv}>
-          {!connected ? (
-            <PrimaryButton
-              variant="contained"
-              onClick={selectWallet}
-              className={classes.amountInput}
-              disabled={!!buyLoading}
-              style={{ width: '300px' }}
-            >
-              {'Connect Wallet'}
-            </PrimaryButton>
-          ) : (
-            <PrimaryButton
-              onClick={buyBackAndClose}
-              className={classes.amountInput}
-              disabled={buyLoading || collatPercent < 150 || !!closeError || lngAmt.gt(0) || shrtAmt.isZero()}
-              variant="contained"
-              style={{ width: '300px' }}
-            >
-              {buyLoading ? (
-                <CircularProgress color="primary" size="1.5rem" />
+            <div className={classes.buttonDiv}>
+              {!connected ? (
+                <PrimaryButton
+                  variant="contained"
+                  onClick={selectWallet}
+                  className={classes.amountInput}
+                  disabled={!!buyLoading}
+                  style={{ width: '300px' }}
+                >
+                  {'Connect Wallet'}
+                </PrimaryButton>
               ) : (
-                <>
-                  {isVaultApproved ? 'Buy back and close' : 'Add operator (1/2)'}
-                  {!isVaultApproved ? (
-                    <Tooltip
-                      style={{ marginLeft: '2px' }}
-                      title="Operator is a contract that mints squeeth, deposits collateral and sells squeeth in single TX. Similarly it also buys back + burns squeeth and withdraws collateral in single TX"
-                    >
-                      <InfoOutlinedIcon fontSize="small" />
-                    </Tooltip>
-                  ) : null}
-                </>
+                <PrimaryButton
+                  onClick={buyBackAndClose}
+                  className={classes.amountInput}
+                  disabled={buyLoading || collatPercent < 150 || !!closeError || lngAmt.gt(0) || shrtAmt.isZero()}
+                  variant="contained"
+                  style={{ width: '300px' }}
+                >
+                  {buyLoading ? (
+                    <CircularProgress color="primary" size="1.5rem" />
+                  ) : (
+                    <>
+                      {isVaultApproved ? 'Buy back and close' : 'Add operator (1/2)'}
+                      {!isVaultApproved ? (
+                        <Tooltip
+                          style={{ marginLeft: '2px' }}
+                          title="Operator is a contract that mints squeeth, deposits collateral and sells squeeth in single TX. Similarly it also buys back + burns squeeth and withdraws collateral in single TX"
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
+                        </Tooltip>
+                      ) : null}
+                    </>
+                  )}
+                </PrimaryButton>
               )}
-            </PrimaryButton>
-          )}
-          <Typography variant="caption" className={classes.caption} component="div">
-            Trades on Uniswap V3 🦄
-          </Typography>
-        </div>
+              <Typography variant="caption" className={classes.caption} component="div">
+                Trades on Uniswap V3 🦄
+              </Typography>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <Confirmed confirmationMessage={`Closed ${amount} Squeeth Short Position`} txnHash={txHash} />
+            <div className={classes.buttonDiv}>
+              <PrimaryButton
+                variant="contained"
+                onClick={() => setConfirmed(false)}
+                className={classes.amountInput}
+                style={{ width: '300px' }}
+              >
+                {'Close'}
+              </PrimaryButton>
+            </div>
+          </div>
+        )}
       </div>
     )
   }, [
@@ -423,132 +455,153 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
 
   return (
     <div>
-      <Typography variant="caption" className={classes.thirdHeading} component="div">
-        Mint and sell squeeth ERC20 to receive premium
-      </Typography>
-      <div className={classes.thirdHeading}>
-        <PrimaryInput
-          value={collateral.toString()}
-          onChange={(v) => setCollateral(Number(v))}
-          label="Collateral"
-          tooltip="Amount of ETH collateral"
-          actionTxt="Max"
-          onActionClicked={() => setCollateral(balance)}
-          unit="ETH"
-          convertedValue={(collateral * Number(ethPrice)).toFixed(2).toLocaleString()}
-          hint={!!openError ? openError : `Balance ${balance} ETH`}
-          error={!!openError}
-        />
-      </div>
-      <div className={classes.thirdHeading}>
-        <TextField
-          size="small"
-          value={collatPercent.toString()}
-          type="number"
-          style={{ width: 300 }}
-          onChange={(event) => setCollatPercent(Number(event.target.value))}
-          id="filled-basic"
-          label="Collateral Ratio"
-          variant="outlined"
-          error={collatPercent < 150}
-          helperText="Minimum is 150%"
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <Typography variant="caption">%</Typography>
-              </InputAdornment>
-            ),
-          }}
-        />
-      </div>
-      <div className={classes.thirdHeading}></div>
-      <CollatRange />
-      <TradeDetails
-        actionTitle="Sell"
-        amount={amount.toFixed(6)}
-        unit="oSQTH"
-        value={Number(getWSqueethPositionValue(amount).toFixed(2)).toLocaleString()}
-        hint={
-          <div className={classes.hint}>
-            <span>Position {shrtAmt.toFixed(6)}</span>
-            {quote.amountOut.gt(0) ? (
-              <>
-                <ArrowRightAltIcon className={classes.arrowIcon} />
-                <span>{shrtAmt.plus(amount).toFixed(6)}</span>
-              </>
-            ) : null}{' '}
-            <span style={{ marginLeft: '4px' }}>oSQTH</span>
+      {!confirmed ? (
+        <div>
+          <Typography variant="caption" className={classes.thirdHeading} component="div">
+            Mint and sell squeeth ERC20 to receive premium
+          </Typography>
+          <div className={classes.thirdHeading}>
+            <PrimaryInput
+              value={collateral}
+              onChange={(v) => setCollateral(Number(v))}
+              label="Collateral"
+              tooltip="Amount of ETH collateral"
+              actionTxt="Max"
+              onActionClicked={() => setCollateral(balance)}
+              unit="ETH"
+              convertedValue={(collateral * Number(ethPrice)).toFixed(2).toLocaleString()}
+              hint={!!openError ? openError : `Balance ${balance} ETH`}
+              error={!!openError}
+            />
           </div>
-        }
-      />
-      <div className={classes.divider}>
-        <TradeInfoItem
-          label="Liquidation Price"
-          value={liqPrice.toFixed(2)}
-          unit="USDC"
-          tooltip="Price of ETH when liquidation occurs"
-        />
-        <TradeInfoItem
-          label="Initial Premium"
-          value={quote.amountOut.toFixed(4)}
-          unit="ETH"
-          tooltip={'Initial payment you get for selling squeeth on Uniswap'}
-        />
-        <TradeInfoItem
-          label="Current Collateral ratio"
-          value={existingCollatPercent}
-          unit="%"
-          tooltip={'Collateral ratio for current short position'}
-        />
-        <div style={{ marginTop: '10px' }}>
-          <UniswapData
-            slippage="0.5"
-            priceImpact={quote.priceImpact}
-            minReceived={quote.minimumAmountOut.toFixed(6)}
-            minReceivedUnit="oSQTH"
+          <div className={classes.thirdHeading}>
+            <TextField
+              size="small"
+              value={collatPercent}
+              type="number"
+              style={{ width: 300 }}
+              onChange={(event) => setCollatPercent(Number(event.target.value))}
+              id="filled-basic"
+              label="Collateral Ratio"
+              variant="outlined"
+              error={collatPercent < 150}
+              helperText="Minimum is 150%"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Typography variant="caption">%</Typography>
+                  </InputAdornment>
+                ),
+              }}
+              inputProps={{
+                min: '0',
+              }}
+            />
+          </div>
+          <div className={classes.thirdHeading}></div>
+          <CollatRange />
+          <TradeDetails
+            actionTitle="Sell"
+            amount={amount.toFixed(6)}
+            unit="oSQTH"
+            value={Number(getWSqueethPositionValue(amount).toFixed(2)).toLocaleString()}
+            hint={
+              <div className={classes.hint}>
+                <span>Position {shrtAmt.toFixed(6)}</span>
+                {quote.amountOut.gt(0) ? (
+                  <>
+                    <ArrowRightAltIcon className={classes.arrowIcon} />
+                    <span>{shrtAmt.plus(amount).toFixed(6)}</span>
+                  </>
+                ) : null}{' '}
+                <span style={{ marginLeft: '4px' }}>oSQTH</span>
+              </div>
+            }
           />
-        </div>
-      </div>
-      <div className={classes.buttonDiv}>
-        {!connected ? (
-          <PrimaryButton
-            variant="contained"
-            onClick={selectWallet}
-            className={classes.amountInput}
-            disabled={!!buyLoading}
-            style={{ width: '300px' }}
-          >
-            {'Connect Wallet'}
-          </PrimaryButton>
-        ) : (
-          <PrimaryButton
-            onClick={depositAndShort}
-            className={classes.amountInput}
-            disabled={shortLoading || collatPercent < 150 || !!openError || lngAmt.gt(0)}
-            variant="contained"
-            style={{ width: '300px' }}
-          >
-            {shortLoading ? (
-              <CircularProgress color="primary" size="1.5rem" />
+          <div className={classes.divider}>
+            <TradeInfoItem
+              label="Liquidation Price"
+              value={liqPrice.toFixed(2)}
+              unit="USDC"
+              tooltip="Price of ETH when liquidation occurs"
+            />
+            <TradeInfoItem
+              label="Initial Premium"
+              value={quote.amountOut.toFixed(4)}
+              unit="ETH"
+              tooltip={'Initial payment you get for selling squeeth on Uniswap'}
+            />
+            <TradeInfoItem
+              label="Current Collateral ratio"
+              value={existingCollatPercent}
+              unit="%"
+              tooltip={'Collateral ratio for current short position'}
+            />
+            <div style={{ marginTop: '10px' }}>
+              <UniswapData
+                slippage="0.5"
+                priceImpact={quote.priceImpact}
+                minReceived={quote.minimumAmountOut.toFixed(6)}
+                minReceivedUnit="oSQTH"
+              />
+            </div>
+          </div>
+          <div className={classes.buttonDiv}>
+            {!connected ? (
+              <PrimaryButton
+                variant="contained"
+                onClick={selectWallet}
+                className={classes.amountInput}
+                disabled={!!buyLoading}
+                style={{ width: '300px' }}
+              >
+                {'Connect Wallet'}
+              </PrimaryButton>
             ) : (
-              <>
-                {isVaultApproved ? 'Deposit and sell' : 'Add operator (1/2)'}
-                {!isVaultApproved ? (
-                  <Tooltip
-                    style={{ marginLeft: '2px' }}
-                    title="Operator is a contract that mints squeeth, deposits collateral and sells squeeth in single TX. Similarly it also buys back + burns squeeth and withdraws collateral in single TX"
-                  >
-                    <InfoOutlinedIcon fontSize="small" />
-                  </Tooltip>
-                ) : null}
-              </>
+              <PrimaryButton
+                onClick={depositAndShort}
+                className={classes.amountInput}
+                disabled={shortLoading || collatPercent < 150 || !!openError || lngAmt.gt(0)}
+                variant="contained"
+                style={{ width: '300px' }}
+              >
+                {shortLoading ? (
+                  <CircularProgress color="primary" size="1.5rem" />
+                ) : (
+                  <>
+                    {isVaultApproved ? 'Deposit and sell' : 'Add operator (1/2)'}
+                    {!isVaultApproved ? (
+                      <Tooltip
+                        style={{ marginLeft: '2px' }}
+                        title="Operator is a contract that mints squeeth, deposits collateral and sells squeeth in single TX. Similarly it also buys back + burns squeeth and withdraws collateral in single TX"
+                      >
+                        <InfoOutlinedIcon fontSize="small" />
+                      </Tooltip>
+                    ) : null}
+                  </>
+                )}
+              </PrimaryButton>
             )}
-          </PrimaryButton>
-        )}
-        <Typography variant="caption" className={classes.caption} component="div">
-          Trades on Uniswap 🦄
-        </Typography>
-      </div>
+            <Typography variant="caption" className={classes.caption} component="div">
+              Trades on Uniswap 🦄
+            </Typography>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <Confirmed confirmationMessage={`Opened ${amount.toFixed(6)} Squeeth Short Position`} txnHash={txHash} />
+          <div className={classes.buttonDiv}>
+            <PrimaryButton
+              variant="contained"
+              onClick={() => setConfirmed(false)}
+              className={classes.amountInput}
+              style={{ width: '300px' }}
+            >
+              {'Close'}
+            </PrimaryButton>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -15,7 +15,7 @@ enum ChartType {
   PNL = 'LONG PNL',
   // Price = 'Price Chart',
   PositionSize = 'Position Size',
-  Funding = 'Funding Payment',
+  // Funding = 'Funding Payment',
   Payoff = 'Payoff',
   // Comparison = 'Comparison',
   Details = 'Details',
@@ -42,13 +42,15 @@ const useStyles = makeStyles((theme) =>
     },
     cardTitle: {
       color: theme.palette.primary.main,
-      marginTop: theme.spacing(2),
+      marginTop: theme.spacing(1),
     },
     header: {
       color: theme.palette.primary.main,
     },
     payoffContainer: {
       display: 'flex',
+      overflow: 'auto',
+      maxHeight: '310px',
     },
   }),
 )
@@ -63,10 +65,10 @@ export function LongChart() {
   useEffect(() => {
     if (tradeType === 0) setMode(ChartType.PNL)
     // else if (tradeType === 1) setMode(ChartType.Price)
-    else if (tradeType === 1) setMode(ChartType.Funding)
-    else if (tradeType === 2) setMode(ChartType.Payoff)
+    // else if (tradeType === 1) setMode(ChartType.Funding)
+    else if (tradeType === 1) setMode(ChartType.Payoff)
     // else if (tradeType === 3) setMode(ChartType.Comparison)
-    else if (tradeType === 3) setMode(ChartType.Details)
+    else if (tradeType === 2) setMode(ChartType.Details)
   }, [tradeType])
 
   const {
@@ -94,13 +96,14 @@ export function LongChart() {
         { data: longSeries, legend: 'Long 1 Squeeth PNL (incl. funding)' },
       ]
     if (mode === ChartType.PositionSize) return [{ data: positionSizeSeries, legend: 'Position Size' }]
-    if (mode === ChartType.Funding)
-      return [{ data: fundingPercentageSeries, legend: 'Daily Funding (paid continuously out of your position)' }]
+    // if (mode === ChartType.Funding)
+    //   return [{ data: fundingPercentageSeries, legend: 'Daily Funding (paid continuously out of your position)' }]
     return []
   }, [mode, longSeries, squeethPrices, ethPrices, longEthPNL, positionSizeSeries, fundingPercentageSeries])
 
   const chartOptions = useMemo(() => {
-    if (mode === ChartType.Funding || mode === ChartType.PositionSize)
+    // if (mode === ChartType.Funding || mode === ChartType.PositionSize)
+    if (mode === ChartType.PositionSize)
       return {
         ...graphOptions,
         localization: {
@@ -139,21 +142,23 @@ export function LongChart() {
         >
           <SqueethTab label={`Historical ${days}D PNL`} />
           {/* <SqueethTab label="Price" /> */}
-          <SqueethTab label="Funding" />
+          {/* <SqueethTab label="Funding" /> */}
           <SqueethTab label="Payoff" />
           {/* <SqueethTab label="Comparison" /> */}
           <SqueethTab label="Details" />
         </SqueethTabs>
         <Hidden smDown>
-          <TextField
-            onChange={(event) => setDays(parseInt(event.target.value))}
-            size="small"
-            value={days}
-            type="number"
-            style={{ width: 150, marginLeft: '16px' }}
-            label="Historical Days"
-            variant="outlined"
-          />
+          {mode === ChartType.PNL ? (
+            <TextField
+              onChange={(event) => setDays(parseInt(event.target.value))}
+              size="small"
+              value={days}
+              type="number"
+              style={{ width: 150, marginLeft: '16px' }}
+              label="Historical Days"
+              variant="outlined"
+            />
+          ) : null}
         </Hidden>
       </div>
 
@@ -172,8 +177,8 @@ export function LongChart() {
           <Typography variant="body2" className={classes.cardDetail}>
             Long squeeth (ETH&sup2;) gives you a leveraged position with unlimited upside, protected downside, and no
             liquidations. Compared to a 2x leveraged position, you make more when ETH goes up and lose less when ETH
-            goes down. Eg. If ETH goes up 5x, squeeth goes up 25x. You pay a funding rate for this position. Enter the
-            position by purchasing an ERC20 token.{' '}
+            goes down (excluding funding). Eg. If ETH goes up 5x, squeeth goes up 25x. You pay a funding rate for this
+            position. Enter the position by purchasing an ERC20 token.{' '}
             <a
               className={classes.header}
               href="https://opynopyn.notion.site/Squeeth-FAQ-4b6a054ab011454cbbd60cb3ee23a37c"

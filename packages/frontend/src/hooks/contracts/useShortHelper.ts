@@ -39,12 +39,14 @@ export const useShortHelper = () => {
 
     const _amount = fromTokenAmount(amount, WSQUEETH_DECIMALS).multipliedBy(normalizationFactor)
     const ethAmt = fromTokenAmount(collatAmount, 18)
-    await handleTransaction(
+    const txHash = await handleTransaction(
       contract.methods.openShort(vaultId, _amount.toFixed(0), 0, _exactInputParams).send({
         from: address,
         value: ethAmt.toNumber(), // Already scaled to 14 so multiplied with 10000
       }),
     )
+
+    return txHash
   }
 
   /**
@@ -63,12 +65,14 @@ export const useShortHelper = () => {
     _exactOutputParams.recipient = shortHelper
 
     // _burnSqueethAmount and _withdrawAmount will be same as we are putting 1:1 collat now
-    await handleTransaction(
+    const txHash = await handleTransaction(
       contract.methods.closeShort(vaultId, _amount.toString(), _withdrawAmt.toFixed(0), _exactOutputParams).send({
         from: address,
         value: _exactOutputParams.amountInMaximum,
       }),
     )
+
+    return txHash
   }
 
   return {

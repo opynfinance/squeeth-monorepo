@@ -297,7 +297,7 @@ function TradePage() {
             <div className={classes.infoItem} style={{ width: '30%' }}>
               <div className={classes.infoLabel}>
                 <Typography color="textSecondary" variant="body2">
-                  Implied 24h Funding
+                  Expected 24h Funding
                 </Typography>
                 <Tooltip
                   title={'Estimated amount of funding paid in next 24 hours. Funding will happen out of your position.'}
@@ -423,14 +423,14 @@ function TradePage() {
               {tradeType === TradeType.LONG ? (
                 <>Long Squeeth - ETH&sup2; Position</>
               ) : (
-                <>Short Squeeth - short ETH&sup2; Position</>
+                <>Covered Short Squeeth - short ETH&sup2; Position</>
               )}
             </Typography>
             <Typography className={classes.logoSubTitle} variant="body1" color="textSecondary">
               {tradeType === TradeType.LONG ? (
                 <>Perpetual leverage without liquidations</>
               ) : (
-                <>Earn funding for selling ETH&sup2;</>
+                <>Earn funding for selling ETH collateralized squeeth;</>
               )}
             </Typography>
           </div>

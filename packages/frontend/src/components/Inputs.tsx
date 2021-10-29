@@ -113,8 +113,9 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
               className={classes.input}
               value={value}
               onChange={(e) => onChange(e.target.value)}
-              placeholder="label"
+              placeholder="0"
               type="number"
+              min="0"
             ></input>
           </div>
         </div>
