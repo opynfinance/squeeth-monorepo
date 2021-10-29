@@ -241,9 +241,17 @@ describe("Controller", function () {
         await controllerTester.connect(random).testDoubleFunding()
       })
 
-      it('should be able to get index and mark price', async() => {
+      it('should be able to get index and mark price and mark price used for funding', async() => {
+        // update block.timestamp in solidity
+        await provider.send("evm_increaseTime", [30])
+        await provider.send("evm_mine", [])
+        
         const markPrice = await controller.getDenormalizedMark(30)
+        const markPriceForFunding = await controller.getDenormalizedMarkForFunding(30)
+
         expect(isSimilar(markPrice.toString(), scaledSqueethPrice.mul(scaledEthPrice).div(one).toString())).to.be.true
+        expect(isSimilar(markPriceForFunding.toString(), scaledSqueethPrice.mul(scaledEthPrice).div(one).toString())).to.be.true
+        expect(markPrice.gt(markPriceForFunding)).to.be.true
 
         const index = await controller.getIndex(30)
         expect(index.eq(scaledEthPrice.mul(scaledEthPrice).div(one))).to.be.true

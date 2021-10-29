@@ -127,9 +127,8 @@ contract Controller is Initializable, Ownable {
     }
 
     /**
-     * @notice get the index price of the powerPerp, not scaled down
-     * @dev the index price here is not is scaled down by INDEX_SCALE in the associated PowerXBase library
-     * @dev this is provided for convenience but is not used for funding or collateralization
+     * @notice get the expected mark price of powerPerp after funding has been applied
+     * @dev this is the mark that would be be used for future funding after a new normalization factor is applied
      * @param _period period which you want to calculate twap with
      * @return index price denominated in $USD, scaled by 1e18
      */
@@ -155,6 +154,26 @@ contract Controller is Initializable, Ownable {
                 dai,
                 address(wPowerPerp),
                 expectedNormalizationFactor
+            );
+    }
+
+    /**
+     * @notice get the mark price of powerPerp before funding has been applied
+     * @dev this is the mark that would be used to calculate a new normalization factor if funding was calculated now
+     * @param _period period which you want to calculate twap with
+     * @return mark price denominated in $USD, scaled by 1e18
+     */
+    function getDenormalizedMarkForFunding(uint32 _period) external view returns (uint256) {
+        return
+            Power2Base._getDenormalizedMark(
+                _period,
+                address(oracle),
+                wPowerPerpPool,
+                ethDaiPool,
+                weth,
+                dai,
+                address(wPowerPerp),
+                normalizationFactor
             );
     }
 
