@@ -17,21 +17,21 @@ import {StrategyMath} from "./StrategyMath.sol";
 
 /**
  * @dev StrategyBase contract
- * @notice Base contract for PowerToken strategy
- * @author Opyn team
+ * @notice base contract for PowerToken strategy
+ * @author opyn team
  */
 contract StrategyBase is ERC20 {
     using StrategyMath for uint256;
     using Address for address payable;
 
-    /// @dev Power token controller
+    /// @dev power token controller
     IController public powerTokenController;
 
     /// @dev WETH token
     address public immutable weth;
     address public immutable wPowerPerp;
 
-    /// @dev Strategy vault ID
+    /// @dev power token strategy vault ID
     uint256 internal immutable _vaultId;
     /// @dev strategy debt amount
     uint256 internal _strategyDebt;
@@ -39,10 +39,12 @@ contract StrategyBase is ERC20 {
     uint256 internal _strategyCollateral;
 
     /**
-     * @notice Strategy base constructor
-     * @dev this will open a vault in the power token contract and store vault ID
+     * @notice constructor for StrategyBase
+     * @dev this will open a vault in the power token contract and store the vault ID
      * @param _powerTokenController power token controller address
      * @param _weth weth token address
+     * @param _name token name for strategy ERC20 token
+     * @param _symbol token symbol for strategy ERC20 token
      */
     constructor(address _powerTokenController, address _weth, string memory _name, string memory _symbol) ERC20(_name, _symbol) {
         require(_powerTokenController != address(0), "invalid power token controller address");
@@ -54,8 +56,8 @@ contract StrategyBase is ERC20 {
         _vaultId = powerTokenController.mintWPowerPerpAmount(0, 0, 0);
     }
     /**
-     * @notice Get strategy vault ID in Squeeth contract
-     * @return vauld ID
+     * @notice get power token strategy vault ID 
+     * @return vault ID
      */
     function getStrategyVaultId() external view returns (uint256) {
         return _vaultId;
@@ -80,7 +82,7 @@ contract StrategyBase is ERC20 {
     /**
      * @notice mint WPowerPerp
      * @param _to receiver address
-     * @param _wAmount amount of wPowerPerp to mint
+     * @param _wAmount amount of WPowerPerp to mint
      * @param _collateral amount of collateral to deposit
      * @param _keepWsqueeth keep minted wSqueeth in this contract if it is set to true
      */
@@ -102,7 +104,7 @@ contract StrategyBase is ERC20 {
 
     /**
      * @notice burn WPowerPerp
-     * @dev this function will not take wSqueeth from msg.sender if _isOwnedWSqueeth == true
+     * @dev this function will not take WPowerPerp from msg.sender if _isOwnedWSqueeth == true
      * @param _from WPowerPerp holder address
      * @param _amount amount to burn
      * @param _collateralToWithdraw amount of collateral to unlock from WPowerPerp vault
@@ -134,8 +136,8 @@ contract StrategyBase is ERC20 {
     }
 
     /**
-     * @notice get strategy debt amount from specific startegy token amount
-     * @notice _strategyAmount strategy amount
+     * @notice get strategy debt amount from specific strategy token amount
+     * @param _strategyAmount strategy amount
      * @return debt amount
      */
     function _getDebtFromStrategyAmount(uint256 _strategyAmount) internal view returns (uint256) {

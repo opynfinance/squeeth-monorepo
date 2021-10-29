@@ -147,7 +147,7 @@ library Power2Base {
 
     /**
      * @notice request twap from our oracle
-     * @dev this won't revert if period is > max period for the pool
+     * @dev this will revert if period is > max period for the pool
      * @param _oracle oracle address
      * @param _pool uniswap v3 pool address
      * @param _base base currency. to get eth/dai price, eth is base token
@@ -163,7 +163,7 @@ library Power2Base {
         uint32 _period
     ) internal view returns (uint256) {
         // period reaching this point should be check, otherwise might revert
-        return IOracle(_oracle).getTwapSafe(_pool, _base, _quote, _period);
+        return IOracle(_oracle).getTwap(_pool, _base, _quote, _period);
     }
 
     /**

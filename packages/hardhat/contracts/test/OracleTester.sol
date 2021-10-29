@@ -45,7 +45,7 @@ contract OracleTester is Oracle{
     return oracle.getTimeWeightedAverageTickSafe(_pool, period);
   }
 
-  function testToUint128(uint256 y) external returns (uint128 z) {
-      toUint128(y);
+  function testToUint128(uint256 y) external pure returns (uint128 z) {
+    return toUint128(y);
   }
 }

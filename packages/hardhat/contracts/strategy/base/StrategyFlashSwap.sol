@@ -23,7 +23,7 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
     using LowGasSafeMath for uint256;
     using LowGasSafeMath for int256;
 
-    /// @dev Uniswap v3 factory address
+    /// @dev Uniswap factory address
     address public immutable factory;
 
     struct SwapCallbackData {
@@ -35,6 +35,7 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
 
     /**
      * @dev constructor
+     * @param _factory uniswap factory address
      */
     constructor(
         address _factory
@@ -43,7 +44,7 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
     }
 
     /**
-     * @notice Uniswap v3 swap callback function
+     * @notice uniswap swap callback function for flashes
      * @param amount0Delta amount of token0
      * @param amount1Delta amount of token1
      * @param _data callback data encoded as SwapCallbackData struct
@@ -68,12 +69,12 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
     }
 
     /**
-     * @notice execute an exact in flash swap
+     * @notice execute an exact-in flash swap (specify an exact amount to pay)
      * @param _tokenIn token address to sell
-     * @param _tokenOut token address to get
+     * @param _tokenOut token address to receive
      * @param _fee pool fee
      * @param _amountIn amount to sell
-     * @param _amountOutMinimum minimum amount to get
+     * @param _amountOutMinimum minimum amount to receive
      * @param _callSource function call source
      * @param _data arbitrary data assigned with the call 
      */
@@ -90,11 +91,11 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
 
 
     /**
-     * @notice execute an exact out flash swap
+     * @notice execute an exact-out flash swap (specify an exact amount to receive)
      * @param _tokenIn token address to sell
-     * @param _tokenOut token address to get
+     * @param _tokenOut token address to receive
      * @param _fee pool fee
-     * @param _amountOut exact amount to get
+     * @param _amountOut exact amount to receive
      * @param _amountInMaximum maximum amount to sell
      * @param _callSource function call source
      * @param _data arbitrary data assigned with the call 
@@ -112,7 +113,7 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
 
 
     /**
-     * @dev function to get called by uniswap callback
+     * @notice function to be called by uniswap callback
      * @param _caller initial strategy function caller
      * @param _tokenIn token address sold
      * @param _tokenOut token address bought
@@ -122,12 +123,17 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
      * @param _callSource function call source
      */
     function _strategyFlash(address _caller, address _tokenIn, address _tokenOut, uint24 _fee, uint256 _amountToPay, bytes memory _callData, uint8 _callSource) internal virtual {}
-
-    /// @dev Performs a single exact input swap
+    
+    /** 
+    * @notice internal function for exact-in swap on uniswap (specify exact amount to pay)
+    * @param _amountIn amount of token to pay
+    * @param _recipient recipient for receive
+    * @param _sqrtPriceLimitX96 price limit
+    */
     function _exactInputInternal(
-        uint256 amountIn,
-        address recipient,
-        uint160 sqrtPriceLimitX96,
+        uint256 _amountIn,
+        address _recipient,
+        uint160 _sqrtPriceLimitX96,
         SwapCallbackData memory data
     ) private returns (uint256) {
         (address tokenIn, address tokenOut, uint24 fee) = data.path.decodeFirstPool();
@@ -136,23 +142,28 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
 
         (int256 amount0, int256 amount1) =
             _getPool(tokenIn, tokenOut, fee).swap(
-                recipient,
+                _recipient,
                 zeroForOne,
-                amountIn.toInt256(),
-                sqrtPriceLimitX96 == 0
+                _amountIn.toInt256(),
+                _sqrtPriceLimitX96 == 0
                     ? (zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1)
-                    : sqrtPriceLimitX96,
+                    : _sqrtPriceLimitX96,
                 abi.encode(data)
             );
 
         return uint256(-(zeroForOne ? amount1 : amount0));
     }
 
-    /// @dev Performs a single exact output swap
+    /** 
+    * @notice internal function for exact-out swap on uniswap (specify exact amount to receive)
+    * @param _amountOut amount of token to receive
+    * @param _recipient recipient for receive
+    * @param _sqrtPriceLimitX96 price limit
+    */
     function _exactOutputInternal(
-        uint256 amountOut,
-        address recipient,
-        uint160 sqrtPriceLimitX96,
+        uint256 _amountOut,
+        address _recipient,
+        uint160 _sqrtPriceLimitX96,
         SwapCallbackData memory data
     ) private returns (uint256) {
         (address tokenOut, address tokenIn, uint24 fee) = data.path.decodeFirstPool();
@@ -161,12 +172,12 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
 
         (int256 amount0Delta, int256 amount1Delta) =
             _getPool(tokenIn, tokenOut, fee).swap(
-                recipient,
+                _recipient,
                 zeroForOne,
-                -amountOut.toInt256(),
-                sqrtPriceLimitX96 == 0
+                -_amountOut.toInt256(),
+                _sqrtPriceLimitX96 == 0
                     ? (zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1)
-                    : sqrtPriceLimitX96,
+                    : _sqrtPriceLimitX96,
                 abi.encode(data)
             );
 
@@ -175,12 +186,18 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
             : (uint256(amount1Delta), uint256(-amount0Delta));
         // it's technically possible to not receive the full output amount,
         // so if no price limit has been specified, require this possibility away
-        if (sqrtPriceLimitX96 == 0) require(amountOutReceived == amountOut);
+        if (_sqrtPriceLimitX96 == 0) require(amountOutReceived == _amountOut);
 
         return amountIn;
     }
 
-    /// @dev Returns the pool for the given token pair and fee. The pool contract may or may not exist.
+    /** 
+    * @notice returns the uniswap pool for the given token pair and fee
+    * @dev the pool contract may or may not exist
+    * @param tokenA address of first token 
+    * @param tokenB address of second token 
+    * @param fee fee tier for pool
+    */
     function _getPool(
         address tokenA,
         address tokenB,

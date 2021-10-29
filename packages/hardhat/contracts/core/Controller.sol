@@ -282,9 +282,9 @@ contract Controller is Initializable, Ownable {
     }
 
     /**
-     * @notice deposit uniswap v3 position token into a vault to increase collateral ratio
+     * @notice deposit uniswap position token into a vault to increase collateral ratio
      * @param _vaultId id of the vault
-     * @param _uniTokenId uniswap v3 position token id
+     * @param _uniTokenId uniswap position token id
      */
     function depositUniPositionToken(uint256 _vaultId, uint256 _uniTokenId) external notPaused {
         _checkVaultId(_vaultId);
@@ -689,7 +689,7 @@ contract Controller is Initializable, Ownable {
      * @param _vault the Vault memory to update
      * @param _account account to transfer the uniswap v3 position from
      * @param _vaultId id of the vault
-     * @param _uniTokenId uniswap v3 position token id
+     * @param _uniTokenId uniswap position token id
      */
     function _depositUniPositionToken(
         VaultLib.Vault memory _vault,

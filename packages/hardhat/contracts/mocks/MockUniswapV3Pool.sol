@@ -86,7 +86,10 @@ contract MockUniswapV3Pool {
         require(balance1Before.add(fee1) <= balance1After, "F1");
     }
 
-    function computeAddress(address factory, PoolKey memory key) internal view returns (address pool) {
+    function computeAddress(
+        address, /*factory*/
+        PoolKey memory /*key*/
+    ) internal view returns (address pool) {
         return address(this);
     }
 }
