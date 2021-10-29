@@ -79,6 +79,7 @@ const useStyles = makeStyles((theme) =>
     },
     amountInput: {
       marginTop: theme.spacing(1),
+      backgroundColor: theme.palette.success.main,
     },
     innerCard: {
       textAlign: 'center',

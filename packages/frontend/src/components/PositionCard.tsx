@@ -145,14 +145,39 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
     return { postTradeAmt, postPosition }
   }, [wSqueethBal.toNumber(), shortSqueethAmt.toNumber(), tradeAmount, actualTradeType, quote.amountOut.toNumber()])
 
+  const getPostPositionBasedValue = useCallback(
+    (long: any, short: any, none: any, loadingMsg?: any) => {
+      if (loadingMsg && loading) return loadingMsg
+      if (postPosition === PositionType.LONG) return long
+      if (postPosition === PositionType.SHORT) return short
+      return none
+    },
+    [postPosition, loading],
+  )
+
   const postTitleClass = useMemo(() => {
     if (postPosition === PositionType.LONG) return classes.longTitle
     if (postPosition === PositionType.SHORT) return classes.shortTitle
     return classes.noneTitle
   }, [postPosition])
 
+  const cardBackground = useMemo(() => {
+    const positionBackground = getPositionBasedValue(
+      'rgba(73,210,115,.08)',
+      'rgb(245, 71, 92, .08)',
+      'rgba(255, 255, 255, 0.08)',
+    )
+    const postPositionBackground = getPostPositionBasedValue(
+      'rgba(73,210,115,.08)',
+      'rgb(245, 71, 92, .08)',
+      'rgba(255, 255, 255, 0.08)',
+    )
+
+    return `linear-gradient(90deg, ${positionBackground} 0%, ${postPositionBackground} 50%)`
+  }, [postPosition, positionType])
+
   return (
-    <div className={classes.container}>
+    <div className={classes.container} style={{ background: cardBackground }}>
       <div className={classes.header}>
         <Typography variant="caption" component="span" color="textSecondary">
           MY POSITION

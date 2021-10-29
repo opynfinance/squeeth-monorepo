@@ -42,6 +42,7 @@ const useStyles = makeStyles((theme) =>
     },
     amountInput: {
       marginTop: theme.spacing(1),
+      backgroundColor: `${theme.palette.error.main}aa`,
     },
     thirdHeading: {
       marginTop: theme.spacing(2),
