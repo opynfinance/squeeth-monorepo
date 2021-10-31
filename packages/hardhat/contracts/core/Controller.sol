@@ -305,6 +305,7 @@ contract Controller is Initializable, Ownable {
         _withdrawCollateral(cachedVault, msg.sender, _vaultId, _amount);
         _checkVault(cachedVault, cachedNormFactor);
         _writeVault(_vaultId, cachedVault);
+        payable(msg.sender).sendValue(_amount);
     }
 
     /**
@@ -396,8 +397,8 @@ contract Controller is Initializable, Ownable {
 
         // if vault is safe after saving, pay bounty and return early
         if (_isVaultSafe(cachedVault, cachedNormFactor)) {
-            payable(msg.sender).sendValue(bounty);
             _writeVault(_vaultId, cachedVault);
+            payable(msg.sender).sendValue(bounty);
             return 0;
         }
 
@@ -415,6 +416,9 @@ contract Controller is Initializable, Ownable {
         emit Liquidate(_vaultId, debtAmount, collateralPaid);
 
         _writeVault(_vaultId, cachedVault);
+
+        // pay the liquidator
+        payable(msg.sender).sendValue(collateralPaid);
 
         return debtAmount;
     }
@@ -607,7 +611,7 @@ contract Controller is Initializable, Ownable {
         uint256 cachedNormFactor = _applyFunding();
         uint256 depositAmountWithFee = _depositAmount;
         uint256 wPowerPerpAmount = _isWAmount ? _mintAmount : _mintAmount.mul(1e18).div(cachedNormFactor);
-
+        uint256 feeAmount;
         VaultLib.Vault memory cachedVault;
 
         // load vault or create new a new one
@@ -618,7 +622,7 @@ contract Controller is Initializable, Ownable {
         }
 
         if (wPowerPerpAmount > 0) {
-            depositAmountWithFee = _payFee(cachedVault, wPowerPerpAmount, _depositAmount);
+            (feeAmount, depositAmountWithFee) = _payFee(cachedVault, wPowerPerpAmount, _depositAmount);
         }
         if (_depositAmount > 0) _addEthCollateral(cachedVault, _vaultId, depositAmountWithFee);
         if (_uniTokenId != 0) _depositUniPositionToken(cachedVault, _account, _vaultId, _uniTokenId);
@@ -627,6 +631,9 @@ contract Controller is Initializable, Ownable {
 
         _checkVault(cachedVault, cachedNormFactor);
         _writeVault(_vaultId, cachedVault);
+
+        //pay insurance fee
+        if (wPowerPerpAmount > 0) payable(feeRecipient).sendValue(feeAmount);
 
         return (_vaultId, wPowerPerpAmount);
     }
@@ -648,7 +655,6 @@ contract Controller is Initializable, Ownable {
         bool _isWAmount
     ) internal returns (uint256) {
         _checkVaultId(_vaultId);
-
         uint256 cachedNormFactor = _applyFunding();
         uint256 wBurnAmount = _isWAmount ? _burnAmount : _burnAmount.mul(1e18).div(cachedNormFactor);
 
@@ -657,6 +663,8 @@ contract Controller is Initializable, Ownable {
         if (_withdrawAmount > 0) _withdrawCollateral(cachedVault, _account, _vaultId, _withdrawAmount);
         _checkVault(cachedVault, cachedNormFactor);
         _writeVault(_vaultId, cachedVault);
+
+        if (_withdrawAmount > 0) payable(msg.sender).sendValue(_withdrawAmount);
 
         return wBurnAmount;
     }
@@ -753,7 +761,6 @@ contract Controller is Initializable, Ownable {
         require(_canModifyVault(_vaultId, _account), "Not allowed");
 
         _vault.removeEthCollateral(_amount);
-        payable(_account).sendValue(_amount);
 
         emit WithdrawCollateral(_vaultId, _amount, 0);
     }
@@ -856,9 +863,6 @@ contract Controller is Initializable, Ownable {
         (, bool isDust) = _getVaultStatus(_vault, _normalizationFactor);
         require(!isDust, "Dust vault left");
 
-        // pay the liquidator
-        payable(_liquidator).sendValue(collateralToPay);
-
         return (wAmountToLiquidate, collateralToPay);
     }
 
@@ -933,9 +937,9 @@ contract Controller is Initializable, Ownable {
         VaultLib.Vault memory _vault,
         uint256 _wSqueethAmount,
         uint256 _depositAmount
-    ) internal returns (uint256) {
+    ) internal view returns (uint256, uint256) {
         uint256 cachedFeeRate = feeRate;
-        if (cachedFeeRate == 0) return _depositAmount;
+        if (cachedFeeRate == 0) return (uint256(0), _depositAmount);
         uint256 depositAmountAfterFee;
         uint256 ethEquivalentMinted = Power2Base._getCollateralByRepayAmount(
             _wSqueethAmount,
@@ -950,15 +954,13 @@ contract Controller is Initializable, Ownable {
         // if fee can be paid from deposited collateral, pay from _depositAmount
         if (_depositAmount > feeAmount) {
             depositAmountAfterFee = _depositAmount.sub(feeAmount);
-            payable(feeRecipient).sendValue(feeAmount);
             // if not, adjust the vault to pay from the vault collateral
         } else {
             _vault.removeEthCollateral(feeAmount);
-            payable(feeRecipient).sendValue(feeAmount);
             depositAmountAfterFee = _depositAmount;
         }
-        //return the deposit amount, which has only been reduced by a fee if it is paid out of the deposit amount
-        return depositAmountAfterFee;
+        //return the fee and deposit amount, which has only been reduced by a fee if it is paid out of the deposit amount
+        return (feeAmount, depositAmountAfterFee);
     }
 
     /**

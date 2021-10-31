@@ -57,6 +57,7 @@ contract MockController {
     ) external {
         if (_amount > 0) _removeShort(msg.sender, _vaultId, _amount);
         if (_withdrawAmount > 0) _withdrawCollateral(msg.sender, _vaultId, _withdrawAmount);
+        if (_withdrawAmount > 0) payable(msg.sender).sendValue(_withdrawAmount);
     }
 
     function _openVault(address _recipient) internal returns (uint256) {
@@ -85,8 +86,6 @@ contract MockController {
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
         cachedVault.removeEthCollateral(_amount);
         vaults[_vaultId] = cachedVault;
-
-        payable(_account).sendValue(_amount);
     }
 
     function _addShort(
