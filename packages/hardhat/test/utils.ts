@@ -16,6 +16,7 @@ export const isEmptyVault = (vault: Vault): boolean => {
 
 export const isSimilar = (number1: string, number2: string, precision: number= 4) => {
   const error = 1/(10 ** precision)
+  if (number2 === number1) return true
   return new BigNumberJs(number1).div(new BigNumberJs(number2)).minus(1).abs().lt(error)
 }
 
