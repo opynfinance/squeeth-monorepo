@@ -139,11 +139,6 @@ describe("Controller Funding tests", function () {
         // use isSimilar because sometimes the expectedNormFactor will be a little bit off, 
         // maybe caused by inconsistent process time by hardhat
         expect(isSimilar(expectedNormalizationFactor.toString(), normalizationFactorAfter.toString(), 15)).to.be.true
-
-        // set prices back
-        await oracle.connect(random).setPrice(squeethEthPool.address , squeethETHPrice) // eth per 1 squeeth
-        await oracle.connect(random).setPrice(ethUSDPool.address , ethUSDPrice)  // usdc per 1 eth
-
       })
       it('normalization factor changes should be bounded below', async() => {
 
@@ -166,7 +161,7 @@ describe("Controller Funding tests", function () {
         // + 3 hours
         const secondsElapsed = 10800 // 3hrs
 
-        await provider.send("evm_setNextBlockTimestamp", [now + secondsElapsed - 2]) 
+        await provider.send("evm_setNextBlockTimestamp", [now + secondsElapsed]) 
         await controller.connect(seller1).applyFunding()   
         
         // Get new new norm factor
@@ -180,11 +175,30 @@ describe("Controller Funding tests", function () {
         const multiplier = getNormFactorMultiplier(expectedCeilMark, index, secondsElapsed)
         const expectedNormalizationFactor = normalizationFactorBefore.mul(multiplier).div(one)
 
-        // use isSimilar because sometimes the expectedNormFactor will be a little bit off, 
-        // maybe caused by inconsistent process time by hardhat
         expect(isSimilar(expectedNormalizationFactor.toString(), normalizationFactorAfter.toString(), 14)).to.be.true
       })
+      it('calling apply funding with little time elapsed should not affect norm factor', async() => {
+        await oracle.connect(random).setPrice(squeethEthPool.address , squeethETHPrice) // eth per 1 squeeth
+        await oracle.connect(random).setPrice(ethUSDPool.address , ethUSDPrice)  // usdc per 1 eth
+        
+        await controller.applyFunding()
+        const normFactor0 = await controller.normalizationFactor()
+        const timestamp0 = await getNow(provider)
+        
+        const timestamp1 = await timestamp0 + 10
+        await provider.send("evm_setNextBlockTimestamp", [timestamp1]) 
+        await controller.applyFunding()
+        const normFactor1 = await controller.normalizationFactor()
 
+        const timestamp2 = await timestamp1 + 10
+        await provider.send("evm_setNextBlockTimestamp", [timestamp2]) 
+        await controller.applyFunding()
+        const normFactor2 = await controller.normalizationFactor()
+
+        // update should be < 1.0001
+        expect(isSimilar(normFactor0.toString(), normFactor1.toString(), 4)).to.be.true
+        expect(isSimilar(normFactor0.toString(), normFactor2.toString(), 4)).to.be.true
+      })
     })
 
     describe('Funding collateralization tests', () => {
@@ -297,6 +311,149 @@ describe("Controller Funding tests", function () {
       })
     })
 
+    describe('Extreme cases for normalization factor', async() => {
+      it('should get capped normalization factor when mark = 0 ', async() => {
+        // Get norm factor
+        const normalizationFactorBefore = await controller.normalizationFactor()
+        const now = await getNow(provider)
+
+        // Set very low mark price
+        const squeethETHPriceNew = 0
+        const ethUSDPriceNew = ethers.utils.parseUnits('3000')
+
+        // Set prices
+        await oracle.connect(random).setPrice(squeethEthPool.address , squeethETHPriceNew) // eth per 1 squeeth
+        await oracle.connect(random).setPrice(ethUSDPool.address, ethUSDPriceNew)  // usdc per 1 eth
+        const index = await controller.getIndex(1)
+
+        // + 3 hours 
+        const secondsElapsed = 10800
+        await provider.send("evm_setNextBlockTimestamp", [now + secondsElapsed]) 
+        await controller.connect(seller1).applyFunding()   
+
+        // Get new new norm factor
+        const normalizationFactorAfter = await controller.normalizationFactor()
+
+        // Mark should be bounded 4/5, 5/4
+        const scaledEthUSDPrice = ethUSDPriceNew.div(oracleScaleFactor)
+        const expectedFloorMark = scaledEthUSDPrice.mul(scaledEthUSDPrice).mul(4).div(5).div(one)
+
+        // Expected bounded norm factor
+        const multiplier = getNormFactorMultiplier(expectedFloorMark, index, secondsElapsed)
+        const expectedNormalizationFactor = normalizationFactorBefore.mul(multiplier).div(one)
+
+        expect(isSimilar(expectedNormalizationFactor.toString(), normalizationFactorAfter.toString(), 15)).to.be.true
+      })
+      it('should get capped normalization factor if eth price crashes', async() => {
+        // Get norm factor
+        const normalizationFactorBefore = await controller.normalizationFactor()
+        const now = await getNow(provider)
+
+        // Set very low index price
+        const squeethETHPriceNew = ethers.utils.parseUnits('3000').div(oracleScaleFactor)
+        const ethUSDPriceNew = ethers.utils.parseUnits('0.0001')
+
+        // Set prices
+        await oracle.connect(random).setPrice(squeethEthPool.address , squeethETHPriceNew) // eth per 1 squeeth
+        await oracle.connect(random).setPrice(ethUSDPool.address , ethUSDPriceNew)  // usdc per 1 eth
+
+        const index = await controller.getIndex(1)  
+
+        // + 3 hours
+        const secondsElapsed = 10800 // 3hrs
+        await provider.send("evm_setNextBlockTimestamp", [now + secondsElapsed]) 
+        await controller.connect(random).applyFunding()   
+
+        // Get new new norm factor
+        const normalizationFactorAfter = await controller.normalizationFactor()
+
+        // Mark should be bounded 4/5, 5/4
+        const scaledEthUSDPrice = ethUSDPriceNew.div(oracleScaleFactor)
+        const expectedCeilMark = scaledEthUSDPrice.mul(scaledEthUSDPrice).mul(5).div(4).div(one)
+        
+
+        // Expected bounded norm factor
+        const multiplier = getNormFactorMultiplier(expectedCeilMark, index, secondsElapsed)
+        const expectedNormalizationFactor = normalizationFactorBefore.mul(multiplier).div(one)
+
+        expect(isSimilar(expectedNormalizationFactor.toString(), normalizationFactorAfter.toString(), 14)).to.be.true
+
+        // norm factor after - norm factor before should be bounded, even now index is 0
+        expect(normalizationFactorAfter.sub(normalizationFactorBefore).lt(one))        
+      })
+      it('calling applying funding every 12 hours * 2 times, will result in a lower norm factor compared to every 24 hours * 1 times', async() => {
+        const secsInOneDay  = 86400
+        const normFactor = await controller.normalizationFactor()
+        await oracle.connect(random).setPrice(squeethEthPool.address , squeethETHPrice.mul(normFactor).div(one))
+        await oracle.connect(random).setPrice(ethUSDPool.address , ethUSDPrice)
+
+        await provider.send("evm_increaseTime", [secsInOneDay])
+        await provider.send("evm_mine", [])
+
+        const expNormFactor0 = await controller.getExpectedNormalizationFactor()
+        const expectedWsqueethPrice0 = squeethETHPrice.mul(expNormFactor0).div(one)
+        
+        await controller.applyFunding()
+        await oracle.setPrice(squeethEthPool.address, expectedWsqueethPrice0)
+
+        // norm0 => norm1 is applying funding once in 24 hr
+        const normFactor0 = await controller.normalizationFactor()
+        const d0DenormMark = await controller.getDenormalizedMark(1)
+
+        // update wsqueeth / eth price to make sure denorm mark is the same
+        const day0 = await getNow(provider)
+        
+        const day1 = await day0 + secsInOneDay
+        await provider.send("evm_setNextBlockTimestamp", [day1]) 
+        await provider.send("evm_mine", []) 
+
+        const expNormFactor1 = await controller.getExpectedNormalizationFactor()
+        const expectedWsqueethPrice1 = squeethETHPrice.mul(expNormFactor1).div(one)
+        
+        await controller.applyFunding()
+        await oracle.setPrice(squeethEthPool.address, expectedWsqueethPrice1)
+        
+        const normFactor1 = await controller.normalizationFactor()
+        const d1DenormMark = await controller.getDenormalizedMark(1)
+        const day1ChangeRatio = normFactor1.mul(one).div(normFactor0)
+        
+        // norm1 => norm2 is applying funding twice in 24 hr
+        const day1AndHalf = await day1 + secsInOneDay/2
+        await provider.send("evm_setNextBlockTimestamp", [day1AndHalf]) 
+        await provider.send("evm_mine", []) 
+
+        const expNormFactor = await controller.getExpectedNormalizationFactor()
+        const expectedWsqueethPrice2 = squeethETHPrice.mul(expNormFactor).div(one)
+        
+        await controller.applyFunding()
+        await oracle.setPrice(squeethEthPool.address, expectedWsqueethPrice2)
+
+        const d15DenormMark = await controller.getDenormalizedMark(1)
+        
+        const day2 = await day1 + secsInOneDay
+        await provider.send("evm_setNextBlockTimestamp", [day2])
+        await provider.send("evm_mine", []) 
+        const expNormFactor2 = await controller.getExpectedNormalizationFactor()
+        const expectedWsqueethPrice3 = squeethETHPrice.mul(expNormFactor2).div(one)
+        
+        await controller.applyFunding()
+        await oracle.setPrice(squeethEthPool.address, expectedWsqueethPrice3)
+
+        const d2DenormMark = await controller.getDenormalizedMark(1)
+        const normFactor2 = await controller.normalizationFactor()
+        const day2ChangeRatio = normFactor2.mul(one).div(normFactor1)
+        
+        console.log(`day1ChangeRatio`, day1ChangeRatio.toString())
+        console.log(`day2ChangeRatio`, day2ChangeRatio.toString())
+        
+        console.log(`d0DenormMark`, d0DenormMark.toString())
+        console.log(`d1DenormMark`, d1DenormMark.toString())       
+        console.log(`d15DenormMark`, d15DenormMark.toString())
+        console.log(`d2DenormMark`, d2DenormMark.toString())
+
+        expect(day2ChangeRatio.lt(day1ChangeRatio)).to.be.true
+      })
+    })
   })
   
 });
