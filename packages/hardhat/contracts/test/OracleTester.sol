@@ -45,7 +45,32 @@ contract OracleTester is Oracle{
     return oracle.getTimeWeightedAverageTickSafe(_pool, period);
   }
 
+  function testGetHistoricalTwapToNow(
+    uint256 _startTimestamp,
+    address _pool,
+    address _base,
+    address _quote
+  ) view external returns (uint256) {
+    uint32 secondsAgoToStartOfTwap = uint32(block.timestamp - _startTimestamp);  
+    uint32 secondsAgoToEndOfTwap=0;
+    
+    return oracle.getHistoricalTwap(_pool, _base, _quote, secondsAgoToStartOfTwap, secondsAgoToEndOfTwap);
+  }
+
+  function testGetHistoricalTwap(
+    uint256 _startTimestamp,
+    uint256 _endTimestamp,
+    address _pool,
+    address _base,
+    address _quote
+  ) view external returns (uint256) {
+    uint32 secondsAgoToStartOfTwap = uint32(block.timestamp - _startTimestamp);  
+    uint32 secondsAgoToEndOfTwap=uint32(block.timestamp - _endTimestamp); 
+        
+    return oracle.getHistoricalTwap(_pool, _base, _quote, secondsAgoToStartOfTwap, secondsAgoToEndOfTwap);
+  }
+
   function testToUint128(uint256 y) external pure returns (uint128 z) {
-    return toUint128(y);
+      return toUint128(y);
   }
 }

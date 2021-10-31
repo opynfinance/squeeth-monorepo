@@ -54,7 +54,6 @@ describe("Oracle Integration Test", function () {
   
       it("fetch initial price", async () => {
         const price = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 1)
-        // console.log(price.div().div(startingPrice))
         expect(isSimilar(price.toString(), (startingPrice * 1e18).toString())).to.be.true
       })
       it("fetch price twap for last 10 seconds", async () => {

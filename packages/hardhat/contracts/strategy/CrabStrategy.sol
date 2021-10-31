@@ -2,8 +2,6 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import "hardhat/console.sol";
-
 // interface
 import {IController} from "../interfaces/IController.sol";
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
@@ -137,8 +135,9 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
         require(_hedgeTimeThreshold > 0, "invalid hedge time threshold");
         require(_hedgePriceThreshold > 0, "invalid hedge price threshold");
         require(_auctionTime > 0, "invalid auction time");
+        require(_minPriceMultiplier < 1e18, "auction min price multiplier too high");
         require(_minPriceMultiplier > 0, "invalid auction min price multiplier");
-        require(_maxPriceMultiplier > 0, "invalid auction max price multiplier");
+        require(_maxPriceMultiplier > 1e18, "auction max price multiplier too low");
 
         oracle = _oracle;
         ethWSqueethPool = _ethWSqueethPool;
@@ -152,7 +151,9 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
     /**
      * @notice receive function to allow ETH transfer to this contract
      */
-    receive() external payable {}
+    receive() external payable {
+        require(msg.sender == weth || msg.sender == address(powerTokenController), "Cannot receive eth");
+    }
 
     /**
      * @notice flash deposit into strategy

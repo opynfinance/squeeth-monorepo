@@ -3,8 +3,6 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import "hardhat/console.sol";
-
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
 import {IShortPowerPerp} from "../interfaces/IShortPowerPerp.sol";
 import {IOracle} from "../interfaces/IOracle.sol";

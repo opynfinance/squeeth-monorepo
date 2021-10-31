@@ -1,8 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity =0.7.6;
 
-import "hardhat/console.sol";
-
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";

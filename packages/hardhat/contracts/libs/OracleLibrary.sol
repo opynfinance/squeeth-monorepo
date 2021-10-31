@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity >=0.5.0 <0.8.0;
 
-import "hardhat/console.sol";
-
 import "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
@@ -58,7 +56,7 @@ library OracleLibrary {
             (int56[] memory tickCumulatives, ) = IUniswapV3Pool(pool).observe(secondAgos);
             int56 tickCumulativesDelta = tickCumulatives[1] - tickCumulatives[0];
 
-            timeWeightedAverageTick = int24(tickCumulativesDelta / _secondsAgoToStartOfTwap);
+            timeWeightedAverageTick = int24(tickCumulativesDelta / (_secondsAgoToStartOfTwap - _secondsAgoToEndOfTwap));
 
             // Always round to negative infinity
             if (tickCumulativesDelta < 0 && (tickCumulativesDelta % _secondsAgoToStartOfTwap != 0))

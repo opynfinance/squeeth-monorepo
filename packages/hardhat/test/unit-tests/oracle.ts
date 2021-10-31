@@ -352,6 +352,27 @@ describe("Oracle", function () {
         .toString())
       expect(isSimilar(price.toString(), squeethPriceInETH1e18)).to.be.true;
     })
+
+    it('should be able to get a historical TWAP from now until first interaction and it should match a normal twap', async() => {
+      const price = new BigNumberJs((
+        await oracleTester.testGetHistoricalTwapToNow(interactionTimestamps[1], squeethPool.address, squeeth.address, weth.address))
+        .toString())
+      const priceTwap = new BigNumberJs((
+        await oracleTester.testGetTwapSince(interactionTimestamps[1], squeethPool.address, squeeth.address, weth.address))
+        .toString())
+  
+      expect(isSimilar(price.toString(), squeethPriceInETH1e18)).to.be.true;
+      expect(price.eq(priceTwap)).to.be.true
+    })
+
+    it('should be able to get a historical TWAP from second interaction to first interaction', async() => {
+      const price = new BigNumberJs((
+        await oracleTester.testGetHistoricalTwap(interactionTimestamps[1], interactionTimestamps[2], squeethPool.address, squeeth.address, weth.address))
+        .toString())
+  
+      expect(isSimilar(price.toString(), squeethPriceInETH1e18, 3)).to.be.true;
+    })
+
     it('should be able to get TWAP since second touch with #getTwapSafe', async() => {
       const price = new BigNumberJs((
         await oracleTester.testGetTwapSafeSince(interactionTimestamps[2], squeethPool.address, squeeth.address, weth.address))

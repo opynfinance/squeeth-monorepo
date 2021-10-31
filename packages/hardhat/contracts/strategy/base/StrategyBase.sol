@@ -1,8 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity =0.7.6;
 
-import "hardhat/console.sol";
-
 // interface
 import {IController} from "../../interfaces/IController.sol";
 import {IWPowerPerp} from "../../interfaces/IWPowerPerp.sol";
@@ -11,7 +9,6 @@ import {IWPowerPerp} from "../../interfaces/IWPowerPerp.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // lib
-// import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {StrategyMath} from "./StrategyMath.sol";
 
@@ -32,7 +29,7 @@ contract StrategyBase is ERC20 {
     address public immutable wPowerPerp;
 
     /// @dev power token strategy vault ID
-    uint256 internal immutable _vaultId;
+    uint256 public immutable _vaultId;
     /// @dev strategy debt amount
     uint256 internal _strategyDebt;
     /// @dev strategy collateral amount

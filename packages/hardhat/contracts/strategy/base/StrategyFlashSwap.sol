@@ -2,8 +2,6 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import "hardhat/console.sol";
-
 // interface
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
@@ -40,6 +38,7 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
     constructor(
         address _factory
     ) {
+        require(_factory != address(0), "invalid factory address");
         factory = _factory;
     }
 
