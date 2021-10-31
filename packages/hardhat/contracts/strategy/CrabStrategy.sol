@@ -164,7 +164,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
     function flashDeposit(uint256 _ethToDeposit, uint256 _ethToBorrow) external payable {
         require(msg.value > _ethToDeposit, "Need some buffer");
 
-        uint256 cachedStrategyDebt = _strategyDebt;
+        (uint256 cachedStrategyDebt, ) = _syncStrategyState();
 
         (uint256 wSqueethToMint, uint256 wSqueethEthPrice) = _calcWsqueethToMint(
             _ethToDeposit.add(_ethToBorrow),
@@ -198,7 +198,9 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
      * @param _maxEthToPay maximum ETH to pay
      */
     function flashWithdraw(uint256 _crabAmount, uint256 _maxEthToPay) external {
-        uint256 exactWSqueethNeeded = _strategyDebt.wmul(_crabAmount).wdiv(totalSupply());
+        (uint256 strategyDebt, ) = _syncStrategyState();
+
+        uint256 exactWSqueethNeeded = strategyDebt.wmul(_crabAmount).wdiv(totalSupply());
 
         _exactOutFlashSwap(
             weth,
@@ -408,9 +410,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
         uint256 _amount,
         bool _isFlashDeposit
     ) internal returns (uint256, uint256) {
-        // load vars for gas optimization
-        uint256 strategyCollateral = _strategyCollateral;
-        uint256 strategyDebt = _strategyDebt;
+        (uint256 strategyDebt, uint256 strategyCollateral) = _syncStrategyState();
 
         (uint256 wSqueethToMint, uint256 wSqueethEthPrice) = _calcWsqueethToMint(
             _amount,
@@ -447,10 +447,12 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
         uint256 _wSqueethAmount,
         bool _isFlashWithdraw
     ) internal returns (uint256) {
-        uint256 strategyShare = _calcCrabRatio(_crabAmount, totalSupply());
-        uint256 ethToWithdraw = _calcEthToWithdraw(strategyShare, _strategyCollateral);
+        (uint256 strategyDebt, uint256 strategyCollateral) = _syncStrategyState();
 
-        require(_wSqueethAmount.wdiv(_strategyDebt) == strategyShare, "invalid ratio");
+        uint256 strategyShare = _calcCrabRatio(_crabAmount, totalSupply());
+        uint256 ethToWithdraw = _calcEthToWithdraw(strategyShare, strategyCollateral);
+
+        require(_wSqueethAmount.wdiv(strategyDebt) == strategyShare, "invalid ratio");
 
         _burnWPowerPerp(_from, _wSqueethAmount, ethToWithdraw, _isFlashWithdraw);
         _burn(_from, _crabAmount);
@@ -604,8 +606,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
             uint256
         )
     {
-        uint256 strategyDebt = _strategyDebt;
-        uint256 ethDelta = _strategyCollateral;
+        (uint256 strategyDebt, uint256 ethDelta) = _syncStrategyState();
         uint256 currentWSqueethPrice = IOracle(oracle).getTwapSafe(ethWSqueethPool, wPowerPerp, weth, TWAP_PERIOD);
         (bool isSellingAuction, ) = _checkAuctionType(strategyDebt, ethDelta, currentWSqueethPrice);
         uint256 auctionWSqueethEthPrice = _getAuctionPrice(_auctionTriggerTime, currentWSqueethPrice, isSellingAuction);
@@ -623,6 +624,18 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
         priceAtLastHedge = currentWSqueethPrice;
 
         return (isSellingAuction, wSqueethToAuction, ethProceeds, auctionWSqueethEthPrice);
+    }
+
+    /**
+     * @notice sync strategy debt and collateral amount
+     * @return synced debt and collateral amount
+     */
+    function _syncStrategyState() internal returns (uint256, uint256) {
+        (, , uint256 syncedStrategyCollateral, uint256 syncedStrategyDebt) = _getVaultDetails();
+        _strategyDebt = syncedStrategyDebt;
+        _strategyCollateral = syncedStrategyCollateral;
+
+        return (syncedStrategyDebt, syncedStrategyCollateral);
     }
 
     /**

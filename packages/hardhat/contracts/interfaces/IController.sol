@@ -2,7 +2,13 @@
 
 pragma solidity =0.7.6;
 
+pragma abicoder v2;
+
+import {VaultLib} from "../libs/VaultLib.sol";
+
 interface IController {
+    function vaults(uint256 _vaultId) external view returns (VaultLib.Vault memory);
+
     function shortPowerPerp() external view returns (address);
 
     function wPowerPerp() external view returns (address);

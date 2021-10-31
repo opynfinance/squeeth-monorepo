@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity =0.7.6;
 
+pragma abicoder v2;
+
 // interface
 import {IController} from "../../interfaces/IController.sol";
 import {IWPowerPerp} from "../../interfaces/IWPowerPerp.sol";
@@ -11,6 +13,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 // lib
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {StrategyMath} from "./StrategyMath.sol";
+import {VaultLib} from "../../libs/VaultLib.sol";
 
 /**
  * @dev StrategyBase contract
@@ -138,7 +141,18 @@ contract StrategyBase is ERC20 {
      * @return debt amount
      */
     function _getDebtFromStrategyAmount(uint256 _strategyAmount) internal view returns (uint256) {
-        return _strategyDebt.wmul(_strategyAmount).wdiv(totalSupply());
+        (, , ,uint256 strategyDebt) = _getVaultDetails();
+        return strategyDebt.wmul(_strategyAmount).wdiv(totalSupply());
+    }
+
+    /**
+     * @notice get strategy vault details
+     * @return operator address, vault NFT id, short and collateral amounts
+     */
+    function _getVaultDetails() internal view returns (address, uint256, uint256, uint256) {
+        VaultLib.Vault memory strategyVault = powerTokenController.vaults(_vaultId);
+
+        return (strategyVault.operator, strategyVault.NftCollateralId, strategyVault.collateralAmount, strategyVault.shortAmount);
     }
 }
 
