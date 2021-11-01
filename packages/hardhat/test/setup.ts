@@ -131,7 +131,6 @@ export const getPoolAddress = async (
   // const { deployer } = await getNamedAccounts();
 
   const ControllerContract = await ethers.getContractFactory("Controller");
-  const controller = (await ControllerContract.deploy()) as Controller;
 
   const OracleContract = await ethers.getContractFactory("Oracle");
   const oracle = (await OracleContract.deploy()) as Oracle;
@@ -152,8 +151,7 @@ export const getPoolAddress = async (
   await wsqueethEthPool.increaseObservationCardinalityNext(128) 
   await ethDaiPool.increaseObservationCardinalityNext(128) 
 
-  await controller.init(
-    oracle.address, 
+  const controller = (await ControllerContract.deploy(oracle.address, 
     shortSqueeth.address, 
     wsqueeth.address,
     weth.address, 
@@ -161,9 +159,10 @@ export const getPoolAddress = async (
     ethDaiPool.address, 
     wsqueethEthPool.address, 
     positionManager.address,
-  );
-  await wsqueeth.init(controller.address);
+  )) as Controller;
+  
   await shortSqueeth.init(controller.address);
+  await wsqueeth.init(controller.address);
   
   return { controller, wsqueeth, shortSqueeth, ethDaiPool, wsqueethEthPool, oracle }
 }

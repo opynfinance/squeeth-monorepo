@@ -12,7 +12,6 @@ import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/inter
 import {IWETH9} from "../interfaces/IWETH9.sol";
 
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import {Initializable} from "@openzeppelin/contracts/proxy/Initializable.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
@@ -20,7 +19,7 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {VaultLib} from "../libs/VaultLib.sol";
 import {Power2Base} from "../libs/Power2Base.sol";
 
-contract Controller is Initializable, Ownable {
+contract Controller is Ownable {
     using SafeMath for uint256;
     using VaultLib for VaultLib.Vault;
     using Address for address payable;
@@ -31,38 +30,32 @@ contract Controller is Initializable, Ownable {
     uint256 public constant PAUSE_TIME_LIMIT = 182 days;
     uint256 public constant FUNDING_PERIOD = 1 days;
 
-    bool public isShutDown; // default to false
-    bool public isSystemPaused; // default to false
-    uint256 public pausesLeft = 4;
-    uint256 public lastPauseTime; // default to 0
-
-    address public weth;
-    address public dai;
-    address public ethDaiPool;
+    address public immutable weth;
+    address public immutable dai;
+    address public immutable ethDaiPool;
+    /// @dev address of the powerPerp/weth pool
+    address public immutable wPowerPerpPool;
+    address public immutable uniswapPositionManager;
+    address public immutable shortPowerPerp;
+    address public immutable wPowerPerp;
+    address public immutable oracle;
     address public feeRecipient;
 
-    /// @dev address of the powerPerp/weth pool
-    address public wPowerPerpPool;
-    address public uniswapPositionManager;
-
+    uint256 public immutable deployTimestamp;
     /// @dev fee rate in basis point. feeRate of 1 = 0.01%
     uint256 public feeRate;
-
     /// @dev the settlement price for each wPowerPerp for settlement
     uint256 public indexForSettlement;
-
     uint256 public normalizationFactor;
     uint256 public lastFundingUpdateTimestamp;
-    uint256 public deployTimestamp;
+    uint256 public pausesLeft = 4;
+    uint256 public lastPauseTime;
 
-    bool public isWethToken0;
+    bool public isShutDown;
+    bool public isSystemPaused;
 
     /// @dev vault data storage
     mapping(uint256 => VaultLib.Vault) public vaults;
-
-    IShortPowerPerp public shortPowerPerp;
-    IWPowerPerp public wPowerPerp;
-    IOracle public oracle;
 
     /// Events
     event OpenVault(uint256 vaultId);
@@ -97,6 +90,50 @@ contract Controller is Initializable, Ownable {
     modifier isShutdown() {
         require(isShutDown, "Not shutdown");
         _;
+    }
+
+    /**
+     * @notice constructor
+     * @param _oracle oracle address
+     * @param _shortPowerPerp erc721 token address representing the short position
+     * @param _wPowerPerp erc20 token address representing non-rebasing long position
+     * @param _weth weth address
+     * @param _dai dai address
+     * @param _ethDaiPool uniswap v3 pool for weth / dai
+     * @param _wPowerPerpPool uniswap v3 pool for wPowerPerp / weth
+     * @param _uniPositionManager uniswap v3 nonfungible position manager address
+     */
+    constructor(
+        address _oracle,
+        address _shortPowerPerp,
+        address _wPowerPerp,
+        address _weth,
+        address _dai,
+        address _ethDaiPool,
+        address _wPowerPerpPool,
+        address _uniPositionManager
+    ) {
+        require(_oracle != address(0), "Invalid oracle address");
+        require(_shortPowerPerp != address(0), "Invalid shortPowerPerp address");
+        require(_wPowerPerp != address(0), "Invalid power perp address");
+        require(_weth != address(0), "Invalid weth address");
+        require(_dai != address(0), "Invalid quote currency address");
+        require(_ethDaiPool != address(0), "Invalid eth:usd pool address");
+        require(_wPowerPerpPool != address(0), "Invalid powerperp:eth pool address");
+        require(_uniPositionManager != address(0), "Invalid uni position manager");
+
+        oracle = _oracle;
+        shortPowerPerp = _shortPowerPerp;
+        wPowerPerp = _wPowerPerp;
+        weth = _weth;
+        dai = _dai;
+        ethDaiPool = _ethDaiPool;
+        wPowerPerpPool = _wPowerPerpPool;
+        uniswapPositionManager = _uniPositionManager;
+
+        deployTimestamp = block.timestamp;
+        normalizationFactor = 1e18;
+        lastFundingUpdateTimestamp = block.timestamp;
     }
 
     /**
@@ -184,54 +221,6 @@ contract Controller is Initializable, Ownable {
         VaultLib.Vault memory vault = vaults[_vaultId];
         uint256 expectedNormalizationFactor = _getNewNormalizationFactor();
         return _isVaultSafe(vault, expectedNormalizationFactor);
-    }
-
-    /**
-     * @notice initialize the contract
-     * @param _oracle oracle address
-     * @param _shortPowerPerp ERC721 token address representing the short position
-     * @param _wPowerPerp ERC20 token address representing the long position
-     * @param _weth weth address
-     * @param _dai dai address
-     * @param _ethDaiPool uniswap v3 pool for weth / dai
-     * @param _wPowerPerpPool uniswap v3 pool for wPowerPerp / weth
-     * @param _uniPositionManager uniswap v3 position manager address
-     */
-    function init(
-        address _oracle,
-        address _shortPowerPerp,
-        address _wPowerPerp,
-        address _weth,
-        address _dai,
-        address _ethDaiPool,
-        address _wPowerPerpPool,
-        address _uniPositionManager
-    ) public initializer {
-        require(_oracle != address(0), "Invalid oracle address");
-        require(_shortPowerPerp != address(0), "Invalid shortPowerPerp address");
-        require(_wPowerPerp != address(0), "Invalid power perp address");
-        require(_weth != address(0), "Invalid weth address");
-        require(_dai != address(0), "Invalid quote currency address");
-        require(_ethDaiPool != address(0), "Invalid eth:usd pool address");
-        require(_wPowerPerpPool != address(0), "Invalid powerperp:eth pool address");
-        require(_uniPositionManager != address(0), "Invalid uni position manager");
-
-        oracle = IOracle(_oracle);
-        shortPowerPerp = IShortPowerPerp(_shortPowerPerp);
-        wPowerPerp = IWPowerPerp(_wPowerPerp);
-
-        ethDaiPool = _ethDaiPool;
-        wPowerPerpPool = _wPowerPerpPool;
-        uniswapPositionManager = _uniPositionManager;
-
-        weth = _weth;
-        dai = _dai;
-
-        normalizationFactor = 1e18;
-        lastFundingUpdateTimestamp = block.timestamp;
-        deployTimestamp = block.timestamp;
-
-        isWethToken0 = weth < _wPowerPerp;
     }
 
     /**
@@ -357,7 +346,7 @@ contract Controller is Initializable, Ownable {
      */
     function reduceDebtShutdown(uint256 _vaultId) external isShutdown {
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
-        _reduceDebt(cachedVault, shortPowerPerp.ownerOf(_vaultId), normalizationFactor, false);
+        _reduceDebt(cachedVault, IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId), normalizationFactor, false);
         _writeVault(_vaultId, cachedVault);
     }
 
@@ -370,7 +359,9 @@ contract Controller is Initializable, Ownable {
         require(_canModifyVault(_vaultId, msg.sender), "Not allowed");
         uint256 cachedNormFactor = _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
-        _reduceDebt(cachedVault, shortPowerPerp.ownerOf(_vaultId), cachedNormFactor, false);
+
+        _reduceDebt(cachedVault, IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId), cachedNormFactor, false);
+
         _writeVault(_vaultId, cachedVault);
     }
 
@@ -393,7 +384,12 @@ contract Controller is Initializable, Ownable {
         require(!_isVaultSafe(cachedVault, cachedNormFactor), "Can not liquidate safe vault");
 
         // try to save target vault before liquidation by reducing debt
-        uint256 bounty = _reduceDebt(cachedVault, shortPowerPerp.ownerOf(_vaultId), cachedNormFactor, true);
+        uint256 bounty = _reduceDebt(
+            cachedVault,
+            IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId),
+            cachedNormFactor,
+            true
+        );
 
         // if vault is safe after saving, pay bounty and return early
         if (_isVaultSafe(cachedVault, cachedNormFactor)) {
@@ -430,7 +426,7 @@ contract Controller is Initializable, Ownable {
      * @param _operator new operator address
      */
     function updateOperator(uint256 _vaultId, address _operator) external {
-        require(shortPowerPerp.ownerOf(_vaultId) == msg.sender, "Not allowed");
+        require(IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId) == msg.sender, "Not allowed");
         vaults[_vaultId].operator = _operator;
         emit UpdateOperator(_vaultId, _operator);
     }
@@ -511,7 +507,7 @@ contract Controller is Initializable, Ownable {
      * @param _wPerpAmount amount of wPowerPerp to burn
      */
     function redeemLong(uint256 _wPerpAmount) external isShutdown {
-        wPowerPerp.burn(msg.sender, _wPerpAmount);
+        IWPowerPerp(wPowerPerp).burn(msg.sender, _wPerpAmount);
 
         uint256 longValue = Power2Base._getLongSettlementValue(_wPerpAmount, indexForSettlement, normalizationFactor);
         payable(msg.sender).sendValue(longValue);
@@ -576,7 +572,7 @@ contract Controller is Initializable, Ownable {
      * @param _vaultId the id to check
      */
     function _checkVaultId(uint256 _vaultId) internal view {
-        require(_vaultId > 0 && _vaultId < shortPowerPerp.nextId(), "Invalid vault id");
+        require(_vaultId > 0 && _vaultId < IShortPowerPerp(shortPowerPerp).nextId(), "Invalid vault id");
     }
 
     /**
@@ -586,7 +582,7 @@ contract Controller is Initializable, Ownable {
      * @return true if the address can modify the vault
      */
     function _canModifyVault(uint256 _vaultId, address _account) internal view returns (bool) {
-        return shortPowerPerp.ownerOf(_vaultId) == _account || vaults[_vaultId].operator == _account;
+        return IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId) == _account || vaults[_vaultId].operator == _account;
     }
 
     /**
@@ -677,7 +673,7 @@ contract Controller is Initializable, Ownable {
      * @return new in-memory vault
      */
     function _openVault(address _recipient) internal returns (uint256, VaultLib.Vault memory) {
-        uint256 vaultId = shortPowerPerp.mintNFT(_recipient);
+        uint256 vaultId = IShortPowerPerp(shortPowerPerp).mintNFT(_recipient);
 
         VaultLib.Vault memory vault = VaultLib.Vault({
             NftCollateralId: 0,
@@ -782,7 +778,7 @@ contract Controller is Initializable, Ownable {
         require(_canModifyVault(_vaultId, _account), "Not allowed");
 
         _vault.addShort(_wPowerPerpAmount);
-        wPowerPerp.mint(_account, _wPowerPerpAmount);
+        IWPowerPerp(wPowerPerp).mint(_account, _wPowerPerpAmount);
 
         emit MintShort(_wPowerPerpAmount, _vaultId);
     }
@@ -802,7 +798,7 @@ contract Controller is Initializable, Ownable {
         uint256 _wPowerPerpAmount
     ) internal {
         _vault.removeShort(_wPowerPerpAmount);
-        wPowerPerp.burn(_account, _wPowerPerpAmount);
+        IWPowerPerp(wPowerPerp).burn(_account, _wPowerPerpAmount);
 
         emit BurnShort(_wPowerPerpAmount, _vaultId);
     }
@@ -856,7 +852,7 @@ contract Controller is Initializable, Ownable {
             wAmountToLiquidate = vaultShortAmount;
         }
 
-        wPowerPerp.burn(_liquidator, wAmountToLiquidate);
+        IWPowerPerp(wPowerPerp).burn(_liquidator, wAmountToLiquidate);
         _vault.removeShort(wAmountToLiquidate);
         _vault.removeEthCollateral(collateralToPay);
 
@@ -916,11 +912,11 @@ contract Controller is Initializable, Ownable {
         if (withdrawnWPowerPerpAmount > _vault.shortAmount) {
             uint256 excess = withdrawnWPowerPerpAmount.sub(_vault.shortAmount);
             withdrawnWPowerPerpAmount = _vault.shortAmount;
-            wPowerPerp.transfer(_owner, excess);
+            IWPowerPerp(wPowerPerp).transfer(_owner, excess);
         }
 
         _vault.removeShort(withdrawnWPowerPerpAmount);
-        wPowerPerp.burn(address(this), withdrawnWPowerPerpAmount);
+        IWPowerPerp(wPowerPerp).burn(address(this), withdrawnWPowerPerpAmount);
 
         return bounty;
     }
@@ -1005,7 +1001,7 @@ contract Controller is Initializable, Ownable {
 
         (uint256 collectedToken0, uint256 collectedToken1) = positionManager.collect(collectParams);
 
-        bool cacheIsWethToken0 = isWethToken0; // cache storage variable
+        bool cacheIsWethToken0 = weth < wPowerPerp;
         uint256 wethAmount = cacheIsWethToken0 ? collectedToken0 : collectedToken1;
         uint256 wPowerPerpAmount = cacheIsWethToken0 ? collectedToken1 : collectedToken0;
 
@@ -1128,7 +1124,7 @@ contract Controller is Initializable, Ownable {
         returns (bool, bool)
     {
         uint256 scaledEthPrice = Power2Base._getScaledTwapSafe(address(oracle), ethDaiPool, weth, dai, 300);
-        int24 perpPoolTick = oracle.getTimeWeightedAverageTickSafe(wPowerPerpPool, 300);
+        int24 perpPoolTick = IOracle(oracle).getTimeWeightedAverageTickSafe(wPowerPerpPool, 300);
         return
             VaultLib.getVaultStatus(
                 _vault,
@@ -1137,7 +1133,7 @@ contract Controller is Initializable, Ownable {
                 scaledEthPrice,
                 MIN_COLLATERAL,
                 perpPoolTick,
-                isWethToken0
+                weth < wPowerPerp
             );
     }
 
@@ -1189,8 +1185,8 @@ contract Controller is Initializable, Ownable {
      * @return return min(max_pool_1, max_pool_2)
      */
     function _getMaxSafePeriod() internal view returns (uint32) {
-        uint32 maxPeriodPool1 = oracle.getMaxPeriod(ethDaiPool);
-        uint32 maxPeriodPool2 = oracle.getMaxPeriod(wPowerPerpPool);
+        uint32 maxPeriodPool1 = IOracle(oracle).getMaxPeriod(ethDaiPool);
+        uint32 maxPeriodPool2 = IOracle(oracle).getMaxPeriod(wPowerPerpPool);
         return maxPeriodPool1 > maxPeriodPool2 ? maxPeriodPool2 : maxPeriodPool1;
     }
 }

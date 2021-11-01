@@ -99,8 +99,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
 
   this.beforeAll("Deploy Controller", async () => {
     const ControllerContract = await ethers.getContractFactory("Controller");
-    controller = (await ControllerContract.deploy()) as Controller;
-    await controller.init(oracle.address, shortSqueeth.address, squeeth.address, weth.address, dai.address, ethDaiPool.address, squeethEthPool.address, uniPositionManager.address);
+    controller = (await ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, dai.address, ethDaiPool.address, squeethEthPool.address, uniPositionManager.address)) as Controller;
   })
 
   describe("Vault1 and Vault2: Basic Flow", function () {

@@ -61,9 +61,7 @@ describe("Controller", function () {
     await oracle.connect(random).setPrice(ethUSDPool.address , ethUSDPrice)  // usdc per 1 eth
     
     const ControllerContract = await ethers.getContractFactory("Controller");
-    controller = (await ControllerContract.deploy()) as Controller;
-    await controller.init(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address);
-
+    controller = (await ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)) as Controller;
   });
   
   describe("Time bound pausing", function () {

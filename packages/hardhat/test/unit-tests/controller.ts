@@ -92,68 +92,80 @@ describe("Controller", function () {
 
     // the oracle should return the exact ETH / USDC price (without scale)
     await oracle.connect(random).setPrice(ethUSDPool.address , ethUSDPrice)  // usdc per 1 eth
+
+    const ControllerContract = await ethers.getContractFactory("Controller");
+    controller = (await ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)) as Controller;
+  });
+
+  it("Should revert when oracle is address(0)", async () => {
+    const ControllerContract = await ethers.getContractFactory("Controller");
+
+    await expect(
+      ControllerContract.deploy(ethers.constants.AddressZero, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
+    ).to.be.revertedWith("Invalid oracle address");
+  });
+
+  it("Should revert when shortSqueeth is address(0)", async () => {
+    const ControllerContract = await ethers.getContractFactory("Controller");
+
+    await expect(
+      ControllerContract.deploy(oracle.address, ethers.constants.AddressZero, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
+    ).to.be.revertedWith("Invalid shortPowerPerp address");
+  });
+
+  it("Should revert when powerperp is address(0)", async () => {
+    const ControllerContract = await ethers.getContractFactory("Controller");
+
+    await expect(
+      ControllerContract.deploy(oracle.address, shortSqueeth.address, ethers.constants.AddressZero, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
+    ).to.be.revertedWith("Invalid power perp address");
+  });
+
+  it("Should revert when weth is address(0)", async () => {
+    const ControllerContract = await ethers.getContractFactory("Controller");
+
+    await expect(
+      ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, ethers.constants.AddressZero, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
+    ).to.be.revertedWith("Invalid weth address");
+  });
+  
+  it("Should revert when quote currency is address(0)", async () => {
+    const ControllerContract = await ethers.getContractFactory("Controller");
+
+    await expect(
+      ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, ethers.constants.AddressZero, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
+    ).to.be.revertedWith("Invalid quote currency address");
+  });
+
+  it("Should revert when ethUSDPool is address(0)", async () => {
+    const ControllerContract = await ethers.getContractFactory("Controller");
+
+    await expect(
+      ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethers.constants.AddressZero, squeethEthPool.address, uniPositionManager.address)
+    ).to.be.revertedWith("Invalid eth:usd pool address");
+  });
+
+  it("Should revert when squeethEthPool is address(0)", async () => {
+    const ControllerContract = await ethers.getContractFactory("Controller");
+
+    await expect(
+      ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, ethers.constants.AddressZero, uniPositionManager.address)
+    ).to.be.revertedWith("Invalid powerperp:eth pool address");
+  });
+
+  it("Should revert when uniPositionManager is address(0)", async () => {
+    const ControllerContract = await ethers.getContractFactory("Controller");
+
+    await expect(
+      ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, ethers.constants.AddressZero)
+    ).to.be.revertedWith("Invalid uni position manager");
   });
 
   describe("Deployment", async () => {
-    it("Controller deployment", async function () {
-      const ControllerContract = await ethers.getContractFactory("Controller");
-      controller = (await ControllerContract.deploy()) as Controller;
-    });
-  });
-
-  describe("Initialization", async () => {
-    it("Should revert when oracle is address(0)", async () => {
-      await expect(
-        controller.init(ethers.constants.AddressZero, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
-      ).to.be.revertedWith("Invalid oracle address");
-    });
-
-    it("Should revert when shortSqueeth is address(0)", async () => {
-      await expect(
-        controller.init(oracle.address, ethers.constants.AddressZero, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
-      ).to.be.revertedWith("Invalid shortPowerPerp address");
-    });
-
-    it("Should revert when powerperp is address(0)", async () => {
-      await expect(
-        controller.init(oracle.address, shortSqueeth.address, ethers.constants.AddressZero, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
-      ).to.be.revertedWith("Invalid power perp address");
-    });
-
-    it("Should revert when weth is address(0)", async () => {
-      await expect(
-        controller.init(oracle.address, shortSqueeth.address, squeeth.address, ethers.constants.AddressZero, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
-      ).to.be.revertedWith("Invalid weth address");
-    });
-    
-    it("Should revert when quote currency is address(0)", async () => {
-      await expect(
-        controller.init(oracle.address, shortSqueeth.address, squeeth.address, weth.address, ethers.constants.AddressZero, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
-      ).to.be.revertedWith("Invalid quote currency address");
-    });
-
-    it("Should revert when ethUSDPool is address(0)", async () => {
-      await expect(
-        controller.init(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethers.constants.AddressZero, squeethEthPool.address, uniPositionManager.address)
-      ).to.be.revertedWith("Invalid eth:usd pool address");
-    });
-
-    it("Should revert when squeethEthPool is address(0)", async () => {
-      await expect(
-        controller.init(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, ethers.constants.AddressZero, uniPositionManager.address)
-      ).to.be.revertedWith("Invalid powerperp:eth pool address");
-    });
-
-    it("Should revert when uniPositionManager is address(0)", async () => {
-      await expect(
-        controller.init(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, ethers.constants.AddressZero)
-      ).to.be.revertedWith("Invalid uni position manager");
-    });
-
-    it("Should be able to init contract", async () => {
-      await controller.init(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address);
+    it("Check controller deployment", async () => {
       const squeethAddr = await controller.wPowerPerp();
       const nftAddr = await controller.shortPowerPerp();
+
       expect(squeethAddr).to.be.eq(
         squeeth.address,
         "squeeth address mismatch"
@@ -161,14 +173,6 @@ describe("Controller", function () {
       expect(nftAddr).to.be.eq(shortSqueeth.address, "nft address mismatch");
     });
 
-    it("Should revert when init is called again", async () => {
-      await expect(
-        controller.init(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
-      ).to.be.revertedWith("Initializable: contract is already initialized");
-    }); 
-  });
-
-  describe("Deployment", async () => {
     it("Controller tester deployment", async function () {
       const ControllerTesterContract = await ethers.getContractFactory("ControllerTester");
       controllerTester = (await ControllerTesterContract.deploy(controller.address)) as ControllerTester;

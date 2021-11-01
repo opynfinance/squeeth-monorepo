@@ -70,8 +70,7 @@ describe("Controller Funding tests", function () {
   describe("Deployment", async () => {
     it("Deployment", async function () {
       const ControllerContract = await ethers.getContractFactory("Controller");
-      controller = (await ControllerContract.deploy()) as Controller;
-      await controller.init(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address);
+      controller = (await ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)) as Controller;
     });
   });
 

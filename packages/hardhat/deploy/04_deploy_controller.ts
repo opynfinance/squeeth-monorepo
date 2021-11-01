@@ -5,12 +5,12 @@ import { getPoolAddress } from '../test/setup'
 import { getUniswapDeployments, getWETH } from '../tasks/utils'
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const { getNamedAccounts, ethers, network } = hre;
+  const { getNamedAccounts, ethers, network, deployments } = hre;
   const { deployer } = await getNamedAccounts();
+  const { deploy } = deployments;
 
   // Load contracts
   const oracle = await ethers.getContract("Oracle", deployer);
-  const controller = await ethers.getContract("Controller", deployer);
   const shortSqueeth = await ethers.getContract("ShortPowerPerp", deployer);
   const wsqueeth = await ethers.getContract("WPowerPerp", deployer);
   
@@ -23,13 +23,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const ethDaiPool = await getPoolAddress(weth9, dai, uniswapFactory)
   const squeethEthPool = await getPoolAddress(weth9, wsqueeth, uniswapFactory)
 
-  try {
-    const tx = await controller.init(oracle.address, shortSqueeth.address, wsqueeth.address, weth9.address, dai.address,  ethDaiPool, squeethEthPool, positionManager.address, { from: deployer });
-    await ethers.provider.waitForTransaction(tx.hash, 1)
-    console.log(`Controller init done 🥝`);
-  } catch (error) {
-    console.log(`Controller already init or encountered error`)
-  }
+  // deploy controller
+  await deploy("Controller", { from: deployer, log: true, args:[oracle.address, shortSqueeth.address, wsqueeth.address, weth9.address, dai.address,  ethDaiPool, squeethEthPool, positionManager.address]});
+  const controller = await ethers.getContract("Controller", deployer);
 
   try {
     const tx = await wsqueeth.init(controller.address, { from: deployer });
