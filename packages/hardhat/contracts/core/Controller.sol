@@ -16,10 +16,11 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {VaultLib} from "../libs/VaultLib.sol";
 import {Power2Base} from "../libs/Power2Base.sol";
 
-contract Controller is Ownable {
+contract Controller is Ownable, ReentrancyGuard {
     using SafeMath for uint256;
     using VaultLib for VaultLib.Vault;
     using Address for address payable;
@@ -238,7 +239,7 @@ contract Controller is Ownable {
         uint256 _vaultId,
         uint128 _powerPerpAmount,
         uint256 _uniTokenId
-    ) external payable notPaused returns (uint256, uint256) {
+    ) external payable nonReentrant notPaused returns (uint256, uint256) {
         return _openDepositMint(msg.sender, _vaultId, _powerPerpAmount, msg.value, _uniTokenId, false);
     }
 
@@ -253,7 +254,7 @@ contract Controller is Ownable {
         uint256 _vaultId,
         uint128 _wPowerPerpAmount,
         uint256 _uniTokenId
-    ) external payable notPaused returns (uint256) {
+    ) external payable nonReentrant notPaused returns (uint256) {
         (uint256 vaultId, ) = _openDepositMint(msg.sender, _vaultId, _wPowerPerpAmount, msg.value, _uniTokenId, true);
         return vaultId;
     }
@@ -262,7 +263,7 @@ contract Controller is Ownable {
      * @dev deposit collateral into a vault
      * @param _vaultId id of the vault
      */
-    function deposit(uint256 _vaultId) external payable notPaused {
+    function deposit(uint256 _vaultId) external payable nonReentrant notPaused {
         _checkVaultId(_vaultId);
         _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
@@ -276,7 +277,7 @@ contract Controller is Ownable {
      * @param _vaultId id of the vault
      * @param _uniTokenId uniswap position token id
      */
-    function depositUniPositionToken(uint256 _vaultId, uint256 _uniTokenId) external notPaused {
+    function depositUniPositionToken(uint256 _vaultId, uint256 _uniTokenId) external nonReentrant notPaused {
         _checkVaultId(_vaultId);
         _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
@@ -290,7 +291,7 @@ contract Controller is Ownable {
      * @param _vaultId id of the vault
      * @param _amount amount of eth to withdraw
      */
-    function withdraw(uint256 _vaultId, uint256 _amount) external payable notPaused {
+    function withdraw(uint256 _vaultId, uint256 _amount) external payable nonReentrant notPaused {
         uint256 cachedNormFactor = _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
 
@@ -304,7 +305,7 @@ contract Controller is Ownable {
      * @notice withdraw uniswap v3 position token from a vault
      * @param _vaultId id of the vault
      */
-    function withdrawUniPositionToken(uint256 _vaultId) external notPaused {
+    function withdrawUniPositionToken(uint256 _vaultId) external nonReentrant notPaused {
         uint256 cachedNormFactor = _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
         _withdrawUniPositionToken(cachedVault, msg.sender, _vaultId);
@@ -322,7 +323,7 @@ contract Controller is Ownable {
         uint256 _vaultId,
         uint256 _wPowerPerpAmount,
         uint256 _withdrawAmount
-    ) external notPaused {
+    ) external nonReentrant notPaused {
         _burnAndWithdraw(msg.sender, _vaultId, _wPowerPerpAmount, _withdrawAmount, true);
     }
 
@@ -337,7 +338,7 @@ contract Controller is Ownable {
         uint256 _vaultId,
         uint256 _powerPerpAmount,
         uint256 _withdrawAmount
-    ) external notPaused returns (uint256) {
+    ) external nonReentrant notPaused returns (uint256) {
         return _burnAndWithdraw(msg.sender, _vaultId, _powerPerpAmount, _withdrawAmount, false);
     }
 
@@ -347,7 +348,7 @@ contract Controller is Ownable {
      * @dev the caller won't get any bounty. this is expected to be used for insolvent vaults in shutdown
      * @param _vaultId vault containing uniswap v3 position to liquidate
      */
-    function reduceDebtShutdown(uint256 _vaultId) external isShutdown {
+    function reduceDebtShutdown(uint256 _vaultId) external nonReentrant isShutdown {
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
         _reduceDebt(cachedVault, IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId), normalizationFactor, false);
         _writeVault(_vaultId, cachedVault);
@@ -358,7 +359,7 @@ contract Controller is Ownable {
      * @dev the caller won't get any bounty. this is expected to be used by vault owner
      * @param _vaultId target vault
      */
-    function reduceDebt(uint256 _vaultId) external notPaused {
+    function reduceDebt(uint256 _vaultId) external nonReentrant notPaused {
         require(_canModifyVault(_vaultId, msg.sender), "Not allowed");
         uint256 cachedNormFactor = _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
@@ -378,7 +379,7 @@ contract Controller is Ownable {
      * @param _maxDebtAmount max amount of wPowerPerpetual to repay
      * @return amount of wPowerPerp repaid
      */
-    function liquidate(uint256 _vaultId, uint256 _maxDebtAmount) external notPaused returns (uint256) {
+    function liquidate(uint256 _vaultId, uint256 _maxDebtAmount) external nonReentrant notPaused returns (uint256) {
         _checkVaultId(_vaultId);
         uint256 cachedNormFactor = _applyFunding();
 
@@ -509,7 +510,7 @@ contract Controller is Ownable {
      * @notice redeem wPowerPerp for (settlement index value) * normalizationFactor when the system is shutdown
      * @param _wPerpAmount amount of wPowerPerp to burn
      */
-    function redeemLong(uint256 _wPerpAmount) external isShutdown {
+    function redeemLong(uint256 _wPerpAmount) external nonReentrant isShutdown {
         IWPowerPerp(wPowerPerp).burn(msg.sender, _wPerpAmount);
 
         uint256 longValue = Power2Base._getLongSettlementValue(_wPerpAmount, indexForSettlement, normalizationFactor);
@@ -521,7 +522,7 @@ contract Controller is Ownable {
      * @dev short position is redeemed by valuing the debt at the (settlement index value) * normalizationFactor
      * @param _vaultId vault id
      */
-    function redeemShort(uint256 _vaultId) external isShutdown {
+    function redeemShort(uint256 _vaultId) external nonReentrant isShutdown {
         require(_canModifyVault(_vaultId, msg.sender), "Not allowed");
 
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
