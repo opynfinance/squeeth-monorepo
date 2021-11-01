@@ -1,20 +1,20 @@
 # `WETH9`
 
-## Functions:
+## All Functions:
 
-- `deposit() (public)`
+- `deposit()`
 
-- `withdraw(uint256 wad) (public)`
+- `withdraw(uint256 wad)`
 
-- `totalSupply() (public)`
+- `totalSupply()`
 
-- `approve(address guy, uint256 wad) (public)`
+- `approve(address guy, uint256 wad)`
 
-- `transfer(address dst, uint256 wad) (public)`
+- `transfer(address dst, uint256 wad)`
 
-- `transferFrom(address src, address dst, uint256 wad) (public)`
+- `transferFrom(address src, address dst, uint256 wad)`
 
-## Events:
+## All Events:
 
 - `Approval(address src, address guy, uint256 wad)`
 
@@ -24,22 +24,16 @@
 
 - `Withdrawal(address src, uint256 wad)`
 
-### Function `deposit() public`
+# Functions
 
-### Function `withdraw(uint256 wad) public`
+## `deposit()`
 
-### Function `totalSupply() → uint256 public`
+## `withdraw(uint256 wad)`
 
-### Function `approve(address guy, uint256 wad) → bool public`
+## `totalSupply() → uint256`
 
-### Function `transfer(address dst, uint256 wad) → bool public`
+## `approve(address guy, uint256 wad) → bool`
 
-### Function `transferFrom(address src, address dst, uint256 wad) → bool public`
+## `transfer(address dst, uint256 wad) → bool`
 
-### Event `Approval(address src, address guy, uint256 wad)`
-
-### Event `Transfer(address src, address dst, uint256 wad)`
-
-### Event `Deposit(address dst, uint256 wad)`
-
-### Event `Withdrawal(address src, uint256 wad)`
+## `transferFrom(address src, address dst, uint256 wad) → bool`

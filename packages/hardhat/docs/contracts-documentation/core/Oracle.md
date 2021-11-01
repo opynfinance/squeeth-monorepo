@@ -1,153 +1,87 @@
 # `Oracle`
 
-## Functions:
+read UniswapV3 pool TWAP prices, and convert to human readable term with (18 decimals)
 
-- `getTwap(address _pool, address _base, address _quote, uint32 _period) (external)`
+if ETH price is $3000, both ETH/USDC price and ETH/DAI price will be reported as 3000 * 1e18 by this oracle
 
-- `getTwapSafe(address _pool, address _base, address _quote, uint32 _period) (external)`
+## All Functions:
 
-- `getMaxPeriod(address _pool) (external)`
+- `getTwap(address _pool, address _base, address _quote, uint32 _period)`
 
-- `getTimeWeightedAverageTickSafe(address _pool, uint32 _period) (external)`
+- `getHistoricalTwap(address _pool, address _base, address _quote, uint32 _secondsAgoToStartOfTwap, uint32 _secondsAgoToEndOfTwap)`
 
-- `_fetchTwapSafe(address _pool, address _base, address _quote, uint32 _period, uint256 _amountIn) (internal)`
+- `getTwapSafe(address _pool, address _base, address _quote, uint32 _period)`
 
-- `_fetchTwap(address _pool, address _base, address _quote, uint32 _period, uint256 _amountIn) (internal)`
+- `getMaxPeriod(address _pool)`
 
-- `_getMaxPeriod(address _pool) (internal)`
+- `getTimeWeightedAverageTickSafe(address _pool, uint32 _period)`
 
-- `toUint128(uint256 y) (internal)`
+# Functions
 
-### Function `getTwap(address _pool, address _base, address _quote, uint32 _period) → uint256 external`
+## `getTwap(address _pool, address _base, address _quote, uint32 _period) → uint256`
 
-get twap from the uniswap pool
+get twap converted with base & quote token decimals
 
-if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD".
+if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD"
 
-#### Parameters:
+### Parameters:
 
-- `_pool`: uniswap pool address
+- `address _pool`: uniswap pool address
 
-- `_base`: base currency. to get eth/dai price, eth is base token
+- `address _base`: base currency. to get eth/usd price, eth is base token
 
-- `_quote`: quote currency. to get eth/dai price, dai is the quote currency
+- `address _quote`: quote currency. to get eth/usd price, usd is the quote currency
 
-- `_period`: number of seconds in the past to start calculating time-weighted average
+- `uint32 _period`: number of seconds in the past to start calculating time-weighted average
 
-#### Return Values:
+### Return Values:
 
-- price scaled by 1e18
+- `address` price of 1 base currency in quote currency. scaled by 1e18
 
-### Function `getTwapSafe(address _pool, address _base, address _quote, uint32 _period) → uint256 external`
+## `getHistoricalTwap(address _pool, address _base, address _quote, uint32 _secondsAgoToStartOfTwap, uint32 _secondsAgoToEndOfTwap) → uint256`
 
-get twap from the uniswap pool, never revert
+## `getTwapSafe(address _pool, address _base, address _quote, uint32 _period) → uint256`
 
-if period is larger than the max period stored by the pool, default to the max period.
+get twap converted with base & quote token decimals, never reverts
 
-#### Parameters:
+### Parameters:
 
-- `_pool`: uniswap pool address
+- `address _pool`: uniswap pool address
 
-- `_base`: base currency. to get eth/dai price, eth is base token
+- `address _base`: base currency. to get eth/usd price, eth is base token
 
-- `_quote`: quote currency. to get eth/dai price, dai is the quote currency
+- `address _quote`: quote currency. to get eth/usd price, usd is the quote currency
 
-- `_period`: number of seconds in the past to start calculating time-weighted average
+- `uint32 _period`: number of seconds in the past to start calculating time-weighted average
 
-#### Return Values:
+### Return Values:
 
-- price scaled by 1e18
+- `address` price of 1 base currency in quote currency. scaled by 1e18
 
-### Function `getMaxPeriod(address _pool) → uint32 external`
+## `getMaxPeriod(address _pool) → uint32`
 
-get the max period that can be used to request twap.
+get the max period that can be used to request twap
 
-#### Parameters:
+### Parameters:
 
-- `_pool`: uniswap pool address
+- `address _pool`: uniswap pool address
 
-#### Return Values:
+### Return Values:
 
-- max period can be used to request twap
+- `address` max period can be used to request twap
 
-### Function `getTimeWeightedAverageTickSafe(address _pool, uint32 _period) → int24 timeWeightedAverageTick external`
+## `getTimeWeightedAverageTickSafe(address _pool, uint32 _period) → int24 timeWeightedAverageTick`
 
 get time weighed average tick, not converted to price
 
 this function will not revert
 
-#### Parameters:
+### Parameters:
 
-- `_pool`: address of the pool
+- `address _pool`: address of the pool
 
-- `_period`: period in second that we want to calculate average on
+- `uint32 _period`: period in second that we want to calculate average on
 
-#### Return Values:
+### Return Values:
 
-- timeWeightedAverageTick the time weighted average tick
-
-### Function `_fetchTwapSafe(address _pool, address _base, address _quote, uint32 _period, uint256 _amountIn) → uint256 amountOut internal`
-
-get twap from the uniswap pool, never revert
-
-if period is larger than the max period stored by the pool, default to the max period.
-
-#### Parameters:
-
-- `_pool`: uniswap pool address
-
-- `_base`: base currency. to get eth/dai price, eth is base token
-
-- `_quote`: quote currency. to get eth/dai price, dai is the quote currency
-
-- `_period`: number of seconds in the past to start calculating time-weighted average
-
-- `_amountIn`: Amount of token to be converted
-
-#### Return Values:
-
-- amountOut Amount of quoteToken received for baseAmount of baseToken
-
-### Function `_fetchTwap(address _pool, address _base, address _quote, uint32 _period, uint256 _amountIn) → uint256 internal`
-
-get twap from the uniswap pool
-
-if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD".
-
-#### Parameters:
-
-- `_pool`: uniswap pool address
-
-- `_base`: base currency. to get eth/dai price, eth is base token
-
-- `_quote`: quote currency. to get eth/dai price, dai is the quote currency
-
-- `_period`: number of seconds in the past to start calculating time-weighted average
-
-#### Return Values:
-
-- price scaled by 1e18
-
-### Function `_getMaxPeriod(address _pool) → uint32 internal`
-
-get the max period that can be used to request twap.
-
-#### Parameters:
-
-- `_pool`: uniswap pool address
-
-#### Return Values:
-
-- max period can be used to request twap
-
-### Function `toUint128(uint256 y) → uint128 z internal`
-
-Cast a uint256 to a uint128, revert on overflow
-
-#### Parameters:
-
-- `y`: The uint256 to be downcasted
-
-#### Return Values:
-
-- z The downcasted integer, now type uint128
+- `address` timeWeightedAverageTick the time weighted average tick

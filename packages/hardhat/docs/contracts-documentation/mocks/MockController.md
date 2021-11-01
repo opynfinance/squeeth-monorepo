@@ -1,15 +1,17 @@
 # `MockController`
 
-## Functions:
+## All Functions:
 
-- `init(address _vaultNFT) (public)`
+- `init(address _shortPowerPerp, address _wPowerPerp)`
 
-- `mint(uint256 _vaultId, uint128 _mintAmount, uint256 _nftTokenId) (external)`
+- `mintWPowerPerpAmount(uint256 _vaultId, uint128 _mintAmount, uint256)`
 
-- `_openVault(address _recipient) (internal)`
+- `burnWPowerPerpAmount(uint256 _vaultId, uint256 _amount, uint256 _withdrawAmount)`
 
-### Function `init(address _vaultNFT) public`
+# Functions
 
-### Function `mint(uint256 _vaultId, uint128 _mintAmount, uint256 _nftTokenId) → uint256, uint256 external`
+## `init(address _shortPowerPerp, address _wPowerPerp)`
 
-### Function `_openVault(address _recipient) → uint256 internal`
+## `mintWPowerPerpAmount(uint256 _vaultId, uint128 _mintAmount, uint256) → uint256, uint256`
+
+## `burnWPowerPerpAmount(uint256 _vaultId, uint256 _amount, uint256 _withdrawAmount)`

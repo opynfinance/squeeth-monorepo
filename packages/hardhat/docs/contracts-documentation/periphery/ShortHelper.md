@@ -1,25 +1,55 @@
 # `ShortHelper`
 
-## Functions:
+contract simplifies opening a short wPowerPerp position by selling wPowerPerp on uniswap v3 and returning eth to user
 
-- `constructor(address _controllerAddr, address _swapRouter, address _wethAddr) (public)`
+## All Functions:
 
-- `openShort(uint256 _vaultId, uint128 _shortSqueethAmount, uint256 _uniNftId, struct ISwapRouter.ExactInputSingleParams _exactInputParams) (external)`
+- `constructor(address _controllerAddr, address _swapRouter, address _wethAddr)`
 
-- `closeShort(uint256 _vaultId, uint256 _removeShortAmount, uint128 _withdrawAmount, struct ISwapRouter.ExactOutputSingleParams _exactOutputParams) (external)`
+- `openShort(uint256 _vaultId, uint128 _powerPerpAmount, uint256 _uniNftId, struct ISwapRouter.ExactInputSingleParams _exactInputParams)`
 
-- `receive() (external)`
+- `closeShort(uint256 _vaultId, uint256 _wPowerPerpAmount, uint128 _withdrawAmount, struct ISwapRouter.ExactOutputSingleParams _exactOutputParams)`
 
-### Function `constructor(address _controllerAddr, address _swapRouter, address _wethAddr) public`
+- `receive()`
 
-### Function `openShort(uint256 _vaultId, uint128 _shortSqueethAmount, uint256 _uniNftId, struct ISwapRouter.ExactInputSingleParams _exactInputParams) external`
+# Functions
 
-mint squeeth, trade with uniswap and send back premium in eth.
+## `constructor(address _controllerAddr, address _swapRouter, address _wethAddr)`
 
-### Function `closeShort(uint256 _vaultId, uint256 _removeShortAmount, uint128 _withdrawAmount, struct ISwapRouter.ExactOutputSingleParams _exactOutputParams) external`
+constructor for short helper
 
-buy back some squeeth and close the position.
+### Parameters:
 
-### Function `receive() external`
+- `address _controllerAddr`: controller address for wPowerPerp
+
+- `address _swapRouter`: uniswap v3 swap router address
+
+- `address _wethAddr`: weth address
+
+## `openShort(uint256 _vaultId, uint128 _powerPerpAmount, uint256 _uniNftId, struct ISwapRouter.ExactInputSingleParams _exactInputParams)`
+
+mint power perp, trade with uniswap v3 and send back premium in eth
+
+### Parameters:
+
+- `uint256 _vaultId`: short wPowerPerp vault id
+
+- `uint128 _powerPerpAmount`: amount of powerPerp to mint/sell
+
+- `uint256 _uniNftId`: uniswap v3 position token id
+
+## `closeShort(uint256 _vaultId, uint256 _wPowerPerpAmount, uint128 _withdrawAmount, struct ISwapRouter.ExactOutputSingleParams _exactOutputParams)`
+
+buy back wPowerPerp with eth on uniswap v3 and close position
+
+### Parameters:
+
+- `uint256 _vaultId`: short wPowerPerp vault id
+
+- `uint256 _wPowerPerpAmount`: amount of wPowerPerp to mint/sell
+
+- `uint128 _withdrawAmount`: amount to withdraw
+
+## `receive()`
 
 only receive eth from weth contract and controller.

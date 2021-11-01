@@ -1,19 +1,25 @@
 # `IOracle`
 
-## Functions:
+## All Functions:
 
-- `getTwap(address _pool, address _base, address _quote, uint32 _period) (external)`
+- `getHistoricalTwap(address _pool, address _base, address _quote, uint32 _period, uint32 _periodToHistoricPrice)`
 
-- `getTwapSafe(address _pool, address _base, address _quote, uint32 _period) (external)`
+- `getTwap(address _pool, address _base, address _quote, uint32 _period)`
 
-- `getMaxPeriod(address _pool) (external)`
+- `getTwapSafe(address _pool, address _base, address _quote, uint32 _period)`
 
-- `getTimeWeightedAverageTickSafe(address _pool, uint32 _period) (external)`
+- `getMaxPeriod(address _pool)`
 
-### Function `getTwap(address _pool, address _base, address _quote, uint32 _period) → uint256 external`
+- `getTimeWeightedAverageTickSafe(address _pool, uint32 _period)`
 
-### Function `getTwapSafe(address _pool, address _base, address _quote, uint32 _period) → uint256 external`
+# Functions
 
-### Function `getMaxPeriod(address _pool) → uint32 external`
+## `getHistoricalTwap(address _pool, address _base, address _quote, uint32 _period, uint32 _periodToHistoricPrice) → uint256`
 
-### Function `getTimeWeightedAverageTickSafe(address _pool, uint32 _period) → int24 timeWeightedAverageTick external`
+## `getTwap(address _pool, address _base, address _quote, uint32 _period) → uint256`
+
+## `getTwapSafe(address _pool, address _base, address _quote, uint32 _period) → uint256`
+
+## `getMaxPeriod(address _pool) → uint32`
+
+## `getTimeWeightedAverageTickSafe(address _pool, uint32 _period) → int24 timeWeightedAverageTick`

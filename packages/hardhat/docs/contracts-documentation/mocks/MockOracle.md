@@ -1,27 +1,29 @@
 # `MockOracle`
 
-## Functions:
+## All Functions:
 
-- `setPrice(address _pool, uint256 _price) (external)`
+- `setPrice(address _pool, uint256 _price)`
 
-- `setAverageTick(address _pool, int24 _poolTick) (external)`
+- `setAverageTick(address _pool, int24 _poolTick)`
 
-- `getTwapSafe(address _pool, address, address, uint32) (external)`
+- `getTwapSafe(address _pool, address, address, uint32)`
 
-- `getTimeWeightedAverageTickSafe(address _pool, uint32) (external)`
+- `getTimeWeightedAverageTickSafe(address _pool, uint32)`
 
-- `getTwap(address _pool, address, address, uint32) (external)`
+- `getTwap(address _pool, address, address, uint32)`
 
-- `getMaxPeriod(address) (external)`
+- `getMaxPeriod(address)`
 
-### Function `setPrice(address _pool, uint256 _price) external`
+# Functions
 
-### Function `setAverageTick(address _pool, int24 _poolTick) external`
+## `setPrice(address _pool, uint256 _price)`
 
-### Function `getTwapSafe(address _pool, address, address, uint32) → uint256 external`
+## `setAverageTick(address _pool, int24 _poolTick)`
 
-### Function `getTimeWeightedAverageTickSafe(address _pool, uint32) → int24 external`
+## `getTwapSafe(address _pool, address, address, uint32) → uint256`
 
-### Function `getTwap(address _pool, address, address, uint32) → uint256 external`
+## `getTimeWeightedAverageTickSafe(address _pool, uint32) → int24`
 
-### Function `getMaxPeriod(address) → uint32 external`
+## `getTwap(address _pool, address, address, uint32) → uint256`
+
+## `getMaxPeriod(address) → uint32`

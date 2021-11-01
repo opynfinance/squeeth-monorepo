@@ -1,47 +1,57 @@
 # `StrategyBase`
 
-Base contract for PowerToken strategy
+base contract for PowerToken strategy
 
 StrategyBase contract
 
-## Functions:
+## All Functions:
 
-- `constructor(address _powerTokenController, address _weth) (public)`
+- `constructor(address _powerTokenController, address _weth, string _name, string _symbol)`
 
-- `getStrategyVaultId() (external)`
+- `getStrategyVaultId()`
 
-- `_openShortPosition() (internal)`
+- `getStrategyDebt()`
 
-## Events:
+- `getStrategyCollateral()`
 
-- `OpenShortPosition(uint256 vaultId)`
+# Functions
 
-### Function `constructor(address _powerTokenController, address _weth) public`
+## `constructor(address _powerTokenController, address _weth, string _name, string _symbol)`
 
-Strategy base constructor
+constructor for StrategyBase
 
-this will open a vault in the power token contract and store vault ID
+this will open a vault in the power token contract and store the vault ID
 
-#### Parameters:
+### Parameters:
 
-- `_powerTokenController`: power token controller address
+- `address _powerTokenController`: power token controller address
 
-- `_weth`: weth token address
+- `address _weth`: weth token address
 
-### Function `getStrategyVaultId() → uint256 external`
+- `string _name`: token name for strategy ERC20 token
 
-Get strategy vault ID in Squeeth contract
+- `string _symbol`: token symbol for strategy ERC20 token
 
-#### Return Values:
+## `getStrategyVaultId() → uint256`
 
-- vauld ID
+get power token strategy vault ID 
 
-### Function `_openShortPosition() internal`
+### Return Values:
 
-Open a short vault
+- `` vault ID
 
-Should only be called at constructor
+## `getStrategyDebt() → uint256`
 
-### Event `OpenShortPosition(uint256 vaultId)`
+get strategy debt amount
 
-emit when strategy open short position
+### Return Values:
+
+- `` debt amount
+
+## `getStrategyCollateral() → uint256`
+
+get strategy collateral amount
+
+### Return Values:
+
+- `` collateral amount

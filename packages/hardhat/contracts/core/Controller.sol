@@ -516,7 +516,7 @@ contract Controller is Ownable {
     /**
      * @notice redeem short position when the system is shutdown
      * @dev short position is redeemed by valuing the debt at the (settlement index value) * normalizationFactor
-     * @param _vaultId vauld id
+     * @param _vaultId vault id
      */
     function redeemShort(uint256 _vaultId) external isShutdown {
         require(_canModifyVault(_vaultId, msg.sender), "Not allowed");

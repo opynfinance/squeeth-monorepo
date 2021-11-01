@@ -1,11 +1,13 @@
 # `IWETH9`
 
-## Functions:
+## All Functions:
 
-- `deposit() (external)`
+- `deposit()`
 
-- `withdraw(uint256 wad) (external)`
+- `withdraw(uint256 wad)`
 
-### Function `deposit() external`
+# Functions
 
-### Function `withdraw(uint256 wad) external`
+## `deposit()`
+
+## `withdraw(uint256 wad)`

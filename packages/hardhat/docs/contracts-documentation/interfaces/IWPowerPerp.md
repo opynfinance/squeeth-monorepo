@@ -1,11 +1,13 @@
 # `IWPowerPerp`
 
-## Functions:
+## All Functions:
 
-- `mint(address _account, uint256 _amount) (external)`
+- `mint(address _account, uint256 _amount)`
 
-- `burn(address _account, uint256 _amount) (external)`
+- `burn(address _account, uint256 _amount)`
 
-### Function `mint(address _account, uint256 _amount) external`
+# Functions
 
-### Function `burn(address _account, uint256 _amount) external`
+## `mint(address _account, uint256 _amount)`
+
+## `burn(address _account, uint256 _amount)`

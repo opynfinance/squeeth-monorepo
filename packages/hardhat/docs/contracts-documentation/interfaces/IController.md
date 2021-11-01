@@ -1,41 +1,59 @@
 # `IController`
 
-## Functions:
+## All Functions:
 
-- `vaultNFT() (external)`
+- `vaults(uint256 _vaultId)`
 
-- `wPowerPerp() (external)`
+- `shortPowerPerp()`
 
-- `mint(uint256 _vaultId, uint128 _mintAmount, uint256 _nftId) (external)`
+- `wPowerPerp()`
 
-- `deposit(uint256 _vaultId) (external)`
+- `getExpectedNormalizationFactor()`
 
-- `withdraw(uint256 _vaultId, uint256 _amount) (external)`
+- `mintPowerPerpAmount(uint256 _vaultId, uint128 _powerPerpAmount, uint256 _uniTokenId)`
 
-- `burn(uint256 _vaultId, uint256 _amount, uint256 _withdrawAmount) (external)`
+- `mintWPowerPerpAmount(uint256 _vaultId, uint128 _wPowerPerpAmount, uint256 _uniTokenId)`
 
-- `applyFunding() (external)`
+- `deposit(uint256 _vaultId)`
 
-### Function `vaultNFT() → address external`
+- `withdraw(uint256 _vaultId, uint256 _amount)`
 
-### Function `wPowerPerp() → address external`
+- `burnWPowerPerpAmount(uint256 _vaultId, uint256 _wPowerPerpAmount, uint256 _withdrawAmount)`
 
-### Function `mint(uint256 _vaultId, uint128 _mintAmount, uint256 _nftId) → uint256, uint256 external`
+- `burnOnPowerPerpAmount(uint256 _vaultId, uint256 _powerPerpAmount, uint256 _withdrawAmount)`
 
-put down collateral and mint squeeth.
+- `applyFunding()`
 
-### Function `deposit(uint256 _vaultId) external`
+- `reduceDebtShutdown(uint256 _vaultId)`
+
+# Functions
+
+## `vaults(uint256 _vaultId) → struct VaultLib.Vault`
+
+## `shortPowerPerp() → address`
+
+## `wPowerPerp() → address`
+
+## `getExpectedNormalizationFactor() → uint256`
+
+## `mintPowerPerpAmount(uint256 _vaultId, uint128 _powerPerpAmount, uint256 _uniTokenId) → uint256 vaultId, uint256 wPowerPerpAmount`
+
+## `mintWPowerPerpAmount(uint256 _vaultId, uint128 _wPowerPerpAmount, uint256 _uniTokenId) → uint256 vaultId`
+
+## `deposit(uint256 _vaultId)`
 
 Deposit collateral into a vault
 
-### Function `withdraw(uint256 _vaultId, uint256 _amount) external`
+## `withdraw(uint256 _vaultId, uint256 _amount)`
 
 Withdraw collateral from a vault.
 
-### Function `burn(uint256 _vaultId, uint256 _amount, uint256 _withdrawAmount) external`
+## `burnWPowerPerpAmount(uint256 _vaultId, uint256 _wPowerPerpAmount, uint256 _withdrawAmount)`
 
-burn squueth and remove collateral from a vault.
+## `burnOnPowerPerpAmount(uint256 _vaultId, uint256 _powerPerpAmount, uint256 _withdrawAmount) → uint256 wPowerPerpAmount`
 
-### Function `applyFunding() external`
+## `applyFunding()`
 
 External function to update the normalized factor as a way to pay funding.
+
+## `reduceDebtShutdown(uint256 _vaultId)`

@@ -1,11 +1,17 @@
 # `MockUniswapV3Pool`
 
-## Functions:
+## All Functions:
 
-- `setPoolTokens(address _token0, address _token1) (external)`
+- `setPoolTokens(address _token0, address _token1)`
 
-- `setSlot0Data(uint160 _sqrtPriceX96, int24 _tick) (external)`
+- `setSlot0Data(uint160 _sqrtPriceX96, int24 _tick)`
 
-### Function `setPoolTokens(address _token0, address _token1) external`
+- `flash(address recipient, uint256 amount0, uint256 amount1, bytes data)`
 
-### Function `setSlot0Data(uint160 _sqrtPriceX96, int24 _tick) external`
+# Functions
+
+## `setPoolTokens(address _token0, address _token1)`
+
+## `setSlot0Data(uint160 _sqrtPriceX96, int24 _tick)`
+
+## `flash(address recipient, uint256 amount0, uint256 amount1, bytes data)`

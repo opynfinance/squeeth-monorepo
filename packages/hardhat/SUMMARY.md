@@ -3,9 +3,10 @@
   * core
     * [Controller](docs/contracts-documentation/core/Controller.md)
     * [Oracle](docs/contracts-documentation/core/Oracle.md)
-    * [VaultManagerNFT](docs/contracts-documentation/core/VaultManagerNFT.md)
-    * [WSqueeth](docs/contracts-documentation/core/WSqueeth.md)
+    * [ShortPowerPerp](docs/contracts-documentation/core/ShortPowerPerp.md)
+    * [WPowerPerp](docs/contracts-documentation/core/WPowerPerp.md)
   * libs
+    * [OracleLibrary](docs/contracts-documentation/libs/OracleLibrary.md)
     * [Power2Base](docs/contracts-documentation/libs/Power2Base.md)
     * [VaultLib](docs/contracts-documentation/libs/VaultLib.md)
   * periphery
@@ -14,3 +15,5 @@
     * [CrabStrategy](docs/contracts-documentation/strategy/CrabStrategy.md)
     * base
       * [StrategyBase](docs/contracts-documentation/strategy/base/StrategyBase.md)
+      * [StrategyFlashSwap](docs/contracts-documentation/strategy/base/StrategyFlashSwap.md)
+      * [StrategyMath](docs/contracts-documentation/strategy/base/StrategyMath.md)

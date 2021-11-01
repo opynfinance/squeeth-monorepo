@@ -1,4 +1,4 @@
-# `VaultLib`
+# `StrategyMath`
 
 ## All Functions:
 

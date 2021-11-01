@@ -1,84 +1,82 @@
 # `Controller`
 
-## Modifiers:
+## All Functions:
 
-- `notShutdown()`
+- `constructor(address _oracle, address _shortPowerPerp, address _wPowerPerp, address _weth, address _quoteCurrency, address _ethQuoteCurrencyPool, address _wPowerPerpPool, address _uniPositionManager)`
 
-## Functions:
+- `getExpectedNormalizationFactor()`
 
-- `init(address _oracle, address _vaultNFT, address _wPowerPerp, address _weth, address _dai, address _ethDaiPool, address _powerPerpPool, address _uniPositionManager) (public)`
+- `getIndex(uint32 _period)`
 
-- `mint(uint256 _vaultId, uint128 _mintAmount, uint256 _nftTokenId) (external)`
+- `getUnscaledIndex(uint32 _period)`
 
-- `deposit(uint256 _vaultId) (external)`
+- `getDenormalizedMark(uint32 _period)`
 
-- `depositUniNFT(uint256 _vaultId, uint256 _tokenId) (external)`
+- `getDenormalizedMarkForFunding(uint32 _period)`
 
-- `withdraw(uint256 _vaultId, uint256 _amount) (external)`
+- `isVaultSafe(uint256 _vaultId)`
 
-- `withdrawUniNFT(uint256 _vaultId) (external)`
+- `mintPowerPerpAmount(uint256 _vaultId, uint128 _powerPerpAmount, uint256 _uniTokenId)`
 
-- `burn(uint256 _vaultId, uint256 _amount, uint256 _withdrawAmount) (external)`
+- `mintWPowerPerpAmount(uint256 _vaultId, uint128 _wPowerPerpAmount, uint256 _uniTokenId)`
 
-- `liquidate(uint256 _vaultId, uint256 _debtAmount) (external)`
+- `deposit(uint256 _vaultId)`
 
-- `getIndex(uint32 _period) (external)`
+- `depositUniPositionToken(uint256 _vaultId, uint256 _uniTokenId)`
 
-- `getDenormalizedMark(uint32 _period) (external)`
+- `withdraw(uint256 _vaultId, uint256 _amount)`
 
-- `updateOperator(uint256 _vaultId, address _operator) (external)`
+- `withdrawUniPositionToken(uint256 _vaultId)`
 
-- `shutDown() (external)`
+- `burnWPowerPerpAmount(uint256 _vaultId, uint256 _wPowerPerpAmount, uint256 _withdrawAmount)`
 
-- `redeemLong(uint256 _wPerpAmount) (external)`
+- `burnPowerPerpAmount(uint256 _vaultId, uint256 _powerPerpAmount, uint256 _withdrawAmount)`
 
-- `redeemShort(uint256 _vaultId) (external)`
+- `reduceDebtShutdown(uint256 _vaultId)`
 
-- `applyFunding() (external)`
+- `reduceDebt(uint256 _vaultId)`
 
-- `donate() (external)`
+- `liquidate(uint256 _vaultId, uint256 _maxDebtAmount)`
 
-- `_canModifyVault(uint256 _vaultId, address _account) (internal)`
+- `updateOperator(uint256 _vaultId, address _operator)`
 
-- `_openVault(address _recipient) (internal)`
+- `setFeeRecipient(address _newFeeRecipient)`
 
-- `_depositUniNFT(address _account, uint256 _vaultId, uint256 _tokenId) (internal)`
+- `setFeeRate(uint256 _newFeeRate)`
 
-- `_addEthCollateral(uint256 _vaultId, uint256 _amount) (internal)`
+- `pauseAndShutDown()`
 
-- `_withdrawUniNFT(address _account, uint256 _vaultId) (internal)`
+- `shutDown()`
 
-- `_withdrawCollateral(address _account, uint256 _vaultId, uint256 _amount) (internal)`
+- `pause()`
 
-- `_addShort(address _account, uint256 _vaultId, uint256 _squeethAmount) (internal)`
+- `unPauseAnyone()`
 
-- `_removeShort(address _account, uint256 _vaultId, uint256 _amount) (internal)`
+- `unPauseOwner()`
 
-- `_applyFunding() (internal)`
+- `redeemLong(uint256 _wPerpAmount)`
 
-- `_checkUniNFT(uint256 _tokenId) (internal)`
+- `redeemShort(uint256 _vaultId)`
 
-- `_checkVault(uint256 _vaultId) (internal)`
+- `applyFunding()`
 
-- `_isVaultSafe(struct VaultLib.Vault _vault) (internal)`
+- `donate()`
 
-- `_getFairPeriodForOracle(uint32 _period) (internal)`
+- `receive()`
 
-- `_getMaxSafePeriod() (internal)`
-
-## Events:
+## All Events:
 
 - `OpenVault(uint256 vaultId)`
 
 - `CloseVault(uint256 vaultId)`
 
-- `DepositCollateral(uint256 vaultId, uint128 amount, uint128 collateralId)`
+- `DepositCollateral(uint256 vaultId, uint256 amount, uint128 collateralId)`
 
-- `DepositUniNftCollateral(uint256 vaultId, uint256 tokenId)`
+- `DepositUniPositionToken(uint256 vaultId, uint256 tokenId)`
 
 - `WithdrawCollateral(uint256 vaultId, uint256 amount, uint128 collateralId)`
 
-- `WithdrawUniNftCollateral(uint256 vaultId, uint256 tokenId)`
+- `WithdrawUniPositionToken(uint256 vaultId, uint256 tokenId)`
 
 - `MintShort(uint256 amount, uint256 vaultId)`
 
@@ -86,158 +84,334 @@
 
 - `UpdateOperator(uint256 vaultId, address operator)`
 
-- `Liquidate(uint256 vaultId, uint256 debtAmount, uint256 collateralToSell)`
+- `FeeRateUpdated(uint256 oldFee, uint256 newFee)`
 
-### Modifier `notShutdown()`
+- `FeeRecipientUpdated(address oldFeeRecipient, address newFeeRecipient)`
 
-### Function `init(address _oracle, address _vaultNFT, address _wPowerPerp, address _weth, address _dai, address _ethDaiPool, address _powerPerpPool, address _uniPositionManager) public`
+- `Liquidate(uint256 vaultId, uint256 debtAmount, uint256 collateralPaid)`
 
-init controller with squeeth and short NFT address
+- `NormalizationFactorUpdated(uint256 oldNormFactor, uint256 newNormFactor, uint256 timestamp)`
 
-### Function `mint(uint256 _vaultId, uint128 _mintAmount, uint256 _nftTokenId) → uint256, uint256 _wSqueethMinted external`
+# Functions
 
-put down collateral and mint squeeth.
+## `constructor(address _oracle, address _shortPowerPerp, address _wPowerPerp, address _weth, address _quoteCurrency, address _ethQuoteCurrencyPool, address _wPowerPerpPool, address _uniPositionManager)`
 
-This mints an amount of rSqueeth.
+constructor
 
-### Function `deposit(uint256 _vaultId) external`
+### Parameters:
 
-Deposit collateral into a vault
+- `address _oracle`: oracle address
 
-### Function `depositUniNFT(uint256 _vaultId, uint256 _tokenId) external`
+- `address _shortPowerPerp`: ERC721 token address representing the short position
 
-Deposit Uni NFT as collateral
+- `address _wPowerPerp`: ERC20 token address representing the long position
 
-### Function `withdraw(uint256 _vaultId, uint256 _amount) external`
+- `address _weth`: weth address
 
-Withdraw collateral from a vault.
+- `address _quoteCurrency`: quoteCurrency address
 
-### Function `withdrawUniNFT(uint256 _vaultId) external`
+- `address _ethQuoteCurrencyPool`: uniswap v3 pool for weth / quoteCurrency
 
-Withdraw Uni NFT from a vault
+- `address _wPowerPerpPool`: uniswap v3 pool for wPowerPerp / weth
 
-### Function `burn(uint256 _vaultId, uint256 _amount, uint256 _withdrawAmount) external`
+- `address _uniPositionManager`: uniswap v3 position manager address
 
-burn squueth and remove collateral from a vault.
+## `getExpectedNormalizationFactor() → uint256`
 
-This burns an amount of wSqueeth.
+returns the expected normalization factor, if the funding is paid right now
 
-### Function `liquidate(uint256 _vaultId, uint256 _debtAmount) external`
+can be used for on-chain and off-chain calculations
+
+## `getIndex(uint32 _period) → uint256`
+
+get the index price of the powerPerp, scaled down
+
+the index price is scaled down by INDEX_SCALE in the associated PowerXBase library
+
+this is the index price used when calculating funding and for collateralization
+
+### Parameters:
+
+- `uint32 _period`: period which you want to calculate twap with
+
+### Return Values:
+
+- `uint32` index price denominated in $USD, scaled by 1e18
+
+## `getUnscaledIndex(uint32 _period) → uint256`
+
+get the expected mark price of powerPerp after funding has been applied
+
+this is the mark that would be be used for future funding after a new normalization factor is applied
+
+### Parameters:
+
+- `uint32 _period`: period which you want to calculate twap with
+
+### Return Values:
+
+- `uint32` index price denominated in $USD, scaled by 1e18
+
+## `getDenormalizedMark(uint32 _period) → uint256`
+
+get the mark price (after funding) of powerPerp as the twap divided by the normalization factor
+
+### Parameters:
+
+- `uint32 _period`: period of time for the twap in seconds
+
+### Return Values:
+
+- `uint32` mark price denominated in $USD, scaled by 1e18
+
+## `getDenormalizedMarkForFunding(uint32 _period) → uint256`
+
+get the mark price of powerPerp before funding has been applied
+
+this is the mark that would be used to calculate a new normalization factor if funding was calculated now
+
+### Parameters:
+
+- `uint32 _period`: period which you want to calculate twap with
+
+### Return Values:
+
+- `uint32` mark price denominated in $USD, scaled by 1e18
+
+## `isVaultSafe(uint256 _vaultId) → bool`
+
+return if the vault is properly collateralized
+
+### Parameters:
+
+- `uint256 _vaultId`: id of the vault
+
+### Return Values:
+
+- `uint256` true if the vault is properly collateralized
+
+## `mintPowerPerpAmount(uint256 _vaultId, uint128 _powerPerpAmount, uint256 _uniTokenId) → uint256, uint256`
+
+deposit collateral and mint wPowerPerp (non-rebasing) for specified powerPerp (rebasing) amount
+
+### Parameters:
+
+- `uint256 _vaultId`: vault to mint wPowerPerp in
+
+- `uint128 _powerPerpAmount`: amount of powerPerp to mint
+
+- `uint256 _uniTokenId`: uniswap v3 position token id (additional collateral)
+
+### Return Values:
+
+- `uint256` amount of wPowerPerp minted
+
+## `mintWPowerPerpAmount(uint256 _vaultId, uint128 _wPowerPerpAmount, uint256 _uniTokenId) → uint256`
+
+deposit collateral and mint wPowerPerp
+
+### Parameters:
+
+- `uint256 _vaultId`: vault to mint wPowerPerp in
+
+- `uint128 _wPowerPerpAmount`: amount of wPowerPerp to mint
+
+- `uint256 _uniTokenId`: uniswap v3 position token id (additional collateral)
+
+## `deposit(uint256 _vaultId)`
+
+deposit collateral into a vault
+
+### Parameters:
+
+- `uint256 _vaultId`: id of the vault
+
+## `depositUniPositionToken(uint256 _vaultId, uint256 _uniTokenId)`
+
+deposit uniswap position token into a vault to increase collateral ratio
+
+### Parameters:
+
+- `uint256 _vaultId`: id of the vault
+
+- `uint256 _uniTokenId`: uniswap position token id
+
+## `withdraw(uint256 _vaultId, uint256 _amount)`
+
+withdraw collateral from a vault
+
+### Parameters:
+
+- `uint256 _vaultId`: id of the vault
+
+- `uint256 _amount`: amount of eth to withdraw
+
+## `withdrawUniPositionToken(uint256 _vaultId)`
+
+withdraw uniswap v3 position token from a vault
+
+### Parameters:
+
+- `uint256 _vaultId`: id of the vault
+
+## `burnWPowerPerpAmount(uint256 _vaultId, uint256 _wPowerPerpAmount, uint256 _withdrawAmount)`
+
+burn wPowerPerp and remove collateral from a vault
+
+### Parameters:
+
+- `uint256 _vaultId`: id of the vault
+
+- `uint256 _wPowerPerpAmount`: amount of wPowerPerp to burn
+
+- `uint256 _withdrawAmount`: amount of eth to withdraw
+
+## `burnPowerPerpAmount(uint256 _vaultId, uint256 _powerPerpAmount, uint256 _withdrawAmount) → uint256`
+
+burn powerPerp and remove collateral from a vault
+
+### Parameters:
+
+- `uint256 _vaultId`: id of the vault
+
+- `uint256 _powerPerpAmount`: amount of powerPerp to burn
+
+- `uint256 _withdrawAmount`: amount of eth to withdraw
+
+### Return Values:
+
+- `uint256` amount of wPowerPerp burned
+
+## `reduceDebtShutdown(uint256 _vaultId)`
+
+after the system is shutdown, insolvent vaults need to be have their uniswap v3 token assets withdrawn by force
+
+if a vault has a uniswap v3 position in it, anyone can call to withdraw uniswap v3 token assets, reducing debt and increasing collateral in the vault
+
+the caller won't get any bounty. this is expected to be used for insolvent vaults in shutdown
+
+### Parameters:
+
+- `uint256 _vaultId`: vault containing uniswap v3 position to liquidate
+
+## `reduceDebt(uint256 _vaultId)`
+
+withdraw assets from uniswap v3 position, reducing debt and increasing collateral in the vault
+
+the caller won't get any bounty. this is expected to be used by vault owner
+
+### Parameters:
+
+- `uint256 _vaultId`: target vault
+
+## `liquidate(uint256 _vaultId, uint256 _maxDebtAmount) → uint256`
 
 if a vault is under the 150% collateral ratio, anyone can liquidate the vault by burning wPowerPerp
 
-liquidator can get back (powerPerp burned) * (index price) * 110% in collateral
+liquidator can get back (wPowerPerp burned) * (index price) * (normalizationFactor)  * 110% in collateral
 
-#### Parameters:
+normally can only liquidate 50% of a vault's debt
 
-- `_vaultId`: the vault you want to liquidate
+if a vault is under dust limit after a liquidation can fully liquidate
 
-- `_debtAmount`: amount of wPowerPerpetual you want to repay.
+will attempt to reduceDebt first, and can earn a bounty if sucessful
 
-### Function `getIndex(uint32 _period) → uint256 external`
+### Parameters:
 
-### Function `getDenormalizedMark(uint32 _period) → uint256 external`
+- `uint256 _vaultId`: vault to liquidate
 
-### Function `updateOperator(uint256 _vaultId, address _operator) external`
+- `uint256 _maxDebtAmount`: max amount of wPowerPerpetual to repay
 
-Authorize an address to modify the vault. Can be revoke by setting address to 0.
+### Return Values:
 
-### Function `shutDown() external`
+- `uint256` amount of wPowerPerp repaid
 
-shutdown the system and enable redeeming long and short
+## `updateOperator(uint256 _vaultId, address _operator)`
 
-### Function `redeemLong(uint256 _wPerpAmount) external`
+authorize an address to modify the vault
 
-redeem wPowerPerp for its index value when the system is shutdown
+can be revoke by setting address to 0
 
-#### Parameters:
+### Parameters:
 
-- `_wPerpAmount`: amount of wPowerPerp to burn
+- `uint256 _vaultId`: id of the vault
 
-### Function `redeemShort(uint256 _vaultId) external`
+- `address _operator`: new operator address
 
-redeem additional collateral from the vault when the system is shutdown
+## `setFeeRecipient(address _newFeeRecipient)`
 
-#### Parameters:
+set the recipient who will receive the fee
 
-- `_vaultId`: vauld id
+this should be a contract handling insurance
 
-### Function `applyFunding() external`
+### Parameters:
 
-Update the normalized factor as a way to pay funding.
+- `address _newFeeRecipient`: new fee recipient
 
-### Function `donate() external`
+## `setFeeRate(uint256 _newFeeRate)`
 
-a function to add eth into a contract, in case it got insolvent and have ensufficient eth to pay out.
+set the fee rate when user mints
 
-### Function `_canModifyVault(uint256 _vaultId, address _account) → bool internal`
+this function cannot be called if the feeRecipient is still un-set
 
-### Function `_openVault(address _recipient) → uint256 vaultId internal`
+### Parameters:
 
-create a new vault and bind it with a new NFT id.
+- `uint256 _newFeeRate`: new fee rate in basis points. can't be higher than 1%
 
-### Function `_depositUniNFT(address _account, uint256 _vaultId, uint256 _tokenId) internal`
+## `pauseAndShutDown()`
 
-### Function `_addEthCollateral(uint256 _vaultId, uint256 _amount) internal`
+pause and then immediately shutdown the system
 
-add collateral to a vault
+this bypasses the check on number of pauses or time based checks, but is irreversible and enables emergency settlement
 
-### Function `_withdrawUniNFT(address _account, uint256 _vaultId) internal`
+## `shutDown()`
 
-withdraw uni nft
+shutdown the system and enable system settlement
 
-### Function `_withdrawCollateral(address _account, uint256 _vaultId, uint256 _amount) internal`
+## `pause()`
 
-remove collateral from the vault
+pause the system for up to 24 hours after which any one can unpause
 
-### Function `_addShort(address _account, uint256 _vaultId, uint256 _squeethAmount) → uint256 amountToMint internal`
+can only be called for 365 days since the contract was launched or 4 times
 
-mint wsqueeth (ERC20) to an account
+## `unPauseAnyone()`
 
-### Function `_removeShort(address _account, uint256 _vaultId, uint256 _amount) internal`
+unpause the contract
 
-burn wsqueeth (ERC20) from an account.
+anyone can unpause the contract after 24 hours
 
-### Function `_applyFunding() internal`
+## `unPauseOwner()`
 
-Update the normalized factor as a way to pay funding.
+unpause the contract
 
-funding is calculated as mark - index.
+owner can unpause at any time
 
-### Function `_checkUniNFT(uint256 _tokenId) internal`
+## `redeemLong(uint256 _wPerpAmount)`
 
-check that the specified tokenId is a valid squeeth/weth lp token.
+redeem wPowerPerp for (settlement index value) * normalizationFactor when the system is shutdown
 
-### Function `_checkVault(uint256 _vaultId) internal`
+### Parameters:
 
-check that the vault is solvent and has enough collateral.
+- `uint256 _wPerpAmount`: amount of wPowerPerp to burn
 
-### Function `_isVaultSafe(struct VaultLib.Vault _vault) → bool internal`
+## `redeemShort(uint256 _vaultId)`
 
-### Function `_getFairPeriodForOracle(uint32 _period) → uint32 internal`
+redeem short position when the system is shutdown
 
-### Function `_getMaxSafePeriod() → uint32 internal`
+short position is redeemed by valuing the debt at the (settlement index value) * normalizationFactor
 
-return the smaller of the max periods of 2 pools
+### Parameters:
 
-### Event `OpenVault(uint256 vaultId)`
+- `uint256 _vaultId`: vault id
 
-Events
+## `applyFunding()`
 
-### Event `CloseVault(uint256 vaultId)`
+update the normalization factor as a way to pay funding
 
-### Event `DepositCollateral(uint256 vaultId, uint128 amount, uint128 collateralId)`
+## `donate()`
 
-### Event `DepositUniNftCollateral(uint256 vaultId, uint256 tokenId)`
+add eth into a contract. used in case contract has insufficient eth to pay for settlement transactions
 
-### Event `WithdrawCollateral(uint256 vaultId, uint256 amount, uint128 collateralId)`
+## `receive()`
 
-### Event `WithdrawUniNftCollateral(uint256 vaultId, uint256 tokenId)`
-
-### Event `MintShort(uint256 amount, uint256 vaultId)`
-
-### Event `BurnShort(uint256 amount, uint256 vaultId)`
-
-### Event `UpdateOperator(uint256 vaultId, address operator)`
-
-### Event `Liquidate(uint256 vaultId, uint256 debtAmount, uint256 collateralToSell)`
+fallback function to accept eth
