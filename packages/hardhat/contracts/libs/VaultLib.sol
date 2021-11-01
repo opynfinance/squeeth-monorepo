@@ -86,7 +86,7 @@ library VaultLib {
      * @param _vault the vault we want to check
      * @param _positionManager address of the uniswap position manager
      * @param _normalizationFactor current _normalizationFactor
-     * @param _ethDaiPrice current eth price scaled by 1e18
+     * @param _ethQuoteCurrencyPrice current eth price scaled by 1e18
      * @param _minCollateral minimum collateral that needs to be in a vault
      * @param _wsqueethPoolTick current price tick for wsqueeth pool
      * @param _isWethToken0 whether weth is token0 in the wsqueeth pool
@@ -97,7 +97,7 @@ library VaultLib {
         Vault memory _vault,
         address _positionManager,
         uint256 _normalizationFactor,
-        uint256 _ethDaiPrice,
+        uint256 _ethQuoteCurrencyPrice,
         uint256 _minCollateral,
         int24 _wsqueethPoolTick,
         bool _isWethToken0
@@ -108,7 +108,7 @@ library VaultLib {
                 _vault,
                 _positionManager,
                 _normalizationFactor,
-                _ethDaiPrice,
+                _ethQuoteCurrencyPrice,
                 _minCollateral,
                 _wsqueethPoolTick,
                 _isWethToken0
@@ -120,7 +120,7 @@ library VaultLib {
      * @param _vault the vault we want to check
      * @param _positionManager address of the uniswap position manager
      * @param _normalizationFactor current _normalizationFactor
-     * @param _ethDaiPrice current eth price scaled by 1e18
+     * @param _ethQuoteCurrencyPrice current eth price scaled by 1e18
      * @param _minCollateral minimum collateral that needs to be in a vault
      * @param _wsqueethPoolTick current price tick for wsqueeth pool
      * @param _isWethToken0 whether weth is token0 in the wsqueeth pool
@@ -131,17 +131,19 @@ library VaultLib {
         Vault memory _vault,
         address _positionManager,
         uint256 _normalizationFactor,
-        uint256 _ethDaiPrice,
+        uint256 _ethQuoteCurrencyPrice,
         uint256 _minCollateral,
         int24 _wsqueethPoolTick,
         bool _isWethToken0
     ) internal view returns (bool, bool) {
-        uint256 debtValueInETH = uint256(_vault.shortAmount).mul(_normalizationFactor).mul(_ethDaiPrice).div(1e36);
+        uint256 debtValueInETH = uint256(_vault.shortAmount).mul(_normalizationFactor).mul(_ethQuoteCurrencyPrice).div(
+            1e36
+        );
         uint256 totalCollateral = _getEffectiveCollateral(
             _vault,
             _positionManager,
             _normalizationFactor,
-            _ethDaiPrice,
+            _ethQuoteCurrencyPrice,
             _wsqueethPoolTick,
             _isWethToken0
         );
@@ -157,7 +159,7 @@ library VaultLib {
      * @param _vault the vault we want to check
      * @param _positionManager address of the uniswap position manager
      * @param _normalizationFactor current _normalizationFactor
-     * @param _ethDaiPrice current eth price scaled by 1e18
+     * @param _ethQuoteCurrencyPrice current eth price scaled by 1e18
      * @param _wsqueethPoolTick current price tick for wsqueeth pool
      * @param _isWethToken0 whether weth is token0 in the wsqueeth pool
      * @return the total worth of collateral in the vault
@@ -166,7 +168,7 @@ library VaultLib {
         Vault memory _vault,
         address _positionManager,
         uint256 _normalizationFactor,
-        uint256 _ethDaiPrice,
+        uint256 _ethQuoteCurrencyPrice,
         int24 _wsqueethPoolTick,
         bool _isWethToken0
     ) internal view returns (uint256) {
@@ -180,7 +182,9 @@ library VaultLib {
             _isWethToken0
         );
         // convert squeeth amount from uniswap position token as equivalent amount of collateral
-        uint256 equivalentCollateral = nftWsqueethAmount.mul(_normalizationFactor).mul(_ethDaiPrice).div(1e36);
+        uint256 equivalentCollateral = nftWsqueethAmount.mul(_normalizationFactor).mul(_ethQuoteCurrencyPrice).div(
+            1e36
+        );
         // add eth value from uniswap position token as collateral
         return nftEthAmount.add(equivalentCollateral).add(_vault.collateralAmount);
     }

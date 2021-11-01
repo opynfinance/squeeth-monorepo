@@ -397,7 +397,6 @@ describe("Controller Funding tests", function () {
 
         // norm0 => norm1 is applying funding once in 24 hr
         const normFactor0 = await controller.normalizationFactor()
-        const d0DenormMark = await controller.getDenormalizedMark(1)
 
         // update wsqueeth / eth price to make sure denorm mark is the same
         const day0 = await getNow(provider)
@@ -413,7 +412,6 @@ describe("Controller Funding tests", function () {
         await oracle.setPrice(squeethEthPool.address, expectedWsqueethPrice1)
         
         const normFactor1 = await controller.normalizationFactor()
-        const d1DenormMark = await controller.getDenormalizedMark(1)
         const day1ChangeRatio = normFactor1.mul(one).div(normFactor0)
         
         // norm1 => norm2 is applying funding twice in 24 hr
@@ -427,8 +425,6 @@ describe("Controller Funding tests", function () {
         await controller.applyFunding()
         await oracle.setPrice(squeethEthPool.address, expectedWsqueethPrice2)
 
-        const d15DenormMark = await controller.getDenormalizedMark(1)
-        
         const day2 = await day1 + secsInOneDay
         await provider.send("evm_setNextBlockTimestamp", [day2])
         await provider.send("evm_mine", []) 
@@ -438,18 +434,9 @@ describe("Controller Funding tests", function () {
         await controller.applyFunding()
         await oracle.setPrice(squeethEthPool.address, expectedWsqueethPrice3)
 
-        const d2DenormMark = await controller.getDenormalizedMark(1)
         const normFactor2 = await controller.normalizationFactor()
         const day2ChangeRatio = normFactor2.mul(one).div(normFactor1)
         
-        console.log(`day1ChangeRatio`, day1ChangeRatio.toString())
-        console.log(`day2ChangeRatio`, day2ChangeRatio.toString())
-        
-        console.log(`d0DenormMark`, d0DenormMark.toString())
-        console.log(`d1DenormMark`, d1DenormMark.toString())       
-        console.log(`d15DenormMark`, d15DenormMark.toString())
-        console.log(`d2DenormMark`, d2DenormMark.toString())
-
         expect(day2ChangeRatio.lt(day1ChangeRatio)).to.be.true
       })
     })

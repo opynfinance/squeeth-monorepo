@@ -142,7 +142,7 @@ describe("Controller", function () {
 
     await expect(
       ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethers.constants.AddressZero, squeethEthPool.address, uniPositionManager.address)
-    ).to.be.revertedWith("Invalid eth:usd pool address");
+    ).to.be.revertedWith("Invalid eth:quoteCurrency pool address");
   });
 
   it("Should revert when squeethEthPool is address(0)", async () => {

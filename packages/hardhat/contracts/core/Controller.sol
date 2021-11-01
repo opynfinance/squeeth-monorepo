@@ -31,8 +31,8 @@ contract Controller is Ownable {
     uint256 public constant FUNDING_PERIOD = 1 days;
 
     address public immutable weth;
-    address public immutable dai;
-    address public immutable ethDaiPool;
+    address public immutable quoteCurrency;
+    address public immutable ethQuoteCurrencyPool;
     /// @dev address of the powerPerp/weth pool
     address public immutable wPowerPerpPool;
     address public immutable uniswapPositionManager;
@@ -95,21 +95,21 @@ contract Controller is Ownable {
     /**
      * @notice constructor
      * @param _oracle oracle address
-     * @param _shortPowerPerp erc721 token address representing the short position
-     * @param _wPowerPerp erc20 token address representing non-rebasing long position
+     * @param _shortPowerPerp ERC721 token address representing the short position
+     * @param _wPowerPerp ERC20 token address representing the long position
      * @param _weth weth address
-     * @param _dai dai address
-     * @param _ethDaiPool uniswap v3 pool for weth / dai
+     * @param _quoteCurrency quoteCurrency address
+     * @param _ethQuoteCurrencyPool uniswap v3 pool for weth / quoteCurrency
      * @param _wPowerPerpPool uniswap v3 pool for wPowerPerp / weth
-     * @param _uniPositionManager uniswap v3 nonfungible position manager address
+     * @param _uniPositionManager uniswap v3 position manager address
      */
     constructor(
         address _oracle,
         address _shortPowerPerp,
         address _wPowerPerp,
         address _weth,
-        address _dai,
-        address _ethDaiPool,
+        address _quoteCurrency,
+        address _ethQuoteCurrencyPool,
         address _wPowerPerpPool,
         address _uniPositionManager
     ) {
@@ -117,8 +117,8 @@ contract Controller is Ownable {
         require(_shortPowerPerp != address(0), "Invalid shortPowerPerp address");
         require(_wPowerPerp != address(0), "Invalid power perp address");
         require(_weth != address(0), "Invalid weth address");
-        require(_dai != address(0), "Invalid quote currency address");
-        require(_ethDaiPool != address(0), "Invalid eth:usd pool address");
+        require(_quoteCurrency != address(0), "Invalid quote currency address");
+        require(_ethQuoteCurrencyPool != address(0), "Invalid eth:quoteCurrency pool address");
         require(_wPowerPerpPool != address(0), "Invalid powerperp:eth pool address");
         require(_uniPositionManager != address(0), "Invalid uni position manager");
 
@@ -126,8 +126,8 @@ contract Controller is Ownable {
         shortPowerPerp = _shortPowerPerp;
         wPowerPerp = _wPowerPerp;
         weth = _weth;
-        dai = _dai;
-        ethDaiPool = _ethDaiPool;
+        quoteCurrency = _quoteCurrency;
+        ethQuoteCurrencyPool = _ethQuoteCurrencyPool;
         wPowerPerpPool = _wPowerPerpPool;
         uniswapPositionManager = _uniPositionManager;
 
@@ -158,7 +158,7 @@ contract Controller is Ownable {
      * @return index price denominated in $USD, scaled by 1e18
      */
     function getIndex(uint32 _period) external view returns (uint256) {
-        return Power2Base._getIndex(_period, address(oracle), ethDaiPool, weth, dai);
+        return Power2Base._getIndex(_period, address(oracle), ethQuoteCurrencyPool, weth, quoteCurrency);
     }
 
     /**
@@ -168,7 +168,7 @@ contract Controller is Ownable {
      * @return index price denominated in $USD, scaled by 1e18
      */
     function getUnscaledIndex(uint32 _period) external view returns (uint256) {
-        return Power2Base._getUnscaledIndex(_period, address(oracle), ethDaiPool, weth, dai);
+        return Power2Base._getUnscaledIndex(_period, address(oracle), ethQuoteCurrencyPool, weth, quoteCurrency);
     }
 
     /**
@@ -184,9 +184,9 @@ contract Controller is Ownable {
                 _period,
                 address(oracle),
                 wPowerPerpPool,
-                ethDaiPool,
+                ethQuoteCurrencyPool,
                 weth,
-                dai,
+                quoteCurrency,
                 address(wPowerPerp),
                 expectedNormalizationFactor
             );
@@ -204,9 +204,9 @@ contract Controller is Ownable {
                 _period,
                 address(oracle),
                 wPowerPerpPool,
-                ethDaiPool,
+                ethQuoteCurrencyPool,
                 weth,
-                dai,
+                quoteCurrency,
                 address(wPowerPerp),
                 normalizationFactor
             );
@@ -461,7 +461,7 @@ contract Controller is Ownable {
     function pauseAndShutDown() external notShutdown notPaused onlyOwner {
         isSystemPaused = true;
         isShutDown = true;
-        indexForSettlement = Power2Base._getScaledTwap(address(oracle), ethDaiPool, weth, dai, 600);
+        indexForSettlement = Power2Base._getScaledTwap(address(oracle), ethQuoteCurrencyPool, weth, quoteCurrency, 600);
     }
 
     /**
@@ -469,7 +469,7 @@ contract Controller is Ownable {
      */
     function shutDown() external notShutdown isPaused onlyOwner {
         isShutDown = true;
-        indexForSettlement = Power2Base._getScaledTwap(address(oracle), ethDaiPool, weth, dai, 600);
+        indexForSettlement = Power2Base._getScaledTwap(address(oracle), ethQuoteCurrencyPool, weth, quoteCurrency, 600);
     }
 
     /**
@@ -894,9 +894,9 @@ contract Controller is Ownable {
                 ._getCollateralByRepayAmount(
                     withdrawnWPowerPerpAmount,
                     address(oracle),
-                    ethDaiPool,
+                    ethQuoteCurrencyPool,
                     weth,
-                    dai,
+                    quoteCurrency,
                     _normalizationFactor
                 )
                 .add(withdrawnEthAmount);
@@ -940,9 +940,9 @@ contract Controller is Ownable {
         uint256 ethEquivalentMinted = Power2Base._getCollateralByRepayAmount(
             _wSqueethAmount,
             address(oracle),
-            ethDaiPool,
+            ethQuoteCurrencyPool,
             weth,
-            dai,
+            quoteCurrency,
             normalizationFactor
         );
         uint256 feeAmount = ethEquivalentMinted.mul(cachedFeeRate).div(10000);
@@ -1048,13 +1048,13 @@ contract Controller is Ownable {
             fairPeriod,
             address(oracle),
             wPowerPerpPool,
-            ethDaiPool,
+            ethQuoteCurrencyPool,
             weth,
-            dai,
+            quoteCurrency,
             address(wPowerPerp),
             cacheNormFactor
         );
-        uint256 index = Power2Base._getIndex(fairPeriod, address(oracle), ethDaiPool, weth, dai);
+        uint256 index = Power2Base._getIndex(fairPeriod, address(oracle), ethQuoteCurrencyPool, weth, quoteCurrency);
         uint256 rFunding = (uint256(1e18).mul(uint256(period))).div(FUNDING_PERIOD);
 
         // floor mark to be at least 80% of index
@@ -1127,7 +1127,13 @@ contract Controller is Ownable {
         view
         returns (bool, bool)
     {
-        uint256 scaledEthPrice = Power2Base._getScaledTwapSafe(address(oracle), ethDaiPool, weth, dai, 300);
+        uint256 scaledEthPrice = Power2Base._getScaledTwapSafe(
+            address(oracle),
+            ethQuoteCurrencyPool,
+            weth,
+            quoteCurrency,
+            300
+        );
         int24 perpPoolTick = IOracle(oracle).getTimeWeightedAverageTickSafe(wPowerPerpPool, 300);
         return
             VaultLib.getVaultStatus(
@@ -1161,9 +1167,9 @@ contract Controller is Ownable {
         uint256 collateralToPay = Power2Base._getCollateralByRepayAmount(
             finalWAmountToLiquidate,
             address(oracle),
-            ethDaiPool,
+            ethQuoteCurrencyPool,
             weth,
-            dai,
+            quoteCurrency,
             _normalizationFactor
         );
 
@@ -1189,7 +1195,7 @@ contract Controller is Ownable {
      * @return return min(max_pool_1, max_pool_2)
      */
     function _getMaxSafePeriod() internal view returns (uint32) {
-        uint32 maxPeriodPool1 = IOracle(oracle).getMaxPeriod(ethDaiPool);
+        uint32 maxPeriodPool1 = IOracle(oracle).getMaxPeriod(ethQuoteCurrencyPool);
         uint32 maxPeriodPool2 = IOracle(oracle).getMaxPeriod(wPowerPerpPool);
         return maxPeriodPool1 > maxPeriodPool2 ? maxPeriodPool2 : maxPeriodPool1;
     }

@@ -20,8 +20,8 @@ contract Oracle {
      * @notice get twap converted with base & quote token decimals
      * @dev if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD"
      * @param _pool uniswap pool address
-     * @param _base base currency. to get eth/dai price, eth is base token
-     * @param _quote quote currency. to get eth/dai price, dai is the quote currency
+     * @param _base base currency. to get eth/usd price, eth is base token
+     * @param _quote quote currency. to get eth/usd price, usd is the quote currency
      * @param _period number of seconds in the past to start calculating time-weighted average
      * @return price of 1 base currency in quote currency. scaled by 1e18
      */
@@ -48,8 +48,8 @@ contract Oracle {
     /**
      * @notice get twap converted with base & quote token decimals, never reverts
      * @param _pool uniswap pool address
-     * @param _base base currency. to get eth/dai price, eth is base token
-     * @param _quote quote currency. to get eth/dai price, dai is the quote currency
+     * @param _base base currency. to get eth/usd price, eth is base token
+     * @param _quote quote currency. to get eth/usd price, usd is the quote currency
      * @param _period number of seconds in the past to start calculating time-weighted average
      * @return price of 1 base currency in quote currency. scaled by 1e18
      */
@@ -92,8 +92,8 @@ contract Oracle {
      * @notice get twap converted with base & quote token decimals, never reverts
      * @dev if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD"
      * @param _pool uniswap pool address
-     * @param _base base currency. to get eth/dai price, eth is base token
-     * @param _quote quote currency. to get eth/dai price, dai is the quote currency
+     * @param _base base currency. to get eth/usd price, eth is base token
+     * @param _quote quote currency. to get eth/usd price, usd is the quote currency
      * @param _period number of seconds in the past to start calculating time-weighted average
      * @return twap price which is scaled
      */
@@ -112,9 +112,8 @@ contract Oracle {
      * @notice get twap converted with base & quote token decimals
      * @dev if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD"
      * @param _pool uniswap pool address
-     * @param _base base currency. to get eth/dai price, eth is base token
-     * @param _quote quote currency. to get eth/dai price, dai is the quote currency
-     * @param _period number of seconds in the past to start calculating time-weighted average
+     * @param _base base currency. to get eth/usd price, eth is base token
+     * @param _quote quote currency. to get eth/usd price, usd is the quote currency     * @param _period number of seconds in the past to start calculating time-weighted average
      * @return twap price which is scaled
      */
     function _fetchTwap(
@@ -140,9 +139,8 @@ contract Oracle {
      * @notice get raw twap from the uniswap pool
      * @dev if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD".
      * @param _pool uniswap pool address
-     * @param _base base currency. to get eth/dai price, eth is base token
-     * @param _quote quote currency. to get eth/dai price, dai is the quote currency
-     * @param _period number of seconds in the past to start calculating time-weighted average
+     * @param _base base currency. to get eth/usd price, eth is base token
+     * @param _quote quote currency. to get eth/usd price, usd is the quote currency    * @param _period number of seconds in the past to start calculating time-weighted average
      * @param _amountIn amount of base currency provided in exchange for quote currency
      * @return amount of quote currency received for _amountIn of base currency
      */

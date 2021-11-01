@@ -15,50 +15,50 @@ library Power2Base {
      * @notice return the scaled down index of the power perp in USD, scaled by 18 decimals
      * @param _period period of time for the twap in seconds
      * @param _oracle oracle address
-     * @param _ethDaiPool uniswap v3 pool for weth / dai
+     * @param _ethQuoteCurrencyPool uniswap v3 pool for weth / quoteCurrency
      * @param _weth weth address
-     * @param _dai dai address
+     * @param _quoteCurrency quoteCurrency address
      * @return for squeeth, return ethPrice^2
      */
     function _getIndex(
         uint32 _period,
         address _oracle,
-        address _ethDaiPool,
+        address _ethQuoteCurrencyPool,
         address _weth,
-        address _dai
+        address _quoteCurrency
     ) internal view returns (uint256) {
-        uint256 ethDaiPrice = _getScaledTwap(_oracle, _ethDaiPool, _weth, _dai, _period);
-        return ethDaiPrice.mul(ethDaiPrice).div(1e18);
+        uint256 ethQuoteCurrencyPrice = _getScaledTwap(_oracle, _ethQuoteCurrencyPool, _weth, _quoteCurrency, _period);
+        return ethQuoteCurrencyPrice.mul(ethQuoteCurrencyPrice).div(1e18);
     }
 
     /**
      * @notice return the unscaled index of the power perp in USD, scaled by 18 decimals
      * @param _period period of time for the twap in seconds
      * @param _oracle oracle address
-     * @param _ethDaiPool uniswap v3 pool for weth / dai
+     * @param _ethQuoteCurrencyPool uniswap v3 pool for weth / quoteCurrency
      * @param _weth weth address
-     * @param _dai dai address
+     * @param _quoteCurrency quoteCurrency address
      * @return for squeeth, return ethPrice^2
      */
     function _getUnscaledIndex(
         uint32 _period,
         address _oracle,
-        address _ethDaiPool,
+        address _ethQuoteCurrencyPool,
         address _weth,
-        address _dai
+        address _quoteCurrency
     ) internal view returns (uint256) {
-        uint256 ethDaiPrice = _getTwap(_oracle, _ethDaiPool, _weth, _dai, _period);
-        return ethDaiPrice.mul(ethDaiPrice).div(1e18);
+        uint256 ethQuoteCurrencyPrice = _getTwap(_oracle, _ethQuoteCurrencyPool, _weth, _quoteCurrency, _period);
+        return ethQuoteCurrencyPrice.mul(ethQuoteCurrencyPrice).div(1e18);
     }
 
     /**
-     * @notice return the mark price of power perp in DAI, scaled by 18 decimals
+     * @notice return the mark price of power perp in quoteCurrency, scaled by 18 decimals
      * @param _period period of time for the twap in seconds
      * @param _oracle oracle address
      * @param _wSqueethEthPool uniswap v3 pool for wSqueeth / weth
-     * @param _ethDaiPool uniswap v3 pool for weth / dai
+     * @param _ethQuoteCurrencyPool uniswap v3 pool for weth / quoteCurrency
      * @param _weth weth address
-     * @param _dai dai address
+     * @param _quoteCurrency quoteCurrency address
      * @param _wsqueeth wSqueeth address
      * @param _normalizationFactor current normalization factor
      * @return for squeeth, return ethPrice * squeethPriceInEth
@@ -67,16 +67,22 @@ library Power2Base {
         uint32 _period,
         address _oracle,
         address _wSqueethEthPool,
-        address _ethDaiPool,
+        address _ethQuoteCurrencyPool,
         address _weth,
-        address _dai,
+        address _quoteCurrency,
         address _wsqueeth,
         uint256 _normalizationFactor
     ) internal view returns (uint256) {
-        uint256 ethDaiPrice = _getScaledTwapSafe(_oracle, _ethDaiPool, _weth, _dai, _period);
+        uint256 ethQuoteCurrencyPrice = _getScaledTwapSafe(
+            _oracle,
+            _ethQuoteCurrencyPool,
+            _weth,
+            _quoteCurrency,
+            _period
+        );
         uint256 wsqueethEthPrice = _getTwapSafe(_oracle, _wSqueethEthPool, address(_wsqueeth), _weth, _period);
 
-        return wsqueethEthPrice.mul(ethDaiPrice).div(_normalizationFactor);
+        return wsqueethEthPrice.mul(ethQuoteCurrencyPrice).div(_normalizationFactor);
     }
 
     /**
@@ -84,30 +90,30 @@ library Power2Base {
      * @dev the actual amount liquidator can get should have a 10% bonus on top of this value.
      * @param _debtAmount wSqueeth amount paid by liquidator
      * @param _oracle oracle address
-     * @param _ethDaiPool uniswap v3 pool for weth / dai
+     * @param _ethQuoteCurrencyPool uniswap v3 pool for weth / quoteCurrency
      * @param _weth weth address
-     * @param _dai dai address
+     * @param _quoteCurrency quoteCurrency address
      * @param _normalizationFactor current normalization factor
      * @return returns equivalent collateral amount for debt
      */
     function _getCollateralByRepayAmount(
         uint256 _debtAmount,
         address _oracle,
-        address _ethDaiPool,
+        address _ethQuoteCurrencyPool,
         address _weth,
-        address _dai,
+        address _quoteCurrency,
         uint256 _normalizationFactor
     ) internal view returns (uint256) {
-        uint256 ethDaiPrice = _getScaledTwap(_oracle, _ethDaiPool, _weth, _dai, 600);
-        return _debtAmount.mul(_normalizationFactor).mul(ethDaiPrice).div(1e36);
+        uint256 ethQuoteCurrencyPrice = _getScaledTwap(_oracle, _ethQuoteCurrencyPool, _weth, _quoteCurrency, 600);
+        return _debtAmount.mul(_normalizationFactor).mul(ethQuoteCurrencyPrice).div(1e36);
     }
 
     /**
      * @notice request twap from our oracle, scaled down by INDEX_SCALE
      * @param _oracle oracle address
      * @param _pool uniswap v3 pool address
-     * @param _base base currency. to get eth/dai price, eth is base token
-     * @param _quote quote currency. to get eth/dai price, dai is the quote currency
+     * @param _base base currency. to get eth/usd price, eth is base token
+     * @param _quote quote currency. to get eth/usd price, usd is the quote currency
      * @param _period number of seconds in the past to start calculating time-weighted average
      * @return twap price scaled down by INDEX_SCALE
      */
@@ -127,8 +133,8 @@ library Power2Base {
      * @dev this won't revert if period is > max period for the pool
      * @param _oracle oracle address
      * @param _pool uniswap v3 pool address
-     * @param _base base currency. to get eth/dai price, eth is base token
-     * @param _quote quote currency. to get eth/dai price, dai is the quote currency
+     * @param _base base currency. to get eth/quoteCurrency price, eth is base token
+     * @param _quote quote currency. to get eth/quoteCurrency price, quoteCurrency is the quote currency
      * @param _period number of seconds in the past to start calculating time-weighted average
      * @return twap price scaled down by INDEX_SCALE
      */
@@ -148,8 +154,8 @@ library Power2Base {
      * @dev this will revert if period is > max period for the pool
      * @param _oracle oracle address
      * @param _pool uniswap v3 pool address
-     * @param _base base currency. to get eth/dai price, eth is base token
-     * @param _quote quote currency. to get eth/dai price, dai is the quote currency
+     * @param _base base currency. to get eth/quoteCurrency price, eth is base token
+     * @param _quote quote currency. to get eth/quoteCurrency price, quoteCurrency is the quote currency
      * @param _period number of seconds in the past to start calculating time-weighted average
      * @return human readable price. scaled by 1e18
      */
@@ -169,8 +175,8 @@ library Power2Base {
      * @dev this won't revert if period is > max period for the pool
      * @param _oracle oracle address
      * @param _pool uniswap v3 pool address
-     * @param _base base currency. to get eth/dai price, eth is base token
-     * @param _quote quote currency. to get eth/dai price, dai is the quote currency
+     * @param _base base currency. to get eth/quoteCurrency price, eth is base token
+     * @param _quote quote currency. to get eth/quoteCurrency price, quoteCurrency is the quote currency
      * @param _period number of seconds in the past to start calculating time-weighted average
      * @return human readable price. scaled by 1e18
      */
