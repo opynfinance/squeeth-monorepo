@@ -152,7 +152,7 @@ describe("Crab flashswap integration test: time based hedging", function () {
       await provider.send("evm_mine", [])
     })
 
-    it("should revert price hedging if the time threshold has not been reached", async () => {  
+    it("should revert price hedging if the price threshold has not been reached", async () => {  
       const timeAtLastHedge = await crabStrategy.timeAtLastHedge()
       const hedgeTimeThreshold = await crabStrategy.hedgeTimeThreshold()
       
