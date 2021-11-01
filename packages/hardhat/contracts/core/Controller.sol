@@ -46,10 +46,13 @@ contract Controller is Ownable {
     uint256 public feeRate;
     /// @dev the settlement price for each wPowerPerp for settlement
     uint256 public indexForSettlement;
-    uint256 public normalizationFactor;
-    uint256 public lastFundingUpdateTimestamp;
+
     uint256 public pausesLeft = 4;
     uint256 public lastPauseTime;
+
+    // these 2 parameters are always updated together. Use uint128 to batch read and write.
+    uint128 public normalizationFactor;
+    uint128 public lastFundingUpdateTimestamp;
 
     bool public isShutDown;
     bool public isSystemPaused;
@@ -133,7 +136,7 @@ contract Controller is Ownable {
 
         deployTimestamp = block.timestamp;
         normalizationFactor = 1e18;
-        lastFundingUpdateTimestamp = block.timestamp;
+        lastFundingUpdateTimestamp = uint128(block.timestamp);
     }
 
     /**
@@ -1021,8 +1024,9 @@ contract Controller is Ownable {
 
         emit NormalizationFactorUpdated(normalizationFactor, newNormalizationFactor, block.timestamp);
 
-        normalizationFactor = newNormalizationFactor;
-        lastFundingUpdateTimestamp = block.timestamp;
+        // the following will be batch into 1 SSTORE because of type uint128
+        normalizationFactor = uint128(newNormalizationFactor);
+        lastFundingUpdateTimestamp = uint128(block.timestamp);
 
         return newNormalizationFactor;
     }
