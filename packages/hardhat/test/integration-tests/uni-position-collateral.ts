@@ -3,8 +3,8 @@ import BigNumberJs from 'bignumber.js'
 import { Contract, BigNumber, constants, utils } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { expect } from "chai";
-import { Controller, INonfungiblePositionManager, MockErc20, VaultLibTester, ShortPowerPerp, WETH9, WPowerPerp } from "../../typechain";
-import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addSqueethLiquidity, addWethDaiLiquidity } from '../setup'
+import { Controller, INonfungiblePositionManager, MockErc20, VaultLibTester, ShortPowerPerp, WETH9, WPowerPerp, IUniswapV3Factory } from "../../typechain";
+import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addSqueethLiquidity, addWethDaiLiquidity, createUniPool } from '../setup'
 import { isSimilar, getNow, one, oracleScaleFactor } from "../utils";
 import { getSqrtPriceAndTickBySqueethPrice } from "../calculator";
 
@@ -19,6 +19,7 @@ describe("Uniswap Position token integration test", function () {
   let squeeth: WPowerPerp
   let shortSqueeth: ShortPowerPerp
   let positionManager: INonfungiblePositionManager
+  let uniFactory: IUniswapV3Factory
   let controller: Controller
   
   let squeethPool: Contract
@@ -51,7 +52,7 @@ describe("Uniswap Position token integration test", function () {
   let vault2Id: BigNumber
   let vault2LPTokenId: number
   const vault2LpEthAmount = utils.parseEther('10')
-  
+
 
   this.beforeAll("Prepare accounts", async() => {
     const accounts = await ethers.getSigners()
@@ -77,6 +78,7 @@ describe("Uniswap Position token integration test", function () {
     )
 
     positionManager = (uniDeployments.positionManager) as INonfungiblePositionManager
+    uniFactory = uniDeployments.uniswapFactory as IUniswapV3Factory
 
     squeeth = coreDeployments.wsqueeth
     shortSqueeth = coreDeployments.shortSqueeth
@@ -289,6 +291,34 @@ describe("Uniswap Position token integration test", function () {
       expect(isSimilar(vaultBefore.collateralAmount.add(vault2LpEthAmount).toString() ,vaultAfter.collateralAmount.toString())).to.be.true
       expect(vaultBefore.shortAmount.eq(vaultAfter.shortAmount)).to.be.true
       expect(vaultAfter.NftCollateralId === 0).to.be.true
+    })
+  })
+
+  describe('deposit LP token with diff fee tier', async() => {
+    let newPoolLPTokenId: number
+    // use fee tier of 0.05% instead of 1% because 0.05% has smaller tick space (10)
+    // which works with our existing script
+    const newFeeTier = 500
+    before('create new pool with fee tier = 0.05%', async() => {
+      await createUniPool(scaledStartingSqueethPrice, squeeth, weth, positionManager, uniFactory, newFeeTier)
+    })
+    before('add liquidity to the new pool', async() => {
+      newPoolLPTokenId = await addSqueethLiquidity(
+        scaledStartingSqueethPrice,
+        humanReadableMintAmount,
+        '45.1',
+        liquidityProvider.address,
+        squeeth,
+        weth,
+        positionManager,
+        controller,
+        newFeeTier
+      )
+    })
+    it('deposit lp token into the vault', async() => {
+      await (positionManager as INonfungiblePositionManager).connect(liquidityProvider).transferFrom(liquidityProvider.address, seller.address, newPoolLPTokenId)
+      await (positionManager as INonfungiblePositionManager).connect(seller).approve(controller.address, newPoolLPTokenId)
+      await controller.connect(seller).mintWPowerPerpAmount(0, 0, newPoolLPTokenId)      
     })
   })
 })

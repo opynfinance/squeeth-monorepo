@@ -67,7 +67,8 @@ export const createUniPool = async(
   tokenA: Contract, 
   tokenB: Contract,
   positionManager: Contract,
-  univ3Factory: Contract
+  univ3Factory: Contract,
+  feeTier = 3000 // default fee = 0.3%
 ): Promise<Contract> => {
   const isTokenAToken0 = parseInt(tokenA.address, 16) < parseInt(tokenB.address, 16)
 
@@ -78,7 +79,7 @@ export const createUniPool = async(
   const token0Addr = isTokenAToken0 ? tokenA.address : tokenB.address
   const token1Addr = isTokenAToken0 ? tokenB.address : tokenA.address
   
-  const poolAddrFirstTry = await univ3Factory.getPool(token0Addr, token1Addr, 3000)
+  const poolAddrFirstTry = await univ3Factory.getPool(token0Addr, token1Addr, feeTier)
   if (poolAddrFirstTry !== ethers.constants.AddressZero) {
     return ethers.getContractAt("IUniswapV3Pool", poolAddrFirstTry);
   }
@@ -86,7 +87,7 @@ export const createUniPool = async(
   await positionManager.createAndInitializePoolIfNecessary(
     token0Addr,
     token1Addr,
-    3000, // fee = 0.3%
+    feeTier,
     sqrtX96Price
   )
 
@@ -94,7 +95,7 @@ export const createUniPool = async(
   let poolAddr: string 
   while(true) {
     await delay(5000)
-    poolAddr = await univ3Factory.getPool(token0Addr, token1Addr, 3000)
+    poolAddr = await univ3Factory.getPool(token0Addr, token1Addr, feeTier)
     if (poolAddr !== ethers.constants.AddressZero) break;
   }
 
@@ -113,13 +114,14 @@ export const createUniPool = async(
 export const getPoolAddress = async (
   tokenA: Contract, 
   tokenB: Contract,
-  univ3Factory: Contract
+  univ3Factory: Contract,
+  fee = 3000
 ) => {
   const isTokenAToken0 = parseInt(tokenA.address, 16) < parseInt(tokenB.address, 16)
 
   const token0Addr = isTokenAToken0 ? tokenA.address : tokenB.address
   const token1Addr = isTokenAToken0 ? tokenB.address : tokenA.address
-  const poolAddr = await univ3Factory.getPool(token0Addr, token1Addr, 3000)
+  const poolAddr = await univ3Factory.getPool(token0Addr, token1Addr, fee)
   return poolAddr as string
 } 
 
@@ -175,7 +177,8 @@ export const addSqueethLiquidity = async(
   squeeth: WPowerPerp, 
   weth: WETH9,
   positionManager: Contract,
-  controller: Controller
+  controller: Controller,
+  feeTier = 3000
   ) => {
 
     const isWethToken0 = parseInt(weth.address, 16) < parseInt(squeeth.address, 16)
@@ -209,7 +212,7 @@ export const addSqueethLiquidity = async(
     const mintParam = {
       token0,
       token1,
-      fee: 3000,
+      fee: feeTier,
       tickLower: -887220,// int24 min tick used when selecting full range
       tickUpper: 887220,// int24 max tick used when selecting full range
       amount0Desired: isWethToken0 ? liquidityWethAmount : liquidityWSqueethAmount,
@@ -233,7 +236,8 @@ export const addWethDaiLiquidity = async(
   deployer: string,
   dai: MockErc20, 
   weth: WETH9,
-  positionManager: Contract
+  positionManager: Contract,
+  feeTier = 3000
   ) => {
 
     const isWethToken0 = parseInt(weth.address, 16) < parseInt(dai.address, 16)
@@ -260,7 +264,7 @@ export const addWethDaiLiquidity = async(
     const mintParam = {
       token0,
       token1,
-      fee: 3000,
+      fee: feeTier,
       tickLower: -887220,// int24 min tick used when selecting full range
       tickUpper: 887220,// int24 max tick used when selecting full range
       amount0Desired: isWethToken0 ? ethAmount.toString() : daiAmount.toString(),
