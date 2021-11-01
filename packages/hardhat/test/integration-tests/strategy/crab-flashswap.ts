@@ -596,8 +596,6 @@ describe("Crab flashswap integration test", function () {
         expect(timeAtLastHedgeAfter.eq(hedgeBlock.timestamp)).to.be.true
         expect(priceAtLastHedgeAfter.eq(currentWSqueethPrice)).to.be.true 
       })
-
-      
     })
   
   describe("hedging non-delta neutral strategy: sell auction based on price threshold", async () => {

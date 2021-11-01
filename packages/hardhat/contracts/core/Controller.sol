@@ -1034,6 +1034,10 @@ contract Controller is Ownable {
     function _getNewNormalizationFactor() internal view returns (uint256) {
         uint32 period = uint32(block.timestamp.sub(lastFundingUpdateTimestamp));
 
+        if (period == 0) {
+            return normalizationFactor;
+        }
+
         // make sure we use the same period for mark and index
         uint32 fairPeriod = _getFairPeriodForOracle(period);
 
