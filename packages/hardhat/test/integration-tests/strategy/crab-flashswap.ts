@@ -1305,8 +1305,6 @@ describe("Crab flashswap integration test", function () {
       expect(timeAtLastHedgeAfter.eq(hedgeBlockTimestamp)).to.be.true
       expect(priceAtLastHedgeAfter.eq(currentWSqueethPriceAfter)).to.be.true 
     })    
-
-
   })
 
   describe("Sell auction: hedge on uniswap", async () => {
