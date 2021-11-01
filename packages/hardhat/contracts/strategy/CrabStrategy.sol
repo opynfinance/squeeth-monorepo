@@ -161,7 +161,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
      * @param _ethToDeposit ETH sent from depositor
      * @param _ethToBorrow ETH to flashswap on uniswap
      */
-    function flashDeposit(uint256 _ethToDeposit, uint256 _ethToBorrow) external payable {
+    function flashDeposit(uint256 _ethToDeposit, uint256 _ethToBorrow) external payable nonReentrant {
         require(msg.value > _ethToDeposit, "Need some buffer");
 
         (uint256 cachedStrategyDebt, ) = _syncStrategyState();
@@ -197,7 +197,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
      * @param _crabAmount crab token amount to burn
      * @param _maxEthToPay maximum ETH to pay
      */
-    function flashWithdraw(uint256 _crabAmount, uint256 _maxEthToPay) external {
+    function flashWithdraw(uint256 _crabAmount, uint256 _maxEthToPay) external nonReentrant {
         (uint256 strategyDebt, ) = _syncStrategyState();
 
         uint256 exactWSqueethNeeded = strategyDebt.wmul(_crabAmount).wdiv(totalSupply());
@@ -221,7 +221,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
      * @return wSqueethToMint minted amount of wSqueeth
      * @return depositorCrabAmount minted amount of strategy token
      */
-    function deposit() external payable returns (uint256, uint256) {
+    function deposit() external payable nonReentrant returns (uint256, uint256) {
         uint256 amount = msg.value;
 
         (uint256 wSqueethToMint, uint256 depositorCrabAmount) = _deposit(msg.sender, amount, false);
@@ -237,7 +237,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
      * @param _crabAmount amount of crab token to burn
      * @param _wSqueethAmount amount of wSqueeth to burn
      */
-    function withdraw(uint256 _crabAmount, uint256 _wSqueethAmount) external payable {
+    function withdraw(uint256 _crabAmount, uint256 _wSqueethAmount) external payable nonReentrant {
         uint256 ethToWithdraw = _withdraw(msg.sender, _crabAmount, _wSqueethAmount, false);
 
         // send back ETH collateral
@@ -249,7 +249,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
     /**
      * @notice hedge startegy based on time threshold with uniswap arbing
      */
-    function timeHedgeOnUniswap() external {
+    function timeHedgeOnUniswap() external nonReentrant {
         uint256 auctionTriggerTime = timeAtLastHedge.add(hedgeTimeThreshold);
 
         require(block.timestamp >= auctionTriggerTime, "Time hedging is not allowed");
@@ -262,7 +262,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
     /**
      * @notice hedge startegy based on price threshold with uniswap arbing
      */
-    function priceHedgeOnUniswap(uint256 _auctionTriggerTime) external payable {
+    function priceHedgeOnUniswap(uint256 _auctionTriggerTime) external payable nonReentrant {
         require(_isPriceHedge(_auctionTriggerTime), "Price hedging not allowed");
 
         _hedgeOnUniswap(_auctionTriggerTime);
@@ -276,7 +276,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
      * @param _isStrategySellingWSqueeth sell or buy auction, true for sell auction
      * @param _limitPrice hedger limit auction price, should be the max price when auction is sell auction, min price when it is a buy auction
      */
-    function timeHedge(bool _isStrategySellingWSqueeth, uint256 _limitPrice) external payable {
+    function timeHedge(bool _isStrategySellingWSqueeth, uint256 _limitPrice) external payable nonReentrant {
         (bool isTimeHedgeAllowed, uint256 auctionTriggerTime) = _isTimeHedge();
 
         require(isTimeHedgeAllowed, "Time hedging is not allowed");
@@ -295,7 +295,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
         uint256 _auctionTriggerTime,
         bool _isStrategySellingWSqueeth,
         uint256 _limitPrice
-    ) external payable {
+    ) external payable nonReentrant {
         require(_isPriceHedge(_auctionTriggerTime), "Price hedging not allowed");
 
         _hedge(_auctionTriggerTime, _isStrategySellingWSqueeth, _limitPrice);
