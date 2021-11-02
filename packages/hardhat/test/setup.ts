@@ -72,9 +72,24 @@ export const createUniPool = async(
 ): Promise<Contract> => {
   const isTokenAToken0 = parseInt(tokenA.address, 16) < parseInt(tokenB.address, 16)
 
+  const tokenADecimals = await tokenA.decimals()
+  const tokenBDecimals = await tokenB.decimals()
+  
+  let rawPrice = tokenBPriceInA
+
+  if (tokenBDecimals > tokenADecimals) {
+    const diff = tokenBDecimals - tokenADecimals
+    rawPrice /= 10 ** diff
+  } else {
+    const diff = tokenADecimals - tokenBDecimals
+    rawPrice *= 10 ** diff
+  }
+
+  console.log(`rawPrice`, rawPrice)
+
   const sqrtX96Price = isTokenAToken0 
-    ? convertToken1PriceToSqrtX96Price(tokenBPriceInA.toString()).toFixed(0)
-    : convertToken0PriceToSqrtX96Price(tokenBPriceInA.toString()).toFixed(0)
+    ? convertToken1PriceToSqrtX96Price(rawPrice.toString()).toFixed(0)
+    : convertToken0PriceToSqrtX96Price(rawPrice.toString()).toFixed(0)
 
   const token0Addr = isTokenAToken0 ? tokenA.address : tokenB.address
   const token1Addr = isTokenAToken0 ? tokenB.address : tokenA.address

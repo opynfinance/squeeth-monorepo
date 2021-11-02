@@ -1,7 +1,7 @@
 import { task, types } from "hardhat/config";
 import "@nomiclabs/hardhat-waffle";
-import { utils } from "ethers";
-import { getWETH, getUniswapDeployments } from './utils'
+import { utils, BigNumber } from "ethers";
+import { getWETH, getUniswapDeployments, getUSDC } from './utils'
 
 const { formatEther, parseEther } = utils
 
@@ -26,23 +26,29 @@ task("addWethLiquidity", "Add liquidity to WETH/DAI pool")
   const { deployer } = await getNamedAccounts();
   const { positionManager, uniswapFactory } = await getUniswapDeployments(ethers, deployer, network.name)
 
-  const dai = await ethers.getContract("MockErc20", deployer);
+  const usdc = await getUSDC(ethers, deployer, network.name)
   const weth = await getWETH(ethers, deployer, network.name)
 
-  const isWethToken0 = parseInt(weth.address, 16) < parseInt(dai.address, 16)
-  const token0 = isWethToken0 ? weth.address : dai.address
-  const token1 = isWethToken0 ? dai.address : weth.address
+  const isWethToken0 = parseInt(weth.address, 16) < parseInt(usdc.address, 16)
+  const token0 = isWethToken0 ? weth.address : usdc.address
+  const token1 = isWethToken0 ? usdc.address : weth.address
 
   // get current spot price form the pool
   const poolAddr = await uniswapFactory.getPool(token0, token1, 3000)
 
   console.log(`Adding liquidity to WETH/DAI pool: ${poolAddr}`)
-  console.log(`WETH Price in DAI: ${basePrice}`)
+  console.log(`WETH Price in USDC: ${basePrice}`)
   
   const wethLiquidityAmount = parseEther(wethAmount)
-  const daiLiquidityAmount = wethLiquidityAmount.mul(basePrice)
+  let usdcLiquidityAmount = wethLiquidityAmount.mul(basePrice)
+  const usdcDecimals = 6
+  const wethDecimals = 18
   
-  const daiBalance = await dai.balanceOf(deployer)
+  usdcLiquidityAmount = usdcLiquidityAmount.div(BigNumber.from(10).pow(wethDecimals-usdcDecimals))
+  
+
+  
+  const daiBalance = await usdc.balanceOf(deployer)
   let wethBalance = await weth.balanceOf(deployer)
 
   if (wethBalance.lt(wethLiquidityAmount)) {
@@ -51,9 +57,9 @@ task("addWethLiquidity", "Add liquidity to WETH/DAI pool")
     wethBalance = await weth.balanceOf(deployer)
   }
 
-  if (daiBalance.lt(daiLiquidityAmount)) {
-    console.log(`Minting ${formatEther(daiLiquidityAmount)} DAI`)
-    const tx = await dai.mint(deployer, daiLiquidityAmount) 
+  if (daiBalance.lt(usdcLiquidityAmount)) {
+    console.log(`Minting ${formatEther(usdcLiquidityAmount)} USDC`)
+    const tx = await usdc.mint(deployer, usdcLiquidityAmount) 
     await ethers.provider.waitForTransaction(tx.hash, 1)
   }
 
@@ -65,10 +71,10 @@ task("addWethLiquidity", "Add liquidity to WETH/DAI pool")
     await ethers.provider.waitForTransaction(tx.hash, 1)
   }
 
-  const daiAllowance = await dai.allowance(deployer, positionManager.address)
-  if (daiAllowance.lt(daiLiquidityAmount)) {
-    console.log(`Approving DAI...`)
-    const tx = await dai.approve(positionManager.address, ethers.constants.MaxUint256)
+  const usdcAllowance = await usdc.allowance(deployer, positionManager.address)
+  if (usdcAllowance.lt(usdcLiquidityAmount)) {
+    console.log(`Approving USDC...`)
+    const tx = await usdc.approve(positionManager.address, ethers.constants.MaxUint256)
     await ethers.provider.waitForTransaction(tx.hash, 1)
   }
   
@@ -81,8 +87,8 @@ task("addWethLiquidity", "Add liquidity to WETH/DAI pool")
     fee: 3000,
     tickLower: -887220,// int24 min tick used when selecting full range
     tickUpper: 887220,// int24 max tick used when selecting full range
-    amount0Desired: isWethToken0 ? wethLiquidityAmount : daiLiquidityAmount,
-    amount1Desired: isWethToken0 ? daiLiquidityAmount : wethLiquidityAmount,
+    amount0Desired: isWethToken0 ? wethLiquidityAmount : usdcLiquidityAmount,
+    amount1Desired: isWethToken0 ? usdcLiquidityAmount : wethLiquidityAmount,
     amount0Min: isWethToken0 ? minWeth : minSqueeth,
     amount1Min: isWethToken0 ? minSqueeth : minWeth,
     recipient: deployer,// address

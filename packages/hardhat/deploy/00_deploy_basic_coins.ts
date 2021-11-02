@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 
-import { networkNameToWeth, networkNameToDai } from '../tasks/utils'
+import { networkNameToWeth, networkNameToUSDC } from '../tasks/utils'
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, ethers, network } = hre;
@@ -22,14 +22,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     console.log(`Using WETH9 at ${wethAddr}`)
   }
 
-  // Deploy Dai
-  const daiAddr = networkNameToDai(network.name as string)
-  if (daiAddr === undefined) {
-    await deploy("MockErc20", { from: deployer, args: ["DAI", "DAI", 18], skipIfAlreadyDeployed: false });  
-    const dai = await ethers.getContract("MockErc20", deployer);
-    console.log(`Dai Deployed at ${dai.address} 🍇`)
+  // Deploy USD
+  const usdcAddress = networkNameToUSDC(network.name as string)
+  if (usdcAddress === undefined) {
+    await deploy("MockErc20", { from: deployer, args: ["USDC", "USDC", 6], skipIfAlreadyDeployed: false });  
+    const usdc = await ethers.getContract("MockErc20", deployer);
+    console.log(`USDC Deployed at ${usdc.address} 🍇`)
   } else {
-    console.log(`Using Dai at ${daiAddr}`)
+    console.log(`Using USDC at ${usdcAddress}`)
   }
 }
 

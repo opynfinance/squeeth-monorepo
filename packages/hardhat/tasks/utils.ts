@@ -30,12 +30,14 @@ export const networkNameToPositionManager = (name: string) => {
   }
 }
 
-export const networkNameToDai = (name: string) => {
+export const networkNameToUSDC = (name: string) => {
   switch (name) {
-    case 'mainnet': return '0x6b175474e89094c44da98b954eedeac495271d0f'
+    case 'mainnet': return '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
+    case 'ropsten': return '0x27415c30d8c87437becbd4f98474f26e712047f4'
     default: return undefined
   }
 }
+
 
 export const networkNameToWeth = (name: string) => {
   switch (name) {
@@ -55,13 +57,14 @@ export const getWETH = async (ethers: any, deployer: string, networkName: string
   return ethers.getContractAt('WETH9', wethAddr)
 }
 
-export const getDai = async (ethers: any, deployer: string, networkName: string)=> {
-  const daiAddress = networkNameToDai(networkName)
-  if (daiAddress === undefined) {
+export const getUSDC = async (ethers: any, deployer: string, networkName: string)=> {
+  const usdcAddress = networkNameToUSDC(networkName)
+  if (usdcAddress === undefined) {
+    // use to local deployment as USDC
     return ethers.getContract("MockErc20", deployer);
   } 
   // get contract instance at address
-  return ethers.getContractAt('MockErc20', daiAddress)
+  return ethers.getContractAt('MockErc20', usdcAddress)
 }
 
 /**
