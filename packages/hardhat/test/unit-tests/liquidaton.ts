@@ -132,6 +132,19 @@ describe("Controller: liquidation unit test", function () {
       // liquidator mint wSqueeth
       await squeeth.connect(liquidator).mint(liquidator.address, vaultBefore.shortAmount)
 
+      const result = await controller.checkLiquidation(vault1Id);
+      const isUnsafe = result[0]
+      const isLiquidatableAfterReducingDebt = result[1]
+      const minWPowerPerpAmount = result[2]
+      const maxWPowerPerpAmount = result[3]
+      const collateralToReceive = result[4]
+
+      expect(isUnsafe).to.be.false
+      expect(isLiquidatableAfterReducingDebt).to.be.false
+      expect(minWPowerPerpAmount.eq(BigNumber.from(0))).to.be.true
+      expect(maxWPowerPerpAmount.eq(BigNumber.from(0))).to.be.true
+      expect(collateralToReceive.eq(BigNumber.from(0))).to.be.true
+
       await expect(controller.connect(liquidator).liquidate(vault1Id, vaultBefore.shortAmount)).to.be.revertedWith(
         'Can not liquidate safe vault'
       )
@@ -144,14 +157,53 @@ describe("Controller: liquidation unit test", function () {
     it("should revert if the vault become a dust vault after liquidation", async () => {
       const vaultBefore = await controller.vaults(vault2Id)
       const debtToRepay = vaultBefore.shortAmount.sub(1) // not burning all the the short
+
+      const debtShouldRepay = vaultBefore.shortAmount
+      const normFactor = await controller.normalizationFactor()
+      let collateralToSell : BigNumber = newEthUsdPrice.mul(normFactor).mul(debtShouldRepay).div(one).div(oracleScaleFactor).div(one)
+      collateralToSell = collateralToSell.add(collateralToSell.div(10))
+
+      const result = await controller.checkLiquidation(vault2Id);
+      const isUnsafe = result[0]
+      const isLiquidatableAfterReducingDebt = result[1]
+      const minWPowerPerpAmount = result[2]
+      const maxWPowerPerpAmount = result[3]
+      const collateralToReceive = result[4]
+
+      expect(isUnsafe).to.be.true
+      expect(isLiquidatableAfterReducingDebt).to.be.true
+      expect(minWPowerPerpAmount.eq(debtShouldRepay)).to.be.true
+      expect(maxWPowerPerpAmount.eq(debtShouldRepay)).to.be.true
+      expect(isSimilar(collateralToReceive.toString(), collateralToSell.toString())).to.be.true
+
       await expect(controller.connect(liquidator).liquidate(vault2Id, debtToRepay)).to.be.revertedWith('Dust vault left');
     })
     it("should allow liquidating a whole vault if only liquidating half of it is gonna make it a dust vault", async () => {
       const vaultBefore = await controller.vaults(vault2Id)
       const debtToRepay = vaultBefore.shortAmount
+            
+      const normFactor = await controller.normalizationFactor()
+      let collateralToSell : BigNumber = newEthUsdPrice.mul(normFactor).mul(debtToRepay).div(one).div(oracleScaleFactor).div(one)
+      collateralToSell = collateralToSell.add(collateralToSell.div(10))
+
+      const result = await controller.checkLiquidation(vault2Id);
+      const isUnsafe = result[0]
+      const isLiquidatableAfterReducingDebt = result[1]
+      const minWPowerPerpAmount = result[2]
+      const maxWPowerPerpAmount = result[3]
+      const collateralToReceive = result[4]
+
+      expect(isUnsafe).to.be.true
+      expect(isLiquidatableAfterReducingDebt).to.be.true
+      expect(minWPowerPerpAmount.eq(vaultBefore.shortAmount)).to.be.true
+      expect(maxWPowerPerpAmount.eq(vaultBefore.shortAmount)).to.be.true
+      expect(isSimilar(collateralToReceive.toString(), collateralToSell.toString())).to.be.true
+
       await controller.connect(liquidator).liquidate(vault2Id, debtToRepay)
+
       const vaultAfter = await controller.vaults(vault2Id)
       expect(vaultAfter.shortAmount.isZero()).to.be.true
+
     })
 
     it("Liquidate unsafe vault (vault 1)", async () => {
@@ -163,6 +215,14 @@ describe("Controller: liquidation unit test", function () {
       expect(isVaultSafeBefore).to.be.false
 
       const debtToRepay = vaultBefore.shortAmount.div(2)
+
+      const result = await controller.checkLiquidation(vault1Id);
+      const isUnsafe = result[0]
+      const isLiquidatableAfterReducingDebt = result[1]
+      const minWPowerPerpAmount = result[2]
+      const maxWPowerPerpAmount = result[3]
+      const collateralToReceive = result[4]
+
       // specifying a higher maxDebtToRepay number, which won't be used
       const maxDebtToRepay = debtToRepay.add(10)
       const tx = await controller.connect(liquidator).liquidate(vault1Id, maxDebtToRepay);
@@ -176,6 +236,12 @@ describe("Controller: liquidation unit test", function () {
       const liquidatorBalanceAfter = await provider.getBalance(liquidator.address)
       const liquidateEventCollateralToSell : BigNumber = (receipt.events?.find(event => event.event === 'Liquidate'))?.args?.collateralPaid;
       const squeethLiquidatorBalanceAfter = await squeeth.balanceOf(liquidator.address)
+
+      expect(isUnsafe).to.be.true
+      expect(isLiquidatableAfterReducingDebt).to.be.true
+      expect(minWPowerPerpAmount.eq(BigNumber.from(0))).to.be.true
+      expect(maxWPowerPerpAmount.eq(debtToRepay)).to.be.true
+      expect(isSimilar(collateralToReceive.toString(), collateralToSell.toString())).to.be.true
 
       expect(isSimilar(liquidatorBalanceAfter.sub(liquidatorBalanceBefore).toString(), collateralToSell.toString())).to.be.true
       expect(liquidateEventCollateralToSell.eq(collateralToSell)).to.be.true
@@ -208,6 +274,26 @@ describe("Controller: liquidation unit test", function () {
       const vault = await controller.vaults(vaultId)
       // liquidator specify amount that would take all collateral, but not clearing all the debt
       const debtToRepay = vault.shortAmount.sub(1)
+
+      const normFactor = await controller.normalizationFactor()
+      let collateralToSell : BigNumber = ethers.utils.parseUnits(newEthPrice).mul(normFactor).mul(debtToRepay).div(one).div(oracleScaleFactor).div(one)
+      collateralToSell = collateralToSell.add(collateralToSell.div(10))
+
+
+      const result = await controller.checkLiquidation(vaultId);
+      const isUnsafe = result[0]
+      const isLiquidatableAfterReducingDebt = result[1]
+      const minWPowerPerpAmount = result[2]
+      const maxWPowerPerpAmount = result[3]
+      const collateralToReceive = result[4]
+
+      expect(collateralToSell.gt(vault.collateralAmount)).to.be.true
+      expect(isUnsafe).to.be.true
+      expect(isLiquidatableAfterReducingDebt).to.be.true
+      expect(minWPowerPerpAmount.eq(vault.shortAmount)).to.be.true
+      expect(maxWPowerPerpAmount.eq(vault.shortAmount)).to.be.true
+      expect(isSimilar(collateralToReceive.toString(), vault.collateralAmount.toString())).to.be.true
+
       await expect(controller.connect(liquidator).liquidate(vaultId, debtToRepay)).to.be.revertedWith('Need full liquidation');
     })
 
@@ -215,6 +301,13 @@ describe("Controller: liquidation unit test", function () {
       const vaultBefore = await controller.vaults(vaultId)
       const liquidatorBalanceBefore = await provider.getBalance(liquidator.address)
       const squeethLiquidatorBalanceBefore = await squeeth.balanceOf(liquidator.address)
+
+      const result = await controller.checkLiquidation(vaultId);
+      const isUnsafe = result[0]
+      const isLiquidatableAfterReducingDebt = result[1]
+      const minWPowerPerpAmount = result[2]
+      const maxWPowerPerpAmount = result[3]
+      const collateralToReceive = result[4]
 
       // fully liquidate a vault
       const debtToRepay = vaultBefore.shortAmount
@@ -227,6 +320,13 @@ describe("Controller: liquidation unit test", function () {
 
       // paying this amount will reduce total eth 
       expect(collateralToSell.gt(vaultBefore.collateralAmount)).to.be.true
+
+      expect(collateralToSell.gt(vaultBefore.collateralAmount)).to.be.true
+      expect(isUnsafe).to.be.true
+      expect(isLiquidatableAfterReducingDebt).to.be.true
+      expect(minWPowerPerpAmount.eq(vaultBefore.shortAmount)).to.be.true
+      expect(maxWPowerPerpAmount.eq(vaultBefore.shortAmount)).to.be.true
+      expect(isSimilar(collateralToReceive.toString(), vaultBefore.collateralAmount.toString())).to.be.true
 
       const vaultAfter = await controller.vaults(vaultId)
       const liquidatorBalanceAfter = await provider.getBalance(liquidator.address)

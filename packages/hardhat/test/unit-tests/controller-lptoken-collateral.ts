@@ -728,11 +728,18 @@ describe("Controller: Uni LP tokens collateralization", function () {
 
       it('anyone can safe the vault, the owner will receive extra wsqueeth withdrawn from Uniswap', async() => {
         // the vault should be underwater now
+        
         await expect(controller.connect(seller1).mintPowerPerpAmount(vaultId, 1, 0)).to.be.revertedWith('Invalid state')
         const vaultBefore = await controller.vaults(vaultId)
         const { squeethAmount: nftSqueethAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, newNFTId, newTick, wethIsToken0InSqueethPool)
 
         const ownerWSqueethBefore = await squeeth.balanceOf(seller1.address)
+
+        const result = await controller.checkLiquidation(vaultId);
+        const isUnsafe = result[0]
+        const isLiquidatableAfterReducingDebt = result[1]
+        const minWPowerPerpAmount = result[2]
+        const maxWPowerPerpAmount = result[3]  
 
         await controller.connect(seller1).reduceDebt(vaultId)
         const vaultAfter = await controller.vaults(vaultId)
@@ -740,6 +747,12 @@ describe("Controller: Uni LP tokens collateralization", function () {
         const ownerWSqueethAfter = await squeeth.balanceOf(seller1.address)
 
         const wsqueethExcess = nftSqueethAmount.sub(vaultBefore.shortAmount)
+
+        expect(isUnsafe).to.be.true
+        expect(isLiquidatableAfterReducingDebt).to.be.false
+        expect(minWPowerPerpAmount.eq(BigNumber.from(0))).to.be.true
+        expect(maxWPowerPerpAmount.eq(BigNumber.from(0))).to.be.true
+
         expect(ownerWSqueethAfter.sub(ownerWSqueethBefore).eq(wsqueethExcess)).to.be.true
         expect(vaultAfter.NftCollateralId === 0).to.be.true
         expect(vaultAfter.shortAmount.isZero()).to.be.true

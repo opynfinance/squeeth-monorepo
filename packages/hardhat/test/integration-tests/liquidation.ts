@@ -384,6 +384,13 @@ describe("Liquidation Integration Test", function () {
 
       const wSqueethAmountToLiquidate = vaultBefore.shortAmount.div(2)
 
+      const result = await controller.checkLiquidation(vault0Id);
+      const isUnsafe = result[0]
+      const isLiquidatableAfterReducingDebt = result[1]
+      const minWPowerPerpAmount = result[2]
+      const maxWPowerPerpAmount = result[3]
+      const collateralToReceive = result[4]
+
       await controller.connect(liquidator).liquidate(vault0Id, wSqueethAmountToLiquidate, {gasPrice: 0});
       
       const normFactor = await controller.normalizationFactor()
@@ -392,6 +399,12 @@ describe("Liquidation Integration Test", function () {
       const vaultAfter = await controller.vaults(vault0Id)
       const liquidatorBalanceAfter = await provider.getBalance(liquidator.address)
       const liquidatorSqueethAfter = await squeeth.balanceOf(liquidator.address)
+
+      expect(isUnsafe).to.be.true
+      expect(isLiquidatableAfterReducingDebt).to.be.true
+      expect(minWPowerPerpAmount.eq(BigNumber.from(0))).to.be.true
+      expect(maxWPowerPerpAmount.eq((vaultBefore.shortAmount).div(2))).to.be.true
+      expect(isSimilar(collateralToReceive.toString(), collateralToGet.toString())).to.be.true
       
       expect(collateralToGet.eq(liquidatorBalanceAfter.sub(liquidatorBalanceBefore))).to.be.true
       expect(vaultBefore.shortAmount.sub(vaultAfter.shortAmount).eq(liquidatorSqueethBefore.sub(liquidatorSqueethAfter))).to.be.true
@@ -400,6 +413,12 @@ describe("Liquidation Integration Test", function () {
     it('should revert if trying to leave vault1 a dust vault', async() => {
       const vaultBefore = await controller.vaults(vault1Id)
       const wSqueethAmountToLiquidate = vaultBefore.shortAmount.div(2)
+
+      const result = await controller.checkLiquidation(vault1Id);
+      const minWPowerPerpAmount = result[2]
+
+      expect(minWPowerPerpAmount.gt(wSqueethAmountToLiquidate)).to.be.true
+
       await expect(controller.connect(liquidator).liquidate(vault1Id, wSqueethAmountToLiquidate, {gasPrice: 0})).to.be.revertedWith('Dust vault left')
     })
 
@@ -413,10 +432,23 @@ describe("Liquidation Integration Test", function () {
       // liquidate the full vault
       const wSqueethAmountToLiquidate = vaultBefore.shortAmount
 
+      const result = await controller.checkLiquidation(vault1Id);
+      const isUnsafe = result[0]
+      const isLiquidatableAfterReducingDebt = result[1]
+      const minWPowerPerpAmount = result[2]
+      const maxWPowerPerpAmount = result[3]
+      const collateralToReceive = result[4]
+
       await controller.connect(liquidator).liquidate(vault1Id, wSqueethAmountToLiquidate, {gasPrice: 0});
       const vaultAfter = await controller.vaults(vault1Id)
       const liquidatorBalanceAfter = await provider.getBalance(liquidator.address)
       const liquidatorSqueethAfter = await squeeth.balanceOf(liquidator.address)
+
+      expect(isUnsafe).to.be.true
+      expect(isLiquidatableAfterReducingDebt).to.be.true
+      expect(minWPowerPerpAmount.eq(vaultBefore.shortAmount)).to.be.true
+      expect(maxWPowerPerpAmount.eq((vaultBefore.shortAmount))).to.be.true
+      expect(isSimilar(collateralToReceive.toString(), (vaultBefore.collateralAmount).toString())).to.be.true
 
       expect(vaultBefore.collateralAmount.eq(liquidatorBalanceAfter.sub(liquidatorBalanceBefore))).to.be.true
       expect(vaultBefore.shortAmount.sub(vaultAfter.shortAmount).eq(liquidatorSqueethBefore.sub(liquidatorSqueethAfter))).to.be.true
@@ -432,6 +464,13 @@ describe("Liquidation Integration Test", function () {
       // liquidate the full vault
       const wSqueethAmountToLiquidate = vaultBefore.shortAmount
 
+      const result = await controller.checkLiquidation(vault2Id);
+      const isUnsafe = result[0]
+      const isLiquidatableAfterReducingDebt = result[1]
+      const minWPowerPerpAmount = result[2]
+      const maxWPowerPerpAmount = result[3]
+      const collateralToReceive = result[4]
+
       await controller.connect(liquidator).liquidate(vault2Id, wSqueethAmountToLiquidate, {gasPrice: 0});
       const vaultAfter = await controller.vaults(vault2Id)
       const liquidatorBalanceAfter = await provider.getBalance(liquidator.address)
@@ -441,16 +480,33 @@ describe("Liquidation Integration Test", function () {
       const normFactor = await controller.normalizationFactor()
       const collateralToGet = newEthPrice.div(oracleScaleFactor).mul(normFactor).mul(wSqueethAmountToLiquidate).div(one).div(one).mul(11).div(10)
       
+      expect(isUnsafe).to.be.true
+      expect(isLiquidatableAfterReducingDebt).to.be.true
+      expect(minWPowerPerpAmount.eq(vaultBefore.shortAmount)).to.be.true
+      expect(maxWPowerPerpAmount.eq((vaultBefore.shortAmount))).to.be.true
+      expect(isSimilar(collateralToReceive.toString(), (collateralToGet).toString())).to.be.true
+
       expect(collateralToGet.eq(liquidatorBalanceAfter.sub(liquidatorBalanceBefore))).to.be.true
       expect(vaultBefore.shortAmount.sub(vaultAfter.shortAmount).eq(liquidatorSqueethBefore.sub(liquidatorSqueethAfter))).to.be.true
       expect(vaultAfter.shortAmount.isZero()).to.be.true
       expect(vaultAfter.collateralAmount.gt(0)).to.be.true
     })
-
     
     it('should revert when trying to liquidate vault 6 (nft vault underwater) but leave dust behind', async() => {
       const vaultBefore = await controller.vaults(vault6Id)
       const wSqueethAmountToLiquidate = vaultBefore.shortAmount.sub(1)
+
+      const result = await controller.checkLiquidation(vault6Id);
+      const isUnsafe = result[0]
+      const isLiquidatableAfterReducingDebt = result[1]
+      const minWPowerPerpAmount = result[2]
+      const maxWPowerPerpAmount = result[3]
+
+      expect(isUnsafe).to.be.true
+      expect(isLiquidatableAfterReducingDebt).to.be.true
+      expect(minWPowerPerpAmount.eq(vaultBefore.shortAmount)).to.be.true
+      expect(maxWPowerPerpAmount.eq((vaultBefore.shortAmount))).to.be.true
+
       await expect(controller.connect(liquidator).liquidate(vault6Id, wSqueethAmountToLiquidate, {gasPrice: 0})).to.be.revertedWith('Dust vault left');
     })
 
@@ -464,6 +520,13 @@ describe("Liquidation Integration Test", function () {
       // liquidate the full vault
       const wSqueethAmountToLiquidate = vaultBefore.shortAmount
 
+      const result = await controller.checkLiquidation(vault6Id);
+      const isUnsafe = result[0]
+      const isLiquidatableAfterReducingDebt = result[1]
+      const minWPowerPerpAmount = result[2]
+      const maxWPowerPerpAmount = result[3]
+      const collateralToReceive = result[4]
+
       await controller.connect(liquidator).liquidate(vault6Id, wSqueethAmountToLiquidate, {gasPrice: 0});
       const vaultAfter = await controller.vaults(vault6Id)
       const liquidatorBalanceAfter = await provider.getBalance(liquidator.address)
@@ -473,6 +536,12 @@ describe("Liquidation Integration Test", function () {
       const normFactor = await controller.normalizationFactor()
       const collateralToGet = newEthPrice.div(oracleScaleFactor).mul(normFactor).mul(wSqueethAmountToLiquidate).div(one).div(one).mul(11).div(10)
       
+      expect(isUnsafe).to.be.true
+      expect(isLiquidatableAfterReducingDebt).to.be.true
+      expect(minWPowerPerpAmount.eq(vaultBefore.shortAmount)).to.be.true
+      expect(maxWPowerPerpAmount.eq((vaultBefore.shortAmount))).to.be.true
+      expect(isSimilar(collateralToReceive.toString(), (collateralToGet).toString())).to.be.true
+
       expect(collateralToGet.eq(liquidatorBalanceAfter.sub(liquidatorBalanceBefore))).to.be.true
       expect(vaultBefore.shortAmount.sub(vaultAfter.shortAmount).eq(liquidatorSqueethBefore.sub(liquidatorSqueethAfter))).to.be.true
       expect(vaultAfter.shortAmount.isZero()).to.be.true
@@ -482,6 +551,20 @@ describe("Liquidation Integration Test", function () {
     it("should revert when trying to liquidate a safe vault", async () => {
       const vaultBefore = await controller.vaults(vault3Id)
       const wSqueethAmountToLiquidate = vaultBefore.shortAmount.div(2)
+
+      const result = await controller.checkLiquidation(vault6Id);
+      const isUnsafe = result[0]
+      const isLiquidatableAfterReducingDebt = result[1]
+      const minWPowerPerpAmount = result[2]
+      const maxWPowerPerpAmount = result[3]
+      const collateralToReceive = result[4]
+
+      expect(isUnsafe).to.be.false
+      expect(isLiquidatableAfterReducingDebt).to.be.false
+      expect(minWPowerPerpAmount.eq(BigNumber.from(0))).to.be.true
+      expect(maxWPowerPerpAmount.eq(BigNumber.from(0))).to.be.true
+      expect(collateralToReceive.eq(BigNumber.from(0))).to.be.true
+      
       await expect(controller.connect(liquidator).liquidate(vault3Id, wSqueethAmountToLiquidate, {gasPrice: 0})).to.be.revertedWith('Can not liquidate safe vault')
     })
   })
@@ -570,6 +653,13 @@ describe("Liquidation Integration Test", function () {
       const wSqueethAmountToLiquidate = vaultBefore.shortAmount.sub(squeethAmount).div(2)
       const liquidatorEthBalance = await provider.getBalance(liquidator.address)
 
+      const result = await controller.checkLiquidation(vault3Id);
+      const isUnsafe = result[0]
+      const isLiquidatableAfterReducingDebt = result[1]
+      const minWPowerPerpAmount = result[2]
+      const maxWPowerPerpAmount = result[3]
+      const collateralToReceive = result[4]
+
       await controller.connect(liquidator).liquidate(vault3Id, wSqueethAmountToLiquidate, {gasPrice: 0})
 
       const liquidatorEthAfter = await provider.getBalance(liquidator.address)
@@ -580,6 +670,12 @@ describe("Liquidation Integration Test", function () {
       const withdrawWSqueethInEth = newEthPrice.mul(normFactor).mul(squeethAmount).div(one).div(one).div(oracleScaleFactor)
       const bounty = withdrawWSqueethInEth.add(ethAmount).mul(2).div(100);
       
+      expect(isUnsafe).to.be.true
+      expect(isLiquidatableAfterReducingDebt).to.be.false
+      expect(minWPowerPerpAmount.eq(BigNumber.from(0))).to.be.true
+      expect(maxWPowerPerpAmount.eq(BigNumber.from(0))).to.be.true
+      expect(isSimilar(collateralToReceive.toString(), (bounty).toString())).to.be.true
+
       expect(isSimilar(liquidatorEthAfter.sub(liquidatorEthBalance).toString(), bounty.toString())).to.be.true      
       expect(vaultAfter.NftCollateralId === 0).to.be.true
       expect(isSimilar(vaultBefore.collateralAmount.add(ethAmount).sub(bounty).toString(), vaultAfter.collateralAmount.toString())).to.be.true
@@ -690,6 +786,13 @@ describe("Liquidation Integration Test", function () {
       const wSqueethAmountToLiquidate = vaultBefore.shortAmount.sub(squeethAmount).div(2)
       const liquidatorEthBalance = await provider.getBalance(liquidator.address)
 
+      const result = await controller.checkLiquidation(vault5Id);
+      const isUnsafe = result[0]
+      const isLiquidatableAfterReducingDebt = result[1]
+      const minWPowerPerpAmount = result[2]
+      const maxWPowerPerpAmount = result[3]
+      const collateralToReceive = result[4]
+
       await controller.connect(liquidator).liquidate(vault5Id, wSqueethAmountToLiquidate, {gasPrice: 0})
 
       const liquidatorEthAfter = await provider.getBalance(liquidator.address)
@@ -697,6 +800,12 @@ describe("Liquidation Integration Test", function () {
       const normFactor = await controller.normalizationFactor()
       
       const reward = newEthPrice.div(oracleScaleFactor).mul(normFactor).mul(wSqueethAmountToLiquidate).div(BigNumber.from(10).pow(36)).mul(11).div(10)
+
+      expect(isUnsafe).to.be.true
+      expect(isLiquidatableAfterReducingDebt).to.be.true
+      expect(minWPowerPerpAmount.eq(BigNumber.from(0))).to.be.true
+      expect(maxWPowerPerpAmount.eq((wSqueethAmountToLiquidate))).to.be.true
+      expect(isSimilar(collateralToReceive.toString(), (reward).toString())).to.be.true
 
       expect(isSimilar(liquidatorEthAfter.sub(liquidatorEthBalance).toString(), reward.toString())).to.be.true      
       expect(vaultAfter.NftCollateralId === 0).to.be.true

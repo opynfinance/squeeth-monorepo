@@ -26,7 +26,7 @@ contract Controller is Ownable, ReentrancyGuard {
     using Address for address payable;
 
     uint32 internal constant SHUTDOWN_PERIOD = 10 minutes;
-    uint256 internal constant MIN_COLLATERAL = 0.5 ether;
+    uint256 public constant MIN_COLLATERAL = 0.5 ether;
     /// @dev system can only be paused for 182 days from deployment
     uint256 public constant PAUSE_TIME_LIMIT = 182 days;
     uint256 public constant FUNDING_PERIOD = 1 days;
@@ -42,7 +42,7 @@ contract Controller is Ownable, ReentrancyGuard {
     address public immutable oracle;
     address public feeRecipient;
 
-    uint256 public immutable deployTimestamp;
+    uint256 internal immutable deployTimestamp;
     /// @dev fee rate in basis point. feeRate of 1 = 0.01%
     uint256 public feeRate;
     /// @dev the settlement price for each wPowerPerp for settlement
@@ -55,6 +55,7 @@ contract Controller is Ownable, ReentrancyGuard {
     uint128 public normalizationFactor;
     uint128 public lastFundingUpdateTimestamp;
 
+    bool internal immutable isWethToken0;
     bool public isShutDown;
     bool public isSystemPaused;
 
@@ -75,26 +76,6 @@ contract Controller is Ownable, ReentrancyGuard {
     event FeeRecipientUpdated(address oldFeeRecipient, address newFeeRecipient);
     event Liquidate(uint256 vaultId, uint256 debtAmount, uint256 collateralPaid);
     event NormalizationFactorUpdated(uint256 oldNormFactor, uint256 newNormFactor, uint256 timestamp);
-
-    modifier notPaused() {
-        require(!isSystemPaused, "Paused");
-        _;
-    }
-
-    modifier isPaused() {
-        require(isSystemPaused, "Not paused");
-        _;
-    }
-
-    modifier notShutdown() {
-        require(!isShutDown, "Shutdown");
-        _;
-    }
-
-    modifier isShutdown() {
-        require(isShutDown, "Not shutdown");
-        _;
-    }
 
     /**
      * @notice constructor
@@ -134,6 +115,7 @@ contract Controller is Ownable, ReentrancyGuard {
         ethQuoteCurrencyPool = _ethQuoteCurrencyPool;
         wPowerPerpPool = _wPowerPerpPool;
         uniswapPositionManager = _uniPositionManager;
+        isWethToken0 = _weth < _wPowerPerp;
 
         deployTimestamp = block.timestamp;
         normalizationFactor = 1e18;
@@ -239,7 +221,8 @@ contract Controller is Ownable, ReentrancyGuard {
         uint256 _vaultId,
         uint128 _powerPerpAmount,
         uint256 _uniTokenId
-    ) external payable nonReentrant notPaused returns (uint256, uint256) {
+    ) external payable nonReentrant returns (uint256, uint256) {
+        _notPaused();
         return _openDepositMint(msg.sender, _vaultId, _powerPerpAmount, msg.value, _uniTokenId, false);
     }
 
@@ -254,7 +237,8 @@ contract Controller is Ownable, ReentrancyGuard {
         uint256 _vaultId,
         uint128 _wPowerPerpAmount,
         uint256 _uniTokenId
-    ) external payable nonReentrant notPaused returns (uint256) {
+    ) external payable nonReentrant returns (uint256) {
+        _notPaused();
         (uint256 vaultId, ) = _openDepositMint(msg.sender, _vaultId, _wPowerPerpAmount, msg.value, _uniTokenId, true);
         return vaultId;
     }
@@ -263,7 +247,8 @@ contract Controller is Ownable, ReentrancyGuard {
      * @dev deposit collateral into a vault
      * @param _vaultId id of the vault
      */
-    function deposit(uint256 _vaultId) external payable nonReentrant notPaused {
+    function deposit(uint256 _vaultId) external payable nonReentrant {
+        _notPaused();
         _checkVaultId(_vaultId);
         _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
@@ -277,7 +262,8 @@ contract Controller is Ownable, ReentrancyGuard {
      * @param _vaultId id of the vault
      * @param _uniTokenId uniswap position token id
      */
-    function depositUniPositionToken(uint256 _vaultId, uint256 _uniTokenId) external nonReentrant notPaused {
+    function depositUniPositionToken(uint256 _vaultId, uint256 _uniTokenId) external nonReentrant {
+        _notPaused();
         _checkVaultId(_vaultId);
         _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
@@ -291,7 +277,8 @@ contract Controller is Ownable, ReentrancyGuard {
      * @param _vaultId id of the vault
      * @param _amount amount of eth to withdraw
      */
-    function withdraw(uint256 _vaultId, uint256 _amount) external payable nonReentrant notPaused {
+    function withdraw(uint256 _vaultId, uint256 _amount) external payable nonReentrant {
+        _notPaused();
         uint256 cachedNormFactor = _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
 
@@ -305,7 +292,8 @@ contract Controller is Ownable, ReentrancyGuard {
      * @notice withdraw uniswap v3 position token from a vault
      * @param _vaultId id of the vault
      */
-    function withdrawUniPositionToken(uint256 _vaultId) external nonReentrant notPaused {
+    function withdrawUniPositionToken(uint256 _vaultId) external nonReentrant {
+        _notPaused();
         uint256 cachedNormFactor = _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
         _withdrawUniPositionToken(cachedVault, msg.sender, _vaultId);
@@ -323,7 +311,8 @@ contract Controller is Ownable, ReentrancyGuard {
         uint256 _vaultId,
         uint256 _wPowerPerpAmount,
         uint256 _withdrawAmount
-    ) external nonReentrant notPaused {
+    ) external nonReentrant {
+        _notPaused();
         _burnAndWithdraw(msg.sender, _vaultId, _wPowerPerpAmount, _withdrawAmount, true);
     }
 
@@ -338,7 +327,8 @@ contract Controller is Ownable, ReentrancyGuard {
         uint256 _vaultId,
         uint256 _powerPerpAmount,
         uint256 _withdrawAmount
-    ) external nonReentrant notPaused returns (uint256) {
+    ) external nonReentrant returns (uint256) {
+        _notPaused();
         return _burnAndWithdraw(msg.sender, _vaultId, _powerPerpAmount, _withdrawAmount, false);
     }
 
@@ -348,7 +338,8 @@ contract Controller is Ownable, ReentrancyGuard {
      * @dev the caller won't get any bounty. this is expected to be used for insolvent vaults in shutdown
      * @param _vaultId vault containing uniswap v3 position to liquidate
      */
-    function reduceDebtShutdown(uint256 _vaultId) external nonReentrant isShutdown {
+    function reduceDebtShutdown(uint256 _vaultId) external nonReentrant {
+        _isShutdown();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
         _reduceDebt(cachedVault, IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId), normalizationFactor, false);
         _writeVault(_vaultId, cachedVault);
@@ -359,7 +350,8 @@ contract Controller is Ownable, ReentrancyGuard {
      * @dev the caller won't get any bounty. this is expected to be used by vault owner
      * @param _vaultId target vault
      */
-    function reduceDebt(uint256 _vaultId) external nonReentrant notPaused {
+    function reduceDebt(uint256 _vaultId) external nonReentrant {
+        _notPaused();
         require(_canModifyVault(_vaultId, msg.sender), "Not allowed");
         uint256 cachedNormFactor = _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
@@ -367,6 +359,106 @@ contract Controller is Ownable, ReentrancyGuard {
         _reduceDebt(cachedVault, IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId), cachedNormFactor, false);
 
         _writeVault(_vaultId, cachedVault);
+    }
+
+    /**
+     * @notice check the result of a call to liquidate
+     * @dev can be used before sending a transaction to determine if the vault is unsafe, if vault can be saved
+     * @dev the minimum wPowerPerp to repay, the maximum wPowerPerp to repay and the proceeds at max wPowerPerp to repay
+     * @param _vaultId vault to liquidate
+     * @return isUnsafe
+     * @return isLiquidatable after reducing debt
+     * @return min wPowerPerp to repay, this is
+     * @return max wPowerPerp to repay, this is only non-zero if saving a vault is not possible
+     * @return proceeds at max wPowerPerp to repay, if isLiquidatable after reducing debt is false, this is the bounty for saving a vault
+     */
+    function checkLiquidation(uint256 _vaultId)
+        external
+        view
+        returns (
+            bool,
+            bool,
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        VaultLib.Vault memory cachedVault = vaults[_vaultId];
+        uint256 cachedNormFactor = _getNewNormalizationFactor();
+        if (_isVaultSafe(cachedVault, cachedNormFactor)) {
+            return (false, false, 0, 0, 0);
+        }
+
+        // get uni NFT balances
+        if (cachedVault.NftCollateralId != 0) {
+            (uint256 nftEthAmount, uint256 nftWsqueethAmount) = VaultLib._getUniPositionBalances(
+                uniswapPositionManager,
+                cachedVault.NftCollateralId,
+                IOracle(oracle).getTimeWeightedAverageTickSafe(wPowerPerpPool, 300),
+                isWethToken0
+            );
+            uint256 bounty = Power2Base
+                ._getCollateralByRepayAmount(
+                    nftWsqueethAmount,
+                    address(oracle),
+                    ethQuoteCurrencyPool,
+                    weth,
+                    quoteCurrency,
+                    cachedNormFactor
+                )
+                .add(nftEthAmount)
+                .mul(2)
+                .div(100);
+
+            if (nftWsqueethAmount > cachedVault.shortAmount) {
+                nftWsqueethAmount = cachedVault.shortAmount;
+            }
+            cachedVault.removeShort(nftWsqueethAmount);
+            cachedVault.removeUniNftCollateral();
+            cachedVault.addEthCollateral(nftEthAmount);
+            cachedVault.removeEthCollateral(bounty);
+            if (_isVaultSafe(cachedVault, cachedNormFactor)) {
+                return (true, false, 0, 0, bounty);
+            }
+            //re-add bounty if not safe after reducing debt
+            cachedVault.addEthCollateral(bounty);
+        }
+
+        //if vault not safe, calculate results of a liquidation
+        uint256 wMinAmountToLiquidate;
+        uint256 vaultShortAmount = uint256(cachedVault.shortAmount);
+        uint256 vaultCollateralAmount = uint256(cachedVault.collateralAmount);
+
+        // try limiting liquidation amount to half of the vault debt
+        (uint256 wMaxAmountToLiquidate, uint256 collateralToPay) = _getLiquidationAmount(
+            vaultShortAmount,
+            vaultShortAmount.div(2),
+            cachedNormFactor
+        );
+
+        if (vaultCollateralAmount > collateralToPay) {
+            if (vaultCollateralAmount.sub(collateralToPay) < MIN_COLLATERAL) {
+                // the vault is left with dust after liquidation, allow liquidating full vault
+                // calculate the new liquidation amount and collateral again based on the new limit
+                (wMaxAmountToLiquidate, collateralToPay) = _getLiquidationAmount(
+                    vaultShortAmount,
+                    vaultShortAmount,
+                    cachedNormFactor
+                );
+                wMinAmountToLiquidate = wMaxAmountToLiquidate;
+            }
+        }
+
+        // check if final collateral to pay is greater than vault amount.
+        // if so the system only pays out the amount the vault has, which may not be profitable
+        if (collateralToPay > vaultCollateralAmount) {
+            // force liquidator to pay full debt amount
+            wMinAmountToLiquidate = vaultShortAmount;
+            wMaxAmountToLiquidate = vaultShortAmount;
+            collateralToPay = vaultCollateralAmount;
+        }
+
+        return (true, true, wMinAmountToLiquidate, wMaxAmountToLiquidate, collateralToPay);
     }
 
     /**
@@ -379,7 +471,8 @@ contract Controller is Ownable, ReentrancyGuard {
      * @param _maxDebtAmount max amount of wPowerPerpetual to repay
      * @return amount of wPowerPerp repaid
      */
-    function liquidate(uint256 _vaultId, uint256 _maxDebtAmount) external nonReentrant notPaused returns (uint256) {
+    function liquidate(uint256 _vaultId, uint256 _maxDebtAmount) external nonReentrant returns (uint256) {
+        _notPaused();
         _checkVaultId(_vaultId);
         uint256 cachedNormFactor = _applyFunding();
 
@@ -462,7 +555,9 @@ contract Controller is Ownable, ReentrancyGuard {
      * @notice pause and then immediately shutdown the system
      * @dev this bypasses the check on number of pauses or time based checks, but is irreversible and enables emergency settlement
      */
-    function pauseAndShutDown() external notShutdown notPaused onlyOwner {
+    function pauseAndShutDown() external onlyOwner {
+        _notShutdown();
+        _notPaused();
         isSystemPaused = true;
         isShutDown = true;
         indexForSettlement = Power2Base._getScaledTwap(address(oracle), ethQuoteCurrencyPool, weth, quoteCurrency, 600);
@@ -471,7 +566,9 @@ contract Controller is Ownable, ReentrancyGuard {
     /**
      * @notice shutdown the system and enable system settlement
      */
-    function shutDown() external notShutdown isPaused onlyOwner {
+    function shutDown() external onlyOwner {
+        _notShutdown();
+        _isPaused();
         isShutDown = true;
         indexForSettlement = Power2Base._getScaledTwap(address(oracle), ethQuoteCurrencyPool, weth, quoteCurrency, 600);
     }
@@ -480,7 +577,9 @@ contract Controller is Ownable, ReentrancyGuard {
      * @notice pause the system for up to 24 hours after which any one can unpause
      * @dev can only be called for 365 days since the contract was launched or 4 times
      */
-    function pause() external notShutdown notPaused onlyOwner {
+    function pause() external onlyOwner {
+        _notShutdown();
+        _notPaused();
         require(pausesLeft > 0, "Paused too many times");
         uint256 timeSinceDeploy = block.timestamp.sub(deployTimestamp);
         require(timeSinceDeploy < PAUSE_TIME_LIMIT, "Pause time limit exceeded");
@@ -493,7 +592,9 @@ contract Controller is Ownable, ReentrancyGuard {
      * @notice unpause the contract
      * @dev anyone can unpause the contract after 24 hours
      */
-    function unPauseAnyone() external notShutdown isPaused {
+    function unPauseAnyone() external {
+        _isPaused();
+        _notShutdown();
         require(block.timestamp > (lastPauseTime + 1 days), "Not enough paused time has passed");
         isSystemPaused = false;
     }
@@ -502,7 +603,9 @@ contract Controller is Ownable, ReentrancyGuard {
      * @notice unpause the contract
      * @dev owner can unpause at any time
      */
-    function unPauseOwner() external notShutdown isPaused onlyOwner {
+    function unPauseOwner() external onlyOwner {
+        _isPaused();
+        _notShutdown();
         isSystemPaused = false;
     }
 
@@ -510,7 +613,8 @@ contract Controller is Ownable, ReentrancyGuard {
      * @notice redeem wPowerPerp for (settlement index value) * normalizationFactor when the system is shutdown
      * @param _wPerpAmount amount of wPowerPerp to burn
      */
-    function redeemLong(uint256 _wPerpAmount) external nonReentrant isShutdown {
+    function redeemLong(uint256 _wPerpAmount) external nonReentrant {
+        _isShutdown();
         IWPowerPerp(wPowerPerp).burn(msg.sender, _wPerpAmount);
 
         uint256 longValue = Power2Base._getLongSettlementValue(_wPerpAmount, indexForSettlement, normalizationFactor);
@@ -522,7 +626,8 @@ contract Controller is Ownable, ReentrancyGuard {
      * @dev short position is redeemed by valuing the debt at the (settlement index value) * normalizationFactor
      * @param _vaultId vault id
      */
-    function redeemShort(uint256 _vaultId) external nonReentrant isShutdown {
+    function redeemShort(uint256 _vaultId) external nonReentrant {
+        _isShutdown();
         require(_canModifyVault(_vaultId, msg.sender), "Not allowed");
 
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
@@ -549,14 +654,17 @@ contract Controller is Ownable, ReentrancyGuard {
     /**
      * @notice update the normalization factor as a way to pay funding
      */
-    function applyFunding() external notPaused {
+    function applyFunding() external {
+        _notPaused();
         _applyFunding();
     }
 
     /**
      * @notice add eth into a contract. used in case contract has insufficient eth to pay for settlement transactions
      */
-    function donate() external payable isShutdown {}
+    function donate() external payable {
+        _isShutdown();
+    }
 
     /**
      * @notice fallback function to accept eth
@@ -570,6 +678,22 @@ contract Controller is Ownable, ReentrancyGuard {
      * | Internal Functions |
      * ======================
      */
+
+    function _notShutdown() internal view {
+        require(!isShutDown, "Shutdown");
+    }
+
+    function _isShutdown() internal view {
+        require(isShutDown, "Not shutdown");
+    }
+
+    function _notPaused() internal view {
+        require(!isSystemPaused, "Paused");
+    }
+
+    function _isPaused() internal view {
+        require(isSystemPaused, "Not paused");
+    }
 
     /**
      * @notice check if a vaultId is valid, reverts if it's not valid
@@ -1005,7 +1129,7 @@ contract Controller is Ownable, ReentrancyGuard {
 
         (uint256 collectedToken0, uint256 collectedToken1) = positionManager.collect(collectParams);
 
-        bool cacheIsWethToken0 = weth < wPowerPerp;
+        bool cacheIsWethToken0 = isWethToken0;
         uint256 wethAmount = cacheIsWethToken0 ? collectedToken0 : collectedToken1;
         uint256 wPowerPerpAmount = cacheIsWethToken0 ? collectedToken1 : collectedToken0;
 
@@ -1148,7 +1272,7 @@ contract Controller is Ownable, ReentrancyGuard {
                 scaledEthPrice,
                 MIN_COLLATERAL,
                 perpPoolTick,
-                weth < wPowerPerp
+                isWethToken0
             );
     }
 

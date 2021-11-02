@@ -921,7 +921,7 @@ describe("Controller", function () {
           controller.connect(random).unPauseAnyone()
         ).to.be.revertedWith("Not paused");
         await expect(
-          controller.connect(random).unPauseOwner()
+          controller.connect(owner).unPauseOwner()
         ).to.be.revertedWith("Not paused");
       });
       it("Should allow owner to pause the system", async () => {
