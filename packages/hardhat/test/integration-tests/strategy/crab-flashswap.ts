@@ -259,7 +259,7 @@ describe("Crab flashswap integration test", function () {
       expect((timeAtLastHedge.add(hedgeTimeThreshold)).gt(hedgeBlockTimestamp)).to.be.true
   
       await expect(
-        crabStrategy.connect(depositor).timeHedgeOnUniswap()
+        crabStrategy.connect(depositor).timeHedgeOnUniswap(BigNumber.from('0'), BigNumber.from('0'))
       ).to.be.revertedWith("Time hedging is not allowed");
     })  
   })
@@ -298,7 +298,7 @@ describe("Crab flashswap integration test", function () {
       })  
     })
 
-    it("should revert price hedging on uniswap if the time threshold has not been reached", async () => {  
+    it("should revert price hedging on uniswap if the price threshold has not been reached", async () => {  
       const timeAtLastHedge = await crabStrategy.timeAtLastHedge()
       const hedgeTimeThreshold = await crabStrategy.hedgeTimeThreshold()
       
@@ -310,7 +310,7 @@ describe("Crab flashswap integration test", function () {
       expect((timeAtLastHedge.add(hedgeTimeThreshold)).gt(hedgeBlockTimestamp)).to.be.true
   
       await expect(
-        crabStrategy.connect(depositor).priceHedgeOnUniswap(hedgeBlockTimestamp)
+        crabStrategy.connect(depositor).priceHedgeOnUniswap(hedgeBlockTimestamp, BigNumber.from('0'), BigNumber.from('0'))
       ).to.be.revertedWith("Price hedging not allowed");
     })  
   })
@@ -350,6 +350,7 @@ describe("Crab flashswap integration test", function () {
           crabStrategy.connect(depositor).timeHedge(isSellAuction, expectedAuctionWSqueethEthPrice, {value: 1})
         ).to.be.revertedWith("strategy is delta neutral");
       })  
+
       it("should revert hedgeOnUniswap if strategy is delta neutral", async () => {  
 
         const hedgeTimeThreshold = await crabStrategy.hedgeTimeThreshold()
@@ -376,7 +377,7 @@ describe("Crab flashswap integration test", function () {
 
         expect(targetHedge.abs().eq(BigNumber.from(0)) || isSimilar(initialWSqueethDelta.toString(), ethDelta.toString())).to.be.true
         await expect(
-          crabStrategy.connect(depositor).timeHedgeOnUniswap()
+          crabStrategy.connect(depositor).timeHedgeOnUniswap(BigNumber.from('0'), BigNumber.from('0'))
         ).to.be.revertedWith("strategy is delta neutral");
       })  
     })
@@ -1356,7 +1357,7 @@ describe("Crab flashswap integration test", function () {
 
       const depositorWsqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
-      await crabStrategy.connect(depositor).timeHedgeOnUniswap();
+      await crabStrategy.connect(depositor).timeHedgeOnUniswap(ethers.utils.parseUnits('0.0000000000000001'),  0);
       
       const strategyDebtAfter = await crabStrategy.getStrategyDebt()
       const depositorWsqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
@@ -1416,12 +1417,12 @@ describe("Crab flashswap integration test", function () {
 
       const depositorWsqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
-      await crabStrategy.connect(depositor).priceHedgeOnUniswap(auctionTriggerTimer);
+      await crabStrategy.connect(depositor).priceHedgeOnUniswap(auctionTriggerTimer, ethers.utils.parseUnits('0.01'), BigNumber.from('0'));
       
       const strategyDebtAfter = await crabStrategy.getStrategyDebt()
       const depositorWsqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
       const ethDeltaAfter = await crabStrategy.getStrategyCollateral()
-
+      
       expect(isSimilar(strategyDebt.add(secondTargetHedge.mul(-1)).toString(),(strategyDebtAfter.toString())))
       expect(isSimilar((ethDelta.sub(expectedEthProceeds)).toString(),ethDeltaAfter.toString()))
       expect(depositorWsqueethBalanceAfter.gt(depositorWsqueethBalanceBefore)).to.be.true
@@ -1481,7 +1482,7 @@ describe("Crab flashswap integration test", function () {
       const depositorWsqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
       const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
       
-      await crabStrategy.connect(depositor).timeHedgeOnUniswap();
+      await crabStrategy.connect(depositor).timeHedgeOnUniswap(0, ethers.utils.parseUnits('0.001'));
       
       const depositorWsqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
       const depositorEthBalanceAfter = await provider.getBalance(depositor.address)
@@ -1534,7 +1535,7 @@ describe("Crab flashswap integration test", function () {
       const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
 
 
-      await crabStrategy.connect(depositor).priceHedgeOnUniswap(auctionTriggerTimer);
+      await crabStrategy.connect(depositor).priceHedgeOnUniswap(auctionTriggerTimer, 0, ethers.utils.parseUnits('0.001'));
       
       const strategyDebtAfter = await crabStrategy.getStrategyDebt()
       const depositorWsqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)

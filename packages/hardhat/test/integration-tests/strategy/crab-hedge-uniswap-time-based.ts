@@ -157,7 +157,7 @@ describe("Crab flashswap integration test: time based hedging", function () {
       expect((timeAtLastHedge.add(hedgeTimeThreshold)).gt(hedgeBlockTimestamp)).to.be.true
   
       await expect(
-        crabStrategy.connect(depositor).timeHedgeOnUniswap()
+        crabStrategy.connect(depositor).timeHedgeOnUniswap(ethers.utils.parseUnits('0.01'), ethers.utils.parseUnits('0.0001'))
       ).to.be.revertedWith("Time hedging is not allowed");
     })  
 
@@ -181,7 +181,7 @@ describe("Crab flashswap integration test: time based hedging", function () {
 
       expect(targetHedge.abs().eq(BigNumber.from(0)) || isSimilar(initialWSqueethDelta.toString(), ethDelta.toString())).to.be.true
       await expect(
-        crabStrategy.connect(depositor).timeHedgeOnUniswap()
+        crabStrategy.connect(depositor).timeHedgeOnUniswap(ethers.utils.parseUnits('0.01'), ethers.utils.parseUnits('0.0001'))
       ).to.be.revertedWith("strategy is delta neutral");
     })
 
@@ -212,7 +212,7 @@ describe("Crab flashswap integration test: time based hedging", function () {
       expect(isSellAuction).to.be.true
 
       await expect(
-        crabStrategy.connect(depositor).timeHedgeOnUniswap()
+        crabStrategy.connect(depositor).timeHedgeOnUniswap(ethers.utils.parseUnits('0.01'), ethers.utils.parseUnits('0.0001'))
       ).to.be.revertedWith("can not execute hedging trade as auction type changed");
     })
 
@@ -251,8 +251,8 @@ describe("Crab flashswap integration test: time based hedging", function () {
       expect(expectedAuctionWSqueethEthPrice.lt(currentWSqueethPrice)).to.be.true
 
       await expect(
-        crabStrategy.connect(depositor).timeHedgeOnUniswap()
-      ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
+        crabStrategy.connect(depositor).timeHedgeOnUniswap(ethers.utils.parseUnits('0.01'), ethers.utils.parseUnits('0.0001'))
+      ).to.be.revertedWith("ds-math-sub-underflow");
     })
 
     it("hedge on uniswap based on time threshold", async () => {
@@ -293,7 +293,7 @@ describe("Crab flashswap integration test: time based hedging", function () {
 
       const depositorWsqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
-      await crabStrategy.connect(depositor).timeHedgeOnUniswap();
+      await crabStrategy.connect(depositor).timeHedgeOnUniswap(ethers.utils.parseUnits('0.01'), ethers.utils.parseUnits('0.0001'));
       
       const strategyDebtAfter = await crabStrategy.getStrategyDebt()
       const depositorWsqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
@@ -326,7 +326,7 @@ describe("Crab flashswap integration test: time based hedging", function () {
       expect((timeAtLastHedge.add(hedgeTimeThreshold)).gt(hedgeBlockTimestamp)).to.be.true
   
       await expect(
-        crabStrategy.connect(depositor).timeHedgeOnUniswap()
+        crabStrategy.connect(depositor).timeHedgeOnUniswap(ethers.utils.parseUnits('0.01'), ethers.utils.parseUnits('0.0001'))
       ).to.be.revertedWith("Time hedging is not allowed");
     })  
 
@@ -355,7 +355,7 @@ describe("Crab flashswap integration test: time based hedging", function () {
       expect(isSellAuction).to.be.false
 
       await expect(
-        crabStrategy.connect(depositor).timeHedgeOnUniswap()
+        crabStrategy.connect(depositor).timeHedgeOnUniswap(ethers.utils.parseUnits('0.01'), ethers.utils.parseUnits('0.0001'))
       ).to.be.revertedWith("can not execute hedging trade as auction type changed");
     })
 
@@ -394,8 +394,8 @@ describe("Crab flashswap integration test: time based hedging", function () {
       expect(expectedAuctionWSqueethEthPrice.lt(currentWSqueethPrice)).to.be.true
 
       await expect(
-        crabStrategy.connect(depositor).timeHedgeOnUniswap()
-      ).to.be.revertedWith("function call failed to execute");
+        crabStrategy.connect(depositor).timeHedgeOnUniswap(ethers.utils.parseUnits('0.01'), ethers.utils.parseUnits('0.0001'))
+      ).to.be.revertedWith("ds-math-sub-underflow");
     })
 
     it("hedge based on time on uniswap", async () => {      
@@ -423,7 +423,7 @@ describe("Crab flashswap integration test: time based hedging", function () {
       const depositorWsqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
       const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
       
-      await crabStrategy.connect(depositor).timeHedgeOnUniswap();
+      await crabStrategy.connect(depositor).timeHedgeOnUniswap(ethers.utils.parseUnits('0.01'), ethers.utils.parseUnits('0.0001'));
       
       const depositorWsqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
       const depositorEthBalanceAfter = await provider.getBalance(depositor.address)

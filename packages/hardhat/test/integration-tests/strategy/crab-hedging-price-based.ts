@@ -152,7 +152,7 @@ describe("Crab flashswap integration test: time based hedging", function () {
       await provider.send("evm_mine", [])
     })
 
-    it("should revert price hedging if the price threshold has not been reached", async () => {  
+    it("should revert price hedging if the time threshold has not been reached", async () => {  
       const timeAtLastHedge = await crabStrategy.timeAtLastHedge()
       const hedgeTimeThreshold = await crabStrategy.hedgeTimeThreshold()
       
@@ -421,7 +421,9 @@ describe("Crab flashswap integration test: time based hedging", function () {
       // advance time for twap to update
       await provider.send("evm_increaseTime", [600])
       await provider.send("evm_mine", []) 
-            
+      
+      const priceAfter = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600)
+      
       const currentBlockNumber = await provider.getBlockNumber()
       const currentBlock = await provider.getBlock(currentBlockNumber)
       const auctionTriggerTimer = currentBlock.timestamp

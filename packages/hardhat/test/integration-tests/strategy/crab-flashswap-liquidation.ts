@@ -26,7 +26,7 @@ const calcPriceMulAndAuctionPrice = (isNegativeTargetHedge: boolean, maxPriceMul
   return [priceMultiplier, auctionWSqueethEthPrice]
 }
 
-describe("Crab flashswap integration test: time based hedging", function () {
+describe("Crab flashswap integration test: crab vault liquidation", function () {
   const startingEthPrice = 3000
   const startingEthPrice1e18 = BigNumber.from(startingEthPrice).mul(one) // 3000 * 1e18
   const scaledStartingSqueethPrice1e18 = startingEthPrice1e18.div(oracleScaleFactor) // 0.3 * 1e18
@@ -173,14 +173,14 @@ describe("Crab flashswap integration test: time based hedging", function () {
     })
 
     before('prepare liquidator to liquidate vault 0 and vault 1', async() => {
-      await provider.send("evm_increaseTime", [600]) // increase time by 10 sec
+      await provider.send("evm_increaseTime", [600]) // increase time by 600 sec
       await provider.send("evm_mine", [])
 
       const vaultId = await crabStrategy._vaultId();
       const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600)
       const vaultBefore = await controller.vaults(vaultId)
       
-      const mintAmount = vaultBefore.shortAmount.mul(2)
+      const mintAmount = vaultBefore.shortAmount
       const collateralRequired = mintAmount.mul(newEthPrice).mul(2).div(oracleScaleFactor).div(one).mul(2)
 
       // mint squeeth to liquidate vault0!
