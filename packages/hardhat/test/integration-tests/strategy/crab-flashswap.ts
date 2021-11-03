@@ -1551,25 +1551,39 @@ describe("Crab flashswap integration test", function () {
 
   describe("Flash withdraw", async () => {
     it("should revert if amount IN is greater than max ETH to pay", async () => {
+      const wSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1)
+
       const userCrabBalanceBefore = await crabStrategy.balanceOf(depositor.address);
       const crabTotalSupply = await crabStrategy.totalSupply()
-      const strategyCollateralAmount = await crabStrategy.getStrategyCollateral()
+      const strategyDebtAmountBefore = await crabStrategy.getStrategyDebt()
+      const strategyCollateralAmountBefore = await crabStrategy.getStrategyCollateral()
+      const userEthBalanceBefore = await provider.getBalance(depositor.address)
       const crabRatio = wdiv(userCrabBalanceBefore, crabTotalSupply);
-      const ethToWithdraw = wmul(crabRatio, strategyCollateralAmount);
-      const maxEthToPay = ethToWithdraw.div(BigNumber.from(3))
+      const debtToRepay = wmul(crabRatio,strategyDebtAmountBefore);
+      const ethCostOfDebtToRepay = wmul(debtToRepay,wSqueethPrice)
+      const userCollateral = wmul(crabRatio, strategyCollateralAmountBefore)
+      const ethToWithdraw = userCollateral.sub(ethCostOfDebtToRepay);
+      const maxEthToPay = ethToWithdraw.mul(9).div(10)
 
       await expect(
         crabStrategy.connect(depositor).flashWithdraw(userCrabBalanceBefore, maxEthToPay)
       ).to.be.revertedWith("amount in greater than max");
     })
 
-    it("should revert if random address tries to flash withdrwa", async () => {
+    it("should revert if random address tries to flash withdraw", async () => {
+      const wSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1)
+
       const userCrabBalanceBefore = await crabStrategy.balanceOf(depositor.address);
       const crabTotalSupply = await crabStrategy.totalSupply()
-      const strategyCollateralAmount = await crabStrategy.getStrategyCollateral()
+      const strategyDebtAmountBefore = await crabStrategy.getStrategyDebt()
+      const strategyCollateralAmountBefore = await crabStrategy.getStrategyCollateral()
+      const userEthBalanceBefore = await provider.getBalance(depositor.address)
       const crabRatio = wdiv(userCrabBalanceBefore, crabTotalSupply);
-      const ethToWithdraw = wmul(crabRatio, strategyCollateralAmount);
-      const maxEthToPay = ethToWithdraw
+      const debtToRepay = wmul(crabRatio,strategyDebtAmountBefore);
+      const ethCostOfDebtToRepay = wmul(debtToRepay,wSqueethPrice)
+      const userCollateral = wmul(crabRatio, strategyCollateralAmountBefore)
+      const ethToWithdraw = userCollateral.sub(ethCostOfDebtToRepay);
+      const maxEthToPay = ethToWithdraw.mul(15).div(10)
 
       await expect(
         crabStrategy.connect(random).flashWithdraw(userCrabBalanceBefore, maxEthToPay)
@@ -1577,21 +1591,42 @@ describe("Crab flashswap integration test", function () {
     })
 
     it("should withdraw correct amount of ETH collateral", async () => {
+      const wSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1)
+
       const userCrabBalanceBefore = await crabStrategy.balanceOf(depositor.address);
       const crabTotalSupply = await crabStrategy.totalSupply()
-      const strategyCollateralAmount = await crabStrategy.getStrategyCollateral()
+      const strategyDebtAmountBefore = await crabStrategy.getStrategyDebt()
+      const strategyCollateralAmountBefore = await crabStrategy.getStrategyCollateral()
       const userEthBalanceBefore = await provider.getBalance(depositor.address)
       const crabRatio = wdiv(userCrabBalanceBefore, crabTotalSupply);
-      const ethToWithdraw = wmul(crabRatio, strategyCollateralAmount);
-      const maxEthToPay = ethToWithdraw.sub(ethToWithdraw.div(BigNumber.from(3)))
+      const debtToRepay = wmul(crabRatio,strategyDebtAmountBefore);
+      const ethCostOfDebtToRepay = wmul(debtToRepay,wSqueethPrice)
+      const userCollateral = wmul(crabRatio, strategyCollateralAmountBefore)
+      const ethToWithdraw = userCollateral.sub(ethCostOfDebtToRepay);
+      const maxEthToPay = ethToWithdraw.mul(15).div(10)
 
       await crabStrategy.connect(depositor).flashWithdraw(userCrabBalanceBefore, maxEthToPay)
 
       const userEthBalanceAfter = await provider.getBalance(depositor.address)
       const userCrabBalanceAfter = await crabStrategy.balanceOf(depositor.address);
+      const strategyDebtAmountAfter = await crabStrategy.getStrategyDebt()
+      const strategyCollateralAmountAfter = await crabStrategy.getStrategyCollateral()
 
-      expect(isSimilar(userEthBalanceAfter.sub(ethToWithdraw).toString(), userEthBalanceBefore.toString())).to.be.true
+      const vaultId = await crabStrategy._vaultId();
+      const isVaultSafe = await controller.isVaultSafe((await crabStrategy._vaultId()))
+      expect(isVaultSafe).to.be.true
+
+      const vaultBefore = await controller.vaults(vaultId)
+      const collateralAfter = vaultBefore.collateralAmount
+      const debtAfter = vaultBefore.shortAmount
+
+      expect(isSimilar(userEthBalanceAfter.sub(userEthBalanceBefore).toString(), ethToWithdraw.toString(),2)).to.be.true
       expect(userCrabBalanceAfter.eq(BigNumber.from(0))).to.be.true
+      expect(userCrabBalanceBefore.sub(userCrabBalanceAfter).eq(userCrabBalanceBefore)).to.be.true
+      expect(collateralAfter.eq(strategyCollateralAmountBefore.sub(userCollateral))).to.be.true
+      expect(strategyDebtAmountBefore.sub(debtAfter).eq(debtToRepay)).to.be.true
+      expect(strategyDebtAmountAfter.eq(BigNumber.from(0))).to.be.true
+      expect(strategyCollateralAmountAfter.eq(BigNumber.from(0))).to.be.true
     })
   })
 })
