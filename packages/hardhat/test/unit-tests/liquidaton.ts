@@ -133,15 +133,10 @@ describe("Controller: liquidation unit test", function () {
       await squeeth.connect(liquidator).mint(liquidator.address, vaultBefore.shortAmount)
 
       const result = await controller.checkLiquidation(vault1Id);
-      const isUnsafe = result[0]
-      const isLiquidatableAfterReducingDebt = result[1]
-      const minWPowerPerpAmount = result[2]
-      const maxWPowerPerpAmount = result[3]
-      const collateralToReceive = result[4]
+      const [isUnsafe, isLiquidatableAfterReducingDebt, maxWPowerPerpAmount, collateralToReceive] = result;
 
       expect(isUnsafe).to.be.false
       expect(isLiquidatableAfterReducingDebt).to.be.false
-      expect(minWPowerPerpAmount.eq(BigNumber.from(0))).to.be.true
       expect(maxWPowerPerpAmount.eq(BigNumber.from(0))).to.be.true
       expect(collateralToReceive.eq(BigNumber.from(0))).to.be.true
 
@@ -164,15 +159,10 @@ describe("Controller: liquidation unit test", function () {
       collateralToSell = collateralToSell.add(collateralToSell.div(10))
 
       const result = await controller.checkLiquidation(vault2Id);
-      const isUnsafe = result[0]
-      const isLiquidatableAfterReducingDebt = result[1]
-      const minWPowerPerpAmount = result[2]
-      const maxWPowerPerpAmount = result[3]
-      const collateralToReceive = result[4]
+      const [isUnsafe, isLiquidatableAfterReducingDebt, maxWPowerPerpAmount, collateralToReceive] = result;
 
       expect(isUnsafe).to.be.true
       expect(isLiquidatableAfterReducingDebt).to.be.true
-      expect(minWPowerPerpAmount.eq(debtShouldRepay)).to.be.true
       expect(maxWPowerPerpAmount.eq(debtShouldRepay)).to.be.true
       expect(isSimilar(collateralToReceive.toString(), collateralToSell.toString())).to.be.true
 
@@ -187,15 +177,10 @@ describe("Controller: liquidation unit test", function () {
       collateralToSell = collateralToSell.add(collateralToSell.div(10))
 
       const result = await controller.checkLiquidation(vault2Id);
-      const isUnsafe = result[0]
-      const isLiquidatableAfterReducingDebt = result[1]
-      const minWPowerPerpAmount = result[2]
-      const maxWPowerPerpAmount = result[3]
-      const collateralToReceive = result[4]
+      const [isUnsafe, isLiquidatableAfterReducingDebt, maxWPowerPerpAmount, collateralToReceive] = result;
 
       expect(isUnsafe).to.be.true
       expect(isLiquidatableAfterReducingDebt).to.be.true
-      expect(minWPowerPerpAmount.eq(vaultBefore.shortAmount)).to.be.true
       expect(maxWPowerPerpAmount.eq(vaultBefore.shortAmount)).to.be.true
       expect(isSimilar(collateralToReceive.toString(), collateralToSell.toString())).to.be.true
 
@@ -217,11 +202,7 @@ describe("Controller: liquidation unit test", function () {
       const debtToRepay = vaultBefore.shortAmount.div(2)
 
       const result = await controller.checkLiquidation(vault1Id);
-      const isUnsafe = result[0]
-      const isLiquidatableAfterReducingDebt = result[1]
-      const minWPowerPerpAmount = result[2]
-      const maxWPowerPerpAmount = result[3]
-      const collateralToReceive = result[4]
+      const [isUnsafe, isLiquidatableAfterReducingDebt, maxWPowerPerpAmount, collateralToReceive] = result;
 
       // specifying a higher maxDebtToRepay number, which won't be used
       const maxDebtToRepay = debtToRepay.add(10)
@@ -239,7 +220,6 @@ describe("Controller: liquidation unit test", function () {
 
       expect(isUnsafe).to.be.true
       expect(isLiquidatableAfterReducingDebt).to.be.true
-      expect(minWPowerPerpAmount.eq(BigNumber.from(0))).to.be.true
       expect(maxWPowerPerpAmount.eq(debtToRepay)).to.be.true
       expect(isSimilar(collateralToReceive.toString(), collateralToSell.toString())).to.be.true
 
@@ -281,16 +261,11 @@ describe("Controller: liquidation unit test", function () {
 
 
       const result = await controller.checkLiquidation(vaultId);
-      const isUnsafe = result[0]
-      const isLiquidatableAfterReducingDebt = result[1]
-      const minWPowerPerpAmount = result[2]
-      const maxWPowerPerpAmount = result[3]
-      const collateralToReceive = result[4]
+      const [isUnsafe, isLiquidatableAfterReducingDebt, maxWPowerPerpAmount, collateralToReceive] = result;
 
       expect(collateralToSell.gt(vault.collateralAmount)).to.be.true
       expect(isUnsafe).to.be.true
       expect(isLiquidatableAfterReducingDebt).to.be.true
-      expect(minWPowerPerpAmount.eq(vault.shortAmount)).to.be.true
       expect(maxWPowerPerpAmount.eq(vault.shortAmount)).to.be.true
       expect(isSimilar(collateralToReceive.toString(), vault.collateralAmount.toString())).to.be.true
 
@@ -303,11 +278,7 @@ describe("Controller: liquidation unit test", function () {
       const squeethLiquidatorBalanceBefore = await squeeth.balanceOf(liquidator.address)
 
       const result = await controller.checkLiquidation(vaultId);
-      const isUnsafe = result[0]
-      const isLiquidatableAfterReducingDebt = result[1]
-      const minWPowerPerpAmount = result[2]
-      const maxWPowerPerpAmount = result[3]
-      const collateralToReceive = result[4]
+      const [isUnsafe, isLiquidatableAfterReducingDebt, maxWPowerPerpAmount, collateralToReceive] = result;
 
       // fully liquidate a vault
       const debtToRepay = vaultBefore.shortAmount
@@ -324,7 +295,6 @@ describe("Controller: liquidation unit test", function () {
       expect(collateralToSell.gt(vaultBefore.collateralAmount)).to.be.true
       expect(isUnsafe).to.be.true
       expect(isLiquidatableAfterReducingDebt).to.be.true
-      expect(minWPowerPerpAmount.eq(vaultBefore.shortAmount)).to.be.true
       expect(maxWPowerPerpAmount.eq(vaultBefore.shortAmount)).to.be.true
       expect(isSimilar(collateralToReceive.toString(), vaultBefore.collateralAmount.toString())).to.be.true
 

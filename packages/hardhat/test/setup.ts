@@ -85,8 +85,6 @@ export const createUniPool = async(
     rawPrice *= 10 ** diff
   }
 
-  console.log(`rawPrice`, rawPrice)
-
   const sqrtX96Price = isTokenAToken0 
     ? convertToken1PriceToSqrtX96Price(rawPrice.toString()).toFixed(0)
     : convertToken0PriceToSqrtX96Price(rawPrice.toString()).toFixed(0)

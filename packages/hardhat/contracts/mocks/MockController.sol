@@ -79,7 +79,7 @@ contract MockController {
     }
 
     function _withdrawCollateral(
-        address _account,
+        address, /*_account*/
         uint256 _vaultId,
         uint256 _amount
     ) internal {

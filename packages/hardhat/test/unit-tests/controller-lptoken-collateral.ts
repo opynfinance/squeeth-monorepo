@@ -738,8 +738,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
         const result = await controller.checkLiquidation(vaultId);
         const isUnsafe = result[0]
         const isLiquidatableAfterReducingDebt = result[1]
-        const minWPowerPerpAmount = result[2]
-        const maxWPowerPerpAmount = result[3]  
+        const maxWPowerPerpAmount = result[2]  
 
         await controller.connect(seller1).reduceDebt(vaultId)
         const vaultAfter = await controller.vaults(vaultId)
@@ -750,7 +749,6 @@ describe("Controller: Uni LP tokens collateralization", function () {
 
         expect(isUnsafe).to.be.true
         expect(isLiquidatableAfterReducingDebt).to.be.false
-        expect(minWPowerPerpAmount.eq(BigNumber.from(0))).to.be.true
         expect(maxWPowerPerpAmount.eq(BigNumber.from(0))).to.be.true
 
         expect(ownerWSqueethAfter.sub(ownerWSqueethBefore).eq(wsqueethExcess)).to.be.true
