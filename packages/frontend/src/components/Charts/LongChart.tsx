@@ -71,6 +71,7 @@ export function LongChart() {
   }, [tradeType])
 
   const {
+    startingETHPrice,
     researchMode,
     ethPrices,
     longEthPNL,
@@ -91,8 +92,8 @@ export function LongChart() {
     //   ]
     if (mode === ChartType.PNL)
       return [
-        { data: longEthPNL, legend: 'Long 1 ETH PNL' },
-        { data: longSeries, legend: 'Long 1 Squeeth PNL (incl. funding)' },
+        { data: convertPNLToPriceChart(longEthPNL, startingETHPrice), legend: 'Long 1 ETH PNL' },
+        { data: convertPNLToPriceChart(longSeries, startingETHPrice), legend: 'Long 1 Squeeth PNL (incl. funding)' },
       ]
     if (mode === ChartType.PositionSize) return [{ data: positionSizeSeries, legend: 'Position Size' }]
     // if (mode === ChartType.Funding)
@@ -109,7 +110,7 @@ export function LongChart() {
           priceFormatter: (num: number) => num + '%',
         },
       }
-    return graphOptions
+    return { ...graphOptions, priceScale: { mode: 2 } }
   }, [mode])
 
   const startTimestamp = useMemo(
@@ -217,4 +218,13 @@ export function LongChart() {
       )}
     </>
   )
+}
+
+const convertPNLToPriceChart = (pnlSeries: { time: number; value: number }[], startingCapital: number) => {
+  return pnlSeries.map(({ value, time }) => {
+    return {
+      value: value + startingCapital,
+      time,
+    }
+  })
 }
