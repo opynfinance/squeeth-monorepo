@@ -16,6 +16,8 @@ import {OracleLibrary} from "../libs/OracleLibrary.sol";
 contract Oracle {
     using SafeMath for uint256;
 
+    uint256 private constant ONE = 1e18;
+
     /**
      * @notice get twap converted with base & quote token decimals
      * @dev if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD"
@@ -41,8 +43,7 @@ contract Oracle {
         uint32 _secondsAgoToStartOfTwap,
         uint32 _secondsAgoToEndOfTwap
     ) external view returns (uint256) {
-        return
-            _fetchHistoricTwap(_pool, _base, _quote, _secondsAgoToStartOfTwap, _secondsAgoToEndOfTwap, uint256(1e18));
+        return _fetchHistoricTwap(_pool, _base, _quote, _secondsAgoToStartOfTwap, _secondsAgoToEndOfTwap, ONE);
     }
 
     /**
@@ -122,7 +123,7 @@ contract Oracle {
         address _quote,
         uint32 _period
     ) internal view returns (uint256) {
-        uint256 quoteAmountOut = _fetchRawTwap(_pool, _base, _quote, _period, uint256(1e18));
+        uint256 quoteAmountOut = _fetchRawTwap(_pool, _base, _quote, _period, ONE);
 
         uint8 baseDecimals = IERC20Detailed(_base).decimals();
         uint8 quoteDecimals = IERC20Detailed(_quote).decimals();

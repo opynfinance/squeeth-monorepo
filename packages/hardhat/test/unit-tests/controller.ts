@@ -300,6 +300,11 @@ describe("Controller", function () {
           'Invalid vault id'
         )
       })
+      it("Should revert when trying to use mint to deposit to non-existent vault", async() => {
+        await expect(controller.connect(seller1).mintPowerPerpAmount(999, 0, 0, {value: 100})).to.be.revertedWith(
+          'Invalid vault id'
+        )
+      })
       it("Should be able to deposit collateral", async () => {
         const depositAmount = ethers.utils.parseUnits('45')
         const controllerBalanceBefore = await provider.getBalance(controller.address)
@@ -330,6 +335,11 @@ describe("Controller", function () {
           'Not allowed'
         )
       });
+      it("Should revert when trying to mint to non-existent vault", async() => {
+        await expect(controller.connect(seller1).mintPowerPerpAmount(999, 10, 0)).to.be.revertedWith(
+          'Invalid vault id'
+        )
+      })
       it("Should be able to mint squeeth", async () => {
         const mintAmount = ethers.utils.parseUnits('100')
         

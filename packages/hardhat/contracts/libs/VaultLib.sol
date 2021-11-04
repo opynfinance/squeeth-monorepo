@@ -182,11 +182,11 @@ library VaultLib {
             _isWethToken0
         );
         // convert squeeth amount from uniswap position token as equivalent amount of collateral
-        uint256 equivalentCollateral = nftWsqueethAmount.mul(_normalizationFactor).mul(_ethQuoteCurrencyPrice).div(
+        uint256 wSqueethIndexValueInEth = nftWsqueethAmount.mul(_normalizationFactor).mul(_ethQuoteCurrencyPrice).div(
             1e36
         );
         // add eth value from uniswap position token as collateral
-        return nftEthAmount.add(equivalentCollateral).add(_vault.collateralAmount);
+        return nftEthAmount.add(wSqueethIndexValueInEth).add(_vault.collateralAmount);
     }
 
     /**
@@ -211,7 +211,7 @@ library VaultLib {
             _wsqueethPoolTick,
             liquidity
         );
-        return (_isWethToken0 ? amount0 : amount1, _isWethToken0 ? amount1 : amount0);
+        return _isWethToken0 ? (amount0, amount1) : (amount1, amount0);
     }
 
     /**

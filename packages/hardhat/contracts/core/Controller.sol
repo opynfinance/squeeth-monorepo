@@ -31,6 +31,9 @@ contract Controller is Ownable, ReentrancyGuard {
     uint256 public constant PAUSE_TIME_LIMIT = 182 days;
     uint256 public constant FUNDING_PERIOD = 1 days;
 
+    /// @dev basic unit used for calculation
+    uint256 private constant ONE = 1e18;
+
     address public immutable weth;
     address public immutable quoteCurrency;
     address public immutable ethQuoteCurrencyPool;
@@ -137,8 +140,8 @@ contract Controller is Ownable, ReentrancyGuard {
         uniswapPositionManager = _uniPositionManager;
         isWethToken0 = _weth < _wPowerPerp;
 
-        deployTimestamp = block.timestamp;
         normalizationFactor = 1e18;
+        deployTimestamp = block.timestamp;
         lastFundingUpdateTimestamp = uint128(block.timestamp);
     }
 
@@ -168,7 +171,7 @@ contract Controller is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice get the expected mark price of powerPerp after funding has been applied
+     * @notice the unscaled index of the power perp in USD, scaled by 18 decimals
      * @dev this is the mark that would be be used for future funding after a new normalization factor is applied
      * @param _period period which you want to calculate twap with
      * @return index price denominated in $USD, scaled by 1e18
@@ -178,7 +181,7 @@ contract Controller is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice get the mark price (after funding) of powerPerp as the twap divided by the normalization factor
+     * @notice get the expected mark price of powerPerp after funding has been applied
      * @param _period period of time for the twap in seconds
      * @return mark price denominated in $USD, scaled by 1e18
      */
@@ -636,7 +639,7 @@ contract Controller is Ownable, ReentrancyGuard {
     ) internal returns (uint256, uint256) {
         uint256 cachedNormFactor = _applyFunding();
         uint256 depositAmountWithFee = _depositAmount;
-        uint256 wPowerPerpAmount = _isWAmount ? _mintAmount : _mintAmount.mul(1e18).div(cachedNormFactor);
+        uint256 wPowerPerpAmount = _isWAmount ? _mintAmount : _mintAmount.mul(ONE).div(cachedNormFactor);
         uint256 feeAmount;
         VaultLib.Vault memory cachedVault;
 
@@ -644,11 +647,13 @@ contract Controller is Ownable, ReentrancyGuard {
         if (_vaultId == 0) {
             (_vaultId, cachedVault) = _openVault(_account);
         } else {
+            // make sure we're not accessing an unexistent vault.
+            _checkVaultId(_vaultId);
             cachedVault = vaults[_vaultId];
         }
 
         if (wPowerPerpAmount > 0) {
-            (feeAmount, depositAmountWithFee) = _payFee(cachedVault, wPowerPerpAmount, _depositAmount);
+            (feeAmount, depositAmountWithFee) = _getFee(cachedVault, wPowerPerpAmount, _depositAmount);
         }
         if (_depositAmount > 0) _addEthCollateral(cachedVault, _vaultId, depositAmountWithFee);
         if (_uniTokenId != 0) _depositUniPositionToken(cachedVault, _account, _vaultId, _uniTokenId);
@@ -658,8 +663,8 @@ contract Controller is Ownable, ReentrancyGuard {
         _checkVault(cachedVault, cachedNormFactor);
         _writeVault(_vaultId, cachedVault);
 
-        //pay insurance fee
-        if (wPowerPerpAmount > 0) payable(feeRecipient).sendValue(feeAmount);
+        // pay insurance fee
+        if (feeAmount > 0) payable(feeRecipient).sendValue(feeAmount);
 
         return (_vaultId, wPowerPerpAmount);
     }
@@ -682,7 +687,7 @@ contract Controller is Ownable, ReentrancyGuard {
     ) internal returns (uint256) {
         _checkVaultId(_vaultId);
         uint256 cachedNormFactor = _applyFunding();
-        uint256 wBurnAmount = _isWAmount ? _burnAmount : _burnAmount.mul(1e18).div(cachedNormFactor);
+        uint256 wBurnAmount = _isWAmount ? _burnAmount : _burnAmount.mul(ONE).div(cachedNormFactor);
 
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
         if (wBurnAmount > 0) _burnWPowerPerp(cachedVault, _account, _vaultId, wBurnAmount);
@@ -917,7 +922,7 @@ contract Controller is Ownable, ReentrancyGuard {
      * @param _depositAmount the amount of eth depositing or withdrawing
      * @return the amount of actual deposited eth into the vault, this is less than the original amount if a fee was taken
      */
-    function _payFee(
+    function _getFee(
         VaultLib.Vault memory _vault,
         uint256 _wSqueethAmount,
         uint256 _depositAmount
@@ -1044,7 +1049,7 @@ contract Controller is Ownable, ReentrancyGuard {
             cacheNormFactor
         );
         uint256 index = Power2Base._getIndex(fairPeriod, address(oracle), ethQuoteCurrencyPool, weth, quoteCurrency);
-        uint256 rFunding = (uint256(1e18).mul(uint256(period))).div(FUNDING_PERIOD);
+        uint256 rFunding = (ONE.mul(uint256(period))).div(FUNDING_PERIOD);
 
         // floor mark to be at least 80% of index
         uint256 lowerBound = index.mul(4).div(5);
@@ -1054,14 +1059,10 @@ contract Controller is Ownable, ReentrancyGuard {
         uint256 upperBound = index.mul(5).div(4);
         if (mark > upperBound) mark = upperBound;
 
-        // multiply by 1e36 to keep newNormalizationFactor in 18 decimals
-        // newNormalizationFactor = mark / ( (1+rFunding) * mark - index * rFunding )
+        // newNormFactor = (mark / ( (1+rFunding) * mark - index * rFunding )) * oldNormaFactor
+        uint256 multiplier = mark.mul(1e36).div((ONE.add(rFunding)).mul(mark).sub(index.mul(rFunding))); // multiply by 1e36 to keep multiplier in 18 decimals
 
-        uint256 newNormalizationFactor = (mark.mul(1e36)).div(
-            ((uint256(1e18).add(rFunding)).mul(mark).sub(index.mul(rFunding)))
-        );
-
-        return cacheNormFactor.mul(newNormalizationFactor).div(1e18);
+        return cacheNormFactor.mul(multiplier).div(ONE);
     }
 
     /**
