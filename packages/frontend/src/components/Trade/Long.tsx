@@ -236,6 +236,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
   }
 
   const sellAndClose = useCallback(async () => {
+    console.log(amount.toNumber(), amount)
     setSellLoading(true)
     try {
       if (squeethAllowance.lt(amount)) {

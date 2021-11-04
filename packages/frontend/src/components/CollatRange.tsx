@@ -1,72 +1,101 @@
 import { createStyles, makeStyles, Tooltip } from '@material-ui/core'
 import { yellow } from '@material-ui/core/colors'
-import React from 'react'
+import React, { useMemo, useState } from 'react'
+
+import Slider from './CustomSlider'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
       width: '300px',
-      display: 'flex',
-      height: '6px',
       marginLeft: 'auto',
       marginRight: 'auto',
     },
     danger: {
-      width: '30%',
       backgroundColor: theme.palette.error.main,
-      borderRadius: theme.spacing(1, 0, 0, 1),
     },
     warning: {
-      width: '30%',
       backgroundColor: yellow[700],
     },
     safe: {
-      width: '40%',
       backgroundColor: theme.palette.success.main,
-      borderRadius: theme.spacing(0, 1, 1, 0),
-    },
-    thumb: {
-      width: '4px',
-      height: '10px',
-      backgroundColor: theme.palette.text.primary,
-      position: 'relative',
-      left: '98%',
-      top: '-40%',
-      cursor: 'pointer',
     },
   }),
 )
 
-const CollatRange: React.FC = () => {
+type CollatRangeType = {
+  collatValue: number
+  onCollatValueChange: (val: number) => void
+}
+
+const CollatRange: React.FC<CollatRangeType> = ({ collatValue, onCollatValueChange }) => {
   const classes = useStyles()
+  const minCollatRatio = 150
+
+  const changeSlider = (val: number[]) => {
+    if (val[1] < minCollatRatio) return
+
+    onCollatValueChange(val[1])
+  }
+
+  const sliderClass = useMemo(() => {
+    if (collatValue < 200) return classes.danger
+    if (collatValue < 225) return classes.warning
+    return classes.safe
+  }, [classes.danger, classes.warning, classes.safe, collatValue])
+
+  const marks = useMemo(() => {
+    return [
+      {
+        value: 0,
+        label: (
+          <Tooltip title="Collateralization ratio">
+            <span>0%</span>
+          </Tooltip>
+        ),
+      },
+      {
+        value: minCollatRatio,
+        label: (
+          <Tooltip title="Minimum collateralization ratio">
+            <span>{minCollatRatio}%</span>
+          </Tooltip>
+        ),
+      },
+      { value: 100, label: '100%' },
+    ]
+  }, [])
+
+  // eslint-disable-next-line react/display-name
+  const ThumbComponent = React.useCallback((props: any) => {
+    if (props['data-index'] === 0) {
+      props.style.backgroundColor = 'grey'
+      props.style.height = 10
+      props.style.marginTop = '-2px'
+
+      return (
+        <Tooltip title="Minimum collateralization ratio">
+          <span {...props}></span>
+        </Tooltip>
+      )
+    }
+
+    return <span {...props}></span>
+  }, [])
 
   return (
     <div className={classes.container}>
-      <div className={classes.danger}>
-        <Tooltip
-          title={
-            <div>
-              <p>200% collateral ratio</p>
-              <p>33% spot move to liquidation</p>
-            </div>
-          }
-        >
-          <div className={classes.thumb}></div>
-        </Tooltip>
-      </div>
-      <div className={classes.warning}>
-        <Tooltip
-          title={
-            <div>
-              <p>225% collateral ratio</p>
-              <p>50% spot move to liquidation</p>
-            </div>
-          }
-        >
-          <div className={classes.thumb}></div>
-        </Tooltip>
-      </div>
-      <div className={classes.safe}></div>
+      <Slider
+        value={[minCollatRatio, collatValue]}
+        ThumbComponent={ThumbComponent}
+        onChange={(_, val) => changeSlider(val as number[])}
+        step={0.1}
+        style={{ width: '95%' }}
+        classes={{ thumb: sliderClass, track: sliderClass }}
+        // marks={marks}
+        min={150}
+        max={300}
+      />
     </div>
   )
 }

@@ -37,12 +37,11 @@ const useStyles = makeStyles((theme) =>
       color: theme.palette.text.secondary,
       lineHeight: '1.75rem',
       fontSize: '16px',
-      marginTop: theme.spacing(4),
+      marginTop: theme.spacing(2),
       maxWidth: '800px',
     },
     cardTitle: {
       color: theme.palette.primary.main,
-      marginTop: theme.spacing(1),
     },
     header: {
       color: theme.palette.primary.main,
@@ -170,7 +169,7 @@ export function LongChart() {
           </Hidden>
         </div>
       ) : mode === ChartType.Details ? (
-        <div style={{ overflow: 'auto', maxHeight: '310px' }}>
+        <div style={{ overflow: 'auto', maxHeight: '370px' }}>
           <Typography className={classes.cardTitle} variant="h6">
             What is squeeth?
           </Typography>

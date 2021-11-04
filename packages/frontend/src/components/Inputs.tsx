@@ -112,7 +112,10 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
             <input
               className={classes.input}
               value={value}
-              onChange={(e) => onChange(e.target.value)}
+              onChange={(e) => {
+                Number(e.target.value) < 0 ? onChange('0') : onChange(e.target.value)
+              }}
+              onWheel={(e) => (e.target as any).blur()}
               placeholder="0"
               type="number"
               min="0"

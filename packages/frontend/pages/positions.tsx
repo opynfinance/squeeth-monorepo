@@ -85,7 +85,8 @@ export default function Positions() {
     existingCollatPercent,
     liquidationPrice,
   } = useShortPositions()
-  const { longGain, shortGain, buyQuote, sellQuote, longUsdAmt, shortUsdAmt } = usePnL()
+  const { longGain, shortGain, buyQuote, sellQuote, longUsdAmt, shortUsdAmt, longRealizedPNL, shortRealizedPNL } =
+    usePnL()
   const ethPrice = useETHPrice()
 
   return (
@@ -113,26 +114,38 @@ export default function Positions() {
             <div className={classes.positionTitle}>
               <Typography>Long Squeeth</Typography>
             </div>
-            <div className={classes.positionData}>
-              <div style={{ width: '50%' }}>
-                <Typography variant="caption" component="span" color="textSecondary">
-                  Position
-                </Typography>
-                <Typography variant="body1">{wSqueethBal.toFixed(8)}&nbsp; oSQTH</Typography>
-                <Typography variant="body2" color="textSecondary">
-                  ${sellQuote.amountOut.times(ethPrice).toFixed(2)}
-                </Typography>
+            <div className={classes.shortPositionData}>
+              <div className={classes.innerPositionData}>
+                <div style={{ width: '50%' }}>
+                  <Typography variant="caption" component="span" color="textSecondary">
+                    Position
+                  </Typography>
+                  <Typography variant="body1">{wSqueethBal.toFixed(8)}&nbsp; oSQTH</Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    ${sellQuote.amountOut.times(ethPrice).toFixed(2)}
+                  </Typography>
+                </div>
+                <div style={{ width: '50%' }}>
+                  <Typography variant="caption" color="textSecondary">
+                    Unrealized P&L
+                  </Typography>
+                  <Typography variant="body1" className={longGain < 0 ? classes.red : classes.green}>
+                    ${sellQuote.amountOut.times(ethPrice).minus(longUsdAmt.abs()).toFixed(2)}
+                  </Typography>
+                  <Typography variant="caption" className={longGain < 0 ? classes.red : classes.green}>
+                    {(longGain || 0).toFixed(2)}%
+                  </Typography>
+                </div>
               </div>
-              <div style={{ width: '50%' }}>
-                <Typography variant="caption" color="textSecondary">
-                  Unrealized P&L
-                </Typography>
-                <Typography variant="body1" className={longGain < 0 ? classes.red : classes.green}>
-                  ${sellQuote.amountOut.times(ethPrice).minus(longUsdAmt.abs()).toFixed(2)}
-                </Typography>
-                <Typography variant="caption" className={longGain < 0 ? classes.red : classes.green}>
-                  {(longGain || 0).toFixed(2)}%
-                </Typography>
+              <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
+                <div style={{ width: '50%' }}>
+                  <Typography variant="caption" component="span" color="textSecondary">
+                    Realized P&L
+                  </Typography>
+                  <Typography variant="body1" className={longRealizedPNL.gte(0) ? classes.green : classes.red}>
+                    ${longRealizedPNL.toFixed(2)}
+                  </Typography>
+                </div>
               </div>
             </div>
           </div>
@@ -178,6 +191,16 @@ export default function Positions() {
                   </Typography>
                   <Typography variant="body1">
                     {existingCollat.toFixed(4)} ETH ({existingCollatPercent}%)
+                  </Typography>
+                </div>
+              </div>
+              <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
+                <div style={{ width: '50%' }}>
+                  <Typography variant="caption" component="span" color="textSecondary">
+                    Realized P&L
+                  </Typography>
+                  <Typography variant="body1" className={shortRealizedPNL.gte(0) ? classes.green : classes.red}>
+                    ${shortRealizedPNL.toFixed(2)}
                   </Typography>
                 </div>
               </div>

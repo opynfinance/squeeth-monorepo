@@ -181,6 +181,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   }, [shortVaults.length])
 
   useEffect(() => {
+    if (!open) return
     const debt = new BigNumber((collateral * 100) / collatPercent)
     getShortAmountFromDebt(debt).then((s) => setAmount(s))
   }, [collatPercent, collateral, normalizationFactor.toNumber()])
@@ -266,12 +267,32 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
     } else if (connected && amount.isGreaterThan(0) && collateral + existingCollat < 0.5) {
       openError = 'Minimum collateral is 0.5 ETH'
     }
+    if (
+      connected &&
+      !open &&
+      amount.isGreaterThan(0) &&
+      amount.lt(shrtAmt) &&
+      withdrawCollat.minus(existingCollat).abs().isLessThan(0.5)
+    ) {
+      closeError =
+        'You must have at least 0.5 ETH collateral unless you fully close out your position. Either fully close your position, or close out less'
+    }
     if (connected && lngAmt.gt(0)) {
       existingLongError = 'Close your long position to open a short'
     }
 
+    console.log(openError, closeError, existingLongError)
     return { openError, closeError, existingLongError }
-  }, [amount, balance, shrtAmt.toNumber(), amount, lngAmt.toNumber(), connected])
+  }, [
+    amount,
+    balance,
+    shrtAmt.toNumber(),
+    amount,
+    lngAmt.toNumber(),
+    connected,
+    withdrawCollat.toNumber(),
+    existingCollat,
+  ])
 
   useEffect(() => {
     setCollatRatio(collatPercent / 100)
@@ -296,7 +317,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                 unit="oSQTH"
                 error={!!closeError}
                 convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
-                hint={shrtAmt.lt(amount) ? 'Close amount exceeds position' : `Position ${shrtAmt.toFixed(6)} oSQTH`}
+                hint={closeError ? closeError : `Position ${shrtAmt.toFixed(6)} oSQTH`}
               />
             </div>
             <div className={classes.thirdHeading}>
@@ -324,7 +345,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
               />
             </div>
             <div className={classes.thirdHeading}></div>
-            <CollatRange />
+            <CollatRange onCollatValueChange={(val) => setCollatPercent(val)} collatValue={collatPercent} />
             <TradeDetails
               actionTitle="Spend"
               amount={sellCloseQuote.amountIn.toFixed(6)}
@@ -500,7 +521,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
             />
           </div>
           <div className={classes.thirdHeading}></div>
-          <CollatRange />
+          <CollatRange onCollatValueChange={(val) => setCollatPercent(val)} collatValue={collatPercent} />
           <TradeDetails
             actionTitle="Sell"
             amount={amount.toFixed(6)}
