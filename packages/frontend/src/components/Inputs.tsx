@@ -76,7 +76,7 @@ type PrimaryInputType = {
   actionTxt?: string
   onActionClicked?: () => void
   convertedValue: number | string
-  hint?: string
+  hint?: string | React.ReactNode
   error?: boolean
 }
 

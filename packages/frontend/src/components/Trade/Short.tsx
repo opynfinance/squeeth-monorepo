@@ -127,6 +127,12 @@ const useStyles = makeStyles((theme) =>
       marginRight: '4px',
       fontSize: '20px',
     },
+    hintTextContainer: {
+      display: 'flex',
+    },
+    hintTitleText: {
+      marginRight: '.5em',
+    },
   }),
 )
 
@@ -317,7 +323,24 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                 unit="oSQTH"
                 error={!!closeError}
                 convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
-                hint={closeError ? closeError : `Position ${shrtAmt.toFixed(6)} oSQTH`}
+                hint={
+                  shrtAmt.lt(amount) ? (
+                    'Close amount exceeds position'
+                  ) : (
+                    <div className={classes.hint}>
+                      <span className={classes.hintTextContainer}>
+                        <span className={classes.hintTitleText}>Position</span> <span>{shrtAmt.toFixed(6)}</span>
+                      </span>
+                      {amount.toNumber() ? (
+                        <>
+                          <ArrowRightAltIcon className={classes.arrowIcon} />
+                          <span>{shrtAmt.minus(amount).toFixed(6)}</span>
+                        </>
+                      ) : null}{' '}
+                      <span style={{ marginLeft: '4px' }}>oSQTH</span>
+                    </div>
+                  )
+                }
               />
             </div>
             <div className={classes.thirdHeading}>
@@ -353,14 +376,14 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
               value={Number(ethPrice.times(sellCloseQuote.amountIn).toFixed(2)).toLocaleString()}
               hint={
                 <div className={classes.hint}>
-                  <span>Position {shrtAmt.toFixed(6)}</span>
-                  {quote.amountOut.gt(0) ? (
+                  <span>{`Balance ${balance}`}</span>
+                  {amount.toNumber() ? (
                     <>
                       <ArrowRightAltIcon className={classes.arrowIcon} />
-                      <span>{shrtAmt.minus(amount).toFixed(6)}</span>
+                      <span>{(balance - sellCloseQuote.amountIn.toNumber()).toFixed(6)}</span>
                     </>
                   ) : null}{' '}
-                  <span style={{ marginLeft: '4px' }}>oSQTH</span>
+                  <span style={{ marginLeft: '4px' }}>ETH</span>
                 </div>
               }
             />
@@ -492,7 +515,22 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
               onActionClicked={() => setCollateral(balance)}
               unit="ETH"
               convertedValue={(collateral * Number(ethPrice)).toFixed(2).toLocaleString()}
-              hint={!!openError ? openError : `Balance ${balance} ETH`}
+              hint={
+                !!openError ? (
+                  openError
+                ) : (
+                  <div className={classes.hint}>
+                    <span>{`Balance ${balance}`}</span>
+                    {collateral ? (
+                      <>
+                        <ArrowRightAltIcon className={classes.arrowIcon} />
+                        <span>{(balance - collateral).toFixed(6)}</span>
+                      </>
+                    ) : null}{' '}
+                    <span style={{ marginLeft: '4px' }}>ETH</span>
+                  </div>
+                )
+              }
               error={!!openError}
             />
           </div>
