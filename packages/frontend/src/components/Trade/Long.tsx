@@ -196,8 +196,16 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
   const classes = useStyles()
   const { swapRouter, wSqueeth } = useAddresses()
   const wSqueethBal = useTokenBalance(wSqueeth, 5, WSQUEETH_DECIMALS)
-  const { sell, buyForWETH, getWSqueethPositionValue } = useSqueethPool()
-  const { tradeAmount: amount, setTradeAmount: setAmount, squeethExposure, quote, setTradeSuccess } = useTrade()
+  const { sell, buyForWETH, getWSqueethPositionValue, getBuyQuoteForETH, getBuyQuote } = useSqueethPool()
+  const {
+    tradeAmount: amount,
+    setTradeAmount: setAmount,
+    squeethExposure,
+    quote,
+    altTradeAmount,
+    setAltTradeAmount,
+    setTradeSuccess,
+  } = useTrade()
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(wSqueeth, swapRouter)
   const { selectWallet, connected } = useWallet()
   const ethPrice = useETHPrice()
@@ -215,7 +223,6 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
     let closeError = null
     let existingShortError = null
 
-    console.log(wSqueethBal.toNumber(), amount, wSqueethBal)
     if (connected && (wSqueethBal.lt(amount) || wSqueethBal.isZero())) {
       closeError = 'Insufficient oSQTH balance'
     }
@@ -243,7 +250,6 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
   }
 
   const sellAndClose = useCallback(async () => {
-    console.log(amount.toNumber(), amount)
     setSellLoading(true)
     try {
       if (squeethAllowance.lt(amount)) {
@@ -260,6 +266,33 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
     setSellLoading(false)
   }, [amount, sell, squeethAllowance, squeethApprove, wSqueethBal])
 
+  const handleCloseDualInputUpdate = (v: number | string, currentInput: string) => {
+    if (currentInput === 'ETH') {
+      setAltTradeAmount(new BigNumber(v))
+      getBuyQuoteForETH(new BigNumber(v)).then((val) => {
+        setAmount(val.amountOut)
+      })
+    } else {
+      setAmount(new BigNumber(v))
+      getBuyQuote(new BigNumber(v)).then((val) => {
+        setAltTradeAmount(val.amountIn)
+      })
+    }
+  }
+  const handleOpenDualInputUpdate = (v: number | string, currentInput: string) => {
+    if (currentInput === 'ETH') {
+      setAmount(new BigNumber(v))
+      getBuyQuoteForETH(new BigNumber(v)).then((val) => {
+        setAltTradeAmount(val.amountOut)
+      })
+    } else {
+      setAltTradeAmount(new BigNumber(v))
+      getBuyQuote(new BigNumber(v)).then((val) => {
+        setAmount(val.amountIn)
+      })
+    }
+  }
+
   const ClosePosition = useMemo(() => {
     return (
       <div>
@@ -271,11 +304,16 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
             <div className={classes.thirdHeading} />
             <PrimaryInput
               value={amount.toNumber()}
-              onChange={(v) => setAmount(new BigNumber(v))}
+              onChange={(v) => handleCloseDualInputUpdate(v, 'oSQTH')}
               label="Amount"
               tooltip="Amount of wSqueeth you want to close"
               actionTxt="Max"
-              onActionClicked={() => setAmount(wSqueethBal)}
+              onActionClicked={() => {
+                setAmount(wSqueethBal)
+                getBuyQuote(new BigNumber(wSqueethBal)).then((val) => {
+                  setAltTradeAmount(val.amountIn)
+                })
+              }}
               unit="oSQTH"
               convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
               error={!!closeError}
@@ -298,22 +336,36 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
                 )
               }
             />
-            <TradeDetails
-              actionTitle="Get"
-              amount={quote.amountOut.toFixed(6)}
+            <PrimaryInput
+              value={altTradeAmount.toNumber()}
+              onChange={(v) => handleCloseDualInputUpdate(v, 'ETH')}
+              label="Amount"
+              tooltip="Amount of wSqueeth you want to close in eth"
+              actionTxt="Max"
+              onActionClicked={() => {
+                setAltTradeAmount(new BigNumber(balance))
+                getBuyQuoteForETH(new BigNumber(balance)).then((val) => {
+                  setAmount(val.amountOut)
+                })
+              }}
               unit="ETH"
-              value={Number(quote.amountOut.times(ethPrice).toFixed(4)).toLocaleString()}
+              convertedValue={altTradeAmount.times(ethPrice).toFixed(2).toLocaleString()}
+              error={!!closeError}
               hint={
-                <div className={classes.hint}>
-                  <span>{`Balance ${balance}`}</span>
-                  {amount.toNumber() ? (
-                    <>
-                      <ArrowRightAltIcon className={classes.arrowIcon} />
-                      <span>{(balance + quote.amountOut.toNumber()).toFixed(6)}</span>
-                    </>
-                  ) : null}{' '}
-                  <span style={{ marginLeft: '4px' }}>ETH</span>
-                </div>
+                closeError ? (
+                  closeError
+                ) : (
+                  <div className={classes.hint}>
+                    <span>{`Balance ${balance}`}</span>
+                    {amount.toNumber() ? (
+                      <>
+                        <ArrowRightAltIcon className={classes.arrowIcon} />
+                        <span>{(balance - altTradeAmount.toNumber()).toFixed(6)}</span>
+                      </>
+                    ) : null}{' '}
+                    <span style={{ marginLeft: '4px' }}>ETH</span>
+                  </div>
+                )
               }
             />
             <div className={classes.divider}>
@@ -411,11 +463,16 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
           <div className={classes.thirdHeading} />
           <PrimaryInput
             value={amount.toNumber()}
-            onChange={(v) => setAmount(new BigNumber(v))}
+            onChange={(v) => handleOpenDualInputUpdate(v, 'ETH')}
             label="Amount"
             tooltip="Amount of ETH you want to spend to get Squeeth exposure"
             actionTxt="Max"
-            onActionClicked={() => setAmount(new BigNumber(balance))}
+            onActionClicked={() => {
+              setAmount(new BigNumber(balance))
+              getBuyQuoteForETH(new BigNumber(balance)).then((val) => {
+                setAltTradeAmount(val.amountOut)
+              })
+            }}
             unit="ETH"
             convertedValue={amount.times(ethPrice).toFixed(2).toLocaleString()}
             error={!!openError}
@@ -436,24 +493,43 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
               )
             }
           />
-          <TradeDetails
-            actionTitle="Buy"
-            amount={quote.amountOut.toFixed(6)}
+
+          <PrimaryInput
+            value={altTradeAmount.toNumber()}
+            onChange={(v) => handleOpenDualInputUpdate(v, 'oSQTH')}
+            label="Amount"
+            tooltip="Amount of Squeeth exposure"
+            actionTxt="Max"
+            onActionClicked={() => {
+              setAltTradeAmount(new BigNumber(wSqueethBal))
+              getBuyQuote(new BigNumber(wSqueethBal)).then((val) => {
+                setAmount(val.amountIn)
+              })
+            }}
             unit="oSQTH"
-            value={Number(squeethExposure.toFixed(2)).toLocaleString()}
+            convertedValue={getWSqueethPositionValue(altTradeAmount).toFixed(2).toLocaleString()}
+            error={!!openError}
             hint={
-              <div className={classes.hint}>
-                <span>Position {wSqueethBal.toFixed(6)}</span>
-                {quote.amountOut.gt(0) ? (
-                  <>
-                    <ArrowRightAltIcon className={classes.arrowIcon} />
-                    <span>{wSqueethBal.plus(quote.amountOut).toFixed(6)}</span>
-                  </>
-                ) : null}{' '}
-                <span style={{ marginLeft: '4px' }}>oSQTH</span>
-              </div>
+              openError ? (
+                openError
+              ) : (
+                <div className={classes.hint}>
+                  <span className={classes.hintTextContainer}>
+                    <span className={classes.hintTitleText}>Position </span>
+                    <span>{wSqueethBal.toFixed(6)}</span>
+                  </span>
+                  {quote.amountOut.gt(0) ? (
+                    <>
+                      <ArrowRightAltIcon className={classes.arrowIcon} />
+                      <span>{wSqueethBal.plus(quote.amountOut).toFixed(6)}</span>
+                    </>
+                  ) : null}{' '}
+                  <span style={{ marginLeft: '4px' }}>oSQTH</span>
+                </div>
+              )
             }
           />
+
           <div className={classes.divider}>
             <TradeInfoItem
               label="Value if ETH up 2x"

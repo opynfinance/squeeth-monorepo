@@ -16,6 +16,7 @@ const useStyles = makeStyles((theme) =>
       borderRadius: theme.spacing(1),
       padding: theme.spacing(1.5),
       margin: 'auto',
+      marginBottom: '1em',
       '&:focus-within': {
         border: `1px solid ${theme.palette.secondary.main}30`,
       },

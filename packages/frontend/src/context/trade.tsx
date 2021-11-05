@@ -33,6 +33,8 @@ type tradeContextType = {
   squeethExposure: number
   quote: Quote
   sellCloseQuote: SellCloseQuote
+  altTradeAmount: BigNumber
+  setAltTradeAmount: (amt: BigNumber) => void
 }
 
 const quoteEmptyState = {
@@ -63,6 +65,8 @@ const initialState: tradeContextType = {
   squeethExposure: 0,
   quote: quoteEmptyState,
   sellCloseQuote: sellCloseEmptyState,
+  altTradeAmount: new BigNumber(1),
+  setAltTradeAmount: () => null,
 }
 
 const tradeContext = React.createContext<tradeContextType>(initialState)
@@ -70,6 +74,7 @@ const useTrade = () => useContext(tradeContext)
 
 const TradeProvider: React.FC = ({ children }) => {
   const [tradeAmount, setTradeAmount] = useState(new BigNumber(0))
+  const [altTradeAmount, setAltTradeAmount] = useState(new BigNumber(0))
   const [tradeType, setTradeType] = useState(TradeType.LONG)
   const [tradeLoading, setTradeLoading] = useState(false)
   const [tradeSuccess, setTradeSuccess] = useState(false)
@@ -140,6 +145,8 @@ const TradeProvider: React.FC = ({ children }) => {
     squeethExposure,
     quote,
     sellCloseQuote,
+    altTradeAmount,
+    setAltTradeAmount,
   }
 
   return <tradeContext.Provider value={store}>{children}</tradeContext.Provider>

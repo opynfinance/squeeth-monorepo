@@ -156,12 +156,21 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
 
   const classes = useStyles()
   const { openShort, closeShort } = useShortHelper()
-  const { getWSqueethPositionValue } = useSqueethPool()
+  const { getWSqueethPositionValue, getBuyQuoteForETH, getBuyQuote } = useSqueethPool()
   const { updateOperator, normFactor: normalizationFactor, getShortAmountFromDebt, getDebtAmount } = useController()
   const { shortHelper } = useAddresses()
   const ethPrice = useETHPrice()
   const { selectWallet, connected } = useWallet()
-  const { tradeAmount: amount, setTradeAmount: setAmount, quote, sellCloseQuote, setTradeSuccess } = useTrade()
+
+  const {
+    tradeAmount: amount,
+    setTradeAmount: setAmount,
+    quote,
+    sellCloseQuote,
+    altTradeAmount,
+    setAltTradeAmount,
+    setTradeSuccess,
+  } = useTrade()
   const { squeethAmount: lngAmt } = useLongPositions()
   const { squeethAmount: shrtAmt, shortVaults, existingCollatPercent } = useShortPositions()
 
@@ -306,6 +315,20 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
     setCollatRatio(collatPercent / 100)
   }, [collatPercent])
 
+  const handleCloseDualInputUpdate = (v: number | string, currentInput: string) => {
+    if (currentInput === 'ETH') {
+      setAltTradeAmount(new BigNumber(v))
+      getBuyQuoteForETH(new BigNumber(v)).then((val) => {
+        setAmount(val.amountOut)
+      })
+    } else {
+      setAmount(new BigNumber(v))
+      getBuyQuote(new BigNumber(v)).then((val) => {
+        setAltTradeAmount(val.amountIn)
+      })
+    }
+  }
+
   const ClosePosition = useMemo(() => {
     return (
       <div>
@@ -317,11 +340,16 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
             <div className={classes.thirdHeading}>
               <PrimaryInput
                 value={amount.toNumber()}
-                onChange={(v) => setAmount(new BigNumber(v))}
+                onChange={(v) => handleCloseDualInputUpdate(v, 'oSQTH')}
                 label="Amount"
                 tooltip="Amount of oSQTH to buy"
                 actionTxt="Max"
-                onActionClicked={() => setAmount(shrtAmt)}
+                onActionClicked={() => {
+                  setAmount(shrtAmt)
+                  getBuyQuote(new BigNumber(shrtAmt)).then((val) => {
+                    setAltTradeAmount(val.amountIn)
+                  })
+                }}
                 unit="oSQTH"
                 error={!!closeError}
                 convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
@@ -371,11 +399,21 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
             </div>
             <div className={classes.thirdHeading}></div>
             <CollatRange onCollatValueChange={(val) => setCollatPercent(val)} collatValue={collatPercent} />
-            <TradeDetails
-              actionTitle="Spend"
-              amount={sellCloseQuote.amountIn.toFixed(6)}
+            <PrimaryInput
+              value={altTradeAmount.toNumber()}
+              onChange={(v) => handleCloseDualInputUpdate(v, 'ETH')}
+              label="Amount"
+              tooltip="Amount of ETH you want to spend to get Squeeth exposure"
+              actionTxt="Max"
+              onActionClicked={() => {
+                setAltTradeAmount(new BigNumber(balance))
+                getBuyQuoteForETH(new BigNumber(balance)).then((val) => {
+                  setAmount(val.amountOut)
+                })
+              }}
               unit="ETH"
-              value={Number(ethPrice.times(sellCloseQuote.amountIn).toFixed(2)).toLocaleString()}
+              error={!!closeError}
+              convertedValue={altTradeAmount.times(ethPrice).toFixed(2).toLocaleString()}
               hint={
                 <div className={classes.hint}>
                   <span>{`Balance ${balance}`}</span>
@@ -562,23 +600,38 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
           </div>
           <div className={classes.thirdHeading}></div>
           <CollatRange onCollatValueChange={(val) => setCollatPercent(val)} collatValue={collatPercent} />
-          <TradeDetails
-            actionTitle="Sell"
-            amount={amount.toFixed(6)}
-            unit="oSQTH"
-            value={Number(getWSqueethPositionValue(amount).toFixed(2)).toLocaleString()}
+
+          <PrimaryInput
+            value={amount.toNumber()}
+            onChange={(v) => setAmount(new BigNumber(v))}
+            label="Sell"
+            tooltip="Amount of ETH collateral"
+            actionTxt="Max"
+            onActionClicked={() => {
+              setAmount(shrtAmt)
+            }}
+            unit="SQTH"
+            convertedValue={Number(getWSqueethPositionValue(amount).toFixed(2)).toLocaleString()}
             hint={
-              <div className={classes.hint}>
-                <span>Position {shrtAmt.toFixed(6)}</span>
-                {quote.amountOut.gt(0) ? (
-                  <>
-                    <ArrowRightAltIcon className={classes.arrowIcon} />
-                    <span>{shrtAmt.plus(amount).toFixed(6)}</span>
-                  </>
-                ) : null}{' '}
-                <span style={{ marginLeft: '4px' }}>oSQTH</span>
-              </div>
+              !!openError ? (
+                openError
+              ) : (
+                <div className={classes.hint}>
+                  <span className={classes.hintTextContainer}>
+                    <span className={classes.hintTitleText}>Position</span>
+                    <span>{shrtAmt.toFixed(6)}</span>
+                  </span>
+                  {quote.amountOut.gt(0) ? (
+                    <>
+                      <ArrowRightAltIcon className={classes.arrowIcon} />
+                      <span>{shrtAmt.plus(amount).toFixed(6)}</span>
+                    </>
+                  ) : null}{' '}
+                  <span style={{ marginLeft: '4px' }}>oSQTH</span>
+                </div>
+              )
             }
+            error={!!openError}
           />
           <div className={classes.divider}>
             <TradeInfoItem
