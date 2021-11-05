@@ -24,6 +24,8 @@ type tradeContextType = {
   setTradeType: (type: TradeType) => void
   tradeLoading: boolean
   setTradeLoading: (loading: boolean) => void
+  tradeSuccess: boolean
+  setTradeSuccess: (state: boolean) => void
   openPosition: number
   setOpenPosition: (o: number) => void
   isOpenPosition: boolean
@@ -52,6 +54,8 @@ const initialState: tradeContextType = {
   setTradeType: () => null,
   tradeLoading: false,
   setTradeLoading: () => null,
+  tradeSuccess: false,
+  setTradeSuccess: () => null,
   openPosition: 0,
   setOpenPosition: () => null,
   isOpenPosition: true,
@@ -68,6 +72,7 @@ const TradeProvider: React.FC = ({ children }) => {
   const [tradeAmount, setTradeAmount] = useState(new BigNumber(0))
   const [tradeType, setTradeType] = useState(TradeType.LONG)
   const [tradeLoading, setTradeLoading] = useState(false)
+  const [tradeSuccess, setTradeSuccess] = useState(false)
   const [openPosition, setOpenPosition] = useState(0)
   const [quote, setQuote] = useState(quoteEmptyState)
   const [sellCloseQuote, setSellCloseQuote] = useState(sellCloseEmptyState)
@@ -126,6 +131,8 @@ const TradeProvider: React.FC = ({ children }) => {
     setTradeType,
     tradeLoading,
     setTradeLoading,
+    tradeSuccess,
+    setTradeSuccess,
     openPosition,
     setOpenPosition,
     isOpenPosition: isPositionOpen,

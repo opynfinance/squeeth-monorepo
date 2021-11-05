@@ -272,15 +272,15 @@ function TradePage() {
   const ethPrice = useETHPrice()
   const { fundingPerDay, mark, index, impliedVol } = useController()
 
-  const { volMultiplier: globalVolMultiplier } = useWorldContext()
-  const { setVolMultiplier } = useETHPriceCharts(1, globalVolMultiplier)
+  const { volMultiplier, setVolMultiplier } = useWorldContext()
   const { tradeType, setTradeType, actualTradeType } = useTrade()
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [showMobileTrade, setShowMobileTrade] = useState(false)
 
   useEffect(() => {
-    setVolMultiplier(globalVolMultiplier)
-  }, [globalVolMultiplier])
+    if (tradeType === TradeType.LONG) setVolMultiplier(1.2)
+    else setVolMultiplier(0.9)
+  }, [tradeType])
 
   const SqueethInfo = useCallback(() => {
     return (

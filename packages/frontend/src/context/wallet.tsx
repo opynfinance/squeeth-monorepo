@@ -7,6 +7,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from 're
 import Web3 from 'web3'
 
 import { EtherscanPrefix } from '../constants'
+import useInterval from '../hooks/useInterval'
 import { Networks } from '../types'
 
 const defaultWeb3 = new Web3(`https://ropsten.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY}`)
@@ -65,6 +66,7 @@ const WalletProvider: React.FC = ({ children }) => {
     tx.on('transactionHash', (hash: string) => {
       const { emitter } = notify.hash(hash)
       emitter.on('all', addEtherscan)
+      emitter.on('all', getBalance)
     })
     return tx
   }
@@ -82,6 +84,26 @@ const WalletProvider: React.FC = ({ children }) => {
     }),
     [web3, address, networkId, signer, balance, onWalletSelect],
   )
+
+  const getBalance = () => {
+    if (!address) {
+      setBalance(new BigNumber(0))
+      return
+    }
+
+    web3.eth.getBalance(address).then((bal) => setBalance(new BigNumber(bal)))
+  }
+
+  useEffect(() => {
+    if (!address) {
+      setBalance(new BigNumber(0))
+      return
+    }
+
+    getBalance()
+  }, [address])
+
+  useInterval(getBalance, 20000)
 
   useEffect(() => {
     const onNetworkChange = (updateNetwork: number) => {
@@ -126,7 +148,7 @@ const WalletProvider: React.FC = ({ children }) => {
         address: setAddress,
         network: onNetworkChange,
         wallet: onWalletUpdate,
-        balance: (balance) => setBalance(new BigNumber(balance)),
+        // balance: (balance) => setBalance(new BigNumber(balance)),
       },
       walletSelect: {
         wallets: [

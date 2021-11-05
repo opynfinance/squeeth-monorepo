@@ -142,7 +142,7 @@ export const useController = () => {
         topics: [SWAP_EVENT_TOPIC],
       },
       () => {
-        console.log(`someone traded wsqueeth, mark update!`)
+        //console.log(`someone traded wsqueeth, mark update!`)
         getMark(3).then(setMark)
       },
     )
@@ -160,7 +160,7 @@ export const useController = () => {
         topics: [SWAP_EVENT_TOPIC],
       },
       () => {
-        console.log(`someone traded weth, mark update!`)
+        //console.log(`someone traded weth, mark update!`)
         getIndex(3).then(setIndex)
       },
     )

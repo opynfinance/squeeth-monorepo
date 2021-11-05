@@ -114,6 +114,7 @@ export const useLongPositions = () => {
     wethAmount,
     usdAmount,
     realizedPNL,
+    refetch,
   }
 }
 
@@ -242,12 +243,23 @@ export const useShortPositions = () => {
     realizedETH,
     realizedUSD,
     realizedPNL,
+    refetch,
   }
 }
 
 export const usePnL = () => {
-  const { usdAmount: longUsdAmt, squeethAmount: wSqueethBal, realizedPNL: longRealizedPNL } = useLongPositions()
-  const { usdAmount: shortUsdAmt, squeethAmount: shortSqueethAmt, realizedPNL: shortRealizedPNL } = useShortPositions()
+  const {
+    usdAmount: longUsdAmt,
+    squeethAmount: wSqueethBal,
+    realizedPNL: longRealizedPNL,
+    refetch: refetchLong,
+  } = useLongPositions()
+  const {
+    usdAmount: shortUsdAmt,
+    squeethAmount: shortSqueethAmt,
+    realizedPNL: shortRealizedPNL,
+    refetch: refetchShort,
+  } = useShortPositions()
   const ethPrice = useETHPrice()
   const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
 
@@ -266,6 +278,11 @@ export const usePnL = () => {
     if (shortSqueethAmt.isGreaterThan(0)) return PositionType.SHORT
     else return PositionType.NONE
   }, [wSqueethBal.toNumber(), shortSqueethAmt.toNumber()])
+
+  const refetch = () => {
+    refetchLong()
+    refetchShort()
+  }
 
   useEffect(() => {
     if (!ready) return
@@ -306,5 +323,6 @@ export const usePnL = () => {
     loading,
     shortRealizedPNL,
     longRealizedPNL,
+    refetch,
   }
 }

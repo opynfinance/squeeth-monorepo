@@ -161,7 +161,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   const { shortHelper } = useAddresses()
   const ethPrice = useETHPrice()
   const { selectWallet, connected } = useWallet()
-  const { tradeAmount: amount, setTradeAmount: setAmount, quote, sellCloseQuote } = useTrade()
+  const { tradeAmount: amount, setTradeAmount: setAmount, quote, sellCloseQuote, setTradeSuccess } = useTrade()
   const { squeethAmount: lngAmt } = useLongPositions()
   const { squeethAmount: shrtAmt, shortVaults, existingCollatPercent } = useShortPositions()
 
@@ -208,6 +208,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
         const confirmedHash = await openShort(vaultId, new BigNumber(amount), new BigNumber(collateral))
         setConfirmed(true)
         setTxHash(confirmedHash.transactionHash)
+        setTradeSuccess(true)
       }
     } catch (e) {
       console.log(e)
@@ -241,6 +242,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
         const confirmedHash = await closeShort(vaultId, new BigNumber(amount), _collat.minus(neededCollat))
         setConfirmed(true)
         setTxHash(confirmedHash.transactionHash)
+        setTradeSuccess(true)
       }
     } catch (e) {
       console.log(e)

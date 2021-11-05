@@ -3,7 +3,7 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { useTrade } from '../context/trade'
 import { useETHPrice } from '../hooks/useETHPrice'
@@ -102,9 +102,22 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
     longUsdAmt,
     shortUsdAmt,
     loading,
+    refetch,
   } = usePnL()
-  const { tradeAmount, actualTradeType, isOpenPosition, quote } = useTrade()
+  const { tradeAmount, actualTradeType, isOpenPosition, quote, tradeSuccess, setTradeSuccess } = useTrade()
   const ethPrice = useETHPrice()
+  const [fetchingNew, setFetchingNew] = useState(false)
+
+  useEffect(() => {
+    if (tradeSuccess) {
+      setFetchingNew(true)
+      setTradeSuccess(false)
+      setTimeout(() => {
+        setFetchingNew(false)
+        refetch()
+      }, 5000)
+    }
+  }, [tradeSuccess])
 
   const titleClass = useMemo(() => {
     if (positionType === PositionType.LONG) return classes.longTitle
@@ -237,6 +250,9 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
           </div>
         </div>
       </div>
+      <Typography variant="caption" color="textSecondary">
+        {fetchingNew ? 'Fetching latest position' : ' '}
+      </Typography>
     </div>
   )
 }

@@ -197,7 +197,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
   const { swapRouter, wSqueeth } = useAddresses()
   const wSqueethBal = useTokenBalance(wSqueeth, 5, WSQUEETH_DECIMALS)
   const { sell, buyForWETH, getWSqueethPositionValue } = useSqueethPool()
-  const { tradeAmount: amount, setTradeAmount: setAmount, squeethExposure, quote } = useTrade()
+  const { tradeAmount: amount, setTradeAmount: setAmount, squeethExposure, quote, setTradeSuccess } = useTrade()
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(wSqueeth, swapRouter)
   const { selectWallet, connected } = useWallet()
   const ethPrice = useETHPrice()
@@ -235,6 +235,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
       const confirmedHash = await buyForWETH(amount)
       setConfirmed(true)
       setTxHash(confirmedHash.transactionHash)
+      setTradeSuccess(true)
     } catch (e) {
       console.log(e)
     }
@@ -248,9 +249,10 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
       if (squeethAllowance.lt(amount)) {
         await squeethApprove()
       } else {
-        const confirmedHash = await sell(new BigNumber(amount))
+        const confirmedHash = await sell(amount)
         setConfirmed(true)
         setTxHash(confirmedHash.transactionHash)
+        setTradeSuccess(true)
       }
     } catch (e) {
       console.log(e)

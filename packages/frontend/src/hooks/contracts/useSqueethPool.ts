@@ -140,7 +140,7 @@ export const useSqueethPool = () => {
       value: ethers.utils.parseEther(amount.toString()),
     }))
 
-    return txHash 
+    return txHash
   }
 
   const sell = async (amount: BigNumber) => {
@@ -159,10 +159,10 @@ export const useSqueethPool = () => {
     exactInputParam.recipient = swapRouter
     const tupleInput = Object.values(exactInputParam).map(v => v?.toString() || '')
 
-    const { amountOut } = await getSellQuote(amount)
+    const { minimumAmountOut } = await getSellQuote(amount)
     const swapIface = new ethers.utils.Interface(routerABI)
     const encodedSwapCall = swapIface.encodeFunctionData('exactInputSingle', [tupleInput])
-    const encodedUnwrapCall = swapIface.encodeFunctionData('unwrapWETH9', [fromTokenAmount(amountOut, 18).toString(), address])
+    const encodedUnwrapCall = swapIface.encodeFunctionData('unwrapWETH9', [fromTokenAmount(minimumAmountOut, 18).toString(), address])
     return [encodedSwapCall, encodedUnwrapCall]
   }
 
