@@ -181,6 +181,7 @@ contract Oracle {
         (, , uint16 observationIndex, uint16 cardinality, , , ) = pool.slot0();
 
         // first observation index
+        // it's safe to use % without checking cardinality = 0 because cardinality is always >= 1
         uint16 oldestObservationIndex = (observationIndex + 1) % cardinality;
 
         (uint32 oldestObservationTimestamp, , , bool initialized) = pool.observations(oldestObservationIndex);

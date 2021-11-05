@@ -9,6 +9,8 @@ import {IOracle} from "../interfaces/IOracle.sol";
 library Power2Base {
     using SafeMath for uint256;
 
+    uint32 constant TWAP_PERIOD = 5 minutes;
+
     uint256 constant INDEX_SCALE = 1e4;
 
     /**
@@ -96,7 +98,7 @@ library Power2Base {
      * @param _normalizationFactor current normalization factor
      * @return returns equivalent collateral amount for debt
      */
-    function _getCollateralByRepayAmount(
+    function _getDebtValueInEth(
         uint256 _debtAmount,
         address _oracle,
         address _ethQuoteCurrencyPool,
@@ -104,7 +106,13 @@ library Power2Base {
         address _quoteCurrency,
         uint256 _normalizationFactor
     ) internal view returns (uint256) {
-        uint256 ethQuoteCurrencyPrice = _getScaledTwap(_oracle, _ethQuoteCurrencyPool, _weth, _quoteCurrency, 600);
+        uint256 ethQuoteCurrencyPrice = _getScaledTwap(
+            _oracle,
+            _ethQuoteCurrencyPool,
+            _weth,
+            _quoteCurrency,
+            TWAP_PERIOD
+        );
         return _debtAmount.mul(_normalizationFactor).mul(ethQuoteCurrencyPrice).div(1e36);
     }
 

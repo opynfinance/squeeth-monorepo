@@ -25,11 +25,12 @@ contract Controller is Ownable, ReentrancyGuard {
     using VaultLib for VaultLib.Vault;
     using Address for address payable;
 
-    uint32 internal constant SHUTDOWN_PERIOD = 10 minutes;
     uint256 public constant MIN_COLLATERAL = 0.5 ether;
     /// @dev system can only be paused for 182 days from deployment
     uint256 public constant PAUSE_TIME_LIMIT = 182 days;
     uint256 public constant FUNDING_PERIOD = 1 days;
+
+    uint32 public constant TWAP_PERIOD = 5 minutes;
 
     /// @dev basic unit used for calculation
     uint256 private constant ONE = 1e18;
@@ -296,7 +297,7 @@ contract Controller is Ownable, ReentrancyGuard {
      * @param _vaultId id of the vault
      * @param _amount amount of eth to withdraw
      */
-    function withdraw(uint256 _vaultId, uint256 _amount) external payable notPaused nonReentrant {
+    function withdraw(uint256 _vaultId, uint256 _amount) external notPaused nonReentrant {
         uint256 cachedNormFactor = _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
 
@@ -494,7 +495,13 @@ contract Controller is Ownable, ReentrancyGuard {
     function pauseAndShutDown() external onlyOwner notShutdown notPaused {
         isSystemPaused = true;
         isShutDown = true;
-        indexForSettlement = Power2Base._getScaledTwap(address(oracle), ethQuoteCurrencyPool, weth, quoteCurrency, 600);
+        indexForSettlement = Power2Base._getScaledTwap(
+            address(oracle),
+            ethQuoteCurrencyPool,
+            weth,
+            quoteCurrency,
+            TWAP_PERIOD
+        );
     }
 
     /**
@@ -502,7 +509,13 @@ contract Controller is Ownable, ReentrancyGuard {
      */
     function shutDown() external onlyOwner isPaused notShutdown {
         isShutDown = true;
-        indexForSettlement = Power2Base._getScaledTwap(address(oracle), ethQuoteCurrencyPool, weth, quoteCurrency, 600);
+        indexForSettlement = Power2Base._getScaledTwap(
+            address(oracle),
+            ethQuoteCurrencyPool,
+            weth,
+            quoteCurrency,
+            TWAP_PERIOD
+        );
     }
 
     /**
@@ -930,7 +943,7 @@ contract Controller is Ownable, ReentrancyGuard {
         uint256 cachedFeeRate = feeRate;
         if (cachedFeeRate == 0) return (uint256(0), _depositAmount);
         uint256 depositAmountAfterFee;
-        uint256 ethEquivalentMinted = Power2Base._getCollateralByRepayAmount(
+        uint256 ethEquivalentMinted = Power2Base._getDebtValueInEth(
             _wSqueethAmount,
             address(oracle),
             ethQuoteCurrencyPool,
@@ -994,11 +1007,7 @@ contract Controller is Ownable, ReentrancyGuard {
 
         (uint256 collectedToken0, uint256 collectedToken1) = positionManager.collect(collectParams);
 
-        bool cacheIsWethToken0 = isWethToken0;
-        uint256 wethAmount = cacheIsWethToken0 ? collectedToken0 : collectedToken1;
-        uint256 wPowerPerpAmount = cacheIsWethToken0 ? collectedToken1 : collectedToken0;
-
-        return (wethAmount, wPowerPerpAmount);
+        return isWethToken0 ? (collectedToken0, collectedToken1) : (collectedToken1, collectedToken0);
     }
 
     /**
@@ -1053,11 +1062,13 @@ contract Controller is Ownable, ReentrancyGuard {
 
         // floor mark to be at least 80% of index
         uint256 lowerBound = index.mul(4).div(5);
-        if (mark < lowerBound) mark = lowerBound;
-
-        // cap mark to be at most 120% of index
-        uint256 upperBound = index.mul(5).div(4);
-        if (mark > upperBound) mark = upperBound;
+        if (mark < lowerBound) {
+            mark = lowerBound;
+        } else {
+            // cap mark to be at most 120% of index
+            uint256 upperBound = index.mul(5).div(4);
+            if (mark > upperBound) mark = upperBound;
+        }
 
         // newNormFactor = (mark / ( (1+rFunding) * mark - index * rFunding )) * oldNormaFactor
         uint256 multiplier = mark.mul(1e36).div((ONE.add(rFunding)).mul(mark).sub(index.mul(rFunding))); // multiply by 1e36 to keep multiplier in 18 decimals
@@ -1122,7 +1133,7 @@ contract Controller is Ownable, ReentrancyGuard {
             ethQuoteCurrencyPool,
             weth,
             quoteCurrency,
-            300
+            TWAP_PERIOD
         );
         return
             VaultLib.getVaultStatus(
@@ -1131,7 +1142,7 @@ contract Controller is Ownable, ReentrancyGuard {
                 _normalizationFactor,
                 scaledEthPrice,
                 MIN_COLLATERAL,
-                IOracle(oracle).getTimeWeightedAverageTickSafe(wPowerPerpPool, 300),
+                IOracle(oracle).getTimeWeightedAverageTickSafe(wPowerPerpPool, TWAP_PERIOD),
                 isWethToken0
             );
     }
@@ -1168,7 +1179,7 @@ contract Controller is Ownable, ReentrancyGuard {
             (uint256 nftEthAmount, uint256 nftWPowerperpAmount) = VaultLib._getUniPositionBalances(
                 uniswapPositionManager,
                 cachedVault.NftCollateralId,
-                IOracle(oracle).getTimeWeightedAverageTickSafe(wPowerPerpPool, 300),
+                IOracle(oracle).getTimeWeightedAverageTickSafe(wPowerPerpPool, TWAP_PERIOD),
                 isWethToken0
             );
 
@@ -1253,7 +1264,7 @@ contract Controller is Ownable, ReentrancyGuard {
     ) internal view returns (uint256) {
         return
             Power2Base
-                ._getCollateralByRepayAmount(
+                ._getDebtValueInEth(
                     _wPowerPerpReduced,
                     address(oracle),
                     ethQuoteCurrencyPool,
@@ -1330,7 +1341,7 @@ contract Controller is Ownable, ReentrancyGuard {
             ? _maxLiquidatableWAmount
             : _maxInputWAmount;
 
-        uint256 collateralToPay = Power2Base._getCollateralByRepayAmount(
+        uint256 collateralToPay = Power2Base._getDebtValueInEth(
             finalWAmountToLiquidate,
             address(oracle),
             ethQuoteCurrencyPool,

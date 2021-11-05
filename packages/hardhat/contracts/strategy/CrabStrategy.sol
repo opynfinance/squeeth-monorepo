@@ -791,14 +791,9 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
     ) internal pure returns (uint256) {
         uint256 depositorShare = _amount.wdiv(_strategyCollateralAmount.add(_amount));
 
-        uint256 depositorCrabAmount;
-        if (_crabTotalSupply != 0) {
-            depositorCrabAmount = (_crabTotalSupply.wmul(depositorShare)).wdiv(uint256(1e18).sub(depositorShare));
-        } else {
-            depositorCrabAmount = _amount;
-        }
+        if (_crabTotalSupply != 0) return _crabTotalSupply.wmul(depositorShare).wdiv(uint256(1e18).sub(depositorShare));
 
-        return depositorCrabAmount;
+        return _amount;
     }
 
     /**

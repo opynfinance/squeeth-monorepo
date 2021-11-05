@@ -111,6 +111,10 @@ describe("Oracle", function () {
     const squeethPoolAddr = await uniswapFactory.getPool(token0, token1, 3000)
     squeethPool = await ethers.getContractAt("IUniswapV3Pool", squeethPoolAddr);
     initPriceTick = (await squeethPool.slot0()).tick
+    const cardinality = (await squeethPool.slot0()).observationCardinality
+
+    // the cardinality will be started with 1
+    expect(cardinality).to.be.eq(1)
 
     // deploy oracle
     oracle = (await (await ethers.getContractFactory("Oracle")).deploy()) as Oracle;
