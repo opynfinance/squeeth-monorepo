@@ -86,7 +86,7 @@ contract Oracle {
     {
         uint32 maxPeriod = _getMaxPeriod(_pool);
         uint32 requestPeriod = _period > maxPeriod ? maxPeriod : _period;
-        return OracleLibrary.consult(_pool, requestPeriod);
+        return OracleLibrary.consultAtHistoricTime(_pool, requestPeriod, 0);
     }
 
     /**
@@ -152,7 +152,7 @@ contract Oracle {
         uint32 _period,
         uint256 _amountIn
     ) internal view returns (uint256) {
-        int24 twapTick = OracleLibrary.consult(_pool, _period);
+        int24 twapTick = OracleLibrary.consultAtHistoricTime(_pool, _period, 0);
         return OracleLibrary.getQuoteAtTick(twapTick, toUint128(_amountIn), _base, _quote);
     }
 

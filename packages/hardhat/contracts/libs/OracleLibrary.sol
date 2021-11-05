@@ -12,26 +12,6 @@ import "@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol";
 /// @author uniswap team other than consultAtHistoricTime(), built by opyn
 library OracleLibrary {
     /// @notice fetches time-weighted average tick using uniswap v3 oracle
-    /// @param pool address of uniswap v3 pool to observe
-    /// @param period number of seconds in the past to start calculating time-weighted average
-    /// @return timeWeightedAverageTick The time-weighted average tick from (block.timestamp - period) to block.timestamp
-    function consult(address pool, uint32 period) internal view returns (int24 timeWeightedAverageTick) {
-        require(period != 0, "BP");
-
-        uint32[] memory secondAgos = new uint32[](2);
-        secondAgos[0] = period;
-        secondAgos[1] = 0;
-
-        (int56[] memory tickCumulatives, ) = IUniswapV3Pool(pool).observe(secondAgos);
-        int56 tickCumulativesDelta = tickCumulatives[1] - tickCumulatives[0];
-
-        timeWeightedAverageTick = int24(tickCumulativesDelta / period);
-
-        // always round to negative infinity
-        if (tickCumulativesDelta < 0 && (tickCumulativesDelta % period != 0)) timeWeightedAverageTick--;
-    }
-
-    /// @notice fetches time-weighted average tick using uniswap v3 oracle
     /// @dev written by opyn team
     /// @param pool Address of uniswap v3 pool that we want to observe
     /// @param _secondsAgoToStartOfTwap number of seconds to start of TWAP period
@@ -42,26 +22,22 @@ library OracleLibrary {
         uint32 _secondsAgoToStartOfTwap,
         uint32 _secondsAgoToEndOfTwap
     ) internal view returns (int24) {
+        require(_secondsAgoToStartOfTwap > _secondsAgoToEndOfTwap, "BP");
         int24 timeWeightedAverageTick;
         uint32[] memory secondAgos = new uint32[](2);
 
-        if (_secondsAgoToEndOfTwap == 0) {
-            // get TWAP from now -> now-twapPeriod
-            timeWeightedAverageTick = consult(pool, _secondsAgoToStartOfTwap);
-        } else {
-            // get TWAP from now-_secondsAgoToStartOfTwap -> now-_secondsAgoToEndOfTwap
-            secondAgos[0] = _secondsAgoToStartOfTwap;
-            secondAgos[1] = _secondsAgoToEndOfTwap;
+        // get TWAP from (now - _secondsAgoToStartOfTwap) -> (now - _secondsAgoToEndOfTwap)
+        secondAgos[0] = _secondsAgoToStartOfTwap;
+        secondAgos[1] = _secondsAgoToEndOfTwap;
 
-            (int56[] memory tickCumulatives, ) = IUniswapV3Pool(pool).observe(secondAgos);
-            int56 tickCumulativesDelta = tickCumulatives[1] - tickCumulatives[0];
+        (int56[] memory tickCumulatives, ) = IUniswapV3Pool(pool).observe(secondAgos);
+        int56 tickCumulativesDelta = tickCumulatives[1] - tickCumulatives[0];
 
-            timeWeightedAverageTick = int24(tickCumulativesDelta / (_secondsAgoToStartOfTwap - _secondsAgoToEndOfTwap));
+        timeWeightedAverageTick = int24(tickCumulativesDelta / (_secondsAgoToStartOfTwap - _secondsAgoToEndOfTwap));
 
-            // Always round to negative infinity
-            if (tickCumulativesDelta < 0 && (tickCumulativesDelta % _secondsAgoToStartOfTwap != 0))
-                timeWeightedAverageTick--;
-        }
+        // Always round to negative infinity
+        if (tickCumulativesDelta < 0 && (tickCumulativesDelta % _secondsAgoToStartOfTwap != 0))
+            timeWeightedAverageTick--;
 
         return timeWeightedAverageTick;
     }
