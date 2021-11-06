@@ -93,10 +93,10 @@ describe("Controller", function () {
 
     });  
     describe("Shut down the system", async () => {
-      it("Should allow the system to be shutdown and paused atomically even after 365 days", async () => {
+      it("Should allow the system to be shutdown and paused atomically even after 183 days", async () => {
         const ethPrice = ethers.utils.parseUnits(settlementPrice)
         await oracle.connect(random).setPrice(ethUSDPool.address , ethPrice) // eth per 1 squeeth
-        await controller.connect(owner).pauseAndShutDown()
+        await controller.connect(owner).shutDown()
         const snapshot = await controller.indexForSettlement();
         expect(snapshot.toString()).to.be.eq(ethPrice.div(oracleScaleFactor))
         expect(await controller.isShutDown()).to.be.true;

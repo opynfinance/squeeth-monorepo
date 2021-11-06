@@ -489,25 +489,11 @@ contract Controller is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice pause and then immediately shutdown the system
+     * @notice pause (if not paused) and then immediately shutdown the system, can be called when paused already
      * @dev this bypasses the check on number of pauses or time based checks, but is irreversible and enables emergency settlement
      */
-    function pauseAndShutDown() external onlyOwner notShutdown notPaused {
+    function shutDown() external onlyOwner notShutdown {
         isSystemPaused = true;
-        isShutDown = true;
-        indexForSettlement = Power2Base._getScaledTwap(
-            address(oracle),
-            ethQuoteCurrencyPool,
-            weth,
-            quoteCurrency,
-            TWAP_PERIOD
-        );
-    }
-
-    /**
-     * @notice shutdown the system and enable system settlement
-     */
-    function shutDown() external onlyOwner isPaused notShutdown {
         isShutDown = true;
         indexForSettlement = Power2Base._getScaledTwap(
             address(oracle),

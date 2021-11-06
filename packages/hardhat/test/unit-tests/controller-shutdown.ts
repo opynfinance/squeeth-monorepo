@@ -72,6 +72,7 @@ describe("Controller", function () {
       it("Should allow the system to be shutdown when paused", async () => {
         const isPausedBefore = await controller.isSystemPaused();
         const ethPrice = ethers.utils.parseUnits(settlementPrice)
+        expect(await controller.isSystemPaused()).to.be.true
         await oracle.connect(random).setPrice(ethUSDPool.address , ethPrice) // eth per 1 squeeth
         await controller.connect(owner).shutDown()
         const snapshot = await controller.indexForSettlement();

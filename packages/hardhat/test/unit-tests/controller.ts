@@ -1043,24 +1043,12 @@ describe("Controller", function () {
           controller.connect(random).reduceDebtShutdown(seller8NFTId)
         ).to.be.revertedWith("Not shutdown");
       });
-
-      it("Should revert when a owner tries to shutdown when system is not paused", async () => {
-        await expect(
-          controller.connect(owner).shutDown()
-        ).to.be.revertedWith("Not paused");
-      });
       
       it("Should allow the owner to re-pause", async () => {
         await controller.connect(owner).pause()
         pausesLeft-=1;
         expect(await controller.isSystemPaused()).to.be.true 
         expect((await controller.pausesLeft()).eq(pausesLeft)).to.be.true 
-      });
-
-      it("Should revert when a owner tries to pauseAndShutDown the system when it is already paused", async () => {
-        await expect(
-          controller.connect(owner).pauseAndShutDown()
-        ).to.be.revertedWith("Paused");
       });
 
       it("Should revert if shutdown is called by non-owner", async () => {
@@ -1080,10 +1068,10 @@ describe("Controller", function () {
         ).to.be.revertedWith("Paused too many times");
       });
     });
-    describe("Shut down the system using pauseAndShutdown", async () => {
+    describe("Shut down the system using shutdown when it is unpaused", async () => {
       it("Should revert when called by non-owner", async () => {
         await expect(
-          controller.connect(random).pauseAndShutDown()
+          controller.connect(random).shutDown()
         ).to.be.revertedWith("Ownable: caller is not the owner");
       });
       it("Should shutdown the system at a price that it will go insolvent", async () => {
@@ -1105,16 +1093,11 @@ describe("Controller", function () {
         await oracle.setAverageTick(squeethEthPool.address, newTick)
         await oracle.setPrice(ethUSDPool.address, settlementPrice)
 
-        await controller.connect(owner).pauseAndShutDown()
+        await controller.connect(owner).shutDown()
         const snapshot = await controller.indexForSettlement();
         expect(snapshot.toString()).to.be.eq(ethPrice.div(oracleScaleFactor))
         expect(await controller.isShutDown()).to.be.true;
         expect(await controller.isSystemPaused()).to.be.true;
-      });
-      it("Should revert when called again after system is shutdown", async () => {
-        await expect(
-          controller.connect(owner).pauseAndShutDown()
-        ).to.be.revertedWith("Shutdown");
       });
       it("Should revert when calling shutdown after system is shutdown", async () => {
         await expect(
