@@ -15,13 +15,14 @@ const useStyles = makeStyles((theme) =>
     container: {
       padding: theme.spacing(2),
       width: '420px',
-      background: theme.palette.background.lightStone,
+      // background: theme.palette.background.lightStone,
       borderRadius: theme.spacing(1),
       display: 'flex',
       flexDirection: 'column',
       [theme.breakpoints.down('sm')]: {
         width: '100%',
       },
+      fontWeight: 700,
     },
     header: {
       display: 'flex',
@@ -44,9 +45,10 @@ const useStyles = makeStyles((theme) =>
       backgroundColor: '#DCDAE920',
     },
     assetDiv: {
-      marginTop: theme.spacing(1),
+      // marginTop: theme.spacing(1),
       display: 'flex',
       justifyContent: 'space-between',
+      flexWrap: 'wrap',
     },
     unit: {
       marginLeft: theme.spacing(0.5),
@@ -175,24 +177,16 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
   }, [postPosition])
 
   const cardBackground = useMemo(() => {
-    const positionBackground = getPositionBasedValue(
-      'rgba(73,210,115,.08)',
-      'rgb(245, 71, 92, .08)',
-      'rgba(255, 255, 255, 0.08)',
-    )
-    const postPositionBackground = getPostPositionBasedValue(
-      'rgba(73,210,115,.08)',
-      'rgb(245, 71, 92, .08)',
-      'rgba(255, 255, 255, 0.08)',
-    )
+    const positionBackground = getPositionBasedValue('#000000', '#200122', 'rgba(255, 255, 255, 0.08)')
+    const postPositionBackground = getPostPositionBasedValue('#077107', '#6f0000', 'rgba(255, 255, 255, 0.08)')
 
-    return `linear-gradient(90deg, ${positionBackground} 0%, ${postPositionBackground} 50%)`
+    return `linear-gradient(to left, ${positionBackground}, ${postPositionBackground} )`
   }, [postPosition, positionType])
 
   return (
     <div className={classes.container} style={{ background: cardBackground }}>
       <div className={classes.header}>
-        <Typography variant="caption" component="span" color="textSecondary">
+        <Typography variant="caption" component="span" style={{ fontWeight: 500 }} color="textSecondary">
           MY POSITION
         </Typography>
         <span className={clsx(classes.title, titleClass)}>{positionType.toUpperCase()}</span>
@@ -205,14 +199,25 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
       </div>
       <div className={classes.assetDiv}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <Typography component="span">
+          <div style={{ display: 'flex', alignItems: 'center', marginTop: '.5em' }}>
+            <Typography component="span" style={{ fontWeight: 600 }}>
               {getPositionBasedValue(wSqueethBal.toFixed(6), shortSqueethAmt.toFixed(6), 0)}
             </Typography>
             {tradeAmount.isGreaterThan(0) ? (
               <>
                 <ArrowRightAltIcon className={classes.arrow} />
-                <Typography component="span" className={classes.postTradeAmt}>
+                <Typography
+                  component="span"
+                  style={{
+                    fontWeight: 600,
+                    color: postTradeAmt.gte(
+                      getPositionBasedValue(wSqueethBal.toFixed(6), shortSqueethAmt.toFixed(6), 0),
+                    )
+                      ? '#49D273'
+                      : '#f5475c',
+                  }}
+                  className={classes.postTradeAmt}
+                >
                   {postTradeAmt.lte(0) ? 0 : postTradeAmt.toFixed(6)}
                 </Typography>
               </>
@@ -226,17 +231,17 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
               Loading
             </Typography>
           ) : (
-            <Typography variant="caption" color="textSecondary">
+            <Typography variant="caption" color="textSecondary" style={{ marginTop: '.5em' }}>
               $ {getPositionBasedValue(sellQuote.amountOut, buyQuote, new BigNumber(0)).times(ethPrice).toFixed(2)}
             </Typography>
           )}
         </div>
-        <div style={{ marginLeft: '16px' }}>
-          <Typography variant="caption" color="textSecondary">
+        <div>
+          <Typography variant="caption" color="textSecondary" style={{ fontWeight: 500 }}>
             Unrealized P&L
           </Typography>
           <div className={classes.pnl}>
-            <Typography className={pnlClass}>
+            <Typography className={pnlClass} style={{ fontWeight: 600 }}>
               {getPositionBasedValue(
                 `$${sellQuote.amountOut.times(ethPrice).minus(longUsdAmt.abs()).toFixed(2)}`,
                 `$${buyQuote.times(ethPrice).minus(shortUsdAmt.abs()).toFixed(2)}`,
