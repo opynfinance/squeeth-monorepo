@@ -63,7 +63,7 @@ contract ShortHelper {
      */
     function openShort(
         uint256 _vaultId,
-        uint128 _powerPerpAmount,
+        uint256 _powerPerpAmount,
         uint256 _uniNftId,
         ISwapRouter.ExactInputSingleParams memory _exactInputParams
     ) external payable {
@@ -101,7 +101,7 @@ contract ShortHelper {
     function closeShort(
         uint256 _vaultId,
         uint256 _wPowerPerpAmount,
-        uint128 _withdrawAmount,
+        uint256 _withdrawAmount,
         ISwapRouter.ExactOutputSingleParams memory _exactOutputParams
     ) external payable {
         require(shortPowerPerp.ownerOf(_vaultId) == msg.sender, "Not allowed");

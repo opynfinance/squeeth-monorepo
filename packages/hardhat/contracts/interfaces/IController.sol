@@ -17,13 +17,13 @@ interface IController {
 
     function mintPowerPerpAmount(
         uint256 _vaultId,
-        uint128 _powerPerpAmount,
+        uint256 _powerPerpAmount,
         uint256 _uniTokenId
     ) external payable returns (uint256 vaultId, uint256 wPowerPerpAmount);
 
     function mintWPowerPerpAmount(
         uint256 _vaultId,
-        uint128 _wPowerPerpAmount,
+        uint256 _wPowerPerpAmount,
         uint256 _uniTokenId
     ) external payable returns (uint256 vaultId);
 

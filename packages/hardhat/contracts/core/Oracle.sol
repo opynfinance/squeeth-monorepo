@@ -7,6 +7,7 @@ import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Po
 import {IERC20Detailed} from "../interfaces/IERC20Detailed.sol";
 
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {Uint256Casting} from "../libs/Uint256Casting.sol";
 import {OracleLibrary} from "../libs/OracleLibrary.sol";
 
 /**
@@ -15,6 +16,7 @@ import {OracleLibrary} from "../libs/OracleLibrary.sol";
  */
 contract Oracle {
     using SafeMath for uint256;
+    using Uint256Casting for uint256;
 
     uint256 private constant ONE = 1e18;
 
@@ -123,7 +125,7 @@ contract Oracle {
         uint256 _amountIn
     ) internal view returns (uint256) {
         int24 twapTick = OracleLibrary.consultAtHistoricTime(_pool, _period, 0);
-        return OracleLibrary.getQuoteAtTick(twapTick, toUint128(_amountIn), _base, _quote);
+        return OracleLibrary.getQuoteAtTick(twapTick, _amountIn.toUint128(), _base, _quote);
     }
 
     function _fetchHistoricTwap(
@@ -136,7 +138,7 @@ contract Oracle {
     ) internal view returns (uint256) {
         int24 twapTick = OracleLibrary.consultAtHistoricTime(_pool, _secondsAgoToStartOfTwap, _secondsAgoToEndOfTwap);
 
-        return OracleLibrary.getQuoteAtTick(twapTick, toUint128(_amountIn), _base, _quote);
+        return OracleLibrary.getQuoteAtTick(twapTick, _amountIn.toUint128(), _base, _quote);
     }
 
     /**
@@ -164,14 +166,5 @@ contract Oracle {
         (oldestObservationTimestamp, , , ) = pool.observations(0);
 
         return uint32(block.timestamp) - oldestObservationTimestamp;
-    }
-
-    /**
-     * @notice cast a uint256 to a uint128, revert on overflow
-     * @param y the uint256 to be downcasted
-     * @return z the downcasted integer, now type uint128
-     */
-    function toUint128(uint256 y) internal pure returns (uint128 z) {
-        require((z = uint128(y)) == y, "Overflow");
     }
 }

@@ -4,12 +4,15 @@ pragma solidity =0.7.6;
 
 import {IOracle} from "../interfaces/IOracle.sol";
 import {Oracle} from "../core/Oracle.sol";
+import {Uint256Casting} from "../libs/Uint256Casting.sol";
 
 /**
  * use this contract to test how to get twap from exactly 1 timestamp
  * Since we can't access block.timestamp offchain before sending the tx
  */
 contract OracleTester is Oracle{
+
+  using Uint256Casting for uint256;
 
   IOracle oracle;
 
@@ -71,6 +74,6 @@ contract OracleTester is Oracle{
   }
 
   function testToUint128(uint256 y) external pure returns (uint128 z) {
-      return toUint128(y);
+      return y.toUint128();
   }
 }

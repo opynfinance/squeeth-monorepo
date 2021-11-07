@@ -8,6 +8,8 @@ import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Po
 import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import "@uniswap/v3-core/contracts/libraries/SqrtPriceMath.sol";
 
+import {Uint256Casting} from "./Uint256Casting.sol";
+
 /**
  * Error code:
  * V1: Vault already had nft
@@ -15,6 +17,7 @@ import "@uniswap/v3-core/contracts/libraries/SqrtPriceMath.sol";
  */
 library VaultLib {
     using SafeMath for uint256;
+    using Uint256Casting for uint256;
 
     struct Vault {
         // the address that can update the vault
@@ -36,7 +39,7 @@ library VaultLib {
      * @param _amount amount of eth to add
      */
     function addEthCollateral(Vault memory _vault, uint256 _amount) internal pure {
-        _vault.collateralAmount = uint96(uint256(_vault.collateralAmount).add(_amount));
+        _vault.collateralAmount = uint256(_vault.collateralAmount).add(_amount).toUint96();
     }
 
     /**
@@ -47,7 +50,7 @@ library VaultLib {
     function addUniNftCollateral(Vault memory _vault, uint256 _tokenId) internal pure {
         require(_vault.NftCollateralId == 0, "V1");
         require(_tokenId != 0, "C23");
-        _vault.NftCollateralId = uint32(_tokenId);
+        _vault.NftCollateralId = _tokenId.toUint32();
     }
 
     /**
@@ -56,7 +59,7 @@ library VaultLib {
      * @param _amount amount of eth to remove
      */
     function removeEthCollateral(Vault memory _vault, uint256 _amount) internal pure {
-        _vault.collateralAmount = uint96(uint256(_vault.collateralAmount).sub(_amount));
+        _vault.collateralAmount = uint256(_vault.collateralAmount).sub(_amount).toUint96();
     }
 
     /**
@@ -74,7 +77,7 @@ library VaultLib {
      * @param _amount amount of debt to add
      */
     function addShort(Vault memory _vault, uint256 _amount) internal pure {
-        _vault.shortAmount = uint128(uint256(_vault.shortAmount).add(_amount));
+        _vault.shortAmount = uint256(_vault.shortAmount).add(_amount).toUint128();
     }
 
     /**
@@ -83,7 +86,7 @@ library VaultLib {
      * @param _amount amount of debt to remove
      */
     function removeShort(Vault memory _vault, uint256 _amount) internal pure {
-        _vault.shortAmount = uint128(uint256(_vault.shortAmount).sub(_amount));
+        _vault.shortAmount = uint256(_vault.shortAmount).sub(_amount).toUint128();
     }
 
     /**

@@ -36,7 +36,7 @@ contract MockController {
 
     function mintWPowerPerpAmount(
         uint256 _vaultId,
-        uint128 _mintAmount,
+        uint256 _mintAmount,
         uint256 /*_nftTokenId*/
     ) external payable returns (uint256, uint256) {
         uint256 wSqueethMinted;

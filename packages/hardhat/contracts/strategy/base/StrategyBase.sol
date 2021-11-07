@@ -95,7 +95,7 @@ contract StrategyBase is ERC20 {
         _strategyCollateral = _strategyCollateral.add(_collateral);
         _strategyDebt = _strategyDebt.add(_wAmount);
 
-        powerTokenController.mintWPowerPerpAmount{value: _collateral}(_vaultId, uint128(_wAmount), 0);
+        powerTokenController.mintWPowerPerpAmount{value: _collateral}(_vaultId, _wAmount, 0);
 
         if (!_keepWsqueeth) {
             IWPowerPerp(wPowerPerp).transfer(_to, _wAmount);

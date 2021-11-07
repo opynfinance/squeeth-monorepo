@@ -124,12 +124,6 @@ describe("Oracle", function () {
 
   })
 
-  describe("Math checks for overflow", async () => {
-    it("should revert if casting oversize uint256 to uint128 overflows", async () => {
-      await expect(oracleTester.testToUint128(ethers.constants.MaxUint256.sub(1))).to.be.revertedWith("Overflow")
-    })
-  })
-
   describe("Fetch price right after initialization", async () => {
     it("should return initial price with period = 1", async () => {
       const price = new BigNumberJs((await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 1, false)).toString())
