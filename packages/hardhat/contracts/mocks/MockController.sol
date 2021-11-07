@@ -25,7 +25,7 @@ contract MockController {
     IShortPowerPerp public shortPowerPerp;
 
     function init(address _shortPowerPerp, address _wPowerPerp) public {
-        require(_shortPowerPerp != address(0), "Invalid shortPowerPerp address");
+        require(_shortPowerPerp != address(0), "C5");
         require(_wPowerPerp != address(0), "Invalid wPowerPerp address");
 
         shortPowerPerp = IShortPowerPerp(_shortPowerPerp);
@@ -93,7 +93,7 @@ contract MockController {
         uint256 _vaultId,
         uint256 _squeethAmount
     ) internal returns (uint256 amountToMint) {
-        require(_canModifyVault(_vaultId, _account), "not allowed");
+        require(_canModifyVault(_vaultId, _account), "C3");
 
         amountToMint = _squeethAmount.mul(1e18).div(normalizationFactor);
 

@@ -102,7 +102,7 @@ describe("Controller", function () {
 
     await expect(
       ControllerContract.deploy(ethers.constants.AddressZero, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
-    ).to.be.revertedWith("Invalid oracle address");
+    ).to.be.revertedWith("C4");
   });
 
   it("Should revert when shortSqueeth is address(0)", async () => {
@@ -110,7 +110,7 @@ describe("Controller", function () {
 
     await expect(
       ControllerContract.deploy(oracle.address, ethers.constants.AddressZero, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
-    ).to.be.revertedWith("Invalid shortPowerPerp address");
+    ).to.be.revertedWith("C5");
   });
 
   it("Should revert when powerperp is address(0)", async () => {
@@ -118,7 +118,7 @@ describe("Controller", function () {
 
     await expect(
       ControllerContract.deploy(oracle.address, shortSqueeth.address, ethers.constants.AddressZero, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
-    ).to.be.revertedWith("Invalid power perp address");
+    ).to.be.revertedWith("C6");
   });
 
   it("Should revert when weth is address(0)", async () => {
@@ -126,7 +126,7 @@ describe("Controller", function () {
 
     await expect(
       ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, ethers.constants.AddressZero, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
-    ).to.be.revertedWith("Invalid weth address");
+    ).to.be.revertedWith("C7");
   });
   
   it("Should revert when quote currency is address(0)", async () => {
@@ -134,7 +134,7 @@ describe("Controller", function () {
 
     await expect(
       ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, ethers.constants.AddressZero, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
-    ).to.be.revertedWith("Invalid quote currency address");
+    ).to.be.revertedWith("C8");
   });
 
   it("Should revert when ethUSDPool is address(0)", async () => {
@@ -142,7 +142,7 @@ describe("Controller", function () {
 
     await expect(
       ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethers.constants.AddressZero, squeethEthPool.address, uniPositionManager.address)
-    ).to.be.revertedWith("Invalid eth:quoteCurrency pool address");
+    ).to.be.revertedWith("C9");
   });
 
   it("Should revert when squeethEthPool is address(0)", async () => {
@@ -150,7 +150,7 @@ describe("Controller", function () {
 
     await expect(
       ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, ethers.constants.AddressZero, uniPositionManager.address)
-    ).to.be.revertedWith("Invalid powerperp:eth pool address");
+    ).to.be.revertedWith("C10");
   });
 
   it("Should revert when uniPositionManager is address(0)", async () => {
@@ -158,7 +158,7 @@ describe("Controller", function () {
 
     await expect(
       ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, ethers.constants.AddressZero)
-    ).to.be.revertedWith("Invalid uni position manager");
+    ).to.be.revertedWith("C11");
   });
 
   describe("Deployment", async () => {
@@ -181,11 +181,11 @@ describe("Controller", function () {
 
   describe("Owner only functions", async () => {
     it("Should revert if trying to set fee rate before setting fee recipient", async () => {
-      await expect(controller.connect(owner).setFeeRate(100)).to.be.revertedWith('Set fee recipient first')
+      await expect(controller.connect(owner).setFeeRate(100)).to.be.revertedWith('C14')
     });
 
     it("Should revert if trying to set address(0) as fee recipient", async () => {
-      await expect(controller.connect(owner).setFeeRecipient(constants.AddressZero)).to.be.revertedWith("Invalid address");
+      await expect(controller.connect(owner).setFeeRecipient(constants.AddressZero)).to.be.revertedWith("C13");
     });
 
     it("Should set the fee recipient", async () => {
@@ -194,7 +194,7 @@ describe("Controller", function () {
     });
 
     it("Should revert if trying to set fee rate that is too high", async () => {
-      await expect(controller.connect(owner).setFeeRate(500)).to.be.revertedWith("Fee too high")
+      await expect(controller.connect(owner).setFeeRate(500)).to.be.revertedWith("C15")
     });
 
     it("Should revert if set fee rate is call by random address", async () => {
@@ -269,7 +269,7 @@ describe("Controller", function () {
 
 
       it('should revert when sending eth to controller from an EOA', async() => {
-        await expect(random.sendTransaction({to: controller.address, value:1})).to.be.revertedWith('Cannot receive eth')
+        await expect(random.sendTransaction({to: controller.address, value:1})).to.be.revertedWith('C19')
       })
     })
 
@@ -292,17 +292,17 @@ describe("Controller", function () {
     describe("#Deposit: Deposit collateral", async () => {
       it("Should revert when trying to deposit to vault 0", async() => {
         await expect(controller.connect(seller1).deposit(0)).to.be.revertedWith(
-          'Invalid vault id'
+          'C20'
         )
       })
       it("Should revert when trying to access non-existent vault", async() => {
         await expect(controller.connect(seller1).deposit(100, {value: 100})).to.be.revertedWith(
-          'Invalid vault id'
+          'C20'
         )
       })
       it("Should revert when trying to use mint to deposit to non-existent vault", async() => {
         await expect(controller.connect(seller1).mintPowerPerpAmount(999, 0, 0, {value: 100})).to.be.revertedWith(
-          'Invalid vault id'
+          'C20'
         )
       })
       it("Should be able to deposit collateral", async () => {
@@ -332,12 +332,12 @@ describe("Controller", function () {
         const mintAmount = ethers.utils.parseUnits('100')
         
         await expect(controller.connect(random).mintPowerPerpAmount(vaultId, mintAmount, 0)).to.be.revertedWith(
-          'Not allowed'
+          'C25'
         )
       });
       it("Should revert when trying to mint to non-existent vault", async() => {
         await expect(controller.connect(seller1).mintPowerPerpAmount(999, 10, 0)).to.be.revertedWith(
-          'Invalid vault id'
+          'C20'
         )
       })
       it("Should be able to mint squeeth", async () => {
@@ -359,7 +359,7 @@ describe("Controller", function () {
       it("Should revert when minting more than allowed", async () => {
         const mintAmount = ethers.utils.parseUnits('100')        
         await expect(controller.connect(seller1).mintPowerPerpAmount(vaultId, mintAmount, 0)).to.be.revertedWith(
-          'Invalid state'
+          'C24'
         )
       });
 
@@ -368,23 +368,23 @@ describe("Controller", function () {
     describe("#Burn: Burn Squeeth", async () => {
       it("Should revert when trying to burn for vault 0", async() => {
         await expect(controller.connect(seller1).burnPowerPerpAmount(0, 0, 0)).to.be.revertedWith(
-          'Invalid vault id'
+          'C20'
         )
       })
       it("Should revert when trying to burn wrapped amount for vault 0", async() => {
         await expect(controller.connect(seller1).burnWPowerPerpAmount(0, 0, 0)).to.be.revertedWith(
-          'Invalid vault id'
+          'C20'
         )
       })
 
       it("Should revert when trying to burn for non-existent vault", async() => {
         await expect(controller.connect(seller1).burnPowerPerpAmount(100, 0, 0)).to.be.revertedWith(
-          'Invalid vault id'
+          'C20'
         )
       })
       it("Should revert when trying to burn wrapped amount for non-existent vault", async() => {
         await expect(controller.connect(seller1).burnWPowerPerpAmount(100, 0, 0)).to.be.revertedWith(
-          'Invalid vault id'
+          'C20'
         )
       })
       it("Should revert if trying to burn more than minted", async () => {
@@ -400,16 +400,16 @@ describe("Controller", function () {
       });
       it('should revert if vault after burning is underwater', async() => {
         const vault = await controller.vaults(vaultId)
-        await expect(controller.connect(seller1).burnWPowerPerpAmount(vaultId, vault.shortAmount.div(2), vault.collateralAmount)).to.be.revertedWith('Invalid state')
+        await expect(controller.connect(seller1).burnWPowerPerpAmount(vaultId, vault.shortAmount.div(2), vault.collateralAmount)).to.be.revertedWith('C24')
       })
       it('should revert if vault after burning is dust', async() => {
         const vault = await controller.vaults(vaultId)
-        await expect(controller.connect(seller1).burnWPowerPerpAmount(vaultId, vault.shortAmount.sub(1), vault.collateralAmount.sub(1))).to.be.revertedWith('Dust vault')
+        await expect(controller.connect(seller1).burnWPowerPerpAmount(vaultId, vault.shortAmount.sub(1), vault.collateralAmount.sub(1))).to.be.revertedWith('C22')
       })
 
       it("Should revert if trying to withdraw and put make vault underwater", async () => {
         const vault = await controller.vaults(vaultId)
-        await expect(controller.connect(seller1).withdraw(vaultId, vault.collateralAmount)).to.be.revertedWith('Invalid state')
+        await expect(controller.connect(seller1).withdraw(vaultId, vault.collateralAmount)).to.be.revertedWith('C24')
       })
 
       it('anyone can burn squeeth for vault1', async() => {
@@ -421,7 +421,7 @@ describe("Controller", function () {
       })
 
       it('should revert when non-owner try to burn and withdraw from vault', async() => {
-        await expect(controller.connect(random).burnWPowerPerpAmount(vaultId, 0, 1000)).to.be.revertedWith('Not allowed')
+        await expect(controller.connect(random).burnWPowerPerpAmount(vaultId, 0, 1000)).to.be.revertedWith('C25')
       })
       
       it("Should be able to burn squeeth", async () => {
@@ -450,7 +450,7 @@ describe("Controller", function () {
       it("Should revert if caller is not the owner", async () => {
         const vault = await controller.vaults(vaultId)
         await expect(controller.connect(random).withdraw(vaultId, vault.collateralAmount)).to.be.revertedWith(
-          'Not allowed'
+          'C25'
         )
       })
       it("Should revert if trying to remove more collateral than deposited", async () => {
@@ -464,7 +464,7 @@ describe("Controller", function () {
         await controller.connect(seller1).mintWPowerPerpAmount(vaultId, mintAmount, 0)
 
         const vault = await controller.vaults(vaultId)
-        await expect(controller.connect(seller1).burnWPowerPerpAmount(vaultId, 0, vault.collateralAmount.sub(2))).to.be.revertedWith('Invalid state')
+        await expect(controller.connect(seller1).burnWPowerPerpAmount(vaultId, 0, vault.collateralAmount.sub(2))).to.be.revertedWith('C24')
         
         // burn the minted amount
         await controller.connect(seller1).burnWPowerPerpAmount(vaultId, mintAmount, 0)
@@ -513,7 +513,7 @@ describe("Controller", function () {
         const mintAmount = ethers.utils.parseUnits('0.1')
         const collateralAmount = ethers.utils.parseUnits('0.45')
         await expect(controller.connect(random).mintPowerPerpAmount(0, mintAmount, 0, {value: collateralAmount}))
-          .to.be.revertedWith('Dust vault')
+          .to.be.revertedWith('C22')
       })
       it('should open vault, deposit and mint in the same tx', async() => {
         vaultId = await shortSqueeth.nextId()
@@ -598,7 +598,7 @@ describe("Controller", function () {
 
     describe('Deposit and mint By operator', () => {
       it('should not allow a non owner to update an operator', async () => {        
-        await expect(controller.connect(seller2).updateOperator(vaultId, random.address)).to.be.revertedWith("Not allowed")
+        await expect(controller.connect(seller2).updateOperator(vaultId, random.address)).to.be.revertedWith("C25")
       })      
       it('should add an operator', async () => {
         await controller.connect(seller1).updateOperator(vaultId, random.address)
@@ -630,7 +630,7 @@ describe("Controller", function () {
       it('should not allow an operator to update the operator associated with an account', async () => {
         const vault = await controller.vaults(vaultId)
         expect(vault.operator).to.be.eq(random.address)
-        await expect(controller.connect(random).updateOperator(vaultId, seller2.address)).to.be.revertedWith("Not allowed")
+        await expect(controller.connect(random).updateOperator(vaultId, seller2.address)).to.be.revertedWith("C25")
       })
     })
 
@@ -783,17 +783,17 @@ describe("Controller", function () {
     it("Should revert when calling redeemLong", async () => {
       await expect(
         controller.connect(seller1).redeemLong(0)
-      ).to.be.revertedWith("Not shutdown");
+      ).to.be.revertedWith("C3");
     });
     it("Should revert when calling redeemShort", async () => {
       await expect(
         controller.connect(seller1).redeemShort(1)
-      ).to.be.revertedWith("Not shutdown");
+      ).to.be.revertedWith("C3");
     });
     it("Should revert when calling donate", async () => {
       await expect(
         controller.connect(random).donate({value: 1})
-      ).to.be.revertedWith("Not shutdown");
+      ).to.be.revertedWith("C3");
     });
   });
   
@@ -929,10 +929,10 @@ describe("Controller", function () {
       it("Should revert when calling unpause before system is paused", async () => {
         await expect(
           controller.connect(random).unPauseAnyone()
-        ).to.be.revertedWith("Not paused");
+        ).to.be.revertedWith("C1");
         await expect(
           controller.connect(owner).unPauseOwner()
-        ).to.be.revertedWith("Not paused");
+        ).to.be.revertedWith("C1");
       });
       it("Should allow owner to pause the system", async () => {
         await controller.connect(owner).pause()
@@ -944,7 +944,7 @@ describe("Controller", function () {
       it("Should revert when a random person tries to unpause immediately afterwards", async () => {
         await expect(
           controller.connect(random).unPauseAnyone()
-        ).to.be.revertedWith("Not enough paused time has passed");
+        ).to.be.revertedWith("C18");
       });
       it("Should allow the owner to un-pause", async () => {
         await controller.connect(owner).unPauseOwner()
@@ -974,62 +974,62 @@ describe("Controller", function () {
       it("Should revert when calling mintPowerPerpAmount", async () => {
         await expect(
           controller.connect(seller1).mintPowerPerpAmount(0, 0, 0)
-        ).to.be.revertedWith("Paused");
+        ).to.be.revertedWith("C0");
       });
       it("Should revert when calling mintWPowerPerpAmount", async () => {
         await expect(
           controller.connect(seller1).mintWPowerPerpAmount(0, 0, 0)
-        ).to.be.revertedWith("Paused");
+        ).to.be.revertedWith("C0");
       });
       it("Should revert when calling deposit", async () => {
         await expect(
           controller.connect(seller1).deposit(1, { value: 1})
-        ).to.be.revertedWith("Paused");
+        ).to.be.revertedWith("C0");
       });
       it("Should revert when calling depositUniPositionToken", async () => {
         await expect(
           controller.connect(seller1).depositUniPositionToken(1, 1,)
-        ).to.be.revertedWith("Paused");
+        ).to.be.revertedWith("C0");
       });
       it("Should revert when calling burnWPowerPerpAmount", async () => {
         await expect(
           controller.connect(seller1).burnWPowerPerpAmount(1, 1, 1)
-        ).to.be.revertedWith("Paused");
+        ).to.be.revertedWith("C0");
       });
       it("Should revert when calling burnPowerPerpAmount", async () => {
         await expect(
           controller.connect(seller1).burnPowerPerpAmount(1, 1, 1)
-        ).to.be.revertedWith("Paused");
+        ).to.be.revertedWith("C0");
       });
       it("Should revert when calling withdraw", async () => {
         await expect(
           controller.connect(seller1).withdraw(1, 1)
-        ).to.be.revertedWith("Paused");
+        ).to.be.revertedWith("C0");
       });
       it("Should revert when calling withdrawUniPositionToken", async () => {
         await expect(
           controller.connect(seller1).withdrawUniPositionToken(1)
-        ).to.be.revertedWith("Paused");
+        ).to.be.revertedWith("C0");
       });
       it("Should revert when calling reduceDebt", async () => {
         await expect(
           controller.connect(seller1).reduceDebt(1)
-        ).to.be.revertedWith("Paused");
+        ).to.be.revertedWith("C0");
       });
       it("Should revert when calling applyFunding", async () => {
         await expect(
           controller.connect(seller1).applyFunding()
-        ).to.be.revertedWith("Paused");
+        ).to.be.revertedWith("C0");
       });
       it("Should revert when calling liquidate", async () => {
         await expect(
           controller.connect(seller1).liquidate(0, 0)
-        ).to.be.revertedWith("Paused");
+        ).to.be.revertedWith("C0");
       });
       it("Should revert when calling reduceDebt", async () => {
         await expect(
           controller.connect(seller1).reduceDebt(0)
-        ).to.be.revertedWith("Paused");
+        ).to.be.revertedWith("C0");
       });
       
       
@@ -1041,7 +1041,7 @@ describe("Controller", function () {
       it("Should revert when a random address tries to reduce debt on a NFT containing vault and the system isnt shut down", async () => {
         await expect(
           controller.connect(random).reduceDebtShutdown(seller8NFTId)
-        ).to.be.revertedWith("Not shutdown");
+        ).to.be.revertedWith("C3");
       });
       
       it("Should allow the owner to re-pause", async () => {
@@ -1065,7 +1065,7 @@ describe("Controller", function () {
       it("Should revert when a owner tries to pause the system after it has been paused 4 times before", async () => {
         await expect(
           controller.connect(owner).pause()
-        ).to.be.revertedWith("Paused too many times");
+        ).to.be.revertedWith("C16");
       });
     });
     describe("Shut down the system using shutdown when it is unpaused", async () => {
@@ -1102,20 +1102,20 @@ describe("Controller", function () {
       it("Should revert when calling shutdown after system is shutdown", async () => {
         await expect(
           controller.connect(owner).shutDown()
-        ).to.be.revertedWith("Shutdown");
+        ).to.be.revertedWith("C2");
       });
       it("Should revert when calling pause after system is shutdown", async () => {
         await expect(
           controller.connect(owner).pause()
-        ).to.be.revertedWith("Shutdown");
+        ).to.be.revertedWith("C2");
       });
       it("Should revert when calling unPause after system is shutdown", async () => {
         await expect(
           controller.connect(random).unPauseAnyone()
-        ).to.be.revertedWith("Shutdown");
+        ).to.be.revertedWith("C2");
         await expect(
           controller.connect(owner).unPauseOwner()
-        ).to.be.revertedWith("Shutdown");
+        ).to.be.revertedWith("C2");
       });
     });
     describe("Settlement: redeemLong", async () => {
@@ -1233,7 +1233,7 @@ describe("Controller", function () {
       it('should revert when a random user is trying to redeem', async() => {
         await expect(
           controller.connect(random).redeemShort(seller3VaultId, {gasPrice: 0})
-        ).to.be.revertedWith('Not allowed')
+        ).to.be.revertedWith('C25')
       })
 
       it("should redeem fair value for normal vault (seller 3)", async () => {

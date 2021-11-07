@@ -242,7 +242,7 @@ describe("Controller Funding tests", function () {
   
           await provider.send("evm_setNextBlockTimestamp", [now + secondsElapsed])  
           await expect(controller.connect(seller1).mintPowerPerpAmount(vaultId, expectedAmountCanMint.mul(1001).div(1000), 0, {value: 0})).to.be.revertedWith(
-            'Invalid state'
+            'C24'
           )
         })
         it('should mint more wSqueeth after funding', async() => {
@@ -287,7 +287,7 @@ describe("Controller Funding tests", function () {
         })
         it('should revert when trying to withdraw too much collateral', async() =>{
           await expect((controller.connect(seller1).withdraw(vaultId, maxCollatToRemove.mul(1001).div(1000)))).to.be.revertedWith(
-            'Invalid state'
+            'C24'
           )
         })
 

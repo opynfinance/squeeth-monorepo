@@ -161,7 +161,7 @@ describe("Testing system stability during extreme market conditions", function (
       it('should revert when trying to mint the same amount with smaller collateral', async() => {
         await expect(
           controller.connect(attacker).mintPowerPerpAmount(0, mintAmount, 0, {value: minCollateral})
-        ).to.be.revertedWith('Invalid state')
+        ).to.be.revertedWith('C24')
       })
     })
 
@@ -182,7 +182,7 @@ describe("Testing system stability during extreme market conditions", function (
       it('should revert when trying to mint with same amount of collateral as before', async() => {
         await expect(
           controller.connect(attacker).mintPowerPerpAmount(0, mintAmount, 0, {value: depositAmount})
-        ).to.be.revertedWith('Invalid state')
+        ).to.be.revertedWith('C24')
       })
     })
 
@@ -270,7 +270,7 @@ describe("Testing system stability during extreme market conditions", function (
         
         await expect(
           controller.connect(attacker).mintPowerPerpAmount(0, attackMintAmount, 0, {value: minCollateral})
-        ).to.be.revertedWith('Invalid state')
+        ).to.be.revertedWith('C24')
       })
     })
 
@@ -289,7 +289,7 @@ describe("Testing system stability during extreme market conditions", function (
       it('will be able to mint more squeeth', async() => {
         // attack only put in the old min collateral
         const attackMintSuperHighAmount = mintAmount.mul(120).div(100)
-        await expect(controller.connect(attacker).mintPowerPerpAmount(0, attackMintSuperHighAmount, 0, {value: minCollateral})).to.be.revertedWith('Invalid state')
+        await expect(controller.connect(attacker).mintPowerPerpAmount(0, attackMintSuperHighAmount, 0, {value: minCollateral})).to.be.revertedWith('C24')
 
         const attackMintAmount = mintAmount.mul(110).div(100)
         await controller.connect(attacker).mintPowerPerpAmount(0, attackMintAmount, 0, {value: minCollateral})

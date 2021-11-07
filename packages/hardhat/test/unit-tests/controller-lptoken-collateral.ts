@@ -132,13 +132,13 @@ describe("Controller: Uni LP tokens collateralization", function () {
 
       it('should revert when trying to deposit a LP token to vault 0', async() => {
         await expect(controller.connect(seller1).depositUniPositionToken(0, 0)).to.be.revertedWith(
-          'Invalid vault id'
+          'C20'
         )
       })
 
       it('should revert when trying to deposit a LP token to non-existent vault', async() => {
         await expect(controller.connect(seller1).depositUniPositionToken(100, 0)).to.be.revertedWith(
-          'Invalid vault id'
+          'C20'
         )
       })
 
@@ -147,7 +147,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
         await uniPositionManager.connect(seller1).approve(controller.address, uniNFTId)
         await uniPositionManager.setMockedProperties(dai.address, squeeth.address, 0, 0, 0)
 
-        await expect(controller.connect(seller1).depositUniPositionToken(vaultId, uniNFTId)).to.be.revertedWith('Invalid nft')
+        await expect(controller.connect(seller1).depositUniPositionToken(vaultId, uniNFTId)).to.be.revertedWith('C23')
         // set the tokens back
         await uniPositionManager.setMockedProperties(token0, token1, 0, 0, 0)
       })
@@ -155,7 +155,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       it('should revert when trying to deposit a LP token with id 0', async ()=> {
         await uniPositionManager.mint(seller1.address, 0)
         await uniPositionManager.connect(seller1).approve(controller.address, 0)
-        await expect(controller.connect(seller1).depositUniPositionToken(vaultId, 0)).to.be.revertedWith('Invalid token id')
+        await expect(controller.connect(seller1).depositUniPositionToken(vaultId, 0)).to.be.revertedWith('C23')
       })
 
       it('should revert when depositor do not own the NFT', async ()=> {
@@ -225,7 +225,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
         // // deposit NFT
         await uniPositionManager.connect(seller1).approve(controller.address, newUniNFTId)
 
-        await expect(controller.connect(seller1).depositUniPositionToken(vaultId, newUniNFTId)).to.be.revertedWith("Vault already had nft")        
+        await expect(controller.connect(seller1).depositUniPositionToken(vaultId, newUniNFTId)).to.be.revertedWith("V1")        
       })
 
       it('should revert if vault id is 0', async() => {
@@ -241,7 +241,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       })
 
       it('should revert if non owner withdraws the nft', async () => {
-        await expect(controller.connect(random).withdrawUniPositionToken(vaultId)).to.be.revertedWith("Not allowed")
+        await expect(controller.connect(random).withdrawUniPositionToken(vaultId)).to.be.revertedWith("C25")
       })
 
       it('should withdraw the nft successfully', async () => {
@@ -255,7 +255,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       })
 
       it('should revert when trying to withdraw from a empty vault', async () => {
-        await expect(controller.connect(seller1).withdrawUniPositionToken(vaultId)).to.be.revertedWith('Vault has no NFT')
+        await expect(controller.connect(seller1).withdrawUniPositionToken(vaultId)).to.be.revertedWith('V2')
       })
 
       it('should deposit an NFT to an existing vault using _openDepositMint', async() => {
@@ -350,7 +350,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       })
   
       it('should revert if trying to remove LP token from the vault.', async() => {
-        await expect(controller.connect(seller1).withdrawUniPositionToken(vaultId)).to.be.revertedWith('Invalid state')
+        await expect(controller.connect(seller1).withdrawUniPositionToken(vaultId)).to.be.revertedWith('C24')
       })
 
       it('update nft property to stimulate losses in Uni LP', async() => {
@@ -375,7 +375,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       it('should revert when effective collateral after withdraw < dust limit', async() => {
         it('should revert if trying to remove LP token from the vault.', async() => {
           const vault = await controller.vaults(vaultId)
-          await expect(controller.connect(seller1).withdraw(vaultId, vault.collateralAmount)).to.be.revertedWith('Dust vault')
+          await expect(controller.connect(seller1).withdraw(vaultId, vault.collateralAmount)).to.be.revertedWith('C22')
         })
       })
 
@@ -431,7 +431,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
         const requiredCollateral = mintAmount.mul(newSqueethPrice).mul(3).div(2)
         expect(result.ethAmount.lt(requiredCollateral)).to.be.true
         
-        await expect(controller.connect(seller1).withdraw(vaultId, 0)).to.be.revertedWith('Invalid state')
+        await expect(controller.connect(seller1).withdraw(vaultId, 0)).to.be.revertedWith('C24')
       })
       it('should be able to liquidate the NFT', async() => {
         const vaultBefore = await controller.vaults(vaultId)
@@ -497,7 +497,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       it('should revert when trying to liquidate the NFT', async() => {
         const liquidationAmount = ethers.utils.parseUnits('50')
         await expect(controller.connect(liquidator).liquidate(vaultId, liquidationAmount)).to.be.revertedWith(
-          'Can not liquidate safe vault'
+          'C12'
         )
       })
     })
@@ -580,7 +580,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       })
   
       it('should revert when calling from random address', async() => {
-        await expect(controller.connect(random).reduceDebt(vaultId)).to.be.revertedWith('Not allowed')
+        await expect(controller.connect(random).reduceDebt(vaultId)).to.be.revertedWith('C25')
       })
     })
     describe('Case: price increase, vault should go underwater and people can save it', async() => {
@@ -633,7 +633,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
         const requiredCollateral = mintAmount.mul(newSqueethPrice).mul(3).div(2)
         expect(result.ethAmount.lt(requiredCollateral)).to.be.true
         
-        await expect(controller.connect(seller1).withdraw(vaultId, 0)).to.be.revertedWith('Invalid state')
+        await expect(controller.connect(seller1).withdraw(vaultId, 0)).to.be.revertedWith('C24')
       })
       before('set NFT redemption amount', async () => {
         const { ethAmount, squeethAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, uniNFTId, newTick, wethIsToken0InSqueethPool)
@@ -729,7 +729,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       it('anyone can safe the vault, the owner will receive extra wsqueeth withdrawn from Uniswap', async() => {
         // the vault should be underwater now
         
-        await expect(controller.connect(seller1).mintPowerPerpAmount(vaultId, 1, 0)).to.be.revertedWith('Invalid state')
+        await expect(controller.connect(seller1).mintPowerPerpAmount(vaultId, 1, 0)).to.be.revertedWith('C24')
         const vaultBefore = await controller.vaults(vaultId)
         const { squeethAmount: nftSqueethAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, newNFTId, newTick, wethIsToken0InSqueethPool)
 

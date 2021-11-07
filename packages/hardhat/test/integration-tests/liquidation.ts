@@ -82,7 +82,7 @@ describe("Liquidation Integration Test", function () {
   const vault5Collateral = ethers.utils.parseUnits('45.1')
   const vault5MintAmount = ethers.utils.parseUnits(humanReadableMintAmount)
 
-  // vault6: with NFT full eth; not safe after reduceDebt, need full liquidation, have enough collateral to pay all debt
+  // vault6: with NFT full eth; not safe after reduceDebt, C21, have enough collateral to pay all debt
   let vault6Id: BigNumber
   const vault6MintAmount = ethers.utils.parseUnits('1')
   const vault6Collateral = ethers.utils.parseUnits('0.2')
@@ -408,7 +408,7 @@ describe("Liquidation Integration Test", function () {
     it('should revert if trying to leave vault1 a dust vault', async() => {
       const vaultBefore = await controller.vaults(vault1Id)
       const wSqueethAmountToLiquidate = vaultBefore.shortAmount.div(2)
-      await expect(controller.connect(liquidator).liquidate(vault1Id, wSqueethAmountToLiquidate, {gasPrice: 0})).to.be.revertedWith('Dust vault left')
+      await expect(controller.connect(liquidator).liquidate(vault1Id, wSqueethAmountToLiquidate, {gasPrice: 0})).to.be.revertedWith('C22')
     })
 
     it("fully liquidate vault 1, get the full collateral amount from the vault", async () => {
@@ -485,7 +485,7 @@ describe("Liquidation Integration Test", function () {
       expect(isLiquidatableAfterReducingDebt).to.be.true
       expect(maxWPowerPerpAmount.eq((vaultBefore.shortAmount))).to.be.true
 
-      await expect(controller.connect(liquidator).liquidate(vault6Id, wSqueethAmountToLiquidate, {gasPrice: 0})).to.be.revertedWith('Dust vault left');
+      await expect(controller.connect(liquidator).liquidate(vault6Id, wSqueethAmountToLiquidate, {gasPrice: 0})).to.be.revertedWith('C22');
     })
 
     it("fully liquidate vault 6, redeem nft and liquidate", async () => {
@@ -533,7 +533,7 @@ describe("Liquidation Integration Test", function () {
       expect(maxWPowerPerpAmount.eq(BigNumber.from(0))).to.be.true
       expect(collateralToReceive.eq(BigNumber.from(0))).to.be.true
       
-      await expect(controller.connect(liquidator).liquidate(vault3Id, wSqueethAmountToLiquidate, {gasPrice: 0})).to.be.revertedWith('Can not liquidate safe vault')
+      await expect(controller.connect(liquidator).liquidate(vault3Id, wSqueethAmountToLiquidate, {gasPrice: 0})).to.be.revertedWith('C12')
     })
   })
 

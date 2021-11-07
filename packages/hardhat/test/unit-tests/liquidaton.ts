@@ -141,7 +141,7 @@ describe("Controller: liquidation unit test", function () {
       expect(collateralToReceive.eq(BigNumber.from(0))).to.be.true
 
       await expect(controller.connect(liquidator).liquidate(vault1Id, vaultBefore.shortAmount)).to.be.revertedWith(
-        'Can not liquidate safe vault'
+        'C12'
       )
     })
 
@@ -166,7 +166,7 @@ describe("Controller: liquidation unit test", function () {
       expect(maxWPowerPerpAmount.eq(debtShouldRepay)).to.be.true
       expect(isSimilar(collateralToReceive.toString(), collateralToSell.toString())).to.be.true
 
-      await expect(controller.connect(liquidator).liquidate(vault2Id, debtToRepay)).to.be.revertedWith('Dust vault left');
+      await expect(controller.connect(liquidator).liquidate(vault2Id, debtToRepay)).to.be.revertedWith('C22');
     })
     it("should allow liquidating a whole vault if only liquidating half of it is gonna make it a dust vault", async () => {
       const vaultBefore = await controller.vaults(vault2Id)
@@ -269,7 +269,7 @@ describe("Controller: liquidation unit test", function () {
       expect(maxWPowerPerpAmount.eq(vault.shortAmount)).to.be.true
       expect(isSimilar(collateralToReceive.toString(), vault.collateralAmount.toString())).to.be.true
 
-      await expect(controller.connect(liquidator).liquidate(vaultId, debtToRepay)).to.be.revertedWith('Need full liquidation');
+      await expect(controller.connect(liquidator).liquidate(vaultId, debtToRepay)).to.be.revertedWith('C21');
     })
 
     it("can fully liquidate a underwater vault, even it's not profitable", async () => {

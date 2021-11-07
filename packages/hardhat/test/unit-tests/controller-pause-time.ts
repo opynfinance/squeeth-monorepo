@@ -88,7 +88,7 @@ describe("Controller", function () {
         await provider.send("evm_mine", [])
         await expect(
           controller.connect(owner).pause()
-        ).to.be.revertedWith("Pause time limit exceeded");
+        ).to.be.revertedWith("C17");
       });
 
     });  

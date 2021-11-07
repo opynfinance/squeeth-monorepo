@@ -20,6 +20,36 @@ import {IOracle} from "../interfaces/IOracle.sol";
 import {VaultLib} from "../libs/VaultLib.sol";
 import {Power2Base} from "../libs/Power2Base.sol";
 
+/**
+ *
+ * Error
+ * C0: Paused
+ * C1: Not paused
+ * C2: Shutdown
+ * C3: Not shutdown
+ * C4: Invalid oracle address
+ * C5: Invalid shortPowerPerp address
+ * C6: Invalid wPowerPerp address
+ * C7: Invalid weth address
+ * C8: Invalid quote currency address
+ * C9: Invalid eth:quoteCurrency pool address
+ * C10: Invalid wPowerPerp:eth pool address
+ * C11: Invalid Uniswap position manager
+ * C12: Can not liquidate safe vault
+ * C13: Invalid address
+ * C14: Set fee recipient first
+ * C15: Fee too high
+ * C16: Paused too many times
+ * C17: Pause time limit exceeded
+ * C18: Not enough paused time has passed
+ * C19: Cannot receive eth
+ * C20: Invalid vault id
+ * C21: Need full liquidation
+ * C22: Dust vault left
+ * C23: Invalid nft
+ * C24: Invalid state
+ * C25: Not allowed
+ */
 contract Controller is Ownable, ReentrancyGuard {
     using SafeMath for uint256;
     using VaultLib for VaultLib.Vault;
@@ -82,22 +112,22 @@ contract Controller is Ownable, ReentrancyGuard {
     event NormalizationFactorUpdated(uint256 oldNormFactor, uint256 newNormFactor, uint256 timestamp);
 
     modifier notPaused() {
-        require(!isSystemPaused, "Paused");
+        require(!isSystemPaused, "C0");
         _;
     }
 
     modifier isPaused() {
-        require(isSystemPaused, "Not paused");
+        require(isSystemPaused, "C1");
         _;
     }
 
     modifier notShutdown() {
-        require(!isShutDown, "Shutdown");
+        require(!isShutDown, "C2");
         _;
     }
 
     modifier isShutdown() {
-        require(isShutDown, "Not shutdown");
+        require(isShutDown, "C3");
         _;
     }
 
@@ -122,14 +152,14 @@ contract Controller is Ownable, ReentrancyGuard {
         address _wPowerPerpPool,
         address _uniPositionManager
     ) {
-        require(_oracle != address(0), "Invalid oracle address");
-        require(_shortPowerPerp != address(0), "Invalid shortPowerPerp address");
-        require(_wPowerPerp != address(0), "Invalid power perp address");
-        require(_weth != address(0), "Invalid weth address");
-        require(_quoteCurrency != address(0), "Invalid quote currency address");
-        require(_ethQuoteCurrencyPool != address(0), "Invalid eth:quoteCurrency pool address");
-        require(_wPowerPerpPool != address(0), "Invalid powerperp:eth pool address");
-        require(_uniPositionManager != address(0), "Invalid uni position manager");
+        require(_oracle != address(0), "C4");
+        require(_shortPowerPerp != address(0), "C5");
+        require(_wPowerPerp != address(0), "C6");
+        require(_weth != address(0), "C7");
+        require(_quoteCurrency != address(0), "C8");
+        require(_ethQuoteCurrencyPool != address(0), "C9");
+        require(_wPowerPerpPool != address(0), "C10");
+        require(_uniPositionManager != address(0), "C11");
 
         oracle = _oracle;
         shortPowerPerp = _shortPowerPerp;
@@ -365,7 +395,7 @@ contract Controller is Ownable, ReentrancyGuard {
      * @param _vaultId target vault
      */
     function reduceDebt(uint256 _vaultId) external notPaused nonReentrant {
-        require(_canModifyVault(_vaultId, msg.sender), "Not allowed");
+        _checkCanModifyVault(_vaultId, msg.sender);
         uint256 cachedNormFactor = _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
 
@@ -414,7 +444,7 @@ contract Controller is Ownable, ReentrancyGuard {
 
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
 
-        require(!_isVaultSafe(cachedVault, cachedNormFactor), "Can not liquidate safe vault");
+        require(!_isVaultSafe(cachedVault, cachedNormFactor), "C12");
 
         // try to save target vault before liquidation by reducing debt
         uint256 bounty = _reduceDebt(
@@ -459,7 +489,7 @@ contract Controller is Ownable, ReentrancyGuard {
      * @param _operator new operator address
      */
     function updateOperator(uint256 _vaultId, address _operator) external {
-        require(IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId) == msg.sender, "Not allowed");
+        require(IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId) == msg.sender, "C25");
         vaults[_vaultId].operator = _operator;
         emit UpdateOperator(_vaultId, _operator);
     }
@@ -470,7 +500,7 @@ contract Controller is Ownable, ReentrancyGuard {
      * @param _newFeeRecipient new fee recipient
      */
     function setFeeRecipient(address _newFeeRecipient) external onlyOwner {
-        require(_newFeeRecipient != address(0), "Invalid address");
+        require(_newFeeRecipient != address(0), "C13");
         emit FeeRecipientUpdated(feeRecipient, _newFeeRecipient);
         feeRecipient = _newFeeRecipient;
     }
@@ -481,8 +511,8 @@ contract Controller is Ownable, ReentrancyGuard {
      * @param _newFeeRate new fee rate in basis points. can't be higher than 1%
      */
     function setFeeRate(uint256 _newFeeRate) external onlyOwner {
-        require(feeRecipient != address(0), "Set fee recipient first");
-        require(_newFeeRate <= 100, "Fee too high");
+        require(feeRecipient != address(0), "C14");
+        require(_newFeeRate <= 100, "C15");
         emit FeeRateUpdated(feeRate, _newFeeRate);
         feeRate = _newFeeRate;
     }
@@ -509,9 +539,9 @@ contract Controller is Ownable, ReentrancyGuard {
      * @dev can only be called for 365 days since the contract was launched or 4 times
      */
     function pause() external onlyOwner notShutdown notPaused {
-        require(pausesLeft > 0, "Paused too many times");
+        require(pausesLeft > 0, "C16");
         uint256 timeSinceDeploy = block.timestamp.sub(deployTimestamp);
-        require(timeSinceDeploy < PAUSE_TIME_LIMIT, "Pause time limit exceeded");
+        require(timeSinceDeploy < PAUSE_TIME_LIMIT, "C17");
         isSystemPaused = true;
         pausesLeft -= 1;
         lastPauseTime = block.timestamp;
@@ -522,7 +552,7 @@ contract Controller is Ownable, ReentrancyGuard {
      * @dev anyone can unpause the contract after 24 hours
      */
     function unPauseAnyone() external isPaused notShutdown {
-        require(block.timestamp > (lastPauseTime + 1 days), "Not enough paused time has passed");
+        require(block.timestamp > (lastPauseTime + 1 days), "C18");
         isSystemPaused = false;
     }
 
@@ -551,7 +581,7 @@ contract Controller is Ownable, ReentrancyGuard {
      * @param _vaultId vault id
      */
     function redeemShort(uint256 _vaultId) external isShutdown nonReentrant {
-        require(_canModifyVault(_vaultId, msg.sender), "Not allowed");
+        _checkCanModifyVault(_vaultId, msg.sender);
 
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
         uint256 cachedNormFactor = normalizationFactor;
@@ -590,7 +620,7 @@ contract Controller is Ownable, ReentrancyGuard {
      * @notice fallback function to accept eth
      */
     receive() external payable {
-        require(msg.sender == weth, "Cannot receive eth");
+        require(msg.sender == weth, "C19");
     }
 
     /*
@@ -604,17 +634,18 @@ contract Controller is Ownable, ReentrancyGuard {
      * @param _vaultId the id to check
      */
     function _checkVaultId(uint256 _vaultId) internal view {
-        require(_vaultId > 0 && _vaultId < IShortPowerPerp(shortPowerPerp).nextId(), "Invalid vault id");
+        require(_vaultId > 0 && _vaultId < IShortPowerPerp(shortPowerPerp).nextId(), "C20");
     }
 
     /**
-     * @notice returns if an address can modify a vault
+     * @notice check if an address can modify a vault
      * @param _vaultId the id of the vault to check if can be modified by _account
      * @param _account the address to check if can modify the vault
-     * @return true if the address can modify the vault
      */
-    function _canModifyVault(uint256 _vaultId, address _account) internal view returns (bool) {
-        return IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId) == _account || vaults[_vaultId].operator == _account;
+    function _checkCanModifyVault(uint256 _vaultId, address _account) internal view {
+        bool canModifyVault = IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId) == _account ||
+            vaults[_vaultId].operator == _account;
+        require(canModifyVault, "C25");
     }
 
     /**
@@ -766,7 +797,7 @@ contract Controller is Ownable, ReentrancyGuard {
         address _account,
         uint256 _vaultId
     ) internal {
-        require(_canModifyVault(_vaultId, _account), "Not allowed");
+        _checkCanModifyVault(_vaultId, _account);
 
         uint256 tokenId = _vault.NftCollateralId;
         _vault.removeUniNftCollateral();
@@ -788,7 +819,7 @@ contract Controller is Ownable, ReentrancyGuard {
         uint256 _vaultId,
         uint256 _amount
     ) internal {
-        require(_canModifyVault(_vaultId, _account), "Not allowed");
+        _checkCanModifyVault(_vaultId, _account);
 
         _vault.removeEthCollateral(_amount);
 
@@ -809,7 +840,7 @@ contract Controller is Ownable, ReentrancyGuard {
         uint256 _vaultId,
         uint256 _wPowerPerpAmount
     ) internal {
-        require(_canModifyVault(_vaultId, _account), "Not allowed");
+        _checkCanModifyVault(_vaultId, _account);
 
         _vault.addShort(_wPowerPerpAmount);
         IWPowerPerp(wPowerPerp).mint(_account, _wPowerPerpAmount);
@@ -862,14 +893,14 @@ contract Controller is Ownable, ReentrancyGuard {
         );
 
         // if the liquidator didn't specify enough wPowerPerp to burn, revert.
-        require(_maxWPowerPerpAmount >= liquidateAmount, "Need full liquidation");
+        require(_maxWPowerPerpAmount >= liquidateAmount, "C21");
 
         IWPowerPerp(wPowerPerp).burn(_liquidator, liquidateAmount);
         _vault.removeShort(liquidateAmount);
         _vault.removeEthCollateral(collateralToPay);
 
         (, bool isDust) = _getVaultStatus(_vault, _normalizationFactor);
-        require(!isDust, "Dust vault left");
+        require(!isDust, "C22");
 
         return (liquidateAmount, collateralToPay);
     }
@@ -1075,7 +1106,7 @@ contract Controller is Ownable, ReentrancyGuard {
         address wethAddr = weth; // cache storage variable
         require(
             (token0 == wPowerPerpAddr && token1 == wethAddr) || (token1 == wPowerPerpAddr && token0 == wethAddr),
-            "Invalid nft"
+            "C23"
         );
     }
 
@@ -1087,8 +1118,8 @@ contract Controller is Ownable, ReentrancyGuard {
      */
     function _checkVault(VaultLib.Vault memory _vault, uint256 _normalizationFactor) internal view {
         (bool isSafe, bool isDust) = _getVaultStatus(_vault, _normalizationFactor);
-        require(isSafe, "Invalid state");
-        require(!isDust, "Dust vault");
+        require(isSafe, "C24");
+        require(!isDust, "C22");
     }
 
     /**

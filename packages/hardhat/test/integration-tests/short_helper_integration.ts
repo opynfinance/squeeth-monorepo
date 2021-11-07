@@ -295,7 +295,7 @@ describe("ShortHelper Integration Test", function () {
       await expect(shortHelper.connect(seller2).openShort(0, smallSqueethAmount, 0, exactInputParam, {
           value: smallCollateralAmount, 
         }
-      )).to.be.revertedWith('Dust vault')
+      )).to.be.revertedWith('C22')
 
     })
 
@@ -314,7 +314,7 @@ describe("ShortHelper Integration Test", function () {
       await expect(shortHelper.connect(seller2).openShort(0, squeethAmount, 0, exactInputParam, {
           value: collateralAmount.div(5),  // not enough collateral
         }
-      )).to.be.revertedWith('Invalid state')
+      )).to.be.revertedWith('C24')
 
     })
 
@@ -375,7 +375,7 @@ describe("ShortHelper Integration Test", function () {
         sqrtPriceLimitX96: 0,
       }
   
-      await expect(shortHelper.connect(seller2).openShort(seller2VaultId, squeethAmount.mul(5), 0, exactInputParam)).to.be.revertedWith('Invalid state')
+      await expect(shortHelper.connect(seller2).openShort(seller2VaultId, squeethAmount.mul(5), 0, exactInputParam)).to.be.revertedWith('C24')
     })
 
   })
@@ -544,7 +544,7 @@ describe("ShortHelper Integration Test", function () {
   
       await expect(shortHelper.connect(seller1)
         .closeShort(seller1VaultId, buyBackWsqueethAmount, withdrawCollateralAmount, exactOutputParam, {value: amountInMaximum}
-      )).to.be.revertedWith('Dust vault')  
+      )).to.be.revertedWith('C22')  
     })
 
     it ('should revert if remove too much collateral vs debt bought back', async () => {
@@ -569,7 +569,7 @@ describe("ShortHelper Integration Test", function () {
   
       await expect(shortHelper.connect(seller1)
         .closeShort(seller1VaultId, buyBackWsqueethAmount, withdrawCollateralAmount, exactOutputParam, {value: amountInMaximum}
-      )).to.be.revertedWith('Invalid state')  
+      )).to.be.revertedWith('C24')  
     })
     
     it ('should partially close a short position and get back eth', async () => {

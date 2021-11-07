@@ -8,6 +8,11 @@ import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Po
 import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import "@uniswap/v3-core/contracts/libraries/SqrtPriceMath.sol";
 
+/**
+ * Error code:
+ * V1: Vault already had nft
+ * V2: Vault has no NFT
+ */
 library VaultLib {
     using SafeMath for uint256;
 
@@ -40,8 +45,8 @@ library VaultLib {
      * @param _tokenId uniswap position token id
      */
     function addUniNftCollateral(Vault memory _vault, uint256 _tokenId) internal pure {
-        require(_vault.NftCollateralId == 0, "Vault already had nft");
-        require(_tokenId != 0, "Invalid token id");
+        require(_vault.NftCollateralId == 0, "V1");
+        require(_tokenId != 0, "C23");
         _vault.NftCollateralId = uint32(_tokenId);
     }
 
@@ -59,7 +64,7 @@ library VaultLib {
      * @param _vault in-memory vault
      */
     function removeUniNftCollateral(Vault memory _vault) internal pure {
-        require(_vault.NftCollateralId != 0, "Vault has no NFT");
+        require(_vault.NftCollateralId != 0, "V2");
         _vault.NftCollateralId = 0;
     }
 
