@@ -15,14 +15,8 @@ interface IOracle {
         address _pool,
         address _base,
         address _quote,
-        uint32 _period
-    ) external view returns (uint256);
-
-    function getTwapSafe(
-        address _pool,
-        address _base,
-        address _quote,
-        uint32 _period
+        uint32 _period,
+        bool _checkPeriod
     ) external view returns (uint256);
 
     function getMaxPeriod(address _pool) external view returns (uint32);

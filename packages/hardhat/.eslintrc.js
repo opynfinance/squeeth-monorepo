@@ -22,7 +22,8 @@ module.exports = {
     "func-names": "off",
     "no-unused-expressions": "off",
     "no-use-before-define": "off",
-    "no-await-in-loop": "off"
+    "no-await-in-loop": "off",
+    "no-underscore-dangle": "off"
   },
   ignorePatterns: ["package.json", "contracts/*", "tasks/default.ts"],
   settings: {

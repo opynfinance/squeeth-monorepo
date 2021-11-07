@@ -31,9 +31,16 @@ contract Oracle {
         address _pool,
         address _base,
         address _quote,
-        uint32 _period
+        uint32 _period,
+        bool _checkPeriod
     ) external view returns (uint256) {
-        return _fetchTwap(_pool, _base, _quote, _period);
+        // if the period is already checked, request TWAP directly. Will revert if period is too long.
+        if (!_checkPeriod) return _fetchTwap(_pool, _base, _quote, _period);
+
+        // make sure the requested period < maxPeriod the pool recorded.
+        uint32 maxPeriod = _getMaxPeriod(_pool);
+        uint32 requestPeriod = _period > maxPeriod ? maxPeriod : _period;
+        return _fetchTwap(_pool, _base, _quote, requestPeriod);
     }
 
     function getHistoricalTwap(
@@ -44,23 +51,6 @@ contract Oracle {
         uint32 _secondsAgoToEndOfTwap
     ) external view returns (uint256) {
         return _fetchHistoricTwap(_pool, _base, _quote, _secondsAgoToStartOfTwap, _secondsAgoToEndOfTwap, ONE);
-    }
-
-    /**
-     * @notice get twap converted with base & quote token decimals, never reverts
-     * @param _pool uniswap pool address
-     * @param _base base currency. to get eth/usd price, eth is base token
-     * @param _quote quote currency. to get eth/usd price, usd is the quote currency
-     * @param _period number of seconds in the past to start calculating time-weighted average
-     * @return price of 1 base currency in quote currency. scaled by 1e18
-     */
-    function getTwapSafe(
-        address _pool,
-        address _base,
-        address _quote,
-        uint32 _period
-    ) external view returns (uint256) {
-        return _fetchTwapSafe(_pool, _base, _quote, _period);
     }
 
     /**
@@ -87,26 +77,6 @@ contract Oracle {
         uint32 maxPeriod = _getMaxPeriod(_pool);
         uint32 requestPeriod = _period > maxPeriod ? maxPeriod : _period;
         return OracleLibrary.consultAtHistoricTime(_pool, requestPeriod, 0);
-    }
-
-    /**
-     * @notice get twap converted with base & quote token decimals, never reverts
-     * @dev if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD"
-     * @param _pool uniswap pool address
-     * @param _base base currency. to get eth/usd price, eth is base token
-     * @param _quote quote currency. to get eth/usd price, usd is the quote currency
-     * @param _period number of seconds in the past to start calculating time-weighted average
-     * @return twap price which is scaled
-     */
-    function _fetchTwapSafe(
-        address _pool,
-        address _base,
-        address _quote,
-        uint32 _period
-    ) internal view returns (uint256) {
-        uint32 maxPeriod = _getMaxPeriod(_pool);
-        uint32 requestPeriod = _period > maxPeriod ? maxPeriod : _period;
-        return _fetchTwap(_pool, _base, _quote, requestPeriod);
     }
 
     /**

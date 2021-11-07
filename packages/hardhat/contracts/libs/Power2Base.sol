@@ -15,7 +15,7 @@ library Power2Base {
 
     /**
      * @notice return the scaled down index of the power perp in USD, scaled by 18 decimals
-     * @param _period period of time for the twap in seconds
+     * @param _period period of time for the twap in seconds (cannot be longer than maximum period for the pool)
      * @param _oracle oracle address
      * @param _ethQuoteCurrencyPool uniswap v3 pool for weth / quoteCurrency
      * @param _weth weth address
@@ -29,13 +29,20 @@ library Power2Base {
         address _weth,
         address _quoteCurrency
     ) internal view returns (uint256) {
-        uint256 ethQuoteCurrencyPrice = _getScaledTwap(_oracle, _ethQuoteCurrencyPool, _weth, _quoteCurrency, _period);
+        uint256 ethQuoteCurrencyPrice = _getScaledTwap(
+            _oracle,
+            _ethQuoteCurrencyPool,
+            _weth,
+            _quoteCurrency,
+            _period,
+            false
+        );
         return ethQuoteCurrencyPrice.mul(ethQuoteCurrencyPrice).div(1e18);
     }
 
     /**
      * @notice return the unscaled index of the power perp in USD, scaled by 18 decimals
-     * @param _period period of time for the twap in seconds
+     * @param _period period of time for the twap in seconds (cannot be longer than maximum period for the pool)
      * @param _oracle oracle address
      * @param _ethQuoteCurrencyPool uniswap v3 pool for weth / quoteCurrency
      * @param _weth weth address
@@ -49,13 +56,13 @@ library Power2Base {
         address _weth,
         address _quoteCurrency
     ) internal view returns (uint256) {
-        uint256 ethQuoteCurrencyPrice = _getTwap(_oracle, _ethQuoteCurrencyPool, _weth, _quoteCurrency, _period);
+        uint256 ethQuoteCurrencyPrice = _getTwap(_oracle, _ethQuoteCurrencyPool, _weth, _quoteCurrency, _period, false);
         return ethQuoteCurrencyPrice.mul(ethQuoteCurrencyPrice).div(1e18);
     }
 
     /**
      * @notice return the mark price of power perp in quoteCurrency, scaled by 18 decimals
-     * @param _period period of time for the twap in seconds
+     * @param _period period of time for the twap in seconds (cannot be longer than maximum period for the pool)
      * @param _oracle oracle address
      * @param _wSqueethEthPool uniswap v3 pool for wSqueeth / weth
      * @param _ethQuoteCurrencyPool uniswap v3 pool for weth / quoteCurrency
@@ -75,14 +82,15 @@ library Power2Base {
         address _wsqueeth,
         uint256 _normalizationFactor
     ) internal view returns (uint256) {
-        uint256 ethQuoteCurrencyPrice = _getScaledTwapSafe(
+        uint256 ethQuoteCurrencyPrice = _getScaledTwap(
             _oracle,
             _ethQuoteCurrencyPool,
             _weth,
             _quoteCurrency,
-            _period
+            _period,
+            false
         );
-        uint256 wsqueethEthPrice = _getTwapSafe(_oracle, _wSqueethEthPool, address(_wsqueeth), _weth, _period);
+        uint256 wsqueethEthPrice = _getTwap(_oracle, _wSqueethEthPool, _wsqueeth, _weth, _period, false);
 
         return wsqueethEthPrice.mul(ethQuoteCurrencyPrice).div(_normalizationFactor);
     }
@@ -111,7 +119,8 @@ library Power2Base {
             _ethQuoteCurrencyPool,
             _weth,
             _quoteCurrency,
-            TWAP_PERIOD
+            TWAP_PERIOD,
+            false
         );
         return _debtAmount.mul(_normalizationFactor).mul(ethQuoteCurrencyPrice).div(1e36);
     }
@@ -122,7 +131,8 @@ library Power2Base {
      * @param _pool uniswap v3 pool address
      * @param _base base currency. to get eth/usd price, eth is base token
      * @param _quote quote currency. to get eth/usd price, usd is the quote currency
-     * @param _period number of seconds in the past to start calculating time-weighted average
+     * @param _period number of seconds in the past to start calculating time-weighted average.
+     * @param _checkPeriod check that period is not longer than maximum period for the pool to prevent reverts
      * @return twap price scaled down by INDEX_SCALE
      */
     function _getScaledTwap(
@@ -130,30 +140,10 @@ library Power2Base {
         address _pool,
         address _base,
         address _quote,
-        uint32 _period
+        uint32 _period,
+        bool _checkPeriod
     ) internal view returns (uint256) {
-        uint256 twap = _getTwap(_oracle, _pool, _base, _quote, _period);
-        return twap.div(INDEX_SCALE);
-    }
-
-    /**
-     * @notice request twap from our oracle, scaled down by INDEX_SCALE
-     * @dev this won't revert if period is > max period for the pool
-     * @param _oracle oracle address
-     * @param _pool uniswap v3 pool address
-     * @param _base base currency. to get eth/quoteCurrency price, eth is base token
-     * @param _quote quote currency. to get eth/quoteCurrency price, quoteCurrency is the quote currency
-     * @param _period number of seconds in the past to start calculating time-weighted average
-     * @return twap price scaled down by INDEX_SCALE
-     */
-    function _getScaledTwapSafe(
-        address _oracle,
-        address _pool,
-        address _base,
-        address _quote,
-        uint32 _period
-    ) internal view returns (uint256) {
-        uint256 twap = _getTwapSafe(_oracle, _pool, _base, _quote, _period);
+        uint256 twap = _getTwap(_oracle, _pool, _base, _quote, _period, _checkPeriod);
         return twap.div(INDEX_SCALE);
     }
 
@@ -165,6 +155,7 @@ library Power2Base {
      * @param _base base currency. to get eth/quoteCurrency price, eth is base token
      * @param _quote quote currency. to get eth/quoteCurrency price, quoteCurrency is the quote currency
      * @param _period number of seconds in the past to start calculating time-weighted average
+     * @param _checkPeriod check that period is not longer than maximum period for the pool to prevent reverts
      * @return human readable price. scaled by 1e18
      */
     function _getTwap(
@@ -172,30 +163,11 @@ library Power2Base {
         address _pool,
         address _base,
         address _quote,
-        uint32 _period
+        uint32 _period,
+        bool _checkPeriod
     ) internal view returns (uint256) {
         // period reaching this point should be check, otherwise might revert
-        return IOracle(_oracle).getTwap(_pool, _base, _quote, _period);
-    }
-
-    /**
-     * @notice request twap from our oracle
-     * @dev this won't revert if period is > max period for the pool
-     * @param _oracle oracle address
-     * @param _pool uniswap v3 pool address
-     * @param _base base currency. to get eth/quoteCurrency price, eth is base token
-     * @param _quote quote currency. to get eth/quoteCurrency price, quoteCurrency is the quote currency
-     * @param _period number of seconds in the past to start calculating time-weighted average
-     * @return human readable price. scaled by 1e18
-     */
-    function _getTwapSafe(
-        address _oracle,
-        address _pool,
-        address _base,
-        address _quote,
-        uint32 _period
-    ) internal view returns (uint256) {
-        return IOracle(_oracle).getTwapSafe(_pool, _base, _quote, _period);
+        return IOracle(_oracle).getTwap(_pool, _base, _quote, _period, _checkPeriod);
     }
 
     /**

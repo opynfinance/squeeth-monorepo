@@ -132,7 +132,7 @@ describe("Oracle", function () {
 
   describe("Fetch price right after initialization", async () => {
     it("should return initial price with period = 1", async () => {
-      const price = new BigNumberJs((await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 1)).toString())
+      const price = new BigNumberJs((await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 1, false)).toString())
       expect(isSimilar(price.toString(), squeethPriceInETH1e18)).to.be.true;
     })
     it('should be able to get TWAP since init time', async() => {
@@ -433,8 +433,8 @@ describe("Oracle", function () {
       expect(isSimilar(timeWeightedTick.toString(), ((newTick + oldTick) / 2).toString())).to.be.true
 
       // check price returned by oracle match the tick
-      const twap = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, period*2)
-      const twapSafe = await oracle.getTwapSafe(squeethPool.address, squeeth.address, weth.address, period*2)
+      const twap = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, period*2, false)
+      const twapSafe = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, period*2, true)
 
       const tickToUse = isWethToken0 ? -timeWeightedTick : timeWeightedTick
       const expectedTwap = tickToPrice1e18(tickToUse)
@@ -452,8 +452,8 @@ describe("Oracle", function () {
       expect(isSimilar(timeWeightedTick.toString(), ((newTick*2 + oldTick) / 3).toString())).to.be.true
 
       // check price returned by oracle match the tick
-      const twap = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, period*3)
-      const twapSafe = await oracle.getTwapSafe(squeethPool.address, squeeth.address, weth.address, period*3)
+      const twap = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, period*3, false)
+      const twapSafe = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, period*3, true)
       const tickToUse = isWethToken0 ? -timeWeightedTick : timeWeightedTick
       const expectedTwap = tickToPrice1e18(tickToUse)
 

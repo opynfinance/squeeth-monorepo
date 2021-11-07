@@ -3,20 +3,20 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+
+import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
+
+import {IWETH9} from "../interfaces/IWETH9.sol";
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
 import {IShortPowerPerp} from "../interfaces/IShortPowerPerp.sol";
 import {IOracle} from "../interfaces/IOracle.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
-import {IWETH9} from "../interfaces/IWETH9.sol";
 
-import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {VaultLib} from "../libs/VaultLib.sol";
 import {Power2Base} from "../libs/Power2Base.sol";
 
@@ -188,7 +188,6 @@ contract Controller is Ownable, ReentrancyGuard {
      */
     function getDenormalizedMark(uint32 _period) external view returns (uint256) {
         uint256 expectedNormalizationFactor = _getNewNormalizationFactor();
-
         return
             Power2Base._getDenormalizedMark(
                 _period,
@@ -500,7 +499,8 @@ contract Controller is Ownable, ReentrancyGuard {
             ethQuoteCurrencyPool,
             weth,
             quoteCurrency,
-            TWAP_PERIOD
+            TWAP_PERIOD,
+            false
         );
     }
 
@@ -1114,12 +1114,13 @@ contract Controller is Ownable, ReentrancyGuard {
         view
         returns (bool, bool)
     {
-        uint256 scaledEthPrice = Power2Base._getScaledTwapSafe(
+        uint256 scaledEthPrice = Power2Base._getScaledTwap(
             address(oracle),
             ethQuoteCurrencyPool,
             weth,
             quoteCurrency,
-            TWAP_PERIOD
+            TWAP_PERIOD,
+            true // do not call more than maximum period so it does not revert
         );
         return
             VaultLib.getVaultStatus(

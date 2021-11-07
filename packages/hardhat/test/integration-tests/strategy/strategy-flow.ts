@@ -1,11 +1,12 @@
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { Contract, BigNumber, providers } from "ethers";
+import BigNumberJs from 'bignumber.js'
+
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { WETH9, MockErc20, Controller, Oracle, WPowerPerp, CrabStrategy } from "../../../typechain";
 import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addWethDaiLiquidity, addSqueethLiquidity } from '../../setup'
 import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../../utils"
-import BigNumberJs from 'bignumber.js'
 
 BigNumberJs.set({EXPONENTIAL_AT: 30})
 
@@ -25,12 +26,10 @@ describe("Crab integration test: flash deposit - deposit - withdraw", function (
   let provider: providers.JsonRpcProvider;
   let owner: SignerWithAddress;
   let depositor: SignerWithAddress;
-  let random: SignerWithAddress;
   let dai: MockErc20
   let weth: WETH9
   let positionManager: Contract
   let uniswapFactory: Contract
-  let swapRouter: Contract
   let oracle: Oracle
   let controller: Controller
   let wSqueethPool: Contract
@@ -39,10 +38,9 @@ describe("Crab integration test: flash deposit - deposit - withdraw", function (
 
   this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async() => {
     const accounts = await ethers.getSigners();
-    const [_owner, _depositor, _random ] = accounts;
+    const [_owner, _depositor ] = accounts;
     owner = _owner;
     depositor = _depositor;
-    random = _random;
     provider = ethers.provider
 
     const { dai: daiToken, weth: wethToken } = await deployWETHAndDai()
@@ -53,7 +51,6 @@ describe("Crab integration test: flash deposit - deposit - withdraw", function (
     const uniDeployments = await deployUniswapV3(weth)
     positionManager = uniDeployments.positionManager
     uniswapFactory = uniDeployments.uniswapFactory
-    swapRouter = uniDeployments.swapRouter
 
     // this will not deploy a new pool, only reuse old onces
     const squeethDeployments = await deploySqueethCoreContracts(
@@ -127,9 +124,9 @@ describe("Crab integration test: flash deposit - deposit - withdraw", function (
       const depositorSqueethBalance = await wSqueeth.balanceOf(depositor.address)
       const strategyContractSqueeth = await wSqueeth.balanceOf(crabStrategy.address)
       const lastHedgeTime = await crabStrategy.timeAtLastHedge()
-      let currentBlockNumber = await provider.getBlockNumber()
-      let currentBlock = await provider.getBlock(currentBlockNumber)
-      let timeStamp = currentBlock.timestamp
+      const currentBlockNumber = await provider.getBlockNumber()
+      const currentBlock = await provider.getBlock(currentBlockNumber)
+      const timeStamp = currentBlock.timestamp
 
       expect(totalSupply.eq(ethToDeposit.add(ethToBorrow))).to.be.true
       expect(depositorCrab.eq(ethToDeposit.add(ethToBorrow))).to.be.true
@@ -202,13 +199,13 @@ describe("Crab integration test: flash deposit - deposit - withdraw", function (
     })
 
     it("should revert if slippage is too high", async () => {
-      const wSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1)
+      const wSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, false)
 
       const userCrabBalanceBefore = await crabStrategy.balanceOf(depositor.address);
       const crabTotalSupply = await crabStrategy.totalSupply()
       const strategyDebtAmountBefore = await crabStrategy.getStrategyDebt()
       const strategyCollateralAmountBefore = await crabStrategy.getStrategyCollateral()
-      const userEthBalanceBefore = await provider.getBalance(depositor.address)
+
       const crabRatio = wdiv(userCrabBalanceBefore, crabTotalSupply);
       const debtToRepay = wmul(crabRatio,strategyDebtAmountBefore);
       const ethCostOfDebtToRepay = wmul(debtToRepay,wSqueethPrice)
@@ -222,7 +219,7 @@ describe("Crab integration test: flash deposit - deposit - withdraw", function (
     })
 
     it("should flash withdraw correct amount of ETH collateral", async () => {
-      const wSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1)
+      const wSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, false)
 
       const userCrabBalanceBefore = await crabStrategy.balanceOf(depositor.address);
       const crabTotalSupply = await crabStrategy.totalSupply()
@@ -231,7 +228,7 @@ describe("Crab integration test: flash deposit - deposit - withdraw", function (
       const userEthBalanceBefore = await provider.getBalance(depositor.address)
       const crabRatio = wdiv(userCrabBalanceBefore, crabTotalSupply);
       const debtToRepay = wmul(crabRatio,strategyDebtAmountBefore);
-      const ethCostOfDebtToRepay = wmul(debtToRepay,wSqueethPrice)
+      const ethCostOfDebtToRepay = wmul(debtToRepay, wSqueethPrice)
       const userCollateral = wmul(crabRatio, strategyCollateralAmountBefore)
       const ethToWithdraw = userCollateral.sub(ethCostOfDebtToRepay);
       const maxEthToPay = ethToWithdraw.mul(15).div(10)

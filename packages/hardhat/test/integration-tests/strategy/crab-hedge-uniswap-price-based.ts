@@ -2,10 +2,10 @@ import { ethers } from "hardhat"
 import { expect } from "chai";
 import { Contract, BigNumber, providers } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
+import BigNumberJs from 'bignumber.js'
 import { WETH9, MockErc20, Controller, Oracle, WPowerPerp, CrabStrategy } from "../../../typechain";
 import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addWethDaiLiquidity, addSqueethLiquidity, buyWSqueeth, buyWeth } from '../../setup'
 import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../../utils"
-import BigNumberJs from 'bignumber.js'
 
 BigNumberJs.set({EXPONENTIAL_AT: 30})
 
@@ -41,7 +41,6 @@ describe("Crab flashswap integration test: time based hedging", function () {
   let provider: providers.JsonRpcProvider;
   let owner: SignerWithAddress;
   let depositor: SignerWithAddress;
-  let random: SignerWithAddress;
   let dai: MockErc20
   let weth: WETH9
   let positionManager: Contract
@@ -55,10 +54,9 @@ describe("Crab flashswap integration test: time based hedging", function () {
 
   this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async() => {
     const accounts = await ethers.getSigners();
-    const [_owner, _depositor, _random ] = accounts;
+    const [_owner, _depositor ] = accounts;
     owner = _owner;
     depositor = _depositor;
-    random = _random;
     provider = ethers.provider
 
     const { dai: daiToken, weth: wethToken } = await deployWETHAndDai()
@@ -132,9 +130,9 @@ describe("Crab flashswap integration test: time based hedging", function () {
     const depositorSqueethBalance = await wSqueeth.balanceOf(depositor.address)
     const strategyContractSqueeth = await wSqueeth.balanceOf(crabStrategy.address)
     const lastHedgeTime = await crabStrategy.timeAtLastHedge()
-    let currentBlockNumber = await provider.getBlockNumber()
-    let currentBlock = await provider.getBlock(currentBlockNumber)
-    let timeStamp = currentBlock.timestamp
+    const currentBlockNumber = await provider.getBlockNumber()
+    const currentBlock = await provider.getBlock(currentBlockNumber)
+    const timeStamp = currentBlock.timestamp
 
     expect(totalSupply.eq(ethToDeposit.add(ethToBorrow))).to.be.true
     expect(depositorCrab.eq(ethToDeposit.add(ethToBorrow))).to.be.true
@@ -164,8 +162,7 @@ describe("Crab flashswap integration test: time based hedging", function () {
       const auctionTriggerTimer = currentBlock.timestamp
       
       const priceAtLastHedge = await crabStrategy.priceAtLastHedge()
-      const hedgePriceThreshold = await crabStrategy.hedgePriceThreshold()
-      const currentWSqueethPrice = await oracle.getTwapSafe(wSqueethPool.address, wSqueeth.address, weth.address, 600)
+      const currentWSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false)
       const priceChange = one.mul(currentWSqueethPrice).div(priceAtLastHedge)
       const priceDeviation = priceChange.gt(one) ? priceChange.sub(one): one.sub(priceChange)
       const canPriceHedge = await crabStrategy.checkPriceHedge(auctionTriggerTimer)
@@ -209,7 +206,7 @@ describe("Crab flashswap integration test: time based hedging", function () {
       expect((await crabStrategy.checkTimeHedge())[0]).to.be.false;
       expect(await crabStrategy.checkPriceHedge(auctionTriggerTimer)).to.be.true;
   
-      let currentWSqueethPrice = await oracle.getTwapSafe(wSqueethPool.address, wSqueeth.address, weth.address, 600)
+      const currentWSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false)
       
       const ethDelta = await crabStrategy.getStrategyCollateral()
       const strategyDebt = await crabStrategy.getStrategyDebt()
@@ -234,8 +231,7 @@ describe("Crab flashswap integration test: time based hedging", function () {
       await provider.send("evm_mine", [])  
             
       const priceAtLastHedge = await crabStrategy.priceAtLastHedge()
-      const hedgePriceThreshold = await crabStrategy.hedgePriceThreshold()
-      const currentWSqueethPrice = await oracle.getTwapSafe(wSqueethPool.address, wSqueeth.address, weth.address, 600)
+      const currentWSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false)
       const priceChange = one.mul(currentWSqueethPrice).div(priceAtLastHedge)
       const priceDeviation = priceChange.gt(one) ? priceChange.sub(one): one.sub(priceChange)
       const canPriceHedge = await crabStrategy.checkPriceHedge(auctionTriggerTimer)
@@ -273,8 +269,7 @@ describe("Crab flashswap integration test: time based hedging", function () {
       await provider.send("evm_mine", [])  
             
       const priceAtLastHedge = await crabStrategy.priceAtLastHedge()
-      const hedgePriceThreshold = await crabStrategy.hedgePriceThreshold()
-      const currentWSqueethPrice = await oracle.getTwapSafe(wSqueethPool.address, wSqueeth.address, weth.address, 600)
+      const currentWSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false)
       const priceChange = one.mul(currentWSqueethPrice).div(priceAtLastHedge)
       const priceDeviation = priceChange.gt(one) ? priceChange.sub(one): one.sub(priceChange)
       const canPriceHedge = await crabStrategy.checkPriceHedge(auctionTriggerTimer)
@@ -306,7 +301,7 @@ describe("Crab flashswap integration test: time based hedging", function () {
 
       await crabStrategy.connect(depositor).priceHedgeOnUniswap(auctionTriggerTimer, ethers.utils.parseUnits('0.01'), ethers.utils.parseUnits('0'))
               
-      const currentWSqueethPriceAfter = await oracle.getTwapSafe(wSqueethPool.address, wSqueeth.address, weth.address, 600)
+      const currentWSqueethPriceAfter = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false)
       const strategyDebtAmountAfter = await crabStrategy.getStrategyDebt()
       const strategyCollateralAmountAfter = await crabStrategy.getStrategyCollateral()
       const timeAtLastHedgeAfter = await crabStrategy.timeAtLastHedge()
@@ -334,7 +329,6 @@ describe("Crab flashswap integration test: time based hedging", function () {
     before(async () => {
       const currentBlockTimestamp = (await provider.getBlock(await provider.getBlockNumber())).timestamp
       await buyWSqueeth(swapRouter, wSqueeth, weth, owner.address, ethers.utils.parseUnits('10000'), currentBlockTimestamp + 10)
-      const priceBefore = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600)
     })
 
     it("should revert if not positive PnL", async () => {
@@ -347,8 +341,7 @@ describe("Crab flashswap integration test: time based hedging", function () {
       const auctionTriggerTimer = currentBlock.timestamp
       
       const priceAtLastHedge = await crabStrategy.priceAtLastHedge()
-      const hedgePriceThreshold = await crabStrategy.hedgePriceThreshold()
-      const currentWSqueethPrice = await oracle.getTwapSafe(wSqueethPool.address, wSqueeth.address, weth.address, 600)
+      const currentWSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false)
       const priceChange = one.mul(currentWSqueethPrice).div(priceAtLastHedge)
       const priceDeviation = priceChange.gt(one) ? priceChange.sub(one): one.sub(priceChange)
       const canPriceHedge = await crabStrategy.checkPriceHedge(auctionTriggerTimer)
@@ -389,8 +382,7 @@ describe("Crab flashswap integration test: time based hedging", function () {
       await provider.send("evm_mine", [])  
             
       const priceAtLastHedge = await crabStrategy.priceAtLastHedge()
-      const hedgePriceThreshold = await crabStrategy.hedgePriceThreshold()
-      const currentWSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600)
+      const currentWSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false)
       const priceChange = one.mul(currentWSqueethPrice).div(priceAtLastHedge)
       const priceDeviation = priceChange.gt(one) ? priceChange.sub(one): one.sub(priceChange)
       const canPriceHedge = await crabStrategy.checkPriceHedge(auctionTriggerTimer)
@@ -398,18 +390,12 @@ describe("Crab flashswap integration test: time based hedging", function () {
       expect(priceDeviation.gt(hedgePriceThreshold))
       expect(canPriceHedge).to.be.true
 
-      const collat = await crabStrategy.getStrategyCollateral()
-      const debt = await crabStrategy.getStrategyDebt()
       const normFactor = await controller.getExpectedNormalizationFactor()
-
-      const collatValueInUsd = collat
-      const debtValueInUsd = debt.mul(normFactor).mul(startingEthPrice).div(10000)
-      const collateralizatonRatio = one.mul(collatValueInUsd).mul(one).div(debtValueInUsd)
 
       const collatToDeposit = one.mul(normFactor).mul(2).mul(startingEthPrice).div(oracleScaleFactor).div(one)
 
       await controller.connect(depositor).mintWPowerPerpAmount("0", ethers.utils.parseUnits("3"), "0", {value: collatToDeposit.mul(10)})
-      let senderWsqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
+      const senderWsqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
       await wSqueeth.connect(depositor).approve(crabStrategy.address, senderWsqueethBalanceBefore)
 
       // set next block timestamp     
@@ -438,8 +424,7 @@ describe("Crab flashswap integration test: time based hedging", function () {
       const auctionTriggerTimer = currentBlock.timestamp - auctionTime
             
       const priceAtLastHedge = await crabStrategy.priceAtLastHedge()
-      const hedgePriceThreshold = await crabStrategy.hedgePriceThreshold()
-      const currentWSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600)
+      const currentWSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false)
       const priceChange = one.mul(currentWSqueethPrice).div(priceAtLastHedge)
       const priceDeviation = priceChange.gt(one) ? priceChange.sub(one): one.sub(priceChange)
       const canPriceHedge = await crabStrategy.checkPriceHedge(auctionTriggerTimer)
@@ -447,18 +432,13 @@ describe("Crab flashswap integration test: time based hedging", function () {
       expect(priceDeviation.gt(hedgePriceThreshold))
       expect(canPriceHedge).to.be.true
 
-      const collat = await crabStrategy.getStrategyCollateral()
-      const debt = await crabStrategy.getStrategyDebt()
       const normFactor = await controller.getExpectedNormalizationFactor()
 
-      const collatValueInUsd = collat
-      const debtValueInUsd = debt.mul(normFactor).mul(startingEthPrice).div(10000)
-      const collateralizatonRatio = one.mul(collatValueInUsd).mul(one).div(debtValueInUsd)
 
       const collatToDeposit = one.mul(normFactor).mul(2).mul(startingEthPrice).div(oracleScaleFactor).div(one)
 
       await controller.connect(depositor).mintWPowerPerpAmount("0", ethers.utils.parseUnits("3"), "0", {value: collatToDeposit.mul(10)})
-      let senderWsqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
+      const senderWsqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
       await wSqueeth.connect(depositor).approve(crabStrategy.address, senderWsqueethBalanceBefore)
 
       // set next block timestamp     
@@ -485,8 +465,7 @@ describe("Crab flashswap integration test: time based hedging", function () {
 
       await crabStrategy.connect(depositor).priceHedgeOnUniswap(auctionTriggerTimer, 0, ethers.utils.parseUnits('0.001'))
               
-      const currentWSqueethPriceAfter = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600)
-      const senderWsqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
+      const currentWSqueethPriceAfter = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false)
       const strategyDebtAmountAfter = await crabStrategy.getStrategyDebt()
       const strategyCollateralAmountAfter = await crabStrategy.getStrategyCollateral()
       const timeAtLastHedgeAfter = await crabStrategy.timeAtLastHedge()

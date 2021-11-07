@@ -14,15 +14,6 @@ contract MockOracle {
         poolTick[_pool] = _poolTick;
     }
 
-    function getTwapSafe(
-        address _pool,
-        address,
-        address,
-        uint32
-    ) external view returns (uint256) {
-        return poolPeriodPrice[_pool];
-    }
-
     function getTimeWeightedAverageTickSafe(
         address _pool,
         uint32 /*_period*/
@@ -34,7 +25,8 @@ contract MockOracle {
         address _pool,
         address,
         address,
-        uint32
+        uint32,
+        bool
     ) external view returns (uint256) {
         return poolPeriodPrice[_pool];
     }

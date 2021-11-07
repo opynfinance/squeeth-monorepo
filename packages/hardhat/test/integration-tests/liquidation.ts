@@ -319,7 +319,7 @@ describe("Liquidation Integration Test", function () {
       // make sure price is set correctly
       await provider.send("evm_increaseTime", [10]) // increase time by 10 sec
       await provider.send("evm_mine", [])
-      const newSqueethPrice = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 1)
+      const newSqueethPrice = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 1, true)
       expect(isSimilar(newSqueethPrice.toString(), (scaledStartingSqueethPrice1e18.mul(2)).toString())).to.be.true
     })
     before('push weth price higher 2x', async() => {
@@ -349,20 +349,20 @@ describe("Liquidation Integration Test", function () {
       // make sure price is set correctly
       await provider.send("evm_increaseTime", [10]) // increase time by 10 sec
       await provider.send("evm_mine", [])
-      const newWethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 1)
+      const newWethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 1, false)
       expect(isSimilar(newWethPrice.toString(), startingEthPrice1e18.mul(2).toString())).to.be.true
     })
     before('increase block time to make sure TWAP is updated', async() => {
       await provider.send("evm_increaseTime", [3600]) // increase time by 60 mins
       await provider.send("evm_mine", [])
 
-      const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 3600)
-      const newSqueethPrice = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 3600)
+      const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 3600, false)
+      const newSqueethPrice = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 3600, false)
       expect(isSimilar(newEthPrice.toString(), newSqueethPrice.mul(oracleScaleFactor).toString(), 3)).to.be.true
     })
 
     before('prepare liquidator to liquidate vault 0 and vault 1', async() => {
-      const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600)
+      const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600, false)
       const vaultBefore = await controller.vaults(vault0Id)
       
       const mintAmount = vaultBefore.shortAmount.mul(2)
@@ -375,7 +375,7 @@ describe("Liquidation Integration Test", function () {
     
     it("liquidate vault 0", async () => {
 
-      const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600)
+      const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600, false)
       const vaultBefore = await controller.vaults(vault0Id)
       
       // state before liquidation
@@ -459,7 +459,7 @@ describe("Liquidation Integration Test", function () {
       const liquidatorBalanceAfter = await provider.getBalance(liquidator.address)
       const liquidatorSqueethAfter = await squeeth.balanceOf(liquidator.address)
 
-      const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600)
+      const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600, false)
       const normFactor = await controller.normalizationFactor()
       const collateralToGet = newEthPrice.div(oracleScaleFactor).mul(normFactor).mul(wSqueethAmountToLiquidate).div(one).div(one).mul(11).div(10)
       
@@ -506,7 +506,7 @@ describe("Liquidation Integration Test", function () {
       const liquidatorBalanceAfter = await provider.getBalance(liquidator.address)
       const liquidatorSqueethAfter = await squeeth.balanceOf(liquidator.address)
 
-      const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600)
+      const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600, false)
       const normFactor = await controller.normalizationFactor()
       const collateralToGet = newEthPrice.div(oracleScaleFactor).mul(normFactor).mul(wSqueethAmountToLiquidate).div(one).div(one).mul(11).div(10)
       
@@ -566,7 +566,7 @@ describe("Liquidation Integration Test", function () {
       // make sure price is set correctly
       await provider.send("evm_increaseTime", [10]) // increase time by 10 sec
       await provider.send("evm_mine", [])
-      const newSqueethPrice = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 1)
+      const newSqueethPrice = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 1, false)
       expect(isSimilar(newSqueethPrice.toString(), scaledStartingSqueethPrice1e18.mul(4).toString())).to.be.true
 
     })
@@ -597,19 +597,19 @@ describe("Liquidation Integration Test", function () {
       // make sure price is set correctly
       await provider.send("evm_increaseTime", [10]) // increase time by 10 sec
       await provider.send("evm_mine", [])
-      const newWethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 1)
+      const newWethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 1, false)
       expect(isSimilar(newWethPrice.toString(), startingEthPrice1e18.mul(4).toString())).to.be.true
     })
     before('increase block time to make sure TWAP is updated', async() => {
       await provider.send("evm_increaseTime", [3600]) // increase time by 60 mins
       await provider.send("evm_mine", [])
 
-      const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 3600)
-      const newSqueethPrice = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 3600)
+      const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 3600, false)
+      const newSqueethPrice = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 3600, false)
       expect(isSimilar(newEthPrice.toString(), newSqueethPrice.mul(oracleScaleFactor).toString(), 3)).to.be.true
     })
     it("calling liquidation now will save vault 3 and get bounty", async () => {
-      const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600)
+      const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600, false)
       // price has 4x, eth amount should have doubled in the nft
       // squeeth amount should be cut in half
       // get net worth of nft
@@ -695,7 +695,7 @@ describe("Liquidation Integration Test", function () {
       // make sure price is set correctly
       await provider.send("evm_increaseTime", [10]) // increase time by 10 sec
       await provider.send("evm_mine", [])
-      const newSqueethPrice = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 1)
+      const newSqueethPrice = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 1, false)
       expect(isSimilar(newSqueethPrice.toString(), scaledStartingSqueethPrice1e18.mul(8).toString())).to.be.true
 
     })
@@ -728,19 +728,19 @@ describe("Liquidation Integration Test", function () {
       // make sure price is set correctly
       await provider.send("evm_increaseTime", [10]) // increase time by 10 sec
       await provider.send("evm_mine", [])
-      const newWethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 1)
+      const newWethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 1, false)
       expect(isSimilar(newWethPrice.toString(), startingEthPrice1e18.mul(8).toString())).to.be.true
     })
     before('increase block time to make sure TWAP is updated', async() => {
       await provider.send("evm_increaseTime", [3600]) // increase time by 60 mins
       await provider.send("evm_mine", [])
 
-      const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 3600)
-      const newSqueethPrice = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 3600)
+      const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 3600, false)
+      const newSqueethPrice = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 3600, false)
       expect(isSimilar(newEthPrice.toString(), newSqueethPrice.mul(oracleScaleFactor).toString(), 3)).to.be.true
     })
     it("calling liquidation now will save vault5 + liquidate half of the remaining debt", async () => {
-      const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600)
+      const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600, false)
       const { tick } = await (squeethPool as IUniswapV3Pool).slot0()
       const isWethToken0 = parseInt(weth.address, 16) < parseInt(squeeth.address, 16)
       const { ethAmount, squeethAmount } = await vaultLib.getUniPositionBalances(positionManager.address, vault5LPTokenId, tick, isWethToken0)

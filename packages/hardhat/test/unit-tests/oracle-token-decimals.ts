@@ -120,12 +120,12 @@ describe("Oracle", function () {
     })
 
     it("should return initial price with period = 1", async () => {
-      const price = new BigNumberJs((await oracle.getTwap(wethUSDPool1.address, weth.address, usdc.address, 1)).toString())
+      const price = new BigNumberJs((await oracle.getTwap(wethUSDPool1.address, weth.address, usdc.address, 1, true)).toString())
       expect(isSimilar(price.toString(), ethRawPrice1e18)).to.be.true;
     })
 
     it("should return correct price with safe twap", async () => {
-      const price = new BigNumberJs((await oracle.getTwapSafe(wethUSDPool1.address, weth.address, usdc.address, 86400)).toString())
+      const price = new BigNumberJs((await oracle.getTwap(wethUSDPool1.address, weth.address, usdc.address, 86400, true)).toString())
       expect(isSimilar(price.toString(), ethRawPrice1e18)).to.be.true;
     })
   })
@@ -165,12 +165,12 @@ describe("Oracle", function () {
     })
 
     it("should return initial price with period = 1", async () => {
-      const price = new BigNumberJs((await oracle.getTwap(wethUSDPool2.address, weth.address, randomUSD.address, 1)).toString())
+      const price = new BigNumberJs((await oracle.getTwap(wethUSDPool2.address, weth.address, randomUSD.address, 1, false)).toString())
       expect(isSimilar(price.toString(), ethRawPrice1e18)).to.be.true;
     })
 
     it("should return correct price with safe twap", async () => {
-      const price = new BigNumberJs((await oracle.getTwapSafe(wethUSDPool2.address, weth.address, randomUSD.address, 86400)).toString())
+      const price = new BigNumberJs((await oracle.getTwap(wethUSDPool2.address, weth.address, randomUSD.address, 86400, true)).toString())
       expect(isSimilar(price.toString(), ethRawPrice1e18)).to.be.true;
     })
   })
