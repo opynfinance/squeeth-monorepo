@@ -101,17 +101,35 @@ contract Controller is Ownable, ReentrancyGuard {
     /// Events
     event OpenVault(uint256 vaultId);
     event CloseVault(uint256 vaultId);
-    event DepositCollateral(uint256 vaultId, uint256 amount, uint128 collateralId);
+    event DepositCollateral(uint256 vaultId, uint256 amount);
     event DepositUniPositionToken(uint256 vaultId, uint256 tokenId);
-    event WithdrawCollateral(uint256 vaultId, uint256 amount, uint128 collateralId);
+    event WithdrawCollateral(uint256 vaultId, uint256 amount);
     event WithdrawUniPositionToken(uint256 vaultId, uint256 tokenId);
     event MintShort(uint256 amount, uint256 vaultId);
     event BurnShort(uint256 amount, uint256 vaultId);
+    event ReduceDebt(
+        uint256 vaultId,
+        uint256 ethRedeemed,
+        uint256 wPowerPerpRedeemed,
+        uint256 wPowerPerpBurned,
+        uint256 wPowerPerpExcess,
+        uint256 bounty
+    );
     event UpdateOperator(uint256 vaultId, address operator);
     event FeeRateUpdated(uint256 oldFee, uint256 newFee);
     event FeeRecipientUpdated(address oldFeeRecipient, address newFeeRecipient);
     event Liquidate(uint256 vaultId, uint256 debtAmount, uint256 collateralPaid);
-    event NormalizationFactorUpdated(uint256 oldNormFactor, uint256 newNormFactor, uint256 timestamp);
+    event NormalizationFactorUpdated(
+        uint256 oldNormFactor,
+        uint256 newNormFactor,
+        uint256 lastModificationTimestamp,
+        uint256 timestamp
+    );
+    event Paused(uint256 pausesLeft);
+    event UnPaused(address unpauser);
+    event Shutdown(uint256 indexForSettlement);
+    event RedeemLong(uint256 wPowerPerpAmount, uint256 payoutAmount);
+    event RedeemShort(uint256 vauldId, uint256 collateralAmount);
 
     modifier notPaused() {
         require(!isSystemPaused, "C0");
@@ -387,7 +405,13 @@ contract Controller is Ownable, ReentrancyGuard {
      */
     function reduceDebtShutdown(uint256 _vaultId) external isShutdown nonReentrant {
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
-        _reduceDebt(cachedVault, IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId), normalizationFactor, false);
+        _reduceDebt(
+            cachedVault,
+            IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId),
+            _vaultId,
+            normalizationFactor,
+            false
+        );
         _writeVault(_vaultId, cachedVault);
     }
 
@@ -401,7 +425,7 @@ contract Controller is Ownable, ReentrancyGuard {
         uint256 cachedNormFactor = _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
 
-        _reduceDebt(cachedVault, IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId), cachedNormFactor, false);
+        _reduceDebt(cachedVault, IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId), _vaultId, cachedNormFactor, false);
 
         _writeVault(_vaultId, cachedVault);
     }
@@ -452,6 +476,7 @@ contract Controller is Ownable, ReentrancyGuard {
         uint256 bounty = _reduceDebt(
             cachedVault,
             IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId),
+            _vaultId,
             cachedNormFactor,
             true
         );
@@ -547,6 +572,8 @@ contract Controller is Ownable, ReentrancyGuard {
         isSystemPaused = true;
         pausesLeft -= 1;
         lastPauseTime = block.timestamp;
+
+        emit Paused(pausesLeft);
     }
 
     /**
@@ -556,6 +583,7 @@ contract Controller is Ownable, ReentrancyGuard {
     function unPauseAnyone() external isPaused notShutdown {
         require(block.timestamp > (lastPauseTime + 1 days), "C18");
         isSystemPaused = false;
+        emit UnPaused(msg.sender);
     }
 
     /**
@@ -564,6 +592,7 @@ contract Controller is Ownable, ReentrancyGuard {
      */
     function unPauseOwner() external onlyOwner isPaused notShutdown {
         isSystemPaused = false;
+        emit UnPaused(msg.sender);
     }
 
     /**
@@ -575,6 +604,8 @@ contract Controller is Ownable, ReentrancyGuard {
 
         uint256 longValue = Power2Base._getLongSettlementValue(_wPerpAmount, indexForSettlement, normalizationFactor);
         payable(msg.sender).sendValue(longValue);
+
+        emit RedeemLong(_wPerpAmount, longValue);
     }
 
     /**
@@ -588,7 +619,7 @@ contract Controller is Ownable, ReentrancyGuard {
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
         uint256 cachedNormFactor = normalizationFactor;
 
-        _reduceDebt(cachedVault, msg.sender, cachedNormFactor, false);
+        _reduceDebt(cachedVault, msg.sender, _vaultId, cachedNormFactor, false);
 
         uint256 debt = Power2Base._getLongSettlementValue(
             cachedVault.shortAmount,
@@ -604,6 +635,8 @@ contract Controller is Ownable, ReentrancyGuard {
         _writeVault(_vaultId, cachedVault);
 
         payable(msg.sender).sendValue(excess);
+
+        emit RedeemShort(_vaultId, excess);
     }
 
     /**
@@ -788,7 +821,7 @@ contract Controller is Ownable, ReentrancyGuard {
         uint256 _amount
     ) internal {
         _vault.addEthCollateral(_amount);
-        emit DepositCollateral(_vaultId, _amount, 0);
+        emit DepositCollateral(_vaultId, _amount);
     }
 
     /**
@@ -829,7 +862,7 @@ contract Controller is Ownable, ReentrancyGuard {
 
         _vault.removeEthCollateral(_amount);
 
-        emit WithdrawCollateral(_vaultId, _amount, 0);
+        emit WithdrawCollateral(_vaultId, _amount);
     }
 
     /**
@@ -925,6 +958,7 @@ contract Controller is Ownable, ReentrancyGuard {
     function _reduceDebt(
         VaultLib.Vault memory _vault,
         address _owner,
+        uint256 _vaultId,
         uint256 _normalizationFactor,
         bool _payBounty
     ) internal returns (uint256) {
@@ -946,6 +980,8 @@ contract Controller is Ownable, ReentrancyGuard {
 
         if (excess > 0) IWPowerPerp(wPowerPerp).transfer(_owner, excess);
         if (burnAmount > 0) IWPowerPerp(wPowerPerp).burn(address(this), burnAmount);
+
+        emit ReduceDebt(_vaultId, withdrawnEthAmount, withdrawnWPowerPerpAmount, burnAmount, excess, bounty);
 
         return bounty;
     }
@@ -1046,7 +1082,12 @@ contract Controller is Ownable, ReentrancyGuard {
 
         uint256 newNormalizationFactor = _getNewNormalizationFactor();
 
-        emit NormalizationFactorUpdated(normalizationFactor, newNormalizationFactor, block.timestamp);
+        emit NormalizationFactorUpdated(
+            normalizationFactor,
+            newNormalizationFactor,
+            lastFundingUpdateTimestamp,
+            block.timestamp
+        );
 
         // the following will be batch into 1 SSTORE because of type uint128
         normalizationFactor = newNormalizationFactor.toUint128();
@@ -1110,12 +1151,7 @@ contract Controller is Ownable, ReentrancyGuard {
             .positions(_uniTokenId);
         // only check token0 and token1, ignore fee
         // if there are multiple wPowerPerp/weth pools with different fee rate, accept position tokens from any of them
-        address wPowerPerpAddr = wPowerPerp; // cache storage variable
-        address wethAddr = weth; // cache storage variable
-        require(
-            (token0 == wPowerPerpAddr && token1 == wethAddr) || (token1 == wPowerPerpAddr && token0 == wethAddr),
-            "C23"
-        );
+        require((token0 == wPowerPerp && token1 == weth) || (token1 == wPowerPerp && token0 == weth), "C23");
     }
 
     /**
