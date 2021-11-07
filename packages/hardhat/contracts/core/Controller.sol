@@ -1237,11 +1237,14 @@ contract Controller is Ownable, ReentrancyGuard {
 
         // if there's a Uniswap Position token in the vault, stimulate reducing debt first
         if (cachedVault.NftCollateralId != 0) {
-            // stimulate vault state after removing nft
+            // using current tick to check how much nft is worth
+            (, int24 spotTick, , , , , ) = IUniswapV3Pool(wPowerPerpPool).slot0();
+
+            // simulate vault state after removing nft
             (uint256 nftEthAmount, uint256 nftWPowerperpAmount) = VaultLib._getUniPositionBalances(
                 uniswapPositionManager,
                 cachedVault.NftCollateralId,
-                IOracle(oracle).getTimeWeightedAverageTickSafe(wPowerPerpPool, TWAP_PERIOD),
+                spotTick,
                 isWethToken0
             );
 
