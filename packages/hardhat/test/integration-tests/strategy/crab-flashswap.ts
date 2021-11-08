@@ -117,45 +117,41 @@ describe("Crab flashswap integration test", function () {
 
   describe("Flash deposit", async () => {
     it("should revert flash depositing when ETH sent is not greater than ethToDeposit", async () => {
-      const ethToDeposit = ethers.utils.parseUnits('1')
-      const ethToBorrow = ethers.utils.parseUnits('1')
+      const ethToDeposit = ethers.utils.parseUnits('2')
       const msgvalue = ethers.utils.parseUnits('1')
 
       await expect(
-        crabStrategy.connect(depositor).flashDeposit(ethToDeposit, ethToBorrow, {value: msgvalue})
-      ).to.be.revertedWith("Need some buffer");
+        crabStrategy.connect(depositor).flashDeposit(ethToDeposit, {value: msgvalue})
+      ).to.be.revertedWith("function call failed to execute");
     })
 
-    it("should revert if depositing 0 ethToDeposit and 0 ethToBorrow due to slippage limit underflow", async () => {
+    it("should revert if depositing 0 ethToDeposit due to slippage limit underflow", async () => {
       const ethToDeposit = ethers.utils.parseUnits('0')
-      const ethToBorrow = ethers.utils.parseUnits('0')
       const msgvalue = ethers.utils.parseUnits('0.01')
 
       await expect(
-        crabStrategy.connect(depositor).flashDeposit(ethToDeposit, ethToBorrow, {value: msgvalue})
+        crabStrategy.connect(depositor).flashDeposit(ethToDeposit, {value: msgvalue})
       ).to.be.revertedWith("ds-math-sub-underflow");
     })
 
     it("should revert if slippage limit is breached", async () => {
-      const ethToDeposit = ethers.utils.parseUnits('0.6')
-      const ethToBorrow = ethers.utils.parseUnits('0.6')
+      const ethToDeposit = ethers.utils.parseUnits('1.2')
       const msgvalue = ethers.utils.parseUnits('0.6000000001')
 
       await expect(
-        crabStrategy.connect(depositor).flashDeposit(ethToDeposit, ethToBorrow, {value: msgvalue})
+        crabStrategy.connect(depositor).flashDeposit(ethToDeposit, {value: msgvalue})
       ).to.be.revertedWith("function call failed to execute");
     })
 
     it("should deposit correct amount and mint correct shares amount", async () => {
-      const ethToDeposit = ethers.utils.parseUnits('0.6')
-      const ethToBorrow = ethers.utils.parseUnits('0.6')
+      const ethToDeposit = ethers.utils.parseUnits('1.2')
       const msgvalue = ethers.utils.parseUnits('0.61')
 
       const squeethDelta = scaledStartingSqueethPrice1e18.mul(2);
-      const debtToMint = wdiv(ethToDeposit.add(ethToBorrow), (squeethDelta));
+      const debtToMint = wdiv(ethToDeposit, (squeethDelta));
       const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
-      await crabStrategy.connect(depositor).flashDeposit(ethToDeposit, ethToBorrow, {value: msgvalue})
+      await crabStrategy.connect(depositor).flashDeposit(ethToDeposit, {value: msgvalue})
       
       const totalSupply = (await crabStrategy.totalSupply())
       const depositorCrab = (await crabStrategy.balanceOf(depositor.address))
@@ -167,8 +163,8 @@ describe("Crab flashswap integration test", function () {
       const currentBlock = await provider.getBlock(currentBlockNumber)
       const timeStamp = currentBlock.timestamp
 
-      expect(totalSupply.eq(ethToDeposit.add(ethToBorrow))).to.be.true
-      expect(depositorCrab.eq(ethToDeposit.add(ethToBorrow))).to.be.true
+      expect(totalSupply.eq(ethToDeposit)).to.be.true
+      expect(depositorCrab.eq(ethToDeposit)).to.be.true
       expect(isSimilar(debtAmount.toString(), debtToMint.toString())).to.be.true
       expect(depositorSqueethBalance.eq(depositorSqueethBalanceBefore)).to.be.true
       expect(strategyContractSqueeth.eq(BigNumber.from(0))).to.be.true
@@ -176,15 +172,14 @@ describe("Crab flashswap integration test", function () {
     })
 
     it("should deposit correct amount and mint correct shares amount on non-initial deposit", async () => {
-      const ethToDeposit = ethers.utils.parseUnits('0.6')
-      const ethToBorrow = ethers.utils.parseUnits('0.6')
+      const ethToDeposit = ethers.utils.parseUnits('1.2')
       const msgvalue = ethers.utils.parseUnits('0.61')
 
       const squeethDelta = scaledStartingSqueethPrice1e18.mul(2);
-      const debtToMint = wdiv(ethToDeposit.add(ethToBorrow), (squeethDelta));
+      const debtToMint = wdiv(ethToDeposit, (squeethDelta));
       const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
-      await crabStrategy.connect(depositor).flashDeposit(ethToDeposit, ethToBorrow, {value: msgvalue})
+      await crabStrategy.connect(depositor).flashDeposit(ethToDeposit, {value: msgvalue})
       
       const totalSupply = (await crabStrategy.totalSupply())
       const depositorCrab = (await crabStrategy.balanceOf(depositor.address))
@@ -196,8 +191,8 @@ describe("Crab flashswap integration test", function () {
       const currentBlock = await provider.getBlock(currentBlockNumber)
       const timeStamp = currentBlock.timestamp
 
-      expect(totalSupply.eq(ethToDeposit.mul(2).add(ethToBorrow.mul(2)))).to.be.true
-      expect(depositorCrab.eq(ethToDeposit.mul(2).add(ethToBorrow.mul(2)))).to.be.true
+      expect(totalSupply.eq(ethToDeposit.mul(2))).to.be.true
+      expect(depositorCrab.eq(ethToDeposit.mul(2))).to.be.true
       expect(isSimilar(debtAmount.toString(), debtToMint.mul(2).toString())).to.be.true
       expect(depositorSqueethBalance.eq(depositorSqueethBalanceBefore)).to.be.true
       expect(strategyContractSqueeth.eq(BigNumber.from(0))).to.be.true

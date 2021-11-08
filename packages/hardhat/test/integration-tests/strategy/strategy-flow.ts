@@ -98,25 +98,23 @@ describe("Crab integration test: flash deposit - deposit - withdraw", function (
 
   describe("flash deposit - deposit - withdraw - flash withdraw", async () => {
     it("should revert flash depositing if not enough ETH", async () => {
-      const ethToDeposit = ethers.utils.parseUnits('10')
-      const ethToBorrow = ethers.utils.parseUnits('10')
+      const ethToDeposit = ethers.utils.parseUnits('20')
       const msgvalue = ethers.utils.parseUnits('10')
 
       await expect(
-        crabStrategy.connect(depositor).flashDeposit(ethToDeposit, ethToBorrow, {value: msgvalue})
-      ).to.be.revertedWith("Need some buffer");
+        crabStrategy.connect(depositor).flashDeposit(ethToDeposit, {value: msgvalue})
+      ).to.be.revertedWith("function call failed to execute");
     })
 
     it("should flash deposit correct amount and mint correct shares amount", async () => {
-      const ethToDeposit = ethers.utils.parseUnits('10')
-      const ethToBorrow = ethers.utils.parseUnits('10')
+      const ethToDeposit = ethers.utils.parseUnits('20')
       const msgvalue = ethers.utils.parseUnits('10.1')
 
       const squeethDelta = scaledStartingSqueethPrice1e18.mul(2);
-      const debtToMint = wdiv(ethToDeposit.add(ethToBorrow), (squeethDelta));
+      const debtToMint = wdiv(ethToDeposit, (squeethDelta));
       const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
-      await crabStrategy.connect(depositor).flashDeposit(ethToDeposit, ethToBorrow, {value: msgvalue})
+      await crabStrategy.connect(depositor).flashDeposit(ethToDeposit, {value: msgvalue})
       
       const totalSupply = (await crabStrategy.totalSupply())
       const depositorCrab = (await crabStrategy.balanceOf(depositor.address))
@@ -128,8 +126,8 @@ describe("Crab integration test: flash deposit - deposit - withdraw", function (
       const currentBlock = await provider.getBlock(currentBlockNumber)
       const timeStamp = currentBlock.timestamp
 
-      expect(totalSupply.eq(ethToDeposit.add(ethToBorrow))).to.be.true
-      expect(depositorCrab.eq(ethToDeposit.add(ethToBorrow))).to.be.true
+      expect(totalSupply.eq(ethToDeposit)).to.be.true
+      expect(depositorCrab.eq(ethToDeposit)).to.be.true
       expect(isSimilar(debtAmount.toString(), debtToMint.toString())).to.be.true
       expect(depositorSqueethBalance.eq(depositorSqueethBalanceBefore)).to.be.true
       expect(strategyContractSqueeth.eq(BigNumber.from(0))).to.be.true

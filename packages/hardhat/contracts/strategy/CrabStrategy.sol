@@ -76,13 +76,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
 
     event Deposit(address indexed depositor, uint256 wSqueethAmount, uint256 lpAmount);
     event Withdraw(address indexed withdrawer, uint256 crabAmount, uint256 wSqueethAmount, uint256 ethWithdrawn);
-    event FlashDeposit(
-        address indexed depositor,
-        uint256 depositedAmount,
-        uint256 borrowedAmount,
-        uint256 totalDepositedAmount,
-        uint256 tradedAmountOut
-    );
+    event FlashDeposit(address indexed depositor, uint256 depositedAmount, uint256 tradedAmountOut);
     event FlashWithdraw(address indexed withdrawer, uint256 crabAmount, uint256 wSqueethAmount);
     event TimeHedgeOnUniswap(
         address indexed hedger,
@@ -171,17 +165,14 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
 
     /**
      * @notice flash deposit into strategy
-     * @dev this function sells minted WSqueeth for _ethToBorrow
+     * @dev this function sells minted WSqueeth
      * @param _ethToDeposit ETH sent from depositor
-     * @param _ethToBorrow ETH to flashswap on uniswap
      */
-    function flashDeposit(uint256 _ethToDeposit, uint256 _ethToBorrow) external payable nonReentrant {
-        require(msg.value > _ethToDeposit, "Need some buffer");
-
+    function flashDeposit(uint256 _ethToDeposit) external payable nonReentrant {
         (uint256 cachedStrategyDebt, ) = _syncStrategyState();
 
         (uint256 wSqueethToMint, uint256 wSqueethEthPrice) = _calcWsqueethToMint(
-            _ethToDeposit.add(_ethToBorrow),
+            _ethToDeposit,
             cachedStrategyDebt,
             _strategyCollateral
         );
@@ -197,12 +188,12 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
             weth,
             IUniswapV3Pool(ethWSqueethPool).fee(),
             wSqueethToMint,
-            _ethToDeposit.add(_ethToBorrow).sub(msg.value),
+            _ethToDeposit.sub(msg.value),
             uint8(FLASH_SOURCE.FLASH_DEPOSIT),
-            abi.encodePacked(_ethToDeposit.add(_ethToBorrow))
+            abi.encodePacked(_ethToDeposit)
         );
 
-        emit FlashDeposit(msg.sender, _ethToDeposit, _ethToBorrow, msg.value, wSqueethToMint);
+        emit FlashDeposit(msg.sender, _ethToDeposit, wSqueethToMint);
     }
 
     /**

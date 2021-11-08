@@ -103,15 +103,14 @@ describe("Crab flashswap integration test: crab vault liquidation", function () 
   })
 
   this.beforeAll("Deposit into strategy", async () => {
-    const ethToDeposit = ethers.utils.parseUnits('10')
-    const ethToBorrow = ethers.utils.parseUnits('10')
+    const ethToDeposit = ethers.utils.parseUnits('20')
     const msgvalue = ethers.utils.parseUnits('10.1')
 
     const squeethDelta = scaledStartingSqueethPrice1e18.mul(2);
-    const debtToMint = wdiv(ethToDeposit.add(ethToBorrow), (squeethDelta));
+    const debtToMint = wdiv(ethToDeposit, (squeethDelta));
     const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
-    await crabStrategy.connect(depositor).flashDeposit(ethToDeposit, ethToBorrow, {value: msgvalue})
+    await crabStrategy.connect(depositor).flashDeposit(ethToDeposit, {value: msgvalue})
     
     const totalSupply = (await crabStrategy.totalSupply())
     const depositorCrab = (await crabStrategy.balanceOf(depositor.address))
@@ -123,8 +122,8 @@ describe("Crab flashswap integration test: crab vault liquidation", function () 
     const currentBlock = await provider.getBlock(currentBlockNumber)
     const timeStamp = currentBlock.timestamp
 
-    expect(totalSupply.eq(ethToDeposit.add(ethToBorrow))).to.be.true
-    expect(depositorCrab.eq(ethToDeposit.add(ethToBorrow))).to.be.true
+    expect(totalSupply.eq(ethToDeposit)).to.be.true
+    expect(depositorCrab.eq(ethToDeposit)).to.be.true
     expect(isSimilar(debtAmount.toString(), debtToMint.toString())).to.be.true
     expect(depositorSqueethBalance.eq(depositorSqueethBalanceBefore)).to.be.true
     expect(strategyContractSqueeth.eq(BigNumber.from(0))).to.be.true
@@ -206,15 +205,14 @@ describe("Crab flashswap integration test: crab vault liquidation", function () 
       const debtBefore = vaultBefore.shortAmount
       const ratio = debtBefore.mul(one).div(collateralBefore)
 
-      const ethToDeposit = ethers.utils.parseUnits('10')
-      const ethToBorrow = ethers.utils.parseUnits('10')
+      const ethToDeposit = ethers.utils.parseUnits('20')
       const msgvalue = ethers.utils.parseUnits('15')  
-      const wSqueethToSell = ethToDeposit.add(ethToBorrow).mul(ratio).div(one)
+      const wSqueethToSell = ethToDeposit.mul(ratio).div(one)
       const strategyDebtAmountBefore = (await crabStrategy.getStrategyDebt())
       const strategyCollateralAmountBefore = (await crabStrategy.getStrategyCollateral())
       const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor2.address)
       const totalSupplyBefore = (await crabStrategy.totalSupply())
-      const depositorShare = one.mul(ethToDeposit.add(ethToBorrow)).div(collateralBefore.add(ethToDeposit.add(ethToBorrow)))
+      const depositorShare = one.mul(ethToDeposit).div(collateralBefore.add(ethToDeposit))
       const crabMintAmount = totalSupplyBefore.mul(depositorShare).div(one.sub(depositorShare))
       const depositorCrabBefore = (await crabStrategy.balanceOf(depositor2.address))
 
@@ -222,8 +220,7 @@ describe("Crab flashswap integration test: crab vault liquidation", function () 
       expect(strategyCollateralAmountBefore.eq(collateralBefore)).to.be.false
       expect(strategyDebtAmountBefore.eq(debtBefore)).to.be.false
 
-      await crabStrategy.connect(depositor2).flashDeposit(ethToDeposit, ethToBorrow, {value: msgvalue})
-      
+      await crabStrategy.connect(depositor2).flashDeposit(ethToDeposit, {value: msgvalue})      
       const strategyDebtAmountAfter = (await crabStrategy.getStrategyDebt())
       const strategyCollateralAmountAfter = (await crabStrategy.getStrategyCollateral())
       const depositorCrabAfter = (await crabStrategy.balanceOf(depositor2.address))
@@ -232,7 +229,7 @@ describe("Crab flashswap integration test: crab vault liquidation", function () 
       const totalSupplyAfter = (await crabStrategy.totalSupply())
       // const depositorEthBalanceAfter = await provider.getBalance(depositor2.address)
 
-      expect(strategyCollateralAmountAfter.eq(collateralBefore.add(ethToDeposit.add(ethToBorrow)))).to.be.true
+      expect(strategyCollateralAmountAfter.eq(collateralBefore.add(ethToDeposit))).to.be.true
       expect(isSimilar(strategyDebtAmountAfter.toString(),(debtBefore.add(wSqueethToSell)).toString())).to.be.true
       expect(isSimilar((strategyDebtAmountAfter.sub(debtBefore)).toString(),(wSqueethToSell).toString())).to.be.true      
       expect(isSimilar((totalSupplyAfter.sub(totalSupplyBefore)).toString(),(crabMintAmount).toString())).to.be.true
