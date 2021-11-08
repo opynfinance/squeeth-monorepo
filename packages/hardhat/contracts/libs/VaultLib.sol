@@ -19,6 +19,8 @@ library VaultLib {
     using SafeMath for uint256;
     using Uint256Casting for uint256;
 
+    uint256 constant ONE_ONE = 1e36;
+
     struct Vault {
         // the address that can update the vault
         address operator;
@@ -145,7 +147,7 @@ library VaultLib {
         bool _isWethToken0
     ) internal view returns (bool, bool) {
         uint256 debtValueInETH = uint256(_vault.shortAmount).mul(_normalizationFactor).mul(_ethQuoteCurrencyPrice).div(
-            1e36
+            ONE_ONE
         );
         uint256 totalCollateral = _getEffectiveCollateral(
             _vault,
@@ -191,7 +193,7 @@ library VaultLib {
         );
         // convert squeeth amount from uniswap position token as equivalent amount of collateral
         uint256 wSqueethIndexValueInEth = nftWsqueethAmount.mul(_normalizationFactor).mul(_ethQuoteCurrencyPrice).div(
-            1e36
+            ONE_ONE
         );
         // add eth value from uniswap position token as collateral
         return nftEthAmount.add(wSqueethIndexValueInEth).add(_vault.collateralAmount);

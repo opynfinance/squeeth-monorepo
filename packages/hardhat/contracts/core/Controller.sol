@@ -64,8 +64,18 @@ contract Controller is Ownable, ReentrancyGuard {
 
     uint32 public constant TWAP_PERIOD = 5 minutes;
 
+    //80% of index
+    uint256 public constant LOWER_MARK_RATIO = 8e17;
+    //125% of index
+    uint256 public constant UPPER_MARK_RATIO = 125e16;
+    // 10%
+    uint256 public constant LIQUIDATION_BOUNTY = 1e17;
+    // 2%
+    uint256 public constant REDUCE_DEBT_BOUNTY = 2e16;
+
     /// @dev basic unit used for calculation
     uint256 private constant ONE = 1e18;
+    uint256 private constant ONE_ONE = 1e36;
 
     address public immutable weth;
     address public immutable quoteCurrency;
@@ -1109,18 +1119,18 @@ contract Controller is Ownable, ReentrancyGuard {
         uint256 index = Power2Base._getIndex(periodForOracle, oracle, ethQuoteCurrencyPool, weth, quoteCurrency);
         uint256 rFunding = (ONE.mul(uint256(period))).div(FUNDING_PERIOD);
 
-        // floor mark to be at least 80% of index
-        uint256 lowerBound = index.mul(4).div(5);
+        // floor mark to be at least LOWER_MARK_RATIO of index
+        uint256 lowerBound = index.mul(LOWER_MARK_RATIO).div(ONE);
         if (mark < lowerBound) {
             mark = lowerBound;
         } else {
-            // cap mark to be at most 120% of index
-            uint256 upperBound = index.mul(5).div(4);
+            // cap mark to be at most UPPER_MARK_RATIO of index
+            uint256 upperBound = index.mul(UPPER_MARK_RATIO).div(ONE);
             if (mark > upperBound) mark = upperBound;
         }
 
         // newNormFactor = (mark / ( (1+rFunding) * mark - index * rFunding )) * oldNormaFactor
-        uint256 multiplier = mark.mul(1e36).div((ONE.add(rFunding)).mul(mark).sub(index.mul(rFunding))); // multiply by 1e36 to keep multiplier in 18 decimals
+        uint256 multiplier = mark.mul(ONE_ONE).div((ONE.add(rFunding)).mul(mark).sub(index.mul(rFunding))); // multiply by 1e36 to keep multiplier in 18 decimals
 
         return cacheNormFactor.mul(multiplier).div(ONE);
     }
@@ -1256,8 +1266,8 @@ contract Controller is Ownable, ReentrancyGuard {
                     _normalizationFactor
                 )
                 .add(_ethWithdrawn)
-                .mul(2)
-                .div(100);
+                .mul(REDUCE_DEBT_BOUNTY)
+                .div(ONE);
     }
 
     /**
@@ -1334,7 +1344,7 @@ contract Controller is Ownable, ReentrancyGuard {
         );
 
         // add 10% bonus for liquidators
-        collateralToPay = collateralToPay.add(collateralToPay.div(10));
+        collateralToPay = collateralToPay.add(collateralToPay.mul(LIQUIDATION_BOUNTY).div(ONE));
 
         return (finalWAmountToLiquidate, collateralToPay);
     }

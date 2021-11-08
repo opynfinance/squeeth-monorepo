@@ -10,8 +10,9 @@ library Power2Base {
     using SafeMath for uint256;
 
     uint32 constant TWAP_PERIOD = 5 minutes;
-
     uint256 constant INDEX_SCALE = 1e4;
+    uint256 constant ONE = 1e18;
+    uint256 constant ONE_ONE = 1e36;
 
     /**
      * @notice return the scaled down index of the power perp in USD, scaled by 18 decimals
@@ -37,7 +38,7 @@ library Power2Base {
             _period,
             false
         );
-        return ethQuoteCurrencyPrice.mul(ethQuoteCurrencyPrice).div(1e18);
+        return ethQuoteCurrencyPrice.mul(ethQuoteCurrencyPrice).div(ONE);
     }
 
     /**
@@ -57,7 +58,7 @@ library Power2Base {
         address _quoteCurrency
     ) internal view returns (uint256) {
         uint256 ethQuoteCurrencyPrice = _getTwap(_oracle, _ethQuoteCurrencyPool, _weth, _quoteCurrency, _period, false);
-        return ethQuoteCurrencyPrice.mul(ethQuoteCurrencyPrice).div(1e18);
+        return ethQuoteCurrencyPrice.mul(ethQuoteCurrencyPrice).div(ONE);
     }
 
     /**
@@ -122,7 +123,7 @@ library Power2Base {
             TWAP_PERIOD,
             false
         );
-        return _debtAmount.mul(_normalizationFactor).mul(ethQuoteCurrencyPrice).div(1e36);
+        return _debtAmount.mul(_normalizationFactor).mul(ethQuoteCurrencyPrice).div(ONE_ONE);
     }
 
     /**
@@ -183,6 +184,6 @@ library Power2Base {
         uint256 _indexPriceForSettlement,
         uint256 _normalizationFactor
     ) internal pure returns (uint256) {
-        return _wsqueethAmount.mul(_normalizationFactor).mul(_indexPriceForSettlement).div(1e36);
+        return _wsqueethAmount.mul(_normalizationFactor).mul(_indexPriceForSettlement).div(ONE_ONE);
     }
 }
