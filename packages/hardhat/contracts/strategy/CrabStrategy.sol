@@ -373,8 +373,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
             if (address(this).balance > 0) {
                 payable(_caller).sendValue(address(this).balance);
             }
-        }
-        if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_WITHDRAW) {
+        } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_WITHDRAW) {
             FlashWithdrawData memory data = abi.decode(_callData, (FlashWithdrawData));
             uint256 ethToWithdraw = _withdraw(
                 _caller,
@@ -390,8 +389,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
             if (proceeds > 0) {
                 payable(_caller).sendValue(proceeds);
             }
-        }
-        if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_HEDGE_SELL) {
+        } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_HEDGE_SELL) {
             FlashHedgeData memory data = abi.decode(_callData, (FlashHedgeData));
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
             _executeSellAuction(_caller, data.ethProceeds, data.wSqueethAmount, data.ethProceeds, true);
@@ -401,8 +399,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
 
             IWPowerPerp(wPowerPerp).transfer(ethWSqueethPool, _amountToPay);
             IWPowerPerp(wPowerPerp).transfer(_caller, wSqueethProfit);
-        }
-        if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_HEDGE_BUY) {
+        } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_HEDGE_BUY) {
             FlashHedgeData memory data = abi.decode(_callData, (FlashHedgeData));
             _executeBuyAuction(_caller, data.wSqueethAmount, data.ethProceeds, true);
 
