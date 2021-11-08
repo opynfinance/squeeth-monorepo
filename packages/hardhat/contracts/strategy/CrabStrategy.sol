@@ -169,16 +169,14 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
      * @param _ethToDeposit ETH sent from depositor
      */
     function flashDeposit(uint256 _ethToDeposit) external payable nonReentrant {
-        (uint256 cachedStrategyDebt, ) = _syncStrategyState();
+        (uint256 cachedStrategyDebt, uint256 cachedStrategyCollateral) = _syncStrategyState();
 
-        (uint256 wSqueethToMint, uint256 wSqueethEthPrice) = _calcWsqueethToMint(
-            _ethToDeposit,
-            cachedStrategyDebt,
-            _strategyCollateral
-        );
+        uint256 wSqueethToMint = _calcWsqueethToMint(_ethToDeposit, cachedStrategyDebt, cachedStrategyCollateral);
 
-        if (cachedStrategyDebt == 0) {
+        if (cachedStrategyDebt == 0 && cachedStrategyCollateral == 0) {
             // store hedge data as strategy is delta neutral at this point
+            // only execute this upon first deposit
+            uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP_PERIOD, true);
             timeAtLastHedge = block.timestamp;
             priceAtLastHedge = wSqueethEthPrice;
         }
@@ -429,15 +427,13 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
     ) internal returns (uint256, uint256) {
         (uint256 strategyDebt, uint256 strategyCollateral) = _syncStrategyState();
 
-        (uint256 wSqueethToMint, uint256 wSqueethEthPrice) = _calcWsqueethToMint(
-            _amount,
-            strategyDebt,
-            strategyCollateral
-        );
+        uint256 wSqueethToMint = _calcWsqueethToMint(_amount, strategyDebt, strategyCollateral);
         uint256 depositorCrabAmount = _calcSharesToMint(_amount, strategyCollateral, totalSupply());
 
-        if (strategyDebt == 0) {
+        if (strategyDebt == 0 && strategyCollateral == 0) {
             // store hedge data as strategy is delta neutral at this point
+            // only execute this upon first deposit
+            uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP_PERIOD, true);
             timeAtLastHedge = block.timestamp;
             priceAtLastHedge = wSqueethEthPrice;
         }
@@ -469,7 +465,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
         uint256 strategyShare = _calcCrabRatio(_crabAmount, totalSupply());
         uint256 ethToWithdraw = _calcEthToWithdraw(strategyShare, strategyCollateral);
 
-        require(_wSqueethAmount.wdiv(strategyDebt) == strategyShare, "invalid ratio");
+        if (strategyDebt > 0) require(_wSqueethAmount.wdiv(strategyDebt) == strategyShare, "invalid ratio");
 
         _burnWPowerPerp(_from, _wSqueethAmount, ethToWithdraw, _isFlashWithdraw);
         _burn(_from, _crabAmount);
@@ -670,19 +666,19 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
         uint256 _depositedAmount,
         uint256 _strategyDebtAmount,
         uint256 _strategyCollateralAmount
-    ) internal view returns (uint256, uint256) {
+    ) internal view returns (uint256) {
         uint256 wSqueethToMint;
-        uint256 wSqueethEthPrice;
 
-        if (_strategyDebtAmount == 0) {
-            wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP_PERIOD, true);
+        if (_strategyDebtAmount == 0 && _strategyCollateralAmount == 0) {
+            require(totalSupply() == 0, "Contract unsafe due to full liquidation");
+            uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP_PERIOD, true);
             uint256 squeethDelta = wSqueethEthPrice.wmul(2e18);
             wSqueethToMint = _depositedAmount.wdiv(squeethDelta);
         } else {
             wSqueethToMint = _depositedAmount.wmul(_strategyDebtAmount).wdiv(_strategyCollateralAmount);
         }
 
-        return (wSqueethToMint, wSqueethEthPrice);
+        return wSqueethToMint;
     }
 
     /**
@@ -726,15 +722,19 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
         uint256 _wSqueethEthPrice,
         bool _isSellingAuction
     ) internal view returns (uint256) {
-        uint256 auctionExecution = block.timestamp.sub(_auctionTriggerTime) >= auctionTime
+        uint256 auctionCompletionRatio = block.timestamp.sub(_auctionTriggerTime) >= auctionTime
             ? 1e18
             : (block.timestamp.sub(_auctionTriggerTime)).wdiv(auctionTime);
 
         uint256 priceMultiplier;
         if (_isSellingAuction) {
-            priceMultiplier = maxPriceMultiplier.sub(auctionExecution.wmul(maxPriceMultiplier.sub(minPriceMultiplier)));
+            priceMultiplier = maxPriceMultiplier.sub(
+                auctionCompletionRatio.wmul(maxPriceMultiplier.sub(minPriceMultiplier))
+            );
         } else {
-            priceMultiplier = minPriceMultiplier.add(auctionExecution.wmul(maxPriceMultiplier.sub(minPriceMultiplier)));
+            priceMultiplier = minPriceMultiplier.add(
+                auctionCompletionRatio.wmul(maxPriceMultiplier.sub(minPriceMultiplier))
+            );
         }
 
         return _wSqueethEthPrice.wmul(priceMultiplier);
