@@ -269,7 +269,8 @@ describe("Crab flashswap integration test: crab vault liquidation", function () 
       expect(userCrabBalanceAfter.eq(BigNumber.from(0))).to.be.true
       expect(userCrabBalanceBefore.sub(userCrabBalanceAfter).eq(userCrabBalanceBefore)).to.be.true
       expect(collateralAfter.eq(strategyCollateralAmountBefore.sub(userCollateral))).to.be.true
-      expect(strategyDebtAmountBefore.sub(debtAfter).eq(debtToRepay)).to.be.true
+      // use isSimilar to prevent last digits rounding error
+      expect(isSimilar(strategyDebtAmountBefore.sub(debtAfter).toString(), debtToRepay.toString(), 10)).to.be.true
     })
 
     it("depositor2 should withdraw correct amount of ETH collateral", async () => {
