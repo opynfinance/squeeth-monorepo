@@ -99,15 +99,15 @@ contract Controller is Ownable, ReentrancyGuard {
     mapping(uint256 => VaultLib.Vault) public vaults;
 
     /// Events
-    event OpenVault(uint256 vaultId);
-    event CloseVault(uint256 vaultId);
-    event DepositCollateral(uint256 vaultId, uint256 amount);
-    event DepositUniPositionToken(uint256 vaultId, uint256 tokenId);
-    event WithdrawCollateral(uint256 vaultId, uint256 amount);
-    event WithdrawUniPositionToken(uint256 vaultId, uint256 tokenId);
-    event MintShort(uint256 amount, uint256 vaultId);
-    event BurnShort(uint256 amount, uint256 vaultId);
+    event OpenVault(address sender, uint256 vaultId);
+    event DepositCollateral(address sender, uint256 vaultId, uint256 amount);
+    event DepositUniPositionToken(address sender, uint256 vaultId, uint256 tokenId);
+    event WithdrawCollateral(address sender, uint256 vaultId, uint256 amount);
+    event WithdrawUniPositionToken(address sender, uint256 vaultId, uint256 tokenId);
+    event MintShort(address sender, uint256 amount, uint256 vaultId);
+    event BurnShort(address sender, uint256 amount, uint256 vaultId);
     event ReduceDebt(
+        address sender,
         uint256 vaultId,
         uint256 ethRedeemed,
         uint256 wPowerPerpRedeemed,
@@ -115,10 +115,10 @@ contract Controller is Ownable, ReentrancyGuard {
         uint256 wPowerPerpExcess,
         uint256 bounty
     );
-    event UpdateOperator(uint256 vaultId, address operator);
+    event UpdateOperator(address sender, uint256 vaultId, address operator);
     event FeeRateUpdated(uint256 oldFee, uint256 newFee);
     event FeeRecipientUpdated(address oldFeeRecipient, address newFeeRecipient);
-    event Liquidate(uint256 vaultId, uint256 debtAmount, uint256 collateralPaid);
+    event Liquidate(address liquidator, uint256 vaultId, uint256 debtAmount, uint256 collateralPaid);
     event NormalizationFactorUpdated(
         uint256 oldNormFactor,
         uint256 newNormFactor,
@@ -128,8 +128,8 @@ contract Controller is Ownable, ReentrancyGuard {
     event Paused(uint256 pausesLeft);
     event UnPaused(address unpauser);
     event Shutdown(uint256 indexForSettlement);
-    event RedeemLong(uint256 wPowerPerpAmount, uint256 payoutAmount);
-    event RedeemShort(uint256 vauldId, uint256 collateralAmount);
+    event RedeemLong(address sender, uint256 wPowerPerpAmount, uint256 payoutAmount);
+    event RedeemShort(address sender, uint256 vauldId, uint256 collateralAmount);
 
     modifier notPaused() {
         require(!isSystemPaused, "C0");
@@ -499,7 +499,7 @@ contract Controller is Ownable, ReentrancyGuard {
             msg.sender
         );
 
-        emit Liquidate(_vaultId, debtAmount, collateralPaid);
+        emit Liquidate(msg.sender, _vaultId, debtAmount, collateralPaid);
 
         _writeVault(_vaultId, cachedVault);
 
@@ -518,7 +518,7 @@ contract Controller is Ownable, ReentrancyGuard {
     function updateOperator(uint256 _vaultId, address _operator) external {
         require(IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId) == msg.sender, "C25");
         vaults[_vaultId].operator = _operator;
-        emit UpdateOperator(_vaultId, _operator);
+        emit UpdateOperator(msg.sender, _vaultId, _operator);
     }
 
     /**
@@ -605,7 +605,7 @@ contract Controller is Ownable, ReentrancyGuard {
         uint256 longValue = Power2Base._getLongSettlementValue(_wPerpAmount, indexForSettlement, normalizationFactor);
         payable(msg.sender).sendValue(longValue);
 
-        emit RedeemLong(_wPerpAmount, longValue);
+        emit RedeemLong(msg.sender, _wPerpAmount, longValue);
     }
 
     /**
@@ -636,7 +636,7 @@ contract Controller is Ownable, ReentrancyGuard {
 
         payable(msg.sender).sendValue(excess);
 
-        emit RedeemShort(_vaultId, excess);
+        emit RedeemShort(msg.sender, _vaultId, excess);
     }
 
     /**
@@ -785,7 +785,7 @@ contract Controller is Ownable, ReentrancyGuard {
             shortAmount: 0,
             operator: address(0)
         });
-        emit OpenVault(vaultId);
+        emit OpenVault(msg.sender, vaultId);
         return (vaultId, vault);
     }
 
@@ -806,7 +806,7 @@ contract Controller is Ownable, ReentrancyGuard {
         _checkUniNFT(_uniTokenId);
         _vault.addUniNftCollateral(_uniTokenId);
         INonfungiblePositionManager(uniswapPositionManager).transferFrom(_account, address(this), _uniTokenId);
-        emit DepositUniPositionToken(_vaultId, _uniTokenId);
+        emit DepositUniPositionToken(msg.sender, _vaultId, _uniTokenId);
     }
 
     /**
@@ -821,7 +821,7 @@ contract Controller is Ownable, ReentrancyGuard {
         uint256 _amount
     ) internal {
         _vault.addEthCollateral(_amount);
-        emit DepositCollateral(_vaultId, _amount);
+        emit DepositCollateral(msg.sender, _vaultId, _amount);
     }
 
     /**
@@ -841,7 +841,7 @@ contract Controller is Ownable, ReentrancyGuard {
         uint256 tokenId = _vault.NftCollateralId;
         _vault.removeUniNftCollateral();
         INonfungiblePositionManager(uniswapPositionManager).transferFrom(address(this), _account, tokenId);
-        emit WithdrawUniPositionToken(_vaultId, tokenId);
+        emit WithdrawUniPositionToken(msg.sender, _vaultId, tokenId);
     }
 
     /**
@@ -862,7 +862,7 @@ contract Controller is Ownable, ReentrancyGuard {
 
         _vault.removeEthCollateral(_amount);
 
-        emit WithdrawCollateral(_vaultId, _amount);
+        emit WithdrawCollateral(msg.sender, _vaultId, _amount);
     }
 
     /**
@@ -884,7 +884,7 @@ contract Controller is Ownable, ReentrancyGuard {
         _vault.addShort(_wPowerPerpAmount);
         IWPowerPerp(wPowerPerp).mint(_account, _wPowerPerpAmount);
 
-        emit MintShort(_wPowerPerpAmount, _vaultId);
+        emit MintShort(msg.sender, _wPowerPerpAmount, _vaultId);
     }
 
     /**
@@ -904,7 +904,7 @@ contract Controller is Ownable, ReentrancyGuard {
         _vault.removeShort(_wPowerPerpAmount);
         IWPowerPerp(wPowerPerp).burn(_account, _wPowerPerpAmount);
 
-        emit BurnShort(_wPowerPerpAmount, _vaultId);
+        emit BurnShort(msg.sender, _wPowerPerpAmount, _vaultId);
     }
 
     /**
@@ -981,7 +981,15 @@ contract Controller is Ownable, ReentrancyGuard {
         if (excess > 0) IWPowerPerp(wPowerPerp).transfer(_owner, excess);
         if (burnAmount > 0) IWPowerPerp(wPowerPerp).burn(address(this), burnAmount);
 
-        emit ReduceDebt(_vaultId, withdrawnEthAmount, withdrawnWPowerPerpAmount, burnAmount, excess, bounty);
+        emit ReduceDebt(
+            msg.sender,
+            _vaultId,
+            withdrawnEthAmount,
+            withdrawnWPowerPerpAmount,
+            burnAmount,
+            excess,
+            bounty
+        );
 
         return bounty;
     }
