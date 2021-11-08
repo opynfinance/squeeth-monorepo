@@ -212,14 +212,24 @@ library VaultLib {
         int24 _wsqueethPoolTick,
         bool _isWethToken0
     ) internal view returns (uint256 ethAmount, uint256 wSqueethAmount) {
-        (int24 tickLower, int24 tickUpper, uint128 liquidity) = _getUniswapPositionInfo(_positionManager, _tokenId);
+        (
+            int24 tickLower,
+            int24 tickUpper,
+            uint128 liquidity,
+            uint128 tokensOwed0,
+            uint128 tokensOwed1
+        ) = _getUniswapPositionInfo(_positionManager, _tokenId);
         (uint256 amount0, uint256 amount1) = _getToken0Token1Balances(
             tickLower,
             tickUpper,
             _wsqueethPoolTick,
             liquidity
         );
-        return _isWethToken0 ? (amount0, amount1) : (amount1, amount0);
+
+        return
+            _isWethToken0
+                ? (amount0 + tokensOwed0, amount1 + tokensOwed1)
+                : (amount1 + tokensOwed1, amount0 + tokensOwed0);
     }
 
     /**
@@ -229,6 +239,8 @@ library VaultLib {
      * @return tickLower lower tick of the position
      * @return tickUpper upper tick of the position
      * @return liquidity raw liquidity amount of the position
+     * @return tokensOwed0 amount of token 0 can be collected as fee
+     * @return tokensOwed1 amount of token 1 can be collected as fee
      */
     function _getUniswapPositionInfo(address _positionManager, uint256 _tokenId)
         internal
@@ -236,12 +248,27 @@ library VaultLib {
         returns (
             int24,
             int24,
+            uint128,
+            uint128,
             uint128
         )
     {
         INonfungiblePositionManager positionManager = INonfungiblePositionManager(_positionManager);
-        (, , , , , int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) = positionManager.positions(_tokenId);
-        return (tickLower, tickUpper, liquidity);
+        (
+            ,
+            ,
+            ,
+            ,
+            ,
+            int24 tickLower,
+            int24 tickUpper,
+            uint128 liquidity,
+            ,
+            ,
+            uint128 tokensOwed0,
+            uint128 tokensOwed1
+        ) = positionManager.positions(_tokenId);
+        return (tickLower, tickUpper, liquidity, tokensOwed0, tokensOwed1);
     }
 
     /**

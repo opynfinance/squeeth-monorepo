@@ -3,7 +3,7 @@ import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber } from "ethers";
 import { parseEther } from "ethers/lib/utils";
-import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester, IWETH9 } from "../../typechain";
+import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester, IWETH9, LiquidationHelper } from "../../typechain";
 import { getSqrtPriceAndTickBySqueethPrice } from "../calculator";
 import { oracleScaleFactor, one } from "../utils";
 
@@ -27,6 +27,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
   let weth: IWETH9;
   let dai: MockErc20;
   let vaultLib: VaultLibTester
+  let liquidationHelper: LiquidationHelper
   let seller1: SignerWithAddress
   let random: SignerWithAddress
   let liquidator: SignerWithAddress
@@ -100,6 +101,18 @@ describe("Controller: Uni LP tokens collateralization", function () {
   this.beforeAll("Deploy Controller", async () => {
     const ControllerContract = await ethers.getContractFactory("Controller");
     controller = (await ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, dai.address, ethDaiPool.address, squeethEthPool.address, uniPositionManager.address)) as Controller;
+
+    const LiqHelperFactory = await ethers.getContractFactory("LiquidationHelper");
+    liquidationHelper = await LiqHelperFactory.deploy(
+        controller.address,
+        oracle.address,
+        squeeth.address,
+        weth.address,
+        dai.address,
+        ethDaiPool.address,
+        squeethEthPool.address,
+        uniPositionManager.address
+      ) as LiquidationHelper;
   })
 
   describe("Vault1 and Vault2: Basic Flow", function () {
@@ -735,7 +748,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
 
         const ownerWSqueethBefore = await squeeth.balanceOf(seller1.address)
 
-        const result = await controller.checkLiquidation(vaultId);
+        const result = await liquidationHelper.checkLiquidation(vaultId);
         const isUnsafe = result[0]
         const isLiquidatableAfterReducingDebt = result[1]
         const maxWPowerPerpAmount = result[2]  

@@ -2,7 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber, providers } from "ethers";
-import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager } from "../../typechain";
+import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, LiquidationHelper } from "../../typechain";
 import { isSimilar, one, oracleScaleFactor } from '../utils'
 
 const squeethETHPrice = ethers.utils.parseUnits('3010')
@@ -19,6 +19,8 @@ describe("Controller: liquidation unit test", function () {
   let oracle: MockOracle;
   let weth: MockErc20;
   let usdc: MockErc20;
+  let liquidationHelper: LiquidationHelper
+
   let provider: providers.JsonRpcProvider;
   let seller1: SignerWithAddress
   let liquidator: SignerWithAddress
@@ -57,7 +59,6 @@ describe("Controller: liquidation unit test", function () {
     await squeethEthPool.setPoolTokens(weth.address, squeeth.address);
     await ethUSDPool.setPoolTokens(weth.address, usdc.address);
 
-
     await oracle.connect(random).setPrice(squeethEthPool.address , squeethETHPrice) // eth per 1 squeeth
     await oracle.connect(random).setPrice(ethUSDPool.address , ethUSDPrice)  // usdc per 1 eth
   });
@@ -74,6 +75,19 @@ describe("Controller: liquidation unit test", function () {
       );
       expect(nftAddr).to.be.eq(shortSqueeth.address, "nft address mismatch");
     });
+    after('deploy liquidation helper', async() => {
+      const LiqHelperFactory = await ethers.getContractFactory("LiquidationHelper");
+      liquidationHelper = await LiqHelperFactory.deploy(
+          controller.address,
+          oracle.address,
+          squeeth.address,
+          weth.address,
+          usdc.address,
+          ethUSDPool.address,
+          squeethEthPool.address,
+          uniPositionManager.address
+        ) as LiquidationHelper;  
+    })
   });
 
   describe("Liquidation", async () => {
@@ -132,7 +146,7 @@ describe("Controller: liquidation unit test", function () {
       // liquidator mint wSqueeth
       await squeeth.connect(liquidator).mint(liquidator.address, vaultBefore.shortAmount)
 
-      const result = await controller.checkLiquidation(vault1Id);
+      const result = await liquidationHelper.checkLiquidation(vault1Id);
       const [isUnsafe, isLiquidatableAfterReducingDebt, maxWPowerPerpAmount, collateralToReceive] = result;
 
       expect(isUnsafe).to.be.false
@@ -158,7 +172,7 @@ describe("Controller: liquidation unit test", function () {
       let collateralToSell : BigNumber = newEthUsdPrice.mul(normFactor).mul(debtShouldRepay).div(one).div(oracleScaleFactor).div(one)
       collateralToSell = collateralToSell.add(collateralToSell.div(10))
 
-      const result = await controller.checkLiquidation(vault2Id);
+      const result = await liquidationHelper.checkLiquidation(vault2Id);
       const [isUnsafe, isLiquidatableAfterReducingDebt, maxWPowerPerpAmount, collateralToReceive] = result;
 
       expect(isUnsafe).to.be.true
@@ -176,7 +190,7 @@ describe("Controller: liquidation unit test", function () {
       let collateralToSell : BigNumber = newEthUsdPrice.mul(normFactor).mul(debtToRepay).div(one).div(oracleScaleFactor).div(one)
       collateralToSell = collateralToSell.add(collateralToSell.div(10))
 
-      const result = await controller.checkLiquidation(vault2Id);
+      const result = await liquidationHelper.checkLiquidation(vault2Id);
       const [isUnsafe, isLiquidatableAfterReducingDebt, maxWPowerPerpAmount, collateralToReceive] = result;
 
       expect(isUnsafe).to.be.true
@@ -201,7 +215,7 @@ describe("Controller: liquidation unit test", function () {
 
       const debtToRepay = vaultBefore.shortAmount.div(2)
 
-      const result = await controller.checkLiquidation(vault1Id);
+      const result = await liquidationHelper.checkLiquidation(vault1Id);
       const [isUnsafe, isLiquidatableAfterReducingDebt, maxWPowerPerpAmount, collateralToReceive] = result;
 
       // specifying a higher maxDebtToRepay number, which won't be used
@@ -260,7 +274,7 @@ describe("Controller: liquidation unit test", function () {
       collateralToSell = collateralToSell.add(collateralToSell.div(10))
 
 
-      const result = await controller.checkLiquidation(vaultId);
+      const result = await liquidationHelper.checkLiquidation(vaultId);
       const [isUnsafe, isLiquidatableAfterReducingDebt, maxWPowerPerpAmount, collateralToReceive] = result;
 
       expect(collateralToSell.gt(vault.collateralAmount)).to.be.true
@@ -277,7 +291,7 @@ describe("Controller: liquidation unit test", function () {
       const liquidatorBalanceBefore = await provider.getBalance(liquidator.address)
       const squeethLiquidatorBalanceBefore = await squeeth.balanceOf(liquidator.address)
 
-      const result = await controller.checkLiquidation(vaultId);
+      const result = await liquidationHelper.checkLiquidation(vaultId);
       const [isUnsafe, isLiquidatableAfterReducingDebt, maxWPowerPerpAmount, collateralToReceive] = result;
 
       // fully liquidate a vault

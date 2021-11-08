@@ -431,30 +431,6 @@ contract Controller is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice check the result of a call to liquidate
-     * @dev can be used before sending a transaction to determine if the vault is unsafe, if vault can be saved
-     * @dev the minimum wPowerPerp to repay, the maximum wPowerPerp to repay and the proceeds at max wPowerPerp to repay
-     * @param _vaultId vault to liquidate
-     * @return isUnsafe
-     * @return isLiquidatable after reducing debt
-     * @return max wPowerPerp to repay, this is only non-zero if saving a vault is not possible
-     * @return proceeds at max wPowerPerp to repay, if isLiquidatable after reducing debt is false, this is the bounty for saving a vault
-     */
-    function checkLiquidation(uint256 _vaultId)
-        external
-        view
-        returns (
-            bool,
-            bool,
-            uint256,
-            uint256
-        )
-    {
-        uint256 _newNormalizationFactor = _getNewNormalizationFactor();
-        return _checkLiquidation(_vaultId, _newNormalizationFactor);
-    }
-
-    /**
      * @notice if a vault is under the 150% collateral ratio, anyone can liquidate the vault by burning wPowerPerp
      * @dev liquidator can get back (wPowerPerp burned) * (index price) * (normalizationFactor)  * 110% in collateral
      * @dev normally can only liquidate 50% of a vault's debt
@@ -1051,7 +1027,7 @@ contract Controller is Ownable, ReentrancyGuard {
     function _redeemUniToken(uint256 _uniTokenId) internal returns (uint256, uint256) {
         INonfungiblePositionManager positionManager = INonfungiblePositionManager(uniswapPositionManager);
 
-        (, , uint128 liquidity) = VaultLib._getUniswapPositionInfo(uniswapPositionManager, _uniTokenId);
+        (, , uint128 liquidity, , ) = VaultLib._getUniswapPositionInfo(uniswapPositionManager, _uniTokenId);
 
         // prepare parameters to withdraw liquidity from uniswap v3 position manager
         INonfungiblePositionManager.DecreaseLiquidityParams memory decreaseParams = INonfungiblePositionManager
@@ -1063,15 +1039,14 @@ contract Controller is Ownable, ReentrancyGuard {
                 deadline: block.timestamp
             });
 
-        // the decreaseLiquidity function returns the amount collectable by the owner
-        (uint256 amount0, uint256 amount1) = positionManager.decreaseLiquidity(decreaseParams);
+        positionManager.decreaseLiquidity(decreaseParams);
 
-        // withdraw weth and wPowerPerp from uniswap
+        // withdraw max amount of weth and wPowerPerp from uniswap
         INonfungiblePositionManager.CollectParams memory collectParams = INonfungiblePositionManager.CollectParams({
             tokenId: _uniTokenId,
             recipient: address(this),
-            amount0Max: amount0.toUint128(),
-            amount1Max: amount1.toUint128()
+            amount0Max: uint128(-1),
+            amount1Max: uint128(-1)
         });
 
         (uint256 collectedToken0, uint256 collectedToken1) = positionManager.collect(collectParams);
@@ -1215,71 +1190,6 @@ contract Controller is Ownable, ReentrancyGuard {
                 IOracle(oracle).getTimeWeightedAverageTickSafe(wPowerPerpPool, TWAP_PERIOD),
                 isWethToken0
             );
-    }
-
-    /**
-     * @notice check the result of a call to liquidate
-     * @dev can be used before sending a transaction to determine if the vault is unsafe, if vault can be saved
-     * @dev the minimum wPowerPerp to repay, the maximum wPowerPerp to repay and the proceeds at max wPowerPerp to repay
-     * @param _vaultId vault to liquidate
-     * @return isUnsafe
-     * @return isLiquidatable after reducing debt
-     * @return max wPowerPerp to repay, this is only non-zero if saving a vault is not possible
-     * @return proceeds at max wPowerPerp to repay, if isLiquidatable after reducing debt is false, this is the bounty for saving a vault
-     */
-    function _checkLiquidation(uint256 _vaultId, uint256 _normalizationFactor)
-        internal
-        view
-        returns (
-            bool,
-            bool,
-            uint256,
-            uint256
-        )
-    {
-        VaultLib.Vault memory cachedVault = vaults[_vaultId];
-
-        if (_isVaultSafe(cachedVault, _normalizationFactor)) {
-            return (false, false, 0, 0);
-        }
-
-        // if there's a Uniswap Position token in the vault, stimulate reducing debt first
-        if (cachedVault.NftCollateralId != 0) {
-            // using current tick to check how much nft is worth
-            (, int24 spotTick, , , , , ) = IUniswapV3Pool(wPowerPerpPool).slot0();
-
-            // simulate vault state after removing nft
-            (uint256 nftEthAmount, uint256 nftWPowerperpAmount) = VaultLib._getUniPositionBalances(
-                uniswapPositionManager,
-                cachedVault.NftCollateralId,
-                spotTick,
-                isWethToken0
-            );
-
-            (, , uint256 bounty) = _getReduceDebtResultInVault(
-                cachedVault,
-                nftEthAmount,
-                nftWPowerperpAmount,
-                _normalizationFactor,
-                true
-            );
-
-            if (_isVaultSafe(cachedVault, _normalizationFactor)) {
-                return (true, false, 0, bounty);
-            }
-            //re-add bounty if not safe after reducing debt
-            cachedVault.addEthCollateral(bounty);
-        }
-
-        // assuming the max the liquidator is willing to pay full debt, this should give us the max one can liquidate
-        (uint256 wMaxAmountToLiquidate, uint256 collateralToPay) = _getLiquidationResult(
-            cachedVault.shortAmount,
-            cachedVault.shortAmount,
-            cachedVault.collateralAmount,
-            _normalizationFactor
-        );
-
-        return (true, true, wMaxAmountToLiquidate, collateralToPay);
     }
 
     /**
