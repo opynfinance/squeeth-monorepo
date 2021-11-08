@@ -162,17 +162,20 @@ export function VaultChart({
           <SqueethTab label={`Historical ${days}D PNL`} />
           <SqueethTab label="Payoff" />
           <SqueethTab label="Details" />
+          <SqueethTab label="Risks" />
         </SqueethTabs>
         <Hidden smDown>
-          <TextField
-            onChange={(event) => setDays(parseInt(event.target.value))}
-            size="small"
-            value={days}
-            type="number"
-            style={{ width: 150, marginLeft: '16px' }}
-            label="Historical Days"
-            variant="outlined"
-          />
+          {chartType === 0 ? (
+            <TextField
+              onChange={(event) => setDays(parseInt(event.target.value))}
+              size="small"
+              value={days}
+              type="number"
+              style={{ width: 150, marginLeft: '16px' }}
+              label="Historical Days"
+              variant="outlined"
+            />
+          ) : null}
         </Hidden>
       </div>
       {seriesRebalance.length === 0 && <Alert severity="info"> Loading historical data, this could take a while</Alert>}
@@ -189,7 +192,7 @@ export function VaultChart({
         />
       ) : chartType === 1 ? (
         <ShortSqueethPayoff ethPrice={ethPrice.toNumber()} collatRatio={collatRatio} />
-      ) : (
+      ) : chartType === 2 ? (
         <div style={{ overflow: 'auto', maxHeight: '300px' }}>
           <Typography className={classes.cardTitle} variant="h6">
             What is short squeeth?
@@ -206,6 +209,20 @@ export function VaultChart({
               Learn more.{' '}
             </a>
           </Typography>
+          {/* <Typography className={classes.cardTitle} variant="h6">
+            Risks
+          </Typography>
+          <Typography variant="body2" className={classes.cardDetail}>
+            If you fall below the minimum collateralization threshold (150%), you are at risk of liquidation. If ETH
+            moves approximately 6% in either direction, you are unprofitable.
+            <br /> <br />
+            Squeeth smart contracts are currently unaudited. This is experimental technology and we encourage caution
+            only risking funds you can afford to lose.
+          </Typography> */}
+        </div>
+      ) : (
+        <div>
+          {' '}
           <Typography className={classes.cardTitle} variant="h6">
             Risks
           </Typography>

@@ -316,9 +316,11 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
               }}
               unit="oSQTH"
               convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
-              error={!!closeError}
+              error={connected && shrtAmt.gt(0) ? !!existingShortError : !!closeError}
               hint={
-                closeError ? (
+                connected && shrtAmt.gt(0) ? (
+                  existingShortError
+                ) : closeError ? (
                   closeError
                 ) : (
                   <div className={classes.hint}>
@@ -350,9 +352,11 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
               }}
               unit="ETH"
               convertedValue={altTradeAmount.times(ethPrice).toFixed(2).toLocaleString()}
-              error={!!closeError}
+              error={connected && shrtAmt.gt(0) ? !!existingShortError : !!closeError}
               hint={
-                closeError ? (
+                connected && shrtAmt.gt(0) ? (
+                  existingShortError
+                ) : closeError ? (
                   closeError
                 ) : (
                   <div className={classes.hint}>
@@ -475,10 +479,12 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
             }}
             unit="ETH"
             convertedValue={amount.times(ethPrice).toFixed(2).toLocaleString()}
-            error={!!openError}
+            error={connected && shrtAmt.gt(0) ? !!existingShortError : !!openError}
             hint={
               openError ? (
                 openError
+              ) : connected && shrtAmt.gt(0) ? (
+                existingShortError
               ) : (
                 <div className={classes.hint}>
                   <span>{`Balance ${balance}`}</span>
@@ -508,10 +514,12 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
             }}
             unit="oSQTH"
             convertedValue={getWSqueethPositionValue(altTradeAmount).toFixed(2).toLocaleString()}
-            error={!!openError}
+            error={connected && shrtAmt.gt(0) ? !!existingShortError : !!openError}
             hint={
               openError ? (
                 openError
+              ) : connected && shrtAmt.gt(0) ? (
+                existingShortError
               ) : (
                 <div className={classes.hint}>
                   <span className={classes.hintTextContainer}>

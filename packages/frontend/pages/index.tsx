@@ -243,25 +243,25 @@ const useStyles = makeStyles((theme) =>
     longIndicator: {
       background: theme.palette.success.main,
       borderRadius: theme.spacing(0.7),
-      opacity: '.1',
+      opacity: '.3',
     },
     shortIndicator: {
       background: theme.palette.error.main,
       borderRadius: theme.spacing(0.7),
-      opacity: '.1',
+      opacity: '.3',
     },
     longTab: {
       color: theme.palette.success.main,
       '&$selected': {
         color: theme.palette.success.main,
-        fontWeight: theme.typography.fontWeightMedium,
+        fontWeight: theme.typography.fontWeightBold,
       },
     },
     shortTab: {
       color: theme.palette.error.main,
       '&$selected': {
         color: theme.palette.error.main,
-        fontWeight: theme.typography.fontWeightMedium,
+        fontWeight: theme.typography.fontWeightBold,
       },
     },
   }),

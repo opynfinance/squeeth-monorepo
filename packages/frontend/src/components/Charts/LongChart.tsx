@@ -19,6 +19,7 @@ enum ChartType {
   Payoff = 'Payoff',
   // Comparison = 'Comparison',
   Details = 'Details',
+  Risks = 'Risks',
 }
 
 const Chart = dynamic(() => import('kaktana-react-lightweight-charts'), { ssr: false })
@@ -68,6 +69,7 @@ export function LongChart() {
     else if (tradeType === 1) setMode(ChartType.Payoff)
     // else if (tradeType === 3) setMode(ChartType.Comparison)
     else if (tradeType === 2) setMode(ChartType.Details)
+    else if (tradeType === 3) setMode(ChartType.Risks)
   }, [tradeType])
 
   const {
@@ -146,6 +148,7 @@ export function LongChart() {
           <SqueethTab label="Payoff" />
           {/* <SqueethTab label="Comparison" /> */}
           <SqueethTab label="Details" />
+          <SqueethTab label="Risks" />
         </SqueethTabs>
         <Hidden smDown>
           {mode === ChartType.PNL ? (
@@ -187,6 +190,22 @@ export function LongChart() {
               Learn more.{' '}
             </a>
           </Typography>
+          {/* <Typography className={classes.cardTitle} variant="h6">
+            Risks
+          </Typography>
+          <Typography variant="body2" className={classes.cardDetail}>
+            Funding is paid out of your position, meaning you sell a small amount of squeeth at funding, reducing your
+            position size. Holding the position for a long period of time without upward movements in ETH can lose
+            considerable funds to funding payments.
+            <br /> <br />
+            Squeeth smart contracts are currently unaudited. This is experimental technology and we encourage caution
+            only risking funds you can afford to lose.
+            <br /> <br />
+            If ETH goes down considerably, you may lose some or all of your initial investment.
+          </Typography> */}
+        </div>
+      ) : mode === ChartType.Risks ? (
+        <div>
           <Typography className={classes.cardTitle} variant="h6">
             Risks
           </Typography>

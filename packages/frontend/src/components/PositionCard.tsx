@@ -7,7 +7,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { useTrade } from '../context/trade'
 import { useETHPrice } from '../hooks/useETHPrice'
-import { usePnL } from '../hooks/usePositions'
+import { useLongPositions, usePnL, useShortPositions } from '../hooks/usePositions'
 import { PositionType, TradeType } from '../types'
 
 const useStyles = makeStyles((theme) =>
@@ -106,8 +106,10 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
     loading,
     refetch,
   } = usePnL()
-  const { tradeAmount, actualTradeType, isOpenPosition, quote, tradeSuccess, setTradeSuccess } = useTrade()
+  const { tradeAmount, actualTradeType, isOpenPosition, quote, tradeSuccess, setTradeSuccess, tradeType } = useTrade()
   const ethPrice = useETHPrice()
+  const { squeethAmount: shrtAmt } = useShortPositions()
+  const { squeethAmount: lngAmt } = useLongPositions()
   const [fetchingNew, setFetchingNew] = useState(false)
 
   useEffect(() => {
@@ -147,11 +149,11 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
   const { postTradeAmt, postPosition } = useMemo(() => {
     let postTradeAmt = new BigNumber(0)
     let postPosition = PositionType.NONE
-    if (actualTradeType === TradeType.LONG) {
+    if (actualTradeType === TradeType.LONG && !shrtAmt.gt(0)) {
       if (isOpenPosition) postTradeAmt = wSqueethBal.plus(quote.amountOut)
       else postTradeAmt = wSqueethBal.minus(tradeAmount)
       if (postTradeAmt.gt(0)) postPosition = PositionType.LONG
-    } else {
+    } else if (actualTradeType === TradeType.SHORT && !lngAmt.gt(0)) {
       if (isOpenPosition) postTradeAmt = shortSqueethAmt.plus(tradeAmount)
       else postTradeAmt = shortSqueethAmt.minus(tradeAmount)
       if (postTradeAmt.gt(0)) postPosition = PositionType.SHORT
@@ -190,12 +192,14 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
           MY POSITION
         </Typography>
         <span className={clsx(classes.title, titleClass)}>{positionType.toUpperCase()}</span>
-        {postPosition !== positionType ? (
+        {postPosition === positionType ||
+        (tradeType === TradeType.LONG && shrtAmt.gt(0)) ||
+        (tradeType === TradeType.SHORT && lngAmt.gt(0)) ? null : (
           <>
             <ArrowRightAltIcon className={classes.arrow} />
             <span className={clsx(classes.title, postTitleClass)}>{postPosition.toUpperCase()}</span>
           </>
-        ) : null}
+        )}
       </div>
       <div className={classes.assetDiv}>
         <div>
@@ -203,7 +207,9 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
             <Typography component="span" style={{ fontWeight: 600 }}>
               {getPositionBasedValue(wSqueethBal.toFixed(6), shortSqueethAmt.toFixed(6), 0)}
             </Typography>
-            {tradeAmount.isGreaterThan(0) ? (
+            {(tradeType === TradeType.SHORT && lngAmt.gt(0)) ||
+            (tradeType === TradeType.LONG && shrtAmt.gt(0)) ||
+            tradeAmount.isLessThanOrEqualTo(0) ? null : (
               <>
                 <ArrowRightAltIcon className={classes.arrow} />
                 <Typography
@@ -221,7 +227,7 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
                   {postTradeAmt.lte(0) ? 0 : postTradeAmt.toFixed(6)}
                 </Typography>
               </>
-            ) : null}
+            )}
             <Typography color="textSecondary" component="span" variant="body2" className={classes.unit}>
               oSQTH
             </Typography>

@@ -351,11 +351,13 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                   })
                 }}
                 unit="oSQTH"
-                error={!!closeError}
+                error={connected && lngAmt.gt(0) ? !!existingLongError : !!closeError}
                 convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
                 hint={
                   shrtAmt.lt(amount) ? (
                     'Close amount exceeds position'
+                  ) : connected && lngAmt.gt(0) ? (
+                    existingLongError
                   ) : (
                     <div className={classes.hint}>
                       <span className={classes.hintTextContainer}>
@@ -412,19 +414,25 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                 })
               }}
               unit="ETH"
-              error={!!closeError}
+              error={connected && lngAmt.gt(0) ? !!existingLongError : !!closeError}
               convertedValue={altTradeAmount.times(ethPrice).toFixed(2).toLocaleString()}
               hint={
-                <div className={classes.hint}>
-                  <span>{`Balance ${balance}`}</span>
-                  {amount.toNumber() ? (
-                    <>
-                      <ArrowRightAltIcon className={classes.arrowIcon} />
-                      <span>{(balance - sellCloseQuote.amountIn.toNumber()).toFixed(6)}</span>
-                    </>
-                  ) : null}{' '}
-                  <span style={{ marginLeft: '4px' }}>ETH</span>
-                </div>
+                connected && shrtAmt.gt(0) ? (
+                  existingLongError
+                ) : (
+                  <div className={classes.hint}>
+                    <span>{`Balance ${balance}`}</span>
+                    {amount.toNumber() ? (
+                      <>
+                        <ArrowRightAltIcon className={classes.arrowIcon} />
+                        <span>{(balance - sellCloseQuote.amountIn.toNumber()).toFixed(6)}</span>
+                      </>
+                    ) : connected && lngAmt.gt(0) ? (
+                      existingLongError
+                    ) : null}{' '}
+                    <span style={{ marginLeft: '4px' }}>ETH</span>
+                  </div>
+                )
               }
             />
             <div className={classes.divider}>
@@ -558,6 +566,8 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
               hint={
                 !!openError ? (
                   openError
+                ) : connected && lngAmt.gt(0) ? (
+                  existingLongError
                 ) : (
                   <div className={classes.hint}>
                     <span>{`Balance ${balance}`}</span>
@@ -571,7 +581,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                   </div>
                 )
               }
-              error={!!openError}
+              error={connected && lngAmt.gt(0) ? !!existingLongError : !!openError}
             />
           </div>
           <div className={classes.thirdHeading}>
@@ -615,6 +625,8 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
             hint={
               !!openError ? (
                 openError
+              ) : connected && lngAmt.gt(0) ? (
+                existingLongError
               ) : (
                 <div className={classes.hint}>
                   <span className={classes.hintTextContainer}>
@@ -631,7 +643,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                 </div>
               )
             }
-            error={!!openError}
+            error={connected && lngAmt.gt(0) ? !!existingLongError : !!openError}
           />
           <div className={classes.divider}>
             <TradeInfoItem
