@@ -57,21 +57,21 @@ contract Controller is Ownable, ReentrancyGuard {
     using VaultLib for VaultLib.Vault;
     using Address for address payable;
 
-    uint256 public constant MIN_COLLATERAL = 0.5 ether;
+    uint256 internal constant MIN_COLLATERAL = 0.5 ether;
     /// @dev system can only be paused for 182 days from deployment
-    uint256 public constant PAUSE_TIME_LIMIT = 182 days;
-    uint256 public constant FUNDING_PERIOD = 1 days;
+    uint256 internal constant PAUSE_TIME_LIMIT = 182 days;
+    uint256 internal constant FUNDING_PERIOD = 1 days;
 
     uint32 public constant TWAP_PERIOD = 5 minutes;
 
     //80% of index
-    uint256 public constant LOWER_MARK_RATIO = 8e17;
+    uint256 internal constant LOWER_MARK_RATIO = 8e17;
     //125% of index
-    uint256 public constant UPPER_MARK_RATIO = 125e16;
+    uint256 internal constant UPPER_MARK_RATIO = 125e16;
     // 10%
-    uint256 public constant LIQUIDATION_BOUNTY = 1e17;
+    uint256 internal constant LIQUIDATION_BOUNTY = 1e17;
     // 2%
-    uint256 public constant REDUCE_DEBT_BOUNTY = 2e16;
+    uint256 internal constant REDUCE_DEBT_BOUNTY = 2e16;
 
     /// @dev basic unit used for calculation
     uint256 private constant ONE = 1e18;
@@ -82,7 +82,7 @@ contract Controller is Ownable, ReentrancyGuard {
     address public immutable ethQuoteCurrencyPool;
     /// @dev address of the powerPerp/weth pool
     address public immutable wPowerPerpPool;
-    address public immutable uniswapPositionManager;
+    address internal immutable uniswapPositionManager;
     address public immutable shortPowerPerp;
     address public immutable wPowerPerp;
     address public immutable oracle;
@@ -247,7 +247,6 @@ contract Controller is Ownable, ReentrancyGuard {
      * @return mark price denominated in $USD, scaled by 1e18
      */
     function getDenormalizedMark(uint32 _period) external view returns (uint256) {
-        uint256 expectedNormalizationFactor = _getNewNormalizationFactor();
         return
             Power2Base._getDenormalizedMark(
                 _period,
@@ -257,7 +256,7 @@ contract Controller is Ownable, ReentrancyGuard {
                 weth,
                 quoteCurrency,
                 wPowerPerp,
-                expectedNormalizationFactor
+                _getNewNormalizationFactor()
             );
     }
 
@@ -610,7 +609,7 @@ contract Controller is Ownable, ReentrancyGuard {
         uint256 debt = Power2Base._getLongSettlementValue(
             cachedVault.shortAmount,
             indexForSettlement,
-            normalizationFactor
+            cachedNormFactor
         );
         // if the debt is more than collateral, this line will revert
         uint256 excess = uint256(cachedVault.collateralAmount).sub(debt);
@@ -664,9 +663,10 @@ contract Controller is Ownable, ReentrancyGuard {
      * @param _account the address to check if can modify the vault
      */
     function _checkCanModifyVault(uint256 _vaultId, address _account) internal view {
-        bool canModifyVault = IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId) == _account ||
-            vaults[_vaultId].operator == _account;
-        require(canModifyVault, "C25");
+        require(
+            IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId) == _account || vaults[_vaultId].operator == _account,
+            "C25"
+        );
     }
 
     /**
@@ -789,7 +789,13 @@ contract Controller is Ownable, ReentrancyGuard {
         uint256 _vaultId,
         uint256 _uniTokenId
     ) internal {
-        _checkUniNFT(_uniTokenId);
+        //get tokens for uniswap NFT
+        (, , address token0, address token1, , , , , , , , ) = INonfungiblePositionManager(uniswapPositionManager)
+            .positions(_uniTokenId);
+        // only check token0 and token1, ignore fee
+        // if there are multiple wPowerPerp/weth pools with different fee rate, accept position tokens from any of them
+        require((token0 == wPowerPerp && token1 == weth) || (token1 == wPowerPerp && token0 == weth), "C23");
+
         _vault.addUniNftCollateral(_uniTokenId);
         INonfungiblePositionManager(uniswapPositionManager).transferFrom(_account, address(this), _uniTokenId);
         emit DepositUniPositionToken(msg.sender, _vaultId, _uniTokenId);
@@ -1136,18 +1142,6 @@ contract Controller is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev check that the specified uni tokenId is a valid wPowerPerp/weth token
-     * @param _uniTokenId uniswap v3 position token id
-     */
-    function _checkUniNFT(uint256 _uniTokenId) internal view {
-        (, , address token0, address token1, , , , , , , , ) = INonfungiblePositionManager(uniswapPositionManager)
-            .positions(_uniTokenId);
-        // only check token0 and token1, ignore fee
-        // if there are multiple wPowerPerp/weth pools with different fee rate, accept position tokens from any of them
-        require((token0 == wPowerPerp && token1 == weth) || (token1 == wPowerPerp && token0 == weth), "C23");
-    }
-
-    /**
      * @notice check if vault has enough collateral and is not a dust vault
      * @dev revert if vault has insufficient collateral or is a dust vault
      * @param _vault the Vault memory to update
@@ -1356,17 +1350,10 @@ contract Controller is Ownable, ReentrancyGuard {
      * @return fair period not greator than _period to be used for both pools.
      */
     function _getConsistentPeriodForOracle(uint32 _period) internal view returns (uint32) {
-        uint32 maxSafePeriod = _getMaxSafePeriod();
-        return _period > maxSafePeriod ? maxSafePeriod : _period;
-    }
-
-    /**
-     * @dev get the smaller of the maximum periods of 2 uniswap v3 pools
-     * @return return min(max_pool_1, max_pool_2)
-     */
-    function _getMaxSafePeriod() internal view returns (uint32) {
         uint32 maxPeriodPool1 = IOracle(oracle).getMaxPeriod(ethQuoteCurrencyPool);
         uint32 maxPeriodPool2 = IOracle(oracle).getMaxPeriod(wPowerPerpPool);
-        return maxPeriodPool1 > maxPeriodPool2 ? maxPeriodPool2 : maxPeriodPool1;
+
+        uint32 maxSafePeriod = maxPeriodPool1 > maxPeriodPool2 ? maxPeriodPool2 : maxPeriodPool1;
+        return _period > maxSafePeriod ? maxSafePeriod : _period;
     }
 }

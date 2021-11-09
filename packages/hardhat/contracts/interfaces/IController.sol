@@ -49,17 +49,6 @@ interface IController {
         uint256 _withdrawAmount
     ) external returns (uint256 wPowerPerpAmount);
 
-    function checkLiquidation(uint256 _vaultId)
-        external
-        view
-        returns (
-            bool,
-            bool,
-            uint256,
-            uint256,
-            uint256
-        );
-
     function liquidate(uint256 _vaultId, uint256 _maxDebtAmount) external returns (uint256);
 
     /**
