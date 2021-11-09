@@ -163,8 +163,8 @@ export const getPoolAddress = async (
   const ethPriceInDai = ethDaiPrice || 3000
   const ethDaiPool = await createUniPool(ethPriceInDai, dai, weth, positionManager, uniswapFactory) as Contract
 
-  await wsqueethEthPool.increaseObservationCardinalityNext(128) 
-  await ethDaiPool.increaseObservationCardinalityNext(128) 
+  await wsqueethEthPool.increaseObservationCardinalityNext(500) 
+  await ethDaiPool.increaseObservationCardinalityNext(500) 
 
   const controller = (await ControllerContract.deploy(oracle.address, 
     shortSqueeth.address, 

@@ -27,6 +27,7 @@ describe("Crab flashswap integration test: crab vault liquidation", function () 
   let depositor: SignerWithAddress;
   let depositor2: SignerWithAddress;
   let liquidator: SignerWithAddress;
+  let feeRecipient: SignerWithAddress;
   let dai: MockErc20
   let weth: WETH9
   let positionManager: Contract
@@ -41,11 +42,12 @@ describe("Crab flashswap integration test: crab vault liquidation", function () 
 
   this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async() => {
     const accounts = await ethers.getSigners();
-    const [_owner, _depositor, _depositor2, _liquidator ] = accounts;
+    const [_owner, _depositor, _depositor2, _liquidator, _feeRecipient ] = accounts;
     owner = _owner;
     depositor = _depositor;
     depositor2 = _depositor2;
     liquidator = _liquidator;
+    feeRecipient = _feeRecipient;
     provider = ethers.provider
 
     const { dai: daiToken, weth: wethToken } = await deployWETHAndDai()
@@ -74,13 +76,18 @@ describe("Crab flashswap integration test: crab vault liquidation", function () 
     wSqueethPool = squeethDeployments.wsqueethEthPool
     ethDaiPool = squeethDeployments.ethDaiPool
 
+    await controller.connect(owner).setFeeRecipient(feeRecipient.address);
+    await controller.connect(owner).setFeeRate(100)
+
     const CrabStrategyContract = await ethers.getContractFactory("CrabStrategy");
     crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, uniswapFactory.address, wSqueethPool.address, hedgeTimeThreshold, hedgePriceThreshold, auctionTime, minPriceMultiplier, maxPriceMultiplier)) as CrabStrategy;
   })
 
   this.beforeAll("Seed pool liquidity", async() => {
-    // add liquidity
+    await provider.send("evm_increaseTime", [300])
+    await provider.send("evm_mine", [])
 
+    // add liquidity
     await addWethDaiLiquidity(
       startingEthPrice,
       ethers.utils.parseUnits('100'), // eth amount
@@ -89,6 +96,9 @@ describe("Crab flashswap integration test: crab vault liquidation", function () 
       weth,
       positionManager
     )
+
+    await provider.send("evm_increaseTime", [600])
+    await provider.send("evm_mine", [])
 
     await addSqueethLiquidity(
       scaledStartingSqueethPrice, 
@@ -100,30 +110,40 @@ describe("Crab flashswap integration test: crab vault liquidation", function () 
       positionManager, 
       controller
     )
+
+    await provider.send("evm_increaseTime", [300])
+    await provider.send("evm_mine", [])
   })
 
   this.beforeAll("Deposit into strategy", async () => {
     const ethToDeposit = ethers.utils.parseUnits('20')
-    const msgvalue = ethers.utils.parseUnits('10.1')
-
-    const squeethDelta = scaledStartingSqueethPrice1e18.mul(2);
-    const debtToMint = wdiv(ethToDeposit, (squeethDelta));
+    const msgvalue = ethers.utils.parseUnits('10.2')
     const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
     await crabStrategy.connect(depositor).flashDeposit(ethToDeposit, {value: msgvalue})
     
+    const normFactor = await controller.normalizationFactor()
+    const currentScaledEthPrice = (await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 300, false)).div(oracleScaleFactor)
+    const feeRate = await controller.feeRate()
+    const ethFeePerWSqueeth = currentScaledEthPrice.mul(normFactor).mul(feeRate).div(10000).div(one)
+    const squeethDelta = scaledStartingSqueethPrice1e18.mul(2);
+    const debtToMint = wdiv(ethToDeposit, (squeethDelta.add(ethFeePerWSqueeth)));
+    const expectedEthDeposit = ethToDeposit.sub(debtToMint.mul(ethFeePerWSqueeth).div(one))
+
     const totalSupply = (await crabStrategy.totalSupply())
     const depositorCrab = (await crabStrategy.balanceOf(depositor.address))
-    const debtAmount = (await crabStrategy.getStrategyDebt())
+    const strategyVault = await controller.vaults(await crabStrategy.vaultId());
+    const debtAmount = strategyVault.shortAmount
     const depositorSqueethBalance = await wSqueeth.balanceOf(depositor.address)
     const strategyContractSqueeth = await wSqueeth.balanceOf(crabStrategy.address)
     const lastHedgeTime = await crabStrategy.timeAtLastHedge()
     const currentBlockNumber = await provider.getBlockNumber()
     const currentBlock = await provider.getBlock(currentBlockNumber)
     const timeStamp = currentBlock.timestamp
+    const collateralAmount = await strategyVault.collateralAmount
 
-    expect(totalSupply.eq(ethToDeposit)).to.be.true
-    expect(depositorCrab.eq(ethToDeposit)).to.be.true
+    expect(isSimilar(totalSupply.toString(),(expectedEthDeposit).toString())).to.be.true
+    expect(isSimilar(depositorCrab.toString(),expectedEthDeposit.toString())).to.be.true
     expect(isSimilar(debtAmount.toString(), debtToMint.toString())).to.be.true
     expect(depositorSqueethBalance.eq(depositorSqueethBalanceBefore)).to.be.true
     expect(strategyContractSqueeth.eq(BigNumber.from(0))).to.be.true
@@ -157,7 +177,7 @@ describe("Crab flashswap integration test: crab vault liquidation", function () 
       await provider.send("evm_increaseTime", [600]) // increase time by 600 sec
       await provider.send("evm_mine", [])
 
-      const vaultId = await crabStrategy._vaultId();
+      const vaultId = await crabStrategy.vaultId();
       const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600, false)
       const vaultBefore = await controller.vaults(vaultId)
       
@@ -169,8 +189,8 @@ describe("Crab flashswap integration test: crab vault liquidation", function () 
     })
 
     it("should liquidate crab vault", async () => {
-      const vaultId = await crabStrategy._vaultId();
-      const isVaultSafe = await controller.isVaultSafe((await crabStrategy._vaultId()))
+      const vaultId = await crabStrategy.vaultId();
+      const isVaultSafe = await controller.isVaultSafe((await crabStrategy.vaultId()))
       expect(isVaultSafe).to.be.false
 
       const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600, false)
@@ -191,8 +211,7 @@ describe("Crab flashswap integration test: crab vault liquidation", function () 
       const liquidatorBalanceAfter = await provider.getBalance(liquidator.address)
       const liquidatorSqueethAfter = await wSqueeth.balanceOf(liquidator.address)
 
-
-      expect(vaultBefore.shortAmount.div(2).eq(vaultAfter.shortAmount)).to.be.true
+      expect(isSimilar((vaultBefore.shortAmount.div(2)).toString(),(vaultAfter.shortAmount).toString())).to.be.true
       expect(vaultAfter.shortAmount.gt(BigNumber.from(0))).to.be.true
       expect(vaultAfter.collateralAmount.gt(BigNumber.from(0))).to.be.true
       expect(collateralToGet.eq(liquidatorBalanceAfter.sub(liquidatorBalanceBefore))).to.be.true
@@ -200,8 +219,16 @@ describe("Crab flashswap integration test: crab vault liquidation", function () 
     })
 
     it("should let user deposit post liquidation and update vault state and provide correct wSqueeth and crab tokens", async () => {
-      const vaultId = await crabStrategy._vaultId();
-      const isVaultSafe = await controller.isVaultSafe((await crabStrategy._vaultId()))
+      
+      //                               (userEthDeposit * strategyDebtBeforeDeposit) 
+      //  wSqueethToMint =  ----------------------------------------------------------------------------------------
+      //                    (strategyCollateralBeforeDeposit + strategyDebtBeforeDeposit*ethUsdPrice*normFactor*fee%)
+
+      
+  
+
+      const vaultId = await crabStrategy.vaultId();
+      const isVaultSafe = await controller.isVaultSafe((await crabStrategy.vaultId()))
       expect(isVaultSafe).to.be.true
 
       const vaultBefore = await controller.vaults(vaultId)
@@ -211,31 +238,34 @@ describe("Crab flashswap integration test: crab vault liquidation", function () 
 
       const ethToDeposit = ethers.utils.parseUnits('20')
       const msgvalue = ethers.utils.parseUnits('15')  
-      const wSqueethToSell = ethToDeposit.mul(ratio).div(one)
-      const strategyDebtAmountBefore = (await crabStrategy.getStrategyDebt())
-      const strategyCollateralAmountBefore = (await crabStrategy.getStrategyCollateral())
-      const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor2.address)
       const totalSupplyBefore = (await crabStrategy.totalSupply())
-      const depositorShare = one.mul(ethToDeposit).div(collateralBefore.add(ethToDeposit))
-      const crabMintAmount = totalSupplyBefore.mul(depositorShare).div(one.sub(depositorShare))
       const depositorCrabBefore = (await crabStrategy.balanceOf(depositor2.address))
-
-
-      expect(strategyCollateralAmountBefore.eq(collateralBefore)).to.be.false
-      expect(strategyDebtAmountBefore.eq(debtBefore)).to.be.false
+      const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
       await crabStrategy.connect(depositor2).flashDeposit(ethToDeposit, {value: msgvalue})      
-      const strategyDebtAmountAfter = (await crabStrategy.getStrategyDebt())
-      const strategyCollateralAmountAfter = (await crabStrategy.getStrategyCollateral())
+      
+      const normFactor = await controller.normalizationFactor()
+      const currentScaledEthPrice = (await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 300, false)).div(oracleScaleFactor)
+      const feeRate = await controller.feeRate()
+      const ethFeePerWSqueeth = currentScaledEthPrice.mul(normFactor).mul(feeRate).div(10000).div(one)
+      const debtToMint = ethToDeposit.mul(debtBefore).div(collateralBefore.add(debtBefore.mul(ethFeePerWSqueeth).div(one)))
+      const expectedEthDeposit = ethToDeposit.sub(debtToMint.mul(ethFeePerWSqueeth).div(one))
+      const depositorShare = one.mul(expectedEthDeposit).div(collateralBefore.add(expectedEthDeposit))
+      const crabMintAmount = totalSupplyBefore.mul(depositorShare).div(one.sub(depositorShare))
+
+
+      const strategyVaultAfter = await controller.vaults(vaultId)
+      const strategyDebtAmountAfter = strategyVaultAfter.shortAmount
+      const strategyCollateralAmountAfter = strategyVaultAfter.collateralAmount
       const depositorCrabAfter = (await crabStrategy.balanceOf(depositor2.address))
       const depositorSqueethBalanceAfter = await wSqueeth.balanceOf(depositor2.address)
       const strategyContractSqueeth = await wSqueeth.balanceOf(crabStrategy.address)
       const totalSupplyAfter = (await crabStrategy.totalSupply())
       // const depositorEthBalanceAfter = await provider.getBalance(depositor2.address)
 
-      expect(strategyCollateralAmountAfter.eq(collateralBefore.add(ethToDeposit))).to.be.true
-      expect(isSimilar(strategyDebtAmountAfter.toString(),(debtBefore.add(wSqueethToSell)).toString())).to.be.true
-      expect(isSimilar((strategyDebtAmountAfter.sub(debtBefore)).toString(),(wSqueethToSell).toString())).to.be.true      
+      expect(isSimilar((strategyCollateralAmountAfter.sub(collateralBefore)).toString(),(expectedEthDeposit).toString())).to.be.true
+      expect(isSimilar(strategyDebtAmountAfter.toString(),(debtBefore.add(debtToMint)).toString())).to.be.true
+      expect(isSimilar((strategyDebtAmountAfter.sub(debtBefore)).toString(),(debtToMint).toString())).to.be.true      
       expect(isSimilar((totalSupplyAfter.sub(totalSupplyBefore)).toString(),(crabMintAmount).toString())).to.be.true
       expect((depositorSqueethBalanceAfter.sub(depositorSqueethBalanceBefore)).eq(BigNumber.from(0))).to.be.true
       expect(strategyContractSqueeth.eq(BigNumber.from(0))).to.be.true
@@ -247,8 +277,9 @@ describe("Crab flashswap integration test: crab vault liquidation", function () 
 
       const userCrabBalanceBefore = await crabStrategy.balanceOf(depositor.address);
       const crabTotalSupply = await crabStrategy.totalSupply()
-      const strategyDebtAmountBefore = await crabStrategy.getStrategyDebt()
-      const strategyCollateralAmountBefore = await crabStrategy.getStrategyCollateral()
+      const strategyVault = await controller.vaults(await crabStrategy.vaultId());
+      const strategyDebtAmountBefore = strategyVault.shortAmount
+      const strategyCollateralAmountBefore = strategyVault.collateralAmount
       const userEthBalanceBefore = await provider.getBalance(depositor.address)
       const crabRatio = wdiv(userCrabBalanceBefore, crabTotalSupply);
       const debtToRepay = wmul(crabRatio,strategyDebtAmountBefore);
@@ -261,8 +292,8 @@ describe("Crab flashswap integration test: crab vault liquidation", function () 
 
       const userEthBalanceAfter = await provider.getBalance(depositor.address)
       const userCrabBalanceAfter = await crabStrategy.balanceOf(depositor.address);
-      const vaultId = await crabStrategy._vaultId();
-      const isVaultSafe = await controller.isVaultSafe((await crabStrategy._vaultId()))
+      const vaultId = await crabStrategy.vaultId();
+      const isVaultSafe = await controller.isVaultSafe((await crabStrategy.vaultId()))
       expect(isVaultSafe).to.be.true
 
       const vaultBefore = await controller.vaults(vaultId)
@@ -284,8 +315,9 @@ describe("Crab flashswap integration test: crab vault liquidation", function () 
 
       const userCrabBalanceBefore = await crabStrategy.balanceOf(depositor2.address);
       const crabTotalSupply = await crabStrategy.totalSupply()
-      const strategyDebtAmountBefore = await crabStrategy.getStrategyDebt()
-      const strategyCollateralAmountBefore = await crabStrategy.getStrategyCollateral()
+      const strategyVault = await controller.vaults(await crabStrategy.vaultId());
+      const strategyDebtAmountBefore = strategyVault.shortAmount
+      const strategyCollateralAmountBefore = strategyVault.collateralAmount
       const userEthBalanceBefore = await provider.getBalance(depositor2.address)
       const crabRatio = wdiv(userCrabBalanceBefore, crabTotalSupply);
       const debtToRepay = wmul(crabRatio,strategyDebtAmountBefore);
@@ -296,13 +328,14 @@ describe("Crab flashswap integration test: crab vault liquidation", function () 
 
       await crabStrategy.connect(depositor2).flashWithdraw(userCrabBalanceBefore, maxEthToPay)
 
+      const strategyVaultAfter = await controller.vaults(await crabStrategy.vaultId());
       const userEthBalanceAfter = await provider.getBalance(depositor2.address)
       const userCrabBalanceAfter = await crabStrategy.balanceOf(depositor2.address);
-      const strategyDebtAmountAfter = await crabStrategy.getStrategyDebt()
-      const strategyCollateralAmountAfter = await crabStrategy.getStrategyCollateral()
+      const strategyDebtAmountAfter = strategyVaultAfter.shortAmount
+      const strategyCollateralAmountAfter = strategyVaultAfter.collateralAmount
 
-      const vaultId = await crabStrategy._vaultId();
-      const isVaultSafe = await controller.isVaultSafe((await crabStrategy._vaultId()))
+      const vaultId = await crabStrategy.vaultId();
+      const isVaultSafe = await controller.isVaultSafe((await crabStrategy.vaultId()))
       expect(isVaultSafe).to.be.true
 
       const vaultBefore = await controller.vaults(vaultId)

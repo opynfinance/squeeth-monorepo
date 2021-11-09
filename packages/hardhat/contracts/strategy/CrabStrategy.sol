@@ -8,6 +8,7 @@ import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
 import {IOracle} from "../interfaces/IOracle.sol";
 import {IWETH9} from "../interfaces/IWETH9.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {IController} from "../interfaces/IController.sol";
 
 // contract
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -17,6 +18,7 @@ import {StrategyFlashSwap} from "./base/StrategyFlashSwap.sol";
 // lib
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {StrategyMath} from "./base/StrategyMath.sol";
+import {Power2Base} from "../libs/Power2Base.sol";
 
 /**
  * @dev CrabStrategy contract
@@ -27,7 +29,10 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
     using StrategyMath for uint256;
     using Address for address payable;
 
-    uint32 public constant TWAP_PERIOD = 600;
+    uint32 public constant TWAP_PERIOD = 5 minutes;
+    uint32 public constant POWER_PERP_PERIOD = 5 minutes;
+    // strategy will only allow hedging if collateral to trade is at least 0.1% of the total strategy collateral
+    uint256 public constant DELTA_HEDGE_THRESHOLD = 1e15;
 
     /// @dev enum to differentiate between uniswap swap callback function source
     enum FLASH_SOURCE {
@@ -38,9 +43,11 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
     }
 
     /// @dev ETH:WSqueeth uniswap pool
-    address public ethWSqueethPool;
+    address public immutable ethWSqueethPool;
     /// @dev strategy uniswap oracle
-    address public oracle;
+    address public immutable oracle;
+    address public immutable ethQuoteCurrencyPool;
+    address public immutable quoteCurrency;
 
     /// @dev time difference to trigger a hedge (seconds)
     uint256 public immutable hedgeTimeThreshold;
@@ -154,6 +161,8 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
         auctionTime = _auctionTime;
         minPriceMultiplier = _minPriceMultiplier;
         maxPriceMultiplier = _maxPriceMultiplier;
+        ethQuoteCurrencyPool = IController(_wSqueethController).ethQuoteCurrencyPool();
+        quoteCurrency = IController(_wSqueethController).quoteCurrency();
     }
 
     /**
@@ -171,7 +180,11 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
     function flashDeposit(uint256 _ethToDeposit) external payable nonReentrant {
         (uint256 cachedStrategyDebt, uint256 cachedStrategyCollateral) = _syncStrategyState();
 
-        uint256 wSqueethToMint = _calcWsqueethToMint(_ethToDeposit, cachedStrategyDebt, cachedStrategyCollateral);
+        (uint256 wSqueethToMint, ) = _calcWsqueethToMintAndFee(
+            _ethToDeposit,
+            cachedStrategyDebt,
+            cachedStrategyCollateral
+        );
 
         if (cachedStrategyDebt == 0 && cachedStrategyCollateral == 0) {
             // store hedge data as strategy is delta neutral at this point
@@ -426,9 +439,9 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
         bool _isFlashDeposit
     ) internal returns (uint256, uint256) {
         (uint256 strategyDebt, uint256 strategyCollateral) = _syncStrategyState();
+        (uint256 wSqueethToMint, uint256 ethFee) = _calcWsqueethToMintAndFee(_amount, strategyDebt, strategyCollateral);
 
-        uint256 wSqueethToMint = _calcWsqueethToMint(_amount, strategyDebt, strategyCollateral);
-        uint256 depositorCrabAmount = _calcSharesToMint(_amount, strategyCollateral, totalSupply());
+        uint256 depositorCrabAmount = _calcSharesToMint(_amount.sub(ethFee), strategyCollateral, totalSupply());
 
         if (strategyDebt == 0 && strategyCollateral == 0) {
             // store hedge data as strategy is delta neutral at this point
@@ -625,12 +638,14 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
     {
         (uint256 strategyDebt, uint256 ethDelta) = _syncStrategyState();
         uint256 currentWSqueethPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP_PERIOD, true);
-        (bool isSellingAuction, ) = _checkAuctionType(strategyDebt, ethDelta, currentWSqueethPrice);
+        uint256 feeAdjustment = _calcFeeAdjustment();
+        (bool isSellingAuction, ) = _checkAuctionType(strategyDebt, ethDelta, currentWSqueethPrice, feeAdjustment);
         uint256 auctionWSqueethEthPrice = _getAuctionPrice(_auctionTriggerTime, currentWSqueethPrice, isSellingAuction);
         (bool isStillSellingAuction, uint256 wSqueethToAuction) = _checkAuctionType(
             strategyDebt,
             ethDelta,
-            auctionWSqueethEthPrice
+            auctionWSqueethEthPrice,
+            feeAdjustment
         );
 
         require(isSellingAuction == isStillSellingAuction, "can not execute hedging trade as auction type changed");
@@ -647,38 +662,61 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
      * @notice sync strategy debt and collateral amount
      * @return synced debt and collateral amount
      */
-    function _syncStrategyState() internal returns (uint256, uint256) {
+    function _syncStrategyState() internal view returns (uint256, uint256) {
         (, , uint256 syncedStrategyCollateral, uint256 syncedStrategyDebt) = _getVaultDetails();
-        _strategyDebt = syncedStrategyDebt;
-        _strategyCollateral = syncedStrategyCollateral;
 
         return (syncedStrategyDebt, syncedStrategyCollateral);
     }
 
     /**
-     * @notice calculate amount of wSqueeth to mint from deposited amount
+     * @notice calculate the fee adjustment factor, which is the amount of ETH owed per 1 wSqueeth minted
+     * @dev the fee is a based off the index value of squeeth and uses a twap scaled down by the PowerPerp's INDEX_SCALE
+     * @return the fee adjustment factor
+     */
+    function _calcFeeAdjustment() internal view returns (uint256) {
+        uint256 ethQuoteCurrencyPrice = Power2Base._getScaledTwap(
+            oracle,
+            ethQuoteCurrencyPool,
+            weth,
+            quoteCurrency,
+            POWER_PERP_PERIOD,
+            false
+        );
+        uint256 normalizationFactor = IController(powerTokenController).getExpectedNormalizationFactor();
+        uint256 feeRate = IController(powerTokenController).feeRate();
+        return normalizationFactor.wmul(ethQuoteCurrencyPrice).mul(feeRate).div(10000);
+    }
+
+    /**
+     * @notice calculate amount of wSqueeth to mint and fee paid from deposited amount
      * @param _depositedAmount amount of deposited WETH
      * @param _strategyDebtAmount amount of strategy debt
      * @param _strategyCollateralAmount collateral amount in strategy
-     * @return amount of minted wSqueeth and WSqueeth/ETH price
+     * @return amount of minted wSqueeth and ETH fee paid on minted squeeth
      */
-    function _calcWsqueethToMint(
+    function _calcWsqueethToMintAndFee(
         uint256 _depositedAmount,
         uint256 _strategyDebtAmount,
         uint256 _strategyCollateralAmount
-    ) internal view returns (uint256) {
+    ) internal view returns (uint256, uint256) {
         uint256 wSqueethToMint;
+        uint256 feeAdjustment = _calcFeeAdjustment();
 
         if (_strategyDebtAmount == 0 && _strategyCollateralAmount == 0) {
             require(totalSupply() == 0, "Contract unsafe due to full liquidation");
+
             uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP_PERIOD, true);
             uint256 squeethDelta = wSqueethEthPrice.wmul(2e18);
-            wSqueethToMint = _depositedAmount.wdiv(squeethDelta);
+            wSqueethToMint = _depositedAmount.wdiv(squeethDelta.add(feeAdjustment));
         } else {
-            wSqueethToMint = _depositedAmount.wmul(_strategyDebtAmount).wdiv(_strategyCollateralAmount);
+            wSqueethToMint = _depositedAmount.wmul(_strategyDebtAmount).wdiv(
+                _strategyCollateralAmount.add(_strategyDebtAmount.wmul(feeAdjustment))
+            );
         }
 
-        return wSqueethToMint;
+        uint256 fee = wSqueethToMint.wmul(feeAdjustment);
+
+        return (wSqueethToMint, fee);
     }
 
     /**
@@ -745,22 +783,27 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
      * @param _debt strategy debt
      * @param _ethDelta ETH delta (= amount of ETH in strategy)
      * @param _wSqueethEthPrice WSqueeth/ETH price
+     * @param _feeAdjustment the fee adjustment, the amount of ETH owed per wSqueeth minted
      * @return auction type(sell or buy) and auction initial target hedge
      */
     function _checkAuctionType(
         uint256 _debt,
         uint256 _ethDelta,
-        uint256 _wSqueethEthPrice
+        uint256 _wSqueethEthPrice,
+        uint256 _feeAdjustment
     ) internal pure returns (bool, uint256) {
         uint256 wSqueethDelta = _debt.wmul(2e18).wmul(_wSqueethEthPrice);
 
         (uint256 targetHedge, bool isSellingAuction) = _getTargetHedgeAndAuctionType(
             wSqueethDelta,
             _ethDelta,
-            _wSqueethEthPrice
+            _wSqueethEthPrice,
+            _feeAdjustment
         );
 
-        require(targetHedge != 0, "strategy is delta neutral");
+        uint256 collateralRatioToHedge = targetHedge.wmul(_wSqueethEthPrice).wdiv(_ethDelta);
+
+        require(collateralRatioToHedge > DELTA_HEDGE_THRESHOLD, "strategy is delta neutral");
 
         return (isSellingAuction, targetHedge);
     }
@@ -810,17 +853,19 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
      * @param _wSqueethDelta WSqueeth delta
      * @param _ethDelta ETH delta
      * @param _wSqueethEthPrice WSqueeth/ETH price
+     * @param _feeAdjustment the fee adjustment, the amount of ETH owed per wSqueeth minted
      * @return target hedge
      * @return auction type: true if auction is selling WSqueeth, false if buying WSqueeth
      */
     function _getTargetHedgeAndAuctionType(
         uint256 _wSqueethDelta,
         uint256 _ethDelta,
-        uint256 _wSqueethEthPrice
+        uint256 _wSqueethEthPrice,
+        uint256 _feeAdjustment
     ) internal pure returns (uint256, bool) {
         return
             (_wSqueethDelta > _ethDelta)
                 ? ((_wSqueethDelta.sub(_ethDelta)).wdiv(_wSqueethEthPrice), false)
-                : ((_ethDelta.sub(_wSqueethDelta)).wdiv(_wSqueethEthPrice), true);
+                : ((_ethDelta.sub(_wSqueethDelta)).wdiv(_wSqueethEthPrice.add(_feeAdjustment)), true);
     }
 }

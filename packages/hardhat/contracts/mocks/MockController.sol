@@ -16,7 +16,10 @@ contract MockController {
 
     uint256 internal constant secInDay = 86400;
 
+    address public quoteCurrency;
+    address public ethQuoteCurrencyPool;
     uint256 public normalizationFactor;
+    uint256 public feeRate = 0;
 
     /// @dev The token ID vault data
     mapping(uint256 => VaultLib.Vault) public vaults;
@@ -24,12 +27,19 @@ contract MockController {
     IWPowerPerp public wPowerPerp;
     IShortPowerPerp public shortPowerPerp;
 
-    function init(address _shortPowerPerp, address _wPowerPerp) public {
+    function init(
+        address _shortPowerPerp,
+        address _wPowerPerp,
+        address _ethQuoteCurrencyPool,
+        address _quoteCurrency
+    ) public {
         require(_shortPowerPerp != address(0), "C5");
         require(_wPowerPerp != address(0), "Invalid wPowerPerp address");
 
         shortPowerPerp = IShortPowerPerp(_shortPowerPerp);
         wPowerPerp = IWPowerPerp(_wPowerPerp);
+        ethQuoteCurrencyPool = _ethQuoteCurrencyPool;
+        quoteCurrency = _quoteCurrency;
 
         normalizationFactor = 1e18;
     }
@@ -118,5 +128,9 @@ contract MockController {
 
     function _canModifyVault(uint256 _vaultId, address _account) internal view returns (bool) {
         return shortPowerPerp.ownerOf(_vaultId) == _account || vaults[_vaultId].operator == _account;
+    }
+
+    function getExpectedNormalizationFactor() external view returns (uint256) {
+        return normalizationFactor;
     }
 }

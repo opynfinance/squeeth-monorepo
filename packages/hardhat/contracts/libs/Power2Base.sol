@@ -9,10 +9,10 @@ import {IOracle} from "../interfaces/IOracle.sol";
 library Power2Base {
     using SafeMath for uint256;
 
-    uint32 constant TWAP_PERIOD = 5 minutes;
-    uint256 constant INDEX_SCALE = 1e4;
-    uint256 constant ONE = 1e18;
-    uint256 constant ONE_ONE = 1e36;
+    uint32 private constant TWAP_PERIOD = 5 minutes;
+    uint256 private constant INDEX_SCALE = 1e4;
+    uint256 private constant ONE = 1e18;
+    uint256 private constant ONE_ONE = 1e36;
 
     /**
      * @notice return the scaled down index of the power perp in USD, scaled by 18 decimals

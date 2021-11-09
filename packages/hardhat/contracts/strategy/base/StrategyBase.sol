@@ -32,11 +32,7 @@ contract StrategyBase is ERC20 {
     address public immutable wPowerPerp;
 
     /// @dev power token strategy vault ID
-    uint256 public immutable _vaultId;
-    /// @dev strategy debt amount
-    uint256 internal _strategyDebt;
-    /// @dev strategy collateral amount
-    uint256 internal _strategyCollateral;
+    uint256 public immutable vaultId;
 
     /**
      * @notice constructor for StrategyBase
@@ -53,30 +49,22 @@ contract StrategyBase is ERC20 {
         weth = _weth;
         powerTokenController = IController(_powerTokenController);
         wPowerPerp = address(powerTokenController.wPowerPerp());
-        _vaultId = powerTokenController.mintWPowerPerpAmount(0, 0, 0);
+        vaultId = powerTokenController.mintWPowerPerpAmount(0, 0, 0);
     }
     /**
      * @notice get power token strategy vault ID 
      * @return vault ID
      */
     function getStrategyVaultId() external view returns (uint256) {
-        return _vaultId;
+        return vaultId;
     }
 
     /**
-     * @notice get strategy debt amount
-     * @return debt amount
+     * @notice get power token strategy details 
+     * @return operator, nft collateral id, short amount, collateral amount
      */
-    function getStrategyDebt() external view returns (uint256) {
-        return _strategyDebt;
-    }
-
-    /**
-     * @notice get strategy collateral amount
-     * @return collateral amount
-     */
-    function getStrategyCollateral() external view returns (uint256) {
-        return _strategyCollateral;
+    function getVaultDetails() external view returns (address, uint256, uint256, uint256) {
+        return _getVaultDetails();
     }
 
     /**
@@ -92,10 +80,7 @@ contract StrategyBase is ERC20 {
         uint256 _collateral,
         bool _keepWsqueeth
     ) internal {
-        _strategyCollateral = _strategyCollateral.add(_collateral);
-        _strategyDebt = _strategyDebt.add(_wAmount);
-
-        powerTokenController.mintWPowerPerpAmount{value: _collateral}(_vaultId, _wAmount, 0);
+        powerTokenController.mintWPowerPerpAmount{value: _collateral}(vaultId, _wAmount, 0);
 
         if (!_keepWsqueeth) {
             IWPowerPerp(wPowerPerp).transfer(_to, _wAmount);
@@ -116,14 +101,11 @@ contract StrategyBase is ERC20 {
         uint256 _collateralToWithdraw,
         bool _isOwnedWSqueeth
     ) internal {
-        _strategyDebt = _strategyDebt.sub(_amount);
-        _strategyCollateral = _strategyCollateral.sub(_collateralToWithdraw);
-
         if (!_isOwnedWSqueeth) {
             IWPowerPerp(wPowerPerp).transferFrom(_from, address(this), _amount);
         }
 
-        powerTokenController.burnWPowerPerpAmount(_vaultId, _amount, _collateralToWithdraw);
+        powerTokenController.burnWPowerPerpAmount(vaultId, _amount, _collateralToWithdraw);
     }
 
     /**
@@ -150,7 +132,7 @@ contract StrategyBase is ERC20 {
      * @return operator address, vault NFT id, short and collateral amounts
      */
     function _getVaultDetails() internal view returns (address, uint256, uint256, uint256) {
-        VaultLib.Vault memory strategyVault = powerTokenController.vaults(_vaultId);
+        VaultLib.Vault memory strategyVault = powerTokenController.vaults(vaultId);
 
         return (strategyVault.operator, strategyVault.NftCollateralId, strategyVault.collateralAmount, strategyVault.shortAmount);
     }

@@ -113,39 +113,7 @@ library VaultLib {
         bool _isWethToken0
     ) internal view returns (bool, bool) {
         if (_vault.shortAmount == 0) return (true, false);
-        return
-            _getVaultStatus(
-                _vault,
-                _positionManager,
-                _normalizationFactor,
-                _ethQuoteCurrencyPrice,
-                _minCollateral,
-                _wsqueethPoolTick,
-                _isWethToken0
-            );
-    }
 
-    /**
-     * @notice check if a vault is properly collateralized
-     * @param _vault the vault we want to check
-     * @param _positionManager address of the uniswap position manager
-     * @param _normalizationFactor current _normalizationFactor
-     * @param _ethQuoteCurrencyPrice current eth price scaled by 1e18
-     * @param _minCollateral minimum collateral that needs to be in a vault
-     * @param _wsqueethPoolTick current price tick for wsqueeth pool
-     * @param _isWethToken0 whether weth is token0 in the wsqueeth pool
-     * @return true if the vault is sufficiently collateralized
-     * @return true if the vault is considered as a dust vault
-     */
-    function _getVaultStatus(
-        Vault memory _vault,
-        address _positionManager,
-        uint256 _normalizationFactor,
-        uint256 _ethQuoteCurrencyPrice,
-        uint256 _minCollateral,
-        int24 _wsqueethPoolTick,
-        bool _isWethToken0
-    ) internal view returns (bool, bool) {
         uint256 debtValueInETH = uint256(_vault.shortAmount).mul(_normalizationFactor).mul(_ethQuoteCurrencyPrice).div(
             ONE_ONE
         );

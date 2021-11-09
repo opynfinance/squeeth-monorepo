@@ -88,6 +88,8 @@ describe("Crab integration test: crab vault full liquidation and shutdown of con
       weth,
       positionManager
     )
+    await provider.send("evm_increaseTime", [300])
+    await provider.send("evm_mine", [])
 
     await addSqueethLiquidity(
       scaledStartingSqueethPrice, 
@@ -99,6 +101,9 @@ describe("Crab integration test: crab vault full liquidation and shutdown of con
       positionManager, 
       controller
     )
+    await provider.send("evm_increaseTime", [300])
+    await provider.send("evm_mine", [])
+
   })
 
   this.beforeAll("Deposit into strategy", async () => {
@@ -114,7 +119,7 @@ describe("Crab integration test: crab vault full liquidation and shutdown of con
 
     const totalSupply = (await crabStrategy.totalSupply())
     const depositorCrab = (await crabStrategy.balanceOf(depositor.address))
-    const debtAmount = (await crabStrategy.getStrategyDebt())
+    const [strategyOperatorBefore, strategyNftIdBefore, strategyCollateralAmountBefore, debtAmount] = await crabStrategy.getVaultDetails()
     const depositorSqueethBalance = await wSqueeth.balanceOf(depositor.address)
     const strategyContractSqueeth = await wSqueeth.balanceOf(crabStrategy.address)
     const lastHedgeTime = await crabStrategy.timeAtLastHedge()
@@ -158,7 +163,7 @@ describe("Crab integration test: crab vault full liquidation and shutdown of con
       await provider.send("evm_increaseTime", [600]) // increase time by 600 sec
       await provider.send("evm_mine", [])
 
-      const vaultId = await crabStrategy._vaultId();
+      const vaultId = await crabStrategy.vaultId();
       const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600, false)
       const vaultBefore = await controller.vaults(vaultId)
       
@@ -170,8 +175,8 @@ describe("Crab integration test: crab vault full liquidation and shutdown of con
     })
 
     it("should liquidate crab vault using a full insolvent liquidation (0 collateral 0 debt remain)", async () => {
-      const vaultId = await crabStrategy._vaultId();
-      const isVaultSafe = await controller.isVaultSafe((await crabStrategy._vaultId()))
+      const vaultId = await crabStrategy.vaultId();
+      const isVaultSafe = await controller.isVaultSafe((await crabStrategy.vaultId()))
       expect(isVaultSafe).to.be.false
 
       const vaultBefore = await controller.vaults(vaultId)
@@ -198,8 +203,8 @@ describe("Crab integration test: crab vault full liquidation and shutdown of con
     })
 
     it("should NOT let user flash deposit post liquidation", async () => {
-      const vaultId = await crabStrategy._vaultId();
-      const isVaultSafe = await controller.isVaultSafe((await crabStrategy._vaultId()))
+      const vaultId = await crabStrategy.vaultId();
+      const isVaultSafe = await controller.isVaultSafe((await crabStrategy.vaultId()))
       expect(isVaultSafe).to.be.true
 
       const vaultBefore = await controller.vaults(vaultId)
@@ -219,8 +224,8 @@ describe("Crab integration test: crab vault full liquidation and shutdown of con
     })
 
     it("should NOT let user deposit post liquidation", async () => {
-        const vaultId = await crabStrategy._vaultId();
-        const isVaultSafe = await controller.isVaultSafe((await crabStrategy._vaultId()))
+        const vaultId = await crabStrategy.vaultId();
+        const isVaultSafe = await controller.isVaultSafe((await crabStrategy.vaultId()))
         expect(isVaultSafe).to.be.true
   
         const vaultBefore = await controller.vaults(vaultId)
@@ -242,8 +247,7 @@ describe("Crab integration test: crab vault full liquidation and shutdown of con
 
       const userCrabBalanceBefore = await crabStrategy.balanceOf(depositor.address);
       const crabTotalSupply = await crabStrategy.totalSupply()
-      const strategyDebtAmountBefore = await crabStrategy.getStrategyDebt()
-      const strategyCollateralAmountBefore = await crabStrategy.getStrategyCollateral()
+      const [strategyOperatorBefore, strategyNftIdBefore, strategyCollateralAmountBefore, strategyDebtAmountBefore] = await crabStrategy.getVaultDetails()
       const crabRatio = wdiv(userCrabBalanceBefore, crabTotalSupply);
       const debtToRepay = wmul(crabRatio,strategyDebtAmountBefore);
       const ethCostOfDebtToRepay = wmul(debtToRepay,wSqueethPrice)
@@ -259,7 +263,7 @@ describe("Crab integration test: crab vault full liquidation and shutdown of con
       
       const userCrabBalanceBefore = await crabStrategy.balanceOf(depositor.address);
       const crabTotalSupply = await crabStrategy.totalSupply()
-      const strategyCollateralAmountBefore = await crabStrategy.getStrategyCollateral()
+      const [strategyOperatorBefore, strategyNftIdBefore, strategyCollateralAmountBefore, strategyDebtAmountBefore] = await crabStrategy.getVaultDetails()
       const userEthBalanceBefore = await provider.getBalance(depositor.address)
       const crabRatio = wdiv(userCrabBalanceBefore, crabTotalSupply);
 
@@ -272,8 +276,8 @@ describe("Crab integration test: crab vault full liquidation and shutdown of con
       const userCrabBalanceAfter = await crabStrategy.balanceOf(depositor.address);
       const userSqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
 
-      const vaultId = await crabStrategy._vaultId();
-      const isVaultSafe = await controller.isVaultSafe((await crabStrategy._vaultId()))
+      const vaultId = await crabStrategy.vaultId();
+      const isVaultSafe = await controller.isVaultSafe((await crabStrategy.vaultId()))
       expect(isVaultSafe).to.be.true
 
       const vaultBefore = await controller.vaults(vaultId)
