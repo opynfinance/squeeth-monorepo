@@ -63,14 +63,29 @@ export const useController = () => {
    * @param vaultType
    * @returns
    */
-  const openDepositAndMint = (vaultId: number, amount: BigNumber, vaultType: Vaults) => {
+  const openDepositAndMint = (vaultId: number, amount: BigNumber, collatAmount: BigNumber) => {
     if (!contract || !address) return
 
-    const _amount = fromTokenAmount(amount, 18)
-    handleTransaction(
+    const _amount = fromTokenAmount(amount, WSQUEETH_DECIMALS).toFixed(0)
+    const ethAmt = fromTokenAmount(collatAmount, 18)
+    console.log(_amount.toString(), ethAmt.toString())
+    return handleTransaction(
       contract.methods.mintWPowerPerpAmount(vaultId, _amount.toString(), 0).send({
         from: address,
-        value: _amount.multipliedBy(getMultiplier(vaultType)).multipliedBy(10000),
+        value: ethAmt.toString(),
+      }),
+    )
+  }
+
+  const burnAndRedeem = (vaultId: number, amount: BigNumber, collatAmount: BigNumber) => {
+    if (!contract || !address) return
+
+    const _amount = fromTokenAmount(amount, WSQUEETH_DECIMALS)
+    const ethAmt = fromTokenAmount(collatAmount, 18)
+    console.log(vaultId, _amount.toFixed(0), ethAmt.toFixed(0))
+    return handleTransaction(
+      contract.methods.burnWPowerPerpAmount(vaultId, _amount.toFixed(0), ethAmt.toFixed(0)).send({
+        from: address,
       }),
     )
   }
@@ -217,5 +232,6 @@ export const useController = () => {
     fundingPerDay,
     getDebtAmount,
     getShortAmountFromDebt,
+    burnAndRedeem,
   }
 }

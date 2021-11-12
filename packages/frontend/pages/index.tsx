@@ -1,4 +1,4 @@
-import { Button, Hidden, IconButton, Tooltip } from '@material-ui/core'
+import { Hidden, IconButton, Tooltip } from '@material-ui/core'
 import Card from '@material-ui/core/Card'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Typography from '@material-ui/core/Typography'
@@ -22,7 +22,6 @@ import { TradeProvider, useTrade } from '../src/context/trade'
 import { useWorldContext } from '../src/context/world'
 import { useController } from '../src/hooks/contracts/useController'
 import { useETHPrice } from '../src/hooks/useETHPrice'
-import { useETHPriceCharts } from '../src/hooks/useETHPriceCharts'
 import { TradeType } from '../src/types'
 import { toTokenAmount } from '../src/utils/calculations'
 

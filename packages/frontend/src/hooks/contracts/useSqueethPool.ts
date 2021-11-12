@@ -1,5 +1,5 @@
 import { CurrencyAmount, Percent, Token } from '@uniswap/sdk-core'
-import { Pool, Route, Trade } from '@uniswap/v3-sdk'
+import { NonfungiblePositionManager, Pool, Position, Route, Tick, Trade } from '@uniswap/v3-sdk'
 import BigNumber from 'bignumber.js'
 import { ethers } from 'ethers'
 import { useEffect, useState } from 'react'
@@ -84,6 +84,7 @@ export const useSqueethPool = () => {
       Number(state.tick),
       ticks || []
     )
+    console.log(state.tick)
 
 
 

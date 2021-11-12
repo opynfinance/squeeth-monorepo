@@ -4,6 +4,7 @@ import {
   CONTROLLER,
   DAI,
   ETH_DAI_POOL,
+  NFT_MANAGER,
   ORACLE,
   QUOTER,
   SHORT_HELPER,
@@ -33,6 +34,7 @@ const useAddresses = () => {
       oracle: ORACLE[networkId],
       ethDaiPool: ETH_DAI_POOL[networkId],
       dai: DAI[networkId],
+      nftManager: NFT_MANAGER[networkId],
     }),
     [networkId],
   )

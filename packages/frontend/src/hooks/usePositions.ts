@@ -1,12 +1,17 @@
 import { useQuery } from '@apollo/client'
+import { Position } from '@uniswap/v3-sdk'
 import BigNumber from 'bignumber.js'
 import { useEffect, useMemo, useState } from 'react'
 
+import NFTpositionManagerABI from '../abis/NFTpositionmanager.json'
 import { useWallet } from '../context/wallet'
 import { useWorldContext } from '../context/world'
+import { positions, positionsVariables } from '../queries/uniswap/__generated__/positions'
 import { swaps, swapsVariables } from '../queries/uniswap/__generated__/swaps'
+import POSITIONS_QUERY from '../queries/uniswap/positionsQuery'
 import SWAPS_QUERY from '../queries/uniswap/swapsQuery'
-import { PositionType } from '../types'
+import { NFTManagers, PositionType } from '../types'
+import { toTokenAmount } from '../utils/calculations'
 import { useController } from './contracts/useController'
 import { useSqueethPool } from './contracts/useSqueethPool'
 import { useVaultManager } from './contracts/useVaultManager'
@@ -138,7 +143,7 @@ export const useShortPositions = () => {
   const { getDebtAmount, normFactor: normalizationFactor } = useController()
 
   const [existingCollatPercent, setExistingCollatPercent] = useState(0)
-  const [existingCollat, setExistingCollat] = useState(0)
+  const [existingCollat, setExistingCollat] = useState(new BigNumber(0))
   const [liquidationPrice, setLiquidationPrice] = useState(0)
   const swaps = data?.swaps
   const isWethToken0 = parseInt(weth, 16) < parseInt(wSqueeth, 16)
@@ -206,13 +211,13 @@ export const useShortPositions = () => {
   )
 
   useEffect(() => {
-    if (squeethAmount.absoluteValue().isGreaterThan(0) && shortVaults.length) {
+    if (shortVaults.length && shortVaults[0].shortAmount) {
       const _collat: BigNumber = shortVaults[0].collateralAmount
-      setExistingCollat(_collat.toNumber())
-      getDebtAmount(squeethAmount.absoluteValue()).then((debt) => {
+      setExistingCollat(_collat)
+      getDebtAmount(new BigNumber(shortVaults[0].shortAmount)).then((debt) => {
         if (debt && debt.isPositive()) {
           setExistingCollatPercent(Number(_collat.div(debt).times(100).toFixed(1)))
-          const rSqueeth = normalizationFactor.multipliedBy(squeethAmount.absoluteValue()).dividedBy(10000)
+          const rSqueeth = normalizationFactor.multipliedBy(new BigNumber(shortVaults[0].amount)).dividedBy(10000)
           setLiquidationPrice(_collat.div(rSqueeth.multipliedBy(1.5)).toNumber())
         }
       })
@@ -323,6 +328,72 @@ export const usePnL = () => {
     loading,
     shortRealizedPNL,
     longRealizedPNL,
+    refetch,
+  }
+}
+
+export const useLPPositions = () => {
+  const { address, web3 } = useWallet()
+  const { squeethPool, nftManager } = useAddresses()
+  const { pool } = useSqueethPool()
+
+  const [positions, setPositions] = useState<NFTManagers[]>([])
+
+  const { data, loading, refetch } = useQuery<positions, positionsVariables>(POSITIONS_QUERY, {
+    variables: {
+      poolAddress: squeethPool.toLowerCase(),
+      owner: address?.toLowerCase() || '',
+    },
+    fetchPolicy: 'cache-and-network',
+  })
+
+  const manager = new web3.eth.Contract(NFTpositionManagerABI as any, nftManager?.toLowerCase() || '')
+  const MAX_UNIT = '0xffffffffffffffffffffffffffffffff'
+
+  const positionAndFees = useMemo(() => {
+    if (!pool) return []
+    return (
+      data?.positions.map(async (p) => {
+        const position = { ...p }
+        const tokenIdHexString = new BigNumber(position.id).toString()
+        const uniPosition = new Position({
+          pool,
+          liquidity: new BigNumber(position.liquidity).toString(),
+          tickLower: Number(position.tickLower.tickIdx),
+          tickUpper: Number(position.tickUpper.tickIdx),
+        })
+
+        const fees = await manager.methods
+          .collect({
+            tokenId: tokenIdHexString,
+            recipient: address,
+            amount0Max: MAX_UNIT,
+            amount1Max: MAX_UNIT,
+          })
+          .call()
+
+        return {
+          ...position,
+          amount0: new BigNumber(uniPosition.amount0.toSignificant(18)),
+          amount1: new BigNumber(uniPosition.amount1.toSignificant(18)),
+          fees0: toTokenAmount(fees?.amount0, 18),
+          fees1: toTokenAmount(fees?.amount1, 18),
+        }
+      }) || []
+    )
+  }, [data?.positions, pool])
+
+  useEffect(() => {
+    if (positionAndFees) {
+      Promise.all(positionAndFees).then((values) => {
+        setPositions(values)
+      })
+    }
+  }, [positionAndFees.length])
+
+  return {
+    positions: positions,
+    loading,
     refetch,
   }
 }

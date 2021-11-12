@@ -1,5 +1,7 @@
 import BigNumber from 'bignumber.js'
 
+import { positions_positions } from '../queries/uniswap/__generated__/positions'
+
 declare module '@material-ui/core/styles/createPalette' {
   interface TypeBackground {
     stone: string
@@ -45,4 +47,10 @@ export enum PositionType {
 export enum TradeType {
   LONG,
   SHORT,
+}
+export interface NFTManagers extends positions_positions {
+  fees0?: BigNumber
+  fees1?: BigNumber
+  amount0?: BigNumber
+  amount1?: BigNumber
 }

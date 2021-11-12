@@ -24,15 +24,20 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(6),
       marginBottom: theme.spacing(6),
     },
+    uniLP: {
+      color: '#FF007A',
+      // textDecoration: 'underline',
+    },
   }),
 )
 
 type ConfirmedProps = {
   confirmationMessage: string
   txnHash: string
+  isLP?: boolean
 }
 
-const Confirmed: React.FC<ConfirmedProps> = ({ confirmationMessage, txnHash }) => {
+const Confirmed: React.FC<ConfirmedProps> = ({ confirmationMessage, txnHash, isLP }) => {
   const classes = useStyles()
   const { networkId } = useWallet()
 
@@ -56,17 +61,31 @@ const Confirmed: React.FC<ConfirmedProps> = ({ confirmationMessage, txnHash }) =
           View on Etherscan{' '}
         </a>
       </div>
-      <div className={classes.squeethCat}>
-        <Image
-          src="https://media.giphy.com/media/eYU60NpFPCONDEItBa/giphy.gif"
-          alt="squeeth cat"
-          width={100}
-          height={100}
-        />
-        <Typography variant="body1" component="div">
-          Stay Squeethy!
-        </Typography>
-      </div>
+      {isLP ? (
+        <div className={classes.squeethCat}>
+          <Typography variant="body1" component="div" className={classes.uniLP}>
+            <a
+              href="https://squeeth-uniswap.netlify.app/#/add/ETH/0x06980aDd9a68D17eA81C7664ECD1e9DDB85360D9/3000"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Provide Liquidity on Uniswap 🦄
+            </a>
+          </Typography>
+        </div>
+      ) : (
+        <div className={classes.squeethCat}>
+          <Image
+            src="https://media.giphy.com/media/eYU60NpFPCONDEItBa/giphy.gif"
+            alt="squeeth cat"
+            width={100}
+            height={100}
+          />
+          <Typography variant="body1" component="div">
+            Stay Squeethy!
+          </Typography>
+        </div>
+      )}
     </div>
   )
 }

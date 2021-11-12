@@ -88,4 +88,11 @@ export const ETH_DAI_POOL: Address = {
   31337: '0x8dF057949E6717B6f28962f30e8415b148241e16',
 }
 
+export const NFT_MANAGER: Address = {
+  1: '',
+  3: '0x8c7c1f786da4dee7d4bb49697a9b0c0c8fb328e0',
+  421611: '',
+  31337: '',
+}
+
 export const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
