@@ -112,16 +112,17 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
 
 
     /**
-     * @notice function to be called by uniswap callback
-     * @param _caller initial strategy function caller
-     * @param _tokenIn token address sold
-     * @param _tokenOut token address bought
-     * @param _fee pool fee
-     * @param _amountToPay amount to pay for the pool second token
-     * @param _callData arbitrary data assigned with the flashswap call 
-     * @param _callSource function call source
+     * @notice function to be called by uniswap callback. 
+     * @dev this function should be overridden by the child contract
+     * param _caller initial strategy function caller
+     * param _tokenIn token address sold
+     * param _tokenOut token address bought
+     * param _fee pool fee
+     * param _amountToPay amount to pay for the pool second token
+     * param _callData arbitrary data assigned with the flashswap call 
+     * param _callSource function call source
      */
-    function _strategyFlash(address _caller, address _tokenIn, address _tokenOut, uint24 _fee, uint256 _amountToPay, bytes memory _callData, uint8 _callSource) internal virtual {}
+    function _strategyFlash(address /*_caller*/, address /*_tokenIn*/, address /*_tokenOut*/, uint24 /*_fee*/, uint256 /*_amountToPay*/, bytes memory _callData, uint8 _callSource) internal virtual {}
     
     /** 
     * @notice internal function for exact-in swap on uniswap (specify exact amount to pay)

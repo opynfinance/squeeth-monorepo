@@ -45,6 +45,16 @@ contract Oracle {
         return _fetchTwap(_pool, _base, _quote, requestPeriod);
     }
 
+    /**
+     * @notice get twap for a specific period of time, converted with base & quote token decimals
+     * @dev if the _secondsAgoToStartOfTwap period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD"
+     * @param _pool uniswap pool address
+     * @param _base base currency. to get eth/usd price, eth is base token
+     * @param _quote quote currency. to get eth/usd price, usd is the quote currency
+     * @param _secondsAgoToStartOfTwap amount of seconds in the past to start calculating time-weighted average
+     * @param _secondsAgoToEndOfTwap amount of seconds in the past to end calculating time-weighted average
+     * @return price of 1 base currency in quote currency. scaled by 1e18
+     */
     function getHistoricalTwap(
         address _pool,
         address _base,
@@ -128,6 +138,16 @@ contract Oracle {
         return OracleLibrary.getQuoteAtTick(twapTick, _amountIn.toUint128(), _base, _quote);
     }
 
+    /**
+     * @notice get twap for a specific period of time, converted with base & quote token decimals
+     * @dev if the _secondsAgoToStartOfTwap period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD"
+     * @param _pool uniswap pool address
+     * @param _base base currency. to get eth/usd price, eth is base token
+     * @param _quote quote currency. to get eth/usd price, usd is the quote currency
+     * @param _secondsAgoToStartOfTwap amount of seconds in the past to start calculating time-weighted average
+     * @param _secondsAgoToEndOfTwap amount of seconds in the past to end calculating time-weighted average
+     * @return price of 1 base currency in quote currency. scaled by 1e18
+     */
     function _fetchHistoricTwap(
         address _pool,
         address _base,
