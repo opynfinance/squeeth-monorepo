@@ -53,4 +53,5 @@ export interface NFTManagers extends positions_positions {
   fees1?: BigNumber
   amount0?: BigNumber
   amount1?: BigNumber
+  dollarValue: BigNumber
 }

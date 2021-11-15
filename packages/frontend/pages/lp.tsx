@@ -32,6 +32,7 @@ import { useSqueethPool } from '../src/hooks/contracts/useSqueethPool'
 import { useTokenBalance } from '../src/hooks/contracts/useTokenBalance'
 import { useVaultManager } from '../src/hooks/contracts/useVaultManager'
 import { useAddresses } from '../src/hooks/useAddress'
+import { useETHPrice } from '../src/hooks/useETHPrice'
 import { useLPPositions, useShortPositions } from '../src/hooks/usePositions'
 import { toTokenAmount } from '../src/utils/calculations'
 
@@ -151,12 +152,13 @@ export function LPCalculator() {
   const [txHash, setTxHash] = useState('')
 
   const classes = useStyles()
-  const { positions } = useLPPositions()
+  const { positions, loading: lpLoading } = useLPPositions()
   const { pool } = useSqueethPool()
   const { balance, connected } = useWallet()
   const { wSqueeth } = useAddresses()
   const squeethBal = useTokenBalance(wSqueeth, 10, WSQUEETH_DECIMALS)
   const { existingCollatPercent, shortVaults, existingCollat } = useShortPositions()
+  const ethPrice = useETHPrice()
 
   const {
     getShortAmountFromDebt,
@@ -166,12 +168,12 @@ export function LPCalculator() {
     burnAndRedeem,
   } = useController()
   const { getWSqueethPositionValue } = useSqueethPool()
-  const { vaults } = useVaultManager()
-  const vaultId = useMemo(() => {
-    if (!vaults.length) return 0
 
-    return vaults[0].id
-  }, [vaults])
+  const vaultId = useMemo(() => {
+    if (!shortVaults.length) return 0
+
+    return shortVaults[0].id
+  }, [shortVaults])
 
   const { mintMinCollatError, burnMinCollatError, minCollRatioError } = useMemo(() => {
     let mintMinCollatError = null
@@ -210,16 +212,17 @@ export function LPCalculator() {
       setWithdrawCollat(new BigNumber(0))
       return
     }
-    if (amount.isEqualTo(squeethBal) && shortVaults.length) {
+    if (shortVaults.length && amount.isEqualTo(shortVaults[0].shortAmount)) {
       setWithdrawCollat(shortVaults[0].collateralAmount)
     } else {
-      getDebtAmount(squeethBal.minus(amount)).then((debt) => {
+      console.log(squeethBal.toNumber(), shortVaults[0].shortAmount.toNumber(), amount.toNumber())
+      getDebtAmount(shortVaults[0].shortAmount.minus(amount)).then((debt) => {
         if (!debt) return
         const neededCollat = debt.times(collatPercent / 100)
         setWithdrawCollat(existingCollat.minus(neededCollat))
       })
     }
-  }, [amount.toString(), existingCollat.toString(), shortVaults.length])
+  }, [amount.toString(), existingCollat.toString(), shortVaults.length, collatPercent])
 
   const mint = async () => {
     setLoading(true)
@@ -439,7 +442,7 @@ export function LPCalculator() {
               actionTitle="Redeem"
               amount={withdrawCollat.abs().toFixed(4)}
               unit="ETH"
-              value={'1'}
+              value={withdrawCollat.abs().times(ethPrice).toFixed(2)}
               hint={
                 <div className={classes.hint}>
                   <span className={classes.hintTextContainer}>
@@ -549,27 +552,36 @@ export function LPCalculator() {
                   <TableCell align="right">Liquidity</TableCell>
                   <TableCell align="right">Collected Fees</TableCell>
                   <TableCell align="right">Uncollected Fees</TableCell>
+                  <TableCell align="right">Value</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {positions?.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center" style={{ textAlign: 'center', fontSize: '16px' }}>
-                      <p>No Existing LP Positions</p>
+                  lpLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center" style={{ textAlign: 'center', fontSize: '16px' }}>
+                        <p>Loading...</p>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center" style={{ textAlign: 'center', fontSize: '16px' }}>
+                        <p>No Existing LP Positions</p>
 
-                      <p>
-                        <p>1. Mint Squeeth on the right.</p>
-                        <a
-                          href="https://squeeth-uniswap.netlify.app/#/add/ETH/0x06980aDd9a68D17eA81C7664ECD1e9DDB85360D9/3000"
-                          target="_blank"
-                          rel="noreferrer"
-                          className={classes.listLink}
-                        >
-                          <p>2. Deposit Squeeth and ETH into Uniswap V3 Pool 🦄</p>
-                        </a>
-                      </p>
-                    </TableCell>
-                  </TableRow>
+                        <p>
+                          <p>1. Mint Squeeth on the right.</p>
+                          <a
+                            href="https://squeeth-uniswap.netlify.app/#/add/ETH/0x06980aDd9a68D17eA81C7664ECD1e9DDB85360D9/3000"
+                            target="_blank"
+                            rel="noreferrer"
+                            className={classes.listLink}
+                          >
+                            <p>2. Deposit Squeeth and ETH into Uniswap V3 Pool 🦄</p>
+                          </a>
+                        </p>
+                      </TableCell>
+                    </TableRow>
+                  )
                 ) : (
                   positions?.map((p) => (
                     <TableRow key={p.id}>
@@ -612,12 +624,15 @@ export function LPCalculator() {
                           {p.fees1?.toFixed(6)} {p.token1.symbol}
                         </span>
                       </TableCell>
+                      <TableCell align="right">
+                        <span style={{ marginRight: '.5em' }}>$ {p.dollarValue?.toFixed(2)}</span>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
               </TableBody>
               {positions && positions?.length > 0 ? (
-                <TableCell colSpan={6}>
+                <TableCell colSpan={7}>
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <a
                       href="https://squeeth-uniswap.netlify.app/#/add/ETH/0x06980aDd9a68D17eA81C7664ECD1e9DDB85360D9/3000"

@@ -343,13 +343,6 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
               onChange={(v) => handleCloseDualInputUpdate(v, 'ETH')}
               label="Amount"
               tooltip="Amount of wSqueeth you want to close in eth"
-              actionTxt="Max"
-              onActionClicked={() => {
-                setAltTradeAmount(new BigNumber(balance))
-                getBuyQuoteForETH(new BigNumber(balance)).then((val) => {
-                  setAmount(val.amountOut)
-                })
-              }}
               unit="ETH"
               convertedValue={altTradeAmount.times(ethPrice).toFixed(2).toLocaleString()}
               error={connected && shrtAmt.gt(0) ? !!existingShortError : !!closeError}
@@ -364,7 +357,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
                     {amount.toNumber() ? (
                       <>
                         <ArrowRightAltIcon className={classes.arrowIcon} />
-                        <span>{(balance - altTradeAmount.toNumber()).toFixed(6)}</span>
+                        <span>{(balance + altTradeAmount.toNumber()).toFixed(6)}</span>
                       </>
                     ) : null}{' '}
                     <span style={{ marginLeft: '4px' }}>ETH</span>
@@ -396,7 +389,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
                   variant="contained"
                   onClick={sellAndClose}
                   className={classes.amountInput}
-                  disabled={!!sellLoading || !!closeError || shrtAmt.gt(0) || lngAmt.isZero()}
+                  disabled={!!sellLoading || !!closeError || shrtAmt.gt(0) || wSqueethBal.isZero()}
                   style={{ width: '300px' }}
                 >
                   {sellLoading ? (
@@ -506,12 +499,6 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
             label="Amount"
             tooltip="Amount of Squeeth exposure"
             actionTxt="Max"
-            onActionClicked={() => {
-              setAltTradeAmount(new BigNumber(wSqueethBal))
-              getBuyQuote(new BigNumber(wSqueethBal)).then((val) => {
-                setAmount(val.amountIn)
-              })
-            }}
             unit="oSQTH"
             convertedValue={getWSqueethPositionValue(altTradeAmount).toFixed(2).toLocaleString()}
             error={connected && shrtAmt.gt(0) ? !!existingShortError : !!openError}
@@ -523,7 +510,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
               ) : (
                 <div className={classes.hint}>
                   <span className={classes.hintTextContainer}>
-                    <span className={classes.hintTitleText}>Position </span>
+                    <span className={classes.hintTitleText}>Balance </span>
                     <span>{wSqueethBal.toFixed(6)}</span>
                   </span>
                   {quote.amountOut.gt(0) ? (

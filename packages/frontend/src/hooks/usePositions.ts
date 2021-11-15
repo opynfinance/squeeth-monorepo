@@ -334,12 +334,18 @@ export const usePnL = () => {
 
 export const useLPPositions = () => {
   const { address, web3 } = useWallet()
-  const { squeethPool, nftManager } = useAddresses()
-  const { pool } = useSqueethPool()
+  const { squeethPool, nftManager, weth, wSqueeth } = useAddresses()
+  const { pool, getWSqueethPositionValue } = useSqueethPool()
+  const ethPrice = useETHPrice()
 
   const [positions, setPositions] = useState<NFTManagers[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const { data, loading, refetch } = useQuery<positions, positionsVariables>(POSITIONS_QUERY, {
+  const {
+    data,
+    refetch,
+    loading: gphLoading,
+  } = useQuery<positions, positionsVariables>(POSITIONS_QUERY, {
     variables: {
       poolAddress: squeethPool.toLowerCase(),
       owner: address?.toLowerCase() || '',
@@ -349,6 +355,12 @@ export const useLPPositions = () => {
 
   const manager = new web3.eth.Contract(NFTpositionManagerABI as any, nftManager?.toLowerCase() || '')
   const MAX_UNIT = '0xffffffffffffffffffffffffffffffff'
+
+  useEffect(() => {
+    setLoading(true)
+  }, [address])
+
+  const isWethToken0 = useMemo(() => parseInt(weth, 16) < parseInt(wSqueeth, 16), [weth, wSqueeth])
 
   const positionAndFees = useMemo(() => {
     if (!pool) return []
@@ -372,28 +384,46 @@ export const useLPPositions = () => {
           })
           .call()
 
+        const squeethAmt = isWethToken0
+          ? new BigNumber(uniPosition.amount1.toSignificant(18))
+          : new BigNumber(uniPosition.amount0.toSignificant(18))
+
+        const wethAmt = isWethToken0
+          ? new BigNumber(uniPosition.amount0.toSignificant(18))
+          : new BigNumber(uniPosition.amount1.toSignificant(18))
+
+        const squeethFees = isWethToken0 ? toTokenAmount(fees?.amount1, 18) : toTokenAmount(fees?.amount0, 18)
+        const wethFees = isWethToken0 ? toTokenAmount(fees?.amount0, 18) : toTokenAmount(fees?.amount1, 18)
+
+        const dollarValue = getWSqueethPositionValue(squeethAmt)
+          .plus(getWSqueethPositionValue(squeethFees))
+          .plus(wethAmt.times(ethPrice))
+          .plus(wethFees.times(ethPrice))
+
         return {
           ...position,
           amount0: new BigNumber(uniPosition.amount0.toSignificant(18)),
           amount1: new BigNumber(uniPosition.amount1.toSignificant(18)),
           fees0: toTokenAmount(fees?.amount0, 18),
           fees1: toTokenAmount(fees?.amount1, 18),
+          dollarValue,
         }
       }) || []
     )
-  }, [data?.positions, pool])
+  }, [data?.positions, pool, ethPrice.toString()])
 
   useEffect(() => {
     if (positionAndFees) {
       Promise.all(positionAndFees).then((values) => {
         setPositions(values)
+        setLoading(false)
       })
     }
   }, [positionAndFees.length])
 
   return {
     positions: positions,
-    loading,
+    loading: gphLoading || loading,
     refetch,
   }
 }
