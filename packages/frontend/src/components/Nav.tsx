@@ -38,7 +38,8 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       alignItems: 'center',
       position: 'absolute',
-      justifyContent: 'center',
+      marginLeft: theme.spacing(40),
+      // justifyContent: 'center',
       width: '100%',
     },
     navLink: {
@@ -55,6 +56,7 @@ const useStyles = makeStyles((theme) =>
       color: theme.palette.primary.main,
     },
     wallet: {
+      display: 'flex',
       marginRight: theme.spacing(2),
     },
     navDrawer: {
@@ -103,25 +105,24 @@ const Nav: React.FC = () => {
             <NavLink path="/lp" name="LP" />
           </div>
         </div>
-        <Button
-          style={{ marginRight: '5px' }}
-          variant="outlined"
-          color="primary"
-          onClick={() => {
-            setCopied(wSqueeth)
-          }}
-        >
-          {' '}
-          {isCopied ? (
-            <>Copied</>
-          ) : (
-            <>
-              oSQTH: {wSqueeth?.substring(0, 8)}...{wSqueeth?.substring(wSqueeth.length - 8, wSqueeth.length)}
-            </>
-          )}
-        </Button>
 
         <div className={classes.wallet}>
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={() => {
+              setCopied(wSqueeth)
+            }}
+          >
+            {' '}
+            {isCopied ? (
+              <>Copied</>
+            ) : (
+              <>
+                oSQTH: {wSqueeth?.substring(0, 8)}...{wSqueeth?.substring(wSqueeth.length - 8, wSqueeth.length)}
+              </>
+            )}
+          </Button>
           <WalletButton />
         </div>
       </Hidden>
