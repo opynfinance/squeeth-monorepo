@@ -1,4 +1,4 @@
-import { Drawer, IconButton } from '@material-ui/core'
+import { Button, Drawer, IconButton } from '@material-ui/core'
 import Hidden from '@material-ui/core/Hidden'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Typography from '@material-ui/core/Typography'
@@ -6,11 +6,14 @@ import MenuIcon from '@material-ui/icons/Menu'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 
 // import logo from '../../public/images/logo.svg'
 import logo from '../../public/images/SqueethLogo.png'
 import { useWallet } from '../context/wallet'
+import { useAddresses } from '../hooks/useAddress'
+import useCopyClipboard from '../hooks/useCopyClipboard'
+// import { useSqueethPool } from '../src/hooks/contracts/useSqueethPool'
 import { toTokenAmount } from '../utils/calculations'
 import WalletButton from './WalletButton'
 
@@ -79,7 +82,10 @@ const NavLink: React.FC<{ path: string; name: string }> = ({ path, name }) => {
 const Nav: React.FC = () => {
   const classes = useStyles()
   const { balance } = useWallet()
+  const { wSqueeth } = useAddresses()
   const [navOpen, setNavOpen] = useState(false)
+  const [isCopied, setCopied] = useCopyClipboard()
+  // const { getWSqueethPositionValue } = useSqueethPool()
 
   return (
     <div className={classes.nav}>
@@ -97,6 +103,24 @@ const Nav: React.FC = () => {
             <NavLink path="/lp" name="LP" />
           </div>
         </div>
+        <Button
+          style={{ marginRight: '5px' }}
+          variant="outlined"
+          color="primary"
+          onClick={() => {
+            setCopied(wSqueeth)
+          }}
+        >
+          {' '}
+          {isCopied ? (
+            <>Copied</>
+          ) : (
+            <>
+              oSQTH: {wSqueeth?.substring(0, 8)}...{wSqueeth?.substring(wSqueeth.length - 8, wSqueeth.length)}
+            </>
+          )}
+        </Button>
+
         <div className={classes.wallet}>
           <WalletButton />
         </div>

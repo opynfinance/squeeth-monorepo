@@ -11,7 +11,7 @@ const WalletButton: React.FC = () => {
   const { selectWallet, connected, address, networkId, balance } = useWallet()
 
   const shortAddress = useMemo(
-    () => (address ? address.slice(0, 8) + '…' + address.slice(address.length - 8, address.length) : ''),
+    () => (address ? address.slice(0, 8) + '...' + address.slice(address.length - 8, address.length) : ''),
     [address],
   )
 
@@ -40,7 +40,7 @@ const WalletButton: React.FC = () => {
       ) : (
         <div>
           <Hidden smDown>
-            <Button variant="text" color="primary">
+            <Button style={{ marginRight: '5px' }} variant="text" color="primary">
               {toTokenAmount(balance, 18).toFixed(4)} ETH
             </Button>
           </Hidden>
