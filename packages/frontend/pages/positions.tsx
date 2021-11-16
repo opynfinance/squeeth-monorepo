@@ -1,15 +1,17 @@
 import { createStyles, makeStyles, Typography } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
 import Nav from '../src/components/Nav'
 import History from '../src/components/Trade/History'
 import { useETHPrice } from '../src/hooks/useETHPrice'
-import { useLongPositions, usePnL, useShortPositions } from '../src/hooks/usePositions'
+import { useLongPositions, useLPPositions, usePnL, useShortPositions } from '../src/hooks/usePositions'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
+      position: 'relative',
       margin: theme.spacing(6, 8),
       width: '800px',
       marginLeft: 'auto',
@@ -20,6 +22,7 @@ const useStyles = makeStyles((theme) =>
       },
     },
     header: {
+      marginTop: theme.spacing(8),
       display: 'flex',
       justifyContent: 'space-between',
     },
@@ -72,6 +75,18 @@ const useStyles = makeStyles((theme) =>
     history: {
       marginTop: theme.spacing(8),
     },
+    lp: {
+      flexDirection: 'column',
+      '&>*': {
+        margin: '10px auto',
+      },
+    },
+    lpLink: {
+      cursor: 'pointer',
+      '&:hover': {
+        opacity: '.7',
+      },
+    },
   }),
 )
 
@@ -88,6 +103,7 @@ export default function Positions() {
   const { longGain, shortGain, buyQuote, sellQuote, longUsdAmt, shortUsdAmt, longRealizedPNL, shortRealizedPNL } =
     usePnL()
   const ethPrice = useETHPrice()
+  const { positions } = useLPPositions()
 
   return (
     <div>
@@ -207,6 +223,23 @@ export default function Positions() {
             </div>
           </div>
         ) : null}
+        {positions && (
+          <>
+            <div className={classes.header}>
+              <Typography color="primary" variant="h6">
+                Your LP Position
+              </Typography>
+            </div>
+            <div className={`${classes.position} ${classes.lp}`}>
+              <Typography>You are currently LPing in Uniswap V3 🦄</Typography>
+              <Link href="/lp">
+                <Typography className={classes.lpLink} color="textSecondary">
+                  Check your LP postion here
+                </Typography>
+              </Link>
+            </div>
+          </>
+        )}
         <div className={classes.history}>
           <Typography color="primary" variant="h6">
             Transaction History

@@ -65,7 +65,7 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const NavLink: React.FC<{ path: string; name: string }> = ({ path, name }) => {
+export const NavLink: React.FC<{ path: string; name: string }> = ({ path, name }) => {
   const classes = useStyles()
   const router = useRouter()
 
@@ -105,7 +105,6 @@ const Nav: React.FC = () => {
             <NavLink path="/lp" name="LP" />
           </div>
         </div>
-
         <div className={classes.wallet}>
           <Button
             variant="outlined"
@@ -119,7 +118,7 @@ const Nav: React.FC = () => {
               <>Copied</>
             ) : (
               <>
-                oSQTH: {wSqueeth?.substring(0, 8)}...{wSqueeth?.substring(wSqueeth.length - 8, wSqueeth.length)}
+                oSQTH: {wSqueeth?.substring(0, 6)}...{wSqueeth?.substring(wSqueeth.length - 4)}
               </>
             )}
           </Button>
