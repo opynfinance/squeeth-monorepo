@@ -1,9 +1,11 @@
-import { createStyles, makeStyles, Typography } from '@material-ui/core'
+import { createStyles, makeStyles, Tooltip, Typography } from '@material-ui/core'
+import InfoIcon from '@material-ui/icons/InfoOutlined'
 import Image from 'next/image'
 import React from 'react'
 
 import { EtherscanPrefix } from '../../constants'
 import { useWallet } from '../../context/wallet'
+import { useAddresses } from '../../hooks/useAddress'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -24,9 +26,21 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(6),
       marginBottom: theme.spacing(6),
     },
+    uniswapLink: {
+      marginTop: theme.spacing(6),
+      marginBottom: theme.spacing(6),
+      display: 'flex',
+      alignItems: 'center',
+    },
     uniLP: {
       color: '#FF007A',
+      marginLeft: theme.spacing(3),
       // textDecoration: 'underline',
+    },
+    infoIcon: {
+      fontSize: '1rem',
+      marginLeft: theme.spacing(0.5),
+      marginTop: '2px',
     },
   }),
 )
@@ -40,6 +54,7 @@ type ConfirmedProps = {
 const Confirmed: React.FC<ConfirmedProps> = ({ confirmationMessage, txnHash, isLP }) => {
   const classes = useStyles()
   const { networkId } = useWallet()
+  const { wSqueeth } = useAddresses()
 
   return (
     <div>
@@ -62,16 +77,19 @@ const Confirmed: React.FC<ConfirmedProps> = ({ confirmationMessage, txnHash, isL
         </a>
       </div>
       {isLP ? (
-        <div className={classes.squeethCat}>
+        <div className={classes.uniswapLink}>
           <Typography variant="body1" component="div" className={classes.uniLP}>
-            <a
-              href="https://squeeth-uniswap.netlify.app/#/add/ETH/0x06980aDd9a68D17eA81C7664ECD1e9DDB85360D9/3000"
-              target="_blank"
-              rel="noreferrer"
-            >
+            <a href={`https://squeeth-uniswap.netlify.app/#/add/ETH/${wSqueeth}/3000`} target="_blank" rel="noreferrer">
               Provide Liquidity on Uniswap 🦄
             </a>
           </Typography>
+          <Tooltip
+            title={
+              'When you click the Uniswap link, the Uniswap LP page may take a few moments to load. Please wait for it to fully load so it can prefill LP token data.'
+            }
+          >
+            <InfoIcon className={classes.infoIcon} />
+          </Tooltip>
         </div>
       ) : (
         <div className={classes.squeethCat}>

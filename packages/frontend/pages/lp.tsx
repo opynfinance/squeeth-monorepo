@@ -1,4 +1,4 @@
-import { Button, createStyles, makeStyles } from '@material-ui/core'
+import { Button, createStyles, makeStyles, Tooltip } from '@material-ui/core'
 import Card from '@material-ui/core/Card'
 import Chip from '@material-ui/core/Chip'
 import InputAdornment from '@material-ui/core/InputAdornment'
@@ -570,14 +570,20 @@ export function LPCalculator() {
 
                         <p>
                           <p>1. Mint Squeeth on the right.</p>
-                          <a
-                            href="https://squeeth-uniswap.netlify.app/#/add/ETH/0x06980aDd9a68D17eA81C7664ECD1e9DDB85360D9/3000"
-                            target="_blank"
-                            rel="noreferrer"
-                            className={classes.listLink}
+                          <Tooltip
+                            title={
+                              'Will takes a while to load the Uniswap Liquidity Pool, please wait for the data fetching process.'
+                            }
                           >
-                            <p>2. Deposit Squeeth and ETH into Uniswap V3 Pool 🦄</p>
-                          </a>
+                            <a
+                              href={`https://squeeth-uniswap.netlify.app/#/add/ETH/${wSqueeth}/3000`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className={classes.listLink}
+                            >
+                              <p>2. Deposit Squeeth and ETH into Uniswap V3 Pool 🦄</p>
+                            </a>
+                          </Tooltip>
                         </p>
                       </TableCell>
                     </TableRow>
@@ -634,14 +640,20 @@ export function LPCalculator() {
               {positions && positions?.length > 0 ? (
                 <TableCell colSpan={7}>
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    <a
-                      href="https://squeeth-uniswap.netlify.app/#/add/ETH/0x06980aDd9a68D17eA81C7664ECD1e9DDB85360D9/3000"
-                      target="_blank"
-                      rel="noreferrer"
-                      className={classes.anchor}
+                    <Tooltip
+                      title={
+                        'Will takes a while to load the Uniswap Liquidity Pool, please wait for the data fetching process.'
+                      }
                     >
-                      Provide Liquidity on Uniswap V3 🦄
-                    </a>
+                      <a
+                        href={`https://squeeth-uniswap.netlify.app/#/add/ETH/${wSqueeth}/3000`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={classes.anchor}
+                      >
+                        Provide Liquidity on Uniswap V3 🦄
+                      </a>
+                    </Tooltip>
                   </div>
                 </TableCell>
               ) : null}
