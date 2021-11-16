@@ -14,7 +14,7 @@ import Typography from '@material-ui/core/Typography'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import BigNumber from 'bignumber.js'
 import Image from 'next/image'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import squeethTokenSymbol from '../public/images/Squeeth.png'
 import { PrimaryButton } from '../src/components/Buttons'
@@ -32,7 +32,7 @@ import { useSqueethPool } from '../src/hooks/contracts/useSqueethPool'
 import { useTokenBalance } from '../src/hooks/contracts/useTokenBalance'
 import { useVaultManager } from '../src/hooks/contracts/useVaultManager'
 import { useAddresses } from '../src/hooks/useAddress'
-import { useETHPrice } from '../src/hooks/useETHPrice'
+import { getETHPriceCoingecko, useETHPrice } from '../src/hooks/useETHPrice'
 import { useLPPositions, useShortPositions } from '../src/hooks/usePositions'
 import { toTokenAmount } from '../src/utils/calculations'
 
@@ -137,6 +137,35 @@ const useStyles = makeStyles((theme) =>
     listLink: {
       color: '#FF007A',
     },
+    squeethInfo: {
+      [theme.breakpoints.down('sm')]: {
+        width: '100%',
+        marginTop: theme.spacing(2),
+      },
+    },
+    squeethInfoSubGroup: {
+      display: 'flex',
+      marginTop: theme.spacing(2),
+      marginBottom: theme.spacing(2),
+      alignItems: 'center',
+    },
+    infoItem: {
+      marginRight: theme.spacing(1),
+      paddingRight: theme.spacing(1.5),
+    },
+    infoLabel: {
+      display: 'flex',
+      alignItems: 'center',
+    },
+    tokenIdLink: {
+      textDecoration: 'underline',
+    },
+    inRange: {
+      backgroundColor: theme.palette.success.main,
+    },
+    outRange: {
+      backgroundColor: theme.palette.error.main,
+    },
   }),
 )
 
@@ -153,21 +182,22 @@ export function LPCalculator() {
 
   const classes = useStyles()
   const { positions, loading: lpLoading } = useLPPositions()
-  const { pool } = useSqueethPool()
+  const { pool, getWSqueethPositionValue, tvl } = useSqueethPool()
   const { balance, connected } = useWallet()
-  const { wSqueeth } = useAddresses()
+  const { weth, wSqueeth } = useAddresses()
   const squeethBal = useTokenBalance(wSqueeth, 10, WSQUEETH_DECIMALS)
   const { existingCollatPercent, shortVaults, existingCollat } = useShortPositions()
   const ethPrice = useETHPrice()
-
   const {
+    mark,
+    index,
+    impliedVol,
     getShortAmountFromDebt,
     openDepositAndMint,
     normFactor: normalizationFactor,
     getDebtAmount,
     burnAndRedeem,
   } = useController()
-  const { getWSqueethPositionValue } = useSqueethPool()
 
   const vaultId = useMemo(() => {
     if (!shortVaults.length) return 0
@@ -511,6 +541,75 @@ export function LPCalculator() {
     withdrawCollat.toString(),
   ])
 
+  const SqueethInfo = useCallback(() => {
+    return (
+      <div className={classes.squeethInfo}>
+        <div>
+          <div className={classes.squeethInfoSubGroup}>
+            {/* hard coded width layout to align with the next line */}
+            <div className={classes.infoItem}>
+              <Typography color="textSecondary" variant="body2">
+                ETH Price
+              </Typography>
+              <Typography>${ethPrice.toNumber().toLocaleString()}</Typography>
+            </div>
+            <div className={classes.infoItem}>
+              <div className={classes.infoLabel}>
+                <Typography color="textSecondary" variant="body2">
+                  ETH&sup2; Price
+                </Typography>
+              </div>
+              <Typography>${Number(toTokenAmount(index, 18).toFixed(0)).toLocaleString()}</Typography>
+            </div>
+            <div className={classes.infoItem}>
+              <div className={classes.infoLabel}>
+                <Typography color="textSecondary" variant="body2">
+                  Mark Price
+                </Typography>
+              </div>
+              <Typography>${Number(toTokenAmount(mark, 18).toFixed(0)).toLocaleString()}</Typography>
+            </div>
+            <div className={classes.infoItem}>
+              <div className={classes.infoLabel}>
+                <Typography color="textSecondary" variant="body2">
+                  oSQTH Price
+                </Typography>
+              </div>
+              <Typography>${Number(getWSqueethPositionValue(1).toFixed(2).toLocaleString()) || 'loading'}</Typography>
+            </div>
+            <div className={classes.infoItem}>
+              <div className={classes.infoLabel}>
+                <Typography color="textSecondary" variant="body2">
+                  Implied Volatility
+                </Typography>
+              </div>
+              <Typography>{(impliedVol * 100).toFixed(2)}%</Typography>
+            </div>
+
+            {/* <div className={classes.infoItem}>
+              <div className={classes.infoLabel}>
+                <Typography color="textSecondary" variant="body2">
+                  Pool TVL
+                </Typography>
+              </div>
+              <Typography>{tvl || 'loading'}%</Typography>
+            </div> */}
+          </div>
+        </div>
+      </div>
+    )
+  }, [
+    classes.infoItem,
+    classes.infoLabel,
+    classes.squeethInfo,
+    classes.squeethInfoSubGroup,
+    ethPrice.toNumber(),
+    impliedVol.toString(),
+    ethPrice.toString(),
+    mark.toString(),
+    index.toString(),
+  ])
+
   const inRange = (lower: number, upper: number) => {
     if (!pool) {
       return false
@@ -536,6 +635,7 @@ export function LPCalculator() {
           </div>
         </div>
 
+        <SqueethInfo />
         <div
           style={{
             display: 'flex',
@@ -550,7 +650,7 @@ export function LPCalculator() {
                   <TableCell align="right">In Range</TableCell>
                   <TableCell align="right">% of Pool</TableCell>
                   <TableCell align="right">Liquidity</TableCell>
-                  <TableCell align="right">Collected Fees</TableCell>
+                  {/* <TableCell align="right">Collected Fees</TableCell> */}
                   <TableCell align="right">Uncollected Fees</TableCell>
                   <TableCell align="right">Value</TableCell>
                 </TableRow>
@@ -559,13 +659,13 @@ export function LPCalculator() {
                 {positions?.length === 0 ? (
                   lpLoading ? (
                     <TableRow>
-                      <TableCell colSpan={7} align="center" style={{ textAlign: 'center', fontSize: '16px' }}>
+                      <TableCell colSpan={6} align="center" style={{ textAlign: 'center', fontSize: '16px' }}>
                         <p>Loading...</p>
                       </TableCell>
                     </TableRow>
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} align="center" style={{ textAlign: 'center', fontSize: '16px' }}>
+                      <TableCell colSpan={6} align="center" style={{ textAlign: 'center', fontSize: '16px' }}>
                         <p>No Existing LP Positions</p>
 
                         <p>
@@ -592,15 +692,20 @@ export function LPCalculator() {
                   positions?.map((p) => (
                     <TableRow key={p.id}>
                       <TableCell component="th" align="right" scope="row">
-                        <a href={`https://squeeth-uniswap.netlify.app/#/pool/${p.id}`} target="_blank" rel="noreferrer">
+                        <a
+                          href={`https://squeeth-uniswap.netlify.app/#/pool/${p.id}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={classes.tokenIdLink}
+                        >
                           #{p.id}
                         </a>
                       </TableCell>
                       <TableCell align="right">
                         {inRange(p.tickLower.tickIdx, p.tickUpper.tickIdx) ? (
-                          <Chip label="Yes" size="small" />
+                          <Chip label="Yes" size="small" className={classes.inRange} />
                         ) : (
-                          <Chip label="No" size="small" />
+                          <Chip label="No" size="small" className={classes.outRange} />
                         )}
                       </TableCell>
                       <TableCell align="right">
@@ -614,14 +719,14 @@ export function LPCalculator() {
                           {Number(p.amount1).toFixed(4)} {p.token1.symbol}
                         </span>
                       </TableCell>
-                      <TableCell align="right">
+                      {/* <TableCell align="right">
                         <span style={{ marginRight: '.5em' }}>
                           {p.collectedFeesToken0} {p.token0.symbol}
                         </span>
                         <span>
                           {p.collectedFeesToken1} {p.token1.symbol}
                         </span>
-                      </TableCell>
+                      </TableCell> */}
                       <TableCell align="right">
                         <span style={{ marginRight: '.5em' }}>
                           {p.fees0?.toFixed(6)} {p.token0.symbol}

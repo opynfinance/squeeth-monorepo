@@ -1756,6 +1756,25 @@
     fs-extra "^9.0.1"
     js-yaml "^3.14.0"
 
+"@thanpolas/crypto-utils@^0.3.1":
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/@thanpolas/crypto-utils/-/crypto-utils-0.3.2.tgz#b775613ad9af769a009d32cb314cb913a5268e3c"
+  integrity sha512-Po8Je107M3n8e7yUuMb9wQZn6+hJ7Ck5XaqF8BSwbjxvtxMkk0GoFbZrAvu6VmccwrXwvJsyBYEhDPr2qsgsyw==
+  dependencies:
+    decimal.js "^10.3.1"
+    invariant "^2.2.4"
+    jsbi "^4.0.0"
+    toformat "^2.0.0"
+
+"@thanpolas/univ3prices@^3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@thanpolas/univ3prices/-/univ3prices-3.0.2.tgz#6fc7002802af3302bf44193dfffbd1958d1868b7"
+  integrity sha512-ExjbTUAQpeD/e7zLUIkGNYd3bcVCdNrGMF4pJeqCVitKxzNHYfMqzawUWOewLmq7t80p+Xa+XwAsweGSG3lqNQ==
+  dependencies:
+    "@thanpolas/crypto-utils" "^0.3.1"
+    invariant "^2.2.4"
+    jsbi "^3.2.2"
+
 "@toruslabs/eccrypto@^1.1.7":
   version "1.1.7"
   resolved "https://registry.yarnpkg.com/@toruslabs/eccrypto/-/eccrypto-1.1.7.tgz#962954d6416f56ca2ba9bb9948cd08bd3b8cd0c4"
@@ -5063,6 +5082,11 @@ decimal.js-light@^2.5.0:
   resolved "https://registry.yarnpkg.com/decimal.js-light/-/decimal.js-light-2.5.1.tgz#134fd32508f19e208f4fb2f8dac0d2626a867934"
   integrity sha512-qIMFpTMZmny+MMIitAB6D7iVPEorVw6YQRWkvarTkT4tBeSLLiHzcwj6q0MmYSFCiVpiqPJTJEYIrpcPzVEIvg==
 
+decimal.js@^10.3.1:
+  version "10.3.1"
+  resolved "https://registry.yarnpkg.com/decimal.js/-/decimal.js-10.3.1.tgz#d8c3a444a9c6774ba60ca6ad7261c3a94fd5e783"
+  integrity sha512-V0pfhfr8suzyPGOx3nmq4aHqabehUZn6Ch9kyFpV79TGDTWFmHqUqXdabR7QHqxzrYolF4+tVmJhUG4OURg5dQ==
+
 decode-uri-component@^0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/decode-uri-component/-/decode-uri-component-0.2.0.tgz#eb3913333458775cb84cd1a1fae062106bb87545"
@@ -8333,7 +8357,7 @@ interpret@^1.0.0:
   resolved "https://registry.yarnpkg.com/interpret/-/interpret-1.4.0.tgz#665ab8bc4da27a774a40584e812e3e0fa45b1a1e"
   integrity sha512-agE4QfB2Lkp9uICn7BAqoscw4SZP9kTE2hxiFI3jBPmXJfdqiahTbUuKGsMoN2GtqL9AxhYioAcVvgsb1HvRbA==
 
-invariant@2, invariant@^2.2.2:
+invariant@2, invariant@^2.2.2, invariant@^2.2.4:
   version "2.2.4"
   resolved "https://registry.yarnpkg.com/invariant/-/invariant-2.2.4.tgz#610f3c92c9359ce1db616e538008d23ff35158e6"
   integrity sha512-phJfQVBuaJM5raOpJjSfkiD6BpbCE4Ns//LaXl6wGYtUBY83nWS6Rf9tXm2e8VaK60JEjYldbPif/A2B1C2gNA==
@@ -9044,6 +9068,16 @@ jsbi@^3.1.4:
   version "3.1.6"
   resolved "https://registry.yarnpkg.com/jsbi/-/jsbi-3.1.6.tgz#572431b0ff4b9c0f5f4b41e214dba76a734e676b"
   integrity sha512-CGjq13y28FrBA5mAU+rsfHaVKEF9jrw3PhzZpIzTeMiPsT0XRDAS6E7QS8/ZTmFQUtl2MDJsxKQoYJzAhF7B1w==
+
+jsbi@^3.2.2:
+  version "3.2.5"
+  resolved "https://registry.yarnpkg.com/jsbi/-/jsbi-3.2.5.tgz#b37bb90e0e5c2814c1c2a1bcd8c729888a2e37d6"
+  integrity sha512-aBE4n43IPvjaddScbvWRA2YlTzKEynHzu7MqOyTipdHucf/VxS63ViCjxYRg86M8Rxwbt/GfzHl1kKERkt45fQ==
+
+jsbi@^4.0.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/jsbi/-/jsbi-4.1.0.tgz#f0c25ed8881bc09891334b03a3952efaa7add337"
+  integrity sha512-384Z4keIsJtYpnVggsxaB255MZctILbxv+ihtwoWPF7KNOlYHn1LFpRnUw5qsAspUAA2+I7qzjVJxVYtHVjxNw==
 
 jsbn@~0.1.0:
   version "0.1.1"
