@@ -223,7 +223,7 @@ export default function Positions() {
             </div>
           </div>
         ) : null}
-        {positions && (
+        {positions?.length && (
           <>
             <div className={classes.header}>
               <Typography color="primary" variant="h6">
