@@ -1,17 +1,15 @@
 import { createStyles, makeStyles, Typography } from '@material-ui/core'
-import BigNumber from 'bignumber.js'
-import Link from 'next/link'
-import { useEffect, useState } from 'react'
 
+import { LPTable } from '../src/components/LPTable'
 import Nav from '../src/components/Nav'
 import History from '../src/components/Trade/History'
+import { useSqueethPool } from '../src/hooks/contracts/useSqueethPool'
 import { useETHPrice } from '../src/hooks/useETHPrice'
 import { useLongPositions, useLPPositions, usePnL, useShortPositions } from '../src/hooks/usePositions'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
-      position: 'relative',
       margin: theme.spacing(6, 8),
       width: '800px',
       marginLeft: 'auto',
@@ -75,18 +73,6 @@ const useStyles = makeStyles((theme) =>
     history: {
       marginTop: theme.spacing(8),
     },
-    lp: {
-      flexDirection: 'column',
-      '&>*': {
-        margin: '10px auto',
-      },
-    },
-    lpLink: {
-      cursor: 'pointer',
-      '&:hover': {
-        opacity: '.7',
-      },
-    },
   }),
 )
 
@@ -104,6 +90,7 @@ export default function Positions() {
     usePnL()
   const ethPrice = useETHPrice()
   const { positions } = useLPPositions()
+  const { pool } = useSqueethPool()
 
   return (
     <div>
@@ -111,7 +98,7 @@ export default function Positions() {
       <div className={classes.container}>
         <div className={classes.header}>
           <Typography color="primary" variant="h6">
-            Your positions
+            Your Positions
           </Typography>
           <div>
             <Typography component="span" color="textSecondary">
@@ -120,12 +107,12 @@ export default function Positions() {
             <Typography component="span">$ {ethPrice.toFixed(2)}</Typography>
           </div>
         </div>
-        {wSqueethBal.isZero() && shortSqueethAmt.isZero() ? (
+        {wSqueethBal.isZero() && shortSqueethAmt.isZero() && (
           <div className={classes.empty}>
             <Typography>No active positions</Typography>
           </div>
-        ) : null}
-        {wSqueethBal.isGreaterThan(0) ? (
+        )}
+        {wSqueethBal.isGreaterThan(0) && (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>Long Squeeth</Typography>
@@ -165,8 +152,8 @@ export default function Positions() {
               </div>
             </div>
           </div>
-        ) : null}
-        {shortSqueethAmt.isGreaterThan(0) ? (
+        )}
+        {shortSqueethAmt.isGreaterThan(0) && (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>Short Squeeth</Typography>
@@ -222,22 +209,15 @@ export default function Positions() {
               </div>
             </div>
           </div>
-        ) : null}
-        {positions?.length && (
+        )}
+        {positions?.length > 0 && (
           <>
             <div className={classes.header}>
               <Typography color="primary" variant="h6">
-                Your LP Position
+                Your LP Positions
               </Typography>
             </div>
-            <div className={`${classes.position} ${classes.lp}`}>
-              <Typography>You are currently LPing in Uniswap V3 🦄</Typography>
-              <Link href="/lp">
-                <Typography className={classes.lpLink} color="textSecondary">
-                  Check your LP postion here
-                </Typography>
-              </Link>
-            </div>
+            <LPTable isLPage={false} pool={pool} />
           </>
         )}
         <div className={classes.history}>

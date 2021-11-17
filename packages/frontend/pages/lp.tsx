@@ -1,17 +1,9 @@
-import { Button, createStyles, makeStyles, Tooltip } from '@material-ui/core'
+import { createStyles, makeStyles } from '@material-ui/core'
 import Card from '@material-ui/core/Card'
-import Chip from '@material-ui/core/Chip'
 import InputAdornment from '@material-ui/core/InputAdornment'
-import Paper from '@material-ui/core/Paper'
 import Step from '@material-ui/core/Step'
 import StepLabel from '@material-ui/core/StepLabel'
 import Stepper from '@material-ui/core/Stepper'
-import Table from '@material-ui/core/Table'
-import TableBody from '@material-ui/core/TableBody'
-import TableCell from '@material-ui/core/TableCell'
-import TableContainer from '@material-ui/core/TableContainer'
-import TableHead from '@material-ui/core/TableHead'
-import TableRow from '@material-ui/core/TableRow'
 import TextField from '@material-ui/core/TextField'
 import Typography from '@material-ui/core/Typography'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
@@ -23,6 +15,7 @@ import squeethTokenSymbol from '../public/images/Squeeth.png'
 import { PrimaryButton } from '../src/components/Buttons'
 import CollatRange from '../src/components/CollatRange'
 import { PrimaryInput } from '../src/components/Inputs'
+import { LPTable } from '../src/components/LPTable'
 import Nav from '../src/components/Nav'
 import { SecondaryTab, SecondaryTabs } from '../src/components/Tabs'
 import Confirmed from '../src/components/Trade/Confirmed'
@@ -36,7 +29,7 @@ import { useTokenBalance } from '../src/hooks/contracts/useTokenBalance'
 import { useVaultManager } from '../src/hooks/contracts/useVaultManager'
 import { useAddresses } from '../src/hooks/useAddress'
 import { getETHPriceCoingecko, useETHPrice } from '../src/hooks/useETHPrice'
-import { useLPPositions, useShortPositions } from '../src/hooks/usePositions'
+import { useShortPositions } from '../src/hooks/usePositions'
 import { toTokenAmount } from '../src/utils/calculations'
 
 const useStyles = makeStyles((theme) =>
@@ -65,14 +58,6 @@ const useStyles = makeStyles((theme) =>
     logo: {
       marginTop: theme.spacing(0.5),
       alignSelf: 'flex-start',
-    },
-    table: {
-      minWidth: 650,
-    },
-    tableContainer: {
-      flexBasis: '72%',
-      marginTop: '1.5em',
-      marginRight: '1.5em',
     },
     tabBackGround: {
       position: 'sticky',
@@ -133,13 +118,6 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(1),
       backgroundColor: theme.palette.success.main,
     },
-    anchor: {
-      color: '#FF007A',
-      fontSize: '16px',
-    },
-    listLink: {
-      color: '#FF007A',
-    },
     squeethInfo: {
       [theme.breakpoints.down('sm')]: {
         width: '100%',
@@ -160,15 +138,6 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       alignItems: 'center',
     },
-    tokenIdLink: {
-      textDecoration: 'underline',
-    },
-    inRange: {
-      backgroundColor: theme.palette.success.main,
-    },
-    outRange: {
-      backgroundColor: theme.palette.error.main,
-    },
     stepper: {
       marginBottom: theme.spacing(1),
     },
@@ -188,7 +157,6 @@ export function LPCalculator() {
   const [step, setStep] = useState(0)
 
   const classes = useStyles()
-  const { positions, loading: lpLoading } = useLPPositions()
   const { pool, getWSqueethPositionValue, tvl } = useSqueethPool()
   const { balance, connected } = useWallet()
   const { weth, wSqueeth } = useAddresses()
@@ -632,13 +600,6 @@ export function LPCalculator() {
     index.toString(),
   ])
 
-  const inRange = (lower: number, upper: number) => {
-    if (!pool) {
-      return false
-    }
-    return upper > pool?.tickCurrent && pool?.tickCurrent > lower
-  }
-
   return (
     <div>
       <Nav />
@@ -664,128 +625,7 @@ export function LPCalculator() {
             justifyContent: 'space-between',
           }}
         >
-          <TableContainer component={Paper} className={classes.tableContainer}>
-            <Table className={classes.table} aria-label="simple table">
-              <TableHead>
-                <TableRow>
-                  <TableCell align="right">Token ID</TableCell>
-                  <TableCell align="right">In Range</TableCell>
-                  <TableCell align="right">% of Pool</TableCell>
-                  <TableCell align="right">Liquidity</TableCell>
-                  {/* <TableCell align="right">Collected Fees</TableCell> */}
-                  <TableCell align="right">Uncollected Fees</TableCell>
-                  <TableCell align="right">Value</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {positions?.length === 0 ? (
-                  lpLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={6} align="center" style={{ textAlign: 'center', fontSize: '16px' }}>
-                        <p>Loading...</p>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={6} align="center" style={{ textAlign: 'center', fontSize: '16px' }}>
-                        <p>No Existing LP Positions</p>
-
-                        <p>
-                          <p>1. Mint Squeeth on the right.</p>
-                          <Tooltip
-                            title={
-                              'Will takes a while to load the Uniswap Liquidity Pool, please wait for the data fetching process.'
-                            }
-                          >
-                            <a
-                              href={`https://squeeth-uniswap.netlify.app/#/add/ETH/${wSqueeth}/3000`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className={classes.listLink}
-                            >
-                              <p>2. Deposit Squeeth and ETH into Uniswap V3 Pool 🦄</p>
-                            </a>
-                          </Tooltip>
-                        </p>
-                      </TableCell>
-                    </TableRow>
-                  )
-                ) : (
-                  positions?.map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell component="th" align="right" scope="row">
-                        <a
-                          href={`https://squeeth-uniswap.netlify.app/#/pool/${p.id}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className={classes.tokenIdLink}
-                        >
-                          #{p.id}
-                        </a>
-                      </TableCell>
-                      <TableCell align="right">
-                        {inRange(p.tickLower.tickIdx, p.tickUpper.tickIdx) ? (
-                          <Chip label="Yes" size="small" className={classes.inRange} />
-                        ) : (
-                          <Chip label="No" size="small" className={classes.outRange} />
-                        )}
-                      </TableCell>
-                      <TableCell align="right">
-                        {((pool ? p.liquidity / Number(pool?.liquidity) : 0) * 100).toFixed(3)}
-                      </TableCell>
-                      <TableCell align="right">
-                        <span style={{ marginRight: '.5em' }}>
-                          {Number(p.amount0).toFixed(4)} {p.token0.symbol}
-                        </span>
-                        <span>
-                          {Number(p.amount1).toFixed(4)} {p.token1.symbol}
-                        </span>
-                      </TableCell>
-                      {/* <TableCell align="right">
-                        <span style={{ marginRight: '.5em' }}>
-                          {p.collectedFeesToken0} {p.token0.symbol}
-                        </span>
-                        <span>
-                          {p.collectedFeesToken1} {p.token1.symbol}
-                        </span>
-                      </TableCell> */}
-                      <TableCell align="right">
-                        <span style={{ marginRight: '.5em' }}>
-                          {p.fees0?.toFixed(6)} {p.token0.symbol}
-                        </span>
-                        <span>
-                          {p.fees1?.toFixed(6)} {p.token1.symbol}
-                        </span>
-                      </TableCell>
-                      <TableCell align="right">
-                        <span style={{ marginRight: '.5em' }}>$ {p.dollarValue?.toFixed(2)}</span>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-              {positions && positions?.length > 0 ? (
-                <TableCell colSpan={7}>
-                  <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    <Tooltip
-                      title={
-                        'Will takes a while to load the Uniswap Liquidity Pool, please wait for the data fetching process.'
-                      }
-                    >
-                      <a
-                        href={`https://squeeth-uniswap.netlify.app/#/add/ETH/${wSqueeth}/3000`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className={classes.anchor}
-                      >
-                        Provide Liquidity on Uniswap V3 🦄
-                      </a>
-                    </Tooltip>
-                  </div>
-                </TableCell>
-              ) : null}
-            </Table>
-          </TableContainer>
+          <LPTable isLPage={true} pool={pool}></LPTable>
           <div className={classes.mintBurnContainer}>
             <Card className={classes.mintBurnCard}>
               <SecondaryTabs

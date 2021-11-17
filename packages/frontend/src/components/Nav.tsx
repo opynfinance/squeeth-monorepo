@@ -38,9 +38,7 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       alignItems: 'center',
       position: 'absolute',
-      marginLeft: theme.spacing(40),
-      // justifyContent: 'center',
-      width: '100%',
+      marginLeft: theme.spacing(20),
     },
     navLink: {
       margin: theme.spacing(0, 3),
@@ -70,14 +68,12 @@ export const NavLink: React.FC<{ path: string; name: string }> = ({ path, name }
   const router = useRouter()
 
   return (
-    <Link href={path}>
-      <Typography
-        className={router.pathname === path ? `${classes.navLink} ${classes.navActive}` : classes.navLink}
-        variant="h6"
-      >
-        {name}
-      </Typography>
-    </Link>
+    <Typography
+      className={router.pathname === path ? `${classes.navLink} ${classes.navActive}` : classes.navLink}
+      variant="h6"
+    >
+      <Link href={path}>{name}</Link>
+    </Typography>
   )
 }
 
