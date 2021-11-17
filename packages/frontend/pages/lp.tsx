@@ -3,6 +3,9 @@ import Card from '@material-ui/core/Card'
 import Chip from '@material-ui/core/Chip'
 import InputAdornment from '@material-ui/core/InputAdornment'
 import Paper from '@material-ui/core/Paper'
+import Step from '@material-ui/core/Step'
+import StepLabel from '@material-ui/core/StepLabel'
+import Stepper from '@material-ui/core/Stepper'
 import Table from '@material-ui/core/Table'
 import TableBody from '@material-ui/core/TableBody'
 import TableCell from '@material-ui/core/TableCell'
@@ -166,6 +169,9 @@ const useStyles = makeStyles((theme) =>
     outRange: {
       backgroundColor: theme.palette.error.main,
     },
+    stepper: {
+      marginBottom: theme.spacing(1),
+    },
   }),
 )
 
@@ -179,6 +185,7 @@ export function LPCalculator() {
   const [loading, setLoading] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
   const [txHash, setTxHash] = useState('')
+  const [step, setStep] = useState(0)
 
   const classes = useStyles()
   const { positions, loading: lpLoading } = useLPPositions()
@@ -198,6 +205,8 @@ export function LPCalculator() {
     getDebtAmount,
     burnAndRedeem,
   } = useController()
+
+  const steps = ['Mint Squeeth', 'LP the SQTH-ETH Uniswap Pool']
 
   const vaultId = useMemo(() => {
     if (!shortVaults.length) return 0
@@ -252,12 +261,13 @@ export function LPCalculator() {
         setWithdrawCollat(existingCollat.minus(neededCollat))
       })
     }
-  }, [amount.toString(), existingCollat.toString(), shortVaults.length, collatPercent])
+  }, [amount.toString(), existingCollat.toString(), shortVaults.length, collatPercent, confirmed])
 
   const mint = async () => {
     setLoading(true)
     const confirmedHash = await openDepositAndMint(vaultId, mintAmount, collatAmount)
     setConfirmed(true)
+    setStep(1)
     setTxHash(confirmedHash.transactionHash)
     setLoading(false)
   }
@@ -271,6 +281,11 @@ export function LPCalculator() {
     setLoading(false)
   }
 
+  const resetMintState = () => {
+    setConfirmed(false)
+    setStep(0)
+  }
+
   const liqPrice = useMemo(() => {
     const rSqueeth = normalizationFactor.multipliedBy(amount.toNumber() || 1).dividedBy(10000)
 
@@ -280,9 +295,16 @@ export function LPCalculator() {
   const Mint = useMemo(() => {
     return (
       <div className={classes.mintBurnTabPanel}>
+        <Stepper activeStep={step} className={classes.stepper}>
+          {steps.map((label) => (
+            <Step key={label}>
+              <StepLabel>{label}</StepLabel>
+            </Step>
+          ))}
+        </Stepper>
         {!confirmed ? (
           <div>
-            <p style={{ textAlign: 'center', fontSize: '.75rem' }}>Mint Squeeth</p>
+            {/* <p style={{ textAlign: 'center', fontSize: '.75rem' }}>Mint Squeeth</p> */}
 
             <PrimaryInput
               value={collatAmount.toNumber()}
@@ -372,7 +394,7 @@ export function LPCalculator() {
             <div className={classes.buttonDiv}>
               <PrimaryButton
                 variant="contained"
-                onClick={() => setConfirmed(false)}
+                onClick={() => resetMintState()}
                 className={classes.amountInput}
                 style={{ width: '300px' }}
               >

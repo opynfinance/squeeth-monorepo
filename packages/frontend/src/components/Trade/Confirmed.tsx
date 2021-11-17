@@ -59,9 +59,11 @@ const Confirmed: React.FC<ConfirmedProps> = ({ confirmationMessage, txnHash, isL
   return (
     <div>
       <div>
-        <Typography variant="h6" className={classes.thirdHeading} component="div">
-          Confirmed 🎉
-        </Typography>
+        {!isLP ? (
+          <Typography variant="h6" className={classes.thirdHeading} component="div">
+            Confirmed 🎉
+          </Typography>
+        ) : null}
         <Typography variant="body1" className={classes.confMsg}>
           {' '}
           {confirmationMessage}{' '}
