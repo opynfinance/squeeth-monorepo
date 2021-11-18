@@ -338,7 +338,8 @@ export const useLPPositions = () => {
   const { pool, getWSqueethPositionValue } = useSqueethPool()
   const ethPrice = useETHPrice()
 
-  const [positions, setPositions] = useState<NFTManagers[]>([])
+  const [activePositions, setActivePositions] = useState<NFTManagers[]>([])
+  const [closedPositions, setClosedPositions] = useState<NFTManagers[]>([])
   const [loading, setLoading] = useState(true)
 
   const {
@@ -415,14 +416,16 @@ export const useLPPositions = () => {
   useEffect(() => {
     if (positionAndFees) {
       Promise.all(positionAndFees).then((values) => {
-        setPositions(values)
+        setActivePositions(values.filter((p) => p.amount0.gt(0) || p.amount1.gt(0)))
+        setClosedPositions(values.filter((p) => p.amount0.isZero() && p.amount1.isZero()))
         setLoading(false)
       })
     }
   }, [positionAndFees.length])
 
   return {
-    positions: positions,
+    activePositions: activePositions,
+    closedPositions: closedPositions,
     loading: gphLoading || loading,
     refetch,
   }

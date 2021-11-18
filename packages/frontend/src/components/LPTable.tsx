@@ -4,7 +4,9 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { Pool } from '@uniswap/v3-sdk'
 import Link from 'next/link'
 import * as React from 'react'
+import { useState } from 'react'
 
+import { SecondaryTab, SecondaryTabs } from '../components/Tabs'
 import { useAddresses } from '../hooks/useAddress'
 import { useLPPositions } from '../hooks/usePositions'
 import { inRange } from '../utils/calculations'
@@ -48,6 +50,12 @@ const useStyles = makeStyles((theme) =>
     outRange: {
       backgroundColor: theme.palette.error.main,
     },
+    tabBackGround: {
+      position: 'sticky',
+      top: '0',
+      zIndex: 20,
+      background: '#2A2D2E',
+    },
   }),
 )
 
@@ -58,11 +66,25 @@ interface LPTableProps {
 
 export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
   const classes = useStyles()
-  const { positions, loading: lpLoading } = useLPPositions()
+  const { activePositions, closedPositions, loading: lpLoading } = useLPPositions()
+  const [activeTab, setActiveTab] = useState(0)
   const { wSqueeth } = useAddresses()
 
   return (
     <TableContainer component={Paper} className={isLPage ? classes.isLPageTableContainer : classes.tableContainer}>
+      {isLPage ? (
+        <SecondaryTabs
+          value={activeTab}
+          onChange={() => (activeTab === 0 ? setActiveTab(1) : setActiveTab(0))}
+          aria-label="simple tabs example"
+          centered
+          variant="fullWidth"
+          className={classes.tabBackGround}
+        >
+          <SecondaryTab label="Active" />
+          <SecondaryTab label="Closed" />
+        </SecondaryTabs>
+      ) : null}
       <Table aria-label="simple table" className={classes.table}>
         <TableHead>
           <TableRow style={{ fontSize: '0.8rem' }}>
@@ -75,21 +97,97 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
             <TableCell align="left">Value</TableCell>
           </TableRow>
         </TableHead>
-        <TableBody>
-          {positions?.length === 0 ? (
-            lpLoading ? (
-              <TableRow>
-                <TableCell colSpan={6} align="center" style={{ textAlign: 'center', fontSize: '16px' }}>
-                  <p>Loading...</p>
-                </TableCell>
-              </TableRow>
-            ) : (
-              <TableRow>
-                <TableCell colSpan={6} align="center" style={{ textAlign: 'center', fontSize: '16px' }}>
-                  <p>No Existing LP Positions</p>
 
-                  <div>
-                    <p>1. Mint Squeeth on the right.</p>
+        {isLPage && activeTab === 1 ? (
+          <TableBody>
+            {closedPositions?.length === 0 ? (
+              lpLoading ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" style={{ textAlign: 'center', fontSize: '16px' }}>
+                    <p>Loading...</p>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" style={{ textAlign: 'center', fontSize: '16px' }}>
+                    <p>No Existing LP Positions</p>
+
+                    <div>
+                      <p>1. Mint Squeeth on the right.</p>
+                      <Tooltip
+                        title={
+                          'When you click the Uniswap link, the Uniswap LP page may take a few moments to load. Please wait for it to fully load so it can prefill LP token data.'
+                        }
+                      >
+                        <a
+                          href={`https://squeeth-uniswap.netlify.app/#/add/ETH/${wSqueeth}/3000`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={`${classes.listLink} ${classes.linkHover}`}
+                        >
+                          <p>2. Deposit Squeeth and ETH into Uniswap V3 Pool 🦄</p>
+                        </a>
+                      </Tooltip>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )
+            ) : (
+              closedPositions?.map((p) => {
+                return (
+                  <TableRow key={p.id}>
+                    <TableCell component="th" align="left" scope="row">
+                      <a
+                        href={`https://squeeth-uniswap.netlify.app/#/pool/${p.id}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={classes.tokenIdLink}
+                      >
+                        #{p.id}
+                      </a>
+                    </TableCell>
+                    <TableCell align="left">
+                      <Chip label="Closed" size="small" />
+                    </TableCell>
+                    <TableCell align="left">
+                      {((pool ? p.liquidity / Number(pool?.liquidity) : 0) * 100).toFixed(3)}
+                    </TableCell>
+                    <TableCell align="left">
+                      <span style={{ marginRight: '.5em' }}>
+                        {Number(p.amount0).toFixed(4)} {p.token0.symbol}
+                      </span>
+                      <span>
+                        {Number(p.amount1).toFixed(4)} {p.token1.symbol}
+                      </span>
+                    </TableCell>
+                    {/* <TableCell align="left">
+                <span style={{ marginRight: '.5em' }}>
+                  {p.collectedFeesToken0} {p.token0.symbol}
+                </span>
+                <span>
+                  {p.collectedFeesToken1} {p.token1.symbol}
+                </span>
+              </TableCell> */}
+                    <TableCell align="left">
+                      <span style={{ marginRight: '.5em' }}>
+                        {p.fees0?.toFixed(6)} {p.token0.symbol}
+                      </span>
+                      <span>
+                        {p.fees1?.toFixed(6)} {p.token1.symbol}
+                      </span>
+                    </TableCell>
+                    <TableCell align="left">
+                      <span style={{ marginRight: '.5em' }}>$ {p.dollarValue?.toFixed(2)}</span>
+                    </TableCell>
+                  </TableRow>
+                )
+              })
+            )}
+
+            {closedPositions && closedPositions?.length > 0 && (
+              <TableRow>
+                <TableCell colSpan={7}>
+                  <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <Tooltip
                       title={
                         'When you click the Uniswap link, the Uniswap LP page may take a few moments to load. Please wait for it to fully load so it can prefill LP token data.'
@@ -99,101 +197,137 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
                         href={`https://squeeth-uniswap.netlify.app/#/add/ETH/${wSqueeth}/3000`}
                         target="_blank"
                         rel="noreferrer"
-                        className={`${classes.listLink} ${classes.linkHover}`}
+                        className={`${classes.anchor} ${classes.linkHover}`}
                       >
-                        <p>2. Deposit Squeeth and ETH into Uniswap V3 Pool 🦄</p>
+                        Provide Liquidity on Uniswap V3 🦄
                       </a>
                     </Tooltip>
                   </div>
                 </TableCell>
               </TableRow>
-            )
-          ) : (
-            positions?.slice(0, isLPage ? positions.length : 3).map((p) => {
-              return (
-                <TableRow key={p.id}>
-                  <TableCell component="th" align="left" scope="row">
-                    <a
-                      href={`https://squeeth-uniswap.netlify.app/#/pool/${p.id}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className={classes.tokenIdLink}
-                    >
-                      #{p.id}
-                    </a>
+            )}
+          </TableBody>
+        ) : (
+          <TableBody>
+            {activePositions?.length === 0 ? (
+              lpLoading ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" style={{ textAlign: 'center', fontSize: '16px' }}>
+                    <p>Loading...</p>
                   </TableCell>
-                  <TableCell align="left">
-                    {inRange(p.tickLower.tickIdx, p.tickUpper.tickIdx, pool) ? (
-                      <Chip label="Yes" size="small" className={classes.inRange} />
-                    ) : (
-                      <Chip label="No" size="small" className={classes.outRange} />
-                    )}
-                  </TableCell>
-                  <TableCell align="left">
-                    {((pool ? p.liquidity / Number(pool?.liquidity) : 0) * 100).toFixed(3)}
-                  </TableCell>
-                  <TableCell align="left">
-                    <span style={{ marginRight: '.5em' }}>
-                      {Number(p.amount0).toFixed(4)} {p.token0.symbol}
-                    </span>
-                    <span>
-                      {Number(p.amount1).toFixed(4)} {p.token1.symbol}
-                    </span>
-                  </TableCell>
-                  {/* <TableCell align="left">
-                <span style={{ marginRight: '.5em' }}>
-                  {p.collectedFeesToken0} {p.token0.symbol}
-                </span>
-                <span>
-                  {p.collectedFeesToken1} {p.token1.symbol}
-                </span>
-              </TableCell> */}
-                  <TableCell align="left">
-                    <span style={{ marginRight: '.5em' }}>
-                      {p.fees0?.toFixed(6)} {p.token0.symbol}
-                    </span>
-                    <span>
-                      {p.fees1?.toFixed(6)} {p.token1.symbol}
-                    </span>
-                  </TableCell>
-                  <TableCell align="left">
-                    <span style={{ marginRight: '.5em' }}>$ {p.dollarValue?.toFixed(2)}</span>
+                </TableRow>
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" style={{ textAlign: 'center', fontSize: '16px' }}>
+                    <p>No Existing LP Positions</p>
+
+                    <div>
+                      <p>1. Mint Squeeth on the right.</p>
+                      <Tooltip
+                        title={
+                          'When you click the Uniswap link, the Uniswap LP page may take a few moments to load. Please wait for it to fully load so it can prefill LP token data.'
+                        }
+                      >
+                        <a
+                          href={`https://squeeth-uniswap.netlify.app/#/add/ETH/${wSqueeth}/3000`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={`${classes.listLink} ${classes.linkHover}`}
+                        >
+                          <p>2. Deposit Squeeth and ETH into Uniswap V3 Pool 🦄</p>
+                        </a>
+                      </Tooltip>
+                    </div>
                   </TableCell>
                 </TableRow>
               )
-            })
-          )}
-          {!isLPage && positions?.length > 3 && (
-            <TableRow>
-              <TableCell className={classes.linkHover} colSpan={7} align="center" style={{ fontSize: '1rem' }}>
-                <Link href="/lp">Check more your LP postions</Link>
-              </TableCell>
-            </TableRow>
-          )}
+            ) : (
+              activePositions?.slice(0, isLPage ? activePositions.length : 3).map((p) => {
+                return (
+                  <TableRow key={p.id}>
+                    <TableCell component="th" align="left" scope="row">
+                      <a
+                        href={`https://squeeth-uniswap.netlify.app/#/pool/${p.id}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={classes.tokenIdLink}
+                      >
+                        #{p.id}
+                      </a>
+                    </TableCell>
+                    <TableCell align="left">
+                      {inRange(p.tickLower.tickIdx, p.tickUpper.tickIdx, pool) ? (
+                        <Chip label="Yes" size="small" className={classes.inRange} />
+                      ) : (
+                        <Chip label="No" size="small" className={classes.outRange} />
+                      )}
+                    </TableCell>
+                    <TableCell align="left">
+                      {((pool ? p.liquidity / Number(pool?.liquidity) : 0) * 100).toFixed(3)}
+                    </TableCell>
+                    <TableCell align="left">
+                      <span style={{ marginRight: '.5em' }}>
+                        {Number(p.amount0).toFixed(4)} {p.token0.symbol}
+                      </span>
+                      <span>
+                        {Number(p.amount1).toFixed(4)} {p.token1.symbol}
+                      </span>
+                    </TableCell>
+                    {/* <TableCell align="left">
+              <span style={{ marginRight: '.5em' }}>
+                {p.collectedFeesToken0} {p.token0.symbol}
+              </span>
+              <span>
+                {p.collectedFeesToken1} {p.token1.symbol}
+              </span>
+            </TableCell> */}
+                    <TableCell align="left">
+                      <span style={{ marginRight: '.5em' }}>
+                        {p.fees0?.toFixed(6)} {p.token0.symbol}
+                      </span>
+                      <span>
+                        {p.fees1?.toFixed(6)} {p.token1.symbol}
+                      </span>
+                    </TableCell>
+                    <TableCell align="left">
+                      <span style={{ marginRight: '.5em' }}>$ {p.dollarValue?.toFixed(2)}</span>
+                    </TableCell>
+                  </TableRow>
+                )
+              })
+            )}
+            {!isLPage && activePositions?.length > 3 && (
+              <TableRow>
+                <TableCell className={classes.linkHover} colSpan={7} align="center" style={{ fontSize: '1rem' }}>
+                  <Link href="/lp">View more</Link>
+                </TableCell>
+              </TableRow>
+            )}
 
-          {positions && positions?.length > 0 && (
-            <TableRow>
-              <TableCell colSpan={7}>
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
-                  <Tooltip
-                    title={
-                      'When you click the Uniswap link, the Uniswap LP page may take a few moments to load. Please wait for it to fully load so it can prefill LP token data.'
-                    }
-                  >
-                    <a
-                      href={`https://squeeth-uniswap.netlify.app/#/add/ETH/${wSqueeth}/3000`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className={`${classes.anchor} ${classes.linkHover}`}
+            {activePositions && activePositions?.length > 0 && (
+              <TableRow>
+                <TableCell colSpan={7}>
+                  <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <Tooltip
+                      title={
+                        'When you click the Uniswap link, the Uniswap LP page may take a few moments to load. Please wait for it to fully load so it can prefill LP token data.'
+                      }
                     >
-                      Provide Liquidity on Uniswap V3 🦄
-                    </a>
-                  </Tooltip>
-                </div>
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
+                      <a
+                        href={`https://squeeth-uniswap.netlify.app/#/add/ETH/${wSqueeth}/3000`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={`${classes.anchor} ${classes.linkHover}`}
+                      >
+                        Provide Liquidity on Uniswap V3 🦄
+                      </a>
+                    </Tooltip>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        )}
       </Table>
     </TableContainer>
   )

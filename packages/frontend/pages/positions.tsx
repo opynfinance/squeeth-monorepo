@@ -89,7 +89,7 @@ export default function Positions() {
   const { longGain, shortGain, buyQuote, sellQuote, longUsdAmt, shortUsdAmt, longRealizedPNL, shortRealizedPNL } =
     usePnL()
   const ethPrice = useETHPrice()
-  const { positions } = useLPPositions()
+  const { activePositions } = useLPPositions()
   const { pool } = useSqueethPool()
 
   return (
@@ -210,7 +210,7 @@ export default function Positions() {
             </div>
           </div>
         )}
-        {positions?.length > 0 && (
+        {activePositions?.length > 0 && (
           <>
             <div className={classes.header}>
               <Typography color="primary" variant="h6">
