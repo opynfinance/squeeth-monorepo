@@ -145,6 +145,8 @@ export const useShortPositions = () => {
   const [existingCollatPercent, setExistingCollatPercent] = useState(0)
   const [existingCollat, setExistingCollat] = useState(new BigNumber(0))
   const [liquidationPrice, setLiquidationPrice] = useState(0)
+  const [isMintedBal, setIsMintedBal] = useState(false)
+
   const swaps = data?.swaps
   const isWethToken0 = parseInt(weth, 16) < parseInt(wSqueeth, 16)
 
@@ -216,11 +218,16 @@ export const useShortPositions = () => {
       setExistingCollat(_collat)
       getDebtAmount(new BigNumber(shortVaults[0].shortAmount)).then((debt) => {
         if (debt && debt.isPositive()) {
+          setIsMintedBal(true)
           setExistingCollatPercent(Number(_collat.div(debt).times(100).toFixed(1)))
           const rSqueeth = normalizationFactor.multipliedBy(new BigNumber(shortVaults[0].amount)).dividedBy(10000)
           setLiquidationPrice(_collat.div(rSqueeth.multipliedBy(1.5)).toNumber())
+        } else {
+          setIsMintedBal(false)
         }
       })
+    } else {
+      setIsMintedBal(false)
     }
   }, [squeethAmount.toNumber(), shortVaults.length])
 
@@ -240,6 +247,7 @@ export const useShortPositions = () => {
     squeethAmount: squeethAmount.absoluteValue(),
     wethAmount,
     usdAmount,
+    isMintedBal,
     shortVaults,
     liquidationPrice,
     existingCollat,

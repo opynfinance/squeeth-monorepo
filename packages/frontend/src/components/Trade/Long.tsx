@@ -1,4 +1,4 @@
-import { CircularProgress, createStyles, Divider, makeStyles, Typography } from '@material-ui/core'
+import { CircularProgress, createStyles, Divider, makeStyles, Tooltip, Typography } from '@material-ui/core'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import BigNumber from 'bignumber.js'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
@@ -15,6 +15,7 @@ import { useETHPrice } from '../../hooks/useETHPrice'
 import { useLongPositions, useShortPositions } from '../../hooks/usePositions'
 import { PrimaryButton } from '../Buttons'
 import { PrimaryInput } from '../Inputs'
+import { StepperBox as Stepper } from '../StepperBox'
 import Confirmed from './Confirmed'
 import TradeDetails from './TradeDetails'
 import TradeInfoItem from './TradeInfoItem'
@@ -178,6 +179,15 @@ const useStyles = makeStyles((theme) =>
     hintTitleText: {
       marginRight: '.5em',
     },
+    linkHover: {
+      '&:hover': {
+        opacity: 0.7,
+      },
+    },
+    anchor: {
+      color: '#FF007A',
+      fontSize: '16px',
+    },
   }),
 )
 
@@ -185,9 +195,11 @@ type BuyProps = {
   balance: number
   open: boolean
   closeTitle: string
+  isLPage?: boolean
+  activeStep?: number
 }
 
-const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
+const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, activeStep = 0 }) => {
   const [buyLoading, setBuyLoading] = useState(false)
   const [sellLoading, setSellLoading] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
@@ -454,126 +466,148 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
     <div>
       {!confirmed ? (
         <div>
-          <Typography variant="caption" className={classes.thirdHeading} component="div">
-            Pay ETH to buy squeeth ERC20
-          </Typography>
-          <div className={classes.thirdHeading} />
-          <PrimaryInput
-            value={amount.toNumber()}
-            onChange={(v) => handleOpenDualInputUpdate(v, 'ETH')}
-            label="Amount"
-            tooltip="Amount of ETH you want to spend to get Squeeth exposure"
-            actionTxt="Max"
-            onActionClicked={() => {
-              setAmount(new BigNumber(balance))
-              getBuyQuoteForETH(new BigNumber(balance)).then((val) => {
-                setAltTradeAmount(val.amountOut)
-              })
-            }}
-            unit="ETH"
-            convertedValue={amount.times(ethPrice).toFixed(2).toLocaleString()}
-            error={connected && shrtAmt.gt(0) ? !!existingShortError : !!openError}
-            hint={
-              openError ? (
-                openError
-              ) : connected && shrtAmt.gt(0) ? (
-                existingShortError
-              ) : (
-                <div className={classes.hint}>
-                  <span>{`Balance ${balance}`}</span>
-                  {amount.toNumber() ? (
-                    <>
-                      <ArrowRightAltIcon className={classes.arrowIcon} />
-                      <span>{(balance - amount.toNumber()).toFixed(6)}</span>
-                    </>
-                  ) : null}{' '}
-                  <span style={{ marginLeft: '4px' }}>ETH</span>
-                </div>
-              )
-            }
-          />
-
-          <PrimaryInput
-            value={altTradeAmount.toNumber()}
-            onChange={(v) => handleOpenDualInputUpdate(v, 'oSQTH')}
-            label="Amount"
-            tooltip="Amount of Squeeth exposure"
-            actionTxt="Max"
-            unit="oSQTH"
-            convertedValue={getWSqueethPositionValue(altTradeAmount).toFixed(2).toLocaleString()}
-            error={connected && shrtAmt.gt(0) ? !!existingShortError : !!openError}
-            hint={
-              openError ? (
-                openError
-              ) : connected && shrtAmt.gt(0) ? (
-                existingShortError
-              ) : (
-                <div className={classes.hint}>
-                  <span className={classes.hintTextContainer}>
-                    <span className={classes.hintTitleText}>Balance </span>
-                    <span>{wSqueethBal.toFixed(6)}</span>
-                  </span>
-                  {quote.amountOut.gt(0) ? (
-                    <>
-                      <ArrowRightAltIcon className={classes.arrowIcon} />
-                      <span>{wSqueethBal.plus(quote.amountOut).toFixed(6)}</span>
-                    </>
-                  ) : null}{' '}
-                  <span style={{ marginLeft: '4px' }}>oSQTH</span>
-                </div>
-              )
-            }
-          />
-
-          <div className={classes.divider}>
-            <TradeInfoItem
-              label="Value if ETH up 2x"
-              value={Number((squeethExposure * 4).toFixed(2)).toLocaleString()}
-              tooltip="The value of your position if ETH goes up 2x, not including funding"
-              frontUnit="$"
-            />
-            {/* if ETH down 50%, squeeth down 75%, so multiply amount by 0.25 to get what would remain  */}
-            <TradeInfoItem
-              label="Value if ETH down 50%"
-              value={Number((squeethExposure * 0.25).toFixed(2)).toLocaleString()}
-              tooltip="The value of your position if ETH goes down 50%, not including funding"
-              frontUnit="$"
-            />
-            <div style={{ marginTop: '10px' }}>
-              <UniswapData
-                slippage="0.5"
-                priceImpact={quote.priceImpact}
-                minReceived={quote.minimumAmountOut.toFixed(6)}
-                minReceivedUnit="oSQTH"
+          {isLPage && <Stepper activeStep={activeStep} steps={['Buy Squeeth', 'LP the SQTH-ETH Uniswap Pool']} />}
+          {activeStep === 0 ? (
+            <>
+              <Typography variant="caption" className={classes.thirdHeading} component="div">
+                Pay ETH to buy squeeth ERC20
+              </Typography>
+              <div className={classes.thirdHeading} />
+              <PrimaryInput
+                value={amount.toNumber()}
+                onChange={(v) => handleOpenDualInputUpdate(v, 'ETH')}
+                label="Amount"
+                tooltip="Amount of ETH you want to spend to get Squeeth exposure"
+                actionTxt="Max"
+                onActionClicked={() => {
+                  setAmount(new BigNumber(balance))
+                  getBuyQuoteForETH(new BigNumber(balance)).then((val) => {
+                    setAltTradeAmount(val.amountOut)
+                  })
+                }}
+                unit="ETH"
+                convertedValue={amount.times(ethPrice).toFixed(2).toLocaleString()}
+                error={connected && shrtAmt.gt(0) ? !!existingShortError : !!openError}
+                hint={
+                  openError ? (
+                    openError
+                  ) : connected && shrtAmt.gt(0) ? (
+                    existingShortError
+                  ) : (
+                    <div className={classes.hint}>
+                      <span>{`Balance ${balance}`}</span>
+                      {amount.toNumber() ? (
+                        <>
+                          <ArrowRightAltIcon className={classes.arrowIcon} />
+                          <span>{(balance - amount.toNumber()).toFixed(6)}</span>
+                        </>
+                      ) : null}{' '}
+                      <span style={{ marginLeft: '4px' }}>ETH</span>
+                    </div>
+                  )
+                }
               />
+
+              <PrimaryInput
+                value={altTradeAmount.toNumber()}
+                onChange={(v) => handleOpenDualInputUpdate(v, 'oSQTH')}
+                label="Amount"
+                tooltip="Amount of Squeeth exposure"
+                actionTxt="Max"
+                unit="oSQTH"
+                convertedValue={getWSqueethPositionValue(altTradeAmount).toFixed(2).toLocaleString()}
+                error={connected && shrtAmt.gt(0) ? !!existingShortError : !!openError}
+                hint={
+                  openError ? (
+                    openError
+                  ) : connected && shrtAmt.gt(0) ? (
+                    existingShortError
+                  ) : (
+                    <div className={classes.hint}>
+                      <span className={classes.hintTextContainer}>
+                        <span className={classes.hintTitleText}>Balance </span>
+                        <span>{wSqueethBal.toFixed(6)}</span>
+                      </span>
+                      {quote.amountOut.gt(0) ? (
+                        <>
+                          <ArrowRightAltIcon className={classes.arrowIcon} />
+                          <span>{wSqueethBal.plus(quote.amountOut).toFixed(6)}</span>
+                        </>
+                      ) : null}{' '}
+                      <span style={{ marginLeft: '4px' }}>oSQTH</span>
+                    </div>
+                  )
+                }
+              />
+
+              <div className={classes.divider}>
+                <TradeInfoItem
+                  label="Value if ETH up 2x"
+                  value={Number((squeethExposure * 4).toFixed(2)).toLocaleString()}
+                  tooltip="The value of your position if ETH goes up 2x, not including funding"
+                  frontUnit="$"
+                />
+                {/* if ETH down 50%, squeeth down 75%, so multiply amount by 0.25 to get what would remain  */}
+                <TradeInfoItem
+                  label="Value if ETH down 50%"
+                  value={Number((squeethExposure * 0.25).toFixed(2)).toLocaleString()}
+                  tooltip="The value of your position if ETH goes down 50%, not including funding"
+                  frontUnit="$"
+                />
+                <div style={{ marginTop: '10px' }}>
+                  <UniswapData
+                    slippage="0.5"
+                    priceImpact={quote.priceImpact}
+                    minReceived={quote.minimumAmountOut.toFixed(6)}
+                    minReceivedUnit="oSQTH"
+                  />
+                </div>
+              </div>
+              <div className={classes.buttonDiv}>
+                {!connected ? (
+                  <PrimaryButton
+                    variant="contained"
+                    onClick={selectWallet}
+                    className={classes.amountInput}
+                    disabled={!!buyLoading}
+                    style={{ width: '300px' }}
+                  >
+                    {'Connect Wallet'}
+                  </PrimaryButton>
+                ) : (
+                  <PrimaryButton
+                    variant="contained"
+                    onClick={transact}
+                    className={classes.amountInput}
+                    disabled={!!buyLoading || !!openError || shrtAmt.gt(0)}
+                    style={{ width: '300px' }}
+                  >
+                    {buyLoading ? <CircularProgress color="primary" size="1.5rem" /> : 'Buy'}
+                  </PrimaryButton>
+                )}
+                <Typography variant="caption" className={classes.caption} component="div">
+                  Trades on Uniswap V3 🦄
+                </Typography>
+              </div>
+            </>
+          ) : (
+            <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
+              <Tooltip
+                title={
+                  'When you click the Uniswap link, the Uniswap LP page may take a few moments to load. Please wait for it to fully load so it can prefill LP token data.'
+                }
+              >
+                <a
+                  href={`https://squeeth-uniswap.netlify.app/#/add/ETH/${wSqueeth}/3000`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`${classes.anchor} ${classes.linkHover}`}
+                >
+                  Provide Liquidity on Uniswap V3 🦄
+                </a>
+              </Tooltip>
             </div>
-          </div>
-          <div className={classes.buttonDiv}>
-            {!connected ? (
-              <PrimaryButton
-                variant="contained"
-                onClick={selectWallet}
-                className={classes.amountInput}
-                disabled={!!buyLoading}
-                style={{ width: '300px' }}
-              >
-                {'Connect Wallet'}
-              </PrimaryButton>
-            ) : (
-              <PrimaryButton
-                variant="contained"
-                onClick={transact}
-                className={classes.amountInput}
-                disabled={!!buyLoading || !!openError || shrtAmt.gt(0)}
-                style={{ width: '300px' }}
-              >
-                {buyLoading ? <CircularProgress color="primary" size="1.5rem" /> : 'Buy'}
-              </PrimaryButton>
-            )}
-            <Typography variant="caption" className={classes.caption} component="div">
-              Trades on Uniswap V3 🦄
-            </Typography>
-          </div>
+          )}
         </div>
       ) : (
         <div>
