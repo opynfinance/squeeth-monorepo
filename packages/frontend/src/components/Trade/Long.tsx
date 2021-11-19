@@ -3,6 +3,7 @@ import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import BigNumber from 'bignumber.js'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
+import { UniswapIframe } from '../../components/UniswapIframe'
 import { WSQUEETH_DECIMALS } from '../../constants'
 import { UNI_POOL_FEES } from '../../constants'
 import { useTrade } from '../../context/trade'
@@ -592,20 +593,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
             </>
           ) : (
             <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
-              <Tooltip
-                title={
-                  'When you click the Uniswap link, the Uniswap LP page may take a few moments to load. Please wait for it to fully load so it can prefill LP token data.'
-                }
-              >
-                <a
-                  href={`https://squeeth-uniswap.netlify.app/#/add/ETH/${wSqueeth}/3000`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={`${classes.anchor} ${classes.linkHover}`}
-                >
-                  Provide Liquidity on Uniswap V3 🦄
-                </a>
-              </Tooltip>
+              <UniswapIframe />
             </div>
           )}
         </div>

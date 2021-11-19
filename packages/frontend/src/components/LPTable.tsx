@@ -7,6 +7,7 @@ import * as React from 'react'
 import { useState } from 'react'
 
 import { SecondaryTab, SecondaryTabs } from '../components/Tabs'
+import { UniswapIframe } from '../components/UniswapIframe'
 import { useAddresses } from '../hooks/useAddress'
 import { useLPPositions } from '../hooks/usePositions'
 import { inRange } from '../utils/calculations'
@@ -110,24 +111,11 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
               ) : (
                 <TableRow>
                   <TableCell colSpan={6} align="center" style={{ textAlign: 'center', fontSize: '16px' }}>
-                    <p>No Existing LP Positions</p>
+                    <p>No Closed LP Positions</p>
 
                     <div>
                       <p>1. Mint Squeeth on the right.</p>
-                      <Tooltip
-                        title={
-                          'When you click the Uniswap link, the Uniswap LP page may take a few moments to load. Please wait for it to fully load so it can prefill LP token data.'
-                        }
-                      >
-                        <a
-                          href={`https://squeeth-uniswap.netlify.app/#/add/ETH/${wSqueeth}/3000`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className={`${classes.listLink} ${classes.linkHover}`}
-                        >
-                          <p>2. Deposit Squeeth and ETH into Uniswap V3 Pool 🦄</p>
-                        </a>
-                      </Tooltip>
+                      <UniswapIframe text={'2.'} />
                     </div>
                   </TableCell>
                 </TableRow>
@@ -188,20 +176,7 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
               <TableRow>
                 <TableCell colSpan={7}>
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    <Tooltip
-                      title={
-                        'When you click the Uniswap link, the Uniswap LP page may take a few moments to load. Please wait for it to fully load so it can prefill LP token data.'
-                      }
-                    >
-                      <a
-                        href={`https://squeeth-uniswap.netlify.app/#/add/ETH/${wSqueeth}/3000`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className={`${classes.anchor} ${classes.linkHover}`}
-                      >
-                        Provide Liquidity on Uniswap V3 🦄
-                      </a>
-                    </Tooltip>
+                    <UniswapIframe />
                   </div>
                 </TableCell>
               </TableRow>
@@ -223,20 +198,9 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
 
                     <div>
                       <p>1. Mint Squeeth on the right.</p>
-                      <Tooltip
-                        title={
-                          'When you click the Uniswap link, the Uniswap LP page may take a few moments to load. Please wait for it to fully load so it can prefill LP token data.'
-                        }
-                      >
-                        <a
-                          href={`https://squeeth-uniswap.netlify.app/#/add/ETH/${wSqueeth}/3000`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className={`${classes.listLink} ${classes.linkHover}`}
-                        >
-                          <p>2. Deposit Squeeth and ETH into Uniswap V3 Pool 🦄</p>
-                        </a>
-                      </Tooltip>
+                      <span>
+                        <UniswapIframe text={'2.'} />
+                      </span>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -307,22 +271,7 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
             {activePositions && activePositions?.length > 0 && (
               <TableRow>
                 <TableCell colSpan={7}>
-                  <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    <Tooltip
-                      title={
-                        'When you click the Uniswap link, the Uniswap LP page may take a few moments to load. Please wait for it to fully load so it can prefill LP token data.'
-                      }
-                    >
-                      <a
-                        href={`https://squeeth-uniswap.netlify.app/#/add/ETH/${wSqueeth}/3000`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className={`${classes.anchor} ${classes.linkHover}`}
-                      >
-                        Provide Liquidity on Uniswap V3 🦄
-                      </a>
-                    </Tooltip>
-                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'center' }}>{/* <UniswapIframe /> */}</div>
                 </TableCell>
               </TableRow>
             )}

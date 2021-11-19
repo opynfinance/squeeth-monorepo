@@ -3,6 +3,7 @@ import InfoIcon from '@material-ui/icons/InfoOutlined'
 import Image from 'next/image'
 import React from 'react'
 
+import { UniswapIframe } from '../../components/UniswapIframe'
 import { EtherscanPrefix } from '../../constants'
 import { useWallet } from '../../context/wallet'
 import { useAddresses } from '../../hooks/useAddress'
@@ -81,9 +82,7 @@ const Confirmed: React.FC<ConfirmedProps> = ({ confirmationMessage, txnHash, isL
       {isLP ? (
         <div className={classes.uniswapLink}>
           <Typography variant="body1" component="div" className={classes.uniLP}>
-            <a href={`https://squeeth-uniswap.netlify.app/#/add/ETH/${wSqueeth}/3000`} target="_blank" rel="noreferrer">
-              Provide Liquidity on Uniswap 🦄
-            </a>
+            <UniswapIframe />
           </Typography>
           <Tooltip
             title={

@@ -28,6 +28,7 @@ import Confirmed from './Trade/Confirmed'
 import Long from './Trade/Long'
 import TradeDetails from './Trade/TradeDetails'
 import TradeInfoItem from './Trade/TradeInfoItem'
+import { UniswapIframe } from './UniswapIframe'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -378,22 +379,7 @@ export const LPActionTabs: React.FC<LPActionTabsProps> = ({
               </div>
             </div>
           ) : (
-            <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
-              <Tooltip
-                title={
-                  'When you click the Uniswap link, the Uniswap LP page may take a few moments to load. Please wait for it to fully load so it can prefill LP token data.'
-                }
-              >
-                <a
-                  href={`https://squeeth-uniswap.netlify.app/#/add/ETH/${wSqueeth}/3000`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={`${classes.anchor} ${classes.linkHover}`}
-                >
-                  Provide Liquidity on Uniswap V3 🦄
-                </a>
-              </Tooltip>
-            </div>
+            <UniswapIframe />
           )
         ) : (
           <div style={{ textAlign: 'center' }}>
