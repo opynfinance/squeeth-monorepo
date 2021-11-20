@@ -242,23 +242,27 @@ export const useSqueethPool = () => {
     }
   }
 
-  const getBuyQuote = async (amount: BigNumber) => {
+  //If I input an exact amount of squeeth I want to buy, tells me how much ETH I need to pay to purchase that squeeth
+  const getBuyQuote = async (squeethAmount: BigNumber) => {
     const emptyState = {
       amountIn: new BigNumber(0),
       maximumAmountIn: new BigNumber(0),
       priceImpact: '0'
     }
 
-    if (!amount || !pool) return emptyState
+    if (!squeethAmount || !pool) return emptyState
 
     try {
+      //WETH is input token, squeeth is output token. I'm using WETH to buy Squeeth 
       const route = new Route([pool], wethToken!, squeethToken!)
+      //getting the amount of ETH I need to put in to get an exact amount of squeeth I inputted out
       const trade = await Trade.exactOut(
-        route, CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(amount, WSQUEETH_DECIMALS).toNumber())
+        route, CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, WSQUEETH_DECIMALS).toNumber())
       )
 
+      //the amount of ETH I need to put in 
       return {
-        amountIn: new BigNumber(trade.inputAmount.toSignificant(18)),
+        amountIn: new BigNumber(trade.inputAmount.toSignificant(18)), 
         maximumAmountIn: new BigNumber(trade.maximumAmountIn(new Percent(5, 10000)).toSignificant(18)),
         priceImpact: trade.priceImpact.toFixed(2)
       }
@@ -269,21 +273,25 @@ export const useSqueethPool = () => {
     return emptyState
   }
 
-  const getBuyQuoteForETH = async (amount: BigNumber) => {
+  //If I input an exact amount of ETH I want to spend, tells me how much Squeeth I'd purchase
+  const getBuyQuoteForETH = async (ETHAmount: BigNumber) => {
     const emptyState = {
       amountOut: new BigNumber(0),
       minimumAmountOut: new BigNumber(0),
       priceImpact: '0'
     }
 
-    if (!amount || !pool) return emptyState
+    if (!ETHAmount || !pool) return emptyState
 
     try {
+      //WETH is input token, squeeth is output token. I'm using WETH to buy Squeeth 
       const route = new Route([pool], wethToken!, squeethToken!)
+      //getting the amount of squeeth I'd get out for putting in an exact amount of ETH
       const trade = await Trade.exactIn(
-        route, CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(amount, 18).toNumber())
+        route, CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toNumber())
       )
 
+      //the amount of squeeth I'm getting out 
       return {
         amountOut: new BigNumber(trade.outputAmount.toSignificant(WSQUEETH_DECIMALS)),
         minimumAmountOut: new BigNumber(trade.minimumAmountOut(new Percent(5, 10000)).toSignificant(WSQUEETH_DECIMALS)),
@@ -296,23 +304,57 @@ export const useSqueethPool = () => {
     return emptyState
   }
 
-  const getSellQuote = async (amount: BigNumber) => {
+  //I input an exact amount of squeeth I want to sell, tells me how much ETH I'd receive
+  const getSellQuote = async (squeethAmount: BigNumber) => {
     const emptyState = {
       amountOut: new BigNumber(0),
       minimumAmountOut: new BigNumber(0),
       priceImpact: '0'
     }
-    if (!amount || !pool) return emptyState
+    if (!squeethAmount || !pool) return emptyState
 
     try {
+      //squeeth is input token, WETH is output token. I'm selling squeeth for WETH
       const route = new Route([pool], squeethToken!, wethToken!)
+      //getting the amount of ETH I'd receive for inputting the amount of squeeth I want to sell 
       const trade = await Trade.exactIn(
-        route, CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(amount, WSQUEETH_DECIMALS).toNumber())
+        route, CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, WSQUEETH_DECIMALS).toNumber())
       )
 
+      //the amount of ETH I'm receiving 
       return {
         amountOut: new BigNumber(trade.outputAmount.toSignificant(18)),
         minimumAmountOut: new BigNumber(trade.minimumAmountOut(new Percent(5, 10000)).toSignificant(18)),
+        priceImpact: trade.priceImpact.toFixed(2)
+      }
+    } catch (e) {
+      console.log(e)
+    }
+
+    return emptyState
+  }
+
+  //I input an exact amount of ETH I want to receive, tells me how much squeeth I'd need to sell 
+  const getSellQuoteForETH = async (ETHAmount: BigNumber) => {
+    const emptyState = {
+      amountIn: new BigNumber(0),
+      maximumAmountIn: new BigNumber(0),
+      priceImpact: '0'
+    }
+    if (!ETHAmount || !pool) return emptyState
+
+    try {
+      //squeeth is input token, WETH is output token. I'm selling squeeth for WETH
+      const route = new Route([pool], squeethToken!, wethToken!)
+      //getting the amount of squeeth I'd need to sell to receive my desired amount of ETH
+      const trade = await Trade.exactOut(
+        route, CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toNumber())
+      )
+
+      //the amount of squeeth I need to sell 
+      return {
+        amountIn: new BigNumber(trade.inputAmount.toSignificant(18)),
+        maximumAmountIn: new BigNumber(trade.maximumAmountIn(new Percent(5, 10000)).toSignificant(18)),
         priceImpact: trade.priceImpact.toFixed(2)
       }
     } catch (e) {
@@ -339,6 +381,7 @@ export const useSqueethPool = () => {
     getBuyParam,
     getBuyQuoteForETH,
     getSellQuote,
+    getSellQuoteForETH,
     getWSqueethPositionValue,
   }
 }

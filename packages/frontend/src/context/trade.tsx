@@ -94,6 +94,9 @@ const TradeProvider: React.FC = ({ children }) => {
   useEffect(() => {
     if (!ready) return
 
+    //tradeType refers to which tab "Long" or "Short" is selected on the trade page
+    //positionType refers to the user's actual position based on their squeeth balances and debt
+    //isPositionOpen is true if the "Open" tab is selected on the trade page; otherwise it refers to the "Close" tab being selected
     if (tradeType === TradeType.LONG) {
       if (positionType === PositionType.SHORT) {
         getBuyQuote(tradeAmount).then(setSellCloseQuote)

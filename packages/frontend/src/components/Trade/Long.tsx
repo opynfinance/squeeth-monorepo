@@ -209,7 +209,15 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
   const classes = useStyles()
   const { swapRouter, wSqueeth } = useAddresses()
   const wSqueethBal = useTokenBalance(wSqueeth, 5, WSQUEETH_DECIMALS)
-  const { sell, buyForWETH, getWSqueethPositionValue, getBuyQuoteForETH, getBuyQuote } = useSqueethPool()
+  const {
+    sell,
+    buyForWETH,
+    getWSqueethPositionValue,
+    getBuyQuoteForETH,
+    getBuyQuote,
+    getSellQuote,
+    getSellQuoteForETH,
+  } = useSqueethPool()
   const {
     tradeAmount: amount,
     setTradeAmount: setAmount,
@@ -280,25 +288,29 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
   }, [amount, sell, squeethAllowance, squeethApprove, wSqueethBal])
 
   const handleCloseDualInputUpdate = (v: number | string, currentInput: string) => {
+    //If I'm inputting an amount of ETH I'd like to receive from selling my squeeth, use getSellQuoteForETH
     if (currentInput === 'ETH') {
       setAltTradeAmount(new BigNumber(v))
-      getBuyQuoteForETH(new BigNumber(v)).then((val) => {
-        setAmount(val.amountOut)
+      getSellQuoteForETH(new BigNumber(v)).then((val) => {
+        setAmount(val.amountIn)
       })
     } else {
+      //If I'm inputting an amount of squeeth I'd like to sell to receive ETH, use getSellQuote
       setAmount(new BigNumber(v))
-      getBuyQuote(new BigNumber(v)).then((val) => {
-        setAltTradeAmount(val.amountIn)
+      getSellQuote(new BigNumber(v)).then((val) => {
+        setAltTradeAmount(val.amountOut)
       })
     }
   }
   const handleOpenDualInputUpdate = (v: number | string, currentInput: string) => {
+    //If I'm inputting an amount of ETH I'd like to spend to get squeeth, use getBuyQuoteForETH
     if (currentInput === 'ETH') {
       setAmount(new BigNumber(v))
       getBuyQuoteForETH(new BigNumber(v)).then((val) => {
         setAltTradeAmount(val.amountOut)
       })
     } else {
+      //If I'm inputting an amount of squeeth I'd like to buy with ETH, use getBuyQuote
       setAltTradeAmount(new BigNumber(v))
       getBuyQuote(new BigNumber(v)).then((val) => {
         setAmount(val.amountIn)
@@ -323,8 +335,8 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
               actionTxt="Max"
               onActionClicked={() => {
                 setAmount(wSqueethBal)
-                getBuyQuote(new BigNumber(wSqueethBal)).then((val) => {
-                  setAltTradeAmount(val.amountIn)
+                getSellQuote(new BigNumber(wSqueethBal)).then((val) => {
+                  setAltTradeAmount(val.amountOut)
                 })
               }}
               unit="oSQTH"
