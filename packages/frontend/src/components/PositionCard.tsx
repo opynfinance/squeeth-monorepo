@@ -209,7 +209,8 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
             </Typography>
             {(tradeType === TradeType.SHORT && lngAmt.gt(0)) ||
             (tradeType === TradeType.LONG && shrtAmt.gt(0)) ||
-            tradeAmount.isLessThanOrEqualTo(0) ? null : (
+            tradeAmount.isLessThanOrEqualTo(0) ||
+            tradeAmount.isNaN() ? null : (
               <>
                 <ArrowRightAltIcon className={classes.arrow} />
                 <Typography

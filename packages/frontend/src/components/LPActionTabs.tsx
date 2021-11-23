@@ -205,8 +205,6 @@ export const LPActionTabs: React.FC<LPActionTabsProps> = ({
   }, [address])
 
   useEffect(() => {
-    console.log(longAmt.toNumber(), shortAmt.toNumber(), isMintedBal)
-
     if (isMintedBal) {
       setCurrentTabs(2) // have minted
       setMintStep(1) // set mint tab default step to 2nd step
@@ -250,7 +248,7 @@ export const LPActionTabs: React.FC<LPActionTabsProps> = ({
     if (shortVaults.length && amount.isEqualTo(shortVaults[0].shortAmount)) {
       setWithdrawCollat(shortVaults[0].collateralAmount)
     } else {
-      console.log(squeethBal.toNumber(), shortVaults[0].shortAmount.toNumber(), amount.toNumber())
+      // console.log(squeethBal.toNumber(), shortVaults[0].shortAmount.toNumber(), amount.toNumber())
       getDebtAmount(shortVaults[0].shortAmount.minus(amount)).then((debt) => {
         if (!debt) return
         const neededCollat = debt.times(collatPercent / 100)
@@ -297,7 +295,7 @@ export const LPActionTabs: React.FC<LPActionTabsProps> = ({
             <div>
               {/* <p style={{ textAlign: 'center', fontSize: '.75rem' }}>Mint Squeeth</p> */}
               <PrimaryInput
-                value={collatAmount.toNumber()}
+                value={collatAmount.toNumber().toString()}
                 onChange={(v) => setCollatAmount(new BigNumber(v))}
                 label="Collateral"
                 tooltip="Collateral"
@@ -428,7 +426,7 @@ export const LPActionTabs: React.FC<LPActionTabsProps> = ({
             <p style={{ textAlign: 'center', fontSize: '.75rem' }}>Burn squeeth and redeem collateral</p>
 
             <PrimaryInput
-              value={amount.toNumber()}
+              value={amount.toNumber().toString()}
               onChange={(v) => setAmount(new BigNumber(v))}
               label="Amount"
               tooltip="Amount of oSQTH to burn"
@@ -564,7 +562,6 @@ export const LPActionTabs: React.FC<LPActionTabsProps> = ({
             <SecondaryTabs
               value={currentAction}
               onChange={(evt, val) => {
-                console.log(val, val === 2, openPosition, openPosition === 2)
                 setCurrentAction(val)
                 if (val === 2) {
                   setOpenPosition(val)

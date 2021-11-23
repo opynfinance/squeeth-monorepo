@@ -176,8 +176,9 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
 
   const liqPrice = useMemo(() => {
     const rSqueeth = normalizationFactor.multipliedBy(amount || 1).dividedBy(10000)
-
-    return collateral / rSqueeth.multipliedBy(1.5).toNumber()
+    const liqp = collateral / rSqueeth.multipliedBy(1.5).toNumber()
+    if (liqp) return liqp
+    return 0
   }, [amount, collatPercent, collateral, normalizationFactor.toNumber()])
 
   useEffect(() => {
@@ -316,6 +317,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   }, [collatPercent])
 
   const handleCloseDualInputUpdate = (v: number | string, currentInput: string) => {
+    if (isNaN(+v) || +v === 0) v = 0
     if (currentInput === 'ETH') {
       setAltTradeAmount(new BigNumber(v))
       getBuyQuoteForETH(new BigNumber(v)).then((val) => {
@@ -339,7 +341,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
             </Typography>
             <div className={classes.thirdHeading}>
               <PrimaryInput
-                value={amount.toNumber()}
+                value={amount.toNumber().toString()}
                 onChange={(v) => handleCloseDualInputUpdate(v, 'oSQTH')}
                 label="Amount"
                 tooltip="Amount of oSQTH to buy"
@@ -402,7 +404,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
             <div className={classes.thirdHeading}></div>
             <CollatRange onCollatValueChange={(val) => setCollatPercent(val)} collatValue={collatPercent} />
             <PrimaryInput
-              value={altTradeAmount.toNumber()}
+              value={altTradeAmount.toNumber().toString()}
               onChange={(v) => handleCloseDualInputUpdate(v, 'ETH')}
               label="Amount"
               tooltip="Amount of ETH you want to spend to get Squeeth exposure"
@@ -555,7 +557,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
           </Typography>
           <div className={classes.thirdHeading}>
             <PrimaryInput
-              value={collateral}
+              value={collateral.toString()}
               onChange={(v) => setCollateral(Number(v))}
               label="Collateral"
               tooltip="Amount of ETH collateral"
@@ -612,7 +614,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
           <CollatRange onCollatValueChange={(val) => setCollatPercent(val)} collatValue={collatPercent} />
 
           <PrimaryInput
-            value={amount.toNumber()}
+            value={amount.toNumber().toString()}
             onChange={(v) => setAmount(new BigNumber(v))}
             label="Sell"
             tooltip="Amount of ETH collateral"

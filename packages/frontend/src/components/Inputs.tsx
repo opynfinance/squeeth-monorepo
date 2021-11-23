@@ -82,7 +82,7 @@ type PrimaryInputType = {
 }
 
 export const PrimaryInput: React.FC<PrimaryInputType> = ({
-  value,
+  value = '0',
   onChange,
   label,
   tooltip,
@@ -112,7 +112,7 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
           <div className={classes.inputContainer}>
             <input
               className={classes.input}
-              value={value}
+              value={isNaN(Number(value)) ? 0 : value}
               onChange={(e) => {
                 Number(e.target.value) < 0 ? onChange('0') : onChange(e.target.value)
               }}

@@ -289,6 +289,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
 
   const handleCloseDualInputUpdate = (v: number | string, currentInput: string) => {
     //If I'm inputting an amount of ETH I'd like to receive from selling my squeeth, use getSellQuoteForETH
+    if (isNaN(+v) || +v === 0) v = 0
     if (currentInput === 'ETH') {
       setAltTradeAmount(new BigNumber(v))
       getSellQuoteForETH(new BigNumber(v)).then((val) => {
@@ -304,6 +305,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
   }
   const handleOpenDualInputUpdate = (v: number | string, currentInput: string) => {
     //If I'm inputting an amount of ETH I'd like to spend to get squeeth, use getBuyQuoteForETH
+    if (isNaN(+v) || +v === 0) v = 0
     if (currentInput === 'ETH') {
       setAmount(new BigNumber(v))
       getBuyQuoteForETH(new BigNumber(v)).then((val) => {
@@ -328,7 +330,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
             </Typography>
             <div className={classes.thirdHeading} />
             <PrimaryInput
-              value={amount.toNumber()}
+              value={amount.toNumber().toString()}
               onChange={(v) => handleCloseDualInputUpdate(v, 'oSQTH')}
               label="Amount"
               tooltip="Amount of wSqueeth you want to close"
@@ -364,7 +366,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
               }
             />
             <PrimaryInput
-              value={altTradeAmount.toNumber()}
+              value={altTradeAmount.toNumber().toString()}
               onChange={(v) => handleCloseDualInputUpdate(v, 'ETH')}
               label="Amount"
               tooltip="Amount of wSqueeth you want to close in eth"
@@ -487,7 +489,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
               </Typography>
               <div className={classes.thirdHeading} />
               <PrimaryInput
-                value={amount.toNumber()}
+                value={amount.toNumber().toString()}
                 onChange={(v) => handleOpenDualInputUpdate(v, 'ETH')}
                 label="Amount"
                 tooltip="Amount of ETH you want to spend to get Squeeth exposure"
@@ -522,7 +524,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
               />
 
               <PrimaryInput
-                value={altTradeAmount.toNumber()}
+                value={altTradeAmount.toNumber().toString()}
                 onChange={(v) => handleOpenDualInputUpdate(v, 'oSQTH')}
                 label="Amount"
                 tooltip="Amount of Squeeth exposure"
