@@ -20,6 +20,7 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(2),
       borderRadius: theme.spacing(1),
       backgroundColor: `${theme.palette.background.paper}40`,
+      height: '68vh',
     },
     isLPageTableContainer: {
       flexBasis: '72%',
@@ -237,14 +238,6 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
                         {Number(p.amount1).toFixed(4)} {p.token1.symbol}
                       </span>
                     </TableCell>
-                    {/* <TableCell align="left">
-              <span style={{ marginRight: '.5em' }}>
-                {p.collectedFeesToken0} {p.token0.symbol}
-              </span>
-              <span>
-                {p.collectedFeesToken1} {p.token1.symbol}
-              </span>
-            </TableCell> */}
                     <TableCell align="left">
                       <span style={{ marginRight: '.5em' }}>
                         {p.fees0?.toFixed(6)} {p.token0.symbol}

@@ -177,6 +177,7 @@ export function LPCalculator() {
           style={{
             display: 'flex',
             justifyContent: 'space-between',
+            height: '68vh',
           }}
         >
           <LPTable isLPage={true} pool={pool}></LPTable>
