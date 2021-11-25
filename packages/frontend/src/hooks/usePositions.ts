@@ -233,7 +233,7 @@ export const useShortPositions = () => {
         if (debt && debt.isPositive()) {
           setIsMintedBal(true)
           setExistingCollatPercent(Number(_collat.div(debt).times(100).toFixed(1)))
-          const rSqueeth = normalizationFactor.multipliedBy(new BigNumber(shortVaults[0].amount)).dividedBy(10000)
+          const rSqueeth = normalizationFactor.multipliedBy(new BigNumber(shortVaults[0].shortAmount)).dividedBy(10000)
           setLiquidationPrice(_collat.div(rSqueeth.multipliedBy(1.5)).toNumber())
         } else {
           setIsMintedBal(false)
