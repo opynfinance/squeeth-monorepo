@@ -86,8 +86,17 @@ export default function Positions() {
     existingCollatPercent,
     liquidationPrice,
   } = useShortPositions()
-  const { longGain, shortGain, buyQuote, sellQuote, longUsdAmt, shortUsdAmt, longRealizedPNL, shortRealizedPNL } =
-    usePnL()
+  const {
+    longGain,
+    shortGain,
+    buyQuote,
+    sellQuote,
+    longUsdAmt,
+    shortUsdAmt,
+    longRealizedPNL,
+    shortRealizedPNL,
+    loading,
+  } = usePnL()
   const ethPrice = useETHPrice()
   const { activePositions } = useLPPositions()
   const { pool } = useSqueethPool()
@@ -132,12 +141,18 @@ export default function Positions() {
                   <Typography variant="caption" color="textSecondary">
                     Unrealized P&L
                   </Typography>
-                  <Typography variant="body1" className={longGain < 0 ? classes.red : classes.green}>
-                    ${sellQuote.amountOut.times(ethPrice).minus(longUsdAmt.abs()).toFixed(2)}
-                  </Typography>
-                  <Typography variant="caption" className={longGain < 0 ? classes.red : classes.green}>
-                    {(longGain || 0).toFixed(2)}%
-                  </Typography>
+                  {loading ? (
+                    <Typography variant="body1">Loading</Typography>
+                  ) : (
+                    <>
+                      <Typography variant="body1" className={longGain < 0 ? classes.red : classes.green}>
+                        ${sellQuote.amountOut.times(ethPrice).minus(longUsdAmt.abs()).toFixed(2)}
+                      </Typography>
+                      <Typography variant="caption" className={longGain < 0 ? classes.red : classes.green}>
+                        {(longGain || 0).toFixed(2)}%
+                      </Typography>
+                    </>
+                  )}
                 </div>
               </div>
               <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
@@ -173,12 +188,18 @@ export default function Positions() {
                   <Typography variant="caption" color="textSecondary">
                     Unrealized P&L
                   </Typography>
-                  <Typography variant="body1" className={shortGain < 0 ? classes.red : classes.green}>
-                    ${buyQuote.times(ethPrice).minus(shortUsdAmt.abs()).toFixed(2)}
-                  </Typography>
-                  <Typography variant="caption" className={longGain < 0 ? classes.red : classes.green}>
-                    {(shortGain || 0).toFixed(2)}%
-                  </Typography>
+                  {loading ? (
+                    <Typography variant="body1">Loading</Typography>
+                  ) : (
+                    <>
+                      <Typography variant="body1" className={shortGain < 0 ? classes.red : classes.green}>
+                        ${buyQuote.times(ethPrice).minus(shortUsdAmt.abs()).toFixed(2)}
+                      </Typography>
+                      <Typography variant="caption" className={longGain < 0 ? classes.red : classes.green}>
+                        {(shortGain || 0).toFixed(2)}%
+                      </Typography>
+                    </>
+                  )}
                 </div>
               </div>
               <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>

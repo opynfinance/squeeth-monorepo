@@ -13,7 +13,7 @@ import { useWallet } from '../../context/wallet'
 import { useController } from '../../hooks/contracts/useController'
 import { useETHPrice } from '../../hooks/useETHPrice'
 import { useTransactionHistory } from '../../hooks/useTransactionHistory'
-
+import { useUsdAmount } from '../../hooks/useUsdAmount'
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
@@ -52,6 +52,7 @@ const History: React.FC = () => {
   const ethPrice = useETHPrice()
   const { normFactor: normalizationFactor } = useController()
   const classes = useStyles()
+  const { getUsdAmt } = useUsdAmount()
 
   return (
     <div>
@@ -90,7 +91,7 @@ const History: React.FC = () => {
               {tx.ethAmount.toFixed(4)}&nbsp; WETH
             </Typography>
             <Typography variant="caption" color="textSecondary">
-              ${tx.usdValue.toFixed(2)}
+              ${getUsdAmt(tx.ethAmount, tx.timestamp).toFixed(2)}
             </Typography>
           </div>
           <div>

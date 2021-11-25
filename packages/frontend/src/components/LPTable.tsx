@@ -264,7 +264,9 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
             {activePositions && activePositions?.length > 0 && (
               <TableRow>
                 <TableCell colSpan={7}>
-                  <div style={{ display: 'flex', justifyContent: 'center' }}>{/* <UniswapIframe /> */}</div>
+                  <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <UniswapIframe />
+                  </div>
                 </TableCell>
               </TableRow>
             )}

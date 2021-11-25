@@ -18,13 +18,16 @@ import { useVaultManager } from './contracts/useVaultManager'
 import { useAddresses } from './useAddress'
 import { useETHPrice } from './useETHPrice'
 import useInterval from './useInterval'
+import { useUsdAmount } from './useUsdAmount'
 
 const bigZero = new BigNumber(0)
 
 export const useLongPositions = () => {
   const { squeethPool, weth, wSqueeth, swapRouter } = useAddresses()
   const { address } = useWallet()
-  const { ethPriceMap } = useWorldContext()
+  const { ethPriceMap, eth90daysPriceMap, ethWithinOneDayPriceMap } = useWorldContext()
+  const { getUsdAmt } = useUsdAmount()
+  // all the swaps, from squeeth to eth and eth to squeeth
   const { data, loading, refetch } = useQuery<swaps, swapsVariables>(SWAPS_QUERY, {
     variables: {
       poolAddress: squeethPool.toLowerCase(),
@@ -54,13 +57,17 @@ export const useLongPositions = () => {
     () =>
       swaps?.reduce(
         (acc, s) => {
+          //values are all from the pool pov
+          //if >0 for the pool, user gave some squeeth to the tool, meaning selling the squeeth
           const squeethAmt = new BigNumber(isWethToken0 ? s.amount1 : s.amount0)
           const wethAmt = new BigNumber(isWethToken0 ? s.amount0 : s.amount1)
-          const time = new Date(Number(s.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
-          const usdAmt = wethAmt.multipliedBy(ethPriceMap[time])
+          const usdAmt = getUsdAmt(wethAmt, s.timestamp)
 
+          //buy one squeeth means -1 to the pool, +1 to the user
           acc.squeethAmount = acc.squeethAmount.plus(squeethAmt.negated())
           acc.wethAmount = acc.wethAmount.plus(wethAmt.negated())
+          //<0 means, buying squeeth
+          //>0 means selling squeeth
           if (squeethAmt.isNegative()) {
             acc.totalSqueeth = acc.totalSqueeth.plus(squeethAmt.abs())
             acc.totalETHSpent = acc.totalETHSpent.plus(wethAmt.abs())
@@ -99,7 +106,7 @@ export const useLongPositions = () => {
         totalETHSpent: bigZero,
         totalUSDSpent: bigZero,
       },
-    [ethPriceMap, isWethToken0, swaps],
+    [ethPriceMap, eth90daysPriceMap, ethWithinOneDayPriceMap, isWethToken0, swaps],
   )
 
   const { realizedPNL } = useMemo(() => {
@@ -109,7 +116,9 @@ export const useLongPositions = () => {
     const realizedForOneSqth = realizedUSD.div(realizedSqueeth)
     const pnlForOneSqth = realizedForOneSqth.minus(costForOneSqth)
 
-    return { realizedPNL: pnlForOneSqth.multipliedBy(realizedSqueeth) }
+    return {
+      realizedPNL: pnlForOneSqth.multipliedBy(realizedSqueeth),
+    }
   }, [realizedSqueeth.toNumber(), realizedUSD.toNumber()])
 
   return {
@@ -126,7 +135,9 @@ export const useLongPositions = () => {
 export const useShortPositions = () => {
   const { squeethPool, weth, wSqueeth, shortHelper } = useAddresses()
   const { address } = useWallet()
-  const { ethPriceMap } = useWorldContext()
+  const { ethPriceMap, eth90daysPriceMap, ethWithinOneDayPriceMap } = useWorldContext()
+  const { getUsdAmt } = useUsdAmount()
+
   const { data, loading, refetch } = useQuery<swaps, swapsVariables>(SWAPS_QUERY, {
     variables: {
       poolAddress: squeethPool.toLowerCase(),
@@ -164,10 +175,12 @@ export const useShortPositions = () => {
     () =>
       swaps?.reduce(
         (acc, s) => {
+          //if >0 means you are buying squeeth to close position
+          //fi <0 means you are shorting squeeth to open a new position
           const squeethAmt = new BigNumber(isWethToken0 ? s.amount1 : s.amount0)
           const wethAmt = new BigNumber(isWethToken0 ? s.amount0 : s.amount1)
-          const time = new Date(Number(s.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
-          const usdAmt = wethAmt.multipliedBy(ethPriceMap[time])
+          // console.log('time90days', time90days)
+          const usdAmt = getUsdAmt(wethAmt, s.timestamp)
 
           acc.squeethAmount = acc.squeethAmount.plus(squeethAmt.negated())
           acc.wethAmount = acc.wethAmount.plus(wethAmt.negated())
@@ -209,7 +222,7 @@ export const useShortPositions = () => {
         totalUSDReceived: bigZero,
         realizedUSD: bigZero,
       },
-    [ethPriceMap, isWethToken0, swaps?.length],
+    [ethPriceMap, ethWithinOneDayPriceMap, eth90daysPriceMap, isWethToken0, swaps?.length],
   )
 
   useEffect(() => {

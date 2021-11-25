@@ -10,6 +10,8 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
 
   const ethPrices = useAsyncMemo(async () => await getETHPrices(days), [], [days])
   const allEthPrices = useAsyncMemo(async () => await getETHPrices(initDays), [], [initDays])
+  const allEth90daysPrices = useAsyncMemo(async () => await getETH90DaysPrices(), [], [])
+  const allEthWithinOneDayPrices = useAsyncMemo(async () => await getETHWithinOneDayPrices(), [], [])
 
   const cusdcPrices = useAsyncMemo(async () => await getCUSDCPrices(days), [], [days])
 
@@ -20,6 +22,15 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
   }, [ethPrices])
 
   const ethPriceMap = allEthPrices.reduce((acc: any, p) => {
+    acc[p.time] = p.value
+    return acc
+  }, {})
+  const eth90daysPriceMap = allEth90daysPrices.reduce((acc: any, p) => {
+    acc[p.time] = p.value
+    return acc
+  }, {})
+
+  const ethWithinOneDayPriceMap = allEthWithinOneDayPrices.reduce((acc: any, p) => {
     acc[p.time] = p.value
     return acc
   }, {})
@@ -186,6 +197,8 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
     fundingPercentageSeries,
     accFunding: squeethSeries.accFunding,
     ethPriceMap,
+    eth90daysPriceMap,
+    ethWithinOneDayPriceMap,
     setCollatRatio,
     collatRatio,
   }
@@ -215,4 +228,28 @@ async function getCUSDCPrices(day = 1): Promise<{ time: number; value: number }[
   const output: any = []
   for (const i in prices) output[i] = { time: prices[i].block_timestamp, value: prices[i].rate }
   return output
+}
+
+export async function getETH90DaysPrices(): Promise<{ time: number; value: number }[]> {
+  const url = `https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=90`
+  const response = await fetch(url)
+  const prices = (await response.json()).prices
+  return prices.map(([timestamp, price]: number[]) => {
+    return {
+      time: new Date(timestamp).setUTCMinutes(0, 0, 0),
+      value: price,
+    }
+  })
+}
+
+export async function getETHWithinOneDayPrices(): Promise<{ time: number; value: number }[]> {
+  const url = `https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=0.999`
+  const response = await fetch(url)
+  const prices = (await response.json()).prices
+  return prices.map(([timestamp, price]: number[]) => {
+    return {
+      time: new Date(timestamp).setUTCSeconds(0, 0),
+      value: price,
+    }
+  })
 }

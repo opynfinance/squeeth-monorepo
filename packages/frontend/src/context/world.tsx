@@ -34,6 +34,8 @@ type WorldContextProps = {
   setCollatRatio: Function
 
   ethPriceMap: { [key: number]: number }
+  eth90daysPriceMap: { [key: number]: number }
+  ethWithinOneDayPriceMap: { [key: number]: number }
 
   getVaultPNLWithRebalance: (longAmount: number) => point[]
   getStableYieldPNL: (comparedlongAmount: number) => point[]
@@ -58,6 +60,8 @@ const initialContext = {
   volMultiplier: 1.2,
   days: 180,
   ethPriceMap: {},
+  ethWithinOneDayPriceMap: {},
+  eth90daysPriceMap: {},
   collatRatio: 1.5,
   setCollatRatio: () => { },
   setVolMultiplier: () => { },
@@ -92,6 +96,8 @@ const WorldProvider: React.FC = ({ children }) => {
     positionSizeSeries,
     fundingPercentageSeries,
     ethPriceMap,
+    ethWithinOneDayPriceMap,
+    eth90daysPriceMap,
     collatRatio,
     setCollatRatio
   } = useETHPriceCharts()
@@ -120,6 +126,8 @@ const WorldProvider: React.FC = ({ children }) => {
         positionSizeSeries,
         fundingPercentageSeries,
         ethPriceMap,
+        ethWithinOneDayPriceMap,
+        eth90daysPriceMap,
         collatRatio,
         setCollatRatio
       }}

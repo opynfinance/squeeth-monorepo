@@ -254,7 +254,7 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
                 `$${buyQuote.times(ethPrice).minus(shortUsdAmt.abs()).toFixed(2)}`,
                 '--',
                 'Loading',
-              )}
+              )}{' '}
             </Typography>
             <Typography variant="caption" className={pnlClass} style={{ marginLeft: '4px' }}>
               {getPositionBasedValue(`(${longGain.toFixed(2)}%)`, `(${shortGain.toFixed(2)}%)`, null, ' ')}
