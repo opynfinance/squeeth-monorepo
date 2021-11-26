@@ -440,6 +440,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                   priceImpact={sellCloseQuote.priceImpact}
                   minReceived={sellCloseQuote.maximumAmountIn.toFixed(4)}
                   minReceivedUnit="ETH"
+                  isMaxSent={true}
                 />
               </div>
             </div>
@@ -647,7 +648,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                 slippage="0.5"
                 priceImpact={quote.priceImpact}
                 minReceived={quote.minimumAmountOut.toFixed(6)}
-                minReceivedUnit="oSQTH"
+                minReceivedUnit="ETH"
               />
             </div>
           </div>

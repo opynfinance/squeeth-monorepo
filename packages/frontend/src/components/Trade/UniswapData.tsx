@@ -10,6 +10,7 @@ type UniswapDataType = {
   priceImpact: string
   minReceived: string
   minReceivedUnit: string
+  isMaxSent?: boolean
 }
 
 const useStyles = makeStyles((theme) =>
@@ -36,7 +37,7 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const UniswapData: React.FC<UniswapDataType> = ({ slippage, priceImpact, minReceived, minReceivedUnit }) => {
+const UniswapData: React.FC<UniswapDataType> = ({ slippage, priceImpact, minReceived, minReceivedUnit, isMaxSent }) => {
   const classes = useStyles()
   const [expanded, setExpanded] = React.useState(false)
 
@@ -70,7 +71,11 @@ const UniswapData: React.FC<UniswapDataType> = ({ slippage, priceImpact, minRece
           <div style={{ width: '100%' }}>
             <TradeInfoItem label="Allowed Slippage" value={slippage} unit="%" />
             <TradeInfoItem label="Price Impact" value={priceImpact} unit="%" />
-            <TradeInfoItem label="Min received" value={minReceived} unit={minReceivedUnit} />
+            <TradeInfoItem
+              label={isMaxSent ? 'Maxmium sent' : 'Min received'}
+              value={minReceived}
+              unit={minReceivedUnit}
+            />
             <TradeInfoItem label="Uniswap V3 LP Fee" value={UNI_POOL_FEES / 10000} unit="%" />
           </div>
         </AccordionDetails>
