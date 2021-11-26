@@ -9,7 +9,7 @@ export function useAsyncMemo<T>(
   const [output, setOutput] = useState<T>(init)
 
   // eslint-disable-next-line
-  const _callback = useMemo(callback, dependencies);
+  const _callback = useMemo(callback, dependencies)
 
   useEffect(() => {
     let isNotCancelled = true

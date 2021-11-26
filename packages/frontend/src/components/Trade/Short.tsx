@@ -316,20 +316,20 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
     setCollatRatio(collatPercent / 100)
   }, [collatPercent])
 
-  const handleCloseDualInputUpdate = (v: number | string, currentInput: string) => {
-    if (isNaN(+v) || +v === 0) v = 0
-    if (currentInput === 'ETH') {
-      setAltTradeAmount(new BigNumber(v))
-      getBuyQuoteForETH(new BigNumber(v)).then((val) => {
-        setAmount(val.amountOut)
-      })
-    } else {
-      setAmount(new BigNumber(v))
-      getBuyQuote(new BigNumber(v)).then((val) => {
-        setAltTradeAmount(val.amountIn)
-      })
-    }
-  }
+  // const handleCloseDualInputUpdate = (v: number | string, currentInput: string) => {
+  //   if (isNaN(+v) || +v === 0) v = 0
+  //   if (currentInput === 'ETH') {
+  //     setAltTradeAmount(new BigNumber(v))
+  //     getBuyQuoteForETH(new BigNumber(v)).then((val) => {
+  //       setAmount(val.amountOut)
+  //     })
+  //   } else {
+  //     setAmount(new BigNumber(v))
+  //     getBuyQuote(new BigNumber(v)).then((val) => {
+  //       setAltTradeAmount(val.amountIn)
+  //     })
+  //   }
+  // }
 
   const ClosePosition = useMemo(() => {
     return (
@@ -341,17 +341,12 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
             </Typography>
             <div className={classes.thirdHeading}>
               <PrimaryInput
-                value={amount.toNumber().toString()}
-                onChange={(v) => handleCloseDualInputUpdate(v, 'oSQTH')}
+                value={amount.toNumber()}
+                onChange={(v) => setAmount(new BigNumber(v))}
                 label="Amount"
                 tooltip="Amount of oSQTH to buy"
                 actionTxt="Max"
-                onActionClicked={() => {
-                  setAmount(shrtAmt)
-                  getBuyQuote(new BigNumber(shrtAmt)).then((val) => {
-                    setAltTradeAmount(val.amountIn)
-                  })
-                }}
+                onActionClicked={() => setAmount(shrtAmt)}
                 unit="oSQTH"
                 error={connected && lngAmt.gt(0) ? !!existingLongError : !!closeError}
                 convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
@@ -403,21 +398,11 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
             </div>
             <div className={classes.thirdHeading}></div>
             <CollatRange onCollatValueChange={(val) => setCollatPercent(val)} collatValue={collatPercent} />
-            <PrimaryInput
-              value={altTradeAmount.toNumber().toString()}
-              onChange={(v) => handleCloseDualInputUpdate(v, 'ETH')}
-              label="Amount"
-              tooltip="Amount of ETH you want to spend to get Squeeth exposure"
-              actionTxt="Max"
-              onActionClicked={() => {
-                setAltTradeAmount(new BigNumber(balance))
-                getBuyQuoteForETH(new BigNumber(balance)).then((val) => {
-                  setAmount(val.amountOut)
-                })
-              }}
+            <TradeDetails
+              actionTitle="Spend"
+              amount={sellCloseQuote.amountIn.toFixed(6)}
               unit="ETH"
-              error={connected && lngAmt.gt(0) ? !!existingLongError : !!closeError}
-              convertedValue={altTradeAmount.times(ethPrice).toFixed(2).toLocaleString()}
+              value={Number(ethPrice.times(sellCloseQuote.amountIn).toFixed(2)).toLocaleString()}
               hint={
                 connected && shrtAmt.gt(0) ? (
                   existingLongError
@@ -458,7 +443,6 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                 />
               </div>
             </div>
-
             <div className={classes.buttonDiv}>
               {!connected ? (
                 <PrimaryButton
@@ -557,7 +541,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
           </Typography>
           <div className={classes.thirdHeading}>
             <PrimaryInput
-              value={collateral.toString()}
+              value={collateral}
               onChange={(v) => setCollateral(Number(v))}
               label="Collateral"
               tooltip="Amount of ETH collateral"
@@ -612,18 +596,11 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
           </div>
           <div className={classes.thirdHeading}></div>
           <CollatRange onCollatValueChange={(val) => setCollatPercent(val)} collatValue={collatPercent} />
-
-          <PrimaryInput
-            value={amount.toNumber().toString()}
-            onChange={(v) => setAmount(new BigNumber(v))}
-            label="Sell"
-            tooltip="Amount of ETH collateral"
-            actionTxt="Max"
-            onActionClicked={() => {
-              setAmount(shrtAmt)
-            }}
-            unit="SQTH"
-            convertedValue={Number(getWSqueethPositionValue(amount).toFixed(2)).toLocaleString()}
+          <TradeDetails
+            actionTitle="Sell"
+            amount={amount.toFixed(6)}
+            unit="oSQTH"
+            value={Number(getWSqueethPositionValue(amount).toFixed(2)).toLocaleString()}
             hint={
               !!openError ? (
                 openError
@@ -645,7 +622,6 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                 </div>
               )
             }
-            error={connected && lngAmt.gt(0) ? !!existingLongError : !!openError}
           />
           <div className={classes.divider}>
             <TradeInfoItem
