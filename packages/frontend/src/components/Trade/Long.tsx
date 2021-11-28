@@ -205,6 +205,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
   const [sellLoading, setSellLoading] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
   const [txHash, setTxHash] = useState('')
+  const [hasJustApprovedSqueeth, setHasJustApprovedSqueeth] = useState(false)
 
   const classes = useStyles()
   const { swapRouter, wSqueeth } = useAddresses()
@@ -275,6 +276,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
     try {
       if (squeethAllowance.lt(amount)) {
         await squeethApprove()
+        setHasJustApprovedSqueeth(true)
       } else {
         const confirmedHash = await sell(amount)
         setConfirmed(true)
@@ -422,7 +424,9 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
                   {sellLoading ? (
                     <CircularProgress color="primary" size="1.5rem" />
                   ) : squeethAllowance.lt(amount) ? (
-                    'Approve oSQTH'
+                    '1/2 Approve oSQTH'
+                  ) : hasJustApprovedSqueeth ? (
+                    '2/2 Sell to close'
                   ) : (
                     'Sell to close'
                   )}
