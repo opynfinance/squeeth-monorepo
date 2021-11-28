@@ -24,6 +24,7 @@
     "clsx": "^1.1.1",
     "copy-to-clipboard": "^3.3.1",
     "firebase": "^8.8.0",
+    "framer-motion": "^5.3.3",
     "kaktana-react-lightweight-charts": "^2.0.0",
     "next": "11.0.1",
     "react": "17.0.2",

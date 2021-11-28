@@ -6,11 +6,11 @@ import Link from 'next/link'
 import * as React from 'react'
 import { useState } from 'react'
 
-import { SecondaryTab, SecondaryTabs } from '../components/Tabs'
-import { UniswapIframe } from '../components/UniswapIframe'
-import { useAddresses } from '../hooks/useAddress'
-import { useLPPositions } from '../hooks/usePositions'
-import { inRange } from '../utils/calculations'
+import { useAddresses } from '../../hooks/useAddress'
+import { useLPPositions } from '../../hooks/usePositions'
+import { inRange } from '../../utils/calculations'
+import { SecondaryTab, SecondaryTabs } from '../Tabs'
+import { UniswapIframe } from '../UniswapIframe'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -20,11 +20,11 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(2),
       borderRadius: theme.spacing(1),
       backgroundColor: `${theme.palette.background.paper}40`,
-      height: '68vh',
+      height: '75vh',
     },
     isLPageTableContainer: {
       flexBasis: '72%',
-      marginTop: '1.5em',
+      marginTop: theme.spacing(2),
       marginRight: '1.5em',
     },
     table: {

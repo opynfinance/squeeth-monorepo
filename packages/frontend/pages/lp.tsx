@@ -5,9 +5,11 @@ import Image from 'next/image'
 import React, { useCallback, useState } from 'react'
 
 import squeethTokenSymbol from '../public/images/Squeeth.png'
+import { LPTable } from '../src/components/Lp/LPTable'
+import ObtainSqueeth from '../src/components/Lp/ObtainSqueeth'
 import { LPActionTabs } from '../src/components/LPActionTabs'
-import { LPTable } from '../src/components/LPTable'
 import Nav from '../src/components/Nav'
+import { LPProvider } from '../src/context/lp'
 import { TradeProvider } from '../src/context/trade'
 import { useController } from '../src/hooks/contracts/useController'
 import { useSqueethPool } from '../src/hooks/contracts/useSqueethPool'
@@ -24,6 +26,8 @@ const useStyles = makeStyles((theme) =>
     },
     logoContainer: {
       display: 'flex',
+      alignItems: 'center',
+      width: '100%',
     },
     logoTitle: {
       marginLeft: theme.spacing(1),
@@ -50,11 +54,12 @@ const useStyles = makeStyles((theme) =>
         width: '100%',
         marginTop: theme.spacing(2),
       },
+      marginLeft: theme.spacing(10),
     },
     squeethInfoSubGroup: {
       display: 'flex',
-      marginTop: theme.spacing(2),
-      marginBottom: theme.spacing(2),
+      // marginTop: theme.spacing(2),
+      // marginBottom: theme.spacing(2),
       alignItems: 'center',
     },
     infoItem: {
@@ -170,18 +175,19 @@ export function LPCalculator() {
               Earn LP fees for providing SQTH-ETH liquidity
             </Typography>
           </div>
+          <SqueethInfo />
         </div>
 
-        <SqueethInfo />
         <div
           style={{
             display: 'flex',
             justifyContent: 'space-between',
-            height: '68vh',
+            height: '78vh',
           }}
         >
           <LPTable isLPage={true} pool={pool}></LPTable>
-          <LPActionTabs
+          <ObtainSqueeth />
+          {/* <LPActionTabs
             amount={amount}
             setAmount={setAmount}
             collatAmount={collatAmount}
@@ -198,7 +204,7 @@ export function LPCalculator() {
             setConfirmed={setConfirmed}
             txHash={txHash}
             setTxHash={setTxHash}
-          />
+          /> */}
         </div>
       </div>
     </div>
@@ -208,7 +214,9 @@ export function LPCalculator() {
 export default function LPage() {
   return (
     <TradeProvider>
-      <LPCalculator />
+      <LPProvider>
+        <LPCalculator />
+      </LPProvider>
     </TradeProvider>
   )
 }

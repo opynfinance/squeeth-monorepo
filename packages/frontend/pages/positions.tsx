@@ -1,6 +1,6 @@
 import { createStyles, makeStyles, Typography } from '@material-ui/core'
 
-import { LPTable } from '../src/components/LPTable'
+import { LPTable } from '../src/components/Lp/LPTable'
 import Nav from '../src/components/Nav'
 import History from '../src/components/Trade/History'
 import { useSqueethPool } from '../src/hooks/contracts/useSqueethPool'

@@ -485,11 +485,10 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
     <div>
       {!confirmed ? (
         <div>
-          {isLPage && <Stepper activeStep={activeStep} steps={['Buy Squeeth', 'LP the SQTH-ETH Uniswap Pool']} />}
           {activeStep === 0 ? (
             <>
               <Typography variant="caption" className={classes.thirdHeading} component="div">
-                Pay ETH to buy squeeth ERC20
+                {isLPage ? '' : 'Pay ETH to buy squeeth ERC20'}
               </Typography>
               <div className={classes.thirdHeading} />
               <PrimaryInput
