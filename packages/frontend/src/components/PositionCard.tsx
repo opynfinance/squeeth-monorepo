@@ -179,10 +179,10 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
   }, [postPosition])
 
   const cardBackground = useMemo(() => {
-    const positionBackground = getPositionBasedValue('#000000', '#200122', 'rgba(255, 255, 255, 0.08)')
-    const postPositionBackground = getPostPositionBasedValue('#077107', '#6f0000', 'rgba(255, 255, 255, 0.08)')
+    const positionBackground = getPositionBasedValue('#375F4290', '#68373D40', 'rgba(255, 255, 255, 0.08)')
+    const postPositionBackground = getPostPositionBasedValue('#375F42', '#68373D90', 'rgba(255, 255, 255, 0.08)')
 
-    return `linear-gradient(to left, ${positionBackground}, ${postPositionBackground} )`
+    return `linear-gradient(to right, ${positionBackground} 0%, ${postPositionBackground} 75%)`
   }, [postPosition, positionType])
 
   return (

@@ -108,6 +108,9 @@ const Nav: React.FC = () => {
             onClick={() => {
               setCopied(wSqueeth)
             }}
+            style={{
+              width: '200px',
+            }}
           >
             {' '}
             {isCopied ? (
