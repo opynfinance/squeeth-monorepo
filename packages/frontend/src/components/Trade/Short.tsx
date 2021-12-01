@@ -17,6 +17,7 @@ import { useLongPositions, useShortPositions } from '../../hooks/usePositions'
 import { PrimaryButton } from '../Buttons'
 import CollatRange from '../CollatRange'
 import { PrimaryInput } from '../Inputs'
+import { TradeSettings } from '../TradeSettings'
 import Confirmed from './Confirmed'
 import TradeDetails from './TradeDetails'
 import TradeInfoItem from './TradeInfoItem'
@@ -46,6 +47,14 @@ const useStyles = makeStyles((theme) =>
     },
     thirdHeading: {
       marginTop: theme.spacing(2),
+    },
+    explainer: {
+      marginTop: theme.spacing(2),
+      paddingLeft: theme.spacing(1),
+      paddingRight: theme.spacing(1),
+      marginLeft: theme.spacing(1),
+      width: '200px',
+      justifyContent: 'left',
     },
     caption: {
       marginTop: theme.spacing(1),
@@ -133,6 +142,15 @@ const useStyles = makeStyles((theme) =>
     hintTitleText: {
       marginRight: '.5em',
     },
+    settingsContainer: {
+      display: 'flex',
+      justify: 'space-between',
+    },
+    settingsButton: {
+      marginTop: theme.spacing(2),
+      marginLeft: theme.spacing(10),
+      justifyContent: 'right',
+    },
   }),
 )
 
@@ -170,6 +188,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
     altTradeAmount,
     setAltTradeAmount,
     setTradeSuccess,
+    slippageAmount,
   } = useTrade()
   const { squeethAmount: lngAmt } = useLongPositions()
   const { squeethAmount: shrtAmt, shortVaults, existingCollatPercent } = useShortPositions()
@@ -336,9 +355,14 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
       <div>
         {!confirmed ? (
           <div>
-            <Typography variant="caption" className={classes.thirdHeading} component="div">
-              {closeTitle}
-            </Typography>
+            <div className={classes.settingsContainer}>
+              <Typography variant="caption" className={classes.explainer} component="div">
+                {closeTitle}
+              </Typography>
+              <span className={classes.settingsButton}>
+                <TradeSettings />
+              </span>
+            </div>
             <div className={classes.thirdHeading}>
               <PrimaryInput
                 value={amount.toNumber()}
@@ -436,7 +460,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
               />
               <div style={{ marginTop: '10px' }}>
                 <UniswapData
-                  slippage="0.5"
+                  slippage={isNaN(Number(slippageAmount)) ? '0' : slippageAmount.toString()}
                   priceImpact={sellCloseQuote.priceImpact}
                   minReceived={sellCloseQuote.maximumAmountIn.toFixed(4)}
                   minReceivedUnit="ETH"
@@ -527,6 +551,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
     buyBackAndClose,
     isVaultApproved,
     setAmount,
+    slippageAmount.toNumber(),
   ])
 
   if (!open) {
@@ -537,9 +562,14 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
     <div>
       {!confirmed ? (
         <div>
-          <Typography variant="caption" className={classes.thirdHeading} component="div">
-            Mint and sell squeeth ERC20 to receive premium
-          </Typography>
+          <div className={classes.settingsContainer}>
+            <Typography variant="caption" className={classes.explainer} component="div">
+              Mint & sell squeeth for premium
+            </Typography>
+            <span className={classes.settingsButton}>
+              <TradeSettings />
+            </span>
+          </div>
           <div className={classes.thirdHeading}>
             <PrimaryInput
               value={collateral}
@@ -645,7 +675,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
             />
             <div style={{ marginTop: '10px' }}>
               <UniswapData
-                slippage="0.5"
+                slippage={isNaN(Number(slippageAmount)) ? '0' : slippageAmount.toString()}
                 priceImpact={quote.priceImpact}
                 minReceived={quote.minimumAmountOut.toFixed(6)}
                 minReceivedUnit="ETH"

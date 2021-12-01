@@ -35,6 +35,8 @@ type tradeContextType = {
   sellCloseQuote: SellCloseQuote
   altTradeAmount: BigNumber
   setAltTradeAmount: (amt: BigNumber) => void
+  slippageAmount: BigNumber
+  setSlippageAmount: (amt: BigNumber) => void
 }
 
 const quoteEmptyState = {
@@ -67,6 +69,8 @@ const initialState: tradeContextType = {
   sellCloseQuote: sellCloseEmptyState,
   altTradeAmount: new BigNumber(1),
   setAltTradeAmount: () => null,
+  slippageAmount: new BigNumber(0.5),
+  setSlippageAmount: () => null,
 }
 
 const tradeContext = React.createContext<tradeContextType>(initialState)
@@ -74,6 +78,7 @@ const useTrade = () => useContext(tradeContext)
 
 const TradeProvider: React.FC = ({ children }) => {
   const [tradeAmount, setTradeAmount] = useState(new BigNumber(0))
+  const [slippageAmount, setSlippageAmount] = useState(new BigNumber(0.5))
   const [altTradeAmount, setAltTradeAmount] = useState(new BigNumber(0))
   const [tradeType, setTradeType] = useState(TradeType.LONG)
   const [tradeLoading, setTradeLoading] = useState(false)
@@ -97,24 +102,25 @@ const TradeProvider: React.FC = ({ children }) => {
     //tradeType refers to which tab "Long" or "Short" is selected on the trade page
     //positionType refers to the user's actual position based on their squeeth balances and debt
     //isPositionOpen is true if the "Open" tab is selected on the trade page; otherwise it refers to the "Close" tab being selected
+    console.log('From useEffect : ', slippageAmount.toNumber())
     if (tradeType === TradeType.LONG) {
       if (positionType === PositionType.SHORT) {
-        getBuyQuote(tradeAmount).then(setSellCloseQuote)
+        getBuyQuote(tradeAmount, slippageAmount).then(setSellCloseQuote)
       } else if (isPositionOpen) {
-        getBuyQuoteForETH(tradeAmount).then(setQuote)
+        getBuyQuoteForETH(tradeAmount, slippageAmount).then(setQuote)
       } else {
-        getSellQuote(tradeAmount).then(setQuote)
+        getSellQuote(tradeAmount, slippageAmount).then(setQuote)
       }
     } else {
       if (positionType === PositionType.LONG) {
-        getSellQuote(tradeAmount).then(setQuote)
+        getSellQuote(tradeAmount, slippageAmount).then(setQuote)
       } else if (isPositionOpen) {
-        getSellQuote(tradeAmount).then(setQuote)
+        getSellQuote(tradeAmount, slippageAmount).then(setQuote)
       } else {
-        getBuyQuote(tradeAmount).then(setSellCloseQuote)
+        getBuyQuote(tradeAmount, slippageAmount).then(setSellCloseQuote)
       }
     }
-  }, [tradeAmount.toNumber(), tradeType, isPositionOpen, ready, positionType])
+  }, [tradeAmount.toNumber(), tradeType, isPositionOpen, ready, positionType, slippageAmount.toNumber()])
 
   useEffect(() => {
     if (tradeType === TradeType.LONG) {
@@ -150,6 +156,8 @@ const TradeProvider: React.FC = ({ children }) => {
     sellCloseQuote,
     altTradeAmount,
     setAltTradeAmount,
+    slippageAmount,
+    setSlippageAmount,
   }
 
   return <tradeContext.Provider value={store}>{children}</tradeContext.Provider>

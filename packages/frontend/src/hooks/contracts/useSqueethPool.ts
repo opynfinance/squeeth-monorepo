@@ -12,11 +12,12 @@ import erc20Abi from '../../abis/erc20.json'
 
 import { INDEX_SCALE, UNI_POOL_FEES, WSQUEETH_DECIMALS } from '../../constants'
 import { useWallet } from '../../context/wallet'
-import { fromTokenAmount, toTokenAmount } from '../../utils/calculations'
+import { fromTokenAmount, parseSlippageInput, toTokenAmount } from '../../utils/calculations'
 import { useAddresses } from '../useAddress'
 import { Networks } from '../../types'
 import useUniswapTicks from '../useUniswapTicks'
 import { useETHPrice } from '../../hooks/useETHPrice'
+import { useTrade } from '../../context/trade'
 // import univ3prices from '@thanpolas/univ3prices'
 const univ3prices = require('@thanpolas/univ3prices')
 
@@ -272,7 +273,7 @@ export const useSqueethPool = () => {
   }
 
   //If I input an exact amount of squeeth I want to buy, tells me how much ETH I need to pay to purchase that squeeth
-  const getBuyQuote = async (squeethAmount: BigNumber) => {
+  const getBuyQuote = async (squeethAmount: BigNumber, slippageAmount = new BigNumber(0.5)) => {
     const emptyState = {
       amountIn: new BigNumber(0),
       maximumAmountIn: new BigNumber(0),
@@ -290,10 +291,12 @@ export const useSqueethPool = () => {
         CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, WSQUEETH_DECIMALS).toNumber()),
       )
 
+      console.log("get buy quote " + JSON.stringify(parseSlippageInput(slippageAmount.toString())))
+
       //the amount of ETH I need to put in
       return {
         amountIn: new BigNumber(trade.inputAmount.toSignificant(18)),
-        maximumAmountIn: new BigNumber(trade.maximumAmountIn(new Percent(5, 10000)).toSignificant(18)),
+        maximumAmountIn: new BigNumber(trade.maximumAmountIn(parseSlippageInput(slippageAmount.toString())).toSignificant(18)),
         priceImpact: trade.priceImpact.toFixed(2),
       }
     } catch (e) {
@@ -304,7 +307,7 @@ export const useSqueethPool = () => {
   }
 
   //If I input an exact amount of ETH I want to spend, tells me how much Squeeth I'd purchase
-  const getBuyQuoteForETH = async (ETHAmount: BigNumber) => {
+  const getBuyQuoteForETH = async (ETHAmount: BigNumber, slippageAmount = new BigNumber(0.5)) => {
     const emptyState = {
       amountOut: new BigNumber(0),
       minimumAmountOut: new BigNumber(0),
@@ -322,10 +325,14 @@ export const useSqueethPool = () => {
         CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toNumber()),
       )
 
+      console.log(slippageAmount.toString())
+
+      console.log("get buy quote for eth " + JSON.stringify(parseSlippageInput(slippageAmount.toString())))
+
       //the amount of squeeth I'm getting out
       return {
         amountOut: new BigNumber(trade.outputAmount.toSignificant(WSQUEETH_DECIMALS)),
-        minimumAmountOut: new BigNumber(trade.minimumAmountOut(new Percent(5, 10000)).toSignificant(WSQUEETH_DECIMALS)),
+        minimumAmountOut: new BigNumber(trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(WSQUEETH_DECIMALS)),
         priceImpact: trade.priceImpact.toFixed(2),
       }
     } catch (e) {
@@ -336,7 +343,7 @@ export const useSqueethPool = () => {
   }
 
   //I input an exact amount of squeeth I want to sell, tells me how much ETH I'd receive
-  const getSellQuote = async (squeethAmount: BigNumber) => {
+  const getSellQuote = async (squeethAmount: BigNumber, slippageAmount = new BigNumber(0.5)) => {
     const emptyState = {
       amountOut: new BigNumber(0),
       minimumAmountOut: new BigNumber(0),
@@ -353,10 +360,13 @@ export const useSqueethPool = () => {
         CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, WSQUEETH_DECIMALS).toNumber()),
       )
 
+      console.log("get sell quote " + JSON.stringify(parseSlippageInput(slippageAmount.toString())))
+
+
       //the amount of ETH I'm receiving
       return {
         amountOut: new BigNumber(trade.outputAmount.toSignificant(18)),
-        minimumAmountOut: new BigNumber(trade.minimumAmountOut(new Percent(5, 10000)).toSignificant(18)),
+        minimumAmountOut: new BigNumber(trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(18)),
         priceImpact: trade.priceImpact.toFixed(2),
       }
     } catch (e) {
@@ -367,7 +377,7 @@ export const useSqueethPool = () => {
   }
 
   //I input an exact amount of ETH I want to receive, tells me how much squeeth I'd need to sell
-  const getSellQuoteForETH = async (ETHAmount: BigNumber) => {
+  const getSellQuoteForETH = async (ETHAmount: BigNumber, slippageAmount = new BigNumber(0.5)) => {
     const emptyState = {
       amountIn: new BigNumber(0),
       maximumAmountIn: new BigNumber(0),
@@ -384,10 +394,12 @@ export const useSqueethPool = () => {
         CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toNumber()),
       )
 
+      console.log("get sell quote for eth " + JSON.stringify(parseSlippageInput(slippageAmount.toString())))
+
       //the amount of squeeth I need to sell
       return {
         amountIn: new BigNumber(trade.inputAmount.toSignificant(18)),
-        maximumAmountIn: new BigNumber(trade.maximumAmountIn(new Percent(5, 10000)).toSignificant(18)),
+        maximumAmountIn: new BigNumber(trade.maximumAmountIn(parseSlippageInput(slippageAmount.toString())).toSignificant(18)),
         priceImpact: trade.priceImpact.toFixed(2),
       }
     } catch (e) {

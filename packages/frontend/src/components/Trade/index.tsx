@@ -7,6 +7,7 @@ import { useWallet } from '../../context/wallet'
 import { TradeType } from '../../types'
 import { toTokenAmount } from '../../utils/calculations'
 import { SecondaryTab, SecondaryTabs } from '../Tabs'
+import { TradeSettings } from '../TradeSettings'
 import Long from './Long'
 import Short from './Short'
 
@@ -59,13 +60,13 @@ const Trade: React.FC = () => {
           <Long
             balance={Number(toTokenAmount(balance, 18).toFixed(4))}
             open={openPosition === 0}
-            closeTitle="Sell squeeth ERC20"
+            closeTitle="Sell squeeth ERC20 to get ETH"
           />
         ) : (
           <Short
             balance={Number(toTokenAmount(balance, 18).toFixed(4))}
             open={openPosition === 0}
-            closeTitle="Buy back squeeth ERC20 and close position"
+            closeTitle="Buy back oSQTH & close position"
           />
         )}
       </div>

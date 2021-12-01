@@ -17,6 +17,7 @@ import { useLongPositions, useShortPositions } from '../../hooks/usePositions'
 import { PrimaryButton } from '../Buttons'
 import { PrimaryInput } from '../Inputs'
 import { StepperBox as Stepper } from '../StepperBox'
+import { TradeSettings } from '../TradeSettings'
 import Confirmed from './Confirmed'
 import TradeDetails from './TradeDetails'
 import TradeInfoItem from './TradeInfoItem'
@@ -40,6 +41,14 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(2),
       paddingLeft: theme.spacing(1),
       paddingRight: theme.spacing(1),
+    },
+    explainer: {
+      marginTop: theme.spacing(2),
+      paddingLeft: theme.spacing(1),
+      paddingRight: theme.spacing(1),
+      marginLeft: theme.spacing(1),
+      width: '200px',
+      justifyContent: 'left',
     },
     caption: {
       marginTop: theme.spacing(1),
@@ -189,6 +198,15 @@ const useStyles = makeStyles((theme) =>
       color: '#FF007A',
       fontSize: '16px',
     },
+    settingsContainer: {
+      display: 'flex',
+      justify: 'space-between',
+    },
+    settingsButton: {
+      marginTop: theme.spacing(2),
+      marginLeft: theme.spacing(10),
+      justifyContent: 'right',
+    },
   }),
 )
 
@@ -227,6 +245,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
     altTradeAmount,
     setAltTradeAmount,
     setTradeSuccess,
+    slippageAmount,
   } = useTrade()
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(wSqueeth, swapRouter)
   const { selectWallet, connected } = useWallet()
@@ -307,6 +326,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
   }
   const handleOpenDualInputUpdate = (v: number | string, currentInput: string) => {
     //If I'm inputting an amount of ETH I'd like to spend to get squeeth, use getBuyQuoteForETH
+    console.log('Hello world called from here', slippageAmount.toNumber())
     if (isNaN(+v) || +v === 0) v = 0
     if (currentInput === 'ETH') {
       setAmount(new BigNumber(v))
@@ -327,9 +347,15 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
       <div>
         {!confirmed ? (
           <div>
-            <Typography variant="caption" className={classes.thirdHeading} component="div">
-              {closeTitle}
-            </Typography>
+            <div className={classes.settingsContainer}>
+              <Typography variant="caption" className={classes.explainer} component="div">
+                {closeTitle}
+              </Typography>
+              <span className={classes.settingsButton}>
+                <TradeSettings />
+              </span>
+            </div>
+
             <div className={classes.thirdHeading} />
             <PrimaryInput
               value={amount.toNumber().toString()}
@@ -396,7 +422,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
             />
             <div className={classes.divider}>
               <UniswapData
-                slippage="0.5"
+                slippage={isNaN(Number(slippageAmount)) ? '0' : slippageAmount.toString()}
                 priceImpact={quote.priceImpact}
                 minReceived={quote.minimumAmountOut.toFixed(4)}
                 minReceivedUnit="ETH"
@@ -475,6 +501,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
     sellAndClose,
     squeethAllowance,
     setAmount,
+    slippageAmount.toNumber(),
   ])
 
   if (!open) {
@@ -487,9 +514,14 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
         <div>
           {activeStep === 0 ? (
             <>
-              <Typography variant="caption" className={classes.thirdHeading} component="div">
-                {isLPage ? '' : 'Pay ETH to buy squeeth ERC20'}
-              </Typography>
+              <div className={classes.settingsContainer}>
+                <Typography variant="caption" className={classes.explainer} component="div">
+                  Pay ETH to buy squeeth ERC20
+                </Typography>
+                <span className={classes.settingsButton}>
+                  <TradeSettings />
+                </span>
+              </div>
               <div className={classes.thirdHeading} />
               <PrimaryInput
                 value={amount.toNumber().toString()}
@@ -574,7 +606,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
                 />
                 <div style={{ marginTop: '10px' }}>
                   <UniswapData
-                    slippage="0.5"
+                    slippage={isNaN(Number(slippageAmount)) ? '0' : slippageAmount.toString()}
                     priceImpact={quote.priceImpact}
                     minReceived={quote.minimumAmountOut.toFixed(6)}
                     minReceivedUnit="oSQTH"
