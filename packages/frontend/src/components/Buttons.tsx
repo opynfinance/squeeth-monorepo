@@ -35,3 +35,29 @@ export const LinkButton = withStyles((theme) => ({
     padding: '0',
   },
 }))(Button)
+
+export const AddButton = withStyles((theme) => ({
+  root: {
+    color: '#000',
+    backgroundColor: theme.palette.success.main,
+    '&:hover': {
+      backgroundColor: theme.palette.success.dark,
+    },
+    '&:disabled': {
+      backgroundColor: theme.palette.background.lightStone,
+    },
+  },
+}))(Button)
+
+export const RemoveButton = withStyles((theme) => ({
+  root: {
+    color: '#000',
+    backgroundColor: theme.palette.error.main,
+    '&:hover': {
+      backgroundColor: theme.palette.error.dark,
+    },
+    '&:disabled': {
+      backgroundColor: theme.palette.background.lightStone,
+    },
+  },
+}))(Button)

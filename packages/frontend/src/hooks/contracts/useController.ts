@@ -59,7 +59,7 @@ export const useController = () => {
   /**
    *
    * @param vaultId - 0 to create new
-   * @param amount - Amount of squeeth to mint
+   * @param amount - Amount of squeeth to mint, if 0 act as add collateral
    * @param vaultType
    * @returns
    */
@@ -67,16 +67,58 @@ export const useController = () => {
     if (!contract || !address) return
 
     const _amount = fromTokenAmount(amount, WSQUEETH_DECIMALS).toFixed(0)
-    const ethAmt = fromTokenAmount(collatAmount, 18)
-    console.log(_amount.toString(), ethAmt.toString())
+    const ethAmt = fromTokenAmount(collatAmount, 18).toFixed(0)
     return handleTransaction(
       contract.methods.mintWPowerPerpAmount(vaultId, _amount.toString(), 0).send({
         from: address,
-        value: ethAmt.toString(),
+        value: ethAmt,
       }),
     )
   }
 
+  /**
+   * Less gas than openDepositAndMint if only deposit is needed
+   *
+   * @param vaultId
+   * @param collatAmount
+   */
+  const depositCollateral = (vaultId: number, collatAmount: BigNumber) => {
+    if (!contract || !address) return
+
+    const ethAmt = fromTokenAmount(collatAmount, 18)
+    return handleTransaction(
+      contract.methods.deposit(vaultId).send({
+        from: address,
+        value: ethAmt.toFixed(0),
+      }),
+    )
+  }
+
+  /**
+   * Less gas than burnAndRedeem
+   *
+   * @param vaultId
+   * @param collatAmount
+   * @returns
+   */
+  const withdrawCollateral = (vaultId: number, collatAmount: BigNumber) => {
+    if (!contract || !address) return
+
+    const ethAmt = fromTokenAmount(collatAmount, 18)
+    return handleTransaction(
+      contract.methods.withdraw(vaultId, ethAmt.toFixed(0)).send({
+        from: address,
+      }),
+    )
+  }
+
+  /**
+   *
+   * @param vaultId
+   * @param amount - Amount of squeeth to burn, if 0 act as remove collateral
+   * @param collatAmount - Amount of collat to remove
+   * @returns
+   */
   const burnAndRedeem = (vaultId: number, amount: BigNumber, collatAmount: BigNumber) => {
     if (!contract || !address) return
 
@@ -221,6 +263,27 @@ export const useController = () => {
     return toTokenAmount(shortAmount.toFixed(0), WSQUEETH_DECIMALS)
   }
 
+  const getCollatRatioAndLiqPrice = async (collateralAmount: BigNumber, shortAmount: BigNumber) => {
+    const emptyState = {
+      collateralPercent: 0,
+      liquidationPrice: 0,
+    }
+    if (!contract) return emptyState
+
+    const debt = await getDebtAmount(shortAmount)
+    if (debt && debt.isPositive()) {
+      const collateralPercent = Number(collateralAmount.div(debt).times(100).toFixed(1))
+      const rSqueeth = normFactor.multipliedBy(new BigNumber(shortAmount)).dividedBy(10000)
+      const liquidationPrice = collateralAmount.div(rSqueeth.multipliedBy(1.5)).toNumber()
+      return {
+        collateralPercent,
+        liquidationPrice,
+      }
+    }
+
+    return emptyState
+  }
+
   return {
     openDepositAndMint,
     getVault,
@@ -233,5 +296,8 @@ export const useController = () => {
     getDebtAmount,
     getShortAmountFromDebt,
     burnAndRedeem,
+    getCollatRatioAndLiqPrice,
+    depositCollateral,
+    withdrawCollateral,
   }
 }

@@ -55,3 +55,9 @@ export interface NFTManagers extends positions_positions {
   amount1?: BigNumber
   dollarValue: BigNumber
 }
+
+export enum CollateralStatus {
+  SAFE = 'SAFE',
+  RISKY = 'RISKY',
+  DANGER = 'DANGER',
+}

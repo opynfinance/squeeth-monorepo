@@ -90,7 +90,7 @@ const CollatRange: React.FC<CollatRangeType> = ({ collatValue, onCollatValueChan
         ThumbComponent={ThumbComponent}
         onChange={(_, val) => changeSlider(val as number[])}
         step={0.1}
-        style={{ width: '95%' }}
+        style={{ width: '100%' }}
         classes={{ thumb: sliderClass, track: sliderClass }}
         // marks={marks}
         min={150}

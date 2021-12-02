@@ -4,7 +4,7 @@ import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import clsx from 'clsx'
 import React from 'react'
 
-import { LinkButton } from './Buttons'
+import { LinkButton } from '../Buttons'
 
 const useStyles = makeStyles((theme) =>
   createStyles({

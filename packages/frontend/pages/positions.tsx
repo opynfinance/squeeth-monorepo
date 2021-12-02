@@ -1,4 +1,5 @@
 import { createStyles, makeStyles, Typography } from '@material-ui/core'
+import Link from 'next/link'
 
 import { LPTable } from '../src/components/Lp/LPTable'
 import Nav from '../src/components/Nav'
@@ -73,6 +74,13 @@ const useStyles = makeStyles((theme) =>
     history: {
       marginTop: theme.spacing(8),
     },
+    link: {
+      color: theme.palette.primary.main,
+      textDecoration: 'underline',
+      fontWeight: 600,
+      fontSize: 14,
+      marginTop: theme.spacing(1),
+    },
   }),
 )
 
@@ -85,6 +93,7 @@ export default function Positions() {
     existingCollat,
     existingCollatPercent,
     liquidationPrice,
+    vaultId,
   } = useShortPositions()
   const {
     longGain,
@@ -172,6 +181,9 @@ export default function Positions() {
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>Short Squeeth</Typography>
+              <Typography className={classes.link}>
+                <Link href={`vault/${vaultId}`}>Manage</Link>
+              </Typography>
             </div>
             <div className={classes.shortPositionData}>
               <div className={classes.innerPositionData}>

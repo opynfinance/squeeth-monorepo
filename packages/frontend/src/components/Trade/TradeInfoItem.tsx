@@ -8,7 +8,7 @@ const useStyles = makeStyles((theme) =>
   createStyles({
     txItem: {
       display: 'flex',
-      marginTop: theme.spacing(1),
+      // marginTop: theme.spacing(1),
       justifyContent: 'space-between',
       alignItems: 'center',
       width: '100%',

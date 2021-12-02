@@ -160,6 +160,7 @@ export const useShortPositions = () => {
 
   const swaps = data?.swaps
   const isWethToken0 = parseInt(weth, 16) < parseInt(wSqueeth, 16)
+  const vaultId = shortVaults[0]?.id || 0
 
   const {
     squeethAmount,
@@ -269,6 +270,7 @@ export const useShortPositions = () => {
     realizedETH,
     realizedUSD,
     realizedPNL,
+    vaultId,
     refetch,
   }
 }

@@ -3,6 +3,7 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
+import Link from 'next/link'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { useTrade } from '../context/trade'
@@ -88,6 +89,12 @@ const useStyles = makeStyles((theme) =>
     postTradeAmt: {
       marginLeft: theme.spacing(1),
     },
+    link: {
+      color: theme.palette.primary.main,
+      textDecoration: 'underline',
+      fontWeight: 600,
+      fontSize: 14,
+    },
   }),
 )
 
@@ -108,7 +115,7 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
   } = usePnL()
   const { tradeAmount, actualTradeType, isOpenPosition, quote, tradeSuccess, setTradeSuccess, tradeType } = useTrade()
   const ethPrice = useETHPrice()
-  const { squeethAmount: shrtAmt } = useShortPositions()
+  const { squeethAmount: shrtAmt, vaultId } = useShortPositions()
   const { squeethAmount: lngAmt } = useLongPositions()
   const [fetchingNew, setFetchingNew] = useState(false)
 
@@ -265,6 +272,11 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
       <Typography variant="caption" color="textSecondary">
         {fetchingNew ? 'Fetching latest position' : ' '}
       </Typography>
+      {positionType === PositionType.SHORT ? (
+        <Typography className={classes.link}>
+          <Link href={`vault/${vaultId}`}>Manage</Link>
+        </Typography>
+      ) : null}
     </div>
   )
 }

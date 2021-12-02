@@ -15,7 +15,7 @@ import { useAddresses } from '../../hooks/useAddress'
 import { useETHPrice } from '../../hooks/useETHPrice'
 import { useLongPositions, useShortPositions } from '../../hooks/usePositions'
 import { PrimaryButton } from '../Buttons'
-import { PrimaryInput } from '../Inputs'
+import { PrimaryInput } from '../inputs/PrimaryInput'
 import { StepperBox as Stepper } from '../StepperBox'
 import { TradeSettings } from '../TradeSettings'
 import Confirmed from './Confirmed'
@@ -252,6 +252,8 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
   const ethPrice = useETHPrice()
   const { squeethAmount: shrtAmt } = useShortPositions()
   const { squeethAmount: lngAmt } = useLongPositions()
+
+  console.log(slippageAmount?.toNumber())
 
   useEffect(() => {
     if (!open && wSqueethBal.lt(amount)) {
