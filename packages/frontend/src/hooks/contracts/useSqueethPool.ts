@@ -83,6 +83,8 @@ export const useSqueethPool = () => {
         18,
       ),
     )
+
+
   }, [squeethToken?.address, pool?.token1Price.toFixed(18)])
 
   const updateData = async () => {

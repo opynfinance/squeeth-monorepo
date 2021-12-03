@@ -269,7 +269,7 @@ const useStyles = makeStyles((theme) =>
 function TradePage() {
   const classes = useStyles()
   const ethPrice = useETHPrice()
-  const { fundingPerDay, mark, index, impliedVol } = useController()
+  const { fundingPerDay, mark, index, impliedVol, currentImpliedFunding } = useController()
 
   const { volMultiplier, setVolMultiplier } = useWorldContext()
   const { tradeType, setTradeType, actualTradeType } = useTrade()
@@ -296,15 +296,26 @@ function TradePage() {
             <div className={classes.infoItem} style={{ width: '30%' }}>
               <div className={classes.infoLabel}>
                 <Typography color="textSecondary" variant="body2">
-                  Expected 24h Funding
+                  Last 24hr Avg Funding
                 </Typography>
                 <Tooltip
-                  title={'Estimated amount of funding paid in next 24 hours. Funding will happen out of your position.'}
+                  title={'Average funding paid over the last 24hrs. Calculated using a 24hr TWAP of Mark - Index.'}
                 >
                   <InfoIcon fontSize="small" className={classes.infoIcon} />
                 </Tooltip>
               </div>
               <Typography>{(fundingPerDay * 100).toFixed(2)}%</Typography>
+            </div>
+            <div className={classes.infoItem} style={{ width: '30%' }}>
+              <div className={classes.infoLabel}>
+                <Typography color="textSecondary" variant="body2">
+                  Current Implied Funding
+                </Typography>
+                <Tooltip title={'Current funding rate calculated using current Mark - Index.'}>
+                  <InfoIcon fontSize="small" className={classes.infoIcon} />
+                </Tooltip>
+              </div>
+              <Typography>{(currentImpliedFunding * 100).toFixed(2) || 'loading'}%</Typography>
             </div>
             <div className={classes.infoItem} style={{ width: '30%' }}>
               <div className={classes.infoLabel}>

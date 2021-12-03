@@ -25,6 +25,7 @@ export const useController = () => {
   const [mark, setMark] = useState(new BigNumber(0))
   const [index, setIndex] = useState(new BigNumber(0))
   const [fundingPerDay, setFundingPerDay] = useState(0)
+  const [currentImpliedFunding, setCurrentImpliedFunding] = useState(0)
   const { controller, ethDaiPool, weth, dai } = useAddresses()
   const { getTwapSafe } = useOracle()
 
@@ -54,6 +55,7 @@ export const useController = () => {
   useEffect(() => {
     if (!contract) return
     getFundingForDay().then(setFundingPerDay)
+    getCurrentImpliedFunding().then(setCurrentImpliedFunding)
   }, [address, contract])
 
   /**
@@ -238,6 +240,14 @@ export const useController = () => {
     return 1 - nF.toNumber()
   }
 
+  const getCurrentImpliedFunding = async () => {
+    const currIndex = await getIndex(1)
+    const currMark = await getMark(1)
+
+    const nF = currMark.dividedBy(currMark.multipliedBy(2).minus(currIndex))
+    return 1 - nF.toNumber()
+  }
+
   // implied variance = - log ((index/mark +1)/2 ) / f
   const impliedVol = useMemo(() => {
     if (mark.isZero()) return 0
@@ -299,5 +309,6 @@ export const useController = () => {
     getCollatRatioAndLiqPrice,
     depositCollateral,
     withdrawCollateral,
+    currentImpliedFunding,
   }
 }
