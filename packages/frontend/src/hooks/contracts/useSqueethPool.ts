@@ -60,9 +60,10 @@ export const useSqueethPool = () => {
     updatePoolTVL()
   }, [squeethContract, ticks?.length])
 
+  const isWethToken0 = parseInt(weth, 16) < parseInt(wSqueeth, 16)
+
   useEffect(() => {
     if (!squeethToken?.address) return
-    const isWethToken0 = parseInt(weth, 16) < parseInt(wSqueeth, 16)
     getBuyQuoteForETH(new BigNumber(1))
       .then((val) => {
         setSqueethPrice(val.amountOut)
@@ -419,6 +420,7 @@ export const useSqueethPool = () => {
     squeethPrice,
     wethPrice,
     ready,
+    isWethToken0,
     buy,
     sell,
     buyForWETH,

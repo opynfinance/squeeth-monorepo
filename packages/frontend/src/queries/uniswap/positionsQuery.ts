@@ -33,6 +33,8 @@ export const POSITIONS_QUERY = gql`
       collectedFeesToken1
       depositedToken0
       depositedToken1
+      withdrawnToken0
+      withdrawnToken1
     }
   }
 `

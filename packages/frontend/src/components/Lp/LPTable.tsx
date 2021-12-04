@@ -2,15 +2,18 @@ import { Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
 import Paper from '@material-ui/core/Paper'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { Pool } from '@uniswap/v3-sdk'
+import BigNumber from 'bignumber.js'
 import Link from 'next/link'
 import * as React from 'react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
+import { SecondaryTab, SecondaryTabs } from '../../components/Tabs'
+import { UniswapIframe } from '../../components/UniswapIframe'
+import { useSqueethPool } from '../../hooks/contracts/useSqueethPool'
 import { useAddresses } from '../../hooks/useAddress'
+import { useETHPrice } from '../../hooks/useETHPrice'
 import { useLPPositions } from '../../hooks/usePositions'
 import { inRange } from '../../utils/calculations'
-import { SecondaryTab, SecondaryTabs } from '../Tabs'
-import { UniswapIframe } from '../UniswapIframe'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -66,11 +69,45 @@ interface LPTableProps {
   pool?: Pool | undefined
 }
 
+const calculatePnL = (
+  depositedToken0: string | undefined,
+  depositedToken1: string | undefined,
+  withdrawToken0: string | undefined,
+  withdrawToken1: string | undefined,
+  ethPrice: BigNumber,
+  squeethPrice: BigNumber,
+  currValue: BigNumber | undefined,
+  isWethToken0: boolean,
+): BigNumber => {
+  if (!depositedToken0 || !depositedToken1 || !currValue) {
+    return new BigNumber(0)
+  }
+  const depToken0 = new BigNumber(depositedToken0)
+  const depToken1 = new BigNumber(depositedToken1)
+
+  const withToken0 = new BigNumber(withdrawToken0 || 0)
+  const withToken1 = new BigNumber(withdrawToken1 || 0)
+
+  const ethDepValue = (isWethToken0 ? depToken0 : depToken1).times(ethPrice)
+  const squeethDepValue = (isWethToken0 ? depToken1 : depToken0).times(squeethPrice)
+  const ethWithdrawValue = (isWethToken0 ? withToken0 : withToken1).times(ethPrice)
+  const squeethWithdrawValue = (isWethToken0 ? withToken1 : withToken0).times(squeethPrice)
+
+  const originalValue = ethDepValue.plus(squeethDepValue).minus(ethWithdrawValue).minus(squeethWithdrawValue)
+  return currValue.minus(originalValue)
+}
+
 export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
   const classes = useStyles()
   const { activePositions, closedPositions, loading: lpLoading } = useLPPositions()
   const [activeTab, setActiveTab] = useState(0)
   const { wSqueeth } = useAddresses()
+  const ethPrice = useETHPrice()
+  const { getWSqueethPositionValue, isWethToken0 } = useSqueethPool()
+
+  useEffect(() => {
+    console.log(activePositions)
+  }, [activePositions.length])
 
   return (
     <TableContainer component={Paper} className={isLPage ? classes.isLPageTableContainer : classes.tableContainer}>
@@ -97,6 +134,11 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
             {/* <TableCell align="left">Collected Fees</TableCell> */}
             <TableCell align="left">Uncollected Fees</TableCell>
             <TableCell align="left">Value</TableCell>
+            <Tooltip
+              title={'PnL = Value of current LP underlying tokens - Value of tokens deposited (at current price) '}
+            >
+              <TableCell align="left">PnL</TableCell>
+            </Tooltip>
           </TableRow>
         </TableHead>
 
@@ -188,13 +230,13 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
             {activePositions?.length === 0 ? (
               lpLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" style={{ textAlign: 'center', fontSize: '16px' }}>
+                  <TableCell colSpan={7} align="center" style={{ textAlign: 'center', fontSize: '16px' }}>
                     <p>Loading...</p>
                   </TableCell>
                 </TableRow>
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" style={{ textAlign: 'center', fontSize: '16px' }}>
+                  <TableCell colSpan={7} align="center" style={{ textAlign: 'center', fontSize: '16px' }}>
                     <p>No Existing LP Positions</p>
 
                     <div>
@@ -248,6 +290,21 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
                     </TableCell>
                     <TableCell align="left">
                       <span style={{ marginRight: '.5em' }}>$ {p.dollarValue?.toFixed(2)}</span>
+                    </TableCell>
+                    <TableCell align="left">
+                      <span style={{ marginRight: '.5em' }}>
+                        ${' '}
+                        {calculatePnL(
+                          p.depositedToken0,
+                          p.depositedToken1,
+                          p.withdrawnToken0,
+                          p.withdrawnToken1,
+                          ethPrice,
+                          getWSqueethPositionValue(1),
+                          p.dollarValue,
+                          isWethToken0,
+                        )?.toFixed(3)}
+                      </span>
                     </TableCell>
                   </TableRow>
                 )

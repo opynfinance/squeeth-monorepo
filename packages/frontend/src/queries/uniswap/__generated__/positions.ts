@@ -54,6 +54,8 @@ export interface positions_positions {
   collectedFeesToken1: any
   depositedToken0: any
   depositedToken1: any
+  withdrawnToken0: any
+  withdrawnToken1: any
 }
 
 export interface positions {
