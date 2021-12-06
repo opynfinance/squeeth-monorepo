@@ -44,12 +44,11 @@ import {Power2Base} from "../libs/Power2Base.sol";
  * C17: Pause time limit exceeded
  * C18: Not enough paused time has passed
  * C19: Cannot receive eth
- * C20: Invalid vault id
+ * C20: Not allowed
  * C21: Need full liquidation
  * C22: Dust vault left
  * C23: Invalid nft
  * C24: Invalid state
- * C25: Not allowed
  */
 contract Controller is Ownable, ReentrancyGuard {
     using SafeMath for uint256;
@@ -328,7 +327,8 @@ contract Controller is Ownable, ReentrancyGuard {
      * @param _vaultId id of the vault
      */
     function deposit(uint256 _vaultId) external payable notPaused nonReentrant {
-        _checkVaultId(_vaultId);
+        _checkCanModifyVault(_vaultId, msg.sender);
+
         _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
         _addEthCollateral(cachedVault, _vaultId, msg.value);
@@ -342,7 +342,8 @@ contract Controller is Ownable, ReentrancyGuard {
      * @param _uniTokenId uniswap position token id
      */
     function depositUniPositionToken(uint256 _vaultId, uint256 _uniTokenId) external notPaused nonReentrant {
-        _checkVaultId(_vaultId);
+        _checkCanModifyVault(_vaultId, msg.sender);
+
         _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
 
@@ -356,10 +357,12 @@ contract Controller is Ownable, ReentrancyGuard {
      * @param _amount amount of eth to withdraw
      */
     function withdraw(uint256 _vaultId, uint256 _amount) external notPaused nonReentrant {
+        _checkCanModifyVault(_vaultId, msg.sender);
+
         uint256 cachedNormFactor = _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
 
-        _withdrawCollateral(cachedVault, msg.sender, _vaultId, _amount);
+        _withdrawCollateral(cachedVault, _vaultId, _amount);
         _checkVault(cachedVault, cachedNormFactor);
         _writeVault(_vaultId, cachedVault);
         payable(msg.sender).sendValue(_amount);
@@ -370,6 +373,8 @@ contract Controller is Ownable, ReentrancyGuard {
      * @param _vaultId id of the vault
      */
     function withdrawUniPositionToken(uint256 _vaultId) external notPaused nonReentrant {
+        _checkCanModifyVault(_vaultId, msg.sender);
+
         uint256 cachedNormFactor = _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
         _withdrawUniPositionToken(cachedVault, msg.sender, _vaultId);
@@ -388,6 +393,8 @@ contract Controller is Ownable, ReentrancyGuard {
         uint256 _wPowerPerpAmount,
         uint256 _withdrawAmount
     ) external notPaused nonReentrant {
+        _checkCanModifyVault(_vaultId, msg.sender);
+
         _burnAndWithdraw(msg.sender, _vaultId, _wPowerPerpAmount, _withdrawAmount, true);
     }
 
@@ -403,6 +410,8 @@ contract Controller is Ownable, ReentrancyGuard {
         uint256 _powerPerpAmount,
         uint256 _withdrawAmount
     ) external notPaused nonReentrant returns (uint256) {
+        _checkCanModifyVault(_vaultId, msg.sender);
+
         return _burnAndWithdraw(msg.sender, _vaultId, _powerPerpAmount, _withdrawAmount, false);
     }
 
@@ -450,7 +459,6 @@ contract Controller is Ownable, ReentrancyGuard {
      * @return amount of wPowerPerp repaid
      */
     function liquidate(uint256 _vaultId, uint256 _maxDebtAmount) external notPaused nonReentrant returns (uint256) {
-        _checkVaultId(_vaultId);
         uint256 cachedNormFactor = _applyFunding();
 
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
@@ -501,7 +509,7 @@ contract Controller is Ownable, ReentrancyGuard {
      * @param _operator new operator address
      */
     function updateOperator(uint256 _vaultId, address _operator) external {
-        require(IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId) == msg.sender, "C25");
+        require(IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId) == msg.sender, "C20");
         vaults[_vaultId].operator = _operator;
         emit UpdateOperator(msg.sender, _vaultId, _operator);
     }
@@ -650,14 +658,6 @@ contract Controller is Ownable, ReentrancyGuard {
      */
 
     /**
-     * @notice check if a vaultId is valid, reverts if it's not valid
-     * @param _vaultId the id to check
-     */
-    function _checkVaultId(uint256 _vaultId) internal view {
-        require(_vaultId > 0 && _vaultId < IShortPowerPerp(shortPowerPerp).nextId(), "C20");
-    }
-
-    /**
      * @notice check if an address can modify a vault
      * @param _vaultId the id of the vault to check if can be modified by _account
      * @param _account the address to check if can modify the vault
@@ -665,7 +665,7 @@ contract Controller is Ownable, ReentrancyGuard {
     function _checkCanModifyVault(uint256 _vaultId, address _account) internal view {
         require(
             IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId) == _account || vaults[_vaultId].operator == _account,
-            "C25"
+            "C20"
         );
     }
 
@@ -699,7 +699,7 @@ contract Controller is Ownable, ReentrancyGuard {
             (_vaultId, cachedVault) = _openVault(_account);
         } else {
             // make sure we're not accessing an unexistent vault.
-            _checkVaultId(_vaultId);
+            _checkCanModifyVault(_vaultId, msg.sender);
             cachedVault = vaults[_vaultId];
         }
 
@@ -740,13 +740,12 @@ contract Controller is Ownable, ReentrancyGuard {
         uint256 _withdrawAmount,
         bool _isWAmount
     ) internal returns (uint256) {
-        _checkVaultId(_vaultId);
         uint256 cachedNormFactor = _applyFunding();
         uint256 wBurnAmount = _isWAmount ? _burnAmount : _burnAmount.mul(ONE).div(cachedNormFactor);
 
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
         if (wBurnAmount > 0) _burnWPowerPerp(cachedVault, _account, _vaultId, wBurnAmount);
-        if (_withdrawAmount > 0) _withdrawCollateral(cachedVault, _account, _vaultId, _withdrawAmount);
+        if (_withdrawAmount > 0) _withdrawCollateral(cachedVault, _vaultId, _withdrawAmount);
         _checkVault(cachedVault, cachedNormFactor);
         _writeVault(_vaultId, cachedVault);
 
@@ -805,6 +804,7 @@ contract Controller is Ownable, ReentrancyGuard {
      * @notice add eth collateral into a vault
      * @dev this function will update the vault memory in-place
      * @param _vault the Vault memory to update.
+     * @param _vaultId id of the vault
      * @param _amount amount of eth adding to the vault
      */
     function _addEthCollateral(
@@ -828,8 +828,6 @@ contract Controller is Ownable, ReentrancyGuard {
         address _account,
         uint256 _vaultId
     ) internal {
-        _checkCanModifyVault(_vaultId, _account);
-
         uint256 tokenId = _vault.NftCollateralId;
         _vault.removeUniNftCollateral();
         INonfungiblePositionManager(uniswapPositionManager).transferFrom(address(this), _account, tokenId);
@@ -840,18 +838,14 @@ contract Controller is Ownable, ReentrancyGuard {
      * @notice remove eth collateral from the vault
      * @dev this function will update the vault memory in-place
      * @param _vault the Vault memory to update
-     * @param _account where to send collateral to
      * @param _vaultId id of the vault
      * @param _amount amount of eth to withdraw
      */
     function _withdrawCollateral(
         VaultLib.Vault memory _vault,
-        address _account,
         uint256 _vaultId,
         uint256 _amount
     ) internal {
-        _checkCanModifyVault(_vaultId, _account);
-
         _vault.removeEthCollateral(_amount);
 
         emit WithdrawCollateral(msg.sender, _vaultId, _amount);
@@ -871,8 +865,6 @@ contract Controller is Ownable, ReentrancyGuard {
         uint256 _vaultId,
         uint256 _wPowerPerpAmount
     ) internal {
-        _checkCanModifyVault(_vaultId, _account);
-
         _vault.addShort(_wPowerPerpAmount);
         IWPowerPerp(wPowerPerp).mint(_account, _wPowerPerpAmount);
 

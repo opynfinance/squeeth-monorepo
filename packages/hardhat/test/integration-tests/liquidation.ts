@@ -237,7 +237,7 @@ describe("Liquidation Integration Test", function () {
   this.beforeAll('Prepare vault5 (with nft), for liquidation', async() => {
     vault5Id = await shortSqueeth.nextId()
 
-    await controller.connect(seller3).mintPowerPerpAmount(0, vault5MintAmount, 0, {value: vault5Collateral})
+    await controller.connect(seller5).mintPowerPerpAmount(0, vault5MintAmount, 0, {value: vault5Collateral})
 
     vault5LPTokenId = await addSqueethLiquidity(
       scaledStartingSqueethPrice,

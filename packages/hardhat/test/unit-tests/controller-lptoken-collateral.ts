@@ -145,13 +145,13 @@ describe("Controller: Uni LP tokens collateralization", function () {
 
       it('should revert when trying to deposit a LP token to vault 0', async() => {
         await expect(controller.connect(seller1).depositUniPositionToken(0, 0)).to.be.revertedWith(
-          'C20'
+          'ERC721: owner query for nonexistent token'
         )
       })
 
       it('should revert when trying to deposit a LP token to non-existent vault', async() => {
         await expect(controller.connect(seller1).depositUniPositionToken(100, 0)).to.be.revertedWith(
-          'C20'
+          'ERC721: owner query for nonexistent token'
         )
       })
 
@@ -175,6 +175,11 @@ describe("Controller: Uni LP tokens collateralization", function () {
         const tokenId = 77;
         await uniPositionManager.mint(random.address, tokenId)
         await expect(controller.connect(seller1).depositUniPositionToken(vaultId, tokenId)).to.be.revertedWith('ERC721: transfer caller is not owner nor approved')
+      })
+
+      it('should revert when a random address tries to add a NFT to a vault they are not owner or operator of', async ()=> {
+        const tokenId = 77;
+        await expect(controller.connect(random).depositUniPositionToken(vaultId, tokenId)).to.be.revertedWith('C20')
       })
 
       it('should deposit and NFT to an existing vault.', async() => {
@@ -254,7 +259,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       })
 
       it('should revert if non owner withdraws the nft', async () => {
-        await expect(controller.connect(random).withdrawUniPositionToken(vaultId)).to.be.revertedWith("C25")
+        await expect(controller.connect(random).withdrawUniPositionToken(vaultId)).to.be.revertedWith("C20")
       })
 
       it('should withdraw the nft successfully', async () => {
@@ -593,7 +598,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       })
   
       it('should revert when calling from random address', async() => {
-        await expect(controller.connect(random).reduceDebt(vaultId)).to.be.revertedWith('C25')
+        await expect(controller.connect(random).reduceDebt(vaultId)).to.be.revertedWith('C20')
       })
     })
     describe('Case: price increase, vault should go underwater and people can save it', async() => {

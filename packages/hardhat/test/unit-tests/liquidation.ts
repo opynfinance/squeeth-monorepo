@@ -140,6 +140,35 @@ describe("Controller: liquidation unit test", function () {
       await squeeth.connect(seller1).transfer(liquidator.address, squeethBalanceAfter)
     });
 
+    it("Should revert liquidating a a vault with id 0", async () => {
+      const result = await liquidationHelper.checkLiquidation(0);
+      const [isUnsafe, isLiquidatableAfterReducingDebt, maxWPowerPerpAmount, collateralToReceive] = result;
+
+      expect(isUnsafe).to.be.false
+      expect(isLiquidatableAfterReducingDebt).to.be.false
+      expect(maxWPowerPerpAmount.eq(BigNumber.from(0))).to.be.true
+      expect(collateralToReceive.eq(BigNumber.from(0))).to.be.true
+
+      await expect(controller.connect(liquidator).liquidate(0, 1)).to.be.revertedWith(
+        'C12'
+      )
+    })
+
+    it("Should revert liquidating a a vault with id greater than max vaults", async () => {
+      const vaultId = await shortSqueeth.nextId()
+      const result = await liquidationHelper.checkLiquidation(vaultId);
+      const [isUnsafe, isLiquidatableAfterReducingDebt, maxWPowerPerpAmount, collateralToReceive] = result;
+
+      expect(isUnsafe).to.be.false
+      expect(isLiquidatableAfterReducingDebt).to.be.false
+      expect(maxWPowerPerpAmount.eq(BigNumber.from(0))).to.be.true
+      expect(collateralToReceive.eq(BigNumber.from(0))).to.be.true
+
+      await expect(controller.connect(liquidator).liquidate(vaultId, 1)).to.be.revertedWith(
+        'C12'
+      )
+    })
+
     it("Should revert liquidating a safe vault", async () => {
       const vaultBefore = await controller.vaults(vault1Id)
 

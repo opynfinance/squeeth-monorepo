@@ -292,19 +292,28 @@ describe("Controller", function () {
     describe("#Deposit: Deposit collateral", async () => {
       it("Should revert when trying to deposit to vault 0", async() => {
         await expect(controller.connect(seller1).deposit(0)).to.be.revertedWith(
-          'C20'
+          'ERC721: owner query for nonexistent token'
         )
       })
       it("Should revert when trying to access non-existent vault", async() => {
         await expect(controller.connect(seller1).deposit(100, {value: 100})).to.be.revertedWith(
-          'C20'
+          'ERC721: owner query for nonexistent token'
         )
       })
       it("Should revert when trying to use mint to deposit to non-existent vault", async() => {
         await expect(controller.connect(seller1).mintPowerPerpAmount(999, 0, 0, {value: 100})).to.be.revertedWith(
+          'ERC721: owner query for nonexistent token'
+        )
+      })
+
+      it("Should revert when trying to use mint to deposit to a vault where msg.sender is not owner or operator", async() => {
+        const depositAmount = ethers.utils.parseUnits('45')
+
+        await expect(controller.connect(random).deposit(vaultId,{value: depositAmount})).to.be.revertedWith(
           'C20'
         )
       })
+
       it("Should be able to deposit collateral", async () => {
         const depositAmount = ethers.utils.parseUnits('45')
         const controllerBalanceBefore = await provider.getBalance(controller.address)
@@ -332,12 +341,12 @@ describe("Controller", function () {
         const mintAmount = ethers.utils.parseUnits('100')
         
         await expect(controller.connect(random).mintPowerPerpAmount(vaultId, mintAmount, 0)).to.be.revertedWith(
-          'C25'
+          'C20'
         )
       });
       it("Should revert when trying to mint to non-existent vault", async() => {
         await expect(controller.connect(seller1).mintPowerPerpAmount(999, 10, 0)).to.be.revertedWith(
-          'C20'
+          'ERC721: owner query for nonexistent token'
         )
       })
       it("Should be able to mint squeeth", async () => {
@@ -368,23 +377,23 @@ describe("Controller", function () {
     describe("#Burn: Burn Squeeth", async () => {
       it("Should revert when trying to burn for vault 0", async() => {
         await expect(controller.connect(seller1).burnPowerPerpAmount(0, 0, 0)).to.be.revertedWith(
-          'C20'
+          'ERC721: owner query for nonexistent token'
         )
       })
       it("Should revert when trying to burn wrapped amount for vault 0", async() => {
         await expect(controller.connect(seller1).burnWPowerPerpAmount(0, 0, 0)).to.be.revertedWith(
-          'C20'
+          'ERC721: owner query for nonexistent token'
         )
       })
 
       it("Should revert when trying to burn for non-existent vault", async() => {
         await expect(controller.connect(seller1).burnPowerPerpAmount(100, 0, 0)).to.be.revertedWith(
-          'C20'
+          'ERC721: owner query for nonexistent token'
         )
       })
       it("Should revert when trying to burn wrapped amount for non-existent vault", async() => {
         await expect(controller.connect(seller1).burnWPowerPerpAmount(100, 0, 0)).to.be.revertedWith(
-          'C20'
+          'ERC721: owner query for nonexistent token'
         )
       })
       it("Should revert if trying to burn more than minted", async () => {
@@ -394,9 +403,11 @@ describe("Controller", function () {
       // todo: add another case to test burning someone else squeeth while being a seller
       it("Should revert if trying to burn without having squeeth", async () => {
         const vault = await controller.vaults(vaultId)
-        await expect(controller.connect(random).burnWPowerPerpAmount(vaultId, vault.shortAmount, 0)).to.be.revertedWith(
+        await squeeth.connect(seller1).transfer(random.address, 1)
+        await expect(controller.connect(seller1).burnWPowerPerpAmount(vaultId, vault.shortAmount, 0)).to.be.revertedWith(
           'ERC20: burn amount exceeds balance'
         )
+        await squeeth.mint(seller1.address, 1)
       });
       it('should revert if vault after burning is underwater', async() => {
         const vault = await controller.vaults(vaultId)
@@ -412,16 +423,13 @@ describe("Controller", function () {
         await expect(controller.connect(seller1).withdraw(vaultId, vault.collateralAmount)).to.be.revertedWith('C24')
       })
 
-      it('anyone can burn squeeth for vault1', async() => {
-        const vaultBefore = await controller.vaults(vaultId)
+      it('Should revert if a random account tries to burn squeeth for vault1', async() => {
         await squeeth.mint(random.address, 1000)
-        await controller.connect(random).burnWPowerPerpAmount(vaultId, 1000, 0)
-        const vaultAfter = await controller.vaults(vaultId)
-        expect(vaultBefore.shortAmount.sub(vaultAfter.shortAmount).eq(1000)).to.be.true
+        await expect(controller.connect(random).burnWPowerPerpAmount(vaultId, 1000, 0)).to.be.revertedWith("C20")
       })
 
       it('should revert when non-owner try to burn and withdraw from vault', async() => {
-        await expect(controller.connect(random).burnWPowerPerpAmount(vaultId, 0, 1000)).to.be.revertedWith('C25')
+        await expect(controller.connect(random).burnWPowerPerpAmount(vaultId, 0, 1000)).to.be.revertedWith('C20')
       })
       
       it("Should be able to burn squeeth", async () => {
@@ -450,7 +458,7 @@ describe("Controller", function () {
       it("Should revert if caller is not the owner", async () => {
         const vault = await controller.vaults(vaultId)
         await expect(controller.connect(random).withdraw(vaultId, vault.collateralAmount)).to.be.revertedWith(
-          'C25'
+          'C20'
         )
       })
       it("Should revert if trying to remove more collateral than deposited", async () => {
@@ -543,6 +551,21 @@ describe("Controller", function () {
     })
 
     describe('Deposit and mint with mintWPowerPerpAmount', () => {
+      
+      it('Should revert if a random address tries to deposit collateral using mintWPowerPerpAmount', async() => {
+        // mint some other squeeth in vault 2.
+        const collateralAmount = ethers.utils.parseUnits('4.5')
+
+        await expect(controller.connect(random).mintWPowerPerpAmount(vaultId, 0, 0, {value: collateralAmount})).to.be.revertedWith("C20")
+      })
+
+      it('Should revert if a random address tries to deposit a Uni NFT using mintWPowerPerpAmount', async() => {
+        // mint some other squeeth in vault 2.
+        const uniTokenId = 100
+        
+        await expect(controller.connect(random).mintWPowerPerpAmount(vaultId, 0, uniTokenId)).to.be.revertedWith("C20")
+      })
+      
       it('should deposit and mint in the same tx', async() => {
         // mint some other squeeth in vault 2.
         const normFactor = await controller.normalizationFactor()
@@ -598,7 +621,7 @@ describe("Controller", function () {
 
     describe('Deposit and mint By operator', () => {
       it('should not allow a non owner to update an operator', async () => {        
-        await expect(controller.connect(seller2).updateOperator(vaultId, random.address)).to.be.revertedWith("C25")
+        await expect(controller.connect(seller2).updateOperator(vaultId, random.address)).to.be.revertedWith("C20")
       })      
       it('should add an operator', async () => {
         await controller.connect(seller1).updateOperator(vaultId, random.address)
@@ -630,7 +653,7 @@ describe("Controller", function () {
       it('should not allow an operator to update the operator associated with an account', async () => {
         const vault = await controller.vaults(vaultId)
         expect(vault.operator).to.be.eq(random.address)
-        await expect(controller.connect(random).updateOperator(vaultId, seller2.address)).to.be.revertedWith("C25")
+        await expect(controller.connect(random).updateOperator(vaultId, seller2.address)).to.be.revertedWith("C20")
       })
     })
 
@@ -1233,7 +1256,7 @@ describe("Controller", function () {
       it('should revert when a random user is trying to redeem', async() => {
         await expect(
           controller.connect(random).redeemShort(seller3VaultId, {gasPrice: 0})
-        ).to.be.revertedWith('C25')
+        ).to.be.revertedWith('C20')
       })
 
       it("should redeem fair value for normal vault (seller 3)", async () => {
