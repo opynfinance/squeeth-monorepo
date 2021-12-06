@@ -86,8 +86,9 @@ const useStyles = makeStyles((theme) =>
 
 export default function Positions() {
   const classes = useStyles()
-  const { wethAmount: longWethAmt, squeethAmount: wSqueethBal } = useLongPositions()
+  const { loading: isLongLoading, wethAmount: longWethAmt, squeethAmount: wSqueethBal } = useLongPositions()
   const {
+    loading: isShortLoading,
     wethAmount: shortWethAmt,
     shortVaults,
     existingCollat,
@@ -105,7 +106,7 @@ export default function Positions() {
     shortUsdAmt,
     longRealizedPNL,
     shortRealizedPNL,
-    loading,
+    loading: isPnLLoading,
   } = usePnL()
   const ethPrice = useETHPrice()
   const { activePositions } = useLPPositions()
@@ -142,16 +143,21 @@ export default function Positions() {
                   <Typography variant="caption" component="span" color="textSecondary">
                     Position
                   </Typography>
-                  <Typography variant="body1">{wSqueethBal.toFixed(8)}&nbsp; oSQTH</Typography>
+                  <Typography variant="body1">
+                    {isLongLoading && wSqueethBal.toNumber() === 0 ? 'Loading' : wSqueethBal.toFixed(8)}&nbsp; oSQTH
+                  </Typography>
                   <Typography variant="body2" color="textSecondary">
-                    ${sellQuote.amountOut.times(ethPrice).toFixed(2)}
+                    $
+                    {isPnLLoading && sellQuote.amountOut.times(ethPrice).toNumber() === 0
+                      ? 'Loading'
+                      : sellQuote.amountOut.times(ethPrice).toFixed(2)}
                   </Typography>
                 </div>
                 <div style={{ width: '50%' }}>
                   <Typography variant="caption" color="textSecondary">
                     Unrealized P&L
                   </Typography>
-                  {loading ? (
+                  {isPnLLoading ? (
                     <Typography variant="body1">Loading</Typography>
                   ) : (
                     <>
@@ -171,7 +177,7 @@ export default function Positions() {
                     Realized P&L
                   </Typography>
                   <Typography variant="body1" className={longRealizedPNL.gte(0) ? classes.green : classes.red}>
-                    ${longRealizedPNL.toFixed(2)}
+                    ${isPnLLoading && longRealizedPNL.toNumber() === 0 ? 'Loading' : longRealizedPNL.toFixed(2)}
                   </Typography>
                 </div>
               </div>
@@ -203,7 +209,7 @@ export default function Positions() {
                   <Typography variant="caption" color="textSecondary">
                     Unrealized P&L
                   </Typography>
-                  {loading ? (
+                  {isPnLLoading ? (
                     <Typography variant="body1">Loading</Typography>
                   ) : (
                     <>
@@ -222,14 +228,17 @@ export default function Positions() {
                   <Typography variant="caption" component="span" color="textSecondary">
                     Liquidation Price
                   </Typography>
-                  <Typography variant="body1">${liquidationPrice.toFixed(2)}</Typography>
+                  <Typography variant="body1">
+                    ${isShortLoading && liquidationPrice === 0 ? 'Loading' : liquidationPrice.toFixed(2)}
+                  </Typography>
                 </div>
                 <div style={{ width: '50%' }}>
                   <Typography variant="caption" component="span" color="textSecondary">
                     Collateral (Amt / Ratio)
                   </Typography>
                   <Typography variant="body1">
-                    {existingCollat.toFixed(4)} ETH ({existingCollatPercent}%)
+                    {isShortLoading && existingCollat.toNumber() === 0 ? 'Loading' : existingCollat.toFixed(4)} ETH (
+                    {existingCollatPercent}%)
                   </Typography>
                 </div>
               </div>
@@ -239,7 +248,7 @@ export default function Positions() {
                     Realized P&L
                   </Typography>
                   <Typography variant="body1" className={shortRealizedPNL.gte(0) ? classes.green : classes.red}>
-                    ${shortRealizedPNL.toFixed(2)}
+                    ${isPnLLoading && shortRealizedPNL.toNumber() === 0 ? 'Loading' : shortRealizedPNL.toFixed(2)}
                   </Typography>
                 </div>
               </div>
