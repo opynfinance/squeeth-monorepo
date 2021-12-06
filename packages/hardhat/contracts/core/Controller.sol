@@ -685,15 +685,15 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
     }
 
     /**
-     * @notice wrapper function which open a vault, add collateral and mint wPowerPerp
+     * @notice wrapper function which opens a vault, adds collateral and mints wPowerPerp
      * @param _account account to receive wPowerPerp
      * @param _vaultId id of the vault
      * @param _mintAmount amount to mint
      * @param _depositAmount amount of eth as collateral
      * @param _uniTokenId id of uniswap v3 position token
-     * @param _isWAmount if the input amount is wPowerPerp (as opposed to rebasing powerPerp)
-     * @return vaultId
-     * @return total minted wPowerPower amount
+     * @param _isWAmount if the input amount is a wPowerPerp amount (as opposed to rebasing powerPerp)
+     * @return the vaultId that was acted on or for a new vault the newly created vaultId
+     * @return the minted wPowerPerp amount
      */
     function _openDepositMint(
         address _account,
@@ -1004,6 +1004,7 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
      * @param _wPowerPerpAmount the amount of wPowerPerpAmount minting
      * @param _depositAmount the amount of eth depositing or withdrawing
      * @param _normalizationFactor current normalization factor
+     * @return the fee amount for the given amount of wPowerPerp
      * @return the amount of actual deposited eth into the vault, this is less than the original amount if a fee was taken
      */
     function _getFee(

@@ -99,7 +99,7 @@ contract ShortHelper is IERC721Receiver {
     /**
      * @notice buy back wPowerPerp with eth on uniswap v3 and close position
      * @param _vaultId short wPowerPerp vault id
-     * @param _wPowerPerpAmount amount of wPowerPerp to mint/sell
+     * @param _wPowerPerpAmount amount of wPowerPerp to burn
      * @param _withdrawAmount amount to withdraw
      */
     function closeShort(
