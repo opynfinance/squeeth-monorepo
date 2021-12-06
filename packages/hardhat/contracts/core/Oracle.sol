@@ -18,7 +18,7 @@ contract Oracle {
     using SafeMath for uint256;
     using Uint256Casting for uint256;
 
-    uint256 private constant ONE = 1e18;
+    uint128 private constant ONE = 1e18;
 
     /**
      * @notice get twap converted with base & quote token decimals
@@ -62,7 +62,7 @@ contract Oracle {
         uint32 _secondsAgoToStartOfTwap,
         uint32 _secondsAgoToEndOfTwap
     ) external view returns (uint256) {
-        return _fetchHistoricTwap(_pool, _base, _quote, _secondsAgoToStartOfTwap, _secondsAgoToEndOfTwap, ONE);
+        return _fetchHistoricTwap(_pool, _base, _quote, _secondsAgoToStartOfTwap, _secondsAgoToEndOfTwap);
     }
 
     /**
@@ -96,7 +96,8 @@ contract Oracle {
      * @dev if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD"
      * @param _pool uniswap pool address
      * @param _base base currency. to get eth/usd price, eth is base token
-     * @param _quote quote currency. to get eth/usd price, usd is the quote currency     * @param _period number of seconds in the past to start calculating time-weighted average
+     * @param _quote quote currency. to get eth/usd price, usd is the quote currency
+     * @param _period number of seconds in the past to start calculating time-weighted average
      * @return twap price which is scaled
      */
     function _fetchTwap(
@@ -105,7 +106,7 @@ contract Oracle {
         address _quote,
         uint32 _period
     ) internal view returns (uint256) {
-        uint256 quoteAmountOut = _fetchRawTwap(_pool, _base, _quote, _period, ONE);
+        uint256 quoteAmountOut = _fetchRawTwap(_pool, _base, _quote, _period);
 
         uint8 baseDecimals = IERC20Detailed(_base).decimals();
         uint8 quoteDecimals = IERC20Detailed(_quote).decimals();
@@ -123,19 +124,18 @@ contract Oracle {
      * @dev if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD".
      * @param _pool uniswap pool address
      * @param _base base currency. to get eth/usd price, eth is base token
-     * @param _quote quote currency. to get eth/usd price, usd is the quote currency    * @param _period number of seconds in the past to start calculating time-weighted average
-     * @param _amountIn amount of base currency provided in exchange for quote currency
+     * @param _quote quote currency. to get eth/usd price, usd is the quote currency
+     * @param _period number of seconds in the past to start calculating time-weighted average
      * @return amount of quote currency received for _amountIn of base currency
      */
     function _fetchRawTwap(
         address _pool,
         address _base,
         address _quote,
-        uint32 _period,
-        uint256 _amountIn
+        uint32 _period
     ) internal view returns (uint256) {
         int24 twapTick = OracleLibrary.consultAtHistoricTime(_pool, _period, 0);
-        return OracleLibrary.getQuoteAtTick(twapTick, _amountIn.toUint128(), _base, _quote);
+        return OracleLibrary.getQuoteAtTick(twapTick, ONE, _base, _quote);
     }
 
     /**
@@ -153,12 +153,11 @@ contract Oracle {
         address _base,
         address _quote,
         uint32 _secondsAgoToStartOfTwap,
-        uint32 _secondsAgoToEndOfTwap,
-        uint256 _amountIn
+        uint32 _secondsAgoToEndOfTwap
     ) internal view returns (uint256) {
         int24 twapTick = OracleLibrary.consultAtHistoricTime(_pool, _secondsAgoToStartOfTwap, _secondsAgoToEndOfTwap);
 
-        return OracleLibrary.getQuoteAtTick(twapTick, _amountIn.toUint128(), _base, _quote);
+        return OracleLibrary.getQuoteAtTick(twapTick, ONE, _base, _quote);
     }
 
     /**
