@@ -158,15 +158,35 @@ describe("Controller: Uni LP tokens collateralization", function () {
       it('should revert when trying to deposit a LP token from a different pool', async ()=> {
         // set token0 and token to dai and squeeth
         await uniPositionManager.connect(seller1).approve(controller.address, uniNFTId)
-        await uniPositionManager.setMockedProperties(dai.address, squeeth.address, 0, 0, 0)
+        await uniPositionManager.setMockedProperties(dai.address, squeeth.address, 0, 0, 1)
 
         await expect(controller.connect(seller1).depositUniPositionToken(vaultId, uniNFTId)).to.be.revertedWith('C23')
-        // set the tokens back
-        await uniPositionManager.setMockedProperties(token0, token1, 0, 0, 0)
       })
 
       it('should revert when trying to deposit a LP token with id 0', async ()=> {
         await uniPositionManager.mint(seller1.address, 0)
+
+        // infinite price range
+        const nftTickUpper = 887220
+        const nftTickLower = -887220
+        const { sqrtPrice: sqrtX96Price, tick: currentTick } = getSqrtPriceAndTickBySqueethPrice(scaledSqueethPrice, wethIsToken0InSqueethPool)
+
+        // how much to stimulate as LP deposit
+        const ethLiquidityAmount = ethers.utils.parseUnits('30')
+        const squeethLiquidityAmount = ethers.utils.parseUnits('100')
+
+        // nft ticks
+        const liquidity = await vaultLib.getLiquidity(
+          sqrtX96Price,
+          nftTickLower,
+          nftTickUpper,
+          wethIsToken0InSqueethPool ? ethLiquidityAmount : squeethLiquidityAmount,
+          wethIsToken0InSqueethPool ? squeethLiquidityAmount: ethLiquidityAmount,
+        )
+        
+        await squeethEthPool.setSlot0Data(sqrtX96Price, currentTick)
+        await uniPositionManager.setMockedProperties(token0, token1, nftTickLower, nftTickUpper, liquidity)
+
         await uniPositionManager.connect(seller1).approve(controller.address, 0)
         await expect(controller.connect(seller1).depositUniPositionToken(vaultId, 0)).to.be.revertedWith('C23')
       })
@@ -174,6 +194,28 @@ describe("Controller: Uni LP tokens collateralization", function () {
       it('should revert when depositor do not own the NFT', async ()=> {
         const tokenId = 77;
         await uniPositionManager.mint(random.address, tokenId)
+
+        // infinite price range
+        const nftTickUpper = 887220
+        const nftTickLower = -887220
+        const { sqrtPrice: sqrtX96Price, tick: currentTick } = getSqrtPriceAndTickBySqueethPrice(scaledSqueethPrice, wethIsToken0InSqueethPool)
+
+        // how much to stimulate as LP deposit
+        const ethLiquidityAmount = ethers.utils.parseUnits('30')
+        const squeethLiquidityAmount = ethers.utils.parseUnits('100')
+
+        // nft ticks
+        const liquidity = await vaultLib.getLiquidity(
+          sqrtX96Price,
+          nftTickLower,
+          nftTickUpper,
+          wethIsToken0InSqueethPool ? ethLiquidityAmount : squeethLiquidityAmount,
+          wethIsToken0InSqueethPool ? squeethLiquidityAmount: ethLiquidityAmount,
+        )
+        
+        await squeethEthPool.setSlot0Data(sqrtX96Price, currentTick)
+        await uniPositionManager.setMockedProperties(token0, token1, nftTickLower, nftTickUpper, liquidity)
+
         await expect(controller.connect(seller1).depositUniPositionToken(vaultId, tokenId)).to.be.revertedWith('ERC721: transfer caller is not owner nor approved')
       })
 
@@ -181,6 +223,36 @@ describe("Controller: Uni LP tokens collateralization", function () {
         const tokenId = 77;
         await expect(controller.connect(random).depositUniPositionToken(vaultId, tokenId)).to.be.revertedWith('C20')
       })
+
+      it('should revert when trying to deposit a 0 liquidity NFT', async ()=> {
+        // infinite price range
+        const nftTickUpper = 887220
+        const nftTickLower = -887220
+        const { sqrtPrice: sqrtX96Price, tick: currentTick } = getSqrtPriceAndTickBySqueethPrice(scaledSqueethPrice, wethIsToken0InSqueethPool)
+
+        // how much to stimulate as LP deposit
+        const ethLiquidityAmount = ethers.utils.parseUnits('0')
+        const squeethLiquidityAmount = ethers.utils.parseUnits('0')
+
+        // nft ticks
+        const liquidity = await vaultLib.getLiquidity(
+          sqrtX96Price,
+          nftTickLower,
+          nftTickUpper,
+          wethIsToken0InSqueethPool ? ethLiquidityAmount : squeethLiquidityAmount,
+          wethIsToken0InSqueethPool ? squeethLiquidityAmount: ethLiquidityAmount,
+        )
+        
+        await squeethEthPool.setSlot0Data(sqrtX96Price, currentTick)
+        await uniPositionManager.setMockedProperties(token0, token1, nftTickLower, nftTickUpper, liquidity)
+
+        // // deposit NFT
+        await uniPositionManager.connect(seller1).approve(controller.address, uniNFTId)
+
+        await expect(controller.connect(seller1).depositUniPositionToken(vaultId, uniNFTId)).to.be.revertedWith("C25")
+      
+      })
+
 
       it('should deposit and NFT to an existing vault.', async() => {
         // infinite price range

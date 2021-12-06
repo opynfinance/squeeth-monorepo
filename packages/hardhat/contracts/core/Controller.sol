@@ -50,6 +50,7 @@ import {Power2Base} from "../libs/Power2Base.sol";
  * C22: Dust vault left
  * C23: Invalid nft
  * C24: Invalid state
+ * C25: 0 liquidity Uniswap position token
  */
 contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
     using SafeMath for uint256;
@@ -803,8 +804,12 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
         uint256 _uniTokenId
     ) internal {
         //get tokens for uniswap NFT
-        (, , address token0, address token1, , , , , , , , ) = INonfungiblePositionManager(uniswapPositionManager)
-            .positions(_uniTokenId);
+        (, , address token0, address token1, , , , uint128 liquidity, , , , ) = INonfungiblePositionManager(
+            uniswapPositionManager
+        ).positions(_uniTokenId);
+
+        //require that liquidity is above 0
+        require(liquidity > 0, "C25");
         // only check token0 and token1, ignore fee
         // if there are multiple wPowerPerp/weth pools with different fee rate, accept position tokens from any of them
         require((token0 == wPowerPerp && token1 == weth) || (token1 == wPowerPerp && token0 == weth), "C23");

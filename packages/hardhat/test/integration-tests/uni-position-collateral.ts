@@ -53,6 +53,9 @@ describe("Uniswap Position token integration test", function () {
   let vault2LPTokenId: number
   const vault2LpEthAmount = utils.parseEther('10')
 
+  // vault3: uni position token has only eth
+  let vault3LPTokenId: number
+  const vault3LpEthAmount = utils.parseEther('10')
 
   this.beforeAll("Prepare accounts", async() => {
     const accounts = await ethers.getSigners()
@@ -226,6 +229,61 @@ describe("Uniswap Position token integration test", function () {
     expect(vault.NftCollateralId === vault2LPTokenId).to.be.true
   })
 
+  describe('Can not deposit a 0 liquidity uni nft in to vault', async( )=> {
+    
+    it("should revert if a user tries to deposit a uni nft with 0 liquidity", async () => {
+      // create a uni position that's [1000, 2000], so it's now all eth
+      const scaledPrice2000 = BigNumber.from('2000').mul(one).div(oracleScaleFactor)
+      const scaledPrice1000 = BigNumber.from('1000').mul(one).div(oracleScaleFactor)
+      const { tick: tick1000 } = getSqrtPriceAndTickBySqueethPrice(scaledPrice1000, isWethToken0)
+      const { tick: tick2000 } = getSqrtPriceAndTickBySqueethPrice(scaledPrice2000, isWethToken0)
+      const tickUpper = isWethToken0 ? tick1000 : tick2000;
+      const tickLower = isWethToken0 ? tick2000 : tick1000;
+      const tickUpperToUse = Math.ceil(parseInt(tickUpper, 10) / TICK_SPACE) * TICK_SPACE
+      const tickLowerToUse = Math.ceil(parseInt(tickLower, 10) / TICK_SPACE) * TICK_SPACE
+      const token0 = isWethToken0 ? weth.address : squeeth.address
+      const token1 = isWethToken0 ? squeeth.address : weth.address
+  
+      // uni position is all ETH
+      const mintParam = {
+        token0,
+        token1,
+        fee: 3000,
+        tickLower: tickLowerToUse,
+        tickUpper: tickUpperToUse,
+        amount0Desired: isWethToken0 ? vault3LpEthAmount : 0,
+        amount1Desired: isWethToken0 ? 0 : vault3LpEthAmount,
+        amount0Min: 0,
+        amount1Min: 0,
+        recipient: seller.address,
+        deadline: Math.floor(await getNow(ethers.provider) + 8640000),// uint256
+      }
+      
+      await weth.connect(seller).deposit({value: vault3LpEthAmount})
+      await weth.connect(seller).approve(positionManager.address, constants.MaxUint256)
+  
+      const tx = await positionManager.connect(seller).mint(mintParam)
+  
+      const receipt = await tx.wait();
+      vault3LPTokenId = (receipt.events?.find(event => event.event === 'IncreaseLiquidity'))?.args?.tokenId.toNumber();
+  
+      const {liquidity: nftLiquidity} = await positionManager.positions(vault3LPTokenId)
+
+      const decreaseLiquidityParams = {
+        tokenId: vault3LPTokenId,
+        liquidity: nftLiquidity,
+        amount0Min: 0,
+        amount1Min: 0,
+        deadline: Math.floor(await getNow(ethers.provider) + 8640000),// uint256
+      }
+        
+      await positionManager.connect(seller).decreaseLiquidity(decreaseLiquidityParams)
+
+      await positionManager.connect(seller).approve(controller.address, vault3LPTokenId)
+  
+      await expect(controller.connect(seller).mintPowerPerpAmount(0, 0, vault3LPTokenId)).to.be.revertedWith("C25")
+    })
+  })
   describe('Save vault with uni position token', async( )=> {
     
     it("seller can redeem an Uni Position token for weth and wSqueeth to reduce debt in vault0", async () => {
