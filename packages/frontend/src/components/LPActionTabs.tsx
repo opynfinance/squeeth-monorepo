@@ -155,6 +155,7 @@ export const LPActionTabs: React.FC<LPActionTabsProps> = ({
   const {
     existingCollatPercent,
     shortVaults,
+    firstValidVault,
     existingCollat,
     isMintedBal,
     squeethAmount: shortAmt,
@@ -174,7 +175,7 @@ export const LPActionTabs: React.FC<LPActionTabsProps> = ({
   const vaultId = useMemo(() => {
     if (!shortVaults.length) return 0
 
-    return shortVaults[0].id
+    return shortVaults[firstValidVault].id
   }, [shortVaults])
 
   const { mintMinCollatError, burnMinCollatError, minCollRatioError } = useMemo(() => {
@@ -245,17 +246,17 @@ export const LPActionTabs: React.FC<LPActionTabsProps> = ({
       setWithdrawCollat(new BigNumber(0))
       return
     }
-    if (shortVaults.length && amount.isEqualTo(shortVaults[0].shortAmount)) {
-      setWithdrawCollat(shortVaults[0].collateralAmount)
+    if (shortVaults.length && amount.isEqualTo(shortVaults[firstValidVault].shortAmount)) {
+      setWithdrawCollat(shortVaults[firstValidVault].collateralAmount)
     } else {
       // console.log(squeethBal.toNumber(), shortVaults[0].shortAmount.toNumber(), amount.toNumber())
-      getDebtAmount(shortVaults[0].shortAmount.minus(amount)).then((debt) => {
+      getDebtAmount(shortVaults[firstValidVault].shortAmount.minus(amount)).then((debt) => {
         if (!debt) return
         const neededCollat = debt.times(collatPercent / 100)
         setWithdrawCollat(existingCollat.minus(neededCollat))
       })
     }
-  }, [amount.toString(), existingCollat.toString(), shortVaults.length, collatPercent, confirmed])
+  }, [amount.toString(), existingCollat.toString(), shortVaults.length, firstValidVault, collatPercent, confirmed])
 
   const mint = async () => {
     setLoading(true)
@@ -267,7 +268,7 @@ export const LPActionTabs: React.FC<LPActionTabsProps> = ({
   }
 
   const burn = async () => {
-    console.log(shortVaults[0])
+    console.log(shortVaults[firstValidVault])
     setLoading(true)
     const confirmedHash = await burnAndRedeem(vaultId, amount, withdrawCollat)
     setConfirmed(true)

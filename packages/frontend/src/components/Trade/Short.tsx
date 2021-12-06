@@ -161,7 +161,7 @@ type SellType = {
 }
 
 const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
-  const [collateral, setCollateral] = useState(0)
+  const [collateral, setCollateral] = useState(new BigNumber(0))
   const [collatPercent, setCollatPercent] = useState(200)
   const [existingCollat, setExistingCollat] = useState(0)
   const [vaultId, setVaultId] = useState(0)
@@ -171,6 +171,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   const [confirmed, setConfirmed] = useState(false)
   const [txHash, setTxHash] = useState('')
   const [withdrawCollat, setWithdrawCollat] = useState(new BigNumber(0))
+  const [neededCollat, setNeededCollat] = useState(new BigNumber(0))
 
   const classes = useStyles()
   const { openShort, closeShort } = useShortHelper()
@@ -191,20 +192,20 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
     slippageAmount,
   } = useTrade()
   const { squeethAmount: lngAmt } = useLongPositions()
-  const { squeethAmount: shrtAmt, shortVaults, existingCollatPercent } = useShortPositions()
+  const { shortVaults, firstValidVault, existingCollatPercent } = useShortPositions()
 
   const liqPrice = useMemo(() => {
     const rSqueeth = normalizationFactor.multipliedBy(amount || 1).dividedBy(10000)
-    const liqp = collateral / rSqueeth.multipliedBy(1.5).toNumber()
+    const liqp = collateral.dividedBy(rSqueeth.multipliedBy(1.5)).toNumber()
     if (liqp) return liqp
     return 0
   }, [amount, collatPercent, collateral, normalizationFactor.toNumber()])
 
   useEffect(() => {
-    if (!open && shrtAmt.lt(amount)) {
-      setAmount(shrtAmt)
+    if (!open && shortVaults.length && shortVaults[firstValidVault].shortAmount.lt(amount)) {
+      setAmount(shortVaults[firstValidVault].shortAmount)
     }
-  }, [shrtAmt.toNumber(), open])
+  }, [shortVaults, open])
 
   useEffect(() => {
     if (!shortVaults.length) {
@@ -212,19 +213,19 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
       return
     }
 
-    setVaultId(shortVaults[0].id)
+    setVaultId(shortVaults[firstValidVault].id)
   }, [shortVaults.length])
 
   useEffect(() => {
     if (!open) return
-    const debt = new BigNumber((collateral * 100) / collatPercent)
+    const debt = collateral.times(100).dividedBy(new BigNumber(collatPercent))
     getShortAmountFromDebt(debt).then((s) => setAmount(s))
   }, [collatPercent, collateral, normalizationFactor.toNumber()])
 
   useEffect(() => {
     if (!vaultId) return
 
-    setIsVaultApproved(shortVaults[0].operator.toLowerCase() === shortHelper.toLowerCase())
+    setIsVaultApproved(shortVaults[firstValidVault].operator.toLowerCase() === shortHelper.toLowerCase())
   }, [vaultId])
 
   const depositAndShort = async () => {
@@ -234,7 +235,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
         await updateOperator(vaultId, shortHelper)
         setIsVaultApproved(true)
       } else {
-        const confirmedHash = await openShort(vaultId, new BigNumber(amount), new BigNumber(collateral))
+        const confirmedHash = await openShort(vaultId, new BigNumber(amount), collateral)
         setConfirmed(true)
         setTxHash(confirmedHash.transactionHash)
         setTradeSuccess(true)
@@ -247,11 +248,13 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
 
   useEffect(() => {
     if (shortVaults.length) {
-      const _collat: BigNumber = shortVaults[0].collateralAmount
+      const _collat: BigNumber = shortVaults[firstValidVault].collateralAmount
       setExistingCollat(_collat.toNumber())
-      const restOfShort = new BigNumber(shortVaults[0].shortAmount).minus(amount)
+      const restOfShort = new BigNumber(shortVaults[firstValidVault].shortAmount).minus(amount)
+
       getDebtAmount(new BigNumber(restOfShort)).then((debt) => {
-        const neededCollat = debt.times(collatPercent / 100)
+        const _neededCollat = debt.times(collatPercent / 100)
+        setNeededCollat(_neededCollat)
         setWithdrawCollat(_collat.minus(neededCollat))
       })
     }
@@ -264,8 +267,8 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
         await updateOperator(vaultId, shortHelper)
         setIsVaultApproved(true)
       } else {
-        const _collat: BigNumber = shortVaults[0].collateralAmount
-        const restOfShort = new BigNumber(shortVaults[0].shortAmount).minus(amount)
+        const _collat: BigNumber = shortVaults[firstValidVault].collateralAmount
+        const restOfShort = new BigNumber(shortVaults[firstValidVault].shortAmount).minus(amount)
         const _debt: BigNumber = await getDebtAmount(new BigNumber(restOfShort))
         const neededCollat = _debt.times(collatPercent / 100)
         const confirmedHash = await closeShort(vaultId, new BigNumber(amount), _collat.minus(neededCollat))
@@ -296,20 +299,25 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
     let closeError = null
     let existingLongError = null
 
-    if (connected && (shrtAmt.lt(amount) || shrtAmt.isZero())) {
+    if (
+      connected &&
+      shortVaults.length &&
+      (shortVaults[firstValidVault].shortAmount.lt(amount) || shortVaults[firstValidVault].shortAmount.isZero())
+    ) {
       closeError = 'Close amount exceeds position'
     }
-    if (connected && collateral > balance) {
+    if (connected && collateral.toNumber() > balance) {
       openError = 'Insufficient ETH balance'
-    } else if (connected && amount.isGreaterThan(0) && collateral + existingCollat < 0.5) {
+    } else if (connected && amount.isGreaterThan(0) && collateral.plus(existingCollat).lt(0.5)) {
       openError = 'Minimum collateral is 0.5 ETH'
     }
     if (
       connected &&
       !open &&
       amount.isGreaterThan(0) &&
-      amount.lt(shrtAmt) &&
-      withdrawCollat.minus(existingCollat).abs().isLessThan(0.5)
+      shortVaults.length &&
+      amount.lt(shortVaults[firstValidVault].shortAmount) &&
+      neededCollat.isLessThan(0.5)
     ) {
       closeError =
         'You must have at least 0.5 ETH collateral unless you fully close out your position. Either fully close your position, or close out less'
@@ -320,16 +328,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
 
     console.log(openError, closeError, existingLongError)
     return { openError, closeError, existingLongError }
-  }, [
-    amount,
-    balance,
-    shrtAmt.toNumber(),
-    amount,
-    lngAmt.toNumber(),
-    connected,
-    withdrawCollat.toNumber(),
-    existingCollat,
-  ])
+  }, [amount, balance, shortVaults, amount, lngAmt.toNumber(), connected, withdrawCollat.toNumber(), existingCollat])
 
   useEffect(() => {
     setCollatRatio(collatPercent / 100)
@@ -370,24 +369,25 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                 label="Amount"
                 tooltip="Amount of oSQTH to buy"
                 actionTxt="Max"
-                onActionClicked={() => setAmount(shrtAmt)}
+                onActionClicked={() => setAmount(shortVaults[firstValidVault].shortAmount)}
                 unit="oSQTH"
                 error={connected && lngAmt.gt(0) ? !!existingLongError : !!closeError}
                 convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
                 hint={
-                  shrtAmt.lt(amount) ? (
+                  shortVaults.length && shortVaults[firstValidVault].shortAmount.lt(amount) ? (
                     'Close amount exceeds position'
                   ) : connected && lngAmt.gt(0) ? (
                     existingLongError
                   ) : (
                     <div className={classes.hint}>
                       <span className={classes.hintTextContainer}>
-                        <span className={classes.hintTitleText}>Position</span> <span>{shrtAmt.toFixed(6)}</span>
+                        <span className={classes.hintTitleText}>Position</span>{' '}
+                        <span>{shortVaults.length && shortVaults[firstValidVault].shortAmount.toFixed(6)}</span>
                       </span>
                       {amount.toNumber() ? (
                         <>
                           <ArrowRightAltIcon className={classes.arrowIcon} />
-                          <span>{shrtAmt.minus(amount).toFixed(6)}</span>
+                          <span>{shortVaults[firstValidVault].shortAmount.minus(amount).toFixed(6)}</span>
                         </>
                       ) : null}{' '}
                       <span style={{ marginLeft: '4px' }}>oSQTH</span>
@@ -428,7 +428,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
               unit="ETH"
               value={Number(ethPrice.times(sellCloseQuote.amountIn).toFixed(2)).toLocaleString()}
               hint={
-                connected && shrtAmt.gt(0) ? (
+                connected && shortVaults.length && shortVaults[firstValidVault].shortAmount.gt(0) ? (
                   existingLongError
                 ) : (
                   <div className={classes.hint}>
@@ -483,7 +483,13 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                 <PrimaryButton
                   onClick={buyBackAndClose}
                   className={classes.amountInput}
-                  disabled={buyLoading || collatPercent < 150 || !!closeError || lngAmt.gt(0) || shrtAmt.isZero()}
+                  disabled={
+                    buyLoading ||
+                    collatPercent < 150 ||
+                    !!closeError ||
+                    lngAmt.gt(0) ||
+                    (shortVaults.length && shortVaults[firstValidVault].shortAmount.isZero())
+                  }
                   variant="contained"
                   style={{ width: '300px' }}
                 >
@@ -537,7 +543,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
     amount,
     closeError,
     getWSqueethPositionValue,
-    shrtAmt,
+    shortVaults,
     collatPercent,
     sellCloseQuote.amountIn,
     sellCloseQuote.priceImpact,
@@ -572,14 +578,14 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
           </div>
           <div className={classes.thirdHeading}>
             <PrimaryInput
-              value={collateral}
-              onChange={(v) => setCollateral(Number(v))}
+              value={collateral.toNumber().toString()}
+              onChange={(v) => setCollateral(new BigNumber(v))}
               label="Collateral"
               tooltip="Amount of ETH collateral"
               actionTxt="Max"
-              onActionClicked={() => setCollateral(balance)}
+              onActionClicked={() => setCollateral(new BigNumber(balance))}
               unit="ETH"
-              convertedValue={(collateral * Number(ethPrice)).toFixed(2).toLocaleString()}
+              convertedValue={collateral.times(ethPrice).toFixed(2).toLocaleString()}
               hint={
                 !!openError ? (
                   openError
@@ -591,7 +597,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                     {collateral ? (
                       <>
                         <ArrowRightAltIcon className={classes.arrowIcon} />
-                        <span>{(balance - collateral).toFixed(6)}</span>
+                        <span>{new BigNumber(balance).minus(collateral).toFixed(6)}</span>
                       </>
                     ) : null}{' '}
                     <span style={{ marginLeft: '4px' }}>ETH</span>
@@ -641,12 +647,12 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                 <div className={classes.hint}>
                   <span className={classes.hintTextContainer}>
                     <span className={classes.hintTitleText}>Position</span>
-                    <span>{shrtAmt.toFixed(6)}</span>
+                    <span>{shortVaults.length && shortVaults[firstValidVault].shortAmount.toFixed(6)}</span>
                   </span>
                   {quote.amountOut.gt(0) ? (
                     <>
                       <ArrowRightAltIcon className={classes.arrowIcon} />
-                      <span>{shrtAmt.plus(amount).toFixed(6)}</span>
+                      <span>{shortVaults[firstValidVault].shortAmount.plus(amount).toFixed(6)}</span>
                     </>
                   ) : null}{' '}
                   <span style={{ marginLeft: '4px' }}>oSQTH</span>

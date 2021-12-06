@@ -89,11 +89,12 @@ export default function Positions() {
   const { wethAmount: longWethAmt, squeethAmount: wSqueethBal } = useLongPositions()
   const {
     wethAmount: shortWethAmt,
-    squeethAmount: shortSqueethAmt,
+    shortVaults,
     existingCollat,
     existingCollatPercent,
     liquidationPrice,
     vaultId,
+    firstValidVault,
   } = useShortPositions()
   const {
     longGain,
@@ -125,7 +126,7 @@ export default function Positions() {
             <Typography component="span">$ {ethPrice.toFixed(2)}</Typography>
           </div>
         </div>
-        {wSqueethBal.isZero() && shortSqueethAmt.isZero() && (
+        {wSqueethBal.isZero() && shortVaults.length && shortVaults[firstValidVault].shortAmount.isZero() && (
           <div className={classes.empty}>
             <Typography>No active positions</Typography>
           </div>
@@ -177,7 +178,7 @@ export default function Positions() {
             </div>
           </div>
         )}
-        {shortSqueethAmt.isGreaterThan(0) && (
+        {shortVaults.length && shortVaults[firstValidVault].shortAmount.isGreaterThan(0) && (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>Short Squeeth</Typography>
@@ -191,7 +192,9 @@ export default function Positions() {
                   <Typography variant="caption" component="span" color="textSecondary">
                     Position
                   </Typography>
-                  <Typography variant="body1">{shortSqueethAmt.toFixed(6)}&nbsp; oSQTH</Typography>
+                  <Typography variant="body1">
+                    {shortVaults.length && shortVaults[firstValidVault].shortAmount.toFixed(6)}&nbsp; oSQTH
+                  </Typography>
                   <Typography variant="body2" color="textSecondary">
                     ${buyQuote.times(ethPrice).toFixed(2)}
                   </Typography>
@@ -207,7 +210,7 @@ export default function Positions() {
                       <Typography variant="body1" className={shortGain < 0 ? classes.red : classes.green}>
                         ${buyQuote.times(ethPrice).minus(shortUsdAmt.abs()).toFixed(2)}
                       </Typography>
-                      <Typography variant="caption" className={longGain < 0 ? classes.red : classes.green}>
+                      <Typography variant="caption" className={shortGain < 0 ? classes.red : classes.green}>
                         {(shortGain || 0).toFixed(2)}%
                       </Typography>
                     </>

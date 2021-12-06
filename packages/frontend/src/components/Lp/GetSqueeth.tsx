@@ -67,7 +67,7 @@ const Mint: React.FC = () => {
   const { wSqueeth } = useAddresses()
   const squeethBal = useTokenBalance(wSqueeth, 10, WSQUEETH_DECIMALS)
   const { balance, connected } = useWallet()
-  const { existingCollatPercent, existingCollat, shortVaults } = useShortPositions()
+  const { existingCollatPercent, existingCollat, shortVaults, firstValidVault } = useShortPositions()
   const { getWSqueethPositionValue } = useSqueethPool()
   const { normFactor: normalizationFactor, openDepositAndMint, getShortAmountFromDebt } = useController()
   const { dispatch } = useLPState()
@@ -80,7 +80,7 @@ const Mint: React.FC = () => {
   const vaultId = useMemo(() => {
     if (!shortVaults.length) return 0
 
-    return shortVaults[0].id
+    return shortVaults[firstValidVault].id
   }, [shortVaults])
 
   const mint = async () => {

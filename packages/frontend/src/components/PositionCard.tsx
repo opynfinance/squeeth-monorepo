@@ -105,7 +105,6 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
     sellQuote,
     longGain,
     shortGain,
-    shortSqueethAmt,
     wSqueethBal,
     positionType,
     longUsdAmt,
@@ -115,7 +114,7 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
   } = usePnL()
   const { tradeAmount, actualTradeType, isOpenPosition, quote, tradeSuccess, setTradeSuccess, tradeType } = useTrade()
   const ethPrice = useETHPrice()
-  const { squeethAmount: shrtAmt, vaultId } = useShortPositions()
+  const { shortVaults, firstValidVault, vaultId } = useShortPositions()
   const { squeethAmount: lngAmt } = useLongPositions()
   const [fetchingNew, setFetchingNew] = useState(false)
 
@@ -156,18 +155,24 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
   const { postTradeAmt, postPosition } = useMemo(() => {
     let postTradeAmt = new BigNumber(0)
     let postPosition = PositionType.NONE
-    if (actualTradeType === TradeType.LONG && !shrtAmt.gt(0)) {
+    if (actualTradeType === TradeType.LONG && shortVaults.length && !shortVaults[firstValidVault].shortAmount.gt(0)) {
       if (isOpenPosition) postTradeAmt = wSqueethBal.plus(quote.amountOut)
       else postTradeAmt = wSqueethBal.minus(tradeAmount)
       if (postTradeAmt.gt(0)) postPosition = PositionType.LONG
     } else if (actualTradeType === TradeType.SHORT && !lngAmt.gt(0)) {
-      if (isOpenPosition) postTradeAmt = shortSqueethAmt.plus(tradeAmount)
-      else postTradeAmt = shortSqueethAmt.minus(tradeAmount)
+      if (isOpenPosition)
+        postTradeAmt = shortVaults.length
+          ? shortVaults[firstValidVault].shortAmount.plus(tradeAmount)
+          : new BigNumber(0)
+      else
+        postTradeAmt = shortVaults.length
+          ? shortVaults[firstValidVault].shortAmount.minus(tradeAmount)
+          : new BigNumber(0)
       if (postTradeAmt.gt(0)) postPosition = PositionType.SHORT
     }
 
     return { postTradeAmt, postPosition }
-  }, [wSqueethBal.toNumber(), shortSqueethAmt.toNumber(), tradeAmount, actualTradeType, quote.amountOut.toNumber()])
+  }, [wSqueethBal.toNumber(), shortVaults, tradeAmount, actualTradeType, quote.amountOut.toNumber()])
 
   const getPostPositionBasedValue = useCallback(
     (long: any, short: any, none: any, loadingMsg?: any) => {
@@ -200,7 +205,7 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
         </Typography>
         <span className={clsx(classes.title, titleClass)}>{positionType.toUpperCase()}</span>
         {postPosition === positionType ||
-        (tradeType === TradeType.LONG && shrtAmt.gt(0)) ||
+        (tradeType === TradeType.LONG && shortVaults.length && shortVaults[firstValidVault].shortAmount.gt(0)) ||
         (tradeType === TradeType.SHORT && lngAmt.gt(0)) ? null : (
           <>
             <ArrowRightAltIcon className={classes.arrow} />
@@ -212,10 +217,14 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', marginTop: '.5em' }}>
             <Typography component="span" style={{ fontWeight: 600 }}>
-              {getPositionBasedValue(wSqueethBal.toFixed(6), shortSqueethAmt.toFixed(6), 0)}
+              {getPositionBasedValue(
+                wSqueethBal.toFixed(6),
+                shortVaults.length && shortVaults[firstValidVault].shortAmount.toFixed(6),
+                0,
+              )}
             </Typography>
             {(tradeType === TradeType.SHORT && lngAmt.gt(0)) ||
-            (tradeType === TradeType.LONG && shrtAmt.gt(0)) ||
+            (tradeType === TradeType.LONG && shortVaults.length && shortVaults[firstValidVault].shortAmount.gt(0)) ||
             tradeAmount.isLessThanOrEqualTo(0) ||
             tradeAmount.isNaN() ? null : (
               <>
@@ -225,7 +234,11 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
                   style={{
                     fontWeight: 600,
                     color: postTradeAmt.gte(
-                      getPositionBasedValue(wSqueethBal.toFixed(6), shortSqueethAmt.toFixed(6), 0),
+                      getPositionBasedValue(
+                        wSqueethBal.toFixed(6),
+                        shortVaults.length && shortVaults[firstValidVault].shortAmount.toFixed(6),
+                        0,
+                      ),
                     )
                       ? '#49D273'
                       : '#f5475c',

@@ -157,10 +157,11 @@ export const useShortPositions = () => {
   const [existingCollat, setExistingCollat] = useState(new BigNumber(0))
   const [liquidationPrice, setLiquidationPrice] = useState(0)
   const [isMintedBal, setIsMintedBal] = useState(false)
+  const [firstValidVault, setFirstValidVault] = useState(0)
 
   const swaps = data?.swaps
   const isWethToken0 = parseInt(weth, 16) < parseInt(wSqueeth, 16)
-  const vaultId = shortVaults[0]?.id || 0
+  const vaultId = shortVaults[firstValidVault]?.id || 0
 
   const {
     squeethAmount,
@@ -227,14 +228,26 @@ export const useShortPositions = () => {
   )
 
   useEffect(() => {
-    if (shortVaults.length && shortVaults[0].shortAmount) {
-      const _collat: BigNumber = shortVaults[0].collateralAmount
+    for (let i = 0; i < shortVaults.length; i++) {
+      if (shortVaults[i].shortAmount.isGreaterThan(0)) {
+        setFirstValidVault(i)
+        console.log('i ' + i)
+        console.log('fvv ' + firstValidVault)
+      }
+    }
+  }, [shortVaults, shortVaults.length])
+
+  useEffect(() => {
+    if (shortVaults.length && shortVaults[firstValidVault].shortAmount) {
+      const _collat: BigNumber = shortVaults[firstValidVault].collateralAmount
       setExistingCollat(_collat)
-      getDebtAmount(new BigNumber(shortVaults[0].shortAmount)).then((debt) => {
+      getDebtAmount(new BigNumber(shortVaults[firstValidVault].shortAmount)).then((debt) => {
         if (debt && debt.isPositive()) {
           setIsMintedBal(true)
           setExistingCollatPercent(Number(_collat.div(debt).times(100).toFixed(1)))
-          const rSqueeth = normalizationFactor.multipliedBy(new BigNumber(shortVaults[0].shortAmount)).dividedBy(10000)
+          const rSqueeth = normalizationFactor
+            .multipliedBy(new BigNumber(shortVaults[firstValidVault].shortAmount))
+            .dividedBy(10000)
           setLiquidationPrice(_collat.div(rSqueeth.multipliedBy(1.5)).toNumber())
         } else {
           setIsMintedBal(false)
@@ -263,6 +276,7 @@ export const useShortPositions = () => {
     usdAmount,
     isMintedBal,
     shortVaults,
+    firstValidVault,
     liquidationPrice,
     existingCollat,
     existingCollatPercent,
@@ -284,7 +298,7 @@ export const usePnL = () => {
   } = useLongPositions()
   const {
     usdAmount: shortUsdAmt,
-    squeethAmount: shortSqueethAmt,
+    shortVaults: shortSqueethVaults,
     realizedPNL: shortRealizedPNL,
     refetch: refetchShort,
   } = useShortPositions()
@@ -303,9 +317,9 @@ export const usePnL = () => {
 
   const positionType = useMemo(() => {
     if (wSqueethBal.isGreaterThan(0)) return PositionType.LONG
-    if (shortSqueethAmt.isGreaterThan(0)) return PositionType.SHORT
+    if (shortSqueethVaults.length && shortSqueethVaults[0].shortAmount.isGreaterThan(0)) return PositionType.SHORT
     else return PositionType.NONE
-  }, [wSqueethBal.toNumber(), shortSqueethAmt.toNumber()])
+  }, [wSqueethBal.toNumber(), shortSqueethVaults])
 
   const refetch = () => {
     refetchLong()
@@ -316,7 +330,8 @@ export const usePnL = () => {
     if (!ready) return
 
     const p1 = getSellQuote(wSqueethBal).then(setSellQuote)
-    const p2 = getBuyQuote(shortSqueethAmt).then((val) => setBuyQuote(val.amountIn))
+    const buyQuoteAmt = shortSqueethVaults.length ? shortSqueethVaults[0].shortAmount : new BigNumber(0)
+    const p2 = getBuyQuote(buyQuoteAmt).then((val) => setBuyQuote(val.amountIn))
     Promise.all([p1, p2]).then(() => setLoading(false))
   }, [wSqueethBal.toNumber(), ready])
 
@@ -346,7 +361,6 @@ export const usePnL = () => {
     longUsdAmt,
     shortUsdAmt,
     wSqueethBal,
-    shortSqueethAmt,
     positionType,
     loading,
     shortRealizedPNL,
