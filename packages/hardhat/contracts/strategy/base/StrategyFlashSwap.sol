@@ -57,13 +57,17 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
 
         SwapCallbackData memory data = abi.decode(_data, (SwapCallbackData));
         (address tokenIn, address tokenOut, uint24 fee) = data.path.decodeFirstPool();
+
+        //ensure that callback comes from uniswap pool
         CallbackValidation.verifyCallback(factory, tokenIn, tokenOut, fee);
 
+        //determine the amount that needs to be repaid as part of the flashswap
         uint256 amountToPay =
             amount0Delta > 0
                 ?  uint256(amount0Delta)
                 :  uint256(amount1Delta);
         
+        //calls the strategy function that uses the proceeds from flash swap and executes logic to have an amount of token to repay the flash swap
         _strategyFlash(data.caller, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource);
     }
 
@@ -78,13 +82,15 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
      * @param _data arbitrary data assigned with the call 
      */
     function _exactInFlashSwap(address _tokenIn, address _tokenOut, uint24 _fee, uint256 _amountIn, uint256 _amountOutMinimum, uint8 _callSource, bytes memory _data) internal {
+        //calls internal uniswap swap function that will trigger a callback for the flash swap
         uint256 amountOut = _exactInputInternal(
             _amountIn,
             address(this),
             uint160(0),
             SwapCallbackData({path: abi.encodePacked(_tokenIn, _fee, _tokenOut), caller: msg.sender, callSource: _callSource, callData: _data})
         );
-
+       
+        //slippage limit check
         require(amountOut >= _amountOutMinimum, "amount out less than min");
     }
 
@@ -100,13 +106,15 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
      * @param _data arbitrary data assigned with the call 
      */
     function _exactOutFlashSwap(address _tokenIn, address _tokenOut, uint24 _fee, uint256 _amountOut, uint256 _amountInMaximum, uint8 _callSource, bytes memory _data) internal {
+        //calls internal uniswap swap function that will trigger a callback for the flash swap
         uint256 amountIn = _exactOutputInternal(
             _amountOut,
             address(this),
             uint160(0),
             SwapCallbackData({path: abi.encodePacked(_tokenOut, _fee, _tokenIn), caller: msg.sender, callSource: _callSource, callData: _data})
         );
-
+        
+        //slippage limit check
         require(amountIn <= _amountInMaximum, "amount in greater than max");
     }
 
@@ -129,6 +137,7 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
     * @param _amountIn amount of token to pay
     * @param _recipient recipient for receive
     * @param _sqrtPriceLimitX96 price limit
+    * @return amount of token bought (amountOut)
     */
     function _exactInputInternal(
         uint256 _amountIn,
@@ -137,9 +146,13 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
         SwapCallbackData memory data
     ) private returns (uint256) {
         (address tokenIn, address tokenOut, uint24 fee) = data.path.decodeFirstPool();
-
+       
+        //uniswap token0 has a lower address than token1
+        //if tokenIn<tokenOut, we are selling an exact amount of token0 in exchange for token1
+        //zeroForOne determines which token is being sold and which is being bought
         bool zeroForOne = tokenIn < tokenOut;
 
+        //swap on uniswap, including data to trigger call back for flashswap
         (int256 amount0, int256 amount1) =
             _getPool(tokenIn, tokenOut, fee).swap(
                 _recipient,
@@ -150,7 +163,8 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
                     : _sqrtPriceLimitX96,
                 abi.encode(data)
             );
-
+        
+        //determine the amountOut based on which token has a lower address
         return uint256(-(zeroForOne ? amount1 : amount0));
     }
 
@@ -159,6 +173,7 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
     * @param _amountOut amount of token to receive
     * @param _recipient recipient for receive
     * @param _sqrtPriceLimitX96 price limit
+    * @return amount of token sold (amountIn)
     */
     function _exactOutputInternal(
         uint256 _amountOut,
@@ -168,8 +183,12 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
     ) private returns (uint256) {
         (address tokenOut, address tokenIn, uint24 fee) = data.path.decodeFirstPool();
 
+        //uniswap token0 has a lower address than token1
+        //if tokenIn<tokenOut, we are buying an exact amount of token1 in exchange for token0
+        //zeroForOne determines which token is being sold and which is being bought
         bool zeroForOne = tokenIn < tokenOut;
-
+        
+        //swap on uniswap, including data to trigger call back for flashswap
         (int256 amount0Delta, int256 amount1Delta) =
             _getPool(tokenIn, tokenOut, fee).swap(
                 _recipient,
@@ -181,6 +200,7 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
                 abi.encode(data)
             );
 
+        //determine the amountIn and amountOut based on which token has a lower address
         (uint256 amountIn, uint256 amountOutReceived) = zeroForOne
             ? (uint256(amount0Delta), uint256(-amount1Delta))
             : (uint256(amount1Delta), uint256(-amount0Delta));

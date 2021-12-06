@@ -60,15 +60,19 @@ contract StrategyBase is ERC20 {
     }
 
     /**
-     * @notice get power token strategy details 
-     * @return operator, nft collateral id, short amount, collateral amount
-     */
+     * @notice get the vault composition of the strategy 
+     * @return operator
+     * @return nft collateral id
+     * @return collateral amount
+     * @return short amount
+    */
     function getVaultDetails() external view returns (address, uint256, uint256, uint256) {
         return _getVaultDetails();
     }
 
     /**
-     * @notice mint WPowerPerp
+     * @notice mint WPowerPerp and deposit collateral
+    * @dev this function will not send WPowerPerp to msg.sender if _keepWSqueeth == true
      * @param _to receiver address
      * @param _wAmount amount of WPowerPerp to mint
      * @param _collateral amount of collateral to deposit
@@ -88,11 +92,11 @@ contract StrategyBase is ERC20 {
     }
 
     /**
-     * @notice burn WPowerPerp
+     * @notice burn WPowerPerp and withdraw collateral
      * @dev this function will not take WPowerPerp from msg.sender if _isOwnedWSqueeth == true
      * @param _from WPowerPerp holder address
-     * @param _amount amount to burn
-     * @param _collateralToWithdraw amount of collateral to unlock from WPowerPerp vault
+     * @param _amount amount of wPowerPerp to burn
+     * @param _collateralToWithdraw amount of collateral to withdraw
      * @param _isOwnedWSqueeth transfer WPowerPerp from holder if it is set to false
      */
     function _burnWPowerPerp(
@@ -118,7 +122,7 @@ contract StrategyBase is ERC20 {
     }
 
     /**
-     * @notice get strategy debt amount from specific strategy token amount
+     * @notice get strategy debt amount for a specific strategy token amount
      * @param _strategyAmount strategy amount
      * @return debt amount
      */
@@ -128,8 +132,11 @@ contract StrategyBase is ERC20 {
     }
 
     /**
-     * @notice get strategy vault details
-     * @return operator address, vault NFT id, short and collateral amounts
+     * @notice get the vault composition of the strategy 
+     * @return operator
+     * @return nft collateral id
+     * @return collateral amount
+     * @return short amount
      */
     function _getVaultDetails() internal view returns (address, uint256, uint256, uint256) {
         VaultLib.Vault memory strategyVault = powerTokenController.vaults(vaultId);
