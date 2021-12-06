@@ -6,24 +6,34 @@ import { WPowerPerp } from "../../typechain";
 
 describe("WPowerPerp", function () {
   let wsqueeth: WPowerPerp;
+  let address1: SignerWithAddress
   let controller: SignerWithAddress
   let random: SignerWithAddress
-  
-  this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async() => {
-    wsqueeth = (await (await ethers.getContractFactory("WPowerPerp")).deploy('Wrapped Squeeth', 'WSQU')) as WPowerPerp;
 
+  this.beforeAll("Prepare accounts", async() => {
     const accounts = await ethers.getSigners();
-    const [_controller, _random] = accounts;
+    const [_address1, _controller, _random] = accounts;
+    address1 = _address1
     controller = _controller
     random = _random
+  });
+  
+  describe("Deploymenl", async() => {
+    it("Deployment", async function () {
+      const WPowerPerpContract = await ethers.getContractFactory("WPowerPerp");
+      wsqueeth = (await WPowerPerpContract.deploy('Wrapped Squeeth', 'WSQU')) as WPowerPerp;
+    });
   })
 
   describe("Initialization", async () => {
-    it("should revert when calling init with invalid address", async () => {
+    it("should revert when calling init with invalid address as controller", async () => {
       await expect(wsqueeth.init(constants.AddressZero)).to.be.revertedWith('Invalid controller address')
     })
-    it("should return initial with controller address", async () => {
-      await wsqueeth.init(controller.address)
+    it("should revert when calling init from a random address", async () => {
+      await expect(wsqueeth.connect(random).init(controller.address)).to.be.revertedWith('Invalid caller of init')
+    })
+    it("should init with controller address when called by the deployer", async () => {
+      await wsqueeth.connect(address1).init(controller.address)
       expect(await wsqueeth.controller()).to.be.eq(controller.address)
     })
     it('should revert when trying to init again', async() => {

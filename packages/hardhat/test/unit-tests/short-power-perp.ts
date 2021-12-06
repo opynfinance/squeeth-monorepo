@@ -26,14 +26,20 @@ describe("ShortPowerPerp", function () {
   });
 
   describe("Initialization", async () => {
-    it("should revert when calling init with invalid address", async () => {
+    it("should revert when calling init with invalid address as controller", async () => {
       await expect(shortSqueeth.init(constants.AddressZero)).to.be.revertedWith('Invalid controller address')
     })
-    it("Should be able to init contract", async () => {
-      await shortSqueeth.init(controller.address);
+    it("should revert when calling init from a random address", async() => {
+      await expect(shortSqueeth.connect(random).init(controller.address)).to.be.revertedWith("Invalid caller of init")
+    })
+    it("Should be able to init contract when called by the deployer", async () => {
+      await shortSqueeth.connect(address1).init(controller.address);
       const controllerAddress = await shortSqueeth.controller();
-      expect(controllerAddress).to.be.eq(controller.address,"Controller address mismatch");
-    });
+      expect(controllerAddress).to.be.eq(controller.address,"Controllr address mismatch");
+    })
+    it("should revert when trying to init again", async () => {
+      await expect(shortSqueeth.connect(address1).init(controller.address)).to.be.revertedWith("Initializable: contract is already initialized")
+    })
   });
 
   describe("Access control", async () => {

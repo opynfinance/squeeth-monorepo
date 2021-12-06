@@ -32,7 +32,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await ethers.provider.waitForTransaction(tx.hash, 1)
     console.log(`Squeeth init done 🍋`);
   } catch (error) {
-    console.log(`Squeeth already init.`)
+    console.log(`Squeeth already init or wrong deployer address.`)
   }
   
   try {
@@ -40,7 +40,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await ethers.provider.waitForTransaction(tx.hash, 1)
     console.log(`ShortPowerPerp init done 🥭`);
   } catch (error) {
-    console.log(`ShortPowerPerp already init.`)
+    console.log(`ShortPowerPerp already init or wrong deployer address.`)
   }
 
   

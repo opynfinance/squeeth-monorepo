@@ -143,8 +143,6 @@ export const getPoolAddress = async (
  * @returns 
  */
  export const deploySqueethCoreContracts= async(weth: Contract, dai: Contract, positionManager: Contract, uniswapFactory: Contract, wsqueethEthPrice?: number, ethDaiPrice?: number ) => {
-  // const { deployer } = await getNamedAccounts();
-
   const ControllerContract = await ethers.getContractFactory("Controller");
 
   const OracleContract = await ethers.getContractFactory("Oracle");

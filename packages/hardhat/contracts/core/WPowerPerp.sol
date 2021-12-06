@@ -11,13 +11,16 @@ import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
  */
 contract WPowerPerp is ERC20, Initializable, IWPowerPerp {
     address public controller;
+    address private immutable deployer;
 
     /**
      * @notice long power perpetual constructor
      * @param _name token name for ERC20
      * @param _symbol token symbol for ERC20
      */
-    constructor(string memory _name, string memory _symbol) ERC20(_name, _symbol) {}
+    constructor(string memory _name, string memory _symbol) ERC20(_name, _symbol) {
+        deployer = msg.sender;
+    }
 
     modifier onlyController() {
         require(msg.sender == controller, "Not controller");
@@ -29,6 +32,7 @@ contract WPowerPerp is ERC20, Initializable, IWPowerPerp {
      * @param _controller controller address
      */
     function init(address _controller) external initializer {
+        require(msg.sender == deployer, "Invalid caller of init");
         require(_controller != address(0), "Invalid controller address");
         controller = _controller;
     }

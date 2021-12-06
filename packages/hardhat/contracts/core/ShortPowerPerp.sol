@@ -13,6 +13,7 @@ contract ShortPowerPerp is ERC721, Initializable {
     uint256 public nextId = 1;
 
     address public controller;
+    address private immutable deployer;
 
     modifier onlyController() {
         require(msg.sender == controller, "Not controller");
@@ -24,13 +25,16 @@ contract ShortPowerPerp is ERC721, Initializable {
      * @param _name token name for ERC721
      * @param _symbol token symbol for ERC721
      */
-    constructor(string memory _name, string memory _symbol) ERC721(_name, _symbol) {}
+    constructor(string memory _name, string memory _symbol) ERC721(_name, _symbol) {
+        deployer = msg.sender;
+    }
 
     /**
      * @notice initialize short contract
      * @param _controller controller address
      */
     function init(address _controller) public initializer {
+        require(msg.sender == deployer, "Invalid caller of init");
         require(_controller != address(0), "Invalid controller address");
         controller = _controller;
     }
