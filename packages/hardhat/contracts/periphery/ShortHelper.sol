@@ -113,7 +113,7 @@ contract ShortHelper {
         // wrap eth to weth
         weth.deposit{value: msg.value}();
 
-        // pay weth and get squeeth in return.
+        // pay weth and get wPowerPerp in return.
         uint256 amountIn = router.exactOutputSingle(_exactOutputParams);
 
         controller.burnWPowerPerpAmount(_vaultId, _wPowerPerpAmount, _withdrawAmount);

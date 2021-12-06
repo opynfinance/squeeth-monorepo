@@ -10,10 +10,10 @@ contract VaultLibTester {
   function getUniPositionBalances(
       address _positionManager,
       uint256 _tokenId,
-      int24 _squeethPoolTick,
+      int24 _wPowerPerpPoolTick,
       bool _isWethToken0
-    ) external view returns (uint256 ethAmount, uint256 squeethAmount) {
-        return VaultLib._getUniPositionBalances(_positionManager, _tokenId, _squeethPoolTick, _isWethToken0);
+    ) external view returns (uint256 ethAmount, uint256 wPowerPerpAmount) {
+        return VaultLib._getUniPositionBalances(_positionManager, _tokenId, _wPowerPerpPoolTick, _isWethToken0);
     }
 
   /**

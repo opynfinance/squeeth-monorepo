@@ -88,7 +88,7 @@ describe("VaultLib", function () {
       it('should get the squeeth / eth amount similar to our deposit amount', async() => {        
         const result = await vaultLib.getUniPositionBalances(uniPositionManager.address, nftTokenId, currentTick, wethIsToken0)
         // about 0.001 squeeth
-        expect(isSimilar(result.squeethAmount.toString(), wsqueethLiquidityAmount.toString())).to.be.true
+        expect(isSimilar(result.wPowerPerpAmount.toString(), wsqueethLiquidityAmount.toString())).to.be.true
         // about 3 eth
         expect(isSimilar(result.ethAmount.toString(), ethLiquidityAmount.toString())).to.be.true
       })
@@ -99,16 +99,16 @@ describe("VaultLib", function () {
         const { sqrtPrice, tick: newTick } = getSqrtPriceAndTickBySqueethPrice(newScaledSqueethPrice, wethIsToken0)
         await squeethEthPool.setSlot0Data(sqrtPrice, newTick)
         
-        const { ethAmount, squeethAmount } = await vaultLib.getUniPositionBalances(
+        const { ethAmount, wPowerPerpAmount } = await vaultLib.getUniPositionBalances(
           uniPositionManager.address, 
           nftTokenId, 
           newTick,
           wethIsToken0
         )
         // x * y = k
-        expect(isSimilar(ethAmount.mul(squeethAmount).toString(), ethLiquidityAmount.mul(wsqueethLiquidityAmount).toString())).to.be.true
+        expect(isSimilar(ethAmount.mul(wPowerPerpAmount).toString(), ethLiquidityAmount.mul(wsqueethLiquidityAmount).toString())).to.be.true
         // eth / squeeth is similar to new price
-        expect(isSimilar(ethAmount.mul(oracleScaleFactor).toString(), newPrice.mul(squeethAmount).toString(), 3)).to.be.true
+        expect(isSimilar(ethAmount.mul(oracleScaleFactor).toString(), newPrice.mul(wPowerPerpAmount).toString(), 3)).to.be.true
       })
     })
     
@@ -174,7 +174,7 @@ describe("VaultLib", function () {
             wethIsToken0
           )
           // about 0.01 squeeth
-          expect(isSimilar(result.squeethAmount.toString(), wsqueethLiquidityAmount.toString(), 3)).to.be.true
+          expect(isSimilar(result.wPowerPerpAmount.toString(), wsqueethLiquidityAmount.toString(), 3)).to.be.true
           // about 30 eth
           expect(isSimilar(result.ethAmount.toString(), ethLiquidityAmount.toString(), 3)).to.be.true
         })
@@ -195,7 +195,7 @@ describe("VaultLib", function () {
             newTick,
             wethIsToken0
           )
-          expect(result.squeethAmount.isZero()).to.be.true
+          expect(result.wPowerPerpAmount.isZero()).to.be.true
 
           const upperBound = 4500 / oracleScaleFactor.toNumber()
           const lowerBound = 2000 / oracleScaleFactor.toNumber()
@@ -232,7 +232,7 @@ describe("VaultLib", function () {
             ? getYAmountAboveRange((1/upperBound), (1/lowerBound), liquidity.toString())
             : getXAmountBelowRange(lowerBound, upperBound, liquidity.toString())
         
-          expect(isSimilar(result.squeethAmount.toString(), expectedSqueethAmount.toString())).to.be.true             
+          expect(isSimilar(result.wPowerPerpAmount.toString(), expectedSqueethAmount.toString())).to.be.true             
 
         })
       })
@@ -270,7 +270,7 @@ describe("VaultLib", function () {
             ? getYAmountAboveRange((1/upperBound), (1/currentPrice), liquidity.toString())
             : getXAmountBelowRange(currentPrice, upperBound, liquidity.toString())
 
-          expect(isSimilar(result.squeethAmount.toString(), expectedSqueethAmount.toString())).to.be.true
+          expect(isSimilar(result.wPowerPerpAmount.toString(), expectedSqueethAmount.toString())).to.be.true
         })
       })
     })

@@ -929,8 +929,8 @@ contract Controller is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice redeem uniswap v3 position in a vault for its constituent eth and wSqueeth
-     * @notice this will increase vault collateral by the amount of eth, and decrease debt by the amount of wSqueeth
+     * @notice redeem uniswap v3 position in a vault for its constituent eth and wPowerPerp
+     * @notice this will increase vault collateral by the amount of eth, and decrease debt by the amount of wPowerPerp
      * @dev will be executed before liquidation if there's an NFT in the vault
      * @dev pays a 2% bounty to the liquidator if called by liquidate()
      * @dev will update the vault memory in-place
@@ -982,14 +982,14 @@ contract Controller is Ownable, ReentrancyGuard {
      * @notice pay fee recipient
      * @dev pay in eth from either the vault or the deposit amount
      * @param _vault the Vault memory to update
-     * @param _wSqueethAmount the amount of wSqueeth minting
+     * @param _wPowerPerpAmount the amount of wPowerPerpAmount minting
      * @param _depositAmount the amount of eth depositing or withdrawing
      * @param _normalizationFactor current normalization factor
      * @return the amount of actual deposited eth into the vault, this is less than the original amount if a fee was taken
      */
     function _getFee(
         VaultLib.Vault memory _vault,
-        uint256 _wSqueethAmount,
+        uint256 _wPowerPerpAmount,
         uint256 _depositAmount,
         uint256 _normalizationFactor
     ) internal view returns (uint256, uint256) {
@@ -997,7 +997,7 @@ contract Controller is Ownable, ReentrancyGuard {
         if (cachedFeeRate == 0) return (uint256(0), _depositAmount);
         uint256 depositAmountAfterFee;
         uint256 ethEquivalentMinted = Power2Base._getDebtValueInEth(
-            _wSqueethAmount,
+            _wPowerPerpAmount,
             oracle,
             ethQuoteCurrencyPool,
             weth,
@@ -1191,8 +1191,8 @@ contract Controller is Ownable, ReentrancyGuard {
     /**
      * @notice get the expected excess, burnAmount and bounty if Uniswap position token got burned
      * @dev this function will update the vault memory in-place
-     * @return burnAmount amount of wSqueeth that should be burned
-     * @return wPowerPerpExcess amount of wSqueeth that should be send to the vault owner
+     * @return burnAmount amount of wPowerPerp that should be burned
+     * @return wPowerPerpExcess amount of wPowerPerp that should be send to the vault owner
      * @return bounty amount of bounty should be paid out to caller
      */
     function _getReduceDebtResultInVault(

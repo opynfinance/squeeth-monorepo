@@ -346,8 +346,8 @@ describe("Controller: Uni LP tokens collateralization", function () {
 
       it('should be able to mint more squeeth after lp deposit', async() => {
 
-        const { ethAmount, squeethAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, uniNFTId, currentTick, wethIsToken0InSqueethPool)
-        const equivalentCollateral = ethAmount.add(squeethAmount.mul(ethDaiPrice))
+        const { ethAmount, wPowerPerpAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, uniNFTId, currentTick, wethIsToken0InSqueethPool)
+        const equivalentCollateral = ethAmount.add(wPowerPerpAmount.mul(ethDaiPrice))
         const vaultBefore = await controller.vaults(vaultId)
         
         const squeethToMint = equivalentCollateral.div(ethDaiPrice).mul(2).div(3)
@@ -444,7 +444,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       it('should become underwater if squeeth price increase, and LP token has no enough eth to cover short position.', async () => {
         const result = await vaultLib.getUniPositionBalances(uniPositionManager.address, uniNFTId, newTick, wethIsToken0InSqueethPool)
         // LP token worth 0 squeeth
-        expect(result.squeethAmount.isZero()).to.be.true
+        expect(result.wPowerPerpAmount.isZero()).to.be.true
         // not enough eth value in LP token!
         const requiredCollateral = mintAmount.mul(newSqueethPrice).mul(3).div(2)
         expect(result.ethAmount.lt(requiredCollateral)).to.be.true
@@ -453,17 +453,17 @@ describe("Controller: Uni LP tokens collateralization", function () {
       })
       it('should be able to liquidate the NFT', async() => {
         const vaultBefore = await controller.vaults(vaultId)
-        const { ethAmount, squeethAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, uniNFTId, newTick, wethIsToken0InSqueethPool)
+        const { ethAmount, wPowerPerpAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, uniNFTId, newTick, wethIsToken0InSqueethPool)
         
         // mint squeeth for liquidator
-        const liquidationAmount = vaultBefore.shortAmount.sub(squeethAmount).div(2)
+        const liquidationAmount = vaultBefore.shortAmount.sub(wPowerPerpAmount).div(2)
         const ethCollateral = liquidationAmount.mul(newSqueethPrice).div(one).mul(2) // with 2 collateral ratio
         await controller.connect(liquidator).mintPowerPerpAmount(0, liquidationAmount, 0, {value: ethCollateral})
 
         expect(vaultBefore.NftCollateralId === 0).to.be.false
 
-        const token0ToSet = wethIsToken0InSqueethPool ? ethAmount : squeethAmount
-        const token1ToSet = wethIsToken0InSqueethPool ? squeethAmount : ethAmount
+        const token0ToSet = wethIsToken0InSqueethPool ? ethAmount : wPowerPerpAmount
+        const token1ToSet = wethIsToken0InSqueethPool ? wPowerPerpAmount : ethAmount
         await uniPositionManager.setAmount0Amount1ToDecrease(token0ToSet, token1ToSet)
 
         const balanceBefore = await provider.getBalance(liquidator.address)
@@ -499,13 +499,13 @@ describe("Controller: Uni LP tokens collateralization", function () {
 
         const result = await vaultLib.getUniPositionBalances(uniPositionManager.address, uniNFTId, newTick, wethIsToken0InSqueethPool)
 
-        const token0ToSet = wethIsToken0InSqueethPool ? result.ethAmount : result.squeethAmount
-        const token1ToSet = wethIsToken0InSqueethPool ? result.squeethAmount : result.ethAmount
+        const token0ToSet = wethIsToken0InSqueethPool ? result.ethAmount : result.wPowerPerpAmount
+        const token1ToSet = wethIsToken0InSqueethPool ? result.wPowerPerpAmount : result.ethAmount
         await uniPositionManager.setAmount0Amount1ToDecrease(token0ToSet, token1ToSet)
 
         // LP token worth 0 eth
         expect(result.ethAmount.isZero()).to.be.true
-        expect(result.squeethAmount.gt(mintAmount)).to.be.true
+        expect(result.wPowerPerpAmount.gt(mintAmount)).to.be.true
         
         const vaultBefore = await controller.vaults(vaultId)
         await controller.connect(seller1).mintPowerPerpAmount(vaultId, 10, 0)
@@ -646,7 +646,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
       it('should become underwater if squeeth price increase, and LP token has no enough eth', async () => {
         const result = await vaultLib.getUniPositionBalances(uniPositionManager.address, uniNFTId, newTick, wethIsToken0InSqueethPool)
         // LP token worth 0 squeeth
-        expect(result.squeethAmount.isZero()).to.be.true
+        expect(result.wPowerPerpAmount.isZero()).to.be.true
         // not enough eth value in LP token!
         const requiredCollateral = mintAmount.mul(newSqueethPrice).mul(3).div(2)
         expect(result.ethAmount.lt(requiredCollateral)).to.be.true
@@ -654,20 +654,20 @@ describe("Controller: Uni LP tokens collateralization", function () {
         await expect(controller.connect(seller1).withdraw(vaultId, 0)).to.be.revertedWith('C24')
       })
       before('set NFT redemption amount', async () => {
-        const { ethAmount, squeethAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, uniNFTId, newTick, wethIsToken0InSqueethPool)
-        const token0ToSet = wethIsToken0InSqueethPool ? ethAmount : squeethAmount
-        const token1ToSet = wethIsToken0InSqueethPool ? squeethAmount : ethAmount
+        const { ethAmount, wPowerPerpAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, uniNFTId, newTick, wethIsToken0InSqueethPool)
+        const token0ToSet = wethIsToken0InSqueethPool ? ethAmount : wPowerPerpAmount
+        const token1ToSet = wethIsToken0InSqueethPool ? wPowerPerpAmount : ethAmount
         await uniPositionManager.setAmount0Amount1ToDecrease(token0ToSet, token1ToSet)
       })
       it('should be able to reduce the debt by calling liquidate', async() => {
         const vaultBefore = await controller.vaults(vaultId)
-        const { ethAmount, squeethAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, uniNFTId, newTick, wethIsToken0InSqueethPool)
+        const { ethAmount, wPowerPerpAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, uniNFTId, newTick, wethIsToken0InSqueethPool)
         // save the vault
         await controller.connect(seller1).liquidate(vaultId, 0, {gasPrice: 0})
         
         const vaultAfter = await controller.vaults(vaultId)
         expect(vaultAfter.NftCollateralId === 0).to.be.true // nft is redeemed
-        expect(vaultAfter.shortAmount.eq(vaultBefore.shortAmount.sub(squeethAmount))).to.be.true
+        expect(vaultAfter.shortAmount.eq(vaultBefore.shortAmount.sub(wPowerPerpAmount))).to.be.true
         expect(vaultAfter.collateralAmount.eq(vaultBefore.collateralAmount.add(ethAmount))).to.be.true
       })
     })
@@ -738,9 +738,9 @@ describe("Controller: Uni LP tokens collateralization", function () {
       })
 
       before('set NFT redemption amount', async () => {
-        const { ethAmount, squeethAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, uniNFTId, newTick, wethIsToken0InSqueethPool)
-        const token0ToSet = wethIsToken0InSqueethPool ? ethAmount : squeethAmount
-        const token1ToSet = wethIsToken0InSqueethPool ? squeethAmount : ethAmount
+        const { ethAmount, wPowerPerpAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, uniNFTId, newTick, wethIsToken0InSqueethPool)
+        const token0ToSet = wethIsToken0InSqueethPool ? ethAmount : wPowerPerpAmount
+        const token1ToSet = wethIsToken0InSqueethPool ? wPowerPerpAmount : ethAmount
         await uniPositionManager.setAmount0Amount1ToDecrease(token0ToSet, token1ToSet)
       })
 
@@ -749,7 +749,7 @@ describe("Controller: Uni LP tokens collateralization", function () {
         
         await expect(controller.connect(seller1).mintPowerPerpAmount(vaultId, 1, 0)).to.be.revertedWith('C24')
         const vaultBefore = await controller.vaults(vaultId)
-        const { squeethAmount: nftSqueethAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, newNFTId, newTick, wethIsToken0InSqueethPool)
+        const { wPowerPerpAmount: nftSqueethAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, newNFTId, newTick, wethIsToken0InSqueethPool)
 
         const ownerWSqueethBefore = await squeeth.balanceOf(seller1.address)
 

@@ -49,15 +49,15 @@ contract MockController {
         uint256 _mintAmount,
         uint256 /*_nftTokenId*/
     ) external payable returns (uint256, uint256) {
-        uint256 wSqueethMinted;
+        uint256 wPowerPerpMinted;
 
         if (_vaultId == 0) _vaultId = _openVault(msg.sender);
         if (msg.value > 0) _addEthCollateral(_vaultId, msg.value);
         if (_mintAmount > 0) {
-            wSqueethMinted = _addShort(msg.sender, _vaultId, _mintAmount);
+            wPowerPerpMinted = _addShort(msg.sender, _vaultId, _mintAmount);
         }
 
-        return (_vaultId, wSqueethMinted);
+        return (_vaultId, wPowerPerpMinted);
     }
 
     function burnWPowerPerpAmount(
@@ -101,11 +101,11 @@ contract MockController {
     function _addShort(
         address _account,
         uint256 _vaultId,
-        uint256 _squeethAmount
+        uint256 _wPowerPerpAmount
     ) internal returns (uint256 amountToMint) {
         require(_canModifyVault(_vaultId, _account), "C3");
 
-        amountToMint = _squeethAmount.mul(1e18).div(normalizationFactor);
+        amountToMint = _wPowerPerpAmount.mul(1e18).div(normalizationFactor);
 
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
         cachedVault.addShort(amountToMint);

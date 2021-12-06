@@ -238,7 +238,7 @@ describe("Uniswap Position token integration test", function () {
       const vaultBefore = await controller.vaults(vault0Id)
 
       // the result we get from here is not accurate
-      const {ethAmount, squeethAmount} = await vaultLib.getUniPositionBalances(positionManager.address, vault0LPTokenId, tick, isWethToken0)
+      const {ethAmount, wPowerPerpAmount} = await vaultLib.getUniPositionBalances(positionManager.address, vault0LPTokenId, tick, isWethToken0)
 
       const wsqueethBefore = await squeeth.balanceOf(seller.address)
 
@@ -253,7 +253,7 @@ describe("Uniswap Position token integration test", function () {
       
       expect(vaultAfter.NftCollateralId === 0).to.be.true
       expect(isSimilar(vaultBefore.collateralAmount.add(ethAmount).toString(), vaultAfter.collateralAmount.toString())).to.be.true
-      expect(isSimilar(wsqueethBurned.add(wsqueethReceived).toString(), squeethAmount.toString())).to.be.true
+      expect(isSimilar(wsqueethBurned.add(wsqueethReceived).toString(), wPowerPerpAmount.toString())).to.be.true
     })
     it("seller can redeem an Uni Position token for wSqueeth to reduce debt in vault1", async () => {
       const vaultBefore = await controller.vaults(vault1Id)

@@ -628,10 +628,10 @@ describe("Liquidation Integration Test", function () {
       // get net worth of nft
       const { tick } = await (squeethPool as IUniswapV3Pool).slot0()
       const isWethToken0 = parseInt(weth.address, 16) < parseInt(squeeth.address, 16)
-      const { ethAmount, squeethAmount } = await vaultLib.getUniPositionBalances(positionManager.address, vault3LPTokenId, tick, isWethToken0)
+      const { ethAmount, wPowerPerpAmount } = await vaultLib.getUniPositionBalances(positionManager.address, vault3LPTokenId, tick, isWethToken0)
       
       const vaultBefore = await controller.vaults(vault3Id)
-      const wSqueethAmountToLiquidate = vaultBefore.shortAmount.sub(squeethAmount).div(2)
+      const wSqueethAmountToLiquidate = vaultBefore.shortAmount.sub(wPowerPerpAmount).div(2)
       const liquidatorEthBalance = await provider.getBalance(liquidator.address)
 
       const result = await liquidationHelper.checkLiquidation(vault3Id);
@@ -651,7 +651,7 @@ describe("Liquidation Integration Test", function () {
       const squeethFeeAmount = isWethToken0 ? tokensOwed1 : tokensOwed0
 
       const totalEthFromUniPosition = ethAmount.add(ethFeeAmount)
-      const totalWSqueethFromUniPosition = squeethAmount.add(squeethFeeAmount)
+      const totalWSqueethFromUniPosition = wPowerPerpAmount.add(squeethFeeAmount)
 
       await controller.connect(liquidator).liquidate(vault3Id, wSqueethAmountToLiquidate, {gasPrice: 0})
 
@@ -774,7 +774,7 @@ describe("Liquidation Integration Test", function () {
       const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600, false)
       const { tick } = await (squeethPool as IUniswapV3Pool).slot0()
       const isWethToken0 = parseInt(weth.address, 16) < parseInt(squeeth.address, 16)
-      const { ethAmount, squeethAmount } = await vaultLib.getUniPositionBalances(positionManager.address, vault5LPTokenId, tick, isWethToken0)
+      const { ethAmount, wPowerPerpAmount } = await vaultLib.getUniPositionBalances(positionManager.address, vault5LPTokenId, tick, isWethToken0)
       
       // hack: increase liquidity so the fee info got updated
       await positionManager.connect(liquidityProvider).increaseLiquidity({
@@ -791,7 +791,7 @@ describe("Liquidation Integration Test", function () {
 
       // total amount of eth and wsqueeth we can get out of the position nft
       const totalEthFromUniPosition = ethAmount.add(ethFeeAmount)
-      const totalWSqueethFromUniPosition = squeethAmount.add(squeethFeeAmount)
+      const totalWSqueethFromUniPosition = wPowerPerpAmount.add(squeethFeeAmount)
 
       const vaultBefore = await controller.vaults(vault5Id)
       const wSqueethAmountToLiquidate = vaultBefore.shortAmount.sub(totalWSqueethFromUniPosition).div(2)

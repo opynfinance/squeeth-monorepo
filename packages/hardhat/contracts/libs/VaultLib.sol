@@ -168,20 +168,20 @@ library VaultLib {
     }
 
     /**
-     * @notice determine how much eth / wSqueeth the uniswap position contains
+     * @notice determine how much eth / wPowerPerp the uniswap position contains
      * @param _positionManager address of the uniswap position manager
      * @param _tokenId uniswap position token id
-     * @param _wsqueethPoolTick current price tick
+     * @param _wPowerPerpPoolTick current price tick
      * @param _isWethToken0 whether weth is token0 in the pool
-     * @return ethAmount the eth amount thie LP token is worth
-     * @return wSqueethAmount the squeeth amount this LP token is worth
+     * @return ethAmount the eth amount this LP token contains
+     * @return wPowerPerpAmount the wPowerPerp amount this LP token contains
      */
     function _getUniPositionBalances(
         address _positionManager,
         uint256 _tokenId,
-        int24 _wsqueethPoolTick,
+        int24 _wPowerPerpPoolTick,
         bool _isWethToken0
-    ) internal view returns (uint256 ethAmount, uint256 wSqueethAmount) {
+    ) internal view returns (uint256 ethAmount, uint256 wPowerPerpAmount) {
         (
             int24 tickLower,
             int24 tickUpper,
@@ -192,7 +192,7 @@ library VaultLib {
         (uint256 amount0, uint256 amount1) = _getToken0Token1Balances(
             tickLower,
             tickUpper,
-            _wsqueethPoolTick,
+            _wPowerPerpPoolTick,
             liquidity
         );
 
@@ -256,7 +256,7 @@ library VaultLib {
         int24 _tick,
         uint128 _liquidity
     ) internal pure returns (uint256 amount0, uint256 amount1) {
-        // get the current price and tick from squeethPool
+        // get the current price and tick from wPowerPerp pool
         uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(_tick);
 
         // the following line is copied from the _modifyPosition function implemented by Uniswap core

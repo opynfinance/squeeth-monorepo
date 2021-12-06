@@ -881,13 +881,13 @@ describe("Controller", function () {
       await uniPositionManager.setMockedProperties(token0, token1, nftTickLower, nftTickUpper, liquidity)
 
       // set amount getting out from position manager
-      const { ethAmount, squeethAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, seller5NFTId, initialTick, wethIsToken0)
-      const token0ToSet = wethIsToken0 ? ethAmount : squeethAmount
-      const token1ToSet = wethIsToken0 ? squeethAmount : ethAmount
+      const { ethAmount, wPowerPerpAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, seller5NFTId, initialTick, wethIsToken0)
+      const token0ToSet = wethIsToken0 ? ethAmount : wPowerPerpAmount
+      const token1ToSet = wethIsToken0 ? wPowerPerpAmount : ethAmount
       await uniPositionManager.setAmount0Amount1ToDecrease(token0ToSet, token1ToSet)
 
       // minting 2x the amount of eth and squeeth as we have 2 nfts to test
-      await squeeth.mint(uniPositionManager.address, squeethAmount.mul(2));
+      await squeeth.mint(uniPositionManager.address, wPowerPerpAmount.mul(2));
       await weth.deposit({value: ethAmount.mul(2)});
       await weth.transfer(uniPositionManager.address, ethAmount.mul(2));
 
@@ -1104,9 +1104,9 @@ describe("Controller", function () {
         // update prices in pool and oracle.
         const newTick = tick
 
-        const { ethAmount, squeethAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, seller8NFTId, newTick, wethIsToken0)
-        const token0ToSet = wethIsToken0 ? ethAmount : squeethAmount
-        const token1ToSet = wethIsToken0 ? squeethAmount : ethAmount
+        const { ethAmount, wPowerPerpAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, seller8NFTId, newTick, wethIsToken0)
+        const token0ToSet = wethIsToken0 ? ethAmount : wPowerPerpAmount
+        const token1ToSet = wethIsToken0 ? wPowerPerpAmount : ethAmount
         await uniPositionManager.setAmount0Amount1ToDecrease(token0ToSet, token1ToSet)
 
         await oracle.connect(random).setPrice(ethUSDPool.address , ethPrice) // eth per 1 squeeth
@@ -1205,13 +1205,13 @@ describe("Controller", function () {
         await squeethEthPool.setSlot0Data(sqrtX96Price, currentTick)
 
         // set amount getting out from position manager
-        const { ethAmount, squeethAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, seller5NFTId, currentTick, wethIsToken0)
-        const token0ToSet = wethIsToken0 ? ethAmount : squeethAmount
-        const token1ToSet = wethIsToken0 ? squeethAmount : ethAmount
+        const { ethAmount, wPowerPerpAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, seller5NFTId, currentTick, wethIsToken0)
+        const token0ToSet = wethIsToken0 ? ethAmount : wPowerPerpAmount
+        const token1ToSet = wethIsToken0 ? wPowerPerpAmount : ethAmount
         await uniPositionManager.setAmount0Amount1ToDecrease(token0ToSet, token1ToSet)
 
         // minting 2x the amount of eth and squeeth as we have 2 nfts to test
-        await squeeth.mint(uniPositionManager.address, squeethAmount.mul(5));
+        await squeeth.mint(uniPositionManager.address, wPowerPerpAmount.mul(5));
         await weth.deposit({value: ethAmount.mul(5)});
         await weth.transfer(uniPositionManager.address, ethAmount.mul(5));
 
@@ -1234,7 +1234,7 @@ describe("Controller", function () {
         const vaultBefore = await controller.vaults(seller8VaultId)
         const sellerEthBefore = await provider.getBalance(seller6.address)
         const controllerEthBefore = await provider.getBalance(controller.address)
-        const { ethAmount, squeethAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, seller8NFTId, currentTick, wethIsToken0)
+        const { ethAmount, wPowerPerpAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, seller8NFTId, currentTick, wethIsToken0)
 
         await controller.connect(random).reduceDebtShutdown(seller8VaultId, {gasPrice: 0})
         const vaultAfter = await controller.vaults(seller8VaultId)
@@ -1242,7 +1242,7 @@ describe("Controller", function () {
 
         const controllerEthAfter = await provider.getBalance(controller.address)
         expect(vaultAfter.collateralAmount.sub(ethAmount).eq(vaultBefore.collateralAmount)).to.be.true
-        expect(vaultBefore.shortAmount.sub(squeethAmount).eq(vaultAfter.shortAmount)).to.be.true
+        expect(vaultBefore.shortAmount.sub(wPowerPerpAmount).eq(vaultAfter.shortAmount)).to.be.true
         expect(controllerEthAfter.sub(ethAmount).eq(controllerEthBefore)).to.be.true
         expect(sellerEthBefore.eq(sellerEthAfter)).to.be.true
       });
@@ -1277,7 +1277,7 @@ describe("Controller", function () {
       });
 
       it("should redeem fair value for short side with uni v3 nft (seller 5)", async () => {
-        const { ethAmount: nftEthAmount, squeethAmount: nftWSqueethAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, seller5NFTId, currentTick, wethIsToken0)
+        const { ethAmount: nftEthAmount, wPowerPerpAmount: nftWSqueethAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, seller5NFTId, currentTick, wethIsToken0)
         const token0ToSet = wethIsToken0 ? nftEthAmount : nftWSqueethAmount
         const token1ToSet = wethIsToken0 ? nftWSqueethAmount : nftEthAmount
         await uniPositionManager.setAmount0Amount1ToDecrease(token0ToSet, token1ToSet)

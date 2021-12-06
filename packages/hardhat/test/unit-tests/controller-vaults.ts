@@ -157,9 +157,9 @@ describe("Simple Vault state tests", function () {
         await oracle.setAverageTick(squeethEthPool.address, tick)
 
 
-        const { squeethAmount, ethAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, uniNFTId, tick, wethIsToken0)
+        const { wPowerPerpAmount, ethAmount } = await vaultLib.getUniPositionBalances(uniPositionManager.address, uniNFTId, tick, wethIsToken0)
         
-        const equivalentCollateral = squeethAmount.mul(initEthUSDPrice).div(one).div(oracleScaleFactor).add(ethAmount)
+        const equivalentCollateral = wPowerPerpAmount.mul(initEthUSDPrice).div(one).div(oracleScaleFactor).add(ethAmount)
         
         const totalMintAmount = equivalentCollateral.mul(one).mul(2).div(3).div(initEthUSDPrice).mul(oracleScaleFactor)
         await controller.mintPowerPerpAmount(0, totalMintAmount, uniNFTId, {value: 0})
@@ -178,7 +178,7 @@ describe("Simple Vault state tests", function () {
         
         const result = await vaultLib.getUniPositionBalances(uniPositionManager.address, uniNFTId, tick, wethIsToken0)
 
-        expect(result.squeethAmount.isZero()).to.be.true
+        expect(result.wPowerPerpAmount.isZero()).to.be.true
         expect(await controller.isVaultSafe(vaultId)).to.be.false
       })
       it('should become underwater if squeeth price decrease, and LP is all squeeth', async()=>{
