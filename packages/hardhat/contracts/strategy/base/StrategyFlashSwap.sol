@@ -5,7 +5,6 @@ pragma abicoder v2;
 // interface
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {IWETH9} from "../../interfaces/IWETH9.sol";
 
 // lib
 import '@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol';

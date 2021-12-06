@@ -3,7 +3,6 @@ pragma solidity =0.7.6;
 
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
-import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
 import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import "@uniswap/v3-core/contracts/libraries/SqrtPriceMath.sol";

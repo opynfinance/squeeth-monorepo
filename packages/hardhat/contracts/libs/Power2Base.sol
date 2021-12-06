@@ -2,7 +2,6 @@
 
 pragma solidity =0.7.6;
 
-import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {IOracle} from "../interfaces/IOracle.sol";
 
