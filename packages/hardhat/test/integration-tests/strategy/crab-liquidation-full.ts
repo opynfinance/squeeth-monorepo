@@ -259,7 +259,7 @@ describe("Crab integration test: crab vault full liquidation and shutdown of con
 
     })
 
-    it("depositor fwithdraw and get 0", async () => {
+    it("depositor withdraw and get 0", async () => {
       
       const userCrabBalanceBefore = await crabStrategy.balanceOf(depositor.address);
       const crabTotalSupply = await crabStrategy.totalSupply()
@@ -270,7 +270,7 @@ describe("Crab integration test: crab vault full liquidation and shutdown of con
       const userCollateral = wmul(crabRatio, strategyCollateralAmountBefore)
       const userSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
-      await crabStrategy.connect(depositor).withdraw(userCrabBalanceBefore, 0, {gasPrice: 0})
+      await crabStrategy.connect(depositor).withdraw(userCrabBalanceBefore, {gasPrice: 0})
 
       const userEthBalanceAfter = await provider.getBalance(depositor.address)
       const userCrabBalanceAfter = await crabStrategy.balanceOf(depositor.address);

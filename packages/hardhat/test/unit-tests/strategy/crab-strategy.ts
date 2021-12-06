@@ -329,18 +329,6 @@ describe("Crab Strategy", function () {
   })
 
   describe("Withdraw from strategy", async () => {
-    it("should revert withdrawing with unequal share/wSqueeth ratio", async () => {
-      const depositorSqueethBalanceBefore = await squeeth.balanceOf(depositor.address)
-      const depositorCrabBefore = (await crabStrategy.balanceOf(depositor.address))
-      const wSqueethAmount = depositorSqueethBalanceBefore.div(2)
-
-      await squeeth.connect(depositor).approve(crabStrategy.address, depositorCrabBefore)
-
-      await expect(
-        crabStrategy.connect(depositor).withdraw(depositorCrabBefore, wSqueethAmount)
-      ).to.be.revertedWith("invalid ratio");
-    })
-    
     it("should revert withdrawing from a random account", async () => {
       const depositorSqueethBalanceBefore = await squeeth.balanceOf(depositor.address)
       const depositorCrabBefore = (await crabStrategy.balanceOf(depositor.address))
@@ -349,7 +337,7 @@ describe("Crab Strategy", function () {
       await squeeth.connect(random).approve(crabStrategy.address, depositorCrabBefore)
 
       await expect(
-        crabStrategy.connect(random).withdraw(depositorCrabBefore, wSqueethAmount)
+        crabStrategy.connect(random).withdraw(depositorCrabBefore)
       ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
     })
 
@@ -366,7 +354,7 @@ describe("Crab Strategy", function () {
       const expectedEthToWithdraw = wmul(strategyCollateralBefore, expectedCrabPercentage)
 
       await squeeth.connect(depositor).approve(crabStrategy.address, 0)
-      await crabStrategy.connect(depositor).withdraw(0, 0);  
+      await crabStrategy.connect(depositor).withdraw(0);  
 
       const strategyVaultAfter = await controller.vaults(await crabStrategy.vaultId());
       const strategyCollateralAfter = strategyVaultAfter.collateralAmount
@@ -397,7 +385,7 @@ describe("Crab Strategy", function () {
       const expectedEthToWithdraw = wmul(strategyCollateralBefore, expectedCrabPercentage)
 
       await squeeth.connect(depositor).approve(crabStrategy.address, depositorSqueethBalanceBefore)
-      await crabStrategy.connect(depositor).withdraw(depositorCrabBefore, depositorSqueethBalanceBefore);  
+      await crabStrategy.connect(depositor).withdraw(depositorCrabBefore);  
 
       const strategyVaultAfter = await controller.vaults(await crabStrategy.vaultId());
       const strategyCollateralAfter = strategyVaultAfter.collateralAmount
@@ -408,6 +396,7 @@ describe("Crab Strategy", function () {
       const depositorEthBalanceAfter = await provider.getBalance(depositor.address)
 
       expect(depositorSqueethBalanceAfter.eq(BigNumber.from(0))).to.be.true
+      expect(depositorSqueethBalanceBefore.gt(BigNumber.from(0))).to.be.true
       expect(depositorCrabAfter.eq(BigNumber.from(0))).to.be.true
       expect(totalCrabAfter.eq(totalCrabBefore.sub(depositorCrabBefore))).to.be.true
       expect(strategyCollateralAfter.eq(strategyCollateralBefore.sub(expectedEthToWithdraw))).to.be.true

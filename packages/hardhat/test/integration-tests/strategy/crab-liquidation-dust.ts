@@ -303,7 +303,7 @@ describe("Crab integration test: crab vault dust liquidation with excess collate
 
       expect(isSimilar(expectedWithdrawal.toString(), expectedShareWithdrawal.toString())).to.be.true
 
-      await crabStrategy.connect(depositor).withdraw(userCrabBalanceBefore, 0, {gasPrice: 0})
+      await crabStrategy.connect(depositor).withdraw(userCrabBalanceBefore, {gasPrice: 0})
 
       const userEthBalanceAfter = await provider.getBalance(depositor.address)
       const userCrabBalanceAfter = await crabStrategy.balanceOf(depositor.address);

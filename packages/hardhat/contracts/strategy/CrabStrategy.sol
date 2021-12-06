@@ -214,9 +214,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
      * @param _maxEthToPay maximum ETH to pay
      */
     function flashWithdraw(uint256 _crabAmount, uint256 _maxEthToPay) external nonReentrant {
-        (uint256 strategyDebt, ) = _syncStrategyState();
-
-        uint256 exactWSqueethNeeded = strategyDebt.wmul(_crabAmount).wdiv(totalSupply());
+        uint256 exactWSqueethNeeded = _getDebtFromStrategyAmount(_crabAmount);
 
         _exactOutFlashSwap(
             weth,
@@ -251,15 +249,15 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
      * @notice withdraw WETH from strategy
      * @dev provide strategy tokens and wSqueeth, returns eth
      * @param _crabAmount amount of crab token to burn
-     * @param _wSqueethAmount amount of wSqueeth to burn
      */
-    function withdraw(uint256 _crabAmount, uint256 _wSqueethAmount) external payable nonReentrant {
-        uint256 ethToWithdraw = _withdraw(msg.sender, _crabAmount, _wSqueethAmount, false);
+    function withdraw(uint256 _crabAmount) external payable nonReentrant {
+        uint256 wSqueethAmount = _getDebtFromStrategyAmount(_crabAmount);
+        uint256 ethToWithdraw = _withdraw(msg.sender, _crabAmount, wSqueethAmount, false);
 
         // send back ETH collateral
         payable(msg.sender).sendValue(ethToWithdraw);
 
-        emit Withdraw(msg.sender, _crabAmount, _wSqueethAmount, ethToWithdraw);
+        emit Withdraw(msg.sender, _crabAmount, wSqueethAmount, ethToWithdraw);
     }
 
     /**
@@ -473,12 +471,10 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
         uint256 _wSqueethAmount,
         bool _isFlashWithdraw
     ) internal returns (uint256) {
-        (uint256 strategyDebt, uint256 strategyCollateral) = _syncStrategyState();
+        (, uint256 strategyCollateral) = _syncStrategyState();
 
         uint256 strategyShare = _calcCrabRatio(_crabAmount, totalSupply());
         uint256 ethToWithdraw = _calcEthToWithdraw(strategyShare, strategyCollateral);
-
-        if (strategyDebt > 0) require(_wSqueethAmount.wdiv(strategyDebt) == strategyShare, "invalid ratio");
 
         _burnWPowerPerp(_from, _wSqueethAmount, ethToWithdraw, _isFlashWithdraw);
         _burn(_from, _crabAmount);

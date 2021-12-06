@@ -195,7 +195,7 @@ describe("Crab integration test: flash deposit - deposit - withdraw", function (
       // some rounding
       const crabToBurn = (await crabStrategy.balanceOf(depositor.address)).div(2).mul(99).div(100)
       const wSqueethToBurn = await crabStrategy.getWsqueethFromCrabAmount(crabToBurn)
-      const wSqueethBefore = await wSqueeth.balanceOf(depositor.address)
+      const depositorWSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
       const strategyVault = await controller.vaults(await crabStrategy.vaultId());
       const strategyDebtBefore = strategyVault.shortAmount
@@ -204,24 +204,26 @@ describe("Crab integration test: flash deposit - deposit - withdraw", function (
       const depositorCrabBefore = (await crabStrategy.balanceOf(depositor.address))
       const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
 
+
       const expectedCrabPercentage = wdiv(crabToBurn, totalCrabBefore)
       const expectedEthToWithdraw = wmul(strategyCollateralBefore, expectedCrabPercentage)
 
       await wSqueeth.connect(depositor).approve(crabStrategy.address, wSqueethToBurn)
-      await crabStrategy.connect(depositor).withdraw(crabToBurn, wSqueethToBurn);  
+      await crabStrategy.connect(depositor).withdraw(crabToBurn);  
 
       const strategyVaultAfter = await controller.vaults(await crabStrategy.vaultId());
       const strategyCollateralAfter = strategyVaultAfter.collateralAmount
       const strategyDebtAfter = strategyVaultAfter.shortAmount
       const totalCrabAfter = await crabStrategy.totalSupply()
       const depositorCrabAfter = (await crabStrategy.balanceOf(depositor.address))
-      const depositorSqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
+      const depositorWSqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
       const depositorEthBalanceAfter = await provider.getBalance(depositor.address)
 
       expect(depositorCrabAfter.eq(depositorCrabBefore.sub(crabToBurn))).to.be.true
       expect(totalCrabAfter.eq(totalCrabBefore.sub(crabToBurn))).to.be.true
       expect(strategyCollateralAfter.eq(strategyCollateralBefore.sub(expectedEthToWithdraw))).to.be.true
       expect(strategyDebtAfter.eq(strategyDebtBefore.sub(wSqueethToBurn))).to.be.true
+      expect(depositorWSqueethBalanceBefore.sub(depositorWSqueethBalanceAfter).eq(wSqueethToBurn)).to.be.true
       expect(isSimilar(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).toString(), expectedEthToWithdraw.toString(), 3)).to.be.true // 0.002605896 diff
     })
 
