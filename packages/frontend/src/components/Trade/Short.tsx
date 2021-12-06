@@ -387,7 +387,9 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                       {amount.toNumber() ? (
                         <>
                           <ArrowRightAltIcon className={classes.arrowIcon} />
-                          <span>{shortVaults[firstValidVault].shortAmount.minus(amount).toFixed(6)}</span>
+                          <span>
+                            {shortVaults.length && shortVaults[firstValidVault].shortAmount.minus(amount).toFixed(6)}
+                          </span>
                         </>
                       ) : null}{' '}
                       <span style={{ marginLeft: '4px' }}>oSQTH</span>
@@ -652,7 +654,9 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                   {quote.amountOut.gt(0) ? (
                     <>
                       <ArrowRightAltIcon className={classes.arrowIcon} />
-                      <span>{shortVaults[firstValidVault].shortAmount.plus(amount).toFixed(6)}</span>
+                      <span>
+                        {shortVaults.length && shortVaults[firstValidVault].shortAmount.plus(amount).toFixed(6)}
+                      </span>
                     </>
                   ) : null}{' '}
                   <span style={{ marginLeft: '4px' }}>oSQTH</span>
