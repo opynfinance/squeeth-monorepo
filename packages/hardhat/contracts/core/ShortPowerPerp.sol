@@ -42,6 +42,6 @@ contract ShortPowerPerp is ERC721, Initializable {
      */
     function mintNFT(address _recipient) external onlyController returns (uint256 tokenId) {
         // mint NFT
-        _mint(_recipient, (tokenId = nextId++));
+        _safeMint(_recipient, (tokenId = nextId++));
     }
 }

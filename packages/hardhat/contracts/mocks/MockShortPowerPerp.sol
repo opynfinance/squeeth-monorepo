@@ -8,7 +8,7 @@ contract MockShortPowerPerp is ERC721Upgradeable {
     uint256 public nextId = 1;
 
     function mintNFT(address _recipient) external returns (uint256 tokenId) {
-        _mint(_recipient, (tokenId = nextId++));
+        _safeMint(_recipient, (tokenId = nextId++));
     }
 
     function burnNFT(uint256 _tokenId) external {

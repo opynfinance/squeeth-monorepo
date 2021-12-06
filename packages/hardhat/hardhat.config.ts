@@ -55,7 +55,7 @@ const UNISWAP_SETTING = {
   settings: {
     optimizer: {
       enabled: true,
-      runs: 7000,
+      runs: 1500,
     },
   },
 };

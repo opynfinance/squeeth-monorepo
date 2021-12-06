@@ -4,12 +4,16 @@ pragma solidity =0.7.6;
 pragma abicoder v2;
 // Interfaces
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
 import {IWETH9} from "../interfaces/IWETH9.sol";
 import {IShortPowerPerp} from "../interfaces/IShortPowerPerp.sol";
 import {IController} from "../interfaces/IController.sol";
+
 // Libraries
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
@@ -17,7 +21,7 @@ import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 /**
  * @notice contract simplifies opening a short wPowerPerp position by selling wPowerPerp on uniswap v3 and returning eth to user
  */
-contract ShortHelper {
+contract ShortHelper is IERC721Receiver {
     using SafeMath for uint256;
     using Address for address payable;
 
@@ -128,5 +132,18 @@ contract ShortHelper {
      */
     receive() external payable {
         require(msg.sender == address(weth) || msg.sender == address(controller), "can't receive eth");
+    }
+
+    /**
+     * @dev accept erc721 from safeTransferFrom and safeMint after callback
+     * @return returns received selector
+     */
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes memory
+    ) public virtual override returns (bytes4) {
+        return this.onERC721Received.selector;
     }
 }

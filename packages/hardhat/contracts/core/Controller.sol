@@ -8,6 +8,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
@@ -50,7 +51,7 @@ import {Power2Base} from "../libs/Power2Base.sol";
  * C23: Invalid nft
  * C24: Invalid state
  */
-contract Controller is Ownable, ReentrancyGuard {
+contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
     using SafeMath for uint256;
     using Uint256Casting for uint256;
     using VaultLib for VaultLib.Vault;
@@ -651,6 +652,19 @@ contract Controller is Ownable, ReentrancyGuard {
         require(msg.sender == weth, "C19");
     }
 
+    /**
+     * @dev accept erc721 from safeTransferFrom and safeMint after callback
+     * @return returns received selector
+     */
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes memory
+    ) public virtual override returns (bytes4) {
+        return this.onERC721Received.selector;
+    }
+
     /*
      * ======================
      * | Internal Functions |
@@ -796,7 +810,7 @@ contract Controller is Ownable, ReentrancyGuard {
         require((token0 == wPowerPerp && token1 == weth) || (token1 == wPowerPerp && token0 == weth), "C23");
 
         _vault.addUniNftCollateral(_uniTokenId);
-        INonfungiblePositionManager(uniswapPositionManager).transferFrom(_account, address(this), _uniTokenId);
+        INonfungiblePositionManager(uniswapPositionManager).safeTransferFrom(_account, address(this), _uniTokenId);
         emit DepositUniPositionToken(msg.sender, _vaultId, _uniTokenId);
     }
 
@@ -830,7 +844,7 @@ contract Controller is Ownable, ReentrancyGuard {
     ) internal {
         uint256 tokenId = _vault.NftCollateralId;
         _vault.removeUniNftCollateral();
-        INonfungiblePositionManager(uniswapPositionManager).transferFrom(address(this), _account, tokenId);
+        INonfungiblePositionManager(uniswapPositionManager).safeTransferFrom(address(this), _account, tokenId);
         emit WithdrawUniPositionToken(msg.sender, _vaultId, tokenId);
     }
 
