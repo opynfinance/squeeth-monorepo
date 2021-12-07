@@ -4,7 +4,10 @@ import Link from 'next/link'
 import { LPTable } from '../src/components/Lp/LPTable'
 import Nav from '../src/components/Nav'
 import History from '../src/components/Trade/History'
+import { WSQUEETH_DECIMALS } from '../src/constants'
 import { useSqueethPool } from '../src/hooks/contracts/useSqueethPool'
+import { useTokenBalance } from '../src/hooks/contracts/useTokenBalance'
+import { useAddresses } from '../src/hooks/useAddress'
 import { useETHPrice } from '../src/hooks/useETHPrice'
 import { useLongPositions, useLPPositions, usePnL, useShortPositions } from '../src/hooks/usePositions'
 
@@ -86,7 +89,7 @@ const useStyles = makeStyles((theme) =>
 
 export default function Positions() {
   const classes = useStyles()
-  const { loading: isLongLoading, wethAmount: longWethAmt, squeethAmount: wSqueethBal } = useLongPositions()
+  const { loading: isLongLoading, wethAmount: longWethAmt } = useLongPositions()
   const {
     loading: isShortLoading,
     wethAmount: shortWethAmt,
@@ -111,6 +114,9 @@ export default function Positions() {
   const ethPrice = useETHPrice()
   const { activePositions } = useLPPositions()
   const { pool } = useSqueethPool()
+
+  const { wSqueeth } = useAddresses()
+  const wSqueethBal = useTokenBalance(wSqueeth, 5, WSQUEETH_DECIMALS)
 
   return (
     <div>
@@ -144,7 +150,8 @@ export default function Positions() {
                     Position
                   </Typography>
                   <Typography variant="body1">
-                    {isLongLoading && wSqueethBal.toNumber() === 0 ? 'Loading' : wSqueethBal.toFixed(8)}&nbsp; oSQTH
+                    {isLongLoading && wSqueethBal.toNumber() === 0 ? 'Loading' : wSqueethBal.toFixed(8)}
+                    &nbsp; oSQTH
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
                     $

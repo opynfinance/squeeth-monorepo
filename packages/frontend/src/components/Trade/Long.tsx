@@ -13,7 +13,7 @@ import { useSqueethPool } from '../../hooks/contracts/useSqueethPool'
 import { useTokenBalance } from '../../hooks/contracts/useTokenBalance'
 import { useAddresses } from '../../hooks/useAddress'
 import { useETHPrice } from '../../hooks/useETHPrice'
-import { useLongPositions, useShortPositions } from '../../hooks/usePositions'
+import { useLongPositions, useLPPositions, useShortPositions } from '../../hooks/usePositions'
 import { PrimaryButton } from '../Buttons'
 import { PrimaryInput } from '../inputs/PrimaryInput'
 import { StepperBox as Stepper } from '../StepperBox'
@@ -253,7 +253,13 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
   const { squeethAmount: shrtAmt } = useShortPositions()
   const { squeethAmount: lngAmt } = useLongPositions()
 
-  console.log(slippageAmount?.toNumber())
+  // console.log(
+  //   wSqueethBal.minus(lngAmt).minus(shrtAmt).toNumber(),
+  //   wSqueethBal.toNumber(),
+  //   lngAmt.toNumber(),
+  //   shrtAmt.toNumber(),
+  //   squeethAllowance.toNumber(),
+  // )
 
   useEffect(() => {
     if (!open && wSqueethBal.lt(amount)) {
