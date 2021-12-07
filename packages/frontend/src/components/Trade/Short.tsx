@@ -294,10 +294,11 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
 
   const { setCollatRatio } = useWorldContext()
 
-  const { openError, closeError, existingLongError } = useMemo(() => {
+  const { openError, closeError, existingLongError, priceImpactWarning } = useMemo(() => {
     let openError = null
     let closeError = null
     let existingLongError = null
+    let priceImpactWarning = null
 
     if (
       connected &&
@@ -305,6 +306,9 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
       (shortVaults[firstValidVault].shortAmount.lt(amount) || shortVaults[firstValidVault].shortAmount.isZero())
     ) {
       closeError = 'Close amount exceeds position'
+    }
+    if (connected && new BigNumber(quote.priceImpact).gt(3)) {
+      priceImpactWarning = 'High Price Impact'
     }
     if (connected && collateral.toNumber() > balance) {
       openError = 'Insufficient ETH balance'
@@ -326,9 +330,34 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
       existingLongError = 'Close your long position to open a short'
     }
 
-    console.log(openError, closeError, existingLongError)
-    return { openError, closeError, existingLongError }
-  }, [amount, balance, shortVaults, amount, lngAmt.toNumber(), connected, withdrawCollat.toNumber(), existingCollat])
+    return { openError, closeError, existingLongError, priceImpactWarning }
+  }, [
+    amount,
+    balance,
+    shortVaults,
+    amount,
+    lngAmt.toNumber(),
+    connected,
+    withdrawCollat.toNumber(),
+    existingCollat,
+    quote.priceImpact,
+  ])
+
+  const shortClosePriceImpactErrorState = useMemo(() => {
+    return (
+      priceImpactWarning &&
+      !buyLoading &&
+      !(collatPercent < 150) &&
+      !closeError &&
+      !lngAmt.gt(0) &&
+      shortVaults.length &&
+      !shortVaults[firstValidVault].shortAmount.isZero()
+    )
+  }, [priceImpactWarning, buyLoading, collatPercent, closeError, lngAmt.toNumber(), shortVaults, firstValidVault])
+
+  const shortOpenPriceImpactErrorState = useMemo(() => {
+    return priceImpactWarning && !shortLoading && !(collatPercent < 150) && !openError && !lngAmt.gt(0)
+  }, [priceImpactWarning, shortLoading, collatPercent, openError, lngAmt.toNumber()])
 
   useEffect(() => {
     setCollatRatio(collatPercent / 100)
@@ -371,13 +400,21 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                 actionTxt="Max"
                 onActionClicked={() => setAmount(shortVaults[firstValidVault].shortAmount)}
                 unit="oSQTH"
-                error={connected && lngAmt.gt(0) ? !!existingLongError : !!closeError}
+                error={
+                  connected && lngAmt.gt(0)
+                    ? !!existingLongError
+                    : new BigNumber(quote.priceImpact).gt(3)
+                    ? !!priceImpactWarning
+                    : !!closeError
+                }
                 convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
                 hint={
                   shortVaults.length && shortVaults[firstValidVault].shortAmount.lt(amount) ? (
                     'Close amount exceeds position'
                   ) : connected && lngAmt.gt(0) ? (
                     existingLongError
+                  ) : priceImpactWarning ? (
+                    priceImpactWarning
                   ) : (
                     <div className={classes.hint}>
                       <span className={classes.hintTextContainer}>
@@ -432,6 +469,8 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
               hint={
                 connected && shortVaults.length && shortVaults[firstValidVault].shortAmount.gt(0) ? (
                   existingLongError
+                ) : priceImpactWarning ? (
+                  priceImpactWarning
                 ) : (
                   <div className={classes.hint}>
                     <span>{`Balance ${balance}`}</span>
@@ -492,14 +531,22 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                     lngAmt.gt(0) ||
                     (shortVaults.length && shortVaults[firstValidVault].shortAmount.isZero())
                   }
-                  variant="contained"
-                  style={{ width: '300px' }}
+                  variant={shortClosePriceImpactErrorState ? 'outlined' : 'contained'}
+                  style={
+                    shortClosePriceImpactErrorState
+                      ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
+                      : { width: '300px' }
+                  }
                 >
                   {buyLoading ? (
                     <CircularProgress color="primary" size="1.5rem" />
                   ) : (
                     <>
-                      {isVaultApproved ? 'Buy back and close' : 'Add operator (1/2)'}
+                      {isVaultApproved
+                        ? 'Buy back and close'
+                        : shortClosePriceImpactErrorState && isVaultApproved
+                        ? 'Buy back and close anyway'
+                        : 'Add operator (1/2)'}
                       {!isVaultApproved ? (
                         <Tooltip
                           style={{ marginLeft: '2px' }}
@@ -593,6 +640,8 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                   openError
                 ) : connected && lngAmt.gt(0) ? (
                   existingLongError
+                ) : priceImpactWarning ? (
+                  priceImpactWarning
                 ) : (
                   <div className={classes.hint}>
                     <span>{`Balance ${balance}`}</span>
@@ -606,7 +655,13 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                   </div>
                 )
               }
-              error={connected && lngAmt.gt(0) ? !!existingLongError : !!openError}
+              error={
+                connected && lngAmt.gt(0)
+                  ? !!existingLongError
+                  : new BigNumber(quote.priceImpact).gt(3)
+                  ? !!priceImpactWarning
+                  : !!openError
+              }
             />
           </div>
           <div className={classes.thirdHeading}>
@@ -708,14 +763,22 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                 onClick={depositAndShort}
                 className={classes.amountInput}
                 disabled={shortLoading || collatPercent < 150 || !!openError || lngAmt.gt(0)}
-                variant="contained"
-                style={{ width: '300px' }}
+                variant={shortOpenPriceImpactErrorState ? 'outlined' : 'contained'}
+                style={
+                  shortOpenPriceImpactErrorState
+                    ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
+                    : { width: '300px' }
+                }
               >
                 {shortLoading ? (
                   <CircularProgress color="primary" size="1.5rem" />
                 ) : (
                   <>
-                    {isVaultApproved ? 'Deposit and sell' : 'Add operator (1/2)'}
+                    {isVaultApproved
+                      ? 'Deposit and sell'
+                      : shortOpenPriceImpactErrorState && isVaultApproved
+                      ? 'Deposit and sell anyway'
+                      : 'Add operator (1/2)'}
                     {!isVaultApproved ? (
                       <Tooltip
                         style={{ marginLeft: '2px' }}

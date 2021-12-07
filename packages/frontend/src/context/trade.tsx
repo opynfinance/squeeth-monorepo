@@ -69,7 +69,7 @@ const initialState: tradeContextType = {
   sellCloseQuote: sellCloseEmptyState,
   altTradeAmount: new BigNumber(1),
   setAltTradeAmount: () => null,
-  slippageAmount: new BigNumber(0.5),
+  slippageAmount: new BigNumber(0.3),
   setSlippageAmount: () => null,
 }
 
@@ -78,7 +78,7 @@ const useTrade = () => useContext(tradeContext)
 
 const TradeProvider: React.FC = ({ children }) => {
   const [tradeAmount, setTradeAmount] = useState(new BigNumber(0))
-  const [slippageAmount, setSlippageAmount] = useState(new BigNumber(0.5))
+  const [slippageAmount, setSlippageAmount] = useState(new BigNumber(0.3))
   const [altTradeAmount, setAltTradeAmount] = useState(new BigNumber(0))
   const [tradeType, setTradeType] = useState(TradeType.LONG)
   const [tradeLoading, setTradeLoading] = useState(false)

@@ -276,7 +276,7 @@ export const useSqueethPool = () => {
   }
 
   //If I input an exact amount of squeeth I want to buy, tells me how much ETH I need to pay to purchase that squeeth
-  const getBuyQuote = async (squeethAmount: BigNumber, slippageAmount = new BigNumber(0.5)) => {
+  const getBuyQuote = async (squeethAmount: BigNumber, slippageAmount = new BigNumber(0.3)) => {
     const emptyState = {
       amountIn: new BigNumber(0),
       maximumAmountIn: new BigNumber(0),
@@ -310,7 +310,7 @@ export const useSqueethPool = () => {
   }
 
   //If I input an exact amount of ETH I want to spend, tells me how much Squeeth I'd purchase
-  const getBuyQuoteForETH = async (ETHAmount: BigNumber, slippageAmount = new BigNumber(0.5)) => {
+  const getBuyQuoteForETH = async (ETHAmount: BigNumber, slippageAmount = new BigNumber(0.3)) => {
     const emptyState = {
       amountOut: new BigNumber(0),
       minimumAmountOut: new BigNumber(0),
@@ -346,7 +346,7 @@ export const useSqueethPool = () => {
   }
 
   //I input an exact amount of squeeth I want to sell, tells me how much ETH I'd receive
-  const getSellQuote = async (squeethAmount: BigNumber, slippageAmount = new BigNumber(0.5)) => {
+  const getSellQuote = async (squeethAmount: BigNumber, slippageAmount = new BigNumber(0.3)) => {
     const emptyState = {
       amountOut: new BigNumber(0),
       minimumAmountOut: new BigNumber(0),
@@ -380,7 +380,7 @@ export const useSqueethPool = () => {
   }
 
   //I input an exact amount of ETH I want to receive, tells me how much squeeth I'd need to sell
-  const getSellQuoteForETH = async (ETHAmount: BigNumber, slippageAmount = new BigNumber(0.5)) => {
+  const getSellQuoteForETH = async (ETHAmount: BigNumber, slippageAmount = new BigNumber(0.3)) => {
     const emptyState = {
       amountIn: new BigNumber(0),
       maximumAmountIn: new BigNumber(0),

@@ -261,10 +261,11 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
     }
   }, [wSqueethBal.toNumber(), open])
 
-  const { openError, closeError, existingShortError } = useMemo(() => {
+  const { openError, closeError, existingShortError, priceImpactWarning } = useMemo(() => {
     let openError = null
     let closeError = null
     let existingShortError = null
+    let priceImpactWarning = null
 
     if (connected && (wSqueethBal.lt(amount) || wSqueethBal.isZero())) {
       closeError = 'Insufficient oSQTH balance'
@@ -275,9 +276,20 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
     if (connected && shrtAmt.gt(0)) {
       existingShortError = 'Close your short position to open a long'
     }
+    if (connected && new BigNumber(quote.priceImpact).gt(3)) {
+      priceImpactWarning = 'High Price Impact'
+    }
 
-    return { openError, closeError, existingShortError }
-  }, [amount, balance, wSqueethBal.toNumber(), connected, shrtAmt.toNumber()])
+    return { openError, closeError, existingShortError, priceImpactWarning }
+  }, [amount, balance, wSqueethBal.toNumber(), connected, shrtAmt.toNumber(), quote.priceImpact])
+
+  const longClosePriceImpactErrorState = useMemo(() => {
+    return priceImpactWarning && !closeError && !sellLoading && !wSqueethBal.isZero() && !shrtAmt.gt(0)
+  }, [priceImpactWarning, closeError, sellLoading, wSqueethBal.toNumber(), shrtAmt.toNumber()])
+
+  const longOpenPriceImpactErrorState = useMemo(() => {
+    return priceImpactWarning && !buyLoading && !openError && !shrtAmt.gt(0)
+  }, [priceImpactWarning, openError, buyLoading, shrtAmt.toNumber()])
 
   const transact = async () => {
     setBuyLoading(true)
@@ -373,12 +385,20 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
               }}
               unit="oSQTH"
               convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
-              error={connected && shrtAmt.gt(0) ? !!existingShortError : !!closeError}
+              error={
+                connected && shrtAmt.gt(0)
+                  ? !!existingShortError
+                  : new BigNumber(quote.priceImpact).gt(3)
+                  ? !!priceImpactWarning
+                  : !!closeError
+              }
               hint={
                 connected && shrtAmt.gt(0) ? (
                   existingShortError
                 ) : closeError ? (
                   closeError
+                ) : priceImpactWarning ? (
+                  priceImpactWarning
                 ) : (
                   <div className={classes.hint}>
                     <span className={classes.hintTextContainer}>
@@ -402,12 +422,20 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
               tooltip="Amount of wSqueeth you want to close in eth"
               unit="ETH"
               convertedValue={altTradeAmount.times(ethPrice).toFixed(2).toLocaleString()}
-              error={connected && shrtAmt.gt(0) ? !!existingShortError : !!closeError}
+              error={
+                connected && shrtAmt.gt(0)
+                  ? !!existingShortError
+                  : new BigNumber(quote.priceImpact).gt(3)
+                  ? !!priceImpactWarning
+                  : !!closeError
+              }
               hint={
                 connected && shrtAmt.gt(0) ? (
                   existingShortError
                 ) : closeError ? (
                   closeError
+                ) : priceImpactWarning ? (
+                  priceImpactWarning
                 ) : (
                   <div className={classes.hint}>
                     <span>{`Balance ${balance}`}</span>
@@ -443,16 +471,22 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
                 </PrimaryButton>
               ) : (
                 <PrimaryButton
-                  variant="contained"
+                  variant={longClosePriceImpactErrorState ? 'outlined' : 'contained'}
                   onClick={sellAndClose}
                   className={classes.amountInput}
                   disabled={!!sellLoading || !!closeError || shrtAmt.gt(0) || wSqueethBal.isZero()}
-                  style={{ width: '300px' }}
+                  style={
+                    longClosePriceImpactErrorState
+                      ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
+                      : { width: '300px' }
+                  }
                 >
                   {sellLoading ? (
                     <CircularProgress color="primary" size="1.5rem" />
                   ) : squeethAllowance.lt(amount) ? (
                     '1/2 Approve oSQTH'
+                  ) : longClosePriceImpactErrorState ? (
+                    'Sell Anyway'
                   ) : hasJustApprovedSqueeth ? (
                     '2/2 Sell to close'
                   ) : (
@@ -539,12 +573,20 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
                 }}
                 unit="ETH"
                 convertedValue={amount.times(ethPrice).toFixed(2).toLocaleString()}
-                error={connected && shrtAmt.gt(0) ? !!existingShortError : !!openError}
+                error={
+                  connected && shrtAmt.gt(0)
+                    ? !!existingShortError
+                    : new BigNumber(quote.priceImpact).gt(3)
+                    ? !!priceImpactWarning
+                    : !!openError
+                }
                 hint={
                   openError ? (
                     openError
                   ) : connected && shrtAmt.gt(0) ? (
                     existingShortError
+                  ) : priceImpactWarning ? (
+                    priceImpactWarning
                   ) : (
                     <div className={classes.hint}>
                       <span>{`Balance ${balance}`}</span>
@@ -568,12 +610,20 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
                 actionTxt="Max"
                 unit="oSQTH"
                 convertedValue={getWSqueethPositionValue(altTradeAmount).toFixed(2).toLocaleString()}
-                error={connected && shrtAmt.gt(0) ? !!existingShortError : !!openError}
+                error={
+                  connected && shrtAmt.gt(0)
+                    ? !!existingShortError
+                    : new BigNumber(quote.priceImpact).gt(3)
+                    ? !!priceImpactWarning
+                    : !!openError
+                }
                 hint={
                   openError ? (
                     openError
                   ) : connected && shrtAmt.gt(0) ? (
                     existingShortError
+                  ) : priceImpactWarning ? (
+                    priceImpactWarning
                   ) : (
                     <div className={classes.hint}>
                       <span className={classes.hintTextContainer}>
@@ -628,13 +678,23 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
                   </PrimaryButton>
                 ) : (
                   <PrimaryButton
-                    variant="contained"
+                    variant={longOpenPriceImpactErrorState ? 'outlined' : 'contained'}
                     onClick={transact}
                     className={classes.amountInput}
                     disabled={!!buyLoading || !!openError || shrtAmt.gt(0)}
-                    style={{ width: '300px' }}
+                    style={
+                      longOpenPriceImpactErrorState
+                        ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
+                        : { width: '300px' }
+                    }
                   >
-                    {buyLoading ? <CircularProgress color="primary" size="1.5rem" /> : 'Buy'}
+                    {buyLoading ? (
+                      <CircularProgress color="primary" size="1.5rem" />
+                    ) : longOpenPriceImpactErrorState ? (
+                      'Buy Anyway'
+                    ) : (
+                      'Buy'
+                    )}
                   </PrimaryButton>
                 )}
                 <Typography variant="caption" className={classes.caption} component="div">

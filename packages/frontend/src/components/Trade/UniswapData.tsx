@@ -62,7 +62,18 @@ const UniswapData: React.FC<UniswapDataType> = ({ slippage, priceImpact, minRece
                 <Typography variant="caption" color="textSecondary" className={classes.pi}>
                   Price impact:{' '}
                 </Typography>
-                <Typography variant="caption">{priceImpact}%</Typography>
+                <Typography
+                  variant="caption"
+                  style={
+                    Number(priceImpact) > 3
+                      ? { color: '#f5475c' }
+                      : Number(priceImpact) < 1
+                      ? { color: '#49D273' }
+                      : { color: '#fff' }
+                  }
+                >
+                  {priceImpact}%
+                </Typography>
               </>
             )}
           </div>
