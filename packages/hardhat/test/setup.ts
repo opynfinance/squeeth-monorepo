@@ -14,7 +14,7 @@ import {
   abi as FACTORY_ABI,
   bytecode as FACTORY_BYTECODE,
 } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json'
-import { Controller, Oracle, ShortPowerPerp, WETH9, WPowerPerp, MockErc20, INonfungiblePositionManager } from "../typechain";
+import { Controller, Oracle, ShortPowerPerp, WETH9, WPowerPerp, MockErc20, INonfungiblePositionManager, ABDKMath64x64 } from "../typechain";
 import { convertToken0PriceToSqrtX96Price, convertToken1PriceToSqrtX96Price } from "./calculator";
 import { getNow } from './utils'
 
@@ -143,7 +143,13 @@ export const getPoolAddress = async (
  * @returns 
  */
  export const deploySqueethCoreContracts= async(weth: Contract, dai: Contract, positionManager: Contract, uniswapFactory: Contract, wsqueethEthPrice?: number, ethDaiPrice?: number ) => {
-  const ControllerContract = await ethers.getContractFactory("Controller");
+  // const { deployer } = await getNamedAccounts();
+
+  const ABDK = await ethers.getContractFactory("ABDKMath64x64")
+  const ABDKLibrary = (await ABDK.deploy()) as ABDKMath64x64;
+
+
+  const ControllerContract = await ethers.getContractFactory("Controller", {libraries: {ABDKMath64x64: ABDKLibrary.address}});
 
   const OracleContract = await ethers.getContractFactory("Oracle");
   const oracle = (await OracleContract.deploy()) as Oracle;

@@ -2,8 +2,11 @@
 
 pragma solidity =0.7.6;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+//interface
 import {IOracle} from "../interfaces/IOracle.sol";
+
+//lib
+import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 
 library Power2Base {
     using SafeMath for uint256;

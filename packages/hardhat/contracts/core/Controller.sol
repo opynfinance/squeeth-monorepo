@@ -3,20 +3,23 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
+// interface
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
-
 import {IWETH9} from "../interfaces/IWETH9.sol";
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
 import {IShortPowerPerp} from "../interfaces/IShortPowerPerp.sol";
 import {IOracle} from "../interfaces/IOracle.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
+//contract
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+
+//lib
+import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {ABDKMath64x64} from "../libs/ABDKMath64x64.sol";
 import {VaultLib} from "../libs/VaultLib.sol";
 import {Uint256Casting} from "../libs/Uint256Casting.sol";
 import {Power2Base} from "../libs/Power2Base.sol";
@@ -54,6 +57,7 @@ import {Power2Base} from "../libs/Power2Base.sol";
 contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
     using SafeMath for uint256;
     using Uint256Casting for uint256;
+    using ABDKMath64x64 for int128;
     using VaultLib for VaultLib.Vault;
     using Address for address payable;
 
@@ -1134,7 +1138,9 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
             cacheNormFactor
         );
         uint256 index = Power2Base._getIndex(periodForOracle, oracle, ethQuoteCurrencyPool, weth, quoteCurrency);
-        uint256 rFunding = (ONE.mul(uint256(period))).div(FUNDING_PERIOD);
+
+        //the fraction of the funding period. used to compound the funding rate
+        int128 rFunding = ABDKMath64x64.divu(period, FUNDING_PERIOD);
 
         // floor mark to be at least LOWER_MARK_RATIO of index
         uint256 lowerBound = index.mul(LOWER_MARK_RATIO).div(ONE);
@@ -1146,10 +1152,15 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
             if (mark > upperBound) mark = upperBound;
         }
 
-        // newNormFactor = (mark / ( (1+rFunding) * mark - index * rFunding )) * oldNormaFactor
-        uint256 multiplier = mark.mul(ONE_ONE).div((ONE.add(rFunding)).mul(mark).sub(index.mul(rFunding))); // multiply by 1e36 to keep multiplier in 18 decimals
+        // normFactor(new) = multiplier * normFactor(old)
+        // multiplier = (index/mark)^rFunding
+        // x^r = n^(log_n(x) * r)
+        // multiplier = 2^( log2(index/mark) * rFunding )
 
-        return cacheNormFactor.mul(multiplier).div(ONE);
+        int128 base = ABDKMath64x64.divu(index, mark);
+        int128 logTerm = ABDKMath64x64.log_2(base).mul(rFunding);
+        int128 multiplier = logTerm.exp_2();
+        return multiplier.mulu(cacheNormFactor);
     }
 
     /**

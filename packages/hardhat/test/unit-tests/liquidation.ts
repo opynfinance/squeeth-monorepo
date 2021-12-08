@@ -2,7 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber, providers } from "ethers";
-import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, LiquidationHelper } from "../../typechain";
+import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, LiquidationHelper, ABDKMath64x64 } from "../../typechain";
 import { isSimilar, one, oracleScaleFactor } from '../utils'
 
 const squeethETHPrice = ethers.utils.parseUnits('3010')
@@ -65,7 +65,10 @@ describe("Controller: liquidation unit test", function () {
 
   describe("Deployment", async () => {
     it("Deployment", async function () {
-      const ControllerContract = await ethers.getContractFactory("Controller");
+      const ABDK = await ethers.getContractFactory("ABDKMath64x64")
+      const ABDKLibrary = (await ABDK.deploy()) as ABDKMath64x64;
+    
+      const ControllerContract = await ethers.getContractFactory("Controller", {libraries: {ABDKMath64x64: ABDKLibrary.address}});
       controller = (await ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)) as Controller;
       const squeethAddr = await controller.wPowerPerp();
       const nftAddr = await controller.shortPowerPerp();

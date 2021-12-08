@@ -1,12 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity =0.7.6;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+//interface
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
 
+//lib
+import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import "@uniswap/v3-core/contracts/libraries/SqrtPriceMath.sol";
-
 import {Uint256Casting} from "./Uint256Casting.sol";
 
 /**

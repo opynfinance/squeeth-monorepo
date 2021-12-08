@@ -1,9 +1,9 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { ethers } from "hardhat"
 import { expect } from "chai";
-import { BigNumber, providers } from "ethers";
+import { BigNumber, providers, utils } from "ethers";
 import { getNow, isSimilar, one, oracleScaleFactor } from "../utils";
-import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager } from "../../typechain";
+import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, ABDKMath64x64} from "../../typechain";
 
 const squeethETHPrice = BigNumber.from('3030').mul(one).div(oracleScaleFactor)
 const ethUSDPrice = BigNumber.from('3000').mul(one)
@@ -11,8 +11,6 @@ const scaledEthPrice = ethUSDPrice.div(oracleScaleFactor)
 
 const mintAmount = BigNumber.from('100').mul(one)
 const collateralAmount = BigNumber.from('50').mul(one)
-
-const secondsInDay = 86400
 
 describe("Controller Funding tests", function () {
   let squeeth: MockWPowerPerp;
@@ -69,7 +67,11 @@ describe("Controller Funding tests", function () {
 
   describe("Deployment", async () => {
     it("Deployment", async function () {
-      const ControllerContract = await ethers.getContractFactory("Controller");
+
+      const ABDK = await ethers.getContractFactory("ABDKMath64x64")
+      const ABDKLibrary = (await ABDK.deploy()) as ABDKMath64x64;
+    
+      const ControllerContract = await ethers.getContractFactory("Controller", {libraries: {ABDKMath64x64: ABDKLibrary.address}});
       controller = (await ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)) as Controller;
     });
   });
@@ -380,13 +382,17 @@ describe("Controller Funding tests", function () {
         // norm factor after - norm factor before should be bounded, even now index is 0
         expect(normalizationFactorAfter.sub(normalizationFactorBefore).lt(one))        
       })
-      it('calling applying funding every 12 hours * 2 times, will result in a lower norm factor compared to every 24 hours * 1 times', async() => {
+      it('calling applying funding every 12 hours * 2 times, should result in an equal norm factor vs calling 1 time after 24hours', async() => {
+        const initialTime = await getNow(provider)
         const secsInOneDay  = 86400
+
+        const day0Initial = await initialTime + secsInOneDay
+
         const normFactor = await controller.normalizationFactor()
         await oracle.connect(random).setPrice(squeethEthPool.address , squeethETHPrice.mul(normFactor).div(one))
         await oracle.connect(random).setPrice(ethUSDPool.address , ethUSDPrice)
 
-        await provider.send("evm_increaseTime", [secsInOneDay])
+        await provider.send("evm_setNextBlockTimestamp", [day0Initial]) 
         await provider.send("evm_mine", [])
 
         const expNormFactor0 = await controller.getExpectedNormalizationFactor()
@@ -437,7 +443,7 @@ describe("Controller Funding tests", function () {
         const normFactor2 = await controller.normalizationFactor()
         const day2ChangeRatio = normFactor2.mul(one).div(normFactor1)
         
-        expect(day2ChangeRatio.lt(day1ChangeRatio)).to.be.true
+        expect(isSimilar(day2ChangeRatio.toString(),day1ChangeRatio.toString())).to.be.true
       })
     })
   })
@@ -445,8 +451,10 @@ describe("Controller Funding tests", function () {
 });
 
 function getNormFactorMultiplier(mark: BigNumber, index:BigNumber, secondsElapsed: number) {
-  const top = one.mul(one).mul(mark)
-  const fractionalDayElapsed = one.mul(secondsElapsed).div(secondsInDay)
-  const bot = one.add(fractionalDayElapsed).mul(mark).sub(index.mul(fractionalDayElapsed))
-  return top.div(bot)
+  
+  const ratio =   parseFloat(utils.formatEther(index.mul(one).div(mark)))
+  const r = secondsElapsed/86400
+  const exponent = Math.log2(ratio)*r
+
+  return BigNumber.from(ethers.utils.parseUnits((2**exponent).toString()))
 }

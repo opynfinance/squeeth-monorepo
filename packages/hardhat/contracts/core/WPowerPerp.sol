@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.7.6;
 
+//interface
+import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
+
+//contract
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/Initializable.sol";
-import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
 
 /**
  * @notice ERC20 Token representing wrapped long power perpetual position

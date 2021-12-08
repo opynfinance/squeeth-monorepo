@@ -2,7 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber, providers, constants } from "ethers";
-import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester, WETH9, ControllerTester } from '../../typechain'
+import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester, WETH9, ControllerTester, ABDKMath64x64 } from '../../typechain'
 import { isEmptyVault } from '../vault-utils'
 import { isSimilar, oracleScaleFactor, one, getNow } from "../utils";
 import { getSqrtPriceAndTickBySqueethPrice } from "../calculator";
@@ -93,12 +93,18 @@ describe("Controller", function () {
     // the oracle should return the exact ETH / USDC price (without scale)
     await oracle.connect(random).setPrice(ethUSDPool.address , ethUSDPrice)  // usdc per 1 eth
 
-    const ControllerContract = await ethers.getContractFactory("Controller");
+    const ABDK = await ethers.getContractFactory("ABDKMath64x64")
+    const ABDKLibrary = (await ABDK.deploy()) as ABDKMath64x64;
+
+    const ControllerContract = await ethers.getContractFactory("Controller", {libraries: {ABDKMath64x64: ABDKLibrary.address}});
     controller = (await ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)) as Controller;
   });
 
   it("Should revert when oracle is address(0)", async () => {
-    const ControllerContract = await ethers.getContractFactory("Controller");
+    const ABDK = await ethers.getContractFactory("ABDKMath64x64")
+    const ABDKLibrary = (await ABDK.deploy()) as ABDKMath64x64;
+
+    const ControllerContract = await ethers.getContractFactory("Controller", {libraries: {ABDKMath64x64: ABDKLibrary.address}});
 
     await expect(
       ControllerContract.deploy(ethers.constants.AddressZero, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
@@ -106,7 +112,10 @@ describe("Controller", function () {
   });
 
   it("Should revert when shortSqueeth is address(0)", async () => {
-    const ControllerContract = await ethers.getContractFactory("Controller");
+    const ABDK = await ethers.getContractFactory("ABDKMath64x64")
+    const ABDKLibrary = (await ABDK.deploy()) as ABDKMath64x64;
+
+    const ControllerContract = await ethers.getContractFactory("Controller", {libraries: {ABDKMath64x64: ABDKLibrary.address}});
 
     await expect(
       ControllerContract.deploy(oracle.address, ethers.constants.AddressZero, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
@@ -114,7 +123,10 @@ describe("Controller", function () {
   });
 
   it("Should revert when powerperp is address(0)", async () => {
-    const ControllerContract = await ethers.getContractFactory("Controller");
+    const ABDK = await ethers.getContractFactory("ABDKMath64x64")
+    const ABDKLibrary = (await ABDK.deploy()) as ABDKMath64x64;
+
+    const ControllerContract = await ethers.getContractFactory("Controller", {libraries: {ABDKMath64x64: ABDKLibrary.address}});
 
     await expect(
       ControllerContract.deploy(oracle.address, shortSqueeth.address, ethers.constants.AddressZero, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
@@ -122,7 +134,10 @@ describe("Controller", function () {
   });
 
   it("Should revert when weth is address(0)", async () => {
-    const ControllerContract = await ethers.getContractFactory("Controller");
+    const ABDK = await ethers.getContractFactory("ABDKMath64x64")
+    const ABDKLibrary = (await ABDK.deploy()) as ABDKMath64x64;
+
+    const ControllerContract = await ethers.getContractFactory("Controller", {libraries: {ABDKMath64x64: ABDKLibrary.address}});
 
     await expect(
       ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, ethers.constants.AddressZero, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
@@ -130,7 +145,10 @@ describe("Controller", function () {
   });
   
   it("Should revert when quote currency is address(0)", async () => {
-    const ControllerContract = await ethers.getContractFactory("Controller");
+    const ABDK = await ethers.getContractFactory("ABDKMath64x64")
+    const ABDKLibrary = (await ABDK.deploy()) as ABDKMath64x64;
+
+    const ControllerContract = await ethers.getContractFactory("Controller", {libraries: {ABDKMath64x64: ABDKLibrary.address}});
 
     await expect(
       ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, ethers.constants.AddressZero, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)
@@ -138,7 +156,10 @@ describe("Controller", function () {
   });
 
   it("Should revert when ethUSDPool is address(0)", async () => {
-    const ControllerContract = await ethers.getContractFactory("Controller");
+    const ABDK = await ethers.getContractFactory("ABDKMath64x64")
+    const ABDKLibrary = (await ABDK.deploy()) as ABDKMath64x64;
+
+    const ControllerContract = await ethers.getContractFactory("Controller", {libraries: {ABDKMath64x64: ABDKLibrary.address}});
 
     await expect(
       ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethers.constants.AddressZero, squeethEthPool.address, uniPositionManager.address)
@@ -146,7 +167,10 @@ describe("Controller", function () {
   });
 
   it("Should revert when squeethEthPool is address(0)", async () => {
-    const ControllerContract = await ethers.getContractFactory("Controller");
+    const ABDK = await ethers.getContractFactory("ABDKMath64x64")
+    const ABDKLibrary = (await ABDK.deploy()) as ABDKMath64x64;
+
+    const ControllerContract = await ethers.getContractFactory("Controller", {libraries: {ABDKMath64x64: ABDKLibrary.address}});
 
     await expect(
       ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, ethers.constants.AddressZero, uniPositionManager.address)
@@ -154,7 +178,10 @@ describe("Controller", function () {
   });
 
   it("Should revert when uniPositionManager is address(0)", async () => {
-    const ControllerContract = await ethers.getContractFactory("Controller");
+    const ABDK = await ethers.getContractFactory("ABDKMath64x64")
+    const ABDKLibrary = (await ABDK.deploy()) as ABDKMath64x64;
+
+    const ControllerContract = await ethers.getContractFactory("Controller", {libraries: {ABDKMath64x64: ABDKLibrary.address}});
 
     await expect(
       ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, ethers.constants.AddressZero)

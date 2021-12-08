@@ -3,9 +3,11 @@
 // uniswap Library only works under 0.7.6
 pragma solidity =0.7.6;
 
+//interface
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IERC20Detailed} from "../interfaces/IERC20Detailed.sol";
 
+//library
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {Uint256Casting} from "../libs/Uint256Casting.sol";
 import {OracleLibrary} from "../libs/OracleLibrary.sol";

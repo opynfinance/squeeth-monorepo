@@ -3,7 +3,7 @@ import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber, providers } from "ethers";
 import { one, oracleScaleFactor } from "../utils";
-import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester } from "../../typechain";
+import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester, ABDKMath64x64 } from "../../typechain";
 import { getSqrtPriceAndTickBySqueethPrice } from "../calculator";
 
 // use the same price to make sure we're not paying funding (at first)
@@ -71,7 +71,10 @@ describe("Simple Vault state tests", function () {
 
   describe("Deployment", async () => {
     it("Deployment", async function () {
-      const ControllerContract = await ethers.getContractFactory("Controller");
+      const ABDK = await ethers.getContractFactory("ABDKMath64x64")
+      const ABDKLibrary = (await ABDK.deploy()) as ABDKMath64x64;
+    
+      const ControllerContract = await ethers.getContractFactory("Controller", {libraries: {ABDKMath64x64: ABDKLibrary.address}});
       controller = (await ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)) as Controller;
     });
   });

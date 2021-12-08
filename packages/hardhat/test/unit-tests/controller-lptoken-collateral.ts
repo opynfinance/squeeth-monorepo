@@ -3,7 +3,7 @@ import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber } from "ethers";
 import { parseEther } from "ethers/lib/utils";
-import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester, IWETH9, LiquidationHelper } from "../../typechain";
+import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester, IWETH9, LiquidationHelper, ABDKMath64x64 } from "../../typechain";
 import { getSqrtPriceAndTickBySqueethPrice } from "../calculator";
 import { oracleScaleFactor, one } from "../utils";
 
@@ -99,8 +99,11 @@ describe("Controller: Uni LP tokens collateralization", function () {
   });
 
   this.beforeAll("Deploy Controller", async () => {
-    const ControllerContract = await ethers.getContractFactory("Controller");
-    controller = (await ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, dai.address, ethDaiPool.address, squeethEthPool.address, uniPositionManager.address)) as Controller;
+    const ABDK = await ethers.getContractFactory("ABDKMath64x64")
+    const ABDKLibrary = (await ABDK.deploy()) as ABDKMath64x64;
+  
+    const ControllerContract = await ethers.getContractFactory("Controller", {libraries: {ABDKMath64x64: ABDKLibrary.address}});
+  controller = (await ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, dai.address, ethDaiPool.address, squeethEthPool.address, uniPositionManager.address)) as Controller;
 
     const LiqHelperFactory = await ethers.getContractFactory("LiquidationHelper");
     liquidationHelper = await LiqHelperFactory.deploy(

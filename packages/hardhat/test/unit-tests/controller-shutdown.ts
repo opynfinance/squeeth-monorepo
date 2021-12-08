@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { ethers } from "hardhat"
 import { expect } from "chai";
-import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, WETH9 } from '../../typechain'
+import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, WETH9, ABDKMath64x64 } from '../../typechain'
 import { oracleScaleFactor } from "../utils";
 
 const squeethETHPrice = ethers.utils.parseUnits('3010')
@@ -57,8 +57,11 @@ describe("Controller", function () {
     await oracle.connect(random).setPrice(squeethEthPool.address , squeethETHPrice) // eth per 1 squeeth
     await oracle.connect(random).setPrice(ethUSDPool.address , ethUSDPrice)  // usdc per 1 eth
     
-    const ControllerContract = await ethers.getContractFactory("Controller");
-    controller = (await ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)) as Controller;
+    const ABDK = await ethers.getContractFactory("ABDKMath64x64")
+    const ABDKLibrary = (await ABDK.deploy()) as ABDKMath64x64;
+  
+    const ControllerContract = await ethers.getContractFactory("Controller", {libraries: {ABDKMath64x64: ABDKLibrary.address}});
+  controller = (await ControllerContract.deploy(oracle.address, shortSqueeth.address, squeeth.address, weth.address, usdc.address, ethUSDPool.address, squeethEthPool.address, uniPositionManager.address)) as Controller;
   });
   
   describe("Time bound pausing", function () {

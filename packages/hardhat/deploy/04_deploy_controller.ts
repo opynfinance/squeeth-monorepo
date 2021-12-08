@@ -23,8 +23,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const ethUSDCPool = await getPoolAddress(weth9, usdc, uniswapFactory)
   const squeethEthPool = await getPoolAddress(weth9, wsqueeth, uniswapFactory)
 
+  // deploy abdk library
+  await deploy("ABDKMath64x64", { from: deployer, log: true})
+  const abdk = await ethers.getContract("ABDKMath64x64", deployer)
+
   // deploy controller
-  await deploy("Controller", { from: deployer, log: true, args:[oracle.address, shortSqueeth.address, wsqueeth.address, weth9.address, usdc.address,  ethUSDCPool, squeethEthPool, positionManager.address]});
+  await deploy("Controller", { from: deployer, log: true, libraries: {ABDKMath64x64: abdk.address}, args:[oracle.address, shortSqueeth.address, wsqueeth.address, weth9.address, usdc.address,  ethUSDCPool, squeethEthPool, positionManager.address]});
   const controller = await ethers.getContract("Controller", deployer);
 
   try {
