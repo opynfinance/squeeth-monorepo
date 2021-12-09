@@ -14,6 +14,7 @@ import {IController} from "../interfaces/IController.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {StrategyBase} from "./base/StrategyBase.sol";
 import {StrategyFlashSwap} from "./base/StrategyFlashSwap.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // lib
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
@@ -25,7 +26,7 @@ import {Power2Base} from "../libs/Power2Base.sol";
  * @notice Contract for Crab strategy
  * @author Opyn team
  */
-contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
+contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownable {
     using StrategyMath for uint256;
     using Address for address payable;
 
@@ -33,6 +34,8 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
     uint32 public constant POWER_PERP_PERIOD = 5 minutes;
     // strategy will only allow hedging if collateral to trade is at least 0.1% of the total strategy collateral
     uint256 public constant DELTA_HEDGE_THRESHOLD = 1e15;
+
+    uint256 public strategyCap;
 
     /// @dev enum to differentiate between uniswap swap callback function source
     enum FLASH_SOURCE {
@@ -118,6 +121,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
     );
     event ExecuteSellAuction(address indexed buyer, uint256 wSqueethSold, uint256 ethBought, bool isHedgingOnUniswap);
     event ExecuteBuyAuction(address indexed seller, uint256 wSqueethBought, uint256 ethSold, bool isHedgingOnUniswap);
+    event SetStrategyCap(uint256 newCapAmount, uint256 oldCapAmount);
 
     /**
      * @notice strategy constructor
@@ -181,6 +185,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
      */
     function flashDeposit(uint256 _ethToDeposit) external payable nonReentrant {
         (uint256 cachedStrategyDebt, uint256 cachedStrategyCollateral) = _syncStrategyState();
+        _checkStrategyCap(_ethToDeposit, cachedStrategyCollateral);
 
         (uint256 wSqueethToMint, ) = _calcWsqueethToMintAndFee(
             _ethToDeposit,
@@ -355,6 +360,30 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
     }
 
     /**
+     * @notice owner can set the strategy cap in ETH collateral terms
+     * @dev deposits are rejected if it would put the strategy above the cap amount
+     * @dev strategy collateral can be above the cap amount due to hedging activities
+     * @param _capAmount the maximum strategy collateral in ETH, checked on deposits
+     */
+    function setStrategyCap(uint256 _capAmount) external onlyOwner {
+        uint256 oldCap = strategyCap;
+        strategyCap = _capAmount;
+
+        emit SetStrategyCap(_capAmount, oldCap);
+    }
+
+    /**
+     * @notice check if a user deposit puts the strategy above the cap
+     * @dev reverts if a deposit amount puts strategy over the cap
+     * @dev it is possible for the strategy to be over the cap from trading/hedging activities, but withdrawals are still allowed
+     * @param _depositAmount the user deposit amount in ETH
+     * @param _strategyCollateral the updated strategy collateral
+     */
+    function _checkStrategyCap(uint256 _depositAmount, uint256 _strategyCollateral) internal view {
+        require(_strategyCollateral.add(_depositAmount) <= strategyCap, "Deposit exceeds strategy cap");
+    }
+
+    /**
      * @notice uniswap flash swap callback function
      * @dev this function will be called by flashswap callback function uniswapV3SwapCallback()
      * @param _caller address of original function caller
@@ -461,6 +490,8 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard {
         bool _isFlashDeposit
     ) internal returns (uint256, uint256) {
         (uint256 strategyDebt, uint256 strategyCollateral) = _syncStrategyState();
+        _checkStrategyCap(_amount, strategyCollateral);
+
         (uint256 wSqueethToMint, uint256 ethFee) = _calcWsqueethToMintAndFee(_amount, strategyDebt, strategyCollateral);
 
         uint256 depositorCrabAmount = _calcSharesToMint(_amount.sub(ethFee), strategyCollateral, totalSupply());

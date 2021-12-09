@@ -256,7 +256,42 @@ describe("Crab Strategy", function () {
     it('should revert when sending eth to crab strategy contract from an EOA', async() => {
       await expect(random.sendTransaction({to: crabStrategy.address, value:1})).to.be.revertedWith('Cannot receive eth')
     })
-});
+  });
+
+  describe("set strategy cap", async () => {
+    const strategyCap = ethers.utils.parseUnits("100")
+    const wSqueethEthPrice = BigNumber.from('3030').mul(one).div(oracleScaleFactor)
+    const ethUSDPrice = BigNumber.from('3000').mul(one)
+
+    before(async () => {
+      await oracle.connect(owner).setPrice(wSqueethEthPool.address, wSqueethEthPrice)
+      await oracle.connect(random).setPrice(ethUSDPool.address , ethUSDPrice)  // usdc per 1 eth
+    })
+
+    it('should revert non owner tries to set the strategy cap', async() => {
+      await expect(crabStrategy.connect(random).setStrategyCap(strategyCap)).to.be.revertedWith("Ownable: caller is not the owner")
+    })
+
+    it('should revert if no cap is set (initially 0 cap)', async() => {
+      const strategyCap = await crabStrategy.strategyCap()
+      const ethToDeposit = 1
+      expect(strategyCap.eq(0)).to.be.true
+
+      await expect(crabStrategy.connect(depositor2).deposit({value: 1})).to.be.revertedWith("Deposit exceeds strategy cap");
+    })
+
+    it('should allow owner to increase the strategy cap', async() => {
+      await crabStrategy.connect(owner).setStrategyCap(strategyCap.mul(2))
+      const strategyCapInContract = await crabStrategy.strategyCap()
+      expect(strategyCapInContract.eq(strategyCap.mul(2))).to.be.true
+    })
+
+    it('should allow owner to reduce the strategy cap', async() => {
+      await crabStrategy.connect(owner).setStrategyCap(strategyCap)
+      const strategyCapInContract = await crabStrategy.strategyCap()
+      expect(strategyCapInContract.eq(strategyCap)).to.be.true
+    })
+  });
 
   describe("Deposit into strategy", async () => {
     const wSqueethEthPrice = BigNumber.from('3030').mul(one).div(oracleScaleFactor)
@@ -325,6 +360,13 @@ describe("Crab Strategy", function () {
       expect(isSimilar(depositorSqueethBalance.toString(), expectedMintedWsqueeth.toString(), 10)).to.be.true
       expect(strategyContractSqueeth.eq(BigNumber.from(0))).to.be.true
       expect(depositorWSqueethDebt.eq(depositorSqueethBalance))    
+    })
+    it('should revert if cap is hit', async() => {
+      const strategyCap = await crabStrategy.strategyCap()
+      const result = await crabStrategy.getVaultDetails()
+      const ethToDeposit = strategyCap.sub(result[2]).add(1)
+
+      await expect(crabStrategy.connect(depositor2).deposit({value: ethToDeposit})).to.be.revertedWith("Deposit exceeds strategy cap");
     })
   })
 

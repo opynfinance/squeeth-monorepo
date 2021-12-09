@@ -108,7 +108,25 @@ describe("Crab integration test: flash deposit - deposit - withdraw", function (
 
   })
 
+  describe("deposit above strategy cap", async () => {
+    it("should revert if depositing an amount that puts the strategy above the cap", async () => {      
+      const ethToDeposit = ethers.utils.parseUnits('20')
+      const msgvalue = ethers.utils.parseUnits('10')
+
+      await expect(
+        crabStrategy.connect(depositor).flashDeposit(ethToDeposit, {value: msgvalue})
+      ).to.be.revertedWith("Deposit exceeds strategy cap");
+    })
+  })
+
   describe("flash deposit - deposit - withdraw - flash withdraw", async () => {
+    it("should let the owner set the cap", async () => {      
+      const strategyCap = ethers.utils.parseUnits("1000")
+      await crabStrategy.connect(owner).setStrategyCap(strategyCap)
+      const strategyCapInContract = await crabStrategy.strategyCap()
+      expect(strategyCapInContract.eq(strategyCap)).to.be.true
+    })
+
     it("should revert flash depositing if not enough ETH", async () => {      
       const ethToDeposit = ethers.utils.parseUnits('20')
       const msgvalue = ethers.utils.parseUnits('10')

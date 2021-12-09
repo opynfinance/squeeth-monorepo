@@ -94,6 +94,11 @@ describe("Crab flashswap integration test: uniswap time based hedging", function
 
     const CrabStrategyContract = await ethers.getContractFactory("CrabStrategy");
     crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, uniswapFactory.address, wSqueethPool.address, hedgeTimeThreshold, hedgePriceThreshold, auctionTime, minPriceMultiplier, maxPriceMultiplier)) as CrabStrategy;
+    
+    const strategyCap = ethers.utils.parseUnits("1000")
+    await crabStrategy.connect(owner).setStrategyCap(strategyCap)
+    const strategyCapInContract = await crabStrategy.strategyCap()
+    expect(strategyCapInContract.eq(strategyCap)).to.be.true
   })
 
   this.beforeAll("Seed pool liquidity", async() => {
