@@ -280,7 +280,7 @@ describe("Crab integration test: flash deposit - deposit - withdraw", function (
       const ethCostOfDebtToRepay = wmul(debtToRepay, wSqueethPrice)
       const userCollateral = wmul(crabRatio, strategyCollateralAmountBefore)
       const ethToWithdraw = userCollateral.sub(ethCostOfDebtToRepay);
-      const maxEthToPay = ethToWithdraw.mul(15).div(10)
+      const maxEthToPay = ethCostOfDebtToRepay.mul(11).div(10)
 
       await crabStrategy.connect(depositor).flashWithdraw(userCrabBalanceBefore, maxEthToPay)
 

@@ -5,8 +5,9 @@ import { BigNumber, providers } from "ethers";
 import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, LiquidationHelper, ABDKMath64x64 } from "../../typechain";
 import { isSimilar, one, oracleScaleFactor } from '../utils'
 
-const squeethETHPrice = ethers.utils.parseUnits('3010')
+const squeethETHPrice = ethers.utils.parseUnits('3030').mul(one).div(oracleScaleFactor)
 const ethUSDPrice = ethers.utils.parseUnits('3000')
+
 
 
 describe("Controller: liquidation unit test", function () {
@@ -101,6 +102,8 @@ describe("Controller: liquidation unit test", function () {
 
     // the new eth price that put vault underwater
     let newEthUsdPrice: BigNumber
+    // the new squeeth price that determines the liquidator bounty
+    let newSqueethEthPrice: BigNumber
 
     before("open vault 1", async () => {
       vault1Id = await shortSqueeth.nextId()
@@ -193,15 +196,17 @@ describe("Controller: liquidation unit test", function () {
 
     it('set eth price to make the vault underwater', async() => {
       newEthUsdPrice = BigNumber.from(4000).mul(one)
+      newSqueethEthPrice = BigNumber.from(4040).mul(one).div(oracleScaleFactor)
       await oracle.connect(random).setPrice(ethUSDPool.address, newEthUsdPrice)
+      await oracle.connect(random).setPrice(squeethEthPool.address, newSqueethEthPrice)
+
     })
     it("should revert if the vault become a dust vault after liquidation", async () => {
       const vaultBefore = await controller.vaults(vault2Id)
       const debtToRepay = vaultBefore.shortAmount.sub(1) // not burning all the the short
 
       const debtShouldRepay = vaultBefore.shortAmount
-      const normFactor = await controller.normalizationFactor()
-      let collateralToSell : BigNumber = newEthUsdPrice.mul(normFactor).mul(debtShouldRepay).div(one).div(oracleScaleFactor).div(one)
+      let collateralToSell : BigNumber = newSqueethEthPrice.mul(debtShouldRepay).div(one)
       collateralToSell = collateralToSell.add(collateralToSell.div(10))
 
       const result = await liquidationHelper.checkLiquidation(vault2Id);
@@ -218,8 +223,7 @@ describe("Controller: liquidation unit test", function () {
       const vaultBefore = await controller.vaults(vault2Id)
       const debtToRepay = vaultBefore.shortAmount
             
-      const normFactor = await controller.normalizationFactor()
-      let collateralToSell : BigNumber = newEthUsdPrice.mul(normFactor).mul(debtToRepay).div(one).div(oracleScaleFactor).div(one)
+      let collateralToSell : BigNumber = newSqueethEthPrice.mul(debtToRepay).div(one)
       collateralToSell = collateralToSell.add(collateralToSell.div(10))
 
       const result = await liquidationHelper.checkLiquidation(vault2Id);
@@ -255,8 +259,7 @@ describe("Controller: liquidation unit test", function () {
       const tx = await controller.connect(liquidator).liquidate(vault1Id, maxDebtToRepay);
       const receipt = await tx.wait();
       
-      const normFactor = await controller.normalizationFactor()
-      let collateralToSell : BigNumber = newEthUsdPrice.mul(normFactor).mul(debtToRepay).div(one).div(oracleScaleFactor).div(one)
+      let collateralToSell : BigNumber = newSqueethEthPrice.mul(debtToRepay).div(one)
       collateralToSell = collateralToSell.add(collateralToSell.div(10))
 
       const vaultAfter = await controller.vaults(vault1Id)
@@ -279,8 +282,9 @@ describe("Controller: liquidation unit test", function () {
 
   describe("Liquidation: un-profitable scenario", async () => {
     let vaultId: BigNumber;
-    const newEthPrice = '9000'
-
+    const newSqueethETHPrice = ethers.utils.parseUnits('9090').mul(one).div(oracleScaleFactor)
+    const newEthUSDPrice = ethers.utils.parseUnits('9000')
+    
     before("open vault", async () => {
       const oldEthPrice = BigNumber.from('3000').mul(one)
       await oracle.connect(random).setPrice(ethUSDPool.address, oldEthPrice)
@@ -292,8 +296,9 @@ describe("Controller: liquidation unit test", function () {
     
     before("set price to a number where vault will become insolvent", async () => {
       // change oracle price to make vault liquidatable
-      const newEthUsdPrice = ethers.utils.parseUnits(newEthPrice)
-      await oracle.connect(random).setPrice(ethUSDPool.address, newEthUsdPrice)
+      await oracle.connect(random).setPrice(ethUSDPool.address, newEthUSDPrice)
+      await oracle.connect(random).setPrice(squeethEthPool.address, newSqueethETHPrice)
+      
     })
 
     it("should revert if the vault is paying out all collateral, but there are still debt", async () => {
@@ -301,10 +306,8 @@ describe("Controller: liquidation unit test", function () {
       // liquidator specify amount that would take all collateral, but not clearing all the debt
       const debtToRepay = vault.shortAmount.sub(1)
 
-      const normFactor = await controller.normalizationFactor()
-      let collateralToSell : BigNumber = ethers.utils.parseUnits(newEthPrice).mul(normFactor).mul(debtToRepay).div(one).div(oracleScaleFactor).div(one)
+      let collateralToSell : BigNumber = newSqueethETHPrice.mul(debtToRepay).div(one)
       collateralToSell = collateralToSell.add(collateralToSell.div(10))
-
 
       const result = await liquidationHelper.checkLiquidation(vaultId);
       const [isUnsafe, isLiquidatableAfterReducingDebt, maxWPowerPerpAmount, collateralToReceive] = result;
@@ -331,8 +334,7 @@ describe("Controller: liquidation unit test", function () {
       const tx = await controller.connect(liquidator).liquidate(vaultId, debtToRepay);
       const receipt = await tx.wait();
       
-      const normFactor = await controller.normalizationFactor()
-      let collateralToSell = BigNumber.from(newEthPrice).mul(BigNumber.from(10).pow(18)).mul(normFactor).mul(debtToRepay).div(BigNumber.from(10).pow(36))
+      let collateralToSell : BigNumber = newSqueethETHPrice.mul(debtToRepay).div(one)
       collateralToSell = collateralToSell.add(collateralToSell.div(10))
 
       // paying this amount will reduce total eth 

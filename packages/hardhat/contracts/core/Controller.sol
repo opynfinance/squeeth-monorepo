@@ -64,8 +64,8 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
     uint256 internal constant MIN_COLLATERAL = 0.5 ether;
     /// @dev system can only be paused for 182 days from deployment
     uint256 internal constant PAUSE_TIME_LIMIT = 182 days;
-    uint256 internal constant FUNDING_PERIOD = 1 days;
 
+    uint256 public constant FUNDING_PERIOD = 420 hours;
     uint32 public constant TWAP_PERIOD = 5 minutes;
 
     //80% of index
@@ -428,13 +428,7 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
      */
     function reduceDebtShutdown(uint256 _vaultId) external isShutdown nonReentrant {
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
-        _reduceDebt(
-            cachedVault,
-            IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId),
-            _vaultId,
-            normalizationFactor,
-            false
-        );
+        _reduceDebt(cachedVault, IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId), _vaultId, false);
         _writeVault(_vaultId, cachedVault);
     }
 
@@ -445,10 +439,9 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
      */
     function reduceDebt(uint256 _vaultId) external notPaused nonReentrant {
         _checkCanModifyVault(_vaultId, msg.sender);
-        uint256 cachedNormFactor = _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
 
-        _reduceDebt(cachedVault, IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId), _vaultId, cachedNormFactor, false);
+        _reduceDebt(cachedVault, IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId), _vaultId, false);
 
         _writeVault(_vaultId, cachedVault);
     }
@@ -471,13 +464,7 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
         require(!_isVaultSafe(cachedVault, cachedNormFactor), "C12");
 
         // try to save target vault before liquidation by reducing debt
-        uint256 bounty = _reduceDebt(
-            cachedVault,
-            IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId),
-            _vaultId,
-            cachedNormFactor,
-            true
-        );
+        uint256 bounty = _reduceDebt(cachedVault, IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId), _vaultId, true);
 
         // if vault is safe after saving, pay bounty and return early
         if (_isVaultSafe(cachedVault, cachedNormFactor)) {
@@ -617,7 +604,7 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
         uint256 cachedNormFactor = normalizationFactor;
 
-        _reduceDebt(cachedVault, msg.sender, _vaultId, cachedNormFactor, false);
+        _reduceDebt(cachedVault, msg.sender, _vaultId, false);
 
         uint256 debt = Power2Base._getLongSettlementValue(
             cachedVault.shortAmount,
@@ -722,12 +709,7 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
         }
 
         if (wPowerPerpAmount > 0) {
-            (feeAmount, depositAmountWithFee) = _getFee(
-                cachedVault,
-                wPowerPerpAmount,
-                _depositAmount,
-                cachedNormFactor
-            );
+            (feeAmount, depositAmountWithFee) = _getFee(cachedVault, wPowerPerpAmount, _depositAmount);
             _mintWPowerPerp(cachedVault, _account, _vaultId, wPowerPerpAmount);
         }
         if (_depositAmount > 0) _addEthCollateral(cachedVault, _vaultId, depositAmountWithFee);
@@ -933,8 +915,7 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
         (uint256 liquidateAmount, uint256 collateralToPay) = _getLiquidationResult(
             _maxWPowerPerpAmount,
             uint256(_vault.shortAmount),
-            uint256(_vault.collateralAmount),
-            _normalizationFactor
+            uint256(_vault.collateralAmount)
         );
 
         // if the liquidator didn't specify enough wPowerPerp to burn, revert.
@@ -958,6 +939,7 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
      * @dev will update the vault memory in-place
      * @param _vault the Vault memory to update
      * @param _owner account to send any excess
+     * @param _vaultId id of the vault to reduce debt on
      * @param _payBounty true if paying caller 2% bounty
      * @return bounty amount of bounty paid for liquidator
      */
@@ -965,7 +947,6 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
         VaultLib.Vault memory _vault,
         address _owner,
         uint256 _vaultId,
-        uint256 _normalizationFactor,
         bool _payBounty
     ) internal returns (uint256) {
         uint256 nftId = _vault.NftCollateralId;
@@ -980,7 +961,6 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
             _vault,
             withdrawnEthAmount,
             withdrawnWPowerPerpAmount,
-            _normalizationFactor,
             _payBounty
         );
 
@@ -1006,15 +986,12 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
      * @param _vault the Vault memory to update
      * @param _wPowerPerpAmount the amount of wPowerPerpAmount minting
      * @param _depositAmount the amount of eth depositing or withdrawing
-     * @param _normalizationFactor current normalization factor
-     * @return the fee amount for the given amount of wPowerPerp
      * @return the amount of actual deposited eth into the vault, this is less than the original amount if a fee was taken
      */
     function _getFee(
         VaultLib.Vault memory _vault,
         uint256 _wPowerPerpAmount,
-        uint256 _depositAmount,
-        uint256 _normalizationFactor
+        uint256 _depositAmount
     ) internal view returns (uint256, uint256) {
         uint256 cachedFeeRate = feeRate;
         if (cachedFeeRate == 0) return (uint256(0), _depositAmount);
@@ -1022,10 +999,9 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
         uint256 ethEquivalentMinted = Power2Base._getDebtValueInEth(
             _wPowerPerpAmount,
             oracle,
-            ethQuoteCurrencyPool,
-            weth,
-            quoteCurrency,
-            _normalizationFactor
+            wPowerPerpPool,
+            wPowerPerp,
+            weth
         );
         uint256 feeAmount = ethEquivalentMinted.mul(cachedFeeRate).div(10000);
 
@@ -1229,7 +1205,6 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
         VaultLib.Vault memory _vault,
         uint256 nftEthAmount,
         uint256 nftWPowerperpAmount,
-        uint256 _normalizationFactor,
         bool _payBounty
     )
         internal
@@ -1241,7 +1216,7 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
         )
     {
         uint256 bounty;
-        if (_payBounty) bounty = _getReduceDebtBounty(nftEthAmount, nftWPowerperpAmount, _normalizationFactor);
+        if (_payBounty) bounty = _getReduceDebtBounty(nftEthAmount, nftWPowerperpAmount);
 
         uint256 burnAmount = nftWPowerperpAmount;
         uint256 wPowerPerpExcess;
@@ -1264,23 +1239,11 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
      * @dev bounty is 2% of the total value of the position token
      * @param _ethWithdrawn amount of eth withdrawn from uniswap by redeeming the position token
      * @param _wPowerPerpReduced amount of wPowerPerp withdrawn from uniswap by redeeming the position token
-     * @param _normalizationFactor normalization factor
      */
-    function _getReduceDebtBounty(
-        uint256 _ethWithdrawn,
-        uint256 _wPowerPerpReduced,
-        uint256 _normalizationFactor
-    ) internal view returns (uint256) {
+    function _getReduceDebtBounty(uint256 _ethWithdrawn, uint256 _wPowerPerpReduced) internal view returns (uint256) {
         return
             Power2Base
-                ._getDebtValueInEth(
-                    _wPowerPerpReduced,
-                    oracle,
-                    ethQuoteCurrencyPool,
-                    weth,
-                    quoteCurrency,
-                    _normalizationFactor
-                )
+                ._getDebtValueInEth(_wPowerPerpReduced, oracle, wPowerPerpPool, wPowerPerp, weth)
                 .add(_ethWithdrawn)
                 .mul(REDUCE_DEBT_BOUNTY)
                 .div(ONE);
@@ -1293,21 +1256,18 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
      * @param _maxWPowerPerpAmount the max amount of wPowerPerp willing to pay
      * @param _vaultShortAmount the amount of short in the vault
      * @param _maxWPowerPerpAmount the amount of collateral in the vault
-     * @param _normalizationFactor normalization factor
      * @return finalLiquidateAmount the amount that should be liquidated. This amount can be higher than _maxWPowerPerpAmount, which should be checked
      * @return collateralToPay final amount of collateral paying out to the liquidator
      */
     function _getLiquidationResult(
         uint256 _maxWPowerPerpAmount,
         uint256 _vaultShortAmount,
-        uint256 _vaultCollateralAmount,
-        uint256 _normalizationFactor
+        uint256 _vaultCollateralAmount
     ) internal view returns (uint256, uint256) {
         // try limiting liquidation amount to half of the vault debt
         (uint256 finalLiquidateAmount, uint256 collateralToPay) = _getSingleLiquidationAmount(
             _maxWPowerPerpAmount,
-            _vaultShortAmount.div(2),
-            _normalizationFactor
+            _vaultShortAmount.div(2)
         );
 
         if (_vaultCollateralAmount > collateralToPay) {
@@ -1316,8 +1276,7 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
                 // calculate the new liquidation amount and collateral again based on the new limit
                 (finalLiquidateAmount, collateralToPay) = _getSingleLiquidationAmount(
                     _maxWPowerPerpAmount,
-                    _vaultShortAmount,
-                    _normalizationFactor
+                    _vaultShortAmount
                 );
             }
         }
@@ -1337,15 +1296,14 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
      * @notice determine how much wPowerPerp to liquidate, and how much collateral to return
      * @param _maxInputWAmount maximum wPowerPerp amount liquidator is willing to repay
      * @param _maxLiquidatableWAmount maximum wPowerPerp amount a liquidator is allowed to repay
-     * @param _normalizationFactor normalization factor
      * @return finalWAmountToLiquidate amount of wPowerPerp the liquidator will burn
      * @return collateralToPay total collateral the liquidator will get
      */
-    function _getSingleLiquidationAmount(
-        uint256 _maxInputWAmount,
-        uint256 _maxLiquidatableWAmount,
-        uint256 _normalizationFactor
-    ) internal view returns (uint256, uint256) {
+    function _getSingleLiquidationAmount(uint256 _maxInputWAmount, uint256 _maxLiquidatableWAmount)
+        internal
+        view
+        returns (uint256, uint256)
+    {
         uint256 finalWAmountToLiquidate = _maxInputWAmount > _maxLiquidatableWAmount
             ? _maxLiquidatableWAmount
             : _maxInputWAmount;
@@ -1353,10 +1311,9 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
         uint256 collateralToPay = Power2Base._getDebtValueInEth(
             finalWAmountToLiquidate,
             oracle,
-            ethQuoteCurrencyPool,
-            weth,
-            quoteCurrency,
-            _normalizationFactor
+            wPowerPerpPool,
+            wPowerPerp,
+            weth
         );
 
         // add 10% bonus for liquidators

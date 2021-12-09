@@ -29,9 +29,8 @@ const calcPriceMulAndAuctionPrice = (isNegativeTargetHedge: boolean, maxPriceMul
 describe("Crab flashswap integration test: uniswap time based hedging", function () {
   const startingEthPrice = 3000
   const startingEthPrice1e18 = BigNumber.from(startingEthPrice).mul(one) // 3000 * 1e18
-  const scaledStartingSqueethPrice1e18 = startingEthPrice1e18.div(oracleScaleFactor) // 0.3 * 1e18
-  const scaledStartingSqueethPrice = startingEthPrice / oracleScaleFactor.toNumber() // 0.3
-
+  const scaledStartingSqueethPrice1e18 = startingEthPrice1e18.mul(12).div(10).div(oracleScaleFactor) // 0.303 * 1e18
+  const scaledStartingSqueethPrice = startingEthPrice*1.2 / oracleScaleFactor.toNumber() // 0.303
 
   const hedgeTimeThreshold = 86400  // 24h
   const hedgePriceThreshold = ethers.utils.parseUnits('0.01')
@@ -141,9 +140,9 @@ describe("Crab flashswap integration test: uniswap time based hedging", function
     await crabStrategy.connect(depositor).flashDeposit(ethToDeposit, {value: msgvalue})
     
     const normFactor = await controller.normalizationFactor()
-    const currentScaledEthPrice = (await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 300, false)).div(oracleScaleFactor)
+    const currentScaledSquethPrice = (await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 300, false))
     const feeRate = await controller.feeRate()
-    const ethFeePerWSqueeth = currentScaledEthPrice.mul(normFactor).mul(feeRate).div(10000).div(one)
+    const ethFeePerWSqueeth = currentScaledSquethPrice.mul(feeRate).div(10000)
     const squeethDelta = scaledStartingSqueethPrice1e18.mul(2);
     const debtToMint = wdiv(ethToDeposit, (squeethDelta.add(ethFeePerWSqueeth)));
     const expectedEthDeposit = ethToDeposit.sub(debtToMint.mul(ethFeePerWSqueeth).div(one))
@@ -252,7 +251,7 @@ describe("Crab flashswap integration test: uniswap time based hedging", function
       // set next block timestamp
       const currentBlockNumber = await provider.getBlockNumber()
       const currentBlock = await provider.getBlock(currentBlockNumber)
-      const hedgeBlockTimestamp = currentBlock.timestamp + 100;
+      const hedgeBlockTimestamp = currentBlock.timestamp + 1;
       await provider.send("evm_setNextBlockTimestamp", [hedgeBlockTimestamp])
 
       const auctionTimeElapsed = BigNumber.from(hedgeBlockTimestamp).sub(auctionTriggerTimer)
@@ -305,10 +304,10 @@ describe("Crab flashswap integration test: uniswap time based hedging", function
       const strategyVault = await controller.vaults(await crabStrategy.vaultId());
       const ethDelta = strategyVault.collateralAmount
       const normFactor = await controller.normalizationFactor()
-      const currentScaledEthPrice = (await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 300, false)).div(oracleScaleFactor)
+      const currentScaledSquethPrice = (await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 300, false))
       const feeRate = await controller.feeRate()
-      const ethFeePerWSqueeth = currentScaledEthPrice.mul(normFactor).mul(feeRate).div(10000).div(one)  
-
+      const ethFeePerWSqueeth = currentScaledSquethPrice.mul(feeRate).div(10000)
+  
       const strategyDebt = strategyVault.shortAmount
       const initialWSqueethDelta = wmul(strategyDebt.mul(2), currentWSqueethPrice)
       const targetHedge = wdiv(initialWSqueethDelta.sub(ethDelta), currentWSqueethPrice.add(ethFeePerWSqueeth))        
@@ -332,6 +331,7 @@ describe("Crab flashswap integration test: uniswap time based hedging", function
       const depositorWsqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
       const ethDeltaAfter = strategyVault.collateralAmount
 
+      expect(isSimilar(expectedEthDeposited.toString(), strategyVaultAfter.collateralAmount.toString()))
       expect(isSimilar((secondTargetHedge.mul(-1)).toString(),(strategyDebtAfter.sub(strategyDebt)).toString()))
       expect(isSimilar((expectedEthProceeds).toString(),ethDeltaAfter.sub(ethDelta).toString()))
       expect(depositorWsqueethBalanceAfter.gt(depositorWsqueethBalanceBefore)).to.be.true

@@ -21,6 +21,11 @@ library VaultLib {
 
     uint256 constant ONE_ONE = 1e36;
 
+    // the collateralization ratio (CR) is checked with the numerator and denominator separately
+    // a user is safe if - collateral value >= (COLLAT_RATIO_NUMER/COLLAT_RATIO_DENOM)* debt value
+    uint256 public constant CR_NUMERATOR = 3;
+    uint256 public constant CR_DENOMINATOR = 2;
+
     struct Vault {
         // the address that can update the vault
         address operator;
@@ -127,7 +132,7 @@ library VaultLib {
         );
 
         bool isDust = totalCollateral < _minCollateral;
-        bool isAboveWater = totalCollateral.mul(2) >= debtValueInETH.mul(3);
+        bool isAboveWater = totalCollateral.mul(CR_DENOMINATOR) >= debtValueInETH.mul(CR_NUMERATOR);
         return (isAboveWater, isDust);
     }
 

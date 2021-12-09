@@ -739,9 +739,11 @@ describe("Controller", function () {
     it('should charge fee on mintPowerPerpAmount from deposit amount', async() => {
       vaultId = await shortSqueeth.nextId()
 
+      const normFactor = await controller.normalizationFactor()
+
       const powerPerpToMint = ethers.utils.parseUnits('0.5')
       const collateralDeposited = ethers.utils.parseUnits('0.55')
-      const powerPerpInEth =  ethUSDPrice.mul(powerPerpToMint).div(one).div(oracleScaleFactor)
+      const powerPerpInEth =  scaledSqueethPrice.mul(powerPerpToMint).mul(normFactor).div(one).div(one)
       const expectedFee = powerPerpInEth.div(100)
       const totalEthAttached = expectedFee.add(collateralDeposited)
     
@@ -760,9 +762,10 @@ describe("Controller", function () {
     it('should charge fee on mintPowerPerpAmount from vault collateral', async() => {
 
       const vaultBefore = await controller.vaults(vaultId)
+      const normFactor = await controller.normalizationFactor()
 
       const powerPerpToMint = ethers.utils.parseUnits('0.5')
-      const powerPerpInEth =  ethUSDPrice.mul(powerPerpToMint).div(one).div(oracleScaleFactor)
+      const powerPerpInEth =  scaledSqueethPrice.mul(powerPerpToMint).mul(normFactor).div(one).div(one)
       const expectedFee = powerPerpInEth.div(100)
     
       const feeRecipientBalanceBefore = await provider.getBalance(feeRecipient.address)
@@ -785,8 +788,7 @@ describe("Controller", function () {
       
       const feeRecipientBalanceBefore = await provider.getBalance(feeRecipient.address)
 
-      const normFactor = await controller.normalizationFactor()
-      const powerPerpInEth =  ethUSDPrice.mul(wSqueethToMint).mul(normFactor).div(one).div(one).div(oracleScaleFactor)
+      const powerPerpInEth =  scaledSqueethPrice.mul(wSqueethToMint).div(one)
       const expectedFee = powerPerpInEth.div(100)
       const totalEthAttached = expectedFee.add(collateralDeposited)
 
@@ -813,8 +815,7 @@ describe("Controller", function () {
 
       await controller.connect(random).mintWPowerPerpAmount(vaultId, wSqueethToMint, 0)
       
-      const normFactor = await controller.normalizationFactor()
-      const powerPerpInEth = ethUSDPrice.mul(wSqueethToMint).mul(normFactor).div(one).div(one).div(oracleScaleFactor)
+      const powerPerpInEth =  scaledSqueethPrice.mul(wSqueethToMint).div(one)
       const expectedFee = powerPerpInEth.div(100)
 
       const feeRecipientBalanceAfter = await provider.getBalance(feeRecipient.address)

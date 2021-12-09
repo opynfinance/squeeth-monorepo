@@ -80,10 +80,13 @@ describe("Controller Funding tests", function () {
     describe('Normalization Factor tests', () => {
       let mark: BigNumber
       let index: BigNumber
-  
+      let fundingPeriod: BigNumber
+
       before(async () => {  
+        fundingPeriod = await controller.FUNDING_PERIOD()
+
         await controller.applyFunding()
-        mark = await controller.getDenormalizedMark(1)
+        mark = await controller.getDenormalizedMarkForFunding(1)
         index = await controller.getIndex(1)
       })
   
@@ -91,7 +94,7 @@ describe("Controller Funding tests", function () {
         const now = await getNow(provider)
         const normalizationFactorBefore = await controller.normalizationFactor()
         const secondsElapsed = 10800 // 3hrs
-        const multiplier = getNormFactorMultiplier(mark, index, secondsElapsed)
+        const multiplier = getNormFactorMultiplier(mark, index, secondsElapsed, fundingPeriod)
         const expectedNormalizationFactor = normalizationFactorBefore.mul(multiplier).div(one)
 
         await provider.send("evm_setNextBlockTimestamp", [now + secondsElapsed]) 
@@ -117,7 +120,7 @@ describe("Controller Funding tests", function () {
         await oracle.connect(random).setPrice(ethUSDPool.address, ethUSDPriceNew)  // usdc per 1 eth
 
         // Get new mark and index
-        mark = await controller.getDenormalizedMark(1)
+        mark = await controller.getDenormalizedMarkForFunding(1)
         index = await controller.getIndex(1)
 
         // + 3 hours 
@@ -134,7 +137,7 @@ describe("Controller Funding tests", function () {
         const expectedFloorMark = scaledEthUSDPrice.mul(scaledEthUSDPrice).mul(4).div(5).div(one)
 
         // Expected bounded norm factor
-        const multiplier = getNormFactorMultiplier(expectedFloorMark, index, secondsElapsed)
+        const multiplier = getNormFactorMultiplier(expectedFloorMark, index, secondsElapsed, fundingPeriod)
         const expectedNormalizationFactor = normalizationFactorBefore.mul(multiplier).div(one)
 
         // use isSimilar because sometimes the expectedNormFactor will be a little bit off, 
@@ -156,7 +159,7 @@ describe("Controller Funding tests", function () {
         await oracle.connect(random).setPrice(ethUSDPool.address , ethUSDPriceNew)  // usdc per 1 eth
 
         // Get new mark and index
-        mark = await controller.getDenormalizedMark(1)
+        mark = await controller.getDenormalizedMarkForFunding(1)
         index = await controller.getIndex(1)  
 
         // + 3 hours
@@ -173,7 +176,7 @@ describe("Controller Funding tests", function () {
         const expectedCeilMark = scaledEthUSDPrice.mul(scaledEthUSDPrice).mul(5).div(4).div(one)
 
         // Expected bounded norm factor
-        const multiplier = getNormFactorMultiplier(expectedCeilMark, index, secondsElapsed)
+        const multiplier = getNormFactorMultiplier(expectedCeilMark, index, secondsElapsed, fundingPeriod)
         const expectedNormalizationFactor = normalizationFactorBefore.mul(multiplier).div(one)
 
         expect(isSimilar(expectedNormalizationFactor.toString(), normalizationFactorAfter.toString(), 14)).to.be.true
@@ -204,6 +207,7 @@ describe("Controller Funding tests", function () {
 
     describe('Funding collateralization tests', () => {
       const collatRatio = ethers.utils.parseUnits('1.5')
+      let fundingPeriod: BigNumber
 
       describe('mint', async() => {
         let vaultId: BigNumber
@@ -211,6 +215,8 @@ describe("Controller Funding tests", function () {
         const secondsElapsed = 21600 // 6 hours
 
         before('prepare a vault', async() => {
+          fundingPeriod = await controller.FUNDING_PERIOD()
+
           // set prices back
           await oracle.connect(random).setPrice(squeethEthPool.address , squeethETHPrice) // eth per 1 squeeth
           await oracle.connect(random).setPrice(ethUSDPool.address , ethUSDPrice)  // usdc per 1 eth
@@ -221,9 +227,11 @@ describe("Controller Funding tests", function () {
           maxSqueethToMint = collateralAmount.mul(one).mul(one).div(collatRatio).div(scaledEthPrice)
 
           await controller.connect(seller1).mintPowerPerpAmount(0, maxSqueethToMint, 0, {value: collateralAmount})
+
+          // advance time
         })
         it('should revert if minting too much squeeth after funding', async() => {
-          const mark = await controller.getDenormalizedMark(1)
+          const mark = await controller.getDenormalizedMarkForFunding(1)
           const index = await controller.getIndex(1)
 
           const now = await getNow(provider)
@@ -234,43 +242,51 @@ describe("Controller Funding tests", function () {
   
           const normalizationFactorBefore = await controller.normalizationFactor()
   
-          const multiplier = getNormFactorMultiplier(mark, index, secondsElapsed)
+          const multiplier = getNormFactorMultiplier(mark, index, secondsElapsed, fundingPeriod)
           const expectedNormalizationFactor = normalizationFactorBefore.mul(multiplier).div(one)
 
           const currentRSqueeth = shortAmount.mul(expectedNormalizationFactor).div(one)
           const maxShortRSqueeth = one.mul(one).mul(collateral).div(scaledEthPrice).div(collatRatio)
 
           const expectedAmountCanMint = maxShortRSqueeth.sub(currentRSqueeth)
-  
-          await provider.send("evm_setNextBlockTimestamp", [now + secondsElapsed])  
-          await expect(controller.connect(seller1).mintPowerPerpAmount(vaultId, expectedAmountCanMint.mul(1001).div(1000), 0, {value: 0})).to.be.revertedWith(
+
+          await provider.send("evm_setNextBlockTimestamp", [now + secondsElapsed])
+          await expect(controller.connect(seller1).mintPowerPerpAmount(vaultId, expectedAmountCanMint.mul(10001).div(10000), 0, {value: 0})).to.be.revertedWith(
             'C24'
           )
         })
+
         it('should mint more wSqueeth after funding', async() => {
-          const mark = await controller.getDenormalizedMark(1)
+          const mark = await controller.getDenormalizedMarkForFunding(1)
           const index = await controller.getIndex(1)
+
   
-          const multiplier = getNormFactorMultiplier(mark, index, secondsElapsed)
-          const expectedAmountCanMint = maxSqueethToMint.sub(maxSqueethToMint.div(multiplier).mul(one))
+          const multiplier = getNormFactorMultiplier(mark, index, secondsElapsed, fundingPeriod)
+
+          // 1 squeeth - 1squeeth * 0.99
+
+          const expectedAmountCanMint = maxSqueethToMint.sub(maxSqueethToMint.mul(multiplier).div(one))
 
           // set next block to be 1 seconds after last block, so the max we can mint is almost the same
           const now = await getNow(provider)
           await provider.send("evm_setNextBlockTimestamp", [now + 1])
-          await controller.connect(seller1).mintPowerPerpAmount(vaultId, expectedAmountCanMint, 0) 
+          await controller.connect(seller1).mintPowerPerpAmount(vaultId, expectedAmountCanMint, 0 ,{value: 0}) 
         })
       })
       
       describe('withdraw', async () => {
         let vaultId: BigNumber
         let maxCollatToRemove: BigNumber
+
         before('prepare a vault and stimulate time passes', async() => {
+          fundingPeriod = await controller.FUNDING_PERIOD()
+
           vaultId = await shortSqueeth.nextId()  
           // put vaultId as 0 to open vault
           await controller.connect(seller1).mintPowerPerpAmount(0, mintAmount,0, {value: collateralAmount})
           const now = await getNow(provider)
   
-          const markPrice = await controller.getDenormalizedMark(1)
+          const markPrice = await controller.getDenormalizedMarkForFunding(1)
           const indexPrice = await controller.getIndex(1)
           const newVault = await controller.vaults(vaultId)
           const shortAmount = newVault.shortAmount
@@ -279,7 +295,7 @@ describe("Controller Funding tests", function () {
           const normalizationFactorBefore = await controller.normalizationFactor()
 
           const secondsElapsed = 10800
-          const multiplier = getNormFactorMultiplier(markPrice, indexPrice, secondsElapsed)
+          const multiplier = getNormFactorMultiplier(markPrice, indexPrice, secondsElapsed, fundingPeriod)
           const expectedNormalizationFactor = normalizationFactorBefore.mul(multiplier).div(one)
 
           const collatRequired = shortAmount.mul(expectedNormalizationFactor).mul(scaledEthPrice).mul(collatRatio).div(one.mul(one).mul(one))
@@ -313,6 +329,13 @@ describe("Controller Funding tests", function () {
     })
 
     describe('Extreme cases for normalization factor', async() => {
+      let fundingPeriod: BigNumber
+
+      before('get funding period', async() => {
+        fundingPeriod = await controller.FUNDING_PERIOD()
+      })
+
+
       it('should get capped normalization factor when mark = 0 ', async() => {
         // Get norm factor
         const normalizationFactorBefore = await controller.normalizationFactor()
@@ -340,7 +363,7 @@ describe("Controller Funding tests", function () {
         const expectedFloorMark = scaledEthUSDPrice.mul(scaledEthUSDPrice).mul(4).div(5).div(one)
 
         // Expected bounded norm factor
-        const multiplier = getNormFactorMultiplier(expectedFloorMark, index, secondsElapsed)
+        const multiplier = getNormFactorMultiplier(expectedFloorMark, index, secondsElapsed, fundingPeriod)
         const expectedNormalizationFactor = normalizationFactorBefore.mul(multiplier).div(one)
 
         expect(isSimilar(expectedNormalizationFactor.toString(), normalizationFactorAfter.toString(), 15)).to.be.true
@@ -374,7 +397,7 @@ describe("Controller Funding tests", function () {
         
 
         // Expected bounded norm factor
-        const multiplier = getNormFactorMultiplier(expectedCeilMark, index, secondsElapsed)
+        const multiplier = getNormFactorMultiplier(expectedCeilMark, index, secondsElapsed, fundingPeriod)
         const expectedNormalizationFactor = normalizationFactorBefore.mul(multiplier).div(one)
 
         expect(isSimilar(expectedNormalizationFactor.toString(), normalizationFactorAfter.toString(), 14)).to.be.true
@@ -450,10 +473,10 @@ describe("Controller Funding tests", function () {
   
 });
 
-function getNormFactorMultiplier(mark: BigNumber, index:BigNumber, secondsElapsed: number) {
+function getNormFactorMultiplier(mark: BigNumber, index:BigNumber, secondsElapsed: number, fundingPeriod: BigNumber) {
   
   const ratio =   parseFloat(utils.formatEther(index.mul(one).div(mark)))
-  const r = secondsElapsed/86400
+  const r = secondsElapsed/(fundingPeriod.toNumber())
   const exponent = Math.log2(ratio)*r
 
   return BigNumber.from(ethers.utils.parseUnits((2**exponent).toString()))

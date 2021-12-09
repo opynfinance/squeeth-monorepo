@@ -101,7 +101,7 @@ describe("Simple Vault state tests", function () {
     it('funding should make the vault back to safe as time goes by', async() => {
       const markPrice = BigNumber.from('3030').mul(one).div(oracleScaleFactor)
       await oracle.setPrice(squeethEthPool.address , markPrice)
-      await provider.send("evm_increaseTime", [86400]) // increase time by 1 day
+      await provider.send("evm_increaseTime", [1.04*86400]) // increase time by 1.04 days
       await provider.send("evm_mine", [])
       expect((await controller.isVaultSafe(vaultId))).to.be.true
     })

@@ -11,7 +11,8 @@ BigNumberJs.set({EXPONENTIAL_AT: 30})
 
 describe("Crab integration test: crab vault full liquidation and shutdown of contracts", function () {
   const startingEthPrice = 3000
-  
+  const startingEthPrice1e18 = BigNumber.from(startingEthPrice).mul(one) // 3000 * 1e18
+  const scaledStartingSqueethPrice1e18 = startingEthPrice1e18.div(oracleScaleFactor) // 0.3 * 1e18
   const scaledStartingSqueethPrice = startingEthPrice / oracleScaleFactor.toNumber() // 0.3
 
 
@@ -164,6 +165,28 @@ describe("Crab integration test: crab vault full liquidation and shutdown of con
       await (swapRouter as ISwapRouter).connect(owner).exactOutputSingle(exactOutputParam)
     })
 
+    before('push squeeth price higher', async() => {
+      // set squeeth price higher by buying 50% of squeeth in the pool
+      const poolSqueethBalance = await wSqueeth.balanceOf(wSqueethPool.address)
+
+      const maxWeth = poolSqueethBalance.mul(scaledStartingSqueethPrice1e18).mul(20).div(one)
+            
+      const exactOutputParam = {
+        tokenIn: weth.address,
+        tokenOut: wSqueeth.address,
+        fee: 3000,
+        recipient: owner.address,
+        deadline: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 86400,
+        amountOut: ethers.utils.parseUnits("500000"),
+        amountInMaximum: maxWeth,
+        sqrtPriceLimitX96: 0,
+      }
+
+      await weth.connect(owner).deposit({value: maxWeth})
+      await weth.connect(owner).approve(swapRouter.address, ethers.constants.MaxUint256)      
+      await (swapRouter as ISwapRouter).connect(owner).exactOutputSingle(exactOutputParam)
+    })
+
     before('prepare liquidator to liquidate strategy', async() => {
       await provider.send("evm_increaseTime", [600]) // increase time by 600 sec
       await provider.send("evm_mine", [])
@@ -258,7 +281,7 @@ describe("Crab integration test: crab vault full liquidation and shutdown of con
       const ethCostOfDebtToRepay = wmul(debtToRepay,wSqueethPrice)
       const userCollateral = wmul(crabRatio, strategyCollateralAmountBefore)
       const ethToWithdraw = userCollateral.sub(ethCostOfDebtToRepay);
-      const maxEthToPay = ethToWithdraw.mul(15).div(10)
+      const maxEthToPay = ethCostOfDebtToRepay.mul(11).div(10)
 
       await expect( crabStrategy.connect(depositor).flashWithdraw(userCrabBalanceBefore, maxEthToPay)).to.be.revertedWith("AS")
 

@@ -731,17 +731,16 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
      * @return the fee adjustment factor
      */
     function _calcFeeAdjustment() internal view returns (uint256) {
-        uint256 ethQuoteCurrencyPrice = Power2Base._getScaledTwap(
+        uint256 wSqueethEthPrice = Power2Base._getTwap(
             oracle,
-            ethQuoteCurrencyPool,
+            ethWSqueethPool,
+            wPowerPerp,
             weth,
-            quoteCurrency,
             POWER_PERP_PERIOD,
             false
         );
-        uint256 normalizationFactor = IController(powerTokenController).getExpectedNormalizationFactor();
         uint256 feeRate = IController(powerTokenController).feeRate();
-        return normalizationFactor.wmul(ethQuoteCurrencyPrice).mul(feeRate).div(10000);
+        return wSqueethEthPrice.mul(feeRate).div(10000);
     }
 
     /**

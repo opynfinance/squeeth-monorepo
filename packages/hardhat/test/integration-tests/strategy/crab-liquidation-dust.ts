@@ -170,6 +170,28 @@ describe("Crab integration test: crab vault dust liquidation with excess collate
       await (swapRouter as ISwapRouter).connect(owner).exactOutputSingle(exactOutputParam)
     })
 
+    before('push squeeth price higher', async() => {
+      // set squeeth price higher by buying 15% of squeeth in the pool
+      const poolSqueethBalance = await wSqueeth.balanceOf(wSqueethPool.address)
+
+      const maxWeth = poolSqueethBalance.mul(scaledStartingSqueethPrice1e18).mul(5).div(one)
+            
+      const exactOutputParam = {
+        tokenIn: weth.address,
+        tokenOut: wSqueeth.address,
+        fee: 3000,
+        recipient: owner.address,
+        deadline: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 86400,
+        amountOut: ethers.utils.parseUnits("150000"),
+        amountInMaximum: maxWeth,
+        sqrtPriceLimitX96: 0,
+      }
+
+      await weth.connect(owner).deposit({value: maxWeth})
+      await weth.connect(owner).approve(swapRouter.address, ethers.constants.MaxUint256)      
+      await (swapRouter as ISwapRouter).connect(owner).exactOutputSingle(exactOutputParam)
+    })
+
     before('prepare liquidator to liquidate strategy', async() => {
       await provider.send("evm_increaseTime", [600]) // increase time by 600 sec
       await provider.send("evm_mine", [])
@@ -190,7 +212,8 @@ describe("Crab integration test: crab vault dust liquidation with excess collate
       const isVaultSafe = await controller.isVaultSafe((await crabStrategy.vaultId()))
       expect(isVaultSafe).to.be.false
 
-      const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600, false)
+      const newSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false)
+      
       const vaultBefore = await controller.vaults(vaultId)
 
       // state before liquidation
@@ -202,7 +225,7 @@ describe("Crab integration test: crab vault dust liquidation with excess collate
       await controller.connect(liquidator).liquidate(vaultId, wSqueethAmountToLiquidate, {gasPrice: 0});
       
       const normFactor = await controller.normalizationFactor()
-      const collateralToGet = newEthPrice.div(oracleScaleFactor).mul(normFactor).mul(wSqueethAmountToLiquidate).div(one).div(one).mul(11).div(10)
+      const collateralToGet = newSqueethPrice.mul(wSqueethAmountToLiquidate).div(one).mul(11).div(10)
 
       const vaultAfter = await controller.vaults(vaultId)
       const liquidatorBalanceAfter = await provider.getBalance(liquidator.address)
@@ -283,7 +306,7 @@ describe("Crab integration test: crab vault dust liquidation with excess collate
       const ethCostOfDebtToRepay = wmul(debtToRepay,wSqueethPrice)
       const userCollateral = wmul(crabRatio, strategyCollateralAmountBefore)
       const ethToWithdraw = userCollateral.sub(ethCostOfDebtToRepay);
-      const maxEthToPay = ethToWithdraw.mul(15).div(10)
+      const maxEthToPay = ethToWithdraw.mul(10).div(10)
 
       await expect( crabStrategy.connect(depositor).flashWithdraw(userCrabBalanceBefore, maxEthToPay)).to.be.revertedWith("AS")
 

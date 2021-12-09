@@ -71,7 +71,7 @@ library Power2Base {
      * @param _ethQuoteCurrencyPool uniswap v3 pool for weth / quoteCurrency
      * @param _weth weth address
      * @param _quoteCurrency quoteCurrency address
-     * @param _wsqueeth wSqueeth address
+     * @param _wSqueeth wSqueeth address
      * @param _normalizationFactor current normalization factor
      * @return for squeeth, return ethPrice * squeethPriceInEth
      */
@@ -82,7 +82,7 @@ library Power2Base {
         address _ethQuoteCurrencyPool,
         address _weth,
         address _quoteCurrency,
-        address _wsqueeth,
+        address _wSqueeth,
         uint256 _normalizationFactor
     ) internal view returns (uint256) {
         uint256 ethQuoteCurrencyPrice = _getScaledTwap(
@@ -93,7 +93,7 @@ library Power2Base {
             _period,
             false
         );
-        uint256 wsqueethEthPrice = _getTwap(_oracle, _wSqueethEthPool, _wsqueeth, _weth, _period, false);
+        uint256 wsqueethEthPrice = _getTwap(_oracle, _wSqueethEthPool, _wSqueeth, _weth, _period, false);
 
         return wsqueethEthPrice.mul(ethQuoteCurrencyPrice).div(_normalizationFactor);
     }
@@ -103,29 +103,20 @@ library Power2Base {
      * @dev the actual amount liquidator can get should have a 10% bonus on top of this value.
      * @param _debtAmount wSqueeth amount paid by liquidator
      * @param _oracle oracle address
-     * @param _ethQuoteCurrencyPool uniswap v3 pool for weth / quoteCurrency
+     * @param _wSqueethEthPool uniswap v3 pool for wSqueeth / weth
+     * @param _wSqueeth wSqueeth address
      * @param _weth weth address
-     * @param _quoteCurrency quoteCurrency address
-     * @param _normalizationFactor current normalization factor
-     * @return returns equivalent collateral amount for debt
+     * @return returns value of debt in ETH
      */
     function _getDebtValueInEth(
         uint256 _debtAmount,
         address _oracle,
-        address _ethQuoteCurrencyPool,
-        address _weth,
-        address _quoteCurrency,
-        uint256 _normalizationFactor
+        address _wSqueethEthPool,
+        address _wSqueeth,
+        address _weth
     ) internal view returns (uint256) {
-        uint256 ethQuoteCurrencyPrice = _getScaledTwap(
-            _oracle,
-            _ethQuoteCurrencyPool,
-            _weth,
-            _quoteCurrency,
-            TWAP_PERIOD,
-            false
-        );
-        return _debtAmount.mul(_normalizationFactor).mul(ethQuoteCurrencyPrice).div(ONE_ONE);
+        uint256 wSqueethPrice = _getTwap(_oracle, _wSqueethEthPool, _wSqueeth, _weth, TWAP_PERIOD, false);
+        return _debtAmount.mul(wSqueethPrice).div(ONE);
     }
 
     /**

@@ -172,7 +172,6 @@ contract LiquidationHelper  {
                 cachedVault,
                 nftEthAmount,
                 nftWPowerperpAmount,
-                _normalizationFactor,
                 true
             );
 
@@ -187,8 +186,7 @@ contract LiquidationHelper  {
         (uint256 wMaxAmountToLiquidate, uint256 collateralToPay) = _getLiquidationResult(
             cachedVault.shortAmount,
             cachedVault.shortAmount,
-            cachedVault.collateralAmount,
-            _normalizationFactor
+            cachedVault.collateralAmount
         );
 
         return (true, true, wMaxAmountToLiquidate, collateralToPay);
@@ -205,7 +203,6 @@ contract LiquidationHelper  {
         VaultLib.Vault memory _vault,
         uint256 nftEthAmount,
         uint256 nftWPowerperpAmount,
-        uint256 _normalizationFactor,
         bool _payBounty
     )
         internal
@@ -217,7 +214,7 @@ contract LiquidationHelper  {
         )
     {
         uint256 bounty;
-        if (_payBounty) bounty = _getReduceDebtBounty(nftEthAmount, nftWPowerperpAmount, _normalizationFactor);
+        if (_payBounty) bounty = _getReduceDebtBounty(nftEthAmount, nftWPowerperpAmount);
 
         uint256 burnAmount = nftWPowerperpAmount;
         uint256 wPowerPerpExcess;
@@ -240,22 +237,19 @@ contract LiquidationHelper  {
      * @dev bounty is 2% of the total value of the position token
      * @param _ethWithdrawn amount of eth withdrawn from uniswap by redeeming the position token
      * @param _wPowerPerpReduced amount of wPowerPerp withdrawn from uniswap by redeeming the position token
-     * @param _normalizationFactor normalization factor
      */
     function _getReduceDebtBounty(
         uint256 _ethWithdrawn,
-        uint256 _wPowerPerpReduced,
-        uint256 _normalizationFactor
+        uint256 _wPowerPerpReduced
     ) internal view returns (uint256) {
         return
             Power2Base
                 ._getDebtValueInEth(
                     _wPowerPerpReduced,
                     oracle,
-                    ethQuoteCurrencyPool,
-                    weth,
-                    quoteCurrency,
-                    _normalizationFactor
+                    wPowerPerpPool,
+                    wPowerPerp,
+                    weth
                 )
                 .add(_ethWithdrawn)
                 .mul(2)
@@ -269,21 +263,18 @@ contract LiquidationHelper  {
      * @param _maxWPowerPerpAmount the max amount of wPowerPerp willing to pay
      * @param _vaultShortAmount the amount of short in the vault
      * @param _maxWPowerPerpAmount the amount of collateral in the vault
-     * @param _normalizationFactor normalization factor
      * @return finalLiquidateAmount the amount that should be liquidated. This amount can be higher than _maxWPowerPerpAmount, which should be checked
      * @return collateralToPay final amount of collateral paying out to the liquidator
      */
     function _getLiquidationResult(
         uint256 _maxWPowerPerpAmount,
         uint256 _vaultShortAmount,
-        uint256 _vaultCollateralAmount,
-        uint256 _normalizationFactor
+        uint256 _vaultCollateralAmount
     ) internal view returns (uint256, uint256) {
         // try limiting liquidation amount to half of the vault debt
         (uint256 finalLiquidateAmount, uint256 collateralToPay) = _getSingleLiquidationAmount(
             _maxWPowerPerpAmount,
-            _vaultShortAmount.div(2),
-            _normalizationFactor
+            _vaultShortAmount.div(2)
         );
 
         if (_vaultCollateralAmount > collateralToPay) {
@@ -292,8 +283,7 @@ contract LiquidationHelper  {
                 // calculate the new liquidation amount and collateral again based on the new limit
                 (finalLiquidateAmount, collateralToPay) = _getSingleLiquidationAmount(
                     _maxWPowerPerpAmount,
-                    _vaultShortAmount,
-                    _normalizationFactor
+                    _vaultShortAmount
                 );
             }
         }
@@ -313,14 +303,12 @@ contract LiquidationHelper  {
      * @notice determine how much wPowerPerp to liquidate, and how much collateral to return
      * @param _maxInputWAmount maximum wPowerPerp amount liquidator is willing to repay
      * @param _maxLiquidatableWAmount maximum wPowerPerp amount a liquidator is allowed to repay
-     * @param _normalizationFactor normalization factor
      * @return finalWAmountToLiquidate amount of wPowerPerp the liquidator will burn
      * @return collateralToPay total collateral the liquidator will get
      */
     function _getSingleLiquidationAmount(
         uint256 _maxInputWAmount,
-        uint256 _maxLiquidatableWAmount,
-        uint256 _normalizationFactor
+        uint256 _maxLiquidatableWAmount
     ) internal view returns (uint256, uint256) {
         uint256 finalWAmountToLiquidate = _maxInputWAmount > _maxLiquidatableWAmount
             ? _maxLiquidatableWAmount
@@ -329,10 +317,9 @@ contract LiquidationHelper  {
         uint256 collateralToPay = Power2Base._getDebtValueInEth(
             finalWAmountToLiquidate,
             oracle,
-            ethQuoteCurrencyPool,
-            weth,
-            quoteCurrency,
-            _normalizationFactor
+            wPowerPerpPool,
+            wPowerPerp,
+            weth
         );
 
         // add 10% bonus for liquidators

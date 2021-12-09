@@ -388,7 +388,8 @@ describe("Liquidation Integration Test", function () {
     
     it("liquidate vault 0", async () => {
 
-      const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600, false)
+      const newSqueethPrice = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 600, false)
+
       const vaultBefore = await controller.vaults(vault0Id)
       
       // state before liquidation
@@ -402,8 +403,7 @@ describe("Liquidation Integration Test", function () {
 
       await controller.connect(liquidator).liquidate(vault0Id, wSqueethAmountToLiquidate, {gasPrice: 0});
       
-      const normFactor = await controller.normalizationFactor()
-      const collateralToGet = newEthPrice.div(oracleScaleFactor).mul(normFactor).mul(wSqueethAmountToLiquidate).div(one).div(one).mul(11).div(10)
+      const collateralToGet = newSqueethPrice.mul(wSqueethAmountToLiquidate).div(one).mul(11).div(10)
 
       const vaultAfter = await controller.vaults(vault0Id)
       const liquidatorBalanceAfter = await provider.getBalance(liquidator.address)
@@ -472,9 +472,8 @@ describe("Liquidation Integration Test", function () {
       const liquidatorBalanceAfter = await provider.getBalance(liquidator.address)
       const liquidatorSqueethAfter = await squeeth.balanceOf(liquidator.address)
 
-      const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600, false)
-      const normFactor = await controller.normalizationFactor()
-      const collateralToGet = newEthPrice.div(oracleScaleFactor).mul(normFactor).mul(wSqueethAmountToLiquidate).div(one).div(one).mul(11).div(10)
+      const newSqueethPrice = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 600, false)
+      const collateralToGet = newSqueethPrice.mul(wSqueethAmountToLiquidate).div(one).mul(11).div(10)
       
       expect(isUnsafe).to.be.true
       expect(isLiquidatableAfterReducingDebt).to.be.true
@@ -519,9 +518,8 @@ describe("Liquidation Integration Test", function () {
       const liquidatorBalanceAfter = await provider.getBalance(liquidator.address)
       const liquidatorSqueethAfter = await squeeth.balanceOf(liquidator.address)
 
-      const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600, false)
-      const normFactor = await controller.normalizationFactor()
-      const collateralToGet = newEthPrice.div(oracleScaleFactor).mul(normFactor).mul(wSqueethAmountToLiquidate).div(one).div(one).mul(11).div(10)
+      const newSqueethPrice = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 600, false)
+      const collateralToGet = newSqueethPrice.mul(wSqueethAmountToLiquidate).div(one).mul(11).div(10)
       
       expect(isUnsafe).to.be.true
       expect(isLiquidatableAfterReducingDebt).to.be.true
@@ -622,7 +620,7 @@ describe("Liquidation Integration Test", function () {
       expect(isSimilar(newEthPrice.toString(), newSqueethPrice.mul(oracleScaleFactor).toString(), 3)).to.be.true
     })
     it("calling liquidation now will save vault 3 and get bounty", async () => {
-      const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600, false)
+      const newSqueethPrice = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 600, false)
       // price has 4x, eth amount should have doubled in the nft
       // squeeth amount should be cut in half
       // get net worth of nft
@@ -657,10 +655,9 @@ describe("Liquidation Integration Test", function () {
 
       const liquidatorEthAfter = await provider.getBalance(liquidator.address)
       const vaultAfter = await controller.vaults(vault3Id)
-      const normFactor = await controller.normalizationFactor()
       
       // paying a 2% bounty on top of total value withdrawn from NFT.
-      const withdrawWSqueethInEth = newEthPrice.mul(normFactor).mul(totalWSqueethFromUniPosition).div(one).div(one).div(oracleScaleFactor)
+      const withdrawWSqueethInEth = newSqueethPrice.mul(totalWSqueethFromUniPosition).div(one)
       const bounty = withdrawWSqueethInEth.add(totalEthFromUniPosition).mul(2).div(100);
       
       expect(isUnsafe).to.be.true
@@ -771,7 +768,8 @@ describe("Liquidation Integration Test", function () {
       expect(isSimilar(newEthPrice.toString(), newSqueethPrice.mul(oracleScaleFactor).toString(), 3)).to.be.true
     })
     it("calling liquidation now will save vault5 + liquidate half of the remaining debt", async () => {
-      const newEthPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600, false)
+      const newSqueethPrice = await oracle.getTwap(squeethPool.address, squeeth.address, weth.address, 600, false)
+
       const { tick } = await (squeethPool as IUniswapV3Pool).slot0()
       const isWethToken0 = parseInt(weth.address, 16) < parseInt(squeeth.address, 16)
       const { ethAmount, wPowerPerpAmount } = await vaultLib.getUniPositionBalances(positionManager.address, vault5LPTokenId, tick, isWethToken0)
@@ -804,9 +802,8 @@ describe("Liquidation Integration Test", function () {
 
       const liquidatorEthAfter = await provider.getBalance(liquidator.address)
       const vaultAfter = await controller.vaults(vault5Id)
-      const normFactor = await controller.normalizationFactor()
       
-      const reward = newEthPrice.div(oracleScaleFactor).mul(normFactor).mul(wSqueethAmountToLiquidate).div(BigNumber.from(10).pow(36)).mul(11).div(10)
+      const reward = newSqueethPrice.mul(wSqueethAmountToLiquidate).div(one).mul(11).div(10)
 
       expect(isUnsafe).to.be.true
       expect(isLiquidatableAfterReducingDebt).to.be.true
