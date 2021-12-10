@@ -5,8 +5,10 @@ import CssBaseline from '@material-ui/core/CssBaseline'
 import { ThemeProvider } from '@material-ui/core/styles'
 import Head from 'next/head'
 import React from 'react'
+import { QueryClient, QueryClientProvider } from 'react-query'
 
 import { useWallet, WalletProvider } from '../src/context/wallet'
+import { WhitelistProvider } from '../src/context/whitelist'
 import { WorldProvider } from '../src/context/world'
 import getTheme, { Mode } from '../src/theme'
 import { uniswapClient } from '../src/utils/apollo-client'
@@ -19,9 +21,15 @@ function MyApp({ Component, pageProps }: any) {
       jssStyles.parentElement!.removeChild(jssStyles)
     }
   }, [])
+  const queryClient = new QueryClient()
+
   return (
     <WalletProvider>
-      <TradeApp Component={Component} pageProps={pageProps} />
+      <QueryClientProvider client={queryClient}>
+        <WhitelistProvider>
+          <TradeApp Component={Component} pageProps={pageProps} />
+        </WhitelistProvider>
+      </QueryClientProvider>
     </WalletProvider>
   )
 }

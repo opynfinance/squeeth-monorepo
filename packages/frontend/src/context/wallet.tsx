@@ -18,6 +18,7 @@ type WalletType = {
   networkId: Networks
   signer: any
   selectWallet: () => void
+  disconnectWallet: () => void
   connected: boolean
   balance: BigNumber
   handleTransaction: any
@@ -29,6 +30,7 @@ const initialState: WalletType = {
   networkId: Networks.ROPSTEN,
   signer: null,
   selectWallet: () => null,
+  disconnectWallet: () => null,
   connected: false,
   balance: new BigNumber(0),
   handleTransaction: () => null,
@@ -52,6 +54,13 @@ const WalletProvider: React.FC = ({ children }) => {
       if (success) onboard.walletCheck()
     })
   }, [onboard])
+
+  const disconnectWallet = useCallback(async () => {
+    if (!onboard) return
+    await onboard.walletReset()
+  }, [onboard])
+
+  const setAddr = (address: string) => setAddress(address.toLowerCase())
 
   function addEtherscan(transaction: any) {
     if (networkId === Networks.LOCAL) return
@@ -80,9 +89,10 @@ const WalletProvider: React.FC = ({ children }) => {
       connected: !!address && networkId in Networks && networkId !== Networks.MAINNET,
       balance,
       selectWallet: onWalletSelect,
+      disconnectWallet: disconnectWallet,
       handleTransaction,
     }),
-    [web3, address, networkId, signer, balance, onWalletSelect],
+    [web3, address, networkId, signer, balance, onWalletSelect, disconnectWallet],
   )
 
   const getBalance = () => {
@@ -145,7 +155,7 @@ const WalletProvider: React.FC = ({ children }) => {
       networkId: networkId,
       darkMode: true,
       subscriptions: {
-        address: setAddress,
+        address: setAddr,
         network: onNetworkChange,
         wallet: onWalletUpdate,
         // balance: (balance) => setBalance(new BigNumber(balance)),
@@ -190,13 +200,14 @@ const WalletProvider: React.FC = ({ children }) => {
     setOnboard(onboard)
     setNotify(notify)
 
-    const previouslySelectedWallet = window.localStorage.getItem('selectedWallet')
+    // removed it for whitelist checking
+    // const previouslySelectedWallet = window.localStorage.getItem('selectedWallet')
 
-    if (previouslySelectedWallet && onboard) {
-      onboard.walletSelect(previouslySelectedWallet).then((success) => {
-        console.log('Connected to wallet', success)
-      })
-    }
+    // if (previouslySelectedWallet && onboard) {
+    //   onboard.walletSelect(previouslySelectedWallet).then((success) => {
+    //     console.log('Connected to wallet', success)
+    //   })
+    // }
   }, [networkId])
 
   return <walletContext.Provider value={store}>{children}</walletContext.Provider>

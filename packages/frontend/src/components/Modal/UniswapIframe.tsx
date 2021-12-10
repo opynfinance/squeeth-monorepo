@@ -8,8 +8,8 @@ import CloseIcon from '@material-ui/icons/Close'
 import OpenInNewIcon from '@material-ui/icons/OpenInNew'
 import * as React from 'react'
 
-import { useAddresses } from '../hooks/useAddress'
-import useCopyClipboard from '../hooks/useCopyClipboard'
+import { useAddresses } from '../../hooks/useAddress'
+import useCopyClipboard from '../../hooks/useCopyClipboard'
 
 const useStyles = makeStyles((theme) =>
   createStyles({

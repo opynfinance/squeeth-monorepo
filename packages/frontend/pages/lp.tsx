@@ -15,6 +15,7 @@ import { useController } from '../src/hooks/contracts/useController'
 import { useSqueethPool } from '../src/hooks/contracts/useSqueethPool'
 import { useETHPrice } from '../src/hooks/useETHPrice'
 import { toTokenAmount } from '../src/utils/calculations'
+import { withRequiredAddr } from '../src/utils/withRequiredAddr'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -211,7 +212,7 @@ export function LPCalculator() {
   )
 }
 
-export default function LPage() {
+export function LPage() {
   return (
     <TradeProvider>
       <LPProvider>
@@ -220,3 +221,5 @@ export default function LPage() {
     </TradeProvider>
   )
 }
+
+export default withRequiredAddr(LPage)

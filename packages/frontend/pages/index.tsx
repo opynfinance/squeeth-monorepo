@@ -12,18 +12,21 @@ import squeethTokenSymbol from '../public/images/Squeeth.png'
 import { PrimaryButton } from '../src/components/Buttons'
 import { LongChart } from '../src/components/Charts/LongChart'
 import { VaultChart } from '../src/components/Charts/VaultChart'
-import MobileModal from '../src/components/MobileModal'
+import MobileModal from '../src/components/Modal/MobileModal'
 import Nav from '../src/components/Nav'
 import PositionCard from '../src/components/PositionCard'
 import { SqueethTab, SqueethTabs } from '../src/components/Tabs'
 import Trade from '../src/components/Trade'
+import { WelcomeModal } from '../src/components/Trade/WelcomeModal'
 import { Vaults } from '../src/constants'
 import { TradeProvider, useTrade } from '../src/context/trade'
+import { LoginState, useWhitelist } from '../src/context/whitelist'
 import { useWorldContext } from '../src/context/world'
 import { useController } from '../src/hooks/contracts/useController'
 import { useETHPrice } from '../src/hooks/useETHPrice'
 import { TradeType } from '../src/types'
 import { toTokenAmount } from '../src/utils/calculations'
+import { withRequiredAddr } from '../src/utils/withRequiredAddr'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -267,6 +270,7 @@ const useStyles = makeStyles((theme) =>
 )
 
 function TradePage() {
+  const { me } = useWhitelist()
   const classes = useStyles()
   const ethPrice = useETHPrice()
   const { fundingPerDay, mark, index, impliedVol, currentImpliedFunding } = useController()
@@ -275,11 +279,22 @@ function TradePage() {
   const { tradeType, setTradeType, actualTradeType } = useTrade()
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [showMobileTrade, setShowMobileTrade] = useState(false)
+  const [isWelcomeModalOpen, setWelcomeModalOpen] = useState(false)
+
+  const handleClose = () => {
+    setWelcomeModalOpen(false)
+  }
 
   useEffect(() => {
     if (tradeType === TradeType.LONG) setVolMultiplier(1.2)
     else setVolMultiplier(0.9)
   }, [tradeType])
+
+  useEffect(() => {
+    if (me?.loginState === LoginState.WHITELISTED) {
+      setWelcomeModalOpen(true)
+    }
+  }, [me])
 
   const SqueethInfo = useCallback(() => {
     return (
@@ -542,14 +557,17 @@ function TradePage() {
           </Card>
         </MobileModal>
       </Hidden>
+      <WelcomeModal open={isWelcomeModalOpen} handleClose={handleClose} />
     </div>
   )
 }
 
-export default function App() {
+export function App() {
   return (
     <TradeProvider>
       <TradePage />
     </TradeProvider>
   )
 }
+
+export default withRequiredAddr(App)

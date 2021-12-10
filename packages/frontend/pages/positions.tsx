@@ -10,6 +10,7 @@ import { useTokenBalance } from '../src/hooks/contracts/useTokenBalance'
 import { useAddresses } from '../src/hooks/useAddress'
 import { useETHPrice } from '../src/hooks/useETHPrice'
 import { useLongPositions, useLPPositions, usePnL, useShortPositions } from '../src/hooks/usePositions'
+import { withRequiredAddr } from '../src/utils/withRequiredAddr'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -87,7 +88,7 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-export default function Positions() {
+export function Positions() {
   const classes = useStyles()
   const { loading: isLongLoading, wethAmount: longWethAmt } = useLongPositions()
   const {
@@ -282,3 +283,5 @@ export default function Positions() {
     </div>
   )
 }
+
+export default withRequiredAddr(Positions)

@@ -38,6 +38,7 @@ import { useAddresses } from '../src/hooks/useAddress'
 import useAsyncMemo from '../src/hooks/useAsyncMemo'
 import { useETHPriceCharts } from '../src/hooks/useETHPriceCharts'
 import { calculateLiquidationPrice, getCrabVaultPayoff, getFairSqueethBid, getVolForTimestamp } from '../src/utils'
+import { withRequiredAddr } from '../src/utils/withRequiredAddr'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -284,7 +285,7 @@ const getVaultIntro = (vault: Vaults) => {
   if (vault === Vaults.ETHBear) return <> Earn yield while being short ETH </>
 }
 
-export default function Vault() {
+export function Vault() {
   const classes = useStyles()
   const [showPercentage, setShowPercentage] = useState(true)
   const [customLong, setCustomLong] = useState(1.5)
@@ -578,3 +579,5 @@ export default function Vault() {
     </div>
   )
 }
+
+export default withRequiredAddr(Vault)

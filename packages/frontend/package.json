@@ -17,6 +17,7 @@
     "@thanpolas/univ3prices": "^3.0.2",
     "@uniswap/sdk-core": "^3.0.1",
     "@uniswap/v3-sdk": "^3.3.2",
+    "axios": "^0.24.0",
     "bignumber.js": "^9.0.1",
     "bnc-notify": "^1.9.1",
     "bnc-onboard": "1.27.0",
@@ -30,6 +31,7 @@
     "react": "17.0.2",
     "react-chartjs-2": "^2.11.1",
     "react-dom": "17.0.2",
+    "react-query": "^3.34.0",
     "web3": "^1.5.2"
   },
   "devDependencies": {

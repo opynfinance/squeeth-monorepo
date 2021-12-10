@@ -22,13 +22,13 @@ import { toTokenAmount } from '../utils/calculations'
 import { PrimaryButton } from './Buttons'
 import CollatRange from './CollatRange'
 import { PrimaryInput } from './inputs/PrimaryInput'
+import { UniswapIframe } from './Modal/UniswapIframe'
 import { StepperBox as Stepper } from './StepperBox'
 import { SecondaryTab, SecondaryTabs } from './Tabs'
 import Confirmed from './Trade/Confirmed'
 import Long from './Trade/Long'
 import TradeDetails from './Trade/TradeDetails'
 import TradeInfoItem from './Trade/TradeInfoItem'
-import { UniswapIframe } from './UniswapIframe'
 
 const useStyles = makeStyles((theme) =>
   createStyles({

@@ -1,4 +1,4 @@
-import { createStyles, Fade, makeStyles, Modal } from '@material-ui/core'
+import { createStyles, Fade, makeStyles } from '@material-ui/core'
 import React from 'react'
 import { useMemo, useState } from 'react'
 
