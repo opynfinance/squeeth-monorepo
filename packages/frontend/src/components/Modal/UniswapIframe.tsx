@@ -8,6 +8,7 @@ import CloseIcon from '@material-ui/icons/Close'
 import OpenInNewIcon from '@material-ui/icons/OpenInNew'
 import * as React from 'react'
 
+import { Tooltips } from '../../constants/enums'
 import { useAddresses } from '../../hooks/useAddress'
 import useCopyClipboard from '../../hooks/useCopyClipboard'
 
@@ -89,11 +90,7 @@ export const UniswapIframe: React.FC<UniswapIframeProps> = ({ text }) => {
 
   return (
     <div>
-      <Tooltip
-        title={
-          'When you click the Uniswap link, the Uniswap LP page may take a few moments to load. Please wait for it to fully load so it can prefill LP token data.'
-        }
-      >
+      <Tooltip title={Tooltips.UniswapLoading}>
         <Button className={classes.btn} variant={'outlined'} onClick={handleClickOpen}>
           <>{text} Deposit Squeeth and ETH into Uniswap V3 Pool 🦄</>
         </Button>

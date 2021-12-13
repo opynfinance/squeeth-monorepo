@@ -137,7 +137,7 @@ enum VaultAction {
 }
 
 enum VaultError {
-  MIN_COLLATERAL = 'Minimum vault collateral is 0.5 ETH',
+  MIN_COLLATERAL = 'Minimum vault collateral is 7.5 ETH',
   MIN_COLLAT_PERCENT = 'Minimum collateral ratio is 150%',
 }
 
@@ -300,7 +300,7 @@ const Component: React.FC = () => {
     let adjustCollatError = null
     let adjustAmountError = null
     if (isCollatAction) {
-      if (vault?.collateralAmount.minus(collateral.negated()).lt(0.5)) adjustCollatError = VaultError.MIN_COLLATERAL
+      if (vault?.collateralAmount.minus(collateral.negated()).lt(7.5)) adjustCollatError = VaultError.MIN_COLLATERAL
       else if (collatPercent < 150) adjustCollatError = VaultError.MIN_COLLAT_PERCENT
     } else {
       if (collatPercent < 150) adjustAmountError = VaultError.MIN_COLLAT_PERCENT

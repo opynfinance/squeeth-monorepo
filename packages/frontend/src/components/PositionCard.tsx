@@ -1,11 +1,13 @@
-import { Typography } from '@material-ui/core'
+import { Tooltip, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
+import InfoIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
 import Link from 'next/link'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
+import { Tooltips } from '../constants/enums'
 import { useTrade } from '../context/trade'
 import { useETHPrice } from '../hooks/useETHPrice'
 import { useLongPositions, usePnL, useShortPositions } from '../hooks/usePositions'
@@ -95,6 +97,10 @@ const useStyles = makeStyles((theme) =>
       fontWeight: 600,
       fontSize: 14,
     },
+    infoIcon: {
+      fontSize: '10px',
+      marginLeft: theme.spacing(0.5),
+    },
   }),
 )
 
@@ -117,6 +123,8 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
   const { shortVaults, firstValidVault, vaultId } = useShortPositions()
   const { squeethAmount: lngAmt } = useLongPositions()
   const [fetchingNew, setFetchingNew] = useState(false)
+  const [postTradeAmt, setPostTradeAmt] = useState(new BigNumber(0))
+  const [postPosition, setPostPosition] = useState(PositionType.NONE)
 
   useEffect(() => {
     if (tradeSuccess) {
@@ -145,33 +153,50 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
   const getPositionBasedValue = useCallback(
     (long: any, short: any, none: any, loadingMsg?: any) => {
       if (loadingMsg && loading) return loadingMsg
-      if (positionType === PositionType.LONG) return long
-      if (positionType === PositionType.SHORT) return short
+      if (positionType === PositionType.LONG) {
+        //if it's showing -100% it is still loading
+        if (longGain <= -100 || !isFinite(Number(longGain))) {
+          return loadingMsg
+        }
+        return long
+      }
+      if (positionType === PositionType.SHORT) {
+        //if it's showing -100% it is still loading
+        if (shortGain <= -100 || !isFinite(Number(shortGain))) {
+          return loadingMsg
+        }
+        return short
+      }
       return none
     },
-    [positionType, loading],
+    [positionType, loading, longGain, shortGain],
   )
 
-  const { postTradeAmt, postPosition } = useMemo(() => {
-    let postTradeAmt = new BigNumber(0)
-    let postPosition = PositionType.NONE
-    if (actualTradeType === TradeType.LONG && shortVaults.length && !shortVaults[firstValidVault].shortAmount.gt(0)) {
-      if (isOpenPosition) postTradeAmt = wSqueethBal.plus(quote.amountOut)
-      else postTradeAmt = wSqueethBal.minus(tradeAmount)
-      if (postTradeAmt.gt(0)) postPosition = PositionType.LONG
+  useEffect(() => {
+    let _postTradeAmt = new BigNumber(0)
+    let _postPosition = PositionType.NONE
+    const hasShortPosition = shortVaults.length > 0 && shortVaults[firstValidVault].shortAmount.gt(0)
+    if (actualTradeType === TradeType.LONG && !hasShortPosition) {
+      if (isOpenPosition) {
+        _postTradeAmt = wSqueethBal.plus(quote.amountOut)
+      } else {
+        _postTradeAmt = wSqueethBal.minus(tradeAmount)
+      }
+      if (_postTradeAmt.gt(0)) _postPosition = PositionType.LONG
     } else if (actualTradeType === TradeType.SHORT && !lngAmt.gt(0)) {
       if (isOpenPosition)
-        postTradeAmt = shortVaults.length
+        _postTradeAmt = shortVaults.length
           ? shortVaults[firstValidVault].shortAmount.plus(tradeAmount)
           : new BigNumber(0)
       else
-        postTradeAmt = shortVaults.length
+        _postTradeAmt = shortVaults.length
           ? shortVaults[firstValidVault].shortAmount.minus(tradeAmount)
           : new BigNumber(0)
-      if (postTradeAmt.gt(0)) postPosition = PositionType.SHORT
+      if (_postTradeAmt.gt(0)) _postPosition = PositionType.SHORT
     }
 
-    return { postTradeAmt, postPosition }
+    setPostTradeAmt(_postTradeAmt)
+    setPostPosition(_postPosition)
   }, [wSqueethBal.toNumber(), shortVaults, tradeAmount, actualTradeType, quote.amountOut.toNumber()])
 
   const getPostPositionBasedValue = useCallback(
@@ -253,7 +278,11 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
               oSQTH
             </Typography>
           </div>
-          {loading ? (
+          {loading ||
+          longGain <= -100 ||
+          !isFinite(Number(longGain)) ||
+          shortGain <= -100 ||
+          !isFinite(Number(shortGain)) ? (
             <Typography variant="caption" color="textSecondary">
               Loading
             </Typography>
@@ -264,9 +293,14 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
           )}
         </div>
         <div>
-          <Typography variant="caption" color="textSecondary" style={{ fontWeight: 500 }}>
-            Unrealized P&L
-          </Typography>
+          <div>
+            <Typography variant="caption" color="textSecondary" style={{ fontWeight: 500 }}>
+              Unrealized P&L
+            </Typography>
+            <Tooltip title={Tooltips.UnrealizedPnL}>
+              <InfoIcon fontSize="small" className={classes.infoIcon} />
+            </Tooltip>
+          </div>
           <div className={classes.pnl}>
             <Typography className={pnlClass} style={{ fontWeight: 600 }}>
               {getPositionBasedValue(

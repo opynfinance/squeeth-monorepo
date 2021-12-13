@@ -20,12 +20,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   
   // update this number to initial price we want to start the pool with.
   
-  const squeethPriceInEth = 4000 / oracleScaleFactor.toNumber(); 
+  const squeethPriceInEth = 4500 / oracleScaleFactor.toNumber(); 
   const squeethWethPool = await createUniPool(squeethPriceInEth, weth9, squeeth, positionManager, uniswapFactory)
   const tx1 = await squeethWethPool.increaseObservationCardinalityNext(128) 
   await ethers.provider.waitForTransaction(tx1.hash, 1)
 
-  const ethPriceInDai = 4000
+  const ethPriceInDai = 4500
   const ethUSDPool = await createUniPool(ethPriceInDai, usdc, weth9, positionManager, uniswapFactory)
   const tx2 = await ethUSDPool.increaseObservationCardinalityNext(128)
   await ethers.provider.waitForTransaction(tx2.hash, 1)

@@ -3,7 +3,7 @@ import InfoIcon from '@material-ui/icons/InfoOutlined'
 import Image from 'next/image'
 import React from 'react'
 
-import { EtherscanPrefix } from '../../constants'
+import { EtherscanPrefix, Tooltips } from '../../constants'
 import { useWallet } from '../../context/wallet'
 import { useAddresses } from '../../hooks/useAddress'
 import { UniswapIframe } from '../Modal/UniswapIframe'
@@ -84,11 +84,7 @@ const Confirmed: React.FC<ConfirmedProps> = ({ confirmationMessage, txnHash, isL
           <Typography variant="body1" component="div" className={classes.uniLP}>
             <UniswapIframe />
           </Typography>
-          <Tooltip
-            title={
-              'When you click the Uniswap link, the Uniswap LP page may take a few moments to load. Please wait for it to fully load so it can prefill LP token data.'
-            }
-          >
+          <Tooltip title={Tooltips.UniswapLoading}>
             <InfoIcon className={classes.infoIcon} />
           </Tooltip>
         </div>

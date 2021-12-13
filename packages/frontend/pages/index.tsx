@@ -19,6 +19,7 @@ import { SqueethTab, SqueethTabs } from '../src/components/Tabs'
 import Trade from '../src/components/Trade'
 import { WelcomeModal } from '../src/components/Trade/WelcomeModal'
 import { Vaults } from '../src/constants'
+import { Tooltips } from '../src/constants/enums'
 import { TradeProvider, useTrade } from '../src/context/trade'
 import { LoginState, useWhitelist } from '../src/context/whitelist'
 import { useWorldContext } from '../src/context/world'
@@ -313,38 +314,36 @@ function TradePage() {
                 <Typography color="textSecondary" variant="body2">
                   Last 24hr Avg Funding
                 </Typography>
-                <Tooltip
-                  title={'Average funding paid over the last 24hrs. Calculated using a 24hr TWAP of Mark - Index.'}
-                >
+                <Tooltip title={Tooltips.Last24AvgFunding}>
                   <InfoIcon fontSize="small" className={classes.infoIcon} />
                 </Tooltip>
               </div>
-              <Typography>{(fundingPerDay * 100).toFixed(2)}%</Typography>
+              <Typography>{(fundingPerDay * 100).toFixed(2) || 'loading'}%</Typography>
             </div>
             <div className={classes.infoItem} style={{ width: '30%' }}>
               <div className={classes.infoLabel}>
                 <Typography color="textSecondary" variant="body2">
                   Current Implied Funding
                 </Typography>
-                <Tooltip title={'Current funding rate calculated using current Mark - Index.'}>
+                <Tooltip title={Tooltips.CurrentImplFunding}>
                   <InfoIcon fontSize="small" className={classes.infoIcon} />
                 </Tooltip>
               </div>
               <Typography>{(currentImpliedFunding * 100).toFixed(2) || 'loading'}%</Typography>
             </div>
-            <div className={classes.infoItem} style={{ width: '30%' }}>
+            <div className={classes.infoItem} style={{ width: '15%' }}>
               <div className={classes.infoLabel}>
                 <Typography color="textSecondary" variant="body2">
                   Funding Payments
                 </Typography>
-                <Tooltip title={'Funding happens every time the contract is touched'}>
+                <Tooltip title={Tooltips.FundingPayments}>
                   <InfoIcon fontSize="small" className={classes.infoIcon} />
                 </Tooltip>
               </div>
               <Typography>Continuous</Typography>
             </div>
-            <div className={classes.infoItem} style={{ width: '15%' }}></div>
             <div className={classes.infoItem} style={{ width: '5%' }}></div>
+            <div className={classes.infoItem} style={{ width: '10%' }}></div>
           </div>
         </div>
         <div>
@@ -365,31 +364,37 @@ function TradePage() {
               </>
             ) : (
               <>
-                <div className={classes.infoItem} style={{ width: '18%' }}>
+                <div className={classes.infoItem} style={{ width: '30%' }}>
                   <div className={classes.infoLabel}>
                     <Typography color="textSecondary" variant="body2">
                       ETH&sup2; Price
                     </Typography>
                   </div>
-                  <Typography>${Number(toTokenAmount(index, 18).toFixed(0)).toLocaleString()}</Typography>
+                  <Typography>${Number(toTokenAmount(index, 18).toFixed(0)).toLocaleString() || 'loading'}</Typography>
                 </div>
                 <div className={classes.infoItem} style={{ width: '30%' }}>
                   <div className={classes.infoLabel}>
                     <Typography color="textSecondary" variant="body2">
                       Mark Price
                     </Typography>
+                    <Tooltip title={Tooltips.Mark}>
+                      <InfoIcon fontSize="small" className={classes.infoIcon} />
+                    </Tooltip>
                   </div>
-                  <Typography>${Number(toTokenAmount(mark, 18).toFixed(0)).toLocaleString()}</Typography>
+                  <Typography>${Number(toTokenAmount(mark, 18).toFixed(0)).toLocaleString() || 'loading'}</Typography>
                 </div>
-                <div className={classes.infoItem} style={{ width: '25%' }}>
+                <div className={classes.infoItem} style={{ width: '30%' }}>
                   <div className={classes.infoLabel}>
                     <Typography color="textSecondary" variant="body2">
                       Implied Volatility
                     </Typography>
+                    <Tooltip title={Tooltips.ImplVol}>
+                      <InfoIcon fontSize="small" className={classes.infoIcon} />
+                    </Tooltip>
                   </div>
                   <Typography>{(impliedVol * 100).toFixed(2)}%</Typography>
                 </div>
-                <div className={classes.infoItem} style={{ width: '15%' }}>
+                <div className={classes.infoItem} style={{ width: '20%' }}>
                   <div className={classes.infoLabel}>
                     <Typography color="textSecondary" variant="body2">
                       Funding

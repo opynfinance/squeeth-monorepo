@@ -189,13 +189,13 @@ export const LPActionTabs: React.FC<LPActionTabsProps> = ({
 
     if (connected && collatAmount > balance) {
       mintMinCollatError = 'Insufficient ETH balance'
-    } else if (connected && collatAmount.plus(existingCollat).lt(0.5)) {
-      mintMinCollatError = 'Minimum collateral is 0.5 ETH'
+    } else if (connected && collatAmount.plus(existingCollat).lt(7.5)) {
+      mintMinCollatError = 'Minimum collateral is 7.5 ETH'
     }
 
-    if (connected && withdrawCollat.minus(existingCollat).abs().isLessThan(0.5)) {
+    if (connected && withdrawCollat.minus(existingCollat).abs().isLessThan(7.5)) {
       burnMinCollatError =
-        'You must have at least 0.5 ETH collateral unless you fully close out your position. Either fully close your position, or close out less'
+        'You must have at least 7.5 ETH collateral unless you fully close out your position. Either fully close your position, or close out less'
     }
 
     return { mintMinCollatError, burnMinCollatError, minCollRatioError }

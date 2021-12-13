@@ -8,6 +8,7 @@ import * as React from 'react'
 import { useEffect, useState } from 'react'
 
 import { SecondaryTab, SecondaryTabs } from '../../components/Tabs'
+import { Tooltips } from '../../constants/enums'
 import { useSqueethPool } from '../../hooks/contracts/useSqueethPool'
 import { useAddresses } from '../../hooks/useAddress'
 import { useETHPrice } from '../../hooks/useETHPrice'
@@ -23,7 +24,7 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(2),
       borderRadius: theme.spacing(1),
       backgroundColor: `${theme.palette.background.paper}40`,
-      height: '75vh',
+      height: '25vh',
     },
     isLPageTableContainer: {
       flexBasis: '72%',
@@ -59,7 +60,6 @@ const useStyles = makeStyles((theme) =>
       position: 'sticky',
       top: '0',
       zIndex: 20,
-      background: '#2A2D2E',
     },
   }),
 )
@@ -134,11 +134,14 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
             {/* <TableCell align="left">Collected Fees</TableCell> */}
             <TableCell align="left">Uncollected Fees</TableCell>
             <TableCell align="left">Value</TableCell>
-            <Tooltip
-              title={'PnL = Value of current LP underlying tokens - Value of tokens deposited (at current price) '}
-            >
-              <TableCell align="left">PnL</TableCell>
-            </Tooltip>
+            {
+              //only show PnL on active tab for now until closed is implemented
+              activeTab === 0 ? (
+                <Tooltip title={Tooltips.LPPnL}>
+                  <TableCell align="left">PnL</TableCell>
+                </Tooltip>
+              ) : null
+            }
           </TableRow>
         </TableHead>
 

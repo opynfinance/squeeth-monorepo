@@ -34,10 +34,14 @@ const useStyles = makeStyles((theme) =>
     },
     cardTitle: {
       color: theme.palette.primary.main,
-      marginTop: theme.spacing(2),
     },
     header: {
       color: theme.palette.primary.main,
+    },
+    payoffContainer: {
+      display: 'flex',
+      overflow: 'auto',
+      maxHeight: '310',
     },
   }),
 )
@@ -187,11 +191,13 @@ export function VaultChart({
           options={chartOptions}
           lineSeries={showPercentage ? lineSeriesPercentage : lineSeries}
           autoWidth
-          height={300}
+          height={290}
           darkTheme
         />
       ) : chartType === 1 ? (
-        <ShortSqueethPayoff ethPrice={ethPrice.toNumber()} collatRatio={collatRatio} />
+        <div className={classes.payoffContainer}>
+          <ShortSqueethPayoff ethPrice={ethPrice.toNumber()} collatRatio={collatRatio} />
+        </div>
       ) : chartType === 2 ? (
         <div style={{ overflow: 'auto', maxHeight: '300px' }}>
           <Typography className={classes.cardTitle} variant="h6">
@@ -204,6 +210,8 @@ export function VaultChart({
             <a
               className={classes.header}
               href="https://opynopyn.notion.site/Squeeth-FAQ-4b6a054ab011454cbbd60cb3ee23a37c"
+              target="_blank"
+              rel="noreferrer"
             >
               {' '}
               Learn more.{' '}

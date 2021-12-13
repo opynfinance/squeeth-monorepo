@@ -98,7 +98,6 @@ const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
       height: '300px',
-      marginTop: '10px',
       width: '430px',
     },
   }),
@@ -177,7 +176,7 @@ const ShortSqueethPayoff: React.FC<{ ethPrice: number; collatRatio: number; vaul
   }, [labels, values0, values14, values28])
 
   return (
-    <div style={{ width: '350px' }}>
+    <div style={{ width: '350px', maxHeight: '295px' }}>
       <Line data={getData} type="line" height={300} width={380} options={chartOptions} />
     </div>
   )

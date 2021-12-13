@@ -103,6 +103,20 @@ const Nav: React.FC = () => {
         </div>
         <div className={classes.wallet}>
           <Button
+            variant="contained"
+            onClick={(e) => {
+              e.preventDefault()
+              window.open('https://opyn.canny.io/', '_blank')
+            }}
+            style={{
+              marginRight: '16px',
+              backgroundColor: '#1F8E98',
+              color: '#FFF',
+            }}
+          >
+            Share Feedback
+          </Button>
+          <Button
             variant="outlined"
             color="primary"
             onClick={() => {
@@ -133,7 +147,7 @@ const Nav: React.FC = () => {
           <div className={classes.navDrawer}>
             <WalletButton />
             <NavLink path="/" name="Trade" />
-            <NavLink path="/strategies" name="Strategies" />
+            {/* <NavLink path="/strategies" name="Strategies" /> */}
             <NavLink path="/positions" name="Positions" />
             <NavLink path="/lp" name="LP" />
           </div>

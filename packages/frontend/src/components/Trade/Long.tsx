@@ -91,6 +91,9 @@ const useStyles = makeStyles((theme) =>
     amountInput: {
       marginTop: theme.spacing(1),
       backgroundColor: theme.palette.success.main,
+      '&:hover': {
+        backgroundColor: theme.palette.success.dark,
+      },
     },
     innerCard: {
       textAlign: 'center',

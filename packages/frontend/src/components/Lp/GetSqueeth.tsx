@@ -4,7 +4,7 @@ import BigNumber from 'bignumber.js'
 import { motion } from 'framer-motion'
 import React, { useEffect, useMemo, useState } from 'react'
 
-import { WSQUEETH_DECIMALS } from '../../constants'
+import { Tooltips, WSQUEETH_DECIMALS } from '../../constants'
 import { LPActions, OBTAIN_METHOD, useLPState } from '../../context/lp'
 import { useWallet } from '../../context/wallet'
 import { useController } from '../../hooks/contracts/useController'
@@ -45,6 +45,9 @@ const useStyles = makeStyles((theme) =>
     amountInput: {
       marginTop: theme.spacing(1),
       backgroundColor: theme.palette.success.main,
+      '&:hover': {
+        backgroundColor: theme.palette.success.dark,
+      },
     },
     hint: {
       display: 'flex',
@@ -76,6 +79,8 @@ const Mint: React.FC = () => {
   const [collatAmount, setCollatAmount] = useState(new BigNumber(0))
   const [collatPercent, setCollatPercent] = useState(200)
   const [loading, setLoading] = useState(false)
+  const [mintMinCollatError, setMintMinCollatError] = useState('')
+  const [minCollRatioError, setMinCollRatioError] = useState('')
 
   const vaultId = useMemo(() => {
     if (!shortVaults.length) return 0
@@ -103,21 +108,16 @@ const Mint: React.FC = () => {
     getShortAmountFromDebt(debt).then((s) => setMintAmount(s))
   }, [collatPercent, collatAmount.toString()])
 
-  const { mintMinCollatError, minCollRatioError } = useMemo(() => {
-    let mintMinCollatError = null
-    let minCollRatioError = null
-
+  useEffect(() => {
     if (collatPercent < 150) {
-      minCollRatioError = 'Minimum collateral ratio is 150%'
+      setMinCollRatioError('Minimum collateral ratio is 150%')
     }
 
     if (connected && collatAmount.isGreaterThan(balance)) {
-      mintMinCollatError = 'Insufficient ETH balance'
-    } else if (connected && collatAmount.plus(existingCollat).lt(0.5)) {
-      mintMinCollatError = 'Minimum collateral is 0.5 ETH'
+      setMintMinCollatError('Insufficient ETH balance')
+    } else if (connected && collatAmount.plus(existingCollat).lt(7.5)) {
+      setMintMinCollatError('Minimum collateral is 7.5 ETH')
     }
-
-    return { mintMinCollatError, minCollRatioError }
   }, [balance.toString(), connected, existingCollat.toString()])
 
   const liqPrice = useMemo(() => {
@@ -132,7 +132,7 @@ const Mint: React.FC = () => {
         value={collatAmount.toNumber().toString()}
         onChange={(v) => setCollatAmount(new BigNumber(v))}
         label="Collateral"
-        tooltip="Collateral"
+        tooltip={Tooltips.SellOpenAmount}
         actionTxt="Max"
         onActionClicked={() => setCollatAmount(toTokenAmount(balance, 18))}
         unit="ETH"
@@ -150,7 +150,7 @@ const Mint: React.FC = () => {
             </div>
           )
         }
-        error={!!mintMinCollatError}
+        error={connected && collatAmount.plus(existingCollat).lt(7.5)}
       />
       <div className={classes.thirdHeading}>
         <TextField
@@ -187,11 +187,16 @@ const Mint: React.FC = () => {
         hint={`Balance ${squeethBal.toFixed(6)}`}
       />
       <div className={classes.divider}>
-        <TradeInfoItem label="Liquidation Price" value={liqPrice.toFixed(2)} tooltip="Liquidation Price" unit="USDC" />
+        <TradeInfoItem
+          label="Liquidation Price"
+          value={liqPrice.toFixed(2)}
+          tooltip={Tooltips.LiquidationPrice}
+          unit="USDC"
+        />
         <TradeInfoItem
           label="Current collateral ratio"
           value={existingCollatPercent}
-          tooltip="Current collateral ratio"
+          tooltip={Tooltips.CurrentCollRatio}
           unit="%"
         />
         <PrimaryButton
@@ -199,7 +204,7 @@ const Mint: React.FC = () => {
           onClick={mint}
           className={classes.amountInput}
           style={{ width: '100%' }}
-          disabled={!!mintMinCollatError || loading}
+          disabled={(connected && collatAmount.plus(existingCollat).lt(7.5)) || loading}
         >
           {loading ? <CircularProgress color="primary" size="1.5rem" /> : 'Mint'}
         </PrimaryButton>

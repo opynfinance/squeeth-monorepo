@@ -62,7 +62,7 @@ task("addSqueethLiquidity", "Add liquidity to wsqueeth pool")
   }
 
   if (wsqueethBalance.lt(liquidityWsqueethAmount)) {
-    console.log(`Minting ${wsqueethAmount} rSqueeth amount of wsqueeth`)
+    console.log(`Minting ${wsqueethAmount} rSqueeth amount of wsqueeth with ${collateralAmount} ETH`)
     const tx = await controller.mintWPowerPerpAmount(0, liquidityWsqueethAmount, 0, {value: ethers.utils.parseEther(collateralAmount)}) 
     await ethers.provider.waitForTransaction(tx.hash, 1)
     wsqueethBalance = await wsqueeth.balanceOf(deployer)

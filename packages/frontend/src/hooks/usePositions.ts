@@ -333,7 +333,7 @@ export const usePnL = () => {
     const buyQuoteAmt = shortSqueethVaults.length ? shortSqueethVaults[0].shortAmount : new BigNumber(0)
     const p2 = getBuyQuote(buyQuoteAmt).then((val) => setBuyQuote(val.amountIn))
     Promise.all([p1, p2]).then(() => setLoading(false))
-  }, [wSqueethBal.toNumber(), ready])
+  }, [wSqueethBal.toNumber(), ready, shortSqueethVaults])
 
   useEffect(() => {
     const _currentValue = sellQuote.amountOut

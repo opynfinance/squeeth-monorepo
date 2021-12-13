@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 
 import abi from '../../abis/controller.json'
-import { INDEX_SCALE, SWAP_EVENT_TOPIC, Vaults, WSQUEETH_DECIMALS } from '../../constants'
+import { FUNDING_PERIOD, INDEX_SCALE, SWAP_EVENT_TOPIC, Vaults, WSQUEETH_DECIMALS } from '../../constants'
 import { ETH_DAI_POOL, SQUEETH_UNI_POOL } from '../../constants/address'
 import { useWallet } from '../../context/wallet'
 import { Vault } from '../../types'
@@ -236,25 +236,22 @@ export const useController = () => {
       mark = await getMark(1)
     }
 
-    const nF = mark.dividedBy(mark.multipliedBy(2).minus(index))
-    return 1 - nF.toNumber()
+    return Math.log(mark.dividedBy(index).toNumber()) / FUNDING_PERIOD
   }
 
   const getCurrentImpliedFunding = async () => {
     const currIndex = await getIndex(1)
     const currMark = await getMark(1)
 
-    const nF = currMark.dividedBy(currMark.multipliedBy(2).minus(currIndex))
-    return 1 - nF.toNumber()
+    return Math.log(currMark.dividedBy(currIndex).toNumber()) / FUNDING_PERIOD
   }
 
-  // implied variance = - log ((index/mark +1)/2 ) / f
   const impliedVol = useMemo(() => {
     if (mark.isZero()) return 0
-    const f = 1 / 365
-    const v2 = Math.log((index.div(mark).toNumber() + 1) / 2) / -f
-    return Math.sqrt(v2)
-  }, [mark, index])
+    if (mark.lt(index)) return 0
+
+    return Math.sqrt(fundingPerDay * 365)
+  }, [mark, fundingPerDay, index])
 
   const getDebtAmount = async (shortAmount: BigNumber) => {
     if (!contract) return new BigNumber(0)

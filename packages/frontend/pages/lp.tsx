@@ -1,5 +1,6 @@
-import { createStyles, makeStyles } from '@material-ui/core'
+import { createStyles, makeStyles, Tooltip } from '@material-ui/core'
 import Typography from '@material-ui/core/Typography'
+import InfoIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
 import Image from 'next/image'
 import React, { useCallback, useState } from 'react'
@@ -9,6 +10,7 @@ import { LPTable } from '../src/components/Lp/LPTable'
 import ObtainSqueeth from '../src/components/Lp/ObtainSqueeth'
 import { LPActionTabs } from '../src/components/LPActionTabs'
 import Nav from '../src/components/Nav'
+import { Tooltips } from '../src/constants/enums'
 import { LPProvider } from '../src/context/lp'
 import { TradeProvider } from '../src/context/trade'
 import { useController } from '../src/hooks/contracts/useController'
@@ -71,6 +73,10 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       alignItems: 'center',
     },
+    infoIcon: {
+      fontSize: '14px',
+      marginLeft: theme.spacing(0.5),
+    },
   }),
 )
 
@@ -116,6 +122,9 @@ export function LPCalculator() {
                 <Typography color="textSecondary" variant="body2">
                   Mark Price
                 </Typography>
+                <Tooltip title={Tooltips.Mark}>
+                  <InfoIcon fontSize="small" className={classes.infoIcon} />
+                </Tooltip>
               </div>
               <Typography>${Number(toTokenAmount(mark, 18).toFixed(0)).toLocaleString()}</Typography>
             </div>
@@ -124,6 +133,9 @@ export function LPCalculator() {
                 <Typography color="textSecondary" variant="body2">
                   oSQTH Price
                 </Typography>
+                <Tooltip title={Tooltips.oSQTHPrice}>
+                  <InfoIcon fontSize="small" className={classes.infoIcon} />
+                </Tooltip>
               </div>
               <Typography>${Number(getWSqueethPositionValue(1).toFixed(2).toLocaleString()) || 'loading'}</Typography>
             </div>
@@ -132,6 +144,9 @@ export function LPCalculator() {
                 <Typography color="textSecondary" variant="body2">
                   Implied Volatility
                 </Typography>
+                <Tooltip title={Tooltips.ImplVol}>
+                  <InfoIcon fontSize="small" className={classes.infoIcon} />
+                </Tooltip>
               </div>
               <Typography>{(impliedVol * 100).toFixed(2)}%</Typography>
             </div>

@@ -180,6 +180,8 @@ const getAdvancedDetail = (vault: Vaults) => {
           <a
             style={{ color: '#4DADF3' }}
             href="https://www.notion.so/opynopyn/Squeeth-FAQ-4b6a054ab011454cbbd60cb3ee23a37c"
+            target="_blank"
+            rel="noreferrer"
           >
             {' '}
             Learn more.{' '}
@@ -227,6 +229,8 @@ const getAdvancedDetail = (vault: Vaults) => {
           <a
             style={{ color: '#4DADF3' }}
             href="https://www.notion.so/opynopyn/Squeeth-FAQ-4b6a054ab011454cbbd60cb3ee23a37c"
+            target="_blank"
+            rel="noreferrer"
           >
             {' '}
             Learn more.{' '}
@@ -258,6 +262,8 @@ const getAdvancedDetail = (vault: Vaults) => {
         <a
           style={{ color: '#4DADF3' }}
           href="https://www.notion.so/opynopyn/Squeeth-FAQ-4b6a054ab011454cbbd60cb3ee23a37c"
+          target="_blank"
+          rel="noreferrer"
         >
           {' '}
           Learn more.{' '}

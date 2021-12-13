@@ -3,8 +3,10 @@ import '../styles/globals.css'
 import { ApolloProvider } from '@apollo/client'
 import CssBaseline from '@material-ui/core/CssBaseline'
 import { ThemeProvider } from '@material-ui/core/styles'
+import * as Fathom from 'fathom-client'
 import Head from 'next/head'
-import React from 'react'
+import { useRouter } from 'next/router'
+import React, { useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from 'react-query'
 
 import { useWallet, WalletProvider } from '../src/context/wallet'
@@ -14,6 +16,8 @@ import getTheme, { Mode } from '../src/theme'
 import { uniswapClient } from '../src/utils/apollo-client'
 
 function MyApp({ Component, pageProps }: any) {
+  const router = useRouter()
+
   React.useEffect(() => {
     // Remove the server-side injected CSS.
     const jssStyles = document.querySelector('#jss-server-side')
@@ -21,7 +25,35 @@ function MyApp({ Component, pageProps }: any) {
       jssStyles.parentElement!.removeChild(jssStyles)
     }
   }, [])
+
   const queryClient = new QueryClient()
+  const siteID = process.env.NEXT_PUBLIC_FATHOM_CODE ? process.env.NEXT_PUBLIC_FATHOM_CODE : ''
+
+  useEffect(() => {
+    // Initialize Fathom when the app loads
+    // Example: yourdomain.com
+    //  - Do not include https://
+    //  - This must be an exact match of your domain.
+    //  - If you're using www. for your domain, make sure you include that here.
+    Fathom.load(siteID, {
+      includedDomains: [
+        'levbev.squeeth.com',
+        'squeethmas-app.opyn.co',
+        'https://continuouscall-opynfinance.vercel.app/',
+      ],
+    })
+
+    function onRouteChangeComplete() {
+      Fathom.trackPageview()
+    }
+    // Record a pageview when route changes
+    router.events.on('routeChangeComplete', onRouteChangeComplete)
+
+    // Unassign event listener
+    return () => {
+      router.events.off('routeChangeComplete', onRouteChangeComplete)
+    }
+  }, [])
 
   return (
     <WalletProvider>

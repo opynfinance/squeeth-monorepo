@@ -1,10 +1,12 @@
-import { createStyles, makeStyles, Typography } from '@material-ui/core'
+import { createStyles, makeStyles, Tooltip, Typography } from '@material-ui/core'
+import InfoIcon from '@material-ui/icons/InfoOutlined'
 import Link from 'next/link'
 
 import { LPTable } from '../src/components/Lp/LPTable'
 import Nav from '../src/components/Nav'
 import History from '../src/components/Trade/History'
 import { WSQUEETH_DECIMALS } from '../src/constants'
+import { Tooltips } from '../src/constants/enums'
 import { useSqueethPool } from '../src/hooks/contracts/useSqueethPool'
 import { useTokenBalance } from '../src/hooks/contracts/useTokenBalance'
 import { useAddresses } from '../src/hooks/useAddress'
@@ -84,6 +86,10 @@ const useStyles = makeStyles((theme) =>
       fontWeight: 600,
       fontSize: 14,
       marginTop: theme.spacing(1),
+    },
+    infoIcon: {
+      fontSize: '10px',
+      marginLeft: theme.spacing(0.5),
     },
   }),
 )
@@ -165,7 +171,10 @@ export function Positions() {
                   <Typography variant="caption" color="textSecondary">
                     Unrealized P&L
                   </Typography>
-                  {isPnLLoading ? (
+                  <Tooltip title={Tooltips.UnrealizedPnL}>
+                    <InfoIcon fontSize="small" className={classes.infoIcon} />
+                  </Tooltip>
+                  {isPnLLoading || longGain <= -100 || !isFinite(Number(longGain)) ? (
                     <Typography variant="body1">Loading</Typography>
                   ) : (
                     <>
@@ -184,6 +193,9 @@ export function Positions() {
                   <Typography variant="caption" component="span" color="textSecondary">
                     Realized P&L
                   </Typography>
+                  <Tooltip title={Tooltips.RealizedPnL}>
+                    <InfoIcon fontSize="small" className={classes.infoIcon} />
+                  </Tooltip>
                   <Typography variant="body1" className={longRealizedPNL.gte(0) ? classes.green : classes.red}>
                     ${isPnLLoading && longRealizedPNL.toNumber() === 0 ? 'Loading' : longRealizedPNL.toFixed(2)}
                   </Typography>
@@ -217,7 +229,10 @@ export function Positions() {
                   <Typography variant="caption" color="textSecondary">
                     Unrealized P&L
                   </Typography>
-                  {isPnLLoading ? (
+                  <Tooltip title={Tooltips.UnrealizedPnL}>
+                    <InfoIcon fontSize="small" className={classes.infoIcon} />
+                  </Tooltip>
+                  {isPnLLoading || shortGain <= -100 || !isFinite(Number(shortGain)) ? (
                     <Typography variant="body1">Loading</Typography>
                   ) : (
                     <>
@@ -236,6 +251,9 @@ export function Positions() {
                   <Typography variant="caption" component="span" color="textSecondary">
                     Liquidation Price
                   </Typography>
+                  <Tooltip title={Tooltips.LiquidationPrice}>
+                    <InfoIcon fontSize="small" className={classes.infoIcon} />
+                  </Tooltip>
                   <Typography variant="body1">
                     ${isShortLoading && liquidationPrice === 0 ? 'Loading' : liquidationPrice.toFixed(2)}
                   </Typography>
@@ -255,6 +273,9 @@ export function Positions() {
                   <Typography variant="caption" component="span" color="textSecondary">
                     Realized P&L
                   </Typography>
+                  <Tooltip title={Tooltips.RealizedPnL}>
+                    <InfoIcon fontSize="small" className={classes.infoIcon} />
+                  </Tooltip>
                   <Typography variant="body1" className={shortRealizedPNL.gte(0) ? classes.green : classes.red}>
                     ${isPnLLoading && shortRealizedPNL.toNumber() === 0 ? 'Loading' : shortRealizedPNL.toFixed(2)}
                   </Typography>

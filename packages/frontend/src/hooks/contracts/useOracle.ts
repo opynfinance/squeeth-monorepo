@@ -20,7 +20,7 @@ export const useOracle = () => {
   const getTwapSafe = async (pool: string, base: string, quote: string, period = 300) => {
     if (!contract || !address) return new BigNumber(0)
 
-    const _price = await contract.methods.getTwapSafe(pool, base, quote, period).call()
+    const _price = await contract.methods.getTwap(pool, base, quote, period, true).call()
     return toTokenAmount(_price, 18)
   }
 

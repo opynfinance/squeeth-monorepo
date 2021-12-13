@@ -185,6 +185,8 @@ export function LongChart() {
             <a
               className={classes.header}
               href="https://opynopyn.notion.site/Squeeth-FAQ-4b6a054ab011454cbbd60cb3ee23a37c"
+              target="_blank"
+              rel="noreferrer"
             >
               {' '}
               Learn more.{' '}

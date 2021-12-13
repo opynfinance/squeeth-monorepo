@@ -5,6 +5,7 @@ import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
+import { Tooltips } from '../../constants/enums'
 import { useTrade } from '../../context/trade'
 import { useWallet } from '../../context/wallet'
 import { useWorldContext } from '../../context/world'
@@ -44,6 +45,9 @@ const useStyles = makeStyles((theme) =>
     amountInput: {
       marginTop: theme.spacing(1),
       backgroundColor: `${theme.palette.error.main}aa`,
+      '&:hover': {
+        backgroundColor: theme.palette.error.dark,
+      },
     },
     thirdHeading: {
       marginTop: theme.spacing(2),
@@ -294,6 +298,11 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
 
   const { setCollatRatio } = useWorldContext()
 
+  const setShortCloseMax = useCallback(() => {
+    setAmount(shortVaults[firstValidVault].shortAmount)
+    setCollatPercent(150)
+  }, [shortVaults, firstValidVault])
+
   const { openError, closeError, existingLongError, priceImpactWarning } = useMemo(() => {
     let openError = null
     let closeError = null
@@ -312,8 +321,8 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
     }
     if (connected && collateral.toNumber() > balance) {
       openError = 'Insufficient ETH balance'
-    } else if (connected && amount.isGreaterThan(0) && collateral.plus(existingCollat).lt(0.5)) {
-      openError = 'Minimum collateral is 0.5 ETH'
+    } else if (connected && amount.isGreaterThan(0) && collateral.plus(existingCollat).lt(7.5)) {
+      openError = 'Minimum collateral is 7.5 ETH'
     }
     if (
       connected &&
@@ -321,10 +330,10 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
       amount.isGreaterThan(0) &&
       shortVaults.length &&
       amount.lt(shortVaults[firstValidVault].shortAmount) &&
-      neededCollat.isLessThan(0.5)
+      neededCollat.isLessThan(7.5)
     ) {
       closeError =
-        'You must have at least 0.5 ETH collateral unless you fully close out your position. Either fully close your position, or close out less'
+        'You must have at least 7.5 ETH collateral unless you fully close out your position. Either fully close your position, or close out less'
     }
     if (connected && lngAmt.gt(0)) {
       existingLongError = 'Close your long position to open a short'
@@ -396,9 +405,9 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                 value={amount.toNumber()}
                 onChange={(v) => setAmount(new BigNumber(v))}
                 label="Amount"
-                tooltip="Amount of oSQTH to buy"
+                tooltip={Tooltips.SellCloseAmount}
                 actionTxt="Max"
-                onActionClicked={() => setAmount(shortVaults[firstValidVault].shortAmount)}
+                onActionClicked={setShortCloseMax}
                 unit="oSQTH"
                 error={
                   connected && lngAmt.gt(0)
@@ -497,7 +506,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                 label="Current Collateral ratio"
                 value={existingCollatPercent}
                 unit="%"
-                tooltip={'Collateral ratio for current short position'}
+                tooltip={Tooltips.CurrentCollRatio}
               />
               <div style={{ marginTop: '10px' }}>
                 <UniswapData
@@ -548,10 +557,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                         ? 'Buy back and close anyway'
                         : 'Add operator (1/2)'}
                       {!isVaultApproved ? (
-                        <Tooltip
-                          style={{ marginLeft: '2px' }}
-                          title="Operator is a contract that mints squeeth, deposits collateral and sells squeeth in single TX. Similarly it also buys back + burns squeeth and withdraws collateral in single TX"
-                        >
+                        <Tooltip style={{ marginLeft: '2px' }} title={Tooltips.Operator}>
                           <InfoOutlinedIcon fontSize="small" />
                         </Tooltip>
                       ) : null}
@@ -630,7 +636,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
               value={collateral.toNumber().toString()}
               onChange={(v) => setCollateral(new BigNumber(v))}
               label="Collateral"
-              tooltip="Amount of ETH collateral"
+              tooltip={Tooltips.SellOpenAmount}
               actionTxt="Max"
               onActionClicked={() => setCollateral(new BigNumber(balance))}
               unit="ETH"
@@ -724,19 +730,19 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
               label="Liquidation Price"
               value={liqPrice.toFixed(2)}
               unit="USDC"
-              tooltip="Price of ETH when liquidation occurs"
+              tooltip={Tooltips.LiquidationPrice}
             />
             <TradeInfoItem
               label="Initial Premium"
               value={quote.amountOut.toFixed(4)}
               unit="ETH"
-              tooltip={'Initial payment you get for selling squeeth on Uniswap'}
+              tooltip={Tooltips.InitialPremium}
             />
             <TradeInfoItem
               label="Current Collateral ratio"
               value={existingCollatPercent}
               unit="%"
-              tooltip={'Collateral ratio for current short position'}
+              tooltip={Tooltips.CurrentCollRatio}
             />
             <div style={{ marginTop: '10px' }}>
               <UniswapData
@@ -780,10 +786,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                       ? 'Deposit and sell anyway'
                       : 'Add operator (1/2)'}
                     {!isVaultApproved ? (
-                      <Tooltip
-                        style={{ marginLeft: '2px' }}
-                        title="Operator is a contract that mints squeeth, deposits collateral and sells squeeth in single TX. Similarly it also buys back + burns squeeth and withdraws collateral in single TX"
-                      >
+                      <Tooltip style={{ marginLeft: '2px' }} title={Tooltips.Operator}>
                         <InfoOutlinedIcon fontSize="small" />
                       </Tooltip>
                     ) : null}
