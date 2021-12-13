@@ -238,8 +238,8 @@ export function VaultChart({
             If you fall below the minimum collateralization threshold (150%), you are at risk of liquidation. If ETH
             moves approximately 6% in either direction, you are unprofitable.
             <br /> <br />
-            Squeeth smart contracts are currently unaudited. This is experimental technology and we encourage caution
-            only risking funds you can afford to lose.
+            Squeeth smart contracts have been audited by Trail of Bits and Monoceros. However, smart contracts are
+            experimental technology and we encourage caution only risking funds you can afford to lose.
           </Typography>
         </div>
       )}

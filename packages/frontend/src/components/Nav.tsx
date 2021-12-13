@@ -101,6 +101,11 @@ const Nav: React.FC = () => {
             {/* <NavLink path="/strategies" name="Strategies" /> */}
             <NavLink path="/positions" name="Positions" />
             <NavLink path="/lp" name="LP" />
+            <a href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq" target="_blank" rel="noreferrer">
+              <Typography className={classes.navLink} variant="h6">
+                FAQ
+              </Typography>
+            </a>
           </div>
         </div>
         <div className={classes.wallet}>
@@ -152,6 +157,11 @@ const Nav: React.FC = () => {
             {/* <NavLink path="/strategies" name="Strategies" /> */}
             <NavLink path="/positions" name="Positions" />
             <NavLink path="/lp" name="LP" />
+            <a href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq" target="_blank" rel="noreferrer">
+              <Typography className={classes.navLink} variant="h6">
+                FAQ
+              </Typography>
+            </a>
           </div>
         </Drawer>
       </Hidden>
