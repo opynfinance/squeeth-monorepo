@@ -88,7 +88,9 @@ const Nav: React.FC = () => {
   return (
     <div className={classes.nav}>
       <div className={classes.logo}>
-        <Image src={logo} alt="logo" width={127} height={55} />
+        <a href="https://squeethmas.opyn.co/">
+          <Image src={logo} alt="logo" width={127} height={55} />
+        </a>
       </div>
       {/*For Desktop view*/}
       <Hidden smDown>
