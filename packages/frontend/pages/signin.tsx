@@ -2,7 +2,7 @@ import { Button, createStyles, makeStyles } from '@material-ui/core'
 import Typography from '@material-ui/core/Typography'
 import Image from 'next/image'
 import Router from 'next/router'
-import React, { useEffect } from 'react'
+import React, { useMemo } from 'react'
 
 import discordIcon from '../public/images/discord.svg'
 import squeethTokenSymbol from '../public/images/Squeeth.png'
@@ -41,7 +41,7 @@ export default function SignIn() {
   const { selectWallet, connected, address } = useWallet()
   const classes = useStyles()
 
-  useEffect(() => {
+  useMemo(() => {
     const whitelisted = connected && !!address && whitelistAddrs.includes(address)
     if (whitelisted) {
       setMe(address)

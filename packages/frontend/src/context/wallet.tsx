@@ -201,13 +201,13 @@ const WalletProvider: React.FC = ({ children }) => {
     setNotify(notify)
 
     // removed it for whitelist checking
-    // const previouslySelectedWallet = window.localStorage.getItem('selectedWallet')
+    const previouslySelectedWallet = window.localStorage.getItem('selectedWallet')
 
-    // if (previouslySelectedWallet && onboard) {
-    //   onboard.walletSelect(previouslySelectedWallet).then((success) => {
-    //     console.log('Connected to wallet', success)
-    //   })
-    // }
+    if (previouslySelectedWallet && onboard) {
+      onboard.walletSelect(previouslySelectedWallet).then((success) => {
+        console.log('Connected to wallet', success)
+      })
+    }
   }, [networkId])
 
   return <walletContext.Provider value={store}>{children}</walletContext.Provider>

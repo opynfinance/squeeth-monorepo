@@ -292,7 +292,9 @@ function TradePage() {
   }, [tradeType])
 
   useEffect(() => {
-    if (me?.loginState === LoginState.WHITELISTED) {
+    const previouslySelectedWallet = window.localStorage.getItem('selectedWallet')
+
+    if (me?.loginState === LoginState.WHITELISTED && !previouslySelectedWallet) {
       setWelcomeModalOpen(true)
     }
   }, [me])
