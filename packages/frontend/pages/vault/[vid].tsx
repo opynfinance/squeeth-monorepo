@@ -1,6 +1,7 @@
-import { CircularProgress, InputAdornment, TextField, Typography } from '@material-ui/core'
+import { Button, CircularProgress, InputAdornment, TextField, Typography } from '@material-ui/core'
 import { orange } from '@material-ui/core/colors'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
+import ReportProblemOutlinedIcon from '@material-ui/icons/ReportProblemOutlined'
 import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
 import Image from 'next/image'
@@ -17,6 +18,7 @@ import TradeInfoItem from '../../src/components/Trade/TradeInfoItem'
 import { WSQUEETH_DECIMALS } from '../../src/constants'
 import { useWallet } from '../../src/context/wallet'
 import { useController } from '../../src/hooks/contracts/useController'
+import { useVaultLiquidations } from '../../src/hooks/contracts/useLiquidations'
 import { useTokenBalance } from '../../src/hooks/contracts/useTokenBalance'
 import { useAddresses } from '../../src/hooks/useAddress'
 import { CollateralStatus, Vault } from '../../src/types'
@@ -44,7 +46,7 @@ const useStyles = makeStyles((theme) =>
       flexDirection: 'column',
       background: theme.palette.background.stone,
       // height: '75px',
-      width: '190px',
+      width: '185px',
       borderRadius: theme.spacing(2),
       padding: theme.spacing(2, 3),
     },
@@ -59,7 +61,7 @@ const useStyles = makeStyles((theme) =>
     manager: {
       display: 'flex',
       justifyContent: 'space-between',
-      marginTop: theme.spacing(6),
+      marginTop: theme.spacing(4),
     },
     managerItem: {
       background: theme.palette.background.stone,
@@ -126,6 +128,34 @@ const useStyles = makeStyles((theme) =>
       justifyContent: 'center',
       marginTop: theme.spacing(8),
     },
+    liquidationContainer: {
+      width: '380px',
+      background: `${theme.palette.error.main}20`,
+      borderRadius: theme.spacing(2),
+      marginTop: theme.spacing(2),
+      padding: theme.spacing(2, 3),
+    },
+    liqTitle: {
+      fontWeight: 600,
+      marginLeft: theme.spacing(2),
+    },
+    liqItem: {
+      display: 'flex',
+      alignItems: 'center',
+      marginTop: theme.spacing(1),
+    },
+    withdrawBtn: {
+      padding: theme.spacing(0, 1),
+      borderRadius: theme.spacing(0.5),
+      fontSize: '10px',
+      fontWeight: 600,
+      marginLeft: theme.spacing(1),
+      color: theme.palette.error.main,
+      textDecoration: 'underline',
+      background: 'transparent',
+      border: 'none',
+      cursor: 'pointer',
+    },
   }),
 )
 
@@ -158,6 +188,7 @@ const Component: React.FC = () => {
   const { wSqueeth } = useAddresses()
   const { balance, address, connected } = useWallet()
   const { vid } = router.query
+  const { liquidations } = useVaultLiquidations(Number(vid))
 
   const squeethBal = useTokenBalance(wSqueeth, 20, WSQUEETH_DECIMALS)
 
@@ -299,6 +330,7 @@ const Component: React.FC = () => {
   const { adjustAmountError, adjustCollatError } = useMemo(() => {
     let adjustCollatError = null
     let adjustAmountError = null
+    if (!vault?.shortAmount.gt(0)) return { adjustAmountError, adjustCollatError }
     if (isCollatAction) {
       if (vault?.collateralAmount.minus(collateral.negated()).lt(7.5)) adjustCollatError = VaultError.MIN_COLLATERAL
       else if (collatPercent < 150) adjustCollatError = VaultError.MIN_COLLAT_PERCENT
@@ -319,6 +351,18 @@ const Component: React.FC = () => {
     return classes.danger
   }, [collatStatus])
 
+  const { totalLiquidated, totalCollatPaid } = liquidations.reduce(
+    (acc, l) => {
+      acc.totalLiquidated = acc.totalLiquidated.plus(l.debtAmount)
+      acc.totalCollatPaid = acc.totalCollatPaid.plus(l.collateralPaid)
+      return acc
+    },
+    {
+      totalLiquidated: new BigNumber(0),
+      totalCollatPaid: new BigNumber(0),
+    },
+  )
+
   return (
     <div>
       <Nav />
@@ -333,18 +377,59 @@ const Component: React.FC = () => {
           <Typography color="primary" variant="h6">
             Manage Vault #{vid}
           </Typography>
+          {liquidations.length ? (
+            <div className={classes.liquidationContainer}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <ReportProblemOutlinedIcon color="error" fontSize="small" />
+                <Typography className={classes.liqTitle} color="error">
+                  Vault Liquidated
+                </Typography>
+              </div>
+              <div className={classes.liqItem}>
+                <Typography color="textSecondary" variant="body2">
+                  Total squeeth liquidated:
+                </Typography>
+                <Typography variant="body2" color="textPrimary" style={{ marginLeft: '8px' }}>
+                  {totalLiquidated.toFixed(6)} oSQTH
+                </Typography>
+              </div>
+              <div className={classes.liqItem}>
+                <Typography color="textSecondary" variant="body2">
+                  Total collateral paid:
+                </Typography>
+                <Typography variant="body2" color="textPrimary" style={{ marginLeft: '8px' }}>
+                  {totalCollatPaid.toFixed(6)} ETH
+                </Typography>
+              </div>
+            </div>
+          ) : null}
           <div className={classes.overview}>
             <div className={classes.overviewItem}>
               <Typography className={classes.overviewValue}>{vault?.shortAmount.toFixed(6)}</Typography>
               <Typography className={classes.overviewTitle}>Debt (oSQTH)</Typography>
             </div>
             <div className={classes.overviewItem}>
-              <Typography className={classes.overviewValue}>{vault?.collateralAmount.toFixed(4)}</Typography>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Typography className={classes.overviewValue}>{vault?.collateralAmount.toFixed(4)}</Typography>
+                {vault?.shortAmount.isZero() && vault.collateralAmount.gt(0) ? (
+                  <button
+                    className={clsx(classes.withdrawBtn)}
+                    onClick={() => {
+                      updateCollateral(vault!.collateralAmount.negated())
+                      removeCollat(vault!.collateralAmount)
+                    }}
+                  >
+                    WITHDRAW
+                  </button>
+                ) : null}
+              </div>
               <Typography className={classes.overviewTitle}>Collateral (ETH)</Typography>
             </div>
             <div className={classes.overviewItem}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Typography className={classes.overviewValue}>{existingCollatPercent || 0} %</Typography>
+                <Typography className={classes.overviewValue}>
+                  {existingCollatPercent === Infinity ? '--' : `${existingCollatPercent || 0} %`}
+                </Typography>
                 <Typography className={clsx(classes.collatStatus, collatClass)} variant="caption">
                   {getCollatPercentStatus(existingCollatPercent)}
                 </Typography>
@@ -352,7 +437,9 @@ const Component: React.FC = () => {
               <Typography className={classes.overviewTitle}>Collateral percent</Typography>
             </div>
             <div className={classes.overviewItem}>
-              <Typography className={classes.overviewValue}>$ {existingLiqPrice.toFixed(2)}</Typography>
+              <Typography className={classes.overviewValue}>
+                $ {existingLiqPrice === Infinity ? '--' : existingLiqPrice.toFixed(2)}
+              </Typography>
               <Typography className={classes.overviewTitle}>Liquidation Price</Typography>
             </div>
           </div>

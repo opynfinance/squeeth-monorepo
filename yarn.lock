@@ -7012,6 +7012,11 @@ fastq@^1.6.0:
   dependencies:
     reusify "^1.0.4"
 
+fathom-client@^3.2.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/fathom-client/-/fathom-client-3.2.0.tgz#781c0b11db90e0ffc5061709dc890a1d2b94ef62"
+  integrity sha512-WF/qA5wXYSuA5K8uiIhGNbErOcTAmfLEWrBxWP2px2dEc9waH9zxjdh9k0F907VCBhdJrv+f7V3HT/Pmro40zA==
+
 faye-websocket@0.11.3:
   version "0.11.3"
   resolved "https://registry.yarnpkg.com/faye-websocket/-/faye-websocket-0.11.3.tgz#5c0e9a8968e8912c286639fde977a8b209f2508e"
@@ -7840,6 +7845,11 @@ graphql@^15.5.0:
   version "15.5.1"
   resolved "https://registry.yarnpkg.com/graphql/-/graphql-15.5.1.tgz#f2f84415d8985e7b84731e7f3536f8bb9d383aad"
   integrity sha512-FeTRX67T3LoE3LWAxxOlW2K3Bz+rMYAC18rRguK4wgXaTZMiJwSUwDmPFo3UadAKbzirKIg5Qy+sNJXbpPRnQw==
+
+graphql@^16.1.0:
+  version "16.1.0"
+  resolved "https://registry.yarnpkg.com/graphql/-/graphql-16.1.0.tgz#83bebeae6e119766d04966f09de9305be7fd44e5"
+  integrity sha512-+PIjmhqGHMIxtnlEirRXDHIzs0cAHAozKG5M2w2N4TnS8VzCxO3bbv1AW9UTeycBfl2QsPduxcVrBvANFKQhiw==
 
 gridplus-sdk@^0.7.16:
   version "0.7.27"
