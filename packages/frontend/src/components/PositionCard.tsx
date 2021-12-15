@@ -150,6 +150,16 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
     return classes.grey
   }, [positionType, longGain, shortGain])
 
+  const isDollarValueLoading = useMemo(() => {
+    if (positionType === PositionType.LONG) {
+      return loading || longGain <= -100 || !isFinite(Number(longGain))
+    } else if (positionType === PositionType.SHORT) {
+      return loading || shortGain <= -100 || !isFinite(Number(shortGain))
+    } else {
+      return null
+    }
+  }, [positionType, loading, longGain, shortGain])
+
   const getPositionBasedValue = useCallback(
     (long: any, short: any, none: any, loadingMsg?: any) => {
       if (loadingMsg && loading) return loadingMsg
@@ -276,11 +286,7 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
               oSQTH
             </Typography>
           </div>
-          {loading ||
-          longGain <= -100 ||
-          !isFinite(Number(longGain)) ||
-          shortGain <= -100 ||
-          !isFinite(Number(shortGain)) ? (
+          {isDollarValueLoading ? (
             <Typography variant="caption" color="textSecondary">
               Loading
             </Typography>
