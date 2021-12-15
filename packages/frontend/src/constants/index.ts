@@ -5,6 +5,8 @@ export const UNI_POOL_FEES = 3000
 
 export const FUNDING_PERIOD = 17.5
 
+export const DEFAULT_SLIPPAGE = 0.5
+
 export const EtherscanPrefix = {
   1: 'http://etherscan.io/tx/',
   3: 'http://ropsten.etherscan.io/tx/',

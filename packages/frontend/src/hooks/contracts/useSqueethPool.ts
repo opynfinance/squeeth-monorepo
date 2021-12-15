@@ -10,7 +10,7 @@ import routerABI from '../../abis/swapRouter.json'
 import uniABI from '../../abis/uniswapPool.json'
 import erc20Abi from '../../abis/erc20.json'
 
-import { INDEX_SCALE, UNI_POOL_FEES, WSQUEETH_DECIMALS } from '../../constants'
+import { INDEX_SCALE, UNI_POOL_FEES, WSQUEETH_DECIMALS, DEFAULT_SLIPPAGE } from '../../constants'
 import { useWallet } from '../../context/wallet'
 import { fromTokenAmount, parseSlippageInput, toTokenAmount } from '../../utils/calculations'
 import { useAddresses } from '../useAddress'
@@ -276,7 +276,7 @@ export const useSqueethPool = () => {
   }
 
   //If I input an exact amount of squeeth I want to buy, tells me how much ETH I need to pay to purchase that squeeth
-  const getBuyQuote = async (squeethAmount: BigNumber, slippageAmount = new BigNumber(0.3)) => {
+  const getBuyQuote = async (squeethAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
     const emptyState = {
       amountIn: new BigNumber(0),
       maximumAmountIn: new BigNumber(0),
@@ -294,8 +294,6 @@ export const useSqueethPool = () => {
         CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, WSQUEETH_DECIMALS).toNumber()),
       )
 
-      console.log("get buy quote " + JSON.stringify(parseSlippageInput(slippageAmount.toString())))
-
       //the amount of ETH I need to put in
       return {
         amountIn: new BigNumber(trade.inputAmount.toSignificant(18)),
@@ -310,7 +308,7 @@ export const useSqueethPool = () => {
   }
 
   //If I input an exact amount of ETH I want to spend, tells me how much Squeeth I'd purchase
-  const getBuyQuoteForETH = async (ETHAmount: BigNumber, slippageAmount = new BigNumber(0.3)) => {
+  const getBuyQuoteForETH = async (ETHAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
     const emptyState = {
       amountOut: new BigNumber(0),
       minimumAmountOut: new BigNumber(0),
@@ -328,10 +326,6 @@ export const useSqueethPool = () => {
         CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toNumber()),
       )
 
-      console.log(slippageAmount.toString())
-
-      console.log("get buy quote for eth " + JSON.stringify(parseSlippageInput(slippageAmount.toString())))
-
       //the amount of squeeth I'm getting out
       return {
         amountOut: new BigNumber(trade.outputAmount.toSignificant(WSQUEETH_DECIMALS)),
@@ -346,7 +340,7 @@ export const useSqueethPool = () => {
   }
 
   //I input an exact amount of squeeth I want to sell, tells me how much ETH I'd receive
-  const getSellQuote = async (squeethAmount: BigNumber, slippageAmount = new BigNumber(0.3)) => {
+  const getSellQuote = async (squeethAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
     const emptyState = {
       amountOut: new BigNumber(0),
       minimumAmountOut: new BigNumber(0),
@@ -363,9 +357,6 @@ export const useSqueethPool = () => {
         CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, WSQUEETH_DECIMALS).toNumber()),
       )
 
-      console.log("get sell quote " + JSON.stringify(parseSlippageInput(slippageAmount.toString())))
-
-
       //the amount of ETH I'm receiving
       return {
         amountOut: new BigNumber(trade.outputAmount.toSignificant(18)),
@@ -380,7 +371,7 @@ export const useSqueethPool = () => {
   }
 
   //I input an exact amount of ETH I want to receive, tells me how much squeeth I'd need to sell
-  const getSellQuoteForETH = async (ETHAmount: BigNumber, slippageAmount = new BigNumber(0.3)) => {
+  const getSellQuoteForETH = async (ETHAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
     const emptyState = {
       amountIn: new BigNumber(0),
       maximumAmountIn: new BigNumber(0),
@@ -396,8 +387,6 @@ export const useSqueethPool = () => {
         route,
         CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toNumber()),
       )
-
-      console.log("get sell quote for eth " + JSON.stringify(parseSlippageInput(slippageAmount.toString())))
 
       //the amount of squeeth I need to sell
       return {

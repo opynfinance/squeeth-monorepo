@@ -1,6 +1,7 @@
 import BigNumber from 'bignumber.js'
 import React, { useContext, useEffect, useMemo, useState } from 'react'
 
+import { DEFAULT_SLIPPAGE } from '../constants/index'
 import { useSqueethPool } from '../hooks/contracts/useSqueethPool'
 import { useLongPositions, usePnL, useShortPositions } from '../hooks/usePositions'
 import { PositionType, TradeType } from '../types'
@@ -69,7 +70,7 @@ const initialState: tradeContextType = {
   sellCloseQuote: sellCloseEmptyState,
   altTradeAmount: new BigNumber(1),
   setAltTradeAmount: () => null,
-  slippageAmount: new BigNumber(0.3),
+  slippageAmount: new BigNumber(DEFAULT_SLIPPAGE),
   setSlippageAmount: () => null,
 }
 
@@ -78,7 +79,7 @@ const useTrade = () => useContext(tradeContext)
 
 const TradeProvider: React.FC = ({ children }) => {
   const [tradeAmount, setTradeAmount] = useState(new BigNumber(0))
-  const [slippageAmount, setSlippageAmount] = useState(new BigNumber(0.3))
+  const [slippageAmount, setSlippageAmount] = useState(new BigNumber(DEFAULT_SLIPPAGE))
   const [altTradeAmount, setAltTradeAmount] = useState(new BigNumber(0))
   const [tradeType, setTradeType] = useState(TradeType.LONG)
   const [tradeLoading, setTradeLoading] = useState(false)

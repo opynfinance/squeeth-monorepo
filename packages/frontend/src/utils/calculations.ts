@@ -2,6 +2,7 @@ import { Percent } from '@uniswap/sdk-core'
 import { Pool } from '@uniswap/v3-sdk'
 import BigNumber from 'bignumber.js'
 
+import { DEFAULT_SLIPPAGE } from '../constants'
 import { CollateralStatus } from '../types'
 
 export function toTokenAmount(amount: BigNumber | number | string, decimals: number): BigNumber {
@@ -23,7 +24,8 @@ export function parseSlippageInput(value: string) {
   const parsed = Math.floor(Number.parseFloat(value) * 10)
 
   if (value.length === 0 || !Number.isInteger(parsed) || parsed < 0 || parsed > 5000) {
-    return new Percent(5, 10_000)
+    const defaultSlippage = DEFAULT_SLIPPAGE * 10
+    return new Percent(defaultSlippage, 10_000)
   } else {
     return new Percent(parsed, 10_000)
   }
