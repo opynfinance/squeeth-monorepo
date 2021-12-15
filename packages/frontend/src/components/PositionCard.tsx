@@ -185,9 +185,7 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
       if (_postTradeAmt.gt(0)) _postPosition = PositionType.LONG
     } else if (actualTradeType === TradeType.SHORT && !lngAmt.gt(0)) {
       if (isOpenPosition)
-        _postTradeAmt = shortVaults.length
-          ? shortVaults[firstValidVault].shortAmount.plus(tradeAmount)
-          : new BigNumber(0)
+        _postTradeAmt = shortVaults.length ? shortVaults[firstValidVault].shortAmount.plus(tradeAmount) : tradeAmount
       else
         _postTradeAmt = shortVaults.length
           ? shortVaults[firstValidVault].shortAmount.minus(tradeAmount)
