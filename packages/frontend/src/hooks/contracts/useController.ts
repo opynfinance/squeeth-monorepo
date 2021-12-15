@@ -249,9 +249,10 @@ export const useController = () => {
   const impliedVol = useMemo(() => {
     if (mark.isZero()) return 0
     if (mark.lt(index)) return 0
+    if (currentImpliedFunding < 0) return 0
 
-    return Math.sqrt(fundingPerDay * 365)
-  }, [mark, fundingPerDay, index])
+    return Math.sqrt(currentImpliedFunding * 365)
+  }, [mark, currentImpliedFunding, index])
 
   const getDebtAmount = async (shortAmount: BigNumber) => {
     if (!contract) return new BigNumber(0)
