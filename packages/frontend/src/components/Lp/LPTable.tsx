@@ -160,7 +160,7 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
                     <p>No Closed LP Positions</p>
 
                     <div>
-                      <p>1. Mint Squeeth on the right.</p>
+                      <p>1. Mint or buy squeeth on the right.</p>
                       <UniswapIframe text={'2.'} />
                     </div>
                   </TableCell>
@@ -243,7 +243,7 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
                     <p>No Existing LP Positions</p>
 
                     <div>
-                      <p>1. Mint Squeeth on the right.</p>
+                      <p>1. Mint or buy squeeth on the right.</p>
                       <span>
                         <UniswapIframe text={'2.'} />
                       </span>

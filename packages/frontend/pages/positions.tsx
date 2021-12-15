@@ -140,12 +140,14 @@ export function Positions() {
             <Typography component="span">$ {ethPrice.toFixed(2)}</Typography>
           </div>
         </div>
-        {wSqueethBal.isZero() && shortVaults.length && shortVaults[firstValidVault].shortAmount.isZero() && (
+        {/* eslint-disable-next-line prettier/prettier */}
+        {wSqueethBal.isZero() && (shortVaults.length && shortVaults[firstValidVault].shortAmount.isZero()) ||
+        (wSqueethBal.isZero() && shortVaults.length === 0) ? (
           <div className={classes.empty}>
             <Typography>No active positions</Typography>
           </div>
-        )}
-        {wSqueethBal.isGreaterThan(0) && (
+        ) : null}
+        {wSqueethBal.isGreaterThan(0) ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>Long Squeeth</Typography>
@@ -203,8 +205,8 @@ export function Positions() {
               </div>
             </div>
           </div>
-        )}
-        {shortVaults.length && shortVaults[firstValidVault].shortAmount.isGreaterThan(0) && (
+        ) : null}
+        {shortVaults.length && shortVaults[firstValidVault].shortAmount.isGreaterThan(0) ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>Short Squeeth</Typography>
@@ -283,8 +285,8 @@ export function Positions() {
               </div>
             </div>
           </div>
-        )}
-        {activePositions?.length > 0 && (
+        ) : null}
+        {activePositions?.length > 0 ? (
           <>
             <div className={classes.header}>
               <Typography color="primary" variant="h6">
@@ -293,7 +295,7 @@ export function Positions() {
             </div>
             <LPTable isLPage={false} pool={pool} />
           </>
-        )}
+        ) : null}
         <div className={classes.history}>
           <Typography color="primary" variant="h6">
             Transaction History
