@@ -372,7 +372,7 @@ export const usePnL = () => {
 export const useLPPositions = () => {
   const { address, web3 } = useWallet()
   const { squeethPool, nftManager, weth, wSqueeth } = useAddresses()
-  const { pool, getWSqueethPositionValue } = useSqueethPool()
+  const { pool, getWSqueethPositionValue, squeethInitialPrice } = useSqueethPool()
   const ethPrice = useETHPrice()
 
   const [activePositions, setActivePositions] = useState<NFTManagers[]>([])
@@ -401,7 +401,7 @@ export const useLPPositions = () => {
   const isWethToken0 = useMemo(() => parseInt(weth, 16) < parseInt(wSqueeth, 16), [weth, wSqueeth])
 
   const positionAndFees = useMemo(() => {
-    if (!pool) return []
+    if (!pool || !squeethInitialPrice.toNumber() || !ethPrice.toNumber()) return []
     return (
       data?.positions.map(async (p) => {
         const position = { ...p }
@@ -448,7 +448,7 @@ export const useLPPositions = () => {
         }
       }) || []
     )
-  }, [data?.positions, pool, ethPrice.toString()])
+  }, [data?.positions, pool, ethPrice.toString(), squeethInitialPrice.toNumber(), ethPrice.toNumber()])
 
   useEffect(() => {
     if (positionAndFees) {
