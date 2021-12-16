@@ -1,7 +1,7 @@
 version: "3"
 services:
   graph-node:
-    image: graphprotocol/graph-node:2c23cce
+    image: graphprotocol/graph-node:27f8307
     ports:
       - "8000:8000"
       - "8001:8001"
@@ -17,7 +17,7 @@ services:
       postgres_pass: let-me-in
       postgres_db: graph-node
       ipfs: "ipfs:5001"
-      ethereum: "localhost:http://host.docker.internal:8545"
+      ethereum: "${ETHEREUM_URL}"
       GRAPH_LOG: info
   ipfs:
     image: ipfs/go-ipfs:v0.4.23
@@ -29,7 +29,11 @@ services:
     image: postgres
     ports:
       - "5432:5432"
-    command: ["postgres", "-cshared_preload_libraries=pg_stat_statements"]
+    command:
+      [
+        "postgres",
+        "-cshared_preload_libraries=pg_stat_statements"
+      ]
     environment:
       POSTGRES_USER: graph-node
       POSTGRES_PASSWORD: let-me-in

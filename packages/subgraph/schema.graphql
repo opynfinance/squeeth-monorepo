@@ -1,0 +1,30 @@
+type Vault @entity {
+  id: ID!
+  shortAmount: BigInt!
+  collateralAmount: BigInt!
+  NftCollateralId: BigInt
+  operator: Bytes
+  owner: Account!
+}
+
+type Account @entity {
+  id: ID!
+  vaults: [Vault!]! @derivedFrom(field: "owner")
+  vaultCount: BigInt!
+}
+
+type Liquidation @entity {
+  id: ID!
+  vaultId: BigInt!
+  debtAmount: BigInt!
+  collateralPaid: BigInt!
+  liquidator: Bytes!
+}
+
+type NormalizationFactorUpdate @entity {
+  id: ID!
+  oldNormFactor: BigInt!
+  newNormFactor: BigInt!
+  lastModificationTimestamp: BigInt!
+  timestamp: BigInt!
+}

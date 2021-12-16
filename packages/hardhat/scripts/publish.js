@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 const fs = require("fs");
 const chalk = require("chalk");
 
@@ -7,11 +8,9 @@ const publishDir = "../react-app/src/contracts";
 
 function publishContract(contractName, networkName) {
   try {
-    let contract = fs
-      .readFileSync(`${deploymentsDir}/${networkName}/${contractName}.json`)
-      .toString();
+    let contract = fs.readFileSync(`${deploymentsDir}/${networkName}/${contractName}.json`).toString();
     contract = JSON.parse(contract);
-    const graphConfigPath = `${graphDir}/config/config.json`;
+    const graphConfigPath = `${graphDir}/config/${networkName}-config.json`;
     let graphConfig;
     try {
       if (fs.existsSync(graphConfigPath)) {
@@ -24,18 +23,19 @@ function publishContract(contractName, networkName) {
     }
 
     graphConfig = JSON.parse(graphConfig);
-    graphConfig[`${networkName}_${contractName}Address`] = contract.address;
+    graphConfig.network = networkName;
+    graphConfig[contractName] = contract.address;
+    graphConfig[`${contractName}-start-block`] = contract.receipt.blockNumber
 
-    const folderPath = graphConfigPath.replace("/config.json", "");
+    console.log(contract.receipt.blockNumber)
+
+    const folderPath = graphConfigPath.replace(`/${networkName}-config.json`, "");
     if (!fs.existsSync(folderPath)) {
       fs.mkdirSync(folderPath);
     }
     fs.writeFileSync(graphConfigPath, JSON.stringify(graphConfig, null, 2));
     if (!fs.existsSync(`${graphDir}/abis`)) fs.mkdirSync(`${graphDir}/abis`);
-    fs.writeFileSync(
-      `${graphDir}/abis/${networkName}_${contractName}.json`,
-      JSON.stringify(contract.abi, null, 2)
-    );
+    fs.writeFileSync(`${graphDir}/abis/${contractName}.json`, JSON.stringify(contract.abi, null, 2));
 
     // Hardhat Deploy writes a file with all ABIs in react-app/src/contracts/contracts.json
     // If you need the bytecodes and/or you want one file per ABIs, un-comment the following block.
@@ -55,9 +55,7 @@ function publishContract(contractName, networkName) {
 
     return true;
   } catch (e) {
-    console.log(
-      "Failed to publish " + chalk.red(contractName) + " to the subgraph."
-    );
+    console.log("Failed to publish " + chalk.red(contractName) + " to the subgraph.");
     console.log(e);
     return false;
   }
