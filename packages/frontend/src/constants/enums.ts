@@ -22,7 +22,7 @@ export enum Tooltips {
   ImplVol = 'Implied Volatility (IV) is a market forecast of ETH price movement implied by squeeth',
   UnrealizedPnL = 'Total profit / loss if you were to fully close your position at the current oSQTH price. Resets if you close your position or change position sides (long to short, or vice versa)',
   RealizedPnL = 'Total realized profit / loss for this position through partial closes. Resets if you fully close your position or change position sides (long to short, or vice versa)',
-  Mark = 'The price squeeth is trading at',
+  Mark = 'The price squeeth is trading at. Because squeeth has convexity, Mark should be greater than ETH^2',
   Last24AvgFunding = 'Average funding paid over the last 24hrs. Calculated using a 24hr TWAP of Mark - Index',
   CurrentImplFunding = 'Current funding rate calculated using current Mark - Index',
   FundingPayments = 'Funding happens every time the contract is touched',

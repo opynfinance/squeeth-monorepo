@@ -205,7 +205,8 @@ export function VaultChart({
           </Typography>
           <Typography variant="body2" className={classes.cardDetail}>
             Short squeeth (ETH&sup2;) is short an ETH&sup2; position. You earn a funding rate for taking on this
-            position. You enter the position by putting down collateral, minting, and selling squeeth. If you become
+            position. You enter the position by putting down collateral, minting, and selling squeeth. You provide ETH
+            collateral to mint squeeth, and your collateralization ratio determines your exposure. If you become
             undercollateralized, you could be liquidated.{' '}
             <a
               className={classes.header}
@@ -235,8 +236,9 @@ export function VaultChart({
             Risks
           </Typography>
           <Typography variant="body2" className={classes.cardDetail}>
-            If you fall below the minimum collateralization threshold (150%), you are at risk of liquidation. If ETH
-            moves approximately 6% in either direction, you are unprofitable.
+            If you fall below the minimum collateralization threshold (150%), you are at risk of liquidation. This
+            position performs best when ETH price does not move much. If ETH price moves considerably, it is likely
+            unprofitable.
             <br /> <br />
             Squeeth smart contracts have been audited by Trail of Bits and Monoceros. However, smart contracts are
             experimental technology and we encourage caution only risking funds you can afford to lose.

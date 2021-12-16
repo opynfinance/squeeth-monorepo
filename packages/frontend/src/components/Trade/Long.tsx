@@ -493,11 +493,11 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
                   {sellLoading ? (
                     <CircularProgress color="primary" size="1.5rem" />
                   ) : squeethAllowance.lt(amount) ? (
-                    '1/2 Approve oSQTH'
+                    'Approve oSQTH (1/2)'
                   ) : longClosePriceImpactErrorState ? (
                     'Sell Anyway'
                   ) : hasJustApprovedSqueeth ? (
-                    '2/2 Sell to close'
+                    'Sell to close (2/2)'
                   ) : (
                     'Sell to close'
                   )}

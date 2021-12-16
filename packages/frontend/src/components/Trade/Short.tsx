@@ -555,7 +555,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                         ? 'Buy back and close'
                         : shortClosePriceImpactErrorState && isVaultApproved
                         ? 'Buy back and close anyway'
-                        : 'Add operator (1/2)'}
+                        : 'Allow wrapper to manage vault (1/2)'}
                       {!isVaultApproved ? (
                         <Tooltip style={{ marginLeft: '2px' }} title={Tooltips.Operator}>
                           <InfoOutlinedIcon fontSize="small" />
@@ -784,7 +784,7 @@ const Sell: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                       ? 'Deposit and sell'
                       : shortOpenPriceImpactErrorState && isVaultApproved
                       ? 'Deposit and sell anyway'
-                      : 'Add operator (1/2)'}
+                      : 'Allow wrapper to manage vault (1/2)'}
                     {!isVaultApproved ? (
                       <Tooltip style={{ marginLeft: '2px' }} title={Tooltips.Operator}>
                         <InfoOutlinedIcon fontSize="small" />
