@@ -204,6 +204,34 @@ export const useSqueethPool = () => {
     return txHash
   }
 
+
+  const buyAndRefund = async (amount: BigNumber) => {
+    const callData = await buyAndRefundData(amount)
+
+    const txHash = await handleTransaction(
+      swapRouterContract?.methods.multicall(callData).send({
+        from: address,
+        value: ethers.utils.parseEther(amount.toString()),
+      }),
+    )
+
+    return txHash
+  }
+
+  
+  const buyAndRefundData = async (amount: BigNumber) => {
+    if (!web3) return
+    const exactInputParam = await getBuyParamForETH(amount)
+    exactInputParam.recipient = address
+    const tupleInput = Object.values(exactInputParam).map((v) => v?.toString() || '')
+
+    const swapIface = new ethers.utils.Interface(routerABI)
+    const encodedSwapCall = swapIface.encodeFunctionData('exactInputSingle', [tupleInput])
+    const encodedRefundCall = swapIface.encodeFunctionData('refundETH')
+
+    return [encodedSwapCall, encodedRefundCall]
+  }
+
   const sell = async (amount: BigNumber) => {
     const callData = await sellAndUnwrapData(amount)
 
@@ -413,6 +441,7 @@ export const useSqueethPool = () => {
     buy,
     sell,
     buyForWETH,
+    buyAndRefund,
     tvl,
     getBuyQuote,
     getSellParam,

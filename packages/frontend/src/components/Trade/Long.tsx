@@ -234,6 +234,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
   const {
     sell,
     buyForWETH,
+    buyAndRefund,
     getWSqueethPositionValue,
     getBuyQuoteForETH,
     getBuyQuote,
@@ -303,7 +304,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
   const transact = async () => {
     setBuyLoading(true)
     try {
-      const confirmedHash = await buyForWETH(amount)
+      const confirmedHash = await buyAndRefund(amount)
       setConfirmed(true)
       setTxHash(confirmedHash.transactionHash)
       setTradeSuccess(true)
