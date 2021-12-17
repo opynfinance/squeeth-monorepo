@@ -19,6 +19,7 @@ type Liquidation @entity {
   debtAmount: BigInt!
   collateralPaid: BigInt!
   liquidator: Bytes!
+  timestamp: BigInt!
 }
 
 type NormalizationFactorUpdate @entity {

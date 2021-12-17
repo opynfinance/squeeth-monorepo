@@ -112,6 +112,7 @@ export function handleLiquidate(event: Liquidate): void {
   liquidation.collateralPaid = event.params.collateralPaid
   liquidation.vaultId = event.params.vaultId
   liquidation.liquidator = event.params.liquidator
+  liquidation.timestamp = event.block.timestamp
   liquidation.save()
 }
 
