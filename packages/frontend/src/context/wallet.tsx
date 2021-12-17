@@ -74,9 +74,12 @@ const WalletProvider: React.FC = ({ children }) => {
 
     tx.on('transactionHash', (hash: string) => {
       const { emitter } = notify.hash(hash)
-      emitter.on('all', addEtherscan)
+      //have to return the emitter object in last order, or the latter emitter object will replace the previous one
+      //if call getbalance in second order, since it has no return, it will show default notification w/o etherscan link
       emitter.on('all', getBalance)
+      emitter.on('all', addEtherscan)
     })
+
     return tx
   }
 
