@@ -34,6 +34,7 @@
     "react-chartjs-2": "^2.11.1",
     "react-dom": "17.0.2",
     "react-query": "^3.34.0",
+    "subscriptions-transport-ws": "^0.11.0",
     "web3": "^1.5.2"
   },
   "devDependencies": {

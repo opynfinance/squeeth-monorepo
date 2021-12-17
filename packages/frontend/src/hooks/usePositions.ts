@@ -1,14 +1,14 @@
 import { useQuery } from '@apollo/client'
 import { Position } from '@uniswap/v3-sdk'
 import BigNumber from 'bignumber.js'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import NFTpositionManagerABI from '../abis/NFTpositionmanager.json'
 import { useWallet } from '../context/wallet'
 import { useWorldContext } from '../context/world'
 import { positions, positionsVariables } from '../queries/uniswap/__generated__/positions'
 import { swaps, swapsVariables } from '../queries/uniswap/__generated__/swaps'
-import POSITIONS_QUERY from '../queries/uniswap/positionsQuery'
+import POSITIONS_QUERY, { POSITIONS_SUBSCRIPTION } from '../queries/uniswap/positionsQuery'
 import SWAPS_QUERY from '../queries/uniswap/swapsQuery'
 import { NFTManagers, PositionType } from '../types'
 import { toTokenAmount } from '../utils/calculations'
@@ -383,6 +383,7 @@ export const useLPPositions = () => {
     data,
     refetch,
     loading: gphLoading,
+    subscribeToMore,
   } = useQuery<positions, positionsVariables>(POSITIONS_QUERY, {
     variables: {
       poolAddress: squeethPool.toLowerCase(),
@@ -397,6 +398,27 @@ export const useLPPositions = () => {
   useEffect(() => {
     setLoading(true)
   }, [address])
+
+  useEffect(() => {
+    subscribeToNewPositions()
+  }, [])
+
+  const subscribeToNewPositions = useCallback(() => {
+    subscribeToMore({
+      document: POSITIONS_SUBSCRIPTION,
+      variables: {
+        poolAddress: squeethPool.toLowerCase(),
+        owner: address?.toLowerCase() || '',
+      },
+      updateQuery(prev, { subscriptionData }) {
+        if (!subscriptionData.data) return prev
+        const newPosition = subscriptionData.data.positions
+        return {
+          positions: newPosition,
+        }
+      },
+    })
+  }, [squeethPool, address])
 
   const isWethToken0 = useMemo(() => parseInt(weth, 16) < parseInt(wSqueeth, 16), [weth, wSqueeth])
 
@@ -448,7 +470,14 @@ export const useLPPositions = () => {
         }
       }) || []
     )
-  }, [data?.positions, pool, ethPrice.toString(), squeethInitialPrice.toNumber(), ethPrice.toNumber()])
+  }, [
+    data?.positions,
+    pool,
+    ethPrice.toString(),
+    squeethInitialPrice.toNumber(),
+    ethPrice.toNumber(),
+    data?.positions?.length,
+  ])
 
   useEffect(() => {
     if (positionAndFees) {
