@@ -115,6 +115,8 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
     positionType,
     longUsdAmt,
     shortUsdAmt,
+    longRealizedPNL,
+    shortRealizedPNL,
     loading,
     refetch,
   } = usePnL()
@@ -143,12 +145,15 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
     return classes.noneTitle
   }, [positionType])
 
-  const pnlClass = useMemo(() => {
-    if (positionType === PositionType.LONG) return longGain > 0 ? classes.green : classes.red
-    if (positionType === PositionType.SHORT) return shortGain > 0 ? classes.green : classes.red
+  const pnlClass = useCallback(
+    (long, short) => {
+      if (positionType === PositionType.LONG) return long?.toFixed(2) > 0 ? classes.green : classes.red
+      if (positionType === PositionType.SHORT) return short?.toFixed(2) > 0 ? classes.green : classes.red
 
-    return classes.grey
-  }, [positionType, longGain, shortGain])
+      return classes.grey
+    },
+    [positionType, longGain, shortGain, longRealizedPNL, shortRealizedPNL],
+  )
 
   const isDollarValueLoading = useMemo(() => {
     if (positionType === PositionType.LONG) {
@@ -180,6 +185,17 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
       return none
     },
     [positionType, loading, longGain, shortGain],
+  )
+
+  const getRealizedPNLBasedValue = useCallback(
+    (long: any, short: any, none: any, loadingMsg?: any) => {
+      if (loadingMsg && loading) return loadingMsg
+      if (longRealizedPNL.isEqualTo(0) && shortRealizedPNL.isEqualTo(0)) return none
+      if (positionType === PositionType.LONG) return long
+      if (positionType === PositionType.SHORT) return short
+      return none
+    },
+    [positionType, loading, longRealizedPNL, shortRealizedPNL],
   )
 
   useEffect(() => {
@@ -298,25 +314,47 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
         </div>
         <div>
           <div>
-            <Typography variant="caption" color="textSecondary" style={{ fontWeight: 500 }}>
-              Unrealized P&L
-            </Typography>
-            <Tooltip title={Tooltips.UnrealizedPnL}>
-              <InfoIcon fontSize="small" className={classes.infoIcon} />
-            </Tooltip>
-          </div>
-          <div className={classes.pnl}>
-            <Typography className={pnlClass} style={{ fontWeight: 600 }}>
-              {getPositionBasedValue(
-                `$${sellQuote.amountOut.times(ethPrice).minus(longUsdAmt.abs()).toFixed(2)}`,
-                `$${buyQuote.times(ethPrice).minus(shortUsdAmt.abs()).toFixed(2)}`,
-                'No position',
-                'Loading',
-              )}{' '}
-            </Typography>
-            <Typography variant="caption" className={pnlClass} style={{ marginLeft: '4px' }}>
-              {getPositionBasedValue(`(${longGain.toFixed(2)}%)`, `(${shortGain.toFixed(2)}%)`, null, ' ')}
-            </Typography>
+            <div>
+              <div>
+                <Typography variant="caption" color="textSecondary" style={{ fontWeight: 500 }}>
+                  Unrealized P&L
+                </Typography>
+                <Tooltip title={Tooltips.UnrealizedPnL}>
+                  <InfoIcon fontSize="small" className={classes.infoIcon} />
+                </Tooltip>
+              </div>
+              <div className={classes.pnl}>
+                <Typography className={pnlClass(longGain, shortGain)} style={{ fontWeight: 600 }}>
+                  {getPositionBasedValue(
+                    `$${sellQuote.amountOut.times(ethPrice).minus(longUsdAmt.abs()).toFixed(2)}`,
+                    `$${buyQuote.times(ethPrice).minus(shortUsdAmt.abs()).toFixed(2)}`,
+                    'No position',
+                    'Loading',
+                  )}
+                </Typography>
+                <Typography variant="caption" className={pnlClass(longGain, shortGain)} style={{ marginLeft: '4px' }}>
+                  {getPositionBasedValue(`(${longGain.toFixed(2)}%)`, `(${shortGain.toFixed(2)}%)`, null, ' ')}
+                </Typography>
+              </div>
+            </div>
+            <div>
+              <Typography variant="caption" color="textSecondary" style={{ fontWeight: 500 }}>
+                Realized P&L
+              </Typography>
+              <Tooltip title={Tooltips.RealizedPnL}>
+                <InfoIcon fontSize="small" className={classes.infoIcon} />
+              </Tooltip>
+            </div>
+            <div className={classes.pnl}>
+              <Typography className={pnlClass(longRealizedPNL, shortRealizedPNL)} style={{ fontWeight: 600 }}>
+                {getRealizedPNLBasedValue(
+                  `$${longRealizedPNL.toFixed(2)}`,
+                  `$${shortRealizedPNL.toFixed(2)}`,
+                  '--',
+                  'Loading',
+                )}
+              </Typography>
+            </div>
           </div>
         </div>
       </div>
