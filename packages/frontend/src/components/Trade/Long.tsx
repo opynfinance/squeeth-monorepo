@@ -511,7 +511,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
           </div>
         ) : (
           <div>
-            <Confirmed confirmationMessage={`Sold ${amount} Squeeth`} txnHash={txHash} />
+            <Confirmed confirmationMessage={`Sold ${amount.toNumber()} Squeeth`} txnHash={txHash} />
             <div className={classes.buttonDiv}>
               <PrimaryButton
                 variant="contained"

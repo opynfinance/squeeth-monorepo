@@ -328,7 +328,7 @@ const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
                   {getPositionBasedValue(
                     `$${sellQuote.amountOut.times(ethPrice).minus(longUsdAmt.abs()).toFixed(2)}`,
                     `$${buyQuote.times(ethPrice).minus(shortUsdAmt.abs()).toFixed(2)}`,
-                    'No position',
+                    '--',
                     'Loading',
                   )}
                 </Typography>
