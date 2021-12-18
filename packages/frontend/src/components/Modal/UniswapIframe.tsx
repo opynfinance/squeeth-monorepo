@@ -71,9 +71,10 @@ const useStyles = makeStyles((theme) =>
 )
 interface UniswapIframeProps {
   text?: string
+  closePosition?: boolean
 }
 
-export const UniswapIframe: React.FC<UniswapIframeProps> = ({ text }) => {
+export const UniswapIframe: React.FC<UniswapIframeProps> = ({ text, closePosition }) => {
   const classes = useStyles()
   const { wSqueeth } = useAddresses()
   const [isCopied, setCopied] = useCopyClipboard()
@@ -92,7 +93,7 @@ export const UniswapIframe: React.FC<UniswapIframeProps> = ({ text }) => {
     <div>
       <Tooltip title={Tooltips.UniswapLoading}>
         <Button className={classes.btn} variant={'outlined'} onClick={handleClickOpen}>
-          <>{text} Deposit Squeeth and ETH into Uniswap V3 Pool 🦄</>
+          <>{text}</>
         </Button>
       </Tooltip>
 
@@ -133,10 +134,14 @@ export const UniswapIframe: React.FC<UniswapIframeProps> = ({ text }) => {
         </DialogTitle>
         <DialogContent className={classes.dialogContent}>
           <div className={classes.uniswapHeaderDiv}>
-            <p className={classes.uniswapWarning}>Please connect your wallet with Uniswap</p>
+            <p className={classes.uniswapWarning}>Make sure your wallet is connected to Uniswap</p>
             <a
               className={classes.uniOpenBtn}
-              href={`https://squeeth-uniswap.netlify.app/#/add/ETH/${wSqueeth}/3000`}
+              href={
+                closePosition
+                  ? 'https://squeeth-uniswap.netlify.app/#/pool'
+                  : `https://squeeth-uniswap.netlify.app/#/add/ETH/${wSqueeth}/3000`
+              }
               target="_blank"
               rel="noreferrer"
             >
@@ -146,7 +151,11 @@ export const UniswapIframe: React.FC<UniswapIframeProps> = ({ text }) => {
           </div>
           <iframe
             className={classes.iframeBox}
-            src={`https://squeeth-uniswap.netlify.app/#/add/ETH/${wSqueeth}/3000`}
+            src={
+              closePosition
+                ? 'https://squeeth-uniswap.netlify.app/#/pool'
+                : `https://squeeth-uniswap.netlify.app/#/add/ETH/${wSqueeth}/3000`
+            }
           ></iframe>
         </DialogContent>
       </Dialog>

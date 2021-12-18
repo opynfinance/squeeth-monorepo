@@ -58,7 +58,7 @@ const ProvideLiquidity: React.FC = () => {
       <motion.div initial={{ x: '-5%', opacity: 0.8 }} animate={{ x: 0, opacity: 1 }} className={classes.container}>
         <div className={classes.headerDiv}>
           <Typography variant="caption" className={classes.warning}>
-            Connect wallet with uniswap
+            Make sure your wallet is connected to Uniswap
           </Typography>
           <a
             className={classes.uniOpenBtn}

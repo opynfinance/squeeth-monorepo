@@ -129,7 +129,9 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
           <TableRow style={{ fontSize: '0.8rem' }}>
             <TableCell align="left">Token ID</TableCell>
             <TableCell align="left">In Range</TableCell>
-            <TableCell align="left">% of Pool</TableCell>
+            <Tooltip title={Tooltips.PercentOfPool}>
+              <TableCell align="left">% of Pool</TableCell>
+            </Tooltip>
             <TableCell align="left">Liquidity</TableCell>
             {/* <TableCell align="left">Collected Fees</TableCell> */}
             <TableCell align="left">Uncollected Fees</TableCell>
@@ -160,8 +162,7 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
                     <p>No Closed LP Positions</p>
 
                     <div>
-                      <p>1. Mint or buy squeeth on the right.</p>
-                      <UniswapIframe text={'2.'} />
+                      <UniswapIframe text={'Close LP Position'} closePosition={true} />
                     </div>
                   </TableCell>
                 </TableRow>
@@ -222,7 +223,7 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
               <TableRow>
                 <TableCell colSpan={7}>
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    <UniswapIframe />
+                    <UniswapIframe text={'Close LP Position'} closePosition={true} />
                   </div>
                 </TableCell>
               </TableRow>
@@ -244,9 +245,15 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
 
                     <div>
                       <p>1. Mint or buy squeeth on the right.</p>
-                      <span>
-                        <UniswapIframe text={'2.'} />
-                      </span>
+                      <a
+                        href={`https://squeeth-uniswap.netlify.app/#/add/ETH/${wSqueeth}/3000`}
+                        target={'_blank'}
+                        rel="noreferrer"
+                        style={{ textDecoration: 'underline' }}
+                      >
+                        {' '}
+                        <p>2. Deposit Squeeth and ETH into Uniswap V3 Pool 🦄</p>{' '}
+                      </a>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -321,15 +328,15 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
               </TableRow>
             )}
 
-            {activePositions && activePositions?.length > 0 && (
+            {/* {activePositions && activePositions?.length > 0 && (
               <TableRow>
                 <TableCell colSpan={7}>
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    <UniswapIframe />
+                    <UniswapIframe text={'Deposit Squeeth and ETH into Uniswap V3 Pool 🦄'} />
                   </div>
                 </TableCell>
               </TableRow>
-            )}
+            )} */}
           </TableBody>
         )}
       </Table>
