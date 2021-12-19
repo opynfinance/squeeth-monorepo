@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 
 import abi from '../../abis/oracle.json'
-import { useWallet } from '../../context/wallet'
-import { toTokenAmount } from '../../utils/calculations'
+import { useWallet } from '@context/wallet'
+import { toTokenAmount } from '@utils/calculations'
 import { useAddresses } from '../useAddress'
 
 export const useOracle = () => {

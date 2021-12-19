@@ -11,13 +11,13 @@ import uniABI from '../../abis/uniswapPool.json'
 import erc20Abi from '../../abis/erc20.json'
 
 import { INDEX_SCALE, UNI_POOL_FEES, WSQUEETH_DECIMALS, DEFAULT_SLIPPAGE } from '../../constants'
-import { useWallet } from '../../context/wallet'
-import { fromTokenAmount, parseSlippageInput, toTokenAmount } from '../../utils/calculations'
+import { useWallet } from '@context/wallet'
+import { fromTokenAmount, parseSlippageInput, toTokenAmount } from '@utils/calculations'
 import { useAddresses } from '../useAddress'
 import { Networks } from '../../types'
 import useUniswapTicks from '../useUniswapTicks'
-import { useETHPrice } from '../../hooks/useETHPrice'
-import { useTrade } from '../../context/trade'
+import { useETHPrice } from '@hooks/useETHPrice'
+import { useTrade } from '@context/trade'
 // import univ3prices from '@thanpolas/univ3prices'
 const univ3prices = require('@thanpolas/univ3prices')
 
@@ -84,8 +84,6 @@ export const useSqueethPool = () => {
         18,
       ),
     )
-
-
   }, [squeethToken?.address, pool?.token1Price.toFixed(18)])
 
   const updateData = async () => {
@@ -204,7 +202,6 @@ export const useSqueethPool = () => {
     return txHash
   }
 
-
   const buyAndRefund = async (amount: BigNumber) => {
     const callData = await buyAndRefundData(amount)
 
@@ -218,7 +215,6 @@ export const useSqueethPool = () => {
     return txHash
   }
 
-  
   const buyAndRefundData = async (amount: BigNumber) => {
     if (!web3) return
     const exactInputParam = await getBuyParamForETH(amount)
@@ -325,7 +321,9 @@ export const useSqueethPool = () => {
       //the amount of ETH I need to put in
       return {
         amountIn: new BigNumber(trade.inputAmount.toSignificant(18)),
-        maximumAmountIn: new BigNumber(trade.maximumAmountIn(parseSlippageInput(slippageAmount.toString())).toSignificant(18)),
+        maximumAmountIn: new BigNumber(
+          trade.maximumAmountIn(parseSlippageInput(slippageAmount.toString())).toSignificant(18),
+        ),
         priceImpact: trade.priceImpact.toFixed(2),
       }
     } catch (e) {
@@ -357,7 +355,9 @@ export const useSqueethPool = () => {
       //the amount of squeeth I'm getting out
       return {
         amountOut: new BigNumber(trade.outputAmount.toSignificant(WSQUEETH_DECIMALS)),
-        minimumAmountOut: new BigNumber(trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(WSQUEETH_DECIMALS)),
+        minimumAmountOut: new BigNumber(
+          trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(WSQUEETH_DECIMALS),
+        ),
         priceImpact: trade.priceImpact.toFixed(2),
       }
     } catch (e) {
@@ -388,7 +388,9 @@ export const useSqueethPool = () => {
       //the amount of ETH I'm receiving
       return {
         amountOut: new BigNumber(trade.outputAmount.toSignificant(18)),
-        minimumAmountOut: new BigNumber(trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(18)),
+        minimumAmountOut: new BigNumber(
+          trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(18),
+        ),
         priceImpact: trade.priceImpact.toFixed(2),
       }
     } catch (e) {
@@ -419,7 +421,9 @@ export const useSqueethPool = () => {
       //the amount of squeeth I need to sell
       return {
         amountIn: new BigNumber(trade.inputAmount.toSignificant(18)),
-        maximumAmountIn: new BigNumber(trade.maximumAmountIn(parseSlippageInput(slippageAmount.toString())).toSignificant(18)),
+        maximumAmountIn: new BigNumber(
+          trade.maximumAmountIn(parseSlippageInput(slippageAmount.toString())).toSignificant(18),
+        ),
         priceImpact: trade.priceImpact.toFixed(2),
       }
     } catch (e) {

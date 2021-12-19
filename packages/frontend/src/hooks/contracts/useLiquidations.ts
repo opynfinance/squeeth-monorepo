@@ -3,8 +3,8 @@ import { Contract } from 'web3-eth-contract'
 
 import controllerABI from '../../abis/controller.json'
 import { WSQUEETH_DECIMALS } from '../../constants'
-import { useWallet } from '../../context/wallet'
-import { toTokenAmount } from '../../utils/calculations'
+import { useWallet } from '@context/wallet'
+import { toTokenAmount } from '@utils/calculations'
 import { useAddresses } from '../useAddress'
 import useInterval from '../useInterval'
 

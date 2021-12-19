@@ -4,7 +4,7 @@ import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward'
 import React from 'react'
 
-import { LPActions, useLPState } from '../../context/lp'
+import { LPActions, useLPState } from '@context/lp'
 
 const useStyles = makeStyles((theme) =>
   createStyles({

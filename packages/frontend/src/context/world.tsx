@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 import React, { useContext, useState } from 'react'
 
-import { useETHPriceCharts } from '../hooks/useETHPriceCharts'
+import { useETHPriceCharts } from '@hooks/useETHPriceCharts'
 
 type point = {
   value: number

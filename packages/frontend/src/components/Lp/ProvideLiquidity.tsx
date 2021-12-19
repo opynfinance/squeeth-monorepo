@@ -5,7 +5,7 @@ import OpenInNewIcon from '@material-ui/icons/OpenInNew'
 import { motion } from 'framer-motion'
 import React from 'react'
 
-import { useAddresses } from '../../hooks/useAddress'
+import { useAddresses } from '@hooks/useAddress'
 
 const useStyles = makeStyles((theme) =>
   createStyles({

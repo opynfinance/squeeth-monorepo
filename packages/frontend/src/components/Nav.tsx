@@ -10,12 +10,12 @@ import React, { useRef, useState } from 'react'
 
 // import logo from '../../public/images/logo.svg'
 import logo from '../../public/images/SqueethLogo.png'
-import { useWallet } from '../context/wallet'
-import { useAddresses } from '../hooks/useAddress'
-import useCopyClipboard from '../hooks/useCopyClipboard'
-// import { useSqueethPool } from '../src/hooks/contracts/useSqueethPool'
-import { toTokenAmount } from '../utils/calculations'
-import WalletButton from './WalletButton'
+import { useWallet } from '@context/wallet'
+import { useAddresses } from '@hooks/useAddress'
+import useCopyClipboard from '@hooks/useCopyClipboard'
+// import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
+import { toTokenAmount } from '@utils/calculations'
+import WalletButton from './Button/WalletButton'
 
 const useStyles = makeStyles((theme) =>
   createStyles({

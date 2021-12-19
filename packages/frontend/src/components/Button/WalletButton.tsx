@@ -4,9 +4,9 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React from 'react'
 import { useMemo } from 'react'
 
-import { useWallet } from '../context/wallet'
-import { Networks } from '../types'
-import { toTokenAmount } from '../utils/calculations'
+import { useWallet } from '@context/wallet'
+import { Networks } from '../../types'
+import { toTokenAmount } from '@utils/calculations'
 
 const useStyles = makeStyles((theme) =>
   createStyles({

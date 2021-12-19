@@ -2,7 +2,7 @@ import { InputAdornment, TextField, Tooltip } from '@material-ui/core'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import React from 'react'
 
-import { useWorldContext } from '../context/world'
+import { useWorldContext } from '@context/world'
 
 const IV: React.FC = () => {
   const { volMultiplier, setVolMultiplier, days, setDays, researchMode, setResearchMode } = useWorldContext()

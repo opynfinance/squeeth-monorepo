@@ -7,10 +7,10 @@ import clsx from 'clsx'
 import Link from 'next/link'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { Tooltips } from '../constants/enums'
-import { useTrade } from '../context/trade'
-import { useETHPrice } from '../hooks/useETHPrice'
-import { useLongPositions, usePnL, useShortPositions } from '../hooks/usePositions'
+import { useLongPositions, usePnL, useShortPositions } from '@hooks/usePositions'
+import { Tooltips } from '@constants/enums'
+import { useTrade } from '@context/trade'
+import { useETHPrice } from '@hooks/useETHPrice'
 import { PositionType, TradeType } from '../types'
 
 const useStyles = makeStyles((theme) =>
@@ -104,7 +104,7 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const PositionCard: React.FC<{ big?: boolean }> = ({ big }) => {
+const PositionCard: React.FC = () => {
   const classes = useStyles()
   const {
     buyQuote,

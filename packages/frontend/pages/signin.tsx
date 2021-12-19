@@ -7,8 +7,8 @@ import React, { useMemo } from 'react'
 import discordIcon from '../public/images/discord.svg'
 import squeethTokenSymbol from '../public/images/Squeeth.png'
 import twitterIcon from '../public/images/twitter.png'
-import { useWallet } from '../src/context/wallet'
-import { LoginState, useWhitelist } from '../src/context/whitelist'
+import { useWallet } from '@context/wallet'
+import { LoginState, useWhitelist } from '@context/whitelist'
 
 const useStyles = makeStyles((theme) =>
   createStyles({

@@ -8,12 +8,12 @@ import TableRow from '@material-ui/core/TableRow'
 import OpenInNewIcon from '@material-ui/icons/OpenInNew'
 
 import { EtherscanPrefix } from '../../constants'
-import { TransactionType } from '../../constants/enums'
-import { useWallet } from '../../context/wallet'
-import { useController } from '../../hooks/contracts/useController'
-import { useETHPrice } from '../../hooks/useETHPrice'
-import { useTransactionHistory } from '../../hooks/useTransactionHistory'
-import { useUsdAmount } from '../../hooks/useUsdAmount'
+import { TransactionType } from '@constants/enums'
+import { useWallet } from '@context/wallet'
+import { useController } from '@hooks/contracts/useController'
+import { useETHPrice } from '@hooks/useETHPrice'
+import { useTransactionHistory } from '@hooks/useTransactionHistory'
+import { useUsdAmount } from '@hooks/useUsdAmount'
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {

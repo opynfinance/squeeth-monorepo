@@ -1,6 +1,6 @@
 import BigNumber from 'bignumber.js'
 
-import { useWorldContext } from '../context/world'
+import { useWorldContext } from '@context/world'
 
 const getClosestTime = (ethWithinOneDayPriceMap: { [key: number]: number }, timestamp: any): number => {
   if (!ethWithinOneDayPriceMap || !timestamp) return 0

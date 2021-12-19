@@ -4,10 +4,10 @@ import { Contract } from 'web3-eth-contract'
 
 import abi from '../../abis/controller.json'
 import { FUNDING_PERIOD, INDEX_SCALE, SWAP_EVENT_TOPIC, Vaults, WSQUEETH_DECIMALS } from '../../constants'
-import { ETH_DAI_POOL, SQUEETH_UNI_POOL } from '../../constants/address'
-import { useWallet } from '../../context/wallet'
+import { ETH_DAI_POOL, SQUEETH_UNI_POOL } from '@constants/address'
+import { useWallet } from '@context/wallet'
 import { Vault } from '../../types'
-import { fromTokenAmount, toTokenAmount } from '../../utils/calculations'
+import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useAddresses } from '../useAddress'
 import { useOracle } from './useOracle'
 

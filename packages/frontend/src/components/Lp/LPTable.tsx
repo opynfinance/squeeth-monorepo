@@ -8,12 +8,12 @@ import * as React from 'react'
 import { useEffect, useState } from 'react'
 
 import { SecondaryTab, SecondaryTabs } from '../../components/Tabs'
-import { Tooltips } from '../../constants/enums'
-import { useSqueethPool } from '../../hooks/contracts/useSqueethPool'
-import { useAddresses } from '../../hooks/useAddress'
-import { useETHPrice } from '../../hooks/useETHPrice'
-import { useLPPositions } from '../../hooks/usePositions'
-import { inRange } from '../../utils/calculations'
+import { Tooltips } from '@constants/enums'
+import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
+import { useAddresses } from '@hooks/useAddress'
+import { useETHPrice } from '@hooks/useETHPrice'
+import { useLPPositions } from '@hooks/usePositions'
+import { inRange } from '@utils/calculations'
 import { UniswapIframe } from '../Modal/UniswapIframe'
 
 const useStyles = makeStyles((theme) =>

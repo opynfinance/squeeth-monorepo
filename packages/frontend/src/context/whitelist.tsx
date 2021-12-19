@@ -2,7 +2,7 @@ import axios from 'axios'
 import React, { createContext, ReactNode, useContext, useEffect, useReducer, useState } from 'react'
 import { useQuery } from 'react-query'
 
-import { csvJSON } from '../utils/csvToJson'
+import { csvJSON } from '@utils/csvToJson'
 import { useWallet } from './wallet'
 
 export enum LoginState {

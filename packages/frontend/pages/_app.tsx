@@ -9,11 +9,11 @@ import { useRouter } from 'next/router'
 import React, { useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from 'react-query'
 
-import { useWallet, WalletProvider } from '../src/context/wallet'
-import { WhitelistProvider } from '../src/context/whitelist'
-import { WorldProvider } from '../src/context/world'
+import { useWallet, WalletProvider } from '@context/wallet'
+import { WhitelistProvider } from '@context/whitelist'
+import { WorldProvider } from '@context/world'
 import getTheme, { Mode } from '../src/theme'
-import { uniswapClient } from '../src/utils/apollo-client'
+import { uniswapClient } from '@utils/apollo-client'
 
 function MyApp({ Component, pageProps }: any) {
   const router = useRouter()

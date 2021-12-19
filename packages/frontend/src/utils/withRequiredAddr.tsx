@@ -1,7 +1,7 @@
 import Router from 'next/router'
 import React, { useEffect } from 'react'
 
-import { LoginState, useWhitelist } from '../context/whitelist'
+import { LoginState, useWhitelist } from '@context/whitelist'
 
 export const withRequiredAddr = <P extends {}>(Component: React.ComponentType<P>): React.FC<P> => {
   const WithRequiredAddr: React.FC<P> = (props) => {

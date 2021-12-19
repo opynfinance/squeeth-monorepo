@@ -4,7 +4,7 @@ import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import clsx from 'clsx'
 import React from 'react'
 
-import { LinkButton } from '../Buttons'
+import { LinkButton } from '../Button'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -91,7 +91,7 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
   unit,
   convertedValue,
   hint,
-  error,
+  error = false,
 }) => {
   const classes = useStyles()
 

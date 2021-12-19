@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 
 import wethAbi from '../../abis/weth.json'
-import { useWallet } from '../../context/wallet'
-import { fromTokenAmount, toTokenAmount } from '../../utils/calculations'
+import { useWallet } from '@context/wallet'
+import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useAddresses } from '../useAddress'
 
 /**

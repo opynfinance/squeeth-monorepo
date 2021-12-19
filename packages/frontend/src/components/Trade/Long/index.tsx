@@ -1,27 +1,24 @@
-import { CircularProgress, createStyles, Divider, makeStyles, Tooltip, Typography } from '@material-ui/core'
+import { CircularProgress, createStyles, makeStyles, Typography } from '@material-ui/core'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import BigNumber from 'bignumber.js'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 
-import { WSQUEETH_DECIMALS } from '../../constants'
-import { UNI_POOL_FEES } from '../../constants'
-import { useTrade } from '../../context/trade'
-import { useWallet } from '../../context/wallet'
-import { useUserAllowance } from '../../hooks/contracts/useAllowance'
-import { useSqueethPool } from '../../hooks/contracts/useSqueethPool'
-import { useTokenBalance } from '../../hooks/contracts/useTokenBalance'
-import { useAddresses } from '../../hooks/useAddress'
-import { useETHPrice } from '../../hooks/useETHPrice'
-import { useLongPositions, useLPPositions, useShortPositions } from '../../hooks/usePositions'
-import { PrimaryButton } from '../Buttons'
-import { PrimaryInput } from '../inputs/PrimaryInput'
-import { UniswapIframe } from '../Modal/UniswapIframe'
-import { StepperBox as Stepper } from '../StepperBox'
-import { TradeSettings } from '../TradeSettings'
-import Confirmed from './Confirmed'
-import TradeDetails from './TradeDetails'
-import TradeInfoItem from './TradeInfoItem'
-import UniswapData from './UniswapData'
+import { WSQUEETH_DECIMALS } from '../../../constants'
+import { useTrade } from '@context/trade'
+import { useWallet } from '@context/wallet'
+import { useUserAllowance } from '@hooks/contracts/useAllowance'
+import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
+import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
+import { useAddresses } from '@hooks/useAddress'
+import { useETHPrice } from '@hooks/useETHPrice'
+import { useLongPositions, useShortPositions } from '@hooks/usePositions'
+import { PrimaryButton } from '@components/Button'
+import { PrimaryInput } from '@components/Input/PrimaryInput'
+import { UniswapIframe } from '@components/Modal/UniswapIframe'
+import { TradeSettings } from '@components/TradeSettings'
+import Confirmed from '../Confirmed'
+import TradeInfoItem from '../TradeInfoItem'
+import UniswapData from '../UniswapData'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -213,34 +210,15 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-type BuyProps = {
-  balance: number
-  open: boolean
-  closeTitle: string
-  isLPage?: boolean
-  activeStep?: number
-}
-
-const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, activeStep = 0 }) => {
+const OpenLong: React.FC<BuyProps> = ({ balance, open, activeStep = 0 }) => {
   const [buyLoading, setBuyLoading] = useState(false)
-  const [sellLoading, setSellLoading] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
   const [txHash, setTxHash] = useState('')
-  const [hasJustApprovedSqueeth, setHasJustApprovedSqueeth] = useState(false)
 
   const classes = useStyles()
-  const { swapRouter, wSqueeth } = useAddresses()
+  const { wSqueeth } = useAddresses()
   const wSqueethBal = useTokenBalance(wSqueeth, 5, WSQUEETH_DECIMALS)
-  const {
-    sell,
-    buyForWETH,
-    buyAndRefund,
-    getWSqueethPositionValue,
-    getBuyQuoteForETH,
-    getBuyQuote,
-    getSellQuote,
-    getSellQuoteForETH,
-  } = useSqueethPool()
+  const { buyAndRefund, getWSqueethPositionValue, getBuyQuoteForETH, getBuyQuote } = useSqueethPool()
   const {
     tradeAmount: amount,
     setTradeAmount: setAmount,
@@ -251,55 +229,36 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
     setTradeSuccess,
     slippageAmount,
   } = useTrade()
-  const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(wSqueeth, swapRouter)
   const { selectWallet, connected } = useWallet()
   const ethPrice = useETHPrice()
   const { squeethAmount: shrtAmt } = useShortPositions()
-  const { squeethAmount: lngAmt } = useLongPositions()
-
-  // console.log(
-  //   wSqueethBal.minus(lngAmt).minus(shrtAmt).toNumber(),
-  //   wSqueethBal.toNumber(),
-  //   lngAmt.toNumber(),
-  //   shrtAmt.toNumber(),
-  //   squeethAllowance.toNumber(),
-  // )
 
   useEffect(() => {
     if (!open && wSqueethBal.lt(amount)) {
       setAmount(wSqueethBal)
     }
-  }, [wSqueethBal.toNumber(), open])
+  }, [wSqueethBal, open])
 
-  const { openError, closeError, existingShortError, priceImpactWarning } = useMemo(() => {
-    let openError = null
-    let closeError = null
-    let existingShortError = null
-    let priceImpactWarning = null
+  let openError: string | undefined
+  let closeError: string | undefined
+  let existingShortError: string | undefined
+  let priceImpactWarning: string | undefined
 
-    if (connected && (wSqueethBal.lt(amount) || wSqueethBal.isZero())) {
+  if (connected) {
+    if (wSqueethBal.lt(amount)) {
       closeError = 'Insufficient oSQTH balance'
     }
-    if (connected && amount.gt(balance)) {
+    if (amount.gt(balance)) {
       openError = 'Insufficient ETH balance'
     }
-    if (connected && shrtAmt.gt(0)) {
+    if (shrtAmt.gt(0)) {
       existingShortError = 'Close your short position to open a long'
     }
-    if (connected && new BigNumber(quote.priceImpact).gt(3)) {
+    if (new BigNumber(quote.priceImpact).gt(3)) {
       priceImpactWarning = 'High Price Impact'
     }
-
-    return { openError, closeError, existingShortError, priceImpactWarning }
-  }, [amount, balance, wSqueethBal.toNumber(), connected, shrtAmt.toNumber(), quote.priceImpact])
-
-  const longClosePriceImpactErrorState = useMemo(() => {
-    return priceImpactWarning && !closeError && !sellLoading && !wSqueethBal.isZero() && !shrtAmt.gt(0)
-  }, [priceImpactWarning, closeError, sellLoading, wSqueethBal.toNumber(), shrtAmt.toNumber()])
-
-  const longOpenPriceImpactErrorState = useMemo(() => {
-    return priceImpactWarning && !buyLoading && !openError && !shrtAmt.gt(0)
-  }, [priceImpactWarning, openError, buyLoading, shrtAmt.toNumber()])
+  }
+  const longOpenPriceImpactErrorState = priceImpactWarning && !buyLoading && !openError && !shrtAmt.gt(0)
 
   const transact = async () => {
     setBuyLoading(true)
@@ -312,41 +271,6 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
       console.log(e)
     }
     setBuyLoading(false)
-  }
-
-  const sellAndClose = useCallback(async () => {
-    setSellLoading(true)
-    try {
-      if (squeethAllowance.lt(amount)) {
-        await squeethApprove()
-        setHasJustApprovedSqueeth(true)
-      } else {
-        const confirmedHash = await sell(amount)
-        setConfirmed(true)
-        setTxHash(confirmedHash.transactionHash)
-        setTradeSuccess(true)
-      }
-    } catch (e) {
-      console.log(e)
-    }
-    setSellLoading(false)
-  }, [amount, sell, squeethAllowance, squeethApprove, wSqueethBal])
-
-  const handleCloseDualInputUpdate = (v: number | string, currentInput: string) => {
-    //If I'm inputting an amount of ETH I'd like to receive from selling my squeeth, use getSellQuoteForETH
-    if (isNaN(+v) || +v === 0) v = 0
-    if (currentInput === 'ETH') {
-      setAltTradeAmount(new BigNumber(v))
-      getSellQuoteForETH(new BigNumber(v)).then((val) => {
-        setAmount(val.amountIn)
-      })
-    } else {
-      //If I'm inputting an amount of squeeth I'd like to sell to receive ETH, use getSellQuote
-      setAmount(new BigNumber(v))
-      getSellQuote(new BigNumber(v)).then((val) => {
-        setAltTradeAmount(val.amountOut)
-      })
-    }
   }
   const handleOpenDualInputUpdate = (v: number | string, currentInput: string) => {
     //If I'm inputting an amount of ETH I'd like to spend to get squeeth, use getBuyQuoteForETH
@@ -365,195 +289,6 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
       })
     }
   }
-
-  const ClosePosition = useMemo(() => {
-    return (
-      <div>
-        {!confirmed ? (
-          <div>
-            <div className={classes.settingsContainer}>
-              <Typography variant="caption" className={classes.explainer} component="div">
-                {closeTitle}
-              </Typography>
-              <span className={classes.settingsButton}>
-                <TradeSettings />
-              </span>
-            </div>
-
-            <div className={classes.thirdHeading} />
-            <PrimaryInput
-              value={amount.toNumber().toString()}
-              onChange={(v) => handleCloseDualInputUpdate(v, 'oSQTH')}
-              label="Amount"
-              tooltip="Amount of wSqueeth you want to close"
-              actionTxt="Max"
-              onActionClicked={() => {
-                setAmount(wSqueethBal)
-                getSellQuote(new BigNumber(wSqueethBal)).then((val) => {
-                  setAltTradeAmount(val.amountOut)
-                })
-              }}
-              unit="oSQTH"
-              convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
-              error={
-                connected && shrtAmt.gt(0)
-                  ? !!existingShortError
-                  : new BigNumber(quote.priceImpact).gt(3)
-                  ? !!priceImpactWarning
-                  : !!closeError
-              }
-              hint={
-                connected && shrtAmt.gt(0) ? (
-                  existingShortError
-                ) : closeError ? (
-                  closeError
-                ) : priceImpactWarning ? (
-                  priceImpactWarning
-                ) : (
-                  <div className={classes.hint}>
-                    <span className={classes.hintTextContainer}>
-                      <span className={classes.hintTitleText}>Position</span> <span>{wSqueethBal.toFixed(6)}</span>
-                    </span>
-                    {quote.amountOut.gt(0) ? (
-                      <>
-                        <ArrowRightAltIcon className={classes.arrowIcon} />
-                        <span>{wSqueethBal.minus(amount).toFixed(6)}</span>
-                      </>
-                    ) : null}{' '}
-                    <span style={{ marginLeft: '4px' }}>oSQTH</span>
-                  </div>
-                )
-              }
-            />
-            <PrimaryInput
-              value={altTradeAmount.toNumber().toString()}
-              onChange={(v) => handleCloseDualInputUpdate(v, 'ETH')}
-              label="Amount"
-              tooltip="Amount of wSqueeth you want to close in eth"
-              unit="ETH"
-              convertedValue={altTradeAmount.times(ethPrice).toFixed(2).toLocaleString()}
-              error={
-                connected && shrtAmt.gt(0)
-                  ? !!existingShortError
-                  : new BigNumber(quote.priceImpact).gt(3)
-                  ? !!priceImpactWarning
-                  : !!closeError
-              }
-              hint={
-                connected && shrtAmt.gt(0) ? (
-                  existingShortError
-                ) : closeError ? (
-                  closeError
-                ) : priceImpactWarning ? (
-                  priceImpactWarning
-                ) : (
-                  <div className={classes.hint}>
-                    <span>{`Balance ${balance}`}</span>
-                    {amount.toNumber() ? (
-                      <>
-                        <ArrowRightAltIcon className={classes.arrowIcon} />
-                        <span>{(balance + altTradeAmount.toNumber()).toFixed(6)}</span>
-                      </>
-                    ) : null}{' '}
-                    <span style={{ marginLeft: '4px' }}>ETH</span>
-                  </div>
-                )
-              }
-            />
-            <div className={classes.divider}>
-              <UniswapData
-                slippage={isNaN(Number(slippageAmount)) ? '0' : slippageAmount.toString()}
-                priceImpact={quote.priceImpact}
-                minReceived={quote.minimumAmountOut.toFixed(4)}
-                minReceivedUnit="ETH"
-              />
-            </div>
-            <div className={classes.buttonDiv}>
-              {!connected ? (
-                <PrimaryButton
-                  variant="contained"
-                  onClick={selectWallet}
-                  className={classes.amountInput}
-                  disabled={!!sellLoading}
-                  style={{ width: '300px' }}
-                >
-                  {'Connect Wallet'}
-                </PrimaryButton>
-              ) : (
-                <PrimaryButton
-                  variant={longClosePriceImpactErrorState ? 'outlined' : 'contained'}
-                  onClick={sellAndClose}
-                  className={classes.amountInput}
-                  disabled={!!sellLoading || !!closeError || shrtAmt.gt(0) || wSqueethBal.isZero()}
-                  style={
-                    longClosePriceImpactErrorState
-                      ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
-                      : { width: '300px' }
-                  }
-                >
-                  {sellLoading ? (
-                    <CircularProgress color="primary" size="1.5rem" />
-                  ) : squeethAllowance.lt(amount) ? (
-                    'Approve oSQTH (1/2)'
-                  ) : longClosePriceImpactErrorState ? (
-                    'Sell Anyway'
-                  ) : hasJustApprovedSqueeth ? (
-                    'Sell to close (2/2)'
-                  ) : (
-                    'Sell to close'
-                  )}
-                </PrimaryButton>
-              )}
-              <Typography variant="caption" className={classes.caption} component="div">
-                Trades on Uniswap 🦄
-              </Typography>
-            </div>
-          </div>
-        ) : (
-          <div>
-            <Confirmed confirmationMessage={`Sold ${amount.toNumber()} Squeeth`} txnHash={txHash} />
-            <div className={classes.buttonDiv}>
-              <PrimaryButton
-                variant="contained"
-                onClick={() => setConfirmed(false)}
-                className={classes.amountInput}
-                style={{ width: '300px' }}
-              >
-                {'Close'}
-              </PrimaryButton>
-            </div>
-          </div>
-        )}
-      </div>
-    )
-  }, [
-    classes.thirdHeading,
-    classes.squeethExp,
-    classes.squeethExpTxt,
-    classes.amountInput,
-    classes.caption,
-    closeTitle,
-    amount,
-    getWSqueethPositionValue,
-    closeError,
-    wSqueethBal,
-    quote.amountOut,
-    quote.priceImpact,
-    quote.minimumAmountOut,
-    ethPrice,
-    connected,
-    selectWallet,
-    sellLoading,
-    sellAndClose,
-    squeethAllowance,
-    setAmount,
-    slippageAmount.toNumber(),
-  ])
-
-  if (!open) {
-    return ClosePosition
-  }
-
   return (
     <div>
       {!confirmed ? (
@@ -583,17 +318,11 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
                 }}
                 unit="ETH"
                 convertedValue={amount.times(ethPrice).toFixed(2).toLocaleString()}
-                error={
-                  connected && shrtAmt.gt(0)
-                    ? !!existingShortError
-                    : new BigNumber(quote.priceImpact).gt(3)
-                    ? !!priceImpactWarning
-                    : !!openError
-                }
+                error={!!existingShortError || !!priceImpactWarning || !!openError}
                 hint={
                   openError ? (
                     openError
-                  ) : connected && shrtAmt.gt(0) ? (
+                  ) : existingShortError ? (
                     existingShortError
                   ) : priceImpactWarning ? (
                     priceImpactWarning
@@ -620,17 +349,11 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
                 actionTxt="Max"
                 unit="oSQTH"
                 convertedValue={getWSqueethPositionValue(altTradeAmount).toFixed(2).toLocaleString()}
-                error={
-                  connected && shrtAmt.gt(0)
-                    ? !!existingShortError
-                    : new BigNumber(quote.priceImpact).gt(3)
-                    ? !!priceImpactWarning
-                    : !!openError
-                }
+                error={!!existingShortError || !!priceImpactWarning || !!openError}
                 hint={
                   openError ? (
                     openError
-                  ) : connected && shrtAmt.gt(0) ? (
+                  ) : existingShortError ? (
                     existingShortError
                   ) : priceImpactWarning ? (
                     priceImpactWarning
@@ -691,7 +414,7 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
                     variant={longOpenPriceImpactErrorState ? 'outlined' : 'contained'}
                     onClick={transact}
                     className={classes.amountInput}
-                    disabled={!!buyLoading || !!openError || shrtAmt.gt(0)}
+                    disabled={!!buyLoading || !!openError || !!existingShortError}
                     style={
                       longOpenPriceImpactErrorState
                         ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
@@ -737,4 +460,257 @@ const Buy: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, a
   )
 }
 
-export default Buy
+const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, activeStep = 0 }) => {
+  const [sellLoading, setSellLoading] = useState(false)
+  const [confirmed, setConfirmed] = useState(false)
+  const [txHash, setTxHash] = useState('')
+  const [hasJustApprovedSqueeth, setHasJustApprovedSqueeth] = useState(false)
+
+  const classes = useStyles()
+  const { swapRouter, wSqueeth } = useAddresses()
+  const wSqueethBal = useTokenBalance(wSqueeth, 5, WSQUEETH_DECIMALS)
+  const { sell, getWSqueethPositionValue, getSellQuote, getSellQuoteForETH } = useSqueethPool()
+  const {
+    tradeAmount: amount,
+    setTradeAmount: setAmount,
+    quote,
+    altTradeAmount,
+    setAltTradeAmount,
+    setTradeSuccess,
+    slippageAmount,
+  } = useTrade()
+  const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(wSqueeth, swapRouter)
+  const { selectWallet, connected } = useWallet()
+  const ethPrice = useETHPrice()
+  const { squeethAmount: shrtAmt } = useShortPositions()
+
+  useEffect(() => {
+    if (!open && wSqueethBal.lt(amount)) {
+      setAmount(wSqueethBal)
+    }
+  }, [wSqueethBal, open])
+
+  let openError: string | undefined
+  let closeError: string | undefined
+  let existingShortError: string | undefined
+  let priceImpactWarning: string | undefined
+
+  if (connected) {
+    if (wSqueethBal.lt(amount)) {
+      closeError = 'Insufficient oSQTH balance'
+    }
+    if (amount.gt(balance)) {
+      openError = 'Insufficient ETH balance'
+    }
+    if (shrtAmt.gt(0)) {
+      existingShortError = 'Close your short position to open a long'
+    }
+    if (new BigNumber(quote.priceImpact).gt(3)) {
+      priceImpactWarning = 'High Price Impact'
+    }
+  }
+
+  const longClosePriceImpactErrorState =
+    priceImpactWarning && !closeError && !sellLoading && !wSqueethBal.isZero() && !shrtAmt.gt(0)
+
+  const sellAndClose = useCallback(async () => {
+    setSellLoading(true)
+    try {
+      if (squeethAllowance.lt(amount)) {
+        await squeethApprove()
+        setHasJustApprovedSqueeth(true)
+      } else {
+        const confirmedHash = await sell(amount)
+        setConfirmed(true)
+        setTxHash(confirmedHash.transactionHash)
+        setTradeSuccess(true)
+      }
+    } catch (e) {
+      console.log(e)
+    }
+    setSellLoading(false)
+  }, [amount, sell, squeethAllowance, squeethApprove, wSqueethBal])
+
+  const handleCloseDualInputUpdate = (v: number | string, currentInput: string) => {
+    //If I'm inputting an amount of ETH I'd like to receive from selling my squeeth, use getSellQuoteForETH
+    if (isNaN(+v) || +v === 0) v = 0
+    if (currentInput === 'ETH') {
+      setAltTradeAmount(new BigNumber(v))
+      getSellQuoteForETH(new BigNumber(v)).then((val) => {
+        setAmount(val.amountIn)
+      })
+    } else {
+      //If I'm inputting an amount of squeeth I'd like to sell to receive ETH, use getSellQuote
+      setAmount(new BigNumber(v))
+      getSellQuote(new BigNumber(v)).then((val) => {
+        setAltTradeAmount(val.amountOut)
+      })
+    }
+  }
+
+  return (
+    <div>
+      {!confirmed ? (
+        <div>
+          <div className={classes.settingsContainer}>
+            <Typography variant="caption" className={classes.explainer} component="div">
+              {closeTitle}
+            </Typography>
+            <span className={classes.settingsButton}>
+              <TradeSettings />
+            </span>
+          </div>
+
+          <div className={classes.thirdHeading} />
+          <PrimaryInput
+            value={amount.toNumber().toString()}
+            onChange={(v) => handleCloseDualInputUpdate(v, 'oSQTH')}
+            label="Amount"
+            tooltip="Amount of wSqueeth you want to close"
+            actionTxt="Max"
+            onActionClicked={() => {
+              setAmount(wSqueethBal)
+              getSellQuote(new BigNumber(wSqueethBal)).then((val) => {
+                setAltTradeAmount(val.amountOut)
+              })
+            }}
+            unit="oSQTH"
+            convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
+            error={!!existingShortError || !!priceImpactWarning || !!closeError}
+            hint={
+              existingShortError ? (
+                existingShortError
+              ) : closeError ? (
+                closeError
+              ) : priceImpactWarning ? (
+                priceImpactWarning
+              ) : (
+                <div className={classes.hint}>
+                  <span className={classes.hintTextContainer}>
+                    <span className={classes.hintTitleText}>Position</span> <span>{wSqueethBal.toFixed(6)}</span>
+                  </span>
+                  {quote.amountOut.gt(0) ? (
+                    <>
+                      <ArrowRightAltIcon className={classes.arrowIcon} />
+                      <span>{wSqueethBal.minus(amount).toFixed(6)}</span>
+                    </>
+                  ) : null}{' '}
+                  <span style={{ marginLeft: '4px' }}>oSQTH</span>
+                </div>
+              )
+            }
+          />
+          <PrimaryInput
+            value={altTradeAmount.toNumber().toString()}
+            onChange={(v) => handleCloseDualInputUpdate(v, 'ETH')}
+            label="Amount"
+            tooltip="Amount of wSqueeth you want to close in eth"
+            unit="ETH"
+            convertedValue={altTradeAmount.times(ethPrice).toFixed(2).toLocaleString()}
+            error={!!existingShortError || !!priceImpactWarning || !!closeError}
+            hint={
+              existingShortError ? (
+                existingShortError
+              ) : closeError ? (
+                closeError
+              ) : priceImpactWarning ? (
+                priceImpactWarning
+              ) : (
+                <div className={classes.hint}>
+                  <span>{`Balance ${balance}`}</span>
+                  {amount.toNumber() ? (
+                    <>
+                      <ArrowRightAltIcon className={classes.arrowIcon} />
+                      <span>{(balance + altTradeAmount.toNumber()).toFixed(6)}</span>
+                    </>
+                  ) : null}{' '}
+                  <span style={{ marginLeft: '4px' }}>ETH</span>
+                </div>
+              )
+            }
+          />
+          <div className={classes.divider}>
+            <UniswapData
+              slippage={isNaN(Number(slippageAmount)) ? '0' : slippageAmount.toString()}
+              priceImpact={quote.priceImpact}
+              minReceived={quote.minimumAmountOut.toFixed(4)}
+              minReceivedUnit="ETH"
+            />
+          </div>
+          <div className={classes.buttonDiv}>
+            {!connected ? (
+              <PrimaryButton
+                variant="contained"
+                onClick={selectWallet}
+                className={classes.amountInput}
+                disabled={!!sellLoading}
+                style={{ width: '300px' }}
+              >
+                {'Connect Wallet'}
+              </PrimaryButton>
+            ) : (
+              <PrimaryButton
+                variant={longClosePriceImpactErrorState ? 'outlined' : 'contained'}
+                onClick={sellAndClose}
+                className={classes.amountInput}
+                disabled={!!sellLoading || !!closeError || !!existingShortError || wSqueethBal.isZero()}
+                style={
+                  longClosePriceImpactErrorState
+                    ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
+                    : { width: '300px' }
+                }
+              >
+                {sellLoading ? (
+                  <CircularProgress color="primary" size="1.5rem" />
+                ) : squeethAllowance.lt(amount) ? (
+                  'Approve oSQTH (1/2)'
+                ) : longClosePriceImpactErrorState ? (
+                  'Sell Anyway'
+                ) : hasJustApprovedSqueeth ? (
+                  'Sell to close (2/2)'
+                ) : (
+                  'Sell to close'
+                )}
+              </PrimaryButton>
+            )}
+            <Typography variant="caption" className={classes.caption} component="div">
+              Trades on Uniswap 🦄
+            </Typography>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <Confirmed confirmationMessage={`Sold ${amount.toNumber()} Squeeth`} txnHash={txHash} />
+          <div className={classes.buttonDiv}>
+            <PrimaryButton
+              variant="contained"
+              onClick={() => setConfirmed(false)}
+              className={classes.amountInput}
+              style={{ width: '300px' }}
+            >
+              {'Close'}
+            </PrimaryButton>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+type BuyProps = {
+  balance: number
+  open: boolean
+  closeTitle: string
+  isLPage?: boolean
+  activeStep?: number
+}
+
+const Long: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, activeStep = 0 }) => {
+  return open ? (
+    <OpenLong balance={balance} open={open} closeTitle={closeTitle} isLPage={isLPage} activeStep={activeStep} />
+  ) : (
+    <CloseLong balance={balance} open={open} closeTitle={closeTitle} isLPage={isLPage} activeStep={activeStep} />
+  )
+}
+
+export default Long

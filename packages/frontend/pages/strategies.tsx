@@ -23,22 +23,22 @@ import { useEffect, useMemo, useState } from 'react'
 
 import crabpayoff from '../public/images/crabpayoff.png'
 import ethbullpayoff from '../public/images/ethbullpayoff.png'
-import ShortSqueethPayoff from '../src/components/Charts/ShortSqueethPayoff'
-import { VaultChart } from '../src/components/Charts/VaultChart'
-import Nav from '../src/components/Nav'
-import TradeInfoItem from '../src/components/Trade/TradeInfoItem'
+import ShortSqueethPayoff from '@components/Charts/ShortSqueethPayoff'
+import { VaultChart } from '@components/Charts/VaultChart'
+import Nav from '@components/Nav'
+import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import { Vaults } from '../src/constants'
-import { useWallet } from '../src/context/wallet'
-import { useWorldContext } from '../src/context/world'
-import { useController } from '../src/hooks/contracts/useController'
-import useShortHelper from '../src/hooks/contracts/useShortHelper'
-import { useTokenBalance } from '../src/hooks/contracts/useTokenBalance'
-import { useVaultManager } from '../src/hooks/contracts/useVaultManager'
-import { useAddresses } from '../src/hooks/useAddress'
-import useAsyncMemo from '../src/hooks/useAsyncMemo'
-import { useETHPriceCharts } from '../src/hooks/useETHPriceCharts'
+import { useWallet } from '@context/wallet'
+import { useWorldContext } from '@context/world'
+import { useController } from '@hooks/contracts/useController'
+import useShortHelper from '@hooks/contracts/useShortHelper'
+import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
+import { useVaultManager } from '@hooks/contracts/useVaultManager'
+import { useAddresses } from '@hooks/useAddress'
+import useAsyncMemo from '@hooks/useAsyncMemo'
+import { useETHPriceCharts } from '@hooks/useETHPriceCharts'
 import { calculateLiquidationPrice, getCrabVaultPayoff, getFairSqueethBid, getVolForTimestamp } from '../src/utils'
-import { withRequiredAddr } from '../src/utils/withRequiredAddr'
+import { withRequiredAddr } from '@utils/withRequiredAddr'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -291,6 +291,34 @@ const getVaultIntro = (vault: Vaults) => {
   if (vault === Vaults.ETHBear) return <> Earn yield while being short ETH </>
 }
 
+const TxValue: React.FC<{ value: string | number; label: string }> = ({ value, label }) => {
+  const classes = useStyles()
+
+  return (
+    <div>
+      <Typography component="span">{value}</Typography>
+      <Typography component="span" variant="caption" className={classes.txUnit}>
+        {label}
+      </Typography>
+    </div>
+  )
+}
+
+const VaultValue: React.FC<{ value: string | number; label: string }> = ({ value, label }) => {
+  const classes = useStyles()
+
+  return (
+    <div>
+      <Typography component="span" color="primary">
+        {value}
+      </Typography>
+      <Typography component="span" variant="caption" className={classes.txUnit}>
+        {label}
+      </Typography>
+    </div>
+  )
+}
+
 export function Vault() {
   const classes = useStyles()
   const [showPercentage, setShowPercentage] = useState(true)
@@ -403,30 +431,6 @@ export function Vault() {
 
   const depositAndShort = () => {
     console.log('Deposit short')
-  }
-
-  const TxValue: React.FC<{ value: string | number; label: string }> = ({ value, label }) => {
-    return (
-      <div>
-        <Typography component="span">{value}</Typography>
-        <Typography component="span" variant="caption" className={classes.txUnit}>
-          {label}
-        </Typography>
-      </div>
-    )
-  }
-
-  const VaultValue: React.FC<{ value: string | number; label: string }> = ({ value, label }) => {
-    return (
-      <div>
-        <Typography component="span" color="primary">
-          {value}
-        </Typography>
-        <Typography component="span" variant="caption" className={classes.txUnit}>
-          {label}
-        </Typography>
-      </div>
-    )
   }
 
   return (

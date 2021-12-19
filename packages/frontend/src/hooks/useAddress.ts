@@ -15,7 +15,7 @@ import {
   WSQUEETH,
   ZERO_ADDR,
 } from '../constants/address'
-import { useWallet } from '../context/wallet'
+import { useWallet } from '@context/wallet'
 
 const useAddresses = () => {
   const { networkId } = useWallet()

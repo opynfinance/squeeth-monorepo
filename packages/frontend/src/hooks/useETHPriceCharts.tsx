@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 
-import { getSqueethChartWithFunding } from '../utils/pricer'
+import { getSqueethChartWithFunding } from '@utils/pricer'
 import { useAsyncMemo } from './useAsyncMemo'
 
 export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initCollatRatio = 1.5) {

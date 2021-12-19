@@ -1,13 +1,11 @@
-import { createStyles, Fade, makeStyles } from '@material-ui/core'
+import { createStyles, makeStyles } from '@material-ui/core'
 import React from 'react'
-import { useMemo, useState } from 'react'
 
-import { useTrade } from '../../context/trade'
-import { useWallet } from '../../context/wallet'
+import { useTrade } from '@context/trade'
+import { useWallet } from '@context/wallet'
 import { TradeType } from '../../types'
-import { toTokenAmount } from '../../utils/calculations'
+import { toTokenAmount } from '@utils/calculations'
 import { SecondaryTab, SecondaryTabs } from '../Tabs'
-import { TradeSettings } from '../TradeSettings'
 import Long from './Long'
 import Short from './Short'
 

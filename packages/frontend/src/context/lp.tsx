@@ -2,8 +2,8 @@ import React, { useContext, useEffect, useReducer } from 'react'
 import { Reducer } from 'react-transition-group/node_modules/@types/react'
 
 import { WSQUEETH_DECIMALS } from '../constants'
-import { useTokenBalance } from '../hooks/contracts/useTokenBalance'
-import { useAddresses } from '../hooks/useAddress'
+import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
+import { useAddresses } from '@hooks/useAddress'
 
 export enum Steps {
   SELECT_METHOD = 1,

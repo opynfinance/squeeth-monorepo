@@ -2,8 +2,8 @@ import BigNumber from 'bignumber.js'
 import React, { useContext, useEffect, useMemo, useState } from 'react'
 
 import { DEFAULT_SLIPPAGE } from '../constants/index'
-import { useSqueethPool } from '../hooks/contracts/useSqueethPool'
-import { useLongPositions, usePnL, useShortPositions } from '../hooks/usePositions'
+import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
+import { useLongPositions, usePnL, useShortPositions } from '@hooks/usePositions'
 import { PositionType, TradeType } from '../types'
 
 type Quote = {

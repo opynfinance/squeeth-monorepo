@@ -6,7 +6,7 @@ import SettingsIcon from '@material-ui/icons/Settings'
 import BigNumber from 'bignumber.js'
 import * as React from 'react'
 
-import { useTrade } from '../context/trade'
+import { useTrade } from '@context/trade'
 
 const useStyles = makeStyles((theme) =>
   createStyles({

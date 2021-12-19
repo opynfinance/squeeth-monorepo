@@ -9,25 +9,25 @@ import Image from 'next/image'
 import { useCallback, useEffect, useState } from 'react'
 
 import squeethTokenSymbol from '../public/images/Squeeth.png'
-import { PrimaryButton } from '../src/components/Buttons'
-import { LongChart } from '../src/components/Charts/LongChart'
-import { VaultChart } from '../src/components/Charts/VaultChart'
-import MobileModal from '../src/components/Modal/MobileModal'
-import Nav from '../src/components/Nav'
-import PositionCard from '../src/components/PositionCard'
-import { SqueethTab, SqueethTabs } from '../src/components/Tabs'
-import Trade from '../src/components/Trade'
-import { WelcomeModal } from '../src/components/Trade/WelcomeModal'
+import { PrimaryButton } from '@components/Button'
+import { LongChart } from '@components/Charts/LongChart'
+import { VaultChart } from '@components/Charts/VaultChart'
+import MobileModal from '@components/Modal/MobileModal'
+import Nav from '@components/Nav'
+import PositionCard from '@components/PositionCard'
+import { SqueethTab, SqueethTabs } from '@components/Tabs'
+import Trade from '@components/Trade'
+import { WelcomeModal } from '@components/Trade/WelcomeModal'
 import { Vaults } from '../src/constants'
-import { Tooltips } from '../src/constants/enums'
-import { TradeProvider, useTrade } from '../src/context/trade'
-import { LoginState, useWhitelist } from '../src/context/whitelist'
-import { useWorldContext } from '../src/context/world'
-import { useController } from '../src/hooks/contracts/useController'
-import { useETHPrice } from '../src/hooks/useETHPrice'
+import { Tooltips } from '@constants/enums'
+import { TradeProvider, useTrade } from '@context/trade'
+import { LoginState, useWhitelist } from '@context/whitelist'
+import { useWorldContext } from '@context/world'
+import { useController } from '@hooks/contracts/useController'
+import { useETHPrice } from '@hooks/useETHPrice'
 import { TradeType } from '../src/types'
-import { toTokenAmount } from '../src/utils/calculations'
-import { withRequiredAddr } from '../src/utils/withRequiredAddr'
+import { toTokenAmount } from '@utils/calculations'
+import { withRequiredAddr } from '@utils/withRequiredAddr'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -270,15 +270,208 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
+const Header: React.FC = () => {
+  const classes = useStyles()
+  const { tradeType } = useTrade()
+
+  return (
+    <>
+      <div className={classes.logoContainer}>
+        <div className={classes.logo}>
+          <Image src={squeethTokenSymbol} alt="squeeth token" width={37} height={37} />
+        </div>
+        <div>
+          <Typography variant="h5" className={classes.logoTitle}>
+            {tradeType === TradeType.LONG ? (
+              <>Long Squeeth - ETH&sup2; Position</>
+            ) : (
+              <>Covered Short Squeeth - short ETH&sup2; Position</>
+            )}
+          </Typography>
+          <Typography className={classes.logoSubTitle} variant="body1" color="textSecondary">
+            {tradeType === TradeType.LONG ? (
+              <>Perpetual leverage without liquidations</>
+            ) : (
+              <>Earn funding for selling ETH collateralized squeeth;</>
+            )}
+          </Typography>
+        </div>
+      </div>
+    </>
+  )
+}
+
+const TabComponent: React.FC = () => {
+  const classes = useStyles()
+  const { tradeType, setTradeType } = useTrade()
+
+  return (
+    <div>
+      <SqueethTabs
+        value={tradeType}
+        onChange={(evt, val) => setTradeType(val)}
+        aria-label="Sub nav tabs"
+        className={classes.subNavTabs}
+        centered
+        classes={{ indicator: tradeType === TradeType.SHORT ? classes.shortIndicator : classes.longIndicator }}
+      >
+        <SqueethTab
+          style={{ width: '50%', color: '#49D273' }}
+          classes={{ root: classes.longTab, selected: classes.longTab }}
+          label="Long"
+        />
+        <SqueethTab
+          style={{ width: '50%', color: '#f5475c' }}
+          classes={{ root: classes.shortTab, selected: classes.shortTab }}
+          label="Short"
+        />
+      </SqueethTabs>
+    </div>
+  )
+}
+
+const SqueethInfo: React.FC = () => {
+  const classes = useStyles()
+  const ethPrice = useETHPrice()
+  const { actualTradeType } = useTrade()
+  const { fundingPerDay, mark, index, impliedVol, currentImpliedFunding } = useController()
+
+  const [showAdvanced, setShowAdvanced] = useState(false)
+
+  return (
+    <div className={classes.squeethInfo}>
+      <div>
+        <div className={classes.squeethInfoSubGroup}>
+          {/* hard coded width layout to align with the next line */}
+          <div className={classes.infoItem} style={{ width: '18%' }}>
+            <Typography color="textSecondary" variant="body2">
+              ETH Price
+            </Typography>
+            <Typography>${ethPrice.toNumber().toLocaleString()}</Typography>
+          </div>
+          <div className={classes.infoItem} style={{ width: '30%' }}>
+            <div className={classes.infoLabel}>
+              <Typography color="textSecondary" variant="body2">
+                Last 24hr Avg Funding
+              </Typography>
+              <Tooltip title={Tooltips.Last24AvgFunding}>
+                <InfoIcon fontSize="small" className={classes.infoIcon} />
+              </Tooltip>
+            </div>
+            <Typography>{(fundingPerDay * 100).toFixed(2) || 'loading'}%</Typography>
+          </div>
+          <div className={classes.infoItem} style={{ width: '30%' }}>
+            <div className={classes.infoLabel}>
+              <Typography color="textSecondary" variant="body2">
+                Current Implied Funding
+              </Typography>
+              <Tooltip title={Tooltips.CurrentImplFunding}>
+                <InfoIcon fontSize="small" className={classes.infoIcon} />
+              </Tooltip>
+            </div>
+            <Typography>{(currentImpliedFunding * 100).toFixed(2) || 'loading'}%</Typography>
+          </div>
+          <div className={classes.infoItem} style={{ width: '15%' }}>
+            <div className={classes.infoLabel}>
+              <Typography color="textSecondary" variant="body2">
+                Funding Payments
+              </Typography>
+              <Tooltip title={Tooltips.FundingPayments}>
+                <InfoIcon fontSize="small" className={classes.infoIcon} />
+              </Tooltip>
+            </div>
+            <Typography>Continuous</Typography>
+          </div>
+          <div className={classes.infoItem} style={{ width: '5%' }}></div>
+          <div className={classes.infoItem} style={{ width: '10%' }}></div>
+        </div>
+      </div>
+      <div>
+        <div className={classes.squeethInfoSubGroup}>
+          {/* hard coded width layout to align with the prev line */}
+          {!showAdvanced ? (
+            <>
+              <div className={classes.infoItem}>
+                <div className={classes.infoLabel}>
+                  <Typography color="textSecondary" variant="body2">
+                    Advanced details
+                  </Typography>
+                </div>
+              </div>
+              <IconButton className={classes.arrowBtn} onClick={() => setShowAdvanced(true)}>
+                <ExpandMoreIcon />
+              </IconButton>
+            </>
+          ) : (
+            <>
+              <div className={classes.infoItem} style={{ width: '30%' }}>
+                <div className={classes.infoLabel}>
+                  <Typography color="textSecondary" variant="body2">
+                    ETH&sup2; Price
+                  </Typography>
+                </div>
+                <Typography>${Number(toTokenAmount(index, 18).toFixed(0)).toLocaleString() || 'loading'}</Typography>
+              </div>
+              <div className={classes.infoItem} style={{ width: '30%' }}>
+                <div className={classes.infoLabel}>
+                  <Typography color="textSecondary" variant="body2">
+                    Mark Price
+                  </Typography>
+                  <Tooltip title={Tooltips.Mark}>
+                    <InfoIcon fontSize="small" className={classes.infoIcon} />
+                  </Tooltip>
+                </div>
+                <Typography>${Number(toTokenAmount(mark, 18).toFixed(0)).toLocaleString() || 'loading'}</Typography>
+              </div>
+              <div className={classes.infoItem} style={{ width: '30%' }}>
+                <div className={classes.infoLabel}>
+                  <Typography color="textSecondary" variant="body2">
+                    Implied Volatility
+                  </Typography>
+                  <Tooltip title={Tooltips.ImplVol}>
+                    <InfoIcon fontSize="small" className={classes.infoIcon} />
+                  </Tooltip>
+                </div>
+                <Typography>{(impliedVol * 100).toFixed(2)}%</Typography>
+              </div>
+              <div className={classes.infoItem} style={{ width: '20%' }}>
+                <div className={classes.infoLabel}>
+                  <Typography color="textSecondary" variant="body2">
+                    Funding
+                  </Typography>
+                  <Tooltip
+                    title={
+                      actualTradeType === TradeType.LONG
+                        ? 'Funding is paid out of your position'
+                        : 'Funding is paid continuously to you from oSQTH token holders'
+                    }
+                  >
+                    <InfoIcon fontSize="small" className={classes.infoIcon} />
+                  </Tooltip>
+                </div>
+                <Typography>In-Kind</Typography>
+              </div>
+              <div className={classes.infoItem}>
+                <IconButton className={classes.arrowBtn} onClick={() => setShowAdvanced(false)}>
+                  <ExpandLessIcon />
+                </IconButton>
+              </div>
+              {/*  */}
+              {/* <div className={classes.infoItem}></div> */}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function TradePage() {
   const { me } = useWhitelist()
   const classes = useStyles()
-  const ethPrice = useETHPrice()
-  const { fundingPerDay, mark, index, impliedVol, currentImpliedFunding } = useController()
 
-  const { volMultiplier, setVolMultiplier } = useWorldContext()
-  const { tradeType, setTradeType, actualTradeType } = useTrade()
-  const [showAdvanced, setShowAdvanced] = useState(false)
+  const { setVolMultiplier } = useWorldContext()
+  const { tradeType, setTradeType } = useTrade()
   const [showMobileTrade, setShowMobileTrade] = useState(false)
   const [isWelcomeModalOpen, setWelcomeModalOpen] = useState(false)
 
@@ -298,204 +491,6 @@ function TradePage() {
       setWelcomeModalOpen(true)
     }
   }, [me])
-
-  const SqueethInfo = useCallback(() => {
-    return (
-      <div className={classes.squeethInfo}>
-        <div>
-          <div className={classes.squeethInfoSubGroup}>
-            {/* hard coded width layout to align with the next line */}
-            <div className={classes.infoItem} style={{ width: '18%' }}>
-              <Typography color="textSecondary" variant="body2">
-                ETH Price
-              </Typography>
-              <Typography>${ethPrice.toNumber().toLocaleString()}</Typography>
-            </div>
-            <div className={classes.infoItem} style={{ width: '30%' }}>
-              <div className={classes.infoLabel}>
-                <Typography color="textSecondary" variant="body2">
-                  Last 24hr Avg Funding
-                </Typography>
-                <Tooltip title={Tooltips.Last24AvgFunding}>
-                  <InfoIcon fontSize="small" className={classes.infoIcon} />
-                </Tooltip>
-              </div>
-              <Typography>{(fundingPerDay * 100).toFixed(2) || 'loading'}%</Typography>
-            </div>
-            <div className={classes.infoItem} style={{ width: '30%' }}>
-              <div className={classes.infoLabel}>
-                <Typography color="textSecondary" variant="body2">
-                  Current Implied Funding
-                </Typography>
-                <Tooltip title={Tooltips.CurrentImplFunding}>
-                  <InfoIcon fontSize="small" className={classes.infoIcon} />
-                </Tooltip>
-              </div>
-              <Typography>{(currentImpliedFunding * 100).toFixed(2) || 'loading'}%</Typography>
-            </div>
-            <div className={classes.infoItem} style={{ width: '15%' }}>
-              <div className={classes.infoLabel}>
-                <Typography color="textSecondary" variant="body2">
-                  Funding Payments
-                </Typography>
-                <Tooltip title={Tooltips.FundingPayments}>
-                  <InfoIcon fontSize="small" className={classes.infoIcon} />
-                </Tooltip>
-              </div>
-              <Typography>Continuous</Typography>
-            </div>
-            <div className={classes.infoItem} style={{ width: '5%' }}></div>
-            <div className={classes.infoItem} style={{ width: '10%' }}></div>
-          </div>
-        </div>
-        <div>
-          <div className={classes.squeethInfoSubGroup}>
-            {/* hard coded width layout to align with the prev line */}
-            {!showAdvanced ? (
-              <>
-                <div className={classes.infoItem}>
-                  <div className={classes.infoLabel}>
-                    <Typography color="textSecondary" variant="body2">
-                      Advanced details
-                    </Typography>
-                  </div>
-                </div>
-                <IconButton className={classes.arrowBtn} onClick={() => setShowAdvanced(true)}>
-                  <ExpandMoreIcon />
-                </IconButton>
-              </>
-            ) : (
-              <>
-                <div className={classes.infoItem} style={{ width: '30%' }}>
-                  <div className={classes.infoLabel}>
-                    <Typography color="textSecondary" variant="body2">
-                      ETH&sup2; Price
-                    </Typography>
-                  </div>
-                  <Typography>${Number(toTokenAmount(index, 18).toFixed(0)).toLocaleString() || 'loading'}</Typography>
-                </div>
-                <div className={classes.infoItem} style={{ width: '30%' }}>
-                  <div className={classes.infoLabel}>
-                    <Typography color="textSecondary" variant="body2">
-                      Mark Price
-                    </Typography>
-                    <Tooltip title={Tooltips.Mark}>
-                      <InfoIcon fontSize="small" className={classes.infoIcon} />
-                    </Tooltip>
-                  </div>
-                  <Typography>${Number(toTokenAmount(mark, 18).toFixed(0)).toLocaleString() || 'loading'}</Typography>
-                </div>
-                <div className={classes.infoItem} style={{ width: '30%' }}>
-                  <div className={classes.infoLabel}>
-                    <Typography color="textSecondary" variant="body2">
-                      Implied Volatility
-                    </Typography>
-                    <Tooltip title={Tooltips.ImplVol}>
-                      <InfoIcon fontSize="small" className={classes.infoIcon} />
-                    </Tooltip>
-                  </div>
-                  <Typography>{(impliedVol * 100).toFixed(2)}%</Typography>
-                </div>
-                <div className={classes.infoItem} style={{ width: '20%' }}>
-                  <div className={classes.infoLabel}>
-                    <Typography color="textSecondary" variant="body2">
-                      Funding
-                    </Typography>
-                    <Tooltip
-                      title={
-                        actualTradeType === TradeType.LONG
-                          ? 'Funding is paid out of your position'
-                          : 'Funding is paid continuously to you from oSQTH token holders'
-                      }
-                    >
-                      <InfoIcon fontSize="small" className={classes.infoIcon} />
-                    </Tooltip>
-                  </div>
-                  <Typography>In-Kind</Typography>
-                </div>
-                <div className={classes.infoItem}>
-                  <IconButton className={classes.arrowBtn} onClick={() => setShowAdvanced(false)}>
-                    <ExpandLessIcon />
-                  </IconButton>
-                </div>
-                {/*  */}
-                {/* <div className={classes.infoItem}></div> */}
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    )
-  }, [
-    actualTradeType,
-    classes.infoIcon,
-    classes.infoItem,
-    classes.infoLabel,
-    classes.squeethInfo,
-    classes.squeethInfoSubGroup,
-    classes.arrowBtn,
-    ethPrice.toNumber(),
-    fundingPerDay,
-    showAdvanced,
-    impliedVol.toString(),
-    ethPrice.toString(),
-    mark.toString(),
-    index.toString(),
-  ])
-
-  const Header = useCallback(() => {
-    return (
-      <>
-        <div className={classes.logoContainer}>
-          <div className={classes.logo}>
-            <Image src={squeethTokenSymbol} alt="squeeth token" width={37} height={37} />
-          </div>
-          <div>
-            <Typography variant="h5" className={classes.logoTitle}>
-              {tradeType === TradeType.LONG ? (
-                <>Long Squeeth - ETH&sup2; Position</>
-              ) : (
-                <>Covered Short Squeeth - short ETH&sup2; Position</>
-              )}
-            </Typography>
-            <Typography className={classes.logoSubTitle} variant="body1" color="textSecondary">
-              {tradeType === TradeType.LONG ? (
-                <>Perpetual leverage without liquidations</>
-              ) : (
-                <>Earn funding for selling ETH collateralized squeeth;</>
-              )}
-            </Typography>
-          </div>
-        </div>
-      </>
-    )
-  }, [classes.logoContainer, classes.logoTitle, tradeType])
-
-  const TabComponent = useCallback(() => {
-    return (
-      <div>
-        <SqueethTabs
-          value={tradeType}
-          onChange={(evt, val) => setTradeType(val)}
-          aria-label="Sub nav tabs"
-          className={classes.subNavTabs}
-          centered
-          classes={{ indicator: tradeType === TradeType.SHORT ? classes.shortIndicator : classes.longIndicator }}
-        >
-          <SqueethTab
-            style={{ width: '50%', color: '#49D273' }}
-            classes={{ root: classes.longTab, selected: classes.longTab }}
-            label="Long"
-          />
-          <SqueethTab
-            style={{ width: '50%', color: '#f5475c' }}
-            classes={{ root: classes.shortTab, selected: classes.shortTab }}
-            label="Short"
-          />
-        </SqueethTabs>
-      </div>
-    )
-  }, [classes.subNavTabs, setTradeType, tradeType])
 
   return (
     <div>

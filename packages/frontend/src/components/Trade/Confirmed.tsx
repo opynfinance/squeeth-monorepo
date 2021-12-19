@@ -4,8 +4,8 @@ import Image from 'next/image'
 import React from 'react'
 
 import { EtherscanPrefix, Tooltips } from '../../constants'
-import { useWallet } from '../../context/wallet'
-import { useAddresses } from '../../hooks/useAddress'
+import { useWallet } from '@context/wallet'
+import { useAddresses } from '@hooks/useAddress'
 import { UniswapIframe } from '../Modal/UniswapIframe'
 
 const useStyles = makeStyles((theme) =>

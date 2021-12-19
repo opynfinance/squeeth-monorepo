@@ -7,7 +7,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from 're
 import Web3 from 'web3'
 
 import { EtherscanPrefix } from '../constants'
-import useInterval from '../hooks/useInterval'
+import useInterval from '@hooks/useInterval'
 import { Networks } from '../types'
 
 const defaultWeb3 = new Web3(`https://ropsten.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY}`)

@@ -2,17 +2,17 @@ import { createStyles, makeStyles, Tooltip, Typography } from '@material-ui/core
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import Link from 'next/link'
 
-import { LPTable } from '../src/components/Lp/LPTable'
-import Nav from '../src/components/Nav'
-import History from '../src/components/Trade/History'
+import { LPTable } from '@components/Lp/LPTable'
+import Nav from '@components/Nav'
+import History from '@components/Trade/History'
 import { WSQUEETH_DECIMALS } from '../src/constants'
-import { Tooltips } from '../src/constants/enums'
-import { useSqueethPool } from '../src/hooks/contracts/useSqueethPool'
-import { useTokenBalance } from '../src/hooks/contracts/useTokenBalance'
-import { useAddresses } from '../src/hooks/useAddress'
-import { useETHPrice } from '../src/hooks/useETHPrice'
-import { useLongPositions, useLPPositions, usePnL, useShortPositions } from '../src/hooks/usePositions'
-import { withRequiredAddr } from '../src/utils/withRequiredAddr'
+import { Tooltips } from '@constants/enums'
+import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
+import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
+import { useAddresses } from '@hooks/useAddress'
+import { useETHPrice } from '@hooks/useETHPrice'
+import { useLongPositions, useLPPositions, usePnL, useShortPositions } from '@hooks/usePositions'
+import { withRequiredAddr } from '@utils/withRequiredAddr'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -141,7 +141,7 @@ export function Positions() {
           </div>
         </div>
         {/* eslint-disable-next-line prettier/prettier */}
-        {wSqueethBal.isZero() && (shortVaults.length && shortVaults[firstValidVault].shortAmount.isZero()) ||
+        {(wSqueethBal.isZero() && shortVaults.length && shortVaults[firstValidVault].shortAmount.isZero()) ||
         (wSqueethBal.isZero() && shortVaults.length === 0) ? (
           <div className={classes.empty}>
             <Typography>No active positions</Typography>

@@ -1,7 +1,7 @@
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React from 'react'
 
-import { Steps, useLPState } from '../../context/lp'
+import { Steps, useLPState } from '@context/lp'
 import GetSqueeth from './GetSqueeth'
 import ProvideLiquidity from './ProvideLiquidity'
 import SelectMethod from './SelectMethod'

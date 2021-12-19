@@ -2,8 +2,8 @@ import BigNumber from 'bignumber.js'
 import { useCallback, useEffect, useState } from 'react'
 
 import abi from '../../abis/erc20.json'
-import { useWallet } from '../../context/wallet'
-import { toTokenAmount } from '../../utils/calculations'
+import { useWallet } from '@context/wallet'
+import { toTokenAmount } from '@utils/calculations'
 
 const MAX_UINT = '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
 

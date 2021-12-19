@@ -6,7 +6,7 @@ import React from 'react'
 
 import Logo from '../../../public/images/mint-squeeth.svg'
 import UniswapLogo from '../../../public/images/uniswap-uni-logo.svg'
-import { LPActions, OBTAIN_METHOD, useLPState } from '../../context/lp'
+import { LPActions, OBTAIN_METHOD, useLPState } from '@context/lp'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
