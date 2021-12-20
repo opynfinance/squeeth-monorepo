@@ -104,6 +104,13 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
+const pnlClass = (positionType: string, long: number | BigNumber, short: number | BigNumber, classes: any) => {
+  if (positionType === PositionType.LONG) return Number(long?.toFixed(2)) > 0 ? classes.green : classes.red
+  if (positionType === PositionType.SHORT) return Number(short?.toFixed(2)) > 0 ? classes.green : classes.red
+
+  return classes.grey
+}
+
 const PositionCard: React.FC = () => {
   const classes = useStyles()
   const {
@@ -144,16 +151,6 @@ const PositionCard: React.FC = () => {
     if (positionType === PositionType.SHORT) return classes.shortTitle
     return classes.noneTitle
   }, [positionType])
-
-  const pnlClass = useCallback(
-    (long, short) => {
-      if (positionType === PositionType.LONG) return long?.toFixed(2) > 0 ? classes.green : classes.red
-      if (positionType === PositionType.SHORT) return short?.toFixed(2) > 0 ? classes.green : classes.red
-
-      return classes.grey
-    },
-    [positionType, longGain, shortGain, longRealizedPNL, shortRealizedPNL],
-  )
 
   const isDollarValueLoading = useMemo(() => {
     if (positionType === PositionType.LONG) {
@@ -221,7 +218,16 @@ const PositionCard: React.FC = () => {
 
     setPostTradeAmt(_postTradeAmt)
     setPostPosition(_postPosition)
-  }, [wSqueethBal.toNumber(), shortVaults, tradeAmount, actualTradeType, quote.amountOut.toNumber()])
+  }, [
+    actualTradeType,
+    firstValidVault,
+    isOpenPosition,
+    lngAmt.toNumber(),
+    quote.amountOut.toNumber(),
+    shortVaults?.length,
+    tradeAmount.toNumber(),
+    wSqueethBal.toNumber(),
+  ])
 
   const getPostPositionBasedValue = useCallback(
     (long: any, short: any, none: any, loadingMsg?: any) => {
@@ -324,7 +330,10 @@ const PositionCard: React.FC = () => {
                 </Tooltip>
               </div>
               <div className={classes.pnl}>
-                <Typography className={pnlClass(longGain, shortGain)} style={{ fontWeight: 600 }}>
+                <Typography
+                  className={pnlClass(positionType, longGain, shortGain, classes)}
+                  style={{ fontWeight: 600 }}
+                >
                   {getPositionBasedValue(
                     `$${sellQuote.amountOut.times(ethPrice).minus(longUsdAmt.abs()).toFixed(2)}`,
                     `$${buyQuote.times(ethPrice).minus(shortUsdAmt.abs()).toFixed(2)}`,
@@ -332,7 +341,11 @@ const PositionCard: React.FC = () => {
                     'Loading',
                   )}
                 </Typography>
-                <Typography variant="caption" className={pnlClass(longGain, shortGain)} style={{ marginLeft: '4px' }}>
+                <Typography
+                  variant="caption"
+                  className={pnlClass(positionType, longGain, shortGain, classes)}
+                  style={{ marginLeft: '4px' }}
+                >
                   {getPositionBasedValue(`(${longGain.toFixed(2)}%)`, `(${shortGain.toFixed(2)}%)`, null, ' ')}
                 </Typography>
               </div>
@@ -346,7 +359,10 @@ const PositionCard: React.FC = () => {
               </Tooltip>
             </div>
             <div className={classes.pnl}>
-              <Typography className={pnlClass(longRealizedPNL, shortRealizedPNL)} style={{ fontWeight: 600 }}>
+              <Typography
+                className={pnlClass(positionType, longRealizedPNL, shortRealizedPNL, classes)}
+                style={{ fontWeight: 600 }}
+              >
                 {getRealizedPNLBasedValue(
                   `$${longRealizedPNL.toFixed(2)}`,
                   `$${shortRealizedPNL.toFixed(2)}`,
