@@ -181,7 +181,7 @@ const PositionCard: React.FC = () => {
       }
       return none
     },
-    [positionType, loading, longGain, shortGain],
+    [shortVaults, wSqueethBal, positionType, loading, longGain, shortGain],
   )
 
   const getRealizedPNLBasedValue = useCallback(
