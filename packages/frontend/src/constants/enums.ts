@@ -35,5 +35,10 @@ export enum Tooltips {
   SellOpenAmount = 'Minimum collateral amount is 7.5 ETH to ensure system solvency with sufficient liquidation incentive',
   LiquidationPrice = 'Price of ETH when liquidation occurs',
   InitialPremium = 'Initial payment you get for selling squeeth on Uniswap',
+  BacktestDisclaimer = 'This is historical backtest data and does not show the actual performance of squeeth. See the FAQ to learn more.',
   PercentOfPool = 'The amount of your liquidity compared to all current active liquidity',
+}
+
+export enum Links {
+  BacktestFAQ = 'https://opyn.gitbook.io/squeeth/resources/squeeth-faq#what-is-the-historical-365d-pnl',
 }

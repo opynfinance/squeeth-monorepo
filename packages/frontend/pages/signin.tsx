@@ -26,12 +26,24 @@ const useStyles = makeStyles((theme) =>
       [theme.breakpoints.down('sm')]: {
         fontSize: 18,
       },
+      textAlign: 'center',
     },
     info: {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
       gap: '10px',
+      textAlign: 'center',
+    },
+    terms: {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: '10px',
+      maxWidth: '300px',
+      fontSize: 12,
+      marginTop: theme.spacing(2),
+      textAlign: 'center',
     },
   }),
 )
@@ -71,6 +83,10 @@ export default function SignIn() {
           </Button>
         </a>
       </div>
+      <Typography variant="body2" className={classes.terms} color="textSecondary">
+        By connecting your wallet, you acknowledge and agree that you are using the Squeeth testnet solely for the
+        purpose of product testing and user feedback. Users are testing the Squeeth frontend for these purposes only.
+      </Typography>
     </div>
   ) : (
     <div className={classes.container}>

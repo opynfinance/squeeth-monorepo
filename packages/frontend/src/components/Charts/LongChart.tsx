@@ -1,12 +1,24 @@
-import { Button, ButtonGroup, createStyles, Hidden, makeStyles, TextField, Typography } from '@material-ui/core'
+import {
+  Button,
+  ButtonGroup,
+  createStyles,
+  Hidden,
+  InputAdornment,
+  makeStyles,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@material-ui/core'
+import InfoIcon from '@material-ui/icons/InfoOutlined'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import React, { useEffect, useMemo, useState } from 'react'
 
 import ComparisonChart from '../../../public/images/ComparisonChart.svg'
-import { graphOptions } from '@constants/diagram'
-import { useWorldContext } from '@context/world'
-import { useETHPrice } from '@hooks/useETHPrice'
+import { graphOptions } from '../../constants/diagram'
+import { Links, Tooltips } from '../../constants/enums'
+import { useWorldContext } from '../../context/world'
+import { useETHPrice } from '../../hooks/useETHPrice'
 import IV from '../IV'
 import { SqueethTab, SqueethTabs } from '../Tabs'
 import LongSqueethPayoff from './LongSqueethPayoff'
@@ -51,6 +63,11 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       overflow: 'auto',
       maxHeight: '310px',
+    },
+    infoIcon: {
+      fontSize: '1rem',
+      marginLeft: theme.spacing(0.5),
+      marginTop: '2px',
     },
   }),
 )
@@ -160,6 +177,17 @@ export function LongChart() {
               style={{ width: 150, marginLeft: '16px' }}
               label="Historical Days"
               variant="outlined"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <a href={Links.BacktestFAQ} target="_blank" rel="noreferrer">
+                      <Tooltip title={Tooltips.BacktestDisclaimer}>
+                        <InfoIcon fontSize="small" />
+                      </Tooltip>
+                    </a>
+                  </InputAdornment>
+                ),
+              }}
             />
           ) : null}
         </Hidden>

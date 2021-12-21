@@ -1,11 +1,12 @@
-import { createStyles, Hidden, makeStyles, TextField, Typography } from '@material-ui/core'
+import { createStyles, Hidden, InputAdornment, makeStyles, TextField, Tooltip, Typography } from '@material-ui/core'
+import InfoIcon from '@material-ui/icons/InfoOutlined'
 import Alert from '@material-ui/lab/Alert'
 import dynamic from 'next/dynamic'
 import React, { useMemo, useState } from 'react'
 
-import { graphOptions, Vaults } from '../../constants'
-import { useWorldContext } from '@context/world'
-import { useETHPrice } from '@hooks/useETHPrice'
+import { graphOptions, Links, Tooltips, Vaults } from '../../constants'
+import { useWorldContext } from '../../context/world'
+import { useETHPrice } from '../../hooks/useETHPrice'
 import IV from '../IV'
 import { SqueethTab, SqueethTabs } from '../Tabs'
 import ShortSqueethPayoff from './ShortSqueethPayoff'
@@ -178,6 +179,17 @@ export function VaultChart({
               style={{ width: 150, marginLeft: '16px' }}
               label="Historical Days"
               variant="outlined"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <a href={Links.BacktestFAQ} target="_blank" rel="noreferrer">
+                      <Tooltip title={Tooltips.BacktestDisclaimer}>
+                        <InfoIcon fontSize="small" />
+                      </Tooltip>
+                    </a>
+                  </InputAdornment>
+                ),
+              }}
             />
           ) : null}
         </Hidden>
