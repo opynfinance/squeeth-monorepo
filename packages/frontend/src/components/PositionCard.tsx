@@ -36,19 +36,50 @@ const useStyles = makeStyles((theme) =>
       borderRadius: theme.spacing(0.5),
       marginLeft: theme.spacing(2),
     },
-    longTitle: {
-      color: theme.palette.success.main,
-      backgroundColor: `${theme.palette.success.main}20`,
+    positionTitle: {
+      color: (props: any): any =>
+        props.positionType === PositionType.LONG
+          ? theme.palette.success.main
+          : props.positionType === PositionType.SHORT
+          ? theme.palette.error.main
+          : 'inherit',
+      backgroundColor: (props: any): any =>
+        props.positionType === PositionType.LONG
+          ? `${theme.palette.success.main}20`
+          : props.positionType === PositionType.SHORT
+          ? `${theme.palette.error.main}20`
+          : '#DCDAE920',
     },
-    shortTitle: {
-      color: theme.palette.error.main,
-      backgroundColor: `${theme.palette.error.main}20`,
+    postpositionTitle: {
+      color: (props: any): any =>
+        props.postPosition === PositionType.LONG
+          ? theme.palette.success.main
+          : props.postPosition === PositionType.SHORT && theme.palette.error.main,
+      backgroundColor: (props: any): any =>
+        props.postPosition === PositionType.LONG
+          ? `${theme.palette.success.main}20`
+          : props.postPosition === PositionType.SHORT
+          ? `${theme.palette.error.main}20`
+          : '#DCDAE920',
     },
-    noneTitle: {
-      backgroundColor: '#DCDAE920',
+    posBg: {
+      background: (props: any): any => {
+        const positionColor =
+          props.positionType === PositionType.LONG
+            ? '#375F4290'
+            : props.positionType === PositionType.SHORT
+            ? '#68373D40'
+            : 'rgba(255, 255, 255, 0.08)'
+        const postColor =
+          props.postPosition === PositionType.LONG
+            ? '#375F42'
+            : props.postPosition === PositionType.SHORT
+            ? '#68373D90'
+            : 'rgba(255, 255, 255, 0.08)'
+        return `linear-gradient(to right, ${positionColor} 0%,${postColor} 75%)`
+      },
     },
     assetDiv: {
-      // marginTop: theme.spacing(1),
       display: 'flex',
       justifyContent: 'space-between',
       flexWrap: 'wrap',
@@ -112,7 +143,6 @@ const pnlClass = (positionType: string, long: number | BigNumber, short: number 
 }
 
 const PositionCard: React.FC = () => {
-  const classes = useStyles()
   const {
     buyQuote,
     sellQuote,
@@ -134,6 +164,7 @@ const PositionCard: React.FC = () => {
   const [fetchingNew, setFetchingNew] = useState(false)
   const [postTradeAmt, setPostTradeAmt] = useState(new BigNumber(0))
   const [postPosition, setPostPosition] = useState(PositionType.NONE)
+  const classes = useStyles({ positionType, postPosition })
 
   useEffect(() => {
     if (tradeSuccess) {
@@ -145,12 +176,6 @@ const PositionCard: React.FC = () => {
       }, 5000)
     }
   }, [tradeSuccess])
-
-  const titleClass = useMemo(() => {
-    if (positionType === PositionType.LONG) return classes.longTitle
-    if (positionType === PositionType.SHORT) return classes.shortTitle
-    return classes.noneTitle
-  }, [positionType])
 
   const isDollarValueLoading = useMemo(() => {
     if (positionType === PositionType.LONG) {
@@ -181,7 +206,7 @@ const PositionCard: React.FC = () => {
       }
       return none
     },
-    [shortVaults, wSqueethBal, positionType, loading, longGain, shortGain],
+    [shortVaults, wSqueethBal, tradeType, positionType, loading, longGain, shortGain],
   )
 
   const getRealizedPNLBasedValue = useCallback(
@@ -229,48 +254,25 @@ const PositionCard: React.FC = () => {
     wSqueethBal.toNumber(),
   ])
 
-  const getPostPositionBasedValue = useCallback(
-    (long: any, short: any, none: any, loadingMsg?: any) => {
-      if (loadingMsg && loading) return loadingMsg
-      if (postPosition === PositionType.LONG) return long
-      if (postPosition === PositionType.SHORT) return short
-      return none
-    },
-    [postPosition, loading],
-  )
-
-  const postTitleClass = useMemo(() => {
-    if (postPosition === PositionType.LONG) return classes.longTitle
-    if (postPosition === PositionType.SHORT) return classes.shortTitle
-    return classes.noneTitle
-  }, [postPosition])
-
-  const cardBackground = useMemo(() => {
-    const positionBackground = getPositionBasedValue('#375F4290', '#68373D40', 'rgba(255, 255, 255, 0.08)')
-    const postPositionBackground = getPostPositionBasedValue('#375F42', '#68373D90', 'rgba(255, 255, 255, 0.08)')
-
-    return `linear-gradient(to right, ${positionBackground} 0%, ${postPositionBackground} 75%)`
-  }, [postPosition, positionType])
-
   return (
-    <div className={classes.container} style={{ background: cardBackground }}>
+    <div className={clsx(classes.container, classes.posBg)}>
       <div className={classes.header}>
         <Typography variant="caption" component="span" style={{ fontWeight: 500 }} color="textSecondary">
           MY POSITION
         </Typography>
-        <span className={clsx(classes.title, titleClass)}>{positionType.toUpperCase()}</span>
+        <span className={clsx(classes.title, classes.positionTitle)}>{positionType.toUpperCase()}</span>
         {postPosition === positionType ||
         (tradeType === TradeType.LONG && shortVaults.length && shortVaults[firstValidVault].shortAmount.gt(0)) ||
         (tradeType === TradeType.SHORT && lngAmt.gt(0)) ? null : (
           <>
             <ArrowRightAltIcon className={classes.arrow} />
-            <span className={clsx(classes.title, postTitleClass)}>{postPosition.toUpperCase()}</span>
+            <span className={clsx(classes.title, classes.postpositionTitle)}>{postPosition.toUpperCase()}</span>
           </>
         )}
       </div>
       <div className={classes.assetDiv}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', marginTop: '.5em' }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
             <Typography component="span" style={{ fontWeight: 600 }}>
               {getPositionBasedValue(
                 wSqueethBal.toFixed(6),
