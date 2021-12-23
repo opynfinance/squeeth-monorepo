@@ -23,6 +23,8 @@ import Confirmed from '@components/Trade/Confirmed'
 import TradeDetails from '@components/Trade/TradeDetails'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import UniswapData from '@components/Trade/UniswapData'
+import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
+import { WSQUEETH_DECIMALS } from '../../../constants'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -175,9 +177,10 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   const { openShort } = useShortHelper()
   const { getWSqueethPositionValue } = useSqueethPool()
   const { updateOperator, normFactor: normalizationFactor, getShortAmountFromDebt, getDebtAmount } = useController()
-  const { shortHelper } = useAddresses()
   const ethPrice = useETHPrice()
   const { selectWallet, connected } = useWallet()
+  const { shortHelper, wSqueeth } = useAddresses()
+  const wSqueethBal = useTokenBalance(wSqueeth, 5, WSQUEETH_DECIMALS)
 
   const {
     tradeAmount: amount,
@@ -288,13 +291,13 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
       closeError =
         'You must have at least 7.5 ETH collateral unless you fully close out your position. Either fully close your position, or close out less'
     }
-    if (lngAmt.gt(0)) {
+    if (lngAmt.gt(0) && !wSqueethBal.isEqualTo(0)) {
       existingLongError = 'Close your long position to open a short'
     }
   }
 
   const shortOpenPriceImpactErrorState =
-    priceImpactWarning && !shortLoading && !(collatPercent < 150) && !openError && !lngAmt.gt(0)
+    priceImpactWarning && !shortLoading && !(collatPercent < 150) && !openError && !existingLongError
 
   useEffect(() => {
     setCollatRatio(collatPercent / 100)
@@ -442,7 +445,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
               <PrimaryButton
                 onClick={depositAndShort}
                 className={classes.amountInput}
-                disabled={shortLoading || collatPercent < 150 || !!openError || lngAmt.gt(0)}
+                disabled={shortLoading || collatPercent < 150 || !!openError || !!existingLongError}
                 variant={shortOpenPriceImpactErrorState ? 'outlined' : 'contained'}
                 style={
                   shortOpenPriceImpactErrorState
@@ -508,7 +511,9 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   const { closeShort } = useShortHelper()
   const { getWSqueethPositionValue } = useSqueethPool()
   const { updateOperator, normFactor: normalizationFactor, getShortAmountFromDebt, getDebtAmount } = useController()
-  const { shortHelper } = useAddresses()
+  const { shortHelper, wSqueeth } = useAddresses()
+  const wSqueethBal = useTokenBalance(wSqueeth, 5, WSQUEETH_DECIMALS)
+
   const ethPrice = useETHPrice()
   const { selectWallet, connected } = useWallet()
 
@@ -632,7 +637,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
       closeError =
         'You must have at least 7.5 ETH collateral unless you fully close out your position. Either fully close your position, or close out less'
     }
-    if (lngAmt.gt(0)) {
+    if (lngAmt.gt(0) && !wSqueethBal.isEqualTo(0)) {
       existingLongError = 'Close your long position to open a short'
     }
   }
@@ -642,7 +647,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
     !buyLoading &&
     !(collatPercent < 150) &&
     !closeError &&
-    !lngAmt.gt(0) &&
+    !existingLongError &&
     shortVaults.length &&
     !shortVaults[firstValidVault].shortAmount.isZero()
 
@@ -743,7 +748,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                       <ArrowRightAltIcon className={classes.arrowIcon} />
                       <span>{(balance - sellCloseQuote.amountIn.toNumber()).toFixed(6)}</span>
                     </>
-                  ) : connected && lngAmt.gt(0) ? (
+                  ) : existingLongError ? (
                     existingLongError
                   ) : null}{' '}
                   <span style={{ marginLeft: '4px' }}>ETH</span>
@@ -792,7 +797,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                   buyLoading ||
                   collatPercent < 150 ||
                   !!closeError ||
-                  lngAmt.gt(0) ||
+                  !!existingLongError ||
                   (shortVaults.length && shortVaults[firstValidVault].shortAmount.isZero())
                 }
                 variant={shortClosePriceImpactErrorState ? 'outlined' : 'contained'}
