@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "codegen:uniswap": "apollo client:codegen --target typescript --globalTypesFile=types/global_apollo.ts --includes=./src/queries/uniswap/**/*.ts  --endpoint 'https://api.thegraph.com/subgraphs/name/kmkoushik/uniswap-v3-ropsten'"
+    "codegen:uniswap": "apollo client:codegen --target typescript --globalTypesFile=types/global_apollo.ts --includes=./src/queries/uniswap/**/*.ts  --endpoint 'https://api.thegraph.com/subgraphs/name/kmkoushik/uniswap-v3-ropsten'",
+    "codegen:squeeth": "apollo client:codegen --target typescript --globalTypesFile=types/global_apollo.ts --includes=./src/queries/squeeth/**/*.ts  --endpoint 'https://api.thegraph.com/subgraphs/name/opynfinance/squeeth-ropsten'"
   },
   "dependencies": {
     "@apollo/client": "^3.4.10",

@@ -57,3 +57,8 @@ export const uniswapClient = {
   31337: mainnet, // Can be replaced with local graph node if needed
   421611: mainnet, // Should be replaced with arbitrum subgraph
 }
+
+export const squeethClient = new ApolloClient({
+  uri: process.env.NEXT_PUBLIC_SUBGRAPH_URI,
+  cache: new InMemoryCache(),
+})

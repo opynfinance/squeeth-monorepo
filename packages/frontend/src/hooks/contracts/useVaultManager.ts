@@ -1,10 +1,14 @@
+import { useQuery } from '@apollo/client'
 import { useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 
 import erc721Abi from '../../abis/vaultManager.json'
+import { VAULTS_QUERY } from '../../queries/squeeth/vaultsQuery'
+import { Vaults, Vaults_vaults } from '../../queries/squeeth/__generated__/Vaults'
+import { squeethClient } from '../../utils/apollo-client'
 import { useWallet } from '@context/wallet'
 import { useAddresses } from '../useAddress'
-import useInterval from '../useInterval'
+// import useInterval from '../useInterval'
 import { useController } from './useController'
 
 /**
@@ -26,32 +30,27 @@ export const useVaultManager = (refetchIntervalSec = 20) => {
     setContract(new web3.eth.Contract(erc721Abi as any, vaultManager))
   }, [web3])
 
-  useEffect(() => {
-    updateBalance()
-  }, [address, contract])
+  const { data, loading } = useQuery<Vaults>(VAULTS_QUERY, {
+    client: squeethClient,
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      ownerId: address,
+    },
+  })
 
-  async function updateBalance() {
-    if (!contract) return
-    try {
-      contract
-        .getPastEvents('Transfer', {
-          fromBlock: 0, // Should be moved to constant and changed based on network id
-          toBlock: 'latest',
-        })
-        .then(async (events) => {
-          const tokens = new Set(
-            events
-              .filter((event) => event.returnValues.to.toLowerCase() === address?.toLowerCase())
-              .map((event) => event.returnValues.tokenId),
-          )
-          const vaultPromise = Array.from(tokens).map((tokenId) => getVault(tokenId))
-          const _vaults = (await Promise.all(vaultPromise)).filter((v) => v?.shortAmount.gt(0))
-          setVaults(_vaults)
-        })
-    } catch (error) {
-      console.log(`updateBalance error`)
-    }
-  }
+  useEffect(() => {
+    ;(async function updateBalance() {
+      if (!data?.vaults?.length) return
+      const tokens = new Set(data?.vaults.map((vault: Vaults_vaults) => vault.id))
+
+      const vaultPromise = Array.from(tokens).map((tokenId) => getVault(Number(tokenId)))
+      const _vaults = (await Promise.all(vaultPromise)).filter((v) => {
+        return v?.shortAmount.gt(0)
+      })
+
+      setVaults(_vaults)
+    })()
+  }, [data?.vaults])
 
   const getOwner = async (vaultId: number) => {
     if (!contract) return
@@ -76,7 +75,5 @@ export const useVaultManager = (refetchIntervalSec = 20) => {
     )
   }
 
-  useInterval(updateBalance, refetchIntervalSec * 1000)
-
-  return { vaults, getOwner, approve, isApproved }
+  return { vaults, getOwner, approve, isApproved, loading }
 }
