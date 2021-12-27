@@ -142,7 +142,11 @@ const pnlClass = (positionType: string, long: number | BigNumber, short: number 
   return classes.grey
 }
 
-const PositionCard: React.FC = () => {
+type PositionCardType = {
+  tradeCompleted: boolean
+}
+
+const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
   const {
     buyQuote,
     sellQuote,
@@ -283,7 +287,8 @@ const PositionCard: React.FC = () => {
             {(tradeType === TradeType.SHORT && lngAmt.gt(0)) ||
             (tradeType === TradeType.LONG && shortVaults.length && shortVaults[firstValidVault].shortAmount.gt(0)) ||
             tradeAmount.isLessThanOrEqualTo(0) ||
-            tradeAmount.isNaN() ? null : (
+            tradeAmount.isNaN() ||
+            tradeCompleted ? null : (
               <>
                 <ArrowRightAltIcon className={classes.arrow} />
                 <Typography

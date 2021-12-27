@@ -14,7 +14,7 @@ const useStyles = makeStyles((theme) =>
       padding: theme.spacing(2),
     },
     obtainItem: {
-      width: '370px',
+      width: '400px',
       height: '240px',
       background: theme.palette.background.lightStone,
       margin: theme.spacing(1, 0),
@@ -58,7 +58,7 @@ const SelectMethod: React.FC = () => {
         onClick={() => dispatch({ type: LPActions.SELECT_METHOD, payload: OBTAIN_METHOD.MINT })}
       >
         <Typography className={classes.obtainItemTitle} variant="h6">
-          Mint
+          Mint Squeeth to LP
         </Typography>
         <Image className={classes.obtainItemImg} src={Logo} alt="Comparison Chart" height={60} width={60} />
         <Typography className={classes.obtainItemDetail}>Mint Squeeth by depositing ETH as collateral</Typography>
@@ -70,7 +70,7 @@ const SelectMethod: React.FC = () => {
         onClick={() => dispatch({ type: LPActions.SELECT_METHOD, payload: OBTAIN_METHOD.BUY })}
       >
         <Typography className={classes.obtainItemTitle} variant="h6">
-          Buy
+          Buy Squeeth to LP
         </Typography>
         <Image className={classes.obtainItemImg} src={UniswapLogo} alt="Comparison Chart" height={60} width={60} />
         <Typography className={classes.obtainItemDetail}>Buy Squeeth directly from Uniswap</Typography>

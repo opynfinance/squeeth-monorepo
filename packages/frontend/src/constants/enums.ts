@@ -27,7 +27,7 @@ export enum Tooltips {
   CurrentImplFunding = 'Current funding rate calculated using current Mark - Index',
   FundingPayments = 'Funding happens every time the contract is touched',
   oSQTHPrice = 'Price of oSQTH on Uniswap',
-  LPPnL = 'PnL = Value of current LP underlying tokens - Value of tokens deposited (at current price)',
+  LPPnL = 'PnL = Value of current LP underlying tokens including uncollected fees - Value of tokens deposited (at current price)',
   UniswapLoading = 'When you click the Uniswap link, the Uniswap LP page may take a few moments to load. Please wait for it to fully load so it can prefill LP token data.',
   Operator = 'Operator is a contract that mints squeeth, deposits collateral and sells squeeth in single TX. Similarly it also buys back + burns squeeth and withdraws collateral in single TX',
   SellCloseAmount = 'Amount of oSQTH to buy',

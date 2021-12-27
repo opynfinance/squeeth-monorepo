@@ -19,12 +19,12 @@ export function inRange(lower: number, upper: number, pool: Pool | undefined): b
   }
   return upper > pool?.tickCurrent && pool?.tickCurrent > lower
 }
-
+3
 export function parseSlippageInput(value: string) {
-  const parsed = Math.floor(Number.parseFloat(value) * 10)
+  const parsed = Math.floor(Number.parseFloat(value) * 100)
 
   if (value.length === 0 || !Number.isInteger(parsed) || parsed < 0 || parsed > 5000) {
-    const defaultSlippage = DEFAULT_SLIPPAGE * 10
+    const defaultSlippage = DEFAULT_SLIPPAGE * 100 //Percent(50, 10_000) = 0.5%
     return new Percent(defaultSlippage, 10_000)
   } else {
     return new Percent(parsed, 10_000)

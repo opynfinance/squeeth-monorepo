@@ -52,7 +52,7 @@ const SqueethInfo: React.FC = () => {
             <Typography color="textSecondary" variant="body2">
               ETH Price
             </Typography>
-            <Typography>${ethPrice.toNumber().toLocaleString()}</Typography>
+            <Typography>${Number(toTokenAmount(index, 18).sqrt()).toFixed(2).toLocaleString()}</Typography>
           </div>
           <div className={classes.infoItem}>
             <div className={classes.infoLabel}>

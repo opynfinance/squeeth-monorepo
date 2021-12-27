@@ -347,7 +347,7 @@ const SqueethInfo: React.FC = () => {
             <Typography color="textSecondary" variant="body2">
               ETH Price
             </Typography>
-            <Typography>${ethPrice.toNumber().toLocaleString()}</Typography>
+            <Typography>${Number(toTokenAmount(index, 18).sqrt()).toFixed(2).toLocaleString()}</Typography>
           </div>
           <div className={classes.infoItem} style={{ width: '30%' }}>
             <div className={classes.infoLabel}>
@@ -474,6 +474,7 @@ function TradePage() {
   const { tradeType, setTradeType } = useTrade()
   const [showMobileTrade, setShowMobileTrade] = useState(false)
   const [isWelcomeModalOpen, setWelcomeModalOpen] = useState(false)
+  const [tradeCompleted, setTradeCompleted] = useState(false)
 
   const handleClose = () => {
     setWelcomeModalOpen(false)
@@ -502,7 +503,7 @@ function TradePage() {
               <Header />
               <div className={classes.positionContainer}>
                 <SqueethInfo />
-                <PositionCard />
+                <PositionCard tradeCompleted={tradeCompleted} />
               </div>
             </div>
             <div className={classes.tradeDetails}>
@@ -525,7 +526,7 @@ function TradePage() {
           <div className={classes.ticket}>
             <TabComponent />
             <Card className={classes.innerTicket}>
-              <Trade />
+              <Trade setTradeCompleted={setTradeCompleted} />
             </Card>
           </div>
         </div>
@@ -541,7 +542,7 @@ function TradePage() {
             )}
           </div>
           <div className={classes.mobileSpacer}>
-            <PositionCard />
+            <PositionCard tradeCompleted={tradeCompleted} />
           </div>
         </div>
         <div className={classes.mobileAction}>
@@ -555,7 +556,7 @@ function TradePage() {
         <MobileModal title="TRADE" isOpen={showMobileTrade} onClose={() => setShowMobileTrade(false)}>
           <TabComponent />
           <Card className={classes.innerTicket} style={{ textAlign: 'center', marginTop: '8px' }}>
-            <Trade />
+            <Trade setTradeCompleted={setTradeCompleted} />
           </Card>
         </MobileModal>
       </Hidden>

@@ -33,7 +33,11 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const Trade: React.FC = () => {
+type tradeType = {
+  setTradeCompleted: any
+}
+
+const Trade: React.FC<tradeType> = ({ setTradeCompleted }) => {
   const classes = useStyles()
   const { balance } = useWallet()
   const { tradeType, openPosition, setOpenPosition } = useTrade()
@@ -59,12 +63,14 @@ const Trade: React.FC = () => {
             balance={Number(toTokenAmount(balance, 18).toFixed(4))}
             open={openPosition === 0}
             closeTitle="Sell squeeth ERC20 to get ETH"
+            setTradeCompleted={setTradeCompleted}
           />
         ) : (
           <Short
             balance={Number(toTokenAmount(balance, 18).toFixed(4))}
             open={openPosition === 0}
             closeTitle="Buy back oSQTH & close position"
+            setTradeCompleted={setTradeCompleted}
           />
         )}
       </div>

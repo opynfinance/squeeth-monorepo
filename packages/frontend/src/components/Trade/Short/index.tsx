@@ -160,7 +160,7 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
+const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCompleted }) => {
   const [collateral, setCollateral] = useState(new BigNumber(0))
   const [collatPercent, setCollatPercent] = useState(200)
   const [existingCollat, setExistingCollat] = useState(0)
@@ -238,6 +238,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
         setConfirmed(true)
         setTxHash(confirmedHash.transactionHash)
         setTradeSuccess(true)
+        setTradeCompleted(true)
       }
     } catch (e) {
       console.log(e)
@@ -337,7 +338,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                     {collateral ? (
                       <>
                         <ArrowRightAltIcon className={classes.arrowIcon} />
-                        <span>{new BigNumber(balance).minus(collateral).toFixed(6)}</span>
+                        <span>{new BigNumber(balance).minus(collateral).toFixed(4)}</span>
                       </>
                     ) : null}
                     <span style={{ marginLeft: '4px' }}>ETH</span>
@@ -393,7 +394,9 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
                     <>
                       <ArrowRightAltIcon className={classes.arrowIcon} />
                       <span>
-                        {shortVaults.length && shortVaults[firstValidVault].shortAmount.plus(amount).toFixed(6)}
+                        {shortVaults.length
+                          ? shortVaults[firstValidVault].shortAmount.plus(amount).toFixed(6)
+                          : amount.toFixed(6)}
                       </span>
                     </>
                   ) : null}{' '}
@@ -495,7 +498,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   )
 }
 
-const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
+const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCompleted }) => {
   const [collateral, setCollateral] = useState(new BigNumber(0))
   const [collatPercent, setCollatPercent] = useState(200)
   const [existingCollat, setExistingCollat] = useState(0)
@@ -584,6 +587,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
         setConfirmed(true)
         setTxHash(confirmedHash.transactionHash)
         setTradeSuccess(true)
+        setTradeCompleted(true)
       }
     } catch (e) {
       console.log(e)
@@ -853,9 +857,10 @@ type SellType = {
   balance: number
   open: boolean
   closeTitle: string
+  setTradeCompleted: any
 }
 
-const Short: React.FC<SellType> = ({ balance, open, closeTitle }) => {
+const Short: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCompleted }) => {
   // const handleCloseDualInputUpdate = (v: number | string, currentInput: string) => {
   //   if (isNaN(+v) || +v === 0) v = 0
   //   if (currentInput === 'ETH') {
@@ -872,9 +877,9 @@ const Short: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   // }
 
   return open ? (
-    <OpenShort balance={balance} open={open} closeTitle={closeTitle} />
+    <OpenShort balance={balance} open={open} closeTitle={closeTitle} setTradeCompleted={setTradeCompleted} />
   ) : (
-    <CloseShort balance={balance} open={open} closeTitle={closeTitle} />
+    <CloseShort balance={balance} open={open} closeTitle={closeTitle} setTradeCompleted={setTradeCompleted} />
   )
 }
 

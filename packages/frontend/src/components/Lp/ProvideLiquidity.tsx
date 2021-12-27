@@ -10,7 +10,7 @@ import { useAddresses } from '@hooks/useAddress'
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
-      width: '370px',
+      width: '400px',
       height: '496px',
       background: theme.palette.background.lightStone,
       margin: theme.spacing(1, 0),

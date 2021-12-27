@@ -10,7 +10,7 @@ import Stepper from './Stepper'
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
-      width: '370px',
+      width: '400px',
       marginTop: theme.spacing(2),
     },
     title: {

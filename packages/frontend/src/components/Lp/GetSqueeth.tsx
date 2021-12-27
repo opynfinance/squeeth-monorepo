@@ -26,7 +26,7 @@ const useStyles = makeStyles((theme) =>
       padding: theme.spacing(2),
     },
     getSqueethCard: {
-      width: '370px',
+      width: '400px',
       height: '496px',
       background: theme.palette.background.lightStone,
       margin: theme.spacing(1, 0),
@@ -221,7 +221,7 @@ const GetSqueeth: React.FC = () => {
   return (
     <>
       <Typography component="span" color="primary">
-        {lpState.obtainMethod === OBTAIN_METHOD.BUY ? 'Buy Squeeth' : 'Mint Squeeth'}
+        {lpState.obtainMethod === OBTAIN_METHOD.BUY ? 'Buy Squeeth to LP' : 'Mint Squeeth to LP'}
       </Typography>
       <motion.div
         initial={{ x: '-5%', opacity: 0.8 }}

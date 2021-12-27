@@ -210,7 +210,7 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const OpenLong: React.FC<BuyProps> = ({ balance, open, activeStep = 0 }) => {
+const OpenLong: React.FC<BuyProps> = ({ balance, open, setTradeCompleted, activeStep = 0 }) => {
   const [buyLoading, setBuyLoading] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
   const [txHash, setTxHash] = useState('')
@@ -267,6 +267,7 @@ const OpenLong: React.FC<BuyProps> = ({ balance, open, activeStep = 0 }) => {
       setConfirmed(true)
       setTxHash(confirmedHash.transactionHash)
       setTradeSuccess(true)
+      setTradeCompleted(true)
     } catch (e) {
       console.log(e)
     }
@@ -460,7 +461,14 @@ const OpenLong: React.FC<BuyProps> = ({ balance, open, activeStep = 0 }) => {
   )
 }
 
-const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, activeStep = 0 }) => {
+const CloseLong: React.FC<BuyProps> = ({
+  balance,
+  open,
+  closeTitle,
+  setTradeCompleted,
+  isLPage = false,
+  activeStep = 0,
+}) => {
   const [sellLoading, setSellLoading] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
   const [txHash, setTxHash] = useState('')
@@ -524,6 +532,7 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = fa
         setConfirmed(true)
         setTxHash(confirmedHash.transactionHash)
         setTradeSuccess(true)
+        setTradeCompleted(true)
       }
     } catch (e) {
       console.log(e)
@@ -621,7 +630,7 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = fa
                   {amount.toNumber() ? (
                     <>
                       <ArrowRightAltIcon className={classes.arrowIcon} />
-                      <span>{(balance + altTradeAmount.toNumber()).toFixed(6)}</span>
+                      <span>{(balance + altTradeAmount.toNumber()).toFixed(4)}</span>
                     </>
                   ) : null}{' '}
                   <span style={{ marginLeft: '4px' }}>ETH</span>
@@ -703,13 +712,35 @@ type BuyProps = {
   closeTitle: string
   isLPage?: boolean
   activeStep?: number
+  setTradeCompleted?: any
 }
 
-const Long: React.FC<BuyProps> = ({ balance, open, closeTitle, isLPage = false, activeStep = 0 }) => {
+const Long: React.FC<BuyProps> = ({
+  balance,
+  open,
+  closeTitle,
+  setTradeCompleted,
+  isLPage = false,
+  activeStep = 0,
+}) => {
   return open ? (
-    <OpenLong balance={balance} open={open} closeTitle={closeTitle} isLPage={isLPage} activeStep={activeStep} />
+    <OpenLong
+      balance={balance}
+      open={open}
+      closeTitle={closeTitle}
+      isLPage={isLPage}
+      activeStep={activeStep}
+      setTradeCompleted={setTradeCompleted}
+    />
   ) : (
-    <CloseLong balance={balance} open={open} closeTitle={closeTitle} isLPage={isLPage} activeStep={activeStep} />
+    <CloseLong
+      balance={balance}
+      open={open}
+      closeTitle={closeTitle}
+      isLPage={isLPage}
+      activeStep={activeStep}
+      setTradeCompleted={setTradeCompleted}
+    />
   )
 }
 
