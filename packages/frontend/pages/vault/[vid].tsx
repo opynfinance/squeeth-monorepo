@@ -23,6 +23,7 @@ import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { useAddresses } from '@hooks/useAddress'
 import { CollateralStatus, Vault } from '../../src/types'
 import { getCollatPercentStatus, toTokenAmount } from '@utils/calculations'
+import { LinkButton } from '@components/Button'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -169,6 +170,8 @@ enum VaultAction {
 enum VaultError {
   MIN_COLLATERAL = 'Minimum vault collateral is 7.5 ETH',
   MIN_COLLAT_PERCENT = 'Minimum collateral ratio is 150%',
+  INSUFFICIENT_ETH_BALANCE = 'Insufficient ETH Balance',
+  INSUFFICIENT_OSQTH_BALANCE = 'Insufficient oSQTH Balance',
 }
 
 const Component: React.FC = () => {
@@ -198,6 +201,7 @@ const Component: React.FC = () => {
   const [collateral, setCollateral] = useState(new BigNumber(0))
   const [collatPercent, setCollatPercent] = useState(0)
   const [shortAmount, setShortAmount] = useState(new BigNumber(0))
+  const [maxToMint, setMaxToMint] = useState(new BigNumber(0))
   const [newLiqPrice, setNewLiqPrice] = useState(0)
   const [action, setAction] = useState(VaultAction.ADD_COLLATERAL)
   const [txLoading, setTxLoading] = useState(false)
@@ -271,6 +275,16 @@ const Component: React.FC = () => {
     setNewLiqPrice(lp)
   }
 
+  const getMaxToMint = async () => {
+    const max = await getShortAmountFromDebt(vault ? vault?.collateralAmount.times(100).div(150) : new BigNumber(0))
+    const diff = vault ? max.minus(vault?.shortAmount) : new BigNumber(0)
+    setMaxToMint(diff)
+  }
+
+  useEffect(() => {
+    if (vault) getMaxToMint()
+  }, [vault, vault?.collateralAmount])
+
   const addCollat = async (collatAmount: BigNumber) => {
     if (!vault) return
 
@@ -331,15 +345,23 @@ const Component: React.FC = () => {
     let adjustCollatError = null
     let adjustAmountError = null
     if (!vault?.shortAmount.gt(0)) return { adjustAmountError, adjustCollatError }
-    if (isCollatAction) {
-      if (vault?.collateralAmount.minus(collateral.negated()).lt(7.5)) adjustCollatError = VaultError.MIN_COLLATERAL
-      else if (collatPercent < 150) adjustCollatError = VaultError.MIN_COLLAT_PERCENT
+    if (action === VaultAction.ADD_COLLATERAL && collateral.gt(toTokenAmount(balance, 18)))
+      adjustCollatError = VaultError.INSUFFICIENT_ETH_BALANCE
+    else if (isCollatAction) {
+      if (collatPercent < 150) adjustCollatError = VaultError.MIN_COLLAT_PERCENT
+      else if (
+        vault?.collateralAmount.minus(collateral.negated()).lt(7.5) &&
+        !vault?.collateralAmount.minus(collateral.negated()).eq(0)
+      )
+        adjustCollatError = VaultError.MIN_COLLATERAL
     } else {
-      if (collatPercent < 150) adjustAmountError = VaultError.MIN_COLLAT_PERCENT
+      if (action === VaultAction.BURN_SQUEETH && shortAmount.abs().gt(squeethBal))
+        adjustAmountError = VaultError.INSUFFICIENT_OSQTH_BALANCE
+      else if (collatPercent < 150) adjustAmountError = VaultError.MIN_COLLAT_PERCENT
     }
 
     return { adjustAmountError, adjustCollatError }
-  }, [shortAmount.toString(), collateral.toString(), collatPercent, action])
+  }, [shortAmount.toString(), collateral.toString(), collatPercent, action, balance.toString()])
 
   const collatStatus = useMemo(() => {
     return getCollatPercentStatus(existingCollatPercent)
@@ -454,6 +476,19 @@ const Component: React.FC = () => {
                 </Typography>
               </div>
               <div style={{ margin: 'auto', width: '300px', marginTop: '24px' }}>
+                <LinkButton
+                  size="small"
+                  color="primary"
+                  onClick={() =>
+                    collateral.isPositive()
+                      ? updateCollateral(toTokenAmount(balance, 18))
+                      : updateCollateral(vault ? vault?.collateralAmount.negated() : collateral)
+                  }
+                  variant="text"
+                  style={{ marginLeft: '250px' }}
+                >
+                  Max
+                </LinkButton>
                 <NumberInput
                   min={vault?.collateralAmount.negated()}
                   step={0.1}
@@ -539,6 +574,17 @@ const Component: React.FC = () => {
                 </Typography>
               </div>
               <div style={{ margin: 'auto', width: '300px', marginTop: '24px' }}>
+                <LinkButton
+                  size="small"
+                  color="primary"
+                  onClick={() =>
+                    shortAmount.isPositive() ? updateShort(maxToMint) : updateShort(squeethBal.negated())
+                  }
+                  variant="text"
+                  style={{ marginLeft: '250px' }}
+                >
+                  Max
+                </LinkButton>
                 <NumberInput
                   min={squeethBal.negated()}
                   step={0.1}

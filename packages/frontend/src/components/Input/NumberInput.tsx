@@ -4,6 +4,8 @@ import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
 import React, { useEffect, useState } from 'react'
 
+import { LinkButton } from '../Button'
+
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
@@ -86,6 +88,8 @@ type NumberInputType = {
   step?: number
   hint?: string // Used for error as well
   error?: boolean
+  actionTxt?: string
+  onActionClicked?: () => void
 }
 
 /**
@@ -101,6 +105,8 @@ const NumberInput: React.FC<NumberInputType> = ({
   unit,
   hint,
   error,
+  actionTxt,
+  onActionClicked,
 }) => {
   const classes = useStyles()
   const [value, setValue] = useState<string>('')
@@ -159,6 +165,17 @@ const NumberInput: React.FC<NumberInputType> = ({
         <Typography color={error ? 'error' : 'textSecondary'} variant="caption">
           {hint}
         </Typography>
+        {actionTxt && onActionClicked ? (
+          <LinkButton
+            size="small"
+            color="primary"
+            onClick={onActionClicked}
+            variant="text"
+            style={{ marginLeft: '250px' }}
+          >
+            {actionTxt}
+          </LinkButton>
+        ) : null}
       </div>
     </div>
   )
