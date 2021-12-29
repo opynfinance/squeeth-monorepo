@@ -1,15 +1,17 @@
 import { useQuery } from '@apollo/client'
+import BigNumber from 'bignumber.js'
 import { useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 
+import { toTokenAmount } from '@utils/calculations'
 import erc721Abi from '../../abis/vaultManager.json'
+import { WSQUEETH_DECIMALS } from '../../constants/'
 import { VAULTS_QUERY } from '../../queries/squeeth/vaultsQuery'
-import { Vaults, Vaults_vaults } from '../../queries/squeeth/__generated__/Vaults'
+import { Vaults } from '../../queries/squeeth/__generated__/Vaults'
 import { squeethClient } from '../../utils/apollo-client'
 import { useWallet } from '@context/wallet'
 import { useAddresses } from '../useAddress'
 // import useInterval from '../useInterval'
-import { useController } from './useController'
 
 /**
  * get user vaults.
@@ -22,8 +24,7 @@ export const useVaultManager = (refetchIntervalSec = 20) => {
   const [contract, setContract] = useState<Contract>()
 
   const { address, web3, handleTransaction } = useWallet()
-  const { vaultManager, shortHelper } = useAddresses()
-  const { getVault } = useController()
+  const { vaultManager } = useAddresses()
 
   useEffect(() => {
     if (!web3 || !vaultManager) return
@@ -39,18 +40,24 @@ export const useVaultManager = (refetchIntervalSec = 20) => {
   })
 
   useEffect(() => {
-    ;(async function updateBalance() {
+    ;(async () => {
       if (!data?.vaults?.length) return
-      const tokens = new Set(data?.vaults.map((vault: Vaults_vaults) => vault.id))
 
-      const vaultPromise = Array.from(tokens).map((tokenId) => getVault(Number(tokenId)))
-      const _vaults = (await Promise.all(vaultPromise)).filter((v) => {
-        return v?.shortAmount.gt(0)
-      })
+      const _vaults = data?.vaults
+        .filter((v) => {
+          return new BigNumber(v?.shortAmount ?? 0).gt(0)
+        })
+        .map(({ id, NftCollateralId, collateralAmount, shortAmount, operator }) => ({
+          id,
+          NFTCollateralId: NftCollateralId,
+          collateralAmount: toTokenAmount(new BigNumber(collateralAmount), 18),
+          shortAmount: toTokenAmount(new BigNumber(shortAmount), WSQUEETH_DECIMALS),
+          operator,
+        }))
 
       setVaults(_vaults)
     })()
-  }, [data?.vaults])
+  }, [data?.vaults?.length])
 
   const getOwner = async (vaultId: number) => {
     if (!contract) return
@@ -62,7 +69,7 @@ export const useVaultManager = (refetchIntervalSec = 20) => {
     if (!contract) return false
 
     const approval = await contract.methods.getApproved(vaultId).call()
-    return toAddress.toLowerCase() === approval.toLowerCase()
+    return toAddress?.toLowerCase() === approval?.toLowerCase()
   }
 
   const approve = async (toAddress: string, vaultId: number) => {

@@ -56,8 +56,8 @@ const History: React.FC = () => {
 
   return (
     <div>
-      {transactions.map((tx) => (
-        <div className={classes.historyItem} key={tx.timestamp}>
+      {transactions.map((tx, index) => (
+        <div className={classes.historyItem} key={tx.timestamp + index}>
           <div className={classes.txItemCol}>
             <Typography variant="body2">{tx.transactionType}</Typography>
             <Typography variant="caption" color="textSecondary">

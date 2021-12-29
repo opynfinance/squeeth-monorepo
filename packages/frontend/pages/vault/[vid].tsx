@@ -1,3 +1,4 @@
+import { useQuery } from '@apollo/client'
 import { Button, CircularProgress, InputAdornment, TextField, Typography } from '@material-ui/core'
 import { orange } from '@material-ui/core/colors'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
@@ -15,13 +16,18 @@ import CollatRange from '@components/CollatRange'
 import NumberInput from '@components/Input/NumberInput'
 import Nav from '@components/Nav'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
+import { usePositions } from '@hooks/usePositions'
 import { WSQUEETH_DECIMALS } from '../../src/constants'
+import { VAULT_QUERY } from '../../src/queries/squeeth/vaultsQuery'
+import { Vault_vault } from '../../src/queries/squeeth/__generated__/Vault'
+import { PositionType } from '../../src/types'
 import { useWallet } from '@context/wallet'
 import { useController } from '@hooks/contracts/useController'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { useAddresses } from '@hooks/useAddress'
 import { CollateralStatus, Vault } from '../../src/types'
+import { squeethClient } from '@utils/apollo-client'
 import { getCollatPercentStatus, toTokenAmount } from '@utils/calculations'
 import { LinkButton } from '@components/Button'
 
@@ -178,7 +184,6 @@ const Component: React.FC = () => {
   const classes = useStyles()
   const router = useRouter()
   const {
-    getVault,
     getCollatRatioAndLiqPrice,
     getDebtAmount,
     getShortAmountFromDebt,
@@ -192,6 +197,7 @@ const Component: React.FC = () => {
   const { balance, address, connected } = useWallet()
   const { vid } = router.query
   const { liquidations } = useVaultLiquidations(Number(vid))
+  const { positionType, squeethAmount } = usePositions()
 
   const squeethBal = useTokenBalance(wSqueeth, 20, WSQUEETH_DECIMALS)
 
@@ -207,23 +213,39 @@ const Component: React.FC = () => {
   const [txLoading, setTxLoading] = useState(false)
   const [pageLoading, setPageLoading] = useState(true)
 
+  const { data, loading } = useQuery<{ vault: Vault_vault }>(VAULT_QUERY, {
+    client: squeethClient,
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      vaultID: vid,
+    },
+  })
+
+  const _vault = data?.vault
   const updateVault = () => {
-    if (!Number(vid)) return
-    getVault(Number(vid)).then((v) => {
-      setVault(v)
-      if (!v) return
-      getCollatRatioAndLiqPrice(v?.collateralAmount, v?.shortAmount).then(({ collateralPercent, liquidationPrice }) => {
+    if (!_vault || !connected) return
+
+    setVault({
+      id: Number(_vault.id),
+      NFTCollateralId: _vault.NftCollateralId,
+      collateralAmount: toTokenAmount(new BigNumber(_vault.collateralAmount), 18),
+      shortAmount: toTokenAmount(new BigNumber(_vault.shortAmount), WSQUEETH_DECIMALS),
+      operator: _vault.operator,
+    })
+
+    getCollatRatioAndLiqPrice(new BigNumber(_vault.collateralAmount), new BigNumber(_vault.shortAmount)).then(
+      ({ collateralPercent, liquidationPrice }) => {
         setExistingCollatPercent(collateralPercent)
         setCollatPercent(collateralPercent)
         setExistingLiqPrice(liquidationPrice)
         setPageLoading(false)
-      })
-    })
+      },
+    )
   }
 
   useEffect(() => {
-    if (vid && connected) updateVault()
-  }, [vid, normFactor.toString(), address, connected])
+    updateVault()
+  }, [vid, normFactor.toString(), address, connected, _vault])
 
   const updateCollateral = async (collatAmount: BigNumber) => {
     setCollateral(collatAmount)
@@ -388,7 +410,7 @@ const Component: React.FC = () => {
   return (
     <div>
       <Nav />
-      {pageLoading ? (
+      {pageLoading || loading ? (
         <div className={classes.loading}>
           <Typography variant="h5" color="textSecondary">
             Loading...
@@ -592,7 +614,18 @@ const Component: React.FC = () => {
                   onChange={(v) => updateShort(v)}
                   value={shortAmount}
                   unit="oSQTH"
-                  hint={!!adjustAmountError ? adjustAmountError : `Balance ${squeethBal.toFixed(6)} oSQTH`}
+                  hint={
+                    !!adjustAmountError
+                      ? adjustAmountError
+                      : `Balance ${
+                          squeethBal?.isGreaterThan(0) &&
+                          positionType === PositionType.LONG &&
+                          squeethBal.minus(squeethAmount).isGreaterThan(0)
+                            ? squeethBal.minus(squeethAmount).toFixed(8)
+                            : squeethBal.toFixed(8)
+                        } oSQTH`
+                  }
+                  // hint={!!adjustAmountError ? adjustAmountError : `Balance ${squeethBal.toFixed(6)} oSQTH`}
                   error={!!adjustAmountError}
                 />
                 <div className={classes.collatContainer}>

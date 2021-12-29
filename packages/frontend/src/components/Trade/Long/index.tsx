@@ -11,7 +11,7 @@ import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { useAddresses } from '@hooks/useAddress'
 import { useETHPrice } from '@hooks/useETHPrice'
-import { useLongPositions, useShortPositions } from '@hooks/usePositions'
+import { useLongPositions, useShortPositions, usePositions } from '@hooks/usePositions'
 import { PrimaryButton } from '@components/Button'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
 import { UniswapIframe } from '@components/Modal/UniswapIframe'
@@ -232,6 +232,7 @@ const OpenLong: React.FC<BuyProps> = ({ balance, open, setTradeCompleted, active
   const { selectWallet, connected } = useWallet()
   const ethPrice = useETHPrice()
   const { squeethAmount: shrtAmt } = useShortPositions()
+  const { squeethAmount } = usePositions()
 
   useEffect(() => {
     if (!open && wSqueethBal.lt(amount)) {
@@ -362,12 +363,12 @@ const OpenLong: React.FC<BuyProps> = ({ balance, open, setTradeCompleted, active
                     <div className={classes.hint}>
                       <span className={classes.hintTextContainer}>
                         <span className={classes.hintTitleText}>Balance </span>
-                        <span>{wSqueethBal.toFixed(6)}</span>
+                        <span>{squeethAmount.toFixed(6)}</span>
                       </span>
                       {quote.amountOut.gt(0) ? (
                         <>
                           <ArrowRightAltIcon className={classes.arrowIcon} />
-                          <span>{wSqueethBal.plus(quote.amountOut).toFixed(6)}</span>
+                          <span>{squeethAmount.plus(quote.amountOut).toFixed(6)}</span>
                         </>
                       ) : null}{' '}
                       <span style={{ marginLeft: '4px' }}>oSQTH</span>
@@ -491,6 +492,8 @@ const CloseLong: React.FC<BuyProps> = ({
   const { selectWallet, connected } = useWallet()
   const ethPrice = useETHPrice()
   const { squeethAmount: shrtAmt } = useShortPositions()
+  const { squeethAmount: longSqueethAmount } = useLongPositions()
+  const { squeethAmount } = usePositions()
 
   useEffect(() => {
     if (!open && wSqueethBal.lt(amount)) {
@@ -578,8 +581,8 @@ const CloseLong: React.FC<BuyProps> = ({
             tooltip="Amount of wSqueeth you want to close"
             actionTxt="Max"
             onActionClicked={() => {
-              setAmount(wSqueethBal)
-              getSellQuote(new BigNumber(wSqueethBal)).then((val) => {
+              setAmount(longSqueethAmount)
+              getSellQuote(new BigNumber(longSqueethAmount)).then((val) => {
                 setAltTradeAmount(val.amountOut)
               })
             }}
@@ -596,12 +599,12 @@ const CloseLong: React.FC<BuyProps> = ({
               ) : (
                 <div className={classes.hint}>
                   <span className={classes.hintTextContainer}>
-                    <span className={classes.hintTitleText}>Position</span> <span>{wSqueethBal.toFixed(6)}</span>
+                    <span className={classes.hintTitleText}>Position</span> <span>{squeethAmount.toFixed(6)}</span>
                   </span>
                   {quote.amountOut.gt(0) ? (
                     <>
                       <ArrowRightAltIcon className={classes.arrowIcon} />
-                      <span>{wSqueethBal.minus(amount).toFixed(6)}</span>
+                      <span>{squeethAmount.minus(amount).toFixed(6)}</span>
                     </>
                   ) : null}{' '}
                   <span style={{ marginLeft: '4px' }}>oSQTH</span>

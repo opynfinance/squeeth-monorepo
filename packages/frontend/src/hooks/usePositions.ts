@@ -22,6 +22,145 @@ import { useUsdAmount } from './useUsdAmount'
 
 const bigZero = new BigNumber(0)
 
+export const usePositions = () => {
+  const { squeethPool, weth, wSqueeth, shortHelper, swapRouter } = useAddresses()
+  const { address } = useWallet()
+  const { getUsdAmt } = useUsdAmount()
+  const { getDebtAmount, normFactor: normalizationFactor } = useController()
+
+  const [positionType, setPositionType] = useState('')
+
+  const { data, loading, refetch } = useQuery<swaps, swapsVariables>(SWAPS_QUERY, {
+    variables: {
+      poolAddress: squeethPool?.toLowerCase(),
+      origin: address || '',
+      recipients: [shortHelper, address || '', swapRouter],
+      orderDirection: 'asc',
+    },
+    fetchPolicy: 'cache-and-network',
+  })
+
+  useInterval(refetch, 5000)
+
+  const { vaults: shortVaults } = useVaultManager(5)
+  const [existingCollatPercent, setExistingCollatPercent] = useState(0)
+  const [existingCollat, setExistingCollat] = useState(new BigNumber(0))
+  const [liquidationPrice, setLiquidationPrice] = useState(0)
+  const [isMintedBal, setIsMintedBal] = useState(false)
+  const [firstValidVault, setFirstValidVault] = useState(0)
+
+  const swaps = data?.swaps
+  const isWethToken0 = parseInt(weth, 16) < parseInt(wSqueeth, 16)
+  const vaultId = shortVaults[firstValidVault]?.id || 0
+
+  const { squeethAmount, wethAmount } = useMemo(
+    () =>
+      swaps?.reduce(
+        (acc, s) => {
+          //values are all from the pool pov
+          //if >0 for the pool, user gave some squeeth to the tool, meaning selling the squeeth
+          const squeethAmt = new BigNumber(isWethToken0 ? s.amount1 : s.amount0)
+          const wethAmt = new BigNumber(isWethToken0 ? s.amount0 : s.amount1)
+          const usdAmt = getUsdAmt(wethAmt, s.timestamp)
+
+          //buy one squeeth means -1 to the pool, +1 to the user
+          acc.squeethAmount = acc.squeethAmount.plus(squeethAmt.negated())
+          acc.wethAmount = acc.wethAmount.plus(wethAmt.negated())
+
+          //<0 means, buying squeeth
+          //>0 means selling squeeth
+          acc.totalSqueeth = acc.totalSqueeth.plus(squeethAmt)
+          acc.totalETHSpent = acc.totalETHSpent.plus(wethAmt)
+          acc.totalUSDSpent = acc.totalUSDSpent.plus(usdAmt)
+
+          acc.usdAmount = acc.usdAmount.plus(usdAmt)
+          if (acc.squeethAmount.isZero()) {
+            acc.usdAmount = bigZero
+            acc.wethAmount = bigZero
+            acc.totalSqueeth = bigZero
+            acc.totalETHSpent = bigZero
+            acc.totalUSDSpent = bigZero
+          }
+
+          return acc
+        },
+        {
+          squeethAmount: bigZero,
+          wethAmount: bigZero,
+          usdAmount: bigZero,
+          totalSqueeth: bigZero,
+          totalETHSpent: bigZero,
+          totalUSDSpent: bigZero,
+        },
+      ) || {
+        squeethAmount: bigZero,
+        wethAmount: bigZero,
+        usdAmount: bigZero,
+        totalSqueeth: bigZero,
+        totalETHSpent: bigZero,
+        totalUSDSpent: bigZero,
+      },
+    [isWethToken0, swaps],
+  )
+
+  useEffect(() => {
+    ;(function determinePositionType() {
+      if (squeethAmount.isGreaterThan(0)) {
+        return setPositionType(PositionType.LONG)
+      } else if (squeethAmount.isLessThan(0)) {
+        return setPositionType(PositionType.SHORT)
+      } else return setPositionType(PositionType.NONE)
+    })()
+  }, [squeethAmount.toNumber()])
+
+  useEffect(() => {
+    for (let i = 0; i < shortVaults.length; i++) {
+      if (shortVaults[i]?.shortAmount.isGreaterThan(0)) {
+        setFirstValidVault(i)
+        console.log('i ' + i)
+        console.log('fvv ' + firstValidVault)
+      }
+    }
+  }, [shortVaults, shortVaults.length])
+
+  useEffect(() => {
+    if (shortVaults.length && shortVaults[firstValidVault]?.shortAmount) {
+      const _collat: BigNumber = shortVaults[firstValidVault].collateralAmount
+      setExistingCollat(_collat)
+      getDebtAmount(new BigNumber(shortVaults[firstValidVault]?.shortAmount)).then((debt) => {
+        if (debt && debt.isPositive()) {
+          setIsMintedBal(true)
+          setExistingCollatPercent(Number(_collat.div(debt).times(100).toFixed(1)))
+          const rSqueeth = normalizationFactor
+            .multipliedBy(new BigNumber(shortVaults[firstValidVault]?.shortAmount))
+            .dividedBy(10000)
+          setLiquidationPrice(_collat.div(rSqueeth.multipliedBy(1.5)).toNumber())
+        } else {
+          setIsMintedBal(false)
+        }
+      })
+    } else {
+      setIsMintedBal(false)
+    }
+  }, [squeethAmount.toNumber(), shortVaults.length])
+
+  return {
+    swaps,
+    loading,
+    squeethAmount: squeethAmount.absoluteValue(),
+    wethAmount,
+    shortVaults,
+    refetch,
+    positionType,
+    existingCollatPercent,
+    existingCollat,
+    liquidationPrice,
+    isMintedBal,
+    firstValidVault,
+    vaultId,
+  }
+}
+
 export const useLongPositions = () => {
   const { squeethPool, weth, wSqueeth, swapRouter } = useAddresses()
   const { address } = useWallet()
@@ -30,7 +169,7 @@ export const useLongPositions = () => {
   // all the swaps, from squeeth to eth and eth to squeeth
   const { data, loading, refetch } = useQuery<swaps, swapsVariables>(SWAPS_QUERY, {
     variables: {
-      poolAddress: squeethPool.toLowerCase(),
+      poolAddress: squeethPool?.toLowerCase(),
       origin: address || '',
       recipients: [address || '', swapRouter],
       orderDirection: 'asc',
@@ -140,7 +279,7 @@ export const useShortPositions = () => {
 
   const { data, loading, refetch } = useQuery<swaps, swapsVariables>(SWAPS_QUERY, {
     variables: {
-      poolAddress: squeethPool.toLowerCase(),
+      poolAddress: squeethPool?.toLowerCase(),
       origin: address || '',
       recipients: [shortHelper],
       orderDirection: 'asc',
@@ -229,7 +368,7 @@ export const useShortPositions = () => {
 
   useEffect(() => {
     for (let i = 0; i < shortVaults.length; i++) {
-      if (shortVaults[i].shortAmount.isGreaterThan(0)) {
+      if (shortVaults[i]?.shortAmount.isGreaterThan(0)) {
         setFirstValidVault(i)
         console.log('i ' + i)
         console.log('fvv ' + firstValidVault)
@@ -238,15 +377,15 @@ export const useShortPositions = () => {
   }, [shortVaults, shortVaults.length])
 
   useEffect(() => {
-    if (shortVaults.length && shortVaults[firstValidVault].shortAmount) {
+    if (shortVaults.length && shortVaults[firstValidVault]?.shortAmount) {
       const _collat: BigNumber = shortVaults[firstValidVault].collateralAmount
       setExistingCollat(_collat)
-      getDebtAmount(new BigNumber(shortVaults[firstValidVault].shortAmount)).then((debt) => {
+      getDebtAmount(new BigNumber(shortVaults[firstValidVault]?.shortAmount)).then((debt) => {
         if (debt && debt.isPositive()) {
           setIsMintedBal(true)
           setExistingCollatPercent(Number(_collat.div(debt).times(100).toFixed(1)))
           const rSqueeth = normalizationFactor
-            .multipliedBy(new BigNumber(shortVaults[firstValidVault].shortAmount))
+            .multipliedBy(new BigNumber(shortVaults[firstValidVault]?.shortAmount))
             .dividedBy(10000)
           setLiquidationPrice(_collat.div(rSqueeth.multipliedBy(1.5)).toNumber())
         } else {
@@ -301,6 +440,7 @@ export const usePnL = () => {
     shortVaults: shortSqueethVaults,
     realizedPNL: shortRealizedPNL,
     refetch: refetchShort,
+    squeethAmount: shortSQueethAmount,
   } = useShortPositions()
   const ethPrice = useETHPrice()
   const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
@@ -317,7 +457,12 @@ export const usePnL = () => {
 
   const positionType = useMemo(() => {
     if (wSqueethBal.isGreaterThan(0)) return PositionType.LONG
-    if (shortSqueethVaults.length && shortSqueethVaults[0].shortAmount.isGreaterThan(0)) return PositionType.SHORT
+    if (
+      shortSqueethVaults.length &&
+      shortSqueethVaults[0]?.shortAmount.isGreaterThan(0) &&
+      shortSQueethAmount.isGreaterThan(0)
+    )
+      return PositionType.SHORT
     else return PositionType.NONE
   }, [wSqueethBal.toNumber(), shortSqueethVaults])
 
@@ -386,7 +531,7 @@ export const useLPPositions = () => {
     subscribeToMore,
   } = useQuery<positions, positionsVariables>(POSITIONS_QUERY, {
     variables: {
-      poolAddress: squeethPool.toLowerCase(),
+      poolAddress: squeethPool?.toLowerCase(),
       owner: address?.toLowerCase() || '',
     },
     fetchPolicy: 'cache-and-network',
@@ -407,7 +552,7 @@ export const useLPPositions = () => {
     subscribeToMore({
       document: POSITIONS_SUBSCRIPTION,
       variables: {
-        poolAddress: squeethPool.toLowerCase(),
+        poolAddress: squeethPool?.toLowerCase(),
         owner: address?.toLowerCase() || '',
       },
       updateQuery(prev, { subscriptionData }) {

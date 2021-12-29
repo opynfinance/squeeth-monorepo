@@ -163,7 +163,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
   } = usePnL()
   const { tradeAmount, actualTradeType, isOpenPosition, quote, tradeSuccess, setTradeSuccess, tradeType } = useTrade()
   const ethPrice = useETHPrice()
-  const { shortVaults, firstValidVault, vaultId } = useShortPositions()
+  const { shortVaults, firstValidVault, vaultId, squeethAmount: shortSqueethAmount } = useShortPositions()
   const { squeethAmount: lngAmt } = useLongPositions()
   const [fetchingNew, setFetchingNew] = useState(false)
   const [postTradeAmt, setPostTradeAmt] = useState(new BigNumber(0))
@@ -227,7 +227,8 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
   useEffect(() => {
     let _postTradeAmt = new BigNumber(0)
     let _postPosition = PositionType.NONE
-    const hasShortPosition = shortVaults.length > 0 && shortVaults[firstValidVault].shortAmount.gt(0)
+    const hasShortPosition =
+      shortVaults.length > 0 && shortVaults[firstValidVault].shortAmount.gt(0) && shortSqueethAmount
     if (actualTradeType === TradeType.LONG && !hasShortPosition) {
       if (isOpenPosition) {
         _postTradeAmt = wSqueethBal.plus(quote.amountOut)
@@ -237,11 +238,9 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
       if (_postTradeAmt.gt(0)) _postPosition = PositionType.LONG
     } else if (actualTradeType === TradeType.SHORT && !lngAmt.gt(0)) {
       if (isOpenPosition)
-        _postTradeAmt = shortVaults.length ? shortVaults[firstValidVault].shortAmount.plus(tradeAmount) : tradeAmount
+        _postTradeAmt = shortSqueethAmount.isGreaterThan(0) ? shortSqueethAmount.plus(tradeAmount) : tradeAmount
       else
-        _postTradeAmt = shortVaults.length
-          ? shortVaults[firstValidVault].shortAmount.minus(tradeAmount)
-          : new BigNumber(0)
+        _postTradeAmt = shortSqueethAmount.isGreaterThan(0) ? shortSqueethAmount.minus(tradeAmount) : new BigNumber(0)
       if (_postTradeAmt.gt(0)) _postPosition = PositionType.SHORT
     }
 
@@ -278,11 +277,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
         <div>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <Typography component="span" style={{ fontWeight: 600 }}>
-              {getPositionBasedValue(
-                wSqueethBal.toFixed(6),
-                shortVaults.length && shortVaults[firstValidVault].shortAmount.toFixed(6),
-                0,
-              )}
+              {getPositionBasedValue(lngAmt.toFixed(6), shortSqueethAmount.toFixed(6), 0)}
             </Typography>
             {(tradeType === TradeType.SHORT && lngAmt.gt(0)) ||
             (tradeType === TradeType.LONG && shortVaults.length && shortVaults[firstValidVault].shortAmount.gt(0)) ||

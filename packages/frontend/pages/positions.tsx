@@ -1,17 +1,19 @@
 import { createStyles, makeStyles, Tooltip, Typography } from '@material-ui/core'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import Link from 'next/link'
+import { useMemo } from 'react'
 
 import { LPTable } from '@components/Lp/LPTable'
 import Nav from '@components/Nav'
 import History from '@components/Trade/History'
 import { WSQUEETH_DECIMALS } from '../src/constants'
+import { PositionType } from '../src/types/'
 import { Tooltips } from '@constants/enums'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { useAddresses } from '@hooks/useAddress'
 import { useETHPrice } from '@hooks/useETHPrice'
-import { useLongPositions, useLPPositions, usePnL, useShortPositions } from '@hooks/usePositions'
+import { useLPPositions, usePnL, usePositions } from '@hooks/usePositions'
 import { withRequiredAddr } from '@utils/withRequiredAddr'
 
 const useStyles = makeStyles((theme) =>
@@ -96,17 +98,6 @@ const useStyles = makeStyles((theme) =>
 
 export function Positions() {
   const classes = useStyles()
-  const { loading: isLongLoading, wethAmount: longWethAmt } = useLongPositions()
-  const {
-    loading: isShortLoading,
-    wethAmount: shortWethAmt,
-    shortVaults,
-    existingCollat,
-    existingCollatPercent,
-    liquidationPrice,
-    vaultId,
-    firstValidVault,
-  } = useShortPositions()
   const {
     longGain,
     shortGain,
@@ -125,6 +116,22 @@ export function Positions() {
   const { wSqueeth } = useAddresses()
   const wSqueethBal = useTokenBalance(wSqueeth, 5, WSQUEETH_DECIMALS)
 
+  const {
+    positionType,
+    squeethAmount,
+    loading: isPositionLoading,
+    shortVaults,
+    firstValidVault,
+    vaultId,
+    existingCollat,
+    existingCollatPercent,
+    liquidationPrice,
+  } = usePositions()
+
+  const vaultExists = useMemo(() => {
+    return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isGreaterThan(0)
+  }, [firstValidVault, shortVaults?.length])
+
   return (
     <div>
       <Nav />
@@ -141,13 +148,15 @@ export function Positions() {
           </div>
         </div>
         {/* eslint-disable-next-line prettier/prettier */}
-        {(wSqueethBal.isZero() && shortVaults.length && shortVaults[firstValidVault].shortAmount.isZero()) ||
-        (wSqueethBal.isZero() && shortVaults.length === 0) ? (
+        {(wSqueethBal.isZero() && shortVaults.length && shortVaults[firstValidVault]?.shortAmount.isZero()) ||
+        (wSqueethBal.isZero() && shortVaults.length === 0 && squeethAmount.isEqualTo(0)) ||
+        (positionType !== PositionType.LONG && positionType !== PositionType.SHORT && !wSqueethBal.isGreaterThan(0)) ? (
           <div className={classes.empty}>
             <Typography>No active positions</Typography>
           </div>
         ) : null}
-        {wSqueethBal.isGreaterThan(0) ? (
+
+        {positionType === PositionType.LONG ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>Long Squeeth</Typography>
@@ -159,7 +168,7 @@ export function Positions() {
                     Position
                   </Typography>
                   <Typography variant="body1">
-                    {isLongLoading && wSqueethBal.toNumber() === 0 ? 'Loading' : wSqueethBal.toFixed(8)}
+                    {isPositionLoading && Number(squeethAmount.toFixed(8)) === 0 ? 'Loading' : squeethAmount.toFixed(8)}
                     &nbsp; oSQTH
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
@@ -206,7 +215,7 @@ export function Positions() {
             </div>
           </div>
         ) : null}
-        {shortVaults.length && shortVaults[firstValidVault].shortAmount.isGreaterThan(0) ? (
+        {positionType === PositionType.SHORT && vaultExists ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>Short Squeeth</Typography>
@@ -220,9 +229,7 @@ export function Positions() {
                   <Typography variant="caption" component="span" color="textSecondary">
                     Position
                   </Typography>
-                  <Typography variant="body1">
-                    {shortVaults.length && shortVaults[firstValidVault].shortAmount.toFixed(6)}&nbsp; oSQTH
-                  </Typography>
+                  <Typography variant="body1">{squeethAmount.toFixed(8)}&nbsp; oSQTH</Typography>
                   <Typography variant="body2" color="textSecondary">
                     ${buyQuote.times(ethPrice).toFixed(2)}
                   </Typography>
@@ -257,7 +264,7 @@ export function Positions() {
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
                   <Typography variant="body1">
-                    ${isShortLoading && liquidationPrice === 0 ? 'Loading' : liquidationPrice.toFixed(2)}
+                    ${isPositionLoading && liquidationPrice === 0 ? 'Loading' : liquidationPrice.toFixed(2)}
                   </Typography>
                 </div>
                 <div style={{ width: '50%' }}>
@@ -265,7 +272,7 @@ export function Positions() {
                     Collateral (Amt / Ratio)
                   </Typography>
                   <Typography variant="body1">
-                    {isShortLoading && existingCollat.toNumber() === 0 ? 'Loading' : existingCollat.toFixed(4)} ETH (
+                    {isPositionLoading && existingCollat.toNumber() === 0 ? 'Loading' : existingCollat.toFixed(4)} ETH (
                     {existingCollatPercent}%)
                   </Typography>
                 </div>
@@ -286,6 +293,60 @@ export function Positions() {
             </div>
           </div>
         ) : null}
+        {(wSqueethBal?.isGreaterThan(0) &&
+          positionType === PositionType.LONG &&
+          wSqueethBal?.minus(squeethAmount)?.isGreaterThan(0)) ||
+        (wSqueethBal?.isGreaterThan(0) && positionType === PositionType.SHORT) ||
+        (wSqueethBal?.isGreaterThan(0) && positionType !== PositionType.SHORT && positionType !== PositionType.LONG) ? (
+          <div className={classes.position}>
+            <div className={classes.positionTitle}>
+              <Typography>Minted Squeeth</Typography>
+              <Typography className={classes.link}>
+                {vaultExists ? <Link href={`vault/${vaultId}`}>Manage</Link> : null}
+              </Typography>
+            </div>
+            <div className={classes.shortPositionData}>
+              <div className={classes.innerPositionData}>
+                <div style={{ width: '50%' }}>
+                  <Typography variant="caption" component="span" color="textSecondary">
+                    Amount
+                  </Typography>
+                  <Typography variant="body1">
+                    {wSqueethBal?.isGreaterThan(0) &&
+                    positionType === PositionType.LONG &&
+                    wSqueethBal.minus(squeethAmount).isGreaterThan(0)
+                      ? wSqueethBal.minus(squeethAmount).toFixed(8)
+                      : wSqueethBal.toFixed(8)}
+                    &nbsp; oSQTH
+                  </Typography>
+                </div>
+              </div>
+              <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
+                <div style={{ width: '50%' }}>
+                  <Typography variant="caption" component="span" color="textSecondary">
+                    Liquidation Price
+                  </Typography>
+                  <Tooltip title={Tooltips.LiquidationPrice}>
+                    <InfoIcon fontSize="small" className={classes.infoIcon} />
+                  </Tooltip>
+                  <Typography variant="body1">
+                    ${isPositionLoading && liquidationPrice === 0 ? 'Loading' : liquidationPrice.toFixed(2)}
+                  </Typography>
+                </div>
+                <div style={{ width: '50%' }}>
+                  <Typography variant="caption" component="span" color="textSecondary">
+                    Collateral (Amt / Ratio)
+                  </Typography>
+                  <Typography variant="body1">
+                    {isPositionLoading && existingCollat.toNumber() === 0 ? 'Loading' : existingCollat.toFixed(4)} ETH (
+                    {existingCollatPercent}%)
+                  </Typography>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         {activePositions?.length > 0 ? (
           <>
             <div className={classes.header}>

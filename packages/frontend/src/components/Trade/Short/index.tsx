@@ -12,9 +12,10 @@ import { useWorldContext } from '@context/world'
 import { useController } from '@hooks/contracts/useController'
 import useShortHelper from '@hooks/contracts/useShortHelper'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
+import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import { useAddresses } from '@hooks/useAddress'
 import { useETHPrice } from '@hooks/useETHPrice'
-import { useLongPositions, useShortPositions } from '@hooks/usePositions'
+import { useLongPositions, useShortPositions, usePositions } from '@hooks/usePositions'
 import { PrimaryButton } from '@components/Button'
 import CollatRange from '@components/CollatRange'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
@@ -164,7 +165,6 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
   const [collateral, setCollateral] = useState(new BigNumber(0))
   const [collatPercent, setCollatPercent] = useState(200)
   const [existingCollat, setExistingCollat] = useState(0)
-  const [vaultId, setVaultId] = useState(0)
   const [isVaultApproved, setIsVaultApproved] = useState(true)
   const [shortLoading, setShortLoading] = useState(false)
   const [buyLoading, setBuyLoading] = useState(false)
@@ -191,7 +191,15 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
     slippageAmount,
   } = useTrade()
   const { squeethAmount: lngAmt } = useLongPositions()
-  const { shortVaults, firstValidVault, existingCollatPercent } = useShortPositions()
+  const {
+    // shortVaults,
+    firstValidVault,
+    existingCollatPercent,
+    squeethAmount: shortSqueethAmount,
+  } = usePositions()
+  const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
+
+  const [vaultId, setVaultId] = useState(shortVaults.length ? shortVaults[firstValidVault].id : 0)
 
   const liqPrice = useMemo(() => {
     const rSqueeth = normalizationFactor.multipliedBy(amount || 1).dividedBy(10000)
@@ -224,12 +232,13 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
   useEffect(() => {
     if (!vaultId) return
 
-    setIsVaultApproved(shortVaults[firstValidVault].operator.toLowerCase() === shortHelper.toLowerCase())
+    setIsVaultApproved(shortVaults[firstValidVault].operator?.toLowerCase() === shortHelper?.toLowerCase())
   }, [vaultId])
 
   const depositAndShort = async () => {
     setShortLoading(true)
     try {
+      if (vaultIDLoading) return
       if (vaultId && !isVaultApproved) {
         await updateOperator(vaultId, shortHelper)
         setIsVaultApproved(true)
@@ -388,16 +397,15 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
                 <div className={classes.hint}>
                   <span className={classes.hintTextContainer}>
                     <span className={classes.hintTitleText}>Position</span>
-                    <span>{shortVaults.length && shortVaults[firstValidVault].shortAmount.toFixed(6)}</span>
+                    <span>
+                      {shortSqueethAmount.toFixed(6)}
+                      {/* {shortVaults.length && shortVaults[firstValidVault].shortAmount.toFixed(6)} */}
+                    </span>
                   </span>
                   {quote.amountOut.gt(0) ? (
                     <>
                       <ArrowRightAltIcon className={classes.arrowIcon} />
-                      <span>
-                        {shortVaults.length
-                          ? shortVaults[firstValidVault].shortAmount.plus(amount).toFixed(6)
-                          : amount.toFixed(6)}
-                      </span>
+                      <span>{shortSqueethAmount.plus(amount).toFixed(6)}</span>
                     </>
                   ) : null}{' '}
                   <span style={{ marginLeft: '4px' }}>oSQTH</span>
@@ -529,7 +537,8 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     slippageAmount,
   } = useTrade()
   const { squeethAmount: lngAmt } = useLongPositions()
-  const { shortVaults, firstValidVault, existingCollatPercent } = useShortPositions()
+  const { shortVaults, firstValidVault, existingCollatPercent, squeethAmount: shortSqueethAmount } = useShortPositions()
+  const { squeethAmount } = usePositions()
 
   useEffect(() => {
     if (!open && shortVaults.length && shortVaults[firstValidVault].shortAmount.lt(amount)) {
@@ -555,7 +564,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   useEffect(() => {
     if (!vaultId) return
 
-    setIsVaultApproved(shortVaults[firstValidVault].operator.toLowerCase() === shortHelper.toLowerCase())
+    setIsVaultApproved(shortVaults[firstValidVault].operator?.toLowerCase() === shortHelper?.toLowerCase())
   }, [vaultId])
 
   useEffect(() => {
@@ -608,11 +617,11 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   const { setCollatRatio } = useWorldContext()
 
   const setShortCloseMax = useCallback(() => {
-    if (shortVaults[firstValidVault]) {
-      setAmount(shortVaults[firstValidVault].shortAmount)
+    if (shortSqueethAmount.isGreaterThan(0)) {
+      setAmount(shortSqueethAmount)
       setCollatPercent(150)
     }
-  }, [shortVaults, firstValidVault])
+  }, [shortSqueethAmount.toNumber()])
 
   let openError: string | undefined
   let closeError: string | undefined
@@ -620,7 +629,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   let priceImpactWarning: string | undefined
 
   if (connected) {
-    if (shortVaults.length && shortVaults[firstValidVault].shortAmount.lt(amount)) {
+    if (squeethAmount.lt(0) && squeethAmount.lt(amount)) {
       closeError = 'Close amount exceeds position'
     }
     if (new BigNumber(quote.priceImpact).gt(3)) {
@@ -672,7 +681,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
           </div>
           <div className={classes.thirdHeading}>
             <PrimaryInput
-              value={amount.toNumber()}
+              value={Number(amount.toNumber().toFixed(8))}
               onChange={(v) => setAmount(new BigNumber(v))}
               label="Amount"
               tooltip={Tooltips.SellCloseAmount}
@@ -692,14 +701,12 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
                   <div className={classes.hint}>
                     <span className={classes.hintTextContainer}>
                       <span className={classes.hintTitleText}>Position</span>{' '}
-                      <span>{shortVaults.length && shortVaults[firstValidVault].shortAmount.toFixed(6)}</span>
+                      <span>{shortSqueethAmount.toFixed(6)}</span>
                     </span>
                     {amount.toNumber() ? (
                       <>
                         <ArrowRightAltIcon className={classes.arrowIcon} />
-                        <span>
-                          {shortVaults.length && shortVaults[firstValidVault].shortAmount.minus(amount).toFixed(6)}
-                        </span>
+                        <span>{shortSqueethAmount?.minus(amount).toFixed(6)}</span>
                       </>
                     ) : null}{' '}
                     <span style={{ marginLeft: '4px' }}>oSQTH</span>
