@@ -285,14 +285,14 @@ const Header: React.FC = () => {
             {tradeType === TradeType.LONG ? (
               <>Long Squeeth - ETH&sup2; Position</>
             ) : (
-              <>Covered Short Squeeth - short ETH&sup2; Position</>
+              <>Covered Short Squeeth - Short ETH&sup2; Position</>
             )}
           </Typography>
           <Typography className={classes.logoSubTitle} variant="body1" color="textSecondary">
             {tradeType === TradeType.LONG ? (
               <>Perpetual leverage without liquidations</>
             ) : (
-              <>Earn funding for selling ETH collateralized squeeth;</>
+              <>Earn funding for selling ETH collateralized squeeth</>
             )}
           </Typography>
         </div>

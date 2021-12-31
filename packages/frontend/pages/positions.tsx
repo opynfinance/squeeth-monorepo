@@ -2,6 +2,7 @@ import { createStyles, makeStyles, Tooltip, Typography } from '@material-ui/core
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import Link from 'next/link'
 import { useMemo } from 'react'
+import BigNumber from 'bignumber.js'
 
 import { LPTable } from '@components/Lp/LPTable'
 import Nav from '@components/Nav'
@@ -15,6 +16,7 @@ import { useAddresses } from '@hooks/useAddress'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { useLPPositions, usePnL, usePositions } from '@hooks/usePositions'
 import { withRequiredAddr } from '@utils/withRequiredAddr'
+import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -129,8 +131,10 @@ export function Positions() {
   } = usePositions()
 
   const vaultExists = useMemo(() => {
-    return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isGreaterThan(0)
+    return shortVaults.length && shortVaults[firstValidVault]?.collateralAmount?.isGreaterThan(0)
   }, [firstValidVault, shortVaults?.length])
+
+  const { liquidations } = useVaultLiquidations(Number(vaultId))
 
   return (
     <div>
@@ -148,9 +152,12 @@ export function Positions() {
           </div>
         </div>
         {/* eslint-disable-next-line prettier/prettier */}
-        {(wSqueethBal.isZero() && shortVaults.length && shortVaults[firstValidVault]?.shortAmount.isZero()) ||
+        {(wSqueethBal.isZero() && shortVaults.length && shortVaults[firstValidVault]?.collateralAmount.isZero()) ||
         (wSqueethBal.isZero() && shortVaults.length === 0 && squeethAmount.isEqualTo(0)) ||
-        (positionType !== PositionType.LONG && positionType !== PositionType.SHORT && !wSqueethBal.isGreaterThan(0)) ? (
+        (positionType !== PositionType.LONG &&
+          positionType !== PositionType.SHORT &&
+          !wSqueethBal.isGreaterThan(0) &&
+          shortVaults[firstValidVault]?.collateralAmount.isZero()) ? (
           <div className={classes.empty}>
             <Typography>No active positions</Typography>
           </div>
@@ -297,7 +304,8 @@ export function Positions() {
           positionType === PositionType.LONG &&
           wSqueethBal?.minus(squeethAmount)?.isGreaterThan(0)) ||
         (wSqueethBal?.isGreaterThan(0) && positionType === PositionType.SHORT) ||
-        (wSqueethBal?.isGreaterThan(0) && positionType !== PositionType.SHORT && positionType !== PositionType.LONG) ? (
+        (wSqueethBal?.isGreaterThan(0) && positionType !== PositionType.SHORT && positionType !== PositionType.LONG) ||
+        (shortVaults.length && shortVaults[firstValidVault]?.collateralAmount.gt(0) && liquidations.length === 0) ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>Minted Squeeth</Typography>
@@ -322,24 +330,98 @@ export function Positions() {
                 </div>
               </div>
               <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
-                <div style={{ width: '50%' }}>
-                  <Typography variant="caption" component="span" color="textSecondary">
-                    Liquidation Price
-                  </Typography>
-                  <Tooltip title={Tooltips.LiquidationPrice}>
-                    <InfoIcon fontSize="small" className={classes.infoIcon} />
-                  </Tooltip>
-                  <Typography variant="body1">
-                    ${isPositionLoading && liquidationPrice === 0 ? 'Loading' : liquidationPrice.toFixed(2)}
-                  </Typography>
-                </div>
+                {new BigNumber(liquidationPrice).isFinite() ? (
+                  <div style={{ width: '50%' }}>
+                    <Typography variant="caption" component="span" color="textSecondary">
+                      Liquidation Price
+                    </Typography>
+                    <Tooltip title={Tooltips.LiquidationPrice}>
+                      <InfoIcon fontSize="small" className={classes.infoIcon} />
+                    </Tooltip>
+                    <Typography variant="body1">
+                      ${isPositionLoading && liquidationPrice === 0 ? 'Loading' : liquidationPrice.toFixed(2)}
+                    </Typography>
+                  </div>
+                ) : null}
                 <div style={{ width: '50%' }}>
                   <Typography variant="caption" component="span" color="textSecondary">
                     Collateral (Amt / Ratio)
                   </Typography>
                   <Typography variant="body1">
-                    {isPositionLoading && existingCollat.toNumber() === 0 ? 'Loading' : existingCollat.toFixed(4)} ETH (
-                    {existingCollatPercent}%)
+                    {isPositionLoading && existingCollat.toNumber() === 0 ? 'Loading' : existingCollat.toFixed(4)} ETH
+                    {new BigNumber(existingCollatPercent).isFinite() ? '( ' + existingCollatPercent + ' %)' : null}
+                  </Typography>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {liquidations.length > 0 && shortVaults.length && shortVaults[firstValidVault]?.collateralAmount.gt(0) ? (
+          <div className={classes.position}>
+            <div className={classes.positionTitle}>
+              <Typography className={classes.red}>Short Squeeth - Liquidated</Typography>
+              <Typography className={classes.link}>
+                <Link href={`vault/${vaultId}`}>Manage</Link>
+              </Typography>
+            </div>
+            <div className={classes.shortPositionData}>
+              <div className={classes.innerPositionData}>
+                <div style={{ width: '50%' }}>
+                  <Typography variant="caption" component="span" color="textSecondary">
+                    Position
+                  </Typography>
+                  <Typography variant="body1">
+                    {shortVaults.length && shortVaults[firstValidVault].shortAmount.toFixed(6)}&nbsp; oSQTH
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    ${buyQuote.times(ethPrice).toFixed(2)}
+                  </Typography>
+                </div>
+                <div style={{ width: '50%' }}>
+                  <Typography variant="caption" color="textSecondary">
+                    Unrealized P&L
+                  </Typography>
+                  <Tooltip title={Tooltips.UnrealizedPnL}>
+                    <InfoIcon fontSize="small" className={classes.infoIcon} />
+                  </Tooltip>
+                  {isPnLLoading || shortGain <= -100 || !isFinite(Number(shortGain)) ? (
+                    <Typography variant="body1">Loading</Typography>
+                  ) : (
+                    <>
+                      <Typography variant="body1" className={shortGain < 0 ? classes.red : classes.green}>
+                        ${buyQuote.times(ethPrice).minus(shortUsdAmt.abs()).toFixed(2)}
+                      </Typography>
+                      <Typography variant="caption" className={shortGain < 0 ? classes.red : classes.green}>
+                        {(shortGain || 0).toFixed(2)}%
+                      </Typography>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
+                <div style={{ width: '50%' }}>
+                  <Typography variant="caption" component="span" color="textSecondary">
+                    Redeemable Collateral
+                  </Typography>
+                  <Typography variant="body1">
+                    {isPositionLoading && shortVaults[firstValidVault].collateralAmount.isZero()
+                      ? 'Loading'
+                      : shortVaults[firstValidVault].collateralAmount.toFixed(4)}{' '}
+                    ETH
+                  </Typography>
+                </div>
+              </div>
+              <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
+                <div style={{ width: '50%' }}>
+                  <Typography variant="caption" component="span" color="textSecondary">
+                    Realized P&L
+                  </Typography>
+                  <Tooltip title={Tooltips.RealizedPnL}>
+                    <InfoIcon fontSize="small" className={classes.infoIcon} />
+                  </Tooltip>
+                  <Typography variant="body1" className={shortRealizedPNL.gte(0) ? classes.green : classes.red}>
+                    ${isPnLLoading && shortRealizedPNL.toNumber() === 0 ? 'Loading' : shortRealizedPNL.toFixed(2)}
                   </Typography>
                 </div>
               </div>

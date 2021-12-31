@@ -8,8 +8,8 @@ export const FUNDING_PERIOD = 17.5
 export const DEFAULT_SLIPPAGE = 0.5
 
 export const EtherscanPrefix = {
-  1: 'http://etherscan.io/tx/',
-  3: 'http://ropsten.etherscan.io/tx/',
+  1: 'https://etherscan.io/tx/',
+  3: 'https://ropsten.etherscan.io/tx/',
   421611: 'https://rinkeby-explorer.arbitrum.io/tx/',
   31337: '/',
 }

@@ -65,6 +65,7 @@ const useStyles = makeStyles((theme) =>
     },
     caption: {
       marginTop: theme.spacing(1),
+      fontSize: '13px',
     },
     txItem: {
       display: 'flex',
@@ -483,7 +484,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
               </PrimaryButton>
             )}
             <Typography variant="caption" className={classes.caption} component="div">
-              Trades on Uniswap 🦄
+              Trades on Uniswap V3 🦄
             </Typography>
           </div>
         </div>

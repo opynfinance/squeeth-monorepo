@@ -115,10 +115,8 @@ export const usePositions = () => {
 
   useEffect(() => {
     for (let i = 0; i < shortVaults.length; i++) {
-      if (shortVaults[i]?.shortAmount.isGreaterThan(0)) {
+      if (shortVaults[i]?.collateralAmount.isGreaterThan(0)) {
         setFirstValidVault(i)
-        console.log('i ' + i)
-        console.log('fvv ' + firstValidVault)
       }
     }
   }, [shortVaults, shortVaults.length])

@@ -45,7 +45,7 @@ export const useVaultManager = (refetchIntervalSec = 20) => {
 
       const _vaults = data?.vaults
         .filter((v) => {
-          return new BigNumber(v?.shortAmount ?? 0).gt(0)
+          return new BigNumber(v?.collateralAmount ?? 0).gt(0)
         })
         .map(({ id, NftCollateralId, collateralAmount, shortAmount, operator }) => ({
           id,

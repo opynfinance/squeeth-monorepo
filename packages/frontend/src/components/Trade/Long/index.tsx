@@ -49,6 +49,7 @@ const useStyles = makeStyles((theme) =>
     },
     caption: {
       marginTop: theme.spacing(1),
+      fontSize: '13px',
     },
     divider: {
       margin: theme.spacing(2, 0),
@@ -686,13 +687,13 @@ const CloseLong: React.FC<BuyProps> = ({
               </PrimaryButton>
             )}
             <Typography variant="caption" className={classes.caption} component="div">
-              Trades on Uniswap 🦄
+              Trades on Uniswap V3 🦄
             </Typography>
           </div>
         </div>
       ) : (
         <div>
-          <Confirmed confirmationMessage={`Sold ${amount.toNumber()} Squeeth`} txnHash={txHash} />
+          <Confirmed confirmationMessage={`Sold ${amount.toNumber().toString()} Squeeth`} txnHash={txHash} />
           <div className={classes.buttonDiv}>
             <PrimaryButton
               variant="contained"
