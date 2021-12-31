@@ -170,6 +170,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
   const [shortLoading, setShortLoading] = useState(false)
   const [buyLoading, setBuyLoading] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
+  const [liqPrice, setLiqPrice] = useState(0)
   const [txHash, setTxHash] = useState('')
   const [withdrawCollat, setWithdrawCollat] = useState(new BigNumber(0))
   const [neededCollat, setNeededCollat] = useState(new BigNumber(0))
@@ -202,11 +203,10 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
 
   const [vaultId, setVaultId] = useState(shortVaults.length ? shortVaults[firstValidVault].id : 0)
 
-  const liqPrice = useMemo(() => {
+  useEffect(() => {
     const rSqueeth = normalizationFactor.multipliedBy(amount || 1).dividedBy(10000)
     const liqp = collateral.dividedBy(rSqueeth.multipliedBy(1.5)).toNumber()
-    if (liqp) return liqp
-    return 0
+    if (liqp) setLiqPrice(liqp)
   }, [amount, collatPercent, collateral, normalizationFactor.toNumber()])
 
   useEffect(() => {
