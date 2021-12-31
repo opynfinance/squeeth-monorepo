@@ -122,7 +122,7 @@ export const usePositions = () => {
   }, [shortVaults, shortVaults.length])
 
   useEffect(() => {
-    if (shortVaults.length && shortVaults[firstValidVault]?.shortAmount) {
+    if (shortVaults.length && shortVaults[firstValidVault]?.collateralAmount) {
       const _collat: BigNumber = shortVaults[firstValidVault].collateralAmount
       setExistingCollat(_collat)
       getDebtAmount(new BigNumber(shortVaults[firstValidVault]?.shortAmount)).then((debt) => {
@@ -366,16 +366,14 @@ export const useShortPositions = () => {
 
   useEffect(() => {
     for (let i = 0; i < shortVaults.length; i++) {
-      if (shortVaults[i]?.shortAmount.isGreaterThan(0)) {
+      if (shortVaults[i]?.collateralAmount.isGreaterThan(0)) {
         setFirstValidVault(i)
-        console.log('i ' + i)
-        console.log('fvv ' + firstValidVault)
       }
     }
   }, [shortVaults, shortVaults.length])
 
   useEffect(() => {
-    if (shortVaults.length && shortVaults[firstValidVault]?.shortAmount) {
+    if (shortVaults.length && shortVaults[firstValidVault]?.collateralAmount) {
       const _collat: BigNumber = shortVaults[firstValidVault].collateralAmount
       setExistingCollat(_collat)
       getDebtAmount(new BigNumber(shortVaults[firstValidVault]?.shortAmount)).then((debt) => {

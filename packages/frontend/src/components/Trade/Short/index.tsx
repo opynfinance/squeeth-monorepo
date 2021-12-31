@@ -222,7 +222,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
     }
 
     setVaultId(shortVaults[firstValidVault].id)
-  }, [shortVaults.length])
+  }, [shortVaults.length, firstValidVault])
 
   useEffect(() => {
     if (!open) return

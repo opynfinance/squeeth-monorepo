@@ -19,6 +19,7 @@ import { PrimaryInput } from '../Input/PrimaryInput'
 import Long from '../Trade/Long'
 import TradeDetails from '../Trade/TradeDetails'
 import TradeInfoItem from '../Trade/TradeInfoItem'
+import { useVaultManager } from '@hooks/contracts/useVaultManager'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -70,7 +71,8 @@ const Mint: React.FC = () => {
   const { wSqueeth } = useAddresses()
   const squeethBal = useTokenBalance(wSqueeth, 10, WSQUEETH_DECIMALS)
   const { balance, connected } = useWallet()
-  const { existingCollatPercent, existingCollat, shortVaults, firstValidVault } = useShortPositions()
+  const { existingCollatPercent, existingCollat, firstValidVault } = useShortPositions()
+  const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
   const { getWSqueethPositionValue } = useSqueethPool()
   const { normFactor: normalizationFactor, openDepositAndMint, getShortAmountFromDebt } = useController()
   const { dispatch } = useLPState()
@@ -81,16 +83,21 @@ const Mint: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [mintMinCollatError, setMintMinCollatError] = useState('')
   const [minCollRatioError, setMinCollRatioError] = useState('')
+  const [vaultId, setVaultId] = useState(shortVaults.length ? shortVaults[firstValidVault].id : 0)
 
-  const vaultId = useMemo(() => {
-    if (!shortVaults.length) return 0
+  useEffect(() => {
+    if (!shortVaults.length) {
+      setVaultId(0)
+      return
+    }
 
-    return shortVaults[firstValidVault].id
-  }, [shortVaults])
+    setVaultId(shortVaults[firstValidVault].id)
+  }, [shortVaults.length, firstValidVault])
 
   const mint = async () => {
     setLoading(true)
     try {
+      if (vaultIDLoading) return
       await openDepositAndMint(vaultId, mintAmount, collatAmount)
       dispatch({ type: LPActions.GO_TO_PROVIDE_LIQUIDITY })
     } catch (e) {
