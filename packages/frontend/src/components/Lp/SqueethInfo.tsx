@@ -41,7 +41,7 @@ const SqueethInfo: React.FC = () => {
   const classes = useStyles()
   const ethPrice = useETHPrice()
   const { mark, index, impliedVol } = useController()
-  const { getWSqueethPositionValue } = useSqueethPool()
+  const { getWSqueethPositionValue, getWSqueethPositionValueInETH } = useSqueethPool()
 
   return (
     <div className={classes.squeethInfo}>
@@ -82,7 +82,15 @@ const SqueethInfo: React.FC = () => {
                 <InfoIcon fontSize="small" className={classes.infoIcon} />
               </Tooltip>
             </div>
-            <Typography>${Number(getWSqueethPositionValue(1).toFixed(2).toLocaleString()) || 'loading'}</Typography>
+            <Typography>
+              {getWSqueethPositionValue(1) && getWSqueethPositionValueInETH(1)
+                ? '$' +
+                  Number(getWSqueethPositionValue(1).toFixed(2).toLocaleString()) +
+                  '\xa0 ' +
+                  Number(getWSqueethPositionValueInETH(1).toFixed(4).toLocaleString()) +
+                  ' ETH'
+                : 'loading'}
+            </Typography>
           </div>
           <div className={classes.infoItem}>
             <div className={classes.infoLabel}>

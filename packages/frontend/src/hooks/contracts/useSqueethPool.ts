@@ -163,6 +163,10 @@ export const useSqueethPool = () => {
     return new BigNumber(amount).times(squeethInitialPrice).times(ethPrice)
   }
 
+  function getWSqueethPositionValueInETH(amount: BigNumber | number) {
+    return new BigNumber(amount).times(squeethInitialPrice)
+  }
+
   async function getPoolState() {
     const slot = await squeethContract?.methods.slot0().call()
     const PoolState = {
@@ -454,5 +458,6 @@ export const useSqueethPool = () => {
     getSellQuote,
     getSellQuoteForETH,
     getWSqueethPositionValue,
+    getWSqueethPositionValueInETH,
   }
 }
