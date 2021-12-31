@@ -501,7 +501,10 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
      * @param _operator new operator address
      */
     function updateOperator(uint256 _vaultId, address _operator) external {
-        require(IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId) == msg.sender, "C20");
+        require(
+            (shortPowerPerp == msg.sender) || (IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId) == msg.sender),
+            "C20"
+        );
         vaults[_vaultId].operator = _operator;
         emit UpdateOperator(msg.sender, _vaultId, _operator);
     }

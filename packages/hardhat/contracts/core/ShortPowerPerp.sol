@@ -5,6 +5,7 @@ pragma solidity =0.7.6;
 //contract
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/Initializable.sol";
+import {IController} from "../interfaces/IController.sol";
 
 /**
  * @notice ERC721 NFT representing ownership of a vault (short position)
@@ -48,5 +49,13 @@ contract ShortPowerPerp is ERC721, Initializable {
     function mintNFT(address _recipient) external onlyController returns (uint256 tokenId) {
         // mint NFT
         _safeMint(_recipient, (tokenId = nextId++));
+    }
+
+    function _beforeTokenTransfer(
+        address, /* from */
+        address, /* to */
+        uint256 tokenId
+    ) internal override {
+        IController(controller).updateOperator(tokenId, address(0));
     }
 }

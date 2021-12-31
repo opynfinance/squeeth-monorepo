@@ -2,19 +2,18 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { constants } from "ethers";
-import { ShortPowerPerp} from "../../typechain";
+import { ShortPowerPerp, ControllerAccessTester} from "../../typechain";
 
 describe("ShortPowerPerp", function () {
   let shortSqueeth: ShortPowerPerp;
   let random: SignerWithAddress
-  let controller: SignerWithAddress
+  let controller: ControllerAccessTester
   let address1: SignerWithAddress
 
   this.beforeAll("Prepare accounts", async() => {
     const accounts = await ethers.getSigners();
-    const [_address1, _controller, _random] = accounts;
+    const [_address1, _random] = accounts;
     address1 = _address1
-    controller = _controller
     random = _random
   });
 
@@ -22,6 +21,8 @@ describe("ShortPowerPerp", function () {
     it("Deployment", async function () {
       const ShortPowerPerpContract = await ethers.getContractFactory("ShortPowerPerp");
       shortSqueeth = (await ShortPowerPerpContract.deploy('Short Squeeth', 'sSQU')) as ShortPowerPerp;
+      const ControllerContract = await ethers.getContractFactory("ControllerAccessTester");
+      controller = (await ControllerContract.deploy(shortSqueeth.address)) as ControllerAccessTester;
     });
   });
 
@@ -35,7 +36,7 @@ describe("ShortPowerPerp", function () {
     it("Should be able to init contract when called by the deployer", async () => {
       await shortSqueeth.connect(address1).init(controller.address);
       const controllerAddress = await shortSqueeth.controller();
-      expect(controllerAddress).to.be.eq(controller.address,"Controllr address mismatch");
+      expect(controllerAddress).to.be.eq(controller.address,"Controller address mismatch");
     })
     it("should revert when trying to init again", async () => {
       await expect(shortSqueeth.connect(address1).init(controller.address)).to.be.revertedWith("Initializable: contract is already initialized")
@@ -48,7 +49,7 @@ describe("ShortPowerPerp", function () {
     });
     it('Should mint nft with expected id if mint is called by controller', async() => {
       const expectedId = await shortSqueeth.nextId()
-      await shortSqueeth.connect(controller).mintNFT(random.address)
+      await controller.connect(address1).mintTest(random.address)
       expect(await shortSqueeth.ownerOf(expectedId) === random.address).to.be.true
     })
   });

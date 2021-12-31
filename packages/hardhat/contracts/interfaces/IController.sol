@@ -63,6 +63,8 @@ interface IController {
 
     function liquidate(uint256 _vaultId, uint256 _maxDebtAmount) external returns (uint256);
 
+    function updateOperator(uint256 _vaultId, address _operator) external;
+
     /**
      * External function to update the normalized factor as a way to pay funding.
      */

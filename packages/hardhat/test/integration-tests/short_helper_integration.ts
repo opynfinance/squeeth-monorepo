@@ -220,11 +220,35 @@ describe("ShortHelper Integration Test", function () {
 
     it('should add ShortHelper as an operator', async() =>{
       // it needs to set the ShortHelper as an operator to allow interactions past minting a new vault
-      // there is no access control here now, we need to fix!
       
       await controller.connect(seller1).updateOperator(seller1VaultId,shortHelper.address)
       const vault = await controller.vaults(seller1VaultId)
       expect(vault.operator).to.be.eq(shortHelper.address, "Operator not set correctly")
+    })
+
+    it('should reset operator when vault transferred', async() =>{
+      
+      const nftOwnerBefore = await shortPowerPerp.ownerOf(seller1VaultId)
+      const vaultBefore = await controller.vaults(seller1VaultId)
+      await shortPowerPerp.connect(seller1).functions["safeTransferFrom(address,address,uint256)"](seller1.address, seller2.address, seller1VaultId)
+      
+      const nftOwnerAfter = await shortPowerPerp.ownerOf(seller1VaultId)
+
+      const vaultAfter = await controller.vaults(seller1VaultId)
+      expect(vaultBefore.operator).to.be.eq(shortHelper.address, "Operator was not set correctly to short helper")
+      expect(vaultAfter.operator).to.be.eq(ethers.constants.AddressZero, "Operator didn't get reset on transfer")
+      expect(nftOwnerBefore).to.be.eq(seller1.address, "Nft was not owned by seller1 before transfer")
+      expect(nftOwnerAfter).to.be.eq(seller2.address, "Nft is not owned by seller2 after transfer")
+
+      await shortPowerPerp.connect(seller2).functions["safeTransferFrom(address,address,uint256)"](seller2.address, seller1.address, seller1VaultId)
+      const nftOwnerFinal = await shortPowerPerp.ownerOf(seller1VaultId)
+
+      expect(nftOwnerFinal).to.be.eq(seller1.address, "Nft is not owned by seller1 after final transfer")
+
+      await controller.connect(seller1).updateOperator(seller1VaultId,shortHelper.address)
+      const vault = await controller.vaults(seller1VaultId)
+      expect(vault.operator).to.be.eq(shortHelper.address, "Operator not set correctly")
+
     })
 
     it ('should add collateral to an existing vault and sell squeeth, receive weth in return', async () => {
