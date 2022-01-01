@@ -36,6 +36,7 @@ const useStyles = makeStyles((theme) =>
     container: {
       margin: theme.spacing(6, 8),
       width: '800px',
+      height: '800px',
       marginLeft: 'auto',
       marginRight: 'auto',
       [theme.breakpoints.down('sm')]: {
@@ -44,18 +45,20 @@ const useStyles = makeStyles((theme) =>
       },
     },
     overview: {
-      display: 'flex',
+      display: 'grid',
       marginTop: theme.spacing(2),
-      justifyContent: 'space-between',
+      gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, max(25% - 20px, 200px)), 1fr))`,
+      columnGap: '20px',
     },
     overviewItem: {
       display: 'flex',
       flexDirection: 'column',
       background: theme.palette.background.stone,
       // height: '75px',
-      width: '185px',
+      width: '100%',
       borderRadius: theme.spacing(2),
       padding: theme.spacing(2, 3),
+      marginBottom: '1em',
     },
     overviewTitle: {
       fontSize: '14px',
@@ -162,6 +165,18 @@ const useStyles = makeStyles((theme) =>
       background: 'transparent',
       border: 'none',
       cursor: 'pointer',
+    },
+    debtOverview: {
+      margin: '2em 0 2.5em 0',
+    },
+    debtItem: {
+      display: 'flex',
+      flexDirection: 'column',
+      border: '1px solid #DCDAE94D',
+      width: '100%',
+      padding: theme.spacing(2, 3),
+      borderRadius: theme.spacing(1),
+      // marginBottom: '1em',
     },
   }),
 )
@@ -407,6 +422,20 @@ const Component: React.FC = () => {
     },
   )
 
+  const mintedDebt = useMemo(() => {
+    return squeethBal?.isGreaterThan(0) && positionType === PositionType.LONG
+      ? squeethBal.minus(squeethAmount)
+      : squeethBal
+  }, [positionType, squeethAmount, squeethBal])
+  const shortDebt = useMemo(() => {
+    return positionType === PositionType.SHORT ? squeethAmount : new BigNumber(0)
+  }, [positionType, squeethAmount])
+  const LPedDebt = useMemo(() => {
+    return vault?.shortAmount.minus(mintedDebt).minus(shortDebt).gt(0)
+      ? vault?.shortAmount.minus(mintedDebt).minus(shortDebt)
+      : new BigNumber(0)
+  }, [mintedDebt, shortDebt, vault?.shortAmount])
+
   return (
     <div>
       <Nav />
@@ -447,11 +476,35 @@ const Component: React.FC = () => {
               </div>
             </div>
           ) : null}
-          <div className={classes.overview}>
-            <div className={classes.overviewItem}>
+
+          <div className={classes.debtOverview}>
+            <div>
               <Typography className={classes.overviewValue}>{vault?.shortAmount.toFixed(6)}</Typography>
-              <Typography className={classes.overviewTitle}>Debt (oSQTH)</Typography>
+              <Typography color="textSecondary" variant="body2" className={classes.overviewTitle}>
+                Total Debt (oSQTH)
+              </Typography>
             </div>
+            <div className={classes.overview}>
+              <div className={classes.debtItem}>
+                <Typography className={classes.overviewTitle}>Minted Debt (oSQTH)</Typography>
+                <Typography className={classes.overviewValue}>{mintedDebt.toFixed(6)}</Typography>
+              </div>
+              <div className={classes.debtItem}>
+                <Typography className={classes.overviewTitle}>Short Debt (oSQTH)</Typography>
+                <Typography className={classes.overviewValue}>{shortDebt.toFixed(6)}</Typography>
+              </div>
+              <div className={classes.debtItem}>
+                <Typography className={classes.overviewTitle}>LP Debt (oSQTH)</Typography>
+                <Typography className={classes.overviewValue}>{LPedDebt?.toFixed(6)}</Typography>
+              </div>
+            </div>
+          </div>
+
+          <div className={classes.overview}>
+            {/* <div className={classes.overviewItem}>
+              <Typography className={classes.overviewValue}>{vault?.shortAmount.toFixed(6)}</Typography>
+              <Typography className={classes.overviewTitle}>Total Debt (oSQTH)</Typography>
+            </div> */}
             <div className={classes.overviewItem}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Typography className={classes.overviewValue}>{vault?.collateralAmount.toFixed(4)}</Typography>
@@ -487,6 +540,7 @@ const Component: React.FC = () => {
               <Typography className={classes.overviewTitle}>Liquidation Price</Typography>
             </div>
           </div>
+
           <div className={classes.manager}>
             <div className={classes.managerItem}>
               <div className={classes.managerItemHeader}>

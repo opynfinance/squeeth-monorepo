@@ -349,7 +349,7 @@ export function Positions() {
                   </Typography>
                   <Typography variant="body1">
                     {isPositionLoading && existingCollat.toNumber() === 0 ? 'Loading' : existingCollat.toFixed(4)} ETH
-                    {new BigNumber(existingCollatPercent).isFinite() ? '( ' + existingCollatPercent + ' %)' : null}
+                    {new BigNumber(existingCollatPercent).isFinite() ? ' (' + existingCollatPercent + ' %)' : null}
                   </Typography>
                 </div>
               </div>
