@@ -98,7 +98,7 @@ const Nav: React.FC = () => {
           <div style={{ display: 'flex' }}>
             <NavLink path="/" name="Trade" />
             {/* <NavLink path="/trade" name="Trade 1" /> */}
-            {/* <NavLink path="/strategies" name="Strategies" /> */}
+            <NavLink path="/strategies" name="Strategies" />
             <NavLink path="/positions" name="Positions" />
             <NavLink path="/lp" name="LP" />
             <a href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq" target="_blank" rel="noreferrer">

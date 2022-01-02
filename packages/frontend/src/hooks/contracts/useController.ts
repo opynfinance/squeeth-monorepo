@@ -263,7 +263,7 @@ export const useController = () => {
   const getDebtAmount = async (shortAmount: BigNumber) => {
     if (!contract) return new BigNumber(0)
 
-    const ethDaiPrice = await getTwapSafe(ethDaiPool, weth, dai, 3000)
+    const ethDaiPrice = await getTwapSafe(ethDaiPool, weth, dai, 300)
     const _shortAmt = fromTokenAmount(shortAmount, WSQUEETH_DECIMALS)
     const ethDebt = new BigNumber(_shortAmt).div(INDEX_SCALE).multipliedBy(normFactor).multipliedBy(ethDaiPrice)
     return toTokenAmount(ethDebt, 18)
@@ -272,7 +272,7 @@ export const useController = () => {
   const getShortAmountFromDebt = async (debtAmount: BigNumber) => {
     if (!contract) return new BigNumber(0)
 
-    const ethDaiPrice = await getTwapSafe(ethDaiPool, weth, dai, 3000)
+    const ethDaiPrice = await getTwapSafe(ethDaiPool, weth, dai, 300)
     const shortAmount = fromTokenAmount(debtAmount, 18).times(INDEX_SCALE).div(normFactor).div(ethDaiPrice)
     return toTokenAmount(shortAmount.toFixed(0), WSQUEETH_DECIMALS)
   }
