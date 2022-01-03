@@ -58,7 +58,7 @@ export const usePositions = () => {
       swaps?.reduce(
         (acc, s) => {
           //values are all from the pool pov
-          //if >0 for the pool, user gave some squeeth to the tool, meaning selling the squeeth
+          //if >0 for the pool, user gave some squeeth to the pool, meaning selling the squeeth
           const squeethAmt = new BigNumber(isWethToken0 ? s.amount1 : s.amount0)
           const wethAmt = new BigNumber(isWethToken0 ? s.amount0 : s.amount1)
           const usdAmt = getUsdAmt(wethAmt, s.timestamp)
@@ -433,11 +433,12 @@ export const usePnL = () => {
   } = useLongPositions()
   const {
     usdAmount: shortUsdAmt,
-    shortVaults: shortSqueethVaults,
+    // shortVaults: shortSqueethVaults,
     realizedPNL: shortRealizedPNL,
     refetch: refetchShort,
-    squeethAmount: shortSQueethAmount,
+    // squeethAmount: shortSQueethAmount,
   } = useShortPositions()
+  const { positionType, squeethAmount, wethAmount, shortVaults, firstValidVault, vaultId } = usePositions()
   const ethPrice = useETHPrice()
   const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
 
@@ -451,17 +452,6 @@ export const usePnL = () => {
   const [shortGain, setShortGain] = useState(0)
   const [loading, setLoading] = useState(true)
 
-  const positionType = useMemo(() => {
-    if (wSqueethBal.isGreaterThan(0)) return PositionType.LONG
-    if (
-      shortSqueethVaults.length &&
-      shortSqueethVaults[0]?.shortAmount.isGreaterThan(0) &&
-      shortSQueethAmount.isGreaterThan(0)
-    )
-      return PositionType.SHORT
-    else return PositionType.NONE
-  }, [wSqueethBal.toNumber(), shortSqueethVaults])
-
   const refetch = () => {
     refetchLong()
     refetchShort()
@@ -470,29 +460,28 @@ export const usePnL = () => {
   useEffect(() => {
     if (!ready) return
 
-    const p1 = getSellQuote(wSqueethBal).then(setSellQuote)
-    const buyQuoteAmt = shortSqueethVaults.length ? shortSqueethVaults[0].shortAmount : new BigNumber(0)
-    const p2 = getBuyQuote(buyQuoteAmt).then((val) => setBuyQuote(val.amountIn))
+    const p1 = getSellQuote(squeethAmount).then(setSellQuote)
+    const p2 = getBuyQuote(squeethAmount).then((val) => setBuyQuote(val.amountIn))
     Promise.all([p1, p2]).then(() => setLoading(false))
-  }, [wSqueethBal.toNumber(), ready, shortSqueethVaults])
+  }, [squeethAmount.toNumber(), ready, shortVaults])
 
   useEffect(() => {
     const _currentValue = sellQuote.amountOut
-      .times(ethPrice || 0)
-      .div(longUsdAmt.absoluteValue())
+      // .times(ethPrice || 0)
+      .div(wethAmount.absoluteValue())
       .times(100)
     const _gain = _currentValue.minus(100)
     setLongGain(_gain.toNumber())
-  }, [ethPrice.toNumber(), longUsdAmt.toNumber(), sellQuote.amountOut.toNumber()])
+  }, [ethPrice.toNumber(), wethAmount.toNumber(), sellQuote.amountOut.toNumber()])
 
   useEffect(() => {
     const _currentValue = buyQuote
-      .times(ethPrice || 0)
-      .div(shortUsdAmt.absoluteValue())
+      // .times(ethPrice || 0)
+      .div(wethAmount.absoluteValue())
       .times(100)
-    const _gain = _currentValue.minus(100)
+    const _gain = new BigNumber(100).minus(_currentValue)
     setShortGain(_gain.toNumber())
-  }, [buyQuote.toNumber(), ethPrice.toNumber(), shortUsdAmt.toNumber()])
+  }, [buyQuote.toNumber(), ethPrice.toNumber(), wethAmount.toNumber()])
 
   return {
     longGain,

@@ -334,7 +334,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
               actionTxt="Max"
               onActionClicked={() => setCollateral(new BigNumber(balance))}
               unit="ETH"
-              convertedValue={collateral.times(ethPrice).toFixed(2).toLocaleString()}
+              convertedValue={!collateral.isNaN() ? collateral.times(ethPrice).toFixed(2).toLocaleString() : 0}
               hint={
                 openError ? (
                   openError
@@ -345,7 +345,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
                 ) : (
                   <div className={classes.hint}>
                     <span>{`Balance ${balance}`}</span>
-                    {collateral ? (
+                    {!collateral.isNaN() ? (
                       <>
                         <ArrowRightAltIcon className={classes.arrowIcon} />
                         <span>{new BigNumber(balance).minus(collateral).toFixed(4)}</span>
@@ -386,9 +386,13 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
           <CollatRange onCollatValueChange={(val) => setCollatPercent(val)} collatValue={collatPercent} />
           <TradeDetails
             actionTitle="Sell"
-            amount={amount.toFixed(6)}
+            amount={!amount.isNaN() ? amount.toFixed(6) : Number(0).toLocaleString()}
             unit="oSQTH"
-            value={Number(getWSqueethPositionValue(amount).toFixed(2)).toLocaleString()}
+            value={
+              !amount.isNaN()
+                ? Number(getWSqueethPositionValue(amount).toFixed(2)).toLocaleString()
+                : Number(0).toLocaleString()
+            }
             hint={
               openError ? (
                 openError
@@ -538,8 +542,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     slippageAmount,
   } = useTrade()
   const { squeethAmount: lngAmt } = useLongPositions()
-  const { shortVaults, firstValidVault, existingCollatPercent, squeethAmount: shortSqueethAmount } = useShortPositions()
-  const { squeethAmount } = usePositions()
+  const { shortVaults, firstValidVault, existingCollatPercent, squeethAmount: shortSqueethAmount } = usePositions()
 
   useEffect(() => {
     if (!open && shortVaults.length && shortVaults[firstValidVault].shortAmount.lt(amount)) {
@@ -630,7 +633,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   let priceImpactWarning: string | undefined
 
   if (connected) {
-    if (squeethAmount.lt(0) && squeethAmount.lt(amount)) {
+    if (shortSqueethAmount.lt(0) && shortSqueethAmount.lt(amount)) {
       closeError = 'Close amount exceeds position'
     }
     if (new BigNumber(quote.priceImpact).gt(3)) {
@@ -682,7 +685,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
           </div>
           <div className={classes.thirdHeading}>
             <PrimaryInput
-              value={Number(amount.toNumber().toFixed(8))}
+              value={Number(amount.toNumber())}
               onChange={(v) => setAmount(new BigNumber(v))}
               label="Amount"
               tooltip={Tooltips.SellCloseAmount}
@@ -690,7 +693,11 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
               onActionClicked={setShortCloseMax}
               unit="oSQTH"
               error={!!existingLongError || !!priceImpactWarning || !!closeError}
-              convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
+              convertedValue={
+                !amount.isNaN()
+                  ? getWSqueethPositionValue(amount).toFixed(2).toLocaleString()
+                  : Number(0).toLocaleString()
+              }
               hint={
                 closeError ? (
                   closeError

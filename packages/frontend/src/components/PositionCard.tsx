@@ -7,11 +7,13 @@ import clsx from 'clsx'
 import Link from 'next/link'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { useLongPositions, usePnL, useShortPositions } from '@hooks/usePositions'
+import { useLongPositions, usePnL, usePositions, useShortPositions } from '@hooks/usePositions'
 import { Tooltips } from '@constants/enums'
 import { useTrade } from '@context/trade'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { PositionType, TradeType } from '../types'
+import { useController } from '@hooks/contracts/useController'
+import { toTokenAmount } from '@utils/calculations'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -147,24 +149,12 @@ type PositionCardType = {
 }
 
 const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
-  const {
-    buyQuote,
-    sellQuote,
-    longGain,
-    shortGain,
-    wSqueethBal,
-    positionType,
-    longUsdAmt,
-    shortUsdAmt,
-    longRealizedPNL,
-    shortRealizedPNL,
-    loading,
-    refetch,
-  } = usePnL()
+  const { buyQuote, sellQuote, longGain, shortGain, wSqueethBal, longRealizedPNL, shortRealizedPNL, loading, refetch } =
+    usePnL()
+  const { positionType, squeethAmount, wethAmount, shortVaults, firstValidVault, vaultId } = usePositions()
   const { tradeAmount, actualTradeType, isOpenPosition, quote, tradeSuccess, setTradeSuccess, tradeType } = useTrade()
   const ethPrice = useETHPrice()
-  const { shortVaults, firstValidVault, vaultId, squeethAmount: shortSqueethAmount } = useShortPositions()
-  const { squeethAmount: lngAmt } = useLongPositions()
+  const { index } = useController()
   const [fetchingNew, setFetchingNew] = useState(false)
   const [postTradeAmt, setPostTradeAmt] = useState(new BigNumber(0))
   const [postPosition, setPostPosition] = useState(PositionType.NONE)
@@ -210,7 +200,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
       }
       return none
     },
-    [shortVaults, wSqueethBal, tradeType, positionType, loading, longGain, shortGain],
+    [shortVaults, squeethAmount, tradeType, positionType, loading, longGain, shortGain],
   )
 
   const getRealizedPNLBasedValue = useCallback(
@@ -227,20 +217,16 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
   useEffect(() => {
     let _postTradeAmt = new BigNumber(0)
     let _postPosition = PositionType.NONE
-    const hasShortPosition =
-      shortVaults.length > 0 && shortVaults[firstValidVault].shortAmount.gt(0) && shortSqueethAmount
-    if (actualTradeType === TradeType.LONG && !hasShortPosition) {
+    if (actualTradeType === TradeType.LONG && positionType !== PositionType.SHORT) {
       if (isOpenPosition) {
-        _postTradeAmt = wSqueethBal.plus(quote.amountOut)
+        _postTradeAmt = squeethAmount.plus(quote.amountOut)
       } else {
-        _postTradeAmt = wSqueethBal.minus(tradeAmount)
+        _postTradeAmt = squeethAmount.minus(tradeAmount)
       }
       if (_postTradeAmt.gt(0)) _postPosition = PositionType.LONG
-    } else if (actualTradeType === TradeType.SHORT && !lngAmt.gt(0)) {
-      if (isOpenPosition)
-        _postTradeAmt = shortSqueethAmount.isGreaterThan(0) ? shortSqueethAmount.plus(tradeAmount) : tradeAmount
-      else
-        _postTradeAmt = shortSqueethAmount.isGreaterThan(0) ? shortSqueethAmount.minus(tradeAmount) : new BigNumber(0)
+    } else if (actualTradeType === TradeType.SHORT && positionType !== PositionType.LONG) {
+      if (isOpenPosition) _postTradeAmt = squeethAmount.isGreaterThan(0) ? squeethAmount.plus(tradeAmount) : tradeAmount
+      else _postTradeAmt = squeethAmount.isGreaterThan(0) ? squeethAmount.minus(tradeAmount) : new BigNumber(0)
       if (_postTradeAmt.gt(0)) _postPosition = PositionType.SHORT
     }
 
@@ -250,11 +236,11 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     actualTradeType,
     firstValidVault,
     isOpenPosition,
-    lngAmt.toNumber(),
     quote.amountOut.toNumber(),
     shortVaults?.length,
     tradeAmount.toNumber(),
-    wSqueethBal.toNumber(),
+    squeethAmount.toNumber(),
+    positionType,
   ])
 
   return (
@@ -265,8 +251,8 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
         </Typography>
         <span className={clsx(classes.title, classes.positionTitle)}>{positionType.toUpperCase()}</span>
         {postPosition === positionType ||
-        (tradeType === TradeType.LONG && shortVaults.length && shortVaults[firstValidVault].shortAmount.gt(0)) ||
-        (tradeType === TradeType.SHORT && lngAmt.gt(0)) ? null : (
+        (tradeType === TradeType.LONG && positionType === PositionType.SHORT) ||
+        (tradeType === TradeType.SHORT && positionType === PositionType.LONG) ? null : (
           <>
             <ArrowRightAltIcon className={classes.arrow} />
             <span className={clsx(classes.title, classes.postpositionTitle)}>{postPosition.toUpperCase()}</span>
@@ -277,10 +263,10 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
         <div>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <Typography component="span" style={{ fontWeight: 600 }}>
-              {getPositionBasedValue(lngAmt.toFixed(6), shortSqueethAmount.toFixed(6), 0)}
+              {getPositionBasedValue(squeethAmount.toFixed(6), squeethAmount.toFixed(6), 0)}
             </Typography>
-            {(tradeType === TradeType.SHORT && lngAmt.gt(0)) ||
-            (tradeType === TradeType.LONG && shortVaults.length && shortVaults[firstValidVault].shortAmount.gt(0)) ||
+            {(tradeType === TradeType.SHORT && positionType === PositionType.LONG) ||
+            (tradeType === TradeType.LONG && positionType === PositionType.SHORT) ||
             tradeAmount.isLessThanOrEqualTo(0) ||
             tradeAmount.isNaN() ||
             tradeCompleted ? null : (
@@ -290,13 +276,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
                   component="span"
                   style={{
                     fontWeight: 600,
-                    color: postTradeAmt.gte(
-                      getPositionBasedValue(
-                        wSqueethBal.toFixed(6),
-                        shortVaults.length && shortVaults[firstValidVault].shortAmount.toFixed(6),
-                        0,
-                      ),
-                    )
+                    color: postTradeAmt.gte(getPositionBasedValue(squeethAmount, squeethAmount, 0))
                       ? '#49D273'
                       : '#f5475c',
                   }}
@@ -337,8 +317,8 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
                   style={{ fontWeight: 600 }}
                 >
                   {getPositionBasedValue(
-                    `$${sellQuote.amountOut.times(ethPrice).minus(longUsdAmt.abs()).toFixed(2)}`,
-                    `$${buyQuote.times(ethPrice).minus(shortUsdAmt.abs()).toFixed(2)}`,
+                    `$${sellQuote.amountOut.minus(wethAmount.abs()).times(toTokenAmount(index, 18).sqrt()).toFixed(2)}`,
+                    `$${wethAmount.minus(buyQuote).times(toTokenAmount(index, 18).sqrt()).toFixed(2)}`,
                     '--',
                     'Loading',
                   )}
@@ -389,3 +369,6 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
 }
 
 export default PositionCard
+function getPositionBasedValue(amountOut: BigNumber, buyQuote: BigNumber, arg2: BigNumber) {
+  throw new Error('Function not implemented.')
+}

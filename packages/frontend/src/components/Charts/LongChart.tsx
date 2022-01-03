@@ -212,7 +212,7 @@ export function LongChart() {
             position. Enter the position by purchasing an ERC20 token.{' '}
             <a
               className={classes.header}
-              href="https://opynopyn.notion.site/Squeeth-FAQ-4b6a054ab011454cbbd60cb3ee23a37c"
+              href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq"
               target="_blank"
               rel="noreferrer"
             >
@@ -244,10 +244,19 @@ export function LongChart() {
             position size. Holding the position for a long period of time without upward movements in ETH can lose
             considerable funds to funding payments.
             <br /> <br />
-            Squeeth smart contracts have been audited by Trail of Bits and Monoceros. However, smart contracts are
+            Squeeth smart contracts have been audited by Trail of Bits and Akira. However, smart contracts are
             experimental technology and we encourage caution only risking funds you can afford to lose.
             <br /> <br />
             If ETH goes down considerably, you may lose some or all of your initial investment.
+            <a
+              className={classes.header}
+              href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq#risks"
+              target="_blank"
+              rel="noreferrer"
+            >
+              {' '}
+              Learn more.{' '}
+            </a>
           </Typography>
         </div>
       ) : (

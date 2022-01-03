@@ -20,7 +20,7 @@ export enum TransactionType {
 
 export enum Tooltips {
   ImplVol = 'Implied Volatility (IV) is a market forecast of ETH price movement implied by squeeth',
-  UnrealizedPnL = 'Total profit / loss if you were to fully close your position at the current oSQTH price. Resets if you close your position or change position sides (long to short, or vice versa)',
+  UnrealizedPnL = 'Total profit / loss if you were to fully close your position at the current oSQTH price on Uniswap. Resets if you close your position or change position sides (long to short, or vice versa)',
   RealizedPnL = 'Total realized profit / loss for this position through partial closes. Resets if you fully close your position or change position sides (long to short, or vice versa)',
   Mark = 'The price squeeth is trading at. Because squeeth has convexity, Mark should be greater than ETH^2',
   Last24AvgFunding = 'Average funding paid over the last 24hrs. Calculated using a 24hr TWAP of Mark - Index',
@@ -29,7 +29,7 @@ export enum Tooltips {
   oSQTHPrice = 'Price of oSQTH on Uniswap',
   LPPnL = 'PnL = Value of current LP underlying tokens including uncollected fees - Value of tokens deposited (at current price)',
   UniswapLoading = 'When you click the Uniswap link, the Uniswap LP page may take a few moments to load. Please wait for it to fully load so it can prefill LP token data.',
-  Operator = 'Operator is a contract that mints squeeth, deposits collateral and sells squeeth in single TX. Similarly it also buys back + burns squeeth and withdraws collateral in single TX',
+  Operator = 'The wrapper contract mints squeeth, deposits collateral and sells squeeth in single TX. Similarly it also buys back + burns squeeth and withdraws collateral in single TX',
   SellCloseAmount = 'Amount of oSQTH to buy',
   CurrentCollRatio = 'Collateral ratio for current short position',
   SellOpenAmount = 'Minimum collateral amount is 7.5 ETH to ensure system solvency with sufficient liquidation incentive',

@@ -11,7 +11,7 @@ import { useController } from '@hooks/contracts/useController'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { useAddresses } from '@hooks/useAddress'
-import { useShortPositions } from '@hooks/usePositions'
+import { usePositions } from '@hooks/usePositions'
 import { toTokenAmount } from '@utils/calculations'
 import { PrimaryButton } from '../Button'
 import CollatRange from '../CollatRange'
@@ -71,7 +71,7 @@ const Mint: React.FC = () => {
   const { wSqueeth } = useAddresses()
   const squeethBal = useTokenBalance(wSqueeth, 10, WSQUEETH_DECIMALS)
   const { balance, connected } = useWallet()
-  const { existingCollatPercent, existingCollat, firstValidVault } = useShortPositions()
+  const { existingCollatPercent, existingCollat, firstValidVault } = usePositions()
   const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
   const { getWSqueethPositionValue } = useSqueethPool()
   const { normFactor: normalizationFactor, openDepositAndMint, getShortAmountFromDebt } = useController()

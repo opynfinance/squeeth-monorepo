@@ -222,7 +222,7 @@ export function VaultChart({
             undercollateralized, you could be liquidated.{' '}
             <a
               className={classes.header}
-              href="https://opynopyn.notion.site/Squeeth-FAQ-4b6a054ab011454cbbd60cb3ee23a37c"
+              href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq"
               target="_blank"
               rel="noreferrer"
             >
@@ -252,8 +252,17 @@ export function VaultChart({
             position performs best when ETH price does not move much. If ETH price moves considerably, it is likely
             unprofitable.
             <br /> <br />
-            Squeeth smart contracts have been audited by Trail of Bits and Monoceros. However, smart contracts are
+            Squeeth smart contracts have been audited by Trail of Bits and Akira. However, smart contracts are
             experimental technology and we encourage caution only risking funds you can afford to lose.
+            <a
+              className={classes.header}
+              href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq#risks"
+              target="_blank"
+              rel="noreferrer"
+            >
+              {' '}
+              Learn more.{' '}
+            </a>
           </Typography>
         </div>
       )}

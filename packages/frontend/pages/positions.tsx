@@ -17,6 +17,8 @@ import { useETHPrice } from '@hooks/useETHPrice'
 import { useLPPositions, usePnL, usePositions } from '@hooks/usePositions'
 import { withRequiredAddr } from '@utils/withRequiredAddr'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
+import { toTokenAmount } from '@utils/calculations'
+import { useController } from '@hooks/contracts/useController'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -105,8 +107,8 @@ export function Positions() {
     shortGain,
     buyQuote,
     sellQuote,
-    longUsdAmt,
-    shortUsdAmt,
+    // longUsdAmt,
+    // shortUsdAmt,
     longRealizedPNL,
     shortRealizedPNL,
     loading: isPnLLoading,
@@ -121,6 +123,7 @@ export function Positions() {
   const {
     positionType,
     squeethAmount,
+    wethAmount,
     loading: isPositionLoading,
     shortVaults,
     firstValidVault,
@@ -129,6 +132,8 @@ export function Positions() {
     existingCollatPercent,
     liquidationPrice,
   } = usePositions()
+
+  const { index } = useController()
 
   const vaultExists = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.collateralAmount?.isGreaterThan(0)
@@ -148,7 +153,9 @@ export function Positions() {
             <Typography component="span" color="textSecondary">
               ETH Price:{' '}
             </Typography>
-            <Typography component="span">$ {ethPrice.toFixed(2)}</Typography>
+            <Typography component="span">
+              ${Number(toTokenAmount(index, 18).sqrt()).toFixed(2).toLocaleString()}
+            </Typography>
           </div>
         </div>
         {/* eslint-disable-next-line prettier/prettier */}
@@ -180,9 +187,9 @@ export function Positions() {
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
                     $
-                    {isPnLLoading && sellQuote.amountOut.times(ethPrice).toNumber() === 0
+                    {isPnLLoading && sellQuote.amountOut.times(toTokenAmount(index, 18).sqrt()).toNumber() === 0
                       ? 'Loading'
-                      : sellQuote.amountOut.times(ethPrice).toFixed(2)}
+                      : sellQuote.amountOut.times(toTokenAmount(index, 18).sqrt()).toFixed(2)}
                   </Typography>
                 </div>
                 <div style={{ width: '50%' }}>
@@ -197,7 +204,8 @@ export function Positions() {
                   ) : (
                     <>
                       <Typography variant="body1" className={longGain < 0 ? classes.red : classes.green}>
-                        ${sellQuote.amountOut.times(ethPrice).minus(longUsdAmt.abs()).toFixed(2)}
+                        ${sellQuote.amountOut.minus(wethAmount.abs()).times(toTokenAmount(index, 18).sqrt()).toFixed(2)}{' '}
+                        ({sellQuote.amountOut.minus(wethAmount.abs()).toFixed(5)} ETH)
                       </Typography>
                       <Typography variant="caption" className={longGain < 0 ? classes.red : classes.green}>
                         {(longGain || 0).toFixed(2)}%
@@ -238,7 +246,7 @@ export function Positions() {
                   </Typography>
                   <Typography variant="body1">{squeethAmount.toFixed(8)}&nbsp; oSQTH</Typography>
                   <Typography variant="body2" color="textSecondary">
-                    ${buyQuote.times(ethPrice).toFixed(2)}
+                    ${buyQuote.times(toTokenAmount(index, 18).sqrt()).toFixed(2)}
                   </Typography>
                 </div>
                 <div style={{ width: '50%' }}>
@@ -253,7 +261,8 @@ export function Positions() {
                   ) : (
                     <>
                       <Typography variant="body1" className={shortGain < 0 ? classes.red : classes.green}>
-                        ${buyQuote.times(ethPrice).minus(shortUsdAmt.abs()).toFixed(2)}
+                        ${wethAmount.minus(buyQuote).times(toTokenAmount(index, 18).sqrt()).toFixed(2)} (
+                        {wethAmount.minus(buyQuote).toFixed(5)} ETH)
                       </Typography>
                       <Typography variant="caption" className={shortGain < 0 ? classes.red : classes.green}>
                         {(shortGain || 0).toFixed(2)}%
@@ -375,7 +384,7 @@ export function Positions() {
                     {shortVaults.length && shortVaults[firstValidVault].shortAmount.toFixed(6)}&nbsp; oSQTH
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
-                    ${buyQuote.times(ethPrice).toFixed(2)}
+                    ${buyQuote.times(toTokenAmount(index, 18).sqrt()).toFixed(2)}
                   </Typography>
                 </div>
                 <div style={{ width: '50%' }}>
@@ -390,7 +399,8 @@ export function Positions() {
                   ) : (
                     <>
                       <Typography variant="body1" className={shortGain < 0 ? classes.red : classes.green}>
-                        ${buyQuote.times(ethPrice).minus(shortUsdAmt.abs()).toFixed(2)}
+                        ${wethAmount.minus(buyQuote).times(toTokenAmount(index, 18).sqrt()).toFixed(2)} (
+                        {wethAmount.minus(buyQuote).toFixed(5)} ETH)
                       </Typography>
                       <Typography variant="caption" className={shortGain < 0 ? classes.red : classes.green}>
                         {(shortGain || 0).toFixed(2)}%
