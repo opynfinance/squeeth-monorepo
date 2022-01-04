@@ -2,7 +2,7 @@ import { gql } from '@apollo/client'
 
 export const TICKS_QUERY = gql`
   query ticks($poolAddress: String!) {
-    ticks(where: { poolAddress: $poolAddress }, first: 1000) {
+    ticks(where: { poolAddress: $poolAddress }) {
       id
       tickIdx
       liquidityNet

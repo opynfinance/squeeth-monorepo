@@ -1,5 +1,5 @@
 import { useQuery } from '@apollo/client'
-import { Button, CircularProgress, InputAdornment, TextField, Typography } from '@material-ui/core'
+import { CircularProgress, InputAdornment, TextField, Typography } from '@material-ui/core'
 import { orange } from '@material-ui/core/colors'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import ReportProblemOutlinedIcon from '@material-ui/icons/ReportProblemOutlined'

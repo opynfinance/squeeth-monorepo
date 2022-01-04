@@ -1,7 +1,7 @@
 import { createStyles, makeStyles, Tooltip, Typography } from '@material-ui/core'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import Link from 'next/link'
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import BigNumber from 'bignumber.js'
 
 import { LPTable } from '@components/Lp/LPTable'
@@ -17,7 +17,7 @@ import { useETHPrice } from '@hooks/useETHPrice'
 import { useLPPositions, usePnL, usePositions } from '@hooks/usePositions'
 import { withRequiredAddr } from '@utils/withRequiredAddr'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
-import { toTokenAmount } from '@utils/calculations'
+import { toTokenAmount, fromTokenAmount } from '@utils/calculations'
 import { useController } from '@hooks/contracts/useController'
 
 const useStyles = makeStyles((theme) =>
@@ -101,6 +101,8 @@ const useStyles = makeStyles((theme) =>
 )
 
 export function Positions() {
+  const [existingCollatPercent, setExistingCollatPercent] = useState(0)
+  const [existingLiqPrice, setExistingLiqPrice] = useState(0)
   const classes = useStyles()
   const {
     longGain,
@@ -129,17 +131,25 @@ export function Positions() {
     firstValidVault,
     vaultId,
     existingCollat,
-    existingCollatPercent,
-    liquidationPrice,
   } = usePositions()
 
-  const { index } = useController()
+  const { index, getCollatRatioAndLiqPrice } = useController()
 
   const vaultExists = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.collateralAmount?.isGreaterThan(0)
   }, [firstValidVault, shortVaults?.length])
 
   const { liquidations } = useVaultLiquidations(Number(vaultId))
+
+  useEffect(() => {
+    getCollatRatioAndLiqPrice(
+      new BigNumber(fromTokenAmount(shortVaults[firstValidVault]?.collateralAmount, 18)),
+      new BigNumber(fromTokenAmount(shortVaults[firstValidVault]?.shortAmount, WSQUEETH_DECIMALS)),
+    ).then(({ collateralPercent, liquidationPrice }) => {
+      setExistingCollatPercent(collateralPercent)
+      setExistingLiqPrice(liquidationPrice)
+    })
+  }, [firstValidVault, getCollatRatioAndLiqPrice, shortVaults])
 
   return (
     <div>
@@ -280,7 +290,7 @@ export function Positions() {
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
                   <Typography variant="body1">
-                    ${isPositionLoading && liquidationPrice === 0 ? 'Loading' : liquidationPrice.toFixed(2)}
+                    ${isPositionLoading && existingLiqPrice === 0 ? 'Loading' : existingLiqPrice.toFixed(2)}
                   </Typography>
                 </div>
                 <div style={{ width: '50%' }}>
@@ -339,7 +349,7 @@ export function Positions() {
                 </div>
               </div>
               <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
-                {new BigNumber(liquidationPrice).isFinite() ? (
+                {new BigNumber(existingLiqPrice).isFinite() ? (
                   <div style={{ width: '50%' }}>
                     <Typography variant="caption" component="span" color="textSecondary">
                       Liquidation Price
@@ -348,10 +358,34 @@ export function Positions() {
                       <InfoIcon fontSize="small" className={classes.infoIcon} />
                     </Tooltip>
                     <Typography variant="body1">
-                      ${isPositionLoading && liquidationPrice === 0 ? 'Loading' : liquidationPrice.toFixed(2)}
+                      ${isPositionLoading && existingLiqPrice === 0 ? 'Loading' : existingLiqPrice.toFixed(2)}
                     </Typography>
                   </div>
                 ) : null}
+                <div style={{ width: '50%' }}>
+                  <Typography variant="caption" component="span" color="textSecondary">
+                    Collateral (Amt / Ratio)
+                  </Typography>
+                  <Typography variant="body1">
+                    {isPositionLoading && existingCollat.toNumber() === 0 ? 'Loading' : existingCollat.toFixed(4)} ETH
+                    {new BigNumber(existingCollatPercent).isFinite() ? ' (' + existingCollatPercent + ' %)' : null}
+                  </Typography>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {liquidations.length > 0 && shortVaults.length && shortVaults[firstValidVault]?.collateralAmount.gt(0) ? (
+          <div className={classes.position}>
+            <div className={classes.positionTitle}>
+              <Typography className={classes.red}>Short Squeeth - Liquidated</Typography>
+              <Typography className={classes.link}>
+                <Link href={`vault/${vaultId}`}>Manage</Link>
+              </Typography>
+            </div>
+            <div className={classes.shortPositionData}>
+              <div className={classes.innerPositionData}>
                 <div style={{ width: '50%' }}>
                   <Typography variant="caption" component="span" color="textSecondary">
                     Collateral (Amt / Ratio)
@@ -415,10 +449,7 @@ export function Positions() {
                     Redeemable Collateral
                   </Typography>
                   <Typography variant="body1">
-                    {isPositionLoading && shortVaults[firstValidVault].collateralAmount.isZero()
-                      ? 'Loading'
-                      : shortVaults[firstValidVault].collateralAmount.toFixed(4)}{' '}
-                    ETH
+                    ${isPositionLoading && existingLiqPrice === 0 ? 'Loading' : existingLiqPrice.toFixed(2)}
                   </Typography>
                 </div>
               </div>
