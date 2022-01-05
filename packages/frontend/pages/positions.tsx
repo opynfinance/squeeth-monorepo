@@ -376,7 +376,7 @@ export function Positions() {
           </div>
         ) : null}
 
-        {liquidations.length > 0 && shortVaults.length && shortVaults[firstValidVault]?.collateralAmount.gt(0) ? (
+        {liquidations.length > 0 ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography className={classes.red}>Short Squeeth - Liquidated</Typography>
