@@ -617,7 +617,7 @@ export const useLPPositions = () => {
         setLoading(false)
       })
     }
-  }, [positionAndFees.length])
+  }, [data?.positions, positionAndFees.length])
 
   return {
     activePositions: activePositions,

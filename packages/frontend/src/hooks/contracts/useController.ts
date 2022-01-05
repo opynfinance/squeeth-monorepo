@@ -235,6 +235,9 @@ export const useController = () => {
       index = await getIndex(1)
       mark = await getMark(1)
     }
+    if (index.isEqualTo(0)) {
+      return 0
+    }
 
     return Math.log(mark.dividedBy(index).toNumber()) / FUNDING_PERIOD
   }
@@ -242,6 +245,9 @@ export const useController = () => {
   const getCurrentImpliedFunding = async () => {
     const currIndex = await getIndex(1)
     const currMark = await getMark(1)
+    if (currIndex.isEqualTo(0)) {
+      return 0
+    }
 
     return Math.log(currMark.dividedBy(currIndex).toNumber()) / FUNDING_PERIOD
   }
