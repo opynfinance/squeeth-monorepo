@@ -7,7 +7,7 @@ import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
 import Image from 'next/image'
 import { useRouter } from 'next/router'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import ethLogo from '../../public/images/ethereum-eth.svg'
 import squeethLogo from '../../public/images/Squeeth.svg'
@@ -400,15 +400,15 @@ const Component: React.FC = () => {
     return { adjustAmountError, adjustCollatError }
   }, [shortAmount.toString(), collateral.toString(), collatPercent, action, balance.toString()])
 
-  const collatStatus = useMemo(() => {
+  const collatStatus = useCallback(() => {
     return getCollatPercentStatus(existingCollatPercent)
   }, [existingCollatPercent])
 
   const collatClass = useMemo(() => {
-    if (collatStatus === CollateralStatus.SAFE) return classes.safe
-    if (collatStatus === CollateralStatus.RISKY) return classes.risky
+    if (collatStatus() === CollateralStatus.SAFE) return classes.safe
+    if (collatStatus() === CollateralStatus.RISKY) return classes.risky
     return classes.danger
-  }, [collatStatus])
+  }, [classes.danger, classes.risky, classes.safe, collatStatus()])
 
   const { totalLiquidated, totalCollatPaid } = liquidations.reduce(
     (acc, l) => {
