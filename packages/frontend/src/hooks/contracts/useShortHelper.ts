@@ -34,7 +34,7 @@ export const useShortHelper = () => {
   const openShort = async (vaultId: number, amount: BigNumber, collatAmount: BigNumber) => {
     if (!contract || !address) return
 
-    const _exactInputParams = getSellParam(amount)
+    const _exactInputParams = await getSellParam(amount)
     _exactInputParams.recipient = shortHelper
 
     const _amount = fromTokenAmount(amount, WSQUEETH_DECIMALS).multipliedBy(normalizationFactor)

@@ -246,7 +246,7 @@ export const useSqueethPool = () => {
 
   const sellAndUnwrapData = async (amount: BigNumber) => {
     if (!web3) return
-    const exactInputParam = getSellParam(amount)
+    const exactInputParam = await getSellParam(amount)
     exactInputParam.recipient = swapRouter
     const tupleInput = Object.values(exactInputParam).map((v) => v?.toString() || '')
 
@@ -260,7 +260,9 @@ export const useSqueethPool = () => {
     return [encodedSwapCall, encodedUnwrapCall]
   }
 
-  const getSellParam = (amount: BigNumber) => {
+  const getSellParam = async (amount: BigNumber) => {
+    const amountMin = fromTokenAmount((await getSellQuote(amount)).minimumAmountOut, 18)
+
     return {
       tokenIn: squeethToken?.address,
       tokenOut: wethToken?.address,
@@ -268,7 +270,7 @@ export const useSqueethPool = () => {
       recipient: address,
       deadline: Math.floor(Date.now() / 1000 + 86400), // uint256
       amountIn: fromTokenAmount(amount, WSQUEETH_DECIMALS).toString(),
-      amountOutMinimum: 0, // Should be updated
+      amountOutMinimum: amountMin.toString(),
       sqrtPriceLimitX96: 0,
     }
   }
