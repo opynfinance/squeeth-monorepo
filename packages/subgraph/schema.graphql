@@ -29,3 +29,15 @@ type NormalizationFactorUpdate @entity {
   lastModificationTimestamp: BigInt!
   timestamp: BigInt!
 }
+
+type HourStatSnapshot @entity {
+  id: ID!
+  timestamp: BigInt!
+  totalCollateralAmount: BigInt!
+}
+
+type DayStatSnapshot @entity {
+  id: ID!
+  timestamp: BigInt!
+  totalCollateralAmount: BigInt!
+}

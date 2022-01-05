@@ -21,7 +21,7 @@ import {
   WithdrawCollateral,
   WithdrawUniPositionToken
 } from "../generated/Controller/Controller"
-import { Vault, Liquidation, NormalizationFactorUpdate } from "../generated/schema"
+import { Vault, Liquidation, NormalizationFactorUpdate, HourStatSnapshot, DayStatSnapshot } from "../generated/schema"
 import { loadOrCreateAccount, BIGINT_ONE, BIGINT_ZERO } from "./util"
 
 // Note: If a handler doesn't require existing field values, it is faster
@@ -83,6 +83,18 @@ export function handleDepositCollateral(event: DepositCollateral): void {
 
   vault.collateralAmount = vault.collateralAmount.plus(event.params.amount)
   vault.save()
+
+  // update TVL stats
+  let timestamp = event.block.timestamp
+
+  const hourStatSnapshot = getHourStatSnapshot(timestamp)
+  hourStatSnapshot.totalCollateralAmount = hourStatSnapshot.totalCollateralAmount.plus(event.params.amount)
+  hourStatSnapshot.save()
+
+  const dayStatSnapshot = getDayStatSnapshot(timestamp)
+  dayStatSnapshot.totalCollateralAmount = dayStatSnapshot.totalCollateralAmount.plus(event.params.amount)
+  dayStatSnapshot.save()
+
 }
 
 export function handleDepositUniPositionToken(
@@ -106,6 +118,17 @@ export function handleLiquidate(event: Liquidate): void {
   vault.shortAmount = vault.shortAmount.minus(event.params.debtAmount)
   vault.collateralAmount = vault.collateralAmount.minus(event.params.collateralPaid)
   vault.save()
+
+  // update TVL stats
+  let timestamp = event.block.timestamp
+
+  const hourStatSnapshot = getHourStatSnapshot(timestamp)
+  hourStatSnapshot.totalCollateralAmount = hourStatSnapshot.totalCollateralAmount.minus(event.params.collateralPaid)
+  hourStatSnapshot.save()
+
+  const dayStatSnapshot = getDayStatSnapshot(timestamp)
+  dayStatSnapshot.totalCollateralAmount = dayStatSnapshot.totalCollateralAmount.minus(event.params.collateralPaid)
+  dayStatSnapshot.save()
 
   const liquidation = new Liquidation(`${event.transaction.hash.toHex()}-${event.logIndex.toString()}`)
   liquidation.debtAmount = event.params.debtAmount
@@ -175,6 +198,18 @@ export function handleWithdrawCollateral(event: WithdrawCollateral): void {
 
   vault.collateralAmount = vault.collateralAmount.minus(event.params.amount)
   vault.save()
+
+  // update TVL stats
+  let timestamp = event.block.timestamp
+
+  const hourStatSnapshot = getHourStatSnapshot(timestamp)
+  hourStatSnapshot.totalCollateralAmount = hourStatSnapshot.totalCollateralAmount.minus(event.params.amount)
+  hourStatSnapshot.save()
+
+  const dayStatSnapshot = getDayStatSnapshot(timestamp)
+  dayStatSnapshot.totalCollateralAmount = dayStatSnapshot.totalCollateralAmount.minus(event.params.amount)
+  dayStatSnapshot.save()
+
 }
 
 export function handleWithdrawUniPositionToken(
@@ -185,4 +220,63 @@ export function handleWithdrawUniPositionToken(
 
   vault.NftCollateralId = BIGINT_ZERO
   vault.save()
+}
+
+function getHourStatSnapshot(timestamp: BigInt): HourStatSnapshot {
+
+  let hourIndex = timestamp.toI32() / 3600 // get unique hour within unix history
+  let hourStartUnix = hourIndex * 3600 // want the rounded effect
+  let hourStartUnixBigInt = BigInt.fromI32(hourStartUnix)
+
+  let hourStatSnapshot = HourStatSnapshot.load('last')  
+
+  if (hourStatSnapshot === null) { 
+    hourStatSnapshot = new HourStatSnapshot('last')
+    hourStatSnapshot.totalCollateralAmount  = BIGINT_ZERO
+    hourStatSnapshot.timestamp = hourStartUnixBigInt
+  }
+
+
+  if (hourStatSnapshot !== null && hourStatSnapshot.timestamp.notEqual(hourStartUnixBigInt) ) {
+    let totalCollateral = hourStatSnapshot.totalCollateralAmount
+    hourStatSnapshot.id = hourStatSnapshot.timestamp.toString()
+    hourStatSnapshot.save()
+    
+    hourStatSnapshot = new HourStatSnapshot('last')
+    hourStatSnapshot.totalCollateralAmount  = totalCollateral
+    hourStatSnapshot.timestamp = hourStartUnixBigInt
+  }
+
+  return hourStatSnapshot as HourStatSnapshot
+
+}
+
+function getDayStatSnapshot(timestamp: BigInt): DayStatSnapshot {
+
+
+  let dayID = timestamp.toI32() / 86400
+  let dayStartUnix = dayID * 86400
+  let dayStartUnixBigInt = BigInt.fromI32(dayStartUnix)
+
+  let dayStatSnapshot = DayStatSnapshot.load('last')  
+
+  if (dayStatSnapshot === null) { 
+    dayStatSnapshot = new DayStatSnapshot('last')
+    dayStatSnapshot.totalCollateralAmount  = BIGINT_ZERO
+    dayStatSnapshot.timestamp = dayStartUnixBigInt
+  }
+
+
+  if (dayStatSnapshot !== null && dayStatSnapshot.timestamp.notEqual(dayStartUnixBigInt) ) {
+    let totalCollateral = dayStatSnapshot.totalCollateralAmount
+    dayStatSnapshot.id = dayStatSnapshot.timestamp.toString()
+    dayStatSnapshot.save()
+    
+    dayStatSnapshot = new DayStatSnapshot('last')
+    dayStatSnapshot.totalCollateralAmount  = totalCollateral
+    dayStatSnapshot.timestamp = dayStartUnixBigInt
+  }
+
+  return dayStatSnapshot as DayStatSnapshot
+
 }
