@@ -8,12 +8,14 @@ import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { Vault } from '../../types'
 import { useController } from './useController'
 import { useOracle } from './useOracle'
+import { useSqueethPool } from './useSqueethPool'
 
 export const useCrabStrategy = () => {
   const { web3, address, handleTransaction, networkId } = useWallet()
   const { crabStrategy, squeethPool, wSqueeth, weth } = useAddresses()
-  const { getVault, getCollatRatioAndLiqPrice } = useController()
+  const { getVault, getCollatRatioAndLiqPrice, getFeeRate } = useController()
   const { getTwapSafe } = useOracle()
+  const { getSellQuote } = useSqueethPool()
 
   const [contract, setContract] = useState<Contract>()
   const [maxCap, setMaxCap] = useState<BigNumber>(new BigNumber(0))
@@ -51,11 +53,10 @@ export const useCrabStrategy = () => {
         }
       })
     const timeHedge = await checkTimeHedge()
-    const _isPriceHedge = await checkPriceHedge(1640319531)
+    const _isPriceHedge = await checkPriceHedge(1641105000)
     setIsTimeHedge(timeHedge[0])
     setIsPriceHedge(_isPriceHedge)
-    setAuctionTriggerTime(1640319531)
-    const squeethPrice = await calculateAuctionPrice()
+    setAuctionTriggerTime(1641105000)
   }
 
   const getMaxCap = async () => {
@@ -99,18 +100,39 @@ export const useCrabStrategy = () => {
     )
   }
 
-  const calculateAuctionPrice = async () => {
-    const squeethPrice = await getTwapSafe(squeethPool, wSqueeth, weth, 3000)
-    return squeethPrice.times(0.95)
+  const calculateETHtoBorrow = async (amount: BigNumber, slippage: number) => {
+    // ethDeposit + ethBorrow = wSqueethDebt * wSqueethPrice * 2
+    if (!vault) return new BigNumber(0)
+    const ethDeposit = amount
+
+    // Float is not handled well in JS so using BigNumber
+    for (let multiplier = new BigNumber(1); multiplier.isGreaterThan(0); multiplier = multiplier.minus(0.01)) {
+      const ethBorrow = ethDeposit.times(multiplier)
+      const initialWSqueethDebt = ethBorrow.plus(ethDeposit).times(vault.shortAmount).div(vault.collateralAmount)
+      const returnedETH = await getSellQuote(initialWSqueethDebt, new BigNumber(slippage))
+      if (ethBorrow.lt(returnedETH.minimumAmountOut)) {
+        return ethBorrow
+      }
+    }
+
+    return new BigNumber(0)
   }
 
-  const flashDeposit = async (amount: BigNumber) => {
+  const flashDeposit = async (amount: BigNumber, slippage: number) => {
     if (!contract) return
+
+    const ethBorrow = fromTokenAmount(await calculateETHtoBorrow(amount, slippage), 18)
+    const ethDeposit = fromTokenAmount(amount, 18)
+    console.log(ethBorrow.toString())
+    contract.methods.flashDeposit(ethBorrow.plus(ethDeposit).toFixed(0)).send({
+      from: address,
+      value: fromTokenAmount(amount, 18).toFixed(0),
+    })
   }
 
   const priceHedgeOnUniswap = async () => {
     return handleTransaction(
-      contract?.methods.priceHedgeOnUniswap(1640319531, 0, 0).send({
+      contract?.methods.priceHedgeOnUniswap(1641105000, 0, 0).send({
         from: address,
       }),
     )
@@ -125,6 +147,7 @@ export const useCrabStrategy = () => {
     isPriceHedge,
     actionTriggerTime,
     deposit,
+    flashDeposit,
     priceHedgeOnUniswap,
   }
 }

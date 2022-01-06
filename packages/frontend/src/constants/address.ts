@@ -102,4 +102,11 @@ export const CRAB_STRATEGY: Address = {
   31337: '',
 }
 
+export const CRAB_TOKEN: Address = {
+  1: '',
+  3: '0x7d568aaed09b2032321628acd2e7f3dafe222731',
+  421611: '',
+  31337: '',
+}
+
 export const ZERO_ADDR = '0x0000000000000000000000000000000000000000'

@@ -115,7 +115,6 @@ export const useSqueethPool = () => {
       Number(state.tick),
       ticks || [],
     )
-    console.log(state.tick)
 
     //const setBeginningPrice =  pool.token0Price
 
@@ -145,7 +144,6 @@ export const useSqueethPool = () => {
     // )
     // const tvl = tokenBalance * tokenPrice + wethPrice.toNumber() * wethBalance
     setTVL(tvl)
-    console.log(tvl)
     return tvl
   }
 
@@ -270,7 +268,7 @@ export const useSqueethPool = () => {
       recipient: address,
       deadline: Math.floor(Date.now() / 1000 + 86400), // uint256
       amountIn: fromTokenAmount(amount, WSQUEETH_DECIMALS).toString(),
-      amountOutMinimum: amountMin.toString(),
+      amountOutMinimum: amountMin.toString(), // Should be updated
       sqrtPriceLimitX96: 0,
     }
   }

@@ -184,6 +184,12 @@ export const useController = () => {
     [contract],
   )
 
+  const getFeeRate = async () => {
+    if (!contract) return new BigNumber(0)
+    const feeRate = new BigNumber(await contract.methods.feeRate().call())
+    console.log(feeRate.toString())
+  }
+
   useEffect(() => {
     if (!contract) return
     //TODO: 3000 not a magic number
@@ -314,5 +320,6 @@ export const useController = () => {
     depositCollateral,
     withdrawCollateral,
     currentImpliedFunding,
+    getFeeRate,
   }
 }

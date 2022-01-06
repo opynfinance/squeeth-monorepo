@@ -573,4 +573,6 @@ export function App() {
   )
 }
 
-export default withRequiredAddr(App)
+export default App
+
+//withRequiredAddr(App)
