@@ -164,12 +164,12 @@ export function VaultChart({
           onChange={(evt, val) => setChartType(val)}
           aria-label="Sub nav tabs"
         >
-          <SqueethTab label={`Historical ${days}D PNL`} />
+          {/* <SqueethTab label={`Historical ${days}D PNL`} /> */}
           <SqueethTab label="Payoff" />
-          <SqueethTab label="Details" />
+          {/* <SqueethTab label="Details" /> */}
           <SqueethTab label="Risks" />
         </SqueethTabs>
-        <Hidden smDown>
+        {/* <Hidden smDown>
           {chartType === 0 ? (
             <TextField
               onChange={(event) => setDays(parseInt(event.target.value))}
@@ -192,56 +192,75 @@ export function VaultChart({
               }}
             />
           ) : null}
-        </Hidden>
+        </Hidden> */}
       </div>
       {seriesRebalance.length === 0 && <Alert severity="info"> Loading historical data, this could take a while</Alert>}
       {chartType === 0 ? (
-        <Chart
-          from={Math.floor(startTimestamp)}
-          to={endTimestamp}
-          // legend={`${vault} PNL`}
-          options={chartOptions}
-          lineSeries={showPercentage ? lineSeriesPercentage : lineSeries}
-          autoWidth
-          height={290}
-          darkTheme
-        />
-      ) : chartType === 1 ? (
         <div className={classes.payoffContainer}>
-          <ShortSqueethPayoff ethPrice={ethPrice.toNumber()} collatRatio={collatRatio} />
-        </div>
-      ) : chartType === 2 ? (
-        <div style={{ overflow: 'auto', maxHeight: '300px' }}>
-          <Typography className={classes.cardTitle} variant="h6">
-            What is short squeeth?
-          </Typography>
-          <Typography variant="body2" className={classes.cardDetail}>
-            Short squeeth (ETH&sup2;) is short an ETH&sup2; position. You earn a funding rate for taking on this
-            position. You enter the position by putting down collateral, minting, and selling squeeth. You provide ETH
-            collateral to mint squeeth, and your collateralization ratio determines your exposure. If you become
-            undercollateralized, you could be liquidated.{' '}
-            <a
-              className={classes.header}
-              href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq"
-              target="_blank"
-              rel="noreferrer"
-            >
-              {' '}
-              Learn more.{' '}
-            </a>
-          </Typography>
-          {/* <Typography className={classes.cardTitle} variant="h6">
-            Risks
-          </Typography>
-          <Typography variant="body2" className={classes.cardDetail}>
-            If you fall below the minimum collateralization threshold (150%), you are at risk of liquidation. If ETH
-            moves approximately 6% in either direction, you are unprofitable.
-            <br /> <br />
-            Squeeth smart contracts are currently unaudited. This is experimental technology and we encourage caution
-            only risking funds you can afford to lose.
-          </Typography> */}
+          <div style={{ width: '450px' }}>
+            <ShortSqueethPayoff ethPrice={ethPrice.toNumber()} collatRatio={collatRatio} />
+          </div>
+
+          <div style={{ width: '500px', marginLeft: '20px' }}>
+            <Typography className={classes.cardTitle} variant="h6">
+              What is short squeeth?
+            </Typography>
+            <Typography variant="body2" className={classes.cardDetail}>
+              Short squeeth (ETH&sup2;) is an ETH collateralized short ETH&sup2; position. Your returns will be a
+              combination of being short oSQTH and long ETH collateral. You earn a funding rate for taking on this
+              position. You enter the position by putting down collateral, minting, and selling squeeth. You provide ETH
+              collateral to mint squeeth, and your collateralization ratio determines your exposure. If you become
+              undercollateralized, you could be liquidated.{' '}
+              <a
+                className={classes.header}
+                href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq"
+                target="_blank"
+                rel="noreferrer"
+              >
+                {' '}
+                Learn more.{' '}
+              </a>
+            </Typography>
+          </div>
         </div>
       ) : (
+        // <Chart
+        //   from={Math.floor(startTimestamp)}
+        //   to={endTimestamp}
+        //   // legend={`${vault} PNL`}
+        //   options={chartOptions}
+        //   lineSeries={showPercentage ? lineSeriesPercentage : lineSeries}
+        //   autoWidth
+        //   height={290}
+        //   darkTheme
+        // />
+        // )
+        // : chartType === 1 ? (
+        //   <div className={classes.payoffContainer}>
+        //     <ShortSqueethPayoff ethPrice={ethPrice.toNumber()} collatRatio={collatRatio} />
+        //   </div>
+        // chartType === 1 ? (
+        //   <div style={{ overflow: 'auto', maxHeight: '300px' }}>
+        //     <Typography className={classes.cardTitle} variant="h6">
+        //       What is short squeeth?
+        //     </Typography>
+        //     <Typography variant="body2" className={classes.cardDetail}>
+        //       Short squeeth (ETH&sup2;) is short an ETH&sup2; position. You earn a funding rate for taking on this
+        //       position. You enter the position by putting down collateral, minting, and selling squeeth. You provide ETH
+        //       collateral to mint squeeth, and your collateralization ratio determines your exposure. If you become
+        //       undercollateralized, you could be liquidated.{' '}
+        //       <a
+        //         className={classes.header}
+        //         href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq"
+        //         target="_blank"
+        //         rel="noreferrer"
+        //       >
+        //         {' '}
+        //         Learn more.{' '}
+        //       </a>
+        //     </Typography>
+        //   </div>
+        // ) :
         <div>
           {' '}
           <Typography className={classes.cardTitle} variant="h6">
