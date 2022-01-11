@@ -1,0 +1,62 @@
+{
+  "name": "@squeeth/frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "codegen:uniswap": "apollo client:codegen --target typescript --globalTypesFile=types/global_apollo.ts --includes=./src/queries/uniswap/**/*.ts  --endpoint 'https://api.thegraph.com/subgraphs/name/kmkoushik/uniswap-v3-ropsten'",
+    "codegen:squeeth": "apollo client:codegen --target typescript --globalTypesFile=types/global_apollo.ts --includes=./src/queries/squeeth/**/*.ts  --endpoint 'https://api.thegraph.com/subgraphs/name/opynfinance/squeeth-ropsten'"
+  },
+  "dependencies": {
+    "@apollo/client": "^3.4.10",
+    "@material-ui/core": "^4.12.3",
+    "@material-ui/icons": "^4.11.2",
+    "@material-ui/lab": "^4.0.0-alpha.60",
+    "@thanpolas/univ3prices": "^3.0.2",
+    "@uniswap/sdk-core": "^3.0.1",
+    "@uniswap/v3-sdk": "^3.3.2",
+    "axios": "^0.24.0",
+    "bignumber.js": "^9.0.1",
+    "bnc-notify": "^1.9.1",
+    "bnc-onboard": "1.27.0",
+    "chart.js": "^2.9.4",
+    "clsx": "^1.1.1",
+    "copy-to-clipboard": "^3.3.1",
+    "fathom-client": "^3.2.0",
+    "firebase": "^8.8.0",
+    "framer-motion": "^5.3.3",
+    "graphql": "^16.1.0",
+    "gray-matter": "^4.0.3",
+    "kaktana-react-lightweight-charts": "^2.0.0",
+    "markdown-to-jsx": "^7.1.5",
+    "next": "^12.0.7",
+    "react": "17.0.2",
+    "react-chartjs-2": "^2.11.1",
+    "react-dom": "17.0.2",
+    "react-query": "^3.34.0",
+    "subscriptions-transport-ws": "^0.11.0",
+    "web3": "^1.5.2"
+  },
+  "devDependencies": {
+    "@types/firebase": "^3.2.1",
+    "@types/react": "17.0.17",
+    "@typescript-eslint/eslint-plugin": "^4.14.2",
+    "@typescript-eslint/parser": "^4.14.2",
+    "apollo": "^2.33.9",
+    "eslint": "7.32.0",
+    "eslint-config-next": "11.0.1",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^3.3.1",
+    "eslint-plugin-react": "^7.22.0",
+    "eslint-plugin-react-hooks": "^4.2.0",
+    "eslint-plugin-simple-import-sort": "^7.0.0",
+    "prettier": "^2.3.1",
+    "typescript": "4.3.5"
+  },
+  "resolutions": {
+    "assemblyscript": "git+https://github.com/AssemblyScript/assemblyscript.git#v0.6"
+  }
+}

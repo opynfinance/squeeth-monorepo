@@ -1,0 +1,41 @@
+body {
+  padding: 0;
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans,
+    Droid Sans, Helvetica Neue, sans-serif;
+
+  background: #181b1c; /* fallback for old browsers */
+  /* background: -webkit-linear-gradient(to bottom, #3296fa11, #181B1C); 
+    background: linear-gradient(to bottom, #3296fa11, #181B1C);  */
+  height: 100vh;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+html {
+  padding: 0;
+  margin: 0;
+  background: 'none';
+}
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.bn-onboard-custom.bn-onboard-modal {
+  z-index: 99;
+}

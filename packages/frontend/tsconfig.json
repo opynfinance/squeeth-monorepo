@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "baseUrl": ".",
+    "paths": {
+      "@apollo/*": ["src/apollo/*"],
+      "@abis/*": ["src/abis/*"],
+      "@components/*": ["src/components/*"],
+      "@constants/*": ["src/constants/*"],
+      "@context/*": ["src/context/*"],
+      "@hooks/*": ["src/hooks/*"],
+      "@pages/*": ["src/pages/*"],
+      "@styles/*": ["src/styles/*"],
+      "@types/*": ["src/types/*"],
+      "@utils/*": ["src/utils/*"]
+    }
+  },
+
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
+}

@@ -1,0 +1,65 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["prettier", "@typescript-eslint", "react", "react-hooks", "simple-import-sort"],
+  "extends": [
+    "plugin:react/recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended",
+    "prettier",
+    "next",
+    "next/core-web-vitals"
+  ],
+  "env": {
+    "browser": true,
+    "jest": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
+  "rules": {
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "ignoreRestSiblings": true
+      }
+    ],
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/member-delimiter-style": "off",
+    "@typescript-eslint/no-non-null-assertion": "off",
+    "@typescript-eslint/no-use-before-define": "off",
+    "@typescript-eslint/no-empty-interface": "off",
+    "@typescript-eslint/ban-ts-ignore": "off",
+    "@typescript-eslint/ban-ts-comment": "off",
+    "@typescript-eslint/camelcase": "off",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+    "react/prop-types": "off",
+    "import/order": "off",
+    "sort-imports": "off",
+    "simple-import-sort/exports": "error",
+    "@typescript-eslint/ban-types": "off",
+    "@typescript-eslint/no-empty-function": "off",
+    // This rule will help with preventing to commit code that is not yet finished
+    // I removed TODO as a term so that we can still use that for future work
+    // and use FIXME during the development process
+    "no-warning-comments": [
+      "warn",
+      {
+        "terms": ["fixme"],
+        "location": "start"
+      }
+    ]
+  }
+}

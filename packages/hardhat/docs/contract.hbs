@@ -1,0 +1,66 @@
+# `{{name}}`
+
+{{{natspec.userdoc}}}
+
+{{{natspec.devdoc}}}
+
+{{!-- {{#if ownModifiers}}
+## Modifiers:
+{{#ownModifiers}}
+- `{{name}}({{args}})`
+{{/ownModifiers}}
+{{/if}} --}}
+
+{{#if ownFunctions}}
+## All Functions:
+{{#ownFunctions}}
+{{#if (or (eq visibility "public") (eq visibility "external"))}}
+- `{{name}}({{args}})`
+{{/if}}
+{{/ownFunctions}}
+{{/if}}
+
+{{#if ownEvents}}
+## All Events:
+{{#ownEvents}}
+- `{{name}}({{args}})`
+{{/ownEvents}}
+{{/if}}
+
+{{!-- {{#ownModifiers}}
+### Modifier `{{name}}({{args}})`
+{{#if natspec.userdoc}}{{natspec.userdoc}}{{/if}}
+{{#if natspec.devdoc}}{{natspec.devdoc}}{{/if}}
+
+{{#if natspec.params}}
+#### Parameters:
+{{#natspec.params}}
+- `{{param}}`: {{description}}
+{{/natspec.params}}
+{{/if}}
+{{/ownModifiers}} --}}
+
+# Functions
+
+{{#ownFunctions}}
+{{#if (or (eq visibility "public") (eq visibility "external"))}}
+## `{{name}}({{args}}){{#if outputs}} → {{outputs}}{{/if}}`
+{{#if natspec.userdoc}}{{natspec.userdoc}}{{/if}}
+{{#if natspec.devdoc}}{{natspec.devdoc}}{{/if}}
+
+{{#if natspec.params}}
+### Parameters:
+{{#natspec.params}}
+- `{{#lookup ../args.types @index}}{{/lookup}} {{param}}`: {{description}}
+{{/natspec.params}}
+{{/if}}
+{{#if natspec.returns}}
+### Return Values:
+{{#natspec.returns}}
+
+{{!-- param is part of description because we didn't name returned variables --}}
+- `{{#lookup ../args.types @index}}{{/lookup}}` {{param}} {{description}}
+{{/natspec.returns}}
+{{/if}}
+{{/if}}
+{{/ownFunctions}}

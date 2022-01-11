@@ -1,0 +1,123 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_pool",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_base",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_quote",
+        "type": "address"
+      },
+      {
+        "internalType": "uint32",
+        "name": "_secondsAgoToStartOfTwap",
+        "type": "uint32"
+      },
+      {
+        "internalType": "uint32",
+        "name": "_secondsAgoToEndOfTwap",
+        "type": "uint32"
+      }
+    ],
+    "name": "getHistoricalTwap",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_pool",
+        "type": "address"
+      }
+    ],
+    "name": "getMaxPeriod",
+    "outputs": [
+      {
+        "internalType": "uint32",
+        "name": "",
+        "type": "uint32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_pool",
+        "type": "address"
+      },
+      {
+        "internalType": "uint32",
+        "name": "_period",
+        "type": "uint32"
+      }
+    ],
+    "name": "getTimeWeightedAverageTickSafe",
+    "outputs": [
+      {
+        "internalType": "int24",
+        "name": "timeWeightedAverageTick",
+        "type": "int24"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_pool",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_base",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_quote",
+        "type": "address"
+      },
+      {
+        "internalType": "uint32",
+        "name": "_period",
+        "type": "uint32"
+      },
+      {
+        "internalType": "bool",
+        "name": "_checkPeriod",
+        "type": "bool"
+      }
+    ],
+    "name": "getTwap",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

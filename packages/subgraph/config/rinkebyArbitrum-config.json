@@ -1,0 +1,17 @@
+{
+  "network": "rinkebyArbitrum",
+  "Controller": "0x6FBbc7eBd7E421839915e8e4fAcC9947dC32F4dE",
+  "Controller-start-block": 5750462,
+  "MockErc20": "0xc4D15025D49a88D70B023870d810f4cAa5c18a63",
+  "MockErc20-start-block": 5750357,
+  "Oracle": "0xe790Afe86c0bdc4Dd7C6CBb7dB087552Ec85F6fB",
+  "Oracle-start-block": 5750458,
+  "Quoter": "0x8f92cfB1BF6eD1ce79F2E8Eb0DC96e0F3b61276D",
+  "Quoter-start-block": 3910585,
+  "ShortHelper": "0x5A30a1E3873A2B5Fc9DB9b2b52491C4b6086FAe0",
+  "ShortHelper-start-block": 5750498,
+  "VaultNFTManager": "0x40FA4273a739667D7dBf1C46755C27338eAa0728",
+  "VaultNFTManager-start-block": 5750466,
+  "WSqueeth": "0xEC0db8766bc003C14861af996e411beA6Bf800aB",
+  "WSqueeth-start-block": 5750472
+}

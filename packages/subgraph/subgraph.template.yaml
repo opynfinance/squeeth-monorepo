@@ -1,0 +1,78 @@
+specVersion: 0.0.4
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: Controller
+    network: {{network}}
+    source:
+      address: "{{Controller}}"
+      abi: Controller
+      startBlock: {{Controller-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - BurnShort
+        - DepositCollateral
+        - DepositUniPositionToken
+        - FeeRateUpdated
+        - FeeRecipientUpdated
+        - Liquidate
+        - MintShort
+        - NormalizationFactorUpdated
+        - OpenVault
+        - OwnershipTransferred
+        - Paused
+        - RedeemLong
+        - RedeemShort
+        - ReduceDebt
+        - Shutdown
+        - UnPaused
+        - UpdateOperator
+        - WithdrawCollateral
+        - WithdrawUniPositionToken
+      abis:
+        - name: Controller
+          file: ./abis/Controller.json
+      eventHandlers:
+        - event: BurnShort(address,uint256,uint256)
+          handler: handleBurnShort
+        - event: DepositCollateral(address,uint256,uint256)
+          handler: handleDepositCollateral
+        - event: DepositUniPositionToken(address,uint256,uint256)
+          handler: handleDepositUniPositionToken
+        - event: FeeRateUpdated(uint256,uint256)
+          handler: handleFeeRateUpdated
+        - event: FeeRecipientUpdated(address,address)
+          handler: handleFeeRecipientUpdated
+        - event: Liquidate(address,uint256,uint256,uint256)
+          handler: handleLiquidate
+        - event: MintShort(address,uint256,uint256)
+          handler: handleMintShort
+        - event: NormalizationFactorUpdated(uint256,uint256,uint256,uint256)
+          handler: handleNormalizationFactorUpdated
+        - event: OpenVault(address,uint256)
+          handler: handleOpenVault
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Paused(uint256)
+          handler: handlePaused
+        - event: RedeemLong(address,uint256,uint256)
+          handler: handleRedeemLong
+        - event: RedeemShort(address,uint256,uint256)
+          handler: handleRedeemShort
+        - event: ReduceDebt(address,uint256,uint256,uint256,uint256,uint256,uint256)
+          handler: handleReduceDebt
+        - event: Shutdown(uint256)
+          handler: handleShutdown
+        - event: UnPaused(address)
+          handler: handleUnPaused
+        - event: UpdateOperator(address,uint256,address)
+          handler: handleUpdateOperator
+        - event: WithdrawCollateral(address,uint256,uint256)
+          handler: handleWithdrawCollateral
+        - event: WithdrawUniPositionToken(address,uint256,uint256)
+          handler: handleWithdrawUniPositionToken
+      file: ./src/controller.ts

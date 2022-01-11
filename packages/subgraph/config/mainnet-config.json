@@ -1,0 +1,17 @@
+{
+  "network": "mainnet",
+  "ABDKMath64x64": "0xB0069E6586F70003342309B9289e07035cC41400",
+  "ABDKMath64x64-start-block": 13977496,
+  "Controller": "0x0344f8706947321FA87881D3DaD0EB1b8C65E732",
+  "Controller-start-block": 13977497,
+  "Oracle": "0xF3822177e77319528a82cad3AC5aa55c4B3792f3",
+  "Oracle-start-block": 13977442,
+  "Quoter": "0xC8d3a4e6BB4952E3658CCA5081c358e6935Efa43",
+  "Quoter-start-block": 13977429,
+  "ShortHelper": "0x9E9fd8A934107Cd0BABf3001981B90243dDe4E98",
+  "ShortHelper-start-block": 13977505,
+  "ShortPowerPerp": "0x4757F744ec0CF2e3500Dc655F55100C943a59cbb",
+  "ShortPowerPerp-start-block": 13977443,
+  "WPowerPerp": "0x4a49c7aC69de6cf23da5872b7A7c7D2f2D48fC87",
+  "WPowerPerp-start-block": 13977444
+}

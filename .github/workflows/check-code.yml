@@ -1,0 +1,14 @@
+# name: 'check-code-in-diff'
+# on: [push, pull_request]
+
+# jobs:
+#   check-code-in-diff:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v1
+#       - uses: patcito/check-keywords-in-diff@v0.2.63
+#         with:
+#           branch: master
+#           notify_issue: true
+#           title: Code diff check
+#           token: ${{ secrets.GITHUB_TOKEN }}

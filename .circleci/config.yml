@@ -1,0 +1,152 @@
+version: 2.1
+orbs:
+  coveralls: coveralls/coveralls@1.0.6
+  node: circleci/node@1.1.6
+
+workflows:
+  build-test-report:
+    jobs:
+      - checkout-and-install
+      - compile:
+          requires:
+            - checkout-and-install
+      - lint:
+          requires:
+            - compile
+      - unit-test-contracts:
+          requires:
+            - compile
+      - coverage:
+          requires:
+            - compile
+          context: BUILD_KEYS
+      - contract-size:
+          requires:
+            - compile
+      - deploy-test:
+          requires:
+            - compile
+
+jobs:
+  checkout-and-install:
+    working_directory: ~/squeeth/packages/hardhat
+    docker:
+      - image: circleci/node:16.6.0
+    steps:
+      - checkout:
+          path: ~/squeeth
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+      - run:
+          name: Install packages
+          command: yarn install
+      - save_cache: 
+          key: dependency-cache-{{ checksum "package.json" }}
+          paths:
+            - node_modules
+      - save_cache:
+          key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - ~/squeeth
+
+  compile:
+    working_directory: ~/squeeth/packages/hardhat
+    docker:
+      - image: circleci/node:16.6.0
+    steps:
+      - checkout:
+          path: ~/squeeth
+      - restore_cache:
+          key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
+      - run:
+          name: Compile Contracts
+          command: npx hardhat compile
+      - save_cache: 
+         key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
+         paths:
+           - typechain
+      - save_cache: 
+         key: artifacts-cache-{{ .Environment.CIRCLE_SHA1 }}
+         paths:
+           - artifacts
+
+  lint:
+    working_directory: ~/squeeth/packages/hardhat
+    docker:
+      - image: circleci/node:16.6.0
+    steps:
+      - checkout:
+          path: ~/squeeth
+      - restore_cache:
+          key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
+      - run:
+          name: Lint
+          command: yarn lint:check
+  
+  unit-test-contracts:
+    working_directory: ~/squeeth/packages/hardhat
+    docker:
+      - image: circleci/node:16.6.0
+    steps:
+      - checkout:
+          path: ~/squeeth
+      - restore_cache:
+          key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
+      - run: 
+          name: Unit tests
+          command: yarn test 
+    
+  deploy-test:
+    working_directory: ~/squeeth/packages/hardhat
+    docker:
+      - image: circleci/node:16.6.0
+    steps:
+      - checkout:
+          path: ~/squeeth
+      - restore_cache:
+          key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
+      - run:
+          name: Deploy
+          command: npx hardhat deploy --network hardhat
+  
+  coverage:
+    working_directory: ~/squeeth/packages/hardhat
+    docker:
+      - image: circleci/node:16.6.0
+    steps:
+      - checkout:
+          path: ~/squeeth
+      - restore_cache:
+          key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
+      - run: 
+          name: Coverage
+          command: yarn coverage 
+      - coveralls/upload:
+          path_to_lcov: ./coverage/lcov.info
+      - store_artifacts:
+          path: /coverage
+      - store_artifacts:
+          path: /coverage.json
+
+  contract-size:
+    working_directory: ~/squeeth/packages/hardhat
+    docker:
+      - image: circleci/node:16.6.0
+    steps:
+      - checkout:
+          path: ~/squeeth
+      - restore_cache:
+          key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          key: artifacts-cache-{{ .Environment.CIRCLE_SHA1 }}
+      - run:
+          name: Check Contracts Size
+          command: npx hardhat size-contracts
