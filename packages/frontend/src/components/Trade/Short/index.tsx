@@ -506,7 +506,10 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
               </PrimaryButton>
             )}
             <Typography variant="caption" className={classes.caption} component="div">
-              Trades on Uniswap V3 🦄
+              <a href={Links.UniswapSwap} target="_blank" rel="noreferrer">
+                {' '}
+                Trades on Uniswap V3 🦄{' '}
+              </a>
             </Typography>
           </div>
         </div>
@@ -909,7 +912,10 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
               </PrimaryButton>
             )}
             <Typography variant="caption" className={classes.caption} component="div">
-              Trades on Uniswap V3 🦄
+              <a href={Links.UniswapSwap} target="_blank" rel="noreferrer">
+                {' '}
+                Trades on Uniswap V3 🦄{' '}
+              </a>
             </Typography>
           </div>
         </div>
