@@ -303,11 +303,11 @@ export function LongChart() {
             <div className={classes.legendBox}>
               <div className={classes.legendContainer}>
                 <div style={{ width: '20px', height: '20px', backgroundColor: '#018FFB' }}></div>
-                <div>Squeeth PNL</div>
+                <div>ETH PNL</div>
               </div>
               <div className={classes.legendContainer}>
                 <div style={{ width: '20px', height: '20px', backgroundColor: '#00E396' }}></div>
-                <div>ETH PNL</div>
+                <div>Squeeth PNL</div>
               </div>
             </div>
           </div>
