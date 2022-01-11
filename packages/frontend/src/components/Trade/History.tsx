@@ -68,7 +68,9 @@ const History: React.FC = () => {
             <Typography
               variant="body2"
               className={
-                tx.transactionType === TransactionType.BUY || tx.transactionType === TransactionType.BURN_SHORT
+                tx.transactionType === TransactionType.BUY ||
+                tx.transactionType === TransactionType.BURN_SHORT ||
+                tx.transactionType === TransactionType.REMOVE_LIQUIDITY
                   ? classes.green
                   : classes.red
               }
@@ -83,7 +85,9 @@ const History: React.FC = () => {
             <Typography
               variant="body2"
               className={
-                tx.transactionType === TransactionType.BUY || tx.transactionType === TransactionType.BURN_SHORT
+                tx.transactionType === TransactionType.BUY ||
+                tx.transactionType === TransactionType.BURN_SHORT ||
+                tx.transactionType === TransactionType.ADD_LIQUIDITY
                   ? classes.red
                   : classes.green
               }
