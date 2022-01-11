@@ -94,7 +94,7 @@ export async function getSqueethPNLCompounding(
     }
 
     cumulativeEthReturn += Math.log(price / preEthPrice)
-    cumulativeSqueethReturn += 2 * Math.log(price / preEthPrice) - fundingCost
+    cumulativeSqueethReturn += 2 * Math.log(price / preEthPrice) + Math.log(price / preEthPrice) ** 2 - fundingCost
     const longPNL = Math.round((Math.exp(cumulativeSqueethReturn) - 1) * 10000) / 100
     const shortPNL = Math.exp(-cumulativeSqueethReturn + cumulativeEthReturn * newCR) - 1
 
