@@ -34,7 +34,7 @@ export enum Tooltips {
   RealizedPnL = 'Total realized profit / loss for this position through partial closes. Resets if you fully close your position or change position sides (long to short, or vice versa)',
   Mark = 'The price squeeth is trading at. Because squeeth has convexity, Mark should be greater than ETH^2',
   Last30MinAvgFunding = 'Global average of daily funding over the last 30min. Calculated using a 30min TWAP of Mark - Index',
-  CurrentImplFunding = 'Current funding rate calculated using current Mark - Index',
+  CurrentImplFunding = 'Expected daily funding based on current price, calculated using current Mark - Index',
   FundingPayments = 'Funding happens every time the contract is touched',
   oSQTHPrice = 'Price of oSQTH on Uniswap',
   LPPnL = 'PnL = Value of current LP underlying tokens including uncollected fees - Value of tokens deposited (at current price)',

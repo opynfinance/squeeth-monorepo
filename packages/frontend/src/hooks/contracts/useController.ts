@@ -236,7 +236,8 @@ export const useController = () => {
       return 0
     }
 
-    return Math.log(mark.dividedBy(index).toNumber()) / FUNDING_PERIOD
+    //Until we can get 24hr daily funding, show avg funding from the past 30mins
+    return Math.log(mark.dividedBy(index).toNumber()) / FUNDING_PERIOD / 48
   }
 
   const getCurrentImpliedFunding = async () => {
