@@ -107,7 +107,7 @@ const Nav: React.FC = () => {
   return (
     <div className={classes.nav}>
       <div className={classes.logo}>
-        <a href="https://squeethmas.opyn.co/">
+        <a href="https://opyn.co/">
           <Image src={logo} alt="logo" width={127} height={55} />
         </a>
       </div>
