@@ -3,7 +3,7 @@ import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import BigNumber from 'bignumber.js'
 import React, { useCallback, useEffect, useState } from 'react'
 
-import { InputType, WSQUEETH_DECIMALS } from '../../../constants'
+import { InputType, WSQUEETH_DECIMALS, Links } from '../../../constants'
 import { useTrade } from '@context/trade'
 import { useWallet } from '@context/wallet'
 import { useUserAllowance } from '@hooks/contracts/useAllowance'
@@ -440,7 +440,10 @@ const OpenLong: React.FC<BuyProps> = ({ balance, open, setTradeCompleted, active
                   </PrimaryButton>
                 )}
                 <Typography variant="caption" className={classes.caption} component="div">
-                  Trades on Uniswap V3 🦄
+                  <a href={Links.UniswapSwap} target="_blank" rel="noreferrer">
+                    {' '}
+                    Trades on Uniswap V3 🦄{' '}
+                  </a>
                 </Typography>
               </div>
             </>
@@ -707,7 +710,10 @@ const CloseLong: React.FC<BuyProps> = ({
               </PrimaryButton>
             )}
             <Typography variant="caption" className={classes.caption} component="div">
-              Trades on Uniswap V3 🦄
+              <a href={Links.UniswapSwap} target="_blank" rel="noreferrer">
+                {' '}
+                Trades on Uniswap V3 🦄{' '}
+              </a>
             </Typography>
           </div>
         </div>

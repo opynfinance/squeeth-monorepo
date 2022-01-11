@@ -387,7 +387,7 @@ const SqueethInfo: React.FC = () => {
           <div className={classes.infoItem}>
             <div className={classes.infoLabel}>
               <Typography color="textSecondary" variant="body2">
-                Last 30min Avg Funding
+                Historical Daily Funding
               </Typography>
               <Tooltip title={Tooltips.Last30MinAvgFunding}>
                 <InfoIcon fontSize="small" className={classes.infoIcon} />
