@@ -283,8 +283,8 @@ export function VaultChart({
             position performs best when ETH price does not move much. If ETH price moves considerably, it is likely
             unprofitable.
             <br /> <br />
-            Squeeth smart contracts have been audited by Trail of Bits and Akira. However, smart contracts are
-            experimental technology and we encourage caution only risking funds you can afford to lose.
+            Squeeth smart contracts have been audited by Trail of Bits, Akira, and Sherlock. However, smart contracts
+            are experimental technology and we encourage caution only risking funds you can afford to lose.
             <a className={classes.header} href={Links.GitBook} target="_blank" rel="noreferrer">
               {' '}
               Learn more.{' '}

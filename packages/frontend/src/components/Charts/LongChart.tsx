@@ -272,8 +272,8 @@ export function LongChart() {
             position size. Holding the position for a long period of time without upward movements in ETH can lose
             considerable funds to funding payments.
             <br /> <br />
-            Squeeth smart contracts have been audited by Trail of Bits and Akira. However, smart contracts are
-            experimental technology and we encourage caution only risking funds you can afford to lose.
+            Squeeth smart contracts have been audited by Trail of Bits, Akira, and Sherlock. However, smart contracts
+            are experimental technology and we encourage caution only risking funds you can afford to lose.
             <br /> <br />
             If ETH goes down considerably, you may lose some or all of your initial investment.
             <a className={classes.header} href={Links.GitBook} target="_blank" rel="noreferrer">
