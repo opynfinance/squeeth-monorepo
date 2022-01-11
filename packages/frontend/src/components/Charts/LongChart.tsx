@@ -268,7 +268,7 @@ export function LongChart() {
             Risks
           </Typography>
           <Typography variant="body2" className={classes.cardDetail}>
-            Funding is paid out of your position, meaning you sell a small amount of squeeth at funding, reducing your
+            Funding is paid out of your position, similar to selling a small amount of squeeth at funding, reducing your
             position size. Holding the position for a long period of time without upward movements in ETH can lose
             considerable funds to funding payments.
             <br /> <br />

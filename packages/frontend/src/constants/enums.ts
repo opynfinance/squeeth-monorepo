@@ -33,7 +33,7 @@ export enum Tooltips {
   UnrealizedPnL = 'Total profit / loss if you were to fully close your position at the current oSQTH price on Uniswap. Resets if you close your position or change position sides (long to short, or vice versa)',
   RealizedPnL = 'Total realized profit / loss for this position through partial closes. Resets if you fully close your position or change position sides (long to short, or vice versa)',
   Mark = 'The price squeeth is trading at. Because squeeth has convexity, Mark should be greater than ETH^2',
-  Last30MinAvgFunding = 'Average funding paid over the last 30min. Calculated using a 30min TWAP of Mark - Index',
+  Last30MinAvgFunding = 'Global average of daily funding over the last 30min. Calculated using a 30min TWAP of Mark - Index',
   CurrentImplFunding = 'Current funding rate calculated using current Mark - Index',
   FundingPayments = 'Funding happens every time the contract is touched',
   oSQTHPrice = 'Price of oSQTH on Uniswap',
@@ -63,15 +63,15 @@ export enum Links {
 }
 
 export const UniswapIFrameOpen = {
-  1: 'https://app.uniswap.org/#/add/ETH/0xCA00bAAF27f1C8792a11FEb2C05C0aE25982B88F/3000',
+  1: 'https://app.uniswap.org/#/add/ETH/0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B/3000',
   3: 'https://squeeth-uniswap.netlify.app/#/add/ETH/0x2c1d37d7d8444B24c14064e35aD1B37E5f7B6035/3000',
-  31337: 'https://app.uniswap.org/#/add/ETH/0xCA00bAAF27f1C8792a11FEb2C05C0aE25982B88F/3000', // Should be replaced with arbitrum subgraph
-  421611: 'https://app.uniswap.org/#/add/ETH/0xCA00bAAF27f1C8792a11FEb2C05C0aE25982B88F/3000', // Should be replaced with arbitrum subgraph
+  31337: 'https://app.uniswap.org/#/add/ETH/0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B/3000', // Should be replaced with arbitrum subgraph
+  421611: 'https://app.uniswap.org/#/add/ETH/0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B/3000', // Should be replaced with arbitrum subgraph
 }
 
 export const UniswapIFrameClose = {
   1: 'https://app.uniswap.org/#/pool',
   3: 'https://squeeth-uniswap.netlify.app/#/pool',
-  31337: 'https://app.uniswap.org/#/add/ETH/0xCA00bAAF27f1C8792a11FEb2C05C0aE25982B88F/3000', // Should be replaced with arbitrum subgraph
-  421611: 'https://app.uniswap.org/#/add/ETH/0xCA00bAAF27f1C8792a11FEb2C05C0aE25982B88F/3000', // Should be replaced with arbitrum subgraph
+  31337: 'https://app.uniswap.org/#/add/ETH/0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B/3000', // Should be replaced with arbitrum subgraph
+  421611: 'https://app.uniswap.org/#/add/ETH/0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B/3000', // Should be replaced with arbitrum subgraph
 }
