@@ -180,7 +180,9 @@ const WalletProvider: React.FC = ({ children }) => {
           {
             walletName: 'walletConnect',
             preferred: true,
-            infuraKey: process.env.NEXT_PUBLIC_INFURA_API_KEY,
+            rpc: {
+              [networkId]: RPC_URL,
+            },
           },
           {
             walletName: 'lattice',
