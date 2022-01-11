@@ -171,11 +171,11 @@ export const useController = () => {
     if (!contract) return null
 
     const vault = await contract.methods.vaults(vaultId).call()
-    const { NFTCollateralId, collateralAmount, shortAmount, operator } = vault
+    const { NftCollateralId, collateralAmount, shortAmount, operator } = vault
 
     return {
       id: vaultId,
-      NFTCollateralId,
+      NFTCollateralId: NftCollateralId,
       collateralAmount: toTokenAmount(new BigNumber(collateralAmount), 18),
       shortAmount: toTokenAmount(new BigNumber(shortAmount), OSQUEETH_DECIMALS),
       operator,
@@ -332,6 +332,26 @@ export const useController = () => {
     return emptyState
   }
 
+  const depositUniPositionToken = async (vaultId: number, uniTokenId: number) => {
+    if (!contract || !address) return
+
+    await handleTransaction(
+      contract.methods.depositUniPositionToken(vaultId, uniTokenId).send({
+        from: address,
+      }),
+    )
+  }
+
+  const withdrawUniPositionToken = async (vaultId: number) => {
+    if (!contract || !address) return
+
+    await handleTransaction(
+      contract.methods.withdrawUniPositionToken(vaultId).send({
+        from: address,
+      }),
+    )
+  }
+
   return {
     openDepositAndMint,
     getVault,
@@ -343,5 +363,7 @@ export const useController = () => {
     depositCollateral,
     withdrawCollateral,
     getTwapEthPrice,
+    depositUniPositionToken,
+    withdrawUniPositionToken,
   }
 }
