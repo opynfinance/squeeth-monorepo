@@ -592,7 +592,7 @@ export const useLPPositions = () => {
         const tokenIdHexString = new BigNumber(position.id).toString()
         const uniPosition = new Position({
           pool,
-          liquidity: new BigNumber(position.liquidity).toString(),
+          liquidity: position.liquidity.toString(),
           tickLower: Number(position.tickLower.tickIdx),
           tickUpper: Number(position.tickUpper.tickIdx),
         })
