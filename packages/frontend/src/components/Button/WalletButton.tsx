@@ -7,6 +7,8 @@ import { useMemo } from 'react'
 import { useWallet } from '@context/wallet'
 import { Networks } from '../../types'
 import { toTokenAmount } from '@utils/calculations'
+import { useENS } from '@hooks/useENS'
+import Davatar from '@davatar/react'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -31,12 +33,23 @@ const useStyles = makeStyles((theme) =>
     walletBtn: {
       background: theme.palette.background.default,
     },
+    account: {
+      display: 'flex',
+      alignItems: 'center',
+      '& img': {
+        marginRight: theme.spacing(1),
+      },
+      '& div': {
+        marginRight: theme.spacing(1),
+      },
+    },
   }),
 )
 
 const WalletButton: React.FC = () => {
   const { selectWallet, connected, address, networkId, balance } = useWallet()
   const classes = useStyles()
+  const { ensName } = useENS(address)
 
   const shortAddress = useMemo(
     () => (address ? address.slice(0, 8) + '...' + address.slice(address.length - 8, address.length) : ''),
@@ -72,7 +85,10 @@ const WalletButton: React.FC = () => {
           </Hidden>
           <Button variant="outlined" color="primary" onClick={selectWallet} className={classes.walletBtn}>
             <Circle networkId={networkId} />
-            {shortAddress}
+            <div className={classes.account}>
+              <Davatar size={20} address={address || ''} />
+              <span>{ensName || shortAddress}</span>
+            </div>
           </Button>
         </div>
       )}
