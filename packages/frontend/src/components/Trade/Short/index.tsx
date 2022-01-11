@@ -14,7 +14,7 @@ import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
 import React, { useCallback, useEffect, useState } from 'react'
 
-import { CloseType, Tooltips } from '@constants/enums'
+import { CloseType, Tooltips, Links } from '@constants/enums'
 import { useTrade } from '@context/trade'
 import { useWallet } from '@context/wallet'
 import { useWorldContext } from '@context/world'
