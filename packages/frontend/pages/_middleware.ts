@@ -10,6 +10,8 @@ export default function middleware(request: NextRequest) {
   if (country && BLOCKED_COUNTRIES.includes(country)) {
     response.cookie('restricted', 'true')
     // return NextResponse.rewrite(request.nextUrl.pathname + '?restricted=true')
+  } else {
+    response.cookie('restricted', 'false')
   }
 
   return response
