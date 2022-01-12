@@ -1,4 +1,5 @@
-import React, { useContext, useState, useCallback } from 'react'
+import React, { useContext, useState, useCallback, useEffect } from 'react'
+import { useRouter } from 'next/router'
 
 type restrictUserContextType = {
   isRestricted: boolean
@@ -14,6 +15,7 @@ const restrictUserContext = React.createContext<restrictUserContextType>(initial
 const useRestrictUser = () => useContext(restrictUserContext)
 
 const RestrictUserProvider: React.FC = ({ children }) => {
+  const router = useRouter()
   const [state, setState] = useState({
     isRestricted: false,
   })
@@ -24,6 +26,12 @@ const RestrictUserProvider: React.FC = ({ children }) => {
       isRestricted: isRestricted,
     }))
   }, [])
+
+  useEffect(() => {
+    if (router?.query?.restricted === 'true') {
+      handleRestrictUser(true)
+    }
+  }, [handleRestrictUser, router.query.restricted])
 
   return (
     <restrictUserContext.Provider value={{ handleRestrictUser, isRestricted: state.isRestricted }}>
