@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
+import { useCookies } from 'react-cookie'
 
 import { useRestrictUser } from '@context/restrict-user'
 import { Modal } from '../src/components/Modal/Modal'
@@ -8,6 +9,9 @@ const App = () => {
   const router = useRouter()
   const { handleRestrictUser, isRestricted } = useRestrictUser()
   const [open] = useState(true)
+  const [cookies, setCookie] = useCookies(['restriction'])
+
+  console.log(cookies)
 
   useEffect(() => {
     handleRestrictUser(true)
@@ -15,6 +19,7 @@ const App = () => {
 
   useEffect(() => {
     if (isRestricted) {
+      setCookie('restriction', 'isRestricted', { path: '/' })
       router.push('/')
     }
   }, [isRestricted, router])
