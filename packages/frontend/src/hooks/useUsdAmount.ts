@@ -4,7 +4,7 @@ import { useWorldContext } from '@context/world'
 
 const getClosestTime = (ethWithinOneDayPriceMap: { [key: number]: number }, timestamp: any): number => {
   if (!ethWithinOneDayPriceMap || !timestamp) return 0
-  const closest = Object.keys(ethWithinOneDayPriceMap).reduce(function (
+  const closest = Object.keys(ethWithinOneDayPriceMap)?.reduce(function (
     previousValue: string,
     currentValue: string,
     currentIndex: number,
