@@ -1,5 +1,5 @@
 import React, { useContext, useState, useCallback, useEffect } from 'react'
-import { useRouter } from 'next/router'
+import { useCookies } from 'react-cookie'
 
 type restrictUserContextType = {
   isRestricted: boolean
@@ -15,7 +15,7 @@ const restrictUserContext = React.createContext<restrictUserContextType>(initial
 const useRestrictUser = () => useContext(restrictUserContext)
 
 const RestrictUserProvider: React.FC = ({ children }) => {
-  const router = useRouter()
+  const [cookies] = useCookies(['restricted'])
   const [state, setState] = useState({
     isRestricted: false,
   })
@@ -28,10 +28,10 @@ const RestrictUserProvider: React.FC = ({ children }) => {
   }, [])
 
   useEffect(() => {
-    if (router?.query?.restricted === 'true') {
+    if (cookies.restricted === 'true') {
       handleRestrictUser(true)
     }
-  }, [handleRestrictUser, router.query.restricted])
+  }, [handleRestrictUser, cookies?.restricted])
 
   return (
     <restrictUserContext.Provider value={{ handleRestrictUser, isRestricted: state.isRestricted }}>
