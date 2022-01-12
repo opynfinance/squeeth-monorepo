@@ -4,23 +4,25 @@ import { useWorldContext } from '@context/world'
 
 const getClosestTime = (ethWithinOneDayPriceMap: { [key: number]: number }, timestamp: any): number => {
   if (!ethWithinOneDayPriceMap || !timestamp) return 0
-  const closest = Object.keys(ethWithinOneDayPriceMap)?.reduce(function (
-    previousValue: string,
-    currentValue: string,
-    currentIndex: number,
-    array: string[],
-  ): any {
-    const prev = Number(previousValue)
-    const cur = Number(currentValue)
-    const prevDiff = Math.abs(prev - timestamp)
-    const curDiff = Math.abs(cur - timestamp)
+  const closest = Object.keys(ethWithinOneDayPriceMap)?.length
+    ? Object.keys(ethWithinOneDayPriceMap).reduce(function (
+        previousValue: string,
+        currentValue: string,
+        currentIndex: number,
+        array: string[],
+      ): any {
+        const prev = Number(previousValue)
+        const cur = Number(currentValue)
+        const prevDiff = Math.abs(prev - timestamp)
+        const curDiff = Math.abs(cur - timestamp)
 
-    if (prevDiff == curDiff) {
-      return previousValue > currentValue ? prev : cur
-    } else {
-      return curDiff < prevDiff ? cur : prev
-    }
-  })
+        if (prevDiff == curDiff) {
+          return previousValue > currentValue ? prev : cur
+        } else {
+          return curDiff < prevDiff ? cur : prev
+        }
+      })
+    : '0'
   return Number(closest)
 }
 
