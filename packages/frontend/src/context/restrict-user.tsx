@@ -15,7 +15,7 @@ const restrictUserContext = React.createContext<restrictUserContextType>(initial
 const useRestrictUser = () => useContext(restrictUserContext)
 
 const RestrictUserProvider: React.FC = ({ children }) => {
-  const [cookies] = useCookies(['restricted'])
+  const [cookies, , removeCookie] = useCookies(['restricted'])
   const [state, setState] = useState({
     isRestricted: false,
   })
@@ -30,6 +30,10 @@ const RestrictUserProvider: React.FC = ({ children }) => {
   useEffect(() => {
     if (cookies.restricted === 'true') {
       handleRestrictUser(true)
+    }
+
+    return () => {
+      removeCookie('restricted', { path: '/' })
     }
   }, [handleRestrictUser, cookies?.restricted])
 
