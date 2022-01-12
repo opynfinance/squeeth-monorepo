@@ -64,9 +64,11 @@ const WalletProvider: React.FC = ({ children }) => {
   const disconnectWallet = useCallback(async () => {
     if (!onboard) return
     await onboard.walletReset()
+    setAddress(null)
+    setBalance(new BigNumber(0))
   }, [onboard])
 
-  const setAddr = (address: string) => setAddress(address.toLowerCase())
+  const setAddr = (address: string) => setAddress(address)
 
   function addEtherscan(transaction: any) {
     if (networkId === Networks.LOCAL) return
