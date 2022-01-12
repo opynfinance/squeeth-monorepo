@@ -29,17 +29,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log(`Start deploying with ${deployer}`)
 
-  const {deploy} = deployments;
+  const { deploy } = deployments;
 
   if (hasUniswapDeployments(network.name)) {
     console.log(`Already have Uniswap Deployment on network ${network.name}. Skipping this step. 🍹\n`)
   } else {
     console.log(`\nDeploying whole Uniswap 🦄 on network ${network.name} again...`)
-    
-  
+
+
     // get WETH9 
     const weth9 = await getWETH(ethers, deployer, network.name)
-  
+
     // Deploy Uniswap Factory
     await deploy("UniswapV3Factory", {
       from: deployer,
@@ -51,7 +51,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
     console.log(`UniswapV3Factory Deployed 🍹`)
     const uniswapFactory = await ethers.getContract("UniswapV3Factory", deployer);
-    
+
     await deploy("SwapRouter", {
       from: deployer,
       log: true,
@@ -62,10 +62,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       args: [uniswapFactory.address, weth9.address]
     });
     console.log(`SwapRouter Deployed 🍍`)
-  
+
     // tokenDescriptor is only used to query tokenURI() on NFT. Don't need that in our deployment
     const tokenDescriptorAddress = ethers.constants.AddressZero
-  
+
     await deploy("NonfungiblePositionManager", {
       from: deployer,
       log: true,
@@ -75,14 +75,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       },
       args: [uniswapFactory.address, weth9.address, tokenDescriptorAddress]
     });
-  
-    console.log(`NonfungiblePositionManager Deployed 🥑\n`) 
+
+    console.log(`NonfungiblePositionManager Deployed 🥑\n`)
   }
 
   // deploy quoter separately.
   const { uniswapFactory } = await getUniswapDeployments(ethers, deployer, network.name)
   const weth = await getWETH(ethers, deployer, network.name)
-  
+
+  if (network.name === "mainnet") {
+    return
+  }
+
   await deploy("Quoter", {
     from: deployer,
     log: true,
@@ -93,7 +97,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     args: [uniswapFactory.address, weth.address]
   });
 
-  console.log(`Quoter Deployed  🥦\n`)   
+  console.log(`Quoter Deployed  🥦\n`)
 }
 
 export default func;

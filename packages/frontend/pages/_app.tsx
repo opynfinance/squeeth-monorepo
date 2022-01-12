@@ -8,7 +8,9 @@ import Head from 'next/head'
 import { useRouter } from 'next/router'
 import React, { useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from 'react-query'
+import { CookiesProvider } from 'react-cookie'
 
+import { RestrictUserProvider } from '@context/restrict-user'
 import { useWallet, WalletProvider } from '@context/wallet'
 import { WorldProvider } from '@context/world'
 import getTheme, { Mode } from '../src/theme'
@@ -48,14 +50,18 @@ function MyApp({ Component, pageProps }: any) {
     return () => {
       router.events.off('routeChangeComplete', onRouteChangeComplete)
     }
-  }, [])
+  }, [router.events, siteID])
 
   return (
-    <WalletProvider>
-      <QueryClientProvider client={queryClient}>
-        <TradeApp Component={Component} pageProps={pageProps} />
-      </QueryClientProvider>
-    </WalletProvider>
+    <CookiesProvider>
+      <RestrictUserProvider>
+        <WalletProvider>
+          <QueryClientProvider client={queryClient}>
+            <TradeApp Component={Component} pageProps={pageProps} />
+          </QueryClientProvider>
+        </WalletProvider>
+      </RestrictUserProvider>
+    </CookiesProvider>
   )
 }
 
