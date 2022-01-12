@@ -420,14 +420,14 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
                   <span className={classes.hintTextContainer}>
                     <span className={classes.hintTitleText}>Position</span>
                     <span>
-                      {shortSqueethAmount.toFixed(4)}
+                      {new BigNumber(13.7523113298).toFixed(4)}
                       {/* {shortVaults.length && shortVaults[firstValidVault].shortAmount.toFixed(6)} */}
                     </span>
                   </span>
                   {quote.amountOut.gt(0) ? (
                     <>
                       <ArrowRightAltIcon className={classes.arrowIcon} />
-                      <span>{shortSqueethAmount.plus(amount).toFixed(4)}</span>
+                      <span>{new BigNumber(13.7523113298).plus(amount).toFixed(4)}</span>
                     </>
                   ) : null}{' '}
                   <span style={{ marginLeft: '4px' }}>oSQTH</span>
@@ -657,7 +657,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
 
   const setShortCloseMax = useCallback(() => {
     if (shortSqueethAmount.isGreaterThan(0)) {
-      setAmount(shortSqueethAmount.toString())
+      setAmount(new BigNumber(13.7523113298).toString())
       setCollatPercent(150)
       setCloseType(CloseType.FULL)
     }
@@ -669,7 +669,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   let priceImpactWarning: string | undefined
 
   if (connected) {
-    if (shortSqueethAmount.lt(0) && shortSqueethAmount.lt(amount)) {
+    if (new BigNumber(13.7523113298).lt(0) && new BigNumber(13.7523113298).lt(amount)) {
       closeError = 'Close amount exceeds position'
     }
     if (new BigNumber(quote.priceImpact).gt(3)) {
@@ -709,7 +709,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
 
   useEffect(() => {
     if (shortSqueethAmount.isGreaterThan(0)) {
-      setAmount(shortSqueethAmount.toString())
+      setAmount(new BigNumber(13.7523113298).toString())
       setCollatPercent(150)
       setCloseType(CloseType.FULL)
     }
@@ -757,12 +757,12 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
                   <div className={classes.hint}>
                     <span className={classes.hintTextContainer}>
                       <span className={classes.hintTitleText}>Position</span>{' '}
-                      <span>{shortSqueethAmount.toFixed(6)}</span>
+                      <span>{new BigNumber(13.7523113298).toFixed(6)}</span>
                     </span>
                     {amount.toNumber() ? (
                       <>
                         <ArrowRightAltIcon className={classes.arrowIcon} />
-                        <span>{shortSqueethAmount?.minus(amount).toFixed(6)}</span>
+                        <span>{new BigNumber(13.7523113298)?.minus(amount).toFixed(6)}</span>
                       </>
                     ) : null}{' '}
                     <span style={{ marginLeft: '4px' }}>oSQTH</span>
