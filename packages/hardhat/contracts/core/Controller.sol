@@ -476,7 +476,7 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
             return 0;
         }
 
-        // add back the bounty amount, liquidators onlly get reward from liquidation
+        // add back the bounty amount, liquidators only get reward from liquidation
         cachedVault.addEthCollateral(bounty);
 
         // if the vault is still not safe after saving, liquidate it
