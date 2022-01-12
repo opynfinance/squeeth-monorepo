@@ -47,7 +47,7 @@ const useStyles = makeStyles((theme) =>
 )
 
 const WalletButton: React.FC = () => {
-  const { selectWallet, connected, address, networkId, balance } = useWallet()
+  const { selectWallet, connected, address, networkId, balance, disconnectWallet } = useWallet()
   const classes = useStyles()
   const { ensName } = useENS(address)
 
@@ -83,7 +83,7 @@ const WalletButton: React.FC = () => {
           <Hidden smDown>
             <div className={classes.balance}>{toTokenAmount(balance, 18).toFixed(4)} ETH</div>
           </Hidden>
-          <Button variant="outlined" color="primary" onClick={selectWallet} className={classes.walletBtn}>
+          <Button variant="outlined" color="primary" onClick={disconnectWallet} className={classes.walletBtn}>
             <Circle networkId={networkId} />
             <div className={classes.account}>
               <Davatar size={20} address={address || ''} />
