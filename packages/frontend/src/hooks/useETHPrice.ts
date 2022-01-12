@@ -11,7 +11,7 @@ import { toTokenAmount } from '@utils/calculations'
  * @param refetchIntervalSec refetch interval in seconds
  * @returns {BigNumber} price denominated in USD
  */
-export const useETHPrice = (refetchIntervalSec = 20): BigNumber => {
+export const useETHPrice = (refetchIntervalSec = 30): BigNumber => {
   const [price, setPrice] = useState(new BigNumber(0))
   const { index } = useController()
 
@@ -30,7 +30,7 @@ export const useETHPrice = (refetchIntervalSec = 20): BigNumber => {
     updatePrice()
   }, [])
 
-  useInterval(updatePrice, refetchIntervalSec * 1000)
+  useInterval(updatePrice, refetchIntervalSec * 15000)
 
   return price
 }

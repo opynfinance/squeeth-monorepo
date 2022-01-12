@@ -85,7 +85,7 @@ const useLPState = () => useContext<LPContextType>(LPContext)
 const LPProvider: React.FC = ({ children }) => {
   const [lpState, dispatch] = useReducer<Reducer<LPType, ActionType>>(tradeReducer, initialState)
   const { wSqueeth } = useAddresses()
-  const squeethBal = useTokenBalance(wSqueeth, 10, WSQUEETH_DECIMALS)
+  const squeethBal = useTokenBalance(wSqueeth, 15, WSQUEETH_DECIMALS)
 
   useEffect(() => {
     if (squeethBal.isZero() || lpState.step === Steps.PROVIDE_LIQUIDITY) return

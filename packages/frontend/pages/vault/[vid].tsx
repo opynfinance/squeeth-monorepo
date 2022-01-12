@@ -235,7 +235,7 @@ const Component: React.FC = () => {
   const { liquidations } = useVaultLiquidations(Number(vid))
   const { positionType, squeethAmount } = usePositions()
 
-  const squeethBal = useTokenBalance(wSqueeth, 20, WSQUEETH_DECIMALS)
+  const squeethBal = useTokenBalance(wSqueeth, 30, WSQUEETH_DECIMALS)
 
   const [vault, setVault] = useState<Vault | null>(null)
   const [existingCollatPercent, setExistingCollatPercent] = useState(0)

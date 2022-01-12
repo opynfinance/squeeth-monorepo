@@ -11,7 +11,6 @@ import { Vaults } from '../../queries/squeeth/__generated__/Vaults'
 import { squeethClient } from '../../utils/apollo-client'
 import { useWallet } from '@context/wallet'
 import { useAddresses } from '../useAddress'
-// import useInterval from '../useInterval'
 
 /**
  * get user vaults.
@@ -19,7 +18,7 @@ import { useAddresses } from '../useAddress'
  * @param refetchIntervalSec refetch interval in seconds
  * @returns {Vault[]}
  */
-export const useVaultManager = (refetchIntervalSec = 20) => {
+export const useVaultManager = (refetchIntervalSec = 30) => {
   const [vaults, setVaults] = useState<Array<any>>([])
   const [contract, setContract] = useState<Contract>()
 
@@ -40,7 +39,7 @@ export const useVaultManager = (refetchIntervalSec = 20) => {
   })
 
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       if (!data?.vaults?.length) return
 
       const _vaults = data?.vaults
