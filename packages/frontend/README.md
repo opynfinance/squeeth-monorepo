@@ -15,6 +15,7 @@ yarn install
 Copy the contents of `.env.example` to a new file `.env`.
 
 `NEXT_PUBLIC_INFURA_API_KEY` - Sign up in [Infura](https://infura.io/dashboard/ethereum) and create an Ethereum project to get infura key.
+`NEXT_PUBLIC_ALCHEMY_API_KEY` - Sign up at [Alchemy] (https://www.alchemy.com/) and create an Etheruem project to get an alchemy key
 `NEXT_PUBLIC_BLOCKNATIVE_DAPP_ID` - Sign up in [Blocknative](https://www.blocknative.com/) and get the api key.
 
 The backtests use Tardis and Firebase and we use Fathom for analytics. All of those fields are optional (note that the backtests will not show up without them though).

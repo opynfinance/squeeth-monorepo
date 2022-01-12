@@ -10,7 +10,13 @@ import { EtherscanPrefix } from '../constants'
 import useInterval from '@hooks/useInterval'
 import { Networks } from '../types'
 
-const defaultWeb3 = new Web3(`https://mainnet.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY}`)
+const useAlchemy = process.env.NEXT_PUBLIC_USE_ALCHEMY
+const defaultWeb3 = useAlchemy ? new Web3(`https://eth-mainnet.alchemyapi.io/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`) : new Web3(`https://mainnet.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY}`)
+if (useAlchemy) {
+  console.log("using alchemy")
+} else {
+  console.log("not using alchemy")
+}
 
 type WalletType = {
   web3: Web3
@@ -149,8 +155,10 @@ const WalletProvider: React.FC = ({ children }) => {
       networkId === Networks.LOCAL
         ? 'http://127.0.0.1:8545/'
         : networkId === Networks.ARBITRUM_RINKEBY
-        ? 'https://rinkeby.arbitrum.io/rpc'
-        : `https://${network}.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY}`
+          ? 'https://rinkeby.arbitrum.io/rpc'
+          : useAlchemy
+            ? `https://eth-${network}.alchemyapi.io/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`
+            : `https://${network}.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY}`
 
     const onboard = Onboard({
       dappId: process.env.NEXT_PUBLIC_BLOCKNATIVE_DAPP_ID,
@@ -172,7 +180,9 @@ const WalletProvider: React.FC = ({ children }) => {
           {
             walletName: 'walletConnect',
             preferred: true,
-            infuraKey: process.env.NEXT_PUBLIC_INFURA_API_KEY,
+            rpc: {
+              [networkId]: RPC_URL,
+            },
           },
           {
             walletName: 'lattice',
