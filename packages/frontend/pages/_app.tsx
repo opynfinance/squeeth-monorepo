@@ -50,7 +50,7 @@ function MyApp({ Component, pageProps }: any) {
     return () => {
       router.events.off('routeChangeComplete', onRouteChangeComplete)
     }
-  }, [])
+  }, [router.events, siteID])
 
   return (
     <CookiesProvider>
