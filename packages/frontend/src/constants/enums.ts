@@ -16,6 +16,8 @@ export enum TransactionType {
   SELL = 'Sold',
   MINT_SHORT = 'Minted and sold',
   BURN_SHORT = 'Bought back and burned',
+  ADD_LIQUIDITY = 'Added Liquidity',
+  REMOVE_LIQUIDITY = 'Removed Liquidity',
 }
 
 export enum CloseType {
