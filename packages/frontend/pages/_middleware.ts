@@ -5,9 +5,13 @@ const BLOCKED_COUNTRIES = ['US', 'BY', 'CU', 'IR', 'IQ', 'CI', 'LR', 'KP', 'SD',
 export default function middleware(request: NextRequest) {
   const country = request.geo?.country
 
+  const response = NextResponse.next()
+
   if (country && BLOCKED_COUNTRIES.includes(country)) {
-    return NextResponse.rewrite('/country-not-supported')
+    response.cookie('restricted', `true,${country}`)
+  } else {
+    response.cookie('restricted', 'false')
   }
 
-  return NextResponse.rewrite(request.nextUrl)
+  return response
 }
