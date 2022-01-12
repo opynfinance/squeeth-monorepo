@@ -6,7 +6,8 @@ export default function middleware(request: NextRequest) {
   const country = request.geo?.country
 
   if (country && BLOCKED_COUNTRIES.includes(country)) {
-    return NextResponse.rewrite('/country-not-supported')
+    // return NextResponse.rewrite('/country-not-supported')
+    return NextResponse.redirect('/country-not-supported')
   }
 
   return NextResponse.rewrite(request.nextUrl)
