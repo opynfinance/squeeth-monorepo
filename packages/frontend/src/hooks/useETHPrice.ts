@@ -22,8 +22,7 @@ export const useETHPrice = (refetchIntervalSec = 20): BigNumber => {
       price = await getETHPriceCoingecko()
       setPrice(price)
     } catch (error) {
-      const altPrice = await getAltETHPrice(index)
-      setPrice(altPrice)
+      setPrice(toTokenAmount(index, 18).sqrt())
     }
   }, [])
 
@@ -45,19 +44,4 @@ export const getETHPriceCoingecko = async (): Promise<BigNumber> => {
   if (priceStruct === undefined) return new BigNumber(0)
   const price = priceStruct.usd
   return new BigNumber(price)
-}
-
-export const getAltETHPrice = async (index: BigNumber): Promise<BigNumber> => {
-  try {
-    const url = 'https://data.messari.io/api/v1/assets/eth/metrics/market-data'
-    const res = await fetch(url, { headers: { 'x-messari-api-key': `${process.env.NEXT_PUBLIC_MESSARI_API_KEY}` } })
-    if (res.ok) {
-      const data = await res.json()
-      return new BigNumber(data.data.market_data.price_usd)
-    } else {
-      return new BigNumber(0)
-    }
-  } catch (error) {
-    return toTokenAmount(index, 18).sqrt()
-  }
 }
