@@ -6,13 +6,18 @@ import { useRestrictUser } from '@context/restrict-user'
 
 const App = () => {
   const router = useRouter()
-  const { handleRestrictUser } = useRestrictUser()
+  const { handleRestrictUser, isRestricted } = useRestrictUser()
   // const [open] = useState(true)
 
   useEffect(() => {
     handleRestrictUser(true)
-    router.push('/')
-  }, [])
+  }, [handleRestrictUser])
+
+  useEffect(() => {
+    if (isRestricted) {
+      router.push('/')
+    }
+  }, [isRestricted, router])
 
   return null
   // (

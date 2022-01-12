@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState, useCallback } from 'react'
 
 type restrictUserContextType = {
   isRestricted: boolean
@@ -18,12 +18,12 @@ const RestrictUserProvider: React.FC = ({ children }) => {
     isRestricted: false,
   })
 
-  const handleRestrictUser = (isRestricted: boolean) => {
+  const handleRestrictUser = useCallback((isRestricted: boolean) => {
     setState((prevState) => ({
       ...prevState,
       isRestricted: isRestricted,
     }))
-  }
+  }, [])
 
   return (
     <restrictUserContext.Provider value={{ handleRestrictUser, isRestricted: state.isRestricted }}>
