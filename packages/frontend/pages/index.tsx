@@ -16,6 +16,7 @@ import { VaultChart } from '@components/Charts/VaultChart'
 import MobileModal from '@components/Modal/MobileModal'
 import Nav from '@components/Nav'
 import PositionCard from '@components/PositionCard'
+import RestrictionInfo from '@components/RestrictionInfo'
 import { SqueethTab, SqueethTabs } from '@components/Tabs'
 import Trade from '@components/Trade'
 import { WelcomeModal } from '@components/Trade/WelcomeModal'
@@ -554,7 +555,7 @@ function TradePage() {
           <div className={classes.ticket}>
             <TabComponent />
             <Card className={classes.innerTicket}>
-              {!isRestricted ? <Trade setTradeCompleted={setTradeCompleted} /> : null}
+              {!isRestricted ? <Trade setTradeCompleted={setTradeCompleted} /> : <RestrictionInfo />}
             </Card>
           </div>
         </div>
@@ -584,7 +585,7 @@ function TradePage() {
         <MobileModal title="TRADE" isOpen={showMobileTrade} onClose={() => setShowMobileTrade(false)}>
           <TabComponent />
           <Card className={classes.innerTicket} style={{ textAlign: 'center', marginTop: '8px' }}>
-            {!isRestricted ? <Trade setTradeCompleted={setTradeCompleted} /> : null}
+            {!isRestricted ? <Trade setTradeCompleted={setTradeCompleted} /> : <RestrictionInfo />}
           </Card>
         </MobileModal>
       </Hidden>
