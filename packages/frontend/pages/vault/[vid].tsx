@@ -564,16 +564,20 @@ const Component: React.FC = () => {
             <div className={classes.overviewItem}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Typography className={classes.overviewValue}>{vault?.collateralAmount.toFixed(4)}</Typography>
-                {vault?.shortAmount.isZero() && vault.collateralAmount.gt(0) ? (
-                  <button
-                    className={clsx(classes.withdrawBtn)}
-                    onClick={() => {
-                      updateCollateral(vault!.collateralAmount.negated().toString())
-                      removeCollat(vault!.collateralAmount)
-                    }}
-                  >
-                    WITHDRAW
-                  </button>
+                {!isRestricted ? (
+                  <>
+                    {vault?.shortAmount.isZero() && vault.collateralAmount.gt(0) ? (
+                      <button
+                        className={clsx(classes.withdrawBtn)}
+                        onClick={() => {
+                          updateCollateral(vault!.collateralAmount.negated().toString())
+                          removeCollat(vault!.collateralAmount)
+                        }}
+                      >
+                        WITHDRAW
+                      </button>
+                    ) : null}
+                  </>
                 ) : null}
               </div>
               <Typography className={classes.overviewTitle}>Collateral (ETH)</Typography>
