@@ -3,6 +3,13 @@ import { useCallback, useMemo, useState } from 'react'
 import { getETHPNLCompounding, getSqueethChartWithFunding, getSqueethPNLCompounding } from '@utils/pricer'
 import { useAsyncMemo } from './useAsyncMemo'
 
+const emptyPriceList = [
+  {
+    time: new Date().setUTCMinutes(0, 0, 0),
+    value: 0,
+  },
+]
+
 export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initCollatRatio = 1.5) {
   const [volMultiplier, setVolMultiplier] = useState(initVolMultiplier)
   const [days, setDays] = useState(initDays)
@@ -238,51 +245,66 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
 }
 
 async function getETHPrices(day = 1): Promise<{ time: number; value: number }[]> {
-  const url = `https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=${day}`
-  const response = await fetch(url)
-  const prices = (await response.json()).prices
-  // [ [timestamp, price] ]
-  return prices.map(([timestamp, price]: number[]) => {
-    return {
-      time: timestamp / 1000,
-      value: price,
-    }
-  })
+  try {
+    const url = `https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=${day}`
+    const response = await fetch(url)
+    const prices = (await response.json()).prices
+    return prices.map(([timestamp, price]: number[]) => {
+      return {
+        time: timestamp / 1000,
+        value: price,
+      }
+    })
+  } catch (error) {
+    return emptyPriceList
+  }
 }
 
 async function getCUSDCPrices(day = 1): Promise<{ time: number; value: number }[]> {
-  const secondsInDay = 24 * 60 * 60
-  const endTime = Math.round(Date.now() / 1000)
-  const startTime = Math.round(endTime - day * secondsInDay)
-  const url = `https://api.compound.finance/api/v2/market_history/graph?asset=0x39aa39c021dfbae8fac545936693ac917d5e7563&min_block_timestamp=${startTime}&max_block_timestamp=${endTime}&num_buckets=${day}`
-  const response = await fetch(url)
-  const prices = (await response.json()).exchange_rates
+  try {
+    const secondsInDay = 24 * 60 * 60
+    const endTime = Math.round(Date.now() / 1000)
+    const startTime = Math.round(endTime - day * secondsInDay)
+    const url = `https://api.compound.finance/api/v2/market_history/graph?asset=0x39aa39c021dfbae8fac545936693ac917d5e7563&min_block_timestamp=${startTime}&max_block_timestamp=${endTime}&num_buckets=${day}`
+    const response = await fetch(url)
+    const prices = (await response.json()).exchange_rates
 
-  const output: any = []
-  for (const i in prices) output[i] = { time: prices[i].block_timestamp, value: prices[i].rate }
-  return output
+    const output: any = []
+    for (const i in prices) output[i] = { time: prices[i].block_timestamp, value: prices[i].rate }
+    return output
+  } catch (error) {
+    return emptyPriceList
+  }
 }
 
 export async function getETH90DaysPrices(): Promise<{ time: number; value: number }[]> {
-  const url = `https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=90`
-  const response = await fetch(url)
-  const prices = (await response.json()).prices
-  return prices.map(([timestamp, price]: number[]) => {
-    return {
-      time: new Date(timestamp).setUTCMinutes(0, 0, 0),
-      value: price,
-    }
-  })
+  try {
+    const url = `https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=90`
+    const response = await fetch(url)
+    const prices = (await response.json()).prices
+    return prices.map(([timestamp, price]: number[]) => {
+      return {
+        time: new Date(timestamp).setUTCMinutes(0, 0, 0),
+        value: price,
+      }
+    })
+  } catch (error) {
+    return emptyPriceList
+  }
 }
 
 export async function getETHWithinOneDayPrices(): Promise<{ time: number; value: number }[]> {
-  const url = `https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=0.999`
-  const response = await fetch(url)
-  const prices = (await response.json()).prices
-  return prices.map(([timestamp, price]: number[]) => {
-    return {
-      time: new Date(timestamp).setUTCSeconds(0, 0),
-      value: price,
-    }
-  })
+  try {
+    const url = `https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=0.999`
+    const response = await fetch(url)
+    const prices = (await response.json()).prices
+    return prices.map(([timestamp, price]: number[]) => {
+      return {
+        time: new Date(timestamp).setUTCSeconds(0, 0),
+        value: price,
+      }
+    })
+  } catch (error) {
+    return emptyPriceList
+  }
 }
