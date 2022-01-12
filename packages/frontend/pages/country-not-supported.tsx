@@ -11,8 +11,6 @@ const App = () => {
   const [open] = useState(true)
   const [cookies, setCookie] = useCookies(['restriction'])
 
-  console.log(cookies)
-
   useEffect(() => {
     handleRestrictUser(true)
   }, [handleRestrictUser])
@@ -20,7 +18,9 @@ const App = () => {
   useEffect(() => {
     if (isRestricted) {
       setCookie('restriction', 'isRestricted', { path: '/' })
-      router.push('/')
+      setTimeout(() => {
+        router.push('/')
+      }, 3000)
     }
   }, [isRestricted, router])
 
