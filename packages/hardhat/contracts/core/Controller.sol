@@ -72,7 +72,7 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
 
     //80% of index
     uint256 internal constant LOWER_MARK_RATIO = 8e17;
-    //125% of index
+    //140% of index
     uint256 internal constant UPPER_MARK_RATIO = 140e16;
     // 10%
     uint256 internal constant LIQUIDATION_BOUNTY = 1e17;
@@ -476,7 +476,7 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
             return 0;
         }
 
-        // add back the bounty amount, liquidators only get reward from liquidation
+        // add back the bounty amount, liquidators onlly get reward from liquidation
         cachedVault.addEthCollateral(bounty);
 
         // if the vault is still not safe after saving, liquidate it
