@@ -7,8 +7,9 @@ import { useCookies } from 'react-cookie'
 const useStyles = makeStyles((theme) =>
   createStyles({
     restrictedInfo: {
-      margin: '1em',
+      margin: '1em auto 1em',
       width: '90%',
+      maxWidth: '350px',
       background: '#181B1C',
       padding: '1em',
       borderRadius: 15,
