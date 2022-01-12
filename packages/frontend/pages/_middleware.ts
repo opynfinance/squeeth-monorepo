@@ -8,8 +8,7 @@ export default function middleware(request: NextRequest) {
   const response = NextResponse.next()
 
   if (country && BLOCKED_COUNTRIES.includes(country)) {
-    response.cookie('restricted', 'true')
-    response.cookie('country', country)
+    response.cookie('restricted', `true,${country}`)
   } else {
     response.cookie('restricted', 'false')
   }

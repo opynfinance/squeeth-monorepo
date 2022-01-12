@@ -28,7 +28,7 @@ const RestrictUserProvider: React.FC = ({ children }) => {
   }, [])
 
   useEffect(() => {
-    if (cookies.restricted === 'true') {
+    if (cookies?.restricted?.split(',')[0] === 'true') {
       handleRestrictUser(true)
     }
 

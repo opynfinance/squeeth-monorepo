@@ -37,13 +37,14 @@ const restrictedCountries: Record<string, string> = {
 
 const RestrictionInfo = () => {
   const classes = useStyles()
-  const [cookies] = useCookies(['country'])
+  const [cookies] = useCookies(['restricted'])
   return (
     <Box className={classes.restrictedInfo}>
       <p>
         <span>
-          This app is not available in {cookies?.country ? restrictedCountries[cookies?.country] : 'your country'}. More
-          details can be found in our
+          This app is not available in{' '}
+          {cookies?.restricted ? restrictedCountries[cookies?.restricted.split(',')[1]] : 'your country'}. More details
+          can be found in our
         </span>
         <Link href="/terms-of-service">
           <a target="_blank"> Terms of service. </a>
