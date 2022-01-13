@@ -1,5 +1,5 @@
-import { CircularProgress } from '@material-ui/core'
 import {
+  CircularProgress,
   createStyles,
   InputAdornment,
   makeStyles,
@@ -209,7 +209,13 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
   } = useTrade()
   const amount = new BigNumber(amountInputValue)
   const collateral = new BigNumber(collateralInput)
-  const { firstValidVault, existingCollatPercent, squeethAmount: shortSqueethAmount, isLong } = usePositions()
+  const {
+    firstValidVault,
+    existingCollatPercent,
+    squeethAmount: shortSqueethAmount,
+    isLong,
+    loading: isPositionFinishedCalc,
+  } = usePositions()
   const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
 
   const [vaultId, setVaultId] = useState(shortVaults.length ? shortVaults[firstValidVault].id : 0)
@@ -351,6 +357,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
               onActionClicked={() => setCollateralInput(balance.toString())}
               unit="ETH"
               convertedValue={!collateral.isNaN() ? collateral.times(ethPrice).toFixed(2).toLocaleString() : 0}
+              isLoading={isPositionFinishedCalc}
               hint={
                 openError ? (
                   openError
@@ -574,6 +581,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     existingCollatPercent,
     squeethAmount: shortSqueethAmount,
     isLong,
+    loading: isPositionFinishedCalc,
   } = usePositions()
 
   useEffect(() => {
@@ -740,6 +748,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
               actionTxt="Max"
               onActionClicked={setShortCloseMax}
               unit="oSQTH"
+              isLoading={isPositionFinishedCalc}
               error={!!existingLongError || !!priceImpactWarning || !!closeError}
               convertedValue={
                 !amount.isNaN()
