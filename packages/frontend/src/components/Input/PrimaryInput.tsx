@@ -156,7 +156,7 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
         </div>
       </div>
 
-      {isLoading ? (
+      {isLoading && !error ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
           <Typography variant="caption" color={error ? 'error' : 'textSecondary'}>
             Fetching price data
