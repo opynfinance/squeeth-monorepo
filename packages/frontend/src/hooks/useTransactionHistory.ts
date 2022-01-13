@@ -37,6 +37,7 @@ export const useTransactionHistory = () => {
         timestamp: transaction.transaction.timestamp,
         transactionType: TransactionType.ADD_LIQUIDITY,
         txId: transaction.transaction.id,
+        ethPriceAtDeposit: bigZero,
       }
 
       const squeethDepositedAmount = new BigNumber(
@@ -75,7 +76,7 @@ export const useTransactionHistory = () => {
       const time = new Date(Number(transaction.transaction.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
       const usdValue = transactionDetails.ethAmount.multipliedBy(ethPriceMap[time]).abs()
 
-      return { ...transactionDetails, usdValue }
+      return { ...transactionDetails, usdValue, ethPriceAtDeposit: new BigNumber(ethPriceMap[time]) }
     },
   )
 
@@ -100,6 +101,7 @@ export const useTransactionHistory = () => {
       timestamp: s.timestamp,
       transactionType,
       txId: s.transaction.id,
+      ethPriceAtDeposit: new BigNumber(ethPriceMap[time]),
     }
   })
 
