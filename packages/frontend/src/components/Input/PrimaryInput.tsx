@@ -155,16 +155,7 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
           <Typography className={classes.unit}>{unit}</Typography>
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <Typography variant="caption" color={error ? 'error' : 'textSecondary'}>
-          {hint || ''}
-        </Typography>
-        {actionTxt && onActionClicked ? (
-          <LinkButton size="small" color="primary" onClick={onActionClicked} variant="text">
-            {actionTxt}
-          </LinkButton>
-        ) : null}
-      </div>
+
       {isLoading ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
           <Typography variant="caption" color={error ? 'error' : 'textSecondary'}>
@@ -172,7 +163,18 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
           </Typography>
           <CircularProgress color="primary" size="1rem" />
         </div>
-      ) : null}
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <Typography variant="caption" color={error ? 'error' : 'textSecondary'}>
+            {hint || ''}
+          </Typography>
+          {actionTxt && onActionClicked ? (
+            <LinkButton size="small" color="primary" onClick={onActionClicked} variant="text">
+              {actionTxt}
+            </LinkButton>
+          ) : null}
+        </div>
+      )}
     </div>
   )
 }
