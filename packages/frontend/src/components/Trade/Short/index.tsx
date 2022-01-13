@@ -583,9 +583,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     existingCollatPercent,
     squeethAmount: shortSqueethAmount,
     isLong,
-    loading: isPositionFinishedCalc,
     lpedSqueeth,
-    loading: isPositionFinishedCalc,
   } = usePositions()
 
   const mintedDebt = useMemo(() => {
