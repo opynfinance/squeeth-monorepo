@@ -10,7 +10,7 @@ import { positions, positionsVariables } from '../queries/uniswap/__generated__/
 import { swaps, swapsVariables } from '../queries/uniswap/__generated__/swaps'
 import POSITIONS_QUERY, { POSITIONS_SUBSCRIPTION } from '../queries/uniswap/positionsQuery'
 import SWAPS_QUERY from '../queries/uniswap/swapsQuery'
-import { NFTManagers, PositionType } from '../types'
+import { NFTManagers, PositionType, TradeType } from '../types'
 import { toTokenAmount } from '@utils/calculations'
 import { useController } from './contracts/useController'
 import { useSqueethPool } from './contracts/useSqueethPool'
@@ -682,7 +682,8 @@ export const useLPPositions = () => {
             withSqth.isEqualTo(0) &&
             sqthLiq.isEqualTo(0) &&
             wethLiq.isEqualTo(0)
-          )
+          ) ||
+          activePositions.length === 0
         )
           setLoading(false)
       })
