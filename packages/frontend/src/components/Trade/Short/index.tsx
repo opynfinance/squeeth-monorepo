@@ -358,6 +358,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
               onActionClicked={() => setCollateralInput(balance.toString())}
               unit="ETH"
               convertedValue={!collateral.isNaN() ? collateral.times(ethPrice).toFixed(2).toLocaleString() : 0}
+              isLoading={isPositionFinishedCalc}
               hint={
                 openError ? (
                   openError
@@ -584,6 +585,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     isLong,
     loading: isPositionFinishedCalc,
     lpedSqueeth,
+    loading: isPositionFinishedCalc,
   } = usePositions()
 
   const mintedDebt = useMemo(() => {
