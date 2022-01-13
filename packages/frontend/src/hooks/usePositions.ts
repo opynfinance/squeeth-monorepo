@@ -668,13 +668,23 @@ export const useLPPositions = () => {
               : new BigNumber(position.withdrawnToken0).plus(position.collectedFeesToken0),
           )
         }
+
         setDepositedSqueeth(depSqth)
         setDepositedWeth(depWeth)
         setWithdrawnSqueeth(withSqth)
         setWithdrawnWeth(withWeth)
         setSqueethLiquidity(sqthLiq)
         setWethLiquidity(wethLiq)
-        setLoading(false)
+        if (
+          !(
+            depSqth.isEqualTo(0) &&
+            depWeth.isEqualTo(0) &&
+            withSqth.isEqualTo(0) &&
+            sqthLiq.isEqualTo(0) &&
+            wethLiq.isEqualTo(0)
+          )
+        )
+          setLoading(false)
       })
     }
   }, [gphLoading, isWethToken0, data?.positions, positionAndFees.length])
