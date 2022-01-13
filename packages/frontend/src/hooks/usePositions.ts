@@ -119,7 +119,7 @@ export const usePositions = () => {
   }, [squeethAmount.toString(), depositedSqueeth.toString(), withdrawnSqueeth.toString()])
 
   useEffect(() => {
-    ; (function determinePositionType() {
+    ;(function determinePositionType() {
       if (finalSqueeth.isGreaterThan(0)) {
         return setPositionType(PositionType.LONG)
       } else if (finalSqueeth.isLessThan(0)) {
