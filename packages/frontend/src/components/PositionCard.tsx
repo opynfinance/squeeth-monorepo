@@ -296,12 +296,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
             <div>
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <Typography component="span" style={{ fontWeight: 600 }}>
-                  {getPositionBasedValue(
-                    squeethAmount.toFixed(6),
-                    squeethAmount.minus(lpedSqueeth.isGreaterThan(0) ? lpedSqueeth : new BigNumber(0)).toFixed(6),
-                    '0',
-                    '0',
-                  )}
+                  {getPositionBasedValue(squeethAmount.toFixed(6), squeethAmount.toFixed(6), '0', '0')}
                 </Typography>
                 {(tradeType === TradeType.SHORT && positionType === PositionType.LONG) ||
                 (tradeType === TradeType.LONG && positionType === PositionType.SHORT) ||
