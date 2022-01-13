@@ -357,7 +357,6 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
               onActionClicked={() => setCollateralInput(balance.toString())}
               unit="ETH"
               convertedValue={!collateral.isNaN() ? collateral.times(ethPrice).toFixed(2).toLocaleString() : 0}
-              isLoading={isPositionFinishedCalc}
               hint={
                 openError ? (
                   openError
