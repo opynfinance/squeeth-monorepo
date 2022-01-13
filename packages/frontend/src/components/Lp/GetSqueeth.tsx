@@ -69,7 +69,7 @@ const useStyles = makeStyles((theme) =>
 const Mint: React.FC = () => {
   const classes = useStyles()
   const { wSqueeth } = useAddresses()
-  const squeethBal = useTokenBalance(wSqueeth, 10, WSQUEETH_DECIMALS)
+  const squeethBal = useTokenBalance(wSqueeth, 15, WSQUEETH_DECIMALS)
   const { balance, connected } = useWallet()
   const { existingCollatPercent, existingCollat, firstValidVault } = usePositions()
   const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()

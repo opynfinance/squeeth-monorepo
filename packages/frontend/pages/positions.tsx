@@ -15,7 +15,6 @@ import { Tooltips, TransactionType } from '@constants/enums'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { useAddresses } from '@hooks/useAddress'
-import { useETHPrice } from '@hooks/useETHPrice'
 import { useLPPositions, usePnL, usePositions } from '@hooks/usePositions'
 import { useTransactionHistory } from '@hooks/useTransactionHistory'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
@@ -123,12 +122,11 @@ export function Positions() {
     shortRealizedPNL,
     loading: isPnLLoading,
   } = usePnL()
-  const ethPrice = useETHPrice()
   const { activePositions } = useLPPositions()
   const { pool } = useSqueethPool()
 
   const { wSqueeth } = useAddresses()
-  const wSqueethBal = useTokenBalance(wSqueeth, 5, WSQUEETH_DECIMALS)
+  const wSqueethBal = useTokenBalance(wSqueeth, 15, WSQUEETH_DECIMALS)
 
   const {
     positionType,
@@ -181,7 +179,7 @@ export function Positions() {
   }, [squeethAmount.toString(), lpedSqueeth.toString()])
 
   const shortDebt = useMemo(() => {
-    return squeethAmount.minus(mintedDebt).minus(lpDebt)
+    return positionType === PositionType.SHORT ? squeethAmount : new BigNumber(0)
   }, [squeethAmount.toString(), lpDebt.toString(), mintedDebt.toString()])
 
   return (
