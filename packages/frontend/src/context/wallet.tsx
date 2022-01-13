@@ -9,16 +9,12 @@ import Web3 from 'web3'
 import { EtherscanPrefix } from '../constants'
 import useInterval from '@hooks/useInterval'
 import { Networks } from '../types'
+import { Web3Provider } from '@ethersproject/providers'
 
 const useAlchemy = process.env.NEXT_PUBLIC_USE_ALCHEMY
 const defaultWeb3 = useAlchemy
   ? new Web3(`https://eth-mainnet.alchemyapi.io/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`)
   : new Web3(`https://mainnet.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY}`)
-if (useAlchemy) {
-  console.log('using alchemy')
-} else {
-  console.log('not using alchemy')
-}
 
 type WalletType = {
   web3: Web3
@@ -126,7 +122,7 @@ const WalletProvider: React.FC = ({ children }) => {
     getBalance()
   }, [address])
 
-  useInterval(getBalance, 20000)
+  useInterval(getBalance, 30000)
 
   useEffect(() => {
     const onNetworkChange = (updateNetwork: number) => {
@@ -150,6 +146,7 @@ const WalletProvider: React.FC = ({ children }) => {
       if (wallet.provider) {
         window.localStorage.setItem('selectedWallet', wallet.name)
         const provider = new ethers.providers.Web3Provider(wallet.provider)
+        provider.pollingInterval = 30000
         setWeb3(new Web3(wallet.provider))
         setSigner(() => provider.getSigner())
       }
@@ -169,6 +166,7 @@ const WalletProvider: React.FC = ({ children }) => {
       dappId: process.env.NEXT_PUBLIC_BLOCKNATIVE_DAPP_ID,
       networkId: networkId,
       darkMode: true,
+      blockPollingInterval: 30000,
       subscriptions: {
         address: setAddr,
         network: onNetworkChange,

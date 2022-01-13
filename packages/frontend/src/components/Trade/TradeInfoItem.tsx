@@ -66,6 +66,7 @@ const TradeInfoItem: React.FC<tradeType> = ({ value, unit, frontUnit, label, too
     if (color === 'green') return classes.green
     if (color === 'red') return classes.red
     return ''
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [color])
 
   return (

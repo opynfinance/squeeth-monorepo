@@ -17,7 +17,7 @@ import { useAddresses } from '../useAddress'
  * @param refetchIntervalSec refetch interval in seconds
  * @returns {Vault[]}
  */
-export const useVaultLiquidations = (vaultId: number, refetchIntervalSec = 20) => {
+export const useVaultLiquidations = (vaultId: number, refetchIntervalSec = 30) => {
   const [liquidations, setLiquidations] = useState<Array<any>>([])
   const [contract, setContract] = useState<Contract>()
 

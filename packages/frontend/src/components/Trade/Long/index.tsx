@@ -221,7 +221,7 @@ const OpenLong: React.FC<BuyProps> = ({ balance, open, setTradeCompleted, active
 
   const classes = useStyles()
   const { wSqueeth } = useAddresses()
-  const wSqueethBal = useTokenBalance(wSqueeth, 5, WSQUEETH_DECIMALS)
+  const wSqueethBal = useTokenBalance(wSqueeth, 15, WSQUEETH_DECIMALS)
   const { buyAndRefund, getWSqueethPositionValue } = useSqueethPool()
   const {
     tradeAmount: amountInputValue,
