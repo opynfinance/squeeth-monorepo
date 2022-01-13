@@ -8,9 +8,10 @@ import Link from 'next/link'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { usePnL, usePositions } from '@hooks/usePositions'
-import { Tooltips } from '@constants/enums'
+import { Tooltips, TransactionType } from '@constants/enums'
 import { useTrade } from '@context/trade'
 import { useETHPrice } from '@hooks/useETHPrice'
+import { useTransactionHistory } from '@hooks/useTransactionHistory'
 import { PositionType, TradeType } from '../types'
 import { useController } from '@hooks/contracts/useController'
 import { toTokenAmount } from '@utils/calculations'
@@ -152,6 +153,13 @@ type PositionCardType = {
 const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
   const { buyQuote, sellQuote, longGain, shortGain, wSqueethBal, longRealizedPNL, shortRealizedPNL, loading, refetch } =
     usePnL()
+  const { transactions } = useTransactionHistory()
+
+  const lastDeposit = useMemo(
+    () => transactions.find((transaction) => transaction.transactionType === TransactionType.MINT_SHORT),
+    [transactions?.length],
+  )
+
   const {
     positionType: pType,
     squeethAmount,
@@ -359,7 +367,11 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
                           .minus(wethAmount.abs())
                           .times(toTokenAmount(index, 18).sqrt())
                           .toFixed(2)}`,
-                        `$${wethAmount.minus(buyQuote).times(toTokenAmount(index, 18).sqrt()).toFixed(2)}`,
+                        `$${wethAmount
+                          .minus(buyQuote)
+                          .times(toTokenAmount(index, 18).sqrt())
+                          .plus(lastDeposit?.ethAmount.times(lastDeposit?.ethPriceAtDeposit.minus(ethPrice)))
+                          .toFixed(2)}`,
                         '--',
                         'Loading',
                       )}

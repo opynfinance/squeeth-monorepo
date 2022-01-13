@@ -11,12 +11,13 @@ import Nav from '@components/Nav'
 import History from '@components/Trade/History'
 import { WSQUEETH_DECIMALS } from '../src/constants'
 import { PositionType } from '../src/types/'
-import { Tooltips } from '@constants/enums'
+import { Tooltips, TransactionType } from '@constants/enums'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { useAddresses } from '@hooks/useAddress'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { useLPPositions, usePnL, usePositions } from '@hooks/usePositions'
+import { useTransactionHistory } from '@hooks/useTransactionHistory'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { toTokenAmount, fromTokenAmount } from '@utils/calculations'
 import { useController } from '@hooks/contracts/useController'
@@ -142,6 +143,12 @@ export function Positions() {
   } = usePositions()
 
   const { index, getCollatRatioAndLiqPrice } = useController()
+  const { transactions } = useTransactionHistory()
+
+  const lastDeposit = useMemo(
+    () => transactions.find((transaction) => transaction.transactionType === TransactionType.MINT_SHORT),
+    [transactions?.length],
+  )
 
   const vaultExists = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.collateralAmount?.isGreaterThan(0)
@@ -301,8 +308,13 @@ export function Positions() {
                   ) : (
                     <>
                       <Typography variant="body1" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
-                        ${wethAmount.minus(buyQuote).times(toTokenAmount(index, 18).sqrt()).toFixed(2)} (
-                        {wethAmount.minus(buyQuote).toFixed(5)} ETH)
+                        $
+                        {wethAmount
+                          .minus(buyQuote)
+                          .times(toTokenAmount(index, 18).sqrt())
+                          .plus(lastDeposit?.ethAmount.times(lastDeposit?.ethPriceAtDeposit.minus(ethPrice)))
+                          .toFixed(2)}{' '}
+                        ({wethAmount.minus(buyQuote).toFixed(5)} ETH)
                       </Typography>
                       <Typography variant="caption" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
                         {(shortGain || 0).toFixed(2)}%
