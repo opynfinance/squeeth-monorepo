@@ -523,7 +523,7 @@ const CloseLong: React.FC<BuyProps> = ({
         setConfirmedAmount(val.amountIn.toFixed(6).toString())
       })
     }
-  }, [wSqueethBal, open])
+  }, [wSqueethBal.toString(), open])
 
   let openError: string | undefined
   let closeError: string | undefined
