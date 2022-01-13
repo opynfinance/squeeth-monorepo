@@ -15,7 +15,6 @@ import { Tooltips } from '@constants/enums'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { useAddresses } from '@hooks/useAddress'
-import { useETHPrice } from '@hooks/useETHPrice'
 import { useLPPositions, usePnL, usePositions } from '@hooks/usePositions'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { toTokenAmount, fromTokenAmount } from '@utils/calculations'
@@ -122,12 +121,11 @@ export function Positions() {
     shortRealizedPNL,
     loading: isPnLLoading,
   } = usePnL()
-  const ethPrice = useETHPrice()
   const { activePositions } = useLPPositions()
   const { pool } = useSqueethPool()
 
   const { wSqueeth } = useAddresses()
-  const wSqueethBal = useTokenBalance(wSqueeth, 5, WSQUEETH_DECIMALS)
+  const wSqueethBal = useTokenBalance(wSqueeth, 15, WSQUEETH_DECIMALS)
 
   const {
     positionType,

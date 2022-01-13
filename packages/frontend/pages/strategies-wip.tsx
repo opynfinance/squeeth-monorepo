@@ -301,8 +301,8 @@ export function Vault() {
   const { openShort, closeShort } = useShortHelper()
   const { updateOperator, fundingPerHalfHour } = useController()
   const { wSqueeth, weth, shortHelper } = useAddresses()
-  const squeethBal = useTokenBalance(wSqueeth, 5)
-  const wethBal = useTokenBalance(weth, 5)
+  const squeethBal = useTokenBalance(wSqueeth, 15)
+  const wethBal = useTokenBalance(weth, 15)
   const { vaults: shortVaults } = useVaultManager(5)
 
   const vault = useMemo(() => {

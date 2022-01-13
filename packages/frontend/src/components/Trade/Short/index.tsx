@@ -197,7 +197,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
   const ethPrice = useETHPrice()
   const { selectWallet, connected } = useWallet()
   const { shortHelper, wSqueeth } = useAddresses()
-  const wSqueethBal = useTokenBalance(wSqueeth, 5, WSQUEETH_DECIMALS)
+  const wSqueethBal = useTokenBalance(wSqueeth, 15, WSQUEETH_DECIMALS)
 
   const {
     tradeAmount: amountInputValue,
@@ -553,7 +553,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   const { getWSqueethPositionValue } = useSqueethPool()
   const { updateOperator, normFactor: normalizationFactor, getShortAmountFromDebt, getDebtAmount } = useController()
   const { shortHelper, wSqueeth } = useAddresses()
-  const wSqueethBal = useTokenBalance(wSqueeth, 5, WSQUEETH_DECIMALS)
+  const wSqueethBal = useTokenBalance(wSqueeth, 15, WSQUEETH_DECIMALS)
 
   const ethPrice = useETHPrice()
   const { selectWallet, connected } = useWallet()

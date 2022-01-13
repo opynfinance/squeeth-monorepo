@@ -40,7 +40,7 @@ export const usePositions = () => {
     fetchPolicy: 'cache-and-network',
   })
 
-  useInterval(refetch, 5000)
+  useInterval(refetch, 30000)
 
   const { vaults: shortVaults } = useVaultManager(5)
   const [existingCollatPercent, setExistingCollatPercent] = useState(0)
@@ -119,7 +119,7 @@ export const usePositions = () => {
   }, [squeethAmount.toString(), depositedSqueeth.toString(), withdrawnSqueeth.toString()])
 
   useEffect(() => {
-    ;(function determinePositionType() {
+    ; (function determinePositionType() {
       if (finalSqueeth.isGreaterThan(0)) {
         return setPositionType(PositionType.LONG)
       } else if (finalSqueeth.isLessThan(0)) {
@@ -194,7 +194,7 @@ const useLongPositions = () => {
     fetchPolicy: 'cache-and-network',
   })
 
-  useInterval(refetch, 5000)
+  useInterval(refetch, 15000)
 
   const swaps = data?.swaps
   const isWethToken0 = parseInt(weth, 16) < parseInt(wSqueeth, 16)
@@ -309,7 +309,7 @@ const useShortPositions = () => {
     fetchPolicy: 'cache-and-network',
   })
 
-  useInterval(refetch, 5000)
+  useInterval(refetch, 15000)
 
   const { vaults: shortVaults } = useVaultManager(5)
   const { getDebtAmount, normFactor: normalizationFactor } = useController()
