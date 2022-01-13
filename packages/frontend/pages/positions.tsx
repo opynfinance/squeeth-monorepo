@@ -172,7 +172,7 @@ export function Positions() {
   }, [squeethAmount.toString(), lpedSqueeth.toString()])
 
   const shortDebt = useMemo(() => {
-    return squeethAmount.minus(mintedDebt).minus(lpDebt)
+    return positionType === PositionType.SHORT ? squeethAmount : new BigNumber(0)
   }, [squeethAmount.toString(), lpDebt.toString(), mintedDebt.toString()])
 
   return (

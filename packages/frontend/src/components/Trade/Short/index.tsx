@@ -12,7 +12,7 @@ import {
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { CloseType, Tooltips, Links } from '@constants/enums'
 import { useTrade } from '@context/trade'
@@ -35,6 +35,7 @@ import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import UniswapData from '@components/Trade/UniswapData'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { WSQUEETH_DECIMALS, MIN_COLLATERAL_AMOUNT } from '../../../constants'
+import { PositionType } from '../../../types'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -539,6 +540,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   const [existingCollat, setExistingCollat] = useState(new BigNumber(0))
   const [vaultId, setVaultId] = useState(0)
   const [isVaultApproved, setIsVaultApproved] = useState(true)
+  const [finalShortAmount, setFinalShortAmount] = useState(new BigNumber(0))
   const [buyLoading, setBuyLoading] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
   const [txHash, setTxHash] = useState('')
@@ -574,7 +576,43 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     existingCollatPercent,
     squeethAmount: shortSqueethAmount,
     isLong,
+    lpedSqueeth,
   } = usePositions()
+
+  const mintedDebt = useMemo(() => {
+    return wSqueethBal?.isGreaterThan(0) && positionType === PositionType.LONG
+      ? wSqueethBal.minus(shortSqueethAmount)
+      : wSqueethBal
+  }, [positionType, shortSqueethAmount.toString(), wSqueethBal.toString()])
+
+  const lpDebt = useMemo(() => {
+    return lpedSqueeth.isGreaterThan(0) ? lpedSqueeth : new BigNumber(0)
+  }, [shortSqueethAmount.toString(), lpedSqueeth.toString()])
+
+  const shortDebt = useMemo(() => {
+    return positionType === PositionType.SHORT ? shortSqueethAmount : new BigNumber(0)
+  }, [shortSqueethAmount.toString(), lpDebt.toString(), mintedDebt.toString()])
+
+  useEffect(() => {
+    if (!shortVaults.length) return
+    console.log('minted ' + mintedDebt.toString() + ' lp ' + lpDebt.toString() + ' short ' + shortDebt.toString())
+    const calculatedShort = mintedDebt.plus(lpDebt).plus(shortDebt)
+    console.log('calc short ' + calculatedShort.toString())
+    const contractShort = shortVaults.length && shortVaults[firstValidVault]?.shortAmount
+    console.log(' contract short ' + shortVaults.length && shortVaults[firstValidVault]?.shortAmount.toString())
+    if (calculatedShort !== contractShort) {
+      setFinalShortAmount(contractShort)
+    } else {
+      setFinalShortAmount(shortDebt)
+    }
+  }, [
+    shortVaults.length,
+    mintedDebt.toString(),
+    shortDebt.toString(),
+    lpDebt.toString(),
+    firstValidVault,
+    shortVaults[firstValidVault]?.shortAmount?.toString(),
+  ])
 
   useEffect(() => {
     if (!open && shortVaults.length && shortVaults[firstValidVault].shortAmount.lt(amount)) {
@@ -656,12 +694,12 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   const { setCollatRatio } = useWorldContext()
 
   const setShortCloseMax = useCallback(() => {
-    if (shortSqueethAmount.isGreaterThan(0)) {
-      setAmount(shortSqueethAmount.toString())
+    if (finalShortAmount.isGreaterThan(0)) {
+      setAmount(finalShortAmount.toString())
       setCollatPercent(150)
       setCloseType(CloseType.FULL)
     }
-  }, [shortSqueethAmount.toString()])
+  }, [finalShortAmount.toString()])
 
   let openError: string | undefined
   let closeError: string | undefined
@@ -669,7 +707,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   let priceImpactWarning: string | undefined
 
   if (connected) {
-    if (shortSqueethAmount.lt(0) && shortSqueethAmount.lt(amount)) {
+    if (finalShortAmount.lt(0) && finalShortAmount.lt(amount)) {
       closeError = 'Close amount exceeds position'
     }
     if (new BigNumber(quote.priceImpact).gt(3)) {
@@ -708,12 +746,12 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   }, [collatPercent])
 
   useEffect(() => {
-    if (shortSqueethAmount.isGreaterThan(0)) {
-      setAmount(shortSqueethAmount.toString())
+    if (finalShortAmount.isGreaterThan(0)) {
+      setAmount(finalShortAmount.toString())
       setCollatPercent(150)
       setCloseType(CloseType.FULL)
     }
-  }, [tradeType, open, shortSqueethAmount.toString()])
+  }, [tradeType, open, finalShortAmount.toString()])
 
   const handleAmountInput = (v: string) => {
     setAmount(v)
@@ -756,13 +794,12 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
                 ) : (
                   <div className={classes.hint}>
                     <span className={classes.hintTextContainer}>
-                      <span className={classes.hintTitleText}>Position</span>{' '}
-                      <span>{shortSqueethAmount.toFixed(6)}</span>
+                      <span className={classes.hintTitleText}>Position</span> <span>{finalShortAmount.toFixed(6)}</span>
                     </span>
                     {amount.toNumber() ? (
                       <>
                         <ArrowRightAltIcon className={classes.arrowIcon} />
-                        <span>{shortSqueethAmount?.minus(amount).toFixed(6)}</span>
+                        <span>{finalShortAmount?.minus(amount).toFixed(6)}</span>
                       </>
                     ) : null}{' '}
                     <span style={{ marginLeft: '4px' }}>oSQTH</span>
