@@ -1,4 +1,4 @@
-import { Button, Tooltip, Typography } from '@material-ui/core'
+import { CircularProgress, Tooltip, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import clsx from 'clsx'
@@ -166,9 +166,12 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
         ) : null}
       </div>
       {isLoading ? (
-        <Typography variant="caption" color={error ? 'error' : 'textSecondary'}>
-          Fetching price data
-        </Typography>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <Typography variant="caption" color={error ? 'error' : 'textSecondary'}>
+            Fetching price data
+          </Typography>
+          <CircularProgress color="primary" size="1rem" />
+        </div>
       ) : null}
     </div>
   )
