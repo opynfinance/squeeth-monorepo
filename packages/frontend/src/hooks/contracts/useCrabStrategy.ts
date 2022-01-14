@@ -163,7 +163,8 @@ export const useCrabStrategy = () => {
 
     const ethWillingToPay = fromTokenAmount(await calculateEthWillingToPay(amount, slippage), 18)
     const crabAmount = fromTokenAmount(amount, 18)
-    contract.methods.flashWithdraw(crabAmount.toFixed(0), ethWillingToPay.toFixed(0)).send({
+    console.log(crabAmount.toString())
+    contract.methods.flashWithdraw(crabAmount, ethWillingToPay).send({
       from: address,
     })
   }
