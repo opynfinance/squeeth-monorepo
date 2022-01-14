@@ -547,7 +547,6 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   const [existingCollat, setExistingCollat] = useState(new BigNumber(0))
   const [vaultId, setVaultId] = useState(0)
   const [isVaultApproved, setIsVaultApproved] = useState(true)
-  const [finalShortAmount, setFinalShortAmount] = useState(new BigNumber(0))
   const [buyLoading, setBuyLoading] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
   const [txHash, setTxHash] = useState('')
@@ -600,27 +599,6 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   const shortDebt = useMemo(() => {
     return positionType === PositionType.SHORT ? shortSqueethAmount : new BigNumber(0)
   }, [shortSqueethAmount.toString(), lpDebt.toString(), mintedDebt.toString()])
-
-  useEffect(() => {
-    if (!shortVaults.length) return
-    console.log('minted ' + mintedDebt.toString() + ' lp ' + lpDebt.toString() + ' short ' + shortDebt.toString())
-    const calculatedShort = mintedDebt.plus(lpDebt).plus(shortDebt)
-    console.log('calc short ' + calculatedShort.toString())
-    const contractShort = shortVaults.length && shortVaults[firstValidVault]?.shortAmount
-    console.log(' contract short ' + shortVaults.length && shortVaults[firstValidVault]?.shortAmount.toString())
-    if (calculatedShort !== contractShort) {
-      setFinalShortAmount(contractShort)
-    } else {
-      setFinalShortAmount(shortDebt)
-    }
-  }, [
-    shortVaults.length,
-    mintedDebt.toString(),
-    shortDebt.toString(),
-    lpDebt.toString(),
-    firstValidVault,
-    shortVaults[firstValidVault]?.shortAmount?.toString(),
-  ])
 
   useEffect(() => {
     if (!open && shortVaults.length && shortVaults[firstValidVault].shortAmount.lt(amount)) {
@@ -702,12 +680,12 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   const { setCollatRatio } = useWorldContext()
 
   const setShortCloseMax = useCallback(() => {
-    if (finalShortAmount.isGreaterThan(0)) {
-      setAmount(finalShortAmount.toString())
+    if (shortDebt.isGreaterThan(0)) {
+      setAmount(shortDebt.toString())
       setCollatPercent(150)
       setCloseType(CloseType.FULL)
     }
-  }, [finalShortAmount.toString()])
+  }, [shortDebt.toString()])
 
   let openError: string | undefined
   let closeError: string | undefined
@@ -715,7 +693,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   let priceImpactWarning: string | undefined
 
   if (connected) {
-    if (finalShortAmount.lt(0) && finalShortAmount.lt(amount)) {
+    if (shortDebt.lt(0) && shortDebt.lt(amount)) {
       closeError = 'Close amount exceeds position'
     }
     if (new BigNumber(quote.priceImpact).gt(3)) {
@@ -754,12 +732,12 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   }, [collatPercent])
 
   useEffect(() => {
-    if (finalShortAmount.isGreaterThan(0)) {
-      setAmount(finalShortAmount.toString())
+    if (shortDebt.isGreaterThan(0)) {
+      setAmount(shortDebt.toString())
       setCollatPercent(150)
       setCloseType(CloseType.FULL)
     }
-  }, [tradeType, open, finalShortAmount.toString()])
+  }, [tradeType, open, shortDebt.toString()])
 
   const handleAmountInput = (v: string) => {
     setAmount(v)
@@ -803,12 +781,12 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
                 ) : (
                   <div className={classes.hint}>
                     <span className={classes.hintTextContainer}>
-                      <span className={classes.hintTitleText}>Position</span> <span>{finalShortAmount.toFixed(6)}</span>
+                      <span className={classes.hintTitleText}>Position</span> <span>{shortDebt.toFixed(6)}</span>
                     </span>
                     {amount.toNumber() ? (
                       <>
                         <ArrowRightAltIcon className={classes.arrowIcon} />
-                        <span>{finalShortAmount?.minus(amount).toFixed(6)}</span>
+                        <span>{shortDebt?.minus(amount).toFixed(6)}</span>
                       </>
                     ) : null}{' '}
                     <span style={{ marginLeft: '4px' }}>oSQTH</span>
