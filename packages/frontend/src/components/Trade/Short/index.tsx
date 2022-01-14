@@ -577,6 +577,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     squeethAmount: shortSqueethAmount,
     isLong,
     lpedSqueeth,
+    loading: isPositionFinishedCalc,
   } = usePositions()
 
   const mintedDebt = useMemo(() => {
@@ -718,7 +719,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     ) {
       closeError = `You must have at least ${MIN_COLLATERAL_AMOUNT} ETH collateral unless you fully close out your position. Either fully close your position, or close out less`
     }
-    if (isLong) {
+    if (isLong && !shortDebt.isGreaterThan(0)) {
       existingLongError = 'Close your long position to open a short'
     }
   }
@@ -770,6 +771,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
               onActionClicked={setShortCloseMax}
               unit="oSQTH"
               error={!!existingLongError || !!priceImpactWarning || !!closeError}
+              isLoading={isPositionFinishedCalc}
               convertedValue={
                 !amount.isNaN()
                   ? getWSqueethPositionValue(amount).toFixed(2).toLocaleString()
