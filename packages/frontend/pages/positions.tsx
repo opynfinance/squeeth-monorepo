@@ -208,7 +208,7 @@ export function Positions() {
           </div>
         ) : null}
 
-        {!shortDebt.isGreaterThan(0) && positionType === PositionType.LONG ? (
+        {positionType === PositionType.LONG ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>Long Squeeth</Typography>
@@ -268,7 +268,7 @@ export function Positions() {
             </div>
           </div>
         ) : null}
-        {shortDebt.isGreaterThan(0) && vaultExists && !fullyLiquidated ? (
+        {positionType === PositionType.SHORT && vaultExists && !fullyLiquidated ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>Short Squeeth</Typography>
