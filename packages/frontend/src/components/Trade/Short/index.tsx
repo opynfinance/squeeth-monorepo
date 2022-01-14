@@ -230,7 +230,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
     if (!open && shortVaults.length && shortVaults[firstValidVault].shortAmount.lt(amount)) {
       setAmount(shortVaults[firstValidVault].shortAmount.toString())
     }
-  }, [shortVaults.length, open])
+  }, [shortVaults?.length, open])
 
   useEffect(() => {
     if (!shortVaults.length) {
@@ -239,7 +239,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
     }
 
     setVaultId(shortVaults[firstValidVault].id)
-  }, [shortVaults.length, firstValidVault])
+  }, [shortVaults?.length, firstValidVault])
 
   useEffect(() => {
     if (!open) return
@@ -287,7 +287,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
         setWithdrawCollat(_collat.minus(neededCollat))
       })
     }
-  }, [amount.toString(), collatPercent, shortVaults.length])
+  }, [amount.toString(), collatPercent, shortVaults?.length])
 
   const { setCollatRatio } = useWorldContext()
 
@@ -604,7 +604,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     if (!open && shortVaults.length && shortVaults[firstValidVault].shortAmount.lt(amount)) {
       setAmount(shortVaults[firstValidVault].shortAmount.toString())
     }
-  }, [shortVaults.length, open])
+  }, [shortVaults?.length, open])
 
   useEffect(() => {
     if (!shortVaults.length) {
@@ -613,7 +613,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     }
 
     setVaultId(shortVaults[firstValidVault].id)
-  }, [shortVaults.length])
+  }, [shortVaults?.length])
 
   useEffect(() => {
     if (!open) return
@@ -640,7 +640,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
         setWithdrawCollat(_collat.minus(neededCollat))
       })
     }
-  }, [amount.toString(), collatPercent, shortVaults.length])
+  }, [amount.toString(), collatPercent, shortVaults?.length])
 
   const buyBackAndClose = useCallback(async () => {
     setBuyLoading(true)
@@ -672,7 +672,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     getDebtAmount,
     isVaultApproved,
     shortHelper,
-    shortVaults.length,
+    shortVaults?.length,
     updateOperator,
     vaultId,
   ])
