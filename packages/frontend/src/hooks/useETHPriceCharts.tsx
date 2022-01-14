@@ -37,10 +37,12 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
     return acc
   }, {})
 
-  const ethWithinOneDayPriceMap = allEthWithinOneDayPrices.reduce((acc: any, p) => {
-    acc[p.time] = p.value
-    return acc
-  }, {})
+  const ethWithinOneDayPriceMap = allEthWithinOneDayPrices?.length
+    ? allEthWithinOneDayPrices.reduce((acc: any, p) => {
+        acc[p.time] = p.value
+        return acc
+      }, {})
+    : {}
 
   /**
    * cUSDC yield as PNL
