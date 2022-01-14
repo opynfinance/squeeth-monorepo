@@ -34,7 +34,7 @@ export enum Tooltips {
   ImplVol = 'Implied Volatility (IV) is a market forecast of ETH price movement implied by squeeth',
   UnrealizedPnL = 'Total profit / loss if you were to fully close your position at the current oSQTH price on Uniswap. Resets if you close your position or change position sides (long to short, or vice versa)',
   RealizedPnL = 'Total realized profit / loss for this position through partial closes. Resets if you fully close your position or change position sides (long to short, or vice versa)',
-  ShortCollateral = 'Takes ETH collateral into account',
+  ShortCollateral = 'Takes ETH collateral into account.',
   Mark = 'The price squeeth is trading at. Because squeeth has convexity, Mark should be greater than ETH^2',
   Last30MinAvgFunding = 'Historical daily funding based on the last 30min. Calculated using a 30min TWAP of Mark - Index',
   CurrentImplFunding = 'Expected daily funding based on current price, calculated using current Mark - Index',
@@ -46,7 +46,7 @@ export enum Tooltips {
   SellCloseAmount = 'Amount of oSQTH to buy',
   CurrentCollRatio = 'Collateral ratio for current short position',
   SellOpenAmount = 'Minimum collateral amount is 7.5 ETH to ensure system solvency with sufficient liquidation incentive',
-  LiquidationPrice = 'Price of ETH when liquidation occurs',
+  LiquidationPrice = 'Price of ETH when liquidation occurs.',
   InitialPremium = 'Initial payment you get for selling squeeth on Uniswap',
   BacktestDisclaimer = 'This is historical backtest data and does not show the actual performance of squeeth. See the FAQ to learn more.',
   PercentOfPool = 'The amount of your liquidity compared to all current active liquidity',
@@ -58,12 +58,14 @@ export enum Tooltips {
   ShortDebt = 'This is squeeth that you acquired and sold',
   LPDebt = 'This is squeeth which you have opened a Uniswap pool to trade.',
   TotalDebt = 'Debt of the vault',
+  VaultLiquidations = 'The strategy is subject to liquidations if it goes below 150% collateral, but rebalancing based on large ETH price changes helps prevent a liquidation from occurring.',
 }
 
 export enum Links {
   BacktestFAQ = 'https://opyn.gitbook.io/squeeth/resources/squeeth-faq#what-is-the-historical-365d-pnl',
   GitBook = 'https://opyn.gitbook.io/squeeth/',
   UniswapSwap = 'https://app.uniswap.org/#/swap?inputCurrency=ETH&outputCurrency=0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B',
+  CrabFAQ = 'https://opyn.gitbook.io/squeeth/resources/squeeth-strategies-faq',
 }
 
 export const UniswapIFrameOpen = {
