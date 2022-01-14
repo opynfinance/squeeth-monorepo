@@ -228,7 +228,7 @@ const OpenLong: React.FC<BuyProps> = ({ balance, open, setTradeCompleted, active
     setTradeAmount: setAmount,
     squeethExposure,
     inputQuoteLoading,
-    setInputQuoteLaoding,
+    setInputQuoteLoading,
     inputQuote,
     setInputType,
     quote,
@@ -299,7 +299,7 @@ const OpenLong: React.FC<BuyProps> = ({ balance, open, setTradeCompleted, active
       setInputType(InputType.SQTH)
       setAltTradeAmount(v)
     }
-    setInputQuoteLaoding(true)
+    setInputQuoteLoading(true)
   }
 
   return (
@@ -496,7 +496,7 @@ const CloseLong: React.FC<BuyProps> = ({
     quote,
     inputQuote,
     inputQuoteLoading,
-    setInputQuoteLaoding,
+    setInputQuoteLoading,
     setInputType,
     altTradeAmount: altAmountInputValue,
     setAltTradeAmount,
@@ -523,7 +523,7 @@ const CloseLong: React.FC<BuyProps> = ({
         setConfirmedAmount(val.amountIn.toFixed(6).toString())
       })
     }
-  }, [wSqueethBal, open])
+  }, [wSqueethBal.toString(), open])
 
   let openError: string | undefined
   let closeError: string | undefined
@@ -566,7 +566,7 @@ const CloseLong: React.FC<BuyProps> = ({
     }
 
     setSellLoading(false)
-  }, [amount, sell, squeethAllowance, squeethApprove, wSqueethBal])
+  }, [amount.toString(), squeethAllowance.toString(), wSqueethBal.toString(), sell, squeethApprove])
 
   const handleCloseDualInputUpdate = (v: string, currentInput: string) => {
     //If I'm inputting an amount of ETH position I'd like to sell to get squeeth, use getSellQuoteForETH in trade context
@@ -584,7 +584,7 @@ const CloseLong: React.FC<BuyProps> = ({
       setInputType(InputType.SQTH)
       setAmount(v)
     }
-    setInputQuoteLaoding(true)
+    setInputQuoteLoading(true)
   }
 
   return (

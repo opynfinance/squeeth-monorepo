@@ -36,7 +36,7 @@ type tradeContextType = {
   inputQuote: string
   setInputQuote: (q: string) => void
   inputQuoteLoading: boolean
-  setInputQuoteLaoding: (bool: boolean) => void
+  setInputQuoteLoading: (bool: boolean) => void
   inputType: InputType
   setInputType: (type: InputType) => void
   sellCloseQuote: SellCloseQuote
@@ -78,7 +78,7 @@ const initialState: tradeContextType = {
   setInputQuote: () => null,
   quote: quoteEmptyState,
   inputQuoteLoading: false,
-  setInputQuoteLaoding: () => null,
+  setInputQuoteLoading: () => null,
   sellCloseQuote: sellCloseEmptyState,
   inputType: InputType.ETH,
   setInputType: () => null,
@@ -103,7 +103,7 @@ const TradeProvider: React.FC = ({ children }) => {
   const [openPosition, setOpenPosition] = useState(0)
   const [quote, setQuote] = useState(quoteEmptyState)
   const [inputQuote, setInputQuote] = useState('')
-  const [inputQuoteLoading, setInputQuoteLaoding] = useState(false)
+  const [inputQuoteLoading, setInputQuoteLoading] = useState(false)
   const [inputType, setInputType] = useState(InputType.ETH)
   const [sellCloseQuote, setSellCloseQuote] = useState(sellCloseEmptyState)
   const [squeethExposure, setSqueethExposure] = useState(0)
@@ -133,7 +133,7 @@ const TradeProvider: React.FC = ({ children }) => {
 
   useEffect(() => {
     if (!ready) return
-    setInputQuoteLaoding(true)
+    setInputQuoteLoading(true)
     //tradeType refers to which tab "Long" or "Short" is selected on the trade page
     //positionType refers to the user's actual position based on their squeeth balances and debt
     //isPositionOpen is true if the "Open" tab is selected on the trade page; otherwise it refers to the "Close" tab being selected
@@ -179,7 +179,7 @@ const TradeProvider: React.FC = ({ children }) => {
         getBuyQuote(new BigNumber(tradeAmount), slippageAmount).then(setSellCloseQuote)
       }
     }
-    setInputQuoteLaoding(false)
+    setInputQuoteLoading(false)
   }, [
     tradeAmount,
     altTradeAmount,
@@ -200,7 +200,7 @@ const TradeProvider: React.FC = ({ children }) => {
       if (inputType === InputType.ETH) setTradeAmount(inputQuote)
       else setAltTradeAmount(inputQuote)
     }
-    setInputQuoteLaoding(false)
+    setInputQuoteLoading(false)
   }, [inputQuote])
 
   useEffect(() => {
@@ -238,7 +238,7 @@ const TradeProvider: React.FC = ({ children }) => {
     inputQuote,
     setInputQuote,
     inputQuoteLoading,
-    setInputQuoteLaoding,
+    setInputQuoteLoading,
     confirmedAmount,
     setConfirmedAmount,
     inputType,
