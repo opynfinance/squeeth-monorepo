@@ -514,6 +514,7 @@ export const usePnL = () => {
   const currentShortDeposits = useMemo(() => {
     if (positionType === PositionType.LONG) return []
     let totalShortSqth = new BigNumber(0)
+    //@ts-expect-error
     const result = []
     for (let index = 0; index < transactions.length; index++) {
       if (totalShortSqth.gte(squeethAmount)) break
@@ -522,7 +523,9 @@ export const usePnL = () => {
         transactions[index].transactionType === TransactionType.MINT_SHORT
       ) {
         totalShortSqth = totalShortSqth.plus(transactions[index].squeethAmount)
-        result.push(transactions[index])
+        getBuyQuote(transactions[index].squeethAmount).then((val) => {
+          result.push({ ...transactions[index], buyQuote: val.amountIn })
+        })
       } else if (
         totalShortSqth.isLessThan(squeethAmount) &&
         transactions[index].transactionType === TransactionType.BURN_SHORT
@@ -530,6 +533,7 @@ export const usePnL = () => {
         totalShortSqth = totalShortSqth.minus(transactions[index].squeethAmount)
       }
     }
+    //@ts-expect-error
     return result
   }, [positionType, squeethAmount.toString(), transactions.length])
 
@@ -538,8 +542,8 @@ export const usePnL = () => {
       currentShortDeposits.reduce(
         (acc, curr) => {
           acc.shortUnrealizedPNL = acc.shortUnrealizedPNL.plus(
-            wethAmount
-              .minus(buyQuote)
+            curr?.ethAmount
+              .minus(curr?.buyQuote)
               .times(toTokenAmount(index, 18).sqrt())
               .plus(curr?.ethAmount.times(curr?.ethPriceAtDeposit.minus(ethPrice))),
           )
@@ -549,7 +553,47 @@ export const usePnL = () => {
           shortUnrealizedPNL: new BigNumber(0),
         },
       ),
-    [buyQuote.toString(), currentShortDeposits.length, ethPrice.toString(), wethAmount.toString()],
+    [currentShortDeposits?.length, ethPrice.toString(), index.toString()],
+  )
+
+  const currentLong = useMemo(() => {
+    if (positionType === PositionType.SHORT) return []
+    let totalLongSqth = new BigNumber(0)
+    //@ts-expect-error
+    const result = []
+    for (let index = 0; index < transactions.length; index++) {
+      if (totalLongSqth.gte(squeethAmount)) break
+      if (totalLongSqth.isLessThan(squeethAmount) && transactions[index].transactionType === TransactionType.BUY) {
+        totalLongSqth = totalLongSqth.plus(transactions[index].squeethAmount)
+        getSellQuote(transactions[index].squeethAmount).then((val) => {
+          result.push({ ...transactions[index], sellQuote: val.amountOut })
+        })
+      } else if (
+        totalLongSqth.isLessThan(squeethAmount) &&
+        transactions[index].transactionType === TransactionType.SELL
+      ) {
+        totalLongSqth = totalLongSqth.minus(transactions[index].squeethAmount)
+      }
+    }
+
+    //@ts-expect-error
+    return result
+  }, [positionType, squeethAmount.toString(), transactions?.length])
+
+  const { longUnrealizedPNL } = useMemo(
+    () =>
+      currentLong.reduce(
+        (acc, curr) => {
+          acc.longUnrealizedPNL = acc.longUnrealizedPNL.plus(
+            curr.sellQuote.minus(curr.ethAmount.abs()).times(toTokenAmount(index, 18).sqrt()),
+          )
+          return acc
+        },
+        {
+          longUnrealizedPNL: new BigNumber(0),
+        },
+      ),
+    [currentLong?.length, index.toString()],
   )
 
   return {
@@ -566,6 +610,7 @@ export const usePnL = () => {
     longRealizedPNL,
     refetch,
     shortUnrealizedPNL,
+    longUnrealizedPNL,
   }
 }
 
