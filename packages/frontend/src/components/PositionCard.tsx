@@ -150,8 +150,18 @@ type PositionCardType = {
 }
 
 const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
-  const { buyQuote, sellQuote, longGain, shortGain, wSqueethBal, longRealizedPNL, shortRealizedPNL, loading, refetch } =
-    usePnL()
+  const {
+    buyQuote,
+    sellQuote,
+    longGain,
+    shortGain,
+    longRealizedPNL,
+    shortRealizedPNL,
+    shortUnrealizedPNL,
+    loading,
+    refetch,
+  } = usePnL()
+
   const {
     positionType: pType,
     squeethAmount,
@@ -162,7 +172,6 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     existingCollat,
     loading: isPositionLoading,
     isLP,
-    lpedSqueeth,
   } = usePositions()
   const { liquidations } = useVaultLiquidations(Number(vaultId))
   const {
@@ -192,7 +201,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
         refetch()
       }, 5000)
     }
-  }, [refetch, setTradeSuccess, tradeSuccess])
+  }, [tradeSuccess])
 
   const fullyLiquidated = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
@@ -354,7 +363,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
                           .minus(wethAmount.abs())
                           .times(toTokenAmount(index, 18).sqrt())
                           .toFixed(2)}`,
-                        `$${wethAmount.minus(buyQuote).times(toTokenAmount(index, 18).sqrt()).toFixed(2)}`,
+                        `$${shortUnrealizedPNL.toFixed(2)}`,
                         '--',
                         'Loading',
                       )}
