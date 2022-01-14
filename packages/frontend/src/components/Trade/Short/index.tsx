@@ -325,8 +325,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
     }
   }
 
-  const shortOpenPriceImpactErrorState =
-    priceImpactWarning && !shortLoading && !(collatPercent < 150) && !openError && !existingLongError
+  const shortOpenPriceImpactErrorState = priceImpactWarning && !shortLoading && !(collatPercent < 150) && !openError
 
   useEffect(() => {
     setCollatRatio(collatPercent / 100)
@@ -379,7 +378,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
                   </div>
                 )
               }
-              error={!!existingLongError || !!priceImpactWarning || !!openError}
+              error={!!priceImpactWarning || !!openError}
             />
           </div>
           <div className={classes.thirdHeading}>
@@ -487,7 +486,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
               <PrimaryButton
                 onClick={depositAndShort}
                 className={classes.amountInput}
-                disabled={shortLoading || collatPercent < 150 || !!openError || !!existingLongError}
+                disabled={shortLoading || collatPercent < 150 || !!openError}
                 variant={shortOpenPriceImpactErrorState ? 'outlined' : 'contained'}
                 style={
                   shortOpenPriceImpactErrorState
@@ -723,7 +722,6 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     !buyLoading &&
     !(collatPercent < 150) &&
     !closeError &&
-    !existingLongError &&
     shortVaults.length &&
     !shortVaults[firstValidVault].shortAmount.isZero()
 
@@ -765,7 +763,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
               onActionClicked={setShortCloseMax}
               unit="oSQTH"
               isLoading={isPositionFinishedCalc}
-              error={!!existingLongError || !!priceImpactWarning || !!closeError}
+              error={!!priceImpactWarning || !!closeError}
               convertedValue={
                 !amount.isNaN()
                   ? getWSqueethPositionValue(amount).toFixed(2).toLocaleString()
@@ -907,7 +905,6 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
                   buyLoading ||
                   collatPercent < 150 ||
                   !!closeError ||
-                  !!existingLongError ||
                   (shortVaults.length && shortVaults[firstValidVault].shortAmount.isZero())
                 }
                 variant={shortClosePriceImpactErrorState ? 'outlined' : 'contained'}
