@@ -15,7 +15,7 @@ import { PrimaryButton } from '@components/Button'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
 import { UniswapIframe } from '@components/Modal/UniswapIframe'
 import { TradeSettings } from '@components/TradeSettings'
-import Confirmed from '../Confirmed'
+import Confirmed, { ConfirmType } from '../Confirmed'
 import TradeInfoItem from '../TradeInfoItem'
 import UniswapData from '../UniswapData'
 import { PositionType } from '../../../types'
@@ -455,7 +455,11 @@ const OpenLong: React.FC<BuyProps> = ({ balance, open, setTradeCompleted, active
         </div>
       ) : (
         <div>
-          <Confirmed confirmationMessage={`Bought ${confirmedAmount} Squeeth`} txnHash={txHash} />
+          <Confirmed
+            confirmationMessage={`Bought ${confirmedAmount} Squeeth`}
+            txnHash={txHash}
+            confirmType={ConfirmType.TRADE}
+          />
           <div className={classes.buttonDiv}>
             <PrimaryButton
               variant="contained"
@@ -720,7 +724,11 @@ const CloseLong: React.FC<BuyProps> = ({
         </div>
       ) : (
         <div>
-          <Confirmed confirmationMessage={`Sold ${confirmedAmount} Squeeth`} txnHash={txHash} />
+          <Confirmed
+            confirmationMessage={`Sold ${confirmedAmount} Squeeth`}
+            txnHash={txHash}
+            confirmType={ConfirmType.TRADE}
+          />
           <div className={classes.buttonDiv}>
             <PrimaryButton
               variant="contained"
