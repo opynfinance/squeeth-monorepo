@@ -10,7 +10,7 @@ import { positions, positionsVariables } from '../queries/uniswap/__generated__/
 import { swaps, swapsVariables } from '../queries/uniswap/__generated__/swaps'
 import POSITIONS_QUERY, { POSITIONS_SUBSCRIPTION } from '../queries/uniswap/positionsQuery'
 import SWAPS_QUERY from '../queries/uniswap/swapsQuery'
-import { NFTManagers, PositionType } from '../types'
+import { NFTManagers, PositionType, TradeType } from '../types'
 import { toTokenAmount } from '@utils/calculations'
 import { useController } from './contracts/useController'
 import { useSqueethPool } from './contracts/useSqueethPool'
@@ -119,13 +119,11 @@ export const usePositions = () => {
   }, [squeethAmount.toString(), depositedSqueeth.toString(), withdrawnSqueeth.toString()])
 
   useEffect(() => {
-    ; (function determinePositionType() {
-      if (finalSqueeth.isGreaterThan(0)) {
-        return setPositionType(PositionType.LONG)
-      } else if (finalSqueeth.isLessThan(0)) {
-        return setPositionType(PositionType.SHORT)
-      } else return setPositionType(PositionType.NONE)
-    })()
+    if (finalSqueeth.isGreaterThan(0)) {
+      return setPositionType(PositionType.LONG)
+    } else if (finalSqueeth.isLessThan(0)) {
+      return setPositionType(PositionType.SHORT)
+    } else return setPositionType(PositionType.NONE)
   }, [finalSqueeth.toString()])
 
   useEffect(() => {
@@ -670,13 +668,24 @@ export const useLPPositions = () => {
               : new BigNumber(position.withdrawnToken0).plus(position.collectedFeesToken0),
           )
         }
+
         setDepositedSqueeth(depSqth)
         setDepositedWeth(depWeth)
         setWithdrawnSqueeth(withSqth)
         setWithdrawnWeth(withWeth)
         setSqueethLiquidity(sqthLiq)
         setWethLiquidity(wethLiq)
-        setLoading(false)
+        if (
+          !(
+            depSqth.isEqualTo(0) &&
+            depWeth.isEqualTo(0) &&
+            withSqth.isEqualTo(0) &&
+            sqthLiq.isEqualTo(0) &&
+            wethLiq.isEqualTo(0)
+          ) ||
+          activePositions.length === 0
+        )
+          setLoading(false)
       })
     }
   }, [gphLoading, isWethToken0, data?.positions, positionAndFees.length])
