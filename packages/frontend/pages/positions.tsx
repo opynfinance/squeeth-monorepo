@@ -117,10 +117,9 @@ export function Positions() {
     shortGain,
     buyQuote,
     sellQuote,
-    // longUsdAmt,
-    // shortUsdAmt,
     longRealizedPNL,
     shortRealizedPNL,
+    shortUnrealizedPNL,
     loading: isPnLLoading,
   } = usePnL()
   const { activePositions, loading: isPositionFinishedCalc } = useLPPositions()
@@ -314,13 +313,7 @@ export function Positions() {
                   ) : (
                     <>
                       <Typography variant="body1" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
-                        $
-                        {wethAmount
-                          .minus(buyQuote)
-                          .times(toTokenAmount(index, 18).sqrt())
-                          .plus(lastDeposit?.ethAmount.times(lastDeposit?.ethPriceAtDeposit.minus(ethPrice)))
-                          .toFixed(2)}{' '}
-                        ({wethAmount.minus(buyQuote).toFixed(5)} ETH)
+                        $ {shortUnrealizedPNL.toFixed(2)} ({wethAmount.minus(buyQuote).toFixed(5)} ETH)
                       </Typography>
                       <Typography variant="caption" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
                         {(shortGain || 0).toFixed(2)}%
