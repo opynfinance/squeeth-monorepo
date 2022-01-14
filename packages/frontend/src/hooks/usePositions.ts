@@ -122,10 +122,10 @@ export const usePositions = () => {
 
   useEffect(() => {
     if (finalSqueeth.isGreaterThan(0)) {
-      return setPositionType(PositionType.LONG)
+      setPositionType(PositionType.LONG)
     } else if (finalSqueeth.isLessThan(0)) {
-      return setPositionType(PositionType.SHORT)
-    } else return setPositionType(PositionType.NONE)
+      setPositionType(PositionType.SHORT)
+    } else setPositionType(PositionType.NONE)
   }, [finalSqueeth.toString()])
 
   useEffect(() => {
