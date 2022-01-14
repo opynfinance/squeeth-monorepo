@@ -3,17 +3,12 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "_wSqueethController",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
         "name": "_oracle",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_shortPowerPerp",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_wPowerPerp",
         "type": "address"
       },
       {
@@ -23,23 +18,38 @@
       },
       {
         "internalType": "address",
-        "name": "_quoteCurrency",
+        "name": "_uniswapFactory",
         "type": "address"
       },
       {
         "internalType": "address",
-        "name": "_ethQuoteCurrencyPool",
+        "name": "_ethWSqueethPool",
         "type": "address"
       },
       {
-        "internalType": "address",
-        "name": "_wPowerPerpPool",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "_hedgeTimeThreshold",
+        "type": "uint256"
       },
       {
-        "internalType": "address",
-        "name": "_uniPositionManager",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "_hedgePriceThreshold",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_auctionTime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_minPriceMultiplier",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_maxPriceMultiplier",
+        "type": "uint256"
       }
     ],
     "stateMutability": "nonpayable",
@@ -49,219 +59,242 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
-        "name": "sender",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "spender",
         "type": "address"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "vaultId",
+        "name": "value",
         "type": "uint256"
       }
     ],
-    "name": "BurnShort",
+    "name": "Approval",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
-        "name": "sender",
+        "name": "depositor",
         "type": "address"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "vaultId",
+        "name": "wSqueethAmount",
         "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "amount",
+        "name": "lpAmount",
         "type": "uint256"
       }
     ],
-    "name": "DepositCollateral",
+    "name": "Deposit",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
-        "name": "sender",
+        "name": "seller",
         "type": "address"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "vaultId",
+        "name": "wSqueethBought",
         "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "tokenId",
+        "name": "ethSold",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "isHedgingOnUniswap",
+        "type": "bool"
       }
     ],
-    "name": "DepositUniPositionToken",
+    "name": "ExecuteBuyAuction",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "buyer",
+        "type": "address"
+      },
+      {
         "indexed": false,
         "internalType": "uint256",
-        "name": "oldFee",
+        "name": "wSqueethSold",
         "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "newFee",
+        "name": "ethBought",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "isHedgingOnUniswap",
+        "type": "bool"
       }
     ],
-    "name": "FeeRateUpdated",
+    "name": "ExecuteSellAuction",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
-        "name": "oldFeeRecipient",
+        "name": "depositor",
         "type": "address"
       },
       {
         "indexed": false,
-        "internalType": "address",
-        "name": "newFeeRecipient",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "depositedAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "tradedAmountOut",
+        "type": "uint256"
       }
     ],
-    "name": "FeeRecipientUpdated",
+    "name": "FlashDeposit",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
-        "name": "liquidator",
+        "name": "withdrawer",
         "type": "address"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "vaultId",
+        "name": "crabAmount",
         "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "debtAmount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "collateralPaid",
+        "name": "wSqueethAmount",
         "type": "uint256"
       }
     ],
-    "name": "Liquidate",
+    "name": "FlashWithdraw",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
-        "name": "sender",
+        "name": "hedger",
         "type": "address"
       },
       {
         "indexed": false,
+        "internalType": "bool",
+        "name": "auctionType",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
         "internalType": "uint256",
-        "name": "amount",
+        "name": "hedgerPrice",
         "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "vaultId",
+        "name": "auctionPrice",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "wSqueethHedgeTargetAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "ethHedgetargetAmount",
         "type": "uint256"
       }
     ],
-    "name": "MintShort",
+    "name": "Hedge",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "oldNormFactor",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newNormFactor",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "lastModificationTimestamp",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "timestamp",
-        "type": "uint256"
-      }
-    ],
-    "name": "NormalizationFactorUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
-        "name": "sender",
+        "name": "hedger",
         "type": "address"
       },
       {
         "indexed": false,
+        "internalType": "bool",
+        "name": "auctionType",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
         "internalType": "uint256",
-        "name": "vaultId",
+        "name": "auctionPrice",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "wSqueethHedgeTargetAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "ethHedgetargetAmount",
         "type": "uint256"
       }
     ],
-    "name": "OpenVault",
+    "name": "HedgeOnUniswap",
     "type": "event"
   },
   {
@@ -287,112 +320,68 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "hedger",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "auctionType",
+        "type": "bool"
+      },
+      {
         "indexed": false,
         "internalType": "uint256",
-        "name": "pausesLeft",
+        "name": "hedgerPrice",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "auctionTriggerTimestamp",
         "type": "uint256"
       }
     ],
-    "name": "Paused",
+    "name": "PriceHedge",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
-        "name": "sender",
+        "name": "hedger",
         "type": "address"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "wPowerPerpAmount",
+        "name": "hedgeTimestamp",
         "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "payoutAmount",
+        "name": "auctionTriggerTimestamp",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "minWSqueeth",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "minEth",
         "type": "uint256"
       }
     ],
-    "name": "RedeemLong",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "vauldId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "collateralAmount",
-        "type": "uint256"
-      }
-    ],
-    "name": "RedeemShort",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "vaultId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "ethRedeemed",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "wPowerPerpRedeemed",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "wPowerPerpBurned",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "wPowerPerpExcess",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "bounty",
-        "type": "uint256"
-      }
-    ],
-    "name": "ReduceDebt",
+    "name": "PriceHedgeOnUniswap",
     "type": "event"
   },
   {
@@ -401,109 +390,164 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "indexForSettlement",
+        "name": "newCapAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "oldCapAmount",
         "type": "uint256"
       }
     ],
-    "name": "Shutdown",
+    "name": "SetStrategyCap",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
-        "name": "unpauser",
+        "name": "hedger",
         "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "auctionType",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "hedgerPrice",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "auctionTriggerTimestamp",
+        "type": "uint256"
       }
     ],
-    "name": "UnPaused",
+    "name": "TimeHedge",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
-        "name": "sender",
+        "name": "hedger",
         "type": "address"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "vaultId",
+        "name": "hedgeTimestamp",
         "type": "uint256"
       },
       {
         "indexed": false,
-        "internalType": "address",
-        "name": "operator",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "auctionTriggerTimestamp",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "minWSqueeth",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "minEth",
+        "type": "uint256"
       }
     ],
-    "name": "UpdateOperator",
+    "name": "TimeHedgeOnUniswap",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
-        "name": "sender",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
         "type": "address"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "vaultId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
+        "name": "value",
         "type": "uint256"
       }
     ],
-    "name": "WithdrawCollateral",
+    "name": "Transfer",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
-        "name": "sender",
+        "name": "withdrawer",
         "type": "address"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "vaultId",
+        "name": "crabAmount",
         "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "tokenId",
+        "name": "wSqueethAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "ethWithdrawn",
         "type": "uint256"
       }
     ],
-    "name": "WithdrawUniPositionToken",
+    "name": "Withdraw",
     "type": "event"
   },
   {
     "inputs": [],
-    "name": "FUNDING_PERIOD",
+    "name": "DELTA_HEDGE_THRESHOLD",
     "outputs": [
       {
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "POWER_PERP_PERIOD",
+    "outputs": [
+      {
+        "internalType": "uint32",
+        "name": "",
+        "type": "uint32"
       }
     ],
     "stateMutability": "view",
@@ -523,31 +567,19 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "applyFunding",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "_vaultId",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
       },
       {
-        "internalType": "uint256",
-        "name": "_powerPerpAmount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_withdrawAmount",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "spender",
+        "type": "address"
       }
     ],
-    "name": "burnPowerPerpAmount",
+    "name": "allowance",
     "outputs": [
       {
         "internalType": "uint256",
@@ -555,67 +587,167 @@
         "type": "uint256"
       }
     ],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "_vaultId",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "spender",
+        "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "_wPowerPerpAmount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_withdrawAmount",
+        "name": "amount",
         "type": "uint256"
       }
     ],
-    "name": "burnWPowerPerpAmount",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
+    "name": "approve",
+    "outputs": [
       {
-        "internalType": "uint256",
-        "name": "_vaultId",
-        "type": "uint256"
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
-    "name": "deposit",
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_vaultId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_uniTokenId",
-        "type": "uint256"
-      }
-    ],
-    "name": "depositUniPositionToken",
-    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [],
-    "name": "donate",
-    "outputs": [],
+    "name": "auctionStartTime",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "auctionTime",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "balanceOf",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_auctionTriggerTime",
+        "type": "uint256"
+      }
+    ],
+    "name": "checkPriceHedge",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "checkTimeHedge",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "decimals",
+    "outputs": [
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "spender",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "subtractedValue",
+        "type": "uint256"
+      }
+    ],
+    "name": "decreaseAllowance",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "deposit",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "payable",
     "type": "function"
   },
@@ -634,12 +766,12 @@
   },
   {
     "inputs": [],
-    "name": "feeRate",
+    "name": "ethWSqueethPool",
     "outputs": [
       {
-        "internalType": "uint256",
+        "internalType": "address",
         "name": "",
-        "type": "uint256"
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -647,7 +779,7 @@
   },
   {
     "inputs": [],
-    "name": "feeRecipient",
+    "name": "factory",
     "outputs": [
       {
         "internalType": "address",
@@ -661,231 +793,13 @@
   {
     "inputs": [
       {
-        "internalType": "uint32",
-        "name": "_period",
-        "type": "uint32"
-      }
-    ],
-    "name": "getDenormalizedMark",
-    "outputs": [
-      {
         "internalType": "uint256",
-        "name": "",
+        "name": "_ethToDeposit",
         "type": "uint256"
       }
     ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint32",
-        "name": "_period",
-        "type": "uint32"
-      }
-    ],
-    "name": "getDenormalizedMarkForFunding",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getExpectedNormalizationFactor",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint32",
-        "name": "_period",
-        "type": "uint32"
-      }
-    ],
-    "name": "getIndex",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint32",
-        "name": "_period",
-        "type": "uint32"
-      }
-    ],
-    "name": "getUnscaledIndex",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "indexForSettlement",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "isShutDown",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "isSystemPaused",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_vaultId",
-        "type": "uint256"
-      }
-    ],
-    "name": "isVaultSafe",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "lastFundingUpdateTimestamp",
-    "outputs": [
-      {
-        "internalType": "uint128",
-        "name": "",
-        "type": "uint128"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "lastPauseTime",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_vaultId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_maxDebtAmount",
-        "type": "uint256"
-      }
-    ],
-    "name": "liquidate",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_vaultId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_powerPerpAmount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_uniTokenId",
-        "type": "uint256"
-      }
-    ],
-    "name": "mintPowerPerpAmount",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
+    "name": "flashDeposit",
+    "outputs": [],
     "stateMutability": "payable",
     "type": "function"
   },
@@ -893,39 +807,101 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_vaultId",
+        "name": "_crabAmount",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "_wPowerPerpAmount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_uniTokenId",
+        "name": "_maxEthToPay",
         "type": "uint256"
       }
     ],
-    "name": "mintWPowerPerpAmount",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "payable",
+    "name": "flashWithdraw",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [],
-    "name": "normalizationFactor",
+    "name": "getStrategyVaultId",
     "outputs": [
       {
-        "internalType": "uint128",
+        "internalType": "uint256",
         "name": "",
-        "type": "uint128"
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getVaultDetails",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_crabAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "getWsqueethFromCrabAmount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "hedgePriceThreshold",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "hedgeTimeThreshold",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -935,34 +911,63 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "",
+        "name": "spender",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "addedValue",
         "type": "uint256"
-      },
-      {
-        "internalType": "bytes",
-        "name": "",
-        "type": "bytes"
       }
     ],
-    "name": "onERC721Received",
+    "name": "increaseAllowance",
     "outputs": [
       {
-        "internalType": "bytes4",
+        "internalType": "bool",
         "name": "",
-        "type": "bytes4"
+        "type": "bool"
       }
     ],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "maxPriceMultiplier",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "minPriceMultiplier",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "name",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -993,14 +998,20 @@
   },
   {
     "inputs": [],
-    "name": "pause",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "name": "powerTokenController",
+    "outputs": [
+      {
+        "internalType": "contract IController",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [],
-    "name": "pausesLeft",
+    "name": "priceAtLastHedge",
     "outputs": [
       {
         "internalType": "uint256",
@@ -1009,6 +1020,52 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_auctionTriggerTime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "_isStrategySellingWSqueeth",
+        "type": "bool"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_limitPrice",
+        "type": "uint256"
+      }
+    ],
+    "name": "priceHedge",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_auctionTriggerTime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_minWSqueeth",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_minEth",
+        "type": "uint256"
+      }
+    ],
+    "name": "priceHedgeOnUniswap",
+    "outputs": [],
+    "stateMutability": "payable",
     "type": "function"
   },
   {
@@ -1025,58 +1082,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_wPerpAmount",
-        "type": "uint256"
-      }
-    ],
-    "name": "redeemLong",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_vaultId",
-        "type": "uint256"
-      }
-    ],
-    "name": "redeemShort",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_vaultId",
-        "type": "uint256"
-      }
-    ],
-    "name": "reduceDebt",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_vaultId",
-        "type": "uint256"
-      }
-    ],
-    "name": "reduceDebtShutdown",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "renounceOwnership",
     "outputs": [],
@@ -1087,36 +1092,23 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_newFeeRate",
+        "name": "_capAmount",
         "type": "uint256"
       }
     ],
-    "name": "setFeeRate",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_newFeeRecipient",
-        "type": "address"
-      }
-    ],
-    "name": "setFeeRecipient",
+    "name": "setStrategyCap",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [],
-    "name": "shortPowerPerp",
+    "name": "strategyCap",
     "outputs": [
       {
-        "internalType": "address",
+        "internalType": "uint256",
         "name": "",
-        "type": "address"
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -1124,8 +1116,129 @@
   },
   {
     "inputs": [],
-    "name": "shutDown",
+    "name": "symbol",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "timeAtLastHedge",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bool",
+        "name": "_isStrategySellingWSqueeth",
+        "type": "bool"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_limitPrice",
+        "type": "uint256"
+      }
+    ],
+    "name": "timeHedge",
     "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_minWSqueeth",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_minEth",
+        "type": "uint256"
+      }
+    ],
+    "name": "timeHedgeOnUniswap",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalSupply",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "recipient",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "transfer",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "recipient",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "transferFrom",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -1143,66 +1256,36 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "unPauseAnyone",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "unPauseOwner",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "_vaultId",
-        "type": "uint256"
+        "internalType": "int256",
+        "name": "amount0Delta",
+        "type": "int256"
       },
       {
-        "internalType": "address",
-        "name": "_operator",
-        "type": "address"
+        "internalType": "int256",
+        "name": "amount1Delta",
+        "type": "int256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_data",
+        "type": "bytes"
       }
     ],
-    "name": "updateOperator",
+    "name": "uniswapV3SwapCallback",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [
+    "inputs": [],
+    "name": "vaultId",
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
-      }
-    ],
-    "name": "vaults",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "operator",
-        "type": "address"
-      },
-      {
-        "internalType": "uint32",
-        "name": "NftCollateralId",
-        "type": "uint32"
-      },
-      {
-        "internalType": "uint96",
-        "name": "collateralAmount",
-        "type": "uint96"
-      },
-      {
-        "internalType": "uint128",
-        "name": "shortAmount",
-        "type": "uint128"
       }
     ],
     "stateMutability": "view",
@@ -1211,19 +1294,6 @@
   {
     "inputs": [],
     "name": "wPowerPerp",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "wPowerPerpPool",
     "outputs": [
       {
         "internalType": "address",
@@ -1251,31 +1321,13 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_vaultId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_amount",
+        "name": "_crabAmount",
         "type": "uint256"
       }
     ],
     "name": "withdraw",
     "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_vaultId",
-        "type": "uint256"
-      }
-    ],
-    "name": "withdrawUniPositionToken",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "payable",
     "type": "function"
   },
   {
