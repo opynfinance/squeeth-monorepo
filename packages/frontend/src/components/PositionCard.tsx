@@ -8,10 +8,9 @@ import Link from 'next/link'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { usePnL, usePositions } from '@hooks/usePositions'
-import { Tooltips, TransactionType } from '@constants/enums'
+import { Tooltips } from '@constants/enums'
 import { useTrade } from '@context/trade'
 import { useETHPrice } from '@hooks/useETHPrice'
-import { useTransactionHistory } from '@hooks/useTransactionHistory'
 import { PositionType, TradeType } from '../types'
 import { useController } from '@hooks/contracts/useController'
 import { toTokenAmount } from '@utils/calculations'
@@ -151,14 +150,17 @@ type PositionCardType = {
 }
 
 const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
-  const { buyQuote, sellQuote, longGain, shortGain, wSqueethBal, longRealizedPNL, shortRealizedPNL, loading, refetch } =
-    usePnL()
-  const { transactions } = useTransactionHistory()
-
-  const lastDeposit = useMemo(
-    () => transactions.find((transaction) => transaction.transactionType === TransactionType.MINT_SHORT),
-    [transactions?.length],
-  )
+  const {
+    buyQuote,
+    sellQuote,
+    longGain,
+    shortGain,
+    longRealizedPNL,
+    shortRealizedPNL,
+    shortUnrealizedPNL,
+    loading,
+    refetch,
+  } = usePnL()
 
   const {
     positionType: pType,
@@ -170,7 +172,6 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     existingCollat,
     loading: isPositionLoading,
     isLP,
-    lpedSqueeth,
   } = usePositions()
   const { liquidations } = useVaultLiquidations(Number(vaultId))
   const {
@@ -200,7 +201,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
         refetch()
       }, 5000)
     }
-  }, [refetch, setTradeSuccess, tradeSuccess])
+  }, [tradeSuccess])
 
   const fullyLiquidated = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
@@ -362,11 +363,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
                           .minus(wethAmount.abs())
                           .times(toTokenAmount(index, 18).sqrt())
                           .toFixed(2)}`,
-                        `$${wethAmount
-                          .minus(buyQuote)
-                          .times(toTokenAmount(index, 18).sqrt())
-                          .plus(lastDeposit?.ethAmount.times(lastDeposit?.ethPriceAtDeposit.minus(ethPrice)))
-                          .toFixed(2)}`,
+                        `$${shortUnrealizedPNL.toFixed(2)}`,
                         '--',
                         'Loading',
                       )}
