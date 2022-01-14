@@ -61,3 +61,12 @@ export enum CollateralStatus {
   RISKY = 'RISKY',
   DANGER = 'DANGER',
 }
+
+export enum CrabStrategyTxType {
+  DEPOSIT = 'DEPOSIT',
+  WITHDRAW = 'WITHDRAW',
+  FLASH_DEPOSIT = 'FLASH_DEPOSIT',
+  FLASH_WITHDRAW = 'FLASH_WITHDRAW',
+  HEDGE_ON_UNISWAP = 'HEDGE_ON_UNISWAP',
+  HEDGE = 'HEDGE',
+}

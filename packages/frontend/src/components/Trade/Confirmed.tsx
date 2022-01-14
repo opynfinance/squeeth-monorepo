@@ -42,27 +42,30 @@ const useStyles = makeStyles((theme) =>
       marginLeft: theme.spacing(0.5),
       marginTop: '2px',
     },
+    img: {
+      borderRadius: theme.spacing(2),
+    },
   }),
 )
+
+export enum ConfirmType {
+  TRADE,
+  CRAB,
+}
 
 type ConfirmedProps = {
   confirmationMessage: string
   txnHash: string
-  isLP?: boolean
+  confirmType: ConfirmType
 }
 
-const Confirmed: React.FC<ConfirmedProps> = ({ confirmationMessage, txnHash, isLP }) => {
+const Confirmed: React.FC<ConfirmedProps> = ({ confirmationMessage, txnHash, confirmType }) => {
   const classes = useStyles()
   const { networkId } = useWallet()
 
   return (
     <div>
       <div>
-        {!isLP ? (
-          <Typography variant="h6" className={classes.thirdHeading} component="div">
-            Confirmed 🎉
-          </Typography>
-        ) : null}
         <Typography variant="body1" className={classes.confMsg}>
           {' '}
           {confirmationMessage}{' '}
@@ -77,22 +80,27 @@ const Confirmed: React.FC<ConfirmedProps> = ({ confirmationMessage, txnHash, isL
           View on Etherscan{' '}
         </a>
       </div>
-      {isLP ? (
-        <div className={classes.uniswapLink}>
-          <Typography variant="body1" component="div" className={classes.uniLP}>
-            <UniswapIframe />
+      {confirmType === ConfirmType.CRAB ? (
+        <div className={classes.squeethCat}>
+          <Image
+            src="https://media.giphy.com/media/ukLCGEh7kXDJ5wNWT7/giphy.gif"
+            alt="squeeth crab cat"
+            width={120}
+            height={120}
+            className={classes.img}
+          />
+          <Typography variant="body1" component="div">
+            Stay Crabby!
           </Typography>
-          <Tooltip title={Tooltips.UniswapLoading}>
-            <InfoIcon className={classes.infoIcon} />
-          </Tooltip>
         </div>
       ) : (
         <div className={classes.squeethCat}>
           <Image
             src="https://media.giphy.com/media/eYU60NpFPCONDEItBa/giphy.gif"
             alt="squeeth cat"
-            width={100}
-            height={100}
+            width={120}
+            height={120}
+            className={classes.img}
           />
           <Typography variant="body1" component="div">
             Stay Squeethy!
