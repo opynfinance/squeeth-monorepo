@@ -39,6 +39,7 @@ describe("Crab flashswap integration test: price based hedging", function () {
   const minPriceMultiplier = ethers.utils.parseUnits('0.95')
   const maxPriceMultiplier = ethers.utils.parseUnits('1.05')
 
+  let initialTimestamp : number
   let provider: providers.JsonRpcProvider;
   let owner: SignerWithAddress;
   let depositor: SignerWithAddress;
@@ -99,6 +100,12 @@ describe("Crab flashswap integration test: price based hedging", function () {
     await crabStrategy.connect(owner).setStrategyCap(strategyCap)
     const strategyCapInContract = await crabStrategy.strategyCap()
     expect(strategyCapInContract.eq(strategyCap)).to.be.true
+
+    // Record time stamp at initialization
+    const currentBlockNumber = await provider.getBlockNumber()
+    const currentBlock = await provider.getBlock(currentBlockNumber)
+    initialTimestamp = currentBlock.timestamp
+
   })
 
   this.beforeAll("Seed pool liquidity", async() => {
@@ -346,8 +353,8 @@ describe("Crab flashswap integration test: price based hedging", function () {
       await expect(
         crabStrategy.connect(depositor).priceHedge(auctionTriggerTimer, !isSellAuction, expectedAuctionWSqueethEthPrice, {value: expectedEthProceeds.add(1)})
       ).to.be.revertedWith("wrong auction type");
-    })    
-
+    })
+    
     it("it should allow a hedge based on price", async () => {
       // advance time so hedge sign doesn't switch
       const currentBlockNumber = await provider.getBlockNumber()
@@ -709,6 +716,36 @@ describe("Crab flashswap integration test: price based hedging", function () {
       expect(isSimilar(strategyCollateralAmountAfter.sub(ethDelta).toString(), (expectedEthProceeds.mul(-1)).toString())).to.be.true
       expect(timeAtLastHedgeAfter.eq(hedgeBlockTimestamp)).to.be.true
       expect(priceAtLastHedgeAfter.eq(currentWSqueethPriceAfter)).to.be.true 
-    })    
+    })
+
+    it("it should not allow a hedge based on a time before previous hedge", async () => {
+
+      // Set trigger time just after initialization 
+      const auctionTriggerTimer = initialTimestamp + 600
+      // Set up hedge            
+      const currentWSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false)
+      const hedgeBlockNumber = await provider.getBlockNumber()
+      const hedgeBlock = await provider.getBlock(hedgeBlockNumber)
+      const hedgeBlockTimestamp = hedgeBlock.timestamp + 1;
+      await provider.send("evm_setNextBlockTimestamp", [hedgeBlockTimestamp])
+      const auctionTimeElapsed = BigNumber.from(hedgeBlockTimestamp).sub(auctionTriggerTimer)
+      const strategyVault = await controller.vaults(await crabStrategy.vaultId());
+      const ethDelta = strategyVault.collateralAmount
+      const strategyDebt = strategyVault.shortAmount
+      const initialWSqueethDelta = wmul(wmul(strategyDebt, BigNumber.from(2).mul(one)), currentWSqueethPrice)
+      const targetHedge = wdiv(initialWSqueethDelta.sub(ethDelta), currentWSqueethPrice)      
+      const isSellAuction = targetHedge.isNegative()
+      const auctionExecution = (auctionTimeElapsed.gte(BigNumber.from(auctionTime))) ? one : wdiv(auctionTimeElapsed, BigNumber.from(auctionTime))
+      const result = calcPriceMulAndAuctionPrice(isSellAuction, maxPriceMultiplier, minPriceMultiplier, auctionExecution, currentWSqueethPrice)
+      const expectedAuctionWSqueethEthPrice = result[1]
+      const finalWSqueethDelta = wmul(wmul(strategyDebt, BigNumber.from(2).mul(one)), expectedAuctionWSqueethEthPrice)
+      const secondTargetHedge = wdiv(finalWSqueethDelta.sub(ethDelta), expectedAuctionWSqueethEthPrice)
+      const expectedEthProceeds = wmul(secondTargetHedge.abs(), expectedAuctionWSqueethEthPrice)
+
+      // try to hedge at timestamp before last hedge
+      await expect( 
+         crabStrategy.connect(depositor).priceHedge(auctionTriggerTimer, isSellAuction, expectedAuctionWSqueethEthPrice)
+      ).to.be.revertedWith("Trigger time must be after time at last hedge") 
+      })
   })
 })

@@ -22,6 +22,8 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {StrategyMath} from "./base/StrategyMath.sol";
 import {Power2Base} from "../libs/Power2Base.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @dev CrabStrategy contract
  * @notice Contract for Crab strategy
@@ -203,6 +205,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
             // only execute this upon first deposit
             uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP_PERIOD, true);
             timeAtLastHedge = block.timestamp;
+            console.log(timeAtLastHedge, 'setting timeAtLastHedge');
             priceAtLastHedge = wSqueethEthPrice;
         }
 
@@ -345,7 +348,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
         uint256 _limitPrice
     ) external payable nonReentrant {
         require(_isPriceHedge(_auctionTriggerTime), "Price hedging not allowed");
-
+        console.log(timeAtLastHedge, 'checking timeAtLastHedge in priceHedge before _hedge()');
         _hedge(_auctionTriggerTime, _isStrategySellingWSqueeth, _limitPrice);
 
         emit PriceHedge(msg.sender, _isStrategySellingWSqueeth, _limitPrice, _auctionTriggerTime);
@@ -578,6 +581,8 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
         bool _isStrategySellingWSqueeth,
         uint256 _limitPrice
     ) internal {
+        require( _auctionTriggerTime > timeAtLastHedge, "Trigger time must be after time at last hedge");
+
         (
             bool isSellingAuction,
             uint256 wSqueethToAuction,
@@ -586,6 +591,9 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
         ) = _startAuction(_auctionTriggerTime);
 
         require(_isStrategySellingWSqueeth == isSellingAuction, "wrong auction type");
+        //console.log(timeAtLastHedge);
+        //console.log(_auctionTriggerTime);
+
 
         if (isSellingAuction) {
             // Receiving ETH and paying wSqueeth
