@@ -14,6 +14,7 @@ import {
   WETH,
   WSQUEETH,
   ZERO_ADDR,
+  CRAB_STRATEGY,
 } from '../constants/address'
 import { useWallet } from '@context/wallet'
 
@@ -35,6 +36,7 @@ const useAddresses = () => {
       ethUsdcPool: ETH_USDC_POOL[networkId],
       usdc: USDC[networkId],
       nftManager: NFT_MANAGER[networkId],
+      crabStrategy: CRAB_STRATEGY[networkId],
     }),
     [networkId],
   )

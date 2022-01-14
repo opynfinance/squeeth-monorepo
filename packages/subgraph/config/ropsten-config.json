@@ -21,5 +21,7 @@
   "UniswapV3Factory": "0xa9C2f675FF8290494675dF5CFc2733319EaeeFDc",
   "UniswapV3Factory-start-block": 11342317,
   "WPowerPerp": "0x2c1d37d7d8444B24c14064e35aD1B37E5f7B6035",
-  "WPowerPerp-start-block": 11584857
+  "WPowerPerp-start-block": 11584857,
+  "CrabStrategy": "0x7D568AAeD09B2032321628aCD2e7F3DAfE222731",
+  "CrabStrategy-start-block": 11664013
 }
