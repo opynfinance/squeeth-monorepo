@@ -120,6 +120,7 @@ export function Positions() {
     longRealizedPNL,
     shortRealizedPNL,
     shortUnrealizedPNL,
+    longUnrealizedPNL,
     loading: isPnLLoading,
   } = usePnL()
   const { activePositions, loading: isPositionFinishedCalc } = useLPPositions()
@@ -250,8 +251,7 @@ export function Positions() {
                   ) : (
                     <>
                       <Typography variant="body1" className={longGain.isLessThan(0) ? classes.red : classes.green}>
-                        ${sellQuote.amountOut.minus(wethAmount.abs()).times(toTokenAmount(index, 18).sqrt()).toFixed(2)}{' '}
-                        ({sellQuote.amountOut.minus(wethAmount.abs()).toFixed(5)} ETH)
+                        $ {longUnrealizedPNL.toFixed(2)} ({sellQuote.amountOut.minus(wethAmount.abs()).toFixed(5)} ETH)
                       </Typography>
                       <Typography variant="caption" className={longGain.isLessThan(0) ? classes.red : classes.green}>
                         {(longGain || 0).toFixed(2)}%
