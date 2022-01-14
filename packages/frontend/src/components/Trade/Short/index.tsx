@@ -28,7 +28,7 @@ import { PrimaryButton } from '@components/Button'
 import CollatRange from '@components/CollatRange'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
 import { TradeSettings } from '@components/TradeSettings'
-import Confirmed from '@components/Trade/Confirmed'
+import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
 import TradeDetails from '@components/Trade/TradeDetails'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import UniswapData from '@components/Trade/UniswapData'
@@ -523,7 +523,11 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
         </div>
       ) : (
         <div>
-          <Confirmed confirmationMessage={`Opened ${confirmedAmount} Squeeth Short Position`} txnHash={txHash} />
+          <Confirmed
+            confirmationMessage={`Opened ${confirmedAmount} Squeeth Short Position`}
+            txnHash={txHash}
+            confirmType={ConfirmType.TRADE}
+          />
           <div className={classes.buttonDiv}>
             <PrimaryButton
               variant="contained"
@@ -967,7 +971,11 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
         </div>
       ) : (
         <div>
-          <Confirmed confirmationMessage={`Closed ${confirmedAmount} Squeeth Short Position`} txnHash={txHash} />
+          <Confirmed
+            confirmationMessage={`Closed ${confirmedAmount} Squeeth Short Position`}
+            txnHash={txHash}
+            confirmType={ConfirmType.TRADE}
+          />
           <div className={classes.buttonDiv}>
             <PrimaryButton
               variant="contained"

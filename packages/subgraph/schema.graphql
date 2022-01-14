@@ -41,3 +41,13 @@ type DayStatSnapshot @entity {
   timestamp: BigInt!
   totalCollateralAmount: BigInt!
 }
+
+type CrabStrategyTx @entity {
+  id: ID!
+  type: String!
+  lpAmount: BigInt
+  ethAmount: BigInt
+  wSqueethAmount: BigInt
+  owner: Bytes
+  timestamp: BigInt!
+}

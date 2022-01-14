@@ -317,7 +317,7 @@ export const useSqueethPool = () => {
       //getting the amount of ETH I need to put in to get an exact amount of squeeth I inputted out
       const trade = await Trade.exactOut(
         route,
-        CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toString()),
+        CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0)),
       )
 
       //the amount of ETH I need to put in
@@ -384,7 +384,7 @@ export const useSqueethPool = () => {
       //getting the amount of ETH I'd receive for inputting the amount of squeeth I want to sell
       const trade = await Trade.exactIn(
         route,
-        CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toString()),
+        CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0)),
       )
 
       //the amount of ETH I'm receiving
@@ -417,7 +417,7 @@ export const useSqueethPool = () => {
       //getting the amount of squeeth I'd need to sell to receive my desired amount of ETH
       const trade = await Trade.exactOut(
         route,
-        CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toString()),
+        CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toFixed(0)),
       )
 
       //the amount of squeeth I need to sell

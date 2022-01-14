@@ -39,6 +39,7 @@ export const SecondaryTabs = withStyles((theme) => {
     root: {
       background: 'transparent',
       padding: theme.spacing(0),
+      borderRadius: theme.spacing(2, 2, 0, 0),
     },
     indicator: {
       height: '0px',

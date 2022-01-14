@@ -76,3 +76,36 @@ dataSources:
         - event: WithdrawUniPositionToken(address,uint256,uint256)
           handler: handleWithdrawUniPositionToken
       file: ./src/controller.ts
+  - kind: ethereum/contract
+    name: CrabStrategy
+    network: {{network}}
+    source:
+      address: "{{CrabStrategy}}"
+      abi: CrabStrategy
+      startBlock: {{CrabStrategy-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Deposit
+        - Withdraw
+        - WithdrawShutdown
+        - FlashDeposit
+        - FlashWithdraw
+        - Transfer
+      abis:
+        - name: CrabStrategy
+          file: ./abis/CrabStrategy.json
+      eventHandlers:
+        - event: Deposit(indexed address,uint256,uint256)
+          handler: handleDeposit
+        - event: Withdraw(indexed address,uint256,uint256,uint256)
+          handler: handleWithdraw
+        - event: FlashDeposit(indexed address,uint256,uint256)
+          handler: handleFlashDeposit
+        - event: FlashWithdraw(indexed address,uint256,uint256)
+          handler: handleFlashWithdraw
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/crabstrategy.ts
