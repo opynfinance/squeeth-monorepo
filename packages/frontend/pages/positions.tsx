@@ -123,7 +123,7 @@ export function Positions() {
     shortRealizedPNL,
     loading: isPnLLoading,
   } = usePnL()
-  const { activePositions } = useLPPositions()
+  const { activePositions, loading: isPositionFinishedCalc } = useLPPositions()
   const { pool } = useSqueethPool()
 
   const { wSqueeth } = useAddresses()
@@ -217,7 +217,7 @@ export function Positions() {
           </div>
         ) : null}
 
-        {positionType === PositionType.LONG ? (
+        {!shortDebt.isGreaterThan(0) && positionType === PositionType.LONG ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>Long Squeeth</Typography>
@@ -291,10 +291,16 @@ export function Positions() {
                   <Typography variant="caption" component="span" color="textSecondary">
                     Position
                   </Typography>
-                  <Typography variant="body1">{squeethAmount.toFixed(8)}&nbsp; oSQTH</Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    ${buyQuote.times(toTokenAmount(index, 18).sqrt()).toFixed(2)}
-                  </Typography>
+                  {isPositionFinishedCalc ? (
+                    <Typography variant="body1">Loading</Typography>
+                  ) : (
+                    <>
+                      <Typography variant="body1">{squeethAmount.toFixed(8) + ' oSQTH'}</Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        ${buyQuote.times(toTokenAmount(index, 18).sqrt()).toFixed(2)}
+                      </Typography>
+                    </>
+                  )}
                 </div>
                 <div style={{ width: '50%' }}>
                   <Typography variant="caption" color="textSecondary">
@@ -303,7 +309,7 @@ export function Positions() {
                   <Tooltip title={Tooltips.UnrealizedPnL}>
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
-                  {isPnLLoading || shortGain.isLessThanOrEqualTo(-100) || !shortGain.isFinite() ? (
+                  {isPositionFinishedCalc || shortGain.isLessThanOrEqualTo(-100) || !shortGain.isFinite() ? (
                     <Typography variant="body1">Loading</Typography>
                   ) : (
                     <>
@@ -332,7 +338,9 @@ export function Positions() {
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
                   <Typography variant="body1">
-                    ${isPositionLoading && existingLiqPrice.isEqualTo(0) ? 'Loading' : existingLiqPrice.toFixed(2)}
+                    {isPositionFinishedCalc && existingLiqPrice.isEqualTo(0)
+                      ? 'Loading'
+                      : '$' + existingLiqPrice.toFixed(2)}
                   </Typography>
                 </div>
                 <div style={{ width: '50%' }}>

@@ -1,4 +1,4 @@
-import { Button, Tooltip, Typography } from '@material-ui/core'
+import { CircularProgress, Tooltip, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import clsx from 'clsx'
@@ -155,21 +155,26 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
           <Typography className={classes.unit}>{unit}</Typography>
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <Typography variant="caption" color={error ? 'error' : 'textSecondary'}>
-          {hint || ''}
-        </Typography>
-        {actionTxt && onActionClicked ? (
-          <LinkButton size="small" color="primary" onClick={onActionClicked} variant="text">
-            {actionTxt}
-          </LinkButton>
-        ) : null}
-      </div>
-      {isLoading ? (
-        <Typography variant="caption" color={error ? 'error' : 'textSecondary'}>
-          Fetching price data
-        </Typography>
-      ) : null}
+
+      {isLoading && !error ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <Typography variant="caption" color={error ? 'error' : 'textSecondary'}>
+            Fetching price data
+          </Typography>
+          <CircularProgress color="primary" size="1rem" />
+        </div>
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <Typography variant="caption" color={error ? 'error' : 'textSecondary'}>
+            {hint || ''}
+          </Typography>
+          {actionTxt && onActionClicked ? (
+            <LinkButton size="small" color="primary" onClick={onActionClicked} variant="text">
+              {actionTxt}
+            </LinkButton>
+          ) : null}
+        </div>
+      )}
     </div>
   )
 }
