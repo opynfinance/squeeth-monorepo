@@ -523,6 +523,11 @@ export const usePnL = () => {
       ) {
         totalShortSqth = totalShortSqth.plus(transactions[index].squeethAmount)
         result.push(transactions[index])
+      } else if (
+        totalShortSqth.isLessThan(squeethAmount) &&
+        transactions[index].transactionType === TransactionType.BURN_SHORT
+      ) {
+        totalShortSqth = totalShortSqth.minus(transactions[index].squeethAmount)
       }
     }
     return result
