@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 
 import abi from '../../abis/controller.json'
-import { FUNDING_PERIOD, INDEX_SCALE, SWAP_EVENT_TOPIC, Vaults, WSQUEETH_DECIMALS, TWAP_PERIOD } from '../../constants'
+import { FUNDING_PERIOD, INDEX_SCALE, SWAP_EVENT_TOPIC, Vaults, OSQUEETH_DECIMALS, TWAP_PERIOD } from '../../constants'
 import { ETH_USDC_POOL, SQUEETH_UNI_POOL } from '@constants/address'
 import { useWallet } from '@context/wallet'
 import { Vault } from '../../types'
@@ -68,7 +68,7 @@ export const useController = () => {
   const openDepositAndMint = (vaultId: number, amount: BigNumber, collatAmount: BigNumber) => {
     if (!contract || !address) return
 
-    const _amount = fromTokenAmount(amount, WSQUEETH_DECIMALS).toFixed(0)
+    const _amount = fromTokenAmount(amount, OSQUEETH_DECIMALS).toFixed(0)
     const ethAmt = fromTokenAmount(collatAmount, 18).toFixed(0)
     return handleTransaction(
       contract.methods.mintWPowerPerpAmount(vaultId, _amount.toString(), 0).send({
@@ -124,7 +124,7 @@ export const useController = () => {
   const burnAndRedeem = (vaultId: number, amount: BigNumber, collatAmount: BigNumber) => {
     if (!contract || !address) return
 
-    const _amount = fromTokenAmount(amount, WSQUEETH_DECIMALS)
+    const _amount = fromTokenAmount(amount, OSQUEETH_DECIMALS)
     const ethAmt = fromTokenAmount(collatAmount, 18)
     console.log(vaultId, _amount.toFixed(0), ethAmt.toFixed(0))
     return handleTransaction(
@@ -159,7 +159,7 @@ export const useController = () => {
       id: vaultId,
       NFTCollateralId,
       collateralAmount: toTokenAmount(new BigNumber(collateralAmount), 18),
-      shortAmount: toTokenAmount(new BigNumber(shortAmount), WSQUEETH_DECIMALS),
+      shortAmount: toTokenAmount(new BigNumber(shortAmount), OSQUEETH_DECIMALS),
       operator,
     }
   }
@@ -261,7 +261,7 @@ export const useController = () => {
     if (!contract) return new BigNumber(0)
 
     const ethUsdcPrice = await getTwapSafe(ethUsdcPool, weth, usdc, TWAP_PERIOD)
-    const _shortAmt = fromTokenAmount(shortAmount, WSQUEETH_DECIMALS)
+    const _shortAmt = fromTokenAmount(shortAmount, OSQUEETH_DECIMALS)
     const ethDebt = new BigNumber(_shortAmt).div(INDEX_SCALE).multipliedBy(normFactor).multipliedBy(ethUsdcPrice)
     return toTokenAmount(ethDebt, 18)
   }
@@ -276,7 +276,7 @@ export const useController = () => {
 
     const ethUsdcPrice = await getTwapSafe(ethUsdcPool, weth, usdc, TWAP_PERIOD)
     const shortAmount = fromTokenAmount(debtAmount, 18).times(INDEX_SCALE).div(normFactor).div(ethUsdcPrice)
-    return toTokenAmount(shortAmount.toFixed(0), WSQUEETH_DECIMALS)
+    return toTokenAmount(shortAmount.toFixed(0), OSQUEETH_DECIMALS)
   }
 
   const getCollatRatioAndLiqPrice = async (collateralAmount: BigNumber, shortAmount: BigNumber) => {

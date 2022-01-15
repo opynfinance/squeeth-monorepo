@@ -5,7 +5,7 @@ import { Contract } from 'web3-eth-contract'
 
 import { toTokenAmount } from '@utils/calculations'
 import erc721Abi from '../../abis/vaultManager.json'
-import { WSQUEETH_DECIMALS } from '../../constants/'
+import { OSQUEETH_DECIMALS } from '../../constants/'
 import { VAULTS_QUERY } from '../../queries/squeeth/vaultsQuery'
 import { Vaults } from '../../queries/squeeth/__generated__/Vaults'
 import { squeethClient } from '../../utils/apollo-client'
@@ -39,7 +39,7 @@ export const useVaultManager = (refetchIntervalSec = 30) => {
   })
 
   useEffect(() => {
-    ; (async () => {
+    ;(async () => {
       if (!data?.vaults?.length) return
 
       const _vaults = data?.vaults
@@ -50,7 +50,7 @@ export const useVaultManager = (refetchIntervalSec = 30) => {
           id,
           NFTCollateralId: NftCollateralId,
           collateralAmount: toTokenAmount(new BigNumber(collateralAmount), 18),
-          shortAmount: toTokenAmount(new BigNumber(shortAmount), WSQUEETH_DECIMALS),
+          shortAmount: toTokenAmount(new BigNumber(shortAmount), OSQUEETH_DECIMALS),
           operator,
         }))
 

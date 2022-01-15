@@ -12,7 +12,7 @@ import {
   SWAP_ROUTER,
   VAULT_MANAGER,
   WETH,
-  WSQUEETH,
+  OSQUEETH,
   ZERO_ADDR,
 } from '../constants/address'
 import { useWallet } from '@context/wallet'
@@ -25,7 +25,7 @@ const useAddresses = () => {
       zero: ZERO_ADDR,
       controller: CONTROLLER[networkId],
       vaultManager: VAULT_MANAGER[networkId],
-      wSqueeth: WSQUEETH[networkId],
+      oSqueeth: OSQUEETH[networkId],
       weth: WETH[networkId],
       swapRouter: SWAP_ROUTER[networkId],
       squeethPool: SQUEETH_UNI_POOL[networkId],

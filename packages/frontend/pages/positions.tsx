@@ -9,18 +9,15 @@ import clsx from 'clsx'
 import { LPTable } from '@components/Lp/LPTable'
 import Nav from '@components/Nav'
 import History from '@components/Trade/History'
-import { WSQUEETH_DECIMALS } from '../src/constants'
 import { PositionType } from '../src/types/'
-import { Tooltips, TransactionType } from '@constants/enums'
+import { Tooltips, TransactionType, OSQUEETH_DECIMALS } from '../src/constants'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
-import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
-import { useAddresses } from '@hooks/useAddress'
-import { useETHPrice } from '@hooks/useETHPrice'
+import { useTrade } from '@context/trade'
 import { useLPPositions, usePnL, usePositions } from '@hooks/usePositions'
 import { useTransactionHistory } from '@hooks/useTransactionHistory'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { toTokenAmount, fromTokenAmount } from '@utils/calculations'
-import { useController } from '@hooks/contracts/useController'
+import { useController } from '../src/hooks/contracts/useController'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -125,9 +122,7 @@ export function Positions() {
   const { activePositions, loading: isPositionFinishedCalc } = useLPPositions()
   const { pool } = useSqueethPool()
 
-  const { wSqueeth } = useAddresses()
-  const wSqueethBal = useTokenBalance(wSqueeth, 15, WSQUEETH_DECIMALS)
-  const ethPrice = useETHPrice()
+  const { oSqueethBal } = useTrade()
 
   const {
     positionType,
@@ -162,7 +157,7 @@ export function Positions() {
   useEffect(() => {
     getCollatRatioAndLiqPrice(
       new BigNumber(fromTokenAmount(shortVaults[firstValidVault]?.collateralAmount, 18)),
-      new BigNumber(fromTokenAmount(shortVaults[firstValidVault]?.shortAmount, WSQUEETH_DECIMALS)),
+      new BigNumber(fromTokenAmount(shortVaults[firstValidVault]?.shortAmount, OSQUEETH_DECIMALS)),
     ).then(({ collateralPercent, liquidationPrice }) => {
       setExistingCollatPercent(collateralPercent)
       setExistingLiqPrice(liquidationPrice)
@@ -170,10 +165,10 @@ export function Positions() {
   }, [firstValidVault, shortVaults?.length])
 
   const mintedDebt = useMemo(() => {
-    return wSqueethBal?.isGreaterThan(0) && positionType === PositionType.LONG
-      ? wSqueethBal.minus(squeethAmount)
-      : wSqueethBal
-  }, [positionType, squeethAmount.toString(), wSqueethBal.toString()])
+    return oSqueethBal?.isGreaterThan(0) && positionType === PositionType.LONG
+      ? oSqueethBal.minus(squeethAmount)
+      : oSqueethBal
+  }, [positionType, squeethAmount.toString(), oSqueethBal.toString()])
 
   const lpDebt = useMemo(() => {
     return lpedSqueeth.isGreaterThan(0) ? lpedSqueeth : new BigNumber(0)
@@ -205,11 +200,11 @@ export function Positions() {
           </div>
         </div>
         {/* eslint-disable-next-line prettier/prettier */}
-        {(wSqueethBal.isZero() && shortVaults.length && shortVaults[firstValidVault]?.collateralAmount.isZero()) ||
-        (wSqueethBal.isZero() && shortVaults.length === 0 && squeethAmount.isEqualTo(0)) ||
+        {(oSqueethBal.isZero() && shortVaults.length && shortVaults[firstValidVault]?.collateralAmount.isZero()) ||
+        (oSqueethBal.isZero() && shortVaults.length === 0 && squeethAmount.isEqualTo(0)) ||
         (positionType !== PositionType.LONG &&
           positionType !== PositionType.SHORT &&
-          !wSqueethBal.isGreaterThan(0) &&
+          !oSqueethBal.isGreaterThan(0) &&
           shortVaults[firstValidVault]?.collateralAmount.isZero()) ? (
           <div className={classes.empty}>
             <Typography>No active positions</Typography>
@@ -276,7 +271,7 @@ export function Positions() {
             </div>
           </div>
         ) : null}
-        {shortDebt.isGreaterThan(0) && positionType === PositionType.SHORT && vaultExists && !fullyLiquidated ? (
+        {shortDebt.isGreaterThan(0) && vaultExists && !fullyLiquidated ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>Short Squeeth</Typography>
@@ -424,11 +419,11 @@ export function Positions() {
                     Amount
                   </Typography>
                   <Typography variant="body1">
-                    {wSqueethBal?.isGreaterThan(0) &&
+                    {oSqueethBal?.isGreaterThan(0) &&
                     positionType === PositionType.LONG &&
-                    wSqueethBal.minus(squeethAmount).isGreaterThan(0)
-                      ? wSqueethBal.minus(squeethAmount).toFixed(8)
-                      : wSqueethBal.toFixed(8)}
+                    oSqueethBal.minus(squeethAmount).isGreaterThan(0)
+                      ? oSqueethBal.minus(squeethAmount).toFixed(8)
+                      : oSqueethBal.toFixed(8)}
                     &nbsp; oSQTH
                   </Typography>
                 </div>

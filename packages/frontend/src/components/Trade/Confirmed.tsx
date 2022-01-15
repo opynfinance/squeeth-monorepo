@@ -5,7 +5,6 @@ import React from 'react'
 
 import { EtherscanPrefix, Tooltips } from '../../constants'
 import { useWallet } from '@context/wallet'
-import { useAddresses } from '@hooks/useAddress'
 import { UniswapIframe } from '../Modal/UniswapIframe'
 
 const useStyles = makeStyles((theme) =>
@@ -55,7 +54,6 @@ type ConfirmedProps = {
 const Confirmed: React.FC<ConfirmedProps> = ({ confirmationMessage, txnHash, isLP }) => {
   const classes = useStyles()
   const { networkId } = useWallet()
-  const { wSqueeth } = useAddresses()
 
   return (
     <div>

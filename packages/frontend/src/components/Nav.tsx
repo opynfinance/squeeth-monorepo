@@ -99,7 +99,7 @@ export const NavLink: React.FC<{ path: string; name: string }> = ({ path, name }
 const Nav: React.FC = () => {
   const classes = useStyles()
   const { balance } = useWallet()
-  const { wSqueeth } = useAddresses()
+  const { oSqueeth } = useAddresses()
   const [navOpen, setNavOpen] = useState(false)
   const [isCopied, setCopied] = useCopyClipboard()
   // const { getWSqueethPositionValue } = useSqueethPool()
@@ -146,7 +146,7 @@ const Nav: React.FC = () => {
             variant="outlined"
             color="primary"
             onClick={() => {
-              setCopied(wSqueeth)
+              setCopied(oSqueeth)
             }}
             className={classes.contractAddress}
           >
@@ -156,7 +156,7 @@ const Nav: React.FC = () => {
               <>
                 <span style={{ textTransform: 'none' }}>oSQTH</span>
                 <Hidden mdDown>
-                  : {wSqueeth?.substring(0, 6)}...{wSqueeth?.substring(wSqueeth.length - 4)}
+                  : {oSqueeth?.substring(0, 6)}...{oSqueeth?.substring(oSqueeth.length - 4)}
                 </Hidden>
               </>
             )}
@@ -180,7 +180,7 @@ const Nav: React.FC = () => {
               variant="outlined"
               color="primary"
               onClick={() => {
-                setCopied(wSqueeth)
+                setCopied(oSqueeth)
               }}
               style={{
                 marginTop: '8px',
@@ -191,8 +191,8 @@ const Nav: React.FC = () => {
                 <>Copied</>
               ) : (
                 <>
-                  <span style={{ textTransform: 'none' }}>oSQTH</span>: {wSqueeth?.substring(0, 6)}...
-                  {wSqueeth?.substring(wSqueeth.length - 4)}
+                  <span style={{ textTransform: 'none' }}>oSQTH</span>: {oSqueeth?.substring(0, 6)}...
+                  {oSqueeth?.substring(oSqueeth.length - 4)}
                 </>
               )}
             </Button>

@@ -11,7 +11,7 @@ import { useAddresses } from './useAddress'
 const bigZero = new BigNumber(0)
 
 export const useTransactionHistory = () => {
-  const { squeethPool, weth, wSqueeth, shortHelper, swapRouter } = useAddresses()
+  const { squeethPool, weth, oSqueeth, shortHelper, swapRouter } = useAddresses()
   const { address } = useWallet()
   const { ethPriceMap } = useWorldContext()
 
@@ -26,7 +26,7 @@ export const useTransactionHistory = () => {
     fetchPolicy: 'cache-and-network',
   })
 
-  const isWethToken0 = parseInt(weth, 16) < parseInt(wSqueeth, 16)
+  const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
 
   const addRemoveLiquidityTrans = (data?.positionSnapshots || []).map(
     (transaction: transactions_positionSnapshots, index: number, array: transactions_positionSnapshots[]) => {

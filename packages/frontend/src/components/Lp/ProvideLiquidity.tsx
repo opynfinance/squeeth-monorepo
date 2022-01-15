@@ -5,8 +5,7 @@ import OpenInNewIcon from '@material-ui/icons/OpenInNew'
 import { motion } from 'framer-motion'
 import React from 'react'
 
-import { useAddresses } from '@hooks/useAddress'
-import { UniswapIFrameOpen, UniswapIFrameClose } from '@constants/enums'
+import { UniswapIFrameOpen } from '@constants/enums'
 import { useWallet } from '@context/wallet'
 
 const useStyles = makeStyles((theme) =>
@@ -50,7 +49,6 @@ const useStyles = makeStyles((theme) =>
 
 const ProvideLiquidity: React.FC = () => {
   const classes = useStyles()
-  const { wSqueeth } = useAddresses()
   const { networkId } = useWallet()
 
   return (

@@ -77,7 +77,7 @@ interface UniswapIframeProps {
 
 export const UniswapIframe: React.FC<UniswapIframeProps> = ({ text, closePosition }) => {
   const classes = useStyles()
-  const { wSqueeth } = useAddresses()
+  const { oSqueeth } = useAddresses()
   const { networkId } = useWallet()
   const [isCopied, setCopied] = useCopyClipboard()
 
@@ -118,7 +118,7 @@ export const UniswapIframe: React.FC<UniswapIframeProps> = ({ text, closePositio
             variant="outlined"
             color="primary"
             onClick={() => {
-              setCopied(wSqueeth)
+              setCopied(oSqueeth)
             }}
           >
             {' '}
@@ -126,7 +126,7 @@ export const UniswapIframe: React.FC<UniswapIframeProps> = ({ text, closePositio
               <>Copied</>
             ) : (
               <>
-                oSQTH: {wSqueeth?.substring(0, 6)}...{wSqueeth?.substring(wSqueeth.length - 4)}
+                oSQTH: {oSqueeth?.substring(0, 6)}...{oSqueeth?.substring(oSqueeth.length - 4)}
               </>
             )}
           </Button>
