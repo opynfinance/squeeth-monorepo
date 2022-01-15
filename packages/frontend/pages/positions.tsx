@@ -246,7 +246,8 @@ export function Positions() {
                   ) : (
                     <>
                       <Typography variant="body1" className={longGain.isLessThan(0) ? classes.red : classes.green}>
-                        $ {longUnrealizedPNL.toFixed(2)} ({sellQuote.amountOut.minus(wethAmount.abs()).toFixed(5)} ETH)
+                        $ {longUnrealizedPNL.toFixed(2)} (
+                        {longUnrealizedPNL.dividedBy(toTokenAmount(index, 18).sqrt()).toFixed(5)} ETH)
                       </Typography>
                       <Typography variant="caption" className={longGain.isLessThan(0) ? classes.red : classes.green}>
                         {(longGain || 0).toFixed(2)}%
@@ -308,7 +309,8 @@ export function Positions() {
                   ) : (
                     <>
                       <Typography variant="body1" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
-                        $ {shortUnrealizedPNL.toFixed(2)} ({wethAmount.minus(buyQuote).toFixed(5)} ETH)
+                        $ {shortUnrealizedPNL.toFixed(2)} (
+                        {shortUnrealizedPNL.dividedBy(toTokenAmount(index, 18).sqrt()).toFixed(5)} ETH)
                       </Typography>
                       <Typography variant="caption" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
                         {(shortGain || 0).toFixed(2)}%
