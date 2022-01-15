@@ -21,6 +21,7 @@ import { useTrade } from '@context/trade'
 import useInterval from './useInterval'
 import { useUsdAmount } from './useUsdAmount'
 import { useTransactionHistory } from './useTransactionHistory'
+import useAsyncMemo from './useAsyncMemo'
 
 const bigZero = new BigNumber(0)
 
@@ -511,7 +512,12 @@ export const usePnL = () => {
     setShortGain(_gain)
   }, [buyQuote.toString(), ethPrice.toString(), wethAmount.toString(), squeethAmount.toString()])
 
-  const currentShortDeposits = useMemo(() => {
+  const currentShortDeposits = useAsyncMemo(
+    async () => await getCurrentShortDeposits(),
+    [],
+    [positionType, squeethAmount.toString(), transactions.length],
+  )
+  async function getCurrentShortDeposits() {
     if (positionType === PositionType.LONG) return []
     let totalShortSqth = new BigNumber(0)
 
@@ -525,7 +531,7 @@ export const usePnL = () => {
       ethPriceAtDeposit: BigNumber
       buyQuote: BigNumber
     }[] = []
-
+    let buyQuote
     for (let index = 0; index < transactions.length; index++) {
       if (totalShortSqth.gte(squeethAmount)) break
       if (
@@ -533,9 +539,8 @@ export const usePnL = () => {
         transactions[index].transactionType === TransactionType.MINT_SHORT
       ) {
         totalShortSqth = totalShortSqth.plus(transactions[index].squeethAmount)
-        getBuyQuote(transactions[index].squeethAmount).then((val) => {
-          result.push({ ...transactions[index], buyQuote: val.amountIn })
-        })
+        buyQuote = await getBuyQuote(transactions[index].squeethAmount)
+        result.push({ ...transactions[index], buyQuote: buyQuote.amountIn })
       } else if (
         totalShortSqth.isLessThan(squeethAmount) &&
         transactions[index].transactionType === TransactionType.BURN_SHORT
@@ -545,7 +550,7 @@ export const usePnL = () => {
     }
 
     return result
-  }, [positionType, squeethAmount.toString(), transactions.length])
+  }
 
   const { shortUnrealizedPNL } = useMemo(
     () =>
@@ -563,10 +568,16 @@ export const usePnL = () => {
           shortUnrealizedPNL: new BigNumber(0),
         },
       ),
-    [currentShortDeposits?.length, ethPrice.toString(), index.toString()],
+    [currentShortDeposits.length, ethPrice.toString(), index.toString()],
   )
 
-  const currentLong = useMemo(() => {
+  const currentLong = useAsyncMemo(
+    async () => await getCurrentLong(),
+    [],
+    [positionType, squeethAmount.toString(), transactions?.length],
+  )
+
+  async function getCurrentLong() {
     if (positionType === PositionType.SHORT) return []
     let totalLongSqth = new BigNumber(0)
 
@@ -580,14 +591,13 @@ export const usePnL = () => {
       ethPriceAtDeposit: BigNumber
       sellQuote: BigNumber
     }[] = []
-
+    let sellQuote
     for (let index = 0; index < transactions.length; index++) {
       if (totalLongSqth.gte(squeethAmount)) break
       if (totalLongSqth.isLessThan(squeethAmount) && transactions[index].transactionType === TransactionType.BUY) {
         totalLongSqth = totalLongSqth.plus(transactions[index].squeethAmount)
-        getSellQuote(transactions[index].squeethAmount).then((val) => {
-          result.push({ ...transactions[index], sellQuote: val.amountOut })
-        })
+        sellQuote = await getSellQuote(transactions[index].squeethAmount)
+        result.push({ ...transactions[index], sellQuote: sellQuote.amountOut })
       } else if (
         totalLongSqth.isLessThan(squeethAmount) &&
         transactions[index].transactionType === TransactionType.SELL
@@ -597,7 +607,7 @@ export const usePnL = () => {
     }
 
     return result
-  }, [positionType, squeethAmount.toString(), transactions?.length])
+  }
 
   const { longUnrealizedPNL } = useMemo(
     () =>
