@@ -20,7 +20,7 @@ export const EtherscanPrefix = {
   31337: '/',
 }
 export const INDEX_SCALE = 10000
-export const WSQUEETH_DECIMALS = 18
+export const OSQUEETH_DECIMALS = 18
 export const WETH_DECIMALS = 18
 
 export const SWAP_EVENT_TOPIC = '0xc42079f94a6350d7e6235f29174924f928cc2ac818eb64fed8004e115fbcca67'

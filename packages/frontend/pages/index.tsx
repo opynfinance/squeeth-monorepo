@@ -26,7 +26,6 @@ import { useRestrictUser } from '@context/restrict-user'
 import { TradeProvider, useTrade } from '@context/trade'
 import { useWorldContext } from '@context/world'
 import { useController } from '@hooks/contracts/useController'
-import { useETHPrice } from '@hooks/useETHPrice'
 import { TradeType } from '../src/types'
 import { toTokenAmount } from '@utils/calculations'
 
@@ -364,7 +363,6 @@ const TabComponent: React.FC = () => {
 
 const SqueethInfo: React.FC = () => {
   const classes = useStyles()
-  const ethPrice = useETHPrice()
   const { actualTradeType } = useTrade()
   const { fundingPerHalfHour, mark, index, impliedVol, currentImpliedFunding } = useController()
 

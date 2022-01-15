@@ -1,9 +1,7 @@
 import React, { useContext, useEffect, useReducer } from 'react'
 import { Reducer } from 'react-transition-group/node_modules/@types/react'
 
-import { WSQUEETH_DECIMALS } from '../constants'
-import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
-import { useAddresses } from '@hooks/useAddress'
+import { useTrade } from '@context/trade'
 
 export enum Steps {
   SELECT_METHOD = 1,
@@ -84,14 +82,13 @@ const useLPState = () => useContext<LPContextType>(LPContext)
 
 const LPProvider: React.FC = ({ children }) => {
   const [lpState, dispatch] = useReducer<Reducer<LPType, ActionType>>(tradeReducer, initialState)
-  const { wSqueeth } = useAddresses()
-  const squeethBal = useTokenBalance(wSqueeth, 15, WSQUEETH_DECIMALS)
+  const { oSqueethBal } = useTrade()
 
   useEffect(() => {
-    if (squeethBal.isZero() || lpState.step === Steps.PROVIDE_LIQUIDITY) return
+    if (oSqueethBal.isZero() || lpState.step === Steps.PROVIDE_LIQUIDITY) return
 
     dispatch({ type: LPActions.GO_TO_PROVIDE_LIQUIDITY })
-  }, [squeethBal.toString()])
+  }, [oSqueethBal.toString()])
 
   return <LPContext.Provider value={{ lpState, dispatch }}>{children}</LPContext.Provider>
 }

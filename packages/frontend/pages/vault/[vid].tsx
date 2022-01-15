@@ -20,16 +20,15 @@ import Nav from '@components/Nav'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import { Tooltips } from '@constants/enums'
 import { usePositions } from '@hooks/usePositions'
-import { MIN_COLLATERAL_AMOUNT, WSQUEETH_DECIMALS } from '../../src/constants'
+import { MIN_COLLATERAL_AMOUNT, OSQUEETH_DECIMALS } from '../../src/constants'
 import { VAULT_QUERY } from '../../src/queries/squeeth/vaultsQuery'
 import { Vault_vault } from '../../src/queries/squeeth/__generated__/Vault'
 import { PositionType } from '../../src/types'
 import { useRestrictUser } from '@context/restrict-user'
 import { useWallet } from '@context/wallet'
-import { useController } from '@hooks/contracts/useController'
+import { useController } from '../../src/hooks/contracts/useController'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
-import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
-import { useAddresses } from '@hooks/useAddress'
+import { useTrade } from '@context/trade'
 import { CollateralStatus, Vault } from '../../src/types'
 import { squeethClient } from '@utils/apollo-client'
 import { getCollatPercentStatus, toTokenAmount } from '@utils/calculations'
@@ -229,13 +228,12 @@ const Component: React.FC = () => {
     burnAndRedeem,
     getTwapEthPrice,
   } = useController()
-  const { wSqueeth } = useAddresses()
   const { balance, address, connected, networkId } = useWallet()
   const { vid } = router.query
   const { liquidations } = useVaultLiquidations(Number(vid))
   const { positionType, squeethAmount } = usePositions()
 
-  const squeethBal = useTokenBalance(wSqueeth, 30, WSQUEETH_DECIMALS)
+  const { oSqueethBal } = useTrade()
 
   const [vault, setVault] = useState<Vault | null>(null)
   const [existingCollatPercent, setExistingCollatPercent] = useState(0)
@@ -268,7 +266,7 @@ const Component: React.FC = () => {
       id: Number(_vault.id),
       NFTCollateralId: _vault.NftCollateralId,
       collateralAmount: toTokenAmount(new BigNumber(_vault.collateralAmount), 18),
-      shortAmount: toTokenAmount(new BigNumber(_vault.shortAmount), WSQUEETH_DECIMALS),
+      shortAmount: toTokenAmount(new BigNumber(_vault.shortAmount), OSQUEETH_DECIMALS),
       operator: _vault.operator,
     })
 
@@ -424,7 +422,7 @@ const Component: React.FC = () => {
       )
         adjustCollatError = VaultError.MIN_COLLATERAL
     } else {
-      if (action === VaultAction.BURN_SQUEETH && shortAmountBN.abs().gt(squeethBal))
+      if (action === VaultAction.BURN_SQUEETH && shortAmountBN.abs().gt(oSqueethBal))
         adjustAmountError = VaultError.INSUFFICIENT_OSQTH_BALANCE
       else if (collatPercent < 150) adjustAmountError = VaultError.MIN_COLLAT_PERCENT
     }
@@ -455,14 +453,14 @@ const Component: React.FC = () => {
   )
 
   const mintedDebt = useMemo(() => {
-    return squeethBal?.isGreaterThan(0) && positionType === PositionType.LONG
-      ? squeethBal.minus(squeethAmount)
-      : squeethBal
-  }, [positionType, squeethAmount, squeethBal])
+    return oSqueethBal?.isGreaterThan(0) && positionType === PositionType.LONG
+      ? oSqueethBal.minus(squeethAmount)
+      : oSqueethBal
+  }, [positionType, squeethAmount.toString(), oSqueethBal.toString()])
 
   const shortDebt = useMemo(() => {
     return positionType === PositionType.SHORT ? squeethAmount : new BigNumber(0)
-  }, [positionType, squeethAmount])
+  }, [positionType, squeethAmount.toString()])
 
   return (
     <div>
@@ -725,7 +723,7 @@ const Component: React.FC = () => {
                       onClick={() =>
                         shortAmountBN.isPositive()
                           ? updateShort(maxToMint.toString())
-                          : updateShort(squeethBal.negated().toString())
+                          : updateShort(oSqueethBal.negated().toString())
                       }
                       variant="text"
                       // style={{ marginLeft: '250px' }}
@@ -734,7 +732,7 @@ const Component: React.FC = () => {
                     </LinkButton>
                   </div>
                   <NumberInput
-                    min={squeethBal.negated().toString()}
+                    min={oSqueethBal.negated().toString()}
                     step={0.1}
                     placeholder="Amount"
                     onChange={(v) => updateShort(v)}
@@ -744,11 +742,11 @@ const Component: React.FC = () => {
                       !!adjustAmountError
                         ? adjustAmountError
                         : `Balance ${
-                            squeethBal?.isGreaterThan(0) &&
+                            oSqueethBal?.isGreaterThan(0) &&
                             positionType === PositionType.LONG &&
-                            squeethBal.minus(squeethAmount).isGreaterThan(0)
-                              ? squeethBal.minus(squeethAmount).toFixed(8)
-                              : squeethBal.toFixed(8)
+                            oSqueethBal.minus(squeethAmount).isGreaterThan(0)
+                              ? oSqueethBal.minus(squeethAmount).toFixed(8)
+                              : oSqueethBal.toFixed(8)
                           } oSQTH`
                     }
                     // hint={!!adjustAmountError ? adjustAmountError : `Balance ${squeethBal.toFixed(6)} oSQTH`}
