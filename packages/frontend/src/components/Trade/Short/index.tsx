@@ -23,7 +23,6 @@ import useShortHelper from '@hooks/contracts/useShortHelper'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import { useAddresses } from '@hooks/useAddress'
-import { useETHPrice } from '@hooks/useETHPrice'
 import { usePositions } from '@hooks/usePositions'
 import { PrimaryButton } from '@components/Button'
 import CollatRange from '@components/CollatRange'
@@ -33,8 +32,7 @@ import Confirmed from '@components/Trade/Confirmed'
 import TradeDetails from '@components/Trade/TradeDetails'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import UniswapData from '@components/Trade/UniswapData'
-import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
-import { WSQUEETH_DECIMALS, MIN_COLLATERAL_AMOUNT } from '../../../constants'
+import { MIN_COLLATERAL_AMOUNT } from '../../../constants'
 import { PositionType } from '../../../types'
 
 const useStyles = makeStyles((theme) =>
@@ -194,10 +192,8 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
   const { openShort } = useShortHelper()
   const { getWSqueethPositionValue } = useSqueethPool()
   const { updateOperator, normFactor: normalizationFactor, getShortAmountFromDebt, getDebtAmount } = useController()
-  const ethPrice = useETHPrice()
   const { selectWallet, connected } = useWallet()
-  const { shortHelper, wSqueeth } = useAddresses()
-  const wSqueethBal = useTokenBalance(wSqueeth, 15, WSQUEETH_DECIMALS)
+  const { shortHelper } = useAddresses()
 
   const {
     tradeAmount: amountInputValue,
@@ -207,6 +203,8 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
     tradeSuccess,
     setTradeSuccess,
     slippageAmount,
+    ethPrice,
+    oSqueethBal,
   } = useTrade()
   const amount = new BigNumber(amountInputValue)
   const collateral = new BigNumber(collateralInput)
@@ -552,10 +550,8 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   const { closeShort } = useShortHelper()
   const { getWSqueethPositionValue } = useSqueethPool()
   const { updateOperator, normFactor: normalizationFactor, getShortAmountFromDebt, getDebtAmount } = useController()
-  const { shortHelper, wSqueeth } = useAddresses()
-  const wSqueethBal = useTokenBalance(wSqueeth, 15, WSQUEETH_DECIMALS)
+  const { shortHelper } = useAddresses()
 
-  const ethPrice = useETHPrice()
   const { selectWallet, connected } = useWallet()
 
   const {
@@ -567,6 +563,8 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     setTradeSuccess,
     tradeSuccess,
     slippageAmount,
+    ethPrice,
+    oSqueethBal,
   } = useTrade()
   const amount = new BigNumber(amountInputValue)
   const {
@@ -581,10 +579,10 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   } = usePositions()
 
   const mintedDebt = useMemo(() => {
-    return wSqueethBal?.isGreaterThan(0) && positionType === PositionType.LONG
-      ? wSqueethBal.minus(shortSqueethAmount)
-      : wSqueethBal
-  }, [positionType, shortSqueethAmount.toString(), wSqueethBal.toString()])
+    return oSqueethBal?.isGreaterThan(0) && positionType === PositionType.LONG
+      ? oSqueethBal.minus(shortSqueethAmount)
+      : oSqueethBal
+  }, [positionType, shortSqueethAmount.toString(), oSqueethBal.toString()])
 
   const lpDebt = useMemo(() => {
     return lpedSqueeth.isGreaterThan(0) ? lpedSqueeth : new BigNumber(0)
@@ -600,7 +598,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     const contractShort = shortVaults.length && shortVaults[firstValidVault]?.shortAmount
 
     if (!calculatedShort.isEqualTo(contractShort)) {
-      setFinalShortAmount(contractShort.minus(mintedDebt))
+      setFinalShortAmount(contractShort)
     } else {
       setFinalShortAmount(shortDebt)
     }
@@ -719,7 +717,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     ) {
       closeError = `You must have at least ${MIN_COLLATERAL_AMOUNT} ETH collateral unless you fully close out your position. Either fully close your position, or close out less`
     }
-    if (isLong && !shortDebt.isGreaterThan(0)) {
+    if (isLong && !finalShortAmount.isGreaterThan(0)) {
       existingLongError = 'Close your long position to open a short'
     }
   }

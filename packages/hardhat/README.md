@@ -3,7 +3,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/opynfinance/squeeth-monorepo/badge.svg?t=XrsOxo)](https://coveralls.io/github/opynfinance/squeeth-monorepo) [![CircleCI](https://circleci.com/gh/opynfinance/squeeth-monorepo/tree/master.svg?style=svg&circle-token=5d9ceb617a91160d922e21209489eb3060f326a3)](https://circleci.com/gh/opynfinance/squeeth-monorepo/tree/master)
 
 Here you can find all the contracts that is related to squeeth. To read auto-generated contract doc, you can go to `/docs/contracts-documentation`. 
-For a more comprehensive documentation about how the system works together, we suggest visiting our [GitBook page](https://app.gitbook.com/invite/-LufZJ5ZhQjPzA36K4pN/5P9fhUvlTZOdOQZy68Jr)  
+For a more comprehensive documentation about how the system works together, we suggest visiting our [GitBook page](https://opyn.gitbook.io/squeeth/)  
 
 # Running this Project
 

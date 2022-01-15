@@ -17,7 +17,7 @@ import { useController } from './contracts/useController'
 import { useSqueethPool } from './contracts/useSqueethPool'
 import { useVaultManager } from './contracts/useVaultManager'
 import { useAddresses } from './useAddress'
-import { useETHPrice } from './useETHPrice'
+import { useTrade } from '@context/trade'
 import useInterval from './useInterval'
 import { useUsdAmount } from './useUsdAmount'
 import { useTransactionHistory } from './useTransactionHistory'
@@ -25,7 +25,7 @@ import { useTransactionHistory } from './useTransactionHistory'
 const bigZero = new BigNumber(0)
 
 export const usePositions = () => {
-  const { squeethPool, weth, wSqueeth, shortHelper, swapRouter } = useAddresses()
+  const { squeethPool, weth, oSqueeth, shortHelper, swapRouter } = useAddresses()
   const { address } = useWallet()
   const { getUsdAmt } = useUsdAmount()
   const { getDebtAmount, normFactor: normalizationFactor } = useController()
@@ -54,7 +54,7 @@ export const usePositions = () => {
   const { depositedSqueeth, withdrawnSqueeth, squeethLiquidity, wethLiquidity, loading: lpLoading } = useLPPositions()
 
   const swaps = data?.swaps
-  const isWethToken0 = parseInt(weth, 16) < parseInt(wSqueeth, 16)
+  const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
   const vaultId = shortVaults[firstValidVault]?.id || 0
 
   useEffect(() => {
@@ -179,7 +179,7 @@ export const usePositions = () => {
 }
 
 const useLongPositions = () => {
-  const { squeethPool, weth, wSqueeth, swapRouter } = useAddresses()
+  const { squeethPool, weth, oSqueeth, swapRouter } = useAddresses()
   const { address } = useWallet()
   const { ethPriceMap, eth90daysPriceMap, ethWithinOneDayPriceMap } = useWorldContext()
   const { getUsdAmt } = useUsdAmount()
@@ -197,7 +197,7 @@ const useLongPositions = () => {
   useInterval(refetch, 15000)
 
   const swaps = data?.swaps
-  const isWethToken0 = parseInt(weth, 16) < parseInt(wSqueeth, 16)
+  const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
 
   const {
     squeethAmount,
@@ -294,7 +294,7 @@ const useLongPositions = () => {
 }
 
 const useShortPositions = () => {
-  const { squeethPool, weth, wSqueeth, shortHelper } = useAddresses()
+  const { squeethPool, weth, oSqueeth, shortHelper } = useAddresses()
   const { address } = useWallet()
   const { ethPriceMap, eth90daysPriceMap, ethWithinOneDayPriceMap } = useWorldContext()
   const { getUsdAmt } = useUsdAmount()
@@ -321,7 +321,7 @@ const useShortPositions = () => {
   const [firstValidVault, setFirstValidVault] = useState(0)
 
   const swaps = data?.swaps
-  const isWethToken0 = parseInt(weth, 16) < parseInt(wSqueeth, 16)
+  const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
   const vaultId = shortVaults[firstValidVault]?.id || 0
 
   const {
@@ -463,7 +463,7 @@ export const usePnL = () => {
   } = useLongPositions()
   const { usdAmount: shortUsdAmt, realizedPNL: shortRealizedPNL, refetch: refetchShort } = useShortPositions()
   const { positionType, squeethAmount, wethAmount, shortVaults, loading: positionLoading } = usePositions()
-  const ethPrice = useETHPrice()
+  const { ethPrice } = useTrade()
   const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
   const { swapTransactions: transactions } = useTransactionHistory()
   const { index } = useController()
@@ -635,9 +635,9 @@ export const usePnL = () => {
 
 export const useLPPositions = () => {
   const { address, web3 } = useWallet()
-  const { squeethPool, nftManager, weth, wSqueeth } = useAddresses()
+  const { squeethPool, nftManager, weth, oSqueeth } = useAddresses()
   const { pool, getWSqueethPositionValue, squeethInitialPrice } = useSqueethPool()
-  const ethPrice = useETHPrice()
+  const { ethPrice } = useTrade()
 
   const [activePositions, setActivePositions] = useState<NFTManagers[]>([])
   const [closedPositions, setClosedPositions] = useState<NFTManagers[]>([])
@@ -690,7 +690,7 @@ export const useLPPositions = () => {
     })
   }, [squeethPool, address])
 
-  const isWethToken0 = useMemo(() => parseInt(weth, 16) < parseInt(wSqueeth, 16), [weth, wSqueeth])
+  const isWethToken0 = useMemo(() => parseInt(weth, 16) < parseInt(oSqueeth, 16), [weth, oSqueeth])
 
   const positionAndFees = useMemo(() => {
     if (!pool || !squeethInitialPrice.toNumber() || !ethPrice.toNumber()) return []

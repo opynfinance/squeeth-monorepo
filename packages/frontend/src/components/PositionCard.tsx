@@ -10,7 +10,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { usePnL, usePositions } from '@hooks/usePositions'
 import { Tooltips } from '@constants/enums'
 import { useTrade } from '@context/trade'
-import { useETHPrice } from '@hooks/useETHPrice'
 import { PositionType, TradeType } from '../types'
 import { useController } from '@hooks/contracts/useController'
 import { toTokenAmount } from '@utils/calculations'
@@ -183,9 +182,9 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     tradeSuccess,
     setTradeSuccess,
     tradeType,
+    ethPrice,
   } = useTrade()
   const tradeAmount = new BigNumber(tradeAmountInput)
-  const ethPrice = useETHPrice()
   const { index } = useController()
   const [fetchingNew, setFetchingNew] = useState(false)
   const [postTradeAmt, setPostTradeAmt] = useState(new BigNumber(0))

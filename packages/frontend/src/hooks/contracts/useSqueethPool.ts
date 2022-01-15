@@ -10,13 +10,12 @@ import routerABI from '../../abis/swapRouter.json'
 import uniABI from '../../abis/uniswapPool.json'
 import erc20Abi from '../../abis/erc20.json'
 
-import { INDEX_SCALE, UNI_POOL_FEES, WSQUEETH_DECIMALS, DEFAULT_SLIPPAGE } from '../../constants'
+import { INDEX_SCALE, UNI_POOL_FEES, DEFAULT_SLIPPAGE, OSQUEETH_DECIMALS } from '../../constants'
 import { useWallet } from '@context/wallet'
 import { fromTokenAmount, parseSlippageInput, toTokenAmount } from '@utils/calculations'
 import { useAddresses } from '../useAddress'
 import { Networks } from '../../types'
 import useUniswapTicks from '../useUniswapTicks'
-import { useETHPrice } from '@hooks/useETHPrice'
 import { useTrade } from '@context/trade'
 // import univ3prices from '@thanpolas/univ3prices'
 const univ3prices = require('@thanpolas/univ3prices')
@@ -41,10 +40,10 @@ export const useSqueethPool = () => {
   const [wethPrice, setWethPrice] = useState<BigNumber>(new BigNumber(0))
   const [ready, setReady] = useState(false)
   const [tvl, setTVL] = useState(0)
-  const ethPrice = useETHPrice()
+  const { ethPrice } = useTrade()
 
   const { address, web3, networkId, handleTransaction } = useWallet()
-  const { squeethPool, swapRouter, quoter, weth, wSqueeth } = useAddresses()
+  const { squeethPool, swapRouter, quoter, weth, oSqueeth } = useAddresses()
   const { ticks } = useUniswapTicks()
 
   useEffect(() => {
@@ -60,7 +59,7 @@ export const useSqueethPool = () => {
     updatePoolTVL()
   }, [squeethContract, ticks?.length])
 
-  const isWethToken0 = parseInt(weth, 16) < parseInt(wSqueeth, 16)
+  const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
 
   useEffect(() => {
     if (!squeethToken?.address) return
@@ -88,22 +87,22 @@ export const useSqueethPool = () => {
 
   const updateData = async () => {
     const { token0, token1, fee } = await getImmutables()
-    const isWethToken0 = parseInt(weth, 16) < parseInt(wSqueeth, 16)
+    const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
 
     const state = await getPoolState()
     const TokenA = new Token(
       networkId,
       token0,
-      isWethToken0 ? 18 : WSQUEETH_DECIMALS,
+      isWethToken0 ? 18 : OSQUEETH_DECIMALS,
       isWethToken0 ? 'WETH' : 'SQE',
-      isWethToken0 ? 'Wrapped Ether' : 'wSqueeth',
+      isWethToken0 ? 'Wrapped Ether' : 'oSqueeth',
     )
     const TokenB = new Token(
       networkId,
       token1,
-      isWethToken0 ? WSQUEETH_DECIMALS : 18,
+      isWethToken0 ? OSQUEETH_DECIMALS : 18,
       isWethToken0 ? 'SQE' : 'WETH',
-      isWethToken0 ? 'wSqueeth' : 'Wrapped Ether',
+      isWethToken0 ? 'oSqueeth' : 'Wrapped Ether',
     )
 
     const pool = new Pool(
@@ -123,7 +122,7 @@ export const useSqueethPool = () => {
   }
 
   const updatePoolTVL = async () => {
-    const isWethToken0 = parseInt(weth, 16) < parseInt(wSqueeth, 16)
+    const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
 
     const state = await getPoolState()
     const ratio = univ3prices([18, 18], state.sqrtPriceX96).toAuto()
@@ -266,7 +265,7 @@ export const useSqueethPool = () => {
       fee: UNI_POOL_FEES,
       recipient: address,
       deadline: Math.floor(Date.now() / 1000 + 86400), // uint256
-      amountIn: fromTokenAmount(amount, WSQUEETH_DECIMALS).toString(),
+      amountIn: fromTokenAmount(amount, OSQUEETH_DECIMALS).toString(),
       amountOutMinimum: amountMin.toString(),
       sqrtPriceLimitX96: 0,
     }
@@ -281,7 +280,7 @@ export const useSqueethPool = () => {
       fee: UNI_POOL_FEES, // uint24
       recipient: address, // address
       deadline: Math.floor(Date.now() / 1000 + 86400), // uint256
-      amountOut: fromTokenAmount(amount, WSQUEETH_DECIMALS).toString(), // uint256
+      amountOut: fromTokenAmount(amount, OSQUEETH_DECIMALS).toString(), // uint256
       amountInMaximum: amountMax.toString(),
       sqrtPriceLimitX96: 0, // uint160
     }
@@ -297,7 +296,7 @@ export const useSqueethPool = () => {
       recipient: address,
       deadline: Math.floor(Date.now() / 1000 + 86400), // uint256
       amountIn: ethers.utils.parseEther(amount.toString()),
-      amountOutMinimum: fromTokenAmount(quote.minimumAmountOut, WSQUEETH_DECIMALS).toString(),
+      amountOutMinimum: fromTokenAmount(quote.minimumAmountOut, OSQUEETH_DECIMALS).toString(),
       sqrtPriceLimitX96: 0,
     }
   }
@@ -318,7 +317,7 @@ export const useSqueethPool = () => {
       //getting the amount of ETH I need to put in to get an exact amount of squeeth I inputted out
       const trade = await Trade.exactOut(
         route,
-        CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, WSQUEETH_DECIMALS).toString()),
+        CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toString()),
       )
 
       //the amount of ETH I need to put in
@@ -357,9 +356,9 @@ export const useSqueethPool = () => {
 
       //the amount of squeeth I'm getting out
       return {
-        amountOut: new BigNumber(trade.outputAmount.toSignificant(WSQUEETH_DECIMALS)),
+        amountOut: new BigNumber(trade.outputAmount.toSignificant(OSQUEETH_DECIMALS)),
         minimumAmountOut: new BigNumber(
-          trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(WSQUEETH_DECIMALS),
+          trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(OSQUEETH_DECIMALS),
         ),
         priceImpact: trade.priceImpact.toFixed(2),
       }
@@ -385,7 +384,7 @@ export const useSqueethPool = () => {
       //getting the amount of ETH I'd receive for inputting the amount of squeeth I want to sell
       const trade = await Trade.exactIn(
         route,
-        CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, WSQUEETH_DECIMALS).toString()),
+        CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toString()),
       )
 
       //the amount of ETH I'm receiving

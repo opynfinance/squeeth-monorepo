@@ -18,7 +18,7 @@ export const VAULT_MANAGER: Address = {
 }
 
 //WPowerPerp
-export const WSQUEETH: Address = {
+export const OSQUEETH: Address = {
   1: '0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B',
   3: '0x2c1d37d7d8444B24c14064e35aD1B37E5f7B6035',
   421611: '0xEC0db8766bc003C14861af996e411beA6Bf800aB',
