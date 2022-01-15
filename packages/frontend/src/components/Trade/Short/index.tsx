@@ -717,7 +717,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     ) {
       closeError = `You must have at least ${MIN_COLLATERAL_AMOUNT} ETH collateral unless you fully close out your position. Either fully close your position, or close out less`
     }
-    if (isLong && !shortDebt.isGreaterThan(0)) {
+    if (isLong && !finalShortAmount.isGreaterThan(0)) {
       existingLongError = 'Close your long position to open a short'
     }
   }
