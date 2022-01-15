@@ -602,7 +602,7 @@ const CloseLong: React.FC<BuyProps> = ({
             value={amountInputValue}
             onChange={(v) => handleCloseDualInputUpdate(v, InputType.SQTH)}
             label="Amount"
-            tooltip="Amount of wSqueeth you want to close"
+            tooltip="Amount of oSqueeth you want to close"
             actionTxt="Max"
             onActionClicked={() => handleCloseDualInputUpdate(oSqueethBal.toString(), InputType.SQTH)}
             unit="oSQTH"
@@ -636,7 +636,7 @@ const CloseLong: React.FC<BuyProps> = ({
             value={altAmountInputValue}
             onChange={(v) => handleCloseDualInputUpdate(v, InputType.ETH)}
             label="Amount"
-            tooltip="Amount of wSqueeth you want to close in eth"
+            tooltip="Amount of oSqueeth you want to close in eth"
             unit="ETH"
             convertedValue={altTradeAmount.times(ethPrice).toFixed(2).toLocaleString()}
             error={!!existingShortError || !!priceImpactWarning || !!closeError}
