@@ -556,12 +556,14 @@ export const usePnL = () => {
     () =>
       currentShortDeposits.reduce(
         (acc, curr) => {
-          acc.shortUnrealizedPNL = acc.shortUnrealizedPNL.plus(
-            curr?.ethAmount
-              .minus(curr?.buyQuote)
-              .times(toTokenAmount(index, 18).sqrt())
-              .plus(curr?.ethAmount.times(curr?.ethPriceAtDeposit.minus(ethPrice))),
-          )
+          acc.shortUnrealizedPNL = !curr?.buyQuote.isEqualTo(0)
+            ? acc.shortUnrealizedPNL.plus(
+                curr?.ethAmount
+                  .minus(curr?.buyQuote)
+                  .times(toTokenAmount(index, 18).sqrt())
+                  .plus(curr?.ethAmount.times(curr?.ethPriceAtDeposit.minus(ethPrice))),
+              )
+            : acc.shortUnrealizedPNL
           return acc
         },
         {
@@ -613,9 +615,11 @@ export const usePnL = () => {
     () =>
       currentLong.reduce(
         (acc, curr) => {
-          acc.longUnrealizedPNL = acc.longUnrealizedPNL.plus(
-            curr.sellQuote.minus(curr.ethAmount.abs()).times(toTokenAmount(index, 18).sqrt()),
-          )
+          acc.longUnrealizedPNL = !curr.sellQuote.isEqualTo(0)
+            ? acc.longUnrealizedPNL.plus(
+                curr.sellQuote.minus(curr.ethAmount.abs()).times(toTokenAmount(index, 18).sqrt()),
+              )
+            : acc.longUnrealizedPNL
           return acc
         },
         {
