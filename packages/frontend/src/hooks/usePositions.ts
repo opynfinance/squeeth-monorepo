@@ -514,8 +514,18 @@ export const usePnL = () => {
   const currentShortDeposits = useMemo(() => {
     if (positionType === PositionType.LONG) return []
     let totalShortSqth = new BigNumber(0)
-    //@ts-expect-error
-    const result = []
+
+    const result: {
+      squeethAmount: BigNumber
+      ethAmount: BigNumber
+      usdValue: BigNumber
+      timestamp: string
+      transactionType: TransactionType
+      txId: string
+      ethPriceAtDeposit: BigNumber
+      buyQuote: BigNumber
+    }[] = []
+
     for (let index = 0; index < transactions.length; index++) {
       if (totalShortSqth.gte(squeethAmount)) break
       if (
@@ -533,7 +543,7 @@ export const usePnL = () => {
         totalShortSqth = totalShortSqth.minus(transactions[index].squeethAmount)
       }
     }
-    //@ts-expect-error
+
     return result
   }, [positionType, squeethAmount.toString(), transactions.length])
 
@@ -559,8 +569,18 @@ export const usePnL = () => {
   const currentLong = useMemo(() => {
     if (positionType === PositionType.SHORT) return []
     let totalLongSqth = new BigNumber(0)
-    //@ts-expect-error
-    const result = []
+
+    const result: {
+      squeethAmount: BigNumber
+      ethAmount: BigNumber
+      usdValue: BigNumber
+      timestamp: string
+      transactionType: TransactionType
+      txId: string
+      ethPriceAtDeposit: BigNumber
+      sellQuote: BigNumber
+    }[] = []
+
     for (let index = 0; index < transactions.length; index++) {
       if (totalLongSqth.gte(squeethAmount)) break
       if (totalLongSqth.isLessThan(squeethAmount) && transactions[index].transactionType === TransactionType.BUY) {
@@ -576,7 +596,6 @@ export const usePnL = () => {
       }
     }
 
-    //@ts-expect-error
     return result
   }, [positionType, squeethAmount.toString(), transactions?.length])
 
