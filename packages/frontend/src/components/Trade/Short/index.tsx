@@ -643,7 +643,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
       getDebtAmount(new BigNumber(restOfShort)).then((debt) => {
         const _neededCollat = debt.times(collatPercent / 100)
         setNeededCollat(_neededCollat)
-        setWithdrawCollat(_collat.minus(neededCollat))
+        setWithdrawCollat(_neededCollat.gt(0) ? _collat.minus(neededCollat) : _collat)
       })
     }
   }, [amount.toString(), collatPercent, shortVaults?.length])
