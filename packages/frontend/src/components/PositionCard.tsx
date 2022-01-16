@@ -165,7 +165,6 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
   const {
     positionType: pType,
     squeethAmount,
-    wethAmount,
     shortVaults,
     firstValidVault,
     vaultId,
@@ -185,7 +184,6 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     ethPrice,
   } = useTrade()
   const tradeAmount = new BigNumber(tradeAmountInput)
-  const { index } = useController()
   const [fetchingNew, setFetchingNew] = useState(false)
   const [postTradeAmt, setPostTradeAmt] = useState(new BigNumber(0))
   const [postPosition, setPostPosition] = useState(PositionType.NONE)

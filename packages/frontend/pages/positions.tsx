@@ -10,11 +10,10 @@ import { LPTable } from '@components/Lp/LPTable'
 import Nav from '@components/Nav'
 import History from '@components/Trade/History'
 import { PositionType } from '../src/types/'
-import { Tooltips, TransactionType, OSQUEETH_DECIMALS } from '../src/constants'
+import { Tooltips, OSQUEETH_DECIMALS } from '../src/constants'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useTrade } from '@context/trade'
 import { useLPPositions, usePnL, usePositions } from '@hooks/usePositions'
-import { useTransactionHistory } from '@hooks/useTransactionHistory'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { toTokenAmount, fromTokenAmount } from '@utils/calculations'
 import { useController } from '../src/hooks/contracts/useController'
@@ -128,7 +127,6 @@ export function Positions() {
   const {
     positionType,
     squeethAmount,
-    wethAmount,
     loading: isPositionLoading,
     shortVaults,
     firstValidVault,
@@ -138,12 +136,6 @@ export function Positions() {
   } = usePositions()
 
   const { index, getCollatRatioAndLiqPrice } = useController()
-  const { transactions } = useTransactionHistory()
-
-  const lastDeposit = useMemo(
-    () => transactions.find((transaction) => transaction.transactionType === TransactionType.MINT_SHORT),
-    [transactions?.length],
-  )
 
   const vaultExists = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.collateralAmount?.isGreaterThan(0)
