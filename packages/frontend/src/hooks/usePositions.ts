@@ -465,7 +465,7 @@ export const usePnL = () => {
   const { usdAmount: shortUsdAmt, realizedPNL: shortRealizedPNL, refetch: refetchShort } = useShortPositions()
   const { positionType, squeethAmount, wethAmount, shortVaults, loading: positionLoading } = usePositions()
   const { ethPrice } = useTrade()
-  const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
+  const { ready, getSellQuote, getBuyQuote, squeethToken } = useSqueethPool()
   const { swapTransactions: transactions } = useTransactionHistory()
   const { index } = useController()
 
@@ -515,7 +515,7 @@ export const usePnL = () => {
   const currentShortDeposits = useAsyncMemo(
     async () => await getCurrentShortDeposits(),
     [],
-    [positionType, squeethAmount.toString(), transactions.length],
+    [squeethToken, positionType, squeethAmount.toString(), transactions.length],
   )
   async function getCurrentShortDeposits() {
     if (positionType === PositionType.LONG) return []
@@ -570,13 +570,13 @@ export const usePnL = () => {
           shortUnrealizedPNL: new BigNumber(0),
         },
       ),
-    [currentShortDeposits.length, ethPrice.toString(), index.toString()],
+    [currentShortDeposits.length, currentShortDeposits[0]?.buyQuote.toString(), ethPrice.toString(), index.toString()],
   )
 
   const currentLong = useAsyncMemo(
     async () => await getCurrentLong(),
     [],
-    [positionType, squeethAmount.toString(), transactions?.length],
+    [squeethToken, positionType, squeethAmount.toString(), transactions?.length],
   )
 
   async function getCurrentLong() {
@@ -626,7 +626,7 @@ export const usePnL = () => {
           longUnrealizedPNL: new BigNumber(0),
         },
       ),
-    [currentLong?.length, index.toString()],
+    [currentLong?.length, currentLong[0]?.sellQuote.toString(), index.toString()],
   )
 
   return {
