@@ -233,7 +233,11 @@ export function Positions() {
                   <Tooltip title={Tooltips.UnrealizedPnL}>
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
-                  {isPnLLoading || longGain.isLessThanOrEqualTo(-100) || !longGain.isFinite() ? (
+                  {isPnLLoading ||
+                  longGain.isLessThanOrEqualTo(-100) ||
+                  !longGain.isFinite() ||
+                  longUnrealizedPNL.isEqualTo(0) ||
+                  !longUnrealizedPNL.isFinite() ? (
                     <Typography variant="body1">Loading</Typography>
                   ) : (
                     <>
@@ -296,7 +300,11 @@ export function Positions() {
                   <Tooltip title={Tooltips.UnrealizedPnL}>
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
-                  {isPositionFinishedCalc || shortGain.isLessThanOrEqualTo(-100) || !shortGain.isFinite() ? (
+                  {isPositionFinishedCalc ||
+                  shortGain.isLessThanOrEqualTo(-100) ||
+                  !shortGain.isFinite() ||
+                  shortUnrealizedPNL.isEqualTo(0) ||
+                  !shortUnrealizedPNL.isFinite ? (
                     <Typography variant="body1">Loading</Typography>
                   ) : (
                     <>

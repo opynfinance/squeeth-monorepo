@@ -528,7 +528,7 @@ export const usePnL = () => {
                 curr?.ethAmount
                   .minus(curr?.buyQuote)
                   .times(toTokenAmount(index, 18).sqrt())
-                  .plus(curr?.ethAmount.times(curr?.ethPriceAtDeposit.minus(ethPrice))),
+                  .plus(curr?.ethAmount.times(curr?.ethPriceAtDeposit.minus(toTokenAmount(index, 18).sqrt()))),
               )
             : acc.shortUnrealizedPNL
           return acc
@@ -537,7 +537,7 @@ export const usePnL = () => {
           shortUnrealizedPNL: new BigNumber(0),
         },
       ),
-    [currentShortDeposits.length, currentShortDeposits[0]?.buyQuote.toString(), ethPrice.toString(), index.toString()],
+    [currentShortDeposits.length, currentShortDeposits[0]?.buyQuote.toString(), index.toString()],
   )
 
   const currentLong = useAsyncMemo(
