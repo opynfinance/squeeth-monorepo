@@ -17,7 +17,6 @@ import { useController } from './contracts/useController'
 import { useSqueethPool } from './contracts/useSqueethPool'
 import { useVaultManager } from './contracts/useVaultManager'
 import { useAddresses } from './useAddress'
-import { useTrade } from '@context/trade'
 import useInterval from './useInterval'
 import { useUsdAmount } from './useUsdAmount'
 import { useTransactionHistory } from './useTransactionHistory'
@@ -463,7 +462,7 @@ export const usePnL = () => {
   } = useLongPositions()
   const { usdAmount: shortUsdAmt, realizedPNL: shortRealizedPNL, refetch: refetchShort } = useShortPositions()
   const { positionType, squeethAmount, wethAmount, shortVaults, loading: positionLoading } = usePositions()
-  const { ethPrice } = useTrade()
+  const { ethPrice } = useWorldContext()
   const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
   const { swapTransactions: transactions } = useTransactionHistory()
   const { index } = useController()
@@ -573,7 +572,7 @@ export const useLPPositions = () => {
   const { address, web3 } = useWallet()
   const { squeethPool, nftManager, weth, oSqueeth } = useAddresses()
   const { pool, getWSqueethPositionValue, squeethInitialPrice } = useSqueethPool()
-  const { ethPrice } = useTrade()
+  const { ethPrice } = useWorldContext()
 
   const [activePositions, setActivePositions] = useState<NFTManagers[]>([])
   const [closedPositions, setClosedPositions] = useState<NFTManagers[]>([])

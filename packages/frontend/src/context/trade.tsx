@@ -1,12 +1,9 @@
 import BigNumber from 'bignumber.js'
 import React, { useContext, useEffect, useMemo, useState } from 'react'
 
-import { DEFAULT_SLIPPAGE, InputType, OSQUEETH_DECIMALS } from '../constants/index'
+import { DEFAULT_SLIPPAGE, InputType } from '../constants/index'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
-import { useETHPrice } from '@hooks/useETHPrice'
-import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { usePnL } from '@hooks/usePositions'
-import { useAddresses } from '@hooks/useAddress'
 import { PositionType, TradeType } from '../types'
 
 type Quote = {
@@ -49,10 +46,6 @@ type tradeContextType = {
   setSlippageAmount: (amt: BigNumber) => void
   confirmedAmount: string
   setConfirmedAmount: (amt: string) => void
-  ethPrice: BigNumber
-  setETHPrice: (amt: BigNumber) => void
-  oSqueethBal: BigNumber
-  setOSqueethBal: (amt: BigNumber) => void
 }
 
 const quoteEmptyState = {
@@ -95,10 +88,6 @@ const initialState: tradeContextType = {
   setSlippageAmount: () => null,
   confirmedAmount: '0',
   setConfirmedAmount: () => null,
-  ethPrice: new BigNumber(0),
-  setETHPrice: () => null,
-  oSqueethBal: new BigNumber(0),
-  setOSqueethBal: () => null,
 }
 
 const tradeContext = React.createContext<tradeContextType>(initialState)
@@ -120,8 +109,6 @@ const TradeProvider: React.FC = ({ children }) => {
   const [squeethExposure, setSqueethExposure] = useState(0)
   const [actualTradeType, setActualTradeType] = useState(TradeType.LONG)
   const [confirmedAmount, setConfirmedAmount] = useState('0')
-  const [ethPrice, setETHPrice] = useState(new BigNumber(0))
-  const [oSqueethBal, setOSqueethBal] = useState(new BigNumber(0))
 
   const {
     ready,
@@ -134,20 +121,9 @@ const TradeProvider: React.FC = ({ children }) => {
     getSellQuoteForETH,
   } = useSqueethPool()
   const { positionType } = usePnL()
-  const { oSqueeth } = useAddresses()
-  const _ethPrice = useETHPrice()
-  const _oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
   const amountOutBN = quote.amountOut
   const isPositionOpen = useMemo(() => openPosition === 0, [openPosition])
-
-  useMemo(() => {
-    if (_ethPrice) setETHPrice(_ethPrice)
-  }, [_ethPrice.toString()])
-
-  useMemo(() => {
-    if (_oSqueethBal) setOSqueethBal(_oSqueethBal)
-  }, [_oSqueethBal.toString()])
 
   useEffect(() => {
     setTradeAmount('0')
@@ -271,10 +247,6 @@ const TradeProvider: React.FC = ({ children }) => {
     setAltTradeAmount,
     slippageAmount,
     setSlippageAmount,
-    ethPrice,
-    setETHPrice,
-    oSqueethBal,
-    setOSqueethBal,
   }
 
   return <tradeContext.Provider value={store}>{children}</tradeContext.Provider>
