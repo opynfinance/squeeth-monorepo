@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 
 import { InputType, Links } from '../../../constants'
 import { useTrade } from '@context/trade'
+import { useWorldContext } from '@context/world'
 import { useWallet } from '@context/wallet'
 import { useUserAllowance } from '@hooks/contracts/useAllowance'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
@@ -234,9 +235,8 @@ const OpenLong: React.FC<BuyProps> = ({ balance, open, setTradeCompleted, active
     setConfirmedAmount,
     setTradeSuccess,
     slippageAmount,
-    ethPrice,
-    oSqueethBal,
   } = useTrade()
+  const { ethPrice, oSqueethBal } = useWorldContext()
   const amount = new BigNumber(amountInputValue)
   const altTradeAmount = new BigNumber(altAmountInputValue)
   const { selectWallet, connected } = useWallet()
@@ -249,20 +249,23 @@ const OpenLong: React.FC<BuyProps> = ({ balance, open, setTradeCompleted, active
   let existingShortError: string | undefined
   let priceImpactWarning: string | undefined
 
-  if (connected) {
-    if (oSqueethBal.lt(amount)) {
-      closeError = 'Insufficient oSQTH balance'
+  useEffect(() => {
+    if (connected) {
+      if (oSqueethBal.lt(amount)) {
+        closeError = 'Insufficient oSQTH balance'
+      }
+      if (amount.gt(balance)) {
+        openError = 'Insufficient ETH balance'
+      }
+      if (isShort) {
+        existingShortError = 'Close your short position to open a long'
+      }
+      if (new BigNumber(quote.priceImpact).gt(3)) {
+        priceImpactWarning = 'High Price Impact'
+      }
     }
-    if (amount.gt(balance)) {
-      openError = 'Insufficient ETH balance'
-    }
-    if (isShort) {
-      existingShortError = 'Close your short position to open a long'
-    }
-    if (new BigNumber(quote.priceImpact).gt(3)) {
-      priceImpactWarning = 'High Price Impact'
-    }
-  }
+  }, [oSqueethBal.toString(), amount.toString(), balance, isShort, quote.priceImpact])
+
   const longOpenPriceImpactErrorState = priceImpactWarning && !buyLoading && !openError && !isShort
 
   const transact = async () => {
@@ -500,9 +503,8 @@ const CloseLong: React.FC<BuyProps> = ({
     slippageAmount,
     confirmedAmount,
     setConfirmedAmount,
-    ethPrice,
-    oSqueethBal,
   } = useTrade()
+  const { ethPrice, oSqueethBal } = useWorldContext()
   const amount = new BigNumber(amountInputValue)
   const altTradeAmount = new BigNumber(altAmountInputValue)
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter)
@@ -527,20 +529,22 @@ const CloseLong: React.FC<BuyProps> = ({
   let existingShortError: string | undefined
   let priceImpactWarning: string | undefined
 
-  if (connected) {
-    if (oSqueethBal.lt(amount)) {
-      closeError = 'Insufficient oSQTH balance'
+  useEffect(() => {
+    if (connected) {
+      if (oSqueethBal.lt(amount)) {
+        closeError = 'Insufficient oSQTH balance'
+      }
+      if (amount.gt(balance)) {
+        openError = 'Insufficient ETH balance'
+      }
+      if (isShort) {
+        existingShortError = 'Close your short position to open a long'
+      }
+      if (new BigNumber(quote.priceImpact).gt(3)) {
+        priceImpactWarning = 'High Price Impact'
+      }
     }
-    if (amount.gt(balance)) {
-      openError = 'Insufficient ETH balance'
-    }
-    if (isShort) {
-      existingShortError = 'Close your short position to open a long'
-    }
-    if (new BigNumber(quote.priceImpact).gt(3)) {
-      priceImpactWarning = 'High Price Impact'
-    }
-  }
+  }, [oSqueethBal.toString(), amount.toString(), balance, isShort, quote.priceImpact])
 
   const longClosePriceImpactErrorState =
     priceImpactWarning && !closeError && !sellLoading && !oSqueethBal.isZero() && !isShort

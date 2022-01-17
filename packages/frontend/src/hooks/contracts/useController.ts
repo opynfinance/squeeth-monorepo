@@ -222,6 +222,7 @@ export const useController = () => {
     )
     // return () => sub.unsubscribe()
   }, [web3, networkId, getIndex])
+
   const getFundingForHalfHour = async () => {
     let index
     let mark

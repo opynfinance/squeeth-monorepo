@@ -1,7 +1,11 @@
-/* eslint-disable prettier/prettier */
-import React, { useContext, useState } from 'react'
+import React, { useContext, useMemo, useState } from 'react'
 
 import { useETHPriceCharts } from '@hooks/useETHPriceCharts'
+import BigNumber from 'bignumber.js'
+import { OSQUEETH_DECIMALS } from '../constants/index'
+import { useAddresses } from '@hooks/useAddress'
+import { useETHPrice } from '@hooks/useETHPrice'
+import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 
 type point = {
   value: number
@@ -39,6 +43,11 @@ type WorldContextProps = {
 
   getVaultPNLWithRebalance: (longAmount: number) => point[]
   getStableYieldPNL: (comparedlongAmount: number) => point[]
+
+  ethPrice: BigNumber
+  setETHPrice: (amt: BigNumber) => void
+  oSqueethBal: BigNumber
+  setOSqueethBal: (amt: BigNumber) => void
 }
 
 const initialContext = {
@@ -69,6 +78,11 @@ const initialContext = {
 
   getVaultPNLWithRebalance: () => [],
   getStableYieldPNL: () => [],
+
+  ethPrice: new BigNumber(0),
+  setETHPrice: () => null,
+  oSqueethBal: new BigNumber(0),
+  setOSqueethBal: () => null,
 }
 
 const worldContext = React.createContext<WorldContextProps>(initialContext)
@@ -77,6 +91,8 @@ const useWorldContext = () => useContext(worldContext)
 const WorldProvider: React.FC = ({ children }) => {
   const [researchMode, setResearchMode] = useState(false)
   // const [ usePriceSeries, setUsePriceSeries ] = useState(false) // default to show PNL.
+  const [ethPrice, setETHPrice] = useState(new BigNumber(0))
+  const [oSqueethBal, setOSqueethBal] = useState(new BigNumber(0))
 
   const {
     ethPrices,
@@ -101,6 +117,18 @@ const WorldProvider: React.FC = ({ children }) => {
     collatRatio,
     setCollatRatio,
   } = useETHPriceCharts()
+
+  const { oSqueeth } = useAddresses()
+  const _ethPrice = useETHPrice()
+  const _oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
+
+  useMemo(() => {
+    if (_ethPrice) setETHPrice(_ethPrice)
+  }, [_ethPrice.toString()])
+
+  useMemo(() => {
+    if (_oSqueethBal) setOSqueethBal(_oSqueethBal)
+  }, [_oSqueethBal.toString()])
 
   return (
     <worldContext.Provider
@@ -130,6 +158,10 @@ const WorldProvider: React.FC = ({ children }) => {
         eth90daysPriceMap,
         collatRatio,
         setCollatRatio,
+        ethPrice,
+        setETHPrice,
+        oSqueethBal,
+        setOSqueethBal,
       }}
     >
       {children}

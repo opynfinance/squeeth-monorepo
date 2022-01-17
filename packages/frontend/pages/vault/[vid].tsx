@@ -28,7 +28,7 @@ import { useRestrictUser } from '@context/restrict-user'
 import { useWallet } from '@context/wallet'
 import { useController } from '../../src/hooks/contracts/useController'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
-import { useTrade } from '@context/trade'
+import { useWorldContext } from '@context/world'
 import { CollateralStatus, Vault } from '../../src/types'
 import { squeethClient } from '@utils/apollo-client'
 import { getCollatPercentStatus, toTokenAmount } from '@utils/calculations'
@@ -233,7 +233,7 @@ const Component: React.FC = () => {
   const { liquidations } = useVaultLiquidations(Number(vid))
   const { positionType, squeethAmount } = usePositions()
 
-  const { oSqueethBal } = useTrade()
+  const { oSqueethBal } = useWorldContext()
 
   const [vault, setVault] = useState<Vault | null>(null)
   const [existingCollatPercent, setExistingCollatPercent] = useState(0)

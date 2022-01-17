@@ -12,7 +12,7 @@ import History from '@components/Trade/History'
 import { PositionType } from '../src/types/'
 import { Tooltips, TransactionType, OSQUEETH_DECIMALS } from '../src/constants'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
-import { useTrade } from '@context/trade'
+import { useWorldContext } from '@context/world'
 import { useLPPositions, usePnL, usePositions } from '@hooks/usePositions'
 import { useTransactionHistory } from '@hooks/useTransactionHistory'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
@@ -122,7 +122,7 @@ export function Positions() {
   const { activePositions, loading: isPositionFinishedCalc } = useLPPositions()
   const { pool } = useSqueethPool()
 
-  const { oSqueethBal } = useTrade()
+  const { oSqueethBal } = useWorldContext()
 
   const {
     positionType,
@@ -134,6 +134,7 @@ export function Positions() {
     vaultId,
     existingCollat,
     lpedSqueeth,
+    isLong,
   } = usePositions()
 
   const { index, getCollatRatioAndLiqPrice } = useController()
@@ -260,7 +261,9 @@ export function Positions() {
                   <Typography variant="caption" component="span" color="textSecondary">
                     Realized P&L
                   </Typography>
-                  <Tooltip title={Tooltips.RealizedPnL}>
+                  <Tooltip
+                    title={isLong ? Tooltips.RealizedPnL : `${Tooltips.RealizedPnL}. ${Tooltips.ShortCollateral}`}
+                  >
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
                   <Typography variant="body1" className={longRealizedPNL.gte(0) ? classes.green : classes.red}>
@@ -300,7 +303,9 @@ export function Positions() {
                   <Typography variant="caption" color="textSecondary">
                     Unrealized P&L
                   </Typography>
-                  <Tooltip title={Tooltips.UnrealizedPnL}>
+                  <Tooltip
+                    title={isLong ? Tooltips.UnrealizedPnL : `${Tooltips.UnrealizedPnL}. ${Tooltips.ShortCollateral}`}
+                  >
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
                   {isPositionFinishedCalc || shortGain.isLessThanOrEqualTo(-100) || !shortGain.isFinite() ? (
