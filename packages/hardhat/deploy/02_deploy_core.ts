@@ -7,7 +7,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const { deployer } = await getNamedAccounts();
   await deploy("Oracle", { from: deployer, log: true,});
-  await deploy("ShortPowerPerp", { from: deployer, log: true, args: ['short Squeeth', 'sSQU']});
+  await deploy("ShortPowerPerp", { from: deployer, log: true, args: ['short Squeeth', 'sSQTH']});
   await deploy("WPowerPerp", { from: deployer, log: true, args:['Opyn Squeeth', 'oSQTH']});
 }
 

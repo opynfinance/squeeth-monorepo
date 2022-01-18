@@ -16,7 +16,7 @@ import { fromTokenAmount, parseSlippageInput, toTokenAmount } from '@utils/calcu
 import { useAddresses } from '../useAddress'
 import { Networks } from '../../types'
 import useUniswapTicks from '../useUniswapTicks'
-import { useTrade } from '@context/trade'
+import { useWorldContext } from '@context/world'
 // import univ3prices from '@thanpolas/univ3prices'
 const univ3prices = require('@thanpolas/univ3prices')
 
@@ -40,7 +40,7 @@ export const useSqueethPool = () => {
   const [wethPrice, setWethPrice] = useState<BigNumber>(new BigNumber(0))
   const [ready, setReady] = useState(false)
   const [tvl, setTVL] = useState(0)
-  const { ethPrice } = useTrade()
+  const { ethPrice } = useWorldContext()
 
   const { address, web3, networkId, handleTransaction } = useWallet()
   const { squeethPool, swapRouter, quoter, weth, oSqueeth } = useAddresses()

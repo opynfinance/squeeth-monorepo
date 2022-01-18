@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useReducer } from 'react'
 import { Reducer } from 'react-transition-group/node_modules/@types/react'
 
-import { useTrade } from '@context/trade'
+import { useWorldContext } from '@context/world'
 
 export enum Steps {
   SELECT_METHOD = 1,
@@ -82,7 +82,7 @@ const useLPState = () => useContext<LPContextType>(LPContext)
 
 const LPProvider: React.FC = ({ children }) => {
   const [lpState, dispatch] = useReducer<Reducer<LPType, ActionType>>(tradeReducer, initialState)
-  const { oSqueethBal } = useTrade()
+  const { oSqueethBal } = useWorldContext()
 
   useEffect(() => {
     if (oSqueethBal.isZero() || lpState.step === Steps.PROVIDE_LIQUIDITY) return
