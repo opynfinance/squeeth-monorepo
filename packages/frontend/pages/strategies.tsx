@@ -8,15 +8,17 @@ import StrategyInfoItem from '@components/Strategies/StrategyInfoItem'
 import { SecondaryTab, SecondaryTabs } from '@components/Tabs'
 import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
 import { useWallet } from '@context/wallet'
-import { useWorldContext } from '@context/world'
 import { useCrabStrategy } from '@hooks/contracts/useCrabStrategy'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { useAddresses } from '@hooks/useAddress'
 import { CircularProgress, InputAdornment, TextField, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
+import { useController } from '@hooks/contracts/useController'
 import { toTokenAmount } from '@utils/calculations'
+import { useWorldContext } from '@context/world'
 import BigNumber from 'bignumber.js'
 import React, { useState } from 'react'
+import { Tooltips } from '@constants/index'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -89,6 +91,7 @@ const Strategies: React.FC = () => {
     useCrabStrategy()
   const { crabStrategy } = useAddresses()
   const crabBalance = useTokenBalance(crabStrategy, 10, 18)
+  const { index } = useController()
   const { ethPrice } = useWorldContext()
 
   const deposit = async () => {
@@ -134,7 +137,12 @@ const Strategies: React.FC = () => {
           <div className={classes.details}>
             <CapDetails maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
             <div className={classes.overview}>
-              <StrategyInfoItem value={ethPrice.toFixed(2)} label="ETH Price ($)" />
+              <StrategyInfoItem
+                value={Number(toTokenAmount(index, 18).sqrt()).toFixed(2).toLocaleString()}
+                label="ETH Price ($)"
+                tooltip={Tooltips.SpotPrice}
+                priceType="spot"
+              />
               <StrategyInfoItem value={vault?.shortAmount.toFixed(4)} label="Short oSQTH" />
               <StrategyInfoItem value={crabBalance.toFixed(4)} label="Position (CRAB)" />
             </div>
@@ -142,14 +150,27 @@ const Strategies: React.FC = () => {
               <StrategyInfoItem
                 value={new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
                   day: 'numeric',
-                  month: 'short',
+                  month: 'numeric',
                   hour: 'numeric',
                   minute: 'numeric',
+                  timeZoneName: 'short',
+                  hour12: false,
                 })}
                 label="Last rebalanced at"
+                tooltip={new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
+                  day: 'numeric',
+                  month: 'long',
+                  hour: 'numeric',
+                  minute: 'numeric',
+                  timeZoneName: 'long',
+                })}
               />
               <StrategyInfoItem value={collatRatio.toString()} label="Collat Ratio (%)" />
-              <StrategyInfoItem value={liquidationPrice.toFixed(2)} label="Liquidation price ($)" />
+              <StrategyInfoItem
+                value={liquidationPrice.toFixed(2)}
+                label="Liq Price ($)"
+                tooltip={`${Tooltips.LiquidationPrice} ${Tooltips.VaultLiquidations}`}
+              />
             </div>
             <StrategyInfo />
             <CrabStrategyHistory />
