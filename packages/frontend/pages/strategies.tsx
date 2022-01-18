@@ -21,6 +21,7 @@ import React, { useState } from 'react'
 import { Tooltips } from '@constants/index'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import { TradeSettings } from '@components/TradeSettings'
+import { Links } from '@constants/enums'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -81,6 +82,9 @@ const useStyles = makeStyles((theme) =>
       justifyContent: 'right',
       alignSelf: 'center',
     },
+    link: {
+      color: theme.palette.primary.main,
+    },
   }),
 )
 
@@ -137,9 +141,13 @@ const Strategies: React.FC = () => {
           </Typography>
         </div>
         <Typography variant="subtitle1" color="textSecondary" style={{ width: '60%', marginTop: '8px' }}>
-          This yielding position is similar to selling a strangle. You are profitable as long as ETH moves less than
-          approximately 6% in either direction in a single day. The strategy rebalances daily to be delta neutral by
-          buying or selling oSQTH.
+          This yielding position allows depositors to collect funding from being short squeeth and long ETH, targeting
+          being delta neutral. You are profitable as long as ETH moves less than approximately 6% in either direction in
+          a single day, where the exact percentage move changes daily subject to volatility.{' '}
+          <a className={classes.link} href={Links.CrabFAQ} target="_blank" rel="noreferrer">
+            {' '}
+            Learn more.{' '}
+          </a>
         </Typography>
         <div className={classes.body}>
           <div className={classes.details}>
