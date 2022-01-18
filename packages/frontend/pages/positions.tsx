@@ -122,7 +122,7 @@ export function Positions() {
   const { activePositions, loading: isPositionFinishedCalc } = useLPPositions()
   const { pool } = useSqueethPool()
 
-  const { oSqueethBal } = useTrade()
+  const { oSqueethBal, ethPrice } = useTrade()
 
   const {
     positionType,
@@ -133,6 +133,7 @@ export function Positions() {
     vaultId,
     existingCollat,
     lpedSqueeth,
+    wethAmount,
   } = usePositions()
 
   const { index, getCollatRatioAndLiqPrice } = useController()
@@ -233,17 +234,17 @@ export function Positions() {
                   <Tooltip title={Tooltips.UnrealizedPnL}>
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
-                  {isPnLLoading ||
-                  longGain.isLessThanOrEqualTo(-100) ||
-                  !longGain.isFinite() ||
-                  longUnrealizedPNL.isEqualTo(0) ||
-                  !longUnrealizedPNL.isFinite() ? (
+                  {isPnLLoading || longGain.isLessThanOrEqualTo(-100) || !longGain.isFinite() ? (
                     <Typography variant="body1">Loading</Typography>
                   ) : (
                     <>
                       <Typography variant="body1" className={longGain.isLessThan(0) ? classes.red : classes.green}>
-                        $ {longUnrealizedPNL.toFixed(2)} (
-                        {longUnrealizedPNL.dividedBy(toTokenAmount(index, 18).sqrt()).toFixed(5)} ETH)
+                        ${' '}
+                        {sellQuote.amountOut
+                          .minus(wethAmount.abs())
+                          .multipliedBy(toTokenAmount(index, 18).sqrt())
+                          .toFixed(2)}{' '}
+                        ({sellQuote.amountOut.minus(wethAmount.abs()).toFixed(5)} ETH)
                       </Typography>
                       <Typography variant="caption" className={longGain.isLessThan(0) ? classes.red : classes.green}>
                         {(longGain || 0).toFixed(2)}%

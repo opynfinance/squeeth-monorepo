@@ -161,7 +161,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     loading,
     refetch,
   } = usePnL()
-
+  const { index } = useController()
   const {
     positionType: pType,
     squeethAmount,
@@ -171,6 +171,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     existingCollat,
     loading: isPositionLoading,
     isLP,
+    wethAmount,
   } = usePositions()
   const { liquidations } = useVaultLiquidations(Number(vaultId))
   const {
@@ -336,7 +337,10 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
                 </Typography>
               ) : (
                 <Typography variant="caption" color="textSecondary" style={{ marginTop: '.5em' }}>
-                  $ {getPositionBasedValue(sellQuote.amountOut, buyQuote, new BigNumber(0)).times(ethPrice).toFixed(2)}
+                  ${' '}
+                  {getPositionBasedValue(sellQuote.amountOut, buyQuote, new BigNumber(0))
+                    .times(toTokenAmount(index, 18).sqrt())
+                    .toFixed(2)}
                 </Typography>
               )}
             </div>
@@ -357,7 +361,10 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
                       style={{ fontWeight: 600 }}
                     >
                       {getPositionBasedValue(
-                        `$${longUnrealizedPNL.toFixed(2)}`,
+                        `$${sellQuote.amountOut
+                          .minus(wethAmount.abs())
+                          .multipliedBy(toTokenAmount(index, 18).sqrt())
+                          .toFixed(2)}`,
                         `$${shortUnrealizedPNL.toFixed(2)}`,
                         '--',
                         'Loading',
