@@ -21,6 +21,7 @@ import { useTrade } from '@context/trade'
 import useInterval from './useInterval'
 import { useUsdAmount } from './useUsdAmount'
 import { useTransactionHistory } from './useTransactionHistory'
+import { useVaultLiquidations } from './contracts/useLiquidations'
 
 const bigZero = new BigNumber(0)
 
