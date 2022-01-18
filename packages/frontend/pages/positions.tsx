@@ -261,7 +261,7 @@ export function Positions() {
             </div>
           </div>
         ) : null}
-        {positionType === PositionType.SHORT && shortDebt.isGreaterThan(0) ? (
+        {shortDebt.isGreaterThan(0) ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>Short Squeeth</Typography>

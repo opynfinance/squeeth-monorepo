@@ -57,7 +57,6 @@ export const usePositions = () => {
   const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
   const vaultId = shortVaults[firstValidVault]?.id || 0
   const { liquidations } = useVaultLiquidations(Number(vaultId))
-  console.log(vaultId, shortVaults)
 
   useEffect(() => {
     if (loading || lpLoading) {
