@@ -10,6 +10,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { usePnL, usePositions } from '@hooks/usePositions'
 import { Tooltips } from '@constants/enums'
 import { useTrade } from '@context/trade'
+import { useWorldContext } from '@context/world'
 import { PositionType, TradeType } from '../types'
 import { useController } from '@hooks/contracts/useController'
 import { toTokenAmount } from '@utils/calculations'
@@ -172,6 +173,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     loading: isPositionLoading,
     isLP,
     wethAmount,
+    isLong,
   } = usePositions()
   const { liquidations } = useVaultLiquidations(Number(vaultId))
   const {
@@ -182,8 +184,8 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     tradeSuccess,
     setTradeSuccess,
     tradeType,
-    ethPrice,
   } = useTrade()
+  const { ethPrice } = useWorldContext()
   const tradeAmount = new BigNumber(tradeAmountInput)
   const [fetchingNew, setFetchingNew] = useState(false)
   const [postTradeAmt, setPostTradeAmt] = useState(new BigNumber(0))
@@ -351,7 +353,9 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
                     <Typography variant="caption" color="textSecondary" style={{ fontWeight: 500 }}>
                       Unrealized P&L
                     </Typography>
-                    <Tooltip title={Tooltips.UnrealizedPnL}>
+                    <Tooltip
+                      title={isLong ? Tooltips.UnrealizedPnL : `${Tooltips.UnrealizedPnL}. ${Tooltips.ShortCollateral}`}
+                    >
                       <InfoIcon fontSize="small" className={classes.infoIcon} />
                     </Tooltip>
                   </div>
@@ -383,7 +387,9 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
                   <Typography variant="caption" color="textSecondary" style={{ fontWeight: 500 }}>
                     Realized P&L
                   </Typography>
-                  <Tooltip title={Tooltips.RealizedPnL}>
+                  <Tooltip
+                    title={isLong ? Tooltips.RealizedPnL : `${Tooltips.RealizedPnL}. ${Tooltips.ShortCollateral}`}
+                  >
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
                 </div>

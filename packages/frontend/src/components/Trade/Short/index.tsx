@@ -203,8 +203,6 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
     tradeSuccess,
     setTradeSuccess,
     slippageAmount,
-    ethPrice,
-    oSqueethBal,
   } = useTrade()
   const amount = new BigNumber(amountInputValue)
   const collateral = new BigNumber(collateralInput)
@@ -281,41 +279,52 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
     }
   }, [amount.toString(), collatPercent, shortVaults?.length])
 
-  const { setCollatRatio } = useWorldContext()
+  const { setCollatRatio, ethPrice, oSqueethBal } = useWorldContext()
 
   let openError: string | undefined
   let closeError: string | undefined
   let existingLongError: string | undefined
   let priceImpactWarning: string | undefined
 
-  if (connected) {
-    if (
-      shortVaults.length &&
-      (shortVaults[firstValidVault].shortAmount.lt(amount) || shortVaults[firstValidVault].shortAmount.isZero())
-    ) {
-      closeError = 'Close amount exceeds position'
+  useEffect(() => {
+    if (connected) {
+      if (
+        shortVaults.length &&
+        (shortVaults[firstValidVault].shortAmount.lt(amount) || shortVaults[firstValidVault].shortAmount.isZero())
+      ) {
+        closeError = 'Close amount exceeds position'
+      }
+      if (new BigNumber(quote.priceImpact).gt(3)) {
+        priceImpactWarning = 'High Price Impact'
+      }
+      if (collateral.isGreaterThan(new BigNumber(balance))) {
+        openError = 'Insufficient ETH balance'
+      } else if (amount.isGreaterThan(0) && collateral.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) {
+        openError = `Minimum collateral is ${MIN_COLLATERAL_AMOUNT} ETH`
+      }
+      if (
+        !open &&
+        amount.isGreaterThan(0) &&
+        shortVaults.length &&
+        amount.lt(shortVaults[firstValidVault].shortAmount) &&
+        neededCollat.isLessThan(MIN_COLLATERAL_AMOUNT)
+      ) {
+        closeError = `You must have at least ${MIN_COLLATERAL_AMOUNT} ETH collateral unless you fully close out your position. Either fully close your position, or close out less`
+      }
+      if (isLong) {
+        existingLongError = 'Close your long position to open a short'
+      }
     }
-    if (new BigNumber(quote.priceImpact).gt(3)) {
-      priceImpactWarning = 'High Price Impact'
-    }
-    if (collateral.isGreaterThan(new BigNumber(balance))) {
-      openError = 'Insufficient ETH balance'
-    } else if (amount.isGreaterThan(0) && collateral.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) {
-      openError = `Minimum collateral is ${MIN_COLLATERAL_AMOUNT} ETH`
-    }
-    if (
-      !open &&
-      amount.isGreaterThan(0) &&
-      shortVaults.length &&
-      amount.lt(shortVaults[firstValidVault].shortAmount) &&
-      neededCollat.isLessThan(MIN_COLLATERAL_AMOUNT)
-    ) {
-      closeError = `You must have at least ${MIN_COLLATERAL_AMOUNT} ETH collateral unless you fully close out your position. Either fully close your position, or close out less`
-    }
-    if (isLong) {
-      existingLongError = 'Close your long position to open a short'
-    }
-  }
+  }, [
+    shortVaults.length,
+    amount.toString(),
+    quote.priceImpact,
+    balance,
+    collateral.toString(),
+    existingCollat.toString(),
+    neededCollat.toString(),
+    isLong,
+  ])
 
   const shortOpenPriceImpactErrorState =
     priceImpactWarning && !shortLoading && !(collatPercent < 150) && !openError && !existingLongError
@@ -563,8 +572,6 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     setTradeSuccess,
     tradeSuccess,
     slippageAmount,
-    ethPrice,
-    oSqueethBal,
   } = useTrade()
   const amount = new BigNumber(amountInputValue)
   const {
@@ -577,6 +584,8 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     lpedSqueeth,
     loading: isPositionFinishedCalc,
   } = usePositions()
+
+  const { setCollatRatio, ethPrice, oSqueethBal } = useWorldContext()
 
   const mintedDebt = useMemo(() => {
     return oSqueethBal?.isGreaterThan(0) && positionType === PositionType.LONG
@@ -681,8 +690,6 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     vaultId,
   ])
 
-  const { setCollatRatio } = useWorldContext()
-
   const setShortCloseMax = useCallback(() => {
     if (finalShortAmount.isGreaterThan(0)) {
       setAmount(finalShortAmount.toString())
@@ -696,31 +703,42 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   let existingLongError: string | undefined
   let priceImpactWarning: string | undefined
 
-  if (connected) {
-    if (finalShortAmount.lt(0) && finalShortAmount.lt(amount)) {
-      closeError = 'Close amount exceeds position'
+  useEffect(() => {
+    if (connected) {
+      if (finalShortAmount.lt(0) && finalShortAmount.lt(amount)) {
+        closeError = 'Close amount exceeds position'
+      }
+      if (new BigNumber(quote.priceImpact).gt(3)) {
+        priceImpactWarning = 'High Price Impact'
+      }
+      if (collateral.isGreaterThan(new BigNumber(balance))) {
+        openError = 'Insufficient ETH balance'
+      } else if (amount.isGreaterThan(0) && collateral.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) {
+        openError = `Minimum collateral is ${MIN_COLLATERAL_AMOUNT} ETH`
+      }
+      if (
+        !open &&
+        amount.isGreaterThan(0) &&
+        shortVaults.length &&
+        amount.lt(finalShortAmount) &&
+        neededCollat.isLessThan(MIN_COLLATERAL_AMOUNT)
+      ) {
+        closeError = `You must have at least ${MIN_COLLATERAL_AMOUNT} ETH collateral unless you fully close out your position. Either fully close your position, or close out less`
+      }
+      if (isLong && !finalShortAmount.isGreaterThan(0)) {
+        existingLongError = 'Close your long position to open a short'
+      }
     }
-    if (new BigNumber(quote.priceImpact).gt(3)) {
-      priceImpactWarning = 'High Price Impact'
-    }
-    if (collateral.isGreaterThan(new BigNumber(balance))) {
-      openError = 'Insufficient ETH balance'
-    } else if (amount.isGreaterThan(0) && collateral.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) {
-      openError = `Minimum collateral is ${MIN_COLLATERAL_AMOUNT} ETH`
-    }
-    if (
-      !open &&
-      amount.isGreaterThan(0) &&
-      shortVaults.length &&
-      amount.lt(finalShortAmount) &&
-      neededCollat.isLessThan(MIN_COLLATERAL_AMOUNT)
-    ) {
-      closeError = `You must have at least ${MIN_COLLATERAL_AMOUNT} ETH collateral unless you fully close out your position. Either fully close your position, or close out less`
-    }
-    if (isLong && !finalShortAmount.isGreaterThan(0)) {
-      existingLongError = 'Close your long position to open a short'
-    }
-  }
+  }, [
+    finalShortAmount.toString(),
+    amount.toString(),
+    quote.priceImpact,
+    collateral.toString(),
+    balance,
+    existingCollat.toString(),
+    neededCollat.toString(),
+    isLong,
+  ])
 
   const shortClosePriceImpactErrorState =
     priceImpactWarning &&

@@ -9,7 +9,7 @@ import { LPActions, OBTAIN_METHOD, useLPState } from '@context/lp'
 import { useWallet } from '@context/wallet'
 import { useController } from '@hooks/contracts/useController'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
-import { useTrade } from '@context/trade'
+import { useWorldContext } from '@context/world'
 import { usePositions } from '@hooks/usePositions'
 import { toTokenAmount } from '@utils/calculations'
 import { PrimaryButton } from '../Button'
@@ -67,7 +67,7 @@ const useStyles = makeStyles((theme) =>
 
 const Mint: React.FC = () => {
   const classes = useStyles()
-  const { oSqueethBal } = useTrade()
+  const { oSqueethBal } = useWorldContext()
   const { balance, connected } = useWallet()
   const { existingCollatPercent, existingCollat, firstValidVault } = usePositions()
   const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
