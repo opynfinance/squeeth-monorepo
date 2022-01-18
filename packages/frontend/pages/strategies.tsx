@@ -19,6 +19,8 @@ import { useWorldContext } from '@context/world'
 import BigNumber from 'bignumber.js'
 import React, { useState } from 'react'
 import { Tooltips } from '@constants/index'
+import TradeInfoItem from '@components/Trade/TradeInfoItem'
+import { TradeSettings } from '@components/TradeSettings'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -73,6 +75,12 @@ const useStyles = makeStyles((theme) =>
       zIndex: 20,
       // background: '#2A2D2E',
     },
+    settingsButton: {
+      marginTop: theme.spacing(2),
+      marginLeft: theme.spacing(37),
+      justifyContent: 'right',
+      alignSelf: 'center',
+    },
   }),
 )
 
@@ -80,7 +88,7 @@ const Strategies: React.FC = () => {
   const [ethAmount, setEthAmount] = useState(new BigNumber(0))
   const [withdrawAmount, setWithdrawAmount] = useState(new BigNumber(0))
   const [depositOption, setDepositOption] = useState(0)
-  const [slippage, setSlippage] = useState(0.5)
+  const [slippage, setSlippage] = useState(new BigNumber(0.5))
   const [txLoading, setTxLoading] = useState(false)
   const [txLoaded, setTxLoaded] = useState(false)
   const [txHash, setTxHash] = useState('')
@@ -97,7 +105,7 @@ const Strategies: React.FC = () => {
   const deposit = async () => {
     setTxLoading(true)
     try {
-      const tx = await flashDeposit(ethAmount, slippage)
+      const tx = await flashDeposit(ethAmount, slippage.toNumber())
       setTxHash(tx.transactionHash)
       setTxLoaded(true)
     } catch (e) {
@@ -109,7 +117,7 @@ const Strategies: React.FC = () => {
   const withdraw = async () => {
     setTxLoading(true)
     try {
-      const tx = await flashWithdraw(withdrawAmount, slippage)
+      const tx = await flashWithdraw(withdrawAmount, slippage.toNumber())
       setTxHash(tx.transactionHash)
       setTxLoaded(true)
     } catch (e) {
@@ -204,6 +212,9 @@ const Strategies: React.FC = () => {
                   <SecondaryTab label="Deposit" />
                   <SecondaryTab label="Withdraw" />
                 </SecondaryTabs>
+                <div className={classes.settingsButton}>
+                  <TradeSettings isCrab={true} setCrabSlippage={setSlippage} crabSlippage={slippage} />
+                </div>
                 <div className={classes.tradeContainer}>
                   {depositOption === 0 ? (
                     <PrimaryInput
@@ -230,7 +241,13 @@ const Strategies: React.FC = () => {
                       onActionClicked={() => setWithdrawAmount(crabBalance)}
                     />
                   )}
-                  <TextField
+                  <TradeInfoItem
+                    label="Slippage"
+                    value={slippage.toString()}
+                    tooltip="The strategy uses a uniswap flashswap to make a deposit. You can adjust slippage for this swap by clicking the gear icon"
+                    unit="%"
+                  />
+                  {/* <TextField
                     size="small"
                     value={slippage}
                     type="number"
@@ -250,7 +267,7 @@ const Strategies: React.FC = () => {
                     inputProps={{
                       min: '0',
                     }}
-                  />
+                  /> */}
                   {depositOption === 0 ? (
                     <PrimaryButton
                       variant="contained"
