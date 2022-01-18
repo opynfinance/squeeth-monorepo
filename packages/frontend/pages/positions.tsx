@@ -116,8 +116,7 @@ export function Positions() {
     sellQuote,
     longRealizedPNL,
     shortRealizedPNL,
-    shortUnrealizedPNL,
-    longUnrealizedPNL,
+    ethCollateralPnl,
     loading: isPnLLoading,
   } = usePnL()
   const { activePositions, loading: isPositionFinishedCalc } = useLPPositions()
@@ -303,17 +302,19 @@ export function Positions() {
                   >
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
-                  {isPositionFinishedCalc ||
-                  shortGain.isLessThanOrEqualTo(-100) ||
-                  !shortGain.isFinite() ||
-                  shortUnrealizedPNL.isEqualTo(0) ||
-                  !shortUnrealizedPNL.isFinite ? (
+                  {isPositionFinishedCalc || shortGain.isLessThanOrEqualTo(-100) || !shortGain.isFinite() ? (
                     <Typography variant="body1">Loading</Typography>
                   ) : (
                     <>
                       <Typography variant="body1" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
-                        $ {shortUnrealizedPNL.toFixed(2)} (
-                        {shortUnrealizedPNL.dividedBy(toTokenAmount(index, 18).sqrt()).toFixed(5)} ETH)
+                        $ {wethAmount.minus(buyQuote).multipliedBy(ethPrice).plus(ethCollateralPnl).toFixed(2)} (
+                        {wethAmount
+                          .minus(buyQuote)
+                          .multipliedBy(ethPrice)
+                          .plus(ethCollateralPnl)
+                          .dividedBy(ethPrice)
+                          .toFixed(5)}{' '}
+                        ETH)
                       </Typography>
                       <Typography variant="caption" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
                         {(shortGain || 0).toFixed(2)}%

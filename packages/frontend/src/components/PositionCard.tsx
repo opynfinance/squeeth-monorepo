@@ -12,8 +12,6 @@ import { Tooltips } from '@constants/enums'
 import { useTrade } from '@context/trade'
 import { useWorldContext } from '@context/world'
 import { PositionType, TradeType } from '../types'
-import { useController } from '@hooks/contracts/useController'
-import { toTokenAmount } from '@utils/calculations'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 
 const useStyles = makeStyles((theme) =>
@@ -157,11 +155,10 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     shortGain,
     longRealizedPNL,
     shortRealizedPNL,
-    shortUnrealizedPNL,
+    ethCollateralPnl,
     loading,
     refetch,
   } = usePnL()
-  const { index } = useController()
   const {
     positionType: pType,
     squeethAmount,
@@ -338,10 +335,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
                 </Typography>
               ) : (
                 <Typography variant="caption" color="textSecondary" style={{ marginTop: '.5em' }}>
-                  ${' '}
-                  {getPositionBasedValue(sellQuote.amountOut, buyQuote, new BigNumber(0))
-                    .times(toTokenAmount(index, 18).sqrt())
-                    .toFixed(2)}
+                  $ {getPositionBasedValue(sellQuote.amountOut, buyQuote, new BigNumber(0)).times(ethPrice).toFixed(2)}
                 </Typography>
               )}
             </div>
@@ -365,7 +359,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
                     >
                       {getPositionBasedValue(
                         `$${sellQuote.amountOut.minus(wethAmount.abs()).multipliedBy(ethPrice).toFixed(2)}`,
-                        `$${shortUnrealizedPNL.toFixed(2)}`,
+                        `$${wethAmount.minus(buyQuote).multipliedBy(ethPrice).plus(ethCollateralPnl).toFixed(2)}`,
                         '--',
                         'Loading',
                       )}
