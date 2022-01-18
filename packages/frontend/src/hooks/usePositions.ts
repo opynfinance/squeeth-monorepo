@@ -38,7 +38,7 @@ export const usePositions = () => {
     variables: {
       poolAddress: squeethPool?.toLowerCase(),
       origin: address || '',
-      recipients: [shortHelper, address || '', swapRouter],
+      recipients: [shortHelper, address || ''],
       orderDirection: 'asc',
     },
     fetchPolicy: 'cache-and-network',
@@ -77,7 +77,6 @@ export const usePositions = () => {
 
           //buy one squeeth means -1 to the pool, +1 to the user
           acc.squeethAmount = acc.squeethAmount.plus(squeethAmt.negated())
-          acc.wethAmount = acc.wethAmount.plus(wethAmt.negated())
 
           //<0 means, buying squeeth
           //>0 means selling squeeth
@@ -86,12 +85,15 @@ export const usePositions = () => {
           acc.totalUSDSpent = acc.totalUSDSpent.plus(usdAmt)
 
           acc.usdAmount = acc.usdAmount.plus(usdAmt)
+          // when the position is fully closed, reset values to zero
           if (acc.squeethAmount.isZero()) {
             acc.usdAmount = bigZero
             acc.wethAmount = bigZero
             acc.totalSqueeth = bigZero
             acc.totalETHSpent = bigZero
             acc.totalUSDSpent = bigZero
+          } else {
+            acc.wethAmount = acc.wethAmount.plus(wethAmt.negated())
           }
 
           return acc
@@ -112,7 +114,7 @@ export const usePositions = () => {
         totalETHSpent: bigZero,
         totalUSDSpent: bigZero,
       },
-    [isWethToken0, swaps],
+    [isWethToken0, swaps?.length],
   )
 
   const { finalSqueeth, finalWeth } = useMemo(() => {
