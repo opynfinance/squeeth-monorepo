@@ -37,7 +37,7 @@ export const usePositions = () => {
     variables: {
       poolAddress: squeethPool?.toLowerCase(),
       origin: address || '',
-      recipients: [shortHelper, address || ''],
+      recipients: [shortHelper, address || '', swapRouter],
       orderDirection: 'asc',
     },
     fetchPolicy: 'cache-and-network',

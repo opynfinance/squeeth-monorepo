@@ -108,6 +108,7 @@ export function Positions() {
   const [existingCollatPercent, setExistingCollatPercent] = useState(0)
   const [existingLiqPrice, setExistingLiqPrice] = useState(new BigNumber(0))
   const classes = useStyles()
+  const { ethPrice } = useWorldContext()
   const {
     longGain,
     shortGain,
@@ -240,12 +241,8 @@ export function Positions() {
                   ) : (
                     <>
                       <Typography variant="body1" className={longGain.isLessThan(0) ? classes.red : classes.green}>
-                        ${' '}
-                        {sellQuote.amountOut
-                          .minus(wethAmount.abs())
-                          .multipliedBy(toTokenAmount(index, 18).sqrt())
-                          .toFixed(2)}{' '}
-                        ({sellQuote.amountOut.minus(wethAmount.abs()).toFixed(5)} ETH)
+                        $ {sellQuote.amountOut.minus(wethAmount.abs()).multipliedBy(ethPrice).toFixed(2)} (
+                        {sellQuote.amountOut.minus(wethAmount.abs()).toFixed(5)} ETH)
                       </Typography>
                       <Typography variant="caption" className={longGain.isLessThan(0) ? classes.red : classes.green}>
                         {(longGain || 0).toFixed(2)}%

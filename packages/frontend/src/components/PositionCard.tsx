@@ -158,7 +158,6 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     longRealizedPNL,
     shortRealizedPNL,
     shortUnrealizedPNL,
-    longUnrealizedPNL,
     loading,
     refetch,
   } = usePnL()
@@ -365,10 +364,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
                       style={{ fontWeight: 600 }}
                     >
                       {getPositionBasedValue(
-                        `$${sellQuote.amountOut
-                          .minus(wethAmount.abs())
-                          .multipliedBy(toTokenAmount(index, 18).sqrt())
-                          .toFixed(2)}`,
+                        `$${sellQuote.amountOut.minus(wethAmount.abs()).multipliedBy(ethPrice).toFixed(2)}`,
                         `$${shortUnrealizedPNL.toFixed(2)}`,
                         '--',
                         'Loading',
