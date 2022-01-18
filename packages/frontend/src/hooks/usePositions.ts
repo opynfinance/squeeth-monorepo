@@ -56,6 +56,8 @@ export const usePositions = () => {
   const swaps = data?.swaps
   const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
   const vaultId = shortVaults[firstValidVault]?.id || 0
+  const { liquidations } = useVaultLiquidations(Number(vaultId))
+  console.log(vaultId, shortVaults)
 
   useEffect(() => {
     if (loading || lpLoading) {
@@ -175,6 +177,10 @@ export const usePositions = () => {
     isLong: positionType === PositionType.LONG,
     isShort: positionType === PositionType.SHORT,
     isLP: squeethLiquidity.gt(0) || wethLiquidity.gt(0),
+    isVaultExists: shortVaults.length && shortVaults[firstValidVault]?.collateralAmount?.isGreaterThan(0),
+    isFullyLiquidated:
+      shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0,
+    isLiquidations: liquidations.length > 0,
   }
 }
 
@@ -734,8 +740,7 @@ export const useLPPositions = () => {
           setLoading(false)
       })
     }
-  }, [gphLoading, isWethToken0, data?.positions, positionAndFees.length])
-
+  }, [gphLoading, isWethToken0, data?.positions.length, positionAndFees?.length])
   return {
     activePositions: activePositions,
     closedPositions: closedPositions,

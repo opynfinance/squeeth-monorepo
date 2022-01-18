@@ -134,25 +134,12 @@ export function Positions() {
     vaultId,
     existingCollat,
     lpedSqueeth,
+    isFullyLiquidated,
+    isVaultExists,
+    isLiquidations,
   } = usePositions()
 
   const { index, getCollatRatioAndLiqPrice } = useController()
-  const { transactions } = useTransactionHistory()
-
-  const lastDeposit = useMemo(
-    () => transactions.find((transaction) => transaction.transactionType === TransactionType.MINT_SHORT),
-    [transactions?.length],
-  )
-
-  const vaultExists = useMemo(() => {
-    return shortVaults.length && shortVaults[firstValidVault]?.collateralAmount?.isGreaterThan(0)
-  }, [firstValidVault, shortVaults?.length])
-
-  const { liquidations } = useVaultLiquidations(Number(vaultId))
-
-  const fullyLiquidated = useMemo(() => {
-    return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
-  }, [firstValidVault, shortVaults?.length, liquidations?.length])
 
   useEffect(() => {
     getCollatRatioAndLiqPrice(
@@ -357,12 +344,12 @@ export function Positions() {
             </div>
           </div>
         ) : null}
-        {lpDebt.isGreaterThan(0) && vaultExists && !fullyLiquidated ? (
+        {lpDebt.isGreaterThan(0) && isVaultExists && !isFullyLiquidated ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>LPed Squeeth</Typography>
               <Typography className={classes.link}>
-                {vaultExists ? <Link href={`vault/${vaultId}`}>Manage</Link> : null}
+                {isVaultExists ? <Link href={`vault/${vaultId}`}>Manage</Link> : null}
               </Typography>
             </div>
             <div className={classes.shortPositionData}>
@@ -404,12 +391,12 @@ export function Positions() {
             </div>
           </div>
         ) : null}
-        {mintedDebt.isGreaterThan(0) && !fullyLiquidated ? (
+        {mintedDebt.isGreaterThan(0) && !isFullyLiquidated ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>Minted Squeeth</Typography>
               <Typography className={classes.link}>
-                {vaultExists ? <Link href={`vault/${vaultId}`}>Manage</Link> : null}
+                {isVaultExists ? <Link href={`vault/${vaultId}`}>Manage</Link> : null}
               </Typography>
             </div>
             <div className={classes.shortPositionData}>
@@ -456,7 +443,7 @@ export function Positions() {
           </div>
         ) : null}
 
-        {liquidations.length > 0 ? (
+        {isLiquidations ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography className={classes.red}>Short Squeeth - Liquidated</Typography>
