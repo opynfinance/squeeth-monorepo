@@ -155,7 +155,8 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     shortGain,
     longRealizedPNL,
     shortRealizedPNL,
-    ethCollateralPnl,
+    shortUnrealizedPNL,
+    longUnrealizedPNL,
     loading,
     refetch,
   } = usePnL()
@@ -168,7 +169,6 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     existingCollat,
     loading: isPositionLoading,
     isLP,
-    wethAmount,
     isLong,
   } = usePositions()
   const { liquidations } = useVaultLiquidations(Number(vaultId))
@@ -358,8 +358,8 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
                       style={{ fontWeight: 600 }}
                     >
                       {getPositionBasedValue(
-                        `$${sellQuote.amountOut.minus(wethAmount.abs()).multipliedBy(ethPrice).toFixed(2)}`,
-                        `$${wethAmount.minus(buyQuote).multipliedBy(ethPrice).plus(ethCollateralPnl).toFixed(2)}`,
+                        `$${longUnrealizedPNL?.usdValue.toFixed(2)}`,
+                        `$${shortUnrealizedPNL.toFixed(2)}`,
                         '--',
                         'Loading',
                       )}

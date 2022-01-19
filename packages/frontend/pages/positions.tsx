@@ -116,7 +116,8 @@ export function Positions() {
     sellQuote,
     longRealizedPNL,
     shortRealizedPNL,
-    ethCollateralPnl,
+    shortUnrealizedPNL,
+    longUnrealizedPNL,
     loading: isPnLLoading,
   } = usePnL()
   const { activePositions, loading: isPositionFinishedCalc } = useLPPositions()
@@ -133,7 +134,6 @@ export function Positions() {
     vaultId,
     existingCollat,
     lpedSqueeth,
-    wethAmount,
     isLong,
   } = usePositions()
 
@@ -240,8 +240,7 @@ export function Positions() {
                   ) : (
                     <>
                       <Typography variant="body1" className={longGain.isLessThan(0) ? classes.red : classes.green}>
-                        $ {sellQuote.amountOut.minus(wethAmount.abs()).multipliedBy(ethPrice).toFixed(2)} (
-                        {sellQuote.amountOut.minus(wethAmount.abs()).toFixed(5)} ETH)
+                        $ {longUnrealizedPNL?.usdValue.toFixed(2)} ({longUnrealizedPNL?.ethValue.toFixed(5)} ETH)
                       </Typography>
                       <Typography variant="caption" className={longGain.isLessThan(0) ? classes.red : classes.green}>
                         {(longGain || 0).toFixed(2)}%
@@ -307,14 +306,7 @@ export function Positions() {
                   ) : (
                     <>
                       <Typography variant="body1" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
-                        $ {wethAmount.minus(buyQuote).multipliedBy(ethPrice).plus(ethCollateralPnl).toFixed(2)} (
-                        {wethAmount
-                          .minus(buyQuote)
-                          .multipliedBy(ethPrice)
-                          .plus(ethCollateralPnl)
-                          .dividedBy(ethPrice)
-                          .toFixed(5)}{' '}
-                        ETH)
+                        $ {shortUnrealizedPNL.toFixed(2)} ({shortUnrealizedPNL.dividedBy(ethPrice).toFixed(5)} ETH)
                       </Typography>
                       <Typography variant="caption" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
                         {(shortGain || 0).toFixed(2)}%
