@@ -126,7 +126,6 @@ export const useController = () => {
 
     const _amount = fromTokenAmount(amount, OSQUEETH_DECIMALS)
     const ethAmt = fromTokenAmount(collatAmount, 18)
-    console.log(vaultId, _amount.toFixed(0), ethAmt.toFixed(0))
     return handleTransaction(
       contract.methods.burnWPowerPerpAmount(vaultId, _amount.toFixed(0), ethAmt.toFixed(0)).send({
         from: address,
@@ -289,7 +288,6 @@ export const useController = () => {
 
     const debt = await getDebtAmount(shortAmount)
     if (debt && debt.isPositive()) {
-      console.log(collateralAmount.toString(), debt.toString())
       const collateralPercent = Number(collateralAmount.div(debt).times(100).toFixed(1))
       const rSqueeth = normFactor.multipliedBy(new BigNumber(shortAmount)).dividedBy(10000)
       const liquidationPrice = collateralAmount.div(rSqueeth.multipliedBy(1.5))

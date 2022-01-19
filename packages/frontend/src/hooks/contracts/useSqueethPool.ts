@@ -61,7 +61,7 @@ export const useSqueethPool = () => {
   useEffect(() => {
     let isMounted = true
 
-    if (!squeethToken?.address) return
+    if (!squeethToken?.address || !pool) return
     getBuyQuoteForETH(new BigNumber(1))
       .then((val) => {
         if (isMounted) {
