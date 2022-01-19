@@ -231,7 +231,7 @@ const Component: React.FC = () => {
   const { balance, address, connected, networkId } = useWallet()
   const { vid } = router.query
   const { liquidations } = useVaultLiquidations(Number(vid))
-  const { positionType, squeethAmount } = usePositions()
+  const { positionType, squeethAmount, mintedDebt, shortDebt, lpedSqueeth } = usePositions()
 
   const { oSqueethBal } = useWorldContext()
 
@@ -451,16 +451,6 @@ const Component: React.FC = () => {
       totalCollatPaid: new BigNumber(0),
     },
   )
-
-  const mintedDebt = useMemo(() => {
-    return oSqueethBal?.isGreaterThan(0) && positionType === PositionType.LONG
-      ? oSqueethBal.minus(squeethAmount)
-      : oSqueethBal
-  }, [positionType, squeethAmount.toString(), oSqueethBal.toString()])
-
-  const shortDebt = useMemo(() => {
-    return positionType === PositionType.SHORT ? squeethAmount : new BigNumber(0)
-  }, [positionType, squeethAmount.toString()])
 
   return (
     <div>
