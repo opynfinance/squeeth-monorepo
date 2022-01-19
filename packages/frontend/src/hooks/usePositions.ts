@@ -19,7 +19,7 @@ import { useAddresses } from './useAddress'
 import useInterval from './useInterval'
 import { useUsdAmount } from './useUsdAmount'
 import { useTransactionHistory } from './useTransactionHistory'
-import { getCurrentShortDeposits } from '../lib/pnl'
+import { getCurrentShortDeposits, calcUnrealizedPnl, calcShortGain, calcLongUnrealizedPnl } from '../lib/pnl'
 
 const bigZero = new BigNumber(0)
 
@@ -62,7 +62,7 @@ export const usePositions = () => {
     }
   }, [lpLoading])
 
-  const { squeethAmount, wethAmount } = useMemo(
+  const { squeethAmount, wethAmount, usdAmount } = useMemo(
     () =>
       swaps?.reduce(
         (acc, s) => {
@@ -81,7 +81,6 @@ export const usePositions = () => {
           acc.totalETHSpent = acc.totalETHSpent.plus(wethAmt)
           acc.totalUSDSpent = acc.totalUSDSpent.plus(usdAmt)
 
-          acc.usdAmount = acc.usdAmount.plus(usdAmt)
           // when the position is fully closed, reset values to zero
           if (acc.squeethAmount.isZero()) {
             acc.usdAmount = bigZero
@@ -91,6 +90,7 @@ export const usePositions = () => {
             acc.totalUSDSpent = bigZero
           } else {
             acc.wethAmount = acc.wethAmount.plus(wethAmt.negated())
+            acc.usdAmount = acc.usdAmount.plus(usdAmt.negated())
           }
 
           return acc
@@ -164,6 +164,7 @@ export const usePositions = () => {
     squeethAmount: finalSqueeth.absoluteValue(),
     lpedSqueeth: depositedSqueeth.minus(withdrawnSqueeth),
     wethAmount: finalWeth,
+    usdAmount,
     shortVaults,
     refetch,
     positionType,
@@ -463,7 +464,7 @@ export const usePnL = () => {
     refetch: refetchLong,
   } = useLongPositions()
   const { usdAmount: shortUsdAmt, realizedPNL: shortRealizedPNL, refetch: refetchShort } = useShortPositions()
-  const { positionType, squeethAmount, wethAmount, shortVaults, loading: positionLoading } = usePositions()
+  const { positionType, squeethAmount, wethAmount, shortVaults, loading: positionLoading, usdAmount } = usePositions()
   const { ethPrice } = useWorldContext()
   const { ready, getSellQuote, getBuyQuote, squeethToken } = useSqueethPool()
   const { swapTransactions: transactions } = useTransactionHistory()
@@ -501,16 +502,6 @@ export const usePnL = () => {
     setLongGain(_gain)
   }, [ethPrice.toString(), wethAmount.toString(), sellQuote.amountOut.toString(), squeethAmount.toString()])
 
-  useEffect(() => {
-    if (squeethAmount.isZero()) {
-      setLongGain(new BigNumber(0))
-      return
-    }
-    const _currentValue = buyQuote.div(wethAmount.absoluteValue()).times(100)
-    const _gain = new BigNumber(100).minus(_currentValue)
-    setShortGain(_gain)
-  }, [buyQuote.toString(), ethPrice.toString(), wethAmount.toString(), squeethAmount.toString()])
-
   const currentShortDeposits = useMemo(
     () => getCurrentShortDeposits({ positionType, squeethAmount, transactions, getBuyQuote }),
     [squeethToken, positionType, squeethAmount.toString(), transactions.length],
@@ -529,6 +520,31 @@ export const usePnL = () => {
     [currentShortDeposits?.length, ethPrice.toString()],
   )
 
+  const shortUnrealizedPNL = useMemo(
+    () => calcUnrealizedPnl({ wethAmount, buyQuote, ethPrice, ethCollateralPnl }),
+    [buyQuote.toString(), ethCollateralPnl.toString(), ethPrice.toString(), wethAmount.toString()],
+  )
+
+  const longUnrealizedPNL = useMemo(
+    () => calcLongUnrealizedPnl({ sellQuote: sellQuote.amountOut, wethAmount, ethPrice }),
+    [ethPrice.toString(), sellQuote.amountOut.toString(), wethAmount.toString()],
+  )
+
+  useEffect(() => {
+    if (squeethAmount.isZero()) {
+      setLongGain(new BigNumber(0))
+      return
+    }
+    const _gain = calcShortGain({ shortUnrealizedPNL, usdAmount, wethAmount, ethPrice })
+    setShortGain(_gain)
+  }, [
+    ethPrice.toString(),
+    shortUnrealizedPNL.toString(),
+    squeethAmount.toString(),
+    usdAmount.toString(),
+    wethAmount.toString(),
+  ])
+
   return {
     longGain,
     shortGain,
@@ -540,7 +556,9 @@ export const usePnL = () => {
     positionType,
     loading,
     shortRealizedPNL,
+    shortUnrealizedPNL,
     longRealizedPNL,
+    longUnrealizedPNL,
     refetch,
     ethCollateralPnl,
   }
