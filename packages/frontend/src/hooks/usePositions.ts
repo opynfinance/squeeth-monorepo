@@ -28,6 +28,7 @@ export const usePositions = () => {
   const { address } = useWallet()
   const { getUsdAmt } = useUsdAmount()
   const { getDebtAmount, normFactor: normalizationFactor } = useController()
+  const { oSqueethBal } = useWorldContext()
 
   const [positionType, setPositionType] = useState(PositionType.NONE)
 
@@ -112,12 +113,33 @@ export const usePositions = () => {
     [isWethToken0, swaps],
   )
 
+  const mintedDebt = useMemo(() => {
+    return oSqueethBal?.isGreaterThan(0) && positionType === PositionType.LONG
+      ? oSqueethBal.minus(squeethAmount)
+      : oSqueethBal
+  }, [oSqueethBal.toString(), positionType, squeethAmount.toString()])
+
+  const shortDebt = useMemo(() => {
+    return positionType === PositionType.SHORT ? squeethAmount : new BigNumber(0)
+  }, [positionType, squeethAmount.toString()])
+
+  const longSqthBal = useMemo(() => {
+    return mintedDebt.gt(0) ? oSqueethBal.minus(mintedDebt) : oSqueethBal
+  }, [positionType, oSqueethBal.toString(), mintedDebt.toString()])
+
+  const lpDebt = useMemo(() => {
+    return depositedSqueeth.minus(withdrawnSqueeth).isGreaterThan(0)
+      ? depositedSqueeth.minus(withdrawnSqueeth)
+      : new BigNumber(0)
+  }, [positionType, depositedSqueeth.toString(), withdrawnSqueeth.toString()])
+
   const { finalSqueeth, finalWeth } = useMemo(() => {
-    const finalSqueeth = squeethAmount.minus(depositedSqueeth).plus(withdrawnSqueeth)
+    // dont include LPed amount will be the correct short amount
+    const finalSqueeth = squeethAmount
     const finalWeth = wethAmount.div(squeethAmount).multipliedBy(finalSqueeth)
     setPositionLoading(false)
     return { finalSqueeth, finalWeth }
-  }, [squeethAmount.toString(), depositedSqueeth.toString(), withdrawnSqueeth.toString()])
+  }, [squeethAmount.toString(), wethAmount.toString()])
 
   useEffect(() => {
     if (finalSqueeth.isGreaterThan(0)) {
@@ -160,7 +182,10 @@ export const usePositions = () => {
     swaps,
     loading: lpLoading,
     squeethAmount: finalSqueeth.absoluteValue(),
-    lpedSqueeth: depositedSqueeth.minus(withdrawnSqueeth),
+    shortDebt: shortDebt.absoluteValue(),
+    lpedSqueeth: lpDebt,
+    mintedDebt: mintedDebt,
+    longSqthBal: longSqthBal,
     wethAmount: finalWeth,
     shortVaults,
     refetch,
