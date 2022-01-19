@@ -23,4 +23,5 @@ export interface userCrabTxes {
 
 export interface userCrabTxesVariables {
   ownerId: string;
+  orderDirection: string;
 }
