@@ -115,7 +115,7 @@ const Strategies: React.FC = () => {
   } = useCrab()
   const { crabStrategy } = useAddresses()
   const crabBalance = useTokenBalance(crabStrategy, 10, 18)
-  const { index } = useController()
+  const { index, currentImpliedFunding, fundingPerHalfHour } = useController()
   const { ethPrice } = useWorldContext()
 
   const deposit = async () => {
@@ -155,8 +155,8 @@ const Strategies: React.FC = () => {
         <Typography variant="subtitle1" color="textSecondary" style={{ width: '60%', marginTop: '8px' }}>
           Crab strategy automates making money in a sideways market. Based on current funding, crab strategy would be
           profitable if ETH moves less than approximately {(profitableMovePercent * 100).toFixed(2)}% in either
-          direction each day. The strategy rebalances daily, reducing risk of liquidations. You earn squeeth funding
-          without being exposed to ETH price movements.
+          direction each day. The strategy rebalances daily, reducing risk of liquidations. You earn squeeth without
+          being exposed to ETH price movements.
           <a className={classes.link} href={Links.CrabFAQ} target="_blank" rel="noreferrer">
             {' '}
             Learn more.{' '}
@@ -173,15 +173,20 @@ const Strategies: React.FC = () => {
                 priceType="spot"
               />
               <StrategyInfoItem
-                value={vault?.shortAmount.toFixed(4)}
-                label="Short oSQTH"
-                tooltip={Tooltips.StrategyShort}
+                value={(currentImpliedFunding * 100).toFixed(2)}
+                label="Current Implied Funding (%)"
+                tooltip={`${Tooltips.StrategyEarnFunding}. ${Tooltips.CurrentImplFunding}`}
               />
               <StrategyInfoItem
+                value={(fundingPerHalfHour * 100).toFixed(2)}
+                label="Historical Daily Funding (%)"
+                tooltip={`${Tooltips.StrategyEarnFunding}. ${Tooltips.Last30MinAvgFunding}`}
+              />
+              {/* <StrategyInfoItem
                 value={crabBalance.toFixed(4)}
                 label="Position (CRAB)"
                 tooltip={Tooltips.StrategyCollRatio}
-              />
+              /> */}
             </div>
             <div className={classes.overview}>
               <StrategyInfoItem
@@ -204,12 +209,21 @@ const Strategies: React.FC = () => {
                   '. Rebalances every 24hrs or every 1% ETH price move'
                 }
               />
-              <StrategyInfoItem value={collatRatio.toString()} label="Collat Ratio (%)" />
               <StrategyInfoItem
+                value={vault?.shortAmount.toFixed(4)}
+                label="Short oSQTH"
+                tooltip={Tooltips.StrategyShort}
+              />
+              <StrategyInfoItem
+                value={collatRatio.toString()}
+                label="Collat Ratio (%)"
+                tooltip={Tooltips.StrategyCollRatio}
+              />
+              {/* <StrategyInfoItem
                 value={liquidationPrice.toFixed(2)}
                 label="Liq Price ($)"
                 tooltip={`${Tooltips.LiquidationPrice} ${Tooltips.StrategyLiquidations}`}
-              />
+              /> */}
             </div>
             <StrategyInfo />
             <CrabStrategyHistory />

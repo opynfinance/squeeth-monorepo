@@ -65,6 +65,7 @@ export enum Tooltips {
   StrategyLiquidations = 'The strategy is subject to liquidations if it goes below 150% collateral, but rebalancing based on large ETH price changes helps prevent a liquidation from occurring.',
   StrategyShort = 'The amount of oSQTH the whole strategy is short',
   StrategyCollRatio = 'The collateralization ratio for the whole strategy',
+  StrategyEarnFunding = 'You earn funding by depositing into the strategy',
 }
 
 export enum Links {
