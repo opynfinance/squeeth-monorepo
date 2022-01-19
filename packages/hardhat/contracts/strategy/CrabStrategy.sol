@@ -93,6 +93,8 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
     event WithdrawShutdown(address indexed withdrawer, uint256 crabAmount, uint256 ethWithdrawn);
     event FlashDeposit(address indexed depositor, uint256 depositedAmount, uint256 tradedAmountOut);
     event FlashWithdraw(address indexed withdrawer, uint256 crabAmount, uint256 wSqueethAmount);
+    event FlashDepositCallback(address indexed depositor, uint256 flashswapDebt, uint256 excess);
+    event FlashWithdrawCallback(address indexed withdrawer, uint256 flashswapDebt, uint256 excess);
     event TimeHedgeOnUniswap(
         address indexed hedger,
         uint256 hedgeTimestamp,
@@ -443,6 +445,8 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
             //repay the flash swap
             IWPowerPerp(wPowerPerp).transfer(ethWSqueethPool, _amountToPay);
 
+            emit FlashDepositCallback(_caller, _amountToPay, address(this).balance);
+
             //return excess eth to the user that was not needed for slippage
             if (address(this).balance > 0) {
                 payable(_caller).sendValue(address(this).balance);
@@ -464,6 +468,9 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
 
             //excess ETH not used to repay flash swap is transferred to the user
             uint256 proceeds = ethToWithdraw.sub(_amountToPay);
+
+            emit FlashWithdrawCallback(_caller, _amountToPay, proceeds);
+
             if (proceeds > 0) {
                 payable(_caller).sendValue(proceeds);
             }
