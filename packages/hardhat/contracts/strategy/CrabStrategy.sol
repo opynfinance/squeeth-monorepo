@@ -404,18 +404,13 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
         return _getDebtFromStrategyAmount(_crabAmount);
     }
 
-    function canExecuteAuction(uint256 _auctionTriggerTime)
-        external view
-        returns (
-            bool
-        )
-    {
+    function canExecuteAuction(uint256 _auctionTriggerTime) external view returns (bool) {
         (uint256 strategyDebt, uint256 ethDelta) = _syncStrategyState();
         uint256 currentWSqueethPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP_PERIOD, true);
         uint256 feeAdjustment = _calcFeeAdjustment();
         (bool isSellingAuction, ) = _checkAuctionType(strategyDebt, ethDelta, currentWSqueethPrice, feeAdjustment);
         uint256 auctionWSqueethEthPrice = _getAuctionPrice(_auctionTriggerTime, currentWSqueethPrice, isSellingAuction);
-        (bool isStillSellingAuction,) = _checkAuctionType(
+        (bool isStillSellingAuction, ) = _checkAuctionType(
             strategyDebt,
             ethDelta,
             auctionWSqueethEthPrice,
