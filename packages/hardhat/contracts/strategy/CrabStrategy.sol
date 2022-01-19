@@ -296,9 +296,9 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
      * @param _minEth minimum ETH amount of profit if hedge auction is buying WSqueeth
      */
     function timeHedgeOnUniswap(uint256 _minWSqueeth, uint256 _minEth) external {
-        uint256 auctionTriggerTime = timeAtLastHedge.add(hedgeTimeThreshold);
+        (bool isTimeHedgeAllowed, uint256 auctionTriggerTime) = _isTimeHedge();
 
-        require(block.timestamp >= auctionTriggerTime, "Time hedging is not allowed");
+        require(isTimeHedgeAllowed, "Time hedging is not allowed");
 
         _hedgeOnUniswap(auctionTriggerTime, _minWSqueeth, _minEth);
 
@@ -347,7 +347,6 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
         uint256 _limitPrice
     ) external payable nonReentrant {
         require(_isPriceHedge(_auctionTriggerTime), "Price hedging not allowed");
-
         _hedge(_auctionTriggerTime, _isStrategySellingWSqueeth, _limitPrice);
 
         emit PriceHedge(msg.sender, _isStrategySellingWSqueeth, _limitPrice, _auctionTriggerTime);
@@ -831,6 +830,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
      * @return true if hedging is allowed
      */
     function _isPriceHedge(uint256 _auctionTriggerTime) internal view returns (bool) {
+        if (_auctionTriggerTime < timeAtLastHedge) return false;
         uint32 secondsToPriceHedgeTrigger = uint32(block.timestamp.sub(_auctionTriggerTime));
         uint256 wSqueethEthPriceAtTriggerTime = IOracle(oracle).getHistoricalTwap(
             ethWSqueethPool,
