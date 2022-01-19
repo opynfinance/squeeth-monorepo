@@ -111,7 +111,7 @@ export const usePositions = () => {
         totalETHSpent: bigZero,
         totalUSDSpent: bigZero,
       },
-    [isWethToken0, swaps],
+    [address, isWethToken0, swaps],
   )
 
   const { finalSqueeth, finalWeth } = useMemo(() => {
@@ -119,7 +119,7 @@ export const usePositions = () => {
     const finalWeth = wethAmount.div(squeethAmount).multipliedBy(finalSqueeth)
     setPositionLoading(false)
     return { finalSqueeth, finalWeth }
-  }, [squeethAmount.toString(), depositedSqueeth.toString(), withdrawnSqueeth.toString()])
+  }, [address, squeethAmount.toString(), depositedSqueeth.toString(), withdrawnSqueeth.toString()])
 
   useEffect(() => {
     if (finalSqueeth.isGreaterThan(0)) {
@@ -127,7 +127,7 @@ export const usePositions = () => {
     } else if (finalSqueeth.isLessThan(0)) {
       setPositionType(PositionType.SHORT)
     } else setPositionType(PositionType.NONE)
-  }, [finalSqueeth.toString()])
+  }, [address, finalSqueeth.toString()])
 
   useEffect(() => {
     for (let i = 0; i < shortVaults.length; i++) {
@@ -135,7 +135,7 @@ export const usePositions = () => {
         setFirstValidVault(i)
       }
     }
-  }, [shortVaults, shortVaults.length])
+  }, [address, shortVaults, shortVaults.length])
 
   useEffect(() => {
     if (shortVaults.length && shortVaults[firstValidVault]?.collateralAmount) {
@@ -156,7 +156,7 @@ export const usePositions = () => {
     } else {
       setIsMintedBal(false)
     }
-  }, [squeethAmount.toString(), shortVaults.length])
+  }, [address, squeethAmount.toString(), shortVaults.length])
 
   return {
     swaps,
@@ -603,12 +603,14 @@ export const useLPPositions = () => {
     fetchPolicy: 'cache-and-network',
   })
 
+  // useInterval(refetch, 30000)
+
   const manager = new web3.eth.Contract(NFTpositionManagerABI as any, nftManager?.toLowerCase() || '')
   const MAX_UNIT = '0xffffffffffffffffffffffffffffffff'
 
   useEffect(() => {
     setLoading(true)
-  }, [address])
+  }, [address, router.pathname])
 
   useEffect(() => {
     subscribeToNewPositions()
@@ -629,12 +631,13 @@ export const useLPPositions = () => {
         }
       },
     })
-  }, [squeethPool, address])
+  }, [address, router.pathname, subscribeToMore, squeethPool, address])
 
   const isWethToken0 = useMemo(() => parseInt(weth, 16) < parseInt(oSqueeth, 16), [weth, oSqueeth])
 
   const positionAndFees = useMemo(() => {
     if (!pool || !squeethInitialPrice.toNumber() || !ethPrice.toNumber()) return []
+
     return (
       data?.positions.map(async (p) => {
         const position = { ...p }
@@ -681,14 +684,7 @@ export const useLPPositions = () => {
         }
       }) || []
     )
-  }, [
-    data?.positions,
-    pool,
-    ethPrice.toString(),
-    squeethInitialPrice.toString(),
-    ethPrice.toString(),
-    data?.positions?.length,
-  ])
+  }, [address, pool, ethPrice.toString(), squeethInitialPrice.toString(), ethPrice.toString(), data?.positions?.length])
 
   useEffect(() => {
     if (positionAndFees && !gphLoading) {
@@ -739,7 +735,7 @@ export const useLPPositions = () => {
           setLoading(false)
       })
     }
-  }, [gphLoading, isWethToken0, data?.positions.length, positionAndFees?.length])
+  }, [address, gphLoading, isWethToken0, data?.positions.length, positionAndFees?.length])
   return {
     activePositions: activePositions,
     closedPositions: closedPositions,
