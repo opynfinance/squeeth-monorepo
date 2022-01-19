@@ -49,3 +49,39 @@ export function getCurrentShortDeposits({ positionType, squeethAmount, transacti
 
   return result
 }
+
+type ShortPnLParams = {
+  wethAmount: BigNumber
+  buyQuote: BigNumber
+  ethPrice: BigNumber
+  ethCollateralPnl: BigNumber
+}
+
+export function calcUnrealizedPnl({ wethAmount, buyQuote, ethPrice, ethCollateralPnl }: ShortPnLParams) {
+  return wethAmount.minus(buyQuote).multipliedBy(ethPrice).plus(ethCollateralPnl)
+}
+
+type ShortGainParams = {
+  shortUnrealizedPNL: BigNumber
+  usdAmount: BigNumber
+  wethAmount: BigNumber
+  ethPrice: BigNumber
+}
+
+export function calcShortGain({ shortUnrealizedPNL, usdAmount, wethAmount, ethPrice }: ShortGainParams) {
+  return shortUnrealizedPNL.div(usdAmount.plus(wethAmount.times(ethPrice).absoluteValue())).times(100)
+}
+export function calcLongUnrealizedPnl({
+  sellQuote,
+  wethAmount,
+  ethPrice,
+}: {
+  sellQuote: BigNumber
+  wethAmount: BigNumber
+  ethPrice: BigNumber
+}) {
+  return {
+    usdValue: sellQuote.minus(wethAmount.abs()).multipliedBy(ethPrice),
+    ethValue: sellQuote.minus(wethAmount.abs()),
+  }
+}
