@@ -28,6 +28,7 @@ export const usePositions = () => {
   const { address } = useWallet()
   const { getUsdAmt } = useUsdAmount()
   const { getDebtAmount, normFactor: normalizationFactor } = useController()
+  const { ethPrice, ethPriceMap } = useWorldContext()
 
   const [positionType, setPositionType] = useState(PositionType.NONE)
 
@@ -62,7 +63,7 @@ export const usePositions = () => {
     }
   }, [lpLoading])
 
-  const { squeethAmount, wethAmount, usdAmount } = useMemo(
+  const { squeethAmount, wethAmount, usdAmount, ethCollateralPnl } = useMemo(
     () =>
       swaps?.reduce(
         (acc, s) => {
@@ -71,6 +72,10 @@ export const usePositions = () => {
           const squeethAmt = new BigNumber(isWethToken0 ? s.amount1 : s.amount0)
           const wethAmt = new BigNumber(isWethToken0 ? s.amount0 : s.amount1)
           const usdAmt = getUsdAmt(wethAmt, s.timestamp)
+
+          const time = new Date(Number(s.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
+
+          acc.ethCollateralPnl = wethAmt.abs().times(new BigNumber(ethPriceMap[time]).minus(ethPrice))
 
           //buy one squeeth means -1 to the pool, +1 to the user
           acc.squeethAmount = acc.squeethAmount.plus(squeethAmt.negated())
@@ -102,6 +107,7 @@ export const usePositions = () => {
           totalSqueeth: bigZero,
           totalETHSpent: bigZero,
           totalUSDSpent: bigZero,
+          ethCollateralPnl: bigZero,
         },
       ) || {
         squeethAmount: bigZero,
@@ -110,6 +116,7 @@ export const usePositions = () => {
         totalSqueeth: bigZero,
         totalETHSpent: bigZero,
         totalUSDSpent: bigZero,
+        ethCollateralPnl: bigZero,
       },
     [isWethToken0, swaps?.length],
   )
@@ -177,6 +184,7 @@ export const usePositions = () => {
     isLong: positionType === PositionType.LONG,
     isShort: positionType === PositionType.SHORT,
     isLP: squeethLiquidity.gt(0) || wethLiquidity.gt(0),
+    ethCollateralPnl,
   }
 }
 
@@ -464,7 +472,15 @@ export const usePnL = () => {
     refetch: refetchLong,
   } = useLongPositions()
   const { usdAmount: shortUsdAmt, realizedPNL: shortRealizedPNL, refetch: refetchShort } = useShortPositions()
-  const { positionType, squeethAmount, wethAmount, shortVaults, loading: positionLoading, usdAmount } = usePositions()
+  const {
+    positionType,
+    squeethAmount,
+    wethAmount,
+    shortVaults,
+    loading: positionLoading,
+    usdAmount,
+    ethCollateralPnl,
+  } = usePositions()
   const { ethPrice } = useWorldContext()
   const { ready, getSellQuote, getBuyQuote, squeethToken } = useSqueethPool()
   const { swapTransactions: transactions } = useTransactionHistory()
@@ -505,19 +521,6 @@ export const usePnL = () => {
   const currentShortDeposits = useMemo(
     () => getCurrentShortDeposits({ positionType, squeethAmount, transactions, getBuyQuote }),
     [squeethToken, positionType, squeethAmount.toString(), transactions.length],
-  )
-
-  const ethCollateralPnl = useMemo(
-    () =>
-      currentShortDeposits.reduce(
-        (acc, curr) => {
-          acc = curr?.ethAmount.times(curr?.ethPriceAtDeposit.minus(ethPrice))
-          return acc
-        },
-
-        new BigNumber(0),
-      ),
-    [currentShortDeposits?.length, ethPrice.toString()],
   )
 
   const shortUnrealizedPNL = useMemo(
