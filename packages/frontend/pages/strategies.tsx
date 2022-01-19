@@ -4,11 +4,12 @@ import Nav from '@components/Nav'
 import CapDetails from '@components/Strategies/Crab/CapDetails'
 import CrabStrategyHistory from '@components/Strategies/Crab/StrategyHistory'
 import StrategyInfo from '@components/Strategies/Crab/StrategyInfo'
+import CrabPosition from '@components/Strategies/Crab/CrabPosition'
 import StrategyInfoItem from '@components/Strategies/StrategyInfoItem'
 import { SecondaryTab, SecondaryTabs } from '@components/Tabs'
 import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
 import { useWallet } from '@context/wallet'
-import { useCrabStrategy } from '@hooks/contracts/useCrabStrategy'
+import { CrabProvider, useCrab } from '@context/crabStrategy'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { useAddresses } from '@hooks/useAddress'
 import { CircularProgress, InputAdornment, TextField, Typography } from '@material-ui/core'
@@ -57,7 +58,7 @@ const useStyles = makeStyles((theme) =>
       margin: theme.spacing(0, 'auto'),
       width: '350px',
       position: 'sticky',
-      height: '400px',
+      height: '420px',
       top: '100px',
     },
     overview: {
@@ -98,9 +99,8 @@ const Strategies: React.FC = () => {
   const [txHash, setTxHash] = useState('')
 
   const classes = useStyles()
-  const { balance } = useWallet()
-  const { maxCap, vault, flashDeposit, collatRatio, flashWithdraw, timeAtLastHedge, liquidationPrice } =
-    useCrabStrategy()
+  const { balance, address } = useWallet()
+  const { maxCap, vault, flashDeposit, collatRatio, flashWithdraw, timeAtLastHedge, liquidationPrice } = useCrab()
   const { crabStrategy } = useAddresses()
   const crabBalance = useTokenBalance(crabStrategy, 10, 18)
   const { index } = useController()
@@ -256,7 +256,7 @@ const Strategies: React.FC = () => {
                   {depositOption === 0 ? (
                     <PrimaryButton
                       variant="contained"
-                      style={{ marginTop: '16px' }}
+                      style={{ marginTop: '8px' }}
                       onClick={() => deposit()}
                       disabled={txLoading}
                     >
@@ -265,14 +265,16 @@ const Strategies: React.FC = () => {
                   ) : (
                     <PrimaryButton
                       variant="contained"
-                      style={{ marginTop: '16px' }}
+                      style={{ marginTop: '8px' }}
                       onClick={() => withdraw()}
                       disabled={txLoading}
                     >
                       {!txLoading ? 'Withdraw' : <CircularProgress color="primary" size="1.5rem" />}
                     </PrimaryButton>
                   )}
-                  <div style={{ marginTop: '16px' }}>Your Position: {crabBalance.toFixed(4)}</div>
+                  <div style={{ marginTop: '16px' }}>
+                    <CrabPosition user={address} />
+                  </div>
                 </div>
               </>
             )}
@@ -283,4 +285,10 @@ const Strategies: React.FC = () => {
   )
 }
 
-export default Strategies
+const Page: React.FC = () => (
+  <CrabProvider>
+    <Strategies />
+  </CrabProvider>
+)
+
+export default Page
