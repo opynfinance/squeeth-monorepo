@@ -745,7 +745,7 @@ describe("Crab flashswap integration test: price based hedging", function () {
       // try to hedge at timestamp before last hedge
       await expect( 
          crabStrategy.connect(depositor).priceHedge(auctionTriggerTimer, isSellAuction, expectedAuctionWSqueethEthPrice)
-      ).to.be.revertedWith("Trigger time must be after time at last hedge") 
+      ).to.be.revertedWith("Price hedging not allowed") 
       })
   })
 })
