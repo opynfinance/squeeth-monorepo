@@ -823,7 +823,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
      * @return true if hedging is allowed
      */
     function _isPriceHedge(uint256 _auctionTriggerTime) internal view returns (bool) {
-        if(_auctionTriggerTime < timeAtLastHedge) return false;
+        if (_auctionTriggerTime < timeAtLastHedge) return false;
         uint32 secondsToPriceHedgeTrigger = uint32(block.timestamp.sub(_auctionTriggerTime));
         uint256 wSqueethEthPriceAtTriggerTime = IOracle(oracle).getHistoricalTwap(
             ethWSqueethPool,
