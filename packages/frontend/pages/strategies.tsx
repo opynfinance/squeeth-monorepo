@@ -22,7 +22,8 @@ import React, { useState } from 'react'
 import { Tooltips } from '@constants/index'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import { TradeSettings } from '@components/TradeSettings'
-import { Links } from '@constants/enums'
+import { Links, Vaults } from '@constants/enums'
+import { CrabStrategyChart } from '@components/Charts/CrabStrategyChart'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -82,6 +83,11 @@ const useStyles = makeStyles((theme) =>
       marginLeft: theme.spacing(37),
       justifyContent: 'right',
       alignSelf: 'center',
+    },
+    chartContainer: {
+      padding: theme.spacing(0),
+      marginTop: theme.spacing(4),
+      maxWidth: '640px',
     },
     link: {
       color: theme.palette.primary.main,
@@ -224,6 +230,9 @@ const Strategies: React.FC = () => {
                 label="Liq Price ($)"
                 tooltip={`${Tooltips.LiquidationPrice} ${Tooltips.StrategyLiquidations}`}
               /> */}
+            </div>
+            <div className={classes.chartContainer}>
+              <CrabStrategyChart vault={Vaults.Short} longAmount={0} showPercentage={true} setCustomLong={() => null} />
             </div>
             <StrategyInfo />
             <CrabStrategyHistory />
