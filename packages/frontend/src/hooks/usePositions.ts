@@ -10,7 +10,7 @@ import { TransactionType } from '@constants/enums'
 import { positions, positionsVariables } from '../queries/uniswap/__generated__/positions'
 import { swaps, swapsVariables } from '../queries/uniswap/__generated__/swaps'
 import POSITIONS_QUERY, { POSITIONS_SUBSCRIPTION } from '../queries/uniswap/positionsQuery'
-import SWAPS_QUERY from '../queries/uniswap/swapsQuery'
+import SWAPS_QUERY, { SWAPS_SUBSCRIPTION } from '../queries/uniswap/swapsQuery'
 import { NFTManagers, PositionType } from '../types'
 import { toTokenAmount } from '@utils/calculations'
 import { useController } from './contracts/useController'
@@ -32,7 +32,7 @@ export const usePositions = () => {
 
   const [positionType, setPositionType] = useState(PositionType.NONE)
 
-  const { data, loading, refetch } = useQuery<swaps, swapsVariables>(SWAPS_QUERY, {
+  const { data, loading, refetch, subscribeToMore } = useQuery<swaps, swapsVariables>(SWAPS_QUERY, {
     variables: {
       poolAddress: squeethPool?.toLowerCase(),
       origin: address || '',
@@ -42,7 +42,28 @@ export const usePositions = () => {
     fetchPolicy: 'cache-and-network',
   })
 
-  useInterval(refetch, 15000)
+  useEffect(() => {
+    subscribeToNewPositions()
+  }, [])
+
+  const subscribeToNewPositions = useCallback(() => {
+    subscribeToMore({
+      document: SWAPS_SUBSCRIPTION,
+      variables: {
+        poolAddress: squeethPool?.toLowerCase(),
+        origin: address || '',
+        recipients: [shortHelper, address || '', swapRouter],
+        orderDirection: 'asc',
+      },
+      updateQuery(prev, { subscriptionData }) {
+        if (!subscriptionData.data) return prev
+        const newSwaps = subscriptionData.data.swaps
+        return {
+          swaps: newSwaps,
+        }
+      },
+    })
+  }, [squeethPool, address])
 
   const { vaults: shortVaults } = useVaultManager(5)
   const [existingCollatPercent, setExistingCollatPercent] = useState(0)
