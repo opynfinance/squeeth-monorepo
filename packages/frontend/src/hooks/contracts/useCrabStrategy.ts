@@ -13,7 +13,7 @@ import { useSqueethPool } from './useSqueethPool'
 export const useCrabStrategy = () => {
   const { web3, address, handleTransaction, networkId } = useWallet()
   const { crabStrategy } = useAddresses()
-  const { getVault, getCollatRatioAndLiqPrice } = useController()
+  const { getVault, getCollatRatioAndLiqPrice, currentImpliedFunding } = useController()
   const { getSellQuote, getBuyQuote } = useSqueethPool()
 
   const [contract, setContract] = useState<Contract>()
@@ -22,6 +22,7 @@ export const useCrabStrategy = () => {
   const [collatRatio, setCollatRatio] = useState(0)
   const [liquidationPrice, setLiquidationPrice] = useState(new BigNumber(0))
   const [timeAtLastHedge, setTimeAtLastHedge] = useState(0)
+  const [profitableMovePercent, setProfitableMovePercent] = useState(0)
 
   useEffect(() => {
     if (!web3 || !crabStrategy) return
@@ -33,6 +34,15 @@ export const useCrabStrategy = () => {
 
     setStrategyData()
   }, [contract, networkId, address])
+
+  useEffect(() => {
+    if (!contract) return
+    setProfitableMovePercent(getCurrentProfitableMovePercent)
+  }, [contract, currentImpliedFunding])
+
+  const getCurrentProfitableMovePercent = () => {
+    return Math.sqrt(currentImpliedFunding)
+  }
 
   const setStrategyData = async () => {
     if (!contract) return
@@ -178,5 +188,6 @@ export const useCrabStrategy = () => {
     checkPriceHedge,
     checkTimeHedge,
     setStrategyCap,
+    profitableMovePercent,
   }
 }

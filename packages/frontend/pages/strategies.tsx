@@ -110,6 +110,8 @@ const Strategies: React.FC = () => {
     liquidationPrice,
     userCrabBalance,
     currentEthValue,
+    flashWithdraw,
+    profitableMovePercent,
   } = useCrab()
   const { crabStrategy } = useAddresses()
   const crabBalance = useTokenBalance(crabStrategy, 10, 18)
@@ -151,9 +153,10 @@ const Strategies: React.FC = () => {
           </Typography>
         </div>
         <Typography variant="subtitle1" color="textSecondary" style={{ width: '60%', marginTop: '8px' }}>
-          This yielding position allows depositors to collect funding from being short squeeth and long ETH, targeting
-          being delta neutral. You are profitable as long as ETH moves less than approximately 6% in either direction in
-          a single day, where the exact percentage move changes daily subject to volatility.{' '}
+          Crab strategy automates making money in a sideways market. Based on current funding, crab strategy would be
+          profitable if ETH moves less than approximately {(profitableMovePercent * 100).toFixed(2)}% in either
+          direction each day. The strategy rebalances daily, reducing risk of liquidations. You earn squeeth funding
+          without being exposed to ETH price movements.
           <a className={classes.link} href={Links.CrabFAQ} target="_blank" rel="noreferrer">
             {' '}
             Learn more.{' '}
