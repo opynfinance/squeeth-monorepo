@@ -120,7 +120,7 @@ export const usePositions = () => {
         totalUSDSpent: bigZero,
         ethCollateralPnl: bigZero,
       },
-    [isWethToken0, swaps?.length],
+    [ethPrice.toString(), isWethToken0, swaps?.length],
   )
 
   const { finalSqueeth, finalWeth } = useMemo(() => {
