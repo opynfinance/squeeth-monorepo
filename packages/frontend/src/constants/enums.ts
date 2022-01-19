@@ -1,3 +1,5 @@
+import { OSQUEETH } from './address'
+
 export enum TradeMode {
   Buy,
   Sell,
@@ -67,8 +69,8 @@ export enum Links {
 }
 
 export const UniswapIFrameOpen = {
-  1: 'https://app.uniswap.org/#/add/ETH/0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B/3000',
-  3: 'https://squeeth-uniswap.netlify.app/#/add/ETH/0x2c1d37d7d8444B24c14064e35aD1B37E5f7B6035/3000',
+  1: `https://app.uniswap.org/#/add/ETH/${OSQUEETH[1]}/3000`,
+  3: `https://squeeth-uniswap.netlify.app/#/add/ETH/${OSQUEETH[3]}/3000`,
   31337: 'https://app.uniswap.org/#/add/ETH/0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B/3000', // Should be replaced with arbitrum subgraph
   421611: 'https://app.uniswap.org/#/add/ETH/0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B/3000', // Should be replaced with arbitrum subgraph
 }
