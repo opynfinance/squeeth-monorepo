@@ -94,6 +94,7 @@ export const usePositions = () => {
             acc.totalSqueeth = bigZero
             acc.totalETHSpent = bigZero
             acc.totalUSDSpent = bigZero
+            acc.ethCollateralPnl = bigZero
           } else {
             acc.wethAmount = acc.wethAmount.plus(wethAmt.negated())
             acc.usdAmount = acc.usdAmount.plus(usdAmt.negated())
@@ -542,15 +543,6 @@ export const usePnL = () => {
     usdAmount.toString(),
     wethAmount.toString(),
   ])
-
-  console.log({
-    _gain: shortGain.toString(),
-    shortUnrealizedPNL: shortUnrealizedPNL.toString(),
-    wethAmount: wethAmount.toString(),
-    buyQuote: buyQuote.toString(),
-    ethPrice: ethPrice.toString(),
-    ethCollateralPnl: ethCollateralPnl.toString(),
-  })
 
   return {
     longGain,
