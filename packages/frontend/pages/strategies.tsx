@@ -169,31 +169,43 @@ const Strategies: React.FC = () => {
                 tooltip={Tooltips.SpotPrice}
                 priceType="spot"
               />
-              <StrategyInfoItem value={vault?.shortAmount.toFixed(4)} label="Short oSQTH" />
-              <StrategyInfoItem value={crabBalance.toFixed(4)} label="Position (CRAB)" />
+              <StrategyInfoItem
+                value={vault?.shortAmount.toFixed(4)}
+                label="Short oSQTH"
+                tooltip={Tooltips.StrategyShort}
+              />
+              <StrategyInfoItem
+                value={crabBalance.toFixed(4)}
+                label="Position (CRAB)"
+                tooltip={Tooltips.StrategyCollRatio}
+              />
             </div>
             <div className={classes.overview}>
               <StrategyInfoItem
                 value={new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
                   day: 'numeric',
-                  month: 'short',
+                  month: 'numeric',
                   hour: 'numeric',
                   minute: 'numeric',
                 })}
                 label="Last rebalanced at"
-                tooltip={new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
-                  day: 'numeric',
-                  month: 'long',
-                  hour: 'numeric',
-                  minute: 'numeric',
-                  timeZoneName: 'long',
-                })}
+                tooltip={
+                  'Last rebalanced at ' +
+                  new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
+                    day: 'numeric',
+                    month: 'long',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    timeZoneName: 'long',
+                  }) +
+                  '. Rebalances every 24hrs or every 1% ETH price move'
+                }
               />
               <StrategyInfoItem value={collatRatio.toString()} label="Collat Ratio (%)" />
               <StrategyInfoItem
                 value={liquidationPrice.toFixed(2)}
                 label="Liq Price ($)"
-                tooltip={`${Tooltips.LiquidationPrice} ${Tooltips.VaultLiquidations}`}
+                tooltip={`${Tooltips.LiquidationPrice} ${Tooltips.StrategyLiquidations}`}
               />
             </div>
             <StrategyInfo />
