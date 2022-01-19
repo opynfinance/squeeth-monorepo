@@ -27,5 +27,6 @@ export interface Vaults {
 }
 
 export interface VaultsVariables {
-  ownerId: any;
+  ownerId: string;
+  vaultID?: string | null;
 }
