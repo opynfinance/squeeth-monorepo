@@ -184,6 +184,28 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
     }
 
     /**
+     * @notice owner can set the strategy cap in ETH collateral terms
+     * @dev deposits are rejected if it would put the strategy above the cap amount
+     * @dev strategy collateral can be above the cap amount due to hedging activities
+     * @param _capAmount the maximum strategy collateral in ETH, checked on deposits
+     */
+    function setStrategyCap(uint256 _capAmount) external onlyOwner {
+        uint256 oldCap = strategyCap;
+        strategyCap = _capAmount;
+
+        emit SetStrategyCap(_capAmount, oldCap);
+    }
+
+    /**
+     * @notice called to redeem the net value of a vault post shutdown
+     * @dev needs to be called 1 time before users can exit the strategy using withdrawShutdown
+     */
+    function redeemShortShutdown() external {
+        hasRedeemedInShutdown = true;
+        powerTokenController.redeemShort(vaultId);
+    }
+
+    /**
      * @notice flash deposit into strategy, providing ETH, selling wSqueeth and receiving strategy tokens
      * @dev this function will execute a flash swap where it receives ETH, deposits and mints using flash swap proceeds and msg.value, and then repays the flash swap with wSqueeth
      * @dev _ethToDeposit must be less than msg.value plus the proceeds from the flash swap
@@ -382,26 +404,25 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
         return _getDebtFromStrategyAmount(_crabAmount);
     }
 
-    /**
-     * @notice owner can set the strategy cap in ETH collateral terms
-     * @dev deposits are rejected if it would put the strategy above the cap amount
-     * @dev strategy collateral can be above the cap amount due to hedging activities
-     * @param _capAmount the maximum strategy collateral in ETH, checked on deposits
-     */
-    function setStrategyCap(uint256 _capAmount) external onlyOwner {
-        uint256 oldCap = strategyCap;
-        strategyCap = _capAmount;
+    function canExecuteAuction(uint256 _auctionTriggerTime)
+        external view
+        returns (
+            bool
+        )
+    {
+        (uint256 strategyDebt, uint256 ethDelta) = _syncStrategyState();
+        uint256 currentWSqueethPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP_PERIOD, true);
+        uint256 feeAdjustment = _calcFeeAdjustment();
+        (bool isSellingAuction, ) = _checkAuctionType(strategyDebt, ethDelta, currentWSqueethPrice, feeAdjustment);
+        uint256 auctionWSqueethEthPrice = _getAuctionPrice(_auctionTriggerTime, currentWSqueethPrice, isSellingAuction);
+        (bool isStillSellingAuction,) = _checkAuctionType(
+            strategyDebt,
+            ethDelta,
+            auctionWSqueethEthPrice,
+            feeAdjustment
+        );
 
-        emit SetStrategyCap(_capAmount, oldCap);
-    }
-
-    /**
-     * @notice called to redeem the net value of a vault post shutdown
-     * @dev needs to be called 1 time before users can exit the strategy using withdrawShutdown
-     */
-    function redeemShortShutdown() external {
-        hasRedeemedInShutdown = true;
-        powerTokenController.redeemShort(vaultId);
+        return isSellingAuction == isStillSellingAuction;
     }
 
     /**
