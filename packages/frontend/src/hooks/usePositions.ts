@@ -631,7 +631,7 @@ export const useLPPositions = () => {
         }
       },
     })
-  }, [address, router.pathname, subscribeToMore, squeethPool, address])
+  }, [address, subscribeToMore, squeethPool, address])
 
   const isWethToken0 = useMemo(() => parseInt(weth, 16) < parseInt(oSqueeth, 16), [weth, oSqueeth])
 
