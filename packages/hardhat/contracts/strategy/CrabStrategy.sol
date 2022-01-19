@@ -404,20 +404,27 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
         return _getDebtFromStrategyAmount(_crabAmount);
     }
 
-    function canExecuteAuction(uint256 _auctionTriggerTime) external view returns (bool) {
+    /**
+     * @notice get current auction details
+     * @param _auctionTriggerTime timestamp where auction started
+     * @return auction type, wSqueeth amount to auction, ETH proceeds, auction price, auction type changed or not
+     */
+    function getAuctionDetails(uint256 _auctionTriggerTime) external view returns (bool, uint256, uint256, uint256, bool) {
         (uint256 strategyDebt, uint256 ethDelta) = _syncStrategyState();
         uint256 currentWSqueethPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP_PERIOD, true);
         uint256 feeAdjustment = _calcFeeAdjustment();
         (bool isSellingAuction, ) = _checkAuctionType(strategyDebt, ethDelta, currentWSqueethPrice, feeAdjustment);
         uint256 auctionWSqueethEthPrice = _getAuctionPrice(_auctionTriggerTime, currentWSqueethPrice, isSellingAuction);
-        (bool isStillSellingAuction, ) = _checkAuctionType(
+        (bool isStillSellingAuction, uint256 wSqueethToAuction) = _checkAuctionType(
             strategyDebt,
             ethDelta,
             auctionWSqueethEthPrice,
             feeAdjustment
         );
+        bool isAuctionDirectionChanged = isSellingAuction != isStillSellingAuction;
+        uint256 ethProceeds = wSqueethToAuction.wmul(auctionWSqueethEthPrice);
 
-        return isSellingAuction == isStillSellingAuction;
+        return (isSellingAuction, wSqueethToAuction, ethProceeds, auctionWSqueethEthPrice, isAuctionDirectionChanged);
     }
 
     /**
