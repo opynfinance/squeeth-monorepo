@@ -1,6 +1,6 @@
 {
   "name": "@squeeth/monorepo",
-  "version": "1.22.17",
+  "version": "1.0.0",
   "keywords": [
     "ethereum",
     "react",
@@ -62,8 +62,8 @@
       "**/hardhat/**"
     ]
   },
+  "dependencies": {},
   "devDependencies": {
-    "@react-native-community/eslint-plugin": "^1.1.0",
     "husky": "^7.0.1",
     "lint-staged": "^11.1.2"
   }
