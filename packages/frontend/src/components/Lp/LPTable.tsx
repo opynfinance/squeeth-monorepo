@@ -21,8 +21,7 @@ import { useEffect, useState } from 'react'
 import { SecondaryTab, SecondaryTabs } from '../../components/Tabs'
 import { Tooltips, UniswapIFrameOpen, UniswapIFrameClose } from '@constants/enums'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
-import { useAddresses } from '@hooks/useAddress'
-import { useETHPrice } from '@hooks/useETHPrice'
+import { useWorldContext } from '@context/world'
 import { useLPPositions } from '@hooks/usePositions'
 import { inRange } from '@utils/calculations'
 import { UniswapIframe } from '../Modal/UniswapIframe'
@@ -118,8 +117,7 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
   const classes = useStyles()
   const { activePositions, closedPositions, loading: lpLoading } = useLPPositions()
   const [activeTab, setActiveTab] = useState(0)
-  const { wSqueeth } = useAddresses()
-  const ethPrice = useETHPrice()
+  const { ethPrice } = useWorldContext()
   const { getWSqueethPositionValue, isWethToken0 } = useSqueethPool()
   const { networkId } = useWallet()
 

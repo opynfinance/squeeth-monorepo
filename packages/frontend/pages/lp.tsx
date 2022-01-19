@@ -8,7 +8,9 @@ import { LPTable } from '@components/Lp/LPTable'
 import ObtainSqueeth from '@components/Lp/ObtainSqueeth'
 import SqueethInfo from '@components/Lp/SqueethInfo'
 import Nav from '@components/Nav'
+import RestrictionInfo from '@components/RestrictionInfo'
 import { LPProvider } from '@context/lp'
+import { useRestrictUser } from '@context/restrict-user'
 import { TradeProvider } from '@context/trade'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 
@@ -46,6 +48,7 @@ const useStyles = makeStyles((theme) =>
 
 export function LPCalculator() {
   const classes = useStyles()
+  const { isRestricted } = useRestrictUser()
   const { pool } = useSqueethPool()
 
   return (
@@ -75,7 +78,7 @@ export function LPCalculator() {
           }}
         >
           <LPTable isLPage={true} pool={pool}></LPTable>
-          <ObtainSqueeth />
+          {!isRestricted ? <ObtainSqueeth /> : null}
         </div>
       </div>
     </div>

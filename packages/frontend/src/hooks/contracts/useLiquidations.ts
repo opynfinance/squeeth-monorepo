@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 
 import controllerABI from '../../abis/controller.json'
-import { WSQUEETH_DECIMALS } from '../../constants'
+import { OSQUEETH_DECIMALS } from '../../constants'
 import { liquidations } from '../../queries/squeeth/__generated__/liquidations'
 import { LIQUIDATIONS_QUERY } from '../../queries/squeeth/liquidationsQuery'
 import { squeethClient } from '../../utils/apollo-client'
@@ -17,7 +17,7 @@ import { useAddresses } from '../useAddress'
  * @param refetchIntervalSec refetch interval in seconds
  * @returns {Vault[]}
  */
-export const useVaultLiquidations = (vaultId: number, refetchIntervalSec = 20) => {
+export const useVaultLiquidations = (vaultId: number, refetchIntervalSec = 30) => {
   const [liquidations, setLiquidations] = useState<Array<any>>([])
   const [contract, setContract] = useState<Contract>()
 
@@ -42,7 +42,7 @@ export const useVaultLiquidations = (vaultId: number, refetchIntervalSec = 20) =
     const _liquidations = data?.liquidations.map((l) => {
       return {
         ...l,
-        debtAmount: toTokenAmount(l.debtAmount.toString(), WSQUEETH_DECIMALS),
+        debtAmount: toTokenAmount(l.debtAmount.toString(), OSQUEETH_DECIMALS),
         collateralPaid: toTokenAmount(l.collateralPaid.toString(), 18),
       }
     })

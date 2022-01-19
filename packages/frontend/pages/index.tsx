@@ -16,15 +16,16 @@ import { VaultChart } from '@components/Charts/VaultChart'
 import MobileModal from '@components/Modal/MobileModal'
 import Nav from '@components/Nav'
 import PositionCard from '@components/PositionCard'
+import RestrictionInfo from '@components/RestrictionInfo'
 import { SqueethTab, SqueethTabs } from '@components/Tabs'
 import Trade from '@components/Trade'
 import { WelcomeModal } from '@components/Trade/WelcomeModal'
 import { Vaults } from '../src/constants'
 import { Tooltips } from '@constants/enums'
+import { useRestrictUser } from '@context/restrict-user'
 import { TradeProvider, useTrade } from '@context/trade'
 import { useWorldContext } from '@context/world'
 import { useController } from '@hooks/contracts/useController'
-import { useETHPrice } from '@hooks/useETHPrice'
 import { TradeType } from '../src/types'
 import { toTokenAmount } from '@utils/calculations'
 
@@ -362,7 +363,6 @@ const TabComponent: React.FC = () => {
 
 const SqueethInfo: React.FC = () => {
   const classes = useStyles()
-  const ethPrice = useETHPrice()
   const { actualTradeType } = useTrade()
   const { fundingPerHalfHour, mark, index, impliedVol, currentImpliedFunding } = useController()
 
@@ -504,6 +504,7 @@ const SqueethInfo: React.FC = () => {
 
 function TradePage() {
   const classes = useStyles()
+  const { isRestricted } = useRestrictUser()
 
   const { setVolMultiplier } = useWorldContext()
   const { tradeType, setTradeType } = useTrade()
@@ -552,7 +553,7 @@ function TradePage() {
           <div className={classes.ticket}>
             <TabComponent />
             <Card className={classes.innerTicket}>
-              <Trade setTradeCompleted={setTradeCompleted} />
+              {!isRestricted ? <Trade setTradeCompleted={setTradeCompleted} /> : <RestrictionInfo />}
             </Card>
           </div>
         </div>
@@ -582,7 +583,7 @@ function TradePage() {
         <MobileModal title="TRADE" isOpen={showMobileTrade} onClose={() => setShowMobileTrade(false)}>
           <TabComponent />
           <Card className={classes.innerTicket} style={{ textAlign: 'center', marginTop: '8px' }}>
-            <Trade setTradeCompleted={setTradeCompleted} />
+            {!isRestricted ? <Trade setTradeCompleted={setTradeCompleted} /> : <RestrictionInfo />}
           </Card>
         </MobileModal>
       </Hidden>

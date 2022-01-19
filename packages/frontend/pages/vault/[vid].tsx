@@ -20,15 +20,15 @@ import Nav from '@components/Nav'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import { Tooltips } from '@constants/enums'
 import { usePositions } from '@hooks/usePositions'
-import { MIN_COLLATERAL_AMOUNT, WSQUEETH_DECIMALS } from '../../src/constants'
+import { MIN_COLLATERAL_AMOUNT, OSQUEETH_DECIMALS } from '../../src/constants'
 import { VAULT_QUERY } from '../../src/queries/squeeth/vaultsQuery'
 import { Vault_vault } from '../../src/queries/squeeth/__generated__/Vault'
 import { PositionType } from '../../src/types'
+import { useRestrictUser } from '@context/restrict-user'
 import { useWallet } from '@context/wallet'
-import { useController } from '@hooks/contracts/useController'
+import { useController } from '../../src/hooks/contracts/useController'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
-import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
-import { useAddresses } from '@hooks/useAddress'
+import { useWorldContext } from '@context/world'
 import { CollateralStatus, Vault } from '../../src/types'
 import { squeethClient } from '@utils/apollo-client'
 import { getCollatPercentStatus, toTokenAmount } from '@utils/calculations'
@@ -216,6 +216,7 @@ enum VaultError {
 const Component: React.FC = () => {
   const classes = useStyles()
   const router = useRouter()
+  const { isRestricted } = useRestrictUser()
   const {
     getCollatRatioAndLiqPrice,
     getDebtAmount,
@@ -227,13 +228,12 @@ const Component: React.FC = () => {
     burnAndRedeem,
     getTwapEthPrice,
   } = useController()
-  const { wSqueeth } = useAddresses()
   const { balance, address, connected, networkId } = useWallet()
   const { vid } = router.query
   const { liquidations } = useVaultLiquidations(Number(vid))
   const { positionType, squeethAmount } = usePositions()
 
-  const squeethBal = useTokenBalance(wSqueeth, 20, WSQUEETH_DECIMALS)
+  const { oSqueethBal } = useWorldContext()
 
   const [vault, setVault] = useState<Vault | null>(null)
   const [existingCollatPercent, setExistingCollatPercent] = useState(0)
@@ -266,7 +266,7 @@ const Component: React.FC = () => {
       id: Number(_vault.id),
       NFTCollateralId: _vault.NftCollateralId,
       collateralAmount: toTokenAmount(new BigNumber(_vault.collateralAmount), 18),
-      shortAmount: toTokenAmount(new BigNumber(_vault.shortAmount), WSQUEETH_DECIMALS),
+      shortAmount: toTokenAmount(new BigNumber(_vault.shortAmount), OSQUEETH_DECIMALS),
       operator: _vault.operator,
     })
 
@@ -422,7 +422,7 @@ const Component: React.FC = () => {
       )
         adjustCollatError = VaultError.MIN_COLLATERAL
     } else {
-      if (action === VaultAction.BURN_SQUEETH && shortAmountBN.abs().gt(squeethBal))
+      if (action === VaultAction.BURN_SQUEETH && shortAmountBN.abs().gt(oSqueethBal))
         adjustAmountError = VaultError.INSUFFICIENT_OSQTH_BALANCE
       else if (collatPercent < 150) adjustAmountError = VaultError.MIN_COLLAT_PERCENT
     }
@@ -453,14 +453,14 @@ const Component: React.FC = () => {
   )
 
   const mintedDebt = useMemo(() => {
-    return squeethBal?.isGreaterThan(0) && positionType === PositionType.LONG
-      ? squeethBal.minus(squeethAmount)
-      : squeethBal
-  }, [positionType, squeethAmount, squeethBal])
+    return oSqueethBal?.isGreaterThan(0) && positionType === PositionType.LONG
+      ? oSqueethBal.minus(squeethAmount)
+      : oSqueethBal
+  }, [positionType, squeethAmount.toString(), oSqueethBal.toString()])
 
   const shortDebt = useMemo(() => {
     return positionType === PositionType.SHORT ? squeethAmount : new BigNumber(0)
-  }, [positionType, squeethAmount])
+  }, [positionType, squeethAmount.toString()])
 
   return (
     <div>
@@ -562,16 +562,20 @@ const Component: React.FC = () => {
             <div className={classes.overviewItem}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Typography className={classes.overviewValue}>{vault?.collateralAmount.toFixed(4)}</Typography>
-                {vault?.shortAmount.isZero() && vault.collateralAmount.gt(0) ? (
-                  <button
-                    className={clsx(classes.withdrawBtn)}
-                    onClick={() => {
-                      updateCollateral(vault!.collateralAmount.negated().toString())
-                      removeCollat(vault!.collateralAmount)
-                    }}
-                  >
-                    WITHDRAW
-                  </button>
+                {!isRestricted ? (
+                  <>
+                    {vault?.shortAmount.isZero() && vault.collateralAmount.gt(0) ? (
+                      <button
+                        className={clsx(classes.withdrawBtn)}
+                        onClick={() => {
+                          updateCollateral(vault!.collateralAmount.negated().toString())
+                          removeCollat(vault!.collateralAmount)
+                        }}
+                      >
+                        WITHDRAW
+                      </button>
+                    ) : null}
+                  </>
                 ) : null}
               </div>
               <Typography className={classes.overviewTitle}>Collateral (ETH)</Typography>
@@ -594,170 +598,61 @@ const Component: React.FC = () => {
               <Typography className={classes.overviewTitle}>Liquidation Price</Typography>
             </div>
           </div>
+          {!isRestricted ? (
+            <div className={classes.manager}>
+              <div className={classes.managerItem}>
+                <div className={classes.managerItemHeader}>
+                  <div style={{ marginLeft: '16px', width: '40px', height: '40px' }}>
+                    <Image src={ethLogo} alt="logo" width={40} height={40} />
+                  </div>
+                  <Typography className={classes.managerItemTitle} variant="h6">
+                    Adjust Collateral
+                  </Typography>
+                </div>
+                <div style={{ margin: 'auto', width: '300px', marginTop: '24px' }}>
+                  <div className={classes.mintBurnTooltip}>
+                    <Tooltip title={Tooltips.CollatRemoveAdd} style={{ alignSelf: 'center' }}>
+                      <InfoIcon fontSize="small" className={classes.infoIcon} />
+                    </Tooltip>
+                    <LinkButton
+                      size="small"
+                      color="primary"
+                      onClick={() =>
+                        collateralBN.isPositive()
+                          ? updateCollateral(toTokenAmount(balance, 18).toString())
+                          : updateCollateral(vault ? vault?.collateralAmount.negated().toString() : collateral)
+                      }
+                      variant="text"
+                    >
+                      Max
+                    </LinkButton>
+                  </div>
 
-          <div className={classes.manager}>
-            <div className={classes.managerItem}>
-              <div className={classes.managerItemHeader}>
-                <div style={{ marginLeft: '16px', width: '40px', height: '40px' }}>
-                  <Image src={ethLogo} alt="logo" width={40} height={40} />
-                </div>
-                <Typography className={classes.managerItemTitle} variant="h6">
-                  Adjust Collateral
-                </Typography>
-              </div>
-              <div style={{ margin: 'auto', width: '300px', marginTop: '24px' }}>
-                <div className={classes.mintBurnTooltip}>
-                  <Tooltip title={Tooltips.CollatRemoveAdd} style={{ alignSelf: 'center' }}>
-                    <InfoIcon fontSize="small" className={classes.infoIcon} />
-                  </Tooltip>
-                  <LinkButton
-                    size="small"
-                    color="primary"
-                    onClick={() =>
-                      collateralBN.isPositive()
-                        ? updateCollateral(toTokenAmount(balance, 18).toString())
-                        : updateCollateral(vault ? vault?.collateralAmount.negated().toString() : collateral)
+                  <NumberInput
+                    min={vault?.collateralAmount.negated().toString()}
+                    step={0.1}
+                    placeholder="Collateral"
+                    onChange={(v) => updateCollateral(v)}
+                    value={collateral}
+                    unit="ETH"
+                    hint={
+                      !!adjustCollatError ? adjustCollatError : `Balance ${toTokenAmount(balance, 18).toFixed(4)} ETH`
                     }
-                    variant="text"
-                  >
-                    Max
-                  </LinkButton>
+                    error={!!adjustCollatError}
+                  />
                 </div>
-
-                <NumberInput
-                  min={vault?.collateralAmount.negated().toString()}
-                  step={0.1}
-                  placeholder="Collateral"
-                  onChange={(v) => updateCollateral(v)}
-                  value={collateral}
-                  unit="ETH"
-                  hint={
-                    !!adjustCollatError ? adjustCollatError : `Balance ${toTokenAmount(balance, 18).toFixed(4)} ETH`
-                  }
-                  error={!!adjustCollatError}
-                />
-              </div>
-              <div className={classes.collatContainer}>
-                <TextField
-                  size="small"
-                  type="number"
-                  style={{ width: '100%', marginRight: '4px' }}
-                  onChange={(event) => updateCollatPercent(Number(event.target.value))}
-                  value={isCollatAction ? collatPercent : existingCollatPercent}
-                  id="filled-basic"
-                  label="Ratio"
-                  variant="outlined"
-                  // error={collatPercent < 150}
-                  // helperText={`Balance ${toTokenAmount(balance, 18).toFixed(4)} ETH`}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <Typography variant="caption">%</Typography>
-                      </InputAdornment>
-                    ),
-                  }}
-                  inputProps={{
-                    min: '0',
-                  }}
-                />
-                <CollatRange
-                  collatValue={isCollatAction ? collatPercent : existingCollatPercent}
-                  onCollatValueChange={updateCollatPercent}
-                />
-              </div>
-              <div className={classes.txDetails}>
-                <TradeInfoItem
-                  label="New liquidation price"
-                  value={isCollatAction ? (newLiqPrice || 0).toFixed(2) : '0'}
-                  frontUnit="$"
-                />
-              </div>
-              <div className={classes.managerActions}>
-                <RemoveButton
-                  className={classes.actionBtn}
-                  size="small"
-                  disabled={action !== VaultAction.REMOVE_COLLATERAL || txLoading || !!adjustCollatError}
-                  onClick={() => removeCollat(collateralBN.abs())}
-                >
-                  {action === VaultAction.REMOVE_COLLATERAL && txLoading ? (
-                    <CircularProgress color="primary" size="1rem" />
-                  ) : (
-                    'Remove'
-                  )}
-                </RemoveButton>
-                <AddButton
-                  onClick={() => addCollat(collateralBN)}
-                  className={classes.actionBtn}
-                  size="small"
-                  disabled={action !== VaultAction.ADD_COLLATERAL || txLoading || !!adjustCollatError}
-                >
-                  {action === VaultAction.ADD_COLLATERAL && txLoading ? (
-                    <CircularProgress color="primary" size="1rem" />
-                  ) : (
-                    'Add'
-                  )}
-                </AddButton>
-              </div>
-            </div>
-            <div className={classes.managerItem}>
-              <div className={classes.managerItemHeader}>
-                <div style={{ marginLeft: '16px', width: '40px', height: '40px' }}>
-                  <Image src={squeethLogo} alt="logo" width={40} height={40} />
-                </div>
-                <Typography className={classes.managerItemTitle} variant="h6">
-                  Adjust Debt
-                </Typography>
-              </div>
-              <div style={{ margin: 'auto', width: '300px', marginTop: '24px' }}>
-                <div className={classes.mintBurnTooltip}>
-                  <Tooltip title={Tooltips.MintBurnInput} style={{ alignSelf: 'center' }}>
-                    <InfoIcon fontSize="small" className={classes.infoIcon} />
-                  </Tooltip>
-                  <LinkButton
-                    size="small"
-                    color="primary"
-                    onClick={() =>
-                      shortAmountBN.isPositive()
-                        ? updateShort(maxToMint.toString())
-                        : updateShort(squeethBal.negated().toString())
-                    }
-                    variant="text"
-                    // style={{ marginLeft: '250px' }}
-                  >
-                    Max
-                  </LinkButton>
-                </div>
-                <NumberInput
-                  min={squeethBal.negated().toString()}
-                  step={0.1}
-                  placeholder="Amount"
-                  onChange={(v) => updateShort(v)}
-                  value={shortAmount}
-                  unit="oSQTH"
-                  hint={
-                    !!adjustAmountError
-                      ? adjustAmountError
-                      : `Balance ${
-                          squeethBal?.isGreaterThan(0) &&
-                          positionType === PositionType.LONG &&
-                          squeethBal.minus(squeethAmount).isGreaterThan(0)
-                            ? squeethBal.minus(squeethAmount).toFixed(8)
-                            : squeethBal.toFixed(8)
-                        } oSQTH`
-                  }
-                  // hint={!!adjustAmountError ? adjustAmountError : `Balance ${squeethBal.toFixed(6)} oSQTH`}
-                  error={!!adjustAmountError}
-                />
                 <div className={classes.collatContainer}>
                   <TextField
                     size="small"
                     type="number"
                     style={{ width: '100%', marginRight: '4px' }}
-                    onChange={(event) => updateDebtForCollatPercent(Number(event.target.value))}
-                    value={!isCollatAction ? collatPercent : existingCollatPercent}
+                    onChange={(event) => updateCollatPercent(Number(event.target.value))}
+                    value={isCollatAction ? collatPercent : existingCollatPercent}
                     id="filled-basic"
                     label="Ratio"
                     variant="outlined"
+                    // error={collatPercent < 150}
+                    // helperText={`Balance ${toTokenAmount(balance, 18).toFixed(4)} ETH`}
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position="end">
@@ -770,46 +665,156 @@ const Component: React.FC = () => {
                     }}
                   />
                   <CollatRange
-                    collatValue={!isCollatAction ? collatPercent : existingCollatPercent}
-                    onCollatValueChange={updateDebtForCollatPercent}
+                    collatValue={isCollatAction ? collatPercent : existingCollatPercent}
+                    onCollatValueChange={updateCollatPercent}
                   />
                 </div>
+                <div className={classes.txDetails}>
+                  <TradeInfoItem
+                    label="New liquidation price"
+                    value={isCollatAction ? (newLiqPrice || 0).toFixed(2) : '0'}
+                    frontUnit="$"
+                  />
+                </div>
+                <div className={classes.managerActions}>
+                  <RemoveButton
+                    className={classes.actionBtn}
+                    size="small"
+                    disabled={action !== VaultAction.REMOVE_COLLATERAL || txLoading || !!adjustCollatError}
+                    onClick={() => removeCollat(collateralBN.abs())}
+                  >
+                    {action === VaultAction.REMOVE_COLLATERAL && txLoading ? (
+                      <CircularProgress color="primary" size="1rem" />
+                    ) : (
+                      'Remove'
+                    )}
+                  </RemoveButton>
+                  <AddButton
+                    onClick={() => addCollat(collateralBN)}
+                    className={classes.actionBtn}
+                    size="small"
+                    disabled={action !== VaultAction.ADD_COLLATERAL || txLoading || !!adjustCollatError}
+                  >
+                    {action === VaultAction.ADD_COLLATERAL && txLoading ? (
+                      <CircularProgress color="primary" size="1rem" />
+                    ) : (
+                      'Add'
+                    )}
+                  </AddButton>
+                </div>
               </div>
-              <div className={classes.txDetails}>
-                <TradeInfoItem
-                  label="New liquidation price"
-                  value={!isCollatAction ? (newLiqPrice || 0).toFixed(2) : '0'}
-                  frontUnit="$"
-                />
-              </div>
-              <div className={classes.managerActions}>
-                <RemoveButton
-                  onClick={() => burn(shortAmountBN)}
-                  className={classes.actionBtn}
-                  size="small"
-                  disabled={action !== VaultAction.BURN_SQUEETH || txLoading || !!adjustAmountError}
-                >
-                  {action === VaultAction.BURN_SQUEETH && txLoading ? (
-                    <CircularProgress color="primary" size="1rem" />
-                  ) : (
-                    'Burn'
-                  )}
-                </RemoveButton>
-                <AddButton
-                  onClick={() => mint(shortAmountBN)}
-                  className={classes.actionBtn}
-                  size="small"
-                  disabled={action !== VaultAction.MINT_SQUEETH || txLoading || !!adjustAmountError}
-                >
-                  {action === VaultAction.MINT_SQUEETH && txLoading ? (
-                    <CircularProgress color="primary" size="1rem" />
-                  ) : (
-                    'Mint'
-                  )}
-                </AddButton>
+              <div className={classes.managerItem}>
+                <div className={classes.managerItemHeader}>
+                  <div style={{ marginLeft: '16px', width: '40px', height: '40px' }}>
+                    <Image src={squeethLogo} alt="logo" width={40} height={40} />
+                  </div>
+                  <Typography className={classes.managerItemTitle} variant="h6">
+                    Adjust Debt
+                  </Typography>
+                </div>
+                <div style={{ margin: 'auto', width: '300px', marginTop: '24px' }}>
+                  <div className={classes.mintBurnTooltip}>
+                    <Tooltip title={Tooltips.MintBurnInput} style={{ alignSelf: 'center' }}>
+                      <InfoIcon fontSize="small" className={classes.infoIcon} />
+                    </Tooltip>
+                    <LinkButton
+                      size="small"
+                      color="primary"
+                      onClick={() =>
+                        shortAmountBN.isPositive()
+                          ? updateShort(maxToMint.toString())
+                          : updateShort(oSqueethBal.negated().toString())
+                      }
+                      variant="text"
+                      // style={{ marginLeft: '250px' }}
+                    >
+                      Max
+                    </LinkButton>
+                  </div>
+                  <NumberInput
+                    min={oSqueethBal.negated().toString()}
+                    step={0.1}
+                    placeholder="Amount"
+                    onChange={(v) => updateShort(v)}
+                    value={shortAmount}
+                    unit="oSQTH"
+                    hint={
+                      !!adjustAmountError
+                        ? adjustAmountError
+                        : `Balance ${
+                            oSqueethBal?.isGreaterThan(0) &&
+                            positionType === PositionType.LONG &&
+                            oSqueethBal.minus(squeethAmount).isGreaterThan(0)
+                              ? oSqueethBal.minus(squeethAmount).toFixed(8)
+                              : oSqueethBal.toFixed(8)
+                          } oSQTH`
+                    }
+                    // hint={!!adjustAmountError ? adjustAmountError : `Balance ${squeethBal.toFixed(6)} oSQTH`}
+                    error={!!adjustAmountError}
+                  />
+                  <div className={classes.collatContainer}>
+                    <TextField
+                      size="small"
+                      type="number"
+                      style={{ width: '100%', marginRight: '4px' }}
+                      onChange={(event) => updateDebtForCollatPercent(Number(event.target.value))}
+                      value={!isCollatAction ? collatPercent : existingCollatPercent}
+                      id="filled-basic"
+                      label="Ratio"
+                      variant="outlined"
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <Typography variant="caption">%</Typography>
+                          </InputAdornment>
+                        ),
+                      }}
+                      inputProps={{
+                        min: '0',
+                      }}
+                    />
+                    <CollatRange
+                      collatValue={!isCollatAction ? collatPercent : existingCollatPercent}
+                      onCollatValueChange={updateDebtForCollatPercent}
+                    />
+                  </div>
+                </div>
+                <div className={classes.txDetails}>
+                  <TradeInfoItem
+                    label="New liquidation price"
+                    value={!isCollatAction ? (newLiqPrice || 0).toFixed(2) : '0'}
+                    frontUnit="$"
+                  />
+                </div>
+                <div className={classes.managerActions}>
+                  <RemoveButton
+                    onClick={() => burn(shortAmountBN)}
+                    className={classes.actionBtn}
+                    size="small"
+                    disabled={action !== VaultAction.BURN_SQUEETH || txLoading || !!adjustAmountError}
+                  >
+                    {action === VaultAction.BURN_SQUEETH && txLoading ? (
+                      <CircularProgress color="primary" size="1rem" />
+                    ) : (
+                      'Burn'
+                    )}
+                  </RemoveButton>
+                  <AddButton
+                    onClick={() => mint(shortAmountBN)}
+                    className={classes.actionBtn}
+                    size="small"
+                    disabled={action !== VaultAction.MINT_SQUEETH || txLoading || !!adjustAmountError}
+                  >
+                    {action === VaultAction.MINT_SQUEETH && txLoading ? (
+                      <CircularProgress color="primary" size="1rem" />
+                    ) : (
+                      'Mint'
+                    )}
+                  </AddButton>
+                </div>
               </div>
             </div>
-          </div>
+          ) : null}
         </div>
       )}
     </div>

@@ -1,17 +1,11 @@
-import { Button, createStyles, IconButton, makeStyles, Paper, Typography } from '@material-ui/core'
-import Table from '@material-ui/core/Table'
-import TableBody from '@material-ui/core/TableBody'
-import TableCell from '@material-ui/core/TableCell'
-import TableContainer from '@material-ui/core/TableContainer'
-import TableHead from '@material-ui/core/TableHead'
-import TableRow from '@material-ui/core/TableRow'
+import { createStyles, IconButton, makeStyles, Typography } from '@material-ui/core'
 import OpenInNewIcon from '@material-ui/icons/OpenInNew'
 
 import { EtherscanPrefix } from '../../constants'
 import { TransactionType } from '@constants/enums'
 import { useWallet } from '@context/wallet'
 import { useController } from '@hooks/contracts/useController'
-import { useETHPrice } from '@hooks/useETHPrice'
+import { useWorldContext } from '@context/world'
 import { useTransactionHistory } from '@hooks/useTransactionHistory'
 import { useUsdAmount } from '@hooks/useUsdAmount'
 const useStyles = makeStyles((theme) =>
@@ -49,7 +43,7 @@ const useStyles = makeStyles((theme) =>
 const History: React.FC = () => {
   const { transactions } = useTransactionHistory()
   const { networkId } = useWallet()
-  const ethPrice = useETHPrice()
+  const { ethPrice } = useWorldContext()
   const { normFactor: normalizationFactor } = useController()
   const classes = useStyles()
   const { getUsdAmt } = useUsdAmount()
@@ -68,7 +62,9 @@ const History: React.FC = () => {
             <Typography
               variant="body2"
               className={
-                tx.transactionType === TransactionType.BUY || tx.transactionType === TransactionType.BURN_SHORT
+                tx.transactionType === TransactionType.BUY ||
+                tx.transactionType === TransactionType.BURN_SHORT ||
+                tx.transactionType === TransactionType.REMOVE_LIQUIDITY
                   ? classes.green
                   : classes.red
               }
@@ -83,7 +79,9 @@ const History: React.FC = () => {
             <Typography
               variant="body2"
               className={
-                tx.transactionType === TransactionType.BUY || tx.transactionType === TransactionType.BURN_SHORT
+                tx.transactionType === TransactionType.BUY ||
+                tx.transactionType === TransactionType.BURN_SHORT ||
+                tx.transactionType === TransactionType.ADD_LIQUIDITY
                   ? classes.red
                   : classes.green
               }

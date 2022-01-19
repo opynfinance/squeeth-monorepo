@@ -5,7 +5,6 @@ import React, { useMemo, useState } from 'react'
 
 import { graphOptions, Links, Vaults } from '../../constants'
 import { useWorldContext } from '../../context/world'
-import { useETHPrice } from '../../hooks/useETHPrice'
 import { SqueethTab, SqueethTabs } from '../Tabs'
 import ShortSqueethPayoff from './ShortSqueethPayoff'
 
@@ -83,7 +82,7 @@ export function VaultChart({
     collatRatio,
   } = useWorldContext()
 
-  const ethPrice = useETHPrice()
+  const { ethPrice } = useWorldContext()
 
   const seriesRebalance = getVaultPNLWithRebalance(longAmount)
   const classes = useStyles()

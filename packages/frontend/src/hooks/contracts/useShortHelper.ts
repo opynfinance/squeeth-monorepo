@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 
 import shortAbi from '../../abis/shortHelper.json'
-import { Vaults, WETH_DECIMALS, WSQUEETH_DECIMALS } from '../../constants'
+import { Vaults, WETH_DECIMALS, OSQUEETH_DECIMALS } from '../../constants'
 import { useWallet } from '@context/wallet'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useAddresses } from '../useAddress'
@@ -37,7 +37,7 @@ export const useShortHelper = () => {
     const _exactInputParams = await getSellParam(amount)
     _exactInputParams.recipient = shortHelper
 
-    const _amount = fromTokenAmount(amount, WSQUEETH_DECIMALS).multipliedBy(normalizationFactor)
+    const _amount = fromTokenAmount(amount, OSQUEETH_DECIMALS).multipliedBy(normalizationFactor)
     const ethAmt = fromTokenAmount(collatAmount, 18)
     const txHash = await handleTransaction(
       contract.methods.openShort(vaultId, _amount.toFixed(0), 0, _exactInputParams).send({
@@ -58,7 +58,7 @@ export const useShortHelper = () => {
   const closeShort = async (vaultId: number, amount: BigNumber, withdrawAmt: BigNumber) => {
     if (!contract || !address) return
 
-    const _amount = fromTokenAmount(amount, WSQUEETH_DECIMALS)
+    const _amount = fromTokenAmount(amount, OSQUEETH_DECIMALS)
     const _withdrawAmt = fromTokenAmount(withdrawAmt.isPositive() ? withdrawAmt : 0, WETH_DECIMALS)
     const _exactOutputParams = await getBuyParam(amount)
 

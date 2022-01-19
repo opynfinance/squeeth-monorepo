@@ -4,13 +4,12 @@ import BigNumber from 'bignumber.js'
 import { motion } from 'framer-motion'
 import React, { useEffect, useMemo, useState } from 'react'
 
-import { MIN_COLLATERAL_AMOUNT, Tooltips, WSQUEETH_DECIMALS } from '../../constants'
+import { MIN_COLLATERAL_AMOUNT, Tooltips } from '../../constants'
 import { LPActions, OBTAIN_METHOD, useLPState } from '@context/lp'
 import { useWallet } from '@context/wallet'
 import { useController } from '@hooks/contracts/useController'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
-import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
-import { useAddresses } from '@hooks/useAddress'
+import { useWorldContext } from '@context/world'
 import { usePositions } from '@hooks/usePositions'
 import { toTokenAmount } from '@utils/calculations'
 import { PrimaryButton } from '../Button'
@@ -68,8 +67,7 @@ const useStyles = makeStyles((theme) =>
 
 const Mint: React.FC = () => {
   const classes = useStyles()
-  const { wSqueeth } = useAddresses()
-  const squeethBal = useTokenBalance(wSqueeth, 10, WSQUEETH_DECIMALS)
+  const { oSqueethBal } = useWorldContext()
   const { balance, connected } = useWallet()
   const { existingCollatPercent, existingCollat, firstValidVault } = usePositions()
   const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
@@ -192,7 +190,7 @@ const Mint: React.FC = () => {
         amount={mintAmount.toFixed(6)}
         unit="oSQTH"
         value={getWSqueethPositionValue(mintAmount).toFixed(2)}
-        hint={`Balance ${squeethBal.toFixed(6)}`}
+        hint={`Balance ${oSqueethBal.toFixed(6)}`}
       />
       <div className={classes.divider}>
         <TradeInfoItem

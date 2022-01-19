@@ -5,13 +5,12 @@ import { Contract } from 'web3-eth-contract'
 
 import { toTokenAmount } from '@utils/calculations'
 import erc721Abi from '../../abis/vaultManager.json'
-import { WSQUEETH_DECIMALS } from '../../constants/'
+import { OSQUEETH_DECIMALS } from '../../constants/'
 import { VAULTS_QUERY } from '../../queries/squeeth/vaultsQuery'
 import { Vaults } from '../../queries/squeeth/__generated__/Vaults'
 import { squeethClient } from '../../utils/apollo-client'
 import { useWallet } from '@context/wallet'
 import { useAddresses } from '../useAddress'
-// import useInterval from '../useInterval'
 
 /**
  * get user vaults.
@@ -19,7 +18,7 @@ import { useAddresses } from '../useAddress'
  * @param refetchIntervalSec refetch interval in seconds
  * @returns {Vault[]}
  */
-export const useVaultManager = (refetchIntervalSec = 20) => {
+export const useVaultManager = (refetchIntervalSec = 30) => {
   const [vaults, setVaults] = useState<Array<any>>([])
   const [contract, setContract] = useState<Contract>()
 
@@ -51,7 +50,7 @@ export const useVaultManager = (refetchIntervalSec = 20) => {
           id,
           NFTCollateralId: NftCollateralId,
           collateralAmount: toTokenAmount(new BigNumber(collateralAmount), 18),
-          shortAmount: toTokenAmount(new BigNumber(shortAmount), WSQUEETH_DECIMALS),
+          shortAmount: toTokenAmount(new BigNumber(shortAmount), OSQUEETH_DECIMALS),
           operator,
         }))
 

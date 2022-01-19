@@ -16,11 +16,11 @@ export const networkNameToUniFactory = (name: string) => {
   }
 }
 
+// quoter is different from uniswap's official deployment! cause it's QuoterV2
 export const networkNameToUniQuoter = (name: string) => {
   switch (name) {
-    case 'mainnet': return '0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6'
-    // quoter is different from uniswap's official deployment!
-    case 'rinkebyArbitrum': return '0x8f92cfB1BF6eD1ce79F2E8Eb0DC96e0F3b61276D'
+    case 'mainnet': return '0xC8d3a4e6BB4952E3658CCA5081c358e6935Efa43'
+    case 'rinkebyArbitrum': return undefined
     default: return undefined
   }
 }

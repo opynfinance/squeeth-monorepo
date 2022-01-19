@@ -12,7 +12,7 @@ import {
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { CloseType, Tooltips, Links } from '@constants/enums'
 import { useTrade } from '@context/trade'
@@ -23,7 +23,6 @@ import useShortHelper from '@hooks/contracts/useShortHelper'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import { useAddresses } from '@hooks/useAddress'
-import { useETHPrice } from '@hooks/useETHPrice'
 import { usePositions } from '@hooks/usePositions'
 import { PrimaryButton } from '@components/Button'
 import CollatRange from '@components/CollatRange'
@@ -33,8 +32,8 @@ import Confirmed from '@components/Trade/Confirmed'
 import TradeDetails from '@components/Trade/TradeDetails'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import UniswapData from '@components/Trade/UniswapData'
-import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
-import { WSQUEETH_DECIMALS, MIN_COLLATERAL_AMOUNT } from '../../../constants'
+import { MIN_COLLATERAL_AMOUNT } from '../../../constants'
+import { PositionType } from '../../../types'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -193,10 +192,8 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
   const { openShort } = useShortHelper()
   const { getWSqueethPositionValue } = useSqueethPool()
   const { updateOperator, normFactor: normalizationFactor, getShortAmountFromDebt, getDebtAmount } = useController()
-  const ethPrice = useETHPrice()
   const { selectWallet, connected } = useWallet()
-  const { shortHelper, wSqueeth } = useAddresses()
-  const wSqueethBal = useTokenBalance(wSqueeth, 5, WSQUEETH_DECIMALS)
+  const { shortHelper } = useAddresses()
 
   const {
     tradeAmount: amountInputValue,
@@ -223,7 +220,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
     if (!open && shortVaults.length && shortVaults[firstValidVault].shortAmount.lt(amount)) {
       setAmount(shortVaults[firstValidVault].shortAmount.toString())
     }
-  }, [shortVaults.length, open])
+  }, [shortVaults?.length, open])
 
   useEffect(() => {
     if (!shortVaults.length) {
@@ -232,7 +229,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
     }
 
     setVaultId(shortVaults[firstValidVault].id)
-  }, [shortVaults.length, firstValidVault])
+  }, [shortVaults?.length, firstValidVault])
 
   useEffect(() => {
     if (!open) return
@@ -280,43 +277,54 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
         setWithdrawCollat(_collat.minus(neededCollat))
       })
     }
-  }, [amount.toString(), collatPercent, shortVaults.length])
+  }, [amount.toString(), collatPercent, shortVaults?.length])
 
-  const { setCollatRatio } = useWorldContext()
+  const { setCollatRatio, ethPrice, oSqueethBal } = useWorldContext()
 
   let openError: string | undefined
   let closeError: string | undefined
   let existingLongError: string | undefined
   let priceImpactWarning: string | undefined
 
-  if (connected) {
-    if (
-      shortVaults.length &&
-      (shortVaults[firstValidVault].shortAmount.lt(amount) || shortVaults[firstValidVault].shortAmount.isZero())
-    ) {
-      closeError = 'Close amount exceeds position'
+  useEffect(() => {
+    if (connected) {
+      if (
+        shortVaults.length &&
+        (shortVaults[firstValidVault].shortAmount.lt(amount) || shortVaults[firstValidVault].shortAmount.isZero())
+      ) {
+        closeError = 'Close amount exceeds position'
+      }
+      if (new BigNumber(quote.priceImpact).gt(3)) {
+        priceImpactWarning = 'High Price Impact'
+      }
+      if (collateral.isGreaterThan(new BigNumber(balance))) {
+        openError = 'Insufficient ETH balance'
+      } else if (amount.isGreaterThan(0) && collateral.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) {
+        openError = `Minimum collateral is ${MIN_COLLATERAL_AMOUNT} ETH`
+      }
+      if (
+        !open &&
+        amount.isGreaterThan(0) &&
+        shortVaults.length &&
+        amount.lt(shortVaults[firstValidVault].shortAmount) &&
+        neededCollat.isLessThan(MIN_COLLATERAL_AMOUNT)
+      ) {
+        closeError = `You must have at least ${MIN_COLLATERAL_AMOUNT} ETH collateral unless you fully close out your position. Either fully close your position, or close out less`
+      }
+      if (isLong) {
+        existingLongError = 'Close your long position to open a short'
+      }
     }
-    if (new BigNumber(quote.priceImpact).gt(3)) {
-      priceImpactWarning = 'High Price Impact'
-    }
-    if (collateral.isGreaterThan(new BigNumber(balance))) {
-      openError = 'Insufficient ETH balance'
-    } else if (amount.isGreaterThan(0) && collateral.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) {
-      openError = `Minimum collateral is ${MIN_COLLATERAL_AMOUNT} ETH`
-    }
-    if (
-      !open &&
-      amount.isGreaterThan(0) &&
-      shortVaults.length &&
-      amount.lt(shortVaults[firstValidVault].shortAmount) &&
-      neededCollat.isLessThan(MIN_COLLATERAL_AMOUNT)
-    ) {
-      closeError = `You must have at least ${MIN_COLLATERAL_AMOUNT} ETH collateral unless you fully close out your position. Either fully close your position, or close out less`
-    }
-    if (isLong) {
-      existingLongError = 'Close your long position to open a short'
-    }
-  }
+  }, [
+    shortVaults.length,
+    amount.toString(),
+    quote.priceImpact,
+    balance,
+    collateral.toString(),
+    existingCollat.toString(),
+    neededCollat.toString(),
+    isLong,
+  ])
 
   const shortOpenPriceImpactErrorState =
     priceImpactWarning && !shortLoading && !(collatPercent < 150) && !openError && !existingLongError
@@ -539,6 +547,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   const [existingCollat, setExistingCollat] = useState(new BigNumber(0))
   const [vaultId, setVaultId] = useState(0)
   const [isVaultApproved, setIsVaultApproved] = useState(true)
+  const [finalShortAmount, setFinalShortAmount] = useState(new BigNumber(0))
   const [buyLoading, setBuyLoading] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
   const [txHash, setTxHash] = useState('')
@@ -550,10 +559,8 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   const { closeShort } = useShortHelper()
   const { getWSqueethPositionValue } = useSqueethPool()
   const { updateOperator, normFactor: normalizationFactor, getShortAmountFromDebt, getDebtAmount } = useController()
-  const { shortHelper, wSqueeth } = useAddresses()
-  const wSqueethBal = useTokenBalance(wSqueeth, 5, WSQUEETH_DECIMALS)
+  const { shortHelper } = useAddresses()
 
-  const ethPrice = useETHPrice()
   const { selectWallet, connected } = useWallet()
 
   const {
@@ -574,13 +581,43 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     existingCollatPercent,
     squeethAmount: shortSqueethAmount,
     isLong,
+    lpedSqueeth,
+    loading: isPositionFinishedCalc,
   } = usePositions()
+
+  const { setCollatRatio, ethPrice, oSqueethBal } = useWorldContext()
+
+  const mintedDebt = useMemo(() => {
+    return oSqueethBal?.isGreaterThan(0) && positionType === PositionType.LONG
+      ? oSqueethBal.minus(shortSqueethAmount)
+      : oSqueethBal
+  }, [positionType, shortSqueethAmount.toString(), oSqueethBal.toString()])
+
+  const lpDebt = useMemo(() => {
+    return lpedSqueeth.isGreaterThan(0) ? lpedSqueeth : new BigNumber(0)
+  }, [shortSqueethAmount.toString(), lpedSqueeth.toString()])
+
+  const shortDebt = useMemo(() => {
+    return positionType === PositionType.SHORT ? shortSqueethAmount : new BigNumber(0)
+  }, [shortSqueethAmount.toString(), lpDebt.toString(), mintedDebt.toString()])
+
+  useEffect(() => {
+    if (!shortVaults.length) return
+    const calculatedShort = mintedDebt.plus(lpDebt).plus(shortDebt)
+    const contractShort = shortVaults.length && shortVaults[firstValidVault]?.shortAmount
+
+    if (!calculatedShort.isEqualTo(contractShort)) {
+      setFinalShortAmount(contractShort)
+    } else {
+      setFinalShortAmount(shortDebt)
+    }
+  }, [shortVaults?.length, mintedDebt.toString(), shortDebt.toString(), lpDebt.toString(), firstValidVault])
 
   useEffect(() => {
     if (!open && shortVaults.length && shortVaults[firstValidVault].shortAmount.lt(amount)) {
       setAmount(shortVaults[firstValidVault].shortAmount.toString())
     }
-  }, [shortVaults.length, open])
+  }, [shortVaults?.length, open])
 
   useEffect(() => {
     if (!shortVaults.length) {
@@ -589,7 +626,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     }
 
     setVaultId(shortVaults[firstValidVault].id)
-  }, [shortVaults.length])
+  }, [shortVaults?.length])
 
   useEffect(() => {
     if (!open) return
@@ -613,10 +650,10 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
       getDebtAmount(new BigNumber(restOfShort)).then((debt) => {
         const _neededCollat = debt.times(collatPercent / 100)
         setNeededCollat(_neededCollat)
-        setWithdrawCollat(_collat.minus(neededCollat))
+        setWithdrawCollat(_neededCollat.gt(0) ? _collat.minus(neededCollat) : _collat)
       })
     }
-  }, [amount.toString(), collatPercent, shortVaults.length])
+  }, [amount.toString(), collatPercent, shortVaults?.length])
 
   const buyBackAndClose = useCallback(async () => {
     setBuyLoading(true)
@@ -648,51 +685,60 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     getDebtAmount,
     isVaultApproved,
     shortHelper,
-    shortVaults.length,
+    shortVaults?.length,
     updateOperator,
     vaultId,
   ])
 
-  const { setCollatRatio } = useWorldContext()
-
   const setShortCloseMax = useCallback(() => {
-    if (shortSqueethAmount.isGreaterThan(0)) {
-      setAmount(shortSqueethAmount.toString())
+    if (finalShortAmount.isGreaterThan(0)) {
+      setAmount(finalShortAmount.toString())
       setCollatPercent(150)
       setCloseType(CloseType.FULL)
     }
-  }, [shortSqueethAmount.toString()])
+  }, [finalShortAmount.toString()])
 
   let openError: string | undefined
   let closeError: string | undefined
   let existingLongError: string | undefined
   let priceImpactWarning: string | undefined
 
-  if (connected) {
-    if (shortSqueethAmount.lt(0) && shortSqueethAmount.lt(amount)) {
-      closeError = 'Close amount exceeds position'
+  useEffect(() => {
+    if (connected) {
+      if (finalShortAmount.lt(0) && finalShortAmount.lt(amount)) {
+        closeError = 'Close amount exceeds position'
+      }
+      if (new BigNumber(quote.priceImpact).gt(3)) {
+        priceImpactWarning = 'High Price Impact'
+      }
+      if (collateral.isGreaterThan(new BigNumber(balance))) {
+        openError = 'Insufficient ETH balance'
+      } else if (amount.isGreaterThan(0) && collateral.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) {
+        openError = `Minimum collateral is ${MIN_COLLATERAL_AMOUNT} ETH`
+      }
+      if (
+        !open &&
+        amount.isGreaterThan(0) &&
+        shortVaults.length &&
+        amount.lt(finalShortAmount) &&
+        neededCollat.isLessThan(MIN_COLLATERAL_AMOUNT)
+      ) {
+        closeError = `You must have at least ${MIN_COLLATERAL_AMOUNT} ETH collateral unless you fully close out your position. Either fully close your position, or close out less`
+      }
+      if (isLong && !finalShortAmount.isGreaterThan(0)) {
+        existingLongError = 'Close your long position to open a short'
+      }
     }
-    if (new BigNumber(quote.priceImpact).gt(3)) {
-      priceImpactWarning = 'High Price Impact'
-    }
-    if (collateral.isGreaterThan(new BigNumber(balance))) {
-      openError = 'Insufficient ETH balance'
-    } else if (amount.isGreaterThan(0) && collateral.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) {
-      openError = `Minimum collateral is ${MIN_COLLATERAL_AMOUNT} ETH`
-    }
-    if (
-      !open &&
-      amount.isGreaterThan(0) &&
-      shortVaults.length &&
-      amount.lt(shortVaults[firstValidVault].shortAmount) &&
-      neededCollat.isLessThan(MIN_COLLATERAL_AMOUNT)
-    ) {
-      closeError = `You must have at least ${MIN_COLLATERAL_AMOUNT} ETH collateral unless you fully close out your position. Either fully close your position, or close out less`
-    }
-    if (isLong) {
-      existingLongError = 'Close your long position to open a short'
-    }
-  }
+  }, [
+    finalShortAmount.toString(),
+    amount.toString(),
+    quote.priceImpact,
+    collateral.toString(),
+    balance,
+    existingCollat.toString(),
+    neededCollat.toString(),
+    isLong,
+  ])
 
   const shortClosePriceImpactErrorState =
     priceImpactWarning &&
@@ -708,12 +754,12 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   }, [collatPercent])
 
   useEffect(() => {
-    if (shortSqueethAmount.isGreaterThan(0)) {
-      setAmount(shortSqueethAmount.toString())
+    if (finalShortAmount.isGreaterThan(0)) {
+      setAmount(finalShortAmount.toString())
       setCollatPercent(150)
       setCloseType(CloseType.FULL)
     }
-  }, [tradeType, open, shortSqueethAmount.toString()])
+  }, [tradeType, open, finalShortAmount.toString()])
 
   const handleAmountInput = (v: string) => {
     setAmount(v)
@@ -741,6 +787,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
               onActionClicked={setShortCloseMax}
               unit="oSQTH"
               error={!!existingLongError || !!priceImpactWarning || !!closeError}
+              isLoading={isPositionFinishedCalc}
               convertedValue={
                 !amount.isNaN()
                   ? getWSqueethPositionValue(amount).toFixed(2).toLocaleString()
@@ -756,13 +803,12 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
                 ) : (
                   <div className={classes.hint}>
                     <span className={classes.hintTextContainer}>
-                      <span className={classes.hintTitleText}>Position</span>{' '}
-                      <span>{shortSqueethAmount.toFixed(6)}</span>
+                      <span className={classes.hintTitleText}>Position</span> <span>{finalShortAmount.toFixed(6)}</span>
                     </span>
                     {amount.toNumber() ? (
                       <>
                         <ArrowRightAltIcon className={classes.arrowIcon} />
-                        <span>{shortSqueethAmount?.minus(amount).toFixed(6)}</span>
+                        <span>{finalShortAmount?.minus(amount).toFixed(6)}</span>
                       </>
                     ) : null}{' '}
                     <span style={{ marginLeft: '4px' }}>oSQTH</span>

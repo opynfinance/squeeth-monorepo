@@ -2,6 +2,8 @@ import BigNumber from 'bignumber.js'
 import { useCallback, useEffect, useState } from 'react'
 
 import useInterval from './useInterval'
+import { useController } from './contracts/useController'
+import { toTokenAmount } from '@utils/calculations'
 
 /**
  * get token price by address.
@@ -9,8 +11,9 @@ import useInterval from './useInterval'
  * @param refetchIntervalSec refetch interval in seconds
  * @returns {BigNumber} price denominated in USD
  */
-export const useETHPrice = (refetchIntervalSec = 20): BigNumber => {
+export const useETHPrice = (refetchIntervalSec = 30): BigNumber => {
   const [price, setPrice] = useState(new BigNumber(0))
+  const { index } = useController()
 
   const updatePrice = useCallback(async () => {
     let price: BigNumber
@@ -19,8 +22,7 @@ export const useETHPrice = (refetchIntervalSec = 20): BigNumber => {
       price = await getETHPriceCoingecko()
       setPrice(price)
     } catch (error) {
-      const altPrice = await getAltETHPrice()
-      setPrice(altPrice)
+      setPrice(toTokenAmount(index, 18).sqrt())
     }
   }, [])
 
@@ -28,7 +30,7 @@ export const useETHPrice = (refetchIntervalSec = 20): BigNumber => {
     updatePrice()
   }, [])
 
-  useInterval(updatePrice, refetchIntervalSec * 1000)
+  useInterval(updatePrice, refetchIntervalSec * 15000)
 
   return price
 }
@@ -42,16 +44,4 @@ export const getETHPriceCoingecko = async (): Promise<BigNumber> => {
   if (priceStruct === undefined) return new BigNumber(0)
   const price = priceStruct.usd
   return new BigNumber(price)
-}
-
-export const getAltETHPrice = async (): Promise<BigNumber> => {
-  const url = 'https://data.messari.io/api/v1/assets/eth/metrics/market-data'
-  const res = await fetch(url, { headers: { 'x-messari-api-key': `${process.env.NEXT_PUBLIC_MESSARI_API_KEY}` } })
-
-  if (res.ok) {
-    const data = await res.json()
-    return new BigNumber(data.data.market_data.price_usd)
-  } else {
-    return new BigNumber(0)
-  }
 }

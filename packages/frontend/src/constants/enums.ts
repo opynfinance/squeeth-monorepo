@@ -1,3 +1,5 @@
+import { OSQUEETH } from './address'
+
 export enum TradeMode {
   Buy,
   Sell,
@@ -16,6 +18,8 @@ export enum TransactionType {
   SELL = 'Sold',
   MINT_SHORT = 'Minted and sold',
   BURN_SHORT = 'Bought back and burned',
+  ADD_LIQUIDITY = 'Added Liquidity',
+  REMOVE_LIQUIDITY = 'Removed Liquidity',
 }
 
 export enum CloseType {
@@ -32,6 +36,7 @@ export enum Tooltips {
   ImplVol = 'Implied Volatility (IV) is a market forecast of ETH price movement implied by squeeth',
   UnrealizedPnL = 'Total profit / loss if you were to fully close your position at the current oSQTH price on Uniswap. Resets if you close your position or change position sides (long to short, or vice versa)',
   RealizedPnL = 'Total realized profit / loss for this position through partial closes. Resets if you fully close your position or change position sides (long to short, or vice versa)',
+  ShortCollateral = 'Takes ETH collateral into account',
   Mark = 'The price squeeth is trading at. Because squeeth has convexity, Mark should be greater than ETH^2',
   Last30MinAvgFunding = 'Historical daily funding based on the last 30min. Calculated using a 30min TWAP of Mark - Index',
   CurrentImplFunding = 'Expected daily funding based on current price, calculated using current Mark - Index',
@@ -64,8 +69,8 @@ export enum Links {
 }
 
 export const UniswapIFrameOpen = {
-  1: 'https://app.uniswap.org/#/add/ETH/0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B/3000',
-  3: 'https://squeeth-uniswap.netlify.app/#/add/ETH/0x2c1d37d7d8444B24c14064e35aD1B37E5f7B6035/3000',
+  1: `https://app.uniswap.org/#/add/ETH/${OSQUEETH[1]}/3000`,
+  3: `https://squeeth-uniswap.netlify.app/#/add/ETH/${OSQUEETH[3]}/3000`,
   31337: 'https://app.uniswap.org/#/add/ETH/0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B/3000', // Should be replaced with arbitrum subgraph
   421611: 'https://app.uniswap.org/#/add/ETH/0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B/3000', // Should be replaced with arbitrum subgraph
 }
