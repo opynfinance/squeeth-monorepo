@@ -58,6 +58,9 @@ type ShortPnLParams = {
 }
 
 export function calcUnrealizedPnl({ wethAmount, buyQuote, ethPrice, ethCollateralPnl }: ShortPnLParams) {
+  if (wethAmount.isEqualTo(0) || buyQuote.isEqualTo(0) || ethPrice.isEqualTo(0) || ethCollateralPnl.isEqualTo(0)) {
+    return new BigNumber(0)
+  }
   return wethAmount.minus(buyQuote).multipliedBy(ethPrice).plus(ethCollateralPnl)
 }
 
@@ -69,6 +72,9 @@ type ShortGainParams = {
 }
 
 export function calcShortGain({ shortUnrealizedPNL, usdAmount, wethAmount, ethPrice }: ShortGainParams) {
+  if (wethAmount.isEqualTo(0) || shortUnrealizedPNL.isEqualTo(0) || ethPrice.isEqualTo(0) || usdAmount.isEqualTo(0)) {
+    return new BigNumber(0)
+  }
   return shortUnrealizedPNL.div(usdAmount.plus(wethAmount.times(ethPrice).absoluteValue())).times(100)
 }
 export function calcLongUnrealizedPnl({
