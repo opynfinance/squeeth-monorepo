@@ -18,8 +18,7 @@ import { useVaultManager } from './contracts/useVaultManager'
 import { useAddresses } from './useAddress'
 import useInterval from './useInterval'
 import { useUsdAmount } from './useUsdAmount'
-import { useTransactionHistory } from './useTransactionHistory'
-import { getCurrentShortDeposits, calcUnrealizedPnl, calcShortGain, calcLongUnrealizedPnl } from '../lib/pnl'
+import { calcUnrealizedPnl, calcShortGain, calcLongUnrealizedPnl } from '../lib/pnl'
 
 const bigZero = new BigNumber(0)
 
@@ -482,8 +481,7 @@ export const usePnL = () => {
     ethCollateralPnl,
   } = usePositions()
   const { ethPrice } = useWorldContext()
-  const { ready, getSellQuote, getBuyQuote, squeethToken } = useSqueethPool()
-  const { swapTransactions: transactions } = useTransactionHistory()
+  const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
 
   const [sellQuote, setSellQuote] = useState({
     amountOut: new BigNumber(0),
@@ -517,11 +515,6 @@ export const usePnL = () => {
     const _gain = _currentValue.minus(100)
     setLongGain(_gain)
   }, [ethPrice.toString(), wethAmount.toString(), sellQuote.amountOut.toString(), squeethAmount.toString()])
-
-  const currentShortDeposits = useMemo(
-    () => getCurrentShortDeposits({ positionType, squeethAmount, transactions, getBuyQuote }),
-    [squeethToken, positionType, squeethAmount.toString(), transactions.length],
-  )
 
   const shortUnrealizedPNL = useMemo(
     () => calcUnrealizedPnl({ wethAmount, buyQuote, ethPrice, ethCollateralPnl }),
