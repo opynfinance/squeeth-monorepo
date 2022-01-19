@@ -63,14 +63,22 @@ const useStyles = makeStyles((theme) =>
       marginBottom: '1em',
     },
     overviewTitle: {
-      fontSize: '14px',
+      fontSize: '16px',
       color: theme.palette.text.secondary,
       fontWeight: 600,
       display: 'flex',
       alignItems: 'center',
     },
+    smallerOverviewTitle: {
+      fontSize: '13px',
+      color: theme.palette.text.secondary,
+      fontWeight: 600,
+    },
     overviewValue: {
       fontSize: '22px',
+    },
+    smallerOverviewValue: {
+      fontSize: '16px',
     },
     manager: {
       display: 'flex',
@@ -526,9 +534,7 @@ const Component: React.FC = () => {
                     <InfoIcon className={classes.infoIcon} />
                   </Tooltip>
                 </Typography>
-                <Typography className={classes.overviewValue}>
-                  {vault?.shortAmount.gt(0) ? shortDebt.toFixed(6) : 0}
-                </Typography>
+                <Typography className={classes.overviewValue}>{shortDebt?.gt(0) ? shortDebt.toFixed(6) : 0}</Typography>
               </div>
               <div className={classes.debtItem}>
                 <Typography className={classes.overviewTitle}>
@@ -537,8 +543,14 @@ const Component: React.FC = () => {
                     <InfoIcon className={classes.infoIcon} />
                   </Tooltip>
                 </Typography>
-                <Typography className={classes.overviewValue}>
-                  {vault?.shortAmount.gt(0) ? mintedDebt.toFixed(6) : 0}
+
+                <Typography className={classes.smallerOverviewValue}>
+                  <span className={classes.smallerOverviewTitle}>Available: </span>
+                  <span>{mintedDebt?.gt(0) ? mintedDebt.toFixed(6) : 0}</span>
+                </Typography>
+                <Typography className={classes.smallerOverviewValue}>
+                  <span className={classes.smallerOverviewTitle}>LPed: </span>
+                  <span>{lpedSqueeth?.gt(0) ? lpedSqueeth.toFixed(6) : 0}</span>
                 </Typography>
               </div>
             </div>
