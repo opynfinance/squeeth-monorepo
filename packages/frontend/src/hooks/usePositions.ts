@@ -74,7 +74,9 @@ export const usePositions = () => {
 
           const time = new Date(Number(s.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
 
-          acc.ethCollateralPnl = wethAmt.abs().times(new BigNumber(ethPriceMap[time]).minus(ethPrice))
+          acc.ethCollateralPnl = acc.ethCollateralPnl.plus(
+            wethAmt.abs().times(new BigNumber(ethPriceMap[time]).minus(ethPrice)),
+          )
 
           //buy one squeeth means -1 to the pool, +1 to the user
           acc.squeethAmount = acc.squeethAmount.plus(squeethAmt.negated())
@@ -540,6 +542,15 @@ export const usePnL = () => {
     usdAmount.toString(),
     wethAmount.toString(),
   ])
+
+  console.log({
+    _gain: shortGain.toString(),
+    shortUnrealizedPNL: shortUnrealizedPNL.toString(),
+    wethAmount: wethAmount.toString(),
+    buyQuote: buyQuote.toString(),
+    ethPrice: ethPrice.toString(),
+    ethCollateralPnl: ethCollateralPnl.toString(),
+  })
 
   return {
     longGain,
