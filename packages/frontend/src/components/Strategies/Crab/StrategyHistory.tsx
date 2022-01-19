@@ -56,18 +56,10 @@ export const CrabStrategyHistory: React.FC = () => {
                 </Typography>
               </div>
               <div className={classes.txSubItem}>
-                <Typography variant="subtitle1">
-                  {d.type === CrabStrategyTxType.DEPOSIT || d.type === CrabStrategyTxType.FLASH_DEPOSIT
-                    ? `${d.ethAmount.toFixed(6)}  ETH`
-                    : `${d.lpAmount.toFixed(6)}  CRAB`}
-                </Typography>
+                <Typography variant="subtitle1">{d.ethAmount.toFixed(6)} ETH</Typography>
               </div>
               <div className={classes.txSubItem}>
-                <Typography variant="subtitle1">
-                  {d.type === CrabStrategyTxType.DEPOSIT || d.type === CrabStrategyTxType.FLASH_DEPOSIT
-                    ? `${d.lpAmount.toFixed(6)}  CRAB`
-                    : `${d.oSqueethAmount.toFixed(6)}  oSQTH`}
-                </Typography>
+                <Typography variant="subtitle1">{d.oSqueethAmount.toFixed(6)} oSQTH</Typography>
               </div>
               <div className={classes.txLink}>
                 <IconButton size="small" href={`${EtherscanPrefix[networkId]}/${d.id}`} target="_blank">

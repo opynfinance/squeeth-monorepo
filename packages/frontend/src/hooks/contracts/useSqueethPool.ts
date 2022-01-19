@@ -62,7 +62,7 @@ export const useSqueethPool = () => {
   const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
 
   useEffect(() => {
-    if (!squeethToken?.address) return
+    if (!squeethToken?.address || !pool) return
     getBuyQuoteForETH(new BigNumber(1))
       .then((val) => {
         setSqueethPrice(val.amountOut)

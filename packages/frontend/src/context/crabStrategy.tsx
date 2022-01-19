@@ -1,20 +1,56 @@
-import { useWallet } from '@context/wallet'
-import { useAddresses } from '@hooks/useAddress'
-import { useState, useEffect } from 'react'
-import { Contract } from 'web3-eth-contract'
-import abi from '../../abis/crabStrategy.json'
+import { Vault } from '../types'
 import BigNumber from 'bignumber.js'
+import React, { useContext, useEffect, useState } from 'react'
+import { BIG_ZERO } from '../constants'
+import { useWallet } from './wallet'
+import { useAddresses } from '@hooks/useAddress'
+import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
+import { useController } from '@hooks/contracts/useController'
+import { Contract } from 'web3-eth-contract'
+import abi from '../abis/crabStrategy.json'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
-import { Vault } from '../../types'
-import { useController } from './useController'
-import { useOracle } from './useOracle'
-import { useSqueethPool } from './useSqueethPool'
+import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 
-export const useCrabStrategy = () => {
+type CrabStrategyType = {
+  loading: boolean
+  maxCap: BigNumber
+  vault: Vault | null
+  collatRatio: number
+  liquidationPrice: BigNumber
+  timeAtLastHedge: number
+  userCrabBalance: BigNumber
+  vaultId: number
+  getCollateralFromCrabAmount: (crabAmount: BigNumber) => Promise<BigNumber | null>
+  flashDeposit: (amount: BigNumber, slippage: number) => Promise<any>
+  flashWithdraw: (amount: BigNumber, slippage: number) => Promise<any>
+  setStrategyCap: (amount: BigNumber) => Promise<any>
+  calculateEthWillingToPay: (amount: BigNumber, slippage: number) => Promise<BigNumber>
+}
+
+const initialState: CrabStrategyType = {
+  maxCap: BIG_ZERO,
+  vault: null,
+  loading: true,
+  collatRatio: 0,
+  liquidationPrice: BIG_ZERO,
+  timeAtLastHedge: 0,
+  userCrabBalance: BIG_ZERO,
+  vaultId: 0,
+  getCollateralFromCrabAmount: async () => BIG_ZERO,
+  flashDeposit: async () => null,
+  flashWithdraw: async () => null,
+  setStrategyCap: async () => null,
+  calculateEthWillingToPay: async () => BIG_ZERO,
+}
+
+const crabContext = React.createContext<CrabStrategyType>(initialState)
+const useCrab = () => useContext(crabContext)
+
+const CrabProvider: React.FC = ({ children }) => {
   const { web3, address, handleTransaction, networkId } = useWallet()
   const { crabStrategy } = useAddresses()
   const { getVault, getCollatRatioAndLiqPrice } = useController()
-  const { getSellQuote, getBuyQuote } = useSqueethPool()
+  const { getSellQuote, getBuyQuote, ready } = useSqueethPool()
 
   const [contract, setContract] = useState<Contract>()
   const [maxCap, setMaxCap] = useState<BigNumber>(new BigNumber(0))
@@ -22,6 +58,8 @@ export const useCrabStrategy = () => {
   const [collatRatio, setCollatRatio] = useState(0)
   const [liquidationPrice, setLiquidationPrice] = useState(new BigNumber(0))
   const [timeAtLastHedge, setTimeAtLastHedge] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const userCrabBalance = useTokenBalance(crabStrategy, 15, 18)
 
   useEffect(() => {
     if (!web3 || !crabStrategy) return
@@ -29,14 +67,13 @@ export const useCrabStrategy = () => {
   }, [crabStrategy, web3])
 
   useEffect(() => {
-    if (!contract) return
+    if (!contract || !ready) return
 
     setStrategyData()
-  }, [contract, networkId, address])
+  }, [contract, networkId, address, ready])
 
   const setStrategyData = async () => {
     if (!contract) return
-    console.log('Setting strategy data', contract)
 
     getMaxCap().then(setMaxCap)
     getStrategyVaultId()
@@ -47,6 +84,7 @@ export const useCrabStrategy = () => {
           getCollatRatioAndLiqPrice(v.collateralAmount, v.shortAmount).then((cl) => {
             setCollatRatio(cl.collateralPercent)
             setLiquidationPrice(cl.liquidationPrice)
+            setLoading(false)
           })
         }
       })
@@ -86,6 +124,14 @@ export const useCrabStrategy = () => {
 
     const result = await contract.methods.getWsqueethFromCrabAmount(fromTokenAmount(crabAmount, 18).toFixed(0)).call()
     return toTokenAmount(result.toString(), 18)
+  }
+
+  const getCollateralFromCrabAmount = async (crabAmount: BigNumber) => {
+    if (!contract || !vault) return null
+
+    const totalSupply = toTokenAmount(await contract.methods.totalSupply().call(), 18)
+    console.log('get collat', vault.collateralAmount.toString(), crabAmount.toString(), totalSupply.toString())
+    return vault.collateralAmount.times(crabAmount).div(totalSupply)
   }
 
   const getStrategyVaultId = async () => {
@@ -138,11 +184,14 @@ export const useCrabStrategy = () => {
   }
 
   const calculateEthWillingToPay = async (amount: BigNumber, slippage: number) => {
+    console.log('ETH willing to pay: before vault')
     if (!vault) return new BigNumber(0)
+    console.log('ETH willing to pay: after vault')
 
     const squeethDebt = await getWsqueethFromCrabAmount(amount)
     if (!squeethDebt) return new BigNumber(0)
 
+    console.log('ETH willing to pay: here')
     const ethWillingtToPayQuote = await getBuyQuote(squeethDebt, new BigNumber(slippage))
     return ethWillingtToPayQuote.maximumAmountIn
   }
@@ -166,17 +215,22 @@ export const useCrabStrategy = () => {
     })
   }
 
-  return {
+  const store: CrabStrategyType = {
     maxCap,
     vault,
+    loading: loading || !ready,
     collatRatio,
     liquidationPrice,
     timeAtLastHedge,
-    deposit,
+    userCrabBalance,
+    vaultId: vault?.id || 0,
     flashDeposit,
     flashWithdraw,
-    checkPriceHedge,
-    checkTimeHedge,
     setStrategyCap,
+    getCollateralFromCrabAmount,
+    calculateEthWillingToPay,
   }
+  return <crabContext.Provider value={store}>{children}</crabContext.Provider>
 }
+
+export { CrabProvider, useCrab }
