@@ -42,7 +42,7 @@ export const usePositions = () => {
     fetchPolicy: 'cache-and-network',
   })
 
-  useInterval(refetch, 30000)
+  useInterval(refetch, 15000)
 
   const { vaults: shortVaults } = useVaultManager(5)
   const [existingCollatPercent, setExistingCollatPercent] = useState(0)
