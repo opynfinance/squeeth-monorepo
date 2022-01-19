@@ -610,7 +610,7 @@ export const useLPPositions = () => {
 
   useEffect(() => {
     setLoading(true)
-  }, [address, router.pathname])
+  }, [address])
 
   useEffect(() => {
     subscribeToNewPositions()
