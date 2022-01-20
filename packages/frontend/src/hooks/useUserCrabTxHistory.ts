@@ -6,6 +6,7 @@ import { WETH_DECIMALS, OSQUEETH_DECIMALS } from '../constants'
 import { squeethClient } from '@utils/apollo-client'
 import { useWallet } from '@context/wallet'
 import { CrabStrategyTxType } from '../types/index'
+import { useUsdAmount } from './useUsdAmount'
 
 const getTxTitle = (type: string) => {
   if (type === CrabStrategyTxType.DEPOSIT) return 'Deposit'
@@ -18,6 +19,7 @@ const getTxTitle = (type: string) => {
 
 export const useUserCrabTxHistory = (user: string, isDescending?: boolean) => {
   const { networkId } = useWallet()
+  const { getUsdAmt } = useUsdAmount()
   const { data, loading } = useQuery<userCrabTxes, userCrabTxesVariables>(USER_CRAB_TX_QUERY, {
     fetchPolicy: 'cache-and-network',
     client: squeethClient[networkId],
@@ -29,6 +31,7 @@ export const useUserCrabTxHistory = (user: string, isDescending?: boolean) => {
 
   const uiData = data?.crabStrategyTxes.map((tx) => {
     const ethAmount = toTokenAmount(tx.ethAmount, WETH_DECIMALS)
+    const ethUsdValue = getUsdAmt(ethAmount, tx.timestamp)
     const lpAmount = toTokenAmount(tx.lpAmount, WETH_DECIMALS)
     const oSqueethAmount = toTokenAmount(tx.wSqueethAmount, OSQUEETH_DECIMALS)
 
@@ -37,6 +40,7 @@ export const useUserCrabTxHistory = (user: string, isDescending?: boolean) => {
       ethAmount,
       lpAmount,
       oSqueethAmount,
+      ethUsdValue,
       txTitle: getTxTitle(tx.type),
     }
   })
