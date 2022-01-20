@@ -1,4 +1,4 @@
-import { useCrabStrategyTxHistory } from '@hooks/useCrabStrategyTxHistory'
+import { useCrabStrategyTxHistory } from '@hooks/useCrabAuctionHistory'
 import { IconButton, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { CrabStrategyTxType } from '../../../types/index'
@@ -45,7 +45,7 @@ export const CrabStrategyHistory: React.FC = () => {
           return (
             <div className={classes.txItem} key={d.id}>
               <div className={classes.txSubItemTitle}>
-                <Typography variant="subtitle1">{d.txTitle}</Typography>
+                <Typography variant="subtitle1">{d.isSellingSqueeth ? 'Sold' : 'Bought'}</Typography>
                 <Typography variant="caption" color="textSecondary">
                   {new Date(d.timestamp * 1000).toLocaleString(undefined, {
                     day: 'numeric',
@@ -56,10 +56,10 @@ export const CrabStrategyHistory: React.FC = () => {
                 </Typography>
               </div>
               <div className={classes.txSubItem}>
-                <Typography variant="subtitle1">{d.ethAmount.toFixed(6)} ETH</Typography>
+                <Typography variant="subtitle1">{d.oSqueethAmount.toFixed(6)} oSQTH</Typography>
               </div>
               <div className={classes.txSubItem}>
-                <Typography variant="subtitle1">{d.oSqueethAmount.toFixed(6)} oSQTH</Typography>
+                <Typography variant="subtitle1">{d.ethAmount.toFixed(6)} ETH</Typography>
               </div>
               <div className={classes.txLink}>
                 <IconButton size="small" href={`${EtherscanPrefix[networkId]}/${d.id}`} target="_blank">
