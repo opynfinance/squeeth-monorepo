@@ -3,6 +3,11 @@ import { useWorldContext } from '@context/world'
 import { Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React from 'react'
+import { useCrab } from '@context/crabStrategy'
+import { Links } from '@constants/enums'
+import CrabProfit from '../../../../public/images/CrabProfit.svg'
+import CrabSteps from '../../../../public/images/CrabSteps.svg'
+import Image from 'next/image'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -17,30 +22,67 @@ const useStyles = makeStyles((theme) =>
     title: {
       marginTop: theme.spacing(2),
     },
+    link: {
+      color: theme.palette.primary.main,
+    },
+    profitImage: {
+      marginTop: theme.spacing(2),
+    },
+    stepsImage: {
+      marginTop: theme.spacing(2),
+      marginBottom: theme.spacing(4),
+    },
+    caption: {
+      marginTop: theme.spacing(1),
+      marginBottom: theme.spacing(4),
+    },
   }),
 )
 
 export const StrategyInfo: React.FC = () => {
   const classes = useStyles()
   const { ethPrice } = useWorldContext()
+  const { profitableMovePercent } = useCrab()
 
   return (
     <div className={classes.container}>
+      <Typography variant="h5" color="primary" className={classes.title}>
+        Profitability
+      </Typography>
+      <div className={classes.profitImage}>
+        <Image src={CrabProfit} alt="Profitability" />
+      </div>
+      <Typography color="textSecondary" variant="subtitle1" className={classes.caption}>
+        Based on current funding, crab strategy would be unprofitable if ETH moves more than the profit threshold of
+        approximately {(profitableMovePercent * 100).toFixed(2)}% in either direction each day.
+      </Typography>
       <Typography variant="h5" color="primary" className={classes.title}>
         Payoff
       </Typography>
       <ShortSqueethPayoff ethPrice={ethPrice.toNumber()} collatRatio={2} />
       <Typography variant="h5" color="primary" className={classes.title}>
+        Steps
+      </Typography>
+      <div className={classes.stepsImage}>
+        <Image src={CrabSteps} alt="Steps" />
+      </div>
+      <Typography variant="h5" color="primary" className={classes.title}>
         Risk
       </Typography>
       <Typography color="textSecondary" variant="subtitle1" className={classes.content}>
         If the Crab Strategy falls below the safe collateralization threshold (150%), the strategy is at risk of
-        liquidation. Rebalancing based on large ETH price changes helps prevent a liquidation from occurring. If ETH
-        moves more than an amount that is based on the funding received from the short Squeeth position (approximately
-        6% in either direction in a single day, subject to volatility) the strategy is unprofitable. In other words, the
-        Crab Strategy takes the view that volatility is high. If ETH goes up or down more than the amount of implied
-        volatility, the strategy loses money. If the Squeeth premium to ETH increases, the strategy will incur a loss
-        because it will be more expensive to close the position.
+        liquidation. Rebalancing based on large ETH price changes helps prevent a liquidation from occurring.
+        <br /> <br />
+        Based on current funding, crab strategy would be unprofitable if ETH moves more than approximately{' '}
+        {(profitableMovePercent * 100).toFixed(2)}% in either direction each day. If the Squeeth premium to ETH
+        increases, the strategy will incur a loss because it will be more expensive to close the position.
+        <a className={classes.link} href={Links.CrabFAQ} target="_blank" rel="noreferrer">
+          {' '}
+          Learn more.{' '}
+        </a>
+        <br /> <br />
+        Crab smart contracts have been audited by Trail of Bits, Akira, and Sherlock. However, smart contracts are
+        experimental technology and we encourage caution only risking funds you can afford to lose.
       </Typography>
     </div>
   )
