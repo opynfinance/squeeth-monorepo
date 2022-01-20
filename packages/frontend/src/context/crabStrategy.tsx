@@ -20,11 +20,13 @@ type CrabStrategyType = {
   timeAtLastHedge: number
   userCrabBalance: BigNumber
   vaultId: number
+  currentEthValue: BigNumber
   getCollateralFromCrabAmount: (crabAmount: BigNumber) => Promise<BigNumber | null>
   flashDeposit: (amount: BigNumber, slippage: number) => Promise<any>
   flashWithdraw: (amount: BigNumber, slippage: number) => Promise<any>
   setStrategyCap: (amount: BigNumber) => Promise<any>
   calculateEthWillingToPay: (amount: BigNumber, slippage: number) => Promise<BigNumber>
+  flashWithdrawEth: (amount: BigNumber, slippage: number) => Promise<any>
 }
 
 const initialState: CrabStrategyType = {
@@ -36,11 +38,13 @@ const initialState: CrabStrategyType = {
   timeAtLastHedge: 0,
   userCrabBalance: BIG_ZERO,
   vaultId: 0,
+  currentEthValue: BIG_ZERO,
   getCollateralFromCrabAmount: async () => BIG_ZERO,
   flashDeposit: async () => null,
   flashWithdraw: async () => null,
   setStrategyCap: async () => null,
   calculateEthWillingToPay: async () => BIG_ZERO,
+  flashWithdrawEth: async () => null,
 }
 
 const crabContext = React.createContext<CrabStrategyType>(initialState)
@@ -59,6 +63,7 @@ const CrabProvider: React.FC = ({ children }) => {
   const [liquidationPrice, setLiquidationPrice] = useState(new BigNumber(0))
   const [timeAtLastHedge, setTimeAtLastHedge] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [currentEthValue, setCurrentEthValue] = useState(new BigNumber(0))
   const userCrabBalance = useTokenBalance(crabStrategy, 15, 18)
 
   useEffect(() => {
@@ -89,6 +94,21 @@ const CrabProvider: React.FC = ({ children }) => {
         }
       })
     getTimeAtLastHedge().then(setTimeAtLastHedge)
+  }
+
+  useEffect(() => {
+    if (!contract || !ready) return
+
+    calculateCurrentValue()
+  }, [userCrabBalance.toString(), ready, contract, vault])
+
+  const calculateCurrentValue = async () => {
+    const collat = await getCollateralFromCrabAmount(userCrabBalance)
+    const ethToPay = await calculateEthWillingToPay(userCrabBalance, 0.5)
+    console.log('Calc current value', collat?.toString(), ethToPay.toString())
+    if (collat) {
+      setCurrentEthValue(collat.minus(ethToPay))
+    }
   }
 
   const getMaxCap = async () => {
@@ -141,19 +161,6 @@ const CrabProvider: React.FC = ({ children }) => {
     return Number(_vaultId.toString())
   }
 
-  // Don't use directly
-  const deposit = async (amount: BigNumber) => {
-    if (!contract) return
-
-    const _ethAmt = fromTokenAmount(amount, 18)
-    return handleTransaction(
-      contract.methods.deposit().send({
-        from: address,
-        value: _ethAmt.toString(),
-      }),
-    )
-  }
-
   const calculateETHtoBorrow = async (amount: BigNumber, slippage: number) => {
     // ethDeposit + ethBorrow = wSqueethDebt * wSqueethPrice * 2
     if (!vault) return new BigNumber(0)
@@ -177,10 +184,12 @@ const CrabProvider: React.FC = ({ children }) => {
 
     const ethBorrow = fromTokenAmount(await calculateETHtoBorrow(amount, slippage), 18)
     const ethDeposit = fromTokenAmount(amount, 18)
-    return contract.methods.flashDeposit(ethBorrow.plus(ethDeposit).toFixed(0)).send({
-      from: address,
-      value: fromTokenAmount(amount, 18).toFixed(0),
-    })
+    return handleTransaction(
+      contract.methods.flashDeposit(ethBorrow.plus(ethDeposit).toFixed(0)).send({
+        from: address,
+        value: fromTokenAmount(amount, 18).toFixed(0),
+      }),
+    )
   }
 
   const calculateEthWillingToPay = async (amount: BigNumber, slippage: number) => {
@@ -201,9 +210,19 @@ const CrabProvider: React.FC = ({ children }) => {
 
     const ethWillingToPay = fromTokenAmount(await calculateEthWillingToPay(amount, slippage), 18)
     const crabAmount = fromTokenAmount(amount, 18)
-    return contract.methods.flashWithdraw(crabAmount.toFixed(0), ethWillingToPay.toFixed(0)).send({
-      from: address,
-    })
+    return handleTransaction(
+      contract.methods.flashWithdraw(crabAmount.toFixed(0), ethWillingToPay.toFixed(0)).send({
+        from: address,
+      }),
+    )
+  }
+
+  const flashWithdrawEth = async (ethAmount: BigNumber, slippage: number) => {
+    if (!contract) return
+
+    const equivalentCrab = ethAmount.div(currentEthValue).times(userCrabBalance)
+    console.log('Equivalent crab balance', equivalentCrab.toString())
+    return flashWithdraw(equivalentCrab, slippage)
   }
 
   const setStrategyCap = async (amount: BigNumber) => {
@@ -224,11 +243,13 @@ const CrabProvider: React.FC = ({ children }) => {
     timeAtLastHedge,
     userCrabBalance,
     vaultId: vault?.id || 0,
+    currentEthValue,
     flashDeposit,
     flashWithdraw,
     setStrategyCap,
     getCollateralFromCrabAmount,
     calculateEthWillingToPay,
+    flashWithdrawEth,
   }
   return <crabContext.Provider value={store}>{children}</crabContext.Provider>
 }
