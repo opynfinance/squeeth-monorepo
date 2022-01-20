@@ -3,7 +3,7 @@ import { useWorldContext } from '@context/world'
 import { Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React from 'react'
-import { useCrabStrategy } from '@hooks/contracts/useCrabStrategy'
+import { useCrab } from '@context/crabStrategy'
 import { Links } from '@constants/enums'
 import CrabProfit from '../../../../public/images/CrabProfit.svg'
 import CrabSteps from '../../../../public/images/CrabSteps.svg'
@@ -42,7 +42,7 @@ const useStyles = makeStyles((theme) =>
 export const StrategyInfo: React.FC = () => {
   const classes = useStyles()
   const { ethPrice } = useWorldContext()
-  const { profitableMovePercent } = useCrabStrategy()
+  const { profitableMovePercent } = useCrab()
 
   return (
     <div className={classes.container}>
