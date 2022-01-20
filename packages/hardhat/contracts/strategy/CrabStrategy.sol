@@ -871,6 +871,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
 
     /**
      * @notice check if hedging based on price threshold is allowed
+     * @param _auctionTriggerTime timestamp where auction started
      * @return true if hedging is allowed
      */
     function _isPriceHedge(uint256 _auctionTriggerTime) internal view returns (bool) {
