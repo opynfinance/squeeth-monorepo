@@ -131,7 +131,7 @@ export const usePositions = () => {
         totalETHSpent: bigZero,
         totalUSDSpent: bigZero,
       },
-    [isWethToken0, swaps],
+    [isWethToken0, swaps?.length],
   )
 
   const mintedDebt = useMemo(() => {
