@@ -10,9 +10,7 @@ import { SecondaryTab, SecondaryTabs } from '@components/Tabs'
 import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
 import { useWallet } from '@context/wallet'
 import { CrabProvider, useCrab } from '@context/crabStrategy'
-import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
-import { useAddresses } from '@hooks/useAddress'
-import { CircularProgress, InputAdornment, TextField, Typography, Tab, Tabs } from '@material-ui/core'
+import { CircularProgress, Typography, Tab, Tabs } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { useController } from '@hooks/contracts/useController'
 import { toTokenAmount } from '@utils/calculations'
@@ -111,7 +109,6 @@ const Strategies: React.FC = () => {
   const [ethAmount, setEthAmount] = useState(new BigNumber(0))
   const [withdrawAmount, setWithdrawAmount] = useState(new BigNumber(0))
   const [depositOption, setDepositOption] = useState(0)
-  const [slippage, setSlippage] = useState(new BigNumber(0.5))
   const [txLoading, setTxLoading] = useState(false)
   const [txLoaded, setTxLoaded] = useState(false)
   const [txHash, setTxHash] = useState('')
@@ -126,14 +123,11 @@ const Strategies: React.FC = () => {
     collatRatio,
     flashWithdrawEth,
     timeAtLastHedge,
-    liquidationPrice,
-    userCrabBalance,
     currentEthValue,
-    flashWithdraw,
     profitableMovePercent,
+    slippage,
+    setSlippage,
   } = useCrab()
-  const { crabStrategy } = useAddresses()
-  const crabBalance = useTokenBalance(crabStrategy, 10, 18)
   const { index, currentImpliedFunding, fundingPerHalfHour } = useController()
   const { ethPrice } = useWorldContext()
 
@@ -147,7 +141,7 @@ const Strategies: React.FC = () => {
   const deposit = async () => {
     setTxLoading(true)
     try {
-      const tx = await flashDeposit(ethAmount, slippage.toNumber())
+      const tx = await flashDeposit(ethAmount, slippage)
       setTxHash(tx.transactionHash)
       setTxLoaded(true)
     } catch (e) {
@@ -159,7 +153,7 @@ const Strategies: React.FC = () => {
   const withdraw = async () => {
     setTxLoading(true)
     try {
-      const tx = await flashWithdrawEth(withdrawAmount, slippage.toNumber())
+      const tx = await flashWithdrawEth(withdrawAmount, slippage)
       setTxHash(tx.transactionHash)
       setTxLoaded(true)
     } catch (e) {
@@ -291,7 +285,7 @@ const Strategies: React.FC = () => {
                       confirmationMessage={
                         depositOption === 0
                           ? `Deposited ${ethAmount.toFixed(4)} ETH`
-                          : `Closed ${withdrawAmount.toFixed(4)} CRAB`
+                          : `Withdrawn ${withdrawAmount.toFixed(4)} ETH`
                       }
                       txnHash={txHash}
                       confirmType={ConfirmType.CRAB}
@@ -314,7 +308,11 @@ const Strategies: React.FC = () => {
                       <SecondaryTab label="Withdraw" />
                     </SecondaryTabs>
                     <div className={classes.settingsButton}>
-                      <TradeSettings isCrab={true} setCrabSlippage={setSlippage} crabSlippage={slippage} />
+                      <TradeSettings
+                        isCrab={true}
+                        setCrabSlippage={(s) => setSlippage(s.toNumber())}
+                        crabSlippage={new BigNumber(slippage)}
+                      />
                     </div>
                     <div className={classes.tradeContainer}>
                       {depositOption === 0 ? (
