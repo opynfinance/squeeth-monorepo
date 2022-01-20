@@ -50,8 +50,8 @@ export const StrategyInfo: React.FC = () => {
         Profitability
       </Typography>
       <div className={classes.profitImage}>
-      <Image src={CrabProfit} alt="Profitability" />
-      </div> 
+        <Image src={CrabProfit} alt="Profitability" />
+      </div>
       <Typography color="textSecondary" variant="subtitle1" className={classes.caption}>
         Based on current funding, crab strategy would be unprofitable if ETH moves more than the profit threshold of
         approximately {(profitableMovePercent * 100).toFixed(2)}% in either direction each day.
@@ -64,7 +64,7 @@ export const StrategyInfo: React.FC = () => {
         Steps
       </Typography>
       <div className={classes.stepsImage}>
-      <Image src={CrabSteps} alt="Steps" className={classes.image} />
+        <Image src={CrabSteps} alt="Steps" />
       </div>
       <Typography variant="h5" color="primary" className={classes.title}>
         Risk
