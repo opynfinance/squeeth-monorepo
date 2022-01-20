@@ -6,9 +6,9 @@ export enum TradeMode {
 }
 
 export enum Vaults {
-  ETHBear = 'ETH Bear Yield Strategy', // long 1 eth + short squeeth
+  ETHBear = 'Bear Strategy', // long 1 eth + short squeeth
   CrabVault = 'Crab Strategy', // long 2 eth + short squeeth
-  ETHBull = 'ETH Bull Yield Strategy', // long 3 eth + short squeeth
+  ETHBull = 'Bull Strategy', // long 3 eth + short squeeth
   Custom = 'Custom Strategy', // long x eth + short squeeth
   Short = 'Short Squeeth', //pure short squeeth
 }
