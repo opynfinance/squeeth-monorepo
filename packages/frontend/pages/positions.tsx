@@ -18,6 +18,9 @@ import { useTransactionHistory } from '@hooks/useTransactionHistory'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { toTokenAmount, fromTokenAmount } from '@utils/calculations'
 import { useController } from '../src/hooks/contracts/useController'
+import { CrabProvider } from '@context/crabStrategy'
+import { useCrabPosition } from '@hooks/useCrabPosition'
+import { useWallet } from '@context/wallet'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -123,6 +126,7 @@ export function Positions() {
   const { pool } = useSqueethPool()
 
   const { oSqueethBal } = useWorldContext()
+  const { address } = useWallet()
 
   const {
     positionType,
@@ -202,11 +206,11 @@ export function Positions() {
         </div>
         {/* eslint-disable-next-line prettier/prettier */}
         {(oSqueethBal.isZero() && shortVaults.length && shortVaults[firstValidVault]?.collateralAmount.isZero()) ||
-        (oSqueethBal.isZero() && shortVaults.length === 0 && squeethAmount.isEqualTo(0)) ||
-        (positionType !== PositionType.LONG &&
-          positionType !== PositionType.SHORT &&
-          !oSqueethBal.isGreaterThan(0) &&
-          shortVaults[firstValidVault]?.collateralAmount.isZero()) ? (
+          (oSqueethBal.isZero() && shortVaults.length === 0 && squeethAmount.isEqualTo(0)) ||
+          (positionType !== PositionType.LONG &&
+            positionType !== PositionType.SHORT &&
+            !oSqueethBal.isGreaterThan(0) &&
+            shortVaults[firstValidVault]?.collateralAmount.isZero()) ? (
           <div className={classes.empty}>
             <Typography>No active positions</Typography>
           </div>
@@ -425,8 +429,8 @@ export function Positions() {
                   </Typography>
                   <Typography variant="body1">
                     {oSqueethBal?.isGreaterThan(0) &&
-                    positionType === PositionType.LONG &&
-                    oSqueethBal.minus(squeethAmount).isGreaterThan(0)
+                      positionType === PositionType.LONG &&
+                      oSqueethBal.minus(squeethAmount).isGreaterThan(0)
                       ? oSqueethBal.minus(squeethAmount).toFixed(8)
                       : oSqueethBal.toFixed(8)}
                     &nbsp; oSQTH
@@ -484,7 +488,7 @@ export function Positions() {
             </div>
           </div>
         ) : null}
-
+        <CrabProvider>{!!address ? <CrabPosition user={address} /> : null}</CrabProvider>
         {activePositions?.length > 0 ? (
           <>
             <div className={classes.header}>
@@ -500,6 +504,68 @@ export function Positions() {
             Transaction History
           </Typography>
           <History />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const CrabPosition: React.FC<{ user: string }> = ({ user }) => {
+  const classes = useStyles()
+  const { depositedEth, depositedUsd, minCurrentEth, minCurrentUsd, minPnL, minPnlUsd, loading } = useCrabPosition(user)
+
+  if (depositedEth.isZero()) return null
+
+  return (
+    <div className={classes.position}>
+      <div className={classes.positionTitle}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <Typography>🦀</Typography>
+          <Typography style={{ marginLeft: '8px' }}>Crab strategy</Typography>
+        </div>
+      </div>
+      <div className={classes.shortPositionData}>
+        <div className={classes.innerPositionData}>
+          <div style={{ width: '50%' }}>
+            <Typography variant="caption" component="span" color="textSecondary">
+              Deposited ETH
+            </Typography>
+            <Typography variant="body1">
+              {depositedEth.toFixed(6)}
+              &nbsp; ETH
+            </Typography>
+            <Typography variant="body2" color="textSecondary">
+              $ {depositedUsd.toFixed(2)}
+            </Typography>
+          </div>
+          <div style={{ width: '50%' }}>
+            <Typography variant="caption" component="span" color="textSecondary">
+              Current Position
+            </Typography>
+            <Typography variant="body1">
+              {minCurrentEth.toFixed(6)}
+              &nbsp; ETH
+            </Typography>
+            <Typography variant="body2" color="textSecondary">
+              $ {minCurrentUsd.toFixed(2)}
+            </Typography>
+          </div>
+        </div>
+        <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
+          <div style={{ width: '50%' }}>
+            <Typography variant="caption" component="span" color="textSecondary">
+              Unrealized P&L
+            </Typography>
+            <Tooltip title={Tooltips.MinCrabPnL}>
+              <InfoIcon fontSize="small" className={classes.infoIcon} />
+            </Tooltip>
+            <Typography variant="body1" className={minPnlUsd.gte(0) ? classes.green : classes.red}>
+              $ {minPnlUsd.toFixed(2)}
+            </Typography>
+            <Typography variant="caption" className={minPnlUsd.gte(0) ? classes.green : classes.red}>
+              {minPnL.toFixed(2)}%
+            </Typography>
+          </div>
         </div>
       </div>
     </div>
