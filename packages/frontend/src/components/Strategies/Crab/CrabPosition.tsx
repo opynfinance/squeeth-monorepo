@@ -33,7 +33,7 @@ const UserNotConnected: React.FC = () => {
 
 const PositionCard: React.FC<{ user: string }> = ({ user }) => {
   const classes = useStyles()
-  const { minCurrentEth, minPnL } = useCrabPosition(user)
+  const { minCurrentEth, minPnL, loading: positionLoading } = useCrabPosition(user)
 
   return (
     <div className={classes.container}>
@@ -41,14 +41,16 @@ const PositionCard: React.FC<{ user: string }> = ({ user }) => {
         Position
       </Typography>
       <div style={{ display: 'flex', alignItems: 'center' }}>
-        <Typography variant="h6">{minCurrentEth.toFixed(6)} ETH</Typography>
-        <Typography
-          variant="body2"
-          style={{ marginLeft: '4px', fontWeight: 600 }}
-          className={minPnL.isNegative() ? classes.red : classes.green}
-        >
-          ({minPnL.toFixed(2)} %)
-        </Typography>
+        <Typography variant="h6">{positionLoading ? 'Loading' : `${minCurrentEth.toFixed(6)} ETH`}</Typography>
+        {!positionLoading ? (
+          <Typography
+            variant="body2"
+            style={{ marginLeft: '4px', fontWeight: 600 }}
+            className={minPnL.isNegative() ? classes.red : classes.green}
+          >
+            ({minPnL.toFixed(2)} %)
+          </Typography>
+        ) : null}
       </div>
     </div>
   )
