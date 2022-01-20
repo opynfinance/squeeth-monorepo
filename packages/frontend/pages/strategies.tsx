@@ -100,7 +100,17 @@ const Strategies: React.FC = () => {
 
   const classes = useStyles()
   const { balance, address } = useWallet()
-  const { maxCap, vault, flashDeposit, collatRatio, flashWithdraw, timeAtLastHedge, liquidationPrice } = useCrab()
+  const {
+    maxCap,
+    vault,
+    flashDeposit,
+    collatRatio,
+    flashWithdrawEth,
+    timeAtLastHedge,
+    liquidationPrice,
+    userCrabBalance,
+    currentEthValue,
+  } = useCrab()
   const { crabStrategy } = useAddresses()
   const crabBalance = useTokenBalance(crabStrategy, 10, 18)
   const { index } = useController()
@@ -121,7 +131,7 @@ const Strategies: React.FC = () => {
   const withdraw = async () => {
     setTxLoading(true)
     try {
-      const tx = await flashWithdraw(withdrawAmount, slippage.toNumber())
+      const tx = await flashWithdrawEth(withdrawAmount, slippage.toNumber())
       setTxHash(tx.transactionHash)
       setTxLoaded(true)
     } catch (e) {
@@ -230,7 +240,7 @@ const Strategies: React.FC = () => {
                       tooltip="ETH Amount to deposit"
                       actionTxt="Max"
                       unit="ETH"
-                      hint={`Balance ${toTokenAmount(balance, 18).toFixed(4)} ETH`}
+                      hint={`Balance ${toTokenAmount(balance, 18).toFixed(6)} ETH`}
                       convertedValue={ethPrice.times(ethAmount).toFixed(2)}
                       onActionClicked={() => setEthAmount(toTokenAmount(balance, 18))}
                     />
@@ -239,12 +249,12 @@ const Strategies: React.FC = () => {
                       value={withdrawAmount.toString()}
                       onChange={(v) => setWithdrawAmount(new BigNumber(v))}
                       label="Amount"
-                      tooltip="Amount of CRAB to close"
+                      tooltip="Amount of ETH to withdraw"
                       actionTxt="Max"
-                      unit="CRAB"
+                      unit="ETH"
                       convertedValue="0"
-                      hint={`Balance ${crabBalance.toFixed(4)} CRAB`}
-                      onActionClicked={() => setWithdrawAmount(crabBalance)}
+                      hint={`Position ${currentEthValue.toFixed(6)} ETH`}
+                      onActionClicked={() => setWithdrawAmount(currentEthValue)}
                     />
                   )}
                   <TradeInfoItem
