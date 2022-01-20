@@ -9,9 +9,11 @@ import {
   HedgeOnUniswap,
   Hedge,
   FlashDepositCallback,
-  FlashWithdrawCallback
+  FlashWithdrawCallback,
+  ExecuteSellAuction,
+  ExecuteBuyAuction
 } from "../generated/CrabStrategy/CrabStrategy"
-import { CrabStrategyTx } from "../generated/schema"
+import { CrabAuction, CrabStrategyTx } from "../generated/schema"
 
 function loadOrCreateTx(id: string): CrabStrategyTx {
   const strategy = CrabStrategyTx.load(id)
@@ -107,4 +109,24 @@ export function handleTransfer(event: Transfer): void {
     strategyTx.lpAmount = event.params.value
     strategyTx.save()
   }
+}
+
+export function handleExecuteSellAuction(event: ExecuteSellAuction): void {
+  const auction = new CrabAuction(event.transaction.hash.toHex())
+  auction.ethAmount = event.params.ethBought
+  auction.squeethAmount = event.params.wSqueethSold
+  auction.isSellingSqueeth = true
+  auction.isHedgingOnUniswap = event.params.isHedgingOnUniswap
+  auction.timestamp = event.block.timestamp
+  auction.save()
+}
+
+export function handleExecuteBuyAuction(event: ExecuteBuyAuction): void {
+  const auction = new CrabAuction(event.transaction.hash.toHex())
+  auction.ethAmount = event.params.ethSold
+  auction.squeethAmount = event.params.wSqueethBought
+  auction.isSellingSqueeth = false
+  auction.isHedgingOnUniswap = event.params.isHedgingOnUniswap
+  auction.timestamp = event.block.timestamp
+  auction.save()
 }
