@@ -39,18 +39,22 @@ const PositionCard: React.FC<{ user: string }> = ({ user }) => {
       <Typography color="primary" variant="subtitle1">
         Position
       </Typography>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <Typography variant="h6">{positionLoading ? 'Loading' : `${minCurrentEth.toFixed(6)} ETH`}</Typography>
-        {!positionLoading ? (
-          <Typography
-            variant="body2"
-            style={{ marginLeft: '4px', fontWeight: 600 }}
-            className={minPnL.isNegative() ? classes.red : classes.green}
-          >
-            ({minPnL.toFixed(2)} %)
-          </Typography>
-        ) : null}
-      </div>
+      {minCurrentEth.gt(0) ? (
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <Typography variant="h6">{positionLoading ? 'Loading' : `${minCurrentEth.toFixed(6)} ETH`}</Typography>
+          {!positionLoading ? (
+            <Typography
+              variant="body2"
+              style={{ marginLeft: '4px', fontWeight: 600 }}
+              className={minPnL.isNegative() ? classes.red : classes.green}
+            >
+              ({minPnL.toFixed(2)} %)
+            </Typography>
+          ) : null}
+        </div>
+      ) : (
+        <Typography variant="body2">--</Typography>
+      )}
     </div>
   )
 }
