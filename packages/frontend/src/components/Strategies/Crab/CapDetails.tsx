@@ -35,13 +35,13 @@ const CapDetails: React.FC<CapType> = ({ maxCap, depositedAmount }) => {
       <div className={classes.vaultDetails}>
         <div>
           <Typography variant="body2" color="textSecondary">
-            Vault Deposits
+            Strategy Deposits
           </Typography>
           <Typography variant="h6">{Number(depositedAmount.toFixed(4)).toLocaleString()} ETH</Typography>
         </div>
         <div>
           <Typography variant="body2" color="textSecondary">
-            Vault Capacity
+            Strategy Capacity
           </Typography>
           <Typography variant="h6">{Number(maxCap.toFixed(4)).toLocaleString()} ETH</Typography>
         </div>

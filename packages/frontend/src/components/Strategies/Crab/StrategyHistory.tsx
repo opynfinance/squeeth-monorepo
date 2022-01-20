@@ -37,7 +37,7 @@ export const CrabStrategyHistory: React.FC = () => {
   return (
     <div className={classes.container}>
       <Typography variant="h5" color="primary" style={{ marginTop: '32px' }}>
-        History
+        Strategy History
       </Typography>
       <div>
         {loading}
