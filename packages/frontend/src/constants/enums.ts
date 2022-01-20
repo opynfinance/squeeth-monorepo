@@ -61,6 +61,7 @@ export enum Tooltips {
   LPDebt = 'This is squeeth which you have opened a Uniswap pool to trade.',
   TotalDebt = 'Debt of the vault',
   VaultLiquidations = 'The strategy is subject to liquidations if it goes below 150% collateral, but rebalancing based on large ETH price changes helps prevent a liquidation from occurring.',
+  MinCrabPnL = 'This is the minimum Pnl that you get because of slippage',
 }
 
 export enum Links {
