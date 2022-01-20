@@ -56,3 +56,13 @@ type CrabStrategyTx @entity {
   ethHedgeTargetAmount: BigInt
   hedgerPrice: BigInt
 }
+
+type CrabAuction @entity {
+  id: ID!
+  isSellingSqueeth: Boolean!
+  squeethAmount: BigInt!
+  ethAmount: BigInt!
+  isHedgingOnUniswap: Boolean!
+  owner: Bytes!
+  timestamp: BigInt!
+}

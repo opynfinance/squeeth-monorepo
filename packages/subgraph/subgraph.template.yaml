@@ -98,6 +98,8 @@ dataSources:
         - Hedge
         - FlashDepositCallback
         - FlashWithdrawCallback
+        - ExecuteSellAuction
+        - ExecuteBuyAuction
       abis:
         - name: CrabStrategy
           file: ./abis/CrabStrategyDeployment.json
@@ -120,4 +122,8 @@ dataSources:
           handler: handleFlashDepositCallback
         - event: FlashWithdrawCallback(indexed address,uint256,uint256)
           handler: handleFlashWithdrawCallback 
+        - event: ExecuteSellAuction(indexed address,uint256,uint256,bool)
+          handler: handleExecuteSellAuction
+        - event: ExecuteBuyAuction(indexed address,uint256,uint256,bool)
+          handler: handleExecuteBuyAuction 
       file: ./src/crabstrategy.ts
