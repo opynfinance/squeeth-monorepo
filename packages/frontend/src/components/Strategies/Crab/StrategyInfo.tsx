@@ -4,10 +4,11 @@ import { Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React from 'react'
 import { useCrab } from '@context/crabStrategy'
-import { Links } from '@constants/enums'
+import { Links, Vaults } from '@constants/enums'
 import CrabProfit from '../../../../public/images/CrabProfit.svg'
 import CrabSteps from '../../../../public/images/CrabSteps.svg'
 import Image from 'next/image'
+import { CrabStrategyChart } from '@components/Charts/CrabStrategyChart'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -36,6 +37,10 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(1),
       marginBottom: theme.spacing(4),
     },
+    chartTitle: {
+      marginTop: theme.spacing(2),
+      marginBottom: theme.spacing(4),
+    },
   }),
 )
 
@@ -46,6 +51,10 @@ export const StrategyInfo: React.FC = () => {
 
   return (
     <div className={classes.container}>
+      <Typography variant="h5" color="primary" className={classes.chartTitle}>
+        Historical PnL Simulation
+      </Typography>
+      <CrabStrategyChart vault={Vaults.Short} longAmount={0} showPercentage={true} setCustomLong={() => null} />
       <Typography variant="h5" color="primary" className={classes.title}>
         Profitability
       </Typography>
