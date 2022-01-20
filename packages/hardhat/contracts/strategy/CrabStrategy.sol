@@ -171,9 +171,9 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
         require(_hedgeTimeThreshold > 0, "invalid hedge time threshold");
         require(_hedgePriceThreshold > 0, "invalid hedge price threshold");
         require(_auctionTime > 0, "invalid auction time");
-        require(_minPriceMultiplier < 1e18, "auction min price multiplier too high");
-        require(_minPriceMultiplier > 0, "invalid auction min price multiplier");
-        require(_maxPriceMultiplier > 1e18, "auction max price multiplier too low");
+        require(_minPriceMultiplier < 1e18, "min price multiplier too high");
+        require(_minPriceMultiplier > 0, "invalid min price multiplier");
+        require(_maxPriceMultiplier > 1e18, "max price multiplier too low");
 
         oracle = _oracle;
         ethWSqueethPool = _ethWSqueethPool;
@@ -289,8 +289,8 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
      * @param _crabAmount amount of strategy token to burn
      */
     function withdrawShutdown(uint256 _crabAmount) external nonReentrant {
-        require(powerTokenController.isShutDown(), "Squeeth contracts are not shut down");
-        require(hasRedeemedInShutdown, "Strategy has not redeemed vault proceeds");
+        require(powerTokenController.isShutDown(), "Squeeth contracts not shut down");
+        require(hasRedeemedInShutdown, "Crab must redeemShortShutdown");
 
         uint256 strategyShare = _calcCrabRatio(_crabAmount, totalSupply());
         uint256 ethToWithdraw = _calcEthToWithdraw(strategyShare, address(this).balance);
@@ -410,6 +410,8 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
      * @param _deltaHedgeThreshold minimum hedge size in a percent of ETH collateral
      */
     function setDeltaHedgeThreshold(uint256 _deltaHedgeThreshold) external onlyOwner {
+        require(_deltaHedgeThreshold < 2e17, "invalid delta hedge threshold");
+
         uint256 oldDeltaHedgeThreshold = deltaHedgeThreshold;
         deltaHedgeThreshold = _deltaHedgeThreshold;
 
@@ -421,6 +423,8 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
      * @param _twapPeriod the twap period, in seconds
      */
     function setTwapPeriod(uint32 _twapPeriod) external onlyOwner {
+        require(_twapPeriod >= 180, "twap period is too short");
+        
         uint32 oldTwapPeriod = twapPeriod;
         twapPeriod = _twapPeriod;
 
@@ -432,6 +436,8 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
      * @param _hedgeTimeThreshold the hedge time threshold, in seconds
      */
     function setHedgeTimeThreshold(uint256 _hedgeTimeThreshold) external onlyOwner {
+        require(_hedgeTimeThreshold > 0, "invalid hedge time threshold");
+
         uint256 oldHedgeTimeThreshold = hedgeTimeThreshold;
         hedgeTimeThreshold = _hedgeTimeThreshold;
 
@@ -443,6 +449,8 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
      * @param _hedgePriceThreshold the hedge price threshold, in percent, scaled by 1e18
      */
     function setHedgePriceThreshold(uint256 _hedgePriceThreshold) external onlyOwner {
+        require(_hedgePriceThreshold > 0, "invalid hedge price threshold");
+        
         uint256 oldHedgePriceThreshold = hedgePriceThreshold;
         hedgePriceThreshold = _hedgePriceThreshold;
 
@@ -454,6 +462,8 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
      * @param _auctionTime the length of the hedge auction in seconds
      */
     function setAuctionTime(uint256 _auctionTime) external onlyOwner {
+        require(_auctionTime > 0, "invalid auction time");
+        
         uint256 oldAuctionTime = auctionTime;
         auctionTime = _auctionTime;
 
@@ -466,6 +476,9 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
      * @param _minPriceMultiplier the min price multiplier, a percentage, scaled by 1e18
      */
     function setMinPriceMultiplier(uint256 _minPriceMultiplier) external onlyOwner {
+        require(_minPriceMultiplier < 1e18, "min price multiplier too high");
+        require(_minPriceMultiplier > 0, "invalid min price multiplier");
+        
         uint256 oldMinPriceMultiplier = minPriceMultiplier;
         minPriceMultiplier = _minPriceMultiplier;
 
@@ -478,6 +491,8 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
      * @param _maxPriceMultiplier the max price multiplier, a percentage, scaled by 1e18
      */
     function setMaxPriceMultiplier(uint256 _maxPriceMultiplier) external onlyOwner {
+        require(_maxPriceMultiplier > 1e18, "max price multiplier too low");
+        
         uint256 oldMaxPriceMultiplier = maxPriceMultiplier;
         maxPriceMultiplier = _maxPriceMultiplier;
 
@@ -685,14 +700,14 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
 
         if (isSellingAuction) {
             // Receiving ETH and paying wSqueeth
-            require(auctionWSqueethEthPrice <= _limitPrice, "Auction price greater than max accepted price");
+            require(auctionWSqueethEthPrice <= _limitPrice, "Auction price > max price");
             require(msg.value >= ethProceeds, "Low ETH amount received");
 
             _executeSellAuction(msg.sender, msg.value, wSqueethToAuction, ethProceeds, false);
         } else {
             require(msg.value == 0, "ETH attached for buy auction");
             // Receiving wSqueeth and paying ETH
-            require(auctionWSqueethEthPrice >= _limitPrice, "Auction price greater than min accepted price");
+            require(auctionWSqueethEthPrice >= _limitPrice, "Auction price < min price");
             _executeBuyAuction(msg.sender, wSqueethToAuction, ethProceeds, false);
         }
 
@@ -830,7 +845,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
             feeAdjustment
         );
 
-        require(isSellingAuction == isStillSellingAuction, "can not execute hedging trade as auction type changed");
+        require(isSellingAuction == isStillSellingAuction, "auction direction changed");
 
         uint256 ethProceeds = wSqueethToAuction.wmul(auctionWSqueethEthPrice);
 

@@ -236,7 +236,7 @@ describe("Crab flashswap integration test: uniswap time based hedging", function
 
       await expect(
         crabStrategy.connect(depositor).timeHedgeOnUniswap(ethers.utils.parseUnits('0.01'), ethers.utils.parseUnits('0.0001'))
-      ).to.be.revertedWith("can not execute hedging trade as auction type changed");
+      ).to.be.revertedWith("auction direction changed");
     })
 
     it("should revert if not positive PnL", async () => {
@@ -387,7 +387,7 @@ describe("Crab flashswap integration test: uniswap time based hedging", function
 
       await expect(
         crabStrategy.connect(depositor).timeHedgeOnUniswap(ethers.utils.parseUnits('0.01'), ethers.utils.parseUnits('0.0001'))
-      ).to.be.revertedWith("can not execute hedging trade as auction type changed");
+      ).to.be.revertedWith("auction direction changed");
     })
 
     it("should revert if not positive PnL", async () => {

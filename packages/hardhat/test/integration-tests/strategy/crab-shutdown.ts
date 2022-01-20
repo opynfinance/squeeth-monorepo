@@ -200,7 +200,7 @@ describe("Crab integration test: Shutdown of Squeeth Power Perp contracts", func
 
     it("should NOT let user withdrawShutdown pre shutdown, pre redeemShortShutdown", async () => {
         const userCrabBalanceBefore = await crabStrategy.balanceOf(depositor.address);
-        await expect(crabStrategy.connect(depositor).withdrawShutdown(userCrabBalanceBefore)).to.be.revertedWith("Squeeth contracts are not shut down")
+        await expect(crabStrategy.connect(depositor).withdrawShutdown(userCrabBalanceBefore)).to.be.revertedWith("Squeeth contracts not shut down")
       })
 
     it('shutdown contracts', async() => {
@@ -212,7 +212,7 @@ describe("Crab integration test: Shutdown of Squeeth Power Perp contracts", func
 
     it("should NOT let user withdrawShutdown post shutdown, pre redeemShortShutdown", async () => {
         const userCrabBalanceBefore = await crabStrategy.balanceOf(depositor.address);
-        await expect(crabStrategy.connect(depositor).withdrawShutdown(userCrabBalanceBefore)).to.be.revertedWith("Strategy has not redeemed vault proceeds")
+        await expect(crabStrategy.connect(depositor).withdrawShutdown(userCrabBalanceBefore)).to.be.revertedWith("Crab must redeemShortShutdown")
       })
 
     it("anyone should be able to call redeemShortShutdown", async () => {
