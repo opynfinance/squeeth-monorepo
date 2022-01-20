@@ -184,6 +184,28 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
     }
 
     /**
+     * @notice owner can set the strategy cap in ETH collateral terms
+     * @dev deposits are rejected if it would put the strategy above the cap amount
+     * @dev strategy collateral can be above the cap amount due to hedging activities
+     * @param _capAmount the maximum strategy collateral in ETH, checked on deposits
+     */
+    function setStrategyCap(uint256 _capAmount) external onlyOwner {
+        uint256 oldCap = strategyCap;
+        strategyCap = _capAmount;
+
+        emit SetStrategyCap(_capAmount, oldCap);
+    }
+
+    /**
+     * @notice called to redeem the net value of a vault post shutdown
+     * @dev needs to be called 1 time before users can exit the strategy using withdrawShutdown
+     */
+    function redeemShortShutdown() external {
+        hasRedeemedInShutdown = true;
+        powerTokenController.redeemShort(vaultId);
+    }
+
+    /**
      * @notice flash deposit into strategy, providing ETH, selling wSqueeth and receiving strategy tokens
      * @dev this function will execute a flash swap where it receives ETH, deposits and mints using flash swap proceeds and msg.value, and then repays the flash swap with wSqueeth
      * @dev _ethToDeposit must be less than msg.value plus the proceeds from the flash swap
@@ -222,7 +244,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
     }
 
     /**
-     * @notice flash deposit into strategy, providing strategy tokens, buying wSqueeth, burning and receiving ETH
+     * @notice flash withdraw from strategy, providing strategy tokens, buying wSqueeth, burning and receiving ETH
      * @dev this function will execute a flash swap where it receives wSqueeth, burns, withdraws ETH and then repays the flash swap with ETH
      * @param _crabAmount strategy token amount to burn
      * @param _maxEthToPay maximum ETH to pay to buy back the owed wSqueeth debt
@@ -292,13 +314,15 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
 
     /**
      * @notice hedge startegy based on time threshold with uniswap arbing
-     * @param _minWSqueeth minimum WSqueeth amount of profit if hedge auction is selling WSqueeth
-     * @param _minEth minimum ETH amount of profit if hedge auction is buying WSqueeth
+     * @dev this function atomically hedges on uniswap and provides a bounty to the caller based on the difference
+     * @dev between uniswap execution price and the price of the hedging auction
+     * @param _minWSqueeth minimum WSqueeth amount the caller willing to receive if hedge auction is selling WSqueeth
+     * @param _minEth minimum ETH amount the caller is willing to receive if hedge auction is buying WSqueeth
      */
     function timeHedgeOnUniswap(uint256 _minWSqueeth, uint256 _minEth) external {
-        uint256 auctionTriggerTime = timeAtLastHedge.add(hedgeTimeThreshold);
+        (bool isTimeHedgeAllowed, uint256 auctionTriggerTime) = _isTimeHedge();
 
-        require(block.timestamp >= auctionTriggerTime, "Time hedging is not allowed");
+        require(isTimeHedgeAllowed, "Time hedging is not allowed");
 
         _hedgeOnUniswap(auctionTriggerTime, _minWSqueeth, _minEth);
 
@@ -307,6 +331,11 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
 
     /**
      * @notice hedge startegy based on price threshold with uniswap arbing
+     * @dev this function atomically hedges on uniswap and provides a bounty to the caller based on the difference
+     * @dev between uniswap execution price and the price of the hedging auction
+     * @param _auctionTriggerTime the time when the price deviation threshold was exceeded and when the auction started
+     * @param _minWSqueeth minimum WSqueeth amount the caller willing to receive if hedge auction is selling WSqueeth
+     * @param _minEth minimum ETH amount the caller is willing to receive if hedge auction is buying WSqueeth
      */
     function priceHedgeOnUniswap(
         uint256 _auctionTriggerTime,
@@ -339,7 +368,9 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
     /**
      * @notice strategy hedging based on price threshold
      * @dev need to attach msg.value if buying WSqueeth
-     * @param _auctionTriggerTime timestamp where auction started
+     * @param _auctionTriggerTime the time when the price deviation threshold was exceeded and when the auction started
+     * @param _isStrategySellingWSqueeth specify the direction of the trade that you expect, this choice impacts the limit price chosen
+     * @param _limitPrice the min or max price that you will trade at, depending on if buying or selling
      */
     function priceHedge(
         uint256 _auctionTriggerTime,
@@ -347,7 +378,6 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
         uint256 _limitPrice
     ) external payable nonReentrant {
         require(_isPriceHedge(_auctionTriggerTime), "Price hedging not allowed");
-
         _hedge(_auctionTriggerTime, _isStrategySellingWSqueeth, _limitPrice);
 
         emit PriceHedge(msg.sender, _isStrategySellingWSqueeth, _limitPrice, _auctionTriggerTime);
@@ -355,7 +385,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
 
     /**
      * @notice check if hedging based on price threshold is allowed
-     * @param _auctionTriggerTime alleged timestamp where auction was triggered
+     * @param _auctionTriggerTime the time when the price deviation threshold was exceeded and when the auction started
      * @return true if hedging is allowed
      */
     function checkPriceHedge(uint256 _auctionTriggerTime) external view returns (bool) {
@@ -375,7 +405,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
 
     /**
      * @notice get wSqueeth debt amount associated with strategy token amount
-     * @dev _crabAmount strategy token amount
+     * @param _crabAmount strategy token amount
      * @return wSqueeth amount
      */
     function getWsqueethFromCrabAmount(uint256 _crabAmount) external view returns (uint256) {
@@ -383,25 +413,36 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
     }
 
     /**
-     * @notice owner can set the strategy cap in ETH collateral terms
-     * @dev deposits are rejected if it would put the strategy above the cap amount
-     * @dev strategy collateral can be above the cap amount due to hedging activities
-     * @param _capAmount the maximum strategy collateral in ETH, checked on deposits
+     * @notice get current auction details
+     * @param _auctionTriggerTime timestamp where auction started
+     * @return if strategy is selling wSqueeth, wSqueeth amount to auction, ETH proceeds, auction price, if auction direction has switched
      */
-    function setStrategyCap(uint256 _capAmount) external onlyOwner {
-        uint256 oldCap = strategyCap;
-        strategyCap = _capAmount;
+    function getAuctionDetails(uint256 _auctionTriggerTime)
+        external
+        view
+        returns (
+            bool,
+            uint256,
+            uint256,
+            uint256,
+            bool
+        )
+    {
+        (uint256 strategyDebt, uint256 ethDelta) = _syncStrategyState();
+        uint256 currentWSqueethPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP_PERIOD, true);
+        uint256 feeAdjustment = _calcFeeAdjustment();
+        (bool isSellingAuction, ) = _checkAuctionType(strategyDebt, ethDelta, currentWSqueethPrice, feeAdjustment);
+        uint256 auctionWSqueethEthPrice = _getAuctionPrice(_auctionTriggerTime, currentWSqueethPrice, isSellingAuction);
+        (bool isStillSellingAuction, uint256 wSqueethToAuction) = _checkAuctionType(
+            strategyDebt,
+            ethDelta,
+            auctionWSqueethEthPrice,
+            feeAdjustment
+        );
+        bool isAuctionDirectionChanged = isSellingAuction != isStillSellingAuction;
+        uint256 ethProceeds = wSqueethToAuction.wmul(auctionWSqueethEthPrice);
 
-        emit SetStrategyCap(_capAmount, oldCap);
-    }
-
-    /**
-     * @notice called to redeem the net value of a vault post shutdown
-     * @dev needs to be called 1 time before users can exit the strategy using withdrawShutdown
-     */
-    function redeemShortShutdown() external {
-        hasRedeemedInShutdown = true;
-        powerTokenController.redeemShort(vaultId);
+        return (isSellingAuction, wSqueethToAuction, ethProceeds, auctionWSqueethEthPrice, isAuctionDirectionChanged);
     }
 
     /**
@@ -620,6 +661,8 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
     /**
      * @notice execute arb between auction price and uniswap price
      * @param _auctionTriggerTime auction starting time
+     * @param _minWSqueeth minimum WSqueeth amount the caller willing to receive if hedge auction is selling WSqueeth
+     * @param _minEth minimum ETH amount the caller is willing to receive if hedge auction is buying WSqueeth
      */
     function _hedgeOnUniswap(
         uint256 _auctionTriggerTime,
@@ -828,9 +871,11 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
 
     /**
      * @notice check if hedging based on price threshold is allowed
+     * @param _auctionTriggerTime timestamp where auction started
      * @return true if hedging is allowed
      */
     function _isPriceHedge(uint256 _auctionTriggerTime) internal view returns (bool) {
+        if (_auctionTriggerTime < timeAtLastHedge) return false;
         uint32 secondsToPriceHedgeTrigger = uint32(block.timestamp.sub(_auctionTriggerTime));
         uint256 wSqueethEthPriceAtTriggerTime = IOracle(oracle).getHistoricalTwap(
             ethWSqueethPool,
@@ -881,7 +926,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
      * @param _ethDelta ETH delta (amount of ETH in strategy)
      * @param _wSqueethEthPrice WSqueeth/ETH price
      * @param _feeAdjustment the fee adjustment, the amount of ETH owed per wSqueeth minted
-     * @return auction type(sell or buy) and auction initial target hedge in wSqueth
+     * @return auction type(sell or buy) and auction initial target hedge in wSqueeth
      */
     function _checkAuctionType(
         uint256 _debt,
