@@ -1,6 +1,5 @@
 import { useCrabPosition } from '@hooks/useCrabPosition'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import BigNumber from 'bignumber.js'
 import React, { useEffect, useState } from 'react'
 import { Typography } from '@material-ui/core'
 
