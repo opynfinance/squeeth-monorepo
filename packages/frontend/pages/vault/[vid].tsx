@@ -39,7 +39,7 @@ const useStyles = makeStyles((theme) =>
     container: {
       margin: theme.spacing(0, 'auto'),
       padding: theme.spacing(6, 0),
-      width: '800px',
+      width: '840px',
       [theme.breakpoints.down('sm')]: {
         width: '100%',
         padding: theme.spacing(0, 2),
@@ -47,10 +47,9 @@ const useStyles = makeStyles((theme) =>
       },
     },
     overview: {
-      display: 'grid',
+      display: 'flex',
       marginTop: theme.spacing(2),
-      gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, max(25% - 20px, 200px)), 1fr))`,
-      columnGap: '20px',
+      gap: '15px',
     },
     overviewItem: {
       display: 'flex',
@@ -63,7 +62,7 @@ const useStyles = makeStyles((theme) =>
       marginBottom: '1em',
     },
     overviewTitle: {
-      fontSize: '16px',
+      fontSize: '14px',
       color: theme.palette.text.secondary,
       fontWeight: 600,
       display: 'flex',
@@ -79,13 +78,17 @@ const useStyles = makeStyles((theme) =>
     },
     managerItem: {
       background: theme.palette.background.stone,
-      width: '380px',
       borderRadius: theme.spacing(2),
-      padding: theme.spacing(2, 3),
+      padding: theme.spacing(4, 6.8),
     },
     managerItemHeader: {
       display: 'flex',
       alignItems: 'center',
+      justifyContent: 'flex-start',
+      '& > *': {
+        display: 'flex',
+        justifyContent: 'flex-start',
+      },
     },
     managerItemTitle: {
       fontSize: '24px',
@@ -180,7 +183,7 @@ const useStyles = makeStyles((theme) =>
       flexDirection: 'column',
       border: '1px solid #DCDAE94D',
       width: '100%',
-      padding: theme.spacing(2, 3),
+      padding: theme.spacing(2),
       borderRadius: theme.spacing(2),
       // marginBottom: '1em',
     },
@@ -540,6 +543,17 @@ const Component: React.FC = () => {
                   {mintedDebt.gt(0) ? mintedDebt.toFixed(6) : 0}
                 </Typography>
               </div>
+              <div className={classes.debtItem}>
+                <Typography className={classes.overviewTitle}>
+                  <span>LPed Debt (oSQTH)</span>
+                  <Tooltip title={Tooltips.LPDebt}>
+                    <InfoIcon className={classes.infoIcon} />
+                  </Tooltip>
+                </Typography>
+                <Typography className={classes.overviewValue}>
+                  {lpedSqueeth?.gt(0) ? lpedSqueeth.toFixed(6) : 0}
+                </Typography>
+              </div>
             </div>
           </div>
 
@@ -591,7 +605,7 @@ const Component: React.FC = () => {
             <div className={classes.manager}>
               <div className={classes.managerItem}>
                 <div className={classes.managerItemHeader}>
-                  <div style={{ marginLeft: '16px', width: '40px', height: '40px' }}>
+                  <div style={{ width: '40px', height: '40px' }}>
                     <Image src={ethLogo} alt="logo" width={40} height={40} />
                   </div>
                   <Typography className={classes.managerItemTitle} variant="h6">
@@ -694,7 +708,7 @@ const Component: React.FC = () => {
               </div>
               <div className={classes.managerItem}>
                 <div className={classes.managerItemHeader}>
-                  <div style={{ marginLeft: '16px', width: '40px', height: '40px' }}>
+                  <div style={{ width: '40px', height: '40px' }}>
                     <Image src={squeethLogo} alt="logo" width={40} height={40} />
                   </div>
                   <Typography className={classes.managerItemTitle} variant="h6">
