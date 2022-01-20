@@ -2,21 +2,12 @@ import { BIG_ZERO } from '../constants'
 import { useEffect, useMemo, useState } from 'react'
 import { useUserCrabTxHistory } from './useUserCrabTxHistory'
 import { CrabStrategyTxType } from '../types'
-import { useUsdAmount } from './useUsdAmount'
 import { useCrab } from '@context/crabStrategy'
 import { useWorldContext } from '@context/world'
 
 export const useCrabPosition = (user: string) => {
   const { loading, data } = useUserCrabTxHistory(user)
-  const { getUsdAmt } = useUsdAmount()
-  const {
-    getCollateralFromCrabAmount,
-    calculateEthWillingToPay,
-    loading: crabLoading,
-    userCrabBalance,
-    vaultId,
-    currentEthValue,
-  } = useCrab()
+  const { loading: crabLoading, userCrabBalance, currentEthValue } = useCrab()
   const { ethPrice } = useWorldContext()
 
   const [minCurrentEth, setMinCurrentEth] = useState(BIG_ZERO)
@@ -27,15 +18,14 @@ export const useCrabPosition = (user: string) => {
 
     const { depositedEth, usdAmount } = data?.reduce(
       (acc, tx) => {
-        const usdAmt = getUsdAmt(tx.ethAmount, tx.timestamp)
         if (tx.type === CrabStrategyTxType.FLASH_DEPOSIT) {
           acc.depositedEth = acc.depositedEth.plus(tx.ethAmount)
           acc.lpAmount = acc.lpAmount.plus(tx.lpAmount)
-          acc.usdAmount = acc.usdAmount.plus(usdAmt)
+          acc.usdAmount = acc.usdAmount.plus(tx.ethUsdValue)
         } else if (tx.type === CrabStrategyTxType.FLASH_WITHDRAW) {
           acc.depositedEth = acc.depositedEth.minus(tx.ethAmount)
           acc.lpAmount = acc.lpAmount.minus(tx.lpAmount)
-          acc.usdAmount = acc.usdAmount.minus(usdAmt)
+          acc.usdAmount = acc.usdAmount.minus(tx.ethUsdValue)
         }
         // Reset to zero if position closed
         if (acc.lpAmount.isZero()) {
