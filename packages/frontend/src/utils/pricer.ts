@@ -67,15 +67,13 @@ export async function getSqueethPNLCompounding(
 > {
   if (ethPrices.length === 0) return []
   const volsMap = await getVolMap()
-  let cumulativeSqueethReturn = 0
-  let cumulativeEthReturn = 0
+  let cumulativeSqueethLongReturn = 0
+  let cumulativeSqueethCrabReturn = 0
   const charts: {
     time: number
     longPNL: number
     shortPNL: number
   }[] = []
-  const liquidatedRate = 1.5
-  let newCR = collatRatio
   // days > 90 is daily data, 90 >= days is hourly data, 1 > days is 5-minutely data
   const fundingPeriodMultiplier = days > 90 ? 365 : days > 1 ? 365 * 24 : 356 * 24 * 12
 
@@ -85,18 +83,13 @@ export async function getSqueethPNLCompounding(
     const preEthPrice = ethPrices[i > 0 ? i - 1 : 0].value
     const fundingCost = i === 0 ? 0 : (vol / Math.sqrt(fundingPeriodMultiplier)) ** 2
 
-    // check if there is liquidation penalty
-    const percentToLiq = collatRatio / liquidatedRate - 1
-    const ethPriceMove = Math.log(price / preEthPrice)
-    if (ethPriceMove >= percentToLiq) {
-      //lose 10% of your collateral value once it gets liquidated
-      newCR = collatRatio - 0.1
-    }
-
-    cumulativeEthReturn += Math.log(price / preEthPrice)
-    cumulativeSqueethReturn += 2 * Math.log(price / preEthPrice) + Math.log(price / preEthPrice) ** 2 - fundingCost
-    const longPNL = Math.round((Math.exp(cumulativeSqueethReturn) - 1) * 10000) / 100
-    const shortPNL = Math.exp(-cumulativeSqueethReturn + cumulativeEthReturn * newCR) - 1
+    //short: -2r - r^2 + f + CR*r, CR=2 equals crab strategy pnl, 2r cancels out
+    //long: 2r +r^2 -f
+    cumulativeSqueethLongReturn += 2 * Math.log(price / preEthPrice) + Math.log(price / preEthPrice) ** 2 - fundingCost
+    // crab return
+    cumulativeSqueethCrabReturn += -(Math.log(price / preEthPrice) ** 2) - fundingCost
+    const longPNL = Math.round((Math.exp(cumulativeSqueethLongReturn) - 1) * 10000) / 100
+    const shortPNL = Math.round((Math.exp(cumulativeSqueethCrabReturn) - 1) * 10000) / 100
 
     charts.push({ shortPNL, longPNL, time })
   }
