@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from 'react'
+import React, { useContext, useState } from 'react'
 
 import { useETHPriceCharts } from '@hooks/useETHPriceCharts'
 import BigNumber from 'bignumber.js'
@@ -45,9 +45,7 @@ type WorldContextProps = {
   getStableYieldPNL: (comparedlongAmount: number) => point[]
 
   ethPrice: BigNumber
-  setETHPrice: (amt: BigNumber) => void
   oSqueethBal: BigNumber
-  setOSqueethBal: (amt: BigNumber) => void
 }
 
 const initialContext = {
@@ -80,7 +78,6 @@ const initialContext = {
   getStableYieldPNL: () => [],
 
   ethPrice: new BigNumber(0),
-  setETHPrice: () => null,
   oSqueethBal: new BigNumber(0),
   setOSqueethBal: () => null,
 }
@@ -91,8 +88,6 @@ const useWorldContext = () => useContext(worldContext)
 const WorldProvider: React.FC = ({ children }) => {
   const [researchMode, setResearchMode] = useState(false)
   // const [ usePriceSeries, setUsePriceSeries ] = useState(false) // default to show PNL.
-  const [ethPrice, setETHPrice] = useState(new BigNumber(0))
-  const [oSqueethBal, setOSqueethBal] = useState(new BigNumber(0))
 
   const {
     ethPrices,
@@ -119,16 +114,8 @@ const WorldProvider: React.FC = ({ children }) => {
   } = useETHPriceCharts()
 
   const { oSqueeth } = useAddresses()
-  const _ethPrice = useETHPrice()
-  const _oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
-
-  useMemo(() => {
-    if (_ethPrice) setETHPrice(_ethPrice)
-  }, [_ethPrice.toString()])
-
-  useMemo(() => {
-    if (_oSqueethBal) setOSqueethBal(_oSqueethBal)
-  }, [_oSqueethBal.toString()])
+  const ethPrice = useETHPrice()
+  const oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
   return (
     <worldContext.Provider
@@ -159,9 +146,7 @@ const WorldProvider: React.FC = ({ children }) => {
         collatRatio,
         setCollatRatio,
         ethPrice,
-        setETHPrice,
         oSqueethBal,
-        setOSqueethBal,
       }}
     >
       {children}
