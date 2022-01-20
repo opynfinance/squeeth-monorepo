@@ -23,7 +23,6 @@ import { Tooltips } from '@constants/index'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import { TradeSettings } from '@components/TradeSettings'
 import { Links, Vaults } from '@constants/enums'
-import { CrabStrategyChart } from '@components/Charts/CrabStrategyChart'
 import Image from 'next/image'
 import bull from '../public/images/bull.gif'
 import bear from '../public/images/bear.gif'
@@ -281,14 +280,6 @@ const Strategies: React.FC = () => {
                 label="Liq Price ($)"
                 tooltip={`${Tooltips.LiquidationPrice} ${Tooltips.StrategyLiquidations}`}
               /> */}
-                </div>
-                <div className={classes.chartContainer}>
-                  <CrabStrategyChart
-                    vault={Vaults.Short}
-                    longAmount={0}
-                    showPercentage={true}
-                    setCustomLong={() => null}
-                  />
                 </div>
                 <StrategyInfo />
                 <CrabStrategyHistory />
