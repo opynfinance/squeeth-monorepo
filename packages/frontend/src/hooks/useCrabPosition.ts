@@ -15,6 +15,7 @@ export const useCrabPosition = (user: string) => {
     loading: crabLoading,
     userCrabBalance,
     vaultId,
+    currentEthValue,
   } = useCrab()
   const { ethPrice } = useWorldContext()
 
@@ -53,15 +54,17 @@ export const useCrabPosition = (user: string) => {
   useEffect(() => {
     if (crabLoading) return
     calculateCurrentValue()
-  }, [userCrabBalance.toString(), depositedEth.toString(), ethPrice.toString(), crabLoading, vaultId])
+  }, [
+    userCrabBalance.toString(),
+    depositedEth.toString(),
+    ethPrice.toString(),
+    crabLoading,
+    currentEthValue.toString(),
+  ])
 
   const calculateCurrentValue = async () => {
-    const collat = await getCollateralFromCrabAmount(userCrabBalance)
-    const ethToPay = await calculateEthWillingToPay(userCrabBalance, 0.5)
-    if (collat) {
-      setMinCurrentEth(collat.minus(ethToPay))
-      setMinCurrentUsd(collat.minus(ethToPay).times(ethPrice))
-    }
+    setMinCurrentEth(currentEthValue)
+    setMinCurrentUsd(currentEthValue.times(ethPrice))
   }
 
   const { minPnL, minPnlUsd } = useMemo(() => {
