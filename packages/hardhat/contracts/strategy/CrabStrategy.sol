@@ -62,7 +62,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
     uint256 public hedgePriceThreshold;
     /// @dev hedge auction duration (seconds)
     uint256 public auctionTime;
-    /// @dev start auction price multiplier for hedge buy auction and reserve price for end sell auction (scaled 1e18)
+    /// @dev start auction price multiplier for hedge buy auction and reserve price for hedge sell auction (scaled 1e18)
     uint256 public minPriceMultiplier;
     /// @dev start auction price multiplier for hedge sell auction and reserve price for hedge buy auction (scaled 1e18)
     uint256 public maxPriceMultiplier;
