@@ -288,6 +288,7 @@ export const useController = () => {
 
     const debt = await getDebtAmount(shortAmount)
     if (debt && debt.isPositive()) {
+      console.log(collateralAmount.toString(), debt.toString())
       const collateralPercent = Number(collateralAmount.div(debt).times(100).toFixed(1))
       const rSqueeth = normFactor.multipliedBy(new BigNumber(shortAmount)).dividedBy(10000)
       const liquidationPrice = collateralAmount.div(rSqueeth.multipliedBy(1.5))

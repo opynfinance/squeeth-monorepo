@@ -21,6 +21,7 @@ type CrabStrategyType = {
   userCrabBalance: BigNumber
   vaultId: number
   currentEthValue: BigNumber
+  profitableMovePercent: number
   getCollateralFromCrabAmount: (crabAmount: BigNumber) => Promise<BigNumber | null>
   flashDeposit: (amount: BigNumber, slippage: number) => Promise<any>
   flashWithdraw: (amount: BigNumber, slippage: number) => Promise<any>
@@ -39,6 +40,7 @@ const initialState: CrabStrategyType = {
   userCrabBalance: BIG_ZERO,
   vaultId: 0,
   currentEthValue: BIG_ZERO,
+  profitableMovePercent: 0,
   getCollateralFromCrabAmount: async () => BIG_ZERO,
   flashDeposit: async () => null,
   flashWithdraw: async () => null,
@@ -53,7 +55,7 @@ const useCrab = () => useContext(crabContext)
 const CrabProvider: React.FC = ({ children }) => {
   const { web3, address, handleTransaction, networkId } = useWallet()
   const { crabStrategy } = useAddresses()
-  const { getVault, getCollatRatioAndLiqPrice } = useController()
+  const { getVault, getCollatRatioAndLiqPrice, currentImpliedFunding } = useController()
   const { getSellQuote, getBuyQuote, ready } = useSqueethPool()
 
   const [contract, setContract] = useState<Contract>()
@@ -65,6 +67,7 @@ const CrabProvider: React.FC = ({ children }) => {
   const [loading, setLoading] = useState(true)
   const [currentEthValue, setCurrentEthValue] = useState(new BigNumber(0))
   const userCrabBalance = useTokenBalance(crabStrategy, 15, 18)
+  const [profitableMovePercent, setProfitableMovePercent] = useState(0)
 
   useEffect(() => {
     if (!web3 || !crabStrategy) return
@@ -76,6 +79,15 @@ const CrabProvider: React.FC = ({ children }) => {
 
     setStrategyData()
   }, [contract, networkId, address, ready])
+
+  useEffect(() => {
+    if (!contract) return
+    setProfitableMovePercent(getCurrentProfitableMovePercent)
+  }, [contract, currentImpliedFunding])
+
+  const getCurrentProfitableMovePercent = () => {
+    return Math.sqrt(currentImpliedFunding)
+  }
 
   const setStrategyData = async () => {
     if (!contract) return
@@ -250,6 +262,7 @@ const CrabProvider: React.FC = ({ children }) => {
     getCollateralFromCrabAmount,
     calculateEthWillingToPay,
     flashWithdrawEth,
+    profitableMovePercent,
   }
   return <crabContext.Provider value={store}>{children}</crabContext.Provider>
 }
