@@ -127,18 +127,18 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
   }, [squeethPNLSeries])
 
   // new short series
-  const shortSeries = useMemo(() => {
-    return squeethPNLSeries.map(({ time, shortPNL }) => {
-      return { time, value: shortPNL }
-    })
-  }, [squeethPNLSeries])
-
-  // prev short series
   // const shortSeries = useMemo(() => {
-  //   return squeethSeries.series.map(({ time, shortPNL }) => {
+  //   return squeethPNLSeries.map(({ time, shortPNL }) => {
   //     return { time, value: shortPNL }
   //   })
-  // }, [squeethSeries])
+  // }, [squeethPNLSeries])
+
+  // prev short series
+  const shortSeries = useMemo(() => {
+    return squeethSeries.series.map(({ time, shortPNL }) => {
+      return { time, value: shortPNL }
+    })
+  }, [squeethSeries])
 
   /**
    * position size over time, decreasing from 1
