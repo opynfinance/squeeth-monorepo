@@ -424,7 +424,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
      */
     function setTwapPeriod(uint32 _twapPeriod) external onlyOwner {
         require(_twapPeriod >= 180, "twap period is too short");
-        
+
         uint32 oldTwapPeriod = twapPeriod;
         twapPeriod = _twapPeriod;
 
@@ -450,7 +450,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
      */
     function setHedgePriceThreshold(uint256 _hedgePriceThreshold) external onlyOwner {
         require(_hedgePriceThreshold > 0, "invalid hedge price threshold");
-        
+
         uint256 oldHedgePriceThreshold = hedgePriceThreshold;
         hedgePriceThreshold = _hedgePriceThreshold;
 
@@ -463,7 +463,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
      */
     function setAuctionTime(uint256 _auctionTime) external onlyOwner {
         require(_auctionTime > 0, "invalid auction time");
-        
+
         uint256 oldAuctionTime = auctionTime;
         auctionTime = _auctionTime;
 
@@ -478,7 +478,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
     function setMinPriceMultiplier(uint256 _minPriceMultiplier) external onlyOwner {
         require(_minPriceMultiplier < 1e18, "min price multiplier too high");
         require(_minPriceMultiplier > 0, "invalid min price multiplier");
-        
+
         uint256 oldMinPriceMultiplier = minPriceMultiplier;
         minPriceMultiplier = _minPriceMultiplier;
 
@@ -492,7 +492,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
      */
     function setMaxPriceMultiplier(uint256 _maxPriceMultiplier) external onlyOwner {
         require(_maxPriceMultiplier > 1e18, "max price multiplier too low");
-        
+
         uint256 oldMaxPriceMultiplier = maxPriceMultiplier;
         maxPriceMultiplier = _maxPriceMultiplier;
 
