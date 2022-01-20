@@ -155,7 +155,7 @@ export const usePositions = () => {
   }, [positionType, depositedSqueeth.toString(), withdrawnSqueeth.toString()])
 
   const { finalSqueeth, finalWeth } = useMemo(() => {
-    // dont include LPed amount will be the correct short amount
+    // dont include LPed & minted amount will be the correct short amount
     const finalSqueeth = squeethAmount
     const finalWeth = wethAmount.div(squeethAmount).multipliedBy(finalSqueeth)
     setPositionLoading(false)
