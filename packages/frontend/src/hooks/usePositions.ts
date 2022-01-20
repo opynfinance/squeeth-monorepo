@@ -74,10 +74,6 @@ export const usePositions = () => {
 
           const time = new Date(Number(s.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
 
-          acc.ethCollateralPnl = acc.ethCollateralPnl.plus(
-            wethAmt.abs().times(new BigNumber(ethPriceMap[time]).minus(ethPrice)),
-          )
-
           //buy one squeeth means -1 to the pool, +1 to the user
           acc.squeethAmount = acc.squeethAmount.plus(squeethAmt.negated())
 
@@ -87,8 +83,13 @@ export const usePositions = () => {
           acc.totalETHSpent = acc.totalETHSpent.plus(wethAmt)
           acc.totalUSDSpent = acc.totalUSDSpent.plus(usdAmt)
 
-          // when the position is fully closed, reset values to zero
+          if (squeethAmt.isPositive()) {
+            acc.ethCollateralPnl = acc.ethCollateralPnl.plus(
+              wethAmt.abs().times(new BigNumber(ethPriceMap[time]).minus(ethPrice)),
+            )
+          }
           if (acc.squeethAmount.isZero()) {
+            // when the position is fully closed, reset values to zero
             acc.usdAmount = bigZero
             acc.wethAmount = bigZero
             acc.totalSqueeth = bigZero
