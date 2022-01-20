@@ -77,5 +77,6 @@ export const useCrabPosition = (user: string) => {
     minCurrentUsd,
     minPnL,
     minPnlUsd,
+    loading: crabLoading || loading,
   }
 }
