@@ -35,7 +35,7 @@ const useStyles = makeStyles((theme) =>
 )
 
 enum TxType {
-  REBALANCES = 'Rebalances',
+  HEDGES = 'Hedges',
   MY_TX = 'My Transactions',
 }
 
@@ -44,7 +44,7 @@ export const CrabStrategyHistory: React.FC = () => {
   const { data, loading } = useCrabStrategyTxHistory()
   const { networkId, address } = useWallet()
 
-  const [txType, setTxType] = useState(TxType.REBALANCES)
+  const [txType, setTxType] = useState(TxType.HEDGES)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -76,7 +76,7 @@ export const CrabStrategyHistory: React.FC = () => {
           {txType}
         </GreyButton>
         <Menu id="simple-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={handleClose}>
-          <MenuItem onClick={() => handleItemClick(TxType.REBALANCES)}>Rebalances</MenuItem>
+          <MenuItem onClick={() => handleItemClick(TxType.HEDGES)}>Hedges</MenuItem>
           {!!address ? <MenuItem onClick={() => handleItemClick(TxType.MY_TX)}>My Transactions</MenuItem> : null}
         </Menu>
       </div>
