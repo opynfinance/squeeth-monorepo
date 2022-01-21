@@ -54,7 +54,7 @@ export const StrategyInfo: React.FC = () => {
       <Typography variant="h5" color="primary" className={classes.chartTitle}>
         Historical PnL Simulation
       </Typography>
-      <CrabStrategyChart vault={Vaults.Short} longAmount={0} showPercentage={true} setCustomLong={() => null} />
+      <CrabStrategyChart vault={Vaults.Short} longAmount={0} setCustomLong={() => null} />
       <Typography variant="h5" color="primary" className={classes.title}>
         Profitability
       </Typography>
