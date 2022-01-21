@@ -1,11 +1,13 @@
 import ShortSqueethPayoff from '@components/Charts/ShortSqueethPayoff'
 import { useWorldContext } from '@context/world'
-import { Typography } from '@material-ui/core'
+import { Typography, Radio, RadioGroup, FormControl, FormControlLabel, FormLabel } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React from 'react'
 import { useCrab } from '@context/crabStrategy'
 import { Links, Vaults } from '@constants/enums'
-import CrabProfit from '../../../../public/images/CrabProfit.svg'
+import CrabProfit_Flat from '../../../../public/images/CrabProfit_Flat.svg'
+import CrabProfit_Increase from '../../../../public/images/CrabProfit_Increase.svg'
+import CrabProfit_Decrease from '../../../../public/images/CrabProfit_Decrease.svg'
 import CrabSteps from '../../../../public/images/CrabSteps.svg'
 import Image from 'next/image'
 import { CrabStrategyChart } from '@components/Charts/CrabStrategyChart'
@@ -41,6 +43,9 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(2),
       marginBottom: theme.spacing(4),
     },
+    radioTitle: {
+      marginTop: theme.spacing(2),
+    },
   }),
 )
 
@@ -48,6 +53,7 @@ export const StrategyInfo: React.FC = () => {
   const classes = useStyles()
   const { ethPrice } = useWorldContext()
   const { profitableMovePercent } = useCrab()
+  const [profitToggle, setProfitToggle] = React.useState('flat')
 
   return (
     <div className={classes.container}>
@@ -56,10 +62,41 @@ export const StrategyInfo: React.FC = () => {
       </Typography>
       <CrabStrategyChart vault={Vaults.Short} longAmount={0} showPercentage={true} setCustomLong={() => null} />
       <Typography variant="h5" color="primary" className={classes.title}>
-        Profitability
+        1 Day Profitability
       </Typography>
+      <FormControl className={classes.radioTitle}>
+        <FormLabel>At the end of one day, if ETH</FormLabel>
+        <RadioGroup
+          row
+          name="At the end of one day, if ETH"
+          value={profitToggle}
+          onChange={(event) => setProfitToggle(event.target.value)}
+        >
+          <FormControlLabel
+            value="increase"
+            control={<Radio />}
+            label={`increases ~${(profitableMovePercent * 100).toFixed(2)}%`}
+          />
+          <FormControlLabel
+            value="flat"
+            control={<Radio />}
+            label={`moves less than ~${(profitableMovePercent * 100).toFixed(2)}%`}
+          />
+          <FormControlLabel
+            value="descrease"
+            control={<Radio />}
+            label={`decreases ~${(profitableMovePercent * 100).toFixed(2)}%`}
+          />
+        </RadioGroup>
+      </FormControl>
       <div className={classes.profitImage}>
-        <Image src={CrabProfit} alt="Profitability" />
+        {profitToggle === 'flat' ? (
+          <Image src={CrabProfit_Flat} alt="1 Day Profitability Flat" />
+        ) : profitToggle === 'increase' ? (
+          <Image src={CrabProfit_Increase} alt="1 Day Profitability Increase" />
+        ) : (
+          <Image src={CrabProfit_Decrease} alt="1 Day Profitability Decrease" />
+        )}
       </div>
       <Typography color="textSecondary" variant="subtitle1" className={classes.caption}>
         Based on current funding, crab strategy would be unprofitable if ETH moves more than the profit threshold of
