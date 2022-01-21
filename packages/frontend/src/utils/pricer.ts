@@ -87,7 +87,7 @@ export async function getSqueethPNLCompounding(
     //long: 2r +r^2 -f
     cumulativeSqueethLongReturn += 2 * Math.log(price / preEthPrice) + Math.log(price / preEthPrice) ** 2 - fundingCost
     // crab return
-    cumulativeSqueethCrabReturn += -(Math.log(price / preEthPrice) ** 2) - fundingCost
+    cumulativeSqueethCrabReturn += -(Math.log(price / preEthPrice) ** 2) + fundingCost
     const longPNL = Math.round((Math.exp(cumulativeSqueethLongReturn) - 1) * 10000) / 100
     const shortPNL = Math.round((Math.exp(cumulativeSqueethCrabReturn) - 1) * 10000) / 100
 
