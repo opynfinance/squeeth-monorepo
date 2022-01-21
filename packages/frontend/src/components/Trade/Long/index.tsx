@@ -236,13 +236,11 @@ const OpenLong: React.FC<BuyProps> = ({ balance, open, setTradeCompleted, active
     setTradeSuccess,
     slippageAmount,
   } = useTrade()
-  const { ethPrice, oSqueethBal } = useWorldContext()
+  const { ethPrice } = useWorldContext()
   const amount = new BigNumber(amountInputValue)
   const altTradeAmount = new BigNumber(altAmountInputValue)
   const { selectWallet, connected } = useWallet()
-  const { squeethAmount, positionType } = usePositions()
-
-  const isShort = positionType === PositionType.SHORT
+  const { squeethAmount, longSqthBal, isShort } = usePositions()
 
   let openError: string | undefined
   let closeError: string | undefined
@@ -251,7 +249,7 @@ const OpenLong: React.FC<BuyProps> = ({ balance, open, setTradeCompleted, active
 
   useEffect(() => {
     if (connected) {
-      if (oSqueethBal.lt(amount)) {
+      if (longSqthBal.lt(amount)) {
         closeError = 'Insufficient oSQTH balance'
       }
       if (amount.gt(balance)) {
@@ -264,7 +262,7 @@ const OpenLong: React.FC<BuyProps> = ({ balance, open, setTradeCompleted, active
         priceImpactWarning = 'High Price Impact'
       }
     }
-  }, [oSqueethBal.toString(), amount.toString(), balance, isShort, quote.priceImpact])
+  }, [longSqthBal.toString(), amount.toString(), balance, isShort, quote.priceImpact])
 
   const longOpenPriceImpactErrorState = priceImpactWarning && !buyLoading && !openError && !isShort
 
@@ -375,7 +373,7 @@ const OpenLong: React.FC<BuyProps> = ({ balance, open, setTradeCompleted, active
                       {quote.amountOut.gt(0) ? (
                         <>
                           <ArrowRightAltIcon className={classes.arrowIcon} />
-                          <span>{oSqueethBal.plus(quote.amountOut).toFixed(6)}</span>
+                          <span>{longSqthBal.plus(quote.amountOut).toFixed(6)}</span>
                         </>
                       ) : null}{' '}
                       <span style={{ marginLeft: '4px' }}>oSQTH</span>
@@ -504,25 +502,25 @@ const CloseLong: React.FC<BuyProps> = ({
     confirmedAmount,
     setConfirmedAmount,
   } = useTrade()
-  const { ethPrice, oSqueethBal } = useWorldContext()
+  const { ethPrice } = useWorldContext()
   const amount = new BigNumber(amountInputValue)
   const altTradeAmount = new BigNumber(altAmountInputValue)
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter)
   const { selectWallet, connected } = useWallet()
-  const { squeethAmount, positionType } = usePositions()
+  const { longSqthBal, shortDebt } = usePositions()
 
-  const isShort = squeethAmount.gt(0) && positionType === PositionType.SHORT
+  const isShort = shortDebt.gt(0)
 
   useEffect(() => {
     //if it's insufficient amount them set it to it's maximum
-    if (!open && oSqueethBal.lt(amount)) {
-      setAmount(oSqueethBal.toString())
-      getSellQuoteForETH(oSqueethBal).then((val) => {
+    if (!open && longSqthBal.lt(amount)) {
+      setAmount(longSqthBal.toString())
+      getSellQuoteForETH(longSqthBal).then((val) => {
         setAltTradeAmount(val.amountIn.toString())
         setConfirmedAmount(val.amountIn.toFixed(6).toString())
       })
     }
-  }, [oSqueethBal.toString(), open])
+  }, [longSqthBal.toString(), open])
 
   let openError: string | undefined
   let closeError: string | undefined
@@ -531,7 +529,7 @@ const CloseLong: React.FC<BuyProps> = ({
 
   useEffect(() => {
     if (connected) {
-      if (oSqueethBal.lt(amount)) {
+      if (longSqthBal.lt(amount)) {
         closeError = 'Insufficient oSQTH balance'
       }
       if (amount.gt(balance)) {
@@ -544,10 +542,10 @@ const CloseLong: React.FC<BuyProps> = ({
         priceImpactWarning = 'High Price Impact'
       }
     }
-  }, [oSqueethBal.toString(), amount.toString(), balance, isShort, quote.priceImpact])
+  }, [longSqthBal.toString(), amount.toString(), balance, isShort, quote.priceImpact])
 
   const longClosePriceImpactErrorState =
-    priceImpactWarning && !closeError && !sellLoading && !oSqueethBal.isZero() && !isShort
+    priceImpactWarning && !closeError && !sellLoading && !longSqthBal.isZero() && !isShort
 
   const sellAndClose = useCallback(async () => {
     setSellLoading(true)
@@ -567,7 +565,7 @@ const CloseLong: React.FC<BuyProps> = ({
     }
 
     setSellLoading(false)
-  }, [amount.toString(), squeethAllowance.toString(), oSqueethBal.toString(), sell, squeethApprove])
+  }, [amount.toString(), squeethAllowance.toString(), longSqthBal.toString(), sell, squeethApprove])
 
   const handleCloseDualInputUpdate = (v: string, currentInput: string) => {
     //If I'm inputting an amount of ETH position I'd like to sell to get squeeth, use getSellQuoteForETH in trade context
@@ -608,7 +606,7 @@ const CloseLong: React.FC<BuyProps> = ({
             label="Amount"
             tooltip="Amount of oSqueeth you want to close"
             actionTxt="Max"
-            onActionClicked={() => handleCloseDualInputUpdate(oSqueethBal.toString(), InputType.SQTH)}
+            onActionClicked={() => handleCloseDualInputUpdate(longSqthBal.toString(), InputType.SQTH)}
             unit="oSQTH"
             convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
             error={!!existingShortError || !!priceImpactWarning || !!closeError}
@@ -623,12 +621,12 @@ const CloseLong: React.FC<BuyProps> = ({
               ) : (
                 <div className={classes.hint}>
                   <span className={classes.hintTextContainer}>
-                    <span className={classes.hintTitleText}>Position</span> <span>{oSqueethBal.toFixed(6)}</span>
+                    <span className={classes.hintTitleText}>Position</span> <span>{longSqthBal.toFixed(6)}</span>
                   </span>
                   {quote.amountOut.gt(0) ? (
                     <>
                       <ArrowRightAltIcon className={classes.arrowIcon} />
-                      <span>{oSqueethBal.minus(amount).toFixed(6)}</span>
+                      <span>{longSqthBal.minus(amount).toFixed(6)}</span>
                     </>
                   ) : null}{' '}
                   <span style={{ marginLeft: '4px' }}>oSQTH</span>
@@ -690,7 +688,7 @@ const CloseLong: React.FC<BuyProps> = ({
                 variant={longClosePriceImpactErrorState ? 'outlined' : 'contained'}
                 onClick={sellAndClose}
                 className={classes.amountInput}
-                disabled={!!sellLoading || !!closeError || !!existingShortError || oSqueethBal.isZero()}
+                disabled={!!sellLoading || !!closeError || !!existingShortError || longSqthBal.isZero()}
                 style={
                   longClosePriceImpactErrorState
                     ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }

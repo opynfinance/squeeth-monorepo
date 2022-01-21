@@ -10,7 +10,7 @@ import { TransactionType } from '@constants/enums'
 import { positions, positionsVariables } from '../queries/uniswap/__generated__/positions'
 import { swaps, swapsVariables } from '../queries/uniswap/__generated__/swaps'
 import POSITIONS_QUERY, { POSITIONS_SUBSCRIPTION } from '../queries/uniswap/positionsQuery'
-import SWAPS_QUERY from '../queries/uniswap/swapsQuery'
+import SWAPS_QUERY, { SWAPS_SUBSCRIPTION } from '../queries/uniswap/swapsQuery'
 import { NFTManagers, PositionType } from '../types'
 import { toTokenAmount } from '@utils/calculations'
 import { useController } from './contracts/useController'
@@ -28,10 +28,11 @@ export const usePositions = () => {
   const { address } = useWallet()
   const { getUsdAmt } = useUsdAmount()
   const { getDebtAmount, normFactor: normalizationFactor } = useController()
+  const { oSqueethBal } = useWorldContext()
 
   const [positionType, setPositionType] = useState(PositionType.NONE)
 
-  const { data, loading, refetch } = useQuery<swaps, swapsVariables>(SWAPS_QUERY, {
+  const { data, loading, refetch, subscribeToMore } = useQuery<swaps, swapsVariables>(SWAPS_QUERY, {
     variables: {
       poolAddress: squeethPool?.toLowerCase(),
       origin: address || '',
@@ -41,7 +42,28 @@ export const usePositions = () => {
     fetchPolicy: 'cache-and-network',
   })
 
-  useInterval(refetch, 30000)
+  useEffect(() => {
+    subscribeToNewPositions()
+  }, [])
+
+  const subscribeToNewPositions = useCallback(() => {
+    subscribeToMore({
+      document: SWAPS_SUBSCRIPTION,
+      variables: {
+        poolAddress: squeethPool?.toLowerCase(),
+        origin: address || '',
+        recipients: [shortHelper, address || '', swapRouter],
+        orderDirection: 'asc',
+      },
+      updateQuery(prev, { subscriptionData }) {
+        if (!subscriptionData.data) return prev
+        const newSwaps = subscriptionData.data.swaps
+        return {
+          swaps: newSwaps,
+        }
+      },
+    })
+  }, [squeethPool, address])
 
   const { vaults: shortVaults } = useVaultManager(5)
   const [existingCollatPercent, setExistingCollatPercent] = useState(0)
@@ -109,15 +131,36 @@ export const usePositions = () => {
         totalETHSpent: bigZero,
         totalUSDSpent: bigZero,
       },
-    [isWethToken0, swaps],
+    [isWethToken0, swaps?.length],
   )
 
+  const mintedDebt = useMemo(() => {
+    return oSqueethBal?.isGreaterThan(0) && positionType === PositionType.LONG
+      ? oSqueethBal.minus(squeethAmount)
+      : oSqueethBal
+  }, [oSqueethBal.toString(), positionType, squeethAmount.toString()])
+
+  const shortDebt = useMemo(() => {
+    return positionType === PositionType.SHORT ? squeethAmount : new BigNumber(0)
+  }, [positionType, squeethAmount.toString()])
+
+  const longSqthBal = useMemo(() => {
+    return mintedDebt.gt(0) ? oSqueethBal.minus(mintedDebt) : oSqueethBal
+  }, [positionType, oSqueethBal.toString(), mintedDebt.toString()])
+
+  const lpDebt = useMemo(() => {
+    return depositedSqueeth.minus(withdrawnSqueeth).isGreaterThan(0)
+      ? depositedSqueeth.minus(withdrawnSqueeth)
+      : new BigNumber(0)
+  }, [positionType, depositedSqueeth.toString(), withdrawnSqueeth.toString()])
+
   const { finalSqueeth, finalWeth } = useMemo(() => {
-    const finalSqueeth = squeethAmount.minus(depositedSqueeth).plus(withdrawnSqueeth)
+    // dont include LPed & minted amount will be the correct short amount
+    const finalSqueeth = squeethAmount
     const finalWeth = wethAmount.div(squeethAmount).multipliedBy(finalSqueeth)
     setPositionLoading(false)
     return { finalSqueeth, finalWeth }
-  }, [squeethAmount.toString(), depositedSqueeth.toString(), withdrawnSqueeth.toString()])
+  }, [squeethAmount.toString(), wethAmount.toString()])
 
   useEffect(() => {
     if (finalSqueeth.isGreaterThan(0)) {
@@ -160,7 +203,10 @@ export const usePositions = () => {
     swaps,
     loading: lpLoading,
     squeethAmount: finalSqueeth.absoluteValue(),
-    lpedSqueeth: depositedSqueeth.minus(withdrawnSqueeth),
+    shortDebt: shortDebt.absoluteValue(),
+    lpedSqueeth: lpDebt,
+    mintedDebt: mintedDebt,
+    longSqthBal: longSqthBal,
     wethAmount: finalWeth,
     shortVaults,
     refetch,
