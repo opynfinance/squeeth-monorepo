@@ -256,7 +256,7 @@ const Strategies: React.FC = () => {
                         minute: 'numeric',
                         timeZoneName: 'long',
                       }) +
-                      '. Hedges every 24hrs or every 1% ETH price move'
+                      '. Hedges every 24hrs or every 20% ETH price move'
                     }
                   />
                   <StrategyInfoItem
