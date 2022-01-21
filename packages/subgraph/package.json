@@ -5,12 +5,13 @@
   "scripts": {
     "codegen": "graph codegen",
     "build": "graph build",
-    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ opynfinance/squeeth",
+    "deploy": "yarn prepare:mainnet && graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ opynfinance/squeeth",
     "create-local": "graph create --node http://localhost:8020/ opynfinance/squeeth",
     "remove-local": "graph remove --node http://localhost:8020/ opynfinance/squeeth",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 opynfinance/squeeth",
     "prepare:ropsten": "mustache config/ropsten-config.json subgraph.template.yaml > subgraph.yaml",
-    "deploy:ropsten": "yarn prepare:ropsten && graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ opynfinance/squeeth-ropsten"
+    "deploy:ropsten": "yarn prepare:ropsten && graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ opynfinance/squeeth-ropsten",
+    "prepare:mainnet": "mustache config/mainnet-config.json subgraph.template.yaml > subgraph.yaml"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "^0.25.1",
