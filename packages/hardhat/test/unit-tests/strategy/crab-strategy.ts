@@ -436,22 +436,22 @@ describe("Crab Strategy", function () {
     })
 
     it('should revert if non owner tries to change the delta hedge threshold', async() => {
-      await expect(crabStrategy.connect(random).setTwapPeriod(newTwapPeriod)).to.be.revertedWith("Ownable: caller is not the owner")
+      await expect(crabStrategy.connect(random).setHedgingTwapPeriod(newTwapPeriod)).to.be.revertedWith("Ownable: caller is not the owner")
     })
 
 
     it('should revert if owner tries to change the twap period to too short of a value', async() => {
-      await expect(crabStrategy.connect(owner).setTwapPeriod(179)).to.be.revertedWith("twap period is too short")
+      await expect(crabStrategy.connect(owner).setHedgingTwapPeriod(179)).to.be.revertedWith("twap period is too short")
     })
 
     it('should allow owner to change the twap period and then change it back', async() => {
       
-      const twapPeriodBefore = await crabStrategy.twapPeriod()
-      await crabStrategy.connect(owner).setTwapPeriod(newTwapPeriod)
-      const newTwapPeriodInContract = await crabStrategy.twapPeriod()
+      const twapPeriodBefore = await crabStrategy.hedgingTwapPeriod()
+      await crabStrategy.connect(owner).setHedgingTwapPeriod(newTwapPeriod)
+      const newTwapPeriodInContract = await crabStrategy.hedgingTwapPeriod()
       expect(newTwapPeriodInContract===newTwapPeriod).to.be.true
-      await crabStrategy.connect(owner).setTwapPeriod(twapPeriodBefore)
-      const newTwapPeriodInContractRevert = await crabStrategy.twapPeriod()
+      await crabStrategy.connect(owner).setHedgingTwapPeriod(twapPeriodBefore)
+      const newTwapPeriodInContractRevert = await crabStrategy.hedgingTwapPeriod()
       expect(newTwapPeriodInContractRevert===twapPeriodBefore).to.be.true
     })
   });
