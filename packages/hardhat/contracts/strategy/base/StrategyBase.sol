@@ -13,6 +13,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // lib
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+// StrategyMath licensed under AGPL-3.0-only
 import {StrategyMath} from "./StrategyMath.sol";
 import {VaultLib} from "../../libs/VaultLib.sol";
 
