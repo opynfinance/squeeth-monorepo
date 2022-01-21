@@ -134,11 +134,11 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
   }, [squeethPNLSeries])
 
   // prev short series
-  // const shortSeries = useMemo(() => {
-  //   return squeethSeries.series.map(({ time, shortPNL }) => {
-  //     return { time, value: shortPNL }
-  //   })
-  // }, [squeethSeries])
+  const prevShortSeries = useMemo(() => {
+    return squeethSeries.series.map(({ time, shortPNL }) => {
+      return { time, value: shortPNL }
+    })
+  }, [squeethSeries])
 
   /**
    * position size over time, decreasing from 1
@@ -207,7 +207,7 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
         }
 
         const longValue = price * longAmount - totalLongCost // should probably be be named something like ethDeltaPnL
-        const realizedPNL = shortSeries[i].value + longValue
+        const realizedPNL = prevShortSeries[i].value + longValue
 
         // calculate how much eth to buy
         data.push({
