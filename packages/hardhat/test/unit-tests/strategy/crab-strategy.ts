@@ -295,12 +295,6 @@ describe("Crab Strategy", function () {
 
   describe("set other params", async () => {
 
-    //const hedgeTimeTolerance = 86400  // 24h
-    //const hedgePriceTolerance = ethers.utils.parseUnits('0.15')
-    //const auctionTime = 3600
-    //const minAuctionSlippage = ethers.utils.parseUnits('0.95')
-    //const maxAuctionSlippage = ethers.utils.parseUnits('1.05')
-
     const newHedgeTimeTolerance = 172800  // 48h
     const newHedgePriceTolerance = ethers.utils.parseUnits('0.1')
     const newAuctionTime = 1200
@@ -357,9 +351,9 @@ describe("Crab Strategy", function () {
       await expect(crabStrategy.connect(random).setAuctionTime(newAuctionTime)).to.be.revertedWith("Ownable: caller is not the owner")
     })
 
-    //it('should revert if owner tries to change the auction time to 0', async() => {
-    //  await expect(crabStrategy.connect(owner).setAuctionTime(0)).to.be.revertedWith("invalid auction time")
-    //})
+    it('should revert if owner tries to change the auction time to 0', async() => {
+      await expect(crabStrategy.connect(owner).setAuctionTime(0)).to.be.revertedWith("invalid auction time")
+    })
 
     it('should allow owner to change the auction time', async() => {
       await crabStrategy.connect(owner).setAuctionTime(newAuctionTime)
@@ -376,10 +370,6 @@ describe("Crab Strategy", function () {
     it('should revert if non owner tries to change the min price multiplier', async() => {
       await expect(crabStrategy.connect(random).setMinPriceMultiplier(newMinAuctionSlippage)).to.be.revertedWith("Ownable: caller is not the owner")
     })
-
-    //it('should revert if owner tries to change the min price multiplier to 0', async() => {
-    //  await expect(crabStrategy.connect(owner).setMinPriceMultiplier(0)).to.be.revertedWith("invalid min price multiplier")
-    //})
 
     it('should revert if owner tries to change the min price multiplier to too high of a value', async() => {
       await expect(crabStrategy.connect(owner).setMinPriceMultiplier(revertMinAuctionSlippage)).to.be.revertedWith("min price multiplier too high")
