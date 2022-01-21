@@ -194,6 +194,28 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
     }
 
     /**
+     * @notice owner can set the strategy cap in ETH collateral terms
+     * @dev deposits are rejected if it would put the strategy above the cap amount
+     * @dev strategy collateral can be above the cap amount due to hedging activities
+     * @param _capAmount the maximum strategy collateral in ETH, checked on deposits
+     */
+    function setStrategyCap(uint256 _capAmount) external onlyOwner {
+        uint256 oldCap = strategyCap;
+        strategyCap = _capAmount;
+
+        emit SetStrategyCap(_capAmount, oldCap);
+    }
+
+    /**
+     * @notice called to redeem the net value of a vault post shutdown
+     * @dev needs to be called 1 time before users can exit the strategy using withdrawShutdown
+     */
+    function redeemShortShutdown() external {
+        hasRedeemedInShutdown = true;
+        powerTokenController.redeemShort(vaultId);
+    }
+
+    /**
      * @notice flash deposit into strategy, providing ETH, selling wSqueeth and receiving strategy tokens
      * @dev this function will execute a flash swap where it receives ETH, deposits and mints using flash swap proceeds and msg.value, and then repays the flash swap with wSqueeth
      * @dev _ethToDeposit must be less than msg.value plus the proceeds from the flash swap
@@ -392,19 +414,6 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
     }
 
     /**
-     * @notice owner can set the strategy cap in ETH collateral terms
-     * @dev deposits are rejected if it would put the strategy above the cap amount
-     * @dev strategy collateral can be above the cap amount due to hedging activities
-     * @param _capAmount the maximum strategy collateral in ETH, checked on deposits
-     */
-    function setStrategyCap(uint256 _capAmount) external onlyOwner {
-        uint256 oldCap = strategyCap;
-        strategyCap = _capAmount;
-
-        emit SetStrategyCap(_capAmount, oldCap);
-    }
-
-    /**
      * @notice owner can set the delta hedge threshold as a percent scaled by 1e18 of ETH collateral
      * @dev the strategy will not allow a hedge if the trade size is below this threshold
      * @param _deltaHedgeThreshold minimum hedge size in a percent of ETH collateral
@@ -497,15 +506,6 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
         maxPriceMultiplier = _maxPriceMultiplier;
 
         emit SetMaxPriceMultiplier(_maxPriceMultiplier, oldMaxPriceMultiplier);
-    }
-
-    /**
-     * @notice called to redeem the net value of a vault post shutdown
-     * @dev needs to be called 1 time before users can exit the strategy using withdrawShutdown
-     */
-    function redeemShortShutdown() external {
-        hasRedeemedInShutdown = true;
-        powerTokenController.redeemShort(vaultId);
     }
 
     /**
