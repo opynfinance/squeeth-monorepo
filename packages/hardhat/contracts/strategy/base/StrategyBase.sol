@@ -44,7 +44,7 @@ contract StrategyBase is ERC20 {
      * @param _symbol token symbol for strategy ERC20 token
      */
     constructor(address _powerTokenController, address _weth, string memory _name, string memory _symbol) ERC20(_name, _symbol) {
-        require(_powerTokenController != address(0), "invalid power token controller address");
+        require(_powerTokenController != address(0), "invalid controller address");
         require(_weth != address(0), "invalid weth address");
 
         weth = _weth;

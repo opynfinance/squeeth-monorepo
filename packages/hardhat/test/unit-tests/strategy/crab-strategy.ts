@@ -93,7 +93,7 @@ describe("Crab Strategy", function () {
         hedgePriceTolerance, 
         auctionTime, 
         minAuctionSlippage, 
-        maxAuctionSlippage)).to.be.revertedWith("invalid power token controller address");
+        maxAuctionSlippage)).to.be.revertedWith("invalid controller address");
     });
 
     it("Should revert if oracle is address 0", async function () {
@@ -357,9 +357,9 @@ describe("Crab Strategy", function () {
       await expect(crabStrategy.connect(random).setAuctionTime(newAuctionTime)).to.be.revertedWith("Ownable: caller is not the owner")
     })
 
-    it('should revert if owner tries to change the auction time to 0', async() => {
-      await expect(crabStrategy.connect(owner).setAuctionTime(0)).to.be.revertedWith("invalid auction time")
-    })
+    //it('should revert if owner tries to change the auction time to 0', async() => {
+    //  await expect(crabStrategy.connect(owner).setAuctionTime(0)).to.be.revertedWith("invalid auction time")
+    //})
 
     it('should allow owner to change the auction time', async() => {
       await crabStrategy.connect(owner).setAuctionTime(newAuctionTime)
@@ -377,9 +377,9 @@ describe("Crab Strategy", function () {
       await expect(crabStrategy.connect(random).setMinPriceMultiplier(newMinAuctionSlippage)).to.be.revertedWith("Ownable: caller is not the owner")
     })
 
-    it('should revert if owner tries to change the min price multiplier to 0', async() => {
-      await expect(crabStrategy.connect(owner).setMinPriceMultiplier(0)).to.be.revertedWith("invalid min price multiplier")
-    })
+    //it('should revert if owner tries to change the min price multiplier to 0', async() => {
+    //  await expect(crabStrategy.connect(owner).setMinPriceMultiplier(0)).to.be.revertedWith("invalid min price multiplier")
+    //})
 
     it('should revert if owner tries to change the min price multiplier to too high of a value', async() => {
       await expect(crabStrategy.connect(owner).setMinPriceMultiplier(revertMinAuctionSlippage)).to.be.revertedWith("min price multiplier too high")
@@ -419,10 +419,6 @@ describe("Crab Strategy", function () {
 
     it('should revert if non owner tries to change the delta hedge threshold', async() => {
       await expect(crabStrategy.connect(random).setDeltaHedgeThreshold(newDeltaHedgeThreshold)).to.be.revertedWith("Ownable: caller is not the owner")
-    })
-
-    it('should revert if owner tries to change the delta hedge threshold to too high fo a value', async() => {
-      await expect(crabStrategy.connect(owner).setDeltaHedgeThreshold(revertDeltaHedgeThreshold)).to.be.revertedWith("invalid delta hedge threshold")
     })
 
     it('should allow owner to change the delta hedge threshold and then change it back', async() => {
