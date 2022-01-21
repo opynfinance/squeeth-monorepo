@@ -115,7 +115,6 @@ export const CrabStrategyHistory: React.FC = () => {
   )
 }
 
-
 const UserCrabHistory: React.FC<{ user: string; networkId: Networks }> = ({ user, networkId }) => {
   const classes = useStyles()
   const { data } = useUserCrabTxHistory(user)
