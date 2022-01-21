@@ -165,6 +165,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
   const {
     positionType: pType,
     squeethAmount,
+    shortDebt,
     wethAmount,
     shortVaults,
     firstValidVault,
@@ -237,7 +238,15 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
       }
       return none
     },
-    [shortVaults, squeethAmount, tradeType, positionType, loading, longGain.toString(), shortGain.toString()],
+    [
+      shortVaults,
+      squeethAmount.toString(),
+      tradeType,
+      positionType,
+      loading,
+      longGain.toString(),
+      shortGain.toString(),
+    ],
   )
 
   const getRealizedPNLBasedValue = useCallback(

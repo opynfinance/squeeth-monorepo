@@ -586,36 +586,24 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     squeethAmount: shortSqueethAmount,
     isLong,
     lpedSqueeth,
+    mintedDebt,
+    shortDebt,
     loading: isPositionFinishedCalc,
   } = usePositions()
 
   const { setCollatRatio, ethPrice, oSqueethBal } = useWorldContext()
 
-  const mintedDebt = useMemo(() => {
-    return oSqueethBal?.isGreaterThan(0) && positionType === PositionType.LONG
-      ? oSqueethBal.minus(shortSqueethAmount)
-      : oSqueethBal
-  }, [positionType, shortSqueethAmount.toString(), oSqueethBal.toString()])
-
-  const lpDebt = useMemo(() => {
-    return lpedSqueeth.isGreaterThan(0) ? lpedSqueeth : new BigNumber(0)
-  }, [shortSqueethAmount.toString(), lpedSqueeth.toString()])
-
-  const shortDebt = useMemo(() => {
-    return positionType === PositionType.SHORT ? shortSqueethAmount : new BigNumber(0)
-  }, [shortSqueethAmount.toString(), lpDebt.toString(), mintedDebt.toString()])
-
   useEffect(() => {
     if (!shortVaults.length) return
-    const calculatedShort = mintedDebt.plus(lpDebt).plus(shortDebt)
+    const calculatedShort = mintedDebt.plus(lpedSqueeth).plus(shortDebt)
     const contractShort = shortVaults.length && shortVaults[firstValidVault]?.shortAmount
 
     if (!calculatedShort.isEqualTo(contractShort)) {
-      setFinalShortAmount(contractShort)
+      setFinalShortAmount(shortDebt)
     } else {
       setFinalShortAmount(shortDebt)
     }
-  }, [shortVaults?.length, mintedDebt.toString(), shortDebt.toString(), lpDebt.toString(), firstValidVault])
+  }, [shortVaults?.length, mintedDebt.toString(), shortDebt.toString(), lpedSqueeth.toString(), firstValidVault])
 
   useEffect(() => {
     if (!open && shortVaults.length && shortVaults[firstValidVault].shortAmount.lt(amount)) {
