@@ -97,7 +97,7 @@ export const NFT_MANAGER: Address = {
 
 export const CRAB_STRATEGY: Address = {
   1: '',
-  3: '0x1ac0ef663ad13aa052d7c3b01aace7fd61755ac3',
+  3: '0xbffBD99cFD9d77c49595dFe8eB531715906ca4Cf',
   421611: '',
   31337: '',
 }
