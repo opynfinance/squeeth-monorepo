@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-3.0-only
 
 pragma solidity =0.7.6;
 pragma abicoder v2;
@@ -19,6 +19,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // lib
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+// StrategyMath licensed under AGPL-3.0-only
 import {StrategyMath} from "./base/StrategyMath.sol";
 import {Power2Base} from "../libs/Power2Base.sol";
 
