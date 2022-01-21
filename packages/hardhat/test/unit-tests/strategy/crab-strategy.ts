@@ -93,7 +93,7 @@ describe("Crab Strategy", function () {
         hedgePriceTolerance, 
         auctionTime, 
         minAuctionSlippage, 
-        maxAuctionSlippage)).to.be.revertedWith("invalid power token controller address");
+        maxAuctionSlippage)).to.be.revertedWith("invalid controller address");
     });
 
     it("Should revert if oracle is address 0", async function () {
@@ -197,7 +197,7 @@ describe("Crab Strategy", function () {
         hedgePriceTolerance, 
         auctionTime, 
         ethers.utils.parseUnits('1.01'), 
-        maxAuctionSlippage)).to.be.revertedWith("auction min price multiplier too high");
+        maxAuctionSlippage)).to.be.revertedWith("min price multiplier too high");
     });
     
     it("Should revert if min price multiplier is 0", async function () {
@@ -212,7 +212,7 @@ describe("Crab Strategy", function () {
         hedgePriceTolerance, 
         auctionTime, 
         0, 
-        maxAuctionSlippage)).to.be.revertedWith("invalid auction min price multiplier");
+        maxAuctionSlippage)).to.be.revertedWith("invalid min price multiplier");
     });
     
     it("Should revert if max price multplier < 1e18", async function () {
@@ -227,7 +227,7 @@ describe("Crab Strategy", function () {
         hedgePriceTolerance, 
         auctionTime, 
         minAuctionSlippage, 
-        ethers.utils.parseUnits('0.99'))).to.be.revertedWith("auction max price multiplier too low");
+        ethers.utils.parseUnits('0.99'))).to.be.revertedWith("max price multiplier too low");
     });
     
     
@@ -290,6 +290,155 @@ describe("Crab Strategy", function () {
       await crabStrategy.connect(owner).setStrategyCap(strategyCap)
       const strategyCapInContract = await crabStrategy.strategyCap()
       expect(strategyCapInContract.eq(strategyCap)).to.be.true
+    })
+  });
+
+  describe("set other params", async () => {
+
+    const newHedgeTimeTolerance = 172800  // 48h
+    const newHedgePriceTolerance = ethers.utils.parseUnits('0.1')
+    const newAuctionTime = 1200
+    const newMinAuctionSlippage = ethers.utils.parseUnits('0.9')
+    const revertMinAuctionSlippage = ethers.utils.parseUnits('1')
+    const newMaxAuctionSlippage = ethers.utils.parseUnits('1.1')
+    const revertMaxAuctionSlippage = ethers.utils.parseUnits('1')
+    const newTwapPeriod = 300 // 5 minutes
+    const newDeltaHedgeThreshold = ethers.utils.parseUnits('0.01')
+    const revertDeltaHedgeThreshold = ethers.utils.parseUnits('0.3')
+
+
+    it('should revert if non owner tries to change the hedge time threshold', async() => {
+      await expect(crabStrategy.connect(random).setHedgeTimeThreshold(newHedgeTimeTolerance)).to.be.revertedWith("Ownable: caller is not the owner")
+    })
+
+    it('should revert if owner tries to change the hedge time threshold to 0', async() => {
+      await expect(crabStrategy.connect(owner).setHedgeTimeThreshold(0)).to.be.revertedWith("invalid hedge time threshold")
+    })
+
+    it('should allow owner to change the hedge time threshold', async() => {
+      await crabStrategy.connect(owner).setHedgeTimeThreshold(newHedgeTimeTolerance)
+      const hedgeTimeThresholdInContract = await crabStrategy.hedgeTimeThreshold()
+      expect(hedgeTimeThresholdInContract.eq(newHedgeTimeTolerance)).to.be.true
+    })
+
+    it('should allow owner to change the hedge time threshold back', async() => {
+      await crabStrategy.connect(owner).setHedgeTimeThreshold(hedgeTimeTolerance)
+      const hedgeTimeThresholdInContract = await crabStrategy.hedgeTimeThreshold()
+      expect(hedgeTimeThresholdInContract.eq(hedgeTimeTolerance)).to.be.true
+    })
+
+    it('should revert if non owner tries to change the hedge price threshold', async() => {
+      await expect(crabStrategy.connect(random).setHedgePriceThreshold(newHedgePriceTolerance)).to.be.revertedWith("Ownable: caller is not the owner")
+    })
+
+    it('should revert if owner tries to change the hedge price threshold to 0', async() => {
+      await expect(crabStrategy.connect(owner).setHedgePriceThreshold(0)).to.be.revertedWith("invalid hedge price threshold")
+    })
+
+    it('should allow owner to change the hedge price threshold', async() => {
+      await crabStrategy.connect(owner).setHedgePriceThreshold(newHedgePriceTolerance)
+      const hedgePriceThresholdInContract = await crabStrategy.hedgePriceThreshold()
+      expect(hedgePriceThresholdInContract.eq(newHedgePriceTolerance)).to.be.true
+    })
+
+    it('should allow owner to change the hedge price threshold back', async() => {
+      await crabStrategy.connect(owner).setHedgePriceThreshold(hedgePriceTolerance)
+      const hedgePriceThresholdInContract = await crabStrategy.hedgePriceThreshold()
+      expect(hedgePriceThresholdInContract.eq(hedgePriceTolerance)).to.be.true
+    })
+
+    it('should revert if non owner tries to change the auction time', async() => {
+      await expect(crabStrategy.connect(random).setAuctionTime(newAuctionTime)).to.be.revertedWith("Ownable: caller is not the owner")
+    })
+
+    it('should revert if owner tries to change the auction time to 0', async() => {
+      await expect(crabStrategy.connect(owner).setAuctionTime(0)).to.be.revertedWith("invalid auction time")
+    })
+
+    it('should allow owner to change the auction time', async() => {
+      await crabStrategy.connect(owner).setAuctionTime(newAuctionTime)
+      const auctionTimeInContract = await crabStrategy.auctionTime()
+      expect(auctionTimeInContract.eq(newAuctionTime)).to.be.true
+    })
+
+    it('should allow owner to change the auction time back', async() => {
+      await crabStrategy.connect(owner).setAuctionTime(auctionTime)
+      const auctionTimeInContract = await crabStrategy.auctionTime()
+      expect(auctionTimeInContract.eq(auctionTime)).to.be.true
+    })
+
+    it('should revert if non owner tries to change the min price multiplier', async() => {
+      await expect(crabStrategy.connect(random).setMinPriceMultiplier(newMinAuctionSlippage)).to.be.revertedWith("Ownable: caller is not the owner")
+    })
+
+    it('should revert if owner tries to change the min price multiplier to too high of a value', async() => {
+      await expect(crabStrategy.connect(owner).setMinPriceMultiplier(revertMinAuctionSlippage)).to.be.revertedWith("min price multiplier too high")
+    })
+
+    it('should allow owner to change the min price multiplier', async() => {
+      await crabStrategy.connect(owner).setMinPriceMultiplier(newMinAuctionSlippage)
+      const newMinAuctionSlippageInContract = await crabStrategy.minPriceMultiplier()
+      expect(newMinAuctionSlippageInContract.eq(newMinAuctionSlippage)).to.be.true
+    })
+
+    it('should allow owner to change the min price multiplier back', async() => {
+      await crabStrategy.connect(owner).setMinPriceMultiplier(minAuctionSlippage)
+      const newMinAuctionSlippageInContract = await crabStrategy.minPriceMultiplier()
+      expect(newMinAuctionSlippageInContract.eq(minAuctionSlippage)).to.be.true
+    })
+
+    it('should revert if non owner tries to change the max price multiplier', async() => {
+      await expect(crabStrategy.connect(random).setMaxPriceMultiplier(newMaxAuctionSlippage)).to.be.revertedWith("Ownable: caller is not the owner")
+    })
+    
+    it('should revert if owner tries to change the max price multiplier to too low of a value', async() => {
+      await expect(crabStrategy.connect(owner).setMaxPriceMultiplier(revertMaxAuctionSlippage)).to.be.revertedWith("max price multiplier too low")
+    })
+
+    it('should allow owner to change the max price multiplier', async() => {
+      await crabStrategy.connect(owner).setMaxPriceMultiplier(newMaxAuctionSlippage)
+      const newMaxAuctionSlippageInContract = await crabStrategy.maxPriceMultiplier()
+      expect(newMaxAuctionSlippageInContract.eq(newMaxAuctionSlippage)).to.be.true
+    })
+
+    it('should allow owner to change the max price multiplier back', async() => {
+      await crabStrategy.connect(owner).setMaxPriceMultiplier(maxAuctionSlippage)
+      const newMaxAuctionSlippageInContract = await crabStrategy.maxPriceMultiplier()
+      expect(newMaxAuctionSlippageInContract.eq(maxAuctionSlippage)).to.be.true
+    })
+
+    it('should revert if non owner tries to change the delta hedge threshold', async() => {
+      await expect(crabStrategy.connect(random).setDeltaHedgeThreshold(newDeltaHedgeThreshold)).to.be.revertedWith("Ownable: caller is not the owner")
+    })
+
+    it('should allow owner to change the delta hedge threshold and then change it back', async() => {
+      const deltaHedgeThresholdBefore = await crabStrategy.deltaHedgeThreshold()
+      await crabStrategy.connect(owner).setDeltaHedgeThreshold(newDeltaHedgeThreshold)
+      const newDeltaHedgeThresholdInContract = await crabStrategy.deltaHedgeThreshold()
+      expect(newDeltaHedgeThresholdInContract.eq(newDeltaHedgeThreshold)).to.be.true
+      await crabStrategy.connect(owner).setDeltaHedgeThreshold(deltaHedgeThresholdBefore)
+      const newDeltaHedgeThresholdInContractRevert = await crabStrategy.deltaHedgeThreshold()
+      expect(newDeltaHedgeThresholdInContractRevert.eq(deltaHedgeThresholdBefore)).to.be.true
+    })
+
+    it('should revert if non owner tries to change the delta hedge threshold', async() => {
+      await expect(crabStrategy.connect(random).setHedgingTwapPeriod(newTwapPeriod)).to.be.revertedWith("Ownable: caller is not the owner")
+    })
+
+
+    it('should revert if owner tries to change the twap period to too short of a value', async() => {
+      await expect(crabStrategy.connect(owner).setHedgingTwapPeriod(179)).to.be.revertedWith("twap period is too short")
+    })
+
+    it('should allow owner to change the twap period and then change it back', async() => {
+      
+      const twapPeriodBefore = await crabStrategy.hedgingTwapPeriod()
+      await crabStrategy.connect(owner).setHedgingTwapPeriod(newTwapPeriod)
+      const newTwapPeriodInContract = await crabStrategy.hedgingTwapPeriod()
+      expect(newTwapPeriodInContract===newTwapPeriod).to.be.true
+      await crabStrategy.connect(owner).setHedgingTwapPeriod(twapPeriodBefore)
+      const newTwapPeriodInContractRevert = await crabStrategy.hedgingTwapPeriod()
+      expect(newTwapPeriodInContractRevert===twapPeriodBefore).to.be.true
     })
   });
 

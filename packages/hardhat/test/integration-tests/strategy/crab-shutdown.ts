@@ -200,7 +200,7 @@ describe("Crab integration test: Shutdown of Squeeth Power Perp contracts", func
 
     it("should NOT let user withdrawShutdown pre shutdown, pre redeemShortShutdown", async () => {
         const userCrabBalanceBefore = await crabStrategy.balanceOf(depositor.address);
-        await expect(crabStrategy.connect(depositor).withdrawShutdown(userCrabBalanceBefore)).to.be.revertedWith("Squeeth contracts are not shut down")
+        await expect(crabStrategy.connect(depositor).withdrawShutdown(userCrabBalanceBefore)).to.be.revertedWith("Squeeth contracts not shut down")
       })
 
     it('shutdown contracts', async() => {
@@ -212,7 +212,7 @@ describe("Crab integration test: Shutdown of Squeeth Power Perp contracts", func
 
     it("should NOT let user withdrawShutdown post shutdown, pre redeemShortShutdown", async () => {
         const userCrabBalanceBefore = await crabStrategy.balanceOf(depositor.address);
-        await expect(crabStrategy.connect(depositor).withdrawShutdown(userCrabBalanceBefore)).to.be.revertedWith("Strategy has not redeemed vault proceeds")
+        await expect(crabStrategy.connect(depositor).withdrawShutdown(userCrabBalanceBefore)).to.be.revertedWith("Crab must redeemShortShutdown")
       })
 
     it("anyone should be able to call redeemShortShutdown", async () => {
@@ -265,13 +265,13 @@ describe("Crab integration test: Shutdown of Squeeth Power Perp contracts", func
       expect(collateralBefore.eq(BigNumber.from(0))).to.be.true
       expect(debtBefore.eq(BigNumber.from(0))).to.be.true
 
-      await expect(crabStrategy.connect(depositor2).flashDeposit(ethToDeposit, {value: msgvalue})).to.be.revertedWith("Crab strategy shut down due to full liquidation or shutdown of squeeth contracts")
+      await expect(crabStrategy.connect(depositor2).flashDeposit(ethToDeposit, {value: msgvalue})).to.be.revertedWith("Crab contracts shut down")
     })
 
     it("should NOT let user deposit post shutdown", async () => { 
         const msgvalue = ethers.utils.parseUnits('15')  
   
-        await expect(crabStrategy.connect(depositor2).deposit({value: msgvalue})).to.be.revertedWith("Crab strategy shut down due to full liquidation or shutdown of squeeth contracts")
+        await expect(crabStrategy.connect(depositor2).deposit({value: msgvalue})).to.be.revertedWith("Crab contracts shut down")
       })
 
     it("depositor should revert trying to flashWithdraw with AS due to amount of wSqueeth to buy being 0", async () => {

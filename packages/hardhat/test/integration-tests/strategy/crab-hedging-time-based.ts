@@ -278,7 +278,7 @@ describe("Crab flashswap integration test: time based hedging", function () {
 
       await expect(
         crabStrategy.connect(depositor).timeHedge(isSellAuction, expectedAuctionWSqueethEthPrice, {value: expectedEthProceeds.add(1)})
-      ).to.be.revertedWith("can not execute hedging trade");
+      ).to.be.revertedWith("auction direction changed");
     })
     
     it("should revert hedging if sent ETH to sell for WSqueeth is not enough", async () => {      
@@ -411,7 +411,7 @@ describe("Crab flashswap integration test: time based hedging", function () {
 
       await expect(
         crabStrategy.connect(depositor).timeHedge(isSellAuction, expectedAuctionWSqueethEthPrice.div(2), {value: expectedEthProceeds.add(1)})
-      ).to.be.revertedWith("Auction price greater than max accepted price");
+      ).to.be.revertedWith("Auction price > max price");
     }) 
 
     it("should hedge by selling WSqueeth for ETH and update timestamp and price at hedge", async () => {
@@ -530,7 +530,7 @@ describe("Crab flashswap integration test: time based hedging", function () {
 
       await expect(
         crabStrategy.connect(depositor).timeHedge(isSellAuction, expectedAuctionWSqueethEthPrice.mul(2))
-      ).to.be.revertedWith("Auction price greater than min accepted price");
+      ).to.be.revertedWith("Auction price < min price");
     })
 
     it("should revert hedging when eth is attached to a buy hedge", async () => {
