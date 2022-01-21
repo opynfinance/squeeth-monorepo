@@ -32,12 +32,13 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
     using StrategyMath for uint256;
     using Address for address payable;
 
-    uint32 public constant TWAP_PERIOD = 420 seconds;
-    uint32 public constant POWER_PERP_PERIOD = 420 seconds;
-    // strategy will only allow hedging if collateral to trade is at least 0.1% of the total strategy collateral
-    uint256 public constant DELTA_HEDGE_THRESHOLD = 1e15;
-
+    /// @dev the cap in ETH for the strategy, above which deposits will be rejected
     uint256 public strategyCap;
+
+    /// @dev the TWAP_PERIOD used in the PowerPerp Controller contract
+    uint32 public constant POWER_PERP_PERIOD = 420 seconds;
+    /// @dev twap period to use for hedge calculations
+    uint32 public hedgingTwapPeriod = 420 seconds;
 
     /// @dev enum to differentiate between uniswap swap callback function source
     enum FLASH_SOURCE {
@@ -54,25 +55,26 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
     address public immutable ethQuoteCurrencyPool;
     address public immutable quoteCurrency;
 
+    /// @dev strategy will only allow hedging if collateral to trade is at least a set percentage of the total strategy collateral
+    uint256 public deltaHedgeThreshold = 1e15;
     /// @dev time difference to trigger a hedge (seconds)
-    uint256 public immutable hedgeTimeThreshold;
+    uint256 public hedgeTimeThreshold;
     /// @dev price movement to trigger a hedge (0.1*1e18 = 10%)
-    uint256 public immutable hedgePriceThreshold;
+    uint256 public hedgePriceThreshold;
     /// @dev hedge auction duration (seconds)
-    uint256 public immutable auctionTime;
-    /// @dev start auction price multiplier for hedge buy auction and reserve price for end sell auction (scaled 1e18)
-    uint256 public immutable minPriceMultiplier;
+    uint256 public auctionTime;
+    /// @dev start auction price multiplier for hedge buy auction and reserve price for hedge sell auction (scaled 1e18)
+    uint256 public minPriceMultiplier;
     /// @dev start auction price multiplier for hedge sell auction and reserve price for hedge buy auction (scaled 1e18)
-    uint256 public immutable maxPriceMultiplier;
+    uint256 public maxPriceMultiplier;
 
     /// @dev timestamp when last hedge executed
     uint256 public timeAtLastHedge;
     /// @dev WSqueeth/Eth price when last hedge executed
     uint256 public priceAtLastHedge;
-    uint256 public auctionStartTime;
 
     /// @dev set to true when redeemShortShutdown has been called
-    bool public hasRedeemedInShutdown;
+    bool private hasRedeemedInShutdown;
 
     struct FlashDepositData {
         uint256 totalDeposit;
@@ -129,7 +131,14 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
     );
     event ExecuteSellAuction(address indexed buyer, uint256 wSqueethSold, uint256 ethBought, bool isHedgingOnUniswap);
     event ExecuteBuyAuction(address indexed seller, uint256 wSqueethBought, uint256 ethSold, bool isHedgingOnUniswap);
-    event SetStrategyCap(uint256 newCapAmount, uint256 oldCapAmount);
+    event SetStrategyCap(uint256 newCapAmount);
+    event SetDeltaHedgeThreshold(uint256 newDeltaHedgeThreshold);
+    event SetHedgingTwapPeriod(uint32 newHedgingTwapPeriod);
+    event SetHedgeTimeThreshold(uint256 newHedgeTimeThreshold);
+    event SetHedgePriceThreshold(uint256 newHedgePriceThreshold);
+    event SetAuctionTime(uint256 newAuctionTime);
+    event SetMinPriceMultiplier(uint256 newMinPriceMultiplier);
+    event SetMaxPriceMultiplier(uint256 newMaxPriceMultiplier);
 
     /**
      * @notice strategy constructor
@@ -162,9 +171,9 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
         require(_hedgeTimeThreshold > 0, "invalid hedge time threshold");
         require(_hedgePriceThreshold > 0, "invalid hedge price threshold");
         require(_auctionTime > 0, "invalid auction time");
-        require(_minPriceMultiplier < 1e18, "auction min price multiplier too high");
-        require(_minPriceMultiplier > 0, "invalid auction min price multiplier");
-        require(_maxPriceMultiplier > 1e18, "auction max price multiplier too low");
+        require(_minPriceMultiplier < 1e18, "min price multiplier too high");
+        require(_minPriceMultiplier > 0, "invalid min price multiplier");
+        require(_maxPriceMultiplier > 1e18, "max price multiplier too low");
 
         oracle = _oracle;
         ethWSqueethPool = _ethWSqueethPool;
@@ -191,10 +200,9 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
      * @param _capAmount the maximum strategy collateral in ETH, checked on deposits
      */
     function setStrategyCap(uint256 _capAmount) external onlyOwner {
-        uint256 oldCap = strategyCap;
         strategyCap = _capAmount;
 
-        emit SetStrategyCap(_capAmount, oldCap);
+        emit SetStrategyCap(_capAmount);
     }
 
     /**
@@ -226,7 +234,13 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
         if (cachedStrategyDebt == 0 && cachedStrategyCollateral == 0) {
             // store hedge data as strategy is delta neutral at this point
             // only execute this upon first deposit
-            uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP_PERIOD, true);
+            uint256 wSqueethEthPrice = IOracle(oracle).getTwap(
+                ethWSqueethPool,
+                wPowerPerp,
+                weth,
+                hedgingTwapPeriod,
+                true
+            );
             timeAtLastHedge = block.timestamp;
             priceAtLastHedge = wSqueethEthPrice;
         }
@@ -269,17 +283,13 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
     /**
      * @notice deposit ETH into strategy
      * @dev provide ETH, return wSqueeth and strategy token
-     * @return wSqueethToMint minted amount of wSqueeth
-     * @return depositorCrabAmount minted amount of strategy token
      */
-    function deposit() external payable nonReentrant returns (uint256, uint256) {
+    function deposit() external payable nonReentrant {
         uint256 amount = msg.value;
 
         (uint256 wSqueethToMint, uint256 depositorCrabAmount) = _deposit(msg.sender, amount, false);
 
         emit Deposit(msg.sender, wSqueethToMint, depositorCrabAmount);
-
-        return (wSqueethToMint, depositorCrabAmount);
     }
 
     /**
@@ -287,7 +297,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
      * @dev provide strategy tokens and wSqueeth, returns eth
      * @param _crabAmount amount of strategy token to burn
      */
-    function withdraw(uint256 _crabAmount) external payable nonReentrant {
+    function withdraw(uint256 _crabAmount) external nonReentrant {
         uint256 wSqueethAmount = _getDebtFromStrategyAmount(_crabAmount);
         uint256 ethToWithdraw = _withdraw(msg.sender, _crabAmount, wSqueethAmount, false);
 
@@ -302,8 +312,8 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
      * @param _crabAmount amount of strategy token to burn
      */
     function withdrawShutdown(uint256 _crabAmount) external nonReentrant {
-        require(powerTokenController.isShutDown(), "Squeeth contracts are not shut down");
-        require(hasRedeemedInShutdown, "Strategy has not redeemed vault proceeds");
+        require(powerTokenController.isShutDown(), "Squeeth contracts not shut down");
+        require(hasRedeemedInShutdown, "Crab must redeemShortShutdown");
 
         uint256 strategyShare = _calcCrabRatio(_crabAmount, totalSupply());
         uint256 ethToWithdraw = _calcEthToWithdraw(strategyShare, address(this).balance);
@@ -399,9 +409,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
      * @return auctionTriggertime auction trigger timestamp
      */
     function checkTimeHedge() external view returns (bool, uint256) {
-        (bool isTimeHedgeAllowed, uint256 auctionTriggerTime) = _isTimeHedge();
-
-        return (isTimeHedgeAllowed, auctionTriggerTime);
+        return _isTimeHedge();
     }
 
     /**
@@ -411,6 +419,91 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
      */
     function getWsqueethFromCrabAmount(uint256 _crabAmount) external view returns (uint256) {
         return _getDebtFromStrategyAmount(_crabAmount);
+    }
+
+    /**
+     * @notice owner can set the delta hedge threshold as a percent scaled by 1e18 of ETH collateral
+     * @dev the strategy will not allow a hedge if the trade size is below this threshold
+     * @param _deltaHedgeThreshold minimum hedge size in a percent of ETH collateral
+     */
+    function setDeltaHedgeThreshold(uint256 _deltaHedgeThreshold) external onlyOwner {
+        deltaHedgeThreshold = _deltaHedgeThreshold;
+
+        emit SetDeltaHedgeThreshold(_deltaHedgeThreshold);
+    }
+
+    /**
+     * @notice owner can set the twap period in seconds that is used for calculating twaps for hedging
+     * @param _hedgingTwapPeriod the twap period, in seconds
+     */
+    function setHedgingTwapPeriod(uint32 _hedgingTwapPeriod) external onlyOwner {
+        require(_hedgingTwapPeriod >= 180, "twap period is too short");
+
+        hedgingTwapPeriod = _hedgingTwapPeriod;
+
+        emit SetHedgingTwapPeriod(_hedgingTwapPeriod);
+    }
+
+    /**
+     * @notice owner can set the hedge time threshold in seconds that determines how often the strategy can be hedged
+     * @param _hedgeTimeThreshold the hedge time threshold, in seconds
+     */
+    function setHedgeTimeThreshold(uint256 _hedgeTimeThreshold) external onlyOwner {
+        require(_hedgeTimeThreshold > 0, "invalid hedge time threshold");
+
+        hedgeTimeThreshold = _hedgeTimeThreshold;
+
+        emit SetHedgeTimeThreshold(_hedgeTimeThreshold);
+    }
+
+    /**
+     * @notice owner can set the hedge time threshold in percent, scaled by 1e18 that determines the deviation in wPowerPerp price that can trigger a rebalance
+     * @param _hedgePriceThreshold the hedge price threshold, in percent, scaled by 1e18
+     */
+    function setHedgePriceThreshold(uint256 _hedgePriceThreshold) external onlyOwner {
+        require(_hedgePriceThreshold > 0, "invalid hedge price threshold");
+
+        hedgePriceThreshold = _hedgePriceThreshold;
+
+        emit SetHedgePriceThreshold(_hedgePriceThreshold);
+    }
+
+    /**
+     * @notice owner can set the auction time, in seconds, that a hedge auction runs for
+     * @param _auctionTime the length of the hedge auction in seconds
+     */
+    function setAuctionTime(uint256 _auctionTime) external onlyOwner {
+        require(_auctionTime > 0, "invalid auction time");
+
+        auctionTime = _auctionTime;
+
+        emit SetAuctionTime(_auctionTime);
+    }
+
+    /**
+     * @notice owner can set the min price multiplier in a percentage scaled by 1e18 (9e17 is 90%)
+     * @dev the min price multiplier is multiplied by the TWAP price to get the intial auction price
+     * @param _minPriceMultiplier the min price multiplier, a percentage, scaled by 1e18
+     */
+    function setMinPriceMultiplier(uint256 _minPriceMultiplier) external onlyOwner {
+        require(_minPriceMultiplier < 1e18, "min price multiplier too high");
+
+        minPriceMultiplier = _minPriceMultiplier;
+
+        emit SetMinPriceMultiplier(_minPriceMultiplier);
+    }
+
+    /**
+     * @notice owner can set the max price multiplier in a percentage scaled by 1e18 (11e18 is 110%)
+     * @dev the max price multiplier is multiplied by the TWAP price to get the final auction price
+     * @param _maxPriceMultiplier the max price multiplier, a percentage, scaled by 1e18
+     */
+    function setMaxPriceMultiplier(uint256 _maxPriceMultiplier) external onlyOwner {
+        require(_maxPriceMultiplier > 1e18, "max price multiplier too low");
+
+        maxPriceMultiplier = _maxPriceMultiplier;
+
+        emit SetMaxPriceMultiplier(_maxPriceMultiplier);
     }
 
     /**
@@ -430,7 +523,13 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
         )
     {
         (uint256 strategyDebt, uint256 ethDelta) = _syncStrategyState();
-        uint256 currentWSqueethPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP_PERIOD, true);
+        uint256 currentWSqueethPrice = IOracle(oracle).getTwap(
+            ethWSqueethPool,
+            wPowerPerp,
+            weth,
+            hedgingTwapPeriod,
+            true
+        );
         uint256 feeAdjustment = _calcFeeAdjustment();
         (bool isSellingAuction, ) = _checkAuctionType(strategyDebt, ethDelta, currentWSqueethPrice, feeAdjustment);
         uint256 auctionWSqueethEthPrice = _getAuctionPrice(_auctionTriggerTime, currentWSqueethPrice, isSellingAuction);
@@ -578,7 +677,13 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
         if (strategyDebt == 0 && strategyCollateral == 0) {
             // store hedge data as strategy is delta neutral at this point
             // only execute this upon first deposit
-            uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP_PERIOD, true);
+            uint256 wSqueethEthPrice = IOracle(oracle).getTwap(
+                ethWSqueethPool,
+                wPowerPerp,
+                weth,
+                hedgingTwapPeriod,
+                true
+            );
             timeAtLastHedge = block.timestamp;
             priceAtLastHedge = wSqueethEthPrice;
         }
@@ -638,14 +743,14 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
 
         if (isSellingAuction) {
             // Receiving ETH and paying wSqueeth
-            require(auctionWSqueethEthPrice <= _limitPrice, "Auction price greater than max accepted price");
+            require(auctionWSqueethEthPrice <= _limitPrice, "Auction price > max price");
             require(msg.value >= ethProceeds, "Low ETH amount received");
 
             _executeSellAuction(msg.sender, msg.value, wSqueethToAuction, ethProceeds, false);
         } else {
             require(msg.value == 0, "ETH attached for buy auction");
             // Receiving wSqueeth and paying ETH
-            require(auctionWSqueethEthPrice >= _limitPrice, "Auction price greater than min accepted price");
+            require(auctionWSqueethEthPrice >= _limitPrice, "Auction price < min price");
             _executeBuyAuction(msg.sender, wSqueethToAuction, ethProceeds, false);
         }
 
@@ -774,7 +879,13 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
         )
     {
         (uint256 strategyDebt, uint256 ethDelta) = _syncStrategyState();
-        uint256 currentWSqueethPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP_PERIOD, true);
+        uint256 currentWSqueethPrice = IOracle(oracle).getTwap(
+            ethWSqueethPool,
+            wPowerPerp,
+            weth,
+            hedgingTwapPeriod,
+            true
+        );
         uint256 feeAdjustment = _calcFeeAdjustment();
         (bool isSellingAuction, ) = _checkAuctionType(strategyDebt, ethDelta, currentWSqueethPrice, feeAdjustment);
         uint256 auctionWSqueethEthPrice = _getAuctionPrice(_auctionTriggerTime, currentWSqueethPrice, isSellingAuction);
@@ -785,7 +896,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
             feeAdjustment
         );
 
-        require(isSellingAuction == isStillSellingAuction, "can not execute hedging trade as auction type changed");
+        require(isSellingAuction == isStillSellingAuction, "auction direction changed");
 
         uint256 ethProceeds = wSqueethToAuction.wmul(auctionWSqueethEthPrice);
 
@@ -840,12 +951,15 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
         uint256 feeAdjustment = _calcFeeAdjustment();
 
         if (_strategyDebtAmount == 0 && _strategyCollateralAmount == 0) {
-            require(
-                totalSupply() == 0,
-                "Crab strategy shut down due to full liquidation or shutdown of squeeth contracts"
-            );
+            require(totalSupply() == 0, "Crab contracts shut down");
 
-            uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP_PERIOD, true);
+            uint256 wSqueethEthPrice = IOracle(oracle).getTwap(
+                ethWSqueethPool,
+                wPowerPerp,
+                weth,
+                hedgingTwapPeriod,
+                true
+            );
             uint256 squeethDelta = wSqueethEthPrice.wmul(2e18);
             wSqueethToMint = _depositedAmount.wdiv(squeethDelta.add(feeAdjustment));
         } else {
@@ -882,7 +996,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
             ethWSqueethPool,
             wPowerPerp,
             weth,
-            secondsToPriceHedgeTrigger + TWAP_PERIOD,
+            secondsToPriceHedgeTrigger + hedgingTwapPeriod,
             secondsToPriceHedgeTrigger
         );
         uint256 cachedRatio = wSqueethEthPriceAtTriggerTime.wdiv(priceAtLastHedge);
@@ -934,7 +1048,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
         uint256 _ethDelta,
         uint256 _wSqueethEthPrice,
         uint256 _feeAdjustment
-    ) internal pure returns (bool, uint256) {
+    ) internal view returns (bool, uint256) {
         uint256 wSqueethDelta = _debt.wmul(2e18).wmul(_wSqueethEthPrice);
 
         (uint256 targetHedge, bool isSellingAuction) = _getTargetHedgeAndAuctionType(
@@ -944,9 +1058,7 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
             _feeAdjustment
         );
 
-        uint256 collateralRatioToHedge = targetHedge.wmul(_wSqueethEthPrice).wdiv(_ethDelta);
-
-        require(collateralRatioToHedge > DELTA_HEDGE_THRESHOLD, "strategy is delta neutral");
+        require(targetHedge.wmul(_wSqueethEthPrice).wdiv(_ethDelta) > deltaHedgeThreshold, "strategy is delta neutral");
 
         return (isSellingAuction, targetHedge);
     }

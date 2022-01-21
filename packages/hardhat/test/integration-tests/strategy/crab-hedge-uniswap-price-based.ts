@@ -212,7 +212,7 @@ describe("Crab flashswap integration test: uniswap price based hedging", functio
   
       await expect(
         crabStrategy.connect(depositor).priceHedgeOnUniswap(auctionTriggerTimer, ethers.utils.parseUnits('0.01'), BigNumber.from('0'))
-      ).to.be.revertedWith("can not execute hedging trade as auction type changed");
+      ).to.be.revertedWith("auction direction changed");
     })    
   
     it("should revert if not positive PnL", async () => {
