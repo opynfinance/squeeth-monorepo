@@ -509,39 +509,6 @@ contract CrabStrategy is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownab
     }
 
     /**
-     * @notice get current auction details
-     * @param _auctionTriggerTime timestamp where auction started
-     * @return if strategy is selling wSqueeth, wSqueeth amount to auction, ETH proceeds, auction price, if auction direction has switched
-     */
-    function getAuctionDetails(uint256 _auctionTriggerTime)
-        external
-        view
-        returns (
-            bool,
-            uint256,
-            uint256,
-            uint256,
-            bool
-        )
-    {
-        (uint256 strategyDebt, uint256 ethDelta) = _syncStrategyState();
-        uint256 currentWSqueethPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP_PERIOD, true);
-        uint256 feeAdjustment = _calcFeeAdjustment();
-        (bool isSellingAuction, ) = _checkAuctionType(strategyDebt, ethDelta, currentWSqueethPrice, feeAdjustment);
-        uint256 auctionWSqueethEthPrice = _getAuctionPrice(_auctionTriggerTime, currentWSqueethPrice, isSellingAuction);
-        (bool isStillSellingAuction, uint256 wSqueethToAuction) = _checkAuctionType(
-            strategyDebt,
-            ethDelta,
-            auctionWSqueethEthPrice,
-            feeAdjustment
-        );
-        bool isAuctionDirectionChanged = isSellingAuction != isStillSellingAuction;
-        uint256 ethProceeds = wSqueethToAuction.wmul(auctionWSqueethEthPrice);
-
-        return (isSellingAuction, wSqueethToAuction, ethProceeds, auctionWSqueethEthPrice, isAuctionDirectionChanged);
-    }
-
-    /**
      * @notice check if a user deposit puts the strategy above the cap
      * @dev reverts if a deposit amount puts strategy over the cap
      * @dev it is possible for the strategy to be over the cap from trading/hedging activities, but withdrawals are still allowed
