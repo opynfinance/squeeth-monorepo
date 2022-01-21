@@ -205,7 +205,7 @@ const Strategies: React.FC = () => {
             <Typography variant="subtitle1" color="textSecondary" style={{ width: '60%', marginTop: '8px' }}>
               Crab strategy automates making money in a sideways market. Based on current funding, crab strategy would
               be profitable if ETH moves less than approximately {(profitableMovePercent * 100).toFixed(2)}% in either
-              direction each day. The strategy rebalances daily, reducing risk of liquidations. You earn squeeth without
+              direction each day. The strategy hedges daily, reducing risk of liquidations. You earn squeeth without
               being exposed to ETH price movements.
               <a className={classes.link} href={Links.CrabFAQ} target="_blank" rel="noreferrer">
                 {' '}
@@ -246,9 +246,9 @@ const Strategies: React.FC = () => {
                       hour: 'numeric',
                       minute: 'numeric',
                     })}
-                    label="Last rebalanced at"
+                    label="Last hedged at"
                     tooltip={
-                      'Last rebalanced at ' +
+                      'Last hedged at ' +
                       new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
                         day: 'numeric',
                         month: 'long',
@@ -256,7 +256,7 @@ const Strategies: React.FC = () => {
                         minute: 'numeric',
                         timeZoneName: 'long',
                       }) +
-                      '. Rebalances every 24hrs or every 1% ETH price move'
+                      '. Hedges every 24hrs or every 1% ETH price move'
                     }
                   />
                   <StrategyInfoItem
