@@ -23,7 +23,7 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(1),
     },
     title: {
-      marginTop: theme.spacing(2),
+      marginTop: theme.spacing(8),
     },
     link: {
       color: theme.palette.primary.main,
