@@ -510,7 +510,7 @@ export function Positions() {
           <CrabPosition
             depositedEth={depositedEth}
             depositedUsd={depositedUsd}
-            loading={false}
+            loading={crabLoading}
             minCurrentEth={minCurrentEth}
             minCurrentUsd={minCurrentUsd}
             minPnL={minPnL}
@@ -573,26 +573,22 @@ const CrabPosition: React.FC<CrabPositionType> = ({
         <div className={classes.innerPositionData}>
           <div style={{ width: '50%' }}>
             <Typography variant="caption" component="span" color="textSecondary">
-              Deposited ETH
+              Deposited Amount
             </Typography>
-            <Typography variant="body1">
+            <Typography variant="body1">$ {depositedUsd.toFixed(2)}</Typography>
+            <Typography variant="body2" color="textSecondary">
               {depositedEth.toFixed(6)}
               &nbsp; ETH
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              $ {depositedUsd.toFixed(2)}
             </Typography>
           </div>
           <div style={{ width: '50%' }}>
             <Typography variant="caption" component="span" color="textSecondary">
               Current Position
             </Typography>
-            <Typography variant="body1">
+            <Typography variant="body1">$ {minCurrentUsd.toFixed(2)}</Typography>
+            <Typography variant="body2" color="textSecondary">
               {minCurrentEth.toFixed(6)}
               &nbsp; ETH
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              $ {minCurrentUsd.toFixed(2)}
             </Typography>
           </div>
         </div>
@@ -605,10 +601,10 @@ const CrabPosition: React.FC<CrabPositionType> = ({
               <InfoIcon fontSize="small" className={classes.infoIcon} />
             </Tooltip>
             <Typography variant="body1" className={minPnlUsd.gte(0) ? classes.green : classes.red}>
-              $ {minPnlUsd.toFixed(2)}
+              {!loading ? '$' + `${minPnlUsd.toFixed(2)}` : 'loading'}
             </Typography>
             <Typography variant="caption" className={minPnlUsd.gte(0) ? classes.green : classes.red}>
-              {minPnL.toFixed(2)}%
+              {!loading ? `${minPnL.toFixed(2)}` + '%' : 'loading'}
             </Typography>
           </div>
         </div>
