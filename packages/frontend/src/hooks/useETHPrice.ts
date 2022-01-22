@@ -24,13 +24,13 @@ export const useETHPrice = (refetchIntervalSec = 30): BigNumber => {
     } catch (error) {
       setPrice(toTokenAmount(index, 18).sqrt())
     }
-  }, [])
+  }, [index])
 
   useEffect(() => {
     updatePrice()
   }, [])
 
-  useInterval(updatePrice, refetchIntervalSec * 15000)
+  useInterval(updatePrice, refetchIntervalSec * 1000)
 
   return price
 }
