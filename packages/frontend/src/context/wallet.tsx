@@ -77,7 +77,6 @@ const WalletProvider: React.FC = ({ children }) => {
 
   const handleTransaction = (tx: any) => {
     if (!notify) return
-
     tx.on('transactionHash', (hash: string) => {
       const { emitter } = notify.hash(hash)
       //have to return the emitter object in last order, or the latter emitter object will replace the previous one
@@ -101,7 +100,7 @@ const WalletProvider: React.FC = ({ children }) => {
       disconnectWallet: disconnectWallet,
       handleTransaction,
     }),
-    [web3, address, networkId, signer, balance, onWalletSelect, disconnectWallet],
+    [web3, address, networkId, signer, balance.toString()],
   )
 
   const getBalance = useCallback(() => {

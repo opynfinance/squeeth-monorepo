@@ -25,7 +25,7 @@ export const useETHPrice = (refetchIntervalSec = 30): BigNumber => {
     }
 
     setPrice(newPrice)
-  }, [index])
+  }, [index.toString()])
 
   useEffect(() => {
     updatePrice()
