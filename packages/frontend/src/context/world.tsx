@@ -13,9 +13,9 @@ type point = {
 }
 
 type WorldContextProps = {
-  researchMode: boolean
+  // researchMode: boolean
   // usePriceSeries: boolean,
-  setResearchMode: Function
+  // setResearchMode: Function
   // setUsePriceSeries: Function,
 
   ethPrices: point[]
@@ -49,10 +49,10 @@ type WorldContextProps = {
 }
 
 const initialContext = {
-  researchMode: false,
-  usePriceSeries: false,
-  setResearchMode: () => {},
-  setUsePriceSeries: () => {},
+  // researchMode: false,
+  // usePriceSeries: false,
+  // setResearchMode: () => {},
+  // setUsePriceSeries: () => {},
 
   ethPrices: [],
   startingETHPrice: 0,
@@ -86,7 +86,7 @@ const worldContext = React.createContext<WorldContextProps>(initialContext)
 const useWorldContext = () => useContext(worldContext)
 
 const WorldProvider: React.FC = ({ children }) => {
-  const [researchMode, setResearchMode] = useState(false)
+  // const [researchMode, setResearchMode] = useState(false)
   // const [ usePriceSeries, setUsePriceSeries ] = useState(false) // default to show PNL.
 
   const {
@@ -123,8 +123,8 @@ const WorldProvider: React.FC = ({ children }) => {
         // usePriceSeries,
         // setUsePriceSeries,
         accFunding,
-        setResearchMode,
-        researchMode,
+        // setResearchMode,
+        // researchMode,
         volMultiplier,
         setVolMultiplier,
         days,
