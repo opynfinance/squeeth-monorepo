@@ -21,6 +21,7 @@ import { useController } from '../src/hooks/contracts/useController'
 import { CrabProvider } from '@context/crabStrategy'
 import { useCrabPosition } from '@hooks/useCrabPosition'
 import { useWallet } from '@context/wallet'
+import { LinkButton } from '@components/Button'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -108,6 +109,35 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
+const PositionsHome = () => {
+  const { address } = useWallet()
+
+  if (address)
+    return (
+      <CrabProvider>
+        <Positions />{' '}
+      </CrabProvider>
+    )
+
+  return <ConnectWallet />
+}
+
+const ConnectWallet: React.FC = () => {
+  const { selectWallet } = useWallet()
+  const classes = useStyles()
+
+  return (
+    <div>
+      <Nav />
+      <div className={classes.container}>
+        <LinkButton style={{ margin: 'auto' }} onClick={selectWallet}>
+          Connect Wallet
+        </LinkButton>
+      </div>
+    </div>
+  )
+}
+
 export function Positions() {
   const [existingCollatPercent, setExistingCollatPercent] = useState(0)
   const [existingLiqPrice, setExistingLiqPrice] = useState(new BigNumber(0))
@@ -144,6 +174,15 @@ export function Positions() {
   } = usePositions()
 
   const { index, getCollatRatioAndLiqPrice } = useController()
+  const {
+    depositedEth,
+    depositedUsd,
+    minCurrentEth,
+    minCurrentUsd,
+    minPnL,
+    minPnlUsd,
+    loading: crabLoading,
+  } = useCrabPosition(address || '')
 
   const vaultExists = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.collateralAmount?.isGreaterThan(0)
@@ -186,12 +225,10 @@ export function Positions() {
             </div>
           </div>
         </div>
-        {(oSqueethBal.isZero() && shortVaults.length && shortVaults[firstValidVault]?.collateralAmount.isZero()) ||
-        (oSqueethBal.isZero() && shortVaults.length === 0 && squeethAmount.isEqualTo(0)) ||
-        (positionType !== PositionType.LONG &&
-          positionType !== PositionType.SHORT &&
-          !oSqueethBal.isGreaterThan(0) &&
-          shortVaults[firstValidVault]?.collateralAmount.isZero()) ? (
+        {!shortDebt.isGreaterThan(0) &&
+        depositedEth.isZero() &&
+        !squeethAmount.isGreaterThan(0) &&
+        !mintedDebt.isGreaterThan(0) ? (
           <div className={classes.empty}>
             <Typography>No active positions</Typography>
           </div>
@@ -469,7 +506,17 @@ export function Positions() {
             </div>
           </div>
         ) : null}
-        <CrabProvider>{!!address ? <CrabPosition user={address} /> : null}</CrabProvider>
+        {!!address ? (
+          <CrabPosition
+            depositedEth={depositedEth}
+            depositedUsd={depositedUsd}
+            loading={false}
+            minCurrentEth={minCurrentEth}
+            minCurrentUsd={minCurrentUsd}
+            minPnL={minPnL}
+            minPnlUsd={minPnlUsd}
+          />
+        ) : null}
         {activePositions?.length > 0 ? (
           <>
             <div className={classes.header}>
@@ -491,11 +538,28 @@ export function Positions() {
   )
 }
 
-const CrabPosition: React.FC<{ user: string }> = ({ user }) => {
-  const classes = useStyles()
-  const { depositedEth, depositedUsd, minCurrentEth, minCurrentUsd, minPnL, minPnlUsd, loading } = useCrabPosition(user)
+type CrabPositionType = {
+  depositedEth: BigNumber
+  depositedUsd: BigNumber
+  loading: boolean
+  minCurrentEth: BigNumber
+  minCurrentUsd: BigNumber
+  minPnL: BigNumber
+  minPnlUsd: BigNumber
+}
 
-  if (depositedEth.isZero()) return null
+const CrabPosition: React.FC<CrabPositionType> = ({
+  depositedEth,
+  depositedUsd,
+  loading,
+  minCurrentEth,
+  minCurrentUsd,
+  minPnL,
+  minPnlUsd,
+}) => {
+  const classes = useStyles()
+
+  if (depositedEth.isZero() || loading) return null
 
   return (
     <div className={classes.position}>
@@ -553,4 +617,4 @@ const CrabPosition: React.FC<{ user: string }> = ({ user }) => {
   )
 }
 
-export default Positions
+export default PositionsHome
