@@ -134,16 +134,12 @@ export function Positions() {
     vaultId,
     existingCollat,
     lpedSqueeth,
+    mintedDebt,
+    shortDebt,
     isLong,
   } = usePositions()
 
   const { index, getCollatRatioAndLiqPrice } = useController()
-  const { transactions } = useTransactionHistory()
-
-  const lastDeposit = useMemo(
-    () => transactions.find((transaction) => transaction.transactionType === TransactionType.MINT_SHORT),
-    [transactions?.length],
-  )
 
   const vaultExists = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.collateralAmount?.isGreaterThan(0)
@@ -164,20 +160,6 @@ export function Positions() {
       setExistingLiqPrice(liquidationPrice)
     })
   }, [firstValidVault, shortVaults?.length])
-
-  const mintedDebt = useMemo(() => {
-    return oSqueethBal?.isGreaterThan(0) && positionType === PositionType.LONG
-      ? oSqueethBal.minus(squeethAmount)
-      : oSqueethBal
-  }, [positionType, squeethAmount.toString(), oSqueethBal.toString()])
-
-  const lpDebt = useMemo(() => {
-    return lpedSqueeth.isGreaterThan(0) ? lpedSqueeth : new BigNumber(0)
-  }, [squeethAmount.toString(), lpedSqueeth.toString()])
-
-  const shortDebt = useMemo(() => {
-    return positionType === PositionType.SHORT ? squeethAmount : new BigNumber(0)
-  }, [positionType, squeethAmount.toString(), lpDebt.toString(), mintedDebt.toString()])
 
   return (
     <div>
@@ -362,7 +344,7 @@ export function Positions() {
             </div>
           </div>
         ) : null}
-        {lpDebt.isGreaterThan(0) && vaultExists && !fullyLiquidated ? (
+        {lpedSqueeth.isGreaterThan(0) && vaultExists && !fullyLiquidated ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>LPed Squeeth</Typography>
@@ -377,7 +359,7 @@ export function Positions() {
                     Amount
                   </Typography>
                   <Typography variant="body1">
-                    {lpDebt.toFixed(8)}
+                    {lpedSqueeth.toFixed(8)}
                     &nbsp; oSQTH
                   </Typography>
                 </div>

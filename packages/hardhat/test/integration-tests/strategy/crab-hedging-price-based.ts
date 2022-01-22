@@ -307,7 +307,7 @@ describe("Crab flashswap integration test: price based hedging", function () {
 
       await expect(
         crabStrategy.connect(depositor).priceHedge(auctionTriggerTimer, isSellAuction, expectedAuctionWSqueethEthPrice, {value: expectedEthProceeds.add(1)})
-      ).to.be.revertedWith("can not execute hedging trade as auction type changed");
+      ).to.be.revertedWith("auction direction changed");
     })    
 
     it("it should revert if hedger specifies the wrong direction", async () => {
@@ -512,7 +512,7 @@ describe("Crab flashswap integration test: price based hedging", function () {
 
       await expect(
         crabStrategy.connect(depositor).priceHedge(auctionTriggerTimer, isSellAuction, expectedAuctionWSqueethEthPrice)
-      ).to.be.revertedWith("can not execute hedging trade as auction type changed");
+      ).to.be.revertedWith("auction direction changed");
     })    
 
     it("it should revert if hedger specifies the wrong direction", async () => {
@@ -648,7 +648,7 @@ describe("Crab flashswap integration test: price based hedging", function () {
 
       await expect(
         crabStrategy.connect(depositor).priceHedge(auctionTriggerTimer, isSellAuction, expectedAuctionWSqueethEthPrice.mul(2))
-      ).to.be.revertedWith("Auction price greater than min accepted price");
+      ).to.be.revertedWith("Auction price < min price");
     })  
 
     it("it should allow a hedge based on price", async () => {

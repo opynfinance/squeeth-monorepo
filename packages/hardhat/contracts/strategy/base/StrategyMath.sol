@@ -20,7 +20,7 @@ pragma solidity >0.4.13;
 
 /**
  * @notice Copied from https://github.com/dapphub/ds-math/blob/e70a364787804c1ded9801ed6c27b440a86ebd32/src/math.sol
- * @dev change contract to library, all uint to uint256, added div() function
+ * @dev change contract to library, added div() function
  */
 library StrategyMath {
     function add(uint x, uint y) internal pure returns (uint z) {

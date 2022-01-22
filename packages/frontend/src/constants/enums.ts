@@ -56,9 +56,9 @@ export enum Tooltips {
   Twap = 'This is a 7 min TWAP from Uniswap.',
   MintBurnInput = 'Input a negative number (with a minus sign on the extreme left) to burn, and a positive number (no sign needed) to mint.',
   CollatRemoveAdd = 'Input a negative number (with a minus sign on the extreme left) to remove, and a positive number (no sign needed) to add.',
+  LPDebt = 'This is squeeth debt for which you have put down collateral to LP.',
   MintedDebt = 'This is squeeth debt for which you have put down collateral to acquire.',
   ShortDebt = 'This is squeeth that you acquired and sold',
-  LPDebt = 'This is squeeth which you have opened a Uniswap pool to trade.',
   TotalDebt = 'Debt of the vault',
 }
 
