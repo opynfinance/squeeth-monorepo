@@ -518,7 +518,7 @@ function TradePage() {
 
   useEffect(() => {
     setVolMultiplier(1.2)
-  }, [tradeType])
+  }, [])
 
   return (
     <div>
