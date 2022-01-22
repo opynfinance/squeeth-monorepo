@@ -30,6 +30,7 @@ const useStyles = makeStyles((theme) =>
     },
     profitImage: {
       marginTop: theme.spacing(2),
+      borderRadius: theme.spacing(1),
     },
     stepsImage: {
       marginTop: theme.spacing(2),

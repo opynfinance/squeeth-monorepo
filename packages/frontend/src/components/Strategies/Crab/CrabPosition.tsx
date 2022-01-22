@@ -2,6 +2,7 @@ import { useCrabPosition } from '@hooks/useCrabPosition'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React, { useEffect, useState } from 'react'
 import { Typography } from '@material-ui/core'
+import BigNumber from 'bignumber.js'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -19,36 +20,30 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const CrabPosition: React.FC<{ user: string | null }> = ({ user }) => {
-  if (!user) return <UserNotConnected />
-
-  return <PositionCard user={user} />
+type CrabPositionType = {
+  value: BigNumber
+  pnl: BigNumber
+  loading: boolean
 }
 
-const UserNotConnected: React.FC = () => {
+const CrabPosition: React.FC<CrabPositionType> = ({ value, pnl, loading }) => {
   const classes = useStyles()
-  return <div className={classes.container}>Connect Wallet</div>
-}
-
-const PositionCard: React.FC<{ user: string }> = ({ user }) => {
-  const classes = useStyles()
-  const { minCurrentEth, minPnL, loading: positionLoading } = useCrabPosition(user)
 
   return (
     <div className={classes.container}>
       <Typography color="primary" variant="subtitle1">
         Position
       </Typography>
-      {minCurrentEth.gt(0) ? (
+      {value.gt(0) ? (
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <Typography variant="h6">{positionLoading ? 'Loading' : `${minCurrentEth.toFixed(6)} ETH`}</Typography>
-          {!positionLoading ? (
+          <Typography variant="h6">{loading ? 'Loading' : `${value.toFixed(2)} USD`}</Typography>
+          {!loading ? (
             <Typography
               variant="body2"
               style={{ marginLeft: '4px', fontWeight: 600 }}
-              className={minPnL.isNegative() ? classes.red : classes.green}
+              className={pnl.isNegative() ? classes.red : classes.green}
             >
-              ({minPnL.toFixed(2)} %)
+              ({pnl.toFixed(2)} %)
             </Typography>
           ) : null}
         </div>

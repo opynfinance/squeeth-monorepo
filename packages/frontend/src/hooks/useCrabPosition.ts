@@ -7,8 +7,7 @@ import { useWorldContext } from '@context/world'
 
 export const useCrabPosition = (user: string) => {
   const { loading, data } = useUserCrabTxHistory(user)
-  const { loading: crabLoading, userCrabBalance, currentEthValue } = useCrab()
-  const { ethPrice } = useWorldContext()
+  const { loading: crabLoading, userCrabBalance, currentEthValue, ethIndexPrice } = useCrab()
 
   const [minCurrentEth, setMinCurrentEth] = useState(BIG_ZERO)
   const [minCurrentUsd, setMinCurrentUsd] = useState(BIG_ZERO)
@@ -47,14 +46,14 @@ export const useCrabPosition = (user: string) => {
   }, [
     userCrabBalance.toString(),
     depositedEth.toString(),
-    ethPrice.toString(),
+    ethIndexPrice.toString(),
     crabLoading,
     currentEthValue.toString(),
   ])
 
   const calculateCurrentValue = async () => {
     setMinCurrentEth(currentEthValue)
-    setMinCurrentUsd(currentEthValue.times(ethPrice))
+    setMinCurrentUsd(currentEthValue.times(ethIndexPrice))
   }
 
   const { minPnL, minPnlUsd } = useMemo(() => {

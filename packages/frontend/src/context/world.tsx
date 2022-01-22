@@ -70,9 +70,9 @@ const initialContext = {
   ethWithinOneDayPriceMap: {},
   eth90daysPriceMap: {},
   collatRatio: 1.5,
-  setCollatRatio: () => {},
-  setVolMultiplier: () => {},
-  setDays: () => {},
+  setCollatRatio: () => null,
+  setVolMultiplier: () => null,
+  setDays: () => null,
 
   getVaultPNLWithRebalance: () => [],
   getStableYieldPNL: () => [],
@@ -114,7 +114,7 @@ const WorldProvider: React.FC = ({ children }) => {
   } = useETHPriceCharts()
 
   const { oSqueeth } = useAddresses()
-  const ethPrice = useETHPrice()
+  const ethPrice = useETHPrice(10)
   const oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
   return (
