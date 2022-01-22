@@ -66,6 +66,7 @@ export enum Tooltips {
   StrategyShort = 'The amount of oSQTH the whole strategy is short',
   StrategyCollRatio = 'The collateralization ratio for the whole strategy',
   StrategyEarnFunding = 'You earn funding by depositing into the strategy',
+  StrategyProfitThreshold = 'Based on current funding, crab strategy would be unprofitable if ETH moves more than the profit threshold in either direction each day.',
 }
 
 export enum Links {

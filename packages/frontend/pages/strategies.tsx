@@ -203,10 +203,10 @@ const Strategies: React.FC = () => {
               </Typography>
             </div>
             <Typography variant="subtitle1" color="textSecondary" style={{ width: '60%', marginTop: '8px' }}>
-              Crab strategy automates making money in a sideways market. Based on current funding, crab strategy would
-              be profitable if ETH moves less than approximately {(profitableMovePercent * 100).toFixed(2)}% in either
-              direction each day. The strategy hedges daily, reducing risk of liquidations. You earn squeeth without
-              being exposed to ETH price movements.
+              Crab automates a strategy that performs best in sideways markets. Based on current funding, crab would be
+              profitable if ETH moves less than approximately <b>{(profitableMovePercent * 100).toFixed(2)}%</b> in
+              either direction each day. Crab hedges daily, reducing risk of liquidations. You earn squeeth without
+              taking any view on if ETH will move up or down.
               <a className={classes.link} href={Links.CrabFAQ} target="_blank" rel="noreferrer">
                 {' '}
                 Learn more.{' '}
@@ -256,13 +256,18 @@ const Strategies: React.FC = () => {
                         minute: 'numeric',
                         timeZoneName: 'long',
                       }) +
-                      '. Hedges every 24hrs or every 1% ETH price move'
+                      '. Hedges every 24hrs or every 20% ETH price move'
                     }
                   />
-                  <StrategyInfoItem
+                  {/* <StrategyInfoItem
                     value={vault?.shortAmount.toFixed(4)}
                     label="Short oSQTH"
                     tooltip={Tooltips.StrategyShort}
+                  /> */}
+                  <StrategyInfoItem
+                    value={(profitableMovePercent * 100).toFixed(2)}
+                    label="Profit Threshold (%)"
+                    tooltip={Tooltips.StrategyProfitThreshold}
                   />
                   <StrategyInfoItem
                     value={collatRatio.toString()}
