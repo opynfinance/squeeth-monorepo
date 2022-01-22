@@ -204,9 +204,9 @@ const Strategies: React.FC = () => {
             </div>
             <Typography variant="subtitle1" color="textSecondary" style={{ width: '60%', marginTop: '8px' }}>
               Crab strategy automates making money in a sideways market. Based on current funding, crab strategy would
-              be profitable if ETH moves less than approximately {(profitableMovePercent * 100).toFixed(2)}% in either
-              direction each day. The strategy hedges daily, reducing risk of liquidations. You earn squeeth without
-              being exposed to ETH price movements.
+              be profitable if ETH moves less than approximately <b>{(profitableMovePercent * 100).toFixed(2)}%</b> in
+              either direction each day. The strategy hedges daily, reducing risk of liquidations. You earn squeeth
+              without being exposed to ETH price movements.
               <a className={classes.link} href={Links.CrabFAQ} target="_blank" rel="noreferrer">
                 {' '}
                 Learn more.{' '}
@@ -259,10 +259,15 @@ const Strategies: React.FC = () => {
                       '. Hedges every 24hrs or every 20% ETH price move'
                     }
                   />
-                  <StrategyInfoItem
+                  {/* <StrategyInfoItem
                     value={vault?.shortAmount.toFixed(4)}
                     label="Short oSQTH"
                     tooltip={Tooltips.StrategyShort}
+                  /> */}
+                  <StrategyInfoItem
+                    value={(profitableMovePercent * 100).toFixed(2)}
+                    label="Profit Threshold (%)"
+                    tooltip={Tooltips.StrategyProfitThreshold}
                   />
                   <StrategyInfoItem
                     value={collatRatio.toString()}

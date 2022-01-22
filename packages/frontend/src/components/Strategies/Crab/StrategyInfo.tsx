@@ -100,7 +100,7 @@ export const StrategyInfo: React.FC = () => {
       </div>
       <Typography color="textSecondary" variant="subtitle1" className={classes.caption}>
         Based on current funding, crab strategy would be unprofitable if ETH moves more than the profit threshold of
-        approximately {(profitableMovePercent * 100).toFixed(2)}% in either direction each day.
+        approximately <b>{(profitableMovePercent * 100).toFixed(2)}%</b> in either direction each day.
       </Typography>
       <Typography variant="h5" color="primary" className={classes.title}>
         Payoff
