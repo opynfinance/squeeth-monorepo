@@ -28,14 +28,23 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
     return ethPrices.length === 0 ? 1 : ethPrices[0].value
   }, [ethPrices])
 
-  const ethPriceMap = allEthPrices.reduce((acc: any, p) => {
-    acc[p.time] = p.value
-    return acc
-  }, {})
-  const eth90daysPriceMap = allEth90daysPrices.reduce((acc: any, p) => {
-    acc[p.time] = p.value
-    return acc
-  }, {})
+  const ethPriceMap = useMemo(
+    () =>
+      allEthPrices.reduce((acc: any, p) => {
+        acc[p.time] = p.value
+        return acc
+      }, {}),
+    [allEthPrices],
+  )
+
+  const eth90daysPriceMap = useMemo(
+    () =>
+      allEth90daysPrices.reduce((acc: any, p) => {
+        acc[p.time] = p.value
+        return acc
+      }, {}),
+    [allEth90daysPrices],
+  )
 
   const ethWithinOneDayPriceMap = allEthWithinOneDayPrices?.length
     ? allEthWithinOneDayPrices.reduce((acc: any, p) => {
@@ -70,11 +79,11 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
   // }, [startingETHPrice, ethPrices])
 
   // prev way to calc short eth pnl w/o compounding
-  const ethShortPNLWithoutCompounding = useMemo(() => {
-    return ethPrices.map(({ time, value }) => {
-      return { time, value: startingETHPrice - value }
-    })
-  }, [startingETHPrice, ethPrices])
+  // const ethShortPNLWithoutCompounding = useMemo(() => {
+  //   return ethPrices.map(({ time, value }) => {
+  //     return { time, value: startingETHPrice - value }
+  //   })
+  // }, [startingETHPrice, ethPrices])
 
   // get compounding eth pnl
   const ethPNLCompounding = useAsyncMemo(
