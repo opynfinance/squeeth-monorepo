@@ -55,7 +55,7 @@ export async function getETHPNLCompounding(ethPrices: { time: number; value: num
 
 export async function getSqueethPNLCompounding(
   ethPrices: { time: number; value: number }[],
-  volMultiplier = 0.8,
+  volMultiplier = 1.2,
   collatRatio = 1.5,
   days = 365,
 ): Promise<
@@ -69,7 +69,6 @@ export async function getSqueethPNLCompounding(
   const volsMap = await getVolMap()
   let cumulativeSqueethLongReturn = 0
   let cumulativeSqueethCrabReturn = 1
-  let cumRet = 1
   const charts: {
     time: number
     longPNL: number
@@ -79,24 +78,22 @@ export async function getSqueethPNLCompounding(
   const fundingPeriodMultiplier = days > 90 ? 365 : days > 1 ? 365 * 24 : 356 * 24 * 12
 
   for (let i = 0; i < ethPrices.length; i++) {
-    volMultiplier = 1
     const { value: price, time } = ethPrices[i > 0 ? i : 0]
-    const vol = (await getVolForTimestampOrDefault(volsMap, time, price)) * volMultiplier
+    const annaulVol = await getVolForTimestampOrDefault(volsMap, time, price)
+    let vol = annaulVol * volMultiplier
     const preEthPrice = ethPrices[i > 0 ? i - 1 : 0].value
-    const fundingCost = i === 0 ? 0 : (vol / Math.sqrt(fundingPeriodMultiplier)) ** 2
+    let fundingCost = i === 0 ? 0 : (vol / Math.sqrt(fundingPeriodMultiplier)) ** 2
     //short: -2r - r^2 + f + CR*r, CR=2 equals crab strategy pnl, 2r cancels out
     //long: 2r +r^2 -f
     cumulativeSqueethLongReturn += 2 * Math.log(price / preEthPrice) + Math.log(price / preEthPrice) ** 2 - fundingCost
     // crab return
-    // cumulativeSqueethCrabReturn *= 1 + -((price / preEthPrice - 1) ** 2) + fundingCost
-    const r = price / preEthPrice - 1
-    cumRet *= 1 + -(r ** 2) + fundingCost
-    cumulativeSqueethCrabReturn *= 1 + -(Math.log(price / preEthPrice) ** 2) + fundingCost
+    const crabVolMultiplier = 1
+    vol = annaulVol * crabVolMultiplier
+    fundingCost = i === 0 ? 0 : (vol / Math.sqrt(fundingPeriodMultiplier)) ** 2
+    const simR = price / preEthPrice - 1
+    cumulativeSqueethCrabReturn *= 1 + -(simR ** 2) + fundingCost
     const longPNL = Math.round((Math.exp(cumulativeSqueethLongReturn) - 1) * 10000) / 100
-    // const shortPNL = Math.round((cumulativeSqueethCrabReturn - 1) * 10000) / 100
-    // const shortPNL = Math.round((Math.exp(cumulativeSqueethCrabReturn) - 1) * 10000) / 100
-    // const shortPNL = Math.round(Math.log(1 + cumulativeSqueethCrabReturn) * 10000) / 100
-    const shortPNL = Math.log(cumRet) * 100
+    const shortPNL = Math.round(Math.log(cumulativeSqueethCrabReturn) * 10000) / 100
     charts.push({ shortPNL, longPNL, time })
   }
 
