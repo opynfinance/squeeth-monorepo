@@ -135,10 +135,14 @@ export const usePositions = () => {
   )
 
   const mintedDebt = useMemo(() => {
-    return oSqueethBal?.isGreaterThan(0) && positionType === PositionType.LONG
+    return shortVaults[vaultId]?.shortAmount.gt(0) &&
+      oSqueethBal?.isGreaterThan(0) &&
+      positionType === PositionType.LONG
       ? oSqueethBal.minus(squeethAmount)
-      : oSqueethBal
-  }, [oSqueethBal.toString(), positionType, squeethAmount.toString()])
+      : shortVaults[vaultId]?.shortAmount.gt(0) && oSqueethBal?.isGreaterThan(0)
+      ? oSqueethBal
+      : new BigNumber(0)
+  }, [oSqueethBal.toString(), positionType, squeethAmount.toString(), shortVaults?.length])
 
   const shortDebt = useMemo(() => {
     return positionType === PositionType.SHORT ? squeethAmount : new BigNumber(0)
