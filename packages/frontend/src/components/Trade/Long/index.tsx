@@ -247,7 +247,7 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
 
   useEffect(() => {
     if (connected) {
-      // if (oSqueethBal.lt(amount)) {
+      // if (longSqthBal.lt(amount)) {
       //   closeError = 'Insufficient oSQTH balance'
       // }
       if (amount.gt(balance)) {
