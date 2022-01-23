@@ -1,8 +1,10 @@
 import { useCrabPosition } from '@hooks/useCrabPosition'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React, { useEffect, useState } from 'react'
-import { Typography } from '@material-ui/core'
+import { Typography, Tooltip } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
+import InfoIcon from '@material-ui/icons/InfoOutlined'
+import { Tooltips } from '@constants/enums'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -16,6 +18,10 @@ const useStyles = makeStyles((theme) =>
     },
     red: {
       color: theme.palette.error.main,
+    },
+    infoIcon: {
+      fontSize: '10px',
+      marginLeft: theme.spacing(0.5),
     },
   }),
 )
@@ -37,7 +43,7 @@ const CrabPosition: React.FC<CrabPositionType> = ({ value, pnl, loading }) => {
       {value.gt(0) ? (
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <Typography variant="h6">{loading ? 'Loading' : `${value.toFixed(2)} USD`}</Typography>
-          {!loading ? (
+          {!loading && pnl.isFinite() ? (
             <Typography
               variant="body2"
               style={{ marginLeft: '4px', fontWeight: 600 }}
@@ -46,6 +52,9 @@ const CrabPosition: React.FC<CrabPositionType> = ({ value, pnl, loading }) => {
               ({pnl.toFixed(2)} %)
             </Typography>
           ) : null}
+          <Tooltip title={Tooltips.MinCrabPnL}>
+            <InfoIcon fontSize="small" className={classes.infoIcon} />
+          </Tooltip>
         </div>
       ) : (
         <Typography variant="body2">--</Typography>
