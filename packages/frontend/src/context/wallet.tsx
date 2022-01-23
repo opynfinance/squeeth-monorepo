@@ -103,18 +103,18 @@ const WalletProvider: React.FC = ({ children }) => {
     [web3, address, networkId, signer, balance.toString(), onWalletSelect, disconnectWallet],
   )
 
-  const getBalance = useCallback(() => {
+  const getBalance = () => {
     if (!address) {
       setBalance(new BigNumber(0))
       return
     }
 
     web3.eth.getBalance(address).then((bal) => setBalance(new BigNumber(bal)))
-  }, [address, web3.eth])
+  }
 
   useEffect(() => {
     getBalance()
-  }, [getBalance])
+  }, [address])
 
   useInterval(getBalance, 30000)
 
@@ -221,7 +221,7 @@ const WalletProvider: React.FC = ({ children }) => {
         console.log('Connected to wallet', success)
       })
     }
-  }, [address, networkId])
+  }, [networkId])
 
   return <walletContext.Provider value={store}>{children}</walletContext.Provider>
 }
