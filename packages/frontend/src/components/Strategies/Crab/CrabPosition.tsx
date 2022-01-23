@@ -43,7 +43,7 @@ const CrabPosition: React.FC<CrabPositionType> = ({ value, pnl, loading }) => {
       {value.gt(0) ? (
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <Typography variant="h6">{loading ? 'Loading' : `${value.toFixed(2)} USD`}</Typography>
-          {!loading ? (
+          {!loading && pnl.isFinite() ? (
             <Typography
               variant="body2"
               style={{ marginLeft: '4px', fontWeight: 600 }}
