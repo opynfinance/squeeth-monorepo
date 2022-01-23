@@ -113,6 +113,10 @@ const WalletProvider: React.FC = ({ children }) => {
   }
 
   useEffect(() => {
+    if (!address) {
+      setBalance(new BigNumber(0))
+      return
+    }
     getBalance()
   }, [address])
 
