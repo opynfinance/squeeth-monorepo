@@ -100,7 +100,7 @@ const WalletProvider: React.FC = ({ children }) => {
       disconnectWallet: disconnectWallet,
       handleTransaction,
     }),
-    [web3, address, networkId, signer, balance.toString()],
+    [web3, address, networkId, signer, balance.toString(), onWalletSelect, disconnectWallet],
   )
 
   const getBalance = useCallback(() => {
