@@ -19,7 +19,6 @@ const useStyles = makeStyles((theme) =>
     red: {
       color: theme.palette.error.main,
     },
-
     infoIcon: {
       fontSize: '10px',
       marginLeft: theme.spacing(0.5),
