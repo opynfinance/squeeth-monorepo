@@ -20,6 +20,8 @@ export enum TransactionType {
   BURN_SHORT = 'Bought back and burned',
   ADD_LIQUIDITY = 'Added Liquidity',
   REMOVE_LIQUIDITY = 'Removed Liquidity',
+  CRAB_FLASH_DEPOSIT = 'Flash deposit in crab',
+  CRAB_FLASH_WITHDRAW = 'Flash withdraw in crab',
 }
 
 export enum CloseType {
