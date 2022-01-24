@@ -245,22 +245,20 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
   let existingShortError: string | undefined
   let priceImpactWarning: string | undefined
 
-  useEffect(() => {
-    if (connected) {
-      // if (longSqthBal.lt(amount)) {
-      //   closeError = 'Insufficient oSQTH balance'
-      // }
-      if (amount.gt(balance)) {
-        openError = 'Insufficient ETH balance'
-      }
-      if (isShort) {
-        existingShortError = 'Close your short position to open a long'
-      }
-      if (new BigNumber(quote.priceImpact).gt(3)) {
-        priceImpactWarning = 'High Price Impact'
-      }
+  if (connected) {
+    // if (longSqthBal.lt(amount)) {
+    //   closeError = 'Insufficient oSQTH balance'
+    // }
+    if (amount.gt(balance)) {
+      openError = 'Insufficient ETH balance'
     }
-  }, [longSqthBal.toString(), amount.toString(), balance, isShort, quote.priceImpact])
+    if (isShort) {
+      existingShortError = 'Close your short position to open a long'
+    }
+    if (new BigNumber(quote.priceImpact).gt(3)) {
+      priceImpactWarning = 'High Price Impact'
+    }
+  }
 
   const longOpenPriceImpactErrorState = priceImpactWarning && !buyLoading && !openError && !isShort
 

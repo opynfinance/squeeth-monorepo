@@ -68,10 +68,18 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
   const { isRestricted } = useRestrictUser()
 
   let maxCapError: string | undefined
+  let depositError: string | undefined
+  let withdrawError: string | undefined
 
   if (connected) {
     if (ethAmount.plus(depositedAmount).gte(maxCap)) {
       maxCapError = 'Amount greater than strategy cap'
+    }
+    if (toTokenAmount(balance, 18).lt(ethAmount)) {
+      depositError = 'Insufficient ETH balance'
+    }
+    if (withdrawAmount.gt(currentEthValue)) {
+      withdrawError = 'Withdraw amount greater than strategy balance'
     }
   }
 
@@ -149,10 +157,16 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
                 tooltip="ETH Amount to deposit"
                 actionTxt="Max"
                 unit="ETH"
-                hint={maxCapError ? maxCapError : `Balance ${toTokenAmount(balance, 18).toFixed(6)} ETH`}
+                hint={
+                  maxCapError
+                    ? maxCapError
+                    : depositError
+                    ? depositError
+                    : `Balance ${toTokenAmount(balance, 18).toFixed(6)} ETH`
+                }
                 convertedValue={ethIndexPrice.times(ethAmount).toFixed(2)}
                 onActionClicked={() => setEthAmount(toTokenAmount(balance, 18))}
-                error={!!maxCapError}
+                error={!!maxCapError || !!depositError}
               />
             ) : (
               <PrimaryInput
@@ -163,8 +177,9 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
                 actionTxt="Max"
                 unit="ETH"
                 convertedValue={ethIndexPrice.times(withdrawAmount).toFixed(2)}
-                hint={`Position ${currentEthValue.toFixed(6)} ETH`}
+                hint={withdrawError ? withdrawError : `Position ${currentEthValue.toFixed(6)} ETH`}
                 onActionClicked={() => setWithdrawAmount(currentEthValue)}
+                error={!!withdrawError}
               />
             )}
             <TradeInfoItem
@@ -178,7 +193,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
                 variant="contained"
                 style={{ marginTop: '8px' }}
                 onClick={() => deposit()}
-                disabled={txLoading || !!maxCapError}
+                disabled={txLoading || !!maxCapError || !!depositError}
               >
                 {!txLoading ? 'Deposit' : <CircularProgress color="primary" size="1.5rem" />}
               </PrimaryButton>
@@ -187,7 +202,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
                 variant="contained"
                 style={{ marginTop: '8px' }}
                 onClick={() => withdraw()}
-                disabled={txLoading}
+                disabled={txLoading || !!withdrawError}
               >
                 {!txLoading ? 'Withdraw' : <CircularProgress color="primary" size="1.5rem" />}
               </PrimaryButton>

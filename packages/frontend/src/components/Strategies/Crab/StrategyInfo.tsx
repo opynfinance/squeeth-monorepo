@@ -66,10 +66,10 @@ export const StrategyInfo: React.FC = () => {
         1 Day Profitability
       </Typography>
       <FormControl className={classes.radioTitle}>
-        <FormLabel>At the end of one day, if ETH</FormLabel>
+        <FormLabel>At the end of one day, if ETH approximately</FormLabel>
         <RadioGroup
           row
-          name="At the end of one day, if ETH"
+          name="At the end of one day, if ETH approximately"
           value={profitToggle}
           onChange={(event) => setProfitToggle(event.target.value)}
         >
