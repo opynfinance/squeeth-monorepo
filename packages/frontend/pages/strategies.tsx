@@ -213,7 +213,7 @@ const Strategies: React.FC = () => {
               </div>
               <div className={classes.tradeForm}>
                 {!!address ? (
-                  <CrabTrade />
+                  <CrabTrade maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
                 ) : (
                   <div className={classes.connectWalletDiv}>
                     <LinkButton onClick={() => selectWallet()}>Connect Wallet</LinkButton>

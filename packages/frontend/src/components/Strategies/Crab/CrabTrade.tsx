@@ -13,7 +13,7 @@ import { CircularProgress } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import CrabPosition from './CrabPosition'
 
 const useStyles = makeStyles((theme) =>
@@ -48,7 +48,12 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const CrabTrade: React.FC = () => {
+type CrabTradeType = {
+  maxCap: BigNumber
+  depositedAmount: BigNumber
+}
+
+const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
   const classes = useStyles()
   const [ethAmount, setEthAmount] = useState(new BigNumber(0))
   const [withdrawAmount, setWithdrawAmount] = useState(new BigNumber(0))
@@ -56,11 +61,19 @@ const CrabTrade: React.FC = () => {
   const [txLoading, setTxLoading] = useState(false)
   const [txLoaded, setTxLoaded] = useState(false)
   const [txHash, setTxHash] = useState('')
-  const { balance, address } = useWallet()
+  const { balance, address, connected } = useWallet()
 
   const { flashDeposit, flashWithdrawEth, currentEthValue, slippage, setSlippage, ethIndexPrice } = useCrab()
   const { minCurrentUsd, minPnL, loading } = useCrabPosition(address || '')
   const { isRestricted } = useRestrictUser()
+
+  let maxCapError: string | undefined
+
+  if (connected) {
+    if (ethAmount.plus(depositedAmount).gte(maxCap)) {
+      maxCapError = 'Amount greater than strategy cap'
+    }
+  }
 
   const deposit = async () => {
     setTxLoading(true)
@@ -136,9 +149,10 @@ const CrabTrade: React.FC = () => {
                 tooltip="ETH Amount to deposit"
                 actionTxt="Max"
                 unit="ETH"
-                hint={`Balance ${toTokenAmount(balance, 18).toFixed(6)} ETH`}
+                hint={maxCapError ? maxCapError : `Balance ${toTokenAmount(balance, 18).toFixed(6)} ETH`}
                 convertedValue={ethIndexPrice.times(ethAmount).toFixed(2)}
                 onActionClicked={() => setEthAmount(toTokenAmount(balance, 18))}
+                error={!!maxCapError}
               />
             ) : (
               <PrimaryInput
@@ -164,7 +178,7 @@ const CrabTrade: React.FC = () => {
                 variant="contained"
                 style={{ marginTop: '8px' }}
                 onClick={() => deposit()}
-                disabled={txLoading}
+                disabled={txLoading || !!maxCapError}
               >
                 {!txLoading ? 'Deposit' : <CircularProgress color="primary" size="1.5rem" />}
               </PrimaryButton>
