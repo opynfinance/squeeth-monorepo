@@ -363,7 +363,7 @@ const useShortPositions = () => {
 
   const swaps = data?.swaps
   const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
-  const vaultId = shortVaults[firstValidVault]?.id || 0
+  const vaultId = shortVaults[firstValidVault]?.id ?? 0
 
   const {
     squeethAmount,
