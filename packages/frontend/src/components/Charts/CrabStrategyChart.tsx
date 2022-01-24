@@ -187,7 +187,6 @@ export function CrabStrategyChart({
     },
   }
 
-
   return (
     <div>
       <div className={classes.navDiv}>

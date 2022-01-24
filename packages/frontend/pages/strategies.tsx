@@ -70,10 +70,6 @@ const useStyles = makeStyles((theme) =>
       alignItems: 'center',
       marginTop: theme.spacing(4),
     },
-    body: {
-      display: 'flex',
-      marginTop: theme.spacing(3),
-    },
     connectWalletDiv: {
       display: 'flex',
       flexDirection: 'column',
@@ -90,22 +86,6 @@ const useStyles = makeStyles((theme) =>
       marginLeft: theme.spacing(37),
       justifyContent: 'right',
       alignSelf: 'center',
-    },
-    chartContainer: {
-      padding: theme.spacing(0),
-      marginTop: theme.spacing(4),
-      maxWidth: '640px',
-    },
-    link: {
-      color: theme.palette.primary.main,
-    },
-    comingSoon: {
-      height: '50vh',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginTop: theme.spacing(15),
     },
   }),
 )
