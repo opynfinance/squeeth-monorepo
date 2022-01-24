@@ -6,7 +6,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import NFTpositionManagerABI from '../abis/NFTpositionmanager.json'
 import { useWallet } from '@context/wallet'
 import { useWorldContext } from '@context/world'
-import { TransactionType } from '@constants/enums'
 import { positions, positionsVariables } from '../queries/uniswap/__generated__/positions'
 import { swaps, swapsVariables } from '../queries/uniswap/__generated__/swaps'
 import POSITIONS_QUERY, { POSITIONS_SUBSCRIPTION } from '../queries/uniswap/positionsQuery'
@@ -19,7 +18,7 @@ import { useVaultManager } from './contracts/useVaultManager'
 import { useAddresses } from './useAddress'
 import useInterval from './useInterval'
 import { useUsdAmount } from './useUsdAmount'
-import { useTransactionHistory } from './useTransactionHistory'
+import { calcUnrealizedPnl } from '../lib/pnl'
 
 const bigZero = new BigNumber(0)
 
@@ -506,8 +505,6 @@ export const usePnL = () => {
   const { positionType, squeethAmount, wethAmount, shortVaults, loading: positionLoading } = usePositions()
   const { ethPrice } = useWorldContext()
   const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
-  const { swapTransactions: transactions } = useTransactionHistory()
-  const { index } = useController()
 
   const [sellQuote, setSellQuote] = useState({
     amountOut: new BigNumber(0),
@@ -552,45 +549,9 @@ export const usePnL = () => {
     setShortGain(_gain)
   }, [buyQuote.toString(), ethPrice.toString(), wethAmount.toString(), squeethAmount.toString()])
 
-  const currentShortDeposits = useMemo(() => {
-    if (positionType === PositionType.LONG) return []
-    let totalShortSqth = new BigNumber(0)
-    const result = []
-    for (let index = 0; index < transactions.length; index++) {
-      if (totalShortSqth.gte(squeethAmount)) break
-      if (
-        totalShortSqth.isLessThan(squeethAmount) &&
-        transactions[index].transactionType === TransactionType.MINT_SHORT
-      ) {
-        totalShortSqth = totalShortSqth.plus(transactions[index].squeethAmount)
-        result.push(transactions[index])
-      } else if (
-        totalShortSqth.isLessThan(squeethAmount) &&
-        transactions[index].transactionType === TransactionType.BURN_SHORT
-      ) {
-        totalShortSqth = totalShortSqth.minus(transactions[index].squeethAmount)
-      }
-    }
-    return result
-  }, [positionType, squeethAmount.toString(), transactions.length])
-
-  const { shortUnrealizedPNL } = useMemo(
-    () =>
-      currentShortDeposits.reduce(
-        (acc, curr) => {
-          acc.shortUnrealizedPNL = acc.shortUnrealizedPNL.plus(
-            wethAmount
-              .minus(buyQuote)
-              .times(toTokenAmount(index, 18).sqrt())
-              .plus(curr?.ethAmount.times(curr?.ethPriceAtDeposit.minus(ethPrice))),
-          )
-          return acc
-        },
-        {
-          shortUnrealizedPNL: new BigNumber(0),
-        },
-      ),
-    [buyQuote.toString(), currentShortDeposits.length, ethPrice.toString(), wethAmount.toString()],
+  const shortUnrealizedPNL = useMemo(
+    () => calcUnrealizedPnl({ wethAmount, buyQuote, ethPrice }),
+    [buyQuote.toString(), ethPrice.toString(), wethAmount.toString()],
   )
 
   return {
