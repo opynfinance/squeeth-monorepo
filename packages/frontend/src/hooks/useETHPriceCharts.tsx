@@ -54,9 +54,14 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
       const startCUSDCPrice = cusdcPrices[0].value
       const amountCUSDC = (startingETHPrice * comparedLongAmount) / startCUSDCPrice
       return cusdcPrices.map(({ time, value }) => {
+        const pnlPerct =
+          Math.round(
+            ((amountCUSDC * value - startingETHPrice * comparedLongAmount) / (startingETHPrice * comparedLongAmount)) *
+              10000,
+          ) / 100
         return {
           time,
-          value: amountCUSDC * value - startingETHPrice * comparedLongAmount,
+          value: pnlPerct,
         }
       })
     },
