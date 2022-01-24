@@ -161,11 +161,7 @@ const UserCrabHistory: React.FC<{ user: string; networkId: Networks }> = ({ user
                 ${d.ethUsdValue.toFixed(2)}
               </Typography>
             </div>
-            <div className={classes.txSubItem}>
-              <Typography variant="subtitle1">
-                <b style={{ fontWeight: 600 }}>{d.oSqueethAmount.toFixed(6)}</b> oSQTH
-              </Typography>
-            </div>
+            <div className={classes.txSubItem} />
             <div className={classes.txLink}>
               <IconButton size="small" href={`${EtherscanPrefix[networkId]}/${d.id}`} target="_blank">
                 <OpenInNewIcon style={{ fontSize: '16px' }} color="secondary" />
