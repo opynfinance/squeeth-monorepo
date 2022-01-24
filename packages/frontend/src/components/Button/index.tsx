@@ -61,3 +61,13 @@ export const RemoveButton = withStyles((theme) => ({
     },
   },
 }))(Button)
+
+export const GreyButton = withStyles((theme) => ({
+  root: {
+    color: theme.palette.text.secondary,
+    backgroundColor: theme.palette.action.hover,
+    '&:hover': {
+      backgroundColor: theme.palette.action.selected,
+    },
+  },
+}))(Button)

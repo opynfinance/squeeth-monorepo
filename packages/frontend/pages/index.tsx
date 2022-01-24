@@ -12,7 +12,7 @@ import { useState } from 'react'
 import squeethTokenSymbol from '../public/images/Squeeth.svg'
 import { PrimaryButton } from '@components/Button'
 import { LongChart } from '@components/Charts/LongChart'
-import { VaultChart } from '@components/Charts/VaultChart'
+import { ShortChart } from '@components/Charts/ShortChart'
 import MobileModal from '@components/Modal/MobileModal'
 import Nav from '@components/Nav'
 import PositionCard from '@components/PositionCard'
@@ -537,7 +537,7 @@ function TradePage() {
               ) : (
                 <>
                   <div>
-                    <VaultChart vault={Vaults.Short} longAmount={0} showPercentage={true} setCustomLong={() => null} />
+                    <ShortChart vault={Vaults.Short} longAmount={0} showPercentage={true} setCustomLong={() => null} />
                   </div>
                 </>
               )}
@@ -559,7 +559,7 @@ function TradePage() {
             {tradeType === TradeType.LONG ? (
               <LongChart />
             ) : (
-              <VaultChart vault={Vaults.Short} longAmount={0} showPercentage={true} setCustomLong={() => null} />
+              <ShortChart vault={Vaults.Short} longAmount={0} showPercentage={true} setCustomLong={() => null} />
             )}
           </div>
           <div className={classes.mobileSpacer}>

@@ -76,7 +76,7 @@ type PrimaryInputType = {
   tooltip?: string
   actionTxt?: string
   onActionClicked?: () => void
-  convertedValue: number | string
+  convertedValue?: number | string
   hint?: string | React.ReactNode
   error?: boolean
   isLoading?: boolean
@@ -151,7 +151,7 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
           ) : null}
         </div> */}
         <div className={classes.unitsContainer}>
-          <Typography variant="caption">${convertedValue}</Typography>
+          <Typography variant="caption">{convertedValue ? `$${convertedValue}` : null}</Typography>
           <Typography className={classes.unit}>{unit}</Typography>
         </div>
       </div>

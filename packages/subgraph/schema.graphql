@@ -41,3 +41,28 @@ type DayStatSnapshot @entity {
   timestamp: BigInt!
   totalCollateralAmount: BigInt!
 }
+
+type CrabStrategyTx @entity {
+  id: ID!
+  type: String!
+  lpAmount: BigInt
+  ethAmount: BigInt!
+  wSqueethAmount: BigInt
+  owner: Bytes
+  isSellingSqueeth: Boolean
+  timestamp: BigInt!
+  auctionPrice: BigInt
+  wSqueethHedgeTargetAmount: BigInt
+  ethHedgeTargetAmount: BigInt
+  hedgerPrice: BigInt
+}
+
+type CrabAuction @entity {
+  id: ID!
+  isSellingSqueeth: Boolean!
+  squeethAmount: BigInt!
+  ethAmount: BigInt!
+  isHedgingOnUniswap: Boolean!
+  owner: Bytes!
+  timestamp: BigInt!
+}
