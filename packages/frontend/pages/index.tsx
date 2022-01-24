@@ -7,7 +7,7 @@ import InfoIcon from '@material-ui/icons/InfoOutlined'
 import ExpandLessIcon from '@material-ui/icons/NavigateBefore'
 import ExpandMoreIcon from '@material-ui/icons/NavigateNext'
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import squeethTokenSymbol from '../public/images/Squeeth.svg'
 import { PrimaryButton } from '@components/Button'
@@ -24,7 +24,6 @@ import { Vaults } from '../src/constants'
 import { Tooltips } from '@constants/enums'
 import { useRestrictUser } from '@context/restrict-user'
 import { TradeProvider, useTrade } from '@context/trade'
-import { useWorldContext } from '@context/world'
 import { useController } from '@hooks/contracts/useController'
 import { TradeType } from '../src/types'
 import { toTokenAmount } from '@utils/calculations'
@@ -506,8 +505,7 @@ function TradePage() {
   const classes = useStyles()
   const { isRestricted } = useRestrictUser()
 
-  const { setVolMultiplier } = useWorldContext()
-  const { tradeType, setTradeType } = useTrade()
+  const { tradeType } = useTrade()
   const [showMobileTrade, setShowMobileTrade] = useState(false)
   const [isWelcomeModalOpen, setWelcomeModalOpen] = useState(false)
   const [tradeCompleted, setTradeCompleted] = useState(false)
@@ -515,10 +513,6 @@ function TradePage() {
   const handleClose = () => {
     setWelcomeModalOpen(false)
   }
-
-  useEffect(() => {
-    setVolMultiplier(1.2)
-  }, [])
 
   return (
     <div>

@@ -20,7 +20,6 @@ import { useAddresses } from './useAddress'
 import useInterval from './useInterval'
 import { useUsdAmount } from './useUsdAmount'
 import { useTransactionHistory } from './useTransactionHistory'
-import { useIntervalAsync } from './useIntervalAsync'
 
 const bigZero = new BigNumber(0)
 
