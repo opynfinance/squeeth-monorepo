@@ -27,7 +27,7 @@ import {
   NormalizationFactorUpdate,
   HourStatSnapshot,
   DayStatSnapshot,
-  VaultTransaction,
+  VaultHistory,
 } from "../generated/schema";
 import { loadOrCreateAccount, BIGINT_ONE, BIGINT_ZERO } from "./util";
 
@@ -82,16 +82,18 @@ export function handleBurnShort(event: BurnShort): void {
 
   vault.shortAmount = vault.shortAmount.minus(event.params.amount);
   vault.save();
+
   let timestamp = event.block.timestamp;
   let transactionHash = event.transaction.hash.toHex();
-  //update vault transactions
+  //update vault history
   const vaultTransaction = getTransactionDetail(
     event.params.vaultId,
     event.params.amount,
     vault,
     timestamp,
-    "WITHDRAWAL",
-    transactionHash
+    "BURN_SHORT",
+    transactionHash,
+    BIGINT_ZERO
   );
   vaultTransaction.save();
 }
@@ -106,14 +108,15 @@ export function handleDepositCollateral(event: DepositCollateral): void {
   let timestamp = event.block.timestamp;
   let transactionHash = event.transaction.hash.toHex();
 
-  //update vault transactions
+  //update vault history
   const vaultTransaction = getTransactionDetail(
     event.params.vaultId,
     event.params.amount,
     vault,
     timestamp,
-    "DEPOSIT",
-    transactionHash
+    "DEPOSIT_COLLAT",
+    transactionHash,
+    BIGINT_ZERO
   );
   vaultTransaction.save();
 
@@ -155,14 +158,15 @@ export function handleLiquidate(event: Liquidate): void {
 
   let timestamp = event.block.timestamp;
   let transactionHash = event.transaction.hash.toHex();
-  //update vault transactions
+  //update vault history
   const vaultTransaction = getTransactionDetail(
     event.params.vaultId,
     event.params.collateralPaid,
     vault,
     timestamp,
-    "WITHDRAWAL",
-    transactionHash
+    "LIQUIDATE",
+    transactionHash,
+    event.params.debtAmount
   );
   vaultTransaction.save();
 
@@ -197,14 +201,15 @@ export function handleMintShort(event: MintShort): void {
 
   let timestamp = event.block.timestamp;
   let transactionHash = event.transaction.hash.toHex();
-  //update vault transactions
+  //update vault history
   const vaultTransaction = getTransactionDetail(
     event.params.vaultId,
     event.params.amount,
     vault,
     timestamp,
-    "DEPOSIT",
-    transactionHash
+    "MINT_SHORT",
+    transactionHash,
+    BIGINT_ZERO
   );
   vaultTransaction.save();
 }
@@ -266,14 +271,15 @@ export function handleWithdrawCollateral(event: WithdrawCollateral): void {
   let timestamp = event.block.timestamp;
   let transactionHash = event.transaction.hash.toHex();
 
-  //update vault transactions
+  //update vault history
   const vaultTransaction = getTransactionDetail(
     event.params.vaultId,
     event.params.amount,
     vault,
     timestamp,
-    "WITHDRAWAL",
-    transactionHash
+    "WITHDRAW_COLLAT",
+    transactionHash,
+    BIGINT_ZERO
   );
   vaultTransaction.save();
 
@@ -362,14 +368,23 @@ function getTransactionDetail(
   amount: BigInt,
   vault: Vault,
   timestamp: BigInt,
-  type: string,
-  transactionHash: string
-): VaultTransaction {
-  const vaultTransaction = new VaultTransaction(transactionHash);
-  vaultTransaction.totalCollateralAmount = vault.collateralAmount;
-  vaultTransaction.amount = amount;
-  vaultTransaction.type = type;
-  vaultTransaction.vaultId = vaultId;
-  vaultTransaction.timestamp = timestamp;
-  return vaultTransaction as VaultTransaction;
+  action: string,
+  transactionHash: string,
+  debtAmount: BigInt
+): VaultHistory {
+  const vaultHistory = new VaultHistory(transactionHash);
+  vaultHistory.totalEthCollateralAmount = vault.collateralAmount;
+  vaultHistory.action = action;
+  vaultHistory.vaultId = vaultId;
+  vaultHistory.timestamp = timestamp;
+  if (action === "MINT_SHORT" || action === "BURN_SHORT") {
+    vaultHistory.oSqthAmount = amount;
+  } else if (action === "DEPOSIT_COLLAT" || action === "WITHDRAW_COLLAT") {
+    vaultHistory.ethCollateralAmount = amount;
+  } else if (action === "LIQUIDATE") {
+    vaultHistory.ethCollateralAmount = amount;
+    vaultHistory.oSqthAmount = debtAmount;
+  }
+
+  return vaultHistory as VaultHistory;
 }
