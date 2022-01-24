@@ -42,16 +42,20 @@ type DayStatSnapshot @entity {
   totalCollateralAmount: BigInt!
 }
 
-enum Type {
-  WITHDRAWAL
-  DEPOSIT
+enum Action {
+  WITHDRAW_COLLAT
+  DEPOSIT_COLLAT
+  MINT_SHORT
+  BURN_SHORT
+  LIQUIDATE
 }
 
-type VaultTransaction @entity {
+type VaultHistory @entity {
   id: ID!
   timestamp: BigInt!
-  totalCollateralAmount: BigInt!
-  type: Type!
+  totalEthCollateralAmount: BigInt!
+  oSqthAmount: BigInt!
+  ethCollateralAmount: BigInt!
+  action: Action!
   vaultId: BigInt!
-  amount: BigInt!
 }
