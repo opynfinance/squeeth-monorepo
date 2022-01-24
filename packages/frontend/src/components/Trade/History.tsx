@@ -63,7 +63,7 @@ const History: React.FC = () => {
             </Typography>
           </div>
           {tx.transactionType === TransactionType.CRAB_FLASH_DEPOSIT ||
-            tx.transactionType === TransactionType.CRAB_FLASH_WITHDRAW ? (
+          tx.transactionType === TransactionType.CRAB_FLASH_WITHDRAW ? (
             <>
               <div className={classes.txItemVal}>
                 <Typography
@@ -90,8 +90,8 @@ const History: React.FC = () => {
                   variant="body2"
                   className={
                     tx.transactionType === TransactionType.BUY ||
-                      tx.transactionType === TransactionType.BURN_SHORT ||
-                      tx.transactionType === TransactionType.REMOVE_LIQUIDITY
+                    tx.transactionType === TransactionType.BURN_SHORT ||
+                    tx.transactionType === TransactionType.REMOVE_LIQUIDITY
                       ? classes.green
                       : classes.red
                   }
@@ -107,8 +107,8 @@ const History: React.FC = () => {
                   variant="body2"
                   className={
                     tx.transactionType === TransactionType.BUY ||
-                      tx.transactionType === TransactionType.BURN_SHORT ||
-                      tx.transactionType === TransactionType.ADD_LIQUIDITY
+                    tx.transactionType === TransactionType.BURN_SHORT ||
+                    tx.transactionType === TransactionType.ADD_LIQUIDITY
                       ? classes.red
                       : classes.green
                   }
