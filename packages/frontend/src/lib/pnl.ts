@@ -1,5 +1,8 @@
 import BigNumber from 'bignumber.js'
 
+import { VaultTransactions_vaultTransactions } from '../queries/squeeth/__generated__/VaultTransactions'
+import { fromTokenAmount } from '@utils/calculations'
+
 type ShortPnLParams = {
   wethAmount: BigNumber
   buyQuote: BigNumber
@@ -40,4 +43,22 @@ export function calcLongUnrealizedPnl({
     usdValue: sellQuote.minus(wethAmount.abs()).multipliedBy(ethPrice),
     ethValue: sellQuote.minus(wethAmount.abs()),
   }
+}
+
+export function calcETHCollateralPnl(
+  data: VaultTransactions_vaultTransactions[] | undefined,
+  ethPriceMap: { [key: string]: number },
+  ethPrice: BigNumber,
+) {
+  return data?.length
+    ? data?.reduce((acc: BigNumber, curr: VaultTransactions_vaultTransactions) => {
+        const time = new Date(Number(curr.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
+        if (curr.type === 'DEPOSIT') {
+          acc = acc.plus(
+            new BigNumber(fromTokenAmount(curr.amount, 18)).times(new BigNumber(ethPriceMap[time]).minus(ethPrice)),
+          )
+        }
+        return acc
+      }, new BigNumber(0))
+    : new BigNumber(0)
 }
