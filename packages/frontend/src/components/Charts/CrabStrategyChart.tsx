@@ -103,7 +103,6 @@ export function CrabStrategyChart({
   const [chartType, setChartType] = useState(0)
 
   const compoundSeries = getStableYieldPNL(1)
-  console.log(shortSeries, compoundSeries)
   const lineSeries = useMemo(() => {
     if (vault === Vaults.ETHBull)
       return [
@@ -187,6 +186,7 @@ export function CrabStrategyChart({
       priceFormatter: (num: number) => num.toFixed(2) + '%',
     },
   }
+
 
   return (
     <div>

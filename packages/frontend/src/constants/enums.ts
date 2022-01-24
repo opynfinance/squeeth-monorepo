@@ -20,6 +20,8 @@ export enum TransactionType {
   BURN_SHORT = 'Bought back and burned',
   ADD_LIQUIDITY = 'Added Liquidity',
   REMOVE_LIQUIDITY = 'Removed Liquidity',
+  CRAB_FLASH_DEPOSIT = 'Flash deposit in crab',
+  CRAB_FLASH_WITHDRAW = 'Flash withdraw in crab',
 }
 
 export enum CloseType {
@@ -61,11 +63,12 @@ export enum Tooltips {
   ShortDebt = 'This is squeeth that you acquired and sold',
   TotalDebt = 'Debt of the vault',
   VaultLiquidations = 'The strategy is subject to liquidations if it goes below 150% collateral, but rebalancing based on large ETH price changes helps prevent a liquidation from occurring.',
-  MinCrabPnL = 'This is the minimum Pnl that you get because of slippage',
+  MinCrabPnL = 'This is your minimum PnL, as it takes into account slippage on Uniswap since the strategy uses flashswaps to deposit and withdraw',
   StrategyLiquidations = 'The strategy is subject to liquidations if it goes below 150% collateral, but rebalancing based on large ETH price changes helps prevent a liquidation from occurring.',
   StrategyShort = 'The amount of oSQTH the whole strategy is short',
   StrategyCollRatio = 'The collateralization ratio for the whole strategy',
   StrategyEarnFunding = 'You earn funding by depositing into the strategy',
+  StrategyProfitThreshold = 'Based on current funding, crab strategy would be unprofitable if ETH moves more than the profit threshold in either direction each day.',
 }
 
 export enum Links {

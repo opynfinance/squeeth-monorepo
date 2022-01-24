@@ -12,6 +12,7 @@ const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
       marginTop: theme.spacing(2),
+      marginBottom: theme.spacing(5),
     },
     tableCell: {
       width: '10px',
@@ -35,7 +36,10 @@ const useStyles = makeStyles((theme) =>
       justifyContent: 'space-between',
     },
     txItemCol: {
-      width: '175px',
+      width: '30%',
+    },
+    txItemVal: {
+      width: '30%',
     },
   }),
 )
@@ -49,7 +53,7 @@ const History: React.FC = () => {
   const { getUsdAmt } = useUsdAmount()
 
   return (
-    <div>
+    <div className={classes.container}>
       {transactions.map((tx, index) => (
         <div className={classes.historyItem} key={tx.timestamp + index}>
           <div className={classes.txItemCol}>
@@ -58,40 +62,66 @@ const History: React.FC = () => {
               {new Date(Number(tx.timestamp) * 1000).toDateString()}
             </Typography>
           </div>
-          <div>
-            <Typography
-              variant="body2"
-              className={
-                tx.transactionType === TransactionType.BUY ||
-                tx.transactionType === TransactionType.BURN_SHORT ||
-                tx.transactionType === TransactionType.REMOVE_LIQUIDITY
-                  ? classes.green
-                  : classes.red
-              }
-            >
-              {tx.squeethAmount.toFixed(8)}&nbsp; oSQTH
-            </Typography>
-            <Typography variant="caption" color="textSecondary">
-              ${tx.squeethAmount.times(ethPrice).times(ethPrice).div(10000).times(normalizationFactor).toFixed(2)}
-            </Typography>
-          </div>
-          <div>
-            <Typography
-              variant="body2"
-              className={
-                tx.transactionType === TransactionType.BUY ||
-                tx.transactionType === TransactionType.BURN_SHORT ||
-                tx.transactionType === TransactionType.ADD_LIQUIDITY
-                  ? classes.red
-                  : classes.green
-              }
-            >
-              {tx.ethAmount.toFixed(4)}&nbsp; WETH
-            </Typography>
-            <Typography variant="caption" color="textSecondary">
-              ${getUsdAmt(tx.ethAmount, tx.timestamp).toFixed(2)}
-            </Typography>
-          </div>
+          {tx.transactionType === TransactionType.CRAB_FLASH_DEPOSIT ||
+          tx.transactionType === TransactionType.CRAB_FLASH_WITHDRAW ? (
+            <>
+              <div className={classes.txItemVal}>
+                <Typography
+                  variant="body2"
+                  className={tx.transactionType === TransactionType.CRAB_FLASH_WITHDRAW ? classes.red : classes.green}
+                >
+                  {tx.ethAmount.toFixed(4)}&nbsp; WETH
+                </Typography>
+                <Typography variant="caption" color="textSecondary">
+                  ${getUsdAmt(tx.ethAmount, tx.timestamp).toFixed(2)}
+                </Typography>
+              </div>
+              <div className={classes.txItemVal}>
+                <Typography variant="body2">{tx.squeethAmount.toFixed(8)}&nbsp; oSQTH</Typography>
+                <Typography variant="caption" color="textSecondary">
+                  ${tx.squeethAmount.times(ethPrice).times(ethPrice).div(10000).times(normalizationFactor).toFixed(2)}
+                </Typography>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className={classes.txItemVal}>
+                <Typography
+                  variant="body2"
+                  className={
+                    tx.transactionType === TransactionType.BUY ||
+                    tx.transactionType === TransactionType.BURN_SHORT ||
+                    tx.transactionType === TransactionType.REMOVE_LIQUIDITY
+                      ? classes.green
+                      : classes.red
+                  }
+                >
+                  {tx.squeethAmount.toFixed(8)}&nbsp; oSQTH
+                </Typography>
+                <Typography variant="caption" color="textSecondary">
+                  ${tx.squeethAmount.times(ethPrice).times(ethPrice).div(10000).times(normalizationFactor).toFixed(2)}
+                </Typography>
+              </div>
+              <div className={classes.txItemVal}>
+                <Typography
+                  variant="body2"
+                  className={
+                    tx.transactionType === TransactionType.BUY ||
+                    tx.transactionType === TransactionType.BURN_SHORT ||
+                    tx.transactionType === TransactionType.ADD_LIQUIDITY
+                      ? classes.red
+                      : classes.green
+                  }
+                >
+                  {tx.ethAmount.toFixed(4)}&nbsp; WETH
+                </Typography>
+                <Typography variant="caption" color="textSecondary">
+                  ${getUsdAmt(tx.ethAmount, tx.timestamp).toFixed(2)}
+                </Typography>
+              </div>
+            </>
+          )}
+
           <div>
             <IconButton size="small" href={`${EtherscanPrefix[networkId]}/${tx.txId}`} target="_blank">
               <OpenInNewIcon style={{ fontSize: '16px' }} color="secondary" />

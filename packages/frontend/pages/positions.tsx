@@ -21,6 +21,7 @@ import { useController } from '../src/hooks/contracts/useController'
 import { CrabProvider } from '@context/crabStrategy'
 import { useCrabPosition } from '@hooks/useCrabPosition'
 import { useWallet } from '@context/wallet'
+import { LinkButton } from '@components/Button'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -29,6 +30,7 @@ const useStyles = makeStyles((theme) =>
       width: '800px',
       marginLeft: 'auto',
       marginRight: 'auto',
+      paddingBottom: theme.spacing(8),
       [theme.breakpoints.down('sm')]: {
         width: '100%',
         padding: theme.spacing(0, 2),
@@ -87,6 +89,7 @@ const useStyles = makeStyles((theme) =>
     },
     history: {
       marginTop: theme.spacing(8),
+      marginBottom: theme.spacing(8),
     },
     link: {
       color: theme.palette.primary.main,
@@ -107,6 +110,35 @@ const useStyles = makeStyles((theme) =>
     },
   }),
 )
+
+const PositionsHome = () => {
+  const { address } = useWallet()
+
+  if (address)
+    return (
+      <CrabProvider>
+        <Positions />{' '}
+      </CrabProvider>
+    )
+
+  return <ConnectWallet />
+}
+
+const ConnectWallet: React.FC = () => {
+  const { selectWallet } = useWallet()
+  const classes = useStyles()
+
+  return (
+    <div>
+      <Nav />
+      <div className={classes.container}>
+        <LinkButton style={{ margin: 'auto' }} onClick={selectWallet}>
+          Connect Wallet
+        </LinkButton>
+      </div>
+    </div>
+  )
+}
 
 export function Positions() {
   const [existingCollatPercent, setExistingCollatPercent] = useState(0)
@@ -144,6 +176,15 @@ export function Positions() {
   } = usePositions()
 
   const { index, getCollatRatioAndLiqPrice } = useController()
+  const {
+    depositedEth,
+    depositedUsd,
+    minCurrentEth,
+    minCurrentUsd,
+    minPnL,
+    minPnlUsd,
+    loading: crabLoading,
+  } = useCrabPosition(address || '')
 
   const vaultExists = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.collateralAmount?.isGreaterThan(0)
@@ -186,12 +227,10 @@ export function Positions() {
             </div>
           </div>
         </div>
-        {(oSqueethBal.isZero() && shortVaults.length && shortVaults[firstValidVault]?.collateralAmount.isZero()) ||
-        (oSqueethBal.isZero() && shortVaults.length === 0 && squeethAmount.isEqualTo(0)) ||
-        (positionType !== PositionType.LONG &&
-          positionType !== PositionType.SHORT &&
-          !oSqueethBal.isGreaterThan(0) &&
-          shortVaults[firstValidVault]?.collateralAmount.isZero()) ? (
+        {!shortDebt.isGreaterThan(0) &&
+        depositedEth.isZero() &&
+        !squeethAmount.isGreaterThan(0) &&
+        !mintedDebt.isGreaterThan(0) ? (
           <div className={classes.empty}>
             <Typography>No active positions</Typography>
           </div>
@@ -469,7 +508,17 @@ export function Positions() {
             </div>
           </div>
         ) : null}
-        <CrabProvider>{!!address ? <CrabPosition user={address} /> : null}</CrabProvider>
+        {!!address ? (
+          <CrabPosition
+            depositedEth={depositedEth}
+            depositedUsd={depositedUsd}
+            loading={crabLoading}
+            minCurrentEth={minCurrentEth}
+            minCurrentUsd={minCurrentUsd}
+            minPnL={minPnL}
+            minPnlUsd={minPnlUsd}
+          />
+        ) : null}
         {activePositions?.length > 0 ? (
           <>
             <div className={classes.header}>
@@ -491,11 +540,28 @@ export function Positions() {
   )
 }
 
-const CrabPosition: React.FC<{ user: string }> = ({ user }) => {
-  const classes = useStyles()
-  const { depositedEth, depositedUsd, minCurrentEth, minCurrentUsd, minPnL, minPnlUsd, loading } = useCrabPosition(user)
+type CrabPositionType = {
+  depositedEth: BigNumber
+  depositedUsd: BigNumber
+  loading: boolean
+  minCurrentEth: BigNumber
+  minCurrentUsd: BigNumber
+  minPnL: BigNumber
+  minPnlUsd: BigNumber
+}
 
-  if (depositedEth.isZero()) return null
+const CrabPosition: React.FC<CrabPositionType> = ({
+  depositedEth,
+  depositedUsd,
+  loading,
+  minCurrentEth,
+  minCurrentUsd,
+  minPnL,
+  minPnlUsd,
+}) => {
+  const classes = useStyles()
+
+  if (depositedEth.isZero() || loading) return null
 
   return (
     <div className={classes.position}>
@@ -509,26 +575,22 @@ const CrabPosition: React.FC<{ user: string }> = ({ user }) => {
         <div className={classes.innerPositionData}>
           <div style={{ width: '50%' }}>
             <Typography variant="caption" component="span" color="textSecondary">
-              Deposited ETH
+              Deposited Amount
             </Typography>
-            <Typography variant="body1">
+            <Typography variant="body1">$ {depositedUsd.toFixed(2)}</Typography>
+            <Typography variant="body2" color="textSecondary">
               {depositedEth.toFixed(6)}
               &nbsp; ETH
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              $ {depositedUsd.toFixed(2)}
             </Typography>
           </div>
           <div style={{ width: '50%' }}>
             <Typography variant="caption" component="span" color="textSecondary">
               Current Position
             </Typography>
-            <Typography variant="body1">
+            <Typography variant="body1">$ {minCurrentUsd.toFixed(2)}</Typography>
+            <Typography variant="body2" color="textSecondary">
               {minCurrentEth.toFixed(6)}
               &nbsp; ETH
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              $ {minCurrentUsd.toFixed(2)}
             </Typography>
           </div>
         </div>
@@ -541,10 +603,10 @@ const CrabPosition: React.FC<{ user: string }> = ({ user }) => {
               <InfoIcon fontSize="small" className={classes.infoIcon} />
             </Tooltip>
             <Typography variant="body1" className={minPnlUsd.gte(0) ? classes.green : classes.red}>
-              $ {minPnlUsd.toFixed(2)}
+              {!loading ? '$' + `${minPnlUsd.toFixed(2)}` : 'loading'}
             </Typography>
             <Typography variant="caption" className={minPnlUsd.gte(0) ? classes.green : classes.red}>
-              {minPnL.toFixed(2)}%
+              {!loading ? `${minPnL.toFixed(2)}` + '%' : 'loading'}
             </Typography>
           </div>
         </div>
@@ -553,4 +615,4 @@ const CrabPosition: React.FC<{ user: string }> = ({ user }) => {
   )
 }
 
-export default Positions
+export default PositionsHome

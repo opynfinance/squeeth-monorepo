@@ -235,7 +235,6 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
     if (!open) return
     const debt = collateral.times(100).dividedBy(new BigNumber(collatPercent))
     getShortAmountFromDebt(debt).then((s) => setAmount(s.toString()))
-    setConfirmedAmount(amount.toFixed(6).toString())
   }, [collatPercent, collateral.toString(), normalizationFactor.toString()])
 
   useEffect(() => {

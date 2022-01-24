@@ -53,8 +53,8 @@ type WorldContextProps = {
 const initialContext = {
   researchMode: false,
   usePriceSeries: false,
-  setResearchMode: () => {},
-  setUsePriceSeries: () => {},
+  setResearchMode: () => null,
+  setUsePriceSeries: () => null,
 
   ethPrices: [],
   startingETHPrice: 0,
@@ -72,9 +72,9 @@ const initialContext = {
   ethWithinOneDayPriceMap: {},
   eth90daysPriceMap: {},
   collatRatio: 1.5,
-  setCollatRatio: () => {},
-  setVolMultiplier: () => {},
-  setDays: () => {},
+  setCollatRatio: () => null,
+  setVolMultiplier: () => null,
+  setDays: () => null,
 
   getVaultPNLWithRebalance: () => [],
   getStableYieldPNL: () => [],
@@ -119,7 +119,7 @@ const WorldProvider: React.FC = ({ children }) => {
   } = useETHPriceCharts()
 
   const { oSqueeth } = useAddresses()
-  const _ethPrice = useETHPrice()
+  const _ethPrice = useETHPrice(10)
   const _oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
   useMemo(() => {
