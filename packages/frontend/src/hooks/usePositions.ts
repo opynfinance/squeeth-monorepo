@@ -1,7 +1,7 @@
 import { useQuery } from '@apollo/client'
 import { Position } from '@uniswap/v3-sdk'
 import BigNumber from 'bignumber.js'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import NFTpositionManagerABI from '../abis/NFTpositionmanager.json'
 import { useWallet } from '@context/wallet'
@@ -65,24 +65,17 @@ export const usePositions = () => {
     })
   }, [squeethPool, address])
 
-  const { vaults: shortVaults } = useVaultManager(5)
+  const { vaults: shortVaults } = useVaultManager()
   const [existingCollatPercent, setExistingCollatPercent] = useState(0)
   const [existingCollat, setExistingCollat] = useState(new BigNumber(0))
   const [liquidationPrice, setLiquidationPrice] = useState(new BigNumber(0))
   const [isMintedBal, setIsMintedBal] = useState(false)
   const [firstValidVault, setFirstValidVault] = useState(0)
-  const [positionLoading, setPositionLoading] = useState(true)
   const { depositedSqueeth, withdrawnSqueeth, squeethLiquidity, wethLiquidity, loading: lpLoading } = useLPPositions()
 
   const swaps = data?.swaps
   const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
   const vaultId = shortVaults[firstValidVault]?.id || 0
-
-  useEffect(() => {
-    if (loading || lpLoading) {
-      setPositionLoading(true)
-    }
-  }, [lpLoading])
 
   const { squeethAmount, wethAmount } = useMemo(
     () =>
@@ -162,7 +155,6 @@ export const usePositions = () => {
     // dont include LPed & minted amount will be the correct short amount
     const finalSqueeth = squeethAmount
     const finalWeth = wethAmount.div(squeethAmount).multipliedBy(finalSqueeth)
-    setPositionLoading(false)
     return { finalSqueeth, finalWeth }
   }, [squeethAmount.toString(), wethAmount.toString()])
 
@@ -180,7 +172,7 @@ export const usePositions = () => {
         setFirstValidVault(i)
       }
     }
-  }, [shortVaults, shortVaults.length])
+  }, [shortVaults.length])
 
   useEffect(() => {
     if (shortVaults.length && shortVaults[firstValidVault]?.collateralAmount) {
@@ -360,7 +352,7 @@ const useShortPositions = () => {
 
   useInterval(refetch, 15000)
 
-  const { vaults: shortVaults } = useVaultManager(5)
+  const { vaults: shortVaults } = useVaultManager()
   const { getDebtAmount, normFactor: normalizationFactor } = useController()
 
   const [existingCollatPercent, setExistingCollatPercent] = useState(0)

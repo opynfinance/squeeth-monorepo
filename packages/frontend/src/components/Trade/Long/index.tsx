@@ -213,7 +213,7 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const OpenLong: React.FC<BuyProps> = ({ balance, open, setTradeCompleted, activeStep = 0 }) => {
+const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep = 0 }) => {
   const [buyLoading, setBuyLoading] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
   const [txHash, setTxHash] = useState('')
@@ -226,13 +226,11 @@ const OpenLong: React.FC<BuyProps> = ({ balance, open, setTradeCompleted, active
     squeethExposure,
     inputQuoteLoading,
     setInputQuoteLoading,
-    inputQuote,
     setInputType,
     quote,
     altTradeAmount: altAmountInputValue,
     setAltTradeAmount,
     confirmedAmount,
-    setConfirmedAmount,
     setTradeSuccess,
     slippageAmount,
   } = useTrade()
@@ -243,15 +241,15 @@ const OpenLong: React.FC<BuyProps> = ({ balance, open, setTradeCompleted, active
   const { squeethAmount, longSqthBal, isShort } = usePositions()
 
   let openError: string | undefined
-  let closeError: string | undefined
+  // let closeError: string | undefined
   let existingShortError: string | undefined
   let priceImpactWarning: string | undefined
 
   useEffect(() => {
     if (connected) {
-      if (longSqthBal.lt(amount)) {
-        closeError = 'Insufficient oSQTH balance'
-      }
+      // if (longSqthBal.lt(amount)) {
+      //   closeError = 'Insufficient oSQTH balance'
+      // }
       if (amount.gt(balance)) {
         openError = 'Insufficient ETH balance'
       }
@@ -470,14 +468,7 @@ const OpenLong: React.FC<BuyProps> = ({ balance, open, setTradeCompleted, active
   )
 }
 
-const CloseLong: React.FC<BuyProps> = ({
-  balance,
-  open,
-  closeTitle,
-  setTradeCompleted,
-  isLPage = false,
-  activeStep = 0,
-}) => {
+const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle, setTradeCompleted }) => {
   const [sellLoading, setSellLoading] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
   const [txHash, setTxHash] = useState('')
@@ -491,7 +482,6 @@ const CloseLong: React.FC<BuyProps> = ({
     tradeAmount: amountInputValue,
     setTradeAmount: setAmount,
     quote,
-    inputQuote,
     inputQuoteLoading,
     setInputQuoteLoading,
     setInputType,
@@ -522,7 +512,7 @@ const CloseLong: React.FC<BuyProps> = ({
     }
   }, [longSqthBal.toString(), open])
 
-  let openError: string | undefined
+  // let openError: string | undefined
   let closeError: string | undefined
   let existingShortError: string | undefined
   let priceImpactWarning: string | undefined
@@ -532,9 +522,9 @@ const CloseLong: React.FC<BuyProps> = ({
       if (longSqthBal.lt(amount)) {
         closeError = 'Insufficient oSQTH balance'
       }
-      if (amount.gt(balance)) {
-        openError = 'Insufficient ETH balance'
-      }
+      // if (amount.gt(balance)) {
+      //   openError = 'Insufficient ETH balance'
+      // }
       if (isShort) {
         existingShortError = 'Close your short position to open a long'
       }
