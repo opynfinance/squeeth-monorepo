@@ -102,6 +102,8 @@ export function CrabStrategyChart({
   const classes = useStyles()
   const [chartType, setChartType] = useState(0)
 
+  const compoundSeries = getStableYieldPNL(1)
+  console.log(shortSeries, compoundSeries)
   const lineSeries = useMemo(() => {
     if (vault === Vaults.ETHBull)
       return [
@@ -120,7 +122,7 @@ export function CrabStrategyChart({
       ]
     if (vault === Vaults.Short)
       return [
-        { data: shortEthPNL, legend: 'Short ETH PNL (%)' },
+        { data: compoundSeries, legend: 'Compound PNL (%)' },
         { data: shortSeries, legend: 'Crab PnL (%) (incl. funding)' },
         // { data: convertPNLToPriceChart(shortEthPNL, startingETHPrice), legend: 'Short ETH' },
         // { data: convertPNLToPriceChart(shortSeries, startingETHPrice), legend: 'Short Squeeth (incl. funding)' },
@@ -241,7 +243,7 @@ export function CrabStrategyChart({
       <div className={classes.legendBox}>
         <div className={classes.legendContainer}>
           <div style={{ width: '20px', height: '20px', backgroundColor: '#018FFB' }}></div>
-          <div>Short ETH PNL</div>
+          <div>Compound cUSDC Yield</div>
         </div>
         <div className={classes.legendContainer}>
           <div style={{ width: '20px', height: '20px', backgroundColor: '#00E396' }}></div>
