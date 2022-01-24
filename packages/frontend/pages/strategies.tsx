@@ -67,17 +67,25 @@ const useStyles = makeStyles((theme) =>
     comingSoon: {
       height: '50vh',
       display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
       alignItems: 'center',
-      gap: '10px',
-      padding: theme.spacing(4),
+      marginTop: theme.spacing(4),
     },
     connectWalletDiv: {
       display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginTop: theme.spacing(15),
+      flexDirection: 'column',
+      paddingRight: theme.spacing(5),
+    },
+    tabBackGround: {
+      position: 'sticky',
+      top: '0',
+      zIndex: 20,
+      // background: '#2A2D2E',
+    },
+    settingsButton: {
+      marginTop: theme.spacing(2),
+      marginLeft: theme.spacing(37),
+      justifyContent: 'right',
+      alignSelf: 'center',
     },
   }),
 )

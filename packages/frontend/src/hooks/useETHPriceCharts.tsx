@@ -63,9 +63,14 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
       const startCUSDCPrice = cusdcPrices[0].value
       const amountCUSDC = (startingETHPrice * comparedLongAmount) / startCUSDCPrice
       return cusdcPrices.map(({ time, value }) => {
+        const pnlPerct =
+          Math.round(
+            ((amountCUSDC * value - startingETHPrice * comparedLongAmount) / (startingETHPrice * comparedLongAmount)) *
+              10000,
+          ) / 100
         return {
           time,
-          value: amountCUSDC * value - startingETHPrice * comparedLongAmount,
+          value: pnlPerct,
         }
       })
     },
@@ -136,14 +141,14 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
   }, [squeethPNLSeries])
 
   // new short series
-  // const shortSeries = useMemo(() => {
-  //   return squeethPNLSeries.map(({ time, shortPNL }) => {
-  //     return { time, value: shortPNL }
-  //   })
-  // }, [squeethPNLSeries])
+  const shortSeries = useMemo(() => {
+    return squeethPNLSeries.map(({ time, shortPNL }) => {
+      return { time, value: shortPNL }
+    })
+  }, [squeethPNLSeries])
 
   // prev short series
-  const shortSeries = useMemo(() => {
+  const prevShortSeries = useMemo(() => {
     return squeethSeries.series.map(({ time, shortPNL }) => {
       return { time, value: shortPNL }
     })
@@ -216,7 +221,7 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
         }
 
         const longValue = price * longAmount - totalLongCost // should probably be be named something like ethDeltaPnL
-        const realizedPNL = shortSeries[i].value + longValue
+        const realizedPNL = prevShortSeries[i].value + longValue
 
         // calculate how much eth to buy
         data.push({

@@ -81,12 +81,10 @@ export function CrabStrategyChart({
   vault,
   longAmount,
   setCustomLong,
-  showPercentage,
 }: {
   vault?: Vaults
   longAmount: number
   setCustomLong: Function
-  showPercentage: boolean
 }) {
   const {
     startingETHPrice,
@@ -104,11 +102,7 @@ export function CrabStrategyChart({
   const classes = useStyles()
   const [chartType, setChartType] = useState(0)
 
-  const startTimestamp = useMemo(() => (seriesRebalance.length > 0 ? seriesRebalance[0].time : 0), [seriesRebalance])
-  const endTimestamp = useMemo(
-    () => (seriesRebalance.length > 0 ? seriesRebalance[seriesRebalance.length - 1].time : 0),
-    [seriesRebalance],
-  )
+  const compoundSeries = getStableYieldPNL(1)
 
   const lineSeries = useMemo(() => {
     if (vault === Vaults.ETHBull)
@@ -128,8 +122,8 @@ export function CrabStrategyChart({
       ]
     if (vault === Vaults.Short)
       return [
-        { data: shortEthPNL, legend: 'Short ETH PNL' },
-        { data: shortSeries, legend: 'Crab PnL (incl. funding)' },
+        { data: compoundSeries, legend: 'Compound PNL (%)' },
+        { data: shortSeries, legend: 'Crab PnL (%) (incl. funding)' },
         // { data: convertPNLToPriceChart(shortEthPNL, startingETHPrice), legend: 'Short ETH' },
         // { data: convertPNLToPriceChart(shortSeries, startingETHPrice), legend: 'Short Squeeth (incl. funding)' },
       ]
@@ -172,19 +166,27 @@ export function CrabStrategyChart({
         // { data: convertPNLToPriceChart(shortSeries, startingETHPrice), legend: 'Short Squeeth (incl. funding)' },
       ]
     return [{ data: seriesRebalance, legend: 'PNL' }]
-  }, [vault, longEthPNL, shortEthPNL, seriesRebalance, getStableYieldPNL, longAmount, startingETHPrice, shortSeries])
+  }, [vault, shortEthPNL, seriesRebalance, getStableYieldPNL, longAmount, startingETHPrice, shortSeries])
 
-  const chartOptions = useMemo(() => {
-    if (showPercentage)
-      return {
-        ...graphOptions,
-        priceScale: { mode: 2 },
-        localization: {
-          priceFormatter: (num: number) => num + '%',
-        },
-      }
-    else return graphOptions
-  }, [showPercentage])
+  const startTimestamp = useMemo(
+    () => (lineSeries.length > 0 && lineSeries[0].data.length > 0 ? lineSeries[0].data[0].time : 0),
+    [lineSeries],
+  )
+
+  const endTimestamp = useMemo(
+    () =>
+      lineSeries.length > 0 && lineSeries[0].data.length > 0
+        ? lineSeries[0].data[lineSeries[0].data.length - 1].time
+        : 0,
+    [lineSeries],
+  )
+
+  const chartOptions = {
+    ...graphOptions,
+    localization: {
+      priceFormatter: (num: number) => num.toFixed(2) + '%',
+    },
+  }
 
   return (
     <div>
@@ -228,20 +230,20 @@ export function CrabStrategyChart({
       </div>
       {seriesRebalance.length === 0 && <Alert severity="info"> Loading historical data, this could take a while</Alert>}
       <Chart
-        from={Math.floor(startTimestamp)}
+        from={startTimestamp}
         to={endTimestamp}
         // legend={`${vault} PNL`}
         options={chartOptions}
-        lineSeries={showPercentage ? lineSeriesPercentage : lineSeries}
+        lineSeries={lineSeries}
         autoWidth
-        height={290}
+        height={300}
         darkTheme
       />
 
       <div className={classes.legendBox}>
         <div className={classes.legendContainer}>
           <div style={{ width: '20px', height: '20px', backgroundColor: '#018FFB' }}></div>
-          <div>Short ETH PNL</div>
+          <div>Compound cUSDC Yield</div>
         </div>
         <div className={classes.legendContainer}>
           <div style={{ width: '20px', height: '20px', backgroundColor: '#00E396' }}></div>
