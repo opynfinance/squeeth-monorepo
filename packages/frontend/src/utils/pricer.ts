@@ -87,7 +87,7 @@ export async function getSqueethPNLCompounding(
     //long: 2r +r^2 -f
     cumulativeSqueethLongReturn += 2 * Math.log(price / preEthPrice) + Math.log(price / preEthPrice) ** 2 - fundingCost
     // crab return
-    const crabVolMultiplier = 1
+    const crabVolMultiplier = 0.9
     vol = annaulVol * crabVolMultiplier
     fundingCost = i === 0 ? 0 : (vol / Math.sqrt(fundingPeriodMultiplier)) ** 2
     const simR = price / preEthPrice - 1
