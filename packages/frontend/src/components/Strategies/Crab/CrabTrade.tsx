@@ -15,6 +15,7 @@ import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useState } from 'react'
 import CrabPosition from './CrabPosition'
+import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -61,11 +62,23 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
   const [txLoading, setTxLoading] = useState(false)
   const [txLoaded, setTxLoaded] = useState(false)
   const [txHash, setTxHash] = useState('')
+  const [depositPriceImpact, setDepositPriceImpact] = useState('0')
+  const [withdrawPriceImpact, setWithdrawPriceImpact] = useState('0')
   const { balance, address, connected } = useWallet()
 
-  const { flashDeposit, flashWithdrawEth, currentEthValue, slippage, setSlippage, ethIndexPrice } = useCrab()
+  const {
+    flashDeposit,
+    flashWithdrawEth,
+    currentEthValue,
+    slippage,
+    setSlippage,
+    ethIndexPrice,
+    calculateEthWillingToPayPriceImpact,
+    calculateETHtoBorrowPriceImpact,
+  } = useCrab()
   const { minCurrentUsd, minPnL, loading } = useCrabPosition(address || '')
   const { isRestricted } = useRestrictUser()
+  const { ready } = useSqueethPool()
 
   let maxCapError: string | undefined
   let depositError: string | undefined
@@ -82,6 +95,15 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
       withdrawError = 'Withdraw amount greater than strategy balance'
     }
   }
+
+  useEffect(() => {
+    if (!ready) return
+    if (depositOption === 0) {
+      calculateETHtoBorrowPriceImpact(ethAmount, slippage).then(setDepositPriceImpact)
+    } else {
+      calculateEthWillingToPayPriceImpact(withdrawAmount, slippage).then(setWithdrawPriceImpact)
+    }
+  }, [ready, ethAmount, withdrawAmount, slippage])
 
   const deposit = async () => {
     setTxLoading(true)
@@ -186,6 +208,11 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
               label="Slippage"
               value={slippage.toString()}
               tooltip="The strategy uses a uniswap flashswap to make a deposit. You can adjust slippage for this swap by clicking the gear icon"
+              unit="%"
+            />
+            <TradeInfoItem
+              label="Price Impact"
+              value={depositOption === 0 ? depositPriceImpact : withdrawPriceImpact}
               unit="%"
             />
             {depositOption === 0 ? (
