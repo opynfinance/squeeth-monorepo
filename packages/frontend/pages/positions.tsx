@@ -30,6 +30,7 @@ const useStyles = makeStyles((theme) =>
       width: '800px',
       marginLeft: 'auto',
       marginRight: 'auto',
+      paddingBottom: theme.spacing(8),
       [theme.breakpoints.down('sm')]: {
         width: '100%',
         padding: theme.spacing(0, 2),
@@ -88,6 +89,7 @@ const useStyles = makeStyles((theme) =>
     },
     history: {
       marginTop: theme.spacing(8),
+      marginBottom: theme.spacing(8),
     },
     link: {
       color: theme.palette.primary.main,
@@ -226,9 +228,9 @@ export function Positions() {
           </div>
         </div>
         {!shortDebt.isGreaterThan(0) &&
-        depositedEth.isZero() &&
-        !squeethAmount.isGreaterThan(0) &&
-        !mintedDebt.isGreaterThan(0) ? (
+          depositedEth.isZero() &&
+          !squeethAmount.isGreaterThan(0) &&
+          !mintedDebt.isGreaterThan(0) ? (
           <div className={classes.empty}>
             <Typography>No active positions</Typography>
           </div>
@@ -447,8 +449,8 @@ export function Positions() {
                   </Typography>
                   <Typography variant="body1">
                     {oSqueethBal?.isGreaterThan(0) &&
-                    positionType === PositionType.LONG &&
-                    oSqueethBal.minus(squeethAmount).isGreaterThan(0)
+                      positionType === PositionType.LONG &&
+                      oSqueethBal.minus(squeethAmount).isGreaterThan(0)
                       ? oSqueethBal.minus(squeethAmount).toFixed(8)
                       : oSqueethBal.toFixed(8)}
                     &nbsp; oSQTH

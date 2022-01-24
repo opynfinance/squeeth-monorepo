@@ -172,7 +172,6 @@ const CrabProvider: React.FC = ({ children }) => {
     if (!contract || !vault) return null
 
     const totalSupply = toTokenAmount(await contract.methods.totalSupply().call(), 18)
-    console.log('get collat', vault.collateralAmount.toString(), crabAmount.toString(), totalSupply.toString())
     return vault.collateralAmount.times(crabAmount).div(totalSupply)
   }
 
@@ -224,14 +223,11 @@ const CrabProvider: React.FC = ({ children }) => {
   }
 
   const calculateEthWillingToPay = async (amount: BigNumber, slippage: number) => {
-    console.log('ETH willing to pay: before vault')
     if (!vault) return new BigNumber(0)
-    console.log('ETH willing to pay: after vault')
 
     const squeethDebt = await getWsqueethFromCrabAmount(amount)
     if (!squeethDebt) return new BigNumber(0)
 
-    console.log('ETH willing to pay: here')
     const ethWillingtToPayQuote = await getBuyQuote(squeethDebt, new BigNumber(slippage))
     return ethWillingtToPayQuote.maximumAmountIn
   }
@@ -256,7 +252,6 @@ const CrabProvider: React.FC = ({ children }) => {
     if (!contract) return
 
     const equivalentCrab = ethAmount.div(currentEthValue).times(userCrabBalance)
-    console.log('Equivalent crab balance', equivalentCrab.toString())
     return flashWithdraw(equivalentCrab, slippage)
   }
 

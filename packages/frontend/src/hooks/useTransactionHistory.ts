@@ -7,6 +7,8 @@ import { useWorldContext } from '@context/world'
 import { transactions_swaps, transactions_positionSnapshots } from '../queries/uniswap/__generated__/transactions'
 import TRANSACTIONS_QUERY from '../queries/uniswap/transactionsQuery'
 import { useAddresses } from './useAddress'
+import { useUserCrabTxHistory } from './useUserCrabTxHistory'
+import { CrabStrategyTxType } from '../types'
 
 const bigZero = new BigNumber(0)
 
@@ -25,6 +27,8 @@ export const useTransactionHistory = () => {
     },
     fetchPolicy: 'cache-and-network',
   })
+
+  const { data: crabData } = useUserCrabTxHistory(address?.toLowerCase() || '')
 
   const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
 
@@ -105,8 +109,25 @@ export const useTransactionHistory = () => {
     }
   })
 
+  const crabTransactions = (crabData || [])?.map((c) => {
+    const transactionType =
+      c.type === CrabStrategyTxType.FLASH_DEPOSIT
+        ? TransactionType.CRAB_FLASH_DEPOSIT
+        : TransactionType.CRAB_FLASH_WITHDRAW
+    const { oSqueethAmount: squeethAmount, ethAmount, ethUsdValue: usdValue, timestamp } = c
+
+    return {
+      transactionType,
+      squeethAmount: squeethAmount.abs(),
+      ethAmount: ethAmount.abs(),
+      usdValue,
+      timestamp,
+      txId: c.id,
+    }
+  })
+
   return {
-    transactions: [...transactions, ...addRemoveLiquidityTrans].sort(
+    transactions: [...transactions, ...addRemoveLiquidityTrans, ...crabTransactions].sort(
       (transactionA, transactionB) => transactionB.timestamp - transactionA.timestamp,
     ),
     loading,

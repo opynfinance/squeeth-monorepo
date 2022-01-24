@@ -5,8 +5,9 @@ import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import { TradeSettings } from '@components/TradeSettings'
 import { useCrab } from '@context/crabStrategy'
+import { useRestrictUser } from '@context/restrict-user'
 import { useWallet } from '@context/wallet'
-import { useWorldContext } from '@context/world'
+import RestrictionInfo from '@components/RestrictionInfo'
 import { useCrabPosition } from '@hooks/useCrabPosition'
 import { CircularProgress } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
@@ -58,7 +59,8 @@ const CrabTrade: React.FC = () => {
   const { balance, address } = useWallet()
 
   const { flashDeposit, flashWithdrawEth, currentEthValue, slippage, setSlippage, ethIndexPrice } = useCrab()
-  const { depositedUsd, minCurrentUsd, minPnL, loading } = useCrabPosition(address || '')
+  const { minCurrentUsd, minPnL, loading } = useCrabPosition(address || '')
+  const { isRestricted } = useRestrictUser()
 
   const deposit = async () => {
     setTxLoading(true)
@@ -75,9 +77,7 @@ const CrabTrade: React.FC = () => {
   const withdraw = async () => {
     setTxLoading(true)
     try {
-      const _ethValue = withdrawAmount.div(ethIndexPrice)
-      console.log(_ethValue.toString())
-      const tx = await flashWithdrawEth(_ethValue, slippage)
+      const tx = await flashWithdrawEth(withdrawAmount, slippage)
       setTxHash(tx.transactionHash)
       setTxLoaded(true)
     } catch (e) {
@@ -85,6 +85,11 @@ const CrabTrade: React.FC = () => {
     }
     setTxLoading(false)
   }
+
+  if (isRestricted) {
+    return <RestrictionInfo />
+  }
+
   return (
     <>
       {txLoaded ? (
@@ -140,11 +145,12 @@ const CrabTrade: React.FC = () => {
                 value={withdrawAmount.toString()}
                 onChange={(v) => setWithdrawAmount(new BigNumber(v))}
                 label="Amount"
-                tooltip="Amount of USD(ETH) to withdraw"
+                tooltip="Amount of ETH to withdraw"
                 actionTxt="Max"
-                unit="USD"
-                hint={`Position ${minCurrentUsd.toFixed(4)} USD`}
-                onActionClicked={() => setWithdrawAmount(minCurrentUsd)}
+                unit="ETH"
+                convertedValue={ethIndexPrice.times(withdrawAmount).toFixed(2)}
+                hint={`Position ${currentEthValue.toFixed(6)} ETH`}
+                onActionClicked={() => setWithdrawAmount(currentEthValue)}
               />
             )}
             <TradeInfoItem
