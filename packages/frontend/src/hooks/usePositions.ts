@@ -10,8 +10,8 @@ import { positions, positionsVariables } from '../queries/uniswap/__generated__/
 import { swaps, swapsVariables } from '../queries/uniswap/__generated__/swaps'
 import POSITIONS_QUERY, { POSITIONS_SUBSCRIPTION } from '../queries/uniswap/positionsQuery'
 import SWAPS_QUERY from '../queries/uniswap/swapsQuery'
-import VAULT_TRANSACTIONS_QUERY from '../queries/squeeth/vaultTransactionQuery'
-import { VaultTransactions } from '../queries/squeeth/__generated__/VaultTransactions'
+import VAULT_HISTORY_QUERY from '../queries/squeeth/vaultHistoryQuery'
+import { VaultHistory } from '../queries/squeeth/__generated__/VaultHistory'
 import { NFTManagers, PositionType } from '../types'
 import { toTokenAmount } from '@utils/calculations'
 import { squeethClient } from '@utils/apollo-client'
@@ -495,14 +495,14 @@ export const usePnL = () => {
     refetchShort()
   }
 
-  const { data } = useQuery<VaultTransactions>(VAULT_TRANSACTIONS_QUERY, {
+  const { data } = useQuery<VaultHistory>(VAULT_HISTORY_QUERY, {
     client: squeethClient[networkId],
     fetchPolicy: 'cache-and-network',
     variables: {
       vaultId: shortVaults[firstValidVault]?.id,
     },
   })
-  const vaultHistoy = data?.vaultTransactions
+  const vaultHistoy = data?.vaultHistories
   const ethCollateralPnl = useMemo(
     () => calcETHCollateralPnl(vaultHistoy, ethPriceMap, ethPrice),
     [vaultHistoy?.length, ethPrice, ethPriceMap],
