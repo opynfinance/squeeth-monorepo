@@ -7,7 +7,8 @@ import clsx from 'clsx'
 import Link from 'next/link'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { usePnL, usePositions } from '@hooks/usePositions'
+import { usePnL } from '@hooks/usePositions'
+import { usePositions } from '@context/positions'
 import { Tooltips } from '@constants/enums'
 import { useTrade } from '@context/trade'
 import { useWorldContext } from '@context/world'
@@ -165,7 +166,6 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
   const {
     positionType: pType,
     squeethAmount,
-    shortDebt,
     wethAmount,
     shortVaults,
     firstValidVault,
