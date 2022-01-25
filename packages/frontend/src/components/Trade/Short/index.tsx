@@ -12,7 +12,7 @@ import {
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 
 import { CloseType, Tooltips, Links } from '@constants/enums'
 import { useTrade } from '@context/trade'
@@ -23,7 +23,7 @@ import useShortHelper from '@hooks/contracts/useShortHelper'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import { useAddresses } from '@hooks/useAddress'
-import { usePositions } from '@hooks/usePositions'
+import { usePositions } from '@context/positions'
 import { PrimaryButton } from '@components/Button'
 import CollatRange from '@components/CollatRange'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
@@ -33,7 +33,6 @@ import TradeDetails from '@components/Trade/TradeDetails'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import UniswapData from '@components/Trade/UniswapData'
 import { MIN_COLLATERAL_AMOUNT } from '../../../constants'
-import { PositionType } from '../../../types'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -573,24 +572,20 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     sellCloseQuote,
     tradeType,
     setTradeSuccess,
-    tradeSuccess,
     slippageAmount,
   } = useTrade()
   const amount = new BigNumber(amountInputValue)
   const {
-    positionType,
     shortVaults,
     firstValidVault,
     existingCollatPercent,
-    squeethAmount: shortSqueethAmount,
     isLong,
     lpedSqueeth,
     mintedDebt,
     shortDebt,
     loading: isPositionFinishedCalc,
   } = usePositions()
-
-  const { setCollatRatio, ethPrice, oSqueethBal } = useWorldContext()
+  const { setCollatRatio, ethPrice } = useWorldContext()
 
   useEffect(() => {
     if (!shortVaults.length) return
