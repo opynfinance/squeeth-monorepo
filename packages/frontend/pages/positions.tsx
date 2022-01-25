@@ -2,7 +2,7 @@ import { createStyles, makeStyles, Tooltip, Typography } from '@material-ui/core
 import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import Link from 'next/link'
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo } from 'react'
 import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
 
@@ -10,17 +10,17 @@ import { LPTable } from '@components/Lp/LPTable'
 import Nav from '@components/Nav'
 import History from '@components/Trade/History'
 import { PositionType } from '../src/types/'
-import { Tooltips, TransactionType, OSQUEETH_DECIMALS } from '../src/constants'
+import { Tooltips } from '../src/constants'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useWorldContext } from '@context/world'
-import { useLPPositions, usePnL, usePositions } from '@hooks/usePositions'
-import { useTransactionHistory } from '@hooks/useTransactionHistory'
+import { useLPPositions, usePnL } from '@hooks/usePositions'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
-import { toTokenAmount, fromTokenAmount } from '@utils/calculations'
+import { toTokenAmount } from '@utils/calculations'
 import { useController } from '../src/hooks/contracts/useController'
 import { CrabProvider } from '@context/crabStrategy'
 import { useCrabPosition } from '@hooks/useCrabPosition'
 import { useWallet } from '@context/wallet'
+import { usePositions } from '@context/positions'
 import { LinkButton } from '@components/Button'
 
 const useStyles = makeStyles((theme) =>
@@ -141,8 +141,6 @@ const ConnectWallet: React.FC = () => {
 }
 
 export function Positions() {
-  const [existingCollatPercent, setExistingCollatPercent] = useState(0)
-  const [existingLiqPrice, setExistingLiqPrice] = useState(new BigNumber(0))
   const classes = useStyles()
   const {
     longGain,
@@ -173,9 +171,11 @@ export function Positions() {
     mintedDebt,
     shortDebt,
     isLong,
+    existingCollatPercent,
+    liquidationPrice,
   } = usePositions()
 
-  const { index, getCollatRatioAndLiqPrice } = useController()
+  const { index } = useController()
   const {
     depositedEth,
     depositedUsd,
@@ -195,16 +195,6 @@ export function Positions() {
   const fullyLiquidated = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
   }, [firstValidVault, shortVaults?.length, liquidations?.length])
-
-  useEffect(() => {
-    getCollatRatioAndLiqPrice(
-      new BigNumber(fromTokenAmount(shortVaults[firstValidVault]?.collateralAmount, 18)),
-      new BigNumber(fromTokenAmount(shortVaults[firstValidVault]?.shortAmount, OSQUEETH_DECIMALS)),
-    ).then(({ collateralPercent, liquidationPrice }) => {
-      setExistingCollatPercent(collateralPercent)
-      setExistingLiqPrice(liquidationPrice)
-    })
-  }, [firstValidVault, shortVaults?.length])
 
   return (
     <div>
@@ -355,9 +345,9 @@ export function Positions() {
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
                   <Typography variant="body1">
-                    {isPositionFinishedCalc && existingLiqPrice.isEqualTo(0)
+                    {isPositionFinishedCalc && liquidationPrice.isEqualTo(0)
                       ? 'Loading'
-                      : '$' + existingLiqPrice.toFixed(2)}
+                      : '$' + liquidationPrice.toFixed(2)}
                   </Typography>
                 </div>
                 <div style={{ width: '50%' }}>
@@ -407,7 +397,7 @@ export function Positions() {
                 </div>
               </div>
               <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
-                {new BigNumber(existingLiqPrice).isFinite() ? (
+                {new BigNumber(liquidationPrice).isFinite() ? (
                   <div style={{ width: '50%' }}>
                     <Typography variant="caption" component="span" color="textSecondary">
                       Liquidation Price
@@ -416,7 +406,7 @@ export function Positions() {
                       <InfoIcon fontSize="small" className={classes.infoIcon} />
                     </Tooltip>
                     <Typography variant="body1">
-                      ${isPositionLoading && existingLiqPrice.isEqualTo(0) ? 'Loading' : existingLiqPrice.toFixed(2)}
+                      ${isPositionLoading && liquidationPrice.isEqualTo(0) ? 'Loading' : liquidationPrice.toFixed(2)}
                     </Typography>
                   </div>
                 ) : null}
@@ -458,7 +448,7 @@ export function Positions() {
                 </div>
               </div>
               <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
-                {new BigNumber(existingLiqPrice).isFinite() ? (
+                {new BigNumber(liquidationPrice).isFinite() ? (
                   <div style={{ width: '50%' }}>
                     <Typography variant="caption" component="span" color="textSecondary">
                       Liquidation Price
@@ -467,7 +457,7 @@ export function Positions() {
                       <InfoIcon fontSize="small" className={classes.infoIcon} />
                     </Tooltip>
                     <Typography variant="body1">
-                      $ {isPositionLoading && existingLiqPrice.isEqualTo(0) ? 'Loading' : existingLiqPrice.toFixed(2)}
+                      $ {isPositionLoading && liquidationPrice.isEqualTo(0) ? 'Loading' : liquidationPrice.toFixed(2)}
                     </Typography>
                   </div>
                 ) : null}
