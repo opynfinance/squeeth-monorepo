@@ -13,6 +13,7 @@ import { CookiesProvider } from 'react-cookie'
 import { RestrictUserProvider } from '@context/restrict-user'
 import { useWallet, WalletProvider } from '@context/wallet'
 import { WorldProvider } from '@context/world'
+import { PositionsProvider } from '@context/positions'
 import getTheme, { Mode } from '../src/theme'
 import { uniswapClient } from '@utils/apollo-client'
 
@@ -84,7 +85,9 @@ const TradeApp = ({ Component, pageProps }: any) => {
           {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
           <CssBaseline />
           <WorldProvider>
-            <Component {...pageProps} />
+            <PositionsProvider>
+              <Component {...pageProps} />
+            </PositionsProvider>
           </WorldProvider>
         </ThemeProvider>
       </ApolloProvider>
