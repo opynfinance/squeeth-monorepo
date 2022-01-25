@@ -199,7 +199,7 @@ const Strategies: React.FC = () => {
                   />
                   <StrategyInfoItem
                     value={(profitableMovePercent * 100).toFixed(2)}
-                    label="Profit Threshold (%)"
+                    label="Current Profit Threshold (%)"
                     tooltip={Tooltips.StrategyProfitThreshold}
                   />
                   <StrategyInfoItem

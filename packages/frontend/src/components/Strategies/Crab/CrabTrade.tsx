@@ -90,9 +90,9 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
     if (ethAmount.plus(depositedAmount).gte(maxCap)) {
       maxCapError = 'Amount greater than strategy cap'
     } else if (ethAmount.plus(depositedAmount).plus(borrowEth).gte(maxCap)) {
-      maxFlashCapError = `Amount greater than strategy cap because of Flash deposit ${borrowEth.toFixed(
+      maxFlashCapError = `Amount greater than strategy cap since it flash borrows ${borrowEth.toFixed(
         2,
-      )} ETH. Try a smaller amount`
+      )} ETH. Input a smaller amount`
     }
     if (toTokenAmount(balance, 18).lt(ethAmount)) {
       depositError = 'Insufficient ETH balance'
@@ -195,10 +195,10 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
                   maxCapError
                     ? maxCapError
                     : depositError
-                    ? depositError
-                    : maxFlashCapError
-                    ? maxFlashCapError
-                    : `Balance ${toTokenAmount(balance, 18).toFixed(6)} ETH`
+                      ? depositError
+                      : maxFlashCapError
+                        ? maxFlashCapError
+                        : `Balance ${toTokenAmount(balance, 18).toFixed(6)} ETH`
                 }
                 convertedValue={ethIndexPrice.times(ethAmount).toFixed(2)}
                 onActionClicked={() => setEthAmount(toTokenAmount(balance, 18))}
