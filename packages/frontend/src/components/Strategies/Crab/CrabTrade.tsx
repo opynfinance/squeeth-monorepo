@@ -195,10 +195,10 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
                   maxCapError
                     ? maxCapError
                     : depositError
-                      ? depositError
-                      : maxFlashCapError
-                        ? maxFlashCapError
-                        : `Balance ${toTokenAmount(balance, 18).toFixed(6)} ETH`
+                    ? depositError
+                    : maxFlashCapError
+                    ? maxFlashCapError
+                    : `Balance ${toTokenAmount(balance, 18).toFixed(6)} ETH`
                 }
                 convertedValue={ethIndexPrice.times(ethAmount).toFixed(2)}
                 onActionClicked={() => setEthAmount(toTokenAmount(balance, 18))}

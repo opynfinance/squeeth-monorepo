@@ -227,7 +227,7 @@ const CrabProvider: React.FC = ({ children }) => {
       const ethBorrow = ethDeposit.times(middle)
       const initialWSqueethDebt = ethBorrow.plus(ethDeposit).times(vault.shortAmount).div(vault.collateralAmount)
       const quote = await getSellQuote(initialWSqueethDebt, new BigNumber(slippage))
-      const borrowRatio = ethBorrow.div(quote.minimumAmountOut).minus(1)
+      const borrowRatio = quote.minimumAmountOut.div(ethBorrow).minus(1)
       if (prevState.minimumAmountOut.eq(quote.minimumAmountOut)) {
         break
       }
@@ -237,13 +237,14 @@ const CrabProvider: React.FC = ({ children }) => {
       } else {
         // If ratio matches check in first half or search in second half
         if (borrowRatio.gt(0)) {
-          end = middle
-        } else {
           start = middle
+        } else {
+          end = middle
         }
       }
     }
 
+    console.log('Eth to borrow: ', prevState.ethBorrow.toString())
     return prevState
   }
 
