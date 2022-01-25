@@ -43,7 +43,7 @@ const useStyles = makeStyles((theme) =>
       margin: theme.spacing(0, 'auto'),
       width: '350px',
       position: 'sticky',
-      height: '420px',
+      height: '440px',
       top: '100px',
     },
     overview: {
@@ -199,7 +199,7 @@ const Strategies: React.FC = () => {
                   />
                   <StrategyInfoItem
                     value={(profitableMovePercent * 100).toFixed(2)}
-                    label="Profit Threshold (%)"
+                    label="Current Profit Threshold (%)"
                     tooltip={Tooltips.StrategyProfitThreshold}
                   />
                   <StrategyInfoItem

@@ -2,7 +2,7 @@ import { gql } from '@apollo/client'
 
 export const CRAB_TX_QUERY = gql`
   query crabAuctions {
-    crabAuctions {
+    crabAuctions(orderBy: timestamp, orderDirection: desc) {
       id
       owner
       squeethAmount
