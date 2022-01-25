@@ -127,6 +127,7 @@ export const usePositions = () => {
   )
 
   const mintedDebt = useMemo(() => {
+    // squeethAmount = user long balance if oSqueethBal > 0, but it could also be minted balance
     return shortVaults[vaultId]?.shortAmount.gt(0) &&
       oSqueethBal?.isGreaterThan(0) &&
       positionType === PositionType.LONG
@@ -142,13 +143,13 @@ export const usePositions = () => {
 
   const longSqthBal = useMemo(() => {
     return mintedDebt.gt(0) ? oSqueethBal.minus(mintedDebt) : oSqueethBal
-  }, [positionType, oSqueethBal.toString(), mintedDebt.toString()])
+  }, [oSqueethBal.toString(), mintedDebt.toString()])
 
   const lpDebt = useMemo(() => {
     return depositedSqueeth.minus(withdrawnSqueeth).isGreaterThan(0)
       ? depositedSqueeth.minus(withdrawnSqueeth)
       : new BigNumber(0)
-  }, [positionType, depositedSqueeth.toString(), withdrawnSqueeth.toString()])
+  }, [depositedSqueeth.toString(), withdrawnSqueeth.toString()])
 
   const { finalSqueeth, finalWeth } = useMemo(() => {
     // dont include LPed & minted amount will be the correct short amount
