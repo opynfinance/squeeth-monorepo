@@ -208,43 +208,41 @@ const CrabProvider: React.FC = ({ children }) => {
     return Number(_vaultId.toString())
   }
 
-  const calculateETHtoBorrowFromUniswap = async (amount: BigNumber, slippage: number) => {
+  const calculateETHtoBorrowFromUniswap = async (ethDeposit: BigNumber, slippage: number) => {
     const emptyState = {
       amountOut: new BigNumber(0),
       minimumAmountOut: new BigNumber(0),
       priceImpact: '0',
       ethBorrow: new BigNumber(0),
     }
-    // ethDeposit + ethBorrow = wSqueethDebt * wSqueethPrice * 2
-    if (!vault || amount.eq(0)) return emptyState
-    const ethDeposit = amount
+    if (!vault || ethDeposit.eq(0)) return emptyState
+
+    let start = new BigNumber(0.25)
+    let end = new BigNumber(3)
+    const deviation = new BigNumber(0.0001) // .01 %
 
     let prevState = emptyState
-    let step = -0.01 // Multiplier can be both greater / lesser than 1
-
-    // Float is not handled well in JS so using BigNumber
-    let multiplier = new BigNumber(1)
-    for (; multiplier.isGreaterThan(0); multiplier = multiplier.plus(step)) {
-      const ethBorrow = ethDeposit.times(multiplier)
+    while (start.lte(end)) {
+      const middle = start.plus(end).div(2)
+      const ethBorrow = ethDeposit.times(middle)
       const initialWSqueethDebt = ethBorrow.plus(ethDeposit).times(vault.shortAmount).div(vault.collateralAmount)
       const quote = await getSellQuote(initialWSqueethDebt, new BigNumber(slippage))
-      if (ethBorrow.lt(quote.minimumAmountOut)) {
-        if (multiplier.eq(1)) {
-          step = 0.01
-        }
-        prevState = { ...quote, ethBorrow }
-        // If decrement, decreasing more is useless
-        if (step === -0.01) {
-          break
-        }
+      const borrowRatio = ethBorrow.div(quote.minimumAmountOut).minus(1)
+      if (prevState.minimumAmountOut.eq(quote.minimumAmountOut)) {
+        break
+      }
+      prevState = { ...quote, ethBorrow }
+      if (borrowRatio.gt(0) && borrowRatio.lte(deviation)) {
+        break
       } else {
-        // If increment, increasing more is useless
-        if (step === 0.01) {
-          break
+        // If ratio matches check in first half or search in second half
+        if (borrowRatio.gt(0)) {
+          end = middle
+        } else {
+          start = middle
         }
       }
     }
-    console.log('Multiplier used', multiplier.minus(step).toString())
 
     return prevState
   }
