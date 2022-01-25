@@ -19,7 +19,7 @@ import NumberInput from '@components/Input/NumberInput'
 import Nav from '@components/Nav'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import { Tooltips } from '@constants/enums'
-import { usePositions } from '@hooks/usePositions'
+import { usePositions } from '@context/positions'
 import { MIN_COLLATERAL_AMOUNT, OSQUEETH_DECIMALS } from '../../src/constants'
 import { VAULT_QUERY } from '../../src/queries/squeeth/vaultsQuery'
 import { Vault_vault } from '../../src/queries/squeeth/__generated__/Vault'
@@ -234,13 +234,12 @@ const Component: React.FC = () => {
   const { balance, address, connected, networkId } = useWallet()
   const { vid } = router.query
   const { liquidations } = useVaultLiquidations(Number(vid))
-  const { positionType, squeethAmount, mintedDebt, shortDebt, lpedSqueeth } = usePositions()
+  const { positionType, squeethAmount, mintedDebt, shortDebt, lpedSqueeth, existingCollatPercent, liquidationPrice } =
+    usePositions()
 
   const { oSqueethBal } = useWorldContext()
 
   const [vault, setVault] = useState<Vault | null>(null)
-  const [existingCollatPercent, setExistingCollatPercent] = useState(0)
-  const [existingLiqPrice, setExistingLiqPrice] = useState(new BigNumber(0))
   const [collateral, setCollateral] = useState('0')
   const collateralBN = new BigNumber(collateral)
   const [collatPercent, setCollatPercent] = useState(0)
@@ -275,9 +274,9 @@ const Component: React.FC = () => {
 
     getCollatRatioAndLiqPrice(new BigNumber(_vault.collateralAmount), new BigNumber(_vault.shortAmount)).then(
       ({ collateralPercent, liquidationPrice }) => {
-        setExistingCollatPercent(collateralPercent)
+        // setExistingCollatPercent(collateralPercent)
         setCollatPercent(collateralPercent)
-        setExistingLiqPrice(new BigNumber(liquidationPrice))
+        // setExistingLiqPrice(new BigNumber(liquidationPrice))
         setPageLoading(false)
       },
     )
@@ -596,7 +595,7 @@ const Component: React.FC = () => {
             </div>
             <div className={classes.overviewItem}>
               <Typography className={classes.overviewValue}>
-                $ {!existingLiqPrice.isFinite() ? '--' : existingLiqPrice.toFixed(2)}
+                $ {!liquidationPrice.isFinite() ? '--' : liquidationPrice.toFixed(2)}
               </Typography>
               <Typography className={classes.overviewTitle}>Liquidation Price</Typography>
             </div>
