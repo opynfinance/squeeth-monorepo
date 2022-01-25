@@ -599,7 +599,7 @@ const CrabPosition: React.FC<CrabPositionType> = ({
             <Typography variant="caption" component="span" color="textSecondary">
               Unrealized P&L
             </Typography>
-            <Tooltip title={Tooltips.MinCrabPnL}>
+            <Tooltip title={Tooltips.CrabPnL}>
               <InfoIcon fontSize="small" className={classes.infoIcon} />
             </Tooltip>
             <Typography variant="body1" className={minPnlUsd.gte(0) ? classes.green : classes.red}>

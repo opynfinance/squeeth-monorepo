@@ -262,7 +262,6 @@ export const useController = () => {
 
     const ethUsdcPrice = await getTwapSafe(ethUsdcPool, weth, usdc, TWAP_PERIOD)
     const _shortAmt = fromTokenAmount(shortAmount, OSQUEETH_DECIMALS)
-    console.log('ETH usdc price', ethUsdcPrice.toString())
     const ethDebt = new BigNumber(_shortAmt).div(INDEX_SCALE).multipliedBy(normFactor).multipliedBy(ethUsdcPrice)
     return toTokenAmount(ethDebt, 18)
   }
@@ -289,7 +288,6 @@ export const useController = () => {
 
     const debt = await getDebtAmount(shortAmount)
     if (debt && debt.isPositive()) {
-      console.log('debt: ', collateralAmount.toString(), debt.toString())
       const collateralPercent = Number(collateralAmount.div(debt).times(100).toFixed(1))
       const rSqueeth = normFactor.multipliedBy(new BigNumber(shortAmount)).dividedBy(10000)
       const liquidationPrice = collateralAmount.div(rSqueeth.multipliedBy(1.5))

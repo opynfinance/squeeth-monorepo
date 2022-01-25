@@ -43,7 +43,7 @@ const useStyles = makeStyles((theme) =>
       margin: theme.spacing(0, 'auto'),
       width: '350px',
       position: 'sticky',
-      height: '420px',
+      height: '440px',
       top: '100px',
     },
     overview: {

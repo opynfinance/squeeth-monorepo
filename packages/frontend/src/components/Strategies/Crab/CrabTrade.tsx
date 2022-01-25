@@ -73,8 +73,8 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
     slippage,
     setSlippage,
     ethIndexPrice,
-    calculateEthWillingToPayPriceImpact,
-    calculateETHtoBorrowPriceImpact,
+    calculateEthWillingToPay,
+    calculateETHtoBorrowFromUniswap,
   } = useCrab()
   const { minCurrentUsd, minPnL, loading } = useCrabPosition(address || '')
   const { isRestricted } = useRestrictUser()
@@ -97,13 +97,16 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
   }
 
   useEffect(() => {
-    if (!ready) return
-    if (depositOption === 0) {
-      calculateETHtoBorrowPriceImpact(ethAmount, slippage).then(setDepositPriceImpact)
-    } else {
-      calculateEthWillingToPayPriceImpact(withdrawAmount, slippage).then(setWithdrawPriceImpact)
-    }
-  }, [ready, ethAmount, withdrawAmount, slippage])
+    if (!ready || depositOption !== 0) return
+
+    calculateETHtoBorrowFromUniswap(ethAmount, slippage).then((q) => setDepositPriceImpact(q.priceImpact))
+  }, [ready, ethAmount.toString(), slippage])
+
+  useEffect(() => {
+    if (!ready || depositOption === 0) return
+
+    calculateEthWillingToPay(withdrawAmount, slippage).then((q) => setWithdrawPriceImpact(q.priceImpact))
+  }, [ready, withdrawAmount.toString(), slippage])
 
   const deposit = async () => {
     setTxLoading(true)

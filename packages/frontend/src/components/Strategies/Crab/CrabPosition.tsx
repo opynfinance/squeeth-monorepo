@@ -52,7 +52,7 @@ const CrabPosition: React.FC<CrabPositionType> = ({ value, pnl, loading }) => {
               ({pnl.toFixed(2)} %)
             </Typography>
           ) : null}
-          <Tooltip title={Tooltips.MinCrabPnL}>
+          <Tooltip title={Tooltips.CrabPnL}>
             <InfoIcon fontSize="small" className={classes.infoIcon} />
           </Tooltip>
         </div>
