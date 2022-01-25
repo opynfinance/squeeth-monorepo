@@ -244,7 +244,7 @@ const CrabProvider: React.FC = ({ children }) => {
       }
     }
 
-    console.log('Eth to borrow: ', prevState.ethBorrow.toString())
+    console.log('Eth to borrow: ', prevState.ethBorrow.toString(), prevState.minimumAmountOut.toString())
     return prevState
   }
 
