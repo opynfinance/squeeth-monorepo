@@ -96,7 +96,7 @@ const Strategies: React.FC = () => {
   const classes = useStyles()
   const { balance, address, selectWallet } = useWallet()
   const { maxCap, vault, collatRatio, timeAtLastHedge, profitableMovePercent } = useCrab()
-  const { index, currentImpliedFunding, fundingPerHalfHour } = useController()
+  const { index, currentImpliedFunding, dailyHistoricalFunding } = useController()
 
   useMemo(() => {
     if (selectedIdx === 0) return Vaults.ETHBull
@@ -171,9 +171,11 @@ const Strategies: React.FC = () => {
                     tooltip={`${Tooltips.StrategyEarnFunding}. ${Tooltips.CurrentImplFunding}`}
                   />
                   <StrategyInfoItem
-                    value={(fundingPerHalfHour * 100).toFixed(2)}
+                    value={(dailyHistoricalFunding.funding * 100).toFixed(2)}
                     label="Historical Daily Funding (%)"
-                    tooltip={`${Tooltips.StrategyEarnFunding}. ${Tooltips.Last30MinAvgFunding}`}
+                    tooltip={`${
+                      Tooltips.StrategyEarnFunding
+                    }. ${`Historical daily funding based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
                   />
                 </div>
                 <div className={classes.overview}>

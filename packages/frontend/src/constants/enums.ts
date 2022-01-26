@@ -49,7 +49,7 @@ export enum Tooltips {
   Operator = 'The wrapper contract mints squeeth, deposits collateral and sells squeeth in single TX. Similarly it also buys back + burns squeeth and withdraws collateral in single TX',
   SellCloseAmount = 'Amount of oSQTH to buy',
   CurrentCollRatio = 'Collateral ratio for current short position',
-  SellOpenAmount = 'Minimum collateral amount is 7.5 ETH to ensure system solvency with sufficient liquidation incentive',
+  SellOpenAmount = 'Minimum collateral amount is 6.9 ETH to ensure system solvency with sufficient liquidation incentive',
   LiquidationPrice = 'Price of ETH when liquidation occurs.',
   InitialPremium = 'Initial payment you get for selling squeeth on Uniswap',
   BacktestDisclaimer = 'This is historical backtest data and does not show the actual performance of squeeth. See the FAQ to learn more.',
@@ -63,12 +63,12 @@ export enum Tooltips {
   ShortDebt = 'This is squeeth that you acquired and sold',
   TotalDebt = 'Debt of the vault',
   VaultLiquidations = 'The strategy is subject to liquidations if it goes below 150% collateral, but rebalancing based on large ETH price changes helps prevent a liquidation from occurring.',
-  CrabPnL = 'Expected total profit/ loss if you were to fully withdraw from the Crab Strategy. Includes price impact from trading on uniswap. Resets if you close your position.',
+  MinCrabPnL = 'This is your minimum PnL, as it takes into account slippage on Uniswap since the strategy uses flashswaps to deposit and withdraw',
   StrategyLiquidations = 'The strategy is subject to liquidations if it goes below 150% collateral, but rebalancing based on large ETH price changes helps prevent a liquidation from occurring.',
   StrategyShort = 'The amount of oSQTH the whole strategy is short',
   StrategyCollRatio = 'The collateralization ratio for the whole strategy',
   StrategyEarnFunding = 'You earn funding by depositing into the strategy',
-  StrategyProfitThreshold = 'Based on current funding, crab strategy would be unprofitable if ETH moves more than approximately the profit threshold in either direction each day.',
+  StrategyProfitThreshold = 'Based on current funding, crab strategy would be unprofitable if ETH moves more than the profit threshold in either direction each day.',
 }
 
 export enum Links {
