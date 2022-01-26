@@ -85,8 +85,8 @@ const PositionsProvider: React.FC = ({ children }) => {
 
   const { longRealizedPNL } = useMemo(() => {
     if (!longRealizedSqueeth.gt(0)) return { longRealizedPNL: BIG_ZERO }
-    const costForOneSqth = totalUSDSpent.div(longTotalSqueeth)
-    const realizedForOneSqth = longRealizedUSD.div(longRealizedSqueeth)
+    const costForOneSqth = !totalUSDSpent.isEqualTo(0) ? totalUSDSpent.div(longTotalSqueeth) : BIG_ZERO
+    const realizedForOneSqth = !longRealizedUSD.isEqualTo(0) ? longRealizedUSD.div(longRealizedSqueeth) : BIG_ZERO
     const pnlForOneSqth = realizedForOneSqth.minus(costForOneSqth)
 
     return {
@@ -102,8 +102,8 @@ const PositionsProvider: React.FC = ({ children }) => {
   const { shortRealizedPNL } = useMemo(() => {
     if (!shortRealizedSqueeth.gt(0)) return { shortRealizedPNL: BIG_ZERO }
 
-    const costForOneSqth = totalUSDReceived.div(shortTotalSqueeth)
-    const realizedForOneSqth = shortRealizedUSD.div(shortRealizedSqueeth)
+    const costForOneSqth = !totalUSDReceived.isEqualTo(0) ? totalUSDReceived.div(shortTotalSqueeth) : BIG_ZERO
+    const realizedForOneSqth = !shortRealizedUSD.isEqualTo(0) ? shortRealizedUSD.div(shortRealizedSqueeth) : BIG_ZERO
     const pnlForOneSqth = realizedForOneSqth.minus(costForOneSqth)
 
     return { shortRealizedPNL: pnlForOneSqth.multipliedBy(shortRealizedSqueeth) }
