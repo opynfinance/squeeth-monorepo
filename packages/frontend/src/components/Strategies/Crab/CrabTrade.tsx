@@ -224,24 +224,42 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
               tooltip="The strategy uses a uniswap flashswap to make a deposit. You can adjust slippage for this swap by clicking the gear icon"
               unit="%"
             />
-            <TradeInfoItem
-              label="Price Impact"
-              value={depositOption === 0 ? depositPriceImpact : withdrawPriceImpact}
-              unit="%"
-            />
+            {depositOption === 0 ? (
+              <TradeInfoItem
+                label="Price Impact"
+                value={depositPriceImpact}
+                unit="%"
+                color={Number(depositPriceImpact) > 3 ? 'red' : Number(depositPriceImpact) < 1 ? 'green' : undefined}
+              />
+            ) : (
+              <TradeInfoItem
+                label="Price Impact"
+                value={withdrawPriceImpact}
+                unit="%"
+                color={Number(withdrawPriceImpact) > 3 ? 'red' : Number(depositPriceImpact) < 1 ? 'green' : undefined}
+              />
+            )}
             {depositOption === 0 ? (
               <PrimaryButton
-                variant="contained"
-                style={{ marginTop: '8px' }}
+                variant={Number(depositPriceImpact) > 3 ? 'outlined' : 'contained'}
                 onClick={() => deposit()}
                 disabled={txLoading || !!maxCapError || !!depositError}
+                style={
+                  Number(depositPriceImpact) > 3
+                    ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
+                    : { marginTop: '8px' }
+                }
               >
                 {!txLoading ? 'Deposit' : <CircularProgress color="primary" size="1.5rem" />}
               </PrimaryButton>
             ) : (
               <PrimaryButton
-                variant="contained"
-                style={{ marginTop: '8px' }}
+                variant={Number(withdrawPriceImpact) > 3 ? 'outlined' : 'contained'}
+                style={
+                  Number(withdrawPriceImpact) > 3
+                    ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
+                    : { marginTop: '8px' }
+                }
                 onClick={() => withdraw()}
                 disabled={txLoading || !!withdrawError}
               >
