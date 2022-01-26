@@ -28,10 +28,23 @@ type CrabStrategyType = {
   flashDeposit: (amount: BigNumber, slippage: number) => Promise<any>
   flashWithdraw: (amount: BigNumber, slippage: number) => Promise<any>
   setStrategyCap: (amount: BigNumber) => Promise<any>
-  calculateEthWillingToPay: (amount: BigNumber, slippage: number) => Promise<BigNumber>
-  calculateETHtoBorrow: (amount: BigNumber, slippage: number) => Promise<BigNumber>
-  calculateEthWillingToPayPriceImpact: (amount: BigNumber, slippage: number) => Promise<string>
-  calculateETHtoBorrowPriceImpact: (amount: BigNumber, slippage: number) => Promise<string>
+  calculateEthWillingToPay: (
+    amount: BigNumber,
+    slippage: number,
+  ) => Promise<{
+    amountIn: BigNumber
+    maximumAmountIn: BigNumber
+    priceImpact: string
+  }>
+  calculateETHtoBorrowFromUniswap: (
+    amount: BigNumber,
+    slippage: number,
+  ) => Promise<{
+    amountOut: BigNumber
+    minimumAmountOut: BigNumber
+    priceImpact: string
+    ethBorrow: BigNumber
+  }>
   flashWithdrawEth: (amount: BigNumber, slippage: number) => Promise<any>
   setSlippage: (slippage: number) => void
 }
@@ -53,10 +66,17 @@ const initialState: CrabStrategyType = {
   flashDeposit: async () => null,
   flashWithdraw: async () => null,
   setStrategyCap: async () => null,
-  calculateEthWillingToPay: async () => BIG_ZERO,
-  calculateETHtoBorrow: async () => BIG_ZERO,
-  calculateEthWillingToPayPriceImpact: async () => '',
-  calculateETHtoBorrowPriceImpact: async () => '',
+  calculateEthWillingToPay: async () => ({
+    amountIn: new BigNumber(0),
+    maximumAmountIn: new BigNumber(0),
+    priceImpact: '0',
+  }),
+  calculateETHtoBorrowFromUniswap: async () => ({
+    amountOut: new BigNumber(0),
+    minimumAmountOut: new BigNumber(0),
+    priceImpact: '0',
+    ethBorrow: new BigNumber(0),
+  }),
   flashWithdrawEth: async () => null,
   setSlippage: () => null,
 }
@@ -133,7 +153,7 @@ const CrabProvider: React.FC = ({ children }) => {
 
   const calculateCurrentValue = async () => {
     const collat = await getCollateralFromCrabAmount(userCrabBalance)
-    const ethToPay = await calculateEthWillingToPay(userCrabBalance, slippage)
+    const { amountIn: ethToPay } = await calculateEthWillingToPay(userCrabBalance, slippage)
     if (collat) {
       setCurrentEthValue(collat.minus(ethToPay))
     }
@@ -188,46 +208,50 @@ const CrabProvider: React.FC = ({ children }) => {
     return Number(_vaultId.toString())
   }
 
-  const calculateETHtoBorrow = async (amount: BigNumber, slippage: number) => {
-    // ethDeposit + ethBorrow = wSqueethDebt * wSqueethPrice * 2
-    if (!vault) return new BigNumber(0)
-    const ethDeposit = amount
+  const calculateETHtoBorrowFromUniswap = async (ethDeposit: BigNumber, slippage: number) => {
+    const emptyState = {
+      amountOut: new BigNumber(0),
+      minimumAmountOut: new BigNumber(0),
+      priceImpact: '0',
+      ethBorrow: new BigNumber(0),
+    }
+    if (!vault || ethDeposit.eq(0)) return emptyState
 
-    // Float is not handled well in JS so using BigNumber
-    for (let multiplier = new BigNumber(1); multiplier.isGreaterThan(0); multiplier = multiplier.minus(0.01)) {
-      const ethBorrow = ethDeposit.times(multiplier)
+    let start = new BigNumber(0.25)
+    let end = new BigNumber(3)
+    const deviation = new BigNumber(0.0001) // .01 %
+
+    let prevState = emptyState
+    while (start.lte(end)) {
+      const middle = start.plus(end).div(2)
+      const ethBorrow = ethDeposit.times(middle)
       const initialWSqueethDebt = ethBorrow.plus(ethDeposit).times(vault.shortAmount).div(vault.collateralAmount)
-      const returnedETH = await getSellQuote(initialWSqueethDebt, new BigNumber(slippage))
-      if (ethBorrow.lt(returnedETH.minimumAmountOut)) {
-        return ethBorrow
+      const quote = await getSellQuote(initialWSqueethDebt, new BigNumber(slippage))
+      const borrowRatio = quote.minimumAmountOut.div(ethBorrow).minus(1)
+      if (prevState.minimumAmountOut.eq(quote.minimumAmountOut)) {
+        break
+      }
+      prevState = { ...quote, ethBorrow }
+      if (borrowRatio.gt(0) && borrowRatio.lte(deviation)) {
+        break
+      } else {
+        // If ratio matches check in first half or search in second half
+        if (borrowRatio.gt(0)) {
+          start = middle
+        } else {
+          end = middle
+        }
       }
     }
 
-    return new BigNumber(0)
-  }
-
-  const calculateETHtoBorrowPriceImpact = async (amount: BigNumber, slippage: number) => {
-    // ethDeposit + ethBorrow = wSqueethDebt * wSqueethPrice * 2
-    if (!vault) return ''
-    const ethDeposit = amount
-
-    // Float is not handled well in JS so using BigNumber
-    for (let multiplier = new BigNumber(1); multiplier.isGreaterThan(0); multiplier = multiplier.minus(0.01)) {
-      const ethBorrow = ethDeposit.times(multiplier)
-      const initialWSqueethDebt = ethBorrow.plus(ethDeposit).times(vault.shortAmount).div(vault.collateralAmount)
-      const returnedETH = await getSellQuote(initialWSqueethDebt, new BigNumber(slippage))
-      if (ethBorrow.lt(returnedETH.minimumAmountOut)) {
-        return returnedETH.priceImpact
-      }
-    }
-
-    return ''
+    console.log('Eth to borrow: ', prevState.ethBorrow.toString(), prevState.minimumAmountOut.toString())
+    return prevState
   }
 
   const flashDeposit = async (amount: BigNumber, slippage: number) => {
     if (!contract || !vault) return
 
-    let _ethBorrow = await calculateETHtoBorrow(amount, slippage)
+    let { ethBorrow: _ethBorrow } = await calculateETHtoBorrowFromUniswap(amount, slippage)
     const _allowedEthToBorrow = maxCap.minus(amount.plus(vault.collateralAmount))
     if (_ethBorrow.gt(_allowedEthToBorrow)) {
       _ethBorrow = _allowedEthToBorrow
@@ -247,29 +271,25 @@ const CrabProvider: React.FC = ({ children }) => {
   }
 
   const calculateEthWillingToPay = async (amount: BigNumber, slippage: number) => {
-    if (!vault) return new BigNumber(0)
+    const emptyState = {
+      amountIn: new BigNumber(0),
+      maximumAmountIn: new BigNumber(0),
+      priceImpact: '0',
+    }
+    if (!vault) return emptyState
 
     const squeethDebt = await getWsqueethFromCrabAmount(amount)
-    if (!squeethDebt) return new BigNumber(0)
+    if (!squeethDebt) return emptyState
 
-    const ethWillingtToPayQuote = await getBuyQuote(squeethDebt, new BigNumber(slippage))
-    return ethWillingtToPayQuote.maximumAmountIn
-  }
-
-  const calculateEthWillingToPayPriceImpact = async (amount: BigNumber, slippage: number) => {
-    if (!vault) return ''
-
-    const squeethDebt = await getWsqueethFromCrabAmount(amount)
-    if (!squeethDebt) return ''
-
-    const ethWillingtToPayQuote = await getBuyQuote(squeethDebt, new BigNumber(slippage))
-    return ethWillingtToPayQuote.priceImpact
+    const ethWillingToPayQuote = await getBuyQuote(squeethDebt, new BigNumber(slippage))
+    return ethWillingToPayQuote
   }
 
   const flashWithdraw = async (amount: BigNumber, slippage: number) => {
     if (!contract) return
 
-    const ethWillingToPay = fromTokenAmount(await calculateEthWillingToPay(amount, slippage), 18)
+    const { maximumAmountIn: _ethWillingToPay } = await calculateEthWillingToPay(amount, slippage)
+    const ethWillingToPay = fromTokenAmount(_ethWillingToPay, 18)
     const crabAmount = fromTokenAmount(amount, 18)
     return handleTransaction(
       contract.methods.flashWithdraw(crabAmount.toFixed(0), ethWillingToPay.toFixed(0)).send({
@@ -315,9 +335,7 @@ const CrabProvider: React.FC = ({ children }) => {
     setStrategyCap,
     getCollateralFromCrabAmount,
     calculateEthWillingToPay,
-    calculateETHtoBorrow,
-    calculateEthWillingToPayPriceImpact,
-    calculateETHtoBorrowPriceImpact,
+    calculateETHtoBorrowFromUniswap,
     flashWithdrawEth,
     setSlippage,
     profitableMovePercent,
