@@ -2,6 +2,7 @@ import BigNumber from 'bignumber.js'
 
 import { VaultHistory_vaultHistories } from '../queries/squeeth/__generated__/VaultHistory'
 import { toTokenAmount } from '@utils/calculations'
+import { Action } from '@constants/enums'
 
 type ShortPnLParams = {
   wethAmount: BigNumber
@@ -63,7 +64,7 @@ export function calcETHCollateralPnl(
   return data?.length
     ? data?.reduce((acc: BigNumber, curr: VaultHistory_vaultHistories) => {
         const time = new Date(Number(curr.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
-        if (curr.action === 'DEPOSIT_COLLAT') {
+        if (curr.action === Action.DEPOSIT_COLLAT) {
           acc = acc.plus(
             new BigNumber(toTokenAmount(curr.ethCollateralAmount, 18)).times(
               new BigNumber(ethPriceMap[time]).minus(ethPrice),
