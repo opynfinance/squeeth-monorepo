@@ -151,17 +151,7 @@ type PositionCardType = {
 }
 
 const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
-  const {
-    buyQuote,
-    sellQuote,
-    longGain,
-    shortGain,
-    longRealizedPNL,
-    shortRealizedPNL,
-    shortUnrealizedPNL,
-    loading,
-    refetch,
-  } = usePnL()
+  const { buyQuote, sellQuote, longGain, shortGain, shortUnrealizedPNL, loading } = usePnL()
 
   const {
     positionType: pType,
@@ -174,6 +164,9 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     loading: isPositionLoading,
     isLP,
     isLong,
+    shortRealizedPNL,
+    longRealizedPNL,
+    swapsQueryRefetch,
   } = usePositions()
   const { liquidations } = useVaultLiquidations(Number(vaultId))
   const {
@@ -200,7 +193,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
       setTradeSuccess(false)
       setTimeout(() => {
         setFetchingNew(false)
-        refetch()
+        swapsQueryRefetch()
       }, 5000)
     }
   }, [tradeSuccess])

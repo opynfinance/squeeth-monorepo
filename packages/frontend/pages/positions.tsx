@@ -13,7 +13,7 @@ import { PositionType } from '../src/types/'
 import { Tooltips } from '../src/constants'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useWorldContext } from '@context/world'
-import { useLPPositions, usePnL } from '@hooks/usePositions'
+import { usePnL } from '@hooks/usePositions'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { toTokenAmount } from '@utils/calculations'
 import { useController } from '../src/hooks/contracts/useController'
@@ -142,6 +142,7 @@ const ConnectWallet: React.FC = () => {
 
 export function Positions() {
   const classes = useStyles()
+  const { longGain, shortGain, buyQuote, sellQuote, shortUnrealizedPNL, loading: isPnLLoading } = usePnL()
 
   const { pool } = useSqueethPool()
 
@@ -163,6 +164,9 @@ export function Positions() {
     isLong,
     existingCollatPercent,
     liquidationPrice,
+    shortRealizedPNL,
+    longRealizedPNL,
+    activePositions,
   } = usePositions()
 
   const { index } = useController()
@@ -292,7 +296,7 @@ export function Positions() {
                   <Typography variant="caption" component="span" color="textSecondary">
                     Position
                   </Typography>
-                  {isPositionFinishedCalc ? (
+                  {isPositionLoading ? (
                     <Typography variant="body1">Loading</Typography>
                   ) : (
                     <>
@@ -312,7 +316,7 @@ export function Positions() {
                   >
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
-                  {isPositionFinishedCalc || shortGain.isLessThanOrEqualTo(-100) || !shortGain.isFinite() ? (
+                  {isPositionLoading || shortGain.isLessThanOrEqualTo(-100) || !shortGain.isFinite() ? (
                     <Typography variant="body1">Loading</Typography>
                   ) : (
                     <>
@@ -335,9 +339,7 @@ export function Positions() {
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
                   <Typography variant="body1">
-                    {isPositionFinishedCalc && liquidationPrice.isEqualTo(0)
-                      ? 'Loading'
-                      : '$' + liquidationPrice.toFixed(2)}
+                    {isPositionLoading && liquidationPrice.isEqualTo(0) ? 'Loading' : '$' + liquidationPrice.toFixed(2)}
                   </Typography>
                 </div>
                 <div style={{ width: '50%' }}>

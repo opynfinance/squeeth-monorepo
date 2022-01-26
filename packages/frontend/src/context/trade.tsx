@@ -3,8 +3,8 @@ import React, { useContext, useEffect, useMemo, useState } from 'react'
 
 import { DEFAULT_SLIPPAGE, InputType } from '../constants/index'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
-import { usePnL } from '@hooks/usePositions'
 import { PositionType, TradeType } from '../types'
+import { usePositions } from './positions'
 
 type Quote = {
   amountOut: BigNumber
@@ -120,7 +120,7 @@ const TradeProvider: React.FC = ({ children }) => {
     getBuyQuote,
     getSellQuoteForETH,
   } = useSqueethPool()
-  const { positionType } = usePnL()
+  const { positionType } = usePositions()
 
   const amountOutBN = quote.amountOut
   const isPositionOpen = useMemo(() => openPosition === 0, [openPosition])
