@@ -126,7 +126,6 @@ export const useController = () => {
 
     const _amount = fromTokenAmount(amount, OSQUEETH_DECIMALS)
     const ethAmt = fromTokenAmount(collatAmount, 18)
-    console.log(vaultId, _amount.toFixed(0), ethAmt.toFixed(0))
     return handleTransaction(
       contract.methods.burnWPowerPerpAmount(vaultId, _amount.toFixed(0), ethAmt.toFixed(0)).send({
         from: address,

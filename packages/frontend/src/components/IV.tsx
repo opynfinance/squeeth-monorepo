@@ -5,7 +5,7 @@ import React from 'react'
 import { useWorldContext } from '@context/world'
 
 const IV: React.FC = () => {
-  const { volMultiplier, setVolMultiplier, days, setDays, researchMode, setResearchMode } = useWorldContext()
+  const { volMultiplier, setVolMultiplier } = useWorldContext()
 
   return (
     <div>

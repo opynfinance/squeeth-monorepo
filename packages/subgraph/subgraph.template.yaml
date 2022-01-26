@@ -76,3 +76,54 @@ dataSources:
         - event: WithdrawUniPositionToken(address,uint256,uint256)
           handler: handleWithdrawUniPositionToken
       file: ./src/controller.ts
+  - kind: ethereum/contract
+    name: CrabStrategy
+    network: {{network}}
+    source:
+      address: "{{CrabStrategyDeployment}}"
+      abi: CrabStrategy
+      startBlock: {{CrabStrategyDeployment-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Deposit
+        - Withdraw
+        - WithdrawShutdown
+        - FlashDeposit
+        - FlashWithdraw
+        - Transfer
+        - HedgeOnUniswap
+        - Hedge
+        - FlashDepositCallback
+        - FlashWithdrawCallback
+        - ExecuteSellAuction
+        - ExecuteBuyAuction
+      abis:
+        - name: CrabStrategy
+          file: ./abis/CrabStrategyDeployment.json
+      eventHandlers:
+        - event: Deposit(indexed address,uint256,uint256)
+          handler: handleDeposit
+        - event: Withdraw(indexed address,uint256,uint256,uint256)
+          handler: handleWithdraw
+        - event: FlashDeposit(indexed address,uint256,uint256)
+          handler: handleFlashDeposit
+        - event: FlashWithdraw(indexed address,uint256,uint256)
+          handler: handleFlashWithdraw
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+        - event: HedgeOnUniswap(indexed address,bool,uint256,uint256,uint256)
+          handler: handleHedgeOnUniswap
+        - event: Hedge(indexed address,bool,uint256,uint256,uint256,uint256)
+          handler: handleHedge
+        - event: FlashDepositCallback(indexed address,uint256,uint256)
+          handler: handleFlashDepositCallback
+        - event: FlashWithdrawCallback(indexed address,uint256,uint256)
+          handler: handleFlashWithdrawCallback 
+        - event: ExecuteSellAuction(indexed address,uint256,uint256,bool)
+          handler: handleExecuteSellAuction
+        - event: ExecuteBuyAuction(indexed address,uint256,uint256,bool)
+          handler: handleExecuteBuyAuction 
+      file: ./src/crabstrategy.ts

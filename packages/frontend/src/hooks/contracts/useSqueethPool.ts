@@ -1,29 +1,23 @@
-import { CurrencyAmount, Percent, Token } from '@uniswap/sdk-core'
-import { NonfungiblePositionManager, Pool, Position, Route, Tick, Trade } from '@uniswap/v3-sdk'
+import { CurrencyAmount, Token } from '@uniswap/sdk-core'
+import { Pool, Route, Trade } from '@uniswap/v3-sdk'
 import BigNumber from 'bignumber.js'
-import { ethers, providers } from 'ethers'
-import { useEffect, useState } from 'react'
+import { ethers } from 'ethers'
+import { useCallback, useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 
-import quoterABI from '../../abis/quoter.json'
 import routerABI from '../../abis/swapRouter.json'
 import uniABI from '../../abis/uniswapPool.json'
-import erc20Abi from '../../abis/erc20.json'
-
-import { INDEX_SCALE, UNI_POOL_FEES, DEFAULT_SLIPPAGE, OSQUEETH_DECIMALS } from '../../constants'
+import { UNI_POOL_FEES, DEFAULT_SLIPPAGE, OSQUEETH_DECIMALS } from '../../constants'
 import { useWallet } from '@context/wallet'
 import { fromTokenAmount, parseSlippageInput, toTokenAmount } from '@utils/calculations'
 import { useAddresses } from '../useAddress'
-import { Networks } from '../../types'
 import useUniswapTicks from '../useUniswapTicks'
 import { useWorldContext } from '@context/world'
-// import univ3prices from '@thanpolas/univ3prices'
-const univ3prices = require('@thanpolas/univ3prices')
 
-const NETWORK_QUOTE_GAS_OVERRIDE: { [chainId: number]: number } = {
-  [Networks.ARBITRUM_RINKEBY]: 6_000_000,
-}
-const DEFAULT_GAS_QUOTE = 2_000_000
+// const NETWORK_QUOTE_GAS_OVERRIDE: { [chainId: number]: number } = {
+//   [Networks.ARBITRUM_RINKEBY]: 6_000_000,
+// }
+// const DEFAULT_GAS_QUOTE = 2_000_000
 
 /**
  * Hook to interact with WETH contract
@@ -31,7 +25,6 @@ const DEFAULT_GAS_QUOTE = 2_000_000
 export const useSqueethPool = () => {
   const [squeethContract, setSqueethContract] = useState<Contract>()
   const [swapRouterContract, setSwapRouterContract] = useState<Contract>()
-  const [quoterContract, setQuoterContract] = useState<Contract>()
   const [pool, setPool] = useState<Pool>()
   const [wethToken, setWethToken] = useState<Token>()
   const [squeethToken, setSqueethToken] = useState<Token>()
@@ -39,38 +32,46 @@ export const useSqueethPool = () => {
   const [squeethPrice, setSqueethPrice] = useState<BigNumber>(new BigNumber(0))
   const [wethPrice, setWethPrice] = useState<BigNumber>(new BigNumber(0))
   const [ready, setReady] = useState(false)
-  const [tvl, setTVL] = useState(0)
+  // const [tvl, setTVL] = useState(0)
   const { ethPrice } = useWorldContext()
 
   const { address, web3, networkId, handleTransaction } = useWallet()
-  const { squeethPool, swapRouter, quoter, weth, oSqueeth } = useAddresses()
+  const { squeethPool, swapRouter, weth, oSqueeth } = useAddresses()
   const { ticks } = useUniswapTicks()
 
   useEffect(() => {
     if (!web3 || !squeethPool || !swapRouter) return
     setSqueethContract(new web3.eth.Contract(uniABI as any, squeethPool))
     setSwapRouterContract(new web3.eth.Contract(routerABI as any, swapRouter))
-    setQuoterContract(new web3.eth.Contract(quoterABI as any, quoter))
   }, [web3])
 
   useEffect(() => {
     if (!squeethContract || !ticks) return
-    updateData()
-    updatePoolTVL()
+    let isMounted = true
+
+    updateData(isMounted)
+
+    return () => {
+      isMounted = false
+    }
   }, [squeethContract, ticks?.length])
 
   const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
 
   useEffect(() => {
-    if (!squeethToken?.address) return
+    let isMounted = true
+
+    if (!squeethToken?.address || !pool) return
     getBuyQuoteForETH(new BigNumber(1))
       .then((val) => {
-        setSqueethPrice(val.amountOut)
-        setSqueethInitialPrice(
-          new BigNumber(
-            !isWethToken0 ? pool?.token0Price.toSignificant(18) || 0 : pool?.token1Price.toSignificant(18) || 0,
-          ),
-        )
+        if (isMounted) {
+          setSqueethPrice(val.amountOut)
+          setSqueethInitialPrice(
+            new BigNumber(
+              !isWethToken0 ? pool?.token0Price.toSignificant(18) || 0 : pool?.token1Price.toSignificant(18) || 0,
+            ),
+          )
+        }
       })
       .catch(console.log)
 
@@ -83,9 +84,13 @@ export const useSqueethPool = () => {
         18,
       ),
     )
+
+    return () => {
+      isMounted = false
+    }
   }, [squeethToken?.address, pool?.token1Price.toFixed(18)])
 
-  const updateData = async () => {
+  const updateData = async (isMounted = false) => {
     const { token0, token1, fee } = await getImmutables()
     const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
 
@@ -114,36 +119,37 @@ export const useSqueethPool = () => {
       Number(state.tick),
       ticks || [],
     )
-    //const setBeginningPrice =  pool.token0Price
 
-    setPool(pool)
-    setWethToken(isWethToken0 ? TokenA : TokenB)
-    setSqueethToken(isWethToken0 ? TokenB : TokenA)
+    if (isMounted) {
+      setPool(pool)
+      setWethToken(isWethToken0 ? TokenA : TokenB)
+      setSqueethToken(isWethToken0 ? TokenB : TokenA)
+    }
   }
 
-  const updatePoolTVL = async () => {
-    const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
+  // const updatePoolTVL = async () => {
+  //   const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
 
-    const state = await getPoolState()
-    const ratio = univ3prices([18, 18], state.sqrtPriceX96).toAuto()
-    const tokenPrice = isWethToken0 ? ratio * wethPrice.toNumber() : wethPrice.toNumber() / ratio
-    // const wethContract = new ethers.Contract(weth, erc20Abi, new ethers.providers.Web3Provider(web3.currentProvider as any) || ethers.getDefaultProvider('ropsten'))
+  //   const state = await getPoolState()
+  //   const ratio = univ3prices([18, 18], state.sqrtPriceX96).toAuto()
+  //   const tokenPrice = isWethToken0 ? ratio * wethPrice.toNumber() : wethPrice.toNumber() / ratio
+  //   // const wethContract = new ethers.Contract(weth, erc20Abi, new ethers.providers.Web3Provider(web3.currentProvider as any) || ethers.getDefaultProvider('ropsten'))
 
-    // const wethBalance = ethers.utils.formatUnits(
-    //   await (wethContract as any).balanceOf(pool),
-    //   18
-    // )
+  //   // const wethBalance = ethers.utils.formatUnits(
+  //   //   await (wethContract as any).balanceOf(pool),
+  //   //   18
+  //   // )
 
-    // const tokenContract = new ethers.Contract(wSqueeth, erc20Abi, new ethers.providers.Web3Provider(web3.currentProvider as any)|| ethers.getDefaultProvider('ropsten'))
+  //   // const tokenContract = new ethers.Contract(wSqueeth, erc20Abi, new ethers.providers.Web3Provider(web3.currentProvider as any)|| ethers.getDefaultProvider('ropsten'))
 
-    // const tokenBalance = ethers.utils.formatUnits(
-    //   await (tokenContract as any).balanceOf(pool),
-    //   18
-    // )
-    // const tvl = tokenBalance * tokenPrice + wethPrice.toNumber() * wethBalance
-    setTVL(tvl)
-    return tvl
-  }
+  //   // const tokenBalance = ethers.utils.formatUnits(
+  //   //   await (tokenContract as any).balanceOf(pool),
+  //   //   18
+  //   // )
+  //   // const tvl = tokenBalance * tokenPrice + wethPrice.toNumber() * wethBalance
+  //   setTVL(tvl)
+  //   return tvl
+  // }
 
   const getImmutables = async () => {
     return {
@@ -317,7 +323,7 @@ export const useSqueethPool = () => {
       //getting the amount of ETH I need to put in to get an exact amount of squeeth I inputted out
       const trade = await Trade.exactOut(
         route,
-        CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toString()),
+        CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0)),
       )
 
       //the amount of ETH I need to put in
@@ -384,7 +390,7 @@ export const useSqueethPool = () => {
       //getting the amount of ETH I'd receive for inputting the amount of squeeth I want to sell
       const trade = await Trade.exactIn(
         route,
-        CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toString()),
+        CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0)),
       )
 
       //the amount of ETH I'm receiving
@@ -417,7 +423,7 @@ export const useSqueethPool = () => {
       //getting the amount of squeeth I'd need to sell to receive my desired amount of ETH
       const trade = await Trade.exactOut(
         route,
-        CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toString()),
+        CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toFixed(0)),
       )
 
       //the amount of squeeth I need to sell
@@ -448,7 +454,7 @@ export const useSqueethPool = () => {
     sell,
     buyForWETH,
     buyAndRefund,
-    tvl,
+    // tvl,
     getBuyQuote,
     getSellParam,
     getBuyParam,

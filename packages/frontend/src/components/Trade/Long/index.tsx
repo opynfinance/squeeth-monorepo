@@ -15,7 +15,7 @@ import { PrimaryButton } from '@components/Button'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
 import { UniswapIframe } from '@components/Modal/UniswapIframe'
 import { TradeSettings } from '@components/TradeSettings'
-import Confirmed from '../Confirmed'
+import Confirmed, { ConfirmType } from '../Confirmed'
 import TradeInfoItem from '../TradeInfoItem'
 import UniswapData from '../UniswapData'
 import { PositionType } from '../../../types'
@@ -213,7 +213,7 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const OpenLong: React.FC<BuyProps> = ({ balance, open, setTradeCompleted, activeStep = 0 }) => {
+const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep = 0 }) => {
   const [buyLoading, setBuyLoading] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
   const [txHash, setTxHash] = useState('')
@@ -226,13 +226,11 @@ const OpenLong: React.FC<BuyProps> = ({ balance, open, setTradeCompleted, active
     squeethExposure,
     inputQuoteLoading,
     setInputQuoteLoading,
-    inputQuote,
     setInputType,
     quote,
     altTradeAmount: altAmountInputValue,
     setAltTradeAmount,
     confirmedAmount,
-    setConfirmedAmount,
     setTradeSuccess,
     slippageAmount,
   } = useTrade()
@@ -243,26 +241,24 @@ const OpenLong: React.FC<BuyProps> = ({ balance, open, setTradeCompleted, active
   const { squeethAmount, longSqthBal, isShort } = usePositions()
 
   let openError: string | undefined
-  let closeError: string | undefined
+  // let closeError: string | undefined
   let existingShortError: string | undefined
   let priceImpactWarning: string | undefined
 
-  useEffect(() => {
-    if (connected) {
-      if (longSqthBal.lt(amount)) {
-        closeError = 'Insufficient oSQTH balance'
-      }
-      if (amount.gt(balance)) {
-        openError = 'Insufficient ETH balance'
-      }
-      if (isShort) {
-        existingShortError = 'Close your short position to open a long'
-      }
-      if (new BigNumber(quote.priceImpact).gt(3)) {
-        priceImpactWarning = 'High Price Impact'
-      }
+  if (connected) {
+    // if (longSqthBal.lt(amount)) {
+    //   closeError = 'Insufficient oSQTH balance'
+    // }
+    if (amount.gt(balance)) {
+      openError = 'Insufficient ETH balance'
     }
-  }, [longSqthBal.toString(), amount.toString(), balance, isShort, quote.priceImpact])
+    if (isShort) {
+      existingShortError = 'Close your short position to open a long'
+    }
+    if (new BigNumber(quote.priceImpact).gt(3)) {
+      priceImpactWarning = 'High Price Impact'
+    }
+  }
 
   const longOpenPriceImpactErrorState = priceImpactWarning && !buyLoading && !openError && !isShort
 
@@ -453,7 +449,11 @@ const OpenLong: React.FC<BuyProps> = ({ balance, open, setTradeCompleted, active
         </div>
       ) : (
         <div>
-          <Confirmed confirmationMessage={`Bought ${confirmedAmount} Squeeth`} txnHash={txHash} />
+          <Confirmed
+            confirmationMessage={`Bought ${confirmedAmount} Squeeth`}
+            txnHash={txHash}
+            confirmType={ConfirmType.TRADE}
+          />
           <div className={classes.buttonDiv}>
             <PrimaryButton
               variant="contained"
@@ -470,14 +470,7 @@ const OpenLong: React.FC<BuyProps> = ({ balance, open, setTradeCompleted, active
   )
 }
 
-const CloseLong: React.FC<BuyProps> = ({
-  balance,
-  open,
-  closeTitle,
-  setTradeCompleted,
-  isLPage = false,
-  activeStep = 0,
-}) => {
+const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle, setTradeCompleted }) => {
   const [sellLoading, setSellLoading] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
   const [txHash, setTxHash] = useState('')
@@ -491,7 +484,6 @@ const CloseLong: React.FC<BuyProps> = ({
     tradeAmount: amountInputValue,
     setTradeAmount: setAmount,
     quote,
-    inputQuote,
     inputQuoteLoading,
     setInputQuoteLoading,
     setInputType,
@@ -522,7 +514,7 @@ const CloseLong: React.FC<BuyProps> = ({
     }
   }, [longSqthBal.toString(), open])
 
-  let openError: string | undefined
+  // let openError: string | undefined
   let closeError: string | undefined
   let existingShortError: string | undefined
   let priceImpactWarning: string | undefined
@@ -532,9 +524,9 @@ const CloseLong: React.FC<BuyProps> = ({
       if (longSqthBal.lt(amount)) {
         closeError = 'Insufficient oSQTH balance'
       }
-      if (amount.gt(balance)) {
-        openError = 'Insufficient ETH balance'
-      }
+      // if (amount.gt(balance)) {
+      //   openError = 'Insufficient ETH balance'
+      // }
       if (isShort) {
         existingShortError = 'Close your short position to open a long'
       }
@@ -718,7 +710,11 @@ const CloseLong: React.FC<BuyProps> = ({
         </div>
       ) : (
         <div>
-          <Confirmed confirmationMessage={`Sold ${confirmedAmount} Squeeth`} txnHash={txHash} />
+          <Confirmed
+            confirmationMessage={`Sold ${confirmedAmount} Squeeth`}
+            txnHash={txHash}
+            confirmType={ConfirmType.TRADE}
+          />
           <div className={classes.buttonDiv}>
             <PrimaryButton
               variant="contained"

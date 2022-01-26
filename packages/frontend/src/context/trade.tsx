@@ -201,7 +201,7 @@ const TradeProvider: React.FC = ({ children }) => {
       else setAltTradeAmount(inputQuote)
     }
     setInputQuoteLoading(false)
-  }, [inputQuote])
+  }, [inputQuote, inputType, isPositionOpen])
 
   useEffect(() => {
     if (tradeType === TradeType.LONG) {
