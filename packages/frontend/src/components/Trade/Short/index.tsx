@@ -597,8 +597,11 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     const calculatedShort = mintedDebt.plus(lpedSqueeth).plus(shortDebt)
     const contractShort = shortVaults.length && shortVaults[firstValidVault]?.shortAmount
 
+    console.log('calc short ' + calculatedShort)
+    console.log('contract short ' + contractShort)
+
     if (!calculatedShort.isEqualTo(contractShort)) {
-      setFinalShortAmount(shortDebt)
+      setFinalShortAmount(contractShort)
     } else {
       setFinalShortAmount(shortDebt)
     }
