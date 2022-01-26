@@ -141,8 +141,6 @@ const ConnectWallet: React.FC = () => {
 }
 
 export function Positions() {
-  const [existingCollatPercent, setExistingCollatPercent] = useState(0)
-  const [existingLiqPrice, setExistingLiqPrice] = useState(new BigNumber(0))
   const classes = useStyles()
   const {
     longGain,
@@ -175,7 +173,7 @@ export function Positions() {
     isLong,
   } = usePositions()
 
-  const { index, getCollatRatioAndLiqPrice } = useController()
+  const { index } = useController()
   const {
     depositedEth,
     depositedUsd,
@@ -191,20 +189,11 @@ export function Positions() {
   }, [firstValidVault, shortVaults?.length])
 
   const { liquidations } = useVaultLiquidations(Number(vaultId))
+  const { existingCollatPercent, existingLiqPrice } = useVaultData(Number(vaultId))
 
   const fullyLiquidated = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
   }, [firstValidVault, shortVaults?.length, liquidations?.length])
-
-  useEffect(() => {
-    getCollatRatioAndLiqPrice(
-      new BigNumber(fromTokenAmount(shortVaults[firstValidVault]?.collateralAmount, 18)),
-      new BigNumber(fromTokenAmount(shortVaults[firstValidVault]?.shortAmount, OSQUEETH_DECIMALS)),
-    ).then(({ collateralPercent, liquidationPrice }) => {
-      setExistingCollatPercent(collateralPercent)
-      setExistingLiqPrice(liquidationPrice)
-    })
-  }, [firstValidVault, shortVaults?.length])
 
   return (
     <div>
