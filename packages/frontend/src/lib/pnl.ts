@@ -61,7 +61,7 @@ export function calcETHCollateralPnl(
   ethPriceMap: { [key: string]: number },
   ethPrice: BigNumber,
 ) {
-  return data?.length
+  const deposits = data?.length
     ? data?.reduce((acc: BigNumber, curr: VaultHistory_vaultHistories) => {
         const time = new Date(Number(curr.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
         if (curr.action === Action.DEPOSIT_COLLAT) {
@@ -74,4 +74,20 @@ export function calcETHCollateralPnl(
         return acc
       }, new BigNumber(0))
     : new BigNumber(0)
+
+  const withdrawals = data?.length
+    ? data?.reduce((acc: BigNumber, curr: VaultHistory_vaultHistories) => {
+        const time = new Date(Number(curr.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
+        if (curr.action === Action.WITHDRAW_COLLAT) {
+          acc = acc.plus(
+            new BigNumber(toTokenAmount(curr.ethCollateralAmount, 18)).times(
+              new BigNumber(ethPriceMap[time]).minus(ethPrice),
+            ),
+          )
+        }
+        return acc
+      }, new BigNumber(0))
+    : new BigNumber(0)
+
+  return deposits.minus(withdrawals)
 }
