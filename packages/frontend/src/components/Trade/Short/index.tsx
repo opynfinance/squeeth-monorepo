@@ -594,18 +594,17 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
 
   useEffect(() => {
     if (!shortVaults.length) return
-    const calculatedShort = mintedDebt.plus(lpedSqueeth).plus(shortDebt)
+    // const calculatedShort = mintedDebt.plus(lpedSqueeth).plus(shortDebt)
     const contractShort = shortVaults.length && shortVaults[firstValidVault]?.shortAmount
 
-    console.log('calc short ' + calculatedShort)
-    console.log('contract short ' + contractShort)
-
-    if (!calculatedShort.isEqualTo(contractShort)) {
-      setFinalShortAmount(contractShort)
-    } else {
-      setFinalShortAmount(shortDebt)
-    }
-  }, [shortVaults?.length, mintedDebt.toString(), shortDebt.toString(), lpedSqueeth.toString(), firstValidVault])
+    // if (!calculatedShort.isEqualTo(contractShort)) {
+    //   setFinalShortAmount(contractShort)
+    // } else {
+    //   setFinalShortAmount(shortDebt)
+    // }
+    setFinalShortAmount(contractShort)
+  }, [shortVaults?.length, firstValidVault])
+  // }, [shortVaults?.length, mintedDebt.toString(), shortDebt.toString(), lpedSqueeth.toString(), firstValidVault])
 
   useEffect(() => {
     if (!open && shortVaults.length && shortVaults[firstValidVault].shortAmount.lt(amount)) {
