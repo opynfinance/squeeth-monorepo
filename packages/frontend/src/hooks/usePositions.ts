@@ -1,7 +1,7 @@
 import { useQuery } from '@apollo/client'
 import { Position } from '@uniswap/v3-sdk'
 import BigNumber from 'bignumber.js'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import NFTpositionManagerABI from '../abis/NFTpositionmanager.json'
 import { useWallet } from '@context/wallet'
@@ -9,7 +9,7 @@ import { useWorldContext } from '@context/world'
 import { positions, positionsVariables } from '../queries/uniswap/__generated__/positions'
 import { swaps, swapsVariables } from '../queries/uniswap/__generated__/swaps'
 import POSITIONS_QUERY, { POSITIONS_SUBSCRIPTION } from '../queries/uniswap/positionsQuery'
-import SWAPS_QUERY from '../queries/uniswap/swapsQuery'
+import SWAPS_QUERY, { SWAPS_SUBSCRIPTION } from '../queries/uniswap/swapsQuery'
 import VAULT_HISTORY_QUERY from '../queries/squeeth/vaultHistoryQuery'
 import { VaultHistory } from '../queries/squeeth/__generated__/VaultHistory'
 import { NFTManagers, PositionType } from '../types'
@@ -30,11 +30,11 @@ export const usePositions = () => {
   const { address } = useWallet()
   const { getUsdAmt } = useUsdAmount()
   const { getDebtAmount, normFactor: normalizationFactor } = useController()
-  const { ethPrice, ethPriceMap } = useWorldContext()
+  const { ethPrice, ethPriceMap, oSqueethBal } = useWorldContext()
 
   const [positionType, setPositionType] = useState(PositionType.NONE)
 
-  const { data, loading, refetch } = useQuery<swaps, swapsVariables>(SWAPS_QUERY, {
+  const { data, loading, refetch, subscribeToMore } = useQuery<swaps, swapsVariables>(SWAPS_QUERY, {
     variables: {
       poolAddress: squeethPool?.toLowerCase(),
       origin: address || '',
@@ -44,26 +44,40 @@ export const usePositions = () => {
     fetchPolicy: 'cache-and-network',
   })
 
-  useInterval(refetch, 30000)
+  useEffect(() => {
+    subscribeToNewPositions()
+  }, [])
 
-  const { vaults: shortVaults } = useVaultManager(5)
+  const subscribeToNewPositions = useCallback(() => {
+    subscribeToMore({
+      document: SWAPS_SUBSCRIPTION,
+      variables: {
+        poolAddress: squeethPool?.toLowerCase(),
+        origin: address || '',
+        recipients: [shortHelper, address || '', swapRouter],
+        orderDirection: 'asc',
+      },
+      updateQuery(prev, { subscriptionData }) {
+        if (!subscriptionData.data) return prev
+        const newSwaps = subscriptionData.data.swaps
+        return {
+          swaps: newSwaps,
+        }
+      },
+    })
+  }, [squeethPool, address])
+
+  const { vaults: shortVaults } = useVaultManager()
   const [existingCollatPercent, setExistingCollatPercent] = useState(0)
   const [existingCollat, setExistingCollat] = useState(new BigNumber(0))
   const [liquidationPrice, setLiquidationPrice] = useState(new BigNumber(0))
   const [isMintedBal, setIsMintedBal] = useState(false)
   const [firstValidVault, setFirstValidVault] = useState(0)
-  const [positionLoading, setPositionLoading] = useState(true)
   const { depositedSqueeth, withdrawnSqueeth, squeethLiquidity, wethLiquidity, loading: lpLoading } = useLPPositions()
 
   const swaps = data?.swaps
   const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
   const vaultId = shortVaults[firstValidVault]?.id || 0
-
-  useEffect(() => {
-    if (loading || lpLoading) {
-      setPositionLoading(true)
-    }
-  }, [lpLoading])
 
   const { squeethAmount, wethAmount, usdAmount } = useMemo(
     () =>
@@ -117,12 +131,37 @@ export const usePositions = () => {
     [isWethToken0, swaps?.length],
   )
 
+  const mintedDebt = useMemo(() => {
+    // squeethAmount = user long balance if oSqueethBal > 0, but it could also be minted balance
+    return shortVaults[vaultId]?.shortAmount.gt(0) &&
+      oSqueethBal?.isGreaterThan(0) &&
+      positionType === PositionType.LONG
+      ? oSqueethBal.minus(squeethAmount)
+      : shortVaults[vaultId]?.shortAmount.gt(0) && oSqueethBal?.isGreaterThan(0)
+      ? oSqueethBal
+      : new BigNumber(0)
+  }, [oSqueethBal.toString(), positionType, squeethAmount.toString(), shortVaults?.length])
+
+  const shortDebt = useMemo(() => {
+    return positionType === PositionType.SHORT ? squeethAmount : new BigNumber(0)
+  }, [positionType, squeethAmount.toString()])
+
+  const longSqthBal = useMemo(() => {
+    return mintedDebt.gt(0) ? oSqueethBal.minus(mintedDebt) : oSqueethBal
+  }, [oSqueethBal.toString(), mintedDebt.toString()])
+
+  const lpDebt = useMemo(() => {
+    return depositedSqueeth.minus(withdrawnSqueeth).isGreaterThan(0)
+      ? depositedSqueeth.minus(withdrawnSqueeth)
+      : new BigNumber(0)
+  }, [depositedSqueeth.toString(), withdrawnSqueeth.toString()])
+
   const { finalSqueeth, finalWeth } = useMemo(() => {
-    const finalSqueeth = squeethAmount.minus(depositedSqueeth).plus(withdrawnSqueeth)
+    // dont include LPed & minted amount will be the correct short amount
+    const finalSqueeth = squeethAmount
     const finalWeth = wethAmount.div(squeethAmount).multipliedBy(finalSqueeth)
-    setPositionLoading(false)
     return { finalSqueeth, finalWeth }
-  }, [squeethAmount.toString(), depositedSqueeth.toString(), withdrawnSqueeth.toString()])
+  }, [squeethAmount.toString(), wethAmount.toString()])
 
   useEffect(() => {
     if (finalSqueeth.isGreaterThan(0)) {
@@ -138,7 +177,7 @@ export const usePositions = () => {
         setFirstValidVault(i)
       }
     }
-  }, [shortVaults, shortVaults.length])
+  }, [shortVaults.length])
 
   useEffect(() => {
     if (shortVaults.length && shortVaults[firstValidVault]?.collateralAmount) {
@@ -165,7 +204,10 @@ export const usePositions = () => {
     swaps,
     loading: lpLoading,
     squeethAmount: finalSqueeth.absoluteValue(),
-    lpedSqueeth: depositedSqueeth.minus(withdrawnSqueeth),
+    shortDebt: shortDebt.absoluteValue(),
+    lpedSqueeth: lpDebt,
+    mintedDebt: mintedDebt,
+    longSqthBal: longSqthBal,
     wethAmount: finalWeth,
     usdAmount,
     shortVaults,
@@ -316,7 +358,7 @@ const useShortPositions = () => {
 
   useInterval(refetch, 15000)
 
-  const { vaults: shortVaults } = useVaultManager(5)
+  const { vaults: shortVaults } = useVaultManager()
   const { getDebtAmount, normFactor: normalizationFactor } = useController()
 
   const [existingCollatPercent, setExistingCollatPercent] = useState(0)
@@ -327,7 +369,7 @@ const useShortPositions = () => {
 
   const swaps = data?.swaps
   const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
-  const vaultId = shortVaults[firstValidVault]?.id || 0
+  const vaultId = shortVaults[firstValidVault]?.id ?? 0
 
   const {
     squeethAmount,

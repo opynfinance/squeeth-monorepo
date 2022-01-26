@@ -40,11 +40,6 @@
         "internalType": "address",
         "name": "_uniPositionManager",
         "type": "address"
-      },
-      {
-        "internalType": "uint24",
-        "name": "_feeTier",
-        "type": "uint24"
       }
     ],
     "stateMutability": "nonpayable",
@@ -658,19 +653,6 @@
         "internalType": "address",
         "name": "",
         "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "feeTier",
-    "outputs": [
-      {
-        "internalType": "uint24",
-        "name": "",
-        "type": "uint24"
       }
     ],
     "stateMutability": "view",

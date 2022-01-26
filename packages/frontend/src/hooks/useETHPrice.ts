@@ -1,9 +1,9 @@
 import BigNumber from 'bignumber.js'
 import { useCallback, useEffect, useState } from 'react'
 
-import useInterval from './useInterval'
 import { useController } from './contracts/useController'
 import { toTokenAmount } from '@utils/calculations'
+import { useIntervalAsync } from './useIntervalAsync'
 
 /**
  * get token price by address.
@@ -16,21 +16,22 @@ export const useETHPrice = (refetchIntervalSec = 30): BigNumber => {
   const { index } = useController()
 
   const updatePrice = useCallback(async () => {
-    let price: BigNumber
+    let newPrice: BigNumber
 
     try {
-      price = await getETHPriceCoingecko()
-      setPrice(price)
+      newPrice = await getETHPriceCoingecko()
     } catch (error) {
-      setPrice(toTokenAmount(index, 18).sqrt())
+      newPrice = toTokenAmount(index, 18).sqrt()
     }
-  }, [])
+
+    setPrice(newPrice)
+  }, [index.toString()])
 
   useEffect(() => {
     updatePrice()
-  }, [])
+  }, [updatePrice])
 
-  useInterval(updatePrice, refetchIntervalSec * 15000)
+  useIntervalAsync(updatePrice, refetchIntervalSec * 1000)
 
   return price
 }
@@ -39,6 +40,7 @@ export const getETHPriceCoingecko = async (): Promise<BigNumber> => {
   const coin = 'ethereum'
 
   const url = `https://api.coingecko.com/api/v3/simple/price?ids=${coin}&vs_currencies=usd`
+
   const res = await fetch(url)
   const priceStruct: { usd: number } = (await res.json())[coin.toLowerCase()]
   if (priceStruct === undefined) return new BigNumber(0)

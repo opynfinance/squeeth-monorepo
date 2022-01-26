@@ -108,17 +108,7 @@ export function LongChart() {
     else if (tradeType === 2) setMode(ChartType.Risks)
   }, [tradeType])
 
-  const {
-    startingETHPrice,
-    researchMode,
-    ethPrices,
-    longEthPNL,
-    squeethPrices,
-    longSeries,
-    days,
-    setDays,
-    positionSizeSeries,
-  } = useWorldContext()
+  const { ethPrices, longEthPNL, squeethPrices, longSeries, days, setDays, positionSizeSeries } = useWorldContext()
 
   // plot line data
   const lineSeries = useMemo(() => {
@@ -331,11 +321,11 @@ export function LongChart() {
   )
 }
 
-const convertPNLToPriceChart = (pnlSeries: { time: number; value: number }[], startingCapital: number) => {
-  return pnlSeries.map(({ value, time }) => {
-    return {
-      value: value + startingCapital,
-      time,
-    }
-  })
-}
+// const convertPNLToPriceChart = (pnlSeries: { time: number; value: number }[], startingCapital: number) => {
+//   return pnlSeries.map(({ value, time }) => {
+//     return {
+//       value: value + startingCapital,
+//       time,
+//     }
+//   })
+// }

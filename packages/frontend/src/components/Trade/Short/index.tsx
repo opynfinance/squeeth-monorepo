@@ -28,7 +28,7 @@ import { PrimaryButton } from '@components/Button'
 import CollatRange from '@components/CollatRange'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
 import { TradeSettings } from '@components/TradeSettings'
-import Confirmed from '@components/Trade/Confirmed'
+import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
 import TradeDetails from '@components/Trade/TradeDetails'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import UniswapData from '@components/Trade/UniswapData'
@@ -235,7 +235,6 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
     if (!open) return
     const debt = collateral.times(100).dividedBy(new BigNumber(collatPercent))
     getShortAmountFromDebt(debt).then((s) => setAmount(s.toString()))
-    setConfirmedAmount(amount.toFixed(6).toString())
   }, [collatPercent, collateral.toString(), normalizationFactor.toString()])
 
   useEffect(() => {
@@ -285,46 +284,38 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
   let closeError: string | undefined
   let existingLongError: string | undefined
   let priceImpactWarning: string | undefined
+  let vaultIdDontLoadedError: string | undefined
 
-  useEffect(() => {
-    if (connected) {
-      if (
-        shortVaults.length &&
-        (shortVaults[firstValidVault].shortAmount.lt(amount) || shortVaults[firstValidVault].shortAmount.isZero())
-      ) {
-        closeError = 'Close amount exceeds position'
-      }
-      if (new BigNumber(quote.priceImpact).gt(3)) {
-        priceImpactWarning = 'High Price Impact'
-      }
-      if (collateral.isGreaterThan(new BigNumber(balance))) {
-        openError = 'Insufficient ETH balance'
-      } else if (amount.isGreaterThan(0) && collateral.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) {
-        openError = `Minimum collateral is ${MIN_COLLATERAL_AMOUNT} ETH`
-      }
-      if (
-        !open &&
-        amount.isGreaterThan(0) &&
-        shortVaults.length &&
-        amount.lt(shortVaults[firstValidVault].shortAmount) &&
-        neededCollat.isLessThan(MIN_COLLATERAL_AMOUNT)
-      ) {
-        closeError = `You must have at least ${MIN_COLLATERAL_AMOUNT} ETH collateral unless you fully close out your position. Either fully close your position, or close out less`
-      }
-      if (isLong) {
-        existingLongError = 'Close your long position to open a short'
-      }
+  if (connected) {
+    if (
+      shortVaults.length &&
+      (shortVaults[firstValidVault].shortAmount.lt(amount) || shortVaults[firstValidVault].shortAmount.isZero())
+    ) {
+      closeError = 'Close amount exceeds position'
     }
-  }, [
-    shortVaults.length,
-    amount.toString(),
-    quote.priceImpact,
-    balance,
-    collateral.toString(),
-    existingCollat.toString(),
-    neededCollat.toString(),
-    isLong,
-  ])
+    if (new BigNumber(quote.priceImpact).gt(3)) {
+      priceImpactWarning = 'High Price Impact'
+    }
+    if (collateral.isGreaterThan(new BigNumber(balance))) {
+      openError = 'Insufficient ETH balance'
+    } else if (amount.isGreaterThan(0) && collateral.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) {
+      openError = `Minimum collateral is ${MIN_COLLATERAL_AMOUNT} ETH`
+    } else if (shortVaults.length && vaultId === 0 && shortVaults[firstValidVault]?.shortAmount.gt(0)) {
+      vaultIdDontLoadedError = 'Loading Vault...'
+    }
+    if (
+      !open &&
+      amount.isGreaterThan(0) &&
+      shortVaults.length &&
+      amount.lt(shortVaults[firstValidVault].shortAmount) &&
+      neededCollat.isLessThan(MIN_COLLATERAL_AMOUNT)
+    ) {
+      closeError = `You must have at least ${MIN_COLLATERAL_AMOUNT} ETH collateral unless you fully close out your position. Either fully close your position, or close out less`
+    }
+    if (isLong) {
+      existingLongError = 'Close your long position to open a short'
+    }
+  }
 
   const shortOpenPriceImpactErrorState =
     priceImpactWarning && !shortLoading && !(collatPercent < 150) && !openError && !existingLongError
@@ -487,7 +478,15 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
               <PrimaryButton
                 onClick={depositAndShort}
                 className={classes.amountInput}
-                disabled={shortLoading || collatPercent < 150 || !!openError || !!existingLongError}
+                disabled={
+                  collateralInput === '0' ||
+                  shortLoading ||
+                  collatPercent < 150 ||
+                  !!openError ||
+                  !!existingLongError ||
+                  (shortVaults.length && shortVaults[firstValidVault].shortAmount.isZero()) ||
+                  !!vaultIdDontLoadedError
+                }
                 variant={shortOpenPriceImpactErrorState ? 'outlined' : 'contained'}
                 style={
                   shortOpenPriceImpactErrorState
@@ -523,7 +522,11 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
         </div>
       ) : (
         <div>
-          <Confirmed confirmationMessage={`Opened ${confirmedAmount} Squeeth Short Position`} txnHash={txHash} />
+          <Confirmed
+            confirmationMessage={`Opened ${confirmedAmount} Squeeth Short Position`}
+            txnHash={txHash}
+            confirmType={ConfirmType.TRADE}
+          />
           <div className={classes.buttonDiv}>
             <PrimaryButton
               variant="contained"
@@ -582,36 +585,27 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     squeethAmount: shortSqueethAmount,
     isLong,
     lpedSqueeth,
+    mintedDebt,
+    shortDebt,
     loading: isPositionFinishedCalc,
   } = usePositions()
 
   const { setCollatRatio, ethPrice, oSqueethBal } = useWorldContext()
 
-  const mintedDebt = useMemo(() => {
-    return oSqueethBal?.isGreaterThan(0) && positionType === PositionType.LONG
-      ? oSqueethBal.minus(shortSqueethAmount)
-      : oSqueethBal
-  }, [positionType, shortSqueethAmount.toString(), oSqueethBal.toString()])
-
-  const lpDebt = useMemo(() => {
-    return lpedSqueeth.isGreaterThan(0) ? lpedSqueeth : new BigNumber(0)
-  }, [shortSqueethAmount.toString(), lpedSqueeth.toString()])
-
-  const shortDebt = useMemo(() => {
-    return positionType === PositionType.SHORT ? shortSqueethAmount : new BigNumber(0)
-  }, [shortSqueethAmount.toString(), lpDebt.toString(), mintedDebt.toString()])
-
   useEffect(() => {
     if (!shortVaults.length) return
-    const calculatedShort = mintedDebt.plus(lpDebt).plus(shortDebt)
+    const calculatedShort = mintedDebt.plus(lpedSqueeth).plus(shortDebt)
     const contractShort = shortVaults.length && shortVaults[firstValidVault]?.shortAmount
+
+    console.log('calc short ' + calculatedShort)
+    console.log('contract short ' + contractShort)
 
     if (!calculatedShort.isEqualTo(contractShort)) {
       setFinalShortAmount(contractShort)
     } else {
       setFinalShortAmount(shortDebt)
     }
-  }, [shortVaults?.length, mintedDebt.toString(), shortDebt.toString(), lpDebt.toString(), firstValidVault])
+  }, [shortVaults?.length, mintedDebt.toString(), shortDebt.toString(), lpedSqueeth.toString(), firstValidVault])
 
   useEffect(() => {
     if (!open && shortVaults.length && shortVaults[firstValidVault].shortAmount.lt(amount)) {
@@ -702,43 +696,35 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   let closeError: string | undefined
   let existingLongError: string | undefined
   let priceImpactWarning: string | undefined
+  let vaultIdDontLoadedError: string | undefined
 
-  useEffect(() => {
-    if (connected) {
-      if (finalShortAmount.lt(0) && finalShortAmount.lt(amount)) {
-        closeError = 'Close amount exceeds position'
-      }
-      if (new BigNumber(quote.priceImpact).gt(3)) {
-        priceImpactWarning = 'High Price Impact'
-      }
-      if (collateral.isGreaterThan(new BigNumber(balance))) {
-        openError = 'Insufficient ETH balance'
-      } else if (amount.isGreaterThan(0) && collateral.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) {
-        openError = `Minimum collateral is ${MIN_COLLATERAL_AMOUNT} ETH`
-      }
-      if (
-        !open &&
-        amount.isGreaterThan(0) &&
-        shortVaults.length &&
-        amount.lt(finalShortAmount) &&
-        neededCollat.isLessThan(MIN_COLLATERAL_AMOUNT)
-      ) {
-        closeError = `You must have at least ${MIN_COLLATERAL_AMOUNT} ETH collateral unless you fully close out your position. Either fully close your position, or close out less`
-      }
-      if (isLong && !finalShortAmount.isGreaterThan(0)) {
-        existingLongError = 'Close your long position to open a short'
-      }
+  if (connected) {
+    if (finalShortAmount.lt(0) && finalShortAmount.lt(amount)) {
+      closeError = 'Close amount exceeds position'
     }
-  }, [
-    finalShortAmount.toString(),
-    amount.toString(),
-    quote.priceImpact,
-    collateral.toString(),
-    balance,
-    existingCollat.toString(),
-    neededCollat.toString(),
-    isLong,
-  ])
+    if (new BigNumber(quote.priceImpact).gt(3)) {
+      priceImpactWarning = 'High Price Impact'
+    }
+    if (collateral.isGreaterThan(new BigNumber(balance))) {
+      openError = 'Insufficient ETH balance'
+    } else if (amount.isGreaterThan(0) && collateral.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) {
+      openError = `Minimum collateral is ${MIN_COLLATERAL_AMOUNT} ETH`
+    } else if (vaultId === 0 && finalShortAmount.gt(0)) {
+      vaultIdDontLoadedError = 'Loading Vault...'
+    }
+    if (
+      !open &&
+      amount.isGreaterThan(0) &&
+      shortVaults.length &&
+      amount.lt(finalShortAmount) &&
+      neededCollat.isLessThan(MIN_COLLATERAL_AMOUNT)
+    ) {
+      closeError = `You must have at least ${MIN_COLLATERAL_AMOUNT} ETH collateral unless you fully close out your position. Either fully close your position, or close out less`
+    }
+    if (isLong && !finalShortAmount.isGreaterThan(0)) {
+      existingLongError = 'Close your long position to open a short'
+    }
+  }
 
   const shortClosePriceImpactErrorState =
     priceImpactWarning &&
@@ -926,11 +912,13 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
                 onClick={buyBackAndClose}
                 className={classes.amountInput}
                 disabled={
+                  amountInputValue === '0' ||
                   buyLoading ||
                   collatPercent < 150 ||
                   !!closeError ||
                   !!existingLongError ||
-                  (shortVaults.length && shortVaults[firstValidVault].shortAmount.isZero())
+                  (shortVaults.length && shortVaults[firstValidVault].shortAmount.isZero()) ||
+                  !!vaultIdDontLoadedError
                 }
                 variant={shortClosePriceImpactErrorState ? 'outlined' : 'contained'}
                 style={
@@ -967,7 +955,11 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
         </div>
       ) : (
         <div>
-          <Confirmed confirmationMessage={`Closed ${confirmedAmount} Squeeth Short Position`} txnHash={txHash} />
+          <Confirmed
+            confirmationMessage={`Closed ${confirmedAmount} Squeeth Short Position`}
+            txnHash={txHash}
+            confirmType={ConfirmType.TRADE}
+          />
           <div className={classes.buttonDiv}>
             <PrimaryButton
               variant="contained"

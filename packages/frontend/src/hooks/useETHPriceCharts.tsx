@@ -28,14 +28,23 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
     return ethPrices.length === 0 ? 1 : ethPrices[0].value
   }, [ethPrices])
 
-  const ethPriceMap = allEthPrices.reduce((acc: any, p) => {
-    acc[p.time] = p.value
-    return acc
-  }, {})
-  const eth90daysPriceMap = allEth90daysPrices.reduce((acc: any, p) => {
-    acc[p.time] = p.value
-    return acc
-  }, {})
+  const ethPriceMap = useMemo(
+    () =>
+      allEthPrices.reduce((acc: any, p) => {
+        acc[p.time] = p.value
+        return acc
+      }, {}),
+    [allEthPrices],
+  )
+
+  const eth90daysPriceMap = useMemo(
+    () =>
+      allEth90daysPrices.reduce((acc: any, p) => {
+        acc[p.time] = p.value
+        return acc
+      }, {}),
+    [allEth90daysPrices],
+  )
 
   const ethWithinOneDayPriceMap = allEthWithinOneDayPrices?.length
     ? allEthWithinOneDayPrices.reduce((acc: any, p) => {
@@ -54,9 +63,14 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
       const startCUSDCPrice = cusdcPrices[0].value
       const amountCUSDC = (startingETHPrice * comparedLongAmount) / startCUSDCPrice
       return cusdcPrices.map(({ time, value }) => {
+        const pnlPerct =
+          Math.round(
+            ((amountCUSDC * value - startingETHPrice * comparedLongAmount) / (startingETHPrice * comparedLongAmount)) *
+              10000,
+          ) / 100
         return {
           time,
-          value: amountCUSDC * value - startingETHPrice * comparedLongAmount,
+          value: pnlPerct,
         }
       })
     },
@@ -70,11 +84,11 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
   // }, [startingETHPrice, ethPrices])
 
   // prev way to calc short eth pnl w/o compounding
-  const ethShortPNLWithoutCompounding = useMemo(() => {
-    return ethPrices.map(({ time, value }) => {
-      return { time, value: startingETHPrice - value }
-    })
-  }, [startingETHPrice, ethPrices])
+  // const ethShortPNLWithoutCompounding = useMemo(() => {
+  //   return ethPrices.map(({ time, value }) => {
+  //     return { time, value: startingETHPrice - value }
+  //   })
+  // }, [startingETHPrice, ethPrices])
 
   // get compounding eth pnl
   const ethPNLCompounding = useAsyncMemo(
@@ -127,14 +141,14 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
   }, [squeethPNLSeries])
 
   // new short series
-  // const shortSeries = useMemo(() => {
-  //   return squeethPNLSeries.map(({ time, shortPNL }) => {
-  //     return { time, value: shortPNL }
-  //   })
-  // }, [squeethPNLSeries])
+  const shortSeries = useMemo(() => {
+    return squeethPNLSeries.map(({ time, shortPNL }) => {
+      return { time, value: shortPNL }
+    })
+  }, [squeethPNLSeries])
 
   // prev short series
-  const shortSeries = useMemo(() => {
+  const prevShortSeries = useMemo(() => {
     return squeethSeries.series.map(({ time, shortPNL }) => {
       return { time, value: shortPNL }
     })
@@ -207,7 +221,7 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
         }
 
         const longValue = price * longAmount - totalLongCost // should probably be be named something like ethDeltaPnL
-        const realizedPNL = shortSeries[i].value + longValue
+        const realizedPNL = prevShortSeries[i].value + longValue
 
         // calculate how much eth to buy
         data.push({

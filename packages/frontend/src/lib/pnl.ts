@@ -1,7 +1,7 @@
 import BigNumber from 'bignumber.js'
 
 import { VaultHistory_vaultHistories } from '../queries/squeeth/__generated__/VaultHistory'
-import { fromTokenAmount } from '@utils/calculations'
+import { toTokenAmount } from '@utils/calculations'
 
 type ShortPnLParams = {
   wethAmount: BigNumber
@@ -11,9 +11,19 @@ type ShortPnLParams = {
 }
 
 export function calcUnrealizedPnl({ wethAmount, buyQuote, ethPrice, ethCollateralPnl }: ShortPnLParams) {
-  if (wethAmount.isEqualTo(0) || buyQuote.isEqualTo(0) || ethPrice.isEqualTo(0) || ethCollateralPnl.isEqualTo(0)) {
+  if (
+    wethAmount.isEqualTo(0) ||
+    !wethAmount.isFinite() ||
+    buyQuote.isEqualTo(0) ||
+    !buyQuote.isFinite() ||
+    ethPrice.isEqualTo(0) ||
+    !ethPrice.isFinite() ||
+    ethCollateralPnl.isEqualTo(0) ||
+    !ethCollateralPnl.isFinite()
+  ) {
     return new BigNumber(0)
   }
+
   return wethAmount.minus(buyQuote).multipliedBy(ethPrice).plus(ethCollateralPnl)
 }
 
@@ -55,7 +65,7 @@ export function calcETHCollateralPnl(
         const time = new Date(Number(curr.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
         if (curr.action === 'DEPOSIT_COLLAT') {
           acc = acc.plus(
-            new BigNumber(fromTokenAmount(curr.ethCollateralAmount, 18)).times(
+            new BigNumber(toTokenAmount(curr.ethCollateralAmount, 18)).times(
               new BigNumber(ethPriceMap[time]).minus(ethPrice),
             ),
           )

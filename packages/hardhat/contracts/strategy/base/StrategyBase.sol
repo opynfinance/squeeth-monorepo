@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-3.0-only
 
 pragma solidity =0.7.6;
 
@@ -13,6 +13,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // lib
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+// StrategyMath licensed under AGPL-3.0-only
 import {StrategyMath} from "./StrategyMath.sol";
 import {VaultLib} from "../../libs/VaultLib.sol";
 
@@ -44,7 +45,7 @@ contract StrategyBase is ERC20 {
      * @param _symbol token symbol for strategy ERC20 token
      */
     constructor(address _powerTokenController, address _weth, string memory _name, string memory _symbol) ERC20(_name, _symbol) {
-        require(_powerTokenController != address(0), "invalid power token controller address");
+        require(_powerTokenController != address(0), "invalid controller address");
         require(_weth != address(0), "invalid weth address");
 
         weth = _weth;

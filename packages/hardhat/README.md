@@ -87,7 +87,7 @@ The primary license for Squeeth V1 Core is the Business Source License 1.1 (`BUS
 - Some files in `contracts/mocks/` are licensed under `GPL-2.0-or-later` (as indicated in their SPDX headers), see [`contracts/mocks/LICENSE_GPL_3`](./contracts/mocks/LICENSE_GPL_3)
 - All files in `contracts/periphery/` are licensed under `GPL-2.0-or-later` (as indicated in their SPDX headers), see [`contracts/periphery/LICENSE_GPL_3`](./contracts/periphery/LICENSE_GPL_3)
 - All files in `contracts/import/` are licensed under `GPL-2.0-or-later` (as indicated in their SPDX headers), see [`contracts/periphery/LICENSE_GPL_3`](./contracts/periphery/LICENSE_GPL_3)
-- Some files in `contracts/strategy/` are licensed under `GPL-2.0-or-later` (as indicated in their SPDX headers), see [`contracts/strategy/LICENSE_GPL_3`](./contracts/strategy/LICENSE_GPL_3)
+- Some files in `contracts/strategy/` are licensed under `GPL-3.0-only` (as indicated in their SPDX headers), see [`contracts/strategy/LICENSE_GPL_3`](./contracts/strategy/LICENSE_GPL_3)
 - Some files in `contracts/strategy/` are licensed under `AGPL-3.0-only` (as indicated in their SPDX headers), see [`contracts/strategy/LICENSE_AGPL_3`](./contracts/strategy/LICENSE_MIT)
 - Some files in `contracts/test/` are licensed under `GPL-2.0-or-later` (as indicated in their SPDX headers), see [`contracts/strategy/LICENSE_GPL_3`](./contracts/strategy/LICENSE_GPL_3)
 - Some files in `contracts/test/` are licensed under `BSD-4-Clause` (as indicated in their SPDX headers), see [`contracts/test/LICENSE_BSD_4_Clause`](./contracts/test/LICENSE_BSD_4_Clause)

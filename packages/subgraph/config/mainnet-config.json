@@ -17,5 +17,7 @@
   "SqrtPriceMathPartial": "0x9cf8dcbCf115B06d8f577E73Cb9EdFdb27828460",
   "SqrtPriceMathPartial-start-block": 13982540,
   "TickMathExternal": "0x4d9d7F7aE80d51628Aa56eF37720718C99E6FDfC",
-  "TickMathExternal-start-block": 13982535
+  "TickMathExternal-start-block": 13982535,
+  "CrabStrategyDeployment": "0xf205ad80bb86ac92247638914265887a8baa437d",
+  "CrabStrategyDeployment-start-block": 11808056
 }
