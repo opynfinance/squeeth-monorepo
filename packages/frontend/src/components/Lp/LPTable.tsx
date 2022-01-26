@@ -1,14 +1,4 @@
-import {
-  Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Tooltip,
-  Typography,
-} from '@material-ui/core'
+import { Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip } from '@material-ui/core'
 import Paper from '@material-ui/core/Paper'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
@@ -19,13 +9,13 @@ import * as React from 'react'
 import { useEffect, useState } from 'react'
 
 import { SecondaryTab, SecondaryTabs } from '../../components/Tabs'
-import { Tooltips, UniswapIFrameOpen, UniswapIFrameClose } from '@constants/enums'
+import { Tooltips, UniswapIFrameOpen } from '@constants/enums'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useWorldContext } from '@context/world'
-import { useLPPositions } from '@hooks/usePositions'
 import { inRange } from '@utils/calculations'
 import { UniswapIframe } from '../Modal/UniswapIframe'
 import { useWallet } from '@context/wallet'
+import { usePositions } from '@context/positions'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -115,7 +105,8 @@ const calculatePnL = (
 
 export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
   const classes = useStyles()
-  const { activePositions, closedPositions, loading: lpLoading } = useLPPositions()
+  const { activePositions, closedPositions, loading: lpLoading } = usePositions()
+
   const [activeTab, setActiveTab] = useState(0)
   const { ethPrice } = useWorldContext()
   const { getWSqueethPositionValue, isWethToken0 } = useSqueethPool()

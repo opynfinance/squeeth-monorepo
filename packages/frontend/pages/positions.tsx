@@ -142,17 +142,7 @@ const ConnectWallet: React.FC = () => {
 
 export function Positions() {
   const classes = useStyles()
-  const {
-    longGain,
-    shortGain,
-    buyQuote,
-    sellQuote,
-    longRealizedPNL,
-    shortRealizedPNL,
-    shortUnrealizedPNL,
-    loading: isPnLLoading,
-  } = usePnL()
-  const { activePositions, loading: isPositionFinishedCalc } = useLPPositions()
+
   const { pool } = useSqueethPool()
 
   const { oSqueethBal } = useWorldContext()
