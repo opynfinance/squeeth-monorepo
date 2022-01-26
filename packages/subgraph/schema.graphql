@@ -42,6 +42,24 @@ type DayStatSnapshot @entity {
   totalCollateralAmount: BigInt!
 }
 
+enum Action {
+  WITHDRAW_COLLAT
+  DEPOSIT_COLLAT
+  MINT_SHORT
+  BURN_SHORT
+  LIQUIDATE
+}
+
+type VaultHistory @entity {
+  id: ID!
+  timestamp: BigInt!
+  totalEthCollateralAmount: BigInt!
+  oSqthAmount: BigInt!
+  ethCollateralAmount: BigInt!
+  action: Action!
+  vaultId: BigInt!
+}
+
 type CrabStrategyTx @entity {
   id: ID!
   type: String!

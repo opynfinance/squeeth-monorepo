@@ -26,8 +26,9 @@ import { Vault_vault } from '../../src/queries/squeeth/__generated__/Vault'
 import { PositionType } from '../../src/types'
 import { useRestrictUser } from '@context/restrict-user'
 import { useWallet } from '@context/wallet'
-import { useController } from '../../src/hooks/contracts/useController'
+import { useController } from '@hooks/contracts/useController'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
+import { useVaultData } from '@hooks/useVaultData'
 import { useWorldContext } from '@context/world'
 import { CollateralStatus, Vault } from '../../src/types'
 import { squeethClient } from '@utils/apollo-client'
@@ -234,15 +235,12 @@ const Component: React.FC = () => {
   const { balance, address, connected, networkId } = useWallet()
   const { vid } = router.query
   const { liquidations } = useVaultLiquidations(Number(vid))
-  const { positionType, squeethAmount, mintedDebt, shortDebt, lpedSqueeth, existingCollatPercent, liquidationPrice } =
-    usePositions()
+  const { positionType, squeethAmount, mintedDebt, shortDebt, lpedSqueeth } = usePositions()
 
   const { oSqueethBal } = useWorldContext()
 
-  const [vault, setVault] = useState<Vault | null>(null)
   const [collateral, setCollateral] = useState('0')
   const collateralBN = new BigNumber(collateral)
-  const [collatPercent, setCollatPercent] = useState(0)
   const [shortAmount, setShortAmount] = useState('0')
   const shortAmountBN = new BigNumber(shortAmount)
   const [maxToMint, setMaxToMint] = useState(new BigNumber(0))
@@ -250,47 +248,22 @@ const Component: React.FC = () => {
   const [newLiqPrice, setNewLiqPrice] = useState(new BigNumber(0))
   const [action, setAction] = useState(VaultAction.ADD_COLLATERAL)
   const [txLoading, setTxLoading] = useState(false)
-  const [pageLoading, setPageLoading] = useState(true)
 
-  const { data, loading } = useQuery<{ vault: Vault_vault }>(VAULT_QUERY, {
-    client: squeethClient[networkId],
-    fetchPolicy: 'cache-and-network',
-    variables: {
-      vaultID: vid,
-    },
-  })
-
-  const _vault = data?.vault
-  const updateVault = () => {
-    if (!_vault || !connected) return
-
-    setVault({
-      id: Number(_vault.id),
-      NFTCollateralId: _vault.NftCollateralId,
-      collateralAmount: toTokenAmount(new BigNumber(_vault.collateralAmount), 18),
-      shortAmount: toTokenAmount(new BigNumber(_vault.shortAmount), OSQUEETH_DECIMALS),
-      operator: _vault.operator,
-    })
-
-    getCollatRatioAndLiqPrice(new BigNumber(_vault.collateralAmount), new BigNumber(_vault.shortAmount)).then(
-      ({ collateralPercent, liquidationPrice }) => {
-        // setExistingCollatPercent(collateralPercent)
-        setCollatPercent(collateralPercent)
-        // setExistingLiqPrice(new BigNumber(liquidationPrice))
-        setPageLoading(false)
-      },
-    )
-  }
+  const {
+    vault,
+    existingCollatPercent,
+    existingLiqPrice,
+    updateVault,
+    setCollatPercent,
+    collatPercent,
+    isVaultLoading,
+  } = useVaultData(Number(vid))
 
   useEffect(() => {
     getTwapEthPrice().then((price) => {
       setTwapEthPrice(price)
     })
   }, [getTwapEthPrice])
-
-  useEffect(() => {
-    updateVault()
-  }, [vid, normFactor.toString(), address, connected, _vault])
 
   const updateCollateral = async (collatAmount: string) => {
     setCollateral(collatAmount)
@@ -457,7 +430,7 @@ const Component: React.FC = () => {
   return (
     <div>
       <Nav />
-      {pageLoading || loading ? (
+      {isVaultLoading ? (
         <div className={classes.loading}>
           <Typography variant="h5" color="textSecondary">
             Loading...
@@ -595,7 +568,7 @@ const Component: React.FC = () => {
             </div>
             <div className={classes.overviewItem}>
               <Typography className={classes.overviewValue}>
-                $ {!liquidationPrice.isFinite() ? '--' : liquidationPrice.toFixed(2)}
+                $ {!existingLiqPrice.isFinite() ? '--' : existingLiqPrice.toFixed(2)}
               </Typography>
               <Typography className={classes.overviewTitle}>Liquidation Price</Typography>
             </div>

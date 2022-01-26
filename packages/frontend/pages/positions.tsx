@@ -22,6 +22,7 @@ import { useCrabPosition } from '@hooks/useCrabPosition'
 import { useWallet } from '@context/wallet'
 import { usePositions } from '@context/positions'
 import { LinkButton } from '@components/Button'
+import { useVaultData } from '@hooks/useVaultData'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -162,8 +163,6 @@ export function Positions() {
     mintedDebt,
     shortDebt,
     isLong,
-    existingCollatPercent,
-    liquidationPrice,
     shortRealizedPNL,
     longRealizedPNL,
     activePositions,
@@ -185,6 +184,7 @@ export function Positions() {
   }, [firstValidVault, shortVaults?.length])
 
   const { liquidations } = useVaultLiquidations(Number(vaultId))
+  const { existingCollatPercent, existingLiqPrice } = useVaultData(Number(vaultId))
 
   const fullyLiquidated = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
@@ -339,7 +339,7 @@ export function Positions() {
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
                   <Typography variant="body1">
-                    {isPositionLoading && liquidationPrice.isEqualTo(0) ? 'Loading' : '$' + liquidationPrice.toFixed(2)}
+                    {isPositionLoading && existingLiqPrice.isEqualTo(0) ? 'Loading' : '$' + existingLiqPrice.toFixed(2)}
                   </Typography>
                 </div>
                 <div style={{ width: '50%' }}>
@@ -389,7 +389,7 @@ export function Positions() {
                 </div>
               </div>
               <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
-                {new BigNumber(liquidationPrice).isFinite() ? (
+                {new BigNumber(existingLiqPrice).isFinite() ? (
                   <div style={{ width: '50%' }}>
                     <Typography variant="caption" component="span" color="textSecondary">
                       Liquidation Price
@@ -398,7 +398,7 @@ export function Positions() {
                       <InfoIcon fontSize="small" className={classes.infoIcon} />
                     </Tooltip>
                     <Typography variant="body1">
-                      ${isPositionLoading && liquidationPrice.isEqualTo(0) ? 'Loading' : liquidationPrice.toFixed(2)}
+                      ${isPositionLoading && existingLiqPrice.isEqualTo(0) ? 'Loading' : existingLiqPrice.toFixed(2)}
                     </Typography>
                   </div>
                 ) : null}
@@ -440,7 +440,7 @@ export function Positions() {
                 </div>
               </div>
               <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
-                {new BigNumber(liquidationPrice).isFinite() ? (
+                {new BigNumber(existingLiqPrice).isFinite() ? (
                   <div style={{ width: '50%' }}>
                     <Typography variant="caption" component="span" color="textSecondary">
                       Liquidation Price
@@ -449,7 +449,7 @@ export function Positions() {
                       <InfoIcon fontSize="small" className={classes.infoIcon} />
                     </Tooltip>
                     <Typography variant="body1">
-                      $ {isPositionLoading && liquidationPrice.isEqualTo(0) ? 'Loading' : liquidationPrice.toFixed(2)}
+                      $ {isPositionLoading && existingLiqPrice.isEqualTo(0) ? 'Loading' : existingLiqPrice.toFixed(2)}
                     </Typography>
                   </div>
                 ) : null}
