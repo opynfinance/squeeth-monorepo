@@ -107,7 +107,7 @@ export const StrategyInfo: React.FC = () => {
       <Typography variant="h5" color="primary" className={classes.title}>
         Payoff
       </Typography>
-      <ShortSqueethPayoff ethPrice={ethPrice.toNumber()} collatRatio={2} />
+      <ShortSqueethPayoff ethPrice={ethPrice.toNumber()} collatRatio={2} vaultType={Vaults.CrabVault} />
       <Typography variant="h5" color="primary" className={classes.title}>
         Steps
       </Typography>

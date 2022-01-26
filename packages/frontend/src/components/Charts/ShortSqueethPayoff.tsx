@@ -6,6 +6,7 @@ import { Vaults } from '../../constants'
 import { getCrabVaultPayoff, getSqueethShortPayOffGraph } from '../../utils'
 
 const color0 = '#6df7e7'
+const color1 = '#6df7e7'
 const color14 = '#6d78f7'
 const color28 = '#F5B073'
 
@@ -110,6 +111,7 @@ const ShortSqueethPayoff: React.FC<{ ethPrice: number; collatRatio: number; vaul
 }) => {
   const [labels, setLabels] = useState<Array<number>>([])
   const [values0, setValues0] = useState<Array<string>>([])
+  const [values1, setValues1] = useState<Array<string | null>>([])
   const [values14, setValues14] = useState<Array<string | null>>([])
   const [values28, setValues28] = useState<Array<string | null>>([])
 
@@ -123,11 +125,14 @@ const ShortSqueethPayoff: React.FC<{ ethPrice: number; collatRatio: number; vaul
       setValues14(payout14)
       setValues28(payout28)
     } else if (vaultType === Vaults.CrabVault) {
-      const { ethPrices, payout0, payout14, payout28 } = getCrabVaultPayoff(ethPrice, collatRatio)
+      // const { ethPrices, payout0, payout14, payout28 } = getCrabVaultPayoff(ethPrice, collatRatio)
+      // setLabels(ethPrices)
+      // setValues0(payout0)
+      // setValues14(payout14)
+      // setValues28(payout28)
+      const { ethPrices, payout1 } = getSqueethShortPayOffGraph(ethPrice, collatRatio)
       setLabels(ethPrices)
-      setValues0(payout0)
-      setValues14(payout14)
-      setValues28(payout28)
+      setValues1(payout1)
     }
   }, [ethPrice, collatRatio])
 
@@ -175,9 +180,33 @@ const ShortSqueethPayoff: React.FC<{ ethPrice: number; collatRatio: number; vaul
     }
   }, [labels, values0, values14, values28])
 
+  const getCrabData = useCallback(() => {
+    return {
+      labels,
+      datasets: [
+        {
+          label: '1 day return',
+          data: values1,
+          fill: false,
+          borderColor: color1,
+          pointHoverBorderColor: color1,
+          pointHoverBackgroundColor: color1,
+          pointBackgroundColor: 'rgba(0, 0, 0, 0)',
+          pointBorderColor: 'rgba(0, 0, 0, 0)',
+          pointHoverRadius: 5,
+          pointHitRadius: 30,
+        },
+      ],
+    }
+  }, [labels, values1])
+
   return (
     <div style={{ width: '100%' }}>
-      <Line data={getData} type="line" height={300} width={400} options={chartOptions} />
+      {vaultType === Vaults.CrabVault ? (
+        <Line data={getCrabData} type="line" height={300} width={400} options={chartOptions} />
+      ) : (
+        <Line data={getData} type="line" height={300} width={400} options={chartOptions} />
+      )}
     </div>
   )
 }
