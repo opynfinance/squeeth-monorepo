@@ -30,7 +30,7 @@ export const useVaultManager = () => {
   //   setContract(new web3.eth.Contract(erc721Abi as any, vaultManager))
   // }, [vaultManager, web3])
 
-  const { data, loading } = useQuery<Vaults>(VAULTS_QUERY, {
+  const { data, loading, refetch } = useQuery<Vaults>(VAULTS_QUERY, {
     client: squeethClient[networkId],
     fetchPolicy: 'cache-and-network',
     variables: {
@@ -81,5 +81,5 @@ export const useVaultManager = () => {
   //   )
   // }
 
-  return { vaults, loading }
+  return { vaults, loading, refetch }
 }
