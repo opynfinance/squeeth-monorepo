@@ -8,8 +8,10 @@ import { useWallet } from '@context/wallet'
 import { useWorldContext } from '@context/world'
 import { positions, positionsVariables } from '../queries/uniswap/__generated__/positions'
 import { swaps, swapsVariables } from '../queries/uniswap/__generated__/swaps'
+import { txs_swaps, txsVariables, txs } from '../queries/uniswap/__generated__/txs'
 import POSITIONS_QUERY, { POSITIONS_SUBSCRIPTION } from '../queries/uniswap/positionsQuery'
 import SWAPS_QUERY, { SWAPS_SUBSCRIPTION } from '../queries/uniswap/swapsQuery'
+import { SWAPS_MINTS_TRANSACTIONS, SWAPS_MINTS_SUBSCRIPTION } from '../queries/uniswap/swapsMintsQuery'
 import { NFTManagers, PositionType } from '../types'
 import { toTokenAmount } from '@utils/calculations'
 import { useController } from './contracts/useController'
@@ -31,12 +33,10 @@ export const usePositions = () => {
 
   const [positionType, setPositionType] = useState(PositionType.NONE)
 
-  const { data, loading, refetch, subscribeToMore } = useQuery<swaps, swapsVariables>(SWAPS_QUERY, {
+  const { data, loading, refetch, subscribeToMore } = useQuery<txs, txsVariables>(SWAPS_MINTS_TRANSACTIONS, {
     variables: {
-      poolAddress: squeethPool?.toLowerCase(),
+      tokenAddress: oSqueeth?.toLowerCase(),
       origin: address || '',
-      recipients: [shortHelper, address || '', swapRouter],
-      orderDirection: 'asc',
     },
     fetchPolicy: 'cache-and-network',
   })
@@ -47,12 +47,10 @@ export const usePositions = () => {
 
   const subscribeToNewPositions = useCallback(() => {
     subscribeToMore({
-      document: SWAPS_SUBSCRIPTION,
+      document: SWAPS_MINTS_SUBSCRIPTION,
       variables: {
-        poolAddress: squeethPool?.toLowerCase(),
+        tokenAddress: oSqueeth?.toLowerCase(),
         origin: address || '',
-        recipients: [shortHelper, address || '', swapRouter],
-        orderDirection: 'asc',
       },
       updateQuery(prev, { subscriptionData }) {
         if (!subscriptionData.data) return prev
@@ -125,6 +123,7 @@ export const usePositions = () => {
       },
     [isWethToken0, swaps?.length],
   )
+  // console.log(swaps)
 
   const mintedDebt = useMemo(() => {
     // squeethAmount = user long balance if oSqueethBal > 0, but it could also be minted balance
