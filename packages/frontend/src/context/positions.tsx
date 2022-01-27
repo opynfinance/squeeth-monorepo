@@ -44,7 +44,7 @@ const positionsContext = React.createContext<positionsContextType | undefined>(u
 const PositionsProvider: React.FC = ({ children }) => {
   const { getDebtAmount, normFactor: normalizationFactor } = useController()
   const { oSqueethBal } = useWorldContext()
-  const { vaults: shortVaults, refetch: refetchVault } = useVaultManager()
+  const { vaults: shortVaults } = useVaultManager()
   const {
     squeethAmount,
     wethAmount,
@@ -182,10 +182,6 @@ const PositionsProvider: React.FC = ({ children }) => {
       setIsMintedBal(false)
     }
   }, [squeethAmount.toString(), shortVaults.length])
-
-  useEffect(() => {
-    refetchVault()
-  }, [squeethAmount.toString()])
 
   const values = {
     swaps,
