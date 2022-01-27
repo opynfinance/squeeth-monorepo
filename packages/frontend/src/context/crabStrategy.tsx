@@ -24,6 +24,7 @@ type CrabStrategyType = {
   profitableMovePercent: number
   slippage: number
   ethIndexPrice: BigNumber
+  isTimeHedgeAvailable: boolean
   getCollateralFromCrabAmount: (crabAmount: BigNumber) => Promise<BigNumber | null>
   flashDeposit: (amount: BigNumber, slippage: number) => Promise<any>
   flashWithdraw: (amount: BigNumber, slippage: number) => Promise<any>
@@ -62,6 +63,7 @@ const initialState: CrabStrategyType = {
   profitableMovePercent: 0,
   slippage: 0.5,
   ethIndexPrice: BIG_ZERO,
+  isTimeHedgeAvailable: false,
   getCollateralFromCrabAmount: async () => BIG_ZERO,
   flashDeposit: async () => null,
   flashWithdraw: async () => null,
@@ -101,6 +103,7 @@ const CrabProvider: React.FC = ({ children }) => {
   const userCrabBalance = useTokenBalance(crabStrategy, 5, 18)
   const [profitableMovePercent, setProfitableMovePercent] = useState(0)
   const [slippage, setSlippage] = useState(0.5)
+  const [isTimeHedgeAvailable, setIsTimeHedgeAvailable] = useState(false)
 
   useEffect(() => {
     if (!web3 || !crabStrategy) return
@@ -143,6 +146,7 @@ const CrabProvider: React.FC = ({ children }) => {
         }
       })
     getTimeAtLastHedge().then(setTimeAtLastHedge)
+    checkTimeHedge().then((h) => setIsTimeHedgeAvailable(h[0]))
   }
 
   useEffect(() => {
@@ -339,6 +343,7 @@ const CrabProvider: React.FC = ({ children }) => {
     flashWithdrawEth,
     setSlippage,
     profitableMovePercent,
+    isTimeHedgeAvailable,
   }
   return <crabContext.Provider value={store}>{children}</crabContext.Provider>
 }
