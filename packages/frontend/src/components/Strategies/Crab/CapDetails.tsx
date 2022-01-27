@@ -37,7 +37,12 @@ const CapDetails: React.FC<CapType> = ({ maxCap, depositedAmount }) => {
           <Typography variant="body2" color="textSecondary">
             Strategy Deposits
           </Typography>
-          <Typography variant="h6">{Number(depositedAmount.toFixed(4)).toLocaleString()} ETH</Typography>
+          <Typography variant="h6">
+            {depositedAmount.gt(maxCap)
+              ? Number(maxCap.toFixed(4)).toLocaleString()
+              : Number(depositedAmount.toFixed(4)).toLocaleString()}{' '}
+            ETH
+          </Typography>
         </div>
         <div>
           <Typography variant="body2" color="textSecondary">
@@ -47,7 +52,14 @@ const CapDetails: React.FC<CapType> = ({ maxCap, depositedAmount }) => {
         </div>
       </div>
       <div className={classes.vaultProgress}>
-        <CustomLinearProgress variant="determinate" value={depositedAmount.div(maxCap).times(100).toNumber()} />
+        <CustomLinearProgress
+          variant="determinate"
+          value={
+            depositedAmount.gt(maxCap)
+              ? maxCap.div(maxCap).times(100).toNumber()
+              : depositedAmount.div(maxCap).times(100).toNumber()
+          }
+        />
       </div>
     </div>
   )
