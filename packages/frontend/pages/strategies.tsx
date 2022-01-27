@@ -96,7 +96,7 @@ const Strategies: React.FC = () => {
   const classes = useStyles()
   const { balance, address, selectWallet } = useWallet()
   const { maxCap, vault, collatRatio, timeAtLastHedge, profitableMovePercent } = useCrab()
-  const { index, currentImpliedFunding, fundingPerHalfHour } = useController()
+  const { index, currentImpliedFunding, dailyHistoricalFunding } = useController()
 
   useMemo(() => {
     if (selectedIdx === 0) return Vaults.ETHBull
@@ -148,8 +148,8 @@ const Strategies: React.FC = () => {
             <Typography variant="subtitle1" color="textSecondary" style={{ width: '60%', marginTop: '8px' }}>
               Crab automates a strategy that performs best in sideways markets. Based on current funding, crab would be
               profitable if ETH moves less than approximately <b>{(profitableMovePercent * 100).toFixed(2)}%</b> in
-              either direction each day. Crab hedges daily, reducing risk of liquidations. You earn squeeth without
-              taking any view on if ETH will move up or down.
+              either direction each day. Crab hedges daily, reducing risk of liquidations. Crab aims to be profitable in
+              USD terms. You earn funding without taking any view on if ETH will move up or down.
               <a className={classes.link} href={Links.CrabFAQ} target="_blank" rel="noreferrer">
                 {' '}
                 Learn more.{' '}
@@ -171,9 +171,11 @@ const Strategies: React.FC = () => {
                     tooltip={`${Tooltips.StrategyEarnFunding}. ${Tooltips.CurrentImplFunding}`}
                   />
                   <StrategyInfoItem
-                    value={(fundingPerHalfHour * 100).toFixed(2)}
+                    value={(dailyHistoricalFunding.funding * 100).toFixed(2)}
                     label="Historical Daily Funding (%)"
-                    tooltip={`${Tooltips.StrategyEarnFunding}. ${Tooltips.Last30MinAvgFunding}`}
+                    tooltip={`${
+                      Tooltips.StrategyEarnFunding
+                    }. ${`Historical daily funding based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
                   />
                 </div>
                 <div className={classes.overview}>

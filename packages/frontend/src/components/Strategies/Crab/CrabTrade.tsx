@@ -16,6 +16,7 @@ import BigNumber from 'bignumber.js'
 import React, { useEffect, useState } from 'react'
 import CrabPosition from './CrabPosition'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
+import { useController } from '@hooks/contracts/useController'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -80,11 +81,13 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
   const { minCurrentUsd, minPnL, loading } = useCrabPosition(address || '')
   const { isRestricted } = useRestrictUser()
   const { ready } = useSqueethPool()
+  const { dailyHistoricalFunding, currentImpliedFunding } = useController()
 
   let maxCapError: string | undefined
   let depositError: string | undefined
   let withdrawError: string | undefined
   let maxFlashCapError: string | undefined
+  let lowVolError: string | undefined
 
   if (connected) {
     if (ethAmount.plus(depositedAmount).gte(maxCap)) {
@@ -99,6 +102,9 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
     }
     if (withdrawAmount.gt(currentEthValue)) {
       withdrawError = 'Withdraw amount greater than strategy balance'
+    }
+    if (currentImpliedFunding < 0.75 * dailyHistoricalFunding.funding) {
+      lowVolError = `Current implied funding is 75% lower than the last ${dailyHistoricalFunding.period} hours. Consider if you want to deposit now or later`
     }
   }
 
@@ -198,6 +204,8 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
                     ? depositError
                     : maxFlashCapError
                     ? maxFlashCapError
+                    : lowVolError
+                    ? lowVolError
                     : `Balance ${toTokenAmount(balance, 18).toFixed(6)} ETH`
                 }
                 convertedValue={ethIndexPrice.times(ethAmount).toFixed(2)}
@@ -245,7 +253,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
                 onClick={() => deposit()}
                 disabled={txLoading || !!maxCapError || !!depositError}
                 style={
-                  Number(depositPriceImpact) > 3
+                  Number(depositPriceImpact) > 3 || !!lowVolError
                     ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
                     : { marginTop: '8px' }
                 }

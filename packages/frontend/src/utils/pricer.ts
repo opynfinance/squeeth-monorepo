@@ -384,11 +384,22 @@ function getShortParams(ethPrice: number, collatRatio: number) {
   const depositValue = initialCollat * ethPrice - squeethMark
 
   const cuNF0 = dailyNormFactor ** 0
+  const cuNF1 = dailyNormFactor ** 1
   const cuNF14 = dailyNormFactor ** 14
   const cuNF28 = dailyNormFactor ** 28
   const getEthPrices = () => {
     let inc = Math.floor(ethPrice / 2)
     return Array(120)
+      .fill(0)
+      .map((_, i) => {
+        if (i === 0) return inc
+        inc += 30
+        return inc
+      })
+  }
+  const getCrabEthPrices = () => {
+    let inc = Math.floor(ethPrice / 2)
+    return Array(100)
       .fill(0)
       .map((_, i) => {
         if (i === 0) return inc
@@ -404,20 +415,26 @@ function getShortParams(ethPrice: number, collatRatio: number) {
     initialCollat,
     depositValue,
     cuNF0,
+    cuNF1,
     cuNF14,
     cuNF28,
     ethPrices: getEthPrices(),
+    crabEthPrices: getCrabEthPrices(),
   }
 }
 
 export function getSqueethShortPayOffGraph(ethPrice: number, collatRatio: number) {
-  const { markRatio, initialCollat, depositValue, cuNF0, cuNF14, cuNF28, ethPrices } = getShortParams(
+  const { markRatio, initialCollat, depositValue, cuNF0, cuNF1, cuNF14, cuNF28, ethPrices, crabEthPrices } = getShortParams(
     ethPrice,
     collatRatio,
   )
 
   const payout0 = ethPrices.map((p) => {
     return (((-1 * cuNF0 * p ** 2 * markRatio + initialCollat * p) / depositValue - 1) * 100).toFixed(2)
+  })
+
+  const payout1 = crabEthPrices.map((p) => {
+    return (((-1 * cuNF1 * p ** 2 * markRatio + initialCollat * p) / depositValue - 1) * 100).toFixed(2)
   })
 
   const payout14 = ethPrices.map((p) => {
@@ -431,6 +448,7 @@ export function getSqueethShortPayOffGraph(ethPrice: number, collatRatio: number
   return {
     ethPrices,
     payout0,
+    payout1,
     payout14,
     payout28,
   }
