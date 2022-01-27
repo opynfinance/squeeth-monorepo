@@ -67,7 +67,7 @@ export function calcETHCollateralPnl(
         if (curr.action === Action.DEPOSIT_COLLAT) {
           acc = acc.plus(
             new BigNumber(toTokenAmount(curr.ethCollateralAmount, 18)).times(
-              new BigNumber(ethPriceMap[time]).minus(ethPrice),
+              new BigNumber(ethPrice).minus(ethPriceMap[time]),
             ),
           )
         }
@@ -81,7 +81,7 @@ export function calcETHCollateralPnl(
         if (curr.action === Action.WITHDRAW_COLLAT) {
           acc = acc.plus(
             new BigNumber(toTokenAmount(curr.ethCollateralAmount, 18)).times(
-              new BigNumber(ethPriceMap[time]).minus(ethPrice),
+              new BigNumber(ethPrice).minus(ethPriceMap[time]),
             ),
           )
         }
