@@ -33,7 +33,6 @@ import {
   loadOrCreateAccount,
   BIGINT_ONE,
   BIGINT_ZERO,
-  ActionType,
   SHORT_HELPER_ADDR,
 } from "./util";
 
@@ -93,11 +92,11 @@ export function handleBurnShort(event: BurnShort): void {
   let transactionHash = event.transaction.hash.toHex();
 
   //check if users manually burn or using shorthelper to close position
-  let actionType: ActionType;
-  if (event.transaction.from === SHORT_HELPER_ADDR) {
-    actionType = ActionType.CLOSE_SHORT;
+  let actionType: string;
+  if (event.transaction.to === SHORT_HELPER_ADDR) {
+    actionType = "CLOSE_SHORT";
   } else {
-    actionType = ActionType.BURN;
+    actionType = "BURN";
   }
   //update vault history
   const vaultTransaction = getTransactionDetail(
@@ -128,7 +127,7 @@ export function handleDepositCollateral(event: DepositCollateral): void {
     event.params.amount,
     vault,
     timestamp,
-    ActionType.DEPOSIT_COLLAT,
+    "DEPOSIT_COLLAT",
     transactionHash,
     BIGINT_ZERO
   );
@@ -136,13 +135,15 @@ export function handleDepositCollateral(event: DepositCollateral): void {
 
   // update TVL stats
   const hourStatSnapshot = getHourStatSnapshot(timestamp);
-  hourStatSnapshot.totalCollateralAmount =
-    hourStatSnapshot.totalCollateralAmount.plus(event.params.amount);
+  hourStatSnapshot.totalCollateralAmount = hourStatSnapshot.totalCollateralAmount.plus(
+    event.params.amount
+  );
   hourStatSnapshot.save();
 
   const dayStatSnapshot = getDayStatSnapshot(timestamp);
-  dayStatSnapshot.totalCollateralAmount =
-    dayStatSnapshot.totalCollateralAmount.plus(event.params.amount);
+  dayStatSnapshot.totalCollateralAmount = dayStatSnapshot.totalCollateralAmount.plus(
+    event.params.amount
+  );
   dayStatSnapshot.save();
 }
 
@@ -178,7 +179,7 @@ export function handleLiquidate(event: Liquidate): void {
     event.params.collateralPaid,
     vault,
     timestamp,
-    ActionType.LIQUIDATE,
+    "LIQUIDATE",
     transactionHash,
     event.params.debtAmount
   );
@@ -186,13 +187,15 @@ export function handleLiquidate(event: Liquidate): void {
 
   // update TVL stats
   const hourStatSnapshot = getHourStatSnapshot(timestamp);
-  hourStatSnapshot.totalCollateralAmount =
-    hourStatSnapshot.totalCollateralAmount.minus(event.params.collateralPaid);
+  hourStatSnapshot.totalCollateralAmount = hourStatSnapshot.totalCollateralAmount.minus(
+    event.params.collateralPaid
+  );
   hourStatSnapshot.save();
 
   const dayStatSnapshot = getDayStatSnapshot(timestamp);
-  dayStatSnapshot.totalCollateralAmount =
-    dayStatSnapshot.totalCollateralAmount.minus(event.params.collateralPaid);
+  dayStatSnapshot.totalCollateralAmount = dayStatSnapshot.totalCollateralAmount.minus(
+    event.params.collateralPaid
+  );
   dayStatSnapshot.save();
 
   const liquidation = new Liquidation(
@@ -216,11 +219,12 @@ export function handleMintShort(event: MintShort): void {
   let timestamp = event.block.timestamp;
   let transactionHash = event.transaction.hash.toHex();
   //check if users manually mint or using shorthelper to close position
-  let actionType: ActionType;
-  if (event.transaction.from === SHORT_HELPER_ADDR) {
-    actionType = ActionType.OPEN_SHORT;
+  //if directly sent to short helper address, then it's open short in 1 step, if directly sen t to controller address, then it's mint
+  let actionType: string;
+  if (event.transaction.to === SHORT_HELPER_ADDR) {
+    actionType = "OPEN_SHORT";
   } else {
-    actionType = ActionType.MINT;
+    actionType = "MINT";
   }
 
   //update vault history
@@ -299,7 +303,7 @@ export function handleWithdrawCollateral(event: WithdrawCollateral): void {
     event.params.amount,
     vault,
     timestamp,
-    ActionType.WITHDRAW_COLLAT,
+    "WITHDRAW_COLLAT",
     transactionHash,
     BIGINT_ZERO
   );
@@ -307,13 +311,15 @@ export function handleWithdrawCollateral(event: WithdrawCollateral): void {
 
   // update TVL stats
   const hourStatSnapshot = getHourStatSnapshot(timestamp);
-  hourStatSnapshot.totalCollateralAmount =
-    hourStatSnapshot.totalCollateralAmount.minus(event.params.amount);
+  hourStatSnapshot.totalCollateralAmount = hourStatSnapshot.totalCollateralAmount.minus(
+    event.params.amount
+  );
   hourStatSnapshot.save();
 
   const dayStatSnapshot = getDayStatSnapshot(timestamp);
-  dayStatSnapshot.totalCollateralAmount =
-    dayStatSnapshot.totalCollateralAmount.minus(event.params.amount);
+  dayStatSnapshot.totalCollateralAmount = dayStatSnapshot.totalCollateralAmount.minus(
+    event.params.amount
+  );
   dayStatSnapshot.save();
 }
 
@@ -400,18 +406,15 @@ function getTransactionDetail(
   vaultHistory.vaultId = vaultId;
   vaultHistory.timestamp = timestamp;
   if (
-    action === ActionType.OPEN_SHORT ||
-    action === ActionType.CLOSE_SHORT ||
-    action === ActionType.MINT ||
-    action === ActionType.BURN
+    action === "OPEN_SHORT" ||
+    action === "CLOSE_SHORT" ||
+    action === "MINT" ||
+    action === "BURN"
   ) {
     vaultHistory.oSqthAmount = amount;
-  } else if (
-    action === ActionType.DEPOSIT_COLLAT ||
-    action === ActionType.WITHDRAW_COLLAT
-  ) {
+  } else if (action === "DEPOSIT_COLLAT" || action === "WITHDRAW_COLLAT") {
     vaultHistory.ethCollateralAmount = amount;
-  } else if (action === ActionType.LIQUIDATE) {
+  } else if (action === "LIQUIDATE") {
     vaultHistory.ethCollateralAmount = amount;
     vaultHistory.oSqthAmount = debtAmount;
   }
