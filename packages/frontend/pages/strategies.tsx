@@ -149,7 +149,7 @@ const Strategies: React.FC = () => {
               Crab automates a strategy that performs best in sideways markets. Based on current funding, crab would be
               profitable if ETH moves less than approximately <b>{(profitableMovePercent * 100).toFixed(2)}%</b> in
               either direction each day. Crab hedges daily, reducing risk of liquidations. Crab aims to be profitable in
-              USD terms. You earn squeeth without taking any view on if ETH will move up or down.
+              USD terms. You earn funding without taking any view on if ETH will move up or down.
               <a className={classes.link} href={Links.CrabFAQ} target="_blank" rel="noreferrer">
                 {' '}
                 Learn more.{' '}

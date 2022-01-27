@@ -222,7 +222,7 @@ export const useController = () => {
     // return () => sub.unsubscribe()
   }, [web3, networkId, getIndex])
 
-  // Tries to get funding for the longest period available based on Uniswap storage slots, optimistically 24hrs, worst case 30min
+  // Tries to get funding for the longest period available based on Uniswap storage slots, optimistically 24hrs, worst case spot
   // TODO: get 24hr historical funding from the subgraph to have a value that isn't dynamic based on storage slots
   const getDailyHistoricalFunding = async () => {
     let index = new BigNumber(0)
@@ -236,6 +236,7 @@ export const useController = () => {
         //convert period from hours to seconds
         index = await getIndex(period * 3600)
         mark = await getMark(period * 3600)
+        isError = false
       } catch (error) {
         isError = true
       }
@@ -247,13 +248,6 @@ export const useController = () => {
       index = await getIndex(1)
       mark = await getMark(1)
     }
-    // try {
-    //   index = await getIndex(1800)
-    //   mark = await getMark(1800)
-    // } catch (error) {
-    //   index = await getIndex(1)
-    //   mark = await getMark(1)
-    // }
 
     if (index.isEqualTo(0)) {
       return { period: 0, funding: 0 }
