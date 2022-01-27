@@ -363,7 +363,7 @@ const TabComponent: React.FC = () => {
 const SqueethInfo: React.FC = () => {
   const classes = useStyles()
   const { actualTradeType } = useTrade()
-  const { fundingPerHalfHour, mark, index, impliedVol, currentImpliedFunding } = useController()
+  const { dailyHistoricalFunding, mark, index, impliedVol, currentImpliedFunding } = useController()
 
   const [showAdvanced, setShowAdvanced] = useState(false)
 
@@ -388,11 +388,13 @@ const SqueethInfo: React.FC = () => {
               <Typography color="textSecondary" variant="body2">
                 Historical Daily Funding
               </Typography>
-              <Tooltip title={Tooltips.Last30MinAvgFunding}>
+              <Tooltip
+                title={`Historical daily funding based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}
+              >
                 <InfoIcon fontSize="small" className={classes.infoIcon} />
               </Tooltip>
             </div>
-            <Typography>{(fundingPerHalfHour * 100).toFixed(2) || 'loading'}%</Typography>
+            <Typography>{(dailyHistoricalFunding.funding * 100).toFixed(2) || 'loading'}%</Typography>
           </div>
           <div className={classes.infoItem}>
             <div className={classes.infoLabel}>
