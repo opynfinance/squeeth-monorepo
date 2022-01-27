@@ -45,8 +45,10 @@ type DayStatSnapshot @entity {
 enum Action {
   WITHDRAW_COLLAT
   DEPOSIT_COLLAT
-  MINT_SHORT
-  BURN_SHORT
+  MINT
+  OPEN_SHORT
+  BURN
+  ClOSE_SHORT
   LIQUIDATE
 }
 

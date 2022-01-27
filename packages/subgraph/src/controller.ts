@@ -29,7 +29,13 @@ import {
   DayStatSnapshot,
   VaultHistory,
 } from "../generated/schema";
-import { loadOrCreateAccount, BIGINT_ONE, BIGINT_ZERO } from "./util";
+import {
+  loadOrCreateAccount,
+  BIGINT_ONE,
+  BIGINT_ZERO,
+  ActionType,
+  SHORT_HELPER_ADDR,
+} from "./util";
 
 // Note: If a handler doesn't require existing field values, it is faster
 // _not_ to load the entity from the store. Instead, create it fresh with
@@ -85,13 +91,21 @@ export function handleBurnShort(event: BurnShort): void {
 
   let timestamp = event.block.timestamp;
   let transactionHash = event.transaction.hash.toHex();
+
+  //check if users manually burn or using shorthelper to close position
+  let actionType: ActionType;
+  if (event.transaction.from === SHORT_HELPER_ADDR) {
+    actionType = ActionType.CLOSE_SHORT;
+  } else {
+    actionType = ActionType.BURN;
+  }
   //update vault history
   const vaultTransaction = getTransactionDetail(
     event.params.vaultId,
     event.params.amount,
     vault,
     timestamp,
-    "BURN_SHORT",
+    actionType,
     transactionHash,
     BIGINT_ZERO
   );
@@ -114,7 +128,7 @@ export function handleDepositCollateral(event: DepositCollateral): void {
     event.params.amount,
     vault,
     timestamp,
-    "DEPOSIT_COLLAT",
+    ActionType.DEPOSIT_COLLAT,
     transactionHash,
     BIGINT_ZERO
   );
@@ -164,7 +178,7 @@ export function handleLiquidate(event: Liquidate): void {
     event.params.collateralPaid,
     vault,
     timestamp,
-    "LIQUIDATE",
+    ActionType.LIQUIDATE,
     transactionHash,
     event.params.debtAmount
   );
@@ -201,13 +215,21 @@ export function handleMintShort(event: MintShort): void {
 
   let timestamp = event.block.timestamp;
   let transactionHash = event.transaction.hash.toHex();
+  //check if users manually mint or using shorthelper to close position
+  let actionType: ActionType;
+  if (event.transaction.from === SHORT_HELPER_ADDR) {
+    actionType = ActionType.OPEN_SHORT;
+  } else {
+    actionType = ActionType.MINT;
+  }
+
   //update vault history
   const vaultTransaction = getTransactionDetail(
     event.params.vaultId,
     event.params.amount,
     vault,
     timestamp,
-    "MINT_SHORT",
+    actionType,
     transactionHash,
     BIGINT_ZERO
   );
@@ -277,7 +299,7 @@ export function handleWithdrawCollateral(event: WithdrawCollateral): void {
     event.params.amount,
     vault,
     timestamp,
-    "WITHDRAW_COLLAT",
+    ActionType.WITHDRAW_COLLAT,
     transactionHash,
     BIGINT_ZERO
   );
@@ -377,11 +399,19 @@ function getTransactionDetail(
   vaultHistory.action = action;
   vaultHistory.vaultId = vaultId;
   vaultHistory.timestamp = timestamp;
-  if (action === "MINT_SHORT" || action === "BURN_SHORT") {
+  if (
+    action === ActionType.OPEN_SHORT ||
+    action === ActionType.CLOSE_SHORT ||
+    action === ActionType.MINT ||
+    action === ActionType.BURN
+  ) {
     vaultHistory.oSqthAmount = amount;
-  } else if (action === "DEPOSIT_COLLAT" || action === "WITHDRAW_COLLAT") {
+  } else if (
+    action === ActionType.DEPOSIT_COLLAT ||
+    action === ActionType.WITHDRAW_COLLAT
+  ) {
     vaultHistory.ethCollateralAmount = amount;
-  } else if (action === "LIQUIDATE") {
+  } else if (action === ActionType.LIQUIDATE) {
     vaultHistory.ethCollateralAmount = amount;
     vaultHistory.oSqthAmount = debtAmount;
   }
