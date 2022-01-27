@@ -4,9 +4,9 @@ import BigNumber from 'bignumber.js'
 import { BIG_ZERO } from '@constants/index'
 import { useWorldContext } from '@context/world'
 import { useSwapsData } from '../hooks/useSwapsData'
-import { useController } from '../hooks/contracts/useController'
 import { useVaultManager } from '../hooks/contracts/useVaultManager'
 import { useLPPositions } from '../hooks/usePositions'
+import { useVaultData } from '../hooks/useVaultData'
 import { swaps_swaps } from '../queries/uniswap/__generated__/swaps'
 import { NFTManagers, PositionType } from '../types'
 
@@ -27,7 +27,6 @@ type positionsContextType = {
   existingCollatPercent: number
   existingCollat: BigNumber
   liquidationPrice: BigNumber
-  isMintedBal: boolean
   firstValidVault: number
   vaultId: any
   isLong: boolean
@@ -42,7 +41,6 @@ type positionsContextType = {
 const positionsContext = React.createContext<positionsContextType | undefined>(undefined)
 
 const PositionsProvider: React.FC = ({ children }) => {
-  const { getDebtAmount, normFactor: normalizationFactor } = useController()
   const { oSqueethBal } = useWorldContext()
   const { vaults: shortVaults } = useVaultManager()
   const {
@@ -75,13 +73,10 @@ const PositionsProvider: React.FC = ({ children }) => {
   } = useLPPositions()
 
   const [positionType, setPositionType] = useState(PositionType.NONE)
-  const [existingCollatPercent, setExistingCollatPercent] = useState(0)
-  const [existingCollat, setExistingCollat] = useState(new BigNumber(0))
-  const [liquidationPrice, setLiquidationPrice] = useState(new BigNumber(0))
-  const [isMintedBal, setIsMintedBal] = useState(false)
   const [firstValidVault, setFirstValidVault] = useState(0)
 
   const vaultId = shortVaults[firstValidVault]?.id || 0
+  const { existingCollat, existingCollatPercent, existingLiqPrice: liquidationPrice } = useVaultData(vaultId)
 
   const { longRealizedPNL } = useMemo(() => {
     if (!longRealizedSqueeth.gt(0)) return { longRealizedPNL: BIG_ZERO }
@@ -162,27 +157,6 @@ const PositionsProvider: React.FC = ({ children }) => {
     }
   }, [shortVaults.length])
 
-  useEffect(() => {
-    if (shortVaults.length && shortVaults[firstValidVault]?.collateralAmount) {
-      const _collat: BigNumber = shortVaults[firstValidVault].collateralAmount
-      setExistingCollat(_collat)
-      getDebtAmount(new BigNumber(shortVaults[firstValidVault]?.shortAmount)).then((debt) => {
-        if (debt && debt.isPositive()) {
-          setIsMintedBal(true)
-          setExistingCollatPercent(Number(_collat.div(debt).times(100).toFixed(1)))
-          const rSqueeth = normalizationFactor
-            .multipliedBy(new BigNumber(shortVaults[firstValidVault]?.shortAmount))
-            .dividedBy(10000)
-          setLiquidationPrice(_collat.div(rSqueeth.multipliedBy(1.5)))
-        } else {
-          setIsMintedBal(false)
-        }
-      })
-    } else {
-      setIsMintedBal(false)
-    }
-  }, [squeethAmount.toString(), shortVaults.length])
-
   const values = {
     swaps,
     loading: lpLoading,
@@ -198,7 +172,6 @@ const PositionsProvider: React.FC = ({ children }) => {
     existingCollatPercent,
     existingCollat,
     liquidationPrice,
-    isMintedBal,
     firstValidVault,
     vaultId,
     isLong: positionType === PositionType.LONG,
