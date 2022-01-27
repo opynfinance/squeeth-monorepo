@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import { toTokenAmount } from '@utils/calculations'
 // import erc721Abi from '../../abis/vaultManager.json'
 import { OSQUEETH_DECIMALS } from '../../constants/'
-import { VAULTS_QUERY } from '../../queries/squeeth/vaultsQuery'
+import { VAULTS_QUERY, VAULTS_SUBSCRIPTION } from '../../queries/squeeth/vaultsQuery'
 import { Vaults } from '../../queries/squeeth/__generated__/Vaults'
 import { squeethClient } from '../../utils/apollo-client'
 import { useWallet } from '@context/wallet'
@@ -30,13 +30,26 @@ export const useVaultManager = () => {
   //   setContract(new web3.eth.Contract(erc721Abi as any, vaultManager))
   // }, [vaultManager, web3])
 
-  const { data, loading, refetch } = useQuery<Vaults>(VAULTS_QUERY, {
+  const { data, loading, subscribeToMore } = useQuery<Vaults>(VAULTS_QUERY, {
     client: squeethClient[networkId],
     fetchPolicy: 'cache-and-network',
     variables: {
       ownerId: address,
     },
   })
+  useEffect(() => {
+    subscribeToMore({
+      document: VAULTS_SUBSCRIPTION,
+      variables: {
+        ownerId: address,
+      },
+      updateQuery(prev, { subscriptionData }) {
+        if (!subscriptionData.data) return prev
+        const newVaults = subscriptionData.data.vaults
+        return { vaults: newVaults }
+      },
+    })
+  }, [address, subscribeToMore])
 
   useEffect(() => {
     ;(async () => {
@@ -56,7 +69,7 @@ export const useVaultManager = () => {
 
       setVaults(_vaults)
     })()
-  }, [data?.vaults])
+  }, [data?.vaults?.length])
 
   // const getOwner = async (vaultId: number) => {
   //   if (!contract) return
@@ -81,5 +94,5 @@ export const useVaultManager = () => {
   //   )
   // }
 
-  return { vaults, loading, refetch }
+  return { vaults, loading }
 }
