@@ -544,10 +544,10 @@ export const usePnL = () => {
       vaultId: shortVaults[firstValidVault]?.id,
     },
   })
-  const vaultHistoy = data?.vaultHistories
+  const vaultHistory = data?.vaultHistories
   const ethCollateralPnl = useMemo(
-    () => calcETHCollateralPnl(vaultHistoy, ethPriceMap, ethPrice),
-    [vaultHistoy?.length, ethPrice, ethPriceMap],
+    () => calcETHCollateralPnl(vaultHistory, ethPriceMap, ethPrice),
+    [vaultHistory?.length, ethPrice, ethPriceMap],
   )
 
   useEffect(() => {
