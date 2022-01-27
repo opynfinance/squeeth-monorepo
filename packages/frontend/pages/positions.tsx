@@ -2,7 +2,7 @@ import { createStyles, makeStyles, Tooltip, Typography } from '@material-ui/core
 import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import Link from 'next/link'
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo } from 'react'
 import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
 
@@ -10,17 +10,18 @@ import { LPTable } from '@components/Lp/LPTable'
 import Nav from '@components/Nav'
 import History from '@components/Trade/History'
 import { PositionType } from '../src/types/'
-import { Tooltips, OSQUEETH_DECIMALS } from '../src/constants'
+import { Tooltips } from '../src/constants'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useWorldContext } from '@context/world'
 import { useLPPositions, usePnL, usePositions } from '@hooks/usePositions'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
-import { toTokenAmount, fromTokenAmount } from '@utils/calculations'
+import { toTokenAmount } from '@utils/calculations'
 import { useController } from '../src/hooks/contracts/useController'
 import { CrabProvider } from '@context/crabStrategy'
 import { useCrabPosition } from '@hooks/useCrabPosition'
 import { useWallet } from '@context/wallet'
 import { LinkButton } from '@components/Button'
+import { useVaultData } from '@hooks/useVaultData'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -140,8 +141,6 @@ const ConnectWallet: React.FC = () => {
 }
 
 export function Positions() {
-  const [existingCollatPercent, setExistingCollatPercent] = useState(0)
-  const [existingLiqPrice, setExistingLiqPrice] = useState(new BigNumber(0))
   const classes = useStyles()
   const { ethPrice } = useWorldContext()
   const {
@@ -175,7 +174,7 @@ export function Positions() {
     isLong,
   } = usePositions()
 
-  const { index, getCollatRatioAndLiqPrice } = useController()
+  const { index } = useController()
   const {
     depositedEth,
     depositedUsd,
@@ -191,20 +190,11 @@ export function Positions() {
   }, [firstValidVault, shortVaults?.length])
 
   const { liquidations } = useVaultLiquidations(Number(vaultId))
+  const { existingCollatPercent, existingLiqPrice } = useVaultData(Number(vaultId))
 
   const fullyLiquidated = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
   }, [firstValidVault, shortVaults?.length, liquidations?.length])
-
-  useEffect(() => {
-    getCollatRatioAndLiqPrice(
-      new BigNumber(fromTokenAmount(shortVaults[firstValidVault]?.collateralAmount, 18)),
-      new BigNumber(fromTokenAmount(shortVaults[firstValidVault]?.shortAmount, OSQUEETH_DECIMALS)),
-    ).then(({ collateralPercent, liquidationPrice }) => {
-      setExistingCollatPercent(collateralPercent)
-      setExistingLiqPrice(liquidationPrice)
-    })
-  }, [firstValidVault, shortVaults?.length])
 
   return (
     <div>

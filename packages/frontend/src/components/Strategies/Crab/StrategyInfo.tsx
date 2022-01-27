@@ -101,7 +101,8 @@ export const StrategyInfo: React.FC = () => {
       </div>
       <Typography color="textSecondary" variant="subtitle1" className={classes.caption}>
         Based on current funding, crab strategy would be unprofitable if ETH moves more than the profit threshold of
-        approximately <b>{(profitableMovePercent * 100).toFixed(2)}%</b> in either direction each day.
+        approximately <b>{(profitableMovePercent * 100).toFixed(2)}%</b> in either direction each day. Crab aims to be
+        profitable in USD terms.
       </Typography>
       <Typography variant="h5" color="primary" className={classes.title}>
         Payoff
@@ -121,8 +122,11 @@ export const StrategyInfo: React.FC = () => {
         liquidation. Rebalancing based on large ETH price changes helps prevent a liquidation from occurring.
         <br /> <br />
         Based on current funding, crab strategy would be unprofitable if ETH moves more than approximately{' '}
-        {(profitableMovePercent * 100).toFixed(2)}% in either direction each day. If the Squeeth premium to ETH
-        increases, the strategy will incur a loss because it will be more expensive to close the position.
+        {(profitableMovePercent * 100).toFixed(2)}% in either direction each day. The implied funding rate at which you
+        deposit at impacts your profitability. Depositing at a high funding rate increases likelihood of profitability.
+        <br /> <br />
+        If the Squeeth premium to ETH increases, the strategy will incur a loss because it will be more expensive to
+        close the position. Crab aims to be profitable in USD terms.
         <a className={classes.link} href={Links.CrabFAQ} target="_blank" rel="noreferrer">
           {' '}
           Learn more.{' '}

@@ -49,7 +49,7 @@ export enum Tooltips {
   Operator = 'The wrapper contract mints squeeth, deposits collateral and sells squeeth in single TX. Similarly it also buys back + burns squeeth and withdraws collateral in single TX',
   SellCloseAmount = 'Amount of oSQTH to buy',
   CurrentCollRatio = 'Collateral ratio for current short position',
-  SellOpenAmount = 'Minimum collateral amount is 7.5 ETH to ensure system solvency with sufficient liquidation incentive',
+  SellOpenAmount = 'Minimum collateral amount is 6.9 ETH to ensure system solvency with sufficient liquidation incentive',
   LiquidationPrice = 'Price of ETH when liquidation occurs.',
   InitialPremium = 'Initial payment you get for selling squeeth on Uniswap',
   BacktestDisclaimer = 'This is historical backtest data and does not show the actual performance of squeeth. See the FAQ to learn more.',

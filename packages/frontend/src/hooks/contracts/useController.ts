@@ -24,7 +24,7 @@ export const useController = () => {
   const [normFactor, setNormFactor] = useState(new BigNumber(1))
   const [mark, setMark] = useState(new BigNumber(0))
   const [index, setIndex] = useState(new BigNumber(0))
-  const [fundingPerHalfHour, setFundingPerHalfHour] = useState(0)
+  const [dailyHistoricalFunding, setDailyHistoricalFunding] = useState({ period: 0, funding: 0 })
   const [currentImpliedFunding, setCurrentImpliedFunding] = useState(0)
   const { controller, ethUsdcPool, weth, usdc } = useAddresses()
   const { getTwapSafe } = useOracle()
@@ -54,7 +54,7 @@ export const useController = () => {
 
   useEffect(() => {
     if (!contract) return
-    getFundingForHalfHour().then(setFundingPerHalfHour)
+    getDailyHistoricalFunding().then(setDailyHistoricalFunding)
     getCurrentImpliedFunding().then(setCurrentImpliedFunding)
   }, [address, contract])
 
@@ -222,21 +222,42 @@ export const useController = () => {
     // return () => sub.unsubscribe()
   }, [web3, networkId, getIndex])
 
-  const getFundingForHalfHour = async () => {
-    let index
-    let mark
-    try {
-      index = await getIndex(1800)
-      mark = await getMark(1800)
-    } catch (error) {
+  // Tries to get funding for the longest period available based on Uniswap storage slots, optimistically 24hrs, worst case spot
+  // TODO: get 24hr historical funding from the subgraph to have a value that isn't dynamic based on storage slots
+  const getDailyHistoricalFunding = async () => {
+    let index = new BigNumber(0)
+    let mark = new BigNumber(0)
+    let period = 24
+    let isError = false
+
+    //start by trying 24hr twap, if fails try dividing by 2 until 45min minimum, fall back to spot otherwise
+    for (; period >= 0.75; period = period / 2) {
+      try {
+        //convert period from hours to seconds
+        index = await getIndex(period * 3600)
+        mark = await getMark(period * 3600)
+        isError = false
+      } catch (error) {
+        isError = true
+      }
+      if (isError === false) {
+        break
+      }
+    }
+    if (index.isEqualTo(0) || mark.isEqualTo(0)) {
       index = await getIndex(1)
       mark = await getMark(1)
     }
+
     if (index.isEqualTo(0)) {
-      return 0
+      return { period: 0, funding: 0 }
     }
 
-    return Math.log(mark.dividedBy(index).toNumber()) / FUNDING_PERIOD
+    console.log('period ' + period)
+
+    const funding = Math.log(mark.dividedBy(index).toNumber()) / FUNDING_PERIOD
+
+    return { period: period, funding: funding }
   }
 
   const getCurrentImpliedFunding = async () => {
@@ -308,7 +329,7 @@ export const useController = () => {
     impliedVol,
     updateOperator,
     normFactor,
-    fundingPerHalfHour,
+    dailyHistoricalFunding,
     getDebtAmount,
     getShortAmountFromDebt,
     burnAndRedeem,
