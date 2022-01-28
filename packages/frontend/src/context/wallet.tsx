@@ -178,6 +178,11 @@ const WalletProvider: React.FC = ({ children }) => {
 
         wallets: [
           { walletName: 'metamask', preferred: true },
+          { walletName: 'coinbase', preferred: true },
+          {
+            walletName: 'walletLink',
+            rpcUrl: RPC_URL,
+          },
           {
             walletName: 'walletConnect',
             preferred: true,
@@ -191,11 +196,14 @@ const WalletProvider: React.FC = ({ children }) => {
             preferred: true,
             appName: 'Opyn V2',
           },
-          { walletName: 'coinbase', preferred: true },
           {
             walletName: 'ledger',
             preferred: true,
             rpcUrl: RPC_URL,
+          },
+          {
+            walletName: 'gnosis',
+            appName: 'WalletConnect',
           },
         ],
       },
