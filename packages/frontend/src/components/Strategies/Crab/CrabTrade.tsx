@@ -107,7 +107,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
         depositError = 'Deposits and withdraws available after the hedge auction'
         withdrawError = 'Deposits and withdraws available after the hedge auction'
       }
-      if (currentImpliedFunding < 0.75 * dailyHistoricalFunding.funding) {
+      if (currentImpliedFunding <= 0.75 * dailyHistoricalFunding.funding) {
         warning = `Current implied funding is 75% lower than the last ${dailyHistoricalFunding.period} hours. Consider if you want to deposit now or later`
       }
     }
@@ -264,7 +264,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
             )}
             {depositOption === 0 ? (
               <PrimaryButton
-                variant={Number(depositPriceImpact) > 3 ? 'outlined' : 'contained'}
+                variant={Number(depositPriceImpact) > 3 || !!warning ? 'outlined' : 'contained'}
                 onClick={() => deposit()}
                 disabled={txLoading || !!depositError}
                 style={
