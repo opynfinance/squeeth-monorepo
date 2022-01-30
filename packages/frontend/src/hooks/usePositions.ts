@@ -1,7 +1,7 @@
 import { useQuery } from '@apollo/client'
 import { Position } from '@uniswap/v3-sdk'
 import BigNumber from 'bignumber.js'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import NFTpositionManagerABI from '../abis/NFTpositionmanager.json'
 import { useWallet } from '@context/wallet'
@@ -18,7 +18,7 @@ import { useVaultManager } from './contracts/useVaultManager'
 import { useAddresses } from './useAddress'
 import useInterval from './useInterval'
 import { useUsdAmount } from './useUsdAmount'
-import { calcUnrealizedPnl } from '../lib/pnl'
+import { calcUnrealizedPnl, calcDollarShortUnrealizedpnl, calcDollarLongUnrealizedpnl } from '../lib/pnl'
 
 const bigZero = new BigNumber(0)
 
@@ -31,7 +31,7 @@ export const usePositions = () => {
 
   const [positionType, setPositionType] = useState(PositionType.NONE)
 
-  const { data, loading, refetch, subscribeToMore } = useQuery<swaps, swapsVariables>(SWAPS_QUERY, {
+  const { data, refetch, subscribeToMore } = useQuery<swaps, swapsVariables>(SWAPS_QUERY, {
     variables: {
       poolAddress: squeethPool?.toLowerCase(),
       origin: address || '',
@@ -216,6 +216,7 @@ export const usePositions = () => {
     isLong: positionType === PositionType.LONG,
     isShort: positionType === PositionType.SHORT,
     isLP: squeethLiquidity.gt(0) || wethLiquidity.gt(0),
+    isWethToken0,
   }
 }
 
@@ -496,6 +497,8 @@ const useShortPositions = () => {
 }
 
 export const usePnL = () => {
+  const [shortUnrealizedPNL, setShortUnrealizedPNL] = useState('')
+  const [longUnrealizedPNL, setLongUnrealizedPNL] = useState('')
   const {
     usdAmount: longUsdAmt,
     squeethAmount: wSqueethBal,
@@ -503,8 +506,16 @@ export const usePnL = () => {
     refetch: refetchLong,
   } = useLongPositions()
   const { usdAmount: shortUsdAmt, realizedPNL: shortRealizedPNL, refetch: refetchShort } = useShortPositions()
-  const { positionType, squeethAmount, wethAmount, shortVaults, loading: positionLoading } = usePositions()
-  const { ethPrice } = useWorldContext()
+  const {
+    positionType,
+    squeethAmount,
+    wethAmount,
+    shortVaults,
+    loading: positionLoading,
+    swaps,
+    isWethToken0,
+  } = usePositions()
+  const { ethPrice, ethPriceMap } = useWorldContext()
   const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
 
   const [sellQuote, setSellQuote] = useState({
@@ -550,10 +561,28 @@ export const usePnL = () => {
     setShortGain(_gain)
   }, [buyQuote.toString(), ethPrice.toString(), wethAmount.toString(), squeethAmount.toString()])
 
-  const shortUnrealizedPNL = useMemo(
+  const spnl = useMemo(
     () => calcUnrealizedPnl({ wethAmount, buyQuote, ethPrice }),
     [buyQuote.toString(), ethPrice.toString(), wethAmount.toString()],
   )
+
+  useEffect(() => {
+    ;(async () => {
+      if (swaps) {
+        const pnl = await calcDollarShortUnrealizedpnl(swaps, isWethToken0, getBuyQuote, ethPrice, ethPriceMap)
+        setShortUnrealizedPNL(pnl)
+      }
+    })()
+  }, [ethPrice.toString(), getBuyQuote, isWethToken0, swaps?.length])
+
+  useEffect(() => {
+    ;(async () => {
+      if (swaps) {
+        const pnl = await calcDollarLongUnrealizedpnl(swaps, isWethToken0, getSellQuote, ethPrice, ethPriceMap)
+        setLongUnrealizedPNL(pnl)
+      }
+    })()
+  }, [ethPrice.toString(), getSellQuote, isWethToken0, swaps?.length])
 
   return {
     longGain,
@@ -569,6 +598,7 @@ export const usePnL = () => {
     longRealizedPNL,
     refetch,
     shortUnrealizedPNL,
+    longUnrealizedPNL,
   }
 }
 
