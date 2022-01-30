@@ -158,6 +158,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     longRealizedPNL,
     shortRealizedPNL,
     shortUnrealizedPNL,
+    longUnrealizedPNL,
     loading,
     refetch,
   } = usePnL()
@@ -165,8 +166,6 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
   const {
     positionType: pType,
     squeethAmount,
-    shortDebt,
-    wethAmount,
     shortVaults,
     firstValidVault,
     vaultId,
@@ -187,7 +186,6 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
   } = useTrade()
   const { ethPrice } = useWorldContext()
   const tradeAmount = new BigNumber(tradeAmountInput)
-  const { index } = useController()
   const [fetchingNew, setFetchingNew] = useState(false)
   const [postTradeAmt, setPostTradeAmt] = useState(new BigNumber(0))
   const [postPosition, setPostPosition] = useState(PositionType.NONE)
@@ -370,15 +368,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
                       className={pnlClass(positionType, longGain, shortGain, classes)}
                       style={{ fontWeight: 600 }}
                     >
-                      {getPositionBasedValue(
-                        `$${sellQuote.amountOut
-                          .minus(wethAmount.abs())
-                          .times(toTokenAmount(index, 18).sqrt())
-                          .toFixed(2)}`,
-                        `$${shortUnrealizedPNL.toFixed(2)}`,
-                        '--',
-                        'Loading',
-                      )}
+                      {getPositionBasedValue(`$${longUnrealizedPNL}`, `$${shortUnrealizedPNL}`, '--', 'Loading')}
                     </Typography>
                     <Typography
                       variant="caption"
