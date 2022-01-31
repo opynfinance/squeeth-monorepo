@@ -77,7 +77,20 @@ export const usePositions = () => {
   const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
   const vaultId = shortVaults[firstValidVault]?.id || 0
 
-  const { squeethAmount, wethAmount, usdAmount } = useMemo(
+  const {
+    squeethAmount,
+    wethAmount,
+    longRealizedSqueeth,
+    totalUSDSpent,
+    longRealizedUSD,
+    longTotalSqueeth,
+    shortRealizedSqueeth,
+    shortRealizedUSD,
+    totalUSDReceived,
+    shortTotalSqueeth,
+    longUsdAmount,
+    shortUsdAmount,
+  } = useMemo(
     () =>
       swaps?.reduce(
         (acc, s) => {
@@ -93,39 +106,95 @@ export const usePositions = () => {
 
           //<0 means, buying squeeth
           //>0 means selling squeeth
-          acc.totalSqueeth = acc.totalSqueeth.plus(squeethAmt)
-          acc.totalETHSpent = acc.totalETHSpent.plus(wethAmt)
-          acc.totalUSDSpent = acc.totalUSDSpent.plus(usdAmt)
+          if (squeethAmt.isPositive()) {
+            acc.shortTotalSqueeth = acc.shortTotalSqueeth.plus(squeethAmt.abs())
+            acc.totalUSDReceived = acc.totalUSDReceived.plus(usdAmt.abs())
+            acc.longRealizedSqueeth = acc.longRealizedSqueeth.plus(squeethAmt.abs())
+            acc.longRealizedUSD = acc.longRealizedUSD.plus(usdAmt.abs())
+          } else if (squeethAmt.isNegative()) {
+            acc.shortRealizedSqueeth = acc.shortRealizedSqueeth.plus(squeethAmt.abs())
+            acc.shortRealizedUSD = acc.shortRealizedUSD.plus(usdAmt.abs())
+            acc.longTotalSqueeth = acc.longTotalSqueeth.plus(squeethAmt.abs())
+            acc.totalUSDSpent = acc.totalUSDSpent.plus(usdAmt.abs())
+          }
 
-          acc.usdAmount = acc.usdAmount.plus(usdAmt)
           if (acc.squeethAmount.isZero()) {
-            acc.usdAmount = bigZero
-            acc.wethAmount = bigZero
-            acc.totalSqueeth = bigZero
-            acc.totalETHSpent = bigZero
-            acc.totalUSDSpent = bigZero
+            acc.longUsdAmount = BIG_ZERO
+            acc.shortUsdAmount = BIG_ZERO
+            acc.wethAmount = BIG_ZERO
+            acc.longTotalSqueeth = BIG_ZERO
+            acc.shortTotalSqueeth = BIG_ZERO
+            acc.totalUSDSpent = BIG_ZERO
+          } else {
+            // when the position is partially closed, will accumulate usdamount
+            acc.longUsdAmount = acc.longUsdAmount.plus(usdAmt)
+            acc.shortUsdAmount = acc.shortUsdAmount.plus(usdAmt.negated())
+            acc.wethAmount = acc.wethAmount.plus(wethAmt.negated())
           }
 
           return acc
         },
         {
-          squeethAmount: bigZero,
-          wethAmount: bigZero,
-          usdAmount: bigZero,
-          totalSqueeth: bigZero,
-          totalETHSpent: bigZero,
-          totalUSDSpent: bigZero,
+          squeethAmount: BIG_ZERO,
+          wethAmount: BIG_ZERO,
+          longUsdAmount: BIG_ZERO,
+          shortUsdAmount: BIG_ZERO,
+          totalUSDSpent: BIG_ZERO,
+          shortTotalSqueeth: BIG_ZERO,
+          totalUSDReceived: BIG_ZERO,
+          longTotalSqueeth: BIG_ZERO,
+          shortRealizedSqueeth: BIG_ZERO,
+          shortRealizedUSD: BIG_ZERO,
+          longRealizedSqueeth: BIG_ZERO,
+          longRealizedUSD: BIG_ZERO,
         },
       ) || {
-        squeethAmount: bigZero,
-        wethAmount: bigZero,
-        usdAmount: bigZero,
-        totalSqueeth: bigZero,
-        totalETHSpent: bigZero,
-        totalUSDSpent: bigZero,
+        squeethAmount: BIG_ZERO,
+        wethAmount: BIG_ZERO,
+        longUsdAmount: BIG_ZERO,
+        shortUsdAmount: BIG_ZERO,
+        totalUSDSpent: BIG_ZERO,
+        shortTotalSqueeth: BIG_ZERO,
+        totalUSDReceived: BIG_ZERO,
+        longTotalSqueeth: BIG_ZERO,
+        shortRealizedSqueeth: BIG_ZERO,
+        shortRealizedUSD: BIG_ZERO,
+        longRealizedSqueeth: BIG_ZERO,
+        longRealizedUSD: BIG_ZERO,
       },
     [isWethToken0, swaps?.length],
   )
+
+  const { longRealizedPNL } = useMemo(() => {
+    if (!longRealizedSqueeth.gt(0)) return { longRealizedPNL: BIG_ZERO }
+    const costForOneSqth = !totalUSDSpent.isEqualTo(0) ? totalUSDSpent.div(longTotalSqueeth) : BIG_ZERO
+    const realizedForOneSqth = !longRealizedUSD.isEqualTo(0) ? longRealizedUSD.div(longRealizedSqueeth) : BIG_ZERO
+    const pnlForOneSqth = realizedForOneSqth.minus(costForOneSqth)
+
+    return {
+      longRealizedPNL: pnlForOneSqth.multipliedBy(longRealizedSqueeth),
+    }
+  }, [
+    longRealizedSqueeth.toString(),
+    longRealizedUSD.toString(),
+    longTotalSqueeth.toString(),
+    totalUSDSpent.toString(),
+  ])
+
+  const { shortRealizedPNL } = useMemo(() => {
+    if (!shortRealizedSqueeth.gt(0)) return { shortRealizedPNL: BIG_ZERO }
+
+    const costForOneSqth = !totalUSDReceived.isEqualTo(0) ? totalUSDReceived.div(shortTotalSqueeth) : BIG_ZERO
+    const realizedForOneSqth = !shortRealizedUSD.isEqualTo(0) ? shortRealizedUSD.div(shortRealizedSqueeth) : BIG_ZERO
+    const pnlForOneSqth = realizedForOneSqth.minus(costForOneSqth)
+
+    return { shortRealizedPNL: pnlForOneSqth.multipliedBy(shortRealizedSqueeth) }
+  }, [
+    shortRealizedSqueeth.toString(),
+    shortRealizedUSD.toString(),
+    shortTotalSqueeth.toString(),
+    totalUSDReceived.toString(),
+  ])
 
   const mintedDebt = useMemo(() => {
     // squeethAmount = user long balance if oSqueethBal > 0, but it could also be minted balance
@@ -218,7 +287,8 @@ export const usePositions = () => {
     isShort: positionType === PositionType.SHORT,
     isLP: squeethLiquidity.gt(0) || wethLiquidity.gt(0),
     isWethToken0,
-    usdAmount,
+    longRealizedPNL,
+    shortRealizedPNL,
   }
 }
 
@@ -501,13 +571,8 @@ const useShortPositions = () => {
 export const usePnL = () => {
   const [shortUnrealizedPNL, setShortUnrealizedPNL] = useState({ usd: BIG_ZERO, eth: BIG_ZERO })
   const [longUnrealizedPNL, setLongUnrealizedPNL] = useState({ usd: BIG_ZERO, eth: BIG_ZERO })
-  const {
-    usdAmount: longUsdAmt,
-    squeethAmount: wSqueethBal,
-    realizedPNL: longRealizedPNL,
-    refetch: refetchLong,
-  } = useLongPositions()
-  const { usdAmount: shortUsdAmt, realizedPNL: shortRealizedPNL, refetch: refetchShort } = useShortPositions()
+  const { usdAmount: longUsdAmt, squeethAmount: wSqueethBal, refetch: refetchLong } = useLongPositions()
+  const { usdAmount: shortUsdAmt, refetch: refetchShort } = useShortPositions()
   const {
     positionType,
     squeethAmount,
@@ -516,7 +581,8 @@ export const usePnL = () => {
     loading: positionLoading,
     swaps,
     isWethToken0,
-    usdAmount,
+    longRealizedPNL,
+    shortRealizedPNL,
   } = usePositions()
   const { ethPrice, ethPriceMap } = useWorldContext()
   const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
@@ -563,16 +629,6 @@ export const usePnL = () => {
     const _gain = new BigNumber(100).minus(_currentValue)
     setShortGain(_gain)
   }, [buyQuote.toString(), ethPrice.toString(), wethAmount.toString(), squeethAmount.toString()])
-
-  // const spnl = useMemo(
-  //   () => calcUnrealizedPnl({ wethAmount, buyQuote, ethPrice }),
-  //   [buyQuote.toString(), ethPrice.toString(), wethAmount.toString()],
-  // )
-
-  // useEffect(() => {
-  //   const sunpnl = buyQuote.times(ethPrice).minus(usdAmount)
-  //   console.log({ sunpnl: sunpnl.toString() })
-  // }, [buyQuote.toString(), ethPrice.toString(), usdAmount.toString()])
 
   useEffect(() => {
     ;(async () => {
