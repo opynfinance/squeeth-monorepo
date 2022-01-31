@@ -79,7 +79,11 @@ export async function calcDollarShortUnrealizedpnl(
 export async function calcDollarLongUnrealizedpnl(
   swaps: swaps_swaps[],
   isWethToken0: boolean,
-  getSellQuote: (squeethAmt: BigNumber) => {},
+  getSellQuote: (squeethAmt: BigNumber) => Promise<{
+    amountOut: BigNumber
+    minimumAmountOut: BigNumber
+    priceImpact: string
+  }>,
   ethPrice: BigNumber,
   ethPriceMap: { [key: string]: number },
 ) {
