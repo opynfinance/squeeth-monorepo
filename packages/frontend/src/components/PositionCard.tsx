@@ -368,7 +368,12 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
                       className={pnlClass(positionType, longGain, shortGain, classes)}
                       style={{ fontWeight: 600 }}
                     >
-                      {getPositionBasedValue(`$${longUnrealizedPNL}`, `$${shortUnrealizedPNL}`, '--', 'Loading')}
+                      {getPositionBasedValue(
+                        `$${longUnrealizedPNL.usd.toFixed(2)}`,
+                        `$${shortUnrealizedPNL.usd.toFixed(2)}`,
+                        '--',
+                        'Loading',
+                      )}
                     </Typography>
                     <Typography
                       variant="caption"
