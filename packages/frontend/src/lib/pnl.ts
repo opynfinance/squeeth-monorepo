@@ -26,21 +26,25 @@ export function calcUnrealizedPnl({ wethAmount, buyQuote, ethPrice }: ShortPnLPa
 export async function calcDollarShortUnrealizedpnl(
   swaps: swaps_swaps[],
   isWethToken0: boolean,
-  getBuyQuote: (squeethAmt: BigNumber) => {},
+  getBuyQuote: (squeethAmt: BigNumber) => Promise<{
+    amountIn: BigNumber
+    maximumAmountIn: BigNumber
+    priceImpact: string
+  }>,
   ethPrice: BigNumber,
   ethPriceMap: { [key: string]: number },
 ) {
   const result = swaps?.length
-    ? swaps?.map(async (item) => {
-        const squeethAmt = new BigNumber(isWethToken0 ? item.amount1 : item.amount0)
-        const wethAmt = new BigNumber(isWethToken0 ? item.amount0 : item.amount1)
+    ? swaps?.map(async (swap) => {
+        const squeethAmt = new BigNumber(isWethToken0 ? swap.amount1 : swap.amount0)
+        const wethAmt = new BigNumber(isWethToken0 ? swap.amount0 : swap.amount1)
         const buyQuote = await getBuyQuote(squeethAmt.abs())
 
         return {
           wethAmt: wethAmt.abs(),
-          squeethAmt: squeethAmt.abs(),
+          squeethAmt,
           buyQuote,
-          timestamp: item.timestamp,
+          timestamp: swap.timestamp,
         }
       })
     : []
@@ -54,13 +58,13 @@ export async function calcDollarShortUnrealizedpnl(
       if (curr.squeethAmt.isPositive()) {
         acc.sell = !curr.buyQuote?.amountIn?.isEqualTo(0)
           ? acc.sell.plus(
-              curr.wethAmt.times(ethPrice).minus(curr.buyQuote?.amountIn?.times(new BigNumber(ethPriceMap[time]))),
+              curr.buyQuote?.amountIn?.times(ethPrice).minus(curr.wethAmt.times(new BigNumber(ethPriceMap[time]))),
             )
           : BIG_ZERO
       } else {
         acc.buy = !curr.buyQuote?.amountIn?.isEqualTo(0)
           ? acc.buy.plus(
-              curr.wethAmt.times(ethPrice).minus(curr.buyQuote?.amountIn?.times(new BigNumber(ethPriceMap[time]))),
+              curr.buyQuote?.amountIn?.times(ethPrice).minus(curr.wethAmt.times(new BigNumber(ethPriceMap[time]))),
             )
           : BIG_ZERO
       }
@@ -69,7 +73,7 @@ export async function calcDollarShortUnrealizedpnl(
     { sell: BIG_ZERO, buy: BIG_ZERO },
   )
 
-  return sell.minus(buy).toFixed(2)
+  return { usd: sell.minus(buy), eth: sell.minus(buy).div(ethPrice) }
 }
 
 export async function calcDollarLongUnrealizedpnl(
@@ -80,16 +84,16 @@ export async function calcDollarLongUnrealizedpnl(
   ethPriceMap: { [key: string]: number },
 ) {
   const result = swaps?.length
-    ? swaps?.map(async (item) => {
-        const squeethAmt = new BigNumber(isWethToken0 ? item.amount1 : item.amount0)
-        const wethAmt = new BigNumber(isWethToken0 ? item.amount0 : item.amount1)
+    ? swaps?.map(async (swap) => {
+        const squeethAmt = new BigNumber(isWethToken0 ? swap.amount1 : swap.amount0)
+        const wethAmt = new BigNumber(isWethToken0 ? swap.amount0 : swap.amount1)
         const sellQuote = await getSellQuote(squeethAmt.abs())
 
         return {
           wethAmt: wethAmt.abs(),
-          squeethAmt: squeethAmt.abs(),
+          squeethAmt,
           sellQuote,
-          timestamp: item.timestamp,
+          timestamp: swap.timestamp,
         }
       })
     : []
@@ -118,5 +122,5 @@ export async function calcDollarLongUnrealizedpnl(
     { buy: BIG_ZERO, sell: BIG_ZERO },
   )
 
-  return buy.minus(sell).toFixed(2)
+  return { usd: buy.minus(sell), eth: buy.minus(sell).div(ethPrice) }
 }
