@@ -19,6 +19,7 @@ import { useAddresses } from './useAddress'
 import useInterval from './useInterval'
 import { useUsdAmount } from './useUsdAmount'
 import { calcUnrealizedPnl, calcDollarShortUnrealizedpnl, calcDollarLongUnrealizedpnl } from '../lib/pnl'
+import { BIG_ZERO } from '../constants/'
 
 const bigZero = new BigNumber(0)
 
@@ -76,7 +77,7 @@ export const usePositions = () => {
   const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
   const vaultId = shortVaults[firstValidVault]?.id || 0
 
-  const { squeethAmount, wethAmount } = useMemo(
+  const { squeethAmount, wethAmount, usdAmount } = useMemo(
     () =>
       swaps?.reduce(
         (acc, s) => {
@@ -217,6 +218,7 @@ export const usePositions = () => {
     isShort: positionType === PositionType.SHORT,
     isLP: squeethLiquidity.gt(0) || wethLiquidity.gt(0),
     isWethToken0,
+    usdAmount,
   }
 }
 
@@ -497,8 +499,8 @@ const useShortPositions = () => {
 }
 
 export const usePnL = () => {
-  const [shortUnrealizedPNL, setShortUnrealizedPNL] = useState('')
-  const [longUnrealizedPNL, setLongUnrealizedPNL] = useState('')
+  const [shortUnrealizedPNL, setShortUnrealizedPNL] = useState({ usd: BIG_ZERO, eth: BIG_ZERO })
+  const [longUnrealizedPNL, setLongUnrealizedPNL] = useState({ usd: BIG_ZERO, eth: BIG_ZERO })
   const {
     usdAmount: longUsdAmt,
     squeethAmount: wSqueethBal,
@@ -514,6 +516,7 @@ export const usePnL = () => {
     loading: positionLoading,
     swaps,
     isWethToken0,
+    usdAmount,
   } = usePositions()
   const { ethPrice, ethPriceMap } = useWorldContext()
   const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
@@ -561,10 +564,15 @@ export const usePnL = () => {
     setShortGain(_gain)
   }, [buyQuote.toString(), ethPrice.toString(), wethAmount.toString(), squeethAmount.toString()])
 
-  const spnl = useMemo(
-    () => calcUnrealizedPnl({ wethAmount, buyQuote, ethPrice }),
-    [buyQuote.toString(), ethPrice.toString(), wethAmount.toString()],
-  )
+  // const spnl = useMemo(
+  //   () => calcUnrealizedPnl({ wethAmount, buyQuote, ethPrice }),
+  //   [buyQuote.toString(), ethPrice.toString(), wethAmount.toString()],
+  // )
+
+  // useEffect(() => {
+  //   const sunpnl = buyQuote.times(ethPrice).minus(usdAmount)
+  //   console.log({ sunpnl: sunpnl.toString() })
+  // }, [buyQuote.toString(), ethPrice.toString(), usdAmount.toString()])
 
   useEffect(() => {
     ;(async () => {
@@ -573,7 +581,7 @@ export const usePnL = () => {
         setShortUnrealizedPNL(pnl)
       }
     })()
-  }, [ethPrice.toString(), getBuyQuote, isWethToken0, swaps?.length])
+  }, [ethPrice.toString(), isWethToken0, swaps?.length, getBuyQuote])
 
   useEffect(() => {
     ;(async () => {
@@ -582,7 +590,7 @@ export const usePnL = () => {
         setLongUnrealizedPNL(pnl)
       }
     })()
-  }, [ethPrice.toString(), getSellQuote, isWethToken0, swaps?.length])
+  }, [ethPrice.toString(), isWethToken0, swaps?.length, getSellQuote])
 
   return {
     longGain,
