@@ -78,6 +78,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
     calculateEthWillingToPay,
     calculateETHtoBorrowFromUniswap,
     isTimeHedgeAvailable,
+    isPriceHedgeAvailable,
   } = useCrab()
   const { minCurrentUsd, minPnL, loading } = useCrabPosition(address || '')
   const { isRestricted } = useRestrictUser()
@@ -102,7 +103,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
       if (withdrawAmount.gt(currentEthValue)) {
         withdrawError = 'Withdraw amount greater than strategy balance'
       }
-      if (!isTimeHedgeAvailable) {
+      if (isTimeHedgeAvailable || isPriceHedgeAvailable) {
         depositError = 'Deposits and withdraws available after the auction'
         withdrawError = 'Deposits and withdraws available after the auction'
       }
