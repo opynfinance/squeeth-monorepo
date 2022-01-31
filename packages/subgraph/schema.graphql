@@ -54,6 +54,7 @@ enum Action {
 
 type VaultHistory @entity {
   id: ID!
+  txid: String!
   timestamp: BigInt!
   totalEthCollateralAmount: BigInt!
   oSqthAmount: BigInt!

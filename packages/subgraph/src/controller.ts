@@ -135,15 +135,13 @@ export function handleDepositCollateral(event: DepositCollateral): void {
 
   // update TVL stats
   const hourStatSnapshot = getHourStatSnapshot(timestamp);
-  hourStatSnapshot.totalCollateralAmount = hourStatSnapshot.totalCollateralAmount.plus(
-    event.params.amount
-  );
+  hourStatSnapshot.totalCollateralAmount =
+    hourStatSnapshot.totalCollateralAmount.plus(event.params.amount);
   hourStatSnapshot.save();
 
   const dayStatSnapshot = getDayStatSnapshot(timestamp);
-  dayStatSnapshot.totalCollateralAmount = dayStatSnapshot.totalCollateralAmount.plus(
-    event.params.amount
-  );
+  dayStatSnapshot.totalCollateralAmount =
+    dayStatSnapshot.totalCollateralAmount.plus(event.params.amount);
   dayStatSnapshot.save();
 }
 
@@ -187,15 +185,13 @@ export function handleLiquidate(event: Liquidate): void {
 
   // update TVL stats
   const hourStatSnapshot = getHourStatSnapshot(timestamp);
-  hourStatSnapshot.totalCollateralAmount = hourStatSnapshot.totalCollateralAmount.minus(
-    event.params.collateralPaid
-  );
+  hourStatSnapshot.totalCollateralAmount =
+    hourStatSnapshot.totalCollateralAmount.minus(event.params.collateralPaid);
   hourStatSnapshot.save();
 
   const dayStatSnapshot = getDayStatSnapshot(timestamp);
-  dayStatSnapshot.totalCollateralAmount = dayStatSnapshot.totalCollateralAmount.minus(
-    event.params.collateralPaid
-  );
+  dayStatSnapshot.totalCollateralAmount =
+    dayStatSnapshot.totalCollateralAmount.minus(event.params.collateralPaid);
   dayStatSnapshot.save();
 
   const liquidation = new Liquidation(
@@ -311,15 +307,13 @@ export function handleWithdrawCollateral(event: WithdrawCollateral): void {
 
   // update TVL stats
   const hourStatSnapshot = getHourStatSnapshot(timestamp);
-  hourStatSnapshot.totalCollateralAmount = hourStatSnapshot.totalCollateralAmount.minus(
-    event.params.amount
-  );
+  hourStatSnapshot.totalCollateralAmount =
+    hourStatSnapshot.totalCollateralAmount.minus(event.params.amount);
   hourStatSnapshot.save();
 
   const dayStatSnapshot = getDayStatSnapshot(timestamp);
-  dayStatSnapshot.totalCollateralAmount = dayStatSnapshot.totalCollateralAmount.minus(
-    event.params.amount
-  );
+  dayStatSnapshot.totalCollateralAmount =
+    dayStatSnapshot.totalCollateralAmount.minus(event.params.amount);
   dayStatSnapshot.save();
 }
 
@@ -400,10 +394,11 @@ function getTransactionDetail(
   transactionHash: string,
   debtAmount: BigInt
 ): VaultHistory {
-  const vaultHistory = new VaultHistory(transactionHash);
+  const vaultHistory = new VaultHistory(transactionHash + "-" + action);
   vaultHistory.totalEthCollateralAmount = vault.collateralAmount;
   vaultHistory.action = action;
   vaultHistory.vaultId = vaultId;
+  vaultHistory.txid = transactionHash;
   vaultHistory.timestamp = timestamp;
   if (
     action === "OPEN_SHORT" ||
