@@ -233,8 +233,6 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
   }, [shortVaults?.length, firstValidVault])
 
   const { existingCollatPercent } = useVaultData(Number(vaultId))
-  console.log('fvv ' + Number(vaultId))
-  console.log('collat % ' + existingCollatPercent)
 
   useEffect(() => {
     if (!open) return
