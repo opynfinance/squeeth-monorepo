@@ -13,7 +13,7 @@ import { CircularProgress } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import CrabPosition from './CrabPosition'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useController } from '@hooks/contracts/useController'
@@ -77,36 +77,55 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
     ethIndexPrice,
     calculateEthWillingToPay,
     calculateETHtoBorrowFromUniswap,
+    isTimeHedgeAvailable,
+    isPriceHedgeAvailable,
   } = useCrab()
   const { minCurrentUsd, minPnL, loading } = useCrabPosition(address || '')
   const { isRestricted } = useRestrictUser()
   const { ready } = useSqueethPool()
   const { dailyHistoricalFunding, currentImpliedFunding } = useController()
 
-  let maxCapError: string | undefined
-  let depositError: string | undefined
-  let withdrawError: string | undefined
-  let maxFlashCapError: string | undefined
-  let lowVolError: string | undefined
+  const { depositError, warning, withdrawError } = useMemo(() => {
+    let depositError: string | undefined
+    let withdrawError: string | undefined
+    let warning: string | undefined
 
-  if (connected) {
-    if (ethAmount.plus(depositedAmount).gte(maxCap)) {
-      maxCapError = 'Amount greater than strategy cap'
-    } else if (ethAmount.plus(depositedAmount).plus(borrowEth).gte(maxCap)) {
-      maxFlashCapError = `Amount greater than strategy cap since it flash borrows ${borrowEth.toFixed(
-        2,
-      )} ETH. Input a smaller amount`
+    if (connected) {
+      if (ethAmount.plus(depositedAmount).gte(maxCap)) {
+        depositError = 'Amount greater than strategy cap'
+      } else if (ethAmount.plus(depositedAmount).plus(borrowEth).gte(maxCap)) {
+        depositError = `Amount greater than strategy cap since it flash borrows ${borrowEth.toFixed(
+          2,
+        )} ETH. Input a smaller amount`
+      } else if (toTokenAmount(balance, 18).lt(ethAmount)) {
+        depositError = 'Insufficient ETH balance'
+      }
+      if (withdrawAmount.gt(currentEthValue)) {
+        withdrawError = 'Withdraw amount greater than strategy balance'
+      }
+      if (!isTimeHedgeAvailable || isPriceHedgeAvailable) {
+        depositError = 'Deposits and withdraws available after the hedge auction'
+        withdrawError = 'Deposits and withdraws available after the hedge auction'
+      }
+      if (currentImpliedFunding < 0.75 * dailyHistoricalFunding.funding) {
+        warning = `Current implied funding is 75% lower than the last ${dailyHistoricalFunding.period} hours. Consider if you want to deposit now or later`
+      }
     }
-    if (toTokenAmount(balance, 18).lt(ethAmount)) {
-      depositError = 'Insufficient ETH balance'
-    }
-    if (withdrawAmount.gt(currentEthValue)) {
-      withdrawError = 'Withdraw amount greater than strategy balance'
-    }
-    if (currentImpliedFunding < 0.75 * dailyHistoricalFunding.funding) {
-      lowVolError = `Current implied funding is 75% lower than the last ${dailyHistoricalFunding.period} hours. Consider if you want to deposit now or later`
-    }
-  }
+
+    return { depositError, warning, withdrawError }
+  }, [
+    connected,
+    ethAmount.toString(),
+    depositedAmount.toString(),
+    maxCap.toString(),
+    borrowEth.toString(),
+    balance.toString(),
+    withdrawAmount.toString(),
+    currentEthValue.toString(),
+    currentImpliedFunding.toString(),
+    dailyHistoricalFunding.funding,
+    dailyHistoricalFunding.period,
+  ])
 
   useEffect(() => {
     if (!ready || depositOption !== 0) return
@@ -198,19 +217,15 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
                 actionTxt="Max"
                 unit="ETH"
                 hint={
-                  maxCapError
-                    ? maxCapError
-                    : depositError
+                  depositError
                     ? depositError
-                    : maxFlashCapError
-                    ? maxFlashCapError
-                    : lowVolError
-                    ? lowVolError
+                    : warning
+                    ? warning
                     : `Balance ${toTokenAmount(balance, 18).toFixed(6)} ETH`
                 }
                 convertedValue={ethIndexPrice.times(ethAmount).toFixed(2)}
                 onActionClicked={() => setEthAmount(toTokenAmount(balance, 18))}
-                error={!!maxCapError || !!depositError || !!maxFlashCapError}
+                error={!!depositError}
               />
             ) : (
               <PrimaryInput
@@ -251,9 +266,9 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
               <PrimaryButton
                 variant={Number(depositPriceImpact) > 3 ? 'outlined' : 'contained'}
                 onClick={() => deposit()}
-                disabled={txLoading || !!maxCapError || !!depositError}
+                disabled={txLoading || !!depositError}
                 style={
-                  Number(depositPriceImpact) > 3 || !!lowVolError
+                  Number(depositPriceImpact) > 3 || !!warning
                     ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
                     : { marginTop: '8px' }
                 }
