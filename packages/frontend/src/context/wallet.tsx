@@ -178,7 +178,7 @@ const WalletProvider: React.FC = ({ children }) => {
 
         wallets: [
           { walletName: 'metamask', preferred: true },
-          { walletName: 'coinbase', preferred: true },
+          { walletName: 'coinbase', preferred: false },
           {
             walletName: 'walletLink',
             rpcUrl: RPC_URL,
