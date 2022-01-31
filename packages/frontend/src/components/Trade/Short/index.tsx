@@ -33,6 +33,8 @@ import TradeDetails from '@components/Trade/TradeDetails'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import UniswapData from '@components/Trade/UniswapData'
 import { MIN_COLLATERAL_AMOUNT } from '../../../constants'
+import { PositionType } from '../../../types'
+import { useVaultData } from '@hooks/useVaultData'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -205,7 +207,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
   } = useTrade()
   const amount = new BigNumber(amountInputValue)
   const collateral = new BigNumber(collateralInput)
-  const { firstValidVault, existingCollatPercent, squeethAmount: shortSqueethAmount, isLong } = usePositions()
+  const { firstValidVault, squeethAmount: shortSqueethAmount, isLong } = usePositions()
   const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
 
   const [vaultId, setVaultId] = useState(shortVaults.length ? shortVaults[firstValidVault].id : 0)
@@ -229,6 +231,8 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
 
     setVaultId(shortVaults[firstValidVault].id)
   }, [shortVaults?.length, firstValidVault])
+
+  const { existingCollatPercent } = useVaultData(Number(vaultId))
 
   useEffect(() => {
     if (!open) return
@@ -578,7 +582,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   const {
     shortVaults,
     firstValidVault,
-    existingCollatPercent,
+    squeethAmount: shortSqueethAmount,
     isLong,
     lpedSqueeth,
     mintedDebt,
@@ -615,6 +619,8 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
 
     setVaultId(shortVaults[firstValidVault].id)
   }, [shortVaults?.length])
+
+  const { existingCollatPercent } = useVaultData(Number(vaultId))
 
   useEffect(() => {
     if (!open) return

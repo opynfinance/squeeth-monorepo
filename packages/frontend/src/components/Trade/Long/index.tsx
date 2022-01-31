@@ -15,6 +15,7 @@ import { PrimaryButton } from '@components/Button'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
 import { UniswapIframe } from '@components/Modal/UniswapIframe'
 import { TradeSettings } from '@components/TradeSettings'
+import { useController } from '@hooks/contracts/useController'
 import Confirmed, { ConfirmType } from '../Confirmed'
 import TradeInfoItem from '../TradeInfoItem'
 import UniswapData from '../UniswapData'
@@ -238,11 +239,13 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
   const altTradeAmount = new BigNumber(altAmountInputValue)
   const { selectWallet, connected } = useWallet()
   const { squeethAmount, longSqthBal, isShort } = usePositions()
+  const { dailyHistoricalFunding, currentImpliedFunding } = useController()
 
   let openError: string | undefined
   // let closeError: string | undefined
   let existingShortError: string | undefined
   let priceImpactWarning: string | undefined
+  let highVolError: string | undefined
 
   if (connected) {
     // if (longSqthBal.lt(amount)) {
@@ -256,6 +259,9 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
     }
     if (new BigNumber(quote.priceImpact).gt(3)) {
       priceImpactWarning = 'High Price Impact'
+    }
+    if (currentImpliedFunding >= 1.75 * dailyHistoricalFunding.funding) {
+      highVolError = `Current implied funding is 75% higher than the last ${dailyHistoricalFunding.period} hours. Consider if you want to purchase now or later`
     }
   }
 
@@ -319,7 +325,7 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
                 onActionClicked={() => handleOpenDualInputUpdate(balance.toString(), InputType.ETH)}
                 unit="ETH"
                 convertedValue={amount.times(ethPrice).toFixed(2).toLocaleString()}
-                error={!!existingShortError || !!priceImpactWarning || !!openError}
+                error={!!existingShortError || !!priceImpactWarning || !!openError || !!highVolError}
                 isLoading={inputQuoteLoading}
                 hint={
                   openError ? (
@@ -328,6 +334,8 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
                     existingShortError
                   ) : priceImpactWarning ? (
                     priceImpactWarning
+                  ) : highVolError ? (
+                    highVolError
                   ) : (
                     <div className={classes.hint}>
                       <span>{`Balance ${balance.toFixed(4)}`}</span>
@@ -359,6 +367,8 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
                     existingShortError
                   ) : priceImpactWarning ? (
                     priceImpactWarning
+                  ) : highVolError ? (
+                    highVolError
                   ) : (
                     <div className={classes.hint}>
                       <span className={classes.hintTextContainer}>
@@ -413,12 +423,12 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
                   </PrimaryButton>
                 ) : (
                   <PrimaryButton
-                    variant={longOpenPriceImpactErrorState ? 'outlined' : 'contained'}
+                    variant={longOpenPriceImpactErrorState || !!highVolError ? 'outlined' : 'contained'}
                     onClick={transact}
                     className={classes.amountInput}
                     disabled={!!buyLoading || !!openError || !!existingShortError}
                     style={
-                      longOpenPriceImpactErrorState
+                      longOpenPriceImpactErrorState || !!highVolError
                         ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
                         : { width: '300px' }
                     }

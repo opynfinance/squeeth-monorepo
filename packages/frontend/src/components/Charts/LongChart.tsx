@@ -263,7 +263,10 @@ export function LongChart() {
             Squeeth smart contracts have been audited by Trail of Bits, Akira, and Sherlock. However, smart contracts
             are experimental technology and we encourage caution only risking funds you can afford to lose.
             <br /> <br />
-            If ETH goes down considerably, you may lose some or all of your initial investment.
+            Profitability also depends on the price you enter and exit, which is dependent on implied volatility (the
+            premium of squeeth to ETH). If the squeeth premium to ETH decreases, without a change in ETH price, a long
+            position will incur a loss because it is not worth as much ETH. If ETH goes down considerably, you may lose
+            some or all of your initial investment.
             <a className={classes.header} href={Links.GitBook} target="_blank" rel="noreferrer">
               {' '}
               Learn more.{' '}

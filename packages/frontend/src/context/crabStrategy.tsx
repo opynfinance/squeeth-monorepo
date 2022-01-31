@@ -10,6 +10,7 @@ import { Contract } from 'web3-eth-contract'
 import abi from '../abis/crabStrategy.json'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
+import db from '@utils/firestore'
 
 type CrabStrategyType = {
   loading: boolean
@@ -24,6 +25,8 @@ type CrabStrategyType = {
   profitableMovePercent: number
   slippage: number
   ethIndexPrice: BigNumber
+  isTimeHedgeAvailable: boolean
+  isPriceHedgeAvailable: boolean
   getCollateralFromCrabAmount: (crabAmount: BigNumber) => Promise<BigNumber | null>
   flashDeposit: (amount: BigNumber, slippage: number) => Promise<any>
   flashWithdraw: (amount: BigNumber, slippage: number) => Promise<any>
@@ -62,6 +65,8 @@ const initialState: CrabStrategyType = {
   profitableMovePercent: 0,
   slippage: 0.5,
   ethIndexPrice: BIG_ZERO,
+  isTimeHedgeAvailable: false,
+  isPriceHedgeAvailable: false,
   getCollateralFromCrabAmount: async () => BIG_ZERO,
   flashDeposit: async () => null,
   flashWithdraw: async () => null,
@@ -101,6 +106,8 @@ const CrabProvider: React.FC = ({ children }) => {
   const userCrabBalance = useTokenBalance(crabStrategy, 5, 18)
   const [profitableMovePercent, setProfitableMovePercent] = useState(0)
   const [slippage, setSlippage] = useState(0.5)
+  const [isTimeHedgeAvailable, setIsTimeHedgeAvailable] = useState(false)
+  const [isPriceHedgeAvailable, setIsPriceHedgeAvailable] = useState(false)
 
   useEffect(() => {
     if (!web3 || !crabStrategy) return
@@ -143,6 +150,12 @@ const CrabProvider: React.FC = ({ children }) => {
         }
       })
     getTimeAtLastHedge().then(setTimeAtLastHedge)
+    checkTimeHedge().then((h) => setIsTimeHedgeAvailable(h[0]))
+    if (process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
+      // Check price hedge only if firebase is available
+      const doc = await db.doc('squeeth-monitoring/crab').get()
+      checkPriceHedge(doc?.data()?.lastAuctionTrigger || 0).then(setIsPriceHedgeAvailable)
+    }
   }
 
   useEffect(() => {
@@ -339,6 +352,8 @@ const CrabProvider: React.FC = ({ children }) => {
     flashWithdrawEth,
     setSlippage,
     profitableMovePercent,
+    isTimeHedgeAvailable,
+    isPriceHedgeAvailable,
   }
   return <crabContext.Provider value={store}>{children}</crabContext.Provider>
 }
