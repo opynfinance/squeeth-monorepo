@@ -131,6 +131,5 @@ export const useTransactionHistory = () => {
       (transactionA, transactionB) => transactionB.timestamp - transactionA.timestamp,
     ),
     loading,
-    swapTransactions: transactions,
   }
 }
