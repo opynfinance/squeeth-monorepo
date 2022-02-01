@@ -103,7 +103,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
       if (withdrawAmount.gt(currentEthValue)) {
         withdrawError = 'Withdraw amount greater than strategy balance'
       }
-      if (!isTimeHedgeAvailable || isPriceHedgeAvailable) {
+      if (isTimeHedgeAvailable || isPriceHedgeAvailable) {
         depositError = 'Deposits and withdraws available after the hedge auction'
         withdrawError = 'Deposits and withdraws available after the hedge auction'
       }
@@ -125,6 +125,8 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
     currentImpliedFunding.toString(),
     dailyHistoricalFunding.funding,
     dailyHistoricalFunding.period,
+    isTimeHedgeAvailable,
+    isPriceHedgeAvailable,
   ])
 
   useEffect(() => {
