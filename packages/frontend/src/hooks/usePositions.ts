@@ -18,7 +18,7 @@ import { useVaultManager } from './contracts/useVaultManager'
 import { useAddresses } from './useAddress'
 import useInterval from './useInterval'
 import { useUsdAmount } from './useUsdAmount'
-import { calcUnrealizedPnl, calcDollarShortUnrealizedpnl, calcDollarLongUnrealizedpnl } from '../lib/pnl'
+import { calcDollarShortUnrealizedpnl, calcDollarLongUnrealizedpnl } from '../lib/pnl'
 import { BIG_ZERO } from '../constants/'
 
 const bigZero = new BigNumber(0)
@@ -77,124 +77,95 @@ export const usePositions = () => {
   const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
   const vaultId = shortVaults[firstValidVault]?.id || 0
 
-  const {
-    squeethAmount,
-    wethAmount,
-    longRealizedSqueeth,
-    totalUSDSpent,
-    longRealizedUSD,
-    longTotalSqueeth,
-    shortRealizedSqueeth,
-    shortRealizedUSD,
-    totalUSDReceived,
-    shortTotalSqueeth,
-    longUsdAmount,
-    shortUsdAmount,
-  } = useMemo(
-    () =>
-      swaps?.reduce(
-        (acc, s) => {
-          //values are all from the pool pov
-          //if >0 for the pool, user gave some squeeth to the pool, meaning selling the squeeth
-          const squeethAmt = new BigNumber(isWethToken0 ? s.amount1 : s.amount0)
-          const wethAmt = new BigNumber(isWethToken0 ? s.amount0 : s.amount1)
-          const usdAmt = getUsdAmt(wethAmt, s.timestamp)
+  const { squeethAmount, wethAmount, totalUSDFromBuy, boughtSqueeth, totalUSDFromSell, soldSqueeth, shortUsdAmount } =
+    useMemo(
+      () =>
+        swaps?.reduce(
+          (acc, s) => {
+            //values are all from the pool pov
+            //if >0 for the pool, user gave some squeeth to the pool, meaning selling the squeeth
+            const squeethAmt = new BigNumber(isWethToken0 ? s.amount1 : s.amount0)
+            const wethAmt = new BigNumber(isWethToken0 ? s.amount0 : s.amount1)
+            const usdAmt = getUsdAmt(wethAmt, s.timestamp)
 
-          //buy one squeeth means -1 to the pool, +1 to the user
-          acc.squeethAmount = acc.squeethAmount.plus(squeethAmt.negated())
-          acc.wethAmount = acc.wethAmount.plus(wethAmt.negated())
+            //buy one squeeth means -1 to the pool, +1 to the user
+            acc.squeethAmount = acc.squeethAmount.plus(squeethAmt.negated())
 
-          //<0 means, buying squeeth
-          //>0 means selling squeeth
-          if (squeethAmt.isPositive()) {
-            acc.shortTotalSqueeth = acc.shortTotalSqueeth.plus(squeethAmt.abs())
-            acc.totalUSDReceived = acc.totalUSDReceived.plus(usdAmt.abs())
-            acc.longRealizedSqueeth = acc.longRealizedSqueeth.plus(squeethAmt.abs())
-            acc.longRealizedUSD = acc.longRealizedUSD.plus(usdAmt.abs())
-          } else if (squeethAmt.isNegative()) {
-            acc.shortRealizedSqueeth = acc.shortRealizedSqueeth.plus(squeethAmt.abs())
-            acc.shortRealizedUSD = acc.shortRealizedUSD.plus(usdAmt.abs())
-            acc.longTotalSqueeth = acc.longTotalSqueeth.plus(squeethAmt.abs())
-            acc.totalUSDSpent = acc.totalUSDSpent.plus(usdAmt.abs())
-          }
+            //<0 means, buying squeeth
+            //>0 means selling squeeth
+            if (squeethAmt.isPositive()) {
+              //replacing longRealizedSqueeth and shortTotalSqueeth
+              acc.soldSqueeth = acc.soldSqueeth.plus(squeethAmt.abs())
+              //replacing totalUSDReceived and longRealizedUSD
+              acc.totalUSDFromSell = acc.totalUSDFromSell.plus(usdAmt.abs())
+            } else if (squeethAmt.isNegative()) {
+              //replacing shortRealizedSqueeth and longTotalSqueeth
+              acc.boughtSqueeth = acc.boughtSqueeth.plus(squeethAmt.abs())
 
-          if (acc.squeethAmount.isZero()) {
-            acc.longUsdAmount = BIG_ZERO
-            acc.shortUsdAmount = BIG_ZERO
-            acc.wethAmount = BIG_ZERO
-            acc.longTotalSqueeth = BIG_ZERO
-            acc.shortTotalSqueeth = BIG_ZERO
-            acc.totalUSDSpent = BIG_ZERO
-          } else {
-            // when the position is partially closed, will accumulate usdamount
-            acc.longUsdAmount = acc.longUsdAmount.plus(usdAmt)
-            acc.shortUsdAmount = acc.shortUsdAmount.plus(usdAmt.negated())
-            acc.wethAmount = acc.wethAmount.plus(wethAmt.negated())
-          }
+              //replacing shortRealizedUSD and totalUSDSpent
+              acc.totalUSDFromBuy = acc.totalUSDFromBuy.plus(usdAmt.abs())
+            }
 
-          return acc
-        },
-        {
+            if (acc.squeethAmount.isZero()) {
+              acc.longUsdAmount = BIG_ZERO
+              acc.shortUsdAmount = BIG_ZERO
+              acc.wethAmount = BIG_ZERO
+              acc.boughtSqueeth = BIG_ZERO
+              acc.soldSqueeth = BIG_ZERO
+              acc.totalUSDFromSell = BIG_ZERO
+              acc.totalUSDFromBuy = BIG_ZERO
+            } else {
+              // when the position is partially closed, will accumulate usdamount
+              acc.longUsdAmount = acc.longUsdAmount.plus(usdAmt)
+              acc.shortUsdAmount = acc.shortUsdAmount.plus(usdAmt.negated())
+              acc.wethAmount = acc.wethAmount.plus(wethAmt.negated())
+            }
+
+            return acc
+          },
+          {
+            squeethAmount: BIG_ZERO,
+            wethAmount: BIG_ZERO,
+            longUsdAmount: BIG_ZERO,
+            shortUsdAmount: BIG_ZERO,
+            boughtSqueeth: BIG_ZERO,
+            soldSqueeth: BIG_ZERO,
+            totalUSDFromBuy: BIG_ZERO,
+            totalUSDFromSell: BIG_ZERO,
+          },
+        ) || {
           squeethAmount: BIG_ZERO,
           wethAmount: BIG_ZERO,
           longUsdAmount: BIG_ZERO,
           shortUsdAmount: BIG_ZERO,
-          totalUSDSpent: BIG_ZERO,
-          shortTotalSqueeth: BIG_ZERO,
-          totalUSDReceived: BIG_ZERO,
-          longTotalSqueeth: BIG_ZERO,
-          shortRealizedSqueeth: BIG_ZERO,
-          shortRealizedUSD: BIG_ZERO,
-          longRealizedSqueeth: BIG_ZERO,
-          longRealizedUSD: BIG_ZERO,
+          boughtSqueeth: BIG_ZERO,
+          soldSqueeth: BIG_ZERO,
+          totalUSDFromBuy: BIG_ZERO,
+          totalUSDFromSell: BIG_ZERO,
         },
-      ) || {
-        squeethAmount: BIG_ZERO,
-        wethAmount: BIG_ZERO,
-        longUsdAmount: BIG_ZERO,
-        shortUsdAmount: BIG_ZERO,
-        totalUSDSpent: BIG_ZERO,
-        shortTotalSqueeth: BIG_ZERO,
-        totalUSDReceived: BIG_ZERO,
-        longTotalSqueeth: BIG_ZERO,
-        shortRealizedSqueeth: BIG_ZERO,
-        shortRealizedUSD: BIG_ZERO,
-        longRealizedSqueeth: BIG_ZERO,
-        longRealizedUSD: BIG_ZERO,
-      },
-    [isWethToken0, swaps?.length],
-  )
+      [isWethToken0, swaps?.length],
+    )
 
   const { longRealizedPNL } = useMemo(() => {
-    if (!longRealizedSqueeth.gt(0)) return { longRealizedPNL: BIG_ZERO }
-    const costForOneSqth = !totalUSDSpent.isEqualTo(0) ? totalUSDSpent.div(longTotalSqueeth) : BIG_ZERO
-    const realizedForOneSqth = !longRealizedUSD.isEqualTo(0) ? longRealizedUSD.div(longRealizedSqueeth) : BIG_ZERO
+    if (!soldSqueeth.gt(0)) return { longRealizedPNL: BIG_ZERO }
+    const costForOneSqth = !totalUSDFromBuy.isEqualTo(0) ? totalUSDFromBuy.div(boughtSqueeth) : BIG_ZERO
+    const realizedForOneSqth = !totalUSDFromSell.isEqualTo(0) ? totalUSDFromSell.div(soldSqueeth) : BIG_ZERO
     const pnlForOneSqth = realizedForOneSqth.minus(costForOneSqth)
 
     return {
-      longRealizedPNL: pnlForOneSqth.multipliedBy(longRealizedSqueeth),
+      longRealizedPNL: pnlForOneSqth.multipliedBy(soldSqueeth),
     }
-  }, [
-    longRealizedSqueeth.toString(),
-    longRealizedUSD.toString(),
-    longTotalSqueeth.toString(),
-    totalUSDSpent.toString(),
-  ])
+  }, [soldSqueeth.toString(), totalUSDFromSell.toString(), boughtSqueeth.toString(), totalUSDFromBuy.toString()])
 
   const { shortRealizedPNL } = useMemo(() => {
-    if (!shortRealizedSqueeth.gt(0)) return { shortRealizedPNL: BIG_ZERO }
+    if (!boughtSqueeth.gt(0)) return { shortRealizedPNL: BIG_ZERO }
 
-    const costForOneSqth = !totalUSDReceived.isEqualTo(0) ? totalUSDReceived.div(shortTotalSqueeth) : BIG_ZERO
-    const realizedForOneSqth = !shortRealizedUSD.isEqualTo(0) ? shortRealizedUSD.div(shortRealizedSqueeth) : BIG_ZERO
+    const costForOneSqth = !totalUSDFromSell.isEqualTo(0) ? totalUSDFromSell.div(soldSqueeth) : BIG_ZERO
+    const realizedForOneSqth = !totalUSDFromBuy.isEqualTo(0) ? totalUSDFromBuy.div(boughtSqueeth) : BIG_ZERO
     const pnlForOneSqth = realizedForOneSqth.minus(costForOneSqth)
 
-    return { shortRealizedPNL: pnlForOneSqth.multipliedBy(shortRealizedSqueeth) }
-  }, [
-    shortRealizedSqueeth.toString(),
-    shortRealizedUSD.toString(),
-    shortTotalSqueeth.toString(),
-    totalUSDReceived.toString(),
-  ])
+    return { shortRealizedPNL: pnlForOneSqth.multipliedBy(boughtSqueeth) }
+  }, [boughtSqueeth.toString(), totalUSDFromBuy.toString(), soldSqueeth.toString(), totalUSDFromSell.toString()])
 
   const mintedDebt = useMemo(() => {
     // squeethAmount = user long balance if oSqueethBal > 0, but it could also be minted balance
@@ -289,6 +260,9 @@ export const usePositions = () => {
     isWethToken0,
     longRealizedPNL,
     shortRealizedPNL,
+    shortUsdAmount,
+    totalUSDFromBuy,
+    totalUSDFromSell,
   }
 }
 
@@ -583,6 +557,7 @@ export const usePnL = () => {
     isWethToken0,
     longRealizedPNL,
     shortRealizedPNL,
+    totalUSDFromBuy,
   } = usePositions()
   const { ethPrice, ethPriceMap } = useWorldContext()
   const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
@@ -615,10 +590,10 @@ export const usePnL = () => {
       setLongGain(new BigNumber(0))
       return
     }
-    const _currentValue = sellQuote.amountOut.times(100).div(wethAmount.absoluteValue())
-    const _gain = _currentValue.minus(100)
+    // const _currentValue = sellQuote.amountOut.times(100).div(wethAmount.absoluteValue())
+    const _gain = longUnrealizedPNL.usd.dividedBy(totalUSDFromBuy).times(100)
     setLongGain(_gain)
-  }, [ethPrice.toString(), wethAmount.toString(), sellQuote.amountOut.toString(), squeethAmount.toString()])
+  }, [loading, longUnrealizedPNL.usd.toString(), sellQuote.amountOut.toString(), totalUSDFromBuy.toString()])
 
   useEffect(() => {
     if (squeethAmount.isZero()) {
