@@ -558,6 +558,7 @@ export const usePnL = () => {
     longRealizedPNL,
     shortRealizedPNL,
     totalUSDFromBuy,
+    totalUSDFromSell,
   } = usePositions()
   const { ethPrice, ethPriceMap } = useWorldContext()
   const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
@@ -600,10 +601,10 @@ export const usePnL = () => {
       setLongGain(new BigNumber(0))
       return
     }
-    const _currentValue = buyQuote.div(wethAmount.absoluteValue()).times(100)
-    const _gain = new BigNumber(100).minus(_currentValue)
+    // const _currentValue = buyQuote.div(wethAmount.absoluteValue()).times(100)
+    const _gain = shortUnrealizedPNL.usd.dividedBy(totalUSDFromSell).times(100)
     setShortGain(_gain)
-  }, [buyQuote.toString(), ethPrice.toString(), wethAmount.toString(), squeethAmount.toString()])
+  }, [shortUnrealizedPNL.usd.toString(), squeethAmount.toString(), totalUSDFromSell.toString()])
 
   useEffect(() => {
     ;(async () => {
