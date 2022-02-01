@@ -1,6 +1,6 @@
 ### Squeeth User Terms of Service
 
-### Last Updated: January 10, 2022
+### Last Updated: January 31, 2022
 
 &nbsp;
 &nbsp;
@@ -12,37 +12,25 @@ Welcome to https://squeeth.opyn.co, a website-hosted user interface, and any ass
 PLEASE BE AWARE THAT THERE ARE ARBITRATION AND CLASS ACTION PROVISIONS THAT MAY AFFECT YOUR RIGHTS.
 You must read this Agreement carefully. By accessing or using the Interface, you signify that you have read, understand, and agree to be bound by this Agreement in its entirety. If you do not agree to these Terms, you are not authorized to access or use the Interface.
 
-OUR INTERFACE IS NOT OFFERED TO PERSONS OR ENTITIES WHO RESIDE IN, ARE CITIZENS OF, ARE LOCATED IN, ARE INCORPORATED IN, OR HAVE A REGISTERED OFFICE IN ANY RESTRICTED TERRITORY (DEFINED BELOW). ANY SUCH PERSON OR ENTITY FROM A RESTRICTED TERRITORY SHALL BE REFERRED TO AS A “RESTRICTED PERSON”. WE DO NOT MAKE EXCEPTIONS; THEREFORE, IF YOU ARE A RESTRICTED PERSON DO NOT ATTEMPT TO USE OUR PROTOCOL OR ACCESS OR ATTEMPT TO ACCESS THE INTERFACE. USE OF A VIRTUAL PRIVATE NETWORK (“VPN”) TO CIRCUMVENT THE RESTRICTIONS SET FORTH HEREIN IS PROHIBITED. WE RESERVE THE RIGHT TO RESTRICT ANY USER’S ACCESS TO THE INTERFACE SUBJECT TO ANY RESTRICTIONS WE MAY SET FORTH IN THIS AGREEMENT.
+OUR INTERFACE IS NOT OFFERED TO PERSONS OR ENTITIES WHO RESIDE IN, ARE CITIZENS OF, ARE LOCATED IN, ARE INCORPORATED IN, OR HAVE A REGISTERED OFFICE IN THE UNITED STATES OF AMERICA (COLLECTIVELY, “US PERSONS”). MOREOVER, OUR INTERFACE IS NOT OFFERED TO PERSONS OR ENTITIES WHO RESIDE IN, ARE CITIZENS OF, ARE LOCATED IN, ARE INCORPORATED IN, OR HAVE A REGISTERED OFFICE IN ANY RESTRICTED TERRITORY, DEFINED BELOW (ANY SUCH PERSON OR ENTITY FROM A RESTRICTED TERRITORY, A “RESTRICTED PERSON”). WE DO NOT MAKE EXCEPTIONS; THEREFORE, IF YOU ARE A US PERSON PERSON DO NOT ATTEMPT TO USE OUR PROTOCOL OR ACCESS OR ATTEMPT TO ACCESS THE INTERFACE. USE OF A VIRTUAL PRIVATE NETWORK (“VPN”) TO CIRCUMVENT THE RESTRICTIONS SET FORTH HEREIN IS PROHIBITED. WE RESERVE THE RIGHT TO RESTRICT ANY USER’S ACCESS TO THE INTERFACE SUBJECT TO ANY RESTRICTIONS WE MAY SET FORTH IN THIS AGREEMENT.
 
 #### 2. Use and Eligibility
 
 As a condition to accessing or using the Interface, you represent, warrant, and covenant to Opyn the following:
 
-you are not a Restricted Person;
-
-you are not a resident, national, or agent of Belarus, Burma (Myanmar), Cote D'Ivoire (Ivory Coast), Cuba, Democratic Republic of Congo, Iran, Iraq, Liberia, North Korea, Sudan, Syria, Zimbabwe, or any other country to which the United States, the United Kingdom or the European Union embargoes goods or imposes similar sanctions (collectively, “Restricted Territories” or singularly a “Restricted Territory”);
-
-you are not a member of any sanctions list or equivalent maintained by the United States government, the United Kingdom government, the European Union, or the United Nations (collectively, “Sanctions Lists Persons”);
-
-you do not intend to transact with any Restricted Person or Sanctions List Person;
-
-you only will transfer legally-obtained Digital Assets (defined below) that belong to you (or you are legally authorized to use), when using, transacting, or connecting to the Interface;
-
-you shall maintain the security and confidentiality of your private keys associated with any Blockchain Technology (defined below) address, passwords, and API keys.
-
-your access to the Interface is not (a) prohibited by and does not otherwise violate or assist you to violate any domestic or foreign law, rule, statute, regulation, by-law, order, protocol, code, decree, or another directive, requirement, or guideline, published or in force that applies to or is otherwise intended to govern or regulate any person, property, transaction, activity, event or other matter, including any rule, order, judgment, directive or other requirement or guideline issued by any domestic or foreign federal, provincial or state, municipal, local or other governmental, regulatory, judicial or administrative authority having jurisdiction over Opyn, you, the Interface or Protocol, or as otherwise duly enacted, enforceable by law, the common law or equity (collectively, “Applicable Laws”); and (b) contributing to or facilitating any illegal activity;
-
-you will obey all Applicable Laws in connection with using the Interface, and you will not use the Interface or Protocol if any Applicable Laws prohibit you from doing so;
-
-you understand the inherent risks associated with Blockchain Technology, the Protocol, and the Interface, which may result in the loss of some or all of your Digital Assets;
-
-you have sufficient knowledge, market sophistication, professional advice, and experience to make your evaluation of the merits and risks of any transaction conducted in connection with the Interface, Protocol, or any Digital Asset;
-
-you accept all consequences of using the Interface, including the risk that you may lose access to your Digital Assets indefinitely;
-
-you are solely responsible for evaluating and understanding any risks related to any transactions involving the Interface, Protocol, or your Digital Assets including but not limited to long or short positions using the Protocol; and
-
-you do not, and will not, use VPN software or any other privacy or anonymization tools or techniques to circumvent, or attempt to circumvent, any restrictions that apply to the Interface.
+- if you are entering into these Terms to access the Protocol or in the future to access the Protocol, then you are not a US Person;
+- you are not a resident, national, or agent of Belarus, Burma (Myanmar), Cote D'Ivoire (Ivory Coast), Cuba, Democratic Republic of Congo, Iran, Iraq, Liberia, North Korea, Sudan, Syria, Zimbabwe, or any other country to which the United States, the United Kingdom or the European Union embargoes goods or imposes similar sanctions (collectively, “Restricted Territories” or singularly a “Restricted Territory”);
+- you are not a member of any sanctions list or equivalent maintained by the United States government, the United Kingdom government, the European Union, or the United Nations (collectively, “Sanctions Lists Persons”);
+- you do not intend to transact with any Restricted Person or Sanctions List Person;
+- you only will transfer legally-obtained Digital Assets (defined below) that belong to you (or you are legally authorized to use), when using, transacting, or connecting to the Interface;
+- you shall maintain the security and confidentiality of your private keys associated with any Blockchain Technology (defined below) address, passwords, and API keys.
+- your access to the Interface is not (a) prohibited by and does not otherwise violate or assist you to violate any domestic or foreign law, rule, statute, regulation, by-law, order, protocol, code, decree, or another directive, requirement, or guideline, published or in force that applies to or is otherwise intended to govern or regulate any person, property, transaction, activity, event or other matter, including any rule, order, judgment, directive or other requirement or guideline issued by any domestic or foreign federal, provincial or state, municipal, local or other governmental, regulatory, judicial or administrative authority having jurisdiction over Opyn, you, the Interface or Protocol, or as otherwise duly enacted, enforceable by law, the common law or equity (collectively, “Applicable Laws”); and (b) contributing to or facilitating any illegal activity;
+- you will obey all Applicable Laws in connection with using the Interface, and you will not use the Interface or Protocol if any Applicable Laws prohibit you from doing so;
+- you understand the inherent risks associated with Blockchain Technology, the Protocol, and the Interface, which may result in the loss of some or all of your Digital Assets;
+- you have sufficient knowledge, market sophistication, professional advice, and experience to make your evaluation of the merits and risks of any transaction conducted in connection with the Interface, Protocol, or any Digital Asset;
+- you accept all consequences of using the Interface, including the risk that you may lose access to your Digital Assets indefinitely;
+- you are solely responsible for evaluating and understanding any risks related to any transactions involving the Interface, Protocol, or your Digital Assets including but not limited to long or short positions using the Protocol; and
+- you do not, and will not, use VPN software or any other privacy or anonymization tools or techniques to circumvent, or attempt to circumvent, any restrictions that apply to the Interface.
 
 #### 3. Age
 
@@ -56,19 +44,12 @@ We care about your privacy. Please note that when you use the Interface, you are
 
 You may not use the Interface to engage in the following categories of activity set forth below or any activities that we determine in our sole discretion may harm us or a third party (“Prohibited Uses”). The Prohibited Uses include but are not limited to:
 
-Any activity that violates any relevant and applicable anti-money laundering and anti-terrorist financing laws and sanctions programs, such as, without limitation, the Bank Secrecy Act and the U.S. Department of Treasury’s Office of Foreign Asset Controls (“Financing Laws”). By using the Interface, you agree that we must comply with Applicable Law including any Financing Laws, which may require us to, upon request by government agencies, take certain actions or provide information which we deem necessary, which may not be in your best interests.
-
-Any transactions involving items that infringe or violate any copyright, trademark, right of publicity or privacy or any other proprietary right under Applicable Law, including but not limited to, sales, distribution, or access to counterfeit software, or other licensed materials without the appropriate authorization from the rights holder; use of Opyn’s Intellectual Property (defined below) without express consent from Opyn.
-
-Any activity that seeks to interfere with or compromise the integrity, security, or proper functioning of the Interface or computer, server, network, personal device, or other information technology system, including, but not limited to, the deployment of viruses; denial-of-service attacks; use of any robot, spider, crawler, scraper or other automated means to extract or export data collected through the Interface; and conduct that imposes, or may impose, an unreasonable or disproportionately large load on our infrastructure.
-
-Any activity that seeks to defraud us or any other person or entity, including, but not limited to, providing any false, inaccurate, or misleading information in order to unlawfully obtain the property of another, or any action that implies an untrue endorsement by or affiliation with Opyn.
-
-Any activity that violates any Applicable Law including but not limited to laws or regulations concerning the integrity of trading markets such as manipulative tactics like spoofing or wash trading.
-
-Any use of the Interface to stalk, harass, bully, or harm another individual, or use of the Interface in any way that is defamatory, obscene, invasive, threatening, or harassing.
-
-Opyn reserves the right to suspend or terminate your access to the Interface, if we believe in our sole discretion that your activities have violated any Prohibited Uses or if your actions using the Interface may harm us or a third party.
+- Any activity that violates any relevant and applicable anti-money laundering and anti-terrorist financing laws and sanctions programs, such as, without limitation, the Bank Secrecy Act and the U.S. Department of Treasury’s Office of Foreign Asset Controls (“Financing Laws”). By using the Interface, you agree that we must comply with Applicable Law including any Financing Laws, which may require us to, upon request by government agencies, take certain actions or provide information which we deem necessary, which may not be in your best interests.
+- Any transactions involving items that infringe or violate any copyright, trademark, right of publicity or privacy or any other proprietary right under Applicable Law, including but not limited to, sales, distribution, or access to counterfeit software, or other licensed materials without the appropriate authorization from the rights holder; use of Opyn’s Intellectual Property (defined below) without express consent from Opyn.
+- Any activity that seeks to interfere with or compromise the integrity, security, or proper functioning of the Interface or computer, server, network, personal device, or other information technology system, including, but not limited to, the deployment of viruses; denial-of-service attacks; use of any robot, spider, crawler, scraper or other automated means to extract or export data collected through the Interface; and conduct that imposes, or may impose, an unreasonable or disproportionately large load on our infrastructure.
+- Any activity that seeks to defraud us or any other person or entity, including, but not limited to, providing any false, inaccurate, or misleading information in order to unlawfully obtain the property of another, or any action that implies an untrue endorsement by or affiliation with Opyn.
+- Any activity that violates any Applicable Law including but not limited to laws or regulations concerning the integrity of trading markets such as manipulative tactics like spoofing or wash trading.
+- Any use of the Interface to stalk, harass, bully, or harm another individual, or use of the Interface in any way that is defamatory, obscene, invasive, threatening, or harassing.
 
 #### 6. Access
 
@@ -77,19 +58,22 @@ After connecting your Digital Wallet (defined below) and complying with all obli
 #### 7. Digital Wallet
 
 In order to access the Protocol through the Interface you may be required to connect a digital wallet that is hosted by you or a third party (“Digital Wallet”) that contains digital assets (“Digital Assets”) legally owned by you. You are solely responsible for any transactions or transmissions that occur with your Digital Wallet.
+
 You agree to notify Opyn immediately of any unauthorized use or other breach of security of your Digital Wallet. Opyn will not be liable for any losses you incur as a result of someone else using your Digital Wallet. However, you could be held liable for losses incurred by Opyn or another party due to someone else using your Digital Wallet.
+
 Any Digital Wallets connected to the Interface are non-custodial, meaning that Opyn does not control your Digital Wallet and has no access to your private encryption keys. Under no circumstances should you attempt to use your Digital Wallet to store or transact any non-supported Digital Assets. Opyn assumes no responsibility or liability in connection with any usage of your Digital Wallet with the Interface or Protocol, and you are solely responsible for your use of your Digital Wallet, including transfers of Digital Assets.
 
 #### 8. No Professional Advice or Fiduciary Duties
 
 All information accessible through the Interface is for informational purposes only and should not be construed as investment, tax, or legal advice. You should not take, or refrain from taking, any action based on any information contained within the Interface or any other information that we make available at any time, including, without limitation, blog posts, articles, links to third-party content, discord content, news feeds, tutorials, tweets, and videos. Before you make any financial, legal, or other decisions involving the Interface, you should seek independent professional advice from an individual who is licensed and qualified in the area for which such advice would be appropriate.
+
 We are not your broker, intermediary, agent or advisor and have no fiduciary relationship or obligation with you when you use the Interface or Protocol. We have no liability for any of your activities or decisions made while using the Interface. This Agreement is not intended to, and does not, create or impose any fiduciary duties on us. To the fullest extent permitted by law, you acknowledge and agree that we owe no fiduciary duties or liabilities to you or any other party, and that to the extent any such duties or liabilities may exist at law or in equity, those duties and liabilities are hereby irrevocably disclaimed, waived, and eliminated. You further agree that the only duties and obligations that we owe you are those set out expressly in this Agreement.
 
 #### 9. Interface
 
 Use of the Interface, in particular for transactions involving Digital Assets, are highly volatile, experimental, and may carry financial risk. All transaction decisions are made solely by you. We accept no responsibility whatsoever for, and will in no circumstances be liable to you in connection with, your use of the Interface for performing Digital Asset transactions through the Protocol, including but not limited to you entering into any long short positions or trading Digital Assets.
 
-The Interface attempts to provide up to date information for all Digital Assets listed; however, due to the nature of Digital Assets some information may be out of date or inaccurate. As you control your own Digital Wallet you are solely responsible for verifying any information regarding the Digital Assets, the Interface, and the Protocol. No representation is made as to the accuracy, completeness, or appropriateness for any particular purpose of any information distributed via the Interface or otherwise encountered when using the Interface. We are not liable to you for any inaccurately quoted information including but not limited to Digital Asset rates or pricing rates for any Digital Assets.
+The Interface attempts to provide up-to-date information for all Digital Assets listed; however, due to the nature of Digital Assets some information may be out of date or inaccurate. As you control your own Digital Wallet you are solely responsible for verifying any information regarding the Digital Assets, the Interface, and the Protocol. No representation is made as to the accuracy, completeness, or appropriateness for any particular purpose of any information distributed via the Interface or otherwise encountered when using the Interface. We are not liable to you for any inaccurately quoted information including but not limited to Digital Asset rates or pricing rates for any Digital Assets.
 
 Our Interface cannot control the timing of any transactions, transaction times are based on your Digital Assets and the Blockchain Technology selected, and we are not liable or responsible for any delays or any issues due to untimeliness of any transactions initiated through the Interface. Use of the Interface is at your sole risk and liability.
 
@@ -100,6 +84,7 @@ The developed Protocol is built through smart contracts and subject to the opera
 #### 11. Blockchain Technology
 
 Please be aware that the underlying technology that makes blockchain based networks, cryptographic systems, and smart contracts available (collectively “Blockchain Technology”) can be used, copied, modified, and distributed by third parties. Opyn does not control or operate the Blockchain Technology, and we assume no responsibility for the operation, functionality, or security of the Blockchain Technology. Blockchain Technology is subject to change that is out of our control, which could materially affect the Interface, the Protocol, and the value, functionality, availability, and use of any Digital Assets.
+
 It is your responsibility to make yourself aware of upcoming operating changes, and you must carefully consider publicly available information in determining whether to continue to use the Interface, transact with any Protocols using your Digital Assets, or otherwise interact with the Blockchain Technology through the Interface. Blockchain Technology is currently under development, and this creates uncertainty relating to Digital Assets and transactions through the Interface. You acknowledge and accept the risks of using your Digital Assets with our Interface that relies on Blockchain Technology and agree that Opyn is not responsible for any changes to any Blockchain Technology that may cause you to experience a complete loss of value or access to your Digital Assets. Such changes may include, but are not limited, to forks, rollbacks, changes to operating rules, breaches of security, and outages.
 
 #### 12. Fees and Costs
@@ -117,6 +102,7 @@ Due to the nature of Blockchain Technology you understand and agree that using t
 #### 15. Interface Availability and Modification
 
 We do not guarantee that the Interface will always be available, work, or be accessible at any particular time. Specifically, we do not guarantee any uptime or specific availability of the Interface. You agree and acknowledge that the Interface uses remote access and may not always be either 100% reliable or available.
+
 We reserve the right to alter, modify, update, or remove the Interface or any portions thereof, at any time at our discretion. We reserve the right to discontinue previously offered features or functionality at our sole discretion and without prior notice. We are not liable to you or to any third party for any modification, suspension, or discontinuance of any feature or component of any portion of the Interface. We reserve the right to determine the timing and content of software updates, which may be automatically updated without notice to you. We may conduct such modifications to our Interface for security, intellectual property, legal reasons, or various other reasons at our discretion, and we are not required to explain such modifications or provide you access to previous versions of our Interface. Nothing in this section obligates us to take measures to update the Interface for security, legal, or other purposes.
 
 #### 16. Third Parties
@@ -147,15 +133,11 @@ The name “Opyn,” “Opyn, Inc.”, the Opyn logo, any associated software, a
 
 Transacting Digital Assets or using Blockchain Technology involves significant risks and potential for financial losses which may result in the theft or loss of some or all of your Digital Assets. Such risks include without limitation the following:
 
-the Digital Assets and the Blockchain Technology are constantly under development making your Digital Assets vulnerable to hacking, breaches in security, flaws, errors, bugs, failures, loss, theft, and fraud (whether due to Opyn or otherwise);
-
-Digital Assets may fail to operate, lose all value, or be changed in a manner including without limitation a fork or rollback of the underlying Blockchain Technology;
-
-the Digital Assets may decrease in value or lose all of its value due to various factors including discovery of wrongful conduct, market manipulation, changes to the underlying Digital Asset or Blockchain Technology. Such factors could cause transaction costs to increase which may impact your use of the Interface;
-
-suspension or cessation of support for an Digital Assets by Blockchain Technology service providers may result in a total loss or inability to transfer or access any Digital Assets; and
-
-Digital Assets may lose value or functionality due to governmental action, laws, or regulation as there is uncertainty to the legal status and categorization of Digital Assets. Such actions could result in the loss of access to the Interface.
+- the Digital Assets and the Blockchain Technology are constantly under development making your Digital Assets vulnerable to hacking, breaches in security, flaws, errors, bugs, failures, loss, theft, and fraud (whether due to Opyn or otherwise);
+- Digital Assets may fail to operate, lose all value, or be changed in a manner including without limitation a fork or rollback of the underlying Blockchain Technology;
+- the Digital Assets may decrease in value or lose all of its value due to various factors including discovery of wrongful conduct, market manipulation, changes to the underlying Digital Asset or Blockchain Technology. Such factors could cause transaction costs to increase which may impact your use of the Interface;
+- suspension or cessation of support for an Digital Assets by Blockchain Technology service providers may result in a total loss or inability to transfer or access any Digital Assets; and
+- Digital Assets may lose value or functionality due to governmental action, laws, or regulation as there is uncertainty to the legal status and categorization of Digital Assets. Such actions could result in the loss of access to the Interface.
 
 You hereby assume and agree that Opyn will have no responsibility or liability for such risks. You hereby irrevocably waive, release, and discharge any and all claims, whether known or unknown to you, against Opyn, its affiliates and their respective shareholders, members, directors, officers, employees, contractors, agents, and representatives related to any of the risks set forth herein. You accept the risk of all use of the Digital Assets and are responsible for conducting your own independent analysis of the risks specific to the Digital Assets. You should not acquire any Digital Assets unless you have sufficient financial resources and can afford to lose all value of the Digital Assets.
 
@@ -182,6 +164,7 @@ This Agreement shall be governed by the laws in force in the state of California
 #### 28. Arbitration
 
 Please read the following section carefully because it requires you to arbitrate certain disputes and claims with Opyn and limits how you can seek relief from Opyn. Also, Opyn arbitration precludes you from suing in court or having a jury trial.
+
 You and Opyn agree that any dispute arising out of or related to this Agreement (“Dispute”), including, but not limited to, the validity, construction, and performance of this Agreement, shall be governed by and under the laws of the state of California, without giving effect to conflict of laws principles thereof.
 
 ##### 28.1 Informal Resolution.
@@ -191,7 +174,9 @@ For any dispute or claim that you have against Opyn, before seeking mediation, a
 ##### 28.2 Binding Arbitration
 
 If you and Opyn cannot reach an agreement to resolve the claim within thirty (30) days after such Notice is received, then either party may submit the dispute to binding arbitration administered by JAMS (“Binding Arbitration” or “Arbitration”). If there is a dispute about whether this arbitration provision can be enforced or applies to the Dispute, you and Opyn agree that the arbitrator will decide that issue. However, any claim that all or part of the Class Action Waiver is unenforceable, unconscionable, void or voidable may be determined only by a court of competent jurisdiction and not by an arbitrator.
-You and Opyn agree that arbitration under this Agreement will substantially and procedurally be governed by the Federal Arbitration Act, 9 U.S.C. §1, et seq. (the “FAA”), to the maximum extent permitted by applicable law. The arbitration will be administered by JAMS before one (1) arbitrator. Arbitration proceedings will be held in San Francisco, California in English, under the JAMS Streamlined Arbitration Rules and Procedures (“JAMS Rules”). The most recent version of the JAMS Rules may be found at https://www.jamsadr.com/ and are hereby incorporated by reference. You either acknowledge and agree that you have read and understand the JAMS Rules or waive your opportunity to read the JAMS Rules and waive any claim that the JAMS Rules are unfair or should not apply for any reason. The arbitrator's award shall be final and binding and may be entered as a judgment in any court of competent jurisdiction. The location of the arbitration shall be San Francisco, CA or a location agreed upon by the parties. Where a Dispute does not exceed $15,000 such Dispute shall be arbitrated solely via pleadings and documents. Both parties agree that they shall solely be responsible for paying for any fees related to any arbitration resolution.  
+
+You and Opyn agree that arbitration under this Agreement will substantially and procedurally be governed by the Federal Arbitration Act, 9 U.S.C. §1, et seq. (the “FAA”), to the maximum extent permitted by applicable law. The arbitration will be administered by JAMS before one (1) arbitrator. Arbitration proceedings will be held in San Francisco, California in English, under the JAMS Streamlined Arbitration Rules and Procedures (“JAMS Rules”). The most recent version of the JAMS Rules may be found at https://www.jamsadr.com/ and are hereby incorporated by reference. You either acknowledge and agree that you have read and understand the JAMS Rules or waive your opportunity to read the JAMS Rules and waive any claim that the JAMS Rules are unfair or should not apply for any reason. The arbitrator's award shall be final and binding and may be entered as a judgment in any court of competent jurisdiction. The location of the arbitration shall be San Francisco, CA or a location agreed upon by the parties. Where a Dispute does not exceed $15,000 such Dispute shall be arbitrated solely via pleadings and documents. Both parties agree that they shall solely be responsible for paying for any fees related to any arbitration resolution.
+
 To the fullest extent permitted by applicable law, no arbitration under this Agreement shall be joined to an arbitration involving any other party subject to this Agreement, whether through class action proceedings or otherwise. You agree that regardless of any statute or law to the contrary, any claim or cause of action arising out of, related to or connected with the use of the Interface, Protocol, or this Agreement must be filed within one (1) year after such claim or cause of action arose or be forever banned. In the event that the law does not permit the above-mentioned dispute to be resolved through arbitration, you agree that any actions shall be brought solely in a court of competent jurisdiction located within or otherwise nearest to San Francisco, CA .
 
 ##### 28.3 Opt-Out
