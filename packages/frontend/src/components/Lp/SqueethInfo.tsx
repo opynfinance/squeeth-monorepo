@@ -14,9 +14,8 @@ const useStyles = makeStyles((theme) =>
     squeethInfo: {
       [theme.breakpoints.down('sm')]: {
         width: '100%',
-        marginTop: theme.spacing(2),
       },
-      marginLeft: theme.spacing(10),
+      marginTop: theme.spacing(2),
     },
     squeethInfoSubGroup: {
       display: 'flex',
