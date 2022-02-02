@@ -34,7 +34,6 @@ type positionsContextType = {
   isLP: boolean
   longRealizedPNL: BigNumber
   shortRealizedPNL: BigNumber
-  longUsdAmount: BigNumber
   shortUsdAmount: BigNumber
 }
 
@@ -46,15 +45,10 @@ const PositionsProvider: React.FC = ({ children }) => {
   const {
     squeethAmount,
     wethAmount,
-    longRealizedSqueeth,
-    totalUSDSpent,
-    longRealizedUSD,
-    longTotalSqueeth,
-    shortRealizedSqueeth,
-    shortRealizedUSD,
-    totalUSDReceived,
-    shortTotalSqueeth,
-    longUsdAmount,
+    totalUSDFromBuy,
+    boughtSqueeth,
+    totalUSDFromSell,
+    soldSqueeth,
     shortUsdAmount,
     swaps,
     refetch: swapsQueryRefetch,
@@ -79,35 +73,25 @@ const PositionsProvider: React.FC = ({ children }) => {
   const { existingCollat, existingCollatPercent, existingLiqPrice: liquidationPrice } = useVaultData(vaultId)
 
   const { longRealizedPNL } = useMemo(() => {
-    if (!longRealizedSqueeth.gt(0)) return { longRealizedPNL: BIG_ZERO }
-    const costForOneSqth = !totalUSDSpent.isEqualTo(0) ? totalUSDSpent.div(longTotalSqueeth) : BIG_ZERO
-    const realizedForOneSqth = !longRealizedUSD.isEqualTo(0) ? longRealizedUSD.div(longRealizedSqueeth) : BIG_ZERO
+    if (!soldSqueeth.gt(0)) return { longRealizedPNL: BIG_ZERO }
+    const costForOneSqth = !totalUSDFromBuy.isEqualTo(0) ? totalUSDFromBuy.div(boughtSqueeth) : BIG_ZERO
+    const realizedForOneSqth = !totalUSDFromSell.isEqualTo(0) ? totalUSDFromSell.div(soldSqueeth) : BIG_ZERO
     const pnlForOneSqth = realizedForOneSqth.minus(costForOneSqth)
 
     return {
-      longRealizedPNL: pnlForOneSqth.multipliedBy(longRealizedSqueeth),
+      longRealizedPNL: pnlForOneSqth.multipliedBy(soldSqueeth),
     }
-  }, [
-    longRealizedSqueeth.toString(),
-    longRealizedUSD.toString(),
-    longTotalSqueeth.toString(),
-    totalUSDSpent.toString(),
-  ])
+  }, [soldSqueeth.toString(), totalUSDFromSell.toString(), boughtSqueeth.toString(), totalUSDFromBuy.toString()])
 
   const { shortRealizedPNL } = useMemo(() => {
-    if (!shortRealizedSqueeth.gt(0)) return { shortRealizedPNL: BIG_ZERO }
+    if (!boughtSqueeth.gt(0)) return { shortRealizedPNL: BIG_ZERO }
 
-    const costForOneSqth = !totalUSDReceived.isEqualTo(0) ? totalUSDReceived.div(shortTotalSqueeth) : BIG_ZERO
-    const realizedForOneSqth = !shortRealizedUSD.isEqualTo(0) ? shortRealizedUSD.div(shortRealizedSqueeth) : BIG_ZERO
+    const costForOneSqth = !totalUSDFromSell.isEqualTo(0) ? totalUSDFromSell.div(soldSqueeth) : BIG_ZERO
+    const realizedForOneSqth = !totalUSDFromBuy.isEqualTo(0) ? totalUSDFromBuy.div(boughtSqueeth) : BIG_ZERO
     const pnlForOneSqth = realizedForOneSqth.minus(costForOneSqth)
 
-    return { shortRealizedPNL: pnlForOneSqth.multipliedBy(shortRealizedSqueeth) }
-  }, [
-    shortRealizedSqueeth.toString(),
-    shortRealizedUSD.toString(),
-    shortTotalSqueeth.toString(),
-    totalUSDReceived.toString(),
-  ])
+    return { shortRealizedPNL: pnlForOneSqth.multipliedBy(boughtSqueeth) }
+  }, [boughtSqueeth.toString(), totalUSDFromBuy.toString(), soldSqueeth.toString(), totalUSDFromSell.toString()])
 
   const mintedDebt = useMemo(() => {
     // squeethAmount = user long balance if oSqueethBal > 0, but it could also be minted balance
@@ -179,7 +163,6 @@ const PositionsProvider: React.FC = ({ children }) => {
     isLP: squeethLiquidity.gt(0) || wethLiquidity.gt(0),
     longRealizedPNL,
     shortRealizedPNL,
-    longUsdAmount,
     shortUsdAmount,
     activePositions,
     closedPositions,

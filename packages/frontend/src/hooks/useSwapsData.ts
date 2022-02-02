@@ -47,107 +47,82 @@ export const useSwapsData = () => {
   }, [address, shortHelper, squeethPool, subscribeToMore, swapRouter])
   const swaps = data?.swaps
   const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
-  const {
-    squeethAmount,
-    wethAmount,
-    longRealizedSqueeth,
-    totalUSDSpent,
-    longRealizedUSD,
-    longTotalSqueeth,
-    shortRealizedSqueeth,
-    shortRealizedUSD,
-    totalUSDReceived,
-    shortTotalSqueeth,
-    longUsdAmount,
-    shortUsdAmount,
-  } = useMemo(
-    () =>
-      swaps?.reduce(
-        (acc, s) => {
-          //values are all from the pool pov
-          //if >0 for the pool, user gave some squeeth to the pool, meaning selling the squeeth
-          const squeethAmt = new BigNumber(isWethToken0 ? s.amount1 : s.amount0)
-          const wethAmt = new BigNumber(isWethToken0 ? s.amount0 : s.amount1)
-          const usdAmt = getUsdAmt(wethAmt, s.timestamp)
+  const { squeethAmount, wethAmount, totalUSDFromBuy, boughtSqueeth, totalUSDFromSell, soldSqueeth, shortUsdAmount } =
+    useMemo(
+      () =>
+        swaps?.reduce(
+          (acc, s) => {
+            //values are all from the pool pov
+            //if >0 for the pool, user gave some squeeth to the pool, meaning selling the squeeth
+            const squeethAmt = new BigNumber(isWethToken0 ? s.amount1 : s.amount0)
+            const wethAmt = new BigNumber(isWethToken0 ? s.amount0 : s.amount1)
+            const usdAmt = getUsdAmt(wethAmt, s.timestamp)
 
-          //buy one squeeth means -1 to the pool, +1 to the user
-          acc.squeethAmount = acc.squeethAmount.plus(squeethAmt.negated())
-          acc.wethAmount = acc.wethAmount.plus(wethAmt.negated())
+            //buy one squeeth means -1 to the pool, +1 to the user
+            acc.squeethAmount = acc.squeethAmount.plus(squeethAmt.negated())
 
-          //<0 means, buying squeeth
-          //>0 means selling squeeth
+            //<0 means, buying squeeth
+            //>0 means selling squeeth
+            if (squeethAmt.isPositive()) {
+              //replacing longRealizedSqueeth and shortTotalSqueeth
+              acc.soldSqueeth = acc.soldSqueeth.plus(squeethAmt.abs())
+              //replacing totalUSDReceived and longRealizedUSD
+              acc.totalUSDFromSell = acc.totalUSDFromSell.plus(usdAmt.abs())
+            } else if (squeethAmt.isNegative()) {
+              //replacing shortRealizedSqueeth and longTotalSqueeth
+              acc.boughtSqueeth = acc.boughtSqueeth.plus(squeethAmt.abs())
 
-          if (squeethAmt.isPositive()) {
-            acc.shortTotalSqueeth = acc.shortTotalSqueeth.plus(squeethAmt.abs())
-            acc.totalUSDReceived = acc.totalUSDReceived.plus(usdAmt.abs())
-            acc.longRealizedSqueeth = acc.longRealizedSqueeth.plus(squeethAmt.abs())
-            acc.longRealizedUSD = acc.longRealizedUSD.plus(usdAmt.abs())
-          } else if (squeethAmt.isNegative()) {
-            acc.shortRealizedSqueeth = acc.shortRealizedSqueeth.plus(squeethAmt.abs())
-            acc.shortRealizedUSD = acc.shortRealizedUSD.plus(usdAmt.abs())
-            acc.longTotalSqueeth = acc.longTotalSqueeth.plus(squeethAmt.abs())
-            acc.totalUSDSpent = acc.totalUSDSpent.plus(usdAmt.abs())
-          }
+              //replacing shortRealizedUSD and totalUSDSpent
+              acc.totalUSDFromBuy = acc.totalUSDFromBuy.plus(usdAmt.abs())
+            }
 
-          if (acc.squeethAmount.isZero()) {
-            acc.longUsdAmount = BIG_ZERO
-            acc.shortUsdAmount = BIG_ZERO
-            acc.wethAmount = BIG_ZERO
-            acc.longTotalSqueeth = BIG_ZERO
-            acc.shortTotalSqueeth = BIG_ZERO
-            acc.totalUSDSpent = BIG_ZERO
-          } else {
-            // when the position is partially closed, will accumulate usdamount
-            acc.longUsdAmount = acc.longUsdAmount.plus(usdAmt)
-            acc.shortUsdAmount = acc.shortUsdAmount.plus(usdAmt.negated())
-            acc.wethAmount = acc.wethAmount.plus(wethAmt.negated())
-          }
+            if (acc.squeethAmount.isZero()) {
+              acc.longUsdAmount = BIG_ZERO
+              acc.shortUsdAmount = BIG_ZERO
+              acc.wethAmount = BIG_ZERO
+              acc.boughtSqueeth = BIG_ZERO
+              acc.soldSqueeth = BIG_ZERO
+              acc.totalUSDFromSell = BIG_ZERO
+              acc.totalUSDFromBuy = BIG_ZERO
+            } else {
+              // when the position is partially closed, will accumulate usdamount
+              acc.longUsdAmount = acc.longUsdAmount.plus(usdAmt)
+              acc.shortUsdAmount = acc.shortUsdAmount.plus(usdAmt.negated())
+              acc.wethAmount = acc.wethAmount.plus(wethAmt.negated())
+            }
 
-          return acc
-        },
-        {
+            return acc
+          },
+          {
+            squeethAmount: BIG_ZERO,
+            wethAmount: BIG_ZERO,
+            longUsdAmount: BIG_ZERO,
+            shortUsdAmount: BIG_ZERO,
+            boughtSqueeth: BIG_ZERO,
+            soldSqueeth: BIG_ZERO,
+            totalUSDFromBuy: BIG_ZERO,
+            totalUSDFromSell: BIG_ZERO,
+          },
+        ) || {
           squeethAmount: BIG_ZERO,
           wethAmount: BIG_ZERO,
           longUsdAmount: BIG_ZERO,
           shortUsdAmount: BIG_ZERO,
-          totalUSDSpent: BIG_ZERO,
-          shortTotalSqueeth: BIG_ZERO,
-          totalUSDReceived: BIG_ZERO,
-          longTotalSqueeth: BIG_ZERO,
-          shortRealizedSqueeth: BIG_ZERO,
-          shortRealizedUSD: BIG_ZERO,
-          longRealizedSqueeth: BIG_ZERO,
-          longRealizedUSD: BIG_ZERO,
+          boughtSqueeth: BIG_ZERO,
+          soldSqueeth: BIG_ZERO,
+          totalUSDFromBuy: BIG_ZERO,
+          totalUSDFromSell: BIG_ZERO,
         },
-      ) || {
-        squeethAmount: BIG_ZERO,
-        wethAmount: BIG_ZERO,
-        longUsdAmount: BIG_ZERO,
-        shortUsdAmount: BIG_ZERO,
-        totalUSDSpent: BIG_ZERO,
-        shortTotalSqueeth: BIG_ZERO,
-        totalUSDReceived: BIG_ZERO,
-        longTotalSqueeth: BIG_ZERO,
-        shortRealizedSqueeth: BIG_ZERO,
-        shortRealizedUSD: BIG_ZERO,
-        longRealizedSqueeth: BIG_ZERO,
-        longRealizedUSD: BIG_ZERO,
-      },
-    [isWethToken0, swaps?.length],
-  )
+      [isWethToken0, swaps?.length],
+    )
 
   return {
     squeethAmount,
     wethAmount,
-    longRealizedSqueeth,
-    totalUSDSpent,
-    longRealizedUSD,
-    longTotalSqueeth,
-    shortRealizedSqueeth,
-    shortRealizedUSD,
-    totalUSDReceived,
-    shortTotalSqueeth,
-    longUsdAmount,
+    totalUSDFromBuy,
+    boughtSqueeth,
+    totalUSDFromSell,
+    soldSqueeth,
     shortUsdAmount,
     swaps,
     refetch,
