@@ -72,21 +72,21 @@ export function calcETHCollateralPnl(
           },
           curr: VaultHistory_vaultHistories,
         ) => {
-        const time = new Date(Number(curr.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
-        if (curr.action === Action.DEPOSIT_COLLAT) {
+          const time = new Date(Number(curr.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
+          if (curr.action === Action.DEPOSIT_COLLAT) {
             acc.depositsPnl = acc.depositsPnl.plus(
-            new BigNumber(toTokenAmount(curr.ethCollateralAmount, 18)).times(
+              new BigNumber(toTokenAmount(curr.ethCollateralAmount, 18)).times(
                 new BigNumber(ethPrice).minus(ethPriceMap[time] ?? 0),
-            ),
-          )
+              ),
+            )
           } else if (curr.action === Action.WITHDRAW_COLLAT) {
             acc.withdrawalsPnl = acc.withdrawalsPnl.plus(
-            new BigNumber(toTokenAmount(curr.ethCollateralAmount, 18)).times(
+              new BigNumber(toTokenAmount(curr.ethCollateralAmount, 18)).times(
                 new BigNumber(ethPrice).minus(ethPriceMap[time] ?? 0),
-            ),
-          )
-        }
-        return acc
+              ),
+            )
+          }
+          return acc
         },
         { depositsPnl: BIG_ZERO, withdrawalsPnl: BIG_ZERO },
       )
@@ -130,13 +130,13 @@ export async function calcDollarShortUnrealizedpnl(
       if (curr.squeethAmt.isPositive()) {
         acc.sell = !curr.buyQuote?.amountIn?.isEqualTo(0)
           ? acc.sell.plus(
-              curr.buyQuote?.amountIn?.times(ethPrice).minus(curr.wethAmt.times(new BigNumber(ethPriceMap[time]))),
+              curr.buyQuote?.amountIn?.times(ethPrice).minus(curr.wethAmt.times(new BigNumber(ethPriceMap[time] ?? 0))),
             )
           : BIG_ZERO
       } else {
         acc.buy = !curr.buyQuote?.amountIn?.isEqualTo(0)
           ? acc.buy.plus(
-              curr.buyQuote?.amountIn?.times(ethPrice).minus(curr.wethAmt.times(new BigNumber(ethPriceMap[time]))),
+              curr.buyQuote?.amountIn?.times(ethPrice).minus(curr.wethAmt.times(new BigNumber(ethPriceMap[time] ?? 0))),
             )
           : BIG_ZERO
       }
@@ -145,7 +145,7 @@ export async function calcDollarShortUnrealizedpnl(
     { sell: BIG_ZERO, buy: BIG_ZERO },
   )
 
-  return { usd: sell.minus(buy), eth: sell.minus(buy).div(ethPrice) }
+  return sell.minus(buy)
 }
 
 export async function calcDollarLongUnrealizedpnl(
@@ -183,13 +183,17 @@ export async function calcDollarLongUnrealizedpnl(
       if (curr.squeethAmt.isNegative()) {
         acc.buy = !curr.sellQuote?.amountOut?.isEqualTo(0)
           ? acc.buy.plus(
-              curr.sellQuote?.amountOut.times(ethPrice).minus(curr.wethAmt.times(new BigNumber(ethPriceMap[time]))),
+              curr.sellQuote?.amountOut
+                .times(ethPrice)
+                .minus(curr.wethAmt.times(new BigNumber(ethPriceMap[time] ?? 0))),
             )
           : BIG_ZERO
       } else {
         acc.sell = !curr.sellQuote?.amountOut?.isEqualTo(0)
           ? acc.sell.plus(
-              curr.sellQuote?.amountOut?.times(ethPrice).minus(curr.wethAmt.times(new BigNumber(ethPriceMap[time]))),
+              curr.sellQuote?.amountOut
+                ?.times(ethPrice)
+                .minus(curr.wethAmt.times(new BigNumber(ethPriceMap[time] ?? 0))),
             )
           : BIG_ZERO
       }
