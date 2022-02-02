@@ -12,8 +12,6 @@ import { Tooltips } from '@constants/enums'
 import { useTrade } from '@context/trade'
 import { useWorldContext } from '@context/world'
 import { PositionType, TradeType } from '../types'
-import { useController } from '@hooks/contracts/useController'
-import { toTokenAmount } from '@utils/calculations'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 
 const useStyles = makeStyles((theme) =>
@@ -162,7 +160,6 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     loading,
     refetch,
   } = usePnL()
-
   const {
     positionType: pType,
     squeethAmount,

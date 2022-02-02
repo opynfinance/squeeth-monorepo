@@ -142,6 +142,7 @@ const ConnectWallet: React.FC = () => {
 
 export function Positions() {
   const classes = useStyles()
+  const { ethPrice } = useWorldContext()
   const {
     longGain,
     shortGain,
@@ -162,7 +163,6 @@ export function Positions() {
   const {
     positionType,
     squeethAmount,
-    wethAmount,
     loading: isPositionLoading,
     shortVaults,
     firstValidVault,

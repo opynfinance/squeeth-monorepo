@@ -10,15 +10,18 @@ import { positions, positionsVariables } from '../queries/uniswap/__generated__/
 import { swaps, swapsVariables } from '../queries/uniswap/__generated__/swaps'
 import POSITIONS_QUERY, { POSITIONS_SUBSCRIPTION } from '../queries/uniswap/positionsQuery'
 import SWAPS_QUERY, { SWAPS_SUBSCRIPTION } from '../queries/uniswap/swapsQuery'
+import VAULT_HISTORY_QUERY from '../queries/squeeth/vaultHistoryQuery'
+import { VaultHistory } from '../queries/squeeth/__generated__/VaultHistory'
 import { NFTManagers, PositionType } from '../types'
 import { toTokenAmount } from '@utils/calculations'
+import { squeethClient } from '@utils/apollo-client'
 import { useController } from './contracts/useController'
 import { useSqueethPool } from './contracts/useSqueethPool'
 import { useVaultManager } from './contracts/useVaultManager'
 import { useAddresses } from './useAddress'
 import useInterval from './useInterval'
 import { useUsdAmount } from './useUsdAmount'
-import { calcDollarShortUnrealizedpnl, calcDollarLongUnrealizedpnl } from '../lib/pnl'
+import { calcDollarShortUnrealizedpnl, calcDollarLongUnrealizedpnl, calcETHCollateralPnl } from '../lib/pnl'
 import { BIG_ZERO } from '../constants/'
 
 const bigZero = new BigNumber(0)
@@ -28,7 +31,7 @@ export const usePositions = () => {
   const { address } = useWallet()
   const { getUsdAmt } = useUsdAmount()
   const { getDebtAmount, normFactor: normalizationFactor } = useController()
-  const { oSqueethBal } = useWorldContext()
+  const { ethPrice, ethPriceMap, oSqueethBal } = useWorldContext()
 
   const [positionType, setPositionType] = useState(PositionType.NONE)
 
@@ -559,9 +562,11 @@ export const usePnL = () => {
     shortRealizedPNL,
     totalUSDFromBuy,
     totalUSDFromSell,
+    firstValidVault,
   } = usePositions()
   const { ethPrice, ethPriceMap } = useWorldContext()
   const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
+  const { networkId } = useWallet()
 
   const [sellQuote, setSellQuote] = useState({
     amountOut: new BigNumber(0),
@@ -577,6 +582,19 @@ export const usePnL = () => {
     refetchLong()
     refetchShort()
   }
+
+  const { data } = useQuery<VaultHistory>(VAULT_HISTORY_QUERY, {
+    client: squeethClient[networkId],
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      vaultId: shortVaults[firstValidVault]?.id,
+    },
+  })
+  const vaultHistory = data?.vaultHistories
+  const ethCollateralPnl = useMemo(
+    () => calcETHCollateralPnl(vaultHistory, ethPriceMap, ethPrice),
+    [vaultHistory?.length, ethPrice, ethPriceMap],
+  )
 
   useEffect(() => {
     if (!ready || positionLoading) return
@@ -595,6 +613,16 @@ export const usePnL = () => {
     const _gain = longUnrealizedPNL.usd.dividedBy(totalUSDFromBuy).times(100)
     setLongGain(_gain)
   }, [loading, longUnrealizedPNL.usd.toString(), sellQuote.amountOut.toString(), totalUSDFromBuy.toString()])
+
+  // const shortUnrealizedPNL = useMemo(
+  //   () => calcUnrealizedPnl({ wethAmount, buyQuote, ethPrice, ethCollateralPnl }),
+  //   [buyQuote.toString(), ethCollateralPnl?.toString(), ethPrice.toString(), wethAmount.toString()],
+  // )
+
+  // const longUnrealizedPNL = useMemo(
+  //   () => calcLongUnrealizedPnl({ sellQuote: sellQuote.amountOut, wethAmount, ethPrice }),
+  //   [ethPrice.toString(), sellQuote.amountOut.toString(), wethAmount.toString()],
+  // )
 
   useEffect(() => {
     if (squeethAmount.isZero()) {
@@ -635,10 +663,10 @@ export const usePnL = () => {
     positionType,
     loading,
     shortRealizedPNL,
-    longRealizedPNL,
-    refetch,
     shortUnrealizedPNL,
+    longRealizedPNL,
     longUnrealizedPNL,
+    refetch,
   }
 }
 
