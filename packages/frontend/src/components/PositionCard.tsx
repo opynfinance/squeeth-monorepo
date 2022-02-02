@@ -13,8 +13,6 @@ import { Tooltips } from '@constants/enums'
 import { useTrade } from '@context/trade'
 import { useWorldContext } from '@context/world'
 import { PositionType, TradeType } from '../types'
-import { useController } from '@hooks/contracts/useController'
-import { toTokenAmount } from '@utils/calculations'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 
 const useStyles = makeStyles((theme) =>
@@ -151,12 +149,11 @@ type PositionCardType = {
 }
 
 const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
-  const { buyQuote, sellQuote, longGain, shortGain, shortUnrealizedPNL, loading } = usePnL()
+  const { buyQuote, sellQuote, longGain, shortGain, shortUnrealizedPNL, longUnrealizedPNL, loading } = usePnL()
 
   const {
     positionType: pType,
     squeethAmount,
-    wethAmount,
     shortVaults,
     firstValidVault,
     vaultId,
@@ -180,7 +177,6 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
   } = useTrade()
   const { ethPrice } = useWorldContext()
   const tradeAmount = new BigNumber(tradeAmountInput)
-  const { index } = useController()
   const [fetchingNew, setFetchingNew] = useState(false)
   const [postTradeAmt, setPostTradeAmt] = useState(new BigNumber(0))
   const [postPosition, setPostPosition] = useState(PositionType.NONE)
@@ -364,10 +360,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
                       style={{ fontWeight: 600 }}
                     >
                       {getPositionBasedValue(
-                        `$${sellQuote.amountOut
-                          .minus(wethAmount.abs())
-                          .times(toTokenAmount(index, 18).sqrt())
-                          .toFixed(2)}`,
+                        `$${longUnrealizedPNL?.usdValue.toFixed(2)}`,
                         `$${shortUnrealizedPNL.toFixed(2)}`,
                         '--',
                         'Loading',

@@ -143,7 +143,17 @@ const ConnectWallet: React.FC = () => {
 
 export function Positions() {
   const classes = useStyles()
-  const { longGain, shortGain, buyQuote, sellQuote, shortUnrealizedPNL, loading: isPnLLoading } = usePnL()
+  const {
+    longGain,
+    shortGain,
+    buyQuote,
+    sellQuote,
+    shortUnrealizedPNL,
+    loading: isPnLLoading,
+    longUnrealizedPNL,
+  } = usePnL()
+
+  const { ethPrice } = useWorldContext()
 
   const { pool } = useSqueethPool()
 
@@ -153,7 +163,6 @@ export function Positions() {
   const {
     positionType,
     squeethAmount,
-    wethAmount,
     loading: isPositionLoading,
     shortVaults,
     firstValidVault,
@@ -254,8 +263,7 @@ export function Positions() {
                   ) : (
                     <>
                       <Typography variant="body1" className={longGain.isLessThan(0) ? classes.red : classes.green}>
-                        ${sellQuote.amountOut.minus(wethAmount.abs()).times(toTokenAmount(index, 18).sqrt()).toFixed(2)}{' '}
-                        ({sellQuote.amountOut.minus(wethAmount.abs()).toFixed(5)} ETH)
+                        $ {longUnrealizedPNL?.usdValue.toFixed(2)} ({longUnrealizedPNL?.ethValue.toFixed(5)} ETH)
                       </Typography>
                       <Typography variant="caption" className={longGain.isLessThan(0) ? classes.red : classes.green}>
                         {(longGain || 0).toFixed(2)}%
@@ -321,7 +329,7 @@ export function Positions() {
                   ) : (
                     <>
                       <Typography variant="body1" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
-                        $ {shortUnrealizedPNL.toFixed(2)} ({wethAmount.minus(buyQuote).toFixed(5)} ETH)
+                        $ {shortUnrealizedPNL.toFixed(2)} ({shortUnrealizedPNL.dividedBy(ethPrice).toFixed(5)} ETH)
                       </Typography>
                       <Typography variant="caption" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
                         {(shortGain || 0).toFixed(2)}%
