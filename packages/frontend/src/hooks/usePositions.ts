@@ -553,7 +553,6 @@ export const usePnL = () => {
   const {
     positionType,
     squeethAmount,
-    wethAmount,
     shortVaults,
     loading: positionLoading,
     swaps,
@@ -563,6 +562,7 @@ export const usePnL = () => {
     totalUSDFromBuy,
     totalUSDFromSell,
     firstValidVault,
+    existingCollat,
   } = usePositions()
   const { ethPrice, ethPriceMap } = useWorldContext()
   const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
@@ -614,23 +614,16 @@ export const usePnL = () => {
     setLongGain(_gain)
   }, [loading, longUnrealizedPNL.usd.toString(), sellQuote.amountOut.toString(), totalUSDFromBuy.toString()])
 
-  // const shortUnrealizedPNL = useMemo(
-  //   () => calcUnrealizedPnl({ wethAmount, buyQuote, ethPrice, ethCollateralPnl }),
-  //   [buyQuote.toString(), ethCollateralPnl?.toString(), ethPrice.toString(), wethAmount.toString()],
-  // )
-
-  // const longUnrealizedPNL = useMemo(
-  //   () => calcLongUnrealizedPnl({ sellQuote: sellQuote.amountOut, wethAmount, ethPrice }),
-  //   [ethPrice.toString(), sellQuote.amountOut.toString(), wethAmount.toString()],
-  // )
-
   useEffect(() => {
     if (squeethAmount.isZero()) {
       setLongGain(new BigNumber(0))
       return
     }
     // const _currentValue = buyQuote.div(wethAmount.absoluteValue()).times(100)
-    const _gain = shortUnrealizedPNL.usd.dividedBy(totalUSDFromSell).times(100)
+    const _gain = !shortUnrealizedPNL.usd.isEqualTo(0)
+      ? shortUnrealizedPNL.usd.dividedBy(totalUSDFromSell.plus(existingCollat)).times(100)
+      : new BigNumber(0)
+
     setShortGain(_gain)
   }, [shortUnrealizedPNL.usd.toString(), squeethAmount.toString(), totalUSDFromSell.toString()])
 
@@ -638,7 +631,12 @@ export const usePnL = () => {
     ;(async () => {
       if (swaps) {
         const pnl = await calcDollarShortUnrealizedpnl(swaps, isWethToken0, getBuyQuote, ethPrice, ethPriceMap)
-        setShortUnrealizedPNL(pnl)
+        setShortUnrealizedPNL({
+          usd: pnl.plus(ethCollateralPnl),
+          eth: pnl.plus(ethCollateralPnl).div(ethPrice).isFinite()
+            ? pnl.plus(ethCollateralPnl).div(ethPrice)
+            : BIG_ZERO,
+        })
       }
     })()
   }, [ethPrice.toString(), isWethToken0, swaps?.length, getBuyQuote])
