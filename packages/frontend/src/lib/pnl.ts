@@ -63,35 +63,36 @@ export function calcETHCollateralPnl(
   ethPriceMap: { [key: string]: number },
   ethPrice: BigNumber,
 ) {
-  const deposits = data?.length
-    ? data?.reduce((acc: BigNumber, curr: VaultHistory_vaultHistories) => {
+  const { depositsPnl, withdrawalsPnl } = data?.length
+    ? data?.reduce(
+        (
+          acc: {
+            depositsPnl: BigNumber
+            withdrawalsPnl: BigNumber
+          },
+          curr: VaultHistory_vaultHistories,
+        ) => {
         const time = new Date(Number(curr.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
         if (curr.action === Action.DEPOSIT_COLLAT) {
-          acc = acc.plus(
+            acc.depositsPnl = acc.depositsPnl.plus(
             new BigNumber(toTokenAmount(curr.ethCollateralAmount, 18)).times(
-              new BigNumber(ethPrice).minus(ethPriceMap[time]),
+                new BigNumber(ethPrice).minus(ethPriceMap[time] ?? 0),
+            ),
+          )
+          } else if (curr.action === Action.WITHDRAW_COLLAT) {
+            acc.withdrawalsPnl = acc.withdrawalsPnl.plus(
+            new BigNumber(toTokenAmount(curr.ethCollateralAmount, 18)).times(
+                new BigNumber(ethPrice).minus(ethPriceMap[time] ?? 0),
             ),
           )
         }
         return acc
-      }, new BigNumber(0))
-    : new BigNumber(0)
+        },
+        { depositsPnl: BIG_ZERO, withdrawalsPnl: BIG_ZERO },
+      )
+    : { depositsPnl: BIG_ZERO, withdrawalsPnl: BIG_ZERO }
 
-  const withdrawals = data?.length
-    ? data?.reduce((acc: BigNumber, curr: VaultHistory_vaultHistories) => {
-        const time = new Date(Number(curr.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
-        if (curr.action === Action.WITHDRAW_COLLAT) {
-          acc = acc.plus(
-            new BigNumber(toTokenAmount(curr.ethCollateralAmount, 18)).times(
-              new BigNumber(ethPrice).minus(ethPriceMap[time]),
-            ),
-          )
-        }
-        return acc
-      }, new BigNumber(0))
-    : new BigNumber(0)
-
-  return deposits.minus(withdrawals)
+  return depositsPnl.minus(withdrawalsPnl)
 }
 
 export async function calcDollarShortUnrealizedpnl(
