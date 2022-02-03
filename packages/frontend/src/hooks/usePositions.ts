@@ -97,15 +97,15 @@ export const usePositions = () => {
             //<0 means, buying squeeth
             //>0 means selling squeeth
             if (squeethAmt.isPositive()) {
-              //replacing longRealizedSqueeth and shortTotalSqueeth
+              //accumulates total amount of squeeth sold either from opening a short position or closing a long position
               acc.soldSqueeth = acc.soldSqueeth.plus(squeethAmt.abs())
-              //replacing totalUSDReceived and longRealizedUSD
+              //wethAmount in used from closing a long position/opening a short position
               acc.totalUSDFromSell = acc.totalUSDFromSell.plus(usdAmt.abs())
             } else if (squeethAmt.isNegative()) {
-              //replacing shortRealizedSqueeth and longTotalSqueeth
+              //accumulates total amount of squeeth bought either from opening a long position or closing a short position
               acc.boughtSqueeth = acc.boughtSqueeth.plus(squeethAmt.abs())
 
-              //replacing shortRealizedUSD and totalUSDSpent
+              //wethAmount in usd from opening a long position/closing a short
               acc.totalUSDFromBuy = acc.totalUSDFromBuy.plus(usdAmt.abs())
             }
 
@@ -592,8 +592,8 @@ export const usePnL = () => {
   })
   const vaultHistory = data?.vaultHistories
   const ethCollateralPnl = useMemo(
-    () => calcETHCollateralPnl(vaultHistory, ethPriceMap, ethPrice),
-    [vaultHistory?.length, ethPrice, ethPriceMap],
+    () => calcETHCollateralPnl(vaultHistory, ethPriceMap, ethPrice, existingCollat),
+    [ethPrice.toString(), ethPriceMap, existingCollat.toString(), vaultHistory?.length],
   )
 
   useEffect(() => {
@@ -621,7 +621,7 @@ export const usePnL = () => {
     }
     // const _currentValue = buyQuote.div(wethAmount.absoluteValue()).times(100)
     const _gain = !shortUnrealizedPNL.usd.isEqualTo(0)
-      ? shortUnrealizedPNL.usd.dividedBy(totalUSDFromSell.plus(existingCollat)).times(100)
+      ? shortUnrealizedPNL.usd.dividedBy(totalUSDFromSell.plus(existingCollat.times(ethPrice))).times(100)
       : new BigNumber(0)
 
     setShortGain(_gain)
@@ -639,7 +639,7 @@ export const usePnL = () => {
         })
       }
     })()
-  }, [ethPrice.toString(), isWethToken0, swaps?.length, getBuyQuote])
+  }, [ethCollateralPnl.toString(), ethPrice.toString(), ethPriceMap, getBuyQuote, isWethToken0, swaps?.length])
 
   useEffect(() => {
     ;(async () => {
