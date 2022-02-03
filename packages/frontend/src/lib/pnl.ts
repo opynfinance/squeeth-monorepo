@@ -62,37 +62,36 @@ export function calcETHCollateralPnl(
   data: VaultHistory_vaultHistories[] | undefined,
   ethPriceMap: { [key: string]: number },
   ethPrice: BigNumber,
+  currentEthBalance: BigNumber,
 ) {
-  const { depositsPnl, withdrawalsPnl } = data?.length
+  const { deposits, withdrawals } = data?.length
     ? data?.reduce(
         (
           acc: {
-            depositsPnl: BigNumber
-            withdrawalsPnl: BigNumber
+            deposits: BigNumber
+            withdrawals: BigNumber
           },
           curr: VaultHistory_vaultHistories,
         ) => {
           const time = new Date(Number(curr.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
           if (curr.action === Action.DEPOSIT_COLLAT) {
-            acc.depositsPnl = acc.depositsPnl.plus(
-              new BigNumber(toTokenAmount(curr.ethCollateralAmount, 18)).times(
-                new BigNumber(ethPrice).minus(ethPriceMap[time] ?? 0),
-              ),
-            )
+            acc.deposits = ethPriceMap[time]
+              ? acc.deposits.plus(new BigNumber(toTokenAmount(curr.ethCollateralAmount, 18)).times(ethPriceMap[time]))
+              : BIG_ZERO
           } else if (curr.action === Action.WITHDRAW_COLLAT) {
-            acc.withdrawalsPnl = acc.withdrawalsPnl.plus(
-              new BigNumber(toTokenAmount(curr.ethCollateralAmount, 18)).times(
-                new BigNumber(ethPrice).minus(ethPriceMap[time] ?? 0),
-              ),
+            acc.withdrawals = acc.withdrawals.plus(
+              new BigNumber(toTokenAmount(curr.ethCollateralAmount, 18)).times(ethPriceMap[time]),
             )
           }
           return acc
         },
-        { depositsPnl: BIG_ZERO, withdrawalsPnl: BIG_ZERO },
+        { deposits: BIG_ZERO, withdrawals: BIG_ZERO },
       )
-    : { depositsPnl: BIG_ZERO, withdrawalsPnl: BIG_ZERO }
+    : { deposits: BIG_ZERO, withdrawals: BIG_ZERO }
 
-  return depositsPnl.minus(withdrawalsPnl)
+  return !currentEthBalance.times(ethPrice).isEqualTo(0) && !deposits.minus(withdrawals).isEqualTo(0)
+    ? currentEthBalance.times(ethPrice).minus(deposits.minus(withdrawals))
+    : BIG_ZERO
 }
 
 export async function calcDollarShortUnrealizedpnl(
@@ -128,17 +127,19 @@ export async function calcDollarShortUnrealizedpnl(
       const time = new Date(Number(curr.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
 
       if (curr.squeethAmt.isPositive()) {
-        acc.sell = !curr.buyQuote?.amountIn?.isEqualTo(0)
-          ? acc.sell.plus(
-              curr.buyQuote?.amountIn?.times(ethPrice).minus(curr.wethAmt.times(new BigNumber(ethPriceMap[time] ?? 0))),
-            )
-          : BIG_ZERO
+        acc.sell =
+          !curr.buyQuote?.amountIn?.isEqualTo(0) && !curr.wethAmt.isEqualTo(0) && ethPriceMap[time]
+            ? acc.sell.plus(
+                curr.buyQuote?.amountIn?.times(ethPrice).minus(curr.wethAmt.times(new BigNumber(ethPriceMap[time]))),
+              )
+            : BIG_ZERO
       } else {
-        acc.buy = !curr.buyQuote?.amountIn?.isEqualTo(0)
-          ? acc.buy.plus(
-              curr.buyQuote?.amountIn?.times(ethPrice).minus(curr.wethAmt.times(new BigNumber(ethPriceMap[time] ?? 0))),
-            )
-          : BIG_ZERO
+        acc.buy =
+          !curr.buyQuote?.amountIn?.isEqualTo(0) && !curr.wethAmt.isEqualTo(0) && ethPriceMap[time]
+            ? acc.buy.plus(
+                curr.buyQuote?.amountIn?.times(ethPrice).minus(curr.wethAmt.times(new BigNumber(ethPriceMap[time]))),
+              )
+            : BIG_ZERO
       }
       return acc
     },
