@@ -104,10 +104,10 @@ const SqueethInfo: React.FC = () => {
             <Typography>
               {getWSqueethPositionValue(1) && getWSqueethPositionValueInETH(1)
                 ? '$' +
-                Number(getWSqueethPositionValue(1).toFixed(2).toLocaleString()) +
-                '\xa0 ' +
-                Number(getWSqueethPositionValueInETH(1).toFixed(4).toLocaleString()) +
-                ' ETH'
+                  Number(getWSqueethPositionValue(1).toFixed(2).toLocaleString()) +
+                  '\xa0 ' +
+                  Number(getWSqueethPositionValueInETH(1).toFixed(4).toLocaleString()) +
+                  ' ETH'
                 : 'loading'}
             </Typography>
           </div>
