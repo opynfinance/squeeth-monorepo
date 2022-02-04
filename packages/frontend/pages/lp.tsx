@@ -62,6 +62,7 @@ const useStyles = makeStyles((theme) =>
     },
     details: {
       marginTop: theme.spacing(4),
+      // paddingLeft: theme.spacing(4),
       // display: 'flex',
     },
     heading: {
@@ -88,7 +89,7 @@ export function LPCalculator() {
     <div>
       <Nav />
       <div className={classes.container}>
-        <div style={{ width: '800px' }}>
+        <div style={{ width: '800px', paddingRight: '16px' }}>
           <div style={{ display: 'flex' }}>
             <div className={classes.logo}>
               <Image src={squeethTokenSymbol} alt="squeeth token" width={37} height={37} />
