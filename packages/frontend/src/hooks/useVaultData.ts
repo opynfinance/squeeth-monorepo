@@ -1,6 +1,7 @@
 import { useQuery } from '@apollo/client'
 import BigNumber from 'bignumber.js'
 import { useEffect, useState } from 'react'
+import { useGetAtom } from 'particule'
 
 import { Vault } from '../types'
 import { OSQUEETH_DECIMALS } from '../constants'
@@ -8,7 +9,7 @@ import { VAULT_QUERY } from '@queries/squeeth/vaultsQuery'
 import { Vault_vault } from '@queries/squeeth/__generated__/Vault'
 
 import { useWallet } from '@context/wallet'
-import { useController } from '@hooks/contracts/useController'
+import { useController, normFactorAtom } from '@hooks/contracts/useController'
 import { squeethClient } from '@utils/apollo-client'
 import { toTokenAmount } from '@utils/calculations'
 
@@ -20,7 +21,8 @@ export const useVaultData = (vid: number) => {
   const [collatPercent, setCollatPercent] = useState(0)
   const [isVaultLoading, setVaultLoading] = useState(true)
 
-  const { getCollatRatioAndLiqPrice, normFactor } = useController()
+  const { getCollatRatioAndLiqPrice } = useController()
+  const normFactor = useGetAtom(normFactorAtom);
   const { address, connected, networkId } = useWallet()
 
   const { data, loading: isDataLoading } = useQuery<{ vault: Vault_vault }>(VAULT_QUERY, {

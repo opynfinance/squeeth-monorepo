@@ -14,6 +14,7 @@ import { VaultHistory } from '../queries/squeeth/__generated__/VaultHistory'
 import { NFTManagers } from '../types'
 import { toTokenAmount } from '@utils/calculations'
 import { squeethClient } from '@utils/apollo-client'
+
 import { useSqueethPool } from './contracts/useSqueethPool'
 import { useController } from './contracts/useController'
 import { useAddresses } from './useAddress'

@@ -9,7 +9,12 @@ import { useWallet } from '@context/wallet'
 import { CrabProvider, useCrab } from '@context/crabStrategy'
 import { Typography, Tab, Tabs } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import { useController } from '@hooks/contracts/useController'
+import {
+  currentImpliedFundingAtom,
+  fundingPerHalfHourAtom,
+  indexAtom,
+  dailyHistoricalFundingAtom
+} from '@hooks/contracts/useController'
 import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
 import React, { useMemo, useState } from 'react'
@@ -19,6 +24,7 @@ import Image from 'next/image'
 import bull from '../public/images/bull.gif'
 import bear from '../public/images/bear.gif'
 import CrabTrade from '@components/Strategies/Crab/CrabTrade'
+import { useGetAtom } from 'particule'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -96,7 +102,10 @@ const Strategies: React.FC = () => {
   const classes = useStyles()
   const { balance, address, selectWallet } = useWallet()
   const { maxCap, vault, collatRatio, timeAtLastHedge, profitableMovePercent } = useCrab()
-  const { index, currentImpliedFunding, dailyHistoricalFunding } = useController()
+  const index = useGetAtom(indexAtom)
+  const currentImpliedFunding = useGetAtom(currentImpliedFundingAtom)
+  const fundingPerHalfHour = useGetAtom(fundingPerHalfHourAtom)
+  const dailyHistoricalFunding = useGetAtom(dailyHistoricalFundingAtom)
 
   useMemo(() => {
     if (selectedIdx === 0) return Vaults.ETHBull

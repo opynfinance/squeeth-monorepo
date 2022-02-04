@@ -13,11 +13,20 @@ import { fromTokenAmount, parseSlippageInput, toTokenAmount } from '@utils/calcu
 import { useAddresses } from '../useAddress'
 import useUniswapTicks from '../useUniswapTicks'
 import { useWorldContext } from '@context/world'
+import { atom, useAtom } from 'particule'
 
 // const NETWORK_QUOTE_GAS_OVERRIDE: { [chainId: number]: number } = {
 //   [Networks.ARBITRUM_RINKEBY]: 6_000_000,
 // }
 // const DEFAULT_GAS_QUOTE = 2_000_000
+
+export const poolAtom = atom<Pool | undefined>(undefined)
+export const wethTokenAtom = atom<Token | undefined>(undefined)
+export const squeethTokenAtom = atom<Token | undefined>(undefined)
+export const squeethInitialPriceAtom = atom(new BigNumber(0))
+export const squeethPriceAtom = atom(new BigNumber(0))
+export const wethPriceAtom = atom(new BigNumber(0))
+export const readyAtom = atom(false)
 
 /**
  * Hook to interact with WETH contract
@@ -25,13 +34,13 @@ import { useWorldContext } from '@context/world'
 export const useSqueethPool = () => {
   const [squeethContract, setSqueethContract] = useState<Contract>()
   const [swapRouterContract, setSwapRouterContract] = useState<Contract>()
-  const [pool, setPool] = useState<Pool>()
-  const [wethToken, setWethToken] = useState<Token>()
-  const [squeethToken, setSqueethToken] = useState<Token>()
-  const [squeethInitialPrice, setSqueethInitialPrice] = useState<BigNumber>(new BigNumber(0))
-  const [squeethPrice, setSqueethPrice] = useState<BigNumber>(new BigNumber(0))
-  const [wethPrice, setWethPrice] = useState<BigNumber>(new BigNumber(0))
-  const [ready, setReady] = useState(false)
+  const [pool, setPool] = useAtom(poolAtom)
+  const [wethToken, setWethToken] = useAtom(wethTokenAtom)
+  const [squeethToken, setSqueethToken] = useAtom(squeethTokenAtom)
+  const [squeethInitialPrice, setSqueethInitialPrice] = useAtom(squeethInitialPriceAtom)
+  const [squeethPrice, setSqueethPrice] = useAtom(squeethPriceAtom)
+  const [wethPrice, setWethPrice] = useAtom(wethPriceAtom)
+  const [ready, setReady] = useAtom(readyAtom)
   // const [tvl, setTVL] = useState(0)
   const { ethPrice } = useWorldContext()
 

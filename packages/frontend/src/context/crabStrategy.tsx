@@ -5,12 +5,13 @@ import { BIG_ZERO } from '../constants'
 import { useWallet } from './wallet'
 import { useAddresses } from '@hooks/useAddress'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
-import { useController } from '@hooks/contracts/useController'
+import { currentImpliedFundingAtom, indexAtom, useController } from '@hooks/contracts/useController'
 import { Contract } from 'web3-eth-contract'
 import abi from '../abis/crabStrategy.json'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import db from '@utils/firestore'
+import { useGetAtom } from 'particule'
 
 type CrabStrategyType = {
   loading: boolean
@@ -92,7 +93,9 @@ const useCrab = () => useContext(crabContext)
 const CrabProvider: React.FC = ({ children }) => {
   const { web3, address, handleTransaction, networkId } = useWallet()
   const { crabStrategy } = useAddresses()
-  const { getVault, getCollatRatioAndLiqPrice, currentImpliedFunding, index } = useController()
+  const { getVault, getCollatRatioAndLiqPrice } = useController()
+  const currentImpliedFunding = useGetAtom(currentImpliedFundingAtom);
+  const index = useGetAtom(indexAtom);
   const { getSellQuote, getBuyQuote, ready } = useSqueethPool()
 
   const [contract, setContract] = useState<Contract>()

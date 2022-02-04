@@ -8,6 +8,7 @@ import ExpandLessIcon from '@material-ui/icons/NavigateBefore'
 import ExpandMoreIcon from '@material-ui/icons/NavigateNext'
 import Image from 'next/image'
 import { useState } from 'react'
+import { useGetAtom } from "particule"
 
 import squeethTokenSymbol from '../public/images/Squeeth.svg'
 import { PrimaryButton } from '@components/Button'
@@ -24,7 +25,14 @@ import { Vaults } from '../src/constants'
 import { Tooltips } from '@constants/enums'
 import { useRestrictUser } from '@context/restrict-user'
 import { TradeProvider, useTrade } from '@context/trade'
-import { useController } from '@hooks/contracts/useController'
+import {
+  indexAtom,
+  markAtom,
+  currentImpliedFundingAtom,
+  impliedVolAtom,
+  dailyHistoricalFundingAtom,
+  normFactorAtom
+} from '@hooks/contracts/useController'
 import { TradeType } from '../src/types'
 import { toTokenAmount } from '@utils/calculations'
 
@@ -363,7 +371,12 @@ const TabComponent: React.FC = () => {
 const SqueethInfo: React.FC = () => {
   const classes = useStyles()
   const { actualTradeType } = useTrade()
-  const { dailyHistoricalFunding, mark, index, impliedVol, currentImpliedFunding, normFactor } = useController()
+  const dailyHistoricalFunding = useGetAtom(dailyHistoricalFundingAtom)
+  const mark = useGetAtom(markAtom)
+  const currentImpliedFunding = useGetAtom(currentImpliedFundingAtom)
+  const impliedVol = useGetAtom(impliedVolAtom)
+  const index = useGetAtom(indexAtom)
+  const normFactor = useGetAtom(normFactorAtom)
 
   const [showAdvanced, setShowAdvanced] = useState(false)
 

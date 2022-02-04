@@ -36,6 +36,7 @@
     "kaktana-react-lightweight-charts": "^2.0.0",
     "markdown-to-jsx": "^7.1.5",
     "next": "^12.0.7",
+    "particule": "^0.0.4",
     "react": "17.0.2",
     "react-chartjs-2": "^2.11.1",
     "react-cookie": "^4.1.1",

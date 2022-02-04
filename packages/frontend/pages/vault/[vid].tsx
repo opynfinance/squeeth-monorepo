@@ -26,7 +26,7 @@ import { Vault_vault } from '../../src/queries/squeeth/__generated__/Vault'
 import { PositionType } from '../../src/types'
 import { useRestrictUser } from '@context/restrict-user'
 import { useWallet } from '@context/wallet'
-import { useController } from '@hooks/contracts/useController'
+import { normFactorAtom, useController } from '@hooks/contracts/useController'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { useVaultData } from '@hooks/useVaultData'
 import { useWorldContext } from '@context/world'
@@ -34,6 +34,7 @@ import { CollateralStatus, Vault } from '../../src/types'
 import { squeethClient } from '@utils/apollo-client'
 import { getCollatPercentStatus, toTokenAmount } from '@utils/calculations'
 import { LinkButton } from '@components/Button'
+import { useGetAtom } from 'particule'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -225,13 +226,13 @@ const Component: React.FC = () => {
     getCollatRatioAndLiqPrice,
     getDebtAmount,
     getShortAmountFromDebt,
-    normFactor,
     depositCollateral,
     withdrawCollateral,
     openDepositAndMint,
     burnAndRedeem,
     getTwapEthPrice,
   } = useController()
+  const normFactor = useGetAtom(normFactorAtom);
   const { balance, address, connected, networkId } = useWallet()
   const { vid } = router.query
   const { liquidations } = useVaultLiquidations(Number(vid))

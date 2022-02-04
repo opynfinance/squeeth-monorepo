@@ -15,8 +15,9 @@ import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useMemo, useState } from 'react'
 import CrabPosition from './CrabPosition'
-import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
-import { useController } from '@hooks/contracts/useController'
+import { readyAtom } from '@hooks/contracts/useSqueethPool'
+import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from '@hooks/contracts/useController'
+import { useGetAtom } from 'particule'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -82,8 +83,9 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
   } = useCrab()
   const { minCurrentUsd, minPnL, loading } = useCrabPosition(address || '')
   const { isRestricted } = useRestrictUser()
-  const { ready } = useSqueethPool()
-  const { dailyHistoricalFunding, currentImpliedFunding } = useController()
+  const ready = useGetAtom(readyAtom)
+  const dailyHistoricalFunding = useGetAtom(dailyHistoricalFundingAtom)
+  const currentImpliedFunding = useGetAtom(currentImpliedFundingAtom)
 
   const { depositError, warning, withdrawError } = useMemo(() => {
     let depositError: string | undefined
