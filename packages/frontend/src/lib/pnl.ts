@@ -8,24 +8,21 @@ type ShortPnLParams = {
   wethAmount: BigNumber
   buyQuote: BigNumber
   ethPrice: BigNumber
-  ethCollateralPnl: BigNumber
 }
 
-export function calcUnrealizedPnl({ wethAmount, buyQuote, ethPrice, ethCollateralPnl }: ShortPnLParams) {
+export function calcUnrealizedPnl({ wethAmount, buyQuote, ethPrice }: ShortPnLParams) {
   if (
     wethAmount.isEqualTo(0) ||
     !wethAmount.isFinite() ||
     buyQuote.isEqualTo(0) ||
     !buyQuote.isFinite() ||
     ethPrice.isEqualTo(0) ||
-    !ethPrice.isFinite() ||
-    ethCollateralPnl.isEqualTo(0) ||
-    !ethCollateralPnl.isFinite()
+    !ethPrice.isFinite()
   ) {
     return new BigNumber(0)
   }
 
-  return buyQuote.minus(wethAmount).multipliedBy(ethPrice).plus(ethCollateralPnl)
+  return buyQuote.minus(wethAmount).multipliedBy(ethPrice)
 }
 
 type ShortGainParams = {

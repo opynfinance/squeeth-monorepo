@@ -74,8 +74,8 @@ export const usePnL = () => {
   }, [ethPrice.toString(), wethAmount.toString(), sellQuote.amountOut.toString(), squeethAmount.toString()])
 
   const shortUnrealizedPNL = useMemo(
-    () => calcUnrealizedPnl({ wethAmount, buyQuote, ethPrice, ethCollateralPnl }),
-    [buyQuote.toString(), ethCollateralPnl?.toString(), ethPrice.toString(), wethAmount.toString()],
+    () => calcUnrealizedPnl({ wethAmount, buyQuote, ethPrice }),
+    [buyQuote.toString(), ethPrice.toString(), wethAmount.toString()],
   )
 
   const longUnrealizedPNL = useMemo(
@@ -274,12 +274,12 @@ export const useLPPositions = () => {
           setLoading(false)
       })
     }
-  }, [gphLoading, isWethToken0, data?.positions, positionAndFees.length])
+  }, [gphLoading, isWethToken0, positionAndFees.length])
 
   return {
     activePositions: activePositions,
     closedPositions: closedPositions,
-    loading: loading,
+    loading: gphLoading || loading,
     depositedSqueeth,
     depositedWeth,
     withdrawnSqueeth,

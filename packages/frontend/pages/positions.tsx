@@ -278,7 +278,8 @@ export function Positions() {
                     Realized P&L
                   </Typography>
                   <Tooltip
-                    title={isLong ? Tooltips.RealizedPnL : `${Tooltips.RealizedPnL}. ${Tooltips.ShortCollateral}`}
+                    title={Tooltips.RealizedPnL}
+                    // title={isLong ? Tooltips.RealizedPnL : `${Tooltips.RealizedPnL}. ${Tooltips.ShortCollateral}`}
                   >
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
@@ -320,7 +321,8 @@ export function Positions() {
                     Unrealized P&L
                   </Typography>
                   <Tooltip
-                    title={isLong ? Tooltips.UnrealizedPnL : `${Tooltips.UnrealizedPnL}. ${Tooltips.ShortCollateral}`}
+                    title={Tooltips.UnrealizedPnL}
+                    // title={isLong ? Tooltips.UnrealizedPnL : `${Tooltips.UnrealizedPnL}. ${Tooltips.ShortCollateral}`}
                   >
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>

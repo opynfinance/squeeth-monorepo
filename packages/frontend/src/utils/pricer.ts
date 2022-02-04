@@ -314,6 +314,18 @@ export function calculateLiquidationPrice(
   return (ethPrice * (shortAmount / collateralAmount + 2)) / (shortAmount / collateralAmount + 1)
 }
 
+function getEthPrices(startPrice: number, step: number, length: number) {
+  let inc = startPrice
+
+  return Array(length)
+      .fill(0)
+      .map((_, i) => {
+        if (i === 0) return inc
+        inc += step
+        return inc
+      })
+}
+
 export function getSqueethLongPayOffGraph(ethPrice: number) {
   const unitPerTrade = 2 / (2 * ethPrice) // Took from the sheet
   const indexAtTrade = ethPrice ** 2 // Squeeeeeeth
@@ -373,6 +385,79 @@ export function getSqueethLongPayOffGraph(ethPrice: number) {
     twoXLeverage,
     twoXLeverageImaginary,
   }
+}
+
+export function getBuyAndLPPayOffGraph(ethPrice: number) {
+  const priceStep = 200
+  const squeethDeposit = 1
+  const squeethMultiplier = 1.1
+  const squeethPrice = squeethMultiplier * ethPrice
+  const ethDeposit = squeethDeposit * squeethPrice
+  const k = squeethDeposit * ethDeposit
+  const dollarToBuy = (ethDeposit * ethPrice) + (squeethDeposit * squeethPrice * ethPrice)
+  const eth1p5Lev = dollarToBuy * 1.5 / ethPrice
+
+  const getEthPrices = () => {
+    let inc = 1000
+    return Array(25)
+      .fill(0)
+      .map((_, i) => {
+        if (i === 0) return inc
+        inc += priceStep
+        return inc
+      })
+  }
+
+  const ethPrices = getEthPrices()
+  const ethPercents = ethPrices.map((p) => (100 * (p / ethPrice - 1)).toFixed(2))
+
+  const lpPayout = ethPrices.map(_ethPrice => {
+    const _squeethPrice = _ethPrice * squeethMultiplier
+    const _squeethBalance = Math.sqrt(k / _ethPrice)
+    const _ethBalance = k / _squeethBalance
+    const _dollarLp = (_squeethBalance * _ethPrice * _squeethPrice) + (_ethBalance * _ethPrice)
+    const _uniswapReturn = _dollarLp - dollarToBuy
+    return (_uniswapReturn * 100 / dollarToBuy).toFixed(2)
+  })
+
+  const leveragePayout = ethPrices.map(_ethPrice => {
+    const _levReturn = (_ethPrice - ethPrice) * eth1p5Lev
+    return (_levReturn * 100 / dollarToBuy).toFixed(2)
+  })
+
+  return { lpPayout, leveragePayout, ethPercents }
+}
+
+export function getMintAndLpPayoffGraph (ethPrice: number) {
+  const squeethDeposit = 1 // Number taken from sheet :|
+  const squeethMultiplier = 1.031
+  const scalingFactor = 10000
+  const squeethPrice = ethPrice * squeethMultiplier / scalingFactor
+  const ethDeposit = squeethDeposit * squeethPrice
+  const k = squeethDeposit * ethDeposit
+  const dollarToMint = (squeethDeposit * ethPrice * 2 * ethPrice / scalingFactor)  + (ethDeposit * ethPrice)
+  const eth1Lev = dollarToMint * 1 / ethPrice
+  const nf = 1
+  const ethCollatInVault = squeethDeposit * ethPrice * 2 / scalingFactor
+
+  const ethPrices = getEthPrices(500, 250, 25)
+  const ethPercents = ethPrices.map((p) => (100 * (p / ethPrice - 1)).toFixed(2))
+
+  const leveragePayout = ethPrices.map(_ethPrice => {
+    const _levReturn = (_ethPrice - ethPrice) * eth1Lev
+    return (_levReturn * 100 / dollarToMint).toFixed(2)
+  })
+
+  const lpPayout = ethPrices.map(_ethPrice => {
+    const _squeethPrice = _ethPrice * squeethMultiplier * nf / scalingFactor
+    const _squeethBalance = Math.sqrt(k / _squeethPrice)
+    const _ethBalance = k / _squeethBalance
+    const _valueMintAndLp = ((_squeethBalance - squeethDeposit) * _squeethPrice * _ethPrice) + (_ethBalance * _ethPrice) + (ethCollatInVault * _ethPrice)
+    const _uniswapReturn = _valueMintAndLp - dollarToMint
+    return (_uniswapReturn * 100 / dollarToMint).toFixed(2)
+  })
+
+  return { leveragePayout, ethPercents, lpPayout }
 }
 
 function getShortParams(ethPrice: number, collatRatio: number) {
