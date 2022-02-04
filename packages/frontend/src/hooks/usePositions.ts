@@ -777,12 +777,12 @@ export const useLPPositions = () => {
           setLoading(false)
       })
     }
-  }, [gphLoading, isWethToken0, data?.positions, positionAndFees.length])
+  }, [gphLoading, isWethToken0, positionAndFees.length])
 
   return {
     activePositions: activePositions,
     closedPositions: closedPositions,
-    loading: loading,
+    loading: gphLoading || loading,
     depositedSqueeth,
     depositedWeth,
     withdrawnSqueeth,

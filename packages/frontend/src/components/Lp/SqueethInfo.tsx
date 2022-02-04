@@ -8,6 +8,8 @@ import { Tooltips } from '@constants/enums'
 import { useController } from '@hooks/contracts/useController'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { toTokenAmount } from '@utils/calculations'
+import LPPosition from './LPPosition'
+import { useWallet } from '@context/wallet'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -16,6 +18,7 @@ const useStyles = makeStyles((theme) =>
         width: '100%',
       },
       marginTop: theme.spacing(2),
+      display: 'flex',
     },
     squeethInfoSubGroup: {
       display: 'flex',
@@ -33,6 +36,12 @@ const useStyles = makeStyles((theme) =>
       fontSize: '14px',
       marginLeft: theme.spacing(0.5),
     },
+    positionCard: {
+      background: theme.palette.background.stone,
+      borderRadius: theme.spacing(1),
+      width: '370px',
+      padding: theme.spacing(2),
+    },
   }),
 )
 
@@ -40,10 +49,11 @@ const SqueethInfo: React.FC = () => {
   const classes = useStyles()
   const { mark, index, impliedVol } = useController()
   const { getWSqueethPositionValue, getWSqueethPositionValueInETH } = useSqueethPool()
+  const { address } = useWallet()
 
   return (
     <div className={classes.squeethInfo}>
-      <div>
+      <div className={classes.positionCard}>
         <div className={classes.squeethInfoSubGroup}>
           {/* hard coded width layout to align with the next line */}
           <div className={classes.infoItem}>
@@ -80,6 +90,8 @@ const SqueethInfo: React.FC = () => {
             </div>
             <Typography>${Number(toTokenAmount(mark, 18).toFixed(0)).toLocaleString()}</Typography>
           </div>
+        </div>
+        <div className={classes.squeethInfoSubGroup} style={{ marginTop: '16px' }}>
           <div className={classes.infoItem}>
             <div className={classes.infoLabel}>
               <Typography color="textSecondary" variant="body2">
@@ -92,10 +104,10 @@ const SqueethInfo: React.FC = () => {
             <Typography>
               {getWSqueethPositionValue(1) && getWSqueethPositionValueInETH(1)
                 ? '$' +
-                  Number(getWSqueethPositionValue(1).toFixed(2).toLocaleString()) +
-                  '\xa0 ' +
-                  Number(getWSqueethPositionValueInETH(1).toFixed(4).toLocaleString()) +
-                  ' ETH'
+                Number(getWSqueethPositionValue(1).toFixed(2).toLocaleString()) +
+                '\xa0 ' +
+                Number(getWSqueethPositionValueInETH(1).toFixed(4).toLocaleString()) +
+                ' ETH'
                 : 'loading'}
             </Typography>
           </div>
@@ -120,6 +132,9 @@ const SqueethInfo: React.FC = () => {
           <Typography>{tvl || 'loading'}%</Typography>
         </div> */}
         </div>
+      </div>
+      <div className={classes.positionCard} style={{ marginLeft: '16px' }}>
+        {address ? <LPPosition /> : 'Connect wallet'}
       </div>
     </div>
   )
