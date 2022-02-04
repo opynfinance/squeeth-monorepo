@@ -131,7 +131,7 @@ const PositionsProvider: React.FC = ({ children }) => {
     } else if (finalSqueeth.isLessThan(0)) {
       setPositionType(PositionType.SHORT)
     } else setPositionType(PositionType.NONE)
-  }, [finalSqueeth.toString()])
+  }, [finalSqueeth.toString(), squeethAmount.toString()])
 
   useEffect(() => {
     for (let i = 0; i < shortVaults.length; i++) {
