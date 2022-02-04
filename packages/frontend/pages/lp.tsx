@@ -124,14 +124,16 @@ export function LPCalculator() {
                 <Typography color="primary" variant="h6">
                   Buy squeeth and LP
                 </Typography>
-                <Typography>Earn a payoff similar to ETH^1.5</Typography>
+                <Typography>
+                  Earn a payoff similar to ETH<sup>1.5</sup>
+                </Typography>
                 <Typography className={classes.heading} variant="subtitle1" color="primary">
                   Details
                 </Typography>
                 <Typography>
-                  Buying and LPing gives you a leverage position with a payoff similar to ETH^1.5. You give up some of
-                  your squeeth upside in exchange for trading fees. You are paying funding for being long squeeth, but
-                  earning fees from LPing on Uniswap.
+                  Buying and LPing gives you a leverage position with a payoff similar to ETH<sup>1.5</sup>. You give up
+                  some of your squeeth upside in exchange for trading fees. You are paying funding for being long
+                  squeeth, but earning fees from LPing on Uniswap.
                 </Typography>
                 <Typography className={classes.heading} variant="subtitle1" color="primary">
                   Payoff
