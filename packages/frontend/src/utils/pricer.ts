@@ -417,12 +417,12 @@ export function getBuyAndLPPayOffGraph(ethPrice: number) {
     const _ethBalance = k / _squeethBalance
     const _dollarLp = (_squeethBalance * _ethPrice * _squeethPrice) + (_ethBalance * _ethPrice)
     const _uniswapReturn = _dollarLp - dollarToBuy
-    return (_uniswapReturn / dollarToBuy).toFixed(2)
+    return (_uniswapReturn * 100 / dollarToBuy).toFixed(2)
   })
 
   const leveragePayout = ethPrices.map(_ethPrice => {
     const _levReturn = (_ethPrice - ethPrice) * eth1p5Lev
-    return (_levReturn / dollarToBuy).toFixed(2)
+    return (_levReturn * 100 / dollarToBuy).toFixed(2)
   })
 
   return { lpPayout, leveragePayout, ethPercents }
@@ -435,17 +435,17 @@ export function getMintAndLpPayoffGraph (ethPrice: number) {
   const squeethPrice = ethPrice * squeethMultiplier / scalingFactor
   const ethDeposit = squeethDeposit * squeethPrice
   const k = squeethDeposit * ethDeposit
-  const dollarToMint = (squeethDeposit * ethPrice * 1.75 * ethPrice / scalingFactor)  + (ethDeposit * ethPrice)
+  const dollarToMint = (squeethDeposit * ethPrice * 2 * ethPrice / scalingFactor)  + (ethDeposit * ethPrice)
   const eth1Lev = dollarToMint * 1 / ethPrice
   const nf = 1
-  const ethCollatInVault = squeethDeposit * ethPrice * 1.745 / scalingFactor
+  const ethCollatInVault = squeethDeposit * ethPrice * 2 / scalingFactor
 
   const ethPrices = getEthPrices(500, 250, 25)
   const ethPercents = ethPrices.map((p) => (100 * (p / ethPrice - 1)).toFixed(2))
 
   const leveragePayout = ethPrices.map(_ethPrice => {
     const _levReturn = (_ethPrice - ethPrice) * eth1Lev
-    return (_levReturn / dollarToMint).toFixed(2)
+    return (_levReturn * 100 / dollarToMint).toFixed(2)
   })
 
   const lpPayout = ethPrices.map(_ethPrice => {
@@ -454,7 +454,7 @@ export function getMintAndLpPayoffGraph (ethPrice: number) {
     const _ethBalance = k / _squeethBalance
     const _valueMintAndLp = ((_squeethBalance - squeethDeposit) * _squeethPrice * _ethPrice) + (_ethBalance * _ethPrice) + (ethCollatInVault * _ethPrice)
     const _uniswapReturn = _valueMintAndLp - dollarToMint
-    return (_uniswapReturn / dollarToMint).toFixed(2)
+    return (_uniswapReturn * 100 / dollarToMint).toFixed(2)
   })
 
   return { leveragePayout, ethPercents, lpPayout }
