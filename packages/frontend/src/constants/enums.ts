@@ -43,6 +43,7 @@ export enum Tooltips {
   Last30MinAvgFunding = 'Historical daily funding based on the last 30min. Calculated using a 30min TWAP of Mark - Index',
   CurrentImplFunding = 'Expected daily funding based on current price, calculated using current Mark - Index',
   FundingPayments = 'Funding happens every time the contract is touched',
+  NormFactor = 'The variable that adjusts the value of your position based on funding',
   oSQTHPrice = 'Price of oSQTH on Uniswap',
   LPPnL = 'PnL = Value of current LP underlying tokens including uncollected fees - Value of tokens deposited (at current price)',
   UniswapLoading = 'When you click the Uniswap link, the Uniswap LP page may take a few moments to load. Please wait for it to fully load so it can prefill LP token data.',
