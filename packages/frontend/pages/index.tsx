@@ -363,7 +363,7 @@ const TabComponent: React.FC = () => {
 const SqueethInfo: React.FC = () => {
   const classes = useStyles()
   const { actualTradeType } = useTrade()
-  const { dailyHistoricalFunding, mark, index, impliedVol, currentImpliedFunding } = useController()
+  const { dailyHistoricalFunding, mark, index, impliedVol, currentImpliedFunding, normFactor } = useController()
 
   const [showAdvanced, setShowAdvanced] = useState(false)
 
@@ -410,13 +410,19 @@ const SqueethInfo: React.FC = () => {
           <div className={classes.infoItem}>
             <div className={classes.infoLabel}>
               <Typography color="textSecondary" variant="body2">
-                Funding Payments
+                Funding
               </Typography>
-              <Tooltip title={Tooltips.FundingPayments}>
+              <Tooltip
+                title={`${Tooltips.FundingPayments}. ${
+                  actualTradeType === TradeType.LONG
+                    ? 'Funding is paid out of your position'
+                    : 'Funding is paid continuously to you from oSQTH token holders'
+                }`}
+              >
                 <InfoIcon fontSize="small" className={classes.infoIcon} />
               </Tooltip>
             </div>
-            <Typography>Continuous</Typography>
+            <Typography>Continuous, In-Kind</Typography>
           </div>
         </div>
       </div>
@@ -470,19 +476,13 @@ const SqueethInfo: React.FC = () => {
               <div className={classes.infoItem}>
                 <div className={classes.infoLabel}>
                   <Typography color="textSecondary" variant="body2">
-                    Funding
+                    Norm Factor
                   </Typography>
-                  <Tooltip
-                    title={
-                      actualTradeType === TradeType.LONG
-                        ? 'Funding is paid out of your position'
-                        : 'Funding is paid continuously to you from oSQTH token holders'
-                    }
-                  >
+                  <Tooltip title={Tooltips.NormFactor}>
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
                 </div>
-                <Typography>In-Kind</Typography>
+                <Typography>{normFactor.toFixed(4)}</Typography>
               </div>
 
               <IconButton
