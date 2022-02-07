@@ -19,7 +19,7 @@ const useRestrictUser = () => useContext(restrictUserContext)
 
 const RestrictUserProvider: React.FC = ({ children }) => {
   const { networkId } = useWallet()
-  const [cookies, , removeCookie] = useCookies(['restricted'])
+  const [cookies] = useCookies(['restricted'])
   const [state, setState] = useState({
     isRestricted: false,
   })
@@ -37,11 +37,7 @@ const RestrictUserProvider: React.FC = ({ children }) => {
     } else {
       handleRestrictUser(false)
     }
-
-    return () => {
-      removeCookie('restricted', { path: '/' })
-    }
-  }, [handleRestrictUser, cookies?.restricted, removeCookie, networkId])
+  }, [handleRestrictUser, cookies?.restricted, networkId])
 
   return (
     <restrictUserContext.Provider value={{ handleRestrictUser, isRestricted: state.isRestricted }}>
