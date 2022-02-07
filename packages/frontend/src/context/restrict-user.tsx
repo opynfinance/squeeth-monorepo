@@ -1,6 +1,9 @@
 import React, { useContext, useState, useCallback, useEffect } from 'react'
 import { useCookies } from 'react-cookie'
 
+import { useWallet } from './wallet'
+import { Networks } from '../types'
+
 type restrictUserContextType = {
   isRestricted: boolean
   handleRestrictUser: (isRestricted: boolean) => void
@@ -15,6 +18,7 @@ const restrictUserContext = React.createContext<restrictUserContextType>(initial
 const useRestrictUser = () => useContext(restrictUserContext)
 
 const RestrictUserProvider: React.FC = ({ children }) => {
+  const { networkId } = useWallet()
   const [cookies, , removeCookie] = useCookies(['restricted'])
   const [state, setState] = useState({
     isRestricted: false,
@@ -28,14 +32,14 @@ const RestrictUserProvider: React.FC = ({ children }) => {
   }, [])
 
   useEffect(() => {
-    if (cookies?.restricted?.split(',')[0] === 'true') {
+    if (cookies?.restricted?.split(',')[0] === 'true' && networkId !== Networks.ROPSTEN) {
       handleRestrictUser(true)
     }
 
     return () => {
       removeCookie('restricted', { path: '/' })
     }
-  }, [handleRestrictUser, cookies?.restricted])
+  }, [handleRestrictUser, cookies?.restricted, networkId, removeCookie])
 
   return (
     <restrictUserContext.Provider value={{ handleRestrictUser, isRestricted: state.isRestricted }}>
