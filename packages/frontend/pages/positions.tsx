@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useMemo } from 'react'
 import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
-import { useGetAtom } from "particule"
+import { useGetAtom } from 'particule'
 
 import { LPTable } from '@components/Lp/LPTable'
 import Nav from '@components/Nav'

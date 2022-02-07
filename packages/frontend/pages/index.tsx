@@ -8,7 +8,7 @@ import ExpandLessIcon from '@material-ui/icons/NavigateBefore'
 import ExpandMoreIcon from '@material-ui/icons/NavigateNext'
 import Image from 'next/image'
 import { useState } from 'react'
-import { useGetAtom } from "particule"
+import { useGetAtom } from 'particule'
 
 import squeethTokenSymbol from '../public/images/Squeeth.svg'
 import { PrimaryButton } from '@components/Button'
@@ -31,7 +31,7 @@ import {
   currentImpliedFundingAtom,
   impliedVolAtom,
   dailyHistoricalFundingAtom,
-  normFactorAtom
+  normFactorAtom,
 } from '@hooks/contracts/useController'
 import { TradeType } from '../src/types'
 import { toTokenAmount } from '@utils/calculations'

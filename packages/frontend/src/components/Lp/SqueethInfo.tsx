@@ -48,9 +48,9 @@ const useStyles = makeStyles((theme) =>
 
 const SqueethInfo: React.FC = () => {
   const classes = useStyles()
-  const mark = useGetAtom(markAtom);
-  const index = useGetAtom(indexAtom);
-  const impliedVol = useGetAtom(impliedVolAtom);
+  const mark = useGetAtom(markAtom)
+  const index = useGetAtom(indexAtom)
+  const impliedVol = useGetAtom(impliedVolAtom)
   const { getWSqueethPositionValue, getWSqueethPositionValueInETH } = useSqueethPool()
   const { address } = useWallet()
 

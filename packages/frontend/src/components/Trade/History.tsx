@@ -49,7 +49,7 @@ const History: React.FC = () => {
   const { transactions } = useTransactionHistory()
   const { networkId } = useWallet()
   const { ethPrice } = useWorldContext()
-  const normalizationFactor = useGetAtom(normFactorAtom);
+  const normalizationFactor = useGetAtom(normFactorAtom)
   const classes = useStyles()
   const { getUsdAmt } = useUsdAmount()
 

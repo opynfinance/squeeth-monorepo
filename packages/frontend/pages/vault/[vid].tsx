@@ -232,7 +232,7 @@ const Component: React.FC = () => {
     burnAndRedeem,
     getTwapEthPrice,
   } = useController()
-  const normFactor = useGetAtom(normFactorAtom);
+  const normFactor = useGetAtom(normFactorAtom)
   const { balance, address, connected, networkId } = useWallet()
   const { vid } = router.query
   const { liquidations } = useVaultLiquidations(Number(vid))

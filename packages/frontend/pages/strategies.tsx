@@ -13,7 +13,7 @@ import {
   currentImpliedFundingAtom,
   fundingPerHalfHourAtom,
   indexAtom,
-  dailyHistoricalFundingAtom
+  dailyHistoricalFundingAtom,
 } from '@hooks/contracts/useController'
 import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'

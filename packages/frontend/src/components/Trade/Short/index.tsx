@@ -37,7 +37,6 @@ import { MIN_COLLATERAL_AMOUNT } from '../../../constants'
 import { PositionType } from '../../../types'
 import { useVaultData } from '@hooks/useVaultData'
 
-
 const useStyles = makeStyles((theme) =>
   createStyles({
     cardTitle: {
@@ -195,7 +194,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
   const { openShort } = useShortHelper()
   const { getWSqueethPositionValue } = useSqueethPool()
   const { updateOperator, getShortAmountFromDebt, getDebtAmount } = useController()
-  const normalizationFactor = useGetAtom(normFactorAtom);
+  const normalizationFactor = useGetAtom(normFactorAtom)
   const { selectWallet, connected } = useWallet()
   const { shortHelper } = useAddresses()
 
@@ -568,7 +567,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   const { closeShort } = useShortHelper()
   const { getWSqueethPositionValue } = useSqueethPool()
   const { updateOperator, getShortAmountFromDebt, getDebtAmount } = useController()
-  const normalizationFactor = useGetAtom(normFactorAtom);
+  const normalizationFactor = useGetAtom(normFactorAtom)
   const { shortHelper } = useAddresses()
 
   const { selectWallet, connected } = useWallet()
