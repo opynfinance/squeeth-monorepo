@@ -22,7 +22,6 @@ const getMultiplier = (type: Vaults) => {
 export const normFactorAtom = atom(new BigNumber(1))
 export const markAtom = atom(new BigNumber(0))
 export const indexAtom = atom(new BigNumber(0))
-export const fundingPerHalfHourAtom = atom(0)
 export const currentImpliedFundingAtom = atom(0)
 export const impliedVolAtom = atom((get: any) => {
   const mark = get(markAtom)
@@ -43,7 +42,6 @@ export const useController = () => {
   const [normFactor, setNormFactor] = useAtom(normFactorAtom)
   const [mark, setMark] = useAtom(markAtom)
   const [index, setIndex] = useAtom(indexAtom)
-  const [fundingPerHalfHour, setFundingPerHalfHour] = useAtom(fundingPerHalfHourAtom)
   const [currentImpliedFunding, setCurrentImpliedFunding] = useAtom(currentImpliedFundingAtom)
   const [dailyHistoricalFunding, setDailyHistoricalFunding] = useAtom(dailyHistoricalFundingAtom)
 

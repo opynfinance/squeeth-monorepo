@@ -11,7 +11,6 @@ import { Typography, Tab, Tabs } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import {
   currentImpliedFundingAtom,
-  fundingPerHalfHourAtom,
   indexAtom,
   dailyHistoricalFundingAtom,
 } from '@hooks/contracts/useController'
@@ -104,7 +103,6 @@ const Strategies: React.FC = () => {
   const { maxCap, vault, collatRatio, timeAtLastHedge, profitableMovePercent } = useCrab()
   const index = useGetAtom(indexAtom)
   const currentImpliedFunding = useGetAtom(currentImpliedFundingAtom)
-  const fundingPerHalfHour = useGetAtom(fundingPerHalfHourAtom)
   const dailyHistoricalFunding = useGetAtom(dailyHistoricalFundingAtom)
 
   useMemo(() => {
