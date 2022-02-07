@@ -24,10 +24,6 @@ export const useSwapsData = () => {
   })
 
   useEffect(() => {
-    subscribeToNewPositions()
-  }, [])
-
-  const subscribeToNewPositions = useCallback(() => {
     subscribeToMore({
       document: SWAPS_SUBSCRIPTION,
       variables: {
@@ -45,6 +41,7 @@ export const useSwapsData = () => {
       },
     })
   }, [address, shortHelper, squeethPool, subscribeToMore, swapRouter])
+
   const swaps = data?.swaps
   const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
   const { squeethAmount, wethAmount, totalUSDFromBuy, boughtSqueeth, totalUSDFromSell, soldSqueeth, shortUsdAmount } =
