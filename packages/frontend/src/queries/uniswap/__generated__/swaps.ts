@@ -53,4 +53,5 @@ export interface swapsVariables {
   recipients: string[];
   tokenAddress: any;
   origin: any;
+  orderDirection: string;
 }

@@ -53,4 +53,5 @@ export interface swapsRopstenVariables {
   recipients: string[];
   tokenAddress: any;
   origin: any;
+  orderDirection: string;
 }

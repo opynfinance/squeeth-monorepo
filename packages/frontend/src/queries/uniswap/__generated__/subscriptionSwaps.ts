@@ -53,4 +53,5 @@ export interface subscriptionSwapsVariables {
   recipients: string[];
   tokenAddress: any;
   origin: any;
+  orderDirection: string;
 }
