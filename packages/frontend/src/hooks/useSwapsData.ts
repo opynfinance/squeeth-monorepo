@@ -52,7 +52,6 @@ export const useSwapsData = () => {
   }, [address, oSqueeth, subscribeToMore])
 
   const swaps = data?.swaps
-  console.log(swaps)
   const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
   const { squeethAmount, wethAmount, totalUSDFromBuy, boughtSqueeth, totalUSDFromSell, soldSqueeth, shortUsdAmount } =
     useMemo(

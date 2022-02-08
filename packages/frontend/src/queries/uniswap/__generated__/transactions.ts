@@ -25,26 +25,8 @@ export interface transactions_positionSnapshots {
   transaction: transactions_positionSnapshots_transaction;
 }
 
-export interface transactions_swaps_transaction {
-  __typename: "Transaction";
-  id: string;
-  blockNumber: any;
-}
-
-export interface transactions_swaps {
-  __typename: "Swap";
-  id: string;
-  recipient: any;
-  amount0: any;
-  amount1: any;
-  timestamp: any;
-  origin: any;
-  transaction: transactions_swaps_transaction;
-}
-
 export interface transactions {
   positionSnapshots: transactions_positionSnapshots[];
-  swaps: transactions_swaps[];
 }
 
 export interface transactionsVariables {
