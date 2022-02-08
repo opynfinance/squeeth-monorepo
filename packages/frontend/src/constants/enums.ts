@@ -43,6 +43,7 @@ export enum Tooltips {
   Last30MinAvgFunding = 'Historical daily funding based on the last 30min. Calculated using a 30min TWAP of Mark - Index',
   CurrentImplFunding = 'Expected daily funding based on current price, calculated using current Mark - Index',
   FundingPayments = 'Funding happens every time the contract is touched',
+  NormFactor = 'The variable that adjusts the value of your position based on funding',
   oSQTHPrice = 'Price of oSQTH on Uniswap',
   LPPnL = 'PnL = Value of current LP underlying tokens including uncollected fees - Value of tokens deposited (at current price)',
   UniswapLoading = 'When you click the Uniswap link, the Uniswap LP page may take a few moments to load. Please wait for it to fully load so it can prefill LP token data.',
@@ -90,4 +91,12 @@ export const UniswapIFrameClose = {
   3: 'https://squeeth-uniswap.netlify.app/#/pool',
   31337: 'https://app.uniswap.org/#/add/ETH/0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B/3000', // Should be replaced with arbitrum subgraph
   421611: 'https://app.uniswap.org/#/add/ETH/0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B/3000', // Should be replaced with arbitrum subgraph
+}
+
+export enum Action {
+  BURN_SHORT = 'BURN_SHORT',
+  DEPOSIT_COLLAT = 'DEPOSIT_COLLAT',
+  LIQUIDATE = 'LIQUIDATE',
+  MINT_SHORT = 'MINT_SHORT',
+  WITHDRAW_COLLAT = 'WITHDRAW_COLLAT',
 }

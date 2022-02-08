@@ -173,11 +173,16 @@ const WalletProvider: React.FC = ({ children }) => {
       },
       walletSelect: {
         description: `<div>
-          <p> By connecting a wallet, you agree to the Opyn user <a href="/terms-of-service" style="color: #2CE6F9;" target="_blank">Terms of Services</a> and acknowledge that you have read and understand the Opyn <a href="/privacy-policy" style="color: #2CE6F9;" target="_blank">privacy policy</a>.</p>
+          <p> By connecting a wallet, you agree to the Opyn user <a href="/terms-of-service" style="color: #2CE6F9;" target="_blank">Terms of Service</a> and acknowledge that you have read and understand the Opyn <a href="/privacy-policy" style="color: #2CE6F9;" target="_blank">Privacy Policy</a>.</p>
           </div > `,
 
         wallets: [
           { walletName: 'metamask', preferred: true },
+          { walletName: 'coinbase', preferred: false },
+          {
+            walletName: 'walletLink',
+            rpcUrl: RPC_URL,
+          },
           {
             walletName: 'walletConnect',
             preferred: true,
@@ -191,11 +196,14 @@ const WalletProvider: React.FC = ({ children }) => {
             preferred: true,
             appName: 'Opyn V2',
           },
-          { walletName: 'coinbase', preferred: true },
           {
             walletName: 'ledger',
             preferred: true,
             rpcUrl: RPC_URL,
+          },
+          {
+            walletName: 'gnosis',
+            appName: 'WalletConnect',
           },
         ],
       },

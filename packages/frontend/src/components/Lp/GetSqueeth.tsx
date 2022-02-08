@@ -10,7 +10,7 @@ import { useWallet } from '@context/wallet'
 import { useController } from '@hooks/contracts/useController'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useWorldContext } from '@context/world'
-import { usePositions } from '@hooks/usePositions'
+import { usePositions } from '@context/positions'
 import { toTokenAmount } from '@utils/calculations'
 import { PrimaryButton } from '../Button'
 import CollatRange from '../CollatRange'
@@ -106,12 +106,18 @@ const Mint: React.FC = () => {
   }
 
   useEffect(() => {
+    let isMounted = true
     if (collatAmountBN.isNaN() || collatAmountBN.isZero()) {
       setMintAmount(new BigNumber(0))
       return
     }
     const debt = collatAmountBN.times(100).div(collatPercent)
-    getShortAmountFromDebt(debt).then((s) => setMintAmount(s))
+    getShortAmountFromDebt(debt).then((s) => {
+      if (isMounted) setMintAmount(s)
+    })
+    return () => {
+      isMounted = false
+    }
   }, [collatPercent, collatAmount.toString()])
 
   useEffect(() => {
@@ -124,7 +130,7 @@ const Mint: React.FC = () => {
     } else if (connected && collatAmountBN.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) {
       setMintMinCollatError('Minimum collateral is 6.9 ETH')
     }
-  }, [balance.toString(), connected, existingCollat.toString()])
+  }, [balance.toString(), connected, existingCollat.toString(), collatAmountBN.toString(), collatPercent])
 
   const liqPrice = useMemo(() => {
     const rSqueeth = normalizationFactor.multipliedBy(mintAmount.toNumber() || new BigNumber(1)).dividedBy(10000)

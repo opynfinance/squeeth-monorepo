@@ -13,13 +13,14 @@ import { PositionType } from '../src/types/'
 import { Tooltips } from '../src/constants'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useWorldContext } from '@context/world'
-import { useLPPositions, usePnL, usePositions } from '@hooks/usePositions'
+import { usePnL } from '@hooks/usePositions'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { toTokenAmount } from '@utils/calculations'
 import { useController } from '../src/hooks/contracts/useController'
 import { CrabProvider } from '@context/crabStrategy'
 import { useCrabPosition } from '@hooks/useCrabPosition'
 import { useWallet } from '@context/wallet'
+import { usePositions } from '@context/positions'
 import { LinkButton } from '@components/Button'
 import { useVaultData } from '@hooks/useVaultData'
 
@@ -147,12 +148,13 @@ export function Positions() {
     shortGain,
     buyQuote,
     sellQuote,
-    longRealizedPNL,
-    shortRealizedPNL,
     shortUnrealizedPNL,
     loading: isPnLLoading,
+    longUnrealizedPNL,
   } = usePnL()
-  const { activePositions, loading: isPositionFinishedCalc } = useLPPositions()
+
+  const { ethPrice } = useWorldContext()
+
   const { pool } = useSqueethPool()
 
   const { oSqueethBal } = useWorldContext()
@@ -161,7 +163,6 @@ export function Positions() {
   const {
     positionType,
     squeethAmount,
-    wethAmount,
     loading: isPositionLoading,
     shortVaults,
     firstValidVault,
@@ -171,6 +172,9 @@ export function Positions() {
     mintedDebt,
     shortDebt,
     isLong,
+    shortRealizedPNL,
+    longRealizedPNL,
+    activePositions,
   } = usePositions()
 
   const { index } = useController()
@@ -259,8 +263,7 @@ export function Positions() {
                   ) : (
                     <>
                       <Typography variant="body1" className={longGain.isLessThan(0) ? classes.red : classes.green}>
-                        ${sellQuote.amountOut.minus(wethAmount.abs()).times(toTokenAmount(index, 18).sqrt()).toFixed(2)}{' '}
-                        ({sellQuote.amountOut.minus(wethAmount.abs()).toFixed(5)} ETH)
+                        $ {longUnrealizedPNL?.usdValue.toFixed(2)} ({longUnrealizedPNL?.ethValue.toFixed(5)} ETH)
                       </Typography>
                       <Typography variant="caption" className={longGain.isLessThan(0) ? classes.red : classes.green}>
                         {(longGain || 0).toFixed(2)}%
@@ -275,7 +278,8 @@ export function Positions() {
                     Realized P&L
                   </Typography>
                   <Tooltip
-                    title={isLong ? Tooltips.RealizedPnL : `${Tooltips.RealizedPnL}. ${Tooltips.ShortCollateral}`}
+                    title={Tooltips.RealizedPnL}
+                    // title={isLong ? Tooltips.RealizedPnL : `${Tooltips.RealizedPnL}. ${Tooltips.ShortCollateral}`}
                   >
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
@@ -301,7 +305,7 @@ export function Positions() {
                   <Typography variant="caption" component="span" color="textSecondary">
                     Position
                   </Typography>
-                  {isPositionFinishedCalc ? (
+                  {isPositionLoading ? (
                     <Typography variant="body1">Loading</Typography>
                   ) : (
                     <>
@@ -317,16 +321,17 @@ export function Positions() {
                     Unrealized P&L
                   </Typography>
                   <Tooltip
-                    title={isLong ? Tooltips.UnrealizedPnL : `${Tooltips.UnrealizedPnL}. ${Tooltips.ShortCollateral}`}
+                    title={Tooltips.UnrealizedPnL}
+                    // title={isLong ? Tooltips.UnrealizedPnL : `${Tooltips.UnrealizedPnL}. ${Tooltips.ShortCollateral}`}
                   >
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
-                  {isPositionFinishedCalc || shortGain.isLessThanOrEqualTo(-100) || !shortGain.isFinite() ? (
+                  {isPositionLoading || shortGain.isLessThanOrEqualTo(-100) || !shortGain.isFinite() ? (
                     <Typography variant="body1">Loading</Typography>
                   ) : (
                     <>
                       <Typography variant="body1" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
-                        $ {shortUnrealizedPNL.toFixed(2)} ({wethAmount.minus(buyQuote).toFixed(5)} ETH)
+                        $ {shortUnrealizedPNL.toFixed(2)} ({shortUnrealizedPNL.dividedBy(ethPrice).toFixed(5)} ETH)
                       </Typography>
                       <Typography variant="caption" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
                         {(shortGain || 0).toFixed(2)}%
@@ -344,9 +349,7 @@ export function Positions() {
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
                   <Typography variant="body1">
-                    {isPositionFinishedCalc && existingLiqPrice.isEqualTo(0)
-                      ? 'Loading'
-                      : '$' + existingLiqPrice.toFixed(2)}
+                    {isPositionLoading && existingLiqPrice.isEqualTo(0) ? 'Loading' : '$' + existingLiqPrice.toFixed(2)}
                   </Typography>
                 </div>
                 <div style={{ width: '50%' }}>

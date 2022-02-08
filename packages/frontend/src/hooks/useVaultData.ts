@@ -15,6 +15,7 @@ import { toTokenAmount } from '@utils/calculations'
 export const useVaultData = (vid: number) => {
   const [vault, setVault] = useState<Vault | null>(null)
   const [existingCollatPercent, setExistingCollatPercent] = useState(0)
+  const [existingCollat, setExistingCollat] = useState(new BigNumber(0))
   const [existingLiqPrice, setExistingLiqPrice] = useState(new BigNumber(0))
   const [collatPercent, setCollatPercent] = useState(0)
   const [isVaultLoading, setVaultLoading] = useState(true)
@@ -41,6 +42,7 @@ export const useVaultData = (vid: number) => {
       shortAmount: toTokenAmount(new BigNumber(_vault.shortAmount), OSQUEETH_DECIMALS),
       operator: _vault.operator,
     })
+    setExistingCollat(toTokenAmount(new BigNumber(_vault.collateralAmount), 18))
 
     getCollatRatioAndLiqPrice(new BigNumber(_vault.collateralAmount), new BigNumber(_vault.shortAmount)).then(
       ({ collateralPercent, liquidationPrice }) => {
@@ -54,7 +56,7 @@ export const useVaultData = (vid: number) => {
 
   useEffect(() => {
     updateVault()
-  }, [vid, normFactor.toString(), address, connected, _vault])
+  }, [vid, normFactor.toString(), address, connected, _vault?.id])
 
   return {
     vault,
@@ -65,5 +67,6 @@ export const useVaultData = (vid: number) => {
     collatPercent,
     isVaultLoading: isVaultLoading || isDataLoading,
     setVaultLoading,
+    existingCollat,
   }
 }

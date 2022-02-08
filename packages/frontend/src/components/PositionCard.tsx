@@ -7,13 +7,12 @@ import clsx from 'clsx'
 import Link from 'next/link'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { usePnL, usePositions } from '@hooks/usePositions'
+import { usePnL } from '@hooks/usePositions'
+import { usePositions } from '@context/positions'
 import { Tooltips } from '@constants/enums'
 import { useTrade } from '@context/trade'
 import { useWorldContext } from '@context/world'
 import { PositionType, TradeType } from '../types'
-import { useController } from '@hooks/contracts/useController'
-import { toTokenAmount } from '@utils/calculations'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 
 const useStyles = makeStyles((theme) =>
@@ -150,23 +149,11 @@ type PositionCardType = {
 }
 
 const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
-  const {
-    buyQuote,
-    sellQuote,
-    longGain,
-    shortGain,
-    longRealizedPNL,
-    shortRealizedPNL,
-    shortUnrealizedPNL,
-    loading,
-    refetch,
-  } = usePnL()
+  const { buyQuote, sellQuote, longGain, shortGain, shortUnrealizedPNL, longUnrealizedPNL, loading } = usePnL()
 
   const {
     positionType: pType,
     squeethAmount,
-    shortDebt,
-    wethAmount,
     shortVaults,
     firstValidVault,
     vaultId,
@@ -174,6 +161,9 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     loading: isPositionLoading,
     isLP,
     isLong,
+    shortRealizedPNL,
+    longRealizedPNL,
+    swapsQueryRefetch,
   } = usePositions()
   const { liquidations } = useVaultLiquidations(Number(vaultId))
   const {
@@ -187,7 +177,6 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
   } = useTrade()
   const { ethPrice } = useWorldContext()
   const tradeAmount = new BigNumber(tradeAmountInput)
-  const { index } = useController()
   const [fetchingNew, setFetchingNew] = useState(false)
   const [postTradeAmt, setPostTradeAmt] = useState(new BigNumber(0))
   const [postPosition, setPostPosition] = useState(PositionType.NONE)
@@ -200,7 +189,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
       setTradeSuccess(false)
       setTimeout(() => {
         setFetchingNew(false)
-        refetch()
+        swapsQueryRefetch()
       }, 5000)
     }
   }, [tradeSuccess])
@@ -238,15 +227,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
       }
       return none
     },
-    [
-      shortVaults,
-      squeethAmount.toString(),
-      tradeType,
-      positionType,
-      loading,
-      longGain.toString(),
-      shortGain.toString(),
-    ],
+    [isPositionLoading, loading, positionType, longGain.toString(), shortGain.toString()],
   )
 
   const getRealizedPNLBasedValue = useCallback(
@@ -285,12 +266,11 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     actualTradeType,
     firstValidVault,
     isOpenPosition,
-    quote.amountOut.toString(),
-    shortVaults?.length,
-    tradeAmount.toString(),
-    squeethAmount.toString(),
-    positionType,
     isPositionLoading,
+    positionType,
+    quote.amountOut.toString(),
+    squeethAmount.toString(),
+    tradeAmount.toString(),
   ])
 
   return (
@@ -360,7 +340,8 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
                       Unrealized P&L
                     </Typography>
                     <Tooltip
-                      title={isLong ? Tooltips.UnrealizedPnL : `${Tooltips.UnrealizedPnL}. ${Tooltips.ShortCollateral}`}
+                      title={Tooltips.UnrealizedPnL}
+                      // title={isLong ? Tooltips.UnrealizedPnL : `${Tooltips.UnrealizedPnL}. ${Tooltips.ShortCollateral}`}
                     >
                       <InfoIcon fontSize="small" className={classes.infoIcon} />
                     </Tooltip>
@@ -371,10 +352,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
                       style={{ fontWeight: 600 }}
                     >
                       {getPositionBasedValue(
-                        `$${sellQuote.amountOut
-                          .minus(wethAmount.abs())
-                          .times(toTokenAmount(index, 18).sqrt())
-                          .toFixed(2)}`,
+                        `$${longUnrealizedPNL?.usdValue.toFixed(2)}`,
                         `$${shortUnrealizedPNL.toFixed(2)}`,
                         '--',
                         'Loading',
@@ -394,7 +372,8 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
                     Realized P&L
                   </Typography>
                   <Tooltip
-                    title={isLong ? Tooltips.RealizedPnL : `${Tooltips.RealizedPnL}. ${Tooltips.ShortCollateral}`}
+                    title={Tooltips.RealizedPnL}
+                    // title={isLong ? Tooltips.RealizedPnL : `${Tooltips.RealizedPnL}. ${Tooltips.ShortCollateral}`}
                   >
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
