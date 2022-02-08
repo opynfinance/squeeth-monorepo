@@ -55,13 +55,13 @@ function MyApp({ Component, pageProps }: any) {
 
   return (
     <CookiesProvider>
-      <RestrictUserProvider>
-        <WalletProvider>
+      <WalletProvider>
+        <RestrictUserProvider>
           <QueryClientProvider client={queryClient}>
             <TradeApp Component={Component} pageProps={pageProps} />
           </QueryClientProvider>
-        </WalletProvider>
-      </RestrictUserProvider>
+        </RestrictUserProvider>
+      </WalletProvider>
     </CookiesProvider>
   )
 }
