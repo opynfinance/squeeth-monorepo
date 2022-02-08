@@ -93,7 +93,7 @@ export const useTransactionHistory = () => {
     const usdValue = ethAmount.multipliedBy(ethPriceMap[time]).abs()
 
     let transactionType = TransactionType.BUY
-    if (squeethAmount.isPositive() && s.recipient.toLowerCase() === swapRouter.toLowerCase()) {
+    if (squeethAmount.isPositive() && s.recipient.toLowerCase() !== shortHelper.toLowerCase()) {
       transactionType = TransactionType.SELL
     } else if (s.recipient.toLowerCase() === shortHelper.toLowerCase()) {
       if (squeethAmount.isNegative()) transactionType = TransactionType.BURN_SHORT
