@@ -10,7 +10,7 @@ import { useWallet } from '@context/wallet'
 import { useUserAllowance } from '@hooks/contracts/useAllowance'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useAddresses } from '@hooks/useAddress'
-import { usePositions } from '@hooks/usePositions'
+import { usePositions } from '@context/positions'
 import { PrimaryButton } from '@components/Button'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
 import { UniswapIframe } from '@components/Modal/UniswapIframe'
@@ -19,7 +19,6 @@ import { useController } from '@hooks/contracts/useController'
 import Confirmed, { ConfirmType } from '../Confirmed'
 import TradeInfoItem from '../TradeInfoItem'
 import UniswapData from '../UniswapData'
-import { PositionType } from '../../../types'
 
 const useStyles = makeStyles((theme) =>
   createStyles({

@@ -13,13 +13,14 @@ import { PositionType } from '../src/types/'
 import { Tooltips } from '../src/constants'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useWorldContext } from '@context/world'
-import { useLPPositions, usePnL, usePositions } from '@hooks/usePositions'
+import { usePnL } from '@hooks/usePositions'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { toTokenAmount } from '@utils/calculations'
 import { useController } from '../src/hooks/contracts/useController'
 import { CrabProvider } from '@context/crabStrategy'
 import { useCrabPosition } from '@hooks/useCrabPosition'
 import { useWallet } from '@context/wallet'
+import { usePositions } from '@context/positions'
 import { LinkButton } from '@components/Button'
 import { useVaultData } from '@hooks/useVaultData'
 
@@ -142,19 +143,18 @@ const ConnectWallet: React.FC = () => {
 
 export function Positions() {
   const classes = useStyles()
-  const { ethPrice } = useWorldContext()
   const {
     longGain,
     shortGain,
     buyQuote,
     sellQuote,
-    longRealizedPNL,
-    shortRealizedPNL,
     shortUnrealizedPNL,
-    longUnrealizedPNL,
     loading: isPnLLoading,
+    longUnrealizedPNL,
   } = usePnL()
-  const { activePositions, loading: isPositionFinishedCalc } = useLPPositions()
+
+  const { ethPrice } = useWorldContext()
+
   const { pool } = useSqueethPool()
 
   const { oSqueethBal } = useWorldContext()
@@ -172,6 +172,9 @@ export function Positions() {
     mintedDebt,
     shortDebt,
     isLong,
+    shortRealizedPNL,
+    longRealizedPNL,
+    activePositions,
   } = usePositions()
 
   const { index } = useController()
@@ -302,7 +305,7 @@ export function Positions() {
                   <Typography variant="caption" component="span" color="textSecondary">
                     Position
                   </Typography>
-                  {isPositionFinishedCalc ? (
+                  {isPositionLoading ? (
                     <Typography variant="body1">Loading</Typography>
                   ) : (
                     <>
@@ -323,7 +326,7 @@ export function Positions() {
                   >
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
-                  {isPositionFinishedCalc || shortGain.isLessThanOrEqualTo(-100) || !shortGain.isFinite() ? (
+                  {isPositionLoading || shortGain.isLessThanOrEqualTo(-100) || !shortGain.isFinite() ? (
                     <Typography variant="body1">Loading</Typography>
                   ) : (
                     <>
@@ -346,9 +349,7 @@ export function Positions() {
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
                   <Typography variant="body1">
-                    {isPositionFinishedCalc && existingLiqPrice.isEqualTo(0)
-                      ? 'Loading'
-                      : '$' + existingLiqPrice.toFixed(2)}
+                    {isPositionLoading && existingLiqPrice.isEqualTo(0) ? 'Loading' : '$' + existingLiqPrice.toFixed(2)}
                   </Typography>
                 </div>
                 <div style={{ width: '50%' }}>
