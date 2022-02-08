@@ -22,7 +22,7 @@ export function calcUnrealizedPnl({ wethAmount, buyQuote, ethPrice }: ShortPnLPa
     return new BigNumber(0)
   }
 
-  return buyQuote.minus(wethAmount).multipliedBy(ethPrice)
+  return wethAmount.minus(buyQuote).multipliedBy(ethPrice)
 }
 
 type ShortGainParams = {
