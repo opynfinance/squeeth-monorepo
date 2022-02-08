@@ -8,30 +8,39 @@ import { useAddresses } from '../hooks/useAddress'
 import { useUsdAmount } from '../hooks/useUsdAmount'
 import { swaps, swapsVariables } from '../queries/uniswap/__generated__/swaps'
 import SWAPS_QUERY, { SWAPS_SUBSCRIPTION } from '../queries/uniswap/swapsQuery'
+import { Networks } from '../types'
+import SWAPS_ROPSTEN_QUERY, { SWAPS_ROPSTEN_SUBSCRIPTION } from '@queries/uniswap/swapsRopstenQuery'
 
 export const useSwapsData = () => {
   const { squeethPool, weth, oSqueeth, shortHelper, swapRouter } = useAddresses()
-  const { address } = useWallet()
+  const { address, networkId } = useWallet()
   const { getUsdAmt } = useUsdAmount()
-  const { data, subscribeToMore, refetch } = useQuery<swaps, swapsVariables>(SWAPS_QUERY, {
-    variables: {
-      poolAddress: squeethPool?.toLowerCase(),
-      origin: address || '',
-      recipients: [shortHelper, address || '', swapRouter],
-      orderDirection: 'asc',
+  const queryVariable = useMemo(
+    () =>
+      networkId === Networks.MAINNET
+        ? {
+            tokenAddress: oSqueeth?.toLowerCase(),
+            origin: address || '',
+          }
+        : {
+            poolAddress: squeethPool?.toLowerCase(),
+            origin: address || '',
+            recipients: [shortHelper, address || '', swapRouter],
+          },
+    [address, networkId, oSqueeth, shortHelper, squeethPool, swapRouter],
+  )
+  const { data, subscribeToMore, refetch } = useQuery<swaps, swapsVariables>(
+    networkId === Networks.MAINNET ? SWAPS_QUERY : SWAPS_ROPSTEN_QUERY,
+    {
+      variables: queryVariable,
+      fetchPolicy: 'cache-and-network',
     },
-    fetchPolicy: 'cache-and-network',
-  })
+  )
 
   useEffect(() => {
     subscribeToMore({
-      document: SWAPS_SUBSCRIPTION,
-      variables: {
-        poolAddress: squeethPool?.toLowerCase(),
-        origin: address || '',
-        recipients: [shortHelper, address || '', swapRouter],
-        orderDirection: 'asc',
-      },
+      document: networkId === Networks.MAINNET ? SWAPS_SUBSCRIPTION : SWAPS_ROPSTEN_SUBSCRIPTION,
+      variables: queryVariable,
       updateQuery(prev, { subscriptionData }) {
         if (!subscriptionData.data) return prev
         const newSwaps = subscriptionData.data.swaps
@@ -40,9 +49,10 @@ export const useSwapsData = () => {
         }
       },
     })
-  }, [address, shortHelper, squeethPool, subscribeToMore, swapRouter])
+  }, [address, oSqueeth, subscribeToMore])
 
   const swaps = data?.swaps
+  console.log(swaps)
   const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
   const { squeethAmount, wethAmount, totalUSDFromBuy, boughtSqueeth, totalUSDFromSell, soldSqueeth, shortUsdAmount } =
     useMemo(
