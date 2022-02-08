@@ -93,7 +93,7 @@ export function handleBurnShort(event: BurnShort): void {
 
   //check if users manually burn or using shorthelper to close position
   let actionType: string;
-  if (event.transaction.to === SHORT_HELPER_ADDR) {
+  if (event.params.sender === SHORT_HELPER_ADDR) {
     actionType = "CLOSE_SHORT";
   } else {
     actionType = "BURN";
@@ -217,7 +217,7 @@ export function handleMintShort(event: MintShort): void {
   //check if users manually mint or using shorthelper to close position
   //if directly sent to short helper address, then it's open short in 1 step, if directly sen t to controller address, then it's mint
   let actionType: string;
-  if (event.transaction.to === SHORT_HELPER_ADDR) {
+  if (event.params.sender === SHORT_HELPER_ADDR) {
     actionType = "OPEN_SHORT";
   } else {
     actionType = "MINT";
