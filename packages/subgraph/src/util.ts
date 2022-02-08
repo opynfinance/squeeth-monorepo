@@ -7,11 +7,11 @@ export const SHORT_HELPER_ADDR = getShortHelperAddr(dataSource.network());
 
 function getShortHelperAddr(networkName: string): Address {
   let addr = Address.fromString("0x3b4095D5ff0e629972CAAa50bd3004B09a1632C5");
-  if (networkName === "ropsten") {
+  if (networkName == "ropsten") {
     addr = Address.fromString("0x8903918DFE74476E90B63061E5b9c3E63b65d3F4");
-  } else if (networkName === "localhost") {
+  } else if (networkName == "localhost") {
     addr = Address.fromString("0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE");
-  } else if (networkName === "rinkebyArbitrum") {
+  } else if (networkName == "rinkebyArbitrum") {
     addr = Address.fromString("0x5A30a1E3873A2B5Fc9DB9b2b52491C4b6086FAe0");
   }
   return addr;
