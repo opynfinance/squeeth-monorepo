@@ -15,24 +15,15 @@ export const useSwapsData = () => {
   const { squeethPool, weth, oSqueeth, shortHelper, swapRouter } = useAddresses()
   const { address, networkId } = useWallet()
   const { getUsdAmt } = useUsdAmount()
-  const queryVariable = useMemo(
-    () =>
-      networkId === Networks.MAINNET
-        ? {
-            tokenAddress: oSqueeth?.toLowerCase(),
-            origin: address || '',
-          }
-        : {
-            poolAddress: squeethPool?.toLowerCase(),
-            origin: address || '',
-            recipients: [shortHelper, address || '', swapRouter],
-          },
-    [address, networkId, oSqueeth, shortHelper, squeethPool, swapRouter],
-  )
   const { data, subscribeToMore, refetch } = useQuery<swaps, swapsVariables>(
     networkId === Networks.MAINNET ? SWAPS_QUERY : SWAPS_ROPSTEN_QUERY,
     {
-      variables: queryVariable,
+      variables: {
+        tokenAddress: oSqueeth?.toLowerCase(),
+        origin: address || '',
+        poolAddress: squeethPool?.toLowerCase(),
+        recipients: [shortHelper, address || '', swapRouter],
+      },
       fetchPolicy: 'cache-and-network',
     },
   )
@@ -40,7 +31,12 @@ export const useSwapsData = () => {
   useEffect(() => {
     subscribeToMore({
       document: networkId === Networks.MAINNET ? SWAPS_SUBSCRIPTION : SWAPS_ROPSTEN_SUBSCRIPTION,
-      variables: queryVariable,
+      variables: {
+        tokenAddress: oSqueeth?.toLowerCase(),
+        origin: address || '',
+        poolAddress: squeethPool?.toLowerCase(),
+        recipients: [shortHelper, address || '', swapRouter],
+      },
       updateQuery(prev, { subscriptionData }) {
         if (!subscriptionData.data) return prev
         const newSwaps = subscriptionData.data.swaps

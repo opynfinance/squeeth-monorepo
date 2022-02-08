@@ -49,6 +49,8 @@ export interface subscriptionSwapsRopsten {
 }
 
 export interface subscriptionSwapsRopstenVariables {
-  poolAddress?: string | null;
-  recipients?: (string | null)[] | null;
+  poolAddress: string;
+  recipients: string[];
+  tokenAddress: any;
+  origin: any;
 }
