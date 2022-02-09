@@ -3,7 +3,7 @@ import React, { useEffect } from 'react'
 
 import { useTrade } from '@context/trade'
 import { useWallet } from '@context/wallet'
-import { usePositions } from '@hooks/usePositions'
+import { usePositions } from '@context/positions'
 import { TradeType, PositionType } from '../../types'
 import { toTokenAmount } from '@utils/calculations'
 import { SecondaryTab, SecondaryTabs } from '../Tabs'
