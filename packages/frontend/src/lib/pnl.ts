@@ -1,10 +1,12 @@
 import BigNumber from 'bignumber.js'
+import { differenceInMinutes, format, subMinutes } from 'date-fns'
 
 import { BIG_ZERO } from '../constants/'
 import { swaps_swaps } from '../queries/uniswap/__generated__/swaps'
 import { VaultHistory_vaultHistories } from '../queries/squeeth/__generated__/VaultHistory'
 import { toTokenAmount } from '@utils/calculations'
 import { Action } from '@constants/enums'
+import { getHistoricEthPrice } from '@hooks/useETHPrice'
 
 type ShortPnLParams = {
   wethAmount: BigNumber
@@ -58,150 +60,119 @@ export function calcLongUnrealizedPnl({
   }
 }
 
-export function calcETHCollateralPnl(
+export async function calcETHCollateralPnl(
   data: VaultHistory_vaultHistories[] | undefined,
-  ethPriceMap: { [key: string]: number },
   ethPrice: BigNumber,
   currentEthBalance: BigNumber,
 ) {
   const { deposits, withdrawals } = data?.length
-    ? data?.reduce(
-        (
-          acc: {
-            deposits: BigNumber
-            withdrawals: BigNumber
-          },
-          curr: VaultHistory_vaultHistories,
-        ) => {
-          const time = new Date(Number(curr.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
-          if (curr.action === Action.DEPOSIT_COLLAT) {
-            acc.deposits = ethPriceMap[time]
-              ? acc.deposits.plus(new BigNumber(toTokenAmount(curr.ethCollateralAmount, 18)).times(ethPriceMap[time]))
-              : BIG_ZERO
-          } else if (curr.action === Action.WITHDRAW_COLLAT) {
-            acc.withdrawals = acc.withdrawals.plus(
-              new BigNumber(toTokenAmount(curr.ethCollateralAmount, 18)).times(ethPriceMap[time]),
-            )
-          }
-          return acc
-        },
-        { deposits: BIG_ZERO, withdrawals: BIG_ZERO },
-      )
+    ? await data?.reduce(async (prevPromise, curr: VaultHistory_vaultHistories) => {
+        const acc = await prevPromise
+
+        const timeInMilliseconds = new Date(Number(curr.timestamp) * 1000).setUTCSeconds(0)
+        const currentTimeInMilliseconds = Date.now()
+        const diff = differenceInMinutes(currentTimeInMilliseconds, timeInMilliseconds, { roundingMethod: 'round' })
+        const dateTimeString =
+          diff < 62
+            ? format(new Date(subMinutes(new Date(), 62)).setUTCSeconds(0), 'yyyy-MM-dd HH:mm:ss')
+            : format(new Date(timeInMilliseconds), 'yyyy-MM-dd HH:mm:ss')
+
+        const historicEthPrice = await getHistoricEthPrice(dateTimeString)
+
+        if (curr.action === Action.DEPOSIT_COLLAT) {
+          acc.deposits = historicEthPrice
+            ? acc.deposits.plus(new BigNumber(toTokenAmount(curr.ethCollateralAmount, 18)).times(historicEthPrice))
+            : BIG_ZERO
+        } else if (curr.action === Action.WITHDRAW_COLLAT) {
+          acc.withdrawals = acc.withdrawals.plus(
+            new BigNumber(toTokenAmount(curr.ethCollateralAmount, 18)).times(historicEthPrice),
+          )
+        }
+        return acc
+      }, Promise.resolve({ deposits: BIG_ZERO, withdrawals: BIG_ZERO }))
     : { deposits: BIG_ZERO, withdrawals: BIG_ZERO }
 
-  return !currentEthBalance.times(ethPrice).isEqualTo(0) && !deposits.minus(withdrawals).isEqualTo(0)
-    ? currentEthBalance.times(ethPrice).minus(deposits.minus(withdrawals))
-    : BIG_ZERO
+  return currentEthBalance.times(ethPrice).isEqualTo(0) && deposits.minus(withdrawals).isEqualTo(0)
+    ? BIG_ZERO
+    : currentEthBalance.times(ethPrice).minus(deposits.minus(withdrawals))
 }
 
 export async function calcDollarShortUnrealizedpnl(
   swaps: swaps_swaps[],
   isWethToken0: boolean,
-  getBuyQuote: (squeethAmt: BigNumber) => Promise<{
-    amountIn: BigNumber
-    maximumAmountIn: BigNumber
-    priceImpact: string
-  }>,
+  buyQuote: BigNumber,
   ethPrice: BigNumber,
-  ethPriceMap: { [key: string]: number },
 ) {
-  const result = swaps?.length
-    ? swaps?.map(async (swap) => {
-        const squeethAmt = new BigNumber(isWethToken0 ? swap.amount1 : swap.amount0)
-        const wethAmt = new BigNumber(isWethToken0 ? swap.amount0 : swap.amount1)
-        const buyQuote = await getBuyQuote(squeethAmt.abs())
+  const { totalWethInUSD } = await swaps.reduce(async (prevPromise, curr: any) => {
+    const acc = await prevPromise
+    const squeethAmt = new BigNumber(isWethToken0 ? curr.amount1 : curr.amount0)
+    const wethAmt = new BigNumber(isWethToken0 ? curr.amount0 : curr.amount1)
 
-        return {
-          wethAmt: wethAmt.abs(),
-          squeethAmt,
-          buyQuote,
-          timestamp: swap.timestamp,
-        }
-      })
-    : []
+    const dateTimeString = getDateStringForPnl(curr.timestamp)
 
-  const data = await Promise.all(result)
+    const historicEthPrice = await getHistoricEthPrice(dateTimeString)
 
-  const { sell, buy } = data.reduce(
-    (acc, curr: any) => {
-      const time = new Date(Number(curr.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
+    acc.totalWethInUSD = acc.totalWethInUSD.plus(wethAmt.negated().times(historicEthPrice ?? BIG_ZERO))
+    acc.totalSqueeth = acc.totalSqueeth.plus(squeethAmt)
 
-      if (curr.squeethAmt.isPositive()) {
-        acc.sell =
-          !curr.buyQuote?.amountIn?.isEqualTo(0) && !curr.wethAmt.isEqualTo(0) && ethPriceMap[time]
-            ? acc.sell.plus(
-                curr.buyQuote?.amountIn?.times(ethPrice).minus(curr.wethAmt.times(new BigNumber(ethPriceMap[time]))),
-              )
-            : BIG_ZERO
-      } else {
-        acc.buy =
-          !curr.buyQuote?.amountIn?.isEqualTo(0) && !curr.wethAmt.isEqualTo(0) && ethPriceMap[time]
-            ? acc.buy.plus(
-                curr.buyQuote?.amountIn?.times(ethPrice).minus(curr.wethAmt.times(new BigNumber(ethPriceMap[time]))),
-              )
-            : BIG_ZERO
-      }
-      return acc
-    },
-    { sell: BIG_ZERO, buy: BIG_ZERO },
-  )
+    if (acc.totalSqueeth.isEqualTo(0)) {
+      acc.totalWethInUSD = BIG_ZERO
+    }
 
-  return sell.minus(buy)
+    return acc
+  }, Promise.resolve({ sell: BIG_ZERO, buy: BIG_ZERO, totalWethInUSD: BIG_ZERO, totalSqueeth: BIG_ZERO }))
+
+  return buyQuote.times(ethPrice).minus(totalWethInUSD)
 }
 
 export async function calcDollarLongUnrealizedpnl(
   swaps: swaps_swaps[],
   isWethToken0: boolean,
-  getSellQuote: (squeethAmt: BigNumber) => Promise<{
+  sellQuote: {
     amountOut: BigNumber
     minimumAmountOut: BigNumber
     priceImpact: string
-  }>,
+  },
   ethPrice: BigNumber,
-  ethPriceMap: { [key: string]: number },
 ) {
-  const result = swaps?.length
-    ? swaps?.map(async (swap) => {
-        const squeethAmt = new BigNumber(isWethToken0 ? swap.amount1 : swap.amount0)
-        const wethAmt = new BigNumber(isWethToken0 ? swap.amount0 : swap.amount1)
-        const sellQuote = await getSellQuote(squeethAmt.abs())
+  const { totalUSDWethAmount } = await swaps.reduce(async (prevPromise, curr: any) => {
+    const acc = await prevPromise
+    const wethAmt = new BigNumber(isWethToken0 ? curr.amount0 : curr.amount1)
+    const squeethAmt = new BigNumber(isWethToken0 ? curr.amount1 : curr.amount0)
 
-        return {
-          wethAmt: wethAmt.abs(),
-          squeethAmt,
-          sellQuote,
-          timestamp: swap.timestamp,
-        }
-      })
-    : []
+    const dateTimeString = getDateStringForPnl(curr.timestamp)
 
-  const data = await Promise.all(result)
+    const ethPriceWhenOpened = await getHistoricEthPrice(dateTimeString)
+    acc.totalUSDWethAmount = acc.totalUSDWethAmount.plus(wethAmt.times(ethPriceWhenOpened ?? BIG_ZERO))
+    acc.totalSqueeth = acc.totalSqueeth.plus(squeethAmt)
 
-  const { buy, sell } = data.reduce(
-    (acc, curr: any) => {
-      const time = new Date(Number(curr.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
+    if (acc.totalSqueeth.isEqualTo(0)) {
+      acc.totalUSDWethAmount = BIG_ZERO
+    }
 
-      if (curr.squeethAmt.isNegative()) {
-        acc.buy = !curr.sellQuote?.amountOut?.isEqualTo(0)
-          ? acc.buy.plus(
-              curr.sellQuote?.amountOut
-                .times(ethPrice)
-                .minus(curr.wethAmt.times(new BigNumber(ethPriceMap[time] ?? 0))),
-            )
-          : BIG_ZERO
-      } else {
-        acc.sell = !curr.sellQuote?.amountOut?.isEqualTo(0)
-          ? acc.sell.plus(
-              curr.sellQuote?.amountOut
-                ?.times(ethPrice)
-                .minus(curr.wethAmt.times(new BigNumber(ethPriceMap[time] ?? 0))),
-            )
-          : BIG_ZERO
-      }
-      return acc
-    },
-    { buy: BIG_ZERO, sell: BIG_ZERO },
-  )
+    return acc
+  }, Promise.resolve({ totalUSDWethAmount: BIG_ZERO, totalSqueeth: BIG_ZERO }))
 
-  return { usd: buy.minus(sell), eth: buy.minus(sell).div(ethPrice) }
+  const usdValue =
+    !sellQuote.amountOut.isEqualTo(0) && !ethPrice.isEqualTo(0)
+      ? sellQuote.amountOut.times(ethPrice).minus(totalUSDWethAmount)
+      : BIG_ZERO
+
+  return {
+    usd: usdValue,
+    eth: !usdValue.isEqualTo(0) ? usdValue.div(ethPrice) : BIG_ZERO,
+  }
+}
+
+function getDateStringForPnl(timestamp: string) {
+  const timeInMilliseconds = new Date(Number(timestamp) * 1000).setUTCSeconds(0)
+  const currentTimeInMilliseconds = Date.now()
+  const diff = differenceInMinutes(currentTimeInMilliseconds, timeInMilliseconds, { roundingMethod: 'round' })
+
+  const dateTimeString =
+    diff < 62
+      ? format(new Date(subMinutes(new Date(), 62)).setUTCSeconds(0), 'yyyy-MM-dd HH:mm:ss')
+      : format(new Date(timeInMilliseconds), 'yyyy-MM-dd HH:mm:ss')
+
+  return dateTimeString
 }
