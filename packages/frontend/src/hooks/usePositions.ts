@@ -117,7 +117,7 @@ export const usePnL = () => {
 
   useEffect(() => {
     ;(async () => {
-      if (swaps && !sellQuote.amountOut.isZero() && !ethPrice.isZero()) {
+      if (swaps?.length && !sellQuote.amountOut.isZero() && !ethPrice.isZero()) {
         const pnl = await calcDollarLongUnrealizedpnl(swaps, isWethToken0, sellQuote, ethPrice)
         setLongUnrealizedPNL(pnl)
       }
