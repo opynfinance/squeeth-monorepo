@@ -60,7 +60,7 @@ export const usePnL = () => {
 
   useEffect(() => {
     ;(async () => {
-      if (vaultHistory?.length && !ethPrice.isEqualTo(0) && !existingCollat.isEqualTo(0)) {
+      if (vaultHistory?.length && !ethPrice.isZero() && !existingCollat.isZero()) {
         const result = await calcETHCollateralPnl(vaultHistory, ethPrice, existingCollat)
         setEthCollateralPnl(result)
       }
@@ -86,13 +86,12 @@ export const usePnL = () => {
   }, [loading, longUnrealizedPNL.usd.toString(), sellQuote.amountOut.toString(), totalUSDFromBuy])
 
   useEffect(() => {
-    if (squeethAmount.isZero()) {
+    if (squeethAmount.isZero() || shortUnrealizedPNL.usd.isZero()) {
       setLongGain(new BigNumber(0))
       return
     }
-    const _gain = !shortUnrealizedPNL.usd.isEqualTo(0)
-      ? shortUnrealizedPNL.usd.dividedBy(totalUSDFromSell.plus(existingCollat.times(ethPrice))).times(100)
-      : new BigNumber(0)
+    const _gain = shortUnrealizedPNL.usd.dividedBy(totalUSDFromSell.plus(existingCollat.times(ethPrice))).times(100)
+
     setShortGain(_gain)
   }, [
     ethPrice.toString(),
@@ -104,7 +103,7 @@ export const usePnL = () => {
 
   useEffect(() => {
     ;(async () => {
-      if (swaps && !buyQuote.isEqualTo(0) && !ethPrice.isEqualTo(0) && !ethCollateralPnl.isEqualTo(0)) {
+      if (swaps?.length && !buyQuote.isZero() && !ethPrice.isZero() && !ethCollateralPnl.isZero()) {
         const pnl = await calcDollarShortUnrealizedpnl(swaps, isWethToken0, buyQuote, ethPrice)
         setShortUnrealizedPNL({
           usd: pnl.plus(ethCollateralPnl),
@@ -118,7 +117,7 @@ export const usePnL = () => {
 
   useEffect(() => {
     ;(async () => {
-      if (swaps && !sellQuote.amountOut.isEqualTo(0) && !ethPrice.isEqualTo(0)) {
+      if (swaps && !sellQuote.amountOut.isZero() && !ethPrice.isZero()) {
         const pnl = await calcDollarLongUnrealizedpnl(swaps, isWethToken0, sellQuote, ethPrice)
         setLongUnrealizedPNL(pnl)
       }
