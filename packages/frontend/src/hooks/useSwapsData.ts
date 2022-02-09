@@ -123,5 +123,6 @@ export const useSwapsData = () => {
     shortUsdAmount,
     swaps,
     refetch,
+    isWethToken0,
   }
 }
