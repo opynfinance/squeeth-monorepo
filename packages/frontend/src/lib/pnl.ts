@@ -45,20 +45,6 @@ export function calcShortGain({ shortUnrealizedPNL, usdAmount, wethAmount, ethPr
   }
   return shortUnrealizedPNL.div(usdAmount.plus(wethAmount.times(ethPrice).absoluteValue())).times(100)
 }
-export function calcLongUnrealizedPnl({
-  sellQuote,
-  wethAmount,
-  ethPrice,
-}: {
-  sellQuote: BigNumber
-  wethAmount: BigNumber
-  ethPrice: BigNumber
-}) {
-  return {
-    usdValue: sellQuote.minus(wethAmount.abs()).multipliedBy(ethPrice),
-    ethValue: sellQuote.minus(wethAmount.abs()),
-  }
-}
 
 export async function calcETHCollateralPnl(
   data: VaultHistory_vaultHistories[] | undefined,
@@ -69,14 +55,7 @@ export async function calcETHCollateralPnl(
     ? await data?.reduce(async (prevPromise, curr: VaultHistory_vaultHistories) => {
         const acc = await prevPromise
 
-        const timeInMilliseconds = new Date(Number(curr.timestamp) * 1000).setUTCSeconds(0)
-        const currentTimeInMilliseconds = Date.now()
-        const diff = differenceInMinutes(currentTimeInMilliseconds, timeInMilliseconds, { roundingMethod: 'round' })
-        const dateTimeString =
-          diff < 62
-            ? format(new Date(subMinutes(new Date(), 62)).setUTCSeconds(0), 'yyyy-MM-dd HH:mm:ss')
-            : format(new Date(timeInMilliseconds), 'yyyy-MM-dd HH:mm:ss')
-
+        const dateTimeString = getDateStringForPnl(curr.timestamp)
         const historicEthPrice = await getHistoricEthPrice(dateTimeString)
 
         if (curr.action === Action.DEPOSIT_COLLAT) {
@@ -92,7 +71,7 @@ export async function calcETHCollateralPnl(
       }, Promise.resolve({ deposits: BIG_ZERO, withdrawals: BIG_ZERO }))
     : { deposits: BIG_ZERO, withdrawals: BIG_ZERO }
 
-  return currentEthBalance.times(ethPrice).isEqualTo(0) && deposits.minus(withdrawals).isEqualTo(0)
+  return currentEthBalance.times(ethPrice).isEqualTo(0) || deposits.minus(withdrawals).isEqualTo(0)
     ? BIG_ZERO
     : currentEthBalance.times(ethPrice).minus(deposits.minus(withdrawals))
 }
@@ -122,7 +101,7 @@ export async function calcDollarShortUnrealizedpnl(
     return acc
   }, Promise.resolve({ sell: BIG_ZERO, buy: BIG_ZERO, totalWethInUSD: BIG_ZERO, totalSqueeth: BIG_ZERO }))
 
-  return buyQuote.times(ethPrice).minus(totalWethInUSD)
+  return !buyQuote.isEqualTo(0) && !ethPrice.isEqualTo(0) ? buyQuote.times(ethPrice).minus(totalWethInUSD) : BIG_ZERO
 }
 
 export async function calcDollarLongUnrealizedpnl(
@@ -147,6 +126,7 @@ export async function calcDollarLongUnrealizedpnl(
     acc.totalSqueeth = acc.totalSqueeth.plus(squeethAmt)
 
     if (acc.totalSqueeth.isEqualTo(0)) {
+      //totalSqueeth being zero means a position has been completely closed, so reset totalUSDWethAmount.
       acc.totalUSDWethAmount = BIG_ZERO
     }
 
@@ -167,9 +147,12 @@ export async function calcDollarLongUnrealizedpnl(
 function getDateStringForPnl(timestamp: string) {
   const timeInMilliseconds = new Date(Number(timestamp) * 1000).setUTCSeconds(0)
   const currentTimeInMilliseconds = Date.now()
+  // Gets difference in minutes between the current time
+  // and the timestamp for which ethPrice data is being requested
   const diff = differenceInMinutes(currentTimeInMilliseconds, timeInMilliseconds, { roundingMethod: 'round' })
 
   const dateTimeString =
+    // 62 minutes represents the window within which TwelveData does not have ethPrice data
     diff < 62
       ? format(new Date(subMinutes(new Date(), 62)).setUTCSeconds(0), 'yyyy-MM-dd HH:mm:ss')
       : format(new Date(timeInMilliseconds), 'yyyy-MM-dd HH:mm:ss')
