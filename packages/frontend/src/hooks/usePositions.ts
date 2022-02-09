@@ -546,6 +546,7 @@ const useShortPositions = () => {
 }
 
 export const usePnL = () => {
+  const [ethCollateralPnl, setEthCollateralPnl] = useState(BIG_ZERO)
   const [shortUnrealizedPNL, setShortUnrealizedPNL] = useState({ usd: BIG_ZERO, eth: BIG_ZERO })
   const [longUnrealizedPNL, setLongUnrealizedPNL] = useState({ usd: BIG_ZERO, eth: BIG_ZERO })
   const { usdAmount: longUsdAmt, squeethAmount: wSqueethBal, refetch: refetchLong } = useLongPositions()
@@ -591,10 +592,13 @@ export const usePnL = () => {
     },
   })
   const vaultHistory = data?.vaultHistories
-  const ethCollateralPnl = useMemo(
-    () => calcETHCollateralPnl(vaultHistory, ethPriceMap, ethPrice, existingCollat),
-    [ethPrice.toString(), ethPriceMap, existingCollat.toString(), vaultHistory?.length],
-  )
+
+  useEffect(() => {
+    ;(async () => {
+      const result = await calcETHCollateralPnl(vaultHistory, ethPrice, existingCollat)
+      setEthCollateralPnl(result)
+    })()
+  }, [ethPrice.toString(), existingCollat.toString(), vaultHistory?.length])
 
   useEffect(() => {
     if (!ready || positionLoading) return
@@ -630,7 +634,7 @@ export const usePnL = () => {
   useEffect(() => {
     ;(async () => {
       if (swaps) {
-        const pnl = await calcDollarShortUnrealizedpnl(swaps, isWethToken0, getBuyQuote, ethPrice, ethPriceMap)
+        const pnl = await calcDollarShortUnrealizedpnl(swaps, isWethToken0, buyQuote, ethPrice)
         setShortUnrealizedPNL({
           usd: pnl.plus(ethCollateralPnl),
           eth: pnl.plus(ethCollateralPnl).div(ethPrice).isFinite()
@@ -639,16 +643,16 @@ export const usePnL = () => {
         })
       }
     })()
-  }, [ethCollateralPnl.toString(), ethPrice.toString(), ethPriceMap, getBuyQuote, isWethToken0, swaps?.length])
+  }, [ethCollateralPnl.toString(), ethPrice.toString(), buyQuote.toString(), isWethToken0, swaps?.length])
 
   useEffect(() => {
     ;(async () => {
       if (swaps) {
-        const pnl = await calcDollarLongUnrealizedpnl(swaps, isWethToken0, getSellQuote, ethPrice, ethPriceMap)
+        const pnl = await calcDollarLongUnrealizedpnl(swaps, isWethToken0, sellQuote, ethPrice)
         setLongUnrealizedPNL(pnl)
       }
     })()
-  }, [ethPrice.toString(), isWethToken0, swaps?.length, getSellQuote])
+  }, [ethPrice.toString(), isWethToken0, swaps?.length, sellQuote.amountOut.toString()])
 
   return {
     longGain,
