@@ -98,7 +98,7 @@ export async function calcDollarShortUnrealizedpnl(
     return acc
   }, Promise.resolve({ sell: BIG_ZERO, buy: BIG_ZERO, totalWethInUSD: BIG_ZERO, totalSqueeth: BIG_ZERO }))
 
-  return !buyQuote.isEqualTo(0) && !ethPrice.isEqualTo(0) ? buyQuote.times(ethPrice).minus(totalWethInUSD) : BIG_ZERO
+  return !buyQuote.isEqualTo(0) && !ethPrice.isEqualTo(0) ? totalWethInUSD.minus(buyQuote.times(ethPrice)) : BIG_ZERO
 }
 
 export async function calcDollarLongUnrealizedpnl(
