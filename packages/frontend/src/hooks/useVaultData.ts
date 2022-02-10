@@ -12,6 +12,7 @@ import { useWallet } from '@context/wallet'
 import { useController, normFactorAtom } from '@hooks/contracts/useController'
 import { squeethClient } from '@utils/apollo-client'
 import { toTokenAmount } from '@utils/calculations'
+import { useSqueethPool } from './contracts/useSqueethPool'
 
 export const useVaultData = (vid: number) => {
   const [vault, setVault] = useState<Vault | null>(null)
@@ -23,6 +24,7 @@ export const useVaultData = (vid: number) => {
 
   const { getCollatRatioAndLiqPrice } = useController()
   const normFactor = useAtom(normFactorAtom)[0]
+  const { ready } = useSqueethPool()
   const { address, connected, networkId } = useWallet()
 
   const { data, loading: isDataLoading } = useQuery<{ vault: Vault_vault }>(VAULT_QUERY, {
@@ -35,7 +37,7 @@ export const useVaultData = (vid: number) => {
 
   const _vault = data?.vault
   const updateVault = () => {
-    if (!_vault || !connected) return
+    if (!_vault || !connected || !ready) return
 
     setVault({
       id: Number(_vault.id),
@@ -46,19 +48,21 @@ export const useVaultData = (vid: number) => {
     })
     setExistingCollat(toTokenAmount(new BigNumber(_vault.collateralAmount), 18))
 
-    getCollatRatioAndLiqPrice(new BigNumber(_vault.collateralAmount), new BigNumber(_vault.shortAmount)).then(
-      ({ collateralPercent, liquidationPrice }) => {
-        setExistingCollatPercent(collateralPercent)
-        setCollatPercent(collateralPercent)
-        setExistingLiqPrice(new BigNumber(liquidationPrice))
-        setVaultLoading(false)
-      },
-    )
+    getCollatRatioAndLiqPrice(
+      toTokenAmount(new BigNumber(_vault.collateralAmount), 18),
+      toTokenAmount(new BigNumber(_vault.shortAmount), OSQUEETH_DECIMALS),
+      _vault.NftCollateralId ? Number(_vault.NftCollateralId) : undefined,
+    ).then(({ collateralPercent, liquidationPrice }) => {
+      setExistingCollatPercent(collateralPercent)
+      setCollatPercent(collateralPercent)
+      setExistingLiqPrice(new BigNumber(liquidationPrice))
+      setVaultLoading(false)
+    })
   }
 
   useEffect(() => {
     updateVault()
-  }, [vid, normFactor.toString(), address, connected, _vault?.id])
+  }, [vid, normFactor.toString(), address, connected, _vault?.id, ready])
 
   return {
     vault,

@@ -11,6 +11,7 @@ import { Vault } from '../../types'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useAddresses } from '../useAddress'
 import { useOracle } from './useOracle'
+import { useNFTManager } from './useNFTManager'
 
 const getMultiplier = (type: Vaults) => {
   if (type === Vaults.ETHBull) return 3
@@ -47,6 +48,7 @@ export const useController = () => {
 
   const { controller, ethUsdcPool, weth, usdc } = useAddresses()
   const { getTwapSafe } = useOracle()
+  const { getETHandOSQTHAmount } = useNFTManager()
 
   useEffect(() => {
     if (!web3) return
@@ -311,18 +313,26 @@ export const useController = () => {
     return toTokenAmount(shortAmount.toFixed(0), OSQUEETH_DECIMALS)
   }
 
-  const getCollatRatioAndLiqPrice = async (collateralAmount: BigNumber, shortAmount: BigNumber) => {
+  const getCollatRatioAndLiqPrice = async (collateralAmount: BigNumber, shortAmount: BigNumber, uniId?: number) => {
     const emptyState = {
       collateralPercent: 0,
       liquidationPrice: new BigNumber(0),
     }
     if (!contract) return emptyState
 
+    let effectiveCollat = collateralAmount
+    // Uni LP token is deposited
+    if (uniId) {
+      const { wethAmount, oSqthAmount } = await getETHandOSQTHAmount(uniId)
+      const ethPrice = await getTwapEthPrice()
+      const sqthValueInEth = oSqthAmount.multipliedBy(normFactor).multipliedBy(ethPrice).div(INDEX_SCALE)
+      effectiveCollat = effectiveCollat.plus(sqthValueInEth).plus(wethAmount)
+    }
     const debt = await getDebtAmount(shortAmount)
     if (debt && debt.isPositive()) {
-      const collateralPercent = Number(collateralAmount.div(debt).times(100).toFixed(1))
+      const collateralPercent = Number(effectiveCollat.div(debt).times(100).toFixed(1))
       const rSqueeth = normFactor.multipliedBy(new BigNumber(shortAmount)).dividedBy(10000)
-      const liquidationPrice = collateralAmount.div(rSqueeth.multipliedBy(1.5))
+      const liquidationPrice = effectiveCollat.div(rSqueeth.multipliedBy(1.5))
       return {
         collateralPercent,
         liquidationPrice,

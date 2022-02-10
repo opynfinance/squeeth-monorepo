@@ -285,6 +285,7 @@ const Component: React.FC = () => {
     const { collateralPercent: cp, liquidationPrice: lp } = await getCollatRatioAndLiqPrice(
       collatAmountBN.plus(vault.collateralAmount), // Get liquidation price and collatPercent for total collat after tx happens
       vault.shortAmount,
+      lpNftId,
     )
     setNewLiqPrice(lp)
     setCollatPercent(cp)
@@ -298,7 +299,7 @@ const Component: React.FC = () => {
     setCollatPercent(percent)
     const debt = await getDebtAmount(vault.shortAmount)
     const newCollat = new BigNumber(percent).times(debt).div(100)
-    const { liquidationPrice: lp } = await getCollatRatioAndLiqPrice(newCollat, vault.shortAmount)
+    const { liquidationPrice: lp } = await getCollatRatioAndLiqPrice(newCollat, vault.shortAmount, lpNftId)
     setNewLiqPrice(lp)
     setCollateral(newCollat.minus(vault.collateralAmount).toString())
   }
@@ -311,6 +312,7 @@ const Component: React.FC = () => {
     const { collateralPercent: cp, liquidationPrice: lp } = await getCollatRatioAndLiqPrice(
       vault.collateralAmount,
       shortAmountBN.plus(vault.shortAmount),
+      lpNftId,
     )
     setNewLiqPrice(lp)
     setCollatPercent(cp)
@@ -325,7 +327,7 @@ const Component: React.FC = () => {
     const _shortAmt = await getShortAmountFromDebt(debt)
     setShortAmount(_shortAmt.minus(vault.shortAmount).toString())
     setAction(percent < existingCollatPercent ? VaultAction.MINT_SQUEETH : VaultAction.BURN_SQUEETH)
-    const { liquidationPrice: lp } = await getCollatRatioAndLiqPrice(vault.collateralAmount, _shortAmt)
+    const { liquidationPrice: lp } = await getCollatRatioAndLiqPrice(vault.collateralAmount, _shortAmt, lpNftId)
     setNewLiqPrice(lp)
   }
 
@@ -492,7 +494,8 @@ const Component: React.FC = () => {
     },
   )
 
-  const isLPDeposited = Number(vault?.NFTCollateralId) !== 0
+  const lpNftId = Number(vault?.NFTCollateralId)
+  const isLPDeposited = lpNftId !== 0
 
   return (
     <div>
@@ -791,7 +794,6 @@ const Component: React.FC = () => {
                                 : oSqueethBal.toFixed(8)
                             } oSQTH`
                       }
-                      // hint={!!adjustAmountError ? adjustAmountError : `Balance ${squeethBal.toFixed(6)} oSQTH`}
                       error={!!adjustAmountError}
                     />
                     <div className={classes.collatContainer}>
@@ -879,13 +881,6 @@ const Component: React.FC = () => {
                       disabled={isLPDeposited}
                     />
                   </div>
-                  {/* <div className={classes.txDetails}>
-                <TradeInfoItem
-                  label="New liquidation price"
-                  value={isCollatAction ? (newLiqPrice || 0).toFixed(2) : '0'}
-                  frontUnit="$"
-                />
-              </div> */}
                   <div className={classes.managerActions} style={{ marginTop: '16px' }}>
                     {isLPDeposited ? (
                       <RemoveButton
