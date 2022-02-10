@@ -14,6 +14,7 @@ import { useTrade } from '@context/trade'
 import { useWorldContext } from '@context/world'
 import { PositionType, TradeType } from '../types'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
+import { usePrevious } from 'react-use'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -160,10 +161,10 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     existingCollat,
     loading: isPositionLoading,
     isLP,
-    isLong,
     shortRealizedPNL,
     longRealizedPNL,
     swapsQueryRefetch,
+    swaps,
   } = usePositions()
   const { liquidations } = useVaultLiquidations(Number(vaultId))
   const {
@@ -176,6 +177,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     tradeType,
   } = useTrade()
   const { ethPrice } = useWorldContext()
+  const prevSwapsData = usePrevious(swaps)
   const tradeAmount = new BigNumber(tradeAmountInput)
   const [fetchingNew, setFetchingNew] = useState(false)
   const [postTradeAmt, setPostTradeAmt] = useState(new BigNumber(0))
@@ -186,13 +188,18 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
   useEffect(() => {
     if (tradeSuccess) {
       setFetchingNew(true)
-      setTradeSuccess(false)
-      setTimeout(() => {
-        setFetchingNew(false)
-        swapsQueryRefetch()
-      }, 5000)
+    } else {
+      setFetchingNew(false)
     }
   }, [tradeSuccess])
+
+  useEffect(() => {
+    if (tradeSuccess && prevSwapsData?.length === swaps?.length) {
+      swapsQueryRefetch()
+    } else {
+      setTradeSuccess(false)
+    }
+  }, [swaps?.length, prevSwapsData?.length, swapsQueryRefetch, tradeSuccess])
 
   const fullyLiquidated = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
