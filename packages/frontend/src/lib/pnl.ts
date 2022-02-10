@@ -86,9 +86,9 @@ export async function calcDollarShortUnrealizedpnl(
     const squeethAmt = new BigNumber(isWethToken0 ? swap.amount1 : swap.amount0)
     const wethAmt = new BigNumber(isWethToken0 ? swap.amount0 : swap.amount1)
 
-    const historicEthPrice = await getEthPriceAtTransactionTime(swap.timestamp)
+    const ethPriceWhenOpened = await getEthPriceAtTransactionTime(swap.timestamp)
 
-    acc.totalWethInUSD = acc.totalWethInUSD.plus(wethAmt.negated().times(historicEthPrice))
+    acc.totalWethInUSD = acc.totalWethInUSD.plus(wethAmt.negated().times(ethPriceWhenOpened))
     acc.totalSqueeth = acc.totalSqueeth.plus(squeethAmt)
 
     if (acc.totalSqueeth.isEqualTo(0)) {
