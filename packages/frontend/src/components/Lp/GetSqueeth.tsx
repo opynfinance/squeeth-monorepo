@@ -3,7 +3,7 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 import BigNumber from 'bignumber.js'
 import { motion } from 'framer-motion'
 import React, { useEffect, useMemo, useState } from 'react'
-import { useGetAtom } from 'particule'
+import { useAtom } from 'jotai'
 
 import { MIN_COLLATERAL_AMOUNT, Tooltips } from '../../constants'
 import { LPActions, OBTAIN_METHOD, useLPState } from '@context/lp'
@@ -74,7 +74,7 @@ const Mint: React.FC = () => {
   const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
   const { getWSqueethPositionValue } = useSqueethPool()
   const { openDepositAndMint, getShortAmountFromDebt } = useController()
-  const normalizationFactor = useGetAtom(normFactorAtom)
+  const normalizationFactor = useAtom(normFactorAtom)[0]
   const { dispatch } = useLPState()
 
   const [mintAmount, setMintAmount] = useState(new BigNumber(0))

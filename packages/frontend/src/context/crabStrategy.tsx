@@ -11,7 +11,7 @@ import abi from '../abis/crabStrategy.json'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import db from '@utils/firestore'
-import { useGetAtom } from 'particule'
+import { useAtom } from 'jotai'
 
 type CrabStrategyType = {
   loading: boolean
@@ -94,8 +94,8 @@ const CrabProvider: React.FC = ({ children }) => {
   const { web3, address, handleTransaction, networkId } = useWallet()
   const { crabStrategy } = useAddresses()
   const { getVault, getCollatRatioAndLiqPrice } = useController()
-  const currentImpliedFunding = useGetAtom(currentImpliedFundingAtom);
-  const index = useGetAtom(indexAtom);
+  const currentImpliedFunding = useAtom(currentImpliedFundingAtom)[0]
+  const index = useAtom(indexAtom)[0]
   const { getSellQuote, getBuyQuote, ready } = useSqueethPool()
 
   const [contract, setContract] = useState<Contract>()

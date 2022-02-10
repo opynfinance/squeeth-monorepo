@@ -8,7 +8,7 @@ import { normFactorAtom } from '@hooks/contracts/useController'
 import { useWorldContext } from '@context/world'
 import { useTransactionHistory } from '@hooks/useTransactionHistory'
 import { useUsdAmount } from '@hooks/useUsdAmount'
-import { useGetAtom } from 'particule'
+import { useAtom } from 'jotai'
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
@@ -49,7 +49,7 @@ const History: React.FC = () => {
   const { transactions } = useTransactionHistory()
   const { networkId } = useWallet()
   const { ethPrice } = useWorldContext()
-  const normalizationFactor = useGetAtom(normFactorAtom)
+  const normalizationFactor = useAtom(normFactorAtom)[0]
   const classes = useStyles()
   const { getUsdAmt } = useUsdAmount()
 

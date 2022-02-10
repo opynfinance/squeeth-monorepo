@@ -1,7 +1,7 @@
 import { useQuery } from '@apollo/client'
 import BigNumber from 'bignumber.js'
 import { useEffect, useState } from 'react'
-import { useGetAtom } from 'particule'
+import { useAtom } from 'jotai'
 
 import { Vault } from '../types'
 import { OSQUEETH_DECIMALS } from '../constants'
@@ -22,7 +22,7 @@ export const useVaultData = (vid: number) => {
   const [isVaultLoading, setVaultLoading] = useState(true)
 
   const { getCollatRatioAndLiqPrice } = useController()
-  const normFactor = useGetAtom(normFactorAtom);
+  const normFactor = useAtom(normFactorAtom)[0]
   const { address, connected, networkId } = useWallet()
 
   const { data, loading: isDataLoading } = useQuery<{ vault: Vault_vault }>(VAULT_QUERY, {

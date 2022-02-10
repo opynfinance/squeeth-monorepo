@@ -13,7 +13,7 @@ import { fromTokenAmount, parseSlippageInput, toTokenAmount } from '@utils/calcu
 import { useAddresses } from '../useAddress'
 import useUniswapTicks from '../useUniswapTicks'
 import { useWorldContext } from '@context/world'
-import { atom, useAtom } from 'particule'
+import { atom, useAtom } from 'jotai'
 
 // const NETWORK_QUOTE_GAS_OVERRIDE: { [chainId: number]: number } = {
 //   [Networks.ARBITRUM_RINKEBY]: 6_000_000,

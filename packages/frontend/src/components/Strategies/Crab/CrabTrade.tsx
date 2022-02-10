@@ -17,7 +17,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import CrabPosition from './CrabPosition'
 import { readyAtom } from '@hooks/contracts/useSqueethPool'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from '@hooks/contracts/useController'
-import { useGetAtom } from 'particule'
+import { useAtom } from 'jotai'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -83,9 +83,9 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
   } = useCrab()
   const { minCurrentUsd, minPnL, loading } = useCrabPosition(address || '')
   const { isRestricted } = useRestrictUser()
-  const ready = useGetAtom(readyAtom)
-  const dailyHistoricalFunding = useGetAtom(dailyHistoricalFundingAtom)
-  const currentImpliedFunding = useGetAtom(currentImpliedFundingAtom)
+  const ready = useAtom(readyAtom)[0]
+  const dailyHistoricalFunding = useAtom(dailyHistoricalFundingAtom)[0]
+  const currentImpliedFunding = useAtom(currentImpliedFundingAtom)[0]
 
   const { depositError, warning, withdrawError } = useMemo(() => {
     let depositError: string | undefined

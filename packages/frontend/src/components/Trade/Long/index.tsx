@@ -2,7 +2,7 @@ import { CircularProgress, createStyles, makeStyles, Typography } from '@materia
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import BigNumber from 'bignumber.js'
 import React, { useCallback, useEffect, useState } from 'react'
-import { useGetAtom } from 'particule'
+import { useAtom } from 'jotai'
 
 import { InputType, Links } from '../../../constants'
 import { useTrade } from '@context/trade'
@@ -240,8 +240,8 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
   const altTradeAmount = new BigNumber(altAmountInputValue)
   const { selectWallet, connected } = useWallet()
   const { squeethAmount, longSqthBal, isShort } = usePositions()
-  const dailyHistoricalFunding = useGetAtom(dailyHistoricalFundingAtom)
-  const currentImpliedFunding = useGetAtom(currentImpliedFundingAtom)
+  const dailyHistoricalFunding = useAtom(dailyHistoricalFundingAtom)[0]
+  const currentImpliedFunding = useAtom(currentImpliedFundingAtom)[0]
 
   let openError: string | undefined
   // let closeError: string | undefined

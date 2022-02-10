@@ -23,7 +23,7 @@ import Image from 'next/image'
 import bull from '../public/images/bull.gif'
 import bear from '../public/images/bear.gif'
 import CrabTrade from '@components/Strategies/Crab/CrabTrade'
-import { useGetAtom } from 'particule'
+import { useAtom } from 'jotai'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -101,9 +101,9 @@ const Strategies: React.FC = () => {
   const classes = useStyles()
   const { balance, address, selectWallet } = useWallet()
   const { maxCap, vault, collatRatio, timeAtLastHedge, profitableMovePercent } = useCrab()
-  const index = useGetAtom(indexAtom)
-  const currentImpliedFunding = useGetAtom(currentImpliedFundingAtom)
-  const dailyHistoricalFunding = useGetAtom(dailyHistoricalFundingAtom)
+  const index = useAtom(indexAtom)[0]
+  const currentImpliedFunding = useAtom(currentImpliedFundingAtom)[0]
+  const dailyHistoricalFunding = useAtom(dailyHistoricalFundingAtom)[0]
 
   useMemo(() => {
     if (selectedIdx === 0) return Vaults.ETHBull

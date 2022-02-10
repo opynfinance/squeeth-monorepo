@@ -1,6 +1,6 @@
 import BigNumber from 'bignumber.js'
 import { useCallback, useEffect, useState } from 'react'
-import { useGetAtom } from 'particule'
+import { useAtom } from 'jotai'
 
 import { indexAtom } from './contracts/useController'
 import { toTokenAmount } from '@utils/calculations'
@@ -14,7 +14,7 @@ import { useIntervalAsync } from './useIntervalAsync'
  */
 export const useETHPrice = (refetchIntervalSec = 30): BigNumber => {
   const [price, setPrice] = useState(new BigNumber(0))
-  const index = useGetAtom(indexAtom)
+  const index = useAtom(indexAtom)[0]
 
   const updatePrice = useCallback(async () => {
     let newPrice: BigNumber

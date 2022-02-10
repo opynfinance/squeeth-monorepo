@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useMemo } from 'react'
 import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
-import { useGetAtom } from 'particule'
+import { useAtom } from 'jotai'
 
 import { LPTable } from '@components/Lp/LPTable'
 import Nav from '@components/Nav'
@@ -154,7 +154,7 @@ export function Positions() {
     longUnrealizedPNL,
   } = usePnL()
 
-  const pool = useGetAtom(poolAtom)
+  const pool = useAtom(poolAtom)[0]
 
   const { oSqueethBal } = useWorldContext()
   const { address } = useWallet()
@@ -176,7 +176,7 @@ export function Positions() {
     activePositions,
   } = usePositions()
 
-  const index = useGetAtom(indexAtom)
+  const index = useAtom(indexAtom)[0]
   const {
     depositedEth,
     depositedUsd,

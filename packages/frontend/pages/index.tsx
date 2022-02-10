@@ -8,7 +8,7 @@ import ExpandLessIcon from '@material-ui/icons/NavigateBefore'
 import ExpandMoreIcon from '@material-ui/icons/NavigateNext'
 import Image from 'next/image'
 import { useState } from 'react'
-import { useGetAtom } from 'particule'
+import { useAtom } from 'jotai'
 
 import squeethTokenSymbol from '../public/images/Squeeth.svg'
 import { PrimaryButton } from '@components/Button'
@@ -371,12 +371,12 @@ const TabComponent: React.FC = () => {
 const SqueethInfo: React.FC = () => {
   const classes = useStyles()
   const { actualTradeType } = useTrade()
-  const dailyHistoricalFunding = useGetAtom(dailyHistoricalFundingAtom)
-  const mark = useGetAtom(markAtom)
-  const currentImpliedFunding = useGetAtom(currentImpliedFundingAtom)
-  const impliedVol = useGetAtom(impliedVolAtom)
-  const index = useGetAtom(indexAtom)
-  const normFactor = useGetAtom(normFactorAtom)
+  const dailyHistoricalFunding = useAtom(dailyHistoricalFundingAtom)[0]
+  const mark = useAtom(markAtom)[0]
+  const currentImpliedFunding = useAtom(currentImpliedFundingAtom)[0]
+  const impliedVol = useAtom(impliedVolAtom)[0]
+  const index = useAtom(indexAtom)[0]
+  const normFactor = useAtom(normFactorAtom)[0]
 
   const [showAdvanced, setShowAdvanced] = useState(false)
 

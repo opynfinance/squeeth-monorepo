@@ -34,7 +34,7 @@ import { CollateralStatus, Vault } from '../../src/types'
 import { squeethClient } from '@utils/apollo-client'
 import { getCollatPercentStatus, toTokenAmount } from '@utils/calculations'
 import { LinkButton } from '@components/Button'
-import { useGetAtom } from 'particule'
+import { useAtom } from 'jotai'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -232,7 +232,7 @@ const Component: React.FC = () => {
     burnAndRedeem,
     getTwapEthPrice,
   } = useController()
-  const normFactor = useGetAtom(normFactorAtom)
+  const normFactor = useAtom(normFactorAtom)[0]
   const { balance, address, connected, networkId } = useWallet()
   const { vid } = router.query
   const { liquidations } = useVaultLiquidations(Number(vid))

@@ -16,7 +16,6 @@ import { useRestrictUser } from '@context/restrict-user'
 import { TradeProvider } from '@context/trade'
 import { useWorldContext } from '@context/world'
 import { SqueethTab, SqueethTabs } from '@components/Tabs'
-import { useGetAtom } from 'particule'
 
 const useStyles = makeStyles((theme) =>
   createStyles({

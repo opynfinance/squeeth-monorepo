@@ -13,7 +13,7 @@ import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
 import React, { useCallback, useEffect, useState } from 'react'
-import { useGetAtom } from 'particule'
+import { useAtom } from 'jotai'
 
 import { CloseType, Tooltips, Links } from '@constants/enums'
 import { useTrade } from '@context/trade'
@@ -194,7 +194,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
   const { openShort } = useShortHelper()
   const { getWSqueethPositionValue } = useSqueethPool()
   const { updateOperator, getShortAmountFromDebt, getDebtAmount } = useController()
-  const normalizationFactor = useGetAtom(normFactorAtom)
+  const normalizationFactor = useAtom(normFactorAtom)[0]
   const { selectWallet, connected } = useWallet()
   const { shortHelper } = useAddresses()
 
@@ -567,7 +567,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   const { closeShort } = useShortHelper()
   const { getWSqueethPositionValue } = useSqueethPool()
   const { updateOperator, getShortAmountFromDebt, getDebtAmount } = useController()
-  const normalizationFactor = useGetAtom(normFactorAtom)
+  const normalizationFactor = useAtom(normFactorAtom)[0]
   const { shortHelper } = useAddresses()
 
   const { selectWallet, connected } = useWallet()
