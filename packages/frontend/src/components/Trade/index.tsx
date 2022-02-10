@@ -2,13 +2,13 @@ import { createStyles, makeStyles } from '@material-ui/core'
 import React, { useEffect } from 'react'
 
 import { useTrade } from '@context/trade'
-import { useWallet } from '@context/wallet'
 import { usePositions } from '@context/positions'
 import { TradeType, PositionType } from '../../types'
 import { toTokenAmount } from '@utils/calculations'
 import { SecondaryTab, SecondaryTabs } from '../Tabs'
 import Long from './Long'
 import Short from './Short'
+import useAppSelector from '@hooks/useAppSelector'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -40,7 +40,7 @@ type tradeType = {
 
 const Trade: React.FC<tradeType> = ({ setTradeCompleted }) => {
   const classes = useStyles()
-  const { balance } = useWallet()
+  const balance = useAppSelector(({ wallet }) => wallet.balance)
   const { tradeType, openPosition, setOpenPosition, setTradeType } = useTrade()
   const { positionType } = usePositions()
 

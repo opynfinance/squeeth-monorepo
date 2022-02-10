@@ -2,7 +2,6 @@ import { Vault } from '../types'
 import BigNumber from 'bignumber.js'
 import React, { useContext, useEffect, useState } from 'react'
 import { BIG_ZERO } from '../constants'
-import { useWallet } from './wallet'
 import { useAddresses } from '@hooks/useAddress'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useController } from '@hooks/contracts/useController'
@@ -11,6 +10,8 @@ import abi from '../abis/crabStrategy.json'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import db from '@utils/firestore'
+import useAppSelector from '@hooks/useAppSelector'
+import { useAddress, useHandleTransaction, useNetworkId } from 'src/state/wallet/hooks'
 
 type CrabStrategyType = {
   loading: boolean
@@ -90,7 +91,10 @@ const crabContext = React.createContext<CrabStrategyType>(initialState)
 const useCrab = () => useContext(crabContext)
 
 const CrabProvider: React.FC = ({ children }) => {
-  const { web3, address, handleTransaction, networkId } = useWallet()
+  const web3 = useAppSelector(({ wallet }) => wallet.web3)
+  const { address } = useAddress()
+  const { networkId } = useNetworkId()
+  const handleTransaction = useHandleTransaction()
   const { crabStrategy } = useAddresses()
   const { getVault, getCollatRatioAndLiqPrice, currentImpliedFunding, index } = useController()
   const { getSellQuote, getBuyQuote, ready } = useSqueethPool()

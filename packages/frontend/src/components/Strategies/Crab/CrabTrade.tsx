@@ -6,7 +6,6 @@ import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import { TradeSettings } from '@components/TradeSettings'
 import { useCrab } from '@context/crabStrategy'
 import { useRestrictUser } from '@context/restrict-user'
-import { useWallet } from '@context/wallet'
 import RestrictionInfo from '@components/RestrictionInfo'
 import { useCrabPosition } from '@hooks/useCrabPosition'
 import { CircularProgress } from '@material-ui/core'
@@ -17,6 +16,8 @@ import React, { useEffect, useMemo, useState } from 'react'
 import CrabPosition from './CrabPosition'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useController } from '@hooks/contracts/useController'
+import useAppSelector from '@hooks/useAppSelector'
+import { useAddress } from 'src/state/wallet/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -66,7 +67,9 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
   const [depositPriceImpact, setDepositPriceImpact] = useState('0')
   const [withdrawPriceImpact, setWithdrawPriceImpact] = useState('0')
   const [borrowEth, setBorrowEth] = useState(new BigNumber(0))
-  const { balance, address, connected } = useWallet()
+  const { address } = useAddress()
+  const balance = useAppSelector(({ wallet }) => wallet.balance)
+  const connected = useAppSelector(({ wallet }) => wallet.connected)
 
   const {
     flashDeposit,
@@ -115,18 +118,18 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
     return { depositError, warning, withdrawError }
   }, [
     connected,
-    ethAmount.toString(),
-    depositedAmount.toString(),
-    maxCap.toString(),
-    borrowEth.toString(),
-    balance.toString(),
-    withdrawAmount.toString(),
-    currentEthValue.toString(),
-    currentImpliedFunding.toString(),
-    dailyHistoricalFunding.funding,
-    dailyHistoricalFunding.period,
+    ethAmount,
+    depositedAmount,
+    maxCap,
+    borrowEth,
+    balance,
+    withdrawAmount,
+    currentEthValue,
     isTimeHedgeAvailable,
     isPriceHedgeAvailable,
+    currentImpliedFunding,
+    dailyHistoricalFunding.funding,
+    dailyHistoricalFunding.period,
   ])
 
   useEffect(() => {

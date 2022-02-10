@@ -6,7 +6,6 @@ import React, { useEffect, useMemo, useState } from 'react'
 
 import { MIN_COLLATERAL_AMOUNT, Tooltips } from '../../constants'
 import { LPActions, OBTAIN_METHOD, useLPState } from '@context/lp'
-import { useWallet } from '@context/wallet'
 import { useController } from '@hooks/contracts/useController'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useWorldContext } from '@context/world'
@@ -19,6 +18,7 @@ import Long from '../Trade/Long'
 import TradeDetails from '../Trade/TradeDetails'
 import TradeInfoItem from '../Trade/TradeInfoItem'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
+import useAppSelector from '@hooks/useAppSelector'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -68,7 +68,8 @@ const useStyles = makeStyles((theme) =>
 const Mint: React.FC = () => {
   const classes = useStyles()
   const { oSqueethBal } = useWorldContext()
-  const { balance, connected } = useWallet()
+  const balance = useAppSelector(({ wallet }) => wallet.balance)
+  const connected = useAppSelector(({ wallet }) => wallet.connected)
   const { existingCollatPercent, existingCollat, firstValidVault } = usePositions()
   const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
   const { getWSqueethPositionValue } = useSqueethPool()
@@ -229,7 +230,7 @@ const Mint: React.FC = () => {
 const GetSqueeth: React.FC = () => {
   const classes = useStyles()
   const { lpState } = useLPState()
-  const { balance } = useWallet()
+  const balance = useAppSelector(({ wallet }) => wallet.balance)
 
   return (
     <>

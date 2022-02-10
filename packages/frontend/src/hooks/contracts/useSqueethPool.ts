@@ -8,11 +8,12 @@ import { Contract } from 'web3-eth-contract'
 import routerABI from '../../abis/swapRouter.json'
 import uniABI from '../../abis/uniswapPool.json'
 import { UNI_POOL_FEES, DEFAULT_SLIPPAGE, OSQUEETH_DECIMALS } from '../../constants'
-import { useWallet } from '@context/wallet'
 import { fromTokenAmount, parseSlippageInput, toTokenAmount } from '@utils/calculations'
 import { useAddresses } from '../useAddress'
 import useUniswapTicks from '../useUniswapTicks'
 import { useWorldContext } from '@context/world'
+import { useAddress, useHandleTransaction, useNetworkId } from 'src/state/wallet/hooks'
+import useAppSelector from '@hooks/useAppSelector'
 
 // const NETWORK_QUOTE_GAS_OVERRIDE: { [chainId: number]: number } = {
 //   [Networks.ARBITRUM_RINKEBY]: 6_000_000,
@@ -35,7 +36,10 @@ export const useSqueethPool = () => {
   // const [tvl, setTVL] = useState(0)
   const { ethPrice } = useWorldContext()
 
-  const { address, web3, networkId, handleTransaction } = useWallet()
+  const { address } = useAddress()
+  const { networkId } = useNetworkId()
+  const web3 = useAppSelector(({ wallet }) => wallet.web3)
+  const handleTransaction = useHandleTransaction()
   const { squeethPool, swapRouter, weth, oSqueeth } = useAddresses()
   const { ticks } = useUniswapTicks()
 

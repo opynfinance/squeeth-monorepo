@@ -14,8 +14,8 @@ import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useWorldContext } from '@context/world'
 import { inRange } from '@utils/calculations'
 import { UniswapIframe } from '../Modal/UniswapIframe'
-import { useWallet } from '@context/wallet'
 import { usePositions } from '@context/positions'
+import { useNetworkId } from 'src/state/wallet/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -110,7 +110,7 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
   const [activeTab, setActiveTab] = useState(0)
   const { ethPrice } = useWorldContext()
   const { getWSqueethPositionValue, isWethToken0 } = useSqueethPool()
-  const { networkId } = useWallet()
+  const { networkId } = useNetworkId()
 
   useEffect(() => {
     console.log(activePositions)

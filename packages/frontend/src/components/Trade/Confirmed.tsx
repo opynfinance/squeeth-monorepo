@@ -4,8 +4,8 @@ import Image from 'next/image'
 import React from 'react'
 
 import { EtherscanPrefix, Tooltips } from '../../constants'
-import { useWallet } from '@context/wallet'
 import { UniswapIframe } from '../Modal/UniswapIframe'
+import { useNetworkId } from 'src/state/wallet/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -61,7 +61,7 @@ type ConfirmedProps = {
 
 const Confirmed: React.FC<ConfirmedProps> = ({ confirmationMessage, txnHash, confirmType }) => {
   const classes = useStyles()
-  const { networkId } = useWallet()
+  const { networkId } = useNetworkId()
 
   return (
     <div>

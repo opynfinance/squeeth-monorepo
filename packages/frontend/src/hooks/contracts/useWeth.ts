@@ -3,9 +3,10 @@ import { useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 
 import wethAbi from '../../abis/weth.json'
-import { useWallet } from '@context/wallet'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useAddresses } from '../useAddress'
+import { useAddress, useHandleTransaction } from 'src/state/wallet/hooks'
+import useAppSelector from '@hooks/useAppSelector'
 
 /**
  * Hook to interact with WETH contract
@@ -13,7 +14,10 @@ import { useAddresses } from '../useAddress'
 export const useWeth = () => {
   const [contract, setContract] = useState<Contract>()
 
-  const { address, web3, handleTransaction } = useWallet()
+  const { address } = useAddress()
+  const web3 = useAppSelector(({ wallet }) => wallet.web3)
+  const handleTransaction = useHandleTransaction()
+
   const { weth } = useAddresses()
 
   useEffect(() => {

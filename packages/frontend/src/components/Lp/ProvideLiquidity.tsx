@@ -6,7 +6,7 @@ import { motion } from 'framer-motion'
 import React from 'react'
 
 import { UniswapIFrameOpen } from '@constants/enums'
-import { useWallet } from '@context/wallet'
+import { useNetworkId } from 'src/state/wallet/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -49,7 +49,7 @@ const useStyles = makeStyles((theme) =>
 
 const ProvideLiquidity: React.FC = () => {
   const classes = useStyles()
-  const { networkId } = useWallet()
+  const { networkId } = useNetworkId()
 
   return (
     <>

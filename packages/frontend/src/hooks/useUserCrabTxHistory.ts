@@ -4,9 +4,9 @@ import USER_CRAB_TX_QUERY from '../queries/squeeth/userCrabTxQuery'
 import { toTokenAmount } from '@utils/calculations'
 import { WETH_DECIMALS, OSQUEETH_DECIMALS } from '../constants'
 import { squeethClient } from '@utils/apollo-client'
-import { useWallet } from '@context/wallet'
 import { CrabStrategyTxType } from '../types/index'
 import { useUsdAmount } from './useUsdAmount'
+import { useNetworkId } from 'src/state/wallet/hooks'
 
 const getTxTitle = (type: string) => {
   if (type === CrabStrategyTxType.DEPOSIT) return 'Deposit'
@@ -18,7 +18,7 @@ const getTxTitle = (type: string) => {
 }
 
 export const useUserCrabTxHistory = (user: string, isDescending?: boolean) => {
-  const { networkId } = useWallet()
+  const { networkId } = useNetworkId()
   const { getUsdAmt } = useUsdAmount()
   const { data, loading } = useQuery<userCrabTxes, userCrabTxesVariables>(USER_CRAB_TX_QUERY, {
     fetchPolicy: 'cache-and-network',

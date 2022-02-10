@@ -5,11 +5,12 @@ import { Contract } from 'web3-eth-contract'
 import abi from '../../abis/controller.json'
 import { FUNDING_PERIOD, INDEX_SCALE, SWAP_EVENT_TOPIC, Vaults, OSQUEETH_DECIMALS, TWAP_PERIOD } from '../../constants'
 import { ETH_USDC_POOL, SQUEETH_UNI_POOL } from '@constants/address'
-import { useWallet } from '@context/wallet'
 import { Vault } from '../../types'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useAddresses } from '../useAddress'
 import { useOracle } from './useOracle'
+import useAppSelector from '@hooks/useAppSelector'
+import { useAddress, useHandleTransaction, useNetworkId } from 'src/state/wallet/hooks'
 
 const getMultiplier = (type: Vaults) => {
   if (type === Vaults.ETHBull) return 3
@@ -19,7 +20,10 @@ const getMultiplier = (type: Vaults) => {
 }
 
 export const useController = () => {
-  const { web3, address, handleTransaction, networkId } = useWallet()
+  const web3 = useAppSelector(({ wallet }) => wallet.web3)
+  const { address } = useAddress()
+  const handleTransaction = useHandleTransaction()
+  const { networkId } = useNetworkId()
   const [contract, setContract] = useState<Contract>()
   const [normFactor, setNormFactor] = useState(new BigNumber(1))
   const [mark, setMark] = useState(new BigNumber(0))

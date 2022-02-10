@@ -7,10 +7,11 @@ import { OSQUEETH_DECIMALS } from '../constants'
 import { VAULT_QUERY } from '@queries/squeeth/vaultsQuery'
 import { Vault_vault } from '@queries/squeeth/__generated__/Vault'
 
-import { useWallet } from '@context/wallet'
 import { useController } from '@hooks/contracts/useController'
 import { squeethClient } from '@utils/apollo-client'
 import { toTokenAmount } from '@utils/calculations'
+import { useAddress, useNetworkId } from 'src/state/wallet/hooks'
+import useAppSelector from './useAppSelector'
 
 export const useVaultData = (vid: number) => {
   const [vault, setVault] = useState<Vault | null>(null)
@@ -21,7 +22,9 @@ export const useVaultData = (vid: number) => {
   const [isVaultLoading, setVaultLoading] = useState(true)
 
   const { getCollatRatioAndLiqPrice, normFactor } = useController()
-  const { address, connected, networkId } = useWallet()
+  const { address } = useAddress()
+  const connected = useAppSelector(({ wallet }) => wallet.connected)
+  const { networkId } = useNetworkId()
 
   const { data, loading: isDataLoading } = useQuery<{ vault: Vault_vault }>(VAULT_QUERY, {
     client: squeethClient[networkId],

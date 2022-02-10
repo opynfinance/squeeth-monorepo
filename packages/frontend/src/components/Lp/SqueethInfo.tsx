@@ -9,7 +9,7 @@ import { useController } from '@hooks/contracts/useController'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { toTokenAmount } from '@utils/calculations'
 import LPPosition from './LPPosition'
-import { useWallet } from '@context/wallet'
+import { useAddress } from 'src/state/wallet/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -49,7 +49,7 @@ const SqueethInfo: React.FC = () => {
   const classes = useStyles()
   const { mark, index, impliedVol } = useController()
   const { getWSqueethPositionValue, getWSqueethPositionValueInETH } = useSqueethPool()
-  const { address } = useWallet()
+  const { address } = useAddress()
 
   return (
     <div className={classes.squeethInfo}>

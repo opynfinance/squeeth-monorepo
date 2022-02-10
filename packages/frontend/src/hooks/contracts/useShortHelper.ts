@@ -5,14 +5,17 @@ import { Contract } from 'web3-eth-contract'
 
 import shortAbi from '../../abis/shortHelper.json'
 import { Vaults, WETH_DECIMALS, OSQUEETH_DECIMALS } from '../../constants'
-import { useWallet } from '@context/wallet'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useAddresses } from '../useAddress'
 import { useController } from './useController'
 import { useSqueethPool } from './useSqueethPool'
+import useAppSelector from '@hooks/useAppSelector'
+import { useAddress, useHandleTransaction } from 'src/state/wallet/hooks'
 
 export const useShortHelper = () => {
-  const { web3, address, handleTransaction } = useWallet()
+  const web3 = useAppSelector(({ wallet }) => wallet.web3)
+  const { address } = useAddress()
+  const handleTransaction = useHandleTransaction()
   const [contract, setContract] = useState<Contract>()
 
   const { getSellParam, getBuyParam } = useSqueethPool()

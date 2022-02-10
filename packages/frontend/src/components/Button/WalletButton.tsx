@@ -4,11 +4,12 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React from 'react'
 import { useMemo } from 'react'
 
-import { useWallet } from '@context/wallet'
 import { Networks } from '../../types'
 import { toTokenAmount } from '@utils/calculations'
 import { useENS } from '@hooks/useENS'
 import Davatar from '@davatar/react'
+import { useAddress, useWalletSelect, useDisconnect } from 'src/state/wallet/hooks'
+import useAppSelector from '@hooks/useAppSelector'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -47,7 +48,12 @@ const useStyles = makeStyles((theme) =>
 )
 
 const WalletButton: React.FC = () => {
-  const { selectWallet, connected, address, networkId, balance, disconnectWallet } = useWallet()
+  const selectWallet = useWalletSelect()
+  const disconnectWallet = useDisconnect()
+  const { address } = useAddress()
+  const networkId = useAppSelector(({ wallet }) => wallet.networkId)
+  const connected = useAppSelector(({ wallet }) => wallet.connected)
+  const balance = useAppSelector(({ wallet }) => wallet.balance)
   const classes = useStyles()
   const { ensName } = useENS(address)
 

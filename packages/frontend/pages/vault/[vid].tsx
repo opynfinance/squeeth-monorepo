@@ -25,7 +25,6 @@ import { VAULT_QUERY } from '../../src/queries/squeeth/vaultsQuery'
 import { Vault_vault } from '../../src/queries/squeeth/__generated__/Vault'
 import { PositionType } from '../../src/types'
 import { useRestrictUser } from '@context/restrict-user'
-import { useWallet } from '@context/wallet'
 import { useController } from '@hooks/contracts/useController'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { useVaultData } from '@hooks/useVaultData'
@@ -34,6 +33,7 @@ import { CollateralStatus, Vault } from '../../src/types'
 import { squeethClient } from '@utils/apollo-client'
 import { getCollatPercentStatus, toTokenAmount } from '@utils/calculations'
 import { LinkButton } from '@components/Button'
+import useAppSelector from '@hooks/useAppSelector'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -232,7 +232,7 @@ const Component: React.FC = () => {
     burnAndRedeem,
     getTwapEthPrice,
   } = useController()
-  const { balance, address, connected, networkId } = useWallet()
+  const balance = useAppSelector(({ wallet }) => wallet.balance)
   const { vid } = router.query
   const { liquidations } = useVaultLiquidations(Number(vid))
   const { positionType, squeethAmount, mintedDebt, shortDebt, lpedSqueeth } = usePositions()
@@ -798,7 +798,7 @@ const Component: React.FC = () => {
 
 const Main: React.FC = () => {
   const classes = useStyles()
-  const { connected } = useWallet()
+  const connected = useAppSelector(({ wallet }) => wallet.connected)
 
   if (!connected) {
     return (

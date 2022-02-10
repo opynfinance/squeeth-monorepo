@@ -5,7 +5,6 @@ import CapDetails from '@components/Strategies/Crab/CapDetails'
 import CrabStrategyHistory from '@components/Strategies/Crab/StrategyHistory'
 import StrategyInfo from '@components/Strategies/Crab/StrategyInfo'
 import StrategyInfoItem from '@components/Strategies/StrategyInfoItem'
-import { useWallet } from '@context/wallet'
 import { CrabProvider, useCrab } from '@context/crabStrategy'
 import { Typography, Tab, Tabs } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
@@ -19,6 +18,7 @@ import Image from 'next/image'
 import bull from '../public/images/bull.gif'
 import bear from '../public/images/bear.gif'
 import CrabTrade from '@components/Strategies/Crab/CrabTrade'
+import { useAddress, useWalletSelect } from 'src/state/wallet/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -94,7 +94,8 @@ const Strategies: React.FC = () => {
   const [selectedIdx, setSelectedIdx] = useState(1)
 
   const classes = useStyles()
-  const { balance, address, selectWallet } = useWallet()
+  const { address } = useAddress()
+  const selectWallet = useWalletSelect()
   const { maxCap, vault, collatRatio, timeAtLastHedge, profitableMovePercent } = useCrab()
   const { index, currentImpliedFunding, dailyHistoricalFunding } = useController()
 

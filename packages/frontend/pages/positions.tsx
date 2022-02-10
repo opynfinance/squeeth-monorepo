@@ -19,10 +19,10 @@ import { toTokenAmount } from '@utils/calculations'
 import { useController } from '../src/hooks/contracts/useController'
 import { CrabProvider } from '@context/crabStrategy'
 import { useCrabPosition } from '@hooks/useCrabPosition'
-import { useWallet } from '@context/wallet'
 import { usePositions } from '@context/positions'
 import { LinkButton } from '@components/Button'
 import { useVaultData } from '@hooks/useVaultData'
+import { useAddress, useWalletSelect } from 'src/state/wallet/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -113,7 +113,7 @@ const useStyles = makeStyles((theme) =>
 )
 
 const PositionsHome = () => {
-  const { address } = useWallet()
+  const { address } = useAddress()
 
   if (address)
     return (
@@ -126,7 +126,7 @@ const PositionsHome = () => {
 }
 
 const ConnectWallet: React.FC = () => {
-  const { selectWallet } = useWallet()
+  const selectWallet = useWalletSelect()
   const classes = useStyles()
 
   return (
@@ -158,7 +158,7 @@ export function Positions() {
   const { pool } = useSqueethPool()
 
   const { oSqueethBal } = useWorldContext()
-  const { address } = useWallet()
+  const { address } = useAddress()
 
   const {
     positionType,

@@ -16,10 +16,10 @@ import {
   ZERO_ADDR,
   CRAB_STRATEGY,
 } from '../constants/address'
-import { useWallet } from '@context/wallet'
+import { useNetworkId } from 'src/state/wallet/hooks'
 
 const useAddresses = () => {
-  const { networkId } = useWallet()
+  const { networkId } = useNetworkId()
 
   const state = useMemo(
     () => ({

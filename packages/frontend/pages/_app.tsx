@@ -9,13 +9,19 @@ import { useRouter } from 'next/router'
 import React, { useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { CookiesProvider } from 'react-cookie'
-
+import { Provider as StateProvider } from 'react-redux'
 import { RestrictUserProvider } from '@context/restrict-user'
-import { useWallet, WalletProvider } from '@context/wallet'
 import { WorldProvider } from '@context/world'
 import { PositionsProvider } from '@context/positions'
 import getTheme, { Mode } from '../src/theme'
 import { uniswapClient } from '@utils/apollo-client'
+import store from '../src/state'
+import WalletUpdater from 'src/state/wallet/updater'
+import { useNetworkId } from 'src/state/wallet/hooks'
+
+const StateUpdaters: React.FC = () => {
+  return <WalletUpdater />
+}
 
 function MyApp({ Component, pageProps }: any) {
   const router = useRouter()
@@ -55,19 +61,20 @@ function MyApp({ Component, pageProps }: any) {
 
   return (
     <CookiesProvider>
-      <WalletProvider>
+      <StateProvider store={store}>
+        <StateUpdaters />
         <RestrictUserProvider>
           <QueryClientProvider client={queryClient}>
             <TradeApp Component={Component} pageProps={pageProps} />
           </QueryClientProvider>
         </RestrictUserProvider>
-      </WalletProvider>
+      </StateProvider>
     </CookiesProvider>
   )
 }
 
 const TradeApp = ({ Component, pageProps }: any) => {
-  const { networkId } = useWallet()
+  const { networkId } = useNetworkId()
 
   return (
     <React.Fragment>

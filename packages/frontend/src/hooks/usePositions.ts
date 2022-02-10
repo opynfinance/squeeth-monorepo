@@ -4,7 +4,6 @@ import BigNumber from 'bignumber.js'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import NFTpositionManagerABI from '../abis/NFTpositionmanager.json'
-import { useWallet } from '@context/wallet'
 import { useWorldContext } from '@context/world'
 import { usePositions } from '@context/positions'
 import { positions, positionsVariables } from '../queries/uniswap/__generated__/positions'
@@ -17,6 +16,8 @@ import { squeethClient } from '@utils/apollo-client'
 import { useSqueethPool } from './contracts/useSqueethPool'
 import { useAddresses } from './useAddress'
 import { calcUnrealizedPnl, calcETHCollateralPnl, calcLongUnrealizedPnl, calcShortGain } from '../lib/pnl'
+import { useAddress, useNetworkId } from 'src/state/wallet/hooks'
+import useAppSelector from './useAppSelector'
 
 export const usePnL = () => {
   const {
@@ -30,7 +31,7 @@ export const usePnL = () => {
 
   const { ethPrice, ethPriceMap } = useWorldContext()
   const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
-  const { networkId } = useWallet()
+  const { networkId } = useNetworkId()
 
   const [sellQuote, setSellQuote] = useState({
     amountOut: new BigNumber(0),
@@ -110,7 +111,8 @@ export const usePnL = () => {
 }
 
 export const useLPPositions = () => {
-  const { address, web3 } = useWallet()
+  const { address } = useAddress()
+  const web3 = useAppSelector(({ wallet }) => wallet.web3)
   const { squeethPool, nftManager, weth, oSqueeth } = useAddresses()
   const { pool, getWSqueethPositionValue, squeethInitialPrice } = useSqueethPool()
   const { ethPrice } = useWorldContext()

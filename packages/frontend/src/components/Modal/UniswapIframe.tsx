@@ -9,9 +9,9 @@ import OpenInNewIcon from '@material-ui/icons/OpenInNew'
 import * as React from 'react'
 
 import { Tooltips, UniswapIFrameOpen, UniswapIFrameClose } from '@constants/enums'
-import { useWallet } from '@context/wallet'
 import { useAddresses } from '@hooks/useAddress'
 import useCopyClipboard from '@hooks/useCopyClipboard'
+import { useNetworkId } from 'src/state/wallet/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -78,7 +78,7 @@ interface UniswapIframeProps {
 export const UniswapIframe: React.FC<UniswapIframeProps> = ({ text, closePosition }) => {
   const classes = useStyles()
   const { oSqueeth } = useAddresses()
-  const { networkId } = useWallet()
+  const { networkId } = useNetworkId()
   const [isCopied, setCopied] = useCopyClipboard()
 
   const [open, setOpen] = React.useState(false)

@@ -2,13 +2,16 @@ import BigNumber from 'bignumber.js'
 import { useCallback, useEffect, useState } from 'react'
 
 import abi from '../../abis/erc20.json'
-import { useWallet } from '@context/wallet'
 import { toTokenAmount } from '@utils/calculations'
+import useAppSelector from '@hooks/useAppSelector'
+import { useAddress, useHandleTransaction } from 'src/state/wallet/hooks'
 
 const MAX_UINT = '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
 
 export function useUserAllowance(token: string, spenderAddess: string) {
-  const { web3, address, handleTransaction } = useWallet()
+  const web3 = useAppSelector(({ wallet }) => wallet.web3)
+  const { address } = useAddress()
+  const handleTransaction = useHandleTransaction()
 
   const [allowance, setAllowance] = useState(new BigNumber(0))
   const [isLoadingAllowance, setIsLoadingAllowance] = useState(true)

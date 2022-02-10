@@ -3,12 +3,12 @@ import { useEffect, useState, useCallback } from 'react'
 import { Contract } from 'web3-eth-contract'
 
 import abi from '../../abis/oracle.json'
-import { useWallet } from '@context/wallet'
 import { toTokenAmount } from '@utils/calculations'
 import { useAddresses } from '../useAddress'
+import useAppSelector from '@hooks/useAppSelector'
 
 export const useOracle = () => {
-  const { web3 } = useWallet()
+  const web3 = useAppSelector(({ wallet }) => wallet.web3)
   const { oracle } = useAddresses()
   const [contract, setContract] = useState<Contract>()
 

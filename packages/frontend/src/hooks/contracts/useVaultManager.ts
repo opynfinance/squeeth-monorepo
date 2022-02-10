@@ -9,7 +9,7 @@ import { OSQUEETH_DECIMALS } from '../../constants/'
 import { VAULTS_QUERY, VAULTS_SUBSCRIPTION } from '../../queries/squeeth/vaultsQuery'
 import { Vaults } from '../../queries/squeeth/__generated__/Vaults'
 import { squeethClient } from '../../utils/apollo-client'
-import { useWallet } from '@context/wallet'
+import { useAddress, useNetworkId } from 'src/state/wallet/hooks'
 // import { useAddresses } from '../useAddress'
 
 /**
@@ -22,7 +22,8 @@ export const useVaultManager = () => {
   const [vaults, setVaults] = useState<Array<any>>([])
   // const [contract, setContract] = useState<Contract>()
 
-  const { address, networkId } = useWallet()
+  const { address } = useAddress()
+  const { networkId } = useNetworkId()
   // const { vaultManager } = useAddresses()
 
   // useEffect(() => {

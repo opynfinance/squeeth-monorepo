@@ -2,16 +2,16 @@ import { useCallback, useEffect, useMemo } from 'react'
 import BigNumber from 'bignumber.js'
 import { useQuery } from '@apollo/client'
 
-import { useWallet } from '@context/wallet'
 import { BIG_ZERO } from '@constants/index'
 import { useAddresses } from '../hooks/useAddress'
 import { useUsdAmount } from '../hooks/useUsdAmount'
 import { swaps, swapsVariables } from '../queries/uniswap/__generated__/swaps'
 import SWAPS_QUERY, { SWAPS_SUBSCRIPTION } from '../queries/uniswap/swapsQuery'
+import { useAddress } from 'src/state/wallet/hooks'
 
 export const useSwapsData = () => {
   const { squeethPool, weth, oSqueeth, shortHelper, swapRouter } = useAddresses()
-  const { address } = useWallet()
+  const { address } = useAddress()
   const { getUsdAmt } = useUsdAmount()
   const { data, subscribeToMore, refetch } = useQuery<swaps, swapsVariables>(SWAPS_QUERY, {
     variables: {
