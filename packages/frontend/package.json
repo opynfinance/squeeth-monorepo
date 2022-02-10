@@ -42,6 +42,7 @@
     "react-dom": "17.0.2",
     "react-query": "^3.34.0",
     "react-redux": "^7.2.6",
+    "react-transition-group": "^4.4.2",
     "redux": "^4.1.2",
     "redux-localstorage-simple": "^2.4.1",
     "set-interval-async": "^2.0.3",
