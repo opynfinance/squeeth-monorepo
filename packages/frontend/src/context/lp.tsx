@@ -1,5 +1,4 @@
-import React, { useContext, useEffect, useReducer } from 'react'
-import { Reducer } from 'react-transition-group/node_modules/@types/react'
+import React, { useContext, useEffect, useReducer, Reducer } from 'react'
 
 import { useWorldContext } from '@context/world'
 

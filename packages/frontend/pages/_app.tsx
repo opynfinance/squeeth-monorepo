@@ -15,9 +15,10 @@ import { WorldProvider } from '@context/world'
 import { PositionsProvider } from '@context/positions'
 import getTheme, { Mode } from '../src/theme'
 import { uniswapClient } from '@utils/apollo-client'
-import store from '../src/state'
+import store, { persistor } from '../src/state'
 import WalletUpdater from 'src/state/wallet/updater'
 import { useNetworkId } from 'src/state/wallet/hooks'
+import { PersistGate } from 'redux-persist/integration/react'
 
 const StateUpdaters: React.FC = () => {
   return <WalletUpdater />
@@ -62,12 +63,14 @@ function MyApp({ Component, pageProps }: any) {
   return (
     <CookiesProvider>
       <StateProvider store={store}>
-        <StateUpdaters />
-        <RestrictUserProvider>
-          <QueryClientProvider client={queryClient}>
-            <TradeApp Component={Component} pageProps={pageProps} />
-          </QueryClientProvider>
-        </RestrictUserProvider>
+        <PersistGate loading={<div>loading</div>} persistor={persistor}>
+          <StateUpdaters />
+          <RestrictUserProvider>
+            <QueryClientProvider client={queryClient}>
+              <TradeApp Component={Component} pageProps={pageProps} />
+            </QueryClientProvider>
+          </RestrictUserProvider>
+        </PersistGate>
       </StateProvider>
     </CookiesProvider>
   )
