@@ -4,11 +4,12 @@ import BigNumber from 'bignumber.js'
 import { TransactionType } from '../constants'
 import { useWallet } from '@context/wallet'
 import { useWorldContext } from '@context/world'
-import { transactions_swaps, transactions_positionSnapshots } from '../queries/uniswap/__generated__/transactions'
+import { transactions_positionSnapshots } from '../queries/uniswap/__generated__/transactions'
 import TRANSACTIONS_QUERY from '../queries/uniswap/transactionsQuery'
 import { useAddresses } from './useAddress'
 import { useUserCrabTxHistory } from './useUserCrabTxHistory'
 import { CrabStrategyTxType } from '../types'
+import { usePositions } from '@context/positions'
 
 const bigZero = new BigNumber(0)
 
@@ -16,6 +17,7 @@ export const useTransactionHistory = () => {
   const { squeethPool, weth, oSqueeth, shortHelper, swapRouter } = useAddresses()
   const { address } = useWallet()
   const { ethPriceMap } = useWorldContext()
+  const { swaps } = usePositions()
 
   const { data, loading } = useQuery(TRANSACTIONS_QUERY, {
     variables: {
@@ -84,14 +86,14 @@ export const useTransactionHistory = () => {
     },
   )
 
-  const transactions = (data?.swaps || []).map((s: transactions_swaps) => {
+  const transactions = (swaps || []).map((s) => {
     const squeethAmount = new BigNumber(isWethToken0 ? s.amount1 : s.amount0)
     const ethAmount = new BigNumber(isWethToken0 ? s.amount0 : s.amount1)
     const time = new Date(Number(s.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
     const usdValue = ethAmount.multipliedBy(ethPriceMap[time]).abs()
 
     let transactionType = TransactionType.BUY
-    if (squeethAmount.isPositive() && s.recipient.toLowerCase() === swapRouter.toLowerCase()) {
+    if (squeethAmount.isPositive() && s.recipient.toLowerCase() !== shortHelper.toLowerCase()) {
       transactionType = TransactionType.SELL
     } else if (s.recipient.toLowerCase() === shortHelper.toLowerCase()) {
       if (squeethAmount.isNegative()) transactionType = TransactionType.BURN_SHORT
