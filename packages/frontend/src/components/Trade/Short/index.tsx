@@ -697,6 +697,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   let existingLongError: string | undefined
   let priceImpactWarning: string | undefined
   let vaultIdDontLoadedError: string | undefined
+  let insufficientETHBalance: string | undefined
 
   if (connected) {
     if (finalShortAmount.lt(0) && finalShortAmount.lt(amount)) {
@@ -723,6 +724,9 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     }
     if (isLong && !finalShortAmount.isGreaterThan(0)) {
       existingLongError = 'Close your long position to open a short'
+    }
+    if (sellCloseQuote.amountIn.gt(balance)) {
+      insufficientETHBalance = 'Insufficient ETH Balance'
     }
   }
 
@@ -773,7 +777,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
               actionTxt="Max"
               onActionClicked={setShortCloseMax}
               unit="oSQTH"
-              error={!!existingLongError || !!priceImpactWarning || !!closeError}
+              error={!!existingLongError || !!priceImpactWarning || !!closeError || !!insufficientETHBalance}
               isLoading={isPositionFinishedCalc}
               convertedValue={
                 !amount.isNaN()
@@ -787,6 +791,8 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
                   existingLongError
                 ) : priceImpactWarning ? (
                   priceImpactWarning
+                ) : insufficientETHBalance ? (
+                  insufficientETHBalance
                 ) : (
                   <div className={classes.hint}>
                     <span className={classes.hintTextContainer}>
@@ -864,6 +870,8 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
                 existingLongError
               ) : priceImpactWarning ? (
                 priceImpactWarning
+              ) : insufficientETHBalance ? (
+                insufficientETHBalance
               ) : (
                 <div className={classes.hint}>
                   <span>{`Balance ${balance}`}</span>
@@ -924,7 +932,8 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
                   !!closeError ||
                   !!existingLongError ||
                   (shortVaults.length && shortVaults[firstValidVault].shortAmount.isZero()) ||
-                  !!vaultIdDontLoadedError
+                  !!vaultIdDontLoadedError ||
+                  !!insufficientETHBalance
                 }
                 variant={shortClosePriceImpactErrorState ? 'outlined' : 'contained'}
                 style={
