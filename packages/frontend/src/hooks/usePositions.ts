@@ -37,7 +37,7 @@ export const usePnL = () => {
   } = usePositions()
   const { index } = useController()
 
-  const { ethPrice } = useWorldContext()
+  // const { ethPrice } = useWorldContext()
   const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
   const { networkId } = useWallet()
 
