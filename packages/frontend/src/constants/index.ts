@@ -28,3 +28,5 @@ export const WETH_DECIMALS = 18
 export const SWAP_EVENT_TOPIC = '0xc42079f94a6350d7e6235f29174924f928cc2ac818eb64fed8004e115fbcca67'
 
 export const BIG_ZERO = new BigNumber(0)
+
+export const POLLING_INTERVAL = 30000

@@ -9,6 +9,7 @@ import { useAppSelector } from '@hooks/useAppSelector'
 import { setWeb3Settings, setAddress } from './actions'
 import { Networks } from '../../types'
 import useInterval from '@hooks/useInterval'
+import { POLLING_INTERVAL } from '@constants/index'
 
 export default function Updater(): null {
   const dispatch = useDispatch()
@@ -38,7 +39,7 @@ export default function Updater(): null {
     if (wallet.provider) {
       window.localStorage.setItem('selectedWallet', wallet.name)
       const provider = new ethers.providers.Web3Provider(wallet.provider)
-      provider.pollingInterval = 30000
+      provider.pollingInterval = POLLING_INTERVAL
       dispatch(setWeb3Settings({ web3: new Web3(wallet.provider), signer: () => provider.getSigner() }))
     }
   }
@@ -71,14 +72,14 @@ export default function Updater(): null {
     getBalance()
   }, [address])
 
-  useInterval(getBalance, 30000)
+  useInterval(getBalance, POLLING_INTERVAL)
 
   useEffect(() => {
     const onboard = Onboard({
       dappId: process.env.NEXT_PUBLIC_BLOCKNATIVE_DAPP_ID,
       networkId: networkId,
       darkMode: true,
-      blockPollingInterval: 30000,
+      blockPollingInterval: POLLING_INTERVAL,
       subscriptions: {
         address: (address) => dispatch(setAddress(address)),
         network: onNetworkChange,
