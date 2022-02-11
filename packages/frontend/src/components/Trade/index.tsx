@@ -44,9 +44,9 @@ const Trade: React.FC<tradeType> = ({ setTradeCompleted }) => {
   const { tradeType, openPosition, setOpenPosition, setTradeType } = useTrade()
   const { positionType } = usePositions()
 
-  useEffect(() => {
-    setTradeType(positionType === PositionType.SHORT ? 1 : 0)
-  }, [positionType])
+  // useEffect(() => {
+  //   setTradeType(positionType === PositionType.SHORT ? 1 : 0)
+  // }, [positionType])
 
   return (
     <div>
