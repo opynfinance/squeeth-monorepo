@@ -70,6 +70,9 @@ const useStyles = makeStyles((theme) =>
     notAllowedCursor: {
       cursor: 'not-allowed',
     },
+    disabledBackground: {
+      backgroundColor: theme.palette.background.stone,
+    },
   }),
 )
 
@@ -107,7 +110,7 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
   const classes = useStyles()
 
   return (
-    <div className={clsx(classes.container, error && classes.errorBorder)}>
+    <div className={clsx(classes.container, error && classes.errorBorder, isFullClose && classes.disabledBackground)}>
       <div className={classes.innerContainer}>
         <div className={classes.rightContainer}>
           <div className={classes.labelContainer}>
