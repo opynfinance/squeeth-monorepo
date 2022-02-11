@@ -9,11 +9,7 @@ import { useWallet } from '@context/wallet'
 import { CrabProvider, useCrab } from '@context/crabStrategy'
 import { Typography, Tab, Tabs } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import {
-  currentImpliedFundingAtom,
-  indexAtom,
-  dailyHistoricalFundingAtom,
-} from '@hooks/contracts/useController'
+import { currentImpliedFundingAtom, indexAtom, dailyHistoricalFundingAtom } from '@hooks/contracts/useController'
 import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
 import React, { useMemo, useState } from 'react'
