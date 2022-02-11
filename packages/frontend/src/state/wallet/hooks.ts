@@ -1,5 +1,4 @@
 import { useCallback } from 'react'
-import { API as NotifyAPI } from 'bnc-notify'
 import { useAppSelector } from '../../hooks/useAppSelector'
 import { useAppDispatch } from '../../hooks/useAppDispatch'
 import { setAddress as _setAddress, setWeb3Settings } from './actions'
@@ -7,7 +6,7 @@ import BigNumber from 'bignumber.js'
 import { EtherscanPrefix } from '../../constants'
 import { Networks } from '../../types'
 
-export function useNotify(): NotifyAPI {
+export function useNotify() {
   const notify = useAppSelector(({ wallet }) => wallet.notify)
   return notify
 }

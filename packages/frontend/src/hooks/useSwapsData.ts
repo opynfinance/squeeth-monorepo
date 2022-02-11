@@ -9,11 +9,12 @@ import { swaps, swapsVariables } from '../queries/uniswap/__generated__/swaps'
 import SWAPS_QUERY, { SWAPS_SUBSCRIPTION } from '../queries/uniswap/swapsQuery'
 import { Networks } from '../types'
 import SWAPS_ROPSTEN_QUERY, { SWAPS_ROPSTEN_SUBSCRIPTION } from '@queries/uniswap/swapsRopstenQuery'
-import { useAddress } from 'src/state/wallet/hooks'
+import { useAddress, useNetworkId } from 'src/state/wallet/hooks'
 
 export const useSwapsData = () => {
   const { squeethPool, weth, oSqueeth, shortHelper, swapRouter } = useAddresses()
   const { address } = useAddress()
+  const { networkId } = useNetworkId()
   const { getUsdAmt } = useUsdAmount()
   const { data, subscribeToMore, refetch } = useQuery<swaps, swapsVariables>(
     networkId === Networks.MAINNET ? SWAPS_QUERY : SWAPS_ROPSTEN_QUERY,
