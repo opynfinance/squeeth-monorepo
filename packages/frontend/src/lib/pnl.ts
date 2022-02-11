@@ -34,19 +34,24 @@ type ShortGainParams = {
   shortUnrealizedPNL: BigNumber
   usdAmount: BigNumber
   wethAmount: BigNumber
-  ethPrice: BigNumber
+  uniswapEthPrice: BigNumber
 }
 
-export function calcShortGain({ shortUnrealizedPNL, usdAmount, wethAmount, ethPrice }: ShortGainParams) {
-  if (wethAmount.isEqualTo(0) || shortUnrealizedPNL.isEqualTo(0) || ethPrice.isEqualTo(0) || usdAmount.isEqualTo(0)) {
+export function calcShortGain({ shortUnrealizedPNL, usdAmount, wethAmount, uniswapEthPrice }: ShortGainParams) {
+  if (
+    wethAmount.isEqualTo(0) ||
+    shortUnrealizedPNL.isEqualTo(0) ||
+    uniswapEthPrice.isEqualTo(0) ||
+    usdAmount.isEqualTo(0)
+  ) {
     return new BigNumber(0)
   }
-  return shortUnrealizedPNL.div(usdAmount.plus(wethAmount.times(ethPrice).absoluteValue())).times(100)
+  return shortUnrealizedPNL.div(usdAmount.plus(wethAmount.times(uniswapEthPrice).absoluteValue())).times(100)
 }
 
 export async function calcETHCollateralPnl(
   data: VaultHistory_vaultHistories[] | undefined,
-  ethPrice: BigNumber,
+  uniswapEthPrice: BigNumber,
   currentVaultEthBalance: BigNumber,
 ) {
   const { deposits, withdrawals } = data?.length
@@ -71,7 +76,7 @@ export async function calcETHCollateralPnl(
     : { deposits: BIG_ZERO, withdrawals: BIG_ZERO }
 
   return !deposits.minus(withdrawals).isZero()
-    ? currentVaultEthBalance.times(ethPrice).minus(deposits.minus(withdrawals))
+    ? currentVaultEthBalance.times(uniswapEthPrice).minus(deposits.minus(withdrawals))
     : BIG_ZERO
 }
 
@@ -79,7 +84,7 @@ export async function calcDollarShortUnrealizedpnl(
   swaps: swaps_swaps[],
   isWethToken0: boolean,
   buyQuote: BigNumber,
-  ethPrice: BigNumber,
+  uniswapEthPrice: BigNumber,
 ) {
   const { totalWethInUSD } = await swaps.reduce(async (prevPromise, swap: any) => {
     const acc = await prevPromise
@@ -98,7 +103,7 @@ export async function calcDollarShortUnrealizedpnl(
     return acc
   }, Promise.resolve({ totalWethInUSD: BIG_ZERO, totalSqueeth: BIG_ZERO }))
 
-  return !totalWethInUSD.isZero() ? totalWethInUSD.minus(buyQuote.times(ethPrice)) : BIG_ZERO
+  return !totalWethInUSD.isZero() ? totalWethInUSD.minus(buyQuote.times(uniswapEthPrice)) : BIG_ZERO
 }
 
 export async function calcDollarLongUnrealizedpnl(
@@ -109,7 +114,7 @@ export async function calcDollarLongUnrealizedpnl(
     minimumAmountOut: BigNumber
     priceImpact: string
   },
-  ethPrice: BigNumber,
+  uniswapEthPrice: BigNumber,
 ) {
   const { totalUSDWethAmount } = await swaps.reduce(async (prevPromise, swap: any) => {
     const acc = await prevPromise
@@ -128,10 +133,10 @@ export async function calcDollarLongUnrealizedpnl(
     return acc
   }, Promise.resolve({ totalUSDWethAmount: BIG_ZERO, totalSqueeth: BIG_ZERO }))
 
-  const usdValue = sellQuote.amountOut.times(ethPrice).minus(totalUSDWethAmount)
+  const usdValue = sellQuote.amountOut.times(uniswapEthPrice).minus(totalUSDWethAmount)
   return {
     usd: usdValue,
-    eth: !usdValue.isEqualTo(0) ? usdValue.div(ethPrice) : BIG_ZERO,
+    eth: !usdValue.isEqualTo(0) ? usdValue.div(uniswapEthPrice) : BIG_ZERO,
   }
 }
 
