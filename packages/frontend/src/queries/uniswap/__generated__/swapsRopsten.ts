@@ -4,36 +4,36 @@
 // This file was automatically generated and should not be edited.
 
 // ====================================================
-// GraphQL query operation: swaps
+// GraphQL query operation: swapsRopsten
 // ====================================================
 
-export interface swaps_swaps_pool_token0 {
+export interface swapsRopsten_swaps_pool_token0 {
   __typename: "Token";
   id: string;
   symbol: string;
 }
 
-export interface swaps_swaps_pool_token1 {
+export interface swapsRopsten_swaps_pool_token1 {
   __typename: "Token";
   id: string;
   symbol: string;
 }
 
-export interface swaps_swaps_pool {
+export interface swapsRopsten_swaps_pool {
   __typename: "Pool";
-  token0: swaps_swaps_pool_token0;
-  token1: swaps_swaps_pool_token1;
+  token0: swapsRopsten_swaps_pool_token0;
+  token1: swapsRopsten_swaps_pool_token1;
 }
 
-export interface swaps_swaps_transaction {
+export interface swapsRopsten_swaps_transaction {
   __typename: "Transaction";
   id: string;
   blockNumber: any;
 }
 
-export interface swaps_swaps {
+export interface swapsRopsten_swaps {
   __typename: "Swap";
-  pool: swaps_swaps_pool;
+  pool: swapsRopsten_swaps_pool;
   id: string;
   timestamp: any;
   recipient: any;
@@ -41,14 +41,14 @@ export interface swaps_swaps {
   amount1: any;
   amountUSD: any;
   origin: any;
-  transaction: swaps_swaps_transaction;
+  transaction: swapsRopsten_swaps_transaction;
 }
 
-export interface swaps {
-  swaps: swaps_swaps[];
+export interface swapsRopsten {
+  swaps: swapsRopsten_swaps[];
 }
 
-export interface swapsVariables {
+export interface swapsRopstenVariables {
   poolAddress: string;
   recipients: string[];
   tokenAddress: any;

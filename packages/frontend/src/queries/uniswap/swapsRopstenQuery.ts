@@ -1,14 +1,18 @@
 import { gql } from '@apollo/client'
 
-export const SWAPS_SUBSCRIPTION = gql`
-  subscription subscriptionSwaps(
+export const SWAPS_ROPSTEN_SUBSCRIPTION = gql`
+  subscription subscriptionSwapsRopsten(
     $poolAddress: String!
     $recipients: [String!]!
     $tokenAddress: Bytes!
     $origin: Bytes!
     $orderDirection: String!
   ) {
-    swaps(orderBy: timestamp, orderDirection: $orderDirection, where: { token1: $tokenAddress, origin: $origin }) {
+    swaps(
+      orderBy: timestamp
+      orderDirection: $orderDirection
+      where: { pool: $poolAddress, origin: $origin, recipient_in: $recipients }
+    ) {
       pool {
         token0 {
           id
@@ -34,15 +38,19 @@ export const SWAPS_SUBSCRIPTION = gql`
   }
 `
 
-export const SWAPS_QUERY = gql`
-  query swaps(
+export const SWAPS_ROPSTEN_QUERY = gql`
+  query swapsRopsten(
     $poolAddress: String!
     $recipients: [String!]!
     $tokenAddress: Bytes!
     $origin: Bytes!
     $orderDirection: String!
   ) {
-    swaps(orderBy: timestamp, orderDirection: $orderDirection, where: { token1: $tokenAddress, origin: $origin }) {
+    swaps(
+      orderBy: timestamp
+      orderDirection: $orderDirection
+      where: { pool: $poolAddress, origin: $origin, recipient_in: $recipients }
+    ) {
       pool {
         token0 {
           id
@@ -67,4 +75,4 @@ export const SWAPS_QUERY = gql`
     }
   }
 `
-export default SWAPS_QUERY
+export default SWAPS_ROPSTEN_QUERY
