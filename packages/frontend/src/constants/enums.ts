@@ -70,6 +70,7 @@ export enum Tooltips {
   StrategyCollRatio = 'The collateralization ratio for the whole strategy',
   StrategyEarnFunding = 'You earn funding by depositing into the strategy',
   StrategyProfitThreshold = 'Based on current funding, crab strategy would be unprofitable if ETH moves more than approximately the profit threshold in either direction each day.',
+  FullcloseInput = 'Select partial close to edit input',
 }
 
 export enum Links {
