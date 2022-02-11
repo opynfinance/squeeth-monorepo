@@ -7,30 +7,37 @@ import { useAddresses } from '../hooks/useAddress'
 import { useUsdAmount } from '../hooks/useUsdAmount'
 import { swaps, swapsVariables } from '../queries/uniswap/__generated__/swaps'
 import SWAPS_QUERY, { SWAPS_SUBSCRIPTION } from '../queries/uniswap/swapsQuery'
+import { Networks } from '../types'
+import SWAPS_ROPSTEN_QUERY, { SWAPS_ROPSTEN_SUBSCRIPTION } from '@queries/uniswap/swapsRopstenQuery'
 import { useAddress } from 'src/state/wallet/hooks'
 
 export const useSwapsData = () => {
   const { squeethPool, weth, oSqueeth, shortHelper, swapRouter } = useAddresses()
   const { address } = useAddress()
   const { getUsdAmt } = useUsdAmount()
-  const { data, subscribeToMore, refetch } = useQuery<swaps, swapsVariables>(SWAPS_QUERY, {
-    variables: {
-      poolAddress: squeethPool?.toLowerCase(),
-      origin: address || '',
-      recipients: [shortHelper, address || '', swapRouter],
-      orderDirection: 'asc',
+  const { data, subscribeToMore, refetch } = useQuery<swaps, swapsVariables>(
+    networkId === Networks.MAINNET ? SWAPS_QUERY : SWAPS_ROPSTEN_QUERY,
+    {
+      variables: {
+        tokenAddress: oSqueeth?.toLowerCase(),
+        origin: address || '',
+        poolAddress: squeethPool?.toLowerCase(),
+        recipients: [shortHelper, address || '', swapRouter],
+        orderDirection: 'desc',
+      },
+      fetchPolicy: 'cache-and-network',
     },
-    fetchPolicy: 'cache-and-network',
-  })
+  )
 
   useEffect(() => {
     subscribeToMore({
-      document: SWAPS_SUBSCRIPTION,
+      document: networkId === Networks.MAINNET ? SWAPS_SUBSCRIPTION : SWAPS_ROPSTEN_SUBSCRIPTION,
       variables: {
-        poolAddress: squeethPool?.toLowerCase(),
+        tokenAddress: oSqueeth?.toLowerCase(),
         origin: address || '',
+        poolAddress: squeethPool?.toLowerCase(),
         recipients: [shortHelper, address || '', swapRouter],
-        orderDirection: 'asc',
+        orderDirection: 'desc',
       },
       updateQuery(prev, { subscriptionData }) {
         if (!subscriptionData.data) return prev
@@ -40,7 +47,7 @@ export const useSwapsData = () => {
         }
       },
     })
-  }, [address, shortHelper, squeethPool, subscribeToMore, swapRouter])
+  }, [address, oSqueeth, subscribeToMore])
 
   const swaps = data?.swaps
   const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)

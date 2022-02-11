@@ -26,22 +26,6 @@ const TRANSACTIONS_QUERY = gql`
         timestamp
       }
     }
-    swaps(
-      where: { pool: $poolAddress, origin: $origin, recipient_in: $recipients }
-      orderBy: timestamp
-      orderDirection: $orderDirection
-    ) {
-      id
-      recipient
-      amount0
-      amount1
-      timestamp
-      origin
-      transaction {
-        id
-        blockNumber
-      }
-    }
   }
 `
 export default TRANSACTIONS_QUERY
