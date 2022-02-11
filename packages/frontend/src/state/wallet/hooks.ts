@@ -80,6 +80,12 @@ export function useOnboard() {
   return onboard
 }
 
+export function useConnected() {
+  const address = useAppSelector(({ wallet }) => wallet.address)
+  const networkId = useAppSelector(({ wallet }) => wallet.networkId)
+  return Boolean(!!address && networkId && networkId in Networks)
+}
+
 export const useAddress = () => {
   const dispatch = useAppDispatch()
   const address = useAppSelector(({ wallet }) => wallet.address)

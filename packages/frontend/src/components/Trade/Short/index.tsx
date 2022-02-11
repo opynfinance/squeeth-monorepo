@@ -16,8 +16,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 
 import { CloseType, Tooltips, Links } from '@constants/enums'
 import { useTrade } from '@context/trade'
-import { useWalletSelect } from 'src/state/wallet/hooks'
-import useAppSelector from '@hooks/useAppSelector'
+import { useConnected, useWalletSelect } from 'src/state/wallet/hooks'
 import { useWorldContext } from '@context/world'
 import { useController } from '@hooks/contracts/useController'
 import useShortHelper from '@hooks/contracts/useShortHelper'
@@ -195,7 +194,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
   const { getWSqueethPositionValue } = useSqueethPool()
   const { updateOperator, normFactor: normalizationFactor, getShortAmountFromDebt, getDebtAmount } = useController()
   const selectWallet = useWalletSelect()
-  const connected = useAppSelector(({ wallet }) => wallet.connected)
+  const connected = useConnected()
   const { shortHelper } = useAddresses()
 
   const {
@@ -570,7 +569,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   const { shortHelper } = useAddresses()
 
   const selectWallet = useWalletSelect()
-  const connected = useAppSelector(({ wallet }) => wallet.connected)
+  const connected = useConnected()
 
   const {
     tradeAmount: amountInputValue,

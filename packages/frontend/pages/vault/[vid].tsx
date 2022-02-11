@@ -34,6 +34,7 @@ import { squeethClient } from '@utils/apollo-client'
 import { getCollatPercentStatus, toTokenAmount } from '@utils/calculations'
 import { LinkButton } from '@components/Button'
 import useAppSelector from '@hooks/useAppSelector'
+import { useConnected } from 'src/state/wallet/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -798,7 +799,7 @@ const Component: React.FC = () => {
 
 const Main: React.FC = () => {
   const classes = useStyles()
-  const connected = useAppSelector(({ wallet }) => wallet.connected)
+  const connected = useConnected()
 
   if (!connected) {
     return (

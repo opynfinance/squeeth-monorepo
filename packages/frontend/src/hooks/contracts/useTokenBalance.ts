@@ -5,7 +5,7 @@ import { Contract } from 'web3-eth-contract'
 import erc20Abi from '../../abis/erc20.json'
 import { toTokenAmount } from '@utils/calculations'
 import { useIntervalAsync } from '@hooks/useIntervalAsync'
-import { useAddress } from 'src/state/wallet/hooks'
+import { useAddress, useConnected } from 'src/state/wallet/hooks'
 import useAppSelector from '@hooks/useAppSelector'
 
 /**
@@ -20,7 +20,7 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals
 
   const { address } = useAddress()
   const web3 = useAppSelector(({ wallet }) => wallet.web3)
-  const connected = useAppSelector(({ wallet }) => wallet.connected)
+  const connected = useConnected()
 
   useEffect(() => {
     if (!web3 || !token) return

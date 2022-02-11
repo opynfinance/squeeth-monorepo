@@ -18,7 +18,6 @@ export interface WalletState {
   address: string | null
   networkId: Networks
   signer: any
-  connected: boolean
   balance: BigNumber
 }
 
@@ -29,7 +28,6 @@ export const initialState: WalletState = {
   address: null,
   networkId: Networks.MAINNET,
   signer: null,
-  connected: false,
   balance: new BigNumber(0),
 }
 
@@ -44,10 +42,8 @@ export default createReducer(initialState, (builder) =>
       state.networkId = networkId || state.networkId
       state.balance = balance || state.balance
       state.notify = notify || state.notify
-      state.connected = Boolean(!!state.address && networkId && networkId in Networks)
     })
     .addCase(setAddress, (state, { payload }) => {
       state.address = payload
-      state.connected = Boolean(!!payload && state.networkId && state.networkId in Networks)
     }),
 )

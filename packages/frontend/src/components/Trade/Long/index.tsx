@@ -18,8 +18,7 @@ import { useController } from '@hooks/contracts/useController'
 import Confirmed, { ConfirmType } from '../Confirmed'
 import TradeInfoItem from '../TradeInfoItem'
 import UniswapData from '../UniswapData'
-import { useWalletSelect } from 'src/state/wallet/hooks'
-import useAppSelector from '@hooks/useAppSelector'
+import { useConnected, useWalletSelect } from 'src/state/wallet/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -239,7 +238,7 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
   const amount = new BigNumber(amountInputValue)
   const altTradeAmount = new BigNumber(altAmountInputValue)
   const selectWallet = useWalletSelect()
-  const connected = useAppSelector(({ wallet }) => wallet.connected)
+  const connected = useConnected()
   const { squeethAmount, longSqthBal, isShort } = usePositions()
   const { dailyHistoricalFunding, currentImpliedFunding } = useController()
 
@@ -510,7 +509,7 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle, setTradeComp
   const altTradeAmount = new BigNumber(altAmountInputValue)
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter)
   const selectWallet = useWalletSelect()
-  const connected = useAppSelector(({ wallet }) => wallet.connected)
+  const connected = useConnected()
   const { longSqthBal, shortDebt } = usePositions()
 
   const isShort = shortDebt.gt(0)

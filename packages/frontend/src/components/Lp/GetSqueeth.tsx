@@ -19,6 +19,7 @@ import TradeDetails from '../Trade/TradeDetails'
 import TradeInfoItem from '../Trade/TradeInfoItem'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import useAppSelector from '@hooks/useAppSelector'
+import { useConnected } from 'src/state/wallet/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -69,7 +70,7 @@ const Mint: React.FC = () => {
   const classes = useStyles()
   const { oSqueethBal } = useWorldContext()
   const balance = useAppSelector(({ wallet }) => wallet.balance)
-  const connected = useAppSelector(({ wallet }) => wallet.connected)
+  const connected = useConnected()
   const { existingCollatPercent, existingCollat, firstValidVault } = usePositions()
   const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
   const { getWSqueethPositionValue } = useSqueethPool()

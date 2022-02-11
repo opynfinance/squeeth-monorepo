@@ -8,7 +8,7 @@ import { Networks } from '../../types'
 import { toTokenAmount } from '@utils/calculations'
 import { useENS } from '@hooks/useENS'
 import Davatar from '@davatar/react'
-import { useAddress, useWalletSelect, useDisconnect } from 'src/state/wallet/hooks'
+import { useAddress, useNetworkId, useWalletSelect, useDisconnect, useConnected } from 'src/state/wallet/hooks'
 import useAppSelector from '@hooks/useAppSelector'
 
 const useStyles = makeStyles((theme) =>
@@ -51,8 +51,8 @@ const WalletButton: React.FC = () => {
   const selectWallet = useWalletSelect()
   const disconnectWallet = useDisconnect()
   const { address } = useAddress()
-  const networkId = useAppSelector(({ wallet }) => wallet.networkId)
-  const connected = useAppSelector(({ wallet }) => wallet.connected)
+  const { networkId } = useNetworkId()
+  const connected = useConnected()
   const balance = useAppSelector(({ wallet }) => wallet.balance)
   const classes = useStyles()
   const { ensName } = useENS(address)

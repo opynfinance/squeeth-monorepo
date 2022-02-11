@@ -17,7 +17,7 @@ import CrabPosition from './CrabPosition'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useController } from '@hooks/contracts/useController'
 import useAppSelector from '@hooks/useAppSelector'
-import { useAddress } from 'src/state/wallet/hooks'
+import { useAddress, useConnected } from 'src/state/wallet/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -69,7 +69,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
   const [borrowEth, setBorrowEth] = useState(new BigNumber(0))
   const { address } = useAddress()
   const balance = useAppSelector(({ wallet }) => wallet.balance)
-  const connected = useAppSelector(({ wallet }) => wallet.connected)
+  const connected = useConnected()
 
   const {
     flashDeposit,
