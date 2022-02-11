@@ -765,6 +765,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
           </div>
           <div className={classes.thirdHeading}>
             <PrimaryInput
+              isFullClose={closeType === CloseType.FULL}
               value={amountInputValue}
               onChange={(v) => handleAmountInput(v)}
               label="Amount"
@@ -807,7 +808,12 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
             <Select
               label="Type of Close"
               value={closeType}
-              onChange={(event: React.ChangeEvent<{ value: unknown }>) => setCloseType(event.target.value as CloseType)}
+              onChange={(event: React.ChangeEvent<{ value: unknown }>) => {
+                if (event.target.value === CloseType.FULL) {
+                  setShortCloseMax()
+                }
+                return setCloseType(event.target.value as CloseType)
+              }}
               displayEmpty
               inputProps={{ 'aria-label': 'Without label' }}
               style={{ padding: '5px 0px', width: '100%', textAlign: 'left' }}

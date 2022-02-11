@@ -5,6 +5,7 @@ import clsx from 'clsx'
 import React from 'react'
 
 import { LinkButton } from '../Button'
+import { Tooltips } from '@constants/enums'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -62,8 +63,12 @@ const useStyles = makeStyles((theme) =>
     inputContainer: {
       margin: theme.spacing(0.5, 0),
     },
+    fullCloseInfo: { display: 'inline-block' },
     unit: {
       fontSize: '22px',
+    },
+    notAllowedCursor: {
+      cursor: 'not-allowed',
     },
   }),
 )
@@ -80,6 +85,7 @@ type PrimaryInputType = {
   hint?: string | React.ReactNode
   error?: boolean
   isLoading?: boolean
+  isFullClose?: boolean
 }
 
 const DecimalRegex = RegExp('^[0-9]*[.]{1}[0-9]*$')
@@ -96,6 +102,7 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
   hint,
   error = false,
   isLoading = false,
+  isFullClose = false,
 }) => {
   const classes = useStyles()
 
@@ -114,33 +121,37 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
             ) : null}
           </div>
           <div className={classes.inputContainer}>
-            <input
-              className={classes.input}
-              value={isNaN(Number(value)) ? 0 : value}
-              onChange={(e) => {
-                let v = e.target.value
-                if (Number(v) < 0) return onChange('0')
-                if (Number(v) !== 0) {
-                  //if it is integer, remove leading zeros
-                  if (!DecimalRegex.test(v)) {
-                    v = Number(v).toString()
+            <Tooltip title={isFullClose ? Tooltips.FullcloseInput : ''} className={classes.fullCloseInfo}>
+              <input
+                className={clsx(classes.input, isFullClose && classes.notAllowedCursor)}
+                // className={classes.input}
+                value={isNaN(Number(value)) ? 0 : value}
+                disabled={isFullClose}
+                onChange={(e) => {
+                  let v = e.target.value
+                  if (Number(v) < 0) return onChange('0')
+                  if (Number(v) !== 0) {
+                    //if it is integer, remove leading zeros
+                    if (!DecimalRegex.test(v)) {
+                      v = Number(v).toString()
+                    }
+                  } else {
+                    // remain input box w single zero, but keep zero when have decimal
+                    v = v.replace(/^[0]+/g, '0')
+                    // if it is no value
+                    if (v.length === 0) {
+                      v = '0'
+                    }
                   }
-                } else {
-                  // remain input box w single zero, but keep zero when have decimal
-                  v = v.replace(/^[0]+/g, '0')
-                  // if it is no value
-                  if (v.length === 0) {
-                    v = '0'
-                  }
-                }
 
-                return onChange(v)
-              }}
-              onWheel={(e) => (e.target as any).blur()}
-              placeholder="0"
-              type="number"
-              min="0"
-            ></input>
+                  return onChange(v)
+                }}
+                onWheel={(e) => (e.target as any).blur()}
+                placeholder="0"
+                type="number"
+                min="0"
+              ></input>
+            </Tooltip>
           </div>
         </div>
         {/* <div>
