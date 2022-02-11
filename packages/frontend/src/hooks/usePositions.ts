@@ -216,14 +216,7 @@ export const useLPPositions = () => {
         }
       }) || []
     )
-  }, [
-    data?.positions,
-    pool,
-    ethPrice.toString(),
-    squeethInitialPrice.toString(),
-    ethPrice.toString(),
-    data?.positions?.length,
-  ])
+  }, [pool, ethPrice.toString(), squeethInitialPrice.toString(), ethPrice.toString(), data?.positions?.length])
 
   useEffect(() => {
     if (positionAndFees && !gphLoading) {
