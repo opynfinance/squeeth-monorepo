@@ -82,6 +82,13 @@ const useStyles = makeStyles((theme) =>
         return `linear-gradient(to right, ${positionColor} 0%,${postColor} 75%)`
       },
     },
+    crabPosBg: {
+      background: (props: any): any => {
+        const positionColor = 'rgba(255, 255, 255, 0.08)'
+        const postColor = 'rgba(255, 255, 255, 0.08)'
+        return `linear-gradient(to right, ${positionColor} 0%,${postColor} 75%)`
+      },
+    },
     assetDiv: {
       display: 'flex',
       justifyContent: 'space-between',
@@ -165,6 +172,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     longRealizedPNL,
     swapsQueryRefetch,
     swaps,
+    shortDebt,
   } = usePositions()
   const { liquidations } = useVaultLiquidations(Number(vaultId))
   const {
@@ -205,6 +213,10 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
   const fullyLiquidated = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
   }, [firstValidVault, shortVaults?.length, liquidations?.length])
+
+  const vaultExists = useMemo(() => {
+    return shortVaults.length && shortVaults[firstValidVault]?.collateralAmount?.isGreaterThan(0)
+  }, [firstValidVault, shortVaults?.length])
 
   const isDollarValueLoading = useMemo(() => {
     if (positionType === PositionType.LONG) {
@@ -282,8 +294,16 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
   ])
 
   return (
-    <div className={clsx(classes.container, classes.posBg)}>
-      {!fullyLiquidated ? (
+    <div
+      className={
+        shortDebt.isGreaterThan(0) && vaultExists
+          ? clsx(classes.container, classes.posBg)
+          : clsx(classes.container, classes.crabPosBg)
+      }
+    >
+      {!fullyLiquidated &&
+      ((!shortDebt.isGreaterThan(0) && positionType === PositionType.LONG) ||
+        (shortDebt.isGreaterThan(0) && vaultExists)) ? (
         <div>
           <div className={classes.header}>
             <Typography variant="caption" component="span" style={{ fontWeight: 500 }} color="textSecondary">
@@ -403,7 +423,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
             </div>
           </div>
         </div>
-      ) : (
+      ) : fullyLiquidated ? (
         <div>
           <Typography style={{ fontWeight: 600 }}>FULLY LIQUIDATED</Typography>
           <Typography variant="caption" component="span" style={{ fontWeight: 500 }} color="textSecondary">
@@ -413,11 +433,75 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
             {isPositionLoading && existingCollat.isEqualTo(0) ? 'Loading' : existingCollat.toFixed(4)} ETH
           </Typography>
         </div>
+      ) : (
+        <div>
+          <div className={classes.header}>
+            <Typography variant="caption" component="span" style={{ fontWeight: 500 }} color="textSecondary">
+              MY POSITION
+            </Typography>
+            <span className={classes.title} style={{ color: '#DCDAE9', backgroundColor: '#DCDAE920' }}>
+              None
+            </span>
+          </div>
+          <div className={classes.assetDiv}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <Typography component="span" style={{ fontWeight: 600 }}>
+                  0
+                </Typography>
+                <Typography color="textSecondary" component="span" variant="body2" className={classes.unit}>
+                  oSQTH
+                </Typography>
+              </div>
+              <Typography variant="caption" color="textSecondary" style={{ marginTop: '.5em' }}>
+                $0
+              </Typography>
+            </div>
+            <div>
+              <div>
+                <div>
+                  <div>
+                    <Typography variant="caption" color="textSecondary" style={{ fontWeight: 500 }}>
+                      Unrealized P&L
+                    </Typography>
+                    <Tooltip
+                      title={Tooltips.UnrealizedPnL}
+                      // title={isLong ? Tooltips.UnrealizedPnL : `${Tooltips.UnrealizedPnL}. ${Tooltips.ShortCollateral}`}
+                    >
+                      <InfoIcon fontSize="small" className={classes.infoIcon} />
+                    </Tooltip>
+                  </div>
+                  <div className={classes.pnl}>
+                    <Typography style={{ fontWeight: 600 }} color="textSecondary">
+                      0
+                    </Typography>
+                  </div>
+                </div>
+                <div>
+                  <Typography variant="caption" color="textSecondary" style={{ fontWeight: 500 }}>
+                    Realized P&L
+                  </Typography>
+                  <Tooltip
+                    title={Tooltips.RealizedPnL}
+                    // title={isLong ? Tooltips.RealizedPnL : `${Tooltips.RealizedPnL}. ${Tooltips.ShortCollateral}`}
+                  >
+                    <InfoIcon fontSize="small" className={classes.infoIcon} />
+                  </Tooltip>
+                </div>
+                <div className={classes.pnl}>
+                  <Typography style={{ fontWeight: 600 }} color="textSecondary">
+                    0
+                  </Typography>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
       <Typography variant="caption" color="textSecondary">
         {fetchingNew ? 'Fetching latest position' : ' '}
       </Typography>
-      {positionType === PositionType.SHORT ? (
+      {positionType === PositionType.SHORT && shortDebt.isGreaterThan(0) && vaultExists ? (
         <Typography className={classes.link}>
           <Link href={`vault/${shortVaults[firstValidVault]?.id}`}>Manage Vault</Link>
         </Typography>

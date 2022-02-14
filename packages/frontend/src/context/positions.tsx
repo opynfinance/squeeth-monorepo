@@ -159,7 +159,11 @@ const PositionsProvider: React.FC = ({ children }) => {
     firstValidVault,
     vaultId,
     isLong: positionType === PositionType.LONG,
-    isShort: positionType === PositionType.SHORT,
+    isShort:
+      positionType === PositionType.SHORT &&
+      shortDebt.isGreaterThan(0) &&
+      shortVaults.length &&
+      shortVaults[firstValidVault]?.collateralAmount?.isGreaterThan(0),
     isLP: squeethLiquidity.gt(0) || wethLiquidity.gt(0),
     longRealizedPNL,
     shortRealizedPNL,
