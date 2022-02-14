@@ -153,8 +153,6 @@ export function Positions() {
     longUnrealizedPNL,
   } = usePnL()
 
-  const { ethPrice } = useWorldContext()
-
   const { pool } = useSqueethPool()
 
   const { oSqueethBal } = useWorldContext()
@@ -258,7 +256,10 @@ export function Positions() {
                   <Tooltip title={Tooltips.UnrealizedPnL}>
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
-                  {isPnLLoading || longGain.isLessThanOrEqualTo(-100) || !longGain.isFinite() ? (
+                  {isPnLLoading ||
+                  longGain.isLessThanOrEqualTo(-100) ||
+                  !longGain.isFinite() ||
+                  longUnrealizedPNL.loading ? (
                     <Typography variant="body1">Loading</Typography>
                   ) : (
                     <>
@@ -328,7 +329,10 @@ export function Positions() {
                   >
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
-                  {isPositionLoading || shortGain.isLessThanOrEqualTo(-100) || !shortGain.isFinite() ? (
+                  {isPositionLoading ||
+                  shortGain.isLessThanOrEqualTo(-100) ||
+                  !shortGain.isFinite() ||
+                  longUnrealizedPNL.loading ? (
                     <Typography variant="body1">Loading</Typography>
                   ) : (
                     <>

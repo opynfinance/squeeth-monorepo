@@ -22,8 +22,8 @@ import { BIG_ZERO } from '../constants/'
 
 export const usePnL = () => {
   const [ethCollateralPnl, setEthCollateralPnl] = useState(BIG_ZERO)
-  const [shortUnrealizedPNL, setShortUnrealizedPNL] = useState({ usd: BIG_ZERO, eth: BIG_ZERO })
-  const [longUnrealizedPNL, setLongUnrealizedPNL] = useState({ usd: BIG_ZERO, eth: BIG_ZERO })
+  const [shortUnrealizedPNL, setShortUnrealizedPNL] = useState({ usd: BIG_ZERO, eth: BIG_ZERO, loading: true })
+  const [longUnrealizedPNL, setLongUnrealizedPNL] = useState({ usd: BIG_ZERO, eth: BIG_ZERO, loading: true })
   const {
     squeethAmount,
     shortVaults,
@@ -114,7 +114,10 @@ export const usePnL = () => {
           eth: pnl.plus(ethCollateralPnl).div(toTokenAmount(index, 18).sqrt()).isFinite()
             ? pnl.plus(ethCollateralPnl).div(toTokenAmount(index, 18).sqrt())
             : BIG_ZERO,
+          loading: false,
         })
+      } else {
+        setShortUnrealizedPNL((prevState) => ({ ...prevState, loading: true }))
       }
     })()
   }, [buyQuote.toString(), ethCollateralPnl.toString(), index.toString(), isWethToken0, swaps?.length])
@@ -123,7 +126,9 @@ export const usePnL = () => {
     ;(async () => {
       if (swaps?.length && !sellQuote.amountOut.isZero() && !index.isZero()) {
         const pnl = await calcDollarLongUnrealizedpnl(swaps, isWethToken0, sellQuote, toTokenAmount(index, 18).sqrt())
-        setLongUnrealizedPNL(pnl)
+        setLongUnrealizedPNL((prevState) => ({ ...prevState, ...pnl, loading: false }))
+      } else {
+        setLongUnrealizedPNL((prevState) => ({ ...prevState, loading: true }))
       }
     })()
   }, [index.toString(), isWethToken0, sellQuote.amountOut.toString(), swaps?.length])
