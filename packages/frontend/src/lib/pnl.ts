@@ -1,7 +1,7 @@
 import BigNumber from 'bignumber.js'
 import { closestIndexTo, differenceInMinutes, format, subMinutes } from 'date-fns'
 
-import { BIG_ZERO } from '../constants/'
+import { BIG_ZERO, TWELVEDATA_NO_PRICEDATA_DURATION } from '../constants/'
 import { swaps_swaps } from '../queries/uniswap/__generated__/swaps'
 import { VaultHistory_vaultHistories } from '../queries/squeeth/__generated__/VaultHistory'
 import { toTokenAmount } from '@utils/calculations'
@@ -147,13 +147,16 @@ async function getEthPriceAtTransactionTime(timestamp: string) {
   // and the timestamp for which ethPrice data is being requested
   const diff = differenceInMinutes(currentTimeInMilliseconds, timeInMilliseconds, { roundingMethod: 'round' })
 
-  if (diff < 62) {
+  if (diff < TWELVEDATA_NO_PRICEDATA_DURATION) {
     // call coingecko
     const priceData = await getETHWithinOneDayPrices()
 
     if (priceData.length === 1) {
       // call twelvedata
-      const dateTimeString = format(new Date(subMinutes(new Date(), 62)).setUTCSeconds(0), 'yyyy-MM-dd HH:mm:ss')
+      const dateTimeString = format(
+        new Date(subMinutes(new Date(), TWELVEDATA_NO_PRICEDATA_DURATION)).setUTCSeconds(0),
+        'yyyy-MM-dd HH:mm:ss',
+      )
       return await getHistoricEthPrice(dateTimeString)
     }
 
@@ -164,7 +167,10 @@ async function getEthPriceAtTransactionTime(timestamp: string) {
       return new BigNumber(priceData[dateIndex].value)
     }
 
-    const dateTimeString = format(new Date(subMinutes(new Date(), 62)).setUTCSeconds(0), 'yyyy-MM-dd HH:mm:ss')
+    const dateTimeString = format(
+      new Date(subMinutes(new Date(), TWELVEDATA_NO_PRICEDATA_DURATION)).setUTCSeconds(0),
+      'yyyy-MM-dd HH:mm:ss',
+    )
     return await getHistoricEthPrice(dateTimeString)
   }
 
