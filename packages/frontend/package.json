@@ -41,6 +41,7 @@
     "react-cookie": "^4.1.1",
     "react-dom": "17.0.2",
     "react-query": "^3.34.0",
+    "react-use": "^17.3.2",
     "set-interval-async": "^2.0.3",
     "subscriptions-transport-ws": "^0.11.0",
     "web3": "^1.5.2"
