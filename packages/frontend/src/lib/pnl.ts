@@ -61,11 +61,9 @@ export async function calcETHCollateralPnl(
         const ethPriceAtTimeOfAction = await getEthPriceAtTransactionTime(vaultHistory.timestamp)
 
         if (vaultHistory.action === Action.DEPOSIT_COLLAT) {
-          acc.deposits = ethPriceAtTimeOfAction
-            ? acc.deposits.plus(
-                new BigNumber(toTokenAmount(vaultHistory.ethCollateralAmount, 18)).times(ethPriceAtTimeOfAction),
-              )
-            : BIG_ZERO
+          acc.deposits = acc.deposits.plus(
+            new BigNumber(toTokenAmount(vaultHistory.ethCollateralAmount, 18)).times(ethPriceAtTimeOfAction),
+          )
         } else if (vaultHistory.action === Action.WITHDRAW_COLLAT) {
           acc.withdrawals = acc.withdrawals.plus(
             new BigNumber(toTokenAmount(vaultHistory.ethCollateralAmount, 18)).times(ethPriceAtTimeOfAction),
