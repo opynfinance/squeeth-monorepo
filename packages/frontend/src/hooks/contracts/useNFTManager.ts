@@ -48,7 +48,7 @@ export const useNFTManager = () => {
     const wethAmount = isWethToken0 ? amt0.plus(tokensOwed0) : amt1.plus(tokensOwed1)
     const oSqthAmount = !isWethToken0 ? amt0.plus(tokensOwed0) : amt1.plus(tokensOwed1)
 
-    return { wethAmount, oSqthAmount }
+    return { wethAmount, oSqthAmount, position: result.uniPosition }
   }
 
   return {

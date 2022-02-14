@@ -12,6 +12,8 @@ import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useAddresses } from '../useAddress'
 import { useOracle } from './useOracle'
 import { useNFTManager } from './useNFTManager'
+import { useSqueethPool } from './useSqueethPool'
+import { Position } from '@uniswap/v3-sdk'
 
 const getMultiplier = (type: Vaults) => {
   if (type === Vaults.ETHBull) return 3
@@ -49,6 +51,7 @@ export const useController = () => {
   const { controller, ethUsdcPool, weth, usdc } = useAddresses()
   const { getTwapSafe } = useOracle()
   const { getETHandOSQTHAmount } = useNFTManager()
+  const { squeethInitialPrice, wethPrice, squeethPrice, isWethToken0 } = useSqueethPool()
 
   useEffect(() => {
     if (!web3) return
@@ -323,16 +326,18 @@ export const useController = () => {
     let effectiveCollat = collateralAmount
     // Uni LP token is deposited
     if (uniId) {
-      const { wethAmount, oSqthAmount } = await getETHandOSQTHAmount(uniId)
+      const { wethAmount, oSqthAmount, position } = await getETHandOSQTHAmount(uniId)
       const ethPrice = await getTwapEthPrice()
       const sqthValueInEth = oSqthAmount.multipliedBy(normFactor).multipliedBy(ethPrice).div(INDEX_SCALE)
       effectiveCollat = effectiveCollat.plus(sqthValueInEth).plus(wethAmount)
+      // calculateLiquidationPriceForLP(position!)
     }
     const debt = await getDebtAmount(shortAmount)
     if (debt && debt.isPositive()) {
       const collateralPercent = Number(effectiveCollat.div(debt).times(100).toFixed(1))
       const rSqueeth = normFactor.multipliedBy(new BigNumber(shortAmount)).dividedBy(10000)
       const liquidationPrice = effectiveCollat.div(rSqueeth.multipliedBy(1.5))
+      // Can't use static value
       return {
         collateralPercent,
         liquidationPrice,
@@ -340,6 +345,22 @@ export const useController = () => {
     }
 
     return emptyState
+  }
+
+  const calculateLiquidationPriceForLP = async (position: Position) => {
+    const pa = !isWethToken0
+      ? new BigNumber(position?.token0PriceLower.toSignificant(18) || 0)
+      : new BigNumber(1).div(position?.token0PriceUpper.toSignificant(18) || 0)
+    const pb = !isWethToken0
+      ? new BigNumber(position?.token0PriceUpper.toSignificant(18) || 0)
+      : new BigNumber(1).div(position?.token0PriceLower.toSignificant(18) || 0)
+
+    const maxEth = toTokenAmount(position.liquidity.toString(), 18).times(pb.sqrt().minus(pa.sqrt()))
+    const maxSqth = toTokenAmount(position.liquidity.toString(), 18).times(
+      new BigNumber(1).div(pa.sqrt()).minus(new BigNumber(1).div(pb.sqrt())),
+    )
+
+    console.log(pa.toString(), pb.toString(), maxEth.toString(), maxSqth.toString())
   }
 
   const depositUniPositionToken = async (vaultId: number, uniTokenId: number) => {

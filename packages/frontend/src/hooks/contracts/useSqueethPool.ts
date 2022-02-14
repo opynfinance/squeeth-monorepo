@@ -83,10 +83,10 @@ export const useSqueethPool = () => {
             ),
           )
         }
+        setReady(true)
       })
       .catch(console.log)
 
-    setReady(true)
     setWethPrice(
       toTokenAmount(
         new BigNumber(
