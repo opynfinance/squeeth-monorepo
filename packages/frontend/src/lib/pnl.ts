@@ -73,9 +73,7 @@ export async function calcETHCollateralPnl(
       }, Promise.resolve({ deposits: BIG_ZERO, withdrawals: BIG_ZERO }))
     : { deposits: BIG_ZERO, withdrawals: BIG_ZERO }
 
-  return !deposits.minus(withdrawals).isZero()
-    ? currentVaultEthBalance.times(uniswapEthPrice).minus(deposits.minus(withdrawals))
-    : BIG_ZERO
+  return currentVaultEthBalance.times(uniswapEthPrice).minus(deposits.minus(withdrawals))
 }
 
 export async function calcDollarShortUnrealizedpnl(
