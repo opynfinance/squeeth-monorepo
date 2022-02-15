@@ -8,12 +8,12 @@ import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.so
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
 // lib
-import "@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol";
-import "@uniswap/v3-periphery/contracts/libraries/Path.sol";
-import "@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol";
-import "@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol";
-import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
-import "@uniswap/v3-core/contracts/libraries/SafeCast.sol";
+import '@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol';
+import '@uniswap/v3-periphery/contracts/libraries/Path.sol';
+import '@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol';
+import '@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol';
+import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
+import '@uniswap/v3-core/contracts/libraries/SafeCast.sol';
 
 contract FlashControllerHelper is IUniswapV3SwapCallback {
     using Path for bytes;
@@ -35,7 +35,9 @@ contract FlashControllerHelper is IUniswapV3SwapCallback {
      * @dev constructor
      * @param _factory uniswap factory address
      */
-    constructor(address _factory) {
+    constructor(
+        address _factory
+    ) {
         require(_factory != address(0), "invalid factory address");
         factory = _factory;
     }
@@ -60,10 +62,13 @@ contract FlashControllerHelper is IUniswapV3SwapCallback {
         CallbackValidation.verifyCallback(factory, tokenIn, tokenOut, fee);
 
         //determine the amount that needs to be repaid as part of the flashswap
-        uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
-
+        uint256 amountToPay =
+            amount0Delta > 0
+                ?  uint256(amount0Delta)
+                :  uint256(amount1Delta);
+        
         //calls the strategy function that uses the proceeds from flash swap and executes logic to have an amount of token to repay the flash swap
-        _swapCallback(data.caller, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource);
+        _flashCallback(data.caller, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource);
     }
 
     /**
