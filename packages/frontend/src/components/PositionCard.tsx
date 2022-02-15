@@ -228,7 +228,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
       }
       if (positionType === PositionType.SHORT) {
         //if it's showing -100% it is still loading
-        if (shortGain.isLessThanOrEqualTo(-100) || !shortGain.isFinite() || shortUnrealizedPNL.loading) {
+        if (shortGain.isLessThanOrEqualTo(-100) || !shortGain.isFinite()) {
           return loadingMsg
         }
         return short
