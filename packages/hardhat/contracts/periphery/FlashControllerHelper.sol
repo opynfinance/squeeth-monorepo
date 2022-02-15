@@ -15,7 +15,7 @@ import '@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol';
 import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
 import '@uniswap/v3-core/contracts/libraries/SafeCast.sol';
 
-contract StrategyFlashSwap is IUniswapV3SwapCallback {
+contract FlashControllerHelper is IUniswapV3SwapCallback {
     using Path for bytes;
     using SafeCast for uint256;
     using LowGasSafeMath for uint256;
@@ -68,7 +68,7 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
                 :  uint256(amount1Delta);
         
         //calls the strategy function that uses the proceeds from flash swap and executes logic to have an amount of token to repay the flash swap
-        _strategyFlash(data.caller, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource);
+        _flashCallback(data.caller, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource);
     }
 
     /**
@@ -93,6 +93,7 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
         //slippage limit check
         require(amountOut >= _amountOutMinimum, "amount out less than min");
     }
+
 
     /**
      * @notice execute an exact-out flash swap (specify an exact amount to receive)
@@ -128,7 +129,7 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
      * param _callData arbitrary data assigned with the flashswap call 
      * param _callSource function call source
      */
-    function _strategyFlash(address /*_caller*/, address /*_tokenIn*/, address /*_tokenOut*/, uint24 /*_fee*/, uint256 /*_amountToPay*/, bytes memory _callData, uint8 _callSource) internal virtual {}
+    function _flashCallback(address /*_caller*/, address /*_tokenIn*/, address /*_tokenOut*/, uint24 /*_fee*/, uint256 /*_amountToPay*/, bytes memory _callData, uint8 _callSource) internal virtual {}
     
     /** 
     * @notice internal function for exact-in swap on uniswap (specify exact amount to pay)
