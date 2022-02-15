@@ -55,36 +55,38 @@ export function calcLongUnrealizedPnl({
 
 export function calcETHCollateralPnl(
   data: VaultHistory_vaultHistories[] | undefined,
-  ethPriceMap: { [key: string]: number },
+  ethPriceMap: { [key: string]: number } | undefined,
   ethPrice: BigNumber,
 ) {
-  const deposits = data?.length
-    ? data?.reduce((acc: BigNumber, curr: VaultHistory_vaultHistories) => {
-        const time = new Date(Number(curr.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
-        if (curr.action === Action.DEPOSIT_COLLAT) {
-          acc = acc.plus(
-            new BigNumber(toTokenAmount(curr.ethCollateralAmount, 18)).times(
-              new BigNumber(ethPrice).minus(ethPriceMap[time]),
-            ),
-          )
-        }
-        return acc
-      }, new BigNumber(0))
-    : new BigNumber(0)
+  const deposits =
+    data?.length && ethPriceMap
+      ? data?.reduce((acc: BigNumber, curr: VaultHistory_vaultHistories) => {
+          const time = new Date(Number(curr.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
+          if (curr.action === Action.DEPOSIT_COLLAT) {
+            acc = acc.plus(
+              new BigNumber(toTokenAmount(curr.ethCollateralAmount, 18)).times(
+                new BigNumber(ethPrice).minus(ethPriceMap[time]),
+              ),
+            )
+          }
+          return acc
+        }, new BigNumber(0))
+      : new BigNumber(0)
 
-  const withdrawals = data?.length
-    ? data?.reduce((acc: BigNumber, curr: VaultHistory_vaultHistories) => {
-        const time = new Date(Number(curr.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
-        if (curr.action === Action.WITHDRAW_COLLAT) {
-          acc = acc.plus(
-            new BigNumber(toTokenAmount(curr.ethCollateralAmount, 18)).times(
-              new BigNumber(ethPrice).minus(ethPriceMap[time]),
-            ),
-          )
-        }
-        return acc
-      }, new BigNumber(0))
-    : new BigNumber(0)
+  const withdrawals =
+    data?.length && ethPriceMap
+      ? data?.reduce((acc: BigNumber, curr: VaultHistory_vaultHistories) => {
+          const time = new Date(Number(curr.timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
+          if (curr.action === Action.WITHDRAW_COLLAT) {
+            acc = acc.plus(
+              new BigNumber(toTokenAmount(curr.ethCollateralAmount, 18)).times(
+                new BigNumber(ethPrice).minus(ethPriceMap[time]),
+              ),
+            )
+          }
+          return acc
+        }, new BigNumber(0))
+      : new BigNumber(0)
 
   return deposits.minus(withdrawals)
 }

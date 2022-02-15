@@ -77,15 +77,7 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-export function CrabStrategyChart({
-  vault,
-  longAmount,
-  setCustomLong,
-}: {
-  vault?: Vaults
-  longAmount: number
-  setCustomLong: Function
-}) {
+export function CrabStrategyChart({ vault, longAmount }: { vault?: Vaults; longAmount: number }) {
   const {
     startingETHPrice,
     getVaultPNLWithRebalance,
@@ -93,7 +85,6 @@ export function CrabStrategyChart({
     shortEthPNL,
     getStableYieldPNL,
     shortSeries,
-    collatRatio,
     days,
     setDays,
   } = useWorldContext()
@@ -105,6 +96,8 @@ export function CrabStrategyChart({
   const compoundSeries = getStableYieldPNL(1)
 
   const lineSeries = useMemo(() => {
+    if (!shortEthPNL || !longEthPNL || !seriesRebalance || !shortSeries) return
+
     if (vault === Vaults.ETHBull)
       return [
         { data: longEthPNL, legend: 'Long ETH' },
@@ -128,9 +121,11 @@ export function CrabStrategyChart({
         // { data: convertPNLToPriceChart(shortSeries, startingETHPrice), legend: 'Short Squeeth (incl. funding)' },
       ]
     return [{ data: seriesRebalance, legend: 'PNL' }]
-  }, [vault, longEthPNL, shortEthPNL, seriesRebalance, getStableYieldPNL, longAmount, shortSeries])
+  }, [compoundSeries, getStableYieldPNL, longAmount, longEthPNL, seriesRebalance, shortEthPNL, shortSeries, vault])
 
   const lineSeriesPercentage = useMemo(() => {
+    if (!startingETHPrice || !seriesRebalance || !longEthPNL || !shortEthPNL) return
+
     if (vault === Vaults.ETHBull)
       return [
         { data: convertPNLToPriceChart(longEthPNL, startingETHPrice), legend: 'Long ETH' },
@@ -169,13 +164,13 @@ export function CrabStrategyChart({
   }, [vault, shortEthPNL, seriesRebalance, getStableYieldPNL, longAmount, startingETHPrice, shortSeries])
 
   const startTimestamp = useMemo(
-    () => (lineSeries.length > 0 && lineSeries[0].data.length > 0 ? lineSeries[0].data[0].time : 0),
+    () => (lineSeries && lineSeries.length > 0 && lineSeries[0].data.length > 0 ? lineSeries[0].data[0].time : 0),
     [lineSeries],
   )
 
   const endTimestamp = useMemo(
     () =>
-      lineSeries.length > 0 && lineSeries[0].data.length > 0
+      lineSeries && lineSeries.length > 0 && lineSeries[0].data.length > 0
         ? lineSeries[0].data[lineSeries[0].data.length - 1].time
         : 0,
     [lineSeries],
@@ -228,7 +223,9 @@ export function CrabStrategyChart({
           ) : null}
         </Hidden>
       </div>
-      {seriesRebalance.length === 0 && <Alert severity="info"> Loading historical data, this could take a while</Alert>}
+      {seriesRebalance && seriesRebalance.length === 0 && (
+        <Alert severity="info"> Loading historical data, this could take a while</Alert>
+      )}
       <Chart
         from={startTimestamp}
         to={endTimestamp}

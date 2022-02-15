@@ -96,7 +96,7 @@ export function LongChart() {
   const [tradeType, setTradeType] = useState(0)
 
   const classes = useStyles()
-  const { ethPrice } = useWorldContext()
+  const { ethPrice, longEthPNL, longSeries, days, setDays, positionSizeSeries } = useWorldContext()
 
   useEffect(() => {
     if (tradeType === 0) setMode(ChartType.PNL)
@@ -108,15 +108,10 @@ export function LongChart() {
     else if (tradeType === 2) setMode(ChartType.Risks)
   }, [tradeType])
 
-  const { ethPrices, longEthPNL, squeethPrices, longSeries, days, setDays, positionSizeSeries } = useWorldContext()
-
   // plot line data
   const lineSeries = useMemo(() => {
-    // if (mode === ChartType.Price)
-    //   return [
-    //     { data: ethPrices, legend: 'ETH' },
-    //     { data: squeethPrices, legend: 'Squeeth' },
-    //   ]
+    if (!longEthPNL || !longSeries || !positionSizeSeries) return
+
     if (mode === ChartType.PNL)
       return [
         { data: longEthPNL, legend: 'Long ETH PNL (%)' },
@@ -126,10 +121,8 @@ export function LongChart() {
         },
       ]
     if (mode === ChartType.PositionSize) return [{ data: positionSizeSeries, legend: 'Position Size' }]
-    // if (mode === ChartType.Funding)
-    //   return [{ data: fundingPercentageSeries, legend: 'Daily Funding (paid continuously out of your position)' }]
     return []
-  }, [mode, longSeries, squeethPrices, ethPrices, longEthPNL])
+  }, [longEthPNL, longSeries, mode, positionSizeSeries])
 
   const chartOptions = useMemo(() => {
     // if (mode === ChartType.Funding || mode === ChartType.PositionSize)
@@ -154,13 +147,13 @@ export function LongChart() {
   }, [mode])
 
   const startTimestamp = useMemo(
-    () => (lineSeries.length > 0 && lineSeries[0].data.length > 0 ? lineSeries[0].data[0].time : 0),
+    () => (lineSeries && lineSeries.length > 0 && lineSeries[0].data.length > 0 ? lineSeries[0].data[0].time : 0),
     [lineSeries],
   )
 
   const endTimestamp = useMemo(
     () =>
-      lineSeries.length > 0 && lineSeries[0].data.length > 0
+      lineSeries && lineSeries.length > 0 && lineSeries[0].data.length > 0
         ? lineSeries[0].data[lineSeries[0].data.length - 1].time
         : 0,
     [lineSeries],
