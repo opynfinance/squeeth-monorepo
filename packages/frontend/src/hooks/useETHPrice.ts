@@ -1,9 +1,8 @@
 import BigNumber from 'bignumber.js'
-import { useCallback, useEffect, useState } from 'react'
+import { useQuery, useQueryClient } from 'react-query'
 
 import { useController } from './contracts/useController'
 import { toTokenAmount } from '@utils/calculations'
-import { useIntervalAsync } from './useIntervalAsync'
 
 /**
  * get token price by address.
@@ -11,29 +10,19 @@ import { useIntervalAsync } from './useIntervalAsync'
  * @param refetchIntervalSec refetch interval in seconds
  * @returns {BigNumber} price denominated in USD
  */
-export const useETHPrice = (refetchIntervalSec = 30): BigNumber => {
-  const [price, setPrice] = useState(new BigNumber(0))
+export const useETHPrice = (refetchIntervalSec = 30) => {
   const { index } = useController()
+  const queryClient = useQueryClient()
 
-  const updatePrice = useCallback(async () => {
-    let newPrice: BigNumber
+  const ethPrice = useQuery('ethPrice', () => getETHPriceCoingecko(), {
+    onError() {
+      queryClient.setQueryData('ethPrice', toTokenAmount(index, 18).sqrt())
+    },
+    refetchInterval: refetchIntervalSec * 1000,
+    refetchOnWindowFocus: true,
+  })
 
-    try {
-      newPrice = await getETHPriceCoingecko()
-    } catch (error) {
-      newPrice = toTokenAmount(index, 18).sqrt()
-    }
-
-    setPrice(newPrice)
-  }, [index.toString()])
-
-  useEffect(() => {
-    updatePrice()
-  }, [updatePrice])
-
-  useIntervalAsync(updatePrice, refetchIntervalSec * 1000)
-
-  return price
+  return ethPrice.data ?? new BigNumber(0)
 }
 
 export const getETHPriceCoingecko = async (): Promise<BigNumber> => {
