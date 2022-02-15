@@ -1,5 +1,16 @@
 import { useQuery } from '@apollo/client'
-import { CircularProgress, InputAdornment, TextField, Typography, Tooltip, Input } from '@material-ui/core'
+import {
+  CircularProgress,
+  InputAdornment,
+  TextField,
+  Typography,
+  Tooltip,
+  Input,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+} from '@material-ui/core'
 import { orange } from '@material-ui/core/colors'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import AccessTimeIcon from '@material-ui/icons/AccessTime'
@@ -21,8 +32,6 @@ import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import { Tooltips } from '@constants/enums'
 import { usePositions } from '@context/positions'
 import { MIN_COLLATERAL_AMOUNT, OSQUEETH_DECIMALS } from '../../src/constants'
-import { VAULT_QUERY } from '../../src/queries/squeeth/vaultsQuery'
-import { Vault_vault } from '../../src/queries/squeeth/__generated__/Vault'
 import { PositionType } from '../../src/types'
 import { useRestrictUser } from '@context/restrict-user'
 import { useWallet } from '@context/wallet'
@@ -37,6 +46,8 @@ import { LinkButton } from '@components/Button'
 import { useAtom } from 'jotai'
 import { useERC721 } from '@hooks/contracts/useERC721'
 import { useAddresses } from '@hooks/useAddress'
+import POSITIONS_QUERY from '@queries/uniswap/positionsQuery'
+import { positions, positionsVariables } from '@queries/uniswap/__generated__/positions'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -223,6 +234,39 @@ enum VaultError {
   INSUFFICIENT_OSQTH_BALANCE = 'Insufficient oSQTH Balance',
 }
 
+const SelectLP: React.FC<{ lpToken: number; setLpToken: (t: number) => void }> = ({ lpToken, setLpToken }) => {
+  const { squeethPool } = useAddresses()
+  const { address } = useWallet()
+
+  const { data } = useQuery<positions, positionsVariables>(POSITIONS_QUERY, {
+    variables: {
+      poolAddress: squeethPool?.toLowerCase(),
+      owner: address?.toLowerCase() || '',
+    },
+    fetchPolicy: 'cache-and-network',
+  })
+
+  return (
+    <FormControl variant="outlined" style={{ width: '300px' }} size="small">
+      <InputLabel id="demo-simple-select-outlined-label">LP Id</InputLabel>
+      <Select
+        labelId="demo-simple-select-label"
+        id="demo-simple-select"
+        value={lpToken}
+        onChange={(e) => setLpToken(Number(e.target.value))}
+        label="LP id"
+      >
+        <MenuItem value={0}>None</MenuItem>
+        {data?.positions?.map((p) => (
+          <MenuItem key={p.id} value={p.id}>
+            {p.id}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  )
+}
+
 const Component: React.FC = () => {
   const classes = useStyles()
   const router = useRouter()
@@ -337,16 +381,19 @@ const Component: React.FC = () => {
     setMaxToMint(diff)
   }
 
-  const updateUniLPTokenInput = async (input: number) => {
-    setUniTokenToDeposit(input)
-    if (!input) return
-    const approvedAddress: string = await getApproved(input)
-    if (controller.toLowerCase() === (approvedAddress || '').toLowerCase()) {
-      setAction(VaultAction.DEPOSIT_UNI_POSITION)
-    } else {
-      setAction(VaultAction.APPROVE_UNI_POSITION)
-    }
-  }
+  const updateUniLPTokenInput = useCallback(
+    async (input: number) => {
+      setUniTokenToDeposit(input)
+      if (!input) return
+      const approvedAddress: string = await getApproved(input)
+      if (controller.toLowerCase() === (approvedAddress || '').toLowerCase()) {
+        setAction(VaultAction.DEPOSIT_UNI_POSITION)
+      } else {
+        setAction(VaultAction.APPROVE_UNI_POSITION)
+      }
+    },
+    [controller],
+  )
 
   useEffect(() => {
     if (vault) getMaxToMint()
@@ -786,13 +833,12 @@ const Component: React.FC = () => {
                       hint={
                         !!adjustAmountError
                           ? adjustAmountError
-                          : `Balance ${
-                              oSqueethBal?.isGreaterThan(0) &&
-                              positionType === PositionType.LONG &&
-                              oSqueethBal.minus(squeethAmount).isGreaterThan(0)
-                                ? oSqueethBal.minus(squeethAmount).toFixed(8)
-                                : oSqueethBal.toFixed(8)
-                            } oSQTH`
+                          : `Balance ${oSqueethBal?.isGreaterThan(0) &&
+                            positionType === PositionType.LONG &&
+                            oSqueethBal.minus(squeethAmount).isGreaterThan(0)
+                            ? oSqueethBal.minus(squeethAmount).toFixed(8)
+                            : oSqueethBal.toFixed(8)
+                          } oSQTH`
                       }
                       error={!!adjustAmountError}
                     />
@@ -869,17 +915,21 @@ const Component: React.FC = () => {
                     </Typography>
                   </div>
                   <div style={{ margin: 'auto', width: '300px', marginTop: '24px' }}>
-                    <TextField
-                      size="small"
-                      value={isLPDeposited ? vault?.NFTCollateralId : uniTokenToDeposit}
-                      type="number"
-                      style={{ width: 300 }}
-                      onChange={(event) => updateUniLPTokenInput(Number(event.target.value))}
-                      id="filled-basic"
-                      label="Uni LP token"
-                      variant="outlined"
-                      disabled={isLPDeposited}
-                    />
+                    {!isLPDeposited ? (
+                      <SelectLP lpToken={uniTokenToDeposit} setLpToken={updateUniLPTokenInput} />
+                    ) : (
+                      <TextField
+                        size="small"
+                        value={isLPDeposited ? vault?.NFTCollateralId : uniTokenToDeposit}
+                        type="number"
+                        style={{ width: 300 }}
+                        onChange={(event) => updateUniLPTokenInput(Number(event.target.value))}
+                        id="filled-basic"
+                        label="Uni LP token"
+                        variant="outlined"
+                        disabled={isLPDeposited}
+                      />
+                    )}
                   </div>
                   <div className={classes.managerActions} style={{ marginTop: '16px' }}>
                     {isLPDeposited ? (
