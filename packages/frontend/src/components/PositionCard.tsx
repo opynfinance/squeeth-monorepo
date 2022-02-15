@@ -281,6 +281,15 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     tradeAmount.toString(),
   ])
 
+  const pnlLoading = useMemo(() => {
+    if (positionType === PositionType.LONG) {
+      return longUnrealizedPNL.loading
+    }
+    if (positionType === PositionType.SHORT) {
+      return shortUnrealizedPNL.loading
+    }
+  }, [longUnrealizedPNL.loading, positionType, shortUnrealizedPNL.loading])
+
   return (
     <div className={clsx(classes.container, classes.posBg)}>
       {!fullyLiquidated ? (
@@ -355,24 +364,30 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
                     </Tooltip>
                   </div>
                   <div className={classes.pnl}>
-                    <Typography
-                      className={pnlClass(positionType, longGain, shortGain, classes)}
-                      style={{ fontWeight: 600 }}
-                    >
-                      {getPositionBasedValue(
-                        `$${longUnrealizedPNL?.usdValue.toFixed(2)}`,
-                        `$${shortUnrealizedPNL.toFixed(2)}`,
-                        '--',
-                        'Loading',
-                      )}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      className={pnlClass(positionType, longGain, shortGain, classes)}
-                      style={{ marginLeft: '4px' }}
-                    >
-                      {getPositionBasedValue(`(${longGain.toFixed(2)}%)`, `(${shortGain.toFixed(2)}%)`, null, ' ')}
-                    </Typography>
+                    {!pnlLoading ? (
+                      <>
+                        <Typography
+                          className={pnlClass(positionType, longGain, shortGain, classes)}
+                          style={{ fontWeight: 600 }}
+                        >
+                          {getPositionBasedValue(
+                            `$${longUnrealizedPNL.usd.toFixed(2)}`,
+                            `$${shortUnrealizedPNL.usd.toFixed(2)}`,
+                            '--',
+                            'Loading',
+                          )}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          className={pnlClass(positionType, longGain, shortGain, classes)}
+                          style={{ marginLeft: '4px' }}
+                        >
+                          {getPositionBasedValue(`(${longGain.toFixed(2)}%)`, `(${shortGain.toFixed(2)}%)`, null, ' ')}
+                        </Typography>
+                      </>
+                    ) : (
+                      'Loading'
+                    )}
                   </div>
                 </div>
                 <div>
