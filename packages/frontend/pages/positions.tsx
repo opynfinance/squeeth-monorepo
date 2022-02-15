@@ -153,11 +153,9 @@ export function Positions() {
     longUnrealizedPNL,
   } = usePnL()
 
-  const { ethPrice } = useWorldContext()
-
   const { pool } = useSqueethPool()
 
-  const { oSqueethBal } = useWorldContext()
+  const { ethPrice, oSqueethBal } = useWorldContext()
   const { address } = useWallet()
 
   const {
