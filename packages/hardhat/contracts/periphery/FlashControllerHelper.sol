@@ -66,7 +66,7 @@ contract FlashControllerHelper is IUniswapV3SwapCallback {
                 :  uint256(amount1Delta);
         
         //calls the strategy function that uses the proceeds from flash swap and executes logic to have an amount of token to repay the flash swap
-        _flashCallback(data.caller, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource);
+        _swapCallback(data.caller, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource);
     }
 
     /**
