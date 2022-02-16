@@ -35,6 +35,9 @@ type positionsContextType = {
   longRealizedPNL: BigNumber
   shortRealizedPNL: BigNumber
   shortUsdAmount: BigNumber
+  isWethToken0: boolean
+  totalUSDFromBuy: BigNumber
+  totalUSDFromSell: BigNumber
 }
 
 const positionsContext = React.createContext<positionsContextType | undefined>(undefined)
@@ -52,6 +55,7 @@ const PositionsProvider: React.FC = ({ children }) => {
     shortUsdAmount,
     swaps,
     refetch: swapsQueryRefetch,
+    isWethToken0,
   } = useSwapsData()
   const {
     depositedSqueeth,
@@ -169,6 +173,9 @@ const PositionsProvider: React.FC = ({ children }) => {
     depositedWeth,
     withdrawnWeth,
     positionsQueryRefetch,
+    isWethToken0,
+    totalUSDFromBuy,
+    totalUSDFromSell,
   }
 
   return <positionsContext.Provider value={values}>{children}</positionsContext.Provider>

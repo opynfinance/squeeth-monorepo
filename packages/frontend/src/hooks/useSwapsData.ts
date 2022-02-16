@@ -23,7 +23,7 @@ export const useSwapsData = () => {
         origin: address || '',
         poolAddress: squeethPool?.toLowerCase(),
         recipients: [shortHelper, address || '', swapRouter],
-        orderDirection: 'desc',
+        orderDirection: 'asc',
       },
       fetchPolicy: 'cache-and-network',
     },
@@ -37,7 +37,7 @@ export const useSwapsData = () => {
         origin: address || '',
         poolAddress: squeethPool?.toLowerCase(),
         recipients: [shortHelper, address || '', swapRouter],
-        orderDirection: 'desc',
+        orderDirection: 'asc',
       },
       updateQuery(prev, { subscriptionData }) {
         if (!subscriptionData.data) return prev
@@ -130,5 +130,6 @@ export const useSwapsData = () => {
     shortUsdAmount,
     swaps,
     refetch,
+    isWethToken0,
   }
 }
