@@ -15,12 +15,16 @@ import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 contract ControllerHelper is FlashControllerHelper {
-
     address public immutable controller;
     address public immutable oracle;
     address public immutable wPowerPerpPool;
 
-    constructor(address _controller, address _oracle, address _wPowerPerpPool, address _uniswapFactory) FlashControllerHelper(_uniswapFactory) {
+    constructor(
+        address _controller,
+        address _oracle,
+        address _wPowerPerpPool,
+        address _uniswapFactory
+    ) FlashControllerHelper(_uniswapFactory) {
         controller = _controller;
         oracle = _oracle;
         wPowerPerpPool = _wPowerPerpPool;
