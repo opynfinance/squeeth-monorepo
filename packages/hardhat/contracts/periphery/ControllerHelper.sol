@@ -14,7 +14,7 @@ import {FlashControllerHelper} from "./FlashControllerHelper.sol";
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
-contract Controller is FlashControllerHelper {
+contract ControllerHelper is FlashControllerHelper {
 
     address public immutable controller;
     address public immutable oracle;
