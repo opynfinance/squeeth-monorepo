@@ -42,6 +42,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         uint256 flashSwappedCollateral;
         uint256 totalCollateralToDeposit;
         uint256 wPowerPerpAmount;
+
     }
 
     event FlashswapWMint(
