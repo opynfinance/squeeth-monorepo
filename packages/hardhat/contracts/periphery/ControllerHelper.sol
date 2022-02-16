@@ -9,16 +9,20 @@ import {IShortPowerPerp} from "../interfaces/IShortPowerPerp.sol";
 import {IOracle} from "../interfaces/IOracle.sol";
 import {IController} from "../interfaces/IController.sol";
 
+import {FlashControllerHelper} from "./FlashControllerHelper.sol";
+
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
-contract Controller {
+contract Controller is FlashControllerHelper {
 
     address public immutable controller;
     address public immutable oracle;
     address public immutable wPowerPerpPool;
 
-    constructor(address _controller, address _oracle, address _wPowerPerpPool) {
+    constructor(address _controller, address _oracle, address _wPowerPerpPool, address _uniswapFactory) FlashControllerHelper(_uniswapFactory) {
         controller = _controller;
+        oracle = _oracle;
+        wPowerPerpPool = _wPowerPerpPool;
     }
 }

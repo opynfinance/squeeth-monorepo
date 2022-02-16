@@ -68,7 +68,7 @@ contract FlashControllerHelper is IUniswapV3SwapCallback {
                 :  uint256(amount1Delta);
         
         //calls the strategy function that uses the proceeds from flash swap and executes logic to have an amount of token to repay the flash swap
-        _flashCallback(data.caller, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource);
+        _swapCallback(data.caller, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource);
     }
 
     /**
@@ -129,7 +129,7 @@ contract FlashControllerHelper is IUniswapV3SwapCallback {
      * param _callData arbitrary data assigned with the flashswap call 
      * param _callSource function call source
      */
-    function _flashCallback(address /*_caller*/, address /*_tokenIn*/, address /*_tokenOut*/, uint24 /*_fee*/, uint256 /*_amountToPay*/, bytes memory _callData, uint8 _callSource) internal virtual {}
+    function _swapCallback(address /*_caller*/, address /*_tokenIn*/, address /*_tokenOut*/, uint24 /*_fee*/, uint256 /*_amountToPay*/, bytes memory _callData, uint8 _callSource) internal virtual {}
     
     /** 
     * @notice internal function for exact-in swap on uniswap (specify exact amount to pay)
