@@ -11,27 +11,41 @@ const emptyPriceList = [
 ]
 
 const FIVE_MINUTES_IN_MILLISECONDS = 300_000
+const ethPriceChartsQueryKeys = {
+  ethPriceRange: (days: number) => ['ethPriceRange', { days }],
+  allEthPricesRange: (days: number) => ['allEthPricesRange', { days }],
+  allEth90daysPrices: () => ['allEth90daysPrices'],
+  allEthWithinOneDayPrices: () => ['allEthWithinOneDayPrices'],
+  cusdcPricesRange: (days: number) => ['cusdcPricesRange', { days }],
+  squeethSeries: () => ['squeethSeries'],
+  squeethPNLSeries: () => ['squeethPNLSeries'],
+  ethPNLCompounding: () => ['ethPNLCompounding'],
+}
 
 export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initCollatRatio = 1.5) {
   const [volMultiplier, setVolMultiplier] = useState(initVolMultiplier)
   const [days, setDays] = useState(initDays)
   const [collatRatio, setCollatRatio] = useState(initCollatRatio)
 
-  const ethPrices = useQuery(`ethPriceRangeIn${days}days`, () => getETHPrices(days), {
+  const ethPrices = useQuery(ethPriceChartsQueryKeys.ethPriceRange(days), () => getETHPrices(days), {
     enabled: Boolean(days),
     staleTime: FIVE_MINUTES_IN_MILLISECONDS,
   })
-  const allEthPrices = useQuery(`allEthPricesIn${initDays}days`, () => getETHPrices(initDays), {
+  const allEthPrices = useQuery(ethPriceChartsQueryKeys.allEthPricesRange(initDays), () => getETHPrices(initDays), {
     enabled: Boolean(initDays),
     staleTime: FIVE_MINUTES_IN_MILLISECONDS,
   })
-  const allEth90daysPrices = useQuery(`allEth90daysPrices`, () => getETH90DaysPrices(), {
+  const allEth90daysPrices = useQuery(ethPriceChartsQueryKeys.allEth90daysPrices(), () => getETH90DaysPrices(), {
     staleTime: FIVE_MINUTES_IN_MILLISECONDS,
   })
-  const allEthWithinOneDayPrices = useQuery(`allEthWithinOneDayPrices`, () => getETHWithinOneDayPrices(), {
-    staleTime: FIVE_MINUTES_IN_MILLISECONDS,
-  })
-  const cusdcPrices = useQuery(`cusdcPricesIn${days}days`, () => getCUSDCPrices(days), {
+  const allEthWithinOneDayPrices = useQuery(
+    ethPriceChartsQueryKeys.allEthWithinOneDayPrices(),
+    () => getETHWithinOneDayPrices(),
+    {
+      staleTime: FIVE_MINUTES_IN_MILLISECONDS,
+    },
+  )
+  const cusdcPrices = useQuery(ethPriceChartsQueryKeys.cusdcPricesRange(days), () => getCUSDCPrices(days), {
     staleTime: FIVE_MINUTES_IN_MILLISECONDS,
   })
 
@@ -111,9 +125,13 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
   // }, [startingETHPrice, ethPrices])
 
   // get compounding eth pnl
-  const ethPNLCompounding = useQuery('ethPNLCompounding', () => getETHPNLCompounding(ethPrices.data ?? []), {
-    enabled: ethPrices.isSuccess,
-  })
+  const ethPNLCompounding = useQuery(
+    ethPriceChartsQueryKeys.ethPNLCompounding(),
+    () => getETHPNLCompounding(ethPrices.data ?? []),
+    {
+      enabled: ethPrices.isSuccess,
+    },
+  )
 
   //new long eth pnl w compounding
   const longEthPNL = useMemo(() => {
@@ -145,13 +163,13 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
   }, [ethPrices.data, startingETHPrice])
 
   const squeethSeries = useQuery(
-    'squeethSeries',
+    ethPriceChartsQueryKeys.squeethSeries(),
     () => getSqueethChartWithFunding(ethPrices.data ?? [], volMultiplier, collatRatio),
     { enabled: ethPrices.isSuccess },
   )
 
   const squeethPNLSeries = useQuery(
-    'squeethPNLSeries',
+    ethPriceChartsQueryKeys.squeethPNLSeries(),
     () => getSqueethPNLCompounding(ethPrices.data ?? [], volMultiplier, collatRatio, days),
     { enabled: Boolean(ethPrices.isSuccess && days) },
   )

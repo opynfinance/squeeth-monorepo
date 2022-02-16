@@ -4,6 +4,10 @@ import { useQuery, useQueryClient } from 'react-query'
 import { useController } from './contracts/useController'
 import { toTokenAmount } from '@utils/calculations'
 
+const ethPriceQueryKeys = {
+  currentEthPrice: () => ['currentEthPrice'],
+}
+
 /**
  * get token price by address.
  * @param token token address
@@ -14,9 +18,9 @@ export const useETHPrice = (refetchIntervalSec = 30) => {
   const { index } = useController()
   const queryClient = useQueryClient()
 
-  const ethPrice = useQuery('ethPrice', () => getETHPriceCoingecko(), {
+  const ethPrice = useQuery(ethPriceQueryKeys.currentEthPrice(), () => getETHPriceCoingecko(), {
     onError() {
-      queryClient.setQueryData('ethPrice', toTokenAmount(index, 18).sqrt())
+      queryClient.setQueryData(ethPriceQueryKeys.currentEthPrice(), toTokenAmount(index, 18).sqrt())
     },
     refetchInterval: refetchIntervalSec * 1000,
     refetchOnWindowFocus: true,
@@ -32,7 +36,7 @@ export const getETHPriceCoingecko = async (): Promise<BigNumber> => {
 
   const res = await fetch(url)
   const priceStruct: { usd: number } = (await res.json())[coin.toLowerCase()]
-  if (priceStruct === undefined) return new BigNumber(0)
+  if (priceStruct === undefined) throw new Error('Error getting ethPrice from Coingecko')
   const price = priceStruct.usd
   return new BigNumber(price)
 }
