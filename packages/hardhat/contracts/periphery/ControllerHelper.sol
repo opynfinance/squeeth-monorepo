@@ -55,7 +55,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
 
     /// @dev enum to differentiate between uniswap swap callback function source
     enum FLASH_SOURCE {
-        FLASH_W_MINT
+        FLASH_W_MINT,
+        FLASH_W_BURN
     }
 
     address public immutable controller;
@@ -558,6 +559,16 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             IWETH9(weth).deposit{value: address(this).balance}();
 
             IWETH9(weth).transfer(wPowerPerpPool, _amountToPay);
+        }
+        else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_W_BURN) {
+            FlashWBurnData memory data = abi.decode(_callData, (FlashWBurnData));
+
+            IController(controller).burnWPowerPerpAmount(data.vaultId, data.wPowerPerpAmount, data.collateralToWithdraw);
+
+            IWETH9.deposit(_amountToPay);
+            IWETH9(weth).transfer(wPowerPerpPool, _amountToPay);
+
+            /// TODO: buy long or send ETH back
         }
     }
 
