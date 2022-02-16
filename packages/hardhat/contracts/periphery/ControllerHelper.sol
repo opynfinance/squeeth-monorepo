@@ -265,6 +265,9 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_W_MINT) {
             flashswapWMintData memory data = abi.decode(_callData, (flashswapWMintData));
 
+            console.log("data.flashSwapedCollateral", data.flashSwapedCollateral);
+            console.log("balance this", IWETH9(weth).balanceOf(address(this)));
+
             // convert WETH to ETH as Uniswap uses WETH
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
 
