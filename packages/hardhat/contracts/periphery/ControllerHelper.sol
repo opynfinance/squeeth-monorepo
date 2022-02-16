@@ -38,6 +38,11 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         SWAP
     }
 
+    /// @dev enum to differentiate between uniswap swap callback function source
+    enum FLASH_SOURCE {
+        FLASH_W_MINT
+    }
+
     address public immutable controller;
     address public immutable oracle;
     address public immutable shortPowerPerp;
