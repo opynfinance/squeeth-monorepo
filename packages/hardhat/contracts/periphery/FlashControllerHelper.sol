@@ -8,12 +8,12 @@ import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.so
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
 // lib
-import '@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol';
-import '@uniswap/v3-periphery/contracts/libraries/Path.sol';
-import '@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol';
-import '@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol';
-import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
-import '@uniswap/v3-core/contracts/libraries/SafeCast.sol';
+import "@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol";
+import "@uniswap/v3-periphery/contracts/libraries/Path.sol";
+import "@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol";
+import "@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol";
+import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
+import "@uniswap/v3-core/contracts/libraries/SafeCast.sol";
 
 contract FlashControllerHelper is IUniswapV3SwapCallback {
     using Path for bytes;
@@ -35,9 +35,7 @@ contract FlashControllerHelper is IUniswapV3SwapCallback {
      * @dev constructor
      * @param _factory uniswap factory address
      */
-    constructor(
-        address _factory
-    ) {
+    constructor(address _factory) {
         require(_factory != address(0), "invalid factory address");
         factory = _factory;
     }
@@ -62,11 +60,8 @@ contract FlashControllerHelper is IUniswapV3SwapCallback {
         CallbackValidation.verifyCallback(factory, tokenIn, tokenOut, fee);
 
         //determine the amount that needs to be repaid as part of the flashswap
-        uint256 amountToPay =
-            amount0Delta > 0
-                ?  uint256(amount0Delta)
-                :  uint256(amount1Delta);
-        
+        uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
+
         //calls the strategy function that uses the proceeds from flash swap and executes logic to have an amount of token to repay the flash swap
         _swapCallback(data.caller, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource);
     }
@@ -155,6 +150,9 @@ contract FlashControllerHelper is IUniswapV3SwapCallback {
      * param _callSource function call source
      */
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 693872a (fix: lint)
     function _swapCallback(
         address, /*_caller*/
         address, /*_tokenIn*/
@@ -172,6 +170,7 @@ contract FlashControllerHelper is IUniswapV3SwapCallback {
      * @param _sqrtPriceLimitX96 price limit
      * @return amount of token bought (amountOut)
      */
+<<<<<<< HEAD
 =======
     function _swapCallback(address /*_caller*/, address /*_tokenIn*/, address /*_tokenOut*/, uint24 /*_fee*/, uint256 /*_amountToPay*/, bytes memory _callData, uint8 _callSource) internal virtual {}
     
@@ -183,6 +182,8 @@ contract FlashControllerHelper is IUniswapV3SwapCallback {
     * @return amount of token bought (amountOut)
     */
 >>>>>>> dd4a6c0 (fix: compilation)
+=======
+>>>>>>> 693872a (fix: lint)
     function _exactInputInternal(
         uint256 _amountIn,
         address _recipient,
@@ -190,6 +191,10 @@ contract FlashControllerHelper is IUniswapV3SwapCallback {
         SwapCallbackData memory data
     ) private returns (uint256) {
         (address tokenIn, address tokenOut, uint24 fee) = data.path.decodeFirstPool();
+<<<<<<< HEAD
+=======
+
+>>>>>>> 693872a (fix: lint)
         //uniswap token0 has a lower address than token1
         //if tokenIn<tokenOut, we are selling an exact amount of token0 in exchange for token1
         //zeroForOne determines which token is being sold and which is being bought
