@@ -493,6 +493,9 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.FLASH_W_MINT) {
             FlashswapWMintParams memory data = abi.decode(_callData, (FlashswapWMintParams));
 
+            console.log("data.flashSwapedCollateral", data.flashSwapedCollateral);
+            console.log("balance this", IWETH9(weth).balanceOf(address(this)));
+
             // convert WETH to ETH as Uniswap uses WETH
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
 
