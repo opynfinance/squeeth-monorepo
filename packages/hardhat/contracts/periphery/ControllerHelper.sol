@@ -32,7 +32,8 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
 
     /// @dev enum to differentiate between uniswap swap callback function source
     enum FLASH_SOURCE {
-        FLASH_W_MINT
+        FLASH_W_MINT,
+        FLASH_W_BURN
     }
 
     address public immutable controller;
@@ -114,6 +115,19 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         emit FlashswapWMint(msg.sender, _vaultId, _wPowerPerpAmount, amountToFlashswap, _collateralAmount);
     }
 
+    function flashWBurn(uint256 _vaultId, uint256 _wPowerPerpAmount, uint256 _collateralToWithdraw) external {
+        _exactOutFlashSwap(
+            weth,
+            wPowerPerp,
+            IUniswapV3Pool(wPowerPerpPool).fee(),
+            _wPowerPerpAmount,
+            _collateralToWithdraw,
+            uint8(FLASH_SOURCE.FLASH_W_BURN),
+            abi.encodePacked(_vaultId, _wPowerPerpAmount, _collateralToWithdraw)
+        );
+
+    }
+
     /**
      * @notice uniswap flash swap callback function
      * @dev this function will be called by flashswap callback function uniswapV3SwapCallback()
@@ -154,6 +168,16 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
 
             // this is a newly open vault, transfer to the user
             if (data.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), _caller, vaultId);
+        }
+        else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_W_BURN) {
+            FlashWBurnData memory data = abi.decode(_callData, (FlashWBurnData));
+
+            IController(controller).burnWPowerPerpAmount(data.vaultId, data.wPowerPerpAmount, data.collateralToWithdraw);
+
+            IWETH9.deposit(_amountToPay);
+            IWETH9(weth).transfer(wPowerPerpPool, _amountToPay);
+
+            /// TODO: buy long or send ETH back
         }
     }
 }
