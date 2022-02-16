@@ -53,6 +53,11 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         FLASHLOAN_CLOSE_VAULT_LP_NFT
     }
 
+    /// @dev enum to differentiate between uniswap swap callback function source
+    enum FLASH_SOURCE {
+        FLASH_W_MINT
+    }
+
     address public immutable controller;
     address public immutable oracle;
     address public immutable shortPowerPerp;
