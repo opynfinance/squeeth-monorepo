@@ -3,6 +3,8 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
+import "hardhat/console.sol";
+
 // interface
 import {IWETH9} from "../interfaces/IWETH9.sol";
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
@@ -72,6 +74,9 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
     }
 
     function flashWMint(uint256 _vaultId, uint256 _wPowerPerpAmount, uint256 _collateralAmount) external payable {
+        console.log("balance this", IWETH9(weth).balanceOf(address(this)));
+        console.log("_collateralAmount.sub(msg.value),", _collateralAmount.sub(msg.value));
+
         _exactInFlashSwap(
             wPowerPerp,
             weth,
@@ -103,8 +108,12 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_W_MINT) {
             FlashWMintData memory data = abi.decode(_callData, (FlashWMintData));
 
+            console.log("data.flashSwapedCollateral", data.flashSwapedCollateral);
+            console.log("balance this", IWETH9(weth).balanceOf(address(this)));
+
             // convert WETH to ETH as Uniswap uses WETH
-            IWETH9(weth).withdraw(data.flashSwapedCollateral);
+            // IWETH9(weth).withdraw(data.flashSwapedCollateral);
+            IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
 
             //will revert if data.flashSwapedCollateral is > eth balance in contract
             IController(controller).mintWPowerPerpAmount{value: data.totalCollateralToDeposit}(data.vaultId, data.wPowerPerpAmount, 0);
