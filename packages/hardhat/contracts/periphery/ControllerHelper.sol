@@ -10,6 +10,7 @@ import {IShortPowerPerp} from "../interfaces/IShortPowerPerp.sol";
 import {IOracle} from "../interfaces/IOracle.sol";
 import {IController} from "../interfaces/IController.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 // contract
 import {FlashControllerHelper} from "./FlashControllerHelper.sol";
@@ -18,7 +19,8 @@ import {FlashControllerHelper} from "./FlashControllerHelper.sol";
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
-contract ControllerHelper is FlashControllerHelper {
+contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
+    using SafeMath for uint256;
 
     /// @dev enum to differentiate between uniswap swap callback function source
     enum FLASH_SOURCE {
@@ -34,10 +36,12 @@ contract ControllerHelper is FlashControllerHelper {
     struct FlashWMintData {
         uint256 vaultId;
         uint256 flashSwapedCollateral;
+        uint256 totalCollateralToDeposit;
         uint256 wPowerPerpAmount;
+
     }
 
-    event FlashWMint(address indexed depositor, uint256 vaultId, uint256 wPowerPerpAmount, uint256 collateralAmount);
+    event FlashWMint(address indexed depositor, uint256 vaultId, uint256 wPowerPerpAmount, uint256 swapedCollateralAmount, uint256 collateralAmount);
 
     constructor(address _controller, address _oracle, address _wPowerPerpPool, address _wPowerPerp, address _weth, address _uniswapFactory) FlashControllerHelper(_uniswapFactory) {
         controller = _controller;
@@ -47,15 +51,35 @@ contract ControllerHelper is FlashControllerHelper {
         weth = _weth;
     }
 
+    /**
+     * @dev accept erc721 from safeTransferFrom and safeMint after callback
+     * @return returns received selector
+     */
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes memory
+    ) public virtual override returns (bytes4) {
+        return this.onERC721Received.selector;
+    }
+
+    /**
+     * @notice receive function to allow ETH transfer to this contract
+     */
+    receive() external payable {
+        require(msg.sender == weth || msg.sender == address(controller), "Cannot receive eth");
+    }
+
     function flashWMint(uint256 _vaultId, uint256 _wPowerPerpAmount, uint256 _collateralAmount) external payable {
         _exactInFlashSwap(
             wPowerPerp,
             weth,
             IUniswapV3Pool(wPowerPerpPool).fee(),
             _wPowerPerpAmount,
-            _collateralAmount,
+            _collateralAmount.sub(msg.value),
             uint8(FLASH_SOURCE.FLASH_W_MINT),
-            abi.encodePacked(_vaultId, _collateralAmount, _wPowerPerpAmount)
+            abi.encodePacked(_vaultId, _collateralAmount.sub(msg.value), _collateralAmount, _wPowerPerpAmount)
         );
     }
 
@@ -83,12 +107,12 @@ contract ControllerHelper is FlashControllerHelper {
             IWETH9(weth).withdraw(data.flashSwapedCollateral);
 
             //will revert if data.flashSwapedCollateral is > eth balance in contract
-            IController(controller).mintWPowerPerpAmount{value: data.flashSwapedCollateral}(data.vaultId, data.wPowerPerpAmount, 0);
+            IController(controller).mintWPowerPerpAmount{value: data.totalCollateralToDeposit}(data.vaultId, data.wPowerPerpAmount, 0);
 
             //repay the flash swap
             IWPowerPerp(wPowerPerp).transfer(wPowerPerpPool, _amountToPay);
 
-            emit FlashWMint(_caller, data.vaultId, data.wPowerPerpAmount, data.flashSwapedCollateral);   
+            emit FlashWMint(_caller, data.vaultId, data.wPowerPerpAmount, data.flashSwapedCollateral, data.totalCollateralToDeposit);   
         }
     }
 }
