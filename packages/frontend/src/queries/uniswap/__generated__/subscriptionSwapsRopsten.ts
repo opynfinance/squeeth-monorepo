@@ -54,4 +54,5 @@ export interface subscriptionSwapsRopstenVariables {
   tokenAddress: any;
   origin: any;
   orderDirection: string;
+  recipient_not: any;
 }
