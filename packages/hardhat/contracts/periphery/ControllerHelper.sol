@@ -116,7 +116,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
 
             //will revert if data.flashSwapedCollateral is > eth balance in contract
-            IController(controller).mintWPowerPerpAmount{value: data.totalCollateralToDeposit}(data.vaultId, data.wPowerPerpAmount, 0);
+            IController(controller).mintWPowerPerpAmount{value: address(this).balance}(data.vaultId, data.wPowerPerpAmount, 0);
 
             //repay the flash swap
             IWPowerPerp(wPowerPerp).transfer(wPowerPerpPool, _amountToPay);
