@@ -176,6 +176,7 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
      * param _callData arbitrary data assigned with the flashswap call
      * param _callSource function call source
      */
+<<<<<<< HEAD
     function _swapCallback(
         address, /*_caller*/
         address, /*_tokenIn*/
@@ -200,6 +201,17 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
      * @param _sqrtPriceLimitX96 price limit
      * @return amount of token bought (amountOut)
      */
+=======
+    function _swapCallback(address /*_caller*/, address /*_tokenIn*/, address /*_tokenOut*/, uint24 /*_fee*/, uint256 /*_amountToPay*/, bytes memory _callData, uint8 _callSource) internal virtual {}
+    
+    /** 
+    * @notice internal function for exact-in swap on uniswap (specify exact amount to pay)
+    * @param _amountIn amount of token to pay
+    * @param _recipient recipient for receive
+    * @param _sqrtPriceLimitX96 price limit
+    * @return amount of token bought (amountOut)
+    */
+>>>>>>> dd4a6c0 (fix: compilation)
     function _exactInputInternal(
         uint256 _amountIn,
         address _recipient,
