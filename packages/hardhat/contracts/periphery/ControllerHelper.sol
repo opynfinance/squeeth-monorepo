@@ -184,6 +184,19 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         emit FlashWBurn(msg.sender, _vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw, _wPowerPerpAmountToBuy);
     }
 
+    function flashWBurn(uint256 _vaultId, uint256 _wPowerPerpAmount, uint256 _collateralToWithdraw) external {
+        _exactOutFlashSwap(
+            weth,
+            wPowerPerp,
+            IUniswapV3Pool(wPowerPerpPool).fee(),
+            _wPowerPerpAmount,
+            _collateralToWithdraw,
+            uint8(FLASH_SOURCE.FLASH_W_BURN),
+            abi.encodePacked(_vaultId, _wPowerPerpAmount, _collateralToWithdraw)
+        );
+
+    }
+
     /**
      * @notice flash close position and buy long squeeth
      * @dev this function
