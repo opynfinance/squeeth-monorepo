@@ -833,12 +833,13 @@ const Component: React.FC = () => {
                       hint={
                         !!adjustAmountError
                           ? adjustAmountError
-                          : `Balance ${oSqueethBal?.isGreaterThan(0) &&
-                            positionType === PositionType.LONG &&
-                            oSqueethBal.minus(squeethAmount).isGreaterThan(0)
-                            ? oSqueethBal.minus(squeethAmount).toFixed(8)
-                            : oSqueethBal.toFixed(8)
-                          } oSQTH`
+                          : `Balance ${
+                              oSqueethBal?.isGreaterThan(0) &&
+                              positionType === PositionType.LONG &&
+                              oSqueethBal.minus(squeethAmount).isGreaterThan(0)
+                                ? oSqueethBal.minus(squeethAmount).toFixed(8)
+                                : oSqueethBal.toFixed(8)
+                            } oSQTH`
                       }
                       error={!!adjustAmountError}
                     />

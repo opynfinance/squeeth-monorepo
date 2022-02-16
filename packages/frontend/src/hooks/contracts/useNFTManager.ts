@@ -11,7 +11,7 @@ import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 
 export const useNFTManager = () => {
   const { nftManager } = useAddresses()
-  const { address, web3 } = useWallet()
+  const { web3 } = useWallet()
   const { pool, isWethToken0 } = useSqueethPool()
 
   const [contract, setContract] = useState<Contract>()
@@ -22,7 +22,6 @@ export const useNFTManager = () => {
   }, [web3])
 
   const getPosition = async (posId: number) => {
-    console.log(contract, pool)
     if (!contract || !pool) return
 
     const { tickLower, tickUpper, liquidity, tokensOwed1, tokensOwed0 } = await contract.methods.positions(posId).call()
@@ -38,7 +37,6 @@ export const useNFTManager = () => {
 
   const getETHandOSQTHAmount = async (posId: number) => {
     const result = await getPosition(posId)
-    console.log(posId, result)
     if (!result) return { wethAmount: BIG_ZERO, oSqthAmount: BIG_ZERO }
 
     const { uniPosition, tokensOwed0, tokensOwed1 } = result
