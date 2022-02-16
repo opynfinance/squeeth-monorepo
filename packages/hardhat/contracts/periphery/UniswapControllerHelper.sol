@@ -9,12 +9,12 @@ import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3FlashCallback.s
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
 // lib
-import '@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol';
-import '@uniswap/v3-periphery/contracts/libraries/Path.sol';
-import '@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol';
-import '@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol';
-import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
-import '@uniswap/v3-core/contracts/libraries/SafeCast.sol';
+import "@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol";
+import "@uniswap/v3-periphery/contracts/libraries/Path.sol";
+import "@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol";
+import "@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol";
+import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
+import "@uniswap/v3-core/contracts/libraries/SafeCast.sol";
 
 contract UniswapControllerHelper is IUniswapV3SwapCallback {
     using Path for bytes;
@@ -177,6 +177,9 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
      * param _callSource function call source
      */
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 693872a (fix: lint)
     function _swapCallback(
         address, /*_caller*/
         address, /*_tokenIn*/
@@ -201,6 +204,7 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
      * @param _sqrtPriceLimitX96 price limit
      * @return amount of token bought (amountOut)
      */
+<<<<<<< HEAD
 =======
     function _swapCallback(address /*_caller*/, address /*_tokenIn*/, address /*_tokenOut*/, uint24 /*_fee*/, uint256 /*_amountToPay*/, bytes memory _callData, uint8 _callSource) internal virtual {}
     
@@ -212,6 +216,8 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
     * @return amount of token bought (amountOut)
     */
 >>>>>>> dd4a6c0 (fix: compilation)
+=======
+>>>>>>> 693872a (fix: lint)
     function _exactInputInternal(
         uint256 _amountIn,
         address _recipient,
@@ -219,6 +225,10 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
         SwapCallbackData memory data
     ) private returns (uint256) {
         (address tokenIn, address tokenOut, uint24 fee) = data.path.decodeFirstPool();
+<<<<<<< HEAD
+=======
+
+>>>>>>> 693872a (fix: lint)
         //uniswap token0 has a lower address than token1
         //if tokenIn<tokenOut, we are selling an exact amount of token0 in exchange for token1
         //zeroForOne determines which token is being sold and which is being bought
