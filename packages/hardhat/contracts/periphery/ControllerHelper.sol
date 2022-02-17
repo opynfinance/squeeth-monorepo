@@ -385,7 +385,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
 
             IController(controller).burnWPowerPerpAmount(data.vaultId, data.wPowerPerpAmount, data.collateralToWithdraw);
 
-            IWETH9.deposit(_amountToPay);
+            IWETH9(weth).deposit{value: _amountToPay}();
             IWETH9(weth).transfer(wPowerPerpPool, _amountToPay);
 
             /// TODO: buy long or send ETH back
