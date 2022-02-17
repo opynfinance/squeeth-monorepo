@@ -14,6 +14,7 @@ import {IController} from "../interfaces/IController.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
 
 // contract
 import {FlashControllerHelper} from "./FlashControllerHelper.sol";
@@ -21,6 +22,8 @@ import {FlashControllerHelper} from "./FlashControllerHelper.sol";
 // lib
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {TransferHelper} from "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
+import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 
 contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
     using SafeMath for uint256;
@@ -45,6 +48,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
     address public immutable wPowerPerp;
     address public immutable weth;
     address public immutable swapRouter;
+    address public immutable nonfungiblePositionManager;
 
     struct flashswapWMintData {
         uint256 vaultId;
@@ -93,6 +97,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         address _wPowerPerp,
         address _weth,
         address _swapRouter,
+        address _nonfungiblePositionManager,
         address _uniswapFactory
     ) FlashControllerHelper(_uniswapFactory) {
         controller = _controller;
@@ -100,8 +105,9 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         shortPowerPerp = _shortPowerPerp;
         wPowerPerpPool = _wPowerPerpPool;
         wPowerPerp = _wPowerPerp;
-        swapRouter = _swapRouter;
         weth = _weth;
+        swapRouter = _swapRouter;
+        nonfungiblePositionManager = _nonfungiblePositionManager;
 
         IWPowerPerp(_wPowerPerp).approve(_swapRouter, type(uint256).max);
         IWETH9(_weth).approve(_swapRouter, type(uint256).max);
@@ -194,7 +200,36 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             uint8(FLASH_SOURCE.FLASH_W_BURN),
             abi.encodePacked(_vaultId, _wPowerPerpAmount, _collateralToWithdraw)
         );
+    }
 
+    function batchMintLp(uint256 _vaultId, uint256 _wPowerPerpAmount, uint256 _collateralToMint, uint256 _collateralToLP) external payable {
+        require(msg.value == _collateralToMint.add(_collateralToLP), "Wrong ETH sent");
+
+        IController(controller).mintWPowerPerpAmount{value: _collateralToMint}(_vaultId, _wPowerPerpAmount, 0);
+
+        TransferHelper.safeApprove(wPowerPerp, nonfungiblePositionManager, _wPowerPerpAmount);
+        TransferHelper.safeApprove(weth, nonfungiblePositionManager, _collateralToLP);
+
+        address token0 = IUniswapV3Pool(wPowerPerpPool).token0();
+        address token1 = IUniswapV3Pool(wPowerPerpPool).token1();
+
+        INonfungiblePositionManager.MintParams memory params =
+            INonfungiblePositionManager.MintParams({
+                token0: token0,
+                token1: token1,
+                fee: IUniswapV3Pool(wPowerPerpPool).fee(),
+                tickLower: TickMath.MIN_TICK,
+                tickUpper: TickMath.MAX_TICK,
+                amount0Desired: token0 == wPowerPerp ? _wPowerPerpAmount : _collateralToLP,
+                amount1Desired: token1 == wPowerPerp ? _wPowerPerpAmount : _collateralToLP,
+                amount0Min: 0,
+                amount1Min: 0,
+                recipient: msg.sender,
+                deadline: block.timestamp
+            });
+
+        // Note that the pool defined by DAI/USDC and fee tier 0.3% must already be created and initialized in order to mint
+        INonfungiblePositionManager(nonfungiblePositionManager).mint(params);
     }
 
     /**
