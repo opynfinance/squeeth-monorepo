@@ -128,7 +128,6 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         shortPowerPerp = _shortPowerPerp;
         wPowerPerpPool = _wPowerPerpPool;
         wPowerPerp = _wPowerPerp;
-        swapRouter = _swapRouter;
         weth = _weth;
         swapRouter = _swapRouter;
         nonfungiblePositionManager = _nonfungiblePositionManager;
@@ -226,7 +225,36 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             uint8(FLASH_SOURCE.FLASH_W_BURN),
             abi.encodePacked(_vaultId, _wPowerPerpAmount, _collateralToWithdraw)
         );
+    }
 
+    function batchMintLp(uint256 _vaultId, uint256 _wPowerPerpAmount, uint256 _collateralToMint, uint256 _collateralToLP) external payable {
+        require(msg.value == _collateralToMint.add(_collateralToLP), "Wrong ETH sent");
+
+        IController(controller).mintWPowerPerpAmount{value: _collateralToMint}(_vaultId, _wPowerPerpAmount, 0);
+
+        TransferHelper.safeApprove(wPowerPerp, nonfungiblePositionManager, _wPowerPerpAmount);
+        TransferHelper.safeApprove(weth, nonfungiblePositionManager, _collateralToLP);
+
+        address token0 = IUniswapV3Pool(wPowerPerpPool).token0();
+        address token1 = IUniswapV3Pool(wPowerPerpPool).token1();
+
+        INonfungiblePositionManager.MintParams memory params =
+            INonfungiblePositionManager.MintParams({
+                token0: token0,
+                token1: token1,
+                fee: IUniswapV3Pool(wPowerPerpPool).fee(),
+                tickLower: TickMath.MIN_TICK,
+                tickUpper: TickMath.MAX_TICK,
+                amount0Desired: token0 == wPowerPerp ? _wPowerPerpAmount : _collateralToLP,
+                amount1Desired: token1 == wPowerPerp ? _wPowerPerpAmount : _collateralToLP,
+                amount0Min: 0,
+                amount1Min: 0,
+                recipient: msg.sender,
+                deadline: block.timestamp
+            });
+
+        // Note that the pool defined by DAI/USDC and fee tier 0.3% must already be created and initialized in order to mint
+        INonfungiblePositionManager(nonfungiblePositionManager).mint(params);
     }
 
     /**
