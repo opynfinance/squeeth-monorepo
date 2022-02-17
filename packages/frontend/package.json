@@ -33,6 +33,7 @@
     "framer-motion": "^5.3.3",
     "graphql": "^16.1.0",
     "gray-matter": "^4.0.3",
+    "jotai": "^1.5.3",
     "kaktana-react-lightweight-charts": "^2.0.0",
     "markdown-to-jsx": "^7.1.5",
     "next": "^12.0.7",
