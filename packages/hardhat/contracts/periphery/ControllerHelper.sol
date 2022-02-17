@@ -241,7 +241,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         );
     }
 
-    function batchMintLp(uint256 _vaultId, uint256 _wPowerPerpAmount, uint256 _collateralToMint, uint256 _collateralToLP) external payable {
+    function batchMintLp(uint256 _vaultId, uint256 _wPowerPerpAmount, uint256 _collateralToMint, uint256 _collateralToLP, int24 _lowerTick, int24 _upperTick) external payable {
         require(msg.value == _collateralToMint.add(_collateralToLP), "Wrong ETH sent");
 
         IController(controller).mintWPowerPerpAmount{value: _collateralToMint}(_vaultId, _wPowerPerpAmount, 0);
