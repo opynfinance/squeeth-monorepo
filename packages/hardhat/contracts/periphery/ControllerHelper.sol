@@ -63,6 +63,12 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         uint256 collateralToWithdraw;
     }
 
+    struct FlashWBurnData {
+        uint256 vaultId;
+        uint256 wPowerPerpAmount;
+        uint256 collateralToWithdraw;
+    }
+
     event FlashswapWMint(
         address indexed depositor,
         uint256 vaultId,
