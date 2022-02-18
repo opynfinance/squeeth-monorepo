@@ -563,7 +563,11 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_W_BURN) {
             FlashWBurnData memory data = abi.decode(_callData, (FlashWBurnData));
 
-            IController(controller).burnWPowerPerpAmount(data.vaultId, data.wPowerPerpAmount, data.collateralToWithdraw);
+            IController(controller).burnWPowerPerpAmount(
+                data.vaultId,
+                data.wPowerPerpAmount,
+                data.collateralToWithdraw
+            );
 
             IWETH9(weth).deposit{value: _amountToPay}();
             IWETH9(weth).transfer(wPowerPerpPool, _amountToPay);
