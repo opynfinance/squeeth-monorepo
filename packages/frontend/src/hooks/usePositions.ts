@@ -14,11 +14,13 @@ import { VaultHistory } from '../queries/squeeth/__generated__/VaultHistory'
 import { NFTManagers } from '../types'
 import { toTokenAmount } from '@utils/calculations'
 import { squeethClient } from '@utils/apollo-client'
+
 import { useSqueethPool } from './contracts/useSqueethPool'
-import { useController } from './contracts/useController'
+import { indexAtom } from './contracts/useController'
 import { useAddresses } from './useAddress'
 import { calcDollarShortUnrealizedpnl, calcETHCollateralPnl, calcDollarLongUnrealizedpnl } from '../lib/pnl'
 import { BIG_ZERO } from '../constants/'
+import { useAtom } from 'jotai'
 
 export const usePnL = () => {
   const [ethCollateralPnl, setEthCollateralPnl] = useState(BIG_ZERO)
@@ -35,7 +37,7 @@ export const usePnL = () => {
     firstValidVault,
     existingCollat,
   } = usePositions()
-  const { index } = useController()
+  const [index] = useAtom(indexAtom)
 
   // const { ethPrice } = useWorldContext()
   const { ready, getSellQuote, getBuyQuote } = useSqueethPool()

@@ -13,12 +13,13 @@ import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
 import React, { useCallback, useEffect, useState } from 'react'
+import { useAtom } from 'jotai'
 
 import { CloseType, Tooltips, Links } from '@constants/enums'
 import { useTrade } from '@context/trade'
 import { useWallet } from '@context/wallet'
 import { useWorldContext } from '@context/world'
-import { useController } from '@hooks/contracts/useController'
+import { normFactorAtom, useController } from '@hooks/contracts/useController'
 import useShortHelper from '@hooks/contracts/useShortHelper'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
@@ -192,7 +193,8 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
   const classes = useStyles()
   const { openShort } = useShortHelper()
   const { getWSqueethPositionValue } = useSqueethPool()
-  const { updateOperator, normFactor: normalizationFactor, getShortAmountFromDebt, getDebtAmount } = useController()
+  const { updateOperator, getShortAmountFromDebt, getDebtAmount } = useController()
+  const normalizationFactor = useAtom(normFactorAtom)[0]
   const { selectWallet, connected } = useWallet()
   const { shortHelper } = useAddresses()
 
@@ -564,7 +566,8 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   const classes = useStyles()
   const { closeShort } = useShortHelper()
   const { getWSqueethPositionValue } = useSqueethPool()
-  const { updateOperator, normFactor: normalizationFactor, getShortAmountFromDebt, getDebtAmount } = useController()
+  const { updateOperator, getShortAmountFromDebt, getDebtAmount } = useController()
+  const normalizationFactor = useAtom(normFactorAtom)[0]
   const { shortHelper } = useAddresses()
 
   const { selectWallet, connected } = useWallet()

@@ -8,15 +8,16 @@ import { Vaults, WETH_DECIMALS, OSQUEETH_DECIMALS } from '../../constants'
 import { useWallet } from '@context/wallet'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useAddresses } from '../useAddress'
-import { useController } from './useController'
+import { normFactorAtom } from './useController'
 import { useSqueethPool } from './useSqueethPool'
+import { useAtom } from 'jotai'
 
 export const useShortHelper = () => {
   const { web3, address, handleTransaction } = useWallet()
   const [contract, setContract] = useState<Contract>()
 
   const { getSellParam, getBuyParam } = useSqueethPool()
-  const { normFactor: normalizationFactor } = useController()
+  const normalizationFactor = useAtom(normFactorAtom)[0]
   const { shortHelper } = useAddresses()
 
   useEffect(() => {
