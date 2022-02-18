@@ -42,12 +42,25 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         uint256 flashSwapedCollateral;
         uint256 totalCollateralToDeposit;
         uint256 wPowerPerpAmount;
-
     }
 
-    event FlashWMint(address indexed depositor, uint256 vaultId, uint256 wPowerPerpAmount, uint256 swapedCollateralAmount, uint256 collateralAmount);
+    event FlashWMint(
+        address indexed depositor,
+        uint256 vaultId,
+        uint256 wPowerPerpAmount,
+        uint256 swapedCollateralAmount,
+        uint256 collateralAmount
+    );
 
-    constructor(address _controller, address _oracle, address _shortPowerPerp, address _wPowerPerpPool, address _wPowerPerp, address _weth, address _uniswapFactory) FlashControllerHelper(_uniswapFactory) {
+    constructor(
+        address _controller,
+        address _oracle,
+        address _shortPowerPerp,
+        address _wPowerPerpPool,
+        address _wPowerPerp,
+        address _weth,
+        address _uniswapFactory
+    ) FlashControllerHelper(_uniswapFactory) {
         controller = _controller;
         oracle = _oracle;
         shortPowerPerp = _shortPowerPerp;
@@ -76,7 +89,11 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         require(msg.sender == weth || msg.sender == address(controller), "Cannot receive eth");
     }
 
-    function flashWMint(uint256 _vaultId, uint256 _wPowerPerpAmount, uint256 _collateralAmount) external payable {
+    function flashWMint(
+        uint256 _vaultId,
+        uint256 _wPowerPerpAmount,
+        uint256 _collateralAmount
+    ) external payable {
         uint256 amountToFlashswap = _collateralAmount.sub(msg.value);
 
         _exactInFlashSwap(
@@ -89,7 +106,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             abi.encodePacked(_vaultId, amountToFlashswap, _collateralAmount, _wPowerPerpAmount)
         );
 
-        emit FlashWMint(msg.sender, _vaultId, _wPowerPerpAmount, amountToFlashswap, _collateralAmount);   
+        emit FlashWMint(msg.sender, _vaultId, _wPowerPerpAmount, amountToFlashswap, _collateralAmount);
     }
 
     /**
@@ -117,7 +134,11 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
 
             //will revert if data.flashSwapedCollateral is > eth balance in contract
             // IController(controller).mintWPowerPerpAmount{value: address(this).balance}(data.vaultId, data.wPowerPerpAmount, 0);
-            uint256 vaultId = IController(controller).mintWPowerPerpAmount{value: data.totalCollateralToDeposit}(data.vaultId, data.wPowerPerpAmount, 0);
+            uint256 vaultId = IController(controller).mintWPowerPerpAmount{value: data.totalCollateralToDeposit}(
+                data.vaultId,
+                data.wPowerPerpAmount,
+                0
+            );
 
             //repay the flash swap
             IWPowerPerp(wPowerPerp).transfer(wPowerPerpPool, _amountToPay);
