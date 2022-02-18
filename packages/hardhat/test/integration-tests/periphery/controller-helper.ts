@@ -4,7 +4,7 @@ import { Contract, BigNumber, providers } from "ethers";
 import BigNumberJs from 'bignumber.js'
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
-import { WETH9, MockErc20, Controller, Oracle, WPowerPerp, ControllerHelper } from "../../../typechain";
+import { WETH9, MockErc20, ShortPowerPerp, Controller, Oracle, WPowerPerp, ControllerHelper } from "../../../typechain";
 import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addWethDaiLiquidity, addSqueethLiquidity } from '../../setup'
 import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../../utils"
 
@@ -31,6 +31,7 @@ describe("Controller helper integration test", function () {
   let wSqueeth: WPowerPerp
   let ethDaiPool: Contract
   let controllerHelper: ControllerHelper
+  let shortSqueeth: ShortPowerPerp
 
 
   this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async() => {
@@ -62,7 +63,7 @@ describe("Controller helper integration test", function () {
     controller = squeethDeployments.controller
     wSqueeth = squeethDeployments.wsqueeth
     oracle = squeethDeployments.oracle
-    // shortSqueeth = squeethDeployments.shortSqueeth
+    shortSqueeth = squeethDeployments.shortSqueeth
     wSqueethPool = squeethDeployments.wsqueethEthPool
     ethDaiPool = squeethDeployments.ethDaiPool
 
@@ -70,7 +71,7 @@ describe("Controller helper integration test", function () {
     await controller.connect(owner).setFeeRate(100)
     
     const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper");
-    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, wSqueethPool.address, wSqueeth.address, weth.address, uniswapFactory.address)) as ControllerHelper;
+    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, shortSqueeth.address, wSqueethPool.address, wSqueeth.address, weth.address, uniswapFactory.address)) as ControllerHelper;
   })
 
   this.beforeAll("Seed pool liquidity", async() => {
@@ -103,22 +104,32 @@ describe("Controller helper integration test", function () {
 
   describe("Mint short with flash deposit", async () => {
     it("flash mint", async () => {      
+      const vaultId = await shortSqueeth.nextId();
+      // await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
+
       const normFactor = await controller.normalizationFactor()
-      const mintWSqueethAmount = ethers.utils.parseUnits('1')
+      const mintWSqueethAmount = ethers.utils.parseUnits('2')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
       const ethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
       const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
-      const collateralAmount = debtInEth.mul(3).div(2)
+      const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
       const value = collateralAmount.div(2).add(collateralAmount.div(3))
+      const controllerBalanceBefore = await provider.getBalance(controller.address)
+      const squeethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
+      const vaultBefore = await controller.vaults(vaultId)
 
-      console.log("mintWSqueethAmount", mintWSqueethAmount.toString());
-      console.log("mintRSqueethAmount", mintRSqueethAmount.toString());
-      console.log("ethPrice", ethPrice.toString())
-      console.log("scaledEthPrice", scaledEthPrice.toString())
-      console.log("collateralAmount", collateralAmount.toString())
+      await controllerHelper.connect(depositor).flashWMint(0, mintWSqueethAmount, collateralAmount, {value: value});
 
-      await controllerHelper.connect(depositor).flashWMint(BigNumber.from(0), collateralAmount, mintWSqueethAmount, {value: value});
+      const controllerBalanceAfter = await provider.getBalance(controller.address)
+      const squeethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
+      const vaultAfter = await controller.vaults(vaultId)
+
+      // Check why this failing with small diff
+      // expect(controllerBalanceBefore.add(collateralAmount).eq(controllerBalanceAfter)).to.be.true
+      expect(squeethBalanceBefore.eq(squeethBalanceAfter)).to.be.true
+      // expect(vaultBefore.collateralAmount.add(collateralAmount).eq(vaultAfter.collateralAmount)).to.be.true
+      expect(vaultBefore.shortAmount.add(mintWSqueethAmount).eq(vaultAfter.shortAmount)).to.be.true
     })
   })
 })

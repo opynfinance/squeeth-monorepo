@@ -23,6 +23,7 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
     using SafeMath for uint256;
+    using Address for address payable;
 
     /// @dev enum to differentiate between uniswap swap callback function source
     enum FLASH_SOURCE {
@@ -31,6 +32,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
 
     address public immutable controller;
     address public immutable oracle;
+    address public immutable shortPowerPerp;
     address public immutable wPowerPerpPool;
     address public immutable wPowerPerp;
     address public immutable weth;
@@ -45,9 +47,10 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
 
     event FlashWMint(address indexed depositor, uint256 vaultId, uint256 wPowerPerpAmount, uint256 swapedCollateralAmount, uint256 collateralAmount);
 
-    constructor(address _controller, address _oracle, address _wPowerPerpPool, address _wPowerPerp, address _weth, address _uniswapFactory) FlashControllerHelper(_uniswapFactory) {
+    constructor(address _controller, address _oracle, address _shortPowerPerp, address _wPowerPerpPool, address _wPowerPerp, address _weth, address _uniswapFactory) FlashControllerHelper(_uniswapFactory) {
         controller = _controller;
         oracle = _oracle;
+        shortPowerPerp = _shortPowerPerp;
         wPowerPerpPool = _wPowerPerpPool;
         wPowerPerp = _wPowerPerp;
         weth = _weth;
@@ -74,18 +77,19 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
     }
 
     function flashWMint(uint256 _vaultId, uint256 _wPowerPerpAmount, uint256 _collateralAmount) external payable {
-        console.log("balance this", IWETH9(weth).balanceOf(address(this)));
-        console.log("_collateralAmount.sub(msg.value),", _collateralAmount.sub(msg.value));
+        uint256 amountToFlashswap = _collateralAmount.sub(msg.value);
 
         _exactInFlashSwap(
             wPowerPerp,
             weth,
             IUniswapV3Pool(wPowerPerpPool).fee(),
             _wPowerPerpAmount,
-            _collateralAmount.sub(msg.value),
+            amountToFlashswap,
             uint8(FLASH_SOURCE.FLASH_W_MINT),
-            abi.encodePacked(_vaultId, _collateralAmount.sub(msg.value), _collateralAmount, _wPowerPerpAmount)
+            abi.encodePacked(_vaultId, amountToFlashswap, _collateralAmount, _wPowerPerpAmount)
         );
+
+        emit FlashWMint(msg.sender, _vaultId, _wPowerPerpAmount, amountToFlashswap, _collateralAmount);   
     }
 
     /**
@@ -108,20 +112,22 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_W_MINT) {
             FlashWMintData memory data = abi.decode(_callData, (FlashWMintData));
 
-            console.log("data.flashSwapedCollateral", data.flashSwapedCollateral);
-            console.log("balance this", IWETH9(weth).balanceOf(address(this)));
-
             // convert WETH to ETH as Uniswap uses WETH
-            // IWETH9(weth).withdraw(data.flashSwapedCollateral);
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
 
             //will revert if data.flashSwapedCollateral is > eth balance in contract
-            IController(controller).mintWPowerPerpAmount{value: address(this).balance}(data.vaultId, data.wPowerPerpAmount, 0);
+            // IController(controller).mintWPowerPerpAmount{value: address(this).balance}(data.vaultId, data.wPowerPerpAmount, 0);
+            uint256 vaultId = IController(controller).mintWPowerPerpAmount{value: data.totalCollateralToDeposit}(data.vaultId, data.wPowerPerpAmount, 0);
 
             //repay the flash swap
             IWPowerPerp(wPowerPerp).transfer(wPowerPerpPool, _amountToPay);
 
-            emit FlashWMint(_caller, data.vaultId, data.wPowerPerpAmount, data.flashSwapedCollateral, data.totalCollateralToDeposit);   
+            if (address(this).balance > 0) {
+                payable(_caller).sendValue(address(this).balance);
+            }
+
+            // this is a newly open vault, transfer to the user
+            if (data.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), _caller, vaultId);
         }
     }
 }
