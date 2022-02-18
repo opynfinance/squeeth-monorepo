@@ -27,7 +27,7 @@ type WalletType = {
   selectWallet: () => void
   disconnectWallet: () => void
   connected: boolean
-  balance: BigNumber | undefined
+  balance: BigNumber
   handleTransaction: any
 }
 
@@ -104,7 +104,7 @@ const WalletProvider: React.FC = ({ children }) => {
       networkId,
       signer,
       connected: !!address && networkId in Networks,
-      balance: balanceQuery.data,
+      balance: balanceQuery.data ?? new BigNumber(0),
       selectWallet: onWalletSelect,
       disconnectWallet: disconnectWallet,
       handleTransaction,
