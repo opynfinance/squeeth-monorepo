@@ -48,6 +48,7 @@ export const useController = () => {
   const [index, setIndex] = useAtom(indexAtom)
   const [currentImpliedFunding, setCurrentImpliedFunding] = useAtom(currentImpliedFundingAtom)
   const [dailyHistoricalFunding, setDailyHistoricalFunding] = useAtom(dailyHistoricalFundingAtom)
+  const impliedVol = useAtom(impliedVolAtom)[0]
 
   const { controller, ethUsdcPool, weth, usdc } = useAddresses()
   const { getTwapSafe } = useOracle()
@@ -376,7 +377,7 @@ export const useController = () => {
       const _ethPrice = new BigNumber(ethPrice)
       const p = _ethPrice
         .times(normFactor)
-        .times(Math.exp(impliedVolAtom * impliedVolAtom * 0.04794520548))
+        .times(Math.exp(impliedVol * impliedVol * 0.04794520548))
         .div(INDEX_SCALE)
 
       if (p.lt(pa)) {
