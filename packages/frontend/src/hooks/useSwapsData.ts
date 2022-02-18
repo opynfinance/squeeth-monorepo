@@ -23,7 +23,7 @@ export const useSwapsData = () => {
         origin: address || '',
         poolAddress: squeethPool?.toLowerCase(),
         recipients: [shortHelper, address || '', swapRouter],
-        recipient_not: crabStrategy,
+        recipient_not: crabStrategy?.toLowerCase(),
         orderDirection: 'asc',
       },
       fetchPolicy: 'cache-and-network',
@@ -38,6 +38,7 @@ export const useSwapsData = () => {
         origin: address || '',
         poolAddress: squeethPool?.toLowerCase(),
         recipients: [shortHelper, address || '', swapRouter],
+        recipient_not: crabStrategy?.toLowerCase(),
         orderDirection: 'asc',
       },
       updateQuery(prev, { subscriptionData }) {
