@@ -172,6 +172,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         uint256 collateralToLP
     );
 
+    event FlashWBurn(address indexed withdrawer, uint256 vaultId, uint256 wPowerPerpAmount, uint256 collateralAmount, uint256 wPowerPerpBought);    
+
     constructor(
         address _controller,
         address _oracle,
@@ -189,6 +191,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         shortPowerPerp = _shortPowerPerp;
         wPowerPerpPool = _wPowerPerpPool;
         wPowerPerp = _wPowerPerp;
+        swapRouter = _swapRouter;
         weth = _weth;
         swapRouter = _swapRouter;
         nonfungiblePositionManager = _nonfungiblePositionManager;
@@ -569,10 +572,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 data.collateralToWithdraw
             );
 
-            IWETH9(weth).deposit{value: _amountToPay}();
+            IWETH9(weth).deposit{value: data.collateralToWithdraw}();
             IWETH9(weth).transfer(wPowerPerpPool, _amountToPay);
-
-            /// TODO: buy long or send ETH back
         }
     }
 
