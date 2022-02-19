@@ -163,6 +163,23 @@ describe("Controller helper integration test", function () {
       expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
       expect(longBalanceAfter.sub(longBalanceBefore).eq(squeethToBuy)).to.be.true
     })
+
+    it("flash close short position and buy long", async () => {
+      const vaultId = (await shortSqueeth.nextId()).sub(1);
+      await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
+
+      const vaultBefore = await controller.vaults(vaultId)
+      const longBalanceBefore = await wSqueeth.balanceOf(depositor.address)
+
+      await controllerHelper.connect(depositor).flashWBurn(vaultId, vaultBefore.shortAmount, vaultBefore.collateralAmount, BigNumber.from(0));
+
+      const vaultAfter = await controller.vaults(vaultId)
+      const longBalanceAfter = await wSqueeth.balanceOf(depositor.address)
+
+      expect(vaultAfter.shortAmount.eq(BigNumber.from(0))).to.be.true
+      expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
+      expect(longBalanceAfter.gt(longBalanceBefore)).to.be.true
+    })
   })
 
   describe("Batch mint and LP", async () => {
