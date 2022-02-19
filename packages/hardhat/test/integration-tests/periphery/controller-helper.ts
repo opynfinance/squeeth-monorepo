@@ -26,6 +26,7 @@ describe("Controller helper integration test", function () {
   let weth: WETH9
   let positionManager: Contract
   let uniswapFactory: Contract
+  let uniswapRouter: Contract
   let oracle: Oracle
   let controller: Controller
   let wSqueethPool: Contract
@@ -520,6 +521,23 @@ describe("Controller helper integration test", function () {
 
         expect(Number(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).sub(vaultBefore.collateralAmount.add(ethToGet).add(wethAmountInLP)).div(one).toString()) <= 0.01).to.be.true
       }
+    })
+
+    it("flash close short position and buy long", async () => {
+      const vaultId = (await shortSqueeth.nextId()).sub(1);
+      await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
+
+      const vaultBefore = await controller.vaults(vaultId)
+      const longBalanceBefore = await wSqueeth.balanceOf(depositor.address)
+
+      await controllerHelper.connect(depositor).flashWBurn(vaultId, vaultBefore.shortAmount, vaultBefore.collateralAmount, BigNumber.from(0));
+
+      const vaultAfter = await controller.vaults(vaultId)
+      const longBalanceAfter = await wSqueeth.balanceOf(depositor.address)
+
+      expect(vaultAfter.shortAmount.eq(BigNumber.from(0))).to.be.true
+      expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
+      expect(longBalanceAfter.gt(longBalanceBefore)).to.be.true
     })
   })
 

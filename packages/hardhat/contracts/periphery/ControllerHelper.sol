@@ -193,6 +193,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         shortPowerPerp = _shortPowerPerp;
         wPowerPerpPool = _wPowerPerpPool;
         wPowerPerp = _wPowerPerp;
+        swapRouter = _swapRouter;
         weth = _weth;
         swapRouter = _swapRouter;
         nonfungiblePositionManager = _nonfungiblePositionManager;
@@ -322,6 +323,22 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             uint8(FLASH_SOURCE.FLASH_SELL_LONG_W_MINT),
             abi.encodePacked(_vaultId, _wPowerPerpAmountToMint, _collateralAmount)
         );
+
+        ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams({
+            tokenIn: weth,
+            tokenOut: wPowerPerp,
+            fee: IUniswapV3Pool(wPowerPerpPool).fee(),
+            recipient: msg.sender,
+            deadline: block.timestamp,
+            amountIn: IWETH9(weth).balanceOf(address(this)),
+            amountOutMinimum: _minToReceive,
+            sqrtPriceLimitX96: 0
+        });
+
+        uint256 amountOut = ISwapRouter(swapRouter).exactInputSingle(swapParams);
+        IWPowerPerp(wPowerPerp).transfer(msg.sender, IWPowerPerp(wPowerPerp).balanceOf(address(this)));
+
+        emit FlashWBurn(msg.sender, _vaultId, _wPowerPerpAmount, _collateralToWithdraw, amountOut);
     }
 
     /**
