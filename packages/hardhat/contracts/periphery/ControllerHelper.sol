@@ -13,6 +13,7 @@ import {IOracle} from "../interfaces/IOracle.sol";
 import {IController} from "../interfaces/IController.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 // contract
 import {FlashControllerHelper} from "./FlashControllerHelper.sol";
@@ -37,6 +38,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
     address public immutable wPowerPerpPool;
     address public immutable wPowerPerp;
     address public immutable weth;
+    address public immutable swapRouter;
 
     struct flashswapWMintData {
         uint256 vaultId;
@@ -59,6 +61,8 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         uint256 collateralAmount
     );
 
+    event FlashWBurn(address indexed withdrawer, uint256 vaultId, uint256 wPowerPerpAmount, uint256 collateralAmount, uint256 wPowerPerpBought);    
+
     constructor(
         address _controller,
         address _oracle,
@@ -66,6 +70,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         address _wPowerPerpPool,
         address _wPowerPerp,
         address _weth,
+        address _swapRouter,
         address _uniswapFactory
     ) FlashControllerHelper(_uniswapFactory) {
         controller = _controller;
@@ -73,7 +78,11 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         shortPowerPerp = _shortPowerPerp;
         wPowerPerpPool = _wPowerPerpPool;
         wPowerPerp = _wPowerPerp;
+        swapRouter = _swapRouter;
         weth = _weth;
+
+        IWPowerPerp(_wPowerPerp).approve(_swapRouter, type(uint256).max);
+        IWETH9(_weth).approve(_swapRouter, type(uint256).max);
     }
 
     /**
@@ -116,10 +125,18 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         emit FlashswapWMint(msg.sender, _vaultId, _wPowerPerpAmount, amountToFlashswap, _collateralAmount);
     }
 
-    function flashWBurn(
+    /**
+     * @notice flash close position and buy long squeeth
+     * @param _vaultId vault ID
+     * @param _wPowerPerpAmount amount of WPowerPerp to burn
+     * @param _collateralToWithdraw amount of collateral to withdraw
+     * @param _minToReceive minimum amount of long WPowerPerp to receive
+     */
+    function flashWBurnBuyLong(
         uint256 _vaultId,
         uint256 _wPowerPerpAmount,
-        uint256 _collateralToWithdraw
+        uint256 _collateralToWithdraw,
+        uint256 _minToReceive
     ) external {
         _exactOutFlashSwap(
             weth,
@@ -130,6 +147,22 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             uint8(FLASH_SOURCE.FLASH_W_BURN),
             abi.encodePacked(_vaultId, _wPowerPerpAmount, _collateralToWithdraw)
         );
+
+        ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams({
+            tokenIn: weth,
+            tokenOut: wPowerPerp,
+            fee: IUniswapV3Pool(wPowerPerpPool).fee(),
+            recipient: msg.sender,
+            deadline: block.timestamp,
+            amountIn: IWETH9(weth).balanceOf(address(this)),
+            amountOutMinimum: _minToReceive,
+            sqrtPriceLimitX96: 0
+        });
+
+        uint256 amountOut = ISwapRouter(swapRouter).exactInputSingle(swapParams);
+        IWPowerPerp(wPowerPerp).transfer(msg.sender, IWPowerPerp(wPowerPerp).balanceOf(address(this)));
+
+        emit FlashWBurn(msg.sender, _vaultId, _wPowerPerpAmount, _collateralToWithdraw, amountOut);
     }
 
     /**
@@ -181,10 +214,8 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
                 data.collateralToWithdraw
             );
 
-            IWETH9(weth).deposit{value: _amountToPay}();
+            IWETH9(weth).deposit{value: data.collateralToWithdraw}();
             IWETH9(weth).transfer(wPowerPerpPool, _amountToPay);
-
-            /// TODO: buy long or send ETH back
         }
     }
 }
