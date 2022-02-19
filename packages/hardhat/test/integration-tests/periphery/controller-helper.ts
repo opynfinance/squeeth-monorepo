@@ -6,7 +6,7 @@ import BigNumberJs from 'bignumber.js'
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { WETH9, MockErc20, ShortPowerPerp, Controller, Oracle, WPowerPerp, ControllerHelper } from "../../../typechain";
 import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addWethDaiLiquidity, addSqueethLiquidity } from '../../setup'
-import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../../utils"
+import { isSimilar, wmul, wdiv, one, oracleScaleFactor, getNow } from "../../utils"
 
 BigNumberJs.set({EXPONENTIAL_AT: 30})
 
@@ -25,6 +25,7 @@ describe("Controller helper integration test", function () {
   let weth: WETH9
   let positionManager: Contract
   let uniswapFactory: Contract
+  let uniswapRouter: Contract
   let oracle: Oracle
   let controller: Controller
   let wSqueethPool: Contract
@@ -50,6 +51,7 @@ describe("Controller helper integration test", function () {
     const uniDeployments = await deployUniswapV3(weth)
     positionManager = uniDeployments.positionManager
     uniswapFactory = uniDeployments.uniswapFactory
+    uniswapRouter = uniDeployments.swapRouter
 
     // this will not deploy a new pool, only reuse old onces
     const squeethDeployments = await deploySqueethCoreContracts(
@@ -71,7 +73,7 @@ describe("Controller helper integration test", function () {
     await controller.connect(owner).setFeeRate(0)
     
     const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper");
-    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, shortSqueeth.address, wSqueethPool.address, wSqueeth.address, weth.address, uniswapFactory.address)) as ControllerHelper;
+    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, shortSqueeth.address, wSqueethPool.address, wSqueeth.address, weth.address, uniswapRouter.address, uniswapFactory.address)) as ControllerHelper;
   })
 
   this.beforeAll("Seed pool liquidity", async() => {
@@ -104,8 +106,7 @@ describe("Controller helper integration test", function () {
 
   describe("Mint short with flash deposit", async () => {
     it("flash mint", async () => {      
-      const vaultId = await shortSqueeth.nextId();
-      // await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
+      const vaultId = (await shortSqueeth.nextId());
 
       const normFactor = await controller.normalizationFactor()
       const mintWSqueethAmount = ethers.utils.parseUnits('10')
@@ -130,6 +131,23 @@ describe("Controller helper integration test", function () {
       expect(squeethBalanceBefore.eq(squeethBalanceAfter)).to.be.true
       expect(vaultBefore.collateralAmount.add(collateralAmount).eq(vaultAfter.collateralAmount)).to.be.true
       expect(vaultBefore.shortAmount.add(mintWSqueethAmount).eq(vaultAfter.shortAmount)).to.be.true
+    })
+
+    it("flash close short position and buy long", async () => {
+      const vaultId = (await shortSqueeth.nextId()).sub(1);
+      await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
+
+      const vaultBefore = await controller.vaults(vaultId)
+      const longBalanceBefore = await wSqueeth.balanceOf(depositor.address)
+
+      await controllerHelper.connect(depositor).flashWBurn(vaultId, vaultBefore.shortAmount, vaultBefore.collateralAmount, BigNumber.from(0));
+
+      const vaultAfter = await controller.vaults(vaultId)
+      const longBalanceAfter = await wSqueeth.balanceOf(depositor.address)
+
+      expect(vaultAfter.shortAmount.eq(BigNumber.from(0))).to.be.true
+      expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
+      expect(longBalanceAfter.gt(longBalanceBefore)).to.be.true
     })
   })
 })
