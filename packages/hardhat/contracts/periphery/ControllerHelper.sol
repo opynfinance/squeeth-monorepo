@@ -69,6 +69,8 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         uint256 wPowerPerpAmountToBuy
     );
 
+    event FlashWBurn(address indexed withdrawer, uint256 vaultId, uint256 wPowerPerpAmount, uint256 collateralAmount, uint256 wPowerPerpBought);    
+
     constructor(
         address _controller,
         address _oracle,
