@@ -80,6 +80,8 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         uint256 collateralToLP
     );
 
+    event FlashWBurn(address indexed withdrawer, uint256 vaultId, uint256 wPowerPerpAmount, uint256 collateralAmount, uint256 wPowerPerpBought);    
+
     constructor(
         address _controller,
         address _oracle,
@@ -96,6 +98,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         shortPowerPerp = _shortPowerPerp;
         wPowerPerpPool = _wPowerPerpPool;
         wPowerPerp = _wPowerPerp;
+        swapRouter = _swapRouter;
         weth = _weth;
         swapRouter = _swapRouter;
         nonfungiblePositionManager = _nonfungiblePositionManager;
