@@ -106,7 +106,7 @@ describe("Controller helper integration test", function () {
 
   describe("Mint short with flash deposit", async () => {
     it("flash mint", async () => {      
-      const vaultId = (await shortSqueeth.nextId());
+      const vaultId = await shortSqueeth.nextId();
 
       const normFactor = await controller.normalizationFactor()
       const mintWSqueethAmount = ethers.utils.parseUnits('10')
@@ -122,7 +122,7 @@ describe("Controller helper integration test", function () {
       const controllerBalanceBefore = await provider.getBalance(controller.address)
       const squeethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
       const vaultBefore = await controller.vaults(vaultId)
-
+      
       await controllerHelper.connect(depositor).flashswapWMint(0, mintWSqueethAmount, collateralAmount, {value: value});
 
       const controllerBalanceAfter = await provider.getBalance(controller.address)
