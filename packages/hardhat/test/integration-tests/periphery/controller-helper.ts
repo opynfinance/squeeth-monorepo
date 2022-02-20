@@ -68,7 +68,7 @@ describe("Controller helper integration test", function () {
     ethDaiPool = squeethDeployments.ethDaiPool
 
     await controller.connect(owner).setFeeRecipient(feeRecipient.address);
-    await controller.connect(owner).setFeeRate(100)
+    await controller.connect(owner).setFeeRate(0)
     
     const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper");
     controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, shortSqueeth.address, wSqueethPool.address, wSqueeth.address, weth.address, uniswapFactory.address)) as ControllerHelper;
@@ -108,7 +108,7 @@ describe("Controller helper integration test", function () {
       // await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
 
       const normFactor = await controller.normalizationFactor()
-      const mintWSqueethAmount = ethers.utils.parseUnits('2')
+      const mintWSqueethAmount = ethers.utils.parseUnits('10')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
       const ethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
@@ -126,9 +126,9 @@ describe("Controller helper integration test", function () {
       const vaultAfter = await controller.vaults(vaultId)
 
       // Check why this failing with small diff
-      // expect(controllerBalanceBefore.add(collateralAmount).eq(controllerBalanceAfter)).to.be.true
+      expect(controllerBalanceBefore.add(collateralAmount).eq(controllerBalanceAfter)).to.be.true
       expect(squeethBalanceBefore.eq(squeethBalanceAfter)).to.be.true
-      // expect(vaultBefore.collateralAmount.add(collateralAmount).eq(vaultAfter.collateralAmount)).to.be.true
+      expect(vaultBefore.collateralAmount.add(collateralAmount).eq(vaultAfter.collateralAmount)).to.be.true
       expect(vaultBefore.shortAmount.add(mintWSqueethAmount).eq(vaultAfter.shortAmount)).to.be.true
     })
   })
