@@ -175,9 +175,9 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
     event FlashWBurn(
         address indexed withdrawer,
         uint256 vaultId,
-        uint256 wPowerPerpAmount,
-        uint256 collateralAmount,
-        uint256 wPowerPerpBought
+        uint256 wPowerPerpAmountToBurn,
+        uint256 collateralAmountToWithdraw,
+        uint256 wPowerPerpAmountToBuy
     );
 
     constructor(
@@ -578,8 +578,14 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 data.collateralToWithdraw
             );
 
-            IWETH9(weth).deposit{value: data.collateralToWithdraw}();
+            IWETH9(weth).deposit{value: _amountToPay}();
             IWETH9(weth).transfer(wPowerPerpPool, _amountToPay);
+
+            IWPowerPerp(wPowerPerp).transfer(_caller, data.wPowerPerpAmountToBuy);
+
+            if (address(this).balance > 0) {
+                payable(_caller).sendValue(address(this).balance);
+            }
         }
     }
 
