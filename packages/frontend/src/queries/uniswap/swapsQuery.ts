@@ -7,8 +7,13 @@ export const SWAPS_SUBSCRIPTION = gql`
     $tokenAddress: Bytes!
     $origin: Bytes!
     $orderDirection: String!
+    $recipient_not: Bytes!
   ) {
-    swaps(orderBy: timestamp, orderDirection: $orderDirection, where: { token1: $tokenAddress, origin: $origin }) {
+    swaps(
+      orderBy: timestamp
+      orderDirection: $orderDirection
+      where: { token1: $tokenAddress, origin: $origin, recipient_not: $recipient_not }
+    ) {
       pool {
         token0 {
           id
@@ -41,8 +46,13 @@ export const SWAPS_QUERY = gql`
     $tokenAddress: Bytes!
     $origin: Bytes!
     $orderDirection: String!
+    $recipient_not: Bytes!
   ) {
-    swaps(orderBy: timestamp, orderDirection: $orderDirection, where: { token1: $tokenAddress, origin: $origin }) {
+    swaps(
+      orderBy: timestamp
+      orderDirection: $orderDirection
+      where: { token1: $tokenAddress, origin: $origin, recipient_not: $recipient_not }
+    ) {
       pool {
         token0 {
           id

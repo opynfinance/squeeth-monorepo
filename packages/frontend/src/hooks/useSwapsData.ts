@@ -12,7 +12,7 @@ import { Networks } from '../types'
 import SWAPS_ROPSTEN_QUERY, { SWAPS_ROPSTEN_SUBSCRIPTION } from '@queries/uniswap/swapsRopstenQuery'
 
 export const useSwapsData = () => {
-  const { squeethPool, weth, oSqueeth, shortHelper, swapRouter } = useAddresses()
+  const { squeethPool, weth, oSqueeth, shortHelper, swapRouter, crabStrategy } = useAddresses()
   const { address, networkId } = useWallet()
   const { getUsdAmt } = useUsdAmount()
   const { data, subscribeToMore, refetch } = useQuery<swaps, swapsVariables>(
@@ -23,7 +23,8 @@ export const useSwapsData = () => {
         origin: address || '',
         poolAddress: squeethPool?.toLowerCase(),
         recipients: [shortHelper, address || '', swapRouter],
-        orderDirection: 'desc',
+        recipient_not: crabStrategy?.toLowerCase(),
+        orderDirection: 'asc',
       },
       fetchPolicy: 'cache-and-network',
     },
@@ -37,7 +38,8 @@ export const useSwapsData = () => {
         origin: address || '',
         poolAddress: squeethPool?.toLowerCase(),
         recipients: [shortHelper, address || '', swapRouter],
-        orderDirection: 'desc',
+        recipient_not: crabStrategy?.toLowerCase(),
+        orderDirection: 'asc',
       },
       updateQuery(prev, { subscriptionData }) {
         if (!subscriptionData.data) return prev
@@ -130,5 +132,6 @@ export const useSwapsData = () => {
     shortUsdAmount,
     swaps,
     refetch,
+    isWethToken0,
   }
 }

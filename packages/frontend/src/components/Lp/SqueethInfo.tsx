@@ -5,11 +5,12 @@ import InfoIcon from '@material-ui/icons/InfoOutlined'
 import React from 'react'
 
 import { Tooltips } from '@constants/enums'
-import { useController } from '@hooks/contracts/useController'
+import { impliedVolAtom, indexAtom, markAtom } from '@hooks/contracts/useController'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { toTokenAmount } from '@utils/calculations'
 import LPPosition from './LPPosition'
 import { useWallet } from '@context/wallet'
+import { useAtom } from 'jotai'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -47,7 +48,9 @@ const useStyles = makeStyles((theme) =>
 
 const SqueethInfo: React.FC = () => {
   const classes = useStyles()
-  const { mark, index, impliedVol } = useController()
+  const mark = useAtom(markAtom)[0]
+  const index = useAtom(indexAtom)[0]
+  const impliedVol = useAtom(impliedVolAtom)[0]
   const { getWSqueethPositionValue, getWSqueethPositionValueInETH } = useSqueethPool()
   const { address } = useWallet()
 

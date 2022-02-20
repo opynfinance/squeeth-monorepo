@@ -4,10 +4,11 @@ import OpenInNewIcon from '@material-ui/icons/OpenInNew'
 import { EtherscanPrefix } from '../../constants'
 import { TransactionType } from '@constants/enums'
 import { useWallet } from '@context/wallet'
-import { useController } from '@hooks/contracts/useController'
+import { normFactorAtom } from '@hooks/contracts/useController'
 import { useWorldContext } from '@context/world'
 import { useTransactionHistory } from '@hooks/useTransactionHistory'
 import { useUsdAmount } from '@hooks/useUsdAmount'
+import { useAtom } from 'jotai'
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
@@ -48,7 +49,7 @@ const History: React.FC = () => {
   const { transactions } = useTransactionHistory()
   const { networkId } = useWallet()
   const { ethPrice } = useWorldContext()
-  const { normFactor: normalizationFactor } = useController()
+  const normalizationFactor = useAtom(normFactorAtom)[0]
   const classes = useStyles()
   const { getUsdAmt } = useUsdAmount()
 

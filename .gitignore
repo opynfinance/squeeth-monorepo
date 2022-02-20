@@ -9,7 +9,7 @@ packages/hardhat/*.txt
 packages/hardhat/artifacts*
 packages/hardhat/typechain*
 # ignore localhost, but keep other deployment record on git
-packages/hardhat/deployments/localhost 
+packages/hardhat/deployments/localhost
 packages/react-app/src/contracts/*
 !packages/react-app/src/contracts/external_contracts.js
 packages/hardhat/cache*
@@ -48,3 +48,6 @@ yarn-error.log*
 
 # Local Netlify folder
 .netlify
+
+# asdf config
+**/.tool-versions

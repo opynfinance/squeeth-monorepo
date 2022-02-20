@@ -1,7 +1,8 @@
 import BigNumber from 'bignumber.js'
 import { useCallback, useEffect, useState } from 'react'
+import { useAtom } from 'jotai'
 
-import { useController } from './contracts/useController'
+import { indexAtom } from './contracts/useController'
 import { toTokenAmount } from '@utils/calculations'
 import { useIntervalAsync } from './useIntervalAsync'
 
@@ -13,7 +14,7 @@ import { useIntervalAsync } from './useIntervalAsync'
  */
 export const useETHPrice = (refetchIntervalSec = 30): BigNumber => {
   const [price, setPrice] = useState(new BigNumber(0))
-  const { index } = useController()
+  const index = useAtom(indexAtom)[0]
 
   const updatePrice = useCallback(async () => {
     let newPrice: BigNumber
@@ -46,4 +47,16 @@ export const getETHPriceCoingecko = async (): Promise<BigNumber> => {
   if (priceStruct === undefined) return new BigNumber(0)
   const price = priceStruct.usd
   return new BigNumber(price)
+}
+
+export const getHistoricEthPrice = async (dateString: string): Promise<BigNumber> => {
+  const pair = 'ETH/USD'
+
+  const response = await fetch(
+    `https://api.twelvedata.com/time_series?start_date=${dateString}&end_date=${dateString}&symbol=${pair}&interval=1min&apikey=${process.env.NEXT_PUBLIC_TWELVEDATA_APIKEY}`,
+  ).then((res) => res.json())
+
+  if (response.status === 'error') return new BigNumber(0)
+
+  return new BigNumber(Number(response.values[0].close))
 }

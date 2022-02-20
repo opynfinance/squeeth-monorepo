@@ -5,18 +5,19 @@ import Link from 'next/link'
 import { useMemo } from 'react'
 import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
+import { useAtom } from 'jotai'
 
 import { LPTable } from '@components/Lp/LPTable'
 import Nav from '@components/Nav'
 import History from '@components/Trade/History'
 import { PositionType } from '../src/types/'
 import { Tooltips } from '../src/constants'
-import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
+import { poolAtom } from '@hooks/contracts/useSqueethPool'
 import { useWorldContext } from '@context/world'
 import { usePnL } from '@hooks/usePositions'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { toTokenAmount } from '@utils/calculations'
-import { useController } from '../src/hooks/contracts/useController'
+import { indexAtom } from '../src/hooks/contracts/useController'
 import { CrabProvider } from '@context/crabStrategy'
 import { useCrabPosition } from '@hooks/useCrabPosition'
 import { useWallet } from '@context/wallet'
@@ -153,9 +154,7 @@ export function Positions() {
     longUnrealizedPNL,
   } = usePnL()
 
-  const { ethPrice } = useWorldContext()
-
-  const { pool } = useSqueethPool()
+  const pool = useAtom(poolAtom)[0]
 
   const { oSqueethBal } = useWorldContext()
   const { address } = useWallet()
@@ -177,7 +176,7 @@ export function Positions() {
     activePositions,
   } = usePositions()
 
-  const { index } = useController()
+  const index = useAtom(indexAtom)[0]
   const {
     depositedEth,
     depositedUsd,
@@ -258,12 +257,17 @@ export function Positions() {
                   <Tooltip title={Tooltips.UnrealizedPnL}>
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
-                  {isPnLLoading || longGain.isLessThanOrEqualTo(-100) || !longGain.isFinite() ? (
+                  {isPnLLoading ||
+                  longGain.isLessThanOrEqualTo(-100) ||
+                  !longGain.isFinite() ||
+                  longUnrealizedPNL.loading ? (
                     <Typography variant="body1">Loading</Typography>
                   ) : (
                     <>
                       <Typography variant="body1" className={longGain.isLessThan(0) ? classes.red : classes.green}>
-                        $ {longUnrealizedPNL?.usdValue.toFixed(2)} ({longUnrealizedPNL?.ethValue.toFixed(5)} ETH)
+                        $ {longUnrealizedPNL.usd.toFixed(2)} ({longUnrealizedPNL.eth.toFixed(5)} ETH)
+                        {/* ${sellQuote.amountOut.minus(wethAmount.abs()).times(toTokenAmount(index, 18).sqrt()).toFixed(2)}{' '}
+                        ({sellQuote.amountOut.minus(wethAmount.abs()).toFixed(5)} ETH) */}
                       </Typography>
                       <Typography variant="caption" className={longGain.isLessThan(0) ? classes.red : classes.green}>
                         {(longGain || 0).toFixed(2)}%
@@ -326,12 +330,16 @@ export function Positions() {
                   >
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
-                  {isPositionLoading || shortGain.isLessThanOrEqualTo(-100) || !shortGain.isFinite() ? (
+                  {isPositionLoading ||
+                  shortGain.isLessThanOrEqualTo(-100) ||
+                  !shortGain.isFinite() ||
+                  longUnrealizedPNL.loading ? (
                     <Typography variant="body1">Loading</Typography>
                   ) : (
                     <>
                       <Typography variant="body1" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
-                        $ {shortUnrealizedPNL.toFixed(2)} ({shortUnrealizedPNL.dividedBy(ethPrice).toFixed(5)} ETH)
+                        $ {shortUnrealizedPNL.usd.toFixed(2)} ({shortUnrealizedPNL.eth.toFixed(5)} ETH)
+                        {/* $ {shortUnrealizedPNL.usd.toFixed(2)} ({wethAmount.minus(buyQuote).toFixed(5)} ETH) */}
                       </Typography>
                       <Typography variant="caption" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
                         {(shortGain || 0).toFixed(2)}%

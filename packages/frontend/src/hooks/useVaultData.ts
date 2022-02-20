@@ -1,16 +1,11 @@
-import { useQuery } from '@apollo/client'
 import BigNumber from 'bignumber.js'
 import { useEffect, useState } from 'react'
+import { useAtom } from 'jotai'
 
 import { Vault } from '../types'
-import { OSQUEETH_DECIMALS } from '../constants'
-import { VAULT_QUERY } from '@queries/squeeth/vaultsQuery'
-import { Vault_vault } from '@queries/squeeth/__generated__/Vault'
-
 import { useWallet } from '@context/wallet'
-import { useController } from '@hooks/contracts/useController'
-import { squeethClient } from '@utils/apollo-client'
-import { toTokenAmount } from '@utils/calculations'
+import { useController, normFactorAtom } from '@hooks/contracts/useController'
+import { useSqueethPool } from './contracts/useSqueethPool'
 
 export const useVaultData = (vid: number) => {
   const [vault, setVault] = useState<Vault | null>(null)
@@ -20,43 +15,37 @@ export const useVaultData = (vid: number) => {
   const [collatPercent, setCollatPercent] = useState(0)
   const [isVaultLoading, setVaultLoading] = useState(true)
 
-  const { getCollatRatioAndLiqPrice, normFactor } = useController()
-  const { address, connected, networkId } = useWallet()
+  const { getCollatRatioAndLiqPrice, getVault } = useController()
+  const normFactor = useAtom(normFactorAtom)[0]
+  const { ready } = useSqueethPool()
+  const { address, connected } = useWallet()
 
-  const { data, loading: isDataLoading } = useQuery<{ vault: Vault_vault }>(VAULT_QUERY, {
-    client: squeethClient[networkId],
-    fetchPolicy: 'cache-and-network',
-    variables: {
-      vaultID: vid,
-    },
-  })
+  const updateVault = async () => {
+    if (!connected || !ready) return
 
-  const _vault = data?.vault
-  const updateVault = () => {
-    if (!_vault || !connected) return
+    const _vault = await getVault(vid)
 
-    setVault({
-      id: Number(_vault.id),
-      NFTCollateralId: _vault.NftCollateralId,
-      collateralAmount: toTokenAmount(new BigNumber(_vault.collateralAmount), 18),
-      shortAmount: toTokenAmount(new BigNumber(_vault.shortAmount), OSQUEETH_DECIMALS),
-      operator: _vault.operator,
+    if (!_vault) return
+    console.log(_vault.collateralAmount.toString())
+
+    setVault(_vault)
+    setExistingCollat(_vault.collateralAmount)
+
+    getCollatRatioAndLiqPrice(
+      _vault.collateralAmount,
+      _vault.shortAmount,
+      _vault.NFTCollateralId ? Number(_vault.NFTCollateralId) : undefined,
+    ).then(({ collateralPercent, liquidationPrice }) => {
+      setExistingCollatPercent(collateralPercent)
+      setCollatPercent(collateralPercent)
+      setExistingLiqPrice(new BigNumber(liquidationPrice))
+      setVaultLoading(false)
     })
-    setExistingCollat(toTokenAmount(new BigNumber(_vault.collateralAmount), 18))
-
-    getCollatRatioAndLiqPrice(new BigNumber(_vault.collateralAmount), new BigNumber(_vault.shortAmount)).then(
-      ({ collateralPercent, liquidationPrice }) => {
-        setExistingCollatPercent(collateralPercent)
-        setCollatPercent(collateralPercent)
-        setExistingLiqPrice(new BigNumber(liquidationPrice))
-        setVaultLoading(false)
-      },
-    )
   }
 
   useEffect(() => {
     updateVault()
-  }, [vid, normFactor.toString(), address, connected, _vault?.id])
+  }, [vid, normFactor.toString(), address, connected, ready])
 
   return {
     vault,
@@ -65,7 +54,7 @@ export const useVaultData = (vid: number) => {
     updateVault,
     setCollatPercent,
     collatPercent,
-    isVaultLoading: isVaultLoading || isDataLoading,
+    isVaultLoading: isVaultLoading,
     setVaultLoading,
     existingCollat,
   }

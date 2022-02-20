@@ -14,21 +14,32 @@ import { VaultHistory } from '../queries/squeeth/__generated__/VaultHistory'
 import { NFTManagers } from '../types'
 import { toTokenAmount } from '@utils/calculations'
 import { squeethClient } from '@utils/apollo-client'
+
 import { useSqueethPool } from './contracts/useSqueethPool'
+import { indexAtom } from './contracts/useController'
 import { useAddresses } from './useAddress'
-import { calcUnrealizedPnl, calcETHCollateralPnl, calcLongUnrealizedPnl, calcShortGain } from '../lib/pnl'
+import { calcDollarShortUnrealizedpnl, calcETHCollateralPnl, calcDollarLongUnrealizedpnl } from '../lib/pnl'
+import { BIG_ZERO } from '../constants/'
+import { useAtom } from 'jotai'
 
 export const usePnL = () => {
+  const [ethCollateralPnl, setEthCollateralPnl] = useState(BIG_ZERO)
+  const [shortUnrealizedPNL, setShortUnrealizedPNL] = useState({ usd: BIG_ZERO, eth: BIG_ZERO, loading: true })
+  const [longUnrealizedPNL, setLongUnrealizedPNL] = useState({ usd: BIG_ZERO, eth: BIG_ZERO, loading: true })
   const {
     squeethAmount,
-    wethAmount,
     shortVaults,
     loading: positionLoading,
+    swaps,
+    isWethToken0,
+    totalUSDFromBuy,
+    totalUSDFromSell,
     firstValidVault,
-    shortUsdAmount,
+    existingCollat,
   } = usePositions()
+  const [index] = useAtom(indexAtom)
 
-  const { ethPrice, ethPriceMap } = useWorldContext()
+  // const { ethPrice } = useWorldContext()
   const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
   const { networkId } = useWallet()
 
@@ -50,10 +61,15 @@ export const usePnL = () => {
     },
   })
   const vaultHistory = data?.vaultHistories
-  const ethCollateralPnl = useMemo(
-    () => calcETHCollateralPnl(vaultHistory, ethPriceMap, ethPrice),
-    [vaultHistory?.length, ethPrice, ethPriceMap],
-  )
+
+  useEffect(() => {
+    ;(async () => {
+      if (vaultHistory?.length && !index.isZero() && !existingCollat.isZero()) {
+        const result = await calcETHCollateralPnl(vaultHistory, toTokenAmount(index, 18).sqrt(), existingCollat)
+        setEthCollateralPnl(result)
+      }
+    })()
+  }, [index.toString(), existingCollat.toString(), vaultHistory?.length])
 
   useEffect(() => {
     if (!ready || positionLoading) return
@@ -61,42 +77,63 @@ export const usePnL = () => {
     const p1 = getSellQuote(squeethAmount).then(setSellQuote)
     const p2 = getBuyQuote(squeethAmount).then((val) => setBuyQuote(val.amountIn))
     Promise.all([p1, p2]).then(() => setLoading(false))
-  }, [ready, squeethAmount.toString(), shortVaults?.length, positionLoading])
+  }, [getBuyQuote, getSellQuote, positionLoading, ready, squeethAmount.toString()])
 
   useEffect(() => {
     if (sellQuote.amountOut.isZero() && !loading) {
       setLongGain(new BigNumber(0))
       return
     }
-    const _currentValue = sellQuote.amountOut.times(100).div(wethAmount.absoluteValue())
-    const _gain = _currentValue.minus(100)
+    // const _currentValue = sellQuote.amountOut.times(100).div(wethAmount.absoluteValue())
+    const _gain = longUnrealizedPNL.usd.dividedBy(totalUSDFromBuy).times(100)
     setLongGain(_gain)
-  }, [ethPrice.toString(), wethAmount.toString(), sellQuote.amountOut.toString(), squeethAmount.toString()])
-
-  const shortUnrealizedPNL = useMemo(
-    () => calcUnrealizedPnl({ wethAmount, buyQuote, ethPrice }),
-    [buyQuote.toString(), ethPrice.toString(), wethAmount.toString()],
-  )
-
-  const longUnrealizedPNL = useMemo(
-    () => calcLongUnrealizedPnl({ sellQuote: sellQuote.amountOut, wethAmount, ethPrice }),
-    [ethPrice.toString(), sellQuote.amountOut.toString(), wethAmount.toString()],
-  )
+  }, [loading, longUnrealizedPNL.usd.toString(), sellQuote.amountOut.toString(), totalUSDFromBuy])
 
   useEffect(() => {
-    if (squeethAmount.isZero()) {
+    if (squeethAmount.isZero() || shortUnrealizedPNL.usd.isZero()) {
       setLongGain(new BigNumber(0))
       return
     }
-    const _gain = calcShortGain({ shortUnrealizedPNL, usdAmount: shortUsdAmount, wethAmount, ethPrice })
+    const _gain = shortUnrealizedPNL.usd
+      .dividedBy(totalUSDFromSell.plus(existingCollat.times(toTokenAmount(index, 18).sqrt())))
+      .times(100)
+
     setShortGain(_gain)
   }, [
-    ethPrice.toString(),
-    shortUnrealizedPNL.toString(),
+    index.toString(),
+    existingCollat.toString(),
+    shortUnrealizedPNL.usd.toString(),
     squeethAmount.toString(),
-    shortUsdAmount.toString(),
-    wethAmount.toString(),
+    totalUSDFromSell.toString(),
   ])
+
+  useEffect(() => {
+    ;(async () => {
+      if (swaps?.length && !buyQuote.isZero() && !index.isZero() && !ethCollateralPnl.isZero()) {
+        const pnl = await calcDollarShortUnrealizedpnl(swaps, isWethToken0, buyQuote, toTokenAmount(index, 18).sqrt())
+        setShortUnrealizedPNL({
+          usd: pnl.plus(ethCollateralPnl),
+          eth: pnl.plus(ethCollateralPnl).div(toTokenAmount(index, 18).sqrt()).isFinite()
+            ? pnl.plus(ethCollateralPnl).div(toTokenAmount(index, 18).sqrt())
+            : BIG_ZERO,
+          loading: false,
+        })
+      } else {
+        setShortUnrealizedPNL((prevState) => ({ ...prevState, loading: true }))
+      }
+    })()
+  }, [buyQuote.toString(), ethCollateralPnl.toString(), index.toString(), isWethToken0, swaps?.length])
+
+  useEffect(() => {
+    ;(async () => {
+      if (swaps?.length && !sellQuote.amountOut.isZero() && !index.isZero()) {
+        const pnl = await calcDollarLongUnrealizedpnl(swaps, isWethToken0, sellQuote, toTokenAmount(index, 18).sqrt())
+        setLongUnrealizedPNL((prevState) => ({ ...prevState, ...pnl, loading: false }))
+      } else {
+        setLongUnrealizedPNL((prevState) => ({ ...prevState, loading: true }))
+      }
+    })()
+  }, [index.toString(), isWethToken0, sellQuote.amountOut.toString(), swaps?.length])
 
   return {
     longGain,

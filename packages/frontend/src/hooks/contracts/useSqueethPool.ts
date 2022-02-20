@@ -13,11 +13,21 @@ import { fromTokenAmount, parseSlippageInput, toTokenAmount } from '@utils/calcu
 import { useAddresses } from '../useAddress'
 import useUniswapTicks from '../useUniswapTicks'
 import { useWorldContext } from '@context/world'
+import { atom, useAtom } from 'jotai'
 
 // const NETWORK_QUOTE_GAS_OVERRIDE: { [chainId: number]: number } = {
 //   [Networks.ARBITRUM_RINKEBY]: 6_000_000,
 // }
 // const DEFAULT_GAS_QUOTE = 2_000_000
+
+export const poolAtom = atom<Pool | undefined>(undefined)
+export const wethTokenAtom = atom<Token | undefined>(undefined)
+export const squeethTokenAtom = atom<Token | undefined>(undefined)
+export const poolTokensAtom = atom<any>({})
+export const squeethInitialPriceAtom = atom(new BigNumber(0))
+export const squeethPriceAtom = atom(new BigNumber(0))
+export const wethPriceAtom = atom(new BigNumber(0))
+export const readyAtom = atom(false)
 
 /**
  * Hook to interact with WETH contract
@@ -25,13 +35,14 @@ import { useWorldContext } from '@context/world'
 export const useSqueethPool = () => {
   const [squeethContract, setSqueethContract] = useState<Contract>()
   const [swapRouterContract, setSwapRouterContract] = useState<Contract>()
-  const [pool, setPool] = useState<Pool>()
-  const [wethToken, setWethToken] = useState<Token>()
-  const [squeethToken, setSqueethToken] = useState<Token>()
-  const [squeethInitialPrice, setSqueethInitialPrice] = useState<BigNumber>(new BigNumber(0))
-  const [squeethPrice, setSqueethPrice] = useState<BigNumber>(new BigNumber(0))
-  const [wethPrice, setWethPrice] = useState<BigNumber>(new BigNumber(0))
-  const [ready, setReady] = useState(false)
+  const [pool, setPool] = useAtom(poolAtom)
+  const [wethToken, setWethToken] = useAtom(wethTokenAtom)
+  const [squeethToken, setSqueethToken] = useAtom(squeethTokenAtom)
+  const [poolTokens, setPoolTokens] = useAtom(poolTokensAtom)
+  const [squeethInitialPrice, setSqueethInitialPrice] = useAtom(squeethInitialPriceAtom)
+  const [squeethPrice, setSqueethPrice] = useAtom(squeethPriceAtom)
+  const [wethPrice, setWethPrice] = useAtom(wethPriceAtom)
+  const [ready, setReady] = useAtom(readyAtom)
   // const [tvl, setTVL] = useState(0)
   const { ethPrice } = useWorldContext()
 
@@ -72,10 +83,10 @@ export const useSqueethPool = () => {
             ),
           )
         }
+        setReady(true)
       })
       .catch(console.log)
 
-    setReady(true)
     setWethPrice(
       toTokenAmount(
         new BigNumber(
@@ -121,6 +132,11 @@ export const useSqueethPool = () => {
     )
 
     if (isMounted) {
+      setPoolTokens({
+        pool,
+        wethToken: isWethToken0 ? TokenA : TokenB,
+        squeethToken: isWethToken0 ? TokenB : TokenA,
+      })
       setPool(pool)
       setWethToken(isWethToken0 ? TokenA : TokenB)
       setSqueethToken(isWethToken0 ? TokenB : TokenA)
@@ -308,38 +324,42 @@ export const useSqueethPool = () => {
   }
 
   //If I input an exact amount of squeeth I want to buy, tells me how much ETH I need to pay to purchase that squeeth
-  const getBuyQuote = async (squeethAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
-    const emptyState = {
-      amountIn: new BigNumber(0),
-      maximumAmountIn: new BigNumber(0),
-      priceImpact: '0',
-    }
-
-    if (!squeethAmount || !pool) return emptyState
-
-    try {
-      //WETH is input token, squeeth is output token. I'm using WETH to buy Squeeth
-      const route = new Route([pool], wethToken!, squeethToken!)
-      //getting the amount of ETH I need to put in to get an exact amount of squeeth I inputted out
-      const trade = await Trade.exactOut(
-        route,
-        CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0)),
-      )
-
-      //the amount of ETH I need to put in
-      return {
-        amountIn: new BigNumber(trade.inputAmount.toSignificant(18)),
-        maximumAmountIn: new BigNumber(
-          trade.maximumAmountIn(parseSlippageInput(slippageAmount.toString())).toSignificant(18),
-        ),
-        priceImpact: trade.priceImpact.toFixed(2),
+  const getBuyQuote = useCallback(
+    async (squeethAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
+      const emptyState = {
+        amountIn: new BigNumber(0),
+        maximumAmountIn: new BigNumber(0),
+        priceImpact: '0',
       }
-    } catch (e) {
-      console.log(e)
-    }
 
-    return emptyState
-  }
+      if (!squeethAmount || !pool) return emptyState
+
+      try {
+        const { wethToken, squeethToken } = poolTokens
+        //WETH is input token, squeeth is output token. I'm using WETH to buy Squeeth
+        const route = new Route([pool], wethToken!, squeethToken!)
+        //getting the amount of ETH I need to put in to get an exact amount of squeeth I inputted out
+        const trade = await Trade.exactOut(
+          route,
+          CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0)),
+        )
+
+        //the amount of ETH I need to put in
+        return {
+          amountIn: new BigNumber(trade.inputAmount.toSignificant(18)),
+          maximumAmountIn: new BigNumber(
+            trade.maximumAmountIn(parseSlippageInput(slippageAmount.toString())).toSignificant(18),
+          ),
+          priceImpact: trade.priceImpact.toFixed(2),
+        }
+      } catch (e) {
+        console.log(e)
+      }
+
+      return emptyState
+    },
+    [pool?.token0Price, wethToken?.address, squeethToken?.address],
+  )
 
   //If I input an exact amount of ETH I want to spend, tells me how much Squeeth I'd purchase
   const getBuyQuoteForETH = async (ETHAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
@@ -352,6 +372,7 @@ export const useSqueethPool = () => {
     if (!ETHAmount || !pool) return emptyState
 
     try {
+      const { wethToken, squeethToken } = poolTokens
       //WETH is input token, squeeth is output token. I'm using WETH to buy Squeeth
       const route = new Route([pool], wethToken!, squeethToken!)
       //getting the amount of squeeth I'd get out for putting in an exact amount of ETH
@@ -376,37 +397,41 @@ export const useSqueethPool = () => {
   }
 
   //I input an exact amount of squeeth I want to sell, tells me how much ETH I'd receive
-  const getSellQuote = async (squeethAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
-    const emptyState = {
-      amountOut: new BigNumber(0),
-      minimumAmountOut: new BigNumber(0),
-      priceImpact: '0',
-    }
-    if (!squeethAmount || !pool) return emptyState
-
-    try {
-      //squeeth is input token, WETH is output token. I'm selling squeeth for WETH
-      const route = new Route([pool], squeethToken!, wethToken!)
-      //getting the amount of ETH I'd receive for inputting the amount of squeeth I want to sell
-      const trade = await Trade.exactIn(
-        route,
-        CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0)),
-      )
-
-      //the amount of ETH I'm receiving
-      return {
-        amountOut: new BigNumber(trade.outputAmount.toSignificant(18)),
-        minimumAmountOut: new BigNumber(
-          trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(18),
-        ),
-        priceImpact: trade.priceImpact.toFixed(2),
+  const getSellQuote = useCallback(
+    async (squeethAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
+      const emptyState = {
+        amountOut: new BigNumber(0),
+        minimumAmountOut: new BigNumber(0),
+        priceImpact: '0',
       }
-    } catch (e) {
-      console.log(e)
-    }
+      if (!squeethAmount || !pool) return emptyState
 
-    return emptyState
-  }
+      try {
+        const { wethToken, squeethToken } = poolTokens
+        //squeeth is input token, WETH is output token. I'm selling squeeth for WETH
+        const route = new Route([pool], squeethToken!, wethToken!)
+        //getting the amount of ETH I'd receive for inputting the amount of squeeth I want to sell
+        const trade = await Trade.exactIn(
+          route,
+          CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0)),
+        )
+
+        //the amount of ETH I'm receiving
+        return {
+          amountOut: new BigNumber(trade.outputAmount.toSignificant(18)),
+          minimumAmountOut: new BigNumber(
+            trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(18),
+          ),
+          priceImpact: trade.priceImpact.toFixed(2),
+        }
+      } catch (e) {
+        console.log(e)
+      }
+
+      return emptyState
+    },
+    [pool?.token0Price, wethToken?.address, squeethToken?.address],
+  )
 
   //I input an exact amount of ETH I want to receive, tells me how much squeeth I'd need to sell
   const getSellQuoteForETH = async (ETHAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
@@ -418,6 +443,7 @@ export const useSqueethPool = () => {
     if (!ETHAmount || !pool) return emptyState
 
     try {
+      const { wethToken, squeethToken } = poolTokens
       //squeeth is input token, WETH is output token. I'm selling squeeth for WETH
       const route = new Route([pool], squeethToken!, wethToken!)
       //getting the amount of squeeth I'd need to sell to receive my desired amount of ETH
