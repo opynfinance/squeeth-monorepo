@@ -242,21 +242,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             abi.encodePacked(_vaultId, _wPowerPerpAmountToMint, _collateralAmount)
         );
 
-        ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams({
-            tokenIn: weth,
-            tokenOut: wPowerPerp,
-            fee: IUniswapV3Pool(wPowerPerpPool).fee(),
-            recipient: msg.sender,
-            deadline: block.timestamp,
-            amountIn: IWETH9(weth).balanceOf(address(this)),
-            amountOutMinimum: _minToReceive,
-            sqrtPriceLimitX96: 0
-        });
-
-        uint256 amountOut = ISwapRouter(swapRouter).exactInputSingle(swapParams);
-        IWPowerPerp(wPowerPerp).transfer(msg.sender, IWPowerPerp(wPowerPerp).balanceOf(address(this)));
-
-        emit FlashWBurn(msg.sender, _vaultId, _wPowerPerpAmount, _collateralToWithdraw, amountOut);
+        emit FlashWBurn(msg.sender, _vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw, _wPowerPerpAmountToBuy);
     }
 
     /**
@@ -496,6 +482,11 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             IWPowerPerp(wPowerPerp).transfer(wPowerPerpPool, _amountToPay);
         } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP) {
             IWETH9(weth).transfer(wPowerPerpPool, _amountToPay);
+            IWPowerPerp(wPowerPerp).transfer(_caller, data.wPowerPerpAmountToBuy);
+
+            if (address(this).balance > 0) {
+                payable(_caller).sendValue(address(this).balance);
+            }
         }
     }
 }
