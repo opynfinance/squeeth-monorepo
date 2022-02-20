@@ -114,7 +114,10 @@ describe("Controller helper integration test", function () {
       const scaledEthPrice = ethPrice.div(10000)
       const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
       const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
-      const value = collateralAmount.div(2).add(collateralAmount.div(3))
+      const squeethEthPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
+      const ethAmountOut = mintWSqueethAmount.mul(squeethEthPrice).div(one)
+      const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
+      const value = collateralAmount.sub(ethAmountOut.mul(one.sub(slippage)).div(one))
       const controllerBalanceBefore = await provider.getBalance(controller.address)
       const squeethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
       const vaultBefore = await controller.vaults(vaultId)
@@ -125,7 +128,6 @@ describe("Controller helper integration test", function () {
       const squeethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
       const vaultAfter = await controller.vaults(vaultId)
 
-      // Check why this failing with small diff
       expect(controllerBalanceBefore.add(collateralAmount).eq(controllerBalanceAfter)).to.be.true
       expect(squeethBalanceBefore.eq(squeethBalanceAfter)).to.be.true
       expect(vaultBefore.collateralAmount.add(collateralAmount).eq(vaultAfter.collateralAmount)).to.be.true
