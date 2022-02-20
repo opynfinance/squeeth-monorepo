@@ -154,15 +154,21 @@ describe("Controller helper integration test", function () {
 
       const vaultBefore = await controller.vaults(vaultId)
       const longBalanceBefore = await wSqueeth.balanceOf(depositor.address)
+      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
+      const squeethToBuy = vaultBefore.collateralAmount.div(squeethPrice)
 
-      await controllerHelper.connect(depositor).flashWBurnBuyLong(vaultId, vaultBefore.shortAmount, vaultBefore.collateralAmount, BigNumber.from(0));
+      console.log("squeethPrice", squeethPrice.toString())
+      console.log("squeethToBuy", squeethToBuy.toString())
+
+      await controllerHelper.connect(depositor).flashswapWBurnBuyLong(vaultId, vaultBefore.shortAmount, squeethToBuy, vaultBefore.collateralAmount, vaultBefore.collateralAmount);
 
       const vaultAfter = await controller.vaults(vaultId)
       const longBalanceAfter = await wSqueeth.balanceOf(depositor.address)
 
       expect(vaultAfter.shortAmount.eq(BigNumber.from(0))).to.be.true
       expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
-      expect(longBalanceAfter.gt(longBalanceBefore)).to.be.true
+      // expect(longBalanceAfter.gt(longBalanceBefore)).to.be.true
+      expect(longBalanceAfter.sub(longBalanceBefore).eq(squeethToBuy)).to.be.true
     })
   })
 })
