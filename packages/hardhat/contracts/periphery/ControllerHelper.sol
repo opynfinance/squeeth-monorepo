@@ -45,12 +45,6 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         FLASH_W_BURN
     }
 
-    /// @dev enum to differentiate between uniswap swap callback function source
-    enum FLASH_SOURCE {
-        FLASH_W_MINT,
-        FLASH_W_BURN
-    }
-
     address public immutable controller;
     address public immutable oracle;
     address public immutable shortPowerPerp;
@@ -229,18 +223,6 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         emit FlashWBurn(msg.sender, _vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw, _wPowerPerpAmountToBuy);
     }
 
-    function flashWBurn(uint256 _vaultId, uint256 _wPowerPerpAmount, uint256 _collateralToWithdraw) external {
-        _exactOutFlashSwap(
-            weth,
-            wPowerPerp,
-            IUniswapV3Pool(wPowerPerpPool).fee(),
-            _wPowerPerpAmount,
-            _collateralToWithdraw,
-            uint8(FLASH_SOURCE.FLASH_W_BURN),
-            abi.encodePacked(_vaultId, _wPowerPerpAmount, _collateralToWithdraw)
-        );
-    }
-
     function batchMintLp(uint256 _vaultId, uint256 _wPowerPerpAmount, uint256 _collateralToMint, uint256 _collateralToLP, int24 _lowerTick, int24 _upperTick) external payable {
         require(msg.value == _collateralToMint.add(_collateralToLP), "Wrong ETH sent");
 
@@ -257,8 +239,8 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
                 token0: token0,
                 token1: token1,
                 fee: IUniswapV3Pool(wPowerPerpPool).fee(),
-                tickLower: TickMath.MIN_TICK,
-                tickUpper: TickMath.MAX_TICK,
+                tickLower: _lowerTick,
+                tickUpper: _upperTick,
                 amount0Desired: token0 == wPowerPerp ? _wPowerPerpAmount : _collateralToLP,
                 amount1Desired: token1 == wPowerPerp ? _wPowerPerpAmount : _collateralToLP,
                 amount0Min: 0,
@@ -598,16 +580,6 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             if (address(this).balance > 0) {
                 payable(_caller).sendValue(address(this).balance);
             }
-        }
-        else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_W_BURN) {
-            FlashWBurnData memory data = abi.decode(_callData, (FlashWBurnData));
-
-            IController(controller).burnWPowerPerpAmount(data.vaultId, data.wPowerPerpAmount, data.collateralToWithdraw);
-
-            IWETH9.deposit(_amountToPay);
-            IWETH9(weth).transfer(wPowerPerpPool, _amountToPay);
-
-            /// TODO: buy long or send ETH back
         }
     }
 }
