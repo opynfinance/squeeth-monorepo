@@ -140,7 +140,7 @@ describe("Controller helper integration test", function () {
       const vaultBefore = await controller.vaults(vaultId)
       const longBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
-      await controllerHelper.connect(depositor).flashWBurn(vaultId, vaultBefore.shortAmount, vaultBefore.collateralAmount, BigNumber.from(0));
+      await controllerHelper.connect(depositor).flashWBurnBuyLong(vaultId, vaultBefore.shortAmount, vaultBefore.collateralAmount, BigNumber.from(0));
 
       const vaultAfter = await controller.vaults(vaultId)
       const longBalanceAfter = await wSqueeth.balanceOf(depositor.address)
