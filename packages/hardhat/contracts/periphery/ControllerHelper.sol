@@ -37,14 +37,14 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
     address public immutable wPowerPerp;
     address public immutable weth;
 
-    struct FlashWMintData {
+    struct flashswapWMintData {
         uint256 vaultId;
         uint256 flashSwapedCollateral;
         uint256 totalCollateralToDeposit;
         uint256 wPowerPerpAmount;
     }
 
-    event FlashWMint(
+    event flashswapWMint(
         address indexed depositor,
         uint256 vaultId,
         uint256 wPowerPerpAmount,
@@ -89,7 +89,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         require(msg.sender == weth || msg.sender == address(controller), "Cannot receive eth");
     }
 
-    function flashWMint(
+    function flashswapWMint(
         uint256 _vaultId,
         uint256 _wPowerPerpAmount,
         uint256 _collateralAmount
@@ -106,7 +106,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             abi.encodePacked(_vaultId, amountToFlashswap, _collateralAmount, _wPowerPerpAmount)
         );
 
-        emit FlashWMint(msg.sender, _vaultId, _wPowerPerpAmount, amountToFlashswap, _collateralAmount);
+        emit flashswapWMint(msg.sender, _vaultId, _wPowerPerpAmount, amountToFlashswap, _collateralAmount);
     }
 
     /**
@@ -127,7 +127,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         uint8 _callSource
     ) internal override {
         if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_W_MINT) {
-            FlashWMintData memory data = abi.decode(_callData, (FlashWMintData));
+            flashswapWMintData memory data = abi.decode(_callData, (flashswapWMintData));
 
             // convert WETH to ETH as Uniswap uses WETH
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));

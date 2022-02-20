@@ -119,7 +119,7 @@ describe("Controller helper integration test", function () {
       const squeethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
       const vaultBefore = await controller.vaults(vaultId)
 
-      await controllerHelper.connect(depositor).flashWMint(0, mintWSqueethAmount, collateralAmount, {value: value});
+      await controllerHelper.connect(depositor).flashswapWMint(0, mintWSqueethAmount, collateralAmount, {value: value});
 
       const controllerBalanceAfter = await provider.getBalance(controller.address)
       const squeethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
