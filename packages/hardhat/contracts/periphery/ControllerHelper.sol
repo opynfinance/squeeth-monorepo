@@ -51,6 +51,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         uint256 wPowerPerpAmountToBurn;
         uint256 wPowerPerpAmountToBuy;
         uint256 collateralToWithdraw;
+        uint256 collateralToBuyWith;
     }
 
     event FlashswapWMint(
