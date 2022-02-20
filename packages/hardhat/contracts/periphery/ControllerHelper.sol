@@ -39,12 +39,12 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
 
     struct flashswapWMintData {
         uint256 vaultId;
-        uint256 flashSwapedCollateral;
+        uint256 flashSwappedCollateral;
         uint256 totalCollateralToDeposit;
         uint256 wPowerPerpAmount;
     }
 
-    event flashswapWMint(
+    event FlashswapWMint(
         address indexed depositor,
         uint256 vaultId,
         uint256 wPowerPerpAmount,
@@ -106,7 +106,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             abi.encodePacked(_vaultId, amountToFlashswap, _collateralAmount, _wPowerPerpAmount)
         );
 
-        emit flashswapWMint(msg.sender, _vaultId, _wPowerPerpAmount, amountToFlashswap, _collateralAmount);
+        emit FlashswapWMint(msg.sender, _vaultId, _wPowerPerpAmount, amountToFlashswap, _collateralAmount);
     }
 
     /**
@@ -132,7 +132,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             // convert WETH to ETH as Uniswap uses WETH
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
 
-            //will revert if data.flashSwapedCollateral is > eth balance in contract
+            //will revert if data.flashSwappedCollateral is > eth balance in contract
             // IController(controller).mintWPowerPerpAmount{value: address(this).balance}(data.vaultId, data.wPowerPerpAmount, 0);
             uint256 vaultId = IController(controller).mintWPowerPerpAmount{value: data.totalCollateralToDeposit}(
                 data.vaultId,
