@@ -106,8 +106,6 @@ describe("Controller helper integration test", function () {
 
   describe("Mint short with flash deposit", async () => {
     it("flash mint", async () => {      
-      const vaultId = await shortSqueeth.nextId();
-
       const normFactor = await controller.normalizationFactor()
       const mintWSqueethAmount = ethers.utils.parseUnits('10')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
