@@ -125,10 +125,10 @@ const PositionsProvider: React.FC = ({ children }) => {
   }, [depositedSqueeth.toString(), withdrawnSqueeth.toString()])
 
   const { finalSqueeth, finalWeth } = useMemo(() => {
-    const finalSqueeth = finalShortSqueeth.gte(0) ? finalShortSqueeth : squeethAmount
+    const finalSqueeth = finalShortSqueeth.gt(0) ? finalShortSqueeth : squeethAmount
     const finalWeth = wethAmount.div(squeethAmount).multipliedBy(finalSqueeth)
     return { finalSqueeth, finalWeth }
-  }, [openShortSqueeth.toString(), longSqthBal.toString(), squeethAmount.toString(), wethAmount.toString()])
+  }, [finalShortSqueeth.toString(), squeethAmount.toString(), wethAmount.toString()])
 
   useEffect(() => {
     if (openShortSqueeth.isGreaterThan(0) || finalSqueeth.isLessThan(0)) {
