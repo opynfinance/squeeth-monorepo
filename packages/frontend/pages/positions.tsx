@@ -170,7 +170,6 @@ export function Positions() {
     lpedSqueeth,
     mintedDebt,
     shortDebt,
-    isLong,
     shortRealizedPNL,
     longRealizedPNL,
     activePositions,
