@@ -73,7 +73,7 @@ describe("Controller helper integration test", function () {
     await controller.connect(owner).setFeeRate(0)
     
     const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper");
-    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, shortSqueeth.address, wSqueethPool.address, wSqueeth.address, weth.address, uniswapRouter.address, uniswapFactory.address)) as ControllerHelper;
+    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, shortSqueeth.address, wSqueethPool.address, wSqueeth.address, weth.address, swapRouter.address, uniswapFactory.address)) as ControllerHelper;
   })
 
   this.beforeAll("Seed pool liquidity", async() => {
