@@ -3,12 +3,13 @@ import BigNumber from 'bignumber.js'
 
 import { BIG_ZERO } from '@constants/index'
 import { useWorldContext } from '@context/world'
-import { useSwapsData } from '../hooks/useSwapsData'
-import { useVaultManager } from '../hooks/contracts/useVaultManager'
-import { useLPPositions } from '../hooks/usePositions'
-import { useVaultData } from '../hooks/useVaultData'
-import { swaps_swaps } from '../queries/uniswap/__generated__/swaps'
+import { useSwapsData } from '@hooks/useSwapsData'
+import { useVaultManager } from '@hooks/contracts/useVaultManager'
+import { useLPPositions } from '@hooks/usePositions'
+import { useVaultData } from '@hooks/useVaultData'
+import { swaps_swaps } from '@queries/uniswap/__generated__/swaps'
 import { NFTManagers, PositionType } from '../types'
+import { useVaultHistory } from '@hooks/useVaultHistory'
 
 type positionsContextType = {
   activePositions: NFTManagers[]
@@ -44,7 +45,8 @@ const positionsContext = React.createContext<positionsContextType | undefined>(u
 
 const PositionsProvider: React.FC = ({ children }) => {
   const { oSqueethBal } = useWorldContext()
-  const { vaults: shortVaults } = useVaultManager()
+  const { openShortSqueeth, mintedSqueeth } = useVaultHistory()
+  const { vaults: shortVaults, firstValidVault } = useVaultManager()
   const {
     squeethAmount,
     wethAmount,
@@ -71,7 +73,6 @@ const PositionsProvider: React.FC = ({ children }) => {
   } = useLPPositions()
 
   const [positionType, setPositionType] = useState(PositionType.NONE)
-  const [firstValidVault, setFirstValidVault] = useState(0)
 
   const vaultId = shortVaults[firstValidVault]?.id || 0
   const { existingCollat, existingCollatPercent, existingLiqPrice: liquidationPrice } = useVaultData(vaultId)
@@ -108,9 +109,10 @@ const PositionsProvider: React.FC = ({ children }) => {
       : new BigNumber(0)
   }, [firstValidVault, oSqueethBal.toString(), positionType, shortVaults?.length, squeethAmount.toString()])
 
-  const shortDebt = useMemo(() => {
-    return positionType === PositionType.SHORT ? squeethAmount : new BigNumber(0)
-  }, [positionType, squeethAmount.toString()])
+  //meaning if there is minted squeeth sold, need to be subtracted
+  const finalShortSqueeth = useMemo(() => {
+    return mintedSqueeth > mintedDebt ? openShortSqueeth.plus(mintedSqueeth).minus(mintedDebt) : openShortSqueeth
+  }, [mintedSqueeth.toString(), mintedDebt.toString(), openShortSqueeth.toString()])
 
   const longSqthBal = useMemo(() => {
     return mintedDebt.gt(0) ? oSqueethBal.minus(mintedDebt) : oSqueethBal
@@ -123,33 +125,24 @@ const PositionsProvider: React.FC = ({ children }) => {
   }, [depositedSqueeth.toString(), withdrawnSqueeth.toString()])
 
   const { finalSqueeth, finalWeth } = useMemo(() => {
-    // dont include LPed & minted amount will be the correct short amount
-    const finalSqueeth = squeethAmount
+    const finalSqueeth = finalShortSqueeth.gte(0) ? finalShortSqueeth : squeethAmount
     const finalWeth = wethAmount.div(squeethAmount).multipliedBy(finalSqueeth)
     return { finalSqueeth, finalWeth }
-  }, [squeethAmount.toString(), wethAmount.toString()])
+  }, [openShortSqueeth.toString(), longSqthBal.toString(), squeethAmount.toString(), wethAmount.toString()])
 
   useEffect(() => {
-    if (finalSqueeth.isGreaterThan(0)) {
-      setPositionType(PositionType.LONG)
-    } else if (finalSqueeth.isLessThan(0)) {
+    if (openShortSqueeth.isGreaterThan(0) || finalSqueeth.isLessThan(0)) {
       setPositionType(PositionType.SHORT)
+    } else if (longSqthBal.isGreaterThan(0) || finalSqueeth.isGreaterThan(0)) {
+      setPositionType(PositionType.LONG)
     } else setPositionType(PositionType.NONE)
-  }, [finalSqueeth.toString(), squeethAmount.toString()])
-
-  useEffect(() => {
-    for (let i = 0; i < shortVaults.length; i++) {
-      if (shortVaults[i]?.collateralAmount.isGreaterThan(0)) {
-        setFirstValidVault(i)
-      }
-    }
-  }, [shortVaults.length])
+  }, [longSqthBal.toString(), openShortSqueeth.toString(), finalSqueeth.toString()])
 
   const values = {
     swaps,
     loading: lpLoading,
-    squeethAmount: finalSqueeth.absoluteValue(),
-    shortDebt: shortDebt.absoluteValue(),
+    squeethAmount: finalSqueeth,
+    shortDebt: openShortSqueeth,
     lpedSqueeth: lpDebt,
     mintedDebt: mintedDebt,
     longSqthBal: longSqthBal,
