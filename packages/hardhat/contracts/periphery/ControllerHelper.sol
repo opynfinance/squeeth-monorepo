@@ -85,8 +85,12 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         uint256 collateralToMint,
         uint256 collateralToLP
     );
-    event FlashswapWBurn(address indexed withdrawer, uint256 vaultId, uint256 wPowerPerpAmountToBurn, uint256 collateralAmountToWithdraw);
-
+    event FlashswapWBurn(
+        address indexed withdrawer,
+        uint256 vaultId,
+        uint256 wPowerPerpAmountToBurn,
+        uint256 collateralAmountToWithdraw
+    );
 
     constructor(
         address _controller,
@@ -194,7 +198,13 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             )
         );
 
-        emit FlashswapWBurnBuyLong(msg.sender, _vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw, _wPowerPerpAmountToBuy);
+        emit FlashswapWBurnBuyLong(
+            msg.sender,
+            _vaultId,
+            _wPowerPerpAmountToBurn,
+            _collateralToWithdraw,
+            _wPowerPerpAmountToBuy
+        );
     }
 
     /**
@@ -203,7 +213,11 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
      * @param _wPowerPerpAmountToBurn amount of WPowerPerp to burn
      * @param _collateralToWithdraw amount of collateral to withdraw
      */
-    function flashswapWBurn(uint256 _vaultId, uint256 _wPowerPerpAmountToBurn, uint256 _collateralToWithdraw) external {
+    function flashswapWBurn(
+        uint256 _vaultId,
+        uint256 _wPowerPerpAmountToBurn,
+        uint256 _collateralToWithdraw
+    ) external {
         _exactOutFlashSwap(
             weth,
             wPowerPerp,
