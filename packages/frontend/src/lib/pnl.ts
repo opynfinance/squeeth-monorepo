@@ -82,7 +82,19 @@ export async function calcETHCollateralPnl(
       }, Promise.resolve({ deposits: BIG_ZERO, withdrawals: BIG_ZERO }))
     : { deposits: BIG_ZERO, withdrawals: BIG_ZERO }
 
-  return currentVaultEthBalance.times(uniswapEthPrice).minus(deposits.minus(withdrawals))
+const getRelevantSwaps = (squeethAmount: BigNumber, swaps: swaps_swaps[], isWethToken0: boolean, isLong = false) => {
+  let totalSqueeth = BIG_ZERO
+  const relevantSwaps = []
+  for (let index = swaps.length - 1; index >= 0; index--) {
+    const squeethAmt = new BigNumber(isWethToken0 ? swaps[index].amount1 : swaps[index].amount0)
+    const sqthAmount = isLong ? squeethAmt.negated() : squeethAmt
+    totalSqueeth = totalSqueeth.plus(sqthAmount)
+    relevantSwaps.push(swaps[index])
+    if (squeethAmount.isEqualTo(totalSqueeth)) {
+      break
+    }
+  }
+  return relevantSwaps
 }
 
 export async function calcDollarShortUnrealizedpnl(
