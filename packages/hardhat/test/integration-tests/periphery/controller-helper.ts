@@ -185,4 +185,40 @@ describe("Controller helper integration test", function () {
       expect(vaultAfter.collateralAmount.eq(collateralAmount)).to.be.true
     })
   })
+
+  describe("Flash close short position", async () => {
+    before(async () => {
+      // mint
+      const normFactor = await controller.normalizationFactor()
+      const mintWSqueethAmount = ethers.utils.parseUnits('10')
+      const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
+      const ethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 420, true)
+      const scaledEthPrice = ethPrice.div(10000)
+      const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
+      const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
+      const squeethEthPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
+      const ethAmountOut = mintWSqueethAmount.mul(squeethEthPrice).div(one)
+      const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
+      const value = collateralAmount.sub(ethAmountOut.mul(one.sub(slippage)).div(one))
+
+      await controllerHelper.connect(depositor).flashswapWMint(0, mintWSqueethAmount, collateralAmount, {value: value});
+    })
+
+    it("Flash close position", async () => {
+      const vaultId = (await shortSqueeth.nextId()).sub(1);
+      await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
+
+      const vaultBefore = await controller.vaults(vaultId)
+      const depositorBalanceBefore = await provider.getBalance(depositor.address)
+
+      await controllerHelper.connect(depositor).flashswapWBurn(vaultId, vaultBefore.shortAmount, vaultBefore.collateralAmount);
+
+      const vaultAfter = await controller.vaults(vaultId)
+      const depositorBalanceAfter = await provider.getBalance(depositor.address)
+
+      expect(vaultAfter.shortAmount.eq(BigNumber.from(0))).to.be.true
+      expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
+      expect(depositorBalanceAfter.gt(depositorBalanceBefore)).to.be.true
+    })
+  })
 })

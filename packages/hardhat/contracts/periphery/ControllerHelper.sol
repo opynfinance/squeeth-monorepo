@@ -32,6 +32,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
     /// @dev enum to differentiate between uniswap swap callback function source
     enum FLASH_SOURCE {
         FLASH_W_MINT,
+        FLASH_W_BURN_BUY_LONG,
         FLASH_W_BURN
     }
 
@@ -44,18 +45,23 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
     address public immutable swapRouter;
     address public immutable nonfungiblePositionManager;
 
-    struct flashswapWMintData {
+    struct FlashswapWMintData {
         uint256 vaultId;
         uint256 flashSwappedCollateral;
         uint256 totalCollateralToDeposit;
         uint256 wPowerPerpAmount;
     }
-    struct FlashWBurnData {
+    struct FlashWBurnBuyLongData {
         uint256 vaultId;
         uint256 wPowerPerpAmountToBurn;
         uint256 wPowerPerpAmountToBuy;
         uint256 collateralToWithdraw;
         uint256 collateralToBuyWith;
+    }
+    struct FlashWBurnData {
+        uint256 vaultId;
+        uint256 wPowerPerpAmountToBurn;
+        uint256 collateralToWithdraw;
     }
 
     event FlashswapWMint(
@@ -65,7 +71,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         uint256 swapedCollateralAmount,
         uint256 collateralAmount
     );
-    event FlashWBurn(
+    event FlashswapWBurnBuyLong(
         address indexed withdrawer,
         uint256 vaultId,
         uint256 wPowerPerpAmountToBurn,
@@ -79,6 +85,8 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         uint256 collateralToMint,
         uint256 collateralToLP
     );
+    event FlashswapWBurn(address indexed withdrawer, uint256 vaultId, uint256 wPowerPerpAmountToBurn, uint256 collateralAmountToWithdraw);
+
 
     constructor(
         address _controller,
@@ -176,7 +184,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             IUniswapV3Pool(wPowerPerpPool).fee(),
             _wPowerPerpAmountToBurn.add(_wPowerPerpAmountToBuy),
             _collateralToBuyWith.add(msg.value),
-            uint8(FLASH_SOURCE.FLASH_W_BURN),
+            uint8(FLASH_SOURCE.FLASH_W_BURN_BUY_LONG),
             abi.encodePacked(
                 _vaultId,
                 _wPowerPerpAmountToBurn,
@@ -186,7 +194,27 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             )
         );
 
-        emit FlashWBurn(msg.sender, _vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw, _wPowerPerpAmountToBuy);
+        emit FlashswapWBurnBuyLong(msg.sender, _vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw, _wPowerPerpAmountToBuy);
+    }
+
+    /**
+     * @notice flash close short position
+     * @param _vaultId vault ID
+     * @param _wPowerPerpAmountToBurn amount of WPowerPerp to burn
+     * @param _collateralToWithdraw amount of collateral to withdraw
+     */
+    function flashswapWBurn(uint256 _vaultId, uint256 _wPowerPerpAmountToBurn, uint256 _collateralToWithdraw) external {
+        _exactOutFlashSwap(
+            weth,
+            wPowerPerp,
+            IUniswapV3Pool(wPowerPerpPool).fee(),
+            _wPowerPerpAmountToBurn,
+            _collateralToWithdraw,
+            uint8(FLASH_SOURCE.FLASH_W_BURN),
+            abi.encodePacked(_vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw)
+        );
+
+        emit FlashswapWBurn(msg.sender, _vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw);
     }
 
     /**
@@ -255,7 +283,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         uint8 _callSource
     ) internal override {
         if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_W_MINT) {
-            flashswapWMintData memory data = abi.decode(_callData, (flashswapWMintData));
+            FlashswapWMintData memory data = abi.decode(_callData, (FlashswapWMintData));
 
             // convert WETH to ETH as Uniswap uses WETH
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
@@ -277,8 +305,8 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
 
             // this is a newly open vault, transfer to the user
             if (data.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), _caller, vaultId);
-        } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_W_BURN) {
-            FlashWBurnData memory data = abi.decode(_callData, (FlashWBurnData));
+        } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_W_BURN_BUY_LONG) {
+            FlashWBurnBuyLongData memory data = abi.decode(_callData, (FlashWBurnBuyLongData));
 
             IController(controller).burnWPowerPerpAmount(
                 data.vaultId,
@@ -288,6 +316,21 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             IWETH9(weth).deposit{value: _amountToPay}();
             IWETH9(weth).transfer(wPowerPerpPool, _amountToPay);
             IWPowerPerp(wPowerPerp).transfer(_caller, data.wPowerPerpAmountToBuy);
+
+            if (address(this).balance > 0) {
+                payable(_caller).sendValue(address(this).balance);
+            }
+        } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_W_BURN) {
+            FlashWBurnData memory data = abi.decode(_callData, (FlashWBurnData));
+
+            IController(controller).burnWPowerPerpAmount(
+                data.vaultId,
+                data.wPowerPerpAmountToBurn,
+                data.collateralToWithdraw
+            );
+
+            IWETH9(weth).deposit{value: _amountToPay}();
+            IWETH9(weth).transfer(wPowerPerpPool, _amountToPay);
 
             if (address(this).balance > 0) {
                 payable(_caller).sendValue(address(this).balance);
