@@ -209,14 +209,19 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         emit FlashWBurn(msg.sender, _vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw, _wPowerPerpAmountToBuy);
     }
 
+    /**
+     * @notice mint WPowerPerp and LP into Uniswap v3 pool
+     * @param _vaultId vault ID
+     * @param _wPowerPerpAmount amount of WPowerPerp token to mint
+     * @param _collateralToMint collateral to use for minting
+     * @param _collateralToLP collateral to use for LPing
+     * @param _lowerTick LP lower tick
+     * @param _upperTick LP upper tick
+     */
     function batchMintLp(uint256 _vaultId, uint256 _wPowerPerpAmount, uint256 _collateralToMint, uint256 _collateralToLP, int24 _lowerTick, int24 _upperTick) external payable {
         require(msg.value == _collateralToMint.add(_collateralToLP), "Wrong ETH sent");
 
-        IController(controller).mintWPowerPerpAmount{value: _collateralToMint}(_vaultId, _wPowerPerpAmount, 0);
-
-        TransferHelper.safeApprove(wPowerPerp, nonfungiblePositionManager, _wPowerPerpAmount);
-        TransferHelper.safeApprove(weth, nonfungiblePositionManager, _collateralToLP);
-
+        uint256 vaultId = IController(controller).mintWPowerPerpAmount{value: _collateralToMint}(_vaultId, _wPowerPerpAmount, 0);
         address token0 = IUniswapV3Pool(wPowerPerpPool).token0();
         address token1 = IUniswapV3Pool(wPowerPerpPool).token1();
 
@@ -235,8 +240,11 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
                 deadline: block.timestamp
             });
 
-        // Note that the pool defined by DAI/USDC and fee tier 0.3% must already be created and initialized in order to mint
-        INonfungiblePositionManager(nonfungiblePositionManager).mint(params);
+        INonfungiblePositionManager(nonfungiblePositionManager).mint{value: _collateralToLP}(params);
+
+        if (_vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), msg.sender, vaultId);
+
+        emit BatchMintLp(msg.sender, _vaultId, _wPowerPerpAmount, _collateralToMint, _collateralToLP);
     }
 
     /**
