@@ -23,6 +23,7 @@ export const useVaultManager = () => {
   // const [contract, setContract] = useState<Contract>()
 
   const { address, networkId } = useWallet()
+  const [firstValidVault, setFirstValidVault] = useState(0)
   // const { vaultManager } = useAddresses()
 
   // useEffect(() => {
@@ -34,14 +35,15 @@ export const useVaultManager = () => {
     client: squeethClient[networkId],
     fetchPolicy: 'cache-and-network',
     variables: {
-      ownerId: address,
+      ownerId: address ?? '',
     },
   })
+
   useEffect(() => {
     subscribeToMore({
       document: VAULTS_SUBSCRIPTION,
       variables: {
-        ownerId: address,
+        ownerId: address ?? '',
       },
       updateQuery(prev, { subscriptionData }) {
         if (!subscriptionData.data) return prev
@@ -50,6 +52,14 @@ export const useVaultManager = () => {
       },
     })
   }, [address, subscribeToMore])
+
+  useEffect(() => {
+    for (let i = 0; i < vaults.length; i++) {
+      if (vaults[i]?.collateralAmount.isGreaterThan(0)) {
+        setFirstValidVault(i)
+      }
+    }
+  }, [address, vaults?.length])
 
   useEffect(() => {
     ;(async () => {
@@ -94,5 +104,5 @@ export const useVaultManager = () => {
   //   )
   // }
 
-  return { vaults, loading }
+  return { firstValidVault, vaults, loading }
 }
