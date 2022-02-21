@@ -167,7 +167,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
 
     /**
      * @notice flash close position and buy long squeeth
-     * @dev this function 
+     * @dev this function
      * @param _vaultId vault ID
      * @param _wPowerPerpAmountToBurn amount of WPowerPerp to burn
      * @param _wPowerPerpAmountToBuy amount of WPowerPerp to buy
@@ -190,7 +190,13 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             _wPowerPerpAmountToBurn.add(_wPowerPerpAmountToBuy),
             _collateralToBuyWith.add(msg.value),
             uint8(FLASH_SOURCE.FLASH_W_BURN),
-            abi.encodePacked(_vaultId, _wPowerPerpAmountToBurn, _wPowerPerpAmountToBuy, _collateralToWithdraw, _collateralToBuyWith.add(msg.value))
+            abi.encodePacked(
+                _vaultId,
+                _wPowerPerpAmountToBurn,
+                _wPowerPerpAmountToBuy,
+                _collateralToWithdraw,
+                _collateralToBuyWith.add(msg.value)
+            )
         );
 
         emit FlashWBurn(msg.sender, _vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw, _wPowerPerpAmountToBuy);
