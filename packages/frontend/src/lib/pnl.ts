@@ -1,5 +1,6 @@
 import BigNumber from 'bignumber.js'
 import { closestIndexTo, differenceInMinutes, format, subMinutes } from 'date-fns'
+import { QueryClient } from 'react-query'
 
 import { BIG_ZERO, TWELVEDATA_NO_PRICEDATA_DURATION } from '../constants/'
 import { swaps_swaps } from '../queries/uniswap/__generated__/swaps'
@@ -48,6 +49,14 @@ export function calcShortGain({ shortUnrealizedPNL, usdAmount, wethAmount, unisw
   }
   return shortUnrealizedPNL.div(usdAmount.plus(wethAmount.times(uniswapEthPrice).absoluteValue())).times(100)
 }
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: Infinity,
+    },
+  },
+})
 
 export async function calcETHCollateralPnl(
   data: VaultHistory_vaultHistories[] | undefined,
@@ -145,7 +154,9 @@ async function getEthPriceAtTransactionTime(timestamp: string) {
 
   if (diff < TWELVEDATA_NO_PRICEDATA_DURATION) {
     // call coingecko
-    const priceData = await getETHWithinOneDayPrices()
+    const priceData = await queryClient.fetchQuery(`userPrice_${timestamp}`, () => getETHWithinOneDayPrices(), {
+      staleTime: Infinity,
+    })
 
     if (priceData.length === 1) {
       // call twelvedata
@@ -153,7 +164,9 @@ async function getEthPriceAtTransactionTime(timestamp: string) {
         new Date(subMinutes(new Date(), TWELVEDATA_NO_PRICEDATA_DURATION)).setUTCSeconds(0),
         'yyyy-MM-dd HH:mm:ss',
       )
-      return await getHistoricEthPrice(dateTimeString)
+      return await queryClient.fetchQuery(`userPrice_${timestamp}`, () => getHistoricEthPrice(dateTimeString), {
+        staleTime: Infinity,
+      })
     }
 
     const dateList = priceData.map((item) => item.time)
@@ -167,10 +180,15 @@ async function getEthPriceAtTransactionTime(timestamp: string) {
       new Date(subMinutes(new Date(), TWELVEDATA_NO_PRICEDATA_DURATION)).setUTCSeconds(0),
       'yyyy-MM-dd HH:mm:ss',
     )
-    return await getHistoricEthPrice(dateTimeString)
+    return await queryClient.fetchQuery(`userPrice_${timestamp}`, () => getHistoricEthPrice(dateTimeString), {
+      staleTime: Infinity,
+    })
   }
 
   // call twelvedata
   const dateTimeString = format(new Date(timeInMilliseconds), 'yyyy-MM-dd HH:mm:ss')
-  return await getHistoricEthPrice(dateTimeString)
+
+  return await queryClient.fetchQuery(`userPrice_${timestamp}`, () => getHistoricEthPrice(dateTimeString), {
+    staleTime: Infinity,
+  })
 }
