@@ -2,8 +2,8 @@ import { createStyles, makeStyles, TextField, Tooltip, Typography } from '@mater
 import dynamic from 'next/dynamic'
 import React, { useEffect, useMemo, useState } from 'react'
 import CustomSwitch from '@components/CustomSwitch'
-import { getTimestampAgo } from '@utils/index'
 import { useNormHistory } from '@hooks/useNormHistory'
+import { NormHistory } from '../../types/index'
 
 const Chart = dynamic(() => import('kaktana-react-lightweight-charts'), { ssr: false })
 
@@ -23,23 +23,13 @@ const FundingChart = () => {
   const [fundingDuration, setFundingDuration] = useState(fundingDurations[0])
   const classes = useStyles()
 
-  const timeAgo = getTimestampAgo(
-    1,
-    fundingDuration.id === '1y' ? 'year' : fundingDuration.id === '1m' ? 'month' : 'day',
-  )
-
-  const { data: normHistoryData } = useNormHistory(timeAgo - 1000)
-  const normFactors = normHistoryData ? normHistoryData['normalizationFactorUpdates'] || [] : []
-  const dailyFundings = normFactors
-    .map((item: any, index: number) => {
-      if (index < 1) return
-      const secondsElapsed = item.timestamp - normFactors[index - 1].timestamp
-      const deltaT = secondsElapsed / (420 * 60 * 60)
-      const markIndex = 1 / Math.exp(Math.log(item.newNormFactor / item.oldNormFactor) / deltaT)
-      return Math.log(markIndex) / 17.5
-    })
-    .filter((funding: number | undefined) => !!funding)
-  console.log('ccc', dailyFundings)
+  const normFactors = useNormHistory()
+  const dailyFundings = normFactors.map((item: NormHistory) => {
+    const secondsElapsed = Number(item.timestamp) - Number(item.lastModificationTimestamp)
+    const deltaT = secondsElapsed / (420 * 60 * 60)
+    const markIndex = 1 / Math.exp(Math.log(Number(item.newNormFactor) / Number(item.oldNormFactor)) / deltaT)
+    return Math.log(markIndex) / 17.5
+  })
 
   return (
     <>
