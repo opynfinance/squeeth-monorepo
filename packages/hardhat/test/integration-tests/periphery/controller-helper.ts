@@ -200,13 +200,17 @@ describe("Controller helper integration test", function () {
       const vaultBefore = await controller.vaults(vaultId)
       const tokenIndexBefore = await (positionManager as INonfungiblePositionManager).totalSupply();
 
-      await controllerHelper.connect(depositor).batchMintLp(vaultId, mintWSqueethAmount, collateralAmount, collateralToLp, -887220, 887220, {value: collateralAmount.add(collateralToLp)});
+      await controllerHelper.connect(depositor).batchMintLp(vaultId, mintWSqueethAmount, collateralAmount, collateralToLp, 0, 0, Math.floor(await getNow(ethers.provider) + 8640000), -887220, 887220, {value: collateralAmount.add(collateralToLp)});
 
       const vaultAfter = await controller.vaults(vaultId)
       const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
       const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
       const ownerOfUniNFT = await (positionManager as INonfungiblePositionManager).ownerOf(tokenId); 
+      const position = await (positionManager as INonfungiblePositionManager).positions(tokenId)
+      const currentPoolTick = await oracle.getTimeWeightedAverageTickSafe(wSqueethPool.address, 420)
 
+      expect(position.tickLower === -887220).to.be.true
+      expect(position.tickUpper === 887220).to.be.true
       expect(ownerOfUniNFT === depositor.address).to.be.true
       expect(tokenIndexAfter.sub(tokenIndexBefore).eq(BigNumber.from(1))).to.be.true
       expect(vaultBefore.shortAmount.eq(BigNumber.from(0))).to.be.true
