@@ -14,7 +14,6 @@ import RestrictionInfo from '@components/RestrictionInfo'
 import { LPProvider } from '@context/lp'
 import { useRestrictUser } from '@context/restrict-user'
 import { TradeProvider } from '@context/trade'
-import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useWorldContext } from '@context/world'
 import { SqueethTab, SqueethTabs } from '@components/Tabs'
 
@@ -82,7 +81,6 @@ export function LPCalculator() {
   const classes = useStyles()
   const { isRestricted } = useRestrictUser()
   const { ethPrice } = useWorldContext()
-
   const [lpType, setLpType] = useState(0)
 
   return (

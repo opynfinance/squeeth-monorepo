@@ -2,6 +2,7 @@ import { CircularProgress, createStyles, makeStyles, Typography } from '@materia
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import BigNumber from 'bignumber.js'
 import React, { useCallback, useEffect, useState } from 'react'
+import { useAtom } from 'jotai'
 
 import { InputType, Links } from '../../../constants'
 import { useTrade } from '@context/trade'
@@ -15,7 +16,7 @@ import { PrimaryButton } from '@components/Button'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
 import { UniswapIframe } from '@components/Modal/UniswapIframe'
 import { TradeSettings } from '@components/TradeSettings'
-import { useController } from '@hooks/contracts/useController'
+import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from '@hooks/contracts/useController'
 import Confirmed, { ConfirmType } from '../Confirmed'
 import TradeInfoItem from '../TradeInfoItem'
 import UniswapData from '../UniswapData'
@@ -239,7 +240,8 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
   const altTradeAmount = new BigNumber(altAmountInputValue)
   const { selectWallet, connected } = useWallet()
   const { squeethAmount, longSqthBal, isShort } = usePositions()
-  const { dailyHistoricalFunding, currentImpliedFunding } = useController()
+  const dailyHistoricalFunding = useAtom(dailyHistoricalFundingAtom)[0]
+  const currentImpliedFunding = useAtom(currentImpliedFundingAtom)[0]
 
   let openError: string | undefined
   // let closeError: string | undefined

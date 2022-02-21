@@ -14,6 +14,7 @@ import { useTrade } from '@context/trade'
 import { useWorldContext } from '@context/world'
 import { PositionType, TradeType } from '../types'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
+import { usePrevious } from 'react-use'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -160,10 +161,10 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     existingCollat,
     loading: isPositionLoading,
     isLP,
-    isLong,
     shortRealizedPNL,
     longRealizedPNL,
     swapsQueryRefetch,
+    swaps,
   } = usePositions()
   const { liquidations } = useVaultLiquidations(Number(vaultId))
   const {
@@ -176,6 +177,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     tradeType,
   } = useTrade()
   const { ethPrice } = useWorldContext()
+  const prevSwapsData = usePrevious(swaps)
   const tradeAmount = new BigNumber(tradeAmountInput)
   const [fetchingNew, setFetchingNew] = useState(false)
   const [postTradeAmt, setPostTradeAmt] = useState(new BigNumber(0))
@@ -186,13 +188,19 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
   useEffect(() => {
     if (tradeSuccess) {
       setFetchingNew(true)
-      setTradeSuccess(false)
-      setTimeout(() => {
-        setFetchingNew(false)
-        swapsQueryRefetch()
-      }, 5000)
+    } else {
+      setFetchingNew(false)
     }
   }, [tradeSuccess])
+
+  useEffect(() => {
+    if (tradeSuccess && prevSwapsData?.length === swaps?.length) {
+      //if trade success and number of swaps is still the same, try refetching again
+      swapsQueryRefetch()
+    } else {
+      setTradeSuccess(false)
+    }
+  }, [swaps?.length, prevSwapsData?.length, swapsQueryRefetch, tradeSuccess])
 
   const fullyLiquidated = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
@@ -273,6 +281,15 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     tradeAmount.toString(),
   ])
 
+  const pnlLoading = useMemo(() => {
+    if (positionType === PositionType.LONG) {
+      return longUnrealizedPNL.loading
+    }
+    if (positionType === PositionType.SHORT) {
+      return shortUnrealizedPNL.loading
+    }
+  }, [longUnrealizedPNL.loading, positionType, shortUnrealizedPNL.loading])
+
   return (
     <div className={clsx(classes.container, classes.posBg)}>
       {!fullyLiquidated ? (
@@ -347,24 +364,30 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
                     </Tooltip>
                   </div>
                   <div className={classes.pnl}>
-                    <Typography
-                      className={pnlClass(positionType, longGain, shortGain, classes)}
-                      style={{ fontWeight: 600 }}
-                    >
-                      {getPositionBasedValue(
-                        `$${longUnrealizedPNL?.usdValue.toFixed(2)}`,
-                        `$${shortUnrealizedPNL.toFixed(2)}`,
-                        '--',
-                        'Loading',
-                      )}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      className={pnlClass(positionType, longGain, shortGain, classes)}
-                      style={{ marginLeft: '4px' }}
-                    >
-                      {getPositionBasedValue(`(${longGain.toFixed(2)}%)`, `(${shortGain.toFixed(2)}%)`, null, ' ')}
-                    </Typography>
+                    {!pnlLoading ? (
+                      <>
+                        <Typography
+                          className={pnlClass(positionType, longGain, shortGain, classes)}
+                          style={{ fontWeight: 600 }}
+                        >
+                          {getPositionBasedValue(
+                            `$${longUnrealizedPNL.usd.toFixed(2)}`,
+                            `$${shortUnrealizedPNL.usd.toFixed(2)}`,
+                            '--',
+                            'Loading',
+                          )}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          className={pnlClass(positionType, longGain, shortGain, classes)}
+                          style={{ marginLeft: '4px' }}
+                        >
+                          {getPositionBasedValue(`(${longGain.toFixed(2)}%)`, `(${shortGain.toFixed(2)}%)`, null, ' ')}
+                        </Typography>
+                      </>
+                    ) : (
+                      'Loading'
+                    )}
                   </div>
                 </div>
                 <div>

@@ -1,6 +1,9 @@
 import BigNumber from 'bignumber.js'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
+import { atom, useAtom } from 'jotai'
+import { Position } from '@uniswap/v3-sdk'
+import fzero from 'fzero'
 
 import abi from '../../abis/controller.json'
 import { FUNDING_PERIOD, INDEX_SCALE, SWAP_EVENT_TOPIC, Vaults, OSQUEETH_DECIMALS, TWAP_PERIOD } from '../../constants'
@@ -10,6 +13,8 @@ import { Vault } from '../../types'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useAddresses } from '../useAddress'
 import { useOracle } from './useOracle'
+import { useNFTManager } from './useNFTManager'
+import { useSqueethPool } from './useSqueethPool'
 
 const getMultiplier = (type: Vaults) => {
   if (type === Vaults.ETHBull) return 3
@@ -18,16 +23,37 @@ const getMultiplier = (type: Vaults) => {
   return 1
 }
 
+export const normFactorAtom = atom(new BigNumber(1))
+export const markAtom = atom(new BigNumber(0))
+export const indexAtom = atom(new BigNumber(0))
+export const currentImpliedFundingAtom = atom(0)
+export const impliedVolAtom = atom((get: any) => {
+  const mark = get(markAtom)
+  const index = get(indexAtom)
+  const currentImpliedFunding = get(currentImpliedFundingAtom)
+
+  if (mark.isZero()) return 0
+  if (mark.lt(index)) return 0
+  if (currentImpliedFunding < 0) return 0
+
+  return Math.sqrt(currentImpliedFunding * 365)
+})
+export const dailyHistoricalFundingAtom = atom({ period: 0, funding: 0 })
+
 export const useController = () => {
   const { web3, address, handleTransaction, networkId } = useWallet()
   const [contract, setContract] = useState<Contract>()
-  const [normFactor, setNormFactor] = useState(new BigNumber(1))
-  const [mark, setMark] = useState(new BigNumber(0))
-  const [index, setIndex] = useState(new BigNumber(0))
-  const [dailyHistoricalFunding, setDailyHistoricalFunding] = useState({ period: 0, funding: 0 })
-  const [currentImpliedFunding, setCurrentImpliedFunding] = useState(0)
+  const [normFactor, setNormFactor] = useAtom(normFactorAtom)
+  const [mark, setMark] = useAtom(markAtom)
+  const [index, setIndex] = useAtom(indexAtom)
+  const [currentImpliedFunding, setCurrentImpliedFunding] = useAtom(currentImpliedFundingAtom)
+  const [dailyHistoricalFunding, setDailyHistoricalFunding] = useAtom(dailyHistoricalFundingAtom)
+  const impliedVol = useAtom(impliedVolAtom)[0]
+
   const { controller, ethUsdcPool, weth, usdc } = useAddresses()
   const { getTwapSafe } = useOracle()
+  const { getETHandOSQTHAmount } = useNFTManager()
+  const { squeethInitialPrice, wethPrice, squeethPrice, isWethToken0 } = useSqueethPool()
 
   useEffect(() => {
     if (!web3) return
@@ -152,11 +178,11 @@ export const useController = () => {
     if (!contract) return null
 
     const vault = await contract.methods.vaults(vaultId).call()
-    const { NFTCollateralId, collateralAmount, shortAmount, operator } = vault
+    const { NftCollateralId, collateralAmount, shortAmount, operator } = vault
 
     return {
       id: vaultId,
-      NFTCollateralId,
+      NFTCollateralId: NftCollateralId,
       collateralAmount: toTokenAmount(new BigNumber(collateralAmount), 18),
       shortAmount: toTokenAmount(new BigNumber(shortAmount), OSQUEETH_DECIMALS),
       operator,
@@ -270,14 +296,6 @@ export const useController = () => {
     return Math.log(currMark.dividedBy(currIndex).toNumber()) / FUNDING_PERIOD
   }
 
-  const impliedVol = useMemo(() => {
-    if (mark.isZero()) return 0
-    if (mark.lt(index)) return 0
-    if (currentImpliedFunding < 0) return 0
-
-    return Math.sqrt(currentImpliedFunding * 365)
-  }, [mark, currentImpliedFunding, index])
-
   const getDebtAmount = async (shortAmount: BigNumber) => {
     if (!contract) return new BigNumber(0)
 
@@ -300,18 +318,29 @@ export const useController = () => {
     return toTokenAmount(shortAmount.toFixed(0), OSQUEETH_DECIMALS)
   }
 
-  const getCollatRatioAndLiqPrice = async (collateralAmount: BigNumber, shortAmount: BigNumber) => {
+  const getCollatRatioAndLiqPrice = async (collateralAmount: BigNumber, shortAmount: BigNumber, uniId?: number) => {
     const emptyState = {
       collateralPercent: 0,
       liquidationPrice: new BigNumber(0),
     }
     if (!contract) return emptyState
 
+    let effectiveCollat = collateralAmount
+    let liquidationPrice = new BigNumber(0)
+    // Uni LP token is deposited
+    if (uniId) {
+      const { wethAmount, oSqthAmount, position } = await getETHandOSQTHAmount(uniId)
+      const ethPrice = await getTwapEthPrice()
+      const sqthValueInEth = oSqthAmount.multipliedBy(normFactor).multipliedBy(ethPrice).div(INDEX_SCALE)
+      effectiveCollat = effectiveCollat.plus(sqthValueInEth).plus(wethAmount)
+      liquidationPrice = calculateLiquidationPriceForLP(collateralAmount, shortAmount, position!)
+    }
     const debt = await getDebtAmount(shortAmount)
     if (debt && debt.isPositive()) {
-      const collateralPercent = Number(collateralAmount.div(debt).times(100).toFixed(1))
+      const collateralPercent = Number(effectiveCollat.div(debt).times(100).toFixed(1))
       const rSqueeth = normFactor.multipliedBy(new BigNumber(shortAmount)).dividedBy(10000)
-      const liquidationPrice = collateralAmount.div(rSqueeth.multipliedBy(1.5))
+      if (!uniId) liquidationPrice = effectiveCollat.div(rSqueeth.multipliedBy(1.5))
+
       return {
         collateralPercent,
         liquidationPrice,
@@ -321,22 +350,90 @@ export const useController = () => {
     return emptyState
   }
 
+  /**
+   * Liquidation price is calculated using this document: https://docs.google.com/document/d/1MzuPADIZqLm3aQu-Ri2Iyk9ZUvDA1D6oOikKwwjSC2M/edit
+   *
+   * If you have any doubts please ask Joe Clark aka alpinechicken 🦔
+   */
+  const calculateLiquidationPriceForLP = (ethCollat: BigNumber, shortAmount: BigNumber, position: Position) => {
+    const liquidity = toTokenAmount(position.liquidity.toString(), 18)
+
+    const ETH_LOWER_BOUND = 500
+    const ETH_UPPER_BOUND = 30000
+
+    const pa = !isWethToken0
+      ? new BigNumber(position?.token0PriceLower.toSignificant(18) || 0)
+      : new BigNumber(1).div(position?.token0PriceUpper.toSignificant(18) || 0)
+    const pb = !isWethToken0
+      ? new BigNumber(position?.token0PriceUpper.toSignificant(18) || 0)
+      : new BigNumber(1).div(position?.token0PriceLower.toSignificant(18) || 0)
+
+    const maxEth = liquidity.times(pb.sqrt().minus(pa.sqrt()))
+    const maxSqth = liquidity.times(new BigNumber(1).div(pa.sqrt()).minus(new BigNumber(1).div(pb.sqrt())))
+
+    const divider = shortAmount.times(1.5).times(normFactor)
+
+    const ethValueFunction = (ethPrice: string) => {
+      const _ethPrice = new BigNumber(ethPrice)
+      const p = _ethPrice
+        .times(normFactor)
+        .times(Math.exp(impliedVol * impliedVol * 0.04794520548))
+        .div(INDEX_SCALE)
+
+      if (p.lt(pa)) {
+        return maxSqth.times(p)
+      }
+      if (p.gt(pb)) {
+        return maxEth
+      }
+
+      return liquidity.times(p.sqrt().times(2).minus(pa.sqrt()).minus(p.div(pb.sqrt())))
+    }
+
+    const fzeroFunction = (ethPrice: string) => {
+      const _result = new BigNumber(ethPrice)
+        .minus(ethValueFunction(ethPrice).plus(ethCollat).times(INDEX_SCALE).div(divider))
+        .toString()
+      return _result
+    }
+
+    const result = fzero(fzeroFunction, [ETH_LOWER_BOUND, ETH_UPPER_BOUND], { maxiter: 50 })
+
+    return new BigNumber(result.solution)
+  }
+
+  const depositUniPositionToken = async (vaultId: number, uniTokenId: number) => {
+    if (!contract || !address) return
+
+    await handleTransaction(
+      contract.methods.depositUniPositionToken(vaultId, uniTokenId).send({
+        from: address,
+      }),
+    )
+  }
+
+  const withdrawUniPositionToken = async (vaultId: number) => {
+    if (!contract || !address) return
+
+    await handleTransaction(
+      contract.methods.withdrawUniPositionToken(vaultId).send({
+        from: address,
+      }),
+    )
+  }
+
   return {
     openDepositAndMint,
     getVault,
-    mark,
-    index,
-    impliedVol,
     updateOperator,
-    normFactor,
-    dailyHistoricalFunding,
     getDebtAmount,
     getShortAmountFromDebt,
     burnAndRedeem,
     getCollatRatioAndLiqPrice,
     depositCollateral,
     withdrawCollateral,
-    currentImpliedFunding,
     getTwapEthPrice,
+    depositUniPositionToken,
+    withdrawUniPositionToken,
   }
 }

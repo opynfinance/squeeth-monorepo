@@ -3,11 +3,12 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 import BigNumber from 'bignumber.js'
 import { motion } from 'framer-motion'
 import React, { useEffect, useMemo, useState } from 'react'
+import { useAtom } from 'jotai'
 
 import { MIN_COLLATERAL_AMOUNT, Tooltips } from '../../constants'
 import { LPActions, OBTAIN_METHOD, useLPState } from '@context/lp'
 import { useWallet } from '@context/wallet'
-import { useController } from '@hooks/contracts/useController'
+import { normFactorAtom, useController } from '@hooks/contracts/useController'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useWorldContext } from '@context/world'
 import { usePositions } from '@context/positions'
@@ -72,7 +73,8 @@ const Mint: React.FC = () => {
   const { existingCollatPercent, existingCollat, firstValidVault } = usePositions()
   const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
   const { getWSqueethPositionValue } = useSqueethPool()
-  const { normFactor: normalizationFactor, openDepositAndMint, getShortAmountFromDebt } = useController()
+  const { openDepositAndMint, getShortAmountFromDebt } = useController()
+  const normalizationFactor = useAtom(normFactorAtom)[0]
   const { dispatch } = useLPState()
 
   const [mintAmount, setMintAmount] = useState(new BigNumber(0))

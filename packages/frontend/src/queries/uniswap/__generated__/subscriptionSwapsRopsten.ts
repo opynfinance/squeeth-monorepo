@@ -4,36 +4,36 @@
 // This file was automatically generated and should not be edited.
 
 // ====================================================
-// GraphQL subscription operation: subscriptionSwaps
+// GraphQL subscription operation: subscriptionSwapsRopsten
 // ====================================================
 
-export interface subscriptionSwaps_swaps_pool_token0 {
+export interface subscriptionSwapsRopsten_swaps_pool_token0 {
   __typename: "Token";
   id: string;
   symbol: string;
 }
 
-export interface subscriptionSwaps_swaps_pool_token1 {
+export interface subscriptionSwapsRopsten_swaps_pool_token1 {
   __typename: "Token";
   id: string;
   symbol: string;
 }
 
-export interface subscriptionSwaps_swaps_pool {
+export interface subscriptionSwapsRopsten_swaps_pool {
   __typename: "Pool";
-  token0: subscriptionSwaps_swaps_pool_token0;
-  token1: subscriptionSwaps_swaps_pool_token1;
+  token0: subscriptionSwapsRopsten_swaps_pool_token0;
+  token1: subscriptionSwapsRopsten_swaps_pool_token1;
 }
 
-export interface subscriptionSwaps_swaps_transaction {
+export interface subscriptionSwapsRopsten_swaps_transaction {
   __typename: "Transaction";
   id: string;
   blockNumber: any;
 }
 
-export interface subscriptionSwaps_swaps {
+export interface subscriptionSwapsRopsten_swaps {
   __typename: "Swap";
-  pool: subscriptionSwaps_swaps_pool;
+  pool: subscriptionSwapsRopsten_swaps_pool;
   id: string;
   timestamp: any;
   recipient: any;
@@ -41,14 +41,14 @@ export interface subscriptionSwaps_swaps {
   amount1: any;
   amountUSD: any;
   origin: any;
-  transaction: subscriptionSwaps_swaps_transaction;
+  transaction: subscriptionSwapsRopsten_swaps_transaction;
 }
 
-export interface subscriptionSwaps {
-  swaps: subscriptionSwaps_swaps[];
+export interface subscriptionSwapsRopsten {
+  swaps: subscriptionSwapsRopsten_swaps[];
 }
 
-export interface subscriptionSwapsVariables {
+export interface subscriptionSwapsRopstenVariables {
   poolAddress: string;
   recipients: string[];
   tokenAddress: any;
