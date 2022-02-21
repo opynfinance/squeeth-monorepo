@@ -17,6 +17,8 @@ import { PositionsProvider } from '@context/positions'
 import getTheme, { Mode } from '../src/theme'
 import { uniswapClient } from '@utils/apollo-client'
 
+const queryClient = new QueryClient()
+
 function MyApp({ Component, pageProps }: any) {
   const router = useRouter()
 
@@ -28,7 +30,6 @@ function MyApp({ Component, pageProps }: any) {
     }
   }, [])
 
-  const queryClient = new QueryClient()
   const siteID = process.env.NEXT_PUBLIC_FATHOM_CODE ? process.env.NEXT_PUBLIC_FATHOM_CODE : ''
 
   useEffect(() => {
@@ -55,13 +56,13 @@ function MyApp({ Component, pageProps }: any) {
 
   return (
     <CookiesProvider>
-      <WalletProvider>
-        <RestrictUserProvider>
-          <QueryClientProvider client={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <WalletProvider>
+          <RestrictUserProvider>
             <TradeApp Component={Component} pageProps={pageProps} />
-          </QueryClientProvider>
-        </RestrictUserProvider>
-      </WalletProvider>
+          </RestrictUserProvider>
+        </WalletProvider>
+      </QueryClientProvider>
     </CookiesProvider>
   )
 }
