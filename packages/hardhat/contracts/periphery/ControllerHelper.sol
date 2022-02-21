@@ -237,6 +237,9 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         uint256 _wPowerPerpAmount,
         uint256 _collateralToMint,
         uint256 _collateralToLP,
+        uint256 _amount0Min,
+        uint256 _amount1Min,
+        uint256 _deadline,
         int24 _lowerTick,
         int24 _upperTick
     ) external payable {
@@ -258,15 +261,22 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             tickUpper: _upperTick,
             amount0Desired: token0 == wPowerPerp ? _wPowerPerpAmount : _collateralToLP,
             amount1Desired: token1 == wPowerPerp ? _wPowerPerpAmount : _collateralToLP,
-            amount0Min: 0,
-            amount1Min: 0,
+            amount0Min: _amount0Min,
+            amount1Min: _amount1Min,
             recipient: msg.sender,
-            deadline: block.timestamp
+            deadline: _deadline
         });
 
         INonfungiblePositionManager(nonfungiblePositionManager).mint{value: _collateralToLP}(params);
 
         if (_vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), msg.sender, vaultId);
+        if (address(this).balance > 0) {
+            payable(msg.sender).sendValue(address(this).balance);
+        }
+        uint256 remainingWPowerPerp = IWPowerPerp(wPowerPerp).balanceOf(address(this));
+        if (remainingWPowerPerp > 0) {
+            IWPowerPerp(wPowerPerp).transfer(msg.sender, remainingWPowerPerp);
+        }
 
         emit BatchMintLp(msg.sender, _vaultId, _wPowerPerpAmount, _collateralToMint, _collateralToLP);
     }
