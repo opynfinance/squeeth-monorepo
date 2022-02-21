@@ -10,6 +10,7 @@ import { EtherscanPrefix } from '../constants'
 import useInterval from '@hooks/useInterval'
 import { Networks } from '../types'
 import { Web3Provider } from '@ethersproject/providers'
+import { useQueryClient } from 'react-query'
 
 const useAlchemy = process.env.NEXT_PUBLIC_USE_ALCHEMY
 const defaultWeb3 = useAlchemy
@@ -52,6 +53,8 @@ const WalletProvider: React.FC = ({ children }) => {
   const [signer, setSigner] = useState<any>(null)
   const [balance, setBalance] = useState<BigNumber>(new BigNumber(0))
 
+  const queryClient = useQueryClient()
+
   const onWalletSelect = useCallback(async () => {
     if (!onboard) return
     onboard.walletSelect().then((success) => {
@@ -62,6 +65,7 @@ const WalletProvider: React.FC = ({ children }) => {
   const disconnectWallet = useCallback(async () => {
     if (!onboard) return
     await onboard.walletReset()
+    queryClient.removeQueries()
     setAddress(null)
     setBalance(new BigNumber(0))
   }, [onboard])
