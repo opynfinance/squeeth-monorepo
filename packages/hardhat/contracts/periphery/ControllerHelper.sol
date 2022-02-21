@@ -48,7 +48,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         address indexed depositor,
         uint256 vaultId,
         uint256 wPowerPerpAmount,
-        uint256 swapedCollateralAmount,
+        uint256 swappedCollateralAmount,
         uint256 collateralAmount
     );
 
