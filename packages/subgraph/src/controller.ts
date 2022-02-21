@@ -1,4 +1,10 @@
-import { Address, BigInt, log } from "@graphprotocol/graph-ts";
+import {
+  Address,
+  BigInt,
+  Bytes,
+  log,
+  dataSource,
+} from "@graphprotocol/graph-ts";
 import {
   Controller,
   BurnShort,
@@ -29,7 +35,9 @@ import {
   DayStatSnapshot,
   VaultHistory,
 } from "../generated/schema";
-import { loadOrCreateAccount, BIGINT_ONE, BIGINT_ZERO } from "./util";
+import { loadOrCreateAccount } from "./util";
+
+import { BIGINT_ONE, BIGINT_ZERO, SHORT_HELPER_ADDR } from "./constants";
 
 // Note: If a handler doesn't require existing field values, it is faster
 // _not_ to load the entity from the store. Instead, create it fresh with
@@ -85,13 +93,21 @@ export function handleBurnShort(event: BurnShort): void {
 
   let timestamp = event.block.timestamp;
   let transactionHash = event.transaction.hash.toHex();
+
+  //check if users manually burn or using shorthelper to close position
+  let actionType: string;
+  if (event.params.sender == SHORT_HELPER_ADDR) {
+    actionType = "CLOSE_SHORT";
+  } else {
+    actionType = "BURN";
+  }
   //update vault history
   const vaultTransaction = getTransactionDetail(
     event.params.vaultId,
     event.params.amount,
     vault,
     timestamp,
-    "BURN_SHORT",
+    actionType,
     transactionHash,
     BIGINT_ZERO
   );
@@ -201,13 +217,22 @@ export function handleMintShort(event: MintShort): void {
 
   let timestamp = event.block.timestamp;
   let transactionHash = event.transaction.hash.toHex();
+  //check if users manually mint or using shorthelper to close position
+  //if directly sent to short helper address, then it's open short in 1 step, if directly sen t to controller address, then it's mint
+  let actionType: string;
+  if (event.params.sender == SHORT_HELPER_ADDR) {
+    actionType = "OPEN_SHORT";
+  } else {
+    actionType = "MINT";
+  }
+
   //update vault history
   const vaultTransaction = getTransactionDetail(
     event.params.vaultId,
     event.params.amount,
     vault,
     timestamp,
-    "MINT_SHORT",
+    actionType,
     transactionHash,
     BIGINT_ZERO
   );
@@ -372,18 +397,20 @@ function getTransactionDetail(
   transactionHash: string,
   debtAmount: BigInt
 ): VaultHistory {
-  const vaultHistory = new VaultHistory(transactionHash);
+  const vaultHistory = new VaultHistory(transactionHash + "-" + action);
   vaultHistory.totalEthCollateralAmount = vault.collateralAmount;
   vaultHistory.action = action;
   vaultHistory.vaultId = vaultId;
+  vaultHistory.txid = transactionHash;
   vaultHistory.timestamp = timestamp;
-  if (action === "MINT_SHORT" || action === "BURN_SHORT") {
-    vaultHistory.oSqthAmount = amount;
-  } else if (action === "DEPOSIT_COLLAT" || action === "WITHDRAW_COLLAT") {
+
+  if (action == "DEPOSIT_COLLAT" || action == "WITHDRAW_COLLAT") {
     vaultHistory.ethCollateralAmount = amount;
-  } else if (action === "LIQUIDATE") {
+  } else if (action == "LIQUIDATE") {
     vaultHistory.ethCollateralAmount = amount;
     vaultHistory.oSqthAmount = debtAmount;
+  } else {
+    vaultHistory.oSqthAmount = amount;
   }
 
   return vaultHistory as VaultHistory;
