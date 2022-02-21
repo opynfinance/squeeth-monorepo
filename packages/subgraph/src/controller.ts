@@ -35,12 +35,9 @@ import {
   DayStatSnapshot,
   VaultHistory,
 } from "../generated/schema";
-import {
-  loadOrCreateAccount,
-  BIGINT_ONE,
-  BIGINT_ZERO,
-  SHORT_HELPER_ADDR,
-} from "./util";
+import { loadOrCreateAccount } from "./util";
+
+import { BIGINT_ONE, BIGINT_ZERO, SHORT_HELPER_ADDR } from "./constants";
 
 // Note: If a handler doesn't require existing field values, it is faster
 // _not_ to load the entity from the store. Instead, create it fresh with
