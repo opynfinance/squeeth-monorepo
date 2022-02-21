@@ -332,6 +332,10 @@ describe("Controller helper integration test", function () {
       const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
       const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
+      const vaultBefore = await controller.vaults(vaultId)
+      const tokenIndexBefore = await (positionManager as INonfungiblePositionManager).totalSupply();
+
+      await controllerHelper.connect(depositor).batchMintLp(vaultId, mintWSqueethAmount, collateralAmount, collateralToLp, -887220, 887220, {value: collateralAmount.add(collateralToLp)});
 
       await controller.connect(depositor).mintWPowerPerpAmount(0, mintWSqueethAmount, 0, {value: collateralAmount})
 
