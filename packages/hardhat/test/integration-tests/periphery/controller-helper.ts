@@ -1,12 +1,12 @@
 import { ethers } from "hardhat"
 import { expect } from "chai";
-import { Contract, BigNumber, providers } from "ethers";
+import { Contract, BigNumber, providers, constants } from "ethers";
 import BigNumberJs from 'bignumber.js'
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { WETH9, MockErc20, ShortPowerPerp, Controller, Oracle, WPowerPerp, ControllerHelper } from "../../../typechain";
 import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addWethDaiLiquidity, addSqueethLiquidity } from '../../setup'
-import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../../utils"
+import { isSimilar, wmul, wdiv, one, oracleScaleFactor, getNow } from "../../utils"
 
 BigNumberJs.set({EXPONENTIAL_AT: 30})
 
@@ -32,7 +32,7 @@ describe("Controller helper integration test", function () {
   let ethDaiPool: Contract
   let controllerHelper: ControllerHelper
   let shortSqueeth: ShortPowerPerp
-
+  let swapRouter: Contract
 
   this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async() => {
     const accounts = await ethers.getSigners();
@@ -50,6 +50,7 @@ describe("Controller helper integration test", function () {
     const uniDeployments = await deployUniswapV3(weth)
     positionManager = uniDeployments.positionManager
     uniswapFactory = uniDeployments.uniswapFactory
+    swapRouter = uniDeployments.swapRouter
 
     // this will not deploy a new pool, only reuse old onces
     const squeethDeployments = await deploySqueethCoreContracts(
@@ -104,8 +105,6 @@ describe("Controller helper integration test", function () {
 
   describe("Mint short with flash deposit", async () => {
     it("flash mint", async () => {      
-      const vaultId = await shortSqueeth.nextId();
-
       const normFactor = await controller.normalizationFactor()
       const mintWSqueethAmount = ethers.utils.parseUnits('10')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
@@ -113,24 +112,39 @@ describe("Controller helper integration test", function () {
       const scaledEthPrice = ethPrice.div(10000)
       const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
       const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
-      const squeethEthPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
-      const ethAmountOut = mintWSqueethAmount.mul(squeethEthPrice).div(one)
+      await controller.connect(owner).mintWPowerPerpAmount(0, mintWSqueethAmount, 0, {value: collateralAmount})
+      const swapParam = {
+        tokenIn: wSqueeth.address,
+        tokenOut: weth.address,
+        fee: 3000,
+        recipient: owner.address,
+        deadline: Math.floor(await getNow(ethers.provider) + 8640000),
+        amountIn: mintWSqueethAmount,
+        amountOutMinimum: 0,
+        sqrtPriceLimitX96: 0
+      }    
+      await wSqueeth.connect(owner).approve(swapRouter.address, constants.MaxUint256)
+      const ethAmountOut = await swapRouter.connect(owner).callStatic.exactInputSingle(swapParam)
+      const vaultId = await shortSqueeth.nextId();
       const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
       const value = collateralAmount.sub(ethAmountOut.mul(one.sub(slippage)).div(one))
       const controllerBalanceBefore = await provider.getBalance(controller.address)
       const squeethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
       const vaultBefore = await controller.vaults(vaultId)
+      const depositorBalanceBefore = await provider.getBalance(depositor.address)
       
       await controllerHelper.connect(depositor).flashswapWMint(0, mintWSqueethAmount, collateralAmount, {value: value});
 
       const controllerBalanceAfter = await provider.getBalance(controller.address)
       const squeethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
       const vaultAfter = await controller.vaults(vaultId)
+      const depositorBalanceAfter = await provider.getBalance(depositor.address)
 
       expect(controllerBalanceBefore.add(collateralAmount).eq(controllerBalanceAfter)).to.be.true
       expect(squeethBalanceBefore.eq(squeethBalanceAfter)).to.be.true
       expect(vaultBefore.collateralAmount.add(collateralAmount).eq(vaultAfter.collateralAmount)).to.be.true
       expect(vaultBefore.shortAmount.add(mintWSqueethAmount).eq(vaultAfter.shortAmount)).to.be.true
+      expect(depositorBalanceAfter.gt(depositorBalanceBefore.sub(value))).to.be.true
     })
   })
 })
