@@ -141,7 +141,7 @@ const PositionsProvider: React.FC = ({ children }) => {
   const values = {
     swaps,
     loading: lpLoading,
-    squeethAmount: finalSqueeth,
+    squeethAmount: finalSqueeth.abs(),
     shortDebt: openShortSqueeth,
     lpedSqueeth: lpDebt,
     mintedDebt: mintedDebt,
