@@ -10,7 +10,7 @@ import { graphOptions } from '../../constants/diagram'
 
 const Chart = dynamic(() => import('kaktana-react-lightweight-charts'), { ssr: false })
 
-const useStyles = makeStyles((theme) =>
+const useStyles = makeStyles(() =>
   createStyles({
     switchWrapper: {
       display: 'flex',
@@ -45,7 +45,7 @@ const FundingChart = () => {
       text: 'VOL',
       itemToAdd: (
         <div className={classes.iconWrapper}>
-          <Tooltip title={Tooltips.BacktestDisclaimer}>
+          <Tooltip title={Tooltips.FundingVol}>
             <InfoIcon fontSize="small" />
           </Tooltip>
         </div>
@@ -58,7 +58,7 @@ const FundingChart = () => {
       text: 'Day',
       itemToAdd: (
         <div className={classes.iconWrapper}>
-          <Tooltip title={Tooltips.BacktestDisclaimer}>
+          <Tooltip title={Tooltips.FundingDaily}>
             <InfoIcon fontSize="small" />
           </Tooltip>
         </div>
@@ -69,7 +69,7 @@ const FundingChart = () => {
       text: 'Month',
       itemToAdd: (
         <div className={classes.iconWrapper}>
-          <Tooltip title={Tooltips.BacktestDisclaimer}>
+          <Tooltip title={Tooltips.FundingMonthly}>
             <InfoIcon fontSize="small" />
           </Tooltip>
         </div>
@@ -80,7 +80,7 @@ const FundingChart = () => {
       text: 'Annual',
       itemToAdd: (
         <div className={classes.iconWrapper}>
-          <Tooltip title={Tooltips.BacktestDisclaimer}>
+          <Tooltip title={Tooltips.FundingAnnual}>
             <InfoIcon fontSize="small" />
           </Tooltip>
         </div>
@@ -100,19 +100,19 @@ const FundingChart = () => {
     const yearFunding = dayFunding * 365.25
     const annualVol = Math.sqrt(dayFunding * 365)
     const value =
-      fundingType.id === 'vol'
+      (fundingType.id === 'vol'
         ? annualVol
         : fundingDuration.id === 'day'
         ? dayFunding
         : fundingDuration.id === 'month'
         ? monthFunding
-        : yearFunding
+        : yearFunding) * 100
     return { time: Number(item.timestamp), value }
   })
   const chartOptions = {
     ...graphOptions,
     localization: {
-      priceFormatter: (num: number) => (num < 0 ? num.toFixed(5) : num.toFixed(6)),
+      priceFormatter: (num: number) => `${num < 0 ? num.toFixed(3) : num.toFixed(4)}%`,
     },
   }
   const startTimestamp = normFactors.length > 0 ? Number(normFactors[0].timestamp) : undefined
@@ -142,7 +142,7 @@ const FundingChart = () => {
               to={endTimestamp}
               legend=""
               options={chartOptions}
-              lineSeries={[{ data: graphData, legend: legendText }]}
+              lineSeries={[{ data: graphData, legend: `${legendText} (%) ` }]}
               autoWidth
               height={300}
               darkTheme

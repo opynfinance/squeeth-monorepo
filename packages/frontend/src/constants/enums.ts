@@ -71,6 +71,10 @@ export enum Tooltips {
   StrategyEarnFunding = 'You earn funding by depositing into the strategy',
   StrategyProfitThreshold = 'Based on current funding, crab strategy would be unprofitable if ETH moves more than approximately the profit threshold in either direction each day.',
   FullcloseInput = 'Select partial close to edit input',
+  FundingVol = 'VOL is calculated as "sqrt(Daily Funding * 365)"',
+  FundingDaily = 'Daily Funding is calculated as "secondsElapsed = current Norm History timestamp - last Norm History timestamp; deltaT = secondsElapsed / secondsElapsed / (420 * 60 * 60); markIndex = 1 / exp(ln(current Norm Factor value / old Norm Factor value) / deltaT); dailyFunding = ln(markIndex) / 17.5"',
+  FundingMonthly = 'Monthly Funding is calculated as (Daily Funding * 30)',
+  FundingAnnual = 'Annual Funding is calculated as (Daily Funding * 365.25)',
 }
 
 export enum Links {
