@@ -123,9 +123,8 @@ export async function calcDollarShortUnrealizedpnl(
 ) {
   const relevantSwaps = getRelevantSwaps(squeethAmount, swaps, isWethToken0)
 
-  const { totalWethInUSD, priceError } = await relevantSwaps.reduce(async (prevPromise, swap: any) => {
+  const { totalWethInUSD, priceError } = await relevantSwaps.reduce(async (prevPromise, swap: any, index) => {
     const acc = await prevPromise
-    const squeethAmt = new BigNumber(isWethToken0 ? swap.amount1 : swap.amount0)
     const wethAmt = new BigNumber(isWethToken0 ? swap.amount0 : swap.amount1)
 
     const ethPriceWhenOpened = await getEthPriceAtTransactionTime(swap.timestamp)
@@ -135,20 +134,15 @@ export async function calcDollarShortUnrealizedpnl(
     }
 
     acc.totalWethInUSD = acc.totalWethInUSD.plus(wethAmt.negated().times(ethPriceWhenOpened))
-    acc.totalSqueeth = acc.totalSqueeth.plus(squeethAmt)
-
-    if (acc.totalSqueeth.isEqualTo(0)) {
-      acc.totalWethInUSD = BIG_ZERO
-    }
 
     return acc
-  }, Promise.resolve({ totalWethInUSD: BIG_ZERO, totalSqueeth: BIG_ZERO, priceError: false }))
+  }, Promise.resolve({ totalWethInUSD: BIG_ZERO, priceError: false }))
 
-  const usd = totalWethInUSD.minus(buyQuote.times(uniswapEthPrice))
+  const usd = totalWethInUSD.minus(buyQuote.times(uniswapEthPrice)).plus(ethCollateralPnl)
 
   return {
     usd,
-    eth: usd.plus(ethCollateralPnl).div(uniswapEthPrice),
+    eth: usd.div(uniswapEthPrice),
     loading: priceError,
   }
 }
@@ -169,23 +163,17 @@ export async function calcDollarLongUnrealizedpnl(
   const { totalUSDWethAmount, priceError } = await relevantSwaps.reduce(async (prevPromise, swap: any) => {
     const acc = await prevPromise
     const wethAmt = new BigNumber(isWethToken0 ? swap.amount0 : swap.amount1)
-    const squeethAmt = new BigNumber(isWethToken0 ? swap.amount1 : swap.amount0)
 
     const ethPriceWhenOpened = await getEthPriceAtTransactionTime(swap.timestamp)
+
     if (ethPriceWhenOpened?.isZero()) {
       acc.priceError = true
     }
 
     acc.totalUSDWethAmount = acc.totalUSDWethAmount.plus(wethAmt.times(ethPriceWhenOpened ?? BIG_ZERO))
-    acc.totalSqueeth = acc.totalSqueeth.plus(squeethAmt)
-
-    if (acc.totalSqueeth.isEqualTo(0)) {
-      //totalSqueeth being zero means a position has been completely closed, so reset totalUSDWethAmount.
-      acc.totalUSDWethAmount = BIG_ZERO
-    }
 
     return acc
-  }, Promise.resolve({ totalUSDWethAmount: BIG_ZERO, totalSqueeth: BIG_ZERO, priceError: false }))
+  }, Promise.resolve({ totalUSDWethAmount: BIG_ZERO, priceError: false }))
 
   const usdValue = !priceError ? sellQuote.amountOut.times(uniswapEthPrice).minus(totalUSDWethAmount) : BIG_ZERO
   return {
