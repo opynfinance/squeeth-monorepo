@@ -69,9 +69,7 @@ export function ShortChart({
   setCustomLong: Function
   showPercentage: boolean
 }) {
-  const { getVaultPNLWithRebalance, collatRatio } = useWorldContext()
-
-  const { ethPrice } = useWorldContext()
+  const { ethPrice, getVaultPNLWithRebalance, collatRatio } = useWorldContext()
 
   const seriesRebalance = getVaultPNLWithRebalance(longAmount)
   const classes = useStyles()
@@ -91,7 +89,9 @@ export function ShortChart({
           <SqueethTab label="Risks" />
         </SqueethTabs>
       </div>
-      {seriesRebalance.length === 0 && <Alert severity="info"> Loading historical data, this could take a while</Alert>}
+      {seriesRebalance && seriesRebalance.length === 0 && (
+        <Alert severity="info"> Loading historical data, this could take a while</Alert>
+      )}
       {chartType === 0 ? (
         <div className={classes.payoffContainer}>
           <div className={classes.shortPayoff}>

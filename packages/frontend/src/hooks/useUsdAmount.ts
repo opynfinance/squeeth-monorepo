@@ -26,7 +26,9 @@ export const useUsdAmount = () => {
   const { ethPriceMap, eth90daysPriceMap, ethWithinOneDayPriceMap } = useWorldContext()
 
   const getUsdAmt = useCallback(
-    (wethAmt: BigNumber, timestamp: any): BigNumber => {
+    (wethAmt: BigNumber, timestamp: any) => {
+      if (!ethPriceMap || !eth90daysPriceMap) return new BigNumber(0)
+
       const currentTime = new Date(Date.now())
       const txTime = new Date(Number(timestamp) * 1000)
       let usdAmount
