@@ -144,7 +144,13 @@ export async function calcDollarShortUnrealizedpnl(
     return acc
   }, Promise.resolve({ totalWethInUSD: BIG_ZERO, totalSqueeth: BIG_ZERO, priceError: false }))
 
-  return !priceError ? totalWethInUSD.minus(buyQuote.times(uniswapEthPrice)) : BIG_ZERO
+  const usd = totalWethInUSD.minus(buyQuote.times(uniswapEthPrice))
+
+  return {
+    usd,
+    eth: usd.plus(ethCollateralPnl).div(uniswapEthPrice),
+    loading: priceError,
+  }
 }
 
 export async function calcDollarLongUnrealizedpnl(
@@ -185,6 +191,7 @@ export async function calcDollarLongUnrealizedpnl(
   return {
     usd: usdValue,
     eth: !usdValue.isZero() ? usdValue.div(uniswapEthPrice) : BIG_ZERO,
+    loading: priceError,
   }
 }
 
@@ -205,7 +212,7 @@ async function getEthPriceAtTransactionTime(timestamp: string) {
       historicPriceQueryKeys.historicPrice(timestamp),
       () => getETHWithinOneDayPrices(),
       {
-      staleTime: Infinity,
+        staleTime: Infinity,
       },
     )
 
@@ -219,7 +226,7 @@ async function getEthPriceAtTransactionTime(timestamp: string) {
         historicPriceQueryKeys.historicPrice(timestamp),
         () => getHistoricEthPrice(dateTimeString),
         {
-        staleTime: Infinity,
+          staleTime: Infinity,
         },
       )
     }
@@ -239,7 +246,7 @@ async function getEthPriceAtTransactionTime(timestamp: string) {
       historicPriceQueryKeys.historicPrice(timestamp),
       () => getHistoricEthPrice(dateTimeString),
       {
-      staleTime: Infinity,
+        staleTime: Infinity,
       },
     )
   }
@@ -251,7 +258,7 @@ async function getEthPriceAtTransactionTime(timestamp: string) {
     historicPriceQueryKeys.historicPrice(timestamp),
     () => getHistoricEthPrice(dateTimeString),
     {
-    staleTime: Infinity,
+      staleTime: Infinity,
     },
   )
 }

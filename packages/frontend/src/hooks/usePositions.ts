@@ -122,13 +122,10 @@ export const usePnL = () => {
           buyQuote,
           toTokenAmount(index, 18).sqrt(),
           squeethAmount,
+          ethCollateralPnl,
         )
         setShortUnrealizedPNL({
-          usd: pnl.plus(ethCollateralPnl),
-          eth: pnl.plus(ethCollateralPnl).div(toTokenAmount(index, 18).sqrt()).isFinite()
-            ? pnl.plus(ethCollateralPnl).div(toTokenAmount(index, 18).sqrt())
-            : BIG_ZERO,
-          loading: false,
+          ...pnl,
         })
       } else {
         setShortUnrealizedPNL((prevState) => ({ ...prevState, loading: true }))
@@ -153,7 +150,7 @@ export const usePnL = () => {
           toTokenAmount(index, 18).sqrt(),
           squeethAmount,
         )
-        setLongUnrealizedPNL((prevState) => ({ ...prevState, ...pnl, loading: false }))
+        setLongUnrealizedPNL((prevState) => ({ ...prevState, ...pnl }))
       } else {
         setLongUnrealizedPNL((prevState) => ({ ...prevState, loading: true }))
       }
