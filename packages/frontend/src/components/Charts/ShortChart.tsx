@@ -5,6 +5,7 @@ import React, { useState } from 'react'
 import { Links, Vaults } from '../../constants'
 import { useWorldContext } from '../../context/world'
 import { SqueethTab, SqueethTabs } from '../Tabs'
+import FundingChart from './FundingChart'
 import ShortSqueethPayoff from './ShortSqueethPayoff'
 
 const useStyles = makeStyles((theme) =>
@@ -88,6 +89,7 @@ export function ShortChart({
           aria-label="Sub nav tabs"
         >
           <SqueethTab label="Payoff" />
+          <SqueethTab label="Funding" />
           <SqueethTab label="Risks" />
         </SqueethTabs>
       </div>
@@ -115,6 +117,8 @@ export function ShortChart({
             </Typography>
           </div>
         </div>
+      ) : chartType === 1 ? (
+        <FundingChart />
       ) : (
         <div>
           {' '}

@@ -1,8 +1,10 @@
-import { createStyles, makeStyles } from '@material-ui/core'
+import { createStyles, makeStyles, Tooltip } from '@material-ui/core'
+import InfoIcon from '@material-ui/icons/InfoOutlined'
 import dynamic from 'next/dynamic'
 import React, { useState } from 'react'
-import CustomSwitch from '@components/CustomSwitch'
+import CustomSwitch, { SwitchItem } from '@components/CustomSwitch'
 import { useNormHistory } from '@hooks/useNormHistory'
+import { Tooltips } from '@constants/enums'
 import { NormHistory } from '../../types/index'
 import { graphOptions } from '../../constants/diagram'
 
@@ -26,22 +28,67 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       gap: '5px',
     },
+    iconWrapper: {
+      display: 'flex',
+      marginLeft: 6,
+    },
   }),
 )
 
 const FundingChart = () => {
+  const classes = useStyles()
+
   const fundingTypes = [
     { id: 'funding', text: 'Funding' },
-    { id: 'vol', text: 'VOL' },
+    {
+      id: 'vol',
+      text: 'VOL',
+      itemToAdd: (
+        <div className={classes.iconWrapper}>
+          <Tooltip title={Tooltips.BacktestDisclaimer}>
+            <InfoIcon fontSize="small" />
+          </Tooltip>
+        </div>
+      ),
+    },
   ]
   const fundingDurations = [
-    { id: '1d', text: 'Day' },
-    { id: '1m', text: 'Month' },
-    { id: '1y', text: 'Annual' },
+    {
+      id: 'day',
+      text: 'Day',
+      itemToAdd: (
+        <div className={classes.iconWrapper}>
+          <Tooltip title={Tooltips.BacktestDisclaimer}>
+            <InfoIcon fontSize="small" />
+          </Tooltip>
+        </div>
+      ),
+    },
+    {
+      id: 'month',
+      text: 'Month',
+      itemToAdd: (
+        <div className={classes.iconWrapper}>
+          <Tooltip title={Tooltips.BacktestDisclaimer}>
+            <InfoIcon fontSize="small" />
+          </Tooltip>
+        </div>
+      ),
+    },
+    {
+      id: 'year',
+      text: 'Annual',
+      itemToAdd: (
+        <div className={classes.iconWrapper}>
+          <Tooltip title={Tooltips.BacktestDisclaimer}>
+            <InfoIcon fontSize="small" />
+          </Tooltip>
+        </div>
+      ),
+    },
   ]
-  const [fundingType, setFundingType] = useState(fundingTypes[0])
-  const [fundingDuration, setFundingDuration] = useState(fundingDurations[0])
-  const classes = useStyles()
+  const [fundingType, setFundingType] = useState<SwitchItem>(fundingTypes[0])
+  const [fundingDuration, setFundingDuration] = useState<SwitchItem>(fundingDurations[0])
 
   const normFactors: NormHistory[] = useNormHistory()
   const graphData = normFactors.map((item) => {
@@ -55,9 +102,9 @@ const FundingChart = () => {
     const value =
       fundingType.id === 'vol'
         ? annualVol
-        : fundingDuration.id === '1d'
+        : fundingDuration.id === 'day'
         ? dayFunding
-        : fundingDuration.id === '1m'
+        : fundingDuration.id === 'month'
         ? monthFunding
         : yearFunding
     return { time: Number(item.timestamp), value }
@@ -70,6 +117,14 @@ const FundingChart = () => {
   }
   const startTimestamp = normFactors.length > 0 ? Number(normFactors[0].timestamp) : undefined
   const endTimestamp = normFactors.length > 0 ? Number(normFactors[normFactors.length - 1].timestamp) : undefined
+  const legendText =
+    fundingType.id === 'vol'
+      ? 'Annual Vol (rhs)'
+      : fundingDuration.id === 'day'
+      ? 'Daily Funding'
+      : fundingDuration.id === 'month'
+      ? 'Monthly Funding'
+      : 'Annual Funding'
 
   return (
     <>
@@ -87,7 +142,7 @@ const FundingChart = () => {
               to={endTimestamp}
               legend=""
               options={chartOptions}
-              lineSeries={[{ data: graphData }]}
+              lineSeries={[{ data: graphData, legend: legendText }]}
               autoWidth
               height={300}
               darkTheme
@@ -95,15 +150,7 @@ const FundingChart = () => {
             <div className={classes.legendBox}>
               <div className={classes.legendContainer}>
                 <div style={{ width: '20px', height: '20px', backgroundColor: '#018FFB' }}></div>
-                <div>
-                  {fundingType.id === 'vol'
-                    ? 'Annual Vol(rhs)'
-                    : fundingDuration.id === '1d'
-                    ? 'Daily Funding'
-                    : fundingDuration.id === '1m'
-                    ? 'Monthly Funding'
-                    : 'Annual Funding'}
-                </div>
+                <div>{legendText}</div>
               </div>
             </div>
           </>

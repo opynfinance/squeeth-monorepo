@@ -12,6 +12,8 @@ const useStyles = makeStyles((theme) =>
       padding: '3px 8px',
       margin: '4px',
       cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
       borderRadius: 12,
       '& p': {
         fontSize: 14,
@@ -19,16 +21,16 @@ const useStyles = makeStyles((theme) =>
     },
     selectedItem: {
       background: '#ddd',
-      '& p': {
-        color: '#333',
-      },
+      color: '#333',
     },
   }),
 )
 
-type SwitchItem = {
+export type SwitchItem = {
   id: string
   text: string
+  itemToAdd?: React.ReactNode
+  beforeText?: boolean
 }
 
 type CustomSwitchType = {
@@ -48,7 +50,9 @@ const CustomSwitch: React.FC<CustomSwitchType> = ({ items, value, onChange }) =>
           className={clsx(classes.switchItem, item.id === value.id && classes.selectedItem)}
           onClick={() => onChange(item)}
         >
+          {item.beforeText && item.itemToAdd && item.itemToAdd}
           <Typography>{item.text}</Typography>
+          {!item.beforeText && item.itemToAdd && item.itemToAdd}
         </div>
       ))}
     </div>

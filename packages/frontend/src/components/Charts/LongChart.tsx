@@ -106,8 +106,8 @@ export function LongChart() {
     else if (tradeType === 1) setMode(ChartType.Payoff)
     // else if (tradeType === 3) setMode(ChartType.Comparison)
     // else if (tradeType === 2) setMode(ChartType.Details)
-    else if (tradeType === 2) setMode(ChartType.Risks)
-    else if (tradeType === 3) setMode(ChartType.Funding)
+    else if (tradeType === 2) setMode(ChartType.Funding)
+    else if (tradeType === 3) setMode(ChartType.Risks)
   }, [tradeType])
 
   const { ethPrices, longEthPNL, squeethPrices, longSeries, days, setDays, positionSizeSeries } = useWorldContext()
@@ -188,8 +188,8 @@ export function LongChart() {
           <SqueethTab label="Payoff" />
           {/* <SqueethTab label="Comparison" /> */}
           {/* <SqueethTab label="Details" /> */}
-          <SqueethTab label="Risks" />
           <SqueethTab label="Funding" />
+          <SqueethTab label="Risks" />
         </SqueethTabs>
         <Hidden smDown>
           {mode === ChartType.PNL ? (
