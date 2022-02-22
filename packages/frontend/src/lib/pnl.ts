@@ -87,15 +87,25 @@ export async function calcETHCollateralPnl(
 
   return !priceError ? currentVaultEthBalance.times(uniswapEthPrice).minus(deposits.minus(withdrawals)) : BIG_ZERO
 }
-
+/**
+ * getRelevantSwaps - gets the swaps that constitute the users current position
+ * @param squeethAmount
+ * @param swaps
+ * @param isWethToken0
+ * @param isLong
+ * @returns array of swaps that add up to the user's squeethAmount
+ */
 const getRelevantSwaps = (squeethAmount: BigNumber, swaps: swaps_swaps[], isWethToken0: boolean, isLong = false) => {
   let totalSqueeth = BIG_ZERO
   const relevantSwaps = []
   for (let index = swaps.length - 1; index >= 0; index--) {
-    const squeethAmt = new BigNumber(isWethToken0 ? swaps[index].amount1 : swaps[index].amount0)
-    const sqthAmount = isLong ? squeethAmt.negated() : squeethAmt
+    const squeethAmountFromSwapsData = new BigNumber(isWethToken0 ? swaps[index].amount1 : swaps[index].amount0)
+    // squeethAmountFromSwaps data from uniswap is -ve when it's a buy and +ve when it's a sell
+    const sqthAmount = isLong ? squeethAmountFromSwapsData.negated() : squeethAmountFromSwapsData
     totalSqueeth = totalSqueeth.plus(sqthAmount)
     relevantSwaps.push(swaps[index])
+
+    //checking if the squeethAmount of the swaps in the relevantSwaps array add up to the user's position
     if (squeethAmount.isEqualTo(totalSqueeth)) {
       break
     }
@@ -109,6 +119,7 @@ export async function calcDollarShortUnrealizedpnl(
   buyQuote: BigNumber,
   uniswapEthPrice: BigNumber,
   squeethAmount: BigNumber,
+  ethCollateralPnl: BigNumber,
 ) {
   const relevantSwaps = getRelevantSwaps(squeethAmount, swaps, isWethToken0)
 
