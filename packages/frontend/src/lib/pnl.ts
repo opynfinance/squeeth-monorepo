@@ -188,24 +188,45 @@ const historicPriceQueryKeys = {
 }
 
 async function getEthPriceAtTransactionTime(timestamp: string) {
-  const timeInMilliseconds = new Date(Number(timestamp) * 1000).setUTCSeconds(0, 0)
-  const currentTimeInMilliseconds = Date.now()
-  // Gets difference in minutes between the current time
-  // and the timestamp for which ethPrice data is being requested
-  const diff = differenceInMinutes(currentTimeInMilliseconds, timeInMilliseconds, { roundingMethod: 'round' })
+  try {
+    const timeInMilliseconds = new Date(Number(timestamp) * 1000).setUTCSeconds(0, 0)
+    const currentTimeInMilliseconds = Date.now()
+    // Gets difference in minutes between the current time
+    // and the timestamp for which ethPrice data is being requested
+    const diff = differenceInMinutes(currentTimeInMilliseconds, timeInMilliseconds, { roundingMethod: 'round' })
 
-  if (diff < TWELVEDATA_NO_PRICEDATA_DURATION) {
-    // call coingecko
-    const priceData = await queryClient.fetchQuery(
-      historicPriceQueryKeys.historicPrice(timestamp),
-      () => getETHWithinOneDayPrices(),
-      {
-        staleTime: Infinity,
-      },
-    )
+    if (diff < TWELVEDATA_NO_PRICEDATA_DURATION) {
+      // call coingecko
+      const priceData = await queryClient.fetchQuery(
+        historicPriceQueryKeys.historicPrice(timestamp),
+        () => getETHWithinOneDayPrices(),
+        {
+          staleTime: Infinity,
+        },
+      )
 
-    if (priceData.length === 1) {
-      // call twelvedata
+      if (priceData.length === 1) {
+        // call twelvedata
+        const dateTimeString = format(
+          new Date(subMinutes(new Date(), TWELVEDATA_NO_PRICEDATA_DURATION)).setUTCSeconds(0),
+          'yyyy-MM-dd HH:mm:ss',
+        )
+        return await queryClient.fetchQuery(
+          historicPriceQueryKeys.historicPrice(timestamp),
+          () => getHistoricEthPrice(dateTimeString),
+          {
+            staleTime: Infinity,
+          },
+        )
+      }
+
+      const dateList = priceData.map((item) => item.time)
+      const dateIndex = closestIndexTo(timeInMilliseconds, dateList)
+
+      if (dateIndex) {
+        return new BigNumber(priceData[dateIndex].value)
+      }
+
       const dateTimeString = format(
         new Date(subMinutes(new Date(), TWELVEDATA_NO_PRICEDATA_DURATION)).setUTCSeconds(0),
         'yyyy-MM-dd HH:mm:ss',
@@ -219,17 +240,9 @@ async function getEthPriceAtTransactionTime(timestamp: string) {
       )
     }
 
-    const dateList = priceData.map((item) => item.time)
-    const dateIndex = closestIndexTo(timeInMilliseconds, dateList)
+    // call twelvedata
+    const dateTimeString = format(new Date(timeInMilliseconds), 'yyyy-MM-dd HH:mm:ss')
 
-    if (dateIndex) {
-      return new BigNumber(priceData[dateIndex].value)
-    }
-
-    const dateTimeString = format(
-      new Date(subMinutes(new Date(), TWELVEDATA_NO_PRICEDATA_DURATION)).setUTCSeconds(0),
-      'yyyy-MM-dd HH:mm:ss',
-    )
     return await queryClient.fetchQuery(
       historicPriceQueryKeys.historicPrice(timestamp),
       () => getHistoricEthPrice(dateTimeString),
@@ -237,16 +250,7 @@ async function getEthPriceAtTransactionTime(timestamp: string) {
         staleTime: Infinity,
       },
     )
+  } catch (error) {
+    return BIG_ZERO
   }
-
-  // call twelvedata
-  const dateTimeString = format(new Date(timeInMilliseconds), 'yyyy-MM-dd HH:mm:ss')
-
-  return await queryClient.fetchQuery(
-    historicPriceQueryKeys.historicPrice(timestamp),
-    () => getHistoricEthPrice(dateTimeString),
-    {
-      staleTime: Infinity,
-    },
-  )
 }

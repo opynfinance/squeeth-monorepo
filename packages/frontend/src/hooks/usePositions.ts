@@ -21,6 +21,7 @@ import { useAddresses } from './useAddress'
 import { calcDollarShortUnrealizedpnl, calcETHCollateralPnl, calcDollarLongUnrealizedpnl } from '../lib/pnl'
 import { BIG_ZERO } from '../constants/'
 import { useAtom } from 'jotai'
+import { PositionType } from '../types'
 
 export const usePnL = () => {
   const [ethCollateralPnl, setEthCollateralPnl] = useState(BIG_ZERO)
@@ -36,6 +37,7 @@ export const usePnL = () => {
     totalUSDFromSell,
     firstValidVault,
     existingCollat,
+    positionType,
   } = usePositions()
   const [index] = useAtom(indexAtom)
 
@@ -114,7 +116,8 @@ export const usePnL = () => {
         !buyQuote.isZero() &&
         !index.isZero() &&
         !ethCollateralPnl.isZero() &&
-        !squeethAmount.isZero()
+        !squeethAmount.isZero() &&
+        positionType === PositionType.SHORT
       ) {
         const pnl = await calcDollarShortUnrealizedpnl(
           swaps,
@@ -138,11 +141,18 @@ export const usePnL = () => {
     isWethToken0,
     swaps?.length,
     squeethAmount.toString(),
+    positionType,
   ])
 
   useEffect(() => {
     ;(async () => {
-      if (swaps?.length && !sellQuote.amountOut.isZero() && !index.isZero() && !squeethAmount.isZero()) {
+      if (
+        swaps?.length &&
+        !sellQuote.amountOut.isZero() &&
+        !index.isZero() &&
+        !squeethAmount.isZero() &&
+        positionType === PositionType.LONG
+      ) {
         const pnl = await calcDollarLongUnrealizedpnl(
           swaps,
           isWethToken0,
@@ -155,7 +165,14 @@ export const usePnL = () => {
         setLongUnrealizedPNL((prevState) => ({ ...prevState, loading: true }))
       }
     })()
-  }, [index.toString(), isWethToken0, sellQuote.amountOut.toString(), swaps?.length, squeethAmount.toString()])
+  }, [
+    index.toString(),
+    isWethToken0,
+    sellQuote.amountOut.toString(),
+    swaps?.length,
+    squeethAmount.toString(),
+    positionType,
+  ])
 
   return {
     longGain,
