@@ -1,9 +1,24 @@
-import { BigInt } from "@graphprotocol/graph-ts";
+import { Address } from "@graphprotocol/graph-ts";
 import { Account } from "../generated/schema";
+import {
+  MAINNET_SHORT_HELPER_ADDR,
+  ROPSTEN_SHORT_HELPER_ADDR,
+  LOCALHOST_SHORT_HELPER_ADDR,
+  RA_SHORT_HELPER_ADDR,
+  BIGINT_ZERO,
+} from "./constants";
 
-export const BIGINT_ONE = BigInt.fromI32(1)
-export const BIGINT_ZERO = BigInt.fromI32(0)
-
+export function getShortHelperAddr(networkName: string): Address {
+  let addr = MAINNET_SHORT_HELPER_ADDR;
+  if (networkName == "ropsten") {
+    addr = ROPSTEN_SHORT_HELPER_ADDR;
+  } else if (networkName == "localhost") {
+    addr = LOCALHOST_SHORT_HELPER_ADDR;
+  } else if (networkName == "rinkebyArbitrum") {
+    addr = RA_SHORT_HELPER_ADDR;
+  }
+  return addr;
+}
 
 export function loadOrCreateAccount(accountId: string): Account {
   let account = Account.load(accountId);
