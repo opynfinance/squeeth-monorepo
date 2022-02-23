@@ -1,5 +1,6 @@
 import BigNumber from 'bignumber.js'
 import Notify from 'bnc-notify'
+import { useQuery, useQueryClient } from 'react-query'
 import Onboard from 'bnc-onboard'
 import { API } from 'bnc-onboard/dist/src/interfaces'
 import { ethers } from 'ethers'
@@ -7,10 +8,12 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from 're
 import Web3 from 'web3'
 
 import { EtherscanPrefix } from '../constants'
-import useInterval from '@hooks/useInterval'
 import { Networks } from '../types'
 import { Web3Provider } from '@ethersproject/providers'
 
+const balanceQueryKeys = {
+  userWalletBalance: () => ['userWalletBalance'],
+}
 const useAlchemy = process.env.NEXT_PUBLIC_USE_ALCHEMY
 const defaultWeb3 = useAlchemy
   ? new Web3(`https://eth-mainnet.alchemyapi.io/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`)
@@ -50,7 +53,13 @@ const WalletProvider: React.FC = ({ children }) => {
   const [onboard, setOnboard] = useState<API | null>(null)
   const [notify, setNotify] = useState<any>(null)
   const [signer, setSigner] = useState<any>(null)
-  const [balance, setBalance] = useState<BigNumber>(new BigNumber(0))
+
+  const queryClient = useQueryClient()
+
+  const balanceQuery = useQuery(balanceQueryKeys.userWalletBalance(), () => getBalance(web3, address), {
+    enabled: Boolean(address),
+    refetchInterval: 30000,
+  })
 
   const onWalletSelect = useCallback(async () => {
     if (!onboard) return
@@ -63,7 +72,7 @@ const WalletProvider: React.FC = ({ children }) => {
     if (!onboard) return
     await onboard.walletReset()
     setAddress(null)
-    setBalance(new BigNumber(0))
+    queryClient.setQueryData(balanceQueryKeys.userWalletBalance(), new BigNumber(0))
   }, [onboard])
 
   const setAddr = (address: string) => setAddress(address)
@@ -95,32 +104,13 @@ const WalletProvider: React.FC = ({ children }) => {
       networkId,
       signer,
       connected: !!address && networkId in Networks,
-      balance,
+      balance: balanceQuery.data ?? new BigNumber(0),
       selectWallet: onWalletSelect,
       disconnectWallet: disconnectWallet,
       handleTransaction,
     }),
-    [web3, address, networkId, signer, balance.toString(), onWalletSelect, disconnectWallet],
+    [web3, address, networkId, signer, balanceQuery.data?.toString(), onWalletSelect, disconnectWallet],
   )
-
-  const getBalance = () => {
-    if (!address) {
-      setBalance(new BigNumber(0))
-      return
-    }
-
-    web3.eth.getBalance(address).then((bal) => setBalance(new BigNumber(bal)))
-  }
-
-  useEffect(() => {
-    if (!address) {
-      setBalance(new BigNumber(0))
-      return
-    }
-    getBalance()
-  }, [address])
-
-  useInterval(getBalance, 30000)
 
   useEffect(() => {
     const onNetworkChange = (updateNetwork: number) => {
@@ -236,6 +226,16 @@ const WalletProvider: React.FC = ({ children }) => {
   }, [networkId])
 
   return <walletContext.Provider value={store}>{children}</walletContext.Provider>
+}
+
+async function getBalance(web3: Web3, address: string | null) {
+  try {
+    if (!address) return
+    const balance = await web3.eth.getBalance(address)
+    return new BigNumber(balance)
+  } catch {
+    return new BigNumber(0)
+  }
 }
 
 export { useWallet, WalletProvider }
