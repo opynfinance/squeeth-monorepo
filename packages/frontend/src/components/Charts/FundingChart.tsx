@@ -119,7 +119,7 @@ const FundingChart = () => {
   const endTimestamp = normFactors.length > 0 ? Number(normFactors[normFactors.length - 1].timestamp) : undefined
   const legendText =
     fundingType.id === 'vol'
-      ? 'Annual Vol (rhs)'
+      ? 'Annual Vol'
       : fundingDuration.id === 'day'
       ? 'Daily Funding'
       : fundingDuration.id === 'month'
