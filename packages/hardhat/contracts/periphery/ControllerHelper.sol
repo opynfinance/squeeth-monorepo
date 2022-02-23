@@ -161,12 +161,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             _wPowerPerpAmountToBurn.add(_wPowerPerpAmountToBuy),
             _maxToPay,
             uint8(FLASH_SOURCE.FLASH_W_BURN),
-            abi.encodePacked(
-                _vaultId,
-                _wPowerPerpAmountToBurn,
-                _wPowerPerpAmountToBuy,
-                _collateralToWithdraw
-            )
+            abi.encodePacked(_vaultId, _wPowerPerpAmountToBurn, _wPowerPerpAmountToBuy, _collateralToWithdraw)
         );
 
         emit FlashWBurn(msg.sender, _vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw, _wPowerPerpAmountToBuy);
