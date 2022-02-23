@@ -49,8 +49,6 @@ export interface subscriptionSwaps {
 }
 
 export interface subscriptionSwapsVariables {
-  poolAddress: string;
-  recipients: string[];
   tokenAddress: any;
   origin: any;
   orderDirection: string;
