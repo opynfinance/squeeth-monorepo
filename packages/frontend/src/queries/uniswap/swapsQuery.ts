@@ -51,7 +51,7 @@ export const SWAPS_QUERY = gql`
     swaps(
       orderBy: timestamp
       orderDirection: $orderDirection
-      where: { token1: $tokenAddress, origin: $origin, recipient_not: $recipient_not }
+      where: { token1: $tokenAddress, origin: $origin, recipient_not: $recipient_not, poolAddress: $poolAddress }
     ) {
       pool {
         token0 {
