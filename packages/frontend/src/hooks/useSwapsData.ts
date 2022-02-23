@@ -22,15 +22,14 @@ export const useSwapsData = () => {
       variables: {
         origin: address || '',
         orderDirection: 'asc',
+        recipient_not: crabStrategy?.toLowerCase(),
         ...(networkId === Networks.MAINNET
           ? {
               tokenAddress: oSqueeth?.toLowerCase(),
-              recipient_not: crabStrategy?.toLowerCase(),
             }
           : {
               poolAddress: squeethPool?.toLowerCase(),
               recipients: [shortHelper, address || '', swapRouter],
-              recipient_not: crabStrategy?.toLowerCase(),
             }),
       },
       fetchPolicy: 'cache-and-network',
@@ -43,15 +42,14 @@ export const useSwapsData = () => {
       variables: {
         origin: address || '',
         orderDirection: 'asc',
+        recipient_not: crabStrategy?.toLowerCase(),
         ...(networkId === Networks.MAINNET
           ? {
               tokenAddress: oSqueeth?.toLowerCase(),
-              recipient_not: crabStrategy?.toLowerCase(),
             }
           : {
               poolAddress: squeethPool?.toLowerCase(),
               recipients: [shortHelper, address || '', swapRouter],
-              recipient_not: crabStrategy?.toLowerCase(),
             }),
       },
       updateQuery(prev, { subscriptionData }) {
