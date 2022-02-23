@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 
 import { getETHPNLCompounding, getSqueethChartWithFunding, getSqueethPNLCompounding } from '@utils/pricer'
-import { useAsyncMemo } from './useAsyncMemo'
+import { useQuery } from 'react-query'
 
 const emptyPriceList = [
   {
@@ -10,59 +10,93 @@ const emptyPriceList = [
   },
 ]
 
+const FIVE_MINUTES_IN_MILLISECONDS = 300_000
+const ethPriceChartsQueryKeys = {
+  ethPriceRange: (days: number) => ['ethPriceRange', { days }],
+  allEthPricesRange: (days: number) => ['allEthPricesRange', { days }],
+  allEth90daysPrices: () => ['allEth90daysPrices'],
+  allEthWithinOneDayPrices: () => ['allEthWithinOneDayPrices'],
+  cusdcPricesRange: (days: number) => ['cusdcPricesRange', { days }],
+  squeethSeries: () => ['squeethSeries'],
+  squeethPNLSeries: () => ['squeethPNLSeries'],
+  ethPNLCompounding: () => ['ethPNLCompounding'],
+}
+
 export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initCollatRatio = 1.5) {
   const [volMultiplier, setVolMultiplier] = useState(initVolMultiplier)
   const [days, setDays] = useState(initDays)
   const [collatRatio, setCollatRatio] = useState(initCollatRatio)
 
-  const ethPrices = useAsyncMemo(async () => await getETHPrices(days), [], [days])
-  const allEthPrices = useAsyncMemo(async () => await getETHPrices(initDays), [], [initDays])
-  const allEth90daysPrices = useAsyncMemo(async () => await getETH90DaysPrices(), [], [])
-  const allEthWithinOneDayPrices = useAsyncMemo(async () => await getETHWithinOneDayPrices(), [], [])
-
-  const cusdcPrices = useAsyncMemo(async () => await getCUSDCPrices(days), [], [days])
+  const ethPrices = useQuery(ethPriceChartsQueryKeys.ethPriceRange(days), () => getETHPrices(days), {
+    enabled: Boolean(days),
+    staleTime: FIVE_MINUTES_IN_MILLISECONDS,
+  })
+  const allEthPrices = useQuery(ethPriceChartsQueryKeys.allEthPricesRange(initDays), () => getETHPrices(initDays), {
+    enabled: Boolean(initDays),
+    staleTime: FIVE_MINUTES_IN_MILLISECONDS,
+  })
+  const allEth90daysPrices = useQuery(ethPriceChartsQueryKeys.allEth90daysPrices(), () => getETH90DaysPrices(), {
+    staleTime: FIVE_MINUTES_IN_MILLISECONDS,
+  })
+  const allEthWithinOneDayPrices = useQuery(
+    ethPriceChartsQueryKeys.allEthWithinOneDayPrices(),
+    () => getETHWithinOneDayPrices(),
+    {
+      staleTime: FIVE_MINUTES_IN_MILLISECONDS,
+    },
+  )
+  const cusdcPrices = useQuery(ethPriceChartsQueryKeys.cusdcPricesRange(days), () => getCUSDCPrices(days), {
+    staleTime: FIVE_MINUTES_IN_MILLISECONDS,
+  })
 
   // const allVols = useAsyncMemo(async () => await getVolForTimestamp(1619942197, 400), [], [])
 
   const startingETHPrice = useMemo(() => {
-    return ethPrices.length === 0 ? 1 : ethPrices[0].value
-  }, [ethPrices])
+    return ethPrices.data && ethPrices.data.length > 0 ? ethPrices.data[0].value : 1
+  }, [ethPrices.data])
 
   const ethPriceMap = useMemo(
     () =>
-      allEthPrices.reduce((acc: any, p) => {
+      allEthPrices.data &&
+      allEthPrices.data.reduce((acc, p) => {
         acc[p.time] = p.value
         return acc
-      }, {}),
-    [allEthPrices],
+      }, {} as Record<string, number>),
+    [allEthPrices.data],
   )
 
   const eth90daysPriceMap = useMemo(
     () =>
-      allEth90daysPrices.reduce((acc: any, p) => {
+      allEth90daysPrices.data &&
+      allEth90daysPrices.data.reduce((acc, p) => {
         acc[p.time] = p.value
         return acc
-      }, {}),
-    [allEth90daysPrices],
+      }, {} as Record<string, number>),
+    [allEth90daysPrices.data],
   )
 
-  const ethWithinOneDayPriceMap = allEthWithinOneDayPrices?.length
-    ? allEthWithinOneDayPrices.reduce((acc: any, p) => {
-        acc[p.time] = p.value
-        return acc
-      }, {})
-    : {}
+  const ethWithinOneDayPriceMap = useMemo(
+    () =>
+      allEthWithinOneDayPrices.data
+        ? allEthWithinOneDayPrices.data.reduce((acc: any, p) => {
+            acc[p.time] = p.value
+            return acc
+          }, {})
+        : {},
+    [allEthWithinOneDayPrices.data],
+  )
 
   /**
    * cUSDC yield as PNL
    */
   const getStableYieldPNL = useCallback(
     (comparedLongAmount: number) => {
-      if (cusdcPrices.length === 0) return []
+      if (!cusdcPrices.data || cusdcPrices.data.length === 0) return []
+
       // price of one unit of cUSDC
-      const startCUSDCPrice = cusdcPrices[0].value
+      const startCUSDCPrice = cusdcPrices.data[0].value
       const amountCUSDC = (startingETHPrice * comparedLongAmount) / startCUSDCPrice
-      return cusdcPrices.map(({ time, value }) => {
+      return cusdcPrices.data.map(({ time, value }) => {
         const pnlPerct =
           Math.round(
             ((amountCUSDC * value - startingETHPrice * comparedLongAmount) / (startingETHPrice * comparedLongAmount)) *
@@ -74,7 +108,7 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
         }
       })
     },
-    [startingETHPrice, cusdcPrices],
+    [startingETHPrice, cusdcPrices.data],
   )
 
   // const ethLongPNLWithoutCompounding = useMemo(() => {
@@ -91,84 +125,105 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
   // }, [startingETHPrice, ethPrices])
 
   // get compounding eth pnl
-  const ethPNLCompounding = useAsyncMemo(
-    () => {
-      return getETHPNLCompounding(ethPrices)
+  const ethPNLCompounding = useQuery(
+    ethPriceChartsQueryKeys.ethPNLCompounding(),
+    () => getETHPNLCompounding(ethPrices.data ?? []),
+    {
+      enabled: ethPrices.isSuccess,
     },
-    [],
-    [ethPrices],
   )
 
   //new long eth pnl w compounding
   const longEthPNL = useMemo(() => {
-    return ethPNLCompounding.map(({ time, longPNL }) => {
-      return { time, value: longPNL }
-    })
-  }, [ethPNLCompounding])
+    return (
+      ethPNLCompounding.data &&
+      ethPNLCompounding.data.map(({ time, longPNL }) => {
+        return { time, value: longPNL }
+      })
+    )
+  }, [ethPNLCompounding.data])
 
   //new short eth pnl w compounding
   const shortEthPNL = useMemo(() => {
-    return ethPNLCompounding.map(({ time, shortPNL }) => {
-      return { time, value: shortPNL }
-    })
-  }, [ethPNLCompounding])
+    return (
+      ethPNLCompounding.data &&
+      ethPNLCompounding.data.map(({ time, shortPNL }) => {
+        return { time, value: shortPNL }
+      })
+    )
+  }, [ethPNLCompounding.data])
 
   const squeethPrices = useMemo(() => {
-    return ethPrices.map(({ time, value }) => {
-      return { time, value: value ** 2 / startingETHPrice }
-    })
-  }, [ethPrices, startingETHPrice])
+    return (
+      ethPrices.data &&
+      ethPrices.data.map(({ time, value }) => {
+        return { time, value: value ** 2 / startingETHPrice }
+      })
+    )
+  }, [ethPrices.data, startingETHPrice])
 
-  const squeethSeries = useAsyncMemo(
-    () => {
-      return getSqueethChartWithFunding(ethPrices, volMultiplier, collatRatio)
-    },
-    { series: [], accFunding: 0 },
-    [ethPrices, volMultiplier, collatRatio],
+  const squeethSeries = useQuery(
+    ethPriceChartsQueryKeys.squeethSeries(),
+    () => getSqueethChartWithFunding(ethPrices.data ?? [], volMultiplier, collatRatio),
+    { enabled: ethPrices.isSuccess },
   )
-  const squeethPNLSeries = useAsyncMemo(
-    () => {
-      return getSqueethPNLCompounding(ethPrices, volMultiplier, collatRatio, days)
-    },
-    [],
-    [ethPrices, volMultiplier, collatRatio],
+
+  const squeethPNLSeries = useQuery(
+    ethPriceChartsQueryKeys.squeethPNLSeries(),
+    () => getSqueethPNLCompounding(ethPrices.data ?? [], volMultiplier, collatRatio, days),
+    { enabled: Boolean(ethPrices.isSuccess && days) },
   )
 
   const longSeries = useMemo(() => {
-    return squeethPNLSeries.map(({ time, longPNL }) => {
-      return { time, value: longPNL }
-    })
-  }, [squeethPNLSeries])
+    return (
+      squeethPNLSeries.data &&
+      squeethPNLSeries.data.map(({ time, longPNL }) => {
+        return { time, value: longPNL }
+      })
+    )
+  }, [squeethPNLSeries.data])
 
   // new short series
   const shortSeries = useMemo(() => {
-    return squeethPNLSeries.map(({ time, shortPNL }) => {
-      return { time, value: shortPNL }
-    })
-  }, [squeethPNLSeries])
+    return (
+      squeethPNLSeries.data &&
+      squeethPNLSeries.data.map(({ time, shortPNL }) => {
+        return { time, value: shortPNL }
+      })
+    )
+  }, [squeethPNLSeries.data])
 
   // prev short series
   const prevShortSeries = useMemo(() => {
-    return squeethSeries.series.map(({ time, shortPNL }) => {
-      return { time, value: shortPNL }
-    })
-  }, [squeethSeries])
+    return (
+      squeethSeries.data &&
+      squeethSeries.data.series.map(({ time, shortPNL }) => {
+        return { time, value: shortPNL }
+      })
+    )
+  }, [squeethSeries.data])
 
   /**
    * position size over time, decreasing from 1
    */
   const positionSizePercentageSeries = useMemo(() => {
-    return squeethSeries.series.map(({ time, positionSize }) => {
-      return { time, value: positionSize * 100 }
-    })
-  }, [squeethSeries])
+    return (
+      squeethSeries.data &&
+      squeethSeries.data.series.map(({ time, positionSize }) => {
+        return { time, value: positionSize * 100 }
+      })
+    )
+  }, [squeethSeries.data])
 
   const fundingPercentageSeries = useMemo(() => {
-    return squeethSeries.series.map(({ time, fundingPerSqueeth, mark, timeElapsed: timeElapsedInDay }) => {
-      const fundingPercentageDay = fundingPerSqueeth / mark / timeElapsedInDay
-      return { time, value: Number((fundingPercentageDay * 100).toFixed(4)) }
-    })
-  }, [squeethSeries])
+    return (
+      squeethSeries.data &&
+      squeethSeries.data.series.map(({ time, fundingPerSqueeth, mark, timeElapsed: timeElapsedInDay }) => {
+        const fundingPercentageDay = fundingPerSqueeth / mark / timeElapsedInDay
+        return { time, value: Number((fundingPercentageDay * 100).toFixed(4)) }
+      })
+    )
+  }, [squeethSeries.data])
 
   /**
    * used to generate vault pnl, considering
@@ -181,8 +236,9 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
    */
   const getVaultPNLWithRebalance = useCallback(
     (n: number, rebalanceInterval = 86400) => {
-      if (squeethSeries.series.length === 0) return []
-      if (squeethSeries.series.length !== ethPrices.length) return []
+      if (!squeethSeries.data || squeethSeries.data.series.length === 0) return []
+      if (!ethPrices.data || !prevShortSeries) return
+      if (ethPrices.data && squeethSeries.data.series.length !== ethPrices.data.length) return []
 
       const delta = n - 2 // fix delta we want to hedge to. (n - 2)
       const normalizedFactor = startingETHPrice
@@ -190,16 +246,16 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
       // how much eth holding throughout the time
       let longAmount = n
       const data: { time: number; value: number }[] = []
-      let nextRebalanceTime = ethPrices[0].time + rebalanceInterval
+      let nextRebalanceTime = ethPrices.data[0].time + rebalanceInterval
 
       // set uniswap fee
       const UNISWAP_FEE = 0.003
 
       // accumulate total cost of buying (or selling) eth
       let totalLongCost = startingETHPrice * longAmount
-      ethPrices.forEach(({ time, value: price }, i) => {
+      ethPrices.data.forEach(({ time, value: price }, i) => {
         if (time > nextRebalanceTime) {
-          const m = squeethSeries.series[i].positionSize
+          const m = squeethSeries.data.series[i].positionSize
 
           // rebalance
           const x = price / normalizedFactor
@@ -232,7 +288,7 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
 
       return data
     },
-    [ethPrices, startingETHPrice, shortSeries, squeethSeries],
+    [ethPrices.data, prevShortSeries, squeethSeries.data, startingETHPrice],
   )
 
   return {
@@ -242,7 +298,7 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
     days,
     volMultiplier,
     startingETHPrice,
-    ethPrices,
+    ethPrices: ethPrices.data,
     getStableYieldPNL,
     longEthPNL,
     shortEthPNL,
@@ -251,7 +307,7 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
     shortSeries,
     positionSizeSeries: positionSizePercentageSeries,
     fundingPercentageSeries,
-    accFunding: squeethSeries.accFunding,
+    accFunding: squeethSeries.data?.accFunding,
     ethPriceMap,
     eth90daysPriceMap,
     ethWithinOneDayPriceMap,
