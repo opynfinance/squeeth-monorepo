@@ -20,6 +20,7 @@ import { Links, Tooltips } from '../../constants/enums'
 import IV from '../IV'
 import { SqueethTab, SqueethTabs } from '../Tabs'
 import LongSqueethPayoff from './LongSqueethPayoff'
+import FundingChart from './FundingChart'
 enum ChartType {
   PNL = 'LONG PNL',
   // Price = 'Price Chart',
@@ -29,6 +30,7 @@ enum ChartType {
   // Comparison = 'Comparison',
   Details = 'Details',
   Risks = 'Risks',
+  Funding = 'Funding',
 }
 
 const Chart = dynamic(() => import('kaktana-react-lightweight-charts'), { ssr: false })
@@ -94,7 +96,6 @@ const useStyles = makeStyles((theme) =>
 export function LongChart() {
   const [mode, setMode] = useState<ChartType>(ChartType.PNL)
   const [tradeType, setTradeType] = useState(0)
-
   const classes = useStyles()
   const { ethPrice, longEthPNL, longSeries, days, setDays, positionSizeSeries } = useWorldContext()
 
@@ -105,7 +106,8 @@ export function LongChart() {
     else if (tradeType === 1) setMode(ChartType.Payoff)
     // else if (tradeType === 3) setMode(ChartType.Comparison)
     // else if (tradeType === 2) setMode(ChartType.Details)
-    else if (tradeType === 2) setMode(ChartType.Risks)
+    else if (tradeType === 2) setMode(ChartType.Funding)
+    else if (tradeType === 3) setMode(ChartType.Risks)
   }, [tradeType])
 
   // plot line data
@@ -179,6 +181,7 @@ export function LongChart() {
           <SqueethTab label="Payoff" />
           {/* <SqueethTab label="Comparison" /> */}
           {/* <SqueethTab label="Details" /> */}
+          <SqueethTab label="Funding" />
           <SqueethTab label="Risks" />
         </SqueethTabs>
         <Hidden smDown>
@@ -266,6 +269,8 @@ export function LongChart() {
             </a>
           </Typography>
         </div>
+      ) : mode === ChartType.Funding ? (
+        <FundingChart />
       ) : (
         // : mode === ChartType.Comparison ? (
         //   <Image src={ComparisonChart} alt="Comparison Chart" height={340} />
