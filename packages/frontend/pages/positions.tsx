@@ -156,7 +156,7 @@ export function Positions() {
 
   const pool = useAtom(poolAtom)[0]
 
-  const { oSqueethBal } = useWorldContext()
+  const { ethPrice, oSqueethBal } = useWorldContext()
   const { address } = useWallet()
 
   const {

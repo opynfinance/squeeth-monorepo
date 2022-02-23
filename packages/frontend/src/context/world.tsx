@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext } from 'react'
 
 import { useETHPriceCharts } from '@hooks/useETHPriceCharts'
 import BigNumber from 'bignumber.js'
@@ -18,18 +18,18 @@ type WorldContextProps = {
   // setResearchMode: Function
   // setUsePriceSeries: Function,
 
-  ethPrices: point[]
+  ethPrices: point[] | undefined
   startingETHPrice: number
-  longEthPNL: point[]
-  shortEthPNL: point[]
-  squeethPrices: point[]
-  longSeries: point[]
-  shortSeries: point[]
+  longEthPNL: point[] | undefined
+  shortEthPNL: point[] | undefined
+  squeethPrices: point[] | undefined
+  longSeries: point[] | undefined
+  shortSeries: point[] | undefined
 
-  positionSizeSeries: point[]
-  fundingPercentageSeries: point[]
+  positionSizeSeries: point[] | undefined
+  fundingPercentageSeries: point[] | undefined
 
-  accFunding: number
+  accFunding: number | undefined
   volMultiplier: number
   days: number
   setVolMultiplier: Function
@@ -37,11 +37,11 @@ type WorldContextProps = {
   collatRatio: number
   setCollatRatio: Function
 
-  ethPriceMap: { [key: number]: number }
-  eth90daysPriceMap: { [key: number]: number }
+  ethPriceMap: { [key: number]: number } | undefined
+  eth90daysPriceMap: { [key: number]: number } | undefined
   ethWithinOneDayPriceMap: { [key: number]: number }
 
-  getVaultPNLWithRebalance: (longAmount: number) => point[]
+  getVaultPNLWithRebalance: (longAmount: number) => point[] | undefined
   getStableYieldPNL: (comparedlongAmount: number) => point[]
 
   ethPrice: BigNumber

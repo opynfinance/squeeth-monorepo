@@ -8,6 +8,7 @@ import Head from 'next/head'
 import { useRouter } from 'next/router'
 import React, { useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from 'react-query'
+import { ReactQueryDevtools } from 'react-query/devtools'
 import { CookiesProvider } from 'react-cookie'
 
 import { RestrictUserProvider } from '@context/restrict-user'
@@ -17,7 +18,7 @@ import { PositionsProvider } from '@context/positions'
 import getTheme, { Mode } from '../src/theme'
 import { uniswapClient } from '@utils/apollo-client'
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
 
 function MyApp({ Component, pageProps }: any) {
   const router = useRouter()
@@ -55,15 +56,16 @@ function MyApp({ Component, pageProps }: any) {
   }, [router.events, siteID])
 
   return (
-    <CookiesProvider>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <CookiesProvider>
         <WalletProvider>
           <RestrictUserProvider>
             <TradeApp Component={Component} pageProps={pageProps} />
           </RestrictUserProvider>
         </WalletProvider>
-      </QueryClientProvider>
-    </CookiesProvider>
+      </CookiesProvider>
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
   )
 }
 
