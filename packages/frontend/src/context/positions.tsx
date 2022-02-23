@@ -107,7 +107,7 @@ const PositionsProvider: React.FC = ({ children }) => {
       : shortVaults[firstValidVault]?.shortAmount.gt(0) && oSqueethBal?.isGreaterThan(0)
       ? oSqueethBal
       : new BigNumber(0)
-  }, [firstValidVault, oSqueethBal.toString(), positionType, shortVaults?.length, squeethAmount.toString()])
+  }, [firstValidVault, oSqueethBal?.toString(), positionType, shortVaults?.length, squeethAmount.toString()])
 
   //meaning if there is minted squeeth sold, need to be subtracted
   const finalShortSqueeth = useMemo(() => {
@@ -116,7 +116,7 @@ const PositionsProvider: React.FC = ({ children }) => {
 
   const longSqthBal = useMemo(() => {
     return mintedDebt.gt(0) ? oSqueethBal.minus(mintedDebt) : oSqueethBal
-  }, [oSqueethBal.toString(), mintedDebt.toString()])
+  }, [oSqueethBal?.toString(), mintedDebt.toString()])
 
   const lpDebt = useMemo(() => {
     return depositedSqueeth.minus(withdrawnSqueeth).isGreaterThan(0)
