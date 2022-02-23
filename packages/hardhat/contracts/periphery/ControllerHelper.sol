@@ -455,24 +455,10 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             _wPowerPerpAmount,
             0
         );
-        address token0 = IUniswapV3Pool(wPowerPerpPool).token0();
-        address token1 = IUniswapV3Pool(wPowerPerpPool).token1();
+        uint256 amount0Desired = wPowerPerpPoolToken0 == wPowerPerp ? _wPowerPerpAmount : _collateralToLP;
+        uint256 amount1Desired = wPowerPerpPoolToken1 == wPowerPerp ? _wPowerPerpAmount : _collateralToLP;
 
-        INonfungiblePositionManager.MintParams memory params = INonfungiblePositionManager.MintParams({
-            token0: token0,
-            token1: token1,
-            fee: IUniswapV3Pool(wPowerPerpPool).fee(),
-            tickLower: _lowerTick,
-            tickUpper: _upperTick,
-            amount0Desired: token0 == wPowerPerp ? _wPowerPerpAmount : _collateralToLP,
-            amount1Desired: token1 == wPowerPerp ? _wPowerPerpAmount : _collateralToLP,
-            amount0Min: _amount0Min,
-            amount1Min: _amount1Min,
-            recipient: msg.sender,
-            deadline: _deadline
-        });
-
-        INonfungiblePositionManager(nonfungiblePositionManager).mint{value: _collateralToLP}(params);
+        _lpWPowerPerpPool(msg.sender, _collateralToLP, amount0Desired, amount1Desired, _amount0Min, _amount1Min, _deadline, _lowerTick, _upperTick);
 
         if (_vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), msg.sender, vaultId);
         if (address(this).balance > 0) {
@@ -484,6 +470,22 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         }
 
         emit BatchMintLp(msg.sender, _vaultId, _wPowerPerpAmount, _collateralToMint, _collateralToLP);
+    }
+
+    function flashswapWMintDepositNft(uint256 _vaultId, uint256 _wPowerPerpAmount, uint256 _collateralToMint, uint256 _collateralToLP, 
+        uint256 _amount0Min,uint256 _amount1Min,uint256 _deadline,
+        int24 _lowerTick,
+        int24 _upperTick
+    ) external payable {
+        _exactInFlashSwap(
+            wPowerPerp,
+            weth,
+            IUniswapV3Pool(wPowerPerpPool).fee(),
+            _wPowerPerpAmount,
+            _collateralToMint,
+            uint8(FLASH_SOURCE.FLASH_W_MINT_DEPOSIT_NFT),
+            abi.encodePacked(_vaultId, _wPowerPerpAmount, _collateralToMint, _collateralToLP, _amount0Min, _amount1Min, _deadline, _lowerTick, _upperTick)
+        );
     }
 
     /**
