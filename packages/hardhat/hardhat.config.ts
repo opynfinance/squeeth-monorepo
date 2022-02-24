@@ -73,7 +73,10 @@ const config: HardhatUserConfig = {
       hardfork: "berlin",
       accounts: {
         accountsBalance: '1000000000000000000000000000'
-      }
+      },
+      forking: {
+        url: "https://mainnet.infura.io/v3/${InfuraKey}",
+      }  
     },
     localhost: {
       url: "http://localhost:8545",
