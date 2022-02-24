@@ -5,6 +5,7 @@ pragma abicoder v2;
 
 // interface
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
+import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3FlashCallback.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
 // lib
@@ -15,7 +16,7 @@ import "@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol";
 import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import "@uniswap/v3-core/contracts/libraries/SafeCast.sol";
 
-contract FlashControllerHelper is IUniswapV3SwapCallback {
+contract FlashControllerHelper is IUniswapV3SwapCallback, IUniswapV3FlashCallback {
     using Path for bytes;
     using SafeCast for uint256;
     using LowGasSafeMath for uint256;
@@ -31,6 +32,12 @@ contract FlashControllerHelper is IUniswapV3SwapCallback {
         bytes callData;
     }
 
+    struct FlashCallbackData {
+        address caller;
+        uint8 callSource;
+        bytes callData;
+    }
+
     /**
      * @dev constructor
      * @param _factory uniswap factory address
@@ -41,7 +48,7 @@ contract FlashControllerHelper is IUniswapV3SwapCallback {
     }
 
     /**
-     * @notice uniswap swap callback function for flashes
+     * @notice uniswap swap callback function for flashswap
      * @param amount0Delta amount of token0
      * @param amount1Delta amount of token1
      * @param _data callback data encoded as SwapCallbackData struct
@@ -62,8 +69,50 @@ contract FlashControllerHelper is IUniswapV3SwapCallback {
         //determine the amount that needs to be repaid as part of the flashswap
         uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
 
-        //calls the strategy function that uses the proceeds from flash swap and executes logic to have an amount of token to repay the flash swap
+        //calls the function that uses the proceeds from flash swap and executes logic to have an amount of token to repay the flash swap
         _swapCallback(data.caller, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource);
+    }
+
+    /**
+     * @notice uniswap flash callback function for flashloan
+     * @param fee0 fee for token0
+     * @param fee1 fee for token1
+     * @param _data callback data encoded as FlashCallbackData struct
+     */
+    function uniswapV3FlashCallback(
+        uint256 fee0,
+        uint256 fee1,
+        bytes calldata _data
+    ) external override {
+        FlashCallbackData memory data = abi.decode(_data, (FlashCallbackData));
+
+        // CallbackValidation.verifyCallback(factory, data.tokenA, data.tokenB, data.fee);
+
+        _flashCallback(fee0, fee1, data.callData, data.callSource);
+    }
+
+    function _flashLoan(
+        bytes memory _data,
+        address _tokenA,
+        address _tokenB,
+        uint24 _fee,
+        uint256 _amount0,
+        uint256 _amount1,
+        uint8 _callSource
+    ) internal {
+        // _getPool(_tokenA, _tokenB, _fee).flash(
+        //     address(this),
+        //     _amount0,
+        //     _amount1,
+        //     abi.encode(
+        //         FlashCallbackData({
+        //             caller: msg.sender,
+        //             callSource: _callSource,
+        //             callData: _data
+        //         })
+        //     )
+        // );
+        
     }
 
     /**
@@ -157,6 +206,13 @@ contract FlashControllerHelper is IUniswapV3SwapCallback {
         address, /*_tokenOut*/
         uint24, /*_fee*/
         uint256, /*_amountToPay*/
+        bytes memory _callData,
+        uint8 _callSource
+    ) internal virtual {}
+
+    function _flashCallback(
+        uint256 _fee0,
+        uint256 _fee1,
         bytes memory _callData,
         uint8 _callSource
     ) internal virtual {}

@@ -18,6 +18,7 @@ import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/inter
 import {IERC20Detailed} from "../interfaces/IERC20Detailed.sol";
 
 // contract
+import {Strings} from '@openzeppelin/contracts/utils/Strings.sol';
 import {FlashControllerHelper} from "./FlashControllerHelper.sol";
 
 // lib
@@ -29,9 +30,10 @@ import {ControllerHelperLib} from "./lib/ControllerHelperLib.sol";
 contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
     using SafeMath for uint256;
     using Address for address payable;
-
+    using Strings for uint256;
+    
     /// @dev enum to differentiate between uniswap swap callback function source
-    enum FLASH_SOURCE {
+    enum CALLBACK_SOURCE {
         FLASH_W_MINT,
         FLASH_W_BURN,
         FLASH_SELL_LONG_W_MINT,
@@ -186,7 +188,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             IUniswapV3Pool(wPowerPerpPool).fee(),
             _wPowerPerpAmount,
             amountToFlashswap,
-            uint8(FLASH_SOURCE.FLASH_W_MINT),
+            uint8(CALLBACK_SOURCE.FLASH_W_MINT),
             abi.encodePacked(_vaultId, amountToFlashswap, _collateralAmount, _wPowerPerpAmount)
         );
 
@@ -217,7 +219,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             IUniswapV3Pool(wPowerPerpPool).fee(),
             _wPowerPerpAmountToBurn.add(_wPowerPerpAmountToBuy),
             _collateralToBuyWith.add(msg.value),
-            uint8(FLASH_SOURCE.FLASH_W_BURN),
+            uint8(CALLBACK_SOURCE.FLASH_W_BURN),
             abi.encodePacked(
                 _vaultId,
                 _wPowerPerpAmountToBurn,
@@ -393,7 +395,17 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         uint256 amount0Desired = wPowerPerpPoolToken0 == wPowerPerp ? _wPowerPerpAmount : _collateralToLP;
         uint256 amount1Desired = wPowerPerpPoolToken1 == wPowerPerp ? _wPowerPerpAmount : _collateralToLP;
 
-        _lpWPowerPerpPool(msg.sender, _collateralToLP, amount0Desired, amount1Desired, _amount0Min, _amount1Min, _deadline, _lowerTick, _upperTick);
+        _lpWPowerPerpPool(
+            msg.sender,
+            _collateralToLP,
+            amount0Desired,
+            amount1Desired,
+            _amount0Min,
+            _amount1Min,
+            _deadline,
+            _lowerTick,
+            _upperTick
+        );
 
         if (_vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), msg.sender, vaultId);
         if (address(this).balance > 0) {
@@ -407,20 +419,43 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         emit BatchMintLp(msg.sender, _vaultId, _wPowerPerpAmount, _collateralToMint, _collateralToLP);
     }
 
-    function flashswapWMintDepositNft(uint256 _vaultId, uint256 _wPowerPerpAmount, uint256 _collateralToMint, uint256 _collateralToLP, 
-        uint256 _amount0Min,uint256 _amount1Min,uint256 _deadline,
+    function flashswapWMintDepositNft(
+        uint256 _vaultId,
+        uint256 _wPowerPerpAmount,
+        uint256 _collateralAmount,
+        uint256 _amount0Min,
+        uint256 _amount1Min,
         int24 _lowerTick,
         int24 _upperTick
     ) external payable {
-        _exactInFlashSwap(
+        uint256 collateralToMint = _collateralAmount.sub(msg.value);
+        uint256 amount0;
+        uint256 amount1;
+        (wPowerPerpPoolToken0 == wPowerPerp) ? amount1 = collateralToMint : amount0 = collateralToMint;
+
+        console.log(_lowerTick < 0);
+
+        _flashLoan(
+            abi.encodePacked(
+                _vaultId,
+                _wPowerPerpAmount,
+                collateralToMint,
+                msg.value,
+                _amount0Min,
+                _amount1Min,
+                uint256(_lowerTick),
+                uint256(_upperTick),
+                (_lowerTick < 0) ? uint256(0) : uint256(1),
+                (_upperTick < 0) ? uint256(0) : uint256(1)
+            ),
             wPowerPerp,
             weth,
             IUniswapV3Pool(wPowerPerpPool).fee(),
-            _wPowerPerpAmount,
-            _collateralToMint,
-            uint8(FLASH_SOURCE.FLASH_W_MINT_DEPOSIT_NFT),
-            abi.encodePacked(_vaultId, _wPowerPerpAmount, _collateralToMint, _collateralToLP, _amount0Min, _amount1Min, _deadline, _lowerTick, _upperTick)
+            amount0,
+            amount1,
+            uint8(CALLBACK_SOURCE.FLASH_W_MINT_DEPOSIT_NFT)
         );
+
     }
 
     /**
@@ -672,7 +707,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         bytes memory _callData,
         uint8 _callSource
     ) internal override {
-        if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_W_MINT) {
+        if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.FLASH_W_MINT) {
             FlashswapWMintData memory data = abi.decode(_callData, (FlashswapWMintData));
 
             // convert WETH to ETH as Uniswap uses WETH
@@ -695,7 +730,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
 
             // this is a newly open vault, transfer to the user
             if (data.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), _caller, vaultId);
-        } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_W_BURN) {
+        } else if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.FLASH_W_BURN) {
             FlashswapWBurnData memory data = abi.decode(_callData, (FlashswapWBurnData));
 
             IController(controller).burnWPowerPerpAmount(
@@ -784,7 +819,17 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
     /**
      * @notice LP into Uniswap V3 pool
      */
-    function _lpWPowerPerpPool(address _recipient, uint256 _ethAmount, uint256 _amount0Desired, uint256 _amount1Desired, uint256 _amount0Min, uint256 _amount1Min, uint256 _deadline, int24 _lowerTick, int24 _upperTick) private returns (uint256) {
+    function _lpWPowerPerpPool(
+        address _recipient,
+        uint256 _ethAmount,
+        uint256 _amount0Desired,
+        uint256 _amount1Desired,
+        uint256 _amount0Min,
+        uint256 _amount1Min,
+        uint256 _deadline,
+        int24 _lowerTick,
+        int24 _upperTick
+    ) private returns (uint256) {
         INonfungiblePositionManager.MintParams memory params = INonfungiblePositionManager.MintParams({
             token0: wPowerPerpPoolToken0,
             token1: wPowerPerpPoolToken1,
@@ -799,8 +844,20 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             deadline: _deadline
         });
 
-        (uint256 tokenId, , , ) = INonfungiblePositionManager(nonfungiblePositionManager).mint{value: _ethAmount}(params);
+        (uint256 tokenId, , , ) = INonfungiblePositionManager(nonfungiblePositionManager).mint{value: _ethAmount}(
+            params
+        );
 
         return tokenId;
     }
+
+    function tickToString(int24 tick) private pure returns (string memory) {
+        string memory sign = '';
+        if (tick < 0) {
+            tick = tick * -1;
+            sign = '-';
+        }
+        return string(abi.encodePacked(sign, uint256(tick).toString()));
+    }
+
 }
