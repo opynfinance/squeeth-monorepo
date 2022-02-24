@@ -233,7 +233,10 @@ enum VaultError {
   INSUFFICIENT_OSQTH_BALANCE = 'Insufficient oSQTH Balance',
 }
 
-const SelectLP: React.FC<{ lpToken: number; setLpToken: (t: number) => void }> = ({ lpToken, setLpToken }) => {
+const SelectLP = React.memo<{ lpToken: number; setLpToken: (t: number) => void }>(function SelectLP({
+  lpToken,
+  setLpToken,
+}) {
   const { squeethPool } = useAddresses()
   const { address } = useWallet()
 
@@ -242,7 +245,7 @@ const SelectLP: React.FC<{ lpToken: number; setLpToken: (t: number) => void }> =
       poolAddress: squeethPool?.toLowerCase(),
       owner: address?.toLowerCase() || '',
     },
-    fetchPolicy: 'cache-and-network',
+    fetchPolicy: 'no-cache',
   })
 
   return (
@@ -264,7 +267,7 @@ const SelectLP: React.FC<{ lpToken: number; setLpToken: (t: number) => void }> =
       </Select>
     </FormControl>
   )
-}
+})
 
 const Component: React.FC = () => {
   const classes = useStyles()
