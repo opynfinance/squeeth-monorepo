@@ -14,6 +14,7 @@ import RestrictionInfo from '@components/RestrictionInfo'
 import { LPProvider } from '@context/lp'
 import { useRestrictUser } from '@context/restrict-user'
 import { TradeProvider } from '@context/trade'
+import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useWorldContext } from '@context/world'
 import { SqueethTab, SqueethTabs } from '@components/Tabs'
 
