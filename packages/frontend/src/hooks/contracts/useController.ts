@@ -14,7 +14,7 @@ import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useAddresses } from '../useAddress'
 import { useOracle } from './useOracle'
 import { useNFTManager } from './useNFTManager'
-import { useSqueethPool } from './useSqueethPool'
+import { isWethToken0Atom } from './useSqueethPool'
 
 const getMultiplier = (type: Vaults) => {
   if (type === Vaults.ETHBull) return 3
@@ -48,12 +48,12 @@ export const useController = () => {
   const [index, setIndex] = useAtom(indexAtom)
   const [currentImpliedFunding, setCurrentImpliedFunding] = useAtom(currentImpliedFundingAtom)
   const [dailyHistoricalFunding, setDailyHistoricalFunding] = useAtom(dailyHistoricalFundingAtom)
-  const impliedVol = useAtom(impliedVolAtom)[0]
+  const [impliedVol] = useAtom(impliedVolAtom)
 
   const { controller, ethUsdcPool, weth, usdc } = useAddresses()
   const { getTwapSafe } = useOracle()
   const { getETHandOSQTHAmount } = useNFTManager()
-  const { squeethInitialPrice, wethPrice, squeethPrice, isWethToken0 } = useSqueethPool()
+  const [isWethToken0] = useAtom(isWethToken0Atom)
 
   useEffect(() => {
     if (!web3) return

@@ -16,7 +16,14 @@ import {
   ZERO_ADDR,
   CRAB_STRATEGY,
 } from '../constants/address'
-import { useWallet } from '@context/wallet'
+import { networkIdAtom, useWallet } from '@context/wallet'
+import { atom } from 'jotai'
+
+// @ts-ignore
+export const oSqueethAtom = atom((get: any) => OSQUEETH[get(networkIdAtom)])
+// @ts-ignore
+export const wethAtom = atom((get: any) => WETH[get(networkIdAtom)])
+
 
 const useAddresses = () => {
   const { networkId } = useWallet()

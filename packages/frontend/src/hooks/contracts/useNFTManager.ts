@@ -1,6 +1,6 @@
 import { useWallet } from '@context/wallet'
 import { useAddresses } from '@hooks/useAddress'
-import { useSqueethPool } from './useSqueethPool'
+import { isWethToken0Atom, poolAtom } from './useSqueethPool'
 import { Position } from '@uniswap/v3-sdk'
 import React, { useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
@@ -8,11 +8,13 @@ import positionManagerAbi from '../../abis/NFTpositionmanager.json'
 import BigNumber from 'bignumber.js'
 import { BIG_ZERO } from '../../constants'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
+import { useAtom } from 'jotai'
 
 export const useNFTManager = () => {
   const { nftManager } = useAddresses()
   const { web3 } = useWallet()
-  const { pool, isWethToken0 } = useSqueethPool()
+  const [pool] = useAtom(poolAtom)
+  const [isWethToken0] = useAtom(isWethToken0Atom)
 
   const [contract, setContract] = useState<Contract>()
 

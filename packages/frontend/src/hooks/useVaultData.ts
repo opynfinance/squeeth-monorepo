@@ -5,7 +5,7 @@ import { useAtom } from 'jotai'
 import { Vault } from '../types'
 import { useWallet } from '@context/wallet'
 import { useController, normFactorAtom } from '@hooks/contracts/useController'
-import { useSqueethPool } from './contracts/useSqueethPool'
+import { readyAtom } from './contracts/useSqueethPool'
 
 export const useVaultData = (vid: number) => {
   const [vault, setVault] = useState<Vault | null>(null)
@@ -17,7 +17,7 @@ export const useVaultData = (vid: number) => {
 
   const { getCollatRatioAndLiqPrice, getVault } = useController()
   const normFactor = useAtom(normFactorAtom)[0]
-  const { ready } = useSqueethPool()
+  const [ready] = useAtom(readyAtom)
   const { address, connected } = useWallet()
 
   const updateVault = async () => {

@@ -154,7 +154,7 @@ export function Positions() {
     longUnrealizedPNL,
   } = usePnL()
 
-  const pool = useAtom(poolAtom)[0]
+  const [pool] = useAtom(poolAtom)
 
   const { ethPrice, oSqueethBal } = useWorldContext()
   const { address } = useWallet()
@@ -176,7 +176,7 @@ export function Positions() {
     activePositions,
   } = usePositions()
 
-  const index = useAtom(indexAtom)[0]
+  const [index] = useAtom(indexAtom)
   const {
     depositedEth,
     depositedUsd,

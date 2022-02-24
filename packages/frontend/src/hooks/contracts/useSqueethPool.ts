@@ -10,7 +10,7 @@ import uniABI from '../../abis/uniswapPool.json'
 import { UNI_POOL_FEES, DEFAULT_SLIPPAGE, OSQUEETH_DECIMALS } from '../../constants'
 import { useWallet } from '@context/wallet'
 import { fromTokenAmount, parseSlippageInput, toTokenAmount } from '@utils/calculations'
-import { useAddresses } from '../useAddress'
+import { oSqueethAtom, useAddresses, wethAtom } from '../useAddress'
 import useUniswapTicks from '../useUniswapTicks'
 import { useWorldContext } from '@context/world'
 import { atom, useAtom } from 'jotai'
@@ -28,6 +28,7 @@ export const squeethInitialPriceAtom = atom(new BigNumber(0))
 export const squeethPriceAtom = atom(new BigNumber(0))
 export const wethPriceAtom = atom(new BigNumber(0))
 export const readyAtom = atom(false)
+export const isWethToken0Atom = atom((get: any) => parseInt(get(wethAtom), 16) < parseInt(get(oSqueethAtom), 16))
 
 /**
  * Hook to interact with WETH contract

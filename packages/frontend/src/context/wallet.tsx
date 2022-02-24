@@ -10,6 +10,7 @@ import Web3 from 'web3'
 import { EtherscanPrefix } from '../constants'
 import { Networks } from '../types'
 import { Web3Provider } from '@ethersproject/providers'
+import { atom, useAtom } from 'jotai'
 
 const balanceQueryKeys = {
   userWalletBalance: () => ['userWalletBalance'],
@@ -46,10 +47,13 @@ const initialState: WalletType = {
 const walletContext = React.createContext<WalletType>(initialState)
 const useWallet = () => useContext(walletContext)
 
+export const networkIdAtom = atom(Networks.MAINNET)
+
 const WalletProvider: React.FC = ({ children }) => {
   const [web3, setWeb3] = useState<Web3>(defaultWeb3)
   const [address, setAddress] = useState<string | null>(null)
   const [networkId, setNetworkId] = useState(Networks.MAINNET)
+  const [networkIdParticle, setNetworkIdParticle] = useAtom(networkIdAtom)
   const [onboard, setOnboard] = useState<API | null>(null)
   const [notify, setNotify] = useState<any>(null)
   const [signer, setSigner] = useState<any>(null)
@@ -116,6 +120,7 @@ const WalletProvider: React.FC = ({ children }) => {
     const onNetworkChange = (updateNetwork: number) => {
       if (updateNetwork in Networks) {
         setNetworkId(updateNetwork)
+        setNetworkIdParticle(updateNetwork)
         if (onboard !== null) {
           const network = updateNetwork === 1337 ? 31337 : updateNetwork
           localStorage.setItem('networkId', network.toString())
