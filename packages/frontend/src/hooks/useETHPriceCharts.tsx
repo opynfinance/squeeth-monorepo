@@ -1,6 +1,11 @@
 import { useCallback, useMemo, useState } from 'react'
 
-import { getETHPNLCompounding, getSqueethChartWithFunding, getSqueethPNLCompounding } from '@utils/pricer'
+import {
+  getETHPNLCompounding,
+  getSqueethChartWithFunding,
+  getSqueethPNLCompounding,
+  useSqueethPNLCompounding,
+} from '@utils/pricer'
 import { useQuery } from 'react-query'
 
 const emptyPriceList = [
@@ -168,30 +173,32 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
     { enabled: ethPrices.isSuccess },
   )
 
-  const squeethPNLSeries = useQuery(
-    ethPriceChartsQueryKeys.squeethPNLSeries(),
-    () => getSqueethPNLCompounding(ethPrices.data ?? [], volMultiplier, collatRatio, days),
-    { enabled: Boolean(ethPrices.isSuccess && days) },
-  )
+  // const squeethPNLSeries = useQuery(
+  //   ethPriceChartsQueryKeys.squeethPNLSeries(),
+  //   () => getSqueethPNLCompounding(ethPrices.data ?? [], volMultiplier, collatRatio, days),
+  //   { enabled: Boolean(ethPrices.isSuccess && days) },
+  // )
+
+  const squeethPNLSeries = useSqueethPNLCompounding(ethPrices.data ?? [], volMultiplier, days)
 
   const longSeries = useMemo(() => {
     return (
-      squeethPNLSeries.data &&
-      squeethPNLSeries.data.map(({ time, longPNL }) => {
+      squeethPNLSeries &&
+      squeethPNLSeries.map(({ time, longPNL }) => {
         return { time, value: longPNL }
       })
     )
-  }, [squeethPNLSeries.data])
+  }, [squeethPNLSeries])
 
   // new short series
   const shortSeries = useMemo(() => {
     return (
-      squeethPNLSeries.data &&
-      squeethPNLSeries.data.map(({ time, shortPNL }) => {
+      squeethPNLSeries &&
+      squeethPNLSeries.map(({ time, shortPNL }) => {
         return { time, value: shortPNL }
       })
     )
-  }, [squeethPNLSeries.data])
+  }, [squeethPNLSeries])
 
   // prev short series
   const prevShortSeries = useMemo(() => {
