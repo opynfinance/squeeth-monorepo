@@ -38,6 +38,14 @@ export type Vault = {
   operator: string
 }
 
+export type NormHistory = {
+  id: string
+  oldNormFactor: string
+  newNormFactor: string
+  lastModificationTimestamp: string
+  timestamp: string
+}
+
 export enum PositionType {
   NONE = 'None',
   LONG = 'Long',
