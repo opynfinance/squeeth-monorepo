@@ -35,7 +35,7 @@ import { MIN_COLLATERAL_AMOUNT, OSQUEETH_DECIMALS } from '../../src/constants'
 import { PositionType } from '../../src/types'
 import { useRestrictUser } from '@context/restrict-user'
 import { useWallet } from '@context/wallet'
-import { normFactorAtom, useController } from '@hooks/contracts/useController'
+import { useController } from '@hooks/contracts/useController'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { useVaultData } from '@hooks/useVaultData'
 import { useWorldContext } from '@context/world'
@@ -43,7 +43,6 @@ import { CollateralStatus, Vault } from '../../src/types'
 import { squeethClient } from '@utils/apollo-client'
 import { getCollatPercentStatus, toTokenAmount } from '@utils/calculations'
 import { LinkButton } from '@components/Button'
-import { useAtom } from 'jotai'
 import { useERC721 } from '@hooks/contracts/useERC721'
 import { useAddresses } from '@hooks/useAddress'
 import POSITIONS_QUERY from '@queries/uniswap/positionsQuery'
@@ -282,9 +281,9 @@ const Component: React.FC = () => {
     getTwapEthPrice,
     depositUniPositionToken,
     withdrawUniPositionToken,
+    normFactor,
     getVault,
   } = useController()
-  const normFactor = useAtom(normFactorAtom)[0]
   const { balance, address, connected, networkId } = useWallet()
   const { vid } = router.query
   const { liquidations } = useVaultLiquidations(Number(vid))

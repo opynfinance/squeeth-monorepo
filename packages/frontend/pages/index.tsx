@@ -25,14 +25,15 @@ import { Vaults } from '../src/constants'
 import { Tooltips } from '@constants/enums'
 import { useRestrictUser } from '@context/restrict-user'
 import { TradeProvider, useTrade } from '@context/trade'
-import {
-  indexAtom,
-  markAtom,
-  currentImpliedFundingAtom,
-  impliedVolAtom,
-  dailyHistoricalFundingAtom,
-  normFactorAtom,
-} from '@hooks/contracts/useController'
+import { useController } from '@hooks/contracts/useController'
+// import {
+//   indexAtom,
+//   markAtom,
+//   currentImpliedFundingAtom,
+//   impliedVolAtom,
+//   dailyHistoricalFundingAtom,
+//   normFactorAtom,
+// } from '@hooks/contracts/useController'
 import { TradeType } from '../src/types'
 import { toTokenAmount } from '@utils/calculations'
 
@@ -371,12 +372,7 @@ const TabComponent: React.FC = () => {
 const SqueethInfo: React.FC = () => {
   const classes = useStyles()
   const { actualTradeType } = useTrade()
-  const dailyHistoricalFunding = useAtom(dailyHistoricalFundingAtom)[0]
-  const mark = useAtom(markAtom)[0]
-  const currentImpliedFunding = useAtom(currentImpliedFundingAtom)[0]
-  const impliedVol = useAtom(impliedVolAtom)[0]
-  const index = useAtom(indexAtom)[0]
-  const normFactor = useAtom(normFactorAtom)[0]
+  const { dailyHistoricalFunding, mark, index, impliedVol, currentImpliedFunding, normFactor } = useController()
 
   const [showAdvanced, setShowAdvanced] = useState(false)
 

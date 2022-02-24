@@ -5,19 +5,18 @@ import Link from 'next/link'
 import { useMemo } from 'react'
 import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
-import { useAtom } from 'jotai'
 
 import { LPTable } from '@components/Lp/LPTable'
 import Nav from '@components/Nav'
 import History from '@components/Trade/History'
 import { PositionType } from '../src/types/'
 import { Tooltips } from '../src/constants'
-import { poolAtom } from '@hooks/contracts/useSqueethPool'
+import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useWorldContext } from '@context/world'
 import { usePnL } from '@hooks/usePositions'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { toTokenAmount } from '@utils/calculations'
-import { indexAtom } from '../src/hooks/contracts/useController'
+import { useController } from '../src/hooks/contracts/useController'
 import { CrabProvider } from '@context/crabStrategy'
 import { useCrabPosition } from '@hooks/useCrabPosition'
 import { useWallet } from '@context/wallet'
@@ -154,7 +153,7 @@ export function Positions() {
     longUnrealizedPNL,
   } = usePnL()
 
-  const pool = useAtom(poolAtom)[0]
+  const { pool } = useSqueethPool()
 
   const { ethPrice, oSqueethBal } = useWorldContext()
   const { address } = useWallet()
@@ -176,7 +175,7 @@ export function Positions() {
     activePositions,
   } = usePositions()
 
-  const index = useAtom(indexAtom)[0]
+  const { index } = useController()
   const {
     depositedEth,
     depositedUsd,

@@ -16,11 +16,10 @@ import { toTokenAmount } from '@utils/calculations'
 import { squeethClient } from '@utils/apollo-client'
 
 import { useSqueethPool } from './contracts/useSqueethPool'
-import { indexAtom } from './contracts/useController'
+import { useController } from './contracts/useController'
 import { useAddresses } from './useAddress'
 import { calcDollarShortUnrealizedpnl, calcETHCollateralPnl, calcDollarLongUnrealizedpnl } from '../lib/pnl'
 import { BIG_ZERO } from '../constants/'
-import { useAtom } from 'jotai'
 
 export const usePnL = () => {
   const [ethCollateralPnl, setEthCollateralPnl] = useState(BIG_ZERO)
@@ -37,7 +36,7 @@ export const usePnL = () => {
     firstValidVault,
     existingCollat,
   } = usePositions()
-  const [index] = useAtom(indexAtom)
+  const { index } = useController()
 
   // const { ethPrice } = useWorldContext()
   const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
