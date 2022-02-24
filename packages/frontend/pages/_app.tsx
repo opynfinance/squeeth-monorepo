@@ -6,22 +6,29 @@ import { ThemeProvider } from '@material-ui/core/styles'
 import * as Fathom from 'fathom-client'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import React, { useEffect } from 'react'
+import React, { useEffect, Suspense, Fragment } from 'react'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { ReactQueryDevtools } from 'react-query/devtools'
 import { CookiesProvider } from 'react-cookie'
+import { useAtom } from 'jotai'
 
 import { RestrictUserProvider } from '@context/restrict-user'
-import { useWallet, WalletProvider } from '@context/wallet'
+// import { useWallet, WalletProvider } from '@context/wallet'
 import { WorldProvider } from '@context/world'
 import { PositionsProvider } from '@context/positions'
 import getTheme, { Mode } from '../src/theme'
 import { uniswapClient } from '@utils/apollo-client'
+import { useOnboard } from 'src/state/wallet/hooks'
+import { networkIdAtom } from 'src/state/wallet/atoms'
+import { useSwaps } from 'src/state/positions/hooks'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
+const isServer = typeof window === 'undefined'
+const BrowserSuspense = isServer ? Fragment : Suspense
 
 function MyApp({ Component, pageProps }: any) {
   const router = useRouter()
+  useOnboard()
 
   React.useEffect(() => {
     // Remove the server-side injected CSS.
@@ -56,21 +63,26 @@ function MyApp({ Component, pageProps }: any) {
   }, [router.events, siteID])
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <CookiesProvider>
-        <WalletProvider>
-          <RestrictUserProvider>
-            <TradeApp Component={Component} pageProps={pageProps} />
-          </RestrictUserProvider>
-        </WalletProvider>
-      </CookiesProvider>
-      <ReactQueryDevtools initialIsOpen={false} />
-    </QueryClientProvider>
+    <CookiesProvider>
+      {/* <WalletProvider> */}
+      <RestrictUserProvider>
+        <QueryClientProvider client={queryClient}>
+          <TradeApp Component={Component} pageProps={pageProps} />
+        </QueryClientProvider>
+      </RestrictUserProvider>
+      {/* </WalletProvider> */}
+    </CookiesProvider>
   )
 }
 
+const Init = () => {
+  useSwaps()
+  return null
+}
+
 const TradeApp = ({ Component, pageProps }: any) => {
-  const { networkId } = useWallet()
+  // const { networkId } = useWallet()
+  const [networkId] = useAtom(networkIdAtom)
 
   return (
     <React.Fragment>
@@ -84,14 +96,17 @@ const TradeApp = ({ Component, pageProps }: any) => {
         <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width" />
       </Head>
       <ApolloProvider client={uniswapClient[networkId] || uniswapClient[1]}>
+        <Init />
         <ThemeProvider theme={getTheme(Mode.DARK)}>
           {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
           <CssBaseline />
-          <WorldProvider>
-            <PositionsProvider>
-              <Component {...pageProps} />
-            </PositionsProvider>
-          </WorldProvider>
+          <BrowserSuspense fallback={<h1>Loading...</h1>}>
+            <WorldProvider>
+              <PositionsProvider>
+                <Component {...pageProps} />
+              </PositionsProvider>
+            </WorldProvider>
+          </BrowserSuspense>
         </ThemeProvider>
       </ApolloProvider>
     </React.Fragment>

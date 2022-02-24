@@ -4,7 +4,7 @@ import BigNumber from 'bignumber.js'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import NFTpositionManagerABI from '../abis/NFTpositionmanager.json'
-import { useWallet } from '@context/wallet'
+// import { useWallet } from '@context/wallet'
 import { useWorldContext } from '@context/world'
 import { usePositions } from '@context/positions'
 import { positions, positionsVariables } from '../queries/uniswap/__generated__/positions'
@@ -14,13 +14,15 @@ import { VaultHistory } from '../queries/squeeth/__generated__/VaultHistory'
 import { NFTManagers } from '../types'
 import { toTokenAmount } from '@utils/calculations'
 import { squeethClient } from '@utils/apollo-client'
+import { useAtom } from 'jotai'
 
 import { useSqueethPool } from './contracts/useSqueethPool'
 import { indexAtom } from './contracts/useController'
 import { useAddresses } from './useAddress'
 import { calcDollarShortUnrealizedpnl, calcETHCollateralPnl, calcDollarLongUnrealizedpnl } from '../lib/pnl'
 import { BIG_ZERO } from '../constants/'
-import { useAtom } from 'jotai'
+import { addressAtom, networkIdAtom, web3Atom } from 'src/state/wallet/atoms'
+import { addressesAtom, isWethToken0Atom, swapsAtom, swapsQueryAtom } from '../state/positions/atoms'
 
 export const usePnL = () => {
   const [ethCollateralPnl, setEthCollateralPnl] = useState(BIG_ZERO)
@@ -41,7 +43,8 @@ export const usePnL = () => {
 
   // const { ethPrice } = useWorldContext()
   const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
-  const { networkId } = useWallet()
+  // const { networkId } = useWallet()
+  const [networkId] = useAtom(networkIdAtom)
 
   const [sellQuote, setSellQuote] = useState({
     amountOut: new BigNumber(0),
@@ -147,8 +150,11 @@ export const usePnL = () => {
 }
 
 export const useLPPositions = () => {
-  const { address, web3 } = useWallet()
-  const { squeethPool, nftManager, weth, oSqueeth } = useAddresses()
+  // const { address, web3 } = useWallet()
+  const [address] = useAtom(addressAtom)
+  const [web3] = useAtom(web3Atom)
+  const [{ squeethPool, nftManager, weth, oSqueeth }] = useAtom(addressesAtom)
+  // const { squeethPool, nftManager, weth, oSqueeth } = useAddresses()
   const { pool, getWSqueethPositionValue, squeethInitialPrice } = useSqueethPool()
   const { ethPrice } = useWorldContext()
 

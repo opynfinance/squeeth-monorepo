@@ -6,6 +6,10 @@ import { OSQUEETH_DECIMALS } from '../constants/index'
 import { useAddresses } from '@hooks/useAddress'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
+import { addressesAtom } from 'src/state/positions/atoms'
+import { useAtom } from 'jotai'
+import { useAtomValue } from 'jotai/utils'
+import { ethPriceAsyncAtom } from 'src/state/ethPrice/atoms'
 
 type point = {
   value: number
@@ -112,6 +116,9 @@ const WorldProvider: React.FC = ({ children }) => {
     collatRatio,
     setCollatRatio,
   } = useETHPriceCharts()
+
+  // const { oSqueeth } = useAddresses()
+  const [{ oSqueeth }] = useAtom(addressesAtom)
 
   const { oSqueeth } = useAddresses()
   const ethPrice = useETHPrice(10)

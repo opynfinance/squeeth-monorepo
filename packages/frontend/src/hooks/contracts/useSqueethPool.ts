@@ -8,12 +8,15 @@ import { Contract } from 'web3-eth-contract'
 import routerABI from '../../abis/swapRouter.json'
 import uniABI from '../../abis/uniswapPool.json'
 import { UNI_POOL_FEES, DEFAULT_SLIPPAGE, OSQUEETH_DECIMALS } from '../../constants'
-import { useWallet } from '@context/wallet'
+// import { useWallet } from '@context/wallet'
 import { fromTokenAmount, parseSlippageInput, toTokenAmount } from '@utils/calculations'
 import { useAddresses } from '../useAddress'
 import useUniswapTicks from '../useUniswapTicks'
 import { useWorldContext } from '@context/world'
 import { atom, useAtom } from 'jotai'
+import { addressAtom, networkIdAtom, web3Atom } from 'src/state/wallet/atoms'
+import { useHandleTransaction } from 'src/state/wallet/hooks'
+import { addressesAtom } from 'src/state/positions/atoms'
 
 // const NETWORK_QUOTE_GAS_OVERRIDE: { [chainId: number]: number } = {
 //   [Networks.ARBITRUM_RINKEBY]: 6_000_000,
@@ -46,8 +49,13 @@ export const useSqueethPool = () => {
   // const [tvl, setTVL] = useState(0)
   const { ethPrice } = useWorldContext()
 
-  const { address, web3, networkId, handleTransaction } = useWallet()
-  const { squeethPool, swapRouter, weth, oSqueeth } = useAddresses()
+  // const { address, web3, networkId, handleTransaction } = useWallet()
+  const [web3] = useAtom(web3Atom)
+  const handleTransaction = useHandleTransaction()
+  const [address] = useAtom(addressAtom)
+  const [networkId] = useAtom(networkIdAtom)
+  // const { squeethPool, swapRouter, weth, oSqueeth } = useAddresses()
+  const [{ squeethPool, swapRouter, weth, oSqueeth }] = useAtom(addressesAtom)
   const { ticks } = useUniswapTicks()
 
   useEffect(() => {

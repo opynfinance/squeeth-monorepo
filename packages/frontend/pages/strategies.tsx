@@ -5,7 +5,7 @@ import CapDetails from '@components/Strategies/Crab/CapDetails'
 import CrabStrategyHistory from '@components/Strategies/Crab/StrategyHistory'
 import StrategyInfo from '@components/Strategies/Crab/StrategyInfo'
 import StrategyInfoItem from '@components/Strategies/StrategyInfoItem'
-import { useWallet } from '@context/wallet'
+// import { useWallet } from '@context/wallet'
 import { CrabProvider, useCrab } from '@context/crabStrategy'
 import { Typography, Tab, Tabs } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
@@ -20,6 +20,8 @@ import bull from '../public/images/bull.gif'
 import bear from '../public/images/bear.gif'
 import CrabTrade from '@components/Strategies/Crab/CrabTrade'
 import { useAtom } from 'jotai'
+import { addressAtom } from 'src/state/wallet/atoms'
+import { useSelectWallet } from 'src/state/wallet/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -95,12 +97,14 @@ const Strategies: React.FC = () => {
   const [selectedIdx, setSelectedIdx] = useState(1)
 
   const classes = useStyles()
-  const { balance, address, selectWallet } = useWallet()
+  // const { address, selectWallet } = useWallet()
   const { maxCap, vault, collatRatio, timeAtLastHedge, profitableMovePercent } = useCrab()
   const index = useAtom(indexAtom)[0]
   const currentImpliedFunding = useAtom(currentImpliedFundingAtom)[0]
   const dailyHistoricalFunding = useAtom(dailyHistoricalFundingAtom)[0]
 
+  const [address] = useAtom(addressAtom)
+  const selectWallet = useSelectWallet()
   useMemo(() => {
     if (selectedIdx === 0) return Vaults.ETHBull
     if (selectedIdx === 1) return Vaults.CrabVault

@@ -3,14 +3,15 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import React from 'react'
+import { useAtom } from 'jotai'
 
 import { Tooltips } from '@constants/enums'
 import { impliedVolAtom, indexAtom, markAtom } from '@hooks/contracts/useController'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { toTokenAmount } from '@utils/calculations'
 import LPPosition from './LPPosition'
-import { useWallet } from '@context/wallet'
-import { useAtom } from 'jotai'
+import { addressAtom } from '../../state/wallet/atoms'
+// import { useWallet } from '@context/wallet'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -52,7 +53,8 @@ const SqueethInfo: React.FC = () => {
   const index = useAtom(indexAtom)[0]
   const impliedVol = useAtom(impliedVolAtom)[0]
   const { getWSqueethPositionValue, getWSqueethPositionValueInETH } = useSqueethPool()
-  const { address } = useWallet()
+  // const { address } = useWallet()
+  const [address] = useAtom(addressAtom)
 
   return (
     <div className={classes.squeethInfo}>
@@ -144,3 +146,6 @@ const SqueethInfo: React.FC = () => {
 }
 
 export default SqueethInfo
+function adressAtom(adressAtom: any): [any] {
+  throw new Error('Function not implemented.')
+}

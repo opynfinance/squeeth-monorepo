@@ -3,12 +3,16 @@ import Button from '@material-ui/core/Button'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React from 'react'
 import { useMemo } from 'react'
+import { useAtom } from 'jotai'
 
-import { useWallet } from '@context/wallet'
+// import { useWallet } from '@context/wallet'
 import { Networks } from '../../types'
 import { toTokenAmount } from '@utils/calculations'
 import { useENS } from '@hooks/useENS'
 import Davatar from '@davatar/react'
+import { addressAtom, connectedWalletAtom, networkIdAtom } from 'src/state/wallet/atoms'
+import { useDiscconectWallet, useSelectWallet, useWalletBalance } from 'src/state/wallet/hooks'
+import { BIG_ZERO } from '../../constants'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -47,7 +51,13 @@ const useStyles = makeStyles((theme) =>
 )
 
 const WalletButton: React.FC = () => {
-  const { selectWallet, connected, address, networkId, balance, disconnectWallet } = useWallet()
+  const [connected] = useAtom(connectedWalletAtom)
+  const [address] = useAtom(addressAtom)
+  const [networkId] = useAtom(networkIdAtom)
+  const { data: balance } = useWalletBalance()
+  const disconnectWallet = useDiscconectWallet()
+  const selectWallet = useSelectWallet()
+
   const classes = useStyles()
   const { ensName } = useENS(address)
 
@@ -81,7 +91,7 @@ const WalletButton: React.FC = () => {
       ) : (
         <div className={classes.walletContainer}>
           <Hidden smDown>
-            <div className={classes.balance}>{toTokenAmount(balance, 18).toFixed(4)} ETH</div>
+            <div className={classes.balance}>{toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4)} ETH</div>
           </Hidden>
           <Button variant="outlined" color="primary" onClick={disconnectWallet} className={classes.walletBtn}>
             <Circle networkId={networkId} />

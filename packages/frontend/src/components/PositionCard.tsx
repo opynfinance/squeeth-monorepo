@@ -195,9 +195,11 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
 
   useEffect(() => {
     if (tradeSuccess && prevSwapsData?.length === swaps?.length) {
+      console.log('calling swaps refetch')
       //if trade success and number of swaps is still the same, try refetching again
       swapsQueryRefetch()
     } else {
+      console.log('setting trade success false')
       setTradeSuccess(false)
     }
   }, [swaps?.length, prevSwapsData?.length, swapsQueryRefetch, tradeSuccess])

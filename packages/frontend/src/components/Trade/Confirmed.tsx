@@ -2,10 +2,12 @@ import { createStyles, makeStyles, Tooltip, Typography } from '@material-ui/core
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import Image from 'next/image'
 import React from 'react'
+import { useAtom } from 'jotai'
 
 import { EtherscanPrefix, Tooltips } from '../../constants'
-import { useWallet } from '@context/wallet'
+// import { useWallet } from '@context/wallet'
 import { UniswapIframe } from '../Modal/UniswapIframe'
+import { networkIdAtom } from 'src/state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -61,7 +63,8 @@ type ConfirmedProps = {
 
 const Confirmed: React.FC<ConfirmedProps> = ({ confirmationMessage, txnHash, confirmType }) => {
   const classes = useStyles()
-  const { networkId } = useWallet()
+  // const { networkId } = useWallet()
+  const [networkId] = useAtom(networkIdAtom)
 
   return (
     <div>

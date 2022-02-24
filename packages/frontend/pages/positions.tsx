@@ -24,6 +24,8 @@ import { useWallet } from '@context/wallet'
 import { usePositions } from '@context/positions'
 import { LinkButton } from '@components/Button'
 import { useVaultData } from '@hooks/useVaultData'
+import { addressAtom } from 'src/state/wallet/atoms'
+import { useSelectWallet } from 'src/state/wallet/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -114,7 +116,8 @@ const useStyles = makeStyles((theme) =>
 )
 
 const PositionsHome = () => {
-  const { address } = useWallet()
+  // const { address } = useWallet()
+  const [address] = useAtom(addressAtom)
 
   if (address)
     return (
@@ -127,7 +130,8 @@ const PositionsHome = () => {
 }
 
 const ConnectWallet: React.FC = () => {
-  const { selectWallet } = useWallet()
+  // const { selectWallet } = useWallet()
+  const selectWallet = useSelectWallet()
   const classes = useStyles()
 
   return (
@@ -154,10 +158,11 @@ export function Positions() {
     longUnrealizedPNL,
   } = usePnL()
 
-  const pool = useAtom(poolAtom)[0]
+  const [pool] = useAtom(poolAtom)
 
-  const { ethPrice, oSqueethBal } = useWorldContext()
-  const { address } = useWallet()
+  const { oSqueethBal } = useWorldContext()
+  // const { address } = useWallet()
+  const [address] = useAtom(addressAtom)
 
   const {
     positionType,

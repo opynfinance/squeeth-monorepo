@@ -2,7 +2,7 @@ import { Vault } from '../types'
 import BigNumber from 'bignumber.js'
 import React, { useContext, useEffect, useState } from 'react'
 import { BIG_ZERO } from '../constants'
-import { useWallet } from './wallet'
+// import { useWallet } from './wallet'
 import { useAddresses } from '@hooks/useAddress'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { currentImpliedFundingAtom, indexAtom, useController } from '@hooks/contracts/useController'
@@ -12,6 +12,9 @@ import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import db from '@utils/firestore'
 import { useAtom } from 'jotai'
+import { addressAtom, networkIdAtom, web3Atom } from 'src/state/wallet/atoms'
+import { useHandleTransaction } from 'src/state/wallet/hooks'
+import { addressesAtom } from 'src/state/positions/atoms'
 
 type CrabStrategyType = {
   loading: boolean
@@ -91,8 +94,13 @@ const crabContext = React.createContext<CrabStrategyType>(initialState)
 const useCrab = () => useContext(crabContext)
 
 const CrabProvider: React.FC = ({ children }) => {
-  const { web3, address, handleTransaction, networkId } = useWallet()
-  const { crabStrategy } = useAddresses()
+  // const { web3, address, handleTransaction, networkId } = useWallet()
+  const [web3] = useAtom(web3Atom)
+  const [networkId] = useAtom(networkIdAtom)
+  const [address] = useAtom(addressAtom)
+  const handleTransaction = useHandleTransaction()
+  // const { crabStrategy } = useAddresses()
+  const [{ crabStrategy }] = useAtom(addressesAtom)
   const { getVault, getCollatRatioAndLiqPrice } = useController()
   const currentImpliedFunding = useAtom(currentImpliedFundingAtom)[0]
   const index = useAtom(indexAtom)[0]

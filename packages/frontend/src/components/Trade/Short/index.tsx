@@ -17,7 +17,7 @@ import { useAtom } from 'jotai'
 
 import { CloseType, Tooltips, Links } from '@constants/enums'
 import { useTrade } from '@context/trade'
-import { useWallet } from '@context/wallet'
+// import { useWallet } from '@context/wallet'
 import { useWorldContext } from '@context/world'
 import { normFactorAtom, useController } from '@hooks/contracts/useController'
 import useShortHelper from '@hooks/contracts/useShortHelper'
@@ -36,6 +36,9 @@ import UniswapData from '@components/Trade/UniswapData'
 import { MIN_COLLATERAL_AMOUNT } from '../../../constants'
 import { PositionType } from '../../../types'
 import { useVaultData } from '@hooks/useVaultData'
+import { connectedWalletAtom } from 'src/state/wallet/atoms'
+import { useSelectWallet } from 'src/state/wallet/hooks'
+import { addressesAtom } from 'src/state/positions/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -195,8 +198,12 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
   const { getWSqueethPositionValue } = useSqueethPool()
   const { updateOperator, getShortAmountFromDebt, getDebtAmount } = useController()
   const normalizationFactor = useAtom(normFactorAtom)[0]
-  const { selectWallet, connected } = useWallet()
-  const { shortHelper } = useAddresses()
+  // const { selectWallet, connected } = useWallet()
+  const [connected] = useAtom(connectedWalletAtom)
+  const selectWallet = useSelectWallet()
+
+  // const { shortHelper } = useAddresses()
+  const [{ shortHelper }] = useAtom(addressesAtom)
 
   const {
     tradeAmount: amountInputValue,
@@ -568,9 +575,12 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   const { getWSqueethPositionValue } = useSqueethPool()
   const { updateOperator, getShortAmountFromDebt, getDebtAmount } = useController()
   const normalizationFactor = useAtom(normFactorAtom)[0]
-  const { shortHelper } = useAddresses()
+  // const { shortHelper } = useAddresses()
+  const [{ shortHelper }] = useAtom(addressesAtom)
 
-  const { selectWallet, connected } = useWallet()
+  // const { selectWallet, connected } = useWallet()
+  const [connected] = useAtom(connectedWalletAtom)
+  const selectWallet = useSelectWallet()
 
   const {
     tradeAmount: amountInputValue,

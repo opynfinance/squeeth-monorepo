@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import BigNumber from 'bignumber.js'
 import { useQuery } from '@apollo/client'
+import { useAtom } from 'jotai'
 
-import { useWallet } from '@context/wallet'
+// import { useWallet } from '@context/wallet'
 import { BIG_ZERO } from '@constants/index'
 import { useAddresses } from '../hooks/useAddress'
 import { useUsdAmount } from '../hooks/useUsdAmount'
@@ -10,10 +11,12 @@ import { swaps, swapsVariables } from '../queries/uniswap/__generated__/swaps'
 import SWAPS_QUERY, { SWAPS_SUBSCRIPTION } from '../queries/uniswap/swapsQuery'
 import { Networks } from '../types'
 import SWAPS_ROPSTEN_QUERY, { SWAPS_ROPSTEN_SUBSCRIPTION } from '@queries/uniswap/swapsRopstenQuery'
+import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
 
 export const useSwapsData = () => {
   const { squeethPool, weth, oSqueeth, shortHelper, swapRouter, crabStrategy } = useAddresses()
-  const { address, networkId } = useWallet()
+  const [networkId] = useAtom(networkIdAtom)
+  const [address] = useAtom(addressAtom)
   const { getUsdAmt } = useUsdAmount()
   const { data, subscribeToMore, refetch } = useQuery<swaps, swapsVariables>(
     networkId === Networks.MAINNET ? SWAPS_QUERY : SWAPS_ROPSTEN_QUERY,

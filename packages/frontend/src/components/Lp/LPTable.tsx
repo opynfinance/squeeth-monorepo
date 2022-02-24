@@ -7,6 +7,7 @@ import BigNumber from 'bignumber.js'
 import Link from 'next/link'
 import * as React from 'react'
 import { useEffect, useState } from 'react'
+import { useAtom } from 'jotai'
 
 import { SecondaryTab, SecondaryTabs } from '../../components/Tabs'
 import { Tooltips, UniswapIFrameOpen } from '@constants/enums'
@@ -14,8 +15,9 @@ import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useWorldContext } from '@context/world'
 import { inRange } from '@utils/calculations'
 import { UniswapIframe } from '../Modal/UniswapIframe'
-import { useWallet } from '@context/wallet'
+// import { useWallet } from '@context/wallet'
 import { usePositions } from '@context/positions'
+import { networkIdAtom } from 'src/state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -110,7 +112,8 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
   const [activeTab, setActiveTab] = useState(0)
   const { ethPrice } = useWorldContext()
   const { getWSqueethPositionValue, isWethToken0 } = useSqueethPool()
-  const { networkId } = useWallet()
+  // const { networkId } = useWallet()
+  const [networkId] = useAtom(networkIdAtom)
 
   useEffect(() => {
     console.log(activePositions)

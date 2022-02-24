@@ -2,19 +2,23 @@ import BigNumber from 'bignumber.js'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 import { atom, useAtom } from 'jotai'
+import { useUpdateAtom } from 'jotai/utils'
 import { Position } from '@uniswap/v3-sdk'
 import fzero from 'fzero'
 
 import abi from '../../abis/controller.json'
 import { FUNDING_PERIOD, INDEX_SCALE, SWAP_EVENT_TOPIC, Vaults, OSQUEETH_DECIMALS, TWAP_PERIOD } from '../../constants'
 import { ETH_USDC_POOL, SQUEETH_UNI_POOL } from '@constants/address'
-import { useWallet } from '@context/wallet'
+// import { useWallet } from '@context/wallet'
 import { Vault } from '../../types'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useAddresses } from '../useAddress'
 import { useOracle } from './useOracle'
 import { useNFTManager } from './useNFTManager'
 import { useSqueethPool } from './useSqueethPool'
+import { addressAtom, networkIdAtom, web3Atom } from 'src/state/wallet/atoms'
+import { useHandleTransaction } from 'src/state/wallet/hooks'
+import { addressesAtom } from 'src/state/positions/atoms'
 
 const getMultiplier = (type: Vaults) => {
   if (type === Vaults.ETHBull) return 3
@@ -41,16 +45,21 @@ export const impliedVolAtom = atom((get: any) => {
 export const dailyHistoricalFundingAtom = atom({ period: 0, funding: 0 })
 
 export const useController = () => {
-  const { web3, address, handleTransaction, networkId } = useWallet()
+  // const { web3, address, handleTransaction, networkId } = useWallet()
+  const handleTransaction = useHandleTransaction()
+  const [web3] = useAtom(web3Atom)
+  const [address] = useAtom(addressAtom)
+  const [networkId] = useAtom(networkIdAtom)
   const [contract, setContract] = useState<Contract>()
   const [normFactor, setNormFactor] = useAtom(normFactorAtom)
   const [mark, setMark] = useAtom(markAtom)
   const [index, setIndex] = useAtom(indexAtom)
-  const [currentImpliedFunding, setCurrentImpliedFunding] = useAtom(currentImpliedFundingAtom)
-  const [dailyHistoricalFunding, setDailyHistoricalFunding] = useAtom(dailyHistoricalFundingAtom)
+  const setCurrentImpliedFunding = useUpdateAtom(currentImpliedFundingAtom)
+  const setDailyHistoricalFunding = useUpdateAtom(dailyHistoricalFundingAtom)
   const impliedVol = useAtom(impliedVolAtom)[0]
 
-  const { controller, ethUsdcPool, weth, usdc } = useAddresses()
+  // const { controller, ethUsdcPool, weth, usdc } = useAddresses()
+  const [{ controller, ethUsdcPool, weth, usdc }] = useAtom(addressesAtom)
   const { getTwapSafe } = useOracle()
   const { getETHandOSQTHAmount } = useNFTManager()
   const { squeethInitialPrice, wethPrice, squeethPrice, isWethToken0 } = useSqueethPool()

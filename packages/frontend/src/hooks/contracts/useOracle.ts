@@ -1,15 +1,20 @@
 import BigNumber from 'bignumber.js'
 import { useEffect, useState, useCallback } from 'react'
 import { Contract } from 'web3-eth-contract'
+import { useAtom } from 'jotai'
 
 import abi from '../../abis/oracle.json'
-import { useWallet } from '@context/wallet'
+// import { useWallet } from '@context/wallet'
 import { toTokenAmount } from '@utils/calculations'
 import { useAddresses } from '../useAddress'
+import { web3Atom } from 'src/state/wallet/atoms'
+import { addressesAtom } from 'src/state/positions/atoms'
 
 export const useOracle = () => {
-  const { web3 } = useWallet()
-  const { oracle } = useAddresses()
+  // const { web3 } = useWallet()
+  const [web3] = useAtom(web3Atom)
+  // const { oracle } = useAddresses()
+  const [{ oracle }] = useAtom(addressesAtom)
   const [contract, setContract] = useState<Contract>()
 
   useEffect(() => {

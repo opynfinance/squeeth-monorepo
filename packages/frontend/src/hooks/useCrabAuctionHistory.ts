@@ -1,16 +1,19 @@
 import { useQuery } from '@apollo/client'
 import BigNumber from 'bignumber.js'
+import { useAtom } from 'jotai'
 
 import { crabAuctions } from '../queries/squeeth/__generated__/crabAuctions'
 import CRAB_AUCTION_QUERY from '../queries/squeeth/crabAuctionQuery'
 import { toTokenAmount } from '@utils/calculations'
 import { WETH_DECIMALS, OSQUEETH_DECIMALS } from '../constants'
 import { squeethClient } from '@utils/apollo-client'
-import { useWallet } from '@context/wallet'
+// import { useWallet } from '@context/wallet'
 import { CrabStrategyTxType } from '../types/index'
+import { networkIdAtom } from 'src/state/wallet/atoms'
 
 export const useCrabStrategyTxHistory = () => {
-  const { networkId } = useWallet()
+  // const { networkId } = useWallet()
+  const [networkId] = useAtom(networkIdAtom)
   const { data, loading } = useQuery<crabAuctions>(CRAB_AUCTION_QUERY, {
     fetchPolicy: 'cache-and-network',
     client: squeethClient[networkId],

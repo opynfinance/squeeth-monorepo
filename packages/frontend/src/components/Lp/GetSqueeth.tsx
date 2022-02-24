@@ -5,9 +5,9 @@ import { motion } from 'framer-motion'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useAtom } from 'jotai'
 
-import { MIN_COLLATERAL_AMOUNT, Tooltips } from '../../constants'
+import { BIG_ZERO, MIN_COLLATERAL_AMOUNT, Tooltips } from '../../constants'
 import { LPActions, OBTAIN_METHOD, useLPState } from '@context/lp'
-import { useWallet } from '@context/wallet'
+// import { useWallet } from '@context/wallet'
 import { normFactorAtom, useController } from '@hooks/contracts/useController'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useWorldContext } from '@context/world'
@@ -20,6 +20,8 @@ import Long from '../Trade/Long'
 import TradeDetails from '../Trade/TradeDetails'
 import TradeInfoItem from '../Trade/TradeInfoItem'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
+import { useWalletBalance } from 'src/state/wallet/hooks'
+import { connectedWalletAtom } from 'src/state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -69,7 +71,9 @@ const useStyles = makeStyles((theme) =>
 const Mint: React.FC = () => {
   const classes = useStyles()
   const { oSqueethBal } = useWorldContext()
-  const { balance, connected } = useWallet()
+  // const { balance, connected } = useWallet()
+  const { data: balance } = useWalletBalance()
+  const [connected] = useAtom(connectedWalletAtom)
   const { existingCollatPercent, existingCollat, firstValidVault } = usePositions()
   const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
   const { getWSqueethPositionValue } = useSqueethPool()
@@ -127,12 +131,12 @@ const Mint: React.FC = () => {
       setMinCollRatioError('Minimum collateral ratio is 150%')
     }
 
-    if (connected && collatAmountBN.isGreaterThan(balance)) {
+    if (connected && collatAmountBN.isGreaterThan(balance ?? BIG_ZERO)) {
       setMintMinCollatError('Insufficient ETH balance')
     } else if (connected && collatAmountBN.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) {
       setMintMinCollatError('Minimum collateral is 6.9 ETH')
     }
-  }, [balance.toString(), connected, existingCollat.toString(), collatAmountBN.toString(), collatPercent])
+  }, [balance?.toString(), connected, existingCollat.toString(), collatAmountBN.toString(), collatPercent])
 
   const liqPrice = useMemo(() => {
     const rSqueeth = normalizationFactor.multipliedBy(mintAmount.toNumber() || new BigNumber(1)).dividedBy(10000)
@@ -148,7 +152,7 @@ const Mint: React.FC = () => {
         label="Collateral"
         tooltip={Tooltips.SellOpenAmount}
         actionTxt="Max"
-        onActionClicked={() => setCollatAmount(toTokenAmount(balance, 18).toString())}
+        onActionClicked={() => setCollatAmount(toTokenAmount(balance ?? BIG_ZERO, 18).toString())}
         unit="ETH"
         convertedValue={0.0}
         hint={
@@ -158,7 +162,7 @@ const Mint: React.FC = () => {
             <div className={classes.hint}>
               <span className={classes.hintTextContainer}>
                 <span className={classes.hintTitleText}>Balance</span>{' '}
-                <span>{toTokenAmount(balance, 18).toFixed(4)}</span>
+                <span>{toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4)}</span>
               </span>
               <span style={{ marginLeft: '4px' }}>ETH</span>
             </div>
@@ -231,7 +235,7 @@ const Mint: React.FC = () => {
 const GetSqueeth: React.FC = () => {
   const classes = useStyles()
   const { lpState } = useLPState()
-  const { balance } = useWallet()
+  const { data: balance } = useWalletBalance()
 
   return (
     <>
@@ -246,7 +250,7 @@ const GetSqueeth: React.FC = () => {
         {lpState.obtainMethod === OBTAIN_METHOD.BUY ? (
           <Long
             isLPage
-            balance={Number(toTokenAmount(balance, 18).toFixed(4))}
+            balance={Number(toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4))}
             open={true}
             closeTitle="Sell squeeth ERC20"
           />

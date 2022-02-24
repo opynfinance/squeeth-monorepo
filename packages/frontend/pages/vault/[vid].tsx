@@ -31,10 +31,10 @@ import Nav from '@components/Nav'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import { Tooltips } from '@constants/enums'
 import { usePositions } from '@context/positions'
-import { MIN_COLLATERAL_AMOUNT, OSQUEETH_DECIMALS } from '../../src/constants'
+import { BIG_ZERO, MIN_COLLATERAL_AMOUNT, OSQUEETH_DECIMALS } from '../../src/constants'
 import { PositionType } from '../../src/types'
 import { useRestrictUser } from '@context/restrict-user'
-import { useWallet } from '@context/wallet'
+// import { useWallet } from '@context/wallet'
 import { normFactorAtom, useController } from '@hooks/contracts/useController'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { useVaultData } from '@hooks/useVaultData'
@@ -48,6 +48,9 @@ import { useERC721 } from '@hooks/contracts/useERC721'
 import { useAddresses } from '@hooks/useAddress'
 import POSITIONS_QUERY from '@queries/uniswap/positionsQuery'
 import { positions, positionsVariables } from '@queries/uniswap/__generated__/positions'
+import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
+import { useWalletBalance } from 'src/state/wallet/hooks'
+import { addressesAtom } from 'src/state/positions/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -235,8 +238,10 @@ enum VaultError {
 }
 
 const SelectLP: React.FC<{ lpToken: number; setLpToken: (t: number) => void }> = ({ lpToken, setLpToken }) => {
-  const { squeethPool } = useAddresses()
-  const { address } = useWallet()
+  // const { squeethPool } = useAddresses()
+  // const { address } = useWallet()
+  const [{ squeethPool }] = useAtom(addressesAtom)
+  const [address] = useAtom(addressAtom)
 
   const { data } = useQuery<positions, positionsVariables>(POSITIONS_QUERY, {
     variables: {
@@ -285,7 +290,8 @@ const Component: React.FC = () => {
     getVault,
   } = useController()
   const normFactor = useAtom(normFactorAtom)[0]
-  const { balance, address, connected, networkId } = useWallet()
+  // const { balance, address, connected, networkId } = useWallet()
+  const { data: balance } = useWalletBalance()
   const { vid } = router.query
   const { liquidations } = useVaultLiquidations(Number(vid))
   const { positionType, squeethAmount, mintedDebt, shortDebt, lpedSqueeth } = usePositions()
@@ -501,7 +507,7 @@ const Component: React.FC = () => {
     let adjustCollatError = null
     let adjustAmountError = null
     if (!vault?.shortAmount.gt(0)) return { adjustAmountError, adjustCollatError }
-    if (action === VaultAction.ADD_COLLATERAL && collateralBN.gt(toTokenAmount(balance, 18)))
+    if (action === VaultAction.ADD_COLLATERAL && collateralBN.gt(toTokenAmount(balance ?? BIG_ZERO, 18)))
       adjustCollatError = VaultError.INSUFFICIENT_ETH_BALANCE
     else if (isCollatAction) {
       if (collatPercent < 150) adjustCollatError = VaultError.MIN_COLLAT_PERCENT
@@ -517,7 +523,7 @@ const Component: React.FC = () => {
     }
 
     return { adjustAmountError, adjustCollatError }
-  }, [shortAmount, collateral, collatPercent, action, balance.toString()])
+  }, [shortAmount, collateral, collatPercent, action, balance?.toString()])
 
   const collatStatus = useCallback(() => {
     return getCollatPercentStatus(existingCollatPercent)
@@ -712,7 +718,7 @@ const Component: React.FC = () => {
                         color="primary"
                         onClick={() =>
                           collateralBN.isPositive()
-                            ? updateCollateral(toTokenAmount(balance, 18).toString())
+                            ? updateCollateral(toTokenAmount(balance ?? BIG_ZERO, 18).toString())
                             : updateCollateral(vault ? vault?.collateralAmount.negated().toString() : collateral)
                         }
                         variant="text"
@@ -729,7 +735,9 @@ const Component: React.FC = () => {
                       value={collateral}
                       unit="ETH"
                       hint={
-                        !!adjustCollatError ? adjustCollatError : `Balance ${toTokenAmount(balance, 18).toFixed(4)} ETH`
+                        !!adjustCollatError
+                          ? adjustCollatError
+                          : `Balance ${toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4)} ETH`
                       }
                       error={!!adjustCollatError}
                     />
@@ -988,7 +996,9 @@ const Component: React.FC = () => {
 
 const Main: React.FC = () => {
   const classes = useStyles()
-  const { connected } = useWallet()
+  // const { connected } = useWallet()
+
+  const [connected] = useAtom(connectedWalletAtom)
 
   if (!connected) {
     return (

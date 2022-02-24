@@ -2,23 +2,30 @@ import BigNumber from 'bignumber.js'
 import { ethers } from 'ethers'
 import { useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
+import { useAtom } from 'jotai'
 
 import shortAbi from '../../abis/shortHelper.json'
 import { Vaults, WETH_DECIMALS, OSQUEETH_DECIMALS } from '../../constants'
-import { useWallet } from '@context/wallet'
+// import { useWallet } from '@context/wallet'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useAddresses } from '../useAddress'
 import { normFactorAtom } from './useController'
 import { useSqueethPool } from './useSqueethPool'
-import { useAtom } from 'jotai'
+import { addressAtom, web3Atom } from 'src/state/wallet/atoms'
+import { useHandleTransaction } from 'src/state/wallet/hooks'
+import { addressesAtom } from 'src/state/positions/atoms'
 
 export const useShortHelper = () => {
-  const { web3, address, handleTransaction } = useWallet()
+  // const { web3, address, handleTransaction } = useWallet()
+  const [web3] = useAtom(web3Atom)
+  const handleTransaction = useHandleTransaction()
+  const [address] = useAtom(addressAtom)
   const [contract, setContract] = useState<Contract>()
 
   const { getSellParam, getBuyParam } = useSqueethPool()
   const normalizationFactor = useAtom(normFactorAtom)[0]
-  const { shortHelper } = useAddresses()
+  // const { shortHelper } = useAddresses()
+  const [{ shortHelper }] = useAtom(addressesAtom)
 
   useEffect(() => {
     if (!web3) return

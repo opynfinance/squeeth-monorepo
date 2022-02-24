@@ -3,15 +3,20 @@ import { useAddresses } from '@hooks/useAddress'
 import { useSqueethPool } from './useSqueethPool'
 import { Position } from '@uniswap/v3-sdk'
 import React, { useEffect, useState } from 'react'
+import { useAtom } from 'jotai'
 import { Contract } from 'web3-eth-contract'
 import positionManagerAbi from '../../abis/NFTpositionmanager.json'
 import BigNumber from 'bignumber.js'
 import { BIG_ZERO } from '../../constants'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
+import { web3Atom } from 'src/state/wallet/atoms'
+import { addressesAtom } from 'src/state/positions/atoms'
 
 export const useNFTManager = () => {
-  const { nftManager } = useAddresses()
-  const { web3 } = useWallet()
+  // const { nftManager } = useAddresses()
+  const [{ nftManager }] = useAtom(addressesAtom)
+  // const { web3 } = useWallet()
+  const [web3] = useAtom(web3Atom)
   const { pool, isWethToken0 } = useSqueethPool()
 
   const [contract, setContract] = useState<Contract>()

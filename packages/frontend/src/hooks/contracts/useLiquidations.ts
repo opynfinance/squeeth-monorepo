@@ -1,15 +1,18 @@
 import { useQuery } from '@apollo/client'
 import { useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
+import { useAtom } from 'jotai'
 
 import controllerABI from '../../abis/controller.json'
 import { OSQUEETH_DECIMALS } from '../../constants'
 import { liquidations } from '../../queries/squeeth/__generated__/liquidations'
 import { LIQUIDATIONS_QUERY } from '../../queries/squeeth/liquidationsQuery'
 import { squeethClient } from '../../utils/apollo-client'
-import { useWallet } from '@context/wallet'
+// import { useWallet } from '@context/wallet'
 import { toTokenAmount } from '@utils/calculations'
 import { useAddresses } from '../useAddress'
+import { networkIdAtom, web3Atom } from 'src/state/wallet/atoms'
+import { addressesAtom } from 'src/state/positions/atoms'
 
 /**
  * get vault liquidations.
@@ -21,8 +24,11 @@ export const useVaultLiquidations = (vaultId: number, refetchIntervalSec = 30) =
   const [liquidations, setLiquidations] = useState<Array<any>>([])
   const [contract, setContract] = useState<Contract>()
 
-  const { address, web3, networkId } = useWallet()
-  const { controller } = useAddresses()
+  // const { web3, networkId } = useWallet()
+  const [web3] = useAtom(web3Atom)
+  const [networkId] = useAtom(networkIdAtom)
+  // const { controller } = useAddresses()
+  const [{ controller }] = useAtom(addressesAtom)
 
   useEffect(() => {
     if (!web3 || !controller) return
