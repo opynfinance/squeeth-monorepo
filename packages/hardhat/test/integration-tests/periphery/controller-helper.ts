@@ -215,4 +215,23 @@ describe("Controller helper integration test", function () {
       expect(longBalanceAfter.gt(longBalanceBefore)).to.be.true
     })
   })
+
+  describe("Sell long and flash mint short", async () => {
+    before(async () => {
+      const vaultId = (await shortSqueeth.nextId()).sub(1);
+      const normFactor = await controller.normalizationFactor()
+      const mintWSqueethAmount = ethers.utils.parseUnits('10')
+      const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
+      const ethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 420, true)
+      const scaledEthPrice = ethPrice.div(10000)
+      const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
+      const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
+
+      await controller.connect(depositor).mintWPowerPerpAmount(vaultId, mintWSqueethAmount, 0, {value: collateralAmount})
+    })
+
+    it("Sell long and flashswap mint short positon", async () => {
+      
+    })
+  })
 })
