@@ -13,13 +13,12 @@ import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
 import React, { useCallback, useEffect, useState } from 'react'
-import { useAtom } from 'jotai'
 
 import { CloseType, Tooltips, Links } from '@constants/enums'
 import { useTrade } from '@context/trade'
 // import { useWallet } from '@context/wallet'
 import { useWorldContext } from '@context/world'
-import { normFactorAtom, useController } from '@hooks/contracts/useController'
+import { useController } from '@hooks/contracts/useController'
 import useShortHelper from '@hooks/contracts/useShortHelper'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
@@ -39,6 +38,7 @@ import { useVaultData } from '@hooks/useVaultData'
 import { connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
 import { addressesAtom } from 'src/state/positions/atoms'
+import { useAtom } from 'jotai'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -196,14 +196,14 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
   const classes = useStyles()
   const { openShort } = useShortHelper()
   const { getWSqueethPositionValue } = useSqueethPool()
-  const { updateOperator, getShortAmountFromDebt, getDebtAmount } = useController()
-  const normalizationFactor = useAtom(normFactorAtom)[0]
+
   // const { selectWallet, connected } = useWallet()
   const [connected] = useAtom(connectedWalletAtom)
   const selectWallet = useSelectWallet()
 
   // const { shortHelper } = useAddresses()
   const [{ shortHelper }] = useAtom(addressesAtom)
+  const { updateOperator, normFactor: normalizationFactor, getShortAmountFromDebt, getDebtAmount } = useController()
 
   const {
     tradeAmount: amountInputValue,
@@ -573,9 +573,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   const classes = useStyles()
   const { closeShort } = useShortHelper()
   const { getWSqueethPositionValue } = useSqueethPool()
-  const { updateOperator, getShortAmountFromDebt, getDebtAmount } = useController()
-  const normalizationFactor = useAtom(normFactorAtom)[0]
-  // const { shortHelper } = useAddresses()
+  const { updateOperator, normFactor: normalizationFactor, getShortAmountFromDebt, getDebtAmount } = useController()
   const [{ shortHelper }] = useAtom(addressesAtom)
 
   // const { selectWallet, connected } = useWallet()

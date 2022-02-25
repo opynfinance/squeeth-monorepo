@@ -9,7 +9,6 @@ import Web3 from 'web3'
 
 import { EtherscanPrefix } from '../constants'
 import { Networks } from '../types'
-import { Web3Provider } from '@ethersproject/providers'
 
 const balanceQueryKeys = {
   userWalletBalance: () => ['userWalletBalance'],
@@ -71,6 +70,7 @@ const WalletProvider: React.FC = ({ children }) => {
   const disconnectWallet = useCallback(async () => {
     if (!onboard) return
     await onboard.walletReset()
+    queryClient.removeQueries()
     setAddress(null)
     queryClient.setQueryData(balanceQueryKeys.userWalletBalance(), new BigNumber(0))
   }, [onboard])

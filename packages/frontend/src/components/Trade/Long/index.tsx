@@ -2,7 +2,6 @@ import { CircularProgress, createStyles, makeStyles, Typography } from '@materia
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import BigNumber from 'bignumber.js'
 import React, { useCallback, useEffect, useState } from 'react'
-import { useAtom } from 'jotai'
 
 import { InputType, Links } from '../../../constants'
 import { useTrade } from '@context/trade'
@@ -16,13 +15,14 @@ import { PrimaryButton } from '@components/Button'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
 import { UniswapIframe } from '@components/Modal/UniswapIframe'
 import { TradeSettings } from '@components/TradeSettings'
-import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from '@hooks/contracts/useController'
+import { useController } from '@hooks/contracts/useController'
 import Confirmed, { ConfirmType } from '../Confirmed'
 import TradeInfoItem from '../TradeInfoItem'
 import UniswapData from '../UniswapData'
 import { connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
 import { addressesAtom } from 'src/state/positions/atoms'
+import { useAtom } from 'jotai'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -245,8 +245,7 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
   const selectWallet = useSelectWallet()
   // const { selectWallet, connected } = useWallet()
   const { squeethAmount, longSqthBal, isShort } = usePositions()
-  const dailyHistoricalFunding = useAtom(dailyHistoricalFundingAtom)[0]
-  const currentImpliedFunding = useAtom(currentImpliedFundingAtom)[0]
+  const { dailyHistoricalFunding, currentImpliedFunding } = useController()
 
   let openError: string | undefined
   // let closeError: string | undefined

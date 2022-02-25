@@ -9,7 +9,7 @@ import { Vaults, WETH_DECIMALS, OSQUEETH_DECIMALS } from '../../constants'
 // import { useWallet } from '@context/wallet'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useAddresses } from '../useAddress'
-import { normFactorAtom } from './useController'
+import { useController } from './useController'
 import { useSqueethPool } from './useSqueethPool'
 import { addressAtom, web3Atom } from 'src/state/wallet/atoms'
 import { useHandleTransaction } from 'src/state/wallet/hooks'
@@ -23,9 +23,10 @@ export const useShortHelper = () => {
   const [contract, setContract] = useState<Contract>()
 
   const { getSellParam, getBuyParam } = useSqueethPool()
-  const normalizationFactor = useAtom(normFactorAtom)[0]
+
   // const { shortHelper } = useAddresses()
   const [{ shortHelper }] = useAtom(addressesAtom)
+  const { normFactor: normalizationFactor } = useController()
 
   useEffect(() => {
     if (!web3) return

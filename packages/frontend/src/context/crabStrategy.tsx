@@ -3,9 +3,8 @@ import BigNumber from 'bignumber.js'
 import React, { useContext, useEffect, useState } from 'react'
 import { BIG_ZERO } from '../constants'
 // import { useWallet } from './wallet'
-import { useAddresses } from '@hooks/useAddress'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
-import { currentImpliedFundingAtom, indexAtom, useController } from '@hooks/contracts/useController'
+import { useController } from '@hooks/contracts/useController'
 import { Contract } from 'web3-eth-contract'
 import abi from '../abis/crabStrategy.json'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
@@ -101,9 +100,7 @@ const CrabProvider: React.FC = ({ children }) => {
   const handleTransaction = useHandleTransaction()
   // const { crabStrategy } = useAddresses()
   const [{ crabStrategy }] = useAtom(addressesAtom)
-  const { getVault, getCollatRatioAndLiqPrice } = useController()
-  const currentImpliedFunding = useAtom(currentImpliedFundingAtom)[0]
-  const index = useAtom(indexAtom)[0]
+  const { getVault, getCollatRatioAndLiqPrice, currentImpliedFunding, index } = useController()
   const { getSellQuote, getBuyQuote, ready } = useSqueethPool()
 
   const [contract, setContract] = useState<Contract>()

@@ -1,10 +1,9 @@
 import BigNumber from 'bignumber.js'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
-import { atom, useAtom } from 'jotai'
-import { useUpdateAtom } from 'jotai/utils'
 import { Position } from '@uniswap/v3-sdk'
 import fzero from 'fzero'
+import { useAtom } from 'jotai'
 
 import abi from '../../abis/controller.json'
 import { FUNDING_PERIOD, INDEX_SCALE, SWAP_EVENT_TOPIC, Vaults, OSQUEETH_DECIMALS, TWAP_PERIOD } from '../../constants'
@@ -27,23 +26,6 @@ const getMultiplier = (type: Vaults) => {
   return 1
 }
 
-export const normFactorAtom = atom(new BigNumber(1))
-export const markAtom = atom(new BigNumber(0))
-export const indexAtom = atom(new BigNumber(0))
-export const currentImpliedFundingAtom = atom(0)
-export const impliedVolAtom = atom((get: any) => {
-  const mark = get(markAtom)
-  const index = get(indexAtom)
-  const currentImpliedFunding = get(currentImpliedFundingAtom)
-
-  if (mark.isZero()) return 0
-  if (mark.lt(index)) return 0
-  if (currentImpliedFunding < 0) return 0
-
-  return Math.sqrt(currentImpliedFunding * 365)
-})
-export const dailyHistoricalFundingAtom = atom({ period: 0, funding: 0 })
-
 export const useController = () => {
   // const { web3, address, handleTransaction, networkId } = useWallet()
   const handleTransaction = useHandleTransaction()
@@ -51,12 +33,11 @@ export const useController = () => {
   const [address] = useAtom(addressAtom)
   const [networkId] = useAtom(networkIdAtom)
   const [contract, setContract] = useState<Contract>()
-  const [normFactor, setNormFactor] = useAtom(normFactorAtom)
-  const [mark, setMark] = useAtom(markAtom)
-  const [index, setIndex] = useAtom(indexAtom)
-  const setCurrentImpliedFunding = useUpdateAtom(currentImpliedFundingAtom)
-  const setDailyHistoricalFunding = useUpdateAtom(dailyHistoricalFundingAtom)
-  const impliedVol = useAtom(impliedVolAtom)[0]
+  const [normFactor, setNormFactor] = useState(new BigNumber(1))
+  const [mark, setMark] = useState(new BigNumber(0))
+  const [index, setIndex] = useState(new BigNumber(0))
+  const [dailyHistoricalFunding, setDailyHistoricalFunding] = useState({ period: 0, funding: 0 })
+  const [currentImpliedFunding, setCurrentImpliedFunding] = useState(0)
 
   // const { controller, ethUsdcPool, weth, usdc } = useAddresses()
   const [{ controller, ethUsdcPool, weth, usdc }] = useAtom(addressesAtom)
@@ -305,6 +286,14 @@ export const useController = () => {
     return Math.log(currMark.dividedBy(currIndex).toNumber()) / FUNDING_PERIOD
   }
 
+  const impliedVol = useMemo(() => {
+    if (mark.isZero()) return 0
+    if (mark.lt(index)) return 0
+    if (currentImpliedFunding < 0) return 0
+
+    return Math.sqrt(currentImpliedFunding * 365)
+  }, [mark, currentImpliedFunding, index])
+
   const getDebtAmount = async (shortAmount: BigNumber) => {
     if (!contract) return new BigNumber(0)
 
@@ -434,13 +423,19 @@ export const useController = () => {
   return {
     openDepositAndMint,
     getVault,
+    mark,
+    index,
+    impliedVol,
     updateOperator,
+    normFactor,
+    dailyHistoricalFunding,
     getDebtAmount,
     getShortAmountFromDebt,
     burnAndRedeem,
     getCollatRatioAndLiqPrice,
     depositCollateral,
     withdrawCollateral,
+    currentImpliedFunding,
     getTwapEthPrice,
     depositUniPositionToken,
     withdrawUniPositionToken,

@@ -6,7 +6,7 @@ import React from 'react'
 import { useAtom } from 'jotai'
 
 import { Tooltips } from '@constants/enums'
-import { impliedVolAtom, indexAtom, markAtom } from '@hooks/contracts/useController'
+import { useController } from '@hooks/contracts/useController'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { toTokenAmount } from '@utils/calculations'
 import LPPosition from './LPPosition'
@@ -49,9 +49,7 @@ const useStyles = makeStyles((theme) =>
 
 const SqueethInfo: React.FC = () => {
   const classes = useStyles()
-  const mark = useAtom(markAtom)[0]
-  const index = useAtom(indexAtom)[0]
-  const impliedVol = useAtom(impliedVolAtom)[0]
+  const { mark, index, impliedVol } = useController()
   const { getWSqueethPositionValue, getWSqueethPositionValueInETH } = useSqueethPool()
   // const { address } = useWallet()
   const [address] = useAtom(addressAtom)

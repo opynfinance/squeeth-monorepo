@@ -9,7 +9,7 @@ import StrategyInfoItem from '@components/Strategies/StrategyInfoItem'
 import { CrabProvider, useCrab } from '@context/crabStrategy'
 import { Typography, Tab, Tabs } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import { currentImpliedFundingAtom, indexAtom, dailyHistoricalFundingAtom } from '@hooks/contracts/useController'
+import { useController } from '@hooks/contracts/useController'
 import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
 import React, { useMemo, useState } from 'react'
@@ -99,9 +99,7 @@ const Strategies: React.FC = () => {
   const classes = useStyles()
   // const { address, selectWallet } = useWallet()
   const { maxCap, vault, collatRatio, timeAtLastHedge, profitableMovePercent } = useCrab()
-  const index = useAtom(indexAtom)[0]
-  const currentImpliedFunding = useAtom(currentImpliedFundingAtom)[0]
-  const dailyHistoricalFunding = useAtom(dailyHistoricalFundingAtom)[0]
+  const { index, currentImpliedFunding, dailyHistoricalFunding } = useController()
 
   const [address] = useAtom(addressAtom)
   const selectWallet = useSelectWallet()

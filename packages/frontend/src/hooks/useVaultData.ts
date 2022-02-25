@@ -3,8 +3,7 @@ import { useEffect, useState } from 'react'
 import { useAtom } from 'jotai'
 
 import { Vault } from '../types'
-// import { useWallet } from '@context/wallet'
-import { useController, normFactorAtom } from '@hooks/contracts/useController'
+import { useController } from '@hooks/contracts/useController'
 import { useSqueethPool } from './contracts/useSqueethPool'
 import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
 
@@ -16,8 +15,7 @@ export const useVaultData = (vid: number) => {
   const [collatPercent, setCollatPercent] = useState(0)
   const [isVaultLoading, setVaultLoading] = useState(true)
 
-  const { getCollatRatioAndLiqPrice, getVault } = useController()
-  const normFactor = useAtom(normFactorAtom)[0]
+  const { getCollatRatioAndLiqPrice, getVault, normFactor } = useController()
   const { ready } = useSqueethPool()
   // const { address, connected } = useWallet()
   const [connected] = useAtom(connectedWalletAtom)
