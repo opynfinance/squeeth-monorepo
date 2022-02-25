@@ -48,7 +48,9 @@ export const getHistoricEthPrice = async (dateString: string): Promise<BigNumber
     `https://api.twelvedata.com/time_series?start_date=${dateString}&end_date=${dateString}&symbol=${pair}&interval=1min&apikey=${process.env.NEXT_PUBLIC_TWELVEDATA_APIKEY}`,
   ).then((res) => res.json())
 
-  if (response.status === 'error') return new BigNumber(0)
+  if (response.status === 'error') {
+    throw new Error(response.status)
+  }
 
   return new BigNumber(Number(response.values[0].close))
 }

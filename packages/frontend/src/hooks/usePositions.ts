@@ -20,6 +20,8 @@ import { useController } from './contracts/useController'
 import { useAddresses } from './useAddress'
 import { calcDollarShortUnrealizedpnl, calcETHCollateralPnl, calcDollarLongUnrealizedpnl } from '../lib/pnl'
 import { BIG_ZERO } from '../constants/'
+import { useAtom } from 'jotai'
+import { PositionType } from '../types'
 
 export const usePnL = () => {
   const [ethCollateralPnl, setEthCollateralPnl] = useState(BIG_ZERO)
@@ -35,6 +37,7 @@ export const usePnL = () => {
     totalUSDFromSell,
     firstValidVault,
     existingCollat,
+    positionType,
   } = usePositions()
   const { index } = useController()
 
@@ -63,12 +66,12 @@ export const usePnL = () => {
 
   useEffect(() => {
     ;(async () => {
-      if (vaultHistory?.length && !index.isZero() && !existingCollat.isZero()) {
+      if (vaultHistory?.length && !index.isZero() && !existingCollat.isZero() && swaps?.length) {
         const result = await calcETHCollateralPnl(vaultHistory, toTokenAmount(index, 18).sqrt(), existingCollat)
         setEthCollateralPnl(result)
       }
     })()
-  }, [index.toString(), existingCollat.toString(), vaultHistory?.length])
+  }, [index.toString(), existingCollat.toString(), vaultHistory?.length, swaps?.length])
 
   useEffect(() => {
     if (!ready || positionLoading) return
@@ -108,31 +111,68 @@ export const usePnL = () => {
 
   useEffect(() => {
     ;(async () => {
-      if (swaps?.length && !buyQuote.isZero() && !index.isZero() && !ethCollateralPnl.isZero()) {
-        const pnl = await calcDollarShortUnrealizedpnl(swaps, isWethToken0, buyQuote, toTokenAmount(index, 18).sqrt())
+      if (
+        swaps?.length &&
+        !buyQuote.isZero() &&
+        !index.isZero() &&
+        !ethCollateralPnl.isZero() &&
+        !squeethAmount.isZero() &&
+        positionType === PositionType.SHORT
+      ) {
+        const pnl = await calcDollarShortUnrealizedpnl(
+          swaps,
+          isWethToken0,
+          buyQuote,
+          toTokenAmount(index, 18).sqrt(),
+          squeethAmount,
+          ethCollateralPnl,
+        )
         setShortUnrealizedPNL({
-          usd: pnl.plus(ethCollateralPnl),
-          eth: pnl.plus(ethCollateralPnl).div(toTokenAmount(index, 18).sqrt()).isFinite()
-            ? pnl.plus(ethCollateralPnl).div(toTokenAmount(index, 18).sqrt())
-            : BIG_ZERO,
-          loading: false,
+          ...pnl,
         })
       } else {
         setShortUnrealizedPNL((prevState) => ({ ...prevState, loading: true }))
       }
     })()
-  }, [buyQuote.toString(), ethCollateralPnl.toString(), index.toString(), isWethToken0, swaps?.length])
+  }, [
+    buyQuote.toString(),
+    ethCollateralPnl.toString(),
+    index.toString(),
+    isWethToken0,
+    swaps?.length,
+    squeethAmount.toString(),
+    positionType,
+  ])
 
   useEffect(() => {
     ;(async () => {
-      if (swaps?.length && !sellQuote.amountOut.isZero() && !index.isZero()) {
-        const pnl = await calcDollarLongUnrealizedpnl(swaps, isWethToken0, sellQuote, toTokenAmount(index, 18).sqrt())
-        setLongUnrealizedPNL((prevState) => ({ ...prevState, ...pnl, loading: false }))
+      if (
+        swaps?.length &&
+        !sellQuote.amountOut.isZero() &&
+        !index.isZero() &&
+        !squeethAmount.isZero() &&
+        positionType === PositionType.LONG
+      ) {
+        const pnl = await calcDollarLongUnrealizedpnl(
+          swaps,
+          isWethToken0,
+          sellQuote,
+          toTokenAmount(index, 18).sqrt(),
+          squeethAmount,
+        )
+        setLongUnrealizedPNL((prevState) => ({ ...prevState, ...pnl }))
       } else {
         setLongUnrealizedPNL((prevState) => ({ ...prevState, loading: true }))
       }
     })()
-  }, [index.toString(), isWethToken0, sellQuote.amountOut.toString(), swaps?.length])
+  }, [
+    index.toString(),
+    isWethToken0,
+    sellQuote.amountOut.toString(),
+    swaps?.length,
+    squeethAmount.toString(),
+    positionType,
+  ])
 
   return {
     longGain,

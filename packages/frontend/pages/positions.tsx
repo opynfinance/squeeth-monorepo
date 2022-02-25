@@ -332,7 +332,7 @@ export function Positions() {
                   {isPositionLoading ||
                   shortGain.isLessThanOrEqualTo(-100) ||
                   !shortGain.isFinite() ||
-                  longUnrealizedPNL.loading ? (
+                  shortUnrealizedPNL.loading ? (
                     <Typography variant="body1">Loading</Typography>
                   ) : (
                     <>
