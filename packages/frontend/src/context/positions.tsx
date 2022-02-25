@@ -1,14 +1,17 @@
 import React, { useContext, useState, useEffect, useMemo } from 'react'
 import BigNumber from 'bignumber.js'
+import { useAtom } from 'jotai'
 
 import { BIG_ZERO } from '@constants/index'
 import { useWorldContext } from '@context/world'
-import { useSwapsData } from '../hooks/useSwapsData'
+// import { useSwapsData } from '../hooks/useSwapsData'
 import { useVaultManager } from '../hooks/contracts/useVaultManager'
 import { useLPPositions } from '../hooks/usePositions'
 import { useVaultData } from '../hooks/useVaultData'
 import { swaps_swaps } from '../queries/uniswap/__generated__/swaps'
 import { NFTManagers, PositionType } from '../types'
+import { useComputeSwaps, useSwaps } from 'src/state/positions/hooks'
+import { isWethToken0Atom, positionTypeAtom, firstValidVaultAtom } from 'src/state/positions/atoms'
 
 type positionsContextType = {
   activePositions: NFTManagers[]
@@ -45,18 +48,16 @@ const positionsContext = React.createContext<positionsContextType | undefined>(u
 const PositionsProvider: React.FC = ({ children }) => {
   const { oSqueethBal } = useWorldContext()
   const { vaults: shortVaults } = useVaultManager()
-  const {
-    squeethAmount,
-    wethAmount,
-    totalUSDFromBuy,
-    boughtSqueeth,
-    totalUSDFromSell,
-    soldSqueeth,
-    shortUsdAmount,
-    swaps,
-    refetch: swapsQueryRefetch,
-    isWethToken0,
-  } = useSwapsData()
+
+  const { data, refetch: swapsQueryRefetch } = useSwaps()
+  const { squeethAmount, wethAmount, shortUsdAmount, boughtSqueeth, soldSqueeth, totalUSDFromBuy, totalUSDFromSell } =
+    useComputeSwaps()
+  const [isWethToken0] = useAtom(isWethToken0Atom)
+  const [positionType, setPositionType] = useAtom(positionTypeAtom)
+  const [firstValidVault, setFirstValidVault] = useAtom(firstValidVaultAtom)
+
+  const swaps = data?.swaps
+
   const {
     depositedSqueeth,
     withdrawnSqueeth,
@@ -70,8 +71,8 @@ const PositionsProvider: React.FC = ({ children }) => {
     refetch: positionsQueryRefetch,
   } = useLPPositions()
 
-  const [positionType, setPositionType] = useState(PositionType.NONE)
-  const [firstValidVault, setFirstValidVault] = useState(0)
+  // const [positionType, setPositionType] = useState(PositionType.NONE)
+  // const [firstValidVault, setFirstValidVault] = useState(0)
 
   const vaultId = shortVaults[firstValidVault]?.id || 0
   const { existingCollat, existingCollatPercent, existingLiqPrice: liquidationPrice } = useVaultData(vaultId)
