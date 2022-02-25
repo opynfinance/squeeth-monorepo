@@ -1,15 +1,33 @@
 import React, { useContext } from 'react'
 
-import { useETHPriceCharts } from '@hooks/useETHPriceCharts'
+// import { useETHPriceCharts } from '@hooks/useETHPriceCharts'
 import BigNumber from 'bignumber.js'
 import { OSQUEETH_DECIMALS } from '../constants/index'
-import { useAddresses } from '@hooks/useAddress'
+// import { useAddresses } from '@hooks/useAddress'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { addressesAtom } from 'src/state/positions/atoms'
 import { useAtom } from 'jotai'
-import { useAtomValue } from 'jotai/utils'
-import { ethPriceAsyncAtom } from 'src/state/ethPrice/atoms'
+import {
+  useAccFunding,
+  collatRatioAtom,
+  daysAtom,
+  useEth90daysPriceMap,
+  useEthPriceMap,
+  useEthPrices,
+  useEthWithinOneDayPriceMap,
+  useFundingPercentageSeries,
+  useLongEthPNL,
+  useLongSeries,
+  usePositionSizePercentageseries,
+  useShortEthPNL,
+  useShortSeries,
+  useSqueethPrices,
+  useStartingETHPrice,
+  useGetVaultPNLWithRebalance,
+  useGetStableYieldPNL,
+  volMultiplierAtom,
+} from 'src/state/ethPriceCharts/atoms'
 
 type point = {
   value: number
@@ -92,36 +110,53 @@ const useWorldContext = () => useContext(worldContext)
 const WorldProvider: React.FC = ({ children }) => {
   // const [researchMode, setResearchMode] = useState(false)
   // const [ usePriceSeries, setUsePriceSeries ] = useState(false) // default to show PNL.
+  const [volMultiplier, setVolMultiplier] = useAtom(volMultiplierAtom)
+  const [days, setDays] = useAtom(daysAtom)
+  const [collatRatio, setCollatRatio] = useAtom(collatRatioAtom)
+  const accFunding = useAccFunding()
+  const ethPrices = useEthPrices()
+  const ethPriceMap = useEthPriceMap()
+  const ethWithinOneDayPriceMap = useEthWithinOneDayPriceMap()
+  const eth90daysPriceMap = useEth90daysPriceMap()
+  const startingETHPrice = useStartingETHPrice()
+  const longEthPNL = useLongEthPNL()
+  const shortEthPNL = useShortEthPNL()
+  const longSeries = useLongSeries()
+  const shortSeries = useShortSeries()
+  const squeethPrices = useSqueethPrices()
+  const positionSizeSeries = usePositionSizePercentageseries()
+  const fundingPercentageSeries = useFundingPercentageSeries()
+  const getVaultPNLWithRebalance = useGetVaultPNLWithRebalance()
+  const getStableYieldPNL = useGetStableYieldPNL()
 
-  const {
-    ethPrices,
-    startingETHPrice,
-    longEthPNL,
-    shortEthPNL,
-    squeethPrices,
-    longSeries,
-    shortSeries,
-    getVaultPNLWithRebalance,
-    volMultiplier,
-    setVolMultiplier,
-    days,
-    setDays,
-    getStableYieldPNL,
-    accFunding,
-    positionSizeSeries,
-    fundingPercentageSeries,
-    ethPriceMap,
-    ethWithinOneDayPriceMap,
-    eth90daysPriceMap,
-    collatRatio,
-    setCollatRatio,
-  } = useETHPriceCharts()
+  // const {
+  // ethPrices,
+  // startingETHPrice,
+  // longEthPNL,
+  // shortEthPNL,
+  // squeethPrices,
+  // longSeries,
+  // shortSeries,
+  // getVaultPNLWithRebalance,
+  // volMultiplier,
+  // setVolMultiplier,
+  // days,
+  // setDays,
+  // getStableYieldPNL,
+  // accFunding,
+  // positionSizeSeries,
+  // fundingPercentageSeries,
+  // ethPriceMap,
+  // ethWithinOneDayPriceMap,
+  // eth90daysPriceMap,
+  // collatRatio,
+  // setCollatRatio,
+  // } = useETHPriceCharts()
 
   // const { oSqueeth } = useAddresses()
   const [{ oSqueeth }] = useAtom(addressesAtom)
 
-  const { oSqueeth } = useAddresses()
-  const ethPrice = useETHPrice(10)
+  const ethPrice = useETHPrice()
   const oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
   return (
@@ -136,7 +171,7 @@ const WorldProvider: React.FC = ({ children }) => {
         setVolMultiplier,
         days,
         setDays,
-        ethPrices,
+        ethPrices: ethPrices.data,
         startingETHPrice,
         getVaultPNLWithRebalance,
         longEthPNL,
