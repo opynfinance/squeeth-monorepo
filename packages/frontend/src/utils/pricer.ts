@@ -133,7 +133,7 @@ export function useSqueethPNLCompounding(
               const deltaT = secondsElapsed / (420 * 60 * 60)
               const markIndex = 1 / Math.exp(Math.log(Number(item.newNormFactor) / Number(item.oldNormFactor)) / deltaT)
               const dayFunding = Math.log(markIndex) / 17.5
-              annualVol = Math.sqrt(Math.abs(dayFunding) * 365)
+              annualVol = (dayFunding < 0 ? -1 : 1) * Math.sqrt(Math.abs(dayFunding) * 365)
             } else {
               annualVol = await getVolForTimestampOrDefault(volsMap, time, price)
             }
