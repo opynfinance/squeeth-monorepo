@@ -230,6 +230,41 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         emit FlashWBurn(msg.sender, _vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw, _wPowerPerpAmountToBuy);
     }
 
+    function flashswapSellLongWMint(
+        uint256 _vaultId,
+        uint256 _wPowerPerpAmountToMint,
+        uint256 _collateralAmount,
+        uint256 _wPowerPerpAmountToSell,
+        uint256 _minToReceive
+    ) external payable {
+        IWPowerPerp(wPowerPerp).transferFrom(msg.sender, address(this), _wPowerPerpAmountToSell);
+
+        uint256 amountOut = _exactInFlashSwap(
+            wPowerPerp,
+            weth,
+            IUniswapV3Pool(wPowerPerpPool).fee(),
+            _wPowerPerpAmountToSell,
+            _minToReceive,
+            uint8(FLASH_SOURCE.SWAP),
+            ""
+        );
+
+        _exactOutFlashSwap(
+            weth,
+            wPowerPerp,
+            IUniswapV3Pool(wPowerPerpPool).fee(),
+            _collateralAmount.sub(msg.value).sub(amountOut),
+            _wPowerPerpAmountToMint,
+            uint8(FLASH_SOURCE.FLASH_SELL_LONG_W_MINT),
+            abi.encodePacked(
+                _vaultId,
+                _wPowerPerpAmountToMint,
+                _collateralAmount
+            )
+        );
+
+    }   
+
     /**
      * @notice mint WPowerPerp and LP into Uniswap v3 pool
      * @param _vaultId vault ID
@@ -615,6 +650,26 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             if (address(this).balance > 0) {
                 payable(_caller).sendValue(address(this).balance);
             }
+        }
+        else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_SELL_LONG_W_MINT) {
+            FlashSellLongWMintData memory data = abi.decode(_callData, (FlashSellLongWMintData));
+
+            // convert WETH to ETH as Uniswap uses WETH
+            IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
+
+            uint256 vaultId = IController(controller).mintWPowerPerpAmount{value: data.collateralAmount}(
+                data.vaultId,
+                data.wPowerPerpAmount,
+                0
+            );
+
+            IWPowerPerp(wPowerPerp).transfer(wPowerPerpPool, _amountToPay);
+
+            if (address(this).balance > 0) {
+                payable(_caller).sendValue(address(this).balance);
+            }
+            // this is a newly open vault, transfer to the user
+            if (data.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), _caller, vaultId);
         }
     }
 }
