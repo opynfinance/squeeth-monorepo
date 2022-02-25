@@ -316,7 +316,7 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
   }
 }
 
-async function getETHPrices(day = 1): Promise<{ time: number; value: number }[]> {
+export async function getETHPrices(day = 1): Promise<{ time: number; value: number }[]> {
   try {
     const url = `https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=${day}`
     const response = await fetch(url)
@@ -332,7 +332,7 @@ async function getETHPrices(day = 1): Promise<{ time: number; value: number }[]>
   }
 }
 
-async function getCUSDCPrices(day = 1): Promise<{ time: number; value: number }[]> {
+export async function getCUSDCPrices(day = 1): Promise<{ time: number; value: number }[]> {
   try {
     const secondsInDay = 24 * 60 * 60
     const endTime = Math.round(Date.now() / 1000)
