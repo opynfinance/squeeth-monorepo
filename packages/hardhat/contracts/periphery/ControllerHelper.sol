@@ -32,7 +32,9 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
     /// @dev enum to differentiate between uniswap swap callback function source
     enum FLASH_SOURCE {
         FLASH_W_MINT,
-        FLASH_W_BURN
+        FLASH_W_BURN,
+        FLASH_SELL_LONG_W_MINT,
+        SWAP
     }
 
     address public immutable controller;
@@ -56,6 +58,11 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         uint256 wPowerPerpAmountToBuy;
         uint256 collateralToWithdraw;
         uint256 collateralToBuyWith;
+    }
+    struct FlashSellLongWMintData {
+        uint256 vaultId;
+        uint256 wPowerPerpAmount;
+        uint256 collateralAmount;
     }
 
     struct FlashWBurnData {
