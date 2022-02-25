@@ -23,8 +23,6 @@ import { networkIdAtom } from 'src/state/wallet/atoms'
 import { useSwaps } from 'src/state/positions/hooks'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
-const isServer = typeof window === 'undefined'
-const BrowserSuspense = isServer ? Fragment : Suspense
 
 function MyApp({ Component, pageProps }: any) {
   const router = useRouter()
@@ -100,13 +98,11 @@ const TradeApp = ({ Component, pageProps }: any) => {
         <ThemeProvider theme={getTheme(Mode.DARK)}>
           {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
           <CssBaseline />
-          <BrowserSuspense fallback={<h1>Loading...</h1>}>
-            <WorldProvider>
-              <PositionsProvider>
-                <Component {...pageProps} />
-              </PositionsProvider>
-            </WorldProvider>
-          </BrowserSuspense>
+          <WorldProvider>
+            <PositionsProvider>
+              <Component {...pageProps} />
+            </PositionsProvider>
+          </WorldProvider>
         </ThemeProvider>
       </ApolloProvider>
     </React.Fragment>

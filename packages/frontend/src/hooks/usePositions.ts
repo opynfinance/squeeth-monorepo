@@ -18,11 +18,10 @@ import { useAtom } from 'jotai'
 
 import { useSqueethPool } from './contracts/useSqueethPool'
 import { indexAtom } from './contracts/useController'
-import { useAddresses } from './useAddress'
 import { calcDollarShortUnrealizedpnl, calcETHCollateralPnl, calcDollarLongUnrealizedpnl } from '../lib/pnl'
 import { BIG_ZERO } from '../constants/'
 import { addressAtom, networkIdAtom, web3Atom } from 'src/state/wallet/atoms'
-import { addressesAtom, isWethToken0Atom, swapsAtom, swapsQueryAtom } from '../state/positions/atoms'
+import { addressesAtom } from '../state/positions/atoms'
 
 export const usePnL = () => {
   const [ethCollateralPnl, setEthCollateralPnl] = useState(BIG_ZERO)
