@@ -116,7 +116,6 @@ export function useSqueethPNLCompounding(
     undefined,
   )
   const normHistoryItems: (NormHistory | undefined)[] = useNormHistoryFromTime(timestamps)
-  console.log('ccc', chartData, ' ', ethPrices.length)
 
   useEffect(() => {
     ;(async () => {
@@ -125,38 +124,43 @@ export function useSqueethPNLCompounding(
 
       if (normHistoryItems.length === ethPrices.length) {
         const volsMap = await getVolMap()
-        const charts = await Promise.all(
+        const annualVols = await Promise.all(
           normHistoryItems.map(async (item, index) => {
             const { value: price, time } = ethPrices[index > 0 ? index : 0]
-            const fundingPeriodMultiplier = days > 90 ? 365 : days > 1 ? 365 * 24 : 356 * 24 * 12
             let annualVol
             if (item) {
               const secondsElapsed = Number(item.timestamp) - Number(item.lastModificationTimestamp)
               const deltaT = secondsElapsed / (420 * 60 * 60)
               const markIndex = 1 / Math.exp(Math.log(Number(item.newNormFactor) / Number(item.oldNormFactor)) / deltaT)
               const dayFunding = Math.log(markIndex) / 17.5
-              annualVol = Math.sqrt(dayFunding * 365)
+              annualVol = Math.sqrt(Math.abs(dayFunding) * 365)
             } else {
               annualVol = await getVolForTimestampOrDefault(volsMap, time, price)
             }
-            let vol = annualVol * volMultiplier
-            console.log('bbb', annualVol)
-            const preEthPrice = ethPrices[index > 0 ? index - 1 : 0].value
-            let fundingCost = index === 0 ? 0 : (vol / Math.sqrt(fundingPeriodMultiplier)) ** 2
-            cumulativeSqueethLongReturn +=
-              2 * Math.log(price / preEthPrice) + Math.log(price / preEthPrice) ** 2 - fundingCost
-            // crab return
-            const crabVolMultiplier = 0.9
-            vol = annualVol * crabVolMultiplier
-            fundingCost = index === 0 ? 0 : (vol / Math.sqrt(fundingPeriodMultiplier)) ** 2
-            const simR = price / preEthPrice - 1
-            cumulativeSqueethCrabReturn *= 1 + -(simR ** 2) + fundingCost
-            const longPNL = Math.round((Math.exp(cumulativeSqueethLongReturn) - 1) * 10000) / 100
-            const shortPNL = Math.round(Math.log(cumulativeSqueethCrabReturn) * 10000) / 100
 
-            return { shortPNL, longPNL, time }
+            return annualVol
           }),
         )
+        const charts = annualVols.map((annualVol, index) => {
+          const { value: price, time } = ethPrices[index > 0 ? index : 0]
+          const fundingPeriodMultiplier = days > 90 ? 365 : days > 1 ? 365 * 24 : 356 * 24 * 12
+
+          let vol = annualVol * volMultiplier
+          const preEthPrice = ethPrices[index > 0 ? index - 1 : 0].value
+          let fundingCost = index === 0 ? 0 : (vol / Math.sqrt(fundingPeriodMultiplier)) ** 2
+          cumulativeSqueethLongReturn +=
+            2 * Math.log(price / preEthPrice) + Math.log(price / preEthPrice) ** 2 - fundingCost
+          // crab return
+          const crabVolMultiplier = 0.9
+          vol = annualVol * crabVolMultiplier
+          fundingCost = index === 0 ? 0 : (vol / Math.sqrt(fundingPeriodMultiplier)) ** 2
+          const simR = price / preEthPrice - 1
+          cumulativeSqueethCrabReturn *= 1 + -(simR ** 2) + fundingCost
+          const longPNL = Math.round((Math.exp(cumulativeSqueethLongReturn) - 1) * 10000) / 100
+          const shortPNL = Math.round(Math.log(cumulativeSqueethCrabReturn) * 10000) / 100
+
+          return { shortPNL, longPNL, time }
+        })
         setChartData(charts)
       }
     })()

@@ -1,11 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 
-import {
-  getETHPNLCompounding,
-  getSqueethChartWithFunding,
-  getSqueethPNLCompounding,
-  useSqueethPNLCompounding,
-} from '@utils/pricer'
+import { getETHPNLCompounding, getSqueethChartWithFunding, useSqueethPNLCompounding } from '@utils/pricer'
 import { useQuery } from 'react-query'
 
 const emptyPriceList = [
@@ -172,12 +167,6 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
     () => getSqueethChartWithFunding(ethPrices.data ?? [], volMultiplier, collatRatio),
     { enabled: ethPrices.isSuccess },
   )
-
-  // const squeethPNLSeries = useQuery(
-  //   ethPriceChartsQueryKeys.squeethPNLSeries(),
-  //   () => getSqueethPNLCompounding(ethPrices.data ?? [], volMultiplier, collatRatio, days),
-  //   { enabled: Boolean(ethPrices.isSuccess && days) },
-  // )
 
   const squeethPNLSeries = useSqueethPNLCompounding(ethPrices.data ?? [], volMultiplier, days)
 

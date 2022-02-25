@@ -77,7 +77,7 @@ const FundingChart = () => {
     },
     {
       id: 'year',
-      text: 'Annual',
+      text: 'Annualized',
       itemToAdd: (
         <div className={classes.iconWrapper}>
           <Tooltip title={Tooltips.FundingAnnual}>
