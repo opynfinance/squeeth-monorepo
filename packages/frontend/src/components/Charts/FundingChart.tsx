@@ -98,7 +98,7 @@ const FundingChart = () => {
     const dayFunding = Math.log(markIndex) / 17.5
     const monthFunding = dayFunding * 30
     const yearFunding = dayFunding * 365.25
-    const annualVol = Math.sqrt(dayFunding * 365)
+    const annualVol = (dayFunding < 0 ? -1 : 1) * Math.sqrt(Math.abs(dayFunding) * 365)
     const value =
       (fundingType.id === 'vol'
         ? annualVol

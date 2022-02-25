@@ -1,6 +1,5 @@
 import {
-  Button,
-  ButtonGroup,
+  Box,
   createStyles,
   Hidden,
   InputAdornment,
@@ -8,6 +7,7 @@ import {
   TextField,
   Tooltip,
   Typography,
+  CircularProgress,
 } from '@material-ui/core'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import dynamic from 'next/dynamic'
@@ -112,7 +112,7 @@ export function LongChart() {
 
   // plot line data
   const lineSeries = useMemo(() => {
-    if (!longEthPNL || !longSeries || !positionSizeSeries) return
+    if (!longEthPNL || !longSeries || longSeries.length === 0 || !positionSizeSeries) return
 
     if (mode === ChartType.PNL)
       return [
@@ -277,17 +277,23 @@ export function LongChart() {
         // )
         <div className={classes.payoffContainer} style={{ maxHeight: 'none' }}>
           <div style={{ flex: '1 1 0', marginTop: '8px' }}>
-            <Chart
-              from={startTimestamp}
-              to={endTimestamp}
-              legend={mode}
-              options={chartOptions}
-              lineSeries={lineSeries}
-              autoWidth
-              // width={1000}
-              height={300}
-              darkTheme
-            />
+            {lineSeries ? (
+              <Chart
+                from={startTimestamp}
+                to={endTimestamp}
+                legend={mode}
+                options={chartOptions}
+                lineSeries={lineSeries}
+                autoWidth
+                // width={1000}
+                height={300}
+                darkTheme
+              />
+            ) : (
+              <Box display="flex" height="300px" width={1} alignItems="center" justifyContent="center">
+                <CircularProgress size={40} color="secondary" />
+              </Box>
+            )}
 
             <div className={classes.legendBox}>
               <div className={classes.legendContainer}>

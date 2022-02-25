@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 
 export const useNormHistoryFromTime = (timestamps: number[]) => {
   const { networkId } = useWallet()
-  const [timeIndex, setTimeIndex] = useState(-1)
+  const [timeIndex, setTimeIndex] = useState(0)
   const [normHistory, setNormHistory] = useState<any[]>([])
   const { data, loading } = useQuery(NORMHISTORY_TIME_QUERY, {
     variables: {
