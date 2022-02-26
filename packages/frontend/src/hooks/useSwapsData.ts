@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import BigNumber from 'bignumber.js'
 import { useQuery } from '@apollo/client'
-import { useAtom } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 
 // import { useWallet } from '@context/wallet'
 import { BIG_ZERO } from '@constants/index'
@@ -12,6 +12,7 @@ import SWAPS_QUERY, { SWAPS_SUBSCRIPTION } from '../queries/uniswap/swapsQuery'
 import { Networks } from '../types'
 import SWAPS_ROPSTEN_QUERY, { SWAPS_ROPSTEN_SUBSCRIPTION } from '@queries/uniswap/swapsRopstenQuery'
 import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
+import { isWethToken0Atom } from 'src/state/positions/atoms'
 
 export const useSwapsData = () => {
   const { squeethPool, weth, oSqueeth, shortHelper, swapRouter, crabStrategy } = useAddresses()
@@ -55,7 +56,7 @@ export const useSwapsData = () => {
   }, [address, oSqueeth, subscribeToMore])
 
   const swaps = data?.swaps
-  const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
   const { squeethAmount, wethAmount, totalUSDFromBuy, boughtSqueeth, totalUSDFromSell, soldSqueeth, shortUsdAmount } =
     useMemo(
       () =>

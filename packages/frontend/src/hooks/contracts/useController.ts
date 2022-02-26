@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 import { Position } from '@uniswap/v3-sdk'
 import fzero from 'fzero'
-import { useAtom } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 
 import abi from '../../abis/controller.json'
 import { FUNDING_PERIOD, INDEX_SCALE, SWAP_EVENT_TOPIC, Vaults, OSQUEETH_DECIMALS, TWAP_PERIOD } from '../../constants'
@@ -17,7 +17,7 @@ import { useNFTManager } from './useNFTManager'
 import { useSqueethPool } from './useSqueethPool'
 import { addressAtom, networkIdAtom, web3Atom } from 'src/state/wallet/atoms'
 import { useHandleTransaction } from 'src/state/wallet/hooks'
-import { addressesAtom } from 'src/state/positions/atoms'
+import { addressesAtom, isWethToken0Atom } from 'src/state/positions/atoms'
 
 const getMultiplier = (type: Vaults) => {
   if (type === Vaults.ETHBull) return 3
@@ -27,11 +27,10 @@ const getMultiplier = (type: Vaults) => {
 }
 
 export const useController = () => {
-  // const { web3, address, handleTransaction, networkId } = useWallet()
   const handleTransaction = useHandleTransaction()
-  const [web3] = useAtom(web3Atom)
-  const [address] = useAtom(addressAtom)
-  const [networkId] = useAtom(networkIdAtom)
+  const web3 = useAtomValue(web3Atom)
+  const address = useAtomValue(addressAtom)
+  const networkId = useAtomValue(networkIdAtom)
   const [contract, setContract] = useState<Contract>()
   const [normFactor, setNormFactor] = useState(new BigNumber(1))
   const [mark, setMark] = useState(new BigNumber(0))
@@ -43,7 +42,7 @@ export const useController = () => {
   const [{ controller, ethUsdcPool, weth, usdc }] = useAtom(addressesAtom)
   const { getTwapSafe } = useOracle()
   const { getETHandOSQTHAmount } = useNFTManager()
-  const { squeethInitialPrice, wethPrice, squeethPrice, isWethToken0 } = useSqueethPool()
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
 
   useEffect(() => {
     if (!web3) return

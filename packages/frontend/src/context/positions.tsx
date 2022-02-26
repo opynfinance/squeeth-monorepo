@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect, useMemo } from 'react'
 import BigNumber from 'bignumber.js'
-import { useAtom } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 
 import { BIG_ZERO } from '@constants/index'
 import { useWorldContext } from '@context/world'
@@ -11,7 +11,7 @@ import { useVaultData } from '../hooks/useVaultData'
 import { swaps_swaps } from '../queries/uniswap/__generated__/swaps'
 import { NFTManagers, PositionType } from '../types'
 import { useComputeSwaps, useSwaps } from 'src/state/positions/hooks'
-import { isWethToken0Atom, positionTypeAtom, firstValidVaultAtom } from 'src/state/positions/atoms'
+import { isWethToken0Atom, positionTypeAtom, firstValidVaultAtom, addressesAtom } from 'src/state/positions/atoms'
 
 type positionsContextType = {
   activePositions: NFTManagers[]
@@ -52,7 +52,7 @@ const PositionsProvider: React.FC = ({ children }) => {
   const { data, refetch: swapsQueryRefetch } = useSwaps()
   const { squeethAmount, wethAmount, shortUsdAmount, boughtSqueeth, soldSqueeth, totalUSDFromBuy, totalUSDFromSell } =
     useComputeSwaps()
-  const [isWethToken0] = useAtom(isWethToken0Atom)
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
   const [positionType, setPositionType] = useAtom(positionTypeAtom)
   const [firstValidVault, setFirstValidVault] = useAtom(firstValidVaultAtom)
 

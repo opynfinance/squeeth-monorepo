@@ -4,6 +4,7 @@ import BigNumber from 'bignumber.js'
 import { ethers } from 'ethers'
 import { useCallback, useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
+import { useAtomValue } from 'jotai'
 
 import routerABI from '../../abis/swapRouter.json'
 import uniABI from '../../abis/uniswapPool.json'
@@ -16,7 +17,7 @@ import { useWorldContext } from '@context/world'
 import { useAtom } from 'jotai'
 import { addressAtom, networkIdAtom, web3Atom } from 'src/state/wallet/atoms'
 import { useHandleTransaction } from 'src/state/wallet/hooks'
-import { addressesAtom } from 'src/state/positions/atoms'
+import { addressesAtom, isWethToken0Atom } from 'src/state/positions/atoms'
 
 // const NETWORK_QUOTE_GAS_OVERRIDE: { [chainId: number]: number } = {
 //   [Networks.ARBITRUM_RINKEBY]: 6_000_000,
@@ -40,12 +41,13 @@ export const useSqueethPool = () => {
   const { ethPrice } = useWorldContext()
 
   // const { address, web3, networkId, handleTransaction } = useWallet()
-  const [web3] = useAtom(web3Atom)
+  const web3 = useAtomValue(web3Atom)
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
   const handleTransaction = useHandleTransaction()
-  const [address] = useAtom(addressAtom)
-  const [networkId] = useAtom(networkIdAtom)
+  const address = useAtomValue(addressAtom)
+  const networkId = useAtomValue(networkIdAtom)
   // const { squeethPool, swapRouter, weth, oSqueeth } = useAddresses()
-  const [{ squeethPool, swapRouter, weth, oSqueeth }] = useAtom(addressesAtom)
+  const { squeethPool, swapRouter } = useAtomValue(addressesAtom)
   const { ticks } = useUniswapTicks()
 
   useEffect(() => {

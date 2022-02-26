@@ -9,6 +9,8 @@ import { Vaults } from '../../queries/squeeth/__generated__/Vaults'
 import { squeethClient } from '../../utils/apollo-client'
 import { useAtom } from 'jotai'
 import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
+import { useUpdateAtom } from 'jotai/utils'
+import { firstValidVaultAtom } from 'src/state/positions/atoms'
 
 /**
  * get user vaults.
@@ -20,6 +22,7 @@ export const useVaultManager = () => {
   const [vaults, setVaults] = useState<Array<any>>([])
   const [address] = useAtom(addressAtom)
   const [networkId] = useAtom(networkIdAtom)
+  const setFirstValidVault = useUpdateAtom(firstValidVaultAtom)
 
   const { data, loading, subscribeToMore } = useQuery<Vaults>(VAULTS_QUERY, {
     client: squeethClient[networkId],
@@ -61,6 +64,14 @@ export const useVaultManager = () => {
       setVaults(_vaults)
     })()
   }, [data?.vaults?.length])
+
+  useEffect(() => {
+    for (let i = 0; i < vaults.length; i++) {
+      if (vaults[i]?.collateralAmount.isGreaterThan(0)) {
+        setFirstValidVault(i)
+      }
+    }
+  }, [vaults.length])
 
   return { vaults, loading }
 }

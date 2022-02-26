@@ -7,7 +7,7 @@ import BigNumber from 'bignumber.js'
 import Link from 'next/link'
 import * as React from 'react'
 import { useEffect, useState } from 'react'
-import { useAtom } from 'jotai'
+import { useAtomValue } from 'jotai'
 
 import { SecondaryTab, SecondaryTabs } from '../../components/Tabs'
 import { Tooltips, UniswapIFrameOpen } from '@constants/enums'
@@ -113,7 +113,8 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
   const { ethPrice } = useWorldContext()
   const { getWSqueethPositionValue, isWethToken0 } = useSqueethPool()
   // const { networkId } = useWallet()
-  const [networkId] = useAtom(networkIdAtom)
+  const networkId = useAtomValue(networkIdAtom)
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
 
   useEffect(() => {
     console.log(activePositions)

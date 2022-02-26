@@ -7,7 +7,7 @@ import { OSQUEETH_DECIMALS } from '../constants/index'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { addressesAtom } from 'src/state/positions/atoms'
-import { useAtom } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 import {
   useAccFunding,
   collatRatioAtom,
@@ -154,7 +154,7 @@ const WorldProvider: React.FC = ({ children }) => {
   // } = useETHPriceCharts()
 
   // const { oSqueeth } = useAddresses()
-  const [{ oSqueeth }] = useAtom(addressesAtom)
+  const { oSqueeth } = useAtomValue(addressesAtom)
 
   const ethPrice = useETHPrice()
   const oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)

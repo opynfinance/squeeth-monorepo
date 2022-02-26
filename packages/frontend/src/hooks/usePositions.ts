@@ -14,7 +14,7 @@ import { VaultHistory } from '../queries/squeeth/__generated__/VaultHistory'
 import { NFTManagers } from '../types'
 import { toTokenAmount } from '@utils/calculations'
 import { squeethClient } from '@utils/apollo-client'
-import { useAtom } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 
 import { useSqueethPool } from './contracts/useSqueethPool'
 import { calcDollarShortUnrealizedpnl, calcETHCollateralPnl, calcDollarLongUnrealizedpnl } from '../lib/pnl'
@@ -247,7 +247,7 @@ export const useLPPositions = () => {
     })
   }, [squeethPool, address])
 
-  const isWethToken0 = useMemo(() => parseInt(weth, 16) < parseInt(oSqueeth, 16), [weth, oSqueeth])
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
 
   const positionAndFees = useMemo(() => {
     if (!pool || !squeethInitialPrice.toNumber() || !ethPrice.toNumber()) return []

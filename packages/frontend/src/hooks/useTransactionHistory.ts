@@ -1,6 +1,6 @@
 import { useQuery } from '@apollo/client'
 import BigNumber from 'bignumber.js'
-import { useAtom } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 
 import { TransactionType } from '../constants'
 // import { useWallet } from '@context/wallet'
@@ -12,16 +12,14 @@ import { useUserCrabTxHistory } from './useUserCrabTxHistory'
 import { CrabStrategyTxType } from '../types'
 import { usePositions } from '@context/positions'
 import { addressAtom } from 'src/state/wallet/atoms'
-import { addressesAtom } from 'src/state/positions/atoms'
+import { addressesAtom, isWethToken0Atom } from 'src/state/positions/atoms'
 
 const bigZero = new BigNumber(0)
 
 export const useTransactionHistory = () => {
-  // const { squeethPool, weth, oSqueeth, shortHelper, swapRouter } = useAddresses()
-  const [{ squeethPool, weth, oSqueeth, shortHelper, swapRouter }] = useAtom(addressesAtom)
-  // const { address } = useWallet()
-  const [address] = useAtom(addressAtom)
-  const { ethPriceMap } = useWorldContext()
+  const { squeethPool, shortHelper, swapRouter } = useAtomValue(addressesAtom)
+  const address = useAtomValue(addressAtom)
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
   const { swaps } = usePositions()
 
   const { data, loading } = useQuery(TRANSACTIONS_QUERY, {

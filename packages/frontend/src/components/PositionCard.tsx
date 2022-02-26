@@ -15,6 +15,7 @@ import { useWorldContext } from '@context/world'
 import { PositionType, TradeType } from '../types'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { usePrevious } from 'react-use'
+import { useLongRealizedPnl, useShortRealizedPnl } from 'src/state/positions/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -161,11 +162,11 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     existingCollat,
     loading: isPositionLoading,
     isLP,
-    shortRealizedPNL,
-    longRealizedPNL,
     swapsQueryRefetch,
     swaps,
   } = usePositions()
+  const longRealizedPNL = useLongRealizedPnl()
+  const shortRealizedPNL = useShortRealizedPnl()
   const { liquidations } = useVaultLiquidations(Number(vaultId))
   const {
     tradeAmount: tradeAmountInput,

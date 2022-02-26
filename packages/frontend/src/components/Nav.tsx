@@ -7,7 +7,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import React, { useState } from 'react'
-import { useAtom } from 'jotai'
+import { useAtomValue } from 'jotai'
 
 import logo from '../../public/images/SqueethLogo.svg'
 // import { useWallet } from '@context/wallet'
@@ -104,7 +104,8 @@ const Nav: React.FC = () => {
   const classes = useStyles()
   // const { balance } = useWallet()
   const { data: balance } = useWalletBalance()
-  const [{ oSqueeth }] = useAtom(addressesAtom)
+
+  const { oSqueeth } = useAtomValue(addressesAtom)
   // const { oSqueeth } = useAddresses()
   const [navOpen, setNavOpen] = useState(false)
   const [isCopied, setCopied] = useCopyClipboard()

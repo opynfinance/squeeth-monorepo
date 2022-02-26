@@ -18,6 +18,7 @@ import {
   CRAB_STRATEGY,
 } from '@constants/address'
 import { networkIdAtom } from '../wallet/atoms'
+import { BIG_ZERO } from '@constants/index'
 
 export const positionTypeAtom = atom(PositionType.NONE)
 export const firstValidVaultAtom = atom(0)
@@ -45,3 +46,13 @@ export const isWethToken0Atom = atom((get) => {
   const addresses = get(addressesAtom)
   return parseInt(addresses.weth, 16) < parseInt(addresses.oSqueeth, 16)
 })
+
+export const activePositionsAtom = atom([])
+export const closedPositionsAtom = atom([])
+export const lpPositionsLoading = atom(false)
+export const squeethLiquidityAtom = atom(BIG_ZERO)
+export const wethLiquidityAtom = atom(BIG_ZERO)
+export const depositedSqueethAtom = atom(BIG_ZERO)
+export const depositedWeth = atom(BIG_ZERO)
+export const withdrawnSqueeth = atom(BIG_ZERO)
+export const withdrawnWeth = atom(BIG_ZERO)
