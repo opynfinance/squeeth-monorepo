@@ -20,9 +20,9 @@ export const useSwapsData = () => {
     {
       variables: {
         tokenAddress: oSqueeth?.toLowerCase(),
-        origin: address || '',
+        origin: address?.toLowerCase() || '',
         poolAddress: squeethPool?.toLowerCase(),
-        recipients: [shortHelper, address || '', swapRouter],
+        recipients: [shortHelper?.toLowerCase(), address?.toLowerCase() || '', swapRouter?.toLowerCase()],
         recipient_not: crabStrategy?.toLowerCase(),
         orderDirection: 'asc',
       },
