@@ -44,7 +44,7 @@ const positionsContext = React.createContext<positionsContextType | undefined>(u
 
 const PositionsProvider: React.FC = ({ children }) => {
   const { oSqueethBal } = useWorldContext()
-  const { vaults: shortVaults } = useVaultManager()
+  const { vaults: shortVaults, vaultId } = useVaultManager()
   const {
     squeethAmount,
     wethAmount,
@@ -73,7 +73,6 @@ const PositionsProvider: React.FC = ({ children }) => {
   const [positionType, setPositionType] = useState(PositionType.NONE)
   const [firstValidVault, setFirstValidVault] = useState(0)
 
-  const vaultId = shortVaults[firstValidVault]?.id || 0
   const { existingCollat, existingCollatPercent, existingLiqPrice: liquidationPrice } = useVaultData(vaultId)
 
   const { longRealizedPNL } = useMemo(() => {
@@ -98,7 +97,6 @@ const PositionsProvider: React.FC = ({ children }) => {
   }, [boughtSqueeth.toString(), totalUSDFromBuy.toString(), soldSqueeth.toString(), totalUSDFromSell.toString()])
 
   const mintedDebt = useMemo(() => {
-    // squeethAmount = user long balance if oSqueethBal > 0, but it could also be minted balance
     return shortVaults[firstValidVault]?.shortAmount.gt(0) &&
       oSqueethBal?.isGreaterThan(0) &&
       positionType === PositionType.LONG

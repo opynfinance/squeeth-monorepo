@@ -104,5 +104,5 @@ export const useVaultManager = () => {
   //   )
   // }
 
-  return { firstValidVault, vaults, loading }
+  return { vaultId: vaults[firstValidVault]?.id || 0, firstValidVault, vaults, loading }
 }

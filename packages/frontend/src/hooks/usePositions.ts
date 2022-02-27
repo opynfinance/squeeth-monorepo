@@ -22,6 +22,7 @@ import { calcDollarShortUnrealizedpnl, calcETHCollateralPnl, calcDollarLongUnrea
 import { BIG_ZERO } from '../constants/'
 import { useAtom } from 'jotai'
 import { PositionType } from '../types'
+import { useVaultHistory } from './useVaultHistory'
 
 export const usePnL = () => {
   const [ethCollateralPnl, setEthCollateralPnl] = useState(BIG_ZERO)
@@ -35,11 +36,11 @@ export const usePnL = () => {
     isWethToken0,
     totalUSDFromBuy,
     totalUSDFromSell,
-    firstValidVault,
     existingCollat,
     positionType,
   } = usePositions()
   const { index } = useController()
+  const { vaultHistory } = useVaultHistory()
 
   // const { ethPrice } = useWorldContext()
   const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
@@ -54,15 +55,6 @@ export const usePnL = () => {
   const [longGain, setLongGain] = useState(new BigNumber(0))
   const [shortGain, setShortGain] = useState(new BigNumber(0))
   const [loading, setLoading] = useState(true)
-
-  const { data } = useQuery<VaultHistory>(VAULT_HISTORY_QUERY, {
-    client: squeethClient[networkId],
-    fetchPolicy: 'cache-and-network',
-    variables: {
-      vaultId: shortVaults[firstValidVault]?.id,
-    },
-  })
-  const vaultHistory = data?.vaultHistories
 
   useEffect(() => {
     ;(async () => {
