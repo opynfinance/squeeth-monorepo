@@ -35,9 +35,9 @@ export const useSwapsData = () => {
       document: networkId === Networks.MAINNET ? SWAPS_SUBSCRIPTION : SWAPS_ROPSTEN_SUBSCRIPTION,
       variables: {
         tokenAddress: oSqueeth?.toLowerCase(),
-        origin: address || '',
+        origin: address?.toLowerCase() || '',
         poolAddress: squeethPool?.toLowerCase(),
-        recipients: [shortHelper, address || '', swapRouter],
+        recipients: [shortHelper?.toLowerCase(), address?.toLowerCase() || '', swapRouter?.toLowerCase()],
         recipient_not: crabStrategy?.toLowerCase(),
         orderDirection: 'asc',
       },
@@ -121,7 +121,6 @@ export const useSwapsData = () => {
         },
       [isWethToken0, swaps?.length],
     )
-
   return {
     squeethAmount,
     wethAmount,
