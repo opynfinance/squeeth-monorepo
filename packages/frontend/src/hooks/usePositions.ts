@@ -225,7 +225,7 @@ export const useLPPositions = () => {
         owner: address?.toLowerCase() || '',
       },
       updateQuery(prev, { subscriptionData }) {
-        if (!subscriptionData.data) return prev
+        if (!subscriptionData.data || subscriptionData.data.positions.length === data?.positions.length) return prev
         const newPosition = subscriptionData.data.positions
         return {
           positions: newPosition,

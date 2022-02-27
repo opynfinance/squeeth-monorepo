@@ -46,7 +46,7 @@ export const useVaultManager = () => {
         ownerId: address?.toLowerCase() ?? '',
       },
       updateQuery(prev, { subscriptionData }) {
-        if (!subscriptionData.data) return prev
+        if (!subscriptionData.data || subscriptionData.data.vaults.length === data?.vaults.length) return prev
         const newVaults = subscriptionData.data.vaults
         return { vaults: newVaults }
       },

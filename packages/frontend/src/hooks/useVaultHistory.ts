@@ -31,7 +31,8 @@ export const useVaultHistory = () => {
         vaultId: vaultId,
       },
       updateQuery(prev, { subscriptionData }) {
-        if (!subscriptionData.data) return prev
+        if (!subscriptionData.data || subscriptionData.data.vaultHistories.length === data?.vaultHistories.length)
+          return prev
         const newVaultsHistories = subscriptionData.data.vaultHistories
         return { vaultHistories: newVaultsHistories }
       },
@@ -82,7 +83,7 @@ export const useVaultHistory = () => {
       },
     [vaultHistory?.length],
   )
-  // console.log(vaultHistory, toTokenAmount(mintedSqueeth, 18).toString(), toTokenAmount(openShortSqueeth, 18).toString())
+  console.log(vaultHistory, toTokenAmount(mintedSqueeth, 18).toString(), toTokenAmount(openShortSqueeth, 18).toString())
   return {
     mintedSqueeth: toTokenAmount(mintedSqueeth, 18),
     burnedSqueeth: toTokenAmount(burnedSqueeth, 18),

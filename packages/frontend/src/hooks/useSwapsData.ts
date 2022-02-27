@@ -42,7 +42,7 @@ export const useSwapsData = () => {
         orderDirection: 'asc',
       },
       updateQuery(prev, { subscriptionData }) {
-        if (!subscriptionData.data) return prev
+        if (!subscriptionData.data || subscriptionData.data.swaps.length === data?.swaps.length) return prev
         const newSwaps = subscriptionData.data.swaps
         return {
           swaps: newSwaps,
