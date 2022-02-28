@@ -191,7 +191,7 @@ export function Positions() {
   }, [firstValidVault, shortVaults?.length])
 
   const { liquidations } = useVaultLiquidations(Number(vaultId))
-  const { existingCollatPercent, existingLiqPrice } = useVaultData(Number(vaultId))
+  const { existingCollatPercent, existingLiqPrice, isVaultLoading: isVaultDataLoading } = useVaultData(Number(vaultId))
 
   const fullyLiquidated = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
