@@ -185,7 +185,7 @@ export const useLPPositions = () => {
 
   const [activePositions, setActivePositions] = useState<NFTManagers[]>([])
   const [closedPositions, setClosedPositions] = useState<NFTManagers[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [squeethLiquidity, setSqueethLiquidity] = useState(new BigNumber(0))
   const [wethLiquidity, setWethLiquidity] = useState(new BigNumber(0))
   const [depositedSqueeth, setDepositedSqueeth] = useState(new BigNumber(0))
@@ -209,15 +209,8 @@ export const useLPPositions = () => {
   const manager = new web3.eth.Contract(NFTpositionManagerABI as any, nftManager?.toLowerCase() || '')
   const MAX_UNIT = '0xffffffffffffffffffffffffffffffff'
 
+  // console.log(data?.positions)
   useEffect(() => {
-    setLoading(true)
-  }, [address])
-
-  useEffect(() => {
-    subscribeToNewPositions()
-  }, [])
-
-  const subscribeToNewPositions = useCallback(() => {
     subscribeToMore({
       document: POSITIONS_SUBSCRIPTION,
       variables: {
@@ -232,7 +225,7 @@ export const useLPPositions = () => {
         }
       },
     })
-  }, [squeethPool, address])
+  }, [address, subscribeToMore])
 
   const isWethToken0 = useMemo(() => parseInt(weth, 16) < parseInt(oSqueeth, 16), [weth, oSqueeth])
 
@@ -287,53 +280,60 @@ export const useLPPositions = () => {
   }, [pool, ethPrice.toString(), squeethInitialPrice.toString(), ethPrice.toString(), data?.positions?.length])
 
   useEffect(() => {
-    if (positionAndFees && !gphLoading) {
+    if (positionAndFees.length > 0 && !gphLoading) {
       setLoading(true)
-      Promise.all(positionAndFees).then((values) => {
-        setActivePositions(values.filter((p) => p.amount0.gt(0) || p.amount1.gt(0)))
-        setClosedPositions(values.filter((p) => p.amount0.isZero() && p.amount1.isZero()))
-        // Calculate cumulative LP position here
-        let depSqth = new BigNumber(0)
-        let depWeth = new BigNumber(0)
-        let withSqth = new BigNumber(0)
-        let withWeth = new BigNumber(0)
-        let sqthLiq = new BigNumber(0)
-        let wethLiq = new BigNumber(0)
-        for (const position of values) {
-          sqthLiq = sqthLiq.plus(isWethToken0 ? position.amount1 : position.amount0)
-          wethLiq = wethLiq.plus(isWethToken0 ? position.amount0 : position.amount1)
-          depSqth = depSqth.plus(isWethToken0 ? position.depositedToken1 : position.depositedToken0)
-          depWeth = depWeth.plus(isWethToken0 ? position.depositedToken0 : position.depositedToken1)
-          withSqth = withSqth.plus(
-            isWethToken0
-              ? new BigNumber(position.withdrawnToken1).plus(position.collectedFeesToken1)
-              : new BigNumber(position.withdrawnToken0).plus(position.collectedFeesToken0),
-          )
-          withWeth = withWeth.plus(
-            !isWethToken0
-              ? new BigNumber(position.withdrawnToken1).plus(position.collectedFeesToken1)
-              : new BigNumber(position.withdrawnToken0).plus(position.collectedFeesToken0),
-          )
-        }
+      Promise.all(positionAndFees)
+        .then((values) => {
+          setActivePositions(values.filter((p) => p.amount0.gt(0) || p.amount1.gt(0)))
+          setClosedPositions(values.filter((p) => p.amount0.isZero() && p.amount1.isZero()))
 
-        setDepositedSqueeth(depSqth)
-        setDepositedWeth(depWeth)
-        setWithdrawnSqueeth(withSqth)
-        setWithdrawnWeth(withWeth)
-        setSqueethLiquidity(sqthLiq)
-        setWethLiquidity(wethLiq)
-        if (
-          !(
-            depSqth.isEqualTo(0) &&
-            depWeth.isEqualTo(0) &&
-            withSqth.isEqualTo(0) &&
-            sqthLiq.isEqualTo(0) &&
-            wethLiq.isEqualTo(0)
-          ) ||
-          activePositions.length === 0
-        )
+          // Calculate cumulative LP position here
+          let depSqth = new BigNumber(0)
+          let depWeth = new BigNumber(0)
+          let withSqth = new BigNumber(0)
+          let withWeth = new BigNumber(0)
+          let sqthLiq = new BigNumber(0)
+          let wethLiq = new BigNumber(0)
+          for (const position of values) {
+            sqthLiq = sqthLiq.plus(isWethToken0 ? position.amount1 : position.amount0)
+            wethLiq = wethLiq.plus(isWethToken0 ? position.amount0 : position.amount1)
+            depSqth = depSqth.plus(isWethToken0 ? position.depositedToken1 : position.depositedToken0)
+            depWeth = depWeth.plus(isWethToken0 ? position.depositedToken0 : position.depositedToken1)
+            withSqth = withSqth.plus(
+              isWethToken0
+                ? new BigNumber(position.withdrawnToken1).plus(position.collectedFeesToken1)
+                : new BigNumber(position.withdrawnToken0).plus(position.collectedFeesToken0),
+            )
+            withWeth = withWeth.plus(
+              !isWethToken0
+                ? new BigNumber(position.withdrawnToken1).plus(position.collectedFeesToken1)
+                : new BigNumber(position.withdrawnToken0).plus(position.collectedFeesToken0),
+            )
+          }
+
+          setDepositedSqueeth(depSqth)
+          setDepositedWeth(depWeth)
+          setWithdrawnSqueeth(withSqth)
+          setWithdrawnWeth(withWeth)
+          setSqueethLiquidity(sqthLiq)
+          setWethLiquidity(wethLiq)
+          if (
+            !(
+              depSqth.isEqualTo(0) &&
+              depWeth.isEqualTo(0) &&
+              withSqth.isEqualTo(0) &&
+              withWeth.isEqualTo(0) &&
+              sqthLiq.isEqualTo(0) &&
+              wethLiq.isEqualTo(0)
+            ) ||
+            activePositions.length === 0
+          )
+            setLoading(false)
+        })
+        .catch((e) => {
+          console.log(e)
           setLoading(false)
-      })
+        })
     }
   }, [gphLoading, isWethToken0, positionAndFees.length])
 
