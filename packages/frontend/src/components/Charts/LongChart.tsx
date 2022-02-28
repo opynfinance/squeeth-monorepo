@@ -12,8 +12,9 @@ import {
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
+import { useAtom } from 'jotai'
 import React, { useEffect, useMemo, useState } from 'react'
-import { useWorldContext } from '@context/world'
+
 import ComparisonChart from '../../../public/images/ComparisonChart.svg'
 import { graphOptions } from '../../constants/diagram'
 import { Links, Tooltips } from '../../constants/enums'
@@ -21,6 +22,8 @@ import IV from '../IV'
 import { SqueethTab, SqueethTabs } from '../Tabs'
 import LongSqueethPayoff from './LongSqueethPayoff'
 import FundingChart from './FundingChart'
+import { useETHPrice } from '@hooks/useETHPrice'
+import { daysAtom, useLongEthPNL, useLongSeries, usePositionSizePercentageseries } from 'src/state/ethPriceCharts/atoms'
 enum ChartType {
   PNL = 'LONG PNL',
   // Price = 'Price Chart',
@@ -97,7 +100,11 @@ export function LongChart() {
   const [mode, setMode] = useState<ChartType>(ChartType.PNL)
   const [tradeType, setTradeType] = useState(0)
   const classes = useStyles()
-  const { ethPrice, longEthPNL, longSeries, days, setDays, positionSizeSeries } = useWorldContext()
+  const ethPrice = useETHPrice()
+  const longEthPNL = useLongEthPNL()
+  const longSeries = useLongSeries()
+  const positionSizeSeries = usePositionSizePercentageseries()
+  const [days, setDays] = useAtom(daysAtom)
 
   useEffect(() => {
     if (tradeType === 0) setMode(ChartType.PNL)

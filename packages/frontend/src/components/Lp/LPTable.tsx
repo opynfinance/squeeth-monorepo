@@ -12,13 +12,14 @@ import { useAtomValue } from 'jotai'
 import { SecondaryTab, SecondaryTabs } from '../../components/Tabs'
 import { Tooltips, UniswapIFrameOpen } from '@constants/enums'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
-import { useWorldContext } from '@context/world'
 import { inRange } from '@utils/calculations'
 import { UniswapIframe } from '../Modal/UniswapIframe'
 // import { useWallet } from '@context/wallet'
 import { usePositions } from '@context/positions'
 import { networkIdAtom } from 'src/state/wallet/atoms'
+import { useETHPrice } from '@hooks/useETHPrice'
 import { isWethToken0Atom } from 'src/state/positions/atoms'
+import { useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -111,8 +112,8 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
   const { activePositions, closedPositions, loading: lpLoading } = usePositions()
 
   const [activeTab, setActiveTab] = useState(0)
-  const { ethPrice } = useWorldContext()
-  const { getWSqueethPositionValue } = useSqueethPool()
+  const ethPrice = useETHPrice()
+  const getWSqueethPositionValue = useGetWSqueethPositionValue()
   // const { networkId } = useWallet()
   const networkId = useAtomValue(networkIdAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)

@@ -98,11 +98,11 @@ const TradeApp = ({ Component, pageProps }: any) => {
         <ThemeProvider theme={getTheme(Mode.DARK)}>
           {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
           <CssBaseline />
-          <WorldProvider>
-            <PositionsProvider>
-              <Component {...pageProps} />
-            </PositionsProvider>
-          </WorldProvider>
+          {/* <WorldProvider> */}
+          <PositionsProvider>
+            <Component {...pageProps} />
+          </PositionsProvider>
+          {/* </WorldProvider> */}
         </ThemeProvider>
       </ApolloProvider>
     </React.Fragment>

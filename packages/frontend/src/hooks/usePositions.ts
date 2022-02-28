@@ -23,6 +23,7 @@ import { addressAtom, networkIdAtom, web3Atom } from 'src/state/wallet/atoms'
 import { addressesAtom, isWethToken0Atom } from '../state/positions/atoms'
 import { useController } from '../hooks/contracts/useController'
 import { PositionType } from '../types'
+import { useETHPrice } from './useETHPrice'
 
 export const usePnL = () => {
   const [ethCollateralPnl, setEthCollateralPnl] = useState(BIG_ZERO)
@@ -33,7 +34,6 @@ export const usePnL = () => {
     shortVaults,
     loading: positionLoading,
     swaps,
-    isWethToken0,
     totalUSDFromBuy,
     totalUSDFromSell,
     firstValidVault,
@@ -41,6 +41,7 @@ export const usePnL = () => {
     positionType,
   } = usePositions()
   const { index } = useController()
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
 
   // const { ethPrice } = useWorldContext()
   const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
@@ -194,8 +195,7 @@ export const useLPPositions = () => {
   const { squeethPool, nftManager } = useAtomValue(addressesAtom)
   // const { squeethPool, nftManager, weth, oSqueeth } = useAddresses()
   const { pool, getWSqueethPositionValue, squeethInitialPrice } = useSqueethPool()
-  const { ethPrice } = useWorldContext()
-
+  const ethPrice = useETHPrice()
   const [activePositions, setActivePositions] = useState<NFTManagers[]>([])
   const [closedPositions, setClosedPositions] = useState<NFTManagers[]>([])
   const [loading, setLoading] = useState(true)

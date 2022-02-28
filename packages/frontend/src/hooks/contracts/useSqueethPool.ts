@@ -14,10 +14,10 @@ import { fromTokenAmount, parseSlippageInput, toTokenAmount } from '@utils/calcu
 import { useAddresses } from '../useAddress'
 import useUniswapTicks from '../useUniswapTicks'
 import { useWorldContext } from '@context/world'
-import { useAtom } from 'jotai'
 import { addressAtom, networkIdAtom, web3Atom } from 'src/state/wallet/atoms'
 import { useHandleTransaction } from 'src/state/wallet/hooks'
 import { addressesAtom, isWethToken0Atom } from 'src/state/positions/atoms'
+import { useETHPrice } from '@hooks/useETHPrice'
 
 // const NETWORK_QUOTE_GAS_OVERRIDE: { [chainId: number]: number } = {
 //   [Networks.ARBITRUM_RINKEBY]: 6_000_000,
@@ -38,7 +38,7 @@ export const useSqueethPool = () => {
   const [wethPrice, setWethPrice] = useState<BigNumber>(new BigNumber(0))
   const [ready, setReady] = useState(false)
   // const [tvl, setTVL] = useState(0)
-  const { ethPrice } = useWorldContext()
+  const ethPrice = useETHPrice()
 
   // const { address, web3, networkId, handleTransaction } = useWallet()
   const web3 = useAtomValue(web3Atom)
@@ -66,8 +66,6 @@ export const useSqueethPool = () => {
       isMounted = false
     }
   }, [squeethContract, ticks?.length])
-
-  const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
 
   useEffect(() => {
     let isMounted = true
@@ -103,7 +101,6 @@ export const useSqueethPool = () => {
 
   const updateData = async (isMounted = false) => {
     const { token0, token1, fee } = await getImmutables()
-    const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
 
     const state = await getPoolState()
     const TokenA = new Token(
@@ -466,7 +463,6 @@ export const useSqueethPool = () => {
     squeethPrice,
     wethPrice,
     ready,
-    isWethToken0,
     buy,
     sell,
     buyForWETH,

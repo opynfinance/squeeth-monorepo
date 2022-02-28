@@ -12,15 +12,14 @@ import { usePositions } from '@context/positions'
 import { addressAtom } from 'src/state/wallet/atoms'
 import { addressesAtom, isWethToken0Atom } from 'src/state/positions/atoms'
 import { useEthPriceMap } from 'src/state/ethPriceCharts/atoms'
-import { useWorldContext } from '@context/world'
 
 const bigZero = new BigNumber(0)
 
 export const useTransactionHistory = () => {
-  const { squeethPool, weth, oSqueeth, shortHelper, swapRouter } = useAtomValue(addressesAtom)
+  const { squeethPool, shortHelper, swapRouter } = useAtomValue(addressesAtom)
   const address = useAtomValue(addressAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)
-  const { ethPriceMap } = useWorldContext()
+  const ethPriceMap = useEthPriceMap()
   const { swaps } = usePositions()
 
   const { data, loading } = useQuery(TRANSACTIONS_QUERY, {

@@ -4,12 +4,11 @@ import BigNumber from 'bignumber.js'
 import { motion } from 'framer-motion'
 import React, { useEffect, useMemo, useState } from 'react'
 
-import { BIG_ZERO, MIN_COLLATERAL_AMOUNT, Tooltips } from '../../constants'
+import { BIG_ZERO, MIN_COLLATERAL_AMOUNT, OSQUEETH_DECIMALS, Tooltips } from '../../constants'
 import { LPActions, OBTAIN_METHOD, useLPState } from '@context/lp'
 import { useWallet } from '@context/wallet'
 import { useController } from '@hooks/contracts/useController'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
-import { useWorldContext } from '@context/world'
 import { usePositions } from '@context/positions'
 import { toTokenAmount } from '@utils/calculations'
 import { PrimaryButton } from '../Button'
@@ -21,7 +20,9 @@ import TradeInfoItem from '../Trade/TradeInfoItem'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import { useWalletBalance } from 'src/state/wallet/hooks'
 import { connectedWalletAtom } from 'src/state/wallet/atoms'
-import { useAtom } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
+import { addressesAtom } from 'src/state/positions/atoms'
+import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -70,8 +71,8 @@ const useStyles = makeStyles((theme) =>
 
 const Mint: React.FC = () => {
   const classes = useStyles()
-  const { oSqueethBal } = useWorldContext()
-  // const { balance, connected } = useWallet()
+  const { oSqueeth } = useAtomValue(addressesAtom)
+  const oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
   const { data: balance } = useWalletBalance()
   const [connected] = useAtom(connectedWalletAtom)
   const { existingCollatPercent, existingCollat, firstValidVault } = usePositions()

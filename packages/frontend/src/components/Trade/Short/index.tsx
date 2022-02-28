@@ -39,6 +39,9 @@ import { connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
 import { addressesAtom } from 'src/state/positions/atoms'
 import { useAtom } from 'jotai'
+import { useETHPrice } from '@hooks/useETHPrice'
+import { collatRatioAtom } from 'src/state/ethPriceCharts/atoms'
+import { useUpdateAtom } from 'jotai/utils'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -290,7 +293,8 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
     }
   }, [amount.toString(), collatPercent, shortVaults?.length])
 
-  const { setCollatRatio, ethPrice, oSqueethBal } = useWorldContext()
+  const ethPrice = useETHPrice()
+  const setCollatRatio = useUpdateAtom(collatRatioAtom)
 
   let openError: string | undefined
   let closeError: string | undefined
@@ -600,7 +604,8 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     shortDebt,
     loading: isPositionFinishedCalc,
   } = usePositions()
-  const { setCollatRatio, ethPrice } = useWorldContext()
+  const setCollatRatio = useUpdateAtom(collatRatioAtom)
+  const ethPrice = useETHPrice()
 
   useEffect(() => {
     if (!shortVaults.length) return

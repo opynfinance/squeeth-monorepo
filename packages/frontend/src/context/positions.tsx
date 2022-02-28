@@ -2,7 +2,7 @@ import React, { useContext, useState, useEffect, useMemo } from 'react'
 import BigNumber from 'bignumber.js'
 import { useAtom, useAtomValue } from 'jotai'
 
-import { BIG_ZERO } from '@constants/index'
+import { BIG_ZERO, OSQUEETH_DECIMALS } from '@constants/index'
 import { useWorldContext } from '@context/world'
 // import { useSwapsData } from '../hooks/useSwapsData'
 import { useVaultManager } from '../hooks/contracts/useVaultManager'
@@ -12,6 +12,7 @@ import { swaps_swaps } from '../queries/uniswap/__generated__/swaps'
 import { NFTManagers, PositionType } from '../types'
 import { useComputeSwaps, useSwaps } from 'src/state/positions/hooks'
 import { isWethToken0Atom, positionTypeAtom, firstValidVaultAtom, addressesAtom } from 'src/state/positions/atoms'
+import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 
 type positionsContextType = {
   activePositions: NFTManagers[]
@@ -46,7 +47,8 @@ type positionsContextType = {
 const positionsContext = React.createContext<positionsContextType | undefined>(undefined)
 
 const PositionsProvider: React.FC = ({ children }) => {
-  const { oSqueethBal } = useWorldContext()
+  const { oSqueeth } = useAtomValue(addressesAtom)
+  const oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
   const { vaults: shortVaults } = useVaultManager()
 
   const { data, refetch: swapsQueryRefetch } = useSwaps()

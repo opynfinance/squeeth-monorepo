@@ -3,11 +3,18 @@ import Alert from '@material-ui/lab/Alert'
 import dynamic from 'next/dynamic'
 import React, { useMemo, useState } from 'react'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
+import { useAtom } from 'jotai'
 
 import { graphOptions, Links, Tooltips, Vaults } from '../../constants'
-import { useWorldContext } from '../../context/world'
-import { SqueethTab, SqueethTabs } from '../Tabs'
-import ShortSqueethPayoff from './ShortSqueethPayoff'
+import {
+  daysAtom,
+  useGetStableYieldPNL,
+  useGetVaultPNLWithRebalance,
+  useLongEthPNL,
+  useShortEthPNL,
+  useShortSeries,
+  useStartingETHPrice,
+} from 'src/state/ethPriceCharts/atoms'
 
 const Chart = dynamic(() => import('kaktana-react-lightweight-charts'), { ssr: false })
 
@@ -78,16 +85,14 @@ const useStyles = makeStyles((theme) =>
 )
 
 export function CrabStrategyChart({ vault, longAmount }: { vault?: Vaults; longAmount: number }) {
-  const {
-    startingETHPrice,
-    getVaultPNLWithRebalance,
-    longEthPNL,
-    shortEthPNL,
-    getStableYieldPNL,
-    shortSeries,
-    days,
-    setDays,
-  } = useWorldContext()
+  const startingETHPrice = useStartingETHPrice()
+  const getVaultPNLWithRebalance = useGetVaultPNLWithRebalance()
+  const longEthPNL = useLongEthPNL()
+  const shortEthPNL = useShortEthPNL()
+  const getStableYieldPNL = useGetStableYieldPNL()
+  const shortSeries = useShortSeries()
+
+  const [days, setDays] = useAtom(daysAtom)
 
   const seriesRebalance = getVaultPNLWithRebalance(longAmount)
   const classes = useStyles()

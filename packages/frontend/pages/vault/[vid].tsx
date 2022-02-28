@@ -38,7 +38,6 @@ import { useRestrictUser } from '@context/restrict-user'
 import { useController } from '@hooks/contracts/useController'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { useVaultData } from '@hooks/useVaultData'
-import { useWorldContext } from '@context/world'
 import { CollateralStatus, Vault } from '../../src/types'
 import { squeethClient } from '@utils/apollo-client'
 import { getCollatPercentStatus, toTokenAmount } from '@utils/calculations'
@@ -50,7 +49,8 @@ import { positions, positionsVariables } from '@queries/uniswap/__generated__/po
 import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useWalletBalance } from 'src/state/wallet/hooks'
 import { addressesAtom } from 'src/state/positions/atoms'
-import { useAtom } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
+import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -298,8 +298,8 @@ const Component: React.FC = () => {
   const { positionType, squeethAmount, mintedDebt, shortDebt, lpedSqueeth } = usePositions()
   const { nftManager, controller } = useAddresses()
   const { getApproved, approve } = useERC721(nftManager)
-
-  const { oSqueethBal } = useWorldContext()
+  const { oSqueeth } = useAtomValue(addressesAtom)
+  const oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
   const [collateral, setCollateral] = useState('0')
   const collateralBN = new BigNumber(collateral)

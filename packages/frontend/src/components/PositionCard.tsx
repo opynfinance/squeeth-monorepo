@@ -11,11 +11,11 @@ import { usePnL } from '@hooks/usePositions'
 import { usePositions } from '@context/positions'
 import { Tooltips } from '@constants/enums'
 import { useTrade } from '@context/trade'
-import { useWorldContext } from '@context/world'
 import { PositionType, TradeType } from '../types'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { usePrevious } from 'react-use'
 import { useLongRealizedPnl, useShortRealizedPnl } from 'src/state/positions/hooks'
+import { useETHPrice } from '@hooks/useETHPrice'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -177,7 +177,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     setTradeSuccess,
     tradeType,
   } = useTrade()
-  const { ethPrice } = useWorldContext()
+  const ethPrice = useETHPrice()
   const prevSwapsData = usePrevious(swaps)
   const tradeAmount = new BigNumber(tradeAmountInput)
   const [fetchingNew, setFetchingNew] = useState(false)

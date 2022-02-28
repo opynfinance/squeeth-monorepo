@@ -23,6 +23,7 @@ import { connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
 import { addressesAtom } from 'src/state/positions/atoms'
 import { useAtom } from 'jotai'
+import { useETHPrice } from '@hooks/useETHPrice'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -238,7 +239,7 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
     setTradeSuccess,
     slippageAmount,
   } = useTrade()
-  const { ethPrice } = useWorldContext()
+  const ethPrice = useETHPrice()
   const amount = new BigNumber(amountInputValue)
   const altTradeAmount = new BigNumber(altAmountInputValue)
   const [connected] = useAtom(connectedWalletAtom)
@@ -510,7 +511,7 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle, setTradeComp
     confirmedAmount,
     setConfirmedAmount,
   } = useTrade()
-  const { ethPrice } = useWorldContext()
+  const ethPrice = useETHPrice()
   const amount = new BigNumber(amountInputValue)
   const altTradeAmount = new BigNumber(altAmountInputValue)
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter)

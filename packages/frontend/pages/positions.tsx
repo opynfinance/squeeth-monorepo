@@ -5,15 +5,14 @@ import Link from 'next/link'
 import { useMemo } from 'react'
 import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
-import { useAtom } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 
 import { LPTable } from '@components/Lp/LPTable'
 import Nav from '@components/Nav'
 import History from '@components/Trade/History'
 import { PositionType } from '../src/types/'
-import { Tooltips } from '../src/constants'
+import { OSQUEETH_DECIMALS, Tooltips } from '../src/constants'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
-import { useWorldContext } from '@context/world'
 import { usePnL } from '@hooks/usePositions'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { toTokenAmount } from '@utils/calculations'
@@ -26,6 +25,9 @@ import { LinkButton } from '@components/Button'
 import { useVaultData } from '@hooks/useVaultData'
 import { addressAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
+import { useLongRealizedPnl, useShortRealizedPnl } from 'src/state/positions/hooks'
+import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
+import { addressesAtom } from 'src/state/positions/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -159,9 +161,8 @@ export function Positions() {
   } = usePnL()
 
   const { pool } = useSqueethPool()
-
-  const { oSqueethBal } = useWorldContext()
-  // const { address } = useWallet()
+  const { oSqueeth } = useAtomValue(addressesAtom)
+  const oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
   const [address] = useAtom(addressAtom)
 
   const {
@@ -176,10 +177,13 @@ export function Positions() {
     mintedDebt,
     shortDebt,
     isLong,
-    shortRealizedPNL,
-    longRealizedPNL,
+    // shortRealizedPNL,
+    // longRealizedPNL,
     activePositions,
   } = usePositions()
+
+  const longRealizedPNL = useLongRealizedPnl()
+  const shortRealizedPNL = useShortRealizedPnl()
 
   const { index } = useController()
   const {

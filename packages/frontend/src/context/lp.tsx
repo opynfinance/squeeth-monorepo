@@ -2,6 +2,10 @@ import React, { useContext, useEffect, useReducer } from 'react'
 import { Reducer } from 'react-transition-group/node_modules/@types/react'
 
 import { useWorldContext } from '@context/world'
+import { useAtomValue } from 'jotai'
+import { addressesAtom } from 'src/state/positions/atoms'
+import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
+import { OSQUEETH_DECIMALS } from '@constants/index'
 
 export enum Steps {
   SELECT_METHOD = 1,
@@ -82,7 +86,9 @@ const useLPState = () => useContext<LPContextType>(LPContext)
 
 const LPProvider: React.FC = ({ children }) => {
   const [lpState, dispatch] = useReducer<Reducer<LPType, ActionType>>(tradeReducer, initialState)
-  const { oSqueethBal } = useWorldContext()
+
+  const { oSqueeth } = useAtomValue(addressesAtom)
+  const oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
   useEffect(() => {
     if (oSqueethBal.isZero() || lpState.step === Steps.PROVIDE_LIQUIDITY) return
