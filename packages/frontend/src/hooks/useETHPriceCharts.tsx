@@ -179,6 +179,15 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
     )
   }, [squeethPNLSeries])
 
+  const squeethIsLive = useMemo(() => {
+    return (
+      squeethPNLSeries &&
+      squeethPNLSeries.map(({ isLive }) => {
+        return isLive
+      })
+    )
+  }, [squeethPNLSeries])
+
   // new short series
   const shortSeries = useMemo(() => {
     return (
@@ -309,6 +318,7 @@ export function useETHPriceCharts(initDays = 365, initVolMultiplier = 1.2, initC
     ethWithinOneDayPriceMap,
     setCollatRatio,
     collatRatio,
+    squeethIsLive,
   }
 }
 

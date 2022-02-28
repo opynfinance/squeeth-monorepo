@@ -112,9 +112,9 @@ export function useSqueethPNLCompounding(
   days = 365,
 ) {
   const timestamps = ethPrices.map(({ time }) => time)
-  const [chartData, setChartData] = useState<{ shortPNL: number; longPNL: number; time: number }[] | undefined>(
-    undefined,
-  )
+  const [chartData, setChartData] = useState<
+    { shortPNL: number; longPNL: number; time: number; isLive: boolean }[] | undefined
+  >(undefined)
   const normHistoryItems: (NormHistory | undefined)[] = useNormHistoryFromTime(timestamps)
 
   useEffect(() => {
@@ -124,7 +124,7 @@ export function useSqueethPNLCompounding(
 
       if (normHistoryItems.length === ethPrices.length) {
         const volsMap = await getVolMap()
-        const annualVols = await Promise.all(
+        const annualVolData = await Promise.all(
           normHistoryItems.map(async (item, index) => {
             const { value: price, time } = ethPrices[index > 0 ? index : 0]
             let annualVol
@@ -138,10 +138,11 @@ export function useSqueethPNLCompounding(
               annualVol = await getVolForTimestampOrDefault(volsMap, time, price)
             }
 
-            return annualVol
+            return { annualVol, isLive: Boolean(item) }
           }),
         )
-        const charts = annualVols.map((annualVol, index) => {
+        const charts = annualVolData.map((item, index) => {
+          const { annualVol, isLive } = item
           const { value: price, time } = ethPrices[index > 0 ? index : 0]
           const fundingPeriodMultiplier = days > 90 ? 365 : days > 1 ? 365 * 24 : 356 * 24 * 12
 
@@ -159,7 +160,7 @@ export function useSqueethPNLCompounding(
           const longPNL = Math.round((Math.exp(cumulativeSqueethLongReturn) - 1) * 10000) / 100
           const shortPNL = Math.round(Math.log(cumulativeSqueethCrabReturn) * 10000) / 100
 
-          return { shortPNL, longPNL, time }
+          return { shortPNL, longPNL, time, isLive }
         })
         setChartData(charts)
       }

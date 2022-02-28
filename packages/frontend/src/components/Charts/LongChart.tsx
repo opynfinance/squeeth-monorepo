@@ -97,7 +97,7 @@ export function LongChart() {
   const [mode, setMode] = useState<ChartType>(ChartType.PNL)
   const [tradeType, setTradeType] = useState(0)
   const classes = useStyles()
-  const { ethPrice, longEthPNL, longSeries, days, setDays, positionSizeSeries } = useWorldContext()
+  const { ethPrice, longEthPNL, longSeries, days, setDays, positionSizeSeries, squeethIsLive } = useWorldContext()
 
   useEffect(() => {
     if (tradeType === 0) setMode(ChartType.PNL)
@@ -112,19 +112,28 @@ export function LongChart() {
 
   // plot line data
   const lineSeries = useMemo(() => {
-    if (!longEthPNL || !longSeries || longSeries.length === 0 || !positionSizeSeries) return
+    if (!longEthPNL || !longSeries || longSeries.length === 0 || !positionSizeSeries || !squeethIsLive) return
+
+    const liveIndex = Math.max(
+      0,
+      squeethIsLive.findIndex((val) => val),
+    ) // return 0 when there is no live data
 
     if (mode === ChartType.PNL)
       return [
         { data: longEthPNL, legend: 'Long ETH PNL (%)' },
         {
-          data: longSeries,
-          legend: 'Long Squeeth PNL (%) (incl. funding)',
+          data: longSeries.slice(0, liveIndex),
+          legend: `Long Squeeth PNL (%) Deribit (incl. funding)`,
+        },
+        {
+          data: longSeries.slice(liveIndex),
+          legend: `Long Squeeth PNL (%) LIVE (incl. funding)`,
         },
       ]
     if (mode === ChartType.PositionSize) return [{ data: positionSizeSeries, legend: 'Position Size' }]
     return []
-  }, [longEthPNL, longSeries, mode, positionSizeSeries])
+  }, [longEthPNL, longSeries, mode, positionSizeSeries, squeethIsLive])
 
   const chartOptions = useMemo(() => {
     // if (mode === ChartType.Funding || mode === ChartType.PositionSize)
