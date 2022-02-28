@@ -95,7 +95,7 @@ export const useUpdateSqueethPoolData = () => {
       setWethToken(isWethToken0 ? TokenA : TokenB)
       setSqueethToken(isWethToken0 ? TokenB : TokenA)
     })()
-  }, [contract, isWethToken0, networkId, setPool, setSqueethToken, setWethToken, ticks])
+  }, [isWethToken0, networkId, ticks?.length])
 }
 
 export const useGetBuyQuoteForETH = () => {
@@ -161,7 +161,7 @@ export const useUpdateSqueethPrices = () => {
         setReady(true)
       })
       .catch(console.log)
-  }, [squeethToken?.address, pool?.token1Price.toFixed(18)])
+  }, [squeethToken?.address, pool?.token1Price.toFixed(18), isWethToken0])
 }
 
 export const useGetWSqueethPositionValue = () => {
@@ -355,7 +355,7 @@ export const useBuyAndRefund = () => {
   return buyAndRefund
 }
 
-const useGetSellQuote = () => {
+export const useGetSellQuote = () => {
   const pool = useAtomValue(poolAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
   const wethToken = useAtomValue(wethTokenAtom)
@@ -397,7 +397,7 @@ const useGetSellQuote = () => {
   return getSellQuote
 }
 
-const useGetSellParam = () => {
+export const useGetSellParam = () => {
   const address = useAtomValue(addressAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
   const wethToken = useAtomValue(wethTokenAtom)
@@ -470,38 +470,37 @@ export const useGetSellQuoteForETH = () => {
   const wethToken = useAtomValue(squeethTokenAtom)
   //I input an exact amount of ETH I want to receive, tells me how much squeeth I'd need to sell
   const getSellQuoteForETH = useCallback(
-    () =>
-      async (ETHAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
-        const emptyState = {
-          amountIn: new BigNumber(0),
-          maximumAmountIn: new BigNumber(0),
-          priceImpact: '0',
+    async (ETHAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
+      const emptyState = {
+        amountIn: new BigNumber(0),
+        maximumAmountIn: new BigNumber(0),
+        priceImpact: '0',
+      }
+      if (!ETHAmount || !pool) return emptyState
+
+      try {
+        //squeeth is input token, WETH is output token. I'm selling squeeth for WETH
+        const route = new Route([pool], squeethToken!, wethToken!)
+        //getting the amount of squeeth I'd need to sell to receive my desired amount of ETH
+        const trade = await Trade.exactOut(
+          route,
+          CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toFixed(0)),
+        )
+
+        //the amount of squeeth I need to sell
+        return {
+          amountIn: new BigNumber(trade.inputAmount.toSignificant(18)),
+          maximumAmountIn: new BigNumber(
+            trade.maximumAmountIn(parseSlippageInput(slippageAmount.toString())).toSignificant(18),
+          ),
+          priceImpact: trade.priceImpact.toFixed(2),
         }
-        if (!ETHAmount || !pool) return emptyState
+      } catch (e) {
+        console.log(e)
+      }
 
-        try {
-          //squeeth is input token, WETH is output token. I'm selling squeeth for WETH
-          const route = new Route([pool], squeethToken!, wethToken!)
-          //getting the amount of squeeth I'd need to sell to receive my desired amount of ETH
-          const trade = await Trade.exactOut(
-            route,
-            CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toFixed(0)),
-          )
-
-          //the amount of squeeth I need to sell
-          return {
-            amountIn: new BigNumber(trade.inputAmount.toSignificant(18)),
-            maximumAmountIn: new BigNumber(
-              trade.maximumAmountIn(parseSlippageInput(slippageAmount.toString())).toSignificant(18),
-            ),
-            priceImpact: trade.priceImpact.toFixed(2),
-          }
-        } catch (e) {
-          console.log(e)
-        }
-
-        return emptyState
-      },
+      return emptyState
+    },
     [pool, squeethToken, wethToken],
   )
 
