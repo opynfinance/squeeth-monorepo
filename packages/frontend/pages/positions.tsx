@@ -294,7 +294,7 @@ export function Positions() {
             </div>
           </div>
         ) : null}
-        {positionType === PositionType.SHORT && !fullyLiquidated ? (
+        {positionType === PositionType.SHORT && vaultExists && !fullyLiquidated ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>Short Squeeth</Typography>
