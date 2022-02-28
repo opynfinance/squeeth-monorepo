@@ -452,11 +452,7 @@ export function Positions() {
                     Amount
                   </Typography>
                   <Typography variant="body1">
-                    {oSqueethBal?.isGreaterThan(0) &&
-                    positionType === PositionType.LONG &&
-                    oSqueethBal.minus(squeethAmount).isGreaterThan(0)
-                      ? oSqueethBal.minus(squeethAmount).toFixed(8)
-                      : oSqueethBal.toFixed(8)}
+                    {isPositionLoading ? 'Loading' : mintedDebt.toFixed(8)}
                     &nbsp; oSQTH
                   </Typography>
                 </div>
