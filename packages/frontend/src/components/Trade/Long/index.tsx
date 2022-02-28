@@ -22,8 +22,15 @@ import UniswapData from '../UniswapData'
 import { connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
 import { addressesAtom } from 'src/state/positions/atoms'
-import { useAtom } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 import { useETHPrice } from '@hooks/useETHPrice'
+import {
+  useBuyAndRefund,
+  useGetSellQuoteForETH,
+  useGetWSqueethPositionValue,
+  useSell,
+} from 'src/state/squeethPool/hooks'
+import { useCurrentImpliedFunding, useDailyHistoricalFunding } from 'src/state/controller/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -224,7 +231,8 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
   const [txHash, setTxHash] = useState('')
 
   const classes = useStyles()
-  const { buyAndRefund, getWSqueethPositionValue } = useSqueethPool()
+  const buyAndRefund = useBuyAndRefund()
+  const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const {
     tradeAmount: amountInputValue,
     setTradeAmount: setAmount,
@@ -246,7 +254,9 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
   const selectWallet = useSelectWallet()
   // const { selectWallet, connected } = useWallet()
   const { squeethAmount, longSqthBal, isShort } = usePositions()
-  const { dailyHistoricalFunding, currentImpliedFunding } = useController()
+
+  const dailyHistoricalFunding = useDailyHistoricalFunding()
+  const currentImpliedFunding = useCurrentImpliedFunding()
 
   let openError: string | undefined
   // let closeError: string | undefined
@@ -495,7 +505,9 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle, setTradeComp
   const classes = useStyles()
   // const { swapRouter, oSqueeth } = useAddresses()
   const [{ swapRouter, oSqueeth }] = useAtom(addressesAtom)
-  const { sell, getWSqueethPositionValue, getSellQuoteForETH } = useSqueethPool()
+  const sell = useSell()
+  const getWSqueethPositionValue = useGetWSqueethPositionValue()
+  const getSellQuoteForETH = useGetSellQuoteForETH()
 
   const {
     tradeAmount: amountInputValue,
@@ -516,7 +528,7 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle, setTradeComp
   const altTradeAmount = new BigNumber(altAmountInputValue)
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter)
   // const { selectWallet, connected } = useWallet()
-  const [connected] = useAtom(connectedWalletAtom)
+  const connected = useAtomValue(connectedWalletAtom)
   const selectWallet = useSelectWallet()
   const { longSqthBal, shortDebt } = usePositions()
 

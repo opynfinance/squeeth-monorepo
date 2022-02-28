@@ -3,7 +3,7 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import React from 'react'
-import { useAtom } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 
 import { Tooltips } from '@constants/enums'
 import { useController } from '@hooks/contracts/useController'
@@ -11,6 +11,9 @@ import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { toTokenAmount } from '@utils/calculations'
 import LPPosition from './LPPosition'
 import { addressAtom } from '../../state/wallet/atoms'
+import { useGetWSqueethPositionValue, useGetWSqueethPositionValueInETH } from 'src/state/squeethPool/hooks'
+import { useIndex, useMark } from 'src/state/controller/hooks'
+import { impliedVolAtom } from 'src/state/controller/atoms'
 // import { useWallet } from '@context/wallet'
 
 const useStyles = makeStyles((theme) =>
@@ -49,8 +52,11 @@ const useStyles = makeStyles((theme) =>
 
 const SqueethInfo: React.FC = () => {
   const classes = useStyles()
-  const { mark, index, impliedVol } = useController()
-  const { getWSqueethPositionValue, getWSqueethPositionValueInETH } = useSqueethPool()
+  const mark = useMark()
+  const index = useIndex()
+  const impliedVol = useAtomValue(impliedVolAtom)
+  const getWSqueethPositionValue = useGetWSqueethPositionValue()
+  const getWSqueethPositionValueInETH = useGetWSqueethPositionValueInETH()
   // const { address } = useWallet()
   const [address] = useAtom(addressAtom)
 

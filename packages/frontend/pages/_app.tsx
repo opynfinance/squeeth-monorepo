@@ -6,21 +6,21 @@ import { ThemeProvider } from '@material-ui/core/styles'
 import * as Fathom from 'fathom-client'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import React, { useEffect, Suspense, Fragment } from 'react'
+import React, { useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from 'react-query'
-import { ReactQueryDevtools } from 'react-query/devtools'
 import { CookiesProvider } from 'react-cookie'
 import { useAtom } from 'jotai'
 
 import { RestrictUserProvider } from '@context/restrict-user'
 // import { useWallet, WalletProvider } from '@context/wallet'
-import { WorldProvider } from '@context/world'
+
 import { PositionsProvider } from '@context/positions'
 import getTheme, { Mode } from '../src/theme'
 import { uniswapClient } from '@utils/apollo-client'
 import { useOnboard } from 'src/state/wallet/hooks'
 import { networkIdAtom } from 'src/state/wallet/atoms'
 import { useSwaps } from 'src/state/positions/hooks'
+import { useUpdateSqueethPrices, useUpdateSqueethPoolData } from 'src/state/squeethPool/hooks'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
 
@@ -75,6 +75,8 @@ function MyApp({ Component, pageProps }: any) {
 
 const Init = () => {
   useSwaps()
+  useUpdateSqueethPrices()
+  useUpdateSqueethPoolData()
   return null
 }
 

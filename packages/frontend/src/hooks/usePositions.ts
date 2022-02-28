@@ -16,14 +16,15 @@ import { toTokenAmount } from '@utils/calculations'
 import { squeethClient } from '@utils/apollo-client'
 import { useAtom, useAtomValue } from 'jotai'
 
-import { useSqueethPool } from './contracts/useSqueethPool'
 import { calcDollarShortUnrealizedpnl, calcETHCollateralPnl, calcDollarLongUnrealizedpnl } from '../lib/pnl'
 import { BIG_ZERO } from '../constants/'
 import { addressAtom, networkIdAtom, web3Atom } from 'src/state/wallet/atoms'
 import { addressesAtom, isWethToken0Atom } from '../state/positions/atoms'
-import { useController } from '../hooks/contracts/useController'
 import { PositionType } from '../types'
 import { useETHPrice } from './useETHPrice'
+import { poolAtom, readyAtom, squeethInitialPriceAtom } from 'src/state/squeethPool/atoms'
+import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
+import { useIndex } from 'src/state/controller/hooks'
 
 export const usePnL = () => {
   const [ethCollateralPnl, setEthCollateralPnl] = useState(BIG_ZERO)
@@ -40,11 +41,15 @@ export const usePnL = () => {
     existingCollat,
     positionType,
   } = usePositions()
-  const { index } = useController()
+  const index = useIndex()
   const isWethToken0 = useAtomValue(isWethToken0Atom)
+  const ready = useAtomValue(readyAtom)
 
   // const { ethPrice } = useWorldContext()
-  const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
+
+  const getSellQuote = useGetSellQuote()
+  const getBuyQuote = useGetBuyQuote()
+
   // const { networkId } = useWallet()
   const [networkId] = useAtom(networkIdAtom)
 
@@ -193,8 +198,10 @@ export const useLPPositions = () => {
   const address = useAtomValue(addressAtom)
   const web3 = useAtomValue(web3Atom)
   const { squeethPool, nftManager } = useAtomValue(addressesAtom)
+  const pool = useAtomValue(poolAtom)
+  const squeethInitialPrice = useAtomValue(squeethInitialPriceAtom)
   // const { squeethPool, nftManager, weth, oSqueeth } = useAddresses()
-  const { pool, getWSqueethPositionValue, squeethInitialPrice } = useSqueethPool()
+  const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const ethPrice = useETHPrice()
   const [activePositions, setActivePositions] = useState<NFTManagers[]>([])
   const [closedPositions, setClosedPositions] = useState<NFTManagers[]>([])

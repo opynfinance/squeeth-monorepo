@@ -1,19 +1,17 @@
 import BigNumber from 'bignumber.js'
-import { ethers } from 'ethers'
 import { useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
-import { useAtom } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 
 import shortAbi from '../../abis/shortHelper.json'
-import { Vaults, WETH_DECIMALS, OSQUEETH_DECIMALS } from '../../constants'
+import { WETH_DECIMALS, OSQUEETH_DECIMALS } from '../../constants'
 // import { useWallet } from '@context/wallet'
-import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
-import { useAddresses } from '../useAddress'
-import { useController } from './useController'
-import { useSqueethPool } from './useSqueethPool'
+import { fromTokenAmount } from '@utils/calculations'
 import { addressAtom, web3Atom } from 'src/state/wallet/atoms'
 import { useHandleTransaction } from 'src/state/wallet/hooks'
 import { addressesAtom } from 'src/state/positions/atoms'
+import { useGetBuyParam, useGetSellParam } from 'src/state/squeethPool/hooks'
+import { normFactorAtom } from 'src/state/controller/atoms'
 
 export const useShortHelper = () => {
   // const { web3, address, handleTransaction } = useWallet()
@@ -22,11 +20,12 @@ export const useShortHelper = () => {
   const [address] = useAtom(addressAtom)
   const [contract, setContract] = useState<Contract>()
 
-  const { getSellParam, getBuyParam } = useSqueethPool()
+  const getSellParam = useGetSellParam()
+  const getBuyParam = useGetBuyParam()
 
   // const { shortHelper } = useAddresses()
   const [{ shortHelper }] = useAtom(addressesAtom)
-  const { normFactor: normalizationFactor } = useController()
+  const normalizationFactor = useAtomValue(normFactorAtom)
 
   useEffect(() => {
     if (!web3) return

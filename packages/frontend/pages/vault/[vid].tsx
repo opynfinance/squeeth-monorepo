@@ -51,6 +51,18 @@ import { useWalletBalance } from 'src/state/wallet/hooks'
 import { addressesAtom } from 'src/state/positions/atoms'
 import { useAtom, useAtomValue } from 'jotai'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
+import {
+  useBurnAndRedeem,
+  useDepositCollateral,
+  useDepositUnuPositionToken,
+  useGetCollatRatioAndLiqPrice,
+  useGetDebtAmount,
+  useGetShortAmountFromDebt,
+  useGetTwapEthPrice,
+  useOpenDepositAndMint,
+  useWithdrawCollateral,
+  useWithdrawUniPositionToken,
+} from 'src/state/controller/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -276,20 +288,17 @@ const Component: React.FC = () => {
   const classes = useStyles()
   const router = useRouter()
   const { isRestricted } = useRestrictUser()
-  const {
-    getCollatRatioAndLiqPrice,
-    getDebtAmount,
-    getShortAmountFromDebt,
-    depositCollateral,
-    withdrawCollateral,
-    openDepositAndMint,
-    burnAndRedeem,
-    getTwapEthPrice,
-    depositUniPositionToken,
-    withdrawUniPositionToken,
-    normFactor,
-    getVault,
-  } = useController()
+
+  const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
+  const getDebtAmount = useGetDebtAmount()
+  const getShortAmountFromDebt = useGetShortAmountFromDebt()
+  const depositCollateral = useDepositCollateral()
+  const withdrawCollateral = useWithdrawCollateral()
+  const openDepositAndMint = useOpenDepositAndMint()
+  const burnAndRedeem = useBurnAndRedeem()
+  const getTwapEthPrice = useGetTwapEthPrice()
+  const depositUniPositionToken = useDepositUnuPositionToken()
+  const withdrawUniPositionToken = useWithdrawUniPositionToken()
 
   // const { balance, address, connected, networkId } = useWallet()
   const { data: balance } = useWalletBalance()

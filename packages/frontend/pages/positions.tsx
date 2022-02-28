@@ -28,6 +28,8 @@ import { useSelectWallet } from 'src/state/wallet/hooks'
 import { useLongRealizedPnl, useShortRealizedPnl } from 'src/state/positions/hooks'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { addressesAtom } from 'src/state/positions/atoms'
+import { poolAtom } from 'src/state/squeethPool/atoms'
+import { useIndex } from 'src/state/controller/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -160,7 +162,8 @@ export function Positions() {
     longUnrealizedPNL,
   } = usePnL()
 
-  const { pool } = useSqueethPool()
+  const pool = useAtomValue(poolAtom)
+  // const { pool } = useSqueethPool()
   const { oSqueeth } = useAtomValue(addressesAtom)
   const oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
   const [address] = useAtom(addressAtom)
@@ -185,7 +188,7 @@ export function Positions() {
   const longRealizedPNL = useLongRealizedPnl()
   const shortRealizedPNL = useShortRealizedPnl()
 
-  const { index } = useController()
+  const index = useIndex()
   const {
     depositedEth,
     depositedUsd,
@@ -535,7 +538,7 @@ export function Positions() {
                 Your LP Positions
               </Typography>
             </div>
-            <LPTable isLPage={false} pool={pool} />
+            <LPTable isLPage={false} pool={pool!} />
           </>
         ) : null}
         <div className={classes.history}>

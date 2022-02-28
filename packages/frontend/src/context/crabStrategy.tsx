@@ -3,17 +3,24 @@ import BigNumber from 'bignumber.js'
 import React, { useContext, useEffect, useState } from 'react'
 import { BIG_ZERO } from '../constants'
 // import { useWallet } from './wallet'
-import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
-import { useController } from '@hooks/contracts/useController'
+
 import { Contract } from 'web3-eth-contract'
 import abi from '../abis/crabStrategy.json'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import db from '@utils/firestore'
-import { useAtom } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 import { addressAtom, networkIdAtom, web3Atom } from 'src/state/wallet/atoms'
 import { useHandleTransaction } from 'src/state/wallet/hooks'
 import { addressesAtom } from 'src/state/positions/atoms'
+import { readyAtom } from 'src/state/squeethPool/atoms'
+import { useGetBuyQuote, useGetSellQuote } from 'src/state/squeethPool/hooks'
+import {
+  useCurrentImpliedFunding,
+  useGetCollatRatioAndLiqPrice,
+  useGetVault,
+  useIndex,
+} from 'src/state/controller/hooks'
 
 type CrabStrategyType = {
   loading: boolean
@@ -94,14 +101,19 @@ const useCrab = () => useContext(crabContext)
 
 const CrabProvider: React.FC = ({ children }) => {
   // const { web3, address, handleTransaction, networkId } = useWallet()
-  const [web3] = useAtom(web3Atom)
-  const [networkId] = useAtom(networkIdAtom)
-  const [address] = useAtom(addressAtom)
+  const web3 = useAtomValue(web3Atom)
+  const networkId = useAtomValue(networkIdAtom)
+  const address = useAtomValue(addressAtom)
+  const ready = useAtomValue(readyAtom)
   const handleTransaction = useHandleTransaction()
   // const { crabStrategy } = useAddresses()
   const [{ crabStrategy }] = useAtom(addressesAtom)
-  const { getVault, getCollatRatioAndLiqPrice, currentImpliedFunding, index } = useController()
-  const { getSellQuote, getBuyQuote, ready } = useSqueethPool()
+  const getVault = useGetVault()
+  const getBuyQuote = useGetBuyQuote()
+  const getSellQuote = useGetSellQuote()
+  const index = useIndex()
+  const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
+  const currentImpliedFunding = useCurrentImpliedFunding()
 
   const [contract, setContract] = useState<Contract>()
   const [maxCap, setMaxCap] = useState<BigNumber>(new BigNumber(0))

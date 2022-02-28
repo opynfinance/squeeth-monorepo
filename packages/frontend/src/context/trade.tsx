@@ -5,6 +5,15 @@ import { DEFAULT_SLIPPAGE, InputType } from '../constants/index'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { PositionType, TradeType } from '../types'
 import { usePositions } from './positions'
+import { useAtomValue } from 'jotai'
+import { readyAtom } from 'src/state/squeethPool/atoms'
+import {
+  useGetBuyQuote,
+  useGetBuyQuoteForETH,
+  useGetSellQuote,
+  useGetSellQuoteForETH,
+  useGetWSqueethPositionValue,
+} from 'src/state/squeethPool/hooks'
 
 type Quote = {
   amountOut: BigNumber
@@ -110,16 +119,13 @@ const TradeProvider: React.FC = ({ children }) => {
   const [actualTradeType, setActualTradeType] = useState(TradeType.LONG)
   const [confirmedAmount, setConfirmedAmount] = useState('0')
 
-  const {
-    ready,
-    sell,
-    getBuyQuoteForETH,
-    buyForWETH,
-    getSellQuote,
-    getWSqueethPositionValue,
-    getBuyQuote,
-    getSellQuoteForETH,
-  } = useSqueethPool()
+  const ready = useAtomValue(readyAtom)
+
+  const getBuyQuoteForETH = useGetBuyQuoteForETH()
+  const getSellQuote = useGetSellQuote()
+  const getWSqueethPositionValue = useGetWSqueethPositionValue()
+  const getBuyQuote = useGetBuyQuote()
+  const getSellQuoteForETH = useGetSellQuoteForETH()
   const { positionType } = usePositions()
 
   const amountOutBN = quote.amountOut

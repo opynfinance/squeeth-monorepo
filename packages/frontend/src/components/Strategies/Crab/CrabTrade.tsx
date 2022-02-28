@@ -15,12 +15,14 @@ import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useMemo, useState } from 'react'
 import CrabPosition from './CrabPosition'
-import { useAtom } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useWalletBalance } from 'src/state/wallet/hooks'
 import { BIG_ZERO } from '../../../constants'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useController } from '@hooks/contracts/useController'
+import { readyAtom } from 'src/state/squeethPool/atoms'
+import { useCurrentImpliedFunding, useDailyHistoricalFunding } from 'src/state/controller/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -88,10 +90,12 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
     isTimeHedgeAvailable,
     isPriceHedgeAvailable,
   } = useCrab()
+  const ready = useAtomValue(readyAtom)
   const { minCurrentUsd, minPnL, loading } = useCrabPosition(address || '')
   const { isRestricted } = useRestrictUser()
-  const { ready } = useSqueethPool()
-  const { dailyHistoricalFunding, currentImpliedFunding } = useController()
+
+  const dailyHistoricalFunding = useDailyHistoricalFunding()
+  const currentImpliedFunding = useCurrentImpliedFunding()
 
   const { depositError, warning, withdrawError } = useMemo(() => {
     let depositError: string | undefined

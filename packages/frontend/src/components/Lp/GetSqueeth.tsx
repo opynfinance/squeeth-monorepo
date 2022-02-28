@@ -23,6 +23,8 @@ import { connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useAtom, useAtomValue } from 'jotai'
 import { addressesAtom } from 'src/state/positions/atoms'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
+import { useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
+import { useGetShortAmountFromDebt, useNormFactor, useOpenDepositAndMint } from 'src/state/controller/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -77,8 +79,10 @@ const Mint: React.FC = () => {
   const [connected] = useAtom(connectedWalletAtom)
   const { existingCollatPercent, existingCollat, firstValidVault } = usePositions()
   const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
-  const { getWSqueethPositionValue } = useSqueethPool()
-  const { normFactor: normalizationFactor, openDepositAndMint, getShortAmountFromDebt } = useController()
+  const getWSqueethPositionValue = useGetWSqueethPositionValue()
+  const normalizationFactor = useNormFactor()
+  const openDepositAndMint = useOpenDepositAndMint()
+  const getShortAmountFromDebt = useGetShortAmountFromDebt()
   const { dispatch } = useLPState()
 
   const [mintAmount, setMintAmount] = useState(new BigNumber(0))

@@ -38,10 +38,17 @@ import { useVaultData } from '@hooks/useVaultData'
 import { connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
 import { addressesAtom } from 'src/state/positions/atoms'
-import { useAtom } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { collatRatioAtom } from 'src/state/ethPriceCharts/atoms'
 import { useUpdateAtom } from 'jotai/utils'
+import { useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
+import {
+  useGetDebtAmount,
+  useGetShortAmountFromDebt,
+  useNormFactor,
+  useUpdateOperator,
+} from 'src/state/controller/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -198,15 +205,20 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
 
   const classes = useStyles()
   const { openShort } = useShortHelper()
-  const { getWSqueethPositionValue } = useSqueethPool()
+
+  const getWSqueethPositionValue = useGetWSqueethPositionValue()
 
   // const { selectWallet, connected } = useWallet()
-  const [connected] = useAtom(connectedWalletAtom)
+  const connected = useAtomValue(connectedWalletAtom)
   const selectWallet = useSelectWallet()
 
   // const { shortHelper } = useAddresses()
-  const [{ shortHelper }] = useAtom(addressesAtom)
-  const { updateOperator, normFactor: normalizationFactor, getShortAmountFromDebt, getDebtAmount } = useController()
+  const { shortHelper } = useAtomValue(addressesAtom)
+
+  const updateOperator = useUpdateOperator()
+  const normalizationFactor = useNormFactor()
+  const getShortAmountFromDebt = useGetShortAmountFromDebt()
+  const getDebtAmount = useGetDebtAmount()
 
   const {
     tradeAmount: amountInputValue,
@@ -576,13 +588,16 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
 
   const classes = useStyles()
   const { closeShort } = useShortHelper()
-  const { getWSqueethPositionValue } = useSqueethPool()
-  const { updateOperator, normFactor: normalizationFactor, getShortAmountFromDebt, getDebtAmount } = useController()
-  const [{ shortHelper }] = useAtom(addressesAtom)
+  const getWSqueethPositionValue = useGetWSqueethPositionValue()
+  const { shortHelper } = useAtomValue(addressesAtom)
 
   // const { selectWallet, connected } = useWallet()
-  const [connected] = useAtom(connectedWalletAtom)
+  const connected = useAtomValue(connectedWalletAtom)
   const selectWallet = useSelectWallet()
+  const updateOperator = useUpdateOperator()
+  const normalizationFactor = useNormFactor()
+  const getShortAmountFromDebt = useGetShortAmountFromDebt()
+  const getDebtAmount = useGetDebtAmount()
 
   const {
     tradeAmount: amountInputValue,

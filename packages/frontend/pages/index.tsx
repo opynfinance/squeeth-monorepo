@@ -8,7 +8,7 @@ import ExpandLessIcon from '@material-ui/icons/NavigateBefore'
 import ExpandMoreIcon from '@material-ui/icons/NavigateNext'
 import Image from 'next/image'
 import { useState } from 'react'
-import { useAtom } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 
 import squeethTokenSymbol from '../public/images/Squeeth.svg'
 import { PrimaryButton } from '@components/Button'
@@ -26,6 +26,7 @@ import { Tooltips } from '@constants/enums'
 import { useRestrictUser } from '@context/restrict-user'
 import { TradeProvider, useTrade } from '@context/trade'
 import { useController } from '@hooks/contracts/useController'
+
 // import {
 //   indexAtom,
 //   markAtom,
@@ -36,6 +37,14 @@ import { useController } from '@hooks/contracts/useController'
 // } from '@hooks/contracts/useController'
 import { TradeType } from '../src/types'
 import { toTokenAmount } from '@utils/calculations'
+import {
+  useCurrentImpliedFunding,
+  useDailyHistoricalFunding,
+  useIndex,
+  useMark,
+  useNormFactor,
+} from 'src/state/controller/hooks'
+import { impliedVolAtom } from 'src/state/controller/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -372,7 +381,12 @@ const TabComponent: React.FC = () => {
 const SqueethInfo: React.FC = () => {
   const classes = useStyles()
   const { actualTradeType } = useTrade()
-  const { dailyHistoricalFunding, mark, index, impliedVol, currentImpliedFunding, normFactor } = useController()
+  const dailyHistoricalFunding = useDailyHistoricalFunding()
+  const mark = useMark()
+  const index = useIndex()
+  const impliedVol = useAtomValue(impliedVolAtom)
+  const currentImpliedFunding = useCurrentImpliedFunding()
+  const normFactor = useNormFactor()
 
   const [showAdvanced, setShowAdvanced] = useState(false)
 
