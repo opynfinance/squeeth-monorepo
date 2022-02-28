@@ -31,6 +31,9 @@ export const useController = () => {
   const web3 = useAtomValue(web3Atom)
   const address = useAtomValue(addressAtom)
   const networkId = useAtomValue(networkIdAtom)
+  const { controller, ethUsdcPool, weth, usdc } = useAtomValue(addressesAtom)
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
+
   const [contract, setContract] = useState<Contract>()
   const [normFactor, setNormFactor] = useState(new BigNumber(1))
   const [mark, setMark] = useState(new BigNumber(0))
@@ -38,11 +41,8 @@ export const useController = () => {
   const [dailyHistoricalFunding, setDailyHistoricalFunding] = useState({ period: 0, funding: 0 })
   const [currentImpliedFunding, setCurrentImpliedFunding] = useState(0)
 
-  // const { controller, ethUsdcPool, weth, usdc } = useAddresses()
-  const [{ controller, ethUsdcPool, weth, usdc }] = useAtom(addressesAtom)
   const { getTwapSafe } = useOracle()
   const { getETHandOSQTHAmount } = useNFTManager()
-  const isWethToken0 = useAtomValue(isWethToken0Atom)
 
   useEffect(() => {
     if (!web3) return

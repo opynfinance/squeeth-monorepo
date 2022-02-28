@@ -20,7 +20,7 @@ import { useSqueethPool } from './contracts/useSqueethPool'
 import { calcDollarShortUnrealizedpnl, calcETHCollateralPnl, calcDollarLongUnrealizedpnl } from '../lib/pnl'
 import { BIG_ZERO } from '../constants/'
 import { addressAtom, networkIdAtom, web3Atom } from 'src/state/wallet/atoms'
-import { addressesAtom } from '../state/positions/atoms'
+import { addressesAtom, isWethToken0Atom } from '../state/positions/atoms'
 import { useController } from '../hooks/contracts/useController'
 import { PositionType } from '../types'
 
@@ -189,9 +189,9 @@ export const usePnL = () => {
 
 export const useLPPositions = () => {
   // const { address, web3 } = useWallet()
-  const [address] = useAtom(addressAtom)
-  const [web3] = useAtom(web3Atom)
-  const [{ squeethPool, nftManager, weth, oSqueeth }] = useAtom(addressesAtom)
+  const address = useAtomValue(addressAtom)
+  const web3 = useAtomValue(web3Atom)
+  const { squeethPool, nftManager } = useAtomValue(addressesAtom)
   // const { squeethPool, nftManager, weth, oSqueeth } = useAddresses()
   const { pool, getWSqueethPositionValue, squeethInitialPrice } = useSqueethPool()
   const { ethPrice } = useWorldContext()

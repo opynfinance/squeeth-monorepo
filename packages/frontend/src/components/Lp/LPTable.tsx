@@ -18,6 +18,7 @@ import { UniswapIframe } from '../Modal/UniswapIframe'
 // import { useWallet } from '@context/wallet'
 import { usePositions } from '@context/positions'
 import { networkIdAtom } from 'src/state/wallet/atoms'
+import { isWethToken0Atom } from 'src/state/positions/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -111,7 +112,7 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
 
   const [activeTab, setActiveTab] = useState(0)
   const { ethPrice } = useWorldContext()
-  const { getWSqueethPositionValue, isWethToken0 } = useSqueethPool()
+  const { getWSqueethPositionValue } = useSqueethPool()
   // const { networkId } = useWallet()
   const networkId = useAtomValue(networkIdAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)

@@ -1,6 +1,6 @@
 import BigNumber from 'bignumber.js'
 import { useEffect, useState } from 'react'
-import { useAtom } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 
 import { Vault } from '../types'
 import { useController } from '@hooks/contracts/useController'
@@ -18,8 +18,8 @@ export const useVaultData = (vid: number) => {
   const { getCollatRatioAndLiqPrice, getVault, normFactor } = useController()
   const { ready } = useSqueethPool()
   // const { address, connected } = useWallet()
-  const [connected] = useAtom(connectedWalletAtom)
-  const [address] = useAtom(addressAtom)
+  const connected = useAtomValue(connectedWalletAtom)
+  const address = useAtomValue(addressAtom)
 
   const updateVault = async () => {
     if (!connected || !ready) return
