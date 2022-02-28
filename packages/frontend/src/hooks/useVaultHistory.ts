@@ -41,6 +41,7 @@ export const useVaultHistory = () => {
 
   //accumulated four actions, mintedSqueeth doesn't take minted squeeth sold into account
   //only consider first valid vault
+  //mintedSqueeth + openShortSqueeth = shortAmount in the vault
   const { mintedSqueeth, burnedSqueeth, openShortSqueeth, closeShortSqueeth } = useMemo(
     () =>
       vaultHistory?.reduce(
