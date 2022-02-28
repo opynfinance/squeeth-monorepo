@@ -1,16 +1,22 @@
 import { useAtom, useAtomValue } from 'jotai'
 import BigNumber from 'bignumber.js'
-import { useQuery } from 'react-query'
 
 import { addressAtom, networkIdAtom, web3Atom } from '../wallet/atoms'
 import { OSQUEETH_DECIMALS, SWAP_EVENT_TOPIC, TWAP_PERIOD } from '../../constants'
-import { markAtom, indexAtom, dailyHistoricalFundingAtom, currentImpliedFundingAtom, impliedVolAtom } from './atoms'
+import {
+  markAtom,
+  indexAtom,
+  dailyHistoricalFundingAtom,
+  currentImpliedFundingAtom,
+  impliedVolAtom,
+  normFactorAtom,
+} from './atoms'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
 import { INDEX_SCALE } from '../../constants'
 import abi from '../../abis/controller.json'
 import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useCallback } from 'react'
 import { ETH_USDC_POOL, SQUEETH_UNI_POOL } from '@constants/address'
 import { useOracle } from '@hooks/contracts/useOracle'
 import useContract from '../../hooks/useContract'
@@ -147,24 +153,32 @@ export const useUpdateOperator = () => {
 
   return updateOperator
 }
-const controllerQueryKeys = {
-  getVault: () => ['getVault'],
-}
 
-export const useGetVault = (vaultId: number) => {
+export const useGetVault = () => {
   const { controller } = useAtomValue(addressesAtom)
   const contract = useContract(controller, abi)
-  const vaultQuery = useQuery(controllerQueryKeys.getVault(), () => getVault(vaultId, contract), {
-    enabled: Boolean(contract),
-  })
 
-  return vaultQuery
+  const getVault = async (vaultId: number) => {
+    if (!contract) return null
+    const vault = await contract.methods.vaults(vaultId).call()
+    const { NftCollateralId, collateralAmount, shortAmount, operator } = vault
+
+    return {
+      id: vaultId,
+      NFTCollateralId: NftCollateralId,
+      collateralAmount: toTokenAmount(new BigNumber(collateralAmount), 18),
+      shortAmount: toTokenAmount(new BigNumber(shortAmount), OSQUEETH_DECIMALS),
+      operator,
+    }
+  }
+
+  return getVault
 }
 
 export const useNormFactor = () => {
   const { controller } = useAtomValue(addressesAtom)
   const contract = useContract(controller, abi)
-  const [normFactor, setNormFactor] = useState(new BigNumber(1))
+  const [normFactor, setNormFactor] = useAtom(normFactorAtom)
   useEffect(() => {
     if (!contract) return
     contract.methods
@@ -184,12 +198,12 @@ export const useNormFactor = () => {
             console.log('normFactor error')
           })
       })
-  }, [contract])
+  }, [])
 
   return normFactor
 }
 
-export const useHistoricalFunding = () => {
+export const useDailyHistoricalFunding = () => {
   const address = useAtomValue(addressAtom)
   const { controller } = useAtomValue(addressesAtom)
   const [dailyHistoricalFunding, setDailyHistoricalFunding] = useAtom(dailyHistoricalFundingAtom)
@@ -197,7 +211,7 @@ export const useHistoricalFunding = () => {
   useEffect(() => {
     if (!contract) return
     getDailyHistoricalFunding(contract).then(setDailyHistoricalFunding)
-  }, [address, contract])
+  }, [address])
 
   return dailyHistoricalFunding
 }
@@ -210,7 +224,7 @@ export const useCurrentImpliedFunding = () => {
   useEffect(() => {
     if (!contract) return
     getCurrentImpliedFunding(contract).then(setCurrentImpliedFunding)
-  }, [address, contract])
+  }, [address])
 
   return currentImpliedFunding
 }
@@ -226,7 +240,7 @@ export const useMark = () => {
   useEffect(() => {
     if (!contract) return
     getMark(1, contract).then(setMark)
-  }, [contract, setMark, address])
+  }, [address])
 
   // setup mark listener
   useEffect(() => {
@@ -243,7 +257,7 @@ export const useMark = () => {
     )
     // cleanup function
     // return () => sub.unsubscribe()
-  }, [contract, networkId, setMark, web3])
+  }, [networkId, web3])
 
   return mark
 }
@@ -258,7 +272,7 @@ export const useIndex = () => {
   useEffect(() => {
     if (!contract) return
     getIndex(1, contract).then(setIndex)
-  }, [address, contract, setIndex])
+  }, [address])
 
   // setup index listender
   useEffect(() => {
@@ -274,7 +288,7 @@ export const useIndex = () => {
       },
     )
     // return () => sub.unsubscribe()
-  }, [web3, networkId, contract, setIndex])
+  }, [web3, networkId])
 
   return index
 }
@@ -282,7 +296,7 @@ export const useIndex = () => {
 export const useGetDebtAmount = () => {
   const { ethUsdcPool, weth, usdc, controller } = useAtomValue(addressesAtom)
   const contract = useContract(controller, abi)
-  const normFactor = useNormFactor()
+  const normFactor = useAtomValue(normFactorAtom)
   const { getTwapSafe } = useOracle()
   const getDebtAmount = async (shortAmount: BigNumber) => {
     if (!contract) return new BigNumber(0)
@@ -308,7 +322,7 @@ export const useGetTwapEthPrice = () => {
 
 export const useGetShortAmountFromDebt = () => {
   const { ethUsdcPool, weth, usdc, controller } = useAtomValue(addressesAtom)
-  const normFactor = useNormFactor()
+  const normFactor = useAtomValue(normFactorAtom)
   const contract = useContract(controller, abi)
   const { getTwapSafe } = useOracle()
   const getShortAmountFromDebt = async (debtAmount: BigNumber) => {
@@ -326,7 +340,7 @@ export const useGetCollatRatioAndLiqPrice = () => {
   const impliedVol = useAtomValue(impliedVolAtom)
   const { controller } = useAtomValue(addressesAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)
-  const normFactor = useNormFactor()
+  const normFactor = useAtomValue(normFactorAtom)
   const contract = useContract(controller, abi)
   const getTwapEthPrice = useGetTwapEthPrice()
   const getDebtAmount = useGetDebtAmount()
