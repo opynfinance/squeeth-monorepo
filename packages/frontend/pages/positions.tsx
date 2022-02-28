@@ -314,7 +314,9 @@ export function Positions() {
                     <>
                       <Typography variant="body1">{squeethAmount.toFixed(8) + ' oSQTH'}</Typography>
                       <Typography variant="body2" color="textSecondary">
-                        ${buyQuote.times(toTokenAmount(index, 18).sqrt()).toFixed(2)}
+                        {isPnLLoading && buyQuote.times(toTokenAmount(index, 18).sqrt()).isEqualTo(0)
+                          ? 'Loading'
+                          : '$' + buyQuote.times(toTokenAmount(index, 18).sqrt()).toFixed(2)}
                       </Typography>
                     </>
                   )}
