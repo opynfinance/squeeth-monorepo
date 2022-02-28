@@ -218,10 +218,11 @@ export function Positions() {
             </div>
           </div>
         </div>
-        {!shortDebt.isGreaterThan(0) &&
+        {shortDebt.isZero() &&
         depositedEth.isZero() &&
-        !squeethAmount.isGreaterThan(0) &&
-        !mintedDebt.isGreaterThan(0) ? (
+        squeethAmount.isZero() &&
+        mintedDebt.isZero() &&
+        lpedSqueeth.isZero() ? (
           <div className={classes.empty}>
             <Typography>No active positions</Typography>
           </div>
