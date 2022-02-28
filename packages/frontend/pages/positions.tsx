@@ -390,7 +390,7 @@ export function Positions() {
             </div>
           </div>
         ) : null}
-        {lpedSqueeth.isGreaterThan(0) && vaultExists && !fullyLiquidated ? (
+        {lpedSqueeth.isGreaterThan(0) && !fullyLiquidated ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>LPed Squeeth</Typography>

@@ -1,7 +1,7 @@
 import { useQuery } from '@apollo/client'
 import { Position } from '@uniswap/v3-sdk'
 import BigNumber from 'bignumber.js'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import NFTpositionManagerABI from '../abis/NFTpositionmanager.json'
 import { useWallet } from '@context/wallet'
@@ -205,8 +205,7 @@ export const useLPPositions = () => {
   const manager = new web3.eth.Contract(NFTpositionManagerABI as any, nftManager || '')
   const MAX_UNIT = '0xffffffffffffffffffffffffffffffff'
 
-  // console.log(data?.positions)
-  useEffect(() => {
+  const subscribeToNewPositions = useCallback(() => {
     subscribeToMore({
       document: POSITIONS_SUBSCRIPTION,
       variables: {
@@ -223,6 +222,12 @@ export const useLPPositions = () => {
     })
   }, [address, subscribeToMore])
 
+  //console.log(data)
+
+  useEffect(() => {
+    subscribeToNewPositions()
+  }, [subscribeToNewPositions])
+
   const isWethToken0 = useMemo(() => parseInt(weth, 16) < parseInt(oSqueeth, 16), [weth, oSqueeth])
 
   const positionAndFees = useMemo(() => {
@@ -238,14 +243,20 @@ export const useLPPositions = () => {
           tickUpper: Number(position.tickUpper.tickIdx),
         })
 
-        const fees = await manager.methods
-          .collect({
-            tokenId: tokenIdHexString,
-            recipient: address,
-            amount0Max: MAX_UNIT,
-            amount1Max: MAX_UNIT,
-          })
-          .call()
+        let fees = { amount0: '0', amount1: '0' }
+
+        try {
+          fees = await manager.methods
+            .collect({
+              tokenId: tokenIdHexString,
+              recipient: address,
+              amount0Max: MAX_UNIT,
+              amount1Max: MAX_UNIT,
+            })
+            .call()
+        } catch (e) {
+          console.log(e)
+        }
 
         const squeethAmt = isWethToken0
           ? new BigNumber(uniPosition.amount1.toSignificant(18))
@@ -331,7 +342,7 @@ export const useLPPositions = () => {
           setLoading(false)
         })
     }
-  }, [gphLoading, isWethToken0, positionAndFees.length])
+  }, [gphLoading, isWethToken0, positionAndFees.length, activePositions.length])
 
   return {
     activePositions: activePositions,
