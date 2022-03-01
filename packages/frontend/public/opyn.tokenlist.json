@@ -1,0 +1,74 @@
+{
+  "name": "Opyn Tokenlist",
+  "timestamp": "2022-02-28T21:17:44.251Z",
+  "version": {
+    "major": 1,
+    "minor": 0,
+    "patch": 0
+  },
+  "tokens": [
+    {
+      "logoURI": "https://squeeth.opyn.co/images/Squeeth.svg",
+      "chainId": 1,
+      "address": "0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B",
+      "name": "Opyn Squeeth",
+      "symbol": "OSQTH",
+      "decimals": 18
+    },
+    {
+      "logoURI": "https://squeeth.opyn.co/images/Squeeth.svg",
+      "chainId": 3,
+      "address": "0x49721ED2d693F3653BC1216b8E330fA53CFC80eD",
+      "name": "Opyn Squeeth",
+      "symbol": "OSQTH",
+      "decimals": 18
+    },
+    {
+      "logoURI": "https://assets.coingecko.com/coins/images/2518/small/weth.png?1628852295",
+      "chainId": 1,
+      "address": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+      "name": "Wrapped Ethereum",
+      "symbol": "WETH",
+      "decimals": 18
+    },
+    {
+      "logoURI": "https://assets.coingecko.com/coins/images/2518/small/weth.png?1628852295",
+      "chainId": 3,
+      "address": "0xc778417e063141139fce010982780140aa0cd5ab",
+      "name": "Wrapped Ethereum",
+      "symbol": "WETH",
+      "decimals": 18
+    },
+    {
+      "name": "USDCoin",
+      "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      "symbol": "USDC",
+      "decimals": 6,
+      "chainId": 1,
+      "logoURI": "https://raw.githubusercontent.com/uniswap/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png"
+    },
+    {
+      "name": "USDCoin",
+      "address": "0x07865c6E87B9F70255377e024ace6630C1Eaa37F",
+      "symbol": "USDC",
+      "decimals": 6,
+      "chainId": 3,
+      "logoURI": "https://raw.githubusercontent.com/uniswap/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png"
+    },
+    {
+      "name": "Crab Strategy",
+      "address": "0xf205ad80BB86ac92247638914265887A8BAa437D",
+      "symbol": "Crab",
+      "chainId": 1,
+      "decimals": 18
+    },
+    {
+      "name": "Crab Strategy",
+      "address": "0xbffBD99cFD9d77c49595dFe8eB531715906ca4Cf",
+      "symbol": "Crab",
+      "chainId": 3,
+      "decimals": 18
+    }
+  ],
+  "logoURI": "https://squeeth.opyn.co/images/logo.svg"
+}

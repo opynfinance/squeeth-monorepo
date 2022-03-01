@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "codegen:uniswap": "apollo client:codegen --target typescript --globalTypesFile=types/global_apollo.ts --includes=./src/queries/uniswap/**/*.ts  --endpoint 'https://api.thegraph.com/subgraphs/name/kmkoushik/uniswap-v3-ropsten'",
-    "codegen:squeeth": "apollo client:codegen --target typescript --globalTypesFile=types/global_apollo.ts --includes=./src/queries/squeeth/**/*.ts  --endpoint 'https://api.thegraph.com/subgraphs/name/opynfinance/squeeth-ropsten'"
+    "codegen:squeeth": "apollo client:codegen --target typescript --globalTypesFile=types/global_apollo.ts --includes=./src/queries/squeeth/**/*.ts  --endpoint 'https://api.thegraph.com/subgraphs/name/opynfinance/squeeth-ropsten'",
+    "validate-token-list": "node ./src/validate-token-list"
   },
   "dependencies": {
     "@apollo/client": "^3.4.10",
@@ -19,6 +20,7 @@
     "@material-ui/lab": "^4.0.0-alpha.60",
     "@thanpolas/univ3prices": "^3.0.2",
     "@uniswap/sdk-core": "^3.0.1",
+    "@uniswap/token-lists": "^1.0.0-beta.27",
     "@uniswap/v3-sdk": "^3.3.2",
     "axios": "^0.24.0",
     "bignumber.js": "^9.0.1",
@@ -54,6 +56,8 @@
     "@types/set-interval-async": "^1.0.0",
     "@typescript-eslint/eslint-plugin": "^4.14.2",
     "@typescript-eslint/parser": "^4.14.2",
+    "ajv": "^8.10.0",
+    "ajv-formats": "^2.1.1",
     "apollo": "^2.33.9",
     "eslint": "7.32.0",
     "eslint-config-next": "11.0.1",
