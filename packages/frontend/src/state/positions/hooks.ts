@@ -7,7 +7,7 @@ import { Position } from '@uniswap/v3-sdk'
 
 import { networkIdAtom, addressAtom, connectedWalletAtom } from '../wallet/atoms'
 import { swaps } from '@queries/uniswap/__generated__/swaps'
-import { Vaults } from '@queries/squeeth/__generated__/Vaults'
+import SWAPS_QUERY, { SWAPS_SUBSCRIPTION } from '@queries/uniswap/swapsQuery'
 import SWAPS_ROPSTEN_QUERY, { SWAPS_ROPSTEN_SUBSCRIPTION } from '@queries/uniswap/swapsRopstenQuery'
 import { VAULT_QUERY } from '@queries/squeeth/vaultsQuery'
 import { BIG_ZERO, OSQUEETH_DECIMALS } from '@constants/index'
@@ -43,30 +43,33 @@ import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useController } from '@hooks/contracts/useController'
 import { toTokenAmount } from '@utils/calculations'
 import { squeethClient } from '@utils/apollo-client'
-import { PositionType, Vault } from '../../types'
+import { PositionType, Vault, Networks } from '../../types'
 import { useLPPositions } from '../../hooks/usePositions'
 
 export const useSwaps = () => {
   const [networkId] = useAtom(networkIdAtom)
   const [address] = useAtom(addressAtom)
   const [{ squeethPool, oSqueeth, shortHelper, swapRouter, crabStrategy }] = useAtom(addressesAtom)
-  const { subscribeToMore, data, refetch, loading, error } = useQuery<swaps, any>(SWAPS_ROPSTEN_QUERY, {
-    variables: {
-      // tokenAddress: oSqueeth?.toLowerCase(),
-      origin: address || '',
-      poolAddress: squeethPool?.toLowerCase(),
-      recipients: [shortHelper, address || '', swapRouter],
-      recipient_not: crabStrategy?.toLowerCase(),
-      orderDirection: 'asc',
+  const { subscribeToMore, data, refetch, loading, error } = useQuery<swaps, any>(
+    networkId === Networks.MAINNET ? SWAPS_QUERY : SWAPS_ROPSTEN_QUERY,
+    {
+      variables: {
+        tokenAddress: oSqueeth?.toLowerCase(),
+        origin: address || '',
+        poolAddress: squeethPool?.toLowerCase(),
+        recipients: [shortHelper, address || '', swapRouter],
+        recipient_not: crabStrategy?.toLowerCase(),
+        orderDirection: 'asc',
+      },
+      fetchPolicy: 'cache-and-network',
     },
-    fetchPolicy: 'cache-and-network',
-  })
+  )
 
   useEffect(() => {
     subscribeToMore({
-      document: SWAPS_ROPSTEN_SUBSCRIPTION,
+      document: networkId === Networks.MAINNET ? SWAPS_SUBSCRIPTION : SWAPS_ROPSTEN_SUBSCRIPTION,
       variables: {
-        // tokenAddress: oSqueeth?.toLowerCase(),
+        tokenAddress: oSqueeth?.toLowerCase(),
         origin: address || '',
         poolAddress: squeethPool?.toLowerCase(),
         recipients: [shortHelper, address || '', swapRouter],
