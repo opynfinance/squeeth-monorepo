@@ -1,6 +1,8 @@
 import { atom } from 'jotai'
 import { BIG_ZERO } from '@constants/index'
+import BigNumber from 'bignumber.js'
 
+export const normFactorAtom = atom(new BigNumber(1))
 export const markAtom = atom(BIG_ZERO)
 export const indexAtom = atom(BIG_ZERO)
 export const dailyHistoricalFundingAtom = atom({ period: 0, funding: 0 })

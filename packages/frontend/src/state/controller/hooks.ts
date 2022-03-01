@@ -22,7 +22,6 @@ import { useOracle } from '@hooks/contracts/useOracle'
 import useContract from '../../hooks/useContract'
 import {
   calculateLiquidationPriceForLP,
-  getVault,
   getIndex,
   getMark,
   getDailyHistoricalFunding,
