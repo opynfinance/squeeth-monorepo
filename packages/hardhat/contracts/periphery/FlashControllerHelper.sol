@@ -103,6 +103,8 @@ contract FlashControllerHelper is IUniswapV3SwapCallback {
 
         //slippage limit check
         require(amountOut >= _amountOutMinimum, "amount out less than min");
+
+        return amountOut;
     }
 
     /**

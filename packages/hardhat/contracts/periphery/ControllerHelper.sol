@@ -15,6 +15,7 @@ import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Po
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
+import {IERC20Detailed} from "../interfaces/IERC20Detailed.sol";
 
 // contract
 import {FlashControllerHelper} from "./FlashControllerHelper.sol";
@@ -115,7 +116,6 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         shortPowerPerp = _shortPowerPerp;
         wPowerPerpPool = _wPowerPerpPool;
         wPowerPerp = _wPowerPerp;
-        swapRouter = _swapRouter;
         weth = _weth;
         swapRouter = _swapRouter;
         nonfungiblePositionManager = _nonfungiblePositionManager;
@@ -238,6 +238,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         _exactOutFlashSwap(
             weth,
             wPowerPerp,
+            weth,
             IUniswapV3Pool(wPowerPerpPool).fee(),
             _wPowerPerpAmount,
             _collateralToWithdraw,
@@ -412,7 +413,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
      */
     function _swapCallback(
         address _caller,
-        address, /*_tokenIn*/
+        address _tokenIn,
         address, /*_tokenOut*/
         uint24, /*_fee*/
         uint256 _amountToPay,
