@@ -245,7 +245,7 @@ export async function updateTimestampVolDB(timestamp: number, vol: number): Prom
 export async function getVolForTimestampFromTardis(timestamp: number, ethPrice: number) {
   const utcDate = new Date(timestamp * 1000).toISOString().split('T')[0]
 
-  const domain = 'http://api.tardis.dev'
+  const domain = 'https://api.tardis.dev'
   const base_url = `${domain}/v1/data-feeds/deribit`
   const url = `${base_url}?from=${utcDate}&filters=[{"channel":"markprice.options"}]&offset=0`
 
