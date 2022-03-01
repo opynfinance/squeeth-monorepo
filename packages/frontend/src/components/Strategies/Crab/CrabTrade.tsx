@@ -15,7 +15,7 @@ import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useMemo, useState } from 'react'
 import CrabPosition from './CrabPosition'
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtomValue } from 'jotai'
 import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useWalletBalance } from 'src/state/wallet/hooks'
 import { BIG_ZERO } from '../../../constants'
@@ -74,8 +74,8 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
   const [borrowEth, setBorrowEth] = useState(new BigNumber(0))
   // const { balance, address, connected } = useWallet()
 
-  const [connected] = useAtom(connectedWalletAtom)
-  const [address] = useAtom(addressAtom)
+  const connected = useAtomValue(connectedWalletAtom)
+  const address = useAtomValue(addressAtom)
   const { data: balance } = useWalletBalance()
 
   const {

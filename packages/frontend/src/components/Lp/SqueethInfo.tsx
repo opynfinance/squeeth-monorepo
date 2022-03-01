@@ -3,7 +3,7 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import React from 'react'
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtomValue } from 'jotai'
 
 import { Tooltips } from '@constants/enums'
 import { useController } from '@hooks/contracts/useController'
@@ -58,7 +58,7 @@ const SqueethInfo: React.FC = () => {
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const getWSqueethPositionValueInETH = useGetWSqueethPositionValueInETH()
   // const { address } = useWallet()
-  const [address] = useAtom(addressAtom)
+  const address = useAtomValue(addressAtom)
 
   return (
     <div className={classes.squeethInfo}>

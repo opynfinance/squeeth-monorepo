@@ -7,7 +7,7 @@ import { OSQUEETH_DECIMALS } from '../../constants/'
 import { VAULTS_QUERY, VAULTS_SUBSCRIPTION } from '../../queries/squeeth/vaultsQuery'
 import { Vaults } from '../../queries/squeeth/__generated__/Vaults'
 import { squeethClient } from '../../utils/apollo-client'
-import { useAtom } from 'jotai'
+import { useAtomValue } from 'jotai'
 import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
 import { useUpdateAtom } from 'jotai/utils'
 import { firstValidVaultAtom } from 'src/state/positions/atoms'
@@ -20,8 +20,8 @@ import { firstValidVaultAtom } from 'src/state/positions/atoms'
  */
 export const useVaultManager = () => {
   const [vaults, setVaults] = useState<Array<any>>([])
-  const [address] = useAtom(addressAtom)
-  const [networkId] = useAtom(networkIdAtom)
+  const address = useAtomValue(addressAtom)
+  const networkId = useAtomValue(networkIdAtom)
   const setFirstValidVault = useUpdateAtom(firstValidVaultAtom)
 
   const { data, loading, subscribeToMore } = useQuery<Vaults>(VAULTS_QUERY, {

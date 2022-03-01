@@ -1,6 +1,6 @@
 import BigNumber from 'bignumber.js'
 import { useCallback, useEffect, useState } from 'react'
-import { useAtom } from 'jotai'
+import { useAtomValue } from 'jotai'
 
 import abi from '../../abis/erc20.json'
 // import { useWallet } from '@context/wallet'
@@ -13,8 +13,8 @@ const MAX_UINT = '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 export function useUserAllowance(token: string, spenderAddess: string) {
   // const { web3, address, handleTransaction } = useWallet()
   const handleTransaction = useHandleTransaction()
-  const [web3] = useAtom(web3Atom)
-  const [address] = useAtom(addressAtom)
+  const web3 = useAtomValue(web3Atom)
+  const address = useAtomValue(addressAtom)
 
   const [allowance, setAllowance] = useState(new BigNumber(0))
   const [isLoadingAllowance, setIsLoadingAllowance] = useState(true)

@@ -22,7 +22,7 @@ import UniswapData from '../UniswapData'
 import { connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
 import { addressesAtom } from 'src/state/positions/atoms'
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtomValue } from 'jotai'
 import { useETHPrice } from '@hooks/useETHPrice'
 import {
   useBuyAndRefund,
@@ -250,7 +250,7 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
   const ethPrice = useETHPrice()
   const amount = new BigNumber(amountInputValue)
   const altTradeAmount = new BigNumber(altAmountInputValue)
-  const [connected] = useAtom(connectedWalletAtom)
+  const connected = useAtomValue(connectedWalletAtom)
   const selectWallet = useSelectWallet()
   // const { selectWallet, connected } = useWallet()
   const { squeethAmount, longSqthBal, isShort } = usePositions()
@@ -504,7 +504,7 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle, setTradeComp
 
   const classes = useStyles()
   // const { swapRouter, oSqueeth } = useAddresses()
-  const [{ swapRouter, oSqueeth }] = useAtom(addressesAtom)
+  const { swapRouter, oSqueeth } = useAtomValue(addressesAtom)
   const sell = useSell()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const getSellQuoteForETH = useGetSellQuoteForETH()

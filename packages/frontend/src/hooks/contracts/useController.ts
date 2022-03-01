@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 import { Position } from '@uniswap/v3-sdk'
 import fzero from 'fzero'
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtomValue } from 'jotai'
 
 import abi from '../../abis/controller.json'
 import { FUNDING_PERIOD, INDEX_SCALE, SWAP_EVENT_TOPIC, Vaults, OSQUEETH_DECIMALS, TWAP_PERIOD } from '../../constants'

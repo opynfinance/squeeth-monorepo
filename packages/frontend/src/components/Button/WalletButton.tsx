@@ -3,7 +3,7 @@ import Button from '@material-ui/core/Button'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React from 'react'
 import { useMemo } from 'react'
-import { useAtom } from 'jotai'
+import { useAtomValue } from 'jotai'
 
 // import { useWallet } from '@context/wallet'
 import { Networks } from '../../types'
@@ -51,9 +51,9 @@ const useStyles = makeStyles((theme) =>
 )
 
 const WalletButton: React.FC = () => {
-  const [connected] = useAtom(connectedWalletAtom)
-  const [address] = useAtom(addressAtom)
-  const [networkId] = useAtom(networkIdAtom)
+  const connected = useAtomValue(connectedWalletAtom)
+  const address = useAtomValue(addressAtom)
+  const networkId = useAtomValue(networkIdAtom)
   const { data: balance } = useWalletBalance()
   const disconnectWallet = useDiscconectWallet()
   const selectWallet = useSelectWallet()

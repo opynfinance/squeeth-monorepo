@@ -1,6 +1,6 @@
 import { useQuery } from '@apollo/client'
 import BigNumber from 'bignumber.js'
-import { useAtom } from 'jotai'
+import { useAtomValue } from 'jotai'
 
 import { crabAuctions } from '../queries/squeeth/__generated__/crabAuctions'
 import CRAB_AUCTION_QUERY from '../queries/squeeth/crabAuctionQuery'
@@ -13,7 +13,7 @@ import { networkIdAtom } from 'src/state/wallet/atoms'
 
 export const useCrabStrategyTxHistory = () => {
   // const { networkId } = useWallet()
-  const [networkId] = useAtom(networkIdAtom)
+  const networkId = useAtomValue(networkIdAtom)
   const { data, loading } = useQuery<crabAuctions>(CRAB_AUCTION_QUERY, {
     fetchPolicy: 'cache-and-network',
     client: squeethClient[networkId],

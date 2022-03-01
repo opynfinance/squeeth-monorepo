@@ -2,7 +2,7 @@ import BigNumber from 'bignumber.js'
 import { useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 import { useQuery } from 'react-query'
-import { useAtom } from 'jotai'
+import { useAtomValue } from 'jotai'
 
 import erc20Abi from '../../abis/erc20.json'
 // import { useWallet } from '@context/wallet'
@@ -22,10 +22,9 @@ const tokenBalanceQueryKeys = {
 export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals = 18) => {
   const [contract, setContract] = useState<Contract>()
 
-  // const { address, web3, connected } = useWallet()
-  const [web3] = useAtom(web3Atom)
-  const [address] = useAtom(addressAtom)
-  const [connected] = useAtom(connectedWalletAtom)
+  const web3 = useAtomValue(web3Atom)
+  const address = useAtomValue(addressAtom)
+  const connected = useAtomValue(connectedWalletAtom)
 
   useEffect(() => {
     if (!web3 || !token) return

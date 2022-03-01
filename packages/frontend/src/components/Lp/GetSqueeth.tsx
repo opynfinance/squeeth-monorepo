@@ -20,7 +20,7 @@ import TradeInfoItem from '../Trade/TradeInfoItem'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import { useWalletBalance } from 'src/state/wallet/hooks'
 import { connectedWalletAtom } from 'src/state/wallet/atoms'
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtomValue } from 'jotai'
 import { addressesAtom } from 'src/state/positions/atoms'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
@@ -76,7 +76,7 @@ const Mint: React.FC = () => {
   const { oSqueeth } = useAtomValue(addressesAtom)
   const oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
   const { data: balance } = useWalletBalance()
-  const [connected] = useAtom(connectedWalletAtom)
+  const connected = useAtomValue(connectedWalletAtom)
   const { existingCollatPercent, existingCollat, firstValidVault } = usePositions()
   const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()

@@ -17,12 +17,12 @@ import {
   CRAB_STRATEGY,
 } from '../constants/address'
 // import { useWallet } from '@context/wallet'
-import { useAtom } from 'jotai'
+import { useAtomValue } from 'jotai'
 import { networkIdAtom } from 'src/state/wallet/atoms'
 
 const useAddresses = () => {
   // const { networkId } = useWallet()
-  const [networkId] = useAtom(networkIdAtom)
+  const networkId = useAtomValue(networkIdAtom)
 
   const state = useMemo(
     () => ({

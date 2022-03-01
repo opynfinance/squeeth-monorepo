@@ -14,7 +14,7 @@ import { VaultHistory } from '../queries/squeeth/__generated__/VaultHistory'
 import { NFTManagers } from '../types'
 import { toTokenAmount } from '@utils/calculations'
 import { squeethClient } from '@utils/apollo-client'
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtomValue } from 'jotai'
 
 import { calcDollarShortUnrealizedpnl, calcETHCollateralPnl, calcDollarLongUnrealizedpnl } from '../lib/pnl'
 import { BIG_ZERO } from '../constants/'
@@ -51,7 +51,7 @@ export const usePnL = () => {
   const getBuyQuote = useGetBuyQuote()
 
   // const { networkId } = useWallet()
-  const [networkId] = useAtom(networkIdAtom)
+  const networkId = useAtomValue(networkIdAtom)
 
   const [sellQuote, setSellQuote] = useState({
     amountOut: new BigNumber(0),

@@ -1,7 +1,7 @@
 import BigNumber from 'bignumber.js'
 import { useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtomValue } from 'jotai'
 
 import shortAbi from '../../abis/shortHelper.json'
 import { WETH_DECIMALS, OSQUEETH_DECIMALS } from '../../constants'
@@ -14,17 +14,15 @@ import { useGetBuyParam, useGetSellParam } from 'src/state/squeethPool/hooks'
 import { normFactorAtom } from 'src/state/controller/atoms'
 
 export const useShortHelper = () => {
-  // const { web3, address, handleTransaction } = useWallet()
-  const [web3] = useAtom(web3Atom)
+  const web3 = useAtomValue(web3Atom)
   const handleTransaction = useHandleTransaction()
-  const [address] = useAtom(addressAtom)
+  const address = useAtomValue(addressAtom)
   const [contract, setContract] = useState<Contract>()
 
   const getSellParam = useGetSellParam()
   const getBuyParam = useGetBuyParam()
 
-  // const { shortHelper } = useAddresses()
-  const [{ shortHelper }] = useAtom(addressesAtom)
+  const { shortHelper } = useAtomValue(addressesAtom)
   const normalizationFactor = useAtomValue(normFactorAtom)
 
   useEffect(() => {

@@ -12,7 +12,7 @@ import { GreyButton } from '@components/Button'
 import { useUserCrabTxHistory } from '@hooks/useUserCrabTxHistory'
 import { CrabStrategyTxType, Networks } from '../../../types/index'
 import clsx from 'clsx'
-import { useAtom } from 'jotai'
+import { useAtomValue } from 'jotai'
 import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
@@ -55,8 +55,8 @@ export const CrabStrategyHistory: React.FC = () => {
   const { data, loading } = useCrabStrategyTxHistory()
   // const { networkId, address } = useWallet()
 
-  const [address] = useAtom(addressAtom)
-  const [networkId] = useAtom(networkIdAtom)
+  const address = useAtomValue(addressAtom)
+  const networkId = useAtomValue(networkIdAtom)
 
   const [txType, setTxType] = useState(TxType.HEDGES)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)

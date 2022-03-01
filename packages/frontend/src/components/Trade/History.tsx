@@ -9,7 +9,7 @@ import { useWorldContext } from '@context/world'
 import { useTransactionHistory } from '@hooks/useTransactionHistory'
 import { useUsdAmount } from '@hooks/useUsdAmount'
 import { networkIdAtom } from 'src/state/wallet/atoms'
-import { useAtom } from 'jotai'
+import { useAtomValue } from 'jotai'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { useNormFactor } from 'src/state/controller/hooks'
 
@@ -52,7 +52,7 @@ const useStyles = makeStyles((theme) =>
 const History: React.FC = () => {
   const { transactions } = useTransactionHistory()
   // const { networkId } = useWallet()
-  const [networkId] = useAtom(networkIdAtom)
+  const networkId = useAtomValue(networkIdAtom)
   const ethPrice = useETHPrice()
   const normalizationFactor = useNormFactor()
 

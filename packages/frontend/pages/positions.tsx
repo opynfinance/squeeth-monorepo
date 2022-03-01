@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useMemo } from 'react'
 import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtomValue } from 'jotai'
 
 import { LPTable } from '@components/Lp/LPTable'
 import Nav from '@components/Nav'
@@ -121,7 +121,7 @@ const useStyles = makeStyles((theme) =>
 
 const PositionsHome = () => {
   // const { address } = useWallet()
-  const [address] = useAtom(addressAtom)
+  const address = useAtomValue(addressAtom)
 
   if (address)
     return (
@@ -166,7 +166,7 @@ export function Positions() {
   // const { pool } = useSqueethPool()
   const { oSqueeth } = useAtomValue(addressesAtom)
   const oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
-  const [address] = useAtom(addressAtom)
+  const address = useAtomValue(addressAtom)
 
   const {
     positionType,

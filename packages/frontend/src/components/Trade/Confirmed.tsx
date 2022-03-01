@@ -2,7 +2,7 @@ import { createStyles, makeStyles, Tooltip, Typography } from '@material-ui/core
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import Image from 'next/image'
 import React from 'react'
-import { useAtom } from 'jotai'
+import { useAtomValue } from 'jotai'
 
 import { EtherscanPrefix, Tooltips } from '../../constants'
 // import { useWallet } from '@context/wallet'
@@ -64,7 +64,7 @@ type ConfirmedProps = {
 const Confirmed: React.FC<ConfirmedProps> = ({ confirmationMessage, txnHash, confirmType }) => {
   const classes = useStyles()
   // const { networkId } = useWallet()
-  const [networkId] = useAtom(networkIdAtom)
+  const networkId = useAtomValue(networkIdAtom)
 
   return (
     <div>

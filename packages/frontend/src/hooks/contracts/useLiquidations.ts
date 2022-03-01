@@ -1,7 +1,7 @@
 import { useQuery } from '@apollo/client'
 import { useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
-import { useAtom } from 'jotai'
+import { useAtomValue } from 'jotai'
 
 import controllerABI from '../../abis/controller.json'
 import { OSQUEETH_DECIMALS } from '../../constants'
@@ -25,10 +25,10 @@ export const useVaultLiquidations = (vaultId: number, refetchIntervalSec = 30) =
   const [contract, setContract] = useState<Contract>()
 
   // const { web3, networkId } = useWallet()
-  const [web3] = useAtom(web3Atom)
-  const [networkId] = useAtom(networkIdAtom)
+  const web3 = useAtomValue(web3Atom)
+  const networkId = useAtomValue(networkIdAtom)
   // const { controller } = useAddresses()
-  const [{ controller }] = useAtom(addressesAtom)
+  const { controller } = useAtomValue(addressesAtom)
 
   useEffect(() => {
     if (!web3 || !controller) return

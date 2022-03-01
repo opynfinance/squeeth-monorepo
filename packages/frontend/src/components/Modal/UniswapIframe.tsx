@@ -13,7 +13,7 @@ import { Tooltips, UniswapIFrameOpen, UniswapIFrameClose } from '@constants/enum
 import { useAddresses } from '@hooks/useAddress'
 import useCopyClipboard from '@hooks/useCopyClipboard'
 import { networkIdAtom } from 'src/state/wallet/atoms'
-import { useAtom } from 'jotai'
+import { useAtomValue } from 'jotai'
 import { addressesAtom } from 'src/state/positions/atoms'
 
 const useStyles = makeStyles((theme) =>
@@ -81,10 +81,10 @@ interface UniswapIframeProps {
 export const UniswapIframe: React.FC<UniswapIframeProps> = ({ text, closePosition }) => {
   const classes = useStyles()
   // const { oSqueeth } = useAddresses()
-  const [{ oSqueeth }] = useAtom(addressesAtom)
+  const { oSqueeth } = useAtomValue(addressesAtom)
 
   // const { networkId } = useWallet()
-  const [networkId] = useAtom(networkIdAtom)
+  const networkId = useAtomValue(networkIdAtom)
   const [isCopied, setCopied] = useCopyClipboard()
 
   const [open, setOpen] = React.useState(false)

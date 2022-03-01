@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import BigNumber from 'bignumber.js'
 import { useQuery } from '@apollo/client'
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtomValue } from 'jotai'
 
 // import { useWallet } from '@context/wallet'
 import { BIG_ZERO } from '@constants/index'
@@ -16,8 +16,8 @@ import { isWethToken0Atom } from 'src/state/positions/atoms'
 
 export const useSwapsData = () => {
   const { squeethPool, weth, oSqueeth, shortHelper, swapRouter, crabStrategy } = useAddresses()
-  const [networkId] = useAtom(networkIdAtom)
-  const [address] = useAtom(addressAtom)
+  const networkId = useAtomValue(networkIdAtom)
+  const address = useAtomValue(addressAtom)
   const { getUsdAmt } = useUsdAmount()
   const { data, subscribeToMore, refetch } = useQuery<swaps, swapsVariables>(
     networkId === Networks.MAINNET ? SWAPS_QUERY : SWAPS_ROPSTEN_QUERY,

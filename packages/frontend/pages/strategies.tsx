@@ -19,7 +19,7 @@ import Image from 'next/image'
 import bull from '../public/images/bull.gif'
 import bear from '../public/images/bear.gif'
 import CrabTrade from '@components/Strategies/Crab/CrabTrade'
-import { useAtom } from 'jotai'
+import { useAtomValue } from 'jotai'
 import { addressAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
 import { useCurrentImpliedFunding, useDailyHistoricalFunding, useIndex } from 'src/state/controller/hooks'
@@ -104,7 +104,7 @@ const Strategies: React.FC = () => {
   const dailyHistoricalFunding = useDailyHistoricalFunding()
   const currentImpliedFunding = useCurrentImpliedFunding()
 
-  const [address] = useAtom(addressAtom)
+  const address = useAtomValue(addressAtom)
   const selectWallet = useSelectWallet()
   useMemo(() => {
     if (selectedIdx === 0) return Vaults.ETHBull

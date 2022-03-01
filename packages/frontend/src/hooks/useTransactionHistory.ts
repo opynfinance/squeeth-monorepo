@@ -1,6 +1,6 @@
 import { useQuery } from '@apollo/client'
 import BigNumber from 'bignumber.js'
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtomValue } from 'jotai'
 
 import { TransactionType } from '../constants'
 // import { useWallet } from '@context/wallet'

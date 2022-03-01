@@ -1,7 +1,7 @@
 import BigNumber from 'bignumber.js'
 import { useCallback, useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
-import { useAtom } from 'jotai'
+import { useAtomValue } from 'jotai'
 
 import erc721Abi from '../../abis/erc721.json'
 // import { useWallet } from '@context/wallet'
@@ -15,8 +15,8 @@ export const useERC721 = (token: string) => {
 
   // const { address, web3, handleTransaction } = useWallet()
   const handleTransaction = useHandleTransaction()
-  const [web3] = useAtom(web3Atom)
-  const [address] = useAtom(addressAtom)
+  const web3 = useAtomValue(web3Atom)
+  const address = useAtomValue(addressAtom)
 
   useEffect(() => {
     if (!web3 || !token) return

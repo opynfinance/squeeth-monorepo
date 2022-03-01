@@ -107,7 +107,7 @@ const CrabProvider: React.FC = ({ children }) => {
   const ready = useAtomValue(readyAtom)
   const handleTransaction = useHandleTransaction()
   // const { crabStrategy } = useAddresses()
-  const [{ crabStrategy }] = useAtom(addressesAtom)
+  const { crabStrategy } = useAtomValue(addressesAtom)
   const getVault = useGetVault()
   const getBuyQuote = useGetBuyQuote()
   const getSellQuote = useGetSellQuote()

@@ -49,7 +49,7 @@ import { positions, positionsVariables } from '@queries/uniswap/__generated__/po
 import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useWalletBalance } from 'src/state/wallet/hooks'
 import { addressesAtom } from 'src/state/positions/atoms'
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtomValue } from 'jotai'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import {
   useBurnAndRedeem,
@@ -252,8 +252,8 @@ enum VaultError {
 const SelectLP: React.FC<{ lpToken: number; setLpToken: (t: number) => void }> = ({ lpToken, setLpToken }) => {
   // const { squeethPool } = useAddresses()
   // const { address } = useWallet()
-  const [{ squeethPool }] = useAtom(addressesAtom)
-  const [address] = useAtom(addressAtom)
+  const { squeethPool } = useAtomValue(addressesAtom)
+  const address = useAtomValue(addressAtom)
 
   const { data } = useQuery<positions, positionsVariables>(POSITIONS_QUERY, {
     variables: {
@@ -1008,7 +1008,7 @@ const Main: React.FC = () => {
   const classes = useStyles()
   // const { connected } = useWallet()
 
-  const [connected] = useAtom(connectedWalletAtom)
+  const connected = useAtomValue(connectedWalletAtom)
 
   if (!connected) {
     return (

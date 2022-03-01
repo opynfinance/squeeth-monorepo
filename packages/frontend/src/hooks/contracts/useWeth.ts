@@ -1,7 +1,7 @@
 import BigNumber from 'bignumber.js'
 import { useEffect, useState } from 'react'
 import { Contract } from 'web3-eth-contract'
-import { useAtom } from 'jotai'
+import { useAtomValue } from 'jotai'
 
 import wethAbi from '../../abis/weth.json'
 // import { useWallet } from '@context/wallet'
@@ -17,12 +17,10 @@ import { addressesAtom } from 'src/state/positions/atoms'
 export const useWeth = () => {
   const [contract, setContract] = useState<Contract>()
 
-  // const { address, web3, handleTransaction } = useWallet()
-  const [web3] = useAtom(web3Atom)
+  const web3 = useAtomValue(web3Atom)
   const handleTransaction = useHandleTransaction()
-  const [address] = useAtom(addressAtom)
-  // const { weth } = useAddresses()
-  const [{ weth }] = useAtom(addressesAtom)
+  const address = useAtomValue(addressAtom)
+  const { weth } = useAtomValue(addressesAtom)
 
   useEffect(() => {
     if (!web3 || !weth) return
