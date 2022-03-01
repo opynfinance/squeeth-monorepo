@@ -124,15 +124,17 @@ export function useSqueethPNLCompounding(
       const volsMap = await getVolMap()
       const liveVolsMap = await getLiveVolMap()
 
-      const normTimestamps = timestamps.filter((timestamp) => {
+      const normTimestamps = timestamps.filter((timestamp, index) => {
         const utcDate = new Date(timestamp * 1000).toISOString().split('T')[0]
-        return timestamp >= 1641772800 && !Object.keys(liveVolsMap ?? {}).includes(utcDate) // 1641772800 is UTC timestamp for Jan 10(the first date of live VOL)
+        return (
+          (timestamp >= 1641772800 && !Object.keys(liveVolsMap ?? {}).includes(utcDate)) ||
+          index === timestamps.length - 1
+        ) // 1641772800 is UTC timestamp for Jan 10(the first date of live VOL) and exclude timestamp of current day as there will be data added
       })
+      console.log('bbb', normTimestamps)
       setTimesToFetchNorm(normTimestamps)
 
-      console.log('bbb', normTimestamps, ' ', timestamps)
-
-      if (normUpdated) {
+      if (normUpdated && timestamps.length > 0) {
         const annualVolData = await Promise.all(
           timestamps.map(async (timestamp, index) => {
             const { value: price, time } = ethPrices[index > 0 ? index : 0]
@@ -299,7 +301,13 @@ export async function getVolMap(): Promise<{ [key: string]: number }> {
 export async function getLiveVolMap(): Promise<{ [key: string]: number }> {
   const document = db.doc('squeeth-vol/slive-vol')
   const doc = await document.get()
-  const data = doc.get('live-vol')
+  let data = doc.get('live-vol')
+  if (!data) {
+    await document.set({
+      'live-vol': {},
+    })
+    data = {}
+  }
   return data
 }
 
@@ -308,7 +316,7 @@ export async function updateTimestampVolDB(timestamp: number, vol: number): Prom
 
   const document = db.doc('squeeth-vol/historical-vol')
   const doc = await document.get()
-  const data = doc.get('daily-vol') ?? []
+  const data = doc.get('daily-vol')
 
   if (Object.keys(data).includes(utcDate)) {
     console.log(`don't need to update ${utcDate} vol`)
@@ -325,14 +333,10 @@ export async function updateTimestampVolDB(timestamp: number, vol: number): Prom
 export async function updateTimestampLiveVolDB(timestamp: number, vol: number): Promise<void> {
   const utcDate = new Date(timestamp * 1000).toISOString().split('T')[0]
 
-  const document = db.doc('squeeth-vol/historical-vol')
+  const document = db.doc('squeeth-vol/slive-vol')
   const doc = await document.get()
-  const data = doc.get('live-vol') ?? {}
+  const data = doc.get('live-vol')
 
-  if (Object.keys(data).includes(utcDate)) {
-    console.log(`don't need to update ${utcDate} live vol`)
-    return
-  }
   console.log(`Updating live vol for ${utcDate} ${vol}`)
   const copy = { ...data }
   copy[utcDate] = Number(vol)

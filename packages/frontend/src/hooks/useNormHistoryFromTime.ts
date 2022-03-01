@@ -9,7 +9,7 @@ import { updateTimestampLiveVolDB } from '@utils/pricer'
 export const useNormHistoryFromTime = (timestamps: number[]) => {
   const { networkId } = useWallet()
   const [timeIndex, setTimeIndex] = useState(0)
-  const [dataUpdated, setDataUpdated] = useState(false)
+  const [dataUpdated, setDataUpdated] = useState(true)
   const { data, loading } = useQuery(NORMHISTORY_TIME_QUERY, {
     variables: {
       timestamp: timestamps[timeIndex],
@@ -18,6 +18,12 @@ export const useNormHistoryFromTime = (timestamps: number[]) => {
     client: squeethClient[networkId],
     fetchPolicy: 'cache-and-network',
   })
+
+  useEffect(() => {
+    if (timestamps.length > 0) {
+      setDataUpdated(false)
+    }
+  }, [timestamps.length])
 
   useEffect(() => {
     if (!loading) {
@@ -36,12 +42,12 @@ export const useNormHistoryFromTime = (timestamps: number[]) => {
             }, 0)
             await updateTimestampLiveVolDB(timestamps[timeIndex], avgVol)
           }
-          setDataUpdated(true)
+          if (timeIndex === timestamps.length - 1) {
+            setDataUpdated(true)
+          } else {
+            setTimeIndex(timeIndex + 1)
+          }
         })()
-      }
-      if (timeIndex < timestamps.length - 1 && dataUpdated) {
-        setTimeIndex(timeIndex + 1)
-        setDataUpdated(false)
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

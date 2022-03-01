@@ -33,7 +33,7 @@ enum ChartType {
   Funding = 'Funding',
 }
 
-const Chart = dynamic(() => import('kaktana-react-lightweight-charts'), { ssr: false })
+const Chart = dynamic(() => import('kaktana-react-lightweight-charts'), {})
 
 const useStyles = makeStyles((theme) =>
   createStyles({
