@@ -13,11 +13,8 @@ const NORMHISTORY_QUERY = gql`
 `
 
 export const NORMHISTORY_TIME_QUERY = gql`
-  query normalizationFactorUpdates($timestamp: Int) {
-    normalizationFactorUpdates(
-      first: 1
-      where: { lastModificationTimestamp_lte: $timestamp, timestamp_gte: $timestamp }
-    ) {
+  query normalizationFactorUpdates($timestamp: Int, $timestampOnedayAfter: Int) {
+    normalizationFactorUpdates(where: { timestamp_gte: $timestamp, timestamp_lt: $timestampOnedayAfter }) {
       id
       oldNormFactor
       newNormFactor

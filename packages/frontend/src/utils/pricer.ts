@@ -1,6 +1,5 @@
 /* eslint-disable prettier/prettier */
 import { useNormHistoryFromTime } from '@hooks/useNormHistoryFromTime'
-import { NormHistory } from '../types/index'
 import { useEffect, useState } from 'react'
 import db from './firestore'
 
@@ -115,30 +114,37 @@ export function useSqueethPNLCompounding(
   const [chartData, setChartData] = useState<
     { shortPNL: number; longPNL: number; time: number; isLive: boolean }[] | undefined
   >(undefined)
-  const normHistoryItems: (NormHistory | undefined)[] = useNormHistoryFromTime(timestamps)
+  const [timesToFetchNorm, setTimesToFetchNorm] = useState<number[]>([])
+  const normUpdated = useNormHistoryFromTime(timesToFetchNorm)
 
   useEffect(() => {
     ;(async () => {
       let cumulativeSqueethLongReturn = 0
       let cumulativeSqueethCrabReturn = 1
+      const volsMap = await getVolMap()
+      const liveVolsMap = await getLiveVolMap()
 
-      if (normHistoryItems.length === ethPrices.length) {
-        const volsMap = await getVolMap()
+      const normTimestamps = timestamps.filter((timestamp) => {
+        const utcDate = new Date(timestamp * 1000).toISOString().split('T')[0]
+        return timestamp >= 1641772800 && !Object.keys(liveVolsMap ?? {}).includes(utcDate) // 1641772800 is UTC timestamp for Jan 10(the first date of live VOL)
+      })
+      setTimesToFetchNorm(normTimestamps)
+
+      console.log('bbb', normTimestamps, ' ', timestamps)
+
+      if (normUpdated) {
         const annualVolData = await Promise.all(
-          normHistoryItems.map(async (item, index) => {
+          timestamps.map(async (timestamp, index) => {
             const { value: price, time } = ethPrices[index > 0 ? index : 0]
-            let annualVol
-            if (item) {
-              const secondsElapsed = Number(item.timestamp) - Number(item.lastModificationTimestamp)
-              const deltaT = secondsElapsed / (420 * 60 * 60)
-              const markIndex = 1 / Math.exp(Math.log(Number(item.newNormFactor) / Number(item.oldNormFactor)) / deltaT)
-              const dayFunding = Math.log(markIndex) / 17.5
-              annualVol = (dayFunding < 0 ? -1 : 1) * Math.sqrt(Math.abs(dayFunding) * 365)
-            } else {
+            const utcDate = new Date(timestamp * 1000).toISOString().split('T')[0]
+            let annualVol = liveVolsMap[utcDate]
+            let isLive = true
+            if (!annualVol) {
               annualVol = await getVolForTimestampOrDefault(volsMap, time, price)
+              isLive = false
             }
 
-            return { annualVol, isLive: Boolean(item) }
+            return { annualVol, isLive }
           }),
         )
         const charts = annualVolData.map((item, index) => {
@@ -166,7 +172,7 @@ export function useSqueethPNLCompounding(
       }
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [normHistoryItems.length])
+  }, [timestamps.length])
   return chartData
 }
 
@@ -290,12 +296,19 @@ export async function getVolMap(): Promise<{ [key: string]: number }> {
   return data
 }
 
+export async function getLiveVolMap(): Promise<{ [key: string]: number }> {
+  const document = db.doc('squeeth-vol/slive-vol')
+  const doc = await document.get()
+  const data = doc.get('live-vol')
+  return data
+}
+
 export async function updateTimestampVolDB(timestamp: number, vol: number): Promise<void> {
   const utcDate = new Date(timestamp * 1000).toISOString().split('T')[0]
 
   const document = db.doc('squeeth-vol/historical-vol')
   const doc = await document.get()
-  const data = doc.get('daily-vol')
+  const data = doc.get('daily-vol') ?? []
 
   if (Object.keys(data).includes(utcDate)) {
     console.log(`don't need to update ${utcDate} vol`)
@@ -306,6 +319,25 @@ export async function updateTimestampVolDB(timestamp: number, vol: number): Prom
   copy[utcDate] = Number(vol)
   await document.set({
     'daily-vol': copy,
+  })
+}
+
+export async function updateTimestampLiveVolDB(timestamp: number, vol: number): Promise<void> {
+  const utcDate = new Date(timestamp * 1000).toISOString().split('T')[0]
+
+  const document = db.doc('squeeth-vol/historical-vol')
+  const doc = await document.get()
+  const data = doc.get('live-vol') ?? {}
+
+  if (Object.keys(data).includes(utcDate)) {
+    console.log(`don't need to update ${utcDate} live vol`)
+    return
+  }
+  console.log(`Updating live vol for ${utcDate} ${vol}`)
+  const copy = { ...data }
+  copy[utcDate] = Number(vol)
+  await document.set({
+    'live-vol': copy,
   })
 }
 
