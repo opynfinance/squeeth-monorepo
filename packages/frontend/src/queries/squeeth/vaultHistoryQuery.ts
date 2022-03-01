@@ -2,7 +2,7 @@ import { gql } from '@apollo/client'
 
 const VAULT_HISTORY_QUERY = gql`
   query VaultHistory($vaultId: BigInt!) {
-    vaultHistories(where: { vaultId: $vaultId }) {
+    vaultHistories(orderBy: timestamp, orderDirection: asc, where: { vaultId: $vaultId }) {
       id
       timestamp
       totalEthCollateralAmount
@@ -16,7 +16,7 @@ const VAULT_HISTORY_QUERY = gql`
 
 export const VAULT_HISTORY_SUBSCRIPTION = gql`
   subscription subscriptionVaultHistory($vaultId: BigInt!) {
-    vaultHistories(where: { vaultId: $vaultId }) {
+    vaultHistories(orderBy: timestamp, orderDirection: asc, where: { vaultId: $vaultId }) {
       id
       timestamp
       totalEthCollateralAmount
