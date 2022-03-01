@@ -23,8 +23,8 @@ export const useTransactionHistory = () => {
     variables: {
       poolAddress: squeethPool.toLowerCase(),
       owner: address?.toLowerCase(),
-      origin: address || '',
-      recipients: [shortHelper, address || '', swapRouter],
+      origin: address?.toLowerCase() || '',
+      recipients: [shortHelper?.toLowerCase(), address?.toLowerCase() || '', swapRouter?.toLowerCase()],
       orderDirection: 'desc',
     },
     fetchPolicy: 'cache-and-network',
