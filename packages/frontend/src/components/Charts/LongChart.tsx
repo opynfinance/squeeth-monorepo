@@ -311,7 +311,11 @@ export function LongChart() {
               </div>
               <div className={classes.legendContainer}>
                 <div style={{ width: '20px', height: '20px', backgroundColor: '#00E396' }}></div>
-                <div>Squeeth PNL</div>
+                <div>Squeeth Deribit PNL</div>
+              </div>
+              <div className={classes.legendContainer}>
+                <div style={{ width: '20px', height: '20px', backgroundColor: '#FEB01B' }}></div>
+                <div>Squeeth LIVE PNL</div>
               </div>
             </div>
           </div>

@@ -131,7 +131,6 @@ export function useSqueethPNLCompounding(
           index === timestamps.length - 1
         ) // 1641772800 is UTC timestamp for Jan 10(the first date of live VOL) and exclude timestamp of current day as there will be data added
       })
-      console.log('bbb', normTimestamps)
       setTimesToFetchNorm(normTimestamps)
 
       if (normUpdated && timestamps.length > 0) {
@@ -152,6 +151,7 @@ export function useSqueethPNLCompounding(
         const charts = annualVolData.map((item, index) => {
           const { annualVol, isLive } = item
           const { value: price, time } = ethPrices[index > 0 ? index : 0]
+
           const fundingPeriodMultiplier = days > 90 ? 365 : days > 1 ? 365 * 24 : 356 * 24 * 12
 
           let vol = annualVol * volMultiplier
