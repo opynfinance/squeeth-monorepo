@@ -249,6 +249,8 @@ export async function getVolForTimestampFromTardis(timestamp: number, ethPrice: 
   const base_url = `${domain}/v1/data-feeds/deribit`
   const url = `${base_url}?from=${utcDate}&filters=[{"channel":"markprice.options"}]&offset=0`
 
+  console.log('ccc', url, ' ', apiKey)
+
   try {
     const response = await fetch(url, {
       headers: {
