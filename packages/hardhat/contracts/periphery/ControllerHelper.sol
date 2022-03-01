@@ -135,7 +135,6 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         shortPowerPerp = _shortPowerPerp;
         wPowerPerpPool = _wPowerPerpPool;
         wPowerPerp = _wPowerPerp;
-        swapRouter = _swapRouter;
         weth = _weth;
         swapRouter = _swapRouter;
         nonfungiblePositionManager = _nonfungiblePositionManager;
@@ -230,6 +229,15 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         emit FlashWBurn(msg.sender, _vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw, _wPowerPerpAmountToBuy);
     }
 
+    /**
+     * @notice sell long wPowerPerp and flashswap mint short position
+     * @dev flahswap amount = collateral amount - msg.value - ETH from selling long wPowerPerp
+     * @param _vaultId vault ID
+     * @param _wPowerPerpAmountToMint wPowerPerp amount to mint
+     * @param _collateralAmount collateral amount to use for minting
+     * @param _wPowerPerpAmountToSell long wPowerPerp amount to sell
+     * @param _minToReceive min ETH amount to receive for selling long wPowerPerp amount
+     */
     function flashswapSellLongWMint(
         uint256 _vaultId,
         uint256 _wPowerPerpAmountToMint,
@@ -239,6 +247,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
     ) external payable {
         IWPowerPerp(wPowerPerp).transferFrom(msg.sender, address(this), _wPowerPerpAmountToSell);
 
+        // swap long wPowerPerp
         uint256 amountOut = _exactInFlashSwap(
             wPowerPerp,
             weth,
@@ -249,21 +258,17 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             ""
         );
 
-        _exactOutFlashSwap(
-            weth,
+        // flahswap and mint short position
+        _exactInFlashSwap(
             wPowerPerp,
+            weth,
             IUniswapV3Pool(wPowerPerpPool).fee(),
-            _collateralAmount.sub(msg.value).sub(amountOut),
             _wPowerPerpAmountToMint,
+            _collateralAmount.sub(msg.value).sub(amountOut),
             uint8(FLASH_SOURCE.FLASH_SELL_LONG_W_MINT),
-            abi.encodePacked(
-                _vaultId,
-                _wPowerPerpAmountToMint,
-                _collateralAmount
-            )
+            abi.encodePacked(_vaultId, _wPowerPerpAmountToMint, _collateralAmount)
         );
-
-    }   
+    }
 
     /**
      * @notice mint WPowerPerp and LP into Uniswap v3 pool
@@ -565,7 +570,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
      */
     function _swapCallback(
         address _caller,
-        address, /*_tokenIn*/
+        address _tokenIn,
         address, /*_tokenOut*/
         uint24, /*_fee*/
         uint256 _amountToPay,
@@ -670,6 +675,9 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             }
             // this is a newly open vault, transfer to the user
             if (data.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), _caller, vaultId);
+        } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.SWAP) {
+            // this is to handle the swap() callback, calling swap() from this contract will only work with wPowerPerpPool
+            IERC20Detailed(_tokenIn).transfer(wPowerPerpPool, _amountToPay);
         }
     }
 }
