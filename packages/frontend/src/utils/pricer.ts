@@ -133,7 +133,7 @@ export function useSqueethPNLCompounding(
       })
       setTimesToFetchNorm(normTimestamps)
 
-      if (normUpdated && timestamps.length > 0) {
+      if (timestamps.length > 0) {
         const annualVolData = await Promise.all(
           timestamps.map(async (timestamp, index) => {
             const { value: price, time } = ethPrices[index > 0 ? index : 0]
@@ -148,6 +148,7 @@ export function useSqueethPNLCompounding(
             return { annualVol, isLive }
           }),
         )
+
         const charts = annualVolData.map((item, index) => {
           const { annualVol, isLive } = item
           const { value: price, time } = ethPrices[index > 0 ? index : 0]
@@ -174,7 +175,7 @@ export function useSqueethPNLCompounding(
       }
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timestamps.length])
+  }, [timestamps.length, days])
   return chartData
 }
 

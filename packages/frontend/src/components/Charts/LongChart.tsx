@@ -157,17 +157,11 @@ export function LongChart() {
     }
   }, [mode])
 
-  const startTimestamp = useMemo(
-    () => (lineSeries && lineSeries.length > 0 && lineSeries[0].data.length > 0 ? lineSeries[0].data[0].time : 0),
-    [lineSeries],
-  )
+  const startTimestamp = useMemo(() => (longSeries && longSeries.length > 0 ? longSeries[0].time : 0), [longSeries])
 
   const endTimestamp = useMemo(
-    () =>
-      lineSeries && lineSeries.length > 0 && lineSeries[0].data.length > 0
-        ? lineSeries[0].data[lineSeries[0].data.length - 1].time
-        : 0,
-    [lineSeries],
+    () => (longSeries && longSeries.length > 0 ? longSeries[longSeries.length - 1].time : 0),
+    [longSeries],
   )
 
   return (
