@@ -21,6 +21,7 @@ import IV from '../IV'
 import { SqueethTab, SqueethTabs } from '../Tabs'
 import LongSqueethPayoff from './LongSqueethPayoff'
 import FundingChart from './FundingChart'
+import LegendBox from '@components/LegendBox'
 enum ChartType {
   PNL = 'LONG PNL',
   // Price = 'Price Chart',
@@ -85,10 +86,6 @@ const useStyles = makeStyles((theme) =>
       gap: '10px',
       marginTop: '10px',
       justifyContent: 'center',
-    },
-    legendContainer: {
-      display: 'flex',
-      gap: '5px',
     },
   }),
 )
@@ -299,18 +296,11 @@ export function LongChart() {
             )}
 
             <div className={classes.legendBox}>
-              <div className={classes.legendContainer}>
-                <div style={{ width: '20px', height: '20px', backgroundColor: '#018FFB' }}></div>
-                <div>ETH PNL</div>
-              </div>
-              <div className={classes.legendContainer}>
-                <div style={{ width: '20px', height: '20px', backgroundColor: '#00E396' }}></div>
-                <div>Squeeth Deribit PNL</div>
-              </div>
-              <div className={classes.legendContainer}>
-                <div style={{ width: '20px', height: '20px', backgroundColor: '#FEB01B' }}></div>
-                <div>Squeeth LIVE PNL</div>
-              </div>
+              {lineSeries && lineSeries[0].data.length > 0 && <LegendBox bgColor="#018FFB" text="ETH PNL" />}
+              {lineSeries && lineSeries[1].data.length > 0 && (
+                <LegendBox bgColor="#00E396" text="Squeeth Deribit PNL" />
+              )}
+              {lineSeries && lineSeries[2].data.length > 0 && <LegendBox bgColor="#FEB01B" text="Squeeth LIVE PNL" />}
             </div>
           </div>
 
