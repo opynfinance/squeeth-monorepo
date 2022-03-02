@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useReducer } from 'react'
 import { Reducer } from 'react-transition-group/node_modules/@types/react'
 
-import { useWorldContext } from '@context/world'
 import { useAtomValue } from 'jotai'
 import { addressesAtom } from 'src/state/positions/atoms'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'

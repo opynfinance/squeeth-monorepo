@@ -14,9 +14,7 @@ import { addressesAtom, isWethToken0Atom } from 'src/state/positions/atoms'
 import { poolAtom } from 'src/state/squeethPool/atoms'
 
 export const useNFTManager = () => {
-  // const { nftManager } = useAddresses()
   const { nftManager } = useAtomValue(addressesAtom)
-  // const { web3 } = useWallet()
   const web3 = useAtomValue(web3Atom)
   const pool = useAtomValue(poolAtom)
 

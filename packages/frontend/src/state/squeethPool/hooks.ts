@@ -3,7 +3,7 @@ import { Token, CurrencyAmount } from '@uniswap/sdk-core'
 import { Pool, Route, Trade } from '@uniswap/v3-sdk'
 import { useUpdateAtom } from 'jotai/utils'
 import { useEffect, useCallback } from 'react'
-import { atom, useAtomValue } from 'jotai'
+import { useAtomValue } from 'jotai'
 import BigNumber from 'bignumber.js'
 import { ethers } from 'ethers'
 

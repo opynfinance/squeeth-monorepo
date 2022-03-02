@@ -31,7 +31,6 @@ import {
   useShortDebt,
   useShortRealizedPnl,
   usePositionsAndFeesComputation,
-  useLPPositionsAndFees,
 } from 'src/state/positions/hooks'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { activePositionsAtom, addressesAtom, existingCollatAtom, positionTypeAtom } from 'src/state/positions/atoms'
