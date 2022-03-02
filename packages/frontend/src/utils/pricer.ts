@@ -105,15 +105,18 @@ export async function getSqueethPNLCompounding(
   return charts
 }
 
-export function useSqueethPNLCompounding(
+export function useETHSqueethPNLCompounding(
   ethPrices: { time: number; value: number }[],
   volMultiplier = 1.2,
   days = 365,
 ) {
   const timestamps = ethPrices.map(({ time }) => time)
-  const [chartData, setChartData] = useState<
+  const [squeethChartData, setSqueethChartData] = useState<
     { shortPNL: number; longPNL: number; time: number; isLive: boolean }[] | undefined
   >(undefined)
+  const [ethChartData, setETHChartData] = useState<{ shortPNL: number; longPNL: number; time: number }[] | undefined>(
+    undefined,
+  )
   const [timesToFetchNorm, setTimesToFetchNorm] = useState<number[]>([])
   const normUpdated = useNormHistoryFromTime(timesToFetchNorm)
 
@@ -149,6 +152,19 @@ export function useSqueethPNLCompounding(
           }),
         )
 
+        let cumulativeEthLongShortReturn = 0
+
+        const ethCharts = ethPrices.map((ethItem, index) => {
+          const { value: price, time } = ethItem
+          const preEthPrice = ethPrices[index > 0 ? index - 1 : 0].value
+          cumulativeEthLongShortReturn += Math.log(price / preEthPrice)
+
+          const longPNL = Math.round((Math.exp(cumulativeEthLongShortReturn) - 1) * 10000) / 100
+          const shortPNL = Math.round((Math.exp(-cumulativeEthLongShortReturn) - 1) * 10000) / 100
+          return { shortPNL, longPNL, time }
+        })
+        setETHChartData(ethCharts)
+
         const charts = annualVolData.map((item, index) => {
           const { annualVol, isLive } = item
           const { value: price, time } = ethPrices[index > 0 ? index : 0]
@@ -171,12 +187,12 @@ export function useSqueethPNLCompounding(
 
           return { shortPNL, longPNL, time, isLive }
         })
-        setChartData(charts)
+        setSqueethChartData(charts)
       }
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timestamps.length, days])
-  return chartData
+  return { ethPNL: ethChartData, squeethPNL: squeethChartData }
 }
 
 /**
