@@ -36,14 +36,14 @@ export const useVaultManager = () => {
     client: squeethClient[networkId],
     fetchPolicy: 'cache-and-network',
     variables: {
-      ownerId: address?.toLowerCase() ?? '',
+      ownerId: address ?? '',
     },
   })
   useEffect(() => {
     subscribeToMore({
       document: VAULTS_SUBSCRIPTION,
       variables: {
-        ownerId: address?.toLowerCase() ?? '',
+        ownerId: address ?? '',
       },
       updateQuery(prev, { subscriptionData }) {
         if (!subscriptionData.data || subscriptionData.data.vaults.length === data?.vaults.length) return prev
