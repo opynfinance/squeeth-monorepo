@@ -28,7 +28,7 @@ const useStyles = makeStyles((theme) =>
       zIndex: 30,
       //background: theme.palette.background.default,
       borderBottom: `1px solid ${theme.palette.background.stone}`,
-      backdropFilter: 'blur(30px)',
+      backgroundColor: 'black',
     },
     logo: {
       marginRight: 'auto',
