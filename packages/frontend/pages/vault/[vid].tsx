@@ -21,6 +21,7 @@ import clsx from 'clsx'
 import Image from 'next/image'
 import { useRouter } from 'next/router'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useAtomValue } from 'jotai'
 
 import ethLogo from '../../public/images/ethereum-eth.svg'
 import squeethLogo from '../../public/images/Squeeth.svg'
@@ -30,11 +31,9 @@ import NumberInput from '@components/Input/NumberInput'
 import Nav from '@components/Nav'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import { Tooltips } from '@constants/enums'
-import { usePositions } from '@context/positions'
 import { BIG_ZERO, MIN_COLLATERAL_AMOUNT, OSQUEETH_DECIMALS } from '../../src/constants'
 import { PositionType } from '../../src/types'
 import { useRestrictUser } from '@context/restrict-user'
-// import { useWallet } from '@context/wallet'
 import { useController } from '@hooks/contracts/useController'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { useVaultData } from '@hooks/useVaultData'
@@ -48,8 +47,7 @@ import POSITIONS_QUERY from '@queries/uniswap/positionsQuery'
 import { positions, positionsVariables } from '@queries/uniswap/__generated__/positions'
 import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useWalletBalance } from 'src/state/wallet/hooks'
-import { addressesAtom } from 'src/state/positions/atoms'
-import { useAtomValue } from 'jotai'
+import { addressesAtom, positionTypeAtom } from 'src/state/positions/atoms'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import {
   useBurnAndRedeem,
@@ -63,6 +61,7 @@ import {
   useWithdrawCollateral,
   useWithdrawUniPositionToken,
 } from 'src/state/controller/hooks'
+import { useComputeSwaps, useLpDebt, useMintedDebt, useShortDebt } from 'src/state/positions/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -300,14 +299,16 @@ const Component: React.FC = () => {
   const depositUniPositionToken = useDepositUnuPositionToken()
   const withdrawUniPositionToken = useWithdrawUniPositionToken()
 
-  // const { balance, address, connected, networkId } = useWallet()
   const { data: balance } = useWalletBalance()
   const { vid } = router.query
   const { liquidations } = useVaultLiquidations(Number(vid))
-  const { positionType, squeethAmount, mintedDebt, shortDebt, lpedSqueeth } = usePositions()
-  const { nftManager, controller } = useAddresses()
+  const { oSqueeth, nftManager, controller } = useAtomValue(addressesAtom)
+  const positionType = useAtomValue(positionTypeAtom)
+  const { squeethAmount } = useComputeSwaps()
+  const mintedDebt = useMintedDebt()
+  const shortDebt = useShortDebt()
+  const lpedSqueeth = useLpDebt()
   const { getApproved, approve } = useERC721(nftManager)
-  const { oSqueeth } = useAtomValue(addressesAtom)
   const oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
   const [collateral, setCollateral] = useState('0')

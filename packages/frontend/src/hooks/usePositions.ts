@@ -4,9 +4,6 @@ import BigNumber from 'bignumber.js'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import NFTpositionManagerABI from '../abis/NFTpositionmanager.json'
-// import { useWallet } from '@context/wallet'
-import { useWorldContext } from '@context/world'
-import { usePositions } from '@context/positions'
 import { positions, positionsVariables } from '../queries/uniswap/__generated__/positions'
 import POSITIONS_QUERY, { POSITIONS_SUBSCRIPTION } from '../queries/uniswap/positionsQuery'
 import VAULT_HISTORY_QUERY from '../queries/squeeth/vaultHistoryQuery'
@@ -19,39 +16,35 @@ import { useAtomValue } from 'jotai'
 import { calcDollarShortUnrealizedpnl, calcETHCollateralPnl, calcDollarLongUnrealizedpnl } from '../lib/pnl'
 import { BIG_ZERO } from '../constants/'
 import { addressAtom, networkIdAtom, web3Atom } from 'src/state/wallet/atoms'
-import { addressesAtom, isWethToken0Atom } from '../state/positions/atoms'
+import { addressesAtom, existingCollatAtom, isWethToken0Atom, positionTypeAtom } from '../state/positions/atoms'
 import { PositionType } from '../types'
 import { useETHPrice } from './useETHPrice'
 import { poolAtom, readyAtom, squeethInitialPriceAtom } from 'src/state/squeethPool/atoms'
 import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
 import { useIndex } from 'src/state/controller/hooks'
+import { useComputeSwaps, useFirstValidVault, useSwaps } from 'src/state/positions/hooks'
+import { useVaultManager } from './contracts/useVaultManager'
 
 export const usePnL = () => {
+  const positionType = useAtomValue(positionTypeAtom)
+  const existingCollat = useAtomValue(existingCollatAtom)
   const [ethCollateralPnl, setEthCollateralPnl] = useState(BIG_ZERO)
   const [shortUnrealizedPNL, setShortUnrealizedPNL] = useState({ usd: BIG_ZERO, eth: BIG_ZERO, loading: true })
   const [longUnrealizedPNL, setLongUnrealizedPNL] = useState({ usd: BIG_ZERO, eth: BIG_ZERO, loading: true })
-  const {
-    squeethAmount,
-    shortVaults,
-    loading: positionLoading,
-    swaps,
-    totalUSDFromBuy,
-    totalUSDFromSell,
-    firstValidVault,
-    existingCollat,
-    positionType,
-  } = usePositions()
+  const { squeethAmount } = useComputeSwaps()
+  const { vaults: shortVaults } = useVaultManager()
+  const { data: swapsQuery, loading: positionLoading } = useSwaps()
+  const swaps = swapsQuery?.swaps
+  const { firstValidVault } = useFirstValidVault()
+  const { totalUSDFromBuy, totalUSDFromSell } = useComputeSwaps()
+
   const index = useIndex()
   const isWethToken0 = useAtomValue(isWethToken0Atom)
+  const networkId = useAtomValue(networkIdAtom)
   const ready = useAtomValue(readyAtom)
-
-  // const { ethPrice } = useWorldContext()
 
   const getSellQuote = useGetSellQuote()
   const getBuyQuote = useGetBuyQuote()
-
-  // const { networkId } = useWallet()
-  const networkId = useAtomValue(networkIdAtom)
 
   const [sellQuote, setSellQuote] = useState({
     amountOut: new BigNumber(0),

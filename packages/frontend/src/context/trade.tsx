@@ -2,9 +2,7 @@ import BigNumber from 'bignumber.js'
 import React, { useContext, useEffect, useMemo, useState } from 'react'
 
 import { DEFAULT_SLIPPAGE, InputType } from '../constants/index'
-import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { PositionType, TradeType } from '../types'
-import { usePositions } from './positions'
 import { useAtomValue } from 'jotai'
 import { readyAtom } from 'src/state/squeethPool/atoms'
 import {
@@ -14,6 +12,7 @@ import {
   useGetSellQuoteForETH,
   useGetWSqueethPositionValue,
 } from 'src/state/squeethPool/hooks'
+import { positionTypeAtom } from 'src/state/positions/atoms'
 
 type Quote = {
   amountOut: BigNumber
@@ -126,7 +125,7 @@ const TradeProvider: React.FC = ({ children }) => {
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const getBuyQuote = useGetBuyQuote()
   const getSellQuoteForETH = useGetSellQuoteForETH()
-  const { positionType } = usePositions()
+  const positionType = useAtomValue(positionTypeAtom)
 
   const amountOutBN = quote.amountOut
   const isPositionOpen = useMemo(() => openPosition === 0, [openPosition])

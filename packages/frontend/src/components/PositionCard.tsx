@@ -8,14 +8,23 @@ import Link from 'next/link'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { usePnL } from '@hooks/usePositions'
-import { usePositions } from '@context/positions'
 import { Tooltips } from '@constants/enums'
 import { useTrade } from '@context/trade'
 import { PositionType, TradeType } from '../types'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { usePrevious } from 'react-use'
-import { useLongRealizedPnl, useShortRealizedPnl } from 'src/state/positions/hooks'
+import {
+  useComputeSwaps,
+  useFirstValidVault,
+  useLongRealizedPnl,
+  useLPPositionsQuery,
+  useShortRealizedPnl,
+  useSwaps,
+} from 'src/state/positions/hooks'
 import { useETHPrice } from '@hooks/useETHPrice'
+import { existingCollatAtom, isLPAtom, positionTypeAtom } from 'src/state/positions/atoms'
+import { useAtomValue } from 'jotai'
+import { useVaultManager } from '@hooks/contracts/useVaultManager'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -152,19 +161,16 @@ type PositionCardType = {
 
 const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
   const { buyQuote, sellQuote, longGain, shortGain, shortUnrealizedPNL, longUnrealizedPNL, loading } = usePnL()
+  const pType = useAtomValue(positionTypeAtom)
+  const existingCollat = useAtomValue(existingCollatAtom)
+  const { data, refetch: swapsQueryRefetch } = useSwaps()
+  const swaps = data?.swaps
+  const { squeethAmount } = useComputeSwaps()
+  const { vaults: shortVaults } = useVaultManager()
+  const { firstValidVault, vaultId } = useFirstValidVault()
+  const { loading: isPositionLoading } = useLPPositionsQuery()
+  const isLP = useAtomValue(isLPAtom)
 
-  const {
-    positionType: pType,
-    squeethAmount,
-    shortVaults,
-    firstValidVault,
-    vaultId,
-    existingCollat,
-    loading: isPositionLoading,
-    isLP,
-    swapsQueryRefetch,
-    swaps,
-  } = usePositions()
   const longRealizedPNL = useLongRealizedPnl()
   const shortRealizedPNL = useShortRealizedPnl()
   const { liquidations } = useVaultLiquidations(Number(vaultId))
@@ -196,11 +202,9 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
 
   useEffect(() => {
     if (tradeSuccess && prevSwapsData?.length === swaps?.length) {
-      console.log('calling swaps refetch')
       //if trade success and number of swaps is still the same, try refetching again
       swapsQueryRefetch()
     } else {
-      console.log('setting trade success false')
       setTradeSuccess(false)
     }
   }, [swaps?.length, prevSwapsData?.length, swapsQueryRefetch, tradeSuccess])

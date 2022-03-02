@@ -12,24 +12,32 @@ import Nav from '@components/Nav'
 import History from '@components/Trade/History'
 import { PositionType } from '../src/types/'
 import { OSQUEETH_DECIMALS, Tooltips } from '../src/constants'
-import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { usePnL } from '@hooks/usePositions'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { toTokenAmount } from '@utils/calculations'
-import { useController } from '../src/hooks/contracts/useController'
 import { CrabProvider } from '@context/crabStrategy'
 import { useCrabPosition } from '@hooks/useCrabPosition'
-import { useWallet } from '@context/wallet'
-import { usePositions } from '@context/positions'
 import { LinkButton } from '@components/Button'
 import { useVaultData } from '@hooks/useVaultData'
 import { addressAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
-import { useLongRealizedPnl, useShortRealizedPnl } from 'src/state/positions/hooks'
+import {
+  useComputeSwaps,
+  useFirstValidVault,
+  useLongRealizedPnl,
+  useLpDebt,
+  useLPPositionsQuery,
+  useMintedDebt,
+  useShortDebt,
+  useShortRealizedPnl,
+  usePositionsAndFeesComputation,
+  useLPPositionsAndFees,
+} from 'src/state/positions/hooks'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
-import { addressesAtom } from 'src/state/positions/atoms'
+import { activePositionsAtom, addressesAtom, existingCollatAtom, positionTypeAtom } from 'src/state/positions/atoms'
 import { poolAtom } from 'src/state/squeethPool/atoms'
 import { useIndex } from 'src/state/controller/hooks'
+import { useVaultManager } from '@hooks/contracts/useVaultManager'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -163,32 +171,24 @@ export function Positions() {
   } = usePnL()
 
   const pool = useAtomValue(poolAtom)
-  // const { pool } = useSqueethPool()
   const { oSqueeth } = useAtomValue(addressesAtom)
   const oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
   const address = useAtomValue(addressAtom)
+  const positionType = useAtomValue(positionTypeAtom)
+  const existingCollat = useAtomValue(existingCollatAtom)
+  const activePositions = useAtomValue(activePositionsAtom)
 
-  const {
-    positionType,
-    squeethAmount,
-    loading: isPositionLoading,
-    shortVaults,
-    firstValidVault,
-    vaultId,
-    existingCollat,
-    lpedSqueeth,
-    mintedDebt,
-    shortDebt,
-    isLong,
-    // shortRealizedPNL,
-    // longRealizedPNL,
-    activePositions,
-  } = usePositions()
-
+  const { loading: isPositionLoading } = useLPPositionsQuery()
+  const { squeethAmount } = useComputeSwaps()
   const longRealizedPNL = useLongRealizedPnl()
   const shortRealizedPNL = useShortRealizedPnl()
-
+  const { vaults: shortVaults } = useVaultManager()
+  const { firstValidVault, vaultId } = useFirstValidVault()
+  const lpedSqueeth = useLpDebt()
+  const mintedDebt = useMintedDebt()
+  const shortDebt = useShortDebt()
   const index = useIndex()
+  usePositionsAndFeesComputation()
   const {
     depositedEth,
     depositedUsd,

@@ -16,14 +16,8 @@ import React, { useCallback, useEffect, useState } from 'react'
 
 import { CloseType, Tooltips, Links } from '@constants/enums'
 import { useTrade } from '@context/trade'
-// import { useWallet } from '@context/wallet'
-import { useWorldContext } from '@context/world'
-import { useController } from '@hooks/contracts/useController'
 import useShortHelper from '@hooks/contracts/useShortHelper'
-import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
-import { useAddresses } from '@hooks/useAddress'
-import { usePositions } from '@context/positions'
 import { PrimaryButton } from '@components/Button'
 import CollatRange from '@components/CollatRange'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
@@ -33,11 +27,10 @@ import TradeDetails from '@components/Trade/TradeDetails'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import UniswapData from '@components/Trade/UniswapData'
 import { MIN_COLLATERAL_AMOUNT } from '../../../constants'
-import { PositionType } from '../../../types'
 import { useVaultData } from '@hooks/useVaultData'
 import { connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
-import { addressesAtom } from 'src/state/positions/atoms'
+import { addressesAtom, isLongAtom } from 'src/state/positions/atoms'
 import { useAtomValue } from 'jotai'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { collatRatioAtom } from 'src/state/ethPriceCharts/atoms'
@@ -49,6 +42,7 @@ import {
   useNormFactor,
   useUpdateOperator,
 } from 'src/state/controller/hooks'
+import { useComputeSwaps, useFirstValidVault, useLPPositionsQuery } from 'src/state/positions/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -231,7 +225,9 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
   } = useTrade()
   const amount = new BigNumber(amountInputValue)
   const collateral = new BigNumber(collateralInput)
-  const { firstValidVault, squeethAmount: shortSqueethAmount, isLong } = usePositions()
+  const isLong = useAtomValue(isLongAtom)
+  const { firstValidVault } = useFirstValidVault()
+  const { squeethAmount: shortSqueethAmount } = useComputeSwaps()
   const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
 
   const [vaultId, setVaultId] = useState(shortVaults.length ? shortVaults[firstValidVault].id : 0)
@@ -590,8 +586,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   const { closeShort } = useShortHelper()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const { shortHelper } = useAtomValue(addressesAtom)
-
-  // const { selectWallet, connected } = useWallet()
+  const isLong = useAtomValue(isLongAtom)
   const connected = useAtomValue(connectedWalletAtom)
   const selectWallet = useSelectWallet()
   const updateOperator = useUpdateOperator()
@@ -609,16 +604,10 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     slippageAmount,
   } = useTrade()
   const amount = new BigNumber(amountInputValue)
-  const {
-    shortVaults,
-    firstValidVault,
-    squeethAmount: shortSqueethAmount,
-    isLong,
-    lpedSqueeth,
-    mintedDebt,
-    shortDebt,
-    loading: isPositionFinishedCalc,
-  } = usePositions()
+
+  const { loading: isPositionFinishedCalc } = useLPPositionsQuery()
+  const { vaults: shortVaults } = useVaultManager()
+  const { firstValidVault } = useFirstValidVault()
   const setCollatRatio = useUpdateAtom(collatRatioAtom)
   const ethPrice = useETHPrice()
 

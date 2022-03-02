@@ -5,24 +5,18 @@ import React, { useCallback, useEffect, useState } from 'react'
 
 import { InputType, Links } from '../../../constants'
 import { useTrade } from '@context/trade'
-import { useWorldContext } from '@context/world'
-// import { useWallet } from '@context/wallet'
 import { useUserAllowance } from '@hooks/contracts/useAllowance'
-import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
-import { useAddresses } from '@hooks/useAddress'
-import { usePositions } from '@context/positions'
 import { PrimaryButton } from '@components/Button'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
 import { UniswapIframe } from '@components/Modal/UniswapIframe'
 import { TradeSettings } from '@components/TradeSettings'
-import { useController } from '@hooks/contracts/useController'
 import Confirmed, { ConfirmType } from '../Confirmed'
 import TradeInfoItem from '../TradeInfoItem'
 import UniswapData from '../UniswapData'
 import { connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
-import { addressesAtom } from 'src/state/positions/atoms'
 import { useAtomValue } from 'jotai'
+import { addressesAtom, isShortAtom } from 'src/state/positions/atoms'
 import { useETHPrice } from '@hooks/useETHPrice'
 import {
   useBuyAndRefund,
@@ -31,6 +25,7 @@ import {
   useSell,
 } from 'src/state/squeethPool/hooks'
 import { useCurrentImpliedFunding, useDailyHistoricalFunding } from 'src/state/controller/hooks'
+import { useComputeSwaps, useLongSqthBal, useShortDebt } from 'src/state/positions/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -251,13 +246,13 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
   const amount = new BigNumber(amountInputValue)
   const altTradeAmount = new BigNumber(altAmountInputValue)
   const connected = useAtomValue(connectedWalletAtom)
+  const isShort = useAtomValue(isShortAtom)
   const selectWallet = useSelectWallet()
-  // const { selectWallet, connected } = useWallet()
-  const { squeethAmount, longSqthBal, isShort } = usePositions()
-
+  const { squeethAmount } = useComputeSwaps()
+  const longSqthBal = useLongSqthBal()
   const dailyHistoricalFunding = useDailyHistoricalFunding()
   const currentImpliedFunding = useCurrentImpliedFunding()
-
+  console.log('yes')
   let openError: string | undefined
   // let closeError: string | undefined
   let existingShortError: string | undefined
@@ -530,8 +525,9 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle, setTradeComp
   // const { selectWallet, connected } = useWallet()
   const connected = useAtomValue(connectedWalletAtom)
   const selectWallet = useSelectWallet()
-  const { longSqthBal, shortDebt } = usePositions()
 
+  const longSqthBal = useLongSqthBal()
+  const shortDebt = useShortDebt()
   const isShort = shortDebt.gt(0)
 
   useEffect(() => {

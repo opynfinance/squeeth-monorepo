@@ -44,6 +44,7 @@ import {
   useNormFactor,
 } from 'src/state/controller/hooks'
 import { impliedVolAtom } from 'src/state/controller/atoms'
+import { usePositionsAndFeesComputation } from 'src/state/positions/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -386,6 +387,7 @@ const SqueethInfo: React.FC = () => {
   const impliedVol = useAtomValue(impliedVolAtom)
   const currentImpliedFunding = useCurrentImpliedFunding()
   const normFactor = useNormFactor()
+  usePositionsAndFeesComputation()
 
   const [showAdvanced, setShowAdvanced] = useState(false)
 

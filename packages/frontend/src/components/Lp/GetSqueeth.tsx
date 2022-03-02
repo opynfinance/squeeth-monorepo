@@ -6,10 +6,6 @@ import React, { useEffect, useMemo, useState } from 'react'
 
 import { BIG_ZERO, MIN_COLLATERAL_AMOUNT, OSQUEETH_DECIMALS, Tooltips } from '../../constants'
 import { LPActions, OBTAIN_METHOD, useLPState } from '@context/lp'
-import { useWallet } from '@context/wallet'
-import { useController } from '@hooks/contracts/useController'
-import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
-import { usePositions } from '@context/positions'
 import { toTokenAmount } from '@utils/calculations'
 import { PrimaryButton } from '../Button'
 import CollatRange from '../CollatRange'
@@ -21,10 +17,11 @@ import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import { useWalletBalance } from 'src/state/wallet/hooks'
 import { connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useAtomValue } from 'jotai'
-import { addressesAtom } from 'src/state/positions/atoms'
+import { addressesAtom, existingCollatAtom, existingCollatPercentAtom } from 'src/state/positions/atoms'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
 import { useGetShortAmountFromDebt, useNormFactor, useOpenDepositAndMint } from 'src/state/controller/hooks'
+import { useFirstValidVault } from 'src/state/positions/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -77,7 +74,9 @@ const Mint: React.FC = () => {
   const oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
   const { data: balance } = useWalletBalance()
   const connected = useAtomValue(connectedWalletAtom)
-  const { existingCollatPercent, existingCollat, firstValidVault } = usePositions()
+  const existingCollatPercent = useAtomValue(existingCollatPercentAtom)
+  const existingCollat = useAtomValue(existingCollatAtom)
+  const { firstValidVault } = useFirstValidVault()
   const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const normalizationFactor = useNormFactor()

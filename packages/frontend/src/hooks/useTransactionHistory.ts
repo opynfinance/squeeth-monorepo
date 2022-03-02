@@ -3,15 +3,14 @@ import BigNumber from 'bignumber.js'
 import { useAtomValue } from 'jotai'
 
 import { TransactionType } from '../constants'
-// import { useWallet } from '@context/wallet'
 import { transactions_positionSnapshots } from '../queries/uniswap/__generated__/transactions'
 import TRANSACTIONS_QUERY from '../queries/uniswap/transactionsQuery'
 import { useUserCrabTxHistory } from './useUserCrabTxHistory'
 import { CrabStrategyTxType } from '../types'
-import { usePositions } from '@context/positions'
 import { addressAtom } from 'src/state/wallet/atoms'
 import { addressesAtom, isWethToken0Atom } from 'src/state/positions/atoms'
 import { useEthPriceMap } from 'src/state/ethPriceCharts/atoms'
+import { useSwaps } from 'src/state/positions/hooks'
 
 const bigZero = new BigNumber(0)
 
@@ -20,7 +19,8 @@ export const useTransactionHistory = () => {
   const address = useAtomValue(addressAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const ethPriceMap = useEthPriceMap()
-  const { swaps } = usePositions()
+  const { data: swapsQuery } = useSwaps()
+  const swaps = swapsQuery?.swaps
 
   const { data, loading } = useQuery(TRANSACTIONS_QUERY, {
     variables: {

@@ -11,15 +11,13 @@ import { useAtomValue } from 'jotai'
 
 import { SecondaryTab, SecondaryTabs } from '../../components/Tabs'
 import { Tooltips, UniswapIFrameOpen } from '@constants/enums'
-import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { inRange } from '@utils/calculations'
 import { UniswapIframe } from '../Modal/UniswapIframe'
-// import { useWallet } from '@context/wallet'
-import { usePositions } from '@context/positions'
 import { networkIdAtom } from 'src/state/wallet/atoms'
 import { useETHPrice } from '@hooks/useETHPrice'
-import { isWethToken0Atom } from 'src/state/positions/atoms'
+import { activePositionsAtom, closedPositionsAtom, isWethToken0Atom } from 'src/state/positions/atoms'
 import { useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
+import { useLPPositionsQuery } from 'src/state/positions/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -109,7 +107,9 @@ const calculatePnL = (
 
 export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
   const classes = useStyles()
-  const { activePositions, closedPositions, loading: lpLoading } = usePositions()
+  const activePositions = useAtomValue(activePositionsAtom)
+  const closedPositions = useAtomValue(closedPositionsAtom)
+  const { loading: lpLoading } = useLPPositionsQuery()
 
   const [activeTab, setActiveTab] = useState(0)
   const ethPrice = useETHPrice()
