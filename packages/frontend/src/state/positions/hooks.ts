@@ -355,7 +355,6 @@ export const useLPPositionsAndFees = () => {
 }
 
 export const usePositionsAndFeesComputation = () => {
-  console.log('dh')
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const [activePositions, setActivePositions] = useAtom(activePositionsAtom)
   const setClosedPositions = useUpdateAtom(closedPositionsAtom)

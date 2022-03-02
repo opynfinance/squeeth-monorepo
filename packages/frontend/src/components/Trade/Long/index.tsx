@@ -252,7 +252,7 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
   const longSqthBal = useLongSqthBal()
   const dailyHistoricalFunding = useDailyHistoricalFunding()
   const currentImpliedFunding = useCurrentImpliedFunding()
-  console.log('yes')
+
   let openError: string | undefined
   // let closeError: string | undefined
   let existingShortError: string | undefined
