@@ -75,7 +75,7 @@ const WalletProvider: React.FC = ({ children }) => {
     queryClient.setQueryData(balanceQueryKeys.userWalletBalance(), new BigNumber(0))
   }, [onboard])
 
-  const setAddr = (address: string) => setAddress(address)
+  const setAddr = (address: string) => setAddress(address.toLowerCase())
 
   function addEtherscan(transaction: any) {
     if (networkId === Networks.LOCAL) return

@@ -8,7 +8,7 @@ import { useAddresses } from './useAddress'
 const useUniswapTicks = () => {
   const { squeethPool } = useAddresses()
   const { data, loading } = useQuery<ticks, ticksVariables>(TICKS_QUERY, {
-    variables: { poolAddress: squeethPool?.toLowerCase() },
+    variables: { poolAddress: squeethPool },
   })
 
   const ticks = data?.ticks

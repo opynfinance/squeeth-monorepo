@@ -19,11 +19,11 @@ export const useSwapsData = () => {
     networkId === Networks.MAINNET ? SWAPS_QUERY : SWAPS_ROPSTEN_QUERY,
     {
       variables: {
-        tokenAddress: oSqueeth?.toLowerCase(),
-        origin: address?.toLowerCase() || '',
-        poolAddress: squeethPool?.toLowerCase(),
-        recipients: [shortHelper?.toLowerCase(), address?.toLowerCase() || '', swapRouter?.toLowerCase()],
-        recipient_not: crabStrategy?.toLowerCase(),
+        tokenAddress: oSqueeth,
+        origin: address || '',
+        poolAddress: squeethPool,
+        recipients: [shortHelper, address || '', swapRouter],
+        recipient_not: crabStrategy,
         orderDirection: 'asc',
       },
       fetchPolicy: 'cache-and-network',
@@ -34,11 +34,11 @@ export const useSwapsData = () => {
     subscribeToMore({
       document: networkId === Networks.MAINNET ? SWAPS_SUBSCRIPTION : SWAPS_ROPSTEN_SUBSCRIPTION,
       variables: {
-        tokenAddress: oSqueeth?.toLowerCase(),
-        origin: address?.toLowerCase() || '',
-        poolAddress: squeethPool?.toLowerCase(),
-        recipients: [shortHelper?.toLowerCase(), address?.toLowerCase() || '', swapRouter?.toLowerCase()],
-        recipient_not: crabStrategy?.toLowerCase(),
+        tokenAddress: oSqueeth,
+        origin: address || '',
+        poolAddress: squeethPool,
+        recipients: [shortHelper, address || '', swapRouter],
+        recipient_not: crabStrategy,
         orderDirection: 'asc',
       },
       updateQuery(prev, { subscriptionData }) {

@@ -200,13 +200,15 @@ export const useLPPositions = () => {
     subscribeToMore,
   } = useQuery<positions, positionsVariables>(POSITIONS_QUERY, {
     variables: {
-      poolAddress: squeethPool?.toLowerCase(),
-      owner: address?.toLowerCase() || '',
+      poolAddress: squeethPool,
+      owner: address || '',
     },
     fetchPolicy: 'cache-and-network',
   })
 
-  const manager = new web3.eth.Contract(NFTpositionManagerABI as any, nftManager?.toLowerCase() || '')
+  // console.log(data?.positions)
+
+  const manager = new web3.eth.Contract(NFTpositionManagerABI as any, nftManager || '')
   const MAX_UNIT = '0xffffffffffffffffffffffffffffffff'
 
   // console.log(data?.positions)
@@ -214,8 +216,8 @@ export const useLPPositions = () => {
     subscribeToMore({
       document: POSITIONS_SUBSCRIPTION,
       variables: {
-        poolAddress: squeethPool?.toLowerCase(),
-        owner: address?.toLowerCase() || '',
+        poolAddress: squeethPool,
+        owner: address || '',
       },
       updateQuery(prev, { subscriptionData }) {
         if (!subscriptionData.data || subscriptionData.data.positions.length === data?.positions.length) return prev
