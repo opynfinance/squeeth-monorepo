@@ -22,6 +22,14 @@ import { BIG_ZERO } from '@constants/index'
 import NFTpositionManagerABI from '../../abis/NFTpositionmanager.json'
 
 export const positionTypeAtom = atom(PositionType.NONE)
+export const isLongAtom = atom((get) => {
+  const positionType = get(positionTypeAtom)
+  return positionType === PositionType.LONG
+})
+export const isShortAtom = atom((get) => {
+  const positionType = get(positionTypeAtom)
+  return positionType === PositionType.SHORT
+})
 export const firstValidVaultAtom = atom(0)
 export const addressesAtom = atom((get) => {
   const networkId = get(networkIdAtom)
@@ -62,6 +70,11 @@ export const depositedSqueethAtom = atom(BIG_ZERO)
 export const depositedWethAtom = atom(BIG_ZERO)
 export const withdrawnSqueethAtom = atom(BIG_ZERO)
 export const withdrawnWethAtom = atom(BIG_ZERO)
+export const isLPAtom = atom((get) => {
+  const squeethLiquidity = get(squeethLiquidityAtom)
+  const wethLiquidity = get(wethLiquidityAtom)
+  return squeethLiquidity.gt(0) || wethLiquidity.gt(0)
+})
 
 export const vaultAtom = atom<Vault | null>(null)
 export const existingCollatPercentAtom = atom(0)
