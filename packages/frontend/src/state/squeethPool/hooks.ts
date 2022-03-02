@@ -27,19 +27,25 @@ import {
 } from './atoms'
 
 const getImmutables = async (squeethContract: Contract) => {
-  return {
-    token0: await squeethContract?.methods.token0().call(),
-    token1: await squeethContract?.methods.token1().call(),
-    fee: await squeethContract?.methods.fee().call(),
-    tickSpacing: await squeethContract?.methods.tickSpacing().call(),
-    maxLiquidityPerTick: await squeethContract?.methods.maxLiquidityPerTick().call(),
-  }
+  const [token0, token1, fee, tickSpacing, maxLiquidityPerTick] = await Promise.all([
+    squeethContract?.methods.token0().call(),
+    squeethContract?.methods.token1().call(),
+    squeethContract?.methods.fee().call(),
+    squeethContract?.methods.tickSpacing().call(),
+    squeethContract?.methods.maxLiquidityPerTick().call(),
+  ])
+
+  return { token0, token1, fee, tickSpacing, maxLiquidityPerTick }
 }
 
 async function getPoolState(squeethContract: Contract) {
-  const slot = await squeethContract?.methods.slot0().call()
+  const [slot, liquidity] = await Promise.all([
+    squeethContract?.methods.slot0().call(),
+    squeethContract?.methods.liquidity().call(),
+  ])
+
   const PoolState = {
-    liquidity: await squeethContract?.methods.liquidity().call(),
+    liquidity,
     sqrtPriceX96: slot[0],
     tick: slot[1],
     observationIndex: slot[2],
