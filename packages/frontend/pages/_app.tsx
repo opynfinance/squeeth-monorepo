@@ -12,9 +12,6 @@ import { CookiesProvider } from 'react-cookie'
 import { useAtomValue } from 'jotai'
 
 import { RestrictUserProvider } from '@context/restrict-user'
-// import { useWallet, WalletProvider } from '@context/wallet'
-
-import { PositionsProvider } from '@context/positions'
 import getTheme, { Mode } from '../src/theme'
 import { uniswapClient } from '@utils/apollo-client'
 import { useOnboard } from 'src/state/wallet/hooks'
@@ -62,13 +59,11 @@ function MyApp({ Component, pageProps }: any) {
 
   return (
     <CookiesProvider>
-      {/* <WalletProvider> */}
       <RestrictUserProvider>
         <QueryClientProvider client={queryClient}>
           <TradeApp Component={Component} pageProps={pageProps} />
         </QueryClientProvider>
       </RestrictUserProvider>
-      {/* </WalletProvider> */}
     </CookiesProvider>
   )
 }
@@ -100,11 +95,7 @@ const TradeApp = ({ Component, pageProps }: any) => {
         <ThemeProvider theme={getTheme(Mode.DARK)}>
           {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
           <CssBaseline />
-          {/* <WorldProvider> */}
-          <PositionsProvider>
-            <Component {...pageProps} />
-          </PositionsProvider>
-          {/* </WorldProvider> */}
+          <Component {...pageProps} />
         </ThemeProvider>
       </ApolloProvider>
     </React.Fragment>
