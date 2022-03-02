@@ -42,7 +42,7 @@ import { toTokenAmount } from '@utils/calculations'
 import { squeethClient } from '@utils/apollo-client'
 import { PositionType, Vault, Networks } from '../../types'
 import { poolAtom, readyAtom, squeethInitialPriceAtom } from '../squeethPool/atoms'
-import { useGetCollatRatioAndLiqPrice } from '../controller/hooks'
+import { useGetCollatRatioAndLiqPrice, useGetVault } from '../controller/hooks'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { useGetWSqueethPositionValue } from '../squeethPool/hooks'
 
@@ -173,7 +173,11 @@ export const useComputeSwaps = () => {
     } else setPositionType(PositionType.NONE)
   }, [finalSqueeth.toString(), computedSwaps.squeethAmount.toString()])
 
-  return { ...computedSwaps, wethAmount: finalWeth }
+  return {
+    ...computedSwaps,
+    wethAmount: finalWeth,
+    squeethAmount: finalSqueeth.absoluteValue(),
+  }
 }
 
 export const useLongRealizedPnl = () => {
@@ -228,7 +232,7 @@ export const useShortDebt = () => {
     return positionType === PositionType.SHORT ? squeethAmount : new BigNumber(0)
   }, [positionType, squeethAmount.toString()])
 
-  return shortDebt
+  return shortDebt.absoluteValue()
 }
 
 export const useLongSqthBal = () => {
@@ -432,7 +436,7 @@ export const useVaultQuery = (vaultId: number) => {
     },
   })
 }
-export const useUpdateVaultData = (vaultId: number) => {
+export const useUpdateVaultData = () => {
   const connected = useAtomValue(connectedWalletAtom)
   const setVault = useUpdateAtom(vaultAtom)
   const setExistingCollat = useUpdateAtom(existingCollatAtom)
@@ -441,16 +445,15 @@ export const useUpdateVaultData = (vaultId: number) => {
   const setExistingLiqPrice = useUpdateAtom(existingLiqPriceAtom)
   const setVaultLoading = useUpdateAtom(isVaultLoadingAtom)
   const ready = useAtomValue(readyAtom)
+  const { vaultId } = useFirstValidVault()
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
+  const getVault = useGetVault()
 
   useEffect(() => {
     ;(async () => {
       if (!connected || !ready) return
 
-      // const _vault = await getVault(vaultId)
-
-      const { data } = useVaultQuery(vaultId)
-      const _vault = data?.vault
+      const _vault = await getVault(vaultId)
 
       if (!_vault) return
 
