@@ -11,11 +11,9 @@ import { Action } from '@constants/index'
 import { toTokenAmount } from '@utils/calculations'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 
-export const useVaultHistory = () => {
+export const useVaultHistory = (vaultId: number) => {
   const { address, networkId } = useWallet()
-  const { vaults, firstValidVault } = useVaultManager()
 
-  const vaultId = vaults[firstValidVault]?.id ?? 0
   const { data, subscribeToMore } = useQuery<VaultHistory, VaultHistoryVariables>(VAULT_HISTORY_QUERY, {
     client: squeethClient[networkId],
     fetchPolicy: 'cache-and-network',
