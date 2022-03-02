@@ -1,7 +1,7 @@
 import { useQuery } from '@apollo/client'
 import { Position } from '@uniswap/v3-sdk'
 import BigNumber from 'bignumber.js'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import NFTpositionManagerABI from '../abis/NFTpositionmanager.json'
 import { useWallet } from '@context/wallet'
@@ -9,18 +9,14 @@ import { useWorldContext } from '@context/world'
 import { usePositions } from '@context/positions'
 import { positions, positionsVariables } from '../queries/uniswap/__generated__/positions'
 import POSITIONS_QUERY, { POSITIONS_SUBSCRIPTION } from '../queries/uniswap/positionsQuery'
-import VAULT_HISTORY_QUERY from '../queries/squeeth/vaultHistoryQuery'
-import { VaultHistory } from '../queries/squeeth/__generated__/VaultHistory'
 import { NFTManagers } from '../types'
 import { toTokenAmount } from '@utils/calculations'
-import { squeethClient } from '@utils/apollo-client'
 
 import { useSqueethPool } from './contracts/useSqueethPool'
 import { useController } from './contracts/useController'
 import { useAddresses } from './useAddress'
 import { calcDollarShortUnrealizedpnl, calcETHCollateralPnl, calcDollarLongUnrealizedpnl } from '../lib/pnl'
 import { BIG_ZERO } from '../constants/'
-import { useAtom } from 'jotai'
 import { PositionType } from '../types'
 import { useVaultHistory } from './useVaultHistory'
 
@@ -30,7 +26,7 @@ export const usePnL = () => {
   const [longUnrealizedPNL, setLongUnrealizedPNL] = useState({ usd: BIG_ZERO, eth: BIG_ZERO, loading: true })
   const {
     squeethAmount,
-    shortVaults,
+    vaultId,
     loading: positionLoading,
     swaps,
     isWethToken0,
@@ -40,11 +36,9 @@ export const usePnL = () => {
     positionType,
   } = usePositions()
   const { index } = useController()
-  const { vaultHistory } = useVaultHistory()
+  const { vaultHistory } = useVaultHistory(vaultId)
 
-  // const { ethPrice } = useWorldContext()
   const { ready, getSellQuote, getBuyQuote } = useSqueethPool()
-  const { networkId } = useWallet()
 
   const [sellQuote, setSellQuote] = useState({
     amountOut: new BigNumber(0),

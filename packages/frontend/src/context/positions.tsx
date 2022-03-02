@@ -2,7 +2,6 @@ import React, { useContext, useState, useEffect, useMemo } from 'react'
 import BigNumber from 'bignumber.js'
 
 import { BIG_ZERO } from '@constants/index'
-import { useWorldContext } from '@context/world'
 import { useSwapsData } from '../hooks/useSwapsData'
 import { useVaultManager } from '../hooks/contracts/useVaultManager'
 import { useLPPositions } from '../hooks/usePositions'
@@ -44,7 +43,6 @@ type positionsContextType = {
 const positionsContext = React.createContext<positionsContextType | undefined>(undefined)
 
 const PositionsProvider: React.FC = ({ children }) => {
-  const { oSqueethBal } = useWorldContext()
   const { vaults: shortVaults, vaultId } = useVaultManager()
   const {
     squeethAmount,
@@ -71,11 +69,9 @@ const PositionsProvider: React.FC = ({ children }) => {
     refetch: positionsQueryRefetch,
   } = useLPPositions()
 
-  const { mintedSqueeth, openShortSqueeth } = useVaultHistory()
-
   const [positionType, setPositionType] = useState(PositionType.NONE)
   const [firstValidVault, setFirstValidVault] = useState(0)
-
+  const { mintedSqueeth, openShortSqueeth } = useVaultHistory(vaultId)
   const { existingCollat, existingCollatPercent, existingLiqPrice: liquidationPrice } = useVaultData(vaultId)
 
   const { longRealizedPNL } = useMemo(() => {
