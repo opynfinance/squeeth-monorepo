@@ -6,12 +6,11 @@ import BigNumber from 'bignumber.js'
 import { Position } from '@uniswap/v3-sdk'
 
 import { networkIdAtom, addressAtom, connectedWalletAtom } from '../wallet/atoms'
-import { swaps } from '@queries/uniswap/__generated__/swaps'
+import { swaps, swapsVariables } from '@queries/uniswap/__generated__/swaps'
 import SWAPS_QUERY, { SWAPS_SUBSCRIPTION } from '@queries/uniswap/swapsQuery'
 import SWAPS_ROPSTEN_QUERY, { SWAPS_ROPSTEN_SUBSCRIPTION } from '@queries/uniswap/swapsRopstenQuery'
 import { VAULT_QUERY } from '@queries/squeeth/vaultsQuery'
 import { BIG_ZERO, OSQUEETH_DECIMALS } from '@constants/index'
-import { useWorldContext } from '@context/world'
 import {
   addressesAtom,
   firstValidVaultAtom,
@@ -39,18 +38,19 @@ import POSITIONS_QUERY, { POSITIONS_SUBSCRIPTION } from '@queries/uniswap/positi
 import { useUsdAmount } from '@hooks/useUsdAmount'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
-import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
-import { useController } from '@hooks/contracts/useController'
 import { toTokenAmount } from '@utils/calculations'
 import { squeethClient } from '@utils/apollo-client'
 import { PositionType, Vault, Networks } from '../../types'
-import { useLPPositions } from '../../hooks/usePositions'
+import { poolAtom, readyAtom, squeethInitialPriceAtom } from '../squeethPool/atoms'
+import { useGetCollatRatioAndLiqPrice } from '../controller/hooks'
+import { useETHPrice } from '@hooks/useETHPrice'
+import { useGetWSqueethPositionValue } from '../squeethPool/hooks'
 
 export const useSwaps = () => {
   const [networkId] = useAtom(networkIdAtom)
   const [address] = useAtom(addressAtom)
   const [{ squeethPool, oSqueeth, shortHelper, swapRouter, crabStrategy }] = useAtom(addressesAtom)
-  const { subscribeToMore, data, refetch, loading, error } = useQuery<swaps, any>(
+  const { subscribeToMore, data, refetch, loading, error } = useQuery<swaps, swapsVariables>(
     networkId === Networks.MAINNET ? SWAPS_QUERY : SWAPS_ROPSTEN_QUERY,
     {
       variables: {
@@ -155,7 +155,7 @@ export const useComputeSwaps = () => {
         totalUSDFromBuy: BIG_ZERO,
         totalUSDFromSell: BIG_ZERO,
       },
-    [getUsdAmt, isWethToken0, data?.swaps.length],
+    [isWethToken0, data?.swaps.length],
   )
 
   const { finalSqueeth, finalWeth } = useMemo(() => {
@@ -242,7 +242,8 @@ export const useLongSqthBal = () => {
 }
 
 export const useLpDebt = () => {
-  const { depositedSqueeth, withdrawnSqueeth } = useLPPositions()
+  const depositedSqueeth = useAtomValue(depositedSqueethAtom)
+  const withdrawnSqueeth = useAtomValue(withdrawnSqueethAtom)
   const lpDebt = useMemo(() => {
     return depositedSqueeth.minus(withdrawnSqueeth).isGreaterThan(0)
       ? depositedSqueeth.minus(withdrawnSqueeth)
@@ -253,14 +254,10 @@ export const useLpDebt = () => {
 }
 
 export const useLPPositionsQuery = () => {
-  const [{ squeethPool }] = useAtom(addressesAtom)
-  const [address] = useAtom(addressAtom)
-  const {
-    data,
-    refetch,
-    loading: gphLoading,
-    subscribeToMore,
-  } = useQuery<positions, positionsVariables>(POSITIONS_QUERY, {
+  const { squeethPool } = useAtomValue(addressesAtom)
+  const address = useAtomValue(addressAtom)
+  const lpPositionsLoading = useAtomValue(lpPositionsLoadingAtom)
+  const { data, refetch, loading, subscribeToMore } = useQuery<positions, positionsVariables>(POSITIONS_QUERY, {
     variables: {
       poolAddress: squeethPool?.toLowerCase(),
       owner: address?.toLowerCase() || '',
@@ -285,22 +282,27 @@ export const useLPPositionsQuery = () => {
     })
   }, [address, squeethPool, subscribeToMore])
 
-  return { data, refetch, gphLoading }
+  return { data, refetch, loading: loading || lpPositionsLoading }
 }
 
 const MAX_UNIT = '0xffffffffffffffffffffffffffffffff'
+const positionFeesAtom = atom<any[]>([])
 export const useLPPositionsAndFees = () => {
   const manager = useAtomValue(managerAtom)
   const address = useAtomValue(addressAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)
+  const pool = useAtomValue(poolAtom)
+  const squeethInitialPrice = useAtomValue(squeethInitialPriceAtom)
+  const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const { data } = useLPPositionsQuery()
-  const { pool, getWSqueethPositionValue, squeethInitialPrice } = useSqueethPool()
-  const { ethPrice } = useWorldContext()
+  const ethPrice = useETHPrice()
+  const [positionFees, setPositionFees] = useAtom(positionFeesAtom)
 
-  return useMemo(() => {
-    if (!pool || !squeethInitialPrice.toNumber() || !ethPrice.toNumber()) return []
-    return (
-      data?.positions.map(async (p) => {
+  useEffect(() => {
+    ;(async function handlePositionFees() {
+      if (!pool || !squeethInitialPrice.toNumber() || !ethPrice.toNumber() || !data) return []
+
+      const positionFeesP = data.positions.map(async (p) => {
         const position = { ...p }
         const tokenIdHexString = new BigNumber(position.id).toString()
         const uniPosition = new Position({
@@ -343,12 +345,17 @@ export const useLPPositionsAndFees = () => {
           fees1: toTokenAmount(fees?.amount1, 18),
           dollarValue,
         }
-      }) || []
-    )
-  }, [pool, ethPrice.toString(), squeethInitialPrice.toString(), ethPrice.toString(), data?.positions?.length])
+      })
+
+      setPositionFees(await Promise.all(positionFeesP))
+    })()
+  }, [ethPrice.toString(), squeethInitialPrice.toString(), data?.positions?.length])
+
+  return positionFees
 }
 
-export const usePositionsAndFeesComputation = (positionAndFees: [], gphLoading: boolean) => {
+export const usePositionsAndFeesComputation = () => {
+  console.log('dh')
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const [activePositions, setActivePositions] = useAtom(activePositionsAtom)
   const setClosedPositions = useUpdateAtom(closedPositionsAtom)
@@ -359,54 +366,58 @@ export const usePositionsAndFeesComputation = (positionAndFees: [], gphLoading: 
   const setWithdrawnWeth = useUpdateAtom(withdrawnWethAtom)
   const setWethLiquidity = useUpdateAtom(wethLiquidityAtom)
   const setSqueethLiquidity = useUpdateAtom(squeethLiquidityAtom)
+
+  const positionAndFees = useLPPositionsAndFees()
+  const { loading: gphLoading } = useLPPositionsQuery()
+
   useEffect(() => {
     if (positionAndFees && !gphLoading) {
       setLoading(true)
-      Promise.all(positionAndFees).then((values: any[]) => {
-        setActivePositions(values.filter((p) => p.amount0.gt(0) || p.amount1.gt(0)))
-        setClosedPositions(values.filter((p) => p.amount0.isZero() && p.amount1.isZero()))
-        // Calculate cumulative LP position here
-        let depSqth = new BigNumber(0)
-        let depWeth = new BigNumber(0)
-        let withSqth = new BigNumber(0)
-        let withWeth = new BigNumber(0)
-        let sqthLiq = new BigNumber(0)
-        let wethLiq = new BigNumber(0)
-        for (const position of values) {
-          sqthLiq = sqthLiq.plus(isWethToken0 ? position.amount1 : position.amount0)
-          wethLiq = wethLiq.plus(isWethToken0 ? position.amount0 : position.amount1)
-          depSqth = depSqth.plus(isWethToken0 ? position.depositedToken1 : position.depositedToken0)
-          depWeth = depWeth.plus(isWethToken0 ? position.depositedToken0 : position.depositedToken1)
-          withSqth = withSqth.plus(
-            isWethToken0
-              ? new BigNumber(position.withdrawnToken1).plus(position.collectedFeesToken1)
-              : new BigNumber(position.withdrawnToken0).plus(position.collectedFeesToken0),
-          )
-          withWeth = withWeth.plus(
-            !isWethToken0
-              ? new BigNumber(position.withdrawnToken1).plus(position.collectedFeesToken1)
-              : new BigNumber(position.withdrawnToken0).plus(position.collectedFeesToken0),
-          )
-        }
-
-        setDepositedSqueeth(depSqth)
-        setDepositedWeth(depWeth)
-        setWithdrawnSqueeth(withSqth)
-        setWithdrawnWeth(withWeth)
-        setSqueethLiquidity(sqthLiq)
-        setWethLiquidity(wethLiq)
-        if (
-          !(
-            depSqth.isEqualTo(0) &&
-            depWeth.isEqualTo(0) &&
-            withSqth.isEqualTo(0) &&
-            sqthLiq.isEqualTo(0) &&
-            wethLiq.isEqualTo(0)
-          ) ||
-          activePositions.length === 0
+      // Promise.all(positionAndFees).then((values: any[]) => {
+      setActivePositions(positionAndFees.filter((p) => p.amount0.gt(0) || p.amount1.gt(0)))
+      setClosedPositions(positionAndFees.filter((p) => p.amount0.isZero() && p.amount1.isZero()))
+      // Calculate cumulative LP position here
+      let depSqth = new BigNumber(0)
+      let depWeth = new BigNumber(0)
+      let withSqth = new BigNumber(0)
+      let withWeth = new BigNumber(0)
+      let sqthLiq = new BigNumber(0)
+      let wethLiq = new BigNumber(0)
+      for (const position of positionAndFees) {
+        sqthLiq = sqthLiq.plus(isWethToken0 ? position.amount1 : position.amount0)
+        wethLiq = wethLiq.plus(isWethToken0 ? position.amount0 : position.amount1)
+        depSqth = depSqth.plus(isWethToken0 ? position.depositedToken1 : position.depositedToken0)
+        depWeth = depWeth.plus(isWethToken0 ? position.depositedToken0 : position.depositedToken1)
+        withSqth = withSqth.plus(
+          isWethToken0
+            ? new BigNumber(position.withdrawnToken1).plus(position.collectedFeesToken1)
+            : new BigNumber(position.withdrawnToken0).plus(position.collectedFeesToken0),
         )
-          setLoading(false)
-      })
+        withWeth = withWeth.plus(
+          !isWethToken0
+            ? new BigNumber(position.withdrawnToken1).plus(position.collectedFeesToken1)
+            : new BigNumber(position.withdrawnToken0).plus(position.collectedFeesToken0),
+        )
+      }
+
+      setDepositedSqueeth(depSqth)
+      setDepositedWeth(depWeth)
+      setWithdrawnSqueeth(withSqth)
+      setWithdrawnWeth(withWeth)
+      setSqueethLiquidity(sqthLiq)
+      setWethLiquidity(wethLiq)
+      if (
+        !(
+          depSqth.isEqualTo(0) &&
+          depWeth.isEqualTo(0) &&
+          withSqth.isEqualTo(0) &&
+          sqthLiq.isEqualTo(0) &&
+          wethLiq.isEqualTo(0)
+        ) ||
+        activePositions.length === 0
+      )
+        setLoading(false)
+      // })
     }
   }, [gphLoading, isWethToken0, positionAndFees.length])
 }
@@ -430,8 +441,9 @@ export const useUpdateVaultData = (vaultId: number) => {
   const setCollatPercent = useUpdateAtom(collatPercentAtom)
   const setExistingLiqPrice = useUpdateAtom(existingLiqPriceAtom)
   const setVaultLoading = useUpdateAtom(isVaultLoadingAtom)
-  const { ready } = useSqueethPool()
-  const { getCollatRatioAndLiqPrice, getVault } = useController()
+  const ready = useAtomValue(readyAtom)
+  const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
+
   useEffect(() => {
     ;(async () => {
       if (!connected || !ready) return
@@ -457,5 +469,19 @@ export const useUpdateVaultData = (vaultId: number) => {
         setVaultLoading(false)
       })
     })()
-  }, [connected, getCollatRatioAndLiqPrice, getVault, ready, vaultId])
+  }, [connected, ready, vaultId])
+}
+
+export const useFirstValidVault = () => {
+  const { vaults: shortVaults } = useVaultManager()
+  const [firstValidVault, setFirstValidVault] = useAtom(firstValidVaultAtom)
+  useEffect(() => {
+    for (let i = 0; i < shortVaults.length; i++) {
+      if (shortVaults[i]?.collateralAmount.isGreaterThan(0)) {
+        setFirstValidVault(i)
+      }
+    }
+  }, [shortVaults.length])
+
+  return { firstValidVault, vaultId: shortVaults[firstValidVault]?.id || 0 }
 }
