@@ -84,7 +84,7 @@ export const useVaultHistory = () => {
       },
     [vaultHistory?.length],
   )
-  console.log(vaultHistory, toTokenAmount(mintedSqueeth, 18).toString(), toTokenAmount(openShortSqueeth, 18).toString())
+  // console.log(vaultHistory, toTokenAmount(mintedSqueeth, 18).toString(), toTokenAmount(openShortSqueeth, 18).toString())
   return {
     mintedSqueeth: toTokenAmount(mintedSqueeth, 18),
     burnedSqueeth: toTokenAmount(burnedSqueeth, 18),
