@@ -112,8 +112,8 @@ const PositionsProvider: React.FC = ({ children }) => {
       : new BigNumber(0)
   }, [depositedSqueeth.toString(), withdrawnSqueeth.toString()])
 
-  //mintedSqueeth balance - mintedSold short position = existing mintedDebt in vault
-  //since LPed amount wont be deducted, will need to be deducted here
+  //mintedSqueeth balance from vault histroy - mintedSold short position = existing mintedDebt in vault, but
+  //LPed amount wont be taken into account from vault history, so will need to be deducted here and added the withdrawn amount back
   const mintedDebt = useMemo(() => {
     return mintedSqueeth.minus(mintedSoldShort).minus(depositedSqueeth).plus(withdrawnSqueeth)
   }, [mintedSqueeth.toString(), mintedSoldShort?.toString(), depositedSqueeth.toString(), withdrawnSqueeth.toString()])
