@@ -580,28 +580,19 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     loading: isPositionFinishedCalc,
   } = usePositions()
   const { setCollatRatio, ethPrice } = useWorldContext()
+  const { existingCollatPercent, vault } = useVaultData(Number(vaultId))
+
 
   useEffect(() => {
-    if (!shortVaults.length) return
-    // const calculatedShort = mintedDebt.plus(lpedSqueeth).plus(shortDebt)
-    const contractShort = shortVaults.length && shortVaults[firstValidVault]?.shortAmount
-
-    // if (!calculatedShort.isEqualTo(contractShort)) {
-    //   setFinalShortAmount(contractShort)
-    // } else {
-    //   setFinalShortAmount(shortDebt)
-    // }
+    const contractShort = vault?.shortAmount ? vault?.shortAmount : new BigNumber(0)
     setFinalShortAmount(contractShort)
-  }, [shortVaults?.length, firstValidVault])
-  // }, [shortVaults?.length, mintedDebt.toString(), shortDebt.toString(), lpedSqueeth.toString(), firstValidVault])
+  }, [vault?.shortAmount.toString()])
 
   useEffect(() => {
-    if (!open && shortVaults.length && shortVaults[firstValidVault].shortAmount.lt(amount)) {
-      setAmount(shortVaults[firstValidVault].shortAmount.toString())
+    if (!open && vault?.shortAmount && vault?.shortAmount.lt(amount)) {
+      setAmount(vault?.shortAmount.toString())
     }
-  }, [shortVaults?.length, open])
-
-  const { existingCollatPercent } = useVaultData(Number(vaultId))
+  }, [vault?.shortAmount.toString(), open])
 
   useEffect(() => {
     if (!open) return
