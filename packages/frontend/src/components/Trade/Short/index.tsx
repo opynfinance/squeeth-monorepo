@@ -609,9 +609,9 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
 
   useEffect(() => {
     if (shortVaults.length) {
-      const _collat: BigNumber = shortVaults[firstValidVault].collateralAmount
+      const _collat: BigNumber = vault?.collateralAmount ?? new BigNumber(0)
       setExistingCollat(_collat)
-      const restOfShort = new BigNumber(shortVaults[firstValidVault].shortAmount).minus(amount)
+      const restOfShort = new BigNumber(vault?.shortAmount ?? new BigNumber(0)).minus(amount)
 
       getDebtAmount(new BigNumber(restOfShort)).then((debt) => {
         const _neededCollat = debt.times(collatPercent / 100)
@@ -619,7 +619,13 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
         setWithdrawCollat(_neededCollat.gt(0) ? _collat.minus(neededCollat) : _collat)
       })
     }
-  }, [amount.toString(), collatPercent, shortVaults?.length])
+  }, [
+    amount.toString(),
+    shortVaults?.length,
+    collatPercent,
+    vault?.collateralAmount.toString(),
+    vault?.shortAmount.toString(),
+  ])
 
   const buyBackAndClose = useCallback(async () => {
     setBuyLoading(true)
@@ -629,8 +635,8 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
         await updateOperator(vaultId, shortHelper)
         setIsVaultApproved(true)
       } else {
-        const _collat: BigNumber = shortVaults[firstValidVault].collateralAmount
-        const restOfShort = new BigNumber(shortVaults[firstValidVault].shortAmount).minus(amount)
+        const _collat: BigNumber = vault?.collateralAmount ?? new BigNumber(0)
+        const restOfShort = new BigNumber(vault?.shortAmount ?? new BigNumber(0)).minus(amount)
         const _debt: BigNumber = await getDebtAmount(new BigNumber(restOfShort))
         const neededCollat = _debt.times(collatPercent / 100)
         const confirmedHash = await closeShort(vaultId, amount, _collat.minus(neededCollat))
@@ -652,6 +658,8 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     isVaultApproved,
     shortHelper,
     shortVaults?.length,
+    vault?.collateralAmount.toString(),
+    vault?.shortAmount.toString(),
     updateOperator,
     vaultId,
   ])
