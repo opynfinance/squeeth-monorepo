@@ -43,7 +43,7 @@ type positionsContextType = {
 const positionsContext = React.createContext<positionsContextType | undefined>(undefined)
 
 const PositionsProvider: React.FC = ({ children }) => {
-  const { vaults: shortVaults, vaultId } = useVaultManager()
+  const { vaults: shortVaults, vaultId, firstValidVault } = useVaultManager()
   const {
     squeethAmount,
     wethAmount,
@@ -70,7 +70,6 @@ const PositionsProvider: React.FC = ({ children }) => {
   } = useLPPositions()
 
   const [positionType, setPositionType] = useState(PositionType.NONE)
-  const [firstValidVault, setFirstValidVault] = useState(0)
   const { mintedSqueeth, openShortSqueeth } = useVaultHistory(vaultId)
   const { existingCollat, existingCollatPercent, existingLiqPrice: liquidationPrice } = useVaultData(vaultId)
 
@@ -121,14 +120,6 @@ const PositionsProvider: React.FC = ({ children }) => {
       setPositionType(PositionType.SHORT)
     } else setPositionType(PositionType.NONE)
   }, [squeethAmount.toString()])
-
-  useEffect(() => {
-    for (let i = 0; i < shortVaults.length; i++) {
-      if (shortVaults[i]?.collateralAmount.isGreaterThan(0)) {
-        setFirstValidVault(i)
-      }
-    }
-  }, [shortVaults.length])
 
   const values = {
     swaps,
