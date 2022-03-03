@@ -31,7 +31,7 @@ describe('YourVaults', () => {
     expect(screen.getByText(/Something went wrong!/i)).toBeInTheDocument()
   })
 
-  it('renders short amount and collateral amount eth', async () => {
+  it('renders short amount and collateral amount eth correctly', async () => {
     await setup({
       data: { vaults: mockedVaults },
     })
