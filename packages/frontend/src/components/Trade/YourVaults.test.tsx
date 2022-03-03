@@ -41,4 +41,20 @@ describe('YourVaults', () => {
     expect(screen.getByText('69.0000')).toBeInTheDocument()
     expect(screen.getByText('2.8000')).toBeInTheDocument()
   })
+
+  it('renders link to the vault detail page', async () => {
+    await setup({
+      data: {
+        vaults: [
+          {
+            id: '172',
+            shortAmount: '2800000000000000000',
+            collateralAmount: '69000000000000000000',
+          },
+        ],
+      },
+    })
+
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/vault/172')
+  })
 })
