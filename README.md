@@ -19,7 +19,7 @@ The squeeth contract is designed for users to long or short a special index: Eth
 
 This monorepo contains the source code for the frontend app as well as the contracts, you can spin up the environment locally, run tests, or play around with the code. For more details about how to use the contracts and frontend, go to `packages/` and choose `hardhat` for the contracts or `frontend`, we have more detailed explanation in each sub-folder.
 
-# 📚 Learn more
+## 📚 Learn more
 
 - Read our [GitBook](https://opyn.gitbook.io/squeeth/) Documentation
 - Visit our official [Medium page](https://medium.com/opyn) where we have tons of great posts
@@ -27,16 +27,19 @@ This monorepo contains the source code for the frontend app as well as the contr
 - Join our [Discord](https://tiny.cc/opyndiscord) to chat with all the derivative big brains
 
 
-# 🔒 Security And Bug Bounty Program
+## 🔒 Security And Bug Bounty Program
 Security is our one of our highest priorities. Our team has created a protocol that we believe is safe and dependable, and is audited by Trail of Bits and Akira, and is insured by Sherlock. All smart contract code is publicly verifiable and we have a bug bounty for undiscovered vulnerabilities. We encourage our users to be mindful of risk and only use funds they can afford to lose. Smart contracts are still new and experimental technology. We want to remind our users to be optimistic about innovation while remaining cautious about where they put their money.
 
 Please see here for details on our [security audit](https://opyn.gitbook.io/squeeth/security/audits-and-insurance) and [bug bounty program](https://opyn.gitbook.io/squeeth/security/bug-bounty).
 
 
-# 🏄‍♂️ Quick Start
+## 🏄‍♂️ Quick Start
 
-Prerequisites: [Node](https://nodejs.org/en/download/) plus [Yarn](https://classic.yarnpkg.com/en/docs/install/).
+### Prerequisites
+1. Install [Node](https://nodejs.org/en/download/) LTS
+1. Install [Yarn](https://classic.yarnpkg.com/en/docs/install/)
 
+### Steps
 > install and start your 👷‍ Hardhat chain:
 
 ```bash
