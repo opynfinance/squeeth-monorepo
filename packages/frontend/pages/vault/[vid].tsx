@@ -245,7 +245,7 @@ const SelectLP = React.memo<{ lpToken: number; setLpToken: (t: number) => void }
       poolAddress: squeethPool,
       owner: address || '',
     },
-    fetchPolicy: 'cache-and-network',
+    fetchPolicy: 'no-cache',
   })
 
   return (
