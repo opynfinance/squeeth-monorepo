@@ -15,7 +15,6 @@ import BigNumber from 'bignumber.js'
 import React, { useCallback, useEffect, useState } from 'react'
 
 import { CloseType, Tooltips, Links } from '@constants/enums'
-import { useTrade } from '@context/trade'
 import useShortHelper from '@hooks/contracts/useShortHelper'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import { PrimaryButton } from '@components/Button'
@@ -31,7 +30,7 @@ import { useVaultData } from '@hooks/useVaultData'
 import { connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
 import { addressesAtom, isLongAtom } from 'src/state/positions/atoms'
-import { useAtomValue } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { collatRatioAtom } from 'src/state/ethPriceCharts/atoms'
 import { useUpdateAtom } from 'jotai/utils'
@@ -43,6 +42,15 @@ import {
   useUpdateOperator,
 } from 'src/state/controller/hooks'
 import { useComputeSwaps, useFirstValidVault, useLPPositionsQuery } from 'src/state/positions/hooks'
+import {
+  quoteAtom,
+  sellCloseQuoteAtom,
+  slippageAmountAtom,
+  tradeAmountAtom,
+  tradeSuccessAtom,
+  tradeTypeAtom,
+} from 'src/state/trade/atoms'
+import { useResetTradeForm } from 'src/state/trade/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -213,16 +221,13 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
   const normalizationFactor = useNormFactor()
   const getShortAmountFromDebt = useGetShortAmountFromDebt()
   const getDebtAmount = useGetDebtAmount()
+  const [tradeSuccess, setTradeSuccess] = useAtom(tradeSuccessAtom)
 
-  const {
-    tradeAmount: amountInputValue,
-    setTradeAmount: setAmount,
-    quote,
-    tradeType,
-    tradeSuccess,
-    setTradeSuccess,
-    slippageAmount,
-  } = useTrade()
+  const quote = useAtomValue(quoteAtom)
+  const [amountInputValue, setAmount] = useAtom(tradeAmountAtom)
+
+  const slippageAmount = useAtomValue(slippageAmountAtom)
+  const tradeType = useAtomValue(tradeTypeAtom)
   const amount = new BigNumber(amountInputValue)
   const collateral = new BigNumber(collateralInput)
   const isLong = useAtomValue(isLongAtom)
@@ -594,15 +599,13 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   const getShortAmountFromDebt = useGetShortAmountFromDebt()
   const getDebtAmount = useGetDebtAmount()
 
-  const {
-    tradeAmount: amountInputValue,
-    setTradeAmount: setAmount,
-    quote,
-    sellCloseQuote,
-    tradeType,
-    setTradeSuccess,
-    slippageAmount,
-  } = useTrade()
+  const quote = useAtomValue(quoteAtom)
+  const sellCloseQuote = useAtomValue(sellCloseQuoteAtom)
+  const [amountInputValue, setAmount] = useAtom(tradeAmountAtom)
+
+  const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
+  const slippageAmount = useAtomValue(slippageAmountAtom)
+  const tradeType = useAtomValue(tradeTypeAtom)
   const amount = new BigNumber(amountInputValue)
 
   const { loading: isPositionFinishedCalc } = useLPPositionsQuery()
@@ -1033,7 +1036,7 @@ const Short: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComplete
   //     })
   //   }
   // }
-
+  useResetTradeForm()
   return open ? (
     <OpenShort balance={balance} open={open} closeTitle={closeTitle} setTradeCompleted={setTradeCompleted} />
   ) : (

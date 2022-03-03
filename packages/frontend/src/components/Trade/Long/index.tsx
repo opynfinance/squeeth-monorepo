@@ -2,9 +2,9 @@ import { CircularProgress, createStyles, makeStyles, Typography } from '@materia
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import BigNumber from 'bignumber.js'
 import React, { useCallback, useEffect, useState } from 'react'
+import { useUpdateAtom } from 'jotai/utils'
 
 import { InputType, Links } from '../../../constants'
-import { useTrade } from '@context/trade'
 import { useUserAllowance } from '@hooks/contracts/useAllowance'
 import { PrimaryButton } from '@components/Button'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
@@ -15,7 +15,7 @@ import TradeInfoItem from '../TradeInfoItem'
 import UniswapData from '../UniswapData'
 import { connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
-import { useAtomValue } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 import { addressesAtom, isShortAtom } from 'src/state/positions/atoms'
 import { useETHPrice } from '@hooks/useETHPrice'
 import {
@@ -26,6 +26,18 @@ import {
 } from 'src/state/squeethPool/hooks'
 import { useCurrentImpliedFunding, useDailyHistoricalFunding } from 'src/state/controller/hooks'
 import { useComputeSwaps, useLongSqthBal, useShortDebt } from 'src/state/positions/hooks'
+import {
+  altTradeAmountAtom,
+  confirmedAmountAtom,
+  inputQuoteLoadingAtom,
+  inputTypeAtom,
+  quoteAtom,
+  slippageAmountAtom,
+  squeethExposureAtom,
+  tradeAmountAtom,
+  tradeSuccessAtom,
+} from 'src/state/trade/atoms'
+import { useResetTradeForm, useUpdateSqueethExposure } from 'src/state/trade/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -228,20 +240,15 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
   const classes = useStyles()
   const buyAndRefund = useBuyAndRefund()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
-  const {
-    tradeAmount: amountInputValue,
-    setTradeAmount: setAmount,
-    squeethExposure,
-    inputQuoteLoading,
-    setInputQuoteLoading,
-    setInputType,
-    quote,
-    altTradeAmount: altAmountInputValue,
-    setAltTradeAmount,
-    confirmedAmount,
-    setTradeSuccess,
-    slippageAmount,
-  } = useTrade()
+  const confirmedAmount = useAtomValue(confirmedAmountAtom)
+  const squeethExposure = useAtomValue(squeethExposureAtom)
+  const [inputQuoteLoading, setInputQuoteLoading] = useAtom(inputQuoteLoadingAtom)
+  const quote = useAtomValue(quoteAtom)
+  const [altAmountInputValue, setAltTradeAmount] = useAtom(altTradeAmountAtom)
+  const [amountInputValue, setAmount] = useAtom(tradeAmountAtom)
+  const setInputType = useUpdateAtom(inputTypeAtom)
+  const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
+  const slippageAmount = useAtomValue(slippageAmountAtom)
   const ethPrice = useETHPrice()
   const amount = new BigNumber(amountInputValue)
   const altTradeAmount = new BigNumber(altAmountInputValue)
@@ -504,20 +511,14 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle, setTradeComp
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const getSellQuoteForETH = useGetSellQuoteForETH()
 
-  const {
-    tradeAmount: amountInputValue,
-    setTradeAmount: setAmount,
-    quote,
-    inputQuoteLoading,
-    setInputQuoteLoading,
-    setInputType,
-    altTradeAmount: altAmountInputValue,
-    setAltTradeAmount,
-    setTradeSuccess,
-    slippageAmount,
-    confirmedAmount,
-    setConfirmedAmount,
-  } = useTrade()
+  const [confirmedAmount, setConfirmedAmount] = useAtom(confirmedAmountAtom)
+  const [inputQuoteLoading, setInputQuoteLoading] = useAtom(inputQuoteLoadingAtom)
+  const quote = useAtomValue(quoteAtom)
+  const [altAmountInputValue, setAltTradeAmount] = useAtom(altTradeAmountAtom)
+  const [amountInputValue, setAmount] = useAtom(tradeAmountAtom)
+  const setInputType = useUpdateAtom(inputTypeAtom)
+  const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
+  const slippageAmount = useAtomValue(slippageAmountAtom)
   const ethPrice = useETHPrice()
   const amount = new BigNumber(amountInputValue)
   const altTradeAmount = new BigNumber(altAmountInputValue)
@@ -775,6 +776,8 @@ const Long: React.FC<BuyProps> = ({
   isLPage = false,
   activeStep = 0,
 }) => {
+  useUpdateSqueethExposure()
+  useResetTradeForm()
   return open ? (
     <OpenLong
       balance={balance}

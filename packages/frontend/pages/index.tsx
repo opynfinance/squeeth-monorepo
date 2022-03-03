@@ -8,7 +8,7 @@ import ExpandLessIcon from '@material-ui/icons/NavigateBefore'
 import ExpandMoreIcon from '@material-ui/icons/NavigateNext'
 import Image from 'next/image'
 import { useState } from 'react'
-import { useAtomValue } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 
 import squeethTokenSymbol from '../public/images/Squeeth.svg'
 import { PrimaryButton } from '@components/Button'
@@ -24,8 +24,8 @@ import { WelcomeModal } from '@components/Trade/WelcomeModal'
 import { Vaults } from '../src/constants'
 import { Tooltips } from '@constants/enums'
 import { useRestrictUser } from '@context/restrict-user'
-import { TradeProvider, useTrade } from '@context/trade'
-import { useController } from '@hooks/contracts/useController'
+import { TradeProvider } from '@context/trade'
+
 // import {
 //   indexAtom,
 //   markAtom,
@@ -45,6 +45,8 @@ import {
 } from 'src/state/controller/hooks'
 import { impliedVolAtom } from 'src/state/controller/atoms'
 import { usePositionsAndFeesComputation } from 'src/state/positions/hooks'
+import { actualTradeTypeAtom, tradeTypeAtom } from 'src/state/trade/atoms'
+import { useTradeAmountUpdate, useTradeUpdate, useUpdateActualTradeType } from 'src/state/trade/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -320,7 +322,7 @@ const useStyles = makeStyles((theme) =>
 
 const Header: React.FC = () => {
   const classes = useStyles()
-  const { tradeType } = useTrade()
+  const tradeType = useAtomValue(tradeTypeAtom)
 
   return (
     <>
@@ -351,7 +353,7 @@ const Header: React.FC = () => {
 
 const TabComponent: React.FC = () => {
   const classes = useStyles()
-  const { tradeType, setTradeType } = useTrade()
+  const [tradeType, setTradeType] = useAtom(tradeTypeAtom)
 
   return (
     <div>
@@ -380,7 +382,7 @@ const TabComponent: React.FC = () => {
 
 const SqueethInfo: React.FC = () => {
   const classes = useStyles()
-  const { actualTradeType } = useTrade()
+  const actualTradeType = useAtomValue(actualTradeTypeAtom)
   const dailyHistoricalFunding = useDailyHistoricalFunding()
   const mark = useMark()
   const index = useIndex()
@@ -388,6 +390,7 @@ const SqueethInfo: React.FC = () => {
   const currentImpliedFunding = useCurrentImpliedFunding()
   const normFactor = useNormFactor()
   usePositionsAndFeesComputation()
+  useUpdateActualTradeType()
 
   const [showAdvanced, setShowAdvanced] = useState(false)
 
@@ -531,7 +534,7 @@ function TradePage() {
   const classes = useStyles()
   const { isRestricted } = useRestrictUser()
 
-  const { tradeType } = useTrade()
+  const tradeType = useAtomValue(tradeTypeAtom)
   const [showMobileTrade, setShowMobileTrade] = useState(false)
   const [isWelcomeModalOpen, setWelcomeModalOpen] = useState(false)
   const [tradeCompleted, setTradeCompleted] = useState(false)
@@ -539,6 +542,9 @@ function TradePage() {
   const handleClose = () => {
     setWelcomeModalOpen(false)
   }
+
+  useTradeAmountUpdate()
+  useTradeUpdate()
 
   return (
     <div>
@@ -614,9 +620,9 @@ function TradePage() {
 
 export function App() {
   return (
-    <TradeProvider>
-      <TradePage />
-    </TradeProvider>
+    // <TradeProvider>
+    <TradePage />
+    // </TradeProvider>
   )
 }
 

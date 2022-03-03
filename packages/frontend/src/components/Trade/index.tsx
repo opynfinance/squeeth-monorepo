@@ -1,7 +1,6 @@
 import { createStyles, makeStyles } from '@material-ui/core'
-import React, { useEffect } from 'react'
+import React from 'react'
 
-import { useTrade } from '@context/trade'
 // import { useWallet } from '@context/wallet'
 // import { usePositions } from '@context/positions'
 import { TradeType, PositionType } from '../../types'
@@ -11,6 +10,8 @@ import Long from './Long'
 import Short from './Short'
 import { useWalletBalance } from 'src/state/wallet/hooks'
 import { BIG_ZERO } from '@constants/index'
+import { openPositionAtom, tradeTypeAtom } from 'src/state/trade/atoms'
+import { useAtom, useAtomValue } from 'jotai'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -42,10 +43,10 @@ type tradeType = {
 
 const Trade: React.FC<tradeType> = ({ setTradeCompleted }) => {
   const classes = useStyles()
-  // const { balance } = useWallet()
+
   const { data: balance } = useWalletBalance()
-  const { tradeType, openPosition, setOpenPosition } = useTrade()
-  // const { positionType } = usePositions()
+  const tradeType = useAtomValue(tradeTypeAtom)
+  const [openPosition, setOpenPosition] = useAtom(openPositionAtom)
 
   // useEffect(() => {
   //   setTradeType(positionType === PositionType.SHORT ? 1 : 0)

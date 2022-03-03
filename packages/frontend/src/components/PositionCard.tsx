@@ -6,10 +6,10 @@ import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
 import Link from 'next/link'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useAtom, useAtomValue } from 'jotai'
 
 import { usePnL } from '@hooks/usePositions'
 import { Tooltips } from '@constants/enums'
-import { useTrade } from '@context/trade'
 import { PositionType, TradeType } from '../types'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { usePrevious } from 'react-use'
@@ -23,8 +23,16 @@ import {
 } from 'src/state/positions/hooks'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { existingCollatAtom, isLPAtom, positionTypeAtom } from 'src/state/positions/atoms'
-import { useAtomValue } from 'jotai'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
+import {
+  actualTradeTypeAtom,
+  isOpenPositionAtom,
+  quoteAtom,
+  tradeAmountAtom,
+  tradeSuccessAtom,
+  tradeTypeAtom,
+} from 'src/state/trade/atoms'
+import { useUpdateActualTradeType } from 'src/state/trade/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -170,19 +178,16 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
   const { firstValidVault, vaultId } = useFirstValidVault()
   const { loading: isPositionLoading } = useLPPositionsQuery()
   const isLP = useAtomValue(isLPAtom)
+  const isOpenPosition = useAtomValue(isOpenPositionAtom)
+  const [tradeSuccess, setTradeSuccess] = useAtom(tradeSuccessAtom)
 
   const longRealizedPNL = useLongRealizedPnl()
   const shortRealizedPNL = useShortRealizedPnl()
   const { liquidations } = useVaultLiquidations(Number(vaultId))
-  const {
-    tradeAmount: tradeAmountInput,
-    actualTradeType,
-    isOpenPosition,
-    quote,
-    tradeSuccess,
-    setTradeSuccess,
-    tradeType,
-  } = useTrade()
+  const actualTradeType = useAtomValue(actualTradeTypeAtom)
+  const quote = useAtomValue(quoteAtom)
+  const tradeAmountInput = useAtomValue(tradeAmountAtom)
+  const tradeType = useAtomValue(tradeTypeAtom)
   const ethPrice = useETHPrice()
   const prevSwapsData = usePrevious(swaps)
   const tradeAmount = new BigNumber(tradeAmountInput)
@@ -191,6 +196,8 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
   const [postPosition, setPostPosition] = useState(PositionType.NONE)
   const positionType = useMemo(() => (isPositionLoading ? PositionType.NONE : pType), [pType, isPositionLoading])
   const classes = useStyles({ positionType, postPosition })
+
+  useUpdateActualTradeType()
 
   useEffect(() => {
     if (tradeSuccess) {
@@ -277,9 +284,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     setPostTradeAmt(_postTradeAmt)
     setPostPosition(_postPosition)
   }, [
-    tradeSuccess,
     actualTradeType,
-    firstValidVault,
     isOpenPosition,
     isPositionLoading,
     positionType,
@@ -321,6 +326,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
                 <Typography component="span" style={{ fontWeight: 600 }}>
                   {getPositionBasedValue(squeethAmount.toFixed(6), squeethAmount.toFixed(6), '0', '0')}
                 </Typography>
+
                 {(tradeType === TradeType.SHORT && positionType === PositionType.LONG) ||
                 (tradeType === TradeType.LONG && positionType === PositionType.SHORT) ||
                 tradeAmount.isLessThanOrEqualTo(0) ||
