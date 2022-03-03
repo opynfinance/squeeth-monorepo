@@ -8,11 +8,7 @@ import Link from 'next/link'
 import { FC } from 'react'
 
 const YourVaults: FC = () => {
-  console.log('asdfasdf')
-
   const { data: { vaults } = {}, loading, error } = useYourVaults()
-
-  console.log('testst', error, vaults, loading)
 
   if (error) {
     return <Typography color="error">{error.message}</Typography>
