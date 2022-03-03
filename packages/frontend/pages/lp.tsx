@@ -207,11 +207,11 @@ export function LPCalculator() {
 
 export function LPage() {
   return (
-    <TradeProvider>
-      <LPProvider>
-        <LPCalculator />
-      </LPProvider>
-    </TradeProvider>
+    // <TradeProvider>
+    <LPProvider>
+      <LPCalculator />
+    </LPProvider>
+    // </TradeProvider>
   )
 }
 
