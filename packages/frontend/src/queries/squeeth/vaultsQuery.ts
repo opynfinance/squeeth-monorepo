@@ -15,6 +15,16 @@ export const VAULTS_QUERY = gql`
   }
 `
 
+export const YOUR_VAULTS_QUERY = gql`
+  query YourVaults($ownerId: ID!) {
+    vaults(where: { owner: $ownerId, collateralAmount_gt: 0 }) {
+      id
+      shortAmount
+      collateralAmount
+    }
+  }
+`
+
 export const VAULTS_SUBSCRIPTION = gql`
   subscription subscriptionVaults($ownerId: ID!, $vaultID: ID) {
     vaults(where: { owner: $ownerId }) {
