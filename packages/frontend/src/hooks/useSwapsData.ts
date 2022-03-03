@@ -10,21 +10,27 @@ import { swaps, swapsVariables } from '../queries/uniswap/__generated__/swaps'
 import SWAPS_QUERY, { SWAPS_SUBSCRIPTION } from '../queries/uniswap/swapsQuery'
 import { Networks } from '../types'
 import SWAPS_ROPSTEN_QUERY, { SWAPS_ROPSTEN_SUBSCRIPTION } from '@queries/uniswap/swapsRopstenQuery'
+import { swapsRopsten, swapsRopstenVariables } from '@queries/uniswap/__generated__/swapsRopsten'
 
 export const useSwapsData = () => {
   const { squeethPool, weth, oSqueeth, shortHelper, swapRouter, crabStrategy } = useAddresses()
   const { address, networkId } = useWallet()
   const { getUsdAmt } = useUsdAmount()
-  const { data, subscribeToMore, refetch } = useQuery<swaps, swapsVariables>(
+  const { data, subscribeToMore, refetch } = useQuery<swaps | swapsRopsten, swapsVariables | swapsRopstenVariables>(
     networkId === Networks.MAINNET ? SWAPS_QUERY : SWAPS_ROPSTEN_QUERY,
     {
       variables: {
-        tokenAddress: oSqueeth,
         origin: address || '',
-        poolAddress: squeethPool,
-        recipients: [shortHelper, address || '', swapRouter],
-        recipient_not: crabStrategy,
         orderDirection: 'asc',
+        recipient_not: crabStrategy,
+        ...(networkId === Networks.MAINNET
+          ? {
+              tokenAddress: oSqueeth,
+            }
+          : {
+              poolAddress: squeethPool,
+              recipients: [shortHelper, address || '', swapRouter],
+            }),
       },
       fetchPolicy: 'cache-and-network',
     },
@@ -34,15 +40,20 @@ export const useSwapsData = () => {
     subscribeToMore({
       document: networkId === Networks.MAINNET ? SWAPS_SUBSCRIPTION : SWAPS_ROPSTEN_SUBSCRIPTION,
       variables: {
-        tokenAddress: oSqueeth,
         origin: address || '',
-        poolAddress: squeethPool,
-        recipients: [shortHelper, address || '', swapRouter],
-        recipient_not: crabStrategy,
         orderDirection: 'asc',
+        recipient_not: crabStrategy,
+        ...(networkId === Networks.MAINNET
+          ? {
+              tokenAddress: oSqueeth,
+            }
+          : {
+              poolAddress: squeethPool,
+              recipients: [shortHelper, address || '', swapRouter],
+            }),
       },
       updateQuery(prev, { subscriptionData }) {
-        if (!subscriptionData.data || subscriptionData.data.swaps.length === data?.swaps.length) return prev
+        if (!subscriptionData.data) return prev
         const newSwaps = subscriptionData.data.swaps
         return {
           swaps: newSwaps,
