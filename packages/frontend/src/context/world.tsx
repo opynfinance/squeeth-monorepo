@@ -46,6 +46,8 @@ type WorldContextProps = {
 
   ethPrice: BigNumber
   oSqueethBal: BigNumber
+
+  squeethIsLive: boolean[] | undefined
 }
 
 const initialContext = {
@@ -80,6 +82,8 @@ const initialContext = {
   ethPrice: new BigNumber(0),
   oSqueethBal: new BigNumber(0),
   setOSqueethBal: () => null,
+
+  squeethIsLive: [],
 }
 
 const worldContext = React.createContext<WorldContextProps>(initialContext)
@@ -111,6 +115,7 @@ const WorldProvider: React.FC = ({ children }) => {
     eth90daysPriceMap,
     collatRatio,
     setCollatRatio,
+    squeethIsLive,
   } = useETHPriceCharts()
 
   const { oSqueeth } = useAddresses()
@@ -147,6 +152,7 @@ const WorldProvider: React.FC = ({ children }) => {
         setCollatRatio,
         ethPrice,
         oSqueethBal,
+        squeethIsLive,
       }}
     >
       {children}
