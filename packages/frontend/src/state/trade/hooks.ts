@@ -119,20 +119,11 @@ export const useTradeUpdate = () => {
     setInputQuoteLoading(false)
   }, [
     altTradeAmount,
-    getBuyQuote,
-    getBuyQuoteForETH,
-    getSellQuote,
-    getSellQuoteForETH,
     inputType,
     isPositionOpen,
     positionType,
     ready,
-    setConfirmedAmount,
-    setInputQuote,
-    setInputQuoteLoading,
-    setQuote,
-    setSellCloseQuote,
-    slippageAmount,
+    slippageAmount.toString(),
     tradeAmount,
     tradeType,
   ])
@@ -157,7 +148,7 @@ export const useTradeAmountUpdate = () => {
       else setAltTradeAmount(inputQuote)
     }
     setInputQuoteLoading(false)
-  }, [inputQuote, inputType, isPositionOpen, setAltTradeAmount, setInputQuoteLoading, setTradeAmount])
+  }, [inputQuote, inputType, isPositionOpen])
 
   return { isPositionOpen, inputType, inputQuote }
 }
