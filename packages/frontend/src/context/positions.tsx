@@ -101,6 +101,7 @@ const PositionsProvider: React.FC = ({ children }) => {
       : new BigNumber(0)
   }, [positionType, squeethAmount?.toString(), openShortSqueeth.toString()])
 
+  // accumulated deposited Squeeth - acc. withdrawn squeeth in LP position = LP debt
   const lpDebt = useMemo(() => {
     return depositedSqueeth.minus(withdrawnSqueeth).isGreaterThan(0)
       ? depositedSqueeth.minus(withdrawnSqueeth)
@@ -109,9 +110,10 @@ const PositionsProvider: React.FC = ({ children }) => {
 
   //mintedSqueeth balance from vault histroy - mintedSold short position = existing mintedDebt in vault, but
   //LPed amount wont be taken into account from vault history, so will need to be deducted here and added the withdrawn amount back
+  //if there is LP Debt, shld be deducted from minted Debt
   const mintedDebt = useMemo(() => {
-    return mintedSqueeth.minus(mintedSoldShort).minus(depositedSqueeth).plus(withdrawnSqueeth)
-  }, [mintedSqueeth.toString(), mintedSoldShort?.toString(), depositedSqueeth.toString(), withdrawnSqueeth.toString()])
+    return mintedSqueeth.minus(mintedSoldShort).minus(lpDebt)
+  }, [mintedSqueeth.toString(), mintedSoldShort?.toString(), lpDebt.toString()])
 
   useEffect(() => {
     if (squeethAmount.isGreaterThan(0)) {
