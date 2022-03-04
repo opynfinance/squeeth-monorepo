@@ -385,6 +385,7 @@ const Component: React.FC = () => {
     async (input: number) => {
       setUniTokenToDeposit(input)
       if (!input) return
+      console.log(input)
       const approvedAddress: string = await getApproved(input)
       if (controller === (approvedAddress || '')) {
         setAction(VaultAction.DEPOSIT_UNI_POSITION)
@@ -392,7 +393,7 @@ const Component: React.FC = () => {
         setAction(VaultAction.APPROVE_UNI_POSITION)
       }
     },
-    [controller],
+    [controller, getApproved],
   )
 
   useEffect(() => {
