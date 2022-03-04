@@ -325,15 +325,22 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
     }
 
     /**
-     * @notice close short position with user Uniswap v3 LP NFT 
+     * @notice close short position with user Uniswap v3 LP NFT
      * @dev user should approve this contract for Uni NFT transfer
      */
-    function closeShortWithUserNft(
-        CloseShortWithUserNftParams calldata params
-    ) external {
-        INonfungiblePositionManager(nonfungiblePositionManager).safeTransferFrom(msg.sender, address(this), params.tokenId);
+    function closeShortWithUserNft(CloseShortWithUserNftParams calldata params) external {
+        INonfungiblePositionManager(nonfungiblePositionManager).safeTransferFrom(
+            msg.sender,
+            address(this),
+            params.tokenId
+        );
 
-        (uint128 liquidity, ,) = ControllerHelperLib._getUniPositionBalances(nonfungiblePositionManager, params.tokenId, IOracle(oracle).getTimeWeightedAverageTickSafe(wPowerPerpPool, 420), isWethToken0);
+        (uint128 liquidity, , ) = ControllerHelperLib._getUniPositionBalances(
+            nonfungiblePositionManager,
+            params.tokenId,
+            IOracle(oracle).getTimeWeightedAverageTickSafe(wPowerPerpPool, 420),
+            isWethToken0
+        );
         // (
         //     ,
         //     ,
@@ -346,25 +353,32 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         //     ,
         //     ,
         //     ,
-            
+
         // ) = INonfungiblePositionManager(nonfungiblePositionManager).positions(params.tokenId);
-        INonfungiblePositionManager.DecreaseLiquidityParams memory decreaseParams = INonfungiblePositionManager.DecreaseLiquidityParams({
-            tokenId: params.tokenId,
-            liquidity: liquidity,
-            amount0Min: params.amount0Min,
-            amount1Min: params.amount1Min,
-            deadline: block.timestamp
-        });
+        INonfungiblePositionManager.DecreaseLiquidityParams memory decreaseParams = INonfungiblePositionManager
+            .DecreaseLiquidityParams({
+                tokenId: params.tokenId,
+                liquidity: liquidity,
+                amount0Min: params.amount0Min,
+                amount1Min: params.amount1Min,
+                deadline: block.timestamp
+            });
         uint256 wethAmount;
         uint256 wPowerPerpAmount;
-        (isWethToken0) ? (wethAmount, wPowerPerpAmount) = INonfungiblePositionManager(nonfungiblePositionManager).decreaseLiquidity(decreaseParams) : (wPowerPerpAmount, wethAmount) = INonfungiblePositionManager(nonfungiblePositionManager).decreaseLiquidity(decreaseParams);
+        (isWethToken0)
+            ? (wethAmount, wPowerPerpAmount) = INonfungiblePositionManager(nonfungiblePositionManager)
+                .decreaseLiquidity(decreaseParams)
+            : (wPowerPerpAmount, wethAmount) = INonfungiblePositionManager(nonfungiblePositionManager)
+            .decreaseLiquidity(decreaseParams);
 
-        (uint256 amount0, uint256 amount1) = INonfungiblePositionManager(nonfungiblePositionManager).collect(INonfungiblePositionManager.CollectParams({
-            tokenId: params.tokenId,
-            recipient: address(this),
-            amount0Max: isWethToken0 ? uint128(wethAmount) : uint128(wPowerPerpAmount),
-            amount1Max: isWethToken0 ?uint128(wPowerPerpAmount) : uint128(wethAmount)
-        }));
+        (uint256 amount0, uint256 amount1) = INonfungiblePositionManager(nonfungiblePositionManager).collect(
+            INonfungiblePositionManager.CollectParams({
+                tokenId: params.tokenId,
+                recipient: address(this),
+                amount0Max: isWethToken0 ? uint128(wethAmount) : uint128(wPowerPerpAmount),
+                amount1Max: isWethToken0 ? uint128(wPowerPerpAmount) : uint128(wethAmount)
+            })
+        );
 
         if (wPowerPerpAmount < params.wPowerPerpAmountToBurn) {
             // may need to set max slippage here
@@ -383,8 +397,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 params.wPowerPerpAmountToBurn,
                 params.collateralToWithdraw
             );
-        }
-        else {
+        } else {
             IController(controller).burnWPowerPerpAmount(
                 params.vaultId,
                 params.wPowerPerpAmountToBurn,
