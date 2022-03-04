@@ -410,7 +410,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                     wPowerPerp,
                     weth,
                     IUniswapV3Pool(wPowerPerpPool).fee(),
-                    params.wPowerPerpAmountToBurn.sub(wPowerPerpAmount),
+                    wPowerPerpAmount.sub(params.wPowerPerpAmountToBurn),
                     params.minOut,
                     uint8(FLASH_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
                     ""
