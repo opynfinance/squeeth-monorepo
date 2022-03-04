@@ -335,6 +335,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             params.tokenId
         );
 
+        // get liquidity amount, and withdraw ETH and wPowerPerp amounts in LP position
         (uint128 liquidity, , ) = ControllerHelperLib._getUniPositionBalances(
             nonfungiblePositionManager,
             params.tokenId,
@@ -353,7 +354,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         //     ,
         //     ,
         //     ,
-
         // ) = INonfungiblePositionManager(nonfungiblePositionManager).positions(params.tokenId);
         INonfungiblePositionManager.DecreaseLiquidityParams memory decreaseParams = INonfungiblePositionManager
             .DecreaseLiquidityParams({
@@ -370,7 +370,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 .decreaseLiquidity(decreaseParams)
             : (wPowerPerpAmount, wethAmount) = INonfungiblePositionManager(nonfungiblePositionManager)
             .decreaseLiquidity(decreaseParams);
-
         (uint256 amount0, uint256 amount1) = INonfungiblePositionManager(nonfungiblePositionManager).collect(
             INonfungiblePositionManager.CollectParams({
                 tokenId: params.tokenId,
@@ -381,7 +380,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         );
 
         if (wPowerPerpAmount < params.wPowerPerpAmountToBurn) {
-            // may need to set max slippage here
+            // swap needed wPowerPerp amount to close short position
+            // TODO: need to set max slippage here
             _exactOutFlashSwap(
                 weth,
                 wPowerPerp,
@@ -398,6 +398,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 params.collateralToWithdraw
             );
         } else {
+            // if LP have more wPowerPerp amount that amount to burn in vault, sell remaining amount for WETH
             IController(controller).burnWPowerPerpAmount(
                 params.vaultId,
                 params.wPowerPerpAmountToBurn,
