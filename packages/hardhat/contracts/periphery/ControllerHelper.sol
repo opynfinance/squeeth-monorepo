@@ -67,6 +67,15 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         uint256 wPowerPerpAmount;
         uint256 collateralAmount;
     }
+    struct CloseShortWithUserNftParams {
+        uint256 vaultId;
+        uint256 tokenId;
+        uint256 wPowerPerpAmountToBurn;
+        uint256 collateralToWithdraw;
+        uint256 minOut;
+        uint128 amount0Min;
+        uint128 amount1Min;
+    }
 
     event FlashswapWMint(
         address indexed depositor,
@@ -233,82 +242,84 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
     /**
      * @notice close short position with user Uniswap v3 LP NFT 
      * @dev user should approve this contract for Uni NFT transfer
-     * @param _vaultId vault ID
-     * @param _tokenId Uni NFT token ID
-     * @param _wPowerPerpAmountToBurn amount of wPowerPerp to burn from vault
-     * @param _collateralToWithdraw amount of collateral to withdraw from vault
-     * @param _minOut minimum amount of ETH to receive for selling wPowerPerp in case LP position have an amount greater than the amount to burn
-     * @param _amount0Min minimum amount of token0 to withraw from LP position
-     * @param _amount1Min minimum amount of token1 to withdraw from LP position
      */
     function closeShortWithUserNft(
-        uint256 _vaultId,
-        uint256 _tokenId,
-        uint256 _wPowerPerpAmountToBurn,
-        uint256 _collateralToWithdraw,
-        uint256 _minOut,
-        uint128 _amount0Min,
-        uint128 _amount1Min
+        CloseShortWithUserNftParams calldata params
     ) external {
-        INonfungiblePositionManager(nonfungiblePositionManager).safeTransferFrom(msg.sender, address(this), _tokenId);
-        (uint128 liquidity, ,) = ControllerHelperLib._getUniPositionBalances(nonfungiblePositionManager, _tokenId, IOracle(oracle).getTimeWeightedAverageTickSafe(wPowerPerpPool, 420), weth < wPowerPerp);
+        INonfungiblePositionManager(nonfungiblePositionManager).safeTransferFrom(msg.sender, address(this), params.tokenId);
 
+        (uint128 liquidity, ,) = ControllerHelperLib._getUniPositionBalances(nonfungiblePositionManager, params.tokenId, IOracle(oracle).getTimeWeightedAverageTickSafe(wPowerPerpPool, 420), isWethToken0);
+        // (
+        //     ,
+        //     ,
+        //     ,
+        //     ,
+        //     ,
+        //     ,
+        //     ,
+        //     uint128 liquidity,
+        //     ,
+        //     ,
+        //     ,
+            
+        // ) = INonfungiblePositionManager(nonfungiblePositionManager).positions(params.tokenId);
         INonfungiblePositionManager.DecreaseLiquidityParams memory decreaseParams = INonfungiblePositionManager.DecreaseLiquidityParams({
-            tokenId: _tokenId,
+            tokenId: params.tokenId,
             liquidity: liquidity,
-            amount0Min: _amount0Min,
-            amount1Min: _amount1Min,
+            amount0Min: params.amount0Min,
+            amount1Min: params.amount1Min,
             deadline: block.timestamp
         });
         uint256 wethAmount;
         uint256 wPowerPerpAmount;
         (isWethToken0) ? (wethAmount, wPowerPerpAmount) = INonfungiblePositionManager(nonfungiblePositionManager).decreaseLiquidity(decreaseParams) : (wPowerPerpAmount, wethAmount) = INonfungiblePositionManager(nonfungiblePositionManager).decreaseLiquidity(decreaseParams);
-       
-        INonfungiblePositionManager.CollectParams memory collectParams = INonfungiblePositionManager.CollectParams({
-            tokenId: _tokenId,
+
+        (uint256 amount0, uint256 amount1) = INonfungiblePositionManager(nonfungiblePositionManager).collect(INonfungiblePositionManager.CollectParams({
+            tokenId: params.tokenId,
             recipient: address(this),
             amount0Max: isWethToken0 ? uint128(wethAmount) : uint128(wPowerPerpAmount),
             amount1Max: isWethToken0 ?uint128(wPowerPerpAmount) : uint128(wethAmount)
-        });
-        INonfungiblePositionManager(nonfungiblePositionManager).collect(collectParams);
+        }));
 
-        if (wPowerPerpAmount < _wPowerPerpAmountToBurn) {
+        if (wPowerPerpAmount < params.wPowerPerpAmountToBurn) {
             // may need to set max slippage here
             _exactOutFlashSwap(
                 weth,
                 wPowerPerp,
                 IUniswapV3Pool(wPowerPerpPool).fee(),
-                _wPowerPerpAmountToBurn.sub(wPowerPerpAmount),
+                params.wPowerPerpAmountToBurn.sub(wPowerPerpAmount),
                 IWETH9(weth).balanceOf(address(this)),
                 uint8(FLASH_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP),
                 ""
             );
 
             IController(controller).burnWPowerPerpAmount(
-                _vaultId,
-                _wPowerPerpAmountToBurn,
-                _collateralToWithdraw
+                params.vaultId,
+                params.wPowerPerpAmountToBurn,
+                params.collateralToWithdraw
             );
         }
         else {
             IController(controller).burnWPowerPerpAmount(
-                _vaultId,
-                _wPowerPerpAmountToBurn,
-                _collateralToWithdraw
+                params.vaultId,
+                params.wPowerPerpAmountToBurn,
+                params.collateralToWithdraw
             );
 
-            if (wPowerPerpAmount.sub(_wPowerPerpAmountToBurn) > 0) {
+            if (wPowerPerpAmount.sub(params.wPowerPerpAmountToBurn) > 0) {
                 _exactInFlashSwap(
                     wPowerPerp,
                     weth,
                     IUniswapV3Pool(wPowerPerpPool).fee(),
-                    _wPowerPerpAmountToBurn.sub(wPowerPerpAmount),
-                    _minOut,
+                    params.wPowerPerpAmountToBurn.sub(wPowerPerpAmount),
+                    params.minOut,
                     uint8(FLASH_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
                     ""
                 );
             }
         }
+
+        IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
 
         if (address(this).balance > 0) {
             payable(msg.sender).sendValue(address(this).balance);

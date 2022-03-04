@@ -297,7 +297,6 @@ describe("Controller helper integration test", function () {
       const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
       collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
-      // const vaultBefore = await controller.vaults(vaultId)
       const tokenIndexBefore = await (positionManager as INonfungiblePositionManager).totalSupply();
 
       await controller.connect(depositor).mintWPowerPerpAmount(0, mintWSqueethAmount, 0, {value: collateralAmount})
@@ -332,15 +331,57 @@ describe("Controller helper integration test", function () {
       const vaultId = (await shortSqueeth.nextId()).sub(1);
       const vaultBefore = await controller.vaults(vaultId)
       const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
-      const amount0Min = isWethToken0 ? collateralToLp : mintWSqueethAmount;
-      const amount1Min = isWethToken0 ? mintWSqueethAmount : collateralToLp;
-      const mintOut = BigNumber.from(0);
+      const amount0Min = BigNumber.from(0);
+      const amount1Min = BigNumber.from(0);
+      const minOut = BigNumber.from(0);
+
+      const positionBefore = await (positionManager as INonfungiblePositionManager).positions(tokenId);
+
+      await (positionManager as INonfungiblePositionManager).connect(depositor).approve(positionManager.address, tokenId); 
+      const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
+        tokenId: tokenId,
+        liquidity: positionBefore.liquidity,
+        amount0Min: amount0Min,
+        amount1Min: amount1Min,
+        deadline: Math.floor(await getNow(ethers.provider) + 8640000),
+      })
+      const wPowerPerpAmountInLP = (isWethToken0) ? amount1 : amount0;
+      const wethAmountInLP = (isWethToken0) ? amount0 : amount1;
+      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
+      const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
 
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address);
       await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controllerHelper.address, tokenId); 
-      await controllerHelper.connect(depositor).closeShortWithUserNft(vaultId, tokenId, mintWSqueethAmount, vaultBefore.collateralAmount, mintOut, 0, 0)
+      await controllerHelper.connect(depositor).closeShortWithUserNft({
+        vaultId, 
+        tokenId,
+        wPowerPerpAmountToBurn: mintWSqueethAmount, 
+        collateralToWithdraw: vaultBefore.collateralAmount, 
+        minOut, 
+        amount0Min: BigNumber.from(0), 
+        amount1Min:BigNumber.from(0)
+      })
 
+      const positionAfter = await (positionManager as INonfungiblePositionManager).positions(tokenId);
+      const vaultAfter = await controller.vaults(vaultId);
+      const depositorEthBalanceAfter = await provider.getBalance(depositor.address)
 
+      expect(positionAfter.liquidity.eq(BigNumber.from(0))).to.be.true
+      expect(vaultAfter.shortAmount.eq(BigNumber.from(0))).to.be.true
+      expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
+
+      if(wPowerPerpAmountInLP.lt(mintWSqueethAmount)) {
+        const ethToBuySqueeth = (mintWSqueethAmount.sub(wPowerPerpAmountInLP)).mul(squeethPrice).div(one); 
+        const remainingETHFromLp = wethAmountInLP.sub(ethToBuySqueeth);
+
+        expect(Number(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).sub(vaultBefore.collateralAmount.add(remainingETHFromLp)).div(one).toString()) <= 0.01).to.be.true
+      }
+      else if (wPowerPerpAmountInLP.gt(mintWSqueethAmount)) {
+        const wPowerPerpAmountToSell = wPowerPerpAmountInLP.sub(mintWSqueethAmount);
+        const ethToGet = wPowerPerpAmountToSell.mul(squeethPrice).div(one);
+
+        expect(Number(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).sub(vaultBefore.collateralAmount.add(ethToGet)).div(one).toString()) <= 0.01).to.be.true
+      }
     })
   })
 })
