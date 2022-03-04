@@ -49,8 +49,6 @@ export interface swaps {
 }
 
 export interface swapsVariables {
-  poolAddress: string;
-  recipients: string[];
   tokenAddress: any;
   origin: any;
   orderDirection: string;

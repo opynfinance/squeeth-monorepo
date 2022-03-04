@@ -21,8 +21,8 @@ export const useTransactionHistory = () => {
 
   const { data, loading } = useQuery(TRANSACTIONS_QUERY, {
     variables: {
-      poolAddress: squeethPool.toLowerCase(),
-      owner: address?.toLowerCase(),
+      poolAddress: squeethPool,
+      owner: address,
       origin: address || '',
       recipients: [shortHelper, address || '', swapRouter],
       orderDirection: 'desc',
@@ -30,7 +30,7 @@ export const useTransactionHistory = () => {
     fetchPolicy: 'cache-and-network',
   })
 
-  const { data: crabData } = useUserCrabTxHistory(address?.toLowerCase() || '')
+  const { data: crabData } = useUserCrabTxHistory(address || '')
 
   const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
 

@@ -242,8 +242,8 @@ const SelectLP = React.memo<{ lpToken: number; setLpToken: (t: number) => void }
 
   const { data } = useQuery<positions, positionsVariables>(POSITIONS_QUERY, {
     variables: {
-      poolAddress: squeethPool?.toLowerCase(),
-      owner: address?.toLowerCase() || '',
+      poolAddress: squeethPool,
+      owner: address || '',
     },
     fetchPolicy: 'no-cache',
   })
@@ -284,10 +284,8 @@ const Component: React.FC = () => {
     getTwapEthPrice,
     depositUniPositionToken,
     withdrawUniPositionToken,
-    normFactor,
-    getVault,
   } = useController()
-  const { balance, address, connected, networkId } = useWallet()
+  const { balance } = useWallet()
   const { vid } = router.query
   const { liquidations } = useVaultLiquidations(Number(vid))
   const { positionType, squeethAmount, mintedDebt, shortDebt, lpedSqueeth } = usePositions()
@@ -388,7 +386,7 @@ const Component: React.FC = () => {
       setUniTokenToDeposit(input)
       if (!input) return
       const approvedAddress: string = await getApproved(input)
-      if (controller.toLowerCase() === (approvedAddress || '').toLowerCase()) {
+      if (controller === (approvedAddress || '')) {
         setAction(VaultAction.DEPOSIT_UNI_POSITION)
       } else {
         setAction(VaultAction.APPROVE_UNI_POSITION)

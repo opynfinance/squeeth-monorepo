@@ -4,10 +4,10 @@
 // This file was automatically generated and should not be edited.
 
 // ====================================================
-// GraphQL query operation: VaultHistory
+// GraphQL subscription operation: subscriptionVaultHistory
 // ====================================================
 
-export interface VaultHistory_vaultHistories {
+export interface subscriptionVaultHistory_vaultHistories {
   __typename: "VaultHistory";
   id: string;
   timestamp: any;
@@ -18,10 +18,10 @@ export interface VaultHistory_vaultHistories {
   vaultId: any;
 }
 
-export interface VaultHistory {
-  vaultHistories: VaultHistory_vaultHistories[];
+export interface subscriptionVaultHistory {
+  vaultHistories: subscriptionVaultHistory_vaultHistories[];
 }
 
-export interface VaultHistoryVariables {
+export interface subscriptionVaultHistoryVariables {
   vaultId: any;
 }
