@@ -75,13 +75,13 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
     }
     // params for CloseShortWithUserNft()
     struct CloseShortWithUserNftParams {
-        uint256 vaultId;                                            // vault ID
-        uint256 tokenId;                                            // Uni NFT token ID
-        uint256 wPowerPerpAmountToBurn;                             // amount of wPowerPerp to burn in vault
-        uint256 collateralToWithdraw;                               // amount of ETH collateral to withdraw from vault
-        uint256 minOut;                                             // minimum amount of ETH to receive when selling wPowerPerp
-        uint128 amount0Min;                                         // minimum amount of token0 to get from closing Uni LP
-        uint128 amount1Min;                                         // minimum amount of token1 to get from closing Uni LP
+        uint256 vaultId; // vault ID
+        uint256 tokenId; // Uni NFT token ID
+        uint256 wPowerPerpAmountToBurn; // amount of wPowerPerp to burn in vault
+        uint256 collateralToWithdraw; // amount of ETH collateral to withdraw from vault
+        uint256 minOut; // minimum amount of ETH to receive when selling wPowerPerp
+        uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
+        uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
     }
 
     struct FlashWBurnData {
