@@ -6,9 +6,9 @@ import { BIG_ZERO, TWELVEDATA_NO_PRICEDATA_DURATION } from '../constants/'
 import { swaps_swaps } from '../queries/uniswap/__generated__/swaps'
 import { VaultHistory_vaultHistories } from '../queries/squeeth/__generated__/VaultHistory'
 import { toTokenAmount } from '@utils/calculations'
-import { Action } from '@constants/enums'
 import { getHistoricEthPrice } from '@hooks/useETHPrice'
 import { getETHWithinOneDayPrices } from '@hooks/useETHPriceCharts'
+import { Action } from '../../types/global_apollo'
 
 type ShortPnLParams = {
   wethAmount: BigNumber
