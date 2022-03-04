@@ -73,14 +73,15 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         uint256 wPowerPerpAmount;
         uint256 collateralAmount;
     }
+    // params for CloseShortWithUserNft()
     struct CloseShortWithUserNftParams {
-        uint256 vaultId;
-        uint256 tokenId;
-        uint256 wPowerPerpAmountToBurn;
-        uint256 collateralToWithdraw;
-        uint256 minOut;
-        uint128 amount0Min;
-        uint128 amount1Min;
+        uint256 vaultId;                                            // vault ID
+        uint256 tokenId;                                            // Uni NFT token ID
+        uint256 wPowerPerpAmountToBurn;                             // amount of wPowerPerp to burn in vault
+        uint256 collateralToWithdraw;                               // amount of ETH collateral to withdraw from vault
+        uint256 minOut;                                             // minimum amount of ETH to receive when selling wPowerPerp
+        uint128 amount0Min;                                         // minimum amount of token0 to get from closing Uni LP
+        uint128 amount1Min;                                         // minimum amount of token1 to get from closing Uni LP
     }
 
     struct FlashWBurnData {
@@ -268,6 +269,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             params.tokenId
         );
 
+        // get liquidity amount, and withdraw ETH and wPowerPerp amounts in LP position
         (uint128 liquidity, , ) = ControllerHelperLib._getUniPositionBalances(
             nonfungiblePositionManager,
             params.tokenId,
@@ -286,7 +288,6 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         //     ,
         //     ,
         //     ,
-
         // ) = INonfungiblePositionManager(nonfungiblePositionManager).positions(params.tokenId);
         INonfungiblePositionManager.DecreaseLiquidityParams memory decreaseParams = INonfungiblePositionManager
             .DecreaseLiquidityParams({
@@ -303,7 +304,6 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
                 .decreaseLiquidity(decreaseParams)
             : (wPowerPerpAmount, wethAmount) = INonfungiblePositionManager(nonfungiblePositionManager)
             .decreaseLiquidity(decreaseParams);
-
         (uint256 amount0, uint256 amount1) = INonfungiblePositionManager(nonfungiblePositionManager).collect(
             INonfungiblePositionManager.CollectParams({
                 tokenId: params.tokenId,
@@ -314,7 +314,8 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         );
 
         if (wPowerPerpAmount < params.wPowerPerpAmountToBurn) {
-            // may need to set max slippage here
+            // swap needed wPowerPerp amount to close short position
+            // TODO: need to set max slippage here
             _exactOutFlashSwap(
                 weth,
                 wPowerPerp,
@@ -331,6 +332,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
                 params.collateralToWithdraw
             );
         } else {
+            // if LP have more wPowerPerp amount that amount to burn in vault, sell remaining amount for WETH
             IController(controller).burnWPowerPerpAmount(
                 params.vaultId,
                 params.wPowerPerpAmountToBurn,
