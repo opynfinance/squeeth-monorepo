@@ -45,7 +45,7 @@ import { getCollatPercentStatus, toTokenAmount } from '@utils/calculations'
 import { LinkButton } from '@components/Button'
 import { useERC721 } from '@hooks/contracts/useERC721'
 import { useAddresses } from '@hooks/useAddress'
-import POSITIONS_QUERY from '@queries/uniswap/positionsQuery'
+import { ACTIVE_POSITIONS_QUERY } from '@queries/uniswap/positionsQuery'
 import { positions, positionsVariables } from '@queries/uniswap/__generated__/positions'
 
 const useStyles = makeStyles((theme) =>
@@ -240,7 +240,7 @@ const SelectLP = React.memo<{ lpToken: number; setLpToken: (t: number) => void }
   const { squeethPool } = useAddresses()
   const { address } = useWallet()
 
-  const { data } = useQuery<positions, positionsVariables>(POSITIONS_QUERY, {
+  const { data } = useQuery<positions, positionsVariables>(ACTIVE_POSITIONS_QUERY, {
     variables: {
       poolAddress: squeethPool,
       owner: address || '',
@@ -385,6 +385,7 @@ const Component: React.FC = () => {
     async (input: number) => {
       setUniTokenToDeposit(input)
       if (!input) return
+      console.log(input)
       const approvedAddress: string = await getApproved(input)
       if (controller === (approvedAddress || '')) {
         setAction(VaultAction.DEPOSIT_UNI_POSITION)
@@ -392,7 +393,7 @@ const Component: React.FC = () => {
         setAction(VaultAction.APPROVE_UNI_POSITION)
       }
     },
-    [controller],
+    [controller, getApproved],
   )
 
   useEffect(() => {
