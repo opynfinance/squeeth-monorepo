@@ -1,7 +1,7 @@
 import { gql } from '@apollo/client'
 
 export const VAULTS_QUERY = gql`
-  query Vaults($ownerId: ID!, $vaultID: ID) {
+  query Vaults($ownerId: ID!) {
     vaults(where: { owner: $ownerId }) {
       id
       shortAmount
@@ -26,7 +26,7 @@ export const YOUR_VAULTS_QUERY = gql`
 `
 
 export const VAULTS_SUBSCRIPTION = gql`
-  subscription subscriptionVaults($ownerId: ID!, $vaultID: ID) {
+  subscription subscriptionVaults($ownerId: ID!) {
     vaults(where: { owner: $ownerId }) {
       id
       shortAmount

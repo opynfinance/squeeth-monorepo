@@ -508,10 +508,9 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle, setTradeComp
   const altTradeAmount = new BigNumber(altAmountInputValue)
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter)
   const { selectWallet, connected } = useWallet()
-  const { longSqthBal, shortDebt } = usePositions()
+  const { longSqthBal, shortDebt, isShort } = usePositions()
 
-  const isShort = shortDebt.gt(0)
-
+  console.log(longSqthBal.toString())
   useEffect(() => {
     //if it's insufficient amount them set it to it's maximum
     if (!open && longSqthBal.lt(amount)) {

@@ -99,9 +99,11 @@ export const UniswapIFrameClose = {
 }
 
 export enum Action {
-  BURN_SHORT = 'BURN_SHORT',
+  MINT = 'MINT',
+  BURN = 'BURN',
+  OPEN_SHORT = 'OPEN_SHORT',
+  CLOSE_SHORT = 'CLOSE_SHORT',
   DEPOSIT_COLLAT = 'DEPOSIT_COLLAT',
   LIQUIDATE = 'LIQUIDATE',
-  MINT_SHORT = 'MINT_SHORT',
   WITHDRAW_COLLAT = 'WITHDRAW_COLLAT',
 }

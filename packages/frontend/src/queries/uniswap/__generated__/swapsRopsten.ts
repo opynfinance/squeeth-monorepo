@@ -51,7 +51,7 @@ export interface swapsRopsten {
 export interface swapsRopstenVariables {
   poolAddress: string;
   recipients: string[];
-  tokenAddress: any;
   origin: any;
   orderDirection: string;
+  recipient_not: any;
 }

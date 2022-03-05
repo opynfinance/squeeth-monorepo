@@ -45,7 +45,7 @@ import { getCollatPercentStatus, toTokenAmount } from '@utils/calculations'
 import { LinkButton } from '@components/Button'
 import { useERC721 } from '@hooks/contracts/useERC721'
 import { useAddresses } from '@hooks/useAddress'
-import POSITIONS_QUERY from '@queries/uniswap/positionsQuery'
+import { ACTIVE_POSITIONS_QUERY } from '@queries/uniswap/positionsQuery'
 import { positions, positionsVariables } from '@queries/uniswap/__generated__/positions'
 
 const useStyles = makeStyles((theme) =>
@@ -240,10 +240,10 @@ const SelectLP = React.memo<{ lpToken: number; setLpToken: (t: number) => void }
   const { squeethPool } = useAddresses()
   const { address } = useWallet()
 
-  const { data } = useQuery<positions, positionsVariables>(POSITIONS_QUERY, {
+  const { data } = useQuery<positions, positionsVariables>(ACTIVE_POSITIONS_QUERY, {
     variables: {
-      poolAddress: squeethPool?.toLowerCase(),
-      owner: address?.toLowerCase() || '',
+      poolAddress: squeethPool,
+      owner: address || '',
     },
     fetchPolicy: 'no-cache',
   })
@@ -284,10 +284,8 @@ const Component: React.FC = () => {
     getTwapEthPrice,
     depositUniPositionToken,
     withdrawUniPositionToken,
-    normFactor,
-    getVault,
   } = useController()
-  const { balance, address, connected, networkId } = useWallet()
+  const { balance } = useWallet()
   const { vid } = router.query
   const { liquidations } = useVaultLiquidations(Number(vid))
   const { positionType, squeethAmount, mintedDebt, shortDebt, lpedSqueeth } = usePositions()
@@ -387,14 +385,15 @@ const Component: React.FC = () => {
     async (input: number) => {
       setUniTokenToDeposit(input)
       if (!input) return
+      console.log(input)
       const approvedAddress: string = await getApproved(input)
-      if (controller.toLowerCase() === (approvedAddress || '').toLowerCase()) {
+      if (controller === (approvedAddress || '')) {
         setAction(VaultAction.DEPOSIT_UNI_POSITION)
       } else {
         setAction(VaultAction.APPROVE_UNI_POSITION)
       }
     },
-    [controller],
+    [controller, getApproved],
   )
 
   useEffect(() => {

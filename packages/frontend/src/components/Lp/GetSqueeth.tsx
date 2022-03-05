@@ -69,8 +69,8 @@ const Mint: React.FC = () => {
   const classes = useStyles()
   const { oSqueethBal } = useWorldContext()
   const { balance, connected } = useWallet()
-  const { existingCollatPercent, existingCollat, firstValidVault } = usePositions()
-  const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
+  const { existingCollatPercent, existingCollat } = usePositions()
+  const { loading: vaultIDLoading, vaultId } = useVaultManager()
   const { getWSqueethPositionValue } = useSqueethPool()
   const { normFactor: normalizationFactor, openDepositAndMint, getShortAmountFromDebt } = useController()
   const { dispatch } = useLPState()
@@ -82,16 +82,6 @@ const Mint: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [mintMinCollatError, setMintMinCollatError] = useState('')
   const [minCollRatioError, setMinCollRatioError] = useState('')
-  const [vaultId, setVaultId] = useState(shortVaults.length ? shortVaults[firstValidVault].id : 0)
-
-  useEffect(() => {
-    if (!shortVaults.length) {
-      setVaultId(0)
-      return
-    }
-
-    setVaultId(shortVaults[firstValidVault].id)
-  }, [shortVaults.length, firstValidVault])
 
   const mint = async () => {
     setLoading(true)

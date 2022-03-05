@@ -1,7 +1,7 @@
 import { useQuery } from '@apollo/client'
 import { squeethClient } from '@utils/apollo-client'
 import { useWallet } from '@context/wallet'
-import NORMHISTORY_QUERY from '../queries/uniswap/normHistoryQuery'
+import NORMHISTORY_QUERY from '../queries/squeeth/normHistoryQuery'
 import { useEffect, useState } from 'react'
 
 export const useNormHistory = () => {

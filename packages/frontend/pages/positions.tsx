@@ -192,7 +192,7 @@ export function Positions() {
   }, [firstValidVault, shortVaults?.length])
 
   const { liquidations } = useVaultLiquidations(Number(vaultId))
-  const { existingCollatPercent, existingLiqPrice } = useVaultData(Number(vaultId))
+  const { existingCollatPercent, existingLiqPrice, isVaultLoading: isVaultDataLoading } = useVaultData(Number(vaultId))
 
   const fullyLiquidated = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
@@ -219,16 +219,17 @@ export function Positions() {
             </div>
           </div>
         </div>
-        {!shortDebt.isGreaterThan(0) &&
+        {shortDebt.isZero() &&
         depositedEth.isZero() &&
-        !squeethAmount.isGreaterThan(0) &&
-        !mintedDebt.isGreaterThan(0) ? (
+        squeethAmount.isZero() &&
+        mintedDebt.isZero() &&
+        lpedSqueeth.isZero() ? (
           <div className={classes.empty}>
             <Typography>No active positions</Typography>
           </div>
         ) : null}
 
-        {!shortDebt.isGreaterThan(0) && positionType === PositionType.LONG ? (
+        {positionType === PositionType.LONG ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>Long Squeeth</Typography>
@@ -295,7 +296,7 @@ export function Positions() {
             </div>
           </div>
         ) : null}
-        {shortDebt.isGreaterThan(0) && vaultExists && !fullyLiquidated ? (
+        {positionType === PositionType.SHORT && vaultExists && !fullyLiquidated ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>Short Squeeth</Typography>
@@ -315,7 +316,9 @@ export function Positions() {
                     <>
                       <Typography variant="body1">{squeethAmount.toFixed(8) + ' oSQTH'}</Typography>
                       <Typography variant="body2" color="textSecondary">
-                        ${buyQuote.times(toTokenAmount(index, 18).sqrt()).toFixed(2)}
+                        {isPnLLoading && buyQuote.times(toTokenAmount(index, 18).sqrt()).isEqualTo(0)
+                          ? 'Loading'
+                          : '$' + buyQuote.times(toTokenAmount(index, 18).sqrt()).toFixed(2)}
                       </Typography>
                     </>
                   )}
@@ -357,7 +360,9 @@ export function Positions() {
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
                   <Typography variant="body1">
-                    {isPositionLoading && existingLiqPrice.isEqualTo(0) ? 'Loading' : '$' + existingLiqPrice.toFixed(2)}
+                    {isVaultDataLoading && existingLiqPrice.isEqualTo(0)
+                      ? 'Loading'
+                      : '$' + existingLiqPrice.toFixed(2)}
                   </Typography>
                 </div>
                 <div style={{ width: '50%' }}>
@@ -365,7 +370,7 @@ export function Positions() {
                     Collateral (Amt / Ratio)
                   </Typography>
                   <Typography variant="body1">
-                    {isPositionLoading && existingCollat.isEqualTo(0) ? 'Loading' : existingCollat.toFixed(4)} ETH (
+                    {isVaultDataLoading && existingCollat.isEqualTo(0) ? 'Loading' : existingCollat.toFixed(4)} ETH (
                     {existingCollatPercent}%)
                   </Typography>
                 </div>
@@ -386,7 +391,7 @@ export function Positions() {
             </div>
           </div>
         ) : null}
-        {lpedSqueeth.isGreaterThan(0) && vaultExists && !fullyLiquidated ? (
+        {lpedSqueeth.isGreaterThan(0) && !fullyLiquidated ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>LPed Squeeth</Typography>
@@ -416,7 +421,7 @@ export function Positions() {
                       <InfoIcon fontSize="small" className={classes.infoIcon} />
                     </Tooltip>
                     <Typography variant="body1">
-                      ${isPositionLoading && existingLiqPrice.isEqualTo(0) ? 'Loading' : existingLiqPrice.toFixed(2)}
+                      ${isVaultDataLoading && existingLiqPrice.isEqualTo(0) ? 'Loading' : existingLiqPrice.toFixed(2)}
                     </Typography>
                   </div>
                 ) : null}
@@ -425,7 +430,7 @@ export function Positions() {
                     Collateral (Amt / Ratio)
                   </Typography>
                   <Typography variant="body1">
-                    {isPositionLoading && existingCollat.isEqualTo(0) ? 'Loading' : existingCollat.toFixed(4)} ETH
+                    {isVaultDataLoading && existingCollat.isEqualTo(0) ? 'Loading' : existingCollat.toFixed(4)} ETH
                     {new BigNumber(existingCollatPercent).isFinite() ? ' (' + existingCollatPercent + ' %)' : null}
                   </Typography>
                 </div>
@@ -448,11 +453,7 @@ export function Positions() {
                     Amount
                   </Typography>
                   <Typography variant="body1">
-                    {oSqueethBal?.isGreaterThan(0) &&
-                    positionType === PositionType.LONG &&
-                    oSqueethBal.minus(squeethAmount).isGreaterThan(0)
-                      ? oSqueethBal.minus(squeethAmount).toFixed(8)
-                      : oSqueethBal.toFixed(8)}
+                    {isPositionLoading ? 'Loading' : mintedDebt.toFixed(8)}
                     &nbsp; oSQTH
                   </Typography>
                 </div>
@@ -467,7 +468,7 @@ export function Positions() {
                       <InfoIcon fontSize="small" className={classes.infoIcon} />
                     </Tooltip>
                     <Typography variant="body1">
-                      $ {isPositionLoading && existingLiqPrice.isEqualTo(0) ? 'Loading' : existingLiqPrice.toFixed(2)}
+                      $ {isVaultDataLoading && existingLiqPrice.isEqualTo(0) ? 'Loading' : existingLiqPrice.toFixed(2)}
                     </Typography>
                   </div>
                 ) : null}
@@ -476,7 +477,7 @@ export function Positions() {
                     Collateral (Amt / Ratio)
                   </Typography>
                   <Typography variant="body1">
-                    {isPositionLoading && existingCollat.isEqualTo(0) ? 'Loading' : existingCollat.toFixed(4)} ETH
+                    {isVaultDataLoading && existingCollat.isEqualTo(0) ? 'Loading' : existingCollat.toFixed(4)} ETH
                     {new BigNumber(existingCollatPercent).isFinite() ? ' (' + existingCollatPercent + ' %)' : null}
                   </Typography>
                 </div>
