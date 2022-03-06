@@ -11,7 +11,7 @@ const useUniswapTicks = () => {
   // const { squeethPool } = useAddresses()
   const { squeethPool } = useAtomValue(addressesAtom)
   const { data, loading } = useQuery<ticks, ticksVariables>(TICKS_QUERY, {
-    variables: { poolAddress: squeethPool.toLowerCase() },
+    variables: { poolAddress: squeethPool },
   })
 
   const ticks = data?.ticks

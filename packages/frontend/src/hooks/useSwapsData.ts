@@ -13,22 +13,28 @@ import { Networks } from '../types'
 import SWAPS_ROPSTEN_QUERY, { SWAPS_ROPSTEN_SUBSCRIPTION } from '@queries/uniswap/swapsRopstenQuery'
 import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
 import { isWethToken0Atom } from 'src/state/positions/atoms'
+import { swapsRopsten, swapsRopstenVariables } from '@queries/uniswap/__generated__/swapsRopsten'
 
 export const useSwapsData = () => {
   const { squeethPool, weth, oSqueeth, shortHelper, swapRouter, crabStrategy } = useAddresses()
   const networkId = useAtomValue(networkIdAtom)
   const address = useAtomValue(addressAtom)
   const { getUsdAmt } = useUsdAmount()
-  const { data, subscribeToMore, refetch } = useQuery<swaps, swapsVariables>(
+  const { data, subscribeToMore, refetch } = useQuery<swaps | swapsRopsten, swapsVariables | swapsRopstenVariables>(
     networkId === Networks.MAINNET ? SWAPS_QUERY : SWAPS_ROPSTEN_QUERY,
     {
       variables: {
-        tokenAddress: oSqueeth?.toLowerCase(),
         origin: address || '',
-        poolAddress: squeethPool?.toLowerCase(),
-        recipients: [shortHelper, address || '', swapRouter],
-        recipient_not: crabStrategy?.toLowerCase(),
         orderDirection: 'asc',
+        recipient_not: crabStrategy,
+        ...(networkId === Networks.MAINNET
+          ? {
+              tokenAddress: oSqueeth,
+            }
+          : {
+              poolAddress: squeethPool,
+              recipients: [shortHelper, address || '', swapRouter],
+            }),
       },
       fetchPolicy: 'cache-and-network',
     },
@@ -38,12 +44,17 @@ export const useSwapsData = () => {
     subscribeToMore({
       document: networkId === Networks.MAINNET ? SWAPS_SUBSCRIPTION : SWAPS_ROPSTEN_SUBSCRIPTION,
       variables: {
-        tokenAddress: oSqueeth?.toLowerCase(),
         origin: address || '',
-        poolAddress: squeethPool?.toLowerCase(),
-        recipients: [shortHelper, address || '', swapRouter],
-        recipient_not: crabStrategy?.toLowerCase(),
         orderDirection: 'asc',
+        recipient_not: crabStrategy,
+        ...(networkId === Networks.MAINNET
+          ? {
+              tokenAddress: oSqueeth,
+            }
+          : {
+              poolAddress: squeethPool,
+              recipients: [shortHelper, address || '', swapRouter],
+            }),
       },
       updateQuery(prev, { subscriptionData }) {
         if (!subscriptionData.data) return prev
@@ -125,7 +136,6 @@ export const useSwapsData = () => {
         },
       [isWethToken0, swaps?.length],
     )
-
   return {
     squeethAmount,
     wethAmount,

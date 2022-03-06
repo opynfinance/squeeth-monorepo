@@ -531,6 +531,7 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle, setTradeComp
   const shortDebt = useShortDebt()
   const isShort = shortDebt.gt(0)
 
+  console.log(longSqthBal.toString())
   useEffect(() => {
     //if it's insufficient amount them set it to it's maximum
     if (!open && longSqthBal.lt(amount)) {

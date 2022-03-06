@@ -330,10 +330,13 @@ export const useSqueethPool = () => {
         //WETH is input token, squeeth is output token. I'm using WETH to buy Squeeth
         const route = new Route([pool], wethToken!, squeethToken!)
         //getting the amount of ETH I need to put in to get an exact amount of squeeth I inputted out
-        const trade = await Trade.exactOut(
-          route,
-          CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0)),
-        )
+        const rawAmount = CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0))
+
+        if (rawAmount.equalTo(0)) {
+          return emptyState
+        }
+
+        const trade = await Trade.exactOut(route, rawAmount)
 
         //the amount of ETH I need to put in
         return {
@@ -366,10 +369,13 @@ export const useSqueethPool = () => {
       //WETH is input token, squeeth is output token. I'm using WETH to buy Squeeth
       const route = new Route([pool], wethToken!, squeethToken!)
       //getting the amount of squeeth I'd get out for putting in an exact amount of ETH
-      const trade = await Trade.exactIn(
-        route,
-        CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toString()),
-      )
+      const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toString())
+
+      if (rawAmount.equalTo(0)) {
+        return emptyState
+      }
+
+      const trade = await Trade.exactIn(route, rawAmount)
 
       //the amount of squeeth I'm getting out
       return {
@@ -400,10 +406,13 @@ export const useSqueethPool = () => {
         //squeeth is input token, WETH is output token. I'm selling squeeth for WETH
         const route = new Route([pool], squeethToken!, wethToken!)
         //getting the amount of ETH I'd receive for inputting the amount of squeeth I want to sell
-        const trade = await Trade.exactIn(
-          route,
-          CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0)),
-        )
+        const rawAmount = CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0))
+
+        if (rawAmount.equalTo(0)) {
+          return emptyState
+        }
+
+        const trade = await Trade.exactIn(route, rawAmount)
 
         //the amount of ETH I'm receiving
         return {
@@ -435,10 +444,13 @@ export const useSqueethPool = () => {
       //squeeth is input token, WETH is output token. I'm selling squeeth for WETH
       const route = new Route([pool], squeethToken!, wethToken!)
       //getting the amount of squeeth I'd need to sell to receive my desired amount of ETH
-      const trade = await Trade.exactOut(
-        route,
-        CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toFixed(0)),
-      )
+      const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toFixed(0))
+
+      if (rawAmount.equalTo(0)) {
+        return emptyState
+      }
+
+      const trade = await Trade.exactOut(route, rawAmount)
 
       //the amount of squeeth I need to sell
       return {

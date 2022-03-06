@@ -3,7 +3,7 @@ import BigNumber from 'bignumber.js'
 import { useAtom, useAtomValue } from 'jotai'
 
 import { BIG_ZERO, OSQUEETH_DECIMALS } from '@constants/index'
-import { useWorldContext } from '@context/world'
+// import { useWorldContext } from '@context/world'
 // import { useSwapsData } from '../hooks/useSwapsData'
 import { useVaultManager } from '../hooks/contracts/useVaultManager'
 import { useLPPositions } from '../hooks/usePositions'
@@ -13,6 +13,7 @@ import { NFTManagers, PositionType } from '../types'
 import { useComputeSwaps, useSwaps } from 'src/state/positions/hooks'
 import { isWethToken0Atom, positionTypeAtom, firstValidVaultAtom, addressesAtom } from 'src/state/positions/atoms'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
+import { useVaultHistory } from '@hooks/useVaultHistory'
 
 type positionsContextType = {
   activePositions: NFTManagers[]
@@ -77,6 +78,7 @@ const PositionsProvider: React.FC = ({ children }) => {
   // const [firstValidVault, setFirstValidVault] = useState(0)
 
   const vaultId = shortVaults[firstValidVault]?.id || 0
+  const { mintedSqueeth, openShortSqueeth } = useVaultHistory(vaultId)
   const { existingCollat, existingCollatPercent, existingLiqPrice: liquidationPrice } = useVaultData(vaultId)
 
   const { longRealizedPNL } = useMemo(() => {
@@ -100,63 +102,44 @@ const PositionsProvider: React.FC = ({ children }) => {
     return { shortRealizedPNL: pnlForOneSqth.multipliedBy(boughtSqueeth) }
   }, [boughtSqueeth.toString(), totalUSDFromBuy.toString(), soldSqueeth.toString(), totalUSDFromSell.toString()])
 
-  const mintedDebt = useMemo(() => {
-    // squeethAmount = user long balance if oSqueethBal > 0, but it could also be minted balance
-    return shortVaults[firstValidVault]?.shortAmount.gt(0) &&
-      oSqueethBal?.isGreaterThan(0) &&
-      positionType === PositionType.LONG
-      ? oSqueethBal.minus(squeethAmount)
-      : shortVaults[firstValidVault]?.shortAmount.gt(0) && oSqueethBal?.isGreaterThan(0)
-      ? oSqueethBal
+  //when the squeethAmount < 0 and the abs amount is greater than openShortSqueeth, that means there is manually sold short position
+  const mintedSoldShort = useMemo(() => {
+    return positionType === PositionType.SHORT && squeethAmount.abs().isGreaterThan(openShortSqueeth)
+      ? squeethAmount.abs().minus(openShortSqueeth)
       : new BigNumber(0)
-  }, [firstValidVault, oSqueethBal?.toString(), positionType, shortVaults?.length, squeethAmount.toString()])
+  }, [positionType, squeethAmount?.toString(), openShortSqueeth.toString()])
 
-  const shortDebt = useMemo(() => {
-    return positionType === PositionType.SHORT ? squeethAmount : new BigNumber(0)
-  }, [positionType, squeethAmount.toString()])
-
-  const longSqthBal = useMemo(() => {
-    return mintedDebt.gt(0) ? oSqueethBal.minus(mintedDebt) : oSqueethBal
-  }, [oSqueethBal?.toString(), mintedDebt.toString()])
-
+  // accumulated deposited Squeeth - acc. withdrawn squeeth in LP position = LP debt
   const lpDebt = useMemo(() => {
     return depositedSqueeth.minus(withdrawnSqueeth).isGreaterThan(0)
       ? depositedSqueeth.minus(withdrawnSqueeth)
       : new BigNumber(0)
   }, [depositedSqueeth.toString(), withdrawnSqueeth.toString()])
 
-  const { finalSqueeth, finalWeth } = useMemo(() => {
-    // dont include LPed & minted amount will be the correct short amount
-    const finalSqueeth = squeethAmount
-    const finalWeth = wethAmount.div(squeethAmount).multipliedBy(finalSqueeth)
-    return { finalSqueeth, finalWeth }
-  }, [squeethAmount.toString(), wethAmount.toString()])
+  //mintedSqueeth balance from vault histroy - mintedSold short position = existing mintedDebt in vault, but
+  //LPed amount wont be taken into account from vault history, so will need to be deducted here and added the withdrawn amount back
+  //if there is LP Debt, shld be deducted from minted Debt
+  const mintedDebt = useMemo(() => {
+    return mintedSqueeth.minus(mintedSoldShort).minus(lpDebt)
+  }, [mintedSqueeth.toString(), mintedSoldShort?.toString(), lpDebt.toString()])
 
   useEffect(() => {
-    if (finalSqueeth.isGreaterThan(0)) {
+    if (squeethAmount.isGreaterThan(0)) {
       setPositionType(PositionType.LONG)
-    } else if (finalSqueeth.isLessThan(0)) {
+    } else if (squeethAmount.isLessThan(0)) {
       setPositionType(PositionType.SHORT)
     } else setPositionType(PositionType.NONE)
-  }, [finalSqueeth.toString(), squeethAmount.toString()])
-
-  useEffect(() => {
-    for (let i = 0; i < shortVaults.length; i++) {
-      if (shortVaults[i]?.collateralAmount.isGreaterThan(0)) {
-        setFirstValidVault(i)
-      }
-    }
-  }, [shortVaults.length])
+  }, [squeethAmount.toString()])
 
   const values = {
     swaps,
     loading: lpLoading,
-    squeethAmount: finalSqueeth.absoluteValue(),
-    shortDebt: shortDebt.absoluteValue(),
+    squeethAmount: squeethAmount.absoluteValue(),
+    shortDebt: positionType === PositionType.SHORT ? squeethAmount.absoluteValue() : new BigNumber(0),
     lpedSqueeth: lpDebt,
     mintedDebt: mintedDebt,
-    longSqthBal: longSqthBal,
-    wethAmount: finalWeth,
+    longSqthBal: positionType === PositionType.LONG ? squeethAmount : new BigNumber(0),
+    wethAmount: wethAmount,
     shortVaults,
     swapsQueryRefetch,
     positionType,

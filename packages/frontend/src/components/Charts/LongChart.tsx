@@ -1,6 +1,5 @@
 import {
-  Button,
-  ButtonGroup,
+  Box,
   createStyles,
   Hidden,
   InputAdornment,
@@ -8,6 +7,7 @@ import {
   TextField,
   Tooltip,
   Typography,
+  CircularProgress,
 } from '@material-ui/core'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import dynamic from 'next/dynamic'
@@ -23,7 +23,14 @@ import { SqueethTab, SqueethTabs } from '../Tabs'
 import LongSqueethPayoff from './LongSqueethPayoff'
 import FundingChart from './FundingChart'
 import { useETHPrice } from '@hooks/useETHPrice'
-import { daysAtom, useLongEthPNL, useLongSeries, usePositionSizePercentageseries } from 'src/state/ethPriceCharts/atoms'
+import {
+  daysAtom,
+  useLongEthPNL,
+  useLongSeries,
+  usePositionSizePercentageseries,
+  useSqueethIsLive,
+} from 'src/state/ethPriceCharts/atoms'
+import LegendBox from '@components/LegendBox'
 enum ChartType {
   PNL = 'LONG PNL',
   // Price = 'Price Chart',
@@ -89,10 +96,6 @@ const useStyles = makeStyles((theme) =>
       marginTop: '10px',
       justifyContent: 'center',
     },
-    legendContainer: {
-      display: 'flex',
-      gap: '5px',
-    },
   }),
 )
 
@@ -105,6 +108,7 @@ export function LongChart() {
   const longSeries = useLongSeries()
   const positionSizeSeries = usePositionSizePercentageseries()
   const [days, setDays] = useAtom(daysAtom)
+  const squeethIsLive = useSqueethIsLive()
 
   useEffect(() => {
     if (tradeType === 0) setMode(ChartType.PNL)
@@ -119,19 +123,28 @@ export function LongChart() {
 
   // plot line data
   const lineSeries = useMemo(() => {
-    if (!longEthPNL || !longSeries || !positionSizeSeries) return
+    if (!longEthPNL || !longSeries || longSeries.length === 0 || !positionSizeSeries || !squeethIsLive) return
+
+    const liveIndex = Math.max(
+      0,
+      squeethIsLive.findIndex((val) => val),
+    ) // return 0 when there is no live data
 
     if (mode === ChartType.PNL)
       return [
         { data: longEthPNL, legend: 'Long ETH PNL (%)' },
         {
-          data: longSeries,
-          legend: 'Long Squeeth PNL (%) (incl. funding)',
+          data: longSeries.slice(0, liveIndex),
+          legend: `Long Squeeth PNL (%) Deribit (incl. funding)`,
+        },
+        {
+          data: longSeries.slice(liveIndex),
+          legend: `Long Squeeth PNL (%) LIVE (incl. funding)`,
         },
       ]
     if (mode === ChartType.PositionSize) return [{ data: positionSizeSeries, legend: 'Position Size' }]
     return []
-  }, [longEthPNL, longSeries, mode, positionSizeSeries])
+  }, [longEthPNL, longSeries, mode, positionSizeSeries, squeethIsLive])
 
   const chartOptions = useMemo(() => {
     // if (mode === ChartType.Funding || mode === ChartType.PositionSize)
@@ -155,17 +168,11 @@ export function LongChart() {
     }
   }, [mode])
 
-  const startTimestamp = useMemo(
-    () => (lineSeries && lineSeries.length > 0 && lineSeries[0].data.length > 0 ? lineSeries[0].data[0].time : 0),
-    [lineSeries],
-  )
+  const startTimestamp = useMemo(() => (longSeries && longSeries.length > 0 ? longSeries[0].time : 0), [longSeries])
 
   const endTimestamp = useMemo(
-    () =>
-      lineSeries && lineSeries.length > 0 && lineSeries[0].data.length > 0
-        ? lineSeries[0].data[lineSeries[0].data.length - 1].time
-        : 0,
-    [lineSeries],
+    () => (longSeries && longSeries.length > 0 ? longSeries[longSeries.length - 1].time : 0),
+    [longSeries],
   )
 
   return (
@@ -284,27 +291,30 @@ export function LongChart() {
         // )
         <div className={classes.payoffContainer} style={{ maxHeight: 'none' }}>
           <div style={{ flex: '1 1 0', marginTop: '8px' }}>
-            <Chart
-              from={startTimestamp}
-              to={endTimestamp}
-              legend={mode}
-              options={chartOptions}
-              lineSeries={lineSeries}
-              autoWidth
-              // width={1000}
-              height={300}
-              darkTheme
-            />
+            {lineSeries ? (
+              <Chart
+                from={startTimestamp}
+                to={endTimestamp}
+                legend={mode}
+                options={chartOptions}
+                lineSeries={lineSeries}
+                autoWidth
+                // width={1000}
+                height={300}
+                darkTheme
+              />
+            ) : (
+              <Box display="flex" height="300px" width={1} alignItems="center" justifyContent="center">
+                <CircularProgress size={40} color="secondary" />
+              </Box>
+            )}
 
             <div className={classes.legendBox}>
-              <div className={classes.legendContainer}>
-                <div style={{ width: '20px', height: '20px', backgroundColor: '#018FFB' }}></div>
-                <div>ETH PNL</div>
-              </div>
-              <div className={classes.legendContainer}>
-                <div style={{ width: '20px', height: '20px', backgroundColor: '#00E396' }}></div>
-                <div>Squeeth PNL</div>
-              </div>
+              {lineSeries && lineSeries[0].data.length > 0 && <LegendBox bgColor="#018FFB" text="ETH PNL" />}
+              {lineSeries && lineSeries[1].data.length > 0 && (
+                <LegendBox bgColor="#00E396" text="Squeeth Deribit PNL" />
+              )}
+              {lineSeries && lineSeries[2].data.length > 0 && <LegendBox bgColor="#FEB01B" text="Squeeth LIVE PNL" />}
             </div>
           </div>
 

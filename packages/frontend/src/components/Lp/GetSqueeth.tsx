@@ -76,12 +76,13 @@ const Mint: React.FC = () => {
   const connected = useAtomValue(connectedWalletAtom)
   const existingCollatPercent = useAtomValue(existingCollatPercentAtom)
   const existingCollat = useAtomValue(existingCollatAtom)
-  const { firstValidVault } = useFirstValidVault()
-  const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
+  const { loading: vaultIDLoading } = useVaultManager()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const normalizationFactor = useNormFactor()
   const openDepositAndMint = useOpenDepositAndMint()
   const getShortAmountFromDebt = useGetShortAmountFromDebt()
+  const { vaultId } = useFirstValidVault()
+
   const { dispatch } = useLPState()
 
   const [mintAmount, setMintAmount] = useState(new BigNumber(0))
@@ -91,16 +92,6 @@ const Mint: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [mintMinCollatError, setMintMinCollatError] = useState('')
   const [minCollRatioError, setMinCollRatioError] = useState('')
-  const [vaultId, setVaultId] = useState(shortVaults.length ? shortVaults[firstValidVault].id : 0)
-
-  useEffect(() => {
-    if (!shortVaults.length) {
-      setVaultId(0)
-      return
-    }
-
-    setVaultId(shortVaults[firstValidVault].id)
-  }, [shortVaults.length, firstValidVault])
 
   const mint = async () => {
     setLoading(true)

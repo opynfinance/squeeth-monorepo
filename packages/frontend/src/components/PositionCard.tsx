@@ -447,7 +447,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
       </Typography>
       {positionType === PositionType.SHORT ? (
         <Typography className={classes.link}>
-          <Link href={`vault/${shortVaults[firstValidVault]?.id}`}>Manage Vault</Link>
+          <Link href={`vault/${vaultId}`}>Manage Vault</Link>
         </Typography>
       ) : null}
       {isLP ? (

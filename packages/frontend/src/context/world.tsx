@@ -27,6 +27,7 @@ import {
   useGetVaultPNLWithRebalance,
   useGetStableYieldPNL,
   volMultiplierAtom,
+  useSqueethIsLive,
 } from 'src/state/ethPriceCharts/atoms'
 
 type point = {
@@ -68,6 +69,8 @@ type WorldContextProps = {
 
   ethPrice: BigNumber
   oSqueethBal: BigNumber
+
+  squeethIsLive: boolean[] | undefined
 }
 
 const initialContext = {
@@ -102,6 +105,8 @@ const initialContext = {
   ethPrice: new BigNumber(0),
   oSqueethBal: new BigNumber(0),
   setOSqueethBal: () => null,
+
+  squeethIsLive: [],
 }
 
 const worldContext = React.createContext<WorldContextProps>(initialContext)
@@ -128,6 +133,7 @@ const WorldProvider: React.FC = ({ children }) => {
   const fundingPercentageSeries = useFundingPercentageSeries()
   const getVaultPNLWithRebalance = useGetVaultPNLWithRebalance()
   const getStableYieldPNL = useGetStableYieldPNL()
+  const squeethIsLive = useSqueethIsLive()
 
   // const {
   // ethPrices,
@@ -189,6 +195,7 @@ const WorldProvider: React.FC = ({ children }) => {
         setCollatRatio,
         ethPrice,
         oSqueethBal,
+        squeethIsLive,
       }}
     >
       {children}
