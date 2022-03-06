@@ -25,6 +25,7 @@ describe("Controller helper integration test", function () {
   let weth: WETH9
   let positionManager: Contract
   let uniswapFactory: Contract
+  let uniswapRouter: Contract
   let oracle: Oracle
   let controller: Controller
   let wSqueethPool: Contract
@@ -72,7 +73,7 @@ describe("Controller helper integration test", function () {
     await controller.connect(owner).setFeeRate(0)
     
     const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper");
-    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, shortSqueeth.address, wSqueethPool.address, wSqueeth.address, weth.address, uniswapFactory.address)) as ControllerHelper;
+    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, shortSqueeth.address, wSqueethPool.address, wSqueeth.address, weth.address, swapRouter.address, uniswapFactory.address)) as ControllerHelper;
   })
 
   this.beforeAll("Seed pool liquidity", async() => {
@@ -145,6 +146,25 @@ describe("Controller helper integration test", function () {
       expect(vaultBefore.collateralAmount.add(collateralAmount).eq(vaultAfter.collateralAmount)).to.be.true
       expect(vaultBefore.shortAmount.add(mintWSqueethAmount).eq(vaultAfter.shortAmount)).to.be.true
       expect(depositorBalanceAfter.gt(depositorBalanceBefore.sub(value))).to.be.true
+    })
+
+    it("flash close short position and buy long", async () => {
+      const vaultId = (await shortSqueeth.nextId()).sub(1);
+      await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
+
+      const vaultBefore = await controller.vaults(vaultId)
+      const longBalanceBefore = await wSqueeth.balanceOf(depositor.address)
+      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
+      const squeethToBuy = vaultBefore.collateralAmount.div(squeethPrice)
+
+      await controllerHelper.connect(depositor).flashswapWBurnBuyLong(vaultId, vaultBefore.shortAmount, squeethToBuy, vaultBefore.collateralAmount, vaultBefore.collateralAmount);
+
+      const vaultAfter = await controller.vaults(vaultId)
+      const longBalanceAfter = await wSqueeth.balanceOf(depositor.address)
+
+      expect(vaultAfter.shortAmount.eq(BigNumber.from(0))).to.be.true
+      expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
+      expect(longBalanceAfter.sub(longBalanceBefore).eq(squeethToBuy)).to.be.true
     })
   })
 })
