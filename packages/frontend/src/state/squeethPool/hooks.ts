@@ -473,7 +473,7 @@ export const useSell = () => {
 export const useGetSellQuoteForETH = () => {
   const pool = useAtomValue(poolAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
-  const wethToken = useAtomValue(squeethTokenAtom)
+  const wethToken = useAtomValue(wethTokenAtom)
   //I input an exact amount of ETH I want to receive, tells me how much squeeth I'd need to sell
   const getSellQuoteForETH = useCallback(
     async (ETHAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
