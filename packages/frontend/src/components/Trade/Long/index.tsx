@@ -344,8 +344,6 @@ const OpenLong: React.FC<BuyProps> = ({ balance, activeStep = 0 }) => {
     setBuyLoading(false)
   }
 
-  console.log({ longSqthBal: longSqthBal.toString() })
-
   return (
     <div>
       {!confirmed ? (
