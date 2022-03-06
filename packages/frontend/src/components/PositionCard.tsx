@@ -27,8 +27,8 @@ import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import {
   actualTradeTypeAtom,
   isOpenPositionAtom,
-  quoteAtom,
-  tradeAmountAtom,
+  sqthTradeAmountAtom,
+  tradeCompletedAtom,
   tradeSuccessAtom,
   tradeTypeAtom,
 } from 'src/state/trade/atoms'
@@ -163,11 +163,7 @@ const pnlClass = (positionType: string, long: number | BigNumber, short: number 
   return classes.grey
 }
 
-type PositionCardType = {
-  tradeCompleted: boolean
-}
-
-const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
+const PositionCard: React.FC = () => {
   const { buyQuote, sellQuote, longGain, shortGain, shortUnrealizedPNL, longUnrealizedPNL, loading } = usePnL()
   const pType = useAtomValue(positionTypeAtom)
   const existingCollat = useAtomValue(existingCollatAtom)
@@ -180,13 +176,13 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
   const isLP = useAtomValue(isLPAtom)
   const isOpenPosition = useAtomValue(isOpenPositionAtom)
   const [tradeSuccess, setTradeSuccess] = useAtom(tradeSuccessAtom)
+  const [tradeCompleted, setTradeCompleted] = useAtom(tradeCompletedAtom)
 
   const longRealizedPNL = useLongRealizedPnl()
   const shortRealizedPNL = useShortRealizedPnl()
   const { liquidations } = useVaultLiquidations(Number(vaultId))
   const actualTradeType = useAtomValue(actualTradeTypeAtom)
-  const quote = useAtomValue(quoteAtom)
-  const tradeAmountInput = useAtomValue(tradeAmountAtom)
+  const tradeAmountInput = useAtomValue(sqthTradeAmountAtom)
   const tradeType = useAtomValue(tradeTypeAtom)
   const ethPrice = useETHPrice()
   const prevSwapsData = usePrevious(swaps)
@@ -212,6 +208,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
       //if trade success and number of swaps is still the same, try refetching again
       swapsQueryRefetch()
     } else {
+      setTradeCompleted(false)
       setTradeSuccess(false)
     }
   }, [swaps?.length, prevSwapsData?.length, swapsQueryRefetch, tradeSuccess])
@@ -270,7 +267,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     let _postPosition = PositionType.NONE
     if (actualTradeType === TradeType.LONG && positionType !== PositionType.SHORT) {
       if (isOpenPosition) {
-        _postTradeAmt = squeethAmount.plus(quote.amountOut)
+        _postTradeAmt = squeethAmount.plus(tradeAmount)
       } else {
         _postTradeAmt = squeethAmount.minus(tradeAmount)
       }
@@ -288,7 +285,6 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     isOpenPosition,
     isPositionLoading,
     positionType,
-    quote.amountOut.toString(),
     squeethAmount.toString(),
     tradeAmount.toString(),
   ])
