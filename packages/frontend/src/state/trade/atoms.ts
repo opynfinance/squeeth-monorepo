@@ -37,3 +37,6 @@ export const tradeAmountAtom = atomWithReset('0')
 export const altTradeAmountAtom = atomWithReset('0')
 export const inputQuoteAtom = atomWithReset('')
 export const sellCloseQuoteAtom = atomWithReset(sellCloseEmptyState)
+
+export const ethTradeAmountAtom = atomWithReset('0')
+export const sqthTradeAmountAtom = atomWithReset('0')
