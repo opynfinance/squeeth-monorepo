@@ -29,7 +29,7 @@ import {
   bytecode as POOL_BYTECODE,
 } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json'
 
-BigNumberJs.set({EXPONENTIAL_AT: 30})
+// BigNumberJs.set({EXPONENTIAL_AT: 30})
 
 const impersonateAddress = async (address: string) => {
   const hre = require('hardhat');
