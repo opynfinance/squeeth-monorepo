@@ -320,7 +320,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             IUniswapV3Pool(wPowerPerpPool).fee(),
             _wPowerPerpAmountToMint.add(_wPowerPerpAmountToSell),
             _minToReceive,
-            uint8(FLASH_SOURCE.FLASH_SELL_LONG_W_MINT),
+            uint8(CALLBACK_SOURCE.FLASH_SELL_LONG_W_MINT),
             abi.encodePacked(_vaultId, _wPowerPerpAmountToMint, _collateralAmount)
         );
 
@@ -391,7 +391,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 IUniswapV3Pool(wPowerPerpPool).fee(),
                 params.wPowerPerpAmountToBurn.sub(wPowerPerpAmount),
                 IWETH9(weth).balanceOf(address(this)),
-                uint8(FLASH_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP),
+                uint8(CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP),
                 ""
             );
 
@@ -415,7 +415,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                     IUniswapV3Pool(wPowerPerpPool).fee(),
                     wPowerPerpAmount.sub(params.wPowerPerpAmountToBurn),
                     params.minOut,
-                    uint8(FLASH_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
+                    uint8(CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
                     ""
                 );
             }
