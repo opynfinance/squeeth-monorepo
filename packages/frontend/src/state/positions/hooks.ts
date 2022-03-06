@@ -45,36 +45,48 @@ import { poolAtom, readyAtom, squeethInitialPriceAtom } from '../squeethPool/ato
 import { useGetCollatRatioAndLiqPrice, useGetVault } from '../controller/hooks'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { useGetWSqueethPositionValue } from '../squeethPool/hooks'
+import { useVaultHistory } from '@hooks/useVaultHistory'
+import { swapsRopsten, swapsRopstenVariables } from '@queries/uniswap/__generated__/swapsRopsten'
 
 export const useSwaps = () => {
   const [networkId] = useAtom(networkIdAtom)
   const [address] = useAtom(addressAtom)
   const [{ squeethPool, oSqueeth, shortHelper, swapRouter, crabStrategy }] = useAtom(addressesAtom)
-  const { subscribeToMore, data, refetch, loading, error } = useQuery<swaps, swapsVariables>(
-    networkId === Networks.MAINNET ? SWAPS_QUERY : SWAPS_ROPSTEN_QUERY,
-    {
-      variables: {
-        tokenAddress: oSqueeth?.toLowerCase(),
-        origin: address || '',
-        poolAddress: squeethPool?.toLowerCase(),
-        recipients: [shortHelper, address || '', swapRouter],
-        recipient_not: crabStrategy?.toLowerCase(),
-        orderDirection: 'asc',
-      },
-      fetchPolicy: 'cache-and-network',
+  const { subscribeToMore, data, refetch, loading, error } = useQuery<
+    swaps | swapsRopsten,
+    swapsVariables | swapsRopstenVariables
+  >(networkId === Networks.MAINNET ? SWAPS_QUERY : SWAPS_ROPSTEN_QUERY, {
+    variables: {
+      origin: address || '',
+      orderDirection: 'asc',
+      recipient_not: crabStrategy,
+      ...(networkId === Networks.MAINNET
+        ? {
+            tokenAddress: oSqueeth,
+          }
+        : {
+            poolAddress: squeethPool,
+            recipients: [shortHelper, address || '', swapRouter],
+          }),
     },
-  )
+    fetchPolicy: 'cache-and-network',
+  })
 
   useEffect(() => {
     subscribeToMore({
       document: networkId === Networks.MAINNET ? SWAPS_SUBSCRIPTION : SWAPS_ROPSTEN_SUBSCRIPTION,
       variables: {
-        tokenAddress: oSqueeth?.toLowerCase(),
         origin: address || '',
-        poolAddress: squeethPool?.toLowerCase(),
-        recipients: [shortHelper, address || '', swapRouter],
-        recipient_not: crabStrategy?.toLowerCase(),
         orderDirection: 'asc',
+        recipient_not: crabStrategy,
+        ...(networkId === Networks.MAINNET
+          ? {
+              tokenAddress: oSqueeth,
+            }
+          : {
+              poolAddress: squeethPool,
+              recipients: [shortHelper, address || '', swapRouter],
+            }),
       },
       updateQuery(prev, { subscriptionData }) {
         if (!subscriptionData.data) return prev
@@ -205,23 +217,31 @@ export const useShortRealizedPnl = () => {
   }, [boughtSqueeth.toString(), totalUSDFromBuy.toString(), soldSqueeth.toString(), totalUSDFromSell.toString()])
 }
 
-export const useMintedDebt = () => {
-  const { vaults: shortVaults } = useVaultManager()
+export const useMintedSoldSort = () => {
+  const { vaultId } = useFirstValidVault()
+  const { openShortSqueeth } = useVaultHistory(vaultId)
   const positionType = useAtomValue(positionTypeAtom)
-  const firstValidVault = useAtomValue(firstValidVaultAtom)
-  const { oSqueeth } = useAtomValue(addressesAtom)
-  const oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
   const { squeethAmount } = useComputeSwaps()
-  const mintedDebt = useMemo(() => {
-    // squeethAmount = user long balance if oSqueethBal > 0, but it could also be minted balance
-    return shortVaults[firstValidVault]?.shortAmount.gt(0) &&
-      oSqueethBal?.isGreaterThan(0) &&
-      positionType === PositionType.LONG
-      ? oSqueethBal.minus(squeethAmount)
-      : shortVaults[firstValidVault]?.shortAmount.gt(0) && oSqueethBal?.isGreaterThan(0)
-      ? oSqueethBal
+  //when the squeethAmount < 0 and the abs amount is greater than openShortSqueeth, that means there is manually sold short position
+  return useMemo(() => {
+    return positionType === PositionType.SHORT && squeethAmount.abs().isGreaterThan(openShortSqueeth)
+      ? squeethAmount.abs().minus(openShortSqueeth)
       : new BigNumber(0)
-  }, [firstValidVault, oSqueethBal?.toString(), positionType, shortVaults?.length, squeethAmount.toString()])
+  }, [positionType, squeethAmount?.toString(), openShortSqueeth.toString()])
+}
+
+export const useMintedDebt = () => {
+  const { vaultId } = useFirstValidVault()
+  const { mintedSqueeth } = useVaultHistory(vaultId)
+  const lpDebt = useLpDebt()
+  const mintedSoldShort = useMintedSoldSort()
+
+  //mintedSqueeth balance from vault histroy - mintedSold short position = existing mintedDebt in vault, but
+  //LPed amount wont be taken into account from vault history, so will need to be deducted here and added the withdrawn amount back
+  //if there is LP Debt, shld be deducted from minted Debt
+  const mintedDebt = useMemo(() => {
+    return mintedSqueeth.minus(mintedSoldShort).minus(lpDebt)
+  }, [mintedSqueeth.toString(), mintedSoldShort?.toString(), lpDebt.toString()])
   return mintedDebt
 }
 

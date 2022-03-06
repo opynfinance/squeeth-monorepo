@@ -11,14 +11,13 @@ import { LPTable } from '@components/Lp/LPTable'
 import Nav from '@components/Nav'
 import History from '@components/Trade/History'
 import { PositionType } from '../src/types/'
-import { OSQUEETH_DECIMALS, Tooltips } from '../src/constants'
+import { Tooltips } from '../src/constants'
 import { usePnL } from '@hooks/usePositions'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { toTokenAmount } from '@utils/calculations'
 import { CrabProvider } from '@context/crabStrategy'
 import { useCrabPosition } from '@hooks/useCrabPosition'
 import { LinkButton } from '@components/Button'
-import { useVaultData } from '@hooks/useVaultData'
 import { addressAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
 import {
@@ -32,8 +31,14 @@ import {
   useShortRealizedPnl,
   usePositionsAndFeesComputation,
 } from 'src/state/positions/hooks'
-import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
-import { activePositionsAtom, addressesAtom, existingCollatAtom, positionTypeAtom } from 'src/state/positions/atoms'
+import {
+  activePositionsAtom,
+  existingCollatAtom,
+  existingCollatPercentAtom,
+  existingLiqPriceAtom,
+  isVaultLoadingAtom,
+  positionTypeAtom,
+} from 'src/state/positions/atoms'
 import { poolAtom } from 'src/state/squeethPool/atoms'
 import { useIndex } from 'src/state/controller/hooks'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
@@ -170,8 +175,6 @@ export function Positions() {
   } = usePnL()
 
   const pool = useAtomValue(poolAtom)
-  const { oSqueeth } = useAtomValue(addressesAtom)
-  const oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
   const address = useAtomValue(addressAtom)
   const positionType = useAtomValue(positionTypeAtom)
   const existingCollat = useAtomValue(existingCollatAtom)
@@ -203,7 +206,9 @@ export function Positions() {
   }, [firstValidVault, shortVaults?.length])
 
   const { liquidations } = useVaultLiquidations(Number(vaultId))
-  const { existingCollatPercent, existingLiqPrice, isVaultLoading: isVaultDataLoading } = useVaultData(Number(vaultId))
+  const existingCollatPercent = useAtomValue(existingCollatPercentAtom)
+  const existingLiqPrice = useAtomValue(existingLiqPriceAtom)
+  const isVaultDataLoading = useAtomValue(isVaultLoadingAtom)
 
   const fullyLiquidated = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0

@@ -34,20 +34,20 @@ export const firstValidVaultAtom = atom(0)
 export const addressesAtom = atom((get) => {
   const networkId = get(networkIdAtom)
   return {
-    zero: ZERO_ADDR,
-    controller: CONTROLLER[networkId],
-    vaultManager: VAULT_MANAGER[networkId],
-    oSqueeth: OSQUEETH[networkId],
-    weth: WETH[networkId],
-    swapRouter: SWAP_ROUTER[networkId],
-    squeethPool: SQUEETH_UNI_POOL[networkId],
-    quoter: QUOTER[networkId],
-    shortHelper: SHORT_HELPER[networkId],
-    oracle: ORACLE[networkId],
-    ethUsdcPool: ETH_USDC_POOL[networkId],
-    usdc: USDC[networkId],
-    nftManager: NFT_MANAGER[networkId],
-    crabStrategy: CRAB_STRATEGY[networkId],
+    zero: ZERO_ADDR.toLowerCase(),
+    controller: CONTROLLER[networkId].toLowerCase(),
+    vaultManager: VAULT_MANAGER[networkId].toLowerCase(),
+    oSqueeth: OSQUEETH[networkId].toLowerCase(),
+    weth: WETH[networkId].toLowerCase(),
+    swapRouter: SWAP_ROUTER[networkId].toLowerCase(),
+    squeethPool: SQUEETH_UNI_POOL[networkId].toLowerCase(),
+    quoter: QUOTER[networkId].toLowerCase(),
+    shortHelper: SHORT_HELPER[networkId].toLowerCase(),
+    oracle: ORACLE[networkId].toLowerCase(),
+    ethUsdcPool: ETH_USDC_POOL[networkId].toLowerCase(),
+    usdc: USDC[networkId].toLowerCase(),
+    nftManager: NFT_MANAGER[networkId].toLowerCase(),
+    crabStrategy: CRAB_STRATEGY[networkId].toLowerCase(),
   }
 })
 

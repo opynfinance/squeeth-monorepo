@@ -2,8 +2,13 @@ import { atom, useAtomValue } from 'jotai'
 import { useQuery } from 'react-query'
 
 import { getCUSDCPrices, getETH90DaysPrices, getETHPrices, getETHWithinOneDayPrices } from '@hooks/useETHPriceCharts'
-import { getETHPNLCompounding, getSqueethChartWithFunding, getSqueethPNLCompounding } from '@utils/pricer'
-import { useCallback } from 'react'
+import {
+  getETHPNLCompounding,
+  getSqueethChartWithFunding,
+  getSqueethPNLCompounding,
+  useETHSqueethPNLCompounding,
+} from '@utils/pricer'
+import { useCallback, useMemo } from 'react'
 
 const FIVE_MINUTES_IN_MILLISECONDS = 300_000
 const ethPriceChartsQueryKeys = {
@@ -108,33 +113,48 @@ export const useSqueethPNLSeries = () => {
 }
 
 export const useLongSeries = () => {
-  const squeethPNLSeries = useSqueethPNLSeries()
+  const volMultiplier = useAtomValue(volMultiplierAtom)
+  const ethPrices = useEthPrices()
+  const days = useAtomValue(daysAtom)
+  const ethSqueethPNLSeries = useETHSqueethPNLCompounding(ethPrices.data ?? [], volMultiplier, days)
 
-  return squeethPNLSeries.data
-    ? squeethPNLSeries.data.map(({ time, longPNL }) => {
+  return useMemo(() => {
+    return (
+      ethSqueethPNLSeries.squeethPNL &&
+      ethSqueethPNLSeries.squeethPNL.map(({ time, longPNL }) => {
         return { time, value: longPNL }
       })
-    : []
+    )
+  }, [ethSqueethPNLSeries])
 }
 
 export const useShortSeries = () => {
-  const squeethPNLSeries = useSqueethPNLSeries()
+  const volMultiplier = useAtomValue(volMultiplierAtom)
+  const ethPrices = useEthPrices()
+  const days = useAtomValue(daysAtom)
+  const ethSqueethPNLSeries = useETHSqueethPNLCompounding(ethPrices.data ?? [], volMultiplier, days)
 
-  return squeethPNLSeries.data
-    ? squeethPNLSeries.data.map(({ time, shortPNL }) => {
+  return useMemo(() => {
+    return (
+      ethSqueethPNLSeries.squeethPNL &&
+      ethSqueethPNLSeries.squeethPNL.map(({ time, shortPNL }) => {
         return { time, value: shortPNL }
       })
-    : []
+    )
+  }, [ethSqueethPNLSeries])
 }
 
 export const usePrevShortSeries = () => {
   const squeethSeries = useSqueethSeries()
 
-  return squeethSeries.data
-    ? squeethSeries.data.series.map(({ time, shortPNL }) => {
+  return useMemo(() => {
+    return (
+      squeethSeries.data &&
+      squeethSeries.data.series.map(({ time, shortPNL }) => {
         return { time, value: shortPNL }
       })
-    : []
+    )
+  }, [squeethSeries.data])
 }
 
 export const usePositionSizePercentageseries = () => {
@@ -160,23 +180,35 @@ export const useFundingPercentageSeries = () => {
 }
 
 export const useLongEthPNL = () => {
-  const ethPNLCompounding = useEthPNLCompounding()
+  const volMultiplier = useAtomValue(volMultiplierAtom)
+  const ethPrices = useEthPrices()
+  const days = useAtomValue(daysAtom)
+  const ethSqueethPNLSeries = useETHSqueethPNLCompounding(ethPrices.data ?? [], volMultiplier, days)
 
-  return ethPNLCompounding.data
-    ? ethPNLCompounding.data.map(({ time, longPNL }) => {
+  return useMemo(() => {
+    return (
+      ethSqueethPNLSeries.ethPNL &&
+      ethSqueethPNLSeries.ethPNL.map(({ time, longPNL }) => {
         return { time, value: longPNL }
       })
-    : []
+    )
+  }, [ethSqueethPNLSeries])
 }
 
 export const useShortEthPNL = () => {
-  const ethPNLCompounding = useEthPNLCompounding()
+  const volMultiplier = useAtomValue(volMultiplierAtom)
+  const ethPrices = useEthPrices()
+  const days = useAtomValue(daysAtom)
+  const ethSqueethPNLSeries = useETHSqueethPNLCompounding(ethPrices.data ?? [], volMultiplier, days)
 
-  return ethPNLCompounding.data
-    ? ethPNLCompounding.data.map(({ time, shortPNL }) => {
+  return useMemo(() => {
+    return (
+      ethSqueethPNLSeries.ethPNL &&
+      ethSqueethPNLSeries.ethPNL.map(({ time, shortPNL }) => {
         return { time, value: shortPNL }
       })
-    : []
+    )
+  }, [ethSqueethPNLSeries])
 }
 
 export const useStartingETHPrice = () => {
@@ -320,4 +352,18 @@ export const useGetStableYieldPNL = () => {
     },
     [cusdcPrices, startingETHPrice],
   )
+}
+export const useSqueethIsLive = () => {
+  const volMultiplier = useAtomValue(volMultiplierAtom)
+  const ethPrices = useEthPrices()
+  const days = useAtomValue(daysAtom)
+  const ethSqueethPNLSeries = useETHSqueethPNLCompounding(ethPrices.data ?? [], volMultiplier, days)
+  return useMemo(() => {
+    return (
+      ethSqueethPNLSeries.squeethPNL &&
+      ethSqueethPNLSeries.squeethPNL.map(({ isLive }) => {
+        return isLive
+      })
+    )
+  }, [ethSqueethPNLSeries])
 }
