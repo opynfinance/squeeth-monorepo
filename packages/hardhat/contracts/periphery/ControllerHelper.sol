@@ -193,7 +193,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         shortPowerPerp = _shortPowerPerp;
         wPowerPerpPool = _wPowerPerpPool;
         wPowerPerp = _wPowerPerp;
-        swapRouter = _swapRouter;
         weth = _weth;
         swapRouter = _swapRouter;
         nonfungiblePositionManager = _nonfungiblePositionManager;
@@ -323,8 +322,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             uint8(CALLBACK_SOURCE.FLASH_SELL_LONG_W_MINT),
             abi.encodePacked(_vaultId, _wPowerPerpAmountToMint, _collateralAmount)
         );
-
-        emit FlashWBurn(msg.sender, _vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw, _wPowerPerpAmountToBuy);
     }
 
     /**
@@ -455,8 +452,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             _wPowerPerpAmount,
             0
         );
-        uint256 amount0Desired = wPowerPerpPoolToken0 == wPowerPerp ? _wPowerPerpAmount : _collateralToLP;
-        uint256 amount1Desired = wPowerPerpPoolToken1 == wPowerPerp ? _wPowerPerpAmount : _collateralToLP;
+        uint256 amount0Desired = isWethToken0 ? _collateralToLP : _wPowerPerpAmount;
+        uint256 amount1Desired = isWethToken0 ? _wPowerPerpAmount : _collateralToLP;
 
         _lpWPowerPerpPool(
             msg.sender,
@@ -482,44 +479,44 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         emit BatchMintLp(msg.sender, _vaultId, _wPowerPerpAmount, _collateralToMint, _collateralToLP);
     }
 
-    function flashswapWMintDepositNft(
-        uint256 _vaultId,
-        uint256 _wPowerPerpAmount,
-        uint256 _collateralAmount,
-        uint256 _amount0Min,
-        uint256 _amount1Min,
-        int24 _lowerTick,
-        int24 _upperTick
-    ) external payable {
-        uint256 collateralToMint = _collateralAmount.sub(msg.value);
-        uint256 amount0;
-        uint256 amount1;
-        (wPowerPerpPoolToken0 == wPowerPerp) ? amount1 = collateralToMint : amount0 = collateralToMint;
+    // function flashswapWMintDepositNft(
+    //     uint256 _vaultId,
+    //     uint256 _wPowerPerpAmount,
+    //     uint256 _collateralAmount,
+    //     uint256 _amount0Min,
+    //     uint256 _amount1Min,
+    //     int24 _lowerTick,
+    //     int24 _upperTick
+    // ) external payable {
+    //     uint256 collateralToMint = _collateralAmount.sub(msg.value);
+    //     uint256 amount0;
+    //     uint256 amount1;
+    //     (isWethToken0) ? amount1 = collateralToMint : amount0 = collateralToMint;
 
-        console.log(_lowerTick < 0);
+    //     console.log(_lowerTick < 0);
 
-        _flashLoan(
-            abi.encodePacked(
-                _vaultId,
-                _wPowerPerpAmount,
-                collateralToMint,
-                msg.value,
-                _amount0Min,
-                _amount1Min,
-                uint256(_lowerTick),
-                uint256(_upperTick),
-                (_lowerTick < 0) ? uint256(0) : uint256(1),
-                (_upperTick < 0) ? uint256(0) : uint256(1)
-            ),
-            wPowerPerp,
-            weth,
-            IUniswapV3Pool(wPowerPerpPool).fee(),
-            amount0,
-            amount1,
-            uint8(CALLBACK_SOURCE.FLASH_W_MINT_DEPOSIT_NFT)
-        );
+    //     _flashLoan(
+    //         abi.encodePacked(
+    //             _vaultId,
+    //             _wPowerPerpAmount,
+    //             collateralToMint,
+    //             msg.value,
+    //             _amount0Min,
+    //             _amount1Min,
+    //             uint256(_lowerTick),
+    //             uint256(_upperTick),
+    //             (_lowerTick < 0) ? uint256(0) : uint256(1),
+    //             (_upperTick < 0) ? uint256(0) : uint256(1)
+    //         ),
+    //         wPowerPerp,
+    //         weth,
+    //         IUniswapV3Pool(wPowerPerpPool).fee(),
+    //         amount0,
+    //         amount1,
+    //         uint8(CALLBACK_SOURCE.FLASH_W_MINT_DEPOSIT_NFT)
+    //     );
 
-    }
+    // }
 
     /**
      * @notice close short position with user Uniswap v3 LP NFT
@@ -790,11 +787,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             IWETH9(weth).deposit{value: address(this).balance}();
 
             IWETH9(weth).transfer(wPowerPerpPool, _amountToPay);
-            IWPowerPerp(wPowerPerp).transfer(_caller, data.wPowerPerpAmountToBuy);
-
-            if (address(this).balance > 0) {
-                payable(_caller).sendValue(address(this).balance);
-            }
         }
         else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_W_BURN) {
             FlashWBurnData memory data = abi.decode(_callData, (FlashWBurnData));
