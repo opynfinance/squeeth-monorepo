@@ -26,7 +26,6 @@ describe("Controller helper integration test", function () {
   let weth: WETH9
   let positionManager: Contract
   let uniswapFactory: Contract
-  let uniswapRouter: Contract
   let oracle: Oracle
   let controller: Controller
   let wSqueethPool: Contract
