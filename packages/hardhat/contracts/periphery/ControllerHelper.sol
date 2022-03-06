@@ -247,24 +247,13 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
     ) external payable {
         IWPowerPerp(wPowerPerp).transferFrom(msg.sender, address(this), _wPowerPerpAmountToSell);
 
-        // swap long wPowerPerp
-        uint256 amountOut = _exactInFlashSwap(
-            wPowerPerp,
-            weth,
-            IUniswapV3Pool(wPowerPerpPool).fee(),
-            _wPowerPerpAmountToSell,
-            _minToReceive,
-            uint8(FLASH_SOURCE.SWAP),
-            ""
-        );
-
         // flahswap and mint short position
         _exactInFlashSwap(
             wPowerPerp,
             weth,
             IUniswapV3Pool(wPowerPerpPool).fee(),
-            _wPowerPerpAmountToMint,
-            _collateralAmount.sub(msg.value).sub(amountOut),
+            _wPowerPerpAmountToMint.add(_wPowerPerpAmountToSell),
+            _minToReceive,
             uint8(FLASH_SOURCE.FLASH_SELL_LONG_W_MINT),
             abi.encodePacked(_vaultId, _wPowerPerpAmountToMint, _collateralAmount)
         );
