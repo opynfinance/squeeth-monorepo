@@ -3,6 +3,7 @@ import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import BigNumber from 'bignumber.js'
 import React, { useCallback, useEffect, useState } from 'react'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
+import debounce from 'lodash.debounce'
 
 import { InputType, Links } from '../../../constants'
 import { useUserAllowance } from '@hooks/contracts/useAllowance'
@@ -22,6 +23,7 @@ import {
   useBuyAndRefund,
   useGetBuyQuote,
   useGetBuyQuoteForETH,
+  useGetSellQuote,
   useGetSellQuoteForETH,
   useGetWSqueethPositionValue,
   useSell,
@@ -32,6 +34,7 @@ import {
   altTradeAmountAtom,
   confirmedAmountAtom,
   ethTradeAmountAtom,
+  inputQuoteAtom,
   inputQuoteLoadingAtom,
   inputTypeAtom,
   quoteAtom,
@@ -263,7 +266,6 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
   const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
 
-  const [inputType, setInputType] = useAtom(inputTypeAtom)
   const [squeethExposure, setSqueethExposure] = useState(0)
   const [quote, setQuote] = useAtom(quoteAtom)
 
@@ -276,31 +278,33 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
   }, [])
 
   useEffect(() => {
-    if (ethTradeAmount !== '') {
-      setInputQuoteLoading(true)
-      getBuyQuoteForETH(new BigNumber(ethTradeAmount), slippageAmount).then((val) => {
-        if (inputType === InputType.ETH) {
-          setSqthTradeAmount(val.amountOut.toString())
-        }
-        setConfirmedAmount(val.amountOut.toFixed(6).toString())
-        setQuote(val)
-        setSqueethExposure(Number(getWSqueethPositionValue(val.amountOut)))
-        setInputQuoteLoading(false)
-      })
-    }
-  }, [inputType, slippageAmount.toString(), ethTradeAmount])
+    getBuyQuoteForETH(new BigNumber(sqthTradeAmount), slippageAmount).then((val) => {
+      setQuote(val)
+    })
+  }, [slippageAmount.toString(), sqthTradeAmount])
 
-  useEffect(() => {
-    if (sqthTradeAmount !== '') {
-      setInputQuoteLoading(true)
-      getBuyQuote(new BigNumber(sqthTradeAmount), slippageAmount).then((val) => {
-        if (inputType === InputType.SQTH) {
-          setEthTradeAmount(val.amountIn.toString())
-        }
-        setInputQuoteLoading(false)
-      })
-    }
-  }, [inputType, slippageAmount.toString(), sqthTradeAmount])
+  const handleEthChange = (value: string) => {
+    setEthTradeAmount(value)
+    setInputQuoteLoading(true)
+
+    getBuyQuoteForETH(new BigNumber(value), slippageAmount).then((val) => {
+      setSqthTradeAmount(val.amountOut.toString())
+      setConfirmedAmount(val.amountOut.toFixed(6).toString())
+      setSqueethExposure(Number(getWSqueethPositionValue(val.amountOut)))
+      setInputQuoteLoading(false)
+    })
+  }
+
+  const handleSqthChange = (value: string) => {
+    setSqthTradeAmount(value)
+    setInputQuoteLoading(true)
+
+    getBuyQuote(new BigNumber(value), slippageAmount).then((val) => {
+      setEthTradeAmount(val.amountIn.toString())
+
+      setInputQuoteLoading(false)
+    })
+  }
 
   let openError: string | undefined
   // let closeError: string | undefined
@@ -342,15 +346,6 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
     setBuyLoading(false)
   }
 
-  const handleChange = (value: string, currentInputType: InputType) => {
-    setInputType(currentInputType)
-    if (currentInputType === InputType.ETH) {
-      setEthTradeAmount(value)
-    } else {
-      setSqthTradeAmount(value)
-    }
-  }
-
   return (
     <div>
       {!confirmed ? (
@@ -368,11 +363,11 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
               <div className={classes.thirdHeading} />
               <PrimaryInput
                 value={ethTradeAmount}
-                onChange={(v) => handleChange(v, InputType.ETH)}
+                onChange={(v) => handleEthChange(v)}
                 label="Amount"
                 tooltip="Amount of ETH you want to spend to get Squeeth exposure"
                 actionTxt="Max"
-                onActionClicked={() => handleChange(balance.toString(), InputType.ETH)}
+                onActionClicked={() => handleEthChange(balance.toString())}
                 unit="ETH"
                 convertedValue={new BigNumber(ethTradeAmount).times(ethPrice).toFixed(2).toLocaleString()}
                 error={!!existingShortError || !!priceImpactWarning || !!openError || !!highVolError}
@@ -402,7 +397,7 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
               />
               <PrimaryInput
                 value={sqthTradeAmount}
-                onChange={(v) => handleChange(v, InputType.SQTH)}
+                onChange={(v) => handleSqthChange(v)}
                 label="Amount"
                 tooltip="Amount of Squeeth exposure"
                 actionTxt="Max"
@@ -536,25 +531,24 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle, setTradeComp
   const [hasJustApprovedSqueeth, setHasJustApprovedSqueeth] = useState(false)
 
   const classes = useStyles()
-  // const { swapRouter, oSqueeth } = useAddresses()
   const { swapRouter, oSqueeth } = useAtomValue(addressesAtom)
   const sell = useSell()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const getSellQuoteForETH = useGetSellQuoteForETH()
+  const getSellQuote = useGetSellQuote()
 
   const [confirmedAmount, setConfirmedAmount] = useAtom(confirmedAmountAtom)
   const [inputQuoteLoading, setInputQuoteLoading] = useAtom(inputQuoteLoadingAtom)
-  const quote = useAtomValue(quoteAtom)
-  const [altAmountInputValue, setAltTradeAmount] = useAtom(altTradeAmountAtom)
-  const [amountInputValue, setAmount] = useAtom(tradeAmountAtom)
-  const setInputType = useUpdateAtom(inputTypeAtom)
+  const [quote, setQuote] = useAtom(quoteAtom)
+  const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
+  const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
   const slippageAmount = useAtomValue(slippageAmountAtom)
   const ethPrice = useETHPrice()
-  const amount = new BigNumber(amountInputValue)
-  const altTradeAmount = new BigNumber(altAmountInputValue)
+  const amount = new BigNumber(sqthTradeAmount)
+  const altTradeAmount = new BigNumber(ethTradeAmount)
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter)
-  // const { selectWallet, connected } = useWallet()
+
   const connected = useAtomValue(connectedWalletAtom)
   const selectWallet = useSelectWallet()
 
@@ -562,13 +556,20 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle, setTradeComp
   const shortDebt = useShortDebt()
   const isShort = shortDebt.gt(0)
 
-  console.log(longSqthBal.toString())
+  const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
+  const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
+
+  useEffect(() => {
+    resetEthTradeAmount()
+    resetSqthTradeAmount()
+  }, [])
+
   useEffect(() => {
     //if it's insufficient amount them set it to it's maximum
     if (!open && longSqthBal.lt(amount)) {
-      setAmount(longSqthBal.toString())
+      setSqthTradeAmount(longSqthBal.toString())
       getSellQuoteForETH(longSqthBal).then((val) => {
-        setAltTradeAmount(val.amountIn.toString())
+        setEthTradeAmount(val.amountIn.toString())
         setConfirmedAmount(val.amountIn.toFixed(6).toString())
       })
     }
@@ -619,23 +620,30 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle, setTradeComp
     setSellLoading(false)
   }, [amount.toString(), squeethAllowance.toString(), longSqthBal.toString(), sell, squeethApprove])
 
-  const handleCloseDualInputUpdate = (v: string, currentInput: string) => {
-    //If I'm inputting an amount of ETH position I'd like to sell to get squeeth, use getSellQuoteForETH in trade context
-    //set eth amt and input type here,
-    //set quote, loading state and squth amount in trade context
-    if (currentInput === InputType.ETH) {
-      if (v === altAmountInputValue) return
-      setInputType(InputType.ETH)
-      setAltTradeAmount(v)
-    } else {
-      //If I'm inputting an amount of squeeth position I'd like to sell to get ETH, use getSellQuote in trade context
-      //set squth amt and input type here,
-      //set quote, loading state and eth amount in trade context
-      if (v === amountInputValue) return
-      setInputType(InputType.SQTH)
-      setAmount(v)
-    }
+  useEffect(() => {
+    getSellQuote(new BigNumber(sqthTradeAmount), slippageAmount).then((val) => {
+      setQuote(val)
+    })
+  }, [slippageAmount.toString(), sqthTradeAmount])
+
+  const handleSqthChange = (value: string) => {
     setInputQuoteLoading(true)
+    setSqthTradeAmount(value)
+    getSellQuote(new BigNumber(value), slippageAmount).then((val) => {
+      if (value !== '0') setConfirmedAmount(Number(value).toFixed(6))
+      setEthTradeAmount(val.amountOut.toString())
+      setInputQuoteLoading(false)
+    })
+  }
+
+  const handleEthChange = (value: string) => {
+    setInputQuoteLoading(true)
+    setEthTradeAmount(value)
+    getSellQuoteForETH(new BigNumber(value), slippageAmount).then((val) => {
+      if (value !== '0') setConfirmedAmount(val.amountIn.toFixed(6).toString())
+      setSqthTradeAmount(val.amountIn.toString())
+      setInputQuoteLoading(false)
+    })
   }
 
   return (
@@ -653,12 +661,12 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle, setTradeComp
 
           <div className={classes.thirdHeading} />
           <PrimaryInput
-            value={amountInputValue}
-            onChange={(v) => handleCloseDualInputUpdate(v, InputType.SQTH)}
+            value={sqthTradeAmount}
+            onChange={(v) => handleSqthChange(v)}
             label="Amount"
             tooltip="Amount of oSqueeth you want to close"
             actionTxt="Max"
-            onActionClicked={() => handleCloseDualInputUpdate(longSqthBal.toString(), InputType.SQTH)}
+            onActionClicked={() => handleSqthChange(longSqthBal.toString())}
             unit="oSQTH"
             convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
             error={!!existingShortError || !!priceImpactWarning || !!closeError}
@@ -687,8 +695,8 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle, setTradeComp
             }
           />
           <PrimaryInput
-            value={altAmountInputValue}
-            onChange={(v) => handleCloseDualInputUpdate(v, InputType.ETH)}
+            value={ethTradeAmount}
+            onChange={(v) => handleEthChange(v)}
             label="Amount"
             tooltip="Amount of oSqueeth you want to close in eth"
             unit="ETH"
@@ -808,8 +816,6 @@ const Long: React.FC<BuyProps> = ({
   isLPage = false,
   activeStep = 0,
 }) => {
-  useUpdateSqueethExposure()
-  useResetTradeForm()
   return open ? (
     <OpenLong
       balance={balance}
