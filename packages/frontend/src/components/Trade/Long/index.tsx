@@ -543,6 +543,7 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle, setTradeComp
   const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
+  const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
   const slippageAmount = useAtomValue(slippageAmountAtom)
   const ethPrice = useETHPrice()
   const amount = new BigNumber(sqthTradeAmount)
@@ -805,35 +806,21 @@ type BuyProps = {
   closeTitle: string
   isLPage?: boolean
   activeStep?: number
-  setTradeCompleted?: any
+  // setTradeCompleted?: any
 }
 
 const Long: React.FC<BuyProps> = ({
   balance,
   open,
   closeTitle,
-  setTradeCompleted,
+  // setTradeCompleted,
   isLPage = false,
   activeStep = 0,
 }) => {
   return open ? (
-    <OpenLong
-      balance={balance}
-      open={open}
-      closeTitle={closeTitle}
-      isLPage={isLPage}
-      activeStep={activeStep}
-      setTradeCompleted={setTradeCompleted}
-    />
+    <OpenLong balance={balance} open={open} closeTitle={closeTitle} isLPage={isLPage} activeStep={activeStep} />
   ) : (
-    <CloseLong
-      balance={balance}
-      open={open}
-      closeTitle={closeTitle}
-      isLPage={isLPage}
-      activeStep={activeStep}
-      setTradeCompleted={setTradeCompleted}
-    />
+    <CloseLong balance={balance} open={open} closeTitle={closeTitle} isLPage={isLPage} activeStep={activeStep} />
   )
 }
 

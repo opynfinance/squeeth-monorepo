@@ -24,16 +24,7 @@ import { WelcomeModal } from '@components/Trade/WelcomeModal'
 import { Vaults } from '../src/constants'
 import { Tooltips } from '@constants/enums'
 import { useRestrictUser } from '@context/restrict-user'
-import { TradeProvider } from '@context/trade'
 
-// import {
-//   indexAtom,
-//   markAtom,
-//   currentImpliedFundingAtom,
-//   impliedVolAtom,
-//   dailyHistoricalFundingAtom,
-//   normFactorAtom,
-// } from '@hooks/contracts/useController'
 import { TradeType } from '../src/types'
 import { toTokenAmount } from '@utils/calculations'
 import {
@@ -46,7 +37,6 @@ import {
 import { impliedVolAtom } from 'src/state/controller/atoms'
 import { usePositionsAndFeesComputation } from 'src/state/positions/hooks'
 import { actualTradeTypeAtom, tradeTypeAtom } from 'src/state/trade/atoms'
-import { useTradeAmountUpdate, useTradeUpdate, useUpdateActualTradeType } from 'src/state/trade/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -390,7 +380,6 @@ const SqueethInfo: React.FC = () => {
   const currentImpliedFunding = useCurrentImpliedFunding()
   const normFactor = useNormFactor()
   usePositionsAndFeesComputation()
-  useUpdateActualTradeType()
 
   const [showAdvanced, setShowAdvanced] = useState(false)
 
@@ -537,14 +526,10 @@ function TradePage() {
   const tradeType = useAtomValue(tradeTypeAtom)
   const [showMobileTrade, setShowMobileTrade] = useState(false)
   const [isWelcomeModalOpen, setWelcomeModalOpen] = useState(false)
-  const [tradeCompleted, setTradeCompleted] = useState(false)
 
   const handleClose = () => {
     setWelcomeModalOpen(false)
   }
-
-  useTradeAmountUpdate()
-  useTradeUpdate()
 
   return (
     <div>
@@ -556,7 +541,7 @@ function TradePage() {
               <Header />
               <div className={classes.positionContainer}>
                 <SqueethInfo />
-                <PositionCard tradeCompleted={tradeCompleted} />
+                <PositionCard />
               </div>
             </div>
             <div className={classes.tradeDetails}>
@@ -578,9 +563,7 @@ function TradePage() {
 
           <div className={classes.ticket}>
             <TabComponent />
-            <Card className={classes.innerTicket}>
-              {!isRestricted ? <Trade setTradeCompleted={setTradeCompleted} /> : <RestrictionInfo />}
-            </Card>
+            <Card className={classes.innerTicket}>{!isRestricted ? <Trade /> : <RestrictionInfo />}</Card>
           </div>
         </div>
       </Hidden>
@@ -595,7 +578,7 @@ function TradePage() {
             )}
           </div>
           <div className={classes.mobileSpacer}>
-            <PositionCard tradeCompleted={tradeCompleted} />
+            <PositionCard />
           </div>
         </div>
         <div className={classes.mobileAction}>
@@ -609,7 +592,7 @@ function TradePage() {
         <MobileModal title="TRADE" isOpen={showMobileTrade} onClose={() => setShowMobileTrade(false)}>
           <TabComponent />
           <Card className={classes.innerTicket} style={{ textAlign: 'center', marginTop: '8px' }}>
-            {!isRestricted ? <Trade setTradeCompleted={setTradeCompleted} /> : <RestrictionInfo />}
+            {!isRestricted ? <Trade /> : <RestrictionInfo />}
           </Card>
         </MobileModal>
       </Hidden>

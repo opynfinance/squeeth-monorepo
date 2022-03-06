@@ -216,6 +216,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
 
   // const { shortHelper } = useAddresses()
   const { shortHelper } = useAtomValue(addressesAtom)
+  const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
 
   const updateOperator = useUpdateOperator()
   const normalizationFactor = useNormFactor()
@@ -589,6 +590,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   const normalizationFactor = useNormFactor()
   const getShortAmountFromDebt = useGetShortAmountFromDebt()
   const getDebtAmount = useGetDebtAmount()
+  const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
 
   const quote = useAtomValue(quoteAtom)
   const sellCloseQuote = useAtomValue(sellCloseQuoteAtom)
@@ -1015,11 +1017,11 @@ const Short: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComplete
   //     })
   //   }
   // }
-  useResetTradeForm()
+
   return open ? (
-    <OpenShort balance={balance} open={open} closeTitle={closeTitle} setTradeCompleted={setTradeCompleted} />
+    <OpenShort balance={balance} open={open} closeTitle={closeTitle} />
   ) : (
-    <CloseShort balance={balance} open={open} closeTitle={closeTitle} setTradeCompleted={setTradeCompleted} />
+    <CloseShort balance={balance} open={open} closeTitle={closeTitle} />
   )
 }
 
