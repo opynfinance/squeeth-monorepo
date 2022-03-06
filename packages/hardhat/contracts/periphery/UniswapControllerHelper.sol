@@ -16,7 +16,7 @@ import "@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol";
 import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import "@uniswap/v3-core/contracts/libraries/SafeCast.sol";
 
-contract FlashControllerHelper is IUniswapV3SwapCallback, IUniswapV3FlashCallback {
+contract UniswapControllerHelper is IUniswapV3SwapCallback, IUniswapV3FlashCallback {
     using Path for bytes;
     using SafeCast for uint256;
     using LowGasSafeMath for uint256;
@@ -112,7 +112,6 @@ contract FlashControllerHelper is IUniswapV3SwapCallback, IUniswapV3FlashCallbac
         //         })
         //     )
         // );
-        
     }
 
     /**
