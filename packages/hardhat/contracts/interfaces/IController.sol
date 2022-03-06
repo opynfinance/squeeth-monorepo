@@ -55,7 +55,7 @@ interface IController {
         uint256 _withdrawAmount
     ) external;
 
-    function burnOnPowerPerpAmount(
+    function burnPowerPerpAmount(
         uint256 _vaultId,
         uint256 _powerPerpAmount,
         uint256 _withdrawAmount

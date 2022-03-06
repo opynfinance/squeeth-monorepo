@@ -13,6 +13,7 @@ import {IOracle} from "../interfaces/IOracle.sol";
 import {IController} from "../interfaces/IController.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 // contract
 import {FlashControllerHelper} from "./FlashControllerHelper.sol";
@@ -27,7 +28,8 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
 
     /// @dev enum to differentiate between uniswap swap callback function source
     enum FLASH_SOURCE {
-        FLASH_W_MINT
+        FLASH_W_MINT,
+        FLASH_W_BURN
     }
 
     address public immutable controller;
@@ -36,12 +38,19 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
     address public immutable wPowerPerpPool;
     address public immutable wPowerPerp;
     address public immutable weth;
+    address public immutable swapRouter;
 
     struct flashswapWMintData {
         uint256 vaultId;
         uint256 flashSwappedCollateral;
         uint256 totalCollateralToDeposit;
         uint256 wPowerPerpAmount;
+    }
+    struct FlashWBurnData {
+        uint256 vaultId;
+        uint256 wPowerPerpAmountToBurn;
+        uint256 wPowerPerpAmountToBuy;
+        uint256 collateralToWithdraw;
     }
 
     event FlashswapWMint(
@@ -51,6 +60,13 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         uint256 swappedCollateralAmount,
         uint256 collateralAmount
     );
+    event FlashWBurn(
+        address indexed withdrawer,
+        uint256 vaultId,
+        uint256 wPowerPerpAmountToBurn,
+        uint256 collateralAmountToWithdraw,
+        uint256 wPowerPerpAmountToBuy
+    );
 
     constructor(
         address _controller,
@@ -59,6 +75,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         address _wPowerPerpPool,
         address _wPowerPerp,
         address _weth,
+        address _swapRouter,
         address _uniswapFactory
     ) FlashControllerHelper(_uniswapFactory) {
         controller = _controller;
@@ -66,7 +83,11 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         shortPowerPerp = _shortPowerPerp;
         wPowerPerpPool = _wPowerPerpPool;
         wPowerPerp = _wPowerPerp;
+        swapRouter = _swapRouter;
         weth = _weth;
+
+        IWPowerPerp(_wPowerPerp).approve(_swapRouter, type(uint256).max);
+        IWETH9(_weth).approve(_swapRouter, type(uint256).max);
     }
 
     /**
@@ -89,6 +110,12 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         require(msg.sender == weth || msg.sender == address(controller), "Cannot receive eth");
     }
 
+    /**
+     * @notice flash mint WPowerPerp using flashswap
+     * @param _vaultId vault ID
+     * @param _wPowerPerpAmount amount of WPowerPerp to mint
+     * @param _collateralAmount total collateral amount to deposit
+     */
     function flashswapWMint(
         uint256 _vaultId,
         uint256 _wPowerPerpAmount,
@@ -107,6 +134,37 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         );
 
         emit FlashswapWMint(msg.sender, _vaultId, _wPowerPerpAmount, amountToFlashswap, _collateralAmount);
+    }
+
+    /**
+     * @notice flash close position and buy long squeeth
+     * @dev this function
+     * @param _vaultId vault ID
+     * @param _wPowerPerpAmountToBurn amount of WPowerPerp to burn
+     * @param _wPowerPerpAmountToBuy amount of WPowerPerp to buy
+     * @param _collateralToWithdraw amount of collateral to withdraw from vault
+     * @param _maxToPay max amount of collateral to pay for WPowerPerp token
+     */
+    function flashswapWBurnBuyLong(
+        uint256 _vaultId,
+        uint256 _wPowerPerpAmountToBurn,
+        uint256 _wPowerPerpAmountToBuy,
+        uint256 _collateralToWithdraw,
+        uint256 _maxToPay
+    ) external payable {
+        require(_maxToPay <= _collateralToWithdraw.add(msg.value), "Not enough collateral");
+
+        _exactOutFlashSwap(
+            weth,
+            wPowerPerp,
+            IUniswapV3Pool(wPowerPerpPool).fee(),
+            _wPowerPerpAmountToBurn.add(_wPowerPerpAmountToBuy),
+            _maxToPay,
+            uint8(FLASH_SOURCE.FLASH_W_BURN),
+            abi.encodePacked(_vaultId, _wPowerPerpAmountToBurn, _wPowerPerpAmountToBuy, _collateralToWithdraw)
+        );
+
+        emit FlashWBurn(msg.sender, _vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw, _wPowerPerpAmountToBuy);
     }
 
     /**
@@ -149,6 +207,21 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
 
             // this is a newly open vault, transfer to the user
             if (data.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), _caller, vaultId);
+        } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_W_BURN) {
+            FlashWBurnData memory data = abi.decode(_callData, (FlashWBurnData));
+
+            IController(controller).burnWPowerPerpAmount(
+                data.vaultId,
+                data.wPowerPerpAmountToBurn,
+                data.collateralToWithdraw
+            );
+            IWETH9(weth).deposit{value: _amountToPay}();
+            IWETH9(weth).transfer(wPowerPerpPool, _amountToPay);
+            IWPowerPerp(wPowerPerp).transfer(_caller, data.wPowerPerpAmountToBuy);
+
+            if (address(this).balance > 0) {
+                payable(_caller).sendValue(address(this).balance);
+            }
         }
     }
 }
