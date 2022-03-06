@@ -33,8 +33,8 @@ import { addressesAtom, existingCollatPercentAtom, isLongAtom, vaultAtom } from 
 import { useAtom, useAtomValue } from 'jotai'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { collatRatioAtom } from 'src/state/ethPriceCharts/atoms'
-import { useUpdateAtom } from 'jotai/utils'
-import { useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
+import { useResetAtom, useUpdateAtom } from 'jotai/utils'
+import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
 import {
   useGetDebtAmount,
   useGetShortAmountFromDebt,
@@ -46,11 +46,12 @@ import {
   quoteAtom,
   sellCloseQuoteAtom,
   slippageAmountAtom,
+  sqthTradeAmountAtom,
   tradeAmountAtom,
+  tradeCompletedAtom,
   tradeSuccessAtom,
   tradeTypeAtom,
 } from 'src/state/trade/atoms'
-import { useResetTradeForm } from 'src/state/trade/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -191,7 +192,7 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCompleted }) => {
+const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   const [collateralInput, setCollateralInput] = useState('0')
   const [collatPercent, setCollatPercent] = useState(150)
   const [existingCollat, setExistingCollat] = useState(new BigNumber(0))
@@ -209,6 +210,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
   const { openShort } = useShortHelper()
 
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
+  const getSellQuote = useGetSellQuote()
 
   // const { selectWallet, connected } = useWallet()
   const connected = useAtomValue(connectedWalletAtom)
@@ -224,8 +226,8 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
   const getDebtAmount = useGetDebtAmount()
   const [tradeSuccess, setTradeSuccess] = useAtom(tradeSuccessAtom)
 
-  const quote = useAtomValue(quoteAtom)
-  const [amountInputValue, setAmount] = useAtom(tradeAmountAtom)
+  const [quote, setQuote] = useAtom(quoteAtom)
+  const [amountInputValue, setAmount] = useAtom(sqthTradeAmountAtom)
 
   const slippageAmount = useAtomValue(slippageAmountAtom)
   const tradeType = useAtomValue(tradeTypeAtom)
@@ -235,6 +237,10 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
   const { firstValidVault, vaultId } = useFirstValidVault()
   const { squeethAmount: shortSqueethAmount } = useComputeSwaps()
   const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
+
+  useEffect(() => {
+    getSellQuote(amount, slippageAmount).then(setQuote)
+  }, [amount.toString(), slippageAmount])
 
   useEffect(() => {
     const rSqueeth = normalizationFactor.multipliedBy(amount || 1).dividedBy(10000)
@@ -249,6 +255,11 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
   }, [shortVaults?.length, open])
 
   const { existingCollatPercent } = useVaultData(Number(vaultId))
+
+  const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
+  useEffect(() => {
+    resetSqthTradeAmount()
+  }, [])
 
   useEffect(() => {
     if (!open) return
@@ -563,7 +574,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
   )
 }
 
-const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCompleted }) => {
+const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   const [collateral, setCollateral] = useState(new BigNumber(0))
   const [confirmedAmount, setConfirmedAmount] = useState('')
   const [collatPercent, setCollatPercent] = useState(200)
@@ -590,11 +601,12 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   const normalizationFactor = useNormFactor()
   const getShortAmountFromDebt = useGetShortAmountFromDebt()
   const getDebtAmount = useGetDebtAmount()
+  const getBuyQuote = useGetBuyQuote()
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
 
   const quote = useAtomValue(quoteAtom)
-  const sellCloseQuote = useAtomValue(sellCloseQuoteAtom)
-  const [amountInputValue, setAmount] = useAtom(tradeAmountAtom)
+  const [sellCloseQuote, setSellCloseQuote] = useAtom(sellCloseQuoteAtom)
+  const [amountInputValue, setAmount] = useAtom(sqthTradeAmountAtom)
 
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
   const slippageAmount = useAtomValue(slippageAmountAtom)
@@ -606,6 +618,15 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   const { firstValidVault, vaultId } = useFirstValidVault()
   const setCollatRatio = useUpdateAtom(collatRatioAtom)
   const ethPrice = useETHPrice()
+
+  const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
+  useEffect(() => {
+    resetSqthTradeAmount()
+  }, [])
+
+  useEffect(() => {
+    getBuyQuote(amount, slippageAmount).then(setSellCloseQuote)
+  }, [amount.toString(), slippageAmount])
 
   useEffect(() => {
     const contractShort = vault?.shortAmount ? vault?.shortAmount : new BigNumber(0)
@@ -999,10 +1020,9 @@ type SellType = {
   balance: number
   open: boolean
   closeTitle: string
-  setTradeCompleted: any
 }
 
-const Short: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCompleted }) => {
+const Short: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   // const handleCloseDualInputUpdate = (v: number | string, currentInput: string) => {
   //   if (isNaN(+v) || +v === 0) v = 0
   //   if (currentInput === 'ETH') {

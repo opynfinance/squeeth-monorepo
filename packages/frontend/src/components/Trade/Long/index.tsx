@@ -3,9 +3,8 @@ import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import BigNumber from 'bignumber.js'
 import React, { useCallback, useEffect, useState } from 'react'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
-import debounce from 'lodash.debounce'
 
-import { InputType, Links } from '../../../constants'
+import { Links } from '../../../constants'
 import { useUserAllowance } from '@hooks/contracts/useAllowance'
 import { PrimaryButton } from '@components/Button'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
@@ -31,20 +30,15 @@ import {
 import { useCurrentImpliedFunding, useDailyHistoricalFunding } from 'src/state/controller/hooks'
 import { useComputeSwaps, useLongSqthBal, useShortDebt } from 'src/state/positions/hooks'
 import {
-  altTradeAmountAtom,
   confirmedAmountAtom,
   ethTradeAmountAtom,
-  inputQuoteAtom,
   inputQuoteLoadingAtom,
-  inputTypeAtom,
   quoteAtom,
   slippageAmountAtom,
   sqthTradeAmountAtom,
-  squeethExposureAtom,
-  tradeAmountAtom,
+  tradeCompletedAtom,
   tradeSuccessAtom,
 } from 'src/state/trade/atoms'
-import { useResetTradeForm, useUpdateSqueethExposure } from 'src/state/trade/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -239,7 +233,7 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep = 0 }) => {
+const OpenLong: React.FC<BuyProps> = ({ balance, activeStep = 0 }) => {
   const [buyLoading, setBuyLoading] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
   const [txHash, setTxHash] = useState('')
@@ -271,6 +265,7 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
 
   const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
   const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
+  const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
 
   useEffect(() => {
     resetEthTradeAmount()
@@ -340,11 +335,16 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
       setTxHash(confirmedHash.transactionHash)
       setTradeSuccess(true)
       setTradeCompleted(true)
+
+      resetEthTradeAmount()
+      resetSqthTradeAmount()
     } catch (e) {
       console.log(e)
     }
     setBuyLoading(false)
   }
+
+  console.log({ longSqthBal: longSqthBal.toString() })
 
   return (
     <div>
@@ -423,7 +423,7 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
                       {quote.amountOut.gt(0) ? (
                         <>
                           <ArrowRightAltIcon className={classes.arrowIcon} />
-                          <span>{longSqthBal.plus(quote.amountOut).toFixed(6)}</span>
+                          <span>{longSqthBal.plus(new BigNumber(sqthTradeAmount)).toFixed(6)}</span>
                         </>
                       ) : null}{' '}
                       <span style={{ marginLeft: '4px' }}>oSQTH</span>
@@ -524,7 +524,7 @@ const OpenLong: React.FC<BuyProps> = ({ balance, setTradeCompleted, activeStep =
   )
 }
 
-const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle, setTradeCompleted }) => {
+const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
   const [sellLoading, setSellLoading] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
   const [txHash, setTxHash] = useState('')
@@ -613,6 +613,9 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle, setTradeComp
         setTxHash(confirmedHash.transactionHash)
         setTradeSuccess(true)
         setTradeCompleted(true)
+
+        resetEthTradeAmount()
+        resetSqthTradeAmount()
       }
     } catch (e) {
       console.log(e)
