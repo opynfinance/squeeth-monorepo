@@ -25,11 +25,14 @@ contract AaveControllerHelper is IFlashLoanReceiver {
     }
 
     constructor(address _provider) {
+        console.log("_provider", _provider);
         ADDRESSES_PROVIDER = ILendingPoolAddressesProvider(_provider);
         // make sure this work for tests file where _provider == 0x0
-        (_provider != address(0))
-            ? LENDING_POOL = ILendingPool(ILendingPoolAddressesProvider(_provider).getLendingPool())
-            : ILendingPool(address(0));
+        // (_provider != address(0))
+        //     ? LENDING_POOL = ILendingPool(ILendingPoolAddressesProvider(_provider).getLendingPool())
+        //     : ILendingPool(address(0));
+
+        LENDING_POOL = ILendingPool(0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9);
     }
 
     function _flashCallback(

@@ -155,6 +155,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         nonfungiblePositionManager = _nonfungiblePositionManager;
         isWethToken0 = _weth < _wPowerPerp;
 
+        console.log(Address.isContract(_controller));
+
         IWPowerPerp(_wPowerPerp).approve(_swapRouter, type(uint256).max);
         IWETH9(_weth).approve(_swapRouter, type(uint256).max);
         IWPowerPerp(_wPowerPerp).approve(_nonfungiblePositionManager, type(uint256).max);
