@@ -469,29 +469,33 @@ export const useUpdateVaultData = () => {
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
   const getVault = useGetVault()
 
+  const updateVault = async () => {
+    if (!connected || !ready) return
+
+    const _vault = await getVault(vaultId)
+
+    if (!_vault) return
+
+    setVault(_vault)
+    setExistingCollat(_vault.collateralAmount)
+
+    getCollatRatioAndLiqPrice(
+      _vault.collateralAmount,
+      _vault.shortAmount,
+      _vault.NFTCollateralId ? Number(_vault.NFTCollateralId) : undefined,
+    ).then(({ collateralPercent, liquidationPrice }) => {
+      setExistingCollatPercent(collateralPercent)
+      setCollatPercent(collateralPercent)
+      setExistingLiqPrice(new BigNumber(liquidationPrice))
+      setVaultLoading(false)
+    })
+  }
+
   useEffect(() => {
-    ;(async () => {
-      if (!connected || !ready) return
-
-      const _vault = await getVault(vaultId)
-
-      if (!_vault) return
-
-      setVault(_vault)
-      setExistingCollat(_vault.collateralAmount)
-
-      getCollatRatioAndLiqPrice(
-        _vault.collateralAmount,
-        _vault.shortAmount,
-        _vault.NFTCollateralId ? Number(_vault.NFTCollateralId) : undefined,
-      ).then(({ collateralPercent, liquidationPrice }) => {
-        setExistingCollatPercent(collateralPercent)
-        setCollatPercent(collateralPercent)
-        setExistingLiqPrice(new BigNumber(liquidationPrice))
-        setVaultLoading(false)
-      })
-    })()
+    updateVault()
   }, [connected, ready, vaultId])
+
+  return updateVault
 }
 
 export const useFirstValidVault = () => {
