@@ -26,7 +26,6 @@ import TradeDetails from '@components/Trade/TradeDetails'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import UniswapData from '@components/Trade/UniswapData'
 import { MIN_COLLATERAL_AMOUNT } from '../../../constants'
-import { useVaultData } from '@hooks/useVaultData'
 import { connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
 import { addressesAtom, existingCollatPercentAtom, isLongAtom, vaultAtom } from 'src/state/positions/atoms'
@@ -254,7 +253,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
     }
   }, [shortVaults?.length, open])
 
-  const { existingCollatPercent } = useVaultData(Number(vaultId))
+  const existingCollatPercent = useAtomValue(existingCollatPercentAtom)
 
   const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
   useEffect(() => {

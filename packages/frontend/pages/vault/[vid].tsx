@@ -21,7 +21,7 @@ import clsx from 'clsx'
 import Image from 'next/image'
 import { useRouter } from 'next/router'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { useAtomValue } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 
 import ethLogo from '../../public/images/ethereum-eth.svg'
 import squeethLogo from '../../public/images/Squeeth.svg'
@@ -36,7 +36,6 @@ import { PositionType } from '../../src/types'
 import { useRestrictUser } from '@context/restrict-user'
 import { useController } from '@hooks/contracts/useController'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
-import { useVaultData } from '@hooks/useVaultData'
 import { CollateralStatus, Vault } from '../../src/types'
 import { squeethClient } from '@utils/apollo-client'
 import { getCollatPercentStatus, toTokenAmount } from '@utils/calculations'
@@ -47,7 +46,15 @@ import { ACTIVE_POSITIONS_QUERY } from '@queries/uniswap/positionsQuery'
 import { positions, positionsVariables } from '@queries/uniswap/__generated__/positions'
 import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useWalletBalance } from 'src/state/wallet/hooks'
-import { addressesAtom, positionTypeAtom } from 'src/state/positions/atoms'
+import {
+  addressesAtom,
+  collatPercentAtom,
+  existingCollatPercentAtom,
+  existingLiqPriceAtom,
+  isVaultLoadingAtom,
+  positionTypeAtom,
+  vaultAtom,
+} from 'src/state/positions/atoms'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import {
   useBurnAndRedeem,
@@ -61,7 +68,7 @@ import {
   useWithdrawCollateral,
   useWithdrawUniPositionToken,
 } from 'src/state/controller/hooks'
-import { useComputeSwaps, useLpDebt, useMintedDebt, useShortDebt } from 'src/state/positions/hooks'
+import { useComputeSwaps, useLpDebt, useMintedDebt, useShortDebt, useUpdateVaultData } from 'src/state/positions/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -322,15 +329,12 @@ const Component: React.FC = () => {
   const [txLoading, setTxLoading] = useState(false)
   const [uniTokenToDeposit, setUniTokenToDeposit] = useState(0)
 
-  const {
-    vault,
-    existingCollatPercent,
-    existingLiqPrice,
-    updateVault,
-    setCollatPercent,
-    collatPercent,
-    isVaultLoading,
-  } = useVaultData(Number(vid))
+  const updateVault = useUpdateVaultData()
+  const vault = useAtomValue(vaultAtom)
+  const existingCollatPercent = useAtomValue(existingCollatPercentAtom)
+  const existingLiqPrice = useAtomValue(existingLiqPriceAtom)
+  const isVaultLoading = useAtomValue(isVaultLoadingAtom)
+  const [collatPercent, setCollatPercent] = useAtom(collatPercentAtom)
 
   useEffect(() => {
     getTwapEthPrice().then((price) => {
