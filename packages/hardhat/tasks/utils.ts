@@ -55,7 +55,7 @@ export const getWETH = async (ethers: any, deployer: string, networkName: string
   const wethAddr = networkNameToWeth(networkName)
   if (wethAddr === undefined) {
     // get from deployed network
-    return ethers.getContract("WETH9", deployer);
+    return ethers.getContractAt("WETH9", deployer);
   } 
   // get contract instance at address
   return ethers.getContract('WETH9', wethAddr)
@@ -65,7 +65,7 @@ export const getUSDC = async (ethers: any, deployer: string, networkName: string
   const usdcAddress = networkNameToUSDC(networkName)
   if (usdcAddress === undefined) {
     // use to local deployment as USDC
-    return ethers.getContract("MockErc20", deployer);
+    return ethers.getContractAt("MockErc20", deployer);
   } 
   // get contract instance at address
   return ethers.getContract('MockErc20', usdcAddress)
@@ -85,7 +85,7 @@ export const getUniswapDeployments = async(ethers: any, deployer: string, networ
   // Get Uniswap Factory
   let uniswapFactory: Contract
   if (networkNameToUniFactory(networkName) === undefined) {
-    uniswapFactory = await ethers.getContract("UniswapV3Factory", deployer);
+    uniswapFactory = await ethers.getContractAt("UniswapV3Factory", deployer);
   } else {
     uniswapFactory = await ethers.getContract('IUniswapV3Factory', networkNameToUniFactory(networkName))
   }
@@ -93,7 +93,7 @@ export const getUniswapDeployments = async(ethers: any, deployer: string, networ
   // Get Uniswap Factory
   let swapRouter: Contract
   if (networkNameToUniRouter(networkName) === undefined) {
-    swapRouter = await ethers.getContract("SwapRouter", deployer);
+    swapRouter = await ethers.getContractAt("SwapRouter", deployer);
   } else {
     swapRouter = await ethers.getContract('ISwapRouter', networkNameToUniRouter(networkName))
   }
@@ -101,7 +101,7 @@ export const getUniswapDeployments = async(ethers: any, deployer: string, networ
   // Get Position Manager
   let positionManager: Contract
   if (networkNameToPositionManager(networkName) === undefined) {
-    positionManager = await ethers.getContract("NonfungiblePositionManager", deployer);
+    positionManager = await ethers.getContractAt("NonfungiblePositionManager", deployer);
   } else {
     positionManager = await ethers.getContract('INonfungiblePositionManager', networkNameToPositionManager(networkName))
   }

@@ -92,6 +92,12 @@ const config: HardhatUserConfig = {
         (you can put in a mnemonic here to set the deployer locally)
       */
     },
+    fork: {
+      url: 'http://127.0.0.1:8545',
+      forking: {
+        url: `https://mainnet.infura.io/v3/${InfuraKey}`,
+      }  
+    },
     rinkeby: {
       url: `https://rinkeby.infura.io/v3/${InfuraKey}`, // <---- YOUR INFURA ID! (or it won't work)
       accounts: {

@@ -12,9 +12,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const feeTier = 3000
 
   // Load contracts
-  const oracle = await ethers.getContract("Oracle", deployer);
-  const shortSqueeth = await ethers.getContract("ShortPowerPerp", deployer);
-  const wsqueeth = await ethers.getContract("WPowerPerp", deployer);
+  const oracle = await ethers.getContractAt("Oracle", deployer);
+  const shortSqueeth = await ethers.getContractAt("ShortPowerPerp", deployer);
+  const wsqueeth = await ethers.getContractAt("WPowerPerp", deployer);
 
   const weth9 = await getWETH(ethers, deployer, network.name)
 
@@ -27,17 +27,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   // deploy abdk library
   await deploy("ABDKMath64x64", { from: deployer, log: true })
-  const abdk = await ethers.getContract("ABDKMath64x64", deployer)
+  const abdk = await ethers.getContractAt("ABDKMath64x64", deployer)
 
   await deploy("TickMathExternal", { from: deployer, log: true })
-  const tickMathExternal = await ethers.getContract("TickMathExternal", deployer)
+  const tickMathExternal = await ethers.getContractAt("TickMathExternal", deployer)
 
   await deploy("SqrtPriceMathPartial", { from: deployer, log: true })
-  const sqrtPriceMathPartial = await ethers.getContract("SqrtPriceMathPartial", deployer)
+  const sqrtPriceMathPartial = await ethers.getContractAt("SqrtPriceMathPartial", deployer)
 
   // deploy controller
   await deploy("Controller", { from: deployer, log: true, libraries: { ABDKMath64x64: abdk.address, SqrtPriceMathPartial: sqrtPriceMathPartial.address, TickMathExternal: tickMathExternal.address }, args: [oracle.address, shortSqueeth.address, wsqueeth.address, weth9.address, usdc.address, ethUSDCPool, squeethEthPool, positionManager.address, feeTier] });
-  const controller = await ethers.getContract("Controller", deployer);
+  const controller = await ethers.getContractAt("Controller", deployer);
 
   try {
     const tx = await wsqueeth.init(controller.address, { from: deployer });

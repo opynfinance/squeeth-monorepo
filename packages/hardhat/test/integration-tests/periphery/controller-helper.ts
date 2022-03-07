@@ -16,7 +16,6 @@ describe("Controller helper integration test", function () {
   const scaledStartingSqueethPrice1e18 = startingEthPrice1e18.div(oracleScaleFactor) // 0.3 * 1e18
   const scaledStartingSqueethPrice = startingEthPrice / oracleScaleFactor.toNumber() // 0.3
 
-
   let provider: providers.JsonRpcProvider;
   let owner: SignerWithAddress;
   let depositor: SignerWithAddress;

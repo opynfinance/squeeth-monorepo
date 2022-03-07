@@ -104,33 +104,10 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
     ) external override {
         FlashCallbackData memory data = abi.decode(_data, (FlashCallbackData));
 
-        // CallbackValidation.verifyCallback(factory, data.tokenA, data.tokenB, data.fee);
+    //     // CallbackValidation.verifyCallback(factory, data.tokenA, data.tokenB, data.fee);
 
-        _flashCallback(fee0, fee1, data.callData, data.callSource);
-    }
-
-    function _flashLoan(
-        bytes memory _data,
-        address _tokenA,
-        address _tokenB,
-        uint24 _fee,
-        uint256 _amount0,
-        uint256 _amount1,
-        uint8 _callSource
-    ) internal {
-        // _getPool(_tokenA, _tokenB, _fee).flash(
-        //     address(this),
-        //     _amount0,
-        //     _amount1,
-        //     abi.encode(
-        //         FlashCallbackData({
-        //             caller: msg.sender,
-        //             callSource: _callSource,
-        //             callData: _data
-        //         })
-        //     )
-        // );
-    }
+    //     _flashCallback(fee0, fee1, data.callData, data.callSource);
+    // }
 
     /**
      * @notice execute an exact-in flash swap (specify an exact amount to pay)

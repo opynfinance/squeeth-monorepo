@@ -479,44 +479,74 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         emit BatchMintLp(msg.sender, _vaultId, _wPowerPerpAmount, _collateralToMint, _collateralToLP);
     }
 
-    // function flashswapWMintDepositNft(
-    //     uint256 _vaultId,
-    //     uint256 _wPowerPerpAmount,
-    //     uint256 _collateralAmount,
-    //     uint256 _amount0Min,
-    //     uint256 _amount1Min,
-    //     int24 _lowerTick,
-    //     int24 _upperTick
-    // ) external payable {
-    //     uint256 collateralToMint = _collateralAmount.sub(msg.value);
-    //     uint256 amount0;
-    //     uint256 amount1;
-    //     (isWethToken0) ? amount1 = collateralToMint : amount0 = collateralToMint;
+    function flashloanWMintDepositNft(FlashloanWMintDepositNftParams calldata params) external payable {
+        uint256 collateralToMint = params.collateralAmount.sub(msg.value);
+        uint256 amount0;
+        uint256 amount1;
+        (isWethToken0) ? amount1 = collateralToMint : amount0 = collateralToMint;
 
-    //     console.log(_lowerTick < 0);
+        _flashLoan(
+            weth,
+            collateralToMint,
+            uint8(CALLBACK_SOURCE.FLASHLOAN_W_MINT_DEPOSIT_NFT),
+            abi.encodePacked(
+                params.vaultId,
+                params.wPowerPerpAmount,
+                collateralToMint,
+                msg.value,
+                params.amount0Min,
+                params.amount1Min,
+                params.lowerTick,
+                params.upperTick
+            )
+        );
+    }
 
-    //     _flashLoan(
-    //         abi.encodePacked(
-    //             _vaultId,
-    //             _wPowerPerpAmount,
-    //             collateralToMint,
-    //             msg.value,
-    //             _amount0Min,
-    //             _amount1Min,
-    //             uint256(_lowerTick),
-    //             uint256(_upperTick),
-    //             (_lowerTick < 0) ? uint256(0) : uint256(1),
-    //             (_upperTick < 0) ? uint256(0) : uint256(1)
-    //         ),
-    //         wPowerPerp,
-    //         weth,
-    //         IUniswapV3Pool(wPowerPerpPool).fee(),
-    //         amount0,
-    //         amount1,
-    //         uint8(CALLBACK_SOURCE.FLASH_W_MINT_DEPOSIT_NFT)
-    //     );
-
+    function _flashCallback(
+        address _initiator,
+        address _asset,
+        uint256 _amount,
+        uint256 _premium,
+        uint8 _callSource,
+        bytes memory _calldata
+    ) internal override {
+        if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.FLASHLOAN_W_MINT_DEPOSIT_NFT) {
+            console.log("this");
+            
+    // struct FlashloanMintDepositNftData {
+    //     uint256 vaultId;
+    //     uint256 wPowerPerpAmount;
+    //     uint256 collateralToMint;
+    //     uint256 collateralToLp;
+    //     uint256 lpAmount0Min;
+    //     uint256 lpAmount1Min;
+    //     int24 lpLowerTick;
+    //     int24 lpUpperTick;
     // }
+            // FlashloanMintDepositNftData memory data = abi.decode(_calldata, (FlashloanMintDepositNftData));
+
+            // uint256 vaultId = IController(controller).mintWPowerPerpAmount{value: data.collateralToMint}(
+            //     data.vaultId,
+            //     data.wPowerPerpAmount,
+            //     0
+            // );
+            // uint256 amount0Desired = isWethToken0 ? _collateralToLP : _wPowerPerpAmount;
+            // uint256 amount1Desired = isWethToken0 ? _wPowerPerpAmount : _collateralToLP;
+
+            // _lpWPowerPerpPool(
+            //     msg.sender,
+            //     _collateralToLP,
+            //     amount0Desired,
+            //     amount1Desired,
+            //     _amount0Min,
+            //     _amount1Min,
+            //     _deadline,
+            //     _lowerTick,
+            //     _upperTick
+            // );
+
+        }
+    }
 
     /**
      * @notice close short position with user Uniswap v3 LP NFT
