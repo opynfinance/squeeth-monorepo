@@ -1,34 +1,27 @@
 import BigNumber from 'bignumber.js'
-import { useEffect, useState } from 'react'
-import { Contract } from 'web3-eth-contract'
 import { useAtomValue } from 'jotai'
 
 import shortAbi from '../../abis/shortHelper.json'
 import { WETH_DECIMALS, OSQUEETH_DECIMALS } from '../../constants'
 // import { useWallet } from '@context/wallet'
 import { fromTokenAmount } from '@utils/calculations'
-import { addressAtom, web3Atom } from 'src/state/wallet/atoms'
+import { addressAtom } from 'src/state/wallet/atoms'
 import { useHandleTransaction } from 'src/state/wallet/hooks'
 import { addressesAtom } from 'src/state/positions/atoms'
 import { useGetBuyParam, useGetSellParam } from 'src/state/squeethPool/hooks'
 import { normFactorAtom } from 'src/state/controller/atoms'
+import useContract from '@hooks/useContract'
 
 export const useShortHelper = () => {
-  const web3 = useAtomValue(web3Atom)
   const handleTransaction = useHandleTransaction()
   const address = useAtomValue(addressAtom)
-  const [contract, setContract] = useState<Contract>()
+  const { shortHelper } = useAtomValue(addressesAtom)
 
   const getSellParam = useGetSellParam()
   const getBuyParam = useGetBuyParam()
+  const contract = useContract(shortHelper, shortAbi)
 
-  const { shortHelper } = useAtomValue(addressesAtom)
   const normalizationFactor = useAtomValue(normFactorAtom)
-
-  useEffect(() => {
-    if (!web3) return
-    setContract(new web3.eth.Contract(shortAbi as any, shortHelper))
-  }, [web3])
 
   /**
    * deposit collat, mint squeeth and sell it in uniSwap
@@ -51,7 +44,6 @@ export const useShortHelper = () => {
         value: ethAmt.toString(), // Already scaled to 14 so multiplied with 10000
       }),
     )
-
     return txHash
   }
 
@@ -77,7 +69,6 @@ export const useShortHelper = () => {
         value: _exactOutputParams.amountInMaximum,
       }),
     )
-
     return txHash
   }
 
