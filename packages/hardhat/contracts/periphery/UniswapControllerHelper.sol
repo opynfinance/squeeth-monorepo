@@ -16,7 +16,7 @@ import "@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol";
 import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import "@uniswap/v3-core/contracts/libraries/SafeCast.sol";
 
-contract UniswapControllerHelper is IUniswapV3SwapCallback, IUniswapV3FlashCallback {
+contract UniswapControllerHelper is IUniswapV3SwapCallback {
     using Path for bytes;
     using SafeCast for uint256;
     using LowGasSafeMath for uint256;
@@ -32,11 +32,11 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback, IUniswapV3FlashCallb
         bytes callData;
     }
 
-    struct FlashCallbackData {
-        address caller;
-        uint8 callSource;
-        bytes callData;
-    }
+    // struct FlashCallbackData {
+    //     address caller;
+    //     uint8 callSource;
+    //     bytes callData;
+    // }
 
     /**
      * @dev constructor
@@ -73,46 +73,23 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback, IUniswapV3FlashCallb
         _swapCallback(data.caller, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource);
     }
 
-    /**
-     * @notice uniswap flash callback function for flashloan
-     * @param fee0 fee for token0
-     * @param fee1 fee for token1
-     * @param _data callback data encoded as FlashCallbackData struct
-     */
-    function uniswapV3FlashCallback(
-        uint256 fee0,
-        uint256 fee1,
-        bytes calldata _data
-    ) external override {
-        FlashCallbackData memory data = abi.decode(_data, (FlashCallbackData));
+    // /**
+    //  * @notice uniswap flash callback function for flashloan
+    //  * @param fee0 fee for token0
+    //  * @param fee1 fee for token1
+    //  * @param _data callback data encoded as FlashCallbackData struct
+    //  */
+    // function uniswapV3FlashCallback(
+    //     uint256 fee0,
+    //     uint256 fee1,
+    //     bytes calldata _data
+    // ) external override {
+    //     FlashCallbackData memory data = abi.decode(_data, (FlashCallbackData));
 
-        // CallbackValidation.verifyCallback(factory, data.tokenA, data.tokenB, data.fee);
+    //     // CallbackValidation.verifyCallback(factory, data.tokenA, data.tokenB, data.fee);
 
-        _flashCallback(fee0, fee1, data.callData, data.callSource);
-    }
-
-    function _flashLoan(
-        bytes memory _data,
-        address _tokenA,
-        address _tokenB,
-        uint24 _fee,
-        uint256 _amount0,
-        uint256 _amount1,
-        uint8 _callSource
-    ) internal {
-        // _getPool(_tokenA, _tokenB, _fee).flash(
-        //     address(this),
-        //     _amount0,
-        //     _amount1,
-        //     abi.encode(
-        //         FlashCallbackData({
-        //             caller: msg.sender,
-        //             callSource: _callSource,
-        //             callData: _data
-        //         })
-        //     )
-        // );
-    }
+    //     _flashCallback(fee0, fee1, data.callData, data.callSource);
+    // }
 
     /**
      * @notice execute an exact-in flash swap (specify an exact amount to pay)
@@ -209,12 +186,12 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback, IUniswapV3FlashCallb
         uint8 _callSource
     ) internal virtual {}
 
-    function _flashCallback(
-        uint256 _fee0,
-        uint256 _fee1,
-        bytes memory _callData,
-        uint8 _callSource
-    ) internal virtual {}
+    // function _flashCallback(
+    //     uint256 _fee0,
+    //     uint256 _fee1,
+    //     bytes memory _callData,
+    //     uint8 _callSource
+    // ) internal virtual {}
 
     /**
      * @notice internal function for exact-in swap on uniswap (specify exact amount to pay)

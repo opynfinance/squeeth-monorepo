@@ -1,7 +1,7 @@
 import { ethers } from "hardhat"
 import BigNumberJs from 'bignumber.js'
 import { Contract, BigNumber, constants } from "ethers";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import { expect } from "chai";
 import { Controller, INonfungiblePositionManager, ISwapRouter, IUniswapV3Pool, MockErc20, Oracle, VaultLibTester, ShortPowerPerp, WETH9, WPowerPerp, LiquidationHelper } from "../../typechain";
 import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addSqueethLiquidity, addWethDaiLiquidity } from '../setup'
