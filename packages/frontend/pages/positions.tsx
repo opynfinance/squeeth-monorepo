@@ -12,7 +12,6 @@ import Nav from '@components/Nav'
 import History from '@components/Trade/History'
 import { PositionType } from '../src/types/'
 import { Tooltips } from '../src/constants'
-import { usePnL } from '@hooks/usePositions'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { toTokenAmount } from '@utils/calculations'
 import { CrabProvider } from '@context/crabStrategy'
@@ -42,6 +41,14 @@ import {
 import { poolAtom } from 'src/state/squeethPool/atoms'
 import { useIndex } from 'src/state/controller/hooks'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
+import {
+  useBuyAndSellQuote,
+  useLongGain,
+  useLongUnrealizedPNL,
+  useShortGain,
+  useShortUnrealizedPNL,
+} from 'src/state/pnl/hooks'
+import { loadingAtom } from 'src/state/pnl/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -164,15 +171,13 @@ const ConnectWallet: React.FC = () => {
 
 export function Positions() {
   const classes = useStyles()
-  const {
-    longGain,
-    shortGain,
-    buyQuote,
-    sellQuote,
-    shortUnrealizedPNL,
-    loading: isPnLLoading,
-    longUnrealizedPNL,
-  } = usePnL()
+
+  const shortGain = useShortGain()
+  const longGain = useLongGain()
+  const { buyQuote, sellQuote } = useBuyAndSellQuote()
+  const longUnrealizedPNL = useLongUnrealizedPNL()
+  const shortUnrealizedPNL = useShortUnrealizedPNL()
+  const isPnLLoading = useAtomValue(loadingAtom)
 
   const pool = useAtomValue(poolAtom)
   const address = useAtomValue(addressAtom)

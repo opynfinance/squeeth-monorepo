@@ -8,7 +8,6 @@ import Link from 'next/link'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 
-import { usePnL } from '@hooks/usePositions'
 import { Tooltips } from '@constants/enums'
 import { PositionType, TradeType } from '../types'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
@@ -33,6 +32,14 @@ import {
   tradeTypeAtom,
 } from 'src/state/trade/atoms'
 import { useUpdateActualTradeType } from 'src/state/trade/hooks'
+import {
+  useBuyAndSellQuote,
+  useLongGain,
+  useLongUnrealizedPNL,
+  useShortGain,
+  useShortUnrealizedPNL,
+} from 'src/state/pnl/hooks'
+import { loadingAtom } from 'src/state/pnl/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -164,7 +171,13 @@ const pnlClass = (positionType: string, long: number | BigNumber, short: number 
 }
 
 const PositionCard: React.FC = () => {
-  const { buyQuote, sellQuote, longGain, shortGain, shortUnrealizedPNL, longUnrealizedPNL, loading } = usePnL()
+  const shortGain = useShortGain()
+  const longGain = useLongGain()
+  const { buyQuote, sellQuote } = useBuyAndSellQuote()
+  const longUnrealizedPNL = useLongUnrealizedPNL()
+  const shortUnrealizedPNL = useShortUnrealizedPNL()
+  const loading = useAtomValue(loadingAtom)
+
   const pType = useAtomValue(positionTypeAtom)
   const existingCollat = useAtomValue(existingCollatAtom)
   const { data, refetch: swapsQueryRefetch } = useSwaps()
