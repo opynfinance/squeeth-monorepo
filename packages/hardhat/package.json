@@ -4,12 +4,14 @@
   "main": "index.js",
   "license": "MIT",
   "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@typescript-eslint/parser": "^4.29.1",
     "eslint": "^7.5.0",
     "eslint-config-airbnb": "^18.2.0",
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-babel": "^5.3.1",
     "eslint-plugin-prettier": "^3.4.0",
+    "hardhat": "2.9.0",
     "sol2uml": "^1.1.29",
     "solc-0.7": "npm:solc@^0.7.6",
     "solidity-docgen": "^0.5.14",
@@ -18,7 +20,6 @@
   "dependencies": {
     "@eth-optimism/hardhat-ovm": "^0.2.2",
     "@float-capital/solidity-coverage": "^0.7.17",
-    "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",
     "@nomiclabs/hardhat-etherscan": "^2.1.4",
     "@nomiclabs/hardhat-waffle": "^2.0.0",
     "@openzeppelin/contracts": "v3.4.2-solc-0.7",
@@ -35,7 +36,6 @@
     "dotenv": "^10.0.0",
     "ethereum-waffle": "^3.1.1",
     "ethers": "^5.3.0",
-    "hardhat": "2.4.3",
     "hardhat-contract-sizer": "^2.0.3",
     "hardhat-deploy": "^0.8.6",
     "hardhat-gas-reporter": "^1.0.4",
@@ -52,6 +52,7 @@
   "scripts": {
     "chain": "hardhat node --network hardhat --no-deploy",
     "test": "hardhat test --network hardhat",
+    "mainnet-fork": "hardhat test --network fork ./test/e2e/periphery/*.ts",
     "compile": "hardhat compile",
     "deploy": "hardhat deploy",
     "postdeploy": "hardhat run scripts/publish.js",

@@ -14,7 +14,7 @@ task("increase-slots", "Increase Pool slot")
   const { deployer } = await getNamedAccounts();
   const { uniswapFactory } = await getUniswapDeployments(ethers, deployer, network.name)
 
-  const wsqueeth = await ethers.getContract("WPowerPerp", deployer);
+  const wsqueeth = await ethers.getContractAt("WPowerPerp", deployer);
   const weth = await getWETH(ethers, deployer, network.name)
 
   const isWethToken0 = parseInt(weth.address, 16) < parseInt(wsqueeth.address, 16)

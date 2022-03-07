@@ -51,10 +51,10 @@ describe("Oracle", function () {
         bytecode: FACTORY_BYTECODE
       }
     });
-    const uniswapFactory = await ethers.getContract("UniswapV3Factory", deployer);
+    const uniswapFactory = await ethers.getContractAt("UniswapV3Factory", deployer);
     
     await deploy("WETH9", { from: deployer });
-    weth = await ethers.getContract("WETH9", deployer) as WETH9;
+    weth = await ethers.getContractAt("WETH9", deployer) as WETH9;
   
     const tx = await deploy("SwapRouter", {
       from: deployer,
@@ -65,7 +65,7 @@ describe("Oracle", function () {
       args: [uniswapFactory.address, weth.address]
     });
 
-    swapRouter = await ethers.getContractAt('ISwapRouter', tx.address)
+    swapRouter = (await ethers.getContractAt('ISwapRouter', tx.address)) as ISwapRouter
   
     // tokenDescriptor is only used to query tokenURI() on NFT. Don't need that in our deployment
     const tokenDescriptorAddress = ethers.constants.AddressZero
@@ -77,7 +77,7 @@ describe("Oracle", function () {
       },
       args: [uniswapFactory.address, weth.address, tokenDescriptorAddress]
     });
-    positionManager = await ethers.getContract("NonfungibleTokenPositionManager", deployer);
+    positionManager = await ethers.getContractAt("NonfungibleTokenPositionManager", deployer);
 
     // Create ETH/SQUEETH Pool with positionManager
     squeeth = (await (await ethers.getContractFactory("MockWPowerPerp")).deploy()) as MockWPowerPerp;
@@ -109,7 +109,7 @@ describe("Oracle", function () {
 
     // set pool
     const squeethPoolAddr = await uniswapFactory.getPool(token0, token1, 3000)
-    squeethPool = await ethers.getContractAt("IUniswapV3Pool", squeethPoolAddr);
+    squeethPool = (await ethers.getContractAt("IUniswapV3Pool", squeethPoolAddr)) as IUniswapV3Pool;
     initPriceTick = (await squeethPool.slot0()).tick
     const cardinality = (await squeethPool.slot0()).observationCardinality
 

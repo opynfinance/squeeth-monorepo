@@ -48,7 +48,7 @@ describe("Oracle", function () {
         bytecode: FACTORY_BYTECODE
       }
     });
-    uniswapFactory = await ethers.getContract("UniswapV3Factory", deployer);
+    uniswapFactory = await ethers.getContractAt("UniswapV3Factory", deployer);
     
   
     const MockErc20Contract = await ethers.getContractFactory("MockErc20");
@@ -75,7 +75,7 @@ describe("Oracle", function () {
       },
       args: [uniswapFactory.address, weth.address, tokenDescriptorAddress]
     });
-    positionManager = await ethers.getContract("NonfungibleTokenPositionManager", deployer);
+    positionManager = await ethers.getContractAt("NonfungibleTokenPositionManager", deployer);
 
     
     // deploy oracle

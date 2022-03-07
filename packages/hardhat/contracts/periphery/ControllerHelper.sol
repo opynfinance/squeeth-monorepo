@@ -18,8 +18,9 @@ import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/inter
 import {IERC20Detailed} from "../interfaces/IERC20Detailed.sol";
 
 // contract
-import {Strings} from '@openzeppelin/contracts/utils/Strings.sol';
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {UniswapControllerHelper} from "./UniswapControllerHelper.sol";
+import {AaveControllerHelper} from "./AaveControllerHelper.sol";
 
 // lib
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
@@ -27,18 +28,19 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {TransferHelper} from "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import {ControllerHelperLib} from "./lib/ControllerHelperLib.sol";
 
-contract ControllerHelper is UniswapControllerHelper, IERC721Receiver {
+contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC721Receiver {
     using SafeMath for uint256;
     using Address for address payable;
     using Strings for uint256;
-    
+
     /// @dev enum to differentiate between uniswap swap callback function source
     enum CALLBACK_SOURCE {
         FLASH_W_MINT,
         FLASH_W_BURN,
         FLASH_SELL_LONG_W_MINT,
         SWAP_EXACTIN_WPOWERPERP_ETH,
-        SWAP_EXACTOUT_ETH_WPOWERPERP
+        SWAP_EXACTOUT_ETH_WPOWERPERP,
+        FLASHLOAN_W_MINT_DEPOSIT_NFT
     }
 
     address public immutable controller;
@@ -69,6 +71,18 @@ contract ControllerHelper is UniswapControllerHelper, IERC721Receiver {
         uint256 wPowerPerpAmount;
         uint256 collateralAmount;
     }
+    // struct for flashloanMintDepositNft() callback data
+    struct FlashloanMintDepositNftData {
+        uint256 vaultId;
+        uint256 wPowerPerpAmount;
+        uint256 collateralToMint;
+        uint256 collateralToLp;
+        uint256 lpAmount0Min;
+        uint256 lpAmount1Min;
+        int24 lpLowerTick;
+        int24 lpUpperTick;
+    }
+
     // params for CloseShortWithUserNft()
     struct CloseShortWithUserNftParams {
         uint256 vaultId; // vault ID
@@ -78,6 +92,16 @@ contract ControllerHelper is UniswapControllerHelper, IERC721Receiver {
         uint256 minOut; // minimum amount of ETH to receive when selling wPowerPerp
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
+    }
+    // struct for flashloanWMintDepositNft() params
+    struct FlashloanWMintDepositNftParams {
+        uint256 vaultId;
+        uint256 wPowerPerpAmount;
+        uint256 collateralAmount;
+        uint256 amount0Min;
+        uint256 amount1Min;
+        int24 lowerTick;
+        int24 upperTick;
     }
 
     event FlashswapWMint(
@@ -111,8 +135,9 @@ contract ControllerHelper is UniswapControllerHelper, IERC721Receiver {
         address _weth,
         address _swapRouter,
         address _nonfungiblePositionManager,
-        address _uniswapFactory
-    ) UniswapControllerHelper(_uniswapFactory) {
+        address _uniswapFactory,
+        address _lendingPoolAddressProvider
+    ) UniswapControllerHelper(_uniswapFactory) AaveControllerHelper(_lendingPoolAddressProvider) {
         controller = _controller;
         oracle = _oracle;
         shortPowerPerp = _shortPowerPerp;
@@ -397,44 +422,74 @@ contract ControllerHelper is UniswapControllerHelper, IERC721Receiver {
         emit BatchMintLp(msg.sender, _vaultId, _wPowerPerpAmount, _collateralToMint, _collateralToLP);
     }
 
-    // function flashswapWMintDepositNft(
-    //     uint256 _vaultId,
-    //     uint256 _wPowerPerpAmount,
-    //     uint256 _collateralAmount,
-    //     uint256 _amount0Min,
-    //     uint256 _amount1Min,
-    //     int24 _lowerTick,
-    //     int24 _upperTick
-    // ) external payable {
-    //     uint256 collateralToMint = _collateralAmount.sub(msg.value);
-    //     uint256 amount0;
-    //     uint256 amount1;
-    //     (isWethToken0) ? amount1 = collateralToMint : amount0 = collateralToMint;
+    function flashloanWMintDepositNft(FlashloanWMintDepositNftParams calldata params) external payable {
+        uint256 collateralToMint = params.collateralAmount.sub(msg.value);
+        uint256 amount0;
+        uint256 amount1;
+        (isWethToken0) ? amount1 = collateralToMint : amount0 = collateralToMint;
 
-    //     console.log(_lowerTick < 0);
+        _flashLoan(
+            weth,
+            collateralToMint,
+            uint8(CALLBACK_SOURCE.FLASHLOAN_W_MINT_DEPOSIT_NFT),
+            abi.encodePacked(
+                params.vaultId,
+                params.wPowerPerpAmount,
+                collateralToMint,
+                msg.value,
+                params.amount0Min,
+                params.amount1Min,
+                params.lowerTick,
+                params.upperTick
+            )
+        );
+    }
 
-    //     _flashLoan(
-    //         abi.encodePacked(
-    //             _vaultId,
-    //             _wPowerPerpAmount,
-    //             collateralToMint,
-    //             msg.value,
-    //             _amount0Min,
-    //             _amount1Min,
-    //             uint256(_lowerTick),
-    //             uint256(_upperTick),
-    //             (_lowerTick < 0) ? uint256(0) : uint256(1),
-    //             (_upperTick < 0) ? uint256(0) : uint256(1)
-    //         ),
-    //         wPowerPerp,
-    //         weth,
-    //         IUniswapV3Pool(wPowerPerpPool).fee(),
-    //         amount0,
-    //         amount1,
-    //         uint8(CALLBACK_SOURCE.FLASH_W_MINT_DEPOSIT_NFT)
-    //     );
-
+    function _flashCallback(
+        address _initiator,
+        address _asset,
+        uint256 _amount,
+        uint256 _premium,
+        uint8 _callSource,
+        bytes memory _calldata
+    ) internal override {
+        if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.FLASHLOAN_W_MINT_DEPOSIT_NFT) {
+            console.log("this");
+            
+    // struct FlashloanMintDepositNftData {
+    //     uint256 vaultId;
+    //     uint256 wPowerPerpAmount;
+    //     uint256 collateralToMint;
+    //     uint256 collateralToLp;
+    //     uint256 lpAmount0Min;
+    //     uint256 lpAmount1Min;
+    //     int24 lpLowerTick;
+    //     int24 lpUpperTick;
     // }
+            // FlashloanMintDepositNftData memory data = abi.decode(_calldata, (FlashloanMintDepositNftData));
+
+            // uint256 vaultId = IController(controller).mintWPowerPerpAmount{value: data.collateralToMint}(
+            //     data.vaultId,
+            //     data.wPowerPerpAmount,
+            //     0
+            // );
+            // uint256 amount0Desired = isWethToken0 ? _collateralToLP : _wPowerPerpAmount;
+            // uint256 amount1Desired = isWethToken0 ? _wPowerPerpAmount : _collateralToLP;
+
+            // _lpWPowerPerpPool(
+            //     msg.sender,
+            //     _collateralToLP,
+            //     amount0Desired,
+            //     amount1Desired,
+            //     _amount0Min,
+            //     _amount1Min,
+            //     _deadline,
+            //     _lowerTick,
+            //     _upperTick
+            // );
+
+        }
+    }
 
     /**
      * @notice uniswap flash swap callback function
@@ -519,7 +574,7 @@ contract ControllerHelper is UniswapControllerHelper, IERC721Receiver {
 
         if (address(this).balance > 0) {
             payable(_caller).sendValue(address(this).balance);
-        }   
+        }
     }
 
     /**
@@ -558,12 +613,11 @@ contract ControllerHelper is UniswapControllerHelper, IERC721Receiver {
     }
 
     function tickToString(int24 tick) private pure returns (string memory) {
-        string memory sign = '';
+        string memory sign = "";
         if (tick < 0) {
             tick = tick * -1;
-            sign = '-';
+            sign = "-";
         }
         return string(abi.encodePacked(sign, uint256(tick).toString()));
     }
-
 }

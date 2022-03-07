@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, BigNumber, providers, constants } from "ethers";
 import BigNumberJs from 'bignumber.js'
 
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import { WETH9, MockErc20, ShortPowerPerp, Controller, Oracle, WPowerPerp, ControllerHelper, INonfungiblePositionManager} from "../../../typechain";
 import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addWethDaiLiquidity, addSqueethLiquidity } from '../../setup'
 import { one, oracleScaleFactor, getNow } from "../../utils"
@@ -15,7 +15,6 @@ describe("Controller helper integration test", function () {
   const startingEthPrice1e18 = BigNumber.from(startingEthPrice).mul(one) // 3000 * 1e18
   const scaledStartingSqueethPrice1e18 = startingEthPrice1e18.div(oracleScaleFactor) // 0.3 * 1e18
   const scaledStartingSqueethPrice = startingEthPrice / oracleScaleFactor.toNumber() // 0.3
-
 
   let provider: providers.JsonRpcProvider;
   let owner: SignerWithAddress;
@@ -80,7 +79,7 @@ describe("Controller helper integration test", function () {
     const ControllerHelperLib = await ethers.getContractFactory("ControllerHelperLib")
     const controllerHelperLib = (await ControllerHelperLib.deploy());  
     const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper", {libraries: {TickMathExternal: TickMathLibrary.address, SqrtPriceMathPartial: SqrtPriceExternalLibrary.address}});
-    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, shortSqueeth.address, wSqueethPool.address, wSqueeth.address, weth.address, swapRouter.address, positionManager.address, uniswapFactory.address)) as ControllerHelper;
+    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, shortSqueeth.address, wSqueethPool.address, wSqueeth.address, weth.address, swapRouter.address, positionManager.address, uniswapFactory.address, constants.AddressZero)) as ControllerHelper;
   })
 
   this.beforeAll("Seed pool liquidity", async() => {

@@ -9,10 +9,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const { deployer } = await getNamedAccounts();
 
-  const controller = await ethers.getContract("Controller", deployer);
-  const oracle = await ethers.getContract("Oracle", deployer);
+  const controller = await ethers.getContractAt("Controller", deployer);
+  const oracle = await ethers.getContractAt("Oracle", deployer);
   const weth = await getWETH(ethers, deployer, network.name)
-  const wsqueeth = await ethers.getContract("WPowerPerp", deployer);
+  const wsqueeth = await ethers.getContractAt("WPowerPerp", deployer);
 
   const {uniswapFactory} = await getUniswapDeployments(ethers, deployer, network.name)
 
