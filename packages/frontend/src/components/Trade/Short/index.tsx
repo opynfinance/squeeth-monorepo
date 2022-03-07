@@ -267,7 +267,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   }, [collatPercent, collateral.toString(), normalizationFactor.toString()])
 
   useEffect(() => {
-    if (!vaultId) return
+    if (!vaultId || !shortVaults?.length) return
 
     setIsVaultApproved(shortVaults[firstValidVault].operator?.toLowerCase() === shortHelper?.toLowerCase())
   }, [vaultId])
