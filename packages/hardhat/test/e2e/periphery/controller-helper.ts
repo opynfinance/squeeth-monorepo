@@ -1,4 +1,6 @@
 // mainnet fork tests
+// in 1 terminal: npx hardhat node --fork https://mainnet.infura.io/v3/infura_key  --no-deploy --network hardhat
+// in 2 terminal: npx hardhat test ./test/e2e/periphery/controller-helper.ts
 import { ethers, network} from "hardhat"
 import { expect } from "chai";
 import { Contract, BigNumber, providers } from "ethers";
@@ -103,7 +105,7 @@ describe("ControllerHelper: mainnet fork", function () {
     const ControllerHelperLib = await ethers.getContractFactory("ControllerHelperLib")
     const controllerHelperLib = (await ControllerHelperLib.deploy());  
     const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper", {libraries: {TickMathExternal: TickMathLibrary.address, SqrtPriceMathPartial: SqrtPriceExternalLibrary.address}});
-    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, shortSqueeth.address, "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C", wSqueeth.address, weth.address, uniswapRouter.address, positionManager.address, uniswapFactory.address, "0xb53c1a33016b2dc2ff3653530bff1848a515c8c5")) as ControllerHelper;
+    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, shortSqueeth.address, "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C", wSqueeth.address, weth.address, uniswapRouter.address, positionManager.address, uniswapFactory.address, "0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5")) as ControllerHelper;
   })
 
   describe("Flash mint short position, LP and use LP as collateral", async () => {

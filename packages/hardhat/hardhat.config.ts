@@ -62,15 +62,15 @@ const UNISWAP_SETTING = {
   },
 };
 
-const AAVE_SETTING = {
-  version: "0.6.12",
-  settings: {
-    optimizer: {
-      enabled: true,
-      runs: 200,
-    },
-  },
-};
+// const AAVE_SETTING = {
+//   version: "0.6.12",
+//   settings: {
+//     optimizer: {
+//       enabled: true,
+//       runs: 200,
+//     },
+//   },
+// };
 
 const config: HardhatUserConfig = {
   defaultNetwork,
@@ -80,15 +80,11 @@ const config: HardhatUserConfig = {
       mining: {
         auto: true
       },
-      hardfork: "muirGlacier",
       accounts: {
         accountsBalance: '1000000000000000000000000000'
       },
       gas: "auto",
-      gasMultiplier: 1.5
-      // forking: {
-      //   url: `https://mainnet.infura.io/v3/${InfuraKey}`,
-      // }
+      hardfork: "berlin"
     },
     localhost: {
       url: "http://localhost:8545",
@@ -96,12 +92,6 @@ const config: HardhatUserConfig = {
         notice no mnemonic here? it will just use account 0 of the hardhat node to deploy
         (you can put in a mnemonic here to set the deployer locally)
       */
-    },
-    fork: {
-      url: 'http://127.0.0.1:8545',
-      forking: {
-        url: `https://mainnet.infura.io/v3/${InfuraKey}`,
-      }  
     },
     rinkeby: {
       url: `https://rinkeby.infura.io/v3/${InfuraKey}`, // <---- YOUR INFURA ID! (or it won't work)
