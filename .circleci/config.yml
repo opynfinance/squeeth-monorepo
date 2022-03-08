@@ -15,17 +15,20 @@ workflows:
             - compile
       - unit-test-contracts:
           requires:
-            - compile
+            - lint
+      - e2e-test:
+          requires:
+            - unit-test-contracts
       - coverage:
           requires:
-            - compile
+            - e2e-test
           context: BUILD_KEYS
       - contract-size:
           requires:
             - compile
-      - deploy-test:
-          requires:
-            - compile
+      # - deploy-test:
+      #     requires:
+      #       - compile
 
 jobs:
   checkout-and-install:

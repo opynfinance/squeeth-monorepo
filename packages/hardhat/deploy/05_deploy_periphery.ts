@@ -8,18 +8,23 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const { deployer } = await getNamedAccounts();
 
-  const controller = await ethers.getContractAt("Controller", deployer);
+  const controller = await ethers.getContract("Controller", deployer);
   const weth = await getWETH(ethers, deployer, network.name)
 
   const {swapRouter} = await getUniswapDeployments(ethers, deployer, network.name)
 
-  await deploy("ShortHelper", {
-    from: deployer,
-    log: true,
-    args: [controller.address, swapRouter.address, weth.address]
-  });
+  console.log("swapRouter.address", swapRouter.address);
 
-  console.log(`Successfully deploy ShortHelper 🥦`)
+  const ShortHelperFactory = await ethers.getContractFactory("ShortHelper", deployer);
+  const shortHelperAddress = await ShortHelperFactory.deploy(controller.address, swapRouter.address, weth.address);
+
+  // await deploy("ShortHelper", {
+  //   from: deployer,
+  //   log: true,
+  //   args: [controller.address, swapRouter.address, weth.address]
+  // });
+
+  console.log(`Successfully deploy ShortHelper ${shortHelperAddress} 🥦`)
 }
 
 export default func;

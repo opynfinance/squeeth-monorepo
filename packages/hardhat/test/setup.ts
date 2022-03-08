@@ -71,10 +71,12 @@ export const createUniPool = async(
   feeTier = 3000 // default fee = 0.3%
 ): Promise<Contract> => {
   const isTokenAToken0 = parseInt(tokenA.address, 16) < parseInt(tokenB.address, 16)
+  // console.log(await tokenA.functions.decimals())
+  // const tokenADecimals = await tokenA.functions.decimals()
+  // const tokenBDecimals = await tokenB.functions.decimals()
+  const tokenADecimals = 18
+  const tokenBDecimals = 6
 
-  const tokenADecimals = await tokenA.decimals()
-  const tokenBDecimals = await tokenB.decimals()
-  
   let rawPrice = tokenBPriceInA
 
   if (tokenBDecimals > tokenADecimals) {
