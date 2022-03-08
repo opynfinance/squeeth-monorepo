@@ -21,7 +21,7 @@ workflows:
             - unit-test-contracts
       - coverage:
           requires:
-            - e2e-test
+            - compile
           context: BUILD_KEYS
       - contract-size:
           requires:
