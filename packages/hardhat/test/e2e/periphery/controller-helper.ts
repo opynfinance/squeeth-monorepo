@@ -1,6 +1,6 @@
 // mainnet fork tests
 // in 1 terminal: npx hardhat node --fork https://mainnet.infura.io/v3/infura_key --fork-block-number 14345140 --no-deploy --network hardhat
-// in 2 terminal: npx hardhat test ./test/e2e/periphery/controller-helper.ts
+// in 2 terminal: MAINNET_FORK=true npx hardhat test ./test/e2e/periphery/controller-helper.ts
 import { ethers, network} from "hardhat"
 import { expect } from "chai";
 import { Contract, BigNumber, providers } from "ethers";
@@ -45,6 +45,8 @@ const impersonateAddress = async (address: string) => {
 };
 
 describe("ControllerHelper: mainnet fork", function () {
+  if (!process.env.MAINNET_FORK) return;
+
   // const startingEthPrice = 3000
   // const startingEthPrice1e18 = BigNumber.from(startingEthPrice).mul(one) // 3000 * 1e18
   // const scaledStartingSqueethPrice1e18 = startingEthPrice1e18.div(oracleScaleFactor) // 0.3 * 1e18

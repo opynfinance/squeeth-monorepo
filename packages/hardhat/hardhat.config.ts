@@ -83,7 +83,6 @@ const config: HardhatUserConfig = {
       accounts: {
         accountsBalance: '1000000000000000000000000000'
       },
-      gas: "auto"
     },
     localhost: {
       url: "http://localhost:8545",
