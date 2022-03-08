@@ -9,7 +9,10 @@ const handleRequest = async (req: NextApiRequest, res: NextApiResponse) => {
     return acc
   }, '')
 
-  if (!path) res.status(400).json({ status: 'error', message: 'Path parameter is missing' })
+  if (!path) {
+    res.status(400).json({ status: 'error', message: 'Path parameter is missing' })
+    return
+  }
 
   const jsonResponse = await (
     await fetch(`${TWELVE_DATA_API}/${path}?${queryString}&apikey=${process.env.NEXT_PUBLIC_TWELVEDATA_APIKEY}`)
