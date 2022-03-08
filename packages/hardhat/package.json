@@ -52,7 +52,6 @@
   "scripts": {
     "chain": "hardhat node --network hardhat --no-deploy",
     "test": "npx hardhat test --network hardhat",
-    "mainnet-fork": "MAINNET_FORK=true npx hardhat test --network fork ./test/e2e/periphery/*.ts",
     "compile": "hardhat compile",
     "deploy": "hardhat deploy",
     "postdeploy": "hardhat run scripts/publish.js",
