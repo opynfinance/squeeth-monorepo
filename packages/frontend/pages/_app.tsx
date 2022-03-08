@@ -1,3 +1,4 @@
+import '../wdyr'
 import '../styles/globals.css'
 
 import { ApolloProvider } from '@apollo/client'
@@ -6,7 +7,7 @@ import { ThemeProvider } from '@material-ui/core/styles'
 import * as Fathom from 'fathom-client'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import React, { useEffect } from 'react'
+import React, { memo, useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { CookiesProvider } from 'react-cookie'
 import { useAtomValue } from 'jotai'
@@ -75,6 +76,7 @@ const Init = () => {
   useUpdateVaultData()
   return null
 }
+const MemoizedInit = memo(Init)
 
 const TradeApp = ({ Component, pageProps }: any) => {
   // const { networkId } = useWallet()
@@ -92,7 +94,7 @@ const TradeApp = ({ Component, pageProps }: any) => {
         <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width" />
       </Head>
       <ApolloProvider client={uniswapClient[networkId] || uniswapClient[1]}>
-        <Init />
+        <MemoizedInit />
         <ThemeProvider theme={getTheme(Mode.DARK)}>
           {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
           <CssBaseline />
