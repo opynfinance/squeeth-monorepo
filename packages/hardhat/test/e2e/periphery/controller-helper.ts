@@ -73,10 +73,6 @@ describe("ControllerHelper: mainnet fork", function () {
   let swapRouter: string
 
   this.beforeAll("Setup mainnet fork contracts", async () => {
-    // depositor = await ethers.provider.getSigner(
-    //  "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
-    // );
-
     depositor = await impersonateAddress("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045");
 
     // const usdcContract = await ethers.getContractFactory("MockErc20")
