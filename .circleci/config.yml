@@ -16,9 +16,6 @@ workflows:
       - unit-test-contracts:
           requires:
             - lint
-      - e2e-test:
-          requires:
-            - unit-test-contracts
       - coverage:
           requires:
             - compile
@@ -26,6 +23,9 @@ workflows:
       - contract-size:
           requires:
             - compile
+      # - deploy-test:
+      #     requires:
+      #       - compile
 
 jobs:
   checkout-and-install:
