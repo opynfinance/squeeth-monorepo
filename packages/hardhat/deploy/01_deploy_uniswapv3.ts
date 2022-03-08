@@ -51,7 +51,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     }
   });
   console.log(`UniswapV3Factory Deployed 🍹`)
-  const uniswapFactory = await ethers.getContractAt("UniswapV3Factory", deployer);
+  const uniswapFactory = await ethers.getContract("UniswapV3Factory", deployer);
 
   await deploy("SwapRouter", {
     from: deployer,
