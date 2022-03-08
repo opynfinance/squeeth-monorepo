@@ -26,9 +26,6 @@ workflows:
       - contract-size:
           requires:
             - compile
-      # - deploy-test:
-      #     requires:
-      #       - compile
 
 jobs:
   checkout-and-install:
