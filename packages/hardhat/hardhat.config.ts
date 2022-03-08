@@ -57,7 +57,7 @@ const UNISWAP_SETTING = {
   settings: {
     optimizer: {
       enabled: true,
-      runs: 825,
+      runs: 200,
     },
   },
 };
@@ -83,8 +83,7 @@ const config: HardhatUserConfig = {
       accounts: {
         accountsBalance: '1000000000000000000000000000'
       },
-      gas: "auto",
-      hardfork: "berlin"
+      gas: "auto"
     },
     localhost: {
       url: "http://localhost:8545",
