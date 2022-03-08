@@ -14,11 +14,6 @@ import {
   abi as FACTORY_ABI,
   bytecode as FACTORY_BYTECODE,
 } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json'
-import {
-  abi as POOL_ABI,
-  bytecode as POOL_BYTECODE,
-} from '@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json'
-
 import { convertToken0PriceToSqrtX96Price, tickToPrice1e18 } from '../calculator'
 import { getNow, isSimilar } from '../utils'
 import { Oracle, MockWPowerPerp, OracleTester, WETH9, ISwapRouter, IUniswapV3Pool } from "../../typechain";
@@ -35,7 +30,7 @@ describe("Oracle", function () {
   let oracle: Oracle;
   let positionManager: Contract
   let oracleTester: OracleTester
-  let squeethPool: Contract
+  let squeethPool: IUniswapV3Pool
   let deployer: string
   let swapRouter: ISwapRouter
   // store list of timestamp that's the pool is touched. [0] = init time, [1] = first interaction ...
@@ -47,25 +42,19 @@ describe("Oracle", function () {
     const { deployer: _deployer } = await getNamedAccounts();
     deployer = _deployer
 
-    const accounts = await ethers.getSigners();
-
-
     const { deploy } = deployments;
   
-    // await deploy("UniswapV3Factory", {
-    //   from: deployer,
-    //   contract: {
-    //     abi: FACTORY_ABI,
-    //     bytecode: FACTORY_BYTECODE
-    //   }
-    // });
-    // const uniswapFactory = await ethers.getContractAt(FACTORY_ABI, deployer);
+    await deploy("UniswapV3Factory", {
+      from: deployer,
+      contract: {
+        abi: FACTORY_ABI,
+        bytecode: FACTORY_BYTECODE
+      }
+    });
+    const uniswapFactory = await ethers.getContract("UniswapV3Factory", deployer);
     
-    const UniswapV3FactoryFactory = new ethers.ContractFactory(FACTORY_ABI, FACTORY_BYTECODE, accounts[0]);
-    const uniswapFactory = await UniswapV3FactoryFactory.deploy();
-  
     await deploy("WETH9", { from: deployer });
-    weth = await ethers.getContractAt("WETH9", deployer) as WETH9;
+    weth = await ethers.getContract("WETH9", deployer) as WETH9;
   
     const tx = await deploy("SwapRouter", {
       from: deployer,
@@ -76,7 +65,7 @@ describe("Oracle", function () {
       args: [uniswapFactory.address, weth.address]
     });
 
-    swapRouter = (await ethers.getContractAt('ISwapRouter', tx.address)) as ISwapRouter
+    swapRouter = await ethers.getContractAt('ISwapRouter', tx.address)
   
     // tokenDescriptor is only used to query tokenURI() on NFT. Don't need that in our deployment
     const tokenDescriptorAddress = ethers.constants.AddressZero
@@ -88,7 +77,7 @@ describe("Oracle", function () {
       },
       args: [uniswapFactory.address, weth.address, tokenDescriptorAddress]
     });
-    positionManager = await ethers.getContractAt(POSITION_MANAGER_ABI, deployer);
+    positionManager = await ethers.getContract("NonfungibleTokenPositionManager", deployer);
 
     // Create ETH/SQUEETH Pool with positionManager
     squeeth = (await (await ethers.getContractFactory("MockWPowerPerp")).deploy()) as MockWPowerPerp;
@@ -120,12 +109,8 @@ describe("Oracle", function () {
 
     // set pool
     const squeethPoolAddr = await uniswapFactory.getPool(token0, token1, 3000)
-    // squeethPool = await ethers.getContractAtFromArtifact(UniswapV3Pool, );
-    const squeethPoolFactory = new ethers.ContractFactory(POOL_ABI, POOL_BYTECODE, accounts[0]);
-    squeethPool = squeethPoolFactory.attach(squeethPoolAddr)
-    console.log("squeethPool", squeethPool)
+    squeethPool = await ethers.getContractAt("IUniswapV3Pool", squeethPoolAddr);
     initPriceTick = (await squeethPool.slot0()).tick
-    console.log("initPriceTick", initPriceTick)
     const cardinality = (await squeethPool.slot0()).observationCardinality
 
     // the cardinality will be started with 1
