@@ -20,6 +20,7 @@
   "dependencies": {
     "@eth-optimism/hardhat-ovm": "^0.2.2",
     "@float-capital/solidity-coverage": "^0.7.17",
+    "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",
     "@nomiclabs/hardhat-etherscan": "^2.1.4",
     "@nomiclabs/hardhat-waffle": "^2.0.0",
     "@openzeppelin/contracts": "v3.4.2-solc-0.7",
@@ -51,8 +52,8 @@
   },
   "scripts": {
     "chain": "hardhat node --network hardhat --no-deploy",
-    "test": "npx hardhat test ./test/unit-tests/**/*.ts ./test/integration-tests/**/*.ts --network hardhat",
-    "mainnet-fork": "hardhat test --network fork ./test/e2e/periphery/*.ts",
+    "test": "npx hardhat test --network hardhat",
+    "mainnet-fork": "MAINNET_FORK=true npx hardhat test --network fork ./test/e2e/periphery/*.ts",
     "compile": "hardhat compile",
     "deploy": "hardhat deploy",
     "postdeploy": "hardhat run scripts/publish.js",
