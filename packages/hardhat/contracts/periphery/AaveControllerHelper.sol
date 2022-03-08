@@ -28,15 +28,15 @@ contract AaveControllerHelper is IFlashLoanReceiver {
         console.log("_provider", _provider);
         ADDRESSES_PROVIDER = ILendingPoolAddressesProvider(_provider);
         // make sure this work for tests file where _provider == 0x0
-        // (_provider != address(0))
-        //     ? LENDING_POOL = ILendingPool(ILendingPoolAddressesProvider(_provider).getLendingPool())
-        //     : ILendingPool(address(0));
+        (_provider != address(0))
+            ? LENDING_POOL = ILendingPool(ILendingPoolAddressesProvider(_provider).getLendingPool())
+            : ILendingPool(address(0));
 
-        LENDING_POOL = ILendingPool(0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9);
+        // LENDING_POOL = ILendingPool(0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9);
     }
 
     function _flashCallback(
-        address _initiator,
+        address, /*_initiator*/
         address _asset,
         uint256 _amount,
         uint256 _premium,
@@ -51,16 +51,23 @@ contract AaveControllerHelper is IFlashLoanReceiver {
         address initiator,
         bytes calldata params
     ) external override returns (bool) {
-        console.log("initiator", initiator);
-
+        // sanity checks
+        require(msg.sender == address(LENDING_POOL), "E5");
+        require(assets.length == 1);
+        
         FlashloanCallbackData memory data = abi.decode(params, (FlashloanCallbackData));
 
+        // this assume that this contract will never flashloan more than 1 asset
         _flashCallback(initiator, assets[0], amounts[0], premiums[0], data.callSource, data.callData);
 
         // Approve the LENDING_POOL contract allowance to *pull* the owed amount
-        for (uint256 i = 0; i < assets.length; i++) {
-            IERC20Detailed(assets[i]).approve(address(LENDING_POOL), amounts[i].add(premiums[i]));
-        }
+        IERC20Detailed(assets[0]).approve(address(LENDING_POOL), amounts[0].add(premiums[0]));
+
+        require(IERC20Detailed(assets[0]).balanceOf(address(this)) >= amounts[0].add(premiums[0]), "noooo");
+
+        console.log("amounts[0].add(premiums[0])", amounts[0].add(premiums[0]));
+        console.log("IERC20Detailed(assets[0]).balanceOf(address(this))", IERC20Detailed(assets[0]).balanceOf(address(this)));
+        console.log("aproooved");
 
         return true;
     }
@@ -79,7 +86,8 @@ contract AaveControllerHelper is IFlashLoanReceiver {
         uint256[] memory amounts = new uint256[](1);
         amounts[0] = _amount;
 
-        uint256[] memory modes = new uint256[](0);
+        uint256[] memory modes = new uint256[](1);
+        modes[0] = 0;
 
         LENDING_POOL.flashLoan(
             address(this),

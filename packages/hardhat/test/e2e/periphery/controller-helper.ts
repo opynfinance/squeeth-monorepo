@@ -1,5 +1,5 @@
 // mainnet fork tests
-// in 1 terminal: npx hardhat node --fork https://mainnet.infura.io/v3/infura_key  --no-deploy --network hardhat
+// in 1 terminal: npx hardhat node --fork https://mainnet.infura.io/v3/infura_key --fork-block-number 14345140 --no-deploy --network hardhat
 // in 2 terminal: npx hardhat test ./test/e2e/periphery/controller-helper.ts
 import { ethers, network} from "hardhat"
 import { expect } from "chai";
@@ -13,10 +13,6 @@ import { isSimilar, wmul, wdiv, one, oracleScaleFactor, getNow } from "../../uti
 import { JsonRpcSigner } from "@ethersproject/providers";
 
 import {
-  abi as SWAP_ROUTER_ABI,
-  bytecode as SWAP_ROUTER_BYTECODE,
-} from '@uniswap/v3-periphery/artifacts/contracts/SwapRouter.sol/SwapRouter.json'
-import {
   abi as POSITION_MANAGER_ABI,
   bytecode as POSITION_MANAGER_BYTECODE,
 } from '@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json'
@@ -28,6 +24,10 @@ import {
   abi as ROUTER_ABI,
   bytecode as ROUTER_BYTECODE,
 } from '@uniswap/v3-periphery/artifacts/contracts/SwapRouter.sol/SwapRouter.json'
+import {
+  abi as POOL_ABI,
+  bytecode as POOL_BYTECODE,
+} from '@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json'
 
 BigNumberJs.set({EXPONENTIAL_AT: 30})
 
@@ -45,10 +45,10 @@ const impersonateAddress = async (address: string) => {
 };
 
 describe("ControllerHelper: mainnet fork", function () {
-  const startingEthPrice = 3000
-  const startingEthPrice1e18 = BigNumber.from(startingEthPrice).mul(one) // 3000 * 1e18
-  const scaledStartingSqueethPrice1e18 = startingEthPrice1e18.div(oracleScaleFactor) // 0.3 * 1e18
-  const scaledStartingSqueethPrice = startingEthPrice / oracleScaleFactor.toNumber() // 0.3
+  // const startingEthPrice = 3000
+  // const startingEthPrice1e18 = BigNumber.from(startingEthPrice).mul(one) // 3000 * 1e18
+  // const scaledStartingSqueethPrice1e18 = startingEthPrice1e18.div(oracleScaleFactor) // 0.3 * 1e18
+  // const scaledStartingSqueethPrice = startingEthPrice / oracleScaleFactor.toNumber() // 0.3
 
 
   let provider: providers.JsonRpcProvider;
@@ -65,7 +65,7 @@ describe("ControllerHelper: mainnet fork", function () {
   let controller: Controller
   let wSqueethPool: Contract
   let wSqueeth: WPowerPerp
-  let ethDaiPool: Contract
+  let ethUsdcPool: Contract
   let controllerHelper: ControllerHelper
   let shortSqueeth: ShortPowerPerp
   let swapRouter: string
@@ -92,8 +92,9 @@ describe("ControllerHelper: mainnet fork", function () {
     wSqueeth = (await ethers.getContractAt("WPowerPerp", "0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B")) as WPowerPerp
     oracle = (await ethers.getContractAt("Oracle", "0x65D66c76447ccB45dAf1e8044e918fA786A483A1")) as Oracle
     shortSqueeth = (await ethers.getContractAt("ShortPowerPerp", "0xa653e22A963ff0026292Cc8B67941c0ba7863a38")) as ShortPowerPerp
-    // wSqueethPool = await ethers.getContractAt("MockErc20", "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C")
+    wSqueethPool = await ethers.getContractAt(POOL_ABI, "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C")
     // ethDaiPool = await ethers.getContractAt("MockErc20", "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8")
+    ethUsdcPool = await ethers.getContractAt(POOL_ABI, "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8");
 
     // await controller.connect(owner).setFeeRecipient(feeRecipient.address);
     // await controller.connect(owner).setFeeRate(0)
@@ -110,7 +111,30 @@ describe("ControllerHelper: mainnet fork", function () {
 
   describe("Flash mint short position, LP and use LP as collateral", async () => {
     it("open short, mint, LP, deposit LP NFT and withdraw ETH collateral", async ()=> {
-      
+      const vaultId = (await shortSqueeth.nextId()).sub(1);
+      const normFactor = await controller.normalizationFactor()
+      const mintWSqueethAmount = ethers.utils.parseUnits('30')
+      const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
+      const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
+      const scaledEthPrice = ethPrice.div(10000)
+      const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
+      const collateralToMint = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
+      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
+      const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
+      const flashloanWMintDepositNftParams = {
+        vaultId: 0,
+        wPowerPerpAmount: mintWSqueethAmount.toString(),
+        collateralToMint: collateralToMint.toString(),
+        collateralToLp: collateralToLp.toString(),
+        collateralToWithdraw: 0,
+        amount0Min: 0,
+        amount1Min: 0,
+        lowerTick: -887220,
+        upperTick: 887220
+      }
+      const vaultBefore = await controller.vaults(vaultId)
+
+      await controllerHelper.connect(depositor).flashloanWMintDepositNft(flashloanWMintDepositNftParams, {value: collateralToLp.add(ethers.utils.parseUnits('1'))})
     })
   })
 })

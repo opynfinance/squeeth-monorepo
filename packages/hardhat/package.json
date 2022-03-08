@@ -51,7 +51,7 @@
   },
   "scripts": {
     "chain": "hardhat node --network hardhat --no-deploy",
-    "test": "npx hardhat test --network hardhat",
+    "test": "npx hardhat test ./test/unit-tests/**/*.ts ./test/integration-tests/**/*.ts --network hardhat",
     "mainnet-fork": "hardhat test --network fork ./test/e2e/periphery/*.ts",
     "compile": "hardhat compile",
     "deploy": "hardhat deploy",
