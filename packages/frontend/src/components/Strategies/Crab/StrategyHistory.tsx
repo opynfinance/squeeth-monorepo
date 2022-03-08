@@ -1,7 +1,7 @@
 import { useCrabStrategyTxHistory } from '@hooks/useCrabAuctionHistory'
 import { IconButton, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { EtherscanPrefix } from '../../../constants'
 import OpenInNewIcon from '@material-ui/icons/OpenInNew'
 import { useWallet } from '@context/wallet'
@@ -12,6 +12,7 @@ import { GreyButton } from '@components/Button'
 import { useUserCrabTxHistory } from '@hooks/useUserCrabTxHistory'
 import { CrabStrategyTxType, Networks } from '../../../types/index'
 import clsx from 'clsx'
+import { getEthPriceAtTransactionTime } from 'src/lib/pnl'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -51,7 +52,12 @@ enum TxType {
 export const CrabStrategyHistory: React.FC = () => {
   const classes = useStyles()
   const { data, loading } = useCrabStrategyTxHistory()
-  const { networkId, address } = useWallet()
+  const { networkId, address, web3 } = useWallet()
+  const txHashStr = useMemo(() => {
+    if (!data) return
+    return data.map(({ id }) => id).join(',')
+  }, [data])
+  const [hedgeBlockNos, setHedgeBlockNos] = useState<number[] | undefined>(undefined)
 
   const [txType, setTxType] = useState(TxType.HEDGES)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
@@ -68,6 +74,23 @@ export const CrabStrategyHistory: React.FC = () => {
     setTxType(type)
     setAnchorEl(null)
   }
+
+  useEffect(() => {
+    if (txHashStr) {
+      ;(async () => {
+        const txHashArr = txHashStr.split(',')
+        const blockNos = await Promise.all(
+          txHashArr.map(async (hash, index) => {
+            const ethPrice = await getEthPriceAtTransactionTime((data ?? [])[index].timestamp)
+            const txData = await web3.eth.getTransaction(hash)
+            console.log('bbb', ethPrice.toNumber(), hash, ' ', (data ?? [])[index].timestamp, txData)
+            return 0
+          }),
+        )
+        setHedgeBlockNos(blockNos)
+      })()
+    }
+  }, [txHashStr, web3])
 
   return (
     <div className={classes.container}>
