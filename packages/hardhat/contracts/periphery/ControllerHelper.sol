@@ -95,7 +95,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         uint256 collateralToMint; // ETH collateral amount to use for minting wPowerPerp
         uint256 collateralToLp; // ETH collateral amount to use for LPing
         uint256 collateralToWithdraw; // ETH amount to withdraw from vault (vault.collateralAmount >= collateralToWithdraw + flashl loaned ETH)
-        uint256 amount0Min;  // amount0Min for Uni LPing
+        uint256 amount0Min; // amount0Min for Uni LPing
         uint256 amount1Min; // amount1Min for Uni LPing
         int24 lowerTick; // Uni LP lower tick
         int24 upperTick; // Uni LP upper tick
@@ -430,7 +430,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
 
     function flashloanWMintDepositNft(FlashloanWMintDepositNftParams calldata params) external payable {
         // check that sender sent the excess amount to repay Aave flashloan fee
-        require (msg.value > params.collateralToLp, "E4");
+        require(msg.value > params.collateralToLp, "E4");
 
         console.log("started");
         console.log("address(this).balance when just started", address(this).balance);
@@ -468,7 +468,10 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.FLASHLOAN_W_MINT_DEPOSIT_NFT) {
             console.log("_amount", _amount);
             console.log("_premium", _premium);
-            console.log("IWETH9(weth).balanceOf(address(this) when receiving flashloan", IWETH9(weth).balanceOf(address(this)));
+            console.log(
+                "IWETH9(weth).balanceOf(address(this) when receiving flashloan",
+                IWETH9(weth).balanceOf(address(this))
+            );
 
             FlashloanMintDepositNftData memory data = abi.decode(_calldata, (FlashloanMintDepositNftData));
 
@@ -499,30 +502,31 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
 
             // deposit Uni NFT token in vault
             INonfungiblePositionManager(nonfungiblePositionManager).approve(controller, uniTokenId);
-            IController(controller).mintWPowerPerpAmount(
-                vaultId,
-                0,
-                uniTokenId
-            );
+            IController(controller).mintWPowerPerpAmount(vaultId, 0, uniTokenId);
 
             console.log("address(this).balance just before withdrawing ETH", address(this).balance);
-            console.log("IWETH9(weth).balanceOf(address(this) just before withdrawing ETH", IWETH9(weth).balanceOf(address(this)));
-
-            // remove flashloan amount in ETH from vault + any amount of collateral user want to withdraw (sum <= vault.collateralAmount)
-            IController(controller).burnWPowerPerpAmount(
-                vaultId,
-                0,
-                _amount.add(data.collateralToWithdraw)
+            console.log(
+                "IWETH9(weth).balanceOf(address(this) just before withdrawing ETH",
+                IWETH9(weth).balanceOf(address(this))
             );
 
+            // remove flashloan amount in ETH from vault + any amount of collateral user want to withdraw (sum <= vault.collateralAmount)
+            IController(controller).burnWPowerPerpAmount(vaultId, 0, _amount.add(data.collateralToWithdraw));
+
             console.log("address(this).balance just after withdrawing ETH", address(this).balance);
-            console.log("IWETH9(weth).balanceOf(address(this) just after withdrawing ETH", IWETH9(weth).balanceOf(address(this)));
+            console.log(
+                "IWETH9(weth).balanceOf(address(this) just after withdrawing ETH",
+                IWETH9(weth).balanceOf(address(this))
+            );
             console.log("_amount.add(_premium)", _amount.add(_premium));
 
             // convert flashloaned amount + fee from ETH to WETH to prepare for payback
             IWETH9(weth).deposit{value: _amount.add(_premium)}();
 
-            console.log("IWETH9(weth).balanceOf(address(this) just after wrapping", IWETH9(weth).balanceOf(address(this)));
+            console.log(
+                "IWETH9(weth).balanceOf(address(this) just after wrapping",
+                IWETH9(weth).balanceOf(address(this))
+            );
         }
     }
 

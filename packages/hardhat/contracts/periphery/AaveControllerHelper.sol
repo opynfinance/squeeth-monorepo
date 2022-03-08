@@ -54,7 +54,7 @@ contract AaveControllerHelper is IFlashLoanReceiver {
         // sanity checks
         require(msg.sender == address(LENDING_POOL), "E5");
         require(assets.length == 1);
-        
+
         FlashloanCallbackData memory data = abi.decode(params, (FlashloanCallbackData));
 
         // this assume that this contract will never flashloan more than 1 asset
@@ -66,7 +66,10 @@ contract AaveControllerHelper is IFlashLoanReceiver {
         require(IERC20Detailed(assets[0]).balanceOf(address(this)) >= amounts[0].add(premiums[0]), "noooo");
 
         console.log("amounts[0].add(premiums[0])", amounts[0].add(premiums[0]));
-        console.log("IERC20Detailed(assets[0]).balanceOf(address(this))", IERC20Detailed(assets[0]).balanceOf(address(this)));
+        console.log(
+            "IERC20Detailed(assets[0]).balanceOf(address(this))",
+            IERC20Detailed(assets[0]).balanceOf(address(this))
+        );
         console.log("aproooved");
 
         return true;
