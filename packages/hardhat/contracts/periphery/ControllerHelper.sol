@@ -235,11 +235,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
 
         uint256 remainingWPowerPerp = IWPowerPerp(wPowerPerp).balanceOf(address(this));
         if (remainingWPowerPerp > 0) {
-            IController(controller).burnWPowerPerpAmount(
-                vaultId,
-                remainingWPowerPerp,
-                0
-            );
+            IController(controller).burnWPowerPerpAmount(vaultId, remainingWPowerPerp, 0);
         }
 
         if (_vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), msg.sender, vaultId);
