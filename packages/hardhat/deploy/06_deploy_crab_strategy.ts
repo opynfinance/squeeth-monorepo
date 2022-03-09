@@ -9,10 +9,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const { deployer } = await getNamedAccounts();
 
-  const controller = await ethers.getContractAt("Controller", deployer);
-  const oracle = await ethers.getContractAt("Oracle", deployer);
+  const controller = await ethers.getContract("Controller", deployer);
+  const oracle = await ethers.getContract("Oracle", deployer);
   const weth = await getWETH(ethers, deployer, network.name)
-  const wsqueeth = await ethers.getContractAt("WPowerPerp", deployer);
+  const wsqueeth = await ethers.getContract("WPowerPerp", deployer);
 
   const {uniswapFactory} = await getUniswapDeployments(ethers, deployer, network.name)
 
@@ -30,6 +30,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const maxPriceMultiplier = ethers.utils.parseUnits('1.05')
 
   // so this won't affect our deployment in test files
+  console.log(controller.address, 
+    oracle.address,
+    weth.address,
+    uniswapFactory.address,
+    squeethPoolAddr,
+    hedgeTimeThreshold, 
+    hedgePriceThreshold, 
+    auctionTime, 
+    minPriceMultiplier, 
+    maxPriceMultiplier)
   await deploy("CrabStrategyDeployment", {
     contract: "CrabStrategy",
     from: deployer,

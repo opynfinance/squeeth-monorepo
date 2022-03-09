@@ -7,6 +7,7 @@ import {IOracle} from "../interfaces/IOracle.sol";
 
 //lib
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import "hardhat/console.sol";
 
 library Power2Base {
     using SafeMath for uint256;
@@ -40,6 +41,11 @@ library Power2Base {
             _period,
             false
         );
+        console.log("Is it coming to index?");
+        console.log(ethQuoteCurrencyPrice);
+        console.log(ethQuoteCurrencyPrice);
+        uint256 result = ethQuoteCurrencyPrice.mul(ethQuoteCurrencyPrice).div(ONE);
+        console.log(result);
         return ethQuoteCurrencyPrice.mul(ethQuoteCurrencyPrice).div(ONE);
     }
 
@@ -59,6 +65,7 @@ library Power2Base {
         address _weth,
         address _quoteCurrency
     ) internal view returns (uint256) {
+        console.log("Is it coming to uniscale index?");
         uint256 ethQuoteCurrencyPrice = _getTwap(_oracle, _ethQuoteCurrencyPool, _weth, _quoteCurrency, _period, false);
         return ethQuoteCurrencyPrice.mul(ethQuoteCurrencyPrice).div(ONE);
     }

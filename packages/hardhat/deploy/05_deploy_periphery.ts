@@ -24,7 +24,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   //   args: [controller.address, swapRouter.address, weth.address]
   // });
 
-  console.log(`Successfully deploy ShortHelper ${shortHelperAddress} 🥦`)
+  console.log(`Successfully deploy ShortHelper ${shortHelperAddress.address} 🥦`)
 }
 
 export default func;
