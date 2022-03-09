@@ -308,8 +308,8 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             INonfungiblePositionManager.CollectParams({
                 tokenId: params.tokenId,
                 recipient: address(this),
-                amount0Max: isWethToken0 ? uint128(wethAmount) : uint128(wPowerPerpAmount),
-                amount1Max: isWethToken0 ? uint128(wPowerPerpAmount) : uint128(wethAmount)
+                amount0Max: type(uint128).max,
+                amount1Max: type(uint128).max
             })
         );
 
