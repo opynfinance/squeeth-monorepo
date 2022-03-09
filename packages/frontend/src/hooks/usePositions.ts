@@ -8,12 +8,11 @@ import { positions, positionsVariables } from '../queries/uniswap/__generated__/
 import POSITIONS_QUERY, { POSITIONS_SUBSCRIPTION } from '../queries/uniswap/positionsQuery'
 import { NFTManagers } from '../types'
 import { toTokenAmount } from '@utils/calculations'
-import { squeethClient } from '@utils/apollo-client'
 import { useAtomValue } from 'jotai'
 
 import { calcDollarShortUnrealizedpnl, calcETHCollateralPnl, calcDollarLongUnrealizedpnl } from '../lib/pnl'
 import { BIG_ZERO } from '../constants/'
-import { addressAtom, networkIdAtom, web3Atom } from 'src/state/wallet/atoms'
+import { addressAtom, web3Atom } from 'src/state/wallet/atoms'
 import { addressesAtom, existingCollatAtom, isWethToken0Atom, positionTypeAtom } from '../state/positions/atoms'
 import { PositionType } from '../types'
 import { useETHPrice } from './useETHPrice'
@@ -21,8 +20,7 @@ import { poolAtom, readyAtom, squeethInitialPriceAtom } from 'src/state/squeethP
 import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
 import { useIndex } from 'src/state/controller/hooks'
 import { useComputeSwaps, useFirstValidVault, useSwaps } from 'src/state/positions/hooks'
-import { useVaultManager } from './contracts/useVaultManager'
-import { useVaultHistory } from './useVaultHistory'
+import { useVaultHistoryQuery } from './useVaultHistory'
 
 export const usePnL = () => {
   const positionType = useAtomValue(positionTypeAtom)
@@ -43,7 +41,7 @@ export const usePnL = () => {
   const getSellQuote = useGetSellQuote()
   const getBuyQuote = useGetBuyQuote()
 
-  const { vaultHistory } = useVaultHistory(vaultId)
+  const vaultHistory = useVaultHistoryQuery(vaultId)
 
   const [sellQuote, setSellQuote] = useState({
     amountOut: new BigNumber(0),

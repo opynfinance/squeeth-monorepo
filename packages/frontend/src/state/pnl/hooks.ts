@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 
-import { useVaultHistory } from '@hooks/useVaultHistory'
+import { useVaultHistoryQuery } from '@hooks/useVaultHistory'
 import { toTokenAmount } from '@utils/calculations'
 import { calcDollarLongUnrealizedpnl, calcDollarShortUnrealizedpnl, calcETHCollateralPnl } from 'src/lib/pnl'
 import { useIndex } from '../controller/hooks'
@@ -25,7 +25,8 @@ import { PositionType } from '../../types'
 
 export function useEthCollateralPnl() {
   const { vaultId } = useFirstValidVault()
-  const { vaultHistory } = useVaultHistory(vaultId)
+  const vaultHistory = useVaultHistoryQuery(vaultId)
+
   const existingCollat = useAtomValue(existingCollatAtom)
   const index = useIndex()
   const [ethCollateralPnl, setEthCollateralPnl] = useAtom(ethCollateralPnlAtom)

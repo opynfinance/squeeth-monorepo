@@ -11,7 +11,7 @@ import { toTokenAmount } from '@utils/calculations'
 import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
 import { useAtomValue } from 'jotai'
 
-export const useVaultHistory = (vaultId: number) => {
+export const useVaultHistoryQuery = (vaultId: number) => {
   const address = useAtomValue(addressAtom)
   const networkId = useAtomValue(networkIdAtom)
 
@@ -37,6 +37,12 @@ export const useVaultHistory = (vaultId: number) => {
       },
     })
   }, [address, vaultId, subscribeToMore])
+
+  return vaultHistory
+}
+
+export const useVaultHistory = (vaultId: number) => {
+  const vaultHistory = useVaultHistoryQuery(vaultId)
 
   //accumulated four actions, mintedSqueeth doesn't take minted squeeth sold into account
   //only consider first valid vault
