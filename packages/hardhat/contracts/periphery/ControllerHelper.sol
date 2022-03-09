@@ -66,19 +66,11 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         uint256 collateralAmount;
     }
 
-    struct FlashWBurnData {
-        uint256 vaultId;
-        uint256 wPowerPerpAmountToBurn;
-        uint256 wPowerPerpAmountToBuy;
-        uint256 collateralToWithdraw;
-        uint256 collateralToBuyWith;
-    }
-
     event FlashswapWMint(
         address indexed depositor,
         uint256 vaultId,
         uint256 wPowerPerpAmount,
-        uint256 swappedCollateralAmount,
+        uint256 swapedCollateralAmount,
         uint256 collateralAmount
     );
     event FlashWBurn(
@@ -95,10 +87,6 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         uint256 collateralToMint,
         uint256 collateralToLP
     );
-
-    event FlashWBurn(address indexed withdrawer, uint256 vaultId, uint256 wPowerPerpAmount, uint256 collateralAmount, uint256 wPowerPerpBought);    
-
-    event FlashWBurn(address indexed withdrawer, uint256 vaultId, uint256 wPowerPerpAmount, uint256 collateralAmount, uint256 wPowerPerpBought);    
 
     constructor(
         address _controller,
@@ -174,78 +162,69 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
 
     /**
      * @notice flash close position and buy long squeeth
-     * @dev this function 
+     * @dev this function
      * @param _vaultId vault ID
      * @param _wPowerPerpAmountToBurn amount of WPowerPerp to burn
      * @param _wPowerPerpAmountToBuy amount of WPowerPerp to buy
      * @param _collateralToWithdraw amount of collateral to withdraw from vault
-     * @param _maxToPay max amount of collateral to pay for WPowerPerp token
+     * @param _collateralToBuyWith amount of collateral from vault to use to buy long
      */
     function flashswapWBurnBuyLong(
         uint256 _vaultId,
         uint256 _wPowerPerpAmountToBurn,
         uint256 _wPowerPerpAmountToBuy,
         uint256 _collateralToWithdraw,
-        uint256 _maxToPay
+        uint256 _collateralToBuyWith
     ) external payable {
-        require(_maxToPay <= _collateralToWithdraw.add(msg.value), "Not enough collateral");
+        require(_collateralToBuyWith <= _collateralToWithdraw.add(msg.value), "Not enough collateral");
 
         _exactOutFlashSwap(
             weth,
             wPowerPerp,
             IUniswapV3Pool(wPowerPerpPool).fee(),
             _wPowerPerpAmountToBurn.add(_wPowerPerpAmountToBuy),
-            _maxToPay,
+            _collateralToBuyWith.add(msg.value),
             uint8(FLASH_SOURCE.FLASH_W_BURN),
-            abi.encodePacked(_vaultId, _wPowerPerpAmountToBurn, _wPowerPerpAmountToBuy, _collateralToWithdraw, _collateralToBuyWith.add(msg.value))
+            abi.encodePacked(
+                _vaultId,
+                _wPowerPerpAmountToBurn,
+                _wPowerPerpAmountToBuy,
+                _collateralToWithdraw,
+                _collateralToBuyWith.add(msg.value)
+            )
         );
 
         emit FlashWBurn(msg.sender, _vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw, _wPowerPerpAmountToBuy);
     }
 
     /**
-     * @notice flash close position and buy long squeeth
-     * @dev this function
+     * @notice sell long wPowerPerp and flashswap mint short position
+     * @dev flahswap amount = collateral amount - msg.value - ETH from selling long wPowerPerp
      * @param _vaultId vault ID
-     * @param _wPowerPerpAmountToBurn amount of WPowerPerp to burn
-     * @param _wPowerPerpAmountToBuy amount of WPowerPerp to buy
-     * @param _collateralToWithdraw amount of collateral to withdraw from vault
-     * @param _maxToPay max amount of collateral to pay for WPowerPerp token
+     * @param _wPowerPerpAmountToMint wPowerPerp amount to mint
+     * @param _collateralAmount collateral amount to use for minting
+     * @param _wPowerPerpAmountToSell long wPowerPerp amount to sell
+     * @param _minToReceive min ETH amount to receive for selling long wPowerPerp amount
      */
-    function flashswapWBurnBuyLong(
+    function flashswapSellLongWMint(
         uint256 _vaultId,
-        uint256 _wPowerPerpAmountToBurn,
-        uint256 _wPowerPerpAmountToBuy,
-        uint256 _collateralToWithdraw,
-        uint256 _maxToPay
+        uint256 _wPowerPerpAmountToMint,
+        uint256 _collateralAmount,
+        uint256 _wPowerPerpAmountToSell,
+        uint256 _minToReceive
     ) external payable {
-        require(_maxToPay <= _collateralToWithdraw.add(msg.value), "Not enough collateral");
+        IWPowerPerp(wPowerPerp).transferFrom(msg.sender, address(this), _wPowerPerpAmountToSell);
 
-        _exactOutFlashSwap(
-            weth,
-            wPowerPerp,
-            IUniswapV3Pool(wPowerPerpPool).fee(),
-            _wPowerPerpAmountToBurn.add(_wPowerPerpAmountToBuy),
-            _maxToPay,
-            uint8(FLASH_SOURCE.FLASH_W_BURN),
-            abi.encodePacked(_vaultId, _wPowerPerpAmountToBurn, _wPowerPerpAmountToBuy, _collateralToWithdraw)
-        );
-
-        emit FlashWBurn(msg.sender, _vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw, _wPowerPerpAmountToBuy);
-    }
-
-    function flashWBurn(uint256 _vaultId, uint256 _wPowerPerpAmount, uint256 _collateralToWithdraw) external {
-        _exactOutFlashSwap(
-            weth,
+        // flahswap and mint short position
+        _exactInFlashSwap(
             wPowerPerp,
             weth,
             IUniswapV3Pool(wPowerPerpPool).fee(),
-            _wPowerPerpAmount,
-            _collateralToWithdraw,
-            uint8(FLASH_SOURCE.FLASH_W_BURN),
-            abi.encodePacked(_vaultId, _wPowerPerpAmount, _collateralToWithdraw)
+            _wPowerPerpAmountToMint.add(_wPowerPerpAmountToSell),
+            _minToReceive,
+            uint8(FLASH_SOURCE.FLASH_SELL_LONG_W_MINT),
+            abi.encodePacked(_vaultId, _wPowerPerpAmountToMint, _collateralAmount)
         );
-
     }
 
     /**
@@ -254,9 +233,6 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
      * @param _wPowerPerpAmount amount of WPowerPerp token to mint
      * @param _collateralToMint collateral to use for minting
      * @param _collateralToLP collateral to use for LPing
-     * @param _amount0Min minimum amount of asset0 in LP
-     * @param _amount1Min minimum amount of asset1 in LP
-     * @param _deadline LP position timestamp deadline
      * @param _lowerTick LP lower tick
      * @param _upperTick LP upper tick
      */
@@ -297,15 +273,14 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
 
         INonfungiblePositionManager(nonfungiblePositionManager).mint{value: _collateralToLP}(params);
 
+        if (_vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), msg.sender, vaultId);
+        if (address(this).balance > 0) {
+            payable(msg.sender).sendValue(address(this).balance);
+        }
         uint256 remainingWPowerPerp = IWPowerPerp(wPowerPerp).balanceOf(address(this));
         if (remainingWPowerPerp > 0) {
-            IController(controller).burnWPowerPerpAmount(vaultId, remainingWPowerPerp, 0);
+            IWPowerPerp(wPowerPerp).transfer(msg.sender, remainingWPowerPerp);
         }
-        // in case _collateralToLP > amount needed to LP, withdraw excess ETH
-        INonfungiblePositionManager(nonfungiblePositionManager).refundETH();
-
-        if (_vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), msg.sender, vaultId);
-        payable(msg.sender).sendValue(address(this).balance);
 
         emit BatchMintLp(msg.sender, _vaultId, _wPowerPerpAmount, _collateralToMint, _collateralToLP);
     }
@@ -458,24 +433,28 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             if (address(this).balance > 0) {
                 payable(_caller).sendValue(address(this).balance);
             }
-        }
-        else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_W_BURN) {
-            FlashWBurnData memory data = abi.decode(_callData, (FlashWBurnData));
+        } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_SELL_LONG_W_MINT) {
+            FlashSellLongWMintData memory data = abi.decode(_callData, (FlashSellLongWMintData));
 
-            IController(controller).burnWPowerPerpAmount(
+            // convert WETH to ETH as Uniswap uses WETH
+            IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
+
+            uint256 vaultId = IController(controller).mintWPowerPerpAmount{value: data.collateralAmount}(
                 data.vaultId,
                 data.wPowerPerpAmount,
-                data.collateralToWithdraw
+                0
             );
 
-            IWETH9.deposit(_amountToPay);
-            IWETH9(weth).transfer(wPowerPerpPool, _amountToPay);
-
-            IWPowerPerp(wPowerPerp).transfer(_caller, data.wPowerPerpAmountToBuy);
+            IWPowerPerp(wPowerPerp).transfer(wPowerPerpPool, _amountToPay);
 
             if (address(this).balance > 0) {
                 payable(_caller).sendValue(address(this).balance);
             }
+            // this is a newly open vault, transfer to the user
+            if (data.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), _caller, vaultId);
+        } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.SWAP) {
+            // this is to handle the swap() callback, calling swap() from this contract will only work with wPowerPerpPool
+            IERC20Detailed(_tokenIn).transfer(wPowerPerpPool, _amountToPay);
         }
     }
 }
