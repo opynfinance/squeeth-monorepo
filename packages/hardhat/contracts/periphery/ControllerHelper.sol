@@ -237,6 +237,8 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         if (remainingWPowerPerp > 0) {
             IController(controller).burnWPowerPerpAmount(vaultId, remainingWPowerPerp, 0);
         }
+        // in case _collateralToLP > amount needed to LP, withdraw excess ETH
+        INonfungiblePositionManager(nonfungiblePositionManager).refundETH();
 
         if (_vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), msg.sender, vaultId);
         payable(msg.sender).sendValue(address(this).balance);
