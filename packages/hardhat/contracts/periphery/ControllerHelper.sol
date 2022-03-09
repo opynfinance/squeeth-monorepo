@@ -73,13 +73,13 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         uint256 wPowerPerpAmount;
         uint256 collateralAmount;
     }
-    // params for CloseShortWithUserNft()
+    // params for closeShortWithUserNft()
     struct CloseShortWithUserNftParams {
         uint256 vaultId; // vault ID
         uint256 tokenId; // Uni NFT token ID
         uint256 wPowerPerpAmountToBurn; // amount of wPowerPerp to burn in vault
         uint256 collateralToWithdraw; // amount of ETH collateral to withdraw from vault
-        uint256 minOut; // minimum amount of ETH to receive when selling wPowerPerp
+        uint256 minEthPerWPowerPerp; // minimum ETH to accept per 1 wPowerPerp to use for slippage check when selling excess
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
     }
@@ -297,14 +297,21 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
                 amount1Min: params.amount1Min,
                 deadline: block.timestamp
             });
+
+        INonfungiblePositionManager(nonfungiblePositionManager).decreaseLiquidity(decreaseParams);
+
         uint256 wethAmount;
         uint256 wPowerPerpAmount;
         (isWethToken0)
-            ? (wethAmount, wPowerPerpAmount) = INonfungiblePositionManager(nonfungiblePositionManager)
-                .decreaseLiquidity(decreaseParams)
-            : (wPowerPerpAmount, wethAmount) = INonfungiblePositionManager(nonfungiblePositionManager)
-            .decreaseLiquidity(decreaseParams);
-        (uint256 amount0, uint256 amount1) = INonfungiblePositionManager(nonfungiblePositionManager).collect(
+            ? (wethAmount, wPowerPerpAmount) = INonfungiblePositionManager(nonfungiblePositionManager).collect(
+                INonfungiblePositionManager.CollectParams({
+                    tokenId: params.tokenId,
+                    recipient: address(this),
+                    amount0Max: type(uint128).max,
+                    amount1Max: type(uint128).max
+                })
+            )
+            : (wPowerPerpAmount, wethAmount) = INonfungiblePositionManager(nonfungiblePositionManager).collect(
             INonfungiblePositionManager.CollectParams({
                 tokenId: params.tokenId,
                 recipient: address(this),
@@ -312,9 +319,6 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
                 amount1Max: type(uint128).max
             })
         );
-
-        // update wPowerPerpAmount & wethAmount to include collect() feees
-        (wethAmount, wPowerPerpAmount) = isWethToken0 ? (amount0, amount1) : (amount1, amount0);
 
         if (wPowerPerpAmount < params.wPowerPerpAmountToBurn) {
             // swap needed wPowerPerp amount to close short position
@@ -342,13 +346,14 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
                 params.collateralToWithdraw
             );
 
-            if (wPowerPerpAmount.sub(params.wPowerPerpAmountToBurn) > 0) {
+            uint256 wPowerPerpExcess = wPowerPerpAmount.sub(params.wPowerPerpAmountToBurn);
+            if (wPowerPerpExcess > 0) {
                 _exactInFlashSwap(
                     wPowerPerp,
                     weth,
                     IUniswapV3Pool(wPowerPerpPool).fee(),
-                    wPowerPerpAmount.sub(params.wPowerPerpAmountToBurn),
-                    params.minOut,
+                    wPowerPerpExcess,
+                    params.minEthPerWPowerPerp.mul(wPowerPerpExcess).div(1e18),
                     uint8(FLASH_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
                     ""
                 );
