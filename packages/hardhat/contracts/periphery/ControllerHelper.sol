@@ -77,6 +77,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
     struct CloseShortWithUserNftParams {
         uint256 vaultId; // vault ID
         uint256 tokenId; // Uni NFT token ID
+        uint256 liquidityPercentage;    // percentage of liquidity to burn in LP position in decimals with 18 precision(e.g 60% = 0.6 = 6e17)
         uint256 wPowerPerpAmountToBurn; // amount of wPowerPerp to burn in vault
         uint256 collateralToWithdraw; // amount of ETH collateral to withdraw from vault
         uint256 minEthPerWPowerPerp; // minimum ETH to accept per 1 wPowerPerp to use for slippage check when selling excess
@@ -292,7 +293,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         INonfungiblePositionManager.DecreaseLiquidityParams memory decreaseParams = INonfungiblePositionManager
             .DecreaseLiquidityParams({
                 tokenId: params.tokenId,
-                liquidity: liquidity,
+                liquidity: uint128(uint256(liquidity).mul(params.liquidityPercentage).div(1e18)),
                 amount0Min: params.amount0Min,
                 amount1Min: params.amount1Min,
                 deadline: block.timestamp
