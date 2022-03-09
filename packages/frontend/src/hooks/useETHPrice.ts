@@ -45,7 +45,7 @@ export const getHistoricEthPrice = async (dateString: string): Promise<BigNumber
   const pair = 'ETH/USD'
 
   const response = await fetch(
-    `https://api.twelvedata.com/time_series?start_date=${dateString}&end_date=${dateString}&symbol=${pair}&interval=1min&apikey=${process.env.NEXT_PUBLIC_TWELVEDATA_APIKEY}`,
+    `/api/twelvedata?path=time_series&start_date=${dateString}&end_date=${dateString}&symbol=${pair}&interval=1min`,
   ).then((res) => res.json())
 
   if (response.status === 'error') {

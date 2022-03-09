@@ -135,7 +135,7 @@ export function LongChart() {
         { data: longEthPNL, legend: 'Long ETH PNL (%)' },
         {
           data: longSeries.slice(0, liveIndex),
-          legend: `Long Squeeth PNL (%) Deribit (incl. funding)`,
+          legend: `Long Squeeth PNL (%) Simulated incl. funding`,
         },
         {
           data: longSeries.slice(liveIndex),
@@ -312,7 +312,11 @@ export function LongChart() {
             <div className={classes.legendBox}>
               {lineSeries && lineSeries[0].data.length > 0 && <LegendBox bgColor="#018FFB" text="ETH PNL" />}
               {lineSeries && lineSeries[1].data.length > 0 && (
-                <LegendBox bgColor="#00E396" text="Squeeth Deribit PNL" />
+                <LegendBox
+                  bgColor="#00E396"
+                  text="Squeeth Simulated PnL"
+                  tooltip="The Squeeth Simulated PnL comes from using at the money implied vol from Deribit"
+                />
               )}
               {lineSeries && lineSeries[2].data.length > 0 && <LegendBox bgColor="#FEB01B" text="Squeeth LIVE PNL" />}
             </div>

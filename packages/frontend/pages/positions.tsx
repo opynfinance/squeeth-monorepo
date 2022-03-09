@@ -1,4 +1,4 @@
-import { createStyles, makeStyles, Tooltip, Typography } from '@material-ui/core'
+import { Box, createStyles, makeStyles, Tooltip, Typography } from '@material-ui/core'
 import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import Link from 'next/link'
@@ -14,7 +14,6 @@ import { PositionType } from '../src/types/'
 import { Tooltips } from '../src/constants'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { toTokenAmount } from '@utils/calculations'
-import { CrabProvider } from '@context/crabStrategy'
 import { useCrabPosition } from '@hooks/useCrabPosition'
 import { LinkButton } from '@components/Button'
 import { addressAtom } from 'src/state/wallet/atoms'
@@ -49,6 +48,7 @@ import {
   useShortUnrealizedPNL,
 } from 'src/state/pnl/hooks'
 import { loadingAtom } from 'src/state/pnl/atoms'
+import YourVaults from '@components/Trade/YourVaults'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -546,6 +546,16 @@ export function Positions() {
             <LPTable isLPage={false} pool={pool!} />
           </>
         ) : null}
+
+        <Box mt={8} component="section">
+          <Typography color="primary" variant="h6">
+            Your Vaults
+          </Typography>
+          <Box mt={2}>
+            <YourVaults />
+          </Box>
+        </Box>
+
         <div className={classes.history}>
           <Typography color="primary" variant="h6">
             Transaction History
