@@ -43,7 +43,6 @@ library Power2Base {
         );
         console.log("Is it coming to index?");
         console.log(ethQuoteCurrencyPrice);
-        console.log(ethQuoteCurrencyPrice);
         uint256 result = ethQuoteCurrencyPrice.mul(ethQuoteCurrencyPrice).div(ONE);
         console.log(result);
         return ethQuoteCurrencyPrice.mul(ethQuoteCurrencyPrice).div(ONE);

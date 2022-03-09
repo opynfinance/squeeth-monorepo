@@ -30,16 +30,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const maxPriceMultiplier = ethers.utils.parseUnits('1.05')
 
   // so this won't affect our deployment in test files
-  console.log(controller.address, 
-    oracle.address,
-    weth.address,
-    uniswapFactory.address,
-    squeethPoolAddr,
-    hedgeTimeThreshold, 
-    hedgePriceThreshold, 
-    auctionTime, 
-    minPriceMultiplier, 
-    maxPriceMultiplier)
   await deploy("CrabStrategyDeployment", {
     contract: "CrabStrategy",
     from: deployer,
