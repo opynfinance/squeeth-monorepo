@@ -58,7 +58,6 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         uint256 wPowerPerpAmountToBurn;
         uint256 wPowerPerpAmountToBuy;
         uint256 collateralToWithdraw;
-        uint256 collateralToBuyWith;
     }
     struct FlashSellLongWMintData {
         uint256 vaultId;
@@ -70,7 +69,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         address indexed depositor,
         uint256 vaultId,
         uint256 wPowerPerpAmount,
-        uint256 swapedCollateralAmount,
+        uint256 swappedCollateralAmount,
         uint256 collateralAmount
     );
     event FlashWBurn(
@@ -167,30 +166,29 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
      * @param _wPowerPerpAmountToBurn amount of WPowerPerp to burn
      * @param _wPowerPerpAmountToBuy amount of WPowerPerp to buy
      * @param _collateralToWithdraw amount of collateral to withdraw from vault
-     * @param _collateralToBuyWith amount of collateral from vault to use to buy long
+     * @param _maxToPay max amount of collateral to pay for WPowerPerp token
      */
     function flashswapWBurnBuyLong(
         uint256 _vaultId,
         uint256 _wPowerPerpAmountToBurn,
         uint256 _wPowerPerpAmountToBuy,
         uint256 _collateralToWithdraw,
-        uint256 _collateralToBuyWith
+        uint256 _maxToPay
     ) external payable {
-        require(_collateralToBuyWith <= _collateralToWithdraw.add(msg.value), "Not enough collateral");
+        require(_maxToPay <= _collateralToWithdraw.add(msg.value), "Not enough collateral");
 
         _exactOutFlashSwap(
             weth,
             wPowerPerp,
             IUniswapV3Pool(wPowerPerpPool).fee(),
             _wPowerPerpAmountToBurn.add(_wPowerPerpAmountToBuy),
-            _collateralToBuyWith.add(msg.value),
+            _maxToPay,
             uint8(FLASH_SOURCE.FLASH_W_BURN),
             abi.encodePacked(
                 _vaultId,
                 _wPowerPerpAmountToBurn,
                 _wPowerPerpAmountToBuy,
-                _collateralToWithdraw,
-                _collateralToBuyWith.add(msg.value)
+                _collateralToWithdraw
             )
         );
 
