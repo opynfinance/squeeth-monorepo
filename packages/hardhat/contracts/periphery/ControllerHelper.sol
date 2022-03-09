@@ -202,7 +202,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
      * @param _wPowerPerpAmountToMint wPowerPerp amount to mint
      * @param _collateralAmount collateral amount to use for minting
      * @param _wPowerPerpAmountToSell long wPowerPerp amount to sell
-     * @param _minToReceive min ETH amount to receive for selling long wPowerPerp amount
+     * @param _minToReceive min ETH amount to receive for selling long _wPowerPerpAmountToMint+_wPowerPerpAmountToSell
      */
     function flashswapSellLongWMint(
         uint256 _vaultId,
