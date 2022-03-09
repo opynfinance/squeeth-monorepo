@@ -12,6 +12,7 @@ import CrabSteps from '../../../../public/images/CrabSteps.svg'
 import Image from 'next/image'
 import { CrabStrategyChart } from '@components/Charts/CrabStrategyChart'
 import { useETHPrice } from '@hooks/useETHPrice'
+import { useSetProfitableMovePercent } from 'src/state/crab/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -54,7 +55,8 @@ const useStyles = makeStyles((theme) =>
 export const StrategyInfo: React.FC = () => {
   const classes = useStyles()
   const ethPrice = useETHPrice()
-  const { profitableMovePercent } = useCrab()
+  const profitableMovePercent = useSetProfitableMovePercent()
+
   const [profitToggle, setProfitToggle] = React.useState('flat')
 
   return (

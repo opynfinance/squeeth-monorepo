@@ -142,12 +142,7 @@ const PositionsHome = () => {
   // const { address } = useWallet()
   const address = useAtomValue(addressAtom)
 
-  if (address)
-    return (
-      <CrabProvider>
-        <Positions />{' '}
-      </CrabProvider>
-    )
+  if (address) return <Positions />
 
   return <ConnectWallet />
 }

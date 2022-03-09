@@ -90,9 +90,6 @@ export const useSetStrategyData = () => {
       checkPriceHedge(doc?.data()?.lastAuctionTrigger || 0, contract).then(setIsPriceHedgeAvailable)
     }
   }, [contract, getCollatRatioAndLiqPrice, getVault])
-  // useEffect(() => {
-  //   setStrategyData()
-  // }, [setStrategyData])
 
   return setStrategyData
 }

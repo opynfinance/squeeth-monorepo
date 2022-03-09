@@ -45,25 +45,28 @@ export const useHandleTransaction = () => {
   const [networkId] = useAtom(networkIdAtom)
   const { refetch } = useWalletBalance()
 
-  const handleTransaction = (tx: any) => {
-    if (!notify) return
-    tx.on('transactionHash', (hash: string) => {
-      const { emitter } = notify.hash(hash)
-      //have to return the emitter object in last order, or the latter emitter object will replace the previous one
-      //if call getbalance in second order, since it has no return, it will show default notification w/o etherscan link
-      emitter.on('all', () => {
-        refetch()
+  const handleTransaction = useCallback(
+    (tx: any) => {
+      if (!notify) return
+      tx.on('transactionHash', (hash: string) => {
+        const { emitter } = notify.hash(hash)
+        //have to return the emitter object in last order, or the latter emitter object will replace the previous one
+        //if call getbalance in second order, since it has no return, it will show default notification w/o etherscan link
+        emitter.on('all', () => {
+          refetch()
+        })
+        emitter.on('all', (transaction) => {
+          if (networkId === Networks.LOCAL) return
+          return {
+            link: `${EtherscanPrefix[networkId]}${transaction.hash}`,
+          }
+        })
       })
-      emitter.on('all', (transaction) => {
-        if (networkId === Networks.LOCAL) return
-        return {
-          link: `${EtherscanPrefix[networkId]}${transaction.hash}`,
-        }
-      })
-    })
 
-    return tx
-  }
+      return tx
+    },
+    [networkId, notify, refetch],
+  )
 
   return handleTransaction
 }
