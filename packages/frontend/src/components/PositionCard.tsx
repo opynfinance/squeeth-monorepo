@@ -5,7 +5,7 @@ import InfoIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
 import Link from 'next/link'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 
 import { Tooltips } from '@constants/enums'
@@ -468,7 +468,9 @@ const PositionCard: React.FC = () => {
   )
 }
 
-export default PositionCard
+const MemoizedPositionCard = memo(PositionCard)
+
+export default MemoizedPositionCard
 // function getPositionBasedValue(amountOut: BigNumber, buyQuote: BigNumber, arg2: BigNumber) {
 //   throw new Error('Function not implemented.')
 // }
