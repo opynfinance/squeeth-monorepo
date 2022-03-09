@@ -313,6 +313,9 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             })
         );
 
+        // update wPowerPerpAmount & wethAmount to include collect() feees
+        (wethAmount, wPowerPerpAmount) = isWethToken0 ? (amount0, amount1) : (amount1, amount0);
+
         if (wPowerPerpAmount < params.wPowerPerpAmountToBurn) {
             // swap needed wPowerPerp amount to close short position
             // TODO: need to set max slippage here
