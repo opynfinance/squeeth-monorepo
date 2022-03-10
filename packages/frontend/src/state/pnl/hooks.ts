@@ -5,7 +5,6 @@ import { useUpdateAtom } from 'jotai/utils'
 import { useVaultHistoryQuery } from '@hooks/useVaultHistory'
 import { toTokenAmount } from '@utils/calculations'
 import { calcDollarLongUnrealizedpnl, calcDollarShortUnrealizedpnl, calcETHCollateralPnl } from 'src/lib/pnl'
-import { useIndex } from '../controller/hooks'
 import { useComputeSwaps, useFirstValidVault, useSwaps } from '../positions/hooks'
 import {
   buyQuoteAtom,
@@ -22,13 +21,14 @@ import { readyAtom } from '../squeethPool/atoms'
 import { useGetBuyQuote, useGetSellQuote } from '../squeethPool/hooks'
 import { BIG_ZERO } from '@constants/index'
 import { PositionType } from '../../types'
+import { indexAtom } from '../controller/atoms'
 
 export function useEthCollateralPnl() {
   const { vaultId } = useFirstValidVault()
   const vaultHistory = useVaultHistoryQuery(vaultId)
 
   const existingCollat = useAtomValue(existingCollatAtom)
-  const index = useIndex()
+  const index = useAtomValue(indexAtom)
   const [ethCollateralPnl, setEthCollateralPnl] = useAtom(ethCollateralPnlAtom)
   const { data: swapsData } = useSwaps()
 
@@ -90,7 +90,7 @@ export function useShortGain() {
   const [shortGain, setShortGain] = useAtom(shortGainAtom)
   const shortUnrealizedPNL = useAtomValue(shortUnrealizedPNLAtom)
   const existingCollat = useAtomValue(existingCollatAtom)
-  const index = useIndex()
+  const index = useAtomValue(indexAtom)
 
   useEffect(() => {
     if (squeethAmount.isZero() || shortUnrealizedPNL.usd.isZero()) {
@@ -119,7 +119,7 @@ export function useLongUnrealizedPNL() {
   const positionType = useAtomValue(positionTypeAtom)
   const sellQuote = useAtomValue(sellQuoteAtom)
   const [longUnrealizedPNL, setLongUnrealizedPNL] = useAtom(longUnrealizedPNLAtom)
-  const index = useIndex()
+  const index = useAtomValue(indexAtom)
 
   const { data: swapsData } = useSwaps()
   const swaps = swapsData?.swaps
@@ -164,7 +164,7 @@ export function useShortUnrealizedPNL() {
   const buyQuote = useAtomValue(buyQuoteAtom)
   const ethCollateralPnl = useEthCollateralPnl()
   const [shortUnrealizedPNL, setShortUnrealizedPNL] = useAtom(shortUnrealizedPNLAtom)
-  const index = useIndex()
+  const index = useAtomValue(indexAtom)
 
   const { data: swapsData } = useSwaps()
   const swaps = swapsData?.swaps

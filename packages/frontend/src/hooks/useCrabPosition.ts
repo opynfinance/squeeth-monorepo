@@ -2,12 +2,12 @@ import { BIG_ZERO } from '../constants'
 import { useEffect, useMemo, useState } from 'react'
 import { useUserCrabTxHistory } from './useUserCrabTxHistory'
 import { CrabStrategyTxType } from '../types'
-import { useIndex } from 'src/state/controller/hooks'
 import { toTokenAmount } from '@utils/calculations'
 import { crabLoadingAtom, currentEthValueAtom } from 'src/state/crab/atoms'
 import { useAtomValue } from 'jotai'
 import { useTokenBalance } from './contracts/useTokenBalance'
 import { addressesAtom } from 'src/state/positions/atoms'
+import { indexAtom } from 'src/state/controller/atoms'
 
 export const useCrabPosition = (user: string) => {
   const crabLoading = useAtomValue(crabLoadingAtom)
@@ -17,7 +17,7 @@ export const useCrabPosition = (user: string) => {
   const { loading, data } = useUserCrabTxHistory(user)
   const userCrabBalance = useTokenBalance(crabStrategy, 5, 18)
 
-  const index = useIndex()
+  const index = useAtomValue(indexAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
 
   const [minCurrentEth, setMinCurrentEth] = useState(BIG_ZERO)

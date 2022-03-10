@@ -4,11 +4,9 @@ import { SecondaryTabs, SecondaryTab } from '@components/Tabs'
 import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import { TradeSettings } from '@components/TradeSettings'
-import { useCrab } from '@context/crabStrategy'
 import { useRestrictUser } from '@context/restrict-user'
 // import { useWallet } from '@context/wallet'
 import RestrictionInfo from '@components/RestrictionInfo'
-import { useCrabPosition } from '@hooks/useCrabPosition'
 import { CircularProgress } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { toTokenAmount } from '@utils/calculations'
@@ -16,13 +14,10 @@ import BigNumber from 'bignumber.js'
 import React, { useEffect, useMemo, useState } from 'react'
 import CrabPosition from './CrabPosition'
 import { useAtom, useAtomValue } from 'jotai'
-import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
+import { connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useWalletBalance } from 'src/state/wallet/hooks'
 import { BIG_ZERO } from '../../../constants'
-import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
-import { useController } from '@hooks/contracts/useController'
 import { readyAtom } from 'src/state/squeethPool/atoms'
-import { useIndex } from 'src/state/controller/hooks'
 import {
   crabStrategySlippageAtom,
   currentEthValueAtom,
@@ -35,9 +30,8 @@ import {
   useCalculateEthWillingToPay,
   useFlashWithdrawEth,
   useSetStrategyData,
-  useCalculateCurrentValue,
 } from 'src/state/crab/hooks'
-import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from 'src/state/controller/atoms'
+import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -99,7 +93,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
   const calculateEthWillingToPay = useCalculateEthWillingToPay()
   const calculateETHtoBorrowFromUniswap = useCalculateETHtoBorrowFromUniswap()
   const flashDeposit = useFlashDeposit(setStrategyData, calculateETHtoBorrowFromUniswap)
-  const index = useIndex()
+  const index = useAtomValue(indexAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
 
   const ready = useAtomValue(readyAtom)

@@ -1,19 +1,18 @@
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtomValue } from 'jotai'
 import BigNumber from 'bignumber.js'
 
-import { addressAtom, networkIdAtom, web3Atom } from '../wallet/atoms'
-import { OSQUEETH_DECIMALS, SWAP_EVENT_TOPIC, TWAP_PERIOD } from '../../constants'
-import { markAtom, indexAtom, impliedVolAtom, normFactorAtom } from './atoms'
+import { addressAtom } from '../wallet/atoms'
+import { OSQUEETH_DECIMALS, TWAP_PERIOD } from '../../constants'
+import { impliedVolAtom, normFactorAtom } from './atoms'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
 import { INDEX_SCALE } from '../../constants'
 import abi from '../../abis/controller.json'
 import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
-import { useEffect, useCallback } from 'react'
-import { ETH_USDC_POOL, SQUEETH_UNI_POOL } from '@constants/address'
+import { useCallback } from 'react'
 import { useOracle } from '@hooks/contracts/useOracle'
 import useContract from '../../hooks/useContract'
-import { calculateLiquidationPriceForLP, getIndex, getMark, getCurrentImpliedFunding } from './utils'
+import { calculateLiquidationPriceForLP } from './utils'
 import { useGetETHandOSQTHAmount } from '../nftmanager/hooks'
 
 export const useOpenDepositAndMint = () => {
@@ -171,37 +170,6 @@ export const useGetVault = () => {
   )
 
   return getVault
-}
-
-export const useIndex = () => {
-  const address = useAtomValue(addressAtom)
-  const web3 = useAtomValue(web3Atom)
-  const { controller } = useAtomValue(addressesAtom)
-  const networkId = useAtomValue(networkIdAtom)
-  const [index, setIndex] = useAtom(indexAtom)
-  const contract = useContract(controller, abi)
-  useEffect(() => {
-    if (!contract) return
-    getIndex(1, contract).then(setIndex)
-  }, [address])
-
-  // setup index listender
-  useEffect(() => {
-    if (!web3) return
-    const sub = web3.eth.subscribe(
-      'logs',
-      {
-        address: [ETH_USDC_POOL[networkId]],
-        topics: [SWAP_EVENT_TOPIC],
-      },
-      () => {
-        getIndex(3, contract).then(setIndex)
-      },
-    )
-    // return () => sub.unsubscribe()
-  }, [web3, networkId])
-
-  return index
 }
 
 export const useGetDebtAmount = () => {

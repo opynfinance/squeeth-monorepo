@@ -1,15 +1,12 @@
-import { LinkButton, PrimaryButton } from '@components/Button'
-import { PrimaryInput } from '@components/Input/PrimaryInput'
+import { LinkButton } from '@components/Button'
 import Nav from '@components/Nav'
 import CapDetails from '@components/Strategies/Crab/CapDetails'
 import CrabStrategyHistory from '@components/Strategies/Crab/StrategyHistory'
 import StrategyInfo from '@components/Strategies/Crab/StrategyInfo'
 import StrategyInfoItem from '@components/Strategies/StrategyInfoItem'
 // import { useWallet } from '@context/wallet'
-import { CrabProvider, useCrab } from '@context/crabStrategy'
 import { Typography, Tab, Tabs } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import { useController } from '@hooks/contracts/useController'
 import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useMemo, useState } from 'react'
@@ -22,7 +19,6 @@ import CrabTrade from '@components/Strategies/Crab/CrabTrade'
 import { useAtomValue } from 'jotai'
 import { addressAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
-import { useIndex } from 'src/state/controller/hooks'
 import {
   crabStrategyCollatRatioAtom,
   crabStrategyVaultAtom,
@@ -30,7 +26,7 @@ import {
   timeAtLastHedgeAtom,
 } from 'src/state/crab/atoms'
 import { useCalculateCurrentValue, useSetProfitableMovePercent, useSetStrategyData } from 'src/state/crab/hooks'
-import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from 'src/state/controller/atoms'
+import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -115,7 +111,7 @@ const Strategies: React.FC = () => {
   const setStrategyData = useSetStrategyData()
   const calculateCurrentValue = useCalculateCurrentValue()
 
-  const index = useIndex()
+  const index = useAtomValue(indexAtom)
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 

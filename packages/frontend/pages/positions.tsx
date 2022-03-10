@@ -38,7 +38,6 @@ import {
   positionTypeAtom,
 } from 'src/state/positions/atoms'
 import { poolAtom } from 'src/state/squeethPool/atoms'
-import { useIndex } from 'src/state/controller/hooks'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import {
   useBuyAndSellQuote,
@@ -49,6 +48,7 @@ import {
 } from 'src/state/pnl/hooks'
 import { loadingAtom } from 'src/state/pnl/atoms'
 import YourVaults from '@components/Trade/YourVaults'
+import { indexAtom } from 'src/state/controller/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -189,7 +189,7 @@ export function Positions() {
   const lpedSqueeth = useLpDebt()
   const mintedDebt = useMintedDebt()
   const shortDebt = useShortDebt()
-  const index = useIndex()
+  const index = useAtomValue(indexAtom)
   usePositionsAndFeesComputation()
   const {
     depositedEth,

@@ -15,8 +15,8 @@ import { useHandleTransaction } from 'src/state/wallet/hooks'
 import { addressesAtom } from 'src/state/positions/atoms'
 import { readyAtom } from 'src/state/squeethPool/atoms'
 import { useGetBuyQuote, useGetSellQuote } from 'src/state/squeethPool/hooks'
-import { useGetCollatRatioAndLiqPrice, useGetVault, useIndex } from 'src/state/controller/hooks'
-import { currentImpliedFundingAtom } from 'src/state/controller/atoms'
+import { useGetCollatRatioAndLiqPrice, useGetVault } from 'src/state/controller/hooks'
+import { currentImpliedFundingAtom, indexAtom } from 'src/state/controller/atoms'
 
 type CrabStrategyType = {
   loading: boolean
@@ -107,7 +107,7 @@ const CrabProvider: React.FC = ({ children }) => {
   const getVault = useGetVault()
   const getBuyQuote = useGetBuyQuote()
   const getSellQuote = useGetSellQuote()
-  const index = useIndex()
+  const index = useAtomValue(indexAtom)
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 
