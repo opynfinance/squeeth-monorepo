@@ -72,10 +72,9 @@ export const createUniPool = async(
 ): Promise<Contract> => {
   const isTokenAToken0 = parseInt(tokenA.address, 16) < parseInt(tokenB.address, 16)
   // console.log(await tokenA.functions.decimals())
-  // const tokenADecimals = await tokenA.functions.decimals()
-  // const tokenBDecimals = await tokenB.functions.decimals()
-  const tokenADecimals = 18
-  const tokenBDecimals = 6
+  const tokenADecimals = await tokenA.functions.decimals()
+  const tokenBDecimals = await tokenB.functions.decimals()
+ 
 
   let rawPrice = tokenBPriceInA
 
