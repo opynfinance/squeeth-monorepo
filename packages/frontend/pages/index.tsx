@@ -27,14 +27,8 @@ import { useRestrictUser } from '@context/restrict-user'
 
 import { PositionType, TradeType } from '../src/types'
 import { toTokenAmount } from '@utils/calculations'
-import {
-  useCurrentImpliedFunding,
-  useDailyHistoricalFunding,
-  useIndex,
-  useMark,
-  useNormFactor,
-} from 'src/state/controller/hooks'
-import { impliedVolAtom } from 'src/state/controller/atoms'
+import { useCurrentImpliedFunding, useDailyHistoricalFunding, useIndex, useMark } from 'src/state/controller/hooks'
+import { getNormFactorAtom, impliedVolAtom } from 'src/state/controller/atoms'
 import { usePositionsAndFeesComputation } from 'src/state/positions/hooks'
 import { actualTradeTypeAtom, ethTradeAmountAtom, sqthTradeAmountAtom, tradeTypeAtom } from 'src/state/trade/atoms'
 import { positionTypeAtom } from 'src/state/positions/atoms'
@@ -401,7 +395,7 @@ const SqueethInfo: React.FC = () => {
   const index = useIndex()
   const impliedVol = useAtomValue(impliedVolAtom)
   const currentImpliedFunding = useCurrentImpliedFunding()
-  const normFactor = useNormFactor()
+  const normFactor = useAtomValue(normFactorAtom)
   usePositionsAndFeesComputation()
 
   const [showAdvanced, setShowAdvanced] = useState(false)

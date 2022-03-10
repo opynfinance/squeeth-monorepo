@@ -3,14 +3,7 @@ import BigNumber from 'bignumber.js'
 
 import { addressAtom, networkIdAtom, web3Atom } from '../wallet/atoms'
 import { OSQUEETH_DECIMALS, SWAP_EVENT_TOPIC, TWAP_PERIOD } from '../../constants'
-import {
-  markAtom,
-  indexAtom,
-  dailyHistoricalFundingAtom,
-  currentImpliedFundingAtom,
-  impliedVolAtom,
-  normFactorAtom,
-} from './atoms'
+import { markAtom, indexAtom, currentImpliedFundingAtom, impliedVolAtom, normFactorAtom } from './atoms'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
 import { INDEX_SCALE } from '../../constants'
@@ -175,34 +168,6 @@ export const useGetVault = () => {
   )
 
   return getVault
-}
-
-export const useNormFactor = () => {
-  const { controller } = useAtomValue(addressesAtom)
-  const contract = useContract(controller, abi)
-  const [normFactor, setNormFactor] = useAtom(normFactorAtom)
-  useEffect(() => {
-    if (!contract) return
-    contract.methods
-      .getExpectedNormalizationFactor()
-      .call()
-      .then((normFactor: any) => {
-        setNormFactor(toTokenAmount(new BigNumber(normFactor.toString()), 18))
-      })
-      .catch(() => {
-        contract.methods
-          .normalizationFactor()
-          .call()
-          .then((normFactor: any) => {
-            setNormFactor(toTokenAmount(new BigNumber(normFactor.toString()), 18))
-          })
-          .catch(() => {
-            console.log('normFactor error')
-          })
-      })
-  }, [])
-
-  return normFactor
 }
 
 export const useDailyHistoricalFunding = () => {
