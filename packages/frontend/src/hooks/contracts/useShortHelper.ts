@@ -11,11 +11,15 @@ import { addressesAtom } from 'src/state/positions/atoms'
 import { useGetBuyParam, useGetSellParam } from 'src/state/squeethPool/hooks'
 import { normFactorAtom } from 'src/state/controller/atoms'
 import useContract from '@hooks/useContract'
+import { useResetAtom, useUpdateAtom } from 'jotai/utils'
+import { transactionHashAtom } from 'src/state/trade/atoms'
 
 export const useShortHelper = () => {
   const handleTransaction = useHandleTransaction()
   const address = useAtomValue(addressAtom)
   const { shortHelper } = useAtomValue(addressesAtom)
+  const setTxHash = useUpdateAtom(transactionHashAtom)
+  const resetTxHash = useResetAtom(transactionHashAtom)
 
   const getSellParam = useGetSellParam()
   const getBuyParam = useGetBuyParam()
@@ -33,18 +37,21 @@ export const useShortHelper = () => {
   const openShort = async (vaultId: number, amount: BigNumber, collatAmount: BigNumber) => {
     if (!contract || !address) return
 
+    resetTxHash()
     const _exactInputParams = await getSellParam(amount)
     _exactInputParams.recipient = shortHelper
 
     const _amount = fromTokenAmount(amount, OSQUEETH_DECIMALS).multipliedBy(normalizationFactor)
     const ethAmt = fromTokenAmount(collatAmount, 18)
-    const txHash = await handleTransaction(
+    const result = await handleTransaction(
       contract.methods.openShort(vaultId, _amount.toFixed(0), 0, _exactInputParams).send({
         from: address,
         value: ethAmt.toString(), // Already scaled to 14 so multiplied with 10000
       }),
     )
-    return txHash
+
+    setTxHash(result.transactionHash)
+    return result
   }
 
   /**
@@ -56,6 +63,7 @@ export const useShortHelper = () => {
   const closeShort = async (vaultId: number, amount: BigNumber, withdrawAmt: BigNumber) => {
     if (!contract || !address) return
 
+    resetTxHash()
     const _amount = fromTokenAmount(amount, OSQUEETH_DECIMALS)
     const _withdrawAmt = fromTokenAmount(withdrawAmt.isPositive() ? withdrawAmt : 0, WETH_DECIMALS)
     const _exactOutputParams = await getBuyParam(amount)
@@ -63,13 +71,15 @@ export const useShortHelper = () => {
     _exactOutputParams.recipient = shortHelper
 
     // _burnSqueethAmount and _withdrawAmount will be same as we are putting 1:1 collat now
-    const txHash = await handleTransaction(
+    const result = await handleTransaction(
       contract.methods.closeShort(vaultId, _amount.toString(), _withdrawAmt.toFixed(0), _exactOutputParams).send({
         from: address,
         value: _exactOutputParams.amountInMaximum,
       }),
     )
-    return txHash
+
+    setTxHash(result.transactionHash)
+    return result
   }
 
   return {
