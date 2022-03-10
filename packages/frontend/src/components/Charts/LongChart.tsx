@@ -12,8 +12,8 @@ import {
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
-import { useAtom } from 'jotai'
-import React, { useEffect, useMemo, useState } from 'react'
+import { atom, useAtom, useAtomValue } from 'jotai'
+import React, { useMemo, memo } from 'react'
 
 import ComparisonChart from '../../../public/images/ComparisonChart.svg'
 import { graphOptions } from '../../constants/diagram'
@@ -99,9 +99,20 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-export function LongChart() {
-  const [mode, setMode] = useState<ChartType>(ChartType.PNL)
-  const [tradeType, setTradeType] = useState(0)
+const chartTradeTypeAtom = atom(0)
+
+const modeAtom = atom<ChartType>((get) => {
+  const tradeType = get(chartTradeTypeAtom)
+
+  if (tradeType === 0) return ChartType.PNL
+  else if (tradeType === 1) return ChartType.Payoff
+  else if (tradeType === 2) return ChartType.Funding
+  else if (tradeType === 3) return ChartType.Risks
+
+  return ChartType.PNL
+})
+
+function LongChart() {
   const classes = useStyles()
   const ethPrice = useETHPrice()
   const longEthPNL = useLongEthPNL()
@@ -109,17 +120,8 @@ export function LongChart() {
   const positionSizeSeries = usePositionSizePercentageseries()
   const [days, setDays] = useAtom(daysAtom)
   const squeethIsLive = useSqueethIsLive()
-
-  useEffect(() => {
-    if (tradeType === 0) setMode(ChartType.PNL)
-    // else if (tradeType === 1) setMode(ChartType.Price)
-    // else if (tradeType === 1) setMode(ChartType.Funding)
-    else if (tradeType === 1) setMode(ChartType.Payoff)
-    // else if (tradeType === 3) setMode(ChartType.Comparison)
-    // else if (tradeType === 2) setMode(ChartType.Details)
-    else if (tradeType === 2) setMode(ChartType.Funding)
-    else if (tradeType === 3) setMode(ChartType.Risks)
-  }, [tradeType])
+  const mode = useAtomValue(modeAtom)
+  const [tradeType, setTradeType] = useAtom(chartTradeTypeAtom)
 
   // plot line data
   const lineSeries = useMemo(() => {
@@ -144,7 +146,7 @@ export function LongChart() {
       ]
     if (mode === ChartType.PositionSize) return [{ data: positionSizeSeries, legend: 'Position Size' }]
     return []
-  }, [longEthPNL, longSeries, mode, positionSizeSeries, squeethIsLive])
+  }, [longEthPNL?.length, longSeries?.length, mode, positionSizeSeries?.length, squeethIsLive])
 
   const chartOptions = useMemo(() => {
     // if (mode === ChartType.Funding || mode === ChartType.PositionSize)
@@ -172,7 +174,7 @@ export function LongChart() {
 
   const endTimestamp = useMemo(
     () => (longSeries && longSeries.length > 0 ? longSeries[longSeries.length - 1].time : 0),
-    [longSeries],
+    [longSeries?.length],
   )
 
   return (
@@ -342,6 +344,10 @@ export function LongChart() {
     </>
   )
 }
+
+const LongChartMemoized = memo(LongChart)
+
+export { LongChartMemoized as LongChart }
 
 // const convertPNLToPriceChart = (pnlSeries: { time: number; value: number }[], startingCapital: number) => {
 //   return pnlSeries.map(({ value, time }) => {
