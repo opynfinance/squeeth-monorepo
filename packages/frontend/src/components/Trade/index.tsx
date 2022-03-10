@@ -3,15 +3,13 @@ import React from 'react'
 
 // import { useWallet } from '@context/wallet'
 // import { usePositions } from '@context/positions'
-import { TradeType, PositionType } from '../../types'
-import { toTokenAmount } from '@utils/calculations'
+import { TradeType } from '../../types'
 import { SecondaryTab, SecondaryTabs } from '../Tabs'
 import Long from './Long'
 import Short from './Short'
-import { useWalletBalance } from 'src/state/wallet/hooks'
-import { BIG_ZERO } from '@constants/index'
-import { openPositionAtom, tradeTypeAtom } from 'src/state/trade/atoms'
+import { ethTradeAmountAtom, openPositionAtom, sqthTradeAmountAtom, tradeTypeAtom } from 'src/state/trade/atoms'
 import { useAtom, useAtomValue } from 'jotai'
+import { useResetAtom } from 'jotai/utils'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -34,13 +32,21 @@ const useStyles = makeStyles((theme) =>
       zIndex: 20,
       background: '#2A2D2E',
     },
+    displayBlock: {
+      display: 'block',
+    },
+    displayNone: {
+      display: 'none',
+    },
   }),
 )
 
 const Trade: React.FC = () => {
   const classes = useStyles()
 
-  const { data: balance } = useWalletBalance()
+  // const { data: balance } = useWalletBalance()
+  const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
+  const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
   const tradeType = useAtomValue(tradeTypeAtom)
   const [openPosition, setOpenPosition] = useAtom(openPositionAtom)
 
@@ -53,7 +59,11 @@ const Trade: React.FC = () => {
       {
         <SecondaryTabs
           value={openPosition}
-          onChange={(evt, val) => setOpenPosition(val)}
+          onChange={(evt, val) => {
+            resetEthTradeAmount()
+            resetSqthTradeAmount()
+            setOpenPosition(val)
+          }}
           aria-label="simple tabs example"
           centered
           variant="fullWidth"
@@ -64,19 +74,21 @@ const Trade: React.FC = () => {
         </SecondaryTabs>
       }
       <div>
-        {tradeType === TradeType.LONG ? (
+        <div className={tradeType === TradeType.LONG ? classes.displayBlock : classes.displayNone}>
           <Long
-            balance={Number(toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4))}
+            // balance={Number(toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4))}
             open={openPosition === 0}
-            closeTitle="Sell squeeth ERC20 to get ETH"
+            // closeTitle="Sell squeeth ERC20 to get ETH"
           />
-        ) : (
+        </div>
+
+        <div className={tradeType !== TradeType.LONG ? classes.displayBlock : classes.displayNone}>
           <Short
-            balance={Number(toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4))}
+            // balance={Number(toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4))}
             open={openPosition === 0}
-            closeTitle="Buy back oSQTH & close position"
+            // closeTitle="Buy back oSQTH & close position"
           />
-        )}
+        </div>
       </div>
     </div>
   )

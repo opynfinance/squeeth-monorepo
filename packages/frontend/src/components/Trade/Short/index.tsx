@@ -25,9 +25,9 @@ import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
 import TradeDetails from '@components/Trade/TradeDetails'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import UniswapData from '@components/Trade/UniswapData'
-import { MIN_COLLATERAL_AMOUNT } from '../../../constants'
+import { BIG_ZERO, MIN_COLLATERAL_AMOUNT } from '../../../constants'
 import { connectedWalletAtom } from 'src/state/wallet/atoms'
-import { useSelectWallet } from 'src/state/wallet/hooks'
+import { useSelectWallet, useWalletBalance } from 'src/state/wallet/hooks'
 import { addressesAtom, existingCollatPercentAtom, isLongAtom, vaultAtom } from 'src/state/positions/atoms'
 import { useAtom, useAtomValue } from 'jotai'
 import { useETHPrice } from '@hooks/useETHPrice'
@@ -50,7 +50,9 @@ import {
   tradeCompletedAtom,
   tradeSuccessAtom,
   tradeTypeAtom,
+  transactionHashAtom,
 } from 'src/state/trade/atoms'
+import { toTokenAmount } from '@utils/calculations'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -188,10 +190,16 @@ const useStyles = makeStyles((theme) =>
       marginLeft: 0,
       marginRight: 0,
     },
+    displayBlock: {
+      display: 'block',
+    },
+    displayNone: {
+      display: 'none',
+    },
   }),
 )
 
-const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
+const OpenShort: React.FC<SellType> = ({ open }) => {
   const [collateralInput, setCollateralInput] = useState('0')
   const [collatPercent, setCollatPercent] = useState(150)
   const [existingCollat, setExistingCollat] = useState(new BigNumber(0))
@@ -199,17 +207,23 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   const [isVaultApproved, setIsVaultApproved] = useState(true)
   const [shortLoading, setShortLoading] = useState(false)
   const [buyLoading, setBuyLoading] = useState(false)
-  const [confirmed, setConfirmed] = useState(false)
+  // const [confirmed, setConfirmed] = useState(false)
   const [liqPrice, setLiqPrice] = useState(new BigNumber(0))
-  const [txHash, setTxHash] = useState('')
+  // const [txHash, setTxHash] = useState('')
   const [withdrawCollat, setWithdrawCollat] = useState(new BigNumber(0))
   const [neededCollat, setNeededCollat] = useState(new BigNumber(0))
+
+  const txHash = useAtomValue(transactionHashAtom)
+  const resetTxHash = useResetAtom(transactionHashAtom)
+  const confirmed = Boolean(txHash)
 
   const classes = useStyles()
   const { openShort } = useShortHelper()
 
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const getSellQuote = useGetSellQuote()
+  const { data } = useWalletBalance()
+  const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
 
   // const { selectWallet, connected } = useWallet()
   const connected = useAtomValue(connectedWalletAtom)
@@ -255,11 +269,6 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
 
   const existingCollatPercent = useAtomValue(existingCollatPercentAtom)
 
-  const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
-  useEffect(() => {
-    resetSqthTradeAmount()
-  }, [])
-
   useEffect(() => {
     if (!open) return
     const debt = collateral.times(100).dividedBy(new BigNumber(collatPercent))
@@ -280,10 +289,10 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
         await updateOperator(vaultId, shortHelper)
         setIsVaultApproved(true)
       } else {
-        const confirmedHash = await openShort(vaultId, amount, collateral)
-        setConfirmed(true)
+        await openShort(vaultId, amount, collateral)
+        // setConfirmed(true)
         setConfirmedAmount(amount.toFixed(6).toString())
-        setTxHash(confirmedHash.transactionHash)
+        // setTxHash(confirmedHash.transactionHash)
         setTradeSuccess(true)
         setTradeCompleted(true)
       }
@@ -359,7 +368,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   }, [tradeSuccess, tradeType])
 
   return (
-    <div>
+    <div className={open ? classes.displayBlock : classes.displayNone}>
       {!confirmed ? (
         <div>
           <div className={classes.settingsContainer}>
@@ -560,7 +569,10 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
           <div className={classes.buttonDiv}>
             <PrimaryButton
               variant="contained"
-              onClick={() => setConfirmed(false)}
+              onClick={() => {
+                resetTxHash()
+                // setConfirmed(false)
+              }}
               className={classes.amountInput}
               style={{ width: '300px' }}
             >
@@ -573,7 +585,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   )
 }
 
-const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
+const CloseShort: React.FC<SellType> = ({ open }) => {
   const [collateral, setCollateral] = useState(new BigNumber(0))
   const [confirmedAmount, setConfirmedAmount] = useState('')
   const [collatPercent, setCollatPercent] = useState(200)
@@ -581,11 +593,15 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   const [isVaultApproved, setIsVaultApproved] = useState(true)
   const [finalShortAmount, setFinalShortAmount] = useState(new BigNumber(0))
   const [buyLoading, setBuyLoading] = useState(false)
-  const [confirmed, setConfirmed] = useState(false)
-  const [txHash, setTxHash] = useState('')
+  // const [confirmed, setConfirmed] = useState(false)
+  // const [txHash, setTxHash] = useState('')
   const [withdrawCollat, setWithdrawCollat] = useState(new BigNumber(0))
   const [neededCollat, setNeededCollat] = useState(new BigNumber(0))
   const [closeType, setCloseType] = useState(CloseType.FULL)
+
+  const txHash = useAtomValue(transactionHashAtom)
+  const resetTxHash = useResetAtom(transactionHashAtom)
+  const confirmed = Boolean(txHash)
 
   const classes = useStyles()
   const { closeShort } = useShortHelper()
@@ -611,6 +627,8 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   const slippageAmount = useAtomValue(slippageAmountAtom)
   const tradeType = useAtomValue(tradeTypeAtom)
   const amount = new BigNumber(amountInputValue)
+  const { data } = useWalletBalance()
+  const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
 
   const { loading: isPositionFinishedCalc } = useLPPositionsQuery()
   const { vaults: shortVaults } = useVaultManager()
@@ -618,10 +636,10 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   const setCollatRatio = useUpdateAtom(collatRatioAtom)
   const ethPrice = useETHPrice()
 
-  const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
-  useEffect(() => {
-    resetSqthTradeAmount()
-  }, [])
+  // const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
+  // useEffect(() => {
+  //   resetSqthTradeAmount()
+  // }, [])
 
   useEffect(() => {
     getBuyQuote(amount, slippageAmount).then(setSellCloseQuote)
@@ -683,10 +701,10 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
         const restOfShort = new BigNumber(vault?.shortAmount ?? new BigNumber(0)).minus(amount)
         const _debt: BigNumber = await getDebtAmount(new BigNumber(restOfShort))
         const neededCollat = _debt.times(collatPercent / 100)
-        const confirmedHash = await closeShort(vaultId, amount, _collat.minus(neededCollat))
-        setConfirmed(true)
+        await closeShort(vaultId, amount, _collat.minus(neededCollat))
+        // setConfirmed(true)
         setConfirmedAmount(amount.toFixed(6).toString())
-        setTxHash(confirmedHash.transactionHash)
+        // setTxHash(confirmedHash.transactionHash)
         setTradeSuccess(true)
         setTradeCompleted(true)
       }
@@ -780,12 +798,12 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
   }
 
   return (
-    <div>
+    <div className={!open ? classes.displayBlock : classes.displayNone}>
       {!confirmed ? (
         <div>
           <div className={classes.settingsContainer}>
             <Typography variant="caption" className={classes.explainer} component="div">
-              {closeTitle}
+              Buy back oSQTH & close position
             </Typography>
             <span className={classes.settingsButton}>
               <TradeSettings />
@@ -1002,7 +1020,10 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
           <div className={classes.buttonDiv}>
             <PrimaryButton
               variant="contained"
-              onClick={() => setConfirmed(false)}
+              onClick={() => {
+                resetTxHash()
+                // setConfirmed(false)
+              }}
               className={classes.amountInput}
               style={{ width: '300px' }}
             >
@@ -1016,31 +1037,16 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle }) => {
 }
 
 type SellType = {
-  balance: number
   open: boolean
-  closeTitle: string
 }
 
-const Short: React.FC<SellType> = ({ balance, open, closeTitle }) => {
-  // const handleCloseDualInputUpdate = (v: number | string, currentInput: string) => {
-  //   if (isNaN(+v) || +v === 0) v = 0
-  //   if (currentInput === 'ETH') {
-  //     setAltTradeAmount(new BigNumber(v))
-  //     getBuyQuoteForETH(new BigNumber(v)).then((val) => {
-  //       setAmount(val.amountOut)
-  //     })
-  //   } else {
-  //     setAmount(new BigNumber(v))
-  //     getBuyQuote(new BigNumber(v)).then((val) => {
-  //       setAltTradeAmount(val.amountIn)
-  //     })
-  //   }
-  // }
+const Short: React.FC<SellType> = ({ open }) => {
+  return (
+    <>
+      <OpenShort open={open} />
 
-  return open ? (
-    <OpenShort balance={balance} open={open} closeTitle={closeTitle} />
-  ) : (
-    <CloseShort balance={balance} open={open} closeTitle={closeTitle} />
+      <CloseShort open={open} />
+    </>
   )
 }
 

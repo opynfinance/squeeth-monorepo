@@ -4,7 +4,7 @@ import BigNumber from 'bignumber.js'
 import React, { useCallback, useEffect, useState } from 'react'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
 
-import { Links } from '../../../constants'
+import { BIG_ZERO, Links } from '../../../constants'
 import { useUserAllowance } from '@hooks/contracts/useAllowance'
 import { PrimaryButton } from '@components/Button'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
@@ -14,7 +14,7 @@ import Confirmed, { ConfirmType } from '../Confirmed'
 import TradeInfoItem from '../TradeInfoItem'
 import UniswapData from '../UniswapData'
 import { connectedWalletAtom } from 'src/state/wallet/atoms'
-import { useSelectWallet } from 'src/state/wallet/hooks'
+import { useSelectWallet, useWalletBalance } from 'src/state/wallet/hooks'
 import { useAtom, useAtomValue } from 'jotai'
 import { addressesAtom, isShortAtom } from 'src/state/positions/atoms'
 import { useETHPrice } from '@hooks/useETHPrice'
@@ -38,7 +38,9 @@ import {
   sqthTradeAmountAtom,
   tradeCompletedAtom,
   tradeSuccessAtom,
+  transactionHashAtom,
 } from 'src/state/trade/atoms'
+import { toTokenAmount } from '@utils/calculations'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -230,15 +232,23 @@ const useStyles = makeStyles((theme) =>
       justifyContent: 'right',
       alignSelf: 'center',
     },
+    displayBlock: {
+      display: 'block',
+    },
+    displayNone: {
+      display: 'none',
+    },
   }),
 )
 
-const OpenLong: React.FC<BuyProps> = ({ balance, activeStep = 0 }) => {
+const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   const [buyLoading, setBuyLoading] = useState(false)
-  const [confirmed, setConfirmed] = useState(false)
-  const [txHash, setTxHash] = useState('')
+  // const [confirmed, setConfirmed] = useState(false)
+  // const [txHash, setTxHash] = useState('')
   const getBuyQuoteForETH = useGetBuyQuoteForETH()
   const getBuyQuote = useGetBuyQuote()
+  const { data } = useWalletBalance()
+  const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
 
   const classes = useStyles()
   const buyAndRefund = useBuyAndRefund()
@@ -248,6 +258,10 @@ const OpenLong: React.FC<BuyProps> = ({ balance, activeStep = 0 }) => {
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
   const slippageAmount = useAtomValue(slippageAmountAtom)
   const ethPrice = useETHPrice()
+
+  const txHash = useAtomValue(transactionHashAtom)
+  const resetTxHash = useResetAtom(transactionHashAtom)
+  const confirmed = Boolean(txHash)
 
   const connected = useAtomValue(connectedWalletAtom)
   const isShort = useAtomValue(isShortAtom)
@@ -266,11 +280,6 @@ const OpenLong: React.FC<BuyProps> = ({ balance, activeStep = 0 }) => {
   const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
   const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
-
-  useEffect(() => {
-    resetEthTradeAmount()
-    resetSqthTradeAmount()
-  }, [])
 
   useEffect(() => {
     getBuyQuoteForETH(new BigNumber(sqthTradeAmount), slippageAmount).then((val) => {
@@ -330,9 +339,9 @@ const OpenLong: React.FC<BuyProps> = ({ balance, activeStep = 0 }) => {
   const transact = async () => {
     setBuyLoading(true)
     try {
-      const confirmedHash = await buyAndRefund(new BigNumber(ethTradeAmount))
-      setConfirmed(true)
-      setTxHash(confirmedHash.transactionHash)
+      await buyAndRefund(new BigNumber(ethTradeAmount))
+      // setConfirmed(true)
+      // setTxHash(confirmedHash.transactionHash)
       setTradeSuccess(true)
       setTradeCompleted(true)
 
@@ -345,7 +354,7 @@ const OpenLong: React.FC<BuyProps> = ({ balance, activeStep = 0 }) => {
   }
 
   return (
-    <div>
+    <div className={open ? classes.displayBlock : classes.displayNone}>
       {!confirmed ? (
         <div>
           {activeStep === 0 ? (
@@ -509,7 +518,10 @@ const OpenLong: React.FC<BuyProps> = ({ balance, activeStep = 0 }) => {
           <div className={classes.buttonDiv}>
             <PrimaryButton
               variant="contained"
-              onClick={() => setConfirmed(false)}
+              onClick={() => {
+                resetTxHash()
+                // setConfirmed(false)
+              }}
               className={classes.amountInput}
               style={{ width: '300px' }}
             >
@@ -522,10 +534,10 @@ const OpenLong: React.FC<BuyProps> = ({ balance, activeStep = 0 }) => {
   )
 }
 
-const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
+const CloseLong: React.FC<BuyProps> = ({ open }) => {
   const [sellLoading, setSellLoading] = useState(false)
-  const [confirmed, setConfirmed] = useState(false)
-  const [txHash, setTxHash] = useState('')
+  // const [confirmed, setConfirmed] = useState(false)
+  // const [txHash, setTxHash] = useState('')
   const [hasJustApprovedSqueeth, setHasJustApprovedSqueeth] = useState(false)
 
   const classes = useStyles()
@@ -534,6 +546,8 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const getSellQuoteForETH = useGetSellQuoteForETH()
   const getSellQuote = useGetSellQuote()
+  const { data } = useWalletBalance()
+  const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
 
   const [confirmedAmount, setConfirmedAmount] = useAtom(confirmedAmountAtom)
   const [inputQuoteLoading, setInputQuoteLoading] = useAtom(inputQuoteLoadingAtom)
@@ -548,6 +562,10 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
   const altTradeAmount = new BigNumber(ethTradeAmount)
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter)
 
+  const txHash = useAtomValue(transactionHashAtom)
+  const resetTxHash = useResetAtom(transactionHashAtom)
+  const confirmed = Boolean(txHash)
+
   const connected = useAtomValue(connectedWalletAtom)
   const selectWallet = useSelectWallet()
 
@@ -557,11 +575,6 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
 
   const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
   const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
-
-  useEffect(() => {
-    resetEthTradeAmount()
-    resetSqthTradeAmount()
-  }, [])
 
   useEffect(() => {
     //if it's insufficient amount them set it to it's maximum
@@ -606,9 +619,9 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
         await squeethApprove()
         setHasJustApprovedSqueeth(true)
       } else {
-        const confirmedHash = await sell(amount)
-        setConfirmed(true)
-        setTxHash(confirmedHash.transactionHash)
+        await sell(amount)
+        // setConfirmed(true)
+        // setTxHash(confirmedHash.transactionHash)
         setTradeSuccess(true)
         setTradeCompleted(true)
 
@@ -649,12 +662,12 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
   }
 
   return (
-    <div>
+    <div className={!open ? classes.displayBlock : classes.displayNone}>
       {!confirmed ? (
         <div>
           <div className={classes.settingsContainer}>
             <Typography variant="caption" className={classes.explainer} component="div">
-              {closeTitle}
+              Sell squeeth ERC20 to get ETH
             </Typography>
             <span className={classes.settingsButton}>
               <TradeSettings />
@@ -788,7 +801,10 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
           <div className={classes.buttonDiv}>
             <PrimaryButton
               variant="contained"
-              onClick={() => setConfirmed(false)}
+              onClick={() => {
+                resetTxHash()
+                // setConfirmed(false)
+              }}
               className={classes.amountInput}
               style={{ width: '300px' }}
             >
@@ -802,26 +818,21 @@ const CloseLong: React.FC<BuyProps> = ({ balance, open, closeTitle }) => {
 }
 
 type BuyProps = {
-  balance: number
+  // balance: number
   open: boolean
-  closeTitle: string
+  // closeTitle: string
   isLPage?: boolean
   activeStep?: number
   // setTradeCompleted?: any
 }
 
-const Long: React.FC<BuyProps> = ({
-  balance,
-  open,
-  closeTitle,
-  // setTradeCompleted,
-  isLPage = false,
-  activeStep = 0,
-}) => {
-  return open ? (
-    <OpenLong balance={balance} open={open} closeTitle={closeTitle} isLPage={isLPage} activeStep={activeStep} />
-  ) : (
-    <CloseLong balance={balance} open={open} closeTitle={closeTitle} isLPage={isLPage} activeStep={activeStep} />
+const Long: React.FC<BuyProps> = ({ open, isLPage = false, activeStep = 0 }) => {
+  return (
+    <>
+      <OpenLong open={open} isLPage={isLPage} activeStep={activeStep} />
+
+      <CloseLong open={open} isLPage={isLPage} activeStep={activeStep} />
+    </>
   )
 }
 
