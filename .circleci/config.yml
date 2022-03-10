@@ -1,4 +1,8 @@
 version: 2.1
+parameters:
+  infura-key:
+    type: string
+    default: ""
 orbs:
   coveralls: coveralls/coveralls@1.0.6
   node: circleci/node@1.1.6
@@ -24,6 +28,9 @@ workflows:
           requires:
             - compile
       - deploy-test:
+          requires:
+            - compile
+      - e2e-test:
           requires:
             - compile
 
@@ -119,6 +126,8 @@ jobs:
     working_directory:  ~/squeeth/packages/hardhat
     docker:
       - image: circleci/node:16.6.0
+    environment:
+      INFURA_KEY: << pipeline.parameters.infura-key >>
     steps:
       - restore_cache:
           key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
