@@ -2,14 +2,12 @@ import { atom } from 'jotai'
 import { BIG_ZERO } from '@constants/index'
 import BigNumber from 'bignumber.js'
 import { toTokenAmount } from '@utils/calculations'
-import { web3Atom } from '../wallet/atoms'
+import { networkIdAtom, web3Atom } from '../wallet/atoms'
 import { getContract } from '@utils/getContract'
 import abi from '../../abis/controller.json'
 import { addressesAtom } from '../positions/atoms'
-import { getCurrentImpliedFunding, getDailyHistoricalFunding } from './utils'
-
-export const markAtom = atom(BIG_ZERO)
-export const indexAtom = atom(BIG_ZERO)
+import { getCurrentImpliedFunding, getDailyHistoricalFunding, getIndex, getMark } from './utils'
+import { SWAP_EVENT_TOPIC } from '../../constants'
 
 export const impliedVolAtom = atom((get) => {
   const mark = get(markAtom)
@@ -94,4 +92,37 @@ export const currentImpliedFundingAtom = atom(
 
 currentImpliedFundingAtom.onMount = (fetchCurrentImpliedFunding) => {
   fetchCurrentImpliedFunding()
+}
+const markResultAtom = atom(BIG_ZERO)
+export const markAtom = atom(
+  (get) => get(markResultAtom),
+  (_get, set) => {
+    const fetchData = async () => {
+      const contract = _get(controllerContractAtom)
+      const web3 = _get(web3Atom)
+      const networkId = _get(networkIdAtom)
+      try {
+        const response = await getMark(1, contract)
+        set(markResultAtom, response)
+
+        web3.eth.subscribe(
+          'logs',
+          {
+            address: [SQUEETH_UNI_POOL[networkId]],
+            topics: [SWAP_EVENT_TOPIC],
+          },
+          () => {
+            getMark(3, contract).then((mark) => set(markResultAtom, mark))
+          },
+        )
+      } catch (error) {
+        set(markResultAtom, BIG_ZERO)
+      }
+    }
+    fetchData()
+  },
+)
+
+markAtom.onMount = (fetchMark) => {
+  fetchMark()
 }

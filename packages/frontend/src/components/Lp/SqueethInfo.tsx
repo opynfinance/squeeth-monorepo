@@ -6,14 +6,12 @@ import React from 'react'
 import { useAtomValue } from 'jotai'
 
 import { Tooltips } from '@constants/enums'
-import { useController } from '@hooks/contracts/useController'
-import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { toTokenAmount } from '@utils/calculations'
 import LPPosition from './LPPosition'
 import { addressAtom } from '../../state/wallet/atoms'
 import { useGetWSqueethPositionValue, useGetWSqueethPositionValueInETH } from 'src/state/squeethPool/hooks'
-import { useIndex, useMark } from 'src/state/controller/hooks'
-import { impliedVolAtom } from 'src/state/controller/atoms'
+import { useIndex } from 'src/state/controller/hooks'
+import { impliedVolAtom, markAtom } from 'src/state/controller/atoms'
 // import { useWallet } from '@context/wallet'
 
 const useStyles = makeStyles((theme) =>
@@ -52,7 +50,7 @@ const useStyles = makeStyles((theme) =>
 
 const SqueethInfo: React.FC = () => {
   const classes = useStyles()
-  const mark = useMark()
+  const mark = useAtomValue(markAtom)
   const index = useIndex()
   const impliedVol = useAtomValue(impliedVolAtom)
   const getWSqueethPositionValue = useGetWSqueethPositionValue()

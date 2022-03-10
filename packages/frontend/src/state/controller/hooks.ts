@@ -3,7 +3,7 @@ import BigNumber from 'bignumber.js'
 
 import { addressAtom, networkIdAtom, web3Atom } from '../wallet/atoms'
 import { OSQUEETH_DECIMALS, SWAP_EVENT_TOPIC, TWAP_PERIOD } from '../../constants'
-import { markAtom, indexAtom, currentImpliedFundingAtom, impliedVolAtom, normFactorAtom } from './atoms'
+import { markAtom, indexAtom, impliedVolAtom, normFactorAtom } from './atoms'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
 import { INDEX_SCALE } from '../../constants'
@@ -171,39 +171,6 @@ export const useGetVault = () => {
   )
 
   return getVault
-}
-
-export const useMark = () => {
-  const address = useAtomValue(addressAtom)
-  const { controller } = useAtomValue(addressesAtom)
-  const web3 = useAtomValue(web3Atom)
-  const networkId = useAtomValue(networkIdAtom)
-  const [mark, setMark] = useAtom(markAtom)
-  const contract = useContract(controller, abi)
-
-  useEffect(() => {
-    if (!contract) return
-    getMark(1, contract).then(setMark)
-  }, [address])
-
-  // setup mark listener
-  useEffect(() => {
-    if (!web3) return
-    const sub = web3.eth.subscribe(
-      'logs',
-      {
-        address: [SQUEETH_UNI_POOL[networkId]],
-        topics: [SWAP_EVENT_TOPIC],
-      },
-      () => {
-        getMark(3, contract).then(setMark)
-      },
-    )
-    // cleanup function
-    // return () => sub.unsubscribe()
-  }, [networkId, web3])
-
-  return mark
 }
 
 export const useIndex = () => {
