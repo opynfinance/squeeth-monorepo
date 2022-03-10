@@ -101,7 +101,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         uint256 liquidityPercentage; // percentage of liquidity to burn in LP position in decimals with 18 precision(e.g 60% = 0.6 = 6e17)
         uint256 wPowerPerpAmountToBurn; // amount of wPowerPerp to burn in vault
         uint256 collateralToWithdraw; // amount of ETH collateral to withdraw from vault
-        uint256 minOut; // minimum amount of ETH to receive when selling wPowerPerp
+        uint256 limitPriceEthPerPowerPerp; // price limit for swapping between wPowerPerp and ETH (ETH per 1 wPowerPerp)
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
     }
@@ -350,24 +350,30 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         INonfungiblePositionManager.DecreaseLiquidityParams memory decreaseParams = INonfungiblePositionManager
             .DecreaseLiquidityParams({
                 tokenId: params.tokenId,
-                liquidity: liquidity,
+                liquidity: uint128(uint256(liquidity).mul(params.liquidityPercentage).div(1e18)),
                 amount0Min: params.amount0Min,
                 amount1Min: params.amount1Min,
                 deadline: block.timestamp
             });
+        INonfungiblePositionManager(nonfungiblePositionManager).decreaseLiquidity(decreaseParams);
+
         uint256 wethAmount;
         uint256 wPowerPerpAmount;
         (isWethToken0)
-            ? (wethAmount, wPowerPerpAmount) = INonfungiblePositionManager(nonfungiblePositionManager)
-                .decreaseLiquidity(decreaseParams)
-            : (wPowerPerpAmount, wethAmount) = INonfungiblePositionManager(nonfungiblePositionManager)
-            .decreaseLiquidity(decreaseParams);
-        (uint256 amount0, uint256 amount1) = INonfungiblePositionManager(nonfungiblePositionManager).collect(
+            ? (wethAmount, wPowerPerpAmount) = INonfungiblePositionManager(nonfungiblePositionManager).collect(
+                INonfungiblePositionManager.CollectParams({
+                    tokenId: params.tokenId,
+                    recipient: address(this),
+                    amount0Max: type(uint128).max,
+                    amount1Max: type(uint128).max
+                })
+            )
+            : (wPowerPerpAmount, wethAmount) = INonfungiblePositionManager(nonfungiblePositionManager).collect(
             INonfungiblePositionManager.CollectParams({
                 tokenId: params.tokenId,
                 recipient: address(this),
-                amount0Max: isWethToken0 ? uint128(wethAmount) : uint128(wPowerPerpAmount),
-                amount1Max: isWethToken0 ? uint128(wPowerPerpAmount) : uint128(wethAmount)
+                amount0Max: type(uint128).max,
+                amount1Max: type(uint128).max
             })
         );
 
@@ -379,7 +385,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 wPowerPerp,
                 IUniswapV3Pool(wPowerPerpPool).fee(),
                 params.wPowerPerpAmountToBurn.sub(wPowerPerpAmount),
-                IWETH9(weth).balanceOf(address(this)),
+                params.limitPriceEthPerPowerPerp.mul(params.wPowerPerpAmountToBurn.sub(wPowerPerpAmount)).div(1e18),
                 uint8(CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP),
                 ""
             );
@@ -397,13 +403,14 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 params.collateralToWithdraw
             );
 
-            if (wPowerPerpAmount.sub(params.wPowerPerpAmountToBurn) > 0) {
+            uint256 wPowerPerpExcess = wPowerPerpAmount.sub(params.wPowerPerpAmountToBurn);
+            if (wPowerPerpExcess > 0) {
                 _exactInFlashSwap(
                     wPowerPerp,
                     weth,
                     IUniswapV3Pool(wPowerPerpPool).fee(),
-                    wPowerPerpAmount.sub(params.wPowerPerpAmountToBurn),
-                    params.minOut,
+                    wPowerPerpExcess,
+                    params.limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18),
                     uint8(CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
                     ""
                 );
@@ -421,6 +428,9 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
      * @param _wPowerPerpAmount amount of WPowerPerp token to mint
      * @param _collateralToMint collateral to use for minting
      * @param _collateralToLP collateral to use for LPing
+     * @param _amount0Min minimum amount of asset0 in LP
+     * @param _amount1Min minimum amount of asset1 in LP
+     * @param _deadline LP position timestamp deadline
      * @param _lowerTick LP lower tick
      * @param _upperTick LP upper tick
      */
@@ -457,11 +467,16 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             _upperTick
         );
 
+        uint256 remainingWPowerPerp = IWPowerPerp(wPowerPerp).balanceOf(address(this));
+        if (remainingWPowerPerp > 0) {
+            IController(controller).burnWPowerPerpAmount(vaultId, remainingWPowerPerp, 0);
+        }
+        // in case _collateralToLP > amount needed to LP, withdraw excess ETH
+        INonfungiblePositionManager(nonfungiblePositionManager).refundETH();
+        // if openeded new vault, transfer vault NFT to user
         if (_vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), msg.sender, vaultId);
 
         payable(msg.sender).sendValue(address(this).balance);
-
-        IWPowerPerp(wPowerPerp).transfer(msg.sender, IWPowerPerp(wPowerPerp).balanceOf(address(this)));
 
         emit BatchMintLp(msg.sender, _vaultId, _wPowerPerpAmount, _collateralToMint, _collateralToLP);
     }
