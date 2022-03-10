@@ -13,13 +13,7 @@ import { useEffect, useCallback } from 'react'
 import { ETH_USDC_POOL, SQUEETH_UNI_POOL } from '@constants/address'
 import { useOracle } from '@hooks/contracts/useOracle'
 import useContract from '../../hooks/useContract'
-import {
-  calculateLiquidationPriceForLP,
-  getIndex,
-  getMark,
-  getDailyHistoricalFunding,
-  getCurrentImpliedFunding,
-} from './utils'
+import { calculateLiquidationPriceForLP, getIndex, getMark, getCurrentImpliedFunding } from './utils'
 import { useGetETHandOSQTHAmount } from '../nftmanager/hooks'
 
 export const useOpenDepositAndMint = () => {
@@ -109,17 +103,20 @@ export const useBurnAndRedeem = () => {
    * @param collatAmount - Amount of collat to remove
    * @returns
    */
-  const burnAndRedeem = (vaultId: number, amount: BigNumber, collatAmount: BigNumber) => {
-    if (!contract || !address) return
+  const burnAndRedeem = useCallback(
+    (vaultId: number, amount: BigNumber, collatAmount: BigNumber) => {
+      if (!contract || !address) return
 
-    const _amount = fromTokenAmount(amount, OSQUEETH_DECIMALS)
-    const ethAmt = fromTokenAmount(collatAmount, 18)
-    return handleTransaction(
-      contract.methods.burnWPowerPerpAmount(vaultId, _amount.toFixed(0), ethAmt.toFixed(0)).send({
-        from: address,
-      }),
-    )
-  }
+      const _amount = fromTokenAmount(amount, OSQUEETH_DECIMALS)
+      const ethAmt = fromTokenAmount(collatAmount, 18)
+      return handleTransaction(
+        contract.methods.burnWPowerPerpAmount(vaultId, _amount.toFixed(0), ethAmt.toFixed(0)).send({
+          from: address,
+        }),
+      )
+    },
+    [contract, address],
+  )
   return burnAndRedeem
 }
 
@@ -133,15 +130,18 @@ export const useUpdateOperator = () => {
    * @param vaultId
    * @param operator
    */
-  const updateOperator = async (vaultId: number, operator: string) => {
-    if (!contract || !address) return
+  const updateOperator = useCallback(
+    async (vaultId: number, operator: string) => {
+      if (!contract || !address) return
 
-    await handleTransaction(
-      contract.methods.updateOperator(vaultId, operator).send({
-        from: address,
-      }),
-    )
-  }
+      await handleTransaction(
+        contract.methods.updateOperator(vaultId, operator).send({
+          from: address,
+        }),
+      )
+    },
+    [contract, address],
+  )
 
   return updateOperator
 }
@@ -168,19 +168,6 @@ export const useGetVault = () => {
   )
 
   return getVault
-}
-
-export const useDailyHistoricalFunding = () => {
-  const address = useAtomValue(addressAtom)
-  const { controller } = useAtomValue(addressesAtom)
-  const [dailyHistoricalFunding, setDailyHistoricalFunding] = useAtom(dailyHistoricalFundingAtom)
-  const contract = useContract(controller, abi)
-  useEffect(() => {
-    if (!contract) return
-    getDailyHistoricalFunding(contract).then(setDailyHistoricalFunding)
-  }, [address])
-
-  return dailyHistoricalFunding
 }
 
 export const useCurrentImpliedFunding = () => {

@@ -22,7 +22,7 @@ import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
 import { useGetShortAmountFromDebt, useOpenDepositAndMint } from 'src/state/controller/hooks'
 import { useFirstValidVault } from 'src/state/positions/hooks'
-import { getNormFactorAtom } from 'src/state/controller/atoms'
+import { normFactorAtom } from 'src/state/controller/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({

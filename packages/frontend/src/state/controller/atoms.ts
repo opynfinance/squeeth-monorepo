@@ -6,10 +6,10 @@ import { web3Atom } from '../wallet/atoms'
 import { getContract } from '@utils/getContract'
 import abi from '../../abis/controller.json'
 import { addressesAtom } from '../positions/atoms'
+import { getDailyHistoricalFunding } from './utils'
 
 export const markAtom = atom(BIG_ZERO)
 export const indexAtom = atom(BIG_ZERO)
-export const dailyHistoricalFundingAtom = atom({ period: 0, funding: 0 })
 export const currentImpliedFundingAtom = atom(0)
 
 export const impliedVolAtom = atom((get) => {
@@ -23,9 +23,9 @@ export const impliedVolAtom = atom((get) => {
   return Math.sqrt(currentImpliedFunding * 365)
 })
 
-const normFactorAtom = atom(new BigNumber(1))
-export const getNormFactorAtom = atom(
-  (get) => get(normFactorAtom),
+const normFactorResultAtom = atom(new BigNumber(1))
+export const normFactorAtom = atom(
+  (get) => get(normFactorResultAtom),
   (_get, set) => {
     const fetchData = async () => {
       const web3 = _get(web3Atom)
@@ -33,13 +33,13 @@ export const getNormFactorAtom = atom(
       const contract = getContract(web3, controller, abi)
       try {
         const response = await contract.methods.getExpectedNormalizationFactor().call()
-        set(normFactorAtom, toTokenAmount(new BigNumber(response.toString()), 18))
+        set(normFactorResultAtom, toTokenAmount(new BigNumber(response.toString()), 18))
       } catch (error) {
         try {
           const data = await contract.methods.normalizationFactor().call()
-          set(normFactorAtom, toTokenAmount(new BigNumber(data.toString()), 18))
+          set(normFactorResultAtom, toTokenAmount(new BigNumber(data.toString()), 18))
         } catch (error) {
-          set(normFactorAtom, new BigNumber(1))
+          set(normFactorResultAtom, new BigNumber(1))
           console.log('normFactor error')
         }
       }
@@ -47,6 +47,29 @@ export const getNormFactorAtom = atom(
     fetchData()
   },
 )
-getNormFactorAtom.onMount = (runFetch) => {
+normFactorAtom.onMount = (runFetch) => {
   runFetch()
+}
+
+const dailyHistoricalFundingResult = atom({ period: 0, funding: 0 })
+export const dailyHistoricalFundingAtom = atom(
+  (get) => get(dailyHistoricalFundingResult),
+  (_get, set) => {
+    const fetchData = async () => {
+      const web3 = _get(web3Atom)
+      const { controller } = _get(addressesAtom)
+      const contract = getContract(web3, controller, abi)
+      try {
+        const response = await getDailyHistoricalFunding(contract)
+        set(dailyHistoricalFundingResult, response)
+      } catch (error) {
+        set(dailyHistoricalFundingResult, { period: 0, funding: 0 })
+      }
+    }
+    fetchData()
+  },
+)
+
+dailyHistoricalFundingAtom.onMount = (fetchDailyHistoricalFunding) => {
+  fetchDailyHistoricalFunding()
 }

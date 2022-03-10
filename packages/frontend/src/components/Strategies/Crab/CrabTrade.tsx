@@ -22,7 +22,7 @@ import { BIG_ZERO } from '../../../constants'
 import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useController } from '@hooks/contracts/useController'
 import { readyAtom } from 'src/state/squeethPool/atoms'
-import { useCurrentImpliedFunding, useDailyHistoricalFunding, useIndex } from 'src/state/controller/hooks'
+import { useCurrentImpliedFunding, useIndex } from 'src/state/controller/hooks'
 import {
   crabStrategySlippageAtom,
   currentEthValueAtom,
@@ -37,6 +37,7 @@ import {
   useSetStrategyData,
   useCalculateCurrentValue,
 } from 'src/state/crab/hooks'
+import { dailyHistoricalFundingAtom } from 'src/state/controller/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -104,7 +105,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
   const ready = useAtomValue(readyAtom)
   const { isRestricted } = useRestrictUser()
 
-  const dailyHistoricalFunding = useDailyHistoricalFunding()
+  const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const currentImpliedFunding = useCurrentImpliedFunding()
 
   useEffect(() => {
