@@ -120,7 +120,7 @@ const WorldProvider: React.FC = ({ children }) => {
 
   const { oSqueeth } = useAddresses()
   const ethPrice = useETHPrice(10)
-  const oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
+  const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
   return (
     <worldContext.Provider

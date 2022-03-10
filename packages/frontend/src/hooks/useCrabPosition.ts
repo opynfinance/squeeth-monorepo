@@ -11,6 +11,8 @@ export const useCrabPosition = (user: string) => {
 
   const [minCurrentEth, setMinCurrentEth] = useState(BIG_ZERO)
   const [minCurrentUsd, setMinCurrentUsd] = useState(BIG_ZERO)
+  const [minPnlUsd, setMinPnlUsd] = useState(BIG_ZERO)
+  const [minPnL, setMinPnL] = useState(BIG_ZERO)
 
   const { depositedEth, usdAmount: depositedUsd } = useMemo(() => {
     if (loading || !data) return { depositedEth: BIG_ZERO, usdAmount: BIG_ZERO }
@@ -52,15 +54,15 @@ export const useCrabPosition = (user: string) => {
   ])
 
   const calculateCurrentValue = async () => {
-    setMinCurrentEth(currentEthValue)
-    setMinCurrentUsd(currentEthValue.times(ethIndexPrice))
-  }
-
-  const { minPnL, minPnlUsd } = useMemo(() => {
+    const minCurrentUsd = currentEthValue.times(ethIndexPrice)
     const minPnlUsd = minCurrentUsd.minus(depositedUsd)
-    const minPnL = minPnlUsd.div(depositedUsd).times(100)
-    return { minPnlUsd, minPnL }
-  }, [depositedUsd.toString(), minCurrentUsd.toString()])
+
+    setMinCurrentEth(currentEthValue)
+    setMinCurrentUsd(minCurrentUsd)
+
+    setMinPnlUsd(minPnlUsd)
+    setMinPnL(minPnlUsd.div(depositedUsd).times(100))
+  }
 
   return {
     depositedEth,
