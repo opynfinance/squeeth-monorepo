@@ -4,7 +4,7 @@ import { Contract, BigNumber, providers, constants } from "ethers";
 import BigNumberJs from 'bignumber.js'
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
-import { WETH9, MockErc20, ShortPowerPerp, Controller, Oracle, WPowerPerp, ControllerHelper } from "../../../typechain";
+import { WETH9, MockErc20, ShortPowerPerp, Controller, Oracle, WPowerPerp, ControllerHelper, INonfungiblePositionManager} from "../../../typechain";
 import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addWethDaiLiquidity, addSqueethLiquidity } from '../../setup'
 import { isSimilar, wmul, wdiv, one, oracleScaleFactor, getNow } from "../../utils"
 
@@ -68,12 +68,9 @@ describe("Controller helper integration test", function () {
     shortSqueeth = squeethDeployments.shortSqueeth
     wSqueethPool = squeethDeployments.wsqueethEthPool
     ethDaiPool = squeethDeployments.ethDaiPool
-
-    await controller.connect(owner).setFeeRecipient(feeRecipient.address);
-    await controller.connect(owner).setFeeRate(0)
     
     const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper");
-    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, shortSqueeth.address, wSqueethPool.address, wSqueeth.address, weth.address, swapRouter.address, uniswapFactory.address)) as ControllerHelper;
+    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, shortSqueeth.address, wSqueethPool.address, wSqueeth.address, weth.address, swapRouter.address, positionManager.address, uniswapFactory.address)) as ControllerHelper;
   })
 
   this.beforeAll("Seed pool liquidity", async() => {
@@ -106,7 +103,7 @@ describe("Controller helper integration test", function () {
 
   describe("Mint short with flash deposit", async () => {
     it("flash mint", async () => {      
-      const normFactor = await controller.normalizationFactor()
+      const normFactor = await controller.getExpectedNormalizationFactor()
       const mintWSqueethAmount = ethers.utils.parseUnits('10')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
       const ethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 420, true)
@@ -165,6 +162,40 @@ describe("Controller helper integration test", function () {
       expect(vaultAfter.shortAmount.eq(BigNumber.from(0))).to.be.true
       expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
       expect(longBalanceAfter.sub(longBalanceBefore).eq(squeethToBuy)).to.be.true
+    })
+  })
+
+  describe("Batch mint and LP", async () => {
+    it("Batch mint and LP", async () => {
+      const vaultId = (await shortSqueeth.nextId());
+
+      const normFactor = await controller.getExpectedNormalizationFactor()
+      const mintWSqueethAmount = ethers.utils.parseUnits('15')
+      const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
+      const ethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 420, true)
+      const scaledEthPrice = ethPrice.div(10000)
+      const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
+      const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
+      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
+      const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
+      const vaultBefore = await controller.vaults(vaultId)
+      const tokenIndexBefore = await (positionManager as INonfungiblePositionManager).totalSupply();
+
+      await controllerHelper.connect(depositor).batchMintLp(0, mintWSqueethAmount, collateralAmount, collateralToLp, 0, 0, Math.floor(await getNow(ethers.provider) + 8640000), -887220, 887220, {value: collateralAmount.add(collateralToLp)});
+
+      const vaultAfter = await controller.vaults(vaultId)
+      const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
+      const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
+      const ownerOfUniNFT = await (positionManager as INonfungiblePositionManager).ownerOf(tokenId); 
+      const position = await (positionManager as INonfungiblePositionManager).positions(tokenId)
+
+      expect(position.tickLower === -887220).to.be.true
+      expect(position.tickUpper === 887220).to.be.true
+      expect(ownerOfUniNFT === depositor.address).to.be.true
+      expect(tokenIndexAfter.sub(tokenIndexBefore).eq(BigNumber.from(1))).to.be.true
+      expect(vaultBefore.shortAmount.eq(BigNumber.from(0))).to.be.true
+      expect(vaultBefore.collateralAmount.eq(BigNumber.from(0))).to.be.true
+      expect(vaultAfter.collateralAmount.eq(collateralAmount)).to.be.true
     })
   })
 })
