@@ -27,7 +27,6 @@ import {
   useGetWSqueethPositionValue,
   useSell,
 } from 'src/state/squeethPool/hooks'
-import { useCurrentImpliedFunding } from 'src/state/controller/hooks'
 import { useComputeSwaps, useLongSqthBal, useShortDebt } from 'src/state/positions/hooks'
 import {
   confirmedAmountAtom,
@@ -41,7 +40,7 @@ import {
   transactionHashAtom,
 } from 'src/state/trade/atoms'
 import { toTokenAmount } from '@utils/calculations'
-import { dailyHistoricalFundingAtom } from 'src/state/controller/atoms'
+import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from 'src/state/controller/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -270,7 +269,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   const { squeethAmount } = useComputeSwaps()
   const longSqthBal = useLongSqthBal()
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
-  const currentImpliedFunding = useCurrentImpliedFunding()
+  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 
   const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)

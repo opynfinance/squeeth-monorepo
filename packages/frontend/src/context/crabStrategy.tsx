@@ -9,18 +9,14 @@ import abi from '../abis/crabStrategy.json'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import db from '@utils/firestore'
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtomValue } from 'jotai'
 import { addressAtom, networkIdAtom, web3Atom } from 'src/state/wallet/atoms'
 import { useHandleTransaction } from 'src/state/wallet/hooks'
 import { addressesAtom } from 'src/state/positions/atoms'
 import { readyAtom } from 'src/state/squeethPool/atoms'
 import { useGetBuyQuote, useGetSellQuote } from 'src/state/squeethPool/hooks'
-import {
-  useCurrentImpliedFunding,
-  useGetCollatRatioAndLiqPrice,
-  useGetVault,
-  useIndex,
-} from 'src/state/controller/hooks'
+import { useGetCollatRatioAndLiqPrice, useGetVault, useIndex } from 'src/state/controller/hooks'
+import { currentImpliedFundingAtom } from 'src/state/controller/atoms'
 
 type CrabStrategyType = {
   loading: boolean
@@ -113,7 +109,7 @@ const CrabProvider: React.FC = ({ children }) => {
   const getSellQuote = useGetSellQuote()
   const index = useIndex()
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
-  const currentImpliedFunding = useCurrentImpliedFunding()
+  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 
   const [contract, setContract] = useState<Contract>()
   const [maxCap, setMaxCap] = useState<BigNumber>(new BigNumber(0))

@@ -6,11 +6,10 @@ import { web3Atom } from '../wallet/atoms'
 import { getContract } from '@utils/getContract'
 import abi from '../../abis/controller.json'
 import { addressesAtom } from '../positions/atoms'
-import { getDailyHistoricalFunding } from './utils'
+import { getCurrentImpliedFunding, getDailyHistoricalFunding } from './utils'
 
 export const markAtom = atom(BIG_ZERO)
 export const indexAtom = atom(BIG_ZERO)
-export const currentImpliedFundingAtom = atom(0)
 
 export const impliedVolAtom = atom((get) => {
   const mark = get(markAtom)
@@ -72,4 +71,27 @@ export const dailyHistoricalFundingAtom = atom(
 
 dailyHistoricalFundingAtom.onMount = (fetchDailyHistoricalFunding) => {
   fetchDailyHistoricalFunding()
+}
+
+const currentImpliedFundingResult = atom(0)
+export const currentImpliedFundingAtom = atom(
+  (get) => get(currentImpliedFundingResult),
+  (_get, set) => {
+    const fetchData = async () => {
+      const web3 = _get(web3Atom)
+      const { controller } = _get(addressesAtom)
+      const contract = getContract(web3, controller, abi)
+      try {
+        const response = await getCurrentImpliedFunding(contract)
+        set(currentImpliedFundingResult, response)
+      } catch (error) {
+        set(currentImpliedFundingResult, 0)
+      }
+    }
+    fetchData()
+  },
+)
+
+currentImpliedFundingAtom.onMount = (fetchCurrentImpliedFunding) => {
+  fetchCurrentImpliedFunding()
 }

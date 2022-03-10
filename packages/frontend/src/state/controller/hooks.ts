@@ -78,16 +78,19 @@ export const useWithdrawCollateral = () => {
    * @param collatAmount
    * @returns
    */
-  const withdrawCollateral = (vaultId: number, collatAmount: BigNumber) => {
-    if (!contract || !address) return
+  const withdrawCollateral = useCallback(
+    (vaultId: number, collatAmount: BigNumber) => {
+      if (!contract || !address) return
 
-    const ethAmt = fromTokenAmount(collatAmount, 18)
-    return handleTransaction(
-      contract.methods.withdraw(vaultId, ethAmt.toFixed(0)).send({
-        from: address,
-      }),
-    )
-  }
+      const ethAmt = fromTokenAmount(collatAmount, 18)
+      return handleTransaction(
+        contract.methods.withdraw(vaultId, ethAmt.toFixed(0)).send({
+          from: address,
+        }),
+      )
+    },
+    [address, contract],
+  )
 
   return withdrawCollateral
 }
@@ -168,19 +171,6 @@ export const useGetVault = () => {
   )
 
   return getVault
-}
-
-export const useCurrentImpliedFunding = () => {
-  const address = useAtomValue(addressAtom)
-  const { controller } = useAtomValue(addressesAtom)
-  const [currentImpliedFunding, setCurrentImpliedFunding] = useAtom(currentImpliedFundingAtom)
-  const contract = useContract(controller, abi)
-  useEffect(() => {
-    if (!contract) return
-    getCurrentImpliedFunding(contract).then(setCurrentImpliedFunding)
-  }, [address])
-
-  return currentImpliedFunding
 }
 
 export const useMark = () => {
@@ -379,16 +369,3 @@ export const useWithdrawUniPositionToken = () => {
   }
   return withdrawUniPositionToken
 }
-
-// export const useImpliedVol = () => {
-//   const mark = useMark()
-//   const index = useIndex()
-//   const currentImpliedFunding = useCurrentImpliedFunding()
-//   return useMemo(() => {
-//     if (mark.isZero()) return 0
-//     if (mark.lt(index)) return 0
-//     if (currentImpliedFunding < 0) return 0
-
-//     return Math.sqrt(currentImpliedFunding * 365)
-//   }, [mark, currentImpliedFunding, index])
-// }

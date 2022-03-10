@@ -22,7 +22,7 @@ import CrabTrade from '@components/Strategies/Crab/CrabTrade'
 import { useAtomValue } from 'jotai'
 import { addressAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
-import { useCurrentImpliedFunding, useIndex } from 'src/state/controller/hooks'
+import { useIndex } from 'src/state/controller/hooks'
 import {
   crabStrategyCollatRatioAtom,
   crabStrategyVaultAtom,
@@ -30,7 +30,7 @@ import {
   timeAtLastHedgeAtom,
 } from 'src/state/crab/atoms'
 import { useCalculateCurrentValue, useSetProfitableMovePercent, useSetStrategyData } from 'src/state/crab/hooks'
-import { dailyHistoricalFundingAtom } from 'src/state/controller/atoms'
+import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from 'src/state/controller/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -117,7 +117,7 @@ const Strategies: React.FC = () => {
 
   const index = useIndex()
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
-  const currentImpliedFunding = useCurrentImpliedFunding()
+  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 
   const address = useAtomValue(addressAtom)
   const selectWallet = useSelectWallet()
