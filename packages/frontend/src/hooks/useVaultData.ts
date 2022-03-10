@@ -30,7 +30,6 @@ export const useVaultData = (vid: number) => {
     const _vault = await getVault(vid)
 
     if (!_vault) return
-    console.log(_vault.collateralAmount.toString())
 
     setVault(_vault)
     setExistingCollat(_vault.collateralAmount)

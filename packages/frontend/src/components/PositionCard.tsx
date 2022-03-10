@@ -286,9 +286,14 @@ const PositionCard: React.FC = () => {
       }
       if (_postTradeAmt.gt(0)) _postPosition = PositionType.LONG
     } else if (actualTradeType === TradeType.SHORT && positionType !== PositionType.LONG) {
-      if (isOpenPosition) _postTradeAmt = squeethAmount.isGreaterThan(0) ? squeethAmount.plus(tradeAmount) : tradeAmount
-      else _postTradeAmt = squeethAmount.isGreaterThan(0) ? squeethAmount.minus(tradeAmount) : new BigNumber(0)
-      if (_postTradeAmt.gt(0)) _postPosition = PositionType.SHORT
+      if (isOpenPosition) {
+        _postTradeAmt = squeethAmount.isGreaterThan(0) ? squeethAmount.plus(tradeAmount) : tradeAmount
+      } else {
+        _postTradeAmt = squeethAmount.isGreaterThan(0) ? squeethAmount.minus(tradeAmount) : new BigNumber(0)
+      }
+      if (_postTradeAmt.gt(0)) {
+        _postPosition = PositionType.SHORT
+      }
     }
 
     setPostTradeAmt(_postTradeAmt)

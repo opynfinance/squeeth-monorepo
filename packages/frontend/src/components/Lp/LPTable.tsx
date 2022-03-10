@@ -118,10 +118,6 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
   const networkId = useAtomValue(networkIdAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)
 
-  useEffect(() => {
-    console.log(activePositions)
-  }, [activePositions.length])
-
   return (
     <TableContainer component={Paper} className={isLPage ? classes.isLPageTableContainer : classes.tableContainer}>
       {isLPage ? (
