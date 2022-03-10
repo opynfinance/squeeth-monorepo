@@ -244,9 +244,9 @@ const GetSqueeth: React.FC = () => {
         {lpState.obtainMethod === OBTAIN_METHOD.BUY ? (
           <Long
             isLPage
-            balance={Number(toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4))}
+            // balance={Number(toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4))}
             open={true}
-            closeTitle="Sell squeeth ERC20"
+            // closeTitle="Sell squeeth ERC20"
           />
         ) : (
           <Mint />
