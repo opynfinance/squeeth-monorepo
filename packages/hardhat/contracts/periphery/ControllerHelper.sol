@@ -226,6 +226,9 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
      * @param _wPowerPerpAmount amount of WPowerPerp token to mint
      * @param _collateralToMint collateral to use for minting
      * @param _collateralToLP collateral to use for LPing
+     * @param _amount0Min minimum amount of asset0 in LP
+     * @param _amount1Min minimum amount of asset1 in LP
+     * @param _deadline LP position timestamp deadline
      * @param _lowerTick LP lower tick
      * @param _upperTick LP upper tick
      */
@@ -266,15 +269,17 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
 
         INonfungiblePositionManager(nonfungiblePositionManager).mint{value: _collateralToLP}(params);
 
-        if (_vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), msg.sender, vaultId);
-        if (address(this).balance > 0) {
-            payable(msg.sender).sendValue(address(this).balance);
-        }
         uint256 remainingWPowerPerp = IWPowerPerp(wPowerPerp).balanceOf(address(this));
         if (remainingWPowerPerp > 0) {
-            IWPowerPerp(wPowerPerp).transfer(msg.sender, remainingWPowerPerp);
+            IController(controller).burnWPowerPerpAmount(vaultId, remainingWPowerPerp, 0);
         }
-
+        // in case _collateralToLP > amount needed to LP, withdraw excess ETH
+        INonfungiblePositionManager(nonfungiblePositionManager).refundETH();
+        // if openeded new vault, transfer vault NFT to user
+        if (_vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), msg.sender, vaultId);
+        
+        payable(msg.sender).sendValue(address(this).balance);
+       
         emit BatchMintLp(msg.sender, _vaultId, _wPowerPerpAmount, _collateralToMint, _collateralToLP);
     }
 
