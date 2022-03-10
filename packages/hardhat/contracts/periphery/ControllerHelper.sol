@@ -80,7 +80,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         uint256 liquidityPercentage;    // percentage of liquidity to burn in LP position in decimals with 18 precision(e.g 60% = 0.6 = 6e17)
         uint256 wPowerPerpAmountToBurn; // amount of wPowerPerp to burn in vault
         uint256 collateralToWithdraw; // amount of ETH collateral to withdraw from vault
-        uint256 minEthPerWPowerPerp; // minimum ETH to accept per 1 wPowerPerp to use for slippage check when selling excess
+        uint256 limitPriceEthPerPowerPerp;  // price limit for swapping between wPowerPerp and ETH (ETH per 1 wPowerPerp)
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
     }
@@ -323,13 +323,12 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
 
         if (wPowerPerpAmount < params.wPowerPerpAmountToBurn) {
             // swap needed wPowerPerp amount to close short position
-            // TODO: need to set max slippage here
             _exactOutFlashSwap(
                 weth,
                 wPowerPerp,
                 IUniswapV3Pool(wPowerPerpPool).fee(),
                 params.wPowerPerpAmountToBurn.sub(wPowerPerpAmount),
-                IWETH9(weth).balanceOf(address(this)),
+                params.limitPriceEthPerPowerPerp.mul(params.wPowerPerpAmountToBurn.sub(wPowerPerpAmount)).div(1e18),
                 uint8(FLASH_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP),
                 ""
             );
@@ -348,13 +347,15 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             );
 
             uint256 wPowerPerpExcess = wPowerPerpAmount.sub(params.wPowerPerpAmountToBurn);
+            console.log("wPowerPerpExcess", wPowerPerpExcess);
+            console.log("params.limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18)", params.limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18));
             if (wPowerPerpExcess > 0) {
                 _exactInFlashSwap(
                     wPowerPerp,
                     weth,
                     IUniswapV3Pool(wPowerPerpPool).fee(),
                     wPowerPerpExcess,
-                    params.minEthPerWPowerPerp.mul(wPowerPerpExcess).div(1e18),
+                    params.limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18),
                     uint8(FLASH_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
                     ""
                 );

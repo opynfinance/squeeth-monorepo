@@ -343,7 +343,8 @@ describe("Controller helper integration test", function () {
       const wethAmountInLP = (isWethToken0) ? amount0 : amount1;
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
       const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
-      const minEthPerWPowerPerp = squeethPrice;
+      const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
+      const limitPriceEthPerPowerPerp = squeethPrice.mul(one.add(slippage)).div(one);
 
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address);
       await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controllerHelper.address, tokenId); 
@@ -353,7 +354,7 @@ describe("Controller helper integration test", function () {
         liquidityPercentage: BigNumber.from(1).mul(BigNumber.from(10).pow(18)),
         wPowerPerpAmountToBurn: mintWSqueethAmount, 
         collateralToWithdraw: vaultBefore.collateralAmount, 
-        minEthPerWPowerPerp,
+        limitPriceEthPerPowerPerp,
         amount0Min: BigNumber.from(0), 
         amount1Min:BigNumber.from(0)
       })
@@ -381,7 +382,7 @@ describe("Controller helper integration test", function () {
     })
   })
 
-  describe("Close second position with user wallet NFT from 1st short: remove 100% liquidity LP wPowerPerp amount is more than vault short amount", async () => {
+  describe("Close second position with user wallet NFT from 1st short: (remove 100% liquidity) LP wPowerPerp amount is more than vault short amount", async () => {
     let tokenId: BigNumber;
     let mintWSqueethAmount: BigNumber;
 
@@ -457,7 +458,7 @@ describe("Controller helper integration test", function () {
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
       const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
       const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
-      const minEthPerWPowerPerp = squeethPrice.mul(one.sub(slippage)).div(one);
+      const limitPriceEthPerPowerPerp = squeethPrice.mul(one.sub(slippage)).div(one);
 
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address);
       await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controllerHelper.address, tokenId); 
@@ -467,7 +468,7 @@ describe("Controller helper integration test", function () {
         liquidityPercentage: BigNumber.from(1).mul(BigNumber.from(10).pow(18)),
         wPowerPerpAmountToBurn: mintWSqueethAmount, 
         collateralToWithdraw: vaultBefore.collateralAmount, 
-        minEthPerWPowerPerp, 
+        limitPriceEthPerPowerPerp, 
         amount0Min: BigNumber.from(0), 
         amount1Min:BigNumber.from(0)
       })
@@ -495,7 +496,7 @@ describe("Controller helper integration test", function () {
     })
   })
 
-  describe("Close second position with user wallet NFT from 1st short: remove 50% liquidity LP wPowerPerp amount is more than vault short amount", async () => {
+  describe("Close second position with user wallet NFT from 1st short: (remove 60% liquidity) LP wPowerPerp amount is more than vault short amount", async () => {
     let tokenId: BigNumber;
     let mintWSqueethAmount: BigNumber;
 
@@ -567,17 +568,17 @@ describe("Controller helper integration test", function () {
       })
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
       const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
-      const minEthPerWPowerPerp = squeethPrice.mul(one.sub(slippage)).div(one);
+      const limitPriceEthPerPowerPerp = squeethPrice.mul(one.sub(slippage)).div(one);
 
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address);
       await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controllerHelper.address, tokenId); 
       await controllerHelper.connect(depositor).closeShortWithUserNft({
         vaultId, 
         tokenId,
-        liquidityPercentage: BigNumber.from(5).mul(BigNumber.from(10).pow(17)),
+        liquidityPercentage: BigNumber.from(6).mul(BigNumber.from(10).pow(17)),
         wPowerPerpAmountToBurn: mintWSqueethAmount, 
         collateralToWithdraw: vaultBefore.collateralAmount, 
-        minEthPerWPowerPerp, 
+        limitPriceEthPerPowerPerp, 
         amount0Min: BigNumber.from(0), 
         amount1Min:BigNumber.from(0)
       })
