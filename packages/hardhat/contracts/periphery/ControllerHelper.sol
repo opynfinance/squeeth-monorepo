@@ -53,12 +53,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         FLASHLOAN_CLOSE_VAULT_LP_NFT
     }
 
-    /// @dev enum to differentiate between uniswap swap callback function source
-    enum FLASH_SOURCE {
-        FLASH_W_MINT,
-        FLASH_W_BURN
-    }
-
     address public immutable controller;
     address public immutable oracle;
     address public immutable shortPowerPerp;
@@ -107,7 +101,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         uint256 liquidityPercentage; // percentage of liquidity to burn in LP position in decimals with 18 precision(e.g 60% = 0.6 = 6e17)
         uint256 wPowerPerpAmountToBurn; // amount of wPowerPerp to burn in vault
         uint256 collateralToWithdraw; // amount of ETH collateral to withdraw from vault
-        uint256 limitPriceEthPerPowerPerp; // price limit for swapping between wPowerPerp and ETH (ETH per 1 wPowerPerp)
+        uint256 minOut; // minimum amount of ETH to receive when selling wPowerPerp
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
     }
@@ -171,10 +165,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         uint256 collateralToMint,
         uint256 collateralToLP
     );
-
-    event FlashWBurn(address indexed withdrawer, uint256 vaultId, uint256 wPowerPerpAmount, uint256 collateralAmount, uint256 wPowerPerpBought);    
-
-    event FlashWBurn(address indexed withdrawer, uint256 vaultId, uint256 wPowerPerpAmount, uint256 collateralAmount, uint256 wPowerPerpBought);    
 
     constructor(
         address _controller,
@@ -848,46 +838,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
 
             IWETH9(weth).transfer(wPowerPerpPool, _amountToPay);
         }
-        else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_W_BURN) {
-            FlashWBurnData memory data = abi.decode(_callData, (FlashWBurnData));
 
-            IController(controller).burnWPowerPerpAmount(
-                data.vaultId,
-                data.wPowerPerpAmount,
-                data.collateralToWithdraw
-            );
-
-            IWETH9(weth).deposit{value: data.collateralToWithdraw}();
-            IWETH9(weth).transfer(wPowerPerpPool, _amountToPay);
-            IWPowerPerp(wPowerPerp).transfer(_caller, data.wPowerPerpAmountToBuy);
-
-            if (address(this).balance > 0) {
-                payable(_caller).sendValue(address(this).balance);
-            }
-        }
-        else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_SELL_LONG_W_MINT) {
-            FlashSellLongWMintData memory data = abi.decode(_callData, (FlashSellLongWMintData));
-
-            // convert WETH to ETH as Uniswap uses WETH
-            IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
-
-            uint256 vaultId = IController(controller).mintWPowerPerpAmount{value: data.collateralAmount}(
-                data.vaultId,
-                data.wPowerPerpAmount,
-                0
-            );
-
-            IWPowerPerp(wPowerPerp).transfer(wPowerPerpPool, _amountToPay);
-
-            if (address(this).balance > 0) {
-                payable(_caller).sendValue(address(this).balance);
-            }
-            // this is a newly open vault, transfer to the user
-            if (data.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), _caller, vaultId);
-        } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.SWAP) {
-            // this is to handle the swap() callback, calling swap() from this contract will only work with wPowerPerpPool
-            IERC20Detailed(_tokenIn).transfer(wPowerPerpPool, _amountToPay);
-        }
+        payable(_caller).sendValue(address(this).balance);
     }
 
     /**
