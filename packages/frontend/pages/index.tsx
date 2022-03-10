@@ -7,7 +7,7 @@ import InfoIcon from '@material-ui/icons/InfoOutlined'
 import ExpandLessIcon from '@material-ui/icons/NavigateBefore'
 import ExpandMoreIcon from '@material-ui/icons/NavigateNext'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 
 import squeethTokenSymbol from '../public/images/Squeeth.svg'
@@ -25,7 +25,7 @@ import { Vaults } from '../src/constants'
 import { Tooltips } from '@constants/enums'
 import { useRestrictUser } from '@context/restrict-user'
 
-import { TradeType } from '../src/types'
+import { PositionType, TradeType } from '../src/types'
 import { toTokenAmount } from '@utils/calculations'
 import {
   useCurrentImpliedFunding,
@@ -36,7 +36,9 @@ import {
 } from 'src/state/controller/hooks'
 import { impliedVolAtom } from 'src/state/controller/atoms'
 import { usePositionsAndFeesComputation } from 'src/state/positions/hooks'
-import { actualTradeTypeAtom, tradeTypeAtom } from 'src/state/trade/atoms'
+import { actualTradeTypeAtom, ethTradeAmountAtom, sqthTradeAmountAtom, tradeTypeAtom } from 'src/state/trade/atoms'
+import { positionTypeAtom } from 'src/state/positions/atoms'
+import { useResetAtom } from 'jotai/utils'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -307,6 +309,12 @@ const useStyles = makeStyles((theme) =>
         fontWeight: theme.typography.fontWeightBold,
       },
     },
+    displayBlock: {
+      display: 'block',
+    },
+    displayNone: {
+      display: 'none',
+    },
   }),
 )
 
@@ -344,12 +352,27 @@ const Header: React.FC = () => {
 const TabComponent: React.FC = () => {
   const classes = useStyles()
   const [tradeType, setTradeType] = useAtom(tradeTypeAtom)
+  const [positionType] = useAtom(positionTypeAtom)
+  const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
+  const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
+
+  useEffect(() => {
+    if (positionType === PositionType.SHORT) {
+      setTradeType(1)
+    } else {
+      setTradeType(0)
+    }
+  }, [positionType])
 
   return (
     <div>
       <SqueethTabs
         value={tradeType}
-        onChange={(evt, val) => setTradeType(val)}
+        onChange={(evt, val) => {
+          resetEthTradeAmount()
+          resetSqthTradeAmount()
+          setTradeType(val)
+        }}
         aria-label="Sub nav tabs"
         className={classes.subNavTabs}
         centered
@@ -545,19 +568,13 @@ function TradePage() {
               </div>
             </div>
             <div className={classes.tradeDetails}>
-              {tradeType === TradeType.LONG ? (
-                <>
-                  <div>
-                    <LongChart />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div>
-                    <ShortChart vault={Vaults.Short} longAmount={0} showPercentage={true} setCustomLong={() => null} />
-                  </div>
-                </>
-              )}
+              <div className={tradeType === TradeType.LONG ? classes.displayBlock : classes.displayNone}>
+                <LongChart />
+              </div>
+
+              <div className={tradeType !== TradeType.LONG ? classes.displayBlock : classes.displayNone}>
+                <ShortChart vault={Vaults.Short} longAmount={0} showPercentage={true} setCustomLong={() => null} />
+              </div>
             </div>
           </div>
 
@@ -571,11 +588,12 @@ function TradePage() {
         <div className={classes.mobileContainer}>
           <Header />
           <div className={classes.mobileSpacer}>
-            {tradeType === TradeType.LONG ? (
+            <div className={tradeType === TradeType.LONG ? classes.displayBlock : classes.displayNone}>
               <LongChart />
-            ) : (
+            </div>
+            <div className={tradeType !== TradeType.LONG ? classes.displayBlock : classes.displayNone}>
               <ShortChart vault={Vaults.Short} longAmount={0} showPercentage={true} setCustomLong={() => null} />
-            )}
+            </div>
           </div>
           <div className={classes.mobileSpacer}>
             <PositionCard />
