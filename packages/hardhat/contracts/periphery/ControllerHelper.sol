@@ -24,7 +24,7 @@ import {FlashControllerHelper} from "./FlashControllerHelper.sol";
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {TransferHelper} from "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
-import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
+import {ControllerHelperLib} from "./lib/ControllerHelperLib.sol";
 
 contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
     using SafeMath for uint256;
@@ -35,7 +35,8 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         FLASH_W_MINT,
         FLASH_W_BURN,
         FLASH_SELL_LONG_W_MINT,
-        SWAP
+        SWAP_EXACTIN_WPOWERPERP_ETH,
+        SWAP_EXACTOUT_ETH_WPOWERPERP
     }
 
     address public immutable controller;
@@ -46,6 +47,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
     address public immutable weth;
     address public immutable swapRouter;
     address public immutable nonfungiblePositionManager;
+    bool public immutable isWethToken0;
 
     struct flashswapWMintData {
         uint256 vaultId;
@@ -63,6 +65,17 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         uint256 vaultId;
         uint256 wPowerPerpAmount;
         uint256 collateralAmount;
+    }
+    // params for closeShortWithUserNft()
+    struct CloseShortWithUserNftParams {
+        uint256 vaultId; // vault ID
+        uint256 tokenId; // Uni NFT token ID
+        uint256 liquidityPercentage; // percentage of liquidity to burn in LP position in decimals with 18 precision(e.g 60% = 0.6 = 6e17)
+        uint256 wPowerPerpAmountToBurn; // amount of wPowerPerp to burn in vault
+        uint256 collateralToWithdraw; // amount of ETH collateral to withdraw from vault
+        uint256 limitPriceEthPerPowerPerp; // price limit for swapping between wPowerPerp and ETH (ETH per 1 wPowerPerp)
+        uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
+        uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
     }
 
     event FlashswapWMint(
@@ -106,6 +119,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         weth = _weth;
         swapRouter = _swapRouter;
         nonfungiblePositionManager = _nonfungiblePositionManager;
+        isWethToken0 = _weth < _wPowerPerp;
 
         IWPowerPerp(_wPowerPerp).approve(_swapRouter, type(uint256).max);
         IWETH9(_weth).approve(_swapRouter, type(uint256).max);
@@ -157,6 +171,114 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         );
 
         emit FlashswapWMint(msg.sender, _vaultId, _wPowerPerpAmount, amountToFlashswap, _collateralAmount);
+    }
+
+    /**
+     * @notice close short position with user Uniswap v3 LP NFT
+     * @dev user should approve this contract for Uni NFT transfer
+     */
+    function closeShortWithUserNft(CloseShortWithUserNftParams calldata params) external {
+        INonfungiblePositionManager(nonfungiblePositionManager).safeTransferFrom(
+            msg.sender,
+            address(this),
+            params.tokenId
+        );
+
+        // get liquidity amount, and withdraw ETH and wPowerPerp amounts in LP position
+        (uint128 liquidity, , ) = ControllerHelperLib._getUniPositionBalances(
+            nonfungiblePositionManager,
+            params.tokenId,
+            IOracle(oracle).getTimeWeightedAverageTickSafe(wPowerPerpPool, 420),
+            isWethToken0
+        );
+        // (
+        //     ,
+        //     ,
+        //     ,
+        //     ,
+        //     ,
+        //     ,
+        //     ,
+        //     uint128 liquidity,
+        //     ,
+        //     ,
+        //     ,
+        // ) = INonfungiblePositionManager(nonfungiblePositionManager).positions(params.tokenId);
+        INonfungiblePositionManager.DecreaseLiquidityParams memory decreaseParams = INonfungiblePositionManager
+            .DecreaseLiquidityParams({
+                tokenId: params.tokenId,
+                liquidity: uint128(uint256(liquidity).mul(params.liquidityPercentage).div(1e18)),
+                amount0Min: params.amount0Min,
+                amount1Min: params.amount1Min,
+                deadline: block.timestamp
+            });
+
+        INonfungiblePositionManager(nonfungiblePositionManager).decreaseLiquidity(decreaseParams);
+
+        uint256 wethAmount;
+        uint256 wPowerPerpAmount;
+        (isWethToken0)
+            ? (wethAmount, wPowerPerpAmount) = INonfungiblePositionManager(nonfungiblePositionManager).collect(
+                INonfungiblePositionManager.CollectParams({
+                    tokenId: params.tokenId,
+                    recipient: address(this),
+                    amount0Max: type(uint128).max,
+                    amount1Max: type(uint128).max
+                })
+            )
+            : (wPowerPerpAmount, wethAmount) = INonfungiblePositionManager(nonfungiblePositionManager).collect(
+            INonfungiblePositionManager.CollectParams({
+                tokenId: params.tokenId,
+                recipient: address(this),
+                amount0Max: type(uint128).max,
+                amount1Max: type(uint128).max
+            })
+        );
+
+        if (wPowerPerpAmount < params.wPowerPerpAmountToBurn) {
+            // swap needed wPowerPerp amount to close short position
+            _exactOutFlashSwap(
+                weth,
+                wPowerPerp,
+                IUniswapV3Pool(wPowerPerpPool).fee(),
+                params.wPowerPerpAmountToBurn.sub(wPowerPerpAmount),
+                params.limitPriceEthPerPowerPerp.mul(params.wPowerPerpAmountToBurn.sub(wPowerPerpAmount)).div(1e18),
+                uint8(FLASH_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP),
+                ""
+            );
+
+            IController(controller).burnWPowerPerpAmount(
+                params.vaultId,
+                params.wPowerPerpAmountToBurn,
+                params.collateralToWithdraw
+            );
+        } else {
+            // if LP have more wPowerPerp amount that amount to burn in vault, sell remaining amount for WETH
+            IController(controller).burnWPowerPerpAmount(
+                params.vaultId,
+                params.wPowerPerpAmountToBurn,
+                params.collateralToWithdraw
+            );
+
+            uint256 wPowerPerpExcess = wPowerPerpAmount.sub(params.wPowerPerpAmountToBurn);
+            if (wPowerPerpExcess > 0) {
+                _exactInFlashSwap(
+                    wPowerPerp,
+                    weth,
+                    IUniswapV3Pool(wPowerPerpPool).fee(),
+                    wPowerPerpExcess,
+                    params.limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18),
+                    uint8(FLASH_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
+                    ""
+                );
+            }
+        }
+
+        IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
+
+        if (address(this).balance > 0) {
+            payable(msg.sender).sendValue(address(this).balance);
+        }
     }
 
     /**
@@ -293,7 +415,7 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
      */
     function _swapCallback(
         address _caller,
-        address _tokenIn,
+        address, /*_tokenIn*/
         address, /*_tokenOut*/
         uint24, /*_fee*/
         uint256 _amountToPay,
@@ -357,9 +479,10 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
             }
             // this is a newly open vault, transfer to the user
             if (data.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), _caller, vaultId);
-        } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.SWAP) {
-            // this is to handle the swap() callback, calling swap() from this contract will only work with wPowerPerpPool
-            IERC20Detailed(_tokenIn).transfer(wPowerPerpPool, _amountToPay);
+        } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH) {
+            IWPowerPerp(wPowerPerp).transfer(wPowerPerpPool, _amountToPay);
+        } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP) {
+            IWETH9(weth).transfer(wPowerPerpPool, _amountToPay);
         }
     }
 }
