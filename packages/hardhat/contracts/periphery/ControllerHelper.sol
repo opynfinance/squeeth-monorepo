@@ -277,9 +277,9 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
         INonfungiblePositionManager(nonfungiblePositionManager).refundETH();
         // if openeded new vault, transfer vault NFT to user
         if (_vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), msg.sender, vaultId);
-        
+
         payable(msg.sender).sendValue(address(this).balance);
-       
+
         emit BatchMintLp(msg.sender, _vaultId, _wPowerPerpAmount, _collateralToMint, _collateralToLP);
     }
 
