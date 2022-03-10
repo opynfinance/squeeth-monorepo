@@ -363,10 +363,12 @@ describe("ShortHelper Integration Test", function () {
       seller2VaultId = (await shortPowerPerp.nextId()).toNumber()
 
       // mint and trade
-      await shortHelper.connect(seller2).openShort(0, squeethAmount, 0, exactInputParam, {
+      const tx = await shortHelper.connect(seller2).openShort(0, squeethAmount, 0, exactInputParam, {
           value: collateralAmount
         }
       )
+      const recept = await provider.getTransactionReceipt(tx.hash)
+      const txCost = recept.effectiveGasPrice.mul(recept.gasUsed)
 
       const normalizationFactor = await controller.normalizationFactor()
       const wSqueethAmount = squeethAmount.mul(one).div(normalizationFactor)
@@ -378,9 +380,9 @@ describe("ShortHelper Integration Test", function () {
   
       expect(nftBalanceAfter.eq(nftBalanceBefore.add(1))).to.be.true
       expect(poolSqueethAfter.toString()).to.be.eq(poolSqueethBefore.add(wSqueethAmount), "squeeth mismatch")
-      // expect(poolWethBefore.sub(poolWethAfter).toString()).to.be.eq(
-      //   sellerEthAfter.add(collateralAmount).sub(sellerEthBefore), "weth mismatch"
-      // )
+      expect(poolWethBefore.sub(poolWethAfter).sub(txCost).toString()).to.be.eq(
+        sellerEthAfter.add(collateralAmount).sub(sellerEthBefore), "weth mismatch"
+      )
     })
 
     it ('should revert if trying to short more from the current vault', async () => {
@@ -618,10 +620,12 @@ describe("ShortHelper Integration Test", function () {
       const poolWethBefore = await weth.balanceOf(poolAddress)
 
       // buy and close
-      await shortHelper.connect(seller1).closeShort(seller1VaultId, buyBackSqueethAmount, withdrawCollateralAmount, exactOutputParam, {
+      const tx = await shortHelper.connect(seller1).closeShort(seller1VaultId, buyBackSqueethAmount, withdrawCollateralAmount, exactOutputParam, {
           value: amountInMaximum // max amount used to buy back eth
         }
       )
+      const recept = await provider.getTransactionReceipt(tx.hash)
+      const txCost = recept.effectiveGasPrice.mul(recept.gasUsed)
   
       const nftBalanceAfter = await shortPowerPerp.balanceOf(seller1.address)
       const poolSqueethAfter = await squeeth.balanceOf(poolAddress)
@@ -630,9 +634,9 @@ describe("ShortHelper Integration Test", function () {
   
       expect(nftBalanceAfter.eq(nftBalanceBefore)).to.be.true
       expect(poolSqueethAfter.toString()).to.be.eq(poolSqueethBefore.sub(buyBackSqueethAmount), "squeeth mismatch")
-      // expect(poolWethAfter.sub(poolWethBefore).toString()).to.be.eq(
-      //   sellerEthBefore.add(withdrawCollateralAmount).sub(sellerEthAfter), "weth mismatch"
-      // )
+      expect(poolWethAfter.sub(poolWethBefore).add(txCost).toString()).to.be.eq(
+        sellerEthBefore.add(withdrawCollateralAmount).sub(sellerEthAfter), "weth mismatch"
+      )
     })
 
     it ('should fully close a short position and get back eth', async () => {
@@ -662,10 +666,12 @@ describe("ShortHelper Integration Test", function () {
       const poolWethBefore = await weth.balanceOf(poolAddress)
 
       // buy and close
-      await shortHelper.connect(seller2).closeShort(seller2VaultId, buyBackSqueethAmount, withdrawCollateralAmount, exactOutputParam, {
+      const tx = await shortHelper.connect(seller2).closeShort(seller2VaultId, buyBackSqueethAmount, withdrawCollateralAmount, exactOutputParam, {
           value: amountInMaximum // max amount used to buy back eth
         }
       )
+      const recept = await provider.getTransactionReceipt(tx.hash)
+      const txCost = recept.effectiveGasPrice.mul(recept.gasUsed)
   
       const nftBalanceAfter = await shortPowerPerp.balanceOf(seller2.address)
       const poolSqueethAfter = await squeeth.balanceOf(poolAddress)
@@ -674,9 +680,9 @@ describe("ShortHelper Integration Test", function () {
   
       expect(nftBalanceAfter.eq(nftBalanceBefore)).to.be.true // nft amount stay the same
       expect(poolSqueethAfter.toString()).to.be.eq(poolSqueethBefore.sub(buyBackSqueethAmount), "squeeth mismatch")
-      // expect(poolWethAfter.sub(poolWethBefore).toString()).to.be.eq(
-      //   sellerEthBefore.add(withdrawCollateralAmount).sub(sellerEthAfter), "weth mismatch"
-      // )
+      expect(poolWethAfter.sub(poolWethBefore).add(txCost).toString()).to.be.eq(
+        sellerEthBefore.add(withdrawCollateralAmount).sub(sellerEthAfter), "weth mismatch"
+      )
     })
 
   })

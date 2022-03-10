@@ -557,12 +557,15 @@ describe("Controller: Uni LP tokens collateralization", function () {
 
         // liquidate the vault
         const tx = await controller.connect(liquidator).liquidate(vaultId, liquidationAmount)
+        const recept = await provider.getTransactionReceipt(tx.hash)
+        const txCost = recept.effectiveGasPrice.mul(recept.gasUsed)
+
         const vaultAfter = await controller.vaults(vaultId)
         const balanceAfter = await provider.getBalance(liquidator.address)
         
         const reward = liquidationAmount.mul(newSqueethPrice).div(one).mul(11).div(10)
         
-        // expect(balanceAfter.sub(balanceBefore).eq(reward)).to.be.true
+        expect(balanceAfter.sub(balanceBefore).add(txCost).eq(reward)).to.be.true
         expect(vaultAfter.NftCollateralId === 0).to.be.true // nft is liquidated
         expect(vaultAfter.shortAmount.eq(vaultBefore.shortAmount.sub(liquidationAmount))).to.be.true
         expect(vaultAfter.collateralAmount.eq(vaultBefore.collateralAmount.add(ethAmount).sub(reward))).to.be.true

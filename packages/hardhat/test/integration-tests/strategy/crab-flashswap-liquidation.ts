@@ -234,7 +234,9 @@ describe("Crab flashswap integration test: crab vault liquidation", function () 
 
       const wSqueethAmountToLiquidate = vaultBefore.shortAmount.div(2)
 
-      await controller.connect(liquidator).liquidate(vaultId, wSqueethAmountToLiquidate);
+      const tx = await controller.connect(liquidator).liquidate(vaultId, wSqueethAmountToLiquidate);
+      const recept = await provider.getTransactionReceipt(tx.hash)
+      const txCost = recept.effectiveGasPrice.mul(recept.gasUsed)
       
       const collateralToGet = newSqueethPrice.mul(wSqueethAmountToLiquidate).div(one).mul(11).div(10)
 
@@ -245,7 +247,7 @@ describe("Crab flashswap integration test: crab vault liquidation", function () 
       expect(isSimilar((vaultBefore.shortAmount.div(2)).toString(),(vaultAfter.shortAmount).toString())).to.be.true
       expect(vaultAfter.shortAmount.gt(BigNumber.from(0))).to.be.true
       expect(vaultAfter.collateralAmount.gt(BigNumber.from(0))).to.be.true
-      // expect(collateralToGet.eq(liquidatorBalanceAfter.sub(liquidatorBalanceBefore))).to.be.true
+      expect(collateralToGet.eq(liquidatorBalanceAfter.sub(liquidatorBalanceBefore).add(txCost))).to.be.true
       expect(vaultBefore.shortAmount.sub(vaultAfter.shortAmount).eq(liquidatorSqueethBefore.sub(liquidatorSqueethAfter))).to.be.true
     })
 
