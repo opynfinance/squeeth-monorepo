@@ -77,10 +77,10 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
     struct CloseShortWithUserNftParams {
         uint256 vaultId; // vault ID
         uint256 tokenId; // Uni NFT token ID
-        uint256 liquidityPercentage;    // percentage of liquidity to burn in LP position in decimals with 18 precision(e.g 60% = 0.6 = 6e17)
+        uint256 liquidityPercentage; // percentage of liquidity to burn in LP position in decimals with 18 precision(e.g 60% = 0.6 = 6e17)
         uint256 wPowerPerpAmountToBurn; // amount of wPowerPerp to burn in vault
         uint256 collateralToWithdraw; // amount of ETH collateral to withdraw from vault
-        uint256 limitPriceEthPerPowerPerp;  // price limit for swapping between wPowerPerp and ETH (ETH per 1 wPowerPerp)
+        uint256 limitPriceEthPerPowerPerp; // price limit for swapping between wPowerPerp and ETH (ETH per 1 wPowerPerp)
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
     }
@@ -348,7 +348,10 @@ contract ControllerHelper is FlashControllerHelper, IERC721Receiver {
 
             uint256 wPowerPerpExcess = wPowerPerpAmount.sub(params.wPowerPerpAmountToBurn);
             console.log("wPowerPerpExcess", wPowerPerpExcess);
-            console.log("params.limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18)", params.limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18));
+            console.log(
+                "params.limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18)",
+                params.limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18)
+            );
             if (wPowerPerpExcess > 0) {
                 _exactInFlashSwap(
                     wPowerPerp,
