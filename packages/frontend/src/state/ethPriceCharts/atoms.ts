@@ -19,11 +19,11 @@ const ethPriceChartsQueryKeys = {
   cusdcPricesRange: (days: number) => ['cusdcPricesRange', { days }],
   squeethSeries: (ethPrices: any, volMultiplier: number, collatRatio: number) => [
     'squeethSeries',
-    { ethPricesData: ethPrices, volMultiplier, collatRatio },
+    { ethPrices, volMultiplier, collatRatio },
   ],
   squeethPNLSeries: (ethPrices: any, volMultiplier: number, collatRatio: number, days: number) => [
     'squeethPNLSeries',
-    { ethPricesData: ethPrices, volMultiplier, collatRatio, days },
+    { ethPrices, volMultiplier, collatRatio, days },
   ],
   ethPNLCompounding: (ethPrices: any) => ['ethPNLCompounding', { ethPricesData: ethPrices }],
 }
@@ -88,7 +88,7 @@ export const useSqueethSeries = () => {
   const collatRatio = useAtomValue(collatRatioAtom)
 
   return useQuery(
-    ethPriceChartsQueryKeys.squeethSeries(ethPrices.data, volMultiplier, collatRatio),
+    ethPriceChartsQueryKeys.squeethSeries(ethPrices.data?.length, volMultiplier, collatRatio),
     () => getSqueethChartWithFunding(ethPrices.data ?? [], volMultiplier, collatRatio),
     { enabled: Boolean(ethPrices.isSuccess && ethPrices.data) },
   )
@@ -106,7 +106,7 @@ export const useSqueethPNLSeries = () => {
   const collatRatio = useAtomValue(collatRatioAtom)
 
   return useQuery(
-    ethPriceChartsQueryKeys.squeethPNLSeries(ethPrices?.data, volMultiplier, collatRatio, days),
+    ethPriceChartsQueryKeys.squeethPNLSeries(ethPrices?.data?.length, volMultiplier, collatRatio, days),
     () => getSqueethPNLCompounding(ethPrices.data ?? [], volMultiplier, collatRatio, days),
     { enabled: Boolean(ethPrices.isSuccess && ethPrices.data && days) },
   )
@@ -125,7 +125,7 @@ export const useLongSeries = () => {
         return { time, value: longPNL }
       })
     )
-  }, [ethSqueethPNLSeries])
+  }, [ethSqueethPNLSeries?.ethPNL?.length, ethSqueethPNLSeries?.squeethPNL?.length])
 }
 
 export const useShortSeries = () => {
@@ -141,7 +141,7 @@ export const useShortSeries = () => {
         return { time, value: shortPNL }
       })
     )
-  }, [ethSqueethPNLSeries])
+  }, [ethSqueethPNLSeries?.ethPNL?.length, ethSqueethPNLSeries?.squeethPNL?.length])
 }
 
 export const usePrevShortSeries = () => {
@@ -154,7 +154,7 @@ export const usePrevShortSeries = () => {
         return { time, value: shortPNL }
       })
     )
-  }, [squeethSeries.data])
+  }, [squeethSeries.data?.series?.length])
 }
 
 export const usePositionSizePercentageseries = () => {
@@ -192,7 +192,7 @@ export const useLongEthPNL = () => {
         return { time, value: longPNL }
       })
     )
-  }, [ethSqueethPNLSeries])
+  }, [ethSqueethPNLSeries?.ethPNL?.length, ethSqueethPNLSeries?.squeethPNL?.length])
 }
 
 export const useShortEthPNL = () => {
@@ -208,7 +208,7 @@ export const useShortEthPNL = () => {
         return { time, value: shortPNL }
       })
     )
-  }, [ethSqueethPNLSeries])
+  }, [ethSqueethPNLSeries?.ethPNL?.length, ethSqueethPNLSeries?.squeethPNL?.length])
 }
 
 export const useStartingETHPrice = () => {
