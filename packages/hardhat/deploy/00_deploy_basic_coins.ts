@@ -16,7 +16,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const wethAddr = networkNameToWeth(network.name as string)
   if (wethAddr === undefined) {
     await deploy("WETH9", { from: deployer });
-    const weth = await ethers.getContractAt("WETH9", deployer);
+    const weth = await ethers.getContract("WETH9", deployer);
     console.log(`WETH9 Deployed at ${weth.address} 🍇`)
   } else {
     console.log(`Using WETH9 at ${wethAddr}`)
@@ -26,7 +26,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const usdcAddress = networkNameToUSDC(network.name as string)
   if (usdcAddress === undefined) {
     await deploy("MockErc20", { from: deployer, args: ["USDC", "USDC", 6], skipIfAlreadyDeployed: false });  
-    const usdc = await ethers.getContractAt("MockErc20", deployer);
+    const usdc = await ethers.getContract("MockErc20", deployer);
     console.log(`USDC Deployed at ${usdc.address} 🍇`)
   } else {
     console.log(`Using USDC at ${usdcAddress}`)
