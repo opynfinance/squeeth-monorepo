@@ -40,3 +40,4 @@ export const sellCloseQuoteAtom = atomWithReset(sellCloseEmptyState)
 
 export const ethTradeAmountAtom = atomWithReset('0')
 export const sqthTradeAmountAtom = atomWithReset('0')
+export const transactionHashAtom = atomWithReset('')

@@ -1,7 +1,7 @@
 import { Contract } from 'web3-eth-contract'
 import { Token, CurrencyAmount } from '@uniswap/sdk-core'
 import { Pool, Route, Trade } from '@uniswap/v3-sdk'
-import { useUpdateAtom } from 'jotai/utils'
+import { useUpdateAtom, useResetAtom } from 'jotai/utils'
 import { useEffect, useCallback } from 'react'
 import { useAtomValue } from 'jotai'
 import BigNumber from 'bignumber.js'
@@ -25,6 +25,7 @@ import {
   squeethPriceeAtom,
   readyAtom,
 } from './atoms'
+import { transactionHashAtom } from '../trade/atoms'
 
 const getImmutables = async (squeethContract: Contract) => {
   const [token0, token1, fee, tickSpacing, maxLiquidityPerTick] = await Promise.all([
@@ -351,21 +352,30 @@ export const useBuyAndRefundData = () => {
 export const useBuyAndRefund = () => {
   const address = useAtomValue(addressAtom)
   const { swapRouter } = useAtomValue(addressesAtom)
+  const setTxHash = useUpdateAtom(transactionHashAtom)
+  const resetTxHash = useResetAtom(transactionHashAtom)
   const handleTransaction = useHandleTransaction()
   const swapRouterContract = useContract(swapRouter, routerABI)
   const buyAndRefundData = useBuyAndRefundData()
-  const buyAndRefund = async (amount: BigNumber) => {
-    const callData = await buyAndRefundData(amount)
 
-    const txHash = await handleTransaction(
-      swapRouterContract?.methods.multicall(callData).send({
-        from: address,
-        value: ethers.utils.parseEther(amount.toString()),
-      }),
-    )
+  const buyAndRefund = useCallback(
+    async (amount: BigNumber) => {
+      resetTxHash()
+      const callData = await buyAndRefundData(amount)
 
-    return txHash
-  }
+      const result = await handleTransaction(
+        swapRouterContract?.methods.multicall(callData).send({
+          from: address,
+          value: ethers.utils.parseEther(amount.toString()),
+        }),
+      )
+
+      setTxHash(result.transactionHash)
+
+      return result
+    },
+    [swapRouterContract?.defaultAccount],
+  )
 
   return buyAndRefund
 }
@@ -423,20 +433,23 @@ export const useGetSellParam = () => {
   const squeethToken = useAtomValue(squeethTokenAtom)
   const wethToken = useAtomValue(wethTokenAtom)
   const getSellQuote = useGetSellQuote()
-  const getSellParam = async (amount: BigNumber) => {
-    const amountMin = fromTokenAmount((await getSellQuote(amount)).minimumAmountOut, 18)
+  const getSellParam = useCallback(
+    async (amount: BigNumber) => {
+      const amountMin = fromTokenAmount((await getSellQuote(amount)).minimumAmountOut, 18)
 
-    return {
-      tokenIn: squeethToken?.address,
-      tokenOut: wethToken?.address,
-      fee: UNI_POOL_FEES,
-      recipient: address,
-      deadline: Math.floor(Date.now() / 1000 + 86400), // uint256
-      amountIn: fromTokenAmount(amount, OSQUEETH_DECIMALS).toString(),
-      amountOutMinimum: amountMin.toString(),
-      sqrtPriceLimitX96: 0,
-    }
-  }
+      return {
+        tokenIn: squeethToken?.address,
+        tokenOut: wethToken?.address,
+        fee: UNI_POOL_FEES,
+        recipient: address,
+        deadline: Math.floor(Date.now() / 1000 + 86400), // uint256
+        amountIn: fromTokenAmount(amount, OSQUEETH_DECIMALS).toString(),
+        amountOutMinimum: amountMin.toString(),
+        sqrtPriceLimitX96: 0,
+      }
+    },
+    [getSellQuote, squeethToken?.address, wethToken?.address],
+  )
   return getSellParam
 }
 
@@ -446,21 +459,24 @@ const useSellAndUnwrapData = () => {
   const { swapRouter } = useAtomValue(addressesAtom)
   const getSellParam = useGetSellParam()
   const getSellQuote = useGetSellQuote()
-  const sellAndUnwrapData = async (amount: BigNumber) => {
-    if (!web3) return
-    const exactInputParam = await getSellParam(amount)
-    exactInputParam.recipient = swapRouter
-    const tupleInput = Object.values(exactInputParam).map((v) => v?.toString() || '')
+  const sellAndUnwrapData = useCallback(
+    async (amount: BigNumber) => {
+      if (!web3) return
+      const exactInputParam = await getSellParam(amount)
+      exactInputParam.recipient = swapRouter
+      const tupleInput = Object.values(exactInputParam).map((v) => v?.toString() || '')
 
-    const { minimumAmountOut } = await getSellQuote(amount)
-    const swapIface = new ethers.utils.Interface(routerABI)
-    const encodedSwapCall = swapIface.encodeFunctionData('exactInputSingle', [tupleInput])
-    const encodedUnwrapCall = swapIface.encodeFunctionData('unwrapWETH9', [
-      fromTokenAmount(minimumAmountOut, 18).toString(),
-      address,
-    ])
-    return [encodedSwapCall, encodedUnwrapCall]
-  }
+      const { minimumAmountOut } = await getSellQuote(amount)
+      const swapIface = new ethers.utils.Interface(routerABI)
+      const encodedSwapCall = swapIface.encodeFunctionData('exactInputSingle', [tupleInput])
+      const encodedUnwrapCall = swapIface.encodeFunctionData('unwrapWETH9', [
+        fromTokenAmount(minimumAmountOut, 18).toString(),
+        address,
+      ])
+      return [encodedSwapCall, encodedUnwrapCall]
+    },
+    [address, swapRouter, getSellQuote, getSellParam],
+  )
 
   return sellAndUnwrapData
 }
@@ -468,20 +484,29 @@ const useSellAndUnwrapData = () => {
 export const useSell = () => {
   const address = useAtomValue(addressAtom)
   const { swapRouter } = useAtomValue(addressesAtom)
+  const setTxHash = useUpdateAtom(transactionHashAtom)
+  const resetTxHash = useResetAtom(transactionHashAtom)
   const handleTransaction = useHandleTransaction()
   const swapRouterContract = useContract(swapRouter, routerABI)
   const sellAndUnwrapData = useSellAndUnwrapData()
-  const sell = async (amount: BigNumber) => {
-    const callData = await sellAndUnwrapData(amount)
 
-    const txHash = await handleTransaction(
-      swapRouterContract?.methods.multicall(callData).send({
-        from: address,
-      }),
-    )
+  const sell = useCallback(
+    async (amount: BigNumber) => {
+      resetTxHash()
+      const callData = await sellAndUnwrapData(amount)
 
-    return txHash
-  }
+      const result = await handleTransaction(
+        swapRouterContract?.methods.multicall(callData).send({
+          from: address,
+        }),
+      )
+
+      setTxHash(result.transactionHash)
+
+      return result
+    },
+    [sellAndUnwrapData, swapRouterContract, address],
+  )
   return sell
 }
 
