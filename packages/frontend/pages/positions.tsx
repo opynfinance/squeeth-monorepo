@@ -1,4 +1,4 @@
-import { createStyles, makeStyles, Tooltip, Typography } from '@material-ui/core'
+import { Box, createStyles, makeStyles, Tooltip, Typography } from '@material-ui/core'
 import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import Link from 'next/link'
@@ -23,6 +23,7 @@ import { useWallet } from '@context/wallet'
 import { usePositions } from '@context/positions'
 import { LinkButton } from '@components/Button'
 import { useVaultData } from '@hooks/useVaultData'
+import YourVaults from '@components/Trade/YourVaults'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -529,6 +530,16 @@ export function Positions() {
             <LPTable isLPage={false} pool={pool} />
           </>
         ) : null}
+
+        <Box mt={8} component="section">
+          <Typography color="primary" variant="h6">
+            Your Vaults
+          </Typography>
+          <Box mt={2}>
+            <YourVaults />
+          </Box>
+        </Box>
+
         <div className={classes.history}>
           <Typography color="primary" variant="h6">
             Transaction History
