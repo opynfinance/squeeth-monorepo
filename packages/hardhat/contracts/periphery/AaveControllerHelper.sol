@@ -37,7 +37,7 @@ contract AaveControllerHelper is IFlashLoanReceiver {
     }
 
     function _flashCallback(
-        address, /*_initiator*/
+        address _initiator,
         address _asset,
         uint256 _amount,
         uint256 _premium,
