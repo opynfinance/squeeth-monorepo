@@ -75,4 +75,8 @@ interface IController {
     function reduceDebtShutdown(uint256 _vaultId) external;
 
     function isShutDown() external returns (bool);
+
+    function depositUniPositionToken(uint256 _vaultId, uint256 _uniTokenId) external;
+
+    function withdrawUniPositionToken(uint256 _vaultId) external;
 }

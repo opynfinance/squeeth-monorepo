@@ -47,12 +47,6 @@ const impersonateAddress = async (address: string) => {
 describe("ControllerHelper: mainnet fork", function () {
   if (!process.env.MAINNET_FORK) return;
 
-  // const startingEthPrice = 3000
-  // const startingEthPrice1e18 = BigNumber.from(startingEthPrice).mul(one) // 3000 * 1e18
-  // const scaledStartingSqueethPrice1e18 = startingEthPrice1e18.div(oracleScaleFactor) // 0.3 * 1e18
-  // const scaledStartingSqueethPrice = startingEthPrice / oracleScaleFactor.toNumber() // 0.3
-
-
   let provider: providers.JsonRpcProvider;
   let owner: SignerWithAddress;
   let depositor: SignerWithAddress;
@@ -97,19 +91,20 @@ describe("ControllerHelper: mainnet fork", function () {
     // await controller.connect(owner).setFeeRecipient(feeRecipient.address);
     // await controller.connect(owner).setFeeRate(0)
     
-    const TickMath = await ethers.getContractFactory("TickMathExternal")
-    const TickMathLibrary = (await TickMath.deploy());
-    const SqrtPriceExternal = await ethers.getContractFactory("SqrtPriceMathPartial")
-    const SqrtPriceExternalLibrary = (await SqrtPriceExternal.deploy());  
-    const ControllerHelperLib = await ethers.getContractFactory("ControllerHelperLib")
-    const controllerHelperLib = (await ControllerHelperLib.deploy());  
-    const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper", {libraries: {TickMathExternal: TickMathLibrary.address, SqrtPriceMathPartial: SqrtPriceExternalLibrary.address}});
+    // const TickMath = await ethers.getContractFactory("TickMathExternal")
+    // const TickMathLibrary = (await TickMath.deploy());
+    // const SqrtPriceExternal = await ethers.getContractFactory("SqrtPriceMathPartial")
+    // const SqrtPriceExternalLibrary = (await SqrtPriceExternal.deploy());  
+    // const ControllerHelperLib = await ethers.getContractFactory("ControllerHelperLib")
+    // const controllerHelperLib = (await ControllerHelperLib.deploy());  
+    // const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper", {libraries: {TickMathExternal: TickMathLibrary.address, SqrtPriceMathPartial: SqrtPriceExternalLibrary.address}});
+    const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper");
     controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, shortSqueeth.address, "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C", wSqueeth.address, weth.address, uniswapRouter.address, positionManager.address, uniswapFactory.address, "0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5")) as ControllerHelper;
   })
 
   describe("Flash mint short position, LP and use LP as collateral", async () => {
     it("open short, mint, LP, deposit LP NFT and withdraw ETH collateral", async ()=> {
-      const vaultId = (await shortSqueeth.nextId()).sub(1);
+      const vaultId = (await shortSqueeth.nextId());
       const normFactor = await controller.normalizationFactor()
       const mintWSqueethAmount = ethers.utils.parseUnits('30')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
@@ -130,9 +125,231 @@ describe("ControllerHelper: mainnet fork", function () {
         lowerTick: -887220,
         upperTick: 887220
       }
-      const vaultBefore = await controller.vaults(vaultId)
 
-      await controllerHelper.connect(depositor).flashloanWMintDepositNft(flashloanWMintDepositNftParams, {value: collateralToLp.add(ethers.utils.parseUnits('1'))})
+      await controllerHelper.connect(depositor).flashloanWMintDepositNft(flashloanWMintDepositNftParams, {value: collateralToLp.add(ethers.utils.parseUnits('0.01'))})
+
+      const vaultAfter = await controller.vaults(vaultId)
+      const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
+      const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
+      const position = await (positionManager as INonfungiblePositionManager).positions(tokenId)
+
+      expect(BigNumber.from(vaultAfter.NftCollateralId).eq(tokenId)).to.be.true;
+      expect(position.tickLower === -887220).to.be.true
+      expect(position.tickUpper === 887220).to.be.true
+      expect(vaultAfter.shortAmount.eq(mintWSqueethAmount)).to.be.true
+      expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
     })
   })
+
+  describe("Close LP position in vault: LP have more wPowerPerp than needed amount to burn", async () => {
+    before("open first short position and LP" , async () => {
+      const normFactor = await controller.normalizationFactor()
+      const mintWSqueethAmountToLp : BigNumber = ethers.utils.parseUnits('50')
+      const mintRSqueethAmount = mintWSqueethAmountToLp.mul(normFactor).div(one)
+      const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
+      const scaledEthPrice = ethPrice.div(10000)
+      const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
+      const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
+      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
+      const collateralToLp = mintWSqueethAmountToLp.mul(squeethPrice).div(one)
+
+      await controller.connect(depositor).mintWPowerPerpAmount(0, mintWSqueethAmountToLp, 0, {value: collateralAmount})
+
+      const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
+      const token0 = isWethToken0 ? weth.address : wSqueeth.address
+      const token1 = isWethToken0 ? wSqueeth.address : weth.address
+
+      const mintParam = {
+        token0,
+        token1,
+        fee: 3000,
+        tickLower: -887220,// int24 min tick used when selecting full range
+        tickUpper: 887220,// int24 max tick used when selecting full range
+        amount0Desired: isWethToken0 ? collateralToLp : mintWSqueethAmountToLp,
+        amount1Desired: isWethToken0 ? mintWSqueethAmountToLp : collateralToLp,
+        amount0Min: 0,
+        amount1Min: 0,
+        recipient: depositor.address,
+        deadline: Math.floor(await getNow(ethers.provider) + 8640000),// uint256
+      }
+
+      await weth.connect(depositor).deposit({value: collateralToLp})
+      await weth.connect(depositor).approve(positionManager.address, ethers.constants.MaxUint256)
+      await wSqueeth.connect(depositor).approve(positionManager.address, ethers.constants.MaxUint256)  
+      await (positionManager as INonfungiblePositionManager).connect(depositor).mint(mintParam)
+    })
+
+    before("open short amount more than amount in LP position" , async () => {
+      const normFactor = await controller.normalizationFactor()
+      const mintWSqueethAmount = ethers.utils.parseUnits('35')
+      const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
+      const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
+      const scaledEthPrice = ethPrice.div(10000)
+      const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
+      const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
+      const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
+      const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
+
+      await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controller.address, tokenId)
+      await controller.connect(depositor).mintWPowerPerpAmount(0, mintWSqueethAmount, tokenId)
+    })
+
+    it("close LP position deposited as collateral in vault", async () => {
+      const vaultId = (await shortSqueeth.nextId()).sub(1);
+      const uniTokenId =  (await controller.vaults(vaultId)).NftCollateralId;
+      const vaultBefore = await controller.vaults(vaultId); 
+      const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
+      const scaledEthPrice = ethPrice.div(10000)
+      const debtInEth = vaultBefore.shortAmount.mul(scaledEthPrice).div(one)
+      const collateralToFlashloan = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
+      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
+      const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
+      const limitPriceEthPerPowerPerp = squeethPrice.mul(one.sub(slippage)).div(one);
+      const flashloanCloseVaultLpNftParam = {
+        vaultId: vaultId,
+        tokenId: uniTokenId,
+        wPowerPerpAmountToBurn: vaultBefore.shortAmount.toString(),
+        collateralToFlashloan: collateralToFlashloan.toString(),
+        limitPriceEthPerPowerPerp: limitPriceEthPerPowerPerp.toString(),
+        amount0Min: 0,
+        amount1Min: 0
+      }
+
+      // let msgValue: BigNumber = BigNumber.from(0);
+      // const positionBefore = await (positionManager as INonfungiblePositionManager).positions(uniTokenId);
+      // await (positionManager as INonfungiblePositionManager).connect(depositor).approve(positionManager.address, uniTokenId); 
+      // const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
+      //   tokenId: uniTokenId,
+      //   liquidity: positionBefore.liquidity,
+      //   amount0Min: BigNumber.from(0),
+      //   amount1Min: BigNumber.from(0),
+      //   deadline: Math.floor(await getNow(ethers.provider) + 8640000),
+      // })
+      // const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
+      // const wPowerPerpAmountInLP = (isWethToken0) ? amount1 : amount0;
+      // const wethAmountInLP = (isWethToken0) ? amount0 : amount1;
+
+      // if(wPowerPerpAmountInLP.lt(vaultBefore.shortAmount)) {
+      //   const ethToBuySqueeth = (vaultBefore.shortAmount.sub(wPowerPerpAmountInLP)).mul(squeethPrice).div(one); 
+      //   const remainingETHFromLp = wethAmountInLP.sub(ethToBuySqueeth);
+      //   const AaveAddressProviderContract = await ethers.getContractFactory("ILendingPoolAddressesProvider");
+      //   const aaveAddressProviderContract = AaveAddressProviderContract.attach("0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5")
+      //   const lendingPoolAdd = await aaveAddressProviderContract.functions.getLendingPool();
+      //   console.log("lendingPoolAdd", lendingPoolAdd);
+      // }
+      // else if (wPowerPerpAmountInLP.gt(vaultBefore.shortAmount)) {
+      //   const wPowerPerpAmountToSell = wPowerPerpAmountInLP.sub(vaultBefore.shortAmount);
+      //   const ethToGet = wPowerPerpAmountToSell.mul(squeethPrice).div(one);
+      // }
+
+      await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address);
+      await controllerHelper.connect(depositor).flashloanCloseVaultLpNft(flashloanCloseVaultLpNftParam);
+    })
+  })
+
+  // describe("Close LP position in vault: LP have less wPowerPerp than needed amount to burn", async () => {
+  //   before("open first short position and LP" , async () => {
+  //     const normFactor = await controller.normalizationFactor()
+  //     const mintWSqueethAmountToLp : BigNumber = ethers.utils.parseUnits('30')
+  //     const mintRSqueethAmount = mintWSqueethAmountToLp.mul(normFactor).div(one)
+  //     const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
+  //     const scaledEthPrice = ethPrice.div(10000)
+  //     const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
+  //     const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
+  //     const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
+  //     const collateralToLp = mintWSqueethAmountToLp.mul(squeethPrice).div(one)
+
+  //     await controller.connect(depositor).mintWPowerPerpAmount(0, mintWSqueethAmountToLp, 0, {value: collateralAmount})
+
+  //     const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
+  //     const token0 = isWethToken0 ? weth.address : wSqueeth.address
+  //     const token1 = isWethToken0 ? wSqueeth.address : weth.address
+
+  //     const mintParam = {
+  //       token0,
+  //       token1,
+  //       fee: 3000,
+  //       tickLower: -887220,// int24 min tick used when selecting full range
+  //       tickUpper: 887220,// int24 max tick used when selecting full range
+  //       amount0Desired: isWethToken0 ? collateralToLp : mintWSqueethAmountToLp,
+  //       amount1Desired: isWethToken0 ? mintWSqueethAmountToLp : collateralToLp,
+  //       amount0Min: 0,
+  //       amount1Min: 0,
+  //       recipient: depositor.address,
+  //       deadline: Math.floor(await getNow(ethers.provider) + 8640000),// uint256
+  //     }
+
+  //     await weth.connect(depositor).deposit({value: collateralToLp})
+  //     await weth.connect(depositor).approve(positionManager.address, ethers.constants.MaxUint256)
+  //     await wSqueeth.connect(depositor).approve(positionManager.address, ethers.constants.MaxUint256)  
+  //     await (positionManager as INonfungiblePositionManager).connect(depositor).mint(mintParam)
+  //   })
+
+  //   before("open short amount more than amount in LP position" , async () => {
+  //     const normFactor = await controller.normalizationFactor()
+  //     const mintWSqueethAmount = ethers.utils.parseUnits('35')
+  //     const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
+  //     const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
+  //     const scaledEthPrice = ethPrice.div(10000)
+  //     const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
+  //     const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
+  //     const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
+  //     const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
+
+  //     await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controller.address, tokenId)
+  //     await controller.connect(depositor).mintWPowerPerpAmount(0, mintWSqueethAmount, tokenId)
+  //   })
+
+  //   it("close LP position deposited as collateral in vault", async () => {
+  //     const vaultId = (await shortSqueeth.nextId()).sub(1);
+  //     const uniTokenId =  (await controller.vaults(vaultId)).NftCollateralId;
+  //     const vaultBefore = await controller.vaults(vaultId); 
+  //     const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
+  //     const scaledEthPrice = ethPrice.div(10000)
+  //     const debtInEth = vaultBefore.shortAmount.mul(scaledEthPrice).div(one)
+  //     const collateralToFlashloan = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
+  //     const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
+  //     const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
+  //     const limitPriceEthPerPowerPerp = squeethPrice.mul(one.add(slippage)).div(one);
+  //     const flashloanCloseVaultLpNftParam = {
+  //       vaultId: vaultId,
+  //       tokenId: uniTokenId,
+  //       wPowerPerpAmountToBurn: vaultBefore.shortAmount.toString(),
+  //       collateralToFlashloan: collateralToFlashloan.toString(),
+  //       limitPriceEthPerPowerPerp: limitPriceEthPerPowerPerp.toString(),
+  //       amount0Min: 0,
+  //       amount1Min: 0
+  //     }
+
+  //     let msgValue: BigNumber = BigNumber.from(0);
+  //     const positionBefore = await (positionManager as INonfungiblePositionManager).positions(uniTokenId);
+  //     await (positionManager as INonfungiblePositionManager).connect(depositor).approve(positionManager.address, uniTokenId); 
+  //     const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
+  //       tokenId: uniTokenId,
+  //       liquidity: positionBefore.liquidity,
+  //       amount0Min: BigNumber.from(0),
+  //       amount1Min: BigNumber.from(0),
+  //       deadline: Math.floor(await getNow(ethers.provider) + 8640000),
+  //     })
+  //     const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
+  //     const wPowerPerpAmountInLP = (isWethToken0) ? amount1 : amount0;
+  //     const wethAmountInLP = (isWethToken0) ? amount0 : amount1;
+
+  //     if(wPowerPerpAmountInLP.lt(vaultBefore.shortAmount)) {
+  //       const ethToBuySqueeth = (vaultBefore.shortAmount.sub(wPowerPerpAmountInLP)).mul(squeethPrice).div(one); 
+  //       const remainingETHFromLp = wethAmountInLP.sub(ethToBuySqueeth);
+  //       const AaveAddressProviderContract = await ethers.getContractFactory("ILendingPoolAddressesProvider");
+  //       const aaveAddressProviderContract = AaveAddressProviderContract.attach("0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5")
+  //       const lendingPoolAdd = await aaveAddressProviderContract.functions.getLendingPool();
+  //       console.log("lendingPoolAdd", lendingPoolAdd);
+  //     }
+  //     else if (wPowerPerpAmountInLP.gt(vaultBefore.shortAmount)) {
+  //       const wPowerPerpAmountToSell = wPowerPerpAmountInLP.sub(vaultBefore.shortAmount);
+  //       const ethToGet = wPowerPerpAmountToSell.mul(squeethPrice).div(one);
+  //     }
+
+  //     await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address);
+  //     await controllerHelper.connect(depositor).flashloanCloseVaultLpNft(flashloanCloseVaultLpNftParam);
+  //   })
+  // })
 })

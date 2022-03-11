@@ -20,6 +20,7 @@ contract AaveControllerHelper is IFlashLoanReceiver {
     ILendingPool public immutable override LENDING_POOL;
 
     struct FlashloanCallbackData {
+        address caller;
         uint8 callSource;
         bytes callData;
     }
@@ -36,7 +37,7 @@ contract AaveControllerHelper is IFlashLoanReceiver {
     }
 
     function _flashCallback(
-        address, /*_initiator*/
+        address _initiator,
         address _asset,
         uint256 _amount,
         uint256 _premium,
@@ -48,7 +49,7 @@ contract AaveControllerHelper is IFlashLoanReceiver {
         address[] calldata assets,
         uint256[] calldata amounts,
         uint256[] calldata premiums,
-        address initiator,
+        address, /*initiator*/
         bytes calldata params
     ) external override returns (bool) {
         // sanity checks
@@ -58,10 +59,15 @@ contract AaveControllerHelper is IFlashLoanReceiver {
         FlashloanCallbackData memory data = abi.decode(params, (FlashloanCallbackData));
 
         // this assume that this contract will never flashloan more than 1 asset
-        _flashCallback(initiator, assets[0], amounts[0], premiums[0], data.callSource, data.callData);
+        _flashCallback(data.caller, assets[0], amounts[0], premiums[0], data.callSource, data.callData);
 
         // Approve the LENDING_POOL contract allowance to *pull* the owed amount
         IERC20Detailed(assets[0]).approve(address(LENDING_POOL), amounts[0].add(premiums[0]));
+
+        console.log("IERC20Detailed(assets[0]).balanceOf(address(this))", IERC20Detailed(assets[0]).balanceOf(address(this)));
+        console.log("amounts[0]", amounts[0]);
+        console.log("premiums[0]", premiums[0]);
+        console.log("amounts[0].add(premiums[0]", amounts[0].add(premiums[0]));
 
         require(IERC20Detailed(assets[0]).balanceOf(address(this)) >= amounts[0].add(premiums[0]), "noooo");
 
@@ -82,7 +88,7 @@ contract AaveControllerHelper is IFlashLoanReceiver {
         uint256 _amount,
         uint8 _callSource,
         bytes memory _data
-    ) public {
+    ) internal {
         address[] memory assets = new address[](1);
         assets[0] = _asset;
 
@@ -98,7 +104,7 @@ contract AaveControllerHelper is IFlashLoanReceiver {
             amounts,
             modes,
             address(this),
-            abi.encode(FlashloanCallbackData({callSource: _callSource, callData: _data})),
+            abi.encode(FlashloanCallbackData({caller: msg.sender, callSource: _callSource, callData: _data})),
             0
         );
     }
