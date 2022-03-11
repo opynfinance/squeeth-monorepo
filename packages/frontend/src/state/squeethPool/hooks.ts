@@ -7,9 +7,7 @@ import { useAtomValue } from 'jotai'
 import BigNumber from 'bignumber.js'
 import { ethers } from 'ethers'
 
-import useContract from '@hooks/useContract'
 import routerABI from '../../abis/swapRouter.json'
-import uniABI from '../../abis/uniswapPool.json'
 import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
 import { addressAtom, networkIdAtom, web3Atom } from '../wallet/atoms'
 import useUniswapTicks from '@hooks/useUniswapTicks'
@@ -26,6 +24,7 @@ import {
   readyAtom,
 } from './atoms'
 import { transactionHashAtom } from '../trade/atoms'
+import { swapRouterContractAtom, squeethPoolContractAtom } from '../contracts/atoms'
 
 const getImmutables = async (squeethContract: Contract) => {
   const [token0, token1, fee, tickSpacing, maxLiquidityPerTick] = await Promise.all([
@@ -65,8 +64,7 @@ export const useUpdateSqueethPoolData = () => {
   const setPool = useUpdateAtom(poolAtom)
   const setWethToken = useUpdateAtom(wethTokenAtom)
   const setSqueethToken = useUpdateAtom(squeethTokenAtom)
-  const { squeethPool } = useAtomValue(addressesAtom)
-  const contract = useContract(squeethPool, uniABI)
+  const contract = useAtomValue(squeethPoolContractAtom)
   const { ticks } = useUniswapTicks()
   useEffect(() => {
     ;(async () => {
@@ -267,9 +265,8 @@ export const useGetBuyParam = () => {
 }
 
 export const useBuy = () => {
-  const { swapRouter } = useAtomValue(addressesAtom)
   const address = useAtomValue(addressAtom)
-  const swapRouterContract = useContract(swapRouter, routerABI)
+  const swapRouterContract = useAtomValue(swapRouterContractAtom)
   const handleTransaction = useHandleTransaction()
   const getBuyParam = useGetBuyParam()
   const buy = async (amount: BigNumber) => {
@@ -309,9 +306,8 @@ export const useGetBuyParamForETH = () => {
 
 export const useBuyForWETH = () => {
   const address = useAtomValue(addressAtom)
-  const { swapRouter } = useAtomValue(addressesAtom)
   const handleTransaction = useHandleTransaction()
-  const swapRouterContract = useContract(swapRouter, routerABI)
+  const swapRouterContract = useAtomValue(swapRouterContractAtom)
   const getBuyParamForETH = useGetBuyParamForETH()
   const buyForWETH = async (amount: BigNumber) => {
     const exactInputParam = await getBuyParamForETH(new BigNumber(amount))
@@ -351,11 +347,10 @@ export const useBuyAndRefundData = () => {
 
 export const useBuyAndRefund = () => {
   const address = useAtomValue(addressAtom)
-  const { swapRouter } = useAtomValue(addressesAtom)
   const setTxHash = useUpdateAtom(transactionHashAtom)
   const resetTxHash = useResetAtom(transactionHashAtom)
   const handleTransaction = useHandleTransaction()
-  const swapRouterContract = useContract(swapRouter, routerABI)
+  const swapRouterContract = useAtomValue(swapRouterContractAtom)
   const buyAndRefundData = useBuyAndRefundData()
 
   const buyAndRefund = useCallback(
@@ -483,11 +478,10 @@ const useSellAndUnwrapData = () => {
 
 export const useSell = () => {
   const address = useAtomValue(addressAtom)
-  const { swapRouter } = useAtomValue(addressesAtom)
   const setTxHash = useUpdateAtom(transactionHashAtom)
   const resetTxHash = useResetAtom(transactionHashAtom)
   const handleTransaction = useHandleTransaction()
-  const swapRouterContract = useContract(swapRouter, routerABI)
+  const swapRouterContract = useAtomValue(swapRouterContractAtom)
   const sellAndUnwrapData = useSellAndUnwrapData()
 
   const sell = useCallback(

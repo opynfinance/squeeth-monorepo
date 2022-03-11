@@ -1,16 +1,13 @@
 import { atom } from 'jotai'
 import BigNumber from 'bignumber.js'
-import { Contract } from 'web3-eth-contract'
 
 import { BIG_ZERO } from '@constants/index'
 import { toTokenAmount } from '@utils/calculations'
 import { networkIdAtom, web3Atom } from '../wallet/atoms'
-import { getContract } from '@utils/getContract'
-import abi from '../../abis/controller.json'
-import { addressesAtom } from '../positions/atoms'
 import { getCurrentImpliedFunding, getDailyHistoricalFunding, getIndex, getMark } from './utils'
 import { ETH_USDC_POOL, SQUEETH_UNI_POOL } from '@constants/address'
 import { SWAP_EVENT_TOPIC } from '../../constants'
+import { controllerContractAtom } from '../contracts/atoms'
 
 export const impliedVolAtom = atom((get) => {
   const mark = get(markAtom)
@@ -21,12 +18,6 @@ export const impliedVolAtom = atom((get) => {
   if (currentImpliedFunding < 0) return 0
 
   return Math.sqrt(currentImpliedFunding * 365)
-})
-const controllerContractAtom = atom<Contract | null>((get) => {
-  const web3 = get(web3Atom)
-  const { controller } = get(addressesAtom)
-  if (!web3) return null
-  return getContract(web3, controller, abi)
 })
 
 const normFactorResultAtom = atom(new BigNumber(1))

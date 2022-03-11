@@ -7,19 +7,17 @@ import { impliedVolAtom, normFactorAtom } from './atoms'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
 import { INDEX_SCALE } from '../../constants'
-import abi from '../../abis/controller.json'
 import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
 import { useCallback } from 'react'
 import { useOracle } from '@hooks/contracts/useOracle'
-import useContract from '../../hooks/useContract'
 import { calculateLiquidationPriceForLP } from './utils'
 import { useGetETHandOSQTHAmount } from '../nftmanager/hooks'
+import { controllerContractAtom } from '../contracts/atoms'
 
 export const useOpenDepositAndMint = () => {
   const address = useAtomValue(addressAtom)
-  const { controller } = useAtomValue(addressesAtom)
   const handleTransaction = useHandleTransaction()
-  const contract = useContract(controller, abi)
+  const contract = useAtomValue(controllerContractAtom)
   /**
    * @param vaultId - 0 to create new
    * @param amount - Amount of squeeth to mint, if 0 act as add collateral
@@ -44,9 +42,8 @@ export const useOpenDepositAndMint = () => {
 
 export const useDepositCollateral = () => {
   const address = useAtomValue(addressAtom)
-  const { controller } = useAtomValue(addressesAtom)
   const handleTransaction = useHandleTransaction()
-  const contract = useContract(controller, abi)
+  const contract = useAtomValue(controllerContractAtom)
   /**
    * Less gas than openDepositAndMint if only deposit is needed
    * @param vaultId
@@ -68,9 +65,8 @@ export const useDepositCollateral = () => {
 
 export const useWithdrawCollateral = () => {
   const address = useAtomValue(addressAtom)
-  const { controller } = useAtomValue(addressesAtom)
   const handleTransaction = useHandleTransaction()
-  const contract = useContract(controller, abi)
+  const contract = useAtomValue(controllerContractAtom)
   /**
    * Less gas than burnAndRedeem
    * @param vaultId
@@ -96,9 +92,8 @@ export const useWithdrawCollateral = () => {
 
 export const useBurnAndRedeem = () => {
   const address = useAtomValue(addressAtom)
-  const { controller } = useAtomValue(addressesAtom)
   const handleTransaction = useHandleTransaction()
-  const contract = useContract(controller, abi)
+  const contract = useAtomValue(controllerContractAtom)
   /**
    * @param vaultId
    * @param amount - Amount of squeeth to burn, if 0 act as remove collateral
@@ -124,9 +119,8 @@ export const useBurnAndRedeem = () => {
 
 export const useUpdateOperator = () => {
   const address = useAtomValue(addressAtom)
-  const { controller } = useAtomValue(addressesAtom)
   const handleTransaction = useHandleTransaction()
-  const contract = useContract(controller, abi)
+  const contract = useAtomValue(controllerContractAtom)
   /**
    * Authorize an address to modify the vault
    * @param vaultId
@@ -149,8 +143,7 @@ export const useUpdateOperator = () => {
 }
 
 export const useGetVault = () => {
-  const { controller } = useAtomValue(addressesAtom)
-  const contract = useContract(controller, abi)
+  const contract = useAtomValue(controllerContractAtom)
 
   const getVault = useCallback(
     async (vaultId: number) => {
@@ -173,8 +166,8 @@ export const useGetVault = () => {
 }
 
 export const useGetDebtAmount = () => {
-  const { ethUsdcPool, weth, usdc, controller } = useAtomValue(addressesAtom)
-  const contract = useContract(controller, abi)
+  const { ethUsdcPool, weth, usdc } = useAtomValue(addressesAtom)
+  const contract = useAtomValue(controllerContractAtom)
   const normFactor = useAtomValue(normFactorAtom)
   const { getTwapSafe } = useOracle()
   const getDebtAmount = useCallback(
@@ -203,9 +196,9 @@ export const useGetTwapEthPrice = () => {
 }
 
 export const useGetShortAmountFromDebt = () => {
-  const { ethUsdcPool, weth, usdc, controller } = useAtomValue(addressesAtom)
+  const { ethUsdcPool, weth, usdc } = useAtomValue(addressesAtom)
   const normFactor = useAtomValue(normFactorAtom)
-  const contract = useContract(controller, abi)
+  const contract = useAtomValue(controllerContractAtom)
   const { getTwapSafe } = useOracle()
   const getShortAmountFromDebt = async (debtAmount: BigNumber) => {
     if (!contract) return new BigNumber(0)
@@ -220,10 +213,9 @@ export const useGetShortAmountFromDebt = () => {
 
 export const useGetCollatRatioAndLiqPrice = () => {
   const impliedVol = useAtomValue(impliedVolAtom)
-  const { controller } = useAtomValue(addressesAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const normFactor = useAtomValue(normFactorAtom)
-  const contract = useContract(controller, abi)
+  const contract = useAtomValue(controllerContractAtom)
   const getTwapEthPrice = useGetTwapEthPrice()
   const getDebtAmount = useGetDebtAmount()
   const getETHandOSQTHAmount = useGetETHandOSQTHAmount()
@@ -274,8 +266,7 @@ export const useGetCollatRatioAndLiqPrice = () => {
 
 export const useDepositUnuPositionToken = () => {
   const address = useAtomValue(addressAtom)
-  const { controller } = useAtomValue(addressesAtom)
-  const contract = useContract(controller, abi)
+  const contract = useAtomValue(controllerContractAtom)
   const handleTransaction = useHandleTransaction()
   const depositUniPositionToken = async (vaultId: number, uniTokenId: number) => {
     if (!contract || !address) return
@@ -291,8 +282,7 @@ export const useDepositUnuPositionToken = () => {
 
 export const useWithdrawUniPositionToken = () => {
   const address = useAtomValue(addressAtom)
-  const { controller } = useAtomValue(addressesAtom)
-  const contract = useContract(controller, abi)
+  const contract = useAtomValue(controllerContractAtom)
   const handleTransaction = useHandleTransaction()
   const withdrawUniPositionToken = async (vaultId: number) => {
     if (!contract || !address) return

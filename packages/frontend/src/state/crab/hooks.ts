@@ -2,7 +2,6 @@ import { useAtom, useAtomValue } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 import { useCallback, useEffect } from 'react'
 
-import useContract from '@hooks/useContract'
 import {
   maxCapAtom,
   crabStrategyVaultAtom,
@@ -16,7 +15,6 @@ import {
   isTimeHedgeAvailableAtom,
   isPriceHedgeAvailableAtom,
 } from './atoms'
-import abi from '../../abis/crabStrategy.json'
 import { addressesAtom } from '../positions/atoms'
 import {
   getMaxCap,
@@ -37,20 +35,9 @@ import { fromTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
 import { addressAtom } from '../wallet/atoms'
 import { currentImpliedFundingAtom } from '../controller/atoms'
-// checkTimeHedge - contract: Contract | null
-// checkPriceHedge - auctionTriggerTime: number, contract: Contract | null
-// getCollateralFromCrabAmount - crabAmount: BigNumber,
-// ===contract: Contract | null,
-// ===vault: Vault | null,
-// getCurrentProfitableMovePercent - currentImpliedFunding
-// getMaxCap-contract -  Contract | null
-// getStrategyVaultId - contract: Contract | null
-// getTimeAtLastHedge - contract: Contract | null
-// getWsqueethFromCrabAmount - crabAmount: BigNumber, contract: Contract | null
-// setStrategyCap - amount: BigNumber, contract: Contract | null, address: string | null
+import { crabStrategyContractAtom } from '../contracts/atoms'
 
 export const useSetStrategyData = () => {
-  const { crabStrategy } = useAtomValue(addressesAtom)
   const setMaxCap = useUpdateAtom(maxCapAtom)
   const setVault = useUpdateAtom(crabStrategyVaultAtom)
   const setCollatRatio = useUpdateAtom(crabStrategyCollatRatioAtom)
@@ -59,7 +46,7 @@ export const useSetStrategyData = () => {
   const setIsPriceHedgeAvailable = useUpdateAtom(isPriceHedgeAvailableAtom)
   const setIsTimeHedgeAvailable = useUpdateAtom(isTimeHedgeAvailableAtom)
   const setTimeAtLastHedge = useUpdateAtom(timeAtLastHedgeAtom)
-  const contract = useContract(crabStrategy, abi)
+  const contract = useAtomValue(crabStrategyContractAtom)
   const getVault = useGetVault()
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
 
@@ -96,9 +83,9 @@ export const useSetStrategyData = () => {
 }
 
 export const useCalculateEthWillingToPay = () => {
-  const { crabStrategy } = useAtomValue(addressesAtom)
   const vault = useAtomValue(crabStrategyVaultAtom)
-  const contract = useContract(crabStrategy, abi)
+
+  const contract = useAtomValue(crabStrategyContractAtom)
   const getBuyQuote = useGetBuyQuote()
   const calculateEthWillingToPay = useCallback(
     async (amount: BigNumber, slippage: number) => {
@@ -127,7 +114,7 @@ export const useCalculateCurrentValue = () => {
   const slippage = useAtomValue(crabStrategySlippageAtom)
   const setCurrentEthValue = useUpdateAtom(currentEthValueAtom)
   const userCrabBalance = useTokenBalance(crabStrategy, 5, 18)
-  const contract = useContract(crabStrategy, abi)
+  const contract = useAtomValue(crabStrategyContractAtom)
   const calculateEthWillingToPay = useCalculateEthWillingToPay()
 
   const calculateCurrentValue = useCallback(async () => {
@@ -199,8 +186,7 @@ export const useFlashDeposit = (setStrategyData: any, calculateETHtoBorrowFromUn
   const maxCap = useAtomValue(maxCapAtom)
   const address = useAtomValue(addressAtom)
   const vault = useAtomValue(crabStrategyVaultAtom)
-  const { crabStrategy } = useAtomValue(addressesAtom)
-  const contract = useContract(crabStrategy, abi)
+  const contract = useAtomValue(crabStrategyContractAtom)
   const handleTransaction = useHandleTransaction()
   // const calculateETHtoBorrowFromUniswap = useCalculateETHtoBorrowFromUniswap()
   const calculateCurrentValue = useCalculateCurrentValue()
@@ -233,8 +219,7 @@ export const useFlashDeposit = (setStrategyData: any, calculateETHtoBorrowFromUn
 }
 
 export const useFlashWithdraw = (setStrategyData: any) => {
-  const { crabStrategy } = useAtomValue(addressesAtom)
-  const contract = useContract(crabStrategy, abi)
+  const contract = useAtomValue(crabStrategyContractAtom)
   const handleTransaction = useHandleTransaction()
   const address = useAtomValue(addressAtom)
   const calculateEthWillingToPay = useCalculateEthWillingToPay()
@@ -267,7 +252,7 @@ export const useFlashWithdrawEth = (setStrategyData: any) => {
   const { crabStrategy } = useAtomValue(addressesAtom)
   const currentEthValue = useAtomValue(currentEthValueAtom)
   const userCrabBalance = useTokenBalance(crabStrategy, 5, 18)
-  const contract = useContract(crabStrategy, abi)
+  const contract = useAtomValue(crabStrategyContractAtom)
   const flashWithdraw = useFlashWithdraw(setStrategyData)
 
   const flashWithdrawEth = useCallback(
@@ -284,8 +269,7 @@ export const useFlashWithdrawEth = (setStrategyData: any) => {
 }
 
 export const useSetStrategyCap = () => {
-  const { crabStrategy } = useAtomValue(addressesAtom)
-  const contract = useContract(crabStrategy, abi)
+  const contract = useAtomValue(crabStrategyContractAtom)
   const address = useAtomValue(addressAtom)
   const setStrategyCap = useCallback(
     async (amount: BigNumber) => {
@@ -303,10 +287,9 @@ export const useSetStrategyCap = () => {
 }
 
 export const useSetProfitableMovePercent = () => {
-  const { crabStrategy } = useAtomValue(addressesAtom)
   const [profitableMovePercent, setProfitableMovePercent] = useAtom(profitableMovePercentAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
-  const contract = useContract(crabStrategy, abi)
+  const contract = useAtomValue(crabStrategyContractAtom)
 
   useEffect(() => {
     if (!contract) return

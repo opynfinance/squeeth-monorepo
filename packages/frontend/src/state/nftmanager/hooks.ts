@@ -1,17 +1,15 @@
 import { Position } from '@uniswap/v3-sdk'
 
-import positionManagerAbi from '../../abis/NFTpositionmanager.json'
 import { toTokenAmount } from '@utils/calculations'
-import useContract from '@hooks/useContract'
 import { useAtomValue } from 'jotai'
-import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
+import { isWethToken0Atom } from '../positions/atoms'
 import BigNumber from 'bignumber.js'
 import { BIG_ZERO } from '@constants/index'
 import { poolAtom } from '../squeethPool/atoms'
+import { nftManagerContractAtom } from '../contracts/atoms'
 
 export const useGetPosition = () => {
-  const { nftManager } = useAtomValue(addressesAtom)
-  const contract = useContract(nftManager, positionManagerAbi)
+  const contract = useAtomValue(nftManagerContractAtom)
   const pool = useAtomValue(poolAtom)
   const getPosition = async (posId: number) => {
     if (!contract || !pool) return

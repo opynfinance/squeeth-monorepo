@@ -1,18 +1,16 @@
 import BigNumber from 'bignumber.js'
 import { useAtomValue } from 'jotai'
 
-import shortAbi from '../../abis/shortHelper.json'
 import { WETH_DECIMALS, OSQUEETH_DECIMALS } from '../../constants'
-// import { useWallet } from '@context/wallet'
 import { fromTokenAmount } from '@utils/calculations'
 import { addressAtom } from 'src/state/wallet/atoms'
 import { useHandleTransaction } from 'src/state/wallet/hooks'
 import { addressesAtom } from 'src/state/positions/atoms'
 import { useGetBuyParam, useGetSellParam } from 'src/state/squeethPool/hooks'
 import { normFactorAtom } from 'src/state/controller/atoms'
-import useContract from '@hooks/useContract'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
 import { transactionHashAtom } from 'src/state/trade/atoms'
+import { shortHelperContractAtom } from '../../state/contracts/atoms'
 
 export const useShortHelper = () => {
   const handleTransaction = useHandleTransaction()
@@ -23,7 +21,7 @@ export const useShortHelper = () => {
 
   const getSellParam = useGetSellParam()
   const getBuyParam = useGetBuyParam()
-  const contract = useContract(shortHelper, shortAbi)
+  const contract = useAtomValue(shortHelperContractAtom)
 
   const normalizationFactor = useAtomValue(normFactorAtom)
 
