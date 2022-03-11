@@ -19,6 +19,7 @@ workflows:
       - coverage:
           requires:
             - compile
+          context: BUILD_KEYS
       - contract-size:
           requires:
             - compile
