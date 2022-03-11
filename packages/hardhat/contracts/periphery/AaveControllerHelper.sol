@@ -64,7 +64,10 @@ contract AaveControllerHelper is IFlashLoanReceiver {
         // Approve the LENDING_POOL contract allowance to *pull* the owed amount
         IERC20Detailed(assets[0]).approve(address(LENDING_POOL), amounts[0].add(premiums[0]));
 
-        console.log("IERC20Detailed(assets[0]).balanceOf(address(this))", IERC20Detailed(assets[0]).balanceOf(address(this)));
+        console.log(
+            "IERC20Detailed(assets[0]).balanceOf(address(this))",
+            IERC20Detailed(assets[0]).balanceOf(address(this))
+        );
         console.log("amounts[0]", amounts[0]);
         console.log("premiums[0]", premiums[0]);
         console.log("amounts[0].add(premiums[0]", amounts[0].add(premiums[0]));
