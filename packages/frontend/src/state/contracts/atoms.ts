@@ -27,9 +27,9 @@ export const crabStrategyContractAtom = atom<Contract | null>((get) => {
 
 export const nftManagerContractAtom = atom<Contract | null>((get) => {
   const web3 = get(web3Atom)
-  const { crabStrategy } = get(addressesAtom)
+  const { nftManager } = get(addressesAtom)
   if (!web3) return null
-  return getContract(web3, crabStrategy, positionManagerAbi)
+  return getContract(web3, nftManager, positionManagerAbi)
 })
 
 export const swapRouterContractAtom = atom<Contract | null>((get) => {
