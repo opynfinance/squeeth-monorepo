@@ -73,19 +73,16 @@ export const useWithdrawCollateral = () => {
    * @param collatAmount
    * @returns
    */
-  const withdrawCollateral = useCallback(
-    (vaultId: number, collatAmount: BigNumber) => {
-      if (!contract || !address) return
+  const withdrawCollateral = (vaultId: number, collatAmount: BigNumber) => {
+    if (!contract || !address) return
 
-      const ethAmt = fromTokenAmount(collatAmount, 18)
-      return handleTransaction(
-        contract.methods.withdraw(vaultId, ethAmt.toFixed(0)).send({
-          from: address,
-        }),
-      )
-    },
-    [address, contract],
-  )
+    const ethAmt = fromTokenAmount(collatAmount, 18)
+    return handleTransaction(
+      contract.methods.withdraw(vaultId, ethAmt.toFixed(0)).send({
+        from: address,
+      }),
+    )
+  }
 
   return withdrawCollateral
 }
@@ -100,20 +97,17 @@ export const useBurnAndRedeem = () => {
    * @param collatAmount - Amount of collat to remove
    * @returns
    */
-  const burnAndRedeem = useCallback(
-    (vaultId: number, amount: BigNumber, collatAmount: BigNumber) => {
-      if (!contract || !address) return
+  const burnAndRedeem = (vaultId: number, amount: BigNumber, collatAmount: BigNumber) => {
+    if (!contract || !address) return
 
-      const _amount = fromTokenAmount(amount, OSQUEETH_DECIMALS)
-      const ethAmt = fromTokenAmount(collatAmount, 18)
-      return handleTransaction(
-        contract.methods.burnWPowerPerpAmount(vaultId, _amount.toFixed(0), ethAmt.toFixed(0)).send({
-          from: address,
-        }),
-      )
-    },
-    [contract, address],
-  )
+    const _amount = fromTokenAmount(amount, OSQUEETH_DECIMALS)
+    const ethAmt = fromTokenAmount(collatAmount, 18)
+    return handleTransaction(
+      contract.methods.burnWPowerPerpAmount(vaultId, _amount.toFixed(0), ethAmt.toFixed(0)).send({
+        from: address,
+      }),
+    )
+  }
   return burnAndRedeem
 }
 
@@ -126,18 +120,15 @@ export const useUpdateOperator = () => {
    * @param vaultId
    * @param operator
    */
-  const updateOperator = useCallback(
-    async (vaultId: number, operator: string) => {
-      if (!contract || !address) return
+  const updateOperator = async (vaultId: number, operator: string) => {
+    if (!contract || !address) return
 
-      await handleTransaction(
-        contract.methods.updateOperator(vaultId, operator).send({
-          from: address,
-        }),
-      )
-    },
-    [contract, address],
-  )
+    await handleTransaction(
+      contract.methods.updateOperator(vaultId, operator).send({
+        from: address,
+      }),
+    )
+  }
 
   return updateOperator
 }
