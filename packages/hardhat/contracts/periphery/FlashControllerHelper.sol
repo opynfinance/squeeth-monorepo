@@ -84,7 +84,7 @@ contract FlashControllerHelper is IUniswapV3SwapCallback {
         uint256 _amountOutMinimum,
         uint8 _callSource,
         bytes memory _data
-    ) internal {
+    ) internal returns (uint256) {
         //calls internal uniswap swap function that will trigger a callback for the flash swap
         uint256 amountOut = _exactInputInternal(
             _amountIn,
@@ -100,6 +100,8 @@ contract FlashControllerHelper is IUniswapV3SwapCallback {
 
         //slippage limit check
         require(amountOut >= _amountOutMinimum, "amount out less than min");
+
+        return amountOut;
     }
 
     /**
