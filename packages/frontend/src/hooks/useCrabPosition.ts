@@ -7,7 +7,7 @@ import { crabLoadingAtom, currentEthValueAtom } from 'src/state/crab/atoms'
 import { useAtomValue } from 'jotai'
 import { useTokenBalance } from './contracts/useTokenBalance'
 import { addressesAtom } from 'src/state/positions/atoms'
-import { indexAtom } from 'src/state/controller/atoms'
+import { useIndex } from 'src/state/controller/hooks'
 
 export const useCrabPosition = (user: string) => {
   const crabLoading = useAtomValue(crabLoadingAtom)
@@ -17,7 +17,7 @@ export const useCrabPosition = (user: string) => {
   const { loading, data } = useUserCrabTxHistory(user)
   const userCrabBalance = useTokenBalance(crabStrategy, 5, 18)
 
-  const index = useAtomValue(indexAtom)
+  const index = useIndex()
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
 
   const [minCurrentEth, setMinCurrentEth] = useState(BIG_ZERO)

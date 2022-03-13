@@ -31,7 +31,8 @@ import {
   useFlashWithdrawEth,
   useSetStrategyData,
 } from 'src/state/crab/hooks'
-import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
+import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from 'src/state/controller/atoms'
+import { useIndex } from 'src/state/controller/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -93,7 +94,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
   const calculateEthWillingToPay = useCalculateEthWillingToPay()
   const calculateETHtoBorrowFromUniswap = useCalculateETHtoBorrowFromUniswap()
   const flashDeposit = useFlashDeposit(setStrategyData, calculateETHtoBorrowFromUniswap)
-  const index = useAtomValue(indexAtom)
+  const index = useIndex()
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
 
   const ready = useAtomValue(readyAtom)

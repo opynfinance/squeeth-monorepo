@@ -20,7 +20,7 @@ import { poolAtom, readyAtom, squeethInitialPriceAtom } from 'src/state/squeethP
 import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
 import { useComputeSwaps, useFirstValidVault, useSwaps } from 'src/state/positions/hooks'
 import { useVaultHistoryQuery } from './useVaultHistory'
-import { indexAtom } from 'src/state/controller/atoms'
+import { useIndex } from 'src/state/controller/hooks'
 
 export const usePnL = () => {
   const positionType = useAtomValue(positionTypeAtom)
@@ -34,7 +34,7 @@ export const usePnL = () => {
   const { vaultId } = useFirstValidVault()
   const { totalUSDFromBuy, totalUSDFromSell } = useComputeSwaps()
 
-  const index = useAtomValue(indexAtom)
+  const index = useIndex()
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const ready = useAtomValue(readyAtom)
 

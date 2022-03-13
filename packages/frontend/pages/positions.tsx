@@ -48,7 +48,7 @@ import {
 } from 'src/state/pnl/hooks'
 import { loadingAtom } from 'src/state/pnl/atoms'
 import YourVaults from '@components/Trade/YourVaults'
-import { indexAtom } from 'src/state/controller/atoms'
+import { useIndex } from 'src/state/controller/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -189,7 +189,7 @@ export function Positions() {
   const lpedSqueeth = useLpDebt()
   const mintedDebt = useMintedDebt()
   const shortDebt = useShortDebt()
-  const index = useAtomValue(indexAtom)
+  const index = useIndex()
   usePositionsAndFeesComputation()
   const {
     depositedEth,

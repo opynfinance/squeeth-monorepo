@@ -21,14 +21,14 @@ import { readyAtom } from '../squeethPool/atoms'
 import { useGetBuyQuote, useGetSellQuote } from '../squeethPool/hooks'
 import { BIG_ZERO } from '@constants/index'
 import { PositionType } from '../../types'
-import { indexAtom } from '../controller/atoms'
+import { useIndex } from '../controller/hooks'
 
 export function useEthCollateralPnl() {
   const { vaultId } = useFirstValidVault()
   const vaultHistory = useVaultHistoryQuery(vaultId)
 
   const existingCollat = useAtomValue(existingCollatAtom)
-  const index = useAtomValue(indexAtom)
+  const index = useIndex()
   const [ethCollateralPnl, setEthCollateralPnl] = useAtom(ethCollateralPnlAtom)
   const { data: swapsData } = useSwaps()
 
@@ -90,7 +90,7 @@ export function useShortGain() {
   const [shortGain, setShortGain] = useAtom(shortGainAtom)
   const shortUnrealizedPNL = useAtomValue(shortUnrealizedPNLAtom)
   const existingCollat = useAtomValue(existingCollatAtom)
-  const index = useAtomValue(indexAtom)
+  const index = useIndex()
 
   useEffect(() => {
     if (squeethAmount.isZero() || shortUnrealizedPNL.usd.isZero()) {
@@ -119,7 +119,7 @@ export function useLongUnrealizedPNL() {
   const positionType = useAtomValue(positionTypeAtom)
   const sellQuote = useAtomValue(sellQuoteAtom)
   const [longUnrealizedPNL, setLongUnrealizedPNL] = useAtom(longUnrealizedPNLAtom)
-  const index = useAtomValue(indexAtom)
+  const index = useIndex()
 
   const { data: swapsData } = useSwaps()
   const swaps = swapsData?.swaps
@@ -164,7 +164,7 @@ export function useShortUnrealizedPNL() {
   const buyQuote = useAtomValue(buyQuoteAtom)
   const ethCollateralPnl = useEthCollateralPnl()
   const [shortUnrealizedPNL, setShortUnrealizedPNL] = useAtom(shortUnrealizedPNLAtom)
-  const index = useAtomValue(indexAtom)
+  const index = useIndex()
 
   const { data: swapsData } = useSwaps()
   const swaps = swapsData?.swaps

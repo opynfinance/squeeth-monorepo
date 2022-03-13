@@ -96,36 +96,4 @@ markAtom.onMount = (fetchMark) => {
   fetchMark()
 }
 
-const indexResult = atom(BIG_ZERO)
-export const indexAtom = atom(
-  (get) => get(indexResult),
-  (_get, set) => {
-    const fetchData = async () => {
-      const contract = _get(controllerContractAtom)
-      const web3 = _get(web3Atom)
-      const networkId = _get(networkIdAtom)
-      try {
-        const response = await getIndex(1, contract)
-        set(indexResult, response)
-
-        web3.eth.subscribe(
-          'logs',
-          {
-            address: [ETH_USDC_POOL[networkId]],
-            topics: [SWAP_EVENT_TOPIC],
-          },
-          () => {
-            getIndex(3, contract).then((index) => set(indexResult, index))
-          },
-        )
-      } catch (error) {
-        set(indexResult, BIG_ZERO)
-      }
-    }
-    fetchData()
-  },
-)
-
-indexAtom.onMount = (fetchIndex) => {
-  fetchIndex()
-}
+export const indexAtom = atom(BIG_ZERO)
