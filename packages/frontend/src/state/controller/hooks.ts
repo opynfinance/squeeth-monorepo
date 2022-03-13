@@ -3,17 +3,30 @@ import BigNumber from 'bignumber.js'
 
 import { addressAtom, networkIdAtom, web3Atom } from '../wallet/atoms'
 import { OSQUEETH_DECIMALS, SWAP_EVENT_TOPIC, TWAP_PERIOD } from '../../constants'
-import { impliedVolAtom, indexAtom, normFactorAtom } from './atoms'
+import {
+  markAtom,
+  currentImpliedFundingAtom,
+  dailyHistoricalFundingAtom,
+  impliedVolAtom,
+  indexAtom,
+  normFactorAtom,
+} from './atoms'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
 import { INDEX_SCALE } from '../../constants'
 import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
 import { useCallback, useEffect } from 'react'
 import { useOracle } from '@hooks/contracts/useOracle'
-import { calculateLiquidationPriceForLP, getIndex } from './utils'
+import {
+  calculateLiquidationPriceForLP,
+  getCurrentImpliedFunding,
+  getDailyHistoricalFunding,
+  getIndex,
+  getMark,
+} from './utils'
 import { useGetETHandOSQTHAmount } from '../nftmanager/hooks'
 import { controllerContractAtom } from '../contracts/atoms'
-import { ETH_USDC_POOL } from '@constants/address'
+import { ETH_USDC_POOL, SQUEETH_UNI_POOL } from '@constants/address'
 
 export const useOpenDepositAndMint = () => {
   const address = useAtomValue(addressAtom)
@@ -344,4 +357,60 @@ export const useIndex = () => {
   }, [web3, networkId])
 
   return index
+}
+
+export const useDailyHistoricalFunding = () => {
+  const address = useAtomValue(addressAtom)
+  const [dailyHistoricalFunding, setDailyHistoricalFunding] = useAtom(dailyHistoricalFundingAtom)
+  const contract = useAtomValue(controllerContractAtom)
+  useEffect(() => {
+    if (!contract) return
+    getDailyHistoricalFunding(contract).then(setDailyHistoricalFunding)
+  }, [address])
+
+  return dailyHistoricalFunding
+}
+
+export const useCurrentImpliedFunding = () => {
+  const address = useAtomValue(addressAtom)
+  const [currentImpliedFunding, setCurrentImpliedFunding] = useAtom(currentImpliedFundingAtom)
+  const contract = useAtomValue(controllerContractAtom)
+  useEffect(() => {
+    if (!contract) return
+    getCurrentImpliedFunding(contract).then(setCurrentImpliedFunding)
+  }, [address])
+
+  return currentImpliedFunding
+}
+
+export const useMark = () => {
+  const address = useAtomValue(addressAtom)
+  const web3 = useAtomValue(web3Atom)
+  const networkId = useAtomValue(networkIdAtom)
+  const [mark, setMark] = useAtom(markAtom)
+  const contract = useAtomValue(controllerContractAtom)
+
+  useEffect(() => {
+    if (!contract) return
+    getMark(1, contract).then(setMark)
+  }, [address])
+
+  // setup mark listener
+  useEffect(() => {
+    if (!web3) return
+    const sub = web3.eth.subscribe(
+      'logs',
+      {
+        address: [SQUEETH_UNI_POOL[networkId]],
+        topics: [SWAP_EVENT_TOPIC],
+      },
+      () => {
+        getMark(3, contract).then(setMark)
+      },
+    )
+    // cleanup function
+    // return () => sub.unsubscribe()
+  }, [networkId, web3])
+
+  return mark
 }

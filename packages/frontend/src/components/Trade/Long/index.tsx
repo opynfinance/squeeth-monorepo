@@ -41,7 +41,7 @@ import {
   transactionHashAtom,
 } from 'src/state/trade/atoms'
 import { toTokenAmount } from '@utils/calculations'
-import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from 'src/state/controller/atoms'
+import { useDailyHistoricalFunding, useCurrentImpliedFunding } from 'src/state/controller/hooks'
 import { TradeType } from '../../../types'
 
 const useStyles = makeStyles((theme) =>
@@ -271,8 +271,8 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   const selectWallet = useSelectWallet()
   const { squeethAmount } = useComputeSwaps()
   const longSqthBal = useLongSqthBal()
-  const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
-  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
+  const dailyHistoricalFunding = useDailyHistoricalFunding()
+  const currentImpliedFunding = useCurrentImpliedFunding()
 
   const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)

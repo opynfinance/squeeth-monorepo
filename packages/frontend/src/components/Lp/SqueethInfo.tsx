@@ -10,8 +10,8 @@ import { toTokenAmount } from '@utils/calculations'
 import LPPosition from './LPPosition'
 import { addressAtom } from '../../state/wallet/atoms'
 import { useGetWSqueethPositionValue, useGetWSqueethPositionValueInETH } from 'src/state/squeethPool/hooks'
-import { impliedVolAtom, markAtom } from 'src/state/controller/atoms'
-import { useIndex } from 'src/state/controller/hooks'
+import { impliedVolAtom } from 'src/state/controller/atoms'
+import { useIndex, useMark } from 'src/state/controller/hooks'
 // import { useWallet } from '@context/wallet'
 
 const useStyles = makeStyles((theme) =>
@@ -50,7 +50,7 @@ const useStyles = makeStyles((theme) =>
 
 const SqueethInfo: React.FC = () => {
   const classes = useStyles()
-  const mark = useAtomValue(markAtom)
+  const mark = useMark()
   const index = useIndex()
   const impliedVol = useAtomValue(impliedVolAtom)
   const getWSqueethPositionValue = useGetWSqueethPositionValue()

@@ -31,8 +31,7 @@ import {
   useFlashWithdrawEth,
   useSetStrategyData,
 } from 'src/state/crab/hooks'
-import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from 'src/state/controller/atoms'
-import { useIndex } from 'src/state/controller/hooks'
+import { useIndex, useDailyHistoricalFunding, useCurrentImpliedFunding } from 'src/state/controller/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -100,8 +99,8 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
   const ready = useAtomValue(readyAtom)
   const { isRestricted } = useRestrictUser()
 
-  const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
-  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
+  const dailyHistoricalFunding = useDailyHistoricalFunding()
+  const currentImpliedFunding = useCurrentImpliedFunding()
 
   useEffect(() => {
     setStrategyData()
