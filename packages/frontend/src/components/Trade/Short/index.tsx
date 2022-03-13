@@ -264,11 +264,11 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
     if (liqp.toString() || liqp.toString() !== '0') setLiqPrice(liqp)
   }, [amount.toString(), collatPercent, collateral.toString(), normalizationFactor.toString()])
 
-  useEffect(() => {
-    if (!open && shortVaults.length && shortVaults[firstValidVault].shortAmount.lt(amount)) {
-      setAmount(shortVaults[firstValidVault].shortAmount.toString())
-    }
-  }, [shortVaults?.length, open])
+  // useEffect(() => {
+  //   if (!open && shortVaults.length && shortVaults[firstValidVault].shortAmount.lt(amount)) {
+  //     setAmount(shortVaults[firstValidVault].shortAmount.toString())
+  //   }
+  // }, [shortVaults?.length, open])
 
   const existingCollatPercent = useAtomValue(existingCollatPercentAtom)
 
@@ -651,16 +651,16 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   useEffect(() => {
     const contractShort = vault?.shortAmount ? vault?.shortAmount : new BigNumber(0)
     setFinalShortAmount(contractShort)
-  }, [vault?.shortAmount.toString()])
+  }, [vault?.shortAmount.toString(), open, tradeType])
 
   useEffect(() => {
-    if (!open && vault?.shortAmount && vault?.shortAmount.lt(amount)) {
+    if (!open && tradeType === TradeType.SHORT && vault?.shortAmount && vault?.shortAmount.lt(amount)) {
       setAmount(vault?.shortAmount.toString())
     }
   }, [vault?.shortAmount.toString(), open])
 
   useEffect(() => {
-    if (!open) return
+    if (!open || tradeType !== TradeType.SHORT) return
     const debt = collateral.times(100).dividedBy(new BigNumber(collatPercent))
     getShortAmountFromDebt(debt).then((s) => setAmount(s.toString()))
     setConfirmedAmount(amount.toFixed(6).toString())
@@ -673,7 +673,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   }, [vaultId])
 
   useEffect(() => {
-    if (shortVaults.length) {
+    if (shortVaults.length && !open && tradeType === TradeType.SHORT) {
       const _collat: BigNumber = vault?.collateralAmount ?? new BigNumber(0)
       setExistingCollat(_collat)
       const restOfShort = new BigNumber(vault?.shortAmount ?? new BigNumber(0)).minus(amount)
@@ -789,7 +789,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   }, [collatPercent])
 
   useEffect(() => {
-    if (finalShortAmount.isGreaterThan(0)) {
+    if (finalShortAmount.isGreaterThan(0) && !open && tradeType === TradeType.SHORT) {
       setAmount(finalShortAmount.toString())
       setCollatPercent(150)
       setCloseType(CloseType.FULL)
