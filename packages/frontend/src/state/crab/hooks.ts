@@ -102,7 +102,7 @@ export const useCalculateEthWillingToPay = () => {
       const ethWillingToPayQuote = await getBuyQuote(squeethDebt, new BigNumber(slippage))
       return ethWillingToPayQuote
     },
-    [contract, getBuyQuote, vault?.id],
+    [contract, getBuyQuote, vault?.id, contract],
   )
 
   return calculateEthWillingToPay

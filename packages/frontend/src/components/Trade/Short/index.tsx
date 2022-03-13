@@ -48,6 +48,7 @@ import {
 } from 'src/state/trade/atoms'
 import { toTokenAmount } from '@utils/calculations'
 import { normFactorAtom } from 'src/state/controller/atoms'
+import { TradeType } from '../../../types'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -247,8 +248,10 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
 
   useEffect(() => {
-    getSellQuote(amount, slippageAmount).then(setQuote)
-  }, [amount.toString(), slippageAmount])
+    if (open && tradeType === TradeType.SHORT) {
+      getSellQuote(amount, slippageAmount).then(setQuote)
+    }
+  }, [amount.toString(), slippageAmount.toString(), tradeType, open])
 
   useEffect(() => {
     const rSqueeth = normalizationFactor.multipliedBy(amount || 1).dividedBy(10000)
@@ -265,10 +268,10 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   const existingCollatPercent = useAtomValue(existingCollatPercentAtom)
 
   useEffect(() => {
-    if (!open) return
+    if (!open || tradeType !== TradeType.SHORT) return
     const debt = collateral.times(100).dividedBy(new BigNumber(collatPercent))
     getShortAmountFromDebt(debt).then((s) => setAmount(s.toString()))
-  }, [collatPercent, collateral.toString(), normalizationFactor.toString()])
+  }, [collatPercent, collateral.toString(), normalizationFactor.toString(), tradeType, open])
 
   useEffect(() => {
     if (!vaultId || !shortVaults?.length) return
@@ -298,7 +301,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   }
 
   useEffect(() => {
-    if (shortVaults.length) {
+    if (shortVaults.length && open && tradeType === TradeType.SHORT) {
       const _collat: BigNumber = shortVaults[firstValidVault].collateralAmount
       setExistingCollat(_collat)
       const restOfShort = new BigNumber(shortVaults[firstValidVault].shortAmount).minus(amount)
@@ -309,7 +312,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
         setWithdrawCollat(_collat.minus(neededCollat))
       })
     }
-  }, [amount.toString(), collatPercent, shortVaults?.length])
+  }, [amount.toString(), collatPercent, shortVaults?.length, open, tradeType])
 
   const ethPrice = useETHPrice()
   const setCollatRatio = useUpdateAtom(collatRatioAtom)
