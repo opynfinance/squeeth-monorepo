@@ -109,7 +109,7 @@ const Mint: React.FC = () => {
   useEffect(() => {
     let isMounted = true
     if (collatAmountBN.isNaN() || collatAmountBN.isZero()) {
-      setMintAmount(new BigNumber(0))
+      if (isMounted) setMintAmount(new BigNumber(0))
       return
     }
     const debt = collatAmountBN.times(100).div(collatPercent)
