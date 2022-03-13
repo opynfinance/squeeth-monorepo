@@ -51,7 +51,7 @@ import { swapsRopsten, swapsRopstenVariables } from '@queries/uniswap/__generate
 export const useSwaps = () => {
   const [networkId] = useAtom(networkIdAtom)
   const [address] = useAtom(addressAtom)
-  const [{ squeethPool, oSqueeth, shortHelper, swapRouter, crabStrategy }] = useAtom(addressesAtom)
+  const { squeethPool, oSqueeth, shortHelper, swapRouter, crabStrategy } = useAtomValue(addressesAtom)
   const { subscribeToMore, data, refetch, loading, error } = useQuery<
     swaps | swapsRopsten,
     swapsVariables | swapsRopstenVariables
