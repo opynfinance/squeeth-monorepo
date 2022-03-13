@@ -29,7 +29,6 @@ import { PositionType, TradeType } from '../src/types'
 import { toTokenAmount } from '@utils/calculations'
 import {
   dailyHistoricalFundingAtom,
-  normFactorAtom,
   impliedVolAtom,
   currentImpliedFundingAtom,
   markAtom,
@@ -39,6 +38,7 @@ import { usePositionsAndFeesComputation } from 'src/state/positions/hooks'
 import { actualTradeTypeAtom, ethTradeAmountAtom, sqthTradeAmountAtom, tradeTypeAtom } from 'src/state/trade/atoms'
 import { positionTypeAtom } from 'src/state/positions/atoms'
 import { useResetAtom } from 'jotai/utils'
+import { useNormFactor } from 'src/state/controller/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -401,7 +401,7 @@ const SqueethInfo: React.FC = () => {
   const index = useAtomValue(indexAtom)
   const impliedVol = useAtomValue(impliedVolAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
-  const normFactor = useAtomValue(normFactorAtom)
+  const normFactor = useNormFactor()
   usePositionsAndFeesComputation()
 
   const [showAdvanced, setShowAdvanced] = useState(false)

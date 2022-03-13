@@ -2,7 +2,6 @@ import { atom } from 'jotai'
 import BigNumber from 'bignumber.js'
 
 import { BIG_ZERO } from '@constants/index'
-import { toTokenAmount } from '@utils/calculations'
 import { networkIdAtom, web3Atom } from '../wallet/atoms'
 import { getCurrentImpliedFunding, getDailyHistoricalFunding, getIndex, getMark } from './utils'
 import { ETH_USDC_POOL, SQUEETH_UNI_POOL } from '@constants/address'
@@ -20,31 +19,7 @@ export const impliedVolAtom = atom((get) => {
   return Math.sqrt(currentImpliedFunding * 365)
 })
 
-const normFactorResultAtom = atom(new BigNumber(1))
-export const normFactorAtom = atom(
-  (get) => get(normFactorResultAtom),
-  (_get, set) => {
-    const fetchData = async () => {
-      const contract = _get(controllerContractAtom)
-      try {
-        const response = await contract?.methods.getExpectedNormalizationFactor().call()
-        set(normFactorResultAtom, toTokenAmount(new BigNumber(response.toString()), 18))
-      } catch (error) {
-        try {
-          const data = await contract?.methods.normalizationFactor().call()
-          set(normFactorResultAtom, toTokenAmount(new BigNumber(data.toString()), 18))
-        } catch (error) {
-          set(normFactorResultAtom, new BigNumber(1))
-          console.log('normFactor error')
-        }
-      }
-    }
-    fetchData()
-  },
-)
-normFactorAtom.onMount = (runFetch) => {
-  runFetch()
-}
+export const normFactorAtom = atom(new BigNumber(1))
 
 const dailyHistoricalFundingResult = atom({ period: 0, funding: 0 })
 export const dailyHistoricalFundingAtom = atom(

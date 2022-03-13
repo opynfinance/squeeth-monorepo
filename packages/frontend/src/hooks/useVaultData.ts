@@ -5,8 +5,7 @@ import { useAtomValue } from 'jotai'
 import { Vault } from '../types'
 import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
 import { readyAtom } from 'src/state/squeethPool/atoms'
-import { normFactorAtom } from 'src/state/controller/atoms'
-import { useGetCollatRatioAndLiqPrice, useGetVault } from 'src/state/controller/hooks'
+import { useGetCollatRatioAndLiqPrice, useGetVault, useNormFactor } from 'src/state/controller/hooks'
 
 export const useVaultData = (vid: number) => {
   const [vault, setVault] = useState<Vault | null>(null)
@@ -16,7 +15,7 @@ export const useVaultData = (vid: number) => {
   const [collatPercent, setCollatPercent] = useState(0)
   const [isVaultLoading, setVaultLoading] = useState(true)
 
-  const normFactor = useAtomValue(normFactorAtom)
+  const normFactor = useNormFactor()
   const getVault = useGetVault()
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
   const ready = useAtomValue(readyAtom)

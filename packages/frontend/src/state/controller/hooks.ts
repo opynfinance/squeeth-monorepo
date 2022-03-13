@@ -1,4 +1,4 @@
-import { useAtomValue } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 import BigNumber from 'bignumber.js'
 
 import { addressAtom } from '../wallet/atoms'
@@ -8,7 +8,7 @@ import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
 import { INDEX_SCALE } from '../../constants'
 import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useOracle } from '@hooks/contracts/useOracle'
 import { calculateLiquidationPriceForLP } from './utils'
 import { useGetETHandOSQTHAmount } from '../nftmanager/hooks'
@@ -159,7 +159,7 @@ export const useGetVault = () => {
 export const useGetDebtAmount = () => {
   const { ethUsdcPool, weth, usdc } = useAtomValue(addressesAtom)
   const contract = useAtomValue(controllerContractAtom)
-  const normFactor = useAtomValue(normFactorAtom)
+  const normFactor = useNormFactor()
   const { getTwapSafe } = useOracle()
   const getDebtAmount = useCallback(
     async (shortAmount: BigNumber) => {
@@ -188,7 +188,7 @@ export const useGetTwapEthPrice = () => {
 
 export const useGetShortAmountFromDebt = () => {
   const { ethUsdcPool, weth, usdc } = useAtomValue(addressesAtom)
-  const normFactor = useAtomValue(normFactorAtom)
+  const normFactor = useNormFactor()
   const contract = useAtomValue(controllerContractAtom)
   const { getTwapSafe } = useOracle()
   const getShortAmountFromDebt = async (debtAmount: BigNumber) => {
@@ -205,7 +205,7 @@ export const useGetShortAmountFromDebt = () => {
 export const useGetCollatRatioAndLiqPrice = () => {
   const impliedVol = useAtomValue(impliedVolAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)
-  const normFactor = useAtomValue(normFactorAtom)
+  const normFactor = useNormFactor()
   const contract = useAtomValue(controllerContractAtom)
   const getTwapEthPrice = useGetTwapEthPrice()
   const getDebtAmount = useGetDebtAmount()
@@ -284,4 +284,31 @@ export const useWithdrawUniPositionToken = () => {
     )
   }
   return withdrawUniPositionToken
+}
+
+export const useNormFactor = () => {
+  const contract = useAtomValue(controllerContractAtom)
+  const [normFactor, setNormFactor] = useAtom(normFactorAtom)
+  useEffect(() => {
+    if (!contract) return
+    contract.methods
+      .getExpectedNormalizationFactor()
+      .call()
+      .then((normFactor: any) => {
+        setNormFactor(toTokenAmount(new BigNumber(normFactor.toString()), 18))
+      })
+      .catch(() => {
+        contract.methods
+          .normalizationFactor()
+          .call()
+          .then((normFactor: any) => {
+            setNormFactor(toTokenAmount(new BigNumber(normFactor.toString()), 18))
+          })
+          .catch(() => {
+            console.log('normFactor error')
+          })
+      })
+  }, [contract])
+
+  return normFactor
 }

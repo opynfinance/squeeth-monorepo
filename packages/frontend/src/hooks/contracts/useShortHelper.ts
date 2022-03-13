@@ -7,10 +7,10 @@ import { addressAtom } from 'src/state/wallet/atoms'
 import { useHandleTransaction } from 'src/state/wallet/hooks'
 import { addressesAtom } from 'src/state/positions/atoms'
 import { useGetBuyParam, useGetSellParam } from 'src/state/squeethPool/hooks'
-import { normFactorAtom } from 'src/state/controller/atoms'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
 import { transactionHashAtom } from 'src/state/trade/atoms'
 import { shortHelperContractAtom } from '../../state/contracts/atoms'
+import { useNormFactor } from 'src/state/controller/hooks'
 
 export const useShortHelper = () => {
   const handleTransaction = useHandleTransaction()
@@ -23,7 +23,7 @@ export const useShortHelper = () => {
   const getBuyParam = useGetBuyParam()
   const contract = useAtomValue(shortHelperContractAtom)
 
-  const normalizationFactor = useAtomValue(normFactorAtom)
+  const normalizationFactor = useNormFactor()
 
   /**
    * deposit collat, mint squeeth and sell it in uniSwap

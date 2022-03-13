@@ -34,7 +34,12 @@ import { useETHPrice } from '@hooks/useETHPrice'
 import { collatRatioAtom } from 'src/state/ethPriceCharts/atoms'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
 import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
-import { useGetDebtAmount, useGetShortAmountFromDebt, useUpdateOperator } from 'src/state/controller/hooks'
+import {
+  useGetDebtAmount,
+  useGetShortAmountFromDebt,
+  useNormFactor,
+  useUpdateOperator,
+} from 'src/state/controller/hooks'
 import { useComputeSwaps, useFirstValidVault, useLPPositionsQuery } from 'src/state/positions/hooks'
 import {
   quoteAtom,
@@ -47,7 +52,7 @@ import {
   transactionHashAtom,
 } from 'src/state/trade/atoms'
 import { toTokenAmount } from '@utils/calculations'
-import { normFactorAtom } from 'src/state/controller/atoms'
+// import { normFactorAtom } from 'src/state/controller/atoms'
 import { TradeType } from '../../../types'
 
 const useStyles = makeStyles((theme) =>
@@ -233,7 +238,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   const getShortAmountFromDebt = useGetShortAmountFromDebt()
   const getDebtAmount = useGetDebtAmount()
   const [tradeSuccess, setTradeSuccess] = useAtom(tradeSuccessAtom)
-  const normalizationFactor = useAtomValue(normFactorAtom)
+  const normalizationFactor = useNormFactor()
 
   const [quote, setQuote] = useAtom(quoteAtom)
   const [amountInputValue, setAmount] = useAtom(sqthTradeAmountAtom)
@@ -611,7 +616,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const vault = useAtomValue(vaultAtom)
   const selectWallet = useSelectWallet()
   const updateOperator = useUpdateOperator()
-  const normalizationFactor = useAtomValue(normFactorAtom)
+  const normalizationFactor = useNormFactor()
   const getShortAmountFromDebt = useGetShortAmountFromDebt()
   const getDebtAmount = useGetDebtAmount()
   const getBuyQuote = useGetBuyQuote()
