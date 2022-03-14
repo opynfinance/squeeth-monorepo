@@ -414,7 +414,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
      * @param _params FlashloanWMintDepositNftParams struct
      */
     function flashloanWMintDepositNft(FlashloanWMintDepositNftParams calldata _params) external payable {
-
         // struct FlashloanWMintDepositNftParams {
         //     uint256 vaultId; // vault ID (could be zero)
         //     uint256 wPowerPerpAmount; // wPowerPerp amount to mint
@@ -449,11 +448,9 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             // convert flashloaned WETH to ETH
             IWETH9(weth).withdraw(_amount);
 
-            uint256 vaultId = IController(controller).mintWPowerPerpAmount{value: data.collateralToDeposit.add(msg.value)}(
-                data.vaultId,
-                data.wPowerPerpAmount,
-                0
-            );
+            uint256 vaultId = IController(controller).mintWPowerPerpAmount{
+                value: data.collateralToDeposit.add(msg.value)
+            }(data.vaultId, data.wPowerPerpAmount, 0);
 
             // LP data.wPowerPerpAmount & data.collateralToLp in Uni v3
             uint256 amount0Desired = isWethToken0 ? data.collateralToLp : data.wPowerPerpAmount;
