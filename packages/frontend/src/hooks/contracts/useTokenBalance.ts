@@ -16,7 +16,7 @@ const tokenBalanceQueryKeys = {
  * @param refetchIntervalSec refetch interval in seconds
  * @returns {BigNumber} raw balance
  */
-export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals = 18, wait = false) => {
+export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals = 18) => {
   const [contract, setContract] = useState<Contract>()
 
   const { address, web3, connected } = useWallet()
@@ -30,8 +30,9 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals
     tokenBalanceQueryKeys.userTokenBalance(token),
     () => updateBalance(token, connected, contract, address, decimals),
     {
-      enabled: Boolean(token) && Boolean(connected) && Boolean(contract) && !wait,
+      enabled: Boolean(token) && Boolean(connected) && Boolean(contract),
       refetchInterval: refetchIntervalSec * 15000,
+      staleTime: 15000,
     },
   )
 
@@ -45,6 +46,10 @@ async function updateBalance(
   address: string | null,
   decimals: number,
 ) {
+  if (token === '0xbffbd99cfd9d77c49595dfe8eb531715906ca4cf') {
+    console.log('updateBalance')
+  }
+
   try {
     if (!token || !connected || !contract) return
     const _bal = await contract.methods.balanceOf(address).call({
