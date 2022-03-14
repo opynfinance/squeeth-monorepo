@@ -200,7 +200,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
      * @notice receive function to allow ETH transfer to this contract
      */
     receive() external payable {
-        require(msg.sender == weth || msg.sender == address(controller), "E3");
     }
 
     /**
