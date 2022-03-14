@@ -199,8 +199,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
     /**
      * @notice receive function to allow ETH transfer to this contract
      */
-    receive() external payable {
-    }
+    receive() external payable {}
 
     /**
      * @notice flash mint WPowerPerp using flashswap
