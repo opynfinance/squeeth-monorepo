@@ -371,7 +371,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   }, [tradeSuccess, tradeType])
 
   return (
-    <div className={open ? classes.displayBlock : classes.displayNone}>
+    <div>
       {!confirmed ? (
         <div>
           <div className={classes.settingsContainer}>
@@ -801,7 +801,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   }
 
   return (
-    <div className={!open ? classes.displayBlock : classes.displayNone}>
+    <>
       {!confirmed ? (
         <div>
           <div className={classes.settingsContainer}>
@@ -1035,7 +1035,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }
 
@@ -1044,13 +1044,7 @@ type SellType = {
 }
 
 const Short: React.FC<SellType> = ({ open }) => {
-  return (
-    <>
-      <OpenShort open={open} />
-
-      <CloseShort open={open} />
-    </>
-  )
+  return open ? <OpenShort open={open} /> : <CloseShort open={open} />
 }
 
 export default Short

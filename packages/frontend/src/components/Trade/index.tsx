@@ -74,21 +74,21 @@ const Trade: React.FC = () => {
         </SecondaryTabs>
       }
       <div>
-        <div className={tradeType === TradeType.LONG ? classes.displayBlock : classes.displayNone}>
+        {tradeType === TradeType.LONG ? (
           <Long
             // balance={Number(toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4))}
             open={openPosition === 0}
             // closeTitle="Sell squeeth ERC20 to get ETH"
           />
-        </div>
-
-        <div className={tradeType !== TradeType.LONG ? classes.displayBlock : classes.displayNone}>
+        ) : (
           <Short
             // balance={Number(toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4))}
             open={openPosition === 0}
             // closeTitle="Buy back oSQTH & close position"
           />
-        </div>
+        )}
+
+        {/* <div className={tradeType !== TradeType.LONG ? classes.displayBlock : classes.displayNone}></div> */}
       </div>
     </div>
   )

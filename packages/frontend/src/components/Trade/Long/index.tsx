@@ -359,7 +359,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   }
 
   return (
-    <div className={open ? classes.displayBlock : classes.displayNone}>
+    <div>
       {!confirmed ? (
         <div>
           {activeStep === 0 ? (
@@ -670,7 +670,7 @@ const CloseLong: React.FC<BuyProps> = ({ open }) => {
   }
 
   return (
-    <div className={!open ? classes.displayBlock : classes.displayNone}>
+    <div>
       {!confirmed ? (
         <div>
           <div className={classes.settingsContainer}>
@@ -835,12 +835,10 @@ type BuyProps = {
 }
 
 const Long: React.FC<BuyProps> = ({ open, isLPage = false, activeStep = 0 }) => {
-  return (
-    <>
-      <OpenLong open={open} isLPage={isLPage} activeStep={activeStep} />
-
-      <CloseLong open={open} isLPage={isLPage} activeStep={activeStep} />
-    </>
+  return open ? (
+    <OpenLong open={open} isLPage={isLPage} activeStep={activeStep} />
+  ) : (
+    <CloseLong open={open} isLPage={isLPage} activeStep={activeStep} />
   )
 }
 
