@@ -12,7 +12,7 @@ import { GreyButton } from '@components/Button'
 import { useUserCrabTxHistory } from '@hooks/useUserCrabTxHistory'
 import { CrabStrategyTxType, Networks } from '../../../types/index'
 import clsx from 'clsx'
-import { getEthPriceAtTransactionTime } from 'src/lib/pnl'
+import { TxItem, useETHPrices } from '@hooks/useETHPrices'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -53,11 +53,9 @@ export const CrabStrategyHistory: React.FC = () => {
   const classes = useStyles()
   const { data, loading } = useCrabStrategyTxHistory()
   const { networkId, address, web3 } = useWallet()
-  const txHashStr = useMemo(() => {
-    if (!data) return
-    return data.map(({ id }) => id).join(',')
-  }, [data])
-  const [hedgeBlockNos, setHedgeBlockNos] = useState<number[] | undefined>(undefined)
+  const [hedgeItems, setHedgeItems] = useState<TxItem[] | undefined>(undefined)
+
+  const ethPrices = useETHPrices(hedgeItems)
 
   const [txType, setTxType] = useState(TxType.HEDGES)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
@@ -76,21 +74,18 @@ export const CrabStrategyHistory: React.FC = () => {
   }
 
   useEffect(() => {
-    if (txHashStr) {
+    if (data) {
       ;(async () => {
-        const txHashArr = txHashStr.split(',')
-        const blockNos = await Promise.all(
-          txHashArr.map(async (hash, index) => {
-            const ethPrice = await getEthPriceAtTransactionTime((data ?? [])[index].timestamp)
-            const txData = await web3.eth.getTransaction(hash)
-            console.log('bbb', ethPrice.toNumber(), hash, ' ', (data ?? [])[index].timestamp, txData)
-            return 0
+        const items = await Promise.all(
+          data.map(async (item) => {
+            const txData = await web3.eth.getTransaction(item.id)
+            return { blockNo: txData.blockNumber ?? 0, timestamp: item.timestamp }
           }),
         )
-        setHedgeBlockNos(blockNos)
+        setHedgeItems(items)
       })()
     }
-  }, [txHashStr, web3])
+  }, [data, web3])
 
   return (
     <div className={classes.container}>
