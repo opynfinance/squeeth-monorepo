@@ -1,0 +1,9 @@
+{
+    "projectId": "yp82ef",
+    "baseUrl": "http://localhost:3000",
+    "pluginsFile": false,
+    "supportFile": false,
+    "video": false,
+    "chromeWebSecurity": true,
+    "defaultCommandTimeout": 10000
+}
