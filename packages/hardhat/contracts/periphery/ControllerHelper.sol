@@ -433,12 +433,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             _upperTick
         );
 
-        uint256 remainingWPowerPerp = IWPowerPerp(wPowerPerp).balanceOf(address(this));
-        if (remainingWPowerPerp > 0) {
-            IController(controller).burnWPowerPerpAmount(vaultId, remainingWPowerPerp, 0);
-        }
-        // in case _collateralToLP > amount needed to LP, withdraw excess ETH
-        INonfungiblePositionManager(nonfungiblePositionManager).refundETH();
+        _checkLpMintExcess(vaultId);
+
         // if openeded new vault, transfer vault NFT to user
         if (_vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), msg.sender, vaultId);
 
@@ -493,6 +489,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 data.lpLowerTick,
                 data.lpUpperTick
             );
+
+            _checkLpMintExcess(vaultId);
 
             // deposit Uni NFT token in vault
             INonfungiblePositionManager(nonfungiblePositionManager).approve(controller, uniTokenId);
