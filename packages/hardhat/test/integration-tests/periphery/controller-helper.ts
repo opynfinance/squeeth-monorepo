@@ -138,8 +138,10 @@ describe("Controller helper integration test", function () {
       const squeethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
       const vaultBefore = await controller.vaults(vaultId)
       const depositorBalanceBefore = await provider.getBalance(depositor.address)
-      
-      await controllerHelper.connect(depositor).flashswapWMint(0, mintWSqueethAmount, collateralAmount, {value: value});
+      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
+      const ethToReceive = (mintWSqueethAmount.mul(squeethPrice).div(one)).mul(one.sub(slippage)).div(one)
+
+      await controllerHelper.connect(depositor).flashswapWMint(0, mintWSqueethAmount, collateralAmount, ethToReceive, {value: value});
 
       const controllerBalanceAfter = await provider.getBalance(controller.address)
       const squeethBalanceAfter = await wSqueeth.balanceOf(depositor.address)

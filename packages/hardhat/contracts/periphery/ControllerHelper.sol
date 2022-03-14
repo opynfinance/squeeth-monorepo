@@ -224,7 +224,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
     function flashswapWMint(
         uint256 _vaultId,
         uint256 _wPowerPerpAmount,
-        uint256 _collateralAmount
+        uint256 _collateralAmount,
+        uint256 _minToReceive
     ) external payable {
         uint256 amountToFlashswap = _collateralAmount.sub(msg.value);
 
@@ -233,11 +234,12 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             weth,
             IUniswapV3Pool(wPowerPerpPool).fee(),
             _wPowerPerpAmount,
-            amountToFlashswap,
+            _minToReceive,
             uint8(CALLBACK_SOURCE.FLASH_W_MINT),
             abi.encodePacked(_vaultId, amountToFlashswap, _collateralAmount, _wPowerPerpAmount)
         );
 
+        // no need to unwrap WETH received from swap as it is done in the callback function
         payable(msg.sender).sendValue(address(this).balance);
 
         emit FlashswapWMint(msg.sender, _vaultId, _wPowerPerpAmount, amountToFlashswap, _collateralAmount);
