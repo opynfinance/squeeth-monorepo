@@ -105,7 +105,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         uint256 wPowerPerpAmount; // wPowerPerp amount to mint
         uint256 collateralToDeposit; // ETH collateral amount to deposit in vault (could be zero)
         uint256 collateralToLp; // ETH collateral amount to use for LPing (could be zero)
-        uint256 collateralToWithdraw; // ETH amount to withdraw from vault (vault.collateralAmount >= collateralToWithdraw + flash loaned ETH)
+        uint256 collateralToWithdraw; // ETH amount to withdraw from vault (if collateralToLp>0, this should be = collateralToLp+fee or = collateralToLp and sender include fee in msg.value)
         uint256 lpAmount0Min; // amount0Min for Uni LPing
         uint256 lpAmount1Min; // amount1Min for Uni LPing
         int24 lpLowerTick; // Uni LP lower tick
@@ -394,12 +394,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             _upperTick
         );
 
-        uint256 remainingWPowerPerp = IWPowerPerp(wPowerPerp).balanceOf(address(this));
-        if (remainingWPowerPerp > 0) {
-            IController(controller).burnWPowerPerpAmount(vaultId, remainingWPowerPerp, 0);
-        }
-        // in case _collateralToLP > amount needed to LP, withdraw excess ETH
-        INonfungiblePositionManager(nonfungiblePositionManager).refundETH();
+        _checkLpMintExcess(vaultId);
+
         // if openeded new vault, transfer vault NFT to user
         if (_vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), msg.sender, vaultId);
 
@@ -454,6 +450,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 data.lpLowerTick,
                 data.lpUpperTick
             );
+
+            _checkLpMintExcess(vaultId);
 
             // deposit Uni NFT token in vault
             INonfungiblePositionManager(nonfungiblePositionManager).approve(controller, uniTokenId);
@@ -607,6 +605,19 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         );
 
         return tokenId;
+    }
+
+    /**
+     * @notice check if excess ETH or wPowerPerp was sent for minting LP position, if so burn wPowerPerp from vault and withdraw ETH from Uni pool
+     * @dev _vaultId vault ID to burn wPowerPerp from
+     */
+    function _checkLpMintExcess(uint256 _vaultId) private {
+        uint256 remainingWPowerPerp = IWPowerPerp(wPowerPerp).balanceOf(address(this));
+        if (remainingWPowerPerp > 0) {
+            IController(controller).burnWPowerPerpAmount(_vaultId, remainingWPowerPerp, 0);
+        }
+        // in case _collateralToLP > amount needed to LP, withdraw excess ETH
+        INonfungiblePositionManager(nonfungiblePositionManager).refundETH();
     }
 
     function _closeUniLp(closeUniLpParams memory _params) private {
