@@ -30,5 +30,5 @@
   },
 
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "src/tests/tsconfig.json"],
-  "exclude": ["node_modules", "./src/types/global_apollo.ts"]
+  "exclude": ["node_modules", "./src/types/global_apollo.ts", "cypress"]
 }
