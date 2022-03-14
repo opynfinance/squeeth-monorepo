@@ -453,18 +453,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
      * @param _params FlashloanWMintDepositNftParams struct
      */
     function flashloanWMintDepositNft(FlashloanWMintDepositNftParams calldata _params) external payable {
-        // struct FlashloanWMintDepositNftParams {
-        //     uint256 vaultId; // vault ID (could be zero)
-        //     uint256 wPowerPerpAmount; // wPowerPerp amount to mint
-        //     uint256 collateralToDeposit; // ETH collateral amount to flashloan and deposit in vault (could be zero)
-        //     uint256 collateralToLp; // ETH collateral amount to use for LPing (could be zero)
-        //     uint256 collateralToWithdraw; // ETH amount to withdraw from vault (vault.collateralAmount >= collateralToWithdraw + flash loaned ETH)
-        //     uint256 lpAmount0Min; // amount0Min for Uni LPing
-        //     uint256 lpAmount1Min; // amount1Min for Uni LPing
-        //     uint256 lpLowerTick; // Uni LP lower tick
-        //     uint256 lpUpperTick; // Uni LP upper tick
-        // }
-
         _flashLoan(
             weth,
             _params.collateralToDeposit,
@@ -511,7 +499,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             IController(controller).depositUniPositionToken(vaultId, uniTokenId);
 
             // remove flashloan amount in ETH from vault + any amount of collateral user want to withdraw (sum <= vault.collateralAmount)
-            IController(controller).burnWPowerPerpAmount(vaultId, 0, _amount.add(data.collateralToWithdraw));
+            IController(controller).withdraw(vaultId, _amount.add(data.collateralToWithdraw));
 
             // convert flashloaned amount + fee from ETH to WETH to prepare for payback
             IWETH9(weth).deposit{value: _amount.add(_premium)}();
