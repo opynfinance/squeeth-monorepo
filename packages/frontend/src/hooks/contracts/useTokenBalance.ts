@@ -46,10 +46,6 @@ async function updateBalance(
   address: string | null,
   decimals: number,
 ) {
-  if (token === '0xbffbd99cfd9d77c49595dfe8eb531715906ca4cf') {
-    console.log('updateBalance')
-  }
-
   try {
     if (!token || !connected || !contract) return
     const _bal = await contract.methods.balanceOf(address).call({
