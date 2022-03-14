@@ -307,7 +307,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
 
     /**
      * @notice sell long wPowerPerp and flashswap mint short position
-     * @dev flahswap amount = collateral amount - msg.value - ETH from selling long wPowerPerp
+     * @dev flashswap amount = collateral amount - msg.value - ETH from selling long wPowerPerp
      * @param _vaultId vault ID
      * @param _wPowerPerpAmountToMint wPowerPerp amount to mint
      * @param _collateralAmount collateral amount to use for minting
@@ -323,7 +323,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
     ) external payable {
         IWPowerPerp(wPowerPerp).transferFrom(msg.sender, address(this), _wPowerPerpAmountToSell);
 
-        // flahswap and mint short position
+        // flashswap and mint short position
         _exactInFlashSwap(
             wPowerPerp,
             weth,
@@ -453,24 +453,24 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
      * @param _params FlashloanWMintDepositNftParams struct
      */
     function flashloanWMintDepositNft(FlashloanWMintDepositNftParams calldata _params) external payable {
-        // check that sender sent the excess amount to repay Aave flashloan fee
-        require(msg.value > _params.collateralToLp, "E4");
+
+        // struct FlashloanWMintDepositNftParams {
+        //     uint256 vaultId; // vault ID (could be zero)
+        //     uint256 wPowerPerpAmount; // wPowerPerp amount to mint
+        //     uint256 collateralToDeposit; // ETH collateral amount to flashloan and deposit in vault (could be zero)
+        //     uint256 collateralToLp; // ETH collateral amount to use for LPing (could be zero)
+        //     uint256 collateralToWithdraw; // ETH amount to withdraw from vault (vault.collateralAmount >= collateralToWithdraw + flash loaned ETH)
+        //     uint256 lpAmount0Min; // amount0Min for Uni LPing
+        //     uint256 lpAmount1Min; // amount1Min for Uni LPing
+        //     uint256 lpLowerTick; // Uni LP lower tick
+        //     uint256 lpUpperTick; // Uni LP upper tick
+        // }
 
         _flashLoan(
             weth,
-            _params.collateralToMint,
+            _params.collateralToDeposit,
             uint8(CALLBACK_SOURCE.FLASHLOAN_W_MINT_DEPOSIT_NFT),
-            abi.encodePacked(
-                _params.vaultId,
-                _params.wPowerPerpAmount,
-                _params.collateralToMint,
-                _params.collateralToLp,
-                _params.collateralToWithdraw,
-                _params.amount0Min,
-                _params.amount1Min,
-                uint256(_params.lowerTick),
-                uint256(_params.upperTick)
-            )
+            abi.encode(_params)
         );
     }
 
@@ -483,12 +483,12 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         bytes memory _calldata
     ) internal override {
         if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.FLASHLOAN_W_MINT_DEPOSIT_NFT) {
-            FlashloanMintDepositNftData memory data = abi.decode(_calldata, (FlashloanMintDepositNftData));
+            FlashloanWMintDepositNftParams memory data = abi.decode(_calldata, (FlashloanWMintDepositNftParams));
 
             // convert flashloaned WETH to ETH
             IWETH9(weth).withdraw(_amount);
 
-            uint256 vaultId = IController(controller).mintWPowerPerpAmount{value: data.collateralToMint}(
+            uint256 vaultId = IController(controller).mintWPowerPerpAmount{value: data.collateralToDeposit.add(msg.value)}(
                 data.vaultId,
                 data.wPowerPerpAmount,
                 0
@@ -505,8 +505,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 data.lpAmount0Min,
                 data.lpAmount1Min,
                 block.timestamp,
-                int24(data.lpLowerTick),
-                int24(data.lpUpperTick)
+                data.lpLowerTick,
+                data.lpUpperTick
             );
 
             // deposit Uni NFT token in vault
