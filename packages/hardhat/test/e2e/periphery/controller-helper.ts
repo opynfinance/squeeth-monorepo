@@ -117,13 +117,13 @@ describe("ControllerHelper: mainnet fork", function () {
       const flashloanWMintDepositNftParams = {
         vaultId: 0,
         wPowerPerpAmount: mintWSqueethAmount.toString(),
-        collateralToMint: collateralToMint.toString(),
+        collateralToDeposit: collateralToMint.toString(),
         collateralToLp: collateralToLp.toString(),
         collateralToWithdraw: 0,
-        amount0Min: 0,
-        amount1Min: 0,
-        lowerTick: -887220,
-        upperTick: 887220
+        lpAmount0Min: 0,
+        lpAmount1Min: 0,
+        lpLowerTick: -887220,
+        lpUpperTick: 887220
       }
 
       await controllerHelper.connect(depositor).flashloanWMintDepositNft(flashloanWMintDepositNftParams, {value: collateralToLp.add(ethers.utils.parseUnits('0.01'))})
