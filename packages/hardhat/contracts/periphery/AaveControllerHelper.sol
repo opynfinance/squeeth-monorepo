@@ -2,6 +2,8 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
+import "hardhat/console.sol";
+
 // interface
 import {IERC20Detailed} from "../interfaces/IERC20Detailed.sol";
 import {IFlashLoanReceiver} from "../interfaces/IFlashLoanReceiver.sol";
@@ -10,8 +12,6 @@ import {ILendingPool} from "../interfaces/ILendingPool.sol";
 
 // lib
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
-
-import "hardhat/console.sol";
 
 contract AaveControllerHelper is IFlashLoanReceiver {
     using SafeMath for uint256;
@@ -26,14 +26,11 @@ contract AaveControllerHelper is IFlashLoanReceiver {
     }
 
     constructor(address _provider) {
-        console.log("_provider", _provider);
         ADDRESSES_PROVIDER = ILendingPoolAddressesProvider(_provider);
         // make sure this work for tests file where _provider == 0x0
         (_provider != address(0))
             ? LENDING_POOL = ILendingPool(ILendingPoolAddressesProvider(_provider).getLendingPool())
             : ILendingPool(address(0));
-
-        // LENDING_POOL = ILendingPool(0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9);
     }
 
     function _flashCallback(
@@ -61,25 +58,12 @@ contract AaveControllerHelper is IFlashLoanReceiver {
         // this assume that this contract will never flashloan more than 1 asset
         _flashCallback(data.caller, assets[0], amounts[0], premiums[0], data.callSource, data.callData);
 
-        // Approve the LENDING_POOL contract allowance to *pull* the owed amount
-        IERC20Detailed(assets[0]).approve(address(LENDING_POOL), amounts[0].add(premiums[0]));
-
-        console.log(
-            "IERC20Detailed(assets[0]).balanceOf(address(this))",
-            IERC20Detailed(assets[0]).balanceOf(address(this))
-        );
         console.log("amounts[0]", amounts[0]);
         console.log("premiums[0]", premiums[0]);
-        console.log("amounts[0].add(premiums[0]", amounts[0].add(premiums[0]));
-
-        require(IERC20Detailed(assets[0]).balanceOf(address(this)) >= amounts[0].add(premiums[0]), "noooo");
-
         console.log("amounts[0].add(premiums[0])", amounts[0].add(premiums[0]));
-        console.log(
-            "IERC20Detailed(assets[0]).balanceOf(address(this))",
-            IERC20Detailed(assets[0]).balanceOf(address(this))
-        );
-        console.log("aproooved");
+
+        // Approve the LENDING_POOL contract allowance to *pull* the owed amount
+        IERC20Detailed(assets[0]).approve(address(LENDING_POOL), amounts[0].add(premiums[0]));
 
         return true;
     }

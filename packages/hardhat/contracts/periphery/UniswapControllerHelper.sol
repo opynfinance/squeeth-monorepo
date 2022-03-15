@@ -3,8 +3,6 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import "hardhat/console.sol";
-
 // interface
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3FlashCallback.sol";
@@ -125,9 +123,6 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
             })
         );
 
-        console.log("amountOut", amountOut);
-        console.log("_amountOutMinimum", _amountOutMinimum);
-
         //slippage limit check
         require(amountOut >= _amountOutMinimum, "amount out less than min");
 
@@ -165,9 +160,6 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
                 callData: _data
             })
         );
-
-        console.log("amountIn", amountIn);
-        console.log("_amountInMaximum", _amountInMaximum);
 
         //slippage limit check
         require(amountIn <= _amountInMaximum, "amount in greater than max");
