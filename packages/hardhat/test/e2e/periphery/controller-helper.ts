@@ -134,13 +134,10 @@ describe("ControllerHelper: mainnet fork", function () {
       const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
       const position = await (positionManager as INonfungiblePositionManager).positions(tokenId)
 
-      console.log("vaultAfter.shortAmount", vaultAfter.shortAmount.toString())
-      console.log("mintWSqueethAmount", mintWSqueethAmount.toString())
-      
       expect(BigNumber.from(vaultAfter.NftCollateralId).eq(tokenId)).to.be.true;
       expect(position.tickLower === -887220).to.be.true
       expect(position.tickUpper === 887220).to.be.true
-      expect(vaultAfter.shortAmount.eq(mintWSqueethAmount)).to.be.true
+      expect(vaultAfter.shortAmount.sub(mintWSqueethAmount).lte(1)).to.be.true
       expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
     })
 
@@ -263,13 +260,10 @@ describe("ControllerHelper: mainnet fork", function () {
       const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
       const position = await (positionManager as INonfungiblePositionManager).positions(tokenId)
 
-      console.log("vaultAfter.collateralAmount", vaultAfter.collateralAmount.toString())
-      console.log("collateralToMint.div(2)", collateralToMint.div(2).toString())
-
       expect(BigNumber.from(vaultAfter.NftCollateralId).eq(tokenId)).to.be.true;
       expect(position.tickLower === -887220).to.be.true
       expect(position.tickUpper === 887220).to.be.true
-      expect(vaultAfter.shortAmount.eq(mintWSqueethAmount)).to.be.true
+      expect(vaultAfter.shortAmount.sub(mintWSqueethAmount).lte(1)).to.be.true
       expect(vaultAfter.collateralAmount.eq(collateralToMint.div(2))).to.be.true
     })
   })
