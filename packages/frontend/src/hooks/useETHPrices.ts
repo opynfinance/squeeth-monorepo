@@ -3,6 +3,7 @@ import { uniswapClient } from '@utils/apollo-client'
 import { useWallet } from '@context/wallet'
 import { ETHPRICE_QUERY } from '../queries/uniswap/ethPriceQuery'
 import { useEffect, useState } from 'react'
+import { getEthPriceAtTransactionTime } from 'src/lib/pnl'
 
 export interface TxItem {
   timestamp: string
@@ -11,9 +12,10 @@ export interface TxItem {
 
 export const useETHPrices = (items: TxItem[] | undefined) => {
   const { networkId } = useWallet()
-  const [skipCount, setSkipCount] = useState(0)
-  const [ethPrices, setETHPrices] = useState<any[]>([])
-  const blockNo = items && items.length > 0 ? items[0].blockNo : 0
+  const [itemIndex, setItemIndex] = useState(0)
+  const [ethPrices, setETHPrices] = useState<number[]>([])
+  const blockNo = items && items.length > 0 ? items[itemIndex].blockNo : 0
+  const txTimestamp = items && items.length > 0 ? items[itemIndex].timestamp : ''
   const { data, loading } = useQuery(ETHPRICE_QUERY, {
     variables: {
       blockNo,
@@ -22,24 +24,26 @@ export const useETHPrices = (items: TxItem[] | undefined) => {
     fetchPolicy: 'cache-and-network',
   })
 
-  console.log('ccc', loading, data, ' ', blockNo)
+  useEffect(() => {
+    if (!loading && items && items.length > 0) {
+      if (data && data['bundles'].length > 0 && data['bundles'][0].ethPriceUSD > 0) {
+        const ethPrice = data['bundles'][0].ethPriceUSD
+        setETHPrices([...ethPrices, ethPrice])
+        if (itemIndex < items.length - 1) {
+          setItemIndex(itemIndex + 1)
+        }
+      } else {
+        ;(async () => {
+          const ethPrice = await getEthPriceAtTransactionTime(txTimestamp)
+          setETHPrices([...ethPrices, ethPrice.toNumber()])
+          if (itemIndex < items.length - 1) {
+            setItemIndex(itemIndex + 1)
+          }
+        })()
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading])
 
-  // useEffect(() => {
-  //   if (!loading) {
-  //     if (data && data['normalizationFactorUpdates'].length > 0) {
-  //       const normHistoryItems = normHistory
-  //       setNormHistory(
-  //         normHistoryItems
-  //           .concat(data['normalizationFactorUpdates'])
-  //           .filter((val, ind, self) => ind === self.findIndex((item) => item.id === val.id)),
-  //       )
-  //       setSkipCount(skipCount + 1000)
-  //     } else {
-  //       setSkipCount(0)
-  //     }
-  //   }
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [loading])
-
-  return 0
+  return ethPrices
 }

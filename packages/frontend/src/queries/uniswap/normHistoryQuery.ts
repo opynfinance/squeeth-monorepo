@@ -12,6 +12,18 @@ const NORMHISTORY_QUERY = gql`
   }
 `
 
+export const NORMHISTORY_TIMESTAMP_QUERY = gql`
+  query normalizationFactorUpdates($timestamp: Int) {
+    normalizationFactorUpdates(first: 1, orderBy: timestamp, where: { timestamp_lte: $timestamp }) {
+      id
+      oldNormFactor
+      newNormFactor
+      lastModificationTimestamp
+      timestamp
+    }
+  }
+`
+
 export const NORMHISTORY_TIME_QUERY = gql`
   query normalizationFactorUpdates($timestamp: Int, $timestampOnedayAfter: Int) {
     normalizationFactorUpdates(where: { timestamp_gte: $timestamp, timestamp_lt: $timestampOnedayAfter }) {

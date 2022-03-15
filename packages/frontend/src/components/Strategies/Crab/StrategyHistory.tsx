@@ -1,7 +1,7 @@
 import { useCrabStrategyTxHistory } from '@hooks/useCrabAuctionHistory'
 import { IconButton, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { EtherscanPrefix } from '../../../constants'
 import OpenInNewIcon from '@material-ui/icons/OpenInNew'
 import { useWallet } from '@context/wallet'
@@ -13,6 +13,7 @@ import { useUserCrabTxHistory } from '@hooks/useUserCrabTxHistory'
 import { CrabStrategyTxType, Networks } from '../../../types/index'
 import clsx from 'clsx'
 import { TxItem, useETHPrices } from '@hooks/useETHPrices'
+import { useNormHistoryFromTimestamps } from '@hooks/useNormHistoryFromTimestamps'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -56,6 +57,7 @@ export const CrabStrategyHistory: React.FC = () => {
   const [hedgeItems, setHedgeItems] = useState<TxItem[] | undefined>(undefined)
 
   const ethPrices = useETHPrices(hedgeItems)
+  const normHistoryItems = useNormHistoryFromTimestamps(hedgeItems?.map((val) => val.timestamp) ?? [])
 
   const [txType, setTxType] = useState(TxType.HEDGES)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
