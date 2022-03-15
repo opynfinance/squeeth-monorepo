@@ -207,8 +207,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         nonfungiblePositionManager = _nonfungiblePositionManager;
         isWethToken0 = _weth < _wPowerPerp;
 
-        console.log(Address.isContract(_controller));
-
         IWPowerPerp(_wPowerPerp).approve(_swapRouter, type(uint256).max);
         IWETH9(_weth).approve(_swapRouter, type(uint256).max);
         IWPowerPerp(_wPowerPerp).approve(_nonfungiblePositionManager, type(uint256).max);
@@ -451,7 +449,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
     function flashloanWMintDepositNft(FlashloanWMintDepositNftParams calldata _params) external payable {
         _flashLoan(
             weth,
-            _params.collateralToDeposit,
+            _params.collateralToFlashloan,
             uint8(CALLBACK_SOURCE.FLASHLOAN_W_MINT_DEPOSIT_NFT),
             abi.encode(_params)
         );
@@ -472,7 +470,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             IWETH9(weth).withdraw(_amount);
 
             uint256 vaultId = IController(controller).mintWPowerPerpAmount{
-                value: data.collateralToDeposit.add(msg.value)
+                value: data.collateralToDeposit
             }(data.vaultId, data.wPowerPerpAmount, 0);
 
             // LP data.wPowerPerpAmount & data.collateralToLp in Uni v3
@@ -513,8 +511,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             IController(controller).deposit{value: _amount}(data.vaultId);
 
             IController(controller).withdrawUniPositionToken(data.vaultId);
-
-            console.log("data.limitPriceEthPerPowerPerp", data.limitPriceEthPerPowerPerp);
 
             _closeUniLp(
                 closeUniLpParams({
@@ -831,9 +827,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             deadline: _deadline
         });
 
-        (uint256 tokenId, , , ) = INonfungiblePositionManager(nonfungiblePositionManager).mint{value: _ethAmount}(
-            _params
-        );
+        (uint256 tokenId, , , ) = INonfungiblePositionManager(nonfungiblePositionManager).mint{value: _ethAmount}(_params);
 
         return tokenId;
     }
