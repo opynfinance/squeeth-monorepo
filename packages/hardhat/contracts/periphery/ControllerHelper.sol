@@ -104,6 +104,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         uint256 vaultId; // vault ID (could be zero)
         uint256 wPowerPerpAmount; // wPowerPerp amount to mint
         uint256 collateralToDeposit; // ETH collateral amount to deposit in vault (could be zero)
+        uint256 collateralToFlashloan;  // ETH amount to flashloan and use for deposit into vault
         uint256 collateralToLp; // ETH collateral amount to use for LPing (could be zero)
         uint256 collateralToWithdraw; // ETH amount to withdraw from vault (if collateralToLp>0, this should be = collateralToLp+fee or = collateralToLp and sender include fee in msg.value)
         uint256 lpAmount0Min; // amount0Min for Uni LPing
@@ -174,8 +175,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         swapRouter = _swapRouter;
         nonfungiblePositionManager = _nonfungiblePositionManager;
         isWethToken0 = _weth < _wPowerPerp;
-
-        console.log(Address.isContract(_controller));
 
         IWPowerPerp(_wPowerPerp).approve(_swapRouter, type(uint256).max);
         IWETH9(_weth).approve(_swapRouter, type(uint256).max);
@@ -410,7 +409,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
     function flashloanWMintDepositNft(FlashloanWMintDepositNftParams calldata _params) external payable {
         _flashLoan(
             weth,
-            _params.collateralToDeposit,
+            _params.collateralToFlashloan,
             uint8(CALLBACK_SOURCE.FLASHLOAN_W_MINT_DEPOSIT_NFT),
             abi.encode(_params)
         );
@@ -431,7 +430,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             IWETH9(weth).withdraw(_amount);
 
             uint256 vaultId = IController(controller).mintWPowerPerpAmount{
-                value: data.collateralToDeposit.add(msg.value)
+                value: data.collateralToDeposit
             }(data.vaultId, data.wPowerPerpAmount, 0);
 
             // LP data.wPowerPerpAmount & data.collateralToLp in Uni v3
@@ -472,8 +471,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             IController(controller).deposit{value: _amount}(data.vaultId);
 
             IController(controller).withdrawUniPositionToken(data.vaultId);
-
-            console.log("data.limitPriceEthPerPowerPerp", data.limitPriceEthPerPowerPerp);
 
             _closeUniLp(
                 closeUniLpParams({
@@ -564,8 +561,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 data.collateralToWithdraw
             );
 
-            console.log("_amountToPay", _amountToPay);
-
             IWETH9(weth).transfer(wPowerPerpPool, _amountToPay);
         }
     }
@@ -598,9 +593,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             deadline: _deadline
         });
 
-        (uint256 tokenId, , , ) = INonfungiblePositionManager(nonfungiblePositionManager).mint{value: _ethAmount}(
-            _params
-        );
+        (uint256 tokenId, , , ) = INonfungiblePositionManager(nonfungiblePositionManager).mint{value: _ethAmount}(_params);
 
         return tokenId;
     }
@@ -652,23 +645,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             })
         );
 
-        console.log("wethAmount", wethAmount);
-        console.log("wPowerPerpAmount", wPowerPerpAmount);
-
         if (wPowerPerpAmount < _params.wPowerPerpAmountToBurn) {
-            console.log("wPowerPerpAmount in pool less than wPowerPerpAmountToBurn");
-            console.log("_params.limitPriceEthPerPowerPerp", _params.limitPriceEthPerPowerPerp);
-            console.log("_params.wPowerPerpAmountToBurn", _params.wPowerPerpAmountToBurn);
-            console.log("wPowerPerpAmount", wPowerPerpAmount);
-            console.log(
-                "_params.wPowerPerpAmountToBurn.sub(wPowerPerpAmount)",
-                _params.wPowerPerpAmountToBurn.sub(wPowerPerpAmount)
-            );
-            console.log(
-                "_params.limitPriceEthPerPowerPerp.mul(_params.wPowerPerpAmountToBurn.sub(wPowerPerpAmount)).div(1e18)",
-                _params.limitPriceEthPerPowerPerp.mul(_params.wPowerPerpAmountToBurn.sub(wPowerPerpAmount)).div(1e18)
-            );
-
             // swap needed wPowerPerp amount to close short position
             _exactOutFlashSwap(
                 weth,
@@ -680,8 +657,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 abi.encodePacked(_params.vaultId, _params.wPowerPerpAmountToBurn, _params.collateralToWithdraw)
             );
         } else {
-            console.log("wPowerPerpAmount in pool more than wPowerPerpAmountToBurn");
-
             // if LP have more wPowerPerp amount that amount to burn in vault, sell remaining amount for WETH
             IController(controller).burnWPowerPerpAmount(
                 _params.vaultId,
