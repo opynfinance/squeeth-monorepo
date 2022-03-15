@@ -572,7 +572,13 @@ const CrabPosition: React.FC<CrabPositionType> = ({
 }) => {
   const classes = useStyles()
 
-  if (depositedEth.isZero() || loading) return null
+  const getPnlClassName = () => {
+    if (loading) {
+      return ''
+    }
+
+    return minPnlUsd.gte(0) ? classes.green : classes.red
+  }
 
   return (
     <div className={classes.position}>
@@ -598,10 +604,9 @@ const CrabPosition: React.FC<CrabPositionType> = ({
             <Typography variant="caption" component="span" color="textSecondary">
               Current Position
             </Typography>
-            <Typography variant="body1">$ {minCurrentUsd.toFixed(2)}</Typography>
+            <Typography variant="body1">{!loading ? `$ ${minCurrentUsd.toFixed(2)}` : 'Loading'}</Typography>
             <Typography variant="body2" color="textSecondary">
-              {minCurrentEth.toFixed(6)}
-              &nbsp; ETH
+              {!loading ? `${minCurrentEth.toFixed(6)}  ETH` : 'Loading'}
             </Typography>
           </div>
         </div>
@@ -613,11 +618,11 @@ const CrabPosition: React.FC<CrabPositionType> = ({
             <Tooltip title={Tooltips.CrabPnL}>
               <InfoIcon fontSize="small" className={classes.infoIcon} />
             </Tooltip>
-            <Typography variant="body1" className={minPnlUsd.gte(0) ? classes.green : classes.red}>
-              {!loading ? '$' + `${minPnlUsd.toFixed(2)}` : 'loading'}
+            <Typography variant="body1" className={getPnlClassName()}>
+              {!loading ? '$' + `${minPnlUsd.toFixed(2)}` : 'Loading'}
             </Typography>
-            <Typography variant="caption" className={minPnlUsd.gte(0) ? classes.green : classes.red}>
-              {!loading ? `${minPnL.toFixed(2)}` + '%' : 'loading'}
+            <Typography variant="caption" className={getPnlClassName()}>
+              {!loading ? `${minPnL.toFixed(2)}` + '%' : 'Loading'}
             </Typography>
           </div>
         </div>
