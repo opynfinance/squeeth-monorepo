@@ -461,9 +461,11 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             // convert flashloaned WETH to ETH
             IWETH9(weth).withdraw(_amount);
 
-            uint256 vaultId = IController(controller).mintWPowerPerpAmount{
-                value: data.collateralToDeposit
-            }(data.vaultId, data.wPowerPerpAmount, 0);
+            uint256 vaultId = IController(controller).mintWPowerPerpAmount{value: data.collateralToDeposit}(
+                data.vaultId,
+                data.wPowerPerpAmount,
+                0
+            );
 
             // LP data.wPowerPerpAmount & data.collateralToLp in Uni v3
             uint256 amount0Desired = isWethToken0 ? data.collateralToLp : data.wPowerPerpAmount;
@@ -812,7 +814,9 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             deadline: _deadline
         });
 
-        (uint256 tokenId, , , ) = INonfungiblePositionManager(nonfungiblePositionManager).mint{value: _ethAmount}(_params);
+        (uint256 tokenId, , , ) = INonfungiblePositionManager(nonfungiblePositionManager).mint{value: _ethAmount}(
+            _params
+        );
 
         return tokenId;
     }
