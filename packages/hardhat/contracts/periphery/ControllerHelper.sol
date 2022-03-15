@@ -98,7 +98,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         uint256 vaultId; // vault ID (could be zero)
         uint256 wPowerPerpAmount; // wPowerPerp amount to mint
         uint256 collateralToDeposit; // ETH collateral amount to deposit in vault (could be zero)
-        uint256 collateralToFlashloan;  // ETH amount to flashloan and use for deposit into vault
+        uint256 collateralToFlashloan; // ETH amount to flashloan and use for deposit into vault
         uint256 collateralToLp; // ETH collateral amount to use for LPing (could be zero)
         uint256 collateralToWithdraw; // ETH amount to withdraw from vault (if collateralToLp>0, this should be = collateralToLp+fee or = collateralToLp and sender include fee in msg.value)
         uint256 lpAmount0Min; // amount0Min for Uni LPing
@@ -198,9 +198,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
      * @notice flash mint WPowerPerp using flashswap
      * @param _params FlashswapWMintParams struct
      */
-    function flashswapWMint(
-        FlashswapWMintParams calldata _params
-    ) external payable {
+    function flashswapWMint(FlashswapWMintParams calldata _params) external payable {
         _exactInFlashSwap(
             wPowerPerp,
             weth,
@@ -215,7 +213,13 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         // no need to unwrap WETH received from swap as it is done in the callback function
         payable(msg.sender).sendValue(address(this).balance);
 
-        emit FlashswapWMint(msg.sender, _params.vaultId, _params.wPowerPerpAmount, _params.amountToFlashswap, _params.totalCollateralToDeposit);
+        emit FlashswapWMint(
+            msg.sender,
+            _params.vaultId,
+            _params.wPowerPerpAmount,
+            _params.amountToFlashswap,
+            _params.totalCollateralToDeposit
+        );
     }
 
     /**
@@ -223,9 +227,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
      * @dev this function
      * @param _params FlashswapWBurnParams struct
      */
-    function flashswapWBurnBuyLong(
-        FlashswapWBurnParams calldata _params
-    ) external payable {
+    function flashswapWBurnBuyLong(FlashswapWBurnParams calldata _params) external payable {
         require(_params.maxToPay <= _params.collateralToWithdraw.add(msg.value), "Not enough collateral");
 
         _exactOutFlashSwap(
@@ -240,7 +242,13 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
 
         payable(msg.sender).sendValue(address(this).balance);
 
-        emit FlashWBurn(msg.sender, _params.vaultId, _params.wPowerPerpAmountToBurn, _params.collateralToWithdraw, _params.wPowerPerpAmountToBuy);
+        emit FlashWBurn(
+            msg.sender,
+            _params.vaultId,
+            _params.wPowerPerpAmountToBurn,
+            _params.collateralToWithdraw,
+            _params.wPowerPerpAmountToBuy
+        );
     }
 
     /**
@@ -401,9 +409,11 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             // convert flashloaned WETH to ETH
             IWETH9(weth).withdraw(_amount);
 
-            uint256 vaultId = IController(controller).mintWPowerPerpAmount{
-                value: data.collateralToDeposit
-            }(data.vaultId, data.wPowerPerpAmount, 0);
+            uint256 vaultId = IController(controller).mintWPowerPerpAmount{value: data.collateralToDeposit}(
+                data.vaultId,
+                data.wPowerPerpAmount,
+                0
+            );
 
             // LP data.wPowerPerpAmount & data.collateralToLp in Uni v3
             uint256 amount0Desired = isWethToken0 ? data.collateralToLp : data.wPowerPerpAmount;
@@ -565,7 +575,9 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             deadline: _deadline
         });
 
-        (uint256 tokenId, , , ) = INonfungiblePositionManager(nonfungiblePositionManager).mint{value: _ethAmount}(_params);
+        (uint256 tokenId, , , ) = INonfungiblePositionManager(nonfungiblePositionManager).mint{value: _ethAmount}(
+            _params
+        );
 
         return tokenId;
     }
