@@ -28,7 +28,6 @@
       "@queries/*": ["src/queries/*"]
     }
   },
-  "types": ["cypress"],
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "src/tests/tsconfig.json"],
-  "exclude": ["node_modules", "./src/types/global_apollo.ts"]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "./src/types/global_apollo.ts", "src/tests/tsconfig.json"]
 }
