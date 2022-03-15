@@ -140,8 +140,15 @@ describe("Controller helper integration test", function () {
       const depositorBalanceBefore = await provider.getBalance(depositor.address)
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
       const ethToReceive = (mintWSqueethAmount.mul(squeethPrice).div(one)).mul(one.sub(slippage)).div(one)
+      const params = {
+        vaultId: 0,
+        amountToFlashswap: collateralAmount.sub(value).toString(),
+        totalCollateralToDeposit: collateralAmount.toString(),
+        wPowerPerpAmount: mintWSqueethAmount.toString(),
+        minToReceive: ethToReceive.toString()
+      }
 
-      await controllerHelper.connect(depositor).flashswapWMint(0, mintWSqueethAmount, collateralAmount, ethToReceive, {value: value});
+      await controllerHelper.connect(depositor).flashswapWMint(params, {value: value});
 
       const controllerBalanceAfter = await provider.getBalance(controller.address)
       const squeethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
@@ -163,8 +170,14 @@ describe("Controller helper integration test", function () {
       const longBalanceBefore = await wSqueeth.balanceOf(depositor.address)
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
       const squeethToBuy = vaultBefore.collateralAmount.div(squeethPrice)
-
-      await controllerHelper.connect(depositor).flashswapWBurnBuyLong(vaultId, vaultBefore.shortAmount, squeethToBuy, vaultBefore.collateralAmount, vaultBefore.collateralAmount);
+      const params = {
+        vaultId,
+        wPowerPerpAmountToBurn: vaultBefore.shortAmount.toString(),
+        wPowerPerpAmountToBuy: squeethToBuy.toString(),
+        collateralToWithdraw: vaultBefore.collateralAmount.toString(),
+        maxToPay: vaultBefore.collateralAmount.toString()
+      }
+      await controllerHelper.connect(depositor).flashswapWBurnBuyLong(params);
 
       const vaultAfter = await controller.vaults(vaultId)
       const longBalanceAfter = await wSqueeth.balanceOf(depositor.address)
@@ -272,9 +285,15 @@ describe("Controller helper integration test", function () {
 
       const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
       const value = collateralAmount.sub(ethAmountOutFromSwap.mul(one.sub(slippage)).div(one)).sub(ethAmountOutFromFlashSwap.mul(one.sub(slippage)).div(one))
-      
+      const params = {
+        vaultId: 0,
+        wPowerPerpAmountToMint: mintWSqueethAmount,
+        collateralAmount: collateralAmount,
+        wPowerPerpAmountToSell: longBalance,
+        minToReceive: BigNumber.from(0)
+      }
       await wSqueeth.connect(depositor).approve(controllerHelper.address, longBalance)
-      await controllerHelper.connect(depositor).flashswapSellLongWMint(0, mintWSqueethAmount, collateralAmount, longBalance, 0, {value: value})
+      await controllerHelper.connect(depositor).flashswapSellLongWMint(params, {value: value})
 
       const vaultAfter = await controller.vaults(vaultId)
 
