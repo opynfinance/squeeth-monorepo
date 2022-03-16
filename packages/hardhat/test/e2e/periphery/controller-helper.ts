@@ -332,18 +332,22 @@ describe("ControllerHelper: mainnet fork", function () {
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
       const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
       const limitPriceEthPerPowerPerp = squeethPrice.mul(one.sub(slippage)).div(one);
+      const positionBefore = await (positionManager as INonfungiblePositionManager).positions(uniTokenId);
+
       const flashloanCloseVaultLpNftParam = {
         vaultId: vaultId,
         tokenId: uniTokenId,
+        liquidity: positionBefore.liquidity,
+        liquidityPercentage: ethers.utils.parseUnits('1'),
         wPowerPerpAmountToBurn: vaultBefore.shortAmount.toString(),
         collateralToFlashloan: collateralToFlashloan.toString(),
+        collateralToWithdraw: collateralToFlashloan.toString(),
         limitPriceEthPerPowerPerp: limitPriceEthPerPowerPerp.toString(),
         amount0Min: 0,
         amount1Min: 0
       }
 
       // let msgValue: BigNumber = BigNumber.from(0);
-      // const positionBefore = await (positionManager as INonfungiblePositionManager).positions(uniTokenId);
       // await (positionManager as INonfungiblePositionManager).connect(depositor).approve(positionManager.address, uniTokenId); 
       // const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
       //   tokenId: uniTokenId,
@@ -438,18 +442,21 @@ describe("ControllerHelper: mainnet fork", function () {
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
       const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
       const limitPriceEthPerPowerPerp = squeethPrice.mul(one.add(slippage)).div(one);
+      const positionBefore = await (positionManager as INonfungiblePositionManager).positions(uniTokenId);
       const flashloanCloseVaultLpNftParam = {
         vaultId: vaultId,
         tokenId: uniTokenId,
+        liquidity: positionBefore.liquidity,
+        liquidityPercentage: ethers.utils.parseUnits('1'),
         wPowerPerpAmountToBurn: vaultBefore.shortAmount.toString(),
         collateralToFlashloan: collateralToFlashloan.toString(),
+        collateralToWithdraw: collateralToFlashloan.toString(),
         limitPriceEthPerPowerPerp: limitPriceEthPerPowerPerp.toString(),
         amount0Min: 0,
         amount1Min: 0
       }
 
       // let msgValue: BigNumber = BigNumber.from(0);
-      // const positionBefore = await (positionManager as INonfungiblePositionManager).positions(uniTokenId);
       // await (positionManager as INonfungiblePositionManager).connect(depositor).approve(positionManager.address, uniTokenId); 
       // const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
       //   tokenId: uniTokenId,
