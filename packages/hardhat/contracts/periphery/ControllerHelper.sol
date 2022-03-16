@@ -381,8 +381,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             )
         );
 
-        console.log("IWETH9(weth).balanceOf(address(this))", IWETH9(weth).balanceOf(address(this)));
-
         IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
         payable(msg.sender).sendValue(address(this).balance);
     }
@@ -779,8 +777,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         } else if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP) {
             SwapExactoutEthWPowerPerpData memory data = abi.decode(_callData, (SwapExactoutEthWPowerPerpData));
 
-            console.log("address(this).balance before", address(this).balance);
-
             IController(controller).burnWPowerPerpAmount(
                 data.vaultId,
                 data.wPowerPerpAmountToBurn,
@@ -792,8 +788,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             IWETH9(weth).deposit{value: address(this).balance}();
 
             IWETH9(weth).transfer(wPowerPerpPool, _amountToPay);
-
-            console.log("IWETH9(weth).balanceOf(address(this)) after", IWETH9(weth).balanceOf(address(this)));
         }
     }
 
@@ -877,8 +871,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             });
         INonfungiblePositionManager(nonfungiblePositionManager).decreaseLiquidity(decreaseParams);
 
-        console.log("IWETH9(weth).balanceOf(address(this)) before before", IWETH9(weth).balanceOf(address(this)));
-
         uint256 wethAmount;
         uint256 wPowerPerpAmount;
         (isWethToken0)
@@ -900,8 +892,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         );
 
         if (wPowerPerpAmount < _params.wPowerPerpAmountToBurn) {
-            console.log("IWETH9(weth).balanceOf(address(this)) before", IWETH9(weth).balanceOf(address(this)));
-
             // swap needed wPowerPerp amount to close short position
             _exactOutFlashSwap(
                 weth,
