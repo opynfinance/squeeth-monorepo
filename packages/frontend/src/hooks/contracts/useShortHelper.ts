@@ -7,8 +7,6 @@ import { addressAtom } from 'src/state/wallet/atoms'
 import { useHandleTransaction } from 'src/state/wallet/hooks'
 import { addressesAtom } from 'src/state/positions/atoms'
 import { useGetBuyParam, useGetSellParam } from 'src/state/squeethPool/hooks'
-import { useResetAtom, useUpdateAtom } from 'jotai/utils'
-import { transactionHashAtom } from 'src/state/trade/atoms'
 import { shortHelperContractAtom } from '../../state/contracts/atoms'
 import { useNormFactor } from 'src/state/controller/hooks'
 
@@ -16,8 +14,6 @@ export const useShortHelper = () => {
   const handleTransaction = useHandleTransaction()
   const address = useAtomValue(addressAtom)
   const { shortHelper } = useAtomValue(addressesAtom)
-  // const setTxHash = useUpdateAtom(transactionHashAtom)
-  // const resetTxHash = useResetAtom(transactionHashAtom)
 
   const getSellParam = useGetSellParam()
   const getBuyParam = useGetBuyParam()
@@ -40,7 +36,6 @@ export const useShortHelper = () => {
 
     const _amount = fromTokenAmount(amount, OSQUEETH_DECIMALS).multipliedBy(normalizationFactor)
     const ethAmt = fromTokenAmount(collatAmount, 18)
-
     const result = await handleTransaction(
       contract.methods.openShort(vaultId, _amount.toFixed(0), 0, _exactInputParams).send({
         from: address,
