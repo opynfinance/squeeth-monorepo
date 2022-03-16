@@ -1,7 +1,7 @@
 version: 2.1
 orbs:
   coveralls: coveralls/coveralls@1.0.6
-  node: cimg/node@1.1.6
+  node: circleci/node@1.1.6
 
 workflows:
   build-test-report:
@@ -34,7 +34,7 @@ jobs:
   checkout-and-install:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: cimg/node:16.6.0
+      - image: circleci/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -55,7 +55,7 @@ jobs:
   compile:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: cimg/node:16.6.0
+      - image: circleci/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -76,7 +76,7 @@ jobs:
   lint:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: cimg/node:16.6.0
+      - image: circleci/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -91,7 +91,7 @@ jobs:
   unit-test-contracts:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: cimg/node:16.6.0
+      - image: circleci/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -106,7 +106,7 @@ jobs:
   deploy-test:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: cimg/node:16.6.0
+      - image: circleci/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -121,7 +121,7 @@ jobs:
   coverage:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: cimg/node:16.6.0
+      - image: circleci/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -142,7 +142,7 @@ jobs:
   contract-size:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: cimg/node:16.6.0
+      - image: circleci/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -157,7 +157,7 @@ jobs:
   e2e-test:
     working_directory:  ~/squeeth/packages/hardhat
     docker:
-      - image: cimg/node:16.6.0
+      - image: circleci/node:16.6.0
     steps:
       - restore_cache:
           key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
