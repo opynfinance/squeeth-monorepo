@@ -245,6 +245,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
 
   const [quote, setQuote] = useAtom(quoteAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
+  const [isUpdateOperation, setIsUpdateOperation] = useAtom(isUpdateOperationAtom)
 
   const slippageAmount = useAtomValue(slippageAmountAtom)
   const tradeType = useAtomValue(tradeTypeAtom)
@@ -292,11 +293,18 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
         return
       }
       if (vaultId && !isVaultApproved) {
+        setIsUpdateOperation(true)
         await updateOperator(vaultId, shortHelper, () => {
           setIsVaultApproved(true)
         })
       } else {
-        await openShort(vaultId, amount, collateral, onOpenShortSuccess)
+        await openShort(vaultId, amount, collateral, () => {
+          setIsUpdateOperation(false)
+          setConfirmedAmount(amount.toFixed(6).toString())
+          setTradeSuccess(true)
+          setTradeCompleted(true)
+          resetEthTradeAmount()
+        })
       }
     } catch (e) {
       console.log(e)
@@ -304,27 +312,11 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
     }
   }
 
-  const onOpenShortSuccess = () => {
-    setConfirmedAmount(amount.toFixed(6).toString())
-    setTradeSuccess(true)
-    setTradeCompleted(true)
-    resetEthTradeAmount()
-  }
-
   useEffect(() => {
     if (transactionInProgress) {
       setShortLoading(false)
     }
   }, [transactionInProgress])
-
-  // useEffect(() => {
-  //   if (confirmed) {
-  //     setConfirmedAmount(amount.toFixed(6).toString())
-  //     setTradeSuccess(true)
-  //     setTradeCompleted(true)
-  //     resetEthTradeAmount()
-  //   }
-  // }, [confirmed])
 
   useEffect(() => {
     if (shortVaults.length && open && tradeType === TradeType.SHORT) {
@@ -335,7 +327,6 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
       getDebtAmount(new BigNumber(restOfShort)).then((debt) => {
         const _neededCollat = debt.times(collatPercent / 100)
         setNeededCollat(_neededCollat)
-        // setWithdrawCollat(_collat.minus(neededCollat))
       })
     }
   }, [amount.toString(), collatPercent, shortVaults?.length, open, tradeType])
@@ -389,7 +380,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
 
   return (
     <div>
-      {confirmed ? (
+      {confirmed && !isUpdateOperation ? (
         <div>
           <Confirmed
             confirmationMessage={`Opened ${confirmedAmount} Squeeth Short Position`}
@@ -401,8 +392,6 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
               variant="contained"
               onClick={() => {
                 resetTransactionData()
-                // resetTxHash()
-                // setConfirmed(false)
               }}
               className={classes.amountInput}
               style={{ width: '300px' }}
@@ -681,8 +670,6 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
     const contractShort = vault?.shortAmount ? vault?.shortAmount : new BigNumber(0)
     setFinalShortAmount(contractShort)
   }, [vault?.shortAmount.toString()])
-
-  // console.log(shortVaults[firstValidVault], shortVaults[firstValidVault]?.shortAmount.toString(), 'LOGGING VAULT.SHORT')
 
   // useEffect(() => {
   //   if (shortVaults[firstValidVault]?.shortAmount && shortVaults[firstValidVault]?.shortAmount.lt(amount)) {
