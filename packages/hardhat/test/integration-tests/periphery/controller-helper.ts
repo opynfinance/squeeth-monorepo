@@ -142,7 +142,6 @@ describe("Controller helper integration test", function () {
       const ethToReceive = (mintWSqueethAmount.mul(squeethPrice).div(one)).mul(one.sub(slippage)).div(one)
       const params = {
         vaultId: 0,
-        amountToFlashswap: collateralAmount.sub(value).toString(),
         totalCollateralToDeposit: collateralAmount.toString(),
         wPowerPerpAmount: mintWSqueethAmount.toString(),
         minToReceive: ethToReceive.toString()

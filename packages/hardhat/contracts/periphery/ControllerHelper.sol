@@ -57,7 +57,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
 
     struct FlashswapWMintParams {
         uint256 vaultId;
-        uint256 amountToFlashswap;
         uint256 totalCollateralToDeposit;
         uint256 wPowerPerpAmount;
         uint256 minToReceive;
@@ -130,7 +129,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         address indexed depositor,
         uint256 vaultId,
         uint256 wPowerPerpAmount,
-        uint256 swappedCollateralAmount,
         uint256 collateralAmount
     );
     event FlashWBurn(
@@ -206,7 +204,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             _params.wPowerPerpAmount,
             _params.minToReceive,
             uint8(CALLBACK_SOURCE.FLASH_W_MINT),
-            // abi.encodePacked(_vaultId, amountToFlashswap, _collateralAmount, _wPowerPerpAmount)
             abi.encode(_params)
         );
 
@@ -217,7 +214,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             msg.sender,
             _params.vaultId,
             _params.wPowerPerpAmount,
-            _params.amountToFlashswap,
             _params.totalCollateralToDeposit
         );
     }
@@ -481,8 +477,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             // convert WETH to ETH as Uniswap uses WETH
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
 
-            //will revert if data.amountToFlashswap is > eth balance in contract
-            // IController(controller).mintWPowerPerpAmount{value: address(this).balance}(data.vaultId, data.wPowerPerpAmount, 0);
+            //will revert if data.totalCollateralToDeposit is > eth balance in contract
             uint256 vaultId = IController(controller).mintWPowerPerpAmount{value: data.totalCollateralToDeposit}(
                 data.vaultId,
                 data.wPowerPerpAmount,
