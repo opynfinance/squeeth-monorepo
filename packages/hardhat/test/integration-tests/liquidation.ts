@@ -408,7 +408,9 @@ describe("Liquidation Integration Test", function () {
       const result = await liquidationHelper.checkLiquidation(vault0Id);
       const [isUnsafe, isLiquidatableAfterReducingDebt, maxWPowerPerpAmount, collateralToReceive] = result;
 
-      await controller.connect(liquidator).liquidate(vault0Id, wSqueethAmountToLiquidate);
+      const tx = await controller.connect(liquidator).liquidate(vault0Id, wSqueethAmountToLiquidate);
+      const recept = await provider.getTransactionReceipt(tx.hash)
+      const txCost = recept.effectiveGasPrice.mul(recept.gasUsed)
       
       const collateralToGet = newSqueethPrice.mul(wSqueethAmountToLiquidate).div(one).mul(11).div(10)
 
@@ -421,7 +423,7 @@ describe("Liquidation Integration Test", function () {
       expect(maxWPowerPerpAmount.eq((vaultBefore.shortAmount).div(2))).to.be.true
       expect(isSimilar(collateralToReceive.toString(), collateralToGet.toString())).to.be.true
       
-      // expect(collateralToGet.eq(liquidatorBalanceAfter.sub(liquidatorBalanceBefore))).to.be.true
+      expect(collateralToGet.eq(liquidatorBalanceAfter.sub(liquidatorBalanceBefore).add(txCost))).to.be.true
       expect(vaultBefore.shortAmount.sub(vaultAfter.shortAmount).eq(liquidatorSqueethBefore.sub(liquidatorSqueethAfter))).to.be.true
     })
 
@@ -444,7 +446,10 @@ describe("Liquidation Integration Test", function () {
       const result = await liquidationHelper.checkLiquidation(vault1Id);
       const [isUnsafe, isLiquidatableAfterReducingDebt, maxWPowerPerpAmount, collateralToReceive] = result;
 
-      await controller.connect(liquidator).liquidate(vault1Id, wSqueethAmountToLiquidate);
+      const tx = await controller.connect(liquidator).liquidate(vault1Id, wSqueethAmountToLiquidate);
+      const recept = await provider.getTransactionReceipt(tx.hash)
+      const txCost = recept.effectiveGasPrice.mul(recept.gasUsed)
+
       const vaultAfter = await controller.vaults(vault1Id)
       const liquidatorBalanceAfter = await provider.getBalance(liquidator.address)
       const liquidatorSqueethAfter = await squeeth.balanceOf(liquidator.address)
@@ -454,7 +459,7 @@ describe("Liquidation Integration Test", function () {
       expect(maxWPowerPerpAmount.eq((vaultBefore.shortAmount))).to.be.true
       expect(isSimilar(collateralToReceive.toString(), (vaultBefore.collateralAmount).toString())).to.be.true
 
-      // expect(vaultBefore.collateralAmount.eq(liquidatorBalanceAfter.sub(liquidatorBalanceBefore))).to.be.true
+      expect(vaultBefore.collateralAmount.eq(liquidatorBalanceAfter.sub(liquidatorBalanceBefore).add(txCost))).to.be.true
       expect(vaultBefore.shortAmount.sub(vaultAfter.shortAmount).eq(liquidatorSqueethBefore.sub(liquidatorSqueethAfter))).to.be.true
     })
 
@@ -474,7 +479,10 @@ describe("Liquidation Integration Test", function () {
       const minWPowerPerpAmount = result[2]
       const collateralToReceive = result[3]
 
-      await controller.connect(liquidator).liquidate(vault2Id, wSqueethAmountToLiquidate);
+      const tx = await controller.connect(liquidator).liquidate(vault2Id, wSqueethAmountToLiquidate);
+      const recept = await provider.getTransactionReceipt(tx.hash)
+      const txCost = recept.effectiveGasPrice.mul(recept.gasUsed)
+
       const vaultAfter = await controller.vaults(vault2Id)
       const liquidatorBalanceAfter = await provider.getBalance(liquidator.address)
       const liquidatorSqueethAfter = await squeeth.balanceOf(liquidator.address)
@@ -487,7 +495,7 @@ describe("Liquidation Integration Test", function () {
       expect(minWPowerPerpAmount.eq(vaultBefore.shortAmount)).to.be.true
       expect(isSimilar(collateralToReceive.toString(), (collateralToGet).toString())).to.be.true
 
-      // expect(collateralToGet.eq(liquidatorBalanceAfter.sub(liquidatorBalanceBefore))).to.be.true
+      expect(collateralToGet.eq(liquidatorBalanceAfter.sub(liquidatorBalanceBefore).add(txCost))).to.be.true
       expect(vaultBefore.shortAmount.sub(vaultAfter.shortAmount).eq(liquidatorSqueethBefore.sub(liquidatorSqueethAfter))).to.be.true
       expect(vaultAfter.shortAmount.isZero()).to.be.true
       expect(vaultAfter.collateralAmount.gt(0)).to.be.true
@@ -520,7 +528,10 @@ describe("Liquidation Integration Test", function () {
       const result = await liquidationHelper.checkLiquidation(vault6Id);
       const [isUnsafe, isLiquidatableAfterReducingDebt, maxWPowerPerpAmount, collateralToReceive] = result;
 
-      await controller.connect(liquidator).liquidate(vault6Id, wSqueethAmountToLiquidate);
+      const tx = await controller.connect(liquidator).liquidate(vault6Id, wSqueethAmountToLiquidate);
+      const recept = await provider.getTransactionReceipt(tx.hash)
+      const txCost = recept.effectiveGasPrice.mul(recept.gasUsed)
+
       const vaultAfter = await controller.vaults(vault6Id)
       const liquidatorBalanceAfter = await provider.getBalance(liquidator.address)
       const liquidatorSqueethAfter = await squeeth.balanceOf(liquidator.address)
@@ -533,7 +544,7 @@ describe("Liquidation Integration Test", function () {
       expect(maxWPowerPerpAmount.eq((vaultBefore.shortAmount))).to.be.true
       expect(isSimilar(collateralToReceive.toString(), (collateralToGet).toString())).to.be.true
 
-      // expect(collateralToGet.eq(liquidatorBalanceAfter.sub(liquidatorBalanceBefore))).to.be.true
+      expect(collateralToGet.eq(liquidatorBalanceAfter.sub(liquidatorBalanceBefore).add(txCost))).to.be.true
       expect(vaultBefore.shortAmount.sub(vaultAfter.shortAmount).eq(liquidatorSqueethBefore.sub(liquidatorSqueethAfter))).to.be.true
       expect(vaultAfter.shortAmount.isZero()).to.be.true
       expect(vaultAfter.collateralAmount.gt(0)).to.be.true
@@ -658,7 +669,9 @@ describe("Liquidation Integration Test", function () {
       const totalEthFromUniPosition = ethAmount.add(ethFeeAmount)
       const totalWSqueethFromUniPosition = wPowerPerpAmount.add(squeethFeeAmount)
 
-      await controller.connect(liquidator).liquidate(vault3Id, wSqueethAmountToLiquidate)
+      const tx = await controller.connect(liquidator).liquidate(vault3Id, wSqueethAmountToLiquidate)
+      const recept = await provider.getTransactionReceipt(tx.hash)
+      const txCost = recept.effectiveGasPrice.mul(recept.gasUsed)
 
       const liquidatorEthAfter = await provider.getBalance(liquidator.address)
       const vaultAfter = await controller.vaults(vault3Id)
@@ -673,7 +686,7 @@ describe("Liquidation Integration Test", function () {
 
       expect(isSimilar(collateralToReceive.toString(), (bounty).toString(), 3)).to.be.true
 
-      // expect(isSimilar(liquidatorEthAfter.sub(liquidatorEthBalance).toString(), bounty.toString())).to.be.true      
+      expect(isSimilar(liquidatorEthAfter.sub(liquidatorEthBalance).add(txCost).toString(), bounty.toString())).to.be.true      
       expect(vaultAfter.NftCollateralId === 0).to.be.true
 
       expect(isSimilar(vaultBefore.collateralAmount.add(totalEthFromUniPosition).sub(bounty).toString(), vaultAfter.collateralAmount.toString(), 2)).to.be.true

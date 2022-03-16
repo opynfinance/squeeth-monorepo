@@ -215,7 +215,9 @@ describe("Crab integration test: crab vault full liquidation and shutdown of con
 
       const wSqueethAmountToLiquidate = vaultBefore.shortAmount
 
-      await controller.connect(liquidator).liquidate(vaultId, wSqueethAmountToLiquidate);
+      const tx = await controller.connect(liquidator).liquidate(vaultId, wSqueethAmountToLiquidate);
+      const recept = await provider.getTransactionReceipt(tx.hash)
+      const txCost = recept.effectiveGasPrice.mul(recept.gasUsed)
       
       const collateralToGet = vaultBefore.collateralAmount
 
@@ -223,7 +225,7 @@ describe("Crab integration test: crab vault full liquidation and shutdown of con
       const liquidatorBalanceAfter = await provider.getBalance(liquidator.address)
       const liquidatorSqueethAfter = await wSqueeth.balanceOf(liquidator.address)
       
-      // expect(collateralToGet.eq(liquidatorBalanceAfter.sub(liquidatorBalanceBefore))).to.be.true
+      expect(collateralToGet.eq(liquidatorBalanceAfter.sub(liquidatorBalanceBefore).add(txCost))).to.be.true
       expect(vaultBefore.shortAmount.sub(vaultAfter.shortAmount).eq(liquidatorSqueethBefore.sub(liquidatorSqueethAfter))).to.be.true
       expect(vaultAfter.shortAmount.eq(BigNumber.from(0))).to.be.equal
       expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.equal
@@ -298,7 +300,9 @@ describe("Crab integration test: crab vault full liquidation and shutdown of con
       const userCollateral = wmul(crabRatio, strategyCollateralAmountBefore)
       const userSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
-      await crabStrategy.connect(depositor).withdraw(userCrabBalanceBefore)
+      const tx = await crabStrategy.connect(depositor).withdraw(userCrabBalanceBefore)
+      const recept = await provider.getTransactionReceipt(tx.hash)
+      const txCost = recept.effectiveGasPrice.mul(recept.gasUsed)
 
       const userEthBalanceAfter = await provider.getBalance(depositor.address)
       const userCrabBalanceAfter = await crabStrategy.balanceOf(depositor.address);
@@ -313,7 +317,7 @@ describe("Crab integration test: crab vault full liquidation and shutdown of con
       const debtAfter = vaultBefore.shortAmount
       const totalSupplyAfter = await crabStrategy.totalSupply()
 
-      // expect(userEthBalanceAfter.sub(userEthBalanceBefore).eq(BigNumber.from(0))).to.be.true
+      expect(userEthBalanceAfter.sub(userEthBalanceBefore).add(txCost).eq(BigNumber.from(0))).to.be.true
       expect(userCrabBalanceAfter.eq(BigNumber.from(0))).to.be.true
       expect(userCrabBalanceBefore.sub(userCrabBalanceAfter).eq(userCrabBalanceBefore)).to.be.true
       expect(userSqueethBalanceAfter.sub(userSqueethBalanceBefore).eq(BigNumber.from(0))).to.be.true

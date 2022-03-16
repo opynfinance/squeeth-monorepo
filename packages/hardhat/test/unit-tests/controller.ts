@@ -567,14 +567,16 @@ describe("Controller", function () {
         const userBalanceBefore = await provider.getBalance(seller1.address)
         const controllerBalanceBefore = await provider.getBalance(controller.address)
         
-        await controller.connect(seller1).withdraw(vaultId, withdrawAmount)
+        const tx = await controller.connect(seller1).withdraw(vaultId, withdrawAmount)
+        const recept = await provider.getTransactionReceipt(tx.hash)
+        const txCost = recept.effectiveGasPrice.mul(recept.gasUsed)
         
         const userBalanceAfter = await provider.getBalance(seller1.address)
         const controllerBalanceAfter = await provider.getBalance(controller.address)
         const vaultAfter = await controller.vaults(vaultId)
 
         expect(controllerBalanceBefore.sub(withdrawAmount).eq(controllerBalanceAfter)).to.be.true
-        // expect(userBalanceAfter.sub(userBalanceBefore).eq(withdrawAmount)).to.be.true
+        expect(userBalanceAfter.sub(userBalanceBefore).add(txCost).eq(withdrawAmount)).to.be.true
         expect(vaultBefore.collateralAmount.sub(withdrawAmount).eq(vaultAfter.collateralAmount)).to.be.true
       });
       it("Should close the vault when it's empty", async () => {
@@ -1245,7 +1247,9 @@ describe("Controller", function () {
         const controllerEthBefore = await provider.getBalance(controller.address)
         const sellerEthBefore = await provider.getBalance(seller2.address)
         const redeemAmount = await squeeth.balanceOf(seller2.address)
-        await controller.connect(seller2).redeemLong(redeemAmount)
+        const tx = await controller.connect(seller2).redeemLong(redeemAmount)
+        const recept = await provider.getTransactionReceipt(tx.hash)
+        const txCost = recept.effectiveGasPrice.mul(recept.gasUsed)
         
         // this test works because ES doesn't apply funding, so normalizationFactor won't change after shutdown
         const expectedPayout = redeemAmount.mul(normalizationFactor).mul(settlementPrice).div(one).div(one).div(oracleScaleFactor)
@@ -1254,14 +1258,16 @@ describe("Controller", function () {
         const squeethBalanceAfter = await squeeth.balanceOf(seller2.address)
         expect(squeethBalanceAfter.isZero()).to.be.true
         expect(controllerEthBefore.sub(controllerEthAfter).eq(expectedPayout)).to.be.true
-        // expect(sellerEthAfter.sub(sellerEthBefore).eq(expectedPayout)).to.be.true
+        expect(sellerEthAfter.sub(sellerEthBefore).add(txCost).eq(expectedPayout)).to.be.true
       });
       it("should be able to redeem long value for seller3", async () => {
         const controllerEthBefore = await provider.getBalance(controller.address)
         const sellerEthBefore = await provider.getBalance(seller3.address)
         const redeemAmount = await squeeth.balanceOf(seller3.address)
-        await controller.connect(seller3).redeemLong(redeemAmount)
-        
+        const tx = await controller.connect(seller3).redeemLong(redeemAmount)
+        const recept = await provider.getTransactionReceipt(tx.hash)
+        const txCost = recept.effectiveGasPrice.mul(recept.gasUsed)
+  
         // this test works because ES doesn't apply funding, so normalizationFactor won't change after shutdown
         const expectedPayout = redeemAmount.mul(normalizationFactor).mul(settlementPrice).div(one).div(one).div(oracleScaleFactor)
         const sellerEthAfter = await provider.getBalance(seller3.address)
@@ -1269,7 +1275,7 @@ describe("Controller", function () {
         const squeethBalanceAfter = await squeeth.balanceOf(seller3.address)
         expect(squeethBalanceAfter.isZero()).to.be.true
         expect(controllerEthBefore.sub(controllerEthAfter).eq(expectedPayout)).to.be.true
-        // expect(sellerEthAfter.sub(sellerEthBefore).eq(expectedPayout)).to.be.true
+        expect(sellerEthAfter.sub(sellerEthBefore).add(txCost).eq(expectedPayout)).to.be.true
       });
     })
     describe('Settlement: redeemShort', async() => {
@@ -1348,7 +1354,10 @@ describe("Controller", function () {
         const sellerEthBefore = await provider.getBalance(seller3.address)
         const controllerEthBefore = await provider.getBalance(controller.address)
 
-        await controller.connect(seller3).redeemShort(seller3VaultId)
+        const tx = await controller.connect(seller3).redeemShort(seller3VaultId)
+        const recept = await provider.getTransactionReceipt(tx.hash)
+        const txCost = recept.effectiveGasPrice.mul(recept.gasUsed)
+
         const vaultAfter = await controller.vaults(seller3VaultId)
         
         const squeethDebt = seller3TotalSqueeth.mul(normalizationFactor).mul(settlementPrice).div(one).div(one).div(oracleScaleFactor)
@@ -1356,7 +1365,7 @@ describe("Controller", function () {
         const sellerEthAfter = await provider.getBalance(seller3.address)
         const controllerEthAfter = await provider.getBalance(controller.address)
         expect(controllerEthBefore.sub(controllerEthAfter).eq(shortPayout)).to.be.true
-        // expect(sellerEthAfter.sub(sellerEthBefore).eq(shortPayout)).to.be.true
+        expect(sellerEthAfter.sub(sellerEthBefore).add(txCost).eq(shortPayout)).to.be.true
         expect(isEmptyVault(vaultAfter)).to.be.true;
       });
 
@@ -1370,7 +1379,10 @@ describe("Controller", function () {
         const sellerEthBefore = await provider.getBalance(seller5.address)
         const squeethBalanceBefore = await squeeth.balanceOf(seller5.address)
 
-        await controller.connect(seller5).redeemShort(seller5VaultId)
+        const tx = await controller.connect(seller5).redeemShort(seller5VaultId)
+        const recept = await provider.getTransactionReceipt(tx.hash)
+        const txCost = recept.effectiveGasPrice.mul(recept.gasUsed)
+
         const vaultAfter = await controller.vaults(seller5VaultId)
         
         const amountToReduceDebtBy = (vaultBefore.shortAmount < nftWSqueethAmount) ? vaultBefore.shortAmount : nftWSqueethAmount 
@@ -1381,7 +1393,7 @@ describe("Controller", function () {
         const squeethBalanceAfter = await squeeth.balanceOf(seller5.address)
         
         expect(squeethBalanceAfter.sub(squeethBalanceBefore).eq(nftWSqueethAmount.sub(amountToReduceDebtBy))).to.be.true
-        // expect(sellerEthAfter.sub(sellerEthBefore).eq(shortPayout)).to.be.true
+        expect(sellerEthAfter.sub(sellerEthBefore).add(txCost).eq(shortPayout)).to.be.true
         expect(isEmptyVault(vaultAfter)).to.be.true;
       });
 
@@ -1404,13 +1416,16 @@ describe("Controller", function () {
         const sellerEthBefore = await provider.getBalance(seller6.address)
         const sellerWsqueethBefore = await squeeth.balanceOf(seller6.address)
 
-        await controller.connect(seller6).redeemShort(seller6VaultId)
+        const tx = await controller.connect(seller6).redeemShort(seller6VaultId)
+        const recept = await provider.getTransactionReceipt(tx.hash)
+        const txCost = recept.effectiveGasPrice.mul(recept.gasUsed)
+
         const vaultAfter = await controller.vaults(seller6VaultId)
         
         const sellerEthAfter = await provider.getBalance(seller6.address)
         const sellerWsqueethAfter = await squeeth.balanceOf(seller6.address)
 
-        // expect(sellerEthAfter.sub(sellerEthBefore).eq(vaultBefore.collateralAmount)).to.be.true
+        expect(sellerEthAfter.sub(sellerEthBefore).add(txCost).eq(vaultBefore.collateralAmount)).to.be.true
         // get the remaining 2/3 (2x the initial minted amount) in wsqueeth
         expect(sellerWsqueethAfter.sub(sellerWsqueethBefore).eq(s6MintAmount.mul(2))).to.be.true
         expect(isEmptyVault(vaultAfter)).to.be.true;
@@ -1419,12 +1434,15 @@ describe("Controller", function () {
       it("should redeem fair value for short vault with no debt (seller7)", async () => {
         const sellerEthBefore = await provider.getBalance(seller7.address)
 
-        await controller.connect(seller7).redeemShort(seller7VaultId)
+        const tx = await controller.connect(seller7).redeemShort(seller7VaultId)
+        const recept = await provider.getTransactionReceipt(tx.hash)
+        const txCost = recept.effectiveGasPrice.mul(recept.gasUsed)
+
         const vaultAfter = await controller.vaults(seller7VaultId)
         
         const sellerEthAfter = await provider.getBalance(seller7.address)
 
-        // expect(sellerEthAfter.sub(sellerEthBefore).eq(vault7Collateral)).to.be.true
+        expect(sellerEthAfter.sub(sellerEthBefore).add(txCost).eq(vault7Collateral)).to.be.true
         expect(isEmptyVault(vaultAfter)).to.be.true;
       });
     });
