@@ -62,20 +62,11 @@ const UNISWAP_SETTING = {
   },
 };
 
-// const AAVE_SETTING = {
-//   version: "0.6.12",
-//   settings: {
-//     optimizer: {
-//       enabled: true,
-//       runs: 200,
-//     },
-//   },
-// };
-
 const config: HardhatUserConfig = {
   defaultNetwork,
   networks: {
     hardhat: {
+      initialBaseFeePerGas: 0,
       saveDeployments: false, // only used in cicd to test deployments
       mining: {
         auto: true
