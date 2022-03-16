@@ -31,7 +31,6 @@ import {
   tradeSuccessAtom,
   tradeTypeAtom,
 } from 'src/state/trade/atoms'
-import { useUpdateActualTradeType } from 'src/state/trade/hooks'
 import {
   useBuyAndSellQuote,
   useLongGain,
@@ -180,7 +179,7 @@ const PositionCard: React.FC = () => {
 
   const pType = useAtomValue(positionTypeAtom)
   const existingCollat = useAtomValue(existingCollatAtom)
-  const { data, refetch: swapsQueryRefetch } = useSwaps()
+  const { data, startPolling, stopPolling } = useSwaps()
   const swaps = data?.swaps
   const { squeethAmount } = useComputeSwaps()
   const { vaults: shortVaults } = useVaultManager()
@@ -206,25 +205,18 @@ const PositionCard: React.FC = () => {
   const positionType = useMemo(() => (isPositionLoading ? PositionType.NONE : pType), [pType, isPositionLoading])
   const classes = useStyles({ positionType, postPosition })
 
-  useUpdateActualTradeType()
-
-  useEffect(() => {
-    if (tradeSuccess) {
-      setFetchingNew(true)
-    } else {
-      setFetchingNew(false)
-    }
-  }, [tradeSuccess])
-
   useEffect(() => {
     if (tradeSuccess && prevSwapsData?.length === swaps?.length) {
-      //if trade success and number of swaps is still the same, try refetching again
-      swapsQueryRefetch()
+      //if trade success and number of swaps is still the same, start swaps polling
+      startPolling(500)
+      setFetchingNew(true)
     } else {
       setTradeCompleted(false)
       setTradeSuccess(false)
+      stopPolling()
+      setFetchingNew(false)
     }
-  }, [swaps?.length, prevSwapsData?.length, swapsQueryRefetch, tradeSuccess])
+  }, [swaps?.length, prevSwapsData?.length, tradeSuccess])
 
   const fullyLiquidated = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
