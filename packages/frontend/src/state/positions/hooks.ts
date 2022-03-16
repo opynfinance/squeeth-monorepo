@@ -40,13 +40,14 @@ import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { toTokenAmount } from '@utils/calculations'
 import { squeethClient } from '@utils/apollo-client'
-import { PositionType, Vault, Networks } from '../../types'
+import { PositionType, Networks } from '../../types'
 import { poolAtom, readyAtom, squeethInitialPriceAtom } from '../squeethPool/atoms'
 import { useGetCollatRatioAndLiqPrice, useGetVault } from '../controller/hooks'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { useGetWSqueethPositionValue } from '../squeethPool/hooks'
 import { useVaultHistory } from '@hooks/useVaultHistory'
 import { swapsRopsten, swapsRopstenVariables } from '@queries/uniswap/__generated__/swapsRopsten'
+import { Vault } from '@queries/squeeth/__generated__/Vault'
 
 export const useSwaps = () => {
   const [networkId] = useAtom(networkIdAtom)
@@ -448,13 +449,29 @@ export const usePositionsAndFeesComputation = () => {
 export const useVaultQuery = (vaultId: number) => {
   const networkId = useAtomValue(networkIdAtom)
 
-  return useQuery<{ vault: Vault }>(VAULT_QUERY, {
+  const query = useQuery<Vault>(VAULT_QUERY, {
     client: squeethClient[networkId],
     fetchPolicy: 'cache-and-network',
     variables: {
       vaultID: vaultId,
     },
   })
+
+  const vaultData = useMemo(() => {
+    if (query.data) {
+      const vault = query.data.vault
+
+      return {
+        id: vault?.id,
+        NFTCollateralId: vault?.NftCollateralId,
+        collateralAmount: toTokenAmount(new BigNumber(vault?.collateralAmount), 18),
+        shortAmount: toTokenAmount(new BigNumber(vault?.shortAmount), OSQUEETH_DECIMALS),
+        operator: vault?.operator,
+      }
+    }
+  }, [query.data])
+
+  return { ...query, data: vaultData }
 }
 export const useUpdateVaultData = () => {
   const connected = useAtomValue(connectedWalletAtom)

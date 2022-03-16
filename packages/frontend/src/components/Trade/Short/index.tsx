@@ -12,7 +12,7 @@ import {
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { memo, useCallback, useEffect, useState } from 'react'
 
 import { CloseType, Tooltips, Links } from '@constants/enums'
 import useShortHelper from '@hooks/contracts/useShortHelper'
@@ -37,11 +37,16 @@ import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValue } from 'sr
 import {
   useGetDebtAmount,
   useGetShortAmountFromDebt,
-  useGetVault,
   useNormFactor,
   useUpdateOperator,
 } from 'src/state/controller/hooks'
-import { useComputeSwaps, useFirstValidVault, useLPPositionsQuery } from 'src/state/positions/hooks'
+import {
+  useComputeSwaps,
+  useFirstValidVault,
+  useLPPositionsQuery,
+  useUpdateVaultData,
+  useVaultQuery,
+} from 'src/state/positions/hooks'
 import {
   ethTradeAmountAtom,
   quoteAtom,
@@ -57,6 +62,7 @@ import { toTokenAmount } from '@utils/calculations'
 // import { normFactorAtom } from 'src/state/controller/atoms'
 import { TradeType } from '../../../types'
 import Cancelled from '../Cancelled'
+import { controllerContractAtom } from 'src/state/contracts/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -640,8 +646,8 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const isLong = useAtomValue(isLongAtom)
   const connected = useAtomValue(connectedWalletAtom)
   const existingCollatPercent = useAtomValue(existingCollatPercentAtom)
-  const [vault, setVault] = useAtom(vaultAtom)
-  const getVault = useGetVault()
+
+  const contract = useAtomValue(controllerContractAtom)
   const selectWallet = useSelectWallet()
   const updateOperator = useUpdateOperator()
   const getDebtAmount = useGetDebtAmount()
@@ -663,13 +669,17 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const { loading: isPositionFinishedCalc } = useLPPositionsQuery()
   const { vaults: shortVaults } = useVaultManager()
   const { firstValidVault, vaultId } = useFirstValidVault()
+  const vaultQuery = useVaultQuery(vaultId)
+  const vault = vaultQuery.data
   const setCollatRatio = useUpdateAtom(collatRatioAtom)
   const ethPrice = useETHPrice()
 
   useEffect(() => {
-    const contractShort = vault?.shortAmount ? vault?.shortAmount : new BigNumber(0)
-    setFinalShortAmount(contractShort)
-  }, [vault?.shortAmount.toString()])
+    if (vault) {
+      const contractShort = vault?.shortAmount ? vault?.shortAmount : new BigNumber(0)
+      setFinalShortAmount(contractShort)
+    }
+  }, [vault])
 
   // useEffect(() => {
   //   if (shortVaults[firstValidVault]?.shortAmount && shortVaults[firstValidVault]?.shortAmount.lt(amount)) {
@@ -731,8 +741,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
           setTradeCompleted(true)
           resetSqthTradeAmount()
           setIsVaultApproved(false)
-          const newVault = await getVault(vault!.id)
-          setVault(newVault)
+          vaultQuery.refetch({ vaultID: vault!.id })
         })
       }
     } catch (e) {
@@ -1078,4 +1087,4 @@ const Short: React.FC<SellType> = ({ open }) => {
   return open ? <OpenShort open={open} /> : <CloseShort open={open} />
 }
 
-export default Short
+export default memo(Short)
