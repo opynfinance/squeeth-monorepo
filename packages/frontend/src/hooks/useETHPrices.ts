@@ -45,5 +45,5 @@ export const useETHPrices = (items: TxItem[] | undefined) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading])
 
-  return ethPrices
+  return ethPrices.length === items?.length ? ethPrices : undefined
 }
