@@ -55,19 +55,22 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
     address public immutable nonfungiblePositionManager;
     bool public immutable isWethToken0;
 
+    /// @dev params for flashswapWMint()
     struct FlashswapWMintParams {
         uint256 vaultId;
         uint256 totalCollateralToDeposit;
         uint256 wPowerPerpAmount;
         uint256 minToReceive;
     }
-    struct FlashswapWBurnParams {
+    /// @dev params for flashswapWBurnBuyLong()
+    struct FlashswapWBurnBuyLongParams {
         uint256 vaultId;
         uint256 wPowerPerpAmountToBurn;
         uint256 wPowerPerpAmountToBuy;
         uint256 collateralToWithdraw;
         uint256 maxToPay;
     }
+    /// @dev params for flashswapSellLongWMint()
     struct FlashSellLongWMintParams {
         uint256 vaultId;
         uint256 wPowerPerpAmountToMint;
@@ -75,13 +78,14 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         uint256 wPowerPerpAmountToSell;
         uint256 minToReceive;
     }
+    /// @dev data struct for callback initiated in _closeUniLp()
     struct SwapExactoutEthWPowerPerpData {
         uint256 vaultId; // vault ID
         uint256 wPowerPerpAmountToBurn; // amount of wPowerPerp to burn in vault
         uint256 collateralToWithdraw; // ETH amount to withdraw from vault
     }
 
-    // params for CloseShortWithUserNft()
+    /// @dev params for CloseShortWithUserNft()
     struct CloseShortWithUserNftParams {
         uint256 vaultId; // vault ID
         uint256 tokenId; // Uni NFT token ID
@@ -93,19 +97,20 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
     }
-    // struct for flashloanWMintDepositNft() params
+    /// @dev params for flashloanWMintDepositNft() 
     struct FlashloanWMintDepositNftParams {
         uint256 vaultId; // vault ID (could be zero)
         uint256 wPowerPerpAmount; // wPowerPerp amount to mint
         uint256 collateralToDeposit; // ETH collateral amount to deposit in vault (could be zero)
         uint256 collateralToFlashloan; // ETH amount to flashloan and use for deposit into vault
         uint256 collateralToLp; // ETH collateral amount to use for LPing (could be zero)
-        uint256 collateralToWithdraw; // ETH amount to withdraw from vault (if collateralToLp>0, this should be = collateralToLp+fee or = collateralToLp and sender include fee in msg.value)
+        uint256 collateralToWithdraw; // ETH amount to withdraw from vault (if collateralToLp>0, this should be = collateralToLp+fee or 50% of collateralToLP and sender include the rest in msg.value)
         uint256 lpAmount0Min; // amount0Min for Uni LPing
         uint256 lpAmount1Min; // amount1Min for Uni LPing
         int24 lpLowerTick; // Uni LP lower tick
         int24 lpUpperTick; // Uni LP upper tick
     }
+    /// @dev params for flashloanCloseVaultLpNft()
     struct FlashloanCloseVaultLpNftParam {
         uint256 vaultId; // vault ID
         uint256 tokenId; // Uni NFT token ID
@@ -113,11 +118,12 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         uint256 liquidityPercentage; // percentage of liquidity to burn in LP position in decimals with 18 precision(e.g 60% = 0.6 = 6e17)
         uint256 wPowerPerpAmountToBurn; // amount of wPowerPerp to burn in vault
         uint256 collateralToFlashloan; // amount of ETH collateral to flashloan and deposit into vault
-        uint256 collateralToWithdraw; 
+        uint256 collateralToWithdraw;
         uint256 limitPriceEthPerPowerPerp; // price limit for swapping between wPowerPerp and ETH (ETH per 1 wPowerPerp)
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
     }
+    /// @dev params for _closeUniLp()
     struct closeUniLpParams {
         uint256 vaultId;
         uint256 tokenId;
@@ -130,6 +136,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         uint128 amount1Min;
     }
 
+    /// @dev events
     event FlashswapWMint(
         address indexed depositor,
         uint256 vaultId,
@@ -215,20 +222,15 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         // no need to unwrap WETH received from swap as it is done in the callback function
         payable(msg.sender).sendValue(address(this).balance);
 
-        emit FlashswapWMint(
-            msg.sender,
-            _params.vaultId,
-            _params.wPowerPerpAmount,
-            _params.totalCollateralToDeposit
-        );
+        emit FlashswapWMint(msg.sender, _params.vaultId, _params.wPowerPerpAmount, _params.totalCollateralToDeposit);
     }
 
     /**
      * @notice flash close position and buy long squeeth
      * @dev this function
-     * @param _params FlashswapWBurnParams struct
+     * @param _params FlashswapWBurnBuyLongParams struct
      */
-    function flashswapWBurnBuyLong(FlashswapWBurnParams calldata _params) external payable {
+    function flashswapWBurnBuyLong(FlashswapWBurnBuyLongParams calldata _params) external payable {
         require(_params.maxToPay <= _params.collateralToWithdraw.add(msg.value), "Not enough collateral");
 
         _exactOutFlashSwap(
@@ -299,7 +301,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             })
         );
 
-        _checkPartialLpClose(_params.vaultId, _params.tokenId, _params.liquidityPercentage);
+        _checkPartialLpClose(0, _params.tokenId, _params.liquidityPercentage);
 
         IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
         payable(msg.sender).sendValue(address(this).balance);
@@ -501,7 +503,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             // this is a newly open vault, transfer to the user
             if (data.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), _caller, vaultId);
         } else if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.FLASH_W_BURN) {
-            FlashswapWBurnParams memory data = abi.decode(_callData, (FlashswapWBurnParams));
+            FlashswapWBurnBuyLongParams memory data = abi.decode(_callData, (FlashswapWBurnBuyLongParams));
 
             IController(controller).burnWPowerPerpAmount(
                 data.vaultId,
@@ -601,7 +603,11 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         INonfungiblePositionManager(nonfungiblePositionManager).refundETH();
     }
 
-    function _checkPartialLpClose(uint256 _vaultId, uint256 _tokenId, uint256 _liquidityPercentage) private {
+    function _checkPartialLpClose(
+        uint256 _vaultId,
+        uint256 _tokenId,
+        uint256 _liquidityPercentage
+    ) private {
         if (_liquidityPercentage < 1e18) {
             if (_vaultId == 0) {
                 INonfungiblePositionManager(nonfungiblePositionManager).safeTransferFrom(
@@ -609,8 +615,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                     msg.sender,
                     _tokenId
                 );
-            }
-            else {
+            } else {
                 IController(controller).depositUniPositionToken(_vaultId, _tokenId);
             }
         }
