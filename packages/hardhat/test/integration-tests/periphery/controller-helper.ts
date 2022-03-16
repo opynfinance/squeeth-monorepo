@@ -372,6 +372,7 @@ describe("Controller helper integration test", function () {
       await controllerHelper.connect(depositor).closeShortWithUserNft({
         vaultId, 
         tokenId,
+        liquidity: positionBefore.liquidity,
         liquidityPercentage: BigNumber.from(1).mul(BigNumber.from(10).pow(18)),
         wPowerPerpAmountToBurn: mintWSqueethAmount, 
         collateralToWithdraw: vaultBefore.collateralAmount, 
@@ -486,6 +487,7 @@ describe("Controller helper integration test", function () {
       await controllerHelper.connect(depositor).closeShortWithUserNft({
         vaultId, 
         tokenId,
+        liquidity: positionBefore.liquidity,
         liquidityPercentage: BigNumber.from(1).mul(BigNumber.from(10).pow(18)),
         wPowerPerpAmountToBurn: mintWSqueethAmount, 
         collateralToWithdraw: vaultBefore.collateralAmount, 
@@ -596,6 +598,7 @@ describe("Controller helper integration test", function () {
       await controllerHelper.connect(depositor).closeShortWithUserNft({
         vaultId, 
         tokenId,
+        liquidity: positionBefore.liquidity,
         liquidityPercentage: BigNumber.from(6).mul(BigNumber.from(10).pow(17)),
         wPowerPerpAmountToBurn: mintWSqueethAmount, 
         collateralToWithdraw: vaultBefore.collateralAmount, 
