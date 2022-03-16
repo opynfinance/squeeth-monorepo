@@ -146,8 +146,11 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
     struct FlashloanCloseVaultLpNftParam {
         uint256 vaultId; // vault ID
         uint256 tokenId; // Uni NFT token ID
+        uint256 liquidity; // amount of liquidity in LP position
+        uint256 liquidityPercentage; // percentage of liquidity to burn in LP position in decimals with 18 precision(e.g 60% = 0.6 = 6e17)
         uint256 wPowerPerpAmountToBurn; // amount of wPowerPerp to burn in vault
         uint256 collateralToFlashloan; // amount of ETH collateral to flashloan and deposit into vault
+        uint256 collateralToWithdraw; 
         uint256 limitPriceEthPerPowerPerp; // price limit for swapping between wPowerPerp and ETH (ETH per 1 wPowerPerp)
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
@@ -155,6 +158,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
     struct closeUniLpParams {
         uint256 vaultId;
         uint256 tokenId;
+        uint256 liquidity;
         uint256 liquidityPercentage; // percentage of liquidity to burn in LP position in decimals with 18 precision(e.g 60% = 0.6 = 6e17)
         uint256 wPowerPerpAmountToBurn;
         uint256 collateralToWithdraw;
@@ -340,6 +344,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             closeUniLpParams({
                 vaultId: _params.vaultId,
                 tokenId: _params.tokenId,
+                liquidity: _params.liquidity,
                 liquidityPercentage: _params.liquidityPercentage,
                 wPowerPerpAmountToBurn: _params.wPowerPerpAmountToBurn,
                 collateralToWithdraw: _params.collateralToWithdraw,
@@ -348,6 +353,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 amount1Min: _params.amount1Min
             })
         );
+
+        _checkPartialLpClose(_params.vaultId, _params.tokenId, _params.liquidityPercentage);
 
         IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
         payable(msg.sender).sendValue(address(this).balance);
@@ -362,9 +369,10 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 closeUniLpParams({
                     vaultId: _params.vaultId,
                     tokenId: _params.tokenId,
-                    liquidityPercentage: uint256(1e18),
+                    liquidity: _params.liquidity,
+                    liquidityPercentage: _params.liquidityPercentage,
                     wPowerPerpAmountToBurn: _params.wPowerPerpAmountToBurn,
-                    collateralToWithdraw: _params.collateralToFlashloan,
+                    collateralToWithdraw: _params.collateralToWithdraw,
                     limitPriceEthPerPowerPerp: _params.limitPriceEthPerPowerPerp,
                     amount0Min: _params.amount0Min,
                     amount1Min: _params.amount1Min
@@ -507,6 +515,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             IController(controller).withdrawUniPositionToken(data.vaultId);
 
             _closeUniLp(data);
+
+            _checkPartialLpClose(data.vaultId, data.tokenId, data.liquidityPercentage);
         }
     }
 
