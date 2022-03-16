@@ -561,13 +561,11 @@ function TradePage() {
               </div>
             </div>
             <div className={classes.tradeDetails}>
-              <div className={tradeType === TradeType.LONG ? classes.displayBlock : classes.displayNone}>
+              {tradeType === TradeType.LONG ? (
                 <LongChart />
-              </div>
-
-              <div className={tradeType !== TradeType.LONG ? classes.displayBlock : classes.displayNone}>
+              ) : (
                 <ShortChart vault={Vaults.Short} longAmount={0} showPercentage={true} setCustomLong={() => null} />
-              </div>
+              )}
             </div>
           </div>
 
