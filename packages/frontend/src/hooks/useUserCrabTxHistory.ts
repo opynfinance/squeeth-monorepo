@@ -26,7 +26,6 @@ export const useUserCrabTxHistory = (user: string, isDescending?: boolean) => {
     {
       fetchPolicy: 'cache-and-network',
       client: squeethClient[networkId],
-      skip: Boolean(user),
       variables: {
         ownerId: user ?? '',
         orderDirection: isDescending ? 'desc' : 'asc',
