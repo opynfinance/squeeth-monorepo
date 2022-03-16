@@ -134,13 +134,14 @@ export const useUpdateOperator = () => {
    * @param vaultId
    * @param operator
    */
-  const updateOperator = async (vaultId: number, operator: string) => {
+  const updateOperator = async (vaultId: number, operator: string, onTxConfirmed?: () => void) => {
     if (!contract || !address) return
 
     await handleTransaction(
       contract.methods.updateOperator(vaultId, operator).send({
         from: address,
       }),
+      onTxConfirmed,
     )
   }
 

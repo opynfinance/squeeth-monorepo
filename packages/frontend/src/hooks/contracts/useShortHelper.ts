@@ -16,8 +16,8 @@ export const useShortHelper = () => {
   const handleTransaction = useHandleTransaction()
   const address = useAtomValue(addressAtom)
   const { shortHelper } = useAtomValue(addressesAtom)
-  const setTxHash = useUpdateAtom(transactionHashAtom)
-  const resetTxHash = useResetAtom(transactionHashAtom)
+  // const setTxHash = useUpdateAtom(transactionHashAtom)
+  // const resetTxHash = useResetAtom(transactionHashAtom)
 
   const getSellParam = useGetSellParam()
   const getBuyParam = useGetBuyParam()
@@ -32,23 +32,23 @@ export const useShortHelper = () => {
    * @param vaultType
    * @returns
    */
-  const openShort = async (vaultId: number, amount: BigNumber, collatAmount: BigNumber) => {
+  const openShort = async (vaultId: number, amount: BigNumber, collatAmount: BigNumber, onTxConfirmed?: () => void) => {
     if (!contract || !address) return
 
-    resetTxHash()
     const _exactInputParams = await getSellParam(amount)
     _exactInputParams.recipient = shortHelper
 
     const _amount = fromTokenAmount(amount, OSQUEETH_DECIMALS).multipliedBy(normalizationFactor)
     const ethAmt = fromTokenAmount(collatAmount, 18)
+
     const result = await handleTransaction(
       contract.methods.openShort(vaultId, _amount.toFixed(0), 0, _exactInputParams).send({
         from: address,
         value: ethAmt.toString(), // Already scaled to 14 so multiplied with 10000
       }),
+      onTxConfirmed,
     )
 
-    setTxHash(result.transactionHash)
     return result
   }
 
@@ -58,10 +58,9 @@ export const useShortHelper = () => {
    * @param amount - Amount of squeeth to buy back
    * @returns
    */
-  const closeShort = async (vaultId: number, amount: BigNumber, withdrawAmt: BigNumber) => {
+  const closeShort = async (vaultId: number, amount: BigNumber, withdrawAmt: BigNumber, onTxConfirmed?: () => void) => {
     if (!contract || !address) return
 
-    resetTxHash()
     const _amount = fromTokenAmount(amount, OSQUEETH_DECIMALS)
     const _withdrawAmt = fromTokenAmount(withdrawAmt.isPositive() ? withdrawAmt : 0, WETH_DECIMALS)
     const _exactOutputParams = await getBuyParam(amount)
@@ -74,9 +73,9 @@ export const useShortHelper = () => {
         from: address,
         value: _exactOutputParams.amountInMaximum,
       }),
+      onTxConfirmed,
     )
 
-    setTxHash(result.transactionHash)
     return result
   }
 
