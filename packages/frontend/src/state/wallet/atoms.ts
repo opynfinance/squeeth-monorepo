@@ -48,4 +48,4 @@ export const connectedWalletAtom = atom((get) => {
   return Boolean(address && networkId)
 })
 
-export const isUpdateOperationAtom = atom(false)
+export const isTransactionFirstStepAtom = atom(false)

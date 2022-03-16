@@ -10,7 +10,7 @@ import Short from './Short'
 import { ethTradeAmountAtom, openPositionAtom, sqthTradeAmountAtom, tradeTypeAtom } from 'src/state/trade/atoms'
 import { useAtom, useAtomValue } from 'jotai'
 import { useResetAtom } from 'jotai/utils'
-import { isUpdateOperationAtom, transactionDataAtom, transactionLoadingAtom } from 'src/state/wallet/atoms'
+import { isTransactionFirstStepAtom, transactionDataAtom, transactionLoadingAtom } from 'src/state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -52,7 +52,7 @@ const Trade: React.FC = () => {
   const [openPosition, setOpenPosition] = useAtom(openPositionAtom)
   const resetTransactionData = useResetAtom(transactionDataAtom)
   const transactionInProgress = useAtomValue(transactionLoadingAtom)
-  const isUpdateOperation = useAtomValue(isUpdateOperationAtom)
+  const isTxFirstStep = useAtomValue(isTransactionFirstStepAtom)
 
   // useEffect(() => {
   //   setTradeType(positionType === PositionType.SHORT ? 1 : 0)
@@ -66,7 +66,7 @@ const Trade: React.FC = () => {
           onChange={(evt, val) => {
             setOpenPosition(val)
 
-            if (!transactionInProgress || !isUpdateOperation) {
+            if (!transactionInProgress || !isTxFirstStep) {
               resetEthTradeAmount()
               resetSqthTradeAmount()
               resetTransactionData()

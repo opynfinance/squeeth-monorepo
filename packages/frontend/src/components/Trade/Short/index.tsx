@@ -26,7 +26,7 @@ import TradeDetails from '@components/Trade/TradeDetails'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import UniswapData from '@components/Trade/UniswapData'
 import { BIG_ZERO, MIN_COLLATERAL_AMOUNT } from '../../../constants'
-import { connectedWalletAtom, isUpdateOperationAtom, transactionDataAtom } from 'src/state/wallet/atoms'
+import { connectedWalletAtom, isTransactionFirstStepAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet, useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
 import { addressesAtom, existingCollatPercentAtom, isLongAtom, vaultAtom } from 'src/state/positions/atoms'
 import { useAtom, useAtomValue } from 'jotai'
@@ -245,7 +245,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
 
   const [quote, setQuote] = useAtom(quoteAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
-  const [isUpdateOperation, setIsUpdateOperation] = useAtom(isUpdateOperationAtom)
+  const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
 
   const slippageAmount = useAtomValue(slippageAmountAtom)
   const tradeType = useAtomValue(tradeTypeAtom)
@@ -293,13 +293,13 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
         return
       }
       if (vaultId && !isVaultApproved) {
-        setIsUpdateOperation(true)
+        setIsTxFirstStep(true)
         await updateOperator(vaultId, shortHelper, () => {
           setIsVaultApproved(true)
         })
       } else {
         await openShort(vaultId, amount, collateral, () => {
-          setIsUpdateOperation(false)
+          setIsTxFirstStep(false)
           setConfirmedAmount(amount.toFixed(6).toString())
           setTradeSuccess(true)
           setTradeCompleted(true)
@@ -380,7 +380,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
 
   return (
     <div>
-      {confirmed && !isUpdateOperation ? (
+      {confirmed && !isTxFirstStep ? (
         <div>
           <Confirmed
             confirmationMessage={`Opened ${confirmedAmount} Squeeth Short Position`}
@@ -622,7 +622,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const [withdrawCollat, setWithdrawCollat] = useState(new BigNumber(0))
   const [neededCollat, setNeededCollat] = useState(new BigNumber(0))
   const [closeType, setCloseType] = useState(CloseType.FULL)
-  const [isUpdateOperation, setIsUpdateOperation] = useAtom(isUpdateOperationAtom)
+  const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
 
   const classes = useStyles()
   const {
@@ -715,7 +715,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
 
     try {
       if (vaultId && !isVaultApproved) {
-        setIsUpdateOperation(true)
+        setIsTxFirstStep(true)
         await updateOperator(vaultId, shortHelper, () => {
           setIsVaultApproved(true)
         })
@@ -725,7 +725,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
         const _debt: BigNumber = await getDebtAmount(new BigNumber(restOfShort))
         const neededCollat = _debt.times(collatPercent / 100)
         await closeShort(vaultId, amount, _collat.minus(neededCollat), async () => {
-          setIsUpdateOperation(false)
+          setIsTxFirstStep(false)
           setConfirmedAmount(amount.toFixed(6).toString())
           setTradeSuccess(true)
           setTradeCompleted(true)
@@ -816,7 +816,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
 
   return (
     <>
-      {confirmed && !isUpdateOperation ? (
+      {confirmed && !isTxFirstStep ? (
         <div>
           <Confirmed
             confirmationMessage={`Closed ${confirmedAmount} Squeeth Short Position`}
@@ -828,8 +828,6 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
               variant="contained"
               onClick={() => {
                 resetTransactionData()
-                // resetTxHash()
-                // setConfirmed(false)
               }}
               className={classes.amountInput}
               style={{ width: '300px' }}

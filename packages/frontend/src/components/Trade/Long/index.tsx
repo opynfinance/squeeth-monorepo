@@ -1,7 +1,7 @@
 import { CircularProgress, createStyles, makeStyles, Typography } from '@material-ui/core'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import BigNumber from 'bignumber.js'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
 
 import { BIG_ZERO, Links } from '../../../constants'
@@ -14,7 +14,7 @@ import Confirmed, { ConfirmType } from '../Confirmed'
 import Cancelled from '../Cancelled'
 import TradeInfoItem from '../TradeInfoItem'
 import UniswapData from '../UniswapData'
-import { connectedWalletAtom, transactionDataAtom } from 'src/state/wallet/atoms'
+import { connectedWalletAtom, isTransactionFirstStepAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet, useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
 import { useAtom, useAtomValue } from 'jotai'
 import { addressesAtom, isShortAtom } from 'src/state/positions/atoms'
@@ -245,7 +245,6 @@ const useStyles = makeStyles((theme) =>
 )
 
 const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
-  const resetTransactionData = useResetAtom(transactionDataAtom)
   const [buyLoading, setBuyLoading] = useState(false)
   const getBuyQuoteForETH = useGetBuyQuoteForETH()
   const getBuyQuote = useGetBuyQuote()
@@ -259,6 +258,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
     loading: transactionInProgress,
     transactionData,
     resetTxCancelled,
+    resetTransactionData,
   } = useTransactionStatus()
   const buyAndRefund = useBuyAndRefund()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
@@ -564,8 +564,6 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
 }
 
 const CloseLong: React.FC<BuyProps> = () => {
-  const resetTransactionData = useResetAtom(transactionDataAtom)
-
   const [sellLoading, setSellLoading] = useState(false)
   const [hasJustApprovedSqueeth, setHasJustApprovedSqueeth] = useState(false)
 
@@ -576,6 +574,7 @@ const CloseLong: React.FC<BuyProps> = () => {
     loading: transactionInProgress,
     transactionData,
     resetTxCancelled,
+    resetTransactionData,
   } = useTransactionStatus()
   const { swapRouter, oSqueeth } = useAtomValue(addressesAtom)
   const sell = useSell()
@@ -597,6 +596,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   const amount = new BigNumber(sqthTradeAmount)
   const altTradeAmount = new BigNumber(ethTradeAmount)
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter)
+  const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
 
   const connected = useAtomValue(connectedWalletAtom)
   const selectWallet = useSelectWallet()
@@ -642,16 +642,18 @@ const CloseLong: React.FC<BuyProps> = () => {
   const longClosePriceImpactErrorState =
     priceImpactWarning && !closeError && !sellLoading && !longSqthBal.isZero() && !isShort
 
-  const sellAndClose = useCallback(async () => {
+  const sellAndClose = async () => {
     setSellLoading(true)
     try {
       if (squeethAllowance.lt(amount)) {
-        await squeethApprove()
-        setHasJustApprovedSqueeth(true)
-        setSellLoading(false)
+        setIsTxFirstStep(true)
+        await squeethApprove(() => {
+          setHasJustApprovedSqueeth(true)
+          setSellLoading(false)
+        })
       } else {
         await sell(amount, () => {
-          setHasJustApprovedSqueeth(false)
+          setIsTxFirstStep(false)
           setTradeSuccess(true)
           setTradeCompleted(true)
 
@@ -663,7 +665,7 @@ const CloseLong: React.FC<BuyProps> = () => {
       console.log(e)
       setSellLoading(false)
     }
-  }, [amount.toString(), squeethAllowance.toString(), longSqthBal.toString(), sell, squeethApprove])
+  }
 
   useEffect(() => {
     if (transactionInProgress) {
@@ -699,7 +701,7 @@ const CloseLong: React.FC<BuyProps> = () => {
 
   return (
     <div>
-      {confirmed && !hasJustApprovedSqueeth ? (
+      {confirmed && !isTxFirstStep ? (
         <div>
           <Confirmed
             confirmationMessage={`Sold ${confirmedAmount} Squeeth`}
