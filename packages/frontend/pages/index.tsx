@@ -33,6 +33,7 @@ import { actualTradeTypeAtom, ethTradeAmountAtom, sqthTradeAmountAtom, tradeType
 import { positionTypeAtom } from 'src/state/positions/atoms'
 import { useResetAtom } from 'jotai/utils'
 import { useDailyHistoricalFunding, useIndex, useMark, useNormFactor } from 'src/state/controller/hooks'
+import { isUpdateOperationAtom, transactionDataAtom, transactionLoadingAtom } from 'src/state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -349,6 +350,9 @@ const TabComponent: React.FC = () => {
   const [positionType] = useAtom(positionTypeAtom)
   const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
   const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
+  const resetTransactionData = useResetAtom(transactionDataAtom)
+  const transactionInProgress = useAtomValue(transactionLoadingAtom)
+  const isUpdateOperation = useAtomValue(isUpdateOperationAtom)
 
   useEffect(() => {
     if (positionType === PositionType.SHORT) {
@@ -363,9 +367,13 @@ const TabComponent: React.FC = () => {
       <SqueethTabs
         value={tradeType}
         onChange={(evt, val) => {
-          resetEthTradeAmount()
-          resetSqthTradeAmount()
           setTradeType(val)
+
+          if (!transactionInProgress || !isUpdateOperation) {
+            resetEthTradeAmount()
+            resetSqthTradeAmount()
+            resetTransactionData()
+          }
         }}
         aria-label="Sub nav tabs"
         className={classes.subNavTabs}

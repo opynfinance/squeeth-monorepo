@@ -10,6 +10,7 @@ import Short from './Short'
 import { ethTradeAmountAtom, openPositionAtom, sqthTradeAmountAtom, tradeTypeAtom } from 'src/state/trade/atoms'
 import { useAtom, useAtomValue } from 'jotai'
 import { useResetAtom } from 'jotai/utils'
+import { isUpdateOperationAtom, transactionDataAtom, transactionLoadingAtom } from 'src/state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -49,6 +50,9 @@ const Trade: React.FC = () => {
   const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
   const tradeType = useAtomValue(tradeTypeAtom)
   const [openPosition, setOpenPosition] = useAtom(openPositionAtom)
+  const resetTransactionData = useResetAtom(transactionDataAtom)
+  const transactionInProgress = useAtomValue(transactionLoadingAtom)
+  const isUpdateOperation = useAtomValue(isUpdateOperationAtom)
 
   // useEffect(() => {
   //   setTradeType(positionType === PositionType.SHORT ? 1 : 0)
@@ -60,9 +64,13 @@ const Trade: React.FC = () => {
         <SecondaryTabs
           value={openPosition}
           onChange={(evt, val) => {
-            resetEthTradeAmount()
-            resetSqthTradeAmount()
             setOpenPosition(val)
+
+            if (!transactionInProgress || !isUpdateOperation) {
+              resetEthTradeAmount()
+              resetSqthTradeAmount()
+              resetTransactionData()
+            }
           }}
           aria-label="simple tabs example"
           centered
