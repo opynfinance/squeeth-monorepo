@@ -52,7 +52,7 @@ export const useSwaps = () => {
   const [networkId] = useAtom(networkIdAtom)
   const [address] = useAtom(addressAtom)
   const { squeethPool, oSqueeth, shortHelper, swapRouter, crabStrategy } = useAtomValue(addressesAtom)
-  const { subscribeToMore, data, refetch, loading, error } = useQuery<
+  const { subscribeToMore, data, refetch, loading, error, startPolling, stopPolling } = useQuery<
     swaps | swapsRopsten,
     swapsVariables | swapsRopstenVariables
   >(networkId === Networks.MAINNET ? SWAPS_QUERY : SWAPS_ROPSTEN_QUERY, {
@@ -98,7 +98,7 @@ export const useSwaps = () => {
     })
   }, [address, crabStrategy, networkId, oSqueeth, shortHelper, squeethPool, swapRouter, subscribeToMore])
 
-  return { data, refetch, loading, error }
+  return { data, refetch, loading, error, startPolling, stopPolling }
 }
 
 export const useComputeSwaps = () => {
