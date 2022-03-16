@@ -27,8 +27,16 @@ import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {TransferHelper} from "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 
-// import {ControllerHelperLib} from "./lib/ControllerHelperLib.sol";
-
+/**
+ * Error code
+ * E0: user not allowed to operate vault
+ * E1: max ETH to pay for long wPowerPerp is less than amount available
+ * E2: ETH sent is less than amount to use for minting short plus amount to use for LPing
+ * E3: amount out less than min
+ * E4: amont in greater tuhan max
+ * E5: invalid factory address
+ * E6: invalid assets length
+ */
 contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC721Receiver {
     using SafeMath for uint256;
     using Address for address payable;

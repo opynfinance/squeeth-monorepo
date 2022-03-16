@@ -51,7 +51,7 @@ contract AaveControllerHelper is IFlashLoanReceiver {
     ) external override returns (bool) {
         // sanity checks
         require(msg.sender == address(LENDING_POOL), "E5");
-        require(assets.length == 1);
+        require(assets.length == 1, "E6");
 
         FlashloanCallbackData memory data = abi.decode(params, (FlashloanCallbackData));
 
