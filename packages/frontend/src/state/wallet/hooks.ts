@@ -1,5 +1,5 @@
-import { useAtom } from 'jotai'
-import { useUpdateAtom } from 'jotai/utils'
+import { useAtom, useAtomValue } from 'jotai'
+import { useResetAtom, useUpdateAtom } from 'jotai/utils'
 import BigNumber from 'bignumber.js'
 import Notify from 'bnc-notify'
 import Onboard from 'bnc-onboard'
@@ -7,10 +7,19 @@ import Web3 from 'web3'
 import { ethers } from 'ethers'
 import { useQuery, useQueryClient } from 'react-query'
 
-import { onboardAtom, addressAtom, notifyAtom, networkIdAtom, signerAtom, web3Atom } from './atoms'
+import {
+  onboardAtom,
+  addressAtom,
+  notifyAtom,
+  networkIdAtom,
+  signerAtom,
+  web3Atom,
+  transactionDataAtom,
+  transactionLoadingAtom,
+} from './atoms'
 import { BIG_ZERO, EtherscanPrefix } from '../../constants/'
 import { Networks } from '../../types'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 export const useSelectWallet = () => {
   const [onboard] = useAtom(onboardAtom)
@@ -44,19 +53,27 @@ export const useHandleTransaction = () => {
   const [notify] = useAtom(notifyAtom)
   const [networkId] = useAtom(networkIdAtom)
   const { refetch } = useWalletBalance()
+  const setTransactionData = useUpdateAtom(transactionDataAtom)
 
   const handleTransaction = useCallback(
-    (tx: any) => {
+    (tx: any, onTxConfirmed?: () => void) => {
       if (!notify) return
       tx.on('transactionHash', (hash: string) => {
         const { emitter } = notify.hash(hash)
         //have to return the emitter object in last order, or the latter emitter object will replace the previous one
         //if call getbalance in second order, since it has no return, it will show default notification w/o etherscan link
-        emitter.on('all', () => {
-          refetch()
-        })
+
         emitter.on('all', (transaction) => {
           if (networkId === Networks.LOCAL) return
+          setTransactionData(transaction)
+
+          if (transaction.status === 'confirmed') {
+            if (onTxConfirmed) {
+              onTxConfirmed()
+            }
+            refetch()
+          }
+
           return {
             link: `${EtherscanPrefix[networkId]}${transaction.hash}`,
           }
@@ -69,6 +86,34 @@ export const useHandleTransaction = () => {
   )
 
   return handleTransaction
+}
+
+export const useTransactionStatus = () => {
+  const [txCancelled, setTxCancelled] = useState(false)
+  const transactionData = useAtomValue(transactionDataAtom)
+  const resetTransactionData = useResetAtom(transactionDataAtom)
+  const transactionLoading = useAtomValue(transactionLoadingAtom)
+
+  const confirmed = transactionData?.status === 'confirmed' && !txCancelled
+  const cancelled = transactionData?.status === 'confirmed' && txCancelled
+
+  useEffect(() => {
+    if (transactionData?.status === 'cancel') {
+      setTxCancelled(true)
+    }
+  }, [transactionData?.status])
+
+  return useMemo(
+    () => ({
+      transactionData,
+      confirmed,
+      cancelled,
+      loading: transactionLoading,
+      resetTxCancelled: () => setTxCancelled(false),
+      resetTransactionData,
+    }),
+    [cancelled, confirmed, resetTransactionData, transactionData, transactionLoading],
+  )
 }
 
 const balanceQueryKeys = {
