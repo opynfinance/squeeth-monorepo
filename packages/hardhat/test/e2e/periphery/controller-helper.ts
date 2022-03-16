@@ -99,7 +99,7 @@ describe("ControllerHelper: mainnet fork", function () {
     // const controllerHelperLib = (await ControllerHelperLib.deploy());  
     // const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper", {libraries: {TickMathExternal: TickMathLibrary.address, SqrtPriceMathPartial: SqrtPriceExternalLibrary.address}});
     const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper");
-    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, shortSqueeth.address, "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C", wSqueeth.address, weth.address, uniswapRouter.address, positionManager.address, uniswapFactory.address, "0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5")) as ControllerHelper;
+    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C", wSqueeth.address, weth.address, uniswapRouter.address, positionManager.address, uniswapFactory.address, "0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5")) as ControllerHelper;
   })
 
   describe("Flash mint short position, LP and use LP as collateral", async () => {

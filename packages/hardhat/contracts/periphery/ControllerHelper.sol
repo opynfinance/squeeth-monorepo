@@ -16,9 +16,9 @@ import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Recei
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
 import {IERC20Detailed} from "../interfaces/IERC20Detailed.sol";
+import {IShortPowerPerp} from "../interfaces/IShortPowerPerp.sol";
 
 // contract
-// import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {UniswapControllerHelper} from "./UniswapControllerHelper.sol";
 import {AaveControllerHelper} from "./AaveControllerHelper.sol";
 
@@ -161,7 +161,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
     constructor(
         address _controller,
         address _oracle,
-        address _shortPowerPerp,
         address _wPowerPerpPool,
         address _wPowerPerp,
         address _weth,
@@ -172,13 +171,13 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
     ) UniswapControllerHelper(_uniswapFactory) AaveControllerHelper(_lendingPoolAddressProvider) {
         controller = _controller;
         oracle = _oracle;
-        shortPowerPerp = _shortPowerPerp;
         wPowerPerpPool = _wPowerPerpPool;
         wPowerPerp = _wPowerPerp;
         weth = _weth;
         swapRouter = _swapRouter;
         nonfungiblePositionManager = _nonfungiblePositionManager;
         isWethToken0 = _weth < _wPowerPerp;
+        shortPowerPerp = IController(_controller).shortPowerPerp();
 
         IWPowerPerp(_wPowerPerp).approve(_swapRouter, type(uint256).max);
         IWETH9(_weth).approve(_swapRouter, type(uint256).max);
@@ -209,6 +208,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
      * @param _params FlashswapWMintParams struct
      */
     function flashswapWMint(FlashswapWMintParams calldata _params) external payable {
+        if (_params.vaultId != 0) require(IShortPowerPerp(shortPowerPerp).ownerOf(_params.vaultId) == msg.sender, "E0");
+
         _exactInFlashSwap(
             wPowerPerp,
             weth,
@@ -231,7 +232,9 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
      * @param _params FlashswapWBurnBuyLongParams struct
      */
     function flashswapWBurnBuyLong(FlashswapWBurnBuyLongParams calldata _params) external payable {
-        require(_params.maxToPay <= _params.collateralToWithdraw.add(msg.value), "Not enough collateral");
+        if (_params.vaultId != 0) require(IShortPowerPerp(shortPowerPerp).ownerOf(_params.vaultId) == msg.sender, "E0");
+
+        require(_params.maxToPay <= _params.collateralToWithdraw.add(msg.value), "E1");
 
         _exactOutFlashSwap(
             weth,
@@ -260,6 +263,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
      * @param _params FlashSellLongWMintParams struct
      */
     function flashswapSellLongWMint(FlashSellLongWMintParams calldata _params) external payable {
+        if (_params.vaultId != 0) require(IShortPowerPerp(shortPowerPerp).ownerOf(_params.vaultId) == msg.sender, "E0");
+
         IWPowerPerp(wPowerPerp).transferFrom(msg.sender, address(this), _params.wPowerPerpAmountToSell);
 
         // flashswap and mint short position
@@ -281,6 +286,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
      * @dev user should approve this contract for Uni NFT transfer
      */
     function closeShortWithUserNft(CloseShortWithUserNftParams calldata _params) external {
+        if (_params.vaultId != 0) require(IShortPowerPerp(shortPowerPerp).ownerOf(_params.vaultId) == msg.sender, "E0");
+
         INonfungiblePositionManager(nonfungiblePositionManager).safeTransferFrom(
             msg.sender,
             address(this),
@@ -308,6 +315,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
     }
 
     function flashloanCloseVaultLpNft(FlashloanCloseVaultLpNftParam calldata _params) external payable {
+        if (_params.vaultId != 0) require(IShortPowerPerp(shortPowerPerp).ownerOf(_params.vaultId) == msg.sender, "E0");
+
         _flashLoan(
             weth,
             _params.collateralToFlashloan,
@@ -354,6 +363,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         int24 _lowerTick,
         int24 _upperTick
     ) external payable {
+        if (_vaultId != 0) require(IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId) == msg.sender, "E0");
+
         require(msg.value == _collateralToMint.add(_collateralToLP), "E2");
 
         uint256 vaultId = IController(controller).mintWPowerPerpAmount{value: _collateralToMint}(
@@ -392,6 +403,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
      * @param _params FlashloanWMintDepositNftParams struct
      */
     function flashloanWMintDepositNft(FlashloanWMintDepositNftParams calldata _params) external payable {
+        if (_params.vaultId != 0) require(IShortPowerPerp(shortPowerPerp).ownerOf(_params.vaultId) == msg.sender, "E0");
+
         _flashLoan(
             weth,
             _params.collateralToFlashloan,

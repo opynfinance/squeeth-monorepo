@@ -78,7 +78,7 @@ describe("Controller helper integration test", function () {
     // const controllerHelperLib = (await ControllerHelperLib.deploy());  
     // const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper", {libraries: {TickMathExternal: TickMathLibrary.address, SqrtPriceMathPartial: SqrtPriceExternalLibrary.address}});
     const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper");
-    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, shortSqueeth.address, wSqueethPool.address, wSqueeth.address, weth.address, swapRouter.address, positionManager.address, uniswapFactory.address, constants.AddressZero)) as ControllerHelper;
+    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, wSqueethPool.address, wSqueeth.address, weth.address, swapRouter.address, positionManager.address, uniswapFactory.address, constants.AddressZero)) as ControllerHelper;
   })
   
   this.beforeAll("Seed pool liquidity", async() => {
