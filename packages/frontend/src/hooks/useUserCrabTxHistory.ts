@@ -4,7 +4,6 @@ import USER_CRAB_TX_QUERY from '../queries/squeeth/userCrabTxQuery'
 import { toTokenAmount } from '@utils/calculations'
 import { WETH_DECIMALS, OSQUEETH_DECIMALS } from '../constants'
 import { squeethClient } from '@utils/apollo-client'
-import { useWallet } from '@context/wallet'
 import { CrabStrategyTxType } from '../types/index'
 import { useUsdAmount } from './useUsdAmount'
 import { networkIdAtom } from 'src/state/wallet/atoms'
@@ -20,17 +19,20 @@ const getTxTitle = (type: string) => {
 }
 
 export const useUserCrabTxHistory = (user: string, isDescending?: boolean) => {
-  // const { networkId } = useWallet()
   const networkId = useAtomValue(networkIdAtom)
   const { getUsdAmt } = useUsdAmount()
-  const { data, loading } = useQuery<userCrabTxes, userCrabTxesVariables>(USER_CRAB_TX_QUERY, {
-    fetchPolicy: 'cache-and-network',
-    client: squeethClient[networkId],
-    variables: {
-      ownerId: user ?? '',
-      orderDirection: isDescending ? 'desc' : 'asc',
+  const { data, loading, startPolling, stopPolling } = useQuery<userCrabTxes, userCrabTxesVariables>(
+    USER_CRAB_TX_QUERY,
+    {
+      fetchPolicy: 'cache-and-network',
+      client: squeethClient[networkId],
+      skip: Boolean(user),
+      variables: {
+        ownerId: user ?? '',
+        orderDirection: isDescending ? 'desc' : 'asc',
+      },
     },
-  })
+  )
 
   const uiData = data?.crabStrategyTxes.map((tx) => {
     const ethAmount = toTokenAmount(tx.ethAmount, WETH_DECIMALS)
@@ -51,5 +53,7 @@ export const useUserCrabTxHistory = (user: string, isDescending?: boolean) => {
   return {
     loading,
     data: uiData,
+    startPolling,
+    stopPolling,
   }
 }
