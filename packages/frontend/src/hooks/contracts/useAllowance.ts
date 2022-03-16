@@ -19,18 +19,23 @@ export function useUserAllowance(token: string, spenderAddess: string) {
   const [allowance, setAllowance] = useState(new BigNumber(0))
   const [isLoadingAllowance, setIsLoadingAllowance] = useState(true)
 
-  const approve = useCallback(async () => {
-    if (!web3 || !address) return
+  const approve = useCallback(
+    async (onTxConfirmed: () => void) => {
+      if (!web3 || !address) return
 
-    const erc = new web3.eth.Contract(abi as any, token)
-    const approveAmount = MAX_UINT
+      const erc = new web3.eth.Contract(abi as any, token)
+      const approveAmount = MAX_UINT
 
-    if (spenderAddess === '') throw new Error('Unkown Spender')
+      if (spenderAddess === '') throw new Error('Unkown Spender')
 
-    await handleTransaction(erc.methods.approve(spenderAddess, approveAmount).send({ from: address }))
-    const newAllowance = await erc.methods.allowance(address, spenderAddess).call()
-    setAllowance(toTokenAmount(new BigNumber(newAllowance.toString()), 18))
-  }, [web3, token, address, spenderAddess])
+      await handleTransaction(erc.methods.approve(spenderAddess, approveAmount).send({ from: address }), async () => {
+        onTxConfirmed()
+        const newAllowance = await erc.methods.allowance(address, spenderAddess).call()
+        setAllowance(toTokenAmount(new BigNumber(newAllowance.toString()), 18))
+      })
+    },
+    [web3, token, address, spenderAddess],
+  )
 
   useEffect(() => {
     if (!address || !web3) return
