@@ -14,8 +14,8 @@ import BigNumber from 'bignumber.js'
 import React, { useEffect, useMemo, useState } from 'react'
 import CrabPosition from './CrabPosition'
 import { useAtom, useAtomValue } from 'jotai'
-import { connectedWalletAtom } from 'src/state/wallet/atoms'
-import { useWalletBalance } from 'src/state/wallet/hooks'
+import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
+import { useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
 import { BIG_ZERO } from '../../../constants'
 import { readyAtom } from 'src/state/squeethPool/atoms'
 import {
@@ -30,8 +30,11 @@ import {
   useCalculateEthWillingToPay,
   useFlashWithdrawEth,
   useSetStrategyData,
+  useCalculateCurrentValue,
 } from 'src/state/crab/hooks'
 import { useIndex, useDailyHistoricalFunding, useCurrentImpliedFunding } from 'src/state/controller/hooks'
+import { useUserCrabTxHistory } from '@hooks/useUserCrabTxHistory'
+import { usePrevious } from 'react-use'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -89,18 +92,34 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
   const [slippage, setSlippage] = useAtom(crabStrategySlippageAtom)
   const { data: balance } = useWalletBalance()
   const setStrategyData = useSetStrategyData()
-  const flashWithdrawEth = useFlashWithdrawEth(setStrategyData)
+  const calculateCurrentValue = useCalculateCurrentValue()
+  const flashWithdrawEth = useFlashWithdrawEth()
   const calculateEthWillingToPay = useCalculateEthWillingToPay()
   const calculateETHtoBorrowFromUniswap = useCalculateETHtoBorrowFromUniswap()
-  const flashDeposit = useFlashDeposit(setStrategyData, calculateETHtoBorrowFromUniswap)
+  const flashDeposit = useFlashDeposit(calculateETHtoBorrowFromUniswap)
   const index = useIndex()
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
+
+  const { confirmed, resetTransactionData, transactionData } = useTransactionStatus()
 
   const ready = useAtomValue(readyAtom)
   const { isRestricted } = useRestrictUser()
 
   const dailyHistoricalFunding = useDailyHistoricalFunding()
   const currentImpliedFunding = useCurrentImpliedFunding()
+
+  const address = useAtomValue(addressAtom)
+  const { data, startPolling, stopPolling } = useUserCrabTxHistory(address ?? '')
+
+  const prevCrabTxData = usePrevious(data)
+
+  useEffect(() => {
+    if (confirmed && prevCrabTxData?.length === data?.length) {
+      startPolling(500)
+    } else {
+      stopPolling()
+    }
+  }, [confirmed, prevCrabTxData?.length, data?.length])
 
   useEffect(() => {
     setStrategyData()
@@ -168,25 +187,29 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
   const deposit = async () => {
     setTxLoading(true)
     try {
-      const tx = await flashDeposit(ethAmount, slippage)
-      setTxHash(tx.transactionHash)
-      setTxLoaded(true)
+      await flashDeposit(ethAmount, slippage, () => {
+        setTxLoading(false)
+        setStrategyData()
+        calculateCurrentValue()
+      })
     } catch (e) {
       console.log(e)
+      setTxLoading(false)
     }
-    setTxLoading(false)
   }
 
   const withdraw = async () => {
     setTxLoading(true)
     try {
-      const tx = await flashWithdrawEth(withdrawAmount, slippage)
-      setTxHash(tx.transactionHash)
-      setTxLoaded(true)
+      await flashWithdrawEth(withdrawAmount, slippage, () => {
+        setTxLoading(false)
+        setStrategyData()
+        calculateCurrentValue()
+      })
     } catch (e) {
       console.log(e)
+      setTxLoading(false)
     }
-    setTxLoading(false)
   }
 
   if (isRestricted) {
@@ -195,7 +218,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
 
   return (
     <>
-      {txLoaded ? (
+      {confirmed ? (
         <div className={classes.confirmedBox}>
           <Confirmed
             confirmationMessage={
@@ -203,10 +226,18 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
                 ? `Deposited ${ethAmount.toFixed(4)} ETH`
                 : `Withdrawn ${withdrawAmount.toFixed(4)} ETH`
             }
-            txnHash={txHash}
+            txnHash={transactionData?.hash ?? ''}
             confirmType={ConfirmType.CRAB}
           />
-          <PrimaryButton variant="contained" style={{ marginTop: '16px' }} onClick={() => setTxLoaded(false)}>
+          <PrimaryButton
+            variant="contained"
+            style={{ marginTop: '16px' }}
+            onClick={() => {
+              resetTransactionData()
+              setWithdrawAmount(new BigNumber(0))
+              setEthAmount(new BigNumber(0))
+            }}
+          >
             Close
           </PrimaryButton>
         </div>
