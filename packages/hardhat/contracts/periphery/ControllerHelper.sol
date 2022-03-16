@@ -97,7 +97,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
     }
-    /// @dev params for flashloanWMintDepositNft() 
+    /// @dev params for flashloanWMintDepositNft()
     struct FlashloanWMintDepositNftParams {
         uint256 vaultId; // vault ID (could be zero)
         uint256 wPowerPerpAmount; // wPowerPerp amount to mint
