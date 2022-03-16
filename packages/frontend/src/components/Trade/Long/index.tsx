@@ -651,6 +651,7 @@ const CloseLong: React.FC<BuyProps> = () => {
         setSellLoading(false)
       } else {
         await sell(amount, () => {
+          setHasJustApprovedSqueeth(false)
           setTradeSuccess(true)
           setTradeCompleted(true)
 
@@ -698,7 +699,7 @@ const CloseLong: React.FC<BuyProps> = () => {
 
   return (
     <div>
-      {confirmed ? (
+      {confirmed && !hasJustApprovedSqueeth ? (
         <div>
           <Confirmed
             confirmationMessage={`Sold ${confirmedAmount} Squeeth`}
