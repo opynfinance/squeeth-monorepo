@@ -7,6 +7,7 @@ import {
   getSqueethChartWithFunding,
   getSqueethPNLCompounding,
   useETHSqueethPNLCompounding,
+  getLongChartData,
 } from '@utils/pricer'
 import { useCallback, useMemo } from 'react'
 
@@ -366,4 +367,20 @@ export const useSqueethIsLive = () => {
       })
     )
   }, [ethSqueethPNLSeries])
+}
+
+export const useLongChartData = () => {
+  const days = useAtomValue(daysAtom)
+  const volMultiplier = useAtomValue(volMultiplierAtom)
+  const collatRatio = useAtomValue(collatRatioAtom)
+
+  return useQuery(
+    ['longChart', { days, collatRatio, volMultiplier }],
+    async () => getLongChartData(days, collatRatio, volMultiplier),
+    {
+      enabled: Boolean(days && volMultiplier && collatRatio),
+      staleTime: Infinity,
+      refetchOnWindowFocus: true,
+    },
+  )
 }

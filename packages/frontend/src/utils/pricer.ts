@@ -703,3 +703,10 @@ export function getCrabVaultPayoff(ethPrice: number, collatRatio: number) {
     payout28,
   }
 }
+
+export const getLongChartData = async (days: number, collatRatio: number, volMultiplier: number) => {
+  const url = `/api/charts/longchart?days=${days}&collatRatio=${collatRatio}&volMultiplier=${volMultiplier}`
+  const response = await fetch(url)
+  const data = await response.json()
+  return data
+}
