@@ -17,10 +17,13 @@ import { WorldProvider } from '@context/world'
 import { PositionsProvider } from '@context/positions'
 import getTheme, { Mode } from '../src/theme'
 import { uniswapClient } from '@utils/apollo-client'
+import useRenderCounter from '../src/hooks/useRenderCounter'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
 
 function MyApp({ Component, pageProps }: any) {
+  useRenderCounter('9', '0')
+
   const router = useRouter()
 
   React.useEffect(() => {
