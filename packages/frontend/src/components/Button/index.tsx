@@ -3,13 +3,16 @@ import { withStyles } from '@material-ui/core/styles'
 
 export const PrimaryButton = withStyles((theme) => ({
   root: {
-    color: '#000',
+    color: '#2B2D2E',
     backgroundColor: theme.palette.primary.main,
     '&:hover': {
       backgroundColor: theme.palette.primary.dark,
     },
     minHeight: '2rem',
     minWidth: '300px',
+    fontSize: '14px',
+    fontWeight: 700,
+    textTransform: 'none',
   },
 }))(Button)
 
@@ -22,6 +25,9 @@ export const ErrorButton = withStyles((theme) => ({
     },
     minHeight: '2rem',
     minWidth: '300px',
+    fontSize: '14px',
+    fontWeight: 700,
+    textTransform: 'none',
   },
 }))(Button)
 

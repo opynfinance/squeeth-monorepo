@@ -11,16 +11,20 @@ declare module '@material-ui/core/styles/createPalette' {
   }
 }
 
-declare module '@material-ui/core/styles' {
-  interface TypographyVariants {
-    number: React.CSSProperties
+declare module '@material-ui/core/styles/createTypography' {
+  interface Typography {
+    body3: React.CSSProperties
+  }
+
+  // allow configuration using `createMuiTheme`
+  interface TypographyOptions {
+    body3?: React.CSSProperties
   }
 }
 
-// Update the Typography's variant prop options
-declare module '@material-ui/core/Typography' {
+declare module '@material-ui/core/Typography/Typography' {
   interface TypographyPropsVariantOverrides {
-    number: true
+    body3: true
   }
 }
 

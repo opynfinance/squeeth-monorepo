@@ -1,5 +1,8 @@
+import FooterInfo from '@components/FooterInfo'
 import LPInfoCard from '@components/Lp/LPInfoCard'
+import LPIntroCard from '@components/Lp/LPIntroCard'
 import Nav from '@components/Nav'
+import { useWorldContext } from '@context/world'
 import { Typography, Box, Grid } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React from 'react'
@@ -28,7 +31,7 @@ const useStyles = makeStyles((theme) =>
       backgroundColor: theme.palette.background.lightStone,
       padding: theme.spacing(2),
       borderRadius: theme.spacing(2),
-      height: '100%',
+      maxHeight: '480px',
     },
     infoBox: {
       padding: theme.spacing(2, 3),
@@ -50,6 +53,7 @@ const useStyles = makeStyles((theme) =>
 
 const LP: React.FC = () => {
   const classes = useStyles()
+  const { ethPrice } = useWorldContext()
 
   return (
     <div>
@@ -77,7 +81,7 @@ const LP: React.FC = () => {
                 <LPInfoCard title="Realized P&L" value="$0.00" disabled />
               </Grid>
               <Grid item xs={6}>
-                <LPInfoCard title="Ethereum (ETH) Price" value="$ 4200.50" />
+                <LPInfoCard title="Ethereum (ETH) Price" value={`$ ${ethPrice.toFixed(2)}`} />
               </Grid>
               <Grid item xs={6}>
                 <LPInfoCard title="Position Size(oSQTH)" value="0.00" disabled />
@@ -106,10 +110,11 @@ const LP: React.FC = () => {
             </Grid>
           </Grid>
           <Grid item xs={12} lg={5}>
-            <Box className={classes.tradeCard}>Trade Page goes here</Box>
+            <LPIntroCard />
           </Grid>
         </Grid>
       </div>
+      <FooterInfo />
     </div>
   )
 }

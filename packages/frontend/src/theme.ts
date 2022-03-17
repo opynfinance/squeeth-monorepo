@@ -25,6 +25,16 @@ const getTheme = (mode: Mode) => {
         'Arial',
         '"Segoe UI Emoji"',
       ].join(','),
+      subtitle2: {
+        fontSize: '15px',
+        fontWeight: 700,
+        lineHeight: '140%',
+        color: 'rgba(255, 255, 255, 0.3)',
+      },
+      body3: {
+        fontSize: '15px',
+        lineHeight: '1.5rem',
+      },
     },
     breakpoints: {
       values: {
