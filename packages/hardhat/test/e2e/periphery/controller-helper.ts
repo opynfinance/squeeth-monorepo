@@ -141,7 +141,7 @@ describe("ControllerHelper: mainnet fork", function () {
       expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
     })
 
-    describe("open short with already overcollateralized vault, mint, LP oSQTH only, deposit LP NFT and withdraw ETH collateral", async ()=> {
+    describe("open short in already overcollateralized vault, mint, LP oSQTH only, deposit LP NFT", async ()=> {
       before(async () => {
         const normFactor = await controller.getExpectedNormalizationFactor()
         const mintWSqueethAmountToLp : BigNumber = ethers.utils.parseUnits('35')
@@ -191,7 +191,7 @@ describe("ControllerHelper: mainnet fork", function () {
       })
     })
 
-    it("open short in new vault, mint, LP oSQTH only, deposit LP NFT and withdraw ETH collateral", async () => {
+    it("open short in new vault, mint, LP oSQTH only, deposit LP NFT", async () => {
       const vaultId = (await shortSqueeth.nextId());
       const normFactor = await controller.getExpectedNormalizationFactor()
       const mintWSqueethAmount = ethers.utils.parseUnits('40')
@@ -228,7 +228,7 @@ describe("ControllerHelper: mainnet fork", function () {
       expect(vaultAfter.collateralAmount.eq(collateralToMint.sub(collateralToFlashloan))).to.be.true
     })
 
-    it("open short, mint with >0 ETH collateral, LP oSQTH + ETH, deposit LP NFT and withdraw ETH collateral", async ()=> {
+    it("open short, mint with >0 ETH collateral, LP oSQTH + ETH, deposit LP NFT", async ()=> {
       const vaultId = (await shortSqueeth.nextId());
       const normFactor = await controller.getExpectedNormalizationFactor()
       const mintWSqueethAmount = ethers.utils.parseUnits('30')
@@ -341,7 +341,7 @@ describe("ControllerHelper: mainnet fork", function () {
         liquidityPercentage: ethers.utils.parseUnits('1'),
         wPowerPerpAmountToBurn: vaultBefore.shortAmount.toString(),
         collateralToFlashloan: collateralToFlashloan.toString(),
-        collateralToWithdraw: collateralToFlashloan.toString(),
+        collateralToWithdraw: BigNumber.from(0),
         limitPriceEthPerPowerPerp: limitPriceEthPerPowerPerp.toString(),
         amount0Min: 0,
         amount1Min: 0
@@ -450,7 +450,7 @@ describe("ControllerHelper: mainnet fork", function () {
         liquidityPercentage: ethers.utils.parseUnits('1'),
         wPowerPerpAmountToBurn: vaultBefore.shortAmount.toString(),
         collateralToFlashloan: collateralToFlashloan.toString(),
-        collateralToWithdraw: collateralToFlashloan.toString(),
+        collateralToWithdraw: BigNumber.from(0),
         limitPriceEthPerPowerPerp: limitPriceEthPerPowerPerp.toString(),
         amount0Min: 0,
         amount1Min: 0
