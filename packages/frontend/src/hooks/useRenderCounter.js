@@ -22,7 +22,7 @@ if (process.env.NODE_ENV === 'development') {
   React.createElement = function (orgComp, ...params) {
     if (typeof orgComp === 'function') {
       const displayName = getDisplayName(orgComp)
-      if (displayName && ignoreNames.includes(displayName) && !displayName.startsWith('With')) {
+      if (displayName && !ignoreNames.includes(displayName) && !displayName.startsWith('With')) {
         if (renderCount[displayName]) {
           renderCount[displayName]++
         } else {
