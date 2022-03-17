@@ -647,7 +647,6 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const connected = useAtomValue(connectedWalletAtom)
   const existingCollatPercent = useAtomValue(existingCollatPercentAtom)
 
-  const contract = useAtomValue(controllerContractAtom)
   const selectWallet = useSelectWallet()
   const updateOperator = useUpdateOperator()
   const getDebtAmount = useGetDebtAmount()
@@ -676,7 +675,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
 
   useEffect(() => {
     if (vault) {
-      const contractShort = vault?.shortAmount ? vault?.shortAmount : new BigNumber(0)
+      const contractShort = vault?.shortAmount?.isFinite() ? vault?.shortAmount : new BigNumber(0)
       setFinalShortAmount(contractShort)
     }
   }, [vault])
