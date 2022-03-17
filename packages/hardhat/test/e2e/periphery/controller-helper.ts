@@ -347,32 +347,6 @@ describe("ControllerHelper: mainnet fork", function () {
         amount1Min: 0
       }
 
-      // let msgValue: BigNumber = BigNumber.from(0);
-      // await (positionManager as INonfungiblePositionManager).connect(depositor).approve(positionManager.address, uniTokenId); 
-      // const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
-      //   tokenId: uniTokenId,
-      //   liquidity: positionBefore.liquidity,
-      //   amount0Min: BigNumber.from(0),
-      //   amount1Min: BigNumber.from(0),
-      //   deadline: Math.floor(await getNow(ethers.provider) + 8640000),
-      // })
-      // const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
-      // const wPowerPerpAmountInLP = (isWethToken0) ? amount1 : amount0;
-      // const wethAmountInLP = (isWethToken0) ? amount0 : amount1;
-
-      // if(wPowerPerpAmountInLP.lt(vaultBefore.shortAmount)) {
-      //   const ethToBuySqueeth = (vaultBefore.shortAmount.sub(wPowerPerpAmountInLP)).mul(squeethPrice).div(one); 
-      //   const remainingETHFromLp = wethAmountInLP.sub(ethToBuySqueeth);
-      //   const AaveAddressProviderContract = await ethers.getContractFactory("ILendingPoolAddressesProvider");
-      //   const aaveAddressProviderContract = AaveAddressProviderContract.attach("0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5")
-      //   const lendingPoolAdd = await aaveAddressProviderContract.functions.getLendingPool();
-      //   console.log("lendingPoolAdd", lendingPoolAdd);
-      // }
-      // else if (wPowerPerpAmountInLP.gt(vaultBefore.shortAmount)) {
-      //   const wPowerPerpAmountToSell = wPowerPerpAmountInLP.sub(vaultBefore.shortAmount);
-      //   const ethToGet = wPowerPerpAmountToSell.mul(squeethPrice).div(one);
-      // }
-
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address);
       await controllerHelper.connect(depositor).flashloanCloseVaultLpNft(flashloanCloseVaultLpNftParam);
 
@@ -463,34 +437,15 @@ describe("ControllerHelper: mainnet fork", function () {
         amount1Min: 0
       }
 
-      // let msgValue: BigNumber = BigNumber.from(0);
-      // await (positionManager as INonfungiblePositionManager).connect(depositor).approve(positionManager.address, uniTokenId); 
-      // const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
-      //   tokenId: uniTokenId,
-      //   liquidity: positionBefore.liquidity,
-      //   amount0Min: BigNumber.from(0),
-      //   amount1Min: BigNumber.from(0),
-      //   deadline: Math.floor(await getNow(ethers.provider) + 8640000),
-      // })
-      // const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
-      // const wPowerPerpAmountInLP = (isWethToken0) ? amount1 : amount0;
-      // const wethAmountInLP = (isWethToken0) ? amount0 : amount1;
-
-      // if(wPowerPerpAmountInLP.lt(vaultBefore.shortAmount)) {
-      //   const ethToBuySqueeth = (vaultBefore.shortAmount.sub(wPowerPerpAmountInLP)).mul(squeethPrice).div(one); 
-      //   const remainingETHFromLp = wethAmountInLP.sub(ethToBuySqueeth);
-      //   const AaveAddressProviderContract = await ethers.getContractFactory("ILendingPoolAddressesProvider");
-      //   const aaveAddressProviderContract = AaveAddressProviderContract.attach("0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5")
-      //   const lendingPoolAdd = await aaveAddressProviderContract.functions.getLendingPool();
-      //   console.log("lendingPoolAdd", lendingPoolAdd);
-      // }
-      // else if (wPowerPerpAmountInLP.gt(vaultBefore.shortAmount)) {
-      //   const wPowerPerpAmountToSell = wPowerPerpAmountInLP.sub(vaultBefore.shortAmount);
-      //   const ethToGet = wPowerPerpAmountToSell.mul(squeethPrice).div(one);
-      // }
-
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address);
       await controllerHelper.connect(depositor).flashloanCloseVaultLpNft(flashloanCloseVaultLpNftParam, {value: ethers.utils.parseUnits('2')});
+
+      const positionAfter = await (positionManager as INonfungiblePositionManager).positions(uniTokenId);
+      const vaultAfter = await controller.vaults(vaultId); 
+
+      expect(positionAfter.liquidity.eq(BigNumber.from(0))).to.be.true
+      expect(vaultAfter.shortAmount.eq(BigNumber.from(0))).to.be.true
+      expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
     })
   })
 })
