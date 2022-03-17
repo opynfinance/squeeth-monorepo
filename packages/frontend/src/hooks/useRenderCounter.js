@@ -1,5 +1,6 @@
 import React from 'react'
-import { isEmpty, isString } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
+import isString from 'lodash/isString'
 
 function getDisplayName(type) {
   return (
