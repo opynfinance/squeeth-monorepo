@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { getETHPrices } from '@hooks/useETHPriceCharts'
+import { getCoingeckoETHPrices as getETHPrices } from '@utils/ethPriceCharts'
 import { getLiveVolMap, getSqueethChartWithFunding, getVolForTimestampOrDefault, getVolMap } from '@utils/pricer'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

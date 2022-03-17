@@ -7,7 +7,7 @@ import { swaps_swaps } from '../queries/uniswap/__generated__/swaps'
 import { VaultHistory_vaultHistories } from '../queries/squeeth/__generated__/VaultHistory'
 import { toTokenAmount } from '@utils/calculations'
 import { getHistoricEthPrice } from '@hooks/useETHPrice'
-import { getETHWithinOneDayPrices } from '@hooks/useETHPriceCharts'
+import { getETHWithinOneDayPrices } from '@utils/ethPriceCharts'
 import { Action } from '../../types/global_apollo'
 
 type ShortPnLParams = {

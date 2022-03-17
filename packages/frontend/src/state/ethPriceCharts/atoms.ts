@@ -1,7 +1,12 @@
 import { atom, useAtomValue } from 'jotai'
 import { useQuery } from 'react-query'
 
-import { getCUSDCPrices, getETH90DaysPrices, getETHPrices, getETHWithinOneDayPrices } from '@hooks/useETHPriceCharts'
+import {
+  getCUSDCPrices,
+  getETH90DaysPrices,
+  getCoingeckoETHPrices as getETHPrices,
+  getETHWithinOneDayPrices,
+} from '@utils/ethPriceCharts'
 import {
   getETHPNLCompounding,
   getSqueethChartWithFunding,
