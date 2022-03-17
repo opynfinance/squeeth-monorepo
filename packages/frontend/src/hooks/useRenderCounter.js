@@ -54,6 +54,8 @@ export default function useRenderCounter(logRenderCountKey, resetRenderCountKey)
       }
 
       if (event.key == resetRenderCountKey && event.ctrlKey) {
+        console.clear()
+        console.log('Render counts has been reset.')
         renderCount = {}
       }
     }
