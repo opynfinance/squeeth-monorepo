@@ -1,5 +1,6 @@
 import React from 'react'
-import { isEmpty, isString } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
+import isString from 'lodash/isString'
 
 function getDisplayName(type) {
   return (
@@ -53,6 +54,8 @@ export default function useRenderCounter(logRenderCountKey, resetRenderCountKey)
       }
 
       if (event.key == resetRenderCountKey && event.ctrlKey) {
+        console.clear()
+        console.log('Render counts has been reset.')
         renderCount = {}
       }
     }
