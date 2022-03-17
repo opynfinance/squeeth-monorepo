@@ -537,6 +537,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             if (data.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), _caller, vaultId);
         } else if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH) {
             IWPowerPerp(wPowerPerp).transfer(wPowerPerpPool, _amountToPay);
+
+            IWETH9(weth).deposit{value: address(this).balance}();
         } else if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP) {
             SwapExactoutEthWPowerPerpData memory data = abi.decode(_callData, (SwapExactoutEthWPowerPerpData));
 
