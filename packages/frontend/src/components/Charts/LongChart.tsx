@@ -18,18 +18,11 @@ import React, { useMemo, memo } from 'react'
 import ComparisonChart from '../../../public/images/ComparisonChart.svg'
 import { graphOptions } from '../../constants/diagram'
 import { Links, Tooltips } from '../../constants/enums'
-import IV from '../IV'
 import { SqueethTab, SqueethTabs } from '../Tabs'
 import LongSqueethPayoff from './LongSqueethPayoff'
 import FundingChart from './FundingChart'
 import { useETHPrice } from '@hooks/useETHPrice'
-import {
-  daysAtom,
-  useLongEthPNL,
-  useLongSeries,
-  usePositionSizePercentageseries,
-  useSqueethIsLive,
-} from 'src/state/ethPriceCharts/atoms'
+import { daysAtom, useLongChartData } from 'src/state/ethPriceCharts/atoms'
 import LegendBox from '@components/LegendBox'
 enum ChartType {
   PNL = 'LONG PNL',
@@ -115,13 +108,15 @@ const modeAtom = atom<ChartType>((get) => {
 function LongChart() {
   const classes = useStyles()
   const ethPrice = useETHPrice()
-  const longEthPNL = useLongEthPNL()
-  const longSeries = useLongSeries()
-  const positionSizeSeries = usePositionSizePercentageseries()
   const [days, setDays] = useAtom(daysAtom)
-  const squeethIsLive = useSqueethIsLive()
   const mode = useAtomValue(modeAtom)
   const [tradeType, setTradeType] = useAtom(chartTradeTypeAtom)
+  const query = useLongChartData()
+
+  const longEthPNL = query.data?.longEthPNL
+  const longSeries = query.data?.longSeries
+  const positionSizeSeries = query.data?.positionSizeSeries
+  const squeethIsLive = query.data?.squeethIsLive
 
   // plot line data
   const lineSeries = useMemo(() => {
@@ -129,7 +124,7 @@ function LongChart() {
 
     const liveIndex = Math.max(
       0,
-      squeethIsLive.findIndex((val) => val),
+      squeethIsLive.findIndex((val: boolean) => val),
     ) // return 0 when there is no live data
 
     if (mode === ChartType.PNL)
@@ -146,7 +141,7 @@ function LongChart() {
       ]
     if (mode === ChartType.PositionSize) return [{ data: positionSizeSeries, legend: 'Position Size' }]
     return []
-  }, [longEthPNL?.length, longSeries?.length, mode, positionSizeSeries?.length, squeethIsLive])
+  }, [longEthPNL?.length, longSeries?.length, mode, positionSizeSeries?.length, squeethIsLive?.length])
 
   const chartOptions = useMemo(() => {
     // if (mode === ChartType.Funding || mode === ChartType.PositionSize)
