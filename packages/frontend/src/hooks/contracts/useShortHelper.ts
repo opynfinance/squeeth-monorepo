@@ -7,8 +7,6 @@ import { addressAtom } from 'src/state/wallet/atoms'
 import { useHandleTransaction } from 'src/state/wallet/hooks'
 import { addressesAtom } from 'src/state/positions/atoms'
 import { useGetBuyParam, useGetSellParam } from 'src/state/squeethPool/hooks'
-import { useResetAtom, useUpdateAtom } from 'jotai/utils'
-import { transactionHashAtom } from 'src/state/trade/atoms'
 import { shortHelperContractAtom } from '../../state/contracts/atoms'
 import { useNormFactor } from 'src/state/controller/hooks'
 
@@ -16,8 +14,6 @@ export const useShortHelper = () => {
   const handleTransaction = useHandleTransaction()
   const address = useAtomValue(addressAtom)
   const { shortHelper } = useAtomValue(addressesAtom)
-  const setTxHash = useUpdateAtom(transactionHashAtom)
-  const resetTxHash = useResetAtom(transactionHashAtom)
 
   const getSellParam = useGetSellParam()
   const getBuyParam = useGetBuyParam()
@@ -32,10 +28,9 @@ export const useShortHelper = () => {
    * @param vaultType
    * @returns
    */
-  const openShort = async (vaultId: number, amount: BigNumber, collatAmount: BigNumber) => {
+  const openShort = async (vaultId: number, amount: BigNumber, collatAmount: BigNumber, onTxConfirmed?: () => void) => {
     if (!contract || !address) return
 
-    resetTxHash()
     const _exactInputParams = await getSellParam(amount)
     _exactInputParams.recipient = shortHelper
 
@@ -46,9 +41,9 @@ export const useShortHelper = () => {
         from: address,
         value: ethAmt.toString(), // Already scaled to 14 so multiplied with 10000
       }),
+      onTxConfirmed,
     )
 
-    setTxHash(result.transactionHash)
     return result
   }
 
@@ -58,10 +53,9 @@ export const useShortHelper = () => {
    * @param amount - Amount of squeeth to buy back
    * @returns
    */
-  const closeShort = async (vaultId: number, amount: BigNumber, withdrawAmt: BigNumber) => {
+  const closeShort = async (vaultId: number, amount: BigNumber, withdrawAmt: BigNumber, onTxConfirmed?: () => void) => {
     if (!contract || !address) return
 
-    resetTxHash()
     const _amount = fromTokenAmount(amount, OSQUEETH_DECIMALS)
     const _withdrawAmt = fromTokenAmount(withdrawAmt.isPositive() ? withdrawAmt : 0, WETH_DECIMALS)
     const _exactOutputParams = await getBuyParam(amount)
@@ -74,9 +68,9 @@ export const useShortHelper = () => {
         from: address,
         value: _exactOutputParams.amountInMaximum,
       }),
+      onTxConfirmed,
     )
 
-    setTxHash(result.transactionHash)
     return result
   }
 

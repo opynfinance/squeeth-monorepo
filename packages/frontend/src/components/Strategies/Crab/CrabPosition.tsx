@@ -38,7 +38,7 @@ const CrabPosition: React.FC = () => {
       <Typography color="primary" variant="subtitle1">
         Position
       </Typography>
-      {minCurrentUsd.gt(0) ? (
+      {minCurrentUsd?.gt(0) ? (
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <Typography variant="h6">{loading ? 'Loading' : `${minCurrentUsd.toFixed(2)} USD`}</Typography>
           {!loading && minPnL.isFinite() ? (

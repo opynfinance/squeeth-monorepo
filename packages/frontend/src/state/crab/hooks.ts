@@ -182,16 +182,15 @@ export const useCalculateETHtoBorrowFromUniswap = () => {
   return calculateETHtoBorrowFromUniswap
 }
 
-export const useFlashDeposit = (setStrategyData: any, calculateETHtoBorrowFromUniswap: any) => {
+export const useFlashDeposit = (calculateETHtoBorrowFromUniswap: any) => {
   const maxCap = useAtomValue(maxCapAtom)
   const address = useAtomValue(addressAtom)
   const vault = useAtomValue(crabStrategyVaultAtom)
   const contract = useAtomValue(crabStrategyContractAtom)
   const handleTransaction = useHandleTransaction()
   // const calculateETHtoBorrowFromUniswap = useCalculateETHtoBorrowFromUniswap()
-  const calculateCurrentValue = useCalculateCurrentValue()
   const flashDeposit = useCallback(
-    async (amount: BigNumber, slippage: number) => {
+    async (amount: BigNumber, slippage: number, onTxConfirmed?: () => void) => {
       if (!contract || !vault) return
 
       let { ethBorrow: _ethBorrow } = await calculateETHtoBorrowFromUniswap(amount, slippage)
@@ -201,16 +200,13 @@ export const useFlashDeposit = (setStrategyData: any, calculateETHtoBorrowFromUn
       }
       const ethBorrow = fromTokenAmount(_ethBorrow, 18)
       const ethDeposit = fromTokenAmount(amount, 18)
-      return handleTransaction(
+      return await handleTransaction(
         contract.methods.flashDeposit(ethBorrow.plus(ethDeposit).toFixed(0)).send({
           from: address,
           value: fromTokenAmount(amount, 18).toFixed(0),
         }),
-      ).then((tx: any) => {
-        setStrategyData()
-        calculateCurrentValue()
-        return tx
-      })
+        onTxConfirmed,
+      )
     },
     [address, contract, handleTransaction, vault?.id, maxCap.toString()],
   )
@@ -218,7 +214,7 @@ export const useFlashDeposit = (setStrategyData: any, calculateETHtoBorrowFromUn
   return flashDeposit
 }
 
-export const useFlashWithdraw = (setStrategyData: any) => {
+export const useFlashWithdraw = () => {
   const contract = useAtomValue(crabStrategyContractAtom)
   const handleTransaction = useHandleTransaction()
   const address = useAtomValue(addressAtom)
@@ -226,21 +222,18 @@ export const useFlashWithdraw = (setStrategyData: any) => {
   const calculateCurrentValue = useCalculateCurrentValue()
 
   const flashWithdraw = useCallback(
-    async (amount: BigNumber, slippage: number) => {
+    async (amount: BigNumber, slippage: number, onTxConfirmed?: () => void) => {
       if (!contract) return
 
       const { maximumAmountIn: _ethWillingToPay } = await calculateEthWillingToPay(amount, slippage)
       const ethWillingToPay = fromTokenAmount(_ethWillingToPay, 18)
       const crabAmount = fromTokenAmount(amount, 18)
-      return handleTransaction(
+      return await handleTransaction(
         contract.methods.flashWithdraw(crabAmount.toFixed(0), ethWillingToPay.toFixed(0)).send({
           from: address,
         }),
-      ).then((tx: any) => {
-        setStrategyData()
-        calculateCurrentValue()
-        return tx
-      })
+        onTxConfirmed,
+      )
     },
     [contract, address, handleTransaction, calculateCurrentValue, calculateEthWillingToPay],
   )
@@ -248,19 +241,19 @@ export const useFlashWithdraw = (setStrategyData: any) => {
   return flashWithdraw
 }
 
-export const useFlashWithdrawEth = (setStrategyData: any) => {
+export const useFlashWithdrawEth = () => {
   const { crabStrategy } = useAtomValue(addressesAtom)
   const currentEthValue = useAtomValue(currentEthValueAtom)
   const userCrabBalance = useTokenBalance(crabStrategy, 5, 18)
   const contract = useAtomValue(crabStrategyContractAtom)
-  const flashWithdraw = useFlashWithdraw(setStrategyData)
+  const flashWithdraw = useFlashWithdraw()
 
   const flashWithdrawEth = useCallback(
-    async (ethAmount: BigNumber, slippage: number) => {
+    async (ethAmount: BigNumber, slippage: number, onTxConfirmed?: () => void) => {
       if (!contract) return
 
       const equivalentCrab = ethAmount.div(currentEthValue).times(userCrabBalance)
-      return flashWithdraw(equivalentCrab, slippage)
+      return await flashWithdraw(equivalentCrab, slippage, onTxConfirmed)
     },
     [contract, currentEthValue?.toString(), flashWithdraw, userCrabBalance?.toString()],
   )

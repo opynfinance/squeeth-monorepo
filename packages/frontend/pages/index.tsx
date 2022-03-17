@@ -7,7 +7,7 @@ import InfoIcon from '@material-ui/icons/InfoOutlined'
 import ExpandLessIcon from '@material-ui/icons/NavigateBefore'
 import ExpandMoreIcon from '@material-ui/icons/NavigateNext'
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 
 import squeethTokenSymbol from '../public/images/Squeeth.svg'
@@ -33,6 +33,7 @@ import { actualTradeTypeAtom, ethTradeAmountAtom, sqthTradeAmountAtom, tradeType
 import { positionTypeAtom } from 'src/state/positions/atoms'
 import { useResetAtom } from 'jotai/utils'
 import { useDailyHistoricalFunding, useIndex, useMark, useNormFactor } from 'src/state/controller/hooks'
+import { isTransactionFirstStepAtom, transactionDataAtom, transactionLoadingAtom } from 'src/state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -346,26 +347,24 @@ const Header: React.FC = () => {
 const TabComponent: React.FC = () => {
   const classes = useStyles()
   const [tradeType, setTradeType] = useAtom(tradeTypeAtom)
-  const [positionType] = useAtom(positionTypeAtom)
   const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
   const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
-
-  useEffect(() => {
-    if (positionType === PositionType.SHORT) {
-      setTradeType(1)
-    } else {
-      setTradeType(0)
-    }
-  }, [positionType])
+  const resetTransactionData = useResetAtom(transactionDataAtom)
+  const transactionInProgress = useAtomValue(transactionLoadingAtom)
+  const isTxFirstStep = useAtomValue(isTransactionFirstStepAtom)
 
   return (
     <div>
       <SqueethTabs
         value={tradeType}
         onChange={(evt, val) => {
-          resetEthTradeAmount()
-          resetSqthTradeAmount()
           setTradeType(val)
+
+          if (!transactionInProgress || !isTxFirstStep) {
+            resetEthTradeAmount()
+            resetSqthTradeAmount()
+            resetTransactionData()
+          }
         }}
         aria-label="Sub nav tabs"
         className={classes.subNavTabs}
@@ -562,13 +561,11 @@ function TradePage() {
               </div>
             </div>
             <div className={classes.tradeDetails}>
-              <div className={tradeType === TradeType.LONG ? classes.displayBlock : classes.displayNone}>
+              {tradeType === TradeType.LONG ? (
                 <LongChart />
-              </div>
-
-              <div className={tradeType !== TradeType.LONG ? classes.displayBlock : classes.displayNone}>
+              ) : (
                 <ShortChart vault={Vaults.Short} longAmount={0} showPercentage={true} setCustomLong={() => null} />
-              </div>
+              )}
             </div>
           </div>
 

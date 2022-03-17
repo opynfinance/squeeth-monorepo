@@ -347,14 +347,11 @@ export const useBuyAndRefundData = () => {
 
 export const useBuyAndRefund = () => {
   const address = useAtomValue(addressAtom)
-  const setTxHash = useUpdateAtom(transactionHashAtom)
-  const resetTxHash = useResetAtom(transactionHashAtom)
   const handleTransaction = useHandleTransaction()
   const swapRouterContract = useAtomValue(swapRouterContractAtom)
   const buyAndRefundData = useBuyAndRefundData()
 
-  const buyAndRefund = async (amount: BigNumber) => {
-    resetTxHash()
+  const buyAndRefund = async (amount: BigNumber, onTxConfirmed?: () => void) => {
     const callData = await buyAndRefundData(amount)
 
     const result = await handleTransaction(
@@ -362,9 +359,8 @@ export const useBuyAndRefund = () => {
         from: address,
         value: ethers.utils.parseEther(amount.toString()),
       }),
+      onTxConfirmed,
     )
-
-    setTxHash(result.transactionHash)
 
     return result
   }
@@ -472,23 +468,19 @@ const useSellAndUnwrapData = () => {
 
 export const useSell = () => {
   const address = useAtomValue(addressAtom)
-  const setTxHash = useUpdateAtom(transactionHashAtom)
-  const resetTxHash = useResetAtom(transactionHashAtom)
   const handleTransaction = useHandleTransaction()
   const swapRouterContract = useAtomValue(swapRouterContractAtom)
   const sellAndUnwrapData = useSellAndUnwrapData()
 
-  const sell = async (amount: BigNumber) => {
-    resetTxHash()
+  const sell = async (amount: BigNumber, onTxConfirmed?: () => void) => {
     const callData = await sellAndUnwrapData(amount)
 
     const result = await handleTransaction(
       swapRouterContract?.methods.multicall(callData).send({
         from: address,
       }),
+      onTxConfirmed,
     )
-
-    setTxHash(result.transactionHash)
 
     return result
   }

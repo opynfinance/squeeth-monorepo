@@ -7,7 +7,7 @@ import { ThemeProvider } from '@material-ui/core/styles'
 import * as Fathom from 'fathom-client'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import React, { memo, useEffect } from 'react'
+import React, { memo, useEffect, useMemo } from 'react'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { ReactQueryDevtools } from 'react-query/devtools'
 import { CookiesProvider } from 'react-cookie'
@@ -18,7 +18,7 @@ import getTheme, { Mode } from '../src/theme'
 import { uniswapClient } from '@utils/apollo-client'
 import { useOnboard } from 'src/state/wallet/hooks'
 import { networkIdAtom } from 'src/state/wallet/atoms'
-import { useSwaps, useUpdateVaultData } from 'src/state/positions/hooks'
+import { useUpdateVaultData } from 'src/state/positions/hooks'
 import { useUpdateSqueethPrices, useUpdateSqueethPoolData } from 'src/state/squeethPool/hooks'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
@@ -74,7 +74,6 @@ function MyApp({ Component, pageProps }: any) {
 }
 
 const Init = () => {
-  useSwaps()
   useUpdateSqueethPrices()
   useUpdateSqueethPoolData()
   useUpdateVaultData()
@@ -83,8 +82,8 @@ const Init = () => {
 const MemoizedInit = memo(Init)
 
 const TradeApp = ({ Component, pageProps }: any) => {
-  // const { networkId } = useWallet()
   const networkId = useAtomValue(networkIdAtom)
+  const client = useMemo(() => uniswapClient[networkId] || uniswapClient[1], [networkId])
 
   return (
     <React.Fragment>
@@ -97,7 +96,7 @@ const TradeApp = ({ Component, pageProps }: any) => {
         <link rel="icon" href="/favicon.ico" />
         <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width" />
       </Head>
-      <ApolloProvider client={uniswapClient[networkId] || uniswapClient[1]}>
+      <ApolloProvider client={client}>
         <MemoizedInit />
         <ThemeProvider theme={getTheme(Mode.DARK)}>
           {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}

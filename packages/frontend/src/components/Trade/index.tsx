@@ -10,6 +10,7 @@ import Short from './Short'
 import { ethTradeAmountAtom, openPositionAtom, sqthTradeAmountAtom, tradeTypeAtom } from 'src/state/trade/atoms'
 import { useAtom, useAtomValue } from 'jotai'
 import { useResetAtom } from 'jotai/utils'
+import { isTransactionFirstStepAtom, transactionDataAtom, transactionLoadingAtom } from 'src/state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -49,6 +50,9 @@ const Trade: React.FC = () => {
   const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
   const tradeType = useAtomValue(tradeTypeAtom)
   const [openPosition, setOpenPosition] = useAtom(openPositionAtom)
+  const resetTransactionData = useResetAtom(transactionDataAtom)
+  const transactionInProgress = useAtomValue(transactionLoadingAtom)
+  const isTxFirstStep = useAtomValue(isTransactionFirstStepAtom)
 
   // useEffect(() => {
   //   setTradeType(positionType === PositionType.SHORT ? 1 : 0)
@@ -60,9 +64,13 @@ const Trade: React.FC = () => {
         <SecondaryTabs
           value={openPosition}
           onChange={(evt, val) => {
-            resetEthTradeAmount()
-            resetSqthTradeAmount()
             setOpenPosition(val)
+
+            if (!transactionInProgress || !isTxFirstStep) {
+              resetEthTradeAmount()
+              resetSqthTradeAmount()
+              resetTransactionData()
+            }
           }}
           aria-label="simple tabs example"
           centered
@@ -74,21 +82,21 @@ const Trade: React.FC = () => {
         </SecondaryTabs>
       }
       <div>
-        <div className={tradeType === TradeType.LONG ? classes.displayBlock : classes.displayNone}>
+        {tradeType === TradeType.LONG ? (
           <Long
             // balance={Number(toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4))}
             open={openPosition === 0}
             // closeTitle="Sell squeeth ERC20 to get ETH"
           />
-        </div>
-
-        <div className={tradeType !== TradeType.LONG ? classes.displayBlock : classes.displayNone}>
+        ) : (
           <Short
             // balance={Number(toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4))}
             open={openPosition === 0}
             // closeTitle="Buy back oSQTH & close position"
           />
-        </div>
+        )}
+
+        {/* <div className={tradeType !== TradeType.LONG ? classes.displayBlock : classes.displayNone}></div> */}
       </div>
     </div>
   )

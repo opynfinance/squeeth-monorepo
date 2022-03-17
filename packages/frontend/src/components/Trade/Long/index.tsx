@@ -1,7 +1,7 @@
 import { CircularProgress, createStyles, makeStyles, Typography } from '@material-ui/core'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import BigNumber from 'bignumber.js'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
 
 import { BIG_ZERO, Links } from '../../../constants'
@@ -11,10 +11,11 @@ import { PrimaryInput } from '@components/Input/PrimaryInput'
 import { UniswapIframe } from '@components/Modal/UniswapIframe'
 import { TradeSettings } from '@components/TradeSettings'
 import Confirmed, { ConfirmType } from '../Confirmed'
+import Cancelled from '../Cancelled'
 import TradeInfoItem from '../TradeInfoItem'
 import UniswapData from '../UniswapData'
-import { connectedWalletAtom } from 'src/state/wallet/atoms'
-import { useSelectWallet, useWalletBalance } from 'src/state/wallet/hooks'
+import { connectedWalletAtom, isTransactionFirstStepAtom } from 'src/state/wallet/atoms'
+import { useSelectWallet, useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
 import { useAtom, useAtomValue } from 'jotai'
 import { addressesAtom, isShortAtom } from 'src/state/positions/atoms'
 import { useETHPrice } from '@hooks/useETHPrice'
@@ -245,14 +246,20 @@ const useStyles = makeStyles((theme) =>
 
 const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   const [buyLoading, setBuyLoading] = useState(false)
-  // const [confirmed, setConfirmed] = useState(false)
-  // const [txHash, setTxHash] = useState('')
   const getBuyQuoteForETH = useGetBuyQuoteForETH()
   const getBuyQuote = useGetBuyQuote()
   const { data } = useWalletBalance()
   const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
 
   const classes = useStyles()
+  const {
+    cancelled,
+    confirmed,
+    loading: transactionInProgress,
+    transactionData,
+    resetTxCancelled,
+    resetTransactionData,
+  } = useTransactionStatus()
   const buyAndRefund = useBuyAndRefund()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const [confirmedAmount, setConfirmedAmount] = useAtom(confirmedAmountAtom)
@@ -261,10 +268,6 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   const slippageAmount = useAtomValue(slippageAmountAtom)
   const ethPrice = useETHPrice()
   const tradeType = useAtomValue(tradeTypeAtom)
-
-  const txHash = useAtomValue(transactionHashAtom)
-  const resetTxHash = useResetAtom(transactionHashAtom)
-  const confirmed = Boolean(txHash)
 
   const connected = useAtomValue(connectedWalletAtom)
   const isShort = useAtomValue(isShortAtom)
@@ -341,26 +344,68 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
 
   const longOpenPriceImpactErrorState = priceImpactWarning && !buyLoading && !openError && !isShort
 
+  useEffect(() => {
+    if (transactionInProgress) {
+      setBuyLoading(false)
+    }
+  }, [transactionInProgress])
+
   const transact = async () => {
     setBuyLoading(true)
     try {
-      await buyAndRefund(new BigNumber(ethTradeAmount))
-      // setConfirmed(true)
-      // setTxHash(confirmedHash.transactionHash)
-      setTradeSuccess(true)
-      setTradeCompleted(true)
+      await buyAndRefund(new BigNumber(ethTradeAmount), () => {
+        setTradeSuccess(true)
+        setTradeCompleted(true)
 
-      resetEthTradeAmount()
-      resetSqthTradeAmount()
+        resetEthTradeAmount()
+        resetSqthTradeAmount()
+      })
     } catch (e) {
       console.log(e)
+      setBuyLoading(false)
     }
-    setBuyLoading(false)
   }
 
   return (
-    <div className={open ? classes.displayBlock : classes.displayNone}>
-      {!confirmed ? (
+    <div>
+      {confirmed ? (
+        <div>
+          <Confirmed
+            confirmationMessage={`Bought ${confirmedAmount} Squeeth`}
+            txnHash={transactionData?.hash ?? ''}
+            confirmType={ConfirmType.TRADE}
+          />
+          <div className={classes.buttonDiv}>
+            <PrimaryButton
+              variant="contained"
+              onClick={() => {
+                resetTransactionData()
+              }}
+              className={classes.amountInput}
+              style={{ width: '300px' }}
+            >
+              {'Close'}
+            </PrimaryButton>
+          </div>
+        </div>
+      ) : cancelled ? (
+        <div>
+          <Cancelled txnHash={transactionData?.hash ?? ''} />
+          <div className={classes.buttonDiv}>
+            <PrimaryButton
+              variant="contained"
+              onClick={() => {
+                resetTransactionData()
+                resetTxCancelled()
+              }}
+              className={classes.amountInput}
+              style={{ width: '300px' }}
+            >
+              {'Close'}
+            </PrimaryButton>
+          </div>
+        </div>
+      ) : (
         <div>
           {activeStep === 0 ? (
             <>
@@ -483,14 +528,14 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                     variant={longOpenPriceImpactErrorState || !!highVolError ? 'outlined' : 'contained'}
                     onClick={transact}
                     className={classes.amountInput}
-                    disabled={!!buyLoading || !!openError || !!existingShortError}
+                    disabled={!!buyLoading || transactionInProgress || !!openError || !!existingShortError}
                     style={
                       longOpenPriceImpactErrorState || !!highVolError
                         ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
                         : { width: '300px' }
                     }
                   >
-                    {buyLoading ? (
+                    {buyLoading || transactionInProgress ? (
                       <CircularProgress color="primary" size="1.5rem" />
                     ) : longOpenPriceImpactErrorState ? (
                       'Buy Anyway'
@@ -513,39 +558,24 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
             </div>
           )}
         </div>
-      ) : (
-        <div>
-          <Confirmed
-            confirmationMessage={`Bought ${confirmedAmount} Squeeth`}
-            txnHash={txHash}
-            confirmType={ConfirmType.TRADE}
-          />
-          <div className={classes.buttonDiv}>
-            <PrimaryButton
-              variant="contained"
-              onClick={() => {
-                resetTxHash()
-                // setConfirmed(false)
-              }}
-              className={classes.amountInput}
-              style={{ width: '300px' }}
-            >
-              {'Close'}
-            </PrimaryButton>
-          </div>
-        </div>
       )}
     </div>
   )
 }
 
-const CloseLong: React.FC<BuyProps> = ({ open }) => {
+const CloseLong: React.FC<BuyProps> = () => {
   const [sellLoading, setSellLoading] = useState(false)
-  // const [confirmed, setConfirmed] = useState(false)
-  // const [txHash, setTxHash] = useState('')
   const [hasJustApprovedSqueeth, setHasJustApprovedSqueeth] = useState(false)
 
   const classes = useStyles()
+  const {
+    cancelled,
+    confirmed,
+    loading: transactionInProgress,
+    transactionData,
+    resetTxCancelled,
+    resetTransactionData,
+  } = useTransactionStatus()
   const { swapRouter, oSqueeth } = useAtomValue(addressesAtom)
   const sell = useSell()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
@@ -562,15 +592,11 @@ const CloseLong: React.FC<BuyProps> = ({ open }) => {
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
   const slippageAmount = useAtomValue(slippageAmountAtom)
-  const tradeType = useAtomValue(tradeTypeAtom)
   const ethPrice = useETHPrice()
   const amount = new BigNumber(sqthTradeAmount)
   const altTradeAmount = new BigNumber(ethTradeAmount)
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter)
-
-  const txHash = useAtomValue(transactionHashAtom)
-  const resetTxHash = useResetAtom(transactionHashAtom)
-  const confirmed = Boolean(txHash)
+  const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
 
   const connected = useAtomValue(connectedWalletAtom)
   const selectWallet = useSelectWallet()
@@ -584,70 +610,74 @@ const CloseLong: React.FC<BuyProps> = ({ open }) => {
 
   useEffect(() => {
     //if it's insufficient amount them set it to it's maximum
-    if (!open && tradeType === TradeType.LONG && longSqthBal.lt(amount)) {
+    if (longSqthBal.lt(amount)) {
       setSqthTradeAmount(longSqthBal.toString())
       getSellQuoteForETH(longSqthBal).then((val) => {
         setEthTradeAmount(val.amountIn.toString())
         setConfirmedAmount(val.amountIn.toFixed(6).toString())
       })
     }
-  }, [longSqthBal.toString(), open, tradeType])
+  }, [longSqthBal.toString()])
 
   // let openError: string | undefined
   let closeError: string | undefined
   let existingShortError: string | undefined
   let priceImpactWarning: string | undefined
 
-  useEffect(() => {
-    if (connected) {
-      if (longSqthBal.lt(amount)) {
-        closeError = 'Insufficient oSQTH balance'
-      }
-      // if (amount.gt(balance)) {
-      //   openError = 'Insufficient ETH balance'
-      // }
-      if (isShort) {
-        existingShortError = 'Close your short position to open a long'
-      }
-      if (new BigNumber(quote.priceImpact).gt(3)) {
-        priceImpactWarning = 'High Price Impact'
-      }
+  if (connected) {
+    if (longSqthBal.lt(amount)) {
+      closeError = 'Insufficient oSQTH balance'
     }
-  }, [longSqthBal.toString(), amount.toString(), balance, isShort, quote.priceImpact])
+    // if (amount.gt(balance)) {
+    //   openError = 'Insufficient ETH balance'
+    // }
+    if (isShort) {
+      existingShortError = 'Close your short position to open a long'
+    }
+    if (new BigNumber(quote.priceImpact).gt(3)) {
+      priceImpactWarning = 'High Price Impact'
+    }
+  }
 
   const longClosePriceImpactErrorState =
     priceImpactWarning && !closeError && !sellLoading && !longSqthBal.isZero() && !isShort
 
-  const sellAndClose = useCallback(async () => {
+  const sellAndClose = async () => {
     setSellLoading(true)
     try {
       if (squeethAllowance.lt(amount)) {
-        await squeethApprove()
-        setHasJustApprovedSqueeth(true)
+        setIsTxFirstStep(true)
+        await squeethApprove(() => {
+          setHasJustApprovedSqueeth(true)
+          setSellLoading(false)
+        })
       } else {
-        await sell(amount)
-        // setConfirmed(true)
-        // setTxHash(confirmedHash.transactionHash)
-        setTradeSuccess(true)
-        setTradeCompleted(true)
+        await sell(amount, () => {
+          setIsTxFirstStep(false)
+          setTradeSuccess(true)
+          setTradeCompleted(true)
 
-        resetEthTradeAmount()
-        resetSqthTradeAmount()
+          resetEthTradeAmount()
+          resetSqthTradeAmount()
+        })
       }
     } catch (e) {
       console.log(e)
+      setSellLoading(false)
     }
-
-    setSellLoading(false)
-  }, [amount.toString(), squeethAllowance.toString(), longSqthBal.toString(), sell, squeethApprove])
+  }
 
   useEffect(() => {
-    if (!open && tradeType === TradeType.LONG) {
-      getSellQuote(new BigNumber(sqthTradeAmount), slippageAmount).then((val) => {
-        setQuote(val)
-      })
+    if (transactionInProgress) {
+      setSellLoading(false)
     }
-  }, [slippageAmount.toString(), sqthTradeAmount, tradeType, open])
+  }, [transactionInProgress])
+
+  useEffect(() => {
+    getSellQuote(new BigNumber(sqthTradeAmount), slippageAmount).then((val) => {
+      setQuote(val)
+    })
+  }, [slippageAmount.toString(), sqthTradeAmount])
 
   const handleSqthChange = (value: string) => {
     setInputQuoteLoading(true)
@@ -670,8 +700,45 @@ const CloseLong: React.FC<BuyProps> = ({ open }) => {
   }
 
   return (
-    <div className={!open ? classes.displayBlock : classes.displayNone}>
-      {!confirmed ? (
+    <div>
+      {confirmed && !isTxFirstStep ? (
+        <div>
+          <Confirmed
+            confirmationMessage={`Sold ${confirmedAmount} Squeeth`}
+            txnHash={transactionData?.hash ?? ''}
+            confirmType={ConfirmType.TRADE}
+          />
+          <div className={classes.buttonDiv}>
+            <PrimaryButton
+              variant="contained"
+              onClick={() => {
+                resetTransactionData()
+              }}
+              className={classes.amountInput}
+              style={{ width: '300px' }}
+            >
+              {'Close'}
+            </PrimaryButton>
+          </div>
+        </div>
+      ) : cancelled ? (
+        <div>
+          <Cancelled txnHash={transactionData?.hash ?? ''} />
+          <div className={classes.buttonDiv}>
+            <PrimaryButton
+              variant="contained"
+              onClick={() => {
+                resetTransactionData()
+                resetTxCancelled()
+              }}
+              className={classes.amountInput}
+              style={{ width: '300px' }}
+            >
+              {'Close'}
+            </PrimaryButton>
+          </div>
+        </div>
+      ) : (
         <div>
           <div className={classes.settingsContainer}>
             <Typography variant="caption" className={classes.explainer} component="div">
@@ -771,14 +838,16 @@ const CloseLong: React.FC<BuyProps> = ({ open }) => {
                 variant={longClosePriceImpactErrorState ? 'outlined' : 'contained'}
                 onClick={sellAndClose}
                 className={classes.amountInput}
-                disabled={!!sellLoading || !!closeError || !!existingShortError || longSqthBal.isZero()}
+                disabled={
+                  !!sellLoading || transactionInProgress || !!closeError || !!existingShortError || longSqthBal.isZero()
+                }
                 style={
                   longClosePriceImpactErrorState
                     ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
                     : { width: '300px' }
                 }
               >
-                {sellLoading ? (
+                {sellLoading || transactionInProgress ? (
                   <CircularProgress color="primary" size="1.5rem" />
                 ) : squeethAllowance.lt(amount) ? (
                   'Approve oSQTH (1/2)'
@@ -799,48 +868,22 @@ const CloseLong: React.FC<BuyProps> = ({ open }) => {
             </Typography>
           </div>
         </div>
-      ) : (
-        <div>
-          <Confirmed
-            confirmationMessage={`Sold ${confirmedAmount} Squeeth`}
-            txnHash={txHash}
-            confirmType={ConfirmType.TRADE}
-          />
-          <div className={classes.buttonDiv}>
-            <PrimaryButton
-              variant="contained"
-              onClick={() => {
-                resetTxHash()
-                // setConfirmed(false)
-              }}
-              className={classes.amountInput}
-              style={{ width: '300px' }}
-            >
-              {'Close'}
-            </PrimaryButton>
-          </div>
-        </div>
       )}
     </div>
   )
 }
 
 type BuyProps = {
-  // balance: number
-  open: boolean
-  // closeTitle: string
+  open?: boolean
   isLPage?: boolean
   activeStep?: number
-  // setTradeCompleted?: any
 }
 
 const Long: React.FC<BuyProps> = ({ open, isLPage = false, activeStep = 0 }) => {
-  return (
-    <>
-      <OpenLong open={open} isLPage={isLPage} activeStep={activeStep} />
-
-      <CloseLong open={open} isLPage={isLPage} activeStep={activeStep} />
-    </>
+  return open ? (
+    <OpenLong open={open} isLPage={isLPage} activeStep={activeStep} />
+  ) : (
+    <CloseLong isLPage={isLPage} activeStep={activeStep} />
   )
 }
 
