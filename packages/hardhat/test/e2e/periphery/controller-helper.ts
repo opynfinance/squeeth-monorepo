@@ -605,6 +605,8 @@ describe("ControllerHelper: mainnet fork", function () {
       const positionAfter = await (positionManager as INonfungiblePositionManager).positions(uniTokenId);
       const vaultAfter = await controller.vaults(vaultId); 
 
+      expect(positionAfter.tickLower === -887220).to.be.true
+      expect(positionAfter.tickUpper === 887220).to.be.true
       expect(positionAfter.liquidity.eq(BigNumber.from(0))).to.be.true
       expect(vaultAfter.shortAmount.eq(BigNumber.from(0))).to.be.true
       expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
@@ -695,6 +697,8 @@ describe("ControllerHelper: mainnet fork", function () {
       const positionAfter = await (positionManager as INonfungiblePositionManager).positions(uniTokenId);
       const vaultAfter = await controller.vaults(vaultId); 
 
+      expect(positionAfter.tickLower === -887220).to.be.true
+      expect(positionAfter.tickUpper === 887220).to.be.true
       expect(positionAfter.liquidity.eq(BigNumber.from(0))).to.be.true
       expect(vaultAfter.shortAmount.eq(BigNumber.from(0))).to.be.true
       expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
