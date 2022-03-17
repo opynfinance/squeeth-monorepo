@@ -107,6 +107,7 @@ const lightPalette: ThemeOptions = {
       stone: '#DCDAE9',
       lightStone: '#DCDAE94D',
       tooltip: '#77757E80',
+      border: '#FFFFFF03',
     },
   },
 }
@@ -137,6 +138,7 @@ const darkPalete: ThemeOptions = {
       lightStone: 'rgba(255, 255, 255, 0.08)',
       tooltip: 'rgba(255, 255, 255)',
       default: '#181B1C',
+      border: '#FFFFFF10',
     },
   },
 }

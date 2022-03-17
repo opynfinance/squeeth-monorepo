@@ -7,6 +7,7 @@ declare module '@material-ui/core/styles/createPalette' {
     stone: string
     lightStone: string
     tooltip: string
+    border: string
   }
 }
 
