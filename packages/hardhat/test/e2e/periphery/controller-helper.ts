@@ -593,7 +593,7 @@ describe("ControllerHelper: mainnet fork", function () {
         liquidityPercentage: ethers.utils.parseUnits('1'),
         wPowerPerpAmountToBurn: vaultBefore.shortAmount.toString(),
         collateralToFlashloan: collateralToFlashloan.toString(),
-        collateralToWithdraw: collateralToFlashloan.toString(),
+        collateralToWithdraw: BigNumber.from(0),
         limitPriceEthPerPowerPerp: limitPriceEthPerPowerPerp.toString(),
         amount0Min: 0,
         amount1Min: 0
@@ -702,7 +702,7 @@ describe("ControllerHelper: mainnet fork", function () {
         liquidityPercentage: ethers.utils.parseUnits('1'),
         wPowerPerpAmountToBurn: vaultBefore.shortAmount.toString(),
         collateralToFlashloan: collateralToFlashloan.toString(),
-        collateralToWithdraw: collateralToFlashloan.toString(),
+        collateralToWithdraw: BigNumber.from(0),
         limitPriceEthPerPowerPerp: limitPriceEthPerPowerPerp.toString(),
         amount0Min: 0,
         amount1Min: 0

@@ -373,7 +373,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                     liquidity: _params.liquidity,
                     liquidityPercentage: _params.liquidityPercentage,
                     wPowerPerpAmountToBurn: _params.wPowerPerpAmountToBurn,
-                    collateralToWithdraw: _params.collateralToWithdraw,
+                    collateralToWithdraw: _params.collateralToFlashloan.add(_params.collateralToWithdraw),
                     limitPriceEthPerPowerPerp: _params.limitPriceEthPerPowerPerp,
                     amount0Min: _params.amount0Min,
                     amount1Min: _params.amount1Min
