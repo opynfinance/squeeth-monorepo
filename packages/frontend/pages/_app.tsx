@@ -1,4 +1,4 @@
-import '../wdyr'
+import useRenderCounter from '../src/hooks/useRenderCounter'
 import '../styles/globals.css'
 
 import { ApolloProvider } from '@apollo/client'
@@ -24,6 +24,8 @@ import { useUpdateSqueethPrices, useUpdateSqueethPoolData } from 'src/state/sque
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
 
 function MyApp({ Component, pageProps }: any) {
+  useRenderCounter('9', '0')
+
   const router = useRouter()
   useOnboard()
 
