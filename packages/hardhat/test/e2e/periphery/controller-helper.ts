@@ -627,6 +627,13 @@ describe("ControllerHelper: mainnet fork", function () {
 
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address);
       await controllerHelper.connect(depositor).flashloanCloseVaultLpNft(flashloanCloseVaultLpNftParam);
+
+      const positionAfter = await (positionManager as INonfungiblePositionManager).positions(uniTokenId);
+      const vaultAfter = await controller.vaults(vaultId); 
+
+      expect(positionAfter.liquidity.eq(BigNumber.from(0))).to.be.true
+      expect(vaultAfter.shortAmount.eq(BigNumber.from(0))).to.be.true
+      expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
     })
   })
 
