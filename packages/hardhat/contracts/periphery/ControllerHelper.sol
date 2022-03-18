@@ -149,6 +149,23 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         uint256 limitPriceEthPerPowerPerp; // price limit for selling wPowerPerp
     }
 
+    /// @dev params for rebalanceWithoutVault()
+    struct RebalanceWithoutVault {
+        uint256 tokenId;
+        uint256 ethAmountToLp;
+        uint256 liquidity;
+        uint256 wPowerPerpAmountDesired;
+        uint256 wethAmountDesired;
+        uint256 amount0DesiredMin;
+        uint256 amount1DesiredMin;
+        uint256 limitPriceEthPerPowerPerp;
+        uint256 amount0Min;
+        uint256 amount1Min;
+        int24 lowerTick;
+        int24 upperTick;
+    }
+
+
     /// @dev events
     event FlashswapWMint(
         address indexed depositor,
@@ -322,43 +339,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         payable(msg.sender).sendValue(address(this).balance);
     }
 
-    function _closeShortWithAmountsFromLp(
-        uint256 _vaultId,
-        uint256 _wPowerPerpAmount,
-        uint256 _wPowerPerpAmountToBurn,
-        uint256 _collateralToWithdraw,
-        uint256 _limitPriceEthPerPowerPerp
-    ) private {
-        if (_wPowerPerpAmount < _wPowerPerpAmountToBurn) {
-            // swap needed wPowerPerp amount to close short position
-            _exactOutFlashSwap(
-                weth,
-                wPowerPerp,
-                IUniswapV3Pool(wPowerPerpPool).fee(),
-                _wPowerPerpAmountToBurn.sub(_wPowerPerpAmount),
-                _limitPriceEthPerPowerPerp.mul(_wPowerPerpAmountToBurn.sub(_wPowerPerpAmount)).div(1e18),
-                uint8(CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP_BURN),
-                abi.encodePacked(_vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw)
-            );
-        } else {
-            // if LP have more wPowerPerp amount that amount to burn in vault, sell remaining amount for WETH
-            IController(controller).burnWPowerPerpAmount(_vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw);
-
-            uint256 wPowerPerpExcess = _wPowerPerpAmount.sub(_wPowerPerpAmountToBurn);
-            if (wPowerPerpExcess > 0) {
-                _exactInFlashSwap(
-                    wPowerPerp,
-                    weth,
-                    IUniswapV3Pool(wPowerPerpPool).fee(),
-                    wPowerPerpExcess,
-                    _limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18),
-                    uint8(CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
-                    ""
-                );
-            }
-        }
-    }
-
     function flashloanCloseVaultLpNft(FlashloanCloseVaultLpNftParam calldata _params) external payable {
         _flashLoan(
             weth,
@@ -493,23 +473,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         payable(msg.sender).sendValue(address(this).balance);
     }
 
-    struct RebalanceWithoutVault {
-        uint256 tokenId;
-        uint256 ethAmountToLp;
-        uint256 liquidity;
-        uint256 wPowerPerpAmountDesired;
-        uint256 wethAmountDesired;
-        uint256 amount0DesiredMin;
-        uint256 amount1DesiredMin;
-        uint256 limitPriceEthPerPowerPerp;
-        uint256 amount0Min;
-        uint256 amount1Min;
-        int24 lowerTick;
-        int24 upperTick;
-        bool rebalanceToken0;
-        bool rebalanceToken1;
-    }
-
     function rebalanceWithoutVault(RebalanceWithoutVault calldata _params) external payable {
         // if user need to send ETH to change LP composition, wrap to WETH
         if (msg.value > 0) IWETH9(weth).deposit{value: msg.value}();
@@ -531,16 +494,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             })
         );
 
-        console.log("_params.wPowerPerpAmountDesired", _params.wPowerPerpAmountDesired);
-        console.log("wPowerPerpAmountInLp", wPowerPerpAmountInLp);
-
-        console.log("p balan b", IWPowerPerp(wPowerPerp).balanceOf(address(this)));
-        console.log("w balan b", IWETH9(weth).balanceOf(address(this)));
-
-
         if (_params.wPowerPerpAmountDesired > wPowerPerpAmountInLp) {
-            console.log("h");
-            // if new position target a higher wPowerPerp amount, swap WETH to reach the desired amount
+            // if the new position target a higher wPowerPerp amount, swap WETH to reach the desired amount (WETH new position is lower than current WETH in LP)
             _exactOutFlashSwap(
                 weth,
                 wPowerPerp,
@@ -553,9 +508,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 ""
             );
         } else if (_params.wPowerPerpAmountDesired < wPowerPerpAmountInLp) {
-                        console.log("hh");
-
-            // if new position target lower wPowerPerp amount, swap excess to WETH
+            // if the new position target lower wPowerPerp amount, swap excess to WETH (position target higher WETH amount)
             uint256 wPowerPerpExcess = wPowerPerpAmountInLp.sub(_params.wPowerPerpAmountDesired);
 
             _exactInFlashSwap(
@@ -568,23 +521,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 ""
             );
         } 
-        // else if (_params.wethAmountDesired > wethAmountInLp) {
-        //                 console.log("hhh");
-
-        //     // if new position target a higher WETH amount, swap wPowerPerp to reach the desired amount
-        //     _exactOutFlashSwap(
-        //         wPowerPerp,
-        //         weth,
-        //         IUniswapV3Pool(wPowerPerpPool).fee(),
-        //         _params.wethAmountDesired.sub(wethAmountInLp),
-        //         _params.limitPriceEthPerPowerPerp.mul(_params.wethAmountDesired.sub(wethAmountInLp)).div(1e18),
-        //         uint8(CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
-        //         ""
-        //     );
-        // }
-
-        console.log("p balan", IWPowerPerp(wPowerPerp).balanceOf(address(this)));
-        console.log("w balan", IWETH9(weth).balanceOf(address(this)));
 
         // mint new position
         _lpWPowerPerpPool(
@@ -598,6 +534,11 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             _params.lowerTick,
             _params.upperTick
         );
+
+        _checkLpMintExcess(0);
+
+        IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
+        payable(msg.sender).sendValue(address(this).balance);        
     }
 
     // struct RebalanceWithVault {
@@ -840,12 +781,9 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         console.log("_amount0Desired", _amount0Desired);
         console.log("_amount0Desired", _amount1Desired);
 
-        (uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1) = INonfungiblePositionManager(nonfungiblePositionManager).mint{value: _ethAmount}(
+        (uint256 tokenId,,,) = INonfungiblePositionManager(nonfungiblePositionManager).mint{value: _ethAmount}(
             _params
         );
-
-        console.log("amount0 amount0", amount0);
-        console.log("amount1 amount1", amount1);
 
         return tokenId;
     }
@@ -857,7 +795,12 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
     function _checkLpMintExcess(uint256 _vaultId) private {
         uint256 remainingWPowerPerp = IWPowerPerp(wPowerPerp).balanceOf(address(this));
         if (remainingWPowerPerp > 0) {
-            IController(controller).burnWPowerPerpAmount(_vaultId, remainingWPowerPerp, 0);
+            if (_vaultId > 0) {
+                IController(controller).burnWPowerPerpAmount(_vaultId, remainingWPowerPerp, 0);
+            }
+            else {
+                IWPowerPerp(wPowerPerp).transfer(msg.sender, remainingWPowerPerp);
+            }
         }
         // in case _collateralToLP > amount needed to LP, withdraw excess ETH
         INonfungiblePositionManager(nonfungiblePositionManager).refundETH();
@@ -913,5 +856,42 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         );
 
         return (wPowerPerpAmount, wethAmount);
+    }
+
+    function _closeShortWithAmountsFromLp(
+        uint256 _vaultId,
+        uint256 _wPowerPerpAmount,
+        uint256 _wPowerPerpAmountToBurn,
+        uint256 _collateralToWithdraw,
+        uint256 _limitPriceEthPerPowerPerp
+    ) private {
+        if (_wPowerPerpAmount < _wPowerPerpAmountToBurn) {
+            // swap needed wPowerPerp amount to close short position
+            _exactOutFlashSwap(
+                weth,
+                wPowerPerp,
+                IUniswapV3Pool(wPowerPerpPool).fee(),
+                _wPowerPerpAmountToBurn.sub(_wPowerPerpAmount),
+                _limitPriceEthPerPowerPerp.mul(_wPowerPerpAmountToBurn.sub(_wPowerPerpAmount)).div(1e18),
+                uint8(CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP_BURN),
+                abi.encodePacked(_vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw)
+            );
+        } else {
+            // if LP have more wPowerPerp amount that amount to burn in vault, sell remaining amount for WETH
+            IController(controller).burnWPowerPerpAmount(_vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw);
+
+            uint256 wPowerPerpExcess = _wPowerPerpAmount.sub(_wPowerPerpAmountToBurn);
+            if (wPowerPerpExcess > 0) {
+                _exactInFlashSwap(
+                    wPowerPerp,
+                    weth,
+                    IUniswapV3Pool(wPowerPerpPool).fee(),
+                    wPowerPerpExcess,
+                    _limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18),
+                    uint8(CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
+                    ""
+                );
+            }
+        }
     }
 }

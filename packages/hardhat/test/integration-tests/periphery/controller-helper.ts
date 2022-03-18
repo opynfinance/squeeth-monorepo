@@ -752,21 +752,6 @@ describe("Controller helper integration test", function () {
       const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
       const limitPriceEthPerPowerPerp = squeethPrice.mul(one.sub(slippage)).div(one);
 
-      // uint256 tokenId;
-      // uint256 ethAmountToLp;
-      // uint256 liquidity;
-      // uint256 wPowerPerpAmountDesired;
-      // uint256 wethAmountDesired;
-      // uint256 amount0DesiredMin;
-      // uint256 amount1DesiredMin;
-      // uint256 limitPriceEthPerPowerPerp;
-      // uint256 amount0Min;
-      // uint256 amount1Min;
-      // int24 lowerTick;
-      // int24 upperTick;
-      // bool rebalanceToken0;
-      // bool rebalanceToken1;
-
       const params = {
         tokenId: oldTokenId,
         ethAmountToLp: BigNumber.from(0),
@@ -790,6 +775,7 @@ describe("Controller helper integration test", function () {
       tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
       const newTokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
       const newPosition = await (positionManager as INonfungiblePositionManager).positions(newTokenId);
+      const ownerOfUniNFT = await (positionManager as INonfungiblePositionManager).ownerOf(newTokenId); 
 
       const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
         tokenId: newTokenId,
@@ -801,8 +787,8 @@ describe("Controller helper integration test", function () {
 
       console.log("amount0", amount0.toString())
       console.log("amount1", amount1.toString())
+
+      expect(ownerOfUniNFT === depositor.address).to.be.true;
     })
   })
-
-
 })
