@@ -161,7 +161,6 @@ const WorldProvider: React.FC = ({ children }) => {
 
   // const { oSqueeth } = useAddresses()
   const { oSqueeth } = useAtomValue(addressesAtom)
-
   const ethPrice = useETHPrice()
   const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
