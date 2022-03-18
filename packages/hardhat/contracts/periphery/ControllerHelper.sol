@@ -143,29 +143,13 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         uint128 amount0Min;
         uint128 amount1Min;
     }
-    struct FlashloanCloseVaultLpNftParam {
-        uint256 vaultId; // vault ID
-        uint256 tokenId; // Uni NFT token ID
-        uint256 liquidity; // amount of liquidity in LP position
-        uint256 liquidityPercentage; // percentage of liquidity to burn in LP position in decimals with 18 precision(e.g 60% = 0.6 = 6e17)
-        uint256 wPowerPerpAmountToBurn; // amount of wPowerPerp to burn in vault
-        uint256 collateralToFlashloan; // amount of ETH collateral to flashloan and deposit into vault
-        uint256 collateralToWithdraw;
-        uint256 limitPriceEthPerPowerPerp; // price limit for swapping between wPowerPerp and ETH (ETH per 1 wPowerPerp)
-        uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
-        uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
-    }
-    /// @dev params for _closeUniLp()
-    struct closeUniLpParams {
-        uint256 vaultId;
+    /// @dev params for sellAll()
+    struct SellAll {
         uint256 tokenId;
         uint256 liquidity;
-        uint256 liquidityPercentage; // percentage of liquidity to burn in LP position in decimals with 18 precision(e.g 60% = 0.6 = 6e17)
-        uint256 wPowerPerpAmountToBurn;
-        uint256 collateralToWithdraw;
-        uint256 limitPriceEthPerPowerPerp;
-        uint128 amount0Min;
-        uint128 amount1Min;
+        uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
+        uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
+        uint256 limitPriceEthPerPowerPerp; // price limit for selling wPowerPerp
     }
 
     /// @dev events
@@ -306,217 +290,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         );
 
         payable(msg.sender).sendValue(address(this).balance);
-    }
-
-    /**
-     * @notice sell long wPowerPerp and flashswap mint short position
-     * @dev flashswap amount = collateral amount - msg.value - ETH from selling long wPowerPerp
-     * @param _params FlashSellLongWMintParams struct
-     */
-    function flashswapSellLongWMint(FlashSellLongWMintParams calldata _params) external payable {
-        IWPowerPerp(wPowerPerp).transferFrom(msg.sender, address(this), _params.wPowerPerpAmountToSell);
-
-        // flashswap and mint short position
-        _exactInFlashSwap(
-            wPowerPerp,
-            weth,
-            IUniswapV3Pool(wPowerPerpPool).fee(),
-            _params.wPowerPerpAmountToMint.add(_params.wPowerPerpAmountToSell),
-            _params.minToReceive,
-            uint8(CALLBACK_SOURCE.FLASH_SELL_LONG_W_MINT),
-            abi.encode(_params)
-        );
-
-        payable(msg.sender).sendValue(address(this).balance);
-    }
-
-    /**
-     * @notice close short position with user Uniswap v3 LP NFT
-     * @dev user should approve this contract for Uni NFT transfer
-     */
-    function closeShortWithUserNft(CloseShortWithUserNftParams calldata _params) external {
-        INonfungiblePositionManager(nonfungiblePositionManager).safeTransferFrom(
-            msg.sender,
-            address(this),
-            _params.tokenId
-        );
-
-        _closeUniLp(
-            closeUniLpParams({
-                vaultId: _params.vaultId,
-                tokenId: _params.tokenId,
-                liquidity: _params.liquidity,
-                liquidityPercentage: _params.liquidityPercentage,
-                wPowerPerpAmountToBurn: _params.wPowerPerpAmountToBurn,
-                collateralToWithdraw: _params.collateralToWithdraw,
-                limitPriceEthPerPowerPerp: _params.limitPriceEthPerPowerPerp,
-                amount0Min: _params.amount0Min,
-                amount1Min: _params.amount1Min
-            })
-        );
-
-        _checkPartialLpClose(0, _params.tokenId, _params.liquidityPercentage);
-
-        IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
-        payable(msg.sender).sendValue(address(this).balance);
-    }
-
-    function flashloanCloseVaultLpNft(FlashloanCloseVaultLpNftParam calldata _params) external payable {
-        _flashLoan(
-            weth,
-            _params.collateralToFlashloan,
-            uint8(CALLBACK_SOURCE.FLASHLOAN_CLOSE_VAULT_LP_NFT),
-            abi.encode(
-                closeUniLpParams({
-                    vaultId: _params.vaultId,
-                    tokenId: _params.tokenId,
-                    liquidity: _params.liquidity,
-                    liquidityPercentage: _params.liquidityPercentage,
-                    wPowerPerpAmountToBurn: _params.wPowerPerpAmountToBurn,
-                    collateralToWithdraw: _params.collateralToFlashloan.add(_params.collateralToWithdraw),
-                    limitPriceEthPerPowerPerp: _params.limitPriceEthPerPowerPerp,
-                    amount0Min: _params.amount0Min,
-                    amount1Min: _params.amount1Min
-                })
-            )
-        );
-
-        IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
-        payable(msg.sender).sendValue(address(this).balance);
-    }
-
-    /**
-     * @notice mint WPowerPerp and LP into Uniswap v3 pool
-     * @param _vaultId vault ID
-     * @param _wPowerPerpAmount amount of WPowerPerp token to mint
-     * @param _collateralToMint collateral to use for minting
-     * @param _collateralToLP collateral to use for LPing
-     * @param _amount0Min minimum amount of asset0 in LP
-     * @param _amount1Min minimum amount of asset1 in LP
-     * @param _deadline LP position timestamp deadline
-     * @param _lowerTick LP lower tick
-     * @param _upperTick LP upper tick
-     */
-    function batchMintLp(
-        uint256 _vaultId,
-        uint256 _wPowerPerpAmount,
-        uint256 _collateralToMint,
-        uint256 _collateralToLP,
-        uint256 _amount0Min,
-        uint256 _amount1Min,
-        uint256 _deadline,
-        int24 _lowerTick,
-        int24 _upperTick
-    ) external payable {
-        require(msg.value == _collateralToMint.add(_collateralToLP), "E2");
-
-        uint256 vaultId = IController(controller).mintWPowerPerpAmount{value: _collateralToMint}(
-            _vaultId,
-            _wPowerPerpAmount,
-            0
-        );
-        uint256 amount0Desired = isWethToken0 ? _collateralToLP : _wPowerPerpAmount;
-        uint256 amount1Desired = isWethToken0 ? _wPowerPerpAmount : _collateralToLP;
-
-        _lpWPowerPerpPool(
-            msg.sender,
-            _collateralToLP,
-            amount0Desired,
-            amount1Desired,
-            _amount0Min,
-            _amount1Min,
-            _deadline,
-            _lowerTick,
-            _upperTick
-        );
-
-        _checkLpMintExcess(vaultId);
-
-        // if openeded new vault, transfer vault NFT to user
-        if (_vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), msg.sender, vaultId);
-
-        payable(msg.sender).sendValue(address(this).balance);
-
-        emit BatchMintLp(msg.sender, _vaultId, _wPowerPerpAmount, _collateralToMint, _collateralToLP);
-    }
-
-    /**
-     * @notice FLash mint short position, LP in Uni v3, use LP NFT as collateral and withdraw ETH collateral to repay flashloan
-     * @dev sender can specify the amount of ETH collateral to withdraw in case vault.collateralAmount > ETH to repay for loan
-     * @param _params FlashloanWMintDepositNftParams struct
-     */
-    function flashloanWMintDepositNft(FlashloanWMintDepositNftParams calldata _params) external payable {
-        _flashLoan(
-            weth,
-            _params.collateralToFlashloan,
-            uint8(CALLBACK_SOURCE.FLASHLOAN_W_MINT_DEPOSIT_NFT),
-            abi.encode(_params)
-        );
-    }
-
-    function _flashCallback(
-        address _initiator,
-        address, /*_asset*/
-        uint256 _amount,
-        uint256 _premium,
-        uint8 _callSource,
-        bytes memory _calldata
-    ) internal override {
-        if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.FLASHLOAN_W_MINT_DEPOSIT_NFT) {
-            FlashloanWMintDepositNftParams memory data = abi.decode(_calldata, (FlashloanWMintDepositNftParams));
-
-            // convert flashloaned WETH to ETH
-            IWETH9(weth).withdraw(_amount);
-
-            uint256 vaultId = IController(controller).mintWPowerPerpAmount{value: data.collateralToDeposit}(
-                data.vaultId,
-                data.wPowerPerpAmount,
-                0
-            );
-
-            // LP data.wPowerPerpAmount & data.collateralToLp in Uni v3
-            uint256 amount0Desired = isWethToken0 ? data.collateralToLp : data.wPowerPerpAmount;
-            uint256 amount1Desired = isWethToken0 ? data.wPowerPerpAmount : data.collateralToLp;
-            uint256 uniTokenId = _lpWPowerPerpPool(
-                address(this),
-                data.collateralToLp,
-                amount0Desired,
-                amount1Desired,
-                data.lpAmount0Min,
-                data.lpAmount1Min,
-                block.timestamp,
-                data.lpLowerTick,
-                data.lpUpperTick
-            );
-
-            _checkLpMintExcess(vaultId);
-
-            // deposit Uni NFT token in vault
-            INonfungiblePositionManager(nonfungiblePositionManager).approve(controller, uniTokenId);
-            IController(controller).depositUniPositionToken(vaultId, uniTokenId);
-
-            // remove flashloan amount in ETH from vault + any amount of collateral user want to withdraw (sum <= vault.collateralAmount)
-            IController(controller).withdraw(vaultId, _amount.add(data.collateralToWithdraw));
-
-            // convert flashloaned amount + fee from ETH to WETH to prepare for payback
-            IWETH9(weth).deposit{value: _amount.add(_premium)}();
-
-            // if openeded new vault, transfer vault NFT to user
-            if (data.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), _initiator, vaultId);
-        } else if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.FLASHLOAN_CLOSE_VAULT_LP_NFT) {
-            closeUniLpParams memory data = abi.decode(_calldata, (closeUniLpParams));
-
-            // convert flashloaned WETH to ETH
-            IWETH9(weth).withdraw(_amount);
-
-            IController(controller).deposit{value: _amount}(data.vaultId);
-
-            IController(controller).withdrawUniPositionToken(data.vaultId);
-
-            _closeUniLp(data);
-
-            _checkPartialLpClose(data.vaultId, data.tokenId, data.liquidityPercentage);
-        }
     }
 
     /**
@@ -829,8 +602,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             if (data.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), _caller, vaultId);
         } else if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH) {
             IWPowerPerp(wPowerPerp).transfer(wPowerPerpPool, _amountToPay);
-
-            IWETH9(weth).deposit{value: address(this).balance}();
         } else if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP) {
             SwapExactoutEthWPowerPerpData memory data = abi.decode(_callData, (SwapExactoutEthWPowerPerpData));
 
