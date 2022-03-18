@@ -217,6 +217,22 @@ export const useGetShortAmountFromDebt = () => {
   return getShortAmountFromDebt
 }
 
+export const useGetUniNFTCollatDetail = () => {
+  const normFactor = useNormFactor()
+  const getETHandOSQTHAmount = useGetETHandOSQTHAmount()
+  const getTwapEthPrice = useGetTwapEthPrice()
+
+  const getUniNFTCollatDetail = async (uniId: number) => {
+    const ethPrice = await getTwapEthPrice()
+    const { wethAmount, oSqthAmount, position } = await getETHandOSQTHAmount(uniId)
+    const sqthValueInEth = oSqthAmount.multipliedBy(normFactor).multipliedBy(ethPrice).div(INDEX_SCALE)
+
+    return { collateral: sqthValueInEth.plus(wethAmount), position }
+  }
+
+  return getUniNFTCollatDetail
+}
+
 export const useGetCollatRatioAndLiqPrice = () => {
   const impliedVol = useAtomValue(impliedVolAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)
@@ -225,6 +241,7 @@ export const useGetCollatRatioAndLiqPrice = () => {
   const getTwapEthPrice = useGetTwapEthPrice()
   const getDebtAmount = useGetDebtAmount()
   const getETHandOSQTHAmount = useGetETHandOSQTHAmount()
+  const getUniNFTCollatDetail = useGetUniNFTCollatDetail()
   const getCollatRatioAndLiqPrice = useCallback(
     async (collateralAmount: BigNumber, shortAmount: BigNumber, uniId?: number) => {
       const emptyState = {
@@ -237,10 +254,8 @@ export const useGetCollatRatioAndLiqPrice = () => {
       let liquidationPrice = new BigNumber(0)
       // Uni LP token is deposited
       if (uniId) {
-        const { wethAmount, oSqthAmount, position } = await getETHandOSQTHAmount(uniId)
-        const ethPrice = await getTwapEthPrice()
-        const sqthValueInEth = oSqthAmount.multipliedBy(normFactor).multipliedBy(ethPrice).div(INDEX_SCALE)
-        effectiveCollat = effectiveCollat.plus(sqthValueInEth).plus(wethAmount)
+        const { collateral: uniCollat, position } = await getUniNFTCollatDetail(uniId)
+        effectiveCollat = effectiveCollat.plus(uniCollat)
         liquidationPrice = calculateLiquidationPriceForLP(
           collateralAmount,
           shortAmount,
