@@ -33,7 +33,7 @@ import {TransferHelper} from "@uniswap/v3-periphery/contracts/libraries/Transfer
  * E1: max ETH to pay for long wPowerPerp is less than amount available
  * E2: ETH sent is less than amount to use for minting short plus amount to use for LPing
  * E3: amount out less than min
- * E4: amont in greater tuhan max
+ * E4: amont in greater than max
  * E5: invalid factory address
  * E6: invalid assets length
  */
@@ -531,7 +531,15 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             })
         );
 
+        console.log("_params.wPowerPerpAmountDesired", _params.wPowerPerpAmountDesired);
+        console.log("wPowerPerpAmountInLp", wPowerPerpAmountInLp);
+
+        console.log("p balan b", IWPowerPerp(wPowerPerp).balanceOf(address(this)));
+        console.log("w balan b", IWETH9(weth).balanceOf(address(this)));
+
+
         if (_params.wPowerPerpAmountDesired > wPowerPerpAmountInLp) {
+            console.log("h");
             // if new position target a higher wPowerPerp amount, swap WETH to reach the desired amount
             _exactOutFlashSwap(
                 weth,
@@ -545,6 +553,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 ""
             );
         } else if (_params.wPowerPerpAmountDesired < wPowerPerpAmountInLp) {
+                        console.log("hh");
+
             // if new position target lower wPowerPerp amount, swap excess to WETH
             uint256 wPowerPerpExcess = wPowerPerpAmountInLp.sub(_params.wPowerPerpAmountDesired);
 
@@ -557,20 +567,24 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 uint8(CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
                 ""
             );
-        }
+        } 
+        // else if (_params.wethAmountDesired > wethAmountInLp) {
+        //                 console.log("hhh");
 
-        if (_params.wethAmountDesired > wethAmountInLp) {
-            // if new position target a higher WETH amount, swap wPowerPerp to reach the desired amount
-            _exactOutFlashSwap(
-                wPowerPerp,
-                weth,
-                IUniswapV3Pool(wPowerPerpPool).fee(),
-                _params.wethAmountDesired.sub(wethAmountInLp),
-                _params.limitPriceEthPerPowerPerp.mul(_params.wethAmountDesired.sub(wethAmountInLp)).div(1e18),
-                uint8(CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP),
-                ""
-            );
-        }
+        //     // if new position target a higher WETH amount, swap wPowerPerp to reach the desired amount
+        //     _exactOutFlashSwap(
+        //         wPowerPerp,
+        //         weth,
+        //         IUniswapV3Pool(wPowerPerpPool).fee(),
+        //         _params.wethAmountDesired.sub(wethAmountInLp),
+        //         _params.limitPriceEthPerPowerPerp.mul(_params.wethAmountDesired.sub(wethAmountInLp)).div(1e18),
+        //         uint8(CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
+        //         ""
+        //     );
+        // }
+
+        console.log("p balan", IWPowerPerp(wPowerPerp).balanceOf(address(this)));
+        console.log("w balan", IWETH9(weth).balanceOf(address(this)));
 
         // mint new position
         _lpWPowerPerpPool(
@@ -823,9 +837,15 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             deadline: _deadline
         });
 
-        (uint256 tokenId, , , ) = INonfungiblePositionManager(nonfungiblePositionManager).mint{value: _ethAmount}(
+        console.log("_amount0Desired", _amount0Desired);
+        console.log("_amount0Desired", _amount1Desired);
+
+        (uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1) = INonfungiblePositionManager(nonfungiblePositionManager).mint{value: _ethAmount}(
             _params
         );
+
+        console.log("amount0 amount0", amount0);
+        console.log("amount1 amount1", amount1);
 
         return tokenId;
     }

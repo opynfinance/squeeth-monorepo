@@ -702,4 +702,107 @@ describe("Controller helper integration test", function () {
       expect(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).sub(collateralToLp.add(ethAmountOut)).lte(BigNumber.from(10).pow(15))).to.be.true
     })
   })
+
+  describe("Rebalance LP through trading amounts", async () => {
+    let collateralToLp: BigNumber;
+    let mintWSqueethAmount: BigNumber;
+
+    before("open position and LP", async () => {
+      const normFactor = await controller.normalizationFactor()
+      mintWSqueethAmount = ethers.utils.parseUnits('35')
+      const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
+      const ethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 420, true)
+      const scaledEthPrice = ethPrice.div(10000)
+      const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
+      const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
+      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
+      collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
+
+      await controller.connect(depositor).mintWPowerPerpAmount(0, mintWSqueethAmount, 0, {value: collateralAmount})
+
+      const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
+      const token0 = isWethToken0 ? weth.address : wSqueeth.address
+      const token1 = isWethToken0 ? wSqueeth.address : weth.address
+  
+      const mintParam = {
+        token0,
+        token1,
+        fee: 3000,
+        tickLower: -887220,// int24 min tick used when selecting full range
+        tickUpper: 887220,// int24 max tick used when selecting full range
+        amount0Desired: isWethToken0 ? collateralToLp : mintWSqueethAmount,
+        amount1Desired: isWethToken0 ? mintWSqueethAmount : collateralToLp,
+        amount0Min: 0,
+        amount1Min: 0,
+        recipient: depositor.address,
+        deadline: Math.floor(await getNow(ethers.provider) + 8640000),// uint256
+      }
+  
+      await weth.connect(depositor).deposit({value: collateralToLp})
+      await weth.connect(depositor).approve(positionManager.address, ethers.constants.MaxUint256)
+      await wSqueeth.connect(depositor).approve(positionManager.address, ethers.constants.MaxUint256)  
+      await (positionManager as INonfungiblePositionManager).connect(depositor).mint(mintParam)
+    })
+
+    it("rebalance to decrease WETH amount and LP only oSQTH", async () => {
+      let tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
+      const oldTokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
+      const oldPosition = await (positionManager as INonfungiblePositionManager).positions(oldTokenId);
+      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
+      const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
+      const limitPriceEthPerPowerPerp = squeethPrice.mul(one.sub(slippage)).div(one);
+
+      // uint256 tokenId;
+      // uint256 ethAmountToLp;
+      // uint256 liquidity;
+      // uint256 wPowerPerpAmountDesired;
+      // uint256 wethAmountDesired;
+      // uint256 amount0DesiredMin;
+      // uint256 amount1DesiredMin;
+      // uint256 limitPriceEthPerPowerPerp;
+      // uint256 amount0Min;
+      // uint256 amount1Min;
+      // int24 lowerTick;
+      // int24 upperTick;
+      // bool rebalanceToken0;
+      // bool rebalanceToken1;
+
+      const params = {
+        tokenId: oldTokenId,
+        ethAmountToLp: BigNumber.from(0),
+        liquidity: oldPosition.liquidity,
+        wPowerPerpAmountDesired: ethers.utils.parseUnits('20'),
+        wethAmountDesired: ethers.utils.parseUnits('12'),
+        amount0DesiredMin: BigNumber.from(0),
+        amount1DesiredMin: BigNumber.from(0),
+        limitPriceEthPerPowerPerp,
+        amount0Min: BigNumber.from(0),
+        amount1Min: BigNumber.from(0),
+        lowerTick: -887220,
+        upperTick: 887220,
+        rebalanceToken0: false,
+        rebalanceToken1: false
+      }
+
+      await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controllerHelper.address, oldTokenId);
+      await controllerHelper.connect(depositor).rebalanceWithoutVault(params);
+
+      tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
+      const newTokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
+      const newPosition = await (positionManager as INonfungiblePositionManager).positions(newTokenId);
+
+      const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
+        tokenId: newTokenId,
+        liquidity: newPosition.liquidity,
+        amount0Min: BigNumber.from(0),
+        amount1Min: BigNumber.from(0),
+        deadline: Math.floor(await getNow(ethers.provider) + 8640000),
+      })
+
+      console.log("amount0", amount0.toString())
+      console.log("amount1", amount1.toString())
+    })
+  })
+
+
 })
