@@ -143,6 +143,14 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         uint128 amount0Min;
         uint128 amount1Min;
     }
+    /// @dev params for sellAll()
+    struct SellAll {
+        uint256 tokenId;
+        uint256 liquidity;
+        uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
+        uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
+        uint256 limitPriceEthPerPowerPerp; // price limit for selling wPowerPerp
+    }
 
     /// @dev events
     event FlashswapWMint(
@@ -406,6 +414,59 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             uint8(CALLBACK_SOURCE.FLASHLOAN_W_MINT_DEPOSIT_NFT),
             abi.encode(_params)
         );
+    }
+
+    function sellAll(SellAll calldata _params) external {
+        INonfungiblePositionManager(nonfungiblePositionManager).safeTransferFrom(
+            msg.sender,
+            address(this),
+            _params.tokenId
+        );
+
+        INonfungiblePositionManager.DecreaseLiquidityParams memory decreaseParams = INonfungiblePositionManager
+            .DecreaseLiquidityParams({
+                tokenId: _params.tokenId,
+                liquidity: uint128(_params.liquidity),
+                amount0Min: _params.amount0Min,
+                amount1Min: _params.amount1Min,
+                deadline: block.timestamp
+            });
+        INonfungiblePositionManager(nonfungiblePositionManager).decreaseLiquidity(decreaseParams);
+
+        uint256 wethAmount;
+        uint256 wPowerPerpAmount;
+        (isWethToken0)
+            ? (wethAmount, wPowerPerpAmount) = INonfungiblePositionManager(nonfungiblePositionManager).collect(
+                INonfungiblePositionManager.CollectParams({
+                    tokenId: _params.tokenId,
+                    recipient: address(this),
+                    amount0Max: type(uint128).max,
+                    amount1Max: type(uint128).max
+                })
+            )
+            : (wPowerPerpAmount, wethAmount) = INonfungiblePositionManager(nonfungiblePositionManager).collect(
+            INonfungiblePositionManager.CollectParams({
+                tokenId: _params.tokenId,
+                recipient: address(this),
+                amount0Max: type(uint128).max,
+                amount1Max: type(uint128).max
+            })
+        );
+
+        if (wPowerPerpAmount > 0) {
+            _exactInFlashSwap(
+                wPowerPerp,
+                weth,
+                IUniswapV3Pool(wPowerPerpPool).fee(),
+                wPowerPerpAmount,
+                _params.limitPriceEthPerPowerPerp.mul(wPowerPerpAmount).div(1e18),
+                uint8(CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
+                ""
+            );
+        }
+
+        IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
+        payable(msg.sender).sendValue(address(this).balance);
     }
 
     function _flashCallback(

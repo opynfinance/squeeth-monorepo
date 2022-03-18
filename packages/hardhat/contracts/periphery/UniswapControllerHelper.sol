@@ -73,24 +73,6 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
         _swapCallback(data.caller, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource);
     }
 
-    // /**
-    //  * @notice uniswap flash callback function for flashloan
-    //  * @param fee0 fee for token0
-    //  * @param fee1 fee for token1
-    //  * @param _data callback data encoded as FlashCallbackData struct
-    //  */
-    // function uniswapV3FlashCallback(
-    //     uint256 fee0,
-    //     uint256 fee1,
-    //     bytes calldata _data
-    // ) external override {
-    //     FlashCallbackData memory data = abi.decode(_data, (FlashCallbackData));
-
-    //     // CallbackValidation.verifyCallback(factory, data.tokenA, data.tokenB, data.fee);
-
-    //     _flashCallback(fee0, fee1, data.callData, data.callSource);
-    // }
-
     /**
      * @notice execute an exact-in flash swap (specify an exact amount to pay)
      * @param _tokenIn token address to sell
