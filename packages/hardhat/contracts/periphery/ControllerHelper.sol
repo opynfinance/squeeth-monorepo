@@ -417,9 +417,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
     }
 
     function sellAll(SellAll calldata _params) external {
-        console.log("b address(this).balance", address(this).balance);
-        console.log("IWETH9(weth).balanceOf(address(this))", IWETH9(weth).balanceOf(address(this)));
-
         INonfungiblePositionManager(nonfungiblePositionManager).safeTransferFrom(
             msg.sender,
             address(this),
@@ -469,7 +466,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         }
 
         IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
-        console.log("address(this).balance", address(this).balance);
         payable(msg.sender).sendValue(address(this).balance);
     }
 
@@ -602,6 +598,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             if (data.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), _caller, vaultId);
         } else if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH) {
             IWPowerPerp(wPowerPerp).transfer(wPowerPerpPool, _amountToPay);
+
+            IWETH9(weth).deposit{value: address(this).balance}();
         } else if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP) {
             SwapExactoutEthWPowerPerpData memory data = abi.decode(_callData, (SwapExactoutEthWPowerPerpData));
 
