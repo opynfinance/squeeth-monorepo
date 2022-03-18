@@ -316,7 +316,7 @@ const Component: React.FC = () => {
   const shortDebt = useShortDebt()
   const lpedSqueeth = useLpDebt()
   const { getApproved, approve } = useERC721(nftManager)
-  const oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
+  const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
   const [collateral, setCollateral] = useState('0')
   const collateralBN = new BigNumber(collateral)

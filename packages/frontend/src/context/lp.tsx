@@ -86,7 +86,7 @@ const LPProvider: React.FC = ({ children }) => {
   const [lpState, dispatch] = useReducer<Reducer<LPType, ActionType>>(tradeReducer, initialState)
 
   const { oSqueeth } = useAtomValue(addressesAtom)
-  const oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
+  const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
   useEffect(() => {
     if (oSqueethBal.isZero() || lpState.step === Steps.PROVIDE_LIQUIDITY) return

@@ -72,7 +72,7 @@ const useStyles = makeStyles((theme) =>
 const Mint: React.FC = () => {
   const classes = useStyles()
   const { oSqueeth } = useAtomValue(addressesAtom)
-  const oSqueethBal = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
+  const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
   const { data: balance } = useWalletBalance()
   const connected = useAtomValue(connectedWalletAtom)
   const existingCollatPercent = useAtomValue(existingCollatPercentAtom)

@@ -11,7 +11,7 @@ import { toTokenAmount } from '@utils/calculations'
 import { addressAtom, connectedWalletAtom, web3Atom } from 'src/state/wallet/atoms'
 
 const tokenBalanceQueryKeys = {
-  userTokenBalance: () => ['userTokenBalance'],
+  userTokenBalance: (token: string) => ['userTokenBalance', token],
 }
 /**
  * get token balance.
@@ -32,7 +32,7 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals
   }, [web3, token])
 
   const balanceQuery = useQuery(
-    tokenBalanceQueryKeys.userTokenBalance(),
+    tokenBalanceQueryKeys.userTokenBalance(token),
     () => updateBalance(token, connected, contract, address, decimals),
     {
       enabled: Boolean(token) && Boolean(connected) && Boolean(contract),
@@ -41,7 +41,7 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals
     },
   )
 
-  return balanceQuery.data ?? new BigNumber(0)
+  return { value: balanceQuery.data ?? new BigNumber(0), loading: !balanceQuery.data }
 }
 
 async function updateBalance(
@@ -57,6 +57,7 @@ async function updateBalance(
       from: address,
     })
     const balance = toTokenAmount(new BigNumber(_bal.toString()), decimals)
+
     return balance
   } catch (error) {
     return new BigNumber(0)

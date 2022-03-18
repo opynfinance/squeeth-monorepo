@@ -119,7 +119,8 @@ const CrabProvider: React.FC = ({ children }) => {
   const [timeAtLastHedge, setTimeAtLastHedge] = useState(0)
   const [loading, setLoading] = useState(true)
   const [currentEthValue, setCurrentEthValue] = useState(new BigNumber(0))
-  const userCrabBalance = useTokenBalance(crabStrategy, 5, 18)
+  const [currentEthLoading, setCurrentEthLoading] = useState(true)
+  const { value: userCrabBalance, loading: userCrabBalanceLoading } = useTokenBalance(crabStrategy, 5, 18)
   const [profitableMovePercent, setProfitableMovePercent] = useState(0)
   const [slippage, setSlippage] = useState(0.5)
   const [isTimeHedgeAvailable, setIsTimeHedgeAvailable] = useState(false)
@@ -175,7 +176,7 @@ const CrabProvider: React.FC = ({ children }) => {
   }
 
   useEffect(() => {
-    if (!contract || !ready) return
+    if (!contract || !ready || userCrabBalanceLoading) return
 
     calculateCurrentValue()
   }, [userCrabBalance.toString(), ready, contract, vault, slippage])
@@ -185,6 +186,7 @@ const CrabProvider: React.FC = ({ children }) => {
     const { amountIn: ethToPay } = await calculateEthWillingToPay(userCrabBalance, slippage)
     if (collat) {
       setCurrentEthValue(collat.minus(ethToPay))
+      setCurrentEthLoading(false)
     }
   }
 
@@ -350,7 +352,7 @@ const CrabProvider: React.FC = ({ children }) => {
   const store: CrabStrategyType = {
     maxCap,
     vault,
-    loading: loading || !ready,
+    loading: loading || !ready || userCrabBalanceLoading || currentEthLoading,
     collatRatio,
     liquidationPrice,
     timeAtLastHedge,
