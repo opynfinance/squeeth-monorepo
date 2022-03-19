@@ -3,7 +3,7 @@
 // in 2 terminal: MAINNET_FORK=true npx hardhat test ./test/e2e/periphery/controller-helper.ts
 import { ethers, network} from "hardhat"
 import { expect } from "chai";
-import { Contract, BigNumber, providers } from "ethers";
+import { Contract, BigNumber, providers, BytesLike, BigNumberish } from "ethers";
 import BigNumberJs from 'bignumber.js'
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
@@ -64,7 +64,6 @@ describe("ControllerHelper: mainnet fork", function () {
   let ethUsdcPool: Contract
   let controllerHelper: ControllerHelper
   let shortSqueeth: ShortPowerPerp
-  let swapRouter: string
 
   this.beforeAll("Setup mainnet fork contracts", async () => {
     depositor = await impersonateAddress("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045");
@@ -77,7 +76,6 @@ describe("ControllerHelper: mainnet fork", function () {
 
     positionManager = await ethers.getContractAt(POSITION_MANAGER_ABI, "0xC36442b4a4522E871399CD717aBDD847Ab11FE88");
     uniswapFactory = await ethers.getContractAt(FACTORY_ABI, "0x1F98431c8aD98523631AE4a59f267346ea31F984");
-    // swapRouter = "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45"
     uniswapRouter = await ethers.getContractAt(ROUTER_ABI, "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45");
 
     controller = (await ethers.getContractAt("Controller", "0x64187ae08781B09368e6253F9E94951243A493D5")) as Controller
@@ -88,18 +86,10 @@ describe("ControllerHelper: mainnet fork", function () {
     // ethDaiPool = await ethers.getContractAt("MockErc20", "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8")
     ethUsdcPool = await ethers.getContractAt(POOL_ABI, "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8");
 
-    // await controller.connect(owner).setFeeRecipient(feeRecipient.address);
-    // await controller.connect(owner).setFeeRate(0)
-    
-    // const TickMath = await ethers.getContractFactory("TickMathExternal")
-    // const TickMathLibrary = (await TickMath.deploy());
-    // const SqrtPriceExternal = await ethers.getContractFactory("SqrtPriceMathPartial")
-    // const SqrtPriceExternalLibrary = (await SqrtPriceExternal.deploy());  
-    // const ControllerHelperLib = await ethers.getContractFactory("ControllerHelperLib")
-    // const controllerHelperLib = (await ControllerHelperLib.deploy());  
-    // const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper", {libraries: {TickMathExternal: TickMathLibrary.address, SqrtPriceMathPartial: SqrtPriceExternalLibrary.address}});
-    const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper");
-    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, shortSqueeth.address, "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C", wSqueeth.address, weth.address, uniswapRouter.address, positionManager.address, uniswapFactory.address, "0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5")) as ControllerHelper;
+    const ControllerHelperUtil = await ethers.getContractFactory("ControllerHelperUtil")
+    const ControllerHelperUtilLib = (await ControllerHelperUtil.deploy());
+    const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper", {libraries: {ControllerHelperUtil: ControllerHelperUtilLib.address}});
+    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, shortSqueeth.address, "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C", wSqueeth.address, weth.address, positionManager.address, uniswapFactory.address, "0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5")) as ControllerHelper;
   })
 
   describe("Flash mint short position, LP and use LP as collateral", async () => {
@@ -452,4 +442,24 @@ describe("ControllerHelper: mainnet fork", function () {
       expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
     })
   })
+
+  // describe("Rebalance with vault", async () => {
+  //   it("rebalance", async () => {
+  //     const abiCoder = new ethers.utils.AbiCoder
+  //     const params = [
+  //       {
+  //         rebalanceVaultNftType: BigNumber.from(0),
+  //         // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
+  //         data: abiCoder.encode(["uint256"], ["1"])
+  //       },
+  //       {
+  //         rebalanceVaultNftType: BigNumber.from(1),
+  //         // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
+  //         data: abiCoder.encode(["uint256"], ["1"])
+  //       }
+  //     ]
+
+  //     await controllerHelper.connect(depositor).RebalanceVaultNft(params, ethers.utils.parseUnits('2'));
+  //   })
+  // })
 })

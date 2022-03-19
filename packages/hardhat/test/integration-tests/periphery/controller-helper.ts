@@ -70,15 +70,10 @@ describe("Controller helper integration test", function () {
     wSqueethPool = squeethDeployments.wsqueethEthPool
     ethDaiPool = squeethDeployments.ethDaiPool
     
-    // const TickMath = await ethers.getContractFactory("TickMathExternal")
-    // const TickMathLibrary = (await TickMath.deploy());
-    // const SqrtPriceExternal = await ethers.getContractFactory("SqrtPriceMathPartial")
-    // const SqrtPriceExternalLibrary = (await SqrtPriceExternal.deploy());  
-    // const ControllerHelperLib = await ethers.getContractFactory("ControllerHelperLib")
-    // const controllerHelperLib = (await ControllerHelperLib.deploy());  
-    // const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper", {libraries: {TickMathExternal: TickMathLibrary.address, SqrtPriceMathPartial: SqrtPriceExternalLibrary.address}});
-    const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper");
-    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, shortSqueeth.address, wSqueethPool.address, wSqueeth.address, weth.address, swapRouter.address, positionManager.address, uniswapFactory.address, constants.AddressZero)) as ControllerHelper;
+    const ControllerHelperUtil = await ethers.getContractFactory("ControllerHelperUtil")
+    const ControllerHelperUtilLib = (await ControllerHelperUtil.deploy());
+    const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper", {libraries: {ControllerHelperUtil: ControllerHelperUtilLib.address}});
+    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, shortSqueeth.address, wSqueethPool.address, wSqueeth.address, weth.address, positionManager.address, uniswapFactory.address, constants.AddressZero)) as ControllerHelper;
   })
   
   this.beforeAll("Seed pool liquidity", async() => {
@@ -203,7 +198,7 @@ describe("Controller helper integration test", function () {
       const vaultBefore = await controller.vaults(vaultId)
       const tokenIndexBefore = await (positionManager as INonfungiblePositionManager).totalSupply();
 
-      await controllerHelper.connect(depositor).batchMintLp(0, mintWSqueethAmount, collateralAmount, collateralToLp, 0, 0, Math.floor(await getNow(ethers.provider) + 8640000), -887220, 887220, {value: collateralAmount.add(collateralToLp)});
+      await controllerHelper.connect(depositor).batchMintLp(0, mintWSqueethAmount, collateralAmount, collateralToLp, 0, 0, -887220, 887220, {value: collateralAmount.add(collateralToLp)});
 
       const vaultAfter = await controller.vaults(vaultId)
       const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
