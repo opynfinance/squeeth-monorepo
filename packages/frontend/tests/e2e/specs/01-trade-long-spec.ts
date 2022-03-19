@@ -72,7 +72,7 @@ describe('Trade on trade page', () => {
         })
 
         it('inputs should be zero by default and tx button is disabled', () => {
-          cy.get('#open-long-header-box').should('contain.text', 'Buy back oSQTH & open position')
+          cy.get('#open-long-header-box').should('contain.text', 'Pay ETH to buy squeeth ERC20')
           cy.get('#open-long-eth-input').should('have.value', '0')
           cy.get('#open-long-osqth-input').should('have.value', '0')
           cy.get('#open-long-sumbit-tx-btn').should('be.disabled')
