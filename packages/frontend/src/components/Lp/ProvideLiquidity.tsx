@@ -64,7 +64,13 @@ const ProvideLiquidity: React.FC = () => {
           <Typography variant="caption" className={classes.warning}>
             Make sure your wallet is connected to Uniswap
           </Typography>
-          <a className={classes.uniOpenBtn} href={UniswapIFrameOpen[networkId]} target="_blank" rel="noreferrer">
+          <a
+            className={classes.uniOpenBtn}
+            id="open-in-uniswap-to-lp"
+            href={UniswapIFrameOpen[networkId]}
+            target="_blank"
+            rel="noreferrer"
+          >
             <Typography variant="caption">Open in Uniswap</Typography>
             <OpenInNewIcon style={{ fontSize: 16, marginLeft: '4px' }} fontSize="small" />
           </a>
