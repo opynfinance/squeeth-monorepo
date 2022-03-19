@@ -77,8 +77,8 @@ const Trade: React.FC = () => {
           variant="fullWidth"
           className={classes.tabBackGround}
         >
-          <SecondaryTab label="Open" />
-          <SecondaryTab label="Close" />
+          <SecondaryTab label="Open" id="open-btn" />
+          <SecondaryTab label="Close" id="close-btn" />
         </SecondaryTabs>
       }
       <div>

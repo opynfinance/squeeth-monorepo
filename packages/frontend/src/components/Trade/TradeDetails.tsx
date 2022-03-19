@@ -1,10 +1,12 @@
 import { createStyles, makeStyles, Typography } from '@material-ui/core'
+import clsx from 'clsx'
 import React, { ReactNode } from 'react'
 
 type TradeDetailsType = {
   actionTitle: string
   amount: string
   unit: string
+  id?: string
   value: string
   hint: ReactNode
 }
@@ -31,15 +33,15 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const TradeDetails: React.FC<TradeDetailsType> = ({ actionTitle, amount, unit, value, hint }) => {
+const TradeDetails: React.FC<TradeDetailsType> = ({ actionTitle, amount, id, unit, value, hint }) => {
   const classes = useStyles()
 
   return (
-    <div className={classes.container}>
+    <div className={classes.container} id={id}>
       <div className={classes.squeethExp}>
         <div>
           <Typography variant="caption">{actionTitle}</Typography>
-          <Typography className={classes.squeethExpTxt}>{amount}</Typography>
+          <Typography className={clsx(classes.squeethExpTxt, 'trade-details-amount')}>{amount}</Typography>
         </div>
         <div>
           <Typography variant="caption">${value}</Typography>

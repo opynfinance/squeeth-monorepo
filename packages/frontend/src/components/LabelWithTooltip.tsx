@@ -17,7 +17,7 @@ const LabelWithTooltip: FC<Props> = ({ label, tooltip, labelVariant, ...props }:
       {tooltip && (
         <Box clone fontSize={10} ml={0.5}>
           <Tooltip title={tooltip}>
-            <InfoIcon fontSize="small" data-testid="info-icon" />
+            <InfoIcon fontSize="small" id="info-icon" />
           </Tooltip>
         </Box>
       )}
