@@ -385,7 +385,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   }, [collatPercent])
 
   return (
-    <div>
+    <div id="open-short-card">
       {confirmed && !isTxFirstStep ? (
         <div>
           <Confirmed
@@ -401,6 +401,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
               }}
               className={classes.amountInput}
               style={{ width: '300px' }}
+              id="open-short-close-btn"
             >
               {'Close'}
             </PrimaryButton>
@@ -426,7 +427,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
       ) : (
         <div>
           <div className={classes.settingsContainer}>
-            <Typography variant="caption" className={classes.explainer} component="div">
+            <Typography variant="caption" className={classes.explainer} component="div" id="open-short-header-box">
               Mint & sell squeeth for premium
             </Typography>
             <span className={classes.settingsButton}>
@@ -452,11 +453,15 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                   priceImpactWarning
                 ) : (
                   <div className={classes.hint}>
-                    <span>{`Balance ${balance.toFixed(4)}`}</span>
+                    <span>
+                      Balance <span id="open-short-eth-before-trade-balance">{balance.toFixed(4)}</span>{' '}
+                    </span>
                     {!collateral.isNaN() ? (
                       <>
                         <ArrowRightAltIcon className={classes.arrowIcon} />
-                        <span>{new BigNumber(balance).minus(collateral).toFixed(4)}</span>
+                        <span id="open-short-eth-post-trade-balance">
+                          {new BigNumber(balance).minus(collateral).toFixed(4)}
+                        </span>
                       </>
                     ) : null}
                     <span style={{ marginLeft: '4px' }}>ETH</span>
@@ -464,6 +469,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                 )
               }
               error={!!existingLongError || !!priceImpactWarning || !!openError}
+              id="open-short-eth-input"
             />
           </div>
           <div className={classes.thirdHeading}>
@@ -489,10 +495,15 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
               inputProps={{
                 min: '0',
               }}
+              className="open-short-collat-ratio-input-box"
             />
           </div>
           <div className={classes.thirdHeading}></div>
-          <CollatRange onCollatValueChange={(val) => setCollatPercent(val)} collatValue={collatPercent} />
+          <CollatRange
+            onCollatValueChange={(val) => setCollatPercent(val)}
+            collatValue={collatPercent}
+            id="open-short-collat-ratio"
+          />
           <TradeDetails
             actionTitle="Sell"
             amount={!amount.isNaN() ? amount.toFixed(6) : Number(0).toLocaleString()}
@@ -511,7 +522,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                 <div className={classes.hint}>
                   <span className={classes.hintTextContainer}>
                     <span className={classes.hintTitleText}>Position</span>
-                    <span>
+                    <span id="open-short-osqth-before-trade-balance">
                       {shortSqueethAmount.toFixed(4)}
                       {/* {shortVaults.length && shortVaults[firstValidVault].shortAmount.toFixed(6)} */}
                     </span>
@@ -519,13 +530,14 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                   {quote.amountOut.gt(0) ? (
                     <>
                       <ArrowRightAltIcon className={classes.arrowIcon} />
-                      <span>{shortSqueethAmount.plus(amount).toFixed(4)}</span>
+                      <span id="open-short-osqth-post-trade-balance">{shortSqueethAmount.plus(amount).toFixed(4)}</span>
                     </>
                   ) : null}{' '}
                   <span style={{ marginLeft: '4px' }}>oSQTH</span>
                 </div>
               )
             }
+            id="open-short-trade-details"
           />
           <div className={classes.divider}>
             <TradeInfoItem
@@ -534,18 +546,21 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
               unit="USDC"
               tooltip={`${Tooltips.LiquidationPrice}. ${Tooltips.Twap}`}
               priceType="twap"
+              id="open-short-liquidation-price"
             />
             <TradeInfoItem
               label="Initial Premium"
               value={quote.amountOut.toFixed(4)}
               unit="ETH"
               tooltip={Tooltips.InitialPremium}
+              id="open-short-initial-preminum"
             />
             <TradeInfoItem
               label="Current Collateral ratio"
               value={existingCollatPercent}
               unit="%"
               tooltip={Tooltips.CurrentCollRatio}
+              id="open-short-collat-ratio"
             />
             <div style={{ marginTop: '10px' }}>
               <UniswapData
@@ -563,6 +578,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                 onClick={selectWallet}
                 className={classes.amountInput}
                 style={{ width: '300px' }}
+                id="open-short-connect-wallet-btn"
               >
                 {'Connect Wallet'}
               </PrimaryButton>
@@ -586,6 +602,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                     ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
                     : { width: '300px' }
                 }
+                id="open-short-sumbit-tx-btn"
               >
                 {shortLoading || transactionInProgress ? (
                   <CircularProgress color="primary" size="1.5rem" />
@@ -822,8 +839,12 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
     setSqthTradeAmount(v)
   }
 
+  console.log(
+    amount.toString(),
+    amount.toString() ? getWSqueethPositionValue(amount).toFixed(2).toLocaleString() : Number(0).toLocaleString(),
+  )
   return (
-    <>
+    <div id="close-short-card">
       {confirmed && !isTxFirstStep ? (
         <div>
           <Confirmed
@@ -839,6 +860,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
               }}
               className={classes.amountInput}
               style={{ width: '300px' }}
+              id="close-short-close-btn"
             >
               {'Close'}
             </PrimaryButton>
@@ -864,7 +886,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
       ) : (
         <div>
           <div className={classes.settingsContainer}>
-            <Typography variant="caption" className={classes.explainer} component="div">
+            <Typography variant="caption" className={classes.explainer} component="div" id="close-short-header-box">
               Buy back oSQTH & close position
             </Typography>
             <span className={classes.settingsButton}>
@@ -900,18 +922,22 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                 ) : (
                   <div className={classes.hint}>
                     <span className={classes.hintTextContainer}>
-                      <span className={classes.hintTitleText}>Position</span> <span>{finalShortAmount.toFixed(6)}</span>
+                      <span className={classes.hintTitleText}>Position</span>{' '}
+                      <span id="close-short-osqth-before-trade-balance">{finalShortAmount.toFixed(6)}</span>
                     </span>
                     {amount.toNumber() ? (
                       <>
                         <ArrowRightAltIcon className={classes.arrowIcon} />
-                        <span>{finalShortAmount?.minus(amount).toFixed(6)}</span>
+                        <span id="close-short-osqth-post-trade-balance">
+                          {finalShortAmount?.minus(amount).toFixed(6)}
+                        </span>
                       </>
                     ) : null}{' '}
                     <span style={{ marginLeft: '4px' }}>oSQTH</span>
                   </div>
                 )
               }
+              id="close-short-osqth-input"
             />
           </div>
           <div style={{ width: '100%', padding: '0 25px 5px 25px' }}>
@@ -927,9 +953,14 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
               displayEmpty
               inputProps={{ 'aria-label': 'Without label' }}
               style={{ padding: '5px 0px', width: '100%', textAlign: 'left' }}
+              id="close-short-type-select"
             >
-              <MenuItem value={CloseType.FULL}>Full Close</MenuItem>
-              <MenuItem value={CloseType.PARTIAL}>Partial Close</MenuItem>
+              <MenuItem value={CloseType.FULL} id="close-short-full-close">
+                Full Close
+              </MenuItem>
+              <MenuItem value={CloseType.PARTIAL} id="close-short-partial-close">
+                Partial Close
+              </MenuItem>
             </Select>
           </div>
           {closeType === CloseType.PARTIAL && (
@@ -956,11 +987,13 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                 inputProps={{
                   min: '0',
                 }}
+                className="close-short-collat-ratio-input-box"
               />
               <CollatRange
                 className={classes.thirdHeading}
                 onCollatValueChange={(val) => setCollatPercent(val)}
                 collatValue={collatPercent}
+                id="close-short-collat-ratio"
               />
             </div>
           )}
@@ -978,11 +1011,15 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                 insufficientETHBalance
               ) : (
                 <div className={classes.hint}>
-                  <span>{`Balance ${balance}`}</span>
+                  <span>
+                    Balance <span id="close-short-eth-before-trade-balance">{balance}</span>{' '}
+                  </span>
                   {amount.toNumber() ? (
                     <>
                       <ArrowRightAltIcon className={classes.arrowIcon} />
-                      <span>{new BigNumber(balance).minus(sellCloseQuote.amountIn).toFixed(6)}</span>
+                      <span id="close-short-eth-post-trade-balance">
+                        {new BigNumber(balance).minus(sellCloseQuote.amountIn).toFixed(6)}
+                      </span>
                     </>
                   ) : existingLongError ? (
                     existingLongError
@@ -991,18 +1028,21 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                 </div>
               )
             }
+            id="close-short-trade-details"
           />
           <div className={classes.divider}>
             <TradeInfoItem
               label="Collateral you redeem"
               value={withdrawCollat.isPositive() ? withdrawCollat.toFixed(4) : 0}
               unit="ETH"
+              id="close-short-collateral-to-redeem"
             />
             <TradeInfoItem
               label="Current Collateral ratio"
               value={existingCollatPercent}
               unit="%"
               tooltip={Tooltips.CurrentCollRatio}
+              id="close-short-collateral-ratio"
             />
             <div style={{ marginTop: '10px' }}>
               <UniswapData
@@ -1022,6 +1062,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                 className={classes.amountInput}
                 disabled={!!buyLoading}
                 style={{ width: '300px' }}
+                id="close-short-connect-wallet-btn"
               >
                 {'Connect Wallet'}
               </PrimaryButton>
@@ -1046,6 +1087,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                     ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
                     : { width: '300px' }
                 }
+                id="close-short-sumbit-tx-btn"
               >
                 {buyLoading || transactionInProgress ? (
                   <CircularProgress color="primary" size="1.5rem" />
@@ -1074,7 +1116,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
           </div>
         </div>
       )}
-    </>
+    </div>
   )
 }
 
