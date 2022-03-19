@@ -40,7 +40,16 @@ const CrabPosition: React.FC = () => {
       </Typography>
       {minCurrentUsd?.gt(0) ? (
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <Typography variant="h6">{loading ? 'Loading' : `${minCurrentUsd.toFixed(2)} USD`}</Typography>
+          <Typography variant="h6">
+            {loading ? (
+              'Loading'
+            ) : (
+              <span>
+                <span id="crab-pos-bal">{minCurrentUsd.toFixed(2)}</span>
+                USD
+              </span>
+            )}
+          </Typography>
           {!loading && minPnL.isFinite() ? (
             <Typography
               variant="body2"

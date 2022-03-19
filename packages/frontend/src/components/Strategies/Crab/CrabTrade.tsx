@@ -143,10 +143,10 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
       if (withdrawAmount.gt(currentEthValue)) {
         withdrawError = 'Withdraw amount greater than strategy balance'
       }
-      if (isTimeHedgeAvailable || isPriceHedgeAvailable) {
-        depositError = 'Deposits and withdraws available after the hedge auction'
-        withdrawError = 'Deposits and withdraws available after the hedge auction'
-      }
+      // if (isTimeHedgeAvailable || isPriceHedgeAvailable) {
+      //   depositError = 'Deposits and withdraws available after the hedge auction'
+      //   withdrawError = 'Deposits and withdraws available after the hedge auction'
+      // }
       if (currentImpliedFunding <= 0.75 * dailyHistoricalFunding.funding) {
         warning = `Current implied funding is 75% lower than the last ${dailyHistoricalFunding.period} hours. Consider if you want to deposit now or later`
       }
@@ -230,6 +230,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
             confirmType={ConfirmType.CRAB}
           />
           <PrimaryButton
+            id="crab-close-btn"
             variant="contained"
             style={{ marginTop: '16px' }}
             onClick={() => {
@@ -251,8 +252,8 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
             variant="fullWidth"
             className={classes.tabBackGround}
           >
-            <SecondaryTab label="Deposit" />
-            <SecondaryTab label="Withdraw" />
+            <SecondaryTab id="crab-deposit-tab" label="Deposit" />
+            <SecondaryTab id="crab-withdraw-tab" label="Withdraw" />
           </SecondaryTabs>
           <div className={classes.settingsButton}>
             <TradeSettings
@@ -264,6 +265,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
           <div className={classes.tradeContainer}>
             {depositOption === 0 ? (
               <PrimaryInput
+                id="crab-deposit-eth-input"
                 value={ethAmount.toString()}
                 onChange={(v) => setEthAmount(new BigNumber(v))}
                 label="Amount"
@@ -283,6 +285,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
               />
             ) : (
               <PrimaryInput
+                id="crab-withdraw-eth-input"
                 value={withdrawAmount.toString()}
                 onChange={(v) => setWithdrawAmount(new BigNumber(v))}
                 label="Amount"
@@ -290,7 +293,15 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
                 actionTxt="Max"
                 unit="ETH"
                 convertedValue={ethIndexPrice.times(withdrawAmount).toFixed(2)}
-                hint={withdrawError ? withdrawError : `Position ${currentEthValue.toFixed(6)} ETH`}
+                hint={
+                  withdrawError ? (
+                    withdrawError
+                  ) : (
+                    <span>
+                      Position <span id="current-crab-eth-bal-input">{currentEthValue.toFixed(6)}</span> ETH
+                    </span>
+                  )
+                }
                 onActionClicked={() => setWithdrawAmount(currentEthValue)}
                 error={!!withdrawError}
               />
@@ -318,6 +329,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
             )}
             {depositOption === 0 ? (
               <PrimaryButton
+                id="crab-deposit-btn"
                 variant={Number(depositPriceImpact) > 3 || !!warning ? 'outlined' : 'contained'}
                 onClick={() => deposit()}
                 disabled={txLoading || !!depositError}
@@ -331,6 +343,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
               </PrimaryButton>
             ) : (
               <PrimaryButton
+                id="crab-withdraw-btn"
                 variant={Number(withdrawPriceImpact) > 3 ? 'outlined' : 'contained'}
                 style={
                   Number(withdrawPriceImpact) > 3
