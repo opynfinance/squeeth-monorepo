@@ -375,11 +375,13 @@ const TabComponent: React.FC = () => {
           style={{ width: '50%', color: '#49D273' }}
           classes={{ root: classes.longTab, selected: classes.longTab }}
           label="Long"
+          id="long-card-btn"
         />
         <SqueethTab
           style={{ width: '50%', color: '#f5475c' }}
           classes={{ root: classes.shortTab, selected: classes.shortTab }}
           label="Short"
+          id="short-card-btn"
         />
       </SqueethTabs>
     </div>
