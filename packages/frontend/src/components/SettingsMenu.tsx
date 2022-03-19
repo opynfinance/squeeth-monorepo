@@ -95,12 +95,12 @@ const SettingMenu = () => {
           'aria-labelledby': 'nav-menu-button',
         }}
       >
-        <MenuItem onClick={handleClose}>
+        <MenuItem onClick={handleClose} key="discord">
           <a href="https://tiny.cc/opyndiscord" target="_blank" rel="noopener noreferrer">
             Discord
           </a>
         </MenuItem>
-        <MenuItem onClick={handleClose}>
+        <MenuItem onClick={handleClose} key="docs">
           <a href="https://opyn.gitbook.io/squeeth/" target="_blank" rel="noopener noreferrer">
             Docs
           </a>
