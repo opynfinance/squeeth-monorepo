@@ -329,7 +329,7 @@ const PositionCard: React.FC = () => {
           <div className={classes.assetDiv}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <Typography component="span" style={{ fontWeight: 600 }}>
+                <Typography component="span" style={{ fontWeight: 600 }} id="position-card-before-trade-balance">
                   {getPositionBasedValue(squeethAmount.toFixed(6), squeethAmount.toFixed(6), '0', '0')}
                 </Typography>
 
@@ -349,6 +349,7 @@ const PositionCard: React.FC = () => {
                           : '#f5475c',
                       }}
                       className={classes.postTradeAmt}
+                      id="position-card-post-trade-balance"
                     >
                       {postTradeAmt.lte(0) ? 0 : postTradeAmt.toFixed(6)}
                     </Typography>
@@ -452,7 +453,7 @@ const PositionCard: React.FC = () => {
         {fetchingNew ? 'Fetching latest position' : ' '}
       </Typography>
       {positionType === PositionType.SHORT ? (
-        <Typography className={classes.link}>
+        <Typography className={classes.link} id="pos-card-manage-vault-link">
           <Link href={`vault/${vaultId}`}>Manage Vault</Link>
         </Typography>
       ) : null}

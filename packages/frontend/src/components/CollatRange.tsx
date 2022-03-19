@@ -25,6 +25,7 @@ const useStyles = makeStyles((theme) =>
 )
 
 type CollatRangeType = {
+  id?: string
   collatValue: number
   onCollatValueChange: (val: number) => void
   className?: string
@@ -45,7 +46,7 @@ const marks = [
   },
 ]
 
-const CollatRange: React.FC<CollatRangeType> = ({ collatValue, onCollatValueChange, className }) => {
+const CollatRange: React.FC<CollatRangeType> = ({ id, collatValue, onCollatValueChange, className }) => {
   const classes = useStyles()
 
   const minCollatRatio = 150
@@ -76,7 +77,7 @@ const CollatRange: React.FC<CollatRangeType> = ({ collatValue, onCollatValueChan
   const sliderClass = collatValue < 200 ? classes.danger : collatValue < 225 ? classes.warning : classes.safe
 
   return (
-    <div className={classes.container}>
+    <div className={classes.container} id={id}>
       {collatValue === 150 && <div style={{ color: 'red' }}></div>}
       <Slider
         value={[minCollatRatio, collatValue]}
@@ -92,13 +93,18 @@ const CollatRange: React.FC<CollatRangeType> = ({ collatValue, onCollatValueChan
         marks={marks}
         min={150}
         max={300}
+        id={id + '-slider'}
       />
       <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
         <Collapse in={collatValue === 150}>
-          <Alert severity="error">You will get liquidated</Alert>
+          <Alert severity="error" id={id + '-alert-text'}>
+            You will get liquidated
+          </Alert>
         </Collapse>
         <Collapse in={collatValue !== 150 && collatValue < 175}>
-          <Alert severity="warning">Collateral ratio is risky. You will get liquidated at 150%.</Alert>
+          <Alert severity="warning" id={id + '-alert-text'}>
+            Collateral ratio is risky. You will get liquidated at 150%.
+          </Alert>
         </Collapse>
       </div>
     </div>
