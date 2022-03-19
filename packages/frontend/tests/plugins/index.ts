@@ -1,4 +1,4 @@
-import admin = require('firebase-admin')
+import * as admin from 'firebase-admin'
 import { plugin as cypressFirebasePlugin } from 'cypress-firebase'
 
 module.exports = (on: Cypress.PluginEvents, config: Cypress.PluginConfigOptions) => {
