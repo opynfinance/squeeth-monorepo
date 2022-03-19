@@ -142,6 +142,7 @@ const Mint: React.FC = () => {
   return (
     <div className={classes.mintContainer}>
       <PrimaryInput
+        id="lp-page-mint-eth-input"
         value={collatAmount}
         onChange={(v) => setCollatAmount(v)}
         label="Collateral"
@@ -214,6 +215,7 @@ const Mint: React.FC = () => {
           unit="%"
         />
         <PrimaryButton
+          id="mint-to-lp-btn"
           variant="contained"
           onClick={mint}
           className={classes.amountInput}
