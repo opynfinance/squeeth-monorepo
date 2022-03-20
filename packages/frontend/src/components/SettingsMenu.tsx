@@ -21,6 +21,10 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(1),
       minWidth: 180,
     },
+    link: {
+      display: 'flex',
+      width: '100%',
+    },
     legalModal: {
       margin: '8em auto 0px',
       width: '90%',
@@ -95,13 +99,13 @@ const SettingMenu = () => {
           'aria-labelledby': 'nav-menu-button',
         }}
       >
-        <MenuItem onClick={handleClose}>
-          <a href="https://tiny.cc/opyndiscord" target="_blank" rel="noopener noreferrer">
+        <MenuItem onClick={handleClose} key="discord">
+          <a href="https://tiny.cc/opyndiscord" target="_blank" rel="noopener noreferrer" className={classes.link}>
             Discord
           </a>
         </MenuItem>
         <MenuItem onClick={handleClose}>
-          <a href="https://opyn.gitbook.io/squeeth/" target="_blank" rel="noopener noreferrer">
+          <a href="https://opyn.gitbook.io/squeeth/" target="_blank" rel="noopener noreferrer" className={classes.link}>
             Docs
           </a>
         </MenuItem>
