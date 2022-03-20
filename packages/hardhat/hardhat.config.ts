@@ -57,20 +57,10 @@ const UNISWAP_SETTING = {
   settings: {
     optimizer: {
       enabled: true,
-      runs: 10,
+      runs: 5,
     },
   },
 };
-
-// const AAVE_SETTING = {
-//   version: "0.6.12",
-//   settings: {
-//     optimizer: {
-//       enabled: true,
-//       runs: 200,
-//     },
-//   },
-// };
 
 const config: HardhatUserConfig = {
   defaultNetwork,

@@ -1,6 +1,6 @@
 //SPDX-License-Identifier: BUSL-1.1
 
-pragma solidity =0.8.0;
+pragma solidity =0.7.6;
 pragma abicoder v2;
 
 import "hardhat/console.sol";
@@ -39,19 +39,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
     using SafeMath for uint256;
     using Address for address payable;
 
-    /// @dev enum to differentiate between uniswap swap callback function source
-    enum CALLBACK_SOURCE {
-        FLASH_W_MINT,
-        FLASH_W_BURN,
-        FLASH_SELL_LONG_W_MINT,
-        SWAP_EXACTIN_WPOWERPERP_ETH,
-        SWAP_EXACTOUT_ETH_WPOWERPERP,
-        SWAP_EXACTOUT_ETH_WPOWERPERP_BURN,
-        FLASHLOAN_W_MINT_DEPOSIT_NFT,
-        FLASHLOAN_CLOSE_VAULT_LP_NFT,
-        FLASHLOAN_REBALANCE_VAULT_NFT
-    }
-
     address public immutable controller;
     address public immutable oracle;
     address public immutable shortPowerPerp;
@@ -85,26 +72,22 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
 
     constructor(
         address _controller,
-        address _oracle,
-        address _shortPowerPerp,
-        address _wPowerPerpPool,
-        address _wPowerPerp,
-        address _weth,
         address _nonfungiblePositionManager,
         address _uniswapFactory,
         address _lendingPoolAddressProvider
     ) UniswapControllerHelper(_uniswapFactory) AaveControllerHelper(_lendingPoolAddressProvider) {
         controller = _controller;
-        oracle = _oracle;
-        shortPowerPerp = _shortPowerPerp;
-        wPowerPerpPool = _wPowerPerpPool;
-        wPowerPerp = _wPowerPerp;
-        weth = _weth;
         nonfungiblePositionManager = _nonfungiblePositionManager;
-        isWethToken0 = _weth < _wPowerPerp;
+        isWethToken0 = IController(_controller).weth() < IController(_controller).wPowerPerp();
 
-        IWPowerPerp(_wPowerPerp).approve(_nonfungiblePositionManager, type(uint256).max);
-        IWETH9(_weth).approve(_nonfungiblePositionManager, type(uint256).max);
+        oracle = IController(_controller).oracle();
+        shortPowerPerp = IController(_controller).shortPowerPerp();
+        wPowerPerpPool = IController(_controller).wPowerPerpPool();
+        wPowerPerp = IController(_controller).wPowerPerp();
+        weth = IController(_controller).weth();
+
+        IWPowerPerp(IController(_controller).wPowerPerp()).approve(_nonfungiblePositionManager, type(uint256).max);
+        IWETH9(IController(_controller).weth()).approve(_nonfungiblePositionManager, type(uint256).max);
     }
 
     /**
@@ -136,7 +119,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             IUniswapV3Pool(wPowerPerpPool).fee(),
             _params.wPowerPerpAmount,
             _params.minToReceive,
-            uint8(CALLBACK_SOURCE.FLASH_W_MINT),
+            uint8(ControllerHelperDataType.CALLBACK_SOURCE.FLASH_W_MINT),
             abi.encode(_params)
         );
 
@@ -155,7 +138,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         external
         payable
     {
-        require(_params.maxToPay <= _params.collateralToWithdraw.add(msg.value), "Not enough collateral");
+        require(_params.maxToPay <= _params.collateralToWithdraw.add(msg.value));
 
         _exactOutFlashSwap(
             weth,
@@ -163,7 +146,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             IUniswapV3Pool(wPowerPerpPool).fee(),
             _params.wPowerPerpAmountToBurn.add(_params.wPowerPerpAmountToBuy),
             _params.maxToPay,
-            uint8(CALLBACK_SOURCE.FLASH_W_BURN),
+            uint8(ControllerHelperDataType.CALLBACK_SOURCE.FLASH_W_BURN),
             abi.encode(_params)
         );
 
@@ -196,7 +179,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             IUniswapV3Pool(wPowerPerpPool).fee(),
             _params.wPowerPerpAmountToMint.add(_params.wPowerPerpAmountToSell),
             _params.minToReceive,
-            uint8(CALLBACK_SOURCE.FLASH_SELL_LONG_W_MINT),
+            uint8(ControllerHelperDataType.CALLBACK_SOURCE.FLASH_SELL_LONG_W_MINT),
             abi.encode(_params)
         );
 
@@ -251,7 +234,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         _flashLoan(
             weth,
             _params.collateralToFlashloan,
-            uint8(CALLBACK_SOURCE.FLASHLOAN_CLOSE_VAULT_LP_NFT),
+            uint8(ControllerHelperDataType.CALLBACK_SOURCE.FLASHLOAN_CLOSE_VAULT_LP_NFT),
             abi.encode(_params)
         );
 
@@ -264,10 +247,9 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
      * @param _params ControllerHelperDataType.MintAndLpParams struct
      */
     function batchMintLp(ControllerHelperDataType.MintAndLpParams calldata _params) external payable {
-        require(msg.value == _params.collateralToDeposit.add(_params.collateralToLp), "E2");
+        require(msg.value == _params.collateralToDeposit.add(_params.collateralToLp));
 
         (uint256 vaultId, ) = ControllerHelperUtil.mintAndLp(
-            msg.sender,
             controller,
             nonfungiblePositionManager,
             wPowerPerp,
@@ -302,7 +284,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         _flashLoan(
             weth,
             _params.collateralToFlashloan,
-            uint8(CALLBACK_SOURCE.FLASHLOAN_W_MINT_DEPOSIT_NFT),
+            uint8(ControllerHelperDataType.CALLBACK_SOURCE.FLASHLOAN_W_MINT_DEPOSIT_NFT),
             abi.encode(_params)
         );
     }
@@ -334,7 +316,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 IUniswapV3Pool(wPowerPerpPool).fee(),
                 wPowerPerpAmountInLp,
                 _params.limitPriceEthPerPowerPerp.mul(wPowerPerpAmountInLp).div(1e18),
-                uint8(CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
+                uint8(ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
                 ""
             );
         }
@@ -376,7 +358,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 _params.limitPriceEthPerPowerPerp.mul(_params.wPowerPerpAmountDesired.sub(wPowerPerpAmountInLp)).div(
                     1e18
                 ),
-                uint8(CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP),
+                uint8(ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP),
                 ""
             );
         } else if (_params.wPowerPerpAmountDesired < wPowerPerpAmountInLp) {
@@ -389,15 +371,18 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 IUniswapV3Pool(wPowerPerpPool).fee(),
                 wPowerPerpExcess,
                 _params.limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18),
-                uint8(CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
+                uint8(ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
                 ""
             );
         }
 
         // mint new position
         ControllerHelperUtil.lpWPowerPerpPool(
+            controller,
             nonfungiblePositionManager,
             wPowerPerpPool,
+            wPowerPerp,
+            0,
             ControllerHelperDataType.LpWPowerPerpPool({
                 recipient: msg.sender,
                 ethAmount: _params.ethAmountToLp,
@@ -410,22 +395,19 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             })
         );
 
-        ControllerHelperUtil.checkLpMintExcess(controller, wPowerPerp, nonfungiblePositionManager, 0);
-
         IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
         payable(msg.sender).sendValue(address(this).balance);
     }
 
     function RebalanceVaultNft(
         uint256 _vaultId,
-        uint256 _tokenId,
         uint256 _collateralToFlashloan,
         ControllerHelperDataType.RebalanceVaultNftParams[] calldata _params
     ) external payable {
         _flashLoan(
             weth,
             _collateralToFlashloan,
-            uint8(CALLBACK_SOURCE.FLASHLOAN_REBALANCE_VAULT_NFT),
+            uint8(ControllerHelperDataType.CALLBACK_SOURCE.FLASHLOAN_REBALANCE_VAULT_NFT),
             abi.encode(_vaultId, _params)
         );
     }
@@ -438,7 +420,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         uint8 _callSource,
         bytes memory _calldata
     ) internal override {
-        if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.FLASHLOAN_W_MINT_DEPOSIT_NFT) {
+        if (ControllerHelperDataType.CALLBACK_SOURCE(_callSource) == ControllerHelperDataType.CALLBACK_SOURCE.FLASHLOAN_W_MINT_DEPOSIT_NFT) {
             ControllerHelperDataType.FlashloanWMintDepositNftParams memory data = abi.decode(
                 _calldata,
                 (ControllerHelperDataType.FlashloanWMintDepositNftParams)
@@ -448,12 +430,12 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             IWETH9(weth).withdraw(_amount);
 
             (uint256 vaultId, uint256 uniTokenId) = ControllerHelperUtil.mintAndLp(
-                address(this),
                 controller,
                 nonfungiblePositionManager,
                 wPowerPerp,
                 wPowerPerpPool,
                 ControllerHelperDataType.MintAndLpParams({
+                    recipient: address(this),
                     vaultId: data.vaultId,
                     wPowerPerpAmount: data.wPowerPerpAmount,
                     collateralToDeposit: data.collateralToDeposit,
@@ -478,7 +460,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
 
             // if openeded new vault, transfer vault NFT to user
             if (data.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), _initiator, vaultId);
-        } else if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.FLASHLOAN_CLOSE_VAULT_LP_NFT) {
+        } else if (ControllerHelperDataType.CALLBACK_SOURCE(_callSource) == ControllerHelperDataType.CALLBACK_SOURCE.FLASHLOAN_CLOSE_VAULT_LP_NFT) {
             ControllerHelperDataType.FlashloanCloseVaultLpNftParam memory data = abi.decode(
                 _calldata,
                 (ControllerHelperDataType.FlashloanCloseVaultLpNftParam)
@@ -518,7 +500,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 data.tokenId,
                 data.liquidityPercentage
             );
-        } else if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.FLASHLOAN_REBALANCE_VAULT_NFT) {
+        } else if (ControllerHelperDataType.CALLBACK_SOURCE(_callSource) == ControllerHelperDataType.CALLBACK_SOURCE.FLASHLOAN_REBALANCE_VAULT_NFT) {
             // convert flashloaned WETH to ETH
             IWETH9(weth).withdraw(_amount);
 
@@ -590,8 +572,11 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                     ); 
 
                     uint256 tokenId = ControllerHelperUtil.lpWPowerPerpPool(
+                        controller,
                         nonfungiblePositionManager,
                         wPowerPerpPool,
+                        wPowerPerp,
+                        vaultId,
                         mintNewLpParams
                     );
 
@@ -626,7 +611,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         bytes memory _callData,
         uint8 _callSource
     ) internal override {
-        if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.FLASH_W_MINT) {
+        if (ControllerHelperDataType.CALLBACK_SOURCE(_callSource) == ControllerHelperDataType.CALLBACK_SOURCE.FLASH_W_MINT) {
             ControllerHelperDataType.FlashswapWMintParams memory data = abi.decode(
                 _callData,
                 (ControllerHelperDataType.FlashswapWMintParams)
@@ -647,7 +632,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
 
             // this is a newly open vault, transfer to the user
             if (data.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), _caller, vaultId);
-        } else if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.FLASH_W_BURN) {
+        } else if (ControllerHelperDataType.CALLBACK_SOURCE(_callSource) == ControllerHelperDataType.CALLBACK_SOURCE.FLASH_W_BURN) {
             ControllerHelperDataType.FlashswapWBurnBuyLongParams memory data = abi.decode(
                 _callData,
                 (ControllerHelperDataType.FlashswapWBurnBuyLongParams)
@@ -661,7 +646,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             IWETH9(weth).deposit{value: _amountToPay}();
             IWETH9(weth).transfer(wPowerPerpPool, _amountToPay);
             IWPowerPerp(wPowerPerp).transfer(_caller, data.wPowerPerpAmountToBuy);
-        } else if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.FLASH_SELL_LONG_W_MINT) {
+        } else if (ControllerHelperDataType.CALLBACK_SOURCE(_callSource) == ControllerHelperDataType.CALLBACK_SOURCE.FLASH_SELL_LONG_W_MINT) {
             ControllerHelperDataType.FlashSellLongWMintParams memory data = abi.decode(
                 _callData,
                 (ControllerHelperDataType.FlashSellLongWMintParams)
@@ -680,13 +665,13 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
 
             // this is a newly open vault, transfer to the user
             if (data.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), _caller, vaultId);
-        } else if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH) {
+        } else if (ControllerHelperDataType.CALLBACK_SOURCE(_callSource) == ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH) {
             IWPowerPerp(wPowerPerp).transfer(wPowerPerpPool, _amountToPay);
 
             IWETH9(weth).deposit{value: address(this).balance}();
-        } else if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP) {
+        } else if (ControllerHelperDataType.CALLBACK_SOURCE(_callSource) == ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP) {
             IWETH9(weth).transfer(wPowerPerpPool, _amountToPay);
-        } else if (CALLBACK_SOURCE(_callSource) == CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP_BURN) {
+        } else if (ControllerHelperDataType.CALLBACK_SOURCE(_callSource) == ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP_BURN) {
             ControllerHelperDataType.SwapExactoutEthWPowerPerpData memory data = abi.decode(
                 _callData,
                 (ControllerHelperDataType.SwapExactoutEthWPowerPerpData)
@@ -721,7 +706,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 IUniswapV3Pool(wPowerPerpPool).fee(),
                 _wPowerPerpAmountToBurn.sub(_wPowerPerpAmount),
                 _limitPriceEthPerPowerPerp.mul(_wPowerPerpAmountToBurn.sub(_wPowerPerpAmount)).div(1e18),
-                uint8(CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP_BURN),
+                uint8(ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP_BURN),
                 abi.encodePacked(_vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw)
             );
         } else {
@@ -736,7 +721,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                     IUniswapV3Pool(wPowerPerpPool).fee(),
                     wPowerPerpExcess,
                     _limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18),
-                    uint8(CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
+                    uint8(ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
                     ""
                 );
             }

@@ -1,16 +1,31 @@
-pragma solidity =0.8.0;
+pragma solidity =0.7.6;
 pragma abicoder v2;
 
 //SPDX-License-Identifier: BUSL-1.1
 
+// interface
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IController} from "../../interfaces/IController.sol";
 
-// import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+// lib
+import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 
 library ControllerHelperDataType {
-    // using SafeMath for uint256;
+    using SafeMath for uint256;
+
+    /// @dev enum to differentiate between uniswap swap callback function source
+    enum CALLBACK_SOURCE {
+        FLASH_W_MINT,
+        FLASH_W_BURN,
+        FLASH_SELL_LONG_W_MINT,
+        SWAP_EXACTIN_WPOWERPERP_ETH,
+        SWAP_EXACTOUT_ETH_WPOWERPERP,
+        SWAP_EXACTOUT_ETH_WPOWERPERP_BURN,
+        FLASHLOAN_W_MINT_DEPOSIT_NFT,
+        FLASHLOAN_CLOSE_VAULT_LP_NFT,
+        FLASHLOAN_REBALANCE_VAULT_NFT
+    }
 
     enum RebalanceVaultNftType {
         IncreaseLpLiquidity,
@@ -64,6 +79,7 @@ library ControllerHelperDataType {
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
     }
     struct MintAndLpParams {
+        address recipient;
         uint256 vaultId;
         uint256 wPowerPerpAmount;
         uint256 collateralToDeposit;

@@ -1,4 +1,4 @@
-pragma solidity =0.8.0;
+pragma solidity =0.7.6;
 pragma abicoder v2;
 
 //SPDX-License-Identifier: BUSL-1.1
@@ -10,11 +10,11 @@ import {IController} from "../../interfaces/IController.sol";
 import {IWPowerPerp} from "../../interfaces/IWPowerPerp.sol";
 
 // lib
-// import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {ControllerHelperDataType} from "./ControllerHelperDataType.sol";
 
 library ControllerHelperUtil {
-    // using SafeMath for uint256;
+    using SafeMath for uint256;
 
     function closeUniLp(address nonfungiblePositionManager, ControllerHelperDataType.closeUniLpParams memory _params, bool isWethToken0) public returns (uint256, uint256) {
         INonfungiblePositionManager.DecreaseLiquidityParams memory decreaseParams = INonfungiblePositionManager
@@ -50,7 +50,7 @@ library ControllerHelperUtil {
         return (wPowerPerpAmount, wethAmount);
     }
 
-    function mintAndLp(address _recepient, address controller, address nonfungiblePositionManager, address wPowerPerp, address wPowerPerpPool, ControllerHelperDataType.MintAndLpParams calldata mintAndLpParams, bool isWethToken0) public returns (uint256, uint256) {
+    function mintAndLp(address controller, address nonfungiblePositionManager, address wPowerPerp, address wPowerPerpPool, ControllerHelperDataType.MintAndLpParams calldata mintAndLpParams, bool isWethToken0) public returns (uint256, uint256) {
         uint256 vaultId = IController(controller).mintWPowerPerpAmount{value: mintAndLpParams.collateralToDeposit}(
             mintAndLpParams.vaultId,
             mintAndLpParams.wPowerPerpAmount,
@@ -59,10 +59,13 @@ library ControllerHelperUtil {
 
         // LP mintAndLpParams.wPowerPerpAmount & mintAndLpParams.collateralToLp in Uni v3
         uint256 uniTokenId = lpWPowerPerpPool(
+            controller,
             nonfungiblePositionManager,
             wPowerPerpPool,
+            wPowerPerp,
+            vaultId,
             ControllerHelperDataType.LpWPowerPerpPool({
-                recipient: _recepient,
+                recipient: mintAndLpParams.recipient,
                 ethAmount: mintAndLpParams.collateralToLp,
                 amount0Desired: isWethToken0 ? mintAndLpParams.collateralToLp : mintAndLpParams.wPowerPerpAmount,
                 amount1Desired: isWethToken0 ? mintAndLpParams.wPowerPerpAmount : mintAndLpParams.collateralToLp,
@@ -72,8 +75,6 @@ library ControllerHelperUtil {
                 upperTick: mintAndLpParams.upperTick
             })
         );
-
-        checkLpMintExcess(controller, wPowerPerp, nonfungiblePositionManager, vaultId);
 
         return (vaultId, uniTokenId);
     }
@@ -119,8 +120,11 @@ library ControllerHelperUtil {
      * @notice LP into Uniswap V3 pool
      */
     function lpWPowerPerpPool(
+        address controller, 
         address nonfungiblePositionManager,
         address wPowerPerpPool,
+        address wPowerPerp,
+        uint256 vaultId,
         ControllerHelperDataType.LpWPowerPerpPool memory _params
     ) public returns (uint256) {
         INonfungiblePositionManager.MintParams memory mintParams = INonfungiblePositionManager.MintParams({
@@ -140,6 +144,8 @@ library ControllerHelperUtil {
         (uint256 tokenId, , , ) = INonfungiblePositionManager(nonfungiblePositionManager).mint{value: _params.ethAmount}(
             mintParams
         );
+
+        checkLpMintExcess(controller, wPowerPerp, nonfungiblePositionManager, vaultId);
 
         return tokenId;
     }

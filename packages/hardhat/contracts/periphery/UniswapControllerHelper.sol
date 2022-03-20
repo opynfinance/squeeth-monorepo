@@ -39,7 +39,7 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
      * @param _factory uniswap factory address
      */
     constructor(address _factory) {
-        require(_factory != address(0), "E5");
+        require(_factory != address(0));
         factory = _factory;
     }
 
@@ -105,7 +105,7 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
         console.log("_amountOutMinimum", _amountOutMinimum);
 
         //slippage limit check
-        require(amountOut >= _amountOutMinimum, "E3");
+        require(amountOut >= _amountOutMinimum);
 
         return amountOut;
     }
@@ -146,7 +146,7 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
         console.log("_amountInMaximum", _amountInMaximum);
 
         //slippage limit check
-        require(amountIn <= _amountInMaximum, "E4");
+        require(amountIn <= _amountInMaximum);
     }
 
     /**
