@@ -34,12 +34,6 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
         bytes callData;
     }
 
-    // struct FlashCallbackData {
-    //     address caller;
-    //     uint8 callSource;
-    //     bytes callData;
-    // }
-
     /**
      * @dev constructor
      * @param _factory uniswap factory address

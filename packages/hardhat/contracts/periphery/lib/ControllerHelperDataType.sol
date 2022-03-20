@@ -54,6 +54,17 @@ library ControllerHelperDataType {
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
     }
+    struct MintAndLpParams {
+        uint256 vaultId;
+        uint256 wPowerPerpAmount;
+        uint256 collateralToDeposit;
+        uint256 collateralToLp;
+        uint256 amount0Min;
+        uint256 amount1Min;
+        int24 lowerTick;
+        int24 upperTick;
+    }
+
     /// @dev params for flashloanWMintDepositNft()
     struct FlashloanWMintDepositNftParams {
         uint256 vaultId; // vault ID (could be zero)
@@ -80,7 +91,7 @@ library ControllerHelperDataType {
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
     }
-    /// @dev params for _closeUniLp()
+    /// @dev params for _closeUniLp() 
     struct closeUniLpParams {
         uint256 tokenId;
         uint256 liquidity;
@@ -123,4 +134,38 @@ library ControllerHelperDataType {
         int24 lowerTick;
         int24 upperTick;
     }
+
+    enum RebalanceVaultNftType {
+        IncreaseLiquidity,
+        DecreaseLiquidity,
+        RepayFlashloan
+    }
+
+    struct RebalanceVaultNftParams {
+        RebalanceVaultNftType rebalanceVaultNftType;
+        bytes data;
+    }
+
+    /// @dev struct for minting more wPowerPerp and add in LP, or increasing more WETH in LP, or both
+    struct IncreaseLiquidityParam {
+        uint256 tokenId;
+        uint256 wPowerPerpAmountToMint;
+        uint256 collateralToDeposit;
+        uint256 wethAmountToLp;
+        uint256 amount0Min;
+        uint256 amount1Min;
+    }
+
+    struct DecreaseLiquidityParams {
+        uint256 tokenId;
+        uint256 liquidity;
+        uint256 liquidityPercentage; // percentage of liquidity to burn in LP position in decimals with 18 precision(e.g 60% = 0.6 = 6e17)
+        uint128 amount0Min;
+        uint128 amount1Min;
+    }
+
+    struct withdrawFromVault {
+        uint256 collateralToWithdraw;
+    }
+
 }

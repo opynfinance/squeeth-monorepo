@@ -50,6 +50,55 @@ library ControllerHelperUtil {
         return (wPowerPerpAmount, wethAmount);
     }
 
+    function mintAndLp(address _recepient, address controller, address nonfungiblePositionManager, address wPowerPerp, address wPowerPerpPool, ControllerHelperDataType.MintAndLpParams calldata mintAndLpParams, bool isWethToken0) public returns (uint256, uint256) {
+        uint256 vaultId = IController(controller).mintWPowerPerpAmount{value: mintAndLpParams.collateralToDeposit}(
+            mintAndLpParams.vaultId,
+            mintAndLpParams.wPowerPerpAmount,
+            0
+        );
+
+        // LP mintAndLpParams.wPowerPerpAmount & mintAndLpParams.collateralToLp in Uni v3
+        uint256 uniTokenId = lpWPowerPerpPool(
+            nonfungiblePositionManager,
+            wPowerPerpPool,
+            ControllerHelperDataType.LpWPowerPerpPool({
+                recipient: _recepient,
+                ethAmount: mintAndLpParams.collateralToLp,
+                amount0Desired: isWethToken0 ? mintAndLpParams.collateralToLp : mintAndLpParams.wPowerPerpAmount,
+                amount1Desired: isWethToken0 ? mintAndLpParams.wPowerPerpAmount : mintAndLpParams.collateralToLp,
+                amount0Min: mintAndLpParams.amount0Min,
+                amount1Min: mintAndLpParams.amount1Min,
+                lowerTick: mintAndLpParams.lowerTick,
+                upperTick: mintAndLpParams.upperTick
+            })
+        );
+
+        checkLpMintExcess(controller, wPowerPerp, nonfungiblePositionManager, vaultId);
+
+        return (vaultId, uniTokenId);
+    }
+
+    function increaseLiquidity(address controller, address nonfungiblePositionManager, uint256 vaultId, ControllerHelperDataType.IncreaseLiquidityParam memory increaseLiquidityParam, bool isWethToken0) public {
+        if (increaseLiquidityParam.wPowerPerpAmountToMint > 0) {
+            IController(controller).mintWPowerPerpAmount{value: increaseLiquidityParam.collateralToDeposit}(
+                vaultId,
+                increaseLiquidityParam.wPowerPerpAmountToMint,
+                0
+            );
+        }
+
+        INonfungiblePositionManager.IncreaseLiquidityParams memory uniIncreaseParams = INonfungiblePositionManager.IncreaseLiquidityParams({
+            tokenId: increaseLiquidityParam.tokenId,
+            amount0Desired: (isWethToken0) ? increaseLiquidityParam.wethAmountToLp : increaseLiquidityParam.wPowerPerpAmountToMint,
+            amount1Desired: (isWethToken0) ? increaseLiquidityParam.wPowerPerpAmountToMint : increaseLiquidityParam.wethAmountToLp,
+            amount0Min: increaseLiquidityParam.amount0Min,
+            amount1Min: increaseLiquidityParam.amount1Min,
+            deadline: block.timestamp
+        });
+
+        INonfungiblePositionManager(nonfungiblePositionManager).increaseLiquidity(uniIncreaseParams);
+    }
+
     /**
      * @notice LP into Uniswap V3 pool
      */

@@ -443,23 +443,23 @@ describe("ControllerHelper: mainnet fork", function () {
     })
   })
 
-  // describe("Rebalance with vault", async () => {
-  //   it("rebalance", async () => {
-  //     const abiCoder = new ethers.utils.AbiCoder
-  //     const params = [
-  //       {
-  //         rebalanceVaultNftType: BigNumber.from(0),
-  //         // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
-  //         data: abiCoder.encode(["uint256"], ["1"])
-  //       },
-  //       {
-  //         rebalanceVaultNftType: BigNumber.from(1),
-  //         // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
-  //         data: abiCoder.encode(["uint256"], ["1"])
-  //       }
-  //     ]
+  describe("Rebalance with vault", async () => {
+    it("rebalance", async () => {
+      const abiCoder = new ethers.utils.AbiCoder
+      const params = [
+        {
+          rebalanceVaultNftType: BigNumber.from(0),
+          // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
+          data: abiCoder.encode(["uint256"], ["1"])
+        },
+        {
+          rebalanceVaultNftType: BigNumber.from(1),
+          // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
+          data: abiCoder.encode(["uint256"], ["1"])
+        }
+      ]
 
-  //     await controllerHelper.connect(depositor).RebalanceVaultNft(params, ethers.utils.parseUnits('2'));
-  //   })
-  // })
+      await controllerHelper.connect(depositor).RebalanceVaultNft(BigNumber.from(1), 4, ethers.utils.parseUnits('2'), params);
+    })
+  })
 })

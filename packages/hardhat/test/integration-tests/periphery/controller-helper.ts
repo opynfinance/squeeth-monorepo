@@ -197,8 +197,18 @@ describe("Controller helper integration test", function () {
       const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
       const vaultBefore = await controller.vaults(vaultId)
       const tokenIndexBefore = await (positionManager as INonfungiblePositionManager).totalSupply();
+      const params = {
+        vaultId: 0,
+        wPowerPerpAmount: mintWSqueethAmount,
+        collateralToDeposit: collateralAmount,
+        collateralToLp: collateralToLp,
+        amount0Min: 0,
+        amount1Min: 0,
+        lowerTick: -887220,
+        upperTick: 887220
+      }
 
-      await controllerHelper.connect(depositor).batchMintLp(0, mintWSqueethAmount, collateralAmount, collateralToLp, 0, 0, -887220, 887220, {value: collateralAmount.add(collateralToLp)});
+      await controllerHelper.connect(depositor).batchMintLp(params, {value: collateralAmount.add(collateralToLp)});
 
       const vaultAfter = await controller.vaults(vaultId)
       const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
