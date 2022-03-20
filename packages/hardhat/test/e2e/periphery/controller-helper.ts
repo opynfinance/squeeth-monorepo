@@ -89,7 +89,7 @@ describe("ControllerHelper: mainnet fork", function () {
     const ControllerHelperUtil = await ethers.getContractFactory("ControllerHelperUtil")
     const ControllerHelperUtilLib = (await ControllerHelperUtil.deploy());
     const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper", {libraries: {ControllerHelperUtil: ControllerHelperUtilLib.address}});
-    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, shortSqueeth.address, "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C", wSqueeth.address, weth.address, positionManager.address, uniswapFactory.address, "0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5")) as ControllerHelper;
+    controllerHelper = (await ControllerHelperContract.deploy(controller.address, positionManager.address, uniswapFactory.address, "0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5")) as ControllerHelper;
   })
 
   describe("Flash mint short position, LP and use LP as collateral", async () => {
@@ -443,23 +443,23 @@ describe("ControllerHelper: mainnet fork", function () {
     })
   })
 
-  describe("Rebalance with vault", async () => {
-    it("rebalance", async () => {
-      const abiCoder = new ethers.utils.AbiCoder
-      const params = [
-        {
-          rebalanceVaultNftType: BigNumber.from(0),
-          // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
-          data: abiCoder.encode(["uint256"], ["1"])
-        },
-        {
-          rebalanceVaultNftType: BigNumber.from(1),
-          // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
-          data: abiCoder.encode(["uint256"], ["1"])
-        }
-      ]
+  // describe("Rebalance with vault", async () => {
+  //   it("rebalance", async () => {
+  //     const abiCoder = new ethers.utils.AbiCoder
+  //     const params = [
+  //       {
+  //         rebalanceVaultNftType: BigNumber.from(0),
+  //         // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
+  //         data: abiCoder.encode(["uint256"], ["1"])
+  //       },
+  //       {
+  //         rebalanceVaultNftType: BigNumber.from(1),
+  //         // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
+  //         data: abiCoder.encode(["uint256"], ["1"])
+  //       }
+  //     ]
 
-      await controllerHelper.connect(depositor).RebalanceVaultNft(BigNumber.from(1), 4, ethers.utils.parseUnits('2'), params);
-    })
-  })
+  //     await controllerHelper.connect(depositor).RebalanceVaultNft(BigNumber.from(1), 4, ethers.utils.parseUnits('2'), params);
+  //   })
+  // })
 })
