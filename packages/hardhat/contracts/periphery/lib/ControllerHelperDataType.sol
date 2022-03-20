@@ -1,4 +1,4 @@
-pragma solidity =0.7.6;
+pragma solidity =0.8.0;
 pragma abicoder v2;
 
 //SPDX-License-Identifier: BUSL-1.1
@@ -7,10 +7,19 @@ import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/inter
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IController} from "../../interfaces/IController.sol";
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+// import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 
 library ControllerHelperDataType {
-    using SafeMath for uint256;
+    // using SafeMath for uint256;
+
+    enum RebalanceVaultNftType {
+        IncreaseLpLiquidity,
+        DecreaseLpLiquidity,
+        MintIntoVault,
+        WithdrawFromVault,
+        MintNewLp,
+        RepayFlashloan
+    }
 
     /// @dev params for flashswapWMint()
     struct FlashswapWMintParams {
@@ -135,19 +144,13 @@ library ControllerHelperDataType {
         int24 upperTick;
     }
 
-    enum RebalanceVaultNftType {
-        IncreaseLiquidity,
-        DecreaseLiquidity,
-        RepayFlashloan
-    }
-
     struct RebalanceVaultNftParams {
         RebalanceVaultNftType rebalanceVaultNftType;
         bytes data;
     }
 
     /// @dev struct for minting more wPowerPerp and add in LP, or increasing more WETH in LP, or both
-    struct IncreaseLiquidityParam {
+    struct IncreaseLpLiquidityParam {
         uint256 tokenId;
         uint256 wPowerPerpAmountToMint;
         uint256 collateralToDeposit;
@@ -156,7 +159,7 @@ library ControllerHelperDataType {
         uint256 amount1Min;
     }
 
-    struct DecreaseLiquidityParams {
+    struct DecreaseLpLiquidityParams {
         uint256 tokenId;
         uint256 liquidity;
         uint256 liquidityPercentage; // percentage of liquidity to burn in LP position in decimals with 18 precision(e.g 60% = 0.6 = 6e17)
@@ -164,7 +167,12 @@ library ControllerHelperDataType {
         uint128 amount1Min;
     }
 
+    struct MintIntoVault {
+        uint256 wPowerPerpToMint;
+        uint256 collateralToDeposit;
+    }
     struct withdrawFromVault {
+        uint256 wPowerPerpToBurn;
         uint256 collateralToWithdraw;
     }
 

@@ -1,4 +1,4 @@
-pragma solidity =0.7.6;
+pragma solidity =0.8.0;
 pragma abicoder v2;
 
 //SPDX-License-Identifier: BUSL-1.1
@@ -10,11 +10,11 @@ import {IController} from "../../interfaces/IController.sol";
 import {IWPowerPerp} from "../../interfaces/IWPowerPerp.sol";
 
 // lib
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+// import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {ControllerHelperDataType} from "./ControllerHelperDataType.sol";
 
 library ControllerHelperUtil {
-    using SafeMath for uint256;
+    // using SafeMath for uint256;
 
     function closeUniLp(address nonfungiblePositionManager, ControllerHelperDataType.closeUniLpParams memory _params, bool isWethToken0) public returns (uint256, uint256) {
         INonfungiblePositionManager.DecreaseLiquidityParams memory decreaseParams = INonfungiblePositionManager
@@ -78,7 +78,7 @@ library ControllerHelperUtil {
         return (vaultId, uniTokenId);
     }
 
-    function increaseLiquidity(address controller, address nonfungiblePositionManager, uint256 vaultId, ControllerHelperDataType.IncreaseLiquidityParam memory increaseLiquidityParam, bool isWethToken0) public {
+    function increaseLpLiquidity(address controller, address nonfungiblePositionManager, uint256 vaultId, ControllerHelperDataType.IncreaseLpLiquidityParam memory increaseLiquidityParam, bool isWethToken0) public {
         if (increaseLiquidityParam.wPowerPerpAmountToMint > 0) {
             IController(controller).mintWPowerPerpAmount{value: increaseLiquidityParam.collateralToDeposit}(
                 vaultId,
@@ -97,6 +97,22 @@ library ControllerHelperUtil {
         });
 
         INonfungiblePositionManager(nonfungiblePositionManager).increaseLiquidity(uniIncreaseParams);
+    }
+
+    function mintIntoVault(address _controller, uint256 _vaultId, uint256 _wPowerPerpToMint, uint256 _collateralToDeposit) public {
+        IController(_controller).mintWPowerPerpAmount{value: _collateralToDeposit}(
+            _vaultId,
+            _wPowerPerpToMint,
+            0
+        );
+    }
+
+    function withdrawFromVault(address _controller, uint256 _vaultId, uint256 _wPowerPerpToBurn, uint256 _collateralToWithdraw) public {
+        IController(_controller).burnWPowerPerpAmount(
+            _vaultId,
+            _wPowerPerpToBurn,
+            _collateralToWithdraw
+        );
     }
 
     /**
