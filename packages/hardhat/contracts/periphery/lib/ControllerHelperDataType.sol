@@ -32,8 +32,7 @@ library ControllerHelperDataType {
         DecreaseLpLiquidity,
         MintIntoVault,
         WithdrawFromVault,
-        MintNewLp,
-        RepayFlashloan
+        MintNewLp
     }
 
     /// @dev params for flashswapWMint()
