@@ -73,7 +73,7 @@ describe("Controller helper integration test", function () {
     const ControllerHelperUtil = await ethers.getContractFactory("ControllerHelperUtil")
     const ControllerHelperUtilLib = (await ControllerHelperUtil.deploy());
     const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper", {libraries: {ControllerHelperUtil: ControllerHelperUtilLib.address}});
-    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, shortSqueeth.address, wSqueethPool.address, wSqueeth.address, weth.address, positionManager.address, uniswapFactory.address, constants.AddressZero)) as ControllerHelper;
+    controllerHelper = (await ControllerHelperContract.deploy(controller.address, positionManager.address, uniswapFactory.address, constants.AddressZero)) as ControllerHelper;
   })
   
   this.beforeAll("Seed pool liquidity", async() => {
@@ -198,6 +198,7 @@ describe("Controller helper integration test", function () {
       const vaultBefore = await controller.vaults(vaultId)
       const tokenIndexBefore = await (positionManager as INonfungiblePositionManager).totalSupply();
       const params = {
+        recipient: depositor.address,
         vaultId: 0,
         wPowerPerpAmount: mintWSqueethAmount,
         collateralToDeposit: collateralAmount,
