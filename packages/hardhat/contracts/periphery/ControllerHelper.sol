@@ -420,7 +420,10 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         uint8 _callSource,
         bytes memory _calldata
     ) internal override {
-        if (ControllerHelperDataType.CALLBACK_SOURCE(_callSource) == ControllerHelperDataType.CALLBACK_SOURCE.FLASHLOAN_W_MINT_DEPOSIT_NFT) {
+        if (
+            ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
+            ControllerHelperDataType.CALLBACK_SOURCE.FLASHLOAN_W_MINT_DEPOSIT_NFT
+        ) {
             ControllerHelperDataType.FlashloanWMintDepositNftParams memory data = abi.decode(
                 _calldata,
                 (ControllerHelperDataType.FlashloanWMintDepositNftParams)
@@ -460,7 +463,10 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
 
             // if openeded new vault, transfer vault NFT to user
             if (data.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), _initiator, vaultId);
-        } else if (ControllerHelperDataType.CALLBACK_SOURCE(_callSource) == ControllerHelperDataType.CALLBACK_SOURCE.FLASHLOAN_CLOSE_VAULT_LP_NFT) {
+        } else if (
+            ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
+            ControllerHelperDataType.CALLBACK_SOURCE.FLASHLOAN_CLOSE_VAULT_LP_NFT
+        ) {
             ControllerHelperDataType.FlashloanCloseVaultLpNftParam memory data = abi.decode(
                 _calldata,
                 (ControllerHelperDataType.FlashloanCloseVaultLpNftParam)
@@ -500,12 +506,17 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 data.tokenId,
                 data.liquidityPercentage
             );
-        } else if (ControllerHelperDataType.CALLBACK_SOURCE(_callSource) == ControllerHelperDataType.CALLBACK_SOURCE.FLASHLOAN_REBALANCE_VAULT_NFT) {
+        } else if (
+            ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
+            ControllerHelperDataType.CALLBACK_SOURCE.FLASHLOAN_REBALANCE_VAULT_NFT
+        ) {
             // convert flashloaned WETH to ETH
             IWETH9(weth).withdraw(_amount);
 
-            (uint256 vaultId, ControllerHelperDataType.RebalanceVaultNftParams[] memory data) = abi
-                .decode(_calldata, (uint256, ControllerHelperDataType.RebalanceVaultNftParams[]));
+            (uint256 vaultId, ControllerHelperDataType.RebalanceVaultNftParams[] memory data) = abi.decode(
+                _calldata,
+                (uint256, ControllerHelperDataType.RebalanceVaultNftParams[])
+            );
 
             IController(controller).deposit{value: _amount}(vaultId);
             IController(controller).withdrawUniPositionToken(vaultId);
@@ -513,7 +524,9 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             console.log("vaultId", vaultId);
 
             for (uint256 i; i < data.length; i++) {
-                if (data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.IncreaseLpLiquidity) {
+                if (
+                    data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.IncreaseLpLiquidity
+                ) {
                     ControllerHelperDataType.IncreaseLpLiquidityParam memory increaseLiquidityParam = abi.decode(
                         data[i].data,
                         (ControllerHelperDataType.IncreaseLpLiquidityParam)
@@ -551,25 +564,33 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                     ControllerHelperDataType.MintIntoVault memory mintIntoVaultParams = abi.decode(
                         data[i].data,
                         (ControllerHelperDataType.MintIntoVault)
-                    ); 
+                    );
 
-                    ControllerHelperUtil.mintIntoVault(controller, vaultId, mintIntoVaultParams.wPowerPerpToMint, mintIntoVaultParams.collateralToDeposit);
+                    ControllerHelperUtil.mintIntoVault(
+                        controller,
+                        vaultId,
+                        mintIntoVaultParams.wPowerPerpToMint,
+                        mintIntoVaultParams.collateralToDeposit
+                    );
                 } else if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.WithdrawFromVault
                 ) {
                     ControllerHelperDataType.withdrawFromVault memory withdrawFromVaultParams = abi.decode(
                         data[i].data,
                         (ControllerHelperDataType.withdrawFromVault)
-                    ); 
+                    );
 
-                    ControllerHelperUtil.withdrawFromVault(controller, vaultId, withdrawFromVaultParams.wPowerPerpToBurn, withdrawFromVaultParams.collateralToWithdraw);
-                } else if (
-                    data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.MintNewLp
-                ) {
+                    ControllerHelperUtil.withdrawFromVault(
+                        controller,
+                        vaultId,
+                        withdrawFromVaultParams.wPowerPerpToBurn,
+                        withdrawFromVaultParams.collateralToWithdraw
+                    );
+                } else if (data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.MintNewLp) {
                     ControllerHelperDataType.LpWPowerPerpPool memory mintNewLpParams = abi.decode(
                         data[i].data,
                         (ControllerHelperDataType.LpWPowerPerpPool)
-                    ); 
+                    );
 
                     uint256 tokenId = ControllerHelperUtil.lpWPowerPerpPool(
                         controller,
@@ -611,7 +632,10 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         bytes memory _callData,
         uint8 _callSource
     ) internal override {
-        if (ControllerHelperDataType.CALLBACK_SOURCE(_callSource) == ControllerHelperDataType.CALLBACK_SOURCE.FLASH_W_MINT) {
+        if (
+            ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
+            ControllerHelperDataType.CALLBACK_SOURCE.FLASH_W_MINT
+        ) {
             ControllerHelperDataType.FlashswapWMintParams memory data = abi.decode(
                 _callData,
                 (ControllerHelperDataType.FlashswapWMintParams)
@@ -632,7 +656,10 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
 
             // this is a newly open vault, transfer to the user
             if (data.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), _caller, vaultId);
-        } else if (ControllerHelperDataType.CALLBACK_SOURCE(_callSource) == ControllerHelperDataType.CALLBACK_SOURCE.FLASH_W_BURN) {
+        } else if (
+            ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
+            ControllerHelperDataType.CALLBACK_SOURCE.FLASH_W_BURN
+        ) {
             ControllerHelperDataType.FlashswapWBurnBuyLongParams memory data = abi.decode(
                 _callData,
                 (ControllerHelperDataType.FlashswapWBurnBuyLongParams)
@@ -646,7 +673,10 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             IWETH9(weth).deposit{value: _amountToPay}();
             IWETH9(weth).transfer(wPowerPerpPool, _amountToPay);
             IWPowerPerp(wPowerPerp).transfer(_caller, data.wPowerPerpAmountToBuy);
-        } else if (ControllerHelperDataType.CALLBACK_SOURCE(_callSource) == ControllerHelperDataType.CALLBACK_SOURCE.FLASH_SELL_LONG_W_MINT) {
+        } else if (
+            ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
+            ControllerHelperDataType.CALLBACK_SOURCE.FLASH_SELL_LONG_W_MINT
+        ) {
             ControllerHelperDataType.FlashSellLongWMintParams memory data = abi.decode(
                 _callData,
                 (ControllerHelperDataType.FlashSellLongWMintParams)
@@ -665,13 +695,22 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
 
             // this is a newly open vault, transfer to the user
             if (data.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), _caller, vaultId);
-        } else if (ControllerHelperDataType.CALLBACK_SOURCE(_callSource) == ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH) {
+        } else if (
+            ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
+            ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH
+        ) {
             IWPowerPerp(wPowerPerp).transfer(wPowerPerpPool, _amountToPay);
 
             IWETH9(weth).deposit{value: address(this).balance}();
-        } else if (ControllerHelperDataType.CALLBACK_SOURCE(_callSource) == ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP) {
+        } else if (
+            ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
+            ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP
+        ) {
             IWETH9(weth).transfer(wPowerPerpPool, _amountToPay);
-        } else if (ControllerHelperDataType.CALLBACK_SOURCE(_callSource) == ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP_BURN) {
+        } else if (
+            ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
+            ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP_BURN
+        ) {
             ControllerHelperDataType.SwapExactoutEthWPowerPerpData memory data = abi.decode(
                 _callData,
                 (ControllerHelperDataType.SwapExactoutEthWPowerPerpData)
