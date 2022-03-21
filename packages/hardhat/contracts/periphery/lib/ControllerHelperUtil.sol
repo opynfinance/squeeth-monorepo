@@ -8,13 +8,16 @@ import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/inter
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IController} from "../../interfaces/IController.sol";
 import {IWPowerPerp} from "../../interfaces/IWPowerPerp.sol";
+import {IWETH9} from "../../interfaces/IWETH9.sol";
 
 // lib
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {ControllerHelperDataType} from "./ControllerHelperDataType.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 library ControllerHelperUtil {
     using SafeMath for uint256;
+    using Address for address payable;
 
     /**
      * @notice fully or partially close Uni v3 LP
@@ -245,4 +248,8 @@ library ControllerHelperUtil {
         INonfungiblePositionManager(_nonfungiblePositionManager).refundETH();
     }
 
+    function sendBack(address _weth) public {
+        IWETH9(_weth).withdraw(IWETH9(_weth).balanceOf(address(this)));
+        payable(msg.sender).sendValue(address(this).balance);
+    }
 }

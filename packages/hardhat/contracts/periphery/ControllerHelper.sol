@@ -48,30 +48,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
     address public immutable nonfungiblePositionManager;
     bool public immutable isWethToken0;
 
-    /// @dev events
-    event FlashswapWMint(
-        address indexed depositor,
-        uint256 vaultId,
-        uint256 wPowerPerpAmount,
-        uint256 collateralAmount
-    );
-    event FlashWBurn(
-        address indexed withdrawer,
-        uint256 vaultId,
-        uint256 wPowerPerpAmountToBurn,
-        uint256 collateralAmountToWithdraw,
-        uint256 wPowerPerpAmountToBuy
-    );
-    event BatchMintLp(
-        address indexed depositor,
-        uint256 vaultId,
-        uint256 wPowerPerpAmount,
-        uint256 collateralToMint,
-        uint256 collateralToLP
-    );
-    // event CloseShortWithUserNft(address indexed withdrawer, uint256 vaultId, uint256 tokenId, uint256 liquidity, uint256 liquidityPercentage);
-
-
     constructor(
         address _controller,
         address _nonfungiblePositionManager,
@@ -127,8 +103,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
 
         // no need to unwrap WETH received from swap as it is done in the callback function
         payable(msg.sender).sendValue(address(this).balance);
-
-        emit FlashswapWMint(msg.sender, _params.vaultId, _params.wPowerPerpAmount, _params.totalCollateralToDeposit);
     }
 
     /**
@@ -153,14 +127,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         );
 
         payable(msg.sender).sendValue(address(this).balance);
-
-        emit FlashWBurn(
-            msg.sender,
-            _params.vaultId,
-            _params.wPowerPerpAmountToBurn,
-            _params.collateralToWithdraw,
-            _params.wPowerPerpAmountToBuy
-        );
     }
 
     /**
@@ -230,10 +196,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             _params.liquidityPercentage
         );
 
-        IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
-        payable(msg.sender).sendValue(address(this).balance);
-
-        // emit CloseShortWithUserNft(msg.sender, _params.vaultId, _params.tokenId, _params.liquidity, _params.liquidityPercentage);
+        ControllerHelperUtil.sendBack(weth);
     }
 
     function flashloanCloseVaultLpNft(ControllerHelperDataType.FlashloanCloseVaultLpNftParam calldata _params)
@@ -247,8 +210,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             abi.encode(_params)
         );
 
-        IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
-        payable(msg.sender).sendValue(address(this).balance);
+        ControllerHelperUtil.sendBack(weth);
     }
 
     /**
@@ -271,14 +233,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         if (_params.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), msg.sender, vaultId);
 
         payable(msg.sender).sendValue(address(this).balance);
-
-        emit BatchMintLp(
-            msg.sender,
-            vaultId,
-            _params.wPowerPerpAmount,
-            _params.collateralToDeposit,
-            _params.collateralToLp
-        );
     }
 
     /**
@@ -330,8 +284,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             );
         }
 
-        IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
-        payable(msg.sender).sendValue(address(this).balance);
+        ControllerHelperUtil.sendBack(weth);
     }
 
     function rebalanceWithoutVault(ControllerHelperDataType.RebalanceWithoutVault calldata _params) external payable {
@@ -404,8 +357,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             })
         );
 
-        IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
-        payable(msg.sender).sendValue(address(this).balance);
+        ControllerHelperUtil.sendBack(weth);
     }
 
     function rebalanceVaultNft(
