@@ -44,15 +44,7 @@ import { ACTIVE_POSITIONS_QUERY } from '@queries/uniswap/positionsQuery'
 import { positions, positionsVariables } from '@queries/uniswap/__generated__/positions'
 import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useWalletBalance } from 'src/state/wallet/hooks'
-import {
-  addressesAtom,
-  collatPercentAtom,
-  existingCollatPercentAtom,
-  existingLiqPriceAtom,
-  isVaultLoadingAtom,
-  positionTypeAtom,
-  vaultAtom,
-} from 'src/state/positions/atoms'
+import { addressesAtom, collatPercentAtom, positionTypeAtom } from 'src/state/positions/atoms'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import {
   useBurnAndRedeem,
@@ -66,7 +58,8 @@ import {
   useWithdrawCollateral,
   useWithdrawUniPositionToken,
 } from 'src/state/controller/hooks'
-import { useComputeSwaps, useLpDebt, useMintedDebt, useShortDebt, useUpdateVaultData } from 'src/state/positions/hooks'
+import { useComputeSwaps, useLpDebt, useMintedDebt, useShortDebt } from 'src/state/positions/hooks'
+import { useVaultData } from '@hooks/useVaultData'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -325,11 +318,7 @@ const Component: React.FC = () => {
   const [txLoading, setTxLoading] = useState(false)
   const [uniTokenToDeposit, setUniTokenToDeposit] = useState(0)
 
-  const updateVault = useUpdateVaultData()
-  const vault = useAtomValue(vaultAtom)
-  const existingCollatPercent = useAtomValue(existingCollatPercentAtom)
-  const existingLiqPrice = useAtomValue(existingLiqPriceAtom)
-  const isVaultLoading = useAtomValue(isVaultLoadingAtom)
+  const { existingCollatPercent, existingLiqPrice, vault, updateVault, isVaultLoading } = useVaultData(Number(vid))
   const [collatPercent, setCollatPercent] = useAtom(collatPercentAtom)
 
   useEffect(() => {

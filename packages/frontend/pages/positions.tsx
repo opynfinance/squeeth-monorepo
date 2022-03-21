@@ -51,6 +51,7 @@ import YourVaults from '@components/Trade/YourVaults'
 import { useIndex } from 'src/state/controller/hooks'
 import { crabStrategyCollatRatioAtom } from 'src/state/crab/atoms'
 import { useCalculateCurrentValue, useSetStrategyData } from 'src/state/crab/hooks'
+import { useVaultData } from '@hooks/useVaultData'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -177,7 +178,6 @@ export function Positions() {
   const pool = useAtomValue(poolAtom)
   const address = useAtomValue(addressAtom)
   const positionType = useAtomValue(positionTypeAtom)
-  const existingCollat = useAtomValue(existingCollatAtom)
   const activePositions = useAtomValue(activePositionsAtom)
 
   const { loading: isPositionLoading } = useLPPositionsQuery()
@@ -186,6 +186,12 @@ export function Positions() {
   const shortRealizedPNL = useShortRealizedPnl()
   const { vaults: shortVaults } = useVaultManager()
   const { firstValidVault, vaultId } = useFirstValidVault()
+  const {
+    existingCollat,
+    existingLiqPrice,
+    existingCollatPercent,
+    isVaultLoading: isVaultDataLoading,
+  } = useVaultData(vaultId)
   const lpedSqueeth = useLpDebt()
   const mintedDebt = useMintedDebt()
   const shortDebt = useShortDebt()
@@ -206,9 +212,6 @@ export function Positions() {
   }, [firstValidVault, shortVaults?.length])
 
   const { liquidations } = useVaultLiquidations(Number(vaultId))
-  const existingCollatPercent = useAtomValue(existingCollatPercentAtom)
-  const existingLiqPrice = useAtomValue(existingLiqPriceAtom)
-  const isVaultDataLoading = useAtomValue(isVaultLoadingAtom)
 
   const fullyLiquidated = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0

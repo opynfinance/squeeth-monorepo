@@ -1,18 +1,25 @@
 import BigNumber from 'bignumber.js'
 import { useEffect, useState } from 'react'
-import { useAtomValue } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 
 import { Vault } from '../types'
 import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
 import { readyAtom } from 'src/state/squeethPool/atoms'
 import { useGetCollatRatioAndLiqPrice, useGetVault, useNormFactor } from 'src/state/controller/hooks'
+import {
+  collatPercentAtom,
+  existingCollatAtom,
+  existingCollatPercentAtom,
+  existingLiqPriceAtom,
+  vaultAtom,
+} from 'src/state/positions/atoms'
 
 export const useVaultData = (vid: number) => {
-  const [vault, setVault] = useState<Vault | null>(null)
-  const [existingCollatPercent, setExistingCollatPercent] = useState(0)
-  const [existingCollat, setExistingCollat] = useState(new BigNumber(0))
-  const [existingLiqPrice, setExistingLiqPrice] = useState(new BigNumber(0))
-  const [collatPercent, setCollatPercent] = useState(0)
+  const [vault, setVault] = useAtom(vaultAtom)
+  const [existingCollatPercent, setExistingCollatPercent] = useAtom(existingCollatPercentAtom)
+  const [existingCollat, setExistingCollat] = useAtom(existingCollatAtom)
+  const [existingLiqPrice, setExistingLiqPrice] = useAtom(existingLiqPriceAtom)
+  const [collatPercent, setCollatPercent] = useAtom(collatPercentAtom)
   const [isVaultLoading, setVaultLoading] = useState(true)
 
   const normFactor = useNormFactor()

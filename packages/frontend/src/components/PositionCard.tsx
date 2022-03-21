@@ -39,6 +39,7 @@ import {
   useShortUnrealizedPNL,
 } from 'src/state/pnl/hooks'
 import { loadingAtom } from 'src/state/pnl/atoms'
+import { useVaultData } from '@hooks/useVaultData'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -178,12 +179,12 @@ const PositionCard: React.FC = () => {
   const loading = useAtomValue(loadingAtom)
 
   const pType = useAtomValue(positionTypeAtom)
-  const existingCollat = useAtomValue(existingCollatAtom)
   const { data, startPolling, stopPolling } = useSwaps()
   const swaps = data?.swaps
   const { squeethAmount } = useComputeSwaps()
   const { vaults: shortVaults } = useVaultManager()
   const { firstValidVault, vaultId } = useFirstValidVault()
+  const { existingCollat } = useVaultData(vaultId)
   const { loading: isPositionLoading } = useLPPositionsQuery()
   const isLP = useAtomValue(isLPAtom)
   const isOpenPosition = useAtomValue(isOpenPositionAtom)
