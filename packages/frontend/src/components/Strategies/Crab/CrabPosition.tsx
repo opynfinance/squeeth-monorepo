@@ -1,9 +1,8 @@
 import { useCrabPosition } from '@hooks/useCrabPosition'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import React, { useEffect, useState } from 'react'
+import React, { memo } from 'react'
 import { useAtomValue } from 'jotai'
 import { Typography, Tooltip } from '@material-ui/core'
-import BigNumber from 'bignumber.js'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import { Tooltips } from '@constants/enums'
 import { addressAtom } from 'src/state/wallet/atoms'
@@ -61,4 +60,4 @@ const CrabPosition: React.FC = () => {
   )
 }
 
-export default CrabPosition
+export default memo(CrabPosition)
