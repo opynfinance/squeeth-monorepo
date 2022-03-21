@@ -2,7 +2,7 @@ import { useETHPrice } from '@hooks/useETHPrice'
 import { createStyles, makeStyles, TextField, Typography } from '@material-ui/core'
 import Alert from '@material-ui/lab/Alert'
 import { useAtomValue } from 'jotai'
-import React, { useState } from 'react'
+import React, { memo, useState } from 'react'
 import { collatRatioAtom, useGetVaultPNLWithRebalance } from 'src/state/ethPriceCharts/atoms'
 
 import { Links, Vaults } from '../../constants'
@@ -61,7 +61,7 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-export function ShortChart({
+function ShortChart({
   vault,
   longAmount,
   setCustomLong,
@@ -158,3 +158,5 @@ export function ShortChart({
     </div>
   )
 }
+
+export const MemoizedShortChart = memo(ShortChart)

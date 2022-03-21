@@ -8,7 +8,7 @@ import CrabProfit_Increase from '../../../../public/images/CrabProfit_Increase.s
 import CrabProfit_Decrease from '../../../../public/images/CrabProfit_Decrease.svg'
 import CrabSteps from '../../../../public/images/CrabSteps.svg'
 import Image from 'next/image'
-import { CrabStrategyChart } from '@components/Charts/CrabStrategyChart'
+import { MemoizedCrabStrategyChart as CrabStrategyChart } from '@components/Charts/CrabStrategyChart'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { useSetProfitableMovePercent } from 'src/state/crab/hooks'
 

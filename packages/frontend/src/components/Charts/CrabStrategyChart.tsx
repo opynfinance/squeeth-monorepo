@@ -1,7 +1,7 @@
 import { createStyles, Hidden, InputAdornment, makeStyles, TextField, Tooltip, Typography } from '@material-ui/core'
 import Alert from '@material-ui/lab/Alert'
 import dynamic from 'next/dynamic'
-import React, { useMemo, useState } from 'react'
+import React, { memo, useMemo, useState } from 'react'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import { useAtom } from 'jotai'
 
@@ -84,7 +84,7 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-export function CrabStrategyChart({ vault, longAmount }: { vault?: Vaults; longAmount: number }) {
+function CrabStrategyChart({ vault, longAmount }: { vault?: Vaults; longAmount: number }) {
   const startingETHPrice = useStartingETHPrice()
   const getVaultPNLWithRebalance = useGetVaultPNLWithRebalance()
   const longEthPNL = useLongEthPNL()
@@ -267,6 +267,8 @@ export function CrabStrategyChart({ vault, longAmount }: { vault?: Vaults; longA
     </div>
   )
 }
+
+export const MemoizedCrabStrategyChart = memo(CrabStrategyChart)
 
 const convertPNLToPriceChart = (pnlSeries: { time: number; value: number }[], startingCapital: number) => {
   return pnlSeries.map(({ value, time }) => {
