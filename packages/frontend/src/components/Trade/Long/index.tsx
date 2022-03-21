@@ -1,7 +1,7 @@
 import { CircularProgress, createStyles, makeStyles, Typography } from '@material-ui/core'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import BigNumber from 'bignumber.js'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
 
 import { BIG_ZERO, Links } from '../../../constants'
@@ -295,28 +295,34 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
     }
   }, [slippageAmount.toString(), sqthTradeAmount])
 
-  const handleEthChange = (value: string) => {
-    setEthTradeAmount(value)
-    setInputQuoteLoading(true)
+  const handleEthChange = useCallback(
+    (value: string) => {
+      setEthTradeAmount(value)
+      setInputQuoteLoading(true)
 
-    getBuyQuoteForETH(new BigNumber(value), slippageAmount).then((val) => {
-      setSqthTradeAmount(val.amountOut.toString())
-      setConfirmedAmount(val.amountOut.toFixed(6).toString())
-      setSqueethExposure(Number(getWSqueethPositionValue(val.amountOut)))
-      setInputQuoteLoading(false)
-    })
-  }
+      getBuyQuoteForETH(new BigNumber(value), slippageAmount).then((val) => {
+        setSqthTradeAmount(val.amountOut.toString())
+        setConfirmedAmount(val.amountOut.toFixed(6).toString())
+        setSqueethExposure(Number(getWSqueethPositionValue(val.amountOut)))
+        setInputQuoteLoading(false)
+      })
+    },
+    [slippageAmount.toString()],
+  )
 
-  const handleSqthChange = (value: string) => {
-    setSqthTradeAmount(value)
-    setInputQuoteLoading(true)
+  const handleSqthChange = useCallback(
+    (value: string) => {
+      setSqthTradeAmount(value)
+      setInputQuoteLoading(true)
 
-    getBuyQuote(new BigNumber(value), slippageAmount).then((val) => {
-      setEthTradeAmount(val.amountIn.toString())
+      getBuyQuote(new BigNumber(value), slippageAmount).then((val) => {
+        setEthTradeAmount(val.amountIn.toString())
 
-      setInputQuoteLoading(false)
-    })
-  }
+        setInputQuoteLoading(false)
+      })
+    },
+    [slippageAmount.toString()],
+  )
 
   let openError: string | undefined
   // let closeError: string | undefined
@@ -350,7 +356,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
     }
   }, [transactionInProgress])
 
-  const transact = async () => {
+  const transact = useCallback(async () => {
     setBuyLoading(true)
     try {
       await buyAndRefund(new BigNumber(ethTradeAmount), () => {
@@ -364,7 +370,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
       console.log(e)
       setBuyLoading(false)
     }
-  }
+  }, [ethTradeAmount])
 
   return (
     <div>
@@ -642,7 +648,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   const longClosePriceImpactErrorState =
     priceImpactWarning && !closeError && !sellLoading && !longSqthBal.isZero() && !isShort
 
-  const sellAndClose = async () => {
+  const sellAndClose = useCallback(async () => {
     setSellLoading(true)
     try {
       if (squeethAllowance.lt(amount)) {
@@ -665,7 +671,7 @@ const CloseLong: React.FC<BuyProps> = () => {
       console.log(e)
       setSellLoading(false)
     }
-  }
+  }, [amount.toString(), squeethAllowance.toString()])
 
   useEffect(() => {
     if (transactionInProgress) {
@@ -679,25 +685,31 @@ const CloseLong: React.FC<BuyProps> = () => {
     })
   }, [slippageAmount.toString(), sqthTradeAmount])
 
-  const handleSqthChange = (value: string) => {
-    setInputQuoteLoading(true)
-    setSqthTradeAmount(value)
-    getSellQuote(new BigNumber(value), slippageAmount).then((val) => {
-      if (value !== '0') setConfirmedAmount(Number(value).toFixed(6))
-      setEthTradeAmount(val.amountOut.toString())
-      setInputQuoteLoading(false)
-    })
-  }
+  const handleSqthChange = useCallback(
+    (value: string) => {
+      setInputQuoteLoading(true)
+      setSqthTradeAmount(value)
+      getSellQuote(new BigNumber(value), slippageAmount).then((val) => {
+        if (value !== '0') setConfirmedAmount(Number(value).toFixed(6))
+        setEthTradeAmount(val.amountOut.toString())
+        setInputQuoteLoading(false)
+      })
+    },
+    [slippageAmount.toString()],
+  )
 
-  const handleEthChange = (value: string) => {
-    setInputQuoteLoading(true)
-    setEthTradeAmount(value)
-    getSellQuoteForETH(new BigNumber(value), slippageAmount).then((val) => {
-      if (value !== '0') setConfirmedAmount(val.amountIn.toFixed(6).toString())
-      setSqthTradeAmount(val.amountIn.toString())
-      setInputQuoteLoading(false)
-    })
-  }
+  const handleEthChange = useCallback(
+    (value: string) => {
+      setInputQuoteLoading(true)
+      setEthTradeAmount(value)
+      getSellQuoteForETH(new BigNumber(value), slippageAmount).then((val) => {
+        if (value !== '0') setConfirmedAmount(val.amountIn.toFixed(6).toString())
+        setSqthTradeAmount(val.amountIn.toString())
+        setInputQuoteLoading(false)
+      })
+    },
+    [slippageAmount.toString()],
+  )
 
   return (
     <div>

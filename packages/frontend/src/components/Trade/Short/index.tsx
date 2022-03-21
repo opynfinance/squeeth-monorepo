@@ -291,7 +291,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
     setIsVaultApproved(shortVaults[firstValidVault].operator?.toLowerCase() === shortHelper?.toLowerCase())
   }, [vaultId])
 
-  const depositAndShort = async () => {
+  const depositAndShort = useCallback(async () => {
     setShortLoading(true)
     try {
       if (vaultIDLoading) {
@@ -316,7 +316,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
       console.log(e)
       setShortLoading(false)
     }
-  }
+  }, [vaultIDLoading, vaultId, isVaultApproved, shortHelper, amount.toString(), collateral.toString()])
 
   useEffect(() => {
     if (transactionInProgress) {
@@ -719,7 +719,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
     }
   }, [transactionInProgress])
 
-  const buyBackAndClose = async () => {
+  const buyBackAndClose = useCallback(async () => {
     setBuyLoading(true)
 
     try {
@@ -747,7 +747,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
       console.log(e)
       setBuyLoading(false)
     }
-  }
+  }, [vault?.id, vaultId, amount.toString()])
 
   const setShortCloseMax = useCallback(() => {
     if (finalShortAmount.isGreaterThan(0)) {
