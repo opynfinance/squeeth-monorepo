@@ -26,6 +26,9 @@ workflows:
       - deploy-test:
           requires:
             - compile
+      - e2e-test:
+          requires:
+            - compile
 
 jobs:
   checkout-and-install:
@@ -114,7 +117,7 @@ jobs:
       - run:
           name: Deploy
           command: npx hardhat deploy --network hardhat
-  
+
   coverage:
     working_directory: ~/squeeth/packages/hardhat
     docker:
@@ -150,3 +153,20 @@ jobs:
       - run:
           name: Check Contracts Size
           command: npx hardhat size-contracts
+
+  e2e-test:
+    working_directory:  ~/squeeth/packages/hardhat
+    docker:
+      - image: circleci/node:16.6.0
+    steps:
+      - restore_cache:
+          key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
+      - run:
+          name: Set Env Variables
+          command: echo "export INFURA_KEY=${INFURA_KEY}" >> $BASH_ENV
+      - run:
+          name: Mainnet E2E Test 
+          command: |
+            ./ci/e2e.sh	

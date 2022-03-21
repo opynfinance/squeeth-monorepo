@@ -5,6 +5,7 @@ pragma abicoder v2;
 
 // interface
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
+import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3FlashCallback.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
 // lib
@@ -15,7 +16,7 @@ import "@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol";
 import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import "@uniswap/v3-core/contracts/libraries/SafeCast.sol";
 
-contract FlashControllerHelper is IUniswapV3SwapCallback {
+contract UniswapControllerHelper is IUniswapV3SwapCallback {
     using Path for bytes;
     using SafeCast for uint256;
     using LowGasSafeMath for uint256;
@@ -31,17 +32,23 @@ contract FlashControllerHelper is IUniswapV3SwapCallback {
         bytes callData;
     }
 
+    // struct FlashCallbackData {
+    //     address caller;
+    //     uint8 callSource;
+    //     bytes callData;
+    // }
+
     /**
      * @dev constructor
      * @param _factory uniswap factory address
      */
     constructor(address _factory) {
-        require(_factory != address(0), "invalid factory address");
+        require(_factory != address(0), "E5");
         factory = _factory;
     }
 
     /**
-     * @notice uniswap swap callback function for flashes
+     * @notice uniswap swap callback function for flashswap
      * @param amount0Delta amount of token0
      * @param amount1Delta amount of token1
      * @param _data callback data encoded as SwapCallbackData struct
@@ -62,7 +69,7 @@ contract FlashControllerHelper is IUniswapV3SwapCallback {
         //determine the amount that needs to be repaid as part of the flashswap
         uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
 
-        //calls the strategy function that uses the proceeds from flash swap and executes logic to have an amount of token to repay the flash swap
+        //calls the function that uses the proceeds from flash swap and executes logic to have an amount of token to repay the flash swap
         _swapCallback(data.caller, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource);
     }
 
@@ -99,7 +106,7 @@ contract FlashControllerHelper is IUniswapV3SwapCallback {
         );
 
         //slippage limit check
-        require(amountOut >= _amountOutMinimum, "amount out less than min");
+        require(amountOut >= _amountOutMinimum, "E3");
 
         return amountOut;
     }
@@ -137,7 +144,7 @@ contract FlashControllerHelper is IUniswapV3SwapCallback {
         );
 
         //slippage limit check
-        require(amountIn <= _amountInMaximum, "amount in greater than max");
+        require(amountIn <= _amountInMaximum, "E4");
     }
 
     /**
@@ -160,6 +167,13 @@ contract FlashControllerHelper is IUniswapV3SwapCallback {
         bytes memory _callData,
         uint8 _callSource
     ) internal virtual {}
+
+    // function _flashCallback(
+    //     uint256 _fee0,
+    //     uint256 _fee1,
+    //     bytes memory _callData,
+    //     uint8 _callSource
+    // ) internal virtual {}
 
     /**
      * @notice internal function for exact-in swap on uniswap (specify exact amount to pay)
