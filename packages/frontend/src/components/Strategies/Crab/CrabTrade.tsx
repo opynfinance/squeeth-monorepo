@@ -57,6 +57,7 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       flexDirection: 'column',
       padding: theme.spacing(1, 3),
+      paddingBottom: theme.spacing(3),
     },
     tabBackGround: {
       position: 'sticky',
@@ -342,9 +343,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
                 {!txLoading ? 'Withdraw' : <CircularProgress color="primary" size="1.5rem" />}
               </PrimaryButton>
             )}
-            <div style={{ marginTop: '16px' }}>
-              <CrabPosition />
-            </div>
+            <CrabPosition />
           </div>
         </>
       )}
