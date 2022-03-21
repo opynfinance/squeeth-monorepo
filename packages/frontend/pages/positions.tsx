@@ -2,7 +2,7 @@ import { Box, createStyles, makeStyles, Tooltip, Typography } from '@material-ui
 import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import Link from 'next/link'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
 import { useAtomValue } from 'jotai'
@@ -49,6 +49,8 @@ import {
 import { loadingAtom } from 'src/state/pnl/atoms'
 import YourVaults from '@components/Trade/YourVaults'
 import { useIndex } from 'src/state/controller/hooks'
+import { crabStrategyCollatRatioAtom } from 'src/state/crab/atoms'
+import { useCalculateCurrentValue, useSetStrategyData } from 'src/state/crab/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -593,6 +595,17 @@ const CrabPosition: React.FC<CrabPositionType> = ({
 
     return minPnlUsd.gte(0) ? classes.green : classes.red
   }
+
+  const collatRatio = useAtomValue(crabStrategyCollatRatioAtom)
+  const setStrategyData = useSetStrategyData()
+  const calculateCurrentValue = useCalculateCurrentValue()
+
+  useEffect(() => {
+    setStrategyData()
+  }, [collatRatio])
+  useEffect(() => {
+    calculateCurrentValue()
+  }, [calculateCurrentValue])
 
   return (
     <div className={classes.position}>
