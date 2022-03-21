@@ -579,12 +579,11 @@ function TradePage() {
         <div className={classes.mobileContainer}>
           <Header />
           <div className={classes.mobileSpacer}>
-            <div className={tradeType === TradeType.LONG ? classes.displayBlock : classes.displayNone}>
+            {tradeType === TradeType.LONG ? (
               <LongChart />
-            </div>
-            <div className={tradeType !== TradeType.LONG ? classes.displayBlock : classes.displayNone}>
+            ) : (
               <ShortChart vault={Vaults.Short} longAmount={0} showPercentage={true} setCustomLong={() => null} />
-            </div>
+            )}
           </div>
           <div className={classes.mobileSpacer}>
             <PositionCard />
