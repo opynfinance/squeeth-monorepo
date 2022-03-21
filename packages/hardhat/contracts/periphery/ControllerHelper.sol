@@ -69,6 +69,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         uint256 collateralToMint,
         uint256 collateralToLP
     );
+    // event CloseShortWithUserNft(address indexed withdrawer, uint256 vaultId, uint256 tokenId, uint256 liquidity, uint256 liquidityPercentage);
+
 
     constructor(
         address _controller,
@@ -189,6 +191,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
     /**
      * @notice close short position with user Uniswap v3 LP NFT
      * @dev user should approve this contract for Uni NFT transfer
+     * @param _params ControllerHelperDataType.CloseShortWithUserNftParams struct
      */
     function closeShortWithUserNft(ControllerHelperDataType.CloseShortWithUserNftParams calldata _params) external {
         INonfungiblePositionManager(nonfungiblePositionManager).safeTransferFrom(
@@ -197,6 +200,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             _params.tokenId
         );
 
+        // close LP position
         (uint256 wPowerPerpAmountInLp, ) = ControllerHelperUtil.closeUniLp(
             nonfungiblePositionManager,
             ControllerHelperDataType.closeUniLpParams({
@@ -208,6 +212,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             }),
             isWethToken0
         );
+
+        // burn vault debt using amounts withdrawn from LP position
         _closeShortWithAmountsFromLp(
             _params.vaultId,
             wPowerPerpAmountInLp,
@@ -215,9 +221,10 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             _params.collateralToWithdraw,
             _params.limitPriceEthPerPowerPerp
         );
+        // if LP position is not fully closed, redeposit in vault or send back to user
         ControllerHelperUtil.checkPartialLpClose(
-            nonfungiblePositionManager,
             controller,
+            nonfungiblePositionManager,
             0,
             _params.tokenId,
             _params.liquidityPercentage
@@ -225,6 +232,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
 
         IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
         payable(msg.sender).sendValue(address(this).balance);
+
+        // emit CloseShortWithUserNft(msg.sender, _params.vaultId, _params.tokenId, _params.liquidity, _params.liquidityPercentage);
     }
 
     function flashloanCloseVaultLpNft(ControllerHelperDataType.FlashloanCloseVaultLpNftParam calldata _params)
@@ -399,7 +408,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         payable(msg.sender).sendValue(address(this).balance);
     }
 
-    function RebalanceVaultNft(
+    function rebalanceVaultNft(
         uint256 _vaultId,
         uint256 _collateralToFlashloan,
         ControllerHelperDataType.RebalanceVaultNftParams[] calldata _params
@@ -500,8 +509,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 data.limitPriceEthPerPowerPerp
             );
             ControllerHelperUtil.checkPartialLpClose(
-                nonfungiblePositionManager,
                 controller,
+                nonfungiblePositionManager,
                 data.vaultId,
                 data.tokenId,
                 data.liquidityPercentage
@@ -518,6 +527,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 (uint256, ControllerHelperDataType.RebalanceVaultNftParams[])
             );
 
+            // deposit collateral into vault and withdraw LP NFT
             IController(controller).deposit{value: _amount}(vaultId);
             IController(controller).withdrawUniPositionToken(vaultId);
 
@@ -527,6 +537,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.IncreaseLpLiquidity
                 ) {
+                    // increase liquidity in LP position, this can mint wPowerPerp and increase
                     ControllerHelperDataType.IncreaseLpLiquidityParam memory increaseLiquidityParam = abi.decode(
                         data[i].data,
                         (ControllerHelperDataType.IncreaseLpLiquidityParam)
@@ -542,6 +553,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 } else if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.DecreaseLpLiquidity
                 ) {
+                    // decrease liquidity in LP
                     ControllerHelperDataType.DecreaseLpLiquidityParams memory decreaseLiquidityParam = abi.decode(
                         data[i].data,
                         (ControllerHelperDataType.DecreaseLpLiquidityParams)
@@ -559,6 +571,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                         isWethToken0
                     );
                 } else if (
+                    // this will execute if the use case is to mint in vault, deposit collateral in vault or mint + deposit
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.MintIntoVault
                 ) {
                     ControllerHelperDataType.MintIntoVault memory mintIntoVaultParams = abi.decode(
@@ -573,6 +586,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                         mintIntoVaultParams.collateralToDeposit
                     );
                 } else if (
+                    // this will execute if the use case is to burn wPowerPerp, withdraw collateral or burn + withdraw
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.WithdrawFromVault
                 ) {
                     ControllerHelperDataType.withdrawFromVault memory withdrawFromVaultParams = abi.decode(
@@ -587,6 +601,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                         withdrawFromVaultParams.collateralToWithdraw
                     );
                 } else if (data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.MintNewLp) {
+                    // this will execute in the use case of fully closing old LP position, and creating new one
                     ControllerHelperDataType.LpWPowerPerpPool memory mintNewLpParams = abi.decode(
                         data[i].data,
                         (ControllerHelperDataType.LpWPowerPerpPool)
