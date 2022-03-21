@@ -1,8 +1,6 @@
 import { createStyles, makeStyles } from '@material-ui/core'
 import React from 'react'
 
-// import { useWallet } from '@context/wallet'
-// import { usePositions } from '@context/positions'
 import { TradeType } from '../../types'
 import { SecondaryTab, SecondaryTabs } from '../Tabs'
 import Long from './Long'
@@ -45,7 +43,6 @@ const useStyles = makeStyles((theme) =>
 const Trade: React.FC = () => {
   const classes = useStyles()
 
-  // const { data: balance } = useWalletBalance()
   const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
   const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
   const tradeType = useAtomValue(tradeTypeAtom)
@@ -53,10 +50,6 @@ const Trade: React.FC = () => {
   const resetTransactionData = useResetAtom(transactionDataAtom)
   const transactionInProgress = useAtomValue(transactionLoadingAtom)
   const isTxFirstStep = useAtomValue(isTransactionFirstStepAtom)
-
-  // useEffect(() => {
-  //   setTradeType(positionType === PositionType.SHORT ? 1 : 0)
-  // }, [positionType])
 
   return (
     <div>
@@ -82,21 +75,7 @@ const Trade: React.FC = () => {
         </SecondaryTabs>
       }
       <div>
-        {tradeType === TradeType.LONG ? (
-          <Long
-            // balance={Number(toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4))}
-            open={openPosition === 0}
-            // closeTitle="Sell squeeth ERC20 to get ETH"
-          />
-        ) : (
-          <Short
-            // balance={Number(toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4))}
-            open={openPosition === 0}
-            // closeTitle="Buy back oSQTH & close position"
-          />
-        )}
-
-        {/* <div className={tradeType !== TradeType.LONG ? classes.displayBlock : classes.displayNone}></div> */}
+        {tradeType === TradeType.LONG ? <Long open={openPosition === 0} /> : <Short open={openPosition === 0} />}
       </div>
     </div>
   )

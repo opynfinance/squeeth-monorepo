@@ -19,7 +19,6 @@ export const useVaultData = (vid: number) => {
   const getVault = useGetVault()
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
   const ready = useAtomValue(readyAtom)
-  // const { address, connected } = useWallet()
   const connected = useAtomValue(connectedWalletAtom)
   const address = useAtomValue(addressAtom)
 

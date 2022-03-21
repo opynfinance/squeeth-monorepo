@@ -5,7 +5,6 @@ import { useQuery } from 'react-query'
 import { useAtomValue } from 'jotai'
 
 import erc20Abi from '../../abis/erc20.json'
-// import { useWallet } from '@context/wallet'
 import { toTokenAmount } from '@utils/calculations'
 // import { useIntervalAsync } from '@hooks/useIntervalAsync'
 import { addressAtom, connectedWalletAtom, web3Atom } from 'src/state/wallet/atoms'

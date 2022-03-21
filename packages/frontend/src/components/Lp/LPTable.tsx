@@ -114,7 +114,6 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
   const [activeTab, setActiveTab] = useState(0)
   const ethPrice = useETHPrice()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
-  // const { networkId } = useWallet()
   const networkId = useAtomValue(networkIdAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)
 

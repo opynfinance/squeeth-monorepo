@@ -9,8 +9,6 @@ import OpenInNewIcon from '@material-ui/icons/OpenInNew'
 import * as React from 'react'
 
 import { Tooltips, UniswapIFrameOpen, UniswapIFrameClose } from '@constants/enums'
-// import { useWallet } from '@context/wallet'
-import { useAddresses } from '@hooks/useAddress'
 import useCopyClipboard from '@hooks/useCopyClipboard'
 import { networkIdAtom } from 'src/state/wallet/atoms'
 import { useAtomValue } from 'jotai'
@@ -80,10 +78,8 @@ interface UniswapIframeProps {
 
 export const UniswapIframe: React.FC<UniswapIframeProps> = ({ text, closePosition }) => {
   const classes = useStyles()
-  // const { oSqueeth } = useAddresses()
   const { oSqueeth } = useAtomValue(addressesAtom)
 
-  // const { networkId } = useWallet()
   const networkId = useAtomValue(networkIdAtom)
   const [isCopied, setCopied] = useCopyClipboard()
 

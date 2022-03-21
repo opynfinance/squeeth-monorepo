@@ -12,7 +12,6 @@ import { addressAtom } from '../../state/wallet/atoms'
 import { useGetWSqueethPositionValue, useGetWSqueethPositionValueInETH } from 'src/state/squeethPool/hooks'
 import { impliedVolAtom } from 'src/state/controller/atoms'
 import { useIndex, useMark } from 'src/state/controller/hooks'
-// import { useWallet } from '@context/wallet'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -55,7 +54,6 @@ const SqueethInfo: React.FC = () => {
   const impliedVol = useAtomValue(impliedVolAtom)
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const getWSqueethPositionValueInETH = useGetWSqueethPositionValueInETH()
-  // const { address } = useWallet()
   const address = useAtomValue(addressAtom)
 
   return (

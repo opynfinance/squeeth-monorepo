@@ -7,7 +7,6 @@ import React from 'react'
 import { useAtomValue } from 'jotai'
 
 import { UniswapIFrameOpen } from '@constants/enums'
-// import { useWallet } from '@context/wallet'
 import { networkIdAtom } from 'src/state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
@@ -51,7 +50,6 @@ const useStyles = makeStyles((theme) =>
 
 const ProvideLiquidity: React.FC = () => {
   const classes = useStyles()
-  // const { networkId } = useWallet()
   const networkId = useAtomValue(networkIdAtom)
 
   return (

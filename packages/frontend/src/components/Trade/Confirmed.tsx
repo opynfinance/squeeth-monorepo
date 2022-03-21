@@ -5,7 +5,6 @@ import React from 'react'
 import { useAtomValue } from 'jotai'
 
 import { EtherscanPrefix, Tooltips } from '../../constants'
-// import { useWallet } from '@context/wallet'
 import { UniswapIframe } from '../Modal/UniswapIframe'
 import { networkIdAtom } from 'src/state/wallet/atoms'
 
@@ -63,7 +62,6 @@ type ConfirmedProps = {
 
 const Confirmed: React.FC<ConfirmedProps> = ({ confirmationMessage, txnHash, confirmType }) => {
   const classes = useStyles()
-  // const { networkId } = useWallet()
   const networkId = useAtomValue(networkIdAtom)
 
   return (

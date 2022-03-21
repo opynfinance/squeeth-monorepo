@@ -48,7 +48,6 @@ const useStyles = makeStyles((theme) =>
 
 const History: React.FC = () => {
   const { transactions } = useTransactionHistory()
-  // const { networkId } = useWallet()
   const networkId = useAtomValue(networkIdAtom)
   const ethPrice = useETHPrice()
   const normalizationFactor = useNormFactor()

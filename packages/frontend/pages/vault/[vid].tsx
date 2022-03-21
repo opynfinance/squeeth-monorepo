@@ -34,14 +34,12 @@ import { Tooltips } from '@constants/enums'
 import { BIG_ZERO, MIN_COLLATERAL_AMOUNT, OSQUEETH_DECIMALS } from '../../src/constants'
 import { PositionType } from '../../src/types'
 import { useRestrictUser } from '@context/restrict-user'
-import { useController } from '@hooks/contracts/useController'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { CollateralStatus, Vault } from '../../src/types'
 import { squeethClient } from '@utils/apollo-client'
 import { getCollatPercentStatus, toTokenAmount } from '@utils/calculations'
 import { LinkButton } from '@components/Button'
 import { useERC721 } from '@hooks/contracts/useERC721'
-import { useAddresses } from '@hooks/useAddress'
 import { ACTIVE_POSITIONS_QUERY } from '@queries/uniswap/positionsQuery'
 import { positions, positionsVariables } from '@queries/uniswap/__generated__/positions'
 import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
@@ -256,8 +254,6 @@ enum VaultError {
 }
 
 const SelectLP: React.FC<{ lpToken: number; setLpToken: (t: number) => void }> = ({ lpToken, setLpToken }) => {
-  // const { squeethPool } = useAddresses()
-  // const { address } = useWallet()
   const { squeethPool } = useAtomValue(addressesAtom)
   const address = useAtomValue(addressAtom)
 
@@ -1012,7 +1008,6 @@ const Component: React.FC = () => {
 
 const Main: React.FC = () => {
   const classes = useStyles()
-  // const { connected } = useWallet()
 
   const connected = useAtomValue(connectedWalletAtom)
 

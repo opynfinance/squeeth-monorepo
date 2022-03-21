@@ -5,7 +5,6 @@ import React from 'react'
 import { useMemo } from 'react'
 import { useAtomValue } from 'jotai'
 
-// import { useWallet } from '@context/wallet'
 import { Networks } from '../../types'
 import { toTokenAmount } from '@utils/calculations'
 import { useENS } from '@hooks/useENS'

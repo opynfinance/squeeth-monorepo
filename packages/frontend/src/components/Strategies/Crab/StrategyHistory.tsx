@@ -4,7 +4,6 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React, { useState } from 'react'
 import { EtherscanPrefix } from '../../../constants'
 import OpenInNewIcon from '@material-ui/icons/OpenInNew'
-// import { useWallet } from '@context/wallet'
 import Menu from '@material-ui/core/Menu'
 import MenuItem from '@material-ui/core/MenuItem'
 import KeyboardArrowDownOutlinedIcon from '@material-ui/icons/KeyboardArrowDownOutlined'
@@ -53,7 +52,6 @@ enum TxType {
 export const CrabStrategyHistory: React.FC = () => {
   const classes = useStyles()
   const { data, loading } = useCrabStrategyTxHistory()
-  // const { networkId, address } = useWallet()
 
   const address = useAtomValue(addressAtom)
   const networkId = useAtomValue(networkIdAtom)

@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { useAtomValue } from 'jotai'
 
 import abi from '../../abis/erc20.json'
-// import { useWallet } from '@context/wallet'
 import { toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from 'src/state/wallet/hooks'
 import { addressAtom, web3Atom } from 'src/state/wallet/atoms'
@@ -11,7 +10,6 @@ import { addressAtom, web3Atom } from 'src/state/wallet/atoms'
 const MAX_UINT = '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
 
 export function useUserAllowance(token: string, spenderAddess: string) {
-  // const { web3, address, handleTransaction } = useWallet()
   const handleTransaction = useHandleTransaction()
   const web3 = useAtomValue(web3Atom)
   const address = useAtomValue(addressAtom)

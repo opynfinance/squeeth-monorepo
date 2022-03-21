@@ -2,7 +2,6 @@ import React, { useContext, useState, useCallback, useEffect } from 'react'
 import { useCookies } from 'react-cookie'
 import { useAtomValue } from 'jotai'
 
-// import { useWallet } from './wallet'
 import { Networks } from '../types'
 import { networkIdAtom } from 'src/state/wallet/atoms'
 
@@ -20,7 +19,6 @@ const restrictUserContext = React.createContext<restrictUserContextType>(initial
 const useRestrictUser = () => useContext(restrictUserContext)
 
 const RestrictUserProvider: React.FC = ({ children }) => {
-  // const { networkId } = useWallet()
   const networkId = useAtomValue(networkIdAtom)
   const [cookies] = useCookies(['restricted'])
   const [state, setState] = useState({

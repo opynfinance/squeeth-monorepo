@@ -10,10 +10,7 @@ import React, { useState } from 'react'
 import { useAtomValue } from 'jotai'
 
 import logo from '../../public/images/SqueethLogo.svg'
-// import { useWallet } from '@context/wallet'
-// import { useAddresses } from '@hooks/useAddress'
 import useCopyClipboard from '@hooks/useCopyClipboard'
-// import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { toTokenAmount } from '@utils/calculations'
 import WalletButton from './Button/WalletButton'
 import SettingMenu from './SettingsMenu'
@@ -102,14 +99,11 @@ export const NavLink: React.FC<{ path: string; name: string }> = ({ path, name }
 
 const Nav: React.FC = () => {
   const classes = useStyles()
-  // const { balance } = useWallet()
   const { data: balance } = useWalletBalance()
 
   const { oSqueeth } = useAtomValue(addressesAtom)
-  // const { oSqueeth } = useAddresses()
   const [navOpen, setNavOpen] = useState(false)
   const [isCopied, setCopied] = useCopyClipboard()
-  // const { getWSqueethPositionValue } = useSqueethPool()
 
   return (
     <div className={classes.nav}>

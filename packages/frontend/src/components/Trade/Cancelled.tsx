@@ -52,7 +52,6 @@ type ConfirmedProps = {
 
 const Cancelled: React.FC<ConfirmedProps> = ({ txnHash }) => {
   const classes = useStyles()
-  // const { networkId } = useWallet()
   const networkId = useAtomValue(networkIdAtom)
 
   return (

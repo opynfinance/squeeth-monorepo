@@ -4,11 +4,9 @@ import { useAtomValue } from 'jotai'
 
 import { ticks, ticksVariables } from '../queries/uniswap/__generated__/ticks'
 import TICKS_QUERY from '../queries/uniswap/ticksQuery'
-import { useAddresses } from './useAddress'
 import { addressesAtom } from 'src/state/positions/atoms'
 
 const useUniswapTicks = () => {
-  // const { squeethPool } = useAddresses()
   const { squeethPool } = useAtomValue(addressesAtom)
   const { data, loading } = useQuery<ticks, ticksVariables>(TICKS_QUERY, {
     variables: { poolAddress: squeethPool },

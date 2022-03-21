@@ -139,7 +139,6 @@ const useStyles = makeStyles((theme) =>
 )
 
 const PositionsHome = () => {
-  // const { address } = useWallet()
   const address = useAtomValue(addressAtom)
 
   if (address) return <Positions />
@@ -148,7 +147,6 @@ const PositionsHome = () => {
 }
 
 const ConnectWallet: React.FC = () => {
-  // const { selectWallet } = useWallet()
   const selectWallet = useSelectWallet()
   const classes = useStyles()
 

@@ -1,6 +1,5 @@
 import BigNumber from 'bignumber.js'
 
-// import { useWorldContext } from '@context/world'
 import { useCallback } from 'react'
 import { useEth90daysPriceMap, useEthPriceMap, useEthWithinOneDayPriceMap } from 'src/state/ethPriceCharts/atoms'
 
