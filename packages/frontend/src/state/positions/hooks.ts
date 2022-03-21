@@ -179,7 +179,7 @@ export const useComputeSwaps = () => {
     } else setPositionType(PositionType.NONE)
   }, [computedSwaps.squeethAmount.toString()])
 
-  return computedSwaps
+  return { ...computedSwaps, squeethAmount: computedSwaps.squeethAmount.absoluteValue() }
 }
 
 export const useLongRealizedPnl = () => {
