@@ -171,26 +171,15 @@ export const useComputeSwaps = () => {
     [isWethToken0, data?.swaps.length],
   )
 
-  const { finalSqueeth, finalWeth } = useMemo(() => {
-    // dont include LPed & minted amount will be the correct short amount
-    const finalSqueeth = computedSwaps.squeethAmount
-    const finalWeth = computedSwaps.wethAmount.div(computedSwaps.squeethAmount).multipliedBy(finalSqueeth)
-    return { finalSqueeth, finalWeth }
-  }, [computedSwaps.squeethAmount.toString(), computedSwaps.wethAmount.toString()])
-
   useEffect(() => {
-    if (finalSqueeth.isGreaterThan(0)) {
+    if (computedSwaps.squeethAmount.isGreaterThan(0)) {
       setPositionType(PositionType.LONG)
-    } else if (finalSqueeth.isLessThan(0)) {
+    } else if (computedSwaps.squeethAmount.isLessThan(0)) {
       setPositionType(PositionType.SHORT)
     } else setPositionType(PositionType.NONE)
-  }, [finalSqueeth.toString(), computedSwaps.squeethAmount.toString()])
+  }, [computedSwaps.squeethAmount.toString()])
 
-  return {
-    ...computedSwaps,
-    wethAmount: finalWeth,
-    squeethAmount: finalSqueeth.absoluteValue(),
-  }
+  return computedSwaps
 }
 
 export const useLongRealizedPnl = () => {
