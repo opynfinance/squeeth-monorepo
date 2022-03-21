@@ -31,12 +31,6 @@ const useStyles = makeStyles((theme) =>
       zIndex: 20,
       background: '#2A2D2E',
     },
-    displayBlock: {
-      display: 'block',
-    },
-    displayNone: {
-      display: 'none',
-    },
   }),
 )
 
