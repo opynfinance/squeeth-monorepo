@@ -350,13 +350,13 @@ const Component: React.FC = () => {
     setAction(percent > existingCollatPercent ? VaultAction.ADD_COLLATERAL : VaultAction.REMOVE_COLLATERAL)
     setCollatPercent(percent)
     const debt = await getDebtAmount(vault.shortAmount)
-    let lpCollatPercent = 0
+    let lpCollatPercent = BIG_ZERO
     // If NFT is deposited, Collateral amount from LP NFT should not be included. So target collat % - lp collat % will give actual collat to remove
     if (lpNftId) {
       const { collateral: uniCollat } = await getUniNFTCollatDetail(lpNftId)
-      lpCollatPercent = uniCollat.div(debt).times(100).toNumber()
+      lpCollatPercent = uniCollat.div(debt).times(100)
     }
-    const newCollat = new BigNumber(percent - lpCollatPercent).times(debt).div(100)
+    const newCollat = new BigNumber(percent).minus(lpCollatPercent).times(debt).div(100)
     const { liquidationPrice: lp } = await getCollatRatioAndLiqPrice(newCollat, vault.shortAmount, lpNftId)
     setNewLiqPrice(lp)
     setCollateral(newCollat.minus(vault.collateralAmount).toString())
