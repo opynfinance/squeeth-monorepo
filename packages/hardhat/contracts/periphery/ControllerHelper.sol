@@ -293,7 +293,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
 
     /**
      * @notice Rebalance LP nft through trading
-     * @param _params ControllerHelperDataType.RebalanceWithoutVault struct 
+     * @param _params ControllerHelperDataType.RebalanceWithoutVault struct
      */
     function rebalanceWithoutVault(ControllerHelperDataType.RebalanceWithoutVault calldata _params) external payable {
         // if user need to send ETH to change LP composition, wrap to WETH
