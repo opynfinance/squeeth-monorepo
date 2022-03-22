@@ -61,24 +61,6 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      - name: Lint
-        # run only on master/dev branch and pull requests
-        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || github.event_name == 'pull_request'
-        run: yarn lint:sarif
-
-      - name: Unit
-        # run only on master/dev branch and pull requests
-        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || github.event_name == 'pull_request'
-        run: yarn test:unit
-
-      - name: Upload lint results
-        # run if lint failed and only on master/dev branch and pull requests
-        if: always() && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || github.event_name == 'pull_request')
-        uses: github/codeql-action/upload-sarif@f5d822707ee6e8fb81b04a5c0040b736da22e587 # pin@codeql-bundle-20210517
-        with:
-          sarif_file: lint-results.sarif
-        continue-on-error: true
-
       - name: Cache next.js build cache
         uses: actions/cache@937d24475381cd9c75ae6db12cb4e79714b926ed # pin@v2
         with:
