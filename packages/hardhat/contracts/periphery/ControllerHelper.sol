@@ -252,6 +252,10 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         );
     }
 
+    /**
+     * @notice sell all LP wPowerPerp amounts to WETH and send back to user
+     * @param _params ControllerHelperDataType.SellAll struct
+     */
     function sellAll(ControllerHelperDataType.SellAll calldata _params) external {
         INonfungiblePositionManager(nonfungiblePositionManager).safeTransferFrom(
             msg.sender,
@@ -287,6 +291,10 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         ControllerHelperUtil.sendBack(weth);
     }
 
+    /**
+     * @notice Rebalance LP nft through trading
+     * @param _params ControllerHelperDataType.RebalanceWithoutVault struct 
+     */
     function rebalanceWithoutVault(ControllerHelperDataType.RebalanceWithoutVault calldata _params) external payable {
         // if user need to send ETH to change LP composition, wrap to WETH
         if (msg.value > 0) IWETH9(weth).deposit{value: msg.value}();
@@ -360,6 +368,12 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         ControllerHelperUtil.sendBack(weth);
     }
 
+    /**
+     * @notice Rebalance, increase and decrease LP liquidity through minting/burning wPowerPerp in vault
+     * @param _vaultId vault ID
+     * @param _collateralToFlashloan collateral amount to flashloan and deposit into vault to be able to withdraw Uni LP NFT
+     * @param _params array of ControllerHelperDataType.RebalanceVaultNftParams structs
+     */
     function rebalanceVaultNft(
         uint256 _vaultId,
         uint256 _collateralToFlashloan,
