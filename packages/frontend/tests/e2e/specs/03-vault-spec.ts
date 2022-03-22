@@ -28,7 +28,7 @@ describe('Open short position and then mint debt, burn debt, add collat, remove 
       })
       it('can open short position', () => {
         cy.get('#user-eth-wallet-balance').invoke('text').then(parseFloat).should('be.at.least', 8)
-        cy.get('#open-short-eth-input').clear().type('8.0', { force: true, delay: 200 }).should('have.value', '8.0')
+        cy.get('#open-short-eth-input').clear().type('8.', { force: true, delay: 200 }).should('have.value', '8.0')
 
         cy.get('#close-short-sumbit-tx-btn').then((btn) => {
           if (btn.text().includes('Allow wrapper')) {

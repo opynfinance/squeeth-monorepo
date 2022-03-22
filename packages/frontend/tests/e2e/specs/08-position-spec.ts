@@ -66,7 +66,7 @@ describe('Trade and see if results are correct on position page', () => {
     })
     it('can open short position', () => {
       cy.get('#user-eth-wallet-balance').invoke('text').then(parseFloat).should('be.at.least', 8)
-      cy.get('#open-short-eth-input').clear().type('8.0', { force: true, delay: 200 }).should('have.value', '8.0')
+      cy.get('#open-short-eth-input').clear().type('8.', { force: true, delay: 200 }).should('have.value', '8.0')
 
       cy.get('#close-short-sumbit-tx-btn').then((btn) => {
         if (btn.text().includes('Allow wrapper')) {
@@ -124,7 +124,7 @@ describe('Trade and see if results are correct on position page', () => {
         cy.get('#lp-prev-step-btn').click({ force: true }).click({ force: true })
         cy.get('#current-lp-step').should('contain.text', '1')
         cy.get('#mint-sqth-to-lp-btn').click({ force: true })
-        cy.get('#lp-page-mint-eth-input').clear().type('8.0', { force: true, delay: 200 }).should('have.value', '8.0')
+        cy.get('#lp-page-mint-eth-input').clear().type('8.', { force: true, delay: 200 }).should('have.value', '8.0')
         cy.get('#current-lp-step').should('contain.text', '2')
         cy.get('#mint-to-lp-btn').click({ force: true })
         trade.confirmMetamaskTransaction()

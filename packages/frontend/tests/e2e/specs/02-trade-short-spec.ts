@@ -48,7 +48,7 @@ describe('Trade on trade page', () => {
       })
 
       it('open short input should be more than minimum collateral amount', () => {
-        cy.get('#open-short-eth-input').clear().type('6.8', { delay: 200, force: true }).should('have.value', '6.8')
+        cy.get('#open-short-eth-input').clear().type('6.9', { delay: 200, force: true }).should('have.value', '6.90')
         cy.get('#open-short-eth-input').invoke('val').then(parseFloat).should('be.at.least', MIN_COLLATERAL_AMOUNT)
         cy.get('#open-short-eth-input-box').should('contain.text', 'Minimum collateral is')
       })
@@ -79,7 +79,7 @@ describe('Trade on trade page', () => {
 
       it('can enter an amount into eth input, before & post trade amount match on position card and osqth input', () => {
         // cy.get('#open-short-eth-input').clear().type('1', { force: true, delay: 200 }).should('have.value', '1')
-        cy.get('#open-short-eth-input').clear().type('8.0', { force: true, delay: 200 }).should('have.value', '8.0')
+        cy.get('#open-short-eth-input').clear().type('8.', { force: true, delay: 200 }).should('have.value', '8.0')
         cy.get('#open-short-eth-before-trade-balance').then((bal) => {
           cy.get('#open-short-eth-post-trade-balance').should('contain.text', (Number(bal.text()) - 8).toFixed(4))
         })
@@ -104,7 +104,7 @@ describe('Trade on trade page', () => {
       })
 
       it('can open short position for osqth', () => {
-        cy.get('#open-short-eth-input').clear().type('8.0', { force: true, delay: 200 }).should('have.value', '8.0')
+        cy.get('#open-short-eth-input').clear().type('8.', { force: true, delay: 200 }).should('have.value', '8.0')
         cy.get('#open-short-trade-details .trade-details-amount').then((v) => {
           cy.get('#open-short-osqth-before-trade-balance').then((bal) => {
             const inputSqth = new BigNumber(v.val().toString()).toFixed(4)
