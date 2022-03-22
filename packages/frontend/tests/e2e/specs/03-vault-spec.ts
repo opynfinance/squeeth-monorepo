@@ -3,7 +3,6 @@ import TradePage from '../pages/trade'
 
 const trade = new TradePage()
 
-let metamaskWalletAddress
 describe('Open short position and then mint debt, burn debt, add collat, remove collat on vault page', () => {
   context('Open short position', () => {
     context('Before tests', () => {
@@ -18,10 +17,6 @@ describe('Open short position and then mint debt, burn debt, add collat, remove 
         trade.connectBrowserWallet()
         trade.acceptMetamaskAccessRequest()
 
-        cy.fetchMetamaskWalletAddress().then((address) => {
-          metamaskWalletAddress = address
-        })
-        cy.log(metamaskWalletAddress)
         cy.get('#wallet-address').should(`contain.text`, '0x' || '.eth')
       })
     })
@@ -53,7 +48,7 @@ describe('Open short position and then mint debt, burn debt, add collat, remove 
       })
     })
 
-    context('Trade on vault page', () => {
+    context('Check the vault', () => {
       // before(() => {
       //   //not opening new tab
       //   cy.get('#pos-card-manage-vault-link a').invoke('removeAttr', 'target').click()

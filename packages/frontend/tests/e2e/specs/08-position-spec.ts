@@ -3,7 +3,6 @@ import TradePage from '../pages/trade'
 
 const trade = new TradePage()
 
-let metamaskWalletAddress
 describe('Trade and see if results are correct on position page', () => {
   context('Before tests', () => {
     it(`Before tests`, () => {
@@ -16,10 +15,6 @@ describe('Trade and see if results are correct on position page', () => {
       trade.connectBrowserWallet()
       trade.acceptMetamaskAccessRequest()
 
-      cy.fetchMetamaskWalletAddress().then((address) => {
-        metamaskWalletAddress = address
-      })
-      cy.log(metamaskWalletAddress)
       cy.get('#wallet-address').should(`contain.text`, '0x' || '.eth')
     })
   })

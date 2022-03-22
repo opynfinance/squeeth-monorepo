@@ -5,7 +5,6 @@ import { MIN_COLLATERAL_AMOUNT } from '../../../src/constants/index'
 
 const trade = new TradePage()
 
-let metamaskWalletAddress
 describe('Trade on trade page', () => {
   context('Before tests', () => {
     it(`Before tests`, () => {
@@ -18,10 +17,6 @@ describe('Trade on trade page', () => {
       trade.connectBrowserWallet()
       trade.acceptMetamaskAccessRequest()
 
-      cy.fetchMetamaskWalletAddress().then((address) => {
-        metamaskWalletAddress = address
-      })
-      cy.log(metamaskWalletAddress)
       cy.get('#wallet-address').should(`contain.text`, '0x' || '.eth')
     })
   })
