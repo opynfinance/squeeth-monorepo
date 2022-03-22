@@ -295,7 +295,7 @@ export const useGetBuyParamForETH = () => {
       fee: UNI_POOL_FEES,
       recipient: address,
       deadline: Math.floor(Date.now() / 1000 + 86400), // uint256
-      amountIn: ethers.utils.parseEther(amount.toString()),
+      amountIn: fromTokenAmount(amount, 18),
       amountOutMinimum: fromTokenAmount(quote.minimumAmountOut, OSQUEETH_DECIMALS).toString(),
       sqrtPriceLimitX96: 0,
     }
@@ -315,7 +315,7 @@ export const useBuyForWETH = () => {
     const txHash = await handleTransaction(
       swapRouterContract?.methods.exactInputSingle(exactInputParam).send({
         from: address,
-        value: ethers.utils.parseEther(amount.toString()),
+        value: fromTokenAmount(amount, 18),
       }),
     )
 
@@ -357,7 +357,7 @@ export const useBuyAndRefund = () => {
     const result = await handleTransaction(
       swapRouterContract?.methods.multicall(callData).send({
         from: address,
-        value: ethers.utils.parseEther(amount.toString()),
+          value: fromTokenAmount(amount, 18),
       }),
       onTxConfirmed,
     )
