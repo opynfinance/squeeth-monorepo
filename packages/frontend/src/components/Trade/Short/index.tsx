@@ -665,7 +665,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
       const contractShort = vault?.shortAmount?.isFinite() ? vault?.shortAmount : new BigNumber(0)
       setFinalShortAmount(contractShort)
     }
-  }, [vault])
+  }, [vault?.shortAmount.toString()])
 
   // useEffect(() => {
   //   if (shortVaults[firstValidVault]?.shortAmount && shortVaults[firstValidVault]?.shortAmount.lt(amount)) {
@@ -734,7 +734,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
       console.log(e)
       setBuyLoading(false)
     }
-  }, [vault?.id, vaultId, amount.toString()])
+  }, [vault?.id, vaultId, amount.toString(), isVaultApproved])
 
   const setShortCloseMax = useCallback(() => {
     if (finalShortAmount.isGreaterThan(0)) {
