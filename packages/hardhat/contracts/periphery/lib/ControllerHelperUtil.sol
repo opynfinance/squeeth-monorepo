@@ -106,7 +106,7 @@ library ControllerHelperUtil {
      * @param _increaseLiquidityParam ControllerHelperDataType.IncreaseLpLiquidityParam struct
      * @param _isWethToken0 bool variable indicate if Weth token is token0 in Uniswap v3 weth/wPowerPerp pool
      */
-    function increaseLpLiquidity(address _controller, address _nonfungiblePositionManager, uint256 _vaultId, ControllerHelperDataType.IncreaseLpLiquidityParam memory _increaseLiquidityParam, bool _isWethToken0) public {
+    function increaseLpLiquidity(address _controller, address _nonfungiblePositionManager, address _wPowerPerp, uint256 _vaultId, ControllerHelperDataType.IncreaseLpLiquidityParam memory _increaseLiquidityParam, bool _isWethToken0) public {
         if (_increaseLiquidityParam.wPowerPerpAmountToMint > 0) {
             IController(_controller).mintWPowerPerpAmount{value: _increaseLiquidityParam.collateralToDeposit}(
                 _vaultId,
@@ -126,8 +126,7 @@ library ControllerHelperUtil {
 
         INonfungiblePositionManager(_nonfungiblePositionManager).increaseLiquidity(uniIncreaseParams);
 
-        /// TODO: add this 
-        // checkExcess(_controller, _nonfungiblePositionManager, _wPowerPerp, , _vaultId);
+        checkExcess(_controller, _nonfungiblePositionManager, _wPowerPerp, _vaultId);
     }
 
     /**

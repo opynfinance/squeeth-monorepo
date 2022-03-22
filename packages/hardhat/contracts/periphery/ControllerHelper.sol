@@ -512,6 +512,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                     ControllerHelperUtil.increaseLpLiquidity(
                         controller,
                         nonfungiblePositionManager,
+                        wPowerPerp,
                         vaultId,
                         increaseLiquidityParam,
                         isWethToken0
