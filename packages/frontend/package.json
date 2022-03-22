@@ -13,6 +13,8 @@
         "test:e2e": "start-server-and-test 'yarn build && yarn start' http-get://localhost:3000 'synpress run'",
         "test:e2e:only:tests": "synpress run",
         "test:e2e:open:testrunner": "synpress open",
+        "test:synpress:secret:words": "SECRET_WORDS='SECRET_WORDS' NETWORK_NAME=ropsten synpress run ",
+        "test:synpress:private:key": "PRIVATE_KEY='PRIVATE_KEY' NETWORK_NAME=ropsten synpress run ",
         "test:e2e:ci": "synpress run --group smoke-tests --record --parallel"
     },
     "dependencies": {
