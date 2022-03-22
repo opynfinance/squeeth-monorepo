@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@apollo/client'
 
-import { useWallet } from '@context/wallet'
 import { BIG_ZERO } from '@constants/index'
 
 import VAULT_HISTORY_QUERY, { VAULT_HISTORY_SUBSCRIPTION } from '../queries/squeeth/vaultHistoryQuery'
@@ -9,10 +8,12 @@ import { VaultHistory, VaultHistoryVariables } from '../queries/squeeth/__genera
 import { squeethClient } from '@utils/apollo-client'
 import { Action } from '@constants/index'
 import { toTokenAmount } from '@utils/calculations'
-import { useVaultManager } from '@hooks/contracts/useVaultManager'
+import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
+import { useAtomValue } from 'jotai'
 
-export const useVaultHistory = (vaultId: number) => {
-  const { address, networkId } = useWallet()
+export const useVaultHistoryQuery = (vaultId: number) => {
+  const address = useAtomValue(addressAtom)
+  const networkId = useAtomValue(networkIdAtom)
 
   const { data, subscribeToMore } = useQuery<VaultHistory, VaultHistoryVariables>(VAULT_HISTORY_QUERY, {
     client: squeethClient[networkId],
@@ -36,6 +37,12 @@ export const useVaultHistory = (vaultId: number) => {
       },
     })
   }, [address, vaultId, subscribeToMore])
+
+  return vaultHistory
+}
+
+export const useVaultHistory = (vaultId: number) => {
+  const vaultHistory = useVaultHistoryQuery(vaultId)
 
   //accumulated four actions, mintedSqueeth doesn't take minted squeeth sold into account
   //only consider first valid vault

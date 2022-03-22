@@ -1,24 +1,31 @@
-import { LinkButton, PrimaryButton } from '@components/Button'
-import { PrimaryInput } from '@components/Input/PrimaryInput'
+import { LinkButton } from '@components/Button'
 import Nav from '@components/Nav'
 import CapDetails from '@components/Strategies/Crab/CapDetails'
 import CrabStrategyHistory from '@components/Strategies/Crab/StrategyHistory'
 import StrategyInfo from '@components/Strategies/Crab/StrategyInfo'
 import StrategyInfoItem from '@components/Strategies/StrategyInfoItem'
-import { useWallet } from '@context/wallet'
-import { CrabProvider, useCrab } from '@context/crabStrategy'
 import { Typography, Tab, Tabs } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import { useController } from '@hooks/contracts/useController'
 import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Tooltips } from '@constants/index'
 import { Links, Vaults } from '@constants/enums'
 import Image from 'next/image'
 import bull from '../public/images/bull.gif'
 import bear from '../public/images/bear.gif'
 import CrabTrade from '@components/Strategies/Crab/CrabTrade'
+import { useAtomValue } from 'jotai'
+import { addressAtom } from 'src/state/wallet/atoms'
+import { useSelectWallet } from 'src/state/wallet/hooks'
+import {
+  crabStrategyCollatRatioAtom,
+  crabStrategyVaultAtom,
+  maxCapAtom,
+  timeAtLastHedgeAtom,
+} from 'src/state/crab/atoms'
+import { useCalculateCurrentValue, useSetProfitableMovePercent, useSetStrategyData } from 'src/state/crab/hooks'
+import { useIndex, useDailyHistoricalFunding, useCurrentImpliedFunding } from 'src/state/controller/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -94,9 +101,27 @@ const Strategies: React.FC = () => {
   const [selectedIdx, setSelectedIdx] = useState(1)
 
   const classes = useStyles()
-  const { balance, address, selectWallet } = useWallet()
-  const { maxCap, vault, collatRatio, timeAtLastHedge, profitableMovePercent } = useCrab()
-  const { index, currentImpliedFunding, dailyHistoricalFunding } = useController()
+  const maxCap = useAtomValue(maxCapAtom)
+  const vault = useAtomValue(crabStrategyVaultAtom)
+  const collatRatio = useAtomValue(crabStrategyCollatRatioAtom)
+  const timeAtLastHedge = useAtomValue(timeAtLastHedgeAtom)
+  const profitableMovePercent = useSetProfitableMovePercent()
+  const setStrategyData = useSetStrategyData()
+  const calculateCurrentValue = useCalculateCurrentValue()
+
+  const index = useIndex()
+  const dailyHistoricalFunding = useDailyHistoricalFunding()
+  const currentImpliedFunding = useCurrentImpliedFunding()
+
+  const address = useAtomValue(addressAtom)
+  const selectWallet = useSelectWallet()
+
+  useEffect(() => {
+    setStrategyData()
+  }, [collatRatio])
+  useEffect(() => {
+    calculateCurrentValue()
+  }, [calculateCurrentValue])
 
   useMemo(() => {
     if (selectedIdx === 0) return Vaults.ETHBull
@@ -205,7 +230,7 @@ const Strategies: React.FC = () => {
                     tooltip={Tooltips.StrategyProfitThreshold}
                   />
                   <StrategyInfoItem
-                    value={collatRatio.toString()}
+                    value={collatRatio === Infinity ? '0.00' : collatRatio.toString()}
                     label="Collat Ratio (%)"
                     tooltip={Tooltips.StrategyCollRatio}
                   />
@@ -230,10 +255,6 @@ const Strategies: React.FC = () => {
   )
 }
 
-const Page: React.FC = () => (
-  <CrabProvider>
-    <Strategies />
-  </CrabProvider>
-)
+const Page: React.FC = () => <Strategies />
 
 export default Page

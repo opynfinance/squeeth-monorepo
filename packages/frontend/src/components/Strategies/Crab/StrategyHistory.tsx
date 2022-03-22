@@ -4,7 +4,6 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React, { useState } from 'react'
 import { EtherscanPrefix } from '../../../constants'
 import OpenInNewIcon from '@material-ui/icons/OpenInNew'
-import { useWallet } from '@context/wallet'
 import Menu from '@material-ui/core/Menu'
 import MenuItem from '@material-ui/core/MenuItem'
 import KeyboardArrowDownOutlinedIcon from '@material-ui/icons/KeyboardArrowDownOutlined'
@@ -12,6 +11,8 @@ import { GreyButton } from '@components/Button'
 import { useUserCrabTxHistory } from '@hooks/useUserCrabTxHistory'
 import { CrabStrategyTxType, Networks } from '../../../types/index'
 import clsx from 'clsx'
+import { useAtomValue } from 'jotai'
+import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -51,7 +52,9 @@ enum TxType {
 export const CrabStrategyHistory: React.FC = () => {
   const classes = useStyles()
   const { data, loading } = useCrabStrategyTxHistory()
-  const { networkId, address } = useWallet()
+
+  const address = useAtomValue(addressAtom)
+  const networkId = useAtomValue(networkIdAtom)
 
   const [txType, setTxType] = useState(TxType.HEDGES)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)

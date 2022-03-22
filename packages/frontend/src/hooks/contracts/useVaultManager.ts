@@ -1,16 +1,16 @@
 import { useQuery } from '@apollo/client'
 import BigNumber from 'bignumber.js'
 import { useEffect, useState } from 'react'
-// import { Contract } from 'web3-eth-contract'
 
 import { toTokenAmount } from '@utils/calculations'
-// import erc721Abi from '../../abis/vaultManager.json'
 import { OSQUEETH_DECIMALS } from '../../constants/'
 import { VAULTS_QUERY, VAULTS_SUBSCRIPTION } from '../../queries/squeeth/vaultsQuery'
 import { Vaults } from '../../queries/squeeth/__generated__/Vaults'
 import { squeethClient } from '../../utils/apollo-client'
-import { useWallet } from '@context/wallet'
-// import { useAddresses } from '../useAddress'
+import { useAtomValue } from 'jotai'
+import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
+import { useUpdateAtom } from 'jotai/utils'
+import { firstValidVaultAtom } from 'src/state/positions/atoms'
 
 /**
  * get user vaults.
@@ -20,17 +20,9 @@ import { useWallet } from '@context/wallet'
  */
 export const useVaultManager = () => {
   const [vaults, setVaults] = useState<Array<any>>([])
-  // const [contract, setContract] = useState<Contract>()
-
-  const { address, networkId } = useWallet()
-  const [firstValidVault, setFirstValidVault] = useState(0)
-
-  // const { vaultManager } = useAddresses()
-
-  // useEffect(() => {
-  //   if (!web3 || !vaultManager) return
-  //   setContract(new web3.eth.Contract(erc721Abi as any, vaultManager))
-  // }, [vaultManager, web3])
+  const address = useAtomValue(addressAtom)
+  const networkId = useAtomValue(networkIdAtom)
+  const setFirstValidVault = useUpdateAtom(firstValidVaultAtom)
 
   const { data, loading, subscribeToMore } = useQuery<Vaults>(VAULTS_QUERY, {
     client: squeethClient[networkId],
@@ -81,28 +73,5 @@ export const useVaultManager = () => {
     })()
   }, [data?.vaults?.length])
 
-  // const getOwner = async (vaultId: number) => {
-  //   if (!contract) return
-
-  //   return await contract.methods.ownerOf(vaultId).call()
-  // }
-
-  // const isApproved = async (toAddress: string, vaultId: number) => {
-  //   if (!contract) return false
-
-  //   const approval = await contract.methods.getApproved(vaultId).call()
-  //   return toAddress?.toLowerCase() === approval?.toLowerCase()
-  // }
-
-  // const approve = async (toAddress: string, vaultId: number) => {
-  //   if (!contract) return
-
-  //   await handleTransaction(
-  //     contract.methods.approve(toAddress, vaultId).send({
-  //       from: address,
-  //     }),
-  //   )
-  // }
-
-  return { vaultId: vaults[firstValidVault]?.id ?? 0, firstValidVault, vaults, loading }
+  return { vaults, loading }
 }

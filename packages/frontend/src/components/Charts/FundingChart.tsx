@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { createStyles, makeStyles, Tooltip } from '@material-ui/core'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import dynamic from 'next/dynamic'
@@ -160,4 +161,4 @@ const FundingChart = () => {
   )
 }
 
-export default FundingChart
+export default memo(FundingChart)

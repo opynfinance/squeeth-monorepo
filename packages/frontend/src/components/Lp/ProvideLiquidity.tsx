@@ -4,9 +4,10 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 import OpenInNewIcon from '@material-ui/icons/OpenInNew'
 import { motion } from 'framer-motion'
 import React from 'react'
+import { useAtomValue } from 'jotai'
 
 import { UniswapIFrameOpen } from '@constants/enums'
-import { useWallet } from '@context/wallet'
+import { networkIdAtom } from 'src/state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -49,7 +50,7 @@ const useStyles = makeStyles((theme) =>
 
 const ProvideLiquidity: React.FC = () => {
   const classes = useStyles()
-  const { networkId } = useWallet()
+  const networkId = useAtomValue(networkIdAtom)
 
   return (
     <>

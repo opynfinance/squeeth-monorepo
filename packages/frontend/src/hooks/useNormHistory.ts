@@ -1,11 +1,13 @@
 import { useQuery } from '@apollo/client'
 import { squeethClient } from '@utils/apollo-client'
-import { useWallet } from '@context/wallet'
+
 import NORMHISTORY_QUERY from '../queries/squeeth/normHistoryQuery'
 import { useEffect, useState } from 'react'
+import { useAtomValue } from 'jotai'
+import { networkIdAtom } from 'src/state/wallet/atoms'
 
 export const useNormHistory = () => {
-  const { networkId } = useWallet()
+  const networkId = useAtomValue(networkIdAtom)
   const [skipCount, setSkipCount] = useState(0)
   const [normHistory, setNormHistory] = useState<any[]>([])
   const { data, loading } = useQuery(NORMHISTORY_QUERY, {

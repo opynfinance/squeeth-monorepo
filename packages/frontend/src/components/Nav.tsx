@@ -7,15 +7,16 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import React, { useState } from 'react'
+import { useAtomValue } from 'jotai'
 
 import logo from '../../public/images/SqueethLogo.svg'
-import { useWallet } from '@context/wallet'
-import { useAddresses } from '@hooks/useAddress'
 import useCopyClipboard from '@hooks/useCopyClipboard'
-// import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { toTokenAmount } from '@utils/calculations'
 import WalletButton from './Button/WalletButton'
 import SettingMenu from './SettingsMenu'
+import { useWalletBalance } from 'src/state/wallet/hooks'
+import { BIG_ZERO } from '../constants/'
+import { addressesAtom } from 'src/state/positions/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -98,11 +99,11 @@ export const NavLink: React.FC<{ path: string; name: string }> = ({ path, name }
 
 const Nav: React.FC = () => {
   const classes = useStyles()
-  const { balance } = useWallet()
-  const { oSqueeth } = useAddresses()
+  const { data: balance } = useWalletBalance()
+
+  const { oSqueeth } = useAtomValue(addressesAtom)
   const [navOpen, setNavOpen] = useState(false)
   const [isCopied, setCopied] = useCopyClipboard()
-  // const { getWSqueethPositionValue } = useSqueethPool()
 
   return (
     <div className={classes.nav}>
@@ -166,7 +167,7 @@ const Nav: React.FC = () => {
         </div>
       </Hidden>
       <Hidden mdUp>
-        <Typography color="primary">{toTokenAmount(balance, 18).toFixed(4)} ETH</Typography>
+        <Typography color="primary">{toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4)} ETH</Typography>
         <IconButton onClick={() => setNavOpen(true)}>
           <MenuIcon />
         </IconButton>
