@@ -91,6 +91,16 @@ const TradeApp = ({ Component, pageProps }: any) => {
           name="description"
           content="Squeeth is a new financial primitive in DeFi that gives traders exposure to ETH²"
         />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Squeeth" />
+        <meta
+          name="twitter:description"
+          content="Squeeth is a new financial primitive in DeFi that gives traders exposure to ETH²"
+        />
+        <meta
+          name="twitter:image"
+          content="https://squeeth.opyn.co/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FSqueethLogo.f8b5e88c.svg&w=128&q=75"
+        />
         <link rel="icon" href="/favicon.ico" />
         <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width" />
       </Head>
