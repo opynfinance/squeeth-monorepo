@@ -1,3 +1,5 @@
+/// <reference types="cypress" />
+
 describe('Metamask', () => {
   context('Test commands', () => {
     // todo: clear the state of extension and test different combinations of setupMetamask with private key & custom network

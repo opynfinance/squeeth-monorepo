@@ -1,4 +1,4 @@
-/* eslint-disable ui-testing/missing-assertion-in-test */
+/// <reference types="cypress" />
 import TradePage from '../pages/trade'
 
 const trade = new TradePage()

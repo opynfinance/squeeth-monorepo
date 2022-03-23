@@ -1,7 +1,7 @@
 import Page from './page'
 import Header from './header'
 import Onboard from './onboard'
-import Notifications from './notifications'
+import Notifications from './notifications.js'
 
 export default class TradePage extends Page {
   constructor() {

@@ -1,4 +1,4 @@
-/* eslint-disable ui-testing/missing-assertion-in-test */
+/// <reference types="cypress" />
 import BigNumber from 'bignumber.js'
 import TradePage from '../pages/trade'
 

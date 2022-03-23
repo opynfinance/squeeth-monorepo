@@ -1,4 +1,4 @@
-/* eslint-disable ui-testing/missing-assertion-in-test */
+/// <reference types="cypress" />
 import TradePage from '../pages/trade'
 import BigNumber from 'bignumber.js'
 import { MIN_COLLATERAL_AMOUNT } from '../../../src/constants/index'
@@ -47,17 +47,16 @@ describe('Trade on trade page', () => {
         })
       })
 
-      it('open short input should be more than minimum collateral amount', () => {
-        cy.get('#open-short-eth-input').clear().type('6.9', { delay: 200, force: true }).should('have.value', '6.90')
-        cy.get('#open-short-eth-input').invoke('val').then(parseFloat).should('be.at.least', MIN_COLLATERAL_AMOUNT)
-        cy.get('#open-short-eth-input-box').should('contain.text', 'Minimum collateral is')
-      })
-
       it('inputs should be zero by default and tx button is disabled', () => {
-        cy.get('#open-short-header-box').should('contain.text', 'Buy back oSQTH & open position')
+        cy.get('#open-short-header-box').should('contain.text', 'Mint & sell squeeth for premium')
         cy.get('#open-short-eth-input').should('have.value', '0')
         cy.get('#open-short-trade-details .trade-details-amount').should('contain.text', '0')
         cy.get('#open-short-sumbit-tx-btn').should('be.disabled')
+      })
+
+      it('open short input should be more than minimum collateral amount', () => {
+        cy.get('#open-short-eth-input').clear().type('6.9', { delay: 200, force: true }).should('have.value', '6.90')
+        cy.get('#open-short-eth-input').invoke('val').then(parseFloat).should('be.at.least', MIN_COLLATERAL_AMOUNT)
       })
 
       it('zero input amount', () => {
@@ -71,10 +70,10 @@ describe('Trade on trade page', () => {
       })
 
       it('adjust collateral ratio', () => {
-        cy.get('.open-short-collat-ratio-input-box')
+        cy.get('.open-short-collat-ratio-input-box input')
           .clear()
-          .type('250', { delay: 200, force: true })
-          .should('have.value', '250')
+          .type('250.', { delay: 200, force: true })
+          .should('have.value', '250.0')
       })
 
       it('can enter an amount into eth input, before & post trade amount match on position card and osqth input', () => {
@@ -84,20 +83,20 @@ describe('Trade on trade page', () => {
           cy.get('#open-short-eth-post-trade-balance').should('contain.text', (Number(bal.text()) - 8).toFixed(4))
         })
 
-        cy.get('#open-short-trade-details .trade-details-amount').invoke('text').should('not.equal', '0')
+        cy.get('#open-short-trade-details .trade-details-amount').invoke('text').should('not.equal', 0)
 
         cy.get('#open-short-trade-details .trade-details-amount').then((val) => {
           cy.get('#open-short-osqth-before-trade-balance').then((bal) => {
             //post = before + input
             cy.get('#open-short-osqth-post-trade-balance').should(
               'contain.text',
-              new BigNumber(val.val().toString()).plus(Number(bal.text())).toFixed(4),
+              new BigNumber(val.text().toString()).plus(Number(bal.text())).toFixed(4),
             )
           })
           cy.get('#position-card-before-trade-balance').then((bal) => {
             cy.get('#position-card-post-trade-balance').should(
               'contain.text',
-              new BigNumber(val.val().toString()).plus(Number(bal.text())).toFixed(6),
+              new BigNumber(val.text().toString()).plus(Number(bal.text())).toFixed(6),
             )
           })
         })
@@ -155,6 +154,7 @@ describe('Trade on trade page', () => {
       it('enter an amount into inputs will get error', () => {
         cy.get('#close-short-osqth-before-trade-balance').then((bal) => {
           if (Number(bal.text()) == 0) {
+            cy.get('#close-short-type-select input').select('Partial Close')
             cy.get('#close-short-osqth-input').clear().type('1', { delay: 200 })
             cy.get('#close-short-osqth-input-box').should('contain.text', 'Insufficient oSQTH balance')
           }
@@ -163,19 +163,19 @@ describe('Trade on trade page', () => {
     })
     context(`when wallet has short osqth balance`, () => {
       it('zero input amount', () => {
-        cy.get('close-short-type-select').select('Partial Close')
+        cy.get('#close-short-type-select input').select('Partial Close')
         cy.get('#close-short-osqth-input').clear().type('0', { delay: 200 }).should('have.value', '0')
         cy.get('#close-short-trade-details .trade-details-amount').should('contain.text', '0')
       })
 
       it('invalid input amount', () => {
-        cy.get('close-short-type-select').select('Partial Close')
+        cy.get('#close-short-type-select input').select('Partial Close')
         cy.get('#close-short-osqth-input').clear().type('\\', { delay: 200 }).should('have.value', '0')
         cy.get('#close-short-trade-details .trade-details-amount').should('contain.text', '0')
       })
 
       it('can enter an amount into osqth input, before & post trade amount match on position card and eth box', () => {
-        cy.get('close-short-type-select').select('Partial Close')
+        cy.get('#close-short-type-select input').select('Partial Close')
         cy.get('#close-short-osqth-input')
           .clear()
           .type('0.001', { force: true, delay: 200 })
@@ -191,10 +191,10 @@ describe('Trade on trade page', () => {
       })
 
       it('can use max button for osqth input when fully close selected', () => {
-        cy.get('close-short-type-select').select('Partial Close')
+        cy.get('#close-short-type-select input').select('Partial Close')
         cy.get('#close-short-osqth-input-action').click()
         cy.get('#close-short-osqth-input').invoke('val').then(parseFloat).should('not.equal', '0')
-        cy.get('close-short-type-select').should('contain.text', 'Fully Close')
+        cy.get('#close-short-type-select input').should('contain.text', 'Fully Close')
 
         cy.get('#close-short-osqth-input').then((val) => {
           const osqthInput = new BigNumber(val.val().toString()).toFixed(6)
@@ -207,8 +207,8 @@ describe('Trade on trade page', () => {
       })
 
       it('can close short position partially', () => {
-        cy.get('close-short-type-select').select('Partial Close')
-        cy.get('close-short-type-select').should('contain.text', 'Partial Close')
+        cy.get('#close-short-type-select input').select('Partial Close')
+        cy.get('#close-short-type-select input').should('contain.text', 'Partial Close')
 
         cy.get('#close-short-osqth-input')
           .clear()
@@ -247,8 +247,8 @@ describe('Trade on trade page', () => {
       })
 
       it(`close short position fully with fully close selected`, () => {
-        cy.get('close-short-type-select').select('Fully Close')
-        cy.get('close-short-type-select').should('contain.text', 'Fully Close')
+        cy.get('#close-short-type-select input').select('Fully Close')
+        cy.get('#close-short-type-select input').should('contain.text', 'Fully Close')
 
         cy.get('#close-short-osqth-input').invoke('val').then(parseFloat).should('not.equal', '0')
 

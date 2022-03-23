@@ -1,3 +1,5 @@
+/// <reference types="cypress" />
+
 describe('Puppeteer', () => {
   context('Test commands', () => {
     it(`initPuppeteer should connect with cypress browser`, () => {
