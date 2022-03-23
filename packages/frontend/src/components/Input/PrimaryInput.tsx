@@ -86,6 +86,7 @@ type PrimaryInputType = {
   onActionClicked?: () => void
   convertedValue?: number | string
   hint?: string | React.ReactNode
+  id?: string
   error?: boolean
   isLoading?: boolean
   isFullClose?: boolean
@@ -103,6 +104,7 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
   unit,
   convertedValue,
   hint,
+  id,
   error = false,
   isLoading = false,
   isFullClose = false,
@@ -110,7 +112,10 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
   const classes = useStyles()
 
   return (
-    <div className={clsx(classes.container, error && classes.errorBorder, isFullClose && classes.disabledBackground)}>
+    <div
+      className={clsx(classes.container, error && classes.errorBorder, isFullClose && classes.disabledBackground)}
+      id={id + '-box'}
+    >
       <div className={classes.innerContainer}>
         <div className={classes.rightContainer}>
           <div className={classes.labelContainer}>
@@ -126,6 +131,7 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
           <div className={classes.inputContainer}>
             <Tooltip title={isFullClose ? Tooltips.FullcloseInput : ''} className={classes.fullCloseInfo}>
               <input
+                id={id}
                 className={clsx(classes.input, isFullClose && classes.notAllowedCursor)}
                 // className={classes.input}
                 value={isNaN(Number(value)) ? 0 : value}
@@ -169,7 +175,6 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
           <Typography className={classes.unit}>{unit}</Typography>
         </div>
       </div>
-
       {isLoading && !error ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
           <Typography variant="caption" color={error ? 'error' : 'textSecondary'}>
@@ -183,7 +188,7 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
             {hint || ''}
           </Typography>
           {actionTxt && onActionClicked ? (
-            <LinkButton size="small" color="primary" onClick={onActionClicked} variant="text">
+            <LinkButton size="small" color="primary" onClick={onActionClicked} variant="text" id={id + '-action'}>
               {actionTxt}
             </LinkButton>
           ) : null}
