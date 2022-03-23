@@ -304,6 +304,12 @@ const useStyles = makeStyles((theme) =>
         fontWeight: theme.typography.fontWeightBold,
       },
     },
+    displayBlock: {
+      display: 'block',
+    },
+    displayNone: {
+      display: 'none',
+    },
   }),
 )
 

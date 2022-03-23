@@ -50,7 +50,9 @@ const useStyles = makeStyles((theme) =>
       margin: theme.spacing(0, 'auto'),
       width: '350px',
       position: 'sticky',
-      height: '440px',
+      maxHeight: '440px',
+      minHeight: '350px',
+      height: 'fit-content',
       top: '100px',
     },
     overview: {
