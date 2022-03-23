@@ -24,6 +24,7 @@ library ControllerHelperUtil {
      * @param _nonfungiblePositionManager Uni NonFungiblePositionManager address
      * @param _params ControllerHelperDataType.closeUniLpParams struct 
      * @param _isWethToken0 bool variable indicate if Weth token is token0 in Uniswap v3 weth/wPowerPerp pool
+     * @return withdraw wPowerPerp and WETH amounts
      */
     function closeUniLp(address _nonfungiblePositionManager, ControllerHelperDataType.closeUniLpParams memory _params, bool _isWethToken0) public returns (uint256, uint256) {
         INonfungiblePositionManager.DecreaseLiquidityParams memory decreaseParams = INonfungiblePositionManager
