@@ -426,7 +426,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
         </div>
       ) : (
         <div>
-          <div className={classes.settingsContainer}>
+          <div className={classes.settingsContainer} id="open-short-card-content">
             <Typography variant="caption" className={classes.explainer} component="div" id="open-short-header-box">
               Mint & sell squeeth for premium
             </Typography>
@@ -940,7 +940,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
               id="close-short-osqth-input"
             />
           </div>
-          <div style={{ width: '100%', padding: '0 25px 5px 25px' }}>
+          <div style={{ width: '100%', padding: '0 25px 5px 25px' }} id="close-short-type-select">
             <Select
               label="Type of Close"
               value={closeType}
@@ -953,7 +953,6 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
               displayEmpty
               inputProps={{ 'aria-label': 'Without label' }}
               style={{ padding: '5px 0px', width: '100%', textAlign: 'left' }}
-              id="close-short-type-select"
             >
               <MenuItem value={CloseType.FULL} id="close-short-full-close">
                 Full Close
