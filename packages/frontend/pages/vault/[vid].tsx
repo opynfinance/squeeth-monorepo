@@ -614,7 +614,7 @@ const Component: React.FC = () => {
                     <InfoIcon className={classes.infoIcon} />
                   </Tooltip>
                 </Typography>
-                <Typography className={classes.overviewValue}>
+                <Typography className={classes.overviewValue} id="vault-total-debt-bal">
                   {vault?.shortAmount.gt(0) ? vault?.shortAmount.toFixed(6) : 0}
                 </Typography>
               </div>
@@ -625,7 +625,9 @@ const Component: React.FC = () => {
                     <InfoIcon className={classes.infoIcon} />
                   </Tooltip>
                 </Typography>
-                <Typography className={classes.overviewValue}>{shortDebt?.gt(0) ? shortDebt.toFixed(6) : 0}</Typography>
+                <Typography className={classes.overviewValue} id="vault-shorted-debt-bal">
+                  {shortDebt?.gt(0) ? shortDebt.toFixed(6) : 0}
+                </Typography>
               </div>
               <div className={classes.debtItem}>
                 <Typography className={classes.overviewTitle}>
@@ -635,7 +637,7 @@ const Component: React.FC = () => {
                   </Tooltip>
                 </Typography>
 
-                <Typography className={classes.overviewValue}>
+                <Typography className={classes.overviewValue} id="vault-minted-debt-bal">
                   {mintedDebt.gt(0) ? mintedDebt.toFixed(6) : 0}
                 </Typography>
               </div>
@@ -646,7 +648,7 @@ const Component: React.FC = () => {
                     <InfoIcon className={classes.infoIcon} />
                   </Tooltip>
                 </Typography>
-                <Typography className={classes.overviewValue}>
+                <Typography className={classes.overviewValue} id="vault-lped-debt-bal">
                   {lpedSqueeth?.gt(0) ? lpedSqueeth.toFixed(6) : 0}
                 </Typography>
               </div>
@@ -660,7 +662,9 @@ const Component: React.FC = () => {
             </div> */}
             <div className={classes.overviewItem}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Typography className={classes.overviewValue}>{vault?.collateralAmount.toFixed(4)}</Typography>
+                <Typography className={classes.overviewValue} id="vault-collat-amount">
+                  {vault?.collateralAmount.toFixed(4)}
+                </Typography>
                 {!isRestricted ? (
                   <>
                     {vault?.shortAmount.isZero() && vault.collateralAmount.gt(0) ? (
@@ -670,6 +674,7 @@ const Component: React.FC = () => {
                           updateCollateral(vault!.collateralAmount.negated().toString())
                           removeCollat(vault!.collateralAmount)
                         }}
+                        id="withdraw-collat-submit-btn"
                       >
                         WITHDRAW
                       </button>
@@ -684,7 +689,11 @@ const Component: React.FC = () => {
                 <Typography className={classes.overviewValue}>
                   {existingCollatPercent === Infinity ? '--' : `${existingCollatPercent || 0} %`}
                 </Typography>
-                <Typography className={clsx(classes.collatStatus, collatClass)} variant="caption">
+                <Typography
+                  className={clsx(classes.collatStatus, collatClass)}
+                  variant="caption"
+                  id="collat-perct-amount"
+                >
                   {getCollatPercentStatus(existingCollatPercent)}
                 </Typography>
               </div>
@@ -715,6 +724,7 @@ const Component: React.FC = () => {
                         <InfoIcon fontSize="small" className={classes.infoIcon} />
                       </Tooltip>
                       <LinkButton
+                        id="collat-max-btn"
                         size="small"
                         color="primary"
                         onClick={() =>
@@ -729,6 +739,7 @@ const Component: React.FC = () => {
                     </div>
 
                     <NumberInput
+                      id="collat-amount-input"
                       min={vault?.collateralAmount.negated().toString()}
                       step={0.1}
                       placeholder="Collateral"
@@ -736,9 +747,17 @@ const Component: React.FC = () => {
                       value={collateral}
                       unit="ETH"
                       hint={
-                        !!adjustCollatError
-                          ? adjustCollatError
-                          : `Balance ${toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4)} ETH`
+                        !!adjustCollatError ? (
+                          adjustCollatError
+                        ) : (
+                          <span>
+                            Balance{' '}
+                            <span id="vault-collat-input-eth-balance">
+                              {toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4)}
+                            </span>{' '}
+                            ETH
+                          </span>
+                        )
                       }
                       error={!!adjustCollatError}
                     />
@@ -765,6 +784,7 @@ const Component: React.FC = () => {
                       inputProps={{
                         min: '0',
                       }}
+                      className="collat-collat-perct"
                     />
                     <CollatRange
                       collatValue={isCollatAction ? collatPercent : existingCollatPercent}
@@ -780,6 +800,7 @@ const Component: React.FC = () => {
                   </div>
                   <div className={classes.managerActions}>
                     <RemoveButton
+                      id="remove-collat-sumbit-tx-btn"
                       className={classes.actionBtn}
                       size="small"
                       disabled={action !== VaultAction.REMOVE_COLLATERAL || txLoading || !!adjustCollatError}
@@ -792,6 +813,7 @@ const Component: React.FC = () => {
                       )}
                     </RemoveButton>
                     <AddButton
+                      id="add-collat-sumbit-tx-btn"
                       onClick={() => addCollat(collateralBN)}
                       className={classes.actionBtn}
                       size="small"
@@ -820,6 +842,7 @@ const Component: React.FC = () => {
                         <InfoIcon fontSize="small" className={classes.infoIcon} />
                       </Tooltip>
                       <LinkButton
+                        id="debt-max-btn"
                         size="small"
                         color="primary"
                         onClick={() =>
@@ -833,6 +856,7 @@ const Component: React.FC = () => {
                       </LinkButton>
                     </div>
                     <NumberInput
+                      id="debt-amount-input"
                       min={oSqueethBal.negated().toString()}
                       step={0.1}
                       placeholder="Amount"
@@ -840,15 +864,21 @@ const Component: React.FC = () => {
                       value={shortAmount}
                       unit="oSQTH"
                       hint={
-                        !!adjustAmountError
-                          ? adjustAmountError
-                          : `Balance ${
-                              oSqueethBal?.isGreaterThan(0) &&
+                        !!adjustAmountError ? (
+                          adjustAmountError
+                        ) : (
+                          <span>
+                            Balance{' '}
+                            <span id="vault-debt-input-osqth-balance">
+                              {oSqueethBal?.isGreaterThan(0) &&
                               positionType === PositionType.LONG &&
                               oSqueethBal.minus(squeethAmount).isGreaterThan(0)
                                 ? oSqueethBal.minus(squeethAmount).toFixed(8)
-                                : oSqueethBal.toFixed(8)
-                            } oSQTH`
+                                : oSqueethBal.toFixed(8)}
+                            </span>{' '}
+                            oSQTH
+                          </span>
+                        )
                       }
                       error={!!adjustAmountError}
                     />
@@ -872,6 +902,7 @@ const Component: React.FC = () => {
                         inputProps={{
                           min: '0',
                         }}
+                        className="debt-collat-perct"
                       />
                       <CollatRange
                         collatValue={!isCollatAction ? collatPercent : existingCollatPercent}
@@ -888,6 +919,7 @@ const Component: React.FC = () => {
                   </div>
                   <div className={classes.managerActions}>
                     <RemoveButton
+                      id="burn-sumbit-tx-btn"
                       onClick={() => burn(shortAmountBN)}
                       className={classes.actionBtn}
                       size="small"
@@ -900,6 +932,7 @@ const Component: React.FC = () => {
                       )}
                     </RemoveButton>
                     <AddButton
+                      id="mint-sumbit-tx-btn"
                       onClick={() => mint(shortAmountBN)}
                       className={classes.actionBtn}
                       size="small"
@@ -944,6 +977,7 @@ const Component: React.FC = () => {
                   <div className={classes.managerActions} style={{ marginTop: '16px' }}>
                     {isLPDeposited ? (
                       <RemoveButton
+                        id="remove-lp-nft-sumbit-tx-btn"
                         className={classes.actionBtn}
                         size="small"
                         disabled={txLoading}
@@ -958,6 +992,7 @@ const Component: React.FC = () => {
                     ) : null}
                     {!isLPDeposited && action === VaultAction.APPROVE_UNI_POSITION ? (
                       <AddButton
+                        id="approve-lp-nft-sumbit-tx-btn"
                         onClick={() => approveUniLPToken(uniTokenToDeposit)}
                         className={classes.actionBtn}
                         size="small"
@@ -972,6 +1007,7 @@ const Component: React.FC = () => {
                     ) : null}
                     {!isLPDeposited && action === VaultAction.DEPOSIT_UNI_POSITION ? (
                       <AddButton
+                        id="deposit-lp-nft-sumbit-tx-btn"
                         onClick={() => depositUniLPToken(uniTokenToDeposit)}
                         className={classes.actionBtn}
                         size="small"
