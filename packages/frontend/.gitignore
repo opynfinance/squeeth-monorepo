@@ -36,5 +36,6 @@ yarn-error.log*
 # tests
 tests/e2e/screenshots
 tests/e2e/videos
-
-serviceAccount.json
+cypress/screenshots
+cypress/videos
+cypress/downloads
