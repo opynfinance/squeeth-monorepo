@@ -108,41 +108,44 @@ export const useGetBuyQuoteForETH = () => {
   const wethToken = useAtomValue(wethTokenAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
   //If I input an exact amount of ETH I want to spend, tells me how much Squeeth I'd purchase
-  const getBuyQuoteForETH = async (ETHAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
-    const emptyState = {
-      amountOut: new BigNumber(0),
-      minimumAmountOut: new BigNumber(0),
-      priceImpact: '0',
-    }
-
-    if (!ETHAmount || !pool) return emptyState
-
-    try {
-      //WETH is input token, squeeth is output token. I'm using WETH to buy Squeeth
-      const route = new Route([pool], wethToken!, squeethToken!)
-      //getting the amount of squeeth I'd get out for putting in an exact amount of ETH
-      const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toString())
-
-      if (rawAmount.equalTo(0)) {
-        return emptyState
+  const getBuyQuoteForETH = useCallback(
+    async (ETHAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
+      const emptyState = {
+        amountOut: new BigNumber(0),
+        minimumAmountOut: new BigNumber(0),
+        priceImpact: '0',
       }
 
-      const trade = await Trade.exactIn(route, rawAmount)
+      if (!ETHAmount || !pool) return emptyState
 
-      //the amount of squeeth I'm getting out
-      return {
-        amountOut: new BigNumber(trade.outputAmount.toSignificant(OSQUEETH_DECIMALS)),
-        minimumAmountOut: new BigNumber(
-          trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(OSQUEETH_DECIMALS),
-        ),
-        priceImpact: trade.priceImpact.toFixed(2),
+      try {
+        //WETH is input token, squeeth is output token. I'm using WETH to buy Squeeth
+        const route = new Route([pool], wethToken!, squeethToken!)
+        //getting the amount of squeeth I'd get out for putting in an exact amount of ETH
+        const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toString())
+
+        if (rawAmount.equalTo(0)) {
+          return emptyState
+        }
+
+        const trade = await Trade.exactIn(route, rawAmount)
+
+        //the amount of squeeth I'm getting out
+        return {
+          amountOut: new BigNumber(trade.outputAmount.toSignificant(OSQUEETH_DECIMALS)),
+          minimumAmountOut: new BigNumber(
+            trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(OSQUEETH_DECIMALS),
+          ),
+          priceImpact: trade.priceImpact.toFixed(2),
+        }
+      } catch (e) {
+        console.log(e)
       }
-    } catch (e) {
-      console.log(e)
-    }
 
-    return emptyState
-  }
+      return emptyState
+    },
+    [pool?.token0.address, wethToken?.address, squeethToken?.address],
+  )
 
   return getBuyQuoteForETH
 }
@@ -175,9 +178,12 @@ export const useUpdateSqueethPrices = () => {
 export const useGetWSqueethPositionValue = () => {
   const ethPrice = useETHPrice()
   const squeethInitialPrice = useAtomValue(squeethInitialPriceAtom)
-  const getWSqueethPositionValue = (amount: BigNumber | number) => {
-    return new BigNumber(amount).times(squeethInitialPrice).times(ethPrice)
-  }
+  const getWSqueethPositionValue = useCallback(
+    (amount: BigNumber | number) => {
+      return new BigNumber(amount).times(squeethInitialPrice).times(ethPrice)
+    },
+    [ethPrice?.toString(), squeethInitialPrice?.toString()],
+  )
 
   return getWSqueethPositionValue
 }
@@ -295,7 +301,7 @@ export const useGetBuyParamForETH = () => {
       fee: UNI_POOL_FEES,
       recipient: address,
       deadline: Math.floor(Date.now() / 1000 + 86400), // uint256
-      amountIn: ethers.utils.parseEther(amount.toString()),
+      amountIn: fromTokenAmount(amount, 18),
       amountOutMinimum: fromTokenAmount(quote.minimumAmountOut, OSQUEETH_DECIMALS).toString(),
       sqrtPriceLimitX96: 0,
     }
@@ -315,7 +321,7 @@ export const useBuyForWETH = () => {
     const txHash = await handleTransaction(
       swapRouterContract?.methods.exactInputSingle(exactInputParam).send({
         from: address,
-        value: ethers.utils.parseEther(amount.toString()),
+        value: fromTokenAmount(amount, 18),
       }),
     )
 
@@ -351,19 +357,22 @@ export const useBuyAndRefund = () => {
   const swapRouterContract = useAtomValue(swapRouterContractAtom)
   const buyAndRefundData = useBuyAndRefundData()
 
-  const buyAndRefund = async (amount: BigNumber, onTxConfirmed?: () => void) => {
-    const callData = await buyAndRefundData(amount)
+  const buyAndRefund = useCallback(
+    async (amount: BigNumber, onTxConfirmed?: () => void) => {
+      const callData = await buyAndRefundData(amount)
 
-    const result = await handleTransaction(
-      swapRouterContract?.methods.multicall(callData).send({
-        from: address,
-        value: ethers.utils.parseEther(amount.toString()),
-      }),
-      onTxConfirmed,
-    )
+      const result = await handleTransaction(
+        swapRouterContract?.methods.multicall(callData).send({
+          from: address,
+          value: fromTokenAmount(amount, 18),
+        }),
+        onTxConfirmed,
+      )
 
-    return result
-  }
+      return result
+    },
+    [address, swapRouterContract, buyAndRefundData],
+  )
 
   return buyAndRefund
 }

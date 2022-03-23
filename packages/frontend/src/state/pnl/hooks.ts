@@ -22,12 +22,13 @@ import { useGetBuyQuote, useGetSellQuote } from '../squeethPool/hooks'
 import { BIG_ZERO } from '@constants/index'
 import { PositionType } from '../../types'
 import { useIndex } from '../controller/hooks'
+import { useVaultData } from '@hooks/useVaultData'
 
 export function useEthCollateralPnl() {
   const { vaultId } = useFirstValidVault()
   const vaultHistory = useVaultHistoryQuery(vaultId)
+  const { existingCollat } = useVaultData(vaultId)
 
-  const existingCollat = useAtomValue(existingCollatAtom)
   const index = useIndex()
   const [ethCollateralPnl, setEthCollateralPnl] = useAtom(ethCollateralPnlAtom)
   const { data: swapsData } = useSwaps()
@@ -89,7 +90,8 @@ export function useShortGain() {
   const { squeethAmount, totalUSDFromSell } = useComputeSwaps()
   const [shortGain, setShortGain] = useAtom(shortGainAtom)
   const shortUnrealizedPNL = useAtomValue(shortUnrealizedPNLAtom)
-  const existingCollat = useAtomValue(existingCollatAtom)
+  const { vaultId } = useFirstValidVault()
+  const { existingCollat } = useVaultData(vaultId)
   const index = useIndex()
 
   useEffect(() => {

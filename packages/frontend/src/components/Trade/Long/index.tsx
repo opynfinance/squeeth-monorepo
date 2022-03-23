@@ -307,7 +307,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
         setInputQuoteLoading(false)
       })
     },
-    [slippageAmount.toString()],
+    [getBuyQuoteForETH, getWSqueethPositionValue, slippageAmount.toString()],
   )
 
   const handleSqthChange = useCallback(
@@ -321,7 +321,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
         setInputQuoteLoading(false)
       })
     },
-    [slippageAmount.toString()],
+    [getBuyQuote, slippageAmount.toString()],
   )
 
   let openError: string | undefined
@@ -370,7 +370,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
       console.log(e)
       setBuyLoading(false)
     }
-  }, [ethTradeAmount])
+  }, [buyAndRefund, ethTradeAmount])
 
   return (
     <div>
@@ -671,7 +671,17 @@ const CloseLong: React.FC<BuyProps> = () => {
       console.log(e)
       setSellLoading(false)
     }
-  }, [amount.toString(), squeethAllowance.toString()])
+  }, [
+    amount.toString(),
+    resetEthTradeAmount,
+    resetSqthTradeAmount,
+    sell,
+    setIsTxFirstStep,
+    setTradeCompleted,
+    setTradeSuccess,
+    squeethAllowance.toString(),
+    squeethApprove,
+  ])
 
   useEffect(() => {
     if (transactionInProgress) {
@@ -695,7 +705,7 @@ const CloseLong: React.FC<BuyProps> = () => {
         setInputQuoteLoading(false)
       })
     },
-    [slippageAmount.toString()],
+    [getSellQuote, slippageAmount.toString()],
   )
 
   const handleEthChange = useCallback(
@@ -708,7 +718,7 @@ const CloseLong: React.FC<BuyProps> = () => {
         setInputQuoteLoading(false)
       })
     },
-    [slippageAmount.toString()],
+    [getSellQuoteForETH, slippageAmount.toString()],
   )
 
   return (

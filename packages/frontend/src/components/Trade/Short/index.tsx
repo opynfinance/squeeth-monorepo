@@ -40,13 +40,7 @@ import {
   useNormFactor,
   useUpdateOperator,
 } from 'src/state/controller/hooks'
-import {
-  useComputeSwaps,
-  useFirstValidVault,
-  useLPPositionsQuery,
-  useUpdateVaultData,
-  useVaultQuery,
-} from 'src/state/positions/hooks'
+import { useComputeSwaps, useFirstValidVault, useLPPositionsQuery, useVaultQuery } from 'src/state/positions/hooks'
 import {
   ethTradeAmountAtom,
   quoteAtom,
@@ -56,13 +50,12 @@ import {
   tradeCompletedAtom,
   tradeSuccessAtom,
   tradeTypeAtom,
-  transactionHashAtom,
 } from 'src/state/trade/atoms'
 import { toTokenAmount } from '@utils/calculations'
 // import { normFactorAtom } from 'src/state/controller/atoms'
 import { TradeType } from '../../../types'
 import Cancelled from '../Cancelled'
-import { controllerContractAtom } from 'src/state/contracts/atoms'
+import { useVaultData } from '@hooks/useVaultData'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -278,7 +271,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   //   }
   // }, [shortVaults?.length, open])
 
-  const existingCollatPercent = useAtomValue(existingCollatPercentAtom)
+  const { existingCollatPercent } = useVaultData(vaultId)
 
   useEffect(() => {
     const debt = collateral.times(100).dividedBy(new BigNumber(collatPercent))
@@ -645,7 +638,6 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const { shortHelper } = useAtomValue(addressesAtom)
   const isLong = useAtomValue(isLongAtom)
   const connected = useAtomValue(connectedWalletAtom)
-  const existingCollatPercent = useAtomValue(existingCollatPercentAtom)
 
   const selectWallet = useSelectWallet()
   const updateOperator = useUpdateOperator()
@@ -668,6 +660,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const { loading: isPositionFinishedCalc } = useLPPositionsQuery()
   const { vaults: shortVaults } = useVaultManager()
   const { firstValidVault, vaultId } = useFirstValidVault()
+  const { existingCollatPercent } = useVaultData(vaultId)
   const vaultQuery = useVaultQuery(vaultId)
   const vault = vaultQuery.data
   const setCollatRatio = useUpdateAtom(collatRatioAtom)
@@ -678,7 +671,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
       const contractShort = vault?.shortAmount?.isFinite() ? vault?.shortAmount : new BigNumber(0)
       setFinalShortAmount(contractShort)
     }
-  }, [vault])
+  }, [vault?.shortAmount.toString()])
 
   // useEffect(() => {
   //   if (shortVaults[firstValidVault]?.shortAmount && shortVaults[firstValidVault]?.shortAmount.lt(amount)) {
@@ -747,7 +740,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
       console.log(e)
       setBuyLoading(false)
     }
-  }, [vault?.id, vaultId, amount.toString()])
+  }, [vault?.id, vaultId, amount.toString(), isVaultApproved])
 
   const setShortCloseMax = useCallback(() => {
     if (finalShortAmount.isGreaterThan(0)) {
