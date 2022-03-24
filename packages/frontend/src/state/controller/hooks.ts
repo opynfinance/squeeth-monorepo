@@ -346,7 +346,6 @@ export const useNormFactor = () => {
 export const useIndex = () => {
   const address = useAtomValue(addressAtom)
   const web3 = useAtomValue(web3Atom)
-  const { controller } = useAtomValue(addressesAtom)
   const networkId = useAtomValue(networkIdAtom)
   const [index, setIndex] = useAtom(indexAtom)
   const contract = useAtomValue(controllerContractAtom)
@@ -369,8 +368,11 @@ export const useIndex = () => {
         getIndex(3, contract).then(setIndex)
       },
     )
-    // return () => sub.unsubscribe()
-  }, [web3, networkId])
+
+    return () => {
+      sub.unsubscribe()
+    }
+  }, [contract, web3, networkId])
 
   return index
 }
@@ -425,8 +427,10 @@ export const useMark = () => {
       },
     )
     // cleanup function
-    // return () => sub.unsubscribe()
-  }, [networkId, web3])
+    return () => {
+      sub.unsubscribe()
+    }
+  }, [contract, networkId, web3])
 
   return mark
 }
