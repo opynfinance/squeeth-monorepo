@@ -1,9 +1,9 @@
+import useSqueethShortPayOffGraph from '@hooks/payOffGraph/useSqueethShortPayOffGraph'
 import { createStyles, makeStyles } from '@material-ui/core'
-import React, { memo, useCallback, useEffect, useState } from 'react'
+import React, { memo, useCallback } from 'react'
 import { Line } from 'react-chartjs-2'
 
 import { Vaults } from '../../constants'
-import { getCrabVaultPayoff, getSqueethShortPayOffGraph } from '../../utils'
 
 const color0 = '#6df7e7'
 const color1 = '#6df7e7'
@@ -109,32 +109,13 @@ const ShortSqueethPayoff: React.FC<{ ethPrice: number; collatRatio: number; vaul
   collatRatio,
   vaultType,
 }) => {
-  const [labels, setLabels] = useState<Array<number>>([])
-  const [values0, setValues0] = useState<Array<string>>([])
-  const [values1, setValues1] = useState<Array<string | null>>([])
-  const [values14, setValues14] = useState<Array<string | null>>([])
-  const [values28, setValues28] = useState<Array<string | null>>([])
-
-  const classes = useStyles()
-
-  useEffect(() => {
-    if (!vaultType) {
-      const { ethPrices, payout0, payout14, payout28 } = getSqueethShortPayOffGraph(ethPrice, collatRatio)
-      setLabels(ethPrices)
-      setValues0(payout0)
-      setValues14(payout14)
-      setValues28(payout28)
-    } else if (vaultType === Vaults.CrabVault) {
-      // const { ethPrices, payout0, payout14, payout28 } = getCrabVaultPayoff(ethPrice, collatRatio)
-      // setLabels(ethPrices)
-      // setValues0(payout0)
-      // setValues14(payout14)
-      // setValues28(payout28)
-      const { ethPrices, payout1 } = getSqueethShortPayOffGraph(ethPrice, collatRatio)
-      setLabels(ethPrices)
-      setValues1(payout1)
-    }
-  }, [ethPrice, collatRatio])
+  const {
+    ethPrices: labels,
+    payout0: values0,
+    payout1: values1,
+    payout14: values14,
+    payout28: values28,
+  } = useSqueethShortPayOffGraph(ethPrice, collatRatio)
 
   const getData = useCallback(() => {
     return {
