@@ -267,8 +267,6 @@ export const useGetCollatRatioAndLiqPrice = () => {
       }
       const debt = await getDebtAmount(shortAmount)
 
-      console.log('effective', effectiveCollat.toString(), debt.toString())
-
       if (debt && !debt.isZero() && debt.isPositive()) {
         const collateralPercent = Number(effectiveCollat.div(debt).times(100).toFixed(1))
         const rSqueeth = normFactor.multipliedBy(new BigNumber(shortAmount)).dividedBy(10000)
