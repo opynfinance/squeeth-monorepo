@@ -2,12 +2,23 @@ import { BIG_ZERO } from '../constants'
 import { useEffect, useMemo, useState } from 'react'
 import { useUserCrabTxHistory } from './useUserCrabTxHistory'
 import { CrabStrategyTxType } from '../types'
-import { useCrab } from '@context/crabStrategy'
-import { useWorldContext } from '@context/world'
+import { toTokenAmount } from '@utils/calculations'
+import { crabLoadingAtom, currentEthValueAtom } from 'src/state/crab/atoms'
+import { useAtomValue } from 'jotai'
+import { useTokenBalance } from './contracts/useTokenBalance'
+import { addressesAtom } from 'src/state/positions/atoms'
+import { useIndex } from 'src/state/controller/hooks'
 
 export const useCrabPosition = (user: string) => {
+  const crabLoading = useAtomValue(crabLoadingAtom)
+  const currentEthValue = useAtomValue(currentEthValueAtom)
+
+  const { crabStrategy } = useAtomValue(addressesAtom)
   const { loading, data } = useUserCrabTxHistory(user)
-  const { loading: crabLoading, userCrabBalance, currentEthValue, ethIndexPrice } = useCrab()
+  const { value: userCrabBalance, loading: userCrabBalanceLoading } = useTokenBalance(crabStrategy, 5, 18)
+
+  const index = useIndex()
+  const ethIndexPrice = toTokenAmount(index, 18).sqrt()
 
   const [minCurrentEth, setMinCurrentEth] = useState(BIG_ZERO)
   const [minCurrentUsd, setMinCurrentUsd] = useState(BIG_ZERO)
@@ -40,10 +51,10 @@ export const useCrabPosition = (user: string) => {
     )
 
     return { depositedEth, usdAmount }
-  }, [loading])
+  }, [data?.length, loading])
 
   useEffect(() => {
-    if (crabLoading) return
+    if (crabLoading || userCrabBalanceLoading) return
     calculateCurrentValue()
   }, [
     userCrabBalance.toString(),
@@ -71,6 +82,6 @@ export const useCrabPosition = (user: string) => {
     minCurrentUsd,
     minPnL,
     minPnlUsd,
-    loading: crabLoading || loading,
+    loading: crabLoading || loading || userCrabBalanceLoading,
   }
 }

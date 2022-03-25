@@ -4,19 +4,15 @@ import Image from 'next/image'
 import React, { useState } from 'react'
 
 import squeethTokenSymbol from '../public/images/Squeeth.svg'
-import { LPTable } from '@components/Lp/LPTable'
 import ObtainSqueeth from '@components/Lp/ObtainSqueeth'
 import SqueethInfo from '@components/Lp/SqueethInfo'
 import LPBuyChart from '@components/Charts/LPBuyChart'
 import LPMintChart from '@components/Charts/LPMintChart'
 import Nav from '@components/Nav'
-import RestrictionInfo from '@components/RestrictionInfo'
 import { LPProvider } from '@context/lp'
 import { useRestrictUser } from '@context/restrict-user'
-import { TradeProvider } from '@context/trade'
-import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
-import { useWorldContext } from '@context/world'
 import { SqueethTab, SqueethTabs } from '@components/Tabs'
+import { useETHPrice } from '@hooks/useETHPrice'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -81,7 +77,7 @@ const useStyles = makeStyles((theme) =>
 export function LPCalculator() {
   const classes = useStyles()
   const { isRestricted } = useRestrictUser()
-  const { ethPrice } = useWorldContext()
+  const ethPrice = useETHPrice()
   const [lpType, setLpType] = useState(0)
 
   return (
@@ -207,11 +203,11 @@ export function LPCalculator() {
 
 export function LPage() {
   return (
-    <TradeProvider>
-      <LPProvider>
-        <LPCalculator />
-      </LPProvider>
-    </TradeProvider>
+    // <TradeProvider>
+    <LPProvider>
+      <LPCalculator />
+    </LPProvider>
+    // </TradeProvider>
   )
 }
 

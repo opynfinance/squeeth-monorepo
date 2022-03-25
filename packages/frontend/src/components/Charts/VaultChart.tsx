@@ -1,10 +1,12 @@
+import { useETHPrice } from '@hooks/useETHPrice'
 import { createStyles, makeStyles, TextField, Typography } from '@material-ui/core'
 import Alert from '@material-ui/lab/Alert'
+import { useAtomValue } from 'jotai'
 
-import React, { useMemo, useState } from 'react'
+import React, { useState } from 'react'
+import { collatRatioAtom, useGetVaultPNLWithRebalance } from 'src/state/ethPriceCharts/atoms'
 
-import { graphOptions, Links, Vaults } from '../../constants'
-import { useWorldContext } from '../../context/world'
+import { Links, Vaults } from '../../constants'
 import { SqueethTab, SqueethTabs } from '../Tabs'
 import ShortSqueethPayoff from './ShortSqueethPayoff'
 
@@ -72,8 +74,9 @@ export function VaultChart({
   setCustomLong: Function
   showPercentage: boolean
 }) {
-  const { ethPrice, getVaultPNLWithRebalance, collatRatio } = useWorldContext()
-
+  const ethPrice = useETHPrice()
+  const collatRatio = useAtomValue(collatRatioAtom)
+  const getVaultPNLWithRebalance = useGetVaultPNLWithRebalance()
   const seriesRebalance = getVaultPNLWithRebalance(longAmount)
   const classes = useStyles()
   const [chartType, setChartType] = useState(0)

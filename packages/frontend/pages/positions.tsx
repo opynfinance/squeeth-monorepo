@@ -2,28 +2,56 @@ import { Box, createStyles, makeStyles, Tooltip, Typography } from '@material-ui
 import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import Link from 'next/link'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
+import { useAtomValue } from 'jotai'
 
 import { LPTable } from '@components/Lp/LPTable'
 import Nav from '@components/Nav'
 import History from '@components/Trade/History'
 import { PositionType } from '../src/types/'
 import { Tooltips } from '../src/constants'
-import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
-import { useWorldContext } from '@context/world'
-import { usePnL } from '@hooks/usePositions'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { toTokenAmount } from '@utils/calculations'
-import { useController } from '../src/hooks/contracts/useController'
-import { CrabProvider } from '@context/crabStrategy'
 import { useCrabPosition } from '@hooks/useCrabPosition'
-import { useWallet } from '@context/wallet'
-import { usePositions } from '@context/positions'
 import { LinkButton } from '@components/Button'
-import { useVaultData } from '@hooks/useVaultData'
+import { addressAtom } from 'src/state/wallet/atoms'
+import { useSelectWallet } from 'src/state/wallet/hooks'
+import {
+  useComputeSwaps,
+  useFirstValidVault,
+  useLongRealizedPnl,
+  useLpDebt,
+  useLPPositionsQuery,
+  useMintedDebt,
+  useShortDebt,
+  useShortRealizedPnl,
+  usePositionsAndFeesComputation,
+} from 'src/state/positions/hooks'
+import {
+  activePositionsAtom,
+  existingCollatAtom,
+  existingCollatPercentAtom,
+  existingLiqPriceAtom,
+  isVaultLoadingAtom,
+  positionTypeAtom,
+} from 'src/state/positions/atoms'
+import { poolAtom } from 'src/state/squeethPool/atoms'
+import { useVaultManager } from '@hooks/contracts/useVaultManager'
+import {
+  useBuyAndSellQuote,
+  useLongGain,
+  useLongUnrealizedPNL,
+  useShortGain,
+  useShortUnrealizedPNL,
+} from 'src/state/pnl/hooks'
+import { loadingAtom } from 'src/state/pnl/atoms'
 import YourVaults from '@components/Trade/YourVaults'
+import { useIndex } from 'src/state/controller/hooks'
+import { crabStrategyCollatRatioAtom } from 'src/state/crab/atoms'
+import { useCalculateCurrentValue, useSetStrategyData } from 'src/state/crab/hooks'
+import { useVaultData } from '@hooks/useVaultData'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -114,20 +142,15 @@ const useStyles = makeStyles((theme) =>
 )
 
 const PositionsHome = () => {
-  const { address } = useWallet()
+  const address = useAtomValue(addressAtom)
 
-  if (address)
-    return (
-      <CrabProvider>
-        <Positions />{' '}
-      </CrabProvider>
-    )
+  if (address) return <Positions />
 
   return <ConnectWallet />
 }
 
 const ConnectWallet: React.FC = () => {
-  const { selectWallet } = useWallet()
+  const selectWallet = useSelectWallet()
   const classes = useStyles()
 
   return (
@@ -144,39 +167,36 @@ const ConnectWallet: React.FC = () => {
 
 export function Positions() {
   const classes = useStyles()
+
+  const shortGain = useShortGain()
+  const longGain = useLongGain()
+  const { buyQuote, sellQuote } = useBuyAndSellQuote()
+  const longUnrealizedPNL = useLongUnrealizedPNL()
+  const shortUnrealizedPNL = useShortUnrealizedPNL()
+  const isPnLLoading = useAtomValue(loadingAtom)
+
+  const pool = useAtomValue(poolAtom)
+  const address = useAtomValue(addressAtom)
+  const positionType = useAtomValue(positionTypeAtom)
+  const activePositions = useAtomValue(activePositionsAtom)
+
+  const { loading: isPositionLoading } = useLPPositionsQuery()
+  const { squeethAmount } = useComputeSwaps()
+  const longRealizedPNL = useLongRealizedPnl()
+  const shortRealizedPNL = useShortRealizedPnl()
+  const { vaults: shortVaults } = useVaultManager()
+  const { firstValidVault, vaultId } = useFirstValidVault()
   const {
-    longGain,
-    shortGain,
-    buyQuote,
-    sellQuote,
-    shortUnrealizedPNL,
-    loading: isPnLLoading,
-    longUnrealizedPNL,
-  } = usePnL()
-
-  const { pool } = useSqueethPool()
-
-  const { ethPrice, oSqueethBal } = useWorldContext()
-  const { address } = useWallet()
-
-  const {
-    positionType,
-    squeethAmount,
-    loading: isPositionLoading,
-    shortVaults,
-    firstValidVault,
-    vaultId,
     existingCollat,
-    lpedSqueeth,
-    mintedDebt,
-    shortDebt,
-    isLong,
-    shortRealizedPNL,
-    longRealizedPNL,
-    activePositions,
-  } = usePositions()
-
-  const { index } = useController()
+    existingLiqPrice,
+    existingCollatPercent,
+    isVaultLoading: isVaultDataLoading,
+  } = useVaultData(vaultId)
+  const lpedSqueeth = useLpDebt()
+  const mintedDebt = useMintedDebt()
+  const shortDebt = useShortDebt()
+  const index = useIndex()
+  usePositionsAndFeesComputation()
   const {
     depositedEth,
     depositedUsd,
@@ -192,7 +212,6 @@ export function Positions() {
   }, [firstValidVault, shortVaults?.length])
 
   const { liquidations } = useVaultLiquidations(Number(vaultId))
-  const { existingCollatPercent, existingLiqPrice, isVaultLoading: isVaultDataLoading } = useVaultData(Number(vaultId))
 
   const fullyLiquidated = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
@@ -527,7 +546,7 @@ export function Positions() {
                 Your LP Positions
               </Typography>
             </div>
-            <LPTable isLPage={false} pool={pool} />
+            <LPTable isLPage={false} pool={pool!} />
           </>
         ) : null}
 
@@ -579,6 +598,17 @@ const CrabPosition: React.FC<CrabPositionType> = ({
 
     return minPnlUsd.gte(0) ? classes.green : classes.red
   }
+
+  const collatRatio = useAtomValue(crabStrategyCollatRatioAtom)
+  const setStrategyData = useSetStrategyData()
+  const calculateCurrentValue = useCalculateCurrentValue()
+
+  useEffect(() => {
+    setStrategyData()
+  }, [collatRatio])
+  useEffect(() => {
+    calculateCurrentValue()
+  }, [calculateCurrentValue])
 
   return (
     <div className={classes.position}>

@@ -1,16 +1,16 @@
 import ShortSqueethPayoff from '@components/Charts/ShortSqueethPayoff'
-import { useWorldContext } from '@context/world'
 import { Typography, Radio, RadioGroup, FormControl, FormControlLabel, FormLabel } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React from 'react'
-import { useCrab } from '@context/crabStrategy'
 import { Links, Vaults } from '@constants/enums'
 import CrabProfit_Flat from '../../../../public/images/CrabProfit_Flat.svg'
 import CrabProfit_Increase from '../../../../public/images/CrabProfit_Increase.svg'
 import CrabProfit_Decrease from '../../../../public/images/CrabProfit_Decrease.svg'
 import CrabSteps from '../../../../public/images/CrabSteps.svg'
 import Image from 'next/image'
-import { CrabStrategyChart } from '@components/Charts/CrabStrategyChart'
+import { MemoizedCrabStrategyChart as CrabStrategyChart } from '@components/Charts/CrabStrategyChart'
+import { useETHPrice } from '@hooks/useETHPrice'
+import { useSetProfitableMovePercent } from 'src/state/crab/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -52,8 +52,9 @@ const useStyles = makeStyles((theme) =>
 
 export const StrategyInfo: React.FC = () => {
   const classes = useStyles()
-  const { ethPrice } = useWorldContext()
-  const { profitableMovePercent } = useCrab()
+  const ethPrice = useETHPrice()
+  const profitableMovePercent = useSetProfitableMovePercent()
+
   const [profitToggle, setProfitToggle] = React.useState('flat')
 
   return (

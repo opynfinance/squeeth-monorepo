@@ -11,6 +11,8 @@ export const SWAPS_SUBSCRIPTION = gql`
       orderBy: timestamp
       orderDirection: $orderDirection
       where: { token1: $tokenAddress, origin: $origin, recipient_not: $recipient_not }
+      first: 1000
+      skip: 0
     ) {
       pool {
         token0 {
@@ -43,6 +45,8 @@ export const SWAPS_QUERY = gql`
       orderBy: timestamp
       orderDirection: $orderDirection
       where: { token1: $tokenAddress, origin: $origin, recipient_not: $recipient_not, poolAddress: $poolAddress }
+      first: 1000
+      skip: 0
     ) {
       pool {
         token0 {

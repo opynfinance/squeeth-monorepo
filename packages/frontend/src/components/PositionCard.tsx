@@ -5,16 +5,41 @@ import InfoIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
 import Link from 'next/link'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { useAtom, useAtomValue } from 'jotai'
 
-import { usePnL } from '@hooks/usePositions'
-import { usePositions } from '@context/positions'
 import { Tooltips } from '@constants/enums'
-import { useTrade } from '@context/trade'
-import { useWorldContext } from '@context/world'
 import { PositionType, TradeType } from '../types'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { usePrevious } from 'react-use'
+import {
+  useComputeSwaps,
+  useFirstValidVault,
+  useLongRealizedPnl,
+  useLPPositionsQuery,
+  useShortRealizedPnl,
+  useSwaps,
+} from 'src/state/positions/hooks'
+import { useETHPrice } from '@hooks/useETHPrice'
+import { existingCollatAtom, isLPAtom, positionTypeAtom } from 'src/state/positions/atoms'
+import { useVaultManager } from '@hooks/contracts/useVaultManager'
+import {
+  actualTradeTypeAtom,
+  isOpenPositionAtom,
+  sqthTradeAmountAtom,
+  tradeCompletedAtom,
+  tradeSuccessAtom,
+  tradeTypeAtom,
+} from 'src/state/trade/atoms'
+import {
+  useBuyAndSellQuote,
+  useLongGain,
+  useLongUnrealizedPNL,
+  useShortGain,
+  useShortUnrealizedPNL,
+} from 'src/state/pnl/hooks'
+import { loadingAtom } from 'src/state/pnl/atoms'
+import { useVaultData } from '@hooks/useVaultData'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -145,38 +170,34 @@ const pnlClass = (positionType: string, long: number | BigNumber, short: number 
   return classes.grey
 }
 
-type PositionCardType = {
-  tradeCompleted: boolean
-}
+const PositionCard: React.FC = () => {
+  const shortGain = useShortGain()
+  const longGain = useLongGain()
+  const { buyQuote, sellQuote } = useBuyAndSellQuote()
+  const longUnrealizedPNL = useLongUnrealizedPNL()
+  const shortUnrealizedPNL = useShortUnrealizedPNL()
+  const loading = useAtomValue(loadingAtom)
 
-const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
-  const { buyQuote, sellQuote, longGain, shortGain, shortUnrealizedPNL, longUnrealizedPNL, loading } = usePnL()
+  const pType = useAtomValue(positionTypeAtom)
+  const { data, startPolling, stopPolling } = useSwaps()
+  const swaps = data?.swaps
+  const { squeethAmount } = useComputeSwaps()
+  const { vaults: shortVaults } = useVaultManager()
+  const { firstValidVault, vaultId } = useFirstValidVault()
+  const { existingCollat } = useVaultData(vaultId)
+  const { loading: isPositionLoading } = useLPPositionsQuery()
+  const isLP = useAtomValue(isLPAtom)
+  const isOpenPosition = useAtomValue(isOpenPositionAtom)
+  const [tradeSuccess, setTradeSuccess] = useAtom(tradeSuccessAtom)
+  const [tradeCompleted, setTradeCompleted] = useAtom(tradeCompletedAtom)
 
-  const {
-    positionType: pType,
-    squeethAmount,
-    shortVaults,
-    firstValidVault,
-    vaultId,
-    existingCollat,
-    loading: isPositionLoading,
-    isLP,
-    shortRealizedPNL,
-    longRealizedPNL,
-    swapsQueryRefetch,
-    swaps,
-  } = usePositions()
+  const longRealizedPNL = useLongRealizedPnl()
+  const shortRealizedPNL = useShortRealizedPnl()
   const { liquidations } = useVaultLiquidations(Number(vaultId))
-  const {
-    tradeAmount: tradeAmountInput,
-    actualTradeType,
-    isOpenPosition,
-    quote,
-    tradeSuccess,
-    setTradeSuccess,
-    tradeType,
-  } = useTrade()
-  const { ethPrice } = useWorldContext()
+  const actualTradeType = useAtomValue(actualTradeTypeAtom)
+  const tradeAmountInput = useAtomValue(sqthTradeAmountAtom)
+  const tradeType = useAtomValue(tradeTypeAtom)
+  const ethPrice = useETHPrice()
   const prevSwapsData = usePrevious(swaps)
   const tradeAmount = new BigNumber(tradeAmountInput)
   const [fetchingNew, setFetchingNew] = useState(false)
@@ -186,21 +207,17 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
   const classes = useStyles({ positionType, postPosition })
 
   useEffect(() => {
-    if (tradeSuccess) {
+    if (tradeSuccess && prevSwapsData?.length === swaps?.length) {
+      //if trade success and number of swaps is still the same, start swaps polling
+      startPolling(500)
       setFetchingNew(true)
     } else {
+      setTradeCompleted(false)
+      setTradeSuccess(false)
+      stopPolling()
       setFetchingNew(false)
     }
-  }, [tradeSuccess])
-
-  useEffect(() => {
-    if (tradeSuccess && prevSwapsData?.length === swaps?.length) {
-      //if trade success and number of swaps is still the same, try refetching again
-      swapsQueryRefetch()
-    } else {
-      setTradeSuccess(false)
-    }
-  }, [swaps?.length, prevSwapsData?.length, swapsQueryRefetch, tradeSuccess])
+  }, [swaps?.length, prevSwapsData?.length, tradeSuccess])
 
   const fullyLiquidated = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
@@ -256,27 +273,29 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
     let _postPosition = PositionType.NONE
     if (actualTradeType === TradeType.LONG && positionType !== PositionType.SHORT) {
       if (isOpenPosition) {
-        _postTradeAmt = squeethAmount.plus(quote.amountOut)
+        _postTradeAmt = squeethAmount.plus(tradeAmount)
       } else {
         _postTradeAmt = squeethAmount.minus(tradeAmount)
       }
       if (_postTradeAmt.gt(0)) _postPosition = PositionType.LONG
     } else if (actualTradeType === TradeType.SHORT && positionType !== PositionType.LONG) {
-      if (isOpenPosition) _postTradeAmt = squeethAmount.isGreaterThan(0) ? squeethAmount.plus(tradeAmount) : tradeAmount
-      else _postTradeAmt = squeethAmount.isGreaterThan(0) ? squeethAmount.minus(tradeAmount) : new BigNumber(0)
-      if (_postTradeAmt.gt(0)) _postPosition = PositionType.SHORT
+      if (isOpenPosition) {
+        _postTradeAmt = squeethAmount.isGreaterThan(0) ? squeethAmount.plus(tradeAmount) : tradeAmount
+      } else {
+        _postTradeAmt = squeethAmount.isGreaterThan(0) ? squeethAmount.minus(tradeAmount) : new BigNumber(0)
+      }
+      if (_postTradeAmt.gt(0)) {
+        _postPosition = PositionType.SHORT
+      }
     }
 
     setPostTradeAmt(_postTradeAmt)
     setPostPosition(_postPosition)
   }, [
-    tradeSuccess,
     actualTradeType,
-    firstValidVault,
     isOpenPosition,
     isPositionLoading,
     positionType,
-    quote.amountOut.toString(),
     squeethAmount.toString(),
     tradeAmount.toString(),
   ])
@@ -314,6 +333,7 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
                 <Typography component="span" style={{ fontWeight: 600 }}>
                   {getPositionBasedValue(squeethAmount.toFixed(6), squeethAmount.toFixed(6), '0', '0')}
                 </Typography>
+
                 {(tradeType === TradeType.SHORT && positionType === PositionType.LONG) ||
                 (tradeType === TradeType.LONG && positionType === PositionType.SHORT) ||
                 tradeAmount.isLessThanOrEqualTo(0) ||
@@ -446,7 +466,9 @@ const PositionCard: React.FC<PositionCardType> = ({ tradeCompleted }) => {
   )
 }
 
-export default PositionCard
+const MemoizedPositionCard = memo(PositionCard)
+
+export default MemoizedPositionCard
 // function getPositionBasedValue(amountOut: BigNumber, buyQuote: BigNumber, arg2: BigNumber) {
 //   throw new Error('Function not implemented.')
 // }

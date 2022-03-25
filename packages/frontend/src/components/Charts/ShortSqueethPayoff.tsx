@@ -1,5 +1,5 @@
 import { createStyles, makeStyles } from '@material-ui/core'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { memo, useCallback, useEffect, useState } from 'react'
 import { Line } from 'react-chartjs-2'
 
 import { Vaults } from '../../constants'
@@ -211,4 +211,4 @@ const ShortSqueethPayoff: React.FC<{ ethPrice: number; collatRatio: number; vaul
   )
 }
 
-export default ShortSqueethPayoff
+export default memo(ShortSqueethPayoff)
