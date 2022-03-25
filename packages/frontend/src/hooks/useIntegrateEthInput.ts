@@ -1,58 +1,63 @@
 import BigNumber from 'bignumber.js'
-import { useGetCollatRatioAndLiqPrice, useGetDebtAmount, useNormFactor } from 'src/state/controller/hooks'
+import { useCallback } from 'react'
+import { useGetCollatRatioAndLiqPrice, useNormFactor } from 'src/state/controller/hooks'
 import { useGetSellQuote } from 'src/state/squeethPool/hooks'
 import { useETHPrice } from './useETHPrice'
 
 export const useIntergrateEthInput = () => {
   const normFactor = useNormFactor()
   const ethPrice = useETHPrice()
-  const getDebtAmount = useGetDebtAmount()
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
   const getSellQuote = useGetSellQuote()
 
-  const integrateETHInput = async (ethDeposited: BigNumber, desiredCollatRatio: number, slippage: BigNumber) => {
-    const emptyState = {
-      totalCollat: new BigNumber(0),
-      ethBorrow: new BigNumber(0),
-      collatRatio: 0,
-    }
+  const integrateETHInput = useCallback(
+    async (ethDeposited: BigNumber, desiredCollatRatio: number, slippage: BigNumber) => {
+      const emptyState = {
+        totalCollat: new BigNumber(0),
+        ethBorrow: new BigNumber(0),
+        collatRatio: 0,
+      }
 
-    let start = new BigNumber(0.8)
-    let end = new BigNumber(1.5)
+      let start = 0.8
+      let end = 1.5
 
-    let prevState = { ...emptyState }
+      let prevState = { ...emptyState }
 
-    while (start.lte(end)) {
-      const middle = start.plus(end).div(2)
-      const extimatedOsqthPrice = middle.multipliedBy(normFactor).times(ethPrice.div(new BigNumber(10000)))
-
-      const oSQTH_mint_guess = ethDeposited.div(
-        new BigNumber(desiredCollatRatio)
-          .times(normFactor)
+      if (ethDeposited.isZero() || desiredCollatRatio < 1.5) return emptyState
+      while (start <= end) {
+        const middle = (start + end) / 2
+        const extimatedOsqthPrice = new BigNumber(middle)
+          .multipliedBy(normFactor)
           .times(ethPrice.div(new BigNumber(10000)))
-          .minus(extimatedOsqthPrice),
-      )
 
-      const ethDebt = await getDebtAmount(oSQTH_mint_guess)
-      const quote = await getSellQuote(oSQTH_mint_guess, slippage)
-      const ethBorrow = quote.amountOut
-      const totalCollat = ethDeposited.plus(ethBorrow)
-      const collatRatioAndLiqPrice = await getCollatRatioAndLiqPrice(totalCollat, oSQTH_mint_guess)
-      const collatRatio = collatRatioAndLiqPrice.collateralPercent
+        const oSQTH_mint_guess = ethDeposited.div(
+          new BigNumber(desiredCollatRatio)
+            .times(normFactor)
+            .times(ethPrice.div(new BigNumber(10000)))
+            .minus(extimatedOsqthPrice),
+        )
 
-      prevState = { ethBorrow, collatRatio, totalCollat }
+        const quote = await getSellQuote(oSQTH_mint_guess, slippage)
+        const ethBorrow = quote.minimumAmountOut
+        const totalCollat = ethDeposited.plus(ethBorrow)
+        const collatRatioAndLiqPrice = await getCollatRatioAndLiqPrice(totalCollat, oSQTH_mint_guess)
+        const collatRatio = collatRatioAndLiqPrice.collateralPercent
 
-      if (collatRatio === desiredCollatRatio) {
-        break
+        prevState = { ethBorrow, collatRatio, totalCollat }
+
+        if ((collatRatio / 100).toFixed(2) === desiredCollatRatio.toFixed(2)) {
+          break
+        }
+        if (collatRatio / 100 < desiredCollatRatio) {
+          end = middle
+        } else {
+          start = middle
+        }
       }
-      if (collatRatio > desiredCollatRatio) {
-        end = middle
-      } else {
-        start = middle
-      }
-    }
-    return prevState
-  }
+      return prevState
+    },
+    [ethPrice.toString(), getCollatRatioAndLiqPrice, getSellQuote, normFactor.toString()],
+  )
 
   return integrateETHInput
 }
