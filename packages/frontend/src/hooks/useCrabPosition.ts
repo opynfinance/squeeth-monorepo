@@ -25,6 +25,10 @@ export const useCrabPosition = (user: string) => {
   const [minPnlUsd, setMinPnlUsd] = useState(BIG_ZERO)
   const [minPnL, setMinPnL] = useState(BIG_ZERO)
 
+  const depositedDepedancy = data
+    ?.map((item) => `${item.ethAmount.toString()}:${item.lpAmount.toString()}:${item.ethUsdValue.toString()}`)
+    .join(' ')
+
   const { depositedEth, usdAmount: depositedUsd } = useMemo(() => {
     if (loading || !data) return { depositedEth: BIG_ZERO, usdAmount: BIG_ZERO }
 
@@ -51,7 +55,7 @@ export const useCrabPosition = (user: string) => {
     )
 
     return { depositedEth, usdAmount }
-  }, [data?.length, loading])
+  }, [depositedDepedancy, loading])
 
   useEffect(() => {
     if (crabLoading || userCrabBalanceLoading) return
@@ -59,6 +63,7 @@ export const useCrabPosition = (user: string) => {
   }, [
     userCrabBalance.toString(),
     depositedEth.toString(),
+    depositedUsd.toString(),
     ethIndexPrice.toString(),
     crabLoading,
     currentEthValue.toString(),
