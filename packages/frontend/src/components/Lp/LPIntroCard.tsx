@@ -3,10 +3,12 @@ import Typography from '@material-ui/core/Typography'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React from 'react'
 import { PrimaryButton } from '@components/Button/index'
-import { useWorldContext } from '@context/world'
 import LPBuyChart from '@components/Charts/LPBuyChart'
 import LPMintChart from '@components/Charts/LPMintChart'
 import { useState } from 'react'
+import { useETHPrice } from '@hooks/useETHPrice'
+import { useAtom } from 'jotai'
+import { seeLPIntroAtom } from 'pages/lp'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -49,9 +51,9 @@ enum LPType {
 
 const LPIntroCard: React.FC = () => {
   const classes = useStyles()
-  const theme = useTheme()
-  const { ethPrice } = useWorldContext()
+  const ethPrice = useETHPrice()
   const [lpType, setLpType] = useState(LPType.BUY)
+  const [, setSeeLPIntro] = useAtom(seeLPIntroAtom)
 
   return (
     <Box className={classes.container}>
@@ -76,7 +78,9 @@ const LPIntroCard: React.FC = () => {
           </Box>
         </Box>
         <Box>
-          <PrimaryButton style={{ minWidth: 120 }}>Start Now</PrimaryButton>
+          <PrimaryButton style={{ minWidth: 120 }} onClick={() => setSeeLPIntro(false)}>
+            Start Now
+          </PrimaryButton>
         </Box>
       </Box>
       {lpType === LPType.BUY ? (

@@ -1,17 +1,18 @@
 import { Contract } from 'web3-eth-contract'
-import { Token, CurrencyAmount } from '@uniswap/sdk-core'
-import { Pool, Route, Trade } from '@uniswap/v3-sdk'
+import { Token, CurrencyAmount, Fraction, Percent } from '@uniswap/sdk-core'
+import { nearestUsableTick, Pool, Route, TickMath, Trade } from '@uniswap/v3-sdk'
 import { useUpdateAtom, useResetAtom } from 'jotai/utils'
 import { useEffect, useCallback } from 'react'
 import { useAtomValue } from 'jotai'
 import BigNumber from 'bignumber.js'
 import { ethers } from 'ethers'
+import { AlphaRouter, ChainId, SwapToRatioStatus } from '@uniswap/smart-order-router'
 
 import routerABI from '../../abis/swapRouter.json'
 import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
 import { addressAtom, networkIdAtom, web3Atom } from '../wallet/atoms'
 import useUniswapTicks from '@hooks/useUniswapTicks'
-import { DEFAULT_SLIPPAGE, OSQUEETH_DECIMALS, UNI_POOL_FEES } from '@constants/index'
+import { DEFAULT_SLIPPAGE, OSQUEETH_DECIMALS, UNI_POOL_FEES, WETH_DECIMALS } from '@constants/index'
 import { fromTokenAmount, parseSlippageInput } from '@utils/calculations'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { useHandleTransaction } from '../wallet/hooks'
@@ -25,6 +26,7 @@ import {
 } from './atoms'
 import { transactionHashAtom } from '../trade/atoms'
 import { swapRouterContractAtom, squeethPoolContractAtom } from '../contracts/atoms'
+import { Position } from '@uniswap/v3-sdk'
 
 const getImmutables = async (squeethContract: Contract) => {
   const [token0, token1, fee, tickSpacing, maxLiquidityPerTick] = await Promise.all([
@@ -540,4 +542,61 @@ export const useGetSellQuoteForETH = () => {
   )
 
   return getSellQuoteForETH
+}
+
+export const useBuyAndLP = () => {
+  const networkId = useAtomValue(networkIdAtom)
+  const address = useAtomValue(addressAtom)
+  const web3 = useAtomValue(web3Atom)
+  const pool = useAtomValue(poolAtom)
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
+  const contract = useAtomValue(squeethPoolContractAtom)
+
+  const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
+  const router = new AlphaRouter({ chainId: networkId as any as ChainId, provider })
+
+  const getBuyAndLP = async () => {
+    console.log(isWethToken0)
+    const token0Balance = CurrencyAmount.fromRawAmount(pool?.token0!, fromTokenAmount(2, WETH_DECIMALS).toString())
+    const token1Balance = CurrencyAmount.fromRawAmount(pool?.token1!, fromTokenAmount(0, WETH_DECIMALS).toString())
+    const { tickSpacing } = await getImmutables(contract!)
+    const state = await getPoolState(contract!)
+    const tickSpacingInt = Number(tickSpacing)
+    console.log(state.tick, tickSpacing)
+    const position = new Position({
+      pool: pool!,
+      tickLower: nearestUsableTick(Number(state.tick), tickSpacingInt) - tickSpacingInt * 2,
+      tickUpper: nearestUsableTick(Number(state.tick), tickSpacingInt) + tickSpacingInt * 2,
+      liquidity: 1,
+    })
+    const routeToRatioResponse = await router.routeToRatio(
+      token0Balance,
+      token1Balance,
+      position,
+      {
+        ratioErrorTolerance: new Fraction(1, 100),
+        maxIterations: 6,
+      },
+      {
+        swapOptions: {
+          recipient: address!,
+          slippageTolerance: parseSlippageInput(DEFAULT_SLIPPAGE.toString()),
+          deadline: 100,
+        },
+        addLiquidityOptions: {
+          tokenId: 10,
+        },
+      },
+    )
+    console.log(routeToRatioResponse.status)
+    if (routeToRatioResponse.status === SwapToRatioStatus.SUCCESS) {
+      console.log(
+        routeToRatioResponse.status,
+        routeToRatioResponse.result.trade.inputAmount.toSignificant(18),
+        routeToRatioResponse.result.trade.outputAmount.toSignificant(18),
+      )
+    }
+  }
+
+  return getBuyAndLP
 }

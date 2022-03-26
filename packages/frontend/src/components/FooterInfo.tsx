@@ -1,10 +1,18 @@
-import { useController } from '@hooks/contracts/useController'
-import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { toTokenAmount } from '@utils/calculations'
+import { useAtom } from 'jotai'
 import React from 'react'
 import { useMemo } from 'react'
+import {
+  dailyHistoricalFundingAtom,
+  impliedVolAtom,
+  indexAtom,
+  markAtom,
+  normFactorAtom,
+} from 'src/state/controller/atoms'
+import { useIndex } from 'src/state/controller/hooks'
+import { useGetWSqueethPositionValue, useGetWSqueethPositionValueInETH } from 'src/state/squeethPool/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -54,8 +62,15 @@ const FooterItem: React.FC<{ title: string; value: string }> = ({ title, value }
 
 const FooterInfo = React.memo(function FooterInfo() {
   const classes = useStyles()
-  const { mark, index, impliedVol, normFactor, dailyHistoricalFunding } = useController()
-  const { getWSqueethPositionValue, getWSqueethPositionValueInETH } = useSqueethPool()
+
+  const [index] = useAtom(indexAtom)
+  const [mark] = useAtom(markAtom)
+  const [normFactor] = useAtom(normFactorAtom)
+  const [dailyHistoricalFunding] = useAtom(dailyHistoricalFundingAtom)
+  const [impliedVol] = useAtom(impliedVolAtom)
+
+  const getWSqueethPositionValue = useGetWSqueethPositionValue()
+  const getWSqueethPositionValueInETH = useGetWSqueethPositionValueInETH()
 
   const oSqthPriceUsd = useMemo(() => getWSqueethPositionValue(1), [getWSqueethPositionValue])
   const oSqthPriceEth = useMemo(() => getWSqueethPositionValueInETH(1), [getWSqueethPositionValueInETH])

@@ -8,6 +8,9 @@ export const PrimaryButton = withStyles((theme) => ({
     '&:hover': {
       backgroundColor: theme.palette.primary.dark,
     },
+    '&:disabled': {
+      backgroundColor: theme.palette.background.stone,
+    },
     minHeight: '2rem',
     minWidth: '300px',
     fontSize: '14px',

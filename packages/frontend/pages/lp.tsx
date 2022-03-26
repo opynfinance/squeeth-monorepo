@@ -1,10 +1,13 @@
 import FooterInfo from '@components/FooterInfo'
 import LPInfoCard from '@components/Lp/LPInfoCard'
 import LPIntroCard from '@components/Lp/LPIntroCard'
+import LPTrade from '@components/Lp/LPTrade'
 import Nav from '@components/Nav'
-import { useWorldContext } from '@context/world'
+import { useETHPrice } from '@hooks/useETHPrice'
 import { Typography, Box, Grid } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
+import { useAtom } from 'jotai'
+import { atomWithStorage } from 'jotai/utils'
 import React from 'react'
 
 const useStyles = makeStyles((theme) =>
@@ -51,9 +54,12 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
+export const seeLPIntroAtom = atomWithStorage('showLPIntro', true)
+
 const LP: React.FC = () => {
   const classes = useStyles()
-  const { ethPrice } = useWorldContext()
+  const ethPrice = useETHPrice()
+  const [seeLPIntro] = useAtom(seeLPIntroAtom)
 
   return (
     <div>
@@ -110,7 +116,7 @@ const LP: React.FC = () => {
             </Grid>
           </Grid>
           <Grid item xs={12} lg={5}>
-            <LPIntroCard />
+            {seeLPIntro ? <LPIntroCard /> : <LPTrade />}
           </Grid>
         </Grid>
       </div>
