@@ -85,7 +85,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         external
         payable
     {
-        require(shortPowerPerp.ownerOf(_params.vaultId) == msg.sender);
+        require(IShortPowerPerp(shortPowerPerp).ownerOf(_params.vaultId) == msg.sender);
         require(_params.maxToPay <= _params.collateralToWithdraw.add(msg.value));
 
         _exactOutFlashSwap(
@@ -110,7 +110,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         external
         payable
     {
-        require(shortPowerPerp.ownerOf(_params.vaultId) == msg.sender);
+        require(IShortPowerPerp(shortPowerPerp).ownerOf(_params.vaultId) == msg.sender);
 
         IWPowerPerp(wPowerPerp).transferFrom(msg.sender, address(this), _params.wPowerPerpAmountToSell);
 
@@ -134,7 +134,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
      * @param _params ControllerHelperDataType.CloseShortWithUserNftParams struct
      */
     function closeShortWithUserNft(ControllerHelperDataType.CloseShortWithUserNftParams calldata _params) external {
-        require(shortPowerPerp.ownerOf(_params.vaultId) == msg.sender);
+        require(IShortPowerPerp(shortPowerPerp).ownerOf(_params.vaultId) == msg.sender);
 
         INonfungiblePositionManager(nonfungiblePositionManager).safeTransferFrom(
             msg.sender,
@@ -179,7 +179,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         external
         payable
     {
-        require(shortPowerPerp.ownerOf(_params.vaultId) == msg.sender);
+        require(IShortPowerPerp(shortPowerPerp).ownerOf(_params.vaultId) == msg.sender);
 
         _flashLoan(
             weth,
@@ -196,7 +196,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
      * @param _params ControllerHelperDataType.MintAndLpParams struct
      */
     function batchMintLp(ControllerHelperDataType.MintAndLpParams calldata _params) external payable {
-        require(shortPowerPerp.ownerOf(_params.vaultId) == msg.sender);
+        require(IShortPowerPerp(shortPowerPerp).ownerOf(_params.vaultId) == msg.sender);
         require(msg.value == _params.collateralToDeposit.add(_params.collateralToLp));
 
         (uint256 vaultId, ) = ControllerHelperUtil.mintAndLp(
@@ -223,7 +223,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         external
         payable
     {
-        require(shortPowerPerp.ownerOf(_params.vaultId) == msg.sender);
+        require(IShortPowerPerp(shortPowerPerp).ownerOf(_params.vaultId) == msg.sender);
         _flashLoan(
             weth,
             _params.collateralToFlashloan,
