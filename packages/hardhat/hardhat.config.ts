@@ -105,7 +105,7 @@ const config: HardhatUserConfig = {
       accounts: {
         mnemonic: mnemonic(),
       },
-      gas: 8000000
+      gas: 8000000000000000
     },
     xdai: {
       url: "https://rpc.xdaichain.com/",
