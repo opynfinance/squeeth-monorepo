@@ -32,6 +32,7 @@ import {
   existingLiqPriceAtom,
   collatPercentAtom,
   isVaultLoadingAtom,
+  swapsAtom,
 } from './atoms'
 import { positions, positionsVariables } from '@queries/uniswap/__generated__/positions'
 import POSITIONS_QUERY, { POSITIONS_SUBSCRIPTION } from '@queries/uniswap/positionsQuery'
@@ -52,6 +53,7 @@ import { Vault } from '@queries/squeeth/__generated__/Vault'
 export const useSwaps = () => {
   const [networkId] = useAtom(networkIdAtom)
   const [address] = useAtom(addressAtom)
+  const setSwaps = useUpdateAtom(swapsAtom)
   const { squeethPool, oSqueeth, shortHelper, swapRouter, crabStrategy } = useAtomValue(addressesAtom)
   const { subscribeToMore, data, refetch, loading, error, startPolling, stopPolling } = useQuery<
     swaps | swapsRopsten,
@@ -99,6 +101,12 @@ export const useSwaps = () => {
     })
   }, [address, crabStrategy, networkId, oSqueeth, shortHelper, squeethPool, swapRouter, subscribeToMore])
 
+  useEffect(() => {
+    if (data?.swaps) {
+      setSwaps({ swaps: data.swaps })
+    }
+  }, [data?.swaps.length])
+
   return { data, refetch, loading, error, startPolling, stopPolling }
 }
 
@@ -106,11 +114,11 @@ export const useComputeSwaps = () => {
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const setPositionType = useUpdateAtom(positionTypeAtom)
   const { getUsdAmt } = useUsdAmount()
-  const { data } = useSwaps()
+  const swapsData = useAtomValue(swapsAtom)
 
   const computedSwaps = useMemo(
     () =>
-      data?.swaps.reduce(
+      swapsData?.swaps.reduce(
         (acc, s) => {
           //values are all from the pool pov
           //if >0 for the pool, user gave some squeeth to the pool, meaning selling the squeeth
@@ -168,7 +176,7 @@ export const useComputeSwaps = () => {
         totalUSDFromBuy: BIG_ZERO,
         totalUSDFromSell: BIG_ZERO,
       },
-    [isWethToken0, data?.swaps.length],
+    [isWethToken0, swapsData?.swaps.length],
   )
 
   useEffect(() => {
@@ -177,7 +185,7 @@ export const useComputeSwaps = () => {
     } else if (computedSwaps.squeethAmount.isLessThan(0)) {
       setPositionType(PositionType.SHORT)
     } else setPositionType(PositionType.NONE)
-  }, [computedSwaps.squeethAmount.toString()])
+  }, [computedSwaps.squeethAmount.toString(), PositionType])
 
   return { ...computedSwaps, squeethAmount: computedSwaps.squeethAmount.absoluteValue() }
 }
