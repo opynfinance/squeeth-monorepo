@@ -25,16 +25,6 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {ControllerHelperDataType} from "./lib/ControllerHelperDataType.sol";
 import {ControllerHelperUtil} from "./lib/ControllerHelperUtil.sol";
 
-/**
- * Error code
- * E0: user not allowed to operate vault
- * E1: max ETH to pay for long wPowerPerp is less than amount available
- * E2: ETH sent is less than amount to use for minting short plus amount to use for LPing
- * E3: amount out less than min
- * E4: amont in greater than max
- * E5: invalid factory address
- * E6: invalid assets length
- */
 contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC721Receiver {
     using SafeMath for uint256;
     using Address for address payable;
@@ -95,6 +85,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         external
         payable
     {
+        require(shortPowerPerp.ownerOf(_params.vaultId) == msg.sender);
         require(_params.maxToPay <= _params.collateralToWithdraw.add(msg.value));
 
         _exactOutFlashSwap(
@@ -119,6 +110,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         external
         payable
     {
+        require(shortPowerPerp.ownerOf(_params.vaultId) == msg.sender);
+
         IWPowerPerp(wPowerPerp).transferFrom(msg.sender, address(this), _params.wPowerPerpAmountToSell);
 
         // flashswap and mint short position
@@ -141,6 +134,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
      * @param _params ControllerHelperDataType.CloseShortWithUserNftParams struct
      */
     function closeShortWithUserNft(ControllerHelperDataType.CloseShortWithUserNftParams calldata _params) external {
+        require(shortPowerPerp.ownerOf(_params.vaultId) == msg.sender);
+
         INonfungiblePositionManager(nonfungiblePositionManager).safeTransferFrom(
             msg.sender,
             address(this),
@@ -184,6 +179,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         external
         payable
     {
+        require(shortPowerPerp.ownerOf(_params.vaultId) == msg.sender);
+
         _flashLoan(
             weth,
             _params.collateralToFlashloan,
@@ -199,6 +196,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
      * @param _params ControllerHelperDataType.MintAndLpParams struct
      */
     function batchMintLp(ControllerHelperDataType.MintAndLpParams calldata _params) external payable {
+        require(shortPowerPerp.ownerOf(_params.vaultId) == msg.sender);
         require(msg.value == _params.collateralToDeposit.add(_params.collateralToLp));
 
         (uint256 vaultId, ) = ControllerHelperUtil.mintAndLp(
@@ -225,6 +223,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         external
         payable
     {
+        require(shortPowerPerp.ownerOf(_params.vaultId) == msg.sender);
         _flashLoan(
             weth,
             _params.collateralToFlashloan,
