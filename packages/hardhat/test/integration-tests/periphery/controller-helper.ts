@@ -137,12 +137,13 @@ describe("Controller helper integration test", function () {
       const ethToReceive = (mintWSqueethAmount.mul(squeethPrice).div(one)).mul(one.sub(slippage)).div(one)
       const params = {
         vaultId: 0,
-        totalCollateralToDeposit: collateralAmount.toString(),
-        wPowerPerpAmount: mintWSqueethAmount.toString(),
-        minToReceive: ethToReceive.toString()
+        collateralAmount: collateralAmount.toString(),
+        wPowerPerpAmountToMint: mintWSqueethAmount.toString(),
+        minToReceive: ethToReceive.toString(),
+        wPowerPerpAmountToSell: BigNumber.from(0)
       }
 
-      await controllerHelper.connect(depositor).flashswapWMint(params, {value: value});
+      await controllerHelper.connect(depositor).flashswapSellLongWMint(params, {value: value});
 
       const controllerBalanceAfter = await provider.getBalance(controller.address)
       const squeethBalanceAfter = await wSqueeth.balanceOf(depositor.address)

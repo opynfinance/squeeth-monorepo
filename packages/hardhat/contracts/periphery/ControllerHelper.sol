@@ -87,25 +87,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
     receive() external payable {}
 
     /**
-     * @notice flash mint WPowerPerp using flashswap
-     * @param _params ControllerHelperDataType.FlashswapWMintParams struct
-     */
-    function flashswapWMint(ControllerHelperDataType.FlashswapWMintParams calldata _params) external payable {
-        _exactInFlashSwap(
-            wPowerPerp,
-            weth,
-            IUniswapV3Pool(wPowerPerpPool).fee(),
-            _params.wPowerPerpAmount,
-            _params.minToReceive,
-            uint8(ControllerHelperDataType.CALLBACK_SOURCE.FLASH_W_MINT),
-            abi.encode(_params)
-        );
-
-        // no need to unwrap WETH received from swap as it is done in the callback function
-        payable(msg.sender).sendValue(address(this).balance);
-    }
-
-    /**
      * @notice flash close position and buy long squeeth
      * @dev this function
      * @param _params ControllerHelperDataType.FlashswapWBurnBuyLongParams struct
@@ -503,6 +484,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.IncreaseLpLiquidity
                 ) {
+                    if (address(this).balance > 0) IWETH9(weth).deposit{value: address(this).balance}();
+
                     // increase liquidity in LP position, this can mint wPowerPerp and increase
                     ControllerHelperDataType.IncreaseLpLiquidityParam memory increaseLiquidityParam = abi.decode(
                         data[i].data,
@@ -615,30 +598,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         uint8 _callSource
     ) internal override {
         if (
-            ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
-            ControllerHelperDataType.CALLBACK_SOURCE.FLASH_W_MINT
-        ) {
-            ControllerHelperDataType.FlashswapWMintParams memory data = abi.decode(
-                _callData,
-                (ControllerHelperDataType.FlashswapWMintParams)
-            );
-
-            // convert WETH to ETH as Uniswap uses WETH
-            IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
-
-            //will revert if data.totalCollateralToDeposit is > eth balance in contract
-            uint256 vaultId = IController(controller).mintWPowerPerpAmount{value: data.totalCollateralToDeposit}(
-                data.vaultId,
-                data.wPowerPerpAmount,
-                0
-            );
-
-            //repay the flash swap
-            IWPowerPerp(wPowerPerp).transfer(wPowerPerpPool, _amountToPay);
-
-            // this is a newly open vault, transfer to the user
-            if (data.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), _caller, vaultId);
-        } else if (
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.FLASH_W_BURN
         ) {

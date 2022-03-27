@@ -35,14 +35,6 @@ library ControllerHelperDataType {
         WithdrawFromVault,
         MintNewLp
     }
-
-    /// @dev params for flashswapWMint()
-    struct FlashswapWMintParams {
-        uint256 vaultId;    // vault ID
-        uint256 totalCollateralToDeposit;   // total collateral to deposit into vault
-        uint256 wPowerPerpAmount;   // wPowerPerp amount to mint
-        uint256 minToReceive;   // minimum to receive for flashswapping wPowerPerp to WETH
-    }
     
     /// @dev params for flashswapWBurnBuyLong()
     struct FlashswapWBurnBuyLongParams {
