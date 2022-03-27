@@ -53,7 +53,7 @@ export const useVaultData = (vid: number) => {
 
   useEffect(() => {
     updateVault()
-  }, [vid, normFactor.toString(), address, connected, ready])
+  }, [vid, normFactor.toString(), address, connected, ready, getVault, getCollatRatioAndLiqPrice])
 
   return {
     vault,
