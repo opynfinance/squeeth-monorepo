@@ -155,14 +155,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             isWethToken0
         );
 
-        // burn vault debt using amounts withdrawn from LP position
-        _closeShortWithAmountsFromLp(
-            _params.vaultId,
-            wPowerPerpAmountInLp,
-            _params.wPowerPerpAmountToBurn,
-            _params.collateralToWithdraw,
-            _params.limitPriceEthPerPowerPerp
-        );
         // if LP position is not fully closed, redeposit in vault or send back to user
         ControllerHelperUtil.checkPartialLpClose(
             controller,
@@ -170,6 +162,15 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             0,
             _params.tokenId,
             _params.liquidityPercentage
+        );
+
+        // burn vault debt using amounts withdrawn from LP position
+        _closeShortWithAmountsFromLp(
+            _params.vaultId,
+            wPowerPerpAmountInLp,
+            _params.wPowerPerpAmountToBurn,
+            _params.collateralToWithdraw,
+            _params.limitPriceEthPerPowerPerp
         );
 
         ControllerHelperUtil.sendBack(weth);
@@ -446,6 +447,14 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 isWethToken0
             );
 
+            ControllerHelperUtil.checkPartialLpClose(
+                controller,
+                nonfungiblePositionManager,
+                data.vaultId,
+                data.tokenId,
+                data.liquidityPercentage
+            );
+
             // close short position using amounts collected from closing LP, withdraw collateralToWithdraw + deposited collateralToFlashloan
             _closeShortWithAmountsFromLp(
                 data.vaultId,
@@ -453,13 +462,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 data.wPowerPerpAmountToBurn,
                 data.collateralToWithdraw.add(data.collateralToFlashloan),
                 data.limitPriceEthPerPowerPerp
-            );
-            ControllerHelperUtil.checkPartialLpClose(
-                controller,
-                nonfungiblePositionManager,
-                data.vaultId,
-                data.tokenId,
-                data.liquidityPercentage
             );
         } else if (
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
