@@ -1,6 +1,5 @@
 import useRenderCounter from '../src/hooks/useRenderCounter'
 import '../styles/globals.css'
-
 import { ApolloProvider } from '@apollo/client'
 import CssBaseline from '@material-ui/core/CssBaseline'
 import { ThemeProvider } from '@material-ui/core/styles'
