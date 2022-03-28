@@ -1,5 +1,6 @@
 import BigNumber from 'bignumber.js'
 import { useCallback } from 'react'
+
 import { useGetCollatRatioAndLiqPrice, useNormFactor } from 'src/state/controller/hooks'
 import { useGetSellQuote } from 'src/state/squeethPool/hooks'
 import { useETHPrice } from './useETHPrice'
@@ -13,7 +14,7 @@ export const useIntergrateEthInput = () => {
   const integrateETHInput = useCallback(
     async (ethDeposited: BigNumber, desiredCollatRatio: number, slippage: BigNumber) => {
       const emptyState = {
-        totalCollat: new BigNumber(0),
+        squeethAmount: new BigNumber(0),
         ethBorrow: new BigNumber(0),
         collatRatio: 0,
       }
@@ -23,7 +24,8 @@ export const useIntergrateEthInput = () => {
 
       let prevState = { ...emptyState }
 
-      if (ethDeposited.isZero() || desiredCollatRatio < 1.5) return emptyState
+      if (ethDeposited.isZero() || desiredCollatRatio <= 1.5) return emptyState
+
       while (start <= end) {
         const middle = (start + end) / 2
         const extimatedOsqthPrice = new BigNumber(middle)
@@ -43,7 +45,7 @@ export const useIntergrateEthInput = () => {
         const collatRatioAndLiqPrice = await getCollatRatioAndLiqPrice(totalCollat, oSQTH_mint_guess)
         const collatRatio = collatRatioAndLiqPrice.collateralPercent
 
-        prevState = { ethBorrow, collatRatio, totalCollat }
+        prevState = { ethBorrow, collatRatio, squeethAmount: oSQTH_mint_guess }
 
         if ((collatRatio / 100).toFixed(2) === desiredCollatRatio.toFixed(2)) {
           break
