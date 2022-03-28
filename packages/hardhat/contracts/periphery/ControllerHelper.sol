@@ -366,6 +366,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             uint8(ControllerHelperDataType.CALLBACK_SOURCE.FLASHLOAN_REBALANCE_VAULT_NFT),
             abi.encode(_vaultId, _params)
         );
+
+        ControllerHelperUtil.sendBack(weth, wPowerPerp);
     }
 
     function _flashCallback(
