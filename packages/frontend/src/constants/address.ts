@@ -103,3 +103,11 @@ export const CRAB_STRATEGY: Address = {
 }
 
 export const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
+
+//ControllerHelper
+export const CONTROLLER_HELPER: Address = {
+  1: '',
+  3: '0x75500ff751789b5753DF14c047e61BC5c4324CF8',
+  421611: '',
+  31337: '',
+}
