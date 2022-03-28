@@ -316,7 +316,7 @@ export const useWithdrawUniPositionToken = () => {
   return withdrawUniPositionToken
 }
 
-export const useNormFactor = () => {
+const useNormFactor = () => {
   const contract = useAtomValue(controllerContractAtom)
   const [normFactor, setNormFactor] = useAtom(normFactorAtom)
   useEffect(() => {
@@ -343,7 +343,7 @@ export const useNormFactor = () => {
   return normFactor
 }
 
-export const useIndex = () => {
+const useIndex = () => {
   const address = useAtomValue(addressAtom)
   const web3 = useAtomValue(web3Atom)
   const networkId = useAtomValue(networkIdAtom)
@@ -377,7 +377,7 @@ export const useIndex = () => {
   return index
 }
 
-export const useDailyHistoricalFunding = () => {
+const useDailyHistoricalFunding = () => {
   const address = useAtomValue(addressAtom)
   const [dailyHistoricalFunding, setDailyHistoricalFunding] = useAtom(dailyHistoricalFundingAtom)
   const contract = useAtomValue(controllerContractAtom)
@@ -389,7 +389,7 @@ export const useDailyHistoricalFunding = () => {
   return dailyHistoricalFunding
 }
 
-export const useCurrentImpliedFunding = () => {
+const useCurrentImpliedFunding = () => {
   const address = useAtomValue(addressAtom)
   const [currentImpliedFunding, setCurrentImpliedFunding] = useAtom(currentImpliedFundingAtom)
   const contract = useAtomValue(controllerContractAtom)
@@ -401,7 +401,7 @@ export const useCurrentImpliedFunding = () => {
   return currentImpliedFunding
 }
 
-export const useMark = () => {
+const useMark = () => {
   const address = useAtomValue(addressAtom)
   const web3 = useAtomValue(web3Atom)
   const networkId = useAtomValue(networkIdAtom)
@@ -433,4 +433,12 @@ export const useMark = () => {
   }, [contract, networkId, web3])
 
   return mark
+}
+
+export const useInitController = () => {
+  useIndex()
+  useMark()
+  useCurrentImpliedFunding()
+  useDailyHistoricalFunding()
+  useNormFactor()
 }
