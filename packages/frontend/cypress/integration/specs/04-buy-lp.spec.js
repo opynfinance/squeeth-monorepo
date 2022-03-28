@@ -17,19 +17,7 @@ describe('Mint or Buy on LP page', () => {
     })
   })
 
-  context(`Mint & buy squeeth on LP page`, () => {
-    it('can mint on LP page', () => {
-      cy.get('#lp-prev-step-btn').click({ force: true }).click({ force: true })
-      cy.get('#current-lp-step').should('contain.text', '1')
-      cy.get('#mint-sqth-to-lp-btn').click({ force: true })
-      cy.get('#lp-page-mint-eth-input').clear().type('8.', { force: true, delay: 200 }).should('have.value', '8.0')
-      cy.get('#current-lp-step').should('contain.text', '2')
-      cy.get('#mint-to-lp-btn').click({ force: true })
-      trade.confirmMetamaskTransaction()
-      trade.waitForTransactionSuccess()
-      cy.get('#current-lp-step').should('contain.text', '3')
-    })
-
+  context(`can buy squeeth on LP page`, () => {
     it('can buy squeeth on LP page', () => {
       cy.get('#lp-prev-step-btn').click({ force: true }).click({ force: true })
       cy.get('#current-lp-step').should('contain.text', '1')
