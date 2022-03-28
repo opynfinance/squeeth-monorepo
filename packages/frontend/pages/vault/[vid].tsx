@@ -263,14 +263,16 @@ const SelectLP: React.FC<{ lpToken: number; setLpToken: (t: number) => void }> =
       <InputLabel id="demo-simple-select-outlined-label">LP Id</InputLabel>
       <Select
         labelId="demo-simple-select-label"
-        id="demo-simple-select"
+        id="lp-id-select"
         value={lpToken}
         onChange={(e) => setLpToken(Number(e.target.value))}
         label="LP id"
       >
-        <MenuItem value={0}>None</MenuItem>
-        {data?.positions?.map((p) => (
-          <MenuItem key={p.id} value={p.id}>
+        <MenuItem value={0} id="lp-id-option-none">
+          None
+        </MenuItem>
+        {data?.positions?.map((p, index) => (
+          <MenuItem key={p.id} value={p.id} id={'lp-id-option' + '-' + index}>
             {p.id}
           </MenuItem>
         ))}
@@ -971,6 +973,7 @@ const Component: React.FC = () => {
                         label="Uni LP token"
                         variant="outlined"
                         disabled={isLPDeposited}
+                        className="deposited-lp-id"
                       />
                     )}
                   </div>
