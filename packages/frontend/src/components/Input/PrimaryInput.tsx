@@ -78,7 +78,7 @@ const useStyles = makeStyles((theme) =>
 
 type PrimaryInputType = {
   value: number | string
-  onChange: (value: string) => void
+  onChange: (value: string, name?: string) => void
   label: string
   unit: string
   tooltip?: string
@@ -89,6 +89,7 @@ type PrimaryInputType = {
   error?: boolean
   isLoading?: boolean
   isFullClose?: boolean
+  name?: string
 }
 
 const DecimalRegex = RegExp('^[0-9]*[.]{1}[0-9]*$')
@@ -106,6 +107,7 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
   error = false,
   isLoading = false,
   isFullClose = false,
+  name = '',
 }) => {
   const classes = useStyles()
 
@@ -126,6 +128,7 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
           <div className={classes.inputContainer}>
             <Tooltip title={isFullClose ? Tooltips.FullcloseInput : ''} className={classes.fullCloseInfo}>
               <input
+                name={name}
                 className={clsx(classes.input, isFullClose && classes.notAllowedCursor)}
                 // className={classes.input}
                 value={isNaN(Number(value)) ? 0 : value}
@@ -147,7 +150,7 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
                     }
                   }
 
-                  return onChange(v)
+                  return onChange(v, e.target.name)
                 }}
                 onWheel={(e) => (e.target as any).blur()}
                 placeholder="0"
