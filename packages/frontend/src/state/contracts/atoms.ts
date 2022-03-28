@@ -51,3 +51,10 @@ export const shortHelperContractAtom = atom<Contract | null>((get) => {
   if (!web3) return null
   return getContract(web3, shortHelper, shortAbi)
 })
+
+export const controllerHelperContractAtom = atom<Contract | null>((get) => {
+  const web3 = get(web3Atom)
+  const { controllerHelper } = get(addressesAtom)
+  if (!web3) return null
+  return getContract(web3, controllerHelper, shortAbi)
+})

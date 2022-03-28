@@ -16,6 +16,7 @@ import {
   OSQUEETH,
   ZERO_ADDR,
   CRAB_STRATEGY,
+  CONTROLLER_HELPER,
 } from '@constants/address'
 import { networkIdAtom, web3Atom } from '../wallet/atoms'
 import { BIG_ZERO } from '@constants/index'
@@ -48,6 +49,7 @@ export const addressesAtom = atom((get) => {
     usdc: USDC[networkId].toLowerCase(),
     nftManager: NFT_MANAGER[networkId].toLowerCase(),
     crabStrategy: CRAB_STRATEGY[networkId].toLowerCase(),
+    controllerHelper: CONTROLLER_HELPER[networkId].toLowerCase(),
   }
 })
 
