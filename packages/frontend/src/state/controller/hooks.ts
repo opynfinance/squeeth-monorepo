@@ -238,9 +238,7 @@ export const useGetCollatRatioAndLiqPrice = () => {
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const normFactor = useNormFactor()
   const contract = useAtomValue(controllerContractAtom)
-  const getTwapEthPrice = useGetTwapEthPrice()
   const getDebtAmount = useGetDebtAmount()
-  const getETHandOSQTHAmount = useGetETHandOSQTHAmount()
   const getUniNFTCollatDetail = useGetUniNFTCollatDetail()
   const getCollatRatioAndLiqPrice = useCallback(
     async (collateralAmount: BigNumber, shortAmount: BigNumber, uniId?: number) => {
@@ -279,7 +277,7 @@ export const useGetCollatRatioAndLiqPrice = () => {
 
       return emptyState
     },
-    [contract, getDebtAmount, getETHandOSQTHAmount, getTwapEthPrice, impliedVol, isWethToken0, normFactor.toString()],
+    [contract, getDebtAmount, impliedVol, isWethToken0, normFactor.toString()],
   )
 
   return getCollatRatioAndLiqPrice
