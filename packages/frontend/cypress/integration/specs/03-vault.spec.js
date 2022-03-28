@@ -75,12 +75,12 @@ describe('Open short position and then mint debt, burn debt, add collat, remove 
         })
         it(`balance of osqth in adjust debt box should be equal to minted osqth`, () => {
           cy.get('#vault-debt-input-osqth-balance').then((bal) => {
-            cy.get('#vault-minted-debt-bal').should('contain.text', Number(bal.text()).toFixed(4))
+            cy.get('#vault-minted-debt-bal').should('contain.text', Number(bal.text()).toFixed(2))
           })
         })
         it(`eth balance from wallet should be the same as balance of eth input box`, () => {
           cy.get('#user-eth-wallet-balance').then((bal) => {
-            cy.get('#vault-collat-input-eth-balance').should('contain.text', Number(bal.text()).toFixed(4))
+            cy.get('#vault-collat-input-eth-balance').should('contain.text', Number(bal.text()).toFixed(2))
           })
         })
       })

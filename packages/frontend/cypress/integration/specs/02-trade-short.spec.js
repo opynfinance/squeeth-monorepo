@@ -43,7 +43,7 @@ describe('Trade on trade page', () => {
 
       it('eth balance from wallet should be the same as balance of eth input box', () => {
         cy.get('#user-eth-wallet-balance').then((bal) => {
-          cy.get('#open-short-eth-before-trade-balance').should('contain.text', Number(bal.text()).toFixed(4))
+          cy.get('#open-short-eth-before-trade-balance').should('contain.text', Number(bal.text()).toFixed(2))
         })
       })
 
@@ -80,7 +80,7 @@ describe('Trade on trade page', () => {
         // cy.get('#open-short-eth-input').clear().type('1', { force: true, delay: 200 }).should('have.value', '1')
         cy.get('#open-short-eth-input').clear().type('8.', { force: true, delay: 200 }).should('have.value', '8.0')
         cy.get('#open-short-eth-before-trade-balance').then((bal) => {
-          cy.get('#open-short-eth-post-trade-balance').should('contain.text', (Number(bal.text()) - 8).toFixed(4))
+          cy.get('#open-short-eth-post-trade-balance').should('contain.text', (Number(bal.text()) - 8).toFixed(2))
         })
 
         cy.get('#open-short-trade-details .trade-details-amount').invoke('text').should('not.equal', 0)
@@ -90,13 +90,13 @@ describe('Trade on trade page', () => {
             //post = before + input
             cy.get('#open-short-osqth-post-trade-balance').should(
               'contain.text',
-              new BigNumber(val.text().toString()).plus(Number(bal.text())).toFixed(4),
+              new BigNumber(val.text().toString()).plus(Number(bal.text())).toFixed(2),
             )
           })
           cy.get('#position-card-before-trade-balance').then((bal) => {
             cy.get('#position-card-post-trade-balance').should(
               'contain.text',
-              new BigNumber(val.text().toString()).plus(Number(bal.text())).toFixed(6),
+              new BigNumber(val.text().toString()).plus(Number(bal.text())).toFixed(2),
             )
           })
         })
@@ -106,7 +106,7 @@ describe('Trade on trade page', () => {
         cy.get('#open-short-eth-input').clear().type('8.', { force: true, delay: 200 }).should('have.value', '8.0')
         cy.get('#open-short-trade-details .trade-details-amount').then((v) => {
           cy.get('#open-short-osqth-before-trade-balance').then((bal) => {
-            const inputSqth = new BigNumber(v.val().toString()).toFixed(4)
+            const inputSqth = new BigNumber(v.val().toString()).toFixed(2)
             cy.get('#close-short-sumbit-tx-btn').then((btn) => {
               if (btn.text().includes('Allow wrapper')) {
                 cy.get('#close-short-sumbit-tx-btn').click({ force: true })
@@ -126,7 +126,7 @@ describe('Trade on trade page', () => {
             cy.get('#open-short-card').should('contain.text', 'Close').should('contain.text', 'Opened')
             cy.get('#position-card-before-trade-balance').should(
               'contain.text',
-              (Number(inputSqth) + Number(bal.text())).toFixed(6),
+              (Number(inputSqth) + Number(bal.text())).toFixed(2),
               { delay: 2000 },
             )
             cy.get('#conf-msg').should('contain.text', inputSqth)
@@ -176,14 +176,11 @@ describe('Trade on trade page', () => {
 
       it('can enter an amount into osqth input, before & post trade amount match on position card and eth box', () => {
         cy.get('#close-short-type-select input').select('Partial Close')
-        cy.get('#close-short-osqth-input')
-          .clear()
-          .type('0.001', { force: true, delay: 200 })
-          .should('have.value', '0.001')
+        cy.get('#close-short-osqth-input').clear().type('1.1', { force: true, delay: 200 }).should('have.value', '1.1')
         cy.get('#open-short-osqth-before-trade-balance').then((val) => {
-          cy.get('#open-short-osqth-post-trade-balance').should('contain.text', (Number(val.text()) - 0.001).toFixed(4))
+          cy.get('#open-short-osqth-post-trade-balance').should('contain.text', (Number(val.text()) - 1.1).toFixed(2))
           cy.get('#position-card-before-trade-balance').then((val) => {
-            cy.get('#position-card-post-trade-balance').should('contain.text', (Number(val.text()) - 0.001).toFixed(4))
+            cy.get('#position-card-post-trade-balance').should('contain.text', (Number(val.text()) - 1.1).toFixed(2))
           })
         })
 
@@ -193,7 +190,7 @@ describe('Trade on trade page', () => {
       it('can use max button for osqth input when fully close selected', () => {
         cy.get('#close-short-type-select input').select('Partial Close')
         cy.get('#close-short-osqth-input-action').click()
-        cy.get('#close-short-osqth-input').invoke('val').then(parseFloat).should('not.equal', '0')
+        cy.get('#close-short-osqth-input').invoke('val').should('not.equal', '0')
         cy.get('#close-short-type-select input').should('contain.text', 'Fully Close')
 
         cy.get('#close-short-osqth-input').then((val) => {
@@ -202,7 +199,7 @@ describe('Trade on trade page', () => {
           cy.get('#position-card-before-trade-balance').should('contain.text', osqthInput)
         })
 
-        cy.get('#close-short-osqth-post-trade-balance').should('contain.text', (0).toFixed(4))
+        cy.get('#close-short-osqth-post-trade-balance').should('contain.text', (0).toFixed(2))
         cy.get('#position-card-post-trade-balance').should('contain.text', '0')
       })
 
@@ -210,10 +207,7 @@ describe('Trade on trade page', () => {
         cy.get('#close-short-type-select input').select('Partial Close')
         cy.get('#close-short-type-select input').should('contain.text', 'Partial Close')
 
-        cy.get('#close-short-osqth-input')
-          .clear()
-          .type('0.001', { force: true, delay: 200 })
-          .should('have.value', '0.001')
+        cy.get('#close-short-osqth-input').clear().type('1.1', { force: true, delay: 200 }).should('have.value', '1.1')
         cy.get('#close-short-osqth-input').then((v) => {
           cy.get('#close-short-osqth-before-trade-balance').then((bal) => {
             const inputSqth = new BigNumber(v.val().toString()).toFixed(6)
@@ -233,7 +227,7 @@ describe('Trade on trade page', () => {
             cy.get('#close-short-card').should('contain.text', 'Close').should('contain.text', 'Closed')
             cy.get('#position-card-before-trade-balance').should(
               'contain.text',
-              (Number(bal.text()) - Number(inputSqth)).toFixed(6),
+              (Number(bal.text()) - Number(inputSqth)).toFixed(2),
               { delay: 2000 },
             )
             cy.get('#conf-msg').should('contain.text', inputSqth)
@@ -250,7 +244,7 @@ describe('Trade on trade page', () => {
         cy.get('#close-short-type-select input').select('Fully Close')
         cy.get('#close-short-type-select input').should('contain.text', 'Fully Close')
 
-        cy.get('#close-short-osqth-input').invoke('val').then(parseFloat).should('not.equal', '0')
+        cy.get('#close-short-osqth-input').invoke('val').should('not.equal', '0')
 
         cy.get('#close-short-osqth-input').then((v) => {
           const inputSqth = new BigNumber(v.val().toString()).toFixed(6)
