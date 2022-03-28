@@ -24,21 +24,15 @@ export const useFlashSwapAndMint = () => {
    * @returns
    */
   const flashSwapAndMint = useCallback(
-    async (vaultId: number, ethCollateralDeposit: BigNumber, squeethAmount: BigNumber, minToReceive: number) => {
+    async (vaultId: number, ethCollateralDeposit: BigNumber, squeethAmount: BigNumber, minToReceive: BigNumber) => {
       if (!contract || !address) return
-
-      console.log('got here', {
-        vaultId,
-        minToReceive,
-        ethCollateralDeposit: ethCollateralDeposit.toString(),
-        squeethAmount: squeethAmount.toString(),
-      })
 
       const wPowerPerpAmount = fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).multipliedBy(normalizationFactor)
       const totalCollateralToDeposit = fromTokenAmount(ethCollateralDeposit, 18)
+      const _minToReceive = fromTokenAmount(minToReceive, 18)
 
       const result = await handleTransaction(
-        contract.methods.flashswapWMint(vaultId, totalCollateralToDeposit, wPowerPerpAmount, minToReceive).send({
+        contract.methods.flashswapWMint(vaultId, totalCollateralToDeposit, wPowerPerpAmount, _minToReceive).send({
           from: address,
           value: totalCollateralToDeposit,
         }),
