@@ -432,7 +432,11 @@ const SqueethInfo: React.FC = () => {
                 <InfoIcon fontSize="small" className={classes.infoIcon} />
               </Tooltip>
             </div>
-            <Typography>{(dailyHistoricalFunding.funding * 100).toFixed(2) || 'loading'}%</Typography>
+            <Typography>
+              {dailyHistoricalFunding.funding === 0
+                ? 'loading'
+                : (dailyHistoricalFunding.funding * 100).toFixed(2) + '%'}
+            </Typography>
           </div>
           <div className={classes.infoItem}>
             <div className={classes.infoLabel}>
@@ -443,7 +447,9 @@ const SqueethInfo: React.FC = () => {
                 <InfoIcon fontSize="small" className={classes.infoIcon} />
               </Tooltip>
             </div>
-            <Typography>{(currentImpliedFunding * 100).toFixed(2) || 'loading'}%</Typography>
+            <Typography>
+              {currentImpliedFunding === 0 ? 'loading' : (currentImpliedFunding * 100).toFixed(2) + '%'}
+            </Typography>
           </div>
           <div className={classes.infoItem}>
             <div className={classes.infoLabel}>
