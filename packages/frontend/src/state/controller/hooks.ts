@@ -174,7 +174,7 @@ export const useGetVault = () => {
 export const useGetDebtAmount = () => {
   const { ethUsdcPool, weth, usdc } = useAtomValue(addressesAtom)
   const contract = useAtomValue(controllerContractAtom)
-  const normFactor = useNormFactor()
+  const normFactor = useAtomValue(normFactorAtom)
   const { getTwapSafe } = useOracle()
   const getDebtAmount = useCallback(
     async (shortAmount: BigNumber) => {
@@ -203,7 +203,7 @@ export const useGetTwapEthPrice = () => {
 
 export const useGetShortAmountFromDebt = () => {
   const { ethUsdcPool, weth, usdc } = useAtomValue(addressesAtom)
-  const normFactor = useNormFactor()
+  const normFactor = useAtomValue(normFactorAtom)
   const contract = useAtomValue(controllerContractAtom)
   const { getTwapSafe } = useOracle()
   const getShortAmountFromDebt = async (debtAmount: BigNumber) => {
@@ -218,7 +218,7 @@ export const useGetShortAmountFromDebt = () => {
 }
 
 export const useGetUniNFTCollatDetail = () => {
-  const normFactor = useNormFactor()
+  const normFactor = useAtomValue(normFactorAtom)
   const getETHandOSQTHAmount = useGetETHandOSQTHAmount()
   const getTwapEthPrice = useGetTwapEthPrice()
 
@@ -236,7 +236,7 @@ export const useGetUniNFTCollatDetail = () => {
 export const useGetCollatRatioAndLiqPrice = () => {
   const impliedVol = useAtomValue(impliedVolAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)
-  const normFactor = useNormFactor()
+  const normFactor = useAtomValue(normFactorAtom)
   const contract = useAtomValue(controllerContractAtom)
   const getTwapEthPrice = useGetTwapEthPrice()
   const getDebtAmount = useGetDebtAmount()

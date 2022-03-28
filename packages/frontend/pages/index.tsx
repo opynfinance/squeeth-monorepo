@@ -27,12 +27,18 @@ import { useRestrictUser } from '@context/restrict-user'
 
 import { PositionType, TradeType } from '../src/types'
 import { toTokenAmount } from '@utils/calculations'
-import { impliedVolAtom, currentImpliedFundingAtom, indexAtom, markAtom } from 'src/state/controller/atoms'
+import {
+  normFactorAtom,
+  impliedVolAtom,
+  currentImpliedFundingAtom,
+  indexAtom,
+  markAtom,
+  dailyHistoricalFundingAtom,
+} from 'src/state/controller/atoms'
 import { usePositionsAndFeesComputation } from 'src/state/positions/hooks'
 import { actualTradeTypeAtom, ethTradeAmountAtom, sqthTradeAmountAtom, tradeTypeAtom } from 'src/state/trade/atoms'
 import { positionTypeAtom } from 'src/state/positions/atoms'
 import { useResetAtom } from 'jotai/utils'
-import { useDailyHistoricalFunding, useNormFactor } from 'src/state/controller/hooks'
 import { isTransactionFirstStepAtom, transactionDataAtom, transactionLoadingAtom } from 'src/state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
@@ -389,12 +395,12 @@ const TabComponent: React.FC = () => {
 const SqueethInfo: React.FC = () => {
   const classes = useStyles()
   const actualTradeType = useAtomValue(actualTradeTypeAtom)
-  const dailyHistoricalFunding = useDailyHistoricalFunding()
+  const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const mark = useAtomValue(markAtom)
   const index = useAtomValue(indexAtom)
   const impliedVol = useAtomValue(impliedVolAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
-  const normFactor = useNormFactor()
+  const normFactor = useAtomValue(normFactorAtom)
   usePositionsAndFeesComputation()
 
   const [showAdvanced, setShowAdvanced] = useState(false)
