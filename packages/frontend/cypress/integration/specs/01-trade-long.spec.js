@@ -140,6 +140,14 @@ describe('Trade on trade page', () => {
           })
         })
 
+        it('can use max button for open long eth input', () => {
+          cy.get('#open-long-eth-input-action').click()
+          cy.get('#open-long-osqth-input').should('not.equal', '0')
+
+          cy.get('#open-long-osqth-post-trade-balance').should('not.contain.text', (0).toFixed(6))
+          cy.get('#position-card-post-trade-balance').should('not.contain.text', '0')
+        })
+
         it('can open long position for osqth', () => {
           cy.get('#open-long-eth-input').clear().type('0.1', { force: true, delay: 200 }).should('have.value', '0.1')
           cy.get('#open-long-osqth-input').then((v) => {
@@ -170,7 +178,7 @@ describe('Trade on trade page', () => {
     context(`close long position`, () => {
       before(() => {
         cy.get('#long-card-btn').click({ force: true })
-        cy.get('#open-btn').click({ force: true })
+        cy.get('#close-btn').click({ force: true })
       })
       it('inputs should be zero by default and tx button is disabled', () => {
         cy.get('#close-long-header-box').should('contain.text', 'Sell squeeth ERC20 to get ETH')

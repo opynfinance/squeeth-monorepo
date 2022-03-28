@@ -329,8 +329,8 @@ const PositionCard: React.FC = () => {
           </div>
           <div className={classes.assetDiv}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center' }} id="position-card-before-trade-balance">
-                <Typography component="span" style={{ fontWeight: 600 }}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <Typography component="span" style={{ fontWeight: 600 }} id="position-card-before-trade-balance">
                   {getPositionBasedValue(squeethAmount.toFixed(6), squeethAmount.toFixed(6), '0', '0')}
                 </Typography>
 
