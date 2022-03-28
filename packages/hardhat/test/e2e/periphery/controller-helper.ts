@@ -104,6 +104,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const collateralToMint = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
       const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
+      const flashloanFee = collateralToMint.mul(9).div(1000)
       const flashloanWMintDepositNftParams = {
         vaultId: 0,
         wPowerPerpAmount: mintWSqueethAmount.toString(),
@@ -117,7 +118,7 @@ describe("ControllerHelper: mainnet fork", function () {
         lpUpperTick: 887220
       }
 
-      await controllerHelper.connect(depositor).flashloanWMintDepositNft(flashloanWMintDepositNftParams, {value: collateralToLp.add(ethers.utils.parseUnits('0.01'))})
+      await controllerHelper.connect(depositor).flashloanWMintDepositNft(flashloanWMintDepositNftParams, {value: collateralToLp.add(ethers.utils.parseUnits('0.01').add(flashloanFee))})
 
       const vaultAfter = await controller.vaults(vaultId)
       const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
