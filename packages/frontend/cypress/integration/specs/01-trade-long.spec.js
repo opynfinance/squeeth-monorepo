@@ -266,9 +266,9 @@ describe('Trade on trade page', () => {
           })
         })
 
-        it('can use max button for osqth input', () => {
-          cy.get('#close-long-eth-input-action').click()
-          cy.get('#close-long-osqth-input').should('not.equal', '0')
+        it('can use max button for close long osqth input', () => {
+          cy.get('#close-long-osqth-input-action').click()
+          cy.get('#close-long-eth-input').should('not.equal', '0')
 
           cy.get('#close-long-osqth-input').then((val) => {
             const osqthInput = new BigNumber(val.val().toString()).toFixed(6)
