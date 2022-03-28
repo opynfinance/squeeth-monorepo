@@ -23,12 +23,12 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
-Cypress.Commands.add('connectWallet', () => {
-  cy.get('body').then(($body) => {
-    if ($body.find('.chakra-modal__content').length <= 0) {
-      cy.findByText('Connect to a wallet').click()
-    }
-  })
-  cy.findByText('MetaMask').click()
-  cy.task('acceptMetamaskAccess')
-})
+// Cypress.Commands.add('connectWallet', () => {
+//   cy.get('body').then(($body) => {
+//     if ($body.find('.chakra-modal__content').length <= 0) {
+//       cy.findByText('Connect to a wallet').click()
+//     }
+//   })
+//   cy.findByText('MetaMask').click()
+//   cy.task('acceptMetamaskAccess')
+// })

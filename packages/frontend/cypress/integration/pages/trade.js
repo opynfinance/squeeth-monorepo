@@ -11,14 +11,6 @@ export default class TradePage extends Page {
     this.notifications = new Notifications()
   }
 
-  acceptMetamaskAccessRequest() {
-    cy.acceptMetamaskAccess()
-  }
-
-  visit() {
-    cy.visit('/')
-  }
-
   connectBrowserWallet() {
     const connectWalletButton = this.header.getConnectWalletBtn()
     connectWalletButton.click()
@@ -38,7 +30,8 @@ export default class TradePage extends Page {
         return txSuccessNotification.should('exist')
       },
       {
-        timeout: 90000000,
+        // tx takes a bit longer so extend the timeout duration, wait for 200000 ms
+        timeout: 200000,
       },
     )
   }
