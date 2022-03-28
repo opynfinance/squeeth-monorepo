@@ -60,7 +60,7 @@ describe('lp nft as collateral txs', () => {
 
     context('Mint', () => {
       it(`can mint`, () => {
-        cy.get('#debt-amount-input').clear().type('1.1', { delay: 200, force: true }).should('have.value', '1.1')
+        cy.get('#debt-amount-input').clear().type('1.', { delay: 200, force: true }).should('have.value', '1.0')
         cy.get('.debt-collat-perct').invoke('text').then(parseFloat).should('be.at.least', 150)
         cy.get('#mint-sumbit-tx-btn').should('not.be.disabled')
         cy.get('#mint-sumbit-tx-btn').click({ force: true })
@@ -84,7 +84,7 @@ describe('lp nft as collateral txs', () => {
     })
     context('Add collat', () => {
       it(`can add collat `, () => {
-        cy.get('#collat-amount-input').clear().type('1.1', { delay: 200, force: true }).should('have.value', '1.1')
+        cy.get('#collat-amount-input').clear().type('1.', { delay: 200, force: true }).should('have.value', '1.0')
         cy.get('.collat-collat-perct').invoke('text').then(parseFloat).should('be.at.least', 150)
         cy.get('#add-collat-sumbit-tx-btn').should('not.be.disabled')
         cy.get('#add-collat-sumbit-tx-btn').click({ force: true })

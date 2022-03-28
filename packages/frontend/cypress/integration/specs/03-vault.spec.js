@@ -86,7 +86,7 @@ describe('Open short position and then mint debt, burn debt, add collat, remove 
       })
       context('Mint', () => {
         it(`can mint with manual input`, () => {
-          cy.get('#debt-amount-input').clear().type('1.1', { delay: 200, force: true }).should('have.value', '1.1')
+          cy.get('#debt-amount-input').clear().type('1.', { delay: 200, force: true }).should('have.value', '1.0')
           cy.get('.debt-collat-perct').invoke('text').then(parseFloat).should('be.at.least', 150)
           cy.get('#mint-sumbit-tx-btn').should('not.be.disabled')
           cy.get('#mint-sumbit-tx-btn').click({ force: true })
@@ -126,7 +126,7 @@ describe('Open short position and then mint debt, burn debt, add collat, remove 
           // })
         })
         it(`can mint with max button`, () => {
-          cy.get('#debt-amount-input').clear().type('1.1', { delay: 200, force: true }).should('have.value', '1.1')
+          cy.get('#debt-amount-input').clear().type('1.', { delay: 200, force: true }).should('have.value', '1.0')
           cy.get('#debt-max-btn').click({ force: true })
           cy.get('.debt-collat-perct').invoke('text').then(parseFloat).should('be.at.least', 150)
           cy.get('#mint-sumbit-tx-btn').should('not.be.disabled')
@@ -162,7 +162,7 @@ describe('Open short position and then mint debt, burn debt, add collat, remove 
       })
       context('Add collat', () => {
         it(`can add collat with manual input`, () => {
-          cy.get('#collat-amount-input').clear().type('1.1', { delay: 200, force: true }).should('have.value', '1.1')
+          cy.get('#collat-amount-input').clear().type('1.', { delay: 200, force: true }).should('have.value', '1.0')
           cy.get('.collat-collat-perct').invoke('text').then(parseFloat).should('be.at.least', 150)
           cy.get('#add-collat-sumbit-tx-btn').should('not.be.disabled')
           cy.get('#add-collat-sumbit-tx-btn').click({ force: true })
@@ -172,7 +172,7 @@ describe('Open short position and then mint debt, burn debt, add collat, remove 
           cy.get('#add-collat-sumbit-tx-btn').should('be.disabled')
         })
         it(`can add collat with max button`, () => {
-          cy.get('#collat-amount-input').clear().type('1.1', { delay: 200, force: true }).should('have.value', '1.1')
+          cy.get('#collat-amount-input').clear().type('1.', { delay: 200, force: true }).should('have.value', '1.0')
           cy.get('#collat-max-btn').click({ force: true })
           cy.get('.collat-collat-perct').invoke('text').then(parseFloat).should('be.at.least', 150)
           cy.get('#add-collat-sumbit-tx-btn').should('not.be.disabled')

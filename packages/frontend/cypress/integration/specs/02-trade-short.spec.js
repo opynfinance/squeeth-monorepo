@@ -176,7 +176,7 @@ describe('Trade on trade page', () => {
 
       it('can enter an amount into osqth input, before & post trade amount match on position card and eth box', () => {
         cy.get('#close-short-type-select input').select('Partial Close')
-        cy.get('#close-short-osqth-input').clear().type('1.1', { force: true, delay: 200 }).should('have.value', '1.1')
+        cy.get('#close-short-osqth-input').clear().type('1.', { force: true, delay: 200 }).should('have.value', '1.0')
         cy.get('#open-short-osqth-before-trade-balance').then((val) => {
           cy.get('#open-short-osqth-post-trade-balance').should('contain.text', (Number(val.text()) - 1.1).toFixed(2))
           cy.get('#position-card-before-trade-balance').then((val) => {
@@ -207,7 +207,7 @@ describe('Trade on trade page', () => {
         cy.get('#close-short-type-select input').select('Partial Close')
         cy.get('#close-short-type-select input').should('contain.text', 'Partial Close')
 
-        cy.get('#close-short-osqth-input').clear().type('1.1', { force: true, delay: 200 }).should('have.value', '1.1')
+        cy.get('#close-short-osqth-input').clear().type('1.', { force: true, delay: 200 }).should('have.value', '1.0')
         cy.get('#close-short-osqth-input').then((v) => {
           cy.get('#close-short-osqth-before-trade-balance').then((bal) => {
             const inputSqth = new BigNumber(v.val().toString()).toFixed(6)
