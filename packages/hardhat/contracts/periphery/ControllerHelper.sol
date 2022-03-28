@@ -397,7 +397,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                     recipient: address(this),
                     vaultId: data.vaultId,
                     wPowerPerpAmount: data.wPowerPerpAmount,
-                    collateralToDeposit: data.collateralToDeposit,
+                    collateralToDeposit: data.collateralToDeposit.add(data.collateralToFlashloan),
                     collateralToLp: data.collateralToLp,
                     amount0Min: data.lpAmount0Min,
                     amount1Min: data.lpAmount1Min,

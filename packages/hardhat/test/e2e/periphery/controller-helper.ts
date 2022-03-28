@@ -107,7 +107,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const flashloanWMintDepositNftParams = {
         vaultId: 0,
         wPowerPerpAmount: mintWSqueethAmount.toString(),
-        collateralToDeposit: collateralToMint.toString(),
+        collateralToDeposit: BigNumber.from(0),
         collateralToFlashloan: collateralToMint.toString(),
         collateralToLp: collateralToLp.toString(),
         collateralToWithdraw: 0,
@@ -194,7 +194,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const flashloanWMintDepositNftParams = {
         vaultId: 0,
         wPowerPerpAmount: mintWSqueethAmount.toString(),
-        collateralToDeposit: collateralToMint.toString(),
+        collateralToDeposit: collateralToMint.sub(collateralToFlashloan).toString(),
         collateralToFlashloan: collateralToFlashloan.toString(),
         collateralToLp: BigNumber.from(0),
         collateralToWithdraw: 0,
@@ -233,7 +233,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const flashloanWMintDepositNftParams = {
         vaultId: 0,
         wPowerPerpAmount: mintWSqueethAmount.toString(),
-        collateralToDeposit: collateralToMint.toString(),
+        collateralToDeposit: collateralToMint.sub(collateralToFlashloan).toString(),
         collateralToFlashloan: collateralToFlashloan.toString(),
         collateralToLp: collateralToLp.toString(),
         collateralToWithdraw: 0,
