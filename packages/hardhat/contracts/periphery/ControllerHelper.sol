@@ -173,7 +173,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             _params.limitPriceEthPerPowerPerp
         );
 
-        ControllerHelperUtil.sendBack(weth);
+        ControllerHelperUtil.sendBack(weth, wPowerPerp);
     }
 
     function flashloanCloseVaultLpNft(ControllerHelperDataType.FlashloanCloseVaultLpNftParam calldata _params)
@@ -189,7 +189,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             abi.encode(_params)
         );
 
-        ControllerHelperUtil.sendBack(weth);
+        ControllerHelperUtil.sendBack(weth, wPowerPerp);
     }
 
     /**
@@ -269,7 +269,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             );
         }
 
-        ControllerHelperUtil.sendBack(weth);
+        ControllerHelperUtil.sendBack(weth, wPowerPerp);
     }
 
     /**
@@ -346,7 +346,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             })
         );
 
-        ControllerHelperUtil.sendBack(weth);
+        ControllerHelperUtil.sendBack(weth, wPowerPerp);
     }
 
     /**

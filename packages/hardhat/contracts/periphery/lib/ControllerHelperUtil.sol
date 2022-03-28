@@ -9,6 +9,7 @@ import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Po
 import {IController} from "../../interfaces/IController.sol";
 import {IWPowerPerp} from "../../interfaces/IWPowerPerp.sol";
 import {IWETH9} from "../../interfaces/IWETH9.sol";
+import {IWPowerPerp} from "../../interfaces/IWPowerPerp.sol";
 
 // lib
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
@@ -249,10 +250,15 @@ library ControllerHelperUtil {
     }
 
     /**
-     * @notice send ETH
+     * @notice send ETH and wPowerPerp
      */
-    function sendBack(address _weth) public {
+    function sendBack(address _weth, address _wPowerPerp) public {
         IWETH9(_weth).withdraw(IWETH9(_weth).balanceOf(address(this)));
         payable(msg.sender).sendValue(address(this).balance);
+
+        uint256 wPowerPerpBalance = IWPowerPerp(_wPowerPerp).balanceOf(address(this));
+        if (wPowerPerpBalance > 0) {
+            IWPowerPerp(_wPowerPerp).transfer(msg.sender, wPowerPerpBalance);
+        }
     }
 }
