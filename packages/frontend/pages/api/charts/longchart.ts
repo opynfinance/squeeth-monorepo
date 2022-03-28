@@ -8,7 +8,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const volMultiplier = Number(req.query.volMultiplier)
 
   try {
-    const ethPrices = await getETHPrices(365)
+    const ethPrices = await getETHPrices(days)
 
     const ethSqueethPNLSeriesPromise = getETHSqueethPNLCompounding(ethPrices, volMultiplier, days)
     const squeethSeriesPromise = getSqueethChartWithFunding(ethPrices, volMultiplier, collatRatio)
