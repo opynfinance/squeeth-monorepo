@@ -420,7 +420,7 @@ export function Positions() {
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>LPed Squeeth</Typography>
-              <Typography className={classes.link}>
+              <Typography className={classes.link} id="lp-vault-link">
                 {vaultExists ? <Link href={`vault/${vaultId}`}>Manage</Link> : null}
               </Typography>
             </div>
