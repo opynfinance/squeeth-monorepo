@@ -1,0 +1,353 @@
+[
+  {
+    "inputs": [
+      { "internalType": "address", "name": "_controller", "type": "address" },
+      { "internalType": "address", "name": "_nonfungiblePositionManager", "type": "address" },
+      { "internalType": "address", "name": "_uniswapFactory", "type": "address" },
+      { "internalType": "address", "name": "_lendingPoolAddressProvider", "type": "address" }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "ADDRESSES_PROVIDER",
+    "outputs": [{ "internalType": "contract ILendingPoolAddressesProvider", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "LENDING_POOL",
+    "outputs": [{ "internalType": "contract ILendingPool", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "recipient", "type": "address" },
+          { "internalType": "uint256", "name": "vaultId", "type": "uint256" },
+          { "internalType": "uint256", "name": "wPowerPerpAmount", "type": "uint256" },
+          { "internalType": "uint256", "name": "collateralToDeposit", "type": "uint256" },
+          { "internalType": "uint256", "name": "collateralToLp", "type": "uint256" },
+          { "internalType": "uint256", "name": "amount0Min", "type": "uint256" },
+          { "internalType": "uint256", "name": "amount1Min", "type": "uint256" },
+          { "internalType": "int24", "name": "lowerTick", "type": "int24" },
+          { "internalType": "int24", "name": "upperTick", "type": "int24" }
+        ],
+        "internalType": "struct ControllerHelperDataType.MintAndLpParams",
+        "name": "_params",
+        "type": "tuple"
+      }
+    ],
+    "name": "batchMintLp",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "uint256", "name": "vaultId", "type": "uint256" },
+          { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
+          { "internalType": "uint256", "name": "liquidity", "type": "uint256" },
+          { "internalType": "uint256", "name": "liquidityPercentage", "type": "uint256" },
+          { "internalType": "uint256", "name": "wPowerPerpAmountToBurn", "type": "uint256" },
+          { "internalType": "uint256", "name": "collateralToWithdraw", "type": "uint256" },
+          { "internalType": "uint256", "name": "limitPriceEthPerPowerPerp", "type": "uint256" },
+          { "internalType": "uint128", "name": "amount0Min", "type": "uint128" },
+          { "internalType": "uint128", "name": "amount1Min", "type": "uint128" }
+        ],
+        "internalType": "struct ControllerHelperDataType.CloseShortWithUserNftParams",
+        "name": "_params",
+        "type": "tuple"
+      }
+    ],
+    "name": "closeShortWithUserNft",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "controller",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address[]", "name": "assets", "type": "address[]" },
+      { "internalType": "uint256[]", "name": "amounts", "type": "uint256[]" },
+      { "internalType": "uint256[]", "name": "premiums", "type": "uint256[]" },
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "bytes", "name": "params", "type": "bytes" }
+    ],
+    "name": "executeOperation",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "factory",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "uint256", "name": "vaultId", "type": "uint256" },
+          { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
+          { "internalType": "uint256", "name": "liquidity", "type": "uint256" },
+          { "internalType": "uint256", "name": "liquidityPercentage", "type": "uint256" },
+          { "internalType": "uint256", "name": "wPowerPerpAmountToBurn", "type": "uint256" },
+          { "internalType": "uint256", "name": "collateralToFlashloan", "type": "uint256" },
+          { "internalType": "uint256", "name": "collateralToWithdraw", "type": "uint256" },
+          { "internalType": "uint256", "name": "limitPriceEthPerPowerPerp", "type": "uint256" },
+          { "internalType": "uint128", "name": "amount0Min", "type": "uint128" },
+          { "internalType": "uint128", "name": "amount1Min", "type": "uint128" }
+        ],
+        "internalType": "struct ControllerHelperDataType.FlashloanCloseVaultLpNftParam",
+        "name": "_params",
+        "type": "tuple"
+      }
+    ],
+    "name": "flashloanCloseVaultLpNft",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "uint256", "name": "vaultId", "type": "uint256" },
+          { "internalType": "uint256", "name": "wPowerPerpAmount", "type": "uint256" },
+          { "internalType": "uint256", "name": "collateralToDeposit", "type": "uint256" },
+          { "internalType": "uint256", "name": "collateralToFlashloan", "type": "uint256" },
+          { "internalType": "uint256", "name": "collateralToLp", "type": "uint256" },
+          { "internalType": "uint256", "name": "collateralToWithdraw", "type": "uint256" },
+          { "internalType": "uint256", "name": "lpAmount0Min", "type": "uint256" },
+          { "internalType": "uint256", "name": "lpAmount1Min", "type": "uint256" },
+          { "internalType": "int24", "name": "lpLowerTick", "type": "int24" },
+          { "internalType": "int24", "name": "lpUpperTick", "type": "int24" }
+        ],
+        "internalType": "struct ControllerHelperDataType.FlashloanWMintDepositNftParams",
+        "name": "_params",
+        "type": "tuple"
+      }
+    ],
+    "name": "flashloanWMintDepositNft",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "uint256", "name": "vaultId", "type": "uint256" },
+          { "internalType": "uint256", "name": "wPowerPerpAmountToMint", "type": "uint256" },
+          { "internalType": "uint256", "name": "collateralAmount", "type": "uint256" },
+          { "internalType": "uint256", "name": "wPowerPerpAmountToSell", "type": "uint256" },
+          { "internalType": "uint256", "name": "minToReceive", "type": "uint256" }
+        ],
+        "internalType": "struct ControllerHelperDataType.FlashSellLongWMintParams",
+        "name": "_params",
+        "type": "tuple"
+      }
+    ],
+    "name": "flashswapSellLongWMint",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "uint256", "name": "vaultId", "type": "uint256" },
+          { "internalType": "uint256", "name": "wPowerPerpAmountToBurn", "type": "uint256" },
+          { "internalType": "uint256", "name": "wPowerPerpAmountToBuy", "type": "uint256" },
+          { "internalType": "uint256", "name": "collateralToWithdraw", "type": "uint256" },
+          { "internalType": "uint256", "name": "maxToPay", "type": "uint256" }
+        ],
+        "internalType": "struct ControllerHelperDataType.FlashswapWBurnBuyLongParams",
+        "name": "_params",
+        "type": "tuple"
+      }
+    ],
+    "name": "flashswapWBurnBuyLong",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "uint256", "name": "vaultId", "type": "uint256" },
+          { "internalType": "uint256", "name": "totalCollateralToDeposit", "type": "uint256" },
+          { "internalType": "uint256", "name": "wPowerPerpAmount", "type": "uint256" },
+          { "internalType": "uint256", "name": "minToReceive", "type": "uint256" }
+        ],
+        "internalType": "struct ControllerHelperDataType.FlashswapWMintParams",
+        "name": "_params",
+        "type": "tuple"
+      }
+    ],
+    "name": "flashswapWMint",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "isWethToken0",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "nonfungiblePositionManager",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "uint256", "name": "", "type": "uint256" },
+      { "internalType": "bytes", "name": "", "type": "bytes" }
+    ],
+    "name": "onERC721Received",
+    "outputs": [{ "internalType": "bytes4", "name": "", "type": "bytes4" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "oracle",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "_vaultId", "type": "uint256" },
+      { "internalType": "uint256", "name": "_collateralToFlashloan", "type": "uint256" },
+      {
+        "components": [
+          {
+            "internalType": "enum ControllerHelperDataType.RebalanceVaultNftType",
+            "name": "rebalanceVaultNftType",
+            "type": "uint8"
+          },
+          { "internalType": "bytes", "name": "data", "type": "bytes" }
+        ],
+        "internalType": "struct ControllerHelperDataType.RebalanceVaultNftParams[]",
+        "name": "_params",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "rebalanceVaultNft",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
+          { "internalType": "uint256", "name": "ethAmountToLp", "type": "uint256" },
+          { "internalType": "uint256", "name": "liquidity", "type": "uint256" },
+          { "internalType": "uint256", "name": "wPowerPerpAmountDesired", "type": "uint256" },
+          { "internalType": "uint256", "name": "wethAmountDesired", "type": "uint256" },
+          { "internalType": "uint256", "name": "amount0DesiredMin", "type": "uint256" },
+          { "internalType": "uint256", "name": "amount1DesiredMin", "type": "uint256" },
+          { "internalType": "uint256", "name": "limitPriceEthPerPowerPerp", "type": "uint256" },
+          { "internalType": "uint256", "name": "amount0Min", "type": "uint256" },
+          { "internalType": "uint256", "name": "amount1Min", "type": "uint256" },
+          { "internalType": "int24", "name": "lowerTick", "type": "int24" },
+          { "internalType": "int24", "name": "upperTick", "type": "int24" }
+        ],
+        "internalType": "struct ControllerHelperDataType.RebalanceWithoutVault",
+        "name": "_params",
+        "type": "tuple"
+      }
+    ],
+    "name": "rebalanceWithoutVault",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
+          { "internalType": "uint256", "name": "liquidity", "type": "uint256" },
+          { "internalType": "uint128", "name": "amount0Min", "type": "uint128" },
+          { "internalType": "uint128", "name": "amount1Min", "type": "uint128" },
+          { "internalType": "uint256", "name": "limitPriceEthPerPowerPerp", "type": "uint256" }
+        ],
+        "internalType": "struct ControllerHelperDataType.SellAll",
+        "name": "_params",
+        "type": "tuple"
+      }
+    ],
+    "name": "sellAll",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "shortPowerPerp",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "int256", "name": "amount0Delta", "type": "int256" },
+      { "internalType": "int256", "name": "amount1Delta", "type": "int256" },
+      { "internalType": "bytes", "name": "_data", "type": "bytes" }
+    ],
+    "name": "uniswapV3SwapCallback",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "wPowerPerp",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "wPowerPerpPool",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "weth",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  { "stateMutability": "payable", "type": "receive" }
+]
