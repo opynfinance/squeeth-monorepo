@@ -264,7 +264,8 @@ export const useGetCollatRatioAndLiqPrice = () => {
         )
       }
       const debt = await getDebtAmount(shortAmount)
-      if (debt && debt.isPositive()) {
+
+      if (debt && !debt.isZero() && debt.isPositive()) {
         const collateralPercent = Number(effectiveCollat.div(debt).times(100).toFixed(1))
         const rSqueeth = normFactor.multipliedBy(new BigNumber(shortAmount)).dividedBy(10000)
         if (!uniId) liquidationPrice = effectiveCollat.div(rSqueeth.multipliedBy(1.5))

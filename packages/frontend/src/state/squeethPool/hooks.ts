@@ -100,7 +100,7 @@ export const useUpdateSqueethPoolData = () => {
       setWethToken(isWethToken0 ? TokenA : TokenB)
       setSqueethToken(isWethToken0 ? TokenB : TokenA)
     })()
-  }, [isWethToken0, networkId, ticks?.length])
+  }, [isWethToken0, networkId, ticks?.length, contract])
 }
 
 export const useGetBuyQuoteForETH = () => {
@@ -144,7 +144,7 @@ export const useGetBuyQuoteForETH = () => {
 
       return emptyState
     },
-    [pool?.token0.address, wethToken?.address, squeethToken?.address],
+    [pool, wethToken?.address, squeethToken?.address],
   )
 
   return getBuyQuoteForETH
@@ -420,7 +420,7 @@ export const useGetSellQuote = () => {
 
       return emptyState
     },
-    [pool?.token0Price, wethToken?.address, squeethToken?.address],
+    [pool, wethToken?.address, squeethToken?.address],
   )
   return getSellQuote
 }

@@ -194,6 +194,12 @@ const useStyles = makeStyles((theme) =>
       marginLeft: 0,
       marginRight: 0,
     },
+    displayBlock: {
+      display: 'block',
+    },
+    displayNone: {
+      display: 'none',
+    },
   }),
 )
 
