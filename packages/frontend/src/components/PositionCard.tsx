@@ -40,6 +40,7 @@ import {
 } from 'src/state/pnl/hooks'
 import { loadingAtom } from 'src/state/pnl/atoms'
 import { useVaultData } from '@hooks/useVaultData'
+import { useAppEffect } from '@hooks/useAppHooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -266,7 +267,7 @@ const PositionCard: React.FC = () => {
     [tradeSuccess, positionType, loading, longRealizedPNL.toString(), shortRealizedPNL.toString()],
   )
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (isPositionLoading) return
 
     let _postTradeAmt = new BigNumber(0)

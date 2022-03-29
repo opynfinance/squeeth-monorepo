@@ -55,7 +55,7 @@ export const useCrabPosition = (user: string) => {
     )
 
     return { depositedEth, usdAmount }
-  }, [depositedDepedancy, loading])
+  }, [data?.length, loading])
 
   useEffect(() => {
     if (crabLoading || userCrabBalanceLoading) return
