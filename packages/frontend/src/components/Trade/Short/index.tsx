@@ -910,6 +910,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                 if (event.target.value === CloseType.FULL) {
                   setShortCloseMax()
                 }
+                setCollatPercent(200)
                 return setCloseType(event.target.value as CloseType)
               }}
               displayEmpty
