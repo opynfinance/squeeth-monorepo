@@ -103,9 +103,6 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
   const collateral = new BigNumber(ethTradeAmount)
 
   let inputError = ''
-  // let openError: string | undefined
-  // let closeError: string | undefined
-  // let existingLongError: string | undefined
   let priceImpactWarning: string | undefined
   let vaultIdDontLoadedError: string | undefined
 
@@ -134,7 +131,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
       inputError = 'Insufficient ETH balance'
     } else if (
       amount.isGreaterThan(0) &&
-      collateral.plus(shortVaults[firstValidVault]?.collateralAmount).lt(MIN_COLLATERAL_AMOUNT)
+      collateral.plus(shortVaults[firstValidVault]?.collateralAmount || BIG_ZERO).lt(MIN_COLLATERAL_AMOUNT)
     ) {
       inputError = `Minimum collateral is ${MIN_COLLATERAL_AMOUNT} ETH`
     } else if (shortVaults.length && vaultId === 0 && shortVaults[firstValidVault]?.shortAmount.gt(0)) {
@@ -188,7 +185,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
           <TradeSettings />
         </span>
       </div>
-      <form onSubmit={handleSubmit}>
+      <form>
         <PrimaryInput
           name="eth"
           value={ethTradeAmount}
@@ -272,8 +269,16 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
           hint={<div>Hint section</div>}
         />
         <PrimaryButton
+          onClick={handleSubmit}
+          variant="contained"
           className={classes.amountInput}
-          disabled={Boolean(inputError) || Boolean(vaultIdDontLoadedError)}
+          disabled={
+            Boolean(inputError) ||
+            Boolean(vaultIdDontLoadedError) ||
+            amount.isZero() ||
+            collateral.isZero() ||
+            collatPercent < 150
+          }
         >
           Open Short
         </PrimaryButton>

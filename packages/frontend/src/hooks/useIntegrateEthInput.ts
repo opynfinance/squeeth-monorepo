@@ -24,7 +24,7 @@ export const useIntergrateEthInput = () => {
 
       let prevState = { ...emptyState }
 
-      if (ethDeposited.isZero() || desiredCollatRatio <= 1.5) return emptyState
+      if (ethDeposited.isZero() || desiredCollatRatio < 1.5) return emptyState
 
       while (start <= end) {
         const middle = (start + end) / 2
