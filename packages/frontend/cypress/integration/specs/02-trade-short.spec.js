@@ -45,7 +45,7 @@ describe('Trade on trade page', () => {
 
       it('eth balance from wallet should be the same as balance of eth input box', () => {
         cy.get('#user-eth-wallet-balance').then((bal) => {
-          cy.get('#open-short-eth-before-trade-balance').should('contain.text', Number(bal.text()).toFixed(2))
+          cy.get('#open-short-eth-before-trade-balance').should('contain.text', Number(bal.text()))
         })
       })
 
@@ -88,7 +88,7 @@ describe('Trade on trade page', () => {
         cy.get('#open-short-eth-input').should('be.visible')
         cy.get('#open-short-eth-input').clear().type('8.', { force: true, delay: 200 }).should('have.value', '8.0')
         cy.get('#open-short-eth-before-trade-balance').then((bal) => {
-          cy.get('#open-short-eth-post-trade-balance').should('contain.text', (Number(bal.text()) - 8).toFixed(2))
+          cy.get('#open-short-eth-post-trade-balance').should('contain.text', (Number(bal.text()) - 8).toFixed(4))
         })
 
         cy.get('#open-short-trade-details .trade-details-amount').invoke('text').should('not.equal', 0)
@@ -98,13 +98,13 @@ describe('Trade on trade page', () => {
             //post = before + input
             cy.get('#open-short-osqth-post-trade-balance').should(
               'contain.text',
-              new BigNumber(val.text().toString()).plus(Number(bal.text())).toFixed(2),
+              new BigNumber(val.text().toString()).plus(Number(bal.text())).toFixed(4),
             )
           })
           cy.get('#position-card-before-trade-balance').then((bal) => {
             cy.get('#position-card-post-trade-balance').should(
               'contain.text',
-              new BigNumber(val.text().toString()).plus(Number(bal.text())).toFixed(2),
+              new BigNumber(val.text().toString()).plus(Number(bal.text())).toFixed(4),
             )
           })
         })
