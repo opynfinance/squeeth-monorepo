@@ -13,6 +13,7 @@
     "chromeWebSecurity": true,
     "viewportWidth": 1920,
     "viewportHeight": 1080,
+    "scrollBehavior": false,
     "component": {
         "componentFolder": ".",
         "testFiles": "**/*.spec.{js,jsx,ts,tsx}"

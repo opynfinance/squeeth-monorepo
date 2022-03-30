@@ -46,7 +46,7 @@ const Trade: React.FC = () => {
   const isTxFirstStep = useAtomValue(isTransactionFirstStepAtom)
 
   return (
-    <div>
+    <div id="trade-card">
       {
         <SecondaryTabs
           value={openPosition}

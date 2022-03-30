@@ -66,6 +66,8 @@ describe('Trade and see if results are correct on position page', () => {
     })
     it('can open short position', () => {
       cy.get('#user-eth-wallet-balance').invoke('text').then(parseFloat).should('be.at.least', 8)
+      cy.get('#trade-card').parent().scrollTo('top')
+      cy.get('#open-short-eth-input').should('be.visible')
       cy.get('#open-short-eth-input').clear().type('8.', { force: true, delay: 200 }).should('have.value', '8.0')
 
       cy.get('#open-short-sumbit-tx-btn').then((btn) => {

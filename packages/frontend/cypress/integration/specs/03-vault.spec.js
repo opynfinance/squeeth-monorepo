@@ -28,6 +28,8 @@ describe('Open short position and then mint debt, burn debt, add collat, remove 
       })
       it('can open short position', () => {
         cy.get('#user-eth-wallet-balance').invoke('text').then(parseFloat).should('be.at.least', 8)
+        cy.get('#trade-card').parent().scrollTo('top')
+        cy.get('#open-short-eth-input').should('be.visible')
         cy.get('#open-short-eth-input').clear().type('8.', { force: true, delay: 200 }).should('have.value', '8.0')
 
         cy.get('#open-short-sumbit-tx-btn').then((btn) => {
@@ -212,8 +214,9 @@ describe('Open short position and then mint debt, burn debt, add collat, remove 
           cy.get('#close-btn').click({ force: true })
         })
         it('can close short position', () => {
-          cy.get('close-short-type-select').select('Fully Close')
-          cy.get('close-short-type-select').should('contain.text', 'Fully Close')
+          cy.get('#close-short-type-select .MuiSelect-select').click({ force: true })
+          cy.get('#close-short-full-close').click({ force: true })
+          cy.get('close-short-type-select').should('contain.text', 'Full Close')
 
           cy.get('#close-short-sumbit-tx-btn').then((btn) => {
             if (btn.text().includes('Approve wrapper')) {
