@@ -388,7 +388,7 @@ function getDayStatSnapshot(timestamp: BigInt): DayStatSnapshot {
   return dayStatSnapshot as DayStatSnapshot;
 }
 
-function getTransactionDetail(
+export function getTransactionDetail(
   vaultId: BigInt,
   amount: BigInt,
   vault: Vault,
