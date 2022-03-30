@@ -1,21 +1,23 @@
 import { Address } from "@graphprotocol/graph-ts";
 import { Account } from "../generated/schema";
-import {
-  MAINNET_SHORT_HELPER_ADDR,
-  ROPSTEN_SHORT_HELPER_ADDR,
-  LOCALHOST_SHORT_HELPER_ADDR,
-  RA_SHORT_HELPER_ADDR,
-  BIGINT_ZERO,
-} from "./constants";
+import { BIGINT_ZERO } from "./constants";
 
-export function getShortHelperAddr(networkName: string): Address {
-  let addr = MAINNET_SHORT_HELPER_ADDR;
+export function getAddress(
+  networkName: string,
+  addresses: {
+    mainnet: Address;
+    localhost: Address;
+    ropsten: Address;
+    ra: Address;
+  }
+): Address {
+  let addr = addresses.mainnet;
   if (networkName == "ropsten") {
-    addr = ROPSTEN_SHORT_HELPER_ADDR;
+    addr = addresses.ropsten;
   } else if (networkName == "localhost") {
-    addr = LOCALHOST_SHORT_HELPER_ADDR;
+    addr = addresses.localhost;
   } else if (networkName == "rinkebyArbitrum") {
-    addr = RA_SHORT_HELPER_ADDR;
+    addr = addresses.ra;
   }
   return addr;
 }
