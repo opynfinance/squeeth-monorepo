@@ -48,6 +48,7 @@ import { useGetWSqueethPositionValue } from '../squeethPool/hooks'
 import { useVaultHistory } from '@hooks/useVaultHistory'
 import { swapsRopsten, swapsRopstenVariables } from '@queries/uniswap/__generated__/swapsRopsten'
 import { Vault } from '@queries/squeeth/__generated__/Vault'
+import { pick } from 'lodash'
 
 export const useSwaps = () => {
   const [networkId] = useAtom(networkIdAtom)
@@ -107,6 +108,8 @@ export const useComputeSwaps = () => {
   const setPositionType = useUpdateAtom(positionTypeAtom)
   const { getUsdAmt } = useUsdAmount()
   const { data } = useSwaps()
+
+  const dataSwapDep = JSON.stringify(data?.swaps.map((s) => pick(s, ['amount0', 'amount1', 'timestamp'])) ?? [])
 
   const computedSwaps = useMemo(
     () =>
@@ -168,7 +171,7 @@ export const useComputeSwaps = () => {
         totalUSDFromBuy: BIG_ZERO,
         totalUSDFromSell: BIG_ZERO,
       },
-    [isWethToken0, data?.swaps.length],
+    [isWethToken0, dataSwapDep],
   )
 
   useEffect(() => {
