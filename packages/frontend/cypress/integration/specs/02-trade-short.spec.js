@@ -116,7 +116,7 @@ describe('Trade on trade page', () => {
         cy.get('#open-short-eth-input').clear().type('8.', { force: true, delay: 200 }).should('have.value', '8.0')
         cy.get('#open-short-trade-details .trade-details-amount').then((v) => {
           cy.get('#open-short-osqth-before-trade-balance').then((bal) => {
-            const inputSqth = new BigNumber(v.val().toString()).toFixed(2)
+            const inputSqth = new BigNumber(v.val().toString()).toFixed(6)
             cy.get('#open-short-sumbit-tx-btn').then((btn) => {
               if (btn.text().includes('Allow wrapper')) {
                 cy.get('#open-short-sumbit-tx-btn').click({ force: true })
@@ -129,9 +129,6 @@ describe('Trade on trade page', () => {
                 trade.waitForTransactionSuccess()
               }
             })
-            cy.get('#open-short-sumbit-tx-btn').click({ force: true })
-            trade.confirmMetamaskTransaction()
-            trade.waitForTransactionSuccess()
 
             cy.get('#open-short-card').should('contain.text', 'Close').should('contain.text', 'Opened')
             cy.get('#position-card-before-trade-balance').should(
@@ -142,7 +139,7 @@ describe('Trade on trade page', () => {
             cy.get('#conf-msg').should('contain.text', inputSqth)
           })
         })
-        cy.get('#open-short-close-btn').click()
+        cy.get('#open-short-close-btn').click({ force: true })
         cy.get('#open-short-header-box').should('contain.text', 'Mint & sell squeeth for premium')
         cy.get('#open-short-eth-input').should('have.value', '0')
         cy.get('#open-short-trade-details .trade-details-amount').should('contain.text', '0')
