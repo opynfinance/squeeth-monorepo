@@ -20,6 +20,9 @@ describe('Trade on trade page', () => {
     })
   })
   context('Trade switch checks', () => {
+    it('check if there is open long card opened by default', () => {
+      cy.get('#open-long-header-box').should('contain.text', 'Pay ETH to buy squeeth ERC20')
+    })
     it('switch between long & short, open & close trade cards with default 0 value', () => {
       cy.get('#long-card-btn').click({ force: true })
       cy.get('#open-btn').click({ force: true })
