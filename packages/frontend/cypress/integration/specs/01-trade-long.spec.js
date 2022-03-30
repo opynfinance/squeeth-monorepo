@@ -144,7 +144,9 @@ describe('Trade on trade page', () => {
         })
 
         it('can use max button for open long eth input', () => {
-          cy.get('#open-long-eth-input-action').click()
+          cy.get('#open-long-eth-input').should('have.value', '0')
+          cy.get('#open-long-osqth-input').should('have.value', '0')
+          cy.get('#open-long-eth-input-action').click({ force: true })
           cy.get('#open-long-osqth-input').should('not.equal', '0')
 
           cy.get('#open-long-osqth-post-trade-balance').should('not.contain.text', (0).toFixed(6))
