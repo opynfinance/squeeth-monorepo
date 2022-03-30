@@ -30,14 +30,14 @@ describe('Open short position and then mint debt, burn debt, add collat, remove 
         cy.get('#user-eth-wallet-balance').invoke('text').then(parseFloat).should('be.at.least', 8)
         cy.get('#open-short-eth-input').clear().type('8.', { force: true, delay: 200 }).should('have.value', '8.0')
 
-        cy.get('#close-short-sumbit-tx-btn').then((btn) => {
+        cy.get('#open-short-sumbit-tx-btn').then((btn) => {
           if (btn.text().includes('Allow wrapper')) {
-            cy.get('#close-short-sumbit-tx-btn').click({ force: true })
+            cy.get('#open-short-sumbit-tx-btn').click({ force: true })
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
           }
           if (btn.text().includes('Deposit and sell')) {
-            cy.get('#close-short-sumbit-tx-btn').click({ force: true })
+            cy.get('#open-short-sumbit-tx-btn').click({ force: true })
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
           }
@@ -49,14 +49,14 @@ describe('Open short position and then mint debt, burn debt, add collat, remove 
     })
 
     context('Check the vault', () => {
-      // before(() => {
-      //   //not opening new tab
-      //   cy.get('#pos-card-manage-vault-link a').invoke('removeAttr', 'target').click()
-      // })
-      it(`Before tests`, () => {
+      before(() => {
         //not opening new tab
         cy.get('#pos-card-manage-vault-link a').invoke('removeAttr', 'target').click()
       })
+      // it(`Before tests`, () => {
+      //   //not opening new tab
+      //   cy.get('#pos-card-manage-vault-link a').invoke('removeAttr', 'target').click()
+      // })
       context(`before tx checks`, () => {
         it('total debt balance & collateral should not be zero', () => {
           cy.get('#vault-total-debt-bal').invoke('text').should('not.equal', '0')

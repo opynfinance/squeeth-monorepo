@@ -107,14 +107,14 @@ describe('Trade on trade page', () => {
         cy.get('#open-short-trade-details .trade-details-amount').then((v) => {
           cy.get('#open-short-osqth-before-trade-balance').then((bal) => {
             const inputSqth = new BigNumber(v.val().toString()).toFixed(2)
-            cy.get('#close-short-sumbit-tx-btn').then((btn) => {
+            cy.get('#open-short-sumbit-tx-btn').then((btn) => {
               if (btn.text().includes('Allow wrapper')) {
-                cy.get('#close-short-sumbit-tx-btn').click({ force: true })
+                cy.get('#open-short-sumbit-tx-btn').click({ force: true })
                 trade.confirmMetamaskTransaction()
                 trade.waitForTransactionSuccess()
               }
               if (btn.text().includes('Deposit and sell')) {
-                cy.get('#close-short-sumbit-tx-btn').click({ force: true })
+                cy.get('#open-short-sumbit-tx-btn').click({ force: true })
                 trade.confirmMetamaskTransaction()
                 trade.waitForTransactionSuccess()
               }
