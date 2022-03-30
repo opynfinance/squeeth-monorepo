@@ -152,24 +152,13 @@ describe('Trade on trade page', () => {
       cy.get('#short-card-btn').click({ force: true })
       cy.get('#close-btn').click({ force: true })
     })
-    it('inputs should be zero by default and tx button is disabled', () => {
+    it('should select full close by default and there should have oSQTH short balance and tx button is not disabled', () => {
       cy.get('#close-short-header-box').should('contain.text', 'Buy back oSQTH & close position')
-      cy.get('#close-short-osqth-input').should('have.value', '0')
-      cy.get('#close-short-sumbit-tx-btn').should('be.disabled')
+      cy.get('#close-short-type-select').should('contain.text', 'Full Close')
+      cy.get('#close-short-osqth-input').should('not.equal', '0')
+      cy.get('#close-short-sumbit-tx-btn').should('not.be.disabled')
     })
-    context(`when wallet has no short osqth balance`, () => {
-      it('enter an amount into inputs will get error', () => {
-        cy.get('#close-short-osqth-before-trade-balance').then((bal) => {
-          if (Number(bal.text()) == 0) {
-            cy.get('#close-short-type-select .MuiSelect-select').click({ force: true })
-            cy.get('#close-short-partial-close').click({ force: true })
-            cy.get('#close-short-type-select').should('contain.text', 'Partial Close')
-            cy.get('#close-short-osqth-input').clear().type('1', { delay: 200 })
-            cy.get('#close-short-osqth-input-box').should('contain.text', 'Insufficient oSQTH balance')
-          }
-        })
-      })
-    })
+
     context(`when wallet has short osqth balance`, () => {
       it('zero input amount', () => {
         cy.get('#close-short-type-select .MuiSelect-select').click({ force: true })
@@ -214,7 +203,6 @@ describe('Trade on trade page', () => {
 
         cy.get('#close-short-osqth-input').then((val) => {
           const osqthInput = new BigNumber(val.val().toString()).toFixed(6)
-          cy.get('#close-short-osqth-before-trade-balance').should('contain.text', osqthInput)
           // now it's closing final short, not neccessarily be the same as the short position, may fail when u have other debts
           cy.get('#position-card-before-trade-balance').should('contain.text', osqthInput)
         })
