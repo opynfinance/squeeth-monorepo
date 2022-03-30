@@ -59,7 +59,7 @@ describe('Trade on trade page', () => {
         it('enter an amount into inputs will get error', () => {
           cy.get('#user-eth-wallet-balance').then((bal) => {
             if (Number(bal.text()) == 0) {
-              cy.get('#open-long-eth-input').clear().type('1', { delay: 200 })
+              cy.get('#open-long-eth-input').clear().type('1.', { delay: 200 })
               cy.get('#open-long-eth-input-box').should('contain.text', 'Insufficient ETH balance')
             }
           })
