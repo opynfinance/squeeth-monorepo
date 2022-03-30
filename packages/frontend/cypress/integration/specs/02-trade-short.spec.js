@@ -177,8 +177,8 @@ describe('Trade on trade page', () => {
       it('can enter an amount into osqth input, before & post trade amount match on position card and eth box', () => {
         cy.get('#close-short-type-select input').select('Partial Close')
         cy.get('#close-short-osqth-input').clear().type('1.', { force: true, delay: 200 }).should('have.value', '1.0')
-        cy.get('#open-short-osqth-before-trade-balance').then((val) => {
-          cy.get('#open-short-osqth-post-trade-balance').should('contain.text', (Number(val.text()) - 1).toFixed(2))
+        cy.get('#close-short-osqth-before-trade-balance').then((val) => {
+          cy.get('#close-short-osqth-post-trade-balance').should('contain.text', (Number(val.text()) - 1).toFixed(2))
           cy.get('#position-card-before-trade-balance').then((val) => {
             cy.get('#position-card-post-trade-balance').should('contain.text', (Number(val.text()) - 1).toFixed(2))
           })
