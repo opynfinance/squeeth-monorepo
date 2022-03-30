@@ -93,7 +93,7 @@ describe('Trade on trade page', () => {
           // cy.get('#open-long-eth-input').clear().type('1', { force: true, delay: 200 }).should('have.value', '1')
           cy.get('#open-long-eth-input').clear().type('1.', { force: true, delay: 200 }).should('have.value', '1.0')
           cy.get('#open-long-eth-before-trade-balance').then((bal) => {
-            cy.get('#open-long-eth-post-trade-balance').should('contain.text', (Number(bal.text()) - 1.1).toFixed(2))
+            cy.get('#open-long-eth-post-trade-balance').should('contain.text', (Number(bal.text()) - 1).toFixed(2))
           })
 
           cy.get('#open-long-osqth-input').should('not.equal', '0')
@@ -211,9 +211,9 @@ describe('Trade on trade page', () => {
           // cy.get('#open-long-eth-input').clear().type('1', { force: true, delay: 200 }).should('have.value', '1')
           cy.get('#close-long-osqth-input').clear().type('1.', { force: true, delay: 200 }).should('have.value', '1.0')
           cy.get('#open-long-osqth-before-trade-balance').then((val) => {
-            cy.get('#open-long-osqth-post-trade-balance').should('contain.text', (Number(val.text()) - 1.1).toFixed(2))
+            cy.get('#open-long-osqth-post-trade-balance').should('contain.text', (Number(val.text()) - 1).toFixed(2))
             cy.get('#position-card-before-trade-balance').then((val) => {
-              cy.get('#position-card-post-trade-balance').should('contain.text', (Number(val.text()) - 1.1).toFixed(2))
+              cy.get('#position-card-post-trade-balance').should('contain.text', (Number(val.text()) - 1).toFixed(2))
             })
           })
 
