@@ -6,6 +6,7 @@ import { useCallback } from 'react'
 import { controllerHelperContractAtom } from '../contracts/atoms'
 import { normFactorAtom } from '../controller/atoms'
 import { useGetSellQuote } from '../squeethPool/hooks'
+import { slippageAmountAtom } from '../trade/atoms'
 
 import { addressAtom } from '../wallet/atoms'
 import { useHandleTransaction } from '../wallet/hooks'
@@ -15,6 +16,7 @@ export const useFlashSwapAndMint = () => {
   const contract = useAtomValue(controllerHelperContractAtom)
   const address = useAtomValue(addressAtom)
   const normalizationFactor = useAtomValue(normFactorAtom)
+  const slippageAmount = useAtomValue(slippageAmountAtom)
   const getSellQuote = useGetSellQuote()
 
   /**
@@ -35,18 +37,19 @@ export const useFlashSwapAndMint = () => {
     ) => {
       if (!contract || !address) return
 
-      const sellQuote = await getSellQuote(squeethAmount)
+      const sellQuote = await getSellQuote(squeethAmount, slippageAmount)
       const wPowerPerpAmount = fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).multipliedBy(normalizationFactor)
       const totalCollateralToDeposit = fromTokenAmount(ethCollateralDeposit, 18)
       const _minToReceive = fromTokenAmount(minToReceive, 18)
 
       const result = await handleTransaction(
         contract.methods
-          .flashswapWMint({
+          .flashswapSellLongWMint({
             vaultId,
-            totalCollateralToDeposit: totalCollateralToDeposit.toString(),
-            wPowerPerpAmount: wPowerPerpAmount.toFixed(0),
+            collateralAmount: totalCollateralToDeposit.toString(),
+            wPowerPerpAmountToMint: wPowerPerpAmount.toFixed(0),
             minToReceive: _minToReceive.toString(),
+            wPowerPerpAmountToSell: '0',
           })
           .send({
             from: address,
