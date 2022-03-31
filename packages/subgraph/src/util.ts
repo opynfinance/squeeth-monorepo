@@ -1,23 +1,36 @@
 import { Address } from "@graphprotocol/graph-ts";
 import { Account } from "../generated/schema";
-import { BIGINT_ZERO } from "./constants";
+import {
+  MAINNET_SHORT_HELPER_ADDR,
+  ROPSTEN_SHORT_HELPER_ADDR,
+  LOCALHOST_SHORT_HELPER_ADDR,
+  RA_SHORT_HELPER_ADDR,
+  BIGINT_ZERO,
+  MAINNET_CONTROLLER_HELPER_ADDR,
+  ROPSTEN_CONTROLLER_HELPER_ADDR,
+  LOCALHOST_CONTROLLER_HELPER_ADDR,
+  RA_CONTROLLER_HELPER_ADDR,
+} from "./constants";
 
-export function getAddress(
-  networkName: string,
-  addresses: {
-    mainnet: Address;
-    localhost: Address;
-    ropsten: Address;
-    ra: Address;
-  }
-): Address {
-  let addr = addresses.mainnet;
+export function getShortHelperAddr(networkName: string): Address {
+  let addr = MAINNET_SHORT_HELPER_ADDR;
   if (networkName == "ropsten") {
-    addr = addresses.ropsten;
+    addr = ROPSTEN_SHORT_HELPER_ADDR;
   } else if (networkName == "localhost") {
-    addr = addresses.localhost;
+    addr = LOCALHOST_SHORT_HELPER_ADDR;
   } else if (networkName == "rinkebyArbitrum") {
-    addr = addresses.ra;
+    addr = RA_SHORT_HELPER_ADDR;
+  }
+  return addr;
+}
+export function getControllerHelperAddr(networkName: string): Address {
+  let addr = MAINNET_CONTROLLER_HELPER_ADDR;
+  if (networkName == "ropsten") {
+    addr = ROPSTEN_CONTROLLER_HELPER_ADDR;
+  } else if (networkName == "localhost") {
+    addr = LOCALHOST_CONTROLLER_HELPER_ADDR;
+  } else if (networkName == "rinkebyArbitrum") {
+    addr = RA_CONTROLLER_HELPER_ADDR;
   }
   return addr;
 }
