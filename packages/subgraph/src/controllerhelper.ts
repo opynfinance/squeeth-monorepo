@@ -3,7 +3,9 @@ import { Vault } from "../generated/schema";
 import { BIGINT_ZERO, CONTROLLER_HELPER_ADDR } from "./constants";
 import { getTransactionDetail } from "./controller";
 
-export function handleFlashSwapWMint(callHandler: FlashswapWMintCall__Inputs) {
+export function handleFlashSwapWMint(
+  callHandler: FlashswapWMintCall__Inputs
+): void {
   const vault = Vault.load(callHandler._params.vaultId.toString());
   if (!vault) return;
 
@@ -38,7 +40,7 @@ export function handleFlashSwapWMint(callHandler: FlashswapWMintCall__Inputs) {
 
 export function handleDepositCollateral(
   callHandler: FlashswapWMintCall__Inputs
-) {
+): void {
   const vault = Vault.load(callHandler._params.vaultId.toString());
   if (!vault) return;
 
