@@ -18,12 +18,12 @@ export const RA_SHORT_HELPER_ADDR = Address.fromString(
 
 export const SHORT_HELPER_ADDR = getShortHelperAddr(dataSource.network());
 
-export const MAINNET_CONTROLLER_HELPER_ADDR = Address.fromString("");
+// export const MAINNET_CONTROLLER_HELPER_ADDR = Address.fromString("");
 export const ROPSTEN_CONTROLLER_HELPER_ADDR = Address.fromString(
   "0x75500ff751789b5753DF14c047e61BC5c4324CF8"
 );
-export const LOCALHOST_CONTROLLER_HELPER_ADDR = Address.fromString("");
-export const RA_CONTROLLER_HELPER_ADDR = Address.fromString("");
+// export const LOCALHOST_CONTROLLER_HELPER_ADDR = Address.fromString("");
+// export const RA_CONTROLLER_HELPER_ADDR = Address.fromString("");
 
 export const CONTROLLER_HELPER_ADDR = getControllerHelperAddr(
   dataSource.network()

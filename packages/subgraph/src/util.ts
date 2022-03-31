@@ -6,10 +6,7 @@ import {
   LOCALHOST_SHORT_HELPER_ADDR,
   RA_SHORT_HELPER_ADDR,
   BIGINT_ZERO,
-  MAINNET_CONTROLLER_HELPER_ADDR,
   ROPSTEN_CONTROLLER_HELPER_ADDR,
-  LOCALHOST_CONTROLLER_HELPER_ADDR,
-  RA_CONTROLLER_HELPER_ADDR,
 } from "./constants";
 
 export function getShortHelperAddr(networkName: string): Address {
@@ -24,14 +21,16 @@ export function getShortHelperAddr(networkName: string): Address {
   return addr;
 }
 export function getControllerHelperAddr(networkName: string): Address {
-  let addr = MAINNET_CONTROLLER_HELPER_ADDR;
+  // let addr = MAINNET_CONTROLLER_HELPER_ADDR;
+  let addr = ROPSTEN_CONTROLLER_HELPER_ADDR;
   if (networkName == "ropsten") {
     addr = ROPSTEN_CONTROLLER_HELPER_ADDR;
-  } else if (networkName == "localhost") {
-    addr = LOCALHOST_CONTROLLER_HELPER_ADDR;
-  } else if (networkName == "rinkebyArbitrum") {
-    addr = RA_CONTROLLER_HELPER_ADDR;
   }
+  // else if (networkName == "localhost") {
+  //   addr = LOCALHOST_CONTROLLER_HELPER_ADDR;
+  // } else if (networkName == "rinkebyArbitrum") {
+  //   addr = RA_CONTROLLER_HELPER_ADDR;
+  // }
   return addr;
 }
 
