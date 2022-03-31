@@ -384,12 +384,13 @@ const PositionCard: React.FC = () => {
                       <InfoIcon fontSize="small" className={classes.infoIcon} />
                     </Tooltip>
                   </div>
-                  <div className={classes.pnl}>
+                  <div className={classes.pnl} id="unrealized-pnl-value">
                     {!pnlLoading ? (
                       <>
                         <Typography
                           className={pnlClass(positionType, longGain, shortGain, classes)}
                           style={{ fontWeight: 600 }}
+                          id="unrealized-pnl-usd-value"
                         >
                           {getPositionBasedValue(
                             `$${longUnrealizedPNL.usd.toFixed(2)}`,
@@ -402,6 +403,7 @@ const PositionCard: React.FC = () => {
                           variant="caption"
                           className={pnlClass(positionType, longGain, shortGain, classes)}
                           style={{ marginLeft: '4px' }}
+                          id="unrealized-pnl-perct-value"
                         >
                           {getPositionBasedValue(`(${longGain.toFixed(2)}%)`, `(${shortGain.toFixed(2)}%)`, null, ' ')}
                         </Typography>
@@ -422,7 +424,7 @@ const PositionCard: React.FC = () => {
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
                 </div>
-                <div className={classes.pnl}>
+                <div className={classes.pnl} id="realized-pnl-value">
                   <Typography
                     className={pnlClass(positionType, longRealizedPNL, shortRealizedPNL, classes)}
                     style={{ fontWeight: 600 }}
