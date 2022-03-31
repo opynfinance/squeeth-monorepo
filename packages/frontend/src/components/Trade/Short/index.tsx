@@ -200,7 +200,7 @@ const useStyles = makeStyles((theme) =>
 const OpenShort: React.FC<SellType> = ({ open }) => {
   const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
   const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
-  const [collatPercent, setCollatPercent] = useState(150)
+  const [collatPercent, setCollatPercent] = useState(200)
   const [existingCollat, setExistingCollat] = useState(new BigNumber(0))
   const [confirmedAmount, setConfirmedAmount] = useState('')
   const [isVaultApproved, setIsVaultApproved] = useState(true)
@@ -910,6 +910,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                 if (event.target.value === CloseType.FULL) {
                   setShortCloseMax()
                 }
+                setCollatPercent(200)
                 return setCloseType(event.target.value as CloseType)
               }}
               displayEmpty
