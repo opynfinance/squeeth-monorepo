@@ -670,8 +670,6 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
     }
   }, [vault])
 
-  console.log('rerender')
-
   // useEffect(() => {
   //   if (shortVaults[firstValidVault]?.shortAmount && shortVaults[firstValidVault]?.shortAmount.lt(amount)) {
   //     console.log('looking for something weird')

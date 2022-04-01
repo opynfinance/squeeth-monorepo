@@ -69,8 +69,6 @@ export const useVaultData = (vid: number) => {
     updateVault()
   }, [updateVault])
 
-  console.log('callback')
-
   return {
     vault,
     existingCollatPercent,
