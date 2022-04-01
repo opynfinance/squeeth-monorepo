@@ -31,9 +31,9 @@ import {
   useSetStrategyData,
   useCalculateCurrentValue,
 } from 'src/state/crab/hooks'
-import { useIndex, useDailyHistoricalFunding, useCurrentImpliedFunding } from 'src/state/controller/hooks'
 import { useUserCrabTxHistory } from '@hooks/useUserCrabTxHistory'
 import { usePrevious } from 'react-use'
+import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -57,6 +57,7 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       flexDirection: 'column',
       padding: theme.spacing(1, 3),
+      paddingBottom: theme.spacing(3),
     },
     tabBackGround: {
       position: 'sticky',
@@ -96,7 +97,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
   const calculateEthWillingToPay = useCalculateEthWillingToPay()
   const calculateETHtoBorrowFromUniswap = useCalculateETHtoBorrowFromUniswap()
   const flashDeposit = useFlashDeposit(calculateETHtoBorrowFromUniswap)
-  const index = useIndex()
+  const index = useAtomValue(indexAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
 
   const { confirmed, resetTransactionData, transactionData } = useTransactionStatus()
@@ -104,8 +105,8 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
   const ready = useAtomValue(readyAtom)
   const { isRestricted } = useRestrictUser()
 
-  const dailyHistoricalFunding = useDailyHistoricalFunding()
-  const currentImpliedFunding = useCurrentImpliedFunding()
+  const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
+  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 
   const address = useAtomValue(addressAtom)
   const { data, startPolling, stopPolling } = useUserCrabTxHistory(address ?? '')
@@ -355,9 +356,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
                 {!txLoading ? 'Withdraw' : <CircularProgress color="primary" size="1.5rem" />}
               </PrimaryButton>
             )}
-            <div style={{ marginTop: '16px' }}>
-              <CrabPosition />
-            </div>
+            <CrabPosition />
           </div>
         </>
       )}

@@ -19,6 +19,7 @@ import { uniswapClient } from '@utils/apollo-client'
 import { useOnboard } from 'src/state/wallet/hooks'
 import { networkIdAtom } from 'src/state/wallet/atoms'
 import { useUpdateSqueethPrices, useUpdateSqueethPoolData } from 'src/state/squeethPool/hooks'
+import { useInitController } from 'src/state/controller/hooks'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
 
@@ -75,6 +76,7 @@ function MyApp({ Component, pageProps }: any) {
 const Init = () => {
   useUpdateSqueethPrices()
   useUpdateSqueethPoolData()
+  useInitController()
   return null
 }
 const MemoizedInit = memo(Init)
@@ -91,6 +93,13 @@ const TradeApp = ({ Component, pageProps }: any) => {
           name="description"
           content="Squeeth is a new financial primitive in DeFi that gives traders exposure to ETH²"
         />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Squeeth" />
+        <meta
+          name="twitter:description"
+          content="Squeeth is a new financial primitive in DeFi that gives traders exposure to ETH²"
+        />
+        <meta name="twitter:image" content="https://squeeth.opyn.co/images/SqueethLogoMedium.png" />
         <link rel="icon" href="/favicon.ico" />
         <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width" />
       </Head>

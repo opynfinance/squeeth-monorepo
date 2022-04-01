@@ -54,6 +54,7 @@ import {
   useGetDebtAmount,
   useGetShortAmountFromDebt,
   useGetTwapEthPrice,
+  useGetUniNFTCollatDetail,
   useOpenDepositAndMint,
   useWithdrawCollateral,
   useWithdrawUniPositionToken,
@@ -296,6 +297,7 @@ const Component: React.FC = () => {
   const getTwapEthPrice = useGetTwapEthPrice()
   const depositUniPositionToken = useDepositUnuPositionToken()
   const withdrawUniPositionToken = useWithdrawUniPositionToken()
+  const getUniNFTCollatDetail = useGetUniNFTCollatDetail()
 
   const { data: balance } = useWalletBalance()
   const { vid } = router.query
@@ -350,7 +352,13 @@ const Component: React.FC = () => {
     setAction(percent > existingCollatPercent ? VaultAction.ADD_COLLATERAL : VaultAction.REMOVE_COLLATERAL)
     setCollatPercent(percent)
     const debt = await getDebtAmount(vault.shortAmount)
-    const newCollat = new BigNumber(percent).times(debt).div(100)
+    let lpCollatPercent = BIG_ZERO
+    // If NFT is deposited, Collateral amount from LP NFT should not be included. So target collat % - lp collat % will give actual collat to remove
+    if (lpNftId) {
+      const { collateral: uniCollat } = await getUniNFTCollatDetail(lpNftId)
+      lpCollatPercent = uniCollat.div(debt).times(100)
+    }
+    const newCollat = new BigNumber(percent).minus(lpCollatPercent).times(debt).div(100)
     const { liquidationPrice: lp } = await getCollatRatioAndLiqPrice(newCollat, vault.shortAmount, lpNftId)
     setNewLiqPrice(lp)
     setCollateral(newCollat.minus(vault.collateralAmount).toString())
@@ -375,7 +383,12 @@ const Component: React.FC = () => {
     setCollatPercent(percent)
     if (!vault) return
 
-    const debt = vault.collateralAmount.times(100).div(percent)
+    let lpNftCollat = BIG_ZERO
+    if (lpNftId) {
+      const { collateral: nftCollat } = await getUniNFTCollatDetail(lpNftId)
+      lpNftCollat = nftCollat
+    }
+    const debt = vault.collateralAmount.plus(lpNftCollat).times(100).div(percent)
     const _shortAmt = await getShortAmountFromDebt(debt)
     setShortAmount(_shortAmt.minus(vault.shortAmount).toString())
     setAction(percent < existingCollatPercent ? VaultAction.MINT_SQUEETH : VaultAction.BURN_SQUEETH)
@@ -395,7 +408,7 @@ const Component: React.FC = () => {
       if (!input) return
 
       const approvedAddress: string = await getApproved(input)
-      if (controller === (approvedAddress || '')) {
+      if (controller === (approvedAddress || '').toLowerCase()) {
         setAction(VaultAction.DEPOSIT_UNI_POSITION)
       } else {
         setAction(VaultAction.APPROVE_UNI_POSITION)

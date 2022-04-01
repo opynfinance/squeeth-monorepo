@@ -174,7 +174,7 @@ export const useGetVault = () => {
 export const useGetDebtAmount = () => {
   const { ethUsdcPool, weth, usdc } = useAtomValue(addressesAtom)
   const contract = useAtomValue(controllerContractAtom)
-  const normFactor = useNormFactor()
+  const normFactor = useAtomValue(normFactorAtom)
   const { getTwapSafe } = useOracle()
   const getDebtAmount = useCallback(
     async (shortAmount: BigNumber) => {
@@ -203,7 +203,7 @@ export const useGetTwapEthPrice = () => {
 
 export const useGetShortAmountFromDebt = () => {
   const { ethUsdcPool, weth, usdc } = useAtomValue(addressesAtom)
-  const normFactor = useNormFactor()
+  const normFactor = useAtomValue(normFactorAtom)
   const contract = useAtomValue(controllerContractAtom)
   const { getTwapSafe } = useOracle()
   const getShortAmountFromDebt = async (debtAmount: BigNumber) => {
@@ -217,14 +217,31 @@ export const useGetShortAmountFromDebt = () => {
   return getShortAmountFromDebt
 }
 
+export const useGetUniNFTCollatDetail = () => {
+  const normFactor = useAtomValue(normFactorAtom)
+  const getETHandOSQTHAmount = useGetETHandOSQTHAmount()
+  const getTwapEthPrice = useGetTwapEthPrice()
+
+  const getUniNFTCollatDetail = async (uniId: number) => {
+    const ethPrice = await getTwapEthPrice()
+    const { wethAmount, oSqthAmount, position } = await getETHandOSQTHAmount(uniId)
+    const sqthValueInEth = oSqthAmount.multipliedBy(normFactor).multipliedBy(ethPrice).div(INDEX_SCALE)
+
+    return { collateral: sqthValueInEth.plus(wethAmount), position }
+  }
+
+  return getUniNFTCollatDetail
+}
+
 export const useGetCollatRatioAndLiqPrice = () => {
   const impliedVol = useAtomValue(impliedVolAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)
-  const normFactor = useNormFactor()
+  const normFactor = useAtomValue(normFactorAtom)
   const contract = useAtomValue(controllerContractAtom)
   const getTwapEthPrice = useGetTwapEthPrice()
   const getDebtAmount = useGetDebtAmount()
   const getETHandOSQTHAmount = useGetETHandOSQTHAmount()
+  const getUniNFTCollatDetail = useGetUniNFTCollatDetail()
   const getCollatRatioAndLiqPrice = useCallback(
     async (collateralAmount: BigNumber, shortAmount: BigNumber, uniId?: number) => {
       const emptyState = {
@@ -237,10 +254,8 @@ export const useGetCollatRatioAndLiqPrice = () => {
       let liquidationPrice = new BigNumber(0)
       // Uni LP token is deposited
       if (uniId) {
-        const { wethAmount, oSqthAmount, position } = await getETHandOSQTHAmount(uniId)
-        const ethPrice = await getTwapEthPrice()
-        const sqthValueInEth = oSqthAmount.multipliedBy(normFactor).multipliedBy(ethPrice).div(INDEX_SCALE)
-        effectiveCollat = effectiveCollat.plus(sqthValueInEth).plus(wethAmount)
+        const { collateral: uniCollat, position } = await getUniNFTCollatDetail(uniId)
+        effectiveCollat = effectiveCollat.plus(uniCollat)
         liquidationPrice = calculateLiquidationPriceForLP(
           collateralAmount,
           shortAmount,
@@ -251,7 +266,8 @@ export const useGetCollatRatioAndLiqPrice = () => {
         )
       }
       const debt = await getDebtAmount(shortAmount)
-      if (debt && debt.isPositive()) {
+
+      if (debt && !debt.isZero() && debt.isPositive()) {
         const collateralPercent = Number(effectiveCollat.div(debt).times(100).toFixed(1))
         const rSqueeth = normFactor.multipliedBy(new BigNumber(shortAmount)).dividedBy(10000)
         if (!uniId) liquidationPrice = effectiveCollat.div(rSqueeth.multipliedBy(1.5))
@@ -301,7 +317,7 @@ export const useWithdrawUniPositionToken = () => {
   return withdrawUniPositionToken
 }
 
-export const useNormFactor = () => {
+const useNormFactor = () => {
   const contract = useAtomValue(controllerContractAtom)
   const [normFactor, setNormFactor] = useAtom(normFactorAtom)
   useEffect(() => {
@@ -328,10 +344,9 @@ export const useNormFactor = () => {
   return normFactor
 }
 
-export const useIndex = () => {
+const useIndex = () => {
   const address = useAtomValue(addressAtom)
   const web3 = useAtomValue(web3Atom)
-  const { controller } = useAtomValue(addressesAtom)
   const networkId = useAtomValue(networkIdAtom)
   const [index, setIndex] = useAtom(indexAtom)
   const contract = useAtomValue(controllerContractAtom)
@@ -354,13 +369,16 @@ export const useIndex = () => {
         getIndex(3, contract).then(setIndex)
       },
     )
-    // return () => sub.unsubscribe()
-  }, [web3, networkId])
+
+    return () => {
+      sub.unsubscribe()
+    }
+  }, [contract, web3, networkId])
 
   return index
 }
 
-export const useDailyHistoricalFunding = () => {
+const useDailyHistoricalFunding = () => {
   const address = useAtomValue(addressAtom)
   const [dailyHistoricalFunding, setDailyHistoricalFunding] = useAtom(dailyHistoricalFundingAtom)
   const contract = useAtomValue(controllerContractAtom)
@@ -372,7 +390,7 @@ export const useDailyHistoricalFunding = () => {
   return dailyHistoricalFunding
 }
 
-export const useCurrentImpliedFunding = () => {
+const useCurrentImpliedFunding = () => {
   const address = useAtomValue(addressAtom)
   const [currentImpliedFunding, setCurrentImpliedFunding] = useAtom(currentImpliedFundingAtom)
   const contract = useAtomValue(controllerContractAtom)
@@ -384,7 +402,7 @@ export const useCurrentImpliedFunding = () => {
   return currentImpliedFunding
 }
 
-export const useMark = () => {
+const useMark = () => {
   const address = useAtomValue(addressAtom)
   const web3 = useAtomValue(web3Atom)
   const networkId = useAtomValue(networkIdAtom)
@@ -410,8 +428,18 @@ export const useMark = () => {
       },
     )
     // cleanup function
-    // return () => sub.unsubscribe()
-  }, [networkId, web3])
+    return () => {
+      sub.unsubscribe()
+    }
+  }, [contract, networkId, web3])
 
   return mark
+}
+
+export const useInitController = () => {
+  useIndex()
+  useMark()
+  useCurrentImpliedFunding()
+  useDailyHistoricalFunding()
+  useNormFactor()
 }

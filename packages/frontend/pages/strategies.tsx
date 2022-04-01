@@ -25,7 +25,7 @@ import {
   timeAtLastHedgeAtom,
 } from 'src/state/crab/atoms'
 import { useCalculateCurrentValue, useSetProfitableMovePercent, useSetStrategyData } from 'src/state/crab/hooks'
-import { useIndex, useDailyHistoricalFunding, useCurrentImpliedFunding } from 'src/state/controller/hooks'
+import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -50,7 +50,9 @@ const useStyles = makeStyles((theme) =>
       margin: theme.spacing(0, 'auto'),
       width: '350px',
       position: 'sticky',
-      height: '440px',
+      maxHeight: '440px',
+      minHeight: '350px',
+      height: 'fit-content',
       top: '100px',
     },
     overview: {
@@ -109,9 +111,9 @@ const Strategies: React.FC = () => {
   const setStrategyData = useSetStrategyData()
   const calculateCurrentValue = useCalculateCurrentValue()
 
-  const index = useIndex()
-  const dailyHistoricalFunding = useDailyHistoricalFunding()
-  const currentImpliedFunding = useCurrentImpliedFunding()
+  const index = useAtomValue(indexAtom)
+  const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
+  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 
   const address = useAtomValue(addressAtom)
   const selectWallet = useSelectWallet()

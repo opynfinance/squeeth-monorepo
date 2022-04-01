@@ -27,12 +27,18 @@ import { useRestrictUser } from '@context/restrict-user'
 
 import { PositionType, TradeType } from '../src/types'
 import { toTokenAmount } from '@utils/calculations'
-import { impliedVolAtom, currentImpliedFundingAtom } from 'src/state/controller/atoms'
+import {
+  normFactorAtom,
+  impliedVolAtom,
+  currentImpliedFundingAtom,
+  indexAtom,
+  markAtom,
+  dailyHistoricalFundingAtom,
+} from 'src/state/controller/atoms'
 import { usePositionsAndFeesComputation } from 'src/state/positions/hooks'
 import { actualTradeTypeAtom, ethTradeAmountAtom, sqthTradeAmountAtom, tradeTypeAtom } from 'src/state/trade/atoms'
 import { positionTypeAtom } from 'src/state/positions/atoms'
 import { useResetAtom } from 'jotai/utils'
-import { useDailyHistoricalFunding, useIndex, useMark, useNormFactor } from 'src/state/controller/hooks'
 import { isTransactionFirstStepAtom, transactionDataAtom, transactionLoadingAtom } from 'src/state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
@@ -304,6 +310,12 @@ const useStyles = makeStyles((theme) =>
         fontWeight: theme.typography.fontWeightBold,
       },
     },
+    displayBlock: {
+      display: 'block',
+    },
+    displayNone: {
+      display: 'none',
+    },
   }),
 )
 
@@ -385,12 +397,12 @@ const TabComponent: React.FC = () => {
 const SqueethInfo: React.FC = () => {
   const classes = useStyles()
   const actualTradeType = useAtomValue(actualTradeTypeAtom)
-  const dailyHistoricalFunding = useDailyHistoricalFunding()
-  const mark = useMark()
-  const index = useIndex()
+  const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
+  const mark = useAtomValue(markAtom)
+  const index = useAtomValue(indexAtom)
   const impliedVol = useAtomValue(impliedVolAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
-  const normFactor = useNormFactor()
+  const normFactor = useAtomValue(normFactorAtom)
   usePositionsAndFeesComputation()
 
   const [showAdvanced, setShowAdvanced] = useState(false)
@@ -422,7 +434,11 @@ const SqueethInfo: React.FC = () => {
                 <InfoIcon fontSize="small" className={classes.infoIcon} />
               </Tooltip>
             </div>
-            <Typography>{(dailyHistoricalFunding.funding * 100).toFixed(2) || 'loading'}%</Typography>
+            <Typography>
+              {dailyHistoricalFunding.funding === 0
+                ? 'loading'
+                : (dailyHistoricalFunding.funding * 100).toFixed(2) + '%'}
+            </Typography>
           </div>
           <div className={classes.infoItem}>
             <div className={classes.infoLabel}>
@@ -433,7 +449,9 @@ const SqueethInfo: React.FC = () => {
                 <InfoIcon fontSize="small" className={classes.infoIcon} />
               </Tooltip>
             </div>
-            <Typography>{(currentImpliedFunding * 100).toFixed(2) || 'loading'}%</Typography>
+            <Typography>
+              {currentImpliedFunding === 0 ? 'loading' : (currentImpliedFunding * 100).toFixed(2) + '%'}
+            </Typography>
           </div>
           <div className={classes.infoItem}>
             <div className={classes.infoLabel}>
