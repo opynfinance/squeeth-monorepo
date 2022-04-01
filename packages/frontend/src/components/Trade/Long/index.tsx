@@ -546,7 +546,13 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                     variant={longOpenPriceImpactErrorState || !!highVolError ? 'outlined' : 'contained'}
                     onClick={transact}
                     className={classes.amountInput}
-                    disabled={!!buyLoading || transactionInProgress || !!openError || !!existingShortError}
+                    disabled={
+                      !!buyLoading ||
+                      transactionInProgress ||
+                      !!openError ||
+                      !!existingShortError ||
+                      sqthTradeAmount === '0'
+                    }
                     style={
                       longOpenPriceImpactErrorState || !!highVolError
                         ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
@@ -883,7 +889,12 @@ const CloseLong: React.FC<BuyProps> = () => {
                 onClick={sellAndClose}
                 className={classes.amountInput}
                 disabled={
-                  !!sellLoading || transactionInProgress || !!closeError || !!existingShortError || longSqthBal.isZero()
+                  !!sellLoading ||
+                  transactionInProgress ||
+                  !!closeError ||
+                  !!existingShortError ||
+                  longSqthBal.isZero() ||
+                  sqthTradeAmount === '0'
                 }
                 style={
                   longClosePriceImpactErrorState
