@@ -174,7 +174,7 @@ export const useGetVault = () => {
 export const useGetDebtAmount = () => {
   const { ethUsdcPool, weth, usdc } = useAtomValue(addressesAtom)
   const contract = useAtomValue(controllerContractAtom)
-  const normFactor = useNormFactor()
+  const normFactor = useAtomValue(normFactorAtom)
   const { getTwapSafe } = useOracle()
   const getDebtAmount = useCallback(
     async (shortAmount: BigNumber) => {
@@ -203,7 +203,7 @@ export const useGetTwapEthPrice = () => {
 
 export const useGetShortAmountFromDebt = () => {
   const { ethUsdcPool, weth, usdc } = useAtomValue(addressesAtom)
-  const normFactor = useNormFactor()
+  const normFactor = useAtomValue(normFactorAtom)
   const contract = useAtomValue(controllerContractAtom)
   const { getTwapSafe } = useOracle()
   const getShortAmountFromDebt = async (debtAmount: BigNumber) => {
@@ -218,7 +218,7 @@ export const useGetShortAmountFromDebt = () => {
 }
 
 export const useGetUniNFTCollatDetail = () => {
-  const normFactor = useNormFactor()
+  const normFactor = useAtomValue(normFactorAtom)
   const getETHandOSQTHAmount = useGetETHandOSQTHAmount()
   const getTwapEthPrice = useGetTwapEthPrice()
 
@@ -236,7 +236,7 @@ export const useGetUniNFTCollatDetail = () => {
 export const useGetCollatRatioAndLiqPrice = () => {
   const impliedVol = useAtomValue(impliedVolAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)
-  const normFactor = useNormFactor()
+  const normFactor = useAtomValue(normFactorAtom)
   const contract = useAtomValue(controllerContractAtom)
   const getDebtAmount = useGetDebtAmount()
   const getUniNFTCollatDetail = useGetUniNFTCollatDetail()
@@ -315,7 +315,7 @@ export const useWithdrawUniPositionToken = () => {
   return withdrawUniPositionToken
 }
 
-export const useNormFactor = () => {
+const useNormFactor = () => {
   const contract = useAtomValue(controllerContractAtom)
   const [normFactor, setNormFactor] = useAtom(normFactorAtom)
   useEffect(() => {
@@ -342,10 +342,9 @@ export const useNormFactor = () => {
   return normFactor
 }
 
-export const useIndex = () => {
+const useIndex = () => {
   const address = useAtomValue(addressAtom)
   const web3 = useAtomValue(web3Atom)
-  const { controller } = useAtomValue(addressesAtom)
   const networkId = useAtomValue(networkIdAtom)
   const [index, setIndex] = useAtom(indexAtom)
   const contract = useAtomValue(controllerContractAtom)
@@ -368,13 +367,16 @@ export const useIndex = () => {
         getIndex(3, contract).then(setIndex)
       },
     )
-    // return () => sub.unsubscribe()
-  }, [web3, networkId])
+
+    return () => {
+      sub.unsubscribe()
+    }
+  }, [contract, web3, networkId])
 
   return index
 }
 
-export const useDailyHistoricalFunding = () => {
+const useDailyHistoricalFunding = () => {
   const address = useAtomValue(addressAtom)
   const [dailyHistoricalFunding, setDailyHistoricalFunding] = useAtom(dailyHistoricalFundingAtom)
   const contract = useAtomValue(controllerContractAtom)
@@ -386,7 +388,7 @@ export const useDailyHistoricalFunding = () => {
   return dailyHistoricalFunding
 }
 
-export const useCurrentImpliedFunding = () => {
+const useCurrentImpliedFunding = () => {
   const address = useAtomValue(addressAtom)
   const [currentImpliedFunding, setCurrentImpliedFunding] = useAtom(currentImpliedFundingAtom)
   const contract = useAtomValue(controllerContractAtom)
@@ -398,7 +400,7 @@ export const useCurrentImpliedFunding = () => {
   return currentImpliedFunding
 }
 
-export const useMark = () => {
+const useMark = () => {
   const address = useAtomValue(addressAtom)
   const web3 = useAtomValue(web3Atom)
   const networkId = useAtomValue(networkIdAtom)
@@ -424,8 +426,18 @@ export const useMark = () => {
       },
     )
     // cleanup function
-    // return () => sub.unsubscribe()
-  }, [networkId, web3])
+    return () => {
+      sub.unsubscribe()
+    }
+  }, [contract, networkId, web3])
 
   return mark
+}
+
+export const useInitController = () => {
+  useIndex()
+  useMark()
+  useCurrentImpliedFunding()
+  useDailyHistoricalFunding()
+  useNormFactor()
 }

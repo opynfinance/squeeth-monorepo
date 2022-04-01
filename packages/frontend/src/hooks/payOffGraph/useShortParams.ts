@@ -1,9 +1,10 @@
-import { useIndex, useMark } from 'src/state/controller/hooks'
+import { useAtomValue } from 'jotai'
+import { indexAtom, markAtom } from 'src/state/controller/atoms'
 
 export default function useShortParams(ethPrice: number, collatRatio: number) {
   const squeethIndex = ethPrice ** 2
-  const mark = useMark()
-  const index = useIndex()
+  const mark = useAtomValue(markAtom)
+  const index = useAtomValue(indexAtom)
   const markRatio = Number(mark.div(index).toString())
   const squeethMark = squeethIndex * markRatio
   const dailyNormFactor = squeethMark / (2 * squeethMark - squeethIndex)

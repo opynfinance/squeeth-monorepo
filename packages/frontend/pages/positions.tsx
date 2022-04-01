@@ -48,10 +48,10 @@ import {
 } from 'src/state/pnl/hooks'
 import { loadingAtom } from 'src/state/pnl/atoms'
 import YourVaults from '@components/Trade/YourVaults'
-import { useIndex } from 'src/state/controller/hooks'
 import { crabStrategyCollatRatioAtom } from 'src/state/crab/atoms'
 import { useCalculateCurrentValue, useSetStrategyData } from 'src/state/crab/hooks'
 import { useVaultData } from '@hooks/useVaultData'
+import { indexAtom } from 'src/state/controller/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -195,7 +195,7 @@ export function Positions() {
   const lpedSqueeth = useLpDebt()
   const mintedDebt = useMintedDebt()
   const shortDebt = useShortDebt()
-  const index = useIndex()
+  const index = useAtomValue(indexAtom)
   usePositionsAndFeesComputation()
   const {
     depositedEth,

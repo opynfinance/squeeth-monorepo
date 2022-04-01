@@ -44,7 +44,12 @@
     "@typescript-eslint/ban-ts-comment": "off",
     "@typescript-eslint/camelcase": "off",
     "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "warn",
+    "react-hooks/exhaustive-deps": [
+      "warn",
+      {
+        "additionalHooks": "(useAppEffect|useAppMemo|useAppCallback)"
+      }
+    ],
     "react/prop-types": "off",
     "import/order": "off",
     "sort-imports": "off",
