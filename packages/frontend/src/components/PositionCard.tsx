@@ -40,6 +40,9 @@ import {
 } from 'src/state/pnl/hooks'
 import { loadingAtom } from 'src/state/pnl/atoms'
 import { useVaultData } from '@hooks/useVaultData'
+import useAppEffect from '@hooks/useAppEffect'
+import useAppCallback from '@hooks/useAppCallback'
+import useAppMemo from '@hooks/useAppMemo'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -224,7 +227,7 @@ const PositionCard: React.FC = () => {
     return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
   }, [firstValidVault, shortVaults?.length, liquidations?.length])
 
-  const isDollarValueLoading = useMemo(() => {
+  const isDollarValueLoading = useAppMemo(() => {
     if (positionType === PositionType.LONG) {
       return loading || longGain.isLessThanOrEqualTo(-100) || !longGain.isFinite()
     } else if (positionType === PositionType.SHORT) {
@@ -232,9 +235,9 @@ const PositionCard: React.FC = () => {
     } else {
       return null
     }
-  }, [positionType, loading, longGain.toString(), shortGain.toString()])
+  }, [positionType, loading, longGain, shortGain])
 
-  const getPositionBasedValue = useCallback(
+  const getPositionBasedValue = useAppCallback(
     (long: any, short: any, none: any, loadingMsg?: any) => {
       if (loadingMsg && (loading || isPositionLoading)) return loadingMsg
       if (positionType === PositionType.LONG) {
@@ -253,10 +256,10 @@ const PositionCard: React.FC = () => {
       }
       return none
     },
-    [isPositionLoading, loading, positionType, longGain.toString(), shortGain.toString()],
+    [isPositionLoading, loading, positionType, longGain, shortGain],
   )
 
-  const getRealizedPNLBasedValue = useCallback(
+  const getRealizedPNLBasedValue = useAppCallback(
     (long: any, short: any, none: any, loadingMsg?: any) => {
       if (loadingMsg && loading) return loadingMsg
       if (longRealizedPNL.isEqualTo(0) && shortRealizedPNL.isEqualTo(0)) return none
@@ -264,10 +267,10 @@ const PositionCard: React.FC = () => {
       if (positionType === PositionType.SHORT) return short
       return none
     },
-    [tradeSuccess, positionType, loading, longRealizedPNL.toString(), shortRealizedPNL.toString()],
+    [positionType, loading, longRealizedPNL, shortRealizedPNL],
   )
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (isPositionLoading) return
 
     let _postTradeAmt = new BigNumber(0)
@@ -292,14 +295,7 @@ const PositionCard: React.FC = () => {
 
     setPostTradeAmt(_postTradeAmt)
     setPostPosition(_postPosition)
-  }, [
-    actualTradeType,
-    isOpenPosition,
-    isPositionLoading,
-    positionType,
-    squeethAmount.toString(),
-    tradeAmount.toString(),
-  ])
+  }, [actualTradeType, isOpenPosition, isPositionLoading, positionType, squeethAmount, tradeAmount])
 
   const pnlLoading = useMemo(() => {
     if (positionType === PositionType.LONG) {

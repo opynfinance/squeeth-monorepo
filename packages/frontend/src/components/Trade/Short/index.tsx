@@ -34,12 +34,7 @@ import { useETHPrice } from '@hooks/useETHPrice'
 import { collatRatioAtom } from 'src/state/ethPriceCharts/atoms'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
 import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
-import {
-  useGetDebtAmount,
-  useGetShortAmountFromDebt,
-  useNormFactor,
-  useUpdateOperator,
-} from 'src/state/controller/hooks'
+import { useGetDebtAmount, useGetShortAmountFromDebt, useUpdateOperator } from 'src/state/controller/hooks'
 import { useComputeSwaps, useFirstValidVault, useLPPositionsQuery, useVaultQuery } from 'src/state/positions/hooks'
 import {
   ethTradeAmountAtom,
@@ -52,7 +47,7 @@ import {
   tradeTypeAtom,
 } from 'src/state/trade/atoms'
 import { toTokenAmount } from '@utils/calculations'
-// import { normFactorAtom } from 'src/state/controller/atoms'
+import { normFactorAtom } from 'src/state/controller/atoms'
 import { TradeType } from '../../../types'
 import Cancelled from '../Cancelled'
 import { useVaultData } from '@hooks/useVaultData'
@@ -206,7 +201,7 @@ const useStyles = makeStyles((theme) =>
 const OpenShort: React.FC<SellType> = ({ open }) => {
   const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
   const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
-  const [collatPercent, setCollatPercent] = useState(150)
+  const [collatPercent, setCollatPercent] = useState(200)
   const [existingCollat, setExistingCollat] = useState(new BigNumber(0))
   const [confirmedAmount, setConfirmedAmount] = useState('')
   const [isVaultApproved, setIsVaultApproved] = useState(true)
@@ -241,7 +236,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   const getShortAmountFromDebt = useGetShortAmountFromDebt()
   const getDebtAmount = useGetDebtAmount()
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
-  const normalizationFactor = useNormFactor()
+  const normalizationFactor = useAtomValue(normFactorAtom)
 
   const [quote, setQuote] = useAtom(quoteAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
@@ -926,6 +921,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                 if (event.target.value === CloseType.FULL) {
                   setShortCloseMax()
                 }
+                setCollatPercent(200)
                 return setCloseType(event.target.value as CloseType)
               }}
               displayEmpty

@@ -18,7 +18,7 @@ import { uniswapClient } from '@utils/apollo-client'
 import { useOnboard } from 'src/state/wallet/hooks'
 import { networkIdAtom } from 'src/state/wallet/atoms'
 import { useUpdateSqueethPrices, useUpdateSqueethPoolData } from 'src/state/squeethPool/hooks'
-import { useSwaps } from 'src/state/positions/hooks'
+import { useInitController } from 'src/state/controller/hooks'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
 
@@ -75,7 +75,7 @@ function MyApp({ Component, pageProps }: any) {
 const Init = () => {
   useUpdateSqueethPrices()
   useUpdateSqueethPoolData()
-  useSwaps()
+  useInitController()
   return null
 }
 const MemoizedInit = memo(Init)
