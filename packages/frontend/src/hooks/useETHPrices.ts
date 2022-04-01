@@ -12,7 +12,7 @@ export interface TxItem {
 }
 
 export const useETHPrices = (items: TxItem[] | undefined) => {
-  const { networkId } = useAtomValue(networkIdAtom)
+  const networkId = useAtomValue(networkIdAtom)
   const [itemIndex, setItemIndex] = useState(0)
   const [ethPrices, setETHPrices] = useState<number[]>([])
   const blockNo = items && items.length > 0 ? items[itemIndex].blockNo : 0
