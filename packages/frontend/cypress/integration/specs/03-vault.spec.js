@@ -219,7 +219,7 @@ describe('Open short position and then mint debt, burn debt, add collat, remove 
           cy.get('close-short-type-select').should('contain.text', 'Full Close')
 
           cy.get('#close-short-sumbit-tx-btn').then((btn) => {
-            if (btn.text().includes('Approve wrapper')) {
+            if (btn.text().includes('Allow wrapper')) {
               cy.get('#close-short-sumbit-tx-btn').click({ force: true })
               trade.confirmMetamaskTransaction()
               trade.waitForTransactionSuccess()
