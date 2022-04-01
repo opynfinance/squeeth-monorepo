@@ -21,6 +21,7 @@ import clsx from 'clsx'
 import Image from 'next/image'
 import { useRouter } from 'next/router'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useAtom, useAtomValue } from 'jotai'
 
 import ethLogo from '../../public/images/ethereum-eth.svg'
 import squeethLogo from '../../public/images/Squeeth.svg'
@@ -30,23 +31,36 @@ import NumberInput from '@components/Input/NumberInput'
 import Nav from '@components/Nav'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import { Tooltips } from '@constants/enums'
-import { usePositions } from '@context/positions'
-import { MIN_COLLATERAL_AMOUNT, OSQUEETH_DECIMALS } from '../../src/constants'
+import { BIG_ZERO, MIN_COLLATERAL_AMOUNT, OSQUEETH_DECIMALS } from '../../src/constants'
 import { PositionType } from '../../src/types'
 import { useRestrictUser } from '@context/restrict-user'
-import { useWallet } from '@context/wallet'
-import { useController } from '@hooks/contracts/useController'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
-import { useVaultData } from '@hooks/useVaultData'
-import { useWorldContext } from '@context/world'
 import { CollateralStatus, Vault } from '../../src/types'
 import { squeethClient } from '@utils/apollo-client'
 import { getCollatPercentStatus, toTokenAmount } from '@utils/calculations'
 import { LinkButton } from '@components/Button'
 import { useERC721 } from '@hooks/contracts/useERC721'
-import { useAddresses } from '@hooks/useAddress'
-import POSITIONS_QUERY from '@queries/uniswap/positionsQuery'
+import { ACTIVE_POSITIONS_QUERY } from '@queries/uniswap/positionsQuery'
 import { positions, positionsVariables } from '@queries/uniswap/__generated__/positions'
+import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
+import { useWalletBalance } from 'src/state/wallet/hooks'
+import { addressesAtom, collatPercentAtom, positionTypeAtom } from 'src/state/positions/atoms'
+import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
+import {
+  useBurnAndRedeem,
+  useDepositCollateral,
+  useDepositUnuPositionToken,
+  useGetCollatRatioAndLiqPrice,
+  useGetDebtAmount,
+  useGetShortAmountFromDebt,
+  useGetTwapEthPrice,
+  useGetUniNFTCollatDetail,
+  useOpenDepositAndMint,
+  useWithdrawCollateral,
+  useWithdrawUniPositionToken,
+} from 'src/state/controller/hooks'
+import { useComputeSwaps, useLpDebt, useMintedDebt, useShortDebt } from 'src/state/positions/hooks'
+import { useVaultData } from '@hooks/useVaultData'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -233,17 +247,14 @@ enum VaultError {
   INSUFFICIENT_OSQTH_BALANCE = 'Insufficient oSQTH Balance',
 }
 
-const SelectLP = React.memo<{ lpToken: number; setLpToken: (t: number) => void }>(function SelectLP({
-  lpToken,
-  setLpToken,
-}) {
-  const { squeethPool } = useAddresses()
-  const { address } = useWallet()
+const SelectLP: React.FC<{ lpToken: number; setLpToken: (t: number) => void }> = ({ lpToken, setLpToken }) => {
+  const { squeethPool } = useAtomValue(addressesAtom)
+  const address = useAtomValue(addressAtom)
 
-  const { data } = useQuery<positions, positionsVariables>(POSITIONS_QUERY, {
+  const { data } = useQuery<positions, positionsVariables>(ACTIVE_POSITIONS_QUERY, {
     variables: {
-      poolAddress: squeethPool?.toLowerCase(),
-      owner: address?.toLowerCase() || '',
+      poolAddress: squeethPool,
+      owner: address || '',
     },
     fetchPolicy: 'no-cache',
   })
@@ -267,34 +278,36 @@ const SelectLP = React.memo<{ lpToken: number; setLpToken: (t: number) => void }
       </Select>
     </FormControl>
   )
-})
+}
 
 const Component: React.FC = () => {
   const classes = useStyles()
   const router = useRouter()
   const { isRestricted } = useRestrictUser()
-  const {
-    getCollatRatioAndLiqPrice,
-    getDebtAmount,
-    getShortAmountFromDebt,
-    depositCollateral,
-    withdrawCollateral,
-    openDepositAndMint,
-    burnAndRedeem,
-    getTwapEthPrice,
-    depositUniPositionToken,
-    withdrawUniPositionToken,
-    normFactor,
-    getVault,
-  } = useController()
-  const { balance, address, connected, networkId } = useWallet()
+
+  const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
+  const getDebtAmount = useGetDebtAmount()
+  const getShortAmountFromDebt = useGetShortAmountFromDebt()
+  const depositCollateral = useDepositCollateral()
+  const withdrawCollateral = useWithdrawCollateral()
+  const openDepositAndMint = useOpenDepositAndMint()
+  const burnAndRedeem = useBurnAndRedeem()
+  const getTwapEthPrice = useGetTwapEthPrice()
+  const depositUniPositionToken = useDepositUnuPositionToken()
+  const withdrawUniPositionToken = useWithdrawUniPositionToken()
+  const getUniNFTCollatDetail = useGetUniNFTCollatDetail()
+
+  const { data: balance } = useWalletBalance()
   const { vid } = router.query
   const { liquidations } = useVaultLiquidations(Number(vid))
-  const { positionType, squeethAmount, mintedDebt, shortDebt, lpedSqueeth } = usePositions()
-  const { nftManager, controller } = useAddresses()
+  const { oSqueeth, nftManager, controller } = useAtomValue(addressesAtom)
+  const positionType = useAtomValue(positionTypeAtom)
+  const { squeethAmount } = useComputeSwaps()
+  const mintedDebt = useMintedDebt()
+  const shortDebt = useShortDebt()
+  const lpedSqueeth = useLpDebt()
   const { getApproved, approve } = useERC721(nftManager)
-
-  const { oSqueethBal } = useWorldContext()
+  const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
   const [collateral, setCollateral] = useState('0')
   const collateralBN = new BigNumber(collateral)
@@ -307,15 +320,8 @@ const Component: React.FC = () => {
   const [txLoading, setTxLoading] = useState(false)
   const [uniTokenToDeposit, setUniTokenToDeposit] = useState(0)
 
-  const {
-    vault,
-    existingCollatPercent,
-    existingLiqPrice,
-    updateVault,
-    setCollatPercent,
-    collatPercent,
-    isVaultLoading,
-  } = useVaultData(Number(vid))
+  const { existingCollatPercent, existingLiqPrice, vault, updateVault, isVaultLoading } = useVaultData(Number(vid))
+  const [collatPercent, setCollatPercent] = useAtom(collatPercentAtom)
 
   useEffect(() => {
     getTwapEthPrice().then((price) => {
@@ -344,7 +350,13 @@ const Component: React.FC = () => {
     setAction(percent > existingCollatPercent ? VaultAction.ADD_COLLATERAL : VaultAction.REMOVE_COLLATERAL)
     setCollatPercent(percent)
     const debt = await getDebtAmount(vault.shortAmount)
-    const newCollat = new BigNumber(percent).times(debt).div(100)
+    let lpCollatPercent = BIG_ZERO
+    // If NFT is deposited, Collateral amount from LP NFT should not be included. So target collat % - lp collat % will give actual collat to remove
+    if (lpNftId) {
+      const { collateral: uniCollat } = await getUniNFTCollatDetail(lpNftId)
+      lpCollatPercent = uniCollat.div(debt).times(100)
+    }
+    const newCollat = new BigNumber(percent).minus(lpCollatPercent).times(debt).div(100)
     const { liquidationPrice: lp } = await getCollatRatioAndLiqPrice(newCollat, vault.shortAmount, lpNftId)
     setNewLiqPrice(lp)
     setCollateral(newCollat.minus(vault.collateralAmount).toString())
@@ -369,7 +381,12 @@ const Component: React.FC = () => {
     setCollatPercent(percent)
     if (!vault) return
 
-    const debt = vault.collateralAmount.times(100).div(percent)
+    let lpNftCollat = BIG_ZERO
+    if (lpNftId) {
+      const { collateral: nftCollat } = await getUniNFTCollatDetail(lpNftId)
+      lpNftCollat = nftCollat
+    }
+    const debt = vault.collateralAmount.plus(lpNftCollat).times(100).div(percent)
     const _shortAmt = await getShortAmountFromDebt(debt)
     setShortAmount(_shortAmt.minus(vault.shortAmount).toString())
     setAction(percent < existingCollatPercent ? VaultAction.MINT_SQUEETH : VaultAction.BURN_SQUEETH)
@@ -387,14 +404,15 @@ const Component: React.FC = () => {
     async (input: number) => {
       setUniTokenToDeposit(input)
       if (!input) return
+
       const approvedAddress: string = await getApproved(input)
-      if (controller.toLowerCase() === (approvedAddress || '').toLowerCase()) {
+      if (controller === (approvedAddress || '').toLowerCase()) {
         setAction(VaultAction.DEPOSIT_UNI_POSITION)
       } else {
         setAction(VaultAction.APPROVE_UNI_POSITION)
       }
     },
-    [controller],
+    [controller, getApproved],
   )
 
   useEffect(() => {
@@ -503,7 +521,7 @@ const Component: React.FC = () => {
     let adjustCollatError = null
     let adjustAmountError = null
     if (!vault?.shortAmount.gt(0)) return { adjustAmountError, adjustCollatError }
-    if (action === VaultAction.ADD_COLLATERAL && collateralBN.gt(toTokenAmount(balance, 18)))
+    if (action === VaultAction.ADD_COLLATERAL && collateralBN.gt(toTokenAmount(balance ?? BIG_ZERO, 18)))
       adjustCollatError = VaultError.INSUFFICIENT_ETH_BALANCE
     else if (isCollatAction) {
       if (collatPercent < 150) adjustCollatError = VaultError.MIN_COLLAT_PERCENT
@@ -519,7 +537,7 @@ const Component: React.FC = () => {
     }
 
     return { adjustAmountError, adjustCollatError }
-  }, [shortAmount, collateral, collatPercent, action, balance.toString()])
+  }, [shortAmount, collateral, collatPercent, action, balance?.toString()])
 
   const collatStatus = useCallback(() => {
     return getCollatPercentStatus(existingCollatPercent)
@@ -714,7 +732,7 @@ const Component: React.FC = () => {
                         color="primary"
                         onClick={() =>
                           collateralBN.isPositive()
-                            ? updateCollateral(toTokenAmount(balance, 18).toString())
+                            ? updateCollateral(toTokenAmount(balance ?? BIG_ZERO, 18).toString())
                             : updateCollateral(vault ? vault?.collateralAmount.negated().toString() : collateral)
                         }
                         variant="text"
@@ -731,7 +749,9 @@ const Component: React.FC = () => {
                       value={collateral}
                       unit="ETH"
                       hint={
-                        !!adjustCollatError ? adjustCollatError : `Balance ${toTokenAmount(balance, 18).toFixed(4)} ETH`
+                        !!adjustCollatError
+                          ? adjustCollatError
+                          : `Balance ${toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4)} ETH`
                       }
                       error={!!adjustCollatError}
                     />
@@ -990,7 +1010,8 @@ const Component: React.FC = () => {
 
 const Main: React.FC = () => {
   const classes = useStyles()
-  const { connected } = useWallet()
+
+  const connected = useAtomValue(connectedWalletAtom)
 
   if (!connected) {
     return (

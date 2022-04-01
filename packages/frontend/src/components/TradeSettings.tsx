@@ -6,7 +6,8 @@ import SettingsIcon from '@material-ui/icons/Settings'
 import BigNumber from 'bignumber.js'
 import * as React from 'react'
 
-import { useTrade } from '@context/trade'
+import { slippageAmountAtom } from 'src/state/trade/atoms'
+import { useAtom } from 'jotai'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -55,7 +56,7 @@ type TradeSettingsProps = {
 export const TradeSettings: React.FC<TradeSettingsProps> = ({ isCrab, setCrabSlippage, crabSlippage }) => {
   const classes = useStyles()
 
-  const { slippageAmount, setSlippageAmount } = useTrade()
+  const [slippageAmount, setSlippageAmount] = useAtom(slippageAmountAtom)
 
   const [open, setOpen] = React.useState(false)
 

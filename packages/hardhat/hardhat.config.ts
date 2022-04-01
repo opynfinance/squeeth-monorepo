@@ -57,23 +57,33 @@ const UNISWAP_SETTING = {
   settings: {
     optimizer: {
       enabled: true,
-      runs: 825,
+      runs: 200,
     },
   },
 };
+
+// const AAVE_SETTING = {
+//   version: "0.6.12",
+//   settings: {
+//     optimizer: {
+//       enabled: true,
+//       runs: 200,
+//     },
+//   },
+// };
 
 const config: HardhatUserConfig = {
   defaultNetwork,
   networks: {
     hardhat: {
+      initialBaseFeePerGas: 0,
       saveDeployments: false, // only used in cicd to test deployments
       mining: {
         auto: true
       },
-      hardfork: "berlin",
       accounts: {
         accountsBalance: '1000000000000000000000000000'
-      }
+      },
     },
     localhost: {
       url: "http://localhost:8545",

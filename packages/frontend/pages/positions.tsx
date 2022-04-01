@@ -1,28 +1,57 @@
-import { createStyles, makeStyles, Tooltip, Typography } from '@material-ui/core'
+import { Box, createStyles, makeStyles, Tooltip, Typography } from '@material-ui/core'
 import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import Link from 'next/link'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
+import { useAtomValue } from 'jotai'
 
 import { LPTable } from '@components/Lp/LPTable'
 import Nav from '@components/Nav'
 import History from '@components/Trade/History'
 import { PositionType } from '../src/types/'
 import { Tooltips } from '../src/constants'
-import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
-import { useWorldContext } from '@context/world'
-import { usePnL } from '@hooks/usePositions'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { toTokenAmount } from '@utils/calculations'
-import { useController } from '../src/hooks/contracts/useController'
-import { CrabProvider } from '@context/crabStrategy'
 import { useCrabPosition } from '@hooks/useCrabPosition'
-import { useWallet } from '@context/wallet'
-import { usePositions } from '@context/positions'
 import { LinkButton } from '@components/Button'
+import { addressAtom } from 'src/state/wallet/atoms'
+import { useSelectWallet } from 'src/state/wallet/hooks'
+import {
+  useComputeSwaps,
+  useFirstValidVault,
+  useLongRealizedPnl,
+  useLpDebt,
+  useLPPositionsQuery,
+  useMintedDebt,
+  useShortDebt,
+  useShortRealizedPnl,
+  usePositionsAndFeesComputation,
+} from 'src/state/positions/hooks'
+import {
+  activePositionsAtom,
+  existingCollatAtom,
+  existingCollatPercentAtom,
+  existingLiqPriceAtom,
+  isVaultLoadingAtom,
+  positionTypeAtom,
+} from 'src/state/positions/atoms'
+import { poolAtom } from 'src/state/squeethPool/atoms'
+import { useVaultManager } from '@hooks/contracts/useVaultManager'
+import {
+  useBuyAndSellQuote,
+  useLongGain,
+  useLongUnrealizedPNL,
+  useShortGain,
+  useShortUnrealizedPNL,
+} from 'src/state/pnl/hooks'
+import { loadingAtom } from 'src/state/pnl/atoms'
+import YourVaults from '@components/Trade/YourVaults'
+import { crabStrategyCollatRatioAtom } from 'src/state/crab/atoms'
+import { useCalculateCurrentValue, useSetStrategyData } from 'src/state/crab/hooks'
 import { useVaultData } from '@hooks/useVaultData'
+import { indexAtom } from 'src/state/controller/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -113,20 +142,15 @@ const useStyles = makeStyles((theme) =>
 )
 
 const PositionsHome = () => {
-  const { address } = useWallet()
+  const address = useAtomValue(addressAtom)
 
-  if (address)
-    return (
-      <CrabProvider>
-        <Positions />{' '}
-      </CrabProvider>
-    )
+  if (address) return <Positions />
 
   return <ConnectWallet />
 }
 
 const ConnectWallet: React.FC = () => {
-  const { selectWallet } = useWallet()
+  const selectWallet = useSelectWallet()
   const classes = useStyles()
 
   return (
@@ -143,39 +167,36 @@ const ConnectWallet: React.FC = () => {
 
 export function Positions() {
   const classes = useStyles()
+
+  const shortGain = useShortGain()
+  const longGain = useLongGain()
+  const { buyQuote, sellQuote } = useBuyAndSellQuote()
+  const longUnrealizedPNL = useLongUnrealizedPNL()
+  const shortUnrealizedPNL = useShortUnrealizedPNL()
+  const isPnLLoading = useAtomValue(loadingAtom)
+
+  const pool = useAtomValue(poolAtom)
+  const address = useAtomValue(addressAtom)
+  const positionType = useAtomValue(positionTypeAtom)
+  const activePositions = useAtomValue(activePositionsAtom)
+
+  const { loading: isPositionLoading } = useLPPositionsQuery()
+  const { squeethAmount } = useComputeSwaps()
+  const longRealizedPNL = useLongRealizedPnl()
+  const shortRealizedPNL = useShortRealizedPnl()
+  const { vaults: shortVaults } = useVaultManager()
+  const { firstValidVault, vaultId } = useFirstValidVault()
   const {
-    longGain,
-    shortGain,
-    buyQuote,
-    sellQuote,
-    shortUnrealizedPNL,
-    loading: isPnLLoading,
-    longUnrealizedPNL,
-  } = usePnL()
-
-  const { pool } = useSqueethPool()
-
-  const { ethPrice, oSqueethBal } = useWorldContext()
-  const { address } = useWallet()
-
-  const {
-    positionType,
-    squeethAmount,
-    loading: isPositionLoading,
-    shortVaults,
-    firstValidVault,
-    vaultId,
     existingCollat,
-    lpedSqueeth,
-    mintedDebt,
-    shortDebt,
-    isLong,
-    shortRealizedPNL,
-    longRealizedPNL,
-    activePositions,
-  } = usePositions()
-
-  const { index } = useController()
+    existingLiqPrice,
+    existingCollatPercent,
+    isVaultLoading: isVaultDataLoading,
+  } = useVaultData(vaultId)
+  const lpedSqueeth = useLpDebt()
+  const mintedDebt = useMintedDebt()
+  const shortDebt = useShortDebt()
+  const index = useAtomValue(indexAtom)
+  usePositionsAndFeesComputation()
   const {
     depositedEth,
     depositedUsd,
@@ -191,7 +212,6 @@ export function Positions() {
   }, [firstValidVault, shortVaults?.length])
 
   const { liquidations } = useVaultLiquidations(Number(vaultId))
-  const { existingCollatPercent, existingLiqPrice } = useVaultData(Number(vaultId))
 
   const fullyLiquidated = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
@@ -218,16 +238,17 @@ export function Positions() {
             </div>
           </div>
         </div>
-        {!shortDebt.isGreaterThan(0) &&
+        {shortDebt.isZero() &&
         depositedEth.isZero() &&
-        !squeethAmount.isGreaterThan(0) &&
-        !mintedDebt.isGreaterThan(0) ? (
+        squeethAmount.isZero() &&
+        mintedDebt.isZero() &&
+        lpedSqueeth.isZero() ? (
           <div className={classes.empty}>
             <Typography>No active positions</Typography>
           </div>
         ) : null}
 
-        {!shortDebt.isGreaterThan(0) && positionType === PositionType.LONG ? (
+        {positionType === PositionType.LONG ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>Long Squeeth</Typography>
@@ -294,7 +315,7 @@ export function Positions() {
             </div>
           </div>
         ) : null}
-        {shortDebt.isGreaterThan(0) && vaultExists && !fullyLiquidated ? (
+        {positionType === PositionType.SHORT && vaultExists && !fullyLiquidated ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>Short Squeeth</Typography>
@@ -314,7 +335,9 @@ export function Positions() {
                     <>
                       <Typography variant="body1">{squeethAmount.toFixed(8) + ' oSQTH'}</Typography>
                       <Typography variant="body2" color="textSecondary">
-                        ${buyQuote.times(toTokenAmount(index, 18).sqrt()).toFixed(2)}
+                        {isPnLLoading && buyQuote.times(toTokenAmount(index, 18).sqrt()).isEqualTo(0)
+                          ? 'Loading'
+                          : '$' + buyQuote.times(toTokenAmount(index, 18).sqrt()).toFixed(2)}
                       </Typography>
                     </>
                   )}
@@ -356,7 +379,9 @@ export function Positions() {
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
                   <Typography variant="body1">
-                    {isPositionLoading && existingLiqPrice.isEqualTo(0) ? 'Loading' : '$' + existingLiqPrice.toFixed(2)}
+                    {isVaultDataLoading && existingLiqPrice.isEqualTo(0)
+                      ? 'Loading'
+                      : '$' + existingLiqPrice.toFixed(2)}
                   </Typography>
                 </div>
                 <div style={{ width: '50%' }}>
@@ -364,7 +389,7 @@ export function Positions() {
                     Collateral (Amt / Ratio)
                   </Typography>
                   <Typography variant="body1">
-                    {isPositionLoading && existingCollat.isEqualTo(0) ? 'Loading' : existingCollat.toFixed(4)} ETH (
+                    {isVaultDataLoading && existingCollat.isEqualTo(0) ? 'Loading' : existingCollat.toFixed(4)} ETH (
                     {existingCollatPercent}%)
                   </Typography>
                 </div>
@@ -385,7 +410,7 @@ export function Positions() {
             </div>
           </div>
         ) : null}
-        {lpedSqueeth.isGreaterThan(0) && vaultExists && !fullyLiquidated ? (
+        {lpedSqueeth.isGreaterThan(0) && !fullyLiquidated ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>LPed Squeeth</Typography>
@@ -415,7 +440,7 @@ export function Positions() {
                       <InfoIcon fontSize="small" className={classes.infoIcon} />
                     </Tooltip>
                     <Typography variant="body1">
-                      ${isPositionLoading && existingLiqPrice.isEqualTo(0) ? 'Loading' : existingLiqPrice.toFixed(2)}
+                      ${isVaultDataLoading && existingLiqPrice.isEqualTo(0) ? 'Loading' : existingLiqPrice.toFixed(2)}
                     </Typography>
                   </div>
                 ) : null}
@@ -424,7 +449,7 @@ export function Positions() {
                     Collateral (Amt / Ratio)
                   </Typography>
                   <Typography variant="body1">
-                    {isPositionLoading && existingCollat.isEqualTo(0) ? 'Loading' : existingCollat.toFixed(4)} ETH
+                    {isVaultDataLoading && existingCollat.isEqualTo(0) ? 'Loading' : existingCollat.toFixed(4)} ETH
                     {new BigNumber(existingCollatPercent).isFinite() ? ' (' + existingCollatPercent + ' %)' : null}
                   </Typography>
                 </div>
@@ -447,11 +472,7 @@ export function Positions() {
                     Amount
                   </Typography>
                   <Typography variant="body1">
-                    {oSqueethBal?.isGreaterThan(0) &&
-                    positionType === PositionType.LONG &&
-                    oSqueethBal.minus(squeethAmount).isGreaterThan(0)
-                      ? oSqueethBal.minus(squeethAmount).toFixed(8)
-                      : oSqueethBal.toFixed(8)}
+                    {isPositionLoading ? 'Loading' : mintedDebt.toFixed(8)}
                     &nbsp; oSQTH
                   </Typography>
                 </div>
@@ -466,7 +487,7 @@ export function Positions() {
                       <InfoIcon fontSize="small" className={classes.infoIcon} />
                     </Tooltip>
                     <Typography variant="body1">
-                      $ {isPositionLoading && existingLiqPrice.isEqualTo(0) ? 'Loading' : existingLiqPrice.toFixed(2)}
+                      $ {isVaultDataLoading && existingLiqPrice.isEqualTo(0) ? 'Loading' : existingLiqPrice.toFixed(2)}
                     </Typography>
                   </div>
                 ) : null}
@@ -475,7 +496,7 @@ export function Positions() {
                     Collateral (Amt / Ratio)
                   </Typography>
                   <Typography variant="body1">
-                    {isPositionLoading && existingCollat.isEqualTo(0) ? 'Loading' : existingCollat.toFixed(4)} ETH
+                    {isVaultDataLoading && existingCollat.isEqualTo(0) ? 'Loading' : existingCollat.toFixed(4)} ETH
                     {new BigNumber(existingCollatPercent).isFinite() ? ' (' + existingCollatPercent + ' %)' : null}
                   </Typography>
                 </div>
@@ -525,9 +546,19 @@ export function Positions() {
                 Your LP Positions
               </Typography>
             </div>
-            <LPTable isLPage={false} pool={pool} />
+            <LPTable isLPage={false} pool={pool!} />
           </>
         ) : null}
+
+        <Box mt={8} component="section">
+          <Typography color="primary" variant="h6">
+            Your Vaults
+          </Typography>
+          <Box mt={2}>
+            <YourVaults />
+          </Box>
+        </Box>
+
         <div className={classes.history}>
           <Typography color="primary" variant="h6">
             Transaction History
@@ -560,7 +591,24 @@ const CrabPosition: React.FC<CrabPositionType> = ({
 }) => {
   const classes = useStyles()
 
-  if (depositedEth.isZero() || loading) return null
+  const getPnlClassName = () => {
+    if (loading) {
+      return ''
+    }
+
+    return minPnlUsd.gte(0) ? classes.green : classes.red
+  }
+
+  const collatRatio = useAtomValue(crabStrategyCollatRatioAtom)
+  const setStrategyData = useSetStrategyData()
+  const calculateCurrentValue = useCalculateCurrentValue()
+
+  useEffect(() => {
+    setStrategyData()
+  }, [collatRatio])
+  useEffect(() => {
+    calculateCurrentValue()
+  }, [calculateCurrentValue])
 
   return (
     <div className={classes.position}>
@@ -586,10 +634,9 @@ const CrabPosition: React.FC<CrabPositionType> = ({
             <Typography variant="caption" component="span" color="textSecondary">
               Current Position
             </Typography>
-            <Typography variant="body1">$ {minCurrentUsd.toFixed(2)}</Typography>
+            <Typography variant="body1">{!loading ? `$ ${minCurrentUsd.toFixed(2)}` : 'Loading'}</Typography>
             <Typography variant="body2" color="textSecondary">
-              {minCurrentEth.toFixed(6)}
-              &nbsp; ETH
+              {!loading ? `${minCurrentEth.toFixed(6)}  ETH` : 'Loading'}
             </Typography>
           </div>
         </div>
@@ -601,11 +648,11 @@ const CrabPosition: React.FC<CrabPositionType> = ({
             <Tooltip title={Tooltips.CrabPnL}>
               <InfoIcon fontSize="small" className={classes.infoIcon} />
             </Tooltip>
-            <Typography variant="body1" className={minPnlUsd.gte(0) ? classes.green : classes.red}>
-              {!loading ? '$' + `${minPnlUsd.toFixed(2)}` : 'loading'}
+            <Typography variant="body1" className={getPnlClassName()}>
+              {!loading ? '$' + `${minPnlUsd.toFixed(2)}` : 'Loading'}
             </Typography>
-            <Typography variant="caption" className={minPnlUsd.gte(0) ? classes.green : classes.red}>
-              {!loading ? `${minPnL.toFixed(2)}` + '%' : 'loading'}
+            <Typography variant="caption" className={getPnlClassName()}>
+              {!loading ? `${minPnL.toFixed(2)}` + '%' : 'Loading'}
             </Typography>
           </div>
         </div>

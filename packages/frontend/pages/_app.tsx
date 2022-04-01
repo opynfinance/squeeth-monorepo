@@ -1,3 +1,4 @@
+import useRenderCounter from '../src/hooks/useRenderCounter'
 import '../styles/globals.css'
 
 import { ApolloProvider } from '@apollo/client'
@@ -6,22 +7,27 @@ import { ThemeProvider } from '@material-ui/core/styles'
 import * as Fathom from 'fathom-client'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import React, { useEffect } from 'react'
+import React, { memo, useEffect, useMemo } from 'react'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { ReactQueryDevtools } from 'react-query/devtools'
 import { CookiesProvider } from 'react-cookie'
+import { useAtomValue } from 'jotai'
 
 import { RestrictUserProvider } from '@context/restrict-user'
-import { useWallet, WalletProvider } from '@context/wallet'
-import { WorldProvider } from '@context/world'
-import { PositionsProvider } from '@context/positions'
 import getTheme, { Mode } from '../src/theme'
 import { uniswapClient } from '@utils/apollo-client'
+import { useOnboard } from 'src/state/wallet/hooks'
+import { networkIdAtom } from 'src/state/wallet/atoms'
+import { useUpdateSqueethPrices, useUpdateSqueethPoolData } from 'src/state/squeethPool/hooks'
+import { useInitController } from 'src/state/controller/hooks'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
 
 function MyApp({ Component, pageProps }: any) {
+  useRenderCounter('9', '0')
+
   const router = useRouter()
+  useOnboard()
 
   React.useEffect(() => {
     // Remove the server-side injected CSS.
@@ -56,21 +62,28 @@ function MyApp({ Component, pageProps }: any) {
   }, [router.events, siteID])
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <CookiesProvider>
-        <WalletProvider>
-          <RestrictUserProvider>
-            <TradeApp Component={Component} pageProps={pageProps} />
-          </RestrictUserProvider>
-        </WalletProvider>
-      </CookiesProvider>
-      <ReactQueryDevtools initialIsOpen={false} />
-    </QueryClientProvider>
+    <CookiesProvider>
+      <RestrictUserProvider>
+        <QueryClientProvider client={queryClient}>
+          <TradeApp Component={Component} pageProps={pageProps} />
+          <ReactQueryDevtools initialIsOpen={false} />
+        </QueryClientProvider>
+      </RestrictUserProvider>
+    </CookiesProvider>
   )
 }
 
+const Init = () => {
+  useUpdateSqueethPrices()
+  useUpdateSqueethPoolData()
+  useInitController()
+  return null
+}
+const MemoizedInit = memo(Init)
+
 const TradeApp = ({ Component, pageProps }: any) => {
-  const { networkId } = useWallet()
+  const networkId = useAtomValue(networkIdAtom)
+  const client = useMemo(() => uniswapClient[networkId] || uniswapClient[1], [networkId])
 
   return (
     <React.Fragment>
@@ -80,18 +93,22 @@ const TradeApp = ({ Component, pageProps }: any) => {
           name="description"
           content="Squeeth is a new financial primitive in DeFi that gives traders exposure to ETH²"
         />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Squeeth" />
+        <meta
+          name="twitter:description"
+          content="Squeeth is a new financial primitive in DeFi that gives traders exposure to ETH²"
+        />
+        <meta name="twitter:image" content="https://squeeth.opyn.co/images/SqueethLogoMedium.png" />
         <link rel="icon" href="/favicon.ico" />
         <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width" />
       </Head>
-      <ApolloProvider client={uniswapClient[networkId] || uniswapClient[1]}>
+      <ApolloProvider client={client}>
+        <MemoizedInit />
         <ThemeProvider theme={getTheme(Mode.DARK)}>
           {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
           <CssBaseline />
-          <WorldProvider>
-            <PositionsProvider>
-              <Component {...pageProps} />
-            </PositionsProvider>
-          </WorldProvider>
+          <Component {...pageProps} />
         </ThemeProvider>
       </ApolloProvider>
     </React.Fragment>

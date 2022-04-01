@@ -8,14 +8,15 @@
 //==============================================================
 
 export enum Action {
-  BURN_SHORT = 'BURN_SHORT',
+  BURN = 'BURN',
+  CLOSE_SHORT = 'CLOSE_SHORT',
   DEPOSIT_COLLAT = 'DEPOSIT_COLLAT',
   LIQUIDATE = 'LIQUIDATE',
-  MINT_SHORT = 'MINT_SHORT',
+  MINT = 'MINT',
+  OPEN_SHORT = 'OPEN_SHORT',
   WITHDRAW_COLLAT = 'WITHDRAW_COLLAT',
 }
 
 //==============================================================
 // END Enums and Input Objects
 //==============================================================
-export { }

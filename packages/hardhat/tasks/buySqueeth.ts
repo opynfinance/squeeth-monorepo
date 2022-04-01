@@ -11,10 +11,10 @@ task("buySqueeth", "Buy Squeeth from the pool")
   const { getNamedAccounts, ethers } = hre;
   const { deployer } = await getNamedAccounts();
   
-  const swapRouter = await ethers.getContract("SwapRouter", deployer);
+  const swapRouter = await ethers.getContractAt("SwapRouter", deployer);
 
-  const squeeth = await ethers.getContract("WPowerPerp", deployer);
-  const weth = await ethers.getContract("WETH9", deployer);
+  const squeeth = await ethers.getContractAt("WPowerPerp", deployer);
+  const weth = await ethers.getContractAt("WETH9", deployer);
 
   const inputWETHAmount = ethers.utils.parseEther(inputAmount) 
 

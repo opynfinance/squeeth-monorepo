@@ -1,9 +1,11 @@
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import { useLPPositions } from '@hooks/usePositions'
+import { useAtomValue } from 'jotai'
 import React from 'react'
 import { Typography } from '@material-ui/core'
-import { LinkButton } from '@components/Button'
 import Link from 'next/link'
+
+import { squeethLiquidityAtom, wethLiquidityAtom } from 'src/state/positions/atoms'
+import { useLPPositionsQuery } from 'src/state/positions/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -17,7 +19,9 @@ const useStyles = makeStyles((theme) =>
 
 const LPPosition: React.FC = () => {
   const classes = useStyles()
-  const { squeethLiquidity, wethLiquidity, loading } = useLPPositions()
+  const squeethLiquidity = useAtomValue(squeethLiquidityAtom)
+  const wethLiquidity = useAtomValue(wethLiquidityAtom)
+  const { loading } = useLPPositionsQuery()
 
   if (loading) return <div className={classes.container}>Loading...</div>
 

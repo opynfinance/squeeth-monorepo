@@ -1,30 +1,17 @@
 import { createStyles, makeStyles } from '@material-ui/core'
-import React, { useEffect } from 'react'
+import React from 'react'
 
-import { useTrade } from '@context/trade'
-import { useWallet } from '@context/wallet'
-import { usePositions } from '@context/positions'
-import { TradeType, PositionType } from '../../types'
-import { toTokenAmount } from '@utils/calculations'
+import { TradeType } from '../../types'
 import { SecondaryTab, SecondaryTabs } from '../Tabs'
 import Long from './Long'
 import Short from './Short'
+import { ethTradeAmountAtom, openPositionAtom, sqthTradeAmountAtom, tradeTypeAtom } from 'src/state/trade/atoms'
+import { useAtom, useAtomValue } from 'jotai'
+import { useResetAtom } from 'jotai/utils'
+import { isTransactionFirstStepAtom, transactionDataAtom, transactionLoadingAtom } from 'src/state/wallet/atoms'
 
-const useStyles = makeStyles((theme) =>
+const useStyles = makeStyles(() =>
   createStyles({
-    modal: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    paper: {
-      backgroundColor: theme.palette.background.paper,
-      boxShadow: theme.shadows[5],
-      padding: theme.spacing(2, 4),
-      borderRadius: theme.spacing(1),
-      width: '40rem',
-      height: '60vh',
-    },
     tabBackGround: {
       position: 'sticky',
       top: '0',
@@ -34,26 +21,31 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-type tradeType = {
-  setTradeCompleted: any
-}
-
-const Trade: React.FC<tradeType> = ({ setTradeCompleted }) => {
+const Trade: React.FC = () => {
   const classes = useStyles()
-  const { balance } = useWallet()
-  const { tradeType, openPosition, setOpenPosition, setTradeType } = useTrade()
-  const { positionType } = usePositions()
 
-  // useEffect(() => {
-  //   setTradeType(positionType === PositionType.SHORT ? 1 : 0)
-  // }, [positionType])
+  const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
+  const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
+  const tradeType = useAtomValue(tradeTypeAtom)
+  const [openPosition, setOpenPosition] = useAtom(openPositionAtom)
+  const resetTransactionData = useResetAtom(transactionDataAtom)
+  const transactionInProgress = useAtomValue(transactionLoadingAtom)
+  const isTxFirstStep = useAtomValue(isTransactionFirstStepAtom)
 
   return (
     <div>
       {
         <SecondaryTabs
           value={openPosition}
-          onChange={(evt, val) => setOpenPosition(val)}
+          onChange={(evt, val) => {
+            setOpenPosition(val)
+
+            if (!transactionInProgress || !isTxFirstStep) {
+              resetEthTradeAmount()
+              resetSqthTradeAmount()
+              resetTransactionData()
+            }
+          }}
           aria-label="simple tabs example"
           centered
           variant="fullWidth"
@@ -64,21 +56,7 @@ const Trade: React.FC<tradeType> = ({ setTradeCompleted }) => {
         </SecondaryTabs>
       }
       <div>
-        {tradeType === TradeType.LONG ? (
-          <Long
-            balance={Number(toTokenAmount(balance, 18).toFixed(4))}
-            open={openPosition === 0}
-            closeTitle="Sell squeeth ERC20 to get ETH"
-            setTradeCompleted={setTradeCompleted}
-          />
-        ) : (
-          <Short
-            balance={Number(toTokenAmount(balance, 18).toFixed(4))}
-            open={openPosition === 0}
-            closeTitle="Buy back oSQTH & close position"
-            setTradeCompleted={setTradeCompleted}
-          />
-        )}
+        {tradeType === TradeType.LONG ? <Long open={openPosition === 0} /> : <Short open={openPosition === 0} />}
       </div>
     </div>
   )

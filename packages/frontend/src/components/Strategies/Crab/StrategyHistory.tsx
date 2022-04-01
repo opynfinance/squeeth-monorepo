@@ -4,7 +4,6 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React, { useEffect, useMemo, useState } from 'react'
 import { EtherscanPrefix } from '../../../constants'
 import OpenInNewIcon from '@material-ui/icons/OpenInNew'
-import { useWallet } from '@context/wallet'
 import Menu from '@material-ui/core/Menu'
 import MenuItem from '@material-ui/core/MenuItem'
 import KeyboardArrowDownOutlinedIcon from '@material-ui/icons/KeyboardArrowDownOutlined'
@@ -14,6 +13,8 @@ import { CrabStrategyTxType, Networks } from '../../../types/index'
 import clsx from 'clsx'
 import { TxItem, useETHPrices } from '@hooks/useETHPrices'
 import { useNormHistoryFromTimestamps } from '@hooks/useNormHistoryFromTimestamps'
+import { useAtomValue } from 'jotai'
+import { addressAtom, networkIdAtom, web3Atom } from 'src/state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -53,7 +54,9 @@ enum TxType {
 export const CrabStrategyHistory: React.FC = () => {
   const classes = useStyles()
   const { data, loading } = useCrabStrategyTxHistory()
-  const { networkId, address, web3 } = useWallet()
+  const address = useAtomValue(addressAtom)
+  const networkId = useAtomValue(networkIdAtom)
+  const web3 = useAtomValue(web3Atom)
   const [hedgeItems, setHedgeItems] = useState<TxItem[] | undefined>(undefined)
 
   const ethPrices = useETHPrices(hedgeItems)

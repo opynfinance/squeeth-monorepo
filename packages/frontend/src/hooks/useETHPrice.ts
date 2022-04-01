@@ -1,8 +1,9 @@
 import BigNumber from 'bignumber.js'
 import { useQuery, useQueryClient } from 'react-query'
 
-import { useController } from './contracts/useController'
 import { toTokenAmount } from '@utils/calculations'
+import { indexAtom } from 'src/state/controller/atoms'
+import { useAtomValue } from 'jotai'
 
 const ethPriceQueryKeys = {
   currentEthPrice: () => ['currentEthPrice'],
@@ -16,7 +17,7 @@ const ethPriceQueryKeys = {
  */
 export const useETHPrice = (refetchIntervalSec = 30) => {
   const queryClient = useQueryClient()
-  const { index } = useController()
+  const index = useAtomValue(indexAtom)
 
   const ethPrice = useQuery(ethPriceQueryKeys.currentEthPrice(), () => getETHPriceCoingecko(), {
     onError() {
@@ -45,7 +46,7 @@ export const getHistoricEthPrice = async (dateString: string): Promise<BigNumber
   const pair = 'ETH/USD'
 
   const response = await fetch(
-    `https://api.twelvedata.com/time_series?start_date=${dateString}&end_date=${dateString}&symbol=${pair}&interval=1min&apikey=${process.env.NEXT_PUBLIC_TWELVEDATA_APIKEY}`,
+    `/api/twelvedata?path=time_series&start_date=${dateString}&end_date=${dateString}&symbol=${pair}&interval=1min`,
   ).then((res) => res.json())
 
   if (response.status === 'error') {

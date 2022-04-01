@@ -1,6 +1,5 @@
 import { createStyles, makeStyles, Typography } from '@material-ui/core'
-import React from 'react'
-import { ReactNode } from 'react-transition-group/node_modules/@types/react'
+import React, { ReactNode } from 'react'
 
 type TradeDetailsType = {
   actionTitle: string

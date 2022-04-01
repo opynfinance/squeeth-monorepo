@@ -3,8 +3,6 @@
 // @generated
 // This file was automatically generated and should not be edited.
 
-import { Action } from "./../../../../types/global_apollo";
-
 // ====================================================
 // GraphQL query operation: VaultHistory
 // ====================================================
@@ -16,7 +14,7 @@ export interface VaultHistory_vaultHistories {
   totalEthCollateralAmount: any;
   oSqthAmount: any;
   ethCollateralAmount: any;
-  action: Action;
+  action: string;
   vaultId: any;
 }
 
@@ -25,5 +23,5 @@ export interface VaultHistory {
 }
 
 export interface VaultHistoryVariables {
-  vaultId: string;
+  vaultId: any;
 }

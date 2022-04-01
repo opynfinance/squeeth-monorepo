@@ -121,7 +121,6 @@ describe("Oracle", function () {
 
     await deploy("OracleTester", { args: [oracle.address], from: deployer })
     oracleTester = (await (await ethers.getContractFactory("OracleTester")).deploy(oracle.address)) as OracleTester;
-
   })
 
   describe("Fetch price right after initialization", async () => {

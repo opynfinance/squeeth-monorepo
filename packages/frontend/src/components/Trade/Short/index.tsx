@@ -12,18 +12,11 @@ import {
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { memo, useCallback, useEffect, useState } from 'react'
 
 import { CloseType, Tooltips, Links } from '@constants/enums'
-import { useTrade } from '@context/trade'
-import { useWallet } from '@context/wallet'
-import { useWorldContext } from '@context/world'
-import { useController } from '@hooks/contracts/useController'
 import useShortHelper from '@hooks/contracts/useShortHelper'
-import { useSqueethPool } from '@hooks/contracts/useSqueethPool'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
-import { useAddresses } from '@hooks/useAddress'
-import { usePositions } from '@context/positions'
 import { PrimaryButton } from '@components/Button'
 import CollatRange from '@components/CollatRange'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
@@ -32,8 +25,31 @@ import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
 import TradeDetails from '@components/Trade/TradeDetails'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import UniswapData from '@components/Trade/UniswapData'
-import { MIN_COLLATERAL_AMOUNT } from '../../../constants'
-import { PositionType } from '../../../types'
+import { BIG_ZERO, MIN_COLLATERAL_AMOUNT } from '../../../constants'
+import { connectedWalletAtom, isTransactionFirstStepAtom } from 'src/state/wallet/atoms'
+import { useSelectWallet, useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
+import { addressesAtom, existingCollatPercentAtom, isLongAtom, vaultAtom } from 'src/state/positions/atoms'
+import { useAtom, useAtomValue } from 'jotai'
+import { useETHPrice } from '@hooks/useETHPrice'
+import { collatRatioAtom } from 'src/state/ethPriceCharts/atoms'
+import { useResetAtom, useUpdateAtom } from 'jotai/utils'
+import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
+import { useGetDebtAmount, useGetShortAmountFromDebt, useUpdateOperator } from 'src/state/controller/hooks'
+import { useComputeSwaps, useFirstValidVault, useLPPositionsQuery, useVaultQuery } from 'src/state/positions/hooks'
+import {
+  ethTradeAmountAtom,
+  quoteAtom,
+  sellCloseQuoteAtom,
+  slippageAmountAtom,
+  sqthTradeAmountAtom,
+  tradeCompletedAtom,
+  tradeSuccessAtom,
+  tradeTypeAtom,
+} from 'src/state/trade/atoms'
+import { toTokenAmount } from '@utils/calculations'
+import { normFactorAtom } from 'src/state/controller/atoms'
+import { TradeType } from '../../../types'
+import Cancelled from '../Cancelled'
 import { useVaultData } from '@hooks/useVaultData'
 
 const useStyles = makeStyles((theme) =>
@@ -172,103 +188,132 @@ const useStyles = makeStyles((theme) =>
       marginLeft: 0,
       marginRight: 0,
     },
+    displayBlock: {
+      display: 'block',
+    },
+    displayNone: {
+      display: 'none',
+    },
   }),
 )
 
-const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCompleted }) => {
-  const [collateralInput, setCollateralInput] = useState('0')
-  const [collatPercent, setCollatPercent] = useState(150)
+const OpenShort: React.FC<SellType> = ({ open }) => {
+  const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
+  const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
+  const [collatPercent, setCollatPercent] = useState(200)
   const [existingCollat, setExistingCollat] = useState(new BigNumber(0))
   const [confirmedAmount, setConfirmedAmount] = useState('')
   const [isVaultApproved, setIsVaultApproved] = useState(true)
   const [shortLoading, setShortLoading] = useState(false)
-  const [buyLoading, setBuyLoading] = useState(false)
-  const [confirmed, setConfirmed] = useState(false)
   const [liqPrice, setLiqPrice] = useState(new BigNumber(0))
-  const [txHash, setTxHash] = useState('')
-  const [withdrawCollat, setWithdrawCollat] = useState(new BigNumber(0))
   const [neededCollat, setNeededCollat] = useState(new BigNumber(0))
 
   const classes = useStyles()
-  const { openShort } = useShortHelper()
-  const { getWSqueethPositionValue } = useSqueethPool()
-  const { updateOperator, normFactor: normalizationFactor, getShortAmountFromDebt, getDebtAmount } = useController()
-  const { selectWallet, connected } = useWallet()
-  const { shortHelper } = useAddresses()
-
   const {
-    tradeAmount: amountInputValue,
-    setTradeAmount: setAmount,
-    quote,
-    tradeType,
-    tradeSuccess,
-    setTradeSuccess,
-    slippageAmount,
-  } = useTrade()
-  const amount = new BigNumber(amountInputValue)
-  const collateral = new BigNumber(collateralInput)
-  const { firstValidVault, squeethAmount: shortSqueethAmount, isLong } = usePositions()
+    cancelled,
+    confirmed,
+    loading: transactionInProgress,
+    transactionData,
+    resetTxCancelled,
+    resetTransactionData,
+  } = useTransactionStatus()
+
+  const { openShort } = useShortHelper()
+
+  const getWSqueethPositionValue = useGetWSqueethPositionValue()
+  const getSellQuote = useGetSellQuote()
+  const { data } = useWalletBalance()
+  const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
+
+  const connected = useAtomValue(connectedWalletAtom)
+  const selectWallet = useSelectWallet()
+
+  const { shortHelper } = useAtomValue(addressesAtom)
+  const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
+
+  const updateOperator = useUpdateOperator()
+  const getShortAmountFromDebt = useGetShortAmountFromDebt()
+  const getDebtAmount = useGetDebtAmount()
+  const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
+  const normalizationFactor = useAtomValue(normFactorAtom)
+
+  const [quote, setQuote] = useAtom(quoteAtom)
+  const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
+  const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
+
+  const slippageAmount = useAtomValue(slippageAmountAtom)
+  const tradeType = useAtomValue(tradeTypeAtom)
+  const amount = new BigNumber(sqthTradeAmount)
+  const collateral = new BigNumber(ethTradeAmount)
+  const isLong = useAtomValue(isLongAtom)
+  const { firstValidVault, vaultId } = useFirstValidVault()
+  const { squeethAmount: shortSqueethAmount } = useComputeSwaps()
   const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
 
-  const [vaultId, setVaultId] = useState(shortVaults.length ? shortVaults[firstValidVault].id : 0)
+  useEffect(() => {
+    getSellQuote(amount, slippageAmount).then(setQuote)
+  }, [amount.toString(), slippageAmount.toString()])
+
   useEffect(() => {
     const rSqueeth = normalizationFactor.multipliedBy(amount || 1).dividedBy(10000)
     const liqp = collateral.dividedBy(rSqueeth.multipliedBy(1.5))
     if (liqp.toString() || liqp.toString() !== '0') setLiqPrice(liqp)
   }, [amount.toString(), collatPercent, collateral.toString(), normalizationFactor.toString()])
 
-  useEffect(() => {
-    if (!open && shortVaults.length && shortVaults[firstValidVault].shortAmount.lt(amount)) {
-      setAmount(shortVaults[firstValidVault].shortAmount.toString())
-    }
-  }, [shortVaults?.length, open])
+  // useEffect(() => {
+  //   if (!open && shortVaults.length && shortVaults[firstValidVault].shortAmount.lt(amount)) {
+  //     setSqthTradeAmount(shortVaults[firstValidVault].shortAmount.toString())
+  //   }
+  // }, [shortVaults?.length, open])
+
+  const { existingCollatPercent } = useVaultData(vaultId)
 
   useEffect(() => {
-    if (!shortVaults.length) {
-      setVaultId(0)
-      return
-    }
-
-    setVaultId(shortVaults[firstValidVault].id)
-  }, [shortVaults?.length, firstValidVault])
-
-  const { existingCollatPercent } = useVaultData(Number(vaultId))
-
-  useEffect(() => {
-    if (!open) return
     const debt = collateral.times(100).dividedBy(new BigNumber(collatPercent))
-    getShortAmountFromDebt(debt).then((s) => setAmount(s.toString()))
-  }, [collatPercent, collateral.toString(), normalizationFactor.toString()])
+    getShortAmountFromDebt(debt).then((s) => setSqthTradeAmount(s.toString()))
+  }, [collatPercent, collateral.toString(), normalizationFactor.toString(), tradeType, open])
 
   useEffect(() => {
-    if (!vaultId) return
+    if (!vaultId || !shortVaults?.length) return
 
     setIsVaultApproved(shortVaults[firstValidVault].operator?.toLowerCase() === shortHelper?.toLowerCase())
   }, [vaultId])
 
-  const depositAndShort = async () => {
+  const depositAndShort = useCallback(async () => {
     setShortLoading(true)
     try {
-      if (vaultIDLoading) return
+      if (vaultIDLoading) {
+        setShortLoading(false)
+        return
+      }
       if (vaultId && !isVaultApproved) {
-        await updateOperator(vaultId, shortHelper)
-        setIsVaultApproved(true)
+        setIsTxFirstStep(true)
+        await updateOperator(vaultId, shortHelper, () => {
+          setIsVaultApproved(true)
+        })
       } else {
-        const confirmedHash = await openShort(vaultId, amount, collateral)
-        setConfirmed(true)
-        setConfirmedAmount(amount.toFixed(6).toString())
-        setTxHash(confirmedHash.transactionHash)
-        setTradeSuccess(true)
-        setTradeCompleted(true)
+        await openShort(vaultId, amount, collateral, () => {
+          setIsTxFirstStep(false)
+          setConfirmedAmount(amount.toFixed(6).toString())
+          setTradeSuccess(true)
+          setTradeCompleted(true)
+          resetEthTradeAmount()
+        })
       }
     } catch (e) {
       console.log(e)
+      setShortLoading(false)
     }
-    setShortLoading(false)
-  }
+  }, [vaultIDLoading, vaultId, isVaultApproved, shortHelper, amount.toString(), collateral.toString()])
 
   useEffect(() => {
-    if (shortVaults.length) {
+    if (transactionInProgress) {
+      setShortLoading(false)
+    }
+  }, [transactionInProgress])
+
+  useEffect(() => {
+    if (shortVaults.length && open && tradeType === TradeType.SHORT) {
       const _collat: BigNumber = shortVaults[firstValidVault].collateralAmount
       setExistingCollat(_collat)
       const restOfShort = new BigNumber(shortVaults[firstValidVault].shortAmount).minus(amount)
@@ -276,12 +321,12 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
       getDebtAmount(new BigNumber(restOfShort)).then((debt) => {
         const _neededCollat = debt.times(collatPercent / 100)
         setNeededCollat(_neededCollat)
-        setWithdrawCollat(_collat.minus(neededCollat))
       })
     }
-  }, [amount.toString(), collatPercent, shortVaults?.length])
+  }, [amount.toString(), collatPercent, shortVaults?.length, open, tradeType])
 
-  const { setCollatRatio, ethPrice, oSqueethBal } = useWorldContext()
+  const ethPrice = useETHPrice()
+  const setCollatRatio = useUpdateAtom(collatRatioAtom)
 
   let openError: string | undefined
   let closeError: string | undefined
@@ -327,13 +372,46 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
     setCollatRatio(collatPercent / 100)
   }, [collatPercent])
 
-  useEffect(() => {
-    setCollateralInput('0')
-  }, [tradeSuccess, tradeType])
-
   return (
     <div>
-      {!confirmed ? (
+      {confirmed && !isTxFirstStep ? (
+        <div>
+          <Confirmed
+            confirmationMessage={`Opened ${confirmedAmount} Squeeth Short Position`}
+            txnHash={transactionData?.hash ?? ''}
+            confirmType={ConfirmType.TRADE}
+          />
+          <div className={classes.buttonDiv}>
+            <PrimaryButton
+              variant="contained"
+              onClick={() => {
+                resetTransactionData()
+              }}
+              className={classes.amountInput}
+              style={{ width: '300px' }}
+            >
+              {'Close'}
+            </PrimaryButton>
+          </div>
+        </div>
+      ) : cancelled ? (
+        <div>
+          <Cancelled txnHash={transactionData?.hash ?? ''} />
+          <div className={classes.buttonDiv}>
+            <PrimaryButton
+              variant="contained"
+              onClick={() => {
+                resetTransactionData()
+                resetTxCancelled()
+              }}
+              className={classes.amountInput}
+              style={{ width: '300px' }}
+            >
+              {'Close'}
+            </PrimaryButton>
+          </div>
+        </div>
+      ) : (
         <div>
           <div className={classes.settingsContainer}>
             <Typography variant="caption" className={classes.explainer} component="div">
@@ -345,12 +423,12 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
           </div>
           <div className={classes.thirdHeading}>
             <PrimaryInput
-              value={collateralInput}
-              onChange={(v) => setCollateralInput(v)}
+              value={ethTradeAmount}
+              onChange={(v) => setEthTradeAmount(v)}
               label="Collateral"
               tooltip={Tooltips.SellOpenAmount}
               actionTxt="Max"
-              onActionClicked={() => setCollateralInput(balance.toString())}
+              onActionClicked={() => setEthTradeAmount(balance.toString())}
               unit="ETH"
               convertedValue={!collateral.isNaN() ? collateral.times(ethPrice).toFixed(2).toLocaleString() : 0}
               hint={
@@ -472,7 +550,6 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
                 variant="contained"
                 onClick={selectWallet}
                 className={classes.amountInput}
-                disabled={!!buyLoading}
                 style={{ width: '300px' }}
               >
                 {'Connect Wallet'}
@@ -482,8 +559,9 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
                 onClick={depositAndShort}
                 className={classes.amountInput}
                 disabled={
-                  collateralInput === '0' ||
+                  ethTradeAmount === '0' ||
                   shortLoading ||
+                  transactionInProgress ||
                   collatPercent < 150 ||
                   !!openError ||
                   !!existingLongError ||
@@ -497,7 +575,7 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
                     : { width: '300px' }
                 }
               >
-                {shortLoading ? (
+                {shortLoading || transactionInProgress ? (
                   <CircularProgress color="primary" size="1.5rem" />
                 ) : (
                   <>
@@ -523,111 +601,79 @@ const OpenShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeComp
             </Typography>
           </div>
         </div>
-      ) : (
-        <div>
-          <Confirmed
-            confirmationMessage={`Opened ${confirmedAmount} Squeeth Short Position`}
-            txnHash={txHash}
-            confirmType={ConfirmType.TRADE}
-          />
-          <div className={classes.buttonDiv}>
-            <PrimaryButton
-              variant="contained"
-              onClick={() => setConfirmed(false)}
-              className={classes.amountInput}
-              style={{ width: '300px' }}
-            >
-              {'Close'}
-            </PrimaryButton>
-          </div>
-        </div>
       )}
     </div>
   )
 }
 
-const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCompleted }) => {
-  const [collateral, setCollateral] = useState(new BigNumber(0))
+const CloseShort: React.FC<SellType> = ({ open }) => {
   const [confirmedAmount, setConfirmedAmount] = useState('')
   const [collatPercent, setCollatPercent] = useState(200)
   const [existingCollat, setExistingCollat] = useState(new BigNumber(0))
-  const [vaultId, setVaultId] = useState(0)
   const [isVaultApproved, setIsVaultApproved] = useState(true)
   const [finalShortAmount, setFinalShortAmount] = useState(new BigNumber(0))
   const [buyLoading, setBuyLoading] = useState(false)
-  const [confirmed, setConfirmed] = useState(false)
-  const [txHash, setTxHash] = useState('')
   const [withdrawCollat, setWithdrawCollat] = useState(new BigNumber(0))
   const [neededCollat, setNeededCollat] = useState(new BigNumber(0))
   const [closeType, setCloseType] = useState(CloseType.FULL)
+  const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
 
   const classes = useStyles()
+  const {
+    cancelled,
+    confirmed,
+    loading: transactionInProgress,
+    transactionData,
+    resetTransactionData,
+    resetTxCancelled,
+  } = useTransactionStatus()
+
   const { closeShort } = useShortHelper()
-  const { getWSqueethPositionValue } = useSqueethPool()
-  const { updateOperator, normFactor: normalizationFactor, getShortAmountFromDebt, getDebtAmount } = useController()
-  const { shortHelper } = useAddresses()
+  const getWSqueethPositionValue = useGetWSqueethPositionValue()
+  const { shortHelper } = useAtomValue(addressesAtom)
+  const isLong = useAtomValue(isLongAtom)
+  const connected = useAtomValue(connectedWalletAtom)
 
-  const { selectWallet, connected } = useWallet()
+  const selectWallet = useSelectWallet()
+  const updateOperator = useUpdateOperator()
+  const getDebtAmount = useGetDebtAmount()
+  const getBuyQuote = useGetBuyQuote()
+  const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
 
-  const {
-    tradeAmount: amountInputValue,
-    setTradeAmount: setAmount,
-    quote,
-    sellCloseQuote,
-    tradeType,
-    setTradeSuccess,
-    slippageAmount,
-  } = useTrade()
-  const amount = new BigNumber(amountInputValue)
-  const {
-    shortVaults,
-    firstValidVault,
-    squeethAmount: shortSqueethAmount,
-    isLong,
-    lpedSqueeth,
-    mintedDebt,
-    shortDebt,
-    loading: isPositionFinishedCalc,
-  } = usePositions()
-  const { setCollatRatio, ethPrice } = useWorldContext()
+  const quote = useAtomValue(quoteAtom)
+  const [sellCloseQuote, setSellCloseQuote] = useAtom(sellCloseQuoteAtom)
+  const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
+  const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
 
-  useEffect(() => {
-    if (!shortVaults.length) return
-    // const calculatedShort = mintedDebt.plus(lpedSqueeth).plus(shortDebt)
-    const contractShort = shortVaults.length && shortVaults[firstValidVault]?.shortAmount
+  const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
+  const slippageAmount = useAtomValue(slippageAmountAtom)
+  const tradeType = useAtomValue(tradeTypeAtom)
+  const amount = new BigNumber(sqthTradeAmount)
+  const { data } = useWalletBalance()
+  const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
 
-    // if (!calculatedShort.isEqualTo(contractShort)) {
-    //   setFinalShortAmount(contractShort)
-    // } else {
-    //   setFinalShortAmount(shortDebt)
-    // }
-    setFinalShortAmount(contractShort)
-  }, [shortVaults?.length, firstValidVault])
-  // }, [shortVaults?.length, mintedDebt.toString(), shortDebt.toString(), lpedSqueeth.toString(), firstValidVault])
+  const { loading: isPositionFinishedCalc } = useLPPositionsQuery()
+  const { vaults: shortVaults } = useVaultManager()
+  const { firstValidVault, vaultId } = useFirstValidVault()
+  const { existingCollatPercent } = useVaultData(vaultId)
+  const vaultQuery = useVaultQuery(vaultId)
+  const vault = vaultQuery.data
+  const setCollatRatio = useUpdateAtom(collatRatioAtom)
+  const ethPrice = useETHPrice()
 
   useEffect(() => {
-    if (!open && shortVaults.length && shortVaults[firstValidVault].shortAmount.lt(amount)) {
-      setAmount(shortVaults[firstValidVault].shortAmount.toString())
+    if (vault) {
+      const contractShort = vault?.shortAmount?.isFinite() ? vault?.shortAmount : new BigNumber(0)
+      setFinalShortAmount(contractShort)
     }
-  }, [shortVaults?.length, open])
+  }, [vault?.shortAmount.toString()])
 
-  useEffect(() => {
-    if (!shortVaults.length) {
-      setVaultId(0)
-      return
-    }
-
-    setVaultId(shortVaults[firstValidVault].id)
-  }, [shortVaults?.length])
-
-  const { existingCollatPercent } = useVaultData(Number(vaultId))
-
-  useEffect(() => {
-    if (!open) return
-    const debt = collateral.times(100).dividedBy(new BigNumber(collatPercent))
-    getShortAmountFromDebt(debt).then((s) => setAmount(s.toString()))
-    setConfirmedAmount(amount.toFixed(6).toString())
-  }, [collatPercent, collateral.toString(), normalizationFactor.toString()])
+  // useEffect(() => {
+  //   if (shortVaults[firstValidVault]?.shortAmount && shortVaults[firstValidVault]?.shortAmount.lt(amount)) {
+  //     console.log('looking for something weird')
+  //     setSqthTradeAmount(shortVaults[firstValidVault]?.shortAmount.toString())
+  //   }
+  // }, [vault?.shortAmount.toString(), amount.toString()])
 
   useEffect(() => {
     if (!vaultId) return
@@ -637,9 +683,9 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
 
   useEffect(() => {
     if (shortVaults.length) {
-      const _collat: BigNumber = shortVaults[firstValidVault].collateralAmount
+      const _collat: BigNumber = vault?.collateralAmount ?? new BigNumber(0)
       setExistingCollat(_collat)
-      const restOfShort = new BigNumber(shortVaults[firstValidVault].shortAmount).minus(amount)
+      const restOfShort = new BigNumber(vault?.shortAmount ?? new BigNumber(0)).minus(amount)
 
       getDebtAmount(new BigNumber(restOfShort)).then((debt) => {
         const _neededCollat = debt.times(collatPercent / 100)
@@ -647,46 +693,53 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
         setWithdrawCollat(_neededCollat.gt(0) ? _collat.minus(neededCollat) : _collat)
       })
     }
-  }, [amount.toString(), collatPercent, shortVaults?.length])
+  }, [
+    amount.toString(),
+    shortVaults?.length,
+    collatPercent,
+    vault?.collateralAmount.toString(),
+    vault?.shortAmount.toString(),
+  ])
+
+  useEffect(() => {
+    if (transactionInProgress) {
+      setBuyLoading(false)
+    }
+  }, [transactionInProgress])
 
   const buyBackAndClose = useCallback(async () => {
     setBuyLoading(true)
 
     try {
       if (vaultId && !isVaultApproved) {
-        await updateOperator(vaultId, shortHelper)
-        setIsVaultApproved(true)
+        setIsTxFirstStep(true)
+        await updateOperator(vaultId, shortHelper, () => {
+          setIsVaultApproved(true)
+        })
       } else {
-        const _collat: BigNumber = shortVaults[firstValidVault].collateralAmount
-        const restOfShort = new BigNumber(shortVaults[firstValidVault].shortAmount).minus(amount)
+        const _collat: BigNumber = vault?.collateralAmount ?? new BigNumber(0)
+        const restOfShort = new BigNumber(vault?.shortAmount ?? new BigNumber(0)).minus(amount)
         const _debt: BigNumber = await getDebtAmount(new BigNumber(restOfShort))
         const neededCollat = _debt.times(collatPercent / 100)
-        const confirmedHash = await closeShort(vaultId, amount, _collat.minus(neededCollat))
-        setConfirmed(true)
-        setConfirmedAmount(amount.toFixed(6).toString())
-        setTxHash(confirmedHash.transactionHash)
-        setTradeSuccess(true)
-        setTradeCompleted(true)
+        await closeShort(vaultId, amount, _collat.minus(neededCollat), async () => {
+          setIsTxFirstStep(false)
+          setConfirmedAmount(amount.toFixed(6).toString())
+          setTradeSuccess(true)
+          setTradeCompleted(true)
+          resetSqthTradeAmount()
+          setIsVaultApproved(false)
+          vaultQuery.refetch({ vaultID: vault!.id })
+        })
       }
     } catch (e) {
       console.log(e)
+      setBuyLoading(false)
     }
-    setBuyLoading(false)
-  }, [
-    amount.toString(),
-    closeShort,
-    collatPercent,
-    getDebtAmount,
-    isVaultApproved,
-    shortHelper,
-    shortVaults?.length,
-    updateOperator,
-    vaultId,
-  ])
+  }, [vault?.id, vaultId, amount.toString(), isVaultApproved])
 
   const setShortCloseMax = useCallback(() => {
     if (finalShortAmount.isGreaterThan(0)) {
-      setAmount(finalShortAmount.toString())
+      setSqthTradeAmount(finalShortAmount.toString())
       setCollatPercent(150)
       setCloseType(CloseType.FULL)
     }
@@ -706,9 +759,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
     if (new BigNumber(quote.priceImpact).gt(3)) {
       priceImpactWarning = 'High Price Impact'
     }
-    if (collateral.isGreaterThan(new BigNumber(balance))) {
-      openError = 'Insufficient ETH balance'
-    } else if (amount.isGreaterThan(0) && collateral.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) {
+    if (amount.isGreaterThan(0) && existingCollat.lt(MIN_COLLATERAL_AMOUNT)) {
       openError = `Minimum collateral is ${MIN_COLLATERAL_AMOUNT} ETH`
     } else if (vaultId === 0 && finalShortAmount.gt(0)) {
       vaultIdDontLoadedError = 'Loading Vault...'
@@ -744,24 +795,65 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
   }, [collatPercent])
 
   useEffect(() => {
+    getBuyQuote(amount, slippageAmount).then(setSellCloseQuote)
+  }, [amount.toString(), slippageAmount])
+
+  useEffect(() => {
     if (finalShortAmount.isGreaterThan(0)) {
-      setAmount(finalShortAmount.toString())
+      setSqthTradeAmount(finalShortAmount.toString())
       setCollatPercent(150)
       setCloseType(CloseType.FULL)
     }
   }, [tradeType, open, finalShortAmount.toString()])
 
   const handleAmountInput = (v: string) => {
-    setAmount(v)
+    setSqthTradeAmount(v)
   }
 
   return (
-    <div>
-      {!confirmed ? (
+    <>
+      {confirmed && !isTxFirstStep ? (
+        <div>
+          <Confirmed
+            confirmationMessage={`Closed ${confirmedAmount} Squeeth Short Position`}
+            txnHash={transactionData?.hash ?? ''}
+            confirmType={ConfirmType.TRADE}
+          />
+          <div className={classes.buttonDiv}>
+            <PrimaryButton
+              variant="contained"
+              onClick={() => {
+                resetTransactionData()
+              }}
+              className={classes.amountInput}
+              style={{ width: '300px' }}
+            >
+              {'Close'}
+            </PrimaryButton>
+          </div>
+        </div>
+      ) : cancelled ? (
+        <div>
+          <Cancelled txnHash={transactionData?.hash ?? ''} />
+          <div className={classes.buttonDiv}>
+            <PrimaryButton
+              variant="contained"
+              onClick={() => {
+                resetTransactionData()
+                resetTxCancelled()
+              }}
+              className={classes.amountInput}
+              style={{ width: '300px' }}
+            >
+              {'Close'}
+            </PrimaryButton>
+          </div>
+        </div>
+      ) : (
         <div>
           <div className={classes.settingsContainer}>
             <Typography variant="caption" className={classes.explainer} component="div">
-              {closeTitle}
+              Buy back oSQTH & close position
             </Typography>
             <span className={classes.settingsButton}>
               <TradeSettings />
@@ -770,7 +862,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
           <div className={classes.thirdHeading}>
             <PrimaryInput
               isFullClose={closeType === CloseType.FULL}
-              value={amountInputValue}
+              value={sqthTradeAmount}
               onChange={(v) => handleAmountInput(v)}
               label="Amount"
               tooltip={Tooltips.SellCloseAmount}
@@ -818,6 +910,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
                 if (event.target.value === CloseType.FULL) {
                   setShortCloseMax()
                 }
+                setCollatPercent(200)
                 return setCloseType(event.target.value as CloseType)
               }}
               displayEmpty
@@ -926,8 +1019,9 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
                 onClick={buyBackAndClose}
                 className={classes.amountInput}
                 disabled={
-                  amountInputValue === '0' ||
+                  sqthTradeAmount === '0' ||
                   buyLoading ||
+                  transactionInProgress ||
                   collatPercent < 150 ||
                   !!closeError ||
                   !!existingLongError ||
@@ -942,7 +1036,7 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
                     : { width: '300px' }
                 }
               >
-                {buyLoading ? (
+                {buyLoading || transactionInProgress ? (
                   <CircularProgress color="primary" size="1.5rem" />
                 ) : (
                   <>
@@ -968,57 +1062,17 @@ const CloseShort: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCom
             </Typography>
           </div>
         </div>
-      ) : (
-        <div>
-          <Confirmed
-            confirmationMessage={`Closed ${confirmedAmount} Squeeth Short Position`}
-            txnHash={txHash}
-            confirmType={ConfirmType.TRADE}
-          />
-          <div className={classes.buttonDiv}>
-            <PrimaryButton
-              variant="contained"
-              onClick={() => setConfirmed(false)}
-              className={classes.amountInput}
-              style={{ width: '300px' }}
-            >
-              {'Close'}
-            </PrimaryButton>
-          </div>
-        </div>
       )}
-    </div>
+    </>
   )
 }
 
 type SellType = {
-  balance: number
   open: boolean
-  closeTitle: string
-  setTradeCompleted: any
 }
 
-const Short: React.FC<SellType> = ({ balance, open, closeTitle, setTradeCompleted }) => {
-  // const handleCloseDualInputUpdate = (v: number | string, currentInput: string) => {
-  //   if (isNaN(+v) || +v === 0) v = 0
-  //   if (currentInput === 'ETH') {
-  //     setAltTradeAmount(new BigNumber(v))
-  //     getBuyQuoteForETH(new BigNumber(v)).then((val) => {
-  //       setAmount(val.amountOut)
-  //     })
-  //   } else {
-  //     setAmount(new BigNumber(v))
-  //     getBuyQuote(new BigNumber(v)).then((val) => {
-  //       setAltTradeAmount(val.amountIn)
-  //     })
-  //   }
-  // }
-
-  return open ? (
-    <OpenShort balance={balance} open={open} closeTitle={closeTitle} setTradeCompleted={setTradeCompleted} />
-  ) : (
-    <CloseShort balance={balance} open={open} closeTitle={closeTitle} setTradeCompleted={setTradeCompleted} />
-  )
+const Short: React.FC<SellType> = ({ open }) => {
+  return open ? <OpenShort open={open} /> : <CloseShort open={open} />
 }
 
-export default Short
+export default memo(Short)

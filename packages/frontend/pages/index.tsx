@@ -8,12 +8,12 @@ import ExpandLessIcon from '@material-ui/icons/NavigateBefore'
 import ExpandMoreIcon from '@material-ui/icons/NavigateNext'
 import Image from 'next/image'
 import { useState } from 'react'
-import { useAtom } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 
 import squeethTokenSymbol from '../public/images/Squeeth.svg'
 import { PrimaryButton } from '@components/Button'
 import { LongChart } from '@components/Charts/LongChart'
-import { ShortChart } from '@components/Charts/ShortChart'
+import { MemoizedShortChart as ShortChart } from '@components/Charts/ShortChart'
 import MobileModal from '@components/Modal/MobileModal'
 import Nav from '@components/Nav'
 import PositionCard from '@components/PositionCard'
@@ -24,18 +24,22 @@ import { WelcomeModal } from '@components/Trade/WelcomeModal'
 import { Vaults } from '../src/constants'
 import { Tooltips } from '@constants/enums'
 import { useRestrictUser } from '@context/restrict-user'
-import { TradeProvider, useTrade } from '@context/trade'
-import { useController } from '@hooks/contracts/useController'
-// import {
-//   indexAtom,
-//   markAtom,
-//   currentImpliedFundingAtom,
-//   impliedVolAtom,
-//   dailyHistoricalFundingAtom,
-//   normFactorAtom,
-// } from '@hooks/contracts/useController'
-import { TradeType } from '../src/types'
+
+import { PositionType, TradeType } from '../src/types'
 import { toTokenAmount } from '@utils/calculations'
+import {
+  normFactorAtom,
+  impliedVolAtom,
+  currentImpliedFundingAtom,
+  indexAtom,
+  markAtom,
+  dailyHistoricalFundingAtom,
+} from 'src/state/controller/atoms'
+import { usePositionsAndFeesComputation } from 'src/state/positions/hooks'
+import { actualTradeTypeAtom, ethTradeAmountAtom, sqthTradeAmountAtom, tradeTypeAtom } from 'src/state/trade/atoms'
+import { positionTypeAtom } from 'src/state/positions/atoms'
+import { useResetAtom } from 'jotai/utils'
+import { isTransactionFirstStepAtom, transactionDataAtom, transactionLoadingAtom } from 'src/state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -306,12 +310,18 @@ const useStyles = makeStyles((theme) =>
         fontWeight: theme.typography.fontWeightBold,
       },
     },
+    displayBlock: {
+      display: 'block',
+    },
+    displayNone: {
+      display: 'none',
+    },
   }),
 )
 
 const Header: React.FC = () => {
   const classes = useStyles()
-  const { tradeType } = useTrade()
+  const tradeType = useAtomValue(tradeTypeAtom)
 
   return (
     <>
@@ -342,13 +352,26 @@ const Header: React.FC = () => {
 
 const TabComponent: React.FC = () => {
   const classes = useStyles()
-  const { tradeType, setTradeType } = useTrade()
+  const [tradeType, setTradeType] = useAtom(tradeTypeAtom)
+  const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
+  const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
+  const resetTransactionData = useResetAtom(transactionDataAtom)
+  const transactionInProgress = useAtomValue(transactionLoadingAtom)
+  const isTxFirstStep = useAtomValue(isTransactionFirstStepAtom)
 
   return (
     <div>
       <SqueethTabs
         value={tradeType}
-        onChange={(evt, val) => setTradeType(val)}
+        onChange={(evt, val) => {
+          setTradeType(val)
+
+          if (!transactionInProgress || !isTxFirstStep) {
+            resetEthTradeAmount()
+            resetSqthTradeAmount()
+            resetTransactionData()
+          }
+        }}
         aria-label="Sub nav tabs"
         className={classes.subNavTabs}
         centered
@@ -371,8 +394,14 @@ const TabComponent: React.FC = () => {
 
 const SqueethInfo: React.FC = () => {
   const classes = useStyles()
-  const { actualTradeType } = useTrade()
-  const { dailyHistoricalFunding, mark, index, impliedVol, currentImpliedFunding, normFactor } = useController()
+  const actualTradeType = useAtomValue(actualTradeTypeAtom)
+  const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
+  const mark = useAtomValue(markAtom)
+  const index = useAtomValue(indexAtom)
+  const impliedVol = useAtomValue(impliedVolAtom)
+  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
+  const normFactor = useAtomValue(normFactorAtom)
+  usePositionsAndFeesComputation()
 
   const [showAdvanced, setShowAdvanced] = useState(false)
 
@@ -403,7 +432,11 @@ const SqueethInfo: React.FC = () => {
                 <InfoIcon fontSize="small" className={classes.infoIcon} />
               </Tooltip>
             </div>
-            <Typography>{(dailyHistoricalFunding.funding * 100).toFixed(2) || 'loading'}%</Typography>
+            <Typography>
+              {dailyHistoricalFunding.funding === 0
+                ? 'loading'
+                : (dailyHistoricalFunding.funding * 100).toFixed(2) + '%'}
+            </Typography>
           </div>
           <div className={classes.infoItem}>
             <div className={classes.infoLabel}>
@@ -414,7 +447,9 @@ const SqueethInfo: React.FC = () => {
                 <InfoIcon fontSize="small" className={classes.infoIcon} />
               </Tooltip>
             </div>
-            <Typography>{(currentImpliedFunding * 100).toFixed(2) || 'loading'}%</Typography>
+            <Typography>
+              {currentImpliedFunding === 0 ? 'loading' : (currentImpliedFunding * 100).toFixed(2) + '%'}
+            </Typography>
           </div>
           <div className={classes.infoItem}>
             <div className={classes.infoLabel}>
@@ -516,10 +551,9 @@ function TradePage() {
   const classes = useStyles()
   const { isRestricted } = useRestrictUser()
 
-  const { tradeType } = useTrade()
+  const tradeType = useAtomValue(tradeTypeAtom)
   const [showMobileTrade, setShowMobileTrade] = useState(false)
   const [isWelcomeModalOpen, setWelcomeModalOpen] = useState(false)
-  const [tradeCompleted, setTradeCompleted] = useState(false)
 
   const handleClose = () => {
     setWelcomeModalOpen(false)
@@ -535,31 +569,21 @@ function TradePage() {
               <Header />
               <div className={classes.positionContainer}>
                 <SqueethInfo />
-                <PositionCard tradeCompleted={tradeCompleted} />
+                <PositionCard />
               </div>
             </div>
             <div className={classes.tradeDetails}>
               {tradeType === TradeType.LONG ? (
-                <>
-                  <div>
-                    <LongChart />
-                  </div>
-                </>
+                <LongChart />
               ) : (
-                <>
-                  <div>
-                    <ShortChart vault={Vaults.Short} longAmount={0} showPercentage={true} setCustomLong={() => null} />
-                  </div>
-                </>
+                <ShortChart vault={Vaults.Short} longAmount={0} showPercentage={true} setCustomLong={() => null} />
               )}
             </div>
           </div>
 
           <div className={classes.ticket}>
             <TabComponent />
-            <Card className={classes.innerTicket}>
-              {!isRestricted ? <Trade setTradeCompleted={setTradeCompleted} /> : <RestrictionInfo />}
-            </Card>
+            <Card className={classes.innerTicket}>{!isRestricted ? <Trade /> : <RestrictionInfo />}</Card>
           </div>
         </div>
       </Hidden>
@@ -574,7 +598,7 @@ function TradePage() {
             )}
           </div>
           <div className={classes.mobileSpacer}>
-            <PositionCard tradeCompleted={tradeCompleted} />
+            <PositionCard />
           </div>
         </div>
         <div className={classes.mobileAction}>
@@ -588,7 +612,7 @@ function TradePage() {
         <MobileModal title="TRADE" isOpen={showMobileTrade} onClose={() => setShowMobileTrade(false)}>
           <TabComponent />
           <Card className={classes.innerTicket} style={{ textAlign: 'center', marginTop: '8px' }}>
-            {!isRestricted ? <Trade setTradeCompleted={setTradeCompleted} /> : <RestrictionInfo />}
+            {!isRestricted ? <Trade /> : <RestrictionInfo />}
           </Card>
         </MobileModal>
       </Hidden>
@@ -599,9 +623,9 @@ function TradePage() {
 
 export function App() {
   return (
-    <TradeProvider>
-      <TradePage />
-    </TradeProvider>
+    // <TradeProvider>
+    <TradePage />
+    // </TradeProvider>
   )
 }
 

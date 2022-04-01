@@ -4,7 +4,6 @@ export const SWAPS_ROPSTEN_SUBSCRIPTION = gql`
   subscription subscriptionSwapsRopsten(
     $poolAddress: String!
     $recipients: [String!]!
-    $tokenAddress: Bytes!
     $origin: Bytes!
     $orderDirection: String!
     $recipient_not: Bytes!
@@ -13,6 +12,8 @@ export const SWAPS_ROPSTEN_SUBSCRIPTION = gql`
       orderBy: timestamp
       orderDirection: $orderDirection
       where: { pool: $poolAddress, origin: $origin, recipient_in: $recipients, recipient_not: $recipient_not }
+      first: 1000
+      skip: 0
     ) {
       pool {
         token0 {
@@ -43,14 +44,16 @@ export const SWAPS_ROPSTEN_QUERY = gql`
   query swapsRopsten(
     $poolAddress: String!
     $recipients: [String!]!
-    $tokenAddress: Bytes!
     $origin: Bytes!
     $orderDirection: String!
+    $recipient_not: Bytes!
   ) {
     swaps(
       orderBy: timestamp
       orderDirection: $orderDirection
-      where: { pool: $poolAddress, origin: $origin, recipient_in: $recipients }
+      where: { pool: $poolAddress, origin: $origin, recipient_in: $recipients, recipient_not: $recipient_not }
+      first: 1000
+      skip: 0
     ) {
       pool {
         token0 {

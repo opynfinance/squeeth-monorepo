@@ -1,28 +1,31 @@
 import { useQuery } from '@apollo/client'
 import BigNumber from 'bignumber.js'
+import { useAtomValue } from 'jotai'
 
 import { TransactionType } from '../constants'
-import { useWallet } from '@context/wallet'
-import { useWorldContext } from '@context/world'
 import { transactions_positionSnapshots } from '../queries/uniswap/__generated__/transactions'
 import TRANSACTIONS_QUERY from '../queries/uniswap/transactionsQuery'
-import { useAddresses } from './useAddress'
 import { useUserCrabTxHistory } from './useUserCrabTxHistory'
 import { CrabStrategyTxType } from '../types'
-import { usePositions } from '@context/positions'
+import { addressAtom } from 'src/state/wallet/atoms'
+import { addressesAtom, isWethToken0Atom } from 'src/state/positions/atoms'
+import { useEthPriceMap } from 'src/state/ethPriceCharts/atoms'
+import { useSwaps } from 'src/state/positions/hooks'
 
 const bigZero = new BigNumber(0)
 
 export const useTransactionHistory = () => {
-  const { squeethPool, weth, oSqueeth, shortHelper, swapRouter } = useAddresses()
-  const { address } = useWallet()
-  const { ethPriceMap } = useWorldContext()
-  const { swaps } = usePositions()
+  const { squeethPool, shortHelper, swapRouter } = useAtomValue(addressesAtom)
+  const address = useAtomValue(addressAtom)
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
+  const ethPriceMap = useEthPriceMap()
+  const { data: swapsQuery } = useSwaps()
+  const swaps = swapsQuery?.swaps
 
   const { data, loading } = useQuery(TRANSACTIONS_QUERY, {
     variables: {
-      poolAddress: squeethPool.toLowerCase(),
-      owner: address?.toLowerCase(),
+      poolAddress: squeethPool,
+      owner: address,
       origin: address || '',
       recipients: [shortHelper, address || '', swapRouter],
       orderDirection: 'desc',
@@ -30,9 +33,7 @@ export const useTransactionHistory = () => {
     fetchPolicy: 'cache-and-network',
   })
 
-  const { data: crabData } = useUserCrabTxHistory(address?.toLowerCase() || '')
-
-  const isWethToken0 = parseInt(weth, 16) < parseInt(oSqueeth, 16)
+  const { data: crabData } = useUserCrabTxHistory(address || '')
 
   const addRemoveLiquidityTrans =
     ethPriceMap &&

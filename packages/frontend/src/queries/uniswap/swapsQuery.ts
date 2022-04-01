@@ -2,8 +2,6 @@ import { gql } from '@apollo/client'
 
 export const SWAPS_SUBSCRIPTION = gql`
   subscription subscriptionSwaps(
-    $poolAddress: String!
-    $recipients: [String!]!
     $tokenAddress: Bytes!
     $origin: Bytes!
     $orderDirection: String!
@@ -13,6 +11,8 @@ export const SWAPS_SUBSCRIPTION = gql`
       orderBy: timestamp
       orderDirection: $orderDirection
       where: { token1: $tokenAddress, origin: $origin, recipient_not: $recipient_not }
+      first: 1000
+      skip: 0
     ) {
       pool {
         token0 {
@@ -40,18 +40,13 @@ export const SWAPS_SUBSCRIPTION = gql`
 `
 
 export const SWAPS_QUERY = gql`
-  query swaps(
-    $poolAddress: String!
-    $recipients: [String!]!
-    $tokenAddress: Bytes!
-    $origin: Bytes!
-    $orderDirection: String!
-    $recipient_not: Bytes!
-  ) {
+  query swaps($tokenAddress: Bytes!, $origin: Bytes!, $orderDirection: String!, $recipient_not: Bytes!) {
     swaps(
       orderBy: timestamp
       orderDirection: $orderDirection
       where: { token1: $tokenAddress, origin: $origin, recipient_not: $recipient_not, poolAddress: $poolAddress }
+      first: 1000
+      skip: 0
     ) {
       pool {
         token0 {

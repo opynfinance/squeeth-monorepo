@@ -2,15 +2,32 @@ import { BIG_ZERO } from '../constants'
 import { useEffect, useMemo, useState } from 'react'
 import { useUserCrabTxHistory } from './useUserCrabTxHistory'
 import { CrabStrategyTxType } from '../types'
-import { useCrab } from '@context/crabStrategy'
-import { useWorldContext } from '@context/world'
+import { toTokenAmount } from '@utils/calculations'
+import { crabLoadingAtom, currentEthValueAtom } from 'src/state/crab/atoms'
+import { useAtomValue } from 'jotai'
+import { useTokenBalance } from './contracts/useTokenBalance'
+import { addressesAtom } from 'src/state/positions/atoms'
+import { indexAtom } from 'src/state/controller/atoms'
 
 export const useCrabPosition = (user: string) => {
+  const crabLoading = useAtomValue(crabLoadingAtom)
+  const currentEthValue = useAtomValue(currentEthValueAtom)
+
+  const { crabStrategy } = useAtomValue(addressesAtom)
   const { loading, data } = useUserCrabTxHistory(user)
-  const { loading: crabLoading, userCrabBalance, currentEthValue, ethIndexPrice } = useCrab()
+  const { value: userCrabBalance, loading: userCrabBalanceLoading } = useTokenBalance(crabStrategy, 5, 18)
+
+  const index = useAtomValue(indexAtom)
+  const ethIndexPrice = toTokenAmount(index, 18).sqrt()
 
   const [minCurrentEth, setMinCurrentEth] = useState(BIG_ZERO)
   const [minCurrentUsd, setMinCurrentUsd] = useState(BIG_ZERO)
+  const [minPnlUsd, setMinPnlUsd] = useState(BIG_ZERO)
+  const [minPnL, setMinPnL] = useState(BIG_ZERO)
+
+  const depositedDepedancy = data
+    ?.map((item) => `${item.ethAmount.toString()}:${item.lpAmount.toString()}:${item.ethUsdValue.toString()}`)
+    .join(' ')
 
   const { depositedEth, usdAmount: depositedUsd } = useMemo(() => {
     if (loading || !data) return { depositedEth: BIG_ZERO, usdAmount: BIG_ZERO }
@@ -38,29 +55,30 @@ export const useCrabPosition = (user: string) => {
     )
 
     return { depositedEth, usdAmount }
-  }, [loading])
+  }, [depositedDepedancy, loading])
 
   useEffect(() => {
-    if (crabLoading) return
+    if (crabLoading || userCrabBalanceLoading) return
     calculateCurrentValue()
   }, [
     userCrabBalance.toString(),
     depositedEth.toString(),
+    depositedUsd.toString(),
     ethIndexPrice.toString(),
     crabLoading,
     currentEthValue.toString(),
   ])
 
   const calculateCurrentValue = async () => {
-    setMinCurrentEth(currentEthValue)
-    setMinCurrentUsd(currentEthValue.times(ethIndexPrice))
-  }
-
-  const { minPnL, minPnlUsd } = useMemo(() => {
+    const minCurrentUsd = currentEthValue.times(ethIndexPrice)
     const minPnlUsd = minCurrentUsd.minus(depositedUsd)
-    const minPnL = minPnlUsd.div(depositedUsd).times(100)
-    return { minPnlUsd, minPnL }
-  }, [depositedUsd.toString(), minCurrentUsd.toString()])
+
+    setMinCurrentEth(currentEthValue)
+    setMinCurrentUsd(minCurrentUsd)
+
+    setMinPnlUsd(minPnlUsd)
+    setMinPnL(minPnlUsd.div(depositedUsd).times(100))
+  }
 
   return {
     depositedEth,
@@ -69,6 +87,6 @@ export const useCrabPosition = (user: string) => {
     minCurrentUsd,
     minPnL,
     minPnlUsd,
-    loading: crabLoading || loading,
+    loading: crabLoading || loading || userCrabBalanceLoading,
   }
 }
