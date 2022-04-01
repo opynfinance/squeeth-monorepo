@@ -1,11 +1,12 @@
 import { useQuery } from '@apollo/client'
 import { squeethClient } from '@utils/apollo-client'
-import { useWallet } from '@context/wallet'
 import { NORMHISTORY_TIMESTAMP_QUERY } from '../queries/uniswap/normHistoryQuery'
 import { useEffect, useState } from 'react'
+import { networkIdAtom } from 'src/state/wallet/atoms'
+import { useAtomValue } from 'jotai'
 
 export const useNormHistoryFromTimestamps = (timestamps: string[] | undefined) => {
-  const { networkId } = useWallet()
+  const { networkId } = useAtomValue(networkIdAtom)
   const [timeIndex, setTimeIndex] = useState(0)
   const [normHistoryItems, setNormHistoryItems] = useState<any[]>([])
   const timestamp = timestamps && timestamps.length > 0 ? Number(timestamps[timeIndex]) : 0

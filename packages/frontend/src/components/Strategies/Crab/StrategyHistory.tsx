@@ -78,6 +78,8 @@ export const CrabStrategyHistory: React.FC = () => {
     })
   }, [data, ethPrices, normHistoryItems])
 
+  console.log('ccc', hedgeWithETHPriceNF)
+
   const [txType, setTxType] = useState(TxType.HEDGES)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
 

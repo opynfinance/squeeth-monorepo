@@ -1,9 +1,10 @@
 import { useQuery } from '@apollo/client'
 import { uniswapClient } from '@utils/apollo-client'
-import { useWallet } from '@context/wallet'
 import { ETHPRICE_QUERY } from '../queries/uniswap/ethPriceQuery'
 import { useEffect, useState } from 'react'
 import { getEthPriceAtTransactionTime } from 'src/lib/pnl'
+import { networkIdAtom } from 'src/state/wallet/atoms'
+import { useAtomValue } from 'jotai'
 
 export interface TxItem {
   timestamp: string
@@ -11,7 +12,7 @@ export interface TxItem {
 }
 
 export const useETHPrices = (items: TxItem[] | undefined) => {
-  const { networkId } = useWallet()
+  const { networkId } = useAtomValue(networkIdAtom)
   const [itemIndex, setItemIndex] = useState(0)
   const [ethPrices, setETHPrices] = useState<number[]>([])
   const blockNo = items && items.length > 0 ? items[itemIndex].blockNo : 0
