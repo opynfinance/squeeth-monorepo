@@ -14,6 +14,8 @@ import {
   vaultAtom,
 } from 'src/state/positions/atoms'
 import { normFactorAtom } from 'src/state/controller/atoms'
+import useAppEffect from './useAppEffect'
+import useAppCallback from './useAppCallback'
 
 export const useVaultData = (vid: number) => {
   const [vault, setVault] = useAtom(vaultAtom)
@@ -30,7 +32,7 @@ export const useVaultData = (vid: number) => {
   const connected = useAtomValue(connectedWalletAtom)
   const address = useAtomValue(addressAtom)
 
-  const updateVault = async () => {
+  const updateVault = useAppCallback(async () => {
     if (!connected || !ready) return
 
     const _vault = await getVault(vid)
@@ -50,11 +52,24 @@ export const useVaultData = (vid: number) => {
       setExistingLiqPrice(new BigNumber(liquidationPrice))
       setVaultLoading(false)
     })
-  }
+  }, [
+    connected,
+    getCollatRatioAndLiqPrice,
+    getVault,
+    ready,
+    setCollatPercent,
+    setExistingCollat,
+    setExistingCollatPercent,
+    setExistingLiqPrice,
+    setVault,
+    vid,
+  ])
 
-  useEffect(() => {
+  useAppEffect(() => {
     updateVault()
-  }, [vid, normFactor.toString(), address, connected, ready, getVault, getCollatRatioAndLiqPrice])
+  }, [updateVault])
+
+  console.log('callback')
 
   return {
     vault,
