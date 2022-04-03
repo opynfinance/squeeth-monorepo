@@ -1,7 +1,19 @@
+import { UNI_V3_FACTORY } from '@constants/address'
 import { Token } from '@uniswap/sdk-core'
 import { IV3PoolProvider, V3PoolAccessor } from '@uniswap/smart-order-router'
 import { ProviderConfig } from '@uniswap/smart-order-router/build/main/src/providers/provider'
-import { FeeAmount } from '@uniswap/v3-sdk'
+import { computePoolAddress, FeeAmount, Pool } from '@uniswap/v3-sdk'
+import _ from 'lodash'
+
+type ISlot0 = {
+  sqrtPriceX96: BigNumber
+  tick: number
+  observationIndex: number
+  observationCardinality: number
+  observationCardinalityNext: number
+  feeProtocol: number
+  unlocked: boolean
+}
 
 export class V3PoolProvider implements IV3PoolProvider {
   // Computing pool addresses is slow as it requires hashing, encoding etc.
@@ -103,7 +115,7 @@ export class V3PoolProvider implements IV3PoolProvider {
   ): { poolAddress: string; token0: Token; token1: Token } {
     const [token0, token1] = tokenA.sortsBefore(tokenB) ? [tokenA, tokenB] : [tokenB, tokenA]
 
-    const cacheKey = `${this.chainId}/${token0.address}/${token1.address}/${feeAmount}`
+    const cacheKey = `${token0.address}/${token1.address}/${feeAmount}`
 
     const cachedAddress = this.POOL_ADDRESS_CACHE[cacheKey]
 
@@ -112,7 +124,7 @@ export class V3PoolProvider implements IV3PoolProvider {
     }
 
     const poolAddress = computePoolAddress({
-      factoryAddress: V3_CORE_FACTORY_ADDRESS,
+      factoryAddress: UNI_V3_FACTORY[3],
       tokenA: token0,
       tokenB: token1,
       fee: feeAmount,
