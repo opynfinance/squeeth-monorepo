@@ -1,6 +1,6 @@
 import { createStyles, makeStyles, Typography, InputAdornment, TextField, CircularProgress } from '@material-ui/core'
 import { useAtom, useAtomValue } from 'jotai'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import debounce from 'lodash.debounce'
 import BigNumber from 'bignumber.js'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
@@ -30,11 +30,12 @@ import { isLongAtom } from 'src/state/positions/atoms'
 import { useComputeSwaps, useFirstValidVault } from 'src/state/positions/hooks'
 import { useVaultData } from '@hooks/useVaultData'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
-import { useGetDebtAmount, useNormFactor } from 'src/state/controller/hooks'
+import { useGetDebtAmount } from 'src/state/controller/hooks'
 import TradeInfoItem from '../TradeInfoItem'
 import UniswapData from '../UniswapData'
 import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
 import Cancelled from '../Cancelled'
+import { normFactorAtom } from 'src/state/controller/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -111,6 +112,9 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
   const [confirmedAmount, setConfirmedAmount] = useState('0')
   const [liqPrice, setLiqPrice] = useState(new BigNumber(0))
   const [shortLoading, setShortLoading] = useState(false)
+  const [msgValue, setMsgValue] = useState(new BigNumber(0))
+  const [totalCollateralAmount, setTotalCollateralAmount] = useState(new BigNumber(0))
+  const [lastTypedInput, setLastTypedInput] = useState<'eth' | 'sqth' | null>(null)
   const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
   const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
@@ -132,7 +136,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
   const { vaults: shortVaults } = useVaultManager()
   const { squeethAmount: shortSqueethAmount } = useComputeSwaps()
   const { existingCollatPercent } = useVaultData(vaultId)
-  const normalizationFactor = useNormFactor()
+  const normalizationFactor = useAtomValue(normFactorAtom)
   const { cancelled, confirmed, failed, transactionData, resetTxCancelled, resetTransactionData } =
     useTransactionStatus()
 
@@ -155,12 +159,13 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
   }, [amount.toString(), collatPercent, shortVaults?.length])
 
   if (connected) {
-    if (
-      shortVaults.length &&
-      (shortVaults[firstValidVault].shortAmount.lt(amount) || shortVaults[firstValidVault].shortAmount.isZero())
-    ) {
-      inputError = 'Close amount exceeds position'
-    }
+    // if (
+    //   !open &&
+    //   shortVaults.length &&
+    //   (shortVaults[firstValidVault].shortAmount.lt(amount) || shortVaults[firstValidVault].shortAmount.isZero())
+    // ) {
+    //   inputError = 'Close amount exceeds position'
+    // }
     if (new BigNumber(quote.priceImpact).gt(3)) {
       priceImpactWarning = 'High Price Impact'
     }
@@ -194,30 +199,47 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
     if (liqp.toString() || liqp.toString() !== '0') setLiqPrice(liqp)
   }, [amount.toString(), collateral.toString(), normalizationFactor.toString()])
 
-  const handleChange = useCallback(
-    debounce((value: string, name: string | undefined) => {
-      if (name === 'sqth') {
-        getSellQuote(new BigNumber(value)).then((quote) => {
-          setQuote(quote)
-          setEthTradeAmount(quote.amountOut.toFixed(6))
-        })
-      } else if (name === 'eth') {
-        integrateETHInput(new BigNumber(value), collatPercent / 100, new BigNumber(0.1)).then((data) => {
-          setSqthTradeAmount(data.squeethAmount.toFixed(6))
-          setMinToReceive(data.ethBorrow)
-          setQuote(data.quote)
-        })
-      }
-    }, 500),
-    [
-      getSellQuote,
-      collatPercent,
-      integrateETHInput,
-      normalizationFactor.toString(),
-      amount.toString(),
-      collateral.toString(),
-    ],
+  const onSqthChange = async (value: string) => {
+    const [quote, debt] = await Promise.all([getSellQuote(new BigNumber(value)), getDebtAmount(new BigNumber(value))])
+
+    const result = debt.times(new BigNumber(collatPercent / 100)).minus(quote.amountOut)
+    setTotalCollateralAmount(debt.times(new BigNumber(collatPercent / 100)))
+    setMsgValue(result)
+    setEthTradeAmount(result.toFixed(6))
+    setQuote(quote)
+  }
+  const handleSqthChange = useMemo(() => debounce(onSqthChange, 500), [getSellQuote, getDebtAmount, collatPercent])
+
+  const onEthChange = async (value: string) => {
+    setMsgValue(new BigNumber(value))
+    const { squeethAmount, ethBorrow, quote } = await integrateETHInput(
+      new BigNumber(value),
+      collatPercent / 100,
+      slippageAmount,
+    )
+    setSqthTradeAmount(squeethAmount.toFixed(6))
+    setMinToReceive(ethBorrow)
+    setQuote(quote)
+    if (!squeethAmount.isZero()) {
+      const debt = await getDebtAmount(squeethAmount)
+      setTotalCollateralAmount(debt.times(new BigNumber(collatPercent / 100)))
+    }
+  }
+
+  const handleEthChange = useMemo(
+    () => debounce(onEthChange, 500),
+    [integrateETHInput, collatPercent, slippageAmount.toString()],
   )
+
+  useEffect(() => {
+    if (lastTypedInput === 'sqth') {
+      onSqthChange(sqthTradeAmount)
+    }
+
+    if (lastTypedInput === 'eth') {
+      onEthChange(ethTradeAmount)
+    }
+  }, [collatPercent, lastTypedInput])
 
   useEffect(() => {
     if (failed) setShortLoading(false)
@@ -226,7 +248,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
   const handleSubmit = async () => {
     setShortLoading(true)
     try {
-      await flashSwapAndMint(vaultId, collateral, amount, minToReceive, () => {
+      await flashSwapAndMint(vaultId, totalCollateralAmount, amount, minToReceive, msgValue, () => {
         setConfirmedAmount(amount.toFixed(6).toString())
         setShortLoading(false)
         setTradeSuccess(true)
@@ -294,9 +316,10 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
             <PrimaryInput
               name="eth"
               value={ethTradeAmount}
-              onChange={(val, name) => {
+              onChange={(val) => {
                 setEthTradeAmount(val)
-                handleChange(val, name)
+                setLastTypedInput('eth')
+                handleEthChange(val)
               }}
               label="Collateral"
               actionTxt="Max"
@@ -329,7 +352,9 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
                 value={collatPercent}
                 type="number"
                 style={{ width: 300 }}
-                onChange={(event) => setCollatPercent(Number(event.target.value))}
+                onChange={(event) => {
+                  setCollatPercent(Number(event.target.value))
+                }}
                 id="filled-basic"
                 label="Collateral Ratio"
                 variant="outlined"
@@ -352,19 +377,16 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
             <CollatRange
               onCollatValueChange={(val) => {
                 setCollatPercent(val)
-                integrateETHInput(new BigNumber(ethTradeAmount), val / 100, new BigNumber(0.1)).then((data) => {
-                  setSqthTradeAmount(data.squeethAmount.toFixed(6))
-                  setMinToReceive(data.ethBorrow)
-                })
               }}
               collatValue={collatPercent}
             />
             <PrimaryInput
               name="sqth"
               value={sqthTradeAmount}
-              onChange={(val, name) => {
+              onChange={(val) => {
                 setSqthTradeAmount(val)
-                handleChange(val, name)
+                setLastTypedInput('sqth')
+                handleSqthChange(val)
               }}
               label="Minted Sqth"
               actionTxt="Max"
