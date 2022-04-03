@@ -1,12 +1,14 @@
 import BigNumber from 'bignumber.js'
+import { useAtomValue } from 'jotai'
 import { useCallback } from 'react'
+import { normFactorAtom } from 'src/state/controller/atoms'
 
-import { useGetCollatRatioAndLiqPrice, useNormFactor } from 'src/state/controller/hooks'
+import { useGetCollatRatioAndLiqPrice } from 'src/state/controller/hooks'
 import { useGetSellQuote } from 'src/state/squeethPool/hooks'
 import { useETHPrice } from './useETHPrice'
 
 export const useIntergrateEthInput = () => {
-  const normFactor = useNormFactor()
+  const normFactor = useAtomValue(normFactorAtom)
   const ethPrice = useETHPrice()
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
   const getSellQuote = useGetSellQuote()
