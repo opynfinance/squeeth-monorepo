@@ -274,6 +274,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
         setIsTxFirstStep(true)
         await updateOperator(vaultId, controllerHelper, () => {
           setIsVaultApproved(true)
+          setShortLoading(false)
         })
       } else {
         await flashSwapAndMint(vaultId, totalCollateralAmount, amount, minToReceive, msgValue, () => {
