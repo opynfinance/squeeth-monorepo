@@ -36,3 +36,7 @@ export function getCollatPercentStatus(collatPercent: number) {
   if (collatPercent < 225) return CollateralStatus.RISKY
   return CollateralStatus.SAFE
 }
+
+export const mergeQuery = (existing = [], incoming: any[]) => {
+  return incoming.length === 0 ? existing : incoming
+}
