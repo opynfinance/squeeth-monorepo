@@ -260,8 +260,8 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
   useEffect(() => {
     if (!vaultId || !shortVaults?.length) return
 
-    setIsVaultApproved(shortVaults[firstValidVault].operator?.toLowerCase() === controllerHelper?.toLowerCase())
-  }, [vaultId])
+    setIsVaultApproved(shortVaults[firstValidVault]?.operator?.toLowerCase() === controllerHelper?.toLowerCase())
+  }, [controllerHelper, firstValidVault, shortVaults[firstValidVault]?.operator, vaultId])
 
   const handleSubmit = async () => {
     setShortLoading(true)
