@@ -8,7 +8,7 @@ import { useUsdAmount } from '@hooks/useUsdAmount'
 import { networkIdAtom } from 'src/state/wallet/atoms'
 import { useAtomValue } from 'jotai'
 import { useETHPrice } from '@hooks/useETHPrice'
-import { useNormFactor } from 'src/state/controller/hooks'
+import { normFactorAtom } from 'src/state/controller/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -50,7 +50,7 @@ const History: React.FC = () => {
   const { transactions } = useTransactionHistory()
   const networkId = useAtomValue(networkIdAtom)
   const ethPrice = useETHPrice()
-  const normalizationFactor = useNormFactor()
+  const normalizationFactor = useAtomValue(normFactorAtom)
 
   const classes = useStyles()
   const { getUsdAmt } = useUsdAmount()
