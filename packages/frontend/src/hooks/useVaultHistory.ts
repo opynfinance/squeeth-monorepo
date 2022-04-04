@@ -56,7 +56,7 @@ export const useVaultHistory = (vaultId: number) => {
           } else if (s.action === Action.BURN) {
             acc.mintedSqueeth = acc.mintedSqueeth.minus(s.oSqthAmount)
             acc.burnedSqueeth = acc.burnedSqueeth.plus(s.oSqthAmount)
-          } else if (s.action === Action.OPEN_SHORT) {
+          } else if (s.action === Action.OPEN_SHORT || s.action === Action.FLASH_SWAP_W_MINT) {
             acc.openShortSqueeth = acc.openShortSqueeth.plus(s.oSqthAmount)
           } else if (s.action === Action.CLOSE_SHORT) {
             acc.closeShortSqueeth = acc.closeShortSqueeth.plus(s.oSqthAmount)
