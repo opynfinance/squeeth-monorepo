@@ -36,6 +36,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
     address public immutable wPowerPerp;
     address public immutable weth;
     address public immutable nonfungiblePositionManager;
+    uint24 public immutable poolFee;
     bool public immutable isWethToken0;
 
     constructor(
@@ -53,6 +54,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         wPowerPerpPool = IController(_controller).wPowerPerpPool();
         wPowerPerp = IController(_controller).wPowerPerp();
         weth = IController(_controller).weth();
+
+        poolFee = IUniswapV3Pool(IController(_controller).wPowerPerpPool()).fee();
 
         IWPowerPerp(IController(_controller).wPowerPerp()).approve(_nonfungiblePositionManager, type(uint256).max);
         IWETH9(IController(_controller).weth()).approve(_nonfungiblePositionManager, type(uint256).max);
@@ -91,7 +94,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         _exactOutFlashSwap(
             weth,
             wPowerPerp,
-            IUniswapV3Pool(wPowerPerpPool).fee(),
+            poolFee,
             _params.wPowerPerpAmountToBurn.add(_params.wPowerPerpAmountToBuy),
             _params.maxToPay,
             uint8(ControllerHelperDataType.CALLBACK_SOURCE.FLASH_W_BURN),
@@ -118,7 +121,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         _exactInFlashSwap(
             wPowerPerp,
             weth,
-            IUniswapV3Pool(wPowerPerpPool).fee(),
+            poolFee,
             _params.wPowerPerpAmountToMint.add(_params.wPowerPerpAmountToSell),
             _params.minToReceive,
             uint8(ControllerHelperDataType.CALLBACK_SOURCE.FLASH_SELL_LONG_W_MINT),
@@ -261,7 +264,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             _exactInFlashSwap(
                 wPowerPerp,
                 weth,
-                IUniswapV3Pool(wPowerPerpPool).fee(),
+                poolFee,
                 wPowerPerpAmountInLp,
                 _params.limitPriceEthPerPowerPerp.mul(wPowerPerpAmountInLp).div(1e18),
                 uint8(ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
@@ -304,7 +307,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             _exactOutFlashSwap(
                 weth,
                 wPowerPerp,
-                IUniswapV3Pool(wPowerPerpPool).fee(),
+                poolFee,
                 _params.wPowerPerpAmountDesired.sub(wPowerPerpAmountInLp),
                 _params.limitPriceEthPerPowerPerp.mul(_params.wPowerPerpAmountDesired.sub(wPowerPerpAmountInLp)).div(
                     1e18
@@ -319,7 +322,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             _exactInFlashSwap(
                 wPowerPerp,
                 weth,
-                IUniswapV3Pool(wPowerPerpPool).fee(),
+                poolFee,
                 wPowerPerpExcess,
                 _params.limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18),
                 uint8(ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
@@ -689,7 +692,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             _exactOutFlashSwap(
                 weth,
                 wPowerPerp,
-                IUniswapV3Pool(wPowerPerpPool).fee(),
+                poolFee,
                 _wPowerPerpAmountToBurn.sub(_wPowerPerpAmount),
                 _limitPriceEthPerPowerPerp.mul(_wPowerPerpAmountToBurn.sub(_wPowerPerpAmount)).div(1e18),
                 uint8(ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP_BURN),
@@ -704,7 +707,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 _exactInFlashSwap(
                     wPowerPerp,
                     weth,
-                    IUniswapV3Pool(wPowerPerpPool).fee(),
+                    poolFee,
                     wPowerPerpExcess,
                     _limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18),
                     uint8(ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
