@@ -109,7 +109,7 @@ export const useComputeSwaps = () => {
   const { getUsdAmt } = useUsdAmount()
   const { data } = useSwaps()
 
-  const dataSwapDep = JSON.stringify(data?.swaps.map((s) => pick(s, ['amount0', 'amount1', 'timestamp'])) ?? [])
+  const dataSwapDep = (data?.swaps.map((s) => s.id) ?? []).join(',')
 
   const computedSwaps = useMemo(
     () =>
