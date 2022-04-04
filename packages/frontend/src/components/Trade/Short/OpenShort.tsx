@@ -128,7 +128,6 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
   const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
   const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
-  const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
   const [quote, setQuote] = useAtom(quoteAtom)
   const connected = useAtomValue(connectedWalletAtom)
   const isLong = useAtomValue(isLongAtom)
@@ -284,7 +283,6 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
           setTradeSuccess(true)
           setTradeCompleted(true)
           resetEthTradeAmount()
-          resetSqthTradeAmount()
           setCollatPercent(150)
         })
       }
@@ -422,10 +420,8 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
                 handleSqthChange(val)
               }}
               label="Minted Sqth"
-              actionTxt="Max"
               unit="oSQTH"
               tooltip={Tooltips.SellOpenAmount}
-              onActionClicked={() => setSqthTradeAmount('500')}
               hint={
                 inputError ? (
                   inputError
@@ -507,7 +503,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
                   <CircularProgress color="primary" size="1.5rem" />
                 ) : (
                   <>
-                    {!vaultId && isVaultApproved
+                    {isVaultApproved
                       ? 'Open Short'
                       : shortOpenPriceImpactErrorState && isVaultApproved
                       ? 'Open Short anyway'
