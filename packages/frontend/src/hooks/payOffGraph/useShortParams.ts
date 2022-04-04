@@ -5,7 +5,7 @@ export default function useShortParams(ethPrice: number, collatRatio: number) {
   const squeethIndex = ethPrice ** 2
   const mark = useAtomValue(markAtom)
   const index = useAtomValue(indexAtom)
-  const markRatio = Number(mark.div(index).toString())
+  const markRatio = mark.dividedBy(index).toNumber()
   const squeethMark = squeethIndex * markRatio
   const dailyNormFactor = squeethMark / (2 * squeethMark - squeethIndex)
   const initialCollat = collatRatio * ethPrice
