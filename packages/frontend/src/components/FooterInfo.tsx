@@ -11,7 +11,6 @@ import {
   markAtom,
   normFactorAtom,
 } from 'src/state/controller/atoms'
-import { useIndex } from 'src/state/controller/hooks'
 import { useGetWSqueethPositionValue, useGetWSqueethPositionValueInETH } from 'src/state/squeethPool/hooks'
 
 const useStyles = makeStyles((theme) =>

@@ -80,3 +80,15 @@ export const GreyButton = withStyles((theme) => ({
     },
   },
 }))(Button)
+
+export const PlainButton = withStyles((theme) => ({
+  root: {
+    padding: 0,
+    color: theme.palette.text.primary,
+    minWidth: '0px',
+    backgroundColor: 'transparent',
+    '&:hover': {
+      backgroundColor: 'transparent',
+    },
+  },
+}))(Button)

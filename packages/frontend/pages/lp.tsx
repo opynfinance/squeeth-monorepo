@@ -115,7 +115,7 @@ const LP: React.FC = () => {
               </Grid>
             </Grid>
           </Grid>
-          <Grid item xs={12} lg={5}>
+          <Grid item xs={12} lg={5} style={{ minWidth: '550px' }}>
             {seeLPIntro ? <LPIntroCard /> : <LPTrade />}
           </Grid>
         </Grid>
