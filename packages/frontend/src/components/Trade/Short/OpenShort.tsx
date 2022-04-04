@@ -88,6 +88,7 @@ const useStyles = makeStyles((theme) =>
     },
     caption: {
       marginTop: theme.spacing(1),
+      marginBottom: theme.spacing(1),
       fontSize: '13px',
     },
     hint: {
