@@ -37,7 +37,12 @@ import {
 } from "../generated/schema";
 import { loadOrCreateAccount } from "./util";
 
-import { BIGINT_ONE, BIGINT_ZERO, SHORT_HELPER_ADDR } from "./constants";
+import {
+  BIGINT_ONE,
+  BIGINT_ZERO,
+  SHORT_HELPER_ADDR,
+  CONTROLLER_HELPER_ADDR,
+} from "./constants";
 
 // Note: If a handler doesn't require existing field values, it is faster
 // _not_ to load the entity from the store. Instead, create it fresh with
@@ -222,6 +227,8 @@ export function handleMintShort(event: MintShort): void {
   let actionType: string;
   if (event.params.sender == SHORT_HELPER_ADDR) {
     actionType = "OPEN_SHORT";
+  } else if (event.params.sender == CONTROLLER_HELPER_ADDR) {
+    actionType = "FLASH_SWAP_W_MINT";
   } else {
     actionType = "MINT";
   }
