@@ -1,9 +1,18 @@
-import { createStyles, makeStyles, Typography, InputAdornment, TextField, CircularProgress } from '@material-ui/core'
+import {
+  createStyles,
+  makeStyles,
+  Typography,
+  InputAdornment,
+  TextField,
+  CircularProgress,
+  Tooltip,
+} from '@material-ui/core'
 import { useAtom, useAtomValue } from 'jotai'
 import { useEffect, useMemo, useState } from 'react'
 import debounce from 'lodash.debounce'
 import BigNumber from 'bignumber.js'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
+import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
 
 import { TradeSettings } from '@components/TradeSettings'
@@ -25,12 +34,12 @@ import { useFlashSwapAndMint } from 'src/state/controllerhelper/hooks'
 import { useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
 import { BIG_ZERO, MIN_COLLATERAL_AMOUNT } from '@constants/index'
-import { connectedWalletAtom } from 'src/state/wallet/atoms'
-import { isLongAtom } from 'src/state/positions/atoms'
+import { connectedWalletAtom, isTransactionFirstStepAtom } from 'src/state/wallet/atoms'
+import { addressesAtom, isLongAtom } from 'src/state/positions/atoms'
 import { useComputeSwaps, useFirstValidVault } from 'src/state/positions/hooks'
 import { useVaultData } from '@hooks/useVaultData'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
-import { useGetDebtAmount } from 'src/state/controller/hooks'
+import { useGetDebtAmount, useUpdateOperator } from 'src/state/controller/hooks'
 import TradeInfoItem from '../TradeInfoItem'
 import UniswapData from '../UniswapData'
 import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
@@ -115,6 +124,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
   const [msgValue, setMsgValue] = useState(new BigNumber(0))
   const [totalCollateralAmount, setTotalCollateralAmount] = useState(new BigNumber(0))
   const [lastTypedInput, setLastTypedInput] = useState<'eth' | 'sqth' | null>(null)
+  const [isVaultApproved, setIsVaultApproved] = useState(true)
   const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
   const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
@@ -125,6 +135,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
   const slippageAmount = useAtomValue(slippageAmountAtom)
+  const { controllerHelper } = useAtomValue(addressesAtom)
 
   const { data } = useWalletBalance()
   const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
@@ -133,12 +144,14 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
   const flashSwapAndMint = useFlashSwapAndMint()
   const getDebtAmount = useGetDebtAmount()
   const { firstValidVault, vaultId } = useFirstValidVault()
-  const { vaults: shortVaults } = useVaultManager()
+  const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
   const { squeethAmount: shortSqueethAmount } = useComputeSwaps()
   const { existingCollatPercent } = useVaultData(vaultId)
   const normalizationFactor = useAtomValue(normFactorAtom)
+  const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
   const { cancelled, confirmed, failed, transactionData, resetTxCancelled, resetTransactionData } =
     useTransactionStatus()
+  const updateOperator = useUpdateOperator()
 
   const amount = new BigNumber(sqthTradeAmount)
   const collateral = new BigNumber(ethTradeAmount)
@@ -245,27 +258,47 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
     if (failed) setShortLoading(false)
   }, [failed])
 
+  useEffect(() => {
+    if (!vaultId || !shortVaults?.length) return
+
+    setIsVaultApproved(shortVaults[firstValidVault].operator?.toLowerCase() === controllerHelper?.toLowerCase())
+  }, [vaultId])
+
   const handleSubmit = async () => {
     setShortLoading(true)
     try {
-      await flashSwapAndMint(vaultId, totalCollateralAmount, amount, minToReceive, msgValue, () => {
-        setConfirmedAmount(amount.toFixed(6).toString())
+      if (vaultIDLoading) {
         setShortLoading(false)
-        setTradeSuccess(true)
-        setTradeCompleted(true)
-        resetEthTradeAmount()
-        resetSqthTradeAmount()
-        setCollatPercent(0)
-      })
+        return
+      }
+      if (vaultId && !isVaultApproved) {
+        setIsTxFirstStep(true)
+        await updateOperator(vaultId, controllerHelper, () => {
+          setIsVaultApproved(true)
+        })
+      } else {
+        await flashSwapAndMint(vaultId, totalCollateralAmount, amount, minToReceive, msgValue, () => {
+          setIsTxFirstStep(false)
+          setConfirmedAmount(amount.toFixed(6).toString())
+          setShortLoading(false)
+          setTradeSuccess(true)
+          setTradeCompleted(true)
+          resetEthTradeAmount()
+          resetSqthTradeAmount()
+          setCollatPercent(150)
+        })
+      }
     } catch (e) {
       console.log(e)
       setShortLoading(false)
     }
   }
 
+  const shortOpenPriceImpactErrorState = priceImpactWarning && !shortLoading && !(collatPercent < 150) && !inputError
+
   return (
     <>
-      {confirmed ? (
+      {confirmed && !isTxFirstStep ? (
         <div>
           <Confirmed
             confirmationMessage={`Opened ${confirmedAmount} Squeeth Short Position`}
@@ -454,7 +487,6 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
             ) : (
               <PrimaryButton
                 onClick={handleSubmit}
-                variant="contained"
                 className={classes.amountInput}
                 disabled={
                   shortLoading ||
@@ -464,8 +496,29 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
                   collateral.isZero() ||
                   collatPercent < 150
                 }
+                variant={shortOpenPriceImpactErrorState ? 'outlined' : 'contained'}
+                style={
+                  shortOpenPriceImpactErrorState
+                    ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
+                    : { width: '300px' }
+                }
               >
-                {shortLoading ? <CircularProgress color="primary" size="1.5rem" /> : ' Open Short'}
+                {shortLoading ? (
+                  <CircularProgress color="primary" size="1.5rem" />
+                ) : (
+                  <>
+                    {!vaultId && isVaultApproved
+                      ? 'Open Short'
+                      : shortOpenPriceImpactErrorState && isVaultApproved
+                      ? 'Open Short anyway'
+                      : 'Allow wrapper to manage vault (1/2)'}
+                    {!isVaultApproved ? (
+                      <Tooltip style={{ marginLeft: '2px' }} title={Tooltips.Operator}>
+                        <InfoOutlinedIcon fontSize="small" />
+                      </Tooltip>
+                    ) : null}
+                  </>
+                )}
               </PrimaryButton>
             )}
           </form>
