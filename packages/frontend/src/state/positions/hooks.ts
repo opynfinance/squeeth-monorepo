@@ -52,7 +52,7 @@ import { Vault } from '@queries/squeeth/__generated__/Vault'
 export const useSwaps = () => {
   const [networkId] = useAtom(networkIdAtom)
   const [address] = useAtom(addressAtom)
-  const { squeethPool, oSqueeth, shortHelper, swapRouter, crabStrategy } = useAtomValue(addressesAtom)
+  const { squeethPool, oSqueeth, shortHelper, swapRouter, crabStrategy, controllerHelper } = useAtomValue(addressesAtom)
   const { subscribeToMore, data, refetch, loading, error, startPolling, stopPolling } = useQuery<
     swaps | swapsRopsten,
     swapsVariables | swapsRopstenVariables
@@ -67,7 +67,7 @@ export const useSwaps = () => {
           }
         : {
             poolAddress: squeethPool,
-            recipients: [shortHelper, address || '', swapRouter],
+            recipients: [shortHelper, address || '', swapRouter, controllerHelper],
           }),
     },
     fetchPolicy: 'cache-and-network',
