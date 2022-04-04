@@ -477,6 +477,9 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 (uint256, ControllerHelperDataType.RebalanceVaultNftParams[])
             );
 
+            // check ownership
+            require(IShortPowerPerp(shortPowerPerp).ownerOf(vaultId) == _initiator);
+
             // deposit collateral into vault and withdraw LP NFT
             IController(controller).deposit{value: _amount}(vaultId);
             IController(controller).withdrawUniPositionToken(vaultId);
