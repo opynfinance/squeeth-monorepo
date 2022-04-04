@@ -33,7 +33,8 @@ library ControllerHelperDataType {
         DecreaseLpLiquidity,
         MintIntoVault,
         WithdrawFromVault,
-        MintNewLp
+        MintNewLp,
+        generalSwap
     }
     
     /// @dev params for flashswapWBurnBuyLong()
@@ -196,5 +197,13 @@ library ControllerHelperDataType {
     struct withdrawFromVault {  
         uint256 wPowerPerpToBurn;   // wPowerPerp amount to burn
         uint256 collateralToWithdraw;   // collateral to withdraw
+    }
+
+    /// @dev struct for swapping from tokenIn to tokenOut
+    struct swap {
+        address tokenIn;
+        address tokenOut;
+        uint256 amountIn;
+        uint256 limitPriceEthPerPowerPerp;
     }
 }

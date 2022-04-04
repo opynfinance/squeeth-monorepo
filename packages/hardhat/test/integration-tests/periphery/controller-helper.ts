@@ -72,6 +72,7 @@ describe("Controller helper integration test", function () {
     
     const ControllerHelperUtil = await ethers.getContractFactory("ControllerHelperUtil")
     const ControllerHelperUtilLib = (await ControllerHelperUtil.deploy());
+    
     const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper", {libraries: {ControllerHelperUtil: ControllerHelperUtilLib.address}});
     controllerHelper = (await ControllerHelperContract.deploy(controller.address, positionManager.address, uniswapFactory.address, constants.AddressZero)) as ControllerHelper;
   })
