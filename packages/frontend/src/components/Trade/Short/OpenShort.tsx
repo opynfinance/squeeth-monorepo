@@ -45,6 +45,7 @@ import UniswapData from '../UniswapData'
 import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
 import Cancelled from '../Cancelled'
 import { normFactorAtom } from 'src/state/controller/atoms'
+import useAppEffect from '@hooks/useAppEffect'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -159,7 +160,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
   let priceImpactWarning: string | undefined
   let vaultIdDontLoadedError: string | undefined
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (shortVaults.length) {
       const restOfShort = new BigNumber(shortVaults[firstValidVault].shortAmount).minus(amount)
 
@@ -168,7 +169,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
         setNeededCollat(_neededCollat)
       })
     }
-  }, [amount.toString(), collatPercent, shortVaults?.length])
+  }, [amount, collatPercent, firstValidVault, getDebtAmount, shortVaults])
 
   if (connected) {
     // if (
@@ -205,11 +206,11 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
     }
   }
 
-  useEffect(() => {
+  useAppEffect(() => {
     const rSqueeth = normalizationFactor.multipliedBy(amount || 1).dividedBy(10000)
     const liqp = collateral.dividedBy(rSqueeth.multipliedBy(1.5))
     if (liqp.toString() || liqp.toString() !== '0') setLiqPrice(liqp)
-  }, [amount.toString(), collateral.toString(), normalizationFactor.toString()])
+  }, [amount, collateral, normalizationFactor])
 
   const onSqthChange = async (value: string) => {
     const [quote, debt] = await Promise.all([getSellQuote(new BigNumber(value)), getDebtAmount(new BigNumber(value))])
@@ -251,7 +252,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
     if (lastTypedInput === 'eth') {
       onEthChange(ethTradeAmount)
     }
-  }, [collatPercent, lastTypedInput])
+  }, [collatPercent, ethTradeAmount, lastTypedInput, sqthTradeAmount])
 
   useEffect(() => {
     if (failed) setShortLoading(false)

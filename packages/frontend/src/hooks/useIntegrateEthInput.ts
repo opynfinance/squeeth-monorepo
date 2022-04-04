@@ -1,11 +1,11 @@
 import BigNumber from 'bignumber.js'
 import { useAtomValue } from 'jotai'
-import { useCallback } from 'react'
 import { normFactorAtom } from 'src/state/controller/atoms'
 
 import { useGetCollatRatioAndLiqPrice } from 'src/state/controller/hooks'
 import { useGetSellQuote } from 'src/state/squeethPool/hooks'
 import { useETHPrice } from './useETHPrice'
+import useAppCallback from '@hooks/useAppCallback'
 
 export const useIntergrateEthInput = () => {
   const normFactor = useAtomValue(normFactorAtom)
@@ -13,7 +13,7 @@ export const useIntergrateEthInput = () => {
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
   const getSellQuote = useGetSellQuote()
 
-  const integrateETHInput = useCallback(
+  const integrateETHInput = useAppCallback(
     async (ethDeposited: BigNumber, desiredCollatRatio: number, slippage: BigNumber) => {
       const emptyState = {
         squeethAmount: new BigNumber(0),
@@ -65,7 +65,7 @@ export const useIntergrateEthInput = () => {
       }
       return prevState
     },
-    [ethPrice.toString(), getCollatRatioAndLiqPrice, getSellQuote, normFactor.toString()],
+    [ethPrice, getCollatRatioAndLiqPrice, getSellQuote, normFactor],
   )
 
   return integrateETHInput

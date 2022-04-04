@@ -2,11 +2,11 @@ import { OSQUEETH_DECIMALS } from '@constants/index'
 import { fromTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
 import { useAtomValue } from 'jotai'
-import { useCallback } from 'react'
 import { controllerHelperContractAtom } from '../contracts/atoms'
 
 import { addressAtom } from '../wallet/atoms'
 import { useHandleTransaction } from '../wallet/hooks'
+import useAppCallback from '@hooks/useAppCallback'
 
 export const useFlashSwapAndMint = () => {
   const handleTransaction = useHandleTransaction()
@@ -21,7 +21,7 @@ export const useFlashSwapAndMint = () => {
    * @param minToReceive - minimum to receive for swap from squeeth -> eth
    * @returns
    */
-  const flashSwapAndMint = useCallback(
+  const flashSwapAndMint = useAppCallback(
     async (
       vaultId: number,
       ethCollateralDeposit: BigNumber,
@@ -54,7 +54,7 @@ export const useFlashSwapAndMint = () => {
       )
       return result
     },
-    [contract, address],
+    [address, contract],
   )
   return flashSwapAndMint
 }
