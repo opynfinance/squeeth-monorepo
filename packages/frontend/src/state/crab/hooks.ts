@@ -121,10 +121,14 @@ export const useCalculateCurrentValue = () => {
   const calculateEthWillingToPay = useCalculateEthWillingToPay()
 
   const calculateCurrentValue = useAppCallback(async () => {
+    if (!vault) return
     const collat = await getCollateralFromCrabAmount(userCrabBalance, contract, vault)
     const { amountIn: ethToPay } = await calculateEthWillingToPay(userCrabBalance, slippage)
-    if (collat) {
+    console.log('Crab balance', userCrabBalance.toString(), vault.collateralAmount.toString(), collat?.toString(), ethToPay.toString())
+    if (collat?.gt(0)) {
       setCurrentEthValue(collat.minus(ethToPay))
+      if (ethToPay.gt(0)) setCurrentEthLoading(false)
+    } else {
       setCurrentEthLoading(false)
     }
   }, [calculateEthWillingToPay, contract, slippage, userCrabBalance, setCurrentEthValue, setCurrentEthLoading, vault?.id])

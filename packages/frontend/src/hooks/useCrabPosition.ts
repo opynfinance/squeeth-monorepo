@@ -16,7 +16,6 @@ export const useCrabPosition = (user: string) => {
 
   const { crabStrategy } = useAtomValue(addressesAtom)
   const { loading, data } = useUserCrabTxHistory(user)
-  const { value: userCrabBalance, loading: userCrabBalanceLoading } = useTokenBalance(crabStrategy, 5, 18)
 
   const index = useAtomValue(indexAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
@@ -62,6 +61,7 @@ export const useCrabPosition = (user: string) => {
     const minCurrentUsd = currentEthValue.times(ethIndexPrice)
     const minPnlUsd = minCurrentUsd.minus(depositedUsd)
 
+    console.log(currentEthValue.toString())
     setMinCurrentEth(currentEthValue)
     setMinCurrentUsd(minCurrentUsd)
 
@@ -70,9 +70,9 @@ export const useCrabPosition = (user: string) => {
   }, [currentEthValue, depositedUsd, ethIndexPrice])
 
   useEffect(() => {
-    if (crabLoading || userCrabBalanceLoading) return
+    if (crabLoading || loading) return
     calculateCurrentValue()
-  }, [calculateCurrentValue, crabLoading, userCrabBalanceLoading])
+  }, [calculateCurrentValue, crabLoading, loading])
 
   return {
     depositedEth,
@@ -81,6 +81,6 @@ export const useCrabPosition = (user: string) => {
     minCurrentUsd,
     minPnL,
     minPnlUsd,
-    loading: crabLoading || loading || userCrabBalanceLoading,
+    loading: crabLoading || loading,
   }
 }
