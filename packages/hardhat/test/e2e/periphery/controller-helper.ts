@@ -3,7 +3,7 @@
 // in 2 terminal: MAINNET_FORK=true npx hardhat test ./test/e2e/periphery/controller-helper.ts
 import { ethers, network} from "hardhat"
 import { expect } from "chai";
-import { Contract, BigNumber, providers, BytesLike, BigNumberish } from "ethers";
+import { Contract, BigNumber, providers } from "ethers";
 import BigNumberJs from 'bignumber.js'
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
@@ -64,6 +64,7 @@ describe("ControllerHelper: mainnet fork", function () {
   let ethUsdcPool: Contract
   let controllerHelper: ControllerHelper
   let shortSqueeth: ShortPowerPerp
+  let swapRouter: string
 
   this.beforeAll("Setup mainnet fork contracts", async () => {
     depositor = await impersonateAddress("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045");
@@ -76,6 +77,7 @@ describe("ControllerHelper: mainnet fork", function () {
 
     positionManager = await ethers.getContractAt(POSITION_MANAGER_ABI, "0xC36442b4a4522E871399CD717aBDD847Ab11FE88");
     uniswapFactory = await ethers.getContractAt(FACTORY_ABI, "0x1F98431c8aD98523631AE4a59f267346ea31F984");
+    // swapRouter = "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45"
     uniswapRouter = await ethers.getContractAt(ROUTER_ABI, "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45");
 
     controller = (await ethers.getContractAt("Controller", "0x64187ae08781B09368e6253F9E94951243A493D5")) as Controller
@@ -86,10 +88,18 @@ describe("ControllerHelper: mainnet fork", function () {
     // ethDaiPool = await ethers.getContractAt("MockErc20", "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8")
     ethUsdcPool = await ethers.getContractAt(POOL_ABI, "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8");
 
-    const ControllerHelperUtil = await ethers.getContractFactory("ControllerHelperUtil")
-    const ControllerHelperUtilLib = (await ControllerHelperUtil.deploy());
-    const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper", {libraries: {ControllerHelperUtil: ControllerHelperUtilLib.address}});
-    controllerHelper = (await ControllerHelperContract.deploy(controller.address, positionManager.address, uniswapFactory.address, "0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5")) as ControllerHelper;
+    // await controller.connect(owner).setFeeRecipient(feeRecipient.address);
+    // await controller.connect(owner).setFeeRate(0)
+    
+    // const TickMath = await ethers.getContractFactory("TickMathExternal")
+    // const TickMathLibrary = (await TickMath.deploy());
+    // const SqrtPriceExternal = await ethers.getContractFactory("SqrtPriceMathPartial")
+    // const SqrtPriceExternalLibrary = (await SqrtPriceExternal.deploy());  
+    // const ControllerHelperLib = await ethers.getContractFactory("ControllerHelperLib")
+    // const controllerHelperLib = (await ControllerHelperLib.deploy());  
+    // const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper", {libraries: {TickMathExternal: TickMathLibrary.address, SqrtPriceMathPartial: SqrtPriceExternalLibrary.address}});
+    const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper");
+    controllerHelper = (await ControllerHelperContract.deploy(controller.address, oracle.address, shortSqueeth.address, "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C", wSqueeth.address, weth.address, uniswapRouter.address, positionManager.address, uniswapFactory.address, "0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5")) as ControllerHelper;
   })
 
   describe("Flash mint short position, LP and use LP as collateral", async () => {
@@ -104,11 +114,10 @@ describe("ControllerHelper: mainnet fork", function () {
       const collateralToMint = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
       const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
-      const flashloanFee = collateralToMint.mul(9).div(1000)
       const flashloanWMintDepositNftParams = {
         vaultId: 0,
         wPowerPerpAmount: mintWSqueethAmount.toString(),
-        collateralToDeposit: BigNumber.from(0),
+        collateralToDeposit: collateralToMint.toString(),
         collateralToFlashloan: collateralToMint.toString(),
         collateralToLp: collateralToLp.toString(),
         collateralToWithdraw: 0,
@@ -118,7 +127,7 @@ describe("ControllerHelper: mainnet fork", function () {
         lpUpperTick: 887220
       }
 
-      await controllerHelper.connect(depositor).flashloanWMintDepositNft(flashloanWMintDepositNftParams, {value: collateralToLp.add(ethers.utils.parseUnits('0.01').add(flashloanFee))})
+      await controllerHelper.connect(depositor).flashloanWMintDepositNft(flashloanWMintDepositNftParams, {value: collateralToLp.add(ethers.utils.parseUnits('0.01'))})
 
       const vaultAfter = await controller.vaults(vaultId)
       const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
@@ -195,7 +204,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const flashloanWMintDepositNftParams = {
         vaultId: 0,
         wPowerPerpAmount: mintWSqueethAmount.toString(),
-        collateralToDeposit: collateralToMint.sub(collateralToFlashloan).toString(),
+        collateralToDeposit: collateralToMint.toString(),
         collateralToFlashloan: collateralToFlashloan.toString(),
         collateralToLp: BigNumber.from(0),
         collateralToWithdraw: 0,
@@ -234,7 +243,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const flashloanWMintDepositNftParams = {
         vaultId: 0,
         wPowerPerpAmount: mintWSqueethAmount.toString(),
-        collateralToDeposit: collateralToMint.sub(collateralToFlashloan).toString(),
+        collateralToDeposit: collateralToMint.toString(),
         collateralToFlashloan: collateralToFlashloan.toString(),
         collateralToLp: collateralToLp.toString(),
         collateralToWithdraw: 0,
@@ -442,69 +451,5 @@ describe("ControllerHelper: mainnet fork", function () {
       expect(vaultAfter.shortAmount.eq(BigNumber.from(0))).to.be.true
       expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
     })
-  })
-
-  // describe("Rebalance with vault", async () => {
-  //   it("rebalance", async () => {
-  //     const abiCoder = new ethers.utils.AbiCoder
-  //     const params = [
-  //       {
-  //         rebalanceVaultNftType: BigNumber.from(0),
-  //         // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
-  //         data: abiCoder.encode(["uint256"], ["1"])
-  //       },
-  //       {
-  //         rebalanceVaultNftType: BigNumber.from(1),
-  //         // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
-  //         data: abiCoder.encode(["uint256"], ["1"])
-  //       }
-  //     ]
-
-  //     await controllerHelper.connect(depositor).RebalanceVaultNft(BigNumber.from(1), 4, ethers.utils.parseUnits('2'), params);
-  //   })
-  // })
-
-  describe("Remove ETH from vault and increase liquidity" , async () => {
-    before("open first short position and LP" , async () => {
-      const normFactor = await controller.getExpectedNormalizationFactor()
-      const mintWSqueethAmountToLp : BigNumber = ethers.utils.parseUnits('30')
-      const mintRSqueethAmount = mintWSqueethAmountToLp.mul(normFactor).div(one)
-      const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
-      const scaledEthPrice = ethPrice.div(10000)
-      const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
-      const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01')).add(debtInEth.mul(2))
-      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
-      const collateralToLp = mintWSqueethAmountToLp.mul(squeethPrice).div(one)
-
-      await controller.connect(depositor).mintWPowerPerpAmount(0, mintWSqueethAmountToLp, 0, {value: collateralAmount})
-
-      const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
-      const token0 = isWethToken0 ? weth.address : wSqueeth.address
-      const token1 = isWethToken0 ? wSqueeth.address : weth.address
-
-      const mintParam = {
-        token0,
-        token1,
-        fee: 3000,
-        tickLower: -887220,// int24 min tick used when selecting full range
-        tickUpper: 887220,// int24 max tick used when selecting full range
-        amount0Desired: isWethToken0 ? collateralToLp : mintWSqueethAmountToLp,
-        amount1Desired: isWethToken0 ? mintWSqueethAmountToLp : collateralToLp,
-        amount0Min: 0,
-        amount1Min: 0,
-        recipient: depositor.address,
-        deadline: Math.floor(await getNow(ethers.provider) + 8640000),// uint256
-      }
-
-      await weth.connect(depositor).deposit({value: collateralToLp})
-      await weth.connect(depositor).approve(positionManager.address, ethers.constants.MaxUint256)
-      await wSqueeth.connect(depositor).approve(positionManager.address, ethers.constants.MaxUint256)  
-      await (positionManager as INonfungiblePositionManager).connect(depositor).mint(mintParam)
-    })
-
-    it("Withdraw collateral from vault and increase ETH in LP", async () => {
-      
-    })
-
   })
 })

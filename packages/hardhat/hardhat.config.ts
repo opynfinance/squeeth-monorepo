@@ -57,10 +57,20 @@ const UNISWAP_SETTING = {
   settings: {
     optimizer: {
       enabled: true,
-      runs: 5,
+      runs: 200,
     },
   },
 };
+
+// const AAVE_SETTING = {
+//   version: "0.6.12",
+//   settings: {
+//     optimizer: {
+//       enabled: true,
+//       runs: 200,
+//     },
+//   },
+// };
 
 const config: HardhatUserConfig = {
   defaultNetwork,
@@ -105,7 +115,7 @@ const config: HardhatUserConfig = {
       accounts: {
         mnemonic: mnemonic(),
       },
-      gas: 8000000000000000
+      gas: 8000000
     },
     xdai: {
       url: "https://rpc.xdaichain.com/",

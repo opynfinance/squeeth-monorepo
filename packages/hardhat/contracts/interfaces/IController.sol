@@ -25,12 +25,6 @@ interface IController {
 
     function wPowerPerp() external view returns (address);
 
-    function wPowerPerpPool() external view returns (address);
-
-    function oracle() external view returns (address);
-
-    function weth() external view returns (address);
-
     function getExpectedNormalizationFactor() external view returns (uint256);
 
     function mintPowerPerpAmount(
