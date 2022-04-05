@@ -32,21 +32,21 @@ describe('Open short position and then mint debt, burn debt, add collat, remove 
         cy.get('#open-short-eth-input').should('be.visible')
         cy.get('#open-short-eth-input').clear().type('8.', { force: true, delay: 200 }).should('have.value', '8.0')
 
-        cy.get('#open-short-sumbit-tx-btn').then((btn) => {
+        cy.get('#open-short-submit-tx-btn').then((btn) => {
           if (btn.text().includes('Allow wrapper')) {
-            cy.get('#open-short-sumbit-tx-btn').click({ force: true })
+            cy.get('#open-short-submit-tx-btn').click({ force: true })
+            trade.confirmMetamaskTransaction()
+            trade.waitForTransactionSuccess()
+            cy.get('#open-short-submit-tx-btn').click({ force: true })
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
           }
           if (btn.text().includes('Deposit and sell')) {
-            cy.get('#open-short-sumbit-tx-btn').click({ force: true })
+            cy.get('#open-short-submit-tx-btn').click({ force: true })
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
           }
         })
-        cy.get('#open-short-sumbit-tx-btn').click({ force: true })
-        trade.confirmMetamaskTransaction()
-        trade.waitForTransactionSuccess()
       })
     })
 
@@ -70,10 +70,10 @@ describe('Open short position and then mint debt, burn debt, add collat, remove 
         it(`input should be zero and button should be disabled by default`, () => {
           cy.get('#debt-amount-input').should('have.value', '0')
           cy.get('#collat-amount-input').should('have.value', '0')
-          cy.get('#mint-sumbit-tx-btn').should('be.disabled')
-          cy.get('#burn-sumbit-tx-btn').should('be.disabled')
-          cy.get('#add-collat-tx-btn').should('be.disabled')
-          cy.get('#remove-collat-tx-btn').should('be.disabled')
+          cy.get('#mint-submit-tx-btn').should('be.disabled')
+          cy.get('#burn-submit-tx-btn').should('be.disabled')
+          cy.get('#add-collat-submit-tx-btn').should('be.disabled')
+          cy.get('#remove-collat-submit-tx-btn').should('be.disabled')
         })
         it(`balance of osqth in adjust debt box should be equal to minted osqth`, () => {
           cy.get('#vault-debt-input-osqth-balance').then((bal) => {
@@ -90,12 +90,12 @@ describe('Open short position and then mint debt, burn debt, add collat, remove 
         it(`can mint with manual input`, () => {
           cy.get('#debt-amount-input').clear().type('1.', { delay: 200, force: true }).should('have.value', '1.0')
           cy.get('.debt-collat-perct').invoke('text').then(parseFloat).should('be.at.least', 150)
-          cy.get('#mint-sumbit-tx-btn').should('not.be.disabled')
-          cy.get('#mint-sumbit-tx-btn').click({ force: true })
+          cy.get('#mint-submit-tx-btn').should('not.be.disabled')
+          cy.get('#mint-submit-tx-btn').click({ force: true })
           trade.confirmMetamaskTransaction()
           trade.waitForTransactionSuccess()
           cy.get('#debt-amount-input').should('have.value', '0')
-          cy.get('#mint-sumbit-tx-btn').should('be.disabled')
+          cy.get('#mint-submit-tx-btn').should('be.disabled')
           // cy.get('#vault-minted-debt-bal').then((inputBal) => {
           //   cy.get('#vault-minted-debt-bal').then((bal) => {
           //     cy.get('#vault-total-debt-bal').then((val) => {
@@ -103,7 +103,7 @@ describe('Open short position and then mint debt, burn debt, add collat, remove 
           //         const mintedBalBeforeTrade = bal.text()
           //         const totalBalBeforeTrade = val.text()
           //         const inputBalBeforeTrade = v.text()
-          //         cy.get('#mint-sumbit-tx-btn').click({ force: true })
+          //         cy.get('#mint-submit-tx-btn').click({ force: true })
           //         trade.confirmMetamaskTransaction()
           //         trade.waitForTransactionSuccess()
           //         cy.get('#vault-minted-debt-bal').should(
@@ -131,80 +131,80 @@ describe('Open short position and then mint debt, burn debt, add collat, remove 
           cy.get('#debt-amount-input').clear().type('1.', { delay: 200, force: true }).should('have.value', '1.0')
           cy.get('#debt-max-btn').click({ force: true })
           cy.get('.debt-collat-perct').invoke('text').then(parseFloat).should('be.at.least', 150)
-          cy.get('#mint-sumbit-tx-btn').should('not.be.disabled')
-          cy.get('#mint-sumbit-tx-btn').click({ force: true })
+          cy.get('#mint-submit-tx-btn').should('not.be.disabled')
+          cy.get('#mint-submit-tx-btn').click({ force: true })
           trade.confirmMetamaskTransaction()
           trade.waitForTransactionSuccess()
           cy.get('#debt-amount-input').should('have.value', '0')
-          cy.get('#mint-sumbit-tx-btn').should('be.disabled')
+          cy.get('#mint-submit-tx-btn').should('be.disabled')
         })
       })
       context('Burn', () => {
         it(`can burn with manual input`, () => {
           cy.get('#debt-amount-input').clear().type('-1.1', { delay: 200, force: true }).should('have.value', '-1.1')
           cy.get('.debt-collat-perct').invoke('text').then(parseFloat).should('be.at.least', 150)
-          cy.get('#burn-sumbit-tx-btn').should('not.be.disabled')
-          cy.get('#burn-sumbit-tx-btn').click({ force: true })
+          cy.get('#burn-submit-tx-btn').should('not.be.disabled')
+          cy.get('#burn-submit-tx-btn').click({ force: true })
           trade.confirmMetamaskTransaction()
           trade.waitForTransactionSuccess()
           cy.get('#debt-amount-input').should('have.value', '0')
-          cy.get('#burn-sumbit-tx-btn').should('be.disabled')
+          cy.get('#burn-submit-tx-btn').should('be.disabled')
         })
         it(`can burn with max button`, () => {
           cy.get('#debt-amount-input').clear().type('-1.1', { delay: 200, force: true }).should('have.value', '-1.1')
           cy.get('#debt-max-btn').click({ force: true })
           cy.get('.debt-collat-perct').invoke('text').then(parseFloat).should('be.at.least', 150)
-          cy.get('#burn-sumbit-tx-btn').should('not.be.disabled')
-          cy.get('#burn-sumbit-tx-btn').click({ force: true })
+          cy.get('#burn-submit-tx-btn').should('not.be.disabled')
+          cy.get('#burn-submit-tx-btn').click({ force: true })
           trade.confirmMetamaskTransaction()
           trade.waitForTransactionSuccess()
           cy.get('#debt-amount-input').should('have.value', '0')
-          cy.get('#burn-sumbit-tx-btn').should('be.disabled')
+          cy.get('#burn-submit-tx-btn').should('be.disabled')
         })
       })
       context('Add collat', () => {
         it(`can add collat with manual input`, () => {
           cy.get('#collat-amount-input').clear().type('1.', { delay: 200, force: true }).should('have.value', '1.0')
           cy.get('.collat-collat-perct').invoke('text').then(parseFloat).should('be.at.least', 150)
-          cy.get('#add-collat-sumbit-tx-btn').should('not.be.disabled')
-          cy.get('#add-collat-sumbit-tx-btn').click({ force: true })
+          cy.get('#add-collat-submit-tx-btn').should('not.be.disabled')
+          cy.get('#add-collat-submit-tx-btn').click({ force: true })
           trade.confirmMetamaskTransaction()
           trade.waitForTransactionSuccess()
           cy.get('#collat-amount-input').should('have.value', '0')
-          cy.get('#add-collat-sumbit-tx-btn').should('be.disabled')
+          cy.get('#add-collat-submit-tx-btn').should('be.disabled')
         })
         it(`can add collat with max button`, () => {
           cy.get('#collat-amount-input').clear().type('1.', { delay: 200, force: true }).should('have.value', '1.0')
           cy.get('#collat-max-btn').click({ force: true })
           cy.get('.collat-collat-perct').invoke('text').then(parseFloat).should('be.at.least', 150)
-          cy.get('#add-collat-sumbit-tx-btn').should('not.be.disabled')
-          cy.get('#add-collat-sumbit-tx-btn').click({ force: true })
+          cy.get('#add-collat-submit-tx-btn').should('not.be.disabled')
+          cy.get('#add-collat-submit-tx-btn').click({ force: true })
           trade.confirmMetamaskTransaction()
           trade.waitForTransactionSuccess()
           cy.get('#collat-amount-input').should('have.value', '0')
-          cy.get('#add-collat-sumbit-tx-btn').should('be.disabled')
+          cy.get('#add-collat-submit-tx-btn').should('be.disabled')
         })
       })
       context('Remove Collat', () => {
         it(`can remove collat with manual input`, () => {
           cy.get('#collat-amount-input').clear().type('-1.1', { delay: 200, force: true }).should('have.value', '-1.1')
           cy.get('.collat-collat-perct').invoke('text').then(parseFloat).should('be.at.least', 150)
-          cy.get('#remove-collat-sumbit-tx-btn').should('not.be.disabled')
-          cy.get('#remove-collat-sumbit-tx-btn').click({ force: true })
+          cy.get('#remove-collat-submit-tx-btn').should('not.be.disabled')
+          cy.get('#remove-collat-submit-tx-btn').click({ force: true })
           trade.confirmMetamaskTransaction()
           trade.waitForTransactionSuccess()
           cy.get('#collat-amount-input').should('have.value', '0')
-          cy.get('#remove-collat-sumbit-tx-btn').should('be.disabled')
+          cy.get('#remove-collat-submit-tx-btn').should('be.disabled')
         })
         it(`can remove collat with max button`, () => {
           cy.get('#collat-max-btn').click({ force: true })
           cy.get('.collat-collat-perct').invoke('text').then(parseFloat).should('be.at.least', 150)
-          cy.get('#remove-collat-sumbit-tx-btn').should('not.be.disabled')
-          cy.get('#remove-collat-sumbit-tx-btn').click({ force: true })
+          cy.get('#remove-collat-submit-tx-btn').should('not.be.disabled')
+          cy.get('#remove-collat-submit-tx-btn').click({ force: true })
           trade.confirmMetamaskTransaction()
           trade.waitForTransactionSuccess()
           cy.get('#collat-amount-input').should('have.value', '0')
-          cy.get('#remove-collat-sumbit-tx-btn').should('be.disabled')
+          cy.get('#remove-collat-submit-tx-btn').should('be.disabled')
         })
       })
 
@@ -218,14 +218,14 @@ describe('Open short position and then mint debt, burn debt, add collat, remove 
           cy.get('#close-short-full-close').click({ force: true })
           cy.get('close-short-type-select').should('contain.text', 'Full Close')
 
-          cy.get('#close-short-sumbit-tx-btn').then((btn) => {
+          cy.get('#close-short-submit-tx-btn').then((btn) => {
             if (btn.text().includes('Allow wrapper')) {
-              cy.get('#close-short-sumbit-tx-btn').click({ force: true })
+              cy.get('#close-short-submit-tx-btn').click({ force: true })
               trade.confirmMetamaskTransaction()
               trade.waitForTransactionSuccess()
             }
             if (btn.text().includes('Buy back')) {
-              cy.get('#close-short-sumbit-tx-btn').click({ force: true })
+              cy.get('#close-short-submit-tx-btn').click({ force: true })
               trade.confirmMetamaskTransaction()
               trade.waitForTransactionSuccess()
             }

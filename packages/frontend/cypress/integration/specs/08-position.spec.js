@@ -26,7 +26,7 @@ describe('Trade and see if results are correct on position page', () => {
     })
     it('open long position and check pos page', () => {
       cy.get('#open-long-osqth-input').clear().type('0.1', { force: true, delay: 200 }).should('have.value', '0.1')
-      cy.get('#open-long-sumbit-tx-btn').click({ force: true })
+      cy.get('#open-long-submit-tx-btn').click({ force: true })
       trade.confirmMetamaskTransaction()
       trade.waitForTransactionSuccess()
       cy.get('#open-long-close-btn').click({ force: true })
@@ -46,10 +46,22 @@ describe('Trade and see if results are correct on position page', () => {
     })
     it('close long position and check pos page', () => {
       cy.get('#close-long-eth-input').clear().type('0.1', { force: true, delay: 200 }).should('have.value', '0.1')
-      cy.get('#close-long-sumbit-tx-btn').click({ force: true })
-      trade.confirmMetamaskTransaction()
-      trade.waitForTransactionSuccess()
-      cy.get('#close-long-close-btn').click({ force: true })
+      cy.get('#close-long-submit-tx-btn').then((btn) => {
+        if (btn.text().includes('Approve oSQTH')) {
+          cy.get('#close-long-submit-tx-btn').click({ force: true })
+          trade.confirmMetamaskTransaction()
+          trade.waitForTransactionSuccess()
+          cy.get('#close-long-submit-tx-btn').click({ force: true })
+          trade.confirmMetamaskTransaction()
+          trade.waitForTransactionSuccess()
+        }
+
+        if (btn.text().includes('Sell')) {
+          cy.get('#close-long-submit-tx-btn').click({ force: true })
+          trade.confirmMetamaskTransaction()
+          trade.waitForTransactionSuccess()
+        }
+      })
     })
 
     it('check results on pos page', () => {
@@ -70,21 +82,21 @@ describe('Trade and see if results are correct on position page', () => {
       cy.get('#open-short-eth-input').should('be.visible')
       cy.get('#open-short-eth-input').clear().type('8.', { force: true, delay: 200 }).should('have.value', '8.0')
 
-      cy.get('#open-short-sumbit-tx-btn').then((btn) => {
+      cy.get('#open-short-submit-tx-btn').then((btn) => {
         if (btn.text().includes('Allow wrapper')) {
-          cy.get('#open-short-sumbit-tx-btn').click({ force: true })
+          cy.get('#open-short-submit-tx-btn').click({ force: true })
+          trade.confirmMetamaskTransaction()
+          trade.waitForTransactionSuccess()
+          cy.get('#open-short-submit-tx-btn').click({ force: true })
           trade.confirmMetamaskTransaction()
           trade.waitForTransactionSuccess()
         }
         if (btn.text().includes('Deposit and sell')) {
-          cy.get('#open-short-sumbit-tx-btn').click({ force: true })
+          cy.get('#open-short-submit-tx-btn').click({ force: true })
           trade.confirmMetamaskTransaction()
           trade.waitForTransactionSuccess()
         }
       })
-      cy.get('#open-short-sumbit-tx-btn').click({ force: true })
-      trade.confirmMetamaskTransaction()
-      trade.waitForTransactionSuccess()
     })
     it('check results on pos page', () => {
       cy.visit('/positions')
@@ -102,11 +114,21 @@ describe('Trade and see if results are correct on position page', () => {
     })
 
     it('close short position', () => {
-      cy.get('close-short-type-select').should('contain.text', 'Fully Close')
-      cy.get('#close-short-sumbit-tx-btn').click({ force: true })
-      trade.confirmMetamaskTransaction()
-      trade.waitForTransactionSuccess()
-      cy.get('#close-short-close-btn').click({ force: true })
+      cy.get('close-short-type-select').should('contain.text', 'Full Close')
+      cy.get('#close-short-submit-tx-btn').then((btn) => {
+        if (btn.text().includes('Allow wrapper')) {
+          cy.get('#close-short-submit-tx-btn').click({ force: true })
+          trade.confirmMetamaskTransaction()
+          trade.waitForTransactionSuccess()
+          cy.get('#close-short-submit-tx-btn').click({ force: true })
+          trade.confirmMetamaskTransaction()
+          trade.waitForTransactionSuccess()
+        } else if (btn.text().includes('Buy back')) {
+          cy.get('#close-short-submit-tx-btn').click({ force: true })
+          trade.confirmMetamaskTransaction()
+          trade.waitForTransactionSuccess()
+        }
+      })
     })
 
     it('check results on pos page', () => {
@@ -123,9 +145,6 @@ describe('Trade and see if results are correct on position page', () => {
         trade.connectBrowserWallet()
       })
       it('mint', () => {
-        cy.get('#lp-prev-step-btn').click({ force: true }).click({ force: true })
-        cy.get('#current-lp-step').should('contain.text', '1')
-        cy.get('#mint-sqth-to-lp-btn').click({ force: true })
         cy.get('#lp-page-mint-eth-input').clear().type('8.', { force: true, delay: 200 }).should('have.value', '8.0')
         cy.get('#current-lp-step').should('contain.text', '2')
         cy.get('#mint-to-lp-btn').click({ force: true })
@@ -148,15 +167,18 @@ describe('Trade and see if results are correct on position page', () => {
       })
       it('create manually short position', () => {
         cy.get('#close-long-eth-input-action').click()
-        cy.get('#close-long-sumbit-tx-btn').then((btn) => {
+        cy.get('#close-long-submit-tx-btn').then((btn) => {
           if (btn.text().includes('Approve oSQTH')) {
-            cy.get('#close-long-sumbit-tx-btn').click({ force: true })
+            cy.get('#close-long-submit-tx-btn').click({ force: true })
+            trade.confirmMetamaskTransaction()
+            trade.waitForTransactionSuccess()
+            cy.get('#close-short-submit-tx-btn').click({ force: true })
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
           }
 
           if (btn.text().includes('Sell')) {
-            cy.get('#close-long-sumbit-tx-btn').click({ force: true })
+            cy.get('#close-long-submit-tx-btn').click({ force: true })
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
           }

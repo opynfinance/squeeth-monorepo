@@ -815,7 +815,7 @@ const Component: React.FC = () => {
                   </div>
                   <div className={classes.managerActions}>
                     <RemoveButton
-                      id="remove-collat-sumbit-tx-btn"
+                      id="remove-collat-submit-tx-btn"
                       className={classes.actionBtn}
                       size="small"
                       disabled={action !== VaultAction.REMOVE_COLLATERAL || txLoading || !!adjustCollatError}
@@ -828,7 +828,7 @@ const Component: React.FC = () => {
                       )}
                     </RemoveButton>
                     <AddButton
-                      id="add-collat-sumbit-tx-btn"
+                      id="add-collat-submit-tx-btn"
                       onClick={() => addCollat(collateralBN)}
                       className={classes.actionBtn}
                       size="small"
@@ -934,7 +934,7 @@ const Component: React.FC = () => {
                   </div>
                   <div className={classes.managerActions}>
                     <RemoveButton
-                      id="burn-sumbit-tx-btn"
+                      id="burn-submit-tx-btn"
                       onClick={() => burn(shortAmountBN)}
                       className={classes.actionBtn}
                       size="small"
@@ -947,7 +947,7 @@ const Component: React.FC = () => {
                       )}
                     </RemoveButton>
                     <AddButton
-                      id="mint-sumbit-tx-btn"
+                      id="mint-submit-tx-btn"
                       onClick={() => mint(shortAmountBN)}
                       className={classes.actionBtn}
                       size="small"
@@ -993,7 +993,7 @@ const Component: React.FC = () => {
                   <div className={classes.managerActions} style={{ marginTop: '16px' }}>
                     {isLPDeposited ? (
                       <RemoveButton
-                        id="remove-lp-nft-sumbit-tx-btn"
+                        id="remove-lp-nft-submit-tx-btn"
                         className={classes.actionBtn}
                         size="small"
                         disabled={txLoading}
@@ -1008,7 +1008,7 @@ const Component: React.FC = () => {
                     ) : null}
                     {!isLPDeposited && action === VaultAction.APPROVE_UNI_POSITION ? (
                       <AddButton
-                        id="approve-lp-nft-sumbit-tx-btn"
+                        id="approve-lp-nft-submit-tx-btn"
                         onClick={() => approveUniLPToken(uniTokenToDeposit)}
                         className={classes.actionBtn}
                         size="small"
@@ -1023,7 +1023,7 @@ const Component: React.FC = () => {
                     ) : null}
                     {!isLPDeposited && action === VaultAction.DEPOSIT_UNI_POSITION ? (
                       <AddButton
-                        id="deposit-lp-nft-sumbit-tx-btn"
+                        id="deposit-lp-nft-submit-tx-btn"
                         onClick={() => depositUniLPToken(uniTokenToDeposit)}
                         className={classes.actionBtn}
                         size="small"

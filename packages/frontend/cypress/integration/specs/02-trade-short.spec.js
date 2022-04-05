@@ -54,7 +54,7 @@ describe('Trade on trade page', () => {
       it('inputs should be zero by default and tx button is disabled', () => {
         cy.get('#open-short-eth-input').should('have.value', '0')
         cy.get('#open-short-trade-details .trade-details-amount').should('contain.text', '0')
-        cy.get('#open-short-sumbit-tx-btn').should('be.disabled')
+        cy.get('#open-short-submit-tx-btn').should('be.disabled')
       })
 
       it('open short input should be more than minimum collateral amount', () => {
@@ -165,16 +165,16 @@ describe('Trade on trade page', () => {
           posCardBeforeShortTradeBal = new BigNumber(val.text())
         })
 
-        cy.get('#open-short-sumbit-tx-btn').then((btn) => {
+        cy.get('#open-short-submit-tx-btn').then((btn) => {
           if (btn.text().includes('Allow wrapper')) {
-            cy.get('#open-short-sumbit-tx-btn').click({ force: true })
+            cy.get('#open-short-submit-tx-btn').click({ force: true })
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
-            cy.get('#open-short-sumbit-tx-btn').click({ force: true })
+            cy.get('#open-short-submit-tx-btn').click({ force: true })
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
           } else if (btn.text().includes('Deposit and sell')) {
-            cy.get('#open-short-sumbit-tx-btn').click({ force: true })
+            cy.get('#open-short-submit-tx-btn').click({ force: true })
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
           }
@@ -191,7 +191,7 @@ describe('Trade on trade page', () => {
         cy.get('#open-short-header-box').should('contain.text', 'Mint & sell squeeth for premium')
         cy.get('#open-short-eth-input').should('have.value', '0')
         cy.get('#open-short-trade-details .trade-details-amount').should('contain.text', '0')
-        cy.get('#open-short-sumbit-tx-btn').should('be.disabled')
+        cy.get('#open-short-submit-tx-btn').should('be.disabled')
       })
 
       it('position card should update to new osqth balance', () => {
@@ -269,7 +269,7 @@ describe('Trade on trade page', () => {
             .should('not.equal', 0)
 
           cy.get('#close-short-osqth-input').should('be.disabled')
-          cy.get('#close-short-sumbit-tx-btn').should('not.be.disabled')
+          cy.get('#close-short-submit-tx-btn').should('not.be.disabled')
         })
 
         it('should have oSQTH short balance in position card', () => {
@@ -296,7 +296,7 @@ describe('Trade on trade page', () => {
 
         it('submit tx button should be disabled when input is zero', () => {
           cy.get('#close-short-osqth-input').clear().type('0', { delay: 200 }).should('have.value', '0')
-          cy.get('#close-short-sumbit-tx-btn').should('be.disabled')
+          cy.get('#close-short-submit-tx-btn').should('be.disabled')
         })
       })
 
@@ -316,7 +316,7 @@ describe('Trade on trade page', () => {
             .then(parseFloat)
             .should('not.equal', 0)
 
-          cy.get('#close-short-sumbit-tx-btn').should('not.be.disabled')
+          cy.get('#close-short-submit-tx-btn').should('not.be.disabled')
         })
 
         it('position card before trade balance should be the same as input box before trade balance', () => {
@@ -357,7 +357,7 @@ describe('Trade on trade page', () => {
             .then(parseFloat)
             .should('not.equal', 0)
           cy.get('#close-short-osqth-input').should('be.disabled')
-          cy.get('#close-short-sumbit-tx-btn').should('not.be.disabled')
+          cy.get('#close-short-submit-tx-btn').should('not.be.disabled')
 
           cy.get('#close-short-osqth-input').then((val) => {
             maxBtnShortCloseInput = new BigNumber(val.val().toString()).toFixed(6)
@@ -416,14 +416,14 @@ describe('Trade on trade page', () => {
             posCardBeforeShortTradeBal = bal.text()
           })
 
-          cy.get('#close-short-sumbit-tx-btn').then((btn) => {
+          cy.get('#close-short-submit-tx-btn').then((btn) => {
             if (btn.text().includes('Allow wrapper')) {
-              cy.get('#close-short-sumbit-tx-btn').click({ force: true })
+              cy.get('#close-short-submit-tx-btn').click({ force: true })
               trade.confirmMetamaskTransaction()
               trade.waitForTransactionSuccess()
             }
             if (btn.text().includes('Buy back')) {
-              cy.get('#close-short-sumbit-tx-btn').click({ force: true })
+              cy.get('#close-short-submit-tx-btn').click({ force: true })
               trade.confirmMetamaskTransaction()
               trade.waitForTransactionSuccess()
             }
@@ -460,7 +460,7 @@ describe('Trade on trade page', () => {
             .then(parseFloat)
             .should('not.equal', 0)
           cy.get('#close-short-osqth-input').should('not.equal', '0').should('be.disabled')
-          cy.get('#close-short-sumbit-tx-btn').should('not.be.disabled')
+          cy.get('#close-short-submit-tx-btn').should('not.be.disabled')
         })
 
         it('should have "close your short position" first error in long oSQTH input when user have short oSQTH', () => {
@@ -495,16 +495,16 @@ describe('Trade on trade page', () => {
           fullShortCloseInput = new BigNumber(bal.val().toString()).toFixed(6)
         })
 
-        cy.get('#close-short-sumbit-tx-btn').then((btn) => {
+        cy.get('#close-short-submit-tx-btn').then((btn) => {
           if (btn.text().includes('Allow wrapper')) {
-            cy.get('#close-short-sumbit-tx-btn').click({ force: true })
+            cy.get('#close-short-submit-tx-btn').click({ force: true })
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
-            cy.get('#close-short-sumbit-tx-btn').click({ force: true })
+            cy.get('#close-short-submit-tx-btn').click({ force: true })
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
           } else if (btn.text().includes('Buy back')) {
-            cy.get('#close-short-sumbit-tx-btn').click({ force: true })
+            cy.get('#close-short-submit-tx-btn').click({ force: true })
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
           }
@@ -522,7 +522,7 @@ describe('Trade on trade page', () => {
         cy.get('#close-short-type-select').should('contain.text', 'Full Close')
         cy.get('#close-short-osqth-input').should('have.value', '0')
         cy.get('#close-short-trade-details .trade-details-amount').should('contain.text', '0')
-        cy.get('#close-short-sumbit-tx-btn').should('be.disabled')
+        cy.get('#close-short-submit-tx-btn').should('be.disabled')
       })
 
       it('position card should update to 0', () => {

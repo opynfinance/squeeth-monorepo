@@ -95,7 +95,7 @@ describe('Trade on trade page', () => {
         cy.get('#open-long-header-box').should('contain.text', 'Pay ETH to buy squeeth ERC20')
         cy.get('#open-long-eth-input').should('have.value', '0')
         cy.get('#open-long-osqth-input').should('have.value', '0')
-        cy.get('#open-long-sumbit-tx-btn').should('be.disabled')
+        cy.get('#open-long-submit-tx-btn').should('be.disabled')
       })
 
       it('zero input amount', () => {
@@ -236,8 +236,8 @@ describe('Trade on trade page', () => {
           openLongoSQTHInput = new BigNumber(v.val().toString())
         })
 
-        cy.get('#open-long-sumbit-tx-btn').should('contain.text', 'Buy')
-        cy.get('#open-long-sumbit-tx-btn').should('not.be.disabled')
+        cy.get('#open-long-submit-tx-btn').should('contain.text', 'Buy')
+        cy.get('#open-long-submit-tx-btn').should('not.be.disabled')
 
         cy.get('#open-long-osqth-before-trade-balance').then((val) => {
           openLongOsqthBeforeTradeBal = new BigNumber(val.text())
@@ -247,7 +247,7 @@ describe('Trade on trade page', () => {
           posCardBeforeLongTradeBal = new BigNumber(val.text())
         })
 
-        cy.get('#open-long-sumbit-tx-btn').click({ force: true })
+        cy.get('#open-long-submit-tx-btn').click({ force: true })
         trade.confirmMetamaskTransaction()
         trade.waitForTransactionSuccess()
       })
@@ -262,7 +262,7 @@ describe('Trade on trade page', () => {
         cy.get('#open-long-header-box').should('contain.text', 'Pay ETH to buy squeeth ERC20')
         cy.get('#open-long-eth-input').should('have.value', '0')
         cy.get('#open-long-osqth-input').should('have.value', '0')
-        cy.get('#open-long-sumbit-tx-btn').should('be.disabled')
+        cy.get('#open-long-submit-tx-btn').should('be.disabled')
       })
 
       it('position card should update to new osqth balance', () => {
@@ -316,7 +316,7 @@ describe('Trade on trade page', () => {
       it('inputs should be zero by default and tx button is disabled', () => {
         cy.get('#close-long-eth-input').should('have.value', '0')
         cy.get('#close-long-osqth-input').should('have.value', '0')
-        cy.get('#close-long-sumbit-tx-btn').should('be.disabled')
+        cy.get('#close-long-submit-tx-btn').should('be.disabled')
       })
 
       it('should have oSQTH long balance in position card', () => {
@@ -337,7 +337,7 @@ describe('Trade on trade page', () => {
 
       it('submit tx button should be disabled when input is zero', () => {
         cy.get('#close-long-osqth-input').clear().type('0', { delay: 200 }).should('have.value', '0')
-        cy.get('#close-long-sumbit-tx-btn').should('be.disabled')
+        cy.get('#close-long-submit-tx-btn').should('be.disabled')
       })
     })
 
@@ -346,7 +346,7 @@ describe('Trade on trade page', () => {
       it('can enter an amount into osqth input', () => {
         cy.get('#close-long-osqth-input').clear().type('0.1', { force: true, delay: 800 }).should('have.value', '0.1')
         cy.get('#close-long-eth-input').should('not.equal', '0')
-        cy.get('#close-long-sumbit-tx-btn').should('not.be.disabled')
+        cy.get('#close-long-submit-tx-btn').should('not.be.disabled')
       })
 
       it('position card before trade balance should be the same as input box before trade balance', () => {
@@ -382,16 +382,16 @@ describe('Trade on trade page', () => {
           posCardBeforeLongTradeBal = bal.text()
         })
 
-        cy.get('#close-long-sumbit-tx-btn').then((btn) => {
+        cy.get('#close-long-submit-tx-btn').then((btn) => {
           if (btn.text().includes('Approve oSQTH')) {
-            cy.get('#close-long-sumbit-tx-btn').click({ force: true })
+            cy.get('#close-long-submit-tx-btn').click({ force: true })
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
-            cy.get('#close-long-sumbit-tx-btn').click({ force: true })
+            cy.get('#close-long-submit-tx-btn').click({ force: true })
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
           } else if (btn.text().includes('Sell')) {
-            cy.get('#close-long-sumbit-tx-btn').click({ force: true })
+            cy.get('#close-long-submit-tx-btn').click({ force: true })
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
           }
@@ -423,7 +423,7 @@ describe('Trade on trade page', () => {
         cy.get('#close-long-header-box').should('contain.text', 'Sell squeeth ERC20 to get ETH')
         cy.get('#close-long-eth-input').should('have.value', '0')
         cy.get('#close-long-osqth-input').should('have.value', '0')
-        cy.get('#close-long-sumbit-tx-btn').should('be.disabled')
+        cy.get('#close-long-submit-tx-btn').should('be.disabled')
       })
 
       it('should have "close your long position" first error in short oSQTH input when user have long oSQTH', () => {
@@ -450,7 +450,7 @@ describe('Trade on trade page', () => {
       it('can enter an amount into eth input and tx succeeds', () => {
         cy.get('#close-long-eth-input').clear().type('0.1', { force: true, delay: 800 }).should('have.value', '0.1')
         cy.get('#close-long-osqth-input').should('not.equal', '0')
-        cy.get('#close-long-sumbit-tx-btn').should('not.be.disabled')
+        cy.get('#close-long-submit-tx-btn').should('not.be.disabled')
 
         // wait for 15 secs for trade amount to load
         cy.get('#close-long-osqth-input')
@@ -492,16 +492,16 @@ describe('Trade on trade page', () => {
         cy.get('#position-card-before-trade-balance').then((bal) => {
           posCardBeforeLongTradeBal = new BigNumber(bal.text().toString())
         })
-        cy.get('#close-long-sumbit-tx-btn').then((btn) => {
+        cy.get('#close-long-submit-tx-btn').then((btn) => {
           if (btn.text().includes('Approve oSQTH')) {
-            cy.get('#close-long-sumbit-tx-btn').click({ force: true })
+            cy.get('#close-long-submit-tx-btn').click({ force: true })
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
-            cy.get('#close-long-sumbit-tx-btn').click({ force: true })
+            cy.get('#close-long-submit-tx-btn').click({ force: true })
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
           } else if (btn.text().includes('Sell')) {
-            cy.get('#close-long-sumbit-tx-btn').click({ force: true })
+            cy.get('#close-long-submit-tx-btn').click({ force: true })
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
           }
@@ -533,7 +533,7 @@ describe('Trade on trade page', () => {
         cy.get('#close-long-header-box').should('contain.text', 'Sell squeeth ERC20 to get ETH')
         cy.get('#close-long-eth-input').should('have.value', '0')
         cy.get('#close-long-osqth-input').should('have.value', '0')
-        cy.get('#close-long-sumbit-tx-btn').should('be.disabled')
+        cy.get('#close-long-submit-tx-btn').should('be.disabled')
       })
 
       it('should have "close your long position" first error in short oSQTH input when user have long oSQTH', () => {
@@ -562,7 +562,7 @@ describe('Trade on trade page', () => {
         cy.get('#close-long-osqth-input-action').click()
         cy.get('#close-long-osqth-input').should('not.equal', '0')
         cy.get('#close-long-eth-input').should('not.equal', '0')
-        cy.get('#close-long-sumbit-tx-btn').should('not.be.disabled')
+        cy.get('#close-long-submit-tx-btn').should('not.be.disabled')
 
         cy.get('#close-long-osqth-input')
           .wait(15000)
@@ -572,16 +572,16 @@ describe('Trade on trade page', () => {
       })
 
       it('send tx', () => {
-        cy.get('#close-long-sumbit-tx-btn').then((btn) => {
+        cy.get('#close-long-submit-tx-btn').then((btn) => {
           if (btn.text().includes('Approve oSQTH')) {
-            cy.get('#close-long-sumbit-tx-btn').click({ force: true })
+            cy.get('#close-long-submit-tx-btn').click({ force: true })
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
-            cy.get('#close-long-sumbit-tx-btn').click({ force: true })
+            cy.get('#close-long-submit-tx-btn').click({ force: true })
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
           } else if (btn.text().includes('Sell')) {
-            cy.get('#close-long-sumbit-tx-btn').click({ force: true })
+            cy.get('#close-long-submit-tx-btn').click({ force: true })
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
           }
@@ -600,7 +600,7 @@ describe('Trade on trade page', () => {
         cy.get('#close-long-header-box').should('contain.text', 'Sell squeeth ERC20 to get ETH')
         cy.get('#close-long-eth-input').should('have.value', '0')
         cy.get('#close-long-osqth-input').should('have.value', '0')
-        cy.get('#close-long-sumbit-tx-btn').should('be.disabled')
+        cy.get('#close-long-submit-tx-btn').should('be.disabled')
       })
 
       it('position card should update to 0', () => {

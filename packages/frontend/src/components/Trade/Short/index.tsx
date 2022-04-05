@@ -590,7 +590,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                     ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
                     : { width: '300px' }
                 }
-                id="open-short-sumbit-tx-btn"
+                id="open-short-submit-tx-btn"
               >
                 {shortLoading || transactionInProgress ? (
                   <CircularProgress color="primary" size="1.5rem" />
@@ -1072,7 +1072,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                     ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
                     : { width: '300px' }
                 }
-                id="close-short-sumbit-tx-btn"
+                id="close-short-submit-tx-btn"
               >
                 {buyLoading || transactionInProgress ? (
                   <CircularProgress color="primary" size="1.5rem" />

@@ -18,15 +18,19 @@ describe('Mint or Buy on LP page', () => {
   })
 
   context(`Mint squeeth on LP page`, () => {
-    it('can mint on LP page', () => {
+    it('can jump to buy card', () => {
       cy.get('#lp-prev-step-btn').click({ force: true }).click({ force: true })
       cy.get('#current-lp-step').should('contain.text', '1')
       cy.get('#mint-sqth-to-lp-btn').click({ force: true })
+    })
+    it('can mint on LP page', () => {
       cy.get('#lp-page-mint-eth-input').clear().type('8.', { force: true, delay: 200 }).should('have.value', '8.0')
       cy.get('#current-lp-step').should('contain.text', '2')
       cy.get('#mint-to-lp-btn').click({ force: true })
       trade.confirmMetamaskTransaction()
       trade.waitForTransactionSuccess()
+    })
+    it('tx succeed and jump to lp window', () => {
       cy.get('#current-lp-step').should('contain.text', '3')
     })
   })

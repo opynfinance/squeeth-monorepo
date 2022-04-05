@@ -558,7 +558,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                         ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
                         : { width: '300px' }
                     }
-                    id="open-long-sumbit-tx-btn"
+                    id="open-long-submit-tx-btn"
                   >
                     {buyLoading || transactionInProgress ? (
                       <CircularProgress color="primary" size="1.5rem" />
@@ -901,7 +901,7 @@ const CloseLong: React.FC<BuyProps> = () => {
                     ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
                     : { width: '300px' }
                 }
-                id="close-long-sumbit-tx-btn"
+                id="close-long-submit-tx-btn"
               >
                 {sellLoading || transactionInProgress ? (
                   <CircularProgress color="primary" size="1.5rem" />
