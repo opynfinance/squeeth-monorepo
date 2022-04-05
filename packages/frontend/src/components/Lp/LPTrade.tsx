@@ -1,4 +1,4 @@
-import { PrimaryButton } from '@components/Button'
+import { OutlinedPlainButton, PrimaryButton } from '@components/Button'
 import LPInput, { LPPriceInput } from '@components/Input/LPInputs'
 import { OSQUEETH_DECIMALS, WETH_DECIMALS } from '../../constants'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
@@ -189,7 +189,7 @@ const BuyAndLP = memo(function BuyAndLP() {
           />
         </Box>
       </Box>
-      <Box mt={2} display="flex" justifyContent="center">
+      <Box mt={2} display="flex" justifyContent="center" flexDirection="column" alignItems="center">
         <Typography variant="body2" component="span" align="center" className={classes.currentPrice}>
           Current price: 0.2345
           <Typography component="span" variant="body2" color="textSecondary">
@@ -197,6 +197,7 @@ const BuyAndLP = memo(function BuyAndLP() {
             ETH per OSQTH
           </Typography>
         </Typography>
+        <OutlinedPlainButton style={{ width: '300px', marginTop: '16px' }}>Full range</OutlinedPlainButton>
       </Box>
     </Box>
   )

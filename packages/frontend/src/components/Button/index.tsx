@@ -92,3 +92,17 @@ export const PlainButton = withStyles((theme) => ({
     },
   },
 }))(Button)
+
+export const OutlinedPlainButton = withStyles((theme) => ({
+  root: {
+    padding: 0,
+    color: theme.palette.text.primary,
+    border: `1px solid ${theme.palette.divider}`,
+    minHeight: '2rem',
+    minWidth: '0px',
+    backgroundColor: 'transparent',
+    '&:hover': {
+      backgroundColor: 'transparent',
+    },
+  },
+}))(Button)
