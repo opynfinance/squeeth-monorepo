@@ -61,7 +61,6 @@ export const useCrabPosition = (user: string) => {
     const minCurrentUsd = currentEthValue.times(ethIndexPrice)
     const minPnlUsd = minCurrentUsd.minus(depositedUsd)
 
-    console.log(currentEthValue.toString())
     setMinCurrentEth(currentEthValue)
     setMinCurrentUsd(minCurrentUsd)
 
