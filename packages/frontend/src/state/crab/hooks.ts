@@ -37,6 +37,7 @@ import { useHandleTransaction } from '../wallet/hooks'
 import { addressAtom } from '../wallet/atoms'
 import { currentImpliedFundingAtom } from '../controller/atoms'
 import { crabStrategyContractAtom } from '../contracts/atoms'
+import useAppCallback from '@hooks/useAppCallback'
 
 export const useSetStrategyData = () => {
   const setMaxCap = useUpdateAtom(maxCapAtom)
@@ -191,8 +192,7 @@ export const useFlashDeposit = (calculateETHtoBorrowFromUniswap: any) => {
   const vault = useAtomValue(crabStrategyVaultAtom)
   const contract = useAtomValue(crabStrategyContractAtom)
   const handleTransaction = useHandleTransaction()
-  // const calculateETHtoBorrowFromUniswap = useCalculateETHtoBorrowFromUniswap()
-  const flashDeposit = useCallback(
+  const flashDeposit = useAppCallback(
     async (amount: BigNumber, slippage: number, onTxConfirmed?: () => void) => {
       if (!contract || !vault) return
 
@@ -211,7 +211,7 @@ export const useFlashDeposit = (calculateETHtoBorrowFromUniswap: any) => {
         onTxConfirmed,
       )
     },
-    [address, contract, handleTransaction, vault?.id, maxCap.toString()],
+    [address, contract, handleTransaction, vault?.id, maxCap, calculateETHtoBorrowFromUniswap],
   )
 
   return flashDeposit
