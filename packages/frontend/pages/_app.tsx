@@ -1,6 +1,5 @@
 import useRenderCounter from '../src/hooks/useRenderCounter'
 import '../styles/globals.css'
-
 import { ApolloProvider } from '@apollo/client'
 import CssBaseline from '@material-ui/core/CssBaseline'
 import { ThemeProvider } from '@material-ui/core/styles'
@@ -20,6 +19,7 @@ import { useOnboard } from 'src/state/wallet/hooks'
 import { networkIdAtom } from 'src/state/wallet/atoms'
 import { useUpdateSqueethPrices, useUpdateSqueethPoolData } from 'src/state/squeethPool/hooks'
 import { useInitController } from 'src/state/controller/hooks'
+import { useSwaps } from 'src/state/positions/hooks'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
 
@@ -77,6 +77,7 @@ const Init = () => {
   useUpdateSqueethPrices()
   useUpdateSqueethPoolData()
   useInitController()
+  useSwaps()
   return null
 }
 const MemoizedInit = memo(Init)

@@ -16,7 +16,7 @@ import {
   shortGainAtom,
   shortUnrealizedPNLAtom,
 } from './atoms'
-import { existingCollatAtom, isWethToken0Atom, positionTypeAtom } from '../positions/atoms'
+import { isWethToken0Atom, positionTypeAtom, swapsAtom } from '../positions/atoms'
 import { readyAtom } from '../squeethPool/atoms'
 import { useGetBuyQuote, useGetSellQuote } from '../squeethPool/hooks'
 import { BIG_ZERO } from '@constants/index'
@@ -26,22 +26,37 @@ import { indexAtom } from '../controller/atoms'
 
 export function useEthCollateralPnl() {
   const { vaultId } = useFirstValidVault()
-  const vaultHistory = useVaultHistoryQuery(vaultId)
-  const { existingCollat } = useVaultData(vaultId)
+  const { vaultHistory, loading: vaultHistoryLoading } = useVaultHistoryQuery(vaultId)
+  const { existingCollat, isVaultLoading } = useVaultData(vaultId)
 
   const index = useAtomValue(indexAtom)
 
   const [ethCollateralPnl, setEthCollateralPnl] = useAtom(ethCollateralPnlAtom)
-  const { data: swapsData } = useSwaps()
+  const swapsData = useAtomValue(swapsAtom)
 
   useEffect(() => {
     ;(async () => {
-      if (vaultHistory?.length && !index.isZero() && !existingCollat.isZero() && swapsData?.swaps?.length) {
+      if (
+        vaultHistory?.length &&
+        !index.isZero() &&
+        !existingCollat.isZero() &&
+        swapsData?.swaps?.length &&
+        !vaultHistoryLoading &&
+        !isVaultLoading
+      ) {
         const result = await calcETHCollateralPnl(vaultHistory, toTokenAmount(index, 18).sqrt(), existingCollat)
         setEthCollateralPnl(result)
       }
     })()
-  }, [existingCollat.toString(), index.toString(), setEthCollateralPnl, swapsData?.swaps?.length, vaultHistory?.length])
+  }, [
+    existingCollat.toString(),
+    index.toString(),
+    setEthCollateralPnl,
+    swapsData?.swaps?.length,
+    vaultHistory?.length,
+    vaultHistoryLoading,
+    isVaultLoading,
+  ])
 
   return ethCollateralPnl
 }
@@ -124,7 +139,7 @@ export function useLongUnrealizedPNL() {
   const [longUnrealizedPNL, setLongUnrealizedPNL] = useAtom(longUnrealizedPNLAtom)
   const index = useAtomValue(indexAtom)
 
-  const { data: swapsData } = useSwaps()
+  const swapsData = useAtomValue(swapsAtom)
   const swaps = swapsData?.swaps
 
   useEffect(() => {
@@ -169,7 +184,8 @@ export function useShortUnrealizedPNL() {
   const [shortUnrealizedPNL, setShortUnrealizedPNL] = useAtom(shortUnrealizedPNLAtom)
   const index = useAtomValue(indexAtom)
 
-  const { data: swapsData } = useSwaps()
+  const { loading: swapsLoading } = useSwaps()
+  const swapsData = useAtomValue(swapsAtom)
   const swaps = swapsData?.swaps
 
   useEffect(() => {
@@ -180,7 +196,8 @@ export function useShortUnrealizedPNL() {
         !index.isZero() &&
         !ethCollateralPnl.isZero() &&
         !squeethAmount.isZero() &&
-        positionType === PositionType.SHORT
+        positionType === PositionType.SHORT &&
+        !swapsLoading
       ) {
         const pnl = await calcDollarShortUnrealizedpnl(
           swaps,
@@ -205,6 +222,7 @@ export function useShortUnrealizedPNL() {
     swaps?.length,
     squeethAmount.toString(),
     positionType,
+    swapsLoading,
   ])
 
   return shortUnrealizedPNL
