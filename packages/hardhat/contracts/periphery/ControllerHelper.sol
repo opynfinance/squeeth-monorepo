@@ -167,6 +167,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
 
         // if LP position is not fully closed, redeposit in vault or send back to user
         ControllerHelperUtil.checkClosedLp(
+            msg.sender,
             ControllerHelperDiamondStorage.getAddressAtSlot(0),
             ControllerHelperDiamondStorage.getAddressAtSlot(6),
             0,
@@ -334,6 +335,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         );
 
         ControllerHelperUtil.checkClosedLp(
+            msg.sender,
             ControllerHelperDiamondStorage.getAddressAtSlot(0),
             ControllerHelperDiamondStorage.getAddressAtSlot(6),
             0,
@@ -512,6 +514,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             );
 
             ControllerHelperUtil.checkClosedLp(
+                _initiator,
                 ControllerHelperDiamondStorage.getAddressAtSlot(0),
                 ControllerHelperDiamondStorage.getAddressAtSlot(6),
                 data.vaultId,

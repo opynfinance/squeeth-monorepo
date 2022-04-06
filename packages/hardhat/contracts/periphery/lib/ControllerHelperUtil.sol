@@ -203,6 +203,7 @@ library ControllerHelperUtil {
 
     /**
      * @notice transfer back LP NFT to user if remaining liquidity == 0 and no vault used, or deposit back into vault if still have liquidity
+     * @param _user user address
      * @param _controller controller address
      * @param _nonfungiblePositionManager Uni NonFungiblePositionManager address
      * @param _vaultId vault ID
@@ -210,6 +211,7 @@ library ControllerHelperUtil {
      * @param _liquidityPercentage percentage of liquidity that was closed from total amount
      */
     function checkClosedLp(
+        address _user,
         address _controller,
         address _nonfungiblePositionManager,
         uint256 _vaultId,
@@ -219,7 +221,7 @@ library ControllerHelperUtil {
         if ((_vaultId == 0) || (_liquidityPercentage == 1e18)) {
             INonfungiblePositionManager(_nonfungiblePositionManager).safeTransferFrom(
                 address(this),
-                msg.sender,
+                _user,
                 _tokenId
             );
         } else {
