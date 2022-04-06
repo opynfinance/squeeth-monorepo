@@ -1,28 +1,25 @@
 import BigNumber from 'bignumber.js'
-import { ethers } from 'ethers'
-import { useEffect, useState } from 'react'
-import { Contract } from 'web3-eth-contract'
+import { useAtomValue } from 'jotai'
 
-import shortAbi from '../../abis/shortHelper.json'
-import { Vaults, WETH_DECIMALS, OSQUEETH_DECIMALS } from '../../constants'
-import { useWallet } from '@context/wallet'
-import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
-import { useAddresses } from '../useAddress'
-import { useController } from './useController'
-import { useSqueethPool } from './useSqueethPool'
+import { WETH_DECIMALS, OSQUEETH_DECIMALS } from '../../constants'
+import { fromTokenAmount } from '@utils/calculations'
+import { addressAtom } from 'src/state/wallet/atoms'
+import { useHandleTransaction } from 'src/state/wallet/hooks'
+import { addressesAtom } from 'src/state/positions/atoms'
+import { useGetBuyParam, useGetSellParam } from 'src/state/squeethPool/hooks'
+import { shortHelperContractAtom } from '../../state/contracts/atoms'
+import { normFactorAtom } from 'src/state/controller/atoms'
 
 export const useShortHelper = () => {
-  const { web3, address, handleTransaction } = useWallet()
-  const [contract, setContract] = useState<Contract>()
+  const handleTransaction = useHandleTransaction()
+  const address = useAtomValue(addressAtom)
+  const { shortHelper } = useAtomValue(addressesAtom)
 
-  const { getSellParam, getBuyParam } = useSqueethPool()
-  const { normFactor: normalizationFactor } = useController()
-  const { shortHelper } = useAddresses()
+  const getSellParam = useGetSellParam()
+  const getBuyParam = useGetBuyParam()
+  const contract = useAtomValue(shortHelperContractAtom)
 
-  useEffect(() => {
-    if (!web3) return
-    setContract(new web3.eth.Contract(shortAbi as any, shortHelper))
-  }, [web3])
+  const normalizationFactor = useAtomValue(normFactorAtom)
 
   /**
    * deposit collat, mint squeeth and sell it in uniSwap
@@ -31,7 +28,7 @@ export const useShortHelper = () => {
    * @param vaultType
    * @returns
    */
-  const openShort = async (vaultId: number, amount: BigNumber, collatAmount: BigNumber) => {
+  const openShort = async (vaultId: number, amount: BigNumber, collatAmount: BigNumber, onTxConfirmed?: () => void) => {
     if (!contract || !address) return
 
     const _exactInputParams = await getSellParam(amount)
@@ -39,14 +36,15 @@ export const useShortHelper = () => {
 
     const _amount = fromTokenAmount(amount, OSQUEETH_DECIMALS).multipliedBy(normalizationFactor)
     const ethAmt = fromTokenAmount(collatAmount, 18)
-    const txHash = await handleTransaction(
+    const result = await handleTransaction(
       contract.methods.openShort(vaultId, _amount.toFixed(0), 0, _exactInputParams).send({
         from: address,
         value: ethAmt.toString(), // Already scaled to 14 so multiplied with 10000
       }),
+      onTxConfirmed,
     )
 
-    return txHash
+    return result
   }
 
   /**
@@ -55,7 +53,7 @@ export const useShortHelper = () => {
    * @param amount - Amount of squeeth to buy back
    * @returns
    */
-  const closeShort = async (vaultId: number, amount: BigNumber, withdrawAmt: BigNumber) => {
+  const closeShort = async (vaultId: number, amount: BigNumber, withdrawAmt: BigNumber, onTxConfirmed?: () => void) => {
     if (!contract || !address) return
 
     const _amount = fromTokenAmount(amount, OSQUEETH_DECIMALS)
@@ -65,14 +63,15 @@ export const useShortHelper = () => {
     _exactOutputParams.recipient = shortHelper
 
     // _burnSqueethAmount and _withdrawAmount will be same as we are putting 1:1 collat now
-    const txHash = await handleTransaction(
+    const result = await handleTransaction(
       contract.methods.closeShort(vaultId, _amount.toString(), _withdrawAmt.toFixed(0), _exactOutputParams).send({
         from: address,
         value: _exactOutputParams.amountInMaximum,
       }),
+      onTxConfirmed,
     )
 
-    return txHash
+    return result
   }
 
   return {

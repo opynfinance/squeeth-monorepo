@@ -1,22 +1,34 @@
 import BigNumber from 'bignumber.js'
 import { useEffect, useState } from 'react'
+import { useAtom, useAtomValue } from 'jotai'
 
 import { Vault } from '../types'
-import { useWallet } from '@context/wallet'
-import { useController } from '@hooks/contracts/useController'
-import { useSqueethPool } from './contracts/useSqueethPool'
+import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
+import { readyAtom } from 'src/state/squeethPool/atoms'
+import { useGetCollatRatioAndLiqPrice, useGetVault } from 'src/state/controller/hooks'
+import {
+  collatPercentAtom,
+  existingCollatAtom,
+  existingCollatPercentAtom,
+  existingLiqPriceAtom,
+  vaultAtom,
+} from 'src/state/positions/atoms'
+import { normFactorAtom } from 'src/state/controller/atoms'
 
 export const useVaultData = (vid: number) => {
-  const [vault, setVault] = useState<Vault | null>(null)
-  const [existingCollatPercent, setExistingCollatPercent] = useState(0)
-  const [existingCollat, setExistingCollat] = useState(new BigNumber(0))
-  const [existingLiqPrice, setExistingLiqPrice] = useState(new BigNumber(0))
-  const [collatPercent, setCollatPercent] = useState(0)
+  const [vault, setVault] = useAtom(vaultAtom)
+  const [existingCollatPercent, setExistingCollatPercent] = useAtom(existingCollatPercentAtom)
+  const [existingCollat, setExistingCollat] = useAtom(existingCollatAtom)
+  const [existingLiqPrice, setExistingLiqPrice] = useAtom(existingLiqPriceAtom)
+  const [collatPercent, setCollatPercent] = useAtom(collatPercentAtom)
   const [isVaultLoading, setVaultLoading] = useState(true)
 
-  const { getCollatRatioAndLiqPrice, getVault, normFactor } = useController()
-  const { ready } = useSqueethPool()
-  const { address, connected } = useWallet()
+  const normFactor = useAtomValue(normFactorAtom)
+  const getVault = useGetVault()
+  const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
+  const ready = useAtomValue(readyAtom)
+  const connected = useAtomValue(connectedWalletAtom)
+  const address = useAtomValue(addressAtom)
 
   const updateVault = async () => {
     if (!connected || !ready) return
@@ -24,7 +36,6 @@ export const useVaultData = (vid: number) => {
     const _vault = await getVault(vid)
 
     if (!_vault) return
-    console.log(_vault.collateralAmount.toString())
 
     setVault(_vault)
     setExistingCollat(_vault.collateralAmount)
@@ -43,7 +54,7 @@ export const useVaultData = (vid: number) => {
 
   useEffect(() => {
     updateVault()
-  }, [vid, normFactor.toString(), address, connected, ready])
+  }, [vid, normFactor.toString(), address, connected, ready, getVault, getCollatRatioAndLiqPrice])
 
   return {
     vault,

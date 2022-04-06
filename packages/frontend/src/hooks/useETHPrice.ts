@@ -1,8 +1,9 @@
 import BigNumber from 'bignumber.js'
 import { useQuery, useQueryClient } from 'react-query'
 
-import { useController } from './contracts/useController'
 import { toTokenAmount } from '@utils/calculations'
+import { indexAtom } from 'src/state/controller/atoms'
+import { useAtomValue } from 'jotai'
 
 const ethPriceQueryKeys = {
   currentEthPrice: () => ['currentEthPrice'],
@@ -16,7 +17,7 @@ const ethPriceQueryKeys = {
  */
 export const useETHPrice = (refetchIntervalSec = 30) => {
   const queryClient = useQueryClient()
-  const { index } = useController()
+  const index = useAtomValue(indexAtom)
 
   const ethPrice = useQuery(ethPriceQueryKeys.currentEthPrice(), () => getETHPriceCoingecko(), {
     onError() {
