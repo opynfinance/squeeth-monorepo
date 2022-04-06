@@ -4,6 +4,13 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React from 'react'
 import AddIcon from '@material-ui/icons/Add'
 import RemoveIcon from '@material-ui/icons/Remove'
+import { useState } from 'react'
+import { nearestUsableTick, priceToClosestTick, tickToPrice } from '@uniswap/v3-sdk'
+import { CurrencyAmount, Price, Token } from '@uniswap/sdk-core'
+import useAppEffect from '@hooks/useAppEffect'
+import useAppCallback from '@hooks/useAppCallback'
+import { useCallback } from 'react'
+import { useEffect } from 'react'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -77,17 +84,62 @@ const LPInput: React.FC<LPInputType> = ({ value, maxValue, onChange, label }) =>
 export default LPInput
 
 type LPPriceInputType = {
-  value: number
+  tick: number
   onChange: (value: number) => void
   label: string
   hint: string
   minValue: number
   spacing: number
+  baseToken: Token
+  quoteToken: Token
+  tickSpacing: number
+  isWethToken0: boolean
   isMax?: boolean
 }
 
-export const LPPriceInput: React.FC<LPPriceInputType> = ({ value, onChange, label, hint, isMax }) => {
+export const LPPriceInput: React.FC<LPPriceInputType> = ({
+  tick: initTick,
+  onChange,
+  label,
+  hint,
+  baseToken,
+  quoteToken,
+  tickSpacing,
+  isWethToken0,
+}) => {
   const classes = useStyles()
+  const [input, setInput] = useState(0)
+  const [tick, setTick] = useState(initTick)
+
+  useAppEffect(() => {
+    // During intermediate state baseToken and quoteToken will be in diff chain. This will throw error
+    if (baseToken.chainId !== quoteToken.chainId) return
+
+    const price = tickToPrice(baseToken, quoteToken, tick).toSignificant(5)
+    setInput(parseFloat(price))
+  }, [baseToken, quoteToken, tick])
+
+  const handleInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { value } = e.target
+      if (value === '') setInput(0)
+
+      setInput(Number(value))
+    },
+    [setInput],
+  )
+
+  const decreaseValue = () => {
+    setTick(isWethToken0 ? tick + tickSpacing : tick - tickSpacing)
+  }
+
+  const increaseValue = () => {
+    setTick(isWethToken0 ? tick - tickSpacing : tick + tickSpacing)
+  }
+
+  useAppEffect(() => {
+    onChange(tick)
+  }, [onChange, tick])
 
   return (
     <Box className={classes.container}>
@@ -108,18 +160,24 @@ export const LPPriceInput: React.FC<LPPriceInputType> = ({ value, onChange, labe
         paddingBottom={2}
         alignItems="center"
       >
-        <IconButton className={classes.iconButton}>
+        <IconButton className={classes.iconButton} onClick={decreaseValue}>
           <RemoveIcon />
         </IconButton>
         <input
           className={classes.input}
           style={{ maxWidth: '100px', textAlign: 'center', margin: '0px' }}
-          value={value}
-          onChange={(event) => onChange(Number(event.target.value))}
+          value={input}
+          onChange={handleInput}
           placeholder="0.0000"
           type="number"
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+              e.preventDefault()
+              e.key === 'ArrowUp' ? increaseValue() : decreaseValue()
+            }
+          }}
         />
-        <IconButton className={classes.iconButton}>
+        <IconButton className={classes.iconButton} onClick={increaseValue}>
           <AddIcon />
         </IconButton>
       </Box>

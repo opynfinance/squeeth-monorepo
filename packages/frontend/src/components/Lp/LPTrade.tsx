@@ -9,7 +9,7 @@ import { seeLPIntroAtom } from 'pages/lp'
 import React from 'react'
 import { useState } from 'react'
 import { memo } from 'react'
-import { addressesAtom } from 'src/state/positions/atoms'
+import { addressesAtom, isWethToken0Atom } from 'src/state/positions/atoms'
 import { useBuyAndLP } from 'src/state/squeethPool/hooks'
 import { addressAtom } from 'src/state/wallet/atoms'
 import { SimpleButton } from './LPIntroCard'
@@ -18,6 +18,12 @@ import useAppMemo from '@hooks/useAppMemo'
 import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
 import useAppCallback from '@hooks/useAppCallback'
+import { poolAtom, squeethInitialPriceAtom, squeethTokenAtom, wethTokenAtom } from 'src/state/squeethPool/atoms'
+import { TickMath } from '@uniswap/v3-sdk'
+import { useMemo } from 'react'
+import { useEffect } from 'react'
+import useAppEffect from '@hooks/useAppEffect'
+import { calculateLPAmounts } from '@utils/lpUtils'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -102,11 +108,40 @@ const BuyAndLP = memo(function BuyAndLP() {
   const { oSqueeth } = useAtomValue(addressesAtom)
   const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
   const { data: bal } = useWalletBalance()
+  const currentSqueethPrice = useAtomValue(squeethInitialPriceAtom)
+  const squeethPool = useAtomValue(poolAtom)
+  const wethToken = useAtomValue(wethTokenAtom)
+  const squeethToken = useAtomValue(squeethTokenAtom)
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
 
   const [sqthAmount, setSqthAmount] = useState('')
   const [ethAmount, setEthAmount] = useState('')
-  const [minPrice, setMinPrice] = useState(0)
-  const [maxPrice, setMaxPrice] = useState(0)
+  const [isSqthConstant, setIsSqthConstant] = useState(true) // If set as true oSqth amount will remain constant and ETH should be calculated
+  const [tickLower, setTickLower] = useState<number>(TickMath.MIN_TICK)
+  const [tickUpper, setTickUpper] = useState<number>(TickMath.MIN_TICK)
+
+  // Initial price
+  const [suggestedTickLower, suggestedTickUpper] = useMemo(() => {
+    let tickLower = TickMath.MIN_TICK
+    let tickUpper = TickMath.MIN_TICK
+    if (!squeethPool) {
+      return [tickLower, tickUpper]
+    }
+
+    const { tickCurrent, tickSpacing } = squeethPool
+
+    tickLower = Math.round((tickCurrent - 10 * tickSpacing) / tickSpacing) * tickSpacing
+    tickUpper = Math.round((tickCurrent + 10 * tickSpacing) / tickSpacing) * tickSpacing
+
+    if (isWethToken0) return [tickUpper, tickLower]
+
+    return [tickLower, tickUpper]
+  }, [isWethToken0, squeethPool])
+
+  useAppEffect(() => {
+    setTickLower(suggestedTickLower)
+    setTickUpper(suggestedTickUpper)
+  }, [suggestedTickLower, suggestedTickUpper])
 
   const ethBalance = useAppMemo(() => {
     if (!bal) return new BigNumber(0)
@@ -117,16 +152,50 @@ const BuyAndLP = memo(function BuyAndLP() {
   const updateSqthAmount = useAppCallback(
     (v: string) => {
       setSqthAmount(v)
+      setIsSqthConstant(true)
+      const [newEthAmt] = calculateLPAmounts(squeethPool!, tickLower, tickUpper, 0, Number(v), isWethToken0)
+      setEthAmount(newEthAmt.toString())
     },
-    [setSqthAmount],
+    [isWethToken0, squeethPool, tickLower, tickUpper],
   )
 
   const updateEthAmount = useAppCallback(
     (v: string) => {
       setEthAmount(v)
+      setIsSqthConstant(false)
+      const [, newSqthAmt] = calculateLPAmounts(squeethPool!, tickLower, tickUpper, Number(v), 0, isWethToken0)
+      setSqthAmount(newSqthAmt.toString())
     },
-    [setEthAmount],
+    [isWethToken0, squeethPool, tickLower, tickUpper],
   )
+
+  const calculateAmountsForTickChange = useAppCallback(() => {
+    if (isSqthConstant) {
+      const [newEthAmt] = calculateLPAmounts(squeethPool!, tickLower, tickUpper, 0, Number(sqthAmount), isWethToken0)
+      setEthAmount(newEthAmt.toString())
+    } else {
+      const [, newSqthAmt] = calculateLPAmounts(squeethPool!, tickLower, tickUpper, Number(ethAmount), 0, isWethToken0)
+      setSqthAmount(newSqthAmt.toString())
+    }
+  }, [ethAmount, isSqthConstant, isWethToken0, sqthAmount, squeethPool, tickLower, tickUpper])
+
+  const updateTickLower = useAppCallback(
+    (v: number) => {
+      setTickLower(v)
+      calculateAmountsForTickChange()
+    },
+    [calculateAmountsForTickChange],
+  )
+
+  const updateTickUpper = useAppCallback(
+    (v: number) => {
+      setTickUpper(v)
+      calculateAmountsForTickChange()
+    },
+    [calculateAmountsForTickChange],
+  )
+
+  if (!squeethPool || !wethToken || !squeethToken) return null
 
   return (
     <Box px={3} mt={3}>
@@ -169,29 +238,37 @@ const BuyAndLP = memo(function BuyAndLP() {
       <Box display="flex" justifyContent="space-between" mt={1} alignItems="center">
         <Box width="45%">
           <LPPriceInput
-            value={minPrice}
-            onChange={(v) => setMinPrice(v)}
+            tick={tickLower}
+            onChange={updateTickLower}
             label="Min price"
             hint="ETH per oSQTH"
             minValue={0}
             spacing={0.001}
+            baseToken={squeethToken!}
+            quoteToken={wethToken!}
+            isWethToken0={isWethToken0}
+            tickSpacing={squeethPool.tickSpacing}
           />
         </Box>
         <Box className={classes.medianBox}></Box>
         <Box width="45%">
           <LPPriceInput
-            value={maxPrice}
-            onChange={(v) => setMinPrice(v)}
+            tick={tickUpper}
+            onChange={updateTickUpper}
             label="Max price"
             hint="ETH per oSQTH"
             minValue={0}
             spacing={0.001}
+            baseToken={squeethToken!}
+            quoteToken={wethToken!}
+            isWethToken0={isWethToken0}
+            tickSpacing={squeethPool.tickSpacing}
           />
         </Box>
       </Box>
       <Box mt={2} display="flex" justifyContent="center" flexDirection="column" alignItems="center">
         <Typography variant="body2" component="span" align="center" className={classes.currentPrice}>
-          Current price: 0.2345
+          Current price: {currentSqueethPrice.toFixed(6)}
           <Typography component="span" variant="body2" color="textSecondary">
             {' '}
             ETH per OSQTH
