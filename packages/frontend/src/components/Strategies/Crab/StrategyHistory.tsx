@@ -1,7 +1,7 @@
 import { useCrabStrategyTxHistory } from '@hooks/useCrabAuctionHistory'
 import { IconButton, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { EtherscanPrefix } from '../../../constants'
 import OpenInNewIcon from '@material-ui/icons/OpenInNew'
 import Menu from '@material-ui/core/Menu'
@@ -11,8 +11,10 @@ import { GreyButton } from '@components/Button'
 import { useUserCrabTxHistory } from '@hooks/useUserCrabTxHistory'
 import { CrabStrategyTxType, Networks } from '../../../types/index'
 import clsx from 'clsx'
+import { TxItem, useETHPrices } from '@hooks/useETHPrices'
+import { useNormHistoryFromTimestamps } from '@hooks/useNormHistoryFromTimestamps'
 import { useAtomValue } from 'jotai'
-import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
+import { addressAtom, networkIdAtom, web3Atom } from 'src/state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -52,9 +54,29 @@ enum TxType {
 export const CrabStrategyHistory: React.FC = () => {
   const classes = useStyles()
   const { data, loading } = useCrabStrategyTxHistory()
-
   const address = useAtomValue(addressAtom)
   const networkId = useAtomValue(networkIdAtom)
+  const web3 = useAtomValue(web3Atom)
+  const [hedgeItems, setHedgeItems] = useState<TxItem[] | undefined>(undefined)
+
+  const ethPrices = useETHPrices(hedgeItems)
+  const normHistoryItems = useNormHistoryFromTimestamps(hedgeItems?.map((val) => val.timestamp) ?? [])
+
+  const hedgeWithETHPriceNF = useMemo(() => {
+    if (!ethPrices || !normHistoryItems || !data) return
+    return data.map((item, index) => {
+      return {
+        txHash: item.id,
+        timestamp: item.timestamp,
+        oSQTHAmount: item.oSqueethAmount,
+        ethAmount: item.ethAmount,
+        ethPrice: ethPrices[index],
+        normFactor: normHistoryItems[index].newNormFactor,
+        oldNormFactor: normHistoryItems[index].oldNormFactor,
+        normFactorTime: normHistoryItems[index].timestamp,
+      }
+    })
+  }, [data, ethPrices, normHistoryItems])
 
   const [txType, setTxType] = useState(TxType.HEDGES)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
@@ -71,6 +93,20 @@ export const CrabStrategyHistory: React.FC = () => {
     setTxType(type)
     setAnchorEl(null)
   }
+
+  useEffect(() => {
+    if (data) {
+      ;(async () => {
+        const items = await Promise.all(
+          data.map(async (item) => {
+            const txData = await web3.eth.getTransaction(item.id)
+            return { blockNo: txData.blockNumber ?? 0, timestamp: item.timestamp }
+          }),
+        )
+        setHedgeItems(items)
+      })()
+    }
+  }, [data, web3])
 
   return (
     <div className={classes.container}>

@@ -187,7 +187,7 @@ const historicPriceQueryKeys = {
   historicPrice: (timestamp: string) => [`userPrice_${timestamp}`],
 }
 
-async function getEthPriceAtTransactionTime(timestamp: string) {
+export async function getEthPriceAtTransactionTime(timestamp: string) {
   try {
     const timeInMilliseconds = new Date(Number(timestamp) * 1000).setUTCSeconds(0, 0)
     const currentTimeInMilliseconds = Date.now()
