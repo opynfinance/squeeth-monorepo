@@ -40,6 +40,7 @@ describe('Deposit and withdraw on strategy page', () => {
         cy.visit('/positions')
         trade.connectBrowserWallet()
         cy.get('#pos-page-crab-deposited-amount').invoke('text').then(parseFloat).should('be.greaterThan', 0.09)
+        cy.get('#pos-page-crab-pnl-amount').invoke('text').then(parseFloat).should('be.greaterThan', 0)
       })
     })
 

@@ -658,7 +658,7 @@ const CrabPosition: React.FC<CrabPositionType> = ({
             <Tooltip title={Tooltips.CrabPnL}>
               <InfoIcon fontSize="small" className={classes.infoIcon} />
             </Tooltip>
-            <Typography variant="body1" className={getPnlClassName()}>
+            <Typography variant="body1" className={getPnlClassName()} id="pos-page-crab-pnl-amount">
               {!loading ? '$' + `${minPnlUsd.toFixed(2)}` : 'Loading'}
             </Typography>
             <Typography variant="caption" className={getPnlClassName()}>

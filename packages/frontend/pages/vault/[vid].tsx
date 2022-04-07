@@ -704,11 +704,7 @@ const Component: React.FC = () => {
                 <Typography className={classes.overviewValue}>
                   {existingCollatPercent === Infinity ? '--' : `${existingCollatPercent || 0} %`}
                 </Typography>
-                <Typography
-                  className={clsx(classes.collatStatus, collatClass)}
-                  variant="caption"
-                  id="collat-perct-amount"
-                >
+                <Typography className={clsx(classes.collatStatus, collatClass)} variant="caption" id="vault-cr">
                   {getCollatPercentStatus(existingCollatPercent)}
                 </Typography>
               </div>
@@ -716,7 +712,7 @@ const Component: React.FC = () => {
             </div>
             <div className={classes.overviewItem}>
               <Typography className={classes.overviewValue}>
-                $ {!existingLiqPrice.isFinite() ? '--' : existingLiqPrice.toFixed(2)}
+                $ <span id="vault-liqp">{!existingLiqPrice.isFinite() ? '--' : existingLiqPrice.toFixed(2)}</span>
               </Typography>
               <Typography className={classes.overviewTitle}>Liquidation Price</Typography>
             </div>
@@ -777,7 +773,7 @@ const Component: React.FC = () => {
                       error={!!adjustCollatError}
                     />
                   </div>
-                  <div className={classes.collatContainer}>
+                  <div className={classes.collatContainer} id="collat-collat-ratio-container">
                     <TextField
                       size="small"
                       type="number"
@@ -811,6 +807,7 @@ const Component: React.FC = () => {
                       label="New liquidation price"
                       value={isCollatAction ? (newLiqPrice || 0).toFixed(2) : '0'}
                       frontUnit="$"
+                      id="collat-new-liqp"
                     />
                   </div>
                   <div className={classes.managerActions}>
@@ -888,8 +885,8 @@ const Component: React.FC = () => {
                               {oSqueethBal?.isGreaterThan(0) &&
                               positionType === PositionType.LONG &&
                               oSqueethBal.minus(squeethAmount).isGreaterThan(0)
-                                ? oSqueethBal.minus(squeethAmount).toFixed(8)
-                                : oSqueethBal.toFixed(8)}
+                                ? oSqueethBal.minus(squeethAmount).toFixed(6)
+                                : oSqueethBal.toFixed(6)}
                             </span>{' '}
                             oSQTH
                           </span>
@@ -897,7 +894,7 @@ const Component: React.FC = () => {
                       }
                       error={!!adjustAmountError}
                     />
-                    <div className={classes.collatContainer}>
+                    <div className={classes.collatContainer} id="debt-collat-ratio-container">
                       <TextField
                         size="small"
                         type="number"
@@ -930,6 +927,7 @@ const Component: React.FC = () => {
                       label="New liquidation price"
                       value={!isCollatAction ? (newLiqPrice || 0).toFixed(2) : '0'}
                       frontUnit="$"
+                      id="debt-new-liqp"
                     />
                   </div>
                   <div className={classes.managerActions}>

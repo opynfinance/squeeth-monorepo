@@ -26,7 +26,7 @@ describe('LP squeeth on uniswap', () => {
       cy.get('#vault-total-debt-bal').invoke('text').then(parseFloat).should('be.greaterThan', 0)
       cy.get('#vault-lped-debt-bal').invoke('text').then(parseFloat).should('be.greaterThan', 0)
       cy.get('#vault-minted-debt-bal').invoke('text').then(parseFloat).should('eq', 0)
-      cy.get('#vault-short-debt-bal').invoke('text').then(parseFloat).should('eq', 0)
+      cy.get('#vault-shorted-debt-bal').invoke('text').then(parseFloat).should('eq', 0)
     })
   })
 })

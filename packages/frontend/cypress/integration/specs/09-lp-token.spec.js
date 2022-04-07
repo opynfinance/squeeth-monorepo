@@ -115,6 +115,7 @@ describe('lp nft as collateral txs', () => {
         trade.waitForTransactionSuccess()
         cy.get('#lp-id-select').should('contain.text', 'None')
       })
+      // issue 233
       it.skip('check lp position', () => {
         cy.get('#vault-lped-debt-bal').invoke('text').then(parseFloat).should('not.equal', 0)
       })
