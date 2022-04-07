@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
-import { MaxUint256 } from '@uniswap/sdk-core';
-import { Pool, Position } from '@uniswap/v3-sdk'
+import { CurrencyAmount, MaxUint256, Price, Token } from '@uniswap/sdk-core';
+import { nearestUsableTick, Pool, Position, priceToClosestTick } from '@uniswap/v3-sdk'
 import { fromTokenAmount, toTokenAmount } from './calculations';
 
 export const calculateLPAmounts = (
@@ -34,4 +34,20 @@ export const calculateLPAmounts = (
   if (isWethToken0) return [newAmount0, newAmount1]
 
   return [newAmount1, newAmount0]
+}
+
+export const calculateTickForPrice = (price: number, quoteToken: Token, baseToken: Token, tickSpacing: number) => {
+  if (price === 0) {
+    return
+  }
+
+  const _price = new Price({
+    quoteAmount: CurrencyAmount.fromRawAmount(quoteToken, Math.ceil(price * Math.pow(10, quoteToken.decimals))),
+    baseAmount: CurrencyAmount.fromRawAmount(baseToken, Math.ceil(1 * Math.pow(10, baseToken.decimals))),
+  })
+
+  const tickFromPrice = priceToClosestTick(_price)
+  const closestTick = nearestUsableTick(tickFromPrice, tickSpacing)
+
+  return closestTick
 }

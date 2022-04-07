@@ -11,7 +11,6 @@ import { useState } from 'react'
 import { memo } from 'react'
 import { addressesAtom, isWethToken0Atom } from 'src/state/positions/atoms'
 import { useBuyAndLP } from 'src/state/squeethPool/hooks'
-import { addressAtom } from 'src/state/wallet/atoms'
 import { SimpleButton } from './LPIntroCard'
 import { useWalletBalance } from 'src/state/wallet/hooks'
 import useAppMemo from '@hooks/useAppMemo'
@@ -21,9 +20,20 @@ import useAppCallback from '@hooks/useAppCallback'
 import { poolAtom, squeethInitialPriceAtom, squeethTokenAtom, wethTokenAtom } from 'src/state/squeethPool/atoms'
 import { TickMath } from '@uniswap/v3-sdk'
 import { useMemo } from 'react'
-import { useEffect } from 'react'
 import useAppEffect from '@hooks/useAppEffect'
 import { calculateLPAmounts } from '@utils/lpUtils'
+import {
+  lpEthAmountAtom,
+  lpIsSqthConstant,
+  lpSqthAmountAtom,
+  lpTickLower,
+  lpTickUpper,
+  lpTxType,
+  LP_TX_TYPE,
+} from 'src/state/lp/atoms'
+import BuyAndLP from './transaction/BuyAndLP'
+import { useCallback } from 'react'
+import { useLPInputValidation } from 'src/state/lp/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -63,7 +73,13 @@ const useStyles = makeStyles((theme) =>
 const LPTrade: React.FC = () => {
   const classes = useStyles()
   const [, setSeeLPIntro] = useAtom(seeLPIntroAtom)
-  const buyAndLP = useBuyAndLP()
+  const [txType, setTxType] = useAtom(lpTxType)
+
+  const calculateTxType = useCallback(() => {
+    setTxType(LP_TX_TYPE.ADD_LIQUIDITY)
+  }, [setTxType])
+
+  const { isValidInput } = useLPInputValidation()
 
   return (
     <div className={classes.container}>
@@ -93,17 +109,29 @@ const LPTrade: React.FC = () => {
             › LP
           </SimpleButton>
         </Box>
-        <PrimaryButton style={{ minWidth: 120 }} onClick={() => buyAndLP()}>
-          Continue
-        </PrimaryButton>
+        <Box>
+          {txType !== LP_TX_TYPE.NONE ? (
+            <SimpleButton
+              size="small"
+              style={{ fontSize: '14px', width: '50px', opacity: '.8' }}
+              onClick={() => setTxType(LP_TX_TYPE.NONE)}
+            >
+              Cancel
+            </SimpleButton>
+          ) : null}
+          <PrimaryButton style={{ minWidth: 120 }} onClick={calculateTxType} disabled={!isValidInput}>
+            Continue
+          </PrimaryButton>
+        </Box>
       </Box>
       <Divider />
-      <BuyAndLP />
+      {txType === LP_TX_TYPE.NONE ? <LPAmountsForm /> : null}
+      {txType === LP_TX_TYPE.ADD_LIQUIDITY || txType === LP_TX_TYPE.SWAP_AND_ADD_LIQUIDITY ? <BuyAndLP /> : null}
     </div>
   )
 }
 
-const BuyAndLP = memo(function BuyAndLP() {
+const LPAmountsForm = memo(function BuyAndLP() {
   const classes = useStyles()
   const { oSqueeth } = useAtomValue(addressesAtom)
   const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
@@ -114,11 +142,11 @@ const BuyAndLP = memo(function BuyAndLP() {
   const squeethToken = useAtomValue(squeethTokenAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)
 
-  const [sqthAmount, setSqthAmount] = useState('')
-  const [ethAmount, setEthAmount] = useState('')
-  const [isSqthConstant, setIsSqthConstant] = useState(true) // If set as true oSqth amount will remain constant and ETH should be calculated
-  const [tickLower, setTickLower] = useState<number>(TickMath.MIN_TICK)
-  const [tickUpper, setTickUpper] = useState<number>(TickMath.MIN_TICK)
+  const [sqthAmount, setSqthAmount] = useAtom(lpSqthAmountAtom)
+  const [ethAmount, setEthAmount] = useAtom(lpEthAmountAtom)
+  const [isSqthConstant, setIsSqthConstant] = useAtom(lpIsSqthConstant) // If set as true oSqth amount will remain constant and ETH should be calculated
+  const [tickLower, setTickLower] = useAtom(lpTickLower)
+  const [tickUpper, setTickUpper] = useAtom(lpTickUpper)
 
   // Initial price
   const [suggestedTickLower, suggestedTickUpper] = useMemo(() => {
@@ -141,7 +169,7 @@ const BuyAndLP = memo(function BuyAndLP() {
   useAppEffect(() => {
     setTickLower(suggestedTickLower)
     setTickUpper(suggestedTickUpper)
-  }, [suggestedTickLower, suggestedTickUpper])
+  }, [setTickLower, setTickUpper, suggestedTickLower, suggestedTickUpper])
 
   const ethBalance = useAppMemo(() => {
     if (!bal) return new BigNumber(0)
@@ -156,7 +184,7 @@ const BuyAndLP = memo(function BuyAndLP() {
       const [newEthAmt] = calculateLPAmounts(squeethPool!, tickLower, tickUpper, 0, Number(v), isWethToken0)
       setEthAmount(newEthAmt.toString())
     },
-    [isWethToken0, squeethPool, tickLower, tickUpper],
+    [isWethToken0, setEthAmount, setIsSqthConstant, setSqthAmount, squeethPool, tickLower, tickUpper],
   )
 
   const updateEthAmount = useAppCallback(
@@ -166,7 +194,7 @@ const BuyAndLP = memo(function BuyAndLP() {
       const [, newSqthAmt] = calculateLPAmounts(squeethPool!, tickLower, tickUpper, Number(v), 0, isWethToken0)
       setSqthAmount(newSqthAmt.toString())
     },
-    [isWethToken0, squeethPool, tickLower, tickUpper],
+    [isWethToken0, setEthAmount, setIsSqthConstant, setSqthAmount, squeethPool, tickLower, tickUpper],
   )
 
   const calculateAmountsForTickChange = useAppCallback(() => {
@@ -177,14 +205,25 @@ const BuyAndLP = memo(function BuyAndLP() {
       const [, newSqthAmt] = calculateLPAmounts(squeethPool!, tickLower, tickUpper, Number(ethAmount), 0, isWethToken0)
       setSqthAmount(newSqthAmt.toString())
     }
-  }, [ethAmount, isSqthConstant, isWethToken0, sqthAmount, squeethPool, tickLower, tickUpper])
+  }, [
+    ethAmount,
+    isSqthConstant,
+    isWethToken0,
+    setEthAmount,
+    setSqthAmount,
+    sqthAmount,
+    squeethPool,
+    tickLower,
+    tickUpper,
+  ])
 
   const updateTickLower = useAppCallback(
     (v: number) => {
+      console.log('Update tick called', v)
       setTickLower(v)
       calculateAmountsForTickChange()
     },
-    [calculateAmountsForTickChange],
+    [calculateAmountsForTickChange, setTickLower],
   )
 
   const updateTickUpper = useAppCallback(
@@ -192,7 +231,7 @@ const BuyAndLP = memo(function BuyAndLP() {
       setTickUpper(v)
       calculateAmountsForTickChange()
     },
-    [calculateAmountsForTickChange],
+    [calculateAmountsForTickChange, setTickUpper],
   )
 
   if (!squeethPool || !wethToken || !squeethToken) return null
@@ -238,7 +277,7 @@ const BuyAndLP = memo(function BuyAndLP() {
       <Box display="flex" justifyContent="space-between" mt={1} alignItems="center">
         <Box width="45%">
           <LPPriceInput
-            tick={tickLower}
+            tick={suggestedTickLower}
             onChange={updateTickLower}
             label="Min price"
             hint="ETH per oSQTH"
@@ -253,7 +292,7 @@ const BuyAndLP = memo(function BuyAndLP() {
         <Box className={classes.medianBox}></Box>
         <Box width="45%">
           <LPPriceInput
-            tick={tickUpper}
+            tick={suggestedTickUpper}
             onChange={updateTickUpper}
             label="Max price"
             hint="ETH per oSQTH"

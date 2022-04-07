@@ -5,12 +5,13 @@ import React from 'react'
 import AddIcon from '@material-ui/icons/Add'
 import RemoveIcon from '@material-ui/icons/Remove'
 import { useState } from 'react'
-import { nearestUsableTick, priceToClosestTick, tickToPrice } from '@uniswap/v3-sdk'
-import { CurrencyAmount, Price, Token } from '@uniswap/sdk-core'
+import { priceToClosestTick, tickToPrice } from '@uniswap/v3-sdk'
+import { Token } from '@uniswap/sdk-core'
 import useAppEffect from '@hooks/useAppEffect'
 import useAppCallback from '@hooks/useAppCallback'
 import { useCallback } from 'react'
 import { useEffect } from 'react'
+import { calculateTickForPrice } from '@utils/lpUtils'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -112,6 +113,7 @@ export const LPPriceInput: React.FC<LPPriceInputType> = ({
   const [tick, setTick] = useState(initTick)
 
   useAppEffect(() => {
+    console.log('Tick inside LpPriceInput', tick)
     // During intermediate state baseToken and quoteToken will be in diff chain. This will throw error
     if (baseToken.chainId !== quoteToken.chainId) return
 
@@ -137,6 +139,14 @@ export const LPPriceInput: React.FC<LPPriceInputType> = ({
     setTick(isWethToken0 ? tick - tickSpacing : tick + tickSpacing)
   }
 
+  const calculateTick = () => {
+    const _newTick = calculateTickForPrice(input, quoteToken, baseToken, tickSpacing)
+    const price = tickToPrice(baseToken, quoteToken, tick).toSignificant(5)
+
+    setInput(parseFloat(price))
+    if (_newTick && tick !== _newTick) setTick(_newTick)
+  }
+
   useAppEffect(() => {
     onChange(tick)
   }, [onChange, tick])
@@ -160,7 +170,7 @@ export const LPPriceInput: React.FC<LPPriceInputType> = ({
         paddingBottom={2}
         alignItems="center"
       >
-        <IconButton className={classes.iconButton} onClick={decreaseValue}>
+        <IconButton className={classes.iconButton} onClick={decreaseValue} onBlur={calculateTick}>
           <RemoveIcon />
         </IconButton>
         <input
@@ -170,6 +180,7 @@ export const LPPriceInput: React.FC<LPPriceInputType> = ({
           onChange={handleInput}
           placeholder="0.0000"
           type="number"
+          onBlur={calculateTick}
           onKeyDown={(e) => {
             if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
               e.preventDefault()
@@ -177,7 +188,7 @@ export const LPPriceInput: React.FC<LPPriceInputType> = ({
             }
           }}
         />
-        <IconButton className={classes.iconButton} onClick={increaseValue}>
+        <IconButton className={classes.iconButton} onClick={increaseValue} onBlur={calculateTick}>
           <AddIcon />
         </IconButton>
       </Box>
