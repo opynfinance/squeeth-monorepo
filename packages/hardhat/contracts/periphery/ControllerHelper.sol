@@ -83,11 +83,9 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         external
         payable
     {
-        if (_params.vaultId != 0)
-            require(
-                IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) ==
-                    msg.sender
-            );
+        require(
+            IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) == msg.sender
+        );
         require(_params.maxToPay <= _params.collateralToWithdraw.add(msg.value));
 
         _exactOutFlashSwap(
@@ -144,11 +142,9 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
      * @param _params ControllerHelperDataType.CloseShortWithUserNftParams struct
      */
     function closeShortWithUserNft(ControllerHelperDataType.CloseShortWithUserNftParams calldata _params) external {
-        if (_params.vaultId != 0)
-            require(
-                IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) ==
-                    msg.sender
-            );
+        require(
+            IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) == msg.sender
+        );
 
         INonfungiblePositionManager(ControllerHelperDiamondStorage.getAddressAtSlot(6)).safeTransferFrom(
             msg.sender,
@@ -197,11 +193,9 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         external
         payable
     {
-        if (_params.vaultId != 0)
-            require(
-                IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) ==
-                    msg.sender
-            );
+        require(
+            IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) == msg.sender
+        );
 
         _flashLoan(
             ControllerHelperDiamondStorage.getAddressAtSlot(5),
