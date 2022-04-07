@@ -16,7 +16,7 @@ describe('Do vault operations(mint debt, burn debt, add collat, remove collat) o
   context('Before tests', () => {
     it(`Before tests`, () => {
       cy.disconnectMetamaskWalletFromAllDapps()
-      cy.visit('/')
+      cy.visit('/vault/281')
     })
   })
 
@@ -278,7 +278,8 @@ describe('Do vault operations(mint debt, burn debt, add collat, remove collat) o
           cy.get('#vault-debt-input-osqth-alance').invoke('text').then(parseFloat).should('equal', 1)
         })
 
-        it('check minted debt balance after minted', () => {
+        // issue #238
+        it.skip('check minted debt balance after minted', () => {
           cy.get('#vault-minted-debt-bal')
             .wait(20000)
             .invoke('text')
@@ -293,7 +294,8 @@ describe('Do vault operations(mint debt, burn debt, add collat, remove collat) o
             .should('eq', Number(shortedDebtBeforeMint.toFixed(6)))
         })
 
-        it('check total debt balance after minted', () => {
+        // issue #238
+        it.skip('check total debt balance after minted', () => {
           cy.get('#vault-total-debt-bal')
             .invoke('text')
             .then(parseFloat)
@@ -320,7 +322,6 @@ describe('Do vault operations(mint debt, burn debt, add collat, remove collat) o
         it(`can burn with max button`, () => {
           cy.get('#debt-amount-input').clear().type('-1', { delay: 200, force: true }).should('have.value', '-1')
           cy.get('#debt-max-btn').click({ force: true })
-          cy.get('#burn-submit-tx-btn').should('not.be.disabled')
           cy.get('#vault-shorted-debt-bal').then((val) => {
             shortedDebtBeforeBurn = new BigNumber(val.text())
           })
@@ -333,6 +334,7 @@ describe('Do vault operations(mint debt, burn debt, add collat, remove collat) o
           cy.get('.debt-collat-perct input').then((val) => {
             crAfterTrade = val.val()
           })
+          cy.get('#burn-submit-tx-btn').should('not.be.disabled')
         })
 
         it('CR should be above 150', () => {
@@ -388,7 +390,6 @@ describe('Do vault operations(mint debt, burn debt, add collat, remove collat) o
       context('add collat with manual input', () => {
         it(`can enter in collat input`, () => {
           cy.get('#collat-amount-input').clear().type('1', { delay: 200, force: true }).should('have.value', '1')
-          cy.get('#add-collat-submit-tx-btn').should('not.be.disabled')
           cy.get('#vault-shorted-debt-bal').then((val) => {
             shortedDebtBeforeMint = new BigNumber(val.text())
           })
@@ -398,6 +399,7 @@ describe('Do vault operations(mint debt, burn debt, add collat, remove collat) o
           cy.get('.collat-collat-perct input').then((val) => {
             crAfterTrade = val.val()
           })
+          cy.get('#add-collat-submit-tx-btn').should('not.be.disabled')
         })
 
         it('CR input should be above 150', () => {
@@ -422,22 +424,11 @@ describe('Do vault operations(mint debt, burn debt, add collat, remove collat) o
         })
 
         it('check vault collat amount', () => {
-          cy.get('#vault-collat-amount').should('contain.text', (9).toFixed(4))
-        })
-
-        it('check minted debt balance after collateral added', () => {
-          cy.get('#vault-minted-debt-bal').wait(20000).invoke('text').then(parseFloat).should('equal', 0)
+          cy.get('#vault-collat-amount').wait(20000).should('contain.text', (9).toFixed(4))
         })
 
         it('check shorted debt balance after collateral added', () => {
           cy.get('#vault-shorted-debt-bal')
-            .invoke('text')
-            .then(parseFloat)
-            .should('eq', Number(shortedDebtBeforeMint.toFixed(6)))
-        })
-
-        it('check total debt balance after collateral added', () => {
-          cy.get('#vault-total-debt-bal')
             .invoke('text')
             .then(parseFloat)
             .should('eq', Number(shortedDebtBeforeMint.toFixed(6)))
@@ -459,11 +450,8 @@ describe('Do vault operations(mint debt, burn debt, add collat, remove collat) o
       })
 
       context('remove Collat with manual input', () => {
-        it(`can remove collat with manual input`, () => {})
-
         it(`can enter in collat input`, () => {
           cy.get('#collat-amount-input').clear().type('-1', { delay: 200, force: true }).should('have.value', '-1')
-          cy.get('#remove-collat-submit-tx-btn').should('not.be.disabled')
           cy.get('#vault-shorted-debt-bal').then((val) => {
             shortedDebtBeforeMint = new BigNumber(val.text())
           })
@@ -473,6 +461,7 @@ describe('Do vault operations(mint debt, burn debt, add collat, remove collat) o
           cy.get('.collat-collat-perct input').then((val) => {
             crAfterTrade = val.val()
           })
+          cy.get('#remove-collat-submit-tx-btn').should('not.be.disabled')
         })
 
         it('CR input should be above 150', () => {
@@ -496,22 +485,11 @@ describe('Do vault operations(mint debt, burn debt, add collat, remove collat) o
         })
 
         it('check vault collat amount', () => {
-          cy.get('#vault-collat-amount').should('contain.text', (8).toFixed(4))
-        })
-
-        it('check minted debt balance after collateral added', () => {
-          cy.get('#vault-minted-debt-bal').wait(20000).invoke('text').then(parseFloat).should('equal', 0)
+          cy.get('#vault-collat-amount').wait(20000).should('contain.text', (8).toFixed(4))
         })
 
         it('check shorted debt balance after collateral added', () => {
           cy.get('#vault-shorted-debt-bal')
-            .invoke('text')
-            .then(parseFloat)
-            .should('eq', Number(shortedDebtBeforeMint.toFixed(6)))
-        })
-
-        it('check total debt balance after collateral added', () => {
-          cy.get('#vault-total-debt-bal')
             .invoke('text')
             .then(parseFloat)
             .should('eq', Number(shortedDebtBeforeMint.toFixed(6)))
@@ -541,9 +519,7 @@ describe('Do vault operations(mint debt, burn debt, add collat, remove collat) o
       })
 
       it('can close short position', () => {
-        cy.get('#close-short-type-select .MuiSelect-select').click({ force: true })
-        cy.get('#close-short-full-close').click({ force: true })
-        cy.get('close-short-type-select').should('contain.text', 'Full Close')
+        cy.get('close-short-type-select').wait(20000).should('contain.text', 'Full Close')
         cy.get('#close-short-osqth-input').should('not.equal', '0')
 
         cy.get('#close-short-submit-tx-btn').then((btn) => {
