@@ -106,7 +106,6 @@ describe('Do vault operations(mint debt, burn debt, add collat, remove collat) o
       context('Mint with manual input', () => {
         it(`can enter in debt input`, () => {
           cy.get('#debt-amount-input').clear().type('1', { delay: 200, force: true }).should('have.value', '1')
-          cy.get('#mint-submit-tx-btn').should('not.be.disabled')
           cy.get('#vault-shorted-debt-bal').then((val) => {
             shortedDebtBeforeMint = new BigNumber(val.text())
           })
@@ -116,6 +115,7 @@ describe('Do vault operations(mint debt, burn debt, add collat, remove collat) o
           cy.get('.debt-collat-perct input').then((val) => {
             crAfterTrade = val.val()
           })
+          cy.get('#mint-submit-tx-btn').should('not.be.disabled')
         })
 
         it('CR input should be above 150', () => {
@@ -173,7 +173,6 @@ describe('Do vault operations(mint debt, burn debt, add collat, remove collat) o
       context.skip('can burn with manual input', () => {
         it(`can burn with manual input`, () => {
           cy.get('#debt-amount-input').clear().type('-1', { delay: 200, force: true }).should('have.value', '-1')
-          cy.get('#burn-submit-tx-btn').should('not.be.disabled')
           cy.get('#vault-shorted-debt-bal').then((val) => {
             shortedDebtBeforeBurn = new BigNumber(val.text())
           })
@@ -186,6 +185,7 @@ describe('Do vault operations(mint debt, burn debt, add collat, remove collat) o
           cy.get('.debt-collat-perct input').then((val) => {
             crAfterTrade = val.val()
           })
+          cy.get('#burn-submit-tx-btn').should('not.be.disabled')
         })
 
         it('CR should be above 150', () => {
@@ -243,7 +243,6 @@ describe('Do vault operations(mint debt, burn debt, add collat, remove collat) o
         it(`can enter with max button`, () => {
           cy.get('#debt-amount-input').clear().type('1', { delay: 200, force: true }).should('have.value', '1')
           cy.get('#debt-max-btn').click({ force: true })
-          cy.get('#mint-submit-tx-btn').should('not.be.disabled')
           cy.get('#debt-amount-input').then((val) => {
             mintWMaxButtonInput = new BigNumber(val.val().toString())
           })
@@ -257,6 +256,7 @@ describe('Do vault operations(mint debt, burn debt, add collat, remove collat) o
           cy.get('.debt-collat-perct input').then((val) => {
             crAfterTrade = val.val()
           })
+          cy.get('#mint-submit-tx-btn').should('not.be.disabled')
         })
 
         it('CR input should be above 150', () => {
@@ -388,7 +388,11 @@ describe('Do vault operations(mint debt, burn debt, add collat, remove collat) o
     context(`adjust collateral `, () => {
       context('add collat with manual input', () => {
         it(`can enter in collat input`, () => {
-          cy.get('#collat-amount-input').clear().type('1', { delay: 200, force: true }).should('have.value', '1')
+          cy.get('#collat-amount-input')
+            .clear()
+            .type('1', { delay: 200, force: true })
+            .should('have.value', '1')
+            .wait(5000)
           cy.get('#vault-shorted-debt-bal').then((val) => {
             shortedDebtBeforeMint = new BigNumber(val.text())
           })
@@ -438,11 +442,11 @@ describe('Do vault operations(mint debt, burn debt, add collat, remove collat) o
         })
 
         it('new liq price has updated', () => {
-          cy.get('#debt-new-liqp .trade-info-item-value').should('contain.text', liqpAfterTrade)
+          cy.get('#collat-new-liqp .trade-info-item-value').should('contain.text', liqpAfterTrade)
         })
 
         it('new cr has updated', () => {
-          cy.get('.debt-collat-perct input')
+          cy.get('.collat-collat-perct input')
             .then((v) => v.val())
             .should('eq', crAfterTrade)
         })
@@ -499,11 +503,11 @@ describe('Do vault operations(mint debt, burn debt, add collat, remove collat) o
         })
 
         it('new liq price has updated', () => {
-          cy.get('#debt-new-liqp .trade-info-item-value').should('contain.text', liqpAfterTrade)
+          cy.get('#collat-new-liqp .trade-info-item-value').should('contain.text', liqpAfterTrade)
         })
 
         it('new cr has updated', () => {
-          cy.get('.debt-collat-perct input')
+          cy.get('.collat-collat-perct input')
             .then((v) => v.val())
             .should('eq', crAfterTrade)
         })
@@ -517,8 +521,13 @@ describe('Do vault operations(mint debt, burn debt, add collat, remove collat) o
         cy.get('#close-btn').click({ force: true })
       })
 
+      it(`should login with success`, () => {
+        trade.connectBrowserWallet()
+
+        cy.get('#wallet-address').should(`contain.text`, '0x' || '.eth')
+      })
+
       it('can close short position', () => {
-        cy.get('close-short-type-select').wait(20000).should('contain.text', 'Full Close')
         cy.get('#close-short-osqth-input').should('not.equal', '0')
 
         cy.get('#close-short-submit-tx-btn').then((btn) => {
