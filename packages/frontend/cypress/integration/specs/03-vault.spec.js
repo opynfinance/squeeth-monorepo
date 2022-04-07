@@ -7,7 +7,6 @@ const trade = new TradePage()
 
 describe('Do vault operations(mint debt, burn debt, add collat, remove collat) on vault page', () => {
   let openShortOsqthInput
-  let mintWManualInput
   let mintWMaxButtonInput
   let liqpAfterTrade
   let crAfterTrade
@@ -16,7 +15,7 @@ describe('Do vault operations(mint debt, burn debt, add collat, remove collat) o
   context('Before tests', () => {
     it(`Before tests`, () => {
       cy.disconnectMetamaskWalletFromAllDapps()
-      cy.visit('/vault/281')
+      cy.visit('/')
     })
   })
 
