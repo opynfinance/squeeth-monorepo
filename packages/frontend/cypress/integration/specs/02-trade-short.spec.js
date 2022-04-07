@@ -85,7 +85,6 @@ describe('Trade on trade page', () => {
         cy.get('#open-short-trade-details .trade-details-amount').invoke('text').then(parseFloat).should('not.equal', 0)
         cy.get('#open-short-trade-details .trade-details-amount').then((val) => {
           openShortOsqthInput = new BigNumber(val.text())
-          cy.log(openShortOsqthInput, val.text())
         })
       })
 
