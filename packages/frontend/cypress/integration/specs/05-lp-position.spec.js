@@ -4,7 +4,7 @@ const trade = new TradePage()
 import TradePage from '../pages/trade'
 
 //please run 04-buy or 04-mint first
-describe('LP squeeth on uniswap', () => {
+describe.skip('LP squeeth on uniswap', () => {
   context('Before tests', () => {
     it(`Before tests`, () => {
       cy.disconnectMetamaskWalletFromAllDapps()
