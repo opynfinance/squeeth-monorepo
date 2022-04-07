@@ -67,7 +67,7 @@ export const useUpdateSqueethPoolData = () => {
   const contract = useAtomValue(squeethPoolContractAtom)
   const { ticks } = useUniswapTicks()
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       const { token0, token1, fee } = await getImmutables(contract!)
 
       const state = await getPoolState(contract!)
@@ -241,7 +241,7 @@ export const useGetBuyQuote = () => {
 
       return emptyState
     },
-    [pool?.token0Price, wethToken?.address, squeethToken?.address],
+    [pool, wethToken?.address, squeethToken?.address],
   )
 
   return getBuyQuote
