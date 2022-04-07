@@ -202,30 +202,30 @@ library ControllerHelperUtil {
     }
 
     /**
-     * @notice check if LP was closed fully or partially, transfer back to user or deposit into vault
+     * @notice transfer back LP NFT to user if remaining liquidity == 0 and no vault used, or deposit back into vault if still have liquidity
+     * @param _user user address
      * @param _controller controller address
      * @param _nonfungiblePositionManager Uni NonFungiblePositionManager address
      * @param _vaultId vault ID
      * @param _tokenId Uni LP NFT id
      * @param _liquidityPercentage percentage of liquidity that was closed from total amount
      */
-    function checkPartialLpClose(
+    function checkClosedLp(
+        address _user,
         address _controller,
         address _nonfungiblePositionManager,
         uint256 _vaultId,
         uint256 _tokenId,
         uint256 _liquidityPercentage
     ) public {
-        if (_liquidityPercentage < 1e18) {
-            if (_vaultId == 0) {
-                INonfungiblePositionManager(_nonfungiblePositionManager).safeTransferFrom(
-                    address(this),
-                    msg.sender,
-                    _tokenId
-                );
-            } else {
-                IController(_controller).depositUniPositionToken(_vaultId, _tokenId);
-            }
+        if ((_vaultId == 0) || (_liquidityPercentage == 1e18)) {
+            INonfungiblePositionManager(_nonfungiblePositionManager).safeTransferFrom(
+                address(this),
+                _user,
+                _tokenId
+            );
+        } else {
+            IController(_controller).depositUniPositionToken(_vaultId, _tokenId);
         }
     }
 
