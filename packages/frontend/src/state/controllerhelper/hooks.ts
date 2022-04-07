@@ -58,3 +58,46 @@ export const useFlashSwapAndMint = () => {
   )
   return flashSwapAndMint
 }
+export const useFlashSwapAndBurn = () => {
+  const handleTransaction = useHandleTransaction()
+  const contract = useAtomValue(controllerHelperContractAtom)
+  const address = useAtomValue(addressAtom)
+
+  /**
+   * flashSwapAndBurn - Used for swap and burn with switching from short to long.
+   * @param vaultId - 0 to create new
+   * @param squeethAmount - Amount of squeeth to burn
+   * @param collateralAmount - eth collateral to withdraw
+   * @param maxToPay - slippage amount
+   * @returns
+   */
+  const flashSwapAndBurn = useAppCallback(
+    async (vaultId, squeethAmount, collateralAmount, maxToPay, msgValue, onTxConfirmed) => {
+      if (!contract || !address) return
+
+      const wPowerPerpAmountToBurn = fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0)
+      const collateralToWithdraw = fromTokenAmount(collateralAmount, 18).toFixed(0)
+      const _maxToPay = fromTokenAmount(maxToPay, 18).toString()
+      const value = fromTokenAmount(msgValue, 18).toFixed(0)
+
+      const result = await handleTransaction(
+        contract.methods
+          .flashswapWBurnBuyLong({
+            vaultId,
+            collateralToWithdraw,
+            wPowerPerpAmountToBurn,
+            maxToPay: _maxToPay,
+            wPowerPerpAmountToBuy: '0',
+          })
+          .send({
+            from: address,
+            value,
+          }),
+        onTxConfirmed,
+      )
+      return result
+    },
+    [address, contract],
+  )
+  return flashSwapAndBurn
+}
