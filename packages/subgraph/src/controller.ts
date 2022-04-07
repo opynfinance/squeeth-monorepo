@@ -103,6 +103,8 @@ export function handleBurnShort(event: BurnShort): void {
   let actionType: string;
   if (event.params.sender == SHORT_HELPER_ADDR) {
     actionType = "CLOSE_SHORT";
+  } else if (event.params.sender == CONTROLLER_HELPER_ADDR) {
+    actionType = "FLASH_SWAP_W_BURN";
   } else {
     actionType = "BURN";
   }
