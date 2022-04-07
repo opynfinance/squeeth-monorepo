@@ -32,6 +32,7 @@ import {
   existingLiqPriceAtom,
   collatPercentAtom,
   isVaultLoadingAtom,
+  swapsAtom,
 } from './atoms'
 import { positions, positionsVariables } from '@queries/uniswap/__generated__/positions'
 import POSITIONS_QUERY, { POSITIONS_SUBSCRIPTION } from '@queries/uniswap/positionsQuery'
@@ -53,6 +54,7 @@ import { ComputeSwapsContext } from './providers'
 export const useSwaps = () => {
   const [networkId] = useAtom(networkIdAtom)
   const [address] = useAtom(addressAtom)
+  const setSwaps = useUpdateAtom(swapsAtom)
   const { squeethPool, oSqueeth, shortHelper, swapRouter, crabStrategy } = useAtomValue(addressesAtom)
   const { subscribeToMore, data, refetch, loading, error, startPolling, stopPolling } = useQuery<
     swaps | swapsRopsten,
@@ -99,6 +101,12 @@ export const useSwaps = () => {
       },
     })
   }, [address, crabStrategy, networkId, oSqueeth, shortHelper, squeethPool, swapRouter, subscribeToMore])
+
+  useEffect(() => {
+    if (data?.swaps) {
+      setSwaps({ swaps: data.swaps })
+    }
+  }, [data?.swaps.length])
 
   return { data, refetch, loading, error, startPolling, stopPolling }
 }

@@ -37,6 +37,7 @@ import { useHandleTransaction } from '../wallet/hooks'
 import { addressAtom } from '../wallet/atoms'
 import { currentImpliedFundingAtom } from '../controller/atoms'
 import { crabStrategyContractAtom } from '../contracts/atoms'
+import useAppCallback from '@hooks/useAppCallback'
 
 export const useSetStrategyData = () => {
   const setMaxCap = useUpdateAtom(maxCapAtom)
@@ -103,7 +104,7 @@ export const useCalculateEthWillingToPay = () => {
       const ethWillingToPayQuote = await getBuyQuote(squeethDebt, new BigNumber(slippage))
       return ethWillingToPayQuote
     },
-    [contract, getBuyQuote, vault?.id, contract],
+    [contract, getBuyQuote, vault?.id],
   )
 
   return calculateEthWillingToPay
@@ -119,14 +120,17 @@ export const useCalculateCurrentValue = () => {
   const contract = useAtomValue(crabStrategyContractAtom)
   const calculateEthWillingToPay = useCalculateEthWillingToPay()
 
-  const calculateCurrentValue = useCallback(async () => {
+  const calculateCurrentValue = useAppCallback(async () => {
+    if (!vault) return
     const collat = await getCollateralFromCrabAmount(userCrabBalance, contract, vault)
     const { amountIn: ethToPay } = await calculateEthWillingToPay(userCrabBalance, slippage)
-    if (collat) {
+    if (collat?.gt(0)) {
       setCurrentEthValue(collat.minus(ethToPay))
+      if (ethToPay.gt(0)) setCurrentEthLoading(false)
+    } else {
       setCurrentEthLoading(false)
     }
-  }, [calculateEthWillingToPay, contract, slippage, userCrabBalance?.toString(), vault?.id])
+  }, [calculateEthWillingToPay, contract, slippage, userCrabBalance, setCurrentEthValue, setCurrentEthLoading, vault?.id])
 
   // useEffect(() => {
   //   calculateCurrentValue()
@@ -191,8 +195,7 @@ export const useFlashDeposit = (calculateETHtoBorrowFromUniswap: any) => {
   const vault = useAtomValue(crabStrategyVaultAtom)
   const contract = useAtomValue(crabStrategyContractAtom)
   const handleTransaction = useHandleTransaction()
-  // const calculateETHtoBorrowFromUniswap = useCalculateETHtoBorrowFromUniswap()
-  const flashDeposit = useCallback(
+  const flashDeposit = useAppCallback(
     async (amount: BigNumber, slippage: number, onTxConfirmed?: () => void) => {
       if (!contract || !vault) return
 
@@ -211,7 +214,7 @@ export const useFlashDeposit = (calculateETHtoBorrowFromUniswap: any) => {
         onTxConfirmed,
       )
     },
-    [address, contract, handleTransaction, vault?.id, maxCap.toString()],
+    [address, contract, handleTransaction, vault?.id, maxCap, calculateETHtoBorrowFromUniswap],
   )
 
   return flashDeposit

@@ -50,17 +50,12 @@ contract AaveControllerHelper is IFlashLoanReceiver {
         bytes calldata params
     ) external override returns (bool) {
         // sanity checks
-        require(msg.sender == address(LENDING_POOL), "E5");
-        require(assets.length == 1, "E6");
+        require(msg.sender == address(LENDING_POOL));
 
         FlashloanCallbackData memory data = abi.decode(params, (FlashloanCallbackData));
 
         // this assume that this contract will never flashloan more than 1 asset
         _flashCallback(data.caller, assets[0], amounts[0], premiums[0], data.callSource, data.callData);
-
-        console.log("amounts[0]", amounts[0]);
-        console.log("premiums[0]", premiums[0]);
-        console.log("amounts[0].add(premiums[0])", amounts[0].add(premiums[0]));
 
         // Approve the LENDING_POOL contract allowance to *pull* the owed amount
         IERC20Detailed(assets[0]).approve(address(LENDING_POOL), amounts[0].add(premiums[0]));
