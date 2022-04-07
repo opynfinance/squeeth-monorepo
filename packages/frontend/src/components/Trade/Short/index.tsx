@@ -52,6 +52,7 @@ import { TradeType } from '../../../types'
 import Cancelled from '../Cancelled'
 import { useVaultData } from '@hooks/useVaultData'
 import { OpenShortPosition } from './OpenShort'
+import { CloseShort as Close } from './CloseShort'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -1073,7 +1074,7 @@ type SellType = {
 }
 
 const Short: React.FC<SellType> = ({ open }) => {
-  return open ? <OpenShortPosition open={open} /> : <CloseShort open={open} />
+  return open ? <OpenShortPosition open={open} /> : <Close />
 }
 
 export default memo(Short)
