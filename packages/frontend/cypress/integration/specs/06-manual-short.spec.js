@@ -43,9 +43,9 @@ describe('Trade on trade page', () => {
         cy.get('#close-long-submit-tx-btn').then((btn) => {
           if (btn.text().includes('Approve oSQTH')) {
             cy.get('#close-long-submit-tx-btn').click({ force: true })
-            trade.confirmMetamaskTransaction()
+            trade.confirmMetamaskPermissionToSpend()
             trade.waitForTransactionSuccess()
-            cy.get('#close-long-submit-tx-btn').click({ force: true })
+            cy.wait(15000).get('#close-long-submit-tx-btn').click({ force: true })
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
           }
