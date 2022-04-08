@@ -87,7 +87,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) == msg.sender
         );
         require(_params.maxToPay <= _params.collateralToWithdraw.add(msg.value));
-
+        console.log('_params.wPowerPerpAmountToBurn: ', _params.wPowerPerpAmountToBurn);
+        console.log('_params.wPowerPerpAmountToBuy: ',_params.wPowerPerpAmountToBuy);
         _exactOutFlashSwap(
             ControllerHelperDiamondStorage.getAddressAtSlot(5),
             ControllerHelperDiamondStorage.getAddressAtSlot(4),
@@ -115,13 +116,13 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) ==
                     msg.sender
             );
-
+        console.log('past owner check');
         IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).transferFrom(
             msg.sender,
             address(this),
             _params.wPowerPerpAmountToSell
         );
-
+        console.log('past the transfer');
         // flashswap and mint short position
         _exactInFlashSwap(
             ControllerHelperDiamondStorage.getAddressAtSlot(4),
@@ -132,7 +133,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             uint8(ControllerHelperDataType.CALLBACK_SOURCE.FLASH_SELL_LONG_W_MINT),
             abi.encode(_params)
         );
-
+        console.log('past the swap');
         payable(msg.sender).sendValue(address(this).balance);
     }
 
@@ -144,7 +145,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
     function closeShortWithUserNft(ControllerHelperDataType.CloseShortWithUserNftParams calldata _params) external {
         require(
             IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) == msg.sender
-        );
+        , 'badd');
 
         INonfungiblePositionManager(ControllerHelperDiamondStorage.getAddressAtSlot(6)).safeTransferFrom(
             msg.sender,
