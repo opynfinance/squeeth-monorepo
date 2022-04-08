@@ -9,7 +9,7 @@ describe('LP squeeth on uniswap', () => {
     it(`Before tests`, () => {
       cy.disconnectMetamaskWalletFromAllDapps()
       cy.visit({
-        url: 'https://squeeth-uniswap.netlify.app/#/add/ETH/0xa4222f78d23593e82Aa74742d25D06720DCa4ab7/3000',
+        url: 'https://squeeth-uniswap.netlify.app/#/add/ETH/0xa4222f78d23593e82Aa74742d25D06720DCa4ab7/3000?lng=en-US',
       })
     })
   })
@@ -23,13 +23,27 @@ describe('LP squeeth on uniswap', () => {
   })
 
   context(`LP`, () => {
+    it('approve spend', () => {
+      cy.get('div')
+        .contains(/^(?=.*\bBalance\b)(?=.*\boSQTH\b).*$/)
+        .parent()
+        .find('button')
+        .click({ force: true })
+
+      cy.wait(5000)
+        .get('button')
+        .contains('Approve oSQTH')
+        .click({ force: true })
+        .then(() => {
+          trade.confirmMetamaskPermissionToSpend()
+        })
+    })
     it('LP squeeth', () => {
-      cy.get('button').contains('(Max)').click({ force: true })
-      cy.get('button').contains('Approve oSQTH').click({ force: true })
-      cy.get('button').contains('Preview').click({ force: true })
-      cy.get('button').contains('Add oSQTH').click({ force: true })
-      trade.confirmMetamaskTransaction()
-      trade.waitForTransactionSuccess()
+      cy.get('button').contains('Preview').wait(5000).should('not.be.disabled').click({ force: true })
+      cy.wait(5000).get('button').contains('Add').click({ force: true })
+      cy.confirmMetamaskTransaction().then((confirmed) => {
+        expect(confirmed).to.be.true
+      })
     })
   })
 })

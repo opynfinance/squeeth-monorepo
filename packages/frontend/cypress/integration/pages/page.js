@@ -16,4 +16,10 @@ export default class Page {
     // Possibly caused by wrong default behaviour within Synpress
     cy.confirmMetamaskTransaction({ gasFee: 30, gasLimit: 5000000 })
   }
+
+  confirmMetamaskPermissionToSpend() {
+    cy.confirmMetamaskPermissionToSpend().then((approved) => {
+      expect(approved).to.be.true
+    })
+  }
 }
