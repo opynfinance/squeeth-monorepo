@@ -29,22 +29,28 @@ import {
   sellCloseQuoteAtom,
   slippageAmountAtom,
   sqthTradeAmountAtom,
+  tradeCompletedAtom,
+  tradeSuccessAtom,
   tradeTypeAtom,
 } from 'src/state/trade/atoms'
 import useAppCallback from '@hooks/useAppCallback'
 import { MIN_COLLATERAL_AMOUNT, BIG_ZERO } from '@constants/index'
-import { connectedWalletAtom } from 'src/state/wallet/atoms'
-import { useSelectWallet, useWalletBalance } from 'src/state/wallet/hooks'
+import { connectedWalletAtom, isTransactionFirstStepAtom } from 'src/state/wallet/atoms'
+import { useSelectWallet, useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
-import { isLongAtom } from 'src/state/positions/atoms'
+import { addressesAtom, isLongAtom } from 'src/state/positions/atoms'
 import { useFirstValidVault, useVaultQuery } from 'src/state/positions/hooks'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
-import { useGetDebtAmount } from 'src/state/controller/hooks'
-import { useGetBuyQuote, useGetBuyQuoteForETH } from 'src/state/squeethPool/hooks'
-import { useFlashSwapAndBurn } from 'src/state/controllerHelper/hooks'
+import { useGetDebtAmount, useUpdateOperator } from 'src/state/controller/hooks'
+import { useGetBuyQuote } from 'src/state/squeethPool/hooks'
+import { useFlashSwapAndBurn } from 'src/state/controllerhelper/hooks'
 import { useVaultData } from '@hooks/useVaultData'
 import { useETHPrice } from '@hooks/useETHPrice'
 import TradeDetails from '../TradeDetails'
+import { useResetAtom, useUpdateAtom } from 'jotai/utils'
+import Confirmed, { ConfirmType } from '../Confirmed'
+import Cancelled from '../Cancelled'
+import useAppEffect from '@hooks/useAppEffect'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -127,23 +133,29 @@ type formError = keyof typeof errorMap | false
 
 export const CloseShort = () => {
   const classes = useStyles()
-  const [collatPercent, setCollatPercent] = useState(150)
-  const [existingCollat, setExistingCollat] = useState(new BigNumber(0))
+  const [collatPercent, setCollatPercent] = useState(200)
   const [closeType, setCloseType] = useState(CloseType.FULL)
   const [closeLoading, setCloseLoading] = useState(false)
   const [finalShortAmount, setFinalShortAmount] = useState(new BigNumber(0))
   const [neededCollat, setNeededCollat] = useState(new BigNumber(0))
   const [withdrawCollat, setWithdrawCollat] = useState(new BigNumber(0))
   const [isVaultApproved, setIsVaultApproved] = useState(true)
-  const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
+  const [confirmedAmount, setConfirmedAmount] = useState('')
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
+  const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
+  const { controllerHelper } = useAtomValue(addressesAtom)
   const slippageAmount = useAtomValue(slippageAmountAtom)
   const amount = new BigNumber(sqthTradeAmount)
-  const quote = useAtomValue(quoteAtom)
   const connected = useAtomValue(connectedWalletAtom)
   const isLong = useAtomValue(isLongAtom)
   const tradeType = useAtomValue(tradeTypeAtom)
   const [sellCloseQuote, setSellCloseQuote] = useAtom(sellCloseQuoteAtom)
+  const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
+  const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
+  const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
+
+  const { cancelled, confirmed, transactionData, resetTransactionData, resetTxCancelled } = useTransactionStatus()
+  const updateOperator = useUpdateOperator()
   const { vaults: shortVaults } = useVaultManager()
   const { vaultId, firstValidVault } = useFirstValidVault()
   const { existingCollatPercent } = useVaultData(vaultId)
@@ -153,7 +165,6 @@ export const CloseShort = () => {
   const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
   const getDebtAmount = useGetDebtAmount()
   const getBuyQuote = useGetBuyQuote()
-  const getBuyQuoteForETH = useGetBuyQuoteForETH()
   const flashSwapAndBurn = useFlashSwapAndBurn()
   const selectWallet = useSelectWallet()
   const ethPrice = useETHPrice()
@@ -176,7 +187,6 @@ export const CloseShort = () => {
   useEffect(() => {
     if (shortVaults.length) {
       const _collat: BigNumber = vault?.collateralAmount ?? new BigNumber(0)
-      setExistingCollat(_collat)
       const restOfShort = new BigNumber(vault?.shortAmount ?? new BigNumber(0)).minus(amount)
 
       getDebtAmount(new BigNumber(restOfShort)).then((debt) => {
@@ -193,23 +203,26 @@ export const CloseShort = () => {
     vault?.shortAmount.toString(),
   ])
 
-  let openError: string | undefined
   let closeError: string | undefined
   let existingLongError: string | undefined
   let priceImpactWarning: string | undefined
   let vaultIdDontLoadedError: string | undefined
   let insufficientETHBalance: string | undefined
 
+  useEffect(() => {
+    if (!vaultId) return
+
+    setIsVaultApproved(shortVaults[firstValidVault].operator?.toLowerCase() === controllerHelper?.toLowerCase())
+  }, [vaultId])
+
   if (connected) {
     if (finalShortAmount.lt(0) && finalShortAmount.lt(amount)) {
       closeError = 'Close amount exceeds position'
     }
-    if (new BigNumber(quote.priceImpact).gt(3)) {
+    if (new BigNumber(sellCloseQuote.priceImpact).gt(3)) {
       priceImpactWarning = 'High Price Impact'
     }
-    if (amount.isGreaterThan(0) && existingCollat.lt(MIN_COLLATERAL_AMOUNT)) {
-      openError = `Minimum collateral is ${MIN_COLLATERAL_AMOUNT} ETH`
-    } else if (vaultId === 0 && finalShortAmount.gt(0)) {
+    if (vaultId === 0 && finalShortAmount.gt(0)) {
       vaultIdDontLoadedError = 'Loading Vault...'
     }
     if (
@@ -238,22 +251,20 @@ export const CloseShort = () => {
     shortVaults.length &&
     !shortVaults[firstValidVault].shortAmount.isZero()
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (finalShortAmount.isGreaterThan(0)) {
       setSqthTradeAmount(finalShortAmount.toString())
       getBuyQuote(finalShortAmount, slippageAmount).then((quote: any) => {
         setSellCloseQuote(quote)
-        setEthTradeAmount(quote.amountIn.toFixed(6))
       })
       setCollatPercent(150)
       setCloseType(CloseType.FULL)
     }
-  }, [tradeType, open, finalShortAmount.toString()])
+  }, [tradeType, open, finalShortAmount])
 
   const onSqthChange = (v: string) => {
     getBuyQuote(new BigNumber(v), slippageAmount).then((quote: any) => {
       setSellCloseQuote(quote)
-      setEthTradeAmount(quote.amountIn.toFixed(6))
     })
   }
   const handleSqthChange = useMemo(() => debounce(onSqthChange, 500), [getBuyQuote, slippageAmount])
@@ -261,18 +272,32 @@ export const CloseShort = () => {
   const handleCloseShort = async () => {
     setCloseLoading(true)
     try {
-      const _collat: BigNumber = vault?.collateralAmount ?? new BigNumber(0)
-      const restOfShort = new BigNumber(vault?.shortAmount ?? new BigNumber(0)).minus(amount)
-      const _debt: BigNumber = await getDebtAmount(new BigNumber(restOfShort))
-      const neededCollat = _debt.times(collatPercent / 100)
-      await flashSwapAndBurn(
-        vaultId,
-        amount,
-        _collat.minus(neededCollat),
-        sellCloseQuote.maximumAmountIn,
-        _collat.minus(neededCollat).minus(sellCloseQuote.amountIn),
-        () => {},
-      )
+      if (vaultId && !isVaultApproved) {
+        setIsTxFirstStep(true)
+        await updateOperator(vaultId, controllerHelper, () => {
+          setIsVaultApproved(true)
+          setCloseLoading(false)
+        })
+      } else {
+        await flashSwapAndBurn(
+          vaultId,
+          amount,
+          withdrawCollat,
+          sellCloseQuote.maximumAmountIn,
+          sellCloseQuote.maximumAmountIn.gt(withdrawCollat)
+            ? sellCloseQuote.maximumAmountIn.minus(withdrawCollat)
+            : BIG_ZERO,
+          async () => {
+            setIsTxFirstStep(false)
+            setConfirmedAmount(amount.toFixed(6).toString())
+            setTradeSuccess(true)
+            setTradeCompleted(true)
+            resetSqthTradeAmount()
+            setIsVaultApproved(false)
+            vaultQuery.refetch({ vaultID: vault!.id })
+          },
+        )
+      }
     } catch (e) {
       console.log(e)
       setCloseLoading(false)
@@ -280,220 +305,262 @@ export const CloseShort = () => {
   }
 
   return (
-    <div>
-      <div className={classes.settingsContainer}>
-        <Typography variant="caption" className={classes.explainer} component="div">
-          Burn oSQTH & close position
-        </Typography>
-        <span className={classes.settingsButton}>
-          <TradeSettings />
-        </span>
-      </div>
-      <form>
-        <div className={classes.thirdHeading}>
-          <PrimaryInput
-            isFullClose={closeType === CloseType.FULL}
-            value={sqthTradeAmount}
-            onChange={(val) => {
-              setSqthTradeAmount(val)
-              handleSqthChange(val)
-            }}
-            label="Amount"
-            tooltip={Tooltips.SellCloseAmount}
-            onActionClicked={setShortCloseMax}
-            actionTxt="Max"
-            unit="oSQTH"
-            error={!!existingLongError || !!priceImpactWarning || !!closeError || !!insufficientETHBalance}
-            hint={
-              closeError ? (
-                closeError
-              ) : existingLongError ? (
-                existingLongError
-              ) : priceImpactWarning ? (
-                priceImpactWarning
-              ) : insufficientETHBalance ? (
-                insufficientETHBalance
-              ) : (
-                <div className={classes.hint}>
-                  <span className={classes.hintTextContainer}>
-                    <span className={classes.hintTitleText}>Position</span> <span>{finalShortAmount.toFixed(6)}</span>
-                  </span>
-                  {amount.toNumber() ? (
-                    <>
-                      <ArrowRightAltIcon className={classes.arrowIcon} />
-                      <span>{finalShortAmount?.minus(amount).toFixed(6)}</span>
-                    </>
-                  ) : null}{' '}
-                  <span style={{ marginLeft: '4px' }}>oSQTH</span>
-                </div>
-              )
-            }
+    <>
+      {confirmed && !isTxFirstStep ? (
+        <div>
+          <Confirmed
+            confirmationMessage={`Closed ${confirmedAmount} Squeeth Short Position`}
+            txnHash={transactionData?.hash ?? ''}
+            confirmType={ConfirmType.TRADE}
           />
-        </div>
-
-        <div style={{ width: '100%', padding: '0 25px 5px 25px' }}>
-          <Select
-            label="Type of Close"
-            value={closeType}
-            onChange={(event: React.ChangeEvent<{ value: unknown }>) => {
-              if (event.target.value === CloseType.FULL) {
-                setShortCloseMax()
-              }
-              setCollatPercent(200)
-              return setCloseType(event.target.value as CloseType)
-            }}
-            displayEmpty
-            inputProps={{ 'aria-label': 'Without label' }}
-            style={{ padding: '5px 0px', width: '100%', textAlign: 'left' }}
-          >
-            <MenuItem value={CloseType.FULL}>Full Close</MenuItem>
-            <MenuItem value={CloseType.PARTIAL}>Partial Close</MenuItem>
-          </Select>
-        </div>
-        {closeType === CloseType.PARTIAL && (
-          <div className={classes.thirdHeading}>
-            <TextField
-              size="small"
-              value={collatPercent}
-              type="number"
-              style={{ width: 300 }}
-              onChange={(event) => setCollatPercent(Number(event.target.value))}
-              id="filled-basic"
-              label="Collateral Ratio"
-              variant="outlined"
-              error={collatPercent < 150}
-              helperText="At risk of liquidation at 150%."
-              FormHelperTextProps={{ classes: { root: classes.formHelperText } }}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <Typography variant="caption">%</Typography>
-                  </InputAdornment>
-                ),
-              }}
-              inputProps={{
-                min: '0',
-              }}
-            />
-            <CollatRange
-              className={classes.thirdHeading}
-              onCollatValueChange={(val) => setCollatPercent(val)}
-              collatValue={collatPercent}
-            />
-          </div>
-        )}
-
-        <div className={classes.thirdHeading}>
-          <TradeDetails
-            actionTitle="Spend"
-            amount={sellCloseQuote.amountIn.toFixed(6)}
-            unit="ETH"
-            value={Number(ethPrice.times(sellCloseQuote.amountIn).toFixed(2)).toLocaleString()}
-            hint={
-              connected && shortVaults.length && shortVaults[firstValidVault].shortAmount.gt(0) ? (
-                existingLongError
-              ) : priceImpactWarning ? (
-                priceImpactWarning
-              ) : insufficientETHBalance ? (
-                insufficientETHBalance
-              ) : (
-                <div className={classes.hint}>
-                  <span>{`Balance ${balance}`}</span>
-                  {amount.toNumber() ? (
-                    <>
-                      <ArrowRightAltIcon className={classes.arrowIcon} />
-                      <span>{new BigNumber(balance).minus(sellCloseQuote.amountIn).toFixed(6)}</span>
-                    </>
-                  ) : existingLongError ? (
-                    existingLongError
-                  ) : null}{' '}
-                  <span style={{ marginLeft: '4px' }}>ETH</span>
-                </div>
-              )
-            }
-          />
-        </div>
-        <div className={classes.divider}>
-          <TradeInfoItem
-            label="Collateral you redeem"
-            value={withdrawCollat.isPositive() ? withdrawCollat.toFixed(4) : 0}
-            unit="ETH"
-          />
-          <TradeInfoItem
-            label="Current Collateral ratio"
-            value={existingCollatPercent}
-            unit="%"
-            tooltip={Tooltips.CurrentCollRatio}
-          />
-          <div style={{ marginTop: '10px' }}>
-            <UniswapData
-              slippage={isNaN(Number(slippageAmount)) ? '0' : slippageAmount.toString()}
-              priceImpact={sellCloseQuote.priceImpact}
-              minReceived={sellCloseQuote.maximumAmountIn.toFixed(4)}
-              minReceivedUnit="ETH"
-              isMaxSent={true}
-            />
-          </div>
-        </div>
-        <div className={classes.buttonDiv}>
-          {!connected ? (
+          <div className={classes.buttonDiv}>
             <PrimaryButton
               variant="contained"
-              onClick={selectWallet}
+              onClick={() => {
+                resetTransactionData()
+              }}
               className={classes.amountInput}
-              disabled={!!closeLoading}
               style={{ width: '300px' }}
             >
-              {'Connect Wallet'}
+              {'Close'}
             </PrimaryButton>
-          ) : (
-            <PrimaryButton
-              variant={shortClosePriceImpactErrorState ? 'outlined' : 'contained'}
-              onClick={handleCloseShort}
-              className={classes.amountInput}
-              disabled={
-                sqthTradeAmount === '0' ||
-                closeLoading ||
-                collatPercent < 150 ||
-                !!closeError ||
-                !!existingLongError ||
-                (shortVaults.length && shortVaults[firstValidVault].shortAmount.isZero()) ||
-                !!vaultIdDontLoadedError ||
-                !!insufficientETHBalance
-              }
-              style={
-                shortClosePriceImpactErrorState
-                  ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
-                  : { width: '300px' }
-              }
-            >
-              {closeLoading ? (
-                <CircularProgress color="primary" size="1.5rem" />
-              ) : (
-                <>
-                  {isVaultApproved
-                    ? 'Close Short'
-                    : shortClosePriceImpactErrorState && isVaultApproved
-                    ? 'Close Short anyway'
-                    : 'Allow wrapper to manage vault (1/2)'}
-                  {!isVaultApproved ? (
-                    <Tooltip style={{ marginLeft: '2px' }} title={Tooltips.Operator}>
-                      <InfoOutlinedIcon fontSize="small" />
-                    </Tooltip>
-                  ) : null}
-                </>
-              )}
-            </PrimaryButton>
-          )}
-
-          <Typography variant="caption" className={classes.caption} component="div">
-            <a href={Links.UniswapSwap} target="_blank" rel="noreferrer">
-              {' '}
-              Trades on Uniswap V3 🦄{' '}
-            </a>
-          </Typography>
+          </div>
         </div>
-      </form>
-    </div>
+      ) : cancelled ? (
+        <div>
+          <Cancelled txnHash={transactionData?.hash ?? ''} />
+          <div className={classes.buttonDiv}>
+            <PrimaryButton
+              variant="contained"
+              onClick={() => {
+                resetTransactionData()
+                resetTxCancelled()
+              }}
+              className={classes.amountInput}
+              style={{ width: '300px' }}
+            >
+              {'Close'}
+            </PrimaryButton>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <div className={classes.settingsContainer}>
+            <Typography variant="caption" className={classes.explainer} component="div">
+              Burn oSQTH & close position
+            </Typography>
+            <span className={classes.settingsButton}>
+              <TradeSettings />
+            </span>
+          </div>
+          <form>
+            <div className={classes.thirdHeading}>
+              <PrimaryInput
+                isFullClose={closeType === CloseType.FULL}
+                value={sqthTradeAmount}
+                onChange={(val) => {
+                  setSqthTradeAmount(val)
+                  handleSqthChange(val)
+                }}
+                label="Amount"
+                tooltip={Tooltips.SellCloseAmount}
+                onActionClicked={setShortCloseMax}
+                actionTxt="Max"
+                unit="oSQTH"
+                error={!!existingLongError || !!priceImpactWarning || !!closeError || !!insufficientETHBalance}
+                hint={
+                  closeError ? (
+                    closeError
+                  ) : existingLongError ? (
+                    existingLongError
+                  ) : priceImpactWarning ? (
+                    priceImpactWarning
+                  ) : insufficientETHBalance ? (
+                    insufficientETHBalance
+                  ) : (
+                    <div className={classes.hint}>
+                      <span className={classes.hintTextContainer}>
+                        <span className={classes.hintTitleText}>Position</span>{' '}
+                        <span>{finalShortAmount.toFixed(6)}</span>
+                      </span>
+                      {amount.toNumber() ? (
+                        <>
+                          <ArrowRightAltIcon className={classes.arrowIcon} />
+                          <span>{finalShortAmount?.minus(amount).toFixed(6)}</span>
+                        </>
+                      ) : null}{' '}
+                      <span style={{ marginLeft: '4px' }}>oSQTH</span>
+                    </div>
+                  )
+                }
+              />
+            </div>
+
+            <div style={{ width: '100%', padding: '0 25px 5px 25px' }}>
+              <Select
+                label="Type of Close"
+                value={closeType}
+                onChange={(event: React.ChangeEvent<{ value: unknown }>) => {
+                  if (event.target.value === CloseType.FULL) {
+                    setShortCloseMax()
+                  }
+                  setCollatPercent(200)
+                  return setCloseType(event.target.value as CloseType)
+                }}
+                displayEmpty
+                inputProps={{ 'aria-label': 'Without label' }}
+                style={{ padding: '5px 0px', width: '100%', textAlign: 'left' }}
+              >
+                <MenuItem value={CloseType.FULL}>Full Close</MenuItem>
+                <MenuItem value={CloseType.PARTIAL}>Partial Close</MenuItem>
+              </Select>
+            </div>
+            {closeType === CloseType.PARTIAL && (
+              <div className={classes.thirdHeading}>
+                <TextField
+                  size="small"
+                  value={collatPercent}
+                  type="number"
+                  style={{ width: 300 }}
+                  onChange={(event) => setCollatPercent(Number(event.target.value))}
+                  id="filled-basic"
+                  label="Collateral Ratio"
+                  variant="outlined"
+                  error={collatPercent < 150}
+                  helperText="At risk of liquidation at 150%."
+                  FormHelperTextProps={{ classes: { root: classes.formHelperText } }}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Typography variant="caption">%</Typography>
+                      </InputAdornment>
+                    ),
+                  }}
+                  inputProps={{
+                    min: '0',
+                  }}
+                />
+                <CollatRange
+                  className={classes.thirdHeading}
+                  onCollatValueChange={(val) => setCollatPercent(val)}
+                  collatValue={collatPercent}
+                />
+              </div>
+            )}
+
+            <div className={classes.thirdHeading}>
+              <TradeDetails
+                actionTitle="Spend"
+                amount={sellCloseQuote.amountIn.toFixed(6)}
+                unit="ETH"
+                value={Number(ethPrice.times(sellCloseQuote.amountIn).toFixed(2)).toLocaleString()}
+                hint={
+                  connected && shortVaults.length && shortVaults[firstValidVault].shortAmount.gt(0) ? (
+                    existingLongError
+                  ) : priceImpactWarning ? (
+                    priceImpactWarning
+                  ) : insufficientETHBalance ? (
+                    insufficientETHBalance
+                  ) : (
+                    <div className={classes.hint}>
+                      <span>{`Balance ${balance}`}</span>
+                      {amount.toNumber() ? (
+                        <>
+                          <ArrowRightAltIcon className={classes.arrowIcon} />
+                          <span>{new BigNumber(balance).minus(sellCloseQuote.amountIn).toFixed(6)}</span>
+                        </>
+                      ) : existingLongError ? (
+                        existingLongError
+                      ) : null}{' '}
+                      <span style={{ marginLeft: '4px' }}>ETH</span>
+                    </div>
+                  )
+                }
+              />
+            </div>
+            <div className={classes.divider}>
+              <TradeInfoItem
+                label="Collateral you redeem"
+                value={withdrawCollat.isPositive() ? withdrawCollat.toFixed(4) : 0}
+                unit="ETH"
+              />
+              <TradeInfoItem
+                label="Current Collateral ratio"
+                value={existingCollatPercent}
+                unit="%"
+                tooltip={Tooltips.CurrentCollRatio}
+              />
+              <div style={{ marginTop: '10px' }}>
+                <UniswapData
+                  slippage={isNaN(Number(slippageAmount)) ? '0' : slippageAmount.toString()}
+                  priceImpact={sellCloseQuote.priceImpact}
+                  minReceived={sellCloseQuote.maximumAmountIn.toFixed(4)}
+                  minReceivedUnit="ETH"
+                  isMaxSent={true}
+                />
+              </div>
+            </div>
+            <div className={classes.buttonDiv}>
+              {!connected ? (
+                <PrimaryButton
+                  variant="contained"
+                  onClick={selectWallet}
+                  className={classes.amountInput}
+                  disabled={!!closeLoading}
+                  style={{ width: '300px' }}
+                >
+                  {'Connect Wallet'}
+                </PrimaryButton>
+              ) : (
+                <PrimaryButton
+                  variant={shortClosePriceImpactErrorState ? 'outlined' : 'contained'}
+                  onClick={handleCloseShort}
+                  className={classes.amountInput}
+                  disabled={
+                    sqthTradeAmount === '0' ||
+                    closeLoading ||
+                    collatPercent < 150 ||
+                    !!closeError ||
+                    !!existingLongError ||
+                    (shortVaults.length && shortVaults[firstValidVault].shortAmount.isZero()) ||
+                    !!vaultIdDontLoadedError ||
+                    !!insufficientETHBalance
+                  }
+                  style={
+                    shortClosePriceImpactErrorState
+                      ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
+                      : { width: '300px' }
+                  }
+                >
+                  {closeLoading ? (
+                    <CircularProgress color="primary" size="1.5rem" />
+                  ) : (
+                    <>
+                      {isVaultApproved
+                        ? 'Close Short'
+                        : shortClosePriceImpactErrorState && isVaultApproved
+                        ? 'Close Short anyway'
+                        : 'Allow wrapper to manage vault (1/2)'}
+                      {!isVaultApproved ? (
+                        <Tooltip style={{ marginLeft: '2px' }} title={Tooltips.Operator}>
+                          <InfoOutlinedIcon fontSize="small" />
+                        </Tooltip>
+                      ) : null}
+                    </>
+                  )}
+                </PrimaryButton>
+              )}
+
+              <Typography variant="caption" className={classes.caption} component="div">
+                <a href={Links.UniswapSwap} target="_blank" rel="noreferrer">
+                  {' '}
+                  Trades on Uniswap V3 🦄{' '}
+                </a>
+              </Typography>
+            </div>
+          </form>
+        </div>
+      )}
+    </>
   )
 }
