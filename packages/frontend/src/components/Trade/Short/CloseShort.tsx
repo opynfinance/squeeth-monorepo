@@ -289,6 +289,7 @@ export const CloseShort = () => {
             : BIG_ZERO,
           async () => {
             setIsTxFirstStep(false)
+            setCloseLoading(false)
             setConfirmedAmount(amount.toFixed(6).toString())
             setTradeSuccess(true)
             setTradeCompleted(true)
@@ -318,6 +319,7 @@ export const CloseShort = () => {
               variant="contained"
               onClick={() => {
                 resetTransactionData()
+                setCloseLoading(false)
               }}
               className={classes.amountInput}
               style={{ width: '300px' }}
