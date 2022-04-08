@@ -21,6 +21,8 @@ import {
 import { networkIdAtom, web3Atom } from '../wallet/atoms'
 import { BIG_ZERO } from '@constants/index'
 import NFTpositionManagerABI from '../../abis/NFTpositionmanager.json'
+import { swaps } from '@queries/uniswap/__generated__/swaps'
+import { swapsRopsten } from '@queries/uniswap/__generated__/swapsRopsten'
 
 export const positionTypeAtom = atom(PositionType.NONE)
 export const isLongAtom = atom((get) => {
@@ -84,3 +86,5 @@ export const existingCollatAtom = atom(BIG_ZERO)
 export const existingLiqPriceAtom = atom(BIG_ZERO)
 export const collatPercentAtom = atom(0)
 export const isVaultLoadingAtom = atom(true)
+export const vaultHistoryUpdatingAtom = atom(false)
+export const swapsAtom = atom<swaps | swapsRopsten>({ swaps: [] })
