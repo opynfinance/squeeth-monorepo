@@ -533,7 +533,8 @@ const Component: React.FC = () => {
     } else {
       if (action === VaultAction.BURN_SQUEETH && shortAmountBN.abs().gt(oSqueethBal))
         adjustAmountError = VaultError.INSUFFICIENT_OSQTH_BALANCE
-      else if (collatPercent < 150) adjustAmountError = VaultError.MIN_COLLAT_PERCENT
+      else if (collatPercent < 150 && !shortAmountBN.abs().isEqualTo(vault.shortAmount))
+        adjustAmountError = VaultError.MIN_COLLAT_PERCENT
     }
 
     return { adjustAmountError, adjustCollatError }
