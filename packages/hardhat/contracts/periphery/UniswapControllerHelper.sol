@@ -3,6 +3,8 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
+import "hardhat/console.sol";
+
 // interface
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3FlashCallback.sol";
@@ -32,18 +34,12 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
         bytes callData;
     }
 
-    // struct FlashCallbackData {
-    //     address caller;
-    //     uint8 callSource;
-    //     bytes callData;
-    // }
-
     /**
      * @dev constructor
      * @param _factory uniswap factory address
      */
     constructor(address _factory) {
-        require(_factory != address(0), "E5");
+        require(_factory != address(0));
         factory = _factory;
     }
 
@@ -105,8 +101,11 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
             })
         );
 
+        console.log("amountOut", amountOut);
+        console.log("_amountOutMinimum", _amountOutMinimum);
+
         //slippage limit check
-        require(amountOut >= _amountOutMinimum, "E3");
+        require(amountOut >= _amountOutMinimum);
 
         return amountOut;
     }
@@ -143,8 +142,11 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
             })
         );
 
+        console.log("amountIn", amountIn);
+        console.log("_amountInMaximum", _amountInMaximum);
+
         //slippage limit check
-        require(amountIn <= _amountInMaximum, "E4");
+        require(amountIn <= _amountInMaximum);
     }
 
     /**

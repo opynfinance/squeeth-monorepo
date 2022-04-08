@@ -21,7 +21,7 @@ import {
   useSwaps,
 } from 'src/state/positions/hooks'
 import { useETHPrice } from '@hooks/useETHPrice'
-import { existingCollatAtom, isLPAtom, positionTypeAtom } from 'src/state/positions/atoms'
+import { isLPAtom, positionTypeAtom, swapsAtom } from 'src/state/positions/atoms'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import {
   actualTradeTypeAtom,
@@ -182,8 +182,9 @@ const PositionCard: React.FC = () => {
   const loading = useAtomValue(loadingAtom)
 
   const pType = useAtomValue(positionTypeAtom)
-  const { data, startPolling, stopPolling } = useSwaps()
-  const swaps = data?.swaps
+  const { startPolling, stopPolling } = useSwaps()
+  const swapsData = useAtomValue(swapsAtom)
+  const swaps = swapsData.swaps
   const { squeethAmount } = useComputeSwaps()
   const { vaults: shortVaults } = useVaultManager()
   const { firstValidVault, vaultId } = useFirstValidVault()
@@ -202,7 +203,7 @@ const PositionCard: React.FC = () => {
   const tradeType = useAtomValue(tradeTypeAtom)
   const ethPrice = useETHPrice()
   const prevSwapsData = usePrevious(swaps)
-  const tradeAmount = new BigNumber(tradeAmountInput)
+  const tradeAmount = useMemo(() => new BigNumber(tradeAmountInput), [tradeAmountInput])
   const [fetchingNew, setFetchingNew] = useState(false)
   const [postTradeAmt, setPostTradeAmt] = useState(new BigNumber(0))
   const [postPosition, setPostPosition] = useState(PositionType.NONE)
@@ -220,11 +221,11 @@ const PositionCard: React.FC = () => {
       stopPolling()
       setFetchingNew(false)
     }
-  }, [swaps?.length, prevSwapsData?.length, tradeSuccess])
+  }, [swaps, prevSwapsData, tradeSuccess, setTradeCompleted, startPolling, stopPolling, setTradeSuccess])
 
   const fullyLiquidated = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
-  }, [firstValidVault, shortVaults?.length, liquidations?.length])
+  }, [firstValidVault, shortVaults, liquidations])
 
   const isDollarValueLoading = useAppMemo(() => {
     if (positionType === PositionType.LONG) {
