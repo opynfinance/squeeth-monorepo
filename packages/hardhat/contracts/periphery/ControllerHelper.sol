@@ -530,6 +530,11 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 data.collateralToWithdraw.add(data.collateralToFlashloan),
                 data.limitPriceEthPerPowerPerp
             );
+
+            if (address(this).balance > 0) {
+                // convert flashloaned amount + fee from ETH to WETH to prepare for payback
+                IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: address(this).balance}();
+            }
         } else if (
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.FLASHLOAN_REBALANCE_VAULT_NFT
@@ -595,10 +600,15 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                         isWethToken0
                     );
 
-                    if (decreaseLiquidityParam.liquidityPercentage == 1e18) {
-                        INonfungiblePositionManager(ControllerHelperDiamondStorage.getAddressAtSlot(6))
-                            .safeTransferFrom(address(this), msg.sender, decreaseLiquidityParam.tokenId);
-                    }
+                    // if LP position is not fully closed, redeposit into vault or send back to user
+                    ControllerHelperUtil.checkClosedLp(
+                        _initiator,
+                        ControllerHelperDiamondStorage.getAddressAtSlot(0),
+                        ControllerHelperDiamondStorage.getAddressAtSlot(6),
+                        vaultId,
+                        decreaseLiquidityParam.tokenId,
+                        decreaseLiquidityParam.liquidityPercentage
+                    );
                 } else if (
                     // this will execute if the use case is to mint in vault, deposit collateral in vault or mint + deposit
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.MintIntoVault
