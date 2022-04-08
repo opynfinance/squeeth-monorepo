@@ -216,7 +216,10 @@ export const CloseShort = () => {
   }, [vaultId])
 
   if (connected) {
-    if (finalShortAmount.lt(0) && finalShortAmount.lt(amount)) {
+    if (
+      (finalShortAmount.lt(0) && finalShortAmount.lt(amount)) ||
+      (vault?.shortAmount && amount.gt(vault.shortAmount))
+    ) {
       closeError = 'Close amount exceeds position'
     }
     if (new BigNumber(sellCloseQuote.priceImpact).gt(3)) {
@@ -226,7 +229,6 @@ export const CloseShort = () => {
       vaultIdDontLoadedError = 'Loading Vault...'
     }
     if (
-      !open &&
       amount.isGreaterThan(0) &&
       shortVaults.length &&
       amount.lt(finalShortAmount) &&
