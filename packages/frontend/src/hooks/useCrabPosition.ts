@@ -8,6 +8,7 @@ import { useAtomValue } from 'jotai'
 import { useTokenBalance } from './contracts/useTokenBalance'
 import { addressesAtom } from 'src/state/positions/atoms'
 import { indexAtom } from 'src/state/controller/atoms'
+import useAppCallback from './useAppCallback'
 
 export const useCrabPosition = (user: string) => {
   const crabLoading = useAtomValue(crabLoadingAtom)
@@ -15,7 +16,6 @@ export const useCrabPosition = (user: string) => {
 
   const { crabStrategy } = useAtomValue(addressesAtom)
   const { loading, data } = useUserCrabTxHistory(user)
-  const { value: userCrabBalance, loading: userCrabBalanceLoading } = useTokenBalance(crabStrategy, 5, 18)
 
   const index = useAtomValue(indexAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
@@ -57,19 +57,7 @@ export const useCrabPosition = (user: string) => {
     return { depositedEth, usdAmount }
   }, [depositedDepedancy, loading])
 
-  useEffect(() => {
-    if (crabLoading || userCrabBalanceLoading) return
-    calculateCurrentValue()
-  }, [
-    userCrabBalance.toString(),
-    depositedEth.toString(),
-    depositedUsd.toString(),
-    ethIndexPrice.toString(),
-    crabLoading,
-    currentEthValue.toString(),
-  ])
-
-  const calculateCurrentValue = async () => {
+  const calculateCurrentValue = useAppCallback(async () => {
     const minCurrentUsd = currentEthValue.times(ethIndexPrice)
     const minPnlUsd = minCurrentUsd.minus(depositedUsd)
 
@@ -78,7 +66,12 @@ export const useCrabPosition = (user: string) => {
 
     setMinPnlUsd(minPnlUsd)
     setMinPnL(minPnlUsd.div(depositedUsd).times(100))
-  }
+  }, [currentEthValue, depositedUsd, ethIndexPrice])
+
+  useEffect(() => {
+    if (crabLoading || loading) return
+    calculateCurrentValue()
+  }, [calculateCurrentValue, crabLoading, loading])
 
   return {
     depositedEth,
@@ -87,6 +80,6 @@ export const useCrabPosition = (user: string) => {
     minCurrentUsd,
     minPnL,
     minPnlUsd,
-    loading: crabLoading || loading || userCrabBalanceLoading,
+    loading: crabLoading || loading,
   }
 }

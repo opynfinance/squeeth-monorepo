@@ -21,7 +21,7 @@ import {
   useSwaps,
 } from 'src/state/positions/hooks'
 import { useETHPrice } from '@hooks/useETHPrice'
-import { existingCollatAtom, isLPAtom, positionTypeAtom } from 'src/state/positions/atoms'
+import { isLPAtom, positionTypeAtom, swapsAtom } from 'src/state/positions/atoms'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import {
   actualTradeTypeAtom,
@@ -182,8 +182,9 @@ const PositionCard: React.FC = () => {
   const loading = useAtomValue(loadingAtom)
 
   const pType = useAtomValue(positionTypeAtom)
-  const { data, startPolling, stopPolling } = useSwaps()
-  const swaps = data?.swaps
+  const { startPolling, stopPolling } = useSwaps()
+  const swapsData = useAtomValue(swapsAtom)
+  const swaps = swapsData.swaps
   const { squeethAmount } = useComputeSwaps()
   const { vaults: shortVaults } = useVaultManager()
   const { firstValidVault, vaultId } = useFirstValidVault()

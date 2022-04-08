@@ -8,9 +8,8 @@ import TRANSACTIONS_QUERY from '../queries/uniswap/transactionsQuery'
 import { useUserCrabTxHistory } from './useUserCrabTxHistory'
 import { CrabStrategyTxType } from '../types'
 import { addressAtom } from 'src/state/wallet/atoms'
-import { addressesAtom, isWethToken0Atom } from 'src/state/positions/atoms'
+import { addressesAtom, isWethToken0Atom, swapsAtom } from 'src/state/positions/atoms'
 import { useEthPriceMap } from 'src/state/ethPriceCharts/atoms'
-import { useSwaps } from 'src/state/positions/hooks'
 
 const bigZero = new BigNumber(0)
 
@@ -19,8 +18,8 @@ export const useTransactionHistory = () => {
   const address = useAtomValue(addressAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const ethPriceMap = useEthPriceMap()
-  const { data: swapsQuery } = useSwaps()
-  const swaps = swapsQuery?.swaps
+  const swapsData = useAtomValue(swapsAtom)
+  const swaps = swapsData?.swaps
 
   const { data, loading } = useQuery(TRANSACTIONS_QUERY, {
     variables: {
