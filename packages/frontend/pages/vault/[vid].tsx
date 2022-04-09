@@ -148,6 +148,7 @@ const useStyles = makeStyles((theme) =>
       borderRadius: theme.spacing(1),
       marginLeft: 'auto',
       marginRight: 'auto',
+      marginTop: theme.spacing(2),
       marginBottom: theme.spacing(2),
       padding: theme.spacing(1),
     },
@@ -953,6 +954,13 @@ const Component: React.FC = () => {
                         disabled={isLPDeposited}
                       />
                     )}
+                  </div>
+                  <div className={classes.txDetails}>
+                    <TradeInfoItem
+                      label="New liquidation price"
+                      value={isCollatAction ? (newLiqPrice || 0).toFixed(2) : '0'}
+                      frontUnit="$"
+                    />
                   </div>
                   <div className={classes.managerActions} style={{ marginTop: '16px' }}>
                     {isLPDeposited ? (
