@@ -23,6 +23,7 @@ import { BIG_ZERO } from '@constants/index'
 import { PositionType } from '../../types'
 import { useVaultData } from '@hooks/useVaultData'
 import { indexAtom } from '../controller/atoms'
+import useAppEffect from '@hooks/useAppEffect'
 
 export function useEthCollateralPnl() {
   const { vaultId } = useFirstValidVault()
@@ -34,7 +35,7 @@ export function useEthCollateralPnl() {
   const [ethCollateralPnl, setEthCollateralPnl] = useAtom(ethCollateralPnlAtom)
   const swapsData = useAtomValue(swapsAtom)
 
-  useEffect(() => {
+  useAppEffect(() => {
     ;(async () => {
       if (
         vaultHistory?.length &&
@@ -48,15 +49,7 @@ export function useEthCollateralPnl() {
         setEthCollateralPnl(result)
       }
     })()
-  }, [
-    existingCollat.toString(),
-    index.toString(),
-    setEthCollateralPnl,
-    swapsData?.swaps?.length,
-    vaultHistory?.length,
-    vaultHistoryLoading,
-    isVaultLoading,
-  ])
+  }, [existingCollat, index, setEthCollateralPnl, swapsData?.swaps, vaultHistory, isVaultLoading])
 
   return ethCollateralPnl
 }
@@ -71,13 +64,13 @@ export function useBuyAndSellQuote() {
   const setLoading = useUpdateAtom(loadingAtom)
   const ready = useAtomValue(readyAtom)
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (!ready || positionsLoading) return
 
     const p1 = getSellQuote(squeethAmount).then(setSellQuote)
     const p2 = getBuyQuote(squeethAmount).then((val) => setBuyQuote(val.amountIn))
     Promise.all([p1, p2]).then(() => setLoading(false))
-  }, [getBuyQuote, getSellQuote, positionsLoading, ready, squeethAmount.toString()])
+  }, [getBuyQuote, getSellQuote, positionsLoading, ready, squeethAmount, setBuyQuote, setLoading, setSellQuote])
 
   return { buyQuote, sellQuote }
 }
@@ -110,23 +103,18 @@ export function useShortGain() {
   const { existingCollat } = useVaultData(vaultId)
   const index = useAtomValue(indexAtom)
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (squeethAmount.isZero() || shortUnrealizedPNL.usd.isZero()) {
       setShortGain(BIG_ZERO)
       return
     }
+
     const _gain = shortUnrealizedPNL.usd
       .dividedBy(totalUSDFromSell.plus(existingCollat.times(toTokenAmount(index, 18).sqrt())))
       .times(100)
 
     setShortGain(_gain)
-  }, [
-    index.toString(),
-    existingCollat.toString(),
-    shortUnrealizedPNL.usd.toString(),
-    squeethAmount.toString(),
-    totalUSDFromSell.toString(),
-  ])
+  }, [index, existingCollat, shortUnrealizedPNL.usd, squeethAmount, totalUSDFromSell, setShortGain])
 
   return shortGain
 }
@@ -142,7 +130,7 @@ export function useLongUnrealizedPNL() {
   const swapsData = useAtomValue(swapsAtom)
   const swaps = swapsData?.swaps
 
-  useEffect(() => {
+  useAppEffect(() => {
     ;(async () => {
       if (
         swaps?.length &&
@@ -163,14 +151,7 @@ export function useLongUnrealizedPNL() {
         setLongUnrealizedPNL((prevState) => ({ ...prevState, loading: true }))
       }
     })()
-  }, [
-    index.toString(),
-    isWethToken0,
-    sellQuote.amountOut.toString(),
-    swaps?.length,
-    squeethAmount.toString(),
-    positionType,
-  ])
+  }, [index, isWethToken0, sellQuote.amountOut, swaps, squeethAmount, positionType, setLongUnrealizedPNL, sellQuote])
 
   return longUnrealizedPNL
 }
@@ -188,7 +169,7 @@ export function useShortUnrealizedPNL() {
   const swapsData = useAtomValue(swapsAtom)
   const swaps = swapsData?.swaps
 
-  useEffect(() => {
+  useAppEffect(() => {
     ;(async () => {
       if (
         swaps?.length &&
@@ -215,13 +196,14 @@ export function useShortUnrealizedPNL() {
       }
     })()
   }, [
-    buyQuote.toString(),
-    ethCollateralPnl.toString(),
-    index.toString(),
+    buyQuote,
+    ethCollateralPnl,
+    index,
     isWethToken0,
-    swaps?.length,
-    squeethAmount.toString(),
+    swaps,
+    squeethAmount,
     positionType,
+    setShortUnrealizedPNL,
     swapsLoading,
   ])
 

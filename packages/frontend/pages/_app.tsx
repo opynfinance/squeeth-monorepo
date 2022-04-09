@@ -19,6 +19,7 @@ import { useOnboard } from 'src/state/wallet/hooks'
 import { networkIdAtom } from 'src/state/wallet/atoms'
 import { useUpdateSqueethPrices, useUpdateSqueethPoolData } from 'src/state/squeethPool/hooks'
 import { useInitController } from 'src/state/controller/hooks'
+import { ComputeSwapsProvider } from 'src/state/positions/providers'
 import { useSwaps } from 'src/state/positions/hooks'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
@@ -109,7 +110,9 @@ const TradeApp = ({ Component, pageProps }: any) => {
         <ThemeProvider theme={getTheme(Mode.DARK)}>
           {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
           <CssBaseline />
-          <Component {...pageProps} />
+          <ComputeSwapsProvider>
+            <Component {...pageProps} />
+          </ComputeSwapsProvider>
         </ThemeProvider>
       </ApolloProvider>
     </React.Fragment>
