@@ -1,20 +1,19 @@
-import { BIG_ZERO } from '../constants'
-import { useEffect, useMemo, useState } from 'react'
-import { useUserCrabTxHistory } from './useUserCrabTxHistory'
-import { CrabStrategyTxType } from '../types'
+import { BIG_ZERO } from '../../constants'
+import { useEffect, useState } from 'react'
+import { useUserCrabTxHistory } from '../useUserCrabTxHistory'
+import { CrabStrategyTxType } from '../../types'
 import { toTokenAmount } from '@utils/calculations'
-import { crabLoadingAtom, currentEthValueAtom } from 'src/state/crab/atoms'
 import { useAtomValue } from 'jotai'
-import { useTokenBalance } from './contracts/useTokenBalance'
-import { addressesAtom } from 'src/state/positions/atoms'
 import { indexAtom } from 'src/state/controller/atoms'
-import useAppCallback from './useAppCallback'
+import useAppCallback from '../useAppCallback'
+import useAppMemo from '../useAppMemo'
+import floatifyBigNums from '@utils/floatifyBigNums'
+import { crabLoadingAtom, currentEthValueAtom } from 'src/state/crab/atoms'
 
 export const useCrabPosition = (user: string) => {
   const crabLoading = useAtomValue(crabLoadingAtom)
   const currentEthValue = useAtomValue(currentEthValueAtom)
 
-  const { crabStrategy } = useAtomValue(addressesAtom)
   const { loading, data } = useUserCrabTxHistory(user)
 
   const index = useAtomValue(indexAtom)
@@ -25,11 +24,7 @@ export const useCrabPosition = (user: string) => {
   const [minPnlUsd, setMinPnlUsd] = useState(BIG_ZERO)
   const [minPnL, setMinPnL] = useState(BIG_ZERO)
 
-  const depositedDepedancy = data
-    ?.map((item) => `${item.ethAmount.toString()}:${item.lpAmount.toString()}:${item.ethUsdValue.toString()}`)
-    .join(' ')
-
-  const { depositedEth, usdAmount: depositedUsd } = useMemo(() => {
+  const { depositedEth, usdAmount: depositedUsd } = useAppMemo(() => {
     if (loading || !data) return { depositedEth: BIG_ZERO, usdAmount: BIG_ZERO }
 
     const { depositedEth, usdAmount } = data?.reduce(
@@ -55,7 +50,7 @@ export const useCrabPosition = (user: string) => {
     )
 
     return { depositedEth, usdAmount }
-  }, [depositedDepedancy, loading])
+  }, [data, loading])
 
   const calculateCurrentValue = useAppCallback(async () => {
     const minCurrentUsd = currentEthValue.times(ethIndexPrice)
