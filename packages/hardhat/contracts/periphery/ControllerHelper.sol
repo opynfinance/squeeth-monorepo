@@ -133,7 +133,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             uint8(ControllerHelperDataType.CALLBACK_SOURCE.FLASH_SELL_LONG_W_MINT),
             abi.encode(_params)
         );
-        console.log('past the swap');
+        console.log('remaining value sent back', address(this).balance);
         payable(msg.sender).sendValue(address(this).balance);
     }
 
