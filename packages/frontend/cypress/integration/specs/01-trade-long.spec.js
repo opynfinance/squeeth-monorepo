@@ -268,7 +268,7 @@ describe('Trade on trade page', () => {
       it('position card should update to new osqth balance', () => {
         // wait for 20 sec to update positon
         cy.get('#position-card-before-trade-balance')
-          .wait(20000)
+          .wait(30000)
           .then((v) => Number(v.text()).toFixed(4))
           .should('eq', posCardBeforeLongTradeBal.plus(openLongoSQTHInput).toFixed(4))
       })

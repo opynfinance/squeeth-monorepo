@@ -196,15 +196,15 @@ describe('Trade on trade page', () => {
       it('position card should update to new osqth balance', () => {
         // wait for 20 sec to update positon
         cy.get('#position-card-before-trade-balance')
-          .wait(20000)
-          .then((v) => Number(v.text()).toFixed(4))
-          .should('eq', posCardBeforeShortTradeBal.plus(openShortOsqthInput).toFixed(4))
+          .wait(30000)
+          .then((v) => Number(parseFloat(v.text()).toFixed(4)))
+          .should('be.approximately', Number(posCardBeforeShortTradeBal.plus(openShortOsqthInput)), 0.0002)
       })
 
       it('input box before trade update to new osqth balance', () => {
         cy.get('#open-short-osqth-before-trade-balance')
-          .then((v) => Number(v.text()).toFixed(4))
-          .should('eq', openShortOsqthBeforeTradeBal.plus(openShortOsqthInput).toFixed(4))
+          .then((v) => Number(parseFloat(v.text()).toFixed(4)))
+          .should('be.approximately', Number(openShortOsqthBeforeTradeBal.plus(openShortOsqthInput)), 0.0002)
       })
 
       it('position card update to the same value as input box before trade balance and not equal 0', () => {
@@ -303,12 +303,18 @@ describe('Trade on trade page', () => {
         it('select partial close and have manual input', () => {
           cy.get('#close-short-type-select .MuiSelect-select').click({ force: true })
           cy.get('#close-short-partial-close').click({ force: true })
-          cy.get('#close-short-type-select').should('contain.text', 'Partial Close')
+          cy.get('#close-short-type-select').wait(2000).should('contain.text', 'Partial Close')
 
           cy.get('#close-short-osqth-input')
             .clear()
             .type('0.1', { force: true, delay: 800 })
             .should('have.value', '0.1')
+
+          // make sure it's able to close short partially
+          cy.get('.close-short-collat-ratio-input-box input')
+            .clear()
+            .type('250.', { delay: 200, force: true })
+            .should('have.value', '250.0')
 
           cy.get('#close-short-trade-details .trade-details-amount')
             .invoke('text')
@@ -399,13 +405,8 @@ describe('Trade on trade page', () => {
           // make sure it's able to close short partially
           cy.get('.close-short-collat-ratio-input-box input')
             .clear()
-            .type('200.', { delay: 200, force: true })
-            .should('have.value', '200.0')
-
-          cy.get('#close-short-collateral-ratio .trade-info-item-value')
-            .invoke('text')
-            .then(parseFloat)
-            .should('be.at.least', 150)
+            .type('250.', { delay: 200, force: true })
+            .should('have.value', '250.0')
 
           cy.get('#close-short-osqth-before-trade-balance').then((bal) => {
             closeShortBeforeTradeBal = bal.text()
@@ -417,6 +418,9 @@ describe('Trade on trade page', () => {
 
           cy.get('#close-short-submit-tx-btn').then((btn) => {
             if (btn.text().includes('Allow wrapper')) {
+              cy.get('#close-short-submit-tx-btn').click({ force: true })
+              trade.confirmMetamaskTransaction()
+              trade.waitForTransactionSuccess()
               cy.get('#close-short-submit-tx-btn').click({ force: true })
               trade.confirmMetamaskTransaction()
               trade.waitForTransactionSuccess()
