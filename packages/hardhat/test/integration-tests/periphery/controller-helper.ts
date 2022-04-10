@@ -462,24 +462,24 @@ describe("Controller helper integration test", function () {
       // const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
       // const squeethToBuy = vaultBefore.collateralAmount.div(squeethPrice)
       // Get expected proceeds of sale of wSqeeth 
-      const ethAmountInToSwap = await quoter.connect(tester).callStatic.quoteExactInputSingle(wSqueeth.address,
-        weth.address,
+      const ethAmountToSwap = await quoter.connect(tester).callStatic.quoteExactOutputSingle(weth.address,
+        wSqueeth.address,
         3000,
         vaultBefore.shortAmount,
         0)
-       console.log('ethAmountInToSwap', ethAmountInToSwap)
-       console.log('maxToPay',vaultBefore.collateralAmount.sub(ethAmountInToSwap).toString())
+       console.log('ethAmountInToSwap', ethAmountToSwap)
+       console.log('maxToPay',vaultBefore.collateralAmount.sub(ethAmountToSwap).toString())
        console.log('vaultId', vaultId)
        console.log('wPowerPerpAmountToBurn', vaultBefore.shortAmount.toString())
        console.log('wPowerPerpAmountToBuy', BigNumber.from(0).toString()),
        console.log('collateralToWithdraw', vaultBefore.collateralAmount.toString())
-       console.log('maxToPay', ethAmountInToSwap.toString())
+       console.log('maxToPay', ethAmountToSwap.toString())
       const params = {
         vaultId,
         wPowerPerpAmountToBurn: vaultBefore.shortAmount.toString(),
         wPowerPerpAmountToBuy: BigNumber.from(0),
         collateralToWithdraw: vaultBefore.collateralAmount.toString(),
-        maxToPay: ethAmountInToSwap.toString()
+        maxToPay: ethAmountToSwap.toString()
       }
       // ** May be good to have some explicit revert msgs here
       await controllerHelper.connect(depositor).flashswapWBurnBuyLong(params);
@@ -573,7 +573,6 @@ describe("Controller helper integration test", function () {
       const scaledEthPrice = ethPrice.div(10000)
       const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
       const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
-     
       const swapParam = {
         tokenIn: wSqueeth.address,
         tokenOut: weth.address,
@@ -611,7 +610,6 @@ describe("Controller helper integration test", function () {
       }
       await wSqueeth.connect(depositor).approve(controllerHelper.address, longBalance)
       await controllerHelper.connect(depositor).flashswapSellLongWMint(params, {value: value})
-
       const vaultAfter = await controller.vaults(vaultId)
 
       expect((await wSqueeth.balanceOf(depositor.address)).eq(BigNumber.from(0))).to.be.true;
