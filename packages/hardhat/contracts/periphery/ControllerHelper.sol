@@ -86,7 +86,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         require(
             IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) == msg.sender
         );
-        //require(_params.maxToPay <= _params.collateralToWithdraw.add(msg.value));
+        require(_params.maxToPay <= _params.collateralToWithdraw.add(msg.value));
         console.log('_params.wPowerPerpAmountToBurn: ', _params.wPowerPerpAmountToBurn);
         console.log('_params.wPowerPerpAmountToBuy: ',_params.wPowerPerpAmountToBuy);
         _exactOutFlashSwap(
