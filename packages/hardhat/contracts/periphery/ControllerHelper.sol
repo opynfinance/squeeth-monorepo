@@ -86,7 +86,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         require(
             IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) == msg.sender
         );
-        require(_params.maxToPay <= _params.collateralToWithdraw.add(msg.value));
+        //require(_params.maxToPay <= _params.collateralToWithdraw.add(msg.value));
         console.log('_params.wPowerPerpAmountToBurn: ', _params.wPowerPerpAmountToBurn);
         console.log('_params.wPowerPerpAmountToBuy: ',_params.wPowerPerpAmountToBuy);
         _exactOutFlashSwap(
@@ -691,21 +691,28 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 _callData,
                 (ControllerHelperDataType.FlashswapWBurnBuyLongParams)
             );
-
+            console.log('in flash burn callback');
+            console.log('burning %s from vault %s trying to withdraw %s', data.wPowerPerpAmountToBurn, data.vaultId, data.collateralToWithdraw);
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).burnWPowerPerpAmount(
                 data.vaultId,
                 data.wPowerPerpAmountToBurn,
                 data.collateralToWithdraw
             );
+            console.log('burn success');
+            console.log('trying to wrap %s eth with %s available', _amountToPay, address(this).balance);
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: _amountToPay}();
+            console.log('wrap success with %s eth', _amountToPay);
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).transfer(
                 ControllerHelperDiamondStorage.getAddressAtSlot(3),
                 _amountToPay
             );
+            console.log('repay swap success');
+            console.log('trying to transfer %s wPowerPerp', data.wPowerPerpAmountToBuy);
             IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).transfer(
                 _caller,
                 data.wPowerPerpAmountToBuy
             );
+            console.log('transfer buy amount success');
         } else if (
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.FLASH_SELL_LONG_W_MINT
