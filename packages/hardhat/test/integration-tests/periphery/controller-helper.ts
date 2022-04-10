@@ -462,7 +462,6 @@ describe("Controller helper integration test", function () {
       // const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
       // const squeethToBuy = vaultBefore.collateralAmount.div(squeethPrice)
       // Get expected proceeds of sale of wSqeeth 
-      console.log('vaultBefore.shortAmount.toString()',vaultBefore.shortAmount.toString())
       const ethAmountInToSwap = await quoter.connect(tester).callStatic.quoteExactInputSingle(wSqueeth.address,
         weth.address,
         3000,
@@ -470,13 +469,17 @@ describe("Controller helper integration test", function () {
         0)
        console.log('ethAmountInToSwap', ethAmountInToSwap)
        console.log('maxToPay',vaultBefore.collateralAmount.sub(ethAmountInToSwap).toString())
-
+       console.log('vaultId', vaultId)
+       console.log('wPowerPerpAmountToBurn', vaultBefore.shortAmount.toString())
+       console.log('wPowerPerpAmountToBuy', BigNumber.from(0).toString()),
+       console.log('collateralToWithdraw', vaultBefore.collateralAmount.toString())
+       console.log('maxToPay', ethAmountInToSwap.toString())
       const params = {
         vaultId,
         wPowerPerpAmountToBurn: vaultBefore.shortAmount.toString(),
         wPowerPerpAmountToBuy: BigNumber.from(0),
-        collateralToWithdraw: vaultBefore.collateralAmount.sub(ethAmountInToSwap).toString(),
-        maxToPay: vaultBefore.collateralAmount.sub(ethAmountInToSwap).toString()
+        collateralToWithdraw: vaultBefore.collateralAmount.toString(),
+        maxToPay: ethAmountInToSwap.toString()
       }
       // ** May be good to have some explicit revert msgs here
       await controllerHelper.connect(depositor).flashswapWBurnBuyLong(params);
