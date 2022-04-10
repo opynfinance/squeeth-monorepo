@@ -665,7 +665,9 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                         vaultId,
                         tokenId
                     );
-                } else if (data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.generalSwap) {
+                } else if (
+                    data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.generalSwap
+                ) {
                     ControllerHelperDataType.GeneralSwap memory swapParams = abi.decode(
                         data[i].data,
                         (ControllerHelperDataType.GeneralSwap)
@@ -802,7 +804,10 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 ControllerHelperDiamondStorage.getAddressAtSlot(3),
                 _amountToPay
             );
-        } else if (ControllerHelperDataType.CALLBACK_SOURCE(_callSource) == ControllerHelperDataType.CALLBACK_SOURCE.GENERAL_SWAP) {
+        } else if (
+            ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
+            ControllerHelperDataType.CALLBACK_SOURCE.GENERAL_SWAP
+        ) {
             IERC20(_tokenIn).transfer(ControllerHelperDiamondStorage.getAddressAtSlot(3), _amountToPay);
         }
     }
