@@ -4,6 +4,7 @@ import LPIntroCard from '@components/Lp/LPIntroCard'
 import LPTrade from '@components/Lp/LPTrade'
 import Nav from '@components/Nav'
 import { useETHPrice } from '@hooks/useETHPrice'
+import { useHasMounted } from '@hooks/useHasMounted'
 import { Typography, Box, Grid } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { useAtom } from 'jotai'
@@ -60,6 +61,7 @@ const LP: React.FC = () => {
   const classes = useStyles()
   const ethPrice = useETHPrice()
   const [seeLPIntro] = useAtom(seeLPIntroAtom)
+  const hasMounted = useHasMounted()
 
   return (
     <div>
@@ -116,7 +118,7 @@ const LP: React.FC = () => {
             </Grid>
           </Grid>
           <Grid item xs={12} lg={5} style={{ minWidth: '550px' }}>
-            {seeLPIntro ? <LPIntroCard /> : <LPTrade />}
+            {hasMounted && seeLPIntro ? <LPIntroCard /> : <LPTrade />}
           </Grid>
         </Grid>
       </div>

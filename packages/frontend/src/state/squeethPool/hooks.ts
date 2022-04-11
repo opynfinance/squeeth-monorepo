@@ -1,5 +1,5 @@
 import { Contract } from 'web3-eth-contract'
-import { Token, CurrencyAmount, Fraction, Percent } from '@uniswap/sdk-core'
+import { Token, CurrencyAmount, Fraction, Percent, Ether } from '@uniswap/sdk-core'
 import { nearestUsableTick, Pool, Route, TickMath, Trade } from '@uniswap/v3-sdk'
 import { useUpdateAtom, useResetAtom } from 'jotai/utils'
 import { useEffect, useCallback } from 'react'
@@ -62,14 +62,14 @@ export const useUpdateSqueethPoolData = () => {
         networkId,
         token0,
         isWethToken0 ? 18 : OSQUEETH_DECIMALS,
-        isWethToken0 ? 'WETH' : 'SQE',
+        isWethToken0 ? 'WETH' : 'oSQTH',
         isWethToken0 ? 'Wrapped Ether' : 'oSqueeth',
       )
       const TokenB = new Token(
         networkId,
         token1,
         isWethToken0 ? OSQUEETH_DECIMALS : 18,
-        isWethToken0 ? 'SQE' : 'WETH',
+        isWethToken0 ? 'oSQTH' : 'WETH',
         isWethToken0 ? 'oSqueeth' : 'Wrapped Ether',
       )
 
@@ -579,36 +579,28 @@ export const useBuyAndLP = () => {
     router = new AlphaRouter({ chainId, provider })
   }
 
-  const getBuyAndLP = async () => {
-    console.log(isWethToken0)
-    const token0Balance = CurrencyAmount.fromRawAmount(pool?.token0!, fromTokenAmount(1, WETH_DECIMALS).toString())
-    const token1Balance = CurrencyAmount.fromRawAmount(pool?.token1!, fromTokenAmount(0.4, WETH_DECIMALS).toString())
-    const { tickSpacing } = await getImmutables(contract!)
-    const state = await getPoolState(contract!)
-    const tickSpacingInt = Number(tickSpacing)
-    console.log(state.tick, tickSpacing)
-    const position = new Position({
-      pool: pool!,
-      tickLower: nearestUsableTick(Number(state.tick), tickSpacingInt) - tickSpacingInt * 10,
-      tickUpper: nearestUsableTick(Number(state.tick), tickSpacingInt) + tickSpacingInt * 10,
-      liquidity: 1,
-    })
+  const getBuyAndLP = async (position: Position, token0Bal: BigNumber, token1Bal: BigNumber) => {
+    const ethToken = Ether.onChain(networkId)
+    const token0Balance = CurrencyAmount.fromRawAmount(isWethToken0 ? ethToken : pool?.token0!, fromTokenAmount(token0Bal, WETH_DECIMALS).toString())
+    const token1Balance = CurrencyAmount.fromRawAmount(!isWethToken0 ? ethToken : pool?.token1!, fromTokenAmount(token1Bal, WETH_DECIMALS).toString())
+
+    console.log(token0Bal.toFixed(18), token1Bal.toFixed(18), isWethToken0)
     const routeToRatioResponse = await router.routeToRatio(
       token0Balance,
       token1Balance,
       position,
       {
-        ratioErrorTolerance: new Fraction(1, 100),
+        ratioErrorTolerance: new Fraction(1, 1000),
         maxIterations: 6,
       },
       {
         swapOptions: {
           recipient: address!,
           slippageTolerance: parseSlippageInput(DEFAULT_SLIPPAGE.toString()),
-          deadline: 100,
+          deadline: +new Date() + 10 * 60 * 1000, // TODO: use current blockchain timestamp,
         },
         addLiquidityOptions: {
-          tokenId: 10,
+          recipient: address!
         },
       },
     )
@@ -623,6 +615,8 @@ export const useBuyAndLP = () => {
     if (routeToRatioResponse.status === SwapToRatioStatus.NO_ROUTE_FOUND) {
       console.log(routeToRatioResponse.error)
     }
+
+    return routeToRatioResponse
   }
 
   return getBuyAndLP

@@ -5,6 +5,7 @@ import { API } from 'bnc-onboard/dist/src/interfaces'
 
 import { Networks } from '../../types'
 import { atomWithReset } from 'jotai/utils'
+import { ethers } from 'ethers'
 
 const useAlchemy = process.env.NEXT_PUBLIC_USE_ALCHEMY
 const usePokt = process.env.NEXT_PUBLIC_USE_POKT
@@ -40,7 +41,7 @@ export const networkIdAtom = atom(Networks.MAINNET)
 export const web3Atom = atom(defaultWeb3)
 export const onboardAtom = atom<API | null>(null)
 export const notifyAtom = atom<NotifyAPI | null>(null)
-export const signerAtom = atom<any>(null)
+export const signerAtom = atom<ethers.providers.JsonRpcSigner | null>(null)
 
 export const connectedWalletAtom = atom((get) => {
   const address = get(addressAtom)

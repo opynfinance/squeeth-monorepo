@@ -20,6 +20,7 @@ import {
 import { BIG_ZERO, EtherscanPrefix } from '../../constants/'
 import { Networks } from '../../types'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { TransactionResponse } from '@ethersproject/providers'
 
 export const useSelectWallet = () => {
   const [onboard] = useAtom(onboardAtom)
@@ -47,6 +48,36 @@ export const useDiscconectWallet = () => {
   }
 
   return disconnectWallet
+}
+
+export const useHandleSignerTransaction = () => {
+  const notify = useAtomValue(notifyAtom)
+  const { refetch } = useWalletBalance()
+  const setTransactionData = useUpdateAtom(transactionDataAtom)
+  const [networkId] = useAtom(networkIdAtom)
+
+  const handleSignerTransaction = useCallback(
+    (tx: TransactionResponse, onTxConfirmed?: () => void) => {
+      if (!notify) return
+
+      const { emitter } = notify.hash(tx.hash)
+      emitter.on('all', (transaction) => {
+        setTransactionData(transaction)
+
+        if (transaction.status === 'confirmed') {
+          onTxConfirmed?.()
+          refetch()
+        }
+
+        return {
+          link: `${EtherscanPrefix[networkId]}${transaction.hash}`,
+        }
+      })
+    },
+    [networkId, notify, refetch, setTransactionData],
+  )
+
+  return handleSignerTransaction
 }
 
 export const useHandleTransaction = () => {

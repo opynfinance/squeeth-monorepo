@@ -3,15 +3,12 @@ import { CurrencyAmount, MaxUint256, Price, Token } from '@uniswap/sdk-core';
 import { nearestUsableTick, Pool, Position, priceToClosestTick } from '@uniswap/v3-sdk'
 import { fromTokenAmount, toTokenAmount } from './calculations';
 
-export const calculateLPAmounts = (
-  pool: Pool,
+export const getPositionFromAmounts = (pool: Pool,
   tickLower: number,
   tickUpper: number,
   wethAmount: number,
   sqthAmount: number,
-  isWethToken0: boolean,
-) => {
-  if (wethAmount === 0 && sqthAmount === 0) return [wethAmount, sqthAmount]
+  isWethToken0: boolean,) => {
 
   let [amount0, amount1] = [sqthAmount, wethAmount]
   if (isWethToken0) {
@@ -28,8 +25,23 @@ export const calculateLPAmounts = (
     useFullPrecision: false
   })
 
-  const newAmount0 = parseFloat(pos.amount0.toFixed(6))
-  const newAmount1 = parseFloat(pos.amount1.toFixed(6))
+  return pos
+}
+
+export const calculateLPAmounts = (
+  pool: Pool,
+  tickLower: number,
+  tickUpper: number,
+  wethAmount: number,
+  sqthAmount: number,
+  isWethToken0: boolean,
+) => {
+  if (wethAmount === 0 && sqthAmount === 0) return [wethAmount, sqthAmount]
+
+  const pos = getPositionFromAmounts(pool, tickLower, tickUpper, wethAmount, sqthAmount, isWethToken0)
+
+  const newAmount0 = parseFloat(pos.amount0.toFixed(8))
+  const newAmount1 = parseFloat(pos.amount1.toFixed(8))
 
   if (isWethToken0) return [newAmount0, newAmount1]
 

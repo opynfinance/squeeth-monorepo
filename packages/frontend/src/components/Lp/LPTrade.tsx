@@ -18,7 +18,7 @@ import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
 import useAppCallback from '@hooks/useAppCallback'
 import { poolAtom, squeethInitialPriceAtom, squeethTokenAtom, wethTokenAtom } from 'src/state/squeethPool/atoms'
-import { TickMath } from '@uniswap/v3-sdk'
+import { Position, TickMath } from '@uniswap/v3-sdk'
 import { useMemo } from 'react'
 import useAppEffect from '@hooks/useAppEffect'
 import { calculateLPAmounts } from '@utils/lpUtils'
@@ -26,14 +26,18 @@ import {
   lpEthAmountAtom,
   lpIsSqthConstant,
   lpSqthAmountAtom,
+  lpSwapAndAddResultAtom,
   lpTickLower,
   lpTickUpper,
-  lpTxType,
+  lpTxTypeAtom,
   LP_TX_TYPE,
 } from 'src/state/lp/atoms'
-import BuyAndLP from './transaction/BuyAndLP'
 import { useCallback } from 'react'
 import { useLPInputValidation } from 'src/state/lp/hooks'
+import { useUpdateAtom } from 'jotai/utils'
+import { SwapToRatioStatus } from '@uniswap/smart-order-router'
+import LPTransaction from './transaction/LPTransaction'
+import LoadingButton from '@components/Button/LoadingButton'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -72,12 +76,54 @@ const useStyles = makeStyles((theme) =>
 
 const LPTrade: React.FC = () => {
   const classes = useStyles()
+  const { oSqueeth } = useAtomValue(addressesAtom)
+  const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
+  const getBuyAndLP = useBuyAndLP()
+  const [sqthAmount, setSqthAmount] = useAtom(lpSqthAmountAtom)
+  const ethAmount = useAtomValue(lpEthAmountAtom)
   const [, setSeeLPIntro] = useAtom(seeLPIntroAtom)
-  const [txType, setTxType] = useAtom(lpTxType)
+  const [txType, setTxType] = useAtom(lpTxTypeAtom)
+  const squeethPool = useAtomValue(poolAtom)
+  const tickLower = useAtomValue(lpTickLower)
+  const tickUpper = useAtomValue(lpTickUpper)
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
+  const setSwapToRatioResponse = useUpdateAtom(lpSwapAndAddResultAtom)
 
-  const calculateTxType = useCallback(() => {
-    setTxType(LP_TX_TYPE.ADD_LIQUIDITY)
-  }, [setTxType])
+  const [isFetchingSwap, setIsFetchingSwap] = useState(false)
+
+  const calculateTxType = useCallback(async () => {
+    if (oSqueethBal.lt(sqthAmount)) {
+      setIsFetchingSwap(true)
+      const newPosition = new Position({
+        pool: squeethPool!,
+        liquidity: 1,
+        tickLower: isWethToken0 ? tickUpper : tickLower,
+        tickUpper: isWethToken0 ? tickLower : tickUpper,
+      })
+      const [token0Bal, token1Bal] = isWethToken0
+        ? [new BigNumber(ethAmount), oSqueethBal]
+        : [oSqueethBal, new BigNumber(ethAmount)]
+      const response = await getBuyAndLP(newPosition, token0Bal, token1Bal)
+      setIsFetchingSwap(false)
+      if (response.status === SwapToRatioStatus.SUCCESS) {
+        setSwapToRatioResponse(response)
+        setTxType(LP_TX_TYPE.SWAP_AND_ADD_LIQUIDITY)
+        setSqthAmount(oSqueethBal.toString())
+      }
+    } else setTxType(LP_TX_TYPE.ADD_LIQUIDITY)
+  }, [
+    ethAmount,
+    getBuyAndLP,
+    isWethToken0,
+    oSqueethBal,
+    setSqthAmount,
+    setSwapToRatioResponse,
+    setTxType,
+    sqthAmount,
+    squeethPool,
+    tickLower,
+    tickUpper,
+  ])
 
   const { isValidInput } = useLPInputValidation()
 
@@ -113,20 +159,26 @@ const LPTrade: React.FC = () => {
           {txType !== LP_TX_TYPE.NONE ? (
             <SimpleButton
               size="small"
-              style={{ fontSize: '14px', width: '50px', opacity: '.8' }}
+              style={{ fontSize: '14px', opacity: '.8', minWidth: 120 }}
               onClick={() => setTxType(LP_TX_TYPE.NONE)}
             >
               Cancel
             </SimpleButton>
-          ) : null}
-          <PrimaryButton style={{ minWidth: 120 }} onClick={calculateTxType} disabled={!isValidInput}>
-            Continue
-          </PrimaryButton>
+          ) : (
+            <LoadingButton
+              style={{ minWidth: 120 }}
+              onClick={calculateTxType}
+              disabled={!isValidInput}
+              isLoading={isFetchingSwap}
+            >
+              Continue
+            </LoadingButton>
+          )}
         </Box>
       </Box>
       <Divider />
       {txType === LP_TX_TYPE.NONE ? <LPAmountsForm /> : null}
-      {txType === LP_TX_TYPE.ADD_LIQUIDITY || txType === LP_TX_TYPE.SWAP_AND_ADD_LIQUIDITY ? <BuyAndLP /> : null}
+      {txType === LP_TX_TYPE.ADD_LIQUIDITY || txType === LP_TX_TYPE.SWAP_AND_ADD_LIQUIDITY ? <LPTransaction /> : null}
     </div>
   )
 }
@@ -234,10 +286,18 @@ const LPAmountsForm = memo(function BuyAndLP() {
     [calculateAmountsForTickChange, setTickUpper],
   )
 
-  if (!squeethPool || !wethToken || !squeethToken) return null
+  if (!squeethPool || !wethToken || !squeethToken) {
+    return (
+      <Box width="100%" minHeight="40vh" pt={10}>
+        <Typography component="p" align="center" color="textSecondary">
+          Loading...
+        </Typography>
+      </Box>
+    )
+  }
 
   return (
-    <Box px={3} mt={3}>
+    <Box px={3} mt={3} minHeight="40vh">
       <Box display="flex" justifyContent="space-between" mb={5}>
         <Box width="45%">
           <Typography variant="body1" className={classes.lpInputTitle}>
@@ -277,7 +337,7 @@ const LPAmountsForm = memo(function BuyAndLP() {
       <Box display="flex" justifyContent="space-between" mt={1} alignItems="center">
         <Box width="45%">
           <LPPriceInput
-            tick={suggestedTickLower}
+            tick={tickLower}
             onChange={updateTickLower}
             label="Min price"
             hint="ETH per oSQTH"
@@ -292,7 +352,7 @@ const LPAmountsForm = memo(function BuyAndLP() {
         <Box className={classes.medianBox}></Box>
         <Box width="45%">
           <LPPriceInput
-            tick={suggestedTickUpper}
+            tick={tickUpper}
             onChange={updateTickUpper}
             label="Max price"
             hint="ETH per oSQTH"
@@ -313,7 +373,7 @@ const LPAmountsForm = memo(function BuyAndLP() {
             ETH per OSQTH
           </Typography>
         </Typography>
-        <OutlinedPlainButton style={{ width: '300px', marginTop: '16px' }}>Full range</OutlinedPlainButton>
+        {/* <OutlinedPlainButton style={{ width: '300px', marginTop: '16px' }}>Full range</OutlinedPlainButton> */}
       </Box>
     </Box>
   )

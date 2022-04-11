@@ -12,6 +12,7 @@ import useAppCallback from '@hooks/useAppCallback'
 import { useCallback } from 'react'
 import { useEffect } from 'react'
 import { calculateTickForPrice } from '@utils/lpUtils'
+import { useMemo } from 'react'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -99,7 +100,7 @@ type LPPriceInputType = {
 }
 
 export const LPPriceInput: React.FC<LPPriceInputType> = ({
-  tick: initTick,
+  tick,
   onChange,
   label,
   hint,
@@ -110,7 +111,7 @@ export const LPPriceInput: React.FC<LPPriceInputType> = ({
 }) => {
   const classes = useStyles()
   const [input, setInput] = useState(0)
-  const [tick, setTick] = useState(initTick)
+  // const [tick, setTick] = useState(initTick)
 
   useAppEffect(() => {
     console.log('Tick inside LpPriceInput', tick)
@@ -132,11 +133,11 @@ export const LPPriceInput: React.FC<LPPriceInputType> = ({
   )
 
   const decreaseValue = () => {
-    setTick(isWethToken0 ? tick + tickSpacing : tick - tickSpacing)
+    onChange(isWethToken0 ? tick + tickSpacing : tick - tickSpacing)
   }
 
   const increaseValue = () => {
-    setTick(isWethToken0 ? tick - tickSpacing : tick + tickSpacing)
+    onChange(isWethToken0 ? tick - tickSpacing : tick + tickSpacing)
   }
 
   const calculateTick = () => {
@@ -144,12 +145,12 @@ export const LPPriceInput: React.FC<LPPriceInputType> = ({
     const price = tickToPrice(baseToken, quoteToken, tick).toSignificant(5)
 
     setInput(parseFloat(price))
-    if (_newTick && tick !== _newTick) setTick(_newTick)
+    if (_newTick && tick !== _newTick) onChange(_newTick)
   }
 
-  useAppEffect(() => {
-    onChange(tick)
-  }, [onChange, tick])
+  // useAppEffect(() => {
+  //   onChange(tick)
+  // }, [onChange, tick])
 
   return (
     <Box className={classes.container}>
