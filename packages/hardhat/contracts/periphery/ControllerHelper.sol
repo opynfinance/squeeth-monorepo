@@ -808,6 +808,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.GENERAL_SWAP
         ) {
+            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: msg.value}();
             IERC20(_tokenIn).transfer(ControllerHelperDiamondStorage.getAddressAtSlot(3), _amountToPay);
         }
     }
