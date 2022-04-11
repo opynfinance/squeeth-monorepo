@@ -601,8 +601,15 @@ const Component: React.FC = () => {
     },
   )
 
-  const lpNftId = Number(vault?.NFTCollateralId)
-  const isLPDeposited = lpNftId !== 0
+  const currentLpNftId = Number(vault?.NFTCollateralId)
+  const isLPDeposited = currentLpNftId !== 0
+
+  useEffect(() => {
+    if (isLPDeposited && !!currentLpNftId) {
+      setAction(VaultAction.DEPOSIT_UNI_POSITION)
+      updateNftCollateral(BIG_ZERO, BIG_ZERO, 0)
+    }
+  }, [isLPDeposited, currentLpNftId])
 
   return (
     <div>
@@ -994,13 +1001,40 @@ const Component: React.FC = () => {
                       />
                     )}
                   </div>
-                  <div className={classes.txDetails}>
-                    <TradeInfoItem
-                      label="New liquidation price"
-                      value={isCollatAction ? (newLiqPrice || 0).toFixed(2) : '0'}
-                      frontUnit="$"
-                    />
-                  </div>
+                  {isLPNFTAction || isLPDeposited ? (
+                    <>
+                      <div className={classes.collatContainer}>
+                        <TextField
+                          size="small"
+                          type="number"
+                          style={{ width: '100%', marginRight: '4px' }}
+                          onChange={(event) => updateCollatPercent(Number(event.target.value))}
+                          value={lpNftCollatPercent}
+                          id="filled-basic"
+                          label="Collateral Ratio"
+                          variant="outlined"
+                          disabled={true}
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <Typography variant="caption">%</Typography>
+                              </InputAdornment>
+                            ),
+                          }}
+                          inputProps={{
+                            min: '0',
+                          }}
+                        />
+                      </div>
+                      <div className={classes.txDetails}>
+                        <TradeInfoItem
+                          label="New liquidation price"
+                          value={(newLpNftLiqPrice ?? 0).toFixed(2)}
+                          frontUnit="$"
+                        />
+                      </div>
+                    </>
+                  ) : null}
                   <div className={classes.managerActions} style={{ marginTop: '16px' }}>
                     {isLPDeposited ? (
                       <RemoveButton
