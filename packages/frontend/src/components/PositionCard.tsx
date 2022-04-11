@@ -203,7 +203,7 @@ const PositionCard: React.FC = () => {
   const tradeType = useAtomValue(tradeTypeAtom)
   const ethPrice = useETHPrice()
   const prevSwapsData = usePrevious(swaps)
-  const tradeAmount = new BigNumber(tradeAmountInput)
+  const tradeAmount = useMemo(() => new BigNumber(tradeAmountInput), [tradeAmountInput])
   const [fetchingNew, setFetchingNew] = useState(false)
   const [postTradeAmt, setPostTradeAmt] = useState(new BigNumber(0))
   const [postPosition, setPostPosition] = useState(PositionType.NONE)
@@ -221,11 +221,11 @@ const PositionCard: React.FC = () => {
       stopPolling()
       setFetchingNew(false)
     }
-  }, [swaps?.length, prevSwapsData?.length, tradeSuccess])
+  }, [swaps, prevSwapsData, tradeSuccess, setTradeCompleted, startPolling, stopPolling, setTradeSuccess])
 
   const fullyLiquidated = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
-  }, [firstValidVault, shortVaults?.length, liquidations?.length])
+  }, [firstValidVault, shortVaults, liquidations])
 
   const isDollarValueLoading = useAppMemo(() => {
     if (positionType === PositionType.LONG) {
