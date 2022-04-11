@@ -1,6 +1,7 @@
 import { useQuery } from '@apollo/client'
 import BigNumber from 'bignumber.js'
 import { useEffect, useState } from 'react'
+import { usePrevious } from 'react-use'
 
 import { toTokenAmount } from '@utils/calculations'
 import { OSQUEETH_DECIMALS } from '../../constants/'
@@ -9,6 +10,8 @@ import { Vaults } from '../../queries/squeeth/__generated__/Vaults'
 import { squeethClient } from '../../utils/apollo-client'
 import { useAtomValue } from 'jotai'
 import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
+import { useUpdateAtom } from 'jotai/utils'
+import { vaultHistoryUpdatingAtom } from 'src/state/positions/atoms'
 
 /**
  * get user vaults.
@@ -16,18 +19,31 @@ import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
  * @param refetchIntervalSec refetch interval in seconds
  * @returns {Vault[]}
  */
-export const useVaultManager = () => {
+export const useVaultManager = (poll = false) => {
   const [vaults, setVaults] = useState<Array<any>>([])
   const address = useAtomValue(addressAtom)
   const networkId = useAtomValue(networkIdAtom)
+  const setVaultHistoryUpdating = useUpdateAtom(vaultHistoryUpdatingAtom)
 
-  const { data, loading, subscribeToMore } = useQuery<Vaults>(VAULTS_QUERY, {
+  const { data, loading, subscribeToMore, startPolling, stopPolling, refetch } = useQuery<Vaults>(VAULTS_QUERY, {
     client: squeethClient[networkId],
     fetchPolicy: 'cache-and-network',
     variables: {
       ownerId: address ?? '',
     },
   })
+
+  const _vaults = data?.vaults
+  const prevVaults = usePrevious(_vaults)
+
+  useEffect(() => {
+    if (poll && prevVaults?.length === _vaults?.length) {
+      startPolling(500)
+    } else {
+      setVaultHistoryUpdating(false)
+      stopPolling()
+    }
+  }, [poll, prevVaults?.length, startPolling, stopPolling, _vaults?.length])
   useEffect(() => {
     subscribeToMore({
       document: VAULTS_SUBSCRIPTION,
@@ -62,5 +78,5 @@ export const useVaultManager = () => {
     })()
   }, [data?.vaults?.length])
 
-  return { vaults, loading }
+  return { vaults, loading, refetch }
 }

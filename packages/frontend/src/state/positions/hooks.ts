@@ -76,31 +76,31 @@ export const useSwaps = () => {
     fetchPolicy: 'cache-and-network',
   })
 
-  useEffect(() => {
-    subscribeToMore({
-      document: networkId === Networks.MAINNET ? SWAPS_SUBSCRIPTION : SWAPS_ROPSTEN_SUBSCRIPTION,
-      variables: {
-        origin: address || '',
-        orderDirection: 'asc',
-        recipient_not: crabStrategy,
-        ...(networkId === Networks.MAINNET
-          ? {
-              tokenAddress: oSqueeth,
-            }
-          : {
-              poolAddress: squeethPool,
-              recipients: [shortHelper, address || '', swapRouter],
-            }),
-      },
-      updateQuery(prev, { subscriptionData }) {
-        if (!subscriptionData.data) return prev
-        const newSwaps = subscriptionData.data.swaps
-        return {
-          swaps: newSwaps,
-        }
-      },
-    })
-  }, [address, crabStrategy, networkId, oSqueeth, shortHelper, squeethPool, swapRouter, subscribeToMore])
+  // useEffect(() => {
+  //   subscribeToMore({
+  //     document: networkId === Networks.MAINNET ? SWAPS_SUBSCRIPTION : SWAPS_ROPSTEN_SUBSCRIPTION,
+  //     variables: {
+  //       origin: address || '',
+  //       orderDirection: 'asc',
+  //       recipient_not: crabStrategy,
+  //       ...(networkId === Networks.MAINNET
+  //         ? {
+  //             tokenAddress: oSqueeth,
+  //           }
+  //         : {
+  //             poolAddress: squeethPool,
+  //             recipients: [shortHelper, address || '', swapRouter],
+  //           }),
+  //     },
+  //     updateQuery(prev, { subscriptionData }) {
+  //       if (!subscriptionData.data) return prev
+  //       const newSwaps = subscriptionData.data.swaps
+  //       return {
+  //         swaps: newSwaps,
+  //       }
+  //     },
+  //   })
+  // }, [address, crabStrategy, networkId, oSqueeth, shortHelper, squeethPool, swapRouter, subscribeToMore])
 
   useEffect(() => {
     if (data?.swaps) {
@@ -446,13 +446,14 @@ export const useUpdateVaultData = () => {
 export const useFirstValidVault = () => {
   const { vaults: shortVaults } = useVaultManager()
   const [firstValidVault, setFirstValidVault] = useAtom(firstValidVaultAtom)
+  const lastShortVault = shortVaults.length - 1
   useEffect(() => {
     for (let i = 0; i < shortVaults.length; i++) {
       if (shortVaults[i]?.collateralAmount.isGreaterThan(0)) {
         setFirstValidVault(i)
       }
     }
-  }, [shortVaults.length])
+  }, [shortVaults.length, shortVaults[lastShortVault]?.collateralAmount.toString()])
 
   return { firstValidVault, vaultId: shortVaults[firstValidVault]?.id || 0 }
 }

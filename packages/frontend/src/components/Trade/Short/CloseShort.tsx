@@ -38,7 +38,7 @@ import { MIN_COLLATERAL_AMOUNT, BIG_ZERO } from '@constants/index'
 import { connectedWalletAtom, isTransactionFirstStepAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet, useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
-import { addressesAtom, isLongAtom } from 'src/state/positions/atoms'
+import { addressesAtom, isLongAtom, vaultHistoryUpdatingAtom } from 'src/state/positions/atoms'
 import { useFirstValidVault, useVaultQuery } from 'src/state/positions/hooks'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import { useGetDebtAmount, useUpdateOperator } from 'src/state/controller/hooks'
@@ -142,6 +142,7 @@ export const CloseShort = () => {
   const [isVaultApproved, setIsVaultApproved] = useState(true)
   const [confirmedAmount, setConfirmedAmount] = useState('')
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
+  const [isVaultHistoryUpdating, setVaultHistoryUpdating] = useAtom(vaultHistoryUpdatingAtom)
   const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
   const { controllerHelper } = useAtomValue(addressesAtom)
   const slippageAmount = useAtomValue(slippageAmountAtom)
@@ -156,7 +157,7 @@ export const CloseShort = () => {
 
   const { cancelled, confirmed, transactionData, resetTransactionData, resetTxCancelled } = useTransactionStatus()
   const updateOperator = useUpdateOperator()
-  const { vaults: shortVaults } = useVaultManager()
+  const { vaults: shortVaults, refetch: refetchVaults } = useVaultManager(isVaultHistoryUpdating)
   const { vaultId, firstValidVault } = useFirstValidVault()
   const { existingCollatPercent } = useVaultData(vaultId)
   const vaultQuery = useVaultQuery(vaultId)
@@ -271,7 +272,6 @@ export const CloseShort = () => {
     })
   }
   const handleSqthChange = useMemo(() => debounce(onSqthChange, 500), [getBuyQuote, slippageAmount])
-
   const handleCloseShort = async () => {
     setCloseLoading(true)
     try {
@@ -298,6 +298,8 @@ export const CloseShort = () => {
             setTradeCompleted(true)
             resetSqthTradeAmount()
             setIsVaultApproved(false)
+            setVaultHistoryUpdating(true)
+            refetchVaults()
             vaultQuery.refetch({ vaultID: vault!.id })
           },
         )
