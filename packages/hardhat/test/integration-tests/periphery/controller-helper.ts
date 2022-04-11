@@ -110,7 +110,7 @@ describe("Controller helper integration test", function () {
   })
 
   describe("Mint short with flash deposit", async () => {
-    it("flash mint", async () => {      
+    it("mint + sell using 100% of proceeds as collateral (with some additional ETH sent)", async () => {      
       const normFactor = await controller.getExpectedNormalizationFactor()
       const mintWSqueethAmount = ethers.utils.parseUnits('10')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
@@ -118,6 +118,7 @@ describe("Controller helper integration test", function () {
       const scaledEthPrice = ethPrice.div(10000)
       const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
       const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
+      // we do this just to have the the exactInputSingle static call not revert so we can estimated price impact and ethAmountOut
       await controller.connect(owner).mintWPowerPerpAmount(0, mintWSqueethAmount, 0, {value: collateralAmount})
       const swapParam = {
         tokenIn: wSqueeth.address,
@@ -160,7 +161,7 @@ describe("Controller helper integration test", function () {
       expect(squeethBalanceBefore.eq(squeethBalanceAfter)).to.be.true
       expect(vaultBefore.collateralAmount.add(collateralAmount).eq(vaultAfter.collateralAmount)).to.be.true
       expect(vaultBefore.shortAmount.add(mintWSqueethAmount).eq(vaultAfter.shortAmount)).to.be.true
-      expect(depositorEthBalanceAfter.gt(depositorEthBalanceBefore.sub(value))).to.be.true
+      expect(depositorEthBalanceAfter.eq(depositorEthBalanceBefore.sub(collateralAmount.sub(ethAmountOut)))).to.be.true
     })
 
     it("flash mint sell 100% proceeds with zero additional eth", async () => {      
@@ -244,7 +245,7 @@ describe("Controller helper integration test", function () {
       // target short amount minted
       expect(vaultBefore.shortAmount.add(mintWSqueethAmount).eq(vaultAfter.shortAmount)).to.be.true
       // depositor balance reduced by collateral
-      //expect(depositorEthBalanceAfter.eq(depositorEthBalanceBefore)).to.be.true
+      expect(depositorEthBalanceAfter.eq(depositorEthBalanceBefore)).to.be.true
       //ßexpect(Number(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).sub(vaultBefore.collateralAmount.add(remainingETHFromLp)).div(one).toString()) <= 0.01).to.be.true
 
       // console.log('depositorEthBalanceBefore.toString()', depositorEthBalanceBefore.toString());
@@ -253,7 +254,7 @@ describe("Controller helper integration test", function () {
       // console.log('testDiff', testDiff.toString())
     })
 
-    it("flash mint sell 50% proceeds with 0 additional eth", async () => {      
+    it("flash mint sell, use 50% proceeds as collateral with 0 additional eth", async () => {      
       const normFactor = await controller.getExpectedNormalizationFactor()
       const mintWSqueethAmount = ethers.utils.parseUnits('10')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
@@ -267,7 +268,6 @@ describe("Controller helper integration test", function () {
       await controller.connect(depositor).mintWPowerPerpAmount(0, 0, 0, {value: collateralAmount})
       const vaultId = (await shortSqueeth.nextId()).sub(1);
       const vaultBefore = await controller.vaults(vaultId)
-      const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
       await wSqueeth.connect(depositor).approve(swapRouter.address, constants.MaxUint256)
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
 
@@ -280,6 +280,10 @@ describe("Controller helper integration test", function () {
            mintWSqueethAmount,
            0)
 
+      const collatToDeposit = ethAmountOutFromSwap.div(2)
+      // we have to do this because of rounding
+      const collatToReceive = ethAmountOutFromSwap.sub(collatToDeposit)
+
       // console.log('ethAmountOutFromSwap', ethAmountOutFromSwap.toString())
       // console.log('depositor vault ', vaultId.toString())
       // console.log('owner of vaultId', await shortSqueeth.ownerOf(vaultId.toString()));
@@ -287,12 +291,15 @@ describe("Controller helper integration test", function () {
       // console.log('mintWSqueethAmount', mintWSqueethAmount.toString());
       const params = {
         vaultId: vaultId.toString(),
-        collateralAmount: ethAmountOutFromSwap.div(2).toString(), // deposit 100% of proceeds of swap as collateral
+        collateralAmount: collatToDeposit.toString(), // deposit 100% of proceeds of swap as collateral
         wPowerPerpAmountToMint: mintWSqueethAmount.toString(),
         minToReceive: BigNumber.from(0),
         wPowerPerpAmountToSell: BigNumber.from(0)
       }
       // flash mint with zero additional eth
+      
+      const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
+
       await controllerHelper.connect(depositor).flashswapSellLongWMint(params);
 
       const controllerBalanceAfter = await provider.getBalance(controller.address)
@@ -324,13 +331,15 @@ describe("Controller helper integration test", function () {
       // target short amount minted
       expect(vaultBefore.shortAmount.add(mintWSqueethAmount).eq(vaultAfter.shortAmount)).to.be.true
       // depositor balance reduced by collateral
-      //expect(depositorEthBalanceAfter.eq(depositorEthBalanceBefore)).to.be.true
-      //ßexpect(Number(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).sub(vaultBefore.collateralAmount.add(remainingETHFromLp)).div(one).toString()) <= 0.01).to.be.true
+      
+      console.log('depositorEthBalanceBefore.toString()', depositorEthBalanceBefore.toString());
+      console.log('depositorEthBalanceAfter.toString()', depositorEthBalanceAfter.toString());
+      const testDiff = depositorEthBalanceAfter.sub(depositorEthBalanceBefore)
+      console.log('testDiff', testDiff.toString())
+      console.log('expectedAmountOut', collatToReceive.toString())
 
-      // console.log('depositorEthBalanceBefore.toString()', depositorEthBalanceBefore.toString());
-      // console.log('depositorEthBalanceAfter.toString()', depositorEthBalanceAfter.toString());
-      // const testDiff = depositorEthBalanceAfter.sub(depositorEthBalanceBefore)
-      // console.log('testDiff', testDiff.toString())
+      expect(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).eq(collatToReceive)).to.be.true
+      // expect(Number(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).sub(vaultBefore.collateralAmount.add(remainingETHFromLp)).div(one).toString()) <= 0.01).to.be.true
 
     })
 
@@ -402,6 +411,7 @@ describe("Controller helper integration test", function () {
       expect(vaultAfter.collateralAmount.sub(vaultBefore.collateralAmount).eq(BigNumber.from(0))).to.be.true
       // target short amount minted
       expect(vaultBefore.shortAmount.add(mintWSqueethAmount).eq(vaultAfter.shortAmount)).to.be.true
+      expect(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).eq(ethAmountOutFromSwap)).to.be.true
       // depositor balance reduced by collateral
       //expect(depositorEthBalanceAfter.eq(depositorEthBalanceBefore)).to.be.true
       //ßexpect(Number(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).sub(vaultBefore.collateralAmount.add(remainingETHFromLp)).div(one).toString()) <= 0.01).to.be.true
@@ -412,7 +422,8 @@ describe("Controller helper integration test", function () {
       // console.log('testDiff', testDiff.toString())
 
     })
-
+  })
+  describe("Flash close short position", async () => {
 
     it("flash close short position and buy long", async () => {
       const vaultId = (await shortSqueeth.nextId()).sub(1);
@@ -423,7 +434,17 @@ describe("Controller helper integration test", function () {
       // console.log('vaultBefore.shortAmount', vaultBefore.shortAmount.toString());
       const longBalanceBefore = await wSqueeth.balanceOf(depositor.address)
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
-      const squeethToBuy = vaultBefore.collateralAmount.div(squeethPrice)
+      console.log(squeethPrice.toString())
+      await weth.connect(owner).approve(swapRouter.address, constants.MaxUint256)
+
+      const squeethCanBuy = await quoter.connect(tester).callStatic.quoteExactInputSingle(weth.address,
+        wSqueeth.address,
+        3000,
+        vaultBefore.collateralAmount,
+        0)
+
+      const squeethToBuy = squeethCanBuy.sub(vaultBefore.shortAmount)
+
       const params = {
         vaultId,
         wPowerPerpAmountToBurn: vaultBefore.shortAmount.toString(),
@@ -431,11 +452,13 @@ describe("Controller helper integration test", function () {
         collateralToWithdraw: vaultBefore.collateralAmount.toString(),
         maxToPay: vaultBefore.collateralAmount.toString()
       }
+
       await controllerHelper.connect(depositor).flashswapWBurnBuyLong(params);
 
       const vaultAfter = await controller.vaults(vaultId)
       const longBalanceAfter = await wSqueeth.balanceOf(depositor.address)
 
+      expect(longBalanceBefore.toString()).eq(BigNumber.from(0))
       expect(vaultAfter.shortAmount.eq(BigNumber.from(0))).to.be.true
       expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
       expect(longBalanceAfter.sub(longBalanceBefore).eq(squeethToBuy)).to.be.true
@@ -451,6 +474,9 @@ describe("Controller helper integration test", function () {
       const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
       const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
       await controller.connect(depositor).mintWPowerPerpAmount(0, mintWSqueethAmount, 0, {value: collateralAmount})
+      const longBalanceBefore = await wSqueeth.balanceOf(depositor.address)
+      const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
+
       const vaultId = (await shortSqueeth.nextId()).sub(1);
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
 
@@ -486,10 +512,12 @@ describe("Controller helper integration test", function () {
 
       const vaultAfter = await controller.vaults(vaultId)
       const longBalanceAfter = await wSqueeth.balanceOf(depositor.address)
+      const depositorEthBalanceAfter = await provider.getBalance(depositor.address)
 
       expect(vaultAfter.shortAmount.eq(BigNumber.from(0))).to.be.true
       expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
-      // expect(longBalanceAfter.sub(longBalanceBefore).eq(squeethToBuy)).to.be.true
+      expect(longBalanceAfter.eq(longBalanceBefore)).to.be.true
+      expect(depositorEthBalanceBefore.sub(depositorEthBalanceAfter).eq(ethAmountToSwap))
     })
 
   })
@@ -565,6 +593,7 @@ describe("Controller helper integration test", function () {
 
     it("Sell long and flashswap mint short positon", async () => {
       const longBalance = await wSqueeth.balanceOf(depositor.address);
+      console.log(longBalance.toString(), "long balance")
       const vaultId = (await shortSqueeth.nextId()).sub(1);
       const normFactor = await controller.normalizationFactor()
       const mintWSqueethAmount = ethers.utils.parseUnits('20')
@@ -600,7 +629,10 @@ describe("Controller helper integration test", function () {
       const ethAmountOutFromFlashSwap = await swapRouter.connect(tester).callStatic.exactInputSingle(flashswapParam)
 
       const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
-      const value = collateralAmount.sub(ethAmountOutFromSwap.mul(one.sub(slippage)).div(one)).sub(ethAmountOutFromFlashSwap.mul(one.sub(slippage)).div(one))
+      const value = collateralAmount.sub(ethAmountOutFromSwap.mul(one.sub(slippage)).div(one))
+      
+      console.log(value.toString())
+      
       const params = {
         vaultId: 0,
         wPowerPerpAmountToMint: mintWSqueethAmount,

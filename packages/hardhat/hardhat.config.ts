@@ -67,6 +67,7 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       initialBaseFeePerGas: 0,
+      gasPrice: 0,
       saveDeployments: false, // only used in cicd to test deployments
       mining: {
         auto: true
