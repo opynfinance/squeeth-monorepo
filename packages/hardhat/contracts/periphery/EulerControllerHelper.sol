@@ -20,8 +20,9 @@ interface IExec {
 }
 
 interface IEulerDToken {
-    function borrow(uint subAccountId, uint amount) external;
-    function repay(uint subAccountId, uint amount) external;
+    function borrow(uint256 subAccountId, uint256 amount) external;
+
+    function repay(uint256 subAccountId, uint256 amount) external;
 }
 
 contract EulerControllerHelper is IDeferredLiquidityCheck {
@@ -40,7 +41,12 @@ contract EulerControllerHelper is IDeferredLiquidityCheck {
         bytes callData;
     }
 
-    constructor(address _exec, address _euler, address _token, address _dToken) {
+    constructor(
+        address _exec,
+        address _euler,
+        address _token,
+        address _dToken
+    ) {
         exec = _exec;
         euler = _euler;
         token = _token;
@@ -81,6 +87,17 @@ contract EulerControllerHelper is IDeferredLiquidityCheck {
         bytes memory _data
     ) internal {
         // Disable the liquidity check for "this" and call-back into onDeferredLiquidityCheck:
-        IExec(exec).deferLiquidityCheck(address(this), abi.encode(FlashloanCallbackData({caller: msg.sender, assetToBorrow: _asset, amountToBorrow: _amount, callSource: _callSource, callData: _data})));
+        IExec(exec).deferLiquidityCheck(
+            address(this),
+            abi.encode(
+                FlashloanCallbackData({
+                    caller: msg.sender,
+                    assetToBorrow: _asset,
+                    amountToBorrow: _amount,
+                    callSource: _callSource,
+                    callData: _data
+                })
+            )
+        );
     }
 }

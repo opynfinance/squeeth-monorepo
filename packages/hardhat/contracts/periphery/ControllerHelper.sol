@@ -41,7 +41,10 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         address _exec,
         address _euler,
         address _dToken
-    ) UniswapControllerHelper(_uniswapFactory) EulerControllerHelper(_exec, _euler, IController(_controller).weth(), _dToken) {
+    )
+        UniswapControllerHelper(_uniswapFactory)
+        EulerControllerHelper(_exec, _euler, IController(_controller).weth(), _dToken)
+    {
         ControllerHelperDiamondStorage.setStorageVariables(
             _controller,
             IController(_controller).oracle(),
