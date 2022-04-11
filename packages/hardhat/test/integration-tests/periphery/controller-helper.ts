@@ -7,7 +7,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-wit
 import { WETH9, MockErc20, ShortPowerPerp, Controller, Oracle, WPowerPerp, ControllerHelper, INonfungiblePositionManager} from "../../../typechain";
 import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addWethDaiLiquidity, addSqueethLiquidity } from '../../setup'
 import { one, oracleScaleFactor, getNow } from "../../utils"
-import { convertCompilerOptionsFromJson } from "typescript";
+import { convertCompilerOptionsFromJson, createNoSubstitutionTemplateLiteral } from "typescript";
 
 BigNumberJs.set({EXPONENTIAL_AT: 30})
 
@@ -491,6 +491,7 @@ describe("Controller helper integration test", function () {
       expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
       // expect(longBalanceAfter.sub(longBalanceBefore).eq(squeethToBuy)).to.be.true
     })
+    
 
   })
 
@@ -537,6 +538,70 @@ describe("Controller helper integration test", function () {
       expect(vaultBefore.collateralAmount.eq(BigNumber.from(0))).to.be.true
       expect(vaultAfter.collateralAmount.eq(collateralAmount)).to.be.true
     })
+
+    it("existing vault - support some ETH and some oSQTH mint+LP (>0 LP collateral) with >0 ETH collateral added", async () => {
+      const vaultId = (await shortSqueeth.nextId()).sub(1);
+      const vault = await controller.vaults(vaultId)
+      await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
+
+      console.log('vaultId', vaultId)
+      console.log('vault.shortAmont', vault.shortAmount)
+      console.log('value.collateralAmount', vault.collateralAmount)
+      console.log('value.NftCollateralId', vault.NftCollateralId)
+
+      const normFactor = await controller.getExpectedNormalizationFactor()
+      const mintWSqueethAmount = ethers.utils.parseUnits('15')
+      const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
+      const ethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 420, true)
+      const scaledEthPrice = ethPrice.div(10000)
+      const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
+      const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
+      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
+      const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
+      const vaultBefore = await controller.vaults(vaultId)
+      const tokenIndexBefore = await (positionManager as INonfungiblePositionManager).totalSupply();
+      console.log('wPowerPerpAmount',mintWSqueethAmount)
+      console.log('collateralToLp',collateralToLp)
+      console.log('vaultId', vaultId)
+      console.log('collateralAmount', collateralAmount);
+
+      
+      const params = {
+        recipient: depositor.address,
+        vaultId: vaultId,
+        wPowerPerpAmount: mintWSqueethAmount, 
+        collateralToDeposit: collateralAmount,
+        collateralToLp: collateralToLp,
+        amount0Min: 0,
+        amount1Min: 0,
+        lowerTick: -887220,
+        upperTick: 887220
+      }
+
+      await controllerHelper.connect(depositor).batchMintLp(params, {value: collateralAmount.add(collateralToLp)});
+
+      const vaultAfter = await controller.vaults(vaultId)
+      const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
+      const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
+      const ownerOfUniNFT = await (positionManager as INonfungiblePositionManager).ownerOf(tokenId); 
+      const position = await (positionManager as INonfungiblePositionManager).positions(tokenId)
+      console.log('vaultBefore.collateralAmount',vaultBefore.collateralAmount)
+      console.log('vaultAfter.collateralAmount',vaultAfter.collateralAmount)
+      console.log('vaultBefore.shortAmount',vaultBefore.shortAmount)
+      console.log('vaultAfter.shortAmount',vaultAfter.shortAmount)
+
+      console.log('tokenId',tokenId)
+      console.log('collateralAmount', collateralAmount)
+
+      console.log('change', vaultAfter.collateralAmount.sub(vaultBefore.collateralAmount).sub(collateralAmount).eq(BigNumber.from(0)) )
+
+      expect(position.tickLower === -887220).to.be.true
+      expect(position.tickUpper === 887220).to.be.true
+      expect(ownerOfUniNFT === depositor.address).to.be.true
+      expect(tokenIndexAfter.sub(tokenIndexBefore).eq(BigNumber.from(1))).to.be.true
+      expect(vaultAfter.collateralAmount.sub(vaultBefore.collateralAmount).sub(collateralAmount).eq(BigNumber.from(0))).to.be.true
+    })
+
   })
 
   describe("Sell long and flash mint short", async () => {

@@ -222,8 +222,10 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) ==
                     msg.sender
             );
-        require(msg.value == _params.collateralToDeposit.add(_params.collateralToLp));
-
+        console.log('collateral added ',_params.collateralToDeposit.add(_params.collateralToLp));
+        console.log('msg.value',msg.value);
+        require(msg.value == _params.collateralToDeposit.add(_params.collateralToLp), 'not enough jjuice');
+        console.log('past require checks for batchMintLP');
         (uint256 vaultId, ) = ControllerHelperUtil.mintAndLp(
             ControllerHelperDiamondStorage.getAddressAtSlot(0),
             ControllerHelperDiamondStorage.getAddressAtSlot(6),

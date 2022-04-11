@@ -1,6 +1,9 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
+import "hardhat/console.sol";
+
+
 //SPDX-License-Identifier: BUSL-1.1
 
 // interface
@@ -79,6 +82,9 @@ library ControllerHelperUtil {
         );
 
         // LP _mintAndLpParams._wPowerPerpAmount & _mintAndLpParams.collateralToLp in Uni v3
+        console.log('trying to lp with %s collateral', _mintAndLpParams.collateralToLp);
+        console.log('trying to lp with %s wSqueeth', _mintAndLpParams.wPowerPerpAmount);
+
         uint256 uniTokenId = lpWPowerPerpPool(
             _controller,
             _nonfungiblePositionManager,
