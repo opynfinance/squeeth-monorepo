@@ -348,6 +348,7 @@ const Component: React.FC = () => {
     setNewLpNftLiqPrice(lp)
     setLpNftCollatPercent(cp)
   }
+
   const updateCollateral = async (collatAmount: string) => {
     setCollateral(collatAmount)
     if (!vault) return
@@ -356,7 +357,7 @@ const Component: React.FC = () => {
     const { collateralPercent: cp, liquidationPrice: lp } = await getCollatRatioAndLiqPrice(
       collatAmountBN.plus(vault.collateralAmount), // Get liquidation price and collatPercent for total collat after tx happens
       vault.shortAmount,
-      lpNftId,
+      currentLpNftId,
     )
     setNewLiqPrice(lp)
     setCollatPercent(cp)
@@ -371,12 +372,13 @@ const Component: React.FC = () => {
     const debt = await getDebtAmount(vault.shortAmount)
     let lpCollatPercent = BIG_ZERO
     // If NFT is deposited, Collateral amount from LP NFT should not be included. So target collat % - lp collat % will give actual collat to remove
-    if (lpNftId) {
-      const { collateral: uniCollat } = await getUniNFTCollatDetail(lpNftId)
+    if (currentLpNftId) {
+      const { collateral: uniCollat } = await getUniNFTCollatDetail(currentLpNftId)
       lpCollatPercent = uniCollat.div(debt).times(100)
     }
     const newCollat = new BigNumber(percent).minus(lpCollatPercent).times(debt).div(100)
-    const { liquidationPrice: lp } = await getCollatRatioAndLiqPrice(newCollat, vault.shortAmount, lpNftId)
+
+    const { liquidationPrice: lp } = await getCollatRatioAndLiqPrice(newCollat, vault.shortAmount, currentLpNftId)
     setNewLiqPrice(lp)
     setCollateral(newCollat.minus(vault.collateralAmount).toString())
   }
@@ -389,8 +391,9 @@ const Component: React.FC = () => {
     const { collateralPercent: cp, liquidationPrice: lp } = await getCollatRatioAndLiqPrice(
       vault.collateralAmount,
       shortAmountBN.plus(vault.shortAmount),
-      lpNftId,
+      currentLpNftId,
     )
+
     setNewLiqPrice(lp)
     setCollatPercent(cp)
     setAction(shortAmountBN.isPositive() ? VaultAction.MINT_SQUEETH : VaultAction.BURN_SQUEETH)
@@ -401,15 +404,16 @@ const Component: React.FC = () => {
     if (!vault) return
 
     let lpNftCollat = BIG_ZERO
-    if (lpNftId) {
-      const { collateral: nftCollat } = await getUniNFTCollatDetail(lpNftId)
+    if (currentLpNftId) {
+      const { collateral: nftCollat } = await getUniNFTCollatDetail(currentLpNftId)
       lpNftCollat = nftCollat
     }
     const debt = vault.collateralAmount.plus(lpNftCollat).times(100).div(percent)
     const _shortAmt = await getShortAmountFromDebt(debt)
     setShortAmount(_shortAmt.minus(vault.shortAmount).toString())
     setAction(percent < existingCollatPercent ? VaultAction.MINT_SQUEETH : VaultAction.BURN_SQUEETH)
-    const { liquidationPrice: lp } = await getCollatRatioAndLiqPrice(vault.collateralAmount, _shortAmt, lpNftId)
+    const { liquidationPrice: lp } = await getCollatRatioAndLiqPrice(vault.collateralAmount, _shortAmt, currentLpNftId)
+
     setNewLiqPrice(lp)
   }
 
@@ -534,6 +538,18 @@ const Component: React.FC = () => {
 
   const isCollatAction = useMemo(() => {
     return action === VaultAction.ADD_COLLATERAL || action === VaultAction.REMOVE_COLLATERAL
+  }, [action])
+
+  const isDebtAction = useMemo(() => {
+    return action === VaultAction.MINT_SQUEETH || action === VaultAction.BURN_SQUEETH
+  }, [action])
+
+  const isLPNFTAction = useMemo(() => {
+    return (
+      action === VaultAction.APPROVE_UNI_POSITION ||
+      action === VaultAction.DEPOSIT_UNI_POSITION ||
+      action === VaultAction.WITHDRAW_UNI_POSITION
+    )
   }, [action])
 
   const { adjustAmountError, adjustCollatError } = useMemo(() => {
@@ -783,7 +799,7 @@ const Component: React.FC = () => {
                       onChange={(event) => updateCollatPercent(Number(event.target.value))}
                       value={isCollatAction ? collatPercent : existingCollatPercent}
                       id="filled-basic"
-                      label="Ratio"
+                      label="Collateral Ratio"
                       variant="outlined"
                       // error={collatPercent < 150}
                       // helperText={`Balance ${toTokenAmount(balance, 18).toFixed(4)} ETH`}
@@ -890,9 +906,9 @@ const Component: React.FC = () => {
                         type="number"
                         style={{ width: '100%', marginRight: '4px' }}
                         onChange={(event) => updateDebtForCollatPercent(Number(event.target.value))}
-                        value={!isCollatAction ? collatPercent : existingCollatPercent}
+                        value={isDebtAction ? collatPercent : existingCollatPercent}
                         id="filled-basic"
-                        label="Ratio"
+                        label="Collateral Ratio"
                         variant="outlined"
                         InputProps={{
                           endAdornment: (
@@ -906,7 +922,7 @@ const Component: React.FC = () => {
                         }}
                       />
                       <CollatRange
-                        collatValue={!isCollatAction ? collatPercent : existingCollatPercent}
+                        collatValue={isDebtAction ? collatPercent : existingCollatPercent}
                         onCollatValueChange={updateDebtForCollatPercent}
                       />
                     </div>
@@ -914,7 +930,7 @@ const Component: React.FC = () => {
                   <div className={classes.txDetails}>
                     <TradeInfoItem
                       label="New liquidation price"
-                      value={!isCollatAction ? (newLiqPrice || 0).toFixed(2) : '0'}
+                      value={isDebtAction ? (newLiqPrice || 0).toFixed(2) : '0'}
                       frontUnit="$"
                     />
                   </div>
