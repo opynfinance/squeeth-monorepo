@@ -211,8 +211,6 @@ describe("Controller helper integration test", function () {
       // no long squeeth
       expect(squeethBalanceBefore.eq(squeethBalanceAfter)).to.be.true
       // 100% of sale proceeds added to collateral
-      // console.log('test', (vaultAfter.collateralAmount.sub(vaultBefore.collateralAmount)).div(ethAmountOutFromSwap).toString())
-      // console.log('test', (vaultAfter.collateralAmount.sub(vaultBefore.collateralAmount)).div(ethAmountOutFromSwap).eq(BigNumber.from(1)))
       expect(vaultAfter.collateralAmount.sub(vaultBefore.collateralAmount).sub(ethAmountOutFromSwap).eq(BigNumber.from(0))).to.be.true
       // target short amount minted
       expect(vaultBefore.shortAmount.add(mintWSqueethAmount).eq(vaultAfter.shortAmount)).to.be.true
@@ -276,12 +274,7 @@ describe("Controller helper integration test", function () {
       expect(vaultBefore.shortAmount.add(mintWSqueethAmount).eq(vaultAfter.shortAmount)).to.be.true
       // depositor balance reduced by collateral
       
-      console.log('depositorEthBalanceBefore.toString()', depositorEthBalanceBefore.toString());
-      console.log('depositorEthBalanceAfter.toString()', depositorEthBalanceAfter.toString());
       const testDiff = depositorEthBalanceAfter.sub(depositorEthBalanceBefore)
-      console.log('testDiff', testDiff.toString())
-      console.log('expectedAmountOut', collatToReceive.toString())
-
       expect(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).eq(collatToReceive)).to.be.true
 
     })
@@ -345,11 +338,8 @@ describe("Controller helper integration test", function () {
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
 
       const vaultBefore = await controller.vaults(vaultId)
-      // console.log('vaultBefore.collateralAmount', vaultBefore.collateralAmount.toString());
-      // console.log('vaultBefore.shortAmount', vaultBefore.shortAmount.toString());
       const longBalanceBefore = await wSqueeth.balanceOf(depositor.address)
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
-      console.log(squeethPrice.toString())
       await weth.connect(owner).approve(swapRouter.address, constants.MaxUint256)
 
       const squeethCanBuy = await quoter.connect(tester).callStatic.quoteExactInputSingle(weth.address,
@@ -396,21 +386,12 @@ describe("Controller helper integration test", function () {
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
 
       const vaultBefore = await controller.vaults(vaultId)
-      console.log('vaultBefore.collateralAmount', vaultBefore.collateralAmount.toString());
-      console.log('vaultBefore.shortAmount', vaultBefore.shortAmount.toString());
       // Get expected proceeds of sale of wSqeeth 
       const ethAmountToSwap = await quoter.connect(tester).callStatic.quoteExactOutputSingle(weth.address,
         wSqueeth.address,
         3000,
         vaultBefore.shortAmount,
         0)
-       console.log('ethAmountInToSwap', ethAmountToSwap)
-       console.log('maxToPay',vaultBefore.collateralAmount.sub(ethAmountToSwap).toString())
-       console.log('vaultId', vaultId)
-       console.log('wPowerPerpAmountToBurn', vaultBefore.shortAmount.toString())
-       console.log('wPowerPerpAmountToBuy', BigNumber.from(0).toString()),
-       console.log('collateralToWithdraw', vaultBefore.collateralAmount.toString())
-       console.log('maxToPay', ethAmountToSwap.toString())
       const params = {
         vaultId,
         wPowerPerpAmountToBurn: vaultBefore.shortAmount.toString(),
@@ -504,7 +485,6 @@ describe("Controller helper integration test", function () {
 
     it("Sell long and flashswap mint short positon", async () => {
       const longBalance = await wSqueeth.balanceOf(depositor.address);
-      console.log(longBalance.toString(), "long balance")
       const normFactor = await controller.normalizationFactor()
       const mintWSqueethAmount = ethers.utils.parseUnits('60')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
@@ -529,9 +509,7 @@ describe("Controller helper integration test", function () {
 
       const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
       const value = collateralAmount.sub(ethAmountOutFromFlashSwap.mul(one.sub(slippage)).div(one))
-      
-      console.log(value.toString())
-      
+            
       const params = {
         vaultId: 0,
         wPowerPerpAmountToMint: mintWSqueethAmount,
@@ -948,8 +926,6 @@ describe("Controller helper integration test", function () {
       }    
       await wSqueeth.connect(owner).approve(swapRouter.address, constants.MaxUint256)
       ethAmountOut = await swapRouter.connect(owner).callStatic.exactInputSingle(swapParam)
-      console.log(mintWSqueethAmount.toString(), "squeeth expected in lp")
-      console.log(collateralToLp.toString(), "weth expected  in lp")
 
       const mintParam = {
         token0,
@@ -1008,9 +984,6 @@ describe("Controller helper integration test", function () {
 
       const depositorEthBalanceAfter= await provider.getBalance(depositor.address)
 
-      console.log(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).toString())
-      console.log(wethAmountInLP.add(ethAmountOut).toString())
-
       // 1 wei difference due to uniswap rounding
       expect(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).sub(wethAmountInLP.add(ethAmountOut)).abs().lte(1)).to.be.true
     })
@@ -1049,9 +1022,6 @@ describe("Controller helper integration test", function () {
       }    
       await weth.connect(owner).approve(swapRouter.address, constants.MaxUint256)
       squeethAmountOut = await swapRouter.connect(owner).callStatic.exactInputSingle(swapParam)
-      console.log(mintWSqueethAmount.toString(), "squeeth expected in lp")
-      console.log(collateralToLp.toString(), "weth expected  in lp")
-
 
       const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
       const token0 = isWethToken0 ? weth.address : wSqueeth.address
@@ -1088,12 +1058,7 @@ describe("Controller helper integration test", function () {
       const slot0 = await wSqueethPool.slot0()
       const currentTick = slot0[1]
 
-      console.log(currentTick.toString())
       const lowerTick = 60*((currentTick - currentTick%60)/60 + 1)
-      console.log(lowerTick.toString(), "lower tick")
-
-
-      console.log("made it here!")
 
       const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
       const positionBefore = await (positionManager as INonfungiblePositionManager).positions(tokenId);
@@ -1149,15 +1114,10 @@ describe("Controller helper integration test", function () {
         deadline: Math.floor(await getNow(ethers.provider) + 8640000),
       })
 
-      console.log("amount0", amount0New.toString())
-      console.log("amount1", amount1New.toString())
-
       const wPowerPerpAmountInNewLp = (isWethToken0) ? amount1New : amount0New;
       const wethAmountInNewLp = (isWethToken0) ? amount0New : amount1New;
 
-
       expect(ownerOfUniNFT === depositor.address).to.be.true;
-      console.log(wPowerPerpAmountInNewLp.toString(), squeethDesired.toString())
       expect(wPowerPerpAmountInNewLp.sub(squeethDesired).lte(4)).to.be.true
       expect(wethAmountInNewLp.eq(BigNumber.from(0))).to.be.true
     })
