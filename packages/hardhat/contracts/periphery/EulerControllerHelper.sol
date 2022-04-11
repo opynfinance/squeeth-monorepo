@@ -28,6 +28,9 @@ contract EulerControllerHelper is IDeferredLiquidityCheck {
     using SafeMath for uint256;
 
     address public immutable exec;
+    address public immutable euler;
+    address public immutable token;
+    address public immutable dToken;
 
     struct FlashloanCallbackData {
         address caller;
@@ -37,8 +40,11 @@ contract EulerControllerHelper is IDeferredLiquidityCheck {
         bytes callData;
     }
 
-    constructor(address _exec) {
+    constructor(address _exec, address _euler, address _token, address _dToken) {
         exec = _exec;
+        euler = _euler;
+        token = _token;
+        dToken = _dToken;
     }
 
     function _flashCallback(
@@ -52,16 +58,18 @@ contract EulerControllerHelper is IDeferredLiquidityCheck {
 
     function onDeferredLiquidityCheck(bytes memory encodedData) external override {
         // sanity checks
-        require(msg.sender == exec);
+        // require(msg.sender == exec);
+
+        console.log("msg.sender", msg.sender);
 
         FlashloanCallbackData memory data = abi.decode(encodedData, (FlashloanCallbackData));
 
-        IEulerDToken(data.assetToBorrow).borrow(0, data.amountToBorrow);
+        IEulerDToken(dToken).borrow(0, data.amountToBorrow);
 
         _flashCallback(data.caller, data.assetToBorrow, data.amountToBorrow, 0, data.callSource, data.callData);
 
-        IERC20Detailed(data.assetToBorrow).approve(data.assetToBorrow, data.amountToBorrow);
-        IEulerDToken(data.assetToBorrow).repay(0, data.amountToBorrow);
+        IERC20Detailed(data.assetToBorrow).approve(euler, data.amountToBorrow);
+        IEulerDToken(dToken).repay(0, data.amountToBorrow);
     }
 
     /**

@@ -39,8 +39,10 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         address _controller,
         address _nonfungiblePositionManager,
         address _uniswapFactory,
-        address _exec
-    ) UniswapControllerHelper(_uniswapFactory) EulerControllerHelper(_exec) {
+        address _exec,
+        address _euler,
+        address _dToken
+    ) UniswapControllerHelper(_uniswapFactory) EulerControllerHelper(_exec, _euler, IController(_controller).weth(), _dToken) {
         ControllerHelperDiamondStorage.setStorageVariables(
             _controller,
             IController(_controller).oracle(),
@@ -441,6 +443,11 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 _calldata,
                 (ControllerHelperDataType.FlashloanWMintDepositNftParams)
             );
+
+            console.log("withdraw");
+            console.log(IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).balanceOf(address(this)));
+            console.log(IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).balanceOf(_initiator));
+            console.log("_amount", _amount);
 
             // convert flashloaned WETH to ETH
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).withdraw(_amount);

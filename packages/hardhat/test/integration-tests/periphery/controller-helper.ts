@@ -74,7 +74,7 @@ describe("Controller helper integration test", function () {
     const ControllerHelperUtilLib = (await ControllerHelperUtil.deploy());
     
     const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper", {libraries: {ControllerHelperUtil: ControllerHelperUtilLib.address}});
-    controllerHelper = (await ControllerHelperContract.deploy(controller.address, positionManager.address, uniswapFactory.address, constants.AddressZero)) as ControllerHelper;
+    controllerHelper = (await ControllerHelperContract.deploy(controller.address, positionManager.address, uniswapFactory.address, constants.AddressZero, constants.AddressZero, constants.AddressZero)) as ControllerHelper;
   })
   
   this.beforeAll("Seed pool liquidity", async() => {
