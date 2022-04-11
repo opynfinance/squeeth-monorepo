@@ -1079,7 +1079,7 @@ describe("Controller helper integration test", function () {
       const wPowerPerpAmountInLP = (isWethToken0) ? amount1 : amount0;
       const wethAmountInLP = (isWethToken0) ? amount0 : amount1;
       //uniswap LPing often will give 1 wei less than expected, with the price of oSQTH need to do more than 1 wei due to rounding up the amount owed 
-      const squeethDesired = wPowerPerpAmountInLP.sub(4).add(squeethAmountOut)
+      const squeethDesired = wPowerPerpAmountInLP.sub(10).add(squeethAmountOut)
 
       const params = {
         tokenId: oldTokenId,
@@ -1118,7 +1118,7 @@ describe("Controller helper integration test", function () {
       const wethAmountInNewLp = (isWethToken0) ? amount0New : amount1New;
 
       expect(ownerOfUniNFT === depositor.address).to.be.true;
-      expect(wPowerPerpAmountInNewLp.sub(squeethDesired).lte(4)).to.be.true
+      expect(wPowerPerpAmountInNewLp.sub(squeethDesired).lte(10)).to.be.true
       expect(wethAmountInNewLp.eq(BigNumber.from(0))).to.be.true
     })
   })
