@@ -516,7 +516,9 @@ const Component: React.FC = () => {
     try {
       await withdrawUniPositionToken(vault.id)
       updateVault()
-      setAction(VaultAction.DEPOSIT_UNI_POSITION)
+      // reset to default action, shld check if this nft got approved with history
+      // cuz now there is no nft selected
+      setAction(VaultAction.ADD_COLLATERAL)
     } catch (e) {
       console.log(e)
     }
