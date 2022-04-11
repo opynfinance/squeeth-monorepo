@@ -581,7 +581,7 @@ describe("Controller helper integration test", function () {
 
       // minting mintWSqueethAmount to a tester address to get later how much should ETH to get for flahswap mintWSqueethAmount
       normFactor = await controller.normalizationFactor()
-      mintWSqueethAmount = ethers.utils.parseUnits('20')
+      mintWSqueethAmount = ethers.utils.parseUnits('150')
       mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
       ethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 420, true)
       scaledEthPrice = ethPrice.div(10000)
@@ -594,28 +594,28 @@ describe("Controller helper integration test", function () {
     it("Sell long and flashswap mint short positon", async () => {
       const longBalance = await wSqueeth.balanceOf(depositor.address);
       console.log(longBalance.toString(), "long balance")
-      const vaultId = (await shortSqueeth.nextId()).sub(1);
       const normFactor = await controller.normalizationFactor()
-      const mintWSqueethAmount = ethers.utils.parseUnits('20')
+      const mintWSqueethAmount = ethers.utils.parseUnits('60')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
       const ethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
       const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
       const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
+      const totalSqueethToSell = longBalance.add(mintWSqueethAmount)
       const swapParam = {
         tokenIn: wSqueeth.address,
         tokenOut: weth.address,
         fee: 3000,
         recipient: owner.address,
         deadline: Math.floor(await getNow(ethers.provider) + 8640000),
-        amountIn: longBalance,
+        amountIn: totalSqueethToSell,
         amountOutMinimum: 0,
         sqrtPriceLimitX96: 0
       }    
-      await wSqueeth.connect(depositor).approve(swapRouter.address, constants.MaxUint256)
-      const ethAmountOutFromSwap = await swapRouter.connect(depositor).callStatic.exactInputSingle(swapParam)
+      //await wSqueeth.connect(depositor).approve(swapRouter.address, constants.MaxUint256)
+      //const ethAmountOutFromSwap = await swapRouter.connect(tester).callStatic.exactInputSingle(swapParam)
 
-      const flashswapParam = {
+/*       const flashswapParam = {
         tokenIn: wSqueeth.address,
         tokenOut: weth.address,
         fee: 3000,
@@ -625,11 +625,12 @@ describe("Controller helper integration test", function () {
         amountOutMinimum: 0,
         sqrtPriceLimitX96: 0
       }    
+ */   
       await wSqueeth.connect(tester).approve(swapRouter.address, constants.MaxUint256)
-      const ethAmountOutFromFlashSwap = await swapRouter.connect(tester).callStatic.exactInputSingle(flashswapParam)
+      const ethAmountOutFromFlashSwap = await swapRouter.connect(tester).callStatic.exactInputSingle(swapParam)
 
       const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
-      const value = collateralAmount.sub(ethAmountOutFromSwap.mul(one.sub(slippage)).div(one))
+      const value = collateralAmount.sub(ethAmountOutFromFlashSwap.mul(one.sub(slippage)).div(one))
       
       console.log(value.toString())
       
@@ -642,9 +643,12 @@ describe("Controller helper integration test", function () {
       }
       await wSqueeth.connect(depositor).approve(controllerHelper.address, longBalance)
       await controllerHelper.connect(depositor).flashswapSellLongWMint(params, {value: value})
+      
+      const vaultId = (await shortSqueeth.nextId()).sub(1);
+      // this was looking at a previous vault and was incorrect, updating the vault id here fixes it (or remove the sub(1) and keep it earlier)
       const vaultAfter = await controller.vaults(vaultId)
 
-      expect((await wSqueeth.balanceOf(depositor.address)).eq(BigNumber.from(0))).to.be.true;
+      //expect((await wSqueeth.balanceOf(depositor.address)).eq(BigNumber.from(0))).to.be.true;
       expect(vaultAfter.shortAmount.eq(mintWSqueethAmount)).to.be.true
     })
 
@@ -664,7 +668,11 @@ describe("Controller helper integration test", function () {
       const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
       const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
-      const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
+      // doing this way explicitly forces us to LP with less than the vault balance 
+      // before it was just using the exact amount = the vault debt and probably passing because of rounding?
+      // alternatively could be done like the next test where we create a new vault that we close against
+      const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one).div(2)
+      const wSqueethToLp = mintWSqueethAmount.div(2)
 
       await controller.connect(depositor).mintWPowerPerpAmount(0, mintWSqueethAmount, 0, {value: collateralAmount})
 
@@ -678,8 +686,8 @@ describe("Controller helper integration test", function () {
         fee: 3000,
         tickLower: -887220,// int24 min tick used when selecting full range
         tickUpper: 887220,// int24 max tick used when selecting full range
-        amount0Desired: isWethToken0 ? collateralToLp : mintWSqueethAmount,
-        amount1Desired: isWethToken0 ? mintWSqueethAmount : collateralToLp,
+        amount0Desired: isWethToken0 ? collateralToLp : wSqueethToLp,
+        amount1Desired: isWethToken0 ? wSqueethToLp : collateralToLp,
         amount0Min: 0,
         amount1Min: 0,
         recipient: depositor.address,
@@ -713,6 +721,11 @@ describe("Controller helper integration test", function () {
       })
       const wPowerPerpAmountInLP = (isWethToken0) ? amount1 : amount0;
       const wethAmountInLP = (isWethToken0) ? amount0 : amount1;
+      const liquidityPercentage = BigNumber.from(1).mul(BigNumber.from(10).pow(18))
+
+      const wPowerPerpAmountToWithdraw = wPowerPerpAmountInLP.mul(liquidityPercentage).div(one)
+      const wethAmountToWithdraw = wethAmountInLP.mul(liquidityPercentage).div(one)
+
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
       const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
       const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
@@ -724,7 +737,7 @@ describe("Controller helper integration test", function () {
         vaultId, 
         tokenId,
         liquidity: positionBefore.liquidity,
-        liquidityPercentage: BigNumber.from(1).mul(BigNumber.from(10).pow(18)),
+        liquidityPercentage: liquidityPercentage,
         wPowerPerpAmountToBurn: mintWSqueethAmount, 
         collateralToWithdraw: vaultBefore.collateralAmount, 
         limitPriceEthPerPowerPerp,
@@ -740,17 +753,18 @@ describe("Controller helper integration test", function () {
       expect(vaultAfter.shortAmount.eq(BigNumber.from(0))).to.be.true
       expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
 
-      if(wPowerPerpAmountInLP.lt(mintWSqueethAmount)) {
-        const ethToBuySqueeth = (mintWSqueethAmount.sub(wPowerPerpAmountInLP)).mul(squeethPrice).div(one); 
-        const remainingETHFromLp = wethAmountInLP.sub(ethToBuySqueeth);
+      if(wPowerPerpAmountToWithdraw.lt(mintWSqueethAmount)) {
+        const ethToBuySqueeth = (mintWSqueethAmount.sub(wPowerPerpAmountToWithdraw)).mul(squeethPrice).div(one); 
+        const remainingETHFromLp = wethAmountToWithdraw.sub(ethToBuySqueeth);
+        //might be good to check actual slippage here instead of <= 0.01, which is kinda arbitrary, but i tried doing it and its hard because need to simulate two transactions remove liquidity + swap
 
         expect(Number(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).sub(vaultBefore.collateralAmount.add(remainingETHFromLp)).div(one).toString()) <= 0.01).to.be.true
       }
-      else if (wPowerPerpAmountInLP.gt(mintWSqueethAmount)) {
-        const wPowerPerpAmountToSell = wPowerPerpAmountInLP.sub(mintWSqueethAmount);
+      else if (wPowerPerpAmountToWithdraw.gt(mintWSqueethAmount)) {
+        const wPowerPerpAmountToSell = wPowerPerpAmountToWithdraw.sub(mintWSqueethAmount);
         const ethToGet = wPowerPerpAmountToSell.mul(squeethPrice).div(one);
 
-        expect(Number(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).sub(vaultBefore.collateralAmount.add(ethToGet)).div(one).toString()) <= 0.01).to.be.true
+        expect(Number(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).sub(vaultBefore.collateralAmount.add(ethToGet).add(wethAmountToWithdraw)).div(one).toString()) <= 0.01).to.be.true
       }
     })
   })
@@ -828,6 +842,11 @@ describe("Controller helper integration test", function () {
       })
       const wPowerPerpAmountInLP = (isWethToken0) ? amount1 : amount0;
       const wethAmountInLP = (isWethToken0) ? amount0 : amount1;
+      const liquidityPercentage = BigNumber.from(1).mul(BigNumber.from(10).pow(18))
+
+      const wPowerPerpAmountToWithdraw = wPowerPerpAmountInLP.mul(liquidityPercentage).div(one)
+      const wethAmountToWithdraw = wethAmountInLP.mul(liquidityPercentage).div(one)
+      
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
       const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
       const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
@@ -839,7 +858,7 @@ describe("Controller helper integration test", function () {
         vaultId, 
         tokenId,
         liquidity: positionBefore.liquidity,
-        liquidityPercentage: BigNumber.from(1).mul(BigNumber.from(10).pow(18)),
+        liquidityPercentage: liquidityPercentage,
         wPowerPerpAmountToBurn: mintWSqueethAmount, 
         collateralToWithdraw: vaultBefore.collateralAmount, 
         limitPriceEthPerPowerPerp, 
@@ -855,18 +874,19 @@ describe("Controller helper integration test", function () {
       expect(vaultAfter.shortAmount.eq(BigNumber.from(0))).to.be.true
       expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
 
-      if(wPowerPerpAmountInLP.lt(mintWSqueethAmount)) {
-        const ethToBuySqueeth = (mintWSqueethAmount.sub(wPowerPerpAmountInLP)).mul(squeethPrice).div(one); 
-        const remainingETHFromLp = wethAmountInLP.sub(ethToBuySqueeth);
+      if(wPowerPerpAmountToWithdraw.lt(mintWSqueethAmount)) {
+        const ethToBuySqueeth = (mintWSqueethAmount.sub(wPowerPerpAmountToWithdraw)).mul(squeethPrice).div(one); 
+        const remainingETHFromLp = wethAmountToWithdraw.sub(ethToBuySqueeth);
 
         expect(Number(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).sub(vaultBefore.collateralAmount.add(remainingETHFromLp)).div(one).toString()) <= 0.01).to.be.true
       }
-      else if (wPowerPerpAmountInLP.gt(mintWSqueethAmount)) {
-        const wPowerPerpAmountToSell = wPowerPerpAmountInLP.sub(mintWSqueethAmount);
+      else if (wPowerPerpAmountToWithdraw.gt(mintWSqueethAmount)) {
+        const wPowerPerpAmountToSell = wPowerPerpAmountToWithdraw.sub(mintWSqueethAmount);
         const ethToGet = wPowerPerpAmountToSell.mul(squeethPrice).div(one);
 
-        expect(Number(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).sub(vaultBefore.collateralAmount.add(ethToGet).add(wethAmountInLP)).div(one).toString()) <= 0.01).to.be.true
+        expect(Number(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).sub(vaultBefore.collateralAmount.add(ethToGet).add(wethAmountToWithdraw)).div(one).toString()) <= 0.01).to.be.true
       }
+
     })
   })
 
@@ -930,6 +950,7 @@ describe("Controller helper integration test", function () {
       const vaultBefore = await controller.vaults(vaultId)
       const amount0Min = BigNumber.from(0);
       const amount1Min = BigNumber.from(0);
+      const liquidityPercentage = BigNumber.from(6).mul(BigNumber.from(10).pow(17))
       const positionBefore = await (positionManager as INonfungiblePositionManager).positions(tokenId);
 
       await (positionManager as INonfungiblePositionManager).connect(depositor).approve(positionManager.address, tokenId); 
@@ -940,17 +961,27 @@ describe("Controller helper integration test", function () {
         amount1Min: amount1Min,
         deadline: Math.floor(await getNow(ethers.provider) + 8640000),
       })
+
+      const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
+
+      const wPowerPerpAmountInLP = (isWethToken0) ? amount1 : amount0;
+      const wethAmountInLP = (isWethToken0) ? amount0 : amount1;
+
+      const wPowerPerpAmountToWithdraw = wPowerPerpAmountInLP.mul(liquidityPercentage).div(one)
+      const wethAmountToWithdraw = wethAmountInLP.mul(liquidityPercentage).div(one)
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
       const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
       const limitPriceEthPerPowerPerp = squeethPrice.mul(one.sub(slippage)).div(one);
 
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address);
       await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controllerHelper.address, tokenId); 
+      
+      const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
       await controllerHelper.connect(depositor).closeShortWithUserNft({
         vaultId, 
         tokenId,
         liquidity: positionBefore.liquidity,
-        liquidityPercentage: BigNumber.from(6).mul(BigNumber.from(10).pow(17)),
+        liquidityPercentage: liquidityPercentage,
         wPowerPerpAmountToBurn: mintWSqueethAmount, 
         collateralToWithdraw: vaultBefore.collateralAmount, 
         limitPriceEthPerPowerPerp, 
@@ -960,16 +991,32 @@ describe("Controller helper integration test", function () {
 
       const positionAfter = await (positionManager as INonfungiblePositionManager).positions(tokenId);
       const vaultAfter = await controller.vaults(vaultId);
+      const depositorEthBalanceAfter = await provider.getBalance(depositor.address)
 
       expect(positionAfter.liquidity.sub(positionBefore.liquidity.div(2)).lte(1)).to.be.true
       expect(vaultAfter.shortAmount.eq(BigNumber.from(0))).to.be.true
       expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
+      
+      if(wPowerPerpAmountToWithdraw.lt(mintWSqueethAmount)) {
+        const ethToBuySqueeth = (mintWSqueethAmount.sub(wPowerPerpAmountToWithdraw)).mul(squeethPrice).div(one); 
+        const remainingETHFromLp = wethAmountToWithdraw.sub(ethToBuySqueeth);
+
+        expect(Number(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).sub(vaultBefore.collateralAmount.add(remainingETHFromLp)).div(one).toString()) <= 0.01).to.be.true
+      }
+      else if (wPowerPerpAmountToWithdraw.gt(mintWSqueethAmount)) {
+        const wPowerPerpAmountToSell = wPowerPerpAmountToWithdraw.sub(mintWSqueethAmount);
+        const ethToGet = wPowerPerpAmountToSell.mul(squeethPrice).div(one);
+
+        expect(Number(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).sub(vaultBefore.collateralAmount.add(ethToGet).add(wethAmountToWithdraw)).div(one).toString()) <= 0.01).to.be.true
+      }
+
     })
   })
 
   describe("Withdraw to ETH", async () => {
     let collateralToLp: BigNumber;
     let mintWSqueethAmount: BigNumber;
+    let ethAmountOut: BigNumber;
 
     before("open position and LP", async () => {
       const normFactor = await controller.normalizationFactor()
@@ -979,8 +1026,9 @@ describe("Controller helper integration test", function () {
       const scaledEthPrice = ethPrice.div(10000)
       const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
       const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
-      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
-      collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
+      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, true)
+      // we do this to ensure we use the maximum wSqueethAmount for LPing, which makes the expect statements easier
+      collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one).mul(2)
 
       await controller.connect(depositor).mintWPowerPerpAmount(0, mintWSqueethAmount, 0, {value: collateralAmount})
 
@@ -988,6 +1036,23 @@ describe("Controller helper integration test", function () {
       const token0 = isWethToken0 ? weth.address : wSqueeth.address
       const token1 = isWethToken0 ? wSqueeth.address : weth.address
   
+      await controller.connect(owner).mintWPowerPerpAmount(0, mintWSqueethAmount, 0, {value: collateralAmount})
+
+      const swapParam = {
+        tokenIn: wSqueeth.address,
+        tokenOut: weth.address,
+        fee: 3000,
+        recipient: owner.address,
+        deadline: Math.floor(await getNow(ethers.provider) + 8640000),
+        amountIn: mintWSqueethAmount,
+        amountOutMinimum: 0,
+        sqrtPriceLimitX96: 0
+      }    
+      await wSqueeth.connect(owner).approve(swapRouter.address, constants.MaxUint256)
+      ethAmountOut = await swapRouter.connect(owner).callStatic.exactInputSingle(swapParam)
+      console.log(mintWSqueethAmount.toString(), "squeeth expected in lp")
+      console.log(collateralToLp.toString(), "weth expected  in lp")
+
       const mintParam = {
         token0,
         token1,
@@ -1009,30 +1074,25 @@ describe("Controller helper integration test", function () {
     })
 
     it("sell all to ETH", async () => {
-      // get expeceted ETH out from selling
-      const normFactor = await controller.getExpectedNormalizationFactor()
-      const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
-      const ethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 420, true)
-      const scaledEthPrice = ethPrice.div(10000)
-      const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
-      const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
-      await controller.connect(owner).mintWPowerPerpAmount(0, mintWSqueethAmount, 0, {value: collateralAmount})
-      const swapParam = {
-        tokenIn: wSqueeth.address,
-        tokenOut: weth.address,
-        fee: 3000,
-        recipient: owner.address,
-        deadline: Math.floor(await getNow(ethers.provider) + 8640000),
-        amountIn: mintWSqueethAmount,
-        amountOutMinimum: 0,
-        sqrtPriceLimitX96: 0
-      }    
-      await wSqueeth.connect(owner).approve(swapRouter.address, constants.MaxUint256)
-      const ethAmountOut = await swapRouter.connect(owner).callStatic.exactInputSingle(swapParam)
-
       const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
       const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
       const positionBefore = await (positionManager as INonfungiblePositionManager).positions(tokenId);
+
+      const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
+      const amount0Min = BigNumber.from(0);
+      const amount1Min = BigNumber.from(0);
+
+      await (positionManager as INonfungiblePositionManager).connect(depositor).approve(positionManager.address, tokenId); 
+      const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
+        tokenId: tokenId,
+        liquidity: positionBefore.liquidity,
+        amount0Min: amount0Min,
+        amount1Min: amount1Min,
+        deadline: Math.floor(await getNow(ethers.provider) + 8640000),
+      })
+      const wPowerPerpAmountInLP = (isWethToken0) ? amount1 : amount0;
+      const wethAmountInLP = (isWethToken0) ? amount0 : amount1;
+
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
       const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
       const limitPriceEthPerPowerPerp = squeethPrice.mul(one.sub(slippage)).div(one);
@@ -1050,13 +1110,18 @@ describe("Controller helper integration test", function () {
 
       const depositorEthBalanceAfter= await provider.getBalance(depositor.address)
 
-      expect(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).sub(collateralToLp.add(ethAmountOut)).lte(BigNumber.from(10).pow(15))).to.be.true
+      console.log(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).toString())
+      console.log(wethAmountInLP.add(ethAmountOut).toString())
+
+      // 1 wei difference due to uniswap rounding
+      expect(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).sub(wethAmountInLP.add(ethAmountOut)).abs().lte(1)).to.be.true
     })
   })
 
   describe("Rebalance LP through trading amounts", async () => {
     let collateralToLp: BigNumber;
     let mintWSqueethAmount: BigNumber;
+    let squeethAmountOut: BigNumber;
 
     before("open position and LP", async () => {
       const normFactor = await controller.normalizationFactor()
@@ -1066,10 +1131,29 @@ describe("Controller helper integration test", function () {
       const scaledEthPrice = ethPrice.div(10000)
       const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
       const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
-      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
-      collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
+      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, true)
+      // we want to LP with all of the ETH collateral which can be guaranteed by using less vs what is expected
+      collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one).mul(4).div(5)
 
       await controller.connect(depositor).mintWPowerPerpAmount(0, mintWSqueethAmount, 0, {value: collateralAmount})
+
+      await weth.connect(owner).deposit({value: collateralToLp})
+
+      const swapParam = {
+        tokenIn: weth.address,
+        tokenOut: wSqueeth.address,
+        fee: 3000,
+        recipient: owner.address,
+        deadline: Math.floor(await getNow(ethers.provider) + 8640000),
+        amountIn: collateralToLp,
+        amountOutMinimum: 0,
+        sqrtPriceLimitX96: 0
+      }    
+      await weth.connect(owner).approve(swapRouter.address, constants.MaxUint256)
+      squeethAmountOut = await swapRouter.connect(owner).callStatic.exactInputSingle(swapParam)
+      console.log(mintWSqueethAmount.toString(), "squeeth expected in lp")
+      console.log(collateralToLp.toString(), "weth expected  in lp")
+
 
       const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
       const token0 = isWethToken0 ? weth.address : wSqueeth.address
@@ -1101,23 +1185,54 @@ describe("Controller helper integration test", function () {
       const oldPosition = await (positionManager as INonfungiblePositionManager).positions(oldTokenId);
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
       const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
-      const limitPriceEthPerPowerPerp = squeethPrice.mul(one.sub(slippage)).div(one);
+      const limitPriceEthPerPowerPerp = squeethPrice.mul(one.add(slippage)).div(one);
+
+      const slot0 = await wSqueethPool.slot0()
+      const currentTick = slot0[1]
+
+      console.log(currentTick.toString())
+      const lowerTick = 60*((currentTick - currentTick%60)/60 + 1)
+      console.log(lowerTick.toString(), "lower tick")
+
+
+      console.log("made it here!")
+
+      const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
+      const positionBefore = await (positionManager as INonfungiblePositionManager).positions(tokenId);
+
+      const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
+      const amount0Min = BigNumber.from(0);
+      const amount1Min = BigNumber.from(0);
+
+
+      await (positionManager as INonfungiblePositionManager).connect(depositor).approve(positionManager.address, tokenId); 
+      const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
+        tokenId: tokenId,
+        liquidity: positionBefore.liquidity,
+        amount0Min: amount0Min,
+        amount1Min: amount1Min,
+        deadline: Math.floor(await getNow(ethers.provider) + 8640000),
+      })
+      const wPowerPerpAmountInLP = (isWethToken0) ? amount1 : amount0;
+      const wethAmountInLP = (isWethToken0) ? amount0 : amount1;
+      //uniswap LPing often will give 1 wei less than expected, with the price of oSQTH need to do more than 1 wei due to rounding up the amount owed 
+      const squeethDesired = wPowerPerpAmountInLP.sub(4).add(squeethAmountOut)
 
       const params = {
         tokenId: oldTokenId,
         ethAmountToLp: BigNumber.from(0),
         liquidity: oldPosition.liquidity,
-        wPowerPerpAmountDesired: ethers.utils.parseUnits('20'),
-        wethAmountDesired: ethers.utils.parseUnits('12'),
+        wPowerPerpAmountDesired: squeethDesired,
+        wethAmountDesired: ethers.utils.parseUnits('1'),
         amount0DesiredMin: BigNumber.from(0),
         amount1DesiredMin: BigNumber.from(0),
         limitPriceEthPerPowerPerp,
         amount0Min: BigNumber.from(0),
         amount1Min: BigNumber.from(0),
-        lowerTick: -887220,
-        upperTick: 887220,
-        rebalanceToken0: false,
-        rebalanceToken1: false
+        lowerTick: lowerTick,
+        upperTick: 887220
+        //rebalanceToken0: false,
+        //rebalanceToken1: false
       }
 
       await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controllerHelper.address, oldTokenId);
@@ -1128,7 +1243,7 @@ describe("Controller helper integration test", function () {
       const newPosition = await (positionManager as INonfungiblePositionManager).positions(newTokenId);
       const ownerOfUniNFT = await (positionManager as INonfungiblePositionManager).ownerOf(newTokenId); 
 
-      const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
+      const [amount0New, amount1New] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
         tokenId: newTokenId,
         liquidity: newPosition.liquidity,
         amount0Min: BigNumber.from(0),
@@ -1136,10 +1251,17 @@ describe("Controller helper integration test", function () {
         deadline: Math.floor(await getNow(ethers.provider) + 8640000),
       })
 
-      console.log("amount0", amount0.toString())
-      console.log("amount1", amount1.toString())
+      console.log("amount0", amount0New.toString())
+      console.log("amount1", amount1New.toString())
+
+      const wPowerPerpAmountInNewLp = (isWethToken0) ? amount1New : amount0New;
+      const wethAmountInNewLp = (isWethToken0) ? amount0New : amount1New;
+
 
       expect(ownerOfUniNFT === depositor.address).to.be.true;
+      console.log(wPowerPerpAmountInNewLp.toString(), squeethDesired.toString())
+      expect(wPowerPerpAmountInNewLp.sub(squeethDesired).lte(4)).to.be.true
+      expect(wethAmountInNewLp.eq(BigNumber.from(0))).to.be.true
     })
   })
 })
