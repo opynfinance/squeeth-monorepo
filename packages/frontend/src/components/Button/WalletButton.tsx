@@ -61,8 +61,13 @@ const useStyles = makeStyles((theme) =>
       border: `1px solid ${theme.palette.divider}`,
       background: theme.palette.background.default,
       borderRadius: 12,
+      zIndex: 2,
       '& button': {
         marginTop: 8,
+      },
+      [theme.breakpoints.down('sm')]: {
+        right: 'unset',
+        left: 0,
       },
     },
   }),

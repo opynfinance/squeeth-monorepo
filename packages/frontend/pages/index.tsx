@@ -39,7 +39,12 @@ import { usePositionsAndFeesComputation } from 'src/state/positions/hooks'
 import { actualTradeTypeAtom, ethTradeAmountAtom, sqthTradeAmountAtom, tradeTypeAtom } from 'src/state/trade/atoms'
 import { positionTypeAtom } from 'src/state/positions/atoms'
 import { useResetAtom } from 'jotai/utils'
-import { isTransactionFirstStepAtom, transactionDataAtom, transactionLoadingAtom } from 'src/state/wallet/atoms'
+import {
+  isTransactionFirstStepAtom,
+  transactionDataAtom,
+  transactionLoadingAtom,
+  supportedNetworkAtom,
+} from 'src/state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -552,6 +557,7 @@ const SqueethInfo: React.FC = () => {
 function TradePage() {
   const classes = useStyles()
   const { isRestricted } = useRestrictUser()
+  const supportedNetwork = useAtomValue(supportedNetworkAtom)
 
   const tradeType = useAtomValue(tradeTypeAtom)
   const [showMobileTrade, setShowMobileTrade] = useState(false)
@@ -607,8 +613,13 @@ function TradePage() {
           <div style={{ width: '65%' }}>
             <TabComponent />
           </div>
-          <PrimaryButton style={{ minWidth: '30%' }} onClick={() => setShowMobileTrade(true)}>
-            Trade
+          <PrimaryButton
+            variant="contained"
+            style={{ minWidth: '30%' }}
+            disabled={!supportedNetwork}
+            onClick={() => setShowMobileTrade(true)}
+          >
+            {supportedNetwork ? 'Trade' : 'Unsupported Network'}
           </PrimaryButton>
         </div>
         <MobileModal title="TRADE" isOpen={showMobileTrade} onClose={() => setShowMobileTrade(false)}>
