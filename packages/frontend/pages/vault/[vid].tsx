@@ -1002,7 +1002,7 @@ const Component: React.FC = () => {
                       />
                     )}
                   </div>
-                  {isLPNFTAction || isLPDeposited ? (
+                  {uniTokenToDeposit ? (
                     <>
                       <div className={classes.collatContainer}>
                         <TextField
