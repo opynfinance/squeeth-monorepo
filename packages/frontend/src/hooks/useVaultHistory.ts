@@ -81,7 +81,7 @@ export const useVaultHistory = (vaultId: number) => {
             acc.burnedSqueeth = acc.burnedSqueeth.plus(s.oSqthAmount)
           } else if (s.action === Action.OPEN_SHORT || s.action === Action.FLASH_SWAP_W_MINT) {
             acc.openShortSqueeth = acc.openShortSqueeth.plus(s.oSqthAmount)
-          } else if (s.action === Action.CLOSE_SHORT) {
+          } else if (s.action === Action.CLOSE_SHORT || s.action === Action.FLASH_SWAP_W_BURN) {
             acc.closeShortSqueeth = acc.closeShortSqueeth.plus(s.oSqthAmount)
             // users fully close short position
             if (

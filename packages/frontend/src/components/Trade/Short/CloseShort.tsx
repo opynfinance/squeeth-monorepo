@@ -172,17 +172,18 @@ export const CloseShort = () => {
   const setShortCloseMax = useAppCallback(() => {
     if (finalShortAmount.isGreaterThan(0)) {
       setSqthTradeAmount(finalShortAmount.toString())
+      onSqthChange(finalShortAmount.toString())
       setCollatPercent(150)
       setCloseType(CloseType.FULL)
     }
   }, [finalShortAmount])
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (vault) {
       const contractShort = vault?.shortAmount?.isFinite() ? vault?.shortAmount : new BigNumber(0)
       setFinalShortAmount(contractShort)
     }
-  }, [vault?.shortAmount.toString()])
+  }, [vault?.shortAmount])
 
   useEffect(() => {
     if (shortVaults.length) {
