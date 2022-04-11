@@ -311,12 +311,14 @@ const Component: React.FC = () => {
   const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
   const [collateral, setCollateral] = useState('0')
+  const [lpNftCollatPercent, setLpNftCollatPercent] = useState(0)
   const collateralBN = new BigNumber(collateral)
   const [shortAmount, setShortAmount] = useState('0')
   const shortAmountBN = new BigNumber(shortAmount)
   const [maxToMint, setMaxToMint] = useState(new BigNumber(0))
   const [twapEthPrice, setTwapEthPrice] = useState(new BigNumber(0))
   const [newLiqPrice, setNewLiqPrice] = useState(new BigNumber(0))
+  const [newLpNftLiqPrice, setNewLpNftLiqPrice] = useState(new BigNumber(0))
   const [action, setAction] = useState(VaultAction.ADD_COLLATERAL)
   const [txLoading, setTxLoading] = useState(false)
   const [uniTokenToDeposit, setUniTokenToDeposit] = useState(0)
@@ -330,6 +332,22 @@ const Component: React.FC = () => {
     })
   }, [getTwapEthPrice])
 
+  const updateNftCollateral = async (
+    collatAmountToUpdate: BigNumber,
+    shortAmountToUpdate: BigNumber,
+    lpNftIdToManage: number,
+  ) => {
+    if (!vault) return
+
+    const { collateralPercent: cp, liquidationPrice: lp } = await getCollatRatioAndLiqPrice(
+      collatAmountToUpdate.plus(vault.collateralAmount),
+      shortAmountToUpdate.plus(vault.shortAmount),
+      lpNftIdToManage, // 0 means to simulate the removal of lp nft
+    )
+
+    setNewLpNftLiqPrice(lp)
+    setLpNftCollatPercent(cp)
+  }
   const updateCollateral = async (collatAmount: string) => {
     setCollateral(collatAmount)
     if (!vault) return
