@@ -1,17 +1,18 @@
 import { Contract } from 'web3-eth-contract'
-import { Token, CurrencyAmount } from '@uniswap/sdk-core'
-import { Pool, Route, Trade } from '@uniswap/v3-sdk'
+import { Token, CurrencyAmount, Fraction, Percent, Ether } from '@uniswap/sdk-core'
+import { nearestUsableTick, Pool, Route, TickMath, Trade } from '@uniswap/v3-sdk'
 import { useUpdateAtom, useResetAtom } from 'jotai/utils'
 import { useEffect, useCallback } from 'react'
 import { useAtomValue } from 'jotai'
 import BigNumber from 'bignumber.js'
 import { ethers } from 'ethers'
+import { AlphaRouter, ChainId, QUOTER_V2_ADDRESS, setGlobalLogger, SwapToRatioStatus, UniswapMulticallProvider, V3QuoteProvider } from '@uniswap/smart-order-router'
 
 import routerABI from '../../abis/swapRouter.json'
 import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
 import { addressAtom, networkIdAtom, web3Atom } from '../wallet/atoms'
 import useUniswapTicks from '@hooks/useUniswapTicks'
-import { DEFAULT_SLIPPAGE, OSQUEETH_DECIMALS, UNI_POOL_FEES } from '@constants/index'
+import { DEFAULT_SLIPPAGE, OSQUEETH_DECIMALS, UNI_POOL_FEES, WETH_DECIMALS } from '@constants/index'
 import { fromTokenAmount, parseSlippageInput } from '@utils/calculations'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { useHandleTransaction } from '../wallet/hooks'
@@ -25,6 +26,10 @@ import {
 } from './atoms'
 import { transactionHashAtom } from '../trade/atoms'
 import { swapRouterContractAtom, squeethPoolContractAtom } from '../contracts/atoms'
+import { Position } from '@uniswap/v3-sdk'
+import { getPoolState } from './utils'
+import { Networks } from '../../types'
+import { V3PoolProvider } from '@utils/v3-ropsten-pool-provider'
 
 const getImmutables = async (squeethContract: Contract) => {
   const [token0, token1, fee, tickSpacing, maxLiquidityPerTick] = await Promise.all([
@@ -38,25 +43,7 @@ const getImmutables = async (squeethContract: Contract) => {
   return { token0, token1, fee, tickSpacing, maxLiquidityPerTick }
 }
 
-async function getPoolState(squeethContract: Contract) {
-  const [slot, liquidity] = await Promise.all([
-    squeethContract?.methods.slot0().call(),
-    squeethContract?.methods.liquidity().call(),
-  ])
 
-  const PoolState = {
-    liquidity,
-    sqrtPriceX96: slot[0],
-    tick: slot[1],
-    observationIndex: slot[2],
-    observationCardinality: slot[3],
-    observationCardinalityNext: slot[4],
-    feeProtocol: slot[5],
-    unlocked: slot[6],
-  }
-
-  return PoolState
-}
 
 export const useUpdateSqueethPoolData = () => {
   const isWethToken0 = useAtomValue(isWethToken0Atom)
@@ -75,14 +62,14 @@ export const useUpdateSqueethPoolData = () => {
         networkId,
         token0,
         isWethToken0 ? 18 : OSQUEETH_DECIMALS,
-        isWethToken0 ? 'WETH' : 'SQE',
+        isWethToken0 ? 'WETH' : 'oSQTH',
         isWethToken0 ? 'Wrapped Ether' : 'oSqueeth',
       )
       const TokenB = new Token(
         networkId,
         token1,
         isWethToken0 ? OSQUEETH_DECIMALS : 18,
-        isWethToken0 ? 'SQE' : 'WETH',
+        isWethToken0 ? 'oSQTH' : 'WETH',
         isWethToken0 ? 'oSqueeth' : 'Wrapped Ether',
       )
 
@@ -540,4 +527,97 @@ export const useGetSellQuoteForETH = () => {
   )
 
   return getSellQuoteForETH
+}
+
+export const useBuyAndLP = () => {
+  const networkId = useAtomValue(networkIdAtom)
+  const address = useAtomValue(addressAtom)
+  const web3 = useAtomValue(web3Atom)
+  const pool = useAtomValue(poolAtom)
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
+  const contract = useAtomValue(squeethPoolContractAtom)
+
+  // console.log(pool)
+  const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
+  let router: AlphaRouter
+  const chainId = networkId as any as ChainId
+  if (networkId === Networks.ROPSTEN) { // Use customised router for ropsten
+    const multicall2Provider = new UniswapMulticallProvider(chainId, provider, 375_000);
+    const v3QuoteProvider = new V3QuoteProvider(chainId,
+      provider,
+      multicall2Provider,
+      {
+        retries: 2,
+        minTimeout: 100,
+        maxTimeout: 1000,
+      },
+      {
+        multicallChunk: 110,
+        gasLimitPerCall: 1_200_000,
+        quoteMinSuccessRate: 0.1,
+      },
+      {
+        gasLimitOverride: 3_000_000,
+        multicallChunk: 45,
+      },
+      {
+        gasLimitOverride: 3_000_000,
+        multicallChunk: 45,
+      },
+      {
+        baseBlockOffset: -10,
+        rollback: {
+          enabled: true,
+          attemptsBeforeRollback: 1,
+          rollbackBlockOffset: -10,
+        },
+      },
+      QUOTER_V2_ADDRESS[3]
+    )
+    router = new AlphaRouter({ chainId, provider, v3PoolProvider: new V3PoolProvider(web3!), v3QuoteProvider })
+  } else {
+    router = new AlphaRouter({ chainId, provider })
+  }
+
+  const getBuyAndLP = async (position: Position, token0Bal: BigNumber, token1Bal: BigNumber) => {
+    const ethToken = Ether.onChain(networkId)
+    const token0Balance = CurrencyAmount.fromRawAmount(isWethToken0 ? ethToken : pool?.token0!, fromTokenAmount(token0Bal, WETH_DECIMALS).toString())
+    const token1Balance = CurrencyAmount.fromRawAmount(!isWethToken0 ? ethToken : pool?.token1!, fromTokenAmount(token1Bal, WETH_DECIMALS).toString())
+
+    console.log(token0Bal.toFixed(18), token1Bal.toFixed(18), isWethToken0)
+    const routeToRatioResponse = await router.routeToRatio(
+      token0Balance,
+      token1Balance,
+      position,
+      {
+        ratioErrorTolerance: new Fraction(1, 1000),
+        maxIterations: 6,
+      },
+      {
+        swapOptions: {
+          recipient: address!,
+          slippageTolerance: parseSlippageInput(DEFAULT_SLIPPAGE.toString()),
+          deadline: +new Date() + 10 * 60 * 1000, // TODO: use current blockchain timestamp,
+        },
+        addLiquidityOptions: {
+          recipient: address!
+        },
+      },
+    )
+    console.log(routeToRatioResponse.status)
+    if (routeToRatioResponse.status === SwapToRatioStatus.SUCCESS) {
+      console.log(
+        routeToRatioResponse.status,
+        routeToRatioResponse.result.trade.inputAmount.toSignificant(18),
+        routeToRatioResponse.result.trade.outputAmount.toSignificant(18),
+      )
+    }
+    if (routeToRatioResponse.status === SwapToRatioStatus.NO_ROUTE_FOUND) {
+      console.log(routeToRatioResponse.error)
+    }
+
+    return routeToRatioResponse
+  }
+
+  return getBuyAndLP
 }

@@ -25,6 +25,16 @@ const getTheme = (mode: Mode) => {
         'Arial',
         '"Segoe UI Emoji"',
       ].join(','),
+      subtitle2: {
+        fontSize: '15px',
+        fontWeight: 700,
+        lineHeight: '140%',
+        color: 'rgba(255, 255, 255, 0.3)',
+      },
+      body3: {
+        fontSize: '15px',
+        lineHeight: '1.5rem',
+      },
     },
     breakpoints: {
       values: {
@@ -107,6 +117,7 @@ const lightPalette: ThemeOptions = {
       stone: '#DCDAE9',
       lightStone: '#DCDAE94D',
       tooltip: '#77757E80',
+      border: '#FFFFFF03',
     },
   },
 }
@@ -137,6 +148,7 @@ const darkPalete: ThemeOptions = {
       lightStone: 'rgba(255, 255, 255, 0.08)',
       tooltip: 'rgba(255, 255, 255)',
       default: '#181B1C',
+      border: '#FFFFFF10',
     },
   },
 }

@@ -6,10 +6,11 @@ import abi from '../../abis/erc20.json'
 import { toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from 'src/state/wallet/hooks'
 import { addressAtom, web3Atom } from 'src/state/wallet/atoms'
+import useAppMemo from '@hooks/useAppMemo'
 
 const MAX_UINT = '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
 
-export function useUserAllowance(token: string, spenderAddess: string) {
+export function useUserAllowance(token: string, spenderAddess: string, spendAmount?: BigNumber) {
   const handleTransaction = useHandleTransaction()
   const web3 = useAtomValue(web3Atom)
   const address = useAtomValue(addressAtom)
@@ -32,7 +33,7 @@ export function useUserAllowance(token: string, spenderAddess: string) {
         setAllowance(toTokenAmount(new BigNumber(newAllowance.toString()), 18))
       })
     },
-    [web3, token, address, spenderAddess],
+    [web3, address, token, spenderAddess, handleTransaction],
   )
 
   useEffect(() => {
@@ -50,5 +51,11 @@ export function useUserAllowance(token: string, spenderAddess: string) {
       })
   }, [web3, spenderAddess, token, address])
 
-  return { allowance, isLoadingAllowance, approve }
+  const isApprovalNeeded = useAppMemo(() => {
+    if (!spendAmount || allowance.gte(spendAmount)) return false
+
+    return true
+  }, [allowance, spendAmount])
+
+  return { allowance, isLoadingAllowance, approve, isApprovalNeeded }
 }

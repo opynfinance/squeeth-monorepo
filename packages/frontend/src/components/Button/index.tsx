@@ -3,13 +3,19 @@ import { withStyles } from '@material-ui/core/styles'
 
 export const PrimaryButton = withStyles((theme) => ({
   root: {
-    color: '#000',
+    color: '#2B2D2E',
     backgroundColor: theme.palette.primary.main,
     '&:hover': {
       backgroundColor: theme.palette.primary.dark,
     },
+    '&:disabled': {
+      backgroundColor: theme.palette.background.stone,
+    },
     minHeight: '2rem',
     minWidth: '300px',
+    fontSize: '14px',
+    fontWeight: 700,
+    textTransform: 'none',
   },
 }))(Button)
 
@@ -22,6 +28,9 @@ export const ErrorButton = withStyles((theme) => ({
     },
     minHeight: '2rem',
     minWidth: '300px',
+    fontSize: '14px',
+    fontWeight: 700,
+    textTransform: 'none',
   },
 }))(Button)
 
@@ -68,6 +77,32 @@ export const GreyButton = withStyles((theme) => ({
     backgroundColor: theme.palette.action.hover,
     '&:hover': {
       backgroundColor: theme.palette.action.selected,
+    },
+  },
+}))(Button)
+
+export const PlainButton = withStyles((theme) => ({
+  root: {
+    padding: 0,
+    color: theme.palette.text.primary,
+    minWidth: '0px',
+    backgroundColor: 'transparent',
+    '&:hover': {
+      backgroundColor: 'transparent',
+    },
+  },
+}))(Button)
+
+export const OutlinedPlainButton = withStyles((theme) => ({
+  root: {
+    padding: 0,
+    color: theme.palette.text.primary,
+    border: `1px solid ${theme.palette.divider}`,
+    minHeight: '2rem',
+    minWidth: '0px',
+    backgroundColor: 'transparent',
+    '&:hover': {
+      backgroundColor: 'transparent',
     },
   },
 }))(Button)

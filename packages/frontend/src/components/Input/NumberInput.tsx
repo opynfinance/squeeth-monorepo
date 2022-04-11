@@ -151,6 +151,7 @@ const NumberInput: React.FC<NumberInputType> = ({
             onChange={(event) => onValueChange(event.target.value)}
             placeholder={placeholder}
             type="number"
+            min="0"
           />
           <div className={classes.spinner}>
             <div className={classes.plusButton} onClick={() => increment(step || 1)}>
