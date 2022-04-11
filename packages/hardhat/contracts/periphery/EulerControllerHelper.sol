@@ -64,7 +64,7 @@ contract EulerControllerHelper is IDeferredLiquidityCheck {
 
     function onDeferredLiquidityCheck(bytes memory encodedData) external override {
         // sanity checks
-        // require(msg.sender == exec);
+        require(msg.sender == euler);
 
         console.log("msg.sender", msg.sender);
 
