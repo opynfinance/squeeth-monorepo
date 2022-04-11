@@ -439,8 +439,11 @@ const Component: React.FC = () => {
   )
 
   useEffect(() => {
-    if (vault) getMaxToMint()
-  }, [vault, vault?.collateralAmount])
+    if (vault) {
+      getMaxToMint()
+      updateNftCollateral(BIG_ZERO, BIG_ZERO, currentLpNftId)
+    }
+  }, [vault, vault?.collateralAmount, vault?.shortAmount])
 
   const addCollat = async (collatAmount: BigNumber) => {
     if (!vault) return
