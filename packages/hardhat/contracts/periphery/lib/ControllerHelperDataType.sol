@@ -24,7 +24,8 @@ library ControllerHelperDataType {
         SWAP_EXACTOUT_ETH_WPOWERPERP_BURN,
         FLASHLOAN_W_MINT_DEPOSIT_NFT,
         FLASHLOAN_CLOSE_VAULT_LP_NFT,
-        FLASHLOAN_REBALANCE_VAULT_NFT
+        FLASHLOAN_REBALANCE_VAULT_NFT,
+        GENERAL_SWAP
     }
 
     /// @dev enum to differentiate between rebalanceVaultNft() actions
@@ -200,7 +201,7 @@ library ControllerHelperDataType {
     }
 
     /// @dev struct for swapping from tokenIn to tokenOut
-    struct swap {
+    struct GeneralSwap {
         address tokenIn;
         address tokenOut;
         uint256 amountIn;

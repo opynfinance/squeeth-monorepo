@@ -14,6 +14,7 @@ import {IController} from "../interfaces/IController.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // contract
 import {UniswapControllerHelper} from "./UniswapControllerHelper.sol";
@@ -664,6 +665,23 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                         vaultId,
                         tokenId
                     );
+                } else if (
+                    data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.generalSwap
+                ) {
+                    ControllerHelperDataType.GeneralSwap memory swapParams = abi.decode(
+                        data[i].data,
+                        (ControllerHelperDataType.GeneralSwap)
+                    );
+
+                    _exactInFlashSwap(
+                        swapParams.tokenIn,
+                        swapParams.tokenOut,
+                        poolFee,
+                        swapParams.amountIn,
+                        swapParams.limitPriceEthPerPowerPerp.mul(swapParams.amountIn).div(1e18),
+                        uint8(ControllerHelperDataType.CALLBACK_SOURCE.GENERAL_SWAP),
+                        ""
+                    );
                 }
             }
 
@@ -685,7 +703,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
      */
     function _swapCallback(
         address _caller,
-        address, /*_tokenIn*/
+        address _tokenIn,
         address, /*_tokenOut*/
         uint24, /*_fee*/
         uint256 _amountToPay,
@@ -786,6 +804,12 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 ControllerHelperDiamondStorage.getAddressAtSlot(3),
                 _amountToPay
             );
+        } else if (
+            ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
+            ControllerHelperDataType.CALLBACK_SOURCE.GENERAL_SWAP
+        ) {
+            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: address(this).balance}();
+            IERC20(_tokenIn).transfer(ControllerHelperDiamondStorage.getAddressAtSlot(3), _amountToPay);
         }
     }
 
