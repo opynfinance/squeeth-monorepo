@@ -426,6 +426,7 @@ const Component: React.FC = () => {
   const updateUniLPTokenInput = useCallback(
     async (input: number) => {
       setUniTokenToDeposit(input)
+      updateNftCollateral(BIG_ZERO, BIG_ZERO, input)
       if (!input) return
 
       const approvedAddress: string = await getApproved(input)
