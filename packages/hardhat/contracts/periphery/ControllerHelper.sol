@@ -407,6 +407,9 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         uint256 _collateralToFlashloan,
         ControllerHelperDataType.RebalanceVaultNftParams[] calldata _params
     ) external payable {
+        // check ownership
+        require(IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_vaultId) == msg.sender);
+
         _flashLoan(
             ControllerHelperDiamondStorage.getAddressAtSlot(5),
             _collateralToFlashloan,
@@ -546,9 +549,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 _calldata,
                 (uint256, ControllerHelperDataType.RebalanceVaultNftParams[])
             );
-
-            // check ownership
-            require(IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(vaultId) == _initiator);
 
             // deposit collateral into vault and withdraw LP NFT
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).deposit{value: _amount}(vaultId);
