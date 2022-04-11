@@ -278,7 +278,7 @@ describe('Trade on trade page', () => {
 
       context('input checks', () => {
         it('zero input amount when partial close is selected', () => {
-          cy.get('#close-short-type-select .MuiSelect-select').click({ force: true })
+          cy.get('#close-short-type-select .MuiSelect-select').wait(10000).click({ force: true })
           cy.get('#close-short-partial-close').click({ force: true })
           cy.get('#close-short-type-select').should('contain.text', 'Partial Close')
           cy.get('#close-short-osqth-input').clear().type('0', { delay: 200 }).should('have.value', '0')
@@ -440,9 +440,9 @@ describe('Trade on trade page', () => {
         })
 
         it('new position card value should be the same as prev position card value', () => {
-          // wait for 15 sec to update positon
+          // wait for 30 sec to update positon
           cy.get('#position-card-before-trade-balance')
-            .wait(15000)
+            .wait(30000)
             .then((v) => Number(v.text()).toFixed(6))
             .should('eq', (Number(posCardBeforeShortTradeBal) - 0.01).toFixed(6))
         })
