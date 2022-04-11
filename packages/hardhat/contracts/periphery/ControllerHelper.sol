@@ -18,7 +18,8 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // contract
 import {UniswapControllerHelper} from "./UniswapControllerHelper.sol";
-import {AaveControllerHelper} from "./AaveControllerHelper.sol";
+// import {AaveControllerHelper} from "./AaveControllerHelper.sol";
+import {EulerControllerHelper} from "./EulerControllerHelper.sol";
 
 // lib
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
@@ -27,7 +28,7 @@ import {ControllerHelperDataType} from "./lib/ControllerHelperDataType.sol";
 import {ControllerHelperUtil} from "./lib/ControllerHelperUtil.sol";
 import {ControllerHelperDiamondStorage} from "./lib/ControllerHelperDiamondStorage.sol";
 
-contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC721Receiver {
+contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IERC721Receiver {
     using SafeMath for uint256;
     using Address for address payable;
 
@@ -38,8 +39,8 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         address _controller,
         address _nonfungiblePositionManager,
         address _uniswapFactory,
-        address _lendingPoolAddressProvider
-    ) UniswapControllerHelper(_uniswapFactory) AaveControllerHelper(_lendingPoolAddressProvider) {
+        address _exec
+    ) UniswapControllerHelper(_uniswapFactory) EulerControllerHelper(_exec) {
         ControllerHelperDiamondStorage.setStorageVariables(
             _controller,
             IController(_controller).oracle(),
