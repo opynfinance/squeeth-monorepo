@@ -444,7 +444,6 @@ const Component: React.FC = () => {
   useEffect(() => {
     if (vault) {
       getMaxToMint()
-      updateNftCollateral(BIG_ZERO, BIG_ZERO, currentLpNftId)
     }
   }, [vault, vault?.collateralAmount, vault?.shortAmount])
 
@@ -454,7 +453,8 @@ const Component: React.FC = () => {
     setTxLoading(true)
     try {
       await depositCollateral(vault.id, collatAmount)
-      updateVault()
+      await updateVault()
+      updateNftCollateral(BIG_ZERO, BIG_ZERO, currentLpNftId)
     } catch (e) {
       console.log(e)
     }
@@ -467,7 +467,8 @@ const Component: React.FC = () => {
     setTxLoading(true)
     try {
       await withdrawCollateral(vault.id, collatAmount.abs())
-      updateVault()
+      await updateVault()
+      updateNftCollateral(BIG_ZERO, BIG_ZERO, currentLpNftId)
     } catch (e) {
       console.log(e)
     }
@@ -480,7 +481,8 @@ const Component: React.FC = () => {
     setTxLoading(true)
     try {
       await openDepositAndMint(vault.id, sAmount, new BigNumber(0))
-      updateVault()
+      await updateVault()
+      updateNftCollateral(BIG_ZERO, BIG_ZERO, currentLpNftId)
     } catch (e) {
       console.log(e)
     }
@@ -493,7 +495,8 @@ const Component: React.FC = () => {
     setTxLoading(true)
     try {
       await burnAndRedeem(vault.id, sAmount.abs(), new BigNumber(0))
-      updateVault()
+      await updateVault()
+      updateNftCollateral(BIG_ZERO, BIG_ZERO, currentLpNftId)
     } catch (e) {
       console.log(e)
     }
@@ -507,7 +510,7 @@ const Component: React.FC = () => {
     try {
       await depositUniPositionToken(vault.id, tokenId)
       setAction(VaultAction.WITHDRAW_UNI_POSITION)
-      updateVault()
+      await updateVault()
     } catch (e) {
       console.log(e)
     }
@@ -521,7 +524,7 @@ const Component: React.FC = () => {
     setAction(VaultAction.WITHDRAW_UNI_POSITION)
     try {
       await withdrawUniPositionToken(vault.id)
-      updateVault()
+      await updateVault()
       // reset to default action, shld check if this nft got approved with history
       // cuz now there is no nft selected
       setAction(VaultAction.ADD_COLLATERAL)
@@ -1036,7 +1039,7 @@ const Component: React.FC = () => {
                       />
                     )}
                   </div>
-                  {uniTokenToDeposit ? (
+                  {currentLpNftId || isLPNFTAction ? (
                     <>
                       <div className={classes.collatContainer}>
                         <TextField
