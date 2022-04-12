@@ -330,7 +330,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             isWethToken0
         );
 
-
         ControllerHelperUtil.checkClosedLp(
             msg.sender,
             ControllerHelperDiamondStorage.getAddressAtSlot(0),
@@ -369,7 +368,9 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             );
         }
 
-        uint256 squeethBalance = IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).balanceOf(address(this));
+        uint256 squeethBalance = IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).balanceOf(
+            address(this)
+        );
         uint256 squeethNeeded = _params.wPowerPerpAmountDesired;
         uint256 ethToLp = _params.ethAmountToLp;
         uint256 ethNeeded = _params.wethAmountDesired;

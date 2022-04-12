@@ -1058,15 +1058,15 @@ describe("Controller helper integration test", function () {
       const slot0 = await wSqueethPool.slot0()
       const currentTick = slot0[1]
 
-      const lowerTick = 60*((currentTick - currentTick%60)/60 + 1)
-
-      const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
-      const positionBefore = await (positionManager as INonfungiblePositionManager).positions(tokenId);
-
       const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
+      console.log(isWethToken0)
       const amount0Min = BigNumber.from(0);
       const amount1Min = BigNumber.from(0);
 
+      const newTick = isWethToken0 ? 60*((currentTick - currentTick%60)/60 - 1): 60*((currentTick - currentTick%60)/60 + 1)
+
+      const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
+      const positionBefore = await (positionManager as INonfungiblePositionManager).positions(tokenId);
 
       await (positionManager as INonfungiblePositionManager).connect(depositor).approve(positionManager.address, tokenId); 
       const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
@@ -1092,8 +1092,8 @@ describe("Controller helper integration test", function () {
         limitPriceEthPerPowerPerp,
         amount0Min: BigNumber.from(0),
         amount1Min: BigNumber.from(0),
-        lowerTick: lowerTick,
-        upperTick: 887220
+        lowerTick: isWethToken0 ? -887220 : newTick,
+        upperTick: isWethToken0 ? newTick : 887220,
         //rebalanceToken0: false,
         //rebalanceToken1: false
       }
@@ -1116,6 +1116,9 @@ describe("Controller helper integration test", function () {
 
       const wPowerPerpAmountInNewLp = (isWethToken0) ? amount1New : amount0New;
       const wethAmountInNewLp = (isWethToken0) ? amount0New : amount1New;
+
+      console.log(amount0New.toString())
+
 
       expect(ownerOfUniNFT === depositor.address).to.be.true;
       expect(wPowerPerpAmountInNewLp.sub(squeethDesired).lte(10)).to.be.true
