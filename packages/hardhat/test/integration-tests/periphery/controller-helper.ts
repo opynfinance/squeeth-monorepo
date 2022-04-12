@@ -1086,7 +1086,7 @@ describe("Controller helper integration test", function () {
         ethAmountToLp: BigNumber.from(0),
         liquidity: oldPosition.liquidity,
         wPowerPerpAmountDesired: squeethDesired,
-        wethAmountDesired: ethers.utils.parseUnits('1'),
+        wethAmountDesired: ethers.utils.parseUnits('0'),
         amount0DesiredMin: BigNumber.from(0),
         amount1DesiredMin: BigNumber.from(0),
         limitPriceEthPerPowerPerp,
