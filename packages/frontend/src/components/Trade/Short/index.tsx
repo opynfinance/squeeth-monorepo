@@ -12,7 +12,7 @@ import {
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
-import React, { memo, useCallback, useEffect, useState } from 'react'
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react'
 
 import { CloseType, Tooltips, Links } from '@constants/enums'
 import useShortHelper from '@hooks/contracts/useShortHelper'
@@ -656,7 +656,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
   const slippageAmount = useAtomValue(slippageAmountAtom)
   const tradeType = useAtomValue(tradeTypeAtom)
-  const amount = new BigNumber(sqthTradeAmount)
+  const amount = useMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const { data } = useWalletBalance()
   const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
 
@@ -827,6 +827,12 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   useAppEffect(() => {
     getBuyQuote(amount, slippageAmount).then(setSellCloseQuote)
   }, [amount, slippageAmount, getBuyQuote, setSellCloseQuote])
+
+  useEffect(() => {
+    if (!amount.isZero() && sellCloseQuote.amountIn.isZero()) {
+      getBuyQuote(amount, slippageAmount).then(setSellCloseQuote)
+    }
+  }, [sellCloseQuote.amountIn.isZero(), amount.toString(), slippageAmount.toString(), getBuyQuote, setSellCloseQuote])
 
   useAppEffect(() => {
     if (finalShortAmount.isGreaterThan(0)) {
