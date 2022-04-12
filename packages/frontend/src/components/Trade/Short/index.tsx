@@ -842,7 +842,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   }, [collatPercent, setCollatRatio])
 
   useAppEffect(() => {
-    getBuyQuote(amount, slippageAmount).then(setSellCloseQuote)
+    getBuyQuote(amount, slippageAmount, 'close short setCloseQuote').then(setSellCloseQuote)
   }, [amount, slippageAmount, getBuyQuote, setSellCloseQuote])
 
   useAppEffect(() => {
