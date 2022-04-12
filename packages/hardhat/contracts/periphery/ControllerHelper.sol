@@ -341,7 +341,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
 
         if (_params.wPowerPerpAmountDesired > wPowerPerpAmountInLp) {
             // if the new position target a higher wPowerPerp amount, swap WETH to reach the desired amount (WETH new position is lower than current WETH in LP)
-            console.log(wPowerPerpAmountInLp, "wPowerPerpAmountInLp");
             _exactOutFlashSwap(
                 ControllerHelperDiamondStorage.getAddressAtSlot(5),
                 ControllerHelperDiamondStorage.getAddressAtSlot(4),
@@ -367,17 +366,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 ""
             );
         }
-
-        uint256 squeethBalance = IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).balanceOf(
-            address(this)
-        );
-        uint256 squeethNeeded = _params.wPowerPerpAmountDesired;
-        uint256 ethToLp = _params.ethAmountToLp;
-        uint256 ethNeeded = _params.wethAmountDesired;
-        console.log(squeethBalance, "squeeth balance");
-        console.log(squeethNeeded, "squeeth desired for lp");
-        console.log(ethToLp, "msg value for lp mint");
-        console.log(ethNeeded, "eth desired for lp");
 
         // mint new position
         ControllerHelperUtil.lpWPowerPerpPool(
@@ -556,8 +544,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             // deposit collateral into vault and withdraw LP NFT
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).deposit{value: _amount}(vaultId);
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).withdrawUniPositionToken(vaultId);
-
-            console.log("vaultId", vaultId);
 
             for (uint256 i; i < data.length; i++) {
                 if (
