@@ -120,8 +120,10 @@ const Strategies: React.FC = () => {
 
   useEffect(() => {
     setStrategyData()
-  }, [collatRatio])
+  }, [collatRatio, setStrategyData])
+
   useEffect(() => {
+    console.log('Calculating initial values')
     calculateCurrentValue()
   }, [calculateCurrentValue])
 
