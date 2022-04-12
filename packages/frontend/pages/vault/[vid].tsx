@@ -247,7 +247,11 @@ enum VaultError {
   INSUFFICIENT_OSQTH_BALANCE = 'Insufficient oSQTH Balance',
 }
 
-const SelectLP: React.FC<{ lpToken: number; setLpToken: (t: number) => void }> = ({ lpToken, setLpToken }) => {
+const SelectLP: React.FC<{ lpToken: number; setLpToken: (t: number) => void; disabled?: boolean }> = ({
+  lpToken,
+  setLpToken,
+  disabled,
+}) => {
   const { squeethPool } = useAtomValue(addressesAtom)
   const address = useAtomValue(addressAtom)
 
@@ -263,6 +267,7 @@ const SelectLP: React.FC<{ lpToken: number; setLpToken: (t: number) => void }> =
     <FormControl variant="outlined" style={{ width: '300px' }} size="small">
       <InputLabel id="demo-simple-select-outlined-label">LP Id</InputLabel>
       <Select
+        disabled={disabled}
         labelId="demo-simple-select-label"
         id="lp-id-select"
         value={lpToken}
@@ -1036,7 +1041,11 @@ const Component: React.FC = () => {
                   </div>
                   <div style={{ margin: 'auto', width: '300px', marginTop: '24px' }}>
                     {!isLPDeposited ? (
-                      <SelectLP lpToken={uniTokenToDeposit} setLpToken={updateUniLPTokenInput} />
+                      <SelectLP
+                        disabled={!supportedNetwork}
+                        lpToken={uniTokenToDeposit}
+                        setLpToken={updateUniLPTokenInput}
+                      />
                     ) : (
                       <TextField
                         size="small"
