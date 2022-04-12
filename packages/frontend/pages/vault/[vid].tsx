@@ -839,7 +839,7 @@ const Component: React.FC = () => {
                         onClick={() =>
                           shortAmountBN.isPositive()
                             ? updateShort(maxToMint.toString())
-                            : vault?.shortAmount.negated().isGreaterThan(oSqueethBal)
+                            : vault?.shortAmount.isGreaterThan(oSqueethBal)
                             ? updateShort(oSqueethBal.negated().toString())
                             : updateShort(vault?.shortAmount ? vault?.shortAmount.negated().toString() : '0')
                         }
