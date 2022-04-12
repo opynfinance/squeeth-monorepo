@@ -124,8 +124,8 @@ describe('Trade on trade page', () => {
       it('input box oSQTH post trade balance should be the same as before-trade + input when input changes', () => {
         cy.get('#open-long-osqth-before-trade-balance').then((bal) => {
           cy.get('#open-long-osqth-post-trade-balance')
-            .then((v) => Number(v.text()).toFixed(4))
-            .should('eq', openLongoSQTHInput.plus(Number(bal.text())).toFixed(4))
+            .then((v) => Number(parseFloat(openLongoSQTHInput.plus(Number(bal.text())).toFixed(4))))
+            .should('be.approximately', Number(posCardBeforeLongTradeBal.plus(openLongoSQTHInput)), 0.0002)
         })
       })
 
@@ -269,14 +269,14 @@ describe('Trade on trade page', () => {
         // wait for 20 sec to update positon
         cy.get('#position-card-before-trade-balance')
           .wait(30000)
-          .then((v) => Number(v.text()).toFixed(4))
-          .should('eq', posCardBeforeLongTradeBal.plus(openLongoSQTHInput).toFixed(4))
+          .then((v) => Number(parseFloat(v.text()).toFixed(4)))
+          .should('be.approximately', Number(posCardBeforeLongTradeBal.plus(openLongoSQTHInput)), 0.0002)
       })
 
       it('input box before trade update to new osqth balance', () => {
         cy.get('#open-long-osqth-before-trade-balance')
-          .then((v) => Number(v.text()).toFixed(4))
-          .should('eq', openLongOsqthBeforeTradeBal.plus(openLongoSQTHInput).toFixed(4))
+          .then((v) => Number(parseFloat(v.text()).toFixed(4)))
+          .should('be.approximately', Number(openLongOsqthBeforeTradeBal.plus(openLongoSQTHInput)), 0.0002)
       })
 
       it('position card update to the same value as input box before trade balance and not equal 0', () => {
