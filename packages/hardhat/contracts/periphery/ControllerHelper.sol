@@ -367,6 +367,9 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             );
         }
 
+        uint256 squeethBalance = IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(6)).balanceOf(address(this));
+        console.log(squeethBalance, _params.wPowerPerpAmountDesired, _params.ethAmountToLp, _params.wethAmountDesired,  "squeeth balance vs needed vs ethAmount vs weth needed");
+
         // mint new position
         ControllerHelperUtil.lpWPowerPerpPool(
             ControllerHelperDiamondStorage.getAddressAtSlot(0),
