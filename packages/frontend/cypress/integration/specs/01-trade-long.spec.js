@@ -471,16 +471,16 @@ describe('Trade on trade page', () => {
       it('position card post trade balance should become before-trade - input when input changes', () => {
         cy.get('#position-card-before-trade-balance').then((val) => {
           cy.get('#position-card-post-trade-balance')
-            .then((v) => Number(v.text()).toFixed(6))
-            .should('eq', new BigNumber(val.text()).minus(closeLongoSQTHInput).toFixed(6))
+            .then((v) => Number(parseFloat(v.text()).toFixed(6)))
+            .should('be.approximately', Number(new BigNumber(val.text()).minus(closeLongoSQTHInput)), 0.0002)
         })
       })
 
       it('input box before trade balance should become before-trade - input when input changes', () => {
         cy.get('#close-long-osqth-before-trade-balance').then((val) => {
           cy.get('#close-long-osqth-post-trade-balance')
-            .then((v) => Number(v.text()).toFixed(6))
-            .should('eq', new BigNumber(val.text()).minus(closeLongoSQTHInput).toFixed(6))
+            .then((v) => Number(parseFloat(v.text()).toFixed(6)))
+            .should('be.approximately', Number(new BigNumber(val.text()).minus(closeLongoSQTHInput)), 0.0002)
         })
       })
 
