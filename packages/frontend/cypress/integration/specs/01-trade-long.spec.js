@@ -124,8 +124,8 @@ describe('Trade on trade page', () => {
       it('input box oSQTH post trade balance should be the same as before-trade + input when input changes', () => {
         cy.get('#open-long-osqth-before-trade-balance').then((bal) => {
           cy.get('#open-long-osqth-post-trade-balance')
-            .then((v) => Number(parseFloat(openLongoSQTHInput.plus(Number(bal.text())).toFixed(4))))
-            .should('be.approximately', Number(posCardBeforeLongTradeBal.plus(openLongoSQTHInput)), 0.0002)
+            .then((v) => Number(parseFloat(v.text()).toFixed(4)))
+            .should('be.approximately', Number(openLongoSQTHInput.plus(Number(bal.text()))), 0.0002)
         })
       })
 
@@ -133,7 +133,7 @@ describe('Trade on trade page', () => {
       it('position card oSQTH post trade balance should be the same as before-trade + input when input changes', () => {
         cy.get('#position-card-before-trade-balance').then((bal) => {
           cy.get('#position-card-post-trade-balance')
-            .then((v) => Number(v.text()).toFixed(4))
+            .then((v) => Number(parseFloat(v.text()).toFixed(4)))
             .should('eq', openLongoSQTHInput.plus(Number(bal.text())).toFixed(4))
         })
       })
@@ -360,16 +360,16 @@ describe('Trade on trade page', () => {
       it('position card post trade balance should become before-trade - input when input changes', () => {
         cy.get('#position-card-before-trade-balance').then((val) => {
           cy.get('#position-card-post-trade-balance')
-            .then((v) => Number(v.text()).toFixed(6))
-            .should('eq', (Number(val.text()) - 0.1).toFixed(6))
+            .then((v) => Number(parseFloat(v.text()).toFixed(6)))
+            .should('be.approximately', Number(val.text()) - 0.1, 0.000002)
         })
       })
 
       it('input box before trade balance should become before-trade - input when input changes', () => {
         cy.get('#close-long-osqth-before-trade-balance').then((val) => {
           cy.get('#close-long-osqth-post-trade-balance')
-            .then((v) => Number(v.text()).toFixed(6))
-            .should('eq', (Number(val.text()) - 0.1).toFixed(6))
+            .then((v) => Number(parseFloat(v.text()).toFixed(6)))
+            .should('be.approximately', Number(val.text()) - 0.1, 0.000002)
         })
       })
 
@@ -408,15 +408,15 @@ describe('Trade on trade page', () => {
         // wait for 30 sec to update positon
         cy.get('#position-card-before-trade-balance')
           .wait(30000)
-          .then((v) => Number(v.text()).toFixed(6))
-          .should('eq', (Number(posCardBeforeLongTradeBal) - 0.1).toFixed(6))
+          .then((v) => Number(parseFloat(v.text()).toFixed(6)))
+          .should('be.approximately', Number(posCardBeforeLongTradeBal) - 0.1, 0.000002)
       })
 
       // issue #280
       it.skip('new input box before trade value should be the same as the one before trade', () => {
         cy.get('#close-long-osqth-before-trade-balance')
-          .then((v) => Number(v.text()).toFixed(6))
-          .should('eq', (Number(closeLongBeforeTradeBal) - 0.1).toFixed(6))
+          .then((v) => Number(parseFloat(v.text()).toFixed(6)))
+          .should('be.approximately', Number(closeLongBeforeTradeBal) - 0.1, 0.000002)
       })
 
       it('return to close long card successfully', () => {
@@ -518,15 +518,15 @@ describe('Trade on trade page', () => {
         // wait for 30 sec to update positon
         cy.get('#position-card-before-trade-balance')
           .wait(30000)
-          .then((v) => Number(v.text()).toFixed(6))
-          .should('eq', posCardBeforeLongTradeBal.minus(closeLongoSQTHInput).toFixed(6))
+          .then((v) => Number(parseFloat(v.text()).toFixed(6)))
+          .should('be.approximately', Number(posCardBeforeLongTradeBal.minus(closeLongoSQTHInput)), 0.000002)
       })
 
       it.skip('new input box before trade value should be the same as the one before trade', () => {
         // issue #280
         cy.get('#close-long-osqth-before-trade-balance')
-          .then((v) => Number(v.text()).toFixed(6))
-          .should('eq', closeLongBeforeTradeBal.minus(closeLongoSQTHInput).toFixed(6))
+          .then((v) => Number(parseFloat(v.text()).toFixed(6)))
+          .should('be.approximately', Number(closeLongBeforeTradeBal.minus(closeLongoSQTHInput)), 0.000002)
       })
 
       it('return to close long card successfully', () => {
