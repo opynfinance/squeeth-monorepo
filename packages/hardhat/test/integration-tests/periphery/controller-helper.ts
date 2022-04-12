@@ -473,7 +473,7 @@ describe("Controller helper integration test", function () {
       expect(longBalanceAfter.eq(longBalanceBefore)).to.be.true
       console.log(depositorEthBalanceBefore.sub(depositorEthBalanceAfter).toString())
       console.log(ethAmountToSwap.toString())
-      expect(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).eq(vaultBefore.collateralAmount.sub(ethAmountToSwap).add(gasSpent))).to.be.true
+      expect(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).eq(vaultBefore.collateralAmount.sub(ethAmountToSwap).sub(gasSpent))).to.be.true
     })
     it("fully close position, buying some but less than residual collateral", async () => {
 
