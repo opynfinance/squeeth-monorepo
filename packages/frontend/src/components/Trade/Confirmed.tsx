@@ -67,7 +67,7 @@ const Confirmed: React.FC<ConfirmedProps> = ({ confirmationMessage, txnHash, con
   return (
     <div>
       <div>
-        <Typography variant="body1" className={classes.confMsg}>
+        <Typography variant="body1" className={classes.confMsg} id="conf-msg">
           {' '}
           {confirmationMessage}{' '}
         </Typography>

@@ -47,6 +47,7 @@ const Stepper: React.FC = () => {
   return (
     <div className={classes.container}>
       <StepperIconButton
+        id="lp-prev-step-btn"
         className={classes.stepButton}
         disabled={!lpState.canGoBack}
         classes={{ disabled: classes.disabled }}
@@ -55,6 +56,7 @@ const Stepper: React.FC = () => {
         <ArrowBackIcon />
       </StepperIconButton>
       <StepperIconButton
+        id="lp-next-step-btn"
         className={classes.stepButton}
         disabled={!lpState.canGoForward}
         classes={{ disabled: classes.disabled }}
@@ -62,7 +64,9 @@ const Stepper: React.FC = () => {
       >
         <ArrowForwardIcon />
       </StepperIconButton>
-      <Typography className={classes.stepData}>0{lpState.step} / 03</Typography>
+      <Typography className={classes.stepData}>
+        0<span id="current-lp-step">{lpState.step}</span> / 03
+      </Typography>{' '}
     </div>
   )
 }

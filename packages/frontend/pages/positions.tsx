@@ -260,7 +260,11 @@ export function Positions() {
                     Position
                   </Typography>
                   <Typography variant="body1">
-                    {isPositionLoading && squeethAmount.isEqualTo(0) ? 'Loading' : squeethAmount.toFixed(8)}
+                    {isPositionLoading && squeethAmount.isEqualTo(0) ? (
+                      'Loading'
+                    ) : (
+                      <span id="pos-page-long-osqth-bal">{squeethAmount.toFixed(8)}</span>
+                    )}{' '}
                     &nbsp; oSQTH
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
@@ -333,7 +337,9 @@ export function Positions() {
                     <Typography variant="body1">Loading</Typography>
                   ) : (
                     <>
-                      <Typography variant="body1">{squeethAmount.toFixed(8) + ' oSQTH'}</Typography>
+                      <Typography variant="body1" id="pos-page-short-osqth-bal">
+                        {squeethAmount.toFixed(8) + ' oSQTH'}
+                      </Typography>{' '}
                       <Typography variant="body2" color="textSecondary">
                         {isPnLLoading && buyQuote.times(toTokenAmount(index, 18).sqrt()).isEqualTo(0)
                           ? 'Loading'
@@ -414,7 +420,7 @@ export function Positions() {
           <div className={classes.position}>
             <div className={classes.positionTitle}>
               <Typography>LPed Squeeth</Typography>
-              <Typography className={classes.link}>
+              <Typography className={classes.link} id="lp-vault-link">
                 {vaultExists ? <Link href={`vault/${vaultId}`}>Manage</Link> : null}
               </Typography>
             </div>
@@ -425,7 +431,7 @@ export function Positions() {
                     Amount
                   </Typography>
                   <Typography variant="body1">
-                    {lpedSqueeth.toFixed(8)}
+                    <span id="pos-page-lped-osqth-bal">{lpedSqueeth.toFixed(8)}</span>
                     &nbsp; oSQTH
                   </Typography>
                 </div>
@@ -472,7 +478,11 @@ export function Positions() {
                     Amount
                   </Typography>
                   <Typography variant="body1">
-                    {isPositionLoading ? 'Loading' : mintedDebt.toFixed(8)}
+                    {isPositionLoading ? (
+                      'Loading'
+                    ) : (
+                      <span id="pos-page-minted-osqth-bal">{mintedDebt.toFixed(8)}</span>
+                    )}{' '}
                     &nbsp; oSQTH
                   </Typography>
                 </div>
@@ -611,7 +621,7 @@ const CrabPosition: React.FC<CrabPositionType> = ({
   }, [calculateCurrentValue])
 
   return (
-    <div className={classes.position}>
+    <div className={classes.position} id="pos-page-crab">
       <div className={classes.positionTitle}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <Typography>🦀</Typography>
@@ -626,7 +636,7 @@ const CrabPosition: React.FC<CrabPositionType> = ({
             </Typography>
             <Typography variant="body1">$ {depositedUsd.toFixed(2)}</Typography>
             <Typography variant="body2" color="textSecondary">
-              {depositedEth.toFixed(6)}
+              <span id="pos-page-crab-deposited-amount">{depositedEth.toFixed(6)}</span>
               &nbsp; ETH
             </Typography>
           </div>
@@ -648,7 +658,7 @@ const CrabPosition: React.FC<CrabPositionType> = ({
             <Tooltip title={Tooltips.CrabPnL}>
               <InfoIcon fontSize="small" className={classes.infoIcon} />
             </Tooltip>
-            <Typography variant="body1" className={getPnlClassName()}>
+            <Typography variant="body1" className={getPnlClassName()} id="pos-page-crab-pnl-amount">
               {!loading ? '$' + `${minPnlUsd.toFixed(2)}` : 'Loading'}
             </Typography>
             <Typography variant="caption" className={getPnlClassName()}>

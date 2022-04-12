@@ -14,10 +14,11 @@ import {IController} from "../interfaces/IController.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // contract
 import {UniswapControllerHelper} from "./UniswapControllerHelper.sol";
-import {AaveControllerHelper} from "./AaveControllerHelper.sol";
+import {EulerControllerHelper} from "./EulerControllerHelper.sol";
 
 // lib
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
@@ -26,7 +27,7 @@ import {ControllerHelperDataType} from "./lib/ControllerHelperDataType.sol";
 import {ControllerHelperUtil} from "./lib/ControllerHelperUtil.sol";
 import {ControllerHelperDiamondStorage} from "./lib/ControllerHelperDiamondStorage.sol";
 
-contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC721Receiver {
+contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IERC721Receiver {
     using SafeMath for uint256;
     using Address for address payable;
 
@@ -37,8 +38,13 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         address _controller,
         address _nonfungiblePositionManager,
         address _uniswapFactory,
-        address _lendingPoolAddressProvider
-    ) UniswapControllerHelper(_uniswapFactory) AaveControllerHelper(_lendingPoolAddressProvider) {
+        address _exec,
+        address _euler,
+        address _dToken
+    )
+        UniswapControllerHelper(_uniswapFactory)
+        EulerControllerHelper(_exec, _euler, IController(_controller).weth(), _dToken)
+    {
         ControllerHelperDiamondStorage.setStorageVariables(
             _controller,
             IController(_controller).oracle(),
@@ -427,7 +433,6 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
         address _initiator,
         address, /*_asset*/
         uint256 _amount,
-        uint256 _premium,
         uint8 _callSource,
         bytes memory _calldata
     ) internal override {
@@ -439,6 +444,11 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 _calldata,
                 (ControllerHelperDataType.FlashloanWMintDepositNftParams)
             );
+
+            console.log("withdraw");
+            console.log(IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).balanceOf(address(this)));
+            console.log(IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).balanceOf(_initiator));
+            console.log("_amount", _amount);
 
             // convert flashloaned WETH to ETH
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).withdraw(_amount);
@@ -479,7 +489,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             );
 
             // convert flashloaned amount + fee from ETH to WETH to prepare for payback
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: _amount.add(_premium)}();
+            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: _amount}();
 
             // if openeded new vault, transfer vault NFT to user
             if (data.vaultId == 0)
@@ -664,6 +674,23 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                         vaultId,
                         tokenId
                     );
+                } else if (
+                    data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.generalSwap
+                ) {
+                    ControllerHelperDataType.GeneralSwap memory swapParams = abi.decode(
+                        data[i].data,
+                        (ControllerHelperDataType.GeneralSwap)
+                    );
+
+                    _exactInFlashSwap(
+                        swapParams.tokenIn,
+                        swapParams.tokenOut,
+                        poolFee,
+                        swapParams.amountIn,
+                        swapParams.limitPriceEthPerPowerPerp.mul(swapParams.amountIn).div(1e18),
+                        uint8(ControllerHelperDataType.CALLBACK_SOURCE.GENERAL_SWAP),
+                        ""
+                    );
                 }
             }
 
@@ -671,7 +698,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).withdraw(vaultId, _amount);
 
             // convert flashloaned amount + fee from ETH to WETH to prepare for payback
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: _amount.add(_premium)}();
+            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: _amount}();
         }
     }
 
@@ -685,7 +712,7 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
      */
     function _swapCallback(
         address _caller,
-        address, /*_tokenIn*/
+        address _tokenIn,
         address, /*_tokenOut*/
         uint24, /*_fee*/
         uint256 _amountToPay,
@@ -786,6 +813,12 @@ contract ControllerHelper is UniswapControllerHelper, AaveControllerHelper, IERC
                 ControllerHelperDiamondStorage.getAddressAtSlot(3),
                 _amountToPay
             );
+        } else if (
+            ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
+            ControllerHelperDataType.CALLBACK_SOURCE.GENERAL_SWAP
+        ) {
+            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: address(this).balance}();
+            IERC20(_tokenIn).transfer(ControllerHelperDiamondStorage.getAddressAtSlot(3), _amountToPay);
         }
     }
 
