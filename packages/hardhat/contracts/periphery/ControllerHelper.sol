@@ -489,7 +489,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             );
 
             // convert flashloaned amount + fee from ETH to WETH to prepare for payback
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: _amount.add(_premium)}();
+            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: _amount}();
 
             // if openeded new vault, transfer vault NFT to user
             if (data.vaultId == 0)
@@ -698,7 +698,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).withdraw(vaultId, _amount);
 
             // convert flashloaned amount + fee from ETH to WETH to prepare for payback
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: _amount.add(_premium)}();
+            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: _amount}();
         }
     }
 
