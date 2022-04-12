@@ -576,6 +576,55 @@ describe("Controller helper integration test", function () {
       expect(vaultBefore.collateralAmount.eq(BigNumber.from(0))).to.be.true
       expect(vaultAfter.collateralAmount.eq(collateralAmount)).to.be.true
     })
+
+    it("Batch mint and LP - existing vault >0 LP collateral with >0 ETH collateral added", async () => {
+      // Make empty vault
+      await controller.connect(depositor).mintWPowerPerpAmount(0, 0, 0, {value: 0})
+      const vaultId = (await shortSqueeth.nextId()).sub(1);
+      await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
+  
+      const normFactor = await controller.getExpectedNormalizationFactor()
+      const mintWSqueethAmount = ethers.utils.parseUnits('15')
+      const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
+      const ethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 420, true)
+      const scaledEthPrice = ethPrice.div(10000)
+      const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
+      const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
+      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
+      const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
+      const vaultBefore = await controller.vaults(vaultId)
+      const tokenIndexBefore = await (positionManager as INonfungiblePositionManager).totalSupply();
+  
+      const params = {
+        recipient: depositor.address,
+        vaultId: vaultId,
+        wPowerPerpAmount: mintWSqueethAmount, 
+        collateralToDeposit: collateralAmount,
+        collateralToLp: collateralToLp,
+        amount0Min: 0,
+        amount1Min: 0,
+        lowerTick: -887220,
+        upperTick: 887220
+      }
+  
+      await controllerHelper.connect(depositor).batchMintLp(params, {value: collateralAmount.add(collateralToLp)});
+  
+      const vaultAfter = await controller.vaults(vaultId)
+      const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
+      const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
+      const ownerOfUniNFT = await (positionManager as INonfungiblePositionManager).ownerOf(tokenId); 
+      const position = await (positionManager as INonfungiblePositionManager).positions(tokenId)
+  
+      expect(position.tickLower === -887220).to.be.true
+      expect(position.tickUpper === 887220).to.be.true
+      expect(ownerOfUniNFT === depositor.address).to.be.true
+      expect(tokenIndexAfter.sub(tokenIndexBefore).eq(BigNumber.from(1))).to.be.true
+      expect(vaultBefore.shortAmount.eq(BigNumber.from(0))).to.be.true
+      expect(vaultBefore.collateralAmount.eq(BigNumber.from(0))).to.be.true
+      expect(vaultAfter.collateralAmount.eq(collateralAmount)).to.be.true
+  
+    })
+
   })
 
   describe("Sell long and flash mint short", async () => {
