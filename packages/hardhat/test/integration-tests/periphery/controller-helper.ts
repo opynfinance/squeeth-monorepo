@@ -158,6 +158,86 @@ describe("Controller helper integration test", function () {
       expect(depositorBalanceAfter.gt(depositorBalanceBefore.sub(value))).to.be.true
     })
 
+    it("flash mint without additional eth", async () => {      
+      const normFactor = await controller.getExpectedNormalizationFactor()
+      const mintWSqueethAmount = ethers.utils.parseUnits('10')
+      const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
+      const ethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 420, true)
+      const scaledEthPrice = ethPrice.div(10000)
+      const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
+      const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
+      await controller.connect(owner).mintWPowerPerpAmount(0, mintWSqueethAmount, 0, {value: collateralAmount}) 
+      await wSqueeth.connect(owner).approve(swapRouter.address, constants.MaxUint256)
+      const vaultId = await shortSqueeth.nextId();
+      const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
+      const controllerBalanceBefore = await provider.getBalance(controller.address)
+      const squeethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
+      const vaultBefore = await controller.vaults(vaultId)
+      const depositorBalanceBefore = await provider.getBalance(depositor.address)
+      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
+      const ethToReceive = (mintWSqueethAmount.mul(squeethPrice).div(one)).mul(one.sub(slippage)).div(one)
+      const params = {
+        vaultId,
+        collateralAmount: collateralAmount.toString(),
+        wPowerPerpAmountToMint: mintWSqueethAmount.toString(),
+        minToReceive: ethToReceive.toString(),
+        wPowerPerpAmountToSell: BigNumber.from(0)
+      }
+
+      await controllerHelper.connect(depositor).flashswapSellLongWMint(params);
+
+      const controllerBalanceAfter = await provider.getBalance(controller.address)
+      const squeethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
+      const vaultAfter = await controller.vaults(vaultId)
+      const depositorBalanceAfter = await provider.getBalance(depositor.address)
+
+      expect(controllerBalanceBefore.add(collateralAmount).eq(controllerBalanceAfter)).to.be.true
+      expect(squeethBalanceBefore.eq(squeethBalanceAfter)).to.be.true
+      expect(vaultBefore.collateralAmount.add(collateralAmount).eq(vaultAfter.collateralAmount)).to.be.true
+      expect(vaultBefore.shortAmount.add(mintWSqueethAmount).eq(vaultAfter.shortAmount)).to.be.true
+      expect(depositorBalanceAfter.gt(depositorBalanceBefore)).to.be.true
+    })
+
+    it("flash mint x% collateral without additional eth", async () => {      
+      const normFactor = await controller.getExpectedNormalizationFactor()
+      const mintWSqueethAmount = ethers.utils.parseUnits('10')
+      const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
+      const ethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 420, true)
+      const scaledEthPrice = ethPrice.div(10000)
+      const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
+      const collateralAmount = debtInEth.mul(6).div(2).add(ethers.utils.parseUnits('0.01'))
+      await controller.connect(owner).mintWPowerPerpAmount(0, mintWSqueethAmount, 0, {value: collateralAmount}) 
+      await wSqueeth.connect(owner).approve(swapRouter.address, constants.MaxUint256)
+      const vaultId = await shortSqueeth.nextId();
+      const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
+      const controllerBalanceBefore = await provider.getBalance(controller.address)
+      const squeethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
+      const vaultBefore = await controller.vaults(vaultId)
+      const depositorBalanceBefore = await provider.getBalance(depositor.address)
+      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
+      const ethToReceive = (mintWSqueethAmount.mul(squeethPrice).div(one)).mul(one.sub(slippage)).div(one)
+      const params = {
+        vaultId,
+        collateralAmount: collateralAmount.toString(),
+        wPowerPerpAmountToMint: mintWSqueethAmount.toString(),
+        minToReceive: ethToReceive.toString(),
+        wPowerPerpAmountToSell: BigNumber.from(0)
+      }
+  
+      await controllerHelper.connect(depositor).flashswapSellLongWMint(params);
+  
+      const controllerBalanceAfter = await provider.getBalance(controller.address)
+      const squeethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
+      const vaultAfter = await controller.vaults(vaultId)
+      const depositorBalanceAfter = await provider.getBalance(depositor.address)
+  
+      expect(controllerBalanceBefore.add(collateralAmount).eq(controllerBalanceAfter)).to.be.true
+      expect(squeethBalanceBefore.eq(squeethBalanceAfter)).to.be.true
+      expect(vaultBefore.collateralAmount.add(collateralAmount).eq(vaultAfter.collateralAmount)).to.be.true
+      expect(vaultBefore.shortAmount.add(mintWSqueethAmount).eq(vaultAfter.shortAmount)).to.be.true
+      expect(depositorBalanceAfter.gt(depositorBalanceBefore)).to.be.true
+    })
+
     it("flash close short position and buy long", async () => {
       const vaultId = (await shortSqueeth.nextId()).sub(1);
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
