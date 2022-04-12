@@ -57,7 +57,6 @@ contract EulerControllerHelper is IDeferredLiquidityCheck {
         address _initiator,
         address _asset,
         uint256 _amount,
-        uint256 _premium,
         uint8 _callSource,
         bytes memory _calldata
     ) internal virtual {}
@@ -72,7 +71,7 @@ contract EulerControllerHelper is IDeferredLiquidityCheck {
 
         IEulerDToken(dToken).borrow(0, data.amountToBorrow);
 
-        _flashCallback(data.caller, data.assetToBorrow, data.amountToBorrow, 0, data.callSource, data.callData);
+        _flashCallback(data.caller, data.assetToBorrow, data.amountToBorrow, data.callSource, data.callData);
 
         IERC20Detailed(data.assetToBorrow).approve(euler, data.amountToBorrow);
         IEulerDToken(dToken).repay(0, data.amountToBorrow);

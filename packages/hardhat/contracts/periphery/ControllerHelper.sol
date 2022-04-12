@@ -433,7 +433,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         address _initiator,
         address, /*_asset*/
         uint256 _amount,
-        uint256 _premium,
         uint8 _callSource,
         bytes memory _calldata
     ) internal override {
