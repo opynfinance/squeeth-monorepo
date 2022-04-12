@@ -134,7 +134,7 @@ describe('Trade on trade page', () => {
         cy.get('#position-card-before-trade-balance').then((bal) => {
           cy.get('#position-card-post-trade-balance')
             .then((v) => Number(parseFloat(v.text()).toFixed(4)))
-            .should('eq', openLongoSQTHInput.plus(Number(bal.text())).toFixed(4))
+            .should('be.approximately', Number(openLongoSQTHInput.plus(Number(bal.text()))), 0.0002)
         })
       })
 
