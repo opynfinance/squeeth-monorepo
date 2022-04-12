@@ -825,12 +825,12 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   }, [collatPercent, setCollatRatio])
 
   useAppEffect(() => {
-    getBuyQuote(amount, slippageAmount).then(setSellCloseQuote)
+    getBuyQuote(amount, slippageAmount, 'initial effect').then(setSellCloseQuote)
   }, [amount, slippageAmount, getBuyQuote, setSellCloseQuote])
 
   useEffect(() => {
     if (!amount.isZero() && sellCloseQuote.amountIn.isZero()) {
-      getBuyQuote(amount, slippageAmount).then(setSellCloseQuote)
+      getBuyQuote(amount, slippageAmount, 'fallback effect').then(setSellCloseQuote)
     }
   }, [sellCloseQuote.amountIn.isZero(), amount.toString(), slippageAmount.toString(), getBuyQuote, setSellCloseQuote])
 

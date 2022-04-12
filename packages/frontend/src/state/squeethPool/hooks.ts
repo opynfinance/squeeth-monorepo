@@ -67,7 +67,7 @@ export const useUpdateSqueethPoolData = () => {
   const contract = useAtomValue(squeethPoolContractAtom)
   const { ticks } = useUniswapTicks()
   useEffect(() => {
-    ; (async () => {
+    ;(async () => {
       const { token0, token1, fee } = await getImmutables(contract!)
 
       const state = await getPoolState(contract!)
@@ -203,12 +203,14 @@ export const useGetBuyQuote = () => {
   const squeethToken = useAtomValue(squeethTokenAtom)
   //If I input an exact amount of squeeth I want to buy, tells me how much ETH I need to pay to purchase that squeeth
   const getBuyQuote = useCallback(
-    async (squeethAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
+    async (squeethAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE), detail = '') => {
       const emptyState = {
         amountIn: new BigNumber(0),
         maximumAmountIn: new BigNumber(0),
         priceImpact: '0',
       }
+
+      console.log(detail)
 
       if (!squeethAmount || !pool) return emptyState
 
@@ -226,6 +228,14 @@ export const useGetBuyQuote = () => {
         }
 
         const trade = await Trade.exactOut(route, rawAmount)
+
+        console.log('calling buyQuote ' + detail, {
+          amountIn: new BigNumber(trade.inputAmount.toSignificant(18)).toString(),
+          maximumAmountIn: new BigNumber(
+            trade.maximumAmountIn(parseSlippageInput(slippageAmount.toString())).toSignificant(18),
+          ).toString(),
+          priceImpact: trade.priceImpact.toFixed(2),
+        })
 
         //the amount of ETH I need to put in
         return {
