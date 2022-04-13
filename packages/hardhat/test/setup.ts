@@ -14,10 +14,6 @@ import {
   abi as FACTORY_ABI,
   bytecode as FACTORY_BYTECODE,
 } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json'
-import {
-  abi as QUOTER_ABI,
-  bytecode as QUOTER_BYTECODE,
-} from "@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json"
 import { Controller, Oracle, ShortPowerPerp, WETH9, WPowerPerp, MockErc20, INonfungiblePositionManager, ABDKMath64x64 } from "../typechain";
 import { convertToken0PriceToSqrtX96Price, convertToken1PriceToSqrtX96Price } from "./calculator";
 import { getNow } from './utils'
@@ -53,11 +49,7 @@ export const deployUniswapV3 = async(weth: Contract) => {
   const positionManagerFactory = new ethers.ContractFactory(POSITION_MANAGER_ABI, POSITION_MANAGER_BYTECODE, accounts[0]);
   const positionManager = await positionManagerFactory.deploy(uniswapFactory.address, weth.address, tokenDescriptorAddress);
 
-  const quoterFactory = new ethers.ContractFactory(QUOTER_ABI, QUOTER_BYTECODE, accounts[0]);
-  const quoter = await quoterFactory.deploy(uniswapFactory.address, weth.address);
-
-
-  return { positionManager, uniswapFactory, swapRouter, quoter }
+  return { positionManager, uniswapFactory, swapRouter }
 }
 
 
