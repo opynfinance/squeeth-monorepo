@@ -208,13 +208,13 @@ export function Positions() {
   } = useCrabPosition(address || '')
 
   const vaultExists = useMemo(() => {
-    return shortVaults.length && shortVaults[firstValidVault]?.collateralAmount?.isGreaterThan(0)
+    return shortVaults?.length && shortVaults[firstValidVault]?.collateralAmount?.isGreaterThan(0)
   }, [firstValidVault, shortVaults?.length])
 
   const { liquidations } = useVaultLiquidations(Number(vaultId))
 
   const fullyLiquidated = useMemo(() => {
-    return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
+    return shortVaults?.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
   }, [firstValidVault, shortVaults?.length, liquidations?.length])
 
   return (
