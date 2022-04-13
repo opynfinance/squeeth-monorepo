@@ -1049,7 +1049,7 @@ const Component: React.FC = () => {
                           onChange={(event) => updateCollatPercent(Number(event.target.value))}
                           value={lpNftCollatPercent}
                           id="filled-basic"
-                          label="Collateral Ratio"
+                          label="New Collateral Ratio"
                           variant="outlined"
                           disabled={true}
                           InputProps={{
