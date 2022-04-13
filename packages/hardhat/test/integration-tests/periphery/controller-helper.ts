@@ -471,8 +471,6 @@ describe("Controller helper integration test", function () {
       expect(vaultAfter.shortAmount.eq(BigNumber.from(0))).to.be.true
       expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
       expect(longBalanceAfter.eq(longBalanceBefore)).to.be.true
-      console.log(depositorEthBalanceBefore.sub(depositorEthBalanceAfter).toString())
-      console.log(ethAmountToSwap.toString())
       expect(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).eq(vaultBefore.collateralAmount.sub(ethAmountToSwap).sub(gasSpent))).to.be.true
     })
     it("fully close position, buying some but less than residual collateral", async () => {
@@ -544,7 +542,7 @@ describe("Controller helper integration test", function () {
       const scaledEthPrice = ethPrice.div(10000)
       const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
       const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
-      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
+      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, true)
       const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
       const vaultBefore = await controller.vaults(vaultId)
       const tokenIndexBefore = await (positionManager as INonfungiblePositionManager).totalSupply();
@@ -559,14 +557,30 @@ describe("Controller helper integration test", function () {
         lowerTick: -887220,
         upperTick: 887220
       }
+      const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
+      const tx = await controllerHelper.connect(depositor).batchMintLp(params, {value: collateralAmount.add(collateralToLp)});
+      const depositorEthBalanceAfter = await provider.getBalance(depositor.address)
+      const receipt = await tx.wait()
+      const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
 
-      await controllerHelper.connect(depositor).batchMintLp(params, {value: collateralAmount.add(collateralToLp)});
 
       const vaultAfter = await controller.vaults(vaultId)
       const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
       const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
       const ownerOfUniNFT = await (positionManager as INonfungiblePositionManager).ownerOf(tokenId); 
       const position = await (positionManager as INonfungiblePositionManager).positions(tokenId)
+
+      const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
+      await (positionManager as INonfungiblePositionManager).connect(depositor).approve(positionManager.address, tokenId); 
+      const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
+        tokenId: tokenId,
+        liquidity: position.liquidity,
+        amount0Min: 0,
+        amount1Min: 0,
+        deadline: Math.floor(await getNow(ethers.provider) + 8640000),
+      })
+      const wPowerPerpAmountInLP = (isWethToken0) ? amount1 : amount0;
+      const wethAmountInLP = (isWethToken0) ? amount0 : amount1;
 
       expect(position.tickLower === -887220).to.be.true
       expect(position.tickUpper === 887220).to.be.true
@@ -575,6 +589,13 @@ describe("Controller helper integration test", function () {
       expect(vaultBefore.shortAmount.eq(BigNumber.from(0))).to.be.true
       expect(vaultBefore.collateralAmount.eq(BigNumber.from(0))).to.be.true
       expect(vaultAfter.collateralAmount.eq(collateralAmount)).to.be.true
+      //uniswap rounding of LP often gives 1 wei less than expected (uniswap takes the 1 wei, but only gives credit for 1 wei less in the LP share)
+      expect((depositorEthBalanceBefore.sub(depositorEthBalanceAfter).sub(collateralAmount).sub(wethAmountInLP).sub(gasSpent)).abs().lte(1)).to.be.true
+      expect((vaultAfter.shortAmount.sub(wPowerPerpAmountInLP)).abs().lte(1)).to.be.true
+      expect(wethAmountInLP.sub(collateralToLp).abs().lte(1)).to.be.true
+      //not sure why there is a shortfall here, maybe rounding, testing less than 2bps difference from expected
+      expect(wPowerPerpAmountInLP.sub(mintWSqueethAmount).mul(one).div(mintWSqueethAmount).abs().lte(BigNumber.from(10).pow(14).mul(2))).to.be.true
+      
     })
 
     it("Batch mint and LP - existing vault >0 LP collateral with >0 ETH collateral added", async () => {
@@ -590,7 +611,7 @@ describe("Controller helper integration test", function () {
       const scaledEthPrice = ethPrice.div(10000)
       const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
       const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
-      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
+      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, true)
       const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
       const vaultBefore = await controller.vaults(vaultId)
       const tokenIndexBefore = await (positionManager as INonfungiblePositionManager).totalSupply();
@@ -606,15 +627,33 @@ describe("Controller helper integration test", function () {
         lowerTick: -887220,
         upperTick: 887220
       }
-  
-      await controllerHelper.connect(depositor).batchMintLp(params, {value: collateralAmount.add(collateralToLp)});
-  
+      const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
+
+      const tx = await controllerHelper.connect(depositor).batchMintLp(params, {value: collateralAmount.add(collateralToLp)});
+      const depositorEthBalanceAfter = await provider.getBalance(depositor.address)
+
+      const receipt = await tx.wait()
+      const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
+
+
       const vaultAfter = await controller.vaults(vaultId)
       const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
       const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
       const ownerOfUniNFT = await (positionManager as INonfungiblePositionManager).ownerOf(tokenId); 
       const position = await (positionManager as INonfungiblePositionManager).positions(tokenId)
   
+      const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
+      await (positionManager as INonfungiblePositionManager).connect(depositor).approve(positionManager.address, tokenId); 
+      const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
+        tokenId: tokenId,
+        liquidity: position.liquidity,
+        amount0Min: 0,
+        amount1Min: 0,
+        deadline: Math.floor(await getNow(ethers.provider) + 8640000),
+      })
+      const wPowerPerpAmountInLP = (isWethToken0) ? amount1 : amount0;
+      const wethAmountInLP = (isWethToken0) ? amount0 : amount1;
+
       expect(position.tickLower === -887220).to.be.true
       expect(position.tickUpper === 887220).to.be.true
       expect(ownerOfUniNFT === depositor.address).to.be.true
@@ -622,6 +661,12 @@ describe("Controller helper integration test", function () {
       expect(vaultBefore.shortAmount.eq(BigNumber.from(0))).to.be.true
       expect(vaultBefore.collateralAmount.eq(BigNumber.from(0))).to.be.true
       expect(vaultAfter.collateralAmount.eq(collateralAmount)).to.be.true
+      //uniswap rounding of LP often gives 1 wei less than expected (uniswap takes the 1 wei, but only gives credit for 1 wei less in the LP share)
+      expect((depositorEthBalanceBefore.sub(depositorEthBalanceAfter).sub(collateralAmount).sub(wethAmountInLP).sub(gasSpent)).abs().lte(1)).to.be.true
+      expect((vaultAfter.shortAmount.sub(wPowerPerpAmountInLP)).abs().lte(1)).to.be.true
+      expect(wethAmountInLP.sub(collateralToLp).abs().lte(1)).to.be.true
+      //not sure why there is a shortfall here, maybe rounding, testing less than 1bps difference from expected
+      expect(wPowerPerpAmountInLP.sub(mintWSqueethAmount).mul(one).div(mintWSqueethAmount).abs().lte(BigNumber.from(10).pow(14).mul(2))).to.be.true
   
     })
 
