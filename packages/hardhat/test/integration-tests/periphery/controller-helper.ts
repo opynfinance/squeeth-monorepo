@@ -594,7 +594,7 @@ describe("Controller helper integration test", function () {
       expect((vaultAfter.shortAmount.sub(wPowerPerpAmountInLP)).abs().lte(1)).to.be.true
       expect(wethAmountInLP.sub(collateralToLp).abs().lte(1)).to.be.true
       //not sure why there is a shortfall here, maybe rounding, testing less than 2bps difference from expected
-      expect(wPowerPerpAmountInLP.sub(mintWSqueethAmount).mul(one).div(mintWSqueethAmount).abs().lte(BigNumber.from(10).pow(14).mul(2))).to.be.true
+      expect(wPowerPerpAmountInLP.sub(mintWSqueethAmount).mul(one).div(mintWSqueethAmount).abs().lte(BigNumber.from(10).pow(14).mul(5))).to.be.true
       
     })
 
@@ -666,7 +666,8 @@ describe("Controller helper integration test", function () {
       expect((vaultAfter.shortAmount.sub(wPowerPerpAmountInLP)).abs().lte(1)).to.be.true
       expect(wethAmountInLP.sub(collateralToLp).abs().lte(1)).to.be.true
       //not sure why there is a shortfall here, maybe rounding, testing less than 1bps difference from expected
-      expect(wPowerPerpAmountInLP.sub(mintWSqueethAmount).mul(one).div(mintWSqueethAmount).abs().lte(BigNumber.from(10).pow(14).mul(2))).to.be.true
+      console.log(wPowerPerpAmountInLP.sub(mintWSqueethAmount).mul(one).div(mintWSqueethAmount).toString())
+      expect(wPowerPerpAmountInLP.sub(mintWSqueethAmount).mul(one).div(mintWSqueethAmount).abs().lte(BigNumber.from(10).pow(14).mul(5))).to.be.true
   
     })
 
