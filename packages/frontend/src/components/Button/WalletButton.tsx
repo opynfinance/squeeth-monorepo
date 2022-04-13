@@ -84,17 +84,20 @@ const WalletButton: React.FC = () => {
   return (
     <div className={classes.walletBox}>
       {!connected ? (
-        <Button variant="contained" color="primary" onClick={selectWallet}>
+        <Button variant="contained" color="primary" onClick={selectWallet} id="connect-wallet">
           Connect wallet
         </Button>
       ) : (
         <div className={classes.walletContainer}>
           <Hidden smDown>
-            <div className={classes.balance}>{toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4)} ETH</div>
+            <div className={classes.balance}>
+              <span id="user-eth-wallet-balance">{toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4)}</span>
+              ETH
+            </div>
           </Hidden>
           <Button variant="outlined" color="primary" onClick={disconnectWallet} className={classes.walletBtn}>
             <Circle networkId={networkId} />
-            <div className={classes.account}>
+            <div className={classes.account} id="wallet-address">
               <Davatar size={20} address={address || ''} />
               <span>{ensName || shortAddress}</span>
             </div>
