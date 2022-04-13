@@ -269,9 +269,9 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
 
     /**
      * @notice sell all LP wPowerPerp amounts to WETH and send back to user
-     * @param _params ControllerHelperDataType.SellAll struct
+     * @param _params ControllerHelperDataType.ReduceLiquidityAndSell struct
      */
-    function sellAll(ControllerHelperDataType.SellAll calldata _params) external {
+    function reduceLiquidityAndSell(ControllerHelperDataType.ReduceLiquidityAndSell calldata _params) external {
         INonfungiblePositionManager(ControllerHelperDiamondStorage.getAddressAtSlot(6)).safeTransferFrom(
             msg.sender,
             address(this),
@@ -284,7 +284,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             ControllerHelperDataType.closeUniLpParams({
                 tokenId: _params.tokenId,
                 liquidity: _params.liquidity,
-                liquidityPercentage: 1e18,
+                liquidityPercentage: _params.liquidityPercentage,
                 amount0Min: uint128(_params.amount0Min),
                 amount1Min: uint128(_params.amount1Min)
             }),
