@@ -7,7 +7,6 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-wit
 import { WETH9, MockErc20, ShortPowerPerp, Controller, Oracle, WPowerPerp, ControllerHelper, INonfungiblePositionManager} from "../../../typechain";
 import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addWethDaiLiquidity, addSqueethLiquidity } from '../../setup'
 import { one, oracleScaleFactor, getNow } from "../../utils"
-import { convertCompilerOptionsFromJson } from "typescript";
 
 BigNumberJs.set({EXPONENTIAL_AT: 30})
 

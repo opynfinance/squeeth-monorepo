@@ -5,7 +5,6 @@
   "license": "MIT",
   "devDependencies": {
     "@typescript-eslint/parser": "^4.29.1",
-    "@uniswap/v3-sdk": "^3.8.2",
     "eslint": "^7.5.0",
     "eslint-config-airbnb": "^18.2.0",
     "eslint-config-prettier": "^6.11.0",
