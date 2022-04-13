@@ -1,8 +1,7 @@
 import { Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 
 import { LinkButton } from '../Button'
 

@@ -1,11 +1,9 @@
-import { createStyles, makeStyles, Tooltip, Typography } from '@material-ui/core'
-import InfoIcon from '@material-ui/icons/InfoOutlined'
+import { createStyles, makeStyles, Typography } from '@material-ui/core'
 import Image from 'next/image'
 import React from 'react'
 import { useAtomValue } from 'jotai'
 
-import { EtherscanPrefix, Tooltips } from '../../constants'
-import { UniswapIframe } from '../Modal/UniswapIframe'
+import { EtherscanPrefix } from '../../constants'
 import { networkIdAtom } from 'src/state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>

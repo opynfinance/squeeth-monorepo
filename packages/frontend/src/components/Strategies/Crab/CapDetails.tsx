@@ -1,5 +1,5 @@
 import CustomLinearProgress from '@components/CustomProgress'
-import { LinearProgress, Typography } from '@material-ui/core'
+import { Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import BigNumber from 'bignumber.js'
 import React from 'react'

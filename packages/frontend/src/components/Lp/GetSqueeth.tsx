@@ -2,7 +2,7 @@ import { CircularProgress, InputAdornment, TextField, Typography } from '@materi
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import BigNumber from 'bignumber.js'
 import { motion } from 'framer-motion'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useState } from 'react'
 
 import { BIG_ZERO, MIN_COLLATERAL_AMOUNT, OSQUEETH_DECIMALS, Tooltips } from '../../constants'
 import { LPActions, OBTAIN_METHOD, useLPState } from '@context/lp'
@@ -24,6 +24,8 @@ import { useGetShortAmountFromDebt, useOpenDepositAndMint } from 'src/state/cont
 import { useFirstValidVault } from 'src/state/positions/hooks'
 import { useVaultData } from '@hooks/useVaultData'
 import { normFactorAtom } from 'src/state/controller/atoms'
+import useAppEffect from '@hooks/useAppEffect'
+import useAppMemo from '@hooks/useAppMemo'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -106,7 +108,7 @@ const Mint: React.FC = () => {
     setLoading(false)
   }
 
-  useEffect(() => {
+  useAppEffect(() => {
     let isMounted = true
     if (collatAmountBN.isNaN() || collatAmountBN.isZero()) {
       if (isMounted) setMintAmount(new BigNumber(0))
@@ -121,7 +123,7 @@ const Mint: React.FC = () => {
     }
   }, [collatPercent, collatAmount.toString()])
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (collatPercent < 150) {
       setMinCollRatioError('Minimum collateral ratio is 150%')
     }
@@ -133,7 +135,7 @@ const Mint: React.FC = () => {
     }
   }, [balance?.toString(), connected, existingCollat.toString(), collatAmountBN.toString(), collatPercent])
 
-  const liqPrice = useMemo(() => {
+  const liqPrice = useAppMemo(() => {
     const rSqueeth = normalizationFactor.multipliedBy(mintAmount.toNumber() || new BigNumber(1)).dividedBy(10000)
 
     return collatAmountBN.div(rSqueeth.multipliedBy(1.5))
@@ -230,7 +232,6 @@ const Mint: React.FC = () => {
 const GetSqueeth: React.FC = () => {
   const classes = useStyles()
   const { lpState } = useLPState()
-  const { data: balance } = useWalletBalance()
 
   return (
     <>
