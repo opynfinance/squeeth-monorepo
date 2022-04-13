@@ -101,8 +101,8 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
             })
         );
 
-        console.log("amountOut", amountOut);
-        console.log("_amountOutMinimum", _amountOutMinimum);
+        //console.log("amountOut", amountOut);
+        //console.log("_amountOutMinimum", _amountOutMinimum);
 
         //slippage limit check
         require(amountOut >= _amountOutMinimum);
@@ -142,8 +142,8 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
             })
         );
 
-        console.log("amountIn", amountIn);
-        console.log("_amountInMaximum", _amountInMaximum);
+        //console.log("amountIn", amountIn);
+        //console.log("_amountInMaximum", _amountInMaximum);
 
         //slippage limit check
         require(amountIn <= _amountInMaximum);
