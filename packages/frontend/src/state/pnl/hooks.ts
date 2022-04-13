@@ -49,7 +49,7 @@ export function useEthCollateralPnl() {
         setEthCollateralPnl(result)
       }
     })()
-  }, [existingCollat, index, setEthCollateralPnl, swapsData?.swaps, vaultHistory, isVaultLoading])
+  }, [existingCollat, index, setEthCollateralPnl, swapsData?.swaps, vaultHistory, isVaultLoading, vaultHistoryLoading])
 
   return ethCollateralPnl
 }
