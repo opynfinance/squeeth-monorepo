@@ -203,7 +203,7 @@ const PositionCard: React.FC = () => {
   const tradeType = useAtomValue(tradeTypeAtom)
   const ethPrice = useETHPrice()
   const prevSwapsData = usePrevious(swaps)
-  const tradeAmount = new BigNumber(tradeAmountInput)
+  const tradeAmount = useMemo(() => new BigNumber(tradeAmountInput), [tradeAmountInput])
   const [fetchingNew, setFetchingNew] = useState(false)
   const [postTradeAmt, setPostTradeAmt] = useState(new BigNumber(0))
   const [postPosition, setPostPosition] = useState(PositionType.NONE)
@@ -221,11 +221,11 @@ const PositionCard: React.FC = () => {
       stopPolling()
       setFetchingNew(false)
     }
-  }, [swaps?.length, prevSwapsData?.length, tradeSuccess])
+  }, [swaps, prevSwapsData, tradeSuccess, setTradeCompleted, startPolling, stopPolling, setTradeSuccess])
 
   const fullyLiquidated = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
-  }, [firstValidVault, shortVaults?.length, liquidations?.length])
+  }, [firstValidVault, shortVaults, liquidations])
 
   const isDollarValueLoading = useAppMemo(() => {
     if (positionType === PositionType.LONG) {
@@ -327,7 +327,7 @@ const PositionCard: React.FC = () => {
           <div className={classes.assetDiv}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <Typography component="span" style={{ fontWeight: 600 }}>
+                <Typography component="span" style={{ fontWeight: 600 }} id="position-card-before-trade-balance">
                   {getPositionBasedValue(squeethAmount.toFixed(6), squeethAmount.toFixed(6), '0', '0')}
                 </Typography>
 
@@ -347,6 +347,7 @@ const PositionCard: React.FC = () => {
                           : '#f5475c',
                       }}
                       className={classes.postTradeAmt}
+                      id="position-card-post-trade-balance"
                     >
                       {postTradeAmt.lte(0) ? 0 : postTradeAmt.toFixed(6)}
                     </Typography>
@@ -380,12 +381,13 @@ const PositionCard: React.FC = () => {
                       <InfoIcon fontSize="small" className={classes.infoIcon} />
                     </Tooltip>
                   </div>
-                  <div className={classes.pnl}>
+                  <div className={classes.pnl} id="unrealized-pnl-value">
                     {!pnlLoading ? (
                       <>
                         <Typography
                           className={pnlClass(positionType, longGain, shortGain, classes)}
                           style={{ fontWeight: 600 }}
+                          id="unrealized-pnl-usd-value"
                         >
                           {getPositionBasedValue(
                             `$${longUnrealizedPNL.usd.toFixed(2)}`,
@@ -398,6 +400,7 @@ const PositionCard: React.FC = () => {
                           variant="caption"
                           className={pnlClass(positionType, longGain, shortGain, classes)}
                           style={{ marginLeft: '4px' }}
+                          id="unrealized-pnl-perct-value"
                         >
                           {getPositionBasedValue(`(${longGain.toFixed(2)}%)`, `(${shortGain.toFixed(2)}%)`, null, ' ')}
                         </Typography>
@@ -418,7 +421,7 @@ const PositionCard: React.FC = () => {
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
                 </div>
-                <div className={classes.pnl}>
+                <div className={classes.pnl} id="realized-pnl-value">
                   <Typography
                     className={pnlClass(positionType, longRealizedPNL, shortRealizedPNL, classes)}
                     style={{ fontWeight: 600 }}
@@ -450,7 +453,7 @@ const PositionCard: React.FC = () => {
         {fetchingNew ? 'Fetching latest position' : ' '}
       </Typography>
       {positionType === PositionType.SHORT ? (
-        <Typography className={classes.link}>
+        <Typography className={classes.link} id="pos-card-manage-vault-link">
           <Link href={`vault/${vaultId}`}>Manage Vault</Link>
         </Typography>
       ) : null}
