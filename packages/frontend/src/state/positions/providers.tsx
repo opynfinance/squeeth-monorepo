@@ -4,10 +4,9 @@ import { useAtomValue } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 import { useEffect, useMemo } from 'react'
 import { BIG_ZERO } from '@constants/index'
-import { isWethToken0Atom, positionTypeAtom } from './atoms'
+import { isWethToken0Atom, positionTypeAtom, swapsAtom } from './atoms'
 import { useUsdAmount } from '@hooks/useUsdAmount'
 import { PositionType } from '../../types'
-import { useSwaps } from './hooks'
 import useAppMemo from '@hooks/useAppMemo'
 import { FC } from 'react'
 
@@ -28,7 +27,7 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const setPositionType = useUpdateAtom(positionTypeAtom)
   const { getUsdAmt } = useUsdAmount()
-  const { data } = useSwaps()
+  const data = useAtomValue(swapsAtom)
 
   const computedSwaps = useAppMemo(
     () =>
