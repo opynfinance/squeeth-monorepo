@@ -75,32 +75,6 @@ export const useSwaps = () => {
     fetchPolicy: 'cache-and-network',
   })
 
-  // useEffect(() => {
-  //   subscribeToMore({
-  //     document: networkId === Networks.MAINNET ? SWAPS_SUBSCRIPTION : SWAPS_ROPSTEN_SUBSCRIPTION,
-  //     variables: {
-  //       origin: address || '',
-  //       orderDirection: 'asc',
-  //       recipient_not: crabStrategy,
-  //       ...(networkId === Networks.MAINNET
-  //         ? {
-  //             tokenAddress: oSqueeth,
-  //           }
-  //         : {
-  //             poolAddress: squeethPool,
-  //             recipients: [shortHelper, address || '', swapRouter],
-  //           }),
-  //     },
-  //     updateQuery(prev, { subscriptionData }) {
-  //       if (!subscriptionData.data) return prev
-  //       const newSwaps = subscriptionData.data.swaps
-  //       return {
-  //         swaps: newSwaps,
-  //       }
-  //     },
-  //   })
-  // }, [address, crabStrategy, networkId, oSqueeth, shortHelper, squeethPool, swapRouter, subscribeToMore])
-
   useEffect(() => {
     if (data?.swaps) {
       setSwaps({ swaps: data.swaps })
