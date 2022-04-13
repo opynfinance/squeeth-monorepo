@@ -383,7 +383,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   }, [buyAndRefund, ethTradeAmount, resetEthTradeAmount, resetSqthTradeAmount, setTradeCompleted, setTradeSuccess])
 
   return (
-    <div>
+    <div id="open-long-card">
       {confirmed ? (
         <div>
           <Confirmed
@@ -393,6 +393,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
           />
           <div className={classes.buttonDiv}>
             <PrimaryButton
+              id="open-long-close-btn"
               variant="contained"
               onClick={() => {
                 resetTransactionData()
@@ -426,7 +427,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
           {activeStep === 0 ? (
             <>
               <div className={classes.settingsContainer}>
-                <Typography variant="caption" className={classes.explainer} component="div">
+                <Typography variant="caption" className={classes.explainer} component="div" id="open-long-header-box">
                   Pay ETH to buy squeeth ERC20
                 </Typography>
                 <span className={classes.settingsButton}>
@@ -456,17 +457,22 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                     highVolError
                   ) : (
                     <div className={classes.hint}>
-                      <span>{`Balance ${balance.toFixed(4)}`}</span>
+                      <span>
+                        Balance <span id="open-long-eth-before-trade-balance">{balance.toFixed(4)}</span>
+                      </span>
                       {new BigNumber(ethTradeAmount).toNumber() ? (
                         <>
                           <ArrowRightAltIcon className={classes.arrowIcon} />
-                          <span>{new BigNumber(balance).minus(new BigNumber(ethTradeAmount)).toFixed(6)}</span>
+                          <span id="open-long-eth-post-trade-balance">
+                            {new BigNumber(balance).minus(new BigNumber(ethTradeAmount)).toFixed(6)}
+                          </span>
                         </>
                       ) : null}{' '}
                       <span style={{ marginLeft: '4px' }}>ETH</span>
                     </div>
                   )
                 }
+                id="open-long-eth-input"
               />
               <PrimaryInput
                 value={sqthTradeAmount}
@@ -491,18 +497,21 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                     <div className={classes.hint}>
                       <span className={classes.hintTextContainer}>
                         <span className={classes.hintTitleText}>Balance </span>
-                        <span>{squeethAmount.toFixed(4)}</span>
+                        <span id="open-long-osqth-before-trade-balance">{squeethAmount.toFixed(4)}</span>
                       </span>
                       {quote.amountOut.gt(0) ? (
                         <>
                           <ArrowRightAltIcon className={classes.arrowIcon} />
-                          <span>{longSqthBal.plus(new BigNumber(sqthTradeAmount)).toFixed(6)}</span>
+                          <span id="open-long-osqth-post-trade-balance">
+                            {longSqthBal.plus(new BigNumber(sqthTradeAmount)).toFixed(6)}
+                          </span>{' '}
                         </>
                       ) : null}{' '}
                       <span style={{ marginLeft: '4px' }}>oSQTH</span>
                     </div>
                   )
                 }
+                id="open-long-osqth-input"
               />
 
               <div className={classes.divider}>
@@ -511,6 +520,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                   value={Number((squeethExposure * 4).toFixed(2)).toLocaleString()}
                   tooltip="The value of your position if ETH goes up 2x, not including funding"
                   frontUnit="$"
+                  id="open-short-eth-up-2x"
                 />
                 {/* if ETH down 50%, squeeth down 75%, so multiply amount by 0.25 to get what would remain  */}
                 <TradeInfoItem
@@ -518,6 +528,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                   value={Number((squeethExposure * 0.25).toFixed(2)).toLocaleString()}
                   tooltip="The value of your position if ETH goes down 50%, not including funding"
                   frontUnit="$"
+                  id="open-short-eth-down-50%"
                 />
                 <div style={{ marginTop: '10px' }}>
                   <UniswapData
@@ -536,6 +547,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                     className={classes.amountInput}
                     disabled={!!buyLoading}
                     style={{ width: '300px' }}
+                    id="open-long-connect-wallet-btn"
                   >
                     {'Connect Wallet'}
                   </PrimaryButton>
@@ -544,12 +556,19 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                     variant={longOpenPriceImpactErrorState || !!highVolError ? 'outlined' : 'contained'}
                     onClick={transact}
                     className={classes.amountInput}
-                    disabled={!!buyLoading || transactionInProgress || !!openError || !!existingShortError}
+                    disabled={
+                      !!buyLoading ||
+                      transactionInProgress ||
+                      !!openError ||
+                      !!existingShortError ||
+                      sqthTradeAmount === '0'
+                    }
                     style={
                       longOpenPriceImpactErrorState || !!highVolError
                         ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
                         : { width: '300px' }
                     }
+                    id="open-long-submit-tx-btn"
                   >
                     {buyLoading || transactionInProgress ? (
                       <CircularProgress color="primary" size="1.5rem" />
@@ -739,7 +758,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   )
 
   return (
-    <div>
+    <div id="close-long-card">
       {confirmed && !isTxFirstStep ? (
         <div>
           <Confirmed
@@ -749,6 +768,7 @@ const CloseLong: React.FC<BuyProps> = () => {
           />
           <div className={classes.buttonDiv}>
             <PrimaryButton
+              id="close-long-close-btn"
               variant="contained"
               onClick={() => {
                 resetTransactionData()
@@ -779,7 +799,7 @@ const CloseLong: React.FC<BuyProps> = () => {
         </div>
       ) : (
         <div>
-          <div className={classes.settingsContainer}>
+          <div className={classes.settingsContainer} id="close-long-header-box">
             <Typography variant="caption" className={classes.explainer} component="div">
               Sell squeeth ERC20 to get ETH
             </Typography>
@@ -810,18 +830,20 @@ const CloseLong: React.FC<BuyProps> = () => {
               ) : (
                 <div className={classes.hint}>
                   <span className={classes.hintTextContainer}>
-                    <span className={classes.hintTitleText}>Position</span> <span>{longSqthBal.toFixed(6)}</span>
+                    <span className={classes.hintTitleText}>Position</span>{' '}
+                    <span id="close-long-osqth-before-trade-balance">{longSqthBal.toFixed(6)}</span>{' '}
                   </span>
                   {quote.amountOut.gt(0) ? (
                     <>
                       <ArrowRightAltIcon className={classes.arrowIcon} />
-                      <span>{longSqthBal.minus(amount).toFixed(6)}</span>
+                      <span id="close-long-osqth-post-trade-balance">{longSqthBal.minus(amount).toFixed(6)}</span>
                     </>
                   ) : null}{' '}
                   <span style={{ marginLeft: '4px' }}>oSQTH</span>
                 </div>
               )
             }
+            id="close-long-osqth-input"
           />
           <PrimaryInput
             value={ethTradeAmount}
@@ -841,17 +863,22 @@ const CloseLong: React.FC<BuyProps> = () => {
                 priceImpactWarning
               ) : (
                 <div className={classes.hint}>
-                  <span>{`Balance ${balance}`}</span>
+                  <span>
+                    Balance <span id="close-long-eth-before-trade-balance">{balance}</span>{' '}
+                  </span>{' '}
                   {amount.toNumber() ? (
                     <>
                       <ArrowRightAltIcon className={classes.arrowIcon} />
-                      <span>{new BigNumber(balance).plus(altTradeAmount).toFixed(4)}</span>
+                      <span id="close-long-eth-post-trade-balance">
+                        {new BigNumber(balance).plus(altTradeAmount).toFixed(4)}
+                      </span>
                     </>
                   ) : null}{' '}
                   <span style={{ marginLeft: '4px' }}>ETH</span>
                 </div>
               )
             }
+            id="close-long-eth-input"
           />
           <div className={classes.divider}>
             <UniswapData
@@ -869,6 +896,7 @@ const CloseLong: React.FC<BuyProps> = () => {
                 className={classes.amountInput}
                 disabled={!!sellLoading}
                 style={{ width: '300px' }}
+                id="close-long-connect-wallet-btn"
               >
                 {'Connect Wallet'}
               </PrimaryButton>
@@ -878,13 +906,19 @@ const CloseLong: React.FC<BuyProps> = () => {
                 onClick={sellAndClose}
                 className={classes.amountInput}
                 disabled={
-                  !!sellLoading || transactionInProgress || !!closeError || !!existingShortError || longSqthBal.isZero()
+                  !!sellLoading ||
+                  transactionInProgress ||
+                  !!closeError ||
+                  !!existingShortError ||
+                  longSqthBal.isZero() ||
+                  sqthTradeAmount === '0'
                 }
                 style={
                   longClosePriceImpactErrorState
                     ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
                     : { width: '300px' }
                 }
+                id="close-long-submit-tx-btn"
               >
                 {sellLoading || transactionInProgress ? (
                   <CircularProgress color="primary" size="1.5rem" />
