@@ -99,6 +99,7 @@ export const useCalculateEthWillingToPay = () => {
       if (!vault) return emptyState
 
       const squeethDebt = await getWsqueethFromCrabAmount(amount, contract)
+      console.log('Debt', squeethDebt?.toString(), amount.toString())
       if (!squeethDebt) return emptyState
 
       const ethWillingToPayQuote = await getBuyQuote(squeethDebt, new BigNumber(slippage))
@@ -232,6 +233,7 @@ export const useFlashWithdraw = () => {
       if (!contract) return
 
       const { maximumAmountIn: _ethWillingToPay } = await calculateEthWillingToPay(amount, slippage)
+      console.log(_ethWillingToPay.toString())
       const ethWillingToPay = fromTokenAmount(_ethWillingToPay, 18)
       const crabAmount = fromTokenAmount(amount, 18)
       return await handleTransaction(
@@ -259,6 +261,7 @@ export const useFlashWithdrawEth = () => {
       if (!contract) return
 
       const equivalentCrab = ethAmount.div(currentEthValue).times(userCrabBalance)
+      console.log(currentEthValue?.toString(), userCrabBalance?.toString(), ethAmount.toString())
       return await flashWithdraw(equivalentCrab, slippage, onTxConfirmed)
     },
     [contract, currentEthValue?.toString(), flashWithdraw, userCrabBalance?.toString()],
