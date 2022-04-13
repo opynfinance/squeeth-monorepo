@@ -291,6 +291,15 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             isWethToken0
         );
 
+        ControllerHelperUtil.checkClosedLp(
+            msg.sender,
+            ControllerHelperDiamondStorage.getAddressAtSlot(0),
+            ControllerHelperDiamondStorage.getAddressAtSlot(6),
+            0,
+            _params.tokenId,
+            _params.liquidityPercentage
+        );
+
         if (wPowerPerpAmountInLp > 0) {
             _exactInFlashSwap(
                 ControllerHelperDiamondStorage.getAddressAtSlot(4),
