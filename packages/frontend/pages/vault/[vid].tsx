@@ -442,9 +442,7 @@ const Component: React.FC = () => {
   )
 
   useEffect(() => {
-    if (vault) {
-      getMaxToMint()
-    }
+    if (vault) getMaxToMint()
   }, [vault, vault?.collateralAmount, vault?.shortAmount])
 
   const addCollat = async (collatAmount: BigNumber) => {
@@ -615,7 +613,7 @@ const Component: React.FC = () => {
       setAction(VaultAction.DEPOSIT_UNI_POSITION)
       updateNftCollateral(BIG_ZERO, BIG_ZERO, 0)
     }
-  }, [isLPDeposited, currentLpNftId, vault])
+  }, [isLPDeposited, currentLpNftId, vault, vault?.collateralAmount, vault?.shortAmount])
 
   return (
     <div>
