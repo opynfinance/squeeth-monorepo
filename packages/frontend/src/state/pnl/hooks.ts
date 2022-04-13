@@ -5,9 +5,10 @@ import { useUpdateAtom } from 'jotai/utils'
 import { useVaultHistoryQuery } from '@hooks/useVaultHistory'
 import { toTokenAmount } from '@utils/calculations'
 import { calcDollarLongUnrealizedpnl, calcDollarShortUnrealizedpnl, calcETHCollateralPnl } from 'src/lib/pnl'
-import { useComputeSwaps, useFirstValidVault, useSwaps } from '../positions/hooks'
+import { useComputeSwaps, useFirstValidVault, useSwaps, useVaultQuery } from '../positions/hooks'
 import {
   buyQuoteAtom,
+  calculatingPNLAtom,
   ethCollateralPnlAtom,
   loadingAtom,
   longGainAtom,
@@ -28,7 +29,9 @@ import useAppEffect from '@hooks/useAppEffect'
 export function useEthCollateralPnl() {
   const { vaultId } = useFirstValidVault()
   const { vaultHistory, loading: vaultHistoryLoading } = useVaultHistoryQuery(vaultId)
-  const { existingCollat, isVaultLoading } = useVaultData(vaultId)
+  const vaultQuery = useVaultQuery(vaultId)
+  const existingCollat = vaultQuery.data?.collateralAmount
+  const isVaultLoading = vaultQuery.loading
 
   const index = useAtomValue(indexAtom)
 
@@ -40,7 +43,8 @@ export function useEthCollateralPnl() {
       if (
         vaultHistory?.length &&
         !index.isZero() &&
-        !existingCollat.isZero() &&
+        existingCollat &&
+        !existingCollat?.isZero() &&
         swapsData?.swaps?.length &&
         !vaultHistoryLoading &&
         !isVaultLoading
@@ -125,6 +129,7 @@ export function useLongUnrealizedPNL() {
   const positionType = useAtomValue(positionTypeAtom)
   const sellQuote = useAtomValue(sellQuoteAtom)
   const [longUnrealizedPNL, setLongUnrealizedPNL] = useAtom(longUnrealizedPNLAtom)
+  const calculatingPNL = useAtomValue(calculatingPNLAtom)
   const index = useAtomValue(indexAtom)
 
   const swapsData = useAtomValue(swapsAtom)
@@ -137,7 +142,8 @@ export function useLongUnrealizedPNL() {
         !sellQuote.amountOut.isZero() &&
         !index.isZero() &&
         !squeethAmount.isZero() &&
-        positionType === PositionType.LONG
+        positionType === PositionType.LONG &&
+        !calculatingPNL
       ) {
         const pnl = await calcDollarLongUnrealizedpnl(
           swaps,
@@ -163,6 +169,7 @@ export function useShortUnrealizedPNL() {
   const buyQuote = useAtomValue(buyQuoteAtom)
   const ethCollateralPnl = useEthCollateralPnl()
   const [shortUnrealizedPNL, setShortUnrealizedPNL] = useAtom(shortUnrealizedPNLAtom)
+  const calculatingPNL = useAtomValue(calculatingPNLAtom)
   const index = useAtomValue(indexAtom)
 
   const { loading: swapsLoading } = useSwaps()
@@ -178,7 +185,8 @@ export function useShortUnrealizedPNL() {
         !ethCollateralPnl.isZero() &&
         !squeethAmount.isZero() &&
         positionType === PositionType.SHORT &&
-        !swapsLoading
+        !swapsLoading &&
+        !calculatingPNL
       ) {
         const pnl = await calcDollarShortUnrealizedpnl(
           swaps,
