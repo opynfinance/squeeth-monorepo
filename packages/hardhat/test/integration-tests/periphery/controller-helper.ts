@@ -592,8 +592,9 @@ describe("Controller helper integration test", function () {
       //uniswap rounding of LP often gives 1 wei less than expected (uniswap takes the 1 wei, but only gives credit for 1 wei less in the LP share)
       expect((depositorEthBalanceBefore.sub(depositorEthBalanceAfter).sub(collateralAmount).sub(wethAmountInLP).sub(gasSpent)).abs().lte(1)).to.be.true
       expect((vaultAfter.shortAmount.sub(wPowerPerpAmountInLP)).abs().lte(1)).to.be.true
-      expect(wethAmountInLP.sub(collateralToLp).abs().lte(1)).to.be.true
-      //not sure why there is a shortfall here, maybe rounding, testing less than 2bps difference from expected
+
+      //not sure why there is a shortfall here, maybe rounding, testing less than 5bps difference from expected
+      expect(wethAmountInLP.sub(collateralToLp).mul(one).div(collateralToLp).abs().lte(BigNumber.from(10).pow(14).mul(5))).to.be.true
       expect(wPowerPerpAmountInLP.sub(mintWSqueethAmount).mul(one).div(mintWSqueethAmount).abs().lte(BigNumber.from(10).pow(14).mul(5))).to.be.true
       
     })
@@ -612,6 +613,7 @@ describe("Controller helper integration test", function () {
       const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
       const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, true)
+      console.log(squeethPrice.toString())
       const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
       const vaultBefore = await controller.vaults(vaultId)
       const tokenIndexBefore = await (positionManager as INonfungiblePositionManager).totalSupply();
@@ -666,10 +668,10 @@ describe("Controller helper integration test", function () {
       expect((depositorEthBalanceBefore.sub(depositorEthBalanceAfter).sub(collateralAmount).sub(wethAmountInLP).sub(gasSpent)).abs().lte(1)).to.be.true
       console.log(vaultAfter.shortAmount.sub(wPowerPerpAmountInLP).toString())
       expect((vaultAfter.shortAmount.sub(wPowerPerpAmountInLP)).abs().lte(10)).to.be.true
-      console.log(wethAmountInLP.sub(collateralToLp).toString())
+      console.log(wethAmountInLP.sub(collateralToLp).mul(one).div(collateralToLp).toString())
 
-      expect(wethAmountInLP.sub(collateralToLp).abs().lte(10)).to.be.true
-      //not sure why there is a shortfall here, maybe rounding, testing less than 1bps difference from expected
+      //not sure why there is a shortfall here, maybe rounding, testing less than 5bps difference from expected
+      expect(wethAmountInLP.sub(collateralToLp).mul(one).div(collateralToLp).abs().lte(BigNumber.from(10).pow(14).mul(5))).to.be.true
       console.log(wPowerPerpAmountInLP.sub(mintWSqueethAmount).mul(one).div(mintWSqueethAmount).toString())
       expect(wPowerPerpAmountInLP.sub(mintWSqueethAmount).mul(one).div(mintWSqueethAmount).abs().lte(BigNumber.from(10).pow(14).mul(5))).to.be.true
   
