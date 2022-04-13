@@ -32,7 +32,6 @@ export const isShortAtom = atom((get) => {
   const positionType = get(positionTypeAtom)
   return positionType === PositionType.SHORT
 })
-export const firstValidVaultAtom = atom(0)
 export const addressesAtom = atom((get) => {
   const networkId = get(networkIdAtom)
   return {
@@ -85,4 +84,5 @@ export const existingLiqPriceAtom = atom(BIG_ZERO)
 export const collatPercentAtom = atom(0)
 export const isVaultLoadingAtom = atom(true)
 export const vaultHistoryUpdatingAtom = atom(false)
+export const vaultManagerPollingAtom = atom(false)
 export const swapsAtom = atom<swaps | swapsRopsten>({ swaps: [] })
