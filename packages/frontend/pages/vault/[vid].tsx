@@ -611,11 +611,11 @@ const Component: React.FC = () => {
   const isLPDeposited = currentLpNftId !== 0
 
   useEffect(() => {
-    if (isLPDeposited && !!currentLpNftId) {
+    if (isLPDeposited && !!currentLpNftId && vault) {
       setAction(VaultAction.DEPOSIT_UNI_POSITION)
       updateNftCollateral(BIG_ZERO, BIG_ZERO, 0)
     }
-  }, [isLPDeposited, currentLpNftId])
+  }, [isLPDeposited, currentLpNftId, vault])
 
   return (
     <div>
