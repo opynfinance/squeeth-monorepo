@@ -82,7 +82,7 @@ export const useHandleTransaction = () => {
 
       return tx
     },
-    [networkId, notify, refetch],
+    [networkId, notify, refetch, setTransactionData],
   )
 
   return handleTransaction

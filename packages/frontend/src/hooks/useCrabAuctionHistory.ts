@@ -1,5 +1,4 @@
 import { useQuery } from '@apollo/client'
-import BigNumber from 'bignumber.js'
 import { useAtomValue } from 'jotai'
 
 import { crabAuctions } from '../queries/squeeth/__generated__/crabAuctions'
@@ -7,7 +6,6 @@ import CRAB_AUCTION_QUERY from '../queries/squeeth/crabAuctionQuery'
 import { toTokenAmount } from '@utils/calculations'
 import { WETH_DECIMALS, OSQUEETH_DECIMALS } from '../constants'
 import { squeethClient } from '@utils/apollo-client'
-import { CrabStrategyTxType } from '../types/index'
 import { networkIdAtom } from 'src/state/wallet/atoms'
 
 export const useCrabStrategyTxHistory = () => {

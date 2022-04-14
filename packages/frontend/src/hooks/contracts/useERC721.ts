@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 import { useAtomValue } from 'jotai'
 
 import erc721Abi from '../../abis/erc721.json'
 import { useHandleTransaction } from 'src/state/wallet/hooks'
 import { addressAtom, web3Atom } from 'src/state/wallet/atoms'
+import useAppEffect from '@hooks/useAppEffect'
 
 export const useERC721 = (token: string) => {
   const [contract, setContract] = useState<Contract>()
@@ -13,7 +14,7 @@ export const useERC721 = (token: string) => {
   const web3 = useAtomValue(web3Atom)
   const address = useAtomValue(addressAtom)
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (!web3 || !token) return
     setContract(new web3.eth.Contract(erc721Abi as any, token))
   }, [web3, token])
