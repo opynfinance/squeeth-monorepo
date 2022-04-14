@@ -845,12 +845,6 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
     getBuyQuote(amount, slippageAmount, 'initial effect').then(setSellCloseQuote)
   }, [amount, slippageAmount, getBuyQuote, setSellCloseQuote])
 
-  useEffect(() => {
-    if (!amount.isZero() && sellCloseQuote.amountIn.isZero()) {
-      getBuyQuote(amount, slippageAmount, 'fallback effect').then(setSellCloseQuote)
-    }
-  }, [sellCloseQuote.amountIn.isZero(), amount.toString(), slippageAmount.toString(), getBuyQuote, setSellCloseQuote])
-
   useAppEffect(() => {
     if (finalShortAmount.isGreaterThan(0)) {
       setSqthTradeAmount(finalShortAmount.toString())
