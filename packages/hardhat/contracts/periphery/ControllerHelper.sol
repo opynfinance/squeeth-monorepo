@@ -93,7 +93,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) == msg.sender
         );
         require(_params.maxToPay <= _params.collateralToWithdraw.add(msg.value));
-
         _exactOutFlashSwap(
             ControllerHelperDiamondStorage.getAddressAtSlot(5),
             ControllerHelperDiamondStorage.getAddressAtSlot(4),
@@ -121,13 +120,11 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) ==
                     msg.sender
             );
-
         IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).transferFrom(
             msg.sender,
             address(this),
             _params.wPowerPerpAmountToSell
         );
-
         // flashswap and mint short position
         _exactInFlashSwap(
             ControllerHelperDiamondStorage.getAddressAtSlot(4),
@@ -138,7 +135,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             uint8(ControllerHelperDataType.CALLBACK_SOURCE.FLASH_SELL_LONG_W_MINT),
             abi.encode(_params)
         );
-
         payable(msg.sender).sendValue(address(this).balance);
     }
 
@@ -564,8 +560,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).deposit{value: _amount}(vaultId);
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).withdrawUniPositionToken(vaultId);
 
-            console.log("vaultId", vaultId);
-
             for (uint256 i; i < data.length; i++) {
                 if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.IncreaseLpLiquidity
@@ -727,7 +721,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 _callData,
                 (ControllerHelperDataType.FlashswapWBurnBuyLongParams)
             );
-
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).burnWPowerPerpAmount(
                 data.vaultId,
                 data.wPowerPerpAmountToBurn,
