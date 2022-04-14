@@ -231,7 +231,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
       collatPercent / 100,
       slippageAmount,
     )
-    setSqthTradeAmount(squeethAmount.toFixed(6))
+    setSqthTradeAmount(squeethAmount.isZero() ? squeethAmount.toString() : squeethAmount.toFixed(6))
     setMinToReceive(ethBorrow)
     setQuote(quote)
     if (!squeethAmount.isZero()) {
@@ -314,6 +314,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
               }}
               className={classes.amountInput}
               style={{ width: '300px' }}
+              id="open-short-close-btn"
             >
               {'Close'}
             </PrimaryButton>
@@ -339,7 +340,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
       ) : (
         <>
           <div className={classes.settingsContainer}>
-            <Typography variant="caption" className={classes.explainer} component="div">
+            <Typography variant="caption" className={classes.explainer} id="open-short-header-box" component="div">
               Mint & sell squeeth for premium
             </Typography>
             <span className={classes.settingsButton}>
@@ -368,17 +369,22 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
                   priceImpactWarning
                 ) : (
                   <div className={classes.hint}>
-                    <span>{`Balance ${balance.toFixed(4)}`}</span>
+                    <span>
+                      Balance <span id="open-short-eth-before-trade-balance">{balance.toFixed(4)}</span>{' '}
+                    </span>
                     {!collateral.isNaN() ? (
                       <>
                         <ArrowRightAltIcon className={classes.arrowIcon} />
-                        <span>{new BigNumber(balance).minus(collateral).toFixed(4)}</span>
+                        <span id="open-short-eth-post-trade-balance">
+                          {new BigNumber(balance).minus(collateral).toFixed(4)}
+                        </span>
                       </>
                     ) : null}
                     <span style={{ marginLeft: '4px' }}>ETH</span>
                   </div>
                 )
               }
+              id="open-short-eth-input"
             />
             <div className={classes.thirdHeading}>
               <TextField
@@ -416,6 +422,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
             />
             <PrimaryInput
               name="sqth"
+              id="open-short-sqth-input"
               value={sqthTradeAmount}
               onChange={(val) => {
                 setSqthTradeAmount(val)
@@ -432,18 +439,21 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
                   <div className={classes.hint}>
                     <span className={classes.hintTextContainer}>
                       <span className={classes.hintTitleText}>Position</span>
-                      <span>{shortSqueethAmount.toFixed(4)}</span>
+                      <span id="open-short-osqth-before-trade-balance">{shortSqueethAmount.toFixed(4)}</span>
                     </span>
                     {quote.amountOut.gt(0) ? (
                       <>
                         <ArrowRightAltIcon className={classes.arrowIcon} />
-                        <span>{shortSqueethAmount.plus(amount).toFixed(4)}</span>
+                        <span id="open-short-osqth-post-trade-balance">
+                          {shortSqueethAmount.plus(amount).toFixed(4)}
+                        </span>
                       </>
                     ) : null}{' '}
                     <span style={{ marginLeft: '4px' }}>oSQTH</span>
                   </div>
                 )
               }
+              // id="open-short-trade-details"
             />
             <div className={classes.divider}>
               <TradeInfoItem
@@ -452,18 +462,21 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
                 unit="USDC"
                 tooltip={`${Tooltips.LiquidationPrice}. ${Tooltips.Twap}`}
                 priceType="twap"
+                id="open-short-liquidation-price"
               />
               <TradeInfoItem
                 label="Initial Premium"
                 value={quote.amountOut.toFixed(4)}
                 unit="ETH"
                 tooltip={Tooltips.InitialPremium}
+                id="open-short-initial-preminum"
               />
               <TradeInfoItem
                 label="Current Collateral ratio"
                 value={existingCollatPercent}
                 unit="%"
                 tooltip={Tooltips.CurrentCollRatio}
+                id="open-short-collat-ratio"
               />
               <div style={{ marginTop: '10px' }}>
                 <UniswapData
@@ -480,6 +493,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
                 // onClick={selectWallet}
                 className={classes.amountInput}
                 // style={{ width: '300px' }}
+                id="open-short-connect-wallet-btn"
               >
                 Connect Wallet
               </PrimaryButton>
@@ -501,6 +515,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
                     ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
                     : { width: '300px' }
                 }
+                id="open-short-submit-tx-btn"
               >
                 {shortLoading ? (
                   <CircularProgress color="primary" size="1.5rem" />
