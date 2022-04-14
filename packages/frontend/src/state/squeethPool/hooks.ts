@@ -2,7 +2,7 @@ import { Contract } from 'web3-eth-contract'
 import { Token, CurrencyAmount } from '@uniswap/sdk-core'
 import { Pool, Route, Trade } from '@uniswap/v3-sdk'
 import { useUpdateAtom, useResetAtom } from 'jotai/utils'
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useState } from 'react'
 import { useAtomValue } from 'jotai'
 import BigNumber from 'bignumber.js'
 import { ethers } from 'ethers'
@@ -23,8 +23,9 @@ import {
   squeethPriceeAtom,
   readyAtom,
 } from './atoms'
-import { transactionHashAtom } from '../trade/atoms'
 import { swapRouterContractAtom, squeethPoolContractAtom } from '../contracts/atoms'
+import { getContract } from '@utils/getContract'
+import uniABI from '../../abis/uniswapPool.json'
 
 const getImmutables = async (squeethContract: Contract) => {
   const [token0, token1, fee, tickSpacing, maxLiquidityPerTick] = await Promise.all([
@@ -197,10 +198,56 @@ export const useGetWSqueethPositionValueInETH = () => {
   return getWSqueethPositionValueInETH
 }
 
+export const useSqueethPoolData = () => {
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
+  const networkId = useAtomValue(networkIdAtom)
+  const web3 = useAtomValue(web3Atom)
+  const { squeethPool } = useAtomValue(addressesAtom)
+  const contract = getContract(web3, squeethPool, uniABI)
+  const [pool, setPool] = useState<Pool | null>(null)
+  const [wethToken, setWethToken] = useState<Token | null>(null)
+  const [squeethToken, setSqueethToken] = useState<Token | null>(null)
+
+  const { ticks } = useUniswapTicks()
+  useEffect(() => {
+    ;(async () => {
+      const [{ token0, token1, fee }, state] = await Promise.all([getImmutables(contract!), getPoolState(contract!)])
+      const TokenA = new Token(
+        networkId,
+        token0,
+        isWethToken0 ? 18 : OSQUEETH_DECIMALS,
+        isWethToken0 ? 'WETH' : 'SQE',
+        isWethToken0 ? 'Wrapped Ether' : 'oSqueeth',
+      )
+      const TokenB = new Token(
+        networkId,
+        token1,
+        isWethToken0 ? OSQUEETH_DECIMALS : 18,
+        isWethToken0 ? 'SQE' : 'WETH',
+        isWethToken0 ? 'oSqueeth' : 'Wrapped Ether',
+      )
+
+      const pool = new Pool(
+        TokenA,
+        TokenB,
+        Number(fee),
+        state.sqrtPriceX96.toString(),
+        state.liquidity.toString(),
+        Number(state.tick),
+        ticks || [],
+      )
+
+      setPool(pool)
+      setWethToken(isWethToken0 ? TokenA : TokenB)
+      setSqueethToken(isWethToken0 ? TokenB : TokenA)
+    })()
+  }, [isWethToken0, networkId, ticks?.length, contract.options.address])
+
+  return { pool, squeethToken, wethToken }
+}
+
 export const useGetBuyQuote = () => {
-  const pool = useAtomValue(poolAtom)
-  const wethToken = useAtomValue(wethTokenAtom)
-  const squeethToken = useAtomValue(squeethTokenAtom)
+  const { pool, squeethToken, wethToken } = useSqueethPoolData()
   //If I input an exact amount of squeeth I want to buy, tells me how much ETH I need to pay to purchase that squeeth
   const getBuyQuote = useCallback(
     async (squeethAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE), detail = '') => {
