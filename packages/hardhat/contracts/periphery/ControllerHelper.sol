@@ -106,7 +106,10 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             abi.encode(_params)
         );
 
-        payable(msg.sender).sendValue(address(this).balance);
+        ControllerHelperUtil.sendBack(
+            ControllerHelperDiamondStorage.getAddressAtSlot(5),
+            ControllerHelperDiamondStorage.getAddressAtSlot(4)
+        );
     }
 
     /**
@@ -140,7 +143,10 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             uint8(ControllerHelperDataType.CALLBACK_SOURCE.FLASH_SELL_LONG_W_MINT),
             abi.encode(_params)
         );
-        payable(msg.sender).sendValue(address(this).balance);
+        ControllerHelperUtil.sendBack(
+            ControllerHelperDiamondStorage.getAddressAtSlot(5),
+            ControllerHelperDiamondStorage.getAddressAtSlot(4)
+        );
     }
 
     /**
@@ -189,7 +195,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             _params.collateralToWithdraw,
             _params.limitPriceEthPerPowerPerp
         );
-        wrapInternal(_params.collateralToWithdraw);
+        wrapInternal(address(this).balance);
 
         ControllerHelperUtil.sendBack(
             ControllerHelperDiamondStorage.getAddressAtSlot(5),
@@ -734,14 +740,21 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 _callData,
                 (ControllerHelperDataType.FlashswapWBurnBuyLongParams)
             );
-            IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).burnWPowerPerpAmount(
+            // IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).burnWPowerPerpAmount(
+            //     data.vaultId,
+            //     data.wPowerPerpAmountToBurn,
+            //     data.collateralToWithdraw
+            // );
+
+            ControllerHelperUtil.withdrawFromVault(
+                ControllerHelperDiamondStorage.getAddressAtSlot(0),
+                ControllerHelperDiamondStorage.getAddressAtSlot(5),
                 data.vaultId,
                 data.wPowerPerpAmountToBurn,
                 data.collateralToWithdraw
             );
 
-
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: _amountToPay}();
+            // IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: _amountToPay}();
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).transfer(
                 ControllerHelperDiamondStorage.getAddressAtSlot(3),
                 _amountToPay
