@@ -473,9 +473,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         uint8 _callSource,
         bytes memory _calldata
     ) internal override {
-        // convert flashloaned WETH to ETH
-        // IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).withdraw(_amount);
-
         if (
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.FLASHLOAN_W_MINT_DEPOSIT_NFT
