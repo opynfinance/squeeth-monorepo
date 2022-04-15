@@ -71,7 +71,9 @@ library ControllerHelperUtil {
      * @param _isWethToken0 bool variable indicate if Weth token is token0 in Uniswap v3 weth/wPowerPerp pool
      * @return _vaultId and tokenId
      */
-    function mintAndLp(address _controller, address _nonfungiblePositionManager, address _wPowerPerp, address _wPowerPerpPool, ControllerHelperDataType.MintAndLpParams calldata _mintAndLpParams, bool _isWethToken0) public returns (uint256, uint256) {
+    function mintAndLp(address _controller, address _nonfungiblePositionManager, address _wPowerPerp, address _wPowerPerpPool, address _weth, ControllerHelperDataType.MintAndLpParams calldata _mintAndLpParams, bool _isWethToken0) public returns (uint256, uint256) {
+        IWETH9(_weth).withdraw(_mintAndLpParams.collateralToDeposit);
+        
         uint256 _vaultId = IController(_controller).mintWPowerPerpAmount{value: _mintAndLpParams.collateralToDeposit}(
             _mintAndLpParams.vaultId,
             _mintAndLpParams.wPowerPerpAmount,
@@ -192,7 +194,11 @@ library ControllerHelperUtil {
             deadline: block.timestamp
         });
 
-        (uint256 tokenId, , , ) = INonfungiblePositionManager(_nonfungiblePositionManager).mint{value: _params.ethAmount}(
+        // (uint256 tokenId, , , ) = INonfungiblePositionManager(_nonfungiblePositionManager).mint{value: _params.ethAmount}(
+        //     mintParams
+        // );
+
+        (uint256 tokenId, , , ) = INonfungiblePositionManager(_nonfungiblePositionManager).mint(
             mintParams
         );
 
