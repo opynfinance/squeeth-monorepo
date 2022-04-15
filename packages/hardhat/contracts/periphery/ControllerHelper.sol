@@ -199,7 +199,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             _params.collateralToWithdraw,
             _params.limitPriceEthPerPowerPerp
         );
-        wrapInternal(_params.collateralToWithdraw);
+        wrapInternal(address(this).balance);
 
         ControllerHelperUtil.sendBack(
             ControllerHelperDiamondStorage.getAddressAtSlot(5),
