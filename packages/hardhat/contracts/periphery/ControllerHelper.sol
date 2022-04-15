@@ -450,9 +450,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         uint8 _callSource,
         bytes memory _calldata
     ) internal override {
-        // convert flashloaned WETH to ETH
-        // IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).withdraw(_amount);
-
         if (
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.FLASHLOAN_W_MINT_DEPOSIT_NFT
@@ -493,12 +490,20 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             );
 
             // remove flashloan amount in ETH from vault + any amount of collateral user want to withdraw (sum <= vault.collateralAmount)
-            IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).withdraw(
+            // IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).withdraw(
+            //     vaultId,
+            //     _amount.add(data.collateralToWithdraw)
+            // );
+            ControllerHelperUtil.withdrawFromVault(
+                ControllerHelperDiamondStorage.getAddressAtSlot(0),
+                ControllerHelperDiamondStorage.getAddressAtSlot(5),
                 vaultId,
+                0,
                 _amount.add(data.collateralToWithdraw)
             );
+
             // convert flashloaned amount + fee from ETH to WETH to prepare for payback
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: _amount.add(data.collateralToWithdraw)}();
+            // IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: _amount.add(data.collateralToWithdraw)}();
 
             // if openeded new vault, transfer vault NFT to user
             if (data.vaultId == 0)
@@ -646,6 +651,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
 
                     ControllerHelperUtil.withdrawFromVault(
                         ControllerHelperDiamondStorage.getAddressAtSlot(0),
+                        ControllerHelperDiamondStorage.getAddressAtSlot(5),
                         vaultId,
                         withdrawFromVaultParams.wPowerPerpToBurn,
                         withdrawFromVaultParams.collateralToWithdraw
@@ -733,6 +739,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 data.wPowerPerpAmountToBurn,
                 data.collateralToWithdraw
             );
+
+
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: _amountToPay}();
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).transfer(
                 ControllerHelperDiamondStorage.getAddressAtSlot(3),

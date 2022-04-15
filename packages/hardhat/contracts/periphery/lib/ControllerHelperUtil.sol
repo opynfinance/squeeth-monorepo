@@ -151,16 +151,19 @@ library ControllerHelperUtil {
     /**
      * @notice burn wPowerPerp or just withdraw collateral from vault (or both)
      * @param _controller controller address
+     * @param _weth weth address
      * @param _vaultId vault Id
      * @param _wPowerPerpToBurn amount of wPowerPerp to burn
      * @param _collateralToWithdraw amount of collateral to withdraw
      */
-    function withdrawFromVault(address _controller, uint256 _vaultId, uint256 _wPowerPerpToBurn, uint256 _collateralToWithdraw) public {
+    function withdrawFromVault(address _controller, address _weth, uint256 _vaultId, uint256 _wPowerPerpToBurn, uint256 _collateralToWithdraw) public {
         IController(_controller).burnWPowerPerpAmount(
             _vaultId,
             _wPowerPerpToBurn,
             _collateralToWithdraw
         );
+
+        if (_collateralToWithdraw > 0) IWETH9(_weth).deposit{_collateralToWithdraw}();
     }
 
     /**
