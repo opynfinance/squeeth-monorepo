@@ -163,7 +163,7 @@ library ControllerHelperUtil {
             _collateralToWithdraw
         );
 
-        if (_collateralToWithdraw > 0) IWETH9(_weth).deposit{_collateralToWithdraw}();
+        if (_collateralToWithdraw > 0) IWETH9(_weth).deposit{value: _collateralToWithdraw}();
     }
 
     /**
