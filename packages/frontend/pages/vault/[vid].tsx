@@ -148,6 +148,7 @@ const useStyles = makeStyles((theme) =>
       borderRadius: theme.spacing(1),
       marginLeft: 'auto',
       marginRight: 'auto',
+      marginTop: theme.spacing(2),
       marginBottom: theme.spacing(2),
       padding: theme.spacing(1),
     },
@@ -312,12 +313,14 @@ const Component: React.FC = () => {
   const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
   const [collateral, setCollateral] = useState('0')
+  const [lpNftCollatPercent, setLpNftCollatPercent] = useState(0)
   const collateralBN = new BigNumber(collateral)
   const [shortAmount, setShortAmount] = useState('0')
   const shortAmountBN = new BigNumber(shortAmount)
   const [maxToMint, setMaxToMint] = useState(new BigNumber(0))
   const [twapEthPrice, setTwapEthPrice] = useState(new BigNumber(0))
   const [newLiqPrice, setNewLiqPrice] = useState(new BigNumber(0))
+  const [newLpNftLiqPrice, setNewLpNftLiqPrice] = useState(new BigNumber(0))
   const [action, setAction] = useState(VaultAction.ADD_COLLATERAL)
   const [txLoading, setTxLoading] = useState(false)
   const [uniTokenToDeposit, setUniTokenToDeposit] = useState(0)
@@ -331,6 +334,23 @@ const Component: React.FC = () => {
     })
   }, [getTwapEthPrice])
 
+  const updateNftCollateral = async (
+    collatAmountToUpdate: BigNumber,
+    shortAmountToUpdate: BigNumber,
+    lpNftIdToManage: number,
+  ) => {
+    if (!vault) return
+
+    const { collateralPercent: cp, liquidationPrice: lp } = await getCollatRatioAndLiqPrice(
+      collatAmountToUpdate.plus(vault.collateralAmount),
+      shortAmountToUpdate.plus(vault.shortAmount),
+      lpNftIdToManage, // 0 means to simulate the removal of lp nft
+    )
+
+    setNewLpNftLiqPrice(lp)
+    setLpNftCollatPercent(cp)
+  }
+
   const updateCollateral = async (collatAmount: string) => {
     setCollateral(collatAmount)
     if (!vault) return
@@ -339,7 +359,7 @@ const Component: React.FC = () => {
     const { collateralPercent: cp, liquidationPrice: lp } = await getCollatRatioAndLiqPrice(
       collatAmountBN.plus(vault.collateralAmount), // Get liquidation price and collatPercent for total collat after tx happens
       vault.shortAmount,
-      lpNftId,
+      currentLpNftId,
     )
     setNewLiqPrice(lp)
     setCollatPercent(cp)
@@ -354,12 +374,13 @@ const Component: React.FC = () => {
     const debt = await getDebtAmount(vault.shortAmount)
     let lpCollatPercent = BIG_ZERO
     // If NFT is deposited, Collateral amount from LP NFT should not be included. So target collat % - lp collat % will give actual collat to remove
-    if (lpNftId) {
-      const { collateral: uniCollat } = await getUniNFTCollatDetail(lpNftId)
+    if (currentLpNftId) {
+      const { collateral: uniCollat } = await getUniNFTCollatDetail(currentLpNftId)
       lpCollatPercent = uniCollat.div(debt).times(100)
     }
     const newCollat = new BigNumber(percent).minus(lpCollatPercent).times(debt).div(100)
-    const { liquidationPrice: lp } = await getCollatRatioAndLiqPrice(newCollat, vault.shortAmount, lpNftId)
+
+    const { liquidationPrice: lp } = await getCollatRatioAndLiqPrice(newCollat, vault.shortAmount, currentLpNftId)
     setNewLiqPrice(lp)
     setCollateral(newCollat.minus(vault.collateralAmount).toString())
   }
@@ -372,8 +393,9 @@ const Component: React.FC = () => {
     const { collateralPercent: cp, liquidationPrice: lp } = await getCollatRatioAndLiqPrice(
       vault.collateralAmount,
       shortAmountBN.plus(vault.shortAmount),
-      lpNftId,
+      currentLpNftId,
     )
+
     setNewLiqPrice(lp)
     setCollatPercent(cp)
     setAction(shortAmountBN.isPositive() ? VaultAction.MINT_SQUEETH : VaultAction.BURN_SQUEETH)
@@ -384,15 +406,16 @@ const Component: React.FC = () => {
     if (!vault) return
 
     let lpNftCollat = BIG_ZERO
-    if (lpNftId) {
-      const { collateral: nftCollat } = await getUniNFTCollatDetail(lpNftId)
+    if (currentLpNftId) {
+      const { collateral: nftCollat } = await getUniNFTCollatDetail(currentLpNftId)
       lpNftCollat = nftCollat
     }
     const debt = vault.collateralAmount.plus(lpNftCollat).times(100).div(percent)
     const _shortAmt = await getShortAmountFromDebt(debt)
     setShortAmount(_shortAmt.minus(vault.shortAmount).toString())
     setAction(percent < existingCollatPercent ? VaultAction.MINT_SQUEETH : VaultAction.BURN_SQUEETH)
-    const { liquidationPrice: lp } = await getCollatRatioAndLiqPrice(vault.collateralAmount, _shortAmt, lpNftId)
+    const { liquidationPrice: lp } = await getCollatRatioAndLiqPrice(vault.collateralAmount, _shortAmt, currentLpNftId)
+
     setNewLiqPrice(lp)
   }
 
@@ -405,6 +428,7 @@ const Component: React.FC = () => {
   const updateUniLPTokenInput = useCallback(
     async (input: number) => {
       setUniTokenToDeposit(input)
+      updateNftCollateral(BIG_ZERO, BIG_ZERO, input)
       if (!input) return
 
       const approvedAddress: string = await getApproved(input)
@@ -419,7 +443,7 @@ const Component: React.FC = () => {
 
   useEffect(() => {
     if (vault) getMaxToMint()
-  }, [vault, vault?.collateralAmount])
+  }, [vault, vault?.collateralAmount, vault?.shortAmount])
 
   const addCollat = async (collatAmount: BigNumber) => {
     if (!vault) return
@@ -427,7 +451,8 @@ const Component: React.FC = () => {
     setTxLoading(true)
     try {
       await depositCollateral(vault.id, collatAmount)
-      updateVault()
+      await updateVault()
+      updateNftCollateral(BIG_ZERO, BIG_ZERO, currentLpNftId)
     } catch (e) {
       console.log(e)
     }
@@ -440,7 +465,8 @@ const Component: React.FC = () => {
     setTxLoading(true)
     try {
       await withdrawCollateral(vault.id, collatAmount.abs())
-      updateVault()
+      await updateVault()
+      updateNftCollateral(BIG_ZERO, BIG_ZERO, currentLpNftId)
     } catch (e) {
       console.log(e)
     }
@@ -453,7 +479,8 @@ const Component: React.FC = () => {
     setTxLoading(true)
     try {
       await openDepositAndMint(vault.id, sAmount, new BigNumber(0))
-      updateVault()
+      await updateVault()
+      updateNftCollateral(BIG_ZERO, BIG_ZERO, currentLpNftId)
     } catch (e) {
       console.log(e)
     }
@@ -466,7 +493,8 @@ const Component: React.FC = () => {
     setTxLoading(true)
     try {
       await burnAndRedeem(vault.id, sAmount.abs(), new BigNumber(0))
-      updateVault()
+      await updateVault()
+      updateNftCollateral(BIG_ZERO, BIG_ZERO, currentLpNftId)
     } catch (e) {
       console.log(e)
     }
@@ -480,7 +508,7 @@ const Component: React.FC = () => {
     try {
       await depositUniPositionToken(vault.id, tokenId)
       setAction(VaultAction.WITHDRAW_UNI_POSITION)
-      updateVault()
+      await updateVault()
     } catch (e) {
       console.log(e)
     }
@@ -494,8 +522,10 @@ const Component: React.FC = () => {
     setAction(VaultAction.WITHDRAW_UNI_POSITION)
     try {
       await withdrawUniPositionToken(vault.id)
-      updateVault()
-      setAction(VaultAction.DEPOSIT_UNI_POSITION)
+      await updateVault()
+      // reset to default action, shld check if this nft got approved with history
+      // cuz now there is no nft selected
+      setAction(VaultAction.ADD_COLLATERAL)
     } catch (e) {
       console.log(e)
     }
@@ -517,6 +547,18 @@ const Component: React.FC = () => {
 
   const isCollatAction = useMemo(() => {
     return action === VaultAction.ADD_COLLATERAL || action === VaultAction.REMOVE_COLLATERAL
+  }, [action])
+
+  const isDebtAction = useMemo(() => {
+    return action === VaultAction.MINT_SQUEETH || action === VaultAction.BURN_SQUEETH
+  }, [action])
+
+  const isLPNFTAction = useMemo(() => {
+    return (
+      action === VaultAction.APPROVE_UNI_POSITION ||
+      action === VaultAction.DEPOSIT_UNI_POSITION ||
+      action === VaultAction.WITHDRAW_UNI_POSITION
+    )
   }, [action])
 
   const { adjustAmountError, adjustCollatError } = useMemo(() => {
@@ -564,8 +606,15 @@ const Component: React.FC = () => {
     },
   )
 
-  const lpNftId = Number(vault?.NFTCollateralId)
-  const isLPDeposited = lpNftId !== 0
+  const currentLpNftId = Number(vault?.NFTCollateralId)
+  const isLPDeposited = currentLpNftId !== 0
+
+  useEffect(() => {
+    if (isLPDeposited && !!currentLpNftId && vault) {
+      setAction(VaultAction.DEPOSIT_UNI_POSITION)
+      updateNftCollateral(BIG_ZERO, BIG_ZERO, 0)
+    }
+  }, [isLPDeposited, currentLpNftId, vault, vault?.collateralAmount, vault?.shortAmount])
 
   return (
     <div>
@@ -782,7 +831,7 @@ const Component: React.FC = () => {
                       onChange={(event) => updateCollatPercent(Number(event.target.value))}
                       value={isCollatAction ? collatPercent : existingCollatPercent}
                       id="filled-basic"
-                      label="Ratio"
+                      label="Collateral Ratio"
                       variant="outlined"
                       // error={collatPercent < 150}
                       // helperText={`Balance ${toTokenAmount(balance, 18).toFixed(4)} ETH`}
@@ -903,9 +952,9 @@ const Component: React.FC = () => {
                         type="number"
                         style={{ width: '100%', marginRight: '4px' }}
                         onChange={(event) => updateDebtForCollatPercent(Number(event.target.value))}
-                        value={!isCollatAction ? collatPercent : existingCollatPercent}
+                        value={isDebtAction ? collatPercent : existingCollatPercent}
                         id="filled-basic"
-                        label="Ratio"
+                        label="Collateral Ratio"
                         variant="outlined"
                         InputProps={{
                           endAdornment: (
@@ -920,7 +969,7 @@ const Component: React.FC = () => {
                         className="debt-collat-perct"
                       />
                       <CollatRange
-                        collatValue={!isCollatAction ? collatPercent : existingCollatPercent}
+                        collatValue={isDebtAction ? collatPercent : existingCollatPercent}
                         onCollatValueChange={updateDebtForCollatPercent}
                       />
                     </div>
@@ -928,7 +977,7 @@ const Component: React.FC = () => {
                   <div className={classes.txDetails}>
                     <TradeInfoItem
                       label="New liquidation price"
-                      value={!isCollatAction ? (newLiqPrice || 0).toFixed(2) : '0'}
+                      value={isDebtAction ? (newLiqPrice || 0).toFixed(2) : '0'}
                       frontUnit="$"
                       id="debt-new-liqp"
                     />
@@ -991,6 +1040,40 @@ const Component: React.FC = () => {
                       />
                     )}
                   </div>
+                  {currentLpNftId || isLPNFTAction ? (
+                    <>
+                      <div className={classes.collatContainer}>
+                        <TextField
+                          size="small"
+                          type="number"
+                          style={{ width: '100%', marginRight: '4px' }}
+                          onChange={(event) => updateCollatPercent(Number(event.target.value))}
+                          value={lpNftCollatPercent}
+                          id="filled-basic"
+                          label="New Collateral Ratio"
+                          variant="outlined"
+                          disabled={true}
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <Typography variant="caption">%</Typography>
+                              </InputAdornment>
+                            ),
+                          }}
+                          inputProps={{
+                            min: '0',
+                          }}
+                        />
+                      </div>
+                      <div className={classes.txDetails}>
+                        <TradeInfoItem
+                          label="New liquidation price"
+                          value={(newLpNftLiqPrice ?? 0).toFixed(2)}
+                          frontUnit="$"
+                        />
+                      </div>
+                    </>
+                  ) : null}
                   <div className={classes.managerActions} style={{ marginTop: '16px' }}>
                     {isLPDeposited ? (
                       <RemoveButton
