@@ -256,7 +256,10 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 vaultId
             );
 
-        payable(msg.sender).sendValue(address(this).balance);
+        ControllerHelperUtil.sendBack(
+            ControllerHelperDiamondStorage.getAddressAtSlot(5),
+            ControllerHelperDiamondStorage.getAddressAtSlot(4)
+        );
     }
 
     /**
