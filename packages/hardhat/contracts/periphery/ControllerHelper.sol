@@ -95,7 +95,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         require(_params.maxToPay <= _params.collateralToWithdraw.add(msg.value));
 
         wrapInternal(msg.value);
-        
+
         _exactOutFlashSwap(
             ControllerHelperDiamondStorage.getAddressAtSlot(5),
             ControllerHelperDiamondStorage.getAddressAtSlot(4),
@@ -273,7 +273,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) ==
                     msg.sender
             );
-        
+
         wrapInternal(msg.value);
         _flashLoan(
             ControllerHelperDiamondStorage.getAddressAtSlot(5),
