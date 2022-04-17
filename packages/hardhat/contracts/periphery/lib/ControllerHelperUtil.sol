@@ -140,7 +140,9 @@ library ControllerHelperUtil {
      * @param __wPowerPerpToMint amount of wPowerPerp to mint
      * @param _collateralToDeposit amount of collateral to deposit
      */
-    function mintIntoVault(address _controller, uint256 _vaultId, uint256 __wPowerPerpToMint, uint256 _collateralToDeposit) public returns (uint256) {
+    function mintIntoVault(address _controller, address _weth, uint256 _vaultId, uint256 __wPowerPerpToMint, uint256 _collateralToDeposit) public returns (uint256) {
+        IWETH9(_weth).withdraw(_collateralToDeposit);
+
         return (IController(_controller).mintWPowerPerpAmount{value: _collateralToDeposit}(
             _vaultId,
             __wPowerPerpToMint,
@@ -196,10 +198,6 @@ library ControllerHelperUtil {
             recipient: _params.recipient,
             deadline: block.timestamp
         });
-
-        // (uint256 tokenId, , , ) = INonfungiblePositionManager(_nonfungiblePositionManager).mint{value: _params.ethAmount}(
-        //     mintParams
-        // );
 
         (uint256 tokenId, , , ) = INonfungiblePositionManager(_nonfungiblePositionManager).mint(
             mintParams
