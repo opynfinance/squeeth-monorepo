@@ -573,7 +573,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 (uint256, ControllerHelperDataType.RebalanceVaultNftParams[])
             );
 
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).withdraw(_amount);
             // deposit collateral into vault and withdraw LP NFT
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).withdraw(_amount);
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).deposit{value: _amount}(vaultId);
