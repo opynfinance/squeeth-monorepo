@@ -569,8 +569,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 (uint256, ControllerHelperDataType.RebalanceVaultNftParams[])
             );
 
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).withdraw(_amount);
             // deposit collateral into vault and withdraw LP NFT
+            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).withdraw(_amount);
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).deposit{value: _amount}(vaultId);
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).withdrawUniPositionToken(vaultId);
 
@@ -578,11 +578,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.IncreaseLpLiquidity
                 ) {
-                    // if (address(this).balance > 0)
-                    //     IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{
-                    //         value: address(this).balance
-                    //     }();
-
                     // increase liquidity in LP position, this can mint wPowerPerp and increase
                     ControllerHelperDataType.IncreaseLpLiquidityParam memory increaseLiquidityParam = abi.decode(
                         data[i].data,
@@ -705,10 +700,13 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             }
 
             // remove flashloan amount in ETH from vault + any amount of collateral user want to withdraw (sum <= vault.collateralAmount)
-            IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).withdraw(vaultId, _amount);
-
-            // convert flashloaned amount + fee from ETH to WETH to prepare for payback
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: _amount}();
+            ControllerHelperUtil.withdrawFromVault(
+                ControllerHelperDiamondStorage.getAddressAtSlot(0),
+                ControllerHelperDiamondStorage.getAddressAtSlot(5),
+                vaultId,
+                0,
+                _amount
+            );
         }
     }
 
@@ -737,11 +735,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 _callData,
                 (ControllerHelperDataType.FlashswapWBurnBuyLongParams)
             );
-            // IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).burnWPowerPerpAmount(
-            //     data.vaultId,
-            //     data.wPowerPerpAmountToBurn,
-            //     data.collateralToWithdraw
-            // );
 
             ControllerHelperUtil.withdrawFromVault(
                 ControllerHelperDiamondStorage.getAddressAtSlot(0),
@@ -751,7 +744,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 data.collateralToWithdraw
             );
 
-            // IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: _amountToPay}();
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).transfer(
                 ControllerHelperDiamondStorage.getAddressAtSlot(3),
                 _amountToPay
@@ -798,7 +790,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 _amountToPay
             );
 
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: address(this).balance}();
+            if (address(this).balance > 0) IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: address(this).balance}();
         } else if (
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP
@@ -816,15 +808,13 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 (ControllerHelperDataType.SwapExactoutEthWPowerPerpData)
             );
 
-            IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).burnWPowerPerpAmount(
+            ControllerHelperUtil.withdrawFromVault(
+                ControllerHelperDiamondStorage.getAddressAtSlot(0),
+                ControllerHelperDiamondStorage.getAddressAtSlot(5),
                 data.vaultId,
                 data.wPowerPerpAmountToBurn,
                 data.collateralToWithdraw
             );
-
-            // at this level, we have some ETH from burnWPowerPerpAmount() and maybe WETH from closing LP position
-            // need to convert all to WETH to make sure we using all available balance for flashswap and flashloan repayment
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: address(this).balance}();
 
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).transfer(
                 ControllerHelperDiamondStorage.getAddressAtSlot(3),
@@ -834,7 +824,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.GENERAL_SWAP
         ) {
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: address(this).balance}();
             IERC20(_tokenIn).transfer(ControllerHelperDiamondStorage.getAddressAtSlot(3), _amountToPay);
         }
     }
@@ -867,7 +856,9 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             );
         } else {
             // if LP have more wPowerPerp amount that amount to burn in vault, sell remaining amount for WETH
-            IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).burnWPowerPerpAmount(
+            ControllerHelperUtil.withdrawFromVault(
+                ControllerHelperDiamondStorage.getAddressAtSlot(0),
+                ControllerHelperDiamondStorage.getAddressAtSlot(5),
                 _vaultId,
                 _wPowerPerpAmountToBurn,
                 _collateralToWithdraw
