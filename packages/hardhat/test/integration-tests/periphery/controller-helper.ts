@@ -1381,6 +1381,7 @@ describe("Controller helper integration test", function () {
       const params = {
         tokenId: tokenId,
         liquidity: positionBefore.liquidity,
+        liquidityPercentage: BigNumber.from(1).mul(BigNumber.from(10).pow(18)),
         amount0Min: 0,
         amount1Min: 0,
         limitPriceEthPerPowerPerp: limitPriceEthPerPowerPerp
@@ -1390,7 +1391,7 @@ describe("Controller helper integration test", function () {
 
       const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
 
-      const tx = await controllerHelper.connect(depositor).sellAll(params);
+      const tx = await controllerHelper.connect(depositor).reduceLiquidityAndSell(params);
 
       const receipt = await tx.wait()
       const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
