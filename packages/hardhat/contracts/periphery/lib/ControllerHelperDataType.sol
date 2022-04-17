@@ -127,9 +127,10 @@ library ControllerHelperDataType {
     }
 
     /// @dev params for sellAll()
-    struct SellAll {
+    struct ReduceLiquidityAndSell {
         uint256 tokenId;    // Uni token ID
         uint256 liquidity;  // LP liquidity amount
+        uint256 liquidityPercentage; // percentage of liquidity to burn in LP position in decimals with 18 precision(e.g 60% = 0.6 = 6e17)
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
         uint256 limitPriceEthPerPowerPerp; // price limit for selling wPowerPerp
