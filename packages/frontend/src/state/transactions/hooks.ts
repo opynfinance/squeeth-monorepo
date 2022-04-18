@@ -1,12 +1,10 @@
 import { useAtom, useAtomValue } from 'jotai'
 import BigNumber from 'bignumber.js'
-import { useUpdateAtom } from 'jotai/utils'
 import { useQuery } from '@apollo/client'
 import { useEffect } from 'react'
 
 import { networkIdAtom, addressAtom } from '../wallet/atoms'
 import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
-import { liquidityTxsHistoryAtom } from './atoms'
 import { useEthPriceMap } from '../ethPriceCharts/atoms'
 
 import { TRANSACTIONS_QUERY, TRANSACTIONS_SUBSCRIPTION } from '@queries/uniswap/transactionsQuery'
@@ -18,7 +16,6 @@ export const useLiquidityTxHistory = () => {
   const [address] = useAtom(addressAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const ethPriceMap = useEthPriceMap()
-  const setLiquidityTxs = useUpdateAtom(liquidityTxsHistoryAtom)
 
   const { squeethPool, oSqueeth, shortHelper, swapRouter, crabStrategy } = useAtomValue(addressesAtom)
 
@@ -110,12 +107,6 @@ export const useLiquidityTxHistory = () => {
         return { ...transactionDetails, usdValue, ethPriceAtDeposit: new BigNumber(ethPriceMap[time]) }
       },
     )
-
-  useEffect(() => {
-    if (data?.positionSnapshots) {
-      setLiquidityTxs({ positionSnapshots: data.positionSnapshots })
-    }
-  }, [data?.positionSnapshots.length])
 
   return { data, addRemoveLiquidityTrans, refetch, loading, error, startPolling, stopPolling }
 }
