@@ -37,7 +37,12 @@ import {
 } from "../generated/schema";
 import { loadOrCreateAccount } from "./util";
 
-import { BIGINT_ONE, BIGINT_ZERO, SHORT_HELPER_ADDR } from "./constants";
+import {
+  BIGINT_ONE,
+  BIGINT_ZERO,
+  SHORT_HELPER_ADDR,
+  EMPTY_ADDR,
+} from "./constants";
 
 // Note: If a handler doesn't require existing field values, it is faster
 // _not_ to load the entity from the store. Instead, create it fresh with
@@ -181,7 +186,7 @@ export function handleLiquidate(event: Liquidate): void {
   //update vault history
   const vaultTransaction = getTransactionDetail(
     event.transaction.from,
-    event.transaction.from,
+    EMPTY_ADDR,
     event.params.vaultId,
     event.params.collateralPaid,
     vault,
@@ -399,8 +404,8 @@ function getDayStatSnapshot(timestamp: BigInt): DayStatSnapshot {
 }
 
 function getTransactionDetail(
-  from: Address,
-  sender: Address,
+  from: Bytes,
+  sender: Bytes,
   vaultId: BigInt,
   amount: BigInt,
   vault: Vault,
