@@ -790,7 +790,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 _amountToPay
             );
 
-            if (address(this).balance > 0) IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: address(this).balance}();
+            if (address(this).balance > 0)
+                IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: address(this).balance}();
         } else if (
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP
