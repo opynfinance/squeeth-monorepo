@@ -24,7 +24,8 @@ library ControllerHelperDataType {
         SWAP_EXACTOUT_ETH_WPOWERPERP_BURN,
         FLASHLOAN_W_MINT_DEPOSIT_NFT,
         FLASHLOAN_CLOSE_VAULT_LP_NFT,
-        FLASHLOAN_REBALANCE_VAULT_NFT
+        FLASHLOAN_REBALANCE_VAULT_NFT,
+        GENERAL_SWAP
     }
 
     /// @dev enum to differentiate between rebalanceVaultNft() actions
@@ -126,9 +127,10 @@ library ControllerHelperDataType {
     }
 
     /// @dev params for sellAll()
-    struct SellAll {
+    struct ReduceLiquidityAndSell {
         uint256 tokenId;    // Uni token ID
         uint256 liquidity;  // LP liquidity amount
+        uint256 liquidityPercentage; // percentage of liquidity to burn in LP position in decimals with 18 precision(e.g 60% = 0.6 = 6e17)
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
         uint256 limitPriceEthPerPowerPerp; // price limit for selling wPowerPerp
@@ -200,7 +202,7 @@ library ControllerHelperDataType {
     }
 
     /// @dev struct for swapping from tokenIn to tokenOut
-    struct swap {
+    struct GeneralSwap {
         address tokenIn;
         address tokenOut;
         uint256 amountIn;
