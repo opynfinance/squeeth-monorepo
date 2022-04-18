@@ -234,6 +234,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
      * @param _params ControllerHelperDataType.MintAndLpParams struct
      */
     function batchMintLp(ControllerHelperDataType.MintAndLpParams calldata _params) external payable {
+        // bool isNegTick = _params.lowerTick < 0;
+        console.log('_params.lowerTick w00t', uint256(_params.lowerTick * -1));
         if (_params.vaultId != 0)
             require(
                 IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) ==
