@@ -82,9 +82,6 @@ library ControllerHelperUtil {
         );
 
         // LP _mintAndLpParams._wPowerPerpAmount & _mintAndLpParams.collateralToLp in Uni v3
-
-        console.log('_mintAndLpParams.lowerTick', uint256(_mintAndLpParams.lowerTick* -1));
-        console.log('_mintAndLpParams.upperTick', uint256(_mintAndLpParams.upperTick * -1));
         uint256 uniTokenId = lpWPowerPerpPool(
             _controller,
             _nonfungiblePositionManager,
@@ -205,20 +202,20 @@ library ControllerHelperUtil {
         });
             //console.log(mintParams);
 
-            console.log(IUniswapV3Pool(_wPowerPerpPool).token0());
-            console.log(IUniswapV3Pool(_wPowerPerpPool).token1());
-            console.log(IUniswapV3Pool(_wPowerPerpPool).fee());
-            console.log(_params.amount0Desired);
-            console.log('_params.lowerTick', uint256(_params.lowerTick* -1));
-            console.log('_params.upperTick1', uint256(_params.upperTick * -1));
-            console.log('_params.ethAmount', _params.ethAmount);
-            console.log('_params.amount0Desired', _params.amount0Desired);
-            console.log('_params.amount1Desired', _params.amount1Desired);
+            // console.log(IUniswapV3Pool(_wPowerPerpPool).token0());
+            // console.log(IUniswapV3Pool(_wPowerPerpPool).token1());
+            // console.log(IUniswapV3Pool(_wPowerPerpPool).fee());
+            // console.log(_params.amount0Desired);
+            // console.log('_params.lowerTick', uint256(_params.lowerTick* -1));
+            // console.log('_params.upperTick', uint256(_params.upperTick * -1));
+            // console.log('_params.ethAmount', _params.ethAmount);
+            // console.log('_params.amount0Desired', _params.amount0Desired);
+            // console.log('_params.amount1Desired', _params.amount1Desired);
 
         (uint256 tokenId, , , ) = INonfungiblePositionManager(_nonfungiblePositionManager).mint(
             mintParams
         );
-        console.log('resulting token id', tokenId);
+        // console.log('resulting token id', tokenId);
 
         checkExcess(_controller, _nonfungiblePositionManager, _wPowerPerp, _vaultId);
 
