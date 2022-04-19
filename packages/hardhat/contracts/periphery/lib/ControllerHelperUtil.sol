@@ -136,16 +136,17 @@ library ControllerHelperUtil {
     /**
      * @notice mint wPowerPerp in vault
      * @param _controller controller address
+     * @param _weth WETH address
      * @param _vaultId vault Id
-     * @param __wPowerPerpToMint amount of wPowerPerp to mint
+     * @param _wPowerPerpToMint amount of wPowerPerp to mint
      * @param _collateralToDeposit amount of collateral to deposit
      */
-    function mintIntoVault(address _controller, address _weth, uint256 _vaultId, uint256 __wPowerPerpToMint, uint256 _collateralToDeposit) public returns (uint256) {
+    function mintIntoVault(address _controller, address _weth, uint256 _vaultId, uint256 _wPowerPerpToMint, uint256 _collateralToDeposit) public returns (uint256) {
         IWETH9(_weth).withdraw(_collateralToDeposit);
 
         return (IController(_controller).mintWPowerPerpAmount{value: _collateralToDeposit}(
             _vaultId,
-            __wPowerPerpToMint,
+            _wPowerPerpToMint,
             0
         ));
     }
@@ -153,6 +154,7 @@ library ControllerHelperUtil {
     /**
      * @notice burn wPowerPerp or just withdraw collateral from vault (or both)
      * @param _controller controller address
+     * @param _weth WETH address
      * @param _weth weth address
      * @param _vaultId vault Id
      * @param _wPowerPerpToBurn amount of wPowerPerp to burn
@@ -258,6 +260,8 @@ library ControllerHelperUtil {
 
     /**
      * @notice send ETH and wPowerPerp
+     * @param _weth WETH address
+     * @param _wPowerPerp wPowerPerp address
      */
     function sendBack(address _weth, address _wPowerPerp) public {
         IWETH9(_weth).withdraw(IWETH9(_weth).balanceOf(address(this)));
