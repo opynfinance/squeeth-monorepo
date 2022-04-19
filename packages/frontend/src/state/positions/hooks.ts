@@ -192,10 +192,6 @@ export const useLongSqthBal = () => {
     return mintedDebt.gt(0) ? oSqueethBal.minus(mintedDebt) : oSqueethBal
   }, [oSqueethBal?.toString(), mintedDebt.toString()])
 
-  console.log(
-    { oSqueeth, oSqueethBal: oSqueethBal.toString(), mintedDebt: mintedDebt.toString() },
-    'in useLongSqthBall',
-  )
   return longSqthBal
 }
 
