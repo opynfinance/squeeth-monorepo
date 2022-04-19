@@ -414,7 +414,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             0,
             ControllerHelperDataType.LpWPowerPerpPool({
                 recipient: msg.sender,
-                ethAmount: _params.ethAmountToLp,
                 amount0Desired: (isWethToken0) ? _params.wethAmountDesired : _params.wPowerPerpAmountDesired,
                 amount1Desired: (isWethToken0) ? _params.wPowerPerpAmountDesired : _params.wethAmountDesired,
                 amount0Min: _params.amount0DesiredMin,

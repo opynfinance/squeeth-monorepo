@@ -89,7 +89,6 @@ library ControllerHelperUtil {
             _vaultId,
             ControllerHelperDataType.LpWPowerPerpPool({
                 recipient: _mintAndLpParams.recipient,
-                ethAmount: _mintAndLpParams.collateralToLp,
                 amount0Desired: _isWethToken0 ? _mintAndLpParams.collateralToLp : _mintAndLpParams.wPowerPerpAmount,
                 amount1Desired: _isWethToken0 ? _mintAndLpParams.wPowerPerpAmount : _mintAndLpParams.collateralToLp,
                 amount0Min: _mintAndLpParams.amount0Min,
