@@ -10,6 +10,9 @@ import { useEthPriceMap } from '../ethPriceCharts/atoms'
 import { TRANSACTIONS_QUERY, TRANSACTIONS_SUBSCRIPTION } from '@queries/uniswap/transactionsQuery'
 import { transactions_positionSnapshots } from '@queries/uniswap/__generated__/transactions'
 import { BIG_ZERO, TransactionType } from '@constants/index'
+import { VAULT_HISTORY_QUERY, VAULT_HISTORY_SUBSCRIPTION } from '@queries/squeeth/vaultHistoryQuery'
+import { VaultHistory, VaultHistoryVariables } from '@queries/squeeth/__generated__/VaultHistory'
+import { squeethClient } from '@utils/apollo-client'
 
 export const useLiquidityTxHistory = () => {
   const [networkId] = useAtom(networkIdAtom)
@@ -109,4 +112,44 @@ export const useLiquidityTxHistory = () => {
     )
 
   return { data, addRemoveLiquidityTrans, refetch, loading, error, startPolling, stopPolling }
+}
+
+export const useVaultTxHistory = () => {
+  const [networkId] = useAtom(networkIdAtom)
+  const [address] = useAtom(addressAtom)
+  // const isWethToken0 = useAtomValue(isWethToken0Atom)
+  // const ethPriceMap = useEthPriceMap()
+
+  const { squeethPool, oSqueeth, shortHelper, swapRouter } = useAtomValue(addressesAtom)
+
+  const { subscribeToMore, data, refetch, loading, error, startPolling, stopPolling } = useQuery<
+    VaultHistory,
+    VaultHistoryVariables
+  >(VAULT_HISTORY_QUERY, {
+    client: squeethClient[networkId],
+    variables: {
+      sender: '0xaC702b908b6DBB9E51A53B2D0952966f1285ac00'.toLowerCase(),
+      // vaultId: 163,
+    },
+    fetchPolicy: 'cache-and-network',
+  })
+
+  useEffect(() => {
+    subscribeToMore({
+      document: VAULT_HISTORY_SUBSCRIPTION,
+      variables: {
+        from: '0xaC702b908b6DBB9E51A53B2D0952966f1285ac00'.toLowerCase(),
+        // vaultId: 163,
+      },
+      updateQuery(prev, { subscriptionData }) {
+        if (!subscriptionData?.data.vaultHistories) return prev
+        const vaultHistories = subscriptionData.data.vaultHistories
+        return {
+          vaultHistories: vaultHistories,
+        }
+      },
+    })
+  }, [address, networkId, oSqueeth, shortHelper, squeethPool, swapRouter, subscribeToMore])
+
+  return { data, refetch, loading, error, startPolling, stopPolling }
 }
