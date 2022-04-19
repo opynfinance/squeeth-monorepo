@@ -154,7 +154,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
      * @dev user should approve this contract for Uni NFT transfer
      * @param _params ControllerHelperDataType.CloseShortWithUserNftParams struct
      */
-    function closeShortWithUserNft(ControllerHelperDataType.CloseShortWithUserNftParams calldata _params) external {
+    function closeShortWithUserNft(ControllerHelperDataType.CloseShortWithUserNftParams calldata _params) external payable {
         require(
             IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) == msg.sender
         );
@@ -164,6 +164,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             address(this),
             _params.tokenId
         );
+
+        wrapInternal(msg.value);
 
         // close LP position
         (uint256 wPowerPerpAmountInLp, ) = ControllerHelperUtil.closeUniLp(
