@@ -46,7 +46,8 @@ export const supportedNetworkAtom = atom<boolean>(false)
 export const connectedWalletAtom = atom((get) => {
   const address = get(addressAtom)
   const networkId = get(networkIdAtom)
-  return Boolean(address && networkId)
+  const supportedNetwork = get(supportedNetworkAtom)
+  return Boolean(address && networkId) || !supportedNetwork
 })
 
 export const isTransactionFirstStepAtom = atom(false)
