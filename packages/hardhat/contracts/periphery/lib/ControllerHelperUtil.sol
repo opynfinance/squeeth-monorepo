@@ -16,6 +16,8 @@ import {IWPowerPerp} from "../../interfaces/IWPowerPerp.sol";
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {ControllerHelperDataType} from "./ControllerHelperDataType.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {ControllerHelperDiamondStorage} from "../lib/ControllerHelperDiamondStorage.sol";
+
 
 library ControllerHelperUtil {
     using SafeMath for uint256;
@@ -80,7 +82,7 @@ library ControllerHelperUtil {
             _mintAndLpParams.wPowerPerpAmount,
             0
         );
-
+        console.log('before lpWPowerPerpPool');
         // LP _mintAndLpParams._wPowerPerpAmount & _mintAndLpParams.collateralToLp in Uni v3
         uint256 uniTokenId = lpWPowerPerpPool(
             _controller,
@@ -187,6 +189,7 @@ library ControllerHelperUtil {
         uint256 _vaultId,
         ControllerHelperDataType.LpWPowerPerpPool memory _params
     ) public returns (uint256) {
+        console.log('Before mintParams construction');
         INonfungiblePositionManager.MintParams memory mintParams = INonfungiblePositionManager.MintParams({
             token0: IUniswapV3Pool(_wPowerPerpPool).token0(),
             token1: IUniswapV3Pool(_wPowerPerpPool).token1(),
@@ -202,20 +205,20 @@ library ControllerHelperUtil {
         });
             //console.log(mintParams);
 
-            // console.log(IUniswapV3Pool(_wPowerPerpPool).token0());
-            // console.log(IUniswapV3Pool(_wPowerPerpPool).token1());
-            // console.log(IUniswapV3Pool(_wPowerPerpPool).fee());
-            // console.log(_params.amount0Desired);
-            // console.log('_params.lowerTick', uint256(_params.lowerTick* -1));
-            // console.log('_params.upperTick', uint256(_params.upperTick * -1));
-            // console.log('_params.ethAmount', _params.ethAmount);
-            // console.log('_params.amount0Desired', _params.amount0Desired);
-            // console.log('_params.amount1Desired', _params.amount1Desired);
+            console.log('token0 address',IUniswapV3Pool(_wPowerPerpPool).token0());
+            console.log('token1 address',IUniswapV3Pool(_wPowerPerpPool).token1());
+            console.log(IUniswapV3Pool(_wPowerPerpPool).fee());
+            console.log('weth address',ControllerHelperDiamondStorage.getAddressAtSlot(5));
+            console.log('_params.lowerTick', uint256(_params.lowerTick* -1));
+            console.log('_params.upperTick', uint256(_params.upperTick));
+            console.log('_params.ethAmount', _params.ethAmount);
+            console.log('_params.amount0Desired', _params.amount0Desired);
+            console.log('_params.amount1Desired', _params.amount1Desired);
 
         (uint256 tokenId, , , ) = INonfungiblePositionManager(_nonfungiblePositionManager).mint(
             mintParams
         );
-        // console.log('resulting token id', tokenId);
+         console.log('resulting token id', tokenId);
 
         checkExcess(_controller, _nonfungiblePositionManager, _wPowerPerp, _vaultId);
 

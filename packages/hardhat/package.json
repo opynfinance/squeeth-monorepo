@@ -10,6 +10,7 @@
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-babel": "^5.3.1",
     "eslint-plugin-prettier": "^3.4.0",
+    "hardhat": "^2.9.3",
     "sol2uml": "^1.1.29",
     "solc-0.7": "npm:solc@^0.7.6",
     "solidity-docgen": "^0.5.14",
@@ -35,7 +36,6 @@
     "dotenv": "^10.0.0",
     "ethereum-waffle": "^3.1.1",
     "ethers": "^5.3.0",
-    "hardhat": "2.9.0",
     "hardhat-contract-sizer": "^2.0.3",
     "hardhat-deploy": "^0.8.6",
     "hardhat-gas-reporter": "^1.0.4",
@@ -75,6 +75,7 @@
     "doc:control-flow:core": "surya graph -m contracts/core/*.sol | dot -Tpng > ./docs/control-flow/Core.png"
   },
   "resolutions": {
-    "assemblyscript": "git+https://github.com/AssemblyScript/assemblyscript.git#v0.6"
+    "assemblyscript": "git+https://github.com/AssemblyScript/assemblyscript.git#v0.6",
+    "hardhat/**/@ethereumjs/tx": "3.5.0"
   }
 }

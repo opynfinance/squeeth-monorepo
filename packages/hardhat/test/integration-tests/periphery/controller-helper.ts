@@ -970,8 +970,6 @@ describe("Controller helper integration test", function () {
       // console.log('tokenIndexBefore',tokenIndexBefore)
       // console.log('tokenIndexAfter',tokenIndexAfter)
 
-      // expect(position.tickLower === newTickLower).to.be.true
-      // expect(position.tickUpper === newTickUpper).to.be.true
       expect(position.tickLower === newTickLower).to.be.true
       expect(position.tickUpper === newTickUpper).to.be.true
       expect(ownerOfUniNFT === depositor.address).to.be.true

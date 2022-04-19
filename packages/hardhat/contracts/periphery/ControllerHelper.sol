@@ -276,6 +276,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         external
         payable
     {
+        console.log('before require');
         if (_params.vaultId != 0)
             require(
                 IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) ==
@@ -472,6 +473,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.FLASHLOAN_W_MINT_DEPOSIT_NFT
         ) {
+            console.log('reached callback');
             ControllerHelperDataType.FlashloanWMintDepositNftParams memory data = abi.decode(
                 _calldata,
                 (ControllerHelperDataType.FlashloanWMintDepositNftParams)
@@ -496,7 +498,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 }),
                 isWethToken0
             );
-
+            console.log('mint successful with %s wPowerPerpAmount %s collateralToDeposit and %s collateralToLp', data.wPowerPerpAmount, data.collateralToDeposit, data.collateralToLp);
             // deposit Uni NFT token in vault
             INonfungiblePositionManager(ControllerHelperDiamondStorage.getAddressAtSlot(6)).approve(
                 ControllerHelperDiamondStorage.getAddressAtSlot(0),
