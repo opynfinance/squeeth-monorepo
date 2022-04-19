@@ -42,6 +42,7 @@ import {
   BIGINT_ZERO,
   SHORT_HELPER_ADDR,
   CONTROLLER_HELPER_ADDR,
+  EMPTY_ADDR,
 } from "./constants";
 
 // Note: If a handler doesn't require existing field values, it is faster
@@ -108,6 +109,8 @@ export function handleBurnShort(event: BurnShort): void {
   }
   //update vault history
   const vaultTransaction = getTransactionDetail(
+    event.transaction.from,
+    event.params.sender,
     event.params.vaultId,
     event.params.amount,
     vault,
@@ -131,6 +134,8 @@ export function handleDepositCollateral(event: DepositCollateral): void {
 
   //update vault history
   const vaultTransaction = getTransactionDetail(
+    event.transaction.from,
+    event.params.sender,
     event.params.vaultId,
     event.params.amount,
     vault,
@@ -181,6 +186,8 @@ export function handleLiquidate(event: Liquidate): void {
   let transactionHash = event.transaction.hash.toHex();
   //update vault history
   const vaultTransaction = getTransactionDetail(
+    event.transaction.from,
+    EMPTY_ADDR,
     event.params.vaultId,
     event.params.collateralPaid,
     vault,
@@ -235,6 +242,8 @@ export function handleMintShort(event: MintShort): void {
 
   //update vault history
   const vaultTransaction = getTransactionDetail(
+    event.transaction.from,
+    event.params.sender,
     event.params.vaultId,
     event.params.amount,
     vault,
@@ -305,6 +314,8 @@ export function handleWithdrawCollateral(event: WithdrawCollateral): void {
 
   //update vault history
   const vaultTransaction = getTransactionDetail(
+    event.transaction.from,
+    event.params.sender,
     event.params.vaultId,
     event.params.amount,
     vault,
@@ -395,7 +406,9 @@ function getDayStatSnapshot(timestamp: BigInt): DayStatSnapshot {
   return dayStatSnapshot as DayStatSnapshot;
 }
 
-export function getTransactionDetail(
+function getTransactionDetail(
+  from: Bytes,
+  sender: Bytes,
   vaultId: BigInt,
   amount: BigInt,
   vault: Vault,
@@ -410,6 +423,8 @@ export function getTransactionDetail(
   vaultHistory.vaultId = vaultId;
   vaultHistory.txid = transactionHash;
   vaultHistory.timestamp = timestamp;
+  vaultHistory.from = from;
+  vaultHistory.sender = sender;
 
   if (action == "DEPOSIT_COLLAT" || action == "WITHDRAW_COLLAT") {
     vaultHistory.ethCollateralAmount = amount;

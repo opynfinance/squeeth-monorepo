@@ -55,6 +55,8 @@ enum Action {
 
 type VaultHistory @entity {
   id: ID!
+  from: Bytes!
+  sender: Bytes!
   txid: String!
   timestamp: BigInt!
   totalEthCollateralAmount: BigInt!
