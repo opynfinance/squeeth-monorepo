@@ -41,12 +41,10 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals
     () => updateBalance(token, connected, contract, address, decimals),
     {
       enabled: Boolean(token) && Boolean(connected) && Boolean(contract),
-      refetchInterval: refetchIntervalSec * 1000,
+      refetchInterval: refetchIntervalSec * 15000,
     },
   )
-
   console.log({ osqueethBal: balanceQuery.data?.toString() }, 'in useTokenBalance')
-
   return { value: balanceQuery.data ?? new BigNumber(0), loading: !balanceQuery.data }
 }
 
