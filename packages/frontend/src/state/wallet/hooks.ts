@@ -132,7 +132,7 @@ export const useWalletBalance = () => {
 }
 
 export const useOnboard = () => {
-  const [supportedNetwork, setSupportedNetwork] = useAtom(supportedNetworkAtom)
+  const setSupportedNetwork = useUpdateAtom(supportedNetworkAtom)
   const [networkId, setNetworkId] = useAtom(networkIdAtom)
   const [onboard, setOnboard] = useAtom(onboardAtom)
   const [address, setAddress] = useAtom(addressAtom)
