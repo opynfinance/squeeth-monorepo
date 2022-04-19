@@ -87,7 +87,7 @@ library ControllerHelperUtil {
         uint256 uniTokenId = lpWPowerPerpPool(
             _controller,
             _nonfungiblePositionManager,
-            _wPowerPerpPool,
+            _wPowerPerpPool, 
             _wPowerPerp,
             _vaultId,
             ControllerHelperDataType.LpWPowerPerpPool({

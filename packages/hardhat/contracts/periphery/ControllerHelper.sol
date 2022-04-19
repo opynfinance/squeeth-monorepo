@@ -479,6 +479,26 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 (ControllerHelperDataType.FlashloanWMintDepositNftParams)
             );
 
+            console.log("withdraw");
+            console.log('this address weth balance',IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).balanceOf(address(this)));
+            console.log('initiator weth balance',IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).balanceOf(_initiator));
+            console.log("_amount", _amount);
+
+            // convert flashloaned WETH to ETH
+            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).withdraw(_amount);
+            console.log('attempt mint with %s wPowerPerpAmount %s collateralToDeposit and %s collateralToLp', data.wPowerPerpAmount, data.collateralToDeposit, data.collateralToLp);
+
+            console.log('recipient', address(this));
+            console.log('vaultId', data.vaultId);
+            console.log('wPowerPerpAmount', data.wPowerPerpAmount);
+            console.log('collateralToDeposit', data.collateralToDeposit.add(data.collateralToFlashloan));
+            console.log('collateralToLp', data.collateralToLp);
+            console.log('mount0Min', data.lpAmount0Min);
+            console.log('amount1Min', data.lpAmount1Min);
+            console.log('lowerTick', uint256(data.lpLowerTick*-1));
+            console.log('upperTick', uint256(data.lpUpperTick));
+            console.log('_amount recieved in flashloan', _amount);
+
             (uint256 vaultId, uint256 uniTokenId) = ControllerHelperUtil.mintAndLp(
                 ControllerHelperDiamondStorage.getAddressAtSlot(0),
                 ControllerHelperDiamondStorage.getAddressAtSlot(6),
@@ -496,9 +516,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                     lowerTick: data.lpLowerTick,
                     upperTick: data.lpUpperTick
                 }),
-                isWethToken0
-            );
-            console.log('mint successful with %s wPowerPerpAmount %s collateralToDeposit and %s collateralToLp', data.wPowerPerpAmount, data.collateralToDeposit, data.collateralToLp);
+                isWethToken0);
+            console.log('mint successful with %s wPowerPerpAmount and %s collateralToLp', data.wPowerPerpAmount, data.collateralToLp);
             // deposit Uni NFT token in vault
             INonfungiblePositionManager(ControllerHelperDiamondStorage.getAddressAtSlot(6)).approve(
                 ControllerHelperDiamondStorage.getAddressAtSlot(0),

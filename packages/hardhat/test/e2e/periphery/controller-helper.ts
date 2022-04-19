@@ -259,84 +259,138 @@ describe("ControllerHelper: mainnet fork", function () {
       expect(vaultAfter.collateralAmount.sub(collateralToMint.div(2)).lte(1)).to.be.true
     })
 
-    
-
-    it("open short, mint, LP oSQTH + ETH, deposit LP NFT and withdraw ETH collateral, no ETH added", async ()=> {
-      // New vault with 2x collateral
+    it("open short in new vault, mint, LP oSQTH only, deposit LP NFT, no eth added", async () => {
+      // New vault with 4x collateral
       const normFactor = await controller.getExpectedNormalizationFactor()
-      const mintWSqueethAmount : BigNumber = ethers.utils.parseUnits('35')
+      const mintWSqueethAmount : BigNumber = ethers.utils.parseUnits('40')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
       const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
-      const collateralToDeposit = debtInEth.mul(2)
+      const collateralToDeposit = debtInEth.mul(4)
       await controller.connect(depositor).mintWPowerPerpAmount(0, mintWSqueethAmount, 0, {value: collateralToDeposit})
 
 
       // Mint full range into vault with no added eth
       const vaultId = (await shortSqueeth.nextId()).sub(1);
-
-      //// test
-      const vaultBefore = await controller.vaults(vaultId)
-      console.log('vaultBefore.collateralAmount', vaultBefore.collateralAmount.toString())
-      console.log('vaultBefore.shortAmount', vaultBefore.shortAmount.toString())
-      console.log('vaultBefore.NftCollateralId', vaultBefore.NftCollateralId.toString())
-
-      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
-      const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
-
-      console.log('ethPrice', ethPrice.toString())
-      console.log('squeethPrice', squeethPrice.toString())
-      console.log('normFactor', normFactor.toString())
-
-      // Operator for vault
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
 
-      console.log('trying LP with zero eth added')
+
       const flashloanWMintDepositNftParams = {
         vaultId: vaultId.toString(),
         wPowerPerpAmount: mintWSqueethAmount.toString(),
-        collateralToDeposit: BigNumber.from(0).toString(),
-        collateralToFlashloan: collateralToDeposit.toString(),
-        collateralToLp: collateralToLp.toString(),
-        collateralToWithdraw: collateralToLp.toString(),
+        collateralToDeposit: BigNumber.from(0),
+        collateralToFlashloan: debtInEth.toString(),
+        collateralToLp: BigNumber.from(0),
+        collateralToWithdraw: 0,
         lpAmount0Min: 0,
         lpAmount1Min: 0,
         lpLowerTick: -887220,
-        lpUpperTick: 887220
+        lpUpperTick: 0
       }
-      // const flashloanWMintDepositNftParams = {
-      //   vaultId: 0,
-      //   wPowerPerpAmount: mintWSqueethAmount.toString(),
-      //   collateralToDeposit: collateralToMint.sub(collateralToFlashloan).toString(),
-      //   collateralToFlashloan: collateralToFlashloan.toString(),
-      //   collateralToLp: collateralToLp.toString(),
-      //   collateralToWithdraw: 0,
-      //   lpAmount0Min: 0,
-      //   lpAmount1Min: 0,
-      //   lpLowerTick: -887220,
-      //   lpUpperTick: 887220
-      // }
 
-      console.log(flashloanWMintDepositNftParams)
-
-      await controllerHelper.connect(depositor).flashloanWMintDepositNft(flashloanWMintDepositNftParams, {value: 0})
+      await controllerHelper.connect(depositor).flashloanWMintDepositNft(flashloanWMintDepositNftParams)
 
       const vaultAfter = await controller.vaults(vaultId)
       const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
       const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
       const position = await (positionManager as INonfungiblePositionManager).positions(tokenId)
 
+    //   const vaultAfter = await controller.vaults(vaultId)
+    //   const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
+    //   const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
+    //   const position = await (positionManager as INonfungiblePositionManager).positions(tokenId)
+
       console.log('vaultAfter.collateralAmount', vaultAfter.collateralAmount.toString())
       console.log('vaultAfter.shortAmount', vaultAfter.shortAmount.toString())
       console.log('vaultAfter.NftCollateralId', vaultAfter.NftCollateralId.toString())
 
+
       expect(BigNumber.from(vaultAfter.NftCollateralId).eq(tokenId)).to.be.true;
       expect(position.tickLower === -887220).to.be.true
-      expect(position.tickUpper === 887220).to.be.true
-      //expect(vaultAfter.shortAmount.sub(mintWSqueethAmount).lte(1)).to.be.true
-      //expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
+      expect(position.tickUpper === 0).to.be.true
+      expect(vaultAfter.shortAmount.eq(mintWSqueethAmount.mul(2))).to.be.true
+      //expect(vaultAfter.collateralAmount.eq(collateralToMint.sub(collateralToFlashloan))).to.be.true
     })
+
+    
+
+    // it("open short, mint, LP oSQTH + ETH, deposit LP NFT and withdraw ETH collateral, no ETH added", async ()=> {
+    //   // New vault with 2x collateral
+    //   const normFactor = await controller.getExpectedNormalizationFactor()
+    //   const mintWSqueethAmount : BigNumber = ethers.utils.parseUnits('35')
+    //   const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
+    //   const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
+    //   const scaledEthPrice = ethPrice.div(10000)
+    //   const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
+    //   const collateralToDeposit = debtInEth.mul(2)
+    //   await controller.connect(depositor).mintWPowerPerpAmount(0, mintWSqueethAmount, 0, {value: collateralToDeposit})
+
+
+    //   // Mint full range into vault with no added eth
+    //   const vaultId = (await shortSqueeth.nextId()).sub(1);
+
+    //   //// test
+    //   const vaultBefore = await controller.vaults(vaultId)
+    //   console.log('vaultBefore.collateralAmount', vaultBefore.collateralAmount.toString())
+    //   console.log('vaultBefore.shortAmount', vaultBefore.shortAmount.toString())
+    //   console.log('vaultBefore.NftCollateralId', vaultBefore.NftCollateralId.toString())
+
+    //   const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
+    //   const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
+
+    //   console.log('ethPrice', ethPrice.toString())
+    //   console.log('squeethPrice', squeethPrice.toString())
+    //   console.log('normFactor', normFactor.toString())
+
+    //   // Operator for vault
+    //   await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
+
+    //   console.log('trying LP with zero eth added')
+    //   const flashloanWMintDepositNftParams = {
+    //     vaultId: vaultId.toString(),
+    //     wPowerPerpAmount: mintWSqueethAmount.toString(),
+    //     collateralToDeposit: BigNumber.from(0).toString(),
+    //     collateralToFlashloan: collateralToDeposit.toString(),
+    //     collateralToLp: collateralToLp.toString(),
+    //     collateralToWithdraw: BigNumber.from(0).toString(), // withdraw from vault at end
+    //     lpAmount0Min: 0,
+    //     lpAmount1Min: 0,
+    //     lpLowerTick: -887220,
+    //     lpUpperTick: 887220
+    //   }
+    //   // const flashloanWMintDepositNftParams = {
+    //   //   vaultId: 0,
+    //   //   wPowerPerpAmount: mintWSqueethAmount.toString(),
+    //   //   collateralToDeposit: collateralToMint.sub(collateralToFlashloan).toString(),
+    //   //   collateralToFlashloan: collateralToFlashloan.toString(),
+    //   //   collateralToLp: collateralToLp.toString(),
+    //   //   collateralToWithdraw: 0,
+    //   //   lpAmount0Min: 0,
+    //   //   lpAmount1Min: 0,
+    //   //   lpLowerTick: -887220,
+    //   //   lpUpperTick: 887220
+    //   // }
+
+    //   console.log(flashloanWMintDepositNftParams)
+
+    //   await controllerHelper.connect(depositor).flashloanWMintDepositNft(flashloanWMintDepositNftParams)
+
+    //   const vaultAfter = await controller.vaults(vaultId)
+    //   const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
+    //   const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
+    //   const position = await (positionManager as INonfungiblePositionManager).positions(tokenId)
+
+    //   console.log('vaultAfter.collateralAmount', vaultAfter.collateralAmount.toString())
+    //   console.log('vaultAfter.shortAmount', vaultAfter.shortAmount.toString())
+    //   console.log('vaultAfter.NftCollateralId', vaultAfter.NftCollateralId.toString())
+
+    //   expect(BigNumber.from(vaultAfter.NftCollateralId).eq(tokenId)).to.be.true;
+    //   expect(position.tickLower === -887220).to.be.true
+    //   expect(position.tickUpper === 887220).to.be.true
+    //   //expect(vaultAfter.shortAmount.sub(mintWSqueethAmount).lte(1)).to.be.true
+    //   //expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
+    // })
 
 
 
