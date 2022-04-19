@@ -44,7 +44,7 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals
       refetchInterval: refetchIntervalSec * 15000,
     },
   )
-  console.log({ osqueethBal: balanceQuery.data?.toString() }, 'in useTokenBalance')
+
   return { value: balanceQuery.data ?? new BigNumber(0), loading: !balanceQuery.data }
 }
 

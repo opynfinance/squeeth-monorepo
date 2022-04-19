@@ -633,14 +633,11 @@ const CloseLong: React.FC<BuyProps> = () => {
   const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
   const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
 
-  console.log({ longSqthBal: longSqthBal.toString(), ethTradeAmount })
-
   useEffect(() => {
     //if it's insufficient amount them set it to it's maximum
     if (longSqthBal.lt(amount)) {
       setSqthTradeAmount(longSqthBal.toString())
       getSellQuoteForETH(longSqthBal).then((val) => {
-        console.log({ amountIn: val.amountIn.toString() })
         setEthTradeAmount(val.amountIn.toString())
         setConfirmedAmount(val.amountIn.toFixed(6).toString())
       })
@@ -723,7 +720,6 @@ const CloseLong: React.FC<BuyProps> = () => {
       setSqthTradeAmount(value)
       getSellQuote(new BigNumber(value), slippageAmount).then((val) => {
         if (value !== '0') setConfirmedAmount(Number(value).toFixed(6))
-        console.log({ amountIn2: val.amountOut.toString() })
         setEthTradeAmount(val.amountOut.toString())
         setInputQuoteLoading(false)
       })
