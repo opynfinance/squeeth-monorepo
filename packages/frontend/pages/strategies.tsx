@@ -243,19 +243,17 @@ const Strategies: React.FC = () => {
                 <StrategyInfo />
                 <CrabStrategyHistory />
               </div>
-              <div className={classes.tradeForm}>
-                {!!address ? (
-                  <CrabTrade maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
-                ) : supportedNetwork ? (
-                  <div className={classes.connectWalletDiv}>
-                    <LinkButton onClick={() => selectWallet()}>Connect Wallet</LinkButton>
-                  </div>
-                ) : (
-                  <Box textAlign="center">
-                    <Typography>Unsupported Network</Typography>
-                  </Box>
-                )}
-              </div>
+              {supportedNetwork && (
+                <div className={classes.tradeForm}>
+                  {!!address ? (
+                    <CrabTrade maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
+                  ) : (
+                    <div className={classes.connectWalletDiv}>
+                      <LinkButton onClick={() => selectWallet()}>Connect Wallet</LinkButton>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}

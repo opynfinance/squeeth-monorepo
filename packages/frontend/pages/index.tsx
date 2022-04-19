@@ -589,10 +589,12 @@ function TradePage() {
             </div>
           </div>
 
-          <div className={classes.ticket}>
-            <TabComponent />
-            <Card className={classes.innerTicket}>{!isRestricted ? <Trade /> : <RestrictionInfo />}</Card>
-          </div>
+          {supportedNetwork && (
+            <div className={classes.ticket}>
+              <TabComponent />
+              <Card className={classes.innerTicket}>{!isRestricted ? <Trade /> : <RestrictionInfo />}</Card>
+            </div>
+          )}
         </div>
       </Hidden>
       <Hidden mdUp>
@@ -609,25 +611,24 @@ function TradePage() {
             <PositionCard />
           </div>
         </div>
-        <div className={classes.mobileAction}>
-          <div style={{ width: '65%' }}>
-            <TabComponent />
-          </div>
-          <PrimaryButton
-            variant="contained"
-            style={{ minWidth: '30%' }}
-            disabled={!supportedNetwork}
-            onClick={() => setShowMobileTrade(true)}
-          >
-            {supportedNetwork ? 'Trade' : 'Unsupported Network'}
-          </PrimaryButton>
-        </div>
-        <MobileModal title="TRADE" isOpen={showMobileTrade} onClose={() => setShowMobileTrade(false)}>
-          <TabComponent />
-          <Card className={classes.innerTicket} style={{ textAlign: 'center', marginTop: '8px' }}>
-            {!isRestricted ? <Trade /> : <RestrictionInfo />}
-          </Card>
-        </MobileModal>
+        {supportedNetwork && (
+          <>
+            <div className={classes.mobileAction}>
+              <div style={{ width: '65%' }}>
+                <TabComponent />
+              </div>
+              <PrimaryButton variant="contained" style={{ minWidth: '30%' }} onClick={() => setShowMobileTrade(true)}>
+                Trade
+              </PrimaryButton>
+            </div>
+            <MobileModal title="TRADE" isOpen={showMobileTrade} onClose={() => setShowMobileTrade(false)}>
+              <TabComponent />
+              <Card className={classes.innerTicket} style={{ textAlign: 'center', marginTop: '8px' }}>
+                {!isRestricted ? <Trade /> : <RestrictionInfo />}
+              </Card>
+            </MobileModal>
+          </>
+        )}
       </Hidden>
       <WelcomeModal open={isWelcomeModalOpen} handleClose={handleClose} />
     </div>

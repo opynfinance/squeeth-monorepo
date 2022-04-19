@@ -145,8 +145,6 @@ export const useOnboard = () => {
       if (updateNetwork in Networks) {
         setNetworkId(updateNetwork)
         setSupportedNetwork(true)
-        const walletAddress = window.localStorage.getItem('walletAddress')
-        setAddress(walletAddress)
         if (onboard !== null) {
           const network = updateNetwork === 1337 ? 31337 : updateNetwork
           // localStorage.setItem('networkId', network.toString())
@@ -155,14 +153,13 @@ export const useOnboard = () => {
           })
         }
       } else {
-        setAddress(null)
         setSupportedNetwork(false)
         if (address === null || onboard === null) return
         onboard.walletCheck()
         console.log('Unsupported network')
       }
     },
-    [setNetworkId, setSupportedNetwork, onboard, setAddress, address],
+    [setNetworkId, setSupportedNetwork, onboard, address],
   )
 
   const onWalletUpdate = useCallback(
@@ -178,14 +175,10 @@ export const useOnboard = () => {
     [setSigner, setWeb3],
   )
 
-  const onAddressChange = useCallback((address: string) => {
-    window.localStorage.setItem('walletAddress', address)
-  }, [])
-
   useEffect(() => {
     const onboard = initOnboard(
       {
-        address: onAddressChange,
+        address: setAddress,
         network: onNetworkChange,
         wallet: onWalletUpdate,
       },

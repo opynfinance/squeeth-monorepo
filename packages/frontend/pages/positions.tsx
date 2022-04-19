@@ -143,8 +143,9 @@ const useStyles = makeStyles((theme) =>
 
 const PositionsHome = () => {
   const address = useAtomValue(addressAtom)
+  const supportedNetwork = useAtomValue(supportedNetworkAtom)
 
-  if (address) return <Positions />
+  if (address && supportedNetwork) return <Positions />
 
   return <ConnectWallet />
 }
@@ -182,6 +183,8 @@ export function Positions() {
 
   const pool = useAtomValue(poolAtom)
   const address = useAtomValue(addressAtom)
+  const supportedNetwork = useAtomValue(supportedNetworkAtom)
+
   const positionType = useAtomValue(positionTypeAtom)
   const activePositions = useAtomValue(activePositionsAtom)
 
@@ -221,8 +224,6 @@ export function Positions() {
   const fullyLiquidated = useMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
   }, [firstValidVault, shortVaults?.length, liquidations?.length])
-
-  const supportedNetwork = useAtomValue(supportedNetworkAtom)
 
   return (
     <div>

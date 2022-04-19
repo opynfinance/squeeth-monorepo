@@ -13,7 +13,7 @@ import BigNumber from 'bignumber.js'
 import React, { useEffect, useMemo, useState } from 'react'
 import CrabPosition from './CrabPosition'
 import { useAtom, useAtomValue } from 'jotai'
-import { addressAtom, connectedWalletAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
+import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
 import { BIG_ZERO } from '../../../constants'
 import { readyAtom } from 'src/state/squeethPool/atoms'
@@ -85,7 +85,6 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
   const [withdrawPriceImpact, setWithdrawPriceImpact] = useState('0')
   const [borrowEth, setBorrowEth] = useState(new BigNumber(0))
 
-  const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const connected = useAtomValue(connectedWalletAtom)
   const currentEthValue = useAtomValue(currentEthValueAtom)
   const isTimeHedgeAvailable = useAtomValue(isTimeHedgeAvailableAtom)
@@ -329,11 +328,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
               />
             )}
 
-            {!supportedNetwork ? (
-              <PrimaryButton variant="contained" style={{ marginTop: 8 }} disabled>
-                Unsupported Nework
-              </PrimaryButton>
-            ) : depositOption === 0 ? (
+            {depositOption === 0 ? (
               <PrimaryButton
                 id="crab-deposit-btn"
                 variant={Number(depositPriceImpact) > 3 || !!warning ? 'outlined' : 'contained'}
