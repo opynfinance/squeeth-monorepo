@@ -57,20 +57,16 @@ const useStyles = makeStyles((theme) =>
     },
     settingsButton: {
       marginTop: theme.spacing(2),
-      marginLeft: theme.spacing(10),
-      justifyContent: 'right',
     },
     settingsContainer: {
       display: 'flex',
-      justify: 'space-between',
+      justifyContent: 'space-between',
+      width: '300px',
+      margin: '0 auto',
     },
     explainer: {
       marginTop: theme.spacing(2),
-      paddingLeft: theme.spacing(1),
       paddingRight: theme.spacing(1),
-      marginLeft: theme.spacing(1),
-      width: '200px',
-      justifyContent: 'left',
     },
     thirdHeading: {
       marginTop: theme.spacing(2),
@@ -173,13 +169,6 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
   }, [amount, collatPercent, firstValidVault, getDebtAmount, shortVaults])
 
   if (connected) {
-    // if (
-    //   !open &&
-    //   shortVaults.length &&
-    //   (shortVaults[firstValidVault].shortAmount.lt(amount) || shortVaults[firstValidVault].shortAmount.isZero())
-    // ) {
-    //   inputError = 'Close amount exceeds position'
-    // }
     if (new BigNumber(quote.priceImpact).gt(3)) {
       priceImpactWarning = 'High Price Impact'
     }
@@ -341,7 +330,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
         <>
           <div className={classes.settingsContainer}>
             <Typography variant="caption" className={classes.explainer} id="open-short-header-box" component="div">
-              Mint & sell squeeth for premium
+              Mint and sell squeeth to receive funding
             </Typography>
             <span className={classes.settingsButton}>
               <TradeSettings />
@@ -429,7 +418,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
                 setLastTypedInput('sqth')
                 handleSqthChange(val)
               }}
-              label="Minted Sqth"
+              label="Sell"
               unit="oSQTH"
               tooltip={Tooltips.SellOpenAmount}
               hint={
@@ -464,13 +453,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
                 priceType="twap"
                 id="open-short-liquidation-price"
               />
-              <TradeInfoItem
-                label="Initial Premium"
-                value={quote.amountOut.toFixed(4)}
-                unit="ETH"
-                tooltip={Tooltips.InitialPremium}
-                id="open-short-initial-preminum"
-              />
+
               <TradeInfoItem
                 label="Current Collateral ratio"
                 value={existingCollatPercent}
