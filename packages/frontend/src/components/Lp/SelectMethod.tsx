@@ -55,6 +55,7 @@ const SelectMethod: React.FC = () => {
         initial={{ x: '-5%', opacity: 0.8 }}
         animate={{ x: 0, opacity: 1 }}
         className={classes.obtainItem}
+        id="mint-sqth-to-lp-btn"
         onClick={() => dispatch({ type: LPActions.SELECT_METHOD, payload: OBTAIN_METHOD.MINT })}
       >
         <Typography className={classes.obtainItemTitle} variant="h6">
@@ -67,6 +68,7 @@ const SelectMethod: React.FC = () => {
         initial={{ x: '-5%', opacity: 0.8 }}
         animate={{ x: 0, opacity: 1 }}
         className={classes.obtainItem}
+        id="buy-sqth-to-lp-btn"
         onClick={() => dispatch({ type: LPActions.SELECT_METHOD, payload: OBTAIN_METHOD.BUY })}
       >
         <Typography className={classes.obtainItemTitle} variant="h6">
