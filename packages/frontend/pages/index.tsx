@@ -577,7 +577,7 @@ function TradePage() {
               <Header />
               <div className={classes.positionContainer}>
                 <SqueethInfo />
-                <PositionCard />
+                {supportedNetwork && <PositionCard />}
               </div>
             </div>
             <div className={classes.tradeDetails}>
@@ -589,12 +589,14 @@ function TradePage() {
             </div>
           </div>
 
-          {supportedNetwork && (
-            <div className={classes.ticket}>
-              <TabComponent />
-              <Card className={classes.innerTicket}>{!isRestricted ? <Trade /> : <RestrictionInfo />}</Card>
-            </div>
-          )}
+          <div className={classes.ticket}>
+            {supportedNetwork && (
+              <>
+                <TabComponent />
+                <Card className={classes.innerTicket}>{!isRestricted ? <Trade /> : <RestrictionInfo />}</Card>
+              </>
+            )}
+          </div>
         </div>
       </Hidden>
       <Hidden mdUp>
