@@ -664,7 +664,7 @@ describe("Controller helper integration test", function () {
         amount0Min: 0,
         amount1Min: 0,
         lowerTick: -887220,
-        upperTick: 887220
+        upperTick: 0
       }
       const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
 
