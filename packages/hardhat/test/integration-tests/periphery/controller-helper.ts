@@ -73,7 +73,10 @@ describe("Controller helper integration test", function () {
     wSqueethPool = squeethDeployments.wsqueethEthPool
     ethDaiPool = squeethDeployments.ethDaiPool
     
-    const ControllerHelperUtil = await ethers.getContractFactory("ControllerHelperUtil")
+    const TickMathExternal = await ethers.getContractFactory("TickMathExternal")
+    const TickMathExternalLib = (await TickMathExternal.deploy());
+
+    const ControllerHelperUtil = await ethers.getContractFactory("ControllerHelperUtil", {libraries: {TickMathExternal: TickMathExternalLib.address}});
     const ControllerHelperUtilLib = (await ControllerHelperUtil.deploy());
     
     const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper", {libraries: {ControllerHelperUtil: ControllerHelperUtilLib.address}});
@@ -658,9 +661,12 @@ describe("Controller helper integration test", function () {
         amount0Min: 0,
         amount1Min: 0,
         lowerTick: -887220,
-        upperTick: 887220
+        upperTick: 0
       }
       const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
+
+      console.log("collateralToLp", collateralToLp.toString())
+
       const tx = await controllerHelper.connect(depositor).batchMintLp(params, {value: collateralAmount.add(collateralToLp)});
       const depositorEthBalanceAfter = await provider.getBalance(depositor.address)
       const receipt = await tx.wait()
