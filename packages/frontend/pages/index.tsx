@@ -25,7 +25,7 @@ import { Vaults } from '../src/constants'
 import { Tooltips } from '@constants/enums'
 import { useRestrictUser } from '@context/restrict-user'
 
-import { PositionType, TradeType } from '../src/types'
+import { /* PositionType, */ TradeType } from '../src/types'
 import { toTokenAmount } from '@utils/calculations'
 import {
   normFactorAtom,
@@ -37,7 +37,7 @@ import {
 } from 'src/state/controller/atoms'
 import { usePositionsAndFeesComputation } from 'src/state/positions/hooks'
 import { actualTradeTypeAtom, ethTradeAmountAtom, sqthTradeAmountAtom, tradeTypeAtom } from 'src/state/trade/atoms'
-import { positionTypeAtom } from 'src/state/positions/atoms'
+// import { positionTypeAtom } from 'src/state/positions/atoms'
 import { useResetAtom } from 'jotai/utils'
 import { isTransactionFirstStepAtom, transactionDataAtom, transactionLoadingAtom } from 'src/state/wallet/atoms'
 
