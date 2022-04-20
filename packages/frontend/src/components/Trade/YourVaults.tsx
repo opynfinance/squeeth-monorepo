@@ -1,7 +1,7 @@
 import LabelWithTooltip from '../LabelWithTooltip'
 import SqueethCard from '../SqueethCard'
 import useYourVaults from '../../hooks/useYourVaults'
-import { Box, Grid, Typography } from '@material-ui/core'
+import { Grid, Typography } from '@material-ui/core'
 import { toTokenAmount } from '../../utils/calculations'
 import BigNumber from 'bignumber.js'
 import Link from 'next/link'

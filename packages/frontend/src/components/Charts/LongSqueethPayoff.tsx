@@ -1,5 +1,6 @@
-import { createStyles, makeStyles } from '@material-ui/core'
-import React, { memo, useCallback, useEffect, useState } from 'react'
+import useAppCallback from '@hooks/useAppCallback'
+import useAppEffect from '@hooks/useAppEffect'
+import React, { memo, useState } from 'react'
 import { Line } from 'react-chartjs-2'
 
 import { getSqueethLongPayOffGraph } from '../../utils'
@@ -65,7 +66,7 @@ const chartOptions = {
       label: function (tooltipItem: any, data: any) {
         return `${data.datasets[tooltipItem.datasetIndex].label}: ${tooltipItem.yLabel} %`
       },
-      title: function (tooltipItem: any, data: any) {
+      title: function (tooltipItem: any) {
         return `${tooltipItem[0].xLabel} % ETH Change`
       },
     },
@@ -98,25 +99,13 @@ const chartOptions = {
   },
 }
 
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    container: {
-      height: '300px',
-      marginTop: '10px',
-      width: '430px',
-    },
-  }),
-)
-
 const LongSqueethPayoff: React.FC<{ ethPrice: number }> = ({ ethPrice }) => {
   const [labels, setLabels] = useState<Array<string>>([])
   const [values, setValues] = useState<Array<string>>([])
   const [twoXValues, setTwoXvalues] = useState<Array<number | null>>([])
   const [twoXImgValues, setTwoXImgvalues] = useState<Array<number | null>>([])
 
-  const classes = useStyles()
-
-  useEffect(() => {
+  useAppEffect(() => {
     const { ethPercents, powerTokenPayout, twoXLeverage, twoXLeverageImaginary } = getSqueethLongPayOffGraph(ethPrice)
     setLabels(ethPercents)
     setValues(powerTokenPayout)
@@ -124,7 +113,7 @@ const LongSqueethPayoff: React.FC<{ ethPrice: number }> = ({ ethPrice }) => {
     setTwoXImgvalues(twoXLeverageImaginary)
   }, [ethPrice])
 
-  const getData = useCallback(() => {
+  const getData = useAppCallback(() => {
     return {
       labels,
       datasets: [
@@ -167,7 +156,7 @@ const LongSqueethPayoff: React.FC<{ ethPrice: number }> = ({ ethPrice }) => {
         },
       ],
     }
-  }, [labels, values, twoXValues])
+  }, [labels, values, twoXValues, twoXImgValues])
 
   return (
     <div style={{ width: '350px' }}>

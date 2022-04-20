@@ -51,7 +51,7 @@ enum TxType {
 
 export const CrabStrategyHistory: React.FC = () => {
   const classes = useStyles()
-  const { data, loading } = useCrabStrategyTxHistory()
+  const { data } = useCrabStrategyTxHistory()
 
   const address = useAtomValue(addressAtom)
   const networkId = useAtomValue(networkIdAtom)

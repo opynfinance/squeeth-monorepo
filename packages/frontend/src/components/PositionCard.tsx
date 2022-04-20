@@ -5,7 +5,7 @@ import InfoIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
 import Link from 'next/link'
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import React, { memo, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 
 import { Tooltips } from '@constants/enums'
@@ -203,14 +203,14 @@ const PositionCard: React.FC = () => {
   const tradeType = useAtomValue(tradeTypeAtom)
   const ethPrice = useETHPrice()
   const prevSwapsData = usePrevious(swaps)
-  const tradeAmount = useMemo(() => new BigNumber(tradeAmountInput), [tradeAmountInput])
+  const tradeAmount = useAppMemo(() => new BigNumber(tradeAmountInput), [tradeAmountInput])
   const [fetchingNew, setFetchingNew] = useState(false)
   const [postTradeAmt, setPostTradeAmt] = useState(new BigNumber(0))
   const [postPosition, setPostPosition] = useState(PositionType.NONE)
-  const positionType = useMemo(() => (isPositionLoading ? PositionType.NONE : pType), [pType, isPositionLoading])
+  const positionType = useAppMemo(() => (isPositionLoading ? PositionType.NONE : pType), [pType, isPositionLoading])
   const classes = useStyles({ positionType, postPosition })
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (tradeSuccess && prevSwapsData?.length === swaps?.length) {
       //if trade success and number of swaps is still the same, start swaps polling
       startPolling(500)
@@ -223,7 +223,7 @@ const PositionCard: React.FC = () => {
     }
   }, [swaps, prevSwapsData, tradeSuccess, setTradeCompleted, startPolling, stopPolling, setTradeSuccess])
 
-  const fullyLiquidated = useMemo(() => {
+  const fullyLiquidated = useAppMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
   }, [firstValidVault, shortVaults, liquidations])
 
@@ -297,7 +297,7 @@ const PositionCard: React.FC = () => {
     setPostPosition(_postPosition)
   }, [actualTradeType, isOpenPosition, isPositionLoading, positionType, squeethAmount, tradeAmount])
 
-  const pnlLoading = useMemo(() => {
+  const pnlLoading = useAppMemo(() => {
     if (positionType === PositionType.LONG) {
       return longUnrealizedPNL.loading
     }
