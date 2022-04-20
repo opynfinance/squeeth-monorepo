@@ -50,7 +50,7 @@ export function calcShortGain({ shortUnrealizedPNL, usdAmount, wethAmount, unisw
   return shortUnrealizedPNL.div(usdAmount.plus(wethAmount.times(uniswapEthPrice).absoluteValue())).times(100)
 }
 
-const queryClient = new QueryClient({
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: Infinity,
@@ -187,7 +187,7 @@ const historicPriceQueryKeys = {
   historicPrice: (timestamp: string) => [`userPrice_${timestamp}`],
 }
 
-async function getEthPriceAtTransactionTime(timestamp: string) {
+export async function getEthPriceAtTransactionTime(timestamp: string) {
   try {
     const timeInMilliseconds = new Date(Number(timestamp) * 1000).setUTCSeconds(0, 0)
     const currentTimeInMilliseconds = Date.now()
