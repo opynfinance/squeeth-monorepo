@@ -1,7 +1,9 @@
+//SPDX-License-Identifier: BUSL-1.1
+
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-//SPDX-License-Identifier: BUSL-1.1
+import "hardhat/console.sol";
 
 // interface
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
@@ -10,15 +12,21 @@ import {IController} from "../../interfaces/IController.sol";
 import {IWPowerPerp} from "../../interfaces/IWPowerPerp.sol";
 import {IWETH9} from "../../interfaces/IWETH9.sol";
 import {IWPowerPerp} from "../../interfaces/IWPowerPerp.sol";
+import {IOracle} from "../../interfaces/IOracle.sol";
 
 // lib
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
-import {ControllerHelperDataType} from "./ControllerHelperDataType.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {ControllerHelperDataType} from "./ControllerHelperDataType.sol";
+import {LiquidityAmounts} from "./LiquidityAmounts.sol";
+import {TickMathExternal} from "../../libs/TickMathExternal.sol";
+import {SqrtPriceMathPartial} from "../../libs/SqrtPriceMathPartial.sol";
 
 library ControllerHelperUtil {
     using SafeMath for uint256;
     using Address for address payable;
+
+    uint32 private constant TWAP_PERIOD = 420;
 
     /**
      * @notice fully or partially close Uni v3 LP
@@ -71,16 +79,41 @@ library ControllerHelperUtil {
      * @param _isWethToken0 bool variable indicate if Weth token is token0 in Uniswap v3 weth/wPowerPerp pool
      * @return _vaultId and tokenId
      */
-    function mintAndLp(address _controller, address _nonfungiblePositionManager, address _wPowerPerp, address _wPowerPerpPool, address _weth, ControllerHelperDataType.MintAndLpParams calldata _mintAndLpParams, bool _isWethToken0) public returns (uint256, uint256) {
+    function mintAndLp(address _controller, address _nonfungiblePositionManager, address _wPowerPerp, address _wPowerPerpPool, address _weth, address _oracle, ControllerHelperDataType.MintAndLpParams calldata _mintAndLpParams, bool _isWethToken0) public returns (uint256, uint256) {
         IWETH9(_weth).withdraw(_mintAndLpParams.collateralToDeposit);
+
+        uint256 amount0Desired; 
+        uint256 amount1Desired;
+        {
+            int24 timeWeightedAverageTick = IOracle(_oracle).getTimeWeightedAverageTickSafe(_wPowerPerpPool, TWAP_PERIOD);
+            uint160 sqrtRatioX96 = TickMathExternal.getSqrtRatioAtTick(timeWeightedAverageTick);
+            uint160 sqrtRatioAX96 = TickMathExternal.getSqrtRatioAtTick(_mintAndLpParams.lowerTick);
+            uint160 sqrtRatioBX96 = TickMathExternal.getSqrtRatioAtTick(_mintAndLpParams.upperTick);
+            (amount0Desired, amount1Desired) = _isWethToken0 ? (_mintAndLpParams.collateralToLp, _mintAndLpParams.wPowerPerpAmount) : (_mintAndLpParams.wPowerPerpAmount, _mintAndLpParams.collateralToLp);
+            uint128 maxLiquidity = LiquidityAmounts.getLiquidityForAmounts(uint160(timeWeightedAverageTick), sqrtRatioAX96, sqrtRatioBX96, amount0Desired, amount1Desired);
+
+            console.log("amount0Desired", amount0Desired);
+            console.log("amount1Desired", amount1Desired);
+
+            console.log("sqrtRatioX96", sqrtRatioX96);
+            console.log("sqrtRatioAX96", sqrtRatioAX96);
+            console.log("sqrtRatioBX96", sqrtRatioBX96);
+            console.log("maxLiquidity", maxLiquidity);
+
+            (amount0Desired, amount1Desired) = LiquidityAmounts.getAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, maxLiquidity);
+        }
         
         uint256 _vaultId = IController(_controller).mintWPowerPerpAmount{value: _mintAndLpParams.collateralToDeposit}(
             _mintAndLpParams.vaultId,
-            _mintAndLpParams.wPowerPerpAmount,
+            _isWethToken0 ? amount1Desired : amount0Desired,
             0
         );
 
-        // LP _mintAndLpParams._wPowerPerpAmount & _mintAndLpParams.collateralToLp in Uni v3
+        console.log("_isWethToken0", _isWethToken0);
+        console.log("amount0Desired", amount0Desired);
+        console.log("amount1Desired", amount1Desired);
+
+        // LP amount0Desired and amount1Desired in Uni v3
         uint256 uniTokenId = lpWPowerPerpPool(
             _controller,
             _nonfungiblePositionManager,
@@ -89,8 +122,8 @@ library ControllerHelperUtil {
             _vaultId,
             ControllerHelperDataType.LpWPowerPerpPool({
                 recipient: _mintAndLpParams.recipient,
-                amount0Desired: _isWethToken0 ? _mintAndLpParams.collateralToLp : _mintAndLpParams.wPowerPerpAmount,
-                amount1Desired: _isWethToken0 ? _mintAndLpParams.wPowerPerpAmount : _mintAndLpParams.collateralToLp,
+                amount0Desired: amount0Desired,
+                amount1Desired: amount1Desired,
                 amount0Min: _mintAndLpParams.amount0Min,
                 amount1Min: _mintAndLpParams.amount1Min,
                 lowerTick: _mintAndLpParams.lowerTick,

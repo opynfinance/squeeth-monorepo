@@ -9,7 +9,6 @@ import "hardhat/console.sol";
 import {IWETH9} from "../interfaces/IWETH9.sol";
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
 import {IShortPowerPerp} from "../interfaces/IShortPowerPerp.sol";
-import {IOracle} from "../interfaces/IOracle.sol";
 import {IController} from "../interfaces/IController.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
@@ -242,12 +241,14 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         require(msg.value == _params.collateralToDeposit.add(_params.collateralToLp));
 
         wrapInternal(msg.value);
+
         (uint256 vaultId, ) = ControllerHelperUtil.mintAndLp(
             ControllerHelperDiamondStorage.getAddressAtSlot(0),
             ControllerHelperDiamondStorage.getAddressAtSlot(6),
             ControllerHelperDiamondStorage.getAddressAtSlot(4),
             ControllerHelperDiamondStorage.getAddressAtSlot(3),
             ControllerHelperDiamondStorage.getAddressAtSlot(5),
+            ControllerHelperDiamondStorage.getAddressAtSlot(1),
             _params,
             isWethToken0
         );
@@ -482,6 +483,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 ControllerHelperDiamondStorage.getAddressAtSlot(4),
                 ControllerHelperDiamondStorage.getAddressAtSlot(3),
                 ControllerHelperDiamondStorage.getAddressAtSlot(5),
+                ControllerHelperDiamondStorage.getAddressAtSlot(1),
                 ControllerHelperDataType.MintAndLpParams({
                     recipient: address(this),
                     vaultId: data.vaultId,
