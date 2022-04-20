@@ -1,7 +1,7 @@
-import { createStyles, Hidden, InputAdornment, makeStyles, TextField, Tooltip, Typography } from '@material-ui/core'
+import { createStyles, Hidden, InputAdornment, makeStyles, TextField, Tooltip } from '@material-ui/core'
 import Alert from '@material-ui/lab/Alert'
 import dynamic from 'next/dynamic'
-import React, { memo, useMemo, useState } from 'react'
+import React, { memo, useState } from 'react'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import { useAtom } from 'jotai'
 
@@ -13,8 +13,8 @@ import {
   useLongEthPNL,
   useShortEthPNL,
   useShortSeries,
-  useStartingETHPrice,
 } from 'src/state/ethPriceCharts/atoms'
+import useAppMemo from '@hooks/useAppMemo'
 
 const Chart = dynamic(() => import('kaktana-react-lightweight-charts'), { ssr: false })
 
@@ -85,7 +85,7 @@ const useStyles = makeStyles((theme) =>
 )
 
 function CrabStrategyChart({ vault, longAmount }: { vault?: Vaults; longAmount: number }) {
-  const startingETHPrice = useStartingETHPrice()
+  // const startingETHPrice = useStartingETHPrice()
   const getVaultPNLWithRebalance = useGetVaultPNLWithRebalance()
   const longEthPNL = useLongEthPNL()
   const shortEthPNL = useShortEthPNL()
@@ -96,11 +96,11 @@ function CrabStrategyChart({ vault, longAmount }: { vault?: Vaults; longAmount: 
 
   const seriesRebalance = getVaultPNLWithRebalance(longAmount)
   const classes = useStyles()
-  const [chartType, setChartType] = useState(0)
+  const [chartType] = useState(0)
 
   const compoundSeries = getStableYieldPNL(1)
 
-  const lineSeries = useMemo(() => {
+  const lineSeries = useAppMemo(() => {
     if (!shortEthPNL || !longEthPNL || !seriesRebalance || !shortSeries) return
 
     if (vault === Vaults.ETHBull)
@@ -128,52 +128,52 @@ function CrabStrategyChart({ vault, longAmount }: { vault?: Vaults; longAmount: 
     return [{ data: seriesRebalance, legend: 'PNL' }]
   }, [compoundSeries, getStableYieldPNL, longAmount, longEthPNL, seriesRebalance, shortEthPNL, shortSeries, vault])
 
-  const lineSeriesPercentage = useMemo(() => {
-    if (!startingETHPrice || !seriesRebalance || !longEthPNL || !shortEthPNL) return
+  // const lineSeriesPercentage = useAppMemo(() => {
+  //   if (!startingETHPrice || !seriesRebalance || !longEthPNL || !shortEthPNL) return
 
-    if (vault === Vaults.ETHBull)
-      return [
-        { data: convertPNLToPriceChart(longEthPNL, startingETHPrice), legend: 'Long ETH' },
-        {
-          data: convertPNLToPriceChart(seriesRebalance, startingETHPrice),
-          legend: 'ETH Bull Strategy (incl. funding)',
-        },
-      ]
-    if (vault === Vaults.CrabVault)
-      return [
-        {
-          data: convertPNLToPriceChart(getStableYieldPNL(longAmount), startingETHPrice),
-          legend: 'Compound Interest Yield',
-        },
-        {
-          data: convertPNLToPriceChart(seriesRebalance, startingETHPrice),
-          legend: 'Crab Strategy PNL (incl. funding)',
-        },
-      ]
-    if (vault === Vaults.ETHBear)
-      return [
-        { data: convertPNLToPriceChart(shortEthPNL, startingETHPrice), legend: 'Short ETH' },
-        {
-          data: convertPNLToPriceChart(seriesRebalance, startingETHPrice),
-          legend: 'ETH Bear Strategy (incl. funding)',
-        },
-      ]
-    if (vault === Vaults.Short)
-      return [
-        { data: shortEthPNL, legend: 'Short ETH PNL' },
-        { data: shortSeries, legend: 'Crab (incl. funding)' },
-        // { data: convertPNLToPriceChart(shortEthPNL, startingETHPrice), legend: 'Short ETH' },
-        // { data: convertPNLToPriceChart(shortSeries, startingETHPrice), legend: 'Short Squeeth (incl. funding)' },
-      ]
-    return [{ data: seriesRebalance, legend: 'PNL' }]
-  }, [vault, shortEthPNL, seriesRebalance, getStableYieldPNL, longAmount, startingETHPrice, shortSeries])
+  //   if (vault === Vaults.ETHBull)
+  //     return [
+  //       { data: convertPNLToPriceChart(longEthPNL, startingETHPrice), legend: 'Long ETH' },
+  //       {
+  //         data: convertPNLToPriceChart(seriesRebalance, startingETHPrice),
+  //         legend: 'ETH Bull Strategy (incl. funding)',
+  //       },
+  //     ]
+  //   if (vault === Vaults.CrabVault)
+  //     return [
+  //       {
+  //         data: convertPNLToPriceChart(getStableYieldPNL(longAmount), startingETHPrice),
+  //         legend: 'Compound Interest Yield',
+  //       },
+  //       {
+  //         data: convertPNLToPriceChart(seriesRebalance, startingETHPrice),
+  //         legend: 'Crab Strategy PNL (incl. funding)',
+  //       },
+  //     ]
+  //   if (vault === Vaults.ETHBear)
+  //     return [
+  //       { data: convertPNLToPriceChart(shortEthPNL, startingETHPrice), legend: 'Short ETH' },
+  //       {
+  //         data: convertPNLToPriceChart(seriesRebalance, startingETHPrice),
+  //         legend: 'ETH Bear Strategy (incl. funding)',
+  //       },
+  //     ]
+  //   if (vault === Vaults.Short)
+  //     return [
+  //       { data: shortEthPNL, legend: 'Short ETH PNL' },
+  //       { data: shortSeries, legend: 'Crab (incl. funding)' },
+  //       // { data: convertPNLToPriceChart(shortEthPNL, startingETHPrice), legend: 'Short ETH' },
+  //       // { data: convertPNLToPriceChart(shortSeries, startingETHPrice), legend: 'Short Squeeth (incl. funding)' },
+  //     ]
+  //   return [{ data: seriesRebalance, legend: 'PNL' }]
+  // }, [vault, shortEthPNL, seriesRebalance, getStableYieldPNL, longAmount, startingETHPrice, shortSeries, longEthPNL])
 
-  const startTimestamp = useMemo(
+  const startTimestamp = useAppMemo(
     () => (lineSeries && lineSeries.length > 0 && lineSeries[0].data.length > 0 ? lineSeries[0].data[0].time : 0),
     [lineSeries],
   )
 
-  const endTimestamp = useMemo(
+  const endTimestamp = useAppMemo(
     () =>
       lineSeries && lineSeries.length > 0 && lineSeries[0].data.length > 0
         ? lineSeries[0].data[lineSeries[0].data.length - 1].time
@@ -270,11 +270,11 @@ function CrabStrategyChart({ vault, longAmount }: { vault?: Vaults; longAmount: 
 
 export const MemoizedCrabStrategyChart = memo(CrabStrategyChart)
 
-const convertPNLToPriceChart = (pnlSeries: { time: number; value: number }[], startingCapital: number) => {
-  return pnlSeries.map(({ value, time }) => {
-    return {
-      value: value + startingCapital,
-      time,
-    }
-  })
-}
+// const convertPNLToPriceChart = (pnlSeries: { time: number; value: number }[], startingCapital: number) => {
+//   return pnlSeries.map(({ value, time }) => {
+//     return {
+//       value: value + startingCapital,
+//       time,
+//     }
+//   })
+// }

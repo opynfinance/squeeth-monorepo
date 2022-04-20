@@ -67,7 +67,6 @@ export function VaultChart({
   vault,
   longAmount,
   setCustomLong,
-  showPercentage,
 }: {
   vault?: Vaults
   longAmount: number
@@ -303,11 +302,11 @@ export function VaultChart({
   )
 }
 
-const convertPNLToPriceChart = (pnlSeries: { time: number; value: number }[], startingCapital: number) => {
-  return pnlSeries.map(({ value, time }) => {
-    return {
-      value: value + startingCapital,
-      time,
-    }
-  })
-}
+// const convertPNLToPriceChart = (pnlSeries: { time: number; value: number }[], startingCapital: number) => {
+//   return pnlSeries.map(({ value, time }) => {
+//     return {
+//       value: value + startingCapital,
+//       time,
+//     }
+//   })
+// }

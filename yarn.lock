@@ -4271,6 +4271,14 @@
     lodash "^4.17.15"
     redent "^3.0.0"
 
+"@testing-library/react-hooks@^8.0.0":
+  version "8.0.0"
+  resolved "https://registry.yarnpkg.com/@testing-library/react-hooks/-/react-hooks-8.0.0.tgz#7d0164bffce4647f506039de0a97f6fcbd20f4bf"
+  integrity sha512-uZqcgtcUUtw7Z9N32W13qQhVAD+Xki2hxbTR461MKax8T6Jr8nsUvZB+vcBTkzY2nFvsUet434CsgF0ncW2yFw==
+  dependencies:
+    "@babel/runtime" "^7.12.5"
+    react-error-boundary "^3.1.0"
+
 "@testing-library/react@12.0.0":
   version "12.0.0"
   resolved "https://registry.yarnpkg.com/@testing-library/react/-/react-12.0.0.tgz#9aeb2264521522ab9b68f519eaf15136148f164a"
@@ -7375,7 +7383,7 @@ binary-install-raw@0.0.13:
 
 binaryen@77.0.0-nightly.20190407:
   version "77.0.0-nightly.20190407"
-  resolved "https://registry.npmjs.org/binaryen/-/binaryen-77.0.0-nightly.20190407.tgz#fbe4f8ba0d6bd0809a84eb519d2d5b5ddff3a7d1"
+  resolved "https://registry.yarnpkg.com/binaryen/-/binaryen-77.0.0-nightly.20190407.tgz#fbe4f8ba0d6bd0809a84eb519d2d5b5ddff3a7d1"
   integrity sha512-1mxYNvQ0xywMe582K7V6Vo2zzhZZxMTeGHH8aE/+/AND8f64D8Q1GThVY3RVRwGY/4p+p95ccw9Xbw2ovFXRIg==
 
 bind-decorator@^1.0.11:
@@ -10177,7 +10185,7 @@ dot-case@^3.0.4:
 
 dotenv-cli@^5.0.0:
   version "5.1.0"
-  resolved "https://registry.npmjs.org/dotenv-cli/-/dotenv-cli-5.1.0.tgz#0d2942b089082da0157f9b26bd6c5c4dd51ef48e"
+  resolved "https://registry.yarnpkg.com/dotenv-cli/-/dotenv-cli-5.1.0.tgz#0d2942b089082da0157f9b26bd6c5c4dd51ef48e"
   integrity sha512-NoEZAlKo9WVrG0b3i9mBxdD6INdDuGqdgR74t68t8084QcI077/1MnPerRW1odl+9uULhcdnQp2U0pYVppKHOA==
   dependencies:
     cross-spawn "^7.0.3"
@@ -10187,7 +10195,7 @@ dotenv-cli@^5.0.0:
 
 dotenv-expand@^8.0.1:
   version "8.0.3"
-  resolved "https://registry.npmjs.org/dotenv-expand/-/dotenv-expand-8.0.3.tgz#29016757455bcc748469c83a19b36aaf2b83dd6e"
+  resolved "https://registry.yarnpkg.com/dotenv-expand/-/dotenv-expand-8.0.3.tgz#29016757455bcc748469c83a19b36aaf2b83dd6e"
   integrity sha512-SErOMvge0ZUyWd5B0NXMQlDkN+8r+HhVUsxgOO7IoPDOdDRD2JjExpN6y3KnFR66jsJMwSn1pqIivhU5rcJiNg==
 
 dotenv@^10.0.0:
@@ -10197,7 +10205,7 @@ dotenv@^10.0.0:
 
 dotenv@^16.0.0:
   version "16.0.0"
-  resolved "https://registry.npmjs.org/dotenv/-/dotenv-16.0.0.tgz#c619001253be89ebb638d027b609c75c26e47411"
+  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.0.0.tgz#c619001253be89ebb638d027b609c75c26e47411"
   integrity sha512-qD9WU0MPM4SWLPJy/r2Be+2WgQj8plChsyrCNQzW/0WjvcJQiKQJ9mH3ZgB3fxbUUxgc/11ZJ0Fi5KiimWGz2Q==
 
 dotenv@^8.0.0:
@@ -18283,7 +18291,7 @@ open@^7.4.2:
 
 opencollective-postinstall@^2.0.0:
   version "2.0.3"
-  resolved "https://registry.npmjs.org/opencollective-postinstall/-/opencollective-postinstall-2.0.3.tgz#7a0fff978f6dbfa4d006238fbac98ed4198c3259"
+  resolved "https://registry.yarnpkg.com/opencollective-postinstall/-/opencollective-postinstall-2.0.3.tgz#7a0fff978f6dbfa4d006238fbac98ed4198c3259"
   integrity sha512-8AV/sCtuzUeTo8gQK5qDZzARrulB3egtLzFgteqB2tcT4Mw7B8Kt7JcDHmltjz6FOAHsvTevk70gZEbhM4ZS9Q==
 
 "openzeppelin-solidity-2.3.0@npm:openzeppelin-solidity@2.3.0":
@@ -19723,6 +19731,13 @@ react-dom@17.0.2, react-dom@^17.0.1:
     loose-envify "^1.1.0"
     object-assign "^4.1.1"
     scheduler "^0.20.2"
+
+react-error-boundary@^3.1.0:
+  version "3.1.4"
+  resolved "https://registry.yarnpkg.com/react-error-boundary/-/react-error-boundary-3.1.4.tgz#255db92b23197108757a888b01e5b729919abde0"
+  integrity sha512-uM9uPzZJTF6wRQORmSrvOIgt4lJ9MC1sNgEOj2XGsDTRE4kmpWxg7ENK9EWNKJRMAOY9z0MuF4yIfl6gp4sotA==
+  dependencies:
+    "@babel/runtime" "^7.12.5"
 
 react-is@17.0.2, "react-is@^16.8.0 || ^17.0.0", react-is@^17.0.1:
   version "17.0.2"

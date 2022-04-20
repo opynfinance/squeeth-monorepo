@@ -1,8 +1,8 @@
-import { createStyles, makeStyles } from '@material-ui/core'
-import React, { memo, useCallback, useEffect, useState } from 'react'
+import useAppCallback from '@hooks/useAppCallback'
+import React, { memo, useEffect, useState } from 'react'
 import { Line } from 'react-chartjs-2'
 
-import { getBuyAndLPPayOffGraph, getSqueethLongPayOffGraph } from '../../utils'
+import { getBuyAndLPPayOffGraph } from '../../utils'
 
 const primaryColor = '#2CE6F9'
 const errorColor = '#EC7987'
@@ -65,7 +65,7 @@ const chartOptions = {
       label: function (tooltipItem: any, data: any) {
         return `${data.datasets[tooltipItem.datasetIndex].label}: ${tooltipItem.yLabel} %`
       },
-      title: function (tooltipItem: any, data: any) {
+      title: function (tooltipItem: any) {
         return `${tooltipItem[0].xLabel} % ETH Change`
       },
     },
@@ -98,22 +98,10 @@ const chartOptions = {
   },
 }
 
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    container: {
-      height: '300px',
-      marginTop: '10px',
-      width: '430px',
-    },
-  }),
-)
-
 const LongSqueethPayoff: React.FC<{ ethPrice: number }> = ({ ethPrice }) => {
   const [labels, setLabels] = useState<Array<string>>([])
   const [values, setValues] = useState<Array<string>>([])
   const [levValues, setLevValues] = useState<Array<string | null>>([])
-
-  const classes = useStyles()
 
   useEffect(() => {
     const { ethPercents, lpPayout, leveragePayout } = getBuyAndLPPayOffGraph(ethPrice)
@@ -122,7 +110,7 @@ const LongSqueethPayoff: React.FC<{ ethPrice: number }> = ({ ethPrice }) => {
     setLevValues(leveragePayout)
   }, [ethPrice])
 
-  const getData = useCallback(() => {
+  const getData = useAppCallback(() => {
     return {
       labels,
       datasets: [
