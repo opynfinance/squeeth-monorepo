@@ -95,7 +95,12 @@ export async function calcETHCollateralPnl(
  * @param isLong
  * @returns array of swaps that add up to the user's squeethAmount
  */
-const getRelevantSwaps = (squeethAmount: BigNumber, swaps: swaps_swaps[], isWethToken0: boolean, isLong = false) => {
+export const getRelevantSwaps = (
+  squeethAmount: BigNumber,
+  swaps: swaps_swaps[],
+  isWethToken0: boolean,
+  isLong = false,
+) => {
   let totalSqueeth = BIG_ZERO
   const relevantSwaps = []
   for (let index = swaps.length - 1; index >= 0; index--) {
