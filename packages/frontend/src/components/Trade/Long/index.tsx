@@ -1,7 +1,7 @@
 import { CircularProgress, createStyles, makeStyles, Typography } from '@material-ui/core'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import BigNumber from 'bignumber.js'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
 
 import { BIG_ZERO, Links } from '../../../constants'
@@ -39,11 +39,13 @@ import {
   tradeCompletedAtom,
   tradeSuccessAtom,
   tradeTypeAtom,
-  transactionHashAtom,
 } from 'src/state/trade/atoms'
 import { toTokenAmount } from '@utils/calculations'
 import { TradeType } from '../../../types'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from 'src/state/controller/atoms'
+import useAppEffect from '@hooks/useAppEffect'
+import useAppCallback from '@hooks/useAppCallback'
+import { useMemo } from 'react'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -287,15 +289,15 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (open && tradeType === TradeType.LONG) {
       getBuyQuoteForETH(new BigNumber(sqthTradeAmount), slippageAmount).then((val) => {
         setQuote(val)
       })
     }
-  }, [slippageAmount.toString(), sqthTradeAmount])
+  }, [slippageAmount, sqthTradeAmount, getBuyQuoteForETH, open, setQuote, tradeType])
 
-  const handleEthChange = useCallback(
+  const handleEthChange = useAppCallback(
     (value: string) => {
       setEthTradeAmount(value)
       setInputQuoteLoading(true)
@@ -307,10 +309,18 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
         setInputQuoteLoading(false)
       })
     },
-    [getBuyQuoteForETH, getWSqueethPositionValue, slippageAmount.toString()],
+    [
+      getBuyQuoteForETH,
+      getWSqueethPositionValue,
+      slippageAmount,
+      setConfirmedAmount,
+      setEthTradeAmount,
+      setInputQuoteLoading,
+      setSqthTradeAmount,
+    ],
   )
 
-  const handleSqthChange = useCallback(
+  const handleSqthChange = useAppCallback(
     (value: string) => {
       setSqthTradeAmount(value)
       setInputQuoteLoading(true)
@@ -321,7 +331,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
         setInputQuoteLoading(false)
       })
     },
-    [getBuyQuote, slippageAmount.toString()],
+    [getBuyQuote, slippageAmount, setEthTradeAmount, setInputQuoteLoading, setSqthTradeAmount],
   )
 
   let openError: string | undefined
@@ -350,13 +360,13 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
 
   const longOpenPriceImpactErrorState = priceImpactWarning && !buyLoading && !openError && !isShort
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (transactionInProgress) {
       setBuyLoading(false)
     }
   }, [transactionInProgress])
 
-  const transact = useCallback(async () => {
+  const transact = useAppCallback(async () => {
     setBuyLoading(true)
     try {
       await buyAndRefund(new BigNumber(ethTradeAmount), () => {
@@ -370,7 +380,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
       console.log(e)
       setBuyLoading(false)
     }
-  }, [buyAndRefund, ethTradeAmount])
+  }, [buyAndRefund, ethTradeAmount, resetEthTradeAmount, resetSqthTradeAmount, setTradeCompleted, setTradeSuccess])
 
   return (
     <div id="open-long-card">
@@ -618,7 +628,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
   const slippageAmount = useAtomValue(slippageAmountAtom)
   const ethPrice = useETHPrice()
-  const amount = new BigNumber(sqthTradeAmount)
+  const amount = useMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const altTradeAmount = new BigNumber(ethTradeAmount)
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter)
   const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
@@ -633,7 +643,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
   const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
 
-  useEffect(() => {
+  useAppEffect(() => {
     //if it's insufficient amount them set it to it's maximum
     if (longSqthBal.lt(amount)) {
       setSqthTradeAmount(longSqthBal.toString())
@@ -642,7 +652,7 @@ const CloseLong: React.FC<BuyProps> = () => {
         setConfirmedAmount(val.amountIn.toFixed(6).toString())
       })
     }
-  }, [longSqthBal.toString()])
+  }, [longSqthBal, amount, getSellQuoteForETH, setConfirmedAmount, setEthTradeAmount, setSqthTradeAmount])
 
   // let openError: string | undefined
   let closeError: string | undefined
@@ -667,7 +677,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   const longClosePriceImpactErrorState =
     priceImpactWarning && !closeError && !sellLoading && !longSqthBal.isZero() && !isShort
 
-  const sellAndClose = useCallback(async () => {
+  const sellAndClose = useAppCallback(async () => {
     setSellLoading(true)
     try {
       if (squeethAllowance.lt(amount)) {
@@ -691,30 +701,30 @@ const CloseLong: React.FC<BuyProps> = () => {
       setSellLoading(false)
     }
   }, [
-    amount.toString(),
+    amount,
     resetEthTradeAmount,
     resetSqthTradeAmount,
     sell,
     setIsTxFirstStep,
     setTradeCompleted,
     setTradeSuccess,
-    squeethAllowance.toString(),
+    squeethAllowance,
     squeethApprove,
   ])
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (transactionInProgress) {
       setSellLoading(false)
     }
   }, [transactionInProgress])
 
-  useEffect(() => {
+  useAppEffect(() => {
     getSellQuote(new BigNumber(sqthTradeAmount), slippageAmount).then((val) => {
       setQuote(val)
     })
-  }, [slippageAmount.toString(), sqthTradeAmount])
+  }, [slippageAmount, sqthTradeAmount, getSellQuote, setQuote])
 
-  const handleSqthChange = useCallback(
+  const handleSqthChange = useAppCallback(
     (value: string) => {
       setInputQuoteLoading(true)
       setSqthTradeAmount(value)
@@ -724,10 +734,10 @@ const CloseLong: React.FC<BuyProps> = () => {
         setInputQuoteLoading(false)
       })
     },
-    [getSellQuote, slippageAmount.toString()],
+    [getSellQuote, slippageAmount, setConfirmedAmount, setEthTradeAmount, setInputQuoteLoading, setSqthTradeAmount],
   )
 
-  const handleEthChange = useCallback(
+  const handleEthChange = useAppCallback(
     (value: string) => {
       setInputQuoteLoading(true)
       setEthTradeAmount(value)
@@ -737,7 +747,14 @@ const CloseLong: React.FC<BuyProps> = () => {
         setInputQuoteLoading(false)
       })
     },
-    [getSellQuoteForETH, slippageAmount.toString()],
+    [
+      getSellQuoteForETH,
+      slippageAmount,
+      setConfirmedAmount,
+      setEthTradeAmount,
+      setInputQuoteLoading,
+      setSqthTradeAmount,
+    ],
   )
 
   return (

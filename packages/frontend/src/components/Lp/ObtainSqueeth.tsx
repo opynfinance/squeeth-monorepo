@@ -7,7 +7,7 @@ import ProvideLiquidity from './ProvideLiquidity'
 import SelectMethod from './SelectMethod'
 import Stepper from './Stepper'
 
-const useStyles = makeStyles((theme) =>
+const useStyles = makeStyles(() =>
   createStyles({
     container: {
       width: '400px',
