@@ -1,5 +1,4 @@
 import useSqueethShortPayOffGraph from '@hooks/payOffGraph/useSqueethShortPayOffGraph'
-import { createStyles, makeStyles } from '@material-ui/core'
 import React, { memo, useCallback } from 'react'
 import { Line } from 'react-chartjs-2'
 
@@ -62,7 +61,7 @@ const chartOptions = {
       label: function (tooltipItem: any, data: any) {
         return `${data.datasets[tooltipItem.datasetIndex].label}: ${tooltipItem.yLabel} %`
       },
-      title: function (tooltipItem: any, data: any) {
+      title: function (tooltipItem: any) {
         return `ETH Price: $${tooltipItem[0].xLabel}`
       },
     },
@@ -94,15 +93,6 @@ const chartOptions = {
     }
   },
 }
-
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    container: {
-      height: '300px',
-      width: '430px',
-    },
-  }),
-)
 
 const ShortSqueethPayoff: React.FC<{ ethPrice: number; collatRatio: number; vaultType?: Vaults }> = ({
   ethPrice,
