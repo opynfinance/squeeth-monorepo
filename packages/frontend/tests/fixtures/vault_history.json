@@ -1,22 +1,62 @@
 [
   {
+    "__typename": "VaultHistory",
     "action": "DEPOSIT_COLLAT",
     "ethCollateralAmount": "6900000000000000000",
-    "id": "0xbf28e988ffe71f6715f86ad1167a8dc57804f089e464b57fec36ee9d391bf08b-DEPOSIT_COLLAT",
+    "id": "0xd772ded3e77fd6c534114de12951c129076f1f516630acf12310e89d6577278c-DEPOSIT_COLLAT",
     "oSqthAmount": "0",
-    "timestamp": "1650376857",
+    "timestamp": "1650454536",
     "totalEthCollateralAmount": "6900000000000000000",
-    "vaultId": "374",
-    "__typename": "VaultHistory"
+    "vaultId": "383"
   },
   {
+    "__typename": "VaultHistory",
     "action": "OPEN_SHORT",
     "ethCollateralAmount": "0",
-    "id": "0xbf28e988ffe71f6715f86ad1167a8dc57804f089e464b57fec36ee9d391bf08b-OPEN_SHORT",
-    "oSqthAmount": "13284500300559379314",
-    "timestamp": "1650376857",
+    "id": "0xd772ded3e77fd6c534114de12951c129076f1f516630acf12310e89d6577278c-OPEN_SHORT",
+    "oSqthAmount": "13320166661914978402",
+    "timestamp": "1650454536",
     "totalEthCollateralAmount": "0",
-    "vaultId": "374",
-    "__typename": "VaultHistory"
+    "vaultId": "383"
+  },
+  {
+    "__typename": "VaultHistory",
+    "action": "DEPOSIT_COLLAT",
+    "ethCollateralAmount": "4000000000000000000",
+    "id": "0x8d4a88a6bf95d6f279457a25ab7c0b3c59402555020250d6e8f4328441c45471-DEPOSIT_COLLAT",
+    "oSqthAmount": "0",
+    "timestamp": "1650454867",
+    "totalEthCollateralAmount": "10900000000000000000",
+    "vaultId": "383"
+  },
+  {
+    "__typename": "VaultHistory",
+    "action": "OPEN_SHORT",
+    "ethCollateralAmount": "0",
+    "id": "0x8d4a88a6bf95d6f279457a25ab7c0b3c59402555020250d6e8f4328441c45471-OPEN_SHORT",
+    "oSqthAmount": "7701527413533985610",
+    "timestamp": "1650454867",
+    "totalEthCollateralAmount": "6900000000000000000",
+    "vaultId": "383"
+  },
+  {
+    "__typename": "VaultHistory",
+    "action": "CLOSE_SHORT",
+    "ethCollateralAmount": "0",
+    "id": "0x4eaeef6472fccabf924010a66867f6382c1f64e416891ae5436dcb6dbbb11aac-CLOSE_SHORT",
+    "oSqthAmount": "5000000000000000000",
+    "timestamp": "1650455536",
+    "totalEthCollateralAmount": "10900000000000000000",
+    "vaultId": "383"
+  },
+  {
+    "__typename": "VaultHistory",
+    "action": "WITHDRAW_COLLAT",
+    "ethCollateralAmount": "2596960716268149148",
+    "id": "0x4eaeef6472fccabf924010a66867f6382c1f64e416891ae5436dcb6dbbb11aac-WITHDRAW_COLLAT",
+    "oSqthAmount": "0",
+    "timestamp": "1650455536",
+    "totalEthCollateralAmount": "8303039283731850852",
+    "vaultId": "383"
   }
 ]
