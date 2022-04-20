@@ -29,6 +29,6 @@
     }
   },
 
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "mocks/handlers.js"],
   "exclude": ["node_modules", "./src/types/global_apollo.ts"]
 }
