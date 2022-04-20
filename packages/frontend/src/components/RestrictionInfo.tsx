@@ -4,7 +4,7 @@ import NorthEastOutlinedIcon from '@material-ui/icons/CallMade'
 import Link from 'next/link'
 import { useCookies } from 'react-cookie'
 
-const useStyles = makeStyles((theme) =>
+const useStyles = makeStyles(() =>
   createStyles({
     restrictedInfo: {
       margin: '1em auto 1em',
