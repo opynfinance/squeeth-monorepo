@@ -1,0 +1,422 @@
+[
+  {
+    "__typename": "Swap",
+    "amount0": "-0.388846787800634359",
+    "amount1": "0.1",
+    "amountUSD": "0",
+    "id": "0xa1e05dd9bebf53bb82d4e21caf85eb1d00cc63c5abe0efbf07d69bdb46648b63#4318",
+    "origin": "0x44f551c8934b6d28fc80529014cfd8dcc77e527d",
+    "pool": {
+      "__typename": "Pool",
+      "token0": {
+        "__typename": "Token",
+        "id": "0xa4222f78d23593e82aa74742d25d06720dca4ab7",
+        "symbol": "oSQTH"
+      },
+      "token1": {
+        "__typename": "Token",
+        "id": "0xc778417e063141139fce010982780140aa0cd5ab",
+        "symbol": "WETH"
+      }
+    },
+    "recipient": "0x44f551c8934b6d28fc80529014cfd8dcc77e527d",
+    "timestamp": "1650223696",
+    "transaction": {
+      "__typename": "Transaction",
+      "blockNumber": "12202376",
+      "id": "0xa1e05dd9bebf53bb82d4e21caf85eb1d00cc63c5abe0efbf07d69bdb46648b63"
+    }
+  },
+  {
+    "__typename": "Swap",
+    "amount0": "0.388846787800634359",
+    "amount1": "-0.09799554173984114",
+    "amountUSD": "0",
+    "id": "0x14cb810ff6959a7a80e63912e483fa4b78c634f139962f1d197e3e5f18ea1609#4326",
+    "origin": "0x44f551c8934b6d28fc80529014cfd8dcc77e527d",
+    "pool": {
+      "__typename": "Pool",
+      "token0": {
+        "__typename": "Token",
+        "id": "0xa4222f78d23593e82aa74742d25d06720dca4ab7",
+        "symbol": "oSQTH"
+      },
+      "token1": {
+        "__typename": "Token",
+        "id": "0xc778417e063141139fce010982780140aa0cd5ab",
+        "symbol": "WETH"
+      }
+    },
+    "recipient": "0x528a19a3e88861e7298c86fe5490b8ec007a4204",
+    "timestamp": "1650349047",
+    "transaction": {
+      "__typename": "Transaction",
+      "blockNumber": "12205242",
+      "id": "0x14cb810ff6959a7a80e63912e483fa4b78c634f139962f1d197e3e5f18ea1609"
+    }
+  },
+  {
+    "__typename": "Swap",
+    "amount0": "13.325406805426751289",
+    "amount1": "-3.329768961220034499",
+    "amountUSD": "0",
+    "id": "0xad8d18e19e97d0f30723e3f8febf2317bb8d355402b24c9de68661c31032cc46#4327",
+    "origin": "0x44f551c8934b6d28fc80529014cfd8dcc77e527d",
+    "pool": {
+      "__typename": "Pool",
+      "token0": {
+        "__typename": "Token",
+        "id": "0xa4222f78d23593e82aa74742d25d06720dca4ab7",
+        "symbol": "oSQTH"
+      },
+      "token1": {
+        "__typename": "Token",
+        "id": "0xc778417e063141139fce010982780140aa0cd5ab",
+        "symbol": "WETH"
+      }
+    },
+    "recipient": "0x8903918dfe74476e90b63061e5b9c3e63b65d3f4",
+    "timestamp": "1650349705",
+    "transaction": {
+      "__typename": "Transaction",
+      "blockNumber": "12205259",
+      "id": "0xad8d18e19e97d0f30723e3f8febf2317bb8d355402b24c9de68661c31032cc46"
+    }
+  },
+  {
+    "__typename": "Swap",
+    "amount0": "-13.325406805426751289",
+    "amount1": "3.349921485830145846",
+    "amountUSD": "0",
+    "id": "0xb1d56206eafaf5816803ff96ba7d8cb3446a6aec523e603a268bf6d0440ecfb6#4328",
+    "origin": "0x44f551c8934b6d28fc80529014cfd8dcc77e527d",
+    "pool": {
+      "__typename": "Pool",
+      "token0": {
+        "__typename": "Token",
+        "id": "0xa4222f78d23593e82aa74742d25d06720dca4ab7",
+        "symbol": "oSQTH"
+      },
+      "token1": {
+        "__typename": "Token",
+        "id": "0xc778417e063141139fce010982780140aa0cd5ab",
+        "symbol": "WETH"
+      }
+    },
+    "recipient": "0x8903918dfe74476e90b63061e5b9c3e63b65d3f4",
+    "timestamp": "1650349874",
+    "transaction": {
+      "__typename": "Transaction",
+      "blockNumber": "12205264",
+      "id": "0xb1d56206eafaf5816803ff96ba7d8cb3446a6aec523e603a268bf6d0440ecfb6"
+    }
+  },
+  {
+    "__typename": "Swap",
+    "amount0": "-1.97006816807892601",
+    "amount1": "0.5",
+    "amountUSD": "0",
+    "id": "0x5429ca825a04c6952e32586edb694377ca8ce3080e5bccf86492e0012b94b63b#4329",
+    "origin": "0x44f551c8934b6d28fc80529014cfd8dcc77e527d",
+    "pool": {
+      "__typename": "Pool",
+      "token0": {
+        "__typename": "Token",
+        "id": "0xa4222f78d23593e82aa74742d25d06720dca4ab7",
+        "symbol": "oSQTH"
+      },
+      "token1": {
+        "__typename": "Token",
+        "id": "0xc778417e063141139fce010982780140aa0cd5ab",
+        "symbol": "WETH"
+      }
+    },
+    "recipient": "0x44f551c8934b6d28fc80529014cfd8dcc77e527d",
+    "timestamp": "1650350767",
+    "transaction": {
+      "__typename": "Transaction",
+      "blockNumber": "12205288",
+      "id": "0x5429ca825a04c6952e32586edb694377ca8ce3080e5bccf86492e0012b94b63b"
+    }
+  },
+  {
+    "__typename": "Swap",
+    "amount0": "1.97006816807892601",
+    "amount1": "-0.497006334782878074",
+    "amountUSD": "0",
+    "id": "0xea932b935a80dc54ae5c29500b3d751b14ea15258ecbfa050371d70c675906b1#4330",
+    "origin": "0x44f551c8934b6d28fc80529014cfd8dcc77e527d",
+    "pool": {
+      "__typename": "Pool",
+      "token0": {
+        "__typename": "Token",
+        "id": "0xa4222f78d23593e82aa74742d25d06720dca4ab7",
+        "symbol": "oSQTH"
+      },
+      "token1": {
+        "__typename": "Token",
+        "id": "0xc778417e063141139fce010982780140aa0cd5ab",
+        "symbol": "WETH"
+      }
+    },
+    "recipient": "0x528a19a3e88861e7298c86fe5490b8ec007a4204",
+    "timestamp": "1650352620",
+    "transaction": {
+      "__typename": "Transaction",
+      "blockNumber": "12205331",
+      "id": "0xea932b935a80dc54ae5c29500b3d751b14ea15258ecbfa050371d70c675906b1"
+    }
+  },
+  {
+    "__typename": "Swap",
+    "amount0": "-1.970053631376186439",
+    "amount1": "0.5",
+    "amountUSD": "0",
+    "id": "0x384ca1993a4ebc38d9b45657d80e085a09d98540f0d0eec5d6a7e3aaa9adff67#4331",
+    "origin": "0x44f551c8934b6d28fc80529014cfd8dcc77e527d",
+    "pool": {
+      "__typename": "Pool",
+      "token0": {
+        "__typename": "Token",
+        "id": "0xa4222f78d23593e82aa74742d25d06720dca4ab7",
+        "symbol": "oSQTH"
+      },
+      "token1": {
+        "__typename": "Token",
+        "id": "0xc778417e063141139fce010982780140aa0cd5ab",
+        "symbol": "WETH"
+      }
+    },
+    "recipient": "0x44f551c8934b6d28fc80529014cfd8dcc77e527d",
+    "timestamp": "1650352674",
+    "transaction": {
+      "__typename": "Transaction",
+      "blockNumber": "12205332",
+      "id": "0x384ca1993a4ebc38d9b45657d80e085a09d98540f0d0eec5d6a7e3aaa9adff67"
+    }
+  },
+  {
+    "__typename": "Swap",
+    "amount0": "1.970053631376186439",
+    "amount1": "-0.477415046658283743",
+    "amountUSD": "0",
+    "id": "0x1dec59fb409e75122fc2c907d6982ff467cc887e3112e5d8c5b56662474121ab#4334",
+    "origin": "0x44f551c8934b6d28fc80529014cfd8dcc77e527d",
+    "pool": {
+      "__typename": "Pool",
+      "token0": {
+        "__typename": "Token",
+        "id": "0xa4222f78d23593e82aa74742d25d06720dca4ab7",
+        "symbol": "oSQTH"
+      },
+      "token1": {
+        "__typename": "Token",
+        "id": "0xc778417e063141139fce010982780140aa0cd5ab",
+        "symbol": "WETH"
+      }
+    },
+    "recipient": "0x528a19a3e88861e7298c86fe5490b8ec007a4204",
+    "timestamp": "1650353611",
+    "transaction": {
+      "__typename": "Transaction",
+      "blockNumber": "12205346",
+      "id": "0x1dec59fb409e75122fc2c907d6982ff467cc887e3112e5d8c5b56662474121ab"
+    }
+  },
+  {
+    "__typename": "Swap",
+    "amount0": "-2.050780619441233471",
+    "amount1": "0.5",
+    "amountUSD": "0",
+    "id": "0x0e00f9739cea557e656bf155e5346ef47e48b5ad6abf4ecc5004aca71eca54a4#4335",
+    "origin": "0x44f551c8934b6d28fc80529014cfd8dcc77e527d",
+    "pool": {
+      "__typename": "Pool",
+      "token0": {
+        "__typename": "Token",
+        "id": "0xa4222f78d23593e82aa74742d25d06720dca4ab7",
+        "symbol": "oSQTH"
+      },
+      "token1": {
+        "__typename": "Token",
+        "id": "0xc778417e063141139fce010982780140aa0cd5ab",
+        "symbol": "WETH"
+      }
+    },
+    "recipient": "0x44f551c8934b6d28fc80529014cfd8dcc77e527d",
+    "timestamp": "1650353842",
+    "transaction": {
+      "__typename": "Transaction",
+      "blockNumber": "12205351",
+      "id": "0x0e00f9739cea557e656bf155e5346ef47e48b5ad6abf4ecc5004aca71eca54a4"
+    }
+  },
+  {
+    "__typename": "Swap",
+    "amount0": "2.050780619441233471",
+    "amount1": "-0.497006371967327231",
+    "amountUSD": "0",
+    "id": "0xc5183418f763cc0ad52e077416e6cf913754b1154444b5cef84eb325239a1186#4336",
+    "origin": "0x44f551c8934b6d28fc80529014cfd8dcc77e527d",
+    "pool": {
+      "__typename": "Pool",
+      "token0": {
+        "__typename": "Token",
+        "id": "0xa4222f78d23593e82aa74742d25d06720dca4ab7",
+        "symbol": "oSQTH"
+      },
+      "token1": {
+        "__typename": "Token",
+        "id": "0xc778417e063141139fce010982780140aa0cd5ab",
+        "symbol": "WETH"
+      }
+    },
+    "recipient": "0x528a19a3e88861e7298c86fe5490b8ec007a4204",
+    "timestamp": "1650356113",
+    "transaction": {
+      "__typename": "Transaction",
+      "blockNumber": "12205395",
+      "id": "0xc5183418f763cc0ad52e077416e6cf913754b1154444b5cef84eb325239a1186"
+    }
+  },
+  {
+    "__typename": "Swap",
+    "amount0": "-2.050765180696781703",
+    "amount1": "0.5",
+    "amountUSD": "0",
+    "id": "0xfe0dd0c2bd8f7ce00e8febed36f39f1b13b01ddf1a9386e4ed79dadbd2c1634c#4337",
+    "origin": "0x44f551c8934b6d28fc80529014cfd8dcc77e527d",
+    "pool": {
+      "__typename": "Pool",
+      "token0": {
+        "__typename": "Token",
+        "id": "0xa4222f78d23593e82aa74742d25d06720dca4ab7",
+        "symbol": "oSQTH"
+      },
+      "token1": {
+        "__typename": "Token",
+        "id": "0xc778417e063141139fce010982780140aa0cd5ab",
+        "symbol": "WETH"
+      }
+    },
+    "recipient": "0x44f551c8934b6d28fc80529014cfd8dcc77e527d",
+    "timestamp": "1650356449",
+    "transaction": {
+      "__typename": "Transaction",
+      "blockNumber": "12205406",
+      "id": "0xfe0dd0c2bd8f7ce00e8febed36f39f1b13b01ddf1a9386e4ed79dadbd2c1634c"
+    }
+  },
+  {
+    "__typename": "Swap",
+    "amount0": "2.050765180696781703",
+    "amount1": "-0.498379523785552348",
+    "amountUSD": "0",
+    "id": "0x714f627022008da9249e51ed8f5d9d0adf417ead54311e2b58093b15ae367ffb#4342",
+    "origin": "0x44f551c8934b6d28fc80529014cfd8dcc77e527d",
+    "pool": {
+      "__typename": "Pool",
+      "token0": {
+        "__typename": "Token",
+        "id": "0xa4222f78d23593e82aa74742d25d06720dca4ab7",
+        "symbol": "oSQTH"
+      },
+      "token1": {
+        "__typename": "Token",
+        "id": "0xc778417e063141139fce010982780140aa0cd5ab",
+        "symbol": "WETH"
+      }
+    },
+    "recipient": "0x528a19a3e88861e7298c86fe5490b8ec007a4204",
+    "timestamp": "1650368637",
+    "transaction": {
+      "__typename": "Transaction",
+      "blockNumber": "12205676",
+      "id": "0x714f627022008da9249e51ed8f5d9d0adf417ead54311e2b58093b15ae367ffb"
+    }
+  },
+  {
+    "__typename": "Swap",
+    "amount0": "-2.045106521778778494",
+    "amount1": "0.5",
+    "amountUSD": "0",
+    "id": "0xb31d4b83b6baebba7846722561e6a76090b8c7c9c19c67802e276481d437d800#4343",
+    "origin": "0x44f551c8934b6d28fc80529014cfd8dcc77e527d",
+    "pool": {
+      "__typename": "Pool",
+      "token0": {
+        "__typename": "Token",
+        "id": "0xa4222f78d23593e82aa74742d25d06720dca4ab7",
+        "symbol": "oSQTH"
+      },
+      "token1": {
+        "__typename": "Token",
+        "id": "0xc778417e063141139fce010982780140aa0cd5ab",
+        "symbol": "WETH"
+      }
+    },
+    "recipient": "0x44f551c8934b6d28fc80529014cfd8dcc77e527d",
+    "timestamp": "1650368763",
+    "transaction": {
+      "__typename": "Transaction",
+      "blockNumber": "12205680",
+      "id": "0xb31d4b83b6baebba7846722561e6a76090b8c7c9c19c67802e276481d437d800"
+    }
+  },
+  {
+    "__typename": "Swap",
+    "amount0": "2.045106521778778494",
+    "amount1": "-0.517425320530576761",
+    "amountUSD": "0",
+    "id": "0xf5da320c80d1c657cd6468071996598bc673067b4dd0410c23fa81a3aa0f51f3#4350",
+    "origin": "0x44f551c8934b6d28fc80529014cfd8dcc77e527d",
+    "pool": {
+      "__typename": "Pool",
+      "token0": {
+        "__typename": "Token",
+        "id": "0xa4222f78d23593e82aa74742d25d06720dca4ab7",
+        "symbol": "oSQTH"
+      },
+      "token1": {
+        "__typename": "Token",
+        "id": "0xc778417e063141139fce010982780140aa0cd5ab",
+        "symbol": "WETH"
+      }
+    },
+    "recipient": "0x528a19a3e88861e7298c86fe5490b8ec007a4204",
+    "timestamp": "1650375567",
+    "transaction": {
+      "__typename": "Transaction",
+      "blockNumber": "12205836",
+      "id": "0xf5da320c80d1c657cd6468071996598bc673067b4dd0410c23fa81a3aa0f51f3"
+    }
+  },
+  {
+    "__typename": "Swap",
+    "amount0": "13.284500300559379314",
+    "amount1": "-3.329197281919339293",
+    "amountUSD": "0",
+    "id": "0xbf28e988ffe71f6715f86ad1167a8dc57804f089e464b57fec36ee9d391bf08b#4351",
+    "origin": "0x44f551c8934b6d28fc80529014cfd8dcc77e527d",
+    "pool": {
+      "__typename": "Pool",
+      "token0": {
+        "__typename": "Token",
+        "id": "0xa4222f78d23593e82aa74742d25d06720dca4ab7",
+        "symbol": "oSQTH"
+      },
+      "token1": {
+        "__typename": "Token",
+        "id": "0xc778417e063141139fce010982780140aa0cd5ab",
+        "symbol": "WETH"
+      }
+    },
+    "recipient": "0x8903918dfe74476e90b63061e5b9c3e63b65d3f4",
+    "timestamp": "1650376857",
+    "transaction": {
+      "__typename": "Transaction",
+      "blockNumber": "12205865",
+      "id": "0xbf28e988ffe71f6715f86ad1167a8dc57804f089e464b57fec36ee9d391bf08b"
+    }
+  }
+]

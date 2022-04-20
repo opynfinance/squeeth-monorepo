@@ -1,0 +1,22 @@
+[
+  {
+    "action": "DEPOSIT_COLLAT",
+    "ethCollateralAmount": "6900000000000000000",
+    "id": "0xbf28e988ffe71f6715f86ad1167a8dc57804f089e464b57fec36ee9d391bf08b-DEPOSIT_COLLAT",
+    "oSqthAmount": "0",
+    "timestamp": "1650376857",
+    "totalEthCollateralAmount": "6900000000000000000",
+    "vaultId": "374",
+    "__typename": "VaultHistory"
+  },
+  {
+    "action": "OPEN_SHORT",
+    "ethCollateralAmount": "0",
+    "id": "0xbf28e988ffe71f6715f86ad1167a8dc57804f089e464b57fec36ee9d391bf08b-OPEN_SHORT",
+    "oSqthAmount": "13284500300559379314",
+    "timestamp": "1650376857",
+    "totalEthCollateralAmount": "0",
+    "vaultId": "374",
+    "__typename": "VaultHistory"
+  }
+]
