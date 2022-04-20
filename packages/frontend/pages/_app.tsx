@@ -22,6 +22,10 @@ import { useInitController } from 'src/state/controller/hooks'
 import { ComputeSwapsProvider } from 'src/state/positions/providers'
 import { useSwaps } from 'src/state/positions/hooks'
 
+if (process.env.NODE_ENV === 'test') {
+  require('../mocks')
+}
+
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
 
 function MyApp({ Component, pageProps }: any) {
