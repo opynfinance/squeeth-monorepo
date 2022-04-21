@@ -7,7 +7,6 @@ import { useAtomValue } from 'jotai'
 import { indexAtom } from 'src/state/controller/atoms'
 import useAppCallback from '../useAppCallback'
 import useAppMemo from '../useAppMemo'
-import floatifyBigNums from '@utils/floatifyBigNums'
 import { crabLoadingAtom, currentEthValueAtom } from 'src/state/crab/atoms'
 
 export const useCrabPosition = (user: string) => {
