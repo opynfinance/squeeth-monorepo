@@ -28,7 +28,7 @@ afterEach(() => {
 })
 
 describe('useCrabPosition', () => {
-  const mockUserCrabHistory = (mockedUserCrabTxHistory: Partial<ReturnType<typeof useUserCrabTxHistory>>) => {
+  const mockTransactionHistory = (mockedUserCrabTxHistory: Partial<ReturnType<typeof useUserCrabTxHistory>>) => {
     ;(useUserCrabTxHistory as jest.Mock).mockReturnValue(mockedUserCrabTxHistory)
   }
 
@@ -38,15 +38,15 @@ describe('useCrabPosition', () => {
 
   describe('loading', () => {
     it('returns true if crab is loading', () => {
-      mockUserCrabHistory({ loading: false, data: mockedUserCrabTxHistoryData })
+      mockTransactionHistory({ loading: false, data: mockedUserCrabTxHistoryData })
 
       const { result } = setup()
 
       expect(result.current.loading).toBe(true)
     })
 
-    it('returns true if user crab history is loading', () => {
-      mockUserCrabHistory({ loading: true, data: [] })
+    it('returns true if transaction history is loading', () => {
+      mockTransactionHistory({ loading: true, data: [] })
 
       const { result, rerender } = setup()
 
@@ -60,8 +60,8 @@ describe('useCrabPosition', () => {
       expect(result.current.loading).toBe(true)
     })
 
-    it('returns false if crab and user crab history are loaded', () => {
-      mockUserCrabHistory({ loading: false, data: mockedUserCrabTxHistoryData })
+    it('returns false if crab and transaction history are loaded', () => {
+      mockTransactionHistory({ loading: false, data: mockedUserCrabTxHistoryData })
 
       const { result, rerender } = setup()
 
@@ -76,7 +76,7 @@ describe('useCrabPosition', () => {
 
   describe('depositedEth and depositedUsd', () => {
     it('returns 0 if user crab history is loading', () => {
-      mockUserCrabHistory({ loading: true, data: [] })
+      mockTransactionHistory({ loading: true, data: [] })
 
       const { result } = setup()
 
@@ -85,11 +85,11 @@ describe('useCrabPosition', () => {
     })
 
     it('returns correct value after user crab history is loaded', () => {
-      mockUserCrabHistory({ loading: true, data: [] })
+      mockTransactionHistory({ loading: true, data: [] })
 
       const { result, rerender } = setup()
 
-      mockUserCrabHistory({ loading: false, data: mockedUserCrabTxHistoryData })
+      mockTransactionHistory({ loading: false, data: mockedUserCrabTxHistoryData })
       rerender()
 
       expect(result.current.depositedEth.toNumber()).toBe(29.686306442273224)
@@ -99,7 +99,7 @@ describe('useCrabPosition', () => {
 
   describe('minCurrentEth and minCurrentUsd', () => {
     it('returns 0 if crab is loading', () => {
-      mockUserCrabHistory({ loading: false, data: mockedUserCrabTxHistoryData })
+      mockTransactionHistory({ loading: false, data: mockedUserCrabTxHistoryData })
 
       const { result } = setup()
 
@@ -108,7 +108,7 @@ describe('useCrabPosition', () => {
     })
 
     it('returns 0 if user crab history is loading', () => {
-      mockUserCrabHistory({ loading: true, data: [] })
+      mockTransactionHistory({ loading: true, data: [] })
 
       const { result, rerender } = setup()
 
@@ -122,7 +122,7 @@ describe('useCrabPosition', () => {
     })
 
     it('returns correct value after crab and user crab history are loaded', () => {
-      mockUserCrabHistory({ loading: true, data: [] })
+      mockTransactionHistory({ loading: true, data: [] })
 
       const { result, rerender } = setup()
 
@@ -131,7 +131,7 @@ describe('useCrabPosition', () => {
       })
       rerender()
 
-      mockUserCrabHistory({ loading: false, data: mockedUserCrabTxHistoryData })
+      mockTransactionHistory({ loading: false, data: mockedUserCrabTxHistoryData })
       rerender()
 
       expect(result.current.minCurrentEth.toNumber()).toBe(31.502381757505464)
@@ -141,7 +141,7 @@ describe('useCrabPosition', () => {
 
   describe('minPnL and minPnlUsd', () => {
     it('returns 0 if crab is loading', () => {
-      mockUserCrabHistory({ loading: false, data: mockedUserCrabTxHistoryData })
+      mockTransactionHistory({ loading: false, data: mockedUserCrabTxHistoryData })
 
       const { result } = setup()
 
@@ -150,7 +150,7 @@ describe('useCrabPosition', () => {
     })
 
     it('returns 0 if user crab history is loading', () => {
-      mockUserCrabHistory({ loading: true, data: [] })
+      mockTransactionHistory({ loading: true, data: [] })
 
       const { result, rerender } = setup()
 
@@ -164,7 +164,7 @@ describe('useCrabPosition', () => {
     })
 
     it('returns correct value after crab and user crab history are loaded', () => {
-      mockUserCrabHistory({ loading: true, data: [] })
+      mockTransactionHistory({ loading: true, data: [] })
 
       const { result, rerender } = setup()
 
@@ -173,7 +173,7 @@ describe('useCrabPosition', () => {
       })
       rerender()
 
-      mockUserCrabHistory({ loading: false, data: mockedUserCrabTxHistoryData })
+      mockTransactionHistory({ loading: false, data: mockedUserCrabTxHistoryData })
       rerender()
 
       expect(result.current.minPnL.toNumber()).toBe(28.469120947322093)
