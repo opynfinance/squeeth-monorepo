@@ -29,7 +29,7 @@ type CollatRangeType = {
   collatValue: number
   onCollatValueChange: (val: number) => void
   className?: string
-  existingCollatPercent: number
+  existingCollatPercent?: number
 }
 
 const marks = [
@@ -52,7 +52,7 @@ const CollatRange: React.FC<CollatRangeType> = ({
   collatValue,
   onCollatValueChange,
   className,
-  existingCollatPercent,
+  existingCollatPercent = 0,
 }) => {
   const classes = useStyles()
 
