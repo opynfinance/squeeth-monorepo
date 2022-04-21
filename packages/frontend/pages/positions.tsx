@@ -16,7 +16,7 @@ import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { toTokenAmount } from '@utils/calculations'
 import { useCrabPosition } from '@hooks/useCrabPosition'
 import { LinkButton } from '@components/Button'
-import { addressAtom } from 'src/state/wallet/atoms'
+import { addressAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
 import {
   useComputeSwaps,
@@ -143,23 +143,29 @@ const useStyles = makeStyles((theme) =>
 
 const PositionsHome = () => {
   const address = useAtomValue(addressAtom)
+  const supportedNetwork = useAtomValue(supportedNetworkAtom)
 
-  if (address) return <Positions />
+  if (address && supportedNetwork) return <Positions />
 
   return <ConnectWallet />
 }
 
 const ConnectWallet: React.FC = () => {
   const selectWallet = useSelectWallet()
+  const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const classes = useStyles()
 
   return (
     <div>
       <Nav />
       <div className={classes.container}>
-        <LinkButton style={{ margin: 'auto' }} onClick={selectWallet}>
-          Connect Wallet
-        </LinkButton>
+        {supportedNetwork ? (
+          <LinkButton style={{ margin: 'auto' }} onClick={selectWallet}>
+            Connect Wallet
+          </LinkButton>
+        ) : (
+          <Typography>Unsupported Network</Typography>
+        )}
       </div>
     </div>
   )
@@ -177,6 +183,8 @@ export function Positions() {
 
   const pool = useAtomValue(poolAtom)
   const address = useAtomValue(addressAtom)
+  const supportedNetwork = useAtomValue(supportedNetworkAtom)
+
   const positionType = useAtomValue(positionTypeAtom)
   const activePositions = useAtomValue(activePositionsAtom)
 
@@ -247,7 +255,6 @@ export function Positions() {
             <Typography>No active positions</Typography>
           </div>
         ) : null}
-
         {positionType === PositionType.LONG ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>
@@ -291,7 +298,7 @@ export function Positions() {
                       <Typography variant="body1" className={longGain.isLessThan(0) ? classes.red : classes.green}>
                         $ {longUnrealizedPNL.usd.toFixed(2)} ({longUnrealizedPNL.eth.toFixed(5)} ETH)
                         {/* ${sellQuote.amountOut.minus(wethAmount.abs()).times(toTokenAmount(index, 18).sqrt()).toFixed(2)}{' '}
-                        ({sellQuote.amountOut.minus(wethAmount.abs()).toFixed(5)} ETH) */}
+                            ({sellQuote.amountOut.minus(wethAmount.abs()).toFixed(5)} ETH) */}
                       </Typography>
                       <Typography variant="caption" className={longGain.isLessThan(0) ? classes.red : classes.green}>
                         {(longGain || 0).toFixed(2)}%
@@ -514,7 +521,6 @@ export function Positions() {
             </div>
           </div>
         ) : null}
-
         {liquidations.length > 0 ? (
           <div className={classes.position}>
             <div className={classes.positionTitle}>

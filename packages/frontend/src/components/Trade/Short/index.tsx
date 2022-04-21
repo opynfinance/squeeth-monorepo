@@ -26,7 +26,7 @@ import TradeDetails from '@components/Trade/TradeDetails'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import UniswapData from '@components/Trade/UniswapData'
 import { BIG_ZERO, MIN_COLLATERAL_AMOUNT } from '../../../constants'
-import { connectedWalletAtom, isTransactionFirstStepAtom } from 'src/state/wallet/atoms'
+import { connectedWalletAtom, isTransactionFirstStepAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet, useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
 import { addressesAtom, isLongAtom, vaultHistoryUpdatingAtom, vaultManagerPollingAtom } from 'src/state/positions/atoms'
 import { useAtom, useAtomValue } from 'jotai'
@@ -230,6 +230,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
 
   const connected = useAtomValue(connectedWalletAtom)
+  const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const selectWallet = useSelectWallet()
 
   const { shortHelper } = useAtomValue(addressesAtom)
@@ -602,6 +603,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                 onClick={depositAndShort}
                 className={classes.amountInput}
                 disabled={
+                  !supportedNetwork ||
                   ethTradeAmount === '0' ||
                   shortLoading ||
                   transactionInProgress ||
@@ -619,7 +621,9 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                 }
                 id="open-short-submit-tx-btn"
               >
-                {shortLoading || transactionInProgress ? (
+                {!supportedNetwork ? (
+                  'Unsupported Network'
+                ) : shortLoading || transactionInProgress ? (
                   <CircularProgress color="primary" size="1.5rem" />
                 ) : (
                   <>
@@ -677,6 +681,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const { shortHelper } = useAtomValue(addressesAtom)
   const isLong = useAtomValue(isLongAtom)
   const connected = useAtomValue(connectedWalletAtom)
+  const supportedNetwork = useAtomValue(supportedNetworkAtom)
 
   const selectWallet = useSelectWallet()
   const updateOperator = useUpdateOperator()
@@ -1110,6 +1115,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                 onClick={buyBackAndClose}
                 className={classes.amountInput}
                 disabled={
+                  !supportedNetwork ||
                   sqthTradeAmount === '0' ||
                   buyLoading ||
                   transactionInProgress ||
@@ -1128,7 +1134,9 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                 }
                 id="close-short-submit-tx-btn"
               >
-                {buyLoading || transactionInProgress ? (
+                {!supportedNetwork ? (
+                  'Unsupported Network'
+                ) : buyLoading || transactionInProgress ? (
                   <CircularProgress color="primary" size="1.5rem" />
                 ) : (
                   <>

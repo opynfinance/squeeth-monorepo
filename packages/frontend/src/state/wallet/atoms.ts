@@ -41,6 +41,7 @@ export const web3Atom = atom(defaultWeb3)
 export const onboardAtom = atom<API | null>(null)
 export const notifyAtom = atom<NotifyAPI | null>(null)
 export const signerAtom = atom<any>(null)
+export const supportedNetworkAtom = atom<boolean>(false)
 
 export const connectedWalletAtom = atom((get) => {
   const address = get(addressAtom)
