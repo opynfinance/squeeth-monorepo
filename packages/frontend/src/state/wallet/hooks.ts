@@ -12,6 +12,7 @@ import {
   addressAtom,
   notifyAtom,
   networkIdAtom,
+  supportedNetworkAtom,
   signerAtom,
   web3Atom,
   transactionDataAtom,
@@ -41,6 +42,7 @@ export const useDiscconectWallet = () => {
   const disconnectWallet = () => {
     if (!onboard) return
     onboard.walletReset()
+    window.localStorage.setItem('walletAddress', '')
     setAddress(null)
     queryClient.setQueryData('userWalletBalance', BIG_ZERO)
     // setBalance(BIG_ZERO)
@@ -130,6 +132,7 @@ export const useWalletBalance = () => {
 }
 
 export const useOnboard = () => {
+  const setSupportedNetwork = useUpdateAtom(supportedNetworkAtom)
   const [networkId, setNetworkId] = useAtom(networkIdAtom)
   const [onboard, setOnboard] = useAtom(onboardAtom)
   const [address, setAddress] = useAtom(addressAtom)
@@ -141,6 +144,7 @@ export const useOnboard = () => {
     (updateNetwork: number) => {
       if (updateNetwork in Networks) {
         setNetworkId(updateNetwork)
+        setSupportedNetwork(true)
         if (onboard !== null) {
           const network = updateNetwork === 1337 ? 31337 : updateNetwork
           // localStorage.setItem('networkId', network.toString())
@@ -149,12 +153,13 @@ export const useOnboard = () => {
           })
         }
       } else {
+        setSupportedNetwork(false)
         if (address === null || onboard === null) return
         onboard.walletCheck()
         console.log('Unsupported network')
       }
     },
-    [address, onboard, setNetworkId],
+    [setNetworkId, setSupportedNetwork, onboard, address],
   )
 
   const onWalletUpdate = useCallback(

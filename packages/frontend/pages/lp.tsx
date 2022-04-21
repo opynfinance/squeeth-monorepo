@@ -13,6 +13,8 @@ import { LPProvider } from '@context/lp'
 import { useRestrictUser } from '@context/restrict-user'
 import { SqueethTab, SqueethTabs } from '@components/Tabs'
 import { useETHPrice } from '@hooks/useETHPrice'
+import { supportedNetworkAtom } from 'src/state/wallet/atoms'
+import { useAtomValue } from 'jotai'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -79,6 +81,7 @@ export function LPCalculator() {
   const { isRestricted } = useRestrictUser()
   const ethPrice = useETHPrice()
   const [lpType, setLpType] = useState(0)
+  const supportedNetwork = useAtomValue(supportedNetworkAtom)
 
   return (
     <div>
@@ -194,7 +197,7 @@ export function LPCalculator() {
           </div>
         </div>
         <div>
-          <div className={classes.tradeForm}>{!isRestricted ? <ObtainSqueeth /> : null}</div>
+          {supportedNetwork && <div className={classes.tradeForm}>{!isRestricted ? <ObtainSqueeth /> : null}</div>}
         </div>
       </div>
     </div>

@@ -5,7 +5,6 @@ import {
   TextField,
   Typography,
   Tooltip,
-  Input,
   Select,
   MenuItem,
   FormControl,
@@ -25,7 +24,7 @@ import { useAtom, useAtomValue } from 'jotai'
 
 import ethLogo from '../../public/images/ethereum-eth.svg'
 import squeethLogo from '../../public/images/Squeeth.svg'
-import { AddButton, RemoveButton } from '@components/Button'
+import { AddButton, PrimaryButton, RemoveButton } from '@components/Button'
 import CollatRange from '@components/CollatRange'
 import NumberInput from '@components/Input/NumberInput'
 import Nav from '@components/Nav'
@@ -42,7 +41,7 @@ import { LinkButton } from '@components/Button'
 import { useERC721 } from '@hooks/contracts/useERC721'
 import { ACTIVE_POSITIONS_QUERY } from '@queries/uniswap/positionsQuery'
 import { positions, positionsVariables } from '@queries/uniswap/__generated__/positions'
-import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
+import { addressAtom, connectedWalletAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useWalletBalance } from 'src/state/wallet/hooks'
 import { addressesAtom, collatPercentAtom, positionTypeAtom } from 'src/state/positions/atoms'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
@@ -248,7 +247,11 @@ enum VaultError {
   INSUFFICIENT_OSQTH_BALANCE = 'Insufficient oSQTH Balance',
 }
 
-const SelectLP: React.FC<{ lpToken: number; setLpToken: (t: number) => void }> = ({ lpToken, setLpToken }) => {
+const SelectLP: React.FC<{ lpToken: number; setLpToken: (t: number) => void; disabled?: boolean }> = ({
+  lpToken,
+  setLpToken,
+  disabled,
+}) => {
   const { squeethPool } = useAtomValue(addressesAtom)
   const address = useAtomValue(addressAtom)
 
@@ -264,6 +267,7 @@ const SelectLP: React.FC<{ lpToken: number; setLpToken: (t: number) => void }> =
     <FormControl variant="outlined" style={{ width: '300px' }} size="small">
       <InputLabel id="demo-simple-select-outlined-label">LP Id</InputLabel>
       <Select
+        disabled={disabled}
         labelId="demo-simple-select-label"
         id="lp-id-select"
         value={lpToken}
@@ -1040,6 +1044,7 @@ const Component: React.FC = () => {
                       />
                     )}
                   </div>
+
                   {currentLpNftId || isLPNFTAction ? (
                     <>
                       <div className={classes.collatContainer}>
@@ -1135,14 +1140,15 @@ const Main: React.FC = () => {
   const classes = useStyles()
 
   const connected = useAtomValue(connectedWalletAtom)
+  const supportedNetwork = useAtomValue(supportedNetworkAtom)
 
-  if (!connected) {
+  if (!connected || !supportedNetwork) {
     return (
       <div>
         <Nav />
         <div className={classes.loading}>
           <Typography variant="h5" color="textSecondary">
-            Connect wallet
+            {!supportedNetwork ? 'Unsupported Network' : 'Connect wallet'}
           </Typography>
         </div>
       </div>

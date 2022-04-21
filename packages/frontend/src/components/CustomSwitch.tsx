@@ -2,7 +2,7 @@ import { createStyles, makeStyles, Typography } from '@material-ui/core'
 import React from 'react'
 import clsx from 'clsx'
 
-const useStyles = makeStyles((theme) =>
+const useStyles = makeStyles(() =>
   createStyles({
     wrapper: {
       display: 'flex',

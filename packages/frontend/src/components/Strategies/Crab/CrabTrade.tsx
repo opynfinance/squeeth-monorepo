@@ -327,6 +327,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
                 color={Number(withdrawPriceImpact) > 3 ? 'red' : Number(depositPriceImpact) < 1 ? 'green' : undefined}
               />
             )}
+
             {depositOption === 0 ? (
               <PrimaryButton
                 id="crab-deposit-btn"
