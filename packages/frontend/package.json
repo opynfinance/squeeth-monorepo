@@ -93,12 +93,5 @@
     },
     "resolutions": {
         "assemblyscript": "git+https://github.com/AssemblyScript/assemblyscript.git#v0.6"
-    },
-    "jest": {
-        "moduleNameMapper": {
-            "^@root(.*)$": "<rootDir>/src$1",
-            "^@components(.*)$": "<rootDir>/src/components$1",
-            "^@constants(.*)$": "<rootDir>/src/constants$1"
-        }
     }
 }
