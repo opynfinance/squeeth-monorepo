@@ -25,6 +25,7 @@ import { PositionType } from '../../types'
 import { useVaultData } from '@hooks/useVaultData'
 import { indexAtom } from '../controller/atoms'
 import useAppEffect from '@hooks/useAppEffect'
+import { useTransactionStatus } from '../wallet/hooks'
 
 export function useEthCollateralPnl() {
   const { vaultId } = useFirstValidVault()
@@ -125,6 +126,7 @@ export function useShortGain() {
 
 export function useLongUnrealizedPNL() {
   const { squeethAmount } = useComputeSwaps()
+  const { loading: transactionInProgress } = useTransactionStatus()
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const positionType = useAtomValue(positionTypeAtom)
   const sellQuote = useAtomValue(sellQuoteAtom)
@@ -143,7 +145,8 @@ export function useLongUnrealizedPNL() {
         !index.isZero() &&
         !squeethAmount.isZero() &&
         positionType === PositionType.LONG &&
-        !calculatingPNL
+        !calculatingPNL &&
+        !transactionInProgress
       ) {
         const pnl = await calcDollarLongUnrealizedpnl(
           swaps,
@@ -171,6 +174,7 @@ export function useShortUnrealizedPNL() {
   const [shortUnrealizedPNL, setShortUnrealizedPNL] = useAtom(shortUnrealizedPNLAtom)
   const calculatingPNL = useAtomValue(calculatingPNLAtom)
   const index = useAtomValue(indexAtom)
+  const { loading: transactionInProgress } = useTransactionStatus()
 
   const { loading: swapsLoading } = useSwaps()
   const swapsData = useAtomValue(swapsAtom)
@@ -186,7 +190,8 @@ export function useShortUnrealizedPNL() {
         !squeethAmount.isZero() &&
         positionType === PositionType.SHORT &&
         !swapsLoading &&
-        !calculatingPNL
+        !calculatingPNL &&
+        !transactionInProgress
       ) {
         const pnl = await calcDollarShortUnrealizedpnl(
           swaps,
@@ -213,6 +218,8 @@ export function useShortUnrealizedPNL() {
     positionType,
     setShortUnrealizedPNL,
     swapsLoading,
+    transactionInProgress,
+    calculatingPNL,
   ])
 
   return shortUnrealizedPNL
