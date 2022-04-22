@@ -184,4 +184,4 @@ jobs:
           key: squeeth-frontend-{{ .Environment.CIRCLE_SHA1 }}
       - run: 
           name: Unit tests
-          command: yarn test 
+          command: yarn test:ci
