@@ -164,6 +164,7 @@ export const useLongSqthBal = () => {
   const longSqthBal = useMemo(() => {
     return mintedDebt.gt(0) ? oSqueethBal.minus(mintedDebt) : oSqueethBal
   }, [oSqueethBal?.toString(), mintedDebt.toString()])
+
   return longSqthBal
 }
 
