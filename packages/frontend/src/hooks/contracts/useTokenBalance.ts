@@ -8,9 +8,15 @@ import erc20Abi from '../../abis/erc20.json'
 import { toTokenAmount } from '@utils/calculations'
 // import { useIntervalAsync } from '@hooks/useIntervalAsync'
 import { addressAtom, connectedWalletAtom, web3Atom } from 'src/state/wallet/atoms'
-
+interface TokenQueryKeyParams {
+  token: string
+  connected: boolean
+  address: string | null
+  decimals: number
+  refetchIntervalSec: number
+}
 const tokenBalanceQueryKeys = {
-  userTokenBalance: (token: string) => ['userTokenBalance', token],
+  userTokenBalance: (params: TokenQueryKeyParams) => ['userTokenBalance', params],
 }
 /**
  * get token balance.
@@ -31,12 +37,11 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals
   }, [web3, token])
 
   const balanceQuery = useQuery(
-    tokenBalanceQueryKeys.userTokenBalance(token),
+    tokenBalanceQueryKeys.userTokenBalance({ address, connected, decimals, refetchIntervalSec, token }),
     () => updateBalance(token, connected, contract, address, decimals),
     {
       enabled: Boolean(token) && Boolean(connected) && Boolean(contract),
       refetchInterval: refetchIntervalSec * 15000,
-      staleTime: 15000,
     },
   )
 
