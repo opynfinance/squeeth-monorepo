@@ -38,13 +38,26 @@ export const useVaultManager = (poll = false) => {
   useEffect(() => {
     if (poll && !prevVault && !currentVault) {
       startPolling(500)
-    } else if (poll && new BigNumber(prevVault?.shortAmount).isEqualTo(new BigNumber(currentVault?.shortAmount))) {
+    } else if (
+      poll &&
+      (new BigNumber(prevVault?.shortAmount).isEqualTo(new BigNumber(currentVault?.shortAmount)) ||
+        new BigNumber(prevVault?.collateralAmount).isEqualTo(new BigNumber(currentVault?.collateralAmount)))
+    ) {
       startPolling(500)
     } else {
       stopPolling()
       setVaultManagerPolling(false)
     }
-  }, [currentVault?.shortAmount.toString(), poll, prevVault?.shortAmount.toString(), startPolling, stopPolling])
+  }, [
+    currentVault?.shortAmount.toString(),
+    currentVault?.collateralAmount.toString(),
+    poll,
+    prevVault?.shortAmount.toString(),
+    prevVault?.collateralAmount.toString(),
+    startPolling,
+    stopPolling,
+    currentVault?.NftCollateralId,
+  ])
 
   const vaults = data?.vaults
     .filter((v) => {
