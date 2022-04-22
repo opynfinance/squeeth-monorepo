@@ -36,7 +36,6 @@ import {
 } from './atoms'
 import { positions, positionsVariables } from '@queries/uniswap/__generated__/positions'
 import POSITIONS_QUERY, { POSITIONS_SUBSCRIPTION } from '@queries/uniswap/positionsQuery'
-import { useUsdAmount } from '@hooks/useUsdAmount'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { toTokenAmount } from '@utils/calculations'
@@ -109,7 +108,7 @@ export const useSwaps = () => {
     if (data?.swaps) {
       setSwaps({ swaps: data.swaps })
     }
-  }, [data?.swaps])
+  }, [data?.swaps, setSwaps])
 
   return { data, refetch, loading, error, startPolling, stopPolling }
 }

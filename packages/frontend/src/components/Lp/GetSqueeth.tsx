@@ -15,7 +15,7 @@ import TradeDetails from '../Trade/TradeDetails'
 import TradeInfoItem from '../Trade/TradeInfoItem'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import { useWalletBalance } from 'src/state/wallet/hooks'
-import { connectedWalletAtom } from 'src/state/wallet/atoms'
+import { connectedWalletAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useAtomValue } from 'jotai'
 import { addressesAtom, existingCollatAtom, existingCollatPercentAtom } from 'src/state/positions/atoms'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
@@ -78,6 +78,7 @@ const Mint: React.FC = () => {
   const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
   const { data: balance } = useWalletBalance()
   const connected = useAtomValue(connectedWalletAtom)
+  const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const { loading: vaultIDLoading } = useVaultManager()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const normalizationFactor = useAtomValue(normFactorAtom)
@@ -222,9 +223,17 @@ const Mint: React.FC = () => {
           onClick={mint}
           className={classes.amountInput}
           style={{ width: '100%' }}
-          disabled={(connected && collatAmountBN.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) || loading}
+          disabled={
+            !supportedNetwork || (connected && collatAmountBN.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) || loading
+          }
         >
-          {loading ? <CircularProgress color="primary" size="1.5rem" /> : 'Mint'}
+          {!supportedNetwork ? (
+            'Unsupported Network'
+          ) : loading ? (
+            <CircularProgress color="primary" size="1.5rem" />
+          ) : (
+            'Mint'
+          )}
         </PrimaryButton>
       </div>
     </div>
