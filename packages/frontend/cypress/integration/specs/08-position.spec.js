@@ -41,6 +41,8 @@ describe('Trade and see if results are correct on position page', () => {
 
   context(`close long position and check pos page`, () => {
     before(() => {
+      cy.visit('/')
+      trade.connectBrowserWallet()
       cy.get('#long-card-btn').click({ force: true })
       cy.get('#close-btn').click({ force: true })
     })
@@ -73,6 +75,8 @@ describe('Trade and see if results are correct on position page', () => {
 
   context(`open short position and check pos page`, () => {
     before(() => {
+      cy.visit('/')
+      trade.connectBrowserWallet()
       cy.get('#short-card-btn').click({ force: true })
       cy.get('#open-btn').click({ force: true })
     })
@@ -107,14 +111,15 @@ describe('Trade and see if results are correct on position page', () => {
 
   context(`close short position and check pos page`, () => {
     before(() => {
-      cy.visit('/lp')
+      cy.visit('/')
       trade.connectBrowserWallet()
       cy.get('#short-card-btn').click({ force: true })
       cy.get('#close-btn').click({ force: true })
     })
 
     it('close short position', () => {
-      cy.get('close-short-type-select').should('contain.text', 'Full Close')
+      cy.get('#close-short-type-select').should('contain.text', 'Full Close')
+
       cy.get('#close-short-submit-tx-btn').then((btn) => {
         if (btn.text().includes('Allow wrapper')) {
           cy.get('#close-short-submit-tx-btn').click({ force: true })
