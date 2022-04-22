@@ -1,17 +1,17 @@
 import { useQuery } from '@apollo/client'
 import BigNumber from 'bignumber.js'
-import { useEffect, useState } from 'react'
 import { usePrevious } from 'react-use'
 import { useAtomValue } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 
 import { toTokenAmount } from '@utils/calculations'
 import { OSQUEETH_DECIMALS } from '../../constants/'
-import { VAULTS_QUERY, VAULTS_SUBSCRIPTION } from '../../queries/squeeth/vaultsQuery'
+import { VAULTS_QUERY } from '../../queries/squeeth/vaultsQuery'
 import { Vaults } from '../../queries/squeeth/__generated__/Vaults'
 import { squeethClient } from '../../utils/apollo-client'
 import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
 import { vaultManagerPollingAtom } from 'src/state/positions/atoms'
+import useAppEffect from '@hooks/useAppEffect'
 
 /**
  * get user vaults.
@@ -35,7 +35,7 @@ export const useVaultManager = (poll = false) => {
   const currentVault = data?.vaults.find((vault) => new BigNumber(vault.collateralAmount).isGreaterThan(0))
   const prevVault = usePrevious(currentVault)
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (poll && !prevVault && !currentVault) {
       startPolling(500)
     } else if (

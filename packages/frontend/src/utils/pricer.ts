@@ -1,6 +1,6 @@
-/* eslint-disable prettier/prettier */
-import { useNormHistoryFromTime } from '@hooks/useNormHistoryFromTime'
-import { useEffect, useState } from 'react'
+// import { useNormHistoryFromTime } from '@hooks/useNormHistoryFromTime'
+import useAppEffect from '@hooks/useAppEffect'
+import { useState } from 'react'
 import db from './firestore'
 
 const apiKey = process.env.NEXT_PUBLIC_TARDIS_API_KEY as string
@@ -58,7 +58,7 @@ export async function getETHPNLCompounding(ethPrices: { time: number; value: num
 export async function getSqueethPNLCompounding(
   ethPrices: { time: number; value: number }[],
   volMultiplier = 1.2,
-  collatRatio = 1.5,
+  _collatRatio = 1.5,
   days = 365,
 ): Promise<
   {
@@ -76,8 +76,8 @@ export async function getSqueethPNLCompounding(
     longPNL: number
     shortPNL: number
   }[] = []
-  const liquidatedRate = 1.5
-  const newCR = collatRatio
+  // const liquidatedRate = 1.5
+  // const newCR = collatRatio
   // days > 90 is daily data, 90 >= days is hourly data, 1 > days is 5-minutely data
   const fundingPeriodMultiplier = days > 90 ? 365 : days > 1 ? 365 * 24 : 356 * 24 * 12
 
@@ -117,24 +117,24 @@ export function useETHSqueethPNLCompounding(
   const [ethChartData, setETHChartData] = useState<{ shortPNL: number; longPNL: number; time: number }[] | undefined>(
     undefined,
   )
-  const [timesToFetchNorm, setTimesToFetchNorm] = useState<number[]>([])
-  const normUpdated = useNormHistoryFromTime(timesToFetchNorm)
+  // const [timesToFetchNorm, setTimesToFetchNorm] = useState<number[]>([])
+  // const normUpdated = useNormHistoryFromTime(timesToFetchNorm)
 
-  useEffect(() => {
+  useAppEffect(() => {
     ;(async () => {
       let cumulativeSqueethLongReturn = 0
       let cumulativeSqueethCrabReturn = 1
       const volsMap = await getVolMap()
       const liveVolsMap = await getLiveVolMap()
 
-      const normTimestamps = timestamps.filter((timestamp, index) => {
-        const utcDate = new Date(timestamp * 1000).toISOString().split('T')[0]
-        return (
-          (timestamp >= 1641772800 && !Object.keys(liveVolsMap ?? {}).includes(utcDate)) ||
-          index === timestamps.length - 1
-        ) // 1641772800 is UTC timestamp for Jan 10(the first date of live VOL) and exclude timestamp of current day as there will be data added
-      })
-      setTimesToFetchNorm(normTimestamps)
+      // const normTimestamps = timestamps.filter((timestamp, index) => {
+      //   const utcDate = new Date(timestamp * 1000).toISOString().split('T')[0]
+      //   return (
+      //     (timestamp >= 1641772800 && !Object.keys(liveVolsMap ?? {}).includes(utcDate)) ||
+      //     index === timestamps.length - 1
+      //   ) // 1641772800 is UTC timestamp for Jan 10(the first date of live VOL) and exclude timestamp of current day as there will be data added
+      // })
+      // setTimesToFetchNorm(normTimestamps)
 
       if (timestamps.length > 0) {
         const annualVolData = await Promise.all(
@@ -190,8 +190,7 @@ export function useETHSqueethPNLCompounding(
         setSqueethChartData(charts)
       }
     })()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timestamps.length, days])
+  }, [timestamps, days, ethPrices, volMultiplier])
   return { ethPNL: ethChartData, squeethPNL: squeethChartData }
 }
 
@@ -413,7 +412,7 @@ function instrumentNameToStrike(optionName: string) {
  * @param vol
  * @param ethPrice
  */
-export function calculateMinCollatReq(shortAmount: number, vol: number, ethPrice: number) {
+export function calculateMinCollatReq(shortAmount: number, _vol: number, _ethPrice: number) {
   return shortAmount
 }
 

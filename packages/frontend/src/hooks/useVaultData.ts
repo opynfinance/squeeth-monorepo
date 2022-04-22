@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 
-import { connectedWalletAtom } from 'src/state/wallet/atoms'
+import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
 import { readyAtom } from 'src/state/squeethPool/atoms'
 import { useGetCollatRatioAndLiqPrice, useGetVault } from 'src/state/controller/hooks'
 import {
@@ -25,11 +25,13 @@ export const useVaultData = (vid: number) => {
   const [collatPercent, setCollatPercent] = useAtom(collatPercentAtom)
   const [isVaultLoading, setVaultLoading] = useState(true)
 
+  // const normFactor = useAtomValue(normFactorAtom)
   const getVault = useGetVault()
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
   const ready = useAtomValue(readyAtom)
   const connected = useAtomValue(connectedWalletAtom)
   const setVaultManagerPolling = useUpdateAtom(vaultManagerPollingAtom)
+  // const address = useAtomValue(addressAtom)
 
   const updateVault = useAppCallback(async () => {
     if (!connected || !ready) return

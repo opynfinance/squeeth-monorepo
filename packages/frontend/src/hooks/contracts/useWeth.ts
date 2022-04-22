@@ -1,13 +1,14 @@
 import BigNumber from 'bignumber.js'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 import { useAtomValue } from 'jotai'
 
 import wethAbi from '../../abis/weth.json'
-import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
+import { fromTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from 'src/state/wallet/hooks'
 import { addressAtom, web3Atom } from 'src/state/wallet/atoms'
 import { addressesAtom } from 'src/state/positions/atoms'
+import useAppEffect from '@hooks/useAppEffect'
 
 /**
  * Hook to interact with WETH contract
@@ -20,10 +21,10 @@ export const useWeth = () => {
   const address = useAtomValue(addressAtom)
   const { weth } = useAtomValue(addressesAtom)
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (!web3 || !weth) return
     setContract(new web3.eth.Contract(wethAbi as any, weth))
-  }, [web3])
+  }, [web3, weth])
 
   /**
    *
@@ -43,12 +44,12 @@ export const useWeth = () => {
     )
   }
 
-  const getAllowance = async (spenderAddress: string) => {
-    if (!contract || !address) return
+  // const getAllowance = async (spenderAddress: string) => {
+  //   if (!contract || !address) return
 
-    const allowance = await contract.methods.allowance(address, spenderAddress).call()
-    return toTokenAmount(new BigNumber(allowance.toString()), 18)
-  }
+  //   const allowance = await contract.methods.allowance(address, spenderAddress).call()
+  //   retur(new BigNumber(allowance.toString()), 18)
+  // }
 
   return {
     wrap,
