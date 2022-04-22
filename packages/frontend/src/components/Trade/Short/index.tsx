@@ -598,7 +598,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
               value={existingCollatPercent}
               unit="%"
               tooltip={Tooltips.CurrentCollRatio}
-              id="open-short-collat-ratio"
+              id="open-short-collat-ratio-info"
             />
             <div style={{ marginTop: '10px' }}>
               <UniswapData
