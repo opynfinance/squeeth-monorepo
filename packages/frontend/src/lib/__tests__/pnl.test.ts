@@ -45,6 +45,12 @@ describe('Unrealized PNL Tests', () => {
       )
       ethCollateralPnl = result
       const pnl = Number(result.toFixed(2))
+
+      // Deposited collat twice 6.9eth and 4eth
+      // Withdrew collat once 2.596960716268149148
+      // pnl = (ethPriceNow * totalCollateralAmount) - ((totalDeposits * ethPriceAtDeposit) - (totalWithdrawal * ethPriceAtWithdrawal))
+      // (3103.55 * 8.303039283731850852)-(((6.9*3154)+(4*3156.70996)) - (2.596960716268149148*3156.09009))
+      // pnl = -424.300290241
       expect(pnl).toBe(-424.3)
     })
   })
@@ -65,6 +71,13 @@ describe('Unrealized PNL Tests', () => {
       )
 
       const shortUnrealizedPNL = Number(result.usd.toFixed(2))
+      // open short position 13.320166661914978402sqth and 3.273287733526941575wethAmt
+      // added to short position 7.70152741353398561sqth and 1.868313911618311895wethAmt
+      // partial close 5qth and 1.218256242919469122wethAmt
+      //pnl = ((wethAmount * ethPriceWhenOpened)-(buyQuote * ethPriceNow)) + ethCollateralPnl
+      // ((((3.273287733526941575*3154)+(1.868313911618311895*3156.70996)) - (1.218256242919469122*3156.09009)) - (3.9545364517509141*3103.55)) + (-424.3)
+      // pnl = -320.653415434
+
       expect(shortUnrealizedPNL).toBe(-320.65)
     })
   })
@@ -88,6 +101,12 @@ describe('Unrealized PNL Tests', () => {
         squeethAmount,
       )
       const longUnrealizedPNL = Number(result.usd.toFixed(2))
+
+      // Opened long  0.5eth and got 2.003542063056514663osqth
+      // Bought long 1eth and got 3.992203164059249958
+      // pnl = sellQuote * currentEthPrice - (wethAmount * ethPriceWhenOpened)
+      // 1.49103011155230043*3103.55 -((0.5 * 3100.19995)+(1 * 3099.30005))
+      // pnl = -21.91
       expect(longUnrealizedPNL).toBe(-21.91)
     })
   })
