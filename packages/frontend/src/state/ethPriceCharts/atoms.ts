@@ -369,7 +369,7 @@ export const useSqueethIsLive = () => {
         return isLive
       })
     )
-  }, [ethSqueethPNLSeries])
+  }, [ethSqueethPNLSeries.squeethPNL])
 }
 
 export const useLongChartData = () => {
