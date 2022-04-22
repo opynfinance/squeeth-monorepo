@@ -3,6 +3,7 @@ import { getShortHelperAddr } from "./util";
 
 export const BIGINT_ONE = BigInt.fromI32(1);
 export const BIGINT_ZERO = BigInt.fromI32(0);
+export const EMPTY_ADDR = Address.empty();
 export const MAINNET_SHORT_HELPER_ADDR = Address.fromString(
   "0x3b4095D5ff0e629972CAAa50bd3004B09a1632C5"
 );
