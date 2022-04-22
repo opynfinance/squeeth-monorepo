@@ -6,6 +6,29 @@ orbs:
 workflows:
   build-test-report:
     jobs:
+      - checkout-and-install
+      - compile:
+          requires:
+            - checkout-and-install
+      - lint:
+          requires:
+            - compile
+      - unit-test-contracts:
+          requires:
+            - compile
+      - coverage:
+          requires:
+            - compile
+          context: BUILD_KEYS
+      - contract-size:
+          requires:
+            - compile
+      - deploy-test:
+          requires:
+            - compile
+      - e2e-test:
+          requires:
+            - compile
       - checkout-and-install-frontend
       - unit-test-frontend:
           requires:
