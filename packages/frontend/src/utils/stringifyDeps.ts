@@ -7,7 +7,7 @@ export default function stringifyDeps(deps?: DependencyList) {
       return dep.toString()
     }
 
-    if (Array.isArray(dep) && dep.every((item) => item.hasOwnProperty('id'))) {
+    if (Array.isArray(dep) && dep.every((item) => item?.hasOwnProperty('id'))) {
       return dep.map((item) => item.id).join(',')
     }
 
