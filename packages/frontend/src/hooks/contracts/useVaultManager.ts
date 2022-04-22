@@ -1,6 +1,6 @@
 import { useQuery } from '@apollo/client'
 import BigNumber from 'bignumber.js'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { toTokenAmount } from '@utils/calculations'
 import { OSQUEETH_DECIMALS } from '../../constants/'
@@ -9,6 +9,7 @@ import { Vaults } from '../../queries/squeeth/__generated__/Vaults'
 import { squeethClient } from '../../utils/apollo-client'
 import { useAtomValue } from 'jotai'
 import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
+import useAppEffect from '@hooks/useAppEffect'
 
 /**
  * get user vaults.
@@ -28,7 +29,7 @@ export const useVaultManager = () => {
       ownerId: address ?? '',
     },
   })
-  useEffect(() => {
+  useAppEffect(() => {
     subscribeToMore({
       document: VAULTS_SUBSCRIPTION,
       variables: {
@@ -40,9 +41,9 @@ export const useVaultManager = () => {
         return { vaults: newVaults }
       },
     })
-  }, [address, subscribeToMore])
+  }, [address, subscribeToMore, data?.vaults.length])
 
-  useEffect(() => {
+  useAppEffect(() => {
     ;(async () => {
       if (!data?.vaults?.length) return
 
@@ -60,7 +61,7 @@ export const useVaultManager = () => {
 
       setVaults(_vaults)
     })()
-  }, [data?.vaults?.length])
+  }, [data?.vaults])
 
   return { vaults, loading }
 }
