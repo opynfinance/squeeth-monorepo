@@ -13,7 +13,7 @@ export const useCrabPosition = (user: string) => {
   const crabLoading = useAtomValue(crabLoadingAtom)
   const currentEthValue = useAtomValue(currentEthValueAtom)
 
-  const { loading: txHistoryLoading, data } = useUserCrabTxHistory(user)
+  const { loading: txHistoryLoading, data: txHistoryData } = useUserCrabTxHistory(user)
 
   const index = useAtomValue(indexAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
@@ -24,9 +24,9 @@ export const useCrabPosition = (user: string) => {
   const [minPnL, setMinPnL] = useState(BIG_ZERO)
 
   const { depositedEth, usdAmount: depositedUsd } = useAppMemo(() => {
-    if (txHistoryLoading || !data) return { depositedEth: BIG_ZERO, usdAmount: BIG_ZERO }
+    if (txHistoryLoading || !txHistoryData) return { depositedEth: BIG_ZERO, usdAmount: BIG_ZERO }
 
-    const { depositedEth, usdAmount } = data?.reduce(
+    const { depositedEth, usdAmount } = txHistoryData?.reduce(
       (acc, tx) => {
         if (tx.type === CrabStrategyTxType.FLASH_DEPOSIT) {
           acc.depositedEth = acc.depositedEth.plus(tx.ethAmount)
@@ -49,7 +49,7 @@ export const useCrabPosition = (user: string) => {
     )
 
     return { depositedEth, usdAmount }
-  }, [data, txHistoryLoading])
+  }, [txHistoryData, txHistoryLoading])
 
   const calculateCurrentValue = useAppCallback(async () => {
     const minCurrentUsd = currentEthValue.times(ethIndexPrice)
