@@ -120,7 +120,7 @@ library ControllerHelperUtil {
                 0
             );
         }
-
+        console.log('_increaseLiquidityParam.tokenId',_increaseLiquidityParam.tokenId);
         INonfungiblePositionManager.IncreaseLiquidityParams memory uniIncreaseParams = INonfungiblePositionManager.IncreaseLiquidityParams({
             tokenId: _increaseLiquidityParam.tokenId,
             amount0Desired: (_isWethToken0) ? _increaseLiquidityParam.wethAmountToLp : _increaseLiquidityParam.wPowerPerpAmountToMint,
@@ -129,9 +129,10 @@ library ControllerHelperUtil {
             amount1Min: _increaseLiquidityParam.amount1Min,
             deadline: block.timestamp
         });
-
+        console.log('_increaseLiquidityParam.wethAmountToLp', _increaseLiquidityParam.wethAmountToLp);
+        console.log('_increaseLiquidityParam.wethAmountToLp', _increaseLiquidityParam.wPowerPerpAmountToMint);
         INonfungiblePositionManager(_nonfungiblePositionManager).increaseLiquidity(uniIncreaseParams);
-
+        console.log('increaseLiquidity');
         checkExcess(_controller, _nonfungiblePositionManager, _wPowerPerp, _vaultId);
     }
 

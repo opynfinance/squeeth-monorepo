@@ -3,6 +3,8 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
+import 'hardhat/console.sol';
+
 // interface
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
@@ -381,10 +383,12 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
      * @param _vaultId id of the vault
      */
     function withdrawUniPositionToken(uint256 _vaultId) external notPaused nonReentrant {
+        console.log('Reached withdrawUniPositionToken');
         _checkCanModifyVault(_vaultId, msg.sender);
 
         uint256 cachedNormFactor = _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
+        console.log('_withdrawUniPositionToken');
         _withdrawUniPositionToken(cachedVault, msg.sender, _vaultId);
         _checkVault(cachedVault, cachedNormFactor);
         _writeVault(_vaultId, cachedVault);
@@ -844,6 +848,7 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
     ) internal {
         uint256 tokenId = _vault.NftCollateralId;
         _vault.removeUniNftCollateral();
+        console.log('reached _withdrawUniPosiionToken');
         INonfungiblePositionManager(uniswapPositionManager).safeTransferFrom(address(this), _account, tokenId);
         emit WithdrawUniPositionToken(msg.sender, _vaultId, tokenId);
     }

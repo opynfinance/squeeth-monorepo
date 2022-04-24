@@ -445,6 +445,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         uint256 _collateralToFlashloan,
         ControllerHelperDataType.RebalanceVaultNftParams[] calldata _params
     ) external payable {
+        console.log('start of rebalanceVaultNft');
         // check ownership
         require(IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_vaultId) == msg.sender);
 
@@ -493,7 +494,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             console.log('wPowerPerpAmount', data.wPowerPerpAmount);
             console.log('collateralToDeposit', data.collateralToDeposit.add(data.collateralToFlashloan));
             console.log('collateralToLp', data.collateralToLp);
-            console.log('mount0Min', data.lpAmount0Min);
+            console.log('amount0Min', data.lpAmount0Min);
             console.log('amount1Min', data.lpAmount1Min);
             console.log('lowerTick', uint256(data.lpLowerTick*-1));
             console.log('upperTick', uint256(data.lpUpperTick));
@@ -599,16 +600,24 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).withdraw(_amount);
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).deposit{value: _amount}(vaultId);
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).withdrawUniPositionToken(vaultId);
+            console.log('withdrawn uni position token');
 
             for (uint256 i; i < data.length; i++) {
                 if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.IncreaseLpLiquidity
                 ) {
+                    if (address(this).balance > 0)
+                        IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{
+                            value: address(this).balance
+                        }();
+                    console.log('before encode');
+
                     // increase liquidity in LP position, this can mint wPowerPerp and increase
                     ControllerHelperDataType.IncreaseLpLiquidityParam memory increaseLiquidityParam = abi.decode(
                         data[i].data,
                         (ControllerHelperDataType.IncreaseLpLiquidityParam)
                     );
+                    console.log('before increaseLpliquidity');
 
                     ControllerHelperUtil.increaseLpLiquidity(
                         ControllerHelperDiamondStorage.getAddressAtSlot(0),
@@ -618,6 +627,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         increaseLiquidityParam,
                         isWethToken0
                     );
+                    console.log('after increaseLpliquidity');
                 } else if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.DecreaseLpLiquidity
                 ) {

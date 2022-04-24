@@ -314,9 +314,7 @@ describe("ControllerHelper: mainnet fork", function () {
       expect(BigNumber.from(vaultAfter.NftCollateralId).eq(tokenId)).to.be.true;
       expect(position.tickLower === -887220).to.be.true
       expect(position.tickUpper === 887220).to.be.true
-      console.log('test1',vaultAfter.shortAmount.sub(vaultBefore.shortAmount).sub(mintWSqueethAmount).abs().toString())
       expect(vaultAfter.shortAmount.sub(vaultBefore.shortAmount).sub(mintWSqueethAmount).abs().lte(1)).to.be.true
-      console.log('test2',vaultAfter.collateralAmount.sub(vaultBefore.collateralAmount).sub((collateralToMint.sub(collateralToFlashloan))).toString())
       expect(vaultAfter.collateralAmount.sub(vaultBefore.collateralAmount).sub((collateralToMint.sub(collateralToFlashloan))).eq(0)).to.be.true
     })
 
@@ -686,25 +684,102 @@ describe("ControllerHelper: mainnet fork", function () {
     })
   })
 
-  // describe("Rebalance with vault", async () => {
-  //   it("rebalance", async () => {
-  //     const abiCoder = new ethers.utils.AbiCoder
-  //     const params = [
-  //       {
-  //         rebalanceVaultNftType: BigNumber.from(0),
-  //         // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
-  //         data: abiCoder.encode(["uint256"], ["1"])
-  //       },
-  //       {
-  //         rebalanceVaultNftType: BigNumber.from(1),
-  //         // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
-  //         data: abiCoder.encode(["uint256"], ["1"])
-  //       }
-  //     ]
+  describe("Rebalance with vault", async () => {
 
-  //     await controllerHelper.connect(depositor).RebalanceVaultNft(BigNumber.from(1), 4, ethers.utils.parseUnits('2'), params);
-  //   })
-  // })
+    // Mint 50 squeeth in new vault
+      before("Mint and LP 50 squeeth" , async () => {
+        // Mint 50 squeeth in new vault
+        const normFactor = await controller.getExpectedNormalizationFactor()
+        const mintWSqueethAmount = ethers.utils.parseUnits('50')
+        const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
+        const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
+        const scaledEthPrice = ethPrice.div(10000)
+        const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
+        const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
+        const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, true)
+        const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
+        const params = {
+          recipient: depositor.address,
+          vaultId: 0,
+          wPowerPerpAmount: mintWSqueethAmount,
+          collateralToDeposit: collateralAmount,
+          collateralToLp: collateralToLp,
+          amount0Min: 0,
+          amount1Min: 0,
+          lowerTick: -887220,
+          upperTick: 887220
+        }
+        // Batch mint
+        await controllerHelper.connect(depositor).batchMintLp(params, {value: collateralAmount.add(collateralToLp)});
+        console.log('target amounts')
+        console.log('wPowerPerpAmount: ', mintWSqueethAmount.toString())
+        console.log('collateralToLp', collateralToLp.toString())
+
+
+      })
+
+    it("rebalance", async () => {
+      // Get vault id
+      const vaultId = (await shortSqueeth.nextId()).sub(1);
+      // Deposit nft to vault
+      const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
+      const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
+      const ownerOfUniNFT = await (positionManager as INonfungiblePositionManager).ownerOf(tokenId); 
+      const position = await (positionManager as INonfungiblePositionManager).positions(tokenId)
+
+      const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
+      
+      await (positionManager as INonfungiblePositionManager).connect(depositor).approve(positionManager.address, tokenId); 
+      const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
+        tokenId: tokenId,
+        liquidity: position.liquidity,
+        amount0Min: 0,
+        amount1Min: 0,
+        deadline: Math.floor(await getNow(ethers.provider) + 8640000),
+      })
+      const wPowerPerpAmountInLP = (isWethToken0) ? amount1 : amount0;
+      const wethAmountInLP = (isWethToken0) ? amount0 : amount1;
+      console.log('vaultId', vaultId.toString())
+      console.log('tokenId', tokenId.toString())
+      console.log('wPowerPerpAmountInLP', wPowerPerpAmountInLP.toString());
+      console.log('wethAmountInLP', wethAmountInLP.toString())
+      console.log('owner of nft', ownerOfUniNFT.toString())
+      console.log('depositor', depositor.address.toString())
+      // deposit nft to vault (approve first)
+      //await shortSqueeth.connect(depositor).approve(controller.address, vaultId);
+      await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
+
+      await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controller.address, tokenId)
+
+      await controller.connect(depositor).depositUniPositionToken(vaultId, tokenId)
+      console.log('sucessfully deposited uni position token')
+
+
+      const vaultBefore = await controller.vaults(vaultId);
+      console.log('shortAmount',vaultBefore.shortAmount.toString());
+      console.log('collateralAmount',vaultBefore.collateralAmount.toString());
+      console.log('NftCollateralId',vaultBefore.NftCollateralId.toString());
+
+      const abiCoder = new ethers.utils.AbiCoder
+      const params = [
+        {
+          // Increase liquidity
+          rebalanceVaultNftType:  BigNumber.from(0),
+          // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
+          data: abiCoder.encode(["uint256", 'uint256', 'uint256','uint256', 'uint256', 'uint256'], [tokenId, BigNumber.from(0), BigNumber.from(0), BigNumber.from(0),BigNumber.from(0),BigNumber.from(0)])
+        },
+        {
+          rebalanceVaultNftType: BigNumber.from(1),
+          // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
+          data: abiCoder.encode(["uint256"], ["1"])
+        }
+      ]
+      console.log('reached rebalance')
+      const flashLoanAmount = ethers.utils.parseUnits('2')
+      await controllerHelper.connect(depositor).rebalanceVaultNft(vaultId, flashLoanAmount, params);
+      console.log('finished rebalance call')
+    })
+  })
 
   describe("Remove ETH from vault and increase liquidity" , async () => {
     before("open first short position and LP" , async () => {
