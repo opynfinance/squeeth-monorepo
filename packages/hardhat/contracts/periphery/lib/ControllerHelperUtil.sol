@@ -79,18 +79,20 @@ library ControllerHelperUtil {
      * @param _isWethToken0 bool variable indicate if Weth token is token0 in Uniswap v3 weth/wPowerPerp pool
      * @return _vaultId and tokenId
      */
-    function mintAndLp(address _controller, address _nonfungiblePositionManager, address _wPowerPerp, address _wPowerPerpPool, address _weth, address _oracle, ControllerHelperDataType.MintAndLpParams calldata _mintAndLpParams, bool _isWethToken0) public returns (uint256, uint256) {
+    function mintAndLp(address _controller, address _nonfungiblePositionManager, address _wPowerPerp, address _wPowerPerpPool, address _weth, ControllerHelperDataType.MintAndLpParams calldata _mintAndLpParams, bool _isWethToken0) public returns (uint256, uint256) {
         IWETH9(_weth).withdraw(_mintAndLpParams.collateralToDeposit);
 
         uint256 amount0Desired; 
         uint256 amount1Desired;
+        
         {
-            int24 timeWeightedAverageTick = IOracle(_oracle).getTimeWeightedAverageTickSafe(_wPowerPerpPool, TWAP_PERIOD);
-            uint160 sqrtRatioX96 = TickMathExternal.getSqrtRatioAtTick(timeWeightedAverageTick);
+            int24 currentTick;
+            (,currentTick,,,,,) = IUniswapV3Pool(_wPowerPerpPool).slot0();
+            uint160 sqrtRatioX96 = TickMathExternal.getSqrtRatioAtTick(currentTick);
             uint160 sqrtRatioAX96 = TickMathExternal.getSqrtRatioAtTick(_mintAndLpParams.lowerTick);
             uint160 sqrtRatioBX96 = TickMathExternal.getSqrtRatioAtTick(_mintAndLpParams.upperTick);
             (amount0Desired, amount1Desired) = _isWethToken0 ? (_mintAndLpParams.collateralToLp, _mintAndLpParams.wPowerPerpAmount) : (_mintAndLpParams.wPowerPerpAmount, _mintAndLpParams.collateralToLp);
-            uint128 maxLiquidity = LiquidityAmounts.getLiquidityForAmounts(uint160(timeWeightedAverageTick), sqrtRatioAX96, sqrtRatioBX96, amount0Desired, amount1Desired);
+            uint128 maxLiquidity = LiquidityAmounts.getLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0Desired, amount1Desired);
 
             console.log("amount0Desired", amount0Desired);
             console.log("amount1Desired", amount1Desired);
@@ -100,7 +102,8 @@ library ControllerHelperUtil {
             console.log("sqrtRatioBX96", sqrtRatioBX96);
             console.log("maxLiquidity", maxLiquidity);
 
-            (amount0Desired, amount1Desired) = LiquidityAmounts.getAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, maxLiquidity);
+            //(amount0Desired, amount1Desired) = LiquidityAmounts.getAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, maxLiquidity);
+            (amount0Desired, amount1Desired) = LiquidityAmounts.getAmountsForLiquidity2(sqrtRatioX96, currentTick, _mintAndLpParams.lowerTick, _mintAndLpParams.upperTick, maxLiquidity);
         }
         
         uint256 _vaultId = IController(_controller).mintWPowerPerpAmount{value: _mintAndLpParams.collateralToDeposit}(
@@ -237,7 +240,7 @@ library ControllerHelperUtil {
             mintParams
         );
 
-        checkExcess(_controller, _nonfungiblePositionManager, _wPowerPerp, _vaultId);
+        //checkExcess(_controller, _nonfungiblePositionManager, _wPowerPerp, _vaultId);
 
         return tokenId;
     }

@@ -248,7 +248,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             ControllerHelperDiamondStorage.getAddressAtSlot(4),
             ControllerHelperDiamondStorage.getAddressAtSlot(3),
             ControllerHelperDiamondStorage.getAddressAtSlot(5),
-            ControllerHelperDiamondStorage.getAddressAtSlot(1),
             _params,
             isWethToken0
         );
@@ -483,7 +482,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 ControllerHelperDiamondStorage.getAddressAtSlot(4),
                 ControllerHelperDiamondStorage.getAddressAtSlot(3),
                 ControllerHelperDiamondStorage.getAddressAtSlot(5),
-                ControllerHelperDiamondStorage.getAddressAtSlot(1),
                 ControllerHelperDataType.MintAndLpParams({
                     recipient: address(this),
                     vaultId: data.vaultId,
