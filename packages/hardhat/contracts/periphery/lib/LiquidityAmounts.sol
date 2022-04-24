@@ -112,7 +112,7 @@ library LiquidityAmounts {
         return FullMath.mulDiv(liquidity, sqrtRatioBX96 - sqrtRatioAX96, FixedPoint96.Q96);
     }
 
-/*     /// @notice Computes the token0 and token1 value for a given amount of liquidity, the current
+    /// @notice Computes the token0 and token1 value for a given amount of liquidity, the current
     /// pool prices and the prices at the tick boundaries
     /// @param sqrtRatioX96 A sqrt price representing the current pool prices
     /// @param sqrtRatioAX96 A sqrt price representing the first tick boundary
@@ -137,8 +137,8 @@ library LiquidityAmounts {
             amount1 = getAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity);
         }
     }
- */
-    function getAmountsForLiquidity(        
+
+    function getAmountsFromLiquidity(        
         uint160 sqrtRatioX96,
         int24 currentTick,
         int24 tickLower,

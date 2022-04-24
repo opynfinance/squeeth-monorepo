@@ -102,8 +102,10 @@ library ControllerHelperUtil {
             console.log("sqrtRatioBX96", sqrtRatioBX96);
             console.log("maxLiquidity", maxLiquidity);
 
+
             //(amount0Desired, amount1Desired) = LiquidityAmounts.getAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, maxLiquidity);
-            (amount0Desired, amount1Desired) = LiquidityAmounts.getAmountsForLiquidity2(sqrtRatioX96, currentTick, _mintAndLpParams.lowerTick, _mintAndLpParams.upperTick, maxLiquidity);
+            (amount0Desired, amount1Desired) = LiquidityAmounts.getAmountsFromLiquidity(sqrtRatioX96, currentTick, _mintAndLpParams.lowerTick, _mintAndLpParams.upperTick, maxLiquidity);
+
         }
         
         uint256 _vaultId = IController(_controller).mintWPowerPerpAmount{value: _mintAndLpParams.collateralToDeposit}(
