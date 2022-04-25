@@ -71,7 +71,9 @@ library ControllerHelperUtil {
      * @param _isWethToken0 bool variable indicate if Weth token is token0 in Uniswap v3 weth/wPowerPerp pool
      * @return _vaultId and tokenId
      */
-    function mintAndLp(address _controller, address _nonfungiblePositionManager, address _wPowerPerp, address _wPowerPerpPool, ControllerHelperDataType.MintAndLpParams calldata _mintAndLpParams, bool _isWethToken0) public returns (uint256, uint256) {
+    function mintAndLp(address _controller, address _nonfungiblePositionManager, address _wPowerPerp, address _wPowerPerpPool, address _weth, ControllerHelperDataType.MintAndLpParams calldata _mintAndLpParams, bool _isWethToken0) public returns (uint256, uint256) {
+        IWETH9(_weth).withdraw(_mintAndLpParams.collateralToDeposit);
+        
         uint256 _vaultId = IController(_controller).mintWPowerPerpAmount{value: _mintAndLpParams.collateralToDeposit}(
             _mintAndLpParams.vaultId,
             _mintAndLpParams.wPowerPerpAmount,
@@ -87,7 +89,6 @@ library ControllerHelperUtil {
             _vaultId,
             ControllerHelperDataType.LpWPowerPerpPool({
                 recipient: _mintAndLpParams.recipient,
-                ethAmount: _mintAndLpParams.collateralToLp,
                 amount0Desired: _isWethToken0 ? _mintAndLpParams.collateralToLp : _mintAndLpParams.wPowerPerpAmount,
                 amount1Desired: _isWethToken0 ? _mintAndLpParams.wPowerPerpAmount : _mintAndLpParams.collateralToLp,
                 amount0Min: _mintAndLpParams.amount0Min,
@@ -134,14 +135,17 @@ library ControllerHelperUtil {
     /**
      * @notice mint wPowerPerp in vault
      * @param _controller controller address
+     * @param _weth WETH address
      * @param _vaultId vault Id
-     * @param __wPowerPerpToMint amount of wPowerPerp to mint
+     * @param _wPowerPerpToMint amount of wPowerPerp to mint
      * @param _collateralToDeposit amount of collateral to deposit
      */
-    function mintIntoVault(address _controller, uint256 _vaultId, uint256 __wPowerPerpToMint, uint256 _collateralToDeposit) public returns (uint256) {
+    function mintIntoVault(address _controller, address _weth, uint256 _vaultId, uint256 _wPowerPerpToMint, uint256 _collateralToDeposit) public returns (uint256) {
+        IWETH9(_weth).withdraw(_collateralToDeposit);
+
         return (IController(_controller).mintWPowerPerpAmount{value: _collateralToDeposit}(
             _vaultId,
-            __wPowerPerpToMint,
+            _wPowerPerpToMint,
             0
         ));
     }
@@ -149,16 +153,20 @@ library ControllerHelperUtil {
     /**
      * @notice burn wPowerPerp or just withdraw collateral from vault (or both)
      * @param _controller controller address
+     * @param _weth WETH address
+     * @param _weth weth address
      * @param _vaultId vault Id
      * @param _wPowerPerpToBurn amount of wPowerPerp to burn
      * @param _collateralToWithdraw amount of collateral to withdraw
      */
-    function withdrawFromVault(address _controller, uint256 _vaultId, uint256 _wPowerPerpToBurn, uint256 _collateralToWithdraw) public {
+    function withdrawFromVault(address _controller, address _weth, uint256 _vaultId, uint256 _wPowerPerpToBurn, uint256 _collateralToWithdraw) public {
         IController(_controller).burnWPowerPerpAmount(
             _vaultId,
             _wPowerPerpToBurn,
             _collateralToWithdraw
         );
+
+        if (_collateralToWithdraw > 0) IWETH9(_weth).deposit{value: _collateralToWithdraw}();
     }
 
     /**
@@ -192,7 +200,7 @@ library ControllerHelperUtil {
             deadline: block.timestamp
         });
 
-        (uint256 tokenId, , , ) = INonfungiblePositionManager(_nonfungiblePositionManager).mint{value: _params.ethAmount}(
+        (uint256 tokenId, , , ) = INonfungiblePositionManager(_nonfungiblePositionManager).mint(
             mintParams
         );
 
@@ -251,6 +259,8 @@ library ControllerHelperUtil {
 
     /**
      * @notice send ETH and wPowerPerp
+     * @param _weth WETH address
+     * @param _wPowerPerp wPowerPerp address
      */
     function sendBack(address _weth, address _wPowerPerp) public {
         IWETH9(_weth).withdraw(IWETH9(_weth).balanceOf(address(this)));
