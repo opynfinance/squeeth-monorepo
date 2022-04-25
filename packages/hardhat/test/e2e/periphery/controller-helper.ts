@@ -726,14 +726,14 @@ describe("ControllerHelper: mainnet fork", function () {
       const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
       const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
       const ownerOfUniNFT = await (positionManager as INonfungiblePositionManager).ownerOf(tokenId); 
-      const position = await (positionManager as INonfungiblePositionManager).positions(tokenId)
+      const positionBefore = await (positionManager as INonfungiblePositionManager).positions(tokenId)
 
       const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
       
       await (positionManager as INonfungiblePositionManager).connect(depositor).approve(positionManager.address, tokenId); 
       const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
         tokenId: tokenId,
-        liquidity: position.liquidity,
+        liquidity: positionBefore.liquidity,
         amount0Min: 0,
         amount1Min: 0,
         deadline: Math.floor(await getNow(ethers.provider) + 8640000),
@@ -745,24 +745,24 @@ describe("ControllerHelper: mainnet fork", function () {
       console.log('wPowerPerpAmountInLP', wPowerPerpAmountInLP.toString());
       console.log('wethAmountInLP', wethAmountInLP.toString())
       console.log('owner of nft', ownerOfUniNFT.toString())
-      console.log('depositor', depositor.address.toString())
+      //console.log('depositor', depositor.address.toString())
       // deposit nft to vault (approve first)
       // await shortSqueeth.connect(depositor).approve(controller.address, vaultId);
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
       
-      await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controller.address, tokenId)
+      await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controller.address, tokenId) // approval for controller 
       await (positionManager as INonfungiblePositionManager).connect(depositor).setApprovalForAll(controllerHelper.address, true) // approve controllerHelper
-      console.log('ControllerHelperUtilLib.address', ControllerHelperUtilLib.address)
-      console.log('ControllerHelper.address', controllerHelper.address)
-      console.log('Controller address', controller.address);
+      //console.log('ControllerHelperUtilLib.address', ControllerHelperUtilLib.address)
+      //console.log('ControllerHelper.address', controllerHelper.address)
+      //console.log('Controller address', controller.address);
 
-      const isControllerHelperApproved = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.isApprovedForAll(depositor.address, controllerHelper.address)
+      //const isControllerHelperApproved = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.isApprovedForAll(depositor.address, controllerHelper.address)
       //await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controllerHelperUtil.address, tokenId)
-      console.log('isControllerHelperApproved', isControllerHelperApproved)
-      const approvedList = await (positionManager as INonfungiblePositionManager).connect(depositor).getApproved(tokenId)
-      console.log('approvedList', approvedList.toString())
+      //console.log('isControllerHelperApproved', isControllerHelperApproved)
+      //const approvedList = await (positionManager as INonfungiblePositionManager).connect(depositor).getApproved(tokenId)
+      //console.log('approvedList', approvedList.toString())
       await controller.connect(depositor).depositUniPositionToken(vaultId, tokenId)
-      console.log('sucessfully deposited uni position token')
+      //console.log('sucessfully deposited uni position token')
 
 
       const vaultBefore = await controller.vaults(vaultId);
@@ -773,10 +773,10 @@ describe("ControllerHelper: mainnet fork", function () {
       const abiCoder = new ethers.utils.AbiCoder
       const params = [
         {
-          // Decrease liquidity
+          // Remove liquidity
           rebalanceVaultNftType: BigNumber.from(1),
           // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
-          data: abiCoder.encode(["uint256", 'uint256', 'uint256', 'uint128', 'uint128'], [tokenId, position.liquidity, BigNumber.from(100).mul(BigNumber.from(10).pow(16)), BigNumber.from(0),BigNumber.from(0) ])
+          data: abiCoder.encode(["uint256", 'uint256', 'uint256', 'uint128', 'uint128'], [tokenId, positionBefore.liquidity, BigNumber.from(100).mul(BigNumber.from(10).pow(16)), BigNumber.from(0),BigNumber.from(0) ])
           }
         // {
         //   // Increase liquidity
@@ -790,6 +790,25 @@ describe("ControllerHelper: mainnet fork", function () {
       const flashLoanAmount = ethers.utils.parseUnits('2')
       await controllerHelper.connect(depositor).rebalanceVaultNft(vaultId, flashLoanAmount, params);
       console.log('finished rebalance call')
+
+      const positionAfter = await (positionManager as INonfungiblePositionManager).positions(tokenId);
+      const vaultAfter = await controller.vaults(vaultId); 
+      const ownerOfUniNFTAfter = await (positionManager as INonfungiblePositionManager).ownerOf(tokenId); 
+      console.log(ownerOfUniNFTAfter.toString())
+      console.log(ownerOfUniNFT.toString())
+      console.log('positionBefore.liquidity',positionBefore.liquidity.toString())
+      //expect(ownerOfUniNFTAfter.toString().eq(depositor.address.toString())).to.be.true
+      expect(positionAfter.tickLower === -887220).to.be.true
+      expect(positionAfter.tickUpper === 887220).to.be.true
+      expect(positionAfter.liquidity.eq(BigNumber.from(0))).to.be.true
+      expect(vaultAfter.shortAmount.eq(vaultBefore.shortAmount)).to.be.true
+      expect(vaultAfter.collateralAmount.eq(vaultBefore.collateralAmount)).to.be.true
+      expect(vaultAfter.NftCollateralId==0).to.be.true      
+      
+      console.log('vaultAfter.shortAmount',vaultAfter.shortAmount.toString());
+      console.log('vaultAfter.collateralAmount',vaultAfter.collateralAmount.toString());
+      console.log('vaultAfter.NftCollateralId',BigNumber.from(0).toString());
+
     })
   })
 

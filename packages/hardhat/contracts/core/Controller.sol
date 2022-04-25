@@ -352,7 +352,7 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
      * @param _uniTokenId uniswap position token id
      */
     function depositUniPositionToken(uint256 _vaultId, uint256 _uniTokenId) external notPaused nonReentrant {
-        console.log('start of depositUniPositionToken');
+        console.log('start of depositUniPositionToken for %s', msg.sender);
         _checkCanModifyVault(_vaultId, msg.sender);
 
         _applyFunding();
