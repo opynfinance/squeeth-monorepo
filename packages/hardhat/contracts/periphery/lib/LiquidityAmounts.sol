@@ -3,6 +3,9 @@ pragma solidity >=0.5.0;
 
 import '@uniswap/v3-core/contracts/libraries/FullMath.sol';
 import '@uniswap/v3-core/contracts/libraries/FixedPoint96.sol';
+import {SqrtPriceMathPartial} from "../../libs/SqrtPriceMathPartial.sol";
+import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
+
 
 /// @title Liquidity amount functions
 /// @notice Provides functions for computing liquidity amounts from token amounts and prices
@@ -134,4 +137,43 @@ library LiquidityAmounts {
             amount1 = getAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity);
         }
     }
+
+    function getAmountsFromLiquidity(        
+        uint160 sqrtRatioX96,
+        int24 currentTick,
+        int24 tickLower,
+        int24 tickUpper,
+        uint128 liquidity
+    ) internal pure returns (uint256 amount0, uint256 amount1) {
+        if (currentTick < tickLower) {
+            amount0 = SqrtPriceMathPartial.getAmount0Delta(
+                TickMath.getSqrtRatioAtTick(tickLower),
+                TickMath.getSqrtRatioAtTick(tickUpper),
+                liquidity,
+                false
+            );
+        } else if (currentTick < tickUpper) {
+            amount0 = SqrtPriceMathPartial.getAmount0Delta(
+                sqrtRatioX96,
+                TickMath.getSqrtRatioAtTick(tickUpper),
+                liquidity,
+                false
+            );
+            amount1 = SqrtPriceMathPartial.getAmount1Delta(
+                TickMath.getSqrtRatioAtTick(tickLower),
+                sqrtRatioX96,
+                liquidity,
+                false
+            );
+        } else {
+            amount1 = SqrtPriceMathPartial.getAmount1Delta(
+                TickMath.getSqrtRatioAtTick(tickLower),
+                TickMath.getSqrtRatioAtTick(tickUpper),
+                liquidity,
+                false
+            );
+            }
+    
+    }
+
 }
