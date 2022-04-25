@@ -93,7 +93,7 @@ library ControllerHelperUtil {
      * @param _isWethToken0 bool variable indicate if Weth token is token0 in Uniswap v3 weth/wPowerPerp pool
      * @return _vaultId and tokenId
      */
-    function mintAndLp(address _controller, address _nonfungiblePositionManager, address _wPowerPerp, address _wPowerPerpPool, address _weth, address _oracle, ControllerHelperDataType.MintAndLpParams calldata _mintAndLpParams, bool _isWethToken0) public returns (uint256, uint256) {
+    function mintAndLp(address _controller, address _nonfungiblePositionManager, address _wPowerPerp, address _wPowerPerpPool, address _weth, ControllerHelperDataType.MintAndLpParams calldata _mintAndLpParams, bool _isWethToken0) public returns (uint256, uint256) {
         IWETH9(_weth).withdraw(_mintAndLpParams.collateralToDeposit);
 
         (uint256 amount0Desired, uint256 amount1Desired) = getAmountsToLp(_wPowerPerpPool, _mintAndLpParams.collateralToLp, _mintAndLpParams.wPowerPerpAmount, _mintAndLpParams.lowerTick, _mintAndLpParams.upperTick, _isWethToken0);
