@@ -8,6 +8,7 @@
         "start": "next start",
         "lint": "next lint",
         "test": "jest --watch",
+        "test:ci": "jest --no-watch",
         "cypress": "dotenv -e .env -- synpress run --configFile cypress.json --config supportFile='cypress/support/index.js',pluginsFile='cypress/plugins/index.js' -b chrome",
         "cypress:mobile": "dotenv -e .env -- synpress run --configFile cypress.json --config supportFile='cypress/support/index.js',pluginsFile='cypress/plugins/index.js,viewportWidth=375,viewportHeight=667' --env guildName='Cypress Mobile Gang',guildUrlName='cypress-mobile-gang',dcInvite='https://discord.gg/G6VWkWJrzp',tgId='-1001689086791' -b chromium",
         "cypress:record": "dotenv -e .env -e .env.development.local -- synpress run --record --configFile cypress.json --config supportFile='cypress/support/index.js',pluginsFile='cypress/plugins/index.js' -b chromium",
@@ -93,12 +94,5 @@
     },
     "resolutions": {
         "assemblyscript": "git+https://github.com/AssemblyScript/assemblyscript.git#v0.6"
-    },
-    "jest": {
-        "moduleNameMapper": {
-            "^@root(.*)$": "<rootDir>/src$1",
-            "^@components(.*)$": "<rootDir>/src/components$1",
-            "^@constants(.*)$": "<rootDir>/src/constants$1"
-        }
     }
 }

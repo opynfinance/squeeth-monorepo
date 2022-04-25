@@ -2,11 +2,6 @@ import { atom } from 'jotai'
 import BigNumber from 'bignumber.js'
 
 import { BIG_ZERO } from '@constants/index'
-import { networkIdAtom, web3Atom } from '../wallet/atoms'
-import { getCurrentImpliedFunding, getDailyHistoricalFunding, getIndex, getMark } from './utils'
-import { ETH_USDC_POOL, SQUEETH_UNI_POOL } from '@constants/address'
-import { SWAP_EVENT_TOPIC } from '../../constants'
-import { controllerContractAtom } from '../contracts/atoms'
 
 export const impliedVolAtom = atom((get) => {
   const mark = get(markAtom)

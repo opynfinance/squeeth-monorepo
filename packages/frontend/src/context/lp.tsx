@@ -1,9 +1,10 @@
-import React, { useContext, useEffect, useReducer, Reducer } from 'react'
+import React, { useContext, useReducer, Reducer } from 'react'
 
 import { useAtomValue } from 'jotai'
 import { addressesAtom } from 'src/state/positions/atoms'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { OSQUEETH_DECIMALS } from '@constants/index'
+import useAppEffect from '@hooks/useAppEffect'
 
 export enum Steps {
   SELECT_METHOD = 1,
@@ -88,11 +89,11 @@ const LPProvider: React.FC = ({ children }) => {
   const { oSqueeth } = useAtomValue(addressesAtom)
   const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (oSqueethBal.isZero() || lpState.step === Steps.PROVIDE_LIQUIDITY) return
 
     dispatch({ type: LPActions.GO_TO_PROVIDE_LIQUIDITY })
-  }, [oSqueethBal.toString()])
+  }, [oSqueethBal, lpState.step])
 
   return <LPContext.Provider value={{ lpState, dispatch }}>{children}</LPContext.Provider>
 }
