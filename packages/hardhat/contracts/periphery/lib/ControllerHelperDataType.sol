@@ -139,7 +139,6 @@ library ControllerHelperDataType {
     /// @dev params for rebalanceWithoutVault()
     struct RebalanceWithoutVault {
         uint256 tokenId;    // Uni token ID
-        uint256 ethAmountToLp;  // amount of WETH to lp
         uint256 liquidity;  // LP liquidity amount
         uint256 wPowerPerpAmountDesired;    // wPowerPerp amount to LP
         uint256 wethAmountDesired;  // WETH amount to LP
@@ -155,7 +154,6 @@ library ControllerHelperDataType {
     /// @dev params for ControllerHelperUtil.lpWPowerPerpPool()
     struct LpWPowerPerpPool {
         address recipient;  // recipient address
-        uint256 ethAmount;  // ETH amount to LP
         uint256 amount0Desired; // amount to LP for asset0
         uint256 amount1Desired; // amount to LP for asset1
         uint256 amount0Min; // amount min to LP for asset0
