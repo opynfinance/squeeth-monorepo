@@ -39,7 +39,12 @@ import { usePositionsAndFeesComputation } from 'src/state/positions/hooks'
 import { actualTradeTypeAtom, ethTradeAmountAtom, sqthTradeAmountAtom, tradeTypeAtom } from 'src/state/trade/atoms'
 // import { positionTypeAtom } from 'src/state/positions/atoms'
 import { useResetAtom } from 'jotai/utils'
-import { isTransactionFirstStepAtom, transactionDataAtom, transactionLoadingAtom } from 'src/state/wallet/atoms'
+import {
+  isTransactionFirstStepAtom,
+  transactionDataAtom,
+  transactionLoadingAtom,
+  supportedNetworkAtom,
+} from 'src/state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -552,6 +557,7 @@ const SqueethInfo: React.FC = () => {
 function TradePage() {
   const classes = useStyles()
   const { isRestricted } = useRestrictUser()
+  const supportedNetwork = useAtomValue(supportedNetworkAtom)
 
   const tradeType = useAtomValue(tradeTypeAtom)
   const [showMobileTrade, setShowMobileTrade] = useState(false)
@@ -571,7 +577,7 @@ function TradePage() {
               <Header />
               <div className={classes.positionContainer}>
                 <SqueethInfo />
-                <PositionCard />
+                {supportedNetwork && <PositionCard />}
               </div>
             </div>
             <div className={classes.tradeDetails}>
@@ -584,8 +590,12 @@ function TradePage() {
           </div>
 
           <div className={classes.ticket}>
-            <TabComponent />
-            <Card className={classes.innerTicket}>{!isRestricted ? <Trade /> : <RestrictionInfo />}</Card>
+            {supportedNetwork && (
+              <>
+                <TabComponent />
+                <Card className={classes.innerTicket}>{!isRestricted ? <Trade /> : <RestrictionInfo />}</Card>
+              </>
+            )}
           </div>
         </div>
       </Hidden>
@@ -603,20 +613,24 @@ function TradePage() {
             <PositionCard />
           </div>
         </div>
-        <div className={classes.mobileAction}>
-          <div style={{ width: '65%' }}>
-            <TabComponent />
-          </div>
-          <PrimaryButton style={{ minWidth: '30%' }} onClick={() => setShowMobileTrade(true)}>
-            Trade
-          </PrimaryButton>
-        </div>
-        <MobileModal title="TRADE" isOpen={showMobileTrade} onClose={() => setShowMobileTrade(false)}>
-          <TabComponent />
-          <Card className={classes.innerTicket} style={{ textAlign: 'center', marginTop: '8px' }}>
-            {!isRestricted ? <Trade /> : <RestrictionInfo />}
-          </Card>
-        </MobileModal>
+        {supportedNetwork && (
+          <>
+            <div className={classes.mobileAction}>
+              <div style={{ width: '65%' }}>
+                <TabComponent />
+              </div>
+              <PrimaryButton variant="contained" style={{ minWidth: '30%' }} onClick={() => setShowMobileTrade(true)}>
+                Trade
+              </PrimaryButton>
+            </div>
+            <MobileModal title="TRADE" isOpen={showMobileTrade} onClose={() => setShowMobileTrade(false)}>
+              <TabComponent />
+              <Card className={classes.innerTicket} style={{ textAlign: 'center', marginTop: '8px' }}>
+                {!isRestricted ? <Trade /> : <RestrictionInfo />}
+              </Card>
+            </MobileModal>
+          </>
+        )}
       </Hidden>
       <WelcomeModal open={isWelcomeModalOpen} handleClose={handleClose} />
     </div>
