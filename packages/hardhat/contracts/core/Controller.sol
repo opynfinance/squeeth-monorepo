@@ -352,6 +352,7 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
      * @param _uniTokenId uniswap position token id
      */
     function depositUniPositionToken(uint256 _vaultId, uint256 _uniTokenId) external notPaused nonReentrant {
+        console.log('start of depositUniPositionToken');
         _checkCanModifyVault(_vaultId, msg.sender);
 
         _applyFunding();
@@ -801,6 +802,7 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
         uint256 _vaultId,
         uint256 _uniTokenId
     ) internal {
+        console.log('reached _depositUniPositionToken');
         //get tokens for uniswap NFT
         (, , address token0, address token1, uint24 fee, , , uint128 liquidity, , , , ) = INonfungiblePositionManager(
             uniswapPositionManager
@@ -812,6 +814,7 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
         require(fee == feeTier, "C26");
         // check token0 and token1
         require((token0 == wPowerPerp && token1 == weth) || (token1 == wPowerPerp && token0 == weth), "C23");
+        console.log('trying to add uni position token');
 
         _vault.addUniNftCollateral(_uniTokenId);
         INonfungiblePositionManager(uniswapPositionManager).safeTransferFrom(_account, address(this), _uniTokenId);

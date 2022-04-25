@@ -610,7 +610,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{
                             value: address(this).balance
                         }();
-                    console.log('before encode');
 
                     // increase liquidity in LP position, this can mint wPowerPerp and increase
                     ControllerHelperDataType.IncreaseLpLiquidityParam memory increaseLiquidityParam = abi.decode(
@@ -627,8 +626,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         increaseLiquidityParam,
                         isWethToken0
                     );
-                    console.log('after increaseLpliquidity');
-                } else if (
+                 } else if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.DecreaseLpLiquidity
                 ) {
                     // decrease liquidity in LP
@@ -636,7 +634,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         data[i].data,
                         (ControllerHelperDataType.DecreaseLpLiquidityParams)
                     );
-
                     ControllerHelperUtil.closeUniLp(
                         ControllerHelperDiamondStorage.getAddressAtSlot(6),
                         ControllerHelperDataType.closeUniLpParams({
@@ -648,7 +645,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         }),
                         isWethToken0
                     );
-
+                    console.log('after closeUniLP');
                     // if LP position is not fully closed, redeposit into vault or send back to user
                     ControllerHelperUtil.checkClosedLp(
                         _initiator,
@@ -658,6 +655,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         decreaseLiquidityParam.tokenId,
                         decreaseLiquidityParam.liquidityPercentage
                     );
+                    console.log('after checkCloseLP');
                 } else if (
                     // this will execute if the use case is to mint in vault, deposit collateral in vault or mint + deposit
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.MintIntoVault

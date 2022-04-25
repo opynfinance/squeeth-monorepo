@@ -31,6 +31,7 @@ library ControllerHelperUtil {
      * @return withdraw wPowerPerp and WETH amounts
      */
     function closeUniLp(address _nonfungiblePositionManager, ControllerHelperDataType.closeUniLpParams memory _params, bool _isWethToken0) public returns (uint256, uint256) {
+        console.log("closeUniLp()");
         INonfungiblePositionManager.DecreaseLiquidityParams memory decreaseParams = INonfungiblePositionManager
             .DecreaseLiquidityParams({
                 tokenId: _params.tokenId,
@@ -39,8 +40,9 @@ library ControllerHelperUtil {
                 amount1Min: _params.amount1Min,
                 deadline: block.timestamp
             });
+        console.log('finished param setup');
         INonfungiblePositionManager(_nonfungiblePositionManager).decreaseLiquidity(decreaseParams);
-
+        console.log('finished decreaseLiquidity');
         uint256 wethAmount;
         uint256 _wPowerPerpAmount;
         (_isWethToken0)
@@ -120,8 +122,7 @@ library ControllerHelperUtil {
                 0
             );
         }
-        console.log('_increaseLiquidityParam.tokenId',_increaseLiquidityParam.tokenId);
-        INonfungiblePositionManager.IncreaseLiquidityParams memory uniIncreaseParams = INonfungiblePositionManager.IncreaseLiquidityParams({
+         INonfungiblePositionManager.IncreaseLiquidityParams memory uniIncreaseParams = INonfungiblePositionManager.IncreaseLiquidityParams({
             tokenId: _increaseLiquidityParam.tokenId,
             amount0Desired: (_isWethToken0) ? _increaseLiquidityParam.wethAmountToLp : _increaseLiquidityParam.wPowerPerpAmountToMint,
             amount1Desired: (_isWethToken0) ? _increaseLiquidityParam.wPowerPerpAmountToMint : _increaseLiquidityParam.wethAmountToLp,
@@ -129,8 +130,7 @@ library ControllerHelperUtil {
             amount1Min: _increaseLiquidityParam.amount1Min,
             deadline: block.timestamp
         });
-        console.log('_increaseLiquidityParam.wethAmountToLp', _increaseLiquidityParam.wethAmountToLp);
-        console.log('_increaseLiquidityParam.wethAmountToLp', _increaseLiquidityParam.wPowerPerpAmountToMint);
+        console.log('_increaseLiquidityParam.amount0Min', uint256(_increaseLiquidityParam.amount0Min));
         INonfungiblePositionManager(_nonfungiblePositionManager).increaseLiquidity(uniIncreaseParams);
         console.log('increaseLiquidity');
         checkExcess(_controller, _nonfungiblePositionManager, _wPowerPerp, _vaultId);
@@ -244,13 +244,17 @@ library ControllerHelperUtil {
         uint256 _liquidityPercentage
     ) public {
         if ((_vaultId == 0) || (_liquidityPercentage == 1e18)) {
+            console.log('before safeTransfer');
             INonfungiblePositionManager(_nonfungiblePositionManager).safeTransferFrom(
                 address(this),
                 _user,
                 _tokenId
             );
         } else {
+            console.log('deposit back msg.sender %s address(this) %s origin %s',msg.sender, address(this), tx.origin);
             IController(_controller).depositUniPositionToken(_vaultId, _tokenId);
+            console.log('deposited back to vault');
+
         }
     }
 

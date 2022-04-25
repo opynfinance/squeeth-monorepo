@@ -7,7 +7,7 @@ import { Contract, BigNumber, providers, BytesLike, BigNumberish } from "ethers"
 import BigNumberJs from 'bignumber.js'
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
-import { WETH9, MockErc20, ShortPowerPerp, Controller, Oracle, WPowerPerp, ControllerHelper, INonfungiblePositionManager} from "../../../typechain";
+import { WETH9, MockErc20, ShortPowerPerp, Controller, Oracle, WPowerPerp, ControllerHelper , INonfungiblePositionManager} from "../../../typechain";
 import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addWethDaiLiquidity, addSqueethLiquidity } from '../../setup'
 import { isSimilar, wmul, wdiv, one, oracleScaleFactor, getNow } from "../../utils"
 import { JsonRpcSigner } from "@ethersproject/providers";
@@ -64,6 +64,7 @@ describe("ControllerHelper: mainnet fork", function () {
   let wSqueeth: WPowerPerp
   let ethUsdcPool: Contract
   let controllerHelper: ControllerHelper
+  let ControllerHelperUtilLib: Contract
   let shortSqueeth: ShortPowerPerp
 
   this.beforeAll("Setup mainnet fork contracts", async () => {
@@ -88,7 +89,7 @@ describe("ControllerHelper: mainnet fork", function () {
     ethUsdcPool = await ethers.getContractAt(POOL_ABI, "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8");
 
     const ControllerHelperUtil = await ethers.getContractFactory("ControllerHelperUtil")
-    const ControllerHelperUtilLib = (await ControllerHelperUtil.deploy());
+    ControllerHelperUtilLib = (await ControllerHelperUtil.deploy());
     const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper", {libraries: {ControllerHelperUtil: ControllerHelperUtilLib.address}});
     controllerHelper = (await ControllerHelperContract.deploy(controller.address, positionManager.address, uniswapFactory.address, "0x59828FdF7ee634AaaD3f58B19fDBa3b03E2D9d80", "0x27182842E098f60e3D576794A5bFFb0777E025d3", "0x62e28f054efc24b26A794F5C1249B6349454352C")) as ControllerHelper;
   })
@@ -746,11 +747,20 @@ describe("ControllerHelper: mainnet fork", function () {
       console.log('owner of nft', ownerOfUniNFT.toString())
       console.log('depositor', depositor.address.toString())
       // deposit nft to vault (approve first)
-      //await shortSqueeth.connect(depositor).approve(controller.address, vaultId);
+      // await shortSqueeth.connect(depositor).approve(controller.address, vaultId);
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
-
+      
       await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controller.address, tokenId)
+      await (positionManager as INonfungiblePositionManager).connect(depositor).setApprovalForAll(controllerHelper.address, true) // approve controllerHelper
+      console.log('ControllerHelperUtilLib.address', ControllerHelperUtilLib.address)
+      console.log('ControllerHelper.address', controllerHelper.address)
+      console.log('Controller address', controller.address);
 
+      const isControllerHelperApproved = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.isApprovedForAll(depositor.address, controllerHelper.address)
+      //await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controllerHelperUtil.address, tokenId)
+      console.log('isControllerHelperApproved', isControllerHelperApproved)
+      const approvedList = await (positionManager as INonfungiblePositionManager).connect(depositor).getApproved(tokenId)
+      console.log('approvedList', approvedList.toString())
       await controller.connect(depositor).depositUniPositionToken(vaultId, tokenId)
       console.log('sucessfully deposited uni position token')
 
@@ -763,16 +773,18 @@ describe("ControllerHelper: mainnet fork", function () {
       const abiCoder = new ethers.utils.AbiCoder
       const params = [
         {
-          // Increase liquidity
-          rebalanceVaultNftType:  BigNumber.from(0),
-          // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
-          data: abiCoder.encode(["uint256", 'uint256', 'uint256','uint256', 'uint256', 'uint256'], [tokenId, BigNumber.from(0), BigNumber.from(0), BigNumber.from(0),BigNumber.from(0),BigNumber.from(0)])
-        },
-        {
+          // Decrease liquidity
           rebalanceVaultNftType: BigNumber.from(1),
           // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
-          data: abiCoder.encode(["uint256"], ["1"])
-        }
+          data: abiCoder.encode(["uint256", 'uint256', 'uint256', 'uint128', 'uint128'], [tokenId, position.liquidity, BigNumber.from(100).mul(BigNumber.from(10).pow(16)), BigNumber.from(0),BigNumber.from(0) ])
+          }
+        // {
+        //   // Increase liquidity
+        //   rebalanceVaultNftType:  BigNumber.from(0),
+        //   // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
+        //   data: abiCoder.encode(["uint256", 'uint256', 'uint256','uint256', 'uint256', 'uint256'], [tokenId, BigNumber.from(0), BigNumber.from(0), BigNumber.from(0),BigNumber.from(0),BigNumber.from(0)])
+        // }
+
       ]
       console.log('reached rebalance')
       const flashLoanAmount = ethers.utils.parseUnits('2')
