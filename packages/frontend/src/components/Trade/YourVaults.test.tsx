@@ -36,8 +36,8 @@ describe('YourVaults', () => {
       data: { vaults: mockedVaults },
     })
 
-    expect(screen.getByText('69.0000')).toBeInTheDocument()
-    expect(screen.getByText('2.8000')).toBeInTheDocument()
+    expect(screen.getByText(/69\.0000/i)).toBeInTheDocument()
+    expect(screen.getByText(/2\.8000/i)).toBeInTheDocument()
   })
 
   it('renders link to the vault detail page', async () => {

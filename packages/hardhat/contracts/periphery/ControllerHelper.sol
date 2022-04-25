@@ -93,6 +93,9 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) == msg.sender
         );
         require(_params.maxToPay <= _params.collateralToWithdraw.add(msg.value));
+
+        wrapInternal(msg.value);
+
         _exactOutFlashSwap(
             ControllerHelperDiamondStorage.getAddressAtSlot(5),
             ControllerHelperDiamondStorage.getAddressAtSlot(4),
@@ -103,7 +106,10 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             abi.encode(_params)
         );
 
-        payable(msg.sender).sendValue(address(this).balance);
+        ControllerHelperUtil.sendBack(
+            ControllerHelperDiamondStorage.getAddressAtSlot(5),
+            ControllerHelperDiamondStorage.getAddressAtSlot(4)
+        );
     }
 
     /**
@@ -120,6 +126,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) ==
                     msg.sender
             );
+
+        wrapInternal(msg.value);
         IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).transferFrom(
             msg.sender,
             address(this),
@@ -135,7 +143,10 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             uint8(ControllerHelperDataType.CALLBACK_SOURCE.FLASH_SELL_LONG_W_MINT),
             abi.encode(_params)
         );
-        payable(msg.sender).sendValue(address(this).balance);
+        ControllerHelperUtil.sendBack(
+            ControllerHelperDiamondStorage.getAddressAtSlot(5),
+            ControllerHelperDiamondStorage.getAddressAtSlot(4)
+        );
     }
 
     /**
@@ -143,7 +154,10 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
      * @dev user should approve this contract for Uni NFT transfer
      * @param _params ControllerHelperDataType.CloseShortWithUserNftParams struct
      */
-    function closeShortWithUserNft(ControllerHelperDataType.CloseShortWithUserNftParams calldata _params) external {
+    function closeShortWithUserNft(ControllerHelperDataType.CloseShortWithUserNftParams calldata _params)
+        external
+        payable
+    {
         require(
             IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) == msg.sender
         );
@@ -153,6 +167,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             address(this),
             _params.tokenId
         );
+
+        wrapInternal(msg.value);
 
         // close LP position
         (uint256 wPowerPerpAmountInLp, ) = ControllerHelperUtil.closeUniLp(
@@ -176,7 +192,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             _params.tokenId,
             _params.liquidityPercentage
         );
-
         // burn vault debt using amounts withdrawn from LP position
         _closeShortWithAmountsFromLp(
             _params.vaultId,
@@ -200,6 +215,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) == msg.sender
         );
 
+        wrapInternal(msg.value);
         _flashLoan(
             ControllerHelperDiamondStorage.getAddressAtSlot(5),
             _params.collateralToFlashloan,
@@ -225,11 +241,13 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             );
         require(msg.value == _params.collateralToDeposit.add(_params.collateralToLp));
 
+        wrapInternal(msg.value);
         (uint256 vaultId, ) = ControllerHelperUtil.mintAndLp(
             ControllerHelperDiamondStorage.getAddressAtSlot(0),
             ControllerHelperDiamondStorage.getAddressAtSlot(6),
             ControllerHelperDiamondStorage.getAddressAtSlot(4),
             ControllerHelperDiamondStorage.getAddressAtSlot(3),
+            ControllerHelperDiamondStorage.getAddressAtSlot(5),
             _params,
             isWethToken0
         );
@@ -242,7 +260,10 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 vaultId
             );
 
-        payable(msg.sender).sendValue(address(this).balance);
+        ControllerHelperUtil.sendBack(
+            ControllerHelperDiamondStorage.getAddressAtSlot(5),
+            ControllerHelperDiamondStorage.getAddressAtSlot(4)
+        );
     }
 
     /**
@@ -259,11 +280,18 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) ==
                     msg.sender
             );
+
+        wrapInternal(msg.value);
         _flashLoan(
             ControllerHelperDiamondStorage.getAddressAtSlot(5),
             _params.collateralToFlashloan,
             uint8(ControllerHelperDataType.CALLBACK_SOURCE.FLASHLOAN_W_MINT_DEPOSIT_NFT),
             abi.encode(_params)
+        );
+
+        ControllerHelperUtil.sendBack(
+            ControllerHelperDiamondStorage.getAddressAtSlot(5),
+            ControllerHelperDiamondStorage.getAddressAtSlot(4)
         );
     }
 
@@ -323,9 +351,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
      * @param _params ControllerHelperDataType.RebalanceWithoutVault struct
      */
     function rebalanceWithoutVault(ControllerHelperDataType.RebalanceWithoutVault calldata _params) external payable {
-        // if user need to send ETH to change LP composition, wrap to WETH
-        if (msg.value > 0) IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: msg.value}();
-
+        wrapInternal(msg.value);
         INonfungiblePositionManager(ControllerHelperDiamondStorage.getAddressAtSlot(6)).safeTransferFrom(
             msg.sender,
             address(this),
@@ -391,7 +417,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             0,
             ControllerHelperDataType.LpWPowerPerpPool({
                 recipient: msg.sender,
-                ethAmount: _params.ethAmountToLp,
                 amount0Desired: (isWethToken0) ? _params.wethAmountDesired : _params.wPowerPerpAmountDesired,
                 amount1Desired: (isWethToken0) ? _params.wPowerPerpAmountDesired : _params.wethAmountDesired,
                 amount0Min: _params.amount0DesiredMin,
@@ -421,6 +446,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         // check ownership
         require(IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_vaultId) == msg.sender);
 
+        wrapInternal(msg.value);
         _flashLoan(
             ControllerHelperDiamondStorage.getAddressAtSlot(5),
             _collateralToFlashloan,
@@ -450,19 +476,12 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 (ControllerHelperDataType.FlashloanWMintDepositNftParams)
             );
 
-            console.log("withdraw");
-            console.log(IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).balanceOf(address(this)));
-            console.log(IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).balanceOf(_initiator));
-            console.log("_amount", _amount);
-
-            // convert flashloaned WETH to ETH
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).withdraw(_amount);
-
             (uint256 vaultId, uint256 uniTokenId) = ControllerHelperUtil.mintAndLp(
                 ControllerHelperDiamondStorage.getAddressAtSlot(0),
                 ControllerHelperDiamondStorage.getAddressAtSlot(6),
                 ControllerHelperDiamondStorage.getAddressAtSlot(4),
                 ControllerHelperDiamondStorage.getAddressAtSlot(3),
+                ControllerHelperDiamondStorage.getAddressAtSlot(5),
                 ControllerHelperDataType.MintAndLpParams({
                     recipient: address(this),
                     vaultId: data.vaultId,
@@ -487,14 +506,13 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 uniTokenId
             );
 
-            // remove flashloan amount in ETH from vault + any amount of collateral user want to withdraw (sum <= vault.collateralAmount)
-            IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).withdraw(
+            ControllerHelperUtil.withdrawFromVault(
+                ControllerHelperDiamondStorage.getAddressAtSlot(0),
+                ControllerHelperDiamondStorage.getAddressAtSlot(5),
                 vaultId,
+                0,
                 _amount.add(data.collateralToWithdraw)
             );
-
-            // convert flashloaned amount + fee from ETH to WETH to prepare for payback
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: _amount}();
 
             // if openeded new vault, transfer vault NFT to user
             if (data.vaultId == 0)
@@ -512,9 +530,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 (ControllerHelperDataType.FlashloanCloseVaultLpNftParam)
             );
 
-            // convert flashloaned WETH to ETH
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).withdraw(_amount);
-
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).deposit{value: _amount}(data.vaultId);
 
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).withdrawUniPositionToken(data.vaultId);
@@ -548,24 +564,17 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 data.collateralToWithdraw.add(data.collateralToFlashloan),
                 data.limitPriceEthPerPowerPerp
             );
-
-            if (address(this).balance > 0) {
-                // convert flashloaned amount + fee from ETH to WETH to prepare for payback
-                IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: address(this).balance}();
-            }
         } else if (
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.FLASHLOAN_REBALANCE_VAULT_NFT
         ) {
-            // convert flashloaned WETH to ETH
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).withdraw(_amount);
-
             (uint256 vaultId, ControllerHelperDataType.RebalanceVaultNftParams[] memory data) = abi.decode(
                 _calldata,
                 (uint256, ControllerHelperDataType.RebalanceVaultNftParams[])
             );
 
             // deposit collateral into vault and withdraw LP NFT
+            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).withdraw(_amount);
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).deposit{value: _amount}(vaultId);
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).withdrawUniPositionToken(vaultId);
 
@@ -573,11 +582,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.IncreaseLpLiquidity
                 ) {
-                    if (address(this).balance > 0)
-                        IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{
-                            value: address(this).balance
-                        }();
-
                     // increase liquidity in LP position, this can mint wPowerPerp and increase
                     ControllerHelperDataType.IncreaseLpLiquidityParam memory increaseLiquidityParam = abi.decode(
                         data[i].data,
@@ -633,6 +637,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
 
                     ControllerHelperUtil.mintIntoVault(
                         ControllerHelperDiamondStorage.getAddressAtSlot(0),
+                        ControllerHelperDiamondStorage.getAddressAtSlot(5),
                         vaultId,
                         mintIntoVaultParams.wPowerPerpToMint,
                         mintIntoVaultParams.collateralToDeposit
@@ -648,6 +653,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
 
                     ControllerHelperUtil.withdrawFromVault(
                         ControllerHelperDiamondStorage.getAddressAtSlot(0),
+                        ControllerHelperDiamondStorage.getAddressAtSlot(5),
                         vaultId,
                         withdrawFromVaultParams.wPowerPerpToBurn,
                         withdrawFromVaultParams.collateralToWithdraw
@@ -698,10 +704,13 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             }
 
             // remove flashloan amount in ETH from vault + any amount of collateral user want to withdraw (sum <= vault.collateralAmount)
-            IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).withdraw(vaultId, _amount);
-
-            // convert flashloaned amount + fee from ETH to WETH to prepare for payback
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: _amount}();
+            ControllerHelperUtil.withdrawFromVault(
+                ControllerHelperDiamondStorage.getAddressAtSlot(0),
+                ControllerHelperDiamondStorage.getAddressAtSlot(5),
+                vaultId,
+                0,
+                _amount
+            );
         }
     }
 
@@ -730,12 +739,15 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 _callData,
                 (ControllerHelperDataType.FlashswapWBurnBuyLongParams)
             );
-            IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).burnWPowerPerpAmount(
+
+            ControllerHelperUtil.withdrawFromVault(
+                ControllerHelperDiamondStorage.getAddressAtSlot(0),
+                ControllerHelperDiamondStorage.getAddressAtSlot(5),
                 data.vaultId,
                 data.wPowerPerpAmountToBurn,
                 data.collateralToWithdraw
             );
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: _amountToPay}();
+
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).transfer(
                 ControllerHelperDiamondStorage.getAddressAtSlot(3),
                 _amountToPay
@@ -753,14 +765,13 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 (ControllerHelperDataType.FlashSellLongWMintParams)
             );
 
-            // convert WETH to ETH as Uniswap uses WETH
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).withdraw(
-                IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).balanceOf(address(this))
+            uint256 vaultId = ControllerHelperUtil.mintIntoVault(
+                ControllerHelperDiamondStorage.getAddressAtSlot(0),
+                ControllerHelperDiamondStorage.getAddressAtSlot(5),
+                data.vaultId,
+                data.wPowerPerpAmountToMint,
+                data.collateralAmount
             );
-
-            uint256 vaultId = IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).mintWPowerPerpAmount{
-                value: data.collateralAmount
-            }(data.vaultId, data.wPowerPerpAmountToMint, 0);
 
             IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).transfer(
                 ControllerHelperDiamondStorage.getAddressAtSlot(3),
@@ -783,7 +794,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 _amountToPay
             );
 
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: address(this).balance}();
+            if (address(this).balance > 0)
+                IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: address(this).balance}();
         } else if (
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP
@@ -801,15 +813,13 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 (ControllerHelperDataType.SwapExactoutEthWPowerPerpData)
             );
 
-            IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).burnWPowerPerpAmount(
+            ControllerHelperUtil.withdrawFromVault(
+                ControllerHelperDiamondStorage.getAddressAtSlot(0),
+                ControllerHelperDiamondStorage.getAddressAtSlot(5),
                 data.vaultId,
                 data.wPowerPerpAmountToBurn,
                 data.collateralToWithdraw
             );
-
-            // at this level, we have some ETH from burnWPowerPerpAmount() and maybe WETH from closing LP position
-            // need to convert all to WETH to make sure we using all available balance for flashswap and flashloan repayment
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: address(this).balance}();
 
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).transfer(
                 ControllerHelperDiamondStorage.getAddressAtSlot(3),
@@ -819,9 +829,16 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.GENERAL_SWAP
         ) {
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: address(this).balance}();
             IERC20(_tokenIn).transfer(ControllerHelperDiamondStorage.getAddressAtSlot(3), _amountToPay);
         }
+    }
+
+    /**
+     * @notice wrap ETH to WETH
+     * @param _amount amount to wrap
+     */
+    function wrapInternal(uint256 _amount) internal {
+        if (_amount > 0) IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: _amount}();
     }
 
     function _closeShortWithAmountsFromLp(
@@ -844,7 +861,9 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             );
         } else {
             // if LP have more wPowerPerp amount that amount to burn in vault, sell remaining amount for WETH
-            IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).burnWPowerPerpAmount(
+            ControllerHelperUtil.withdrawFromVault(
+                ControllerHelperDiamondStorage.getAddressAtSlot(0),
+                ControllerHelperDiamondStorage.getAddressAtSlot(5),
                 _vaultId,
                 _wPowerPerpAmountToBurn,
                 _collateralToWithdraw
@@ -863,5 +882,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 );
             }
         }
+
+        // wrap ETH to WETH
+        wrapInternal(address(this).balance);
     }
 }
