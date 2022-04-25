@@ -145,6 +145,3 @@ const SqueethInfo: React.FC = () => {
 }
 
 export default SqueethInfo
-function adressAtom(adressAtom: any): [any] {
-  throw new Error('Function not implemented.')
-}

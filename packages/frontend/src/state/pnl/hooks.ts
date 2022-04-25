@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 
@@ -49,7 +48,7 @@ export function useEthCollateralPnl() {
         setEthCollateralPnl(result)
       }
     })()
-  }, [existingCollat, index, setEthCollateralPnl, swapsData?.swaps, vaultHistory, isVaultLoading])
+  }, [existingCollat, index, setEthCollateralPnl, swapsData?.swaps, vaultHistory, isVaultLoading, vaultHistoryLoading])
 
   return ethCollateralPnl
 }
@@ -82,7 +81,7 @@ export function useLongGain() {
   const [longGain, setLongGain] = useAtom(longGainAtom)
   const longUnrealizedPNL = useAtomValue(longUnrealizedPNLAtom)
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (sellQuote.amountOut.isZero() && !loading) {
       setLongGain(BIG_ZERO)
       return
@@ -90,7 +89,7 @@ export function useLongGain() {
 
     const _gain = longUnrealizedPNL.usd.dividedBy(totalUSDFromBuy).times(100)
     setLongGain(_gain)
-  }, [loading, longUnrealizedPNL.usd.toString(), sellQuote.amountOut.toString(), totalUSDFromBuy.toString()])
+  }, [loading, longUnrealizedPNL.usd, sellQuote.amountOut, totalUSDFromBuy, setLongGain])
 
   return longGain
 }

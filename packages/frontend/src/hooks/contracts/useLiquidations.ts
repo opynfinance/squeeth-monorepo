@@ -1,5 +1,5 @@
 import { useQuery } from '@apollo/client'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Contract } from 'web3-eth-contract'
 import { useAtomValue } from 'jotai'
 
@@ -9,8 +9,9 @@ import { liquidations } from '../../queries/squeeth/__generated__/liquidations'
 import { LIQUIDATIONS_QUERY } from '../../queries/squeeth/liquidationsQuery'
 import { squeethClient } from '../../utils/apollo-client'
 import { toTokenAmount } from '@utils/calculations'
-import { networkIdAtom, web3Atom } from 'src/state/wallet/atoms'
-import { addressesAtom } from 'src/state/positions/atoms'
+import { networkIdAtom /* web3Atom */ } from 'src/state/wallet/atoms'
+// import { addressesAtom } from 'src/state/positions/atoms'
+import useAppEffect from '@hooks/useAppEffect'
 
 /**
  * get vault liquidations.
@@ -18,18 +19,18 @@ import { addressesAtom } from 'src/state/positions/atoms'
  * @param refetchIntervalSec refetch interval in seconds
  * @returns {Vault[]}
  */
-export const useVaultLiquidations = (vaultId: number, refetchIntervalSec = 30) => {
+export const useVaultLiquidations = (vaultId: number /* refetchIntervalSec = 30 */) => {
   const [liquidations, setLiquidations] = useState<Array<any>>([])
-  const [contract, setContract] = useState<Contract>()
+  // const [contract, setContract] = useState<Contract>()
 
-  const web3 = useAtomValue(web3Atom)
+  // const web3 = useAtomValue(web3Atom)
   const networkId = useAtomValue(networkIdAtom)
-  const { controller } = useAtomValue(addressesAtom)
+  // const { controller } = useAtomValue(addressesAtom)
 
-  useEffect(() => {
-    if (!web3 || !controller) return
-    setContract(new web3.eth.Contract(controllerABI as any, controller))
-  }, [web3])
+  // useAppEffect(() => {
+  //   if (!web3 || !controller) return
+  //   setContract(new web3.eth.Contract(controllerABI as any, controller))
+  // }, [web3])
 
   const { data, loading } = useQuery<liquidations>(LIQUIDATIONS_QUERY, {
     client: squeethClient[networkId],
@@ -39,7 +40,7 @@ export const useVaultLiquidations = (vaultId: number, refetchIntervalSec = 30) =
     fetchPolicy: 'cache-and-network',
   })
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (!data?.liquidations) return
     const _liquidations = data?.liquidations.map((l) => {
       return {
@@ -49,7 +50,7 @@ export const useVaultLiquidations = (vaultId: number, refetchIntervalSec = 30) =
       }
     })
     setLiquidations(_liquidations)
-  }, [data?.liquidations?.length])
+  }, [data?.liquidations])
 
   return { liquidations, loading }
 }

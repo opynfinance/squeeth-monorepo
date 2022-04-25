@@ -2,7 +2,7 @@ import { CircularProgress, InputAdornment, TextField, Typography } from '@materi
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import BigNumber from 'bignumber.js'
 import { motion } from 'framer-motion'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useState } from 'react'
 
 import { BIG_ZERO, MIN_COLLATERAL_AMOUNT, OSQUEETH_DECIMALS, Tooltips } from '../../constants'
 import { LPActions, OBTAIN_METHOD, useLPState } from '@context/lp'
@@ -15,7 +15,7 @@ import TradeDetails from '../Trade/TradeDetails'
 import TradeInfoItem from '../Trade/TradeInfoItem'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import { useWalletBalance } from 'src/state/wallet/hooks'
-import { connectedWalletAtom } from 'src/state/wallet/atoms'
+import { connectedWalletAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useAtomValue } from 'jotai'
 import { addressesAtom, existingCollatAtom, existingCollatPercentAtom } from 'src/state/positions/atoms'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
@@ -24,6 +24,8 @@ import { useGetShortAmountFromDebt, useOpenDepositAndMint } from 'src/state/cont
 import { useFirstValidVault } from 'src/state/positions/hooks'
 import { useVaultData } from '@hooks/useVaultData'
 import { normFactorAtom } from 'src/state/controller/atoms'
+import useAppEffect from '@hooks/useAppEffect'
+import useAppMemo from '@hooks/useAppMemo'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -76,6 +78,7 @@ const Mint: React.FC = () => {
   const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
   const { data: balance } = useWalletBalance()
   const connected = useAtomValue(connectedWalletAtom)
+  const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const { loading: vaultIDLoading } = useVaultManager()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const normalizationFactor = useAtomValue(normFactorAtom)
@@ -106,7 +109,7 @@ const Mint: React.FC = () => {
     setLoading(false)
   }
 
-  useEffect(() => {
+  useAppEffect(() => {
     let isMounted = true
     if (collatAmountBN.isNaN() || collatAmountBN.isZero()) {
       if (isMounted) setMintAmount(new BigNumber(0))
@@ -121,7 +124,7 @@ const Mint: React.FC = () => {
     }
   }, [collatPercent, collatAmount.toString()])
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (collatPercent < 150) {
       setMinCollRatioError('Minimum collateral ratio is 150%')
     }
@@ -133,7 +136,7 @@ const Mint: React.FC = () => {
     }
   }, [balance?.toString(), connected, existingCollat.toString(), collatAmountBN.toString(), collatPercent])
 
-  const liqPrice = useMemo(() => {
+  const liqPrice = useAppMemo(() => {
     const rSqueeth = normalizationFactor.multipliedBy(mintAmount.toNumber() || new BigNumber(1)).dividedBy(10000)
 
     return collatAmountBN.div(rSqueeth.multipliedBy(1.5))
@@ -220,9 +223,17 @@ const Mint: React.FC = () => {
           onClick={mint}
           className={classes.amountInput}
           style={{ width: '100%' }}
-          disabled={(connected && collatAmountBN.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) || loading}
+          disabled={
+            !supportedNetwork || (connected && collatAmountBN.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) || loading
+          }
         >
-          {loading ? <CircularProgress color="primary" size="1.5rem" /> : 'Mint'}
+          {!supportedNetwork ? (
+            'Unsupported Network'
+          ) : loading ? (
+            <CircularProgress color="primary" size="1.5rem" />
+          ) : (
+            'Mint'
+          )}
         </PrimaryButton>
       </div>
     </div>
@@ -232,7 +243,6 @@ const Mint: React.FC = () => {
 const GetSqueeth: React.FC = () => {
   const classes = useStyles()
   const { lpState } = useLPState()
-  const { data: balance } = useWalletBalance()
 
   return (
     <>
