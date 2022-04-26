@@ -3,8 +3,6 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import 'hardhat/console.sol';
-
 // interface
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
@@ -352,7 +350,6 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
      * @param _uniTokenId uniswap position token id
      */
     function depositUniPositionToken(uint256 _vaultId, uint256 _uniTokenId) external notPaused nonReentrant {
-        console.log('start of depositUniPositionToken for %s', msg.sender);
         _checkCanModifyVault(_vaultId, msg.sender);
 
         _applyFunding();
@@ -384,12 +381,10 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
      * @param _vaultId id of the vault
      */
     function withdrawUniPositionToken(uint256 _vaultId) external notPaused nonReentrant {
-        console.log('Reached withdrawUniPositionToken');
         _checkCanModifyVault(_vaultId, msg.sender);
 
         uint256 cachedNormFactor = _applyFunding();
         VaultLib.Vault memory cachedVault = vaults[_vaultId];
-        console.log('_withdrawUniPositionToken');
         _withdrawUniPositionToken(cachedVault, msg.sender, _vaultId);
         _checkVault(cachedVault, cachedNormFactor);
         _writeVault(_vaultId, cachedVault);
@@ -802,7 +797,6 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
         uint256 _vaultId,
         uint256 _uniTokenId
     ) internal {
-        console.log('reached _depositUniPositionToken from %s ', msg.sender);
         //get tokens for uniswap NFT
         (, , address token0, address token1, uint24 fee, , , uint128 liquidity, , , , ) = INonfungiblePositionManager(
             uniswapPositionManager
@@ -814,7 +808,6 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
         require(fee == feeTier, "C26");
         // check token0 and token1
         require((token0 == wPowerPerp && token1 == weth) || (token1 == wPowerPerp && token0 == weth), "C23");
-        console.log('trying to add uni position token');
 
         _vault.addUniNftCollateral(_uniTokenId);
         INonfungiblePositionManager(uniswapPositionManager).safeTransferFrom(_account, address(this), _uniTokenId);
@@ -851,7 +844,6 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
     ) internal {
         uint256 tokenId = _vault.NftCollateralId;
         _vault.removeUniNftCollateral();
-        console.log('reached _withdrawUniPosiionToken');
         INonfungiblePositionManager(uniswapPositionManager).safeTransferFrom(address(this), _account, tokenId);
         emit WithdrawUniPositionToken(msg.sender, _vaultId, tokenId);
     }

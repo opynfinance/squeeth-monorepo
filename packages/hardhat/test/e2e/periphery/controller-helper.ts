@@ -28,7 +28,6 @@ import {
   abi as POOL_ABI,
   bytecode as POOL_BYTECODE,
 } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json'
-import { createNoSubstitutionTemplateLiteral } from "typescript";
 
 BigNumberJs.set({EXPONENTIAL_AT: 30})
 
@@ -737,7 +736,7 @@ describe("ControllerHelper: mainnet fork", function () {
       })
       const wPowerPerpAmountInLPBefore = (isWethToken0) ? amount1 : amount0;
       const wethAmountInLPBefore = (isWethToken0) ? amount0 : amount1;
-      // console.log('vaultId', vaultId.toString())
+      console.log('vaultIddddddddddd', vaultId.toString())
       // console.log('tokenId', tokenId.toString())
       // console.log('wPowerPerpAmountInLP', wPowerPerpAmountInLP.toString());
       // console.log('wethAmountInLP', wethAmountInLP.toString())
@@ -790,7 +789,7 @@ describe("ControllerHelper: mainnet fork", function () {
            rebalanceVaultNftType:  BigNumber.from(4), // MintNewLP
            // lpWPowerPerpPool: [recipient, ethAmount, amount0Desired, amount1Desired, amount0Min, amount1Mint, lowerTick, upperTick ]
            data: abiCoder.encode(["address", 'uint256', 'uint256','uint256', 'uint256', 'uint256', 'int24', 'int24'],
-            [depositor.address.toString(), BigNumber.from(0), amount0.toString(), amount1.toString(), amount0Min.toString(), amount1Min.toString(), newTickLower.toString(), newTickUpper.toString()])
+            [controllerHelper.address.toString(), BigNumber.from(0), amount0.toString(), amount1.toString(), amount0Min.toString(), amount1Min.toString(), newTickLower.toString(), newTickUpper.toString()])
          }
 
       ]
