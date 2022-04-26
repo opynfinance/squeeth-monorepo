@@ -1,5 +1,6 @@
 import BigNumber from 'bignumber.js'
 import MockDate from 'mockdate'
+import timezoneMock from 'timezone-mock'
 
 import { server } from '../../../mocks/server'
 import {
@@ -22,7 +23,10 @@ let ethCollateralPnl: BigNumber
 
 describe('Unrealized PNL Tests', () => {
   // Establish API mocking before all tests.
-  beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
+  beforeAll(() => {
+    timezoneMock.register('Europe/London')
+    server.listen({ onUnhandledRequest: 'warn' })
+  })
   // Reset any request handlers that we may add during the tests,
   // so they don't affect other tests.
   afterEach(() => {
@@ -31,7 +35,10 @@ describe('Unrealized PNL Tests', () => {
     MockDate.reset()
   })
   // Clean up after the tests are finished.
-  afterAll(() => server.close())
+  afterAll(() => {
+    timezoneMock.unregister()
+    server.close()
+  })
 
   describe('EthCollateralPnl', () => {
     test('should get the right result', async () => {
