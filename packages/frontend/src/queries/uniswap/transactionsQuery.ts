@@ -1,13 +1,7 @@
 import { gql } from '@apollo/client'
 
 export const TRANSACTIONS_QUERY = gql`
-  query transactions(
-    $poolAddress: Bytes!
-    $owner: String!
-    $origin: String!
-    $recipients: [String!]!
-    $orderDirection: String!
-  ) {
+  query transactions($poolAddress: Bytes!, $owner: String!, $orderDirection: String!) {
     positionSnapshots(
       orderBy: id
       orderDirection: $orderDirection
@@ -30,13 +24,7 @@ export const TRANSACTIONS_QUERY = gql`
 `
 
 export const TRANSACTIONS_SUBSCRIPTION = gql`
-  subscription subscriptionTransactions(
-    $poolAddress: Bytes!
-    $owner: String!
-    $origin: String!
-    $recipients: [String!]!
-    $orderDirection: String!
-  ) {
+  subscription subscriptionTransactions($poolAddress: Bytes!, $owner: String!, $orderDirection: String!) {
     positionSnapshots(
       orderBy: id
       orderDirection: $orderDirection
