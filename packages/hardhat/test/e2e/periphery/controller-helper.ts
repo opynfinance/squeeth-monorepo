@@ -716,7 +716,6 @@ describe("ControllerHelper: mainnet fork", function () {
         console.log('wPowerPerpAmount: ', mintWSqueethAmount.toString())
         console.log('collateralToLp', collateralToLp.toString())
 
-
       })
 
     it("rebalance", async () => {
@@ -770,40 +769,72 @@ describe("ControllerHelper: mainnet fork", function () {
       console.log('collateralAmount',vaultBefore.collateralAmount.toString());
       console.log('NftCollateralId',vaultBefore.NftCollateralId.toString());
 
+      // Setup for mint of new LP
+      const slot0 = await wSqueethPool.slot0()
+      const currentTick = slot0[1]
+
+      //const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
+      const amount0Min = BigNumber.from(0);
+      const amount1Min = BigNumber.from(0);
+
+      // Closest 60 tick width around current tick (60 is minimum tick width for 30bps pool)
+      const newTickLower = 60*((currentTick - currentTick%60)/60 - 1)
+      const newTickUpper = 60*((currentTick - currentTick%60)/60 + 1)
+      console.log('Inputs for MintNewLP to encode',depositor.address.toString(), BigNumber.from(0), amount0,
+      amount1, BigNumber.from(0), BigNumber.from(0), newTickLower, newTickUpper)
+      console.log('currentTick', currentTick);
       const abiCoder = new ethers.utils.AbiCoder
       const params = [
         {
           // Remove liquidity
-          rebalanceVaultNftType: BigNumber.from(1),
+          rebalanceVaultNftType: BigNumber.from(1), // DecreaseLp:
           // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
-          data: abiCoder.encode(["uint256", 'uint256', 'uint256', 'uint128', 'uint128'], [tokenId, positionBefore.liquidity, BigNumber.from(100).mul(BigNumber.from(10).pow(16)), BigNumber.from(0),BigNumber.from(0) ])
-          }
-        // {
-        //   // Increase liquidity
-        //   rebalanceVaultNftType:  BigNumber.from(0),
-        //   // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
-        //   data: abiCoder.encode(["uint256", 'uint256', 'uint256','uint256', 'uint256', 'uint256'], [tokenId, BigNumber.from(0), BigNumber.from(0), BigNumber.from(0),BigNumber.from(0),BigNumber.from(0)])
-        // }
+          // DecreaseLiquidityParams: [tokenId, liquidity, liquidityPercentage, amount0Min, amount1Min]
+          data: abiCoder.encode(["uint256", 'uint256', 'uint256', 'uint128', 'uint128'],
+           [tokenId, positionBefore.liquidity, BigNumber.from(100).mul(BigNumber.from(10).pow(16)), BigNumber.from(0),BigNumber.from(0) ])
+          },
+          // {
+          //   // Remove liquidity
+          //   rebalanceVaultNftType: BigNumber.from(1), // DecreaseLp:
+          //   // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
+          //   // DecreaseLiquidityParams: [tokenId, liquidity, liquidityPercentage, amount0Min, amount1Min]
+          //   data: abiCoder.encode(["uint256", 'uint256', 'uint256', 'uint128', 'uint128'],
+          //    [tokenId, positionBefore.liquidity, BigNumber.from(100).mul(BigNumber.from(10).pow(16)), BigNumber.from(0),BigNumber.from(0) ])
+          //   }
+
+
+         {
+           // Mint new LP 
+           rebalanceVaultNftType:  BigNumber.from(4), // MintNewLP
+           // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
+           // lpWPowerPerpPool: [recipient, ethAmount, amount0Desired, amount1Desired, amount0Min, amount1Mint, lowerTick, upperTick ]
+           data: abiCoder.encode(["address", 'uint256', 'uint256','uint256', 'uint256', 'uint256', 'int24', 'int24'],
+            [depositor.address.toString(), BigNumber.from(0), amount0.toString(), amount1.toString(), BigNumber.from(0), BigNumber.from(0), newTickLower.toString(), newTickUpper.toString()])
+         }
 
       ]
+      console.log('amount0', amount0.toString())
+      console.log('amount1', amount1.toString())
+      console.log(newTickLower)
       console.log('reached rebalance')
       const flashLoanAmount = ethers.utils.parseUnits('2')
       await controllerHelper.connect(depositor).rebalanceVaultNft(vaultId, flashLoanAmount, params);
       console.log('finished rebalance call')
-
-      const positionAfter = await (positionManager as INonfungiblePositionManager).positions(tokenId);
+      const tokenIndexNext = await (positionManager as INonfungiblePositionManager).totalSupply();
+      const tokenIdAfter = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexNext.sub(1));
+      const positionAfter = await (positionManager as INonfungiblePositionManager).positions(tokenIdAfter);
       const vaultAfter = await controller.vaults(vaultId); 
-      const ownerOfUniNFTAfter = await (positionManager as INonfungiblePositionManager).ownerOf(tokenId); 
-      console.log(ownerOfUniNFTAfter.toString())
-      console.log(ownerOfUniNFT.toString())
+
+      const ownerOfUniNFTAfter = await (positionManager as INonfungiblePositionManager).ownerOf(tokenIdAfter); 
+
       console.log('positionBefore.liquidity',positionBefore.liquidity.toString())
       //expect(ownerOfUniNFTAfter.toString().eq(depositor.address.toString())).to.be.true
-      expect(positionAfter.tickLower === -887220).to.be.true
-      expect(positionAfter.tickUpper === 887220).to.be.true
-      expect(positionAfter.liquidity.eq(BigNumber.from(0))).to.be.true
-      expect(vaultAfter.shortAmount.eq(vaultBefore.shortAmount)).to.be.true
-      expect(vaultAfter.collateralAmount.eq(vaultBefore.collateralAmount)).to.be.true
-      expect(vaultAfter.NftCollateralId==0).to.be.true      
+      expect(positionAfter.tickLower === newTickLower).to.be.true
+      expect(positionAfter.tickUpper === newTickUpper).to.be.true
+      //expect(positionAfter.liquidity.eq(BigNumber.from(0))).to.be.true
+      //expect(vaultAfter.shortAmount.eq(vaultBefore.shortAmount)).to.be.true
+      //expect(vaultAfter.collateralAmount.eq(vaultBefore.collateralAmount)).to.be.true
+      //expect(vaultAfter.NftCollateralId==0).to.be.true      
       
       console.log('vaultAfter.shortAmount',vaultAfter.shortAmount.toString());
       console.log('vaultAfter.collateralAmount',vaultAfter.collateralAmount.toString());
