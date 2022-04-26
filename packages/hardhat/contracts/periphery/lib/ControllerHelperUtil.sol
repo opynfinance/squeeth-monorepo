@@ -69,7 +69,7 @@ library ControllerHelperUtil {
         return (_wPowerPerpAmount, wethAmount);
     }
 
-    function getAmountsToLp(address _wPowerPerpPool, uint256 _collateralToLp, uint256 _wPowerPerpAmount, int24 _lowerTick, int24 _upperTick, bool _isWethToken0) internal view returns (uint256, uint256) {
+    function getAmountsToLp(address _wPowerPerpPool, uint256 _collateralToLp, uint256 _wPowerPerpAmount, int24 _lowerTick, int24 _upperTick, bool _isWethToken0) public view returns (uint256, uint256) {
         uint256 amount0Desired; 
         uint256 amount1Desired;
 
