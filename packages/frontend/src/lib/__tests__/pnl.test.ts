@@ -20,21 +20,29 @@ import swaps02 from '../../../tests/fixtures/swaps_02.json'
 
 const CURRENT_ETH_PRICE = new BigNumber('3103.55')
 let ethCollateralPnl: BigNumber
+timezoneMock.options({
+  fallbackFn: (date) => {
+    console.error({ date })
+    return date
+  },
+})
 
 describe('Unrealized PNL Tests', () => {
   // Establish API mocking before all tests.
   beforeAll(() => {
-    timezoneMock.register('Europe/London')
     server.listen({ onUnhandledRequest: 'warn' })
   })
-  // Reset any request handlers that we may add during the tests,
-  // so they don't affect other tests.
+
+  beforeEach(() => {
+    timezoneMock.register('Europe/London')
+  })
+
   afterEach(() => {
     server.resetHandlers()
     queryClient.clear()
     MockDate.reset()
   })
-  // Clean up after the tests are finished.
+
   afterAll(() => {
     timezoneMock.unregister()
     server.close()
@@ -149,6 +157,7 @@ describe('Unrealized PNL Tests', () => {
 
     test('should get price from twelvedata', async () => {
       MockDate.set(1650450600000)
+      timezoneMock.register('Europe/London')
       const result = await getEthPriceAtTransactionTime('1650445835')
       const price = Number(result.toFixed(2))
 
