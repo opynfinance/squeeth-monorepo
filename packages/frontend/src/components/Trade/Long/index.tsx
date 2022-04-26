@@ -1,5 +1,6 @@
 import { CircularProgress, createStyles, makeStyles, Typography } from '@material-ui/core'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
+import RefreshOutlined from '@material-ui/icons/RefreshOutlined'
 import BigNumber from 'bignumber.js'
 import React, { useState } from 'react'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
@@ -276,7 +277,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   const isShort = useAtomValue(isShortAtom)
   const selectWallet = useSelectWallet()
   const { squeethAmount } = useComputeSwaps()
-  const longSqthBal = useLongSqthBal()
+  const { longSqthBal } = useLongSqthBal()
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 
@@ -641,7 +642,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   const connected = useAtomValue(connectedWalletAtom)
   const selectWallet = useSelectWallet()
 
-  const longSqthBal = useLongSqthBal()
+  const { longSqthBal, loading: sqthBalLoading, error: sqthBalError, refetch: refetchSqthBal } = useLongSqthBal()
   const shortDebt = useShortDebt()
   const isShort = shortDebt.gt(0)
 
@@ -819,12 +820,13 @@ const CloseLong: React.FC<BuyProps> = () => {
             onChange={(v) => handleSqthChange(v)}
             label="Amount"
             tooltip="Amount of oSqueeth you want to close"
-            actionTxt="Max"
+            actionTxt={!sqthBalError ? 'Max' : ''}
             onActionClicked={() => handleSqthChange(longSqthBal.toString())}
             unit="oSQTH"
             convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
             error={!!existingShortError || !!priceImpactWarning || !!closeError}
-            isLoading={inputQuoteLoading}
+            isLoading={inputQuoteLoading || sqthBalLoading}
+            loadingMessage={sqthBalLoading ? 'Fetching oSQTH balance' : 'Fetching sell quote.'}
             hint={
               existingShortError ? (
                 existingShortError
@@ -834,17 +836,29 @@ const CloseLong: React.FC<BuyProps> = () => {
                 priceImpactWarning
               ) : (
                 <div className={classes.hint}>
-                  <span className={classes.hintTextContainer}>
-                    <span className={classes.hintTitleText}>Position</span>{' '}
-                    <span id="close-long-osqth-before-trade-balance">{longSqthBal.toFixed(6)}</span>{' '}
-                  </span>
-                  {quote.amountOut.gt(0) ? (
+                  {sqthBalError ? (
+                    <div
+                      style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}
+                      onClick={() => refetchSqthBal()}
+                    >
+                      <span>Reload Balance</span>
+                      <RefreshOutlined className={classes.arrowIcon} />
+                    </div>
+                  ) : (
                     <>
-                      <ArrowRightAltIcon className={classes.arrowIcon} />
-                      <span id="close-long-osqth-post-trade-balance">{longSqthBal.minus(amount).toFixed(6)}</span>
+                      <span className={classes.hintTextContainer}>
+                        <span className={classes.hintTitleText}>Position</span>{' '}
+                        <span id="close-long-osqth-before-trade-balance">{longSqthBal.toFixed(6)}</span>{' '}
+                      </span>
+                      {quote.amountOut.gt(0) ? (
+                        <>
+                          <ArrowRightAltIcon className={classes.arrowIcon} />
+                          <span id="close-long-osqth-post-trade-balance">{longSqthBal.minus(amount).toFixed(6)}</span>
+                        </>
+                      ) : null}{' '}
+                      <span style={{ marginLeft: '4px' }}>oSQTH</span>
                     </>
-                  ) : null}{' '}
-                  <span style={{ marginLeft: '4px' }}>oSQTH</span>
+                  )}
                 </div>
               )
             }
