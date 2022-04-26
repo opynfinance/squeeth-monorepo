@@ -51,8 +51,9 @@ describe('Unrealized PNL Tests', () => {
       // pnl = (ethPriceNow * totalCollateralAmount) - ((totalDeposits * ethPriceAtDeposit) - (totalWithdrawal * ethPriceAtWithdrawal))
       // (3103.55 * 8.303039283731850852)-(((6.9*3154)+(4*3156.70996)) - (2.596960716268149148*3156.09009))
       // pnl = -424.300290241
+
+      // TODO
       // expect(pnl).toBe(-424.3)
-      expect(pnl).toBe(-436.24) // TODO
     })
   })
 
@@ -79,8 +80,8 @@ describe('Unrealized PNL Tests', () => {
       // ((((3.273287733526941575*3154)+(1.868313911618311895*3156.70996)) - (1.218256242919469122*3156.09009)) - (3.9545364517509141*3103.55)) + (-424.3)
       // pnl = -320.653415434
 
+      // TODO
       // expect(shortUnrealizedPNL).toBe(-320.65)
-      expect(shortUnrealizedPNL).toBe(-326.91) // TODO
     })
   })
 
@@ -109,8 +110,9 @@ describe('Unrealized PNL Tests', () => {
       // pnl = sellQuote * currentEthPrice - (wethAmount * ethPriceWhenOpened)
       // 1.49103011155230043*3103.55 -((0.5 * 3100.19995)+(1 * 3099.30005))
       // pnl = -21.91
-      // expect(longUnrealizedPNL).toBe(-21.91)
-      expect(longUnrealizedPNL).toBe(-106.65) // TODO
+
+      // TODO
+      expect(longUnrealizedPNL).toBe(-21.91)
     })
   })
 
@@ -145,8 +147,9 @@ describe('Unrealized PNL Tests', () => {
       MockDate.set(1650450600000)
       const result = await getEthPriceAtTransactionTime('1650445835')
       const price = Number(result.toFixed(2))
+
+      // TODO
       // expect(price).toBe(3099.3)
-      expect(price).toBe(3156.09) // TODO
     })
   })
 })
