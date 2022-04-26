@@ -200,6 +200,8 @@ jobs:
     working_directory: ~/squeeth/packages/frontend
     docker:
       - image: circleci/node:16.6.0
+    environment:
+      TZ: "Africa/Lagos"
     steps:
       - checkout:
           path: ~/squeeth
