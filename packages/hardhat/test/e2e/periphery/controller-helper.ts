@@ -182,7 +182,7 @@ describe("ControllerHelper: mainnet fork", function () {
       expect(position.tickLower === -887220).to.be.true
       expect(position.tickUpper === 887220).to.be.true
       console.log(vaultAfter.shortAmount.toString(), mintWSqueethAmount.toString())
-      expect(vaultAfter.shortAmount.sub(mintWSqueethAmount).abs().lte(100)).to.be.true
+      expect(vaultAfter.shortAmount.sub(mintWSqueethAmount).abs().lte(1)).to.be.true
       expect(depositorSqueethBalanceAfter.sub(depositorSqueethBalanceBefore).lte(1)).to.be.true
       expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
     })
