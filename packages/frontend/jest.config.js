@@ -21,6 +21,7 @@ const customJestConfig = {
     '^@constants(.*)$': '<rootDir>/src/constants$1',
     '^@context(.*)$': '<rootDir>/src/context$1',
     '^@queries(.*)$': '<rootDir>/src/queries$1',
+    '^@components(.*)$': '<rootDir>/src/components$1',
   },
 }
 
