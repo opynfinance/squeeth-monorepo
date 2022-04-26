@@ -660,18 +660,20 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                     );
                 } else if (data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.MintNewLp) {
                     // this will execute in the use case of fully closing old LP position, and creating new one
-                    ControllerHelperDataType.LpWPowerPerpPool memory mintNewLpParams = abi.decode(
+                    ControllerHelperDataType.MintAndLpParams memory mintAndLpParams = abi.decode(
                         data[i].data,
-                        (ControllerHelperDataType.LpWPowerPerpPool)
+                        (ControllerHelperDataType.MintAndLpParams)
                     );
 
-                    uint256 tokenId = ControllerHelperUtil.lpWPowerPerpPool(
+                    uint256 tokenId;
+                    (vaultId, tokenId) = ControllerHelperUtil.mintAndLp(
                         ControllerHelperDiamondStorage.getAddressAtSlot(0),
                         ControllerHelperDiamondStorage.getAddressAtSlot(6),
-                        ControllerHelperDiamondStorage.getAddressAtSlot(3),
                         ControllerHelperDiamondStorage.getAddressAtSlot(4),
-                        vaultId,
-                        mintNewLpParams
+                        ControllerHelperDiamondStorage.getAddressAtSlot(3),
+                        ControllerHelperDiamondStorage.getAddressAtSlot(5),
+                        mintAndLpParams,
+                        isWethToken0
                     );
 
                     // deposit Uni NFT token in vault
