@@ -168,13 +168,19 @@ library ControllerHelperUtil {
      * @param _collateralToDeposit amount of collateral to deposit
      */
     function mintIntoVault(address _controller, address _weth, uint256 _vaultId, uint256 _wPowerPerpToMint, uint256 _collateralToDeposit) public returns (uint256) {
-        IWETH9(_weth).withdraw(_collateralToDeposit);
+        if (_collateralToDeposit > 0) IWETH9(_weth).withdraw(_collateralToDeposit);
 
-        return (IController(_controller).mintWPowerPerpAmount{value: _collateralToDeposit}(
-            _vaultId,
-            _wPowerPerpToMint,
-            0
-        ));
+        uint256 vaultId = _vaultId;
+        if (_wPowerPerpToMint > 0) {
+            vaultId = IController(_controller).mintWPowerPerpAmount{value: _collateralToDeposit}(
+                _vaultId,
+                _wPowerPerpToMint,
+                0
+            );
+        } else {
+            IController(_controller).deposit{value: _collateralToDeposit}(_vaultId);
+        }
+        return vaultId;
     }
 
     /**

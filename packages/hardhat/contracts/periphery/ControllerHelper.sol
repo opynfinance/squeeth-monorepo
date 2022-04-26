@@ -629,19 +629,19 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                     );
                 } else if (
                     // this will execute if the use case is to mint in vault, deposit collateral in vault or mint + deposit
-                    data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.MintIntoVault
+                    data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.DepositIntoVault
                 ) {
-                    ControllerHelperDataType.MintIntoVault memory mintIntoVaultParams = abi.decode(
+                    ControllerHelperDataType.DepositIntoVault memory depositIntoVaultParams = abi.decode(
                         data[i].data,
-                        (ControllerHelperDataType.MintIntoVault)
+                        (ControllerHelperDataType.DepositIntoVault)
                     );
 
                     ControllerHelperUtil.mintIntoVault(
                         ControllerHelperDiamondStorage.getAddressAtSlot(0),
                         ControllerHelperDiamondStorage.getAddressAtSlot(5),
                         vaultId,
-                        mintIntoVaultParams.wPowerPerpToMint,
-                        mintIntoVaultParams.collateralToDeposit
+                        depositIntoVaultParams.wPowerPerpToMint,
+                        depositIntoVaultParams.collateralToDeposit
                     );
                 } else if (
                     // this will execute if the use case is to burn wPowerPerp, withdraw collateral or burn + withdraw
