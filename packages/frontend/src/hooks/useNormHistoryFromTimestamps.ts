@@ -36,10 +36,10 @@ export const useNormHistoryFromTimestamps = (timestamps: string[] | undefined) =
       } else if (data && data['factor1'].length > 0) {
         setNormHistoryItems([...normHistoryItems, data['factor1'][0]])
       }
-      if (timeIndex < timestamps.length - 1) setTimeIndex(timeIndex + 1)
+      if (timeIndex < timestamps.length) setTimeIndex(timeIndex + 1)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading])
+  }, [loading, timeIndex])
 
-  return normHistoryItems.length === timestamps?.length ? normHistoryItems : undefined
+  return normHistoryItems
 }

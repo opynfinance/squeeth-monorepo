@@ -7,7 +7,7 @@ import InfoIcon from '@material-ui/icons/InfoOutlined'
 import ExpandLessIcon from '@material-ui/icons/NavigateBefore'
 import ExpandMoreIcon from '@material-ui/icons/NavigateNext'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 
 import squeethTokenSymbol from '../public/images/Squeeth.svg'
@@ -39,7 +39,19 @@ import { usePositionsAndFeesComputation } from 'src/state/positions/hooks'
 import { actualTradeTypeAtom, ethTradeAmountAtom, sqthTradeAmountAtom, tradeTypeAtom } from 'src/state/trade/atoms'
 import { positionTypeAtom } from 'src/state/positions/atoms'
 import { useResetAtom } from 'jotai/utils'
-import { isTransactionFirstStepAtom, transactionDataAtom, transactionLoadingAtom } from 'src/state/wallet/atoms'
+import {
+  isTransactionFirstStepAtom,
+  networkIdAtom,
+  transactionDataAtom,
+  transactionLoadingAtom,
+  web3Atom,
+} from 'src/state/wallet/atoms'
+
+import ALL_TRANSACTIONS from '@queries/uniswap/allTransactions'
+import { uniswapClient } from '@utils/apollo-client'
+import { useQuery } from '@apollo/client'
+import { TxItem, useETHPrices } from '@hooks/useETHPrices'
+import { useNormHistoryFromTimestamps } from '@hooks/useNormHistoryFromTimestamps'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -322,6 +334,37 @@ const useStyles = makeStyles((theme) =>
 const Header: React.FC = () => {
   const classes = useStyles()
   const tradeType = useAtomValue(tradeTypeAtom)
+
+  const networkId = useAtomValue(networkIdAtom)
+  const web3 = useAtomValue(web3Atom)
+
+  const { data: uniswapTxs } = useQuery(ALL_TRANSACTIONS, {
+    client: uniswapClient[networkId],
+    fetchPolicy: 'cache-and-network',
+  })
+
+  const [uniswapTxItems, setUniswapTxItems] = useState<TxItem[] | undefined>(undefined)
+
+  const uniswapTxHashes = uniswapTxs ? uniswapTxs.swapsAs0.concat(uniswapTxs.swapsAs1).slice(41, 41) : undefined
+
+  const ethPrices = useETHPrices(uniswapTxItems)
+  const normHistoryItems = useNormHistoryFromTimestamps(uniswapTxItems?.map((val) => val.timestamp) ?? [])
+
+  console.log('cc', ethPrices, ' ', normHistoryItems)
+
+  useEffect(() => {
+    if (uniswapTxHashes && web3) {
+      ;(async () => {
+        const items = await Promise.all(
+          uniswapTxHashes.map(async (item) => {
+            const txData = await web3.eth.getTransaction(item.transaction.id)
+            return { blockNo: txData.blockNumber ?? 0, timestamp: item.timestamp }
+          }),
+        )
+        setUniswapTxItems(items)
+      })()
+    }
+  }, [uniswapTxHashes, web3])
 
   return (
     <>

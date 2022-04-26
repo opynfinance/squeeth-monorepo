@@ -30,14 +30,14 @@ export const useETHPrices = (items: TxItem[] | undefined) => {
       if (data && data['bundles'].length > 0 && data['bundles'][0].ethPriceUSD > 0) {
         const ethPrice = data['bundles'][0].ethPriceUSD
         setETHPrices([...ethPrices, ethPrice])
-        if (itemIndex < items.length - 1) {
+        if (itemIndex < items.length) {
           setItemIndex(itemIndex + 1)
         }
       } else {
         ;(async () => {
           const ethPrice = await getEthPriceAtTransactionTime(txTimestamp)
           setETHPrices([...ethPrices, ethPrice.toNumber()])
-          if (itemIndex < items.length - 1) {
+          if (itemIndex < items.length) {
             setItemIndex(itemIndex + 1)
           }
         })()
@@ -46,5 +46,5 @@ export const useETHPrices = (items: TxItem[] | undefined) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading])
 
-  return ethPrices.length === items?.length ? ethPrices : undefined
+  return ethPrices
 }
