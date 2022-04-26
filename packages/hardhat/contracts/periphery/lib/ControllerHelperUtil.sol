@@ -212,7 +212,6 @@ library ControllerHelperUtil {
             console.log('weth address',ControllerHelperDiamondStorage.getAddressAtSlot(5));
             console.log('_params.lowerTick', uint256(_params.lowerTick* -1));
             console.log('_params.upperTick', uint256(_params.upperTick));
-            console.log('_params.ethAmount', _params.ethAmount);
             console.log('_params.amount0Desired', _params.amount0Desired);
             console.log('_params.amount1Desired', _params.amount1Desired);
 

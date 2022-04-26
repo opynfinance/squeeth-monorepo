@@ -63,7 +63,6 @@ describe("ControllerHelper: mainnet fork", function () {
   let wSqueeth: WPowerPerp
   let ethUsdcPool: Contract
   let controllerHelper: ControllerHelper
-  let ControllerHelperUtilLib: Contract
   let shortSqueeth: ShortPowerPerp
 
   this.beforeAll("Setup mainnet fork contracts", async () => {
@@ -88,7 +87,7 @@ describe("ControllerHelper: mainnet fork", function () {
     ethUsdcPool = await ethers.getContractAt(POOL_ABI, "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8");
 
     const ControllerHelperUtil = await ethers.getContractFactory("ControllerHelperUtil")
-    ControllerHelperUtilLib = (await ControllerHelperUtil.deploy());
+    const ControllerHelperUtilLib = (await ControllerHelperUtil.deploy());
     const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper", {libraries: {ControllerHelperUtil: ControllerHelperUtilLib.address}});
     controllerHelper = (await ControllerHelperContract.deploy(controller.address, positionManager.address, uniswapFactory.address, "0x59828FdF7ee634AaaD3f58B19fDBa3b03E2D9d80", "0x27182842E098f60e3D576794A5bFFb0777E025d3", "0x62e28f054efc24b26A794F5C1249B6349454352C")) as ControllerHelper;
   })
@@ -746,7 +745,6 @@ describe("ControllerHelper: mainnet fork", function () {
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
       await (positionManager as INonfungiblePositionManager).connect(depositor).setApprovalForAll(controller.address, true) // approval for controller 
       await (positionManager as INonfungiblePositionManager).connect(depositor).setApprovalForAll(controllerHelper.address, true) // approve controllerHelper
-      console.log('ControllerHelperUtilLib.address', ControllerHelperUtilLib.address)
       console.log('ControllerHelper.address', controllerHelper.address)
       console.log('Controller address', controller.address);
 

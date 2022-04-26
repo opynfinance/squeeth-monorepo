@@ -486,7 +486,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             console.log("_amount", _amount);
 
             // convert flashloaned WETH to ETH
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).withdraw(_amount);
+            // IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).withdraw(_amount);
             console.log('attempt mint with %s wPowerPerpAmount %s collateralToDeposit and %s collateralToLp', data.wPowerPerpAmount, data.collateralToDeposit, data.collateralToLp);
 
             // console.log('recipient', address(this));
@@ -593,8 +593,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         ) {
             console.log('reached callback');
             // convert flashloaned WETH to ETH
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).withdraw(_amount);
-            (uint256 vaultId, ControllerHelperDataType.RebalanceVaultNftParams[] memory data) = abi.decode(
+             (uint256 vaultId, ControllerHelperDataType.RebalanceVaultNftParams[] memory data) = abi.decode(
                 _calldata,
                 (uint256, ControllerHelperDataType.RebalanceVaultNftParams[])
             );
@@ -609,11 +608,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.IncreaseLpLiquidity
                 ) {
-                    if (address(this).balance > 0)
-                        IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{
-                            value: address(this).balance
-                        }();
-
                     // increase liquidity in LP position, this can mint wPowerPerp and increase
                     ControllerHelperDataType.IncreaseLpLiquidityParam memory increaseLiquidityParam = abi.decode(
                         data[i].data,
