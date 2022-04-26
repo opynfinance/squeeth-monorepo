@@ -17,14 +17,12 @@ export const useLiquidityTxHistory = () => {
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const ethPriceMap = useEthPriceMap()
 
-  const { squeethPool, oSqueeth, shortHelper, swapRouter, crabStrategy } = useAtomValue(addressesAtom)
+  const { squeethPool, crabStrategy } = useAtomValue(addressesAtom)
 
   const { subscribeToMore, data, refetch, loading, error, startPolling, stopPolling } = useQuery(TRANSACTIONS_QUERY, {
     variables: {
       poolAddress: squeethPool,
       owner: address,
-      origin: address || '',
-      recipients: [shortHelper, address || '', swapRouter],
       orderDirection: 'desc',
     },
     fetchPolicy: 'cache-and-network',
@@ -36,8 +34,6 @@ export const useLiquidityTxHistory = () => {
       variables: {
         poolAddress: squeethPool,
         owner: address,
-        origin: address || '',
-        recipients: [shortHelper, address || '', swapRouter],
         orderDirection: 'desc',
       },
       updateQuery(prev, { subscriptionData }) {
@@ -48,7 +44,7 @@ export const useLiquidityTxHistory = () => {
         }
       },
     })
-  }, [address, crabStrategy, networkId, oSqueeth, shortHelper, squeethPool, swapRouter, subscribeToMore])
+  }, [address, crabStrategy, networkId, squeethPool, subscribeToMore])
 
   const addRemoveLiquidityTrans =
     ethPriceMap &&
