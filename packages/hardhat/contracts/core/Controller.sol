@@ -802,7 +802,7 @@ contract Controller is Ownable, ReentrancyGuard, IERC721Receiver {
         uint256 _vaultId,
         uint256 _uniTokenId
     ) internal {
-        console.log('reached _depositUniPositionToken');
+        console.log('reached _depositUniPositionToken from %s ', msg.sender);
         //get tokens for uniswap NFT
         (, , address token0, address token1, uint24 fee, , , uint128 liquidity, , , , ) = INonfungiblePositionManager(
             uniswapPositionManager

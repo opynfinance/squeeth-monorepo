@@ -714,10 +714,12 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         ControllerHelperDiamondStorage.getAddressAtSlot(0),
                         tokenId
                     );
-                    // IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).depositUniPositionToken(
-                    //     vaultId,
-                    //     tokenId
-                    // );
+                    console.log('this address is %s',address(this));
+                    IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).depositUniPositionToken(
+                        vaultId,
+                        tokenId
+                    );
+                    console.log('successfuly deposited uni position token');
                 } else if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.generalSwap
                 ) {
