@@ -112,7 +112,7 @@ export default function Positions() {
 
         {liquidations.length > 0 && <ShortSqueethLiquidated />}
 
-        {!!address && (
+        {!!address && depositedEth.isGreaterThan(0) && (
           <CrabPosition
             depositedEth={depositedEth}
             depositedUsd={depositedUsd}
