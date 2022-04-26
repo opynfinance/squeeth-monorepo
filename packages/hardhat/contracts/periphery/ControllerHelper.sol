@@ -3,8 +3,6 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import "hardhat/console.sol";
-
 // interface
 import {IWETH9} from "../interfaces/IWETH9.sol";
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
@@ -245,7 +243,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         (uint256 vaultId, ) = ControllerHelperUtil.mintAndLp(
             ControllerHelperDiamondStorage.getAddressAtSlot(0),
             ControllerHelperDiamondStorage.getAddressAtSlot(6),
-            ControllerHelperDiamondStorage.getAddressAtSlot(4),
             ControllerHelperDiamondStorage.getAddressAtSlot(3),
             ControllerHelperDiamondStorage.getAddressAtSlot(5),
             _params,
@@ -380,22 +377,30 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             1e18
         );
 
-        if (_params.wPowerPerpAmountDesired > wPowerPerpAmountInLp) {
+        (uint256 wethAmountDesired, uint256 wPowerPerpAmountDesired) = ControllerHelperUtil.getAmountsToLp(
+            ControllerHelperDiamondStorage.getAddressAtSlot(3),
+            _params.wethAmountDesired,
+            _params.wPowerPerpAmountDesired,
+            _params.lowerTick,
+            _params.upperTick,
+            isWethToken0
+        );
+        if (!isWethToken0) (wethAmountDesired, wPowerPerpAmountDesired) = (wPowerPerpAmountDesired, wethAmountDesired);
+
+        if (wPowerPerpAmountDesired > wPowerPerpAmountInLp) {
             // if the new position target a higher wPowerPerp amount, swap WETH to reach the desired amount (WETH new position is lower than current WETH in LP)
             _exactOutFlashSwap(
                 ControllerHelperDiamondStorage.getAddressAtSlot(5),
                 ControllerHelperDiamondStorage.getAddressAtSlot(4),
                 poolFee,
-                _params.wPowerPerpAmountDesired.sub(wPowerPerpAmountInLp),
-                _params.limitPriceEthPerPowerPerp.mul(_params.wPowerPerpAmountDesired.sub(wPowerPerpAmountInLp)).div(
-                    1e18
-                ),
+                wPowerPerpAmountDesired.sub(wPowerPerpAmountInLp),
+                _params.limitPriceEthPerPowerPerp.mul(wPowerPerpAmountDesired.sub(wPowerPerpAmountInLp)).div(1e18),
                 uint8(ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP),
                 ""
             );
-        } else if (_params.wPowerPerpAmountDesired < wPowerPerpAmountInLp) {
+        } else if (wPowerPerpAmountDesired < wPowerPerpAmountInLp) {
             // if the new position target lower wPowerPerp amount, swap excess to WETH (position target higher WETH amount)
-            uint256 wPowerPerpExcess = wPowerPerpAmountInLp.sub(_params.wPowerPerpAmountDesired);
+            uint256 wPowerPerpExcess = wPowerPerpAmountInLp.sub(wPowerPerpAmountDesired);
 
             _exactInFlashSwap(
                 ControllerHelperDiamondStorage.getAddressAtSlot(4),
@@ -410,15 +415,12 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
 
         // mint new position
         ControllerHelperUtil.lpWPowerPerpPool(
-            ControllerHelperDiamondStorage.getAddressAtSlot(0),
             ControllerHelperDiamondStorage.getAddressAtSlot(6),
             ControllerHelperDiamondStorage.getAddressAtSlot(3),
-            ControllerHelperDiamondStorage.getAddressAtSlot(4),
-            0,
             ControllerHelperDataType.LpWPowerPerpPool({
                 recipient: msg.sender,
-                amount0Desired: (isWethToken0) ? _params.wethAmountDesired : _params.wPowerPerpAmountDesired,
-                amount1Desired: (isWethToken0) ? _params.wPowerPerpAmountDesired : _params.wethAmountDesired,
+                amount0Desired: (isWethToken0) ? wethAmountDesired : wPowerPerpAmountDesired,
+                amount1Desired: (isWethToken0) ? wPowerPerpAmountDesired : wethAmountDesired,
                 amount0Min: _params.amount0DesiredMin,
                 amount1Min: _params.amount1DesiredMin,
                 lowerTick: _params.lowerTick,
@@ -479,7 +481,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             (uint256 vaultId, uint256 uniTokenId) = ControllerHelperUtil.mintAndLp(
                 ControllerHelperDiamondStorage.getAddressAtSlot(0),
                 ControllerHelperDiamondStorage.getAddressAtSlot(6),
-                ControllerHelperDiamondStorage.getAddressAtSlot(4),
                 ControllerHelperDiamondStorage.getAddressAtSlot(3),
                 ControllerHelperDiamondStorage.getAddressAtSlot(5),
                 ControllerHelperDataType.MintAndLpParams({
@@ -669,7 +670,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                     (vaultId, tokenId) = ControllerHelperUtil.mintAndLp(
                         ControllerHelperDiamondStorage.getAddressAtSlot(0),
                         ControllerHelperDiamondStorage.getAddressAtSlot(6),
-                        ControllerHelperDiamondStorage.getAddressAtSlot(4),
                         ControllerHelperDiamondStorage.getAddressAtSlot(3),
                         ControllerHelperDiamondStorage.getAddressAtSlot(5),
                         mintAndLpParams,
