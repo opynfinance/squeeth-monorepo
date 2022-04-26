@@ -45,7 +45,12 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals
     },
   )
 
-  return { value: balanceQuery.data ?? new BigNumber(0), loading: !balanceQuery.data }
+  return {
+    value: balanceQuery.data ?? new BigNumber(0),
+    loading: balanceQuery.isLoading || balanceQuery.isRefetching,
+    error: balanceQuery.error || balanceQuery.isRefetchError || !balanceQuery.data,
+    refetch: balanceQuery.refetch,
+  }
 }
 
 async function updateBalance(
