@@ -7,7 +7,7 @@ import { Contract, BigNumber, providers, BytesLike, BigNumberish } from "ethers"
 import BigNumberJs from 'bignumber.js'
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
-import { WETH9, MockErc20, ShortPowerPerp, Controller, Oracle, WPowerPerp, ControllerHelper , INonfungiblePositionManager} from "../../../typechain";
+import { WETH9, MockErc20, ShortPowerPerp, Controller, Oracle, WPowerPerp, ControllerHelper , INonfungiblePositionManager, VaultLibTester} from "../../../typechain";
 import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addWethDaiLiquidity, addSqueethLiquidity } from '../../setup'
 import { isSimilar, wmul, wdiv, one, oracleScaleFactor, getNow } from "../../utils"
 import { JsonRpcSigner } from "@ethersproject/providers";
@@ -70,6 +70,9 @@ describe("ControllerHelper: mainnet fork", function () {
   let controllerHelper: ControllerHelper
   let shortSqueeth: ShortPowerPerp
   let liquidityAmount: Libraries
+  let vaultLib: VaultLibTester
+
+
 
   this.beforeAll("Setup mainnet fork contracts", async () => {
     depositor = await impersonateAddress("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045");
@@ -92,9 +95,16 @@ describe("ControllerHelper: mainnet fork", function () {
     wSqueethPool = await ethers.getContractAt(POOL_ABI, "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C")
     // ethDaiPool = await ethers.getContractAt("MockErc20", "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8")
     ethUsdcPool = await ethers.getContractAt(POOL_ABI, "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8");
-    // Liquidity library to get amounts
-    const liquidityAmountFactory = new ethers.ContractFactory(LIQUIDITY_ABI, LIQUIDITY_BYTECODE, owner);
-    liquidityAmount = await liquidityAmountFactory.deploy(); 
+
+    const SqrtPriceExternal = await ethers.getContractFactory("SqrtPriceMathPartial")
+    const SqrtPriceExternalLibrary = (await SqrtPriceExternal.deploy());
+
+    const TickMathExternal = await ethers.getContractFactory("TickMathExternal")
+    const TickMathLibrary = (await TickMathExternal.deploy());
+
+    const VaultTester = await ethers.getContractFactory("VaultLibTester", {libraries: {TickMathExternal: TickMathLibrary.address, SqrtPriceMathPartial: SqrtPriceExternalLibrary.address}});
+    vaultLib = (await VaultTester.deploy()) as VaultLibTester;
+
 
     const ControllerHelperUtil = await ethers.getContractFactory("ControllerHelperUtil")
     const ControllerHelperUtilLib = (await ControllerHelperUtil.deploy());
@@ -696,7 +706,7 @@ describe("ControllerHelper: mainnet fork", function () {
   describe("Rebalance with vault", async () => {
 
     // Mint 50 squeeth in new vault
-      before("Mint and LP 50 squeeth" , async () => {
+      beforeEach("Mint and LP full range" , async () => {
         // Mint 50 squeeth in new vault
         const normFactor = await controller.getExpectedNormalizationFactor()
         const mintWSqueethAmount = ethers.utils.parseUnits('50')
@@ -726,6 +736,13 @@ describe("ControllerHelper: mainnet fork", function () {
 
       })
 
+      afterEach("Mint and LP 50 squeeth" , async () => {
+        // Pull out uni token from vault
+        const vaultId = (await shortSqueeth.nextId()).sub(1);
+        controller.connect(depositor).withdrawUniPositionToken(vaultId)
+        console.log('pull out completed');
+      })
+        
     it("Close vault LP and open new LP with the a different range, same amount of ETH and oSQTH", async () => {
       // Get vault and LP info
       const vaultId = (await shortSqueeth.nextId()).sub(1);
@@ -822,16 +839,14 @@ describe("ControllerHelper: mainnet fork", function () {
       // const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16)
       // Get current LPpositions
 
-      await liquidityAmount. .getLiquidityPosition(tokenIdAfter)
-
-      await (positionManager as INonfungiblePositionManager).connect(depositor).approve(positionManager.address, tokenId); 
-      const [amount0After, amount1After] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
-        tokenId: tokenId,
-        liquidity: positionBefore.liquidity,
-        amount0Min: 0,
-        amount1Min: 0,
-        deadline: Math.floor(await getNow(ethers.provider) + 8640000),
-      })
+      // Can't use decreaseLiquidity here because reverts with 'Not approved'. Not sure why this is the case.
+      // const [amount0After, amount1After] = await (positionManager as INonfungiblePositionManager).connect(controllerHelper.address).callStatic.decreaseLiquidity({
+      //   tokenId: tokenIdAfter,
+      //   liquidity: positionAfter.liquidity,
+      //   amount0Min: 0,
+      //   amount1Min: 0,
+      //   deadline: Math.floor(await getNow(ethers.provider) + 8640000),
+      // })
       
 
       // const wPowerPerpAmountInLPAfter = (isWethToken0) ? amount1 : amount0;
@@ -839,9 +854,12 @@ describe("ControllerHelper: mainnet fork", function () {
 
       // Expects
       // 
+      const slot0After = await wSqueethPool.slot0()
+      const currentTickAfter = slot0After[1]
+      const { ethAmount, wPowerPerpAmount } = await vaultLib.getUniPositionBalances(positionManager.address, tokenIdAfter, currentTickAfter, isWethToken0)
 
-      console.log('amount0After', amount0After.toString())
-      console.log('amount1After', amount1After.toString())
+      console.log('ethAmount', ethAmount.toString())
+      console.log('wPowerPerpAmount', wPowerPerpAmount.toString())
       console.log('positionBefore.liquidity',positionBefore.liquidity.toString())
       //expect(ownerOfUniNFTAfter.toString().eq(depositor.address.toString())).to.be.true
       expect(positionAfter.tickLower === newTickLower).to.be.true
