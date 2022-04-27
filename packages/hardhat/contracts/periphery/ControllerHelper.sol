@@ -245,7 +245,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         (uint256 vaultId, ) = ControllerHelperUtil.mintAndLp(
             ControllerHelperDiamondStorage.getAddressAtSlot(0),
             ControllerHelperDiamondStorage.getAddressAtSlot(6),
-            ControllerHelperDiamondStorage.getAddressAtSlot(4),
             ControllerHelperDiamondStorage.getAddressAtSlot(3),
             ControllerHelperDiamondStorage.getAddressAtSlot(5),
             _params,
@@ -484,7 +483,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             (uint256 vaultId, uint256 uniTokenId) = ControllerHelperUtil.mintAndLp(
                 ControllerHelperDiamondStorage.getAddressAtSlot(0),
                 ControllerHelperDiamondStorage.getAddressAtSlot(6),
-                ControllerHelperDiamondStorage.getAddressAtSlot(4),
                 ControllerHelperDiamondStorage.getAddressAtSlot(3),
                 ControllerHelperDiamondStorage.getAddressAtSlot(5),
                 ControllerHelperDataType.MintAndLpParams({
