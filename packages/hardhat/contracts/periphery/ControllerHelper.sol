@@ -596,6 +596,16 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         increaseLiquidityParam,
                         isWethToken0
                     );
+
+                    // re-deposit the LP token
+                    ControllerHelperUtil.checkClosedLp(
+                        _initiator,
+                        ControllerHelperDiamondStorage.getAddressAtSlot(0),
+                        ControllerHelperDiamondStorage.getAddressAtSlot(6),
+                        vaultId,
+                        increaseLiquidityParam.tokenId,
+                        0
+                    );
                 } else if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.DecreaseLpLiquidity
                 ) {
@@ -700,6 +710,37 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         uint8(ControllerHelperDataType.CALLBACK_SOURCE.GENERAL_SWAP),
                         ""
                     );
+                } else if (
+                    data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.CollectFees
+                ) {
+                    ControllerHelperDataType.CollectParams memory collectParams = abi.decode(
+                        data[i].data,
+                        (ControllerHelperDataType.CollectParams)
+                    );                    
+                    
+                    INonfungiblePositionManager.CollectParams memory uniCollectParams = INonfungiblePositionManager.CollectParams({
+                                tokenId: collectParams.tokenId,
+                                recipient: address(this),
+                                amount0Max: collectParams.amount0Max,
+                                amount1Max: collectParams.amount0Max
+                            });
+
+                    INonfungiblePositionManager(ControllerHelperDiamondStorage.getAddressAtSlot(6)).collect(
+                        uniCollectParams
+                    );
+                } else if (
+                    data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.DepositExistingNft
+                ) {
+                    ControllerHelperDataType.DepositNftParams memory depositNftParams = abi.decode(
+                        data[i].data,
+                        (ControllerHelperDataType.DepositNftParams)
+                    );                    
+                    INonfungiblePositionManager(ControllerHelperDiamondStorage.getAddressAtSlot(6)).approve(
+                        ControllerHelperDiamondStorage.getAddressAtSlot(0),
+                        depositNftParams.tokenId
+                    );
+ 
+                    IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).depositUniPositionToken(vaultId, depositNftParams.tokenId);
                 }
             }
 
