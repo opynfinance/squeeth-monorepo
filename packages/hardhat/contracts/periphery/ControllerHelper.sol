@@ -597,6 +597,11 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         increaseLiquidityParam,
                         isWethToken0
                     );
+
+                    IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).depositUniPositionToken(
+                        vaultId,
+                        increaseLiquidityParam.tokenId
+                    );
                 } else if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.DecreaseLpLiquidity
                 ) {
