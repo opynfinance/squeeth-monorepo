@@ -574,7 +574,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             // check ownership
             if (vaultId > 0) {
                 require(
-                    IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_vaultId) == _initiator
+                    IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(vaultId) == _initiator
                 );
             }
 
