@@ -297,7 +297,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   useAppEffect(() => {
     if (!vaultId || !vault) return
 
-    setIsVaultApproved(vault.operator.toLowerCase() === shortHelper?.toLowerCase())
+    setIsVaultApproved(vault?.operator?.toLowerCase() === shortHelper?.toLowerCase())
   }, [vaultId, shortHelper, vault])
 
   const depositAndShort = useAppCallback(async () => {
@@ -735,7 +735,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   useAppEffect(() => {
     if (!vaultId) return
 
-    setIsVaultApproved(vault?.operator.toLowerCase() === shortHelper?.toLowerCase())
+    setIsVaultApproved(vault?.operator?.toLowerCase() === shortHelper?.toLowerCase())
   }, [shortHelper, vault, vaultId])
 
   useAppEffect(() => {
