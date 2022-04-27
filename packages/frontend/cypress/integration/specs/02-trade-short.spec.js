@@ -239,13 +239,11 @@ describe('Trade on trade page', () => {
         cy.get('#open-btn').click({ force: true })
 
         cy.get('#open-short-collat-ratio-info .trade-info-item-value').should('have.text', '250')
-        cy.get('.open-short-collat-ratio-input-box input').clear({ force: true })
-        cy.findByText('Total Collateral Ratio: 250')
       })
     })
   })
 
-  context.skip(`when have short oSQTH balance, the default trade card would be short`, () => {
+  context(`when have short oSQTH balance, the default trade card would be short`, () => {
     // issue #278
     it.skip('reload to see if by default is short & open trade cards', () => {
       cy.reload()
