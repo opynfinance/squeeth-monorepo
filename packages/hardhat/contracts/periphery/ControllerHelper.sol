@@ -571,9 +571,11 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 (uint256, ControllerHelperDataType.RebalanceVaultNftParams[])
             );
 
-                    // check ownership
+            // check ownership
             if (vaultId > 0) {
-                require(IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_vaultId) == _initiator);
+                require(
+                    IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_vaultId) == _initiator
+                );
             }
 
             // deposit collateral into vault and withdraw LP NFT
