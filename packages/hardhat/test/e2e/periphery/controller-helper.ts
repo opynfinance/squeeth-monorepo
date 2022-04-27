@@ -499,8 +499,8 @@ describe("ControllerHelper: mainnet fork", function () {
         fee: 3000,
         recipient: owner.address,
         deadline: Math.floor(await getNow(ethers.provider) + 8640000),
-        amountOut: wSqueethToBuy,
-        amountInMaximum: wSqueethToBuy.mul(100000),
+        amountIn: ethToSell,
+        amountOutMinimum: 0,
         sqrtPriceLimitX96: 0
       }    
       console.log(swapParamBuy)
@@ -515,7 +515,7 @@ describe("ControllerHelper: mainnet fork", function () {
       await weth.connect(owner).approve(uniswapRouter.address, constants.MaxUint256)
       console.log("made it here 2")
 
-      await uniswapRouter.connect(owner).exactOutputSingle(swapParamBuy)
+      await uniswapRouter.connect(owner).exactInputSingle(swapParamBuy)
       const ownerSqueethBalanceAfterTrade1 = await wSqueeth.balanceOf(owner.address)
       //const ownerEthBalanceAfterTrade1 = await provider.getBalance(owner.address)
 
