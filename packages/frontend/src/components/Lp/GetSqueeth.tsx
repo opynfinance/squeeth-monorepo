@@ -84,20 +84,20 @@ const Mint: React.FC = () => {
   const normalizationFactor = useAtomValue(normFactorAtom)
   const openDepositAndMint = useOpenDepositAndMint()
   const getShortAmountFromDebt = useGetShortAmountFromDebt()
-  const { vaultId } = useFirstValidVault()
-  const { existingCollat, existingCollatPercent } = useVaultData(vaultId)
+  const { vaultId, validVault: vault } = useFirstValidVault()
+  const { existingCollat, existingCollatPercent } = useVaultData(vault)
 
   const { dispatch } = useLPState()
 
   const [mintAmount, setMintAmount] = useState(new BigNumber(0))
   const [collatAmount, setCollatAmount] = useState('0')
   const collatAmountBN = new BigNumber(collatAmount)
-  const [collatPercent, setCollatPercent] = useState(existingCollatPercent > 0 ? 0 : 200)
+  const [collatPercent, setCollatPercent] = useState(existingCollatPercent > 0 ? existingCollatPercent : 200)
   const [loading, setLoading] = useState(false)
   const [mintMinCollatError, setMintMinCollatError] = useState('')
   const [minCollRatioError, setMinCollRatioError] = useState('')
 
-  const _totalCollatPercent = collatPercent + existingCollatPercent
+  const _totalCollateral = vault ? vault.collateralAmount.plus(collatAmountBN) : collatAmountBN
 
   const mint = async () => {
     setLoading(true)
@@ -112,22 +112,27 @@ const Mint: React.FC = () => {
   }
 
   useAppEffect(() => {
+    setCollatPercent(existingCollatPercent > 0 ? existingCollatPercent : 200)
+  }, [existingCollatPercent])
+
+  useAppEffect(() => {
     let isMounted = true
     if (collatAmountBN.isNaN() || collatAmountBN.isZero()) {
       if (isMounted) setMintAmount(new BigNumber(0))
       return
     }
-    const debt = collatAmountBN.times(100).div(_totalCollatPercent)
-    getShortAmountFromDebt(debt).then((s) => {
-      if (isMounted) setMintAmount(s)
+    const debt = _totalCollateral.times(100).div(collatPercent)
+    getShortAmountFromDebt(debt).then((totalSqueeth) => {
+      const _mintAmount = totalSqueeth.minus(vault?.shortAmount ?? BIG_ZERO)
+      if (isMounted) setMintAmount(_mintAmount)
     })
     return () => {
       isMounted = false
     }
-  }, [_totalCollatPercent, collatAmount.toString()])
+  }, [collatPercent, collatAmount.toString(), _totalCollateral.toString()])
 
   useAppEffect(() => {
-    if (existingCollatPercent > 0 ? _totalCollatPercent < 150 : collatPercent < 150) {
+    if (collatPercent < 150) {
       setMinCollRatioError('Minimum collateral ratio is 150%')
     }
 
@@ -136,20 +141,19 @@ const Mint: React.FC = () => {
     } else if (connected && collatAmountBN.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) {
       setMintMinCollatError('Minimum collateral is 6.9 ETH')
     }
-  }, [
-    balance?.toString(),
-    connected,
-    existingCollat.toString(),
-    collatAmountBN.toString(),
-    _totalCollatPercent,
-    collatPercent,
-  ])
+  }, [balance?.toString(), connected, existingCollat.toString(), collatAmountBN.toString(), collatPercent])
 
   const liqPrice = useAppMemo(() => {
     const rSqueeth = normalizationFactor.multipliedBy(mintAmount.toNumber() || new BigNumber(1)).dividedBy(10000)
 
-    return collatAmountBN.div(rSqueeth.multipliedBy(1.5))
-  }, [mintAmount.toString(), collatPercent, collatAmount.toString(), normalizationFactor.toString()])
+    return _totalCollateral.div(rSqueeth.multipliedBy(1.5))
+  }, [
+    mintAmount.toString(),
+    collatPercent,
+    collatAmount.toString(),
+    normalizationFactor.toString(),
+    _totalCollateral.toString(),
+  ])
 
   return (
     <div className={classes.mintContainer}>
@@ -188,8 +192,8 @@ const Mint: React.FC = () => {
           id="filled-basic"
           label="Collateral Ratio"
           variant="outlined"
-          error={_totalCollatPercent < 150}
-          helperText={existingCollatPercent ? `Total Collateral Ratio: ${_totalCollatPercent}` : minCollRatioError}
+          error={collatPercent < 150}
+          helperText={minCollRatioError}
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
