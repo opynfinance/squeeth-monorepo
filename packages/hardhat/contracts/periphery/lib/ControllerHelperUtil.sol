@@ -69,45 +69,37 @@ library ControllerHelperUtil {
         return (_wPowerPerpAmount, wethAmount);
     }
 
+    function getAmountsToLp(address _wPowerPerpPool, uint256 _collateralToLp, uint256 _wPowerPerpAmount, int24 _lowerTick, int24 _upperTick, bool _isWethToken0) public view returns (uint256, uint256) {
+        uint256 amount0Desired; 
+        uint256 amount1Desired;
+
+        {
+            (,int24 currentTick,,,,,) = IUniswapV3Pool(_wPowerPerpPool).slot0();
+            uint160 sqrtRatioX96 = TickMathExternal.getSqrtRatioAtTick(currentTick);
+            uint160 sqrtRatioAX96 = TickMathExternal.getSqrtRatioAtTick(_lowerTick);
+            uint160 sqrtRatioBX96 = TickMathExternal.getSqrtRatioAtTick(_upperTick);
+            (amount0Desired, amount1Desired) = _isWethToken0 ? (_collateralToLp, _wPowerPerpAmount) : (_wPowerPerpAmount, _collateralToLp);
+            uint128 maxLiquidity = LiquidityAmounts.getLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0Desired, amount1Desired);
+            (amount0Desired, amount1Desired) = LiquidityAmounts.getAmountsFromLiquidity(sqrtRatioX96, currentTick, _lowerTick, _upperTick, maxLiquidity);
+        }
+        
+        return (amount0Desired, amount1Desired);
+    }
+
     /**
      * @notice minth amount of wPowerPerp and LP in weth/wPowerPerp pool
      * @param _controller wPowerPerp controller address
      * @param _nonfungiblePositionManager Uni NonFungiblePositionManager address
-     * @param _wPowerPerp wPowerPerp contract address
      * @param _wPowerPerpPool wPowerPerp Uni v3 pool
      * @param _mintAndLpParams ControllerHelperDataType.MintAndLpParams struct
      * @param _isWethToken0 bool variable indicate if Weth token is token0 in Uniswap v3 weth/wPowerPerp pool
      * @return _vaultId and tokenId
      */
-    function mintAndLp(address _controller, address _nonfungiblePositionManager, address _wPowerPerp, address _wPowerPerpPool, address _weth, ControllerHelperDataType.MintAndLpParams calldata _mintAndLpParams, bool _isWethToken0) public returns (uint256, uint256) {
+    function mintAndLp(address _controller, address _nonfungiblePositionManager, address _wPowerPerpPool, address _weth, ControllerHelperDataType.MintAndLpParams calldata _mintAndLpParams, bool _isWethToken0) public returns (uint256, uint256) {
         IWETH9(_weth).withdraw(_mintAndLpParams.collateralToDeposit);
 
-        uint256 amount0Desired; 
-        uint256 amount1Desired;
-        
-        {
-            int24 currentTick;
-            (,currentTick,,,,,) = IUniswapV3Pool(_wPowerPerpPool).slot0();
-            uint160 sqrtRatioX96 = TickMathExternal.getSqrtRatioAtTick(currentTick);
-            uint160 sqrtRatioAX96 = TickMathExternal.getSqrtRatioAtTick(_mintAndLpParams.lowerTick);
-            uint160 sqrtRatioBX96 = TickMathExternal.getSqrtRatioAtTick(_mintAndLpParams.upperTick);
-            (amount0Desired, amount1Desired) = _isWethToken0 ? (_mintAndLpParams.collateralToLp, _mintAndLpParams.wPowerPerpAmount) : (_mintAndLpParams.wPowerPerpAmount, _mintAndLpParams.collateralToLp);
-            uint128 maxLiquidity = LiquidityAmounts.getLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0Desired, amount1Desired);
-
-            console.log("amount0Desired", amount0Desired);
-            console.log("amount1Desired", amount1Desired);
-
-            console.log("sqrtRatioX96", sqrtRatioX96);
-            console.log("sqrtRatioAX96", sqrtRatioAX96);
-            console.log("sqrtRatioBX96", sqrtRatioBX96);
-            console.log("maxLiquidity", maxLiquidity);
-
-
-            //(amount0Desired, amount1Desired) = LiquidityAmounts.getAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, maxLiquidity);
-            (amount0Desired, amount1Desired) = LiquidityAmounts.getAmountsFromLiquidity(sqrtRatioX96, currentTick, _mintAndLpParams.lowerTick, _mintAndLpParams.upperTick, maxLiquidity);
-
-        }
-        
+        (uint256 amount0Desired, uint256 amount1Desired) = getAmountsToLp(_wPowerPerpPool, _mintAndLpParams.collateralToLp, _mintAndLpParams.wPowerPerpAmount, _mintAndLpParams.lowerTick, _mintAndLpParams.upperTick, _isWethToken0);
+                
         uint256 _vaultId = IController(_controller).mintWPowerPerpAmount{value: _mintAndLpParams.collateralToDeposit}(
             _mintAndLpParams.vaultId,
             _isWethToken0 ? amount1Desired : amount0Desired,
@@ -120,11 +112,8 @@ library ControllerHelperUtil {
 
         // LP amount0Desired and amount1Desired in Uni v3
         uint256 uniTokenId = lpWPowerPerpPool(
-            _controller,
             _nonfungiblePositionManager,
             _wPowerPerpPool,
-            _wPowerPerp,
-            _vaultId,
             ControllerHelperDataType.LpWPowerPerpPool({
                 recipient: _mintAndLpParams.recipient,
                 amount0Desired: amount0Desired,
@@ -179,13 +168,19 @@ library ControllerHelperUtil {
      * @param _collateralToDeposit amount of collateral to deposit
      */
     function mintIntoVault(address _controller, address _weth, uint256 _vaultId, uint256 _wPowerPerpToMint, uint256 _collateralToDeposit) public returns (uint256) {
-        IWETH9(_weth).withdraw(_collateralToDeposit);
+        if (_collateralToDeposit > 0) IWETH9(_weth).withdraw(_collateralToDeposit);
 
-        return (IController(_controller).mintWPowerPerpAmount{value: _collateralToDeposit}(
-            _vaultId,
-            _wPowerPerpToMint,
-            0
-        ));
+        uint256 vaultId = _vaultId;
+        if (_wPowerPerpToMint > 0) {
+            vaultId = IController(_controller).mintWPowerPerpAmount{value: _collateralToDeposit}(
+                _vaultId,
+                _wPowerPerpToMint,
+                0
+            );
+        } else {
+            IController(_controller).deposit{value: _collateralToDeposit}(_vaultId);
+        }
+        return vaultId;
     }
 
     /**
@@ -208,19 +203,13 @@ library ControllerHelperUtil {
 
     /**
      * @notice LP into Uniswap V3 pool
-     * @param _controller controller address
      * @param _nonfungiblePositionManager Uni NonFungiblePositionManager address
      * @param _wPowerPerpPool wPowerpPerp pool address in Uni v3
-     * @param _wPowerPerp wPowerPerp address
-     * @param _vaultId vault ID
      * @param _params ControllerHelperDataType.LpWPowerPerpPool struct
      */
     function lpWPowerPerpPool(
-        address _controller, 
         address _nonfungiblePositionManager,
         address _wPowerPerpPool,
-        address _wPowerPerp,
-        uint256 _vaultId,
         ControllerHelperDataType.LpWPowerPerpPool memory _params
     ) public returns (uint256) {
         INonfungiblePositionManager.MintParams memory mintParams = INonfungiblePositionManager.MintParams({
@@ -240,8 +229,6 @@ library ControllerHelperUtil {
         (uint256 tokenId, , , ) = INonfungiblePositionManager(_nonfungiblePositionManager).mint(
             mintParams
         );
-
-        //checkExcess(_controller, _nonfungiblePositionManager, _wPowerPerp, _vaultId);
 
         return tokenId;
     }
