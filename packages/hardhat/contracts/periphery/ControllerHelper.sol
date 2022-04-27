@@ -597,15 +597,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         isWethToken0
                     );
 
-                    // re-deposit the LP token
-                    ControllerHelperUtil.checkClosedLp(
-                        _initiator,
-                        ControllerHelperDiamondStorage.getAddressAtSlot(0),
-                        ControllerHelperDiamondStorage.getAddressAtSlot(6),
-                        vaultId,
-                        increaseLiquidityParam.tokenId,
-                        0
-                    );
                 } else if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.DecreaseLpLiquidity
                 ) {
