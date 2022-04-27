@@ -5,7 +5,7 @@ import { useContext } from 'react'
 import BigNumber from 'bignumber.js'
 import { Position } from '@uniswap/v3-sdk'
 
-import { networkIdAtom, addressAtom, connectedWalletAtom } from '../wallet/atoms'
+import { networkIdAtom, addressAtom } from '../wallet/atoms'
 import { swaps, swapsVariables } from '@queries/uniswap/__generated__/swaps'
 import SWAPS_QUERY, { SWAPS_SUBSCRIPTION } from '@queries/uniswap/swapsQuery'
 import SWAPS_ROPSTEN_QUERY, { SWAPS_ROPSTEN_SUBSCRIPTION } from '@queries/uniswap/swapsRopstenQuery'
@@ -13,7 +13,6 @@ import { VAULT_QUERY } from '@queries/squeeth/vaultsQuery'
 import { BIG_ZERO, OSQUEETH_DECIMALS } from '@constants/index'
 import {
   addressesAtom,
-  firstValidVaultAtom,
   isWethToken0Atom,
   positionTypeAtom,
   managerAtom,
@@ -26,12 +25,6 @@ import {
   depositedWethAtom,
   withdrawnSqueethAtom,
   withdrawnWethAtom,
-  vaultAtom,
-  existingCollatPercentAtom,
-  existingCollatAtom,
-  existingLiqPriceAtom,
-  collatPercentAtom,
-  isVaultLoadingAtom,
   swapsAtom,
 } from './atoms'
 import { positions, positionsVariables } from '@queries/uniswap/__generated__/positions'
@@ -41,8 +34,7 @@ import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { toTokenAmount } from '@utils/calculations'
 import { squeethClient } from '@utils/apollo-client'
 import { PositionType, Networks } from '../../types'
-import { poolAtom, readyAtom, squeethInitialPriceAtom } from '../squeethPool/atoms'
-import { useGetCollatRatioAndLiqPrice, useGetVault } from '../controller/hooks'
+import { poolAtom, squeethInitialPriceAtom } from '../squeethPool/atoms'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { useGetWSqueethPositionValue } from '../squeethPool/hooks'
 import { useVaultHistory } from '@hooks/useVaultHistory'
@@ -51,7 +43,6 @@ import { Vault } from '@queries/squeeth/__generated__/Vault'
 import { ComputeSwapsContext } from './providers'
 import useAppEffect from '@hooks/useAppEffect'
 import useAppMemo from '@hooks/useAppMemo'
-import useAppCallback from '@hooks/useAppCallback'
 
 export const useSwaps = () => {
   const [networkId] = useAtom(networkIdAtom)
@@ -428,70 +419,18 @@ export const useVaultQuery = (vaultId: number) => {
 
   return { ...query, data: vaultData }
 }
-export const useUpdateVaultData = () => {
-  const connected = useAtomValue(connectedWalletAtom)
-  const setVault = useUpdateAtom(vaultAtom)
-  const setExistingCollat = useUpdateAtom(existingCollatAtom)
-  const setExistingCollatPercent = useUpdateAtom(existingCollatPercentAtom)
-  const setCollatPercent = useUpdateAtom(collatPercentAtom)
-  const setExistingLiqPrice = useUpdateAtom(existingLiqPriceAtom)
-  const setVaultLoading = useUpdateAtom(isVaultLoadingAtom)
-  const ready = useAtomValue(readyAtom)
-  const { vaultId } = useFirstValidVault()
-  const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
-  const getVault = useGetVault()
-
-  const updateVault = useAppCallback(async () => {
-    if (!connected || !ready) return
-
-    const _vault = await getVault(vaultId)
-
-    if (!_vault) return
-
-    setVault(_vault)
-    setExistingCollat(_vault.collateralAmount)
-
-    getCollatRatioAndLiqPrice(
-      _vault.collateralAmount,
-      _vault.shortAmount,
-      _vault.NFTCollateralId ? Number(_vault.NFTCollateralId) : undefined,
-    ).then(({ collateralPercent, liquidationPrice }) => {
-      setExistingCollatPercent(collateralPercent)
-      setCollatPercent(collateralPercent)
-      setExistingLiqPrice(new BigNumber(liquidationPrice))
-      setVaultLoading(false)
-    })
-  }, [
-    connected,
-    getCollatRatioAndLiqPrice,
-    getVault,
-    ready,
-    setCollatPercent,
-    setExistingCollat,
-    setExistingCollatPercent,
-    setExistingLiqPrice,
-    setVault,
-    setVaultLoading,
-    vaultId,
-  ])
-
-  useAppEffect(() => {
-    updateVault()
-  }, [connected, ready, vaultId, updateVault])
-
-  return updateVault
-}
 
 export const useFirstValidVault = () => {
-  const { vaults: shortVaults } = useVaultManager()
-  const [firstValidVault, setFirstValidVault] = useAtom(firstValidVaultAtom)
-  useAppEffect(() => {
-    for (let i = 0; i < shortVaults.length; i++) {
-      if (shortVaults[i]?.collateralAmount.isGreaterThan(0)) {
-        setFirstValidVault(i)
-      }
-    }
-  }, [shortVaults, setFirstValidVault])
+  const { vaults: shortVaults, loading } = useVaultManager()
 
-  return { firstValidVault, vaultId: shortVaults[firstValidVault]?.id || 0 }
+  if (shortVaults) {
+    const index = shortVaults.findIndex((vault) => vault.collateralAmount.isGreaterThan(0))
+    return {
+      isVaultLoading: loading,
+      vaultId: Number(shortVaults[index]?.id) || 0,
+      validVault: shortVaults[index],
+    }
+  }
+
+  return { isVaultLoading: loading, vaultId: 0, validVault: undefined }
 }
