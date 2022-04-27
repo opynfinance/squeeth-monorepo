@@ -707,6 +707,7 @@ describe("ControllerHelper: mainnet fork", function () {
 
     // Mint 50 squeeth in new vault
       beforeEach("Mint and LP full range" , async () => {
+        const depositorEthBalanceBefore = await ethers.provider.getBalance(depositor.address)
         // Mint 50 squeeth in new vault
         const normFactor = await controller.getExpectedNormalizationFactor()
         const mintWSqueethAmount = ethers.utils.parseUnits('50')
@@ -729,10 +730,17 @@ describe("ControllerHelper: mainnet fork", function () {
           upperTick: 887220
         }
         // Batch mint new full range LP
-        await controllerHelper.connect(depositor).batchMintLp(params, {value: collateralAmount.add(collateralToLp)});
+        const tx = await controllerHelper.connect(depositor).batchMintLp(params, {value: collateralAmount.add(collateralToLp)});
+        const receipt = await tx.wait()
+        const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
+        const depositorEthBalanceAfter= await ethers.provider.getBalance(depositor.address)
         console.log('target amounts')
-        console.log('wPowerPerpAmount: ', mintWSqueethAmount.toString())
+        console.log('collateral amount', collateralAmount.toString())
         console.log('collateralToLp', collateralToLp.toString())
+        console.log('wPowerPerpAmount: ', mintWSqueethAmount.toString())
+        console.log('depositorEthBalanceBefore', depositorEthBalanceBefore.toString())
+        console.log('depositorEthBalanceAfter', depositorEthBalanceAfter.toString())
+        console.log('gasSpent', gasSpent.toString())
 
       })
 
@@ -753,6 +761,9 @@ describe("ControllerHelper: mainnet fork", function () {
       const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16)
       // Get current LPpositions 
       await (positionManager as INonfungiblePositionManager).connect(depositor).approve(positionManager.address, tokenId); 
+
+
+
       const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
         tokenId: tokenId,
         liquidity: positionBefore.liquidity,
@@ -760,9 +771,24 @@ describe("ControllerHelper: mainnet fork", function () {
         amount1Min: 0,
         deadline: Math.floor(await getNow(ethers.provider) + 8640000),
       })
+
+      // const slot0Before = await wSqueethPool.slot0()
+      // const currentTickBefore = slot0Before[1]
+      // const [amount0_, amount1_] = await vaultLib.getAmountsForLiquidity(currentTickBefore, positionBefore.tickLower, positionBefore.tickUpper, positionBefore.liquidity)
+
+      const vault = await controller.vaults(vaultId);
+
+      // const wPowerPerpAmountInLPBefore1 = amount0_
+      // const wethAmountInLPBefore1 = amount1_
       const wPowerPerpAmountInLPBefore = (isWethToken0) ? amount1 : amount0;
       const wethAmountInLPBefore = (isWethToken0) ? amount0 : amount1;
+      console.log('wPowerPerpAmountInLPBefore', wPowerPerpAmountInLPBefore.toString())
+      console.log('wethAmountInLPBefore', wethAmountInLPBefore.toString())
+      // console.log('wPowerPerpAmountInLPBefore1', wPowerPerpAmountInLPBefore1.toString())
+      // console.log('wethAmountInLPBefore1', wethAmountInLPBefore1.toString())
       console.log('vaultIddddddddddd', vaultId.toString())
+      console.log('vault.shortAmount', vault.shortAmount.toString())
+      console.log('vault.collateralAmount', vault.collateralAmount.toString())
       // console.log('tokenId', tokenId.toString())
       // console.log('wPowerPerpAmountInLP', wPowerPerpAmountInLP.toString());
       // console.log('wethAmountInLP', wethAmountInLP.toString())
@@ -774,8 +800,8 @@ describe("ControllerHelper: mainnet fork", function () {
       await (positionManager as INonfungiblePositionManager).connect(depositor).setApprovalForAll(controllerHelper.address, true) // approve controllerHelper
       // await (positionManager as INonfungiblePositionManager).connect(depositor).setApprovalForAll(depositor.address, true) // approve depositor address
 
-      console.log('ControllerHelper.address', controllerHelper.address)
-      console.log('Controller address', controller.address);
+      // console.log('ControllerHelper.address', controllerHelper.address)
+      // console.log('Controller address', controller.address);
 
       //const isControllerHelperApproved = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.isApprovedForAll(depositor.address, controllerHelper.address)
       //await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controllerHelperUtil.address, tokenId)
@@ -833,7 +859,7 @@ describe("ControllerHelper: mainnet fork", function () {
       // Get new vault and LP info
       const vaultAfter = await controller.vaults(vaultId);
       const tokenIdAfter = vaultAfter.NftCollateralId;
-      console.log('vaultAfter.NftCollateralId',vaultAfter.NftCollateralId.toString())
+      console.log('vaultAfter.NftCollaterald',vaultAfter.NftCollateralId.toString())
       const positionAfter = await (positionManager as INonfungiblePositionManager).positions(tokenIdAfter)
       console.log('printed positions', positionAfter)
       // const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16)
@@ -856,10 +882,10 @@ describe("ControllerHelper: mainnet fork", function () {
       // 
       const slot0After = await wSqueethPool.slot0()
       const currentTickAfter = slot0After[1]
-      const { ethAmount, wPowerPerpAmount } = await vaultLib.getUniPositionBalances(positionManager.address, tokenIdAfter, currentTickAfter, isWethToken0)
+      const positionAmountsAfter = await vaultLib.getUniPositionBalances(positionManager.address, tokenIdAfter, currentTickAfter, isWethToken0)
 
-      console.log('ethAmount', ethAmount.toString())
-      console.log('wPowerPerpAmount', wPowerPerpAmount.toString())
+      console.log('ethAmount', positionAmountsAfter.ethAmount.toString())
+      console.log('wPowerPerpAmount', positionAmountsAfter.wPowerPerpAmount.toString())
       console.log('positionBefore.liquidity',positionBefore.liquidity.toString())
       //expect(ownerOfUniNFTAfter.toString().eq(depositor.address.toString())).to.be.true
       expect(positionAfter.tickLower === newTickLower).to.be.true
