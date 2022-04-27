@@ -77,7 +77,7 @@ describe("ControllerHelper: mainnet fork", function () {
 
     positionManager = await ethers.getContractAt(POSITION_MANAGER_ABI, "0xC36442b4a4522E871399CD717aBDD847Ab11FE88");
     uniswapFactory = await ethers.getContractAt(FACTORY_ABI, "0x1F98431c8aD98523631AE4a59f267346ea31F984");
-    uniswapRouter = await ethers.getContractAt(ROUTER_ABI, "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45");
+    uniswapRouter = await ethers.getContractAt(ROUTER_ABI, "0xE592427A0AEce92De3Edee1F18E0157C05861564");
 
     controller = (await ethers.getContractAt("Controller", "0x64187ae08781B09368e6253F9E94951243A493D5")) as Controller
     wSqueeth = (await ethers.getContractAt("WPowerPerp", "0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B")) as WPowerPerp
@@ -499,14 +499,14 @@ describe("ControllerHelper: mainnet fork", function () {
         fee: 3000,
         recipient: owner.address,
         deadline: Math.floor(await getNow(ethers.provider) + 8640000),
-        amountIn: ethToSell,
+        amountIn: ethToSell.toString(),
         amountOutMinimum: 0,
         sqrtPriceLimitX96: 0
       }    
       console.log(swapParamBuy)
 
 
-      weth.deposit({value: ethToSell})
+      weth.connect(owner).deposit({value: ethToSell})
  
       console.log("made it here 1")
       const ownerSqueethBalanceBeforeTrade1 = await wSqueeth.balanceOf(owner.address)
