@@ -18,6 +18,10 @@ import {
   abi as QUOTER_ABI,
   bytecode as QUOTER_BYTECODE,
 } from "@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json"
+import {
+  abi as LIQUIDITY_ABI,
+  bytecode as LIQUIDITY_BYTECODE,
+} from '@uniswap/v3-periphery/artifacts/contracts/libraries/LiquidityAmounts.sol/LiquidityAmounts.json'
 import { Controller, Oracle, ShortPowerPerp, WETH9, WPowerPerp, MockErc20, INonfungiblePositionManager, ABDKMath64x64 } from "../typechain";
 import { convertToken0PriceToSqrtX96Price, convertToken1PriceToSqrtX96Price } from "./calculator";
 import { getNow } from './utils'
@@ -56,8 +60,10 @@ export const deployUniswapV3 = async(weth: Contract) => {
   const quoterFactory = new ethers.ContractFactory(QUOTER_ABI, QUOTER_BYTECODE, accounts[0]);
   const quoter = await quoterFactory.deploy(uniswapFactory.address, weth.address);
 
+  const liquidityAmountsFactory = new ethers.ContractFactory(LIQUIDITY_ABI, LIQUIDITY_BYTECODE, accounts[0]);
+  const liquidityAmounts = await liquidityAmountsFactory.deploy(); 
 
-  return { positionManager, uniswapFactory, swapRouter, quoter }
+  return { positionManager, uniswapFactory, swapRouter, quoter, liquidityAmounts}
 }
 
 

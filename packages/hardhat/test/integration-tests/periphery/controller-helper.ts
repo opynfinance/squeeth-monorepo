@@ -35,6 +35,7 @@ describe("Controller helper integration test", function () {
   let shortSqueeth: ShortPowerPerp
   let swapRouter: Contract
   let quoter: Contract
+  let liquidityAmounts: Contract
 
   this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async() => {
     const accounts = await ethers.getSigners();
@@ -55,6 +56,7 @@ describe("Controller helper integration test", function () {
     uniswapFactory = uniDeployments.uniswapFactory
     swapRouter = uniDeployments.swapRouter
     quoter = uniDeployments.quoter
+    liquidityAmounts = uniDeployments.liquidityAmounts
 
 
     // this will not deploy a new pool, only reuse old onces

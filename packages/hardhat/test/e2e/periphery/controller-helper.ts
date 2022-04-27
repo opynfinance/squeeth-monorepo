@@ -28,6 +28,11 @@ import {
   abi as POOL_ABI,
   bytecode as POOL_BYTECODE,
 } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json'
+import {
+  abi as LIQUIDITY_ABI,
+  bytecode as LIQUIDITY_BYTECODE,
+} from '@uniswap/v3-periphery/artifacts/contracts/libraries/LiquidityAmounts.sol/LiquidityAmounts.json'
+import { Libraries } from "hardhat/types";
 
 BigNumberJs.set({EXPONENTIAL_AT: 30})
 
@@ -64,9 +69,11 @@ describe("ControllerHelper: mainnet fork", function () {
   let ethUsdcPool: Contract
   let controllerHelper: ControllerHelper
   let shortSqueeth: ShortPowerPerp
+  let liquidityAmount: Libraries
 
   this.beforeAll("Setup mainnet fork contracts", async () => {
     depositor = await impersonateAddress("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045");
+    owner = await impersonateAddress("0x8d12A197cB00D4747a1fe03395095ce2A5CC6819");
 
     // const usdcContract = await ethers.getContractFactory("MockErc20")
     usdc = await ethers.getContractAt("MockErc20", "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
@@ -85,6 +92,9 @@ describe("ControllerHelper: mainnet fork", function () {
     wSqueethPool = await ethers.getContractAt(POOL_ABI, "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C")
     // ethDaiPool = await ethers.getContractAt("MockErc20", "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8")
     ethUsdcPool = await ethers.getContractAt(POOL_ABI, "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8");
+    // Liquidity library to get amounts
+    const liquidityAmountFactory = new ethers.ContractFactory(LIQUIDITY_ABI, LIQUIDITY_BYTECODE, owner);
+    liquidityAmount = await liquidityAmountFactory.deploy(); 
 
     const ControllerHelperUtil = await ethers.getContractFactory("ControllerHelperUtil")
     const ControllerHelperUtilLib = (await ControllerHelperUtil.deploy());
@@ -745,6 +755,8 @@ describe("ControllerHelper: mainnet fork", function () {
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
       await (positionManager as INonfungiblePositionManager).connect(depositor).setApprovalForAll(controller.address, true) // approval for controller 
       await (positionManager as INonfungiblePositionManager).connect(depositor).setApprovalForAll(controllerHelper.address, true) // approve controllerHelper
+      // await (positionManager as INonfungiblePositionManager).connect(depositor).setApprovalForAll(depositor.address, true) // approve depositor address
+
       console.log('ControllerHelper.address', controllerHelper.address)
       console.log('Controller address', controller.address);
 
@@ -773,6 +785,8 @@ describe("ControllerHelper: mainnet fork", function () {
       console.log('Inputs for MintNewLP to encode',depositor.address.toString(), BigNumber.from(0), amount0,
       amount1, BigNumber.from(0), BigNumber.from(0), newTickLower, newTickUpper)
       console.log('currentTick', currentTick);
+      console.log('amount0', amount0.toString());
+      console.log('amount1', amount1.toString());
       const abiCoder = new ethers.utils.AbiCoder
       const params = [
         {
@@ -785,9 +799,9 @@ describe("ControllerHelper: mainnet fork", function () {
          {
            // Mint new LP 
            rebalanceVaultNftType:  BigNumber.from(4), // MintNewLP
-           // lpWPowerPerpPool: [recipient, ethAmount, amount0Desired, amount1Desired, amount0Min, amount1Mint, lowerTick, upperTick ]
-           data: abiCoder.encode(["address", 'uint256', 'uint256','uint256', 'uint256', 'uint256', 'int24', 'int24'],
-            [controllerHelper.address.toString(), BigNumber.from(0), amount0.toString(), amount1.toString(), amount0Min.toString(), amount1Min.toString(), newTickLower.toString(), newTickUpper.toString()])
+           // lpWPowerPerpPool: [recipient, amount0Desired, amount1Desired, amount0Min, amount1Mint, lowerTick, upperTick ]
+           data: abiCoder.encode(["address", 'uint256','uint256', 'uint256', 'uint256', 'int24', 'int24'],
+            [controllerHelper.address.toString(),  amount0.toString(), amount1.toString(), amount0Min.toString(), amount1Min.toString(), newTickLower.toString(), newTickUpper.toString()])
          }
 
       ]
@@ -804,9 +818,13 @@ describe("ControllerHelper: mainnet fork", function () {
       const tokenIdAfter = vaultAfter.NftCollateralId;
       console.log('vaultAfter.NftCollateralId',vaultAfter.NftCollateralId.toString())
       const positionAfter = await (positionManager as INonfungiblePositionManager).positions(tokenIdAfter)
-      console.log('printed positions')
+      console.log('printed positions', positionAfter)
       // const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16)
-      // Get current LPpositions 
+      // Get current LPpositions
+
+      await liquidityAmount. .getLiquidityPosition(tokenIdAfter)
+
+      await (positionManager as INonfungiblePositionManager).connect(depositor).approve(positionManager.address, tokenId); 
       const [amount0After, amount1After] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
         tokenId: tokenId,
         liquidity: positionBefore.liquidity,
@@ -814,13 +832,16 @@ describe("ControllerHelper: mainnet fork", function () {
         amount1Min: 0,
         deadline: Math.floor(await getNow(ethers.provider) + 8640000),
       })
-      const wPowerPerpAmountInLPAfter = (isWethToken0) ? amount1 : amount0;
-      const wethAmountInLPAfter = (isWethToken0) ? amount0 : amount1;
+      
+
+      // const wPowerPerpAmountInLPAfter = (isWethToken0) ? amount1 : amount0;
+      // const wethAmountInLPAfter = (isWethToken0) ? amount0 : amount1;
 
       // Expects
       // 
 
-
+      console.log('amount0After', amount0After.toString())
+      console.log('amount1After', amount1After.toString())
       console.log('positionBefore.liquidity',positionBefore.liquidity.toString())
       //expect(ownerOfUniNFTAfter.toString().eq(depositor.address.toString())).to.be.true
       expect(positionAfter.tickLower === newTickLower).to.be.true
@@ -832,7 +853,7 @@ describe("ControllerHelper: mainnet fork", function () {
       
       console.log('vaultAfter.shortAmount',vaultAfter.shortAmount.toString());
       console.log('vaultAfter.collateralAmount',vaultAfter.collateralAmount.toString());
-      console.log('vaultAfter.NftCollateralId',BigNumber.from(0).toString());
+      console.log('vaultAfter.NftCollateralId',vaultAfter.NftCollateralId);
 
     })
   })
