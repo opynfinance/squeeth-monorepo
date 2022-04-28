@@ -20,7 +20,6 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {ControllerHelperDataType} from "./ControllerHelperDataType.sol";
 import {LiquidityAmounts} from "./LiquidityAmounts.sol";
 import {TickMathExternal} from "../../libs/TickMathExternal.sol";
-import {SqrtPriceMathPartial} from "../../libs/SqrtPriceMathPartial.sol";
 
 library ControllerHelperUtil {
     using SafeMath for uint256;
