@@ -841,7 +841,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
       amount.isGreaterThan(0) &&
       shortVaults.length &&
       amount.lt(finalShortAmount) &&
-      neededCollat.isLessThan(MIN_COLLATERAL_AMOUNT)
+      withdrawCollat.gt(shortVaults[firstValidVault].collateralAmount.minus(MIN_COLLATERAL_AMOUNT))
     ) {
       closeError = `You must have at least ${MIN_COLLATERAL_AMOUNT} ETH collateral unless you fully close out your position. Either fully close your position, or close out less`
     }
