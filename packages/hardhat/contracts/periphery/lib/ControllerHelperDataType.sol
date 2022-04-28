@@ -32,7 +32,7 @@ library ControllerHelperDataType {
     enum RebalanceVaultNftType {
         IncreaseLpLiquidity,
         DecreaseLpLiquidity,
-        MintIntoVault,
+        DepositIntoVault,
         WithdrawFromVault,
         MintNewLp,
         generalSwap
@@ -188,7 +188,7 @@ library ControllerHelperDataType {
     }
 
     /// @dev struct for minting into vault
-    struct MintIntoVault {
+    struct DepositIntoVault {
         uint256 wPowerPerpToMint;   // wPowerPerp amount to mint
         uint256 collateralToDeposit;    // collateral amount to deposit
     }
