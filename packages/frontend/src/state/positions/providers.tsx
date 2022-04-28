@@ -107,8 +107,8 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
     () => ({
       ...computedSwaps,
       squeethAmount:
-        computedSwaps.squeethAmount.isGreaterThan(0) && oSqueethBal?.isEqualTo(0)
-          ? BIG_ZERO
+        computedSwaps.squeethAmount.isGreaterThan(0) && computedSwaps.squeethAmount.isGreaterThan(oSqueethBal)
+          ? oSqueethBal
           : computedSwaps.squeethAmount.absoluteValue(),
     }),
     [computedSwaps, oSqueethBal],
