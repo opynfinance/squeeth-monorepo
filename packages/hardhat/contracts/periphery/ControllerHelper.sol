@@ -58,10 +58,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         IWPowerPerp(IController(_controller).wPowerPerp()).approve(_nonfungiblePositionManager, type(uint256).max);
         IWETH9(IController(_controller).weth()).approve(_nonfungiblePositionManager, type(uint256).max);
 
-        INonfungiblePositionManager(_nonfungiblePositionManager).setApprovalForAll(
-            _controller,
-            true
-        );
+        INonfungiblePositionManager(_nonfungiblePositionManager).setApprovalForAll(_controller, true);
     }
 
     /**
