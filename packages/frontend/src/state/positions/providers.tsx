@@ -3,14 +3,14 @@ import { createContext } from 'react'
 import { useAtomValue } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 import { useEffect, useMemo } from 'react'
-import { BIG_ZERO } from '@constants/index'
-import { isWethToken0Atom, positionTypeAtom } from './atoms'
+import { BIG_ZERO, OSQUEETH_DECIMALS } from '@constants/index'
+import { addressesAtom, isWethToken0Atom, positionTypeAtom } from './atoms'
 import { useUsdAmount } from '@hooks/useUsdAmount'
 import { PositionType } from '../../types'
 import { useSwaps } from './hooks'
 import useAppMemo from '@hooks/useAppMemo'
 import { FC } from 'react'
-
+import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 interface ComputeSwapsContextValue {
   squeethAmount: BigNumber
   wethAmount: BigNumber
@@ -29,6 +29,8 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
   const setPositionType = useUpdateAtom(positionTypeAtom)
   const { getUsdAmt } = useUsdAmount()
   const { data } = useSwaps()
+  const { oSqueeth } = useAtomValue(addressesAtom)
+  const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
   const computedSwaps = useAppMemo(
     () =>
@@ -94,16 +96,22 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
   )
 
   useEffect(() => {
-    if (computedSwaps.squeethAmount.isGreaterThan(0)) {
+    if (computedSwaps.squeethAmount.isGreaterThan(0) && oSqueethBal?.isGreaterThan(0)) {
       setPositionType(PositionType.LONG)
     } else if (computedSwaps.squeethAmount.isLessThan(0)) {
       setPositionType(PositionType.SHORT)
     } else setPositionType(PositionType.NONE)
-  }, [computedSwaps.squeethAmount, setPositionType])
+  }, [computedSwaps.squeethAmount, oSqueethBal, setPositionType])
 
   const value = useMemo(
-    () => ({ ...computedSwaps, squeethAmount: computedSwaps.squeethAmount.absoluteValue() }),
-    [computedSwaps],
+    () => ({
+      ...computedSwaps,
+      squeethAmount:
+        computedSwaps.squeethAmount.isGreaterThan(0) && computedSwaps.squeethAmount.isGreaterThan(oSqueethBal)
+          ? oSqueethBal
+          : computedSwaps.squeethAmount.absoluteValue(),
+    }),
+    [computedSwaps, oSqueethBal],
   )
 
   return <ComputeSwapsContext.Provider value={value}>{children}</ComputeSwapsContext.Provider>
