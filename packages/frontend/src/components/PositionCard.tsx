@@ -259,16 +259,7 @@ const PositionCard: React.FC = () => {
       }
       return none
     },
-
-  const getRealizedPNLBasedValue = useAppCallback(
-    (long: any, short: any, none: any, loadingMsg?: any) => {
-      if (loadingMsg && loading) return loadingMsg
-      if (longRealizedPNL.isEqualTo(0) && shortRealizedPNL.isEqualTo(0)) return none
-      if (positionType === PositionType.LONG) return long
-      if (positionType === PositionType.SHORT) return short
-      return none
-    },
-    [positionType, loading, longRealizedPNL, shortRealizedPNL],
+    [isPositionLoading, loading, positionType],
   )
 
   useAppEffect(() => {
@@ -329,7 +320,14 @@ const PositionCard: React.FC = () => {
             <div>
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <Typography component="span" style={{ fontWeight: 600 }} id="position-card-before-trade-balance">
-                  {getPositionBasedValue(squeethAmount.toFixed(6), squeethAmount.toFixed(6), '0', '0')}
+                  {getPositionBasedValue(
+                    squeethAmount.toFixed(6),
+                    squeethAmount.toFixed(6),
+                    squeethAmount,
+                    squeethAmount,
+                    '0',
+                    '0',
+                  )}
                 </Typography>
 
                 {(tradeType === TradeType.SHORT && positionType === PositionType.LONG) ||
@@ -343,7 +341,9 @@ const PositionCard: React.FC = () => {
                       component="span"
                       style={{
                         fontWeight: 600,
-                        color: postTradeAmt.gte(getPositionBasedValue(squeethAmount, squeethAmount, 0))
+                        color: postTradeAmt.gte(
+                          getPositionBasedValue(squeethAmount, squeethAmount, squeethAmount, squeethAmount, 0),
+                        )
                           ? '#49D273'
                           : '#f5475c',
                       }}
@@ -364,7 +364,9 @@ const PositionCard: React.FC = () => {
                 </Typography>
               ) : (
                 <Typography variant="caption" color="textSecondary" style={{ marginTop: '.5em' }}>
-                  $ {getPositionBasedValue(sellQuote.amountOut, buyQuote, new BigNumber(0)).times(ethPrice).toFixed(2)}
+                  {getPositionBasedValue(sellQuote.amountOut, buyQuote, sellQuote.amountOut, buyQuote, new BigNumber(0))
+                    .times(ethPrice)
+                    .toFixed(2)}
                 </Typography>
               )}
             </div>
@@ -393,6 +395,8 @@ const PositionCard: React.FC = () => {
                           {getPositionBasedValue(
                             `$${longUnrealizedPNL.usd.toFixed(2)}`,
                             `$${shortUnrealizedPNL.usd.toFixed(2)}`,
+                            longUnrealizedPNL.usd,
+                            shortUnrealizedPNL.usd,
                             '--',
                             'Loading',
                           )}
@@ -403,7 +407,14 @@ const PositionCard: React.FC = () => {
                           style={{ marginLeft: '4px' }}
                           id="unrealized-pnl-perct-value"
                         >
-                          {getPositionBasedValue(`(${longGain.toFixed(2)}%)`, `(${shortGain.toFixed(2)}%)`, null, ' ')}
+                          {getPositionBasedValue(
+                            `(${longGain.toFixed(2)}%)`,
+                            `(${shortGain.toFixed(2)}%)`,
+                            longGain,
+                            shortGain,
+                            null,
+                            ' ',
+                          )}
                         </Typography>
                       </>
                     ) : (
@@ -427,9 +438,11 @@ const PositionCard: React.FC = () => {
                     className={pnlClass(positionType, longRealizedPNL, shortRealizedPNL, classes)}
                     style={{ fontWeight: 600 }}
                   >
-                    {getRealizedPNLBasedValue(
+                    {getPositionBasedValue(
                       `$${longRealizedPNL.toFixed(2)}`,
                       `$${shortRealizedPNL.toFixed(2)}`,
+                      longRealizedPNL,
+                      shortRealizedPNL,
                       '--',
                       'Loading',
                     )}
