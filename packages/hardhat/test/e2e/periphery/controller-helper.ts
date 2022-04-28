@@ -476,23 +476,7 @@ describe("ControllerHelper: mainnet fork", function () {
 
     it("swap with pool, collect fees and redeposit uni nft in vault", async () => {
       
-      const ethToSell = ethers.utils.parseUnits("1000")
-      const wSqueethToBuy = ethers.utils.parseUnits("1000")
-/*       const swapParamBuy = {
-        tokenIn: weth.address,
-        tokenOut: wSqueeth.address,
-        fee: 3000,
-        recipient: owner.address,
-        deadline: Math.floor(await getNow(ethers.provider) + 8640000),
-        amountIn: ethToSell,
-        amountOutMinimum: 0,
-        sqrtPriceLimitX96: 0
-      }     */
-
-      const slot0 = await wSqueethPool.slot0()
-      console.log(slot0.sqrtPriceX96)      
-      //const price = sqrtRatioX96 ** 2 / 2 ** 192
-
+      const ethToSell = ethers.utils.parseUnits("500")
       const swapParamBuy = {
         tokenIn: weth.address,
         tokenOut: wSqueeth.address,
@@ -503,8 +487,6 @@ describe("ControllerHelper: mainnet fork", function () {
         amountOutMinimum: 0,
         sqrtPriceLimitX96: 0
       }    
-      console.log(swapParamBuy)
-
 
       weth.connect(owner).deposit({value: ethToSell})
  
@@ -512,12 +494,10 @@ describe("ControllerHelper: mainnet fork", function () {
       const ownerWethBalanceBeforeTrade1 = await weth.balanceOf(owner.address)
 
       await weth.connect(owner).approve(uniswapRouter.address, constants.MaxUint256)
-      console.log("made it here 2")
 
       await uniswapRouter.connect(owner).exactInputSingle(swapParamBuy)
       const ownerSqueethBalanceAfterTrade1 = await wSqueeth.balanceOf(owner.address)
       const ownerWethBalanceAfterTrade1 = await weth.balanceOf(owner.address)
-      console.log(ownerWethBalanceAfterTrade1.toString(), ownerWethBalanceBeforeTrade1.toString())
 
       expect(ownerWethBalanceBeforeTrade1.sub(ownerWethBalanceAfterTrade1).eq(ethToSell)).to.be.true
 
@@ -573,8 +553,6 @@ describe("ControllerHelper: mainnet fork", function () {
       const depositorSqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
       const depositorEthBalanceAfter = await ethers.provider.getBalance(depositor.address)
 
-      console.log("made it here 4")
-
       const positionAfter = await (positionManager as INonfungiblePositionManager).positions(uniTokenId);
       const vaultAfter = await controller.vaults(vaultId); 
 
@@ -582,8 +560,6 @@ describe("ControllerHelper: mainnet fork", function () {
       expect(positionAfter.tickUpper === 887220).to.be.true
       expect(positionAfter.liquidity.eq(positionBefore.liquidity)).to.be.true
       expect(vaultAfter.NftCollateralId==vaultBefore.NftCollateralId).to.be.true
-      console.log(depositorSqueethBalanceAfter.toString(), depositorSqueethBalanceBefore.toString())
-      console.log(depositorEthBalanceAfter.toString(), depositorEthBalanceBefore.toString())
       expect(depositorSqueethBalanceAfter.gt(depositorSqueethBalanceBefore)).to.be.true
       expect(depositorEthBalanceAfter.gt(depositorEthBalanceBefore)).to.be.true
 
