@@ -111,7 +111,7 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
           ? BIG_ZERO
           : computedSwaps.squeethAmount.absoluteValue(),
     }),
-    [computedSwaps],
+    [computedSwaps, oSqueethBal],
   )
 
   return <ComputeSwapsContext.Provider value={value}>{children}</ComputeSwapsContext.Provider>
