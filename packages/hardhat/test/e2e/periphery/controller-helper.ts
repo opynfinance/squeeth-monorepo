@@ -449,7 +449,7 @@ describe("ControllerHelper: mainnet fork", function () {
     before("open short position and LP" , async () => {
       const vaultId = (await shortSqueeth.nextId());
       const normFactor = await controller.getExpectedNormalizationFactor()
-      const mintWSqueethAmount = ethers.utils.parseUnits('30')
+      const mintWSqueethAmount = ethers.utils.parseUnits('1000')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
@@ -476,8 +476,8 @@ describe("ControllerHelper: mainnet fork", function () {
 
     it("swap with pool, collect fees and redeposit uni nft in vault", async () => {
       
-      const ethToSell = ethers.utils.parseUnits("4")
-      const wSqueethToBuy = ethers.utils.parseUnits("4")
+      const ethToSell = ethers.utils.parseUnits("1000")
+      const wSqueethToBuy = ethers.utils.parseUnits("1000")
 /*       const swapParamBuy = {
         tokenIn: weth.address,
         tokenOut: wSqueeth.address,
@@ -508,19 +508,18 @@ describe("ControllerHelper: mainnet fork", function () {
 
       weth.connect(owner).deposit({value: ethToSell})
  
-      console.log("made it here 1")
       const ownerSqueethBalanceBeforeTrade1 = await wSqueeth.balanceOf(owner.address)
-      //const ownerEthBalanceBeforeTrade1 = await provider.getBalance(owner.address)
+      const ownerWethBalanceBeforeTrade1 = await weth.balanceOf(owner.address)
 
       await weth.connect(owner).approve(uniswapRouter.address, constants.MaxUint256)
       console.log("made it here 2")
 
       await uniswapRouter.connect(owner).exactInputSingle(swapParamBuy)
       const ownerSqueethBalanceAfterTrade1 = await wSqueeth.balanceOf(owner.address)
-      //const ownerEthBalanceAfterTrade1 = await provider.getBalance(owner.address)
+      const ownerWethBalanceAfterTrade1 = await weth.balanceOf(owner.address)
+      console.log(ownerWethBalanceAfterTrade1.toString(), ownerWethBalanceBeforeTrade1.toString())
 
-      //expect(ownerEthBalanceBeforeTrade1.sub(ownerEthBalanceAfterTrade1).eq(ethToSell)).to.be.true
-      console.log("made it here 3")
+      expect(ownerWethBalanceBeforeTrade1.sub(ownerWethBalanceAfterTrade1).eq(ethToSell)).to.be.true
 
       const wSqueethToSell = ownerSqueethBalanceAfterTrade1.sub(ownerSqueethBalanceBeforeTrade1)
       const swapParamSell = {
@@ -539,7 +538,6 @@ describe("ControllerHelper: mainnet fork", function () {
       await uniswapRouter.connect(owner).exactInputSingle(swapParamSell)
       const ownerSqueethBalanceAfterTrade2 = await wSqueeth.balanceOf(owner.address)
       expect(ownerSqueethBalanceBeforeTrade2.sub(ownerSqueethBalanceAfterTrade2).eq(wSqueethToSell)).to.be.true
-      console.log("made it here 3a")
 
       const vaultId = (await shortSqueeth.nextId()).sub(1);
       const uniTokenId =  (await controller.vaults(vaultId)).NftCollateralId;
@@ -549,11 +547,6 @@ describe("ControllerHelper: mainnet fork", function () {
       const debtInEth = vaultBefore.shortAmount.mul(scaledEthPrice).div(one)
       const collateralToFlashloan = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
       const positionBefore = await (positionManager as INonfungiblePositionManager).positions(uniTokenId);
-      const collectFeesParams = {
-        tokenId: uniTokenId,
-        amount0Max: 2**128-1,
-        amount1Max: 2**128-1
-      }
 
       const amount0Max = BigNumber.from(2).mul(BigNumber.from(10).pow(18)).sub(1)
       const amount1Max = BigNumber.from(2).mul(BigNumber.from(10).pow(18)).sub(1)
@@ -575,10 +568,10 @@ describe("ControllerHelper: mainnet fork", function () {
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address);
 
       const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
-      //const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
+      const depositorEthBalanceBefore = await ethers.provider.getBalance(depositor.address)
       await controllerHelper.connect(depositor).rebalanceVaultNft(vaultId, collateralToFlashloan, params);
       const depositorSqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
-      //const depositorEthBalanceAfter = await provider.getBalance(depositor.address)
+      const depositorEthBalanceAfter = await ethers.provider.getBalance(depositor.address)
 
       console.log("made it here 4")
 
@@ -590,8 +583,9 @@ describe("ControllerHelper: mainnet fork", function () {
       expect(positionAfter.liquidity.eq(positionBefore.liquidity)).to.be.true
       expect(vaultAfter.NftCollateralId==vaultBefore.NftCollateralId).to.be.true
       console.log(depositorSqueethBalanceAfter.toString(), depositorSqueethBalanceBefore.toString())
-      //expect(depositorSqueethBalanceAfter.gt(depositorSqueethBalanceBefore)).to.be.true
-      //expect(depositorEthBalanceAfter.gt(depositorEthBalanceBefore)).to.be.true
+      console.log(depositorEthBalanceAfter.toString(), depositorEthBalanceBefore.toString())
+      expect(depositorSqueethBalanceAfter.gt(depositorSqueethBalanceBefore)).to.be.true
+      expect(depositorEthBalanceAfter.gt(depositorEthBalanceBefore)).to.be.true
 
     })
   })
