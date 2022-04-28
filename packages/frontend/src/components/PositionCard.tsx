@@ -238,26 +238,27 @@ const PositionCard: React.FC = () => {
   }, [positionType, loading, longGain, shortGain])
 
   const getPositionBasedValue = useAppCallback(
-    (long: any, short: any, none: any, loadingMsg?: any) => {
+    (
+      longReturnValue: any,
+      shortReturnValue: any,
+      longBignumber: BigNumber,
+      shortBignumber: BigNumber,
+      none: any,
+      loadingMsg?: any,
+    ) => {
       if (loadingMsg && (loading || isPositionLoading)) return loadingMsg
+      if (!longReturnValue || !shortReturnValue) return none
+      if (longBignumber.isEqualTo(0) && longBignumber.isEqualTo(0)) return none
       if (positionType === PositionType.LONG) {
-        //if it's showing -100% it is still loading
-        if (longGain.isLessThanOrEqualTo(-100) || !longGain.isFinite()) {
-          return loadingMsg
-        }
-        return long
+        if (!longBignumber.isFinite() || longBignumber.isEqualTo(0)) return loadingMsg
+        return longReturnValue
       }
       if (positionType === PositionType.SHORT) {
-        //if it's showing -100% it is still loading
-        if (shortGain.isLessThanOrEqualTo(-100) || !shortGain.isFinite()) {
-          return loadingMsg
-        }
-        return short
+        if (!shortBignumber.isFinite() || longBignumber.isEqualTo(0)) return loadingMsg
+        return shortReturnValue
       }
       return none
     },
-    [isPositionLoading, loading, positionType, longGain, shortGain],
-  )
 
   const getRealizedPNLBasedValue = useAppCallback(
     (long: any, short: any, none: any, loadingMsg?: any) => {
