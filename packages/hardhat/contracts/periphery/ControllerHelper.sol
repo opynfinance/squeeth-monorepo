@@ -57,6 +57,11 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
 
         IWPowerPerp(IController(_controller).wPowerPerp()).approve(_nonfungiblePositionManager, type(uint256).max);
         IWETH9(IController(_controller).weth()).approve(_nonfungiblePositionManager, type(uint256).max);
+
+        INonfungiblePositionManager(_nonfungiblePositionManager).setApprovalForAll(
+            _controller,
+            true
+        );
     }
 
     /**
@@ -682,10 +687,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                     );
 
                     // deposit Uni NFT token in vault
-                    INonfungiblePositionManager(ControllerHelperDiamondStorage.getAddressAtSlot(6)).approve(
-                        ControllerHelperDiamondStorage.getAddressAtSlot(0),
-                        tokenId
-                    );
                     IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).depositUniPositionToken(
                         vaultId,
                         tokenId
