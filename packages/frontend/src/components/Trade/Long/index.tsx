@@ -247,7 +247,7 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open, sqthBalProps }) => {
+const OpenLong: React.FC<BuyProps & LongProps> = ({ activeStep = 0, open, sqthBalProps }) => {
   const [buyLoading, setBuyLoading] = useState(false)
   const getBuyQuoteForETH = useGetBuyQuoteForETH()
   const getBuyQuote = useGetBuyQuote()
@@ -612,7 +612,8 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open, sqthBalProps }) =>
   )
 }
 
-const CloseLong: React.FC<BuyProps> = ({ sqthBalProps }) => {
+const CloseLong: React.FC<BuyProps & LongProps> = ({ sqthBalProps }) => {
+  const { longSqthBal, loading: sqthBalLoading, error: sqthBalError, refetch: refetchSqthBal } = sqthBalProps
   const [sellLoading, setSellLoading] = useState(false)
   const [hasJustApprovedSqueeth, setHasJustApprovedSqueeth] = useState(false)
 
@@ -651,7 +652,6 @@ const CloseLong: React.FC<BuyProps> = ({ sqthBalProps }) => {
   const connected = useAtomValue(connectedWalletAtom)
   const selectWallet = useSelectWallet()
 
-  const { longSqthBal, loading: sqthBalLoading, error: sqthBalError, refetch: refetchSqthBal } = sqthBalProps
   const shortDebt = useShortDebt()
   const isShort = shortDebt.gt(0)
 
@@ -983,6 +983,9 @@ type BuyProps = {
   open?: boolean
   isLPage?: boolean
   activeStep?: number
+}
+
+type LongProps = {
   sqthBalProps: {
     longSqthBal: BigNumber
     refetch: () => void
