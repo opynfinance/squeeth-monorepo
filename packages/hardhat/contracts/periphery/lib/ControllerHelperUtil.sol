@@ -1,7 +1,8 @@
+//SPDX-License-Identifier: BUSL-1.1
+
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-//SPDX-License-Identifier: BUSL-1.1
 import "hardhat/console.sol";
 
 // interface
@@ -11,17 +12,21 @@ import {IController} from "../../interfaces/IController.sol";
 import {IWPowerPerp} from "../../interfaces/IWPowerPerp.sol";
 import {IWETH9} from "../../interfaces/IWETH9.sol";
 import {IWPowerPerp} from "../../interfaces/IWPowerPerp.sol";
+import {IOracle} from "../../interfaces/IOracle.sol";
 
 // lib
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
-import {ControllerHelperDataType} from "./ControllerHelperDataType.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
-import {ControllerHelperDiamondStorage} from "../lib/ControllerHelperDiamondStorage.sol";
-
+import {ControllerHelperDataType} from "./ControllerHelperDataType.sol";
+import {LiquidityAmounts} from "./LiquidityAmounts.sol";
+import {TickMathExternal} from "../../libs/TickMathExternal.sol";
+import {SqrtPriceMathPartial} from "../../libs/SqrtPriceMathPartial.sol";
 
 library ControllerHelperUtil {
     using SafeMath for uint256;
     using Address for address payable;
+
+    uint32 private constant TWAP_PERIOD = 420;
 
     /**
      * @notice fully or partially close Uni v3 LP
@@ -31,7 +36,6 @@ library ControllerHelperUtil {
      * @return withdraw wPowerPerp and WETH amounts
      */
     function closeUniLp(address _nonfungiblePositionManager, ControllerHelperDataType.closeUniLpParams memory _params, bool _isWethToken0) public returns (uint256, uint256) {
-        console.log("closeUniLp()");
         INonfungiblePositionManager.DecreaseLiquidityParams memory decreaseParams = INonfungiblePositionManager
             .DecreaseLiquidityParams({
                 tokenId: _params.tokenId,
@@ -40,9 +44,8 @@ library ControllerHelperUtil {
                 amount1Min: _params.amount1Min,
                 deadline: block.timestamp
             });
-        console.log('finished param setup');
         INonfungiblePositionManager(_nonfungiblePositionManager).decreaseLiquidity(decreaseParams);
-        console.log('finished decreaseLiquidity');
+
         uint256 wethAmount;
         uint256 _wPowerPerpAmount;
         (_isWethToken0)
@@ -66,36 +69,55 @@ library ControllerHelperUtil {
         return (_wPowerPerpAmount, wethAmount);
     }
 
+    function getAmountsToLp(address _wPowerPerpPool, uint256 _collateralToLp, uint256 _wPowerPerpAmount, int24 _lowerTick, int24 _upperTick, bool _isWethToken0) public view returns (uint256, uint256) {
+        uint256 amount0Desired; 
+        uint256 amount1Desired;
+
+        {
+            (,int24 currentTick,,,,,) = IUniswapV3Pool(_wPowerPerpPool).slot0();
+            uint160 sqrtRatioX96 = TickMathExternal.getSqrtRatioAtTick(currentTick);
+            uint160 sqrtRatioAX96 = TickMathExternal.getSqrtRatioAtTick(_lowerTick);
+            uint160 sqrtRatioBX96 = TickMathExternal.getSqrtRatioAtTick(_upperTick);
+            (amount0Desired, amount1Desired) = _isWethToken0 ? (_collateralToLp, _wPowerPerpAmount) : (_wPowerPerpAmount, _collateralToLp);
+            uint128 maxLiquidity = LiquidityAmounts.getLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0Desired, amount1Desired);
+            (amount0Desired, amount1Desired) = LiquidityAmounts.getAmountsFromLiquidity(sqrtRatioX96, currentTick, _lowerTick, _upperTick, maxLiquidity);
+        }
+        
+        return (amount0Desired, amount1Desired);
+    }
+
     /**
      * @notice minth amount of wPowerPerp and LP in weth/wPowerPerp pool
      * @param _controller wPowerPerp controller address
      * @param _nonfungiblePositionManager Uni NonFungiblePositionManager address
-     * @param _wPowerPerp wPowerPerp contract address
      * @param _wPowerPerpPool wPowerPerp Uni v3 pool
      * @param _mintAndLpParams ControllerHelperDataType.MintAndLpParams struct
      * @param _isWethToken0 bool variable indicate if Weth token is token0 in Uniswap v3 weth/wPowerPerp pool
      * @return _vaultId and tokenId
      */
-    function mintAndLp(address _controller, address _nonfungiblePositionManager, address _wPowerPerp, address _wPowerPerpPool, address _weth, ControllerHelperDataType.MintAndLpParams calldata _mintAndLpParams, bool _isWethToken0) public returns (uint256, uint256) {
+    function mintAndLp(address _controller, address _nonfungiblePositionManager, address _wPowerPerpPool, address _weth, ControllerHelperDataType.MintAndLpParams calldata _mintAndLpParams, bool _isWethToken0) public returns (uint256, uint256) {
         IWETH9(_weth).withdraw(_mintAndLpParams.collateralToDeposit);
-        
+
+        (uint256 amount0Desired, uint256 amount1Desired) = getAmountsToLp(_wPowerPerpPool, _mintAndLpParams.collateralToLp, _mintAndLpParams.wPowerPerpAmount, _mintAndLpParams.lowerTick, _mintAndLpParams.upperTick, _isWethToken0);
+                
         uint256 _vaultId = IController(_controller).mintWPowerPerpAmount{value: _mintAndLpParams.collateralToDeposit}(
             _mintAndLpParams.vaultId,
-            _mintAndLpParams.wPowerPerpAmount,
+            _isWethToken0 ? amount1Desired : amount0Desired,
             0
         );
-        console.log('before lpWPowerPerpPool');
-        // LP _mintAndLpParams._wPowerPerpAmount & _mintAndLpParams.collateralToLp in Uni v3
+
+        console.log("_isWethToken0", _isWethToken0);
+        console.log("amount0Desired", amount0Desired);
+        console.log("amount1Desired", amount1Desired);
+
+        // LP amount0Desired and amount1Desired in Uni v3
         uint256 uniTokenId = lpWPowerPerpPool(
-            _controller,
             _nonfungiblePositionManager,
-            _wPowerPerpPool, 
-            _wPowerPerp,
-            _vaultId,
+            _wPowerPerpPool,
             ControllerHelperDataType.LpWPowerPerpPool({
                 recipient: _mintAndLpParams.recipient,
-                amount0Desired: _isWethToken0 ? _mintAndLpParams.collateralToLp : _mintAndLpParams.wPowerPerpAmount,
-                amount1Desired: _isWethToken0 ? _mintAndLpParams.wPowerPerpAmount : _mintAndLpParams.collateralToLp,
+                amount0Desired: amount0Desired,
+                amount1Desired: amount1Desired,
                 amount0Min: _mintAndLpParams.amount0Min,
                 amount1Min: _mintAndLpParams.amount1Min,
                 lowerTick: _mintAndLpParams.lowerTick,
@@ -122,7 +144,8 @@ library ControllerHelperUtil {
                 0
             );
         }
-         INonfungiblePositionManager.IncreaseLiquidityParams memory uniIncreaseParams = INonfungiblePositionManager.IncreaseLiquidityParams({
+
+        INonfungiblePositionManager.IncreaseLiquidityParams memory uniIncreaseParams = INonfungiblePositionManager.IncreaseLiquidityParams({
             tokenId: _increaseLiquidityParam.tokenId,
             amount0Desired: (_isWethToken0) ? _increaseLiquidityParam.wethAmountToLp : _increaseLiquidityParam.wPowerPerpAmountToMint,
             amount1Desired: (_isWethToken0) ? _increaseLiquidityParam.wPowerPerpAmountToMint : _increaseLiquidityParam.wethAmountToLp,
@@ -130,9 +153,9 @@ library ControllerHelperUtil {
             amount1Min: _increaseLiquidityParam.amount1Min,
             deadline: block.timestamp
         });
-        console.log('_increaseLiquidityParam.amount0Min', uint256(_increaseLiquidityParam.amount0Min));
+
         INonfungiblePositionManager(_nonfungiblePositionManager).increaseLiquidity(uniIncreaseParams);
-        console.log('increaseLiquidity');
+
         checkExcess(_controller, _nonfungiblePositionManager, _wPowerPerp, _vaultId);
     }
 
@@ -145,19 +168,24 @@ library ControllerHelperUtil {
      * @param _collateralToDeposit amount of collateral to deposit
      */
     function mintIntoVault(address _controller, address _weth, uint256 _vaultId, uint256 _wPowerPerpToMint, uint256 _collateralToDeposit) public returns (uint256) {
-        IWETH9(_weth).withdraw(_collateralToDeposit);
+        if (_collateralToDeposit > 0) IWETH9(_weth).withdraw(_collateralToDeposit);
 
-        return (IController(_controller).mintWPowerPerpAmount{value: _collateralToDeposit}(
-            _vaultId,
-            _wPowerPerpToMint,
-            0
-        ));
+        uint256 vaultId = _vaultId;
+        if (_wPowerPerpToMint > 0) {
+            vaultId = IController(_controller).mintWPowerPerpAmount{value: _collateralToDeposit}(
+                _vaultId,
+                _wPowerPerpToMint,
+                0
+            );
+        } else {
+            IController(_controller).deposit{value: _collateralToDeposit}(_vaultId);
+        }
+        return vaultId;
     }
 
     /**
      * @notice burn wPowerPerp or just withdraw collateral from vault (or both)
      * @param _controller controller address
-     * @param _weth WETH address
      * @param _weth weth address
      * @param _vaultId vault Id
      * @param _wPowerPerpToBurn amount of wPowerPerp to burn
@@ -175,22 +203,15 @@ library ControllerHelperUtil {
 
     /**
      * @notice LP into Uniswap V3 pool
-     * @param _controller controller address
      * @param _nonfungiblePositionManager Uni NonFungiblePositionManager address
      * @param _wPowerPerpPool wPowerpPerp pool address in Uni v3
-     * @param _wPowerPerp wPowerPerp address
-     * @param _vaultId vault ID
      * @param _params ControllerHelperDataType.LpWPowerPerpPool struct
      */
     function lpWPowerPerpPool(
-        address _controller, 
         address _nonfungiblePositionManager,
         address _wPowerPerpPool,
-        address _wPowerPerp,
-        uint256 _vaultId,
         ControllerHelperDataType.LpWPowerPerpPool memory _params
     ) public returns (uint256) {
-        console.log('Before mintParams construction');
         INonfungiblePositionManager.MintParams memory mintParams = INonfungiblePositionManager.MintParams({
             token0: IUniswapV3Pool(_wPowerPerpPool).token0(),
             token1: IUniswapV3Pool(_wPowerPerpPool).token1(),
@@ -204,23 +225,10 @@ library ControllerHelperUtil {
             recipient: _params.recipient,
             deadline: block.timestamp
         });
-            //console.log(mintParams);
-
-            console.log('token0 address',IUniswapV3Pool(_wPowerPerpPool).token0());
-            console.log('token1 address',IUniswapV3Pool(_wPowerPerpPool).token1());
-            console.log(IUniswapV3Pool(_wPowerPerpPool).fee());
-            console.log('weth address',ControllerHelperDiamondStorage.getAddressAtSlot(5));
-            console.log('_params.lowerTick', uint256(_params.lowerTick* -1));
-            console.log('_params.upperTick', uint256(_params.upperTick));
-            console.log('_params.amount0Desired', _params.amount0Desired);
-            console.log('_params.amount1Desired', _params.amount1Desired);
 
         (uint256 tokenId, , , ) = INonfungiblePositionManager(_nonfungiblePositionManager).mint(
             mintParams
         );
-         console.log('resulting token id', tokenId);
-
-        checkExcess(_controller, _nonfungiblePositionManager, _wPowerPerp, _vaultId);
 
         return tokenId;
     }
@@ -243,17 +251,13 @@ library ControllerHelperUtil {
         uint256 _liquidityPercentage
     ) public {
         if ((_vaultId == 0) || (_liquidityPercentage == 1e18)) {
-            console.log('before safeTransfer');
             INonfungiblePositionManager(_nonfungiblePositionManager).safeTransferFrom(
                 address(this),
                 _user,
                 _tokenId
             );
         } else {
-            console.log('deposit back msg.sender %s address(this) %s origin %s',msg.sender, address(this), tx.origin);
             IController(_controller).depositUniPositionToken(_vaultId, _tokenId);
-            console.log('deposited back to vault');
-
         }
     }
 
