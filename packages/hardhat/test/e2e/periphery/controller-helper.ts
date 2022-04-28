@@ -7,7 +7,7 @@ import { Contract, BigNumber, providers, BytesLike, BigNumberish } from "ethers"
 import BigNumberJs from 'bignumber.js'
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
-import { WETH9, MockErc20, ShortPowerPerp, Controller, Oracle, WPowerPerp, ControllerHelper , INonfungiblePositionManager, VaultLibTester} from "../../../typechain";
+import { WETH9, MockErc20, ShortPowerPerp, Controller, Oracle, WPowerPerp, ControllerHelper, INonfungiblePositionManager, SqrtPriceMathPartial} from "../../../typechain";
 import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addWethDaiLiquidity, addSqueethLiquidity } from '../../setup'
 import { isSimilar, wmul, wdiv, one, oracleScaleFactor, getNow } from "../../utils"
 import { JsonRpcSigner } from "@ethersproject/providers";
@@ -70,7 +70,6 @@ describe("ControllerHelper: mainnet fork", function () {
   let controllerHelper: ControllerHelper
   let shortSqueeth: ShortPowerPerp
   let liquidityAmount: Libraries
-  let vaultLib: VaultLibTester
 
 
 
@@ -100,14 +99,14 @@ describe("ControllerHelper: mainnet fork", function () {
     const SqrtPriceExternalLibrary = (await SqrtPriceExternal.deploy());
 
     const TickMathExternal = await ethers.getContractFactory("TickMathExternal")
-    const TickMathLibrary = (await TickMathExternal.deploy());
+    const TickMathExternalLib = (await TickMathExternal.deploy());
 
-    const VaultTester = await ethers.getContractFactory("VaultLibTester", {libraries: {TickMathExternal: TickMathLibrary.address, SqrtPriceMathPartial: SqrtPriceExternalLibrary.address}});
-    vaultLib = (await VaultTester.deploy()) as VaultLibTester;
+    const SqrtPriceMathPartial = await ethers.getContractFactory("SqrtPriceMathPartial")
+    const SqrtPriceMathPartialLib = (await SqrtPriceMathPartial.deploy());
 
-
-    const ControllerHelperUtil = await ethers.getContractFactory("ControllerHelperUtil")
+    const ControllerHelperUtil = await ethers.getContractFactory("ControllerHelperUtil", {libraries: {TickMathExternal: TickMathExternalLib.address, SqrtPriceMathPartial: SqrtPriceMathPartialLib.address}});
     const ControllerHelperUtilLib = (await ControllerHelperUtil.deploy());
+    
     const ControllerHelperContract = await ethers.getContractFactory("ControllerHelper", {libraries: {ControllerHelperUtil: ControllerHelperUtilLib.address}});
     controllerHelper = (await ControllerHelperContract.deploy(controller.address, positionManager.address, uniswapFactory.address, "0x59828FdF7ee634AaaD3f58B19fDBa3b03E2D9d80", "0x27182842E098f60e3D576794A5bFFb0777E025d3", "0x62e28f054efc24b26A794F5C1249B6349454352C")) as ControllerHelper;
   })
@@ -882,11 +881,11 @@ describe("ControllerHelper: mainnet fork", function () {
       // 
       const slot0After = await wSqueethPool.slot0()
       const currentTickAfter = slot0After[1]
-      const positionAmountsAfter = await vaultLib.getUniPositionBalances(positionManager.address, tokenIdAfter, currentTickAfter, isWethToken0)
+      // const positionAmountsAfter = await vaultLib.getUniPositionBalances(positionManager.address, tokenIdAfter, currentTickAfter, isWethToken0)
 
-      console.log('ethAmount', positionAmountsAfter.ethAmount.toString())
-      console.log('wPowerPerpAmount', positionAmountsAfter.wPowerPerpAmount.toString())
-      console.log('positionBefore.liquidity',positionBefore.liquidity.toString())
+      // console.log('ethAmount', positionAmountsAfter.ethAmount.toString())
+      // console.log('wPowerPerpAmount', positionAmountsAfter.wPowerPerpAmount.toString())
+      // console.log('positionBefore.liquidity',positionBefore.liquidity.toString())
       //expect(ownerOfUniNFTAfter.toString().eq(depositor.address.toString())).to.be.true
       expect(positionAfter.tickLower === newTickLower).to.be.true
       expect(positionAfter.tickUpper === newTickUpper).to.be.true
