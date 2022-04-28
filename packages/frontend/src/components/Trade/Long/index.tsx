@@ -46,7 +46,7 @@ import { TradeType } from '../../../types'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from 'src/state/controller/atoms'
 import useAppEffect from '@hooks/useAppEffect'
 import useAppCallback from '@hooks/useAppCallback'
-import { useMemo } from 'react'
+import useAppMemo from '@hooks/useAppMemo'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -247,7 +247,7 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
+const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open, sqthBalProps }) => {
   const [buyLoading, setBuyLoading] = useState(false)
   const getBuyQuoteForETH = useGetBuyQuoteForETH()
   const getBuyQuote = useGetBuyQuote()
@@ -277,7 +277,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   const isShort = useAtomValue(isShortAtom)
   const selectWallet = useSelectWallet()
   const { squeethAmount } = useComputeSwaps()
-  const { longSqthBal } = useLongSqthBal()
+  const { longSqthBal, refetch: refetchSqthBal } = sqthBalProps
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 
@@ -372,6 +372,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
     setBuyLoading(true)
     try {
       await buyAndRefund(new BigNumber(ethTradeAmount), () => {
+        refetchSqthBal()
         setTradeSuccess(true)
         setTradeCompleted(true)
 
@@ -382,7 +383,15 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
       console.log(e)
       setBuyLoading(false)
     }
-  }, [buyAndRefund, ethTradeAmount, resetEthTradeAmount, resetSqthTradeAmount, setTradeCompleted, setTradeSuccess])
+  }, [
+    buyAndRefund,
+    ethTradeAmount,
+    resetEthTradeAmount,
+    resetSqthTradeAmount,
+    setTradeCompleted,
+    setTradeSuccess,
+    refetchSqthBal,
+  ])
 
   return (
     <div id="open-long-card">
@@ -603,7 +612,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   )
 }
 
-const CloseLong: React.FC<BuyProps> = () => {
+const CloseLong: React.FC<BuyProps> = ({ sqthBalProps }) => {
   const [sellLoading, setSellLoading] = useState(false)
   const [hasJustApprovedSqueeth, setHasJustApprovedSqueeth] = useState(false)
 
@@ -633,7 +642,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
   const slippageAmount = useAtomValue(slippageAmountAtom)
   const ethPrice = useETHPrice()
-  const amount = useMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
+  const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const altTradeAmount = new BigNumber(ethTradeAmount)
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter)
   const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
@@ -642,7 +651,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   const connected = useAtomValue(connectedWalletAtom)
   const selectWallet = useSelectWallet()
 
-  const { longSqthBal, loading: sqthBalLoading, error: sqthBalError, refetch: refetchSqthBal } = useLongSqthBal()
+  const { longSqthBal, loading: sqthBalLoading, error: sqthBalError, refetch: refetchSqthBal } = sqthBalProps
   const shortDebt = useShortDebt()
   const isShort = shortDebt.gt(0)
 
@@ -694,6 +703,7 @@ const CloseLong: React.FC<BuyProps> = () => {
         })
       } else {
         await sell(amount, () => {
+          refetchSqthBal()
           setIsTxFirstStep(false)
           setTradeSuccess(true)
           setTradeCompleted(true)
@@ -716,6 +726,7 @@ const CloseLong: React.FC<BuyProps> = () => {
     setTradeSuccess,
     squeethAllowance,
     squeethApprove,
+    refetchSqthBal,
   ])
 
   useAppEffect(() => {
@@ -972,13 +983,30 @@ type BuyProps = {
   open?: boolean
   isLPage?: boolean
   activeStep?: number
+  sqthBalProps: {
+    longSqthBal: BigNumber
+    refetch: () => void
+    loading: boolean
+    error?: any
+  }
 }
 
 const Long: React.FC<BuyProps> = ({ open, isLPage = false, activeStep = 0 }) => {
+  const { longSqthBal, refetch: refetchSqthBal, loading: loadingSqthBal, error } = useLongSqthBal()
+
   return open ? (
-    <OpenLong open={open} isLPage={isLPage} activeStep={activeStep} />
+    <OpenLong
+      open={open}
+      isLPage={isLPage}
+      activeStep={activeStep}
+      sqthBalProps={{ longSqthBal, refetch: refetchSqthBal, loading: loadingSqthBal }}
+    />
   ) : (
-    <CloseLong isLPage={isLPage} activeStep={activeStep} />
+    <CloseLong
+      isLPage={isLPage}
+      activeStep={activeStep}
+      sqthBalProps={{ longSqthBal, refetch: refetchSqthBal, loading: loadingSqthBal, error }}
+    />
   )
 }
 
