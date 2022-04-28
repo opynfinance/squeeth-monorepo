@@ -23,6 +23,7 @@ import { PositionType } from '../../types'
 import { useVaultData } from '@hooks/useVaultData'
 import { indexAtom } from '../controller/atoms'
 import useAppEffect from '@hooks/useAppEffect'
+import { useState } from 'react'
 
 export function useEthCollateralPnl() {
   const { vaultId } = useFirstValidVault()
@@ -32,6 +33,7 @@ export function useEthCollateralPnl() {
   const index = useAtomValue(indexAtom)
 
   const [ethCollateralPnl, setEthCollateralPnl] = useAtom(ethCollateralPnlAtom)
+  const [error, setError] = useState('')
   const swapsData = useAtomValue(swapsAtom)
 
   useAppEffect(() => {
@@ -44,13 +46,20 @@ export function useEthCollateralPnl() {
         !vaultHistoryLoading &&
         !isVaultLoading
       ) {
-        const result = await calcETHCollateralPnl(vaultHistory, toTokenAmount(index, 18).sqrt(), existingCollat)
-        setEthCollateralPnl(result)
+        try {
+          const result = await calcETHCollateralPnl(vaultHistory, toTokenAmount(index, 18).sqrt(), existingCollat)
+
+          setEthCollateralPnl(result)
+        } catch (e) {
+          if (e instanceof Error) {
+            setError(e.message)
+          }
+        }
       }
     })()
   }, [existingCollat, index, setEthCollateralPnl, swapsData?.swaps, vaultHistory, isVaultLoading, vaultHistoryLoading])
 
-  return ethCollateralPnl
+  return { ethCollateralPnl, error }
 }
 
 export function useBuyAndSellQuote() {
@@ -160,7 +169,7 @@ export function useShortUnrealizedPNL() {
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const positionType = useAtomValue(positionTypeAtom)
   const buyQuote = useAtomValue(buyQuoteAtom)
-  const ethCollateralPnl = useEthCollateralPnl()
+  const { ethCollateralPnl, error } = useEthCollateralPnl()
   const [shortUnrealizedPNL, setShortUnrealizedPNL] = useAtom(shortUnrealizedPNLAtom)
   const index = useAtomValue(indexAtom)
 
@@ -170,11 +179,15 @@ export function useShortUnrealizedPNL() {
 
   useAppEffect(() => {
     ;(async () => {
-      if (
+      if (error) {
+        setShortUnrealizedPNL((prevState) => ({
+          ...prevState,
+          error,
+        }))
+      } else if (
         swaps?.length &&
         !buyQuote.isZero() &&
         !index.isZero() &&
-        !ethCollateralPnl.isZero() &&
         !squeethAmount.isZero() &&
         positionType === PositionType.SHORT &&
         !swapsLoading
@@ -187,9 +200,11 @@ export function useShortUnrealizedPNL() {
           squeethAmount,
           ethCollateralPnl,
         )
-        setShortUnrealizedPNL({
+
+        setShortUnrealizedPNL((prevState) => ({
+          ...prevState,
           ...pnl,
-        })
+        }))
       } else {
         setShortUnrealizedPNL((prevState) => ({ ...prevState, loading: true }))
       }

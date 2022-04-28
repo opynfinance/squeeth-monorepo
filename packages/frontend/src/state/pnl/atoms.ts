@@ -2,7 +2,7 @@ import { atom } from 'jotai'
 import { BIG_ZERO } from '@constants/index'
 
 export const ethCollateralPnlAtom = atom(BIG_ZERO)
-export const shortUnrealizedPNLAtom = atom({ usd: BIG_ZERO, eth: BIG_ZERO, loading: true })
+export const shortUnrealizedPNLAtom = atom({ usd: BIG_ZERO, eth: BIG_ZERO, loading: true, error: '' })
 export const longUnrealizedPNLAtom = atom({ usd: BIG_ZERO, eth: BIG_ZERO, loading: true })
 export const buyQuoteAtom = atom(BIG_ZERO)
 export const sellQuoteAtom = atom({

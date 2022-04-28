@@ -5,7 +5,7 @@ import InfoIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
 import Link from 'next/link'
-import React, { memo, useState } from 'react'
+import React, { memo, useMemo, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 
 import { Tooltips } from '@constants/enums'
@@ -306,6 +306,10 @@ const PositionCard: React.FC = () => {
     }
   }, [longUnrealizedPNL.loading, positionType, shortUnrealizedPNL.loading])
 
+  const pnlError = useMemo(() => {
+    return positionType === PositionType.SHORT && shortUnrealizedPNL.error
+  }, [shortUnrealizedPNL.error, positionType])
+
   return (
     <div className={clsx(classes.container, classes.posBg)}>
       {!fullyLiquidated ? (
@@ -382,7 +386,11 @@ const PositionCard: React.FC = () => {
                     </Tooltip>
                   </div>
                   <div className={classes.pnl} id="unrealized-pnl-value">
-                    {!pnlLoading ? (
+                    {pnlError ? (
+                      pnlError
+                    ) : pnlLoading ? (
+                      'Loading'
+                    ) : (
                       <>
                         <Typography
                           className={pnlClass(positionType, longGain, shortGain, classes)}
@@ -405,8 +413,6 @@ const PositionCard: React.FC = () => {
                           {getPositionBasedValue(`(${longGain.toFixed(2)}%)`, `(${shortGain.toFixed(2)}%)`, null, ' ')}
                         </Typography>
                       </>
-                    ) : (
-                      'Loading'
                     )}
                   </div>
                 </div>

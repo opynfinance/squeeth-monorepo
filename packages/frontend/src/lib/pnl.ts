@@ -9,6 +9,7 @@ import { toTokenAmount } from '@utils/calculations'
 import { getHistoricEthPrice } from '@hooks/useETHPrice'
 import { getETHWithinOneDayPrices } from '@utils/ethPriceCharts'
 import { Action } from '../../types/global_apollo'
+import floatifyBigNums from '@utils/floatifyBigNums'
 
 type ShortPnLParams = {
   wethAmount: BigNumber
@@ -85,7 +86,11 @@ export async function calcETHCollateralPnl(
       }, Promise.resolve({ deposits: BIG_ZERO, withdrawals: BIG_ZERO, priceError: false }))
     : { deposits: BIG_ZERO, withdrawals: BIG_ZERO, priceError: true }
 
-  return !priceError ? currentVaultEthBalance.times(uniswapEthPrice).minus(deposits.minus(withdrawals)) : BIG_ZERO
+  if (priceError) {
+    throw new Error('Collateral PnL Error')
+  }
+
+  return currentVaultEthBalance.times(uniswapEthPrice).minus(deposits.minus(withdrawals))
 }
 /**
  * getRelevantSwaps - gets the swaps that constitute the users current position
