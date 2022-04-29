@@ -508,7 +508,7 @@ describe("ControllerHelper: mainnet fork", function () {
         fee: 3000,
         recipient: owner.address,
         deadline: Math.floor(await getNow(ethers.provider) + 8640000),
-        amountIn: wSqueethToSell,
+        amountIn: wSqueethToSell.toString(),
         amountOutMinimum: 0,
         sqrtPriceLimitX96: 0
       }    
