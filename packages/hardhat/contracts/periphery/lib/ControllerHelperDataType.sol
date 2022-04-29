@@ -76,6 +76,7 @@ library ControllerHelperDataType {
         uint256 limitPriceEthPerPowerPerp; // price limit for swapping between wPowerPerp and ETH (ETH per 1 wPowerPerp)
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
+        bool burnExactRemoved;
     }
 
     /// @dev params for batchMintLp()
@@ -117,6 +118,7 @@ library ControllerHelperDataType {
         uint256 limitPriceEthPerPowerPerp; // price limit for swapping between wPowerPerp and ETH (ETH per 1 wPowerPerp)
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
+        bool burnExactRemoved;
     }
 
     /// @dev params for _closeUniLp() 

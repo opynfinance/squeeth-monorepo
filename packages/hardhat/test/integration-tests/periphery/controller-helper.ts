@@ -1040,7 +1040,8 @@ describe("Controller helper integration test", function () {
         collateralToWithdraw: vaultBefore.collateralAmount, 
         limitPriceEthPerPowerPerp,
         amount0Min: BigNumber.from(0), 
-        amount1Min:BigNumber.from(0)
+        amount1Min:BigNumber.from(0),
+        burnExactRemoved: false
       })
 
       const positionAfter = await (positionManager as INonfungiblePositionManager).positions(tokenId);
@@ -1161,7 +1162,8 @@ describe("Controller helper integration test", function () {
         collateralToWithdraw: vaultBefore.collateralAmount, 
         limitPriceEthPerPowerPerp, 
         amount0Min: BigNumber.from(0), 
-        amount1Min:BigNumber.from(0)
+        amount1Min:BigNumber.from(0),
+        burnExactRemoved: false
       })
 
       const positionAfter = await (positionManager as INonfungiblePositionManager).positions(tokenId);
@@ -1284,7 +1286,8 @@ describe("Controller helper integration test", function () {
         collateralToWithdraw: vaultBefore.collateralAmount, 
         limitPriceEthPerPowerPerp, 
         amount0Min: BigNumber.from(0), 
-        amount1Min:BigNumber.from(0)
+        amount1Min:BigNumber.from(0),
+        burnExactRemoved: false
       })
 
       const positionAfter = await (positionManager as INonfungiblePositionManager).positions(tokenId);
