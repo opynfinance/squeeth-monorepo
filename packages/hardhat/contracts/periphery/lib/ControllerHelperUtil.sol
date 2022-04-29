@@ -11,7 +11,6 @@ import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Po
 import {IController} from "../../interfaces/IController.sol";
 import {IWPowerPerp} from "../../interfaces/IWPowerPerp.sol";
 import {IWETH9} from "../../interfaces/IWETH9.sol";
-import {IWPowerPerp} from "../../interfaces/IWPowerPerp.sol";
 import {IOracle} from "../../interfaces/IOracle.sol";
 
 // lib
@@ -94,14 +93,16 @@ library ControllerHelperUtil {
      * @param _isWethToken0 bool variable indicate if Weth token is token0 in Uniswap v3 weth/wPowerPerp pool
      * @return _vaultId and tokenId
      */
-    function mintAndLp(address _controller, address _nonfungiblePositionManager, address _wPowerPerpPool, address _weth, ControllerHelperDataType.MintAndLpParams calldata _mintAndLpParams, bool _isWethToken0) public returns (uint256, uint256) {
+    function mintAndLp(address _controller, address _nonfungiblePositionManager, address _wPowerPerp, address _wPowerPerpPool, address _weth, ControllerHelperDataType.MintAndLpParams calldata _mintAndLpParams, bool _isWethToken0) public returns (uint256, uint256) {
         IWETH9(_weth).withdraw(_mintAndLpParams.collateralToDeposit);
 
         (uint256 amount0Desired, uint256 amount1Desired) = getAmountsToLp(_wPowerPerpPool, _mintAndLpParams.collateralToLp, _mintAndLpParams.wPowerPerpAmount, _mintAndLpParams.lowerTick, _mintAndLpParams.upperTick, _isWethToken0);
                 
+        // assuming the contract will not hold oSQTH more than amount1Desired
+        uint256 amountToMint = (_isWethToken0) ? amount1Desired.sub(IWPowerPerp(_wPowerPerp).balanceOf(address(this))) : amount0Desired.sub(IWPowerPerp(_wPowerPerp).balanceOf(address(this)));
         uint256 _vaultId = IController(_controller).mintWPowerPerpAmount{value: _mintAndLpParams.collateralToDeposit}(
             _mintAndLpParams.vaultId,
-            _isWethToken0 ? amount1Desired : amount0Desired,
+            amountToMint,
             0
         );
 

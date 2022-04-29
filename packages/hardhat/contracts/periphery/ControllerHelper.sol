@@ -245,6 +245,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         (uint256 vaultId, ) = ControllerHelperUtil.mintAndLp(
             ControllerHelperDiamondStorage.getAddressAtSlot(0),
             ControllerHelperDiamondStorage.getAddressAtSlot(6),
+            ControllerHelperDiamondStorage.getAddressAtSlot(4),
             ControllerHelperDiamondStorage.getAddressAtSlot(3),
             ControllerHelperDiamondStorage.getAddressAtSlot(5),
             _params,
@@ -483,6 +484,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             (uint256 vaultId, uint256 uniTokenId) = ControllerHelperUtil.mintAndLp(
                 ControllerHelperDiamondStorage.getAddressAtSlot(0),
                 ControllerHelperDiamondStorage.getAddressAtSlot(6),
+                ControllerHelperDiamondStorage.getAddressAtSlot(4),
                 ControllerHelperDiamondStorage.getAddressAtSlot(3),
                 ControllerHelperDiamondStorage.getAddressAtSlot(5),
                 ControllerHelperDataType.MintAndLpParams({
@@ -635,7 +637,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         decreaseLiquidityParam.liquidityPercentage
                     );
                 } else if (
-                    // this will execute if the use case is to mint in vault, deposit collateral in vault or mint + deposit
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.DepositIntoVault
                 ) {
                     ControllerHelperDataType.DepositIntoVault memory depositIntoVaultParams = abi.decode(
@@ -677,6 +678,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                     (vaultId, tokenId) = ControllerHelperUtil.mintAndLp(
                         ControllerHelperDiamondStorage.getAddressAtSlot(0),
                         ControllerHelperDiamondStorage.getAddressAtSlot(6),
+                        ControllerHelperDiamondStorage.getAddressAtSlot(4),
                         ControllerHelperDiamondStorage.getAddressAtSlot(3),
                         ControllerHelperDiamondStorage.getAddressAtSlot(5),
                         mintAndLpParams,
