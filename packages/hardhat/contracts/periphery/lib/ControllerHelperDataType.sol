@@ -35,7 +35,9 @@ library ControllerHelperDataType {
         DepositIntoVault,
         WithdrawFromVault,
         MintNewLp,
-        generalSwap
+        generalSwap,
+        CollectFees, 
+        DepositExistingNft
     }
     
     /// @dev params for flashswapWBurnBuyLong()
@@ -205,5 +207,16 @@ library ControllerHelperDataType {
         address tokenOut;
         uint256 amountIn;
         uint256 limitPriceEthPerPowerPerp;
+    }
+
+    /// @dev struct for collecting fees owed from a uniswap NFT
+    struct CollectFeesParams {
+        uint256 tokenId;
+        uint128 amount0Max;
+        uint128 amount1Max;
+    }
+    /// @dev struct for re-depositing and existing uniswap NFT to a vault
+    struct DepositExistingNftParams {
+        uint256 tokenId;
     }
 }

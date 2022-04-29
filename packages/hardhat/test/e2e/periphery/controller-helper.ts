@@ -3,7 +3,7 @@
 // in 2 terminal: MAINNET_FORK=true npx hardhat test ./test/e2e/periphery/controller-helper.ts
 import { ethers, network} from "hardhat"
 import { expect } from "chai";
-import { Contract, BigNumber, providers, BytesLike, BigNumberish } from "ethers";
+import { Contract, BigNumber, providers, BytesLike, BigNumberish, constants } from "ethers";
 import BigNumberJs from 'bignumber.js'
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
@@ -67,6 +67,7 @@ describe("ControllerHelper: mainnet fork", function () {
 
   this.beforeAll("Setup mainnet fork contracts", async () => {
     depositor = await impersonateAddress("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045");
+    owner = await impersonateAddress('0xDA9dfA130Df4dE4673b89022EE50ff26f6EA73Cf');
 
     // const usdcContract = await ethers.getContractFactory("MockErc20")
     usdc = await ethers.getContractAt("MockErc20", "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
@@ -76,7 +77,7 @@ describe("ControllerHelper: mainnet fork", function () {
 
     positionManager = await ethers.getContractAt(POSITION_MANAGER_ABI, "0xC36442b4a4522E871399CD717aBDD847Ab11FE88");
     uniswapFactory = await ethers.getContractAt(FACTORY_ABI, "0x1F98431c8aD98523631AE4a59f267346ea31F984");
-    uniswapRouter = await ethers.getContractAt(ROUTER_ABI, "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45");
+    uniswapRouter = await ethers.getContractAt(ROUTER_ABI, "0xE592427A0AEce92De3Edee1F18E0157C05861564");
 
     controller = (await ethers.getContractAt("Controller", "0x64187ae08781B09368e6253F9E94951243A493D5")) as Controller
     wSqueeth = (await ethers.getContractAt("WPowerPerp", "0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B")) as WPowerPerp
@@ -539,6 +540,129 @@ describe("ControllerHelper: mainnet fork", function () {
       expect(positionAfter.liquidity.eq(BigNumber.from(0))).to.be.true
       expect(vaultAfter.shortAmount.eq(BigNumber.from(0))).to.be.true
       expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
+    })
+  })
+
+  describe("Collect fees from vault and redeposit", async () => {
+    before("open short position and LP" , async () => {
+      const vaultId = (await shortSqueeth.nextId());
+      const normFactor = await controller.getExpectedNormalizationFactor()
+      const mintWSqueethAmount = ethers.utils.parseUnits('50')
+      const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
+      const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
+      const scaledEthPrice = ethPrice.div(10000)
+      const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
+      const collateralToMint = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
+      const collateralToFlashloan = collateralToMint
+      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, true)
+      const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
+      const flashloanWMintDepositNftParams = {
+        vaultId: 0,
+        wPowerPerpAmount: mintWSqueethAmount.toString(),
+        collateralToDeposit: 0,
+        collateralToFlashloan: collateralToFlashloan.toString(),
+        collateralToLp: collateralToLp.toString(),
+        collateralToWithdraw: 0,
+        lpAmount0Min: 0,
+        lpAmount1Min: 0,
+        lpLowerTick: -887220,
+        lpUpperTick: 887220
+      }
+
+      await controllerHelper.connect(depositor).flashloanWMintDepositNft(flashloanWMintDepositNftParams, {value: collateralToLp})
+    })
+
+    it("swap with pool, collect fees and redeposit uni nft in vault", async () => {
+      
+      const ethToSell = ethers.utils.parseUnits("5")
+      const swapParamBuy = {
+        tokenIn: weth.address,
+        tokenOut: wSqueeth.address,
+        fee: 3000,
+        recipient: owner.address,
+        deadline: Math.floor(await getNow(ethers.provider) + 8640000),
+        amountIn: ethToSell.toString(),
+        amountOutMinimum: 0,
+        sqrtPriceLimitX96: 0
+      }    
+
+      weth.connect(owner).deposit({value: ethToSell})
+ 
+      const ownerSqueethBalanceBeforeTrade1 = await wSqueeth.balanceOf(owner.address)
+      const ownerWethBalanceBeforeTrade1 = await weth.balanceOf(owner.address)
+
+      await weth.connect(owner).approve(uniswapRouter.address, constants.MaxUint256)
+
+      await uniswapRouter.connect(owner).exactInputSingle(swapParamBuy)
+      const ownerSqueethBalanceAfterTrade1 = await wSqueeth.balanceOf(owner.address)
+      const ownerWethBalanceAfterTrade1 = await weth.balanceOf(owner.address)
+
+      expect(ownerWethBalanceBeforeTrade1.sub(ownerWethBalanceAfterTrade1).eq(ethToSell)).to.be.true
+
+      const wSqueethToSell = ownerSqueethBalanceAfterTrade1.sub(ownerSqueethBalanceBeforeTrade1)
+      const swapParamSell = {
+        tokenIn: wSqueeth.address,
+        tokenOut: weth.address,
+        fee: 3000,
+        recipient: owner.address,
+        deadline: Math.floor(await getNow(ethers.provider) + 8640000),
+        amountIn: wSqueethToSell.toString(),
+        amountOutMinimum: 0,
+        sqrtPriceLimitX96: 0
+      }    
+
+      const ownerSqueethBalanceBeforeTrade2 = await wSqueeth.balanceOf(owner.address)
+      await wSqueeth.connect(owner).approve(uniswapRouter.address, constants.MaxUint256)
+      await uniswapRouter.connect(owner).exactInputSingle(swapParamSell)
+      const ownerSqueethBalanceAfterTrade2 = await wSqueeth.balanceOf(owner.address)
+      expect(ownerSqueethBalanceBeforeTrade2.sub(ownerSqueethBalanceAfterTrade2).eq(wSqueethToSell)).to.be.true
+
+      const vaultId = (await shortSqueeth.nextId()).sub(1);
+      const uniTokenId =  (await controller.vaults(vaultId)).NftCollateralId;
+      const vaultBefore = await controller.vaults(vaultId); 
+      const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
+      const scaledEthPrice = ethPrice.div(10000)
+      const debtInEth = vaultBefore.shortAmount.mul(scaledEthPrice).div(one)
+      const collateralToFlashloan = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
+      const positionBefore = await (positionManager as INonfungiblePositionManager).positions(uniTokenId);
+
+      const amount0Max = BigNumber.from(2).mul(BigNumber.from(10).pow(18)).sub(1)
+      const amount1Max = BigNumber.from(2).mul(BigNumber.from(10).pow(18)).sub(1)
+
+      const abiCoder = new ethers.utils.AbiCoder
+      const params = [
+      {
+          rebalanceVaultNftType: BigNumber.from(6),
+          // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
+          data: abiCoder.encode(["uint256", "uint128", "uint128"], [uniTokenId, amount0Max, amount1Max])
+        },
+        {
+          rebalanceVaultNftType: BigNumber.from(7),
+          // data: ethers.utils.hexlify(abiCoder.encode(["uint256"], ["1"])) as BytesLike
+          data: abiCoder.encode(["uint256"], [uniTokenId])
+        }
+      ]
+
+      await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address);
+
+      const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
+      const depositorEthBalanceBefore = await ethers.provider.getBalance(depositor.address)
+      const tx = await controllerHelper.connect(depositor).rebalanceVaultNft(vaultId, collateralToFlashloan, params);
+      const receipt = await tx.wait()
+      const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
+      const depositorSqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
+      const depositorEthBalanceAfter = await ethers.provider.getBalance(depositor.address)
+
+      const positionAfter = await (positionManager as INonfungiblePositionManager).positions(uniTokenId);
+      const vaultAfter = await controller.vaults(vaultId); 
+
+      expect(positionAfter.tickLower === -887220).to.be.true
+      expect(positionAfter.tickUpper === 887220).to.be.true
+      expect(positionAfter.liquidity.eq(positionBefore.liquidity)).to.be.true
+      expect(vaultAfter.NftCollateralId==vaultBefore.NftCollateralId).to.be.true
+      expect(depositorSqueethBalanceAfter.gt(depositorSqueethBalanceBefore)).to.be.true
+      expect(depositorEthBalanceAfter.add(gasSpent).gt(depositorEthBalanceBefore)).to.be.true
+
     })
   })
 

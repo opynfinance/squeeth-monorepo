@@ -228,35 +228,25 @@ const PositionCard: React.FC = () => {
   }, [firstValidVault, shortVaults, liquidations])
 
   const isDollarValueLoading = useAppMemo(() => {
-    if (positionType === PositionType.LONG) {
-      return loading || longGain.isLessThanOrEqualTo(-100) || !longGain.isFinite()
-    } else if (positionType === PositionType.SHORT) {
-      return loading || shortGain.isLessThanOrEqualTo(-100) || !shortGain.isFinite()
+    if (positionType === PositionType.LONG || positionType === PositionType.SHORT) {
+      return loading
     } else {
       return null
     }
-  }, [positionType, loading, longGain, shortGain])
+  }, [positionType, loading])
 
   const getPositionBasedValue = useAppCallback(
     (long: any, short: any, none: any, loadingMsg?: any) => {
       if (loadingMsg && (loading || isPositionLoading)) return loadingMsg
       if (positionType === PositionType.LONG) {
-        //if it's showing -100% it is still loading
-        if (longGain.isLessThanOrEqualTo(-100) || !longGain.isFinite()) {
-          return loadingMsg
-        }
         return long
       }
       if (positionType === PositionType.SHORT) {
-        //if it's showing -100% it is still loading
-        if (shortGain.isLessThanOrEqualTo(-100) || !shortGain.isFinite()) {
-          return loadingMsg
-        }
         return short
       }
       return none
     },
-    [isPositionLoading, loading, positionType, longGain, shortGain],
+    [isPositionLoading, loading, positionType],
   )
 
   const getRealizedPNLBasedValue = useAppCallback(

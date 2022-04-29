@@ -707,6 +707,41 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         uint8(ControllerHelperDataType.CALLBACK_SOURCE.GENERAL_SWAP),
                         ""
                     );
+                } else if (
+                    data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.CollectFees
+                ) {
+                    ControllerHelperDataType.CollectFeesParams memory collectFeesParams = abi.decode(
+                        data[i].data,
+                        (ControllerHelperDataType.CollectFeesParams)
+                    );
+
+                    INonfungiblePositionManager.CollectParams memory collectParams = INonfungiblePositionManager
+                        .CollectParams({
+                            tokenId: collectFeesParams.tokenId,
+                            recipient: address(this),
+                            amount0Max: collectFeesParams.amount0Max,
+                            amount1Max: collectFeesParams.amount0Max
+                        });
+
+                    INonfungiblePositionManager(ControllerHelperDiamondStorage.getAddressAtSlot(6)).collect(
+                        collectParams
+                    );
+                } else if (
+                    data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.DepositExistingNft
+                ) {
+                    ControllerHelperDataType.DepositExistingNftParams memory depositExistingNftParams = abi.decode(
+                        data[i].data,
+                        (ControllerHelperDataType.DepositExistingNftParams)
+                    );
+                    INonfungiblePositionManager(ControllerHelperDiamondStorage.getAddressAtSlot(6)).approve(
+                        ControllerHelperDiamondStorage.getAddressAtSlot(0),
+                        depositExistingNftParams.tokenId
+                    );
+
+                    IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).depositUniPositionToken(
+                        vaultId,
+                        depositExistingNftParams.tokenId
+                    );
                 }
             }
 
