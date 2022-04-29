@@ -98,13 +98,16 @@ library ControllerHelperUtil {
 
         (uint256 amount0Desired, uint256 amount1Desired) = getAmountsToLp(_wPowerPerpPool, _mintAndLpParams.collateralToLp, _mintAndLpParams.wPowerPerpAmount, _mintAndLpParams.lowerTick, _mintAndLpParams.upperTick, _isWethToken0);
                 
-        // assuming the contract will not hold oSQTH more than amount1Desired
-        uint256 amountToMint = (_isWethToken0) ? amount1Desired.sub(IWPowerPerp(_wPowerPerp).balanceOf(address(this))) : amount0Desired.sub(IWPowerPerp(_wPowerPerp).balanceOf(address(this)));
-        uint256 _vaultId = IController(_controller).mintWPowerPerpAmount{value: _mintAndLpParams.collateralToDeposit}(
-            _mintAndLpParams.vaultId,
-            amountToMint,
-            0
-        );
+        uint256 _vaultId;
+        uint256 amountToMint = (_isWethToken0) ? amount1Desired : amount0Desired;
+        if (IWPowerPerp(_wPowerPerp).balanceOf(address(this)) < amountToMint) {
+            amountToMint = amountToMint.sub(IWPowerPerp(_wPowerPerp).balanceOf(address(this)));
+            _vaultId = IController(_controller).mintWPowerPerpAmount{value: _mintAndLpParams.collateralToDeposit}(
+                _mintAndLpParams.vaultId,
+                amountToMint,
+                0
+            );
+        }
 
         // LP amount0Desired and amount1Desired in Uni v3
         uint256 uniTokenId = lpWPowerPerpPool(
