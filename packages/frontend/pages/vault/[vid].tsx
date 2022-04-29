@@ -58,7 +58,14 @@ import {
   useWithdrawCollateral,
   useWithdrawUniPositionToken,
 } from 'src/state/controller/hooks'
-import { useComputeSwaps, useFirstValidVault, useLpDebt, useMintedDebt, useShortDebt } from 'src/state/positions/hooks'
+import {
+  useComputeSwaps,
+  useLpDebt,
+  useMintedDebt,
+  useShortDebt,
+  usePositionsAndFeesComputation,
+  useFirstValidVault,
+} from 'src/state/positions/hooks'
 import { useVaultData } from '@hooks/useVaultData'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 
@@ -292,6 +299,7 @@ const Component: React.FC = () => {
   const classes = useStyles()
   const router = useRouter()
   const { isRestricted } = useRestrictUser()
+  usePositionsAndFeesComputation()
 
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
   const getDebtAmount = useGetDebtAmount()
@@ -313,6 +321,7 @@ const Component: React.FC = () => {
   const { squeethAmount } = useComputeSwaps()
   const mintedDebt = useMintedDebt()
   const shortDebt = useShortDebt()
+
   const lpedSqueeth = useLpDebt()
   const { getApproved, approve } = useERC721(nftManager)
   const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
