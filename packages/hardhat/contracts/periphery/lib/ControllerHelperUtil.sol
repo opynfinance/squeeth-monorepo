@@ -105,10 +105,6 @@ library ControllerHelperUtil {
             0
         );
 
-        console.log("_isWethToken0", _isWethToken0);
-        console.log("amount0Desired", amount0Desired);
-        console.log("amount1Desired", amount1Desired);
-
         // LP amount0Desired and amount1Desired in Uni v3
         uint256 uniTokenId = lpWPowerPerpPool(
             _nonfungiblePositionManager,
@@ -135,11 +131,28 @@ library ControllerHelperUtil {
      * @param _increaseLiquidityParam ControllerHelperDataType.IncreaseLpLiquidityParam struct
      * @param _isWethToken0 bool variable indicate if Weth token is token0 in Uniswap v3 weth/wPowerPerp pool
      */
-    function increaseLpLiquidity(address _controller, address _nonfungiblePositionManager, address _wPowerPerp, uint256 _vaultId, ControllerHelperDataType.IncreaseLpLiquidityParam memory _increaseLiquidityParam, bool _isWethToken0) public {
+    function increaseLpLiquidity(address _controller, address _nonfungiblePositionManager, address _wPowerPerpPool, uint256 _vaultId, ControllerHelperDataType.IncreaseLpLiquidityParam memory _increaseLiquidityParam, bool _isWethToken0) public {
         if (_increaseLiquidityParam.wPowerPerpAmountToMint > 0) {
+            (
+                ,
+                ,
+                ,
+                ,
+                ,
+                int24 tickLower,
+                int24 tickUpper,
+                ,
+                ,
+                ,
+                ,
+                
+            ) = INonfungiblePositionManager(_nonfungiblePositionManager).positions(_increaseLiquidityParam.tokenId);
+            (uint256 amount0Desired, uint256 amount1Desired) = getAmountsToLp(_wPowerPerpPool, _increaseLiquidityParam.collateralToDeposit, _increaseLiquidityParam.wPowerPerpAmountToMint, tickLower, tickUpper, _isWethToken0);
+
+            (_increaseLiquidityParam.wPowerPerpAmountToMint, _increaseLiquidityParam.wethAmountToLp) = (_isWethToken0) ? (amount1Desired, amount0Desired) : (amount0Desired, amount1Desired);
             IController(_controller).mintWPowerPerpAmount{value: _increaseLiquidityParam.collateralToDeposit}(
                 _vaultId,
-                _increaseLiquidityParam.wPowerPerpAmountToMint,
+                _isWethToken0 ? amount1Desired : amount0Desired,
                 0
             );
         }
@@ -154,8 +167,6 @@ library ControllerHelperUtil {
         });
 
         INonfungiblePositionManager(_nonfungiblePositionManager).increaseLiquidity(uniIncreaseParams);
-
-        checkExcess(_controller, _nonfungiblePositionManager, _wPowerPerp, _vaultId);
     }
 
     /**
@@ -258,26 +269,6 @@ library ControllerHelperUtil {
         } else {
             IController(_controller).depositUniPositionToken(_vaultId, _tokenId);
         }
-    }
-
-    /**
-     * @notice check if excess ETH or _wPowerPerp was sent for minting LP position, if so burn _wPowerPerp from vault and withdraw ETH from Uni pool
-     * @param _controller controller address
-     * @param _nonfungiblePositionManager Uni NonFungiblePositionManager address
-     * @param _wPowerPerp wPowerPerp address 
-     * @param _vaultId vault ID to burn _wPowerPerp from
-     */
-    function checkExcess(address _controller, address _nonfungiblePositionManager, address _wPowerPerp, uint256 _vaultId) public {
-        uint256 remainingWPowerPerp = IWPowerPerp(_wPowerPerp).balanceOf(address(this));
-        if (remainingWPowerPerp > 0) {
-            if (_vaultId > 0) {
-                IController(_controller).burnWPowerPerpAmount(_vaultId, remainingWPowerPerp, 0);
-            } else {
-                IWPowerPerp(_wPowerPerp).transfer(msg.sender, remainingWPowerPerp);
-            }
-        }
-        // in case _collateralToLP > amount needed to LP, withdraw excess ETH
-        INonfungiblePositionManager(_nonfungiblePositionManager).refundETH();
     }
 
     /**
