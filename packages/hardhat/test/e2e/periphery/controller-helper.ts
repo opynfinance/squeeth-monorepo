@@ -434,7 +434,8 @@ describe("ControllerHelper: mainnet fork", function () {
         collateralToWithdraw: BigNumber.from(0),
         limitPriceEthPerPowerPerp: limitPriceEthPerPowerPerp.toString(),
         amount0Min: 0,
-        amount1Min: 0
+        amount1Min: 0,
+        poolFee: 3000
       }
 
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address);
@@ -526,7 +527,8 @@ describe("ControllerHelper: mainnet fork", function () {
         collateralToWithdraw: BigNumber.from(0),
         limitPriceEthPerPowerPerp: limitPriceEthPerPowerPerp.toString(),
         amount0Min: 0,
-        amount1Min: 0
+        amount1Min: 0,
+        poolFee: 3000
       }
 
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address);
