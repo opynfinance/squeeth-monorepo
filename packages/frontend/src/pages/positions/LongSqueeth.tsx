@@ -53,7 +53,7 @@ export default function LongSqueeth() {
             <Tooltip title={Tooltips.UnrealizedPnL}>
               <InfoIcon fontSize="small" className={classes.infoIcon} />
             </Tooltip>
-            {isPnLLoading || longGain.isLessThanOrEqualTo(-100) || !longGain.isFinite() || longUnrealizedPNL.loading ? (
+            {isPnLLoading || longUnrealizedPNL.loading ? (
               <Typography variant="body1">Loading</Typography>
             ) : (
               <>
