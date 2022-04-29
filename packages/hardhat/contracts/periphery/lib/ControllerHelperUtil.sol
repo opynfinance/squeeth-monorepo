@@ -24,8 +24,6 @@ library ControllerHelperUtil {
     using SafeMath for uint256;
     using Address for address payable;
 
-    uint32 private constant TWAP_PERIOD = 420;
-
     /**
      * @notice fully or partially close Uni v3 LP
      * @param _nonfungiblePositionManager Uni NonFungiblePositionManager address
