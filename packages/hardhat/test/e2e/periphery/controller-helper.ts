@@ -449,7 +449,7 @@ describe("ControllerHelper: mainnet fork", function () {
     before("open short position and LP" , async () => {
       const vaultId = (await shortSqueeth.nextId());
       const normFactor = await controller.getExpectedNormalizationFactor()
-      const mintWSqueethAmount = ethers.utils.parseUnits('1000')
+      const mintWSqueethAmount = ethers.utils.parseUnits('50')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
@@ -476,7 +476,7 @@ describe("ControllerHelper: mainnet fork", function () {
 
     it("swap with pool, collect fees and redeposit uni nft in vault", async () => {
       
-      const ethToSell = ethers.utils.parseUnits("500")
+      const ethToSell = ethers.utils.parseUnits("5")
       const swapParamBuy = {
         tokenIn: weth.address,
         tokenOut: wSqueeth.address,
@@ -549,7 +549,9 @@ describe("ControllerHelper: mainnet fork", function () {
 
       const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
       const depositorEthBalanceBefore = await ethers.provider.getBalance(depositor.address)
-      await controllerHelper.connect(depositor).rebalanceVaultNft(vaultId, collateralToFlashloan, params);
+      const tx = await controllerHelper.connect(depositor).rebalanceVaultNft(vaultId, collateralToFlashloan, params);
+      const receipt = await tx.wait()
+      const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
       const depositorSqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
       const depositorEthBalanceAfter = await ethers.provider.getBalance(depositor.address)
 
@@ -561,7 +563,7 @@ describe("ControllerHelper: mainnet fork", function () {
       expect(positionAfter.liquidity.eq(positionBefore.liquidity)).to.be.true
       expect(vaultAfter.NftCollateralId==vaultBefore.NftCollateralId).to.be.true
       expect(depositorSqueethBalanceAfter.gt(depositorSqueethBalanceBefore)).to.be.true
-      expect(depositorEthBalanceAfter.gt(depositorEthBalanceBefore)).to.be.true
+      expect(depositorEthBalanceAfter.add(gasSpent).gt(depositorEthBalanceBefore)).to.be.true
 
     })
   })
