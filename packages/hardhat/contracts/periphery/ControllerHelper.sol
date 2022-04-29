@@ -824,7 +824,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         vaultId
                     );
             }
-            
+
             IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).transfer(
                 ControllerHelperDiamondStorage.getAddressAtSlot(3),
                 _amountToPay
