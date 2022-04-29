@@ -703,37 +703,37 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 } else if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.CollectFees
                 ) {
-                    ControllerHelperDataType.CollectParams memory collectParams = abi.decode(
+                    ControllerHelperDataType.CollectFeesParams memory collectFeesParams = abi.decode(
                         data[i].data,
-                        (ControllerHelperDataType.CollectParams)
+                        (ControllerHelperDataType.CollectFeesParams)
                     );
 
-                    INonfungiblePositionManager.CollectParams memory uniCollectParams = INonfungiblePositionManager
+                    INonfungiblePositionManager.CollectParams memory collectParams = INonfungiblePositionManager
                         .CollectParams({
-                            tokenId: collectParams.tokenId,
+                            tokenId: collectFeesParams.tokenId,
                             recipient: address(this),
-                            amount0Max: collectParams.amount0Max,
-                            amount1Max: collectParams.amount0Max
+                            amount0Max: collectFeesParams.amount0Max,
+                            amount1Max: collectFeesParams.amount0Max
                         });
 
                     INonfungiblePositionManager(ControllerHelperDiamondStorage.getAddressAtSlot(6)).collect(
-                        uniCollectParams
+                        collectParams
                     );
                 } else if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.DepositExistingNft
                 ) {
-                    ControllerHelperDataType.DepositNftParams memory depositNftParams = abi.decode(
+                    ControllerHelperDataType.DepositExistingNftParams memory depositExistingNftParams = abi.decode(
                         data[i].data,
-                        (ControllerHelperDataType.DepositNftParams)
+                        (ControllerHelperDataType.DepositExistingNftParams)
                     );
                     INonfungiblePositionManager(ControllerHelperDiamondStorage.getAddressAtSlot(6)).approve(
                         ControllerHelperDiamondStorage.getAddressAtSlot(0),
-                        depositNftParams.tokenId
+                        depositExistingNftParams.tokenId
                     );
 
                     IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).depositUniPositionToken(
                         vaultId,
-                        depositNftParams.tokenId
+                        depositExistingNftParams.tokenId
                     );
                 }
             }

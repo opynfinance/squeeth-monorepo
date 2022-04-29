@@ -210,13 +210,13 @@ library ControllerHelperDataType {
     }
 
     /// @dev struct for collecting fees owed from a uniswap NFT
-    struct CollectParams {
+    struct CollectFeesParams {
         uint256 tokenId;
         uint128 amount0Max;
         uint128 amount1Max;
     }
     /// @dev struct for re-depositing and existing uniswap NFT to a vault
-    struct DepositNftParams {
+    struct DepositExistingNftParams {
         uint256 tokenId;
     }
 }
