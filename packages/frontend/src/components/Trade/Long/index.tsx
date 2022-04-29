@@ -29,7 +29,7 @@ import {
   useGetWSqueethPositionValue,
   useSell,
 } from 'src/state/squeethPool/hooks'
-import { useComputeSwaps, useLongSqthBal, useShortDebt } from 'src/state/positions/hooks'
+import { useComputeSwaps, useShortDebt } from 'src/state/positions/hooks'
 import {
   confirmedAmountAtom,
   ethTradeAmountAtom,
@@ -247,7 +247,7 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const OpenLong: React.FC<BuyProps & LongProps> = ({ activeStep = 0, open, sqthBalProps }) => {
+const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   const [buyLoading, setBuyLoading] = useState(false)
   const getBuyQuoteForETH = useGetBuyQuoteForETH()
   const getBuyQuote = useGetBuyQuote()
@@ -277,7 +277,6 @@ const OpenLong: React.FC<BuyProps & LongProps> = ({ activeStep = 0, open, sqthBa
   const isShort = useAtomValue(isShortAtom)
   const selectWallet = useSelectWallet()
   const { squeethAmount } = useComputeSwaps()
-  const { longSqthBal, refetch: refetchSqthBal } = sqthBalProps
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 
@@ -372,7 +371,6 @@ const OpenLong: React.FC<BuyProps & LongProps> = ({ activeStep = 0, open, sqthBa
     setBuyLoading(true)
     try {
       await buyAndRefund(new BigNumber(ethTradeAmount), () => {
-        refetchSqthBal()
         setTradeSuccess(true)
         setTradeCompleted(true)
 
@@ -383,15 +381,7 @@ const OpenLong: React.FC<BuyProps & LongProps> = ({ activeStep = 0, open, sqthBa
       console.log(e)
       setBuyLoading(false)
     }
-  }, [
-    buyAndRefund,
-    ethTradeAmount,
-    resetEthTradeAmount,
-    resetSqthTradeAmount,
-    setTradeCompleted,
-    setTradeSuccess,
-    refetchSqthBal,
-  ])
+  }, [buyAndRefund, ethTradeAmount, resetEthTradeAmount, resetSqthTradeAmount, setTradeCompleted, setTradeSuccess])
 
   return (
     <div id="open-long-card">
@@ -514,7 +504,7 @@ const OpenLong: React.FC<BuyProps & LongProps> = ({ activeStep = 0, open, sqthBa
                         <>
                           <ArrowRightAltIcon className={classes.arrowIcon} />
                           <span id="open-long-osqth-post-trade-balance">
-                            {longSqthBal.plus(new BigNumber(sqthTradeAmount)).toFixed(6)}
+                            {squeethAmount.plus(new BigNumber(sqthTradeAmount)).toFixed(6)}
                           </span>{' '}
                         </>
                       ) : null}{' '}
@@ -612,8 +602,7 @@ const OpenLong: React.FC<BuyProps & LongProps> = ({ activeStep = 0, open, sqthBa
   )
 }
 
-const CloseLong: React.FC<BuyProps & LongProps> = ({ sqthBalProps }) => {
-  const { longSqthBal, loading: sqthBalLoading, error: sqthBalError, refetch: refetchSqthBal } = sqthBalProps
+const CloseLong: React.FC<BuyProps> = () => {
   const [sellLoading, setSellLoading] = useState(false)
   const [hasJustApprovedSqueeth, setHasJustApprovedSqueeth] = useState(false)
 
@@ -651,6 +640,7 @@ const CloseLong: React.FC<BuyProps & LongProps> = ({ sqthBalProps }) => {
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const connected = useAtomValue(connectedWalletAtom)
   const selectWallet = useSelectWallet()
+  const { squeethAmount } = useComputeSwaps()
 
   const shortDebt = useShortDebt()
   const isShort = shortDebt.gt(0)
@@ -660,14 +650,14 @@ const CloseLong: React.FC<BuyProps & LongProps> = ({ sqthBalProps }) => {
 
   useAppEffect(() => {
     //if it's insufficient amount them set it to it's maximum
-    if (longSqthBal.lt(amount)) {
-      setSqthTradeAmount(longSqthBal.toString())
-      getSellQuoteForETH(longSqthBal).then((val) => {
+    if (squeethAmount.lt(amount)) {
+      setSqthTradeAmount(squeethAmount.toString())
+      getSellQuoteForETH(squeethAmount).then((val) => {
         setEthTradeAmount(val.amountIn.toString())
         setConfirmedAmount(val.amountIn.toFixed(6).toString())
       })
     }
-  }, [longSqthBal, amount, getSellQuoteForETH, setConfirmedAmount, setEthTradeAmount, setSqthTradeAmount])
+  }, [squeethAmount, amount, getSellQuoteForETH, setConfirmedAmount, setEthTradeAmount, setSqthTradeAmount])
 
   // let openError: string | undefined
   let closeError: string | undefined
@@ -675,7 +665,7 @@ const CloseLong: React.FC<BuyProps & LongProps> = ({ sqthBalProps }) => {
   let priceImpactWarning: string | undefined
 
   if (connected) {
-    if (longSqthBal.lt(amount)) {
+    if (squeethAmount.lt(amount)) {
       closeError = 'Insufficient oSQTH balance'
     }
     // if (amount.gt(balance)) {
@@ -690,7 +680,7 @@ const CloseLong: React.FC<BuyProps & LongProps> = ({ sqthBalProps }) => {
   }
 
   const longClosePriceImpactErrorState =
-    priceImpactWarning && !closeError && !sellLoading && !longSqthBal.isZero() && !isShort
+    priceImpactWarning && !closeError && !sellLoading && !squeethAmount.isZero() && !isShort
 
   const sellAndClose = useAppCallback(async () => {
     setSellLoading(true)
@@ -703,7 +693,6 @@ const CloseLong: React.FC<BuyProps & LongProps> = ({ sqthBalProps }) => {
         })
       } else {
         await sell(amount, () => {
-          refetchSqthBal()
           setIsTxFirstStep(false)
           setTradeSuccess(true)
           setTradeCompleted(true)
@@ -726,7 +715,6 @@ const CloseLong: React.FC<BuyProps & LongProps> = ({ sqthBalProps }) => {
     setTradeSuccess,
     squeethAllowance,
     squeethApprove,
-    refetchSqthBal,
   ])
 
   useAppEffect(() => {
@@ -831,13 +819,12 @@ const CloseLong: React.FC<BuyProps & LongProps> = ({ sqthBalProps }) => {
             onChange={(v) => handleSqthChange(v)}
             label="Amount"
             tooltip="Amount of oSqueeth you want to close"
-            actionTxt={!sqthBalError ? 'Max' : ''}
-            onActionClicked={() => handleSqthChange(longSqthBal.toString())}
+            actionTxt="Max"
+            onActionClicked={() => handleSqthChange(squeethAmount.toString())}
             unit="oSQTH"
             convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
             error={!!existingShortError || !!priceImpactWarning || !!closeError}
-            isLoading={inputQuoteLoading || sqthBalLoading}
-            loadingMessage={sqthBalLoading ? 'Fetching oSQTH balance' : 'Fetching sell quote.'}
+            isLoading={inputQuoteLoading}
             hint={
               existingShortError ? (
                 existingShortError
@@ -847,29 +834,17 @@ const CloseLong: React.FC<BuyProps & LongProps> = ({ sqthBalProps }) => {
                 priceImpactWarning
               ) : (
                 <div className={classes.hint}>
-                  {sqthBalError ? (
-                    <div
-                      style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}
-                      onClick={() => refetchSqthBal()}
-                    >
-                      <span>Reload Balance</span>
-                      <RefreshOutlined className={classes.arrowIcon} />
-                    </div>
-                  ) : (
+                  <span className={classes.hintTextContainer}>
+                    <span className={classes.hintTitleText}>Position</span>{' '}
+                    <span id="close-long-osqth-before-trade-balance">{squeethAmount.toFixed(6)}</span>{' '}
+                  </span>
+                  {quote.amountOut.gt(0) ? (
                     <>
-                      <span className={classes.hintTextContainer}>
-                        <span className={classes.hintTitleText}>Position</span>{' '}
-                        <span id="close-long-osqth-before-trade-balance">{longSqthBal.toFixed(6)}</span>{' '}
-                      </span>
-                      {quote.amountOut.gt(0) ? (
-                        <>
-                          <ArrowRightAltIcon className={classes.arrowIcon} />
-                          <span id="close-long-osqth-post-trade-balance">{longSqthBal.minus(amount).toFixed(6)}</span>
-                        </>
-                      ) : null}{' '}
-                      <span style={{ marginLeft: '4px' }}>oSQTH</span>
+                      <ArrowRightAltIcon className={classes.arrowIcon} />
+                      <span id="close-long-osqth-post-trade-balance">{squeethAmount.minus(amount).toFixed(6)}</span>
                     </>
-                  )}
+                  ) : null}{' '}
+                  <span style={{ marginLeft: '4px' }}>oSQTH</span>
                 </div>
               )
             }
@@ -941,7 +916,7 @@ const CloseLong: React.FC<BuyProps & LongProps> = ({ sqthBalProps }) => {
                   transactionInProgress ||
                   !!closeError ||
                   !!existingShortError ||
-                  longSqthBal.isZero() ||
+                  squeethAmount.isZero() ||
                   sqthTradeAmount === '0'
                 }
                 style={
@@ -985,31 +960,11 @@ type BuyProps = {
   activeStep?: number
 }
 
-type LongProps = {
-  sqthBalProps: {
-    longSqthBal: BigNumber
-    refetch: () => void
-    loading: boolean
-    error?: any
-  }
-}
-
 const Long: React.FC<BuyProps> = ({ open, isLPage = false, activeStep = 0 }) => {
-  const { longSqthBal, refetch: refetchSqthBal, loading: loadingSqthBal, error } = useLongSqthBal()
-
   return open ? (
-    <OpenLong
-      open={open}
-      isLPage={isLPage}
-      activeStep={activeStep}
-      sqthBalProps={{ longSqthBal, refetch: refetchSqthBal, loading: loadingSqthBal }}
-    />
+    <OpenLong open={open} isLPage={isLPage} activeStep={activeStep} />
   ) : (
-    <CloseLong
-      isLPage={isLPage}
-      activeStep={activeStep}
-      sqthBalProps={{ longSqthBal, refetch: refetchSqthBal, loading: loadingSqthBal, error }}
-    />
+    <CloseLong isLPage={isLPage} activeStep={activeStep} />
   )
 }
 
