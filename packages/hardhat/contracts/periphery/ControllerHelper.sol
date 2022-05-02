@@ -587,7 +587,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).withdraw(_amount);
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).deposit{value: _amount}(vaultId);
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).withdrawUniPositionToken(vaultId);
-
+            console.log('before rebalance loop');
             for (uint256 i; i < data.length; i++) {
                 if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.IncreaseLpLiquidity
@@ -616,6 +616,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.DecreaseLpLiquidity
                 ) {
                     // decrease liquidity in LP
+                    console.log('before decrease liquidity');
                     ControllerHelperDataType.DecreaseLpLiquidityParams memory decreaseLiquidityParam = abi.decode(
                         data[i].data,
                         (ControllerHelperDataType.DecreaseLpLiquidityParams)
@@ -632,6 +633,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         }),
                         isWethToken0
                     );
+                    console.log('after decrease liquidity');
 
                     // if LP position is not fully closed, redeposit into vault or send back to user
                     ControllerHelperUtil.checkClosedLp(
@@ -685,6 +687,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                     }
                 } else if (data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.MintNewLp) {
                     // this will execute in the use case of fully closing old LP position, and creating new one
+                    console.log('before mintLP data');
                     ControllerHelperDataType.MintAndLpParams memory mintAndLpParams = abi.decode(
                         data[i].data,
                         (ControllerHelperDataType.MintAndLpParams)

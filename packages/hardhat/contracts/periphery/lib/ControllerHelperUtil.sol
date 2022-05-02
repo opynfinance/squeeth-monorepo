@@ -238,6 +238,7 @@ library ControllerHelperUtil {
             recipient: _params.recipient,
             deadline: block.timestamp
         });
+        
         console.log('try to mint ne LP with %s amount0Desired and %s amount1Desired on %s to %s', _params.amount0Desired, _params.amount1Desired);
         console.log('on %s to %s', uint256(_params.lowerTick), uint256(_params.upperTick));
 
