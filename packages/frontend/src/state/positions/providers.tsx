@@ -103,11 +103,8 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
     } else setPositionType(PositionType.NONE)
   }, [computedSwaps.squeethAmount, oSqueethBal, setPositionType])
 
-  console.log('ContextValue', computedSwaps.squeethAmount.toNumber(), oSqueethBal.toNumber())
-
   useAppEffect(() => {
     refetch()
-    console.log('ContextValue refetch')
   }, [computedSwaps.squeethAmount, refetch])
 
   const value = useAppMemo(
