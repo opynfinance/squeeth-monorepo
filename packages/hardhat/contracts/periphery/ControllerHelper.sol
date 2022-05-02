@@ -702,12 +702,14 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         mintAndLpParams,
                         isWethToken0
                     );
+                    console.log('after mintLP data trying to deposit token %s for vault %s', tokenId, vaultId);
 
                     // deposit Uni NFT token in vault
                     IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).depositUniPositionToken(
                         vaultId,
                         tokenId
                     );
+                    console.log('after depositUniPositionToken');
                 } else if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.generalSwap
                 ) {
