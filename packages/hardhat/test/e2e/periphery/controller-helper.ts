@@ -255,7 +255,7 @@ describe("ControllerHelper: mainnet fork", function () {
   
         expect(BigNumber.from(vaultAfter.NftCollateralId).eq(tokenId)).to.be.true;
         expect(vaultAfter.shortAmount.sub(mintWSqueethAmount.add(vaultBefore.shortAmount)).abs().lte(10)).to.be.true
-        expect(depositorSqueethBalanceAfter.sub(depositorSqueethBalanceBefore).lte(1)).to.be.true
+        expect(depositorSqueethBalanceAfter.sub(depositorSqueethBalanceBefore).lte(10)).to.be.true
         expect(vaultAfter.collateralAmount.eq(vaultBefore.collateralAmount)).to.be.true
       })
     })
@@ -312,7 +312,7 @@ describe("ControllerHelper: mainnet fork", function () {
       console.log(depositorSqueethBalanceAfter.toString(), "squeeth after")
       console.log(depositorSqueethBalanceBefore.toString(), "squeeth before")
       
-      expect(depositorSqueethBalanceAfter.sub(depositorSqueethBalanceBefore).lte(1)).to.be.true
+      expect(depositorSqueethBalanceAfter.sub(depositorSqueethBalanceBefore).lte(10)).to.be.true
       expect(vaultAfter.collateralAmount.eq(collateralToMint.sub(collateralToFlashloan))).to.be.true
     })
 
