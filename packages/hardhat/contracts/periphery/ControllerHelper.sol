@@ -245,7 +245,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             ControllerHelperDiamondStorage.getAddressAtSlot(0),
             ControllerHelperDiamondStorage.getAddressAtSlot(6),
             ControllerHelperDiamondStorage.getAddressAtSlot(4),
-            ControllerHelperDiamondStorage.getAddressAtSlot(3),
             ControllerHelperDiamondStorage.getAddressAtSlot(5),
             _params,
             isWethToken0
@@ -418,7 +417,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         // mint new position
         ControllerHelperUtil.lpWPowerPerpPool(
             ControllerHelperDiamondStorage.getAddressAtSlot(6),
-            ControllerHelperDiamondStorage.getAddressAtSlot(3),
+            _params.wPowerPerpPool,
             ControllerHelperDataType.LpWPowerPerpPool({
                 recipient: msg.sender,
                 amount0Desired: (isWethToken0) ? wethAmountDesired : wPowerPerpAmountDesired,
@@ -484,10 +483,10 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 ControllerHelperDiamondStorage.getAddressAtSlot(0),
                 ControllerHelperDiamondStorage.getAddressAtSlot(6),
                 ControllerHelperDiamondStorage.getAddressAtSlot(4),
-                ControllerHelperDiamondStorage.getAddressAtSlot(3),
                 ControllerHelperDiamondStorage.getAddressAtSlot(5),
                 ControllerHelperDataType.MintAndLpParams({
                     recipient: address(this),
+                    wPowerPerpPool: ControllerHelperDiamondStorage.getAddressAtSlot(3),
                     vaultId: data.vaultId,
                     wPowerPerpAmount: data.wPowerPerpAmount,
                     collateralToDeposit: data.collateralToDeposit.add(data.collateralToFlashloan),
@@ -679,7 +678,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         ControllerHelperDiamondStorage.getAddressAtSlot(0),
                         ControllerHelperDiamondStorage.getAddressAtSlot(6),
                         ControllerHelperDiamondStorage.getAddressAtSlot(4),
-                        ControllerHelperDiamondStorage.getAddressAtSlot(3),
                         ControllerHelperDiamondStorage.getAddressAtSlot(5),
                         mintAndLpParams,
                         isWethToken0

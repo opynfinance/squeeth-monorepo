@@ -84,6 +84,7 @@ library ControllerHelperDataType {
     /// @dev params for batchMintLp()
     struct MintAndLpParams {
         address recipient;  // recipient address
+        address wPowerPerpPool; // Uni v3 ETH/WPowerPerp pool
         uint256 vaultId;    // vault ID
         uint256 wPowerPerpAmount;   // wPowerPerp amount to mint
         uint256 collateralToDeposit;    // collateral to deposit into vault
@@ -145,6 +146,7 @@ library ControllerHelperDataType {
 
     /// @dev params for rebalanceWithoutVault()
     struct RebalanceWithoutVault {
+        address wPowerPerpPool; // Uni v3 ETH/WPowerPerp pool
         uint256 tokenId;    // Uni token ID
         uint256 liquidity;  // LP liquidity amount
         uint256 wPowerPerpAmountDesired;    // wPowerPerp amount to LP
