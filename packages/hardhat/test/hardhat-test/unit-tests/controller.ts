@@ -2,7 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-wit
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber, providers, constants } from "ethers";
-import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester, WETH9, ControllerTester, ABDKMath64x64} from '../../typechain'
+import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester, WETH9, ControllerTester, ABDKMath64x64} from '../../../typechain'
 import { isEmptyVault } from '../vault-utils'
 import { isSimilar, oracleScaleFactor, one, getNow } from "../utils";
 import { getSqrtPriceAndTickBySqueethPrice } from "../calculator";

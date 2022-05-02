@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import { ethers } from "hardhat"
 import { expect } from "chai";
-import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, WETH9, ABDKMath64x64 } from '../../typechain'
+import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, WETH9, ABDKMath64x64 } from '../../../typechain'
 import { oracleScaleFactor } from "../utils";
 
 const squeethETHPrice = ethers.utils.parseUnits('3010')
