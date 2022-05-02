@@ -3,6 +3,8 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
+import 'hardhat/console.sol';
+
 // interface
 import {IWETH9} from "../interfaces/IWETH9.sol";
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
@@ -275,13 +277,15 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         external
         payable
     {
+        console.log('before vaultId check');
         if (_params.vaultId != 0)
             require(
                 IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) ==
                     msg.sender
             );
-
+        console.log('before wrap msg.value');
         wrapInternal(msg.value);
+        console.log('just before flashloan');
         _flashLoan(
             ControllerHelperDiamondStorage.getAddressAtSlot(5),
             _params.collateralToFlashloan,
@@ -480,7 +484,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 _calldata,
                 (ControllerHelperDataType.FlashloanWMintDepositNftParams)
             );
-
+            console.log('before mintAndLp');
             (uint256 vaultId, uint256 uniTokenId) = ControllerHelperUtil.mintAndLp(
                 ControllerHelperDiamondStorage.getAddressAtSlot(0),
                 ControllerHelperDiamondStorage.getAddressAtSlot(6),
@@ -500,7 +504,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 }),
                 isWethToken0
             );
-
+            console.log('after mintAndLp');
             // deposit Uni NFT token in vault
             INonfungiblePositionManager(ControllerHelperDiamondStorage.getAddressAtSlot(6)).approve(
                 ControllerHelperDiamondStorage.getAddressAtSlot(0),

@@ -92,10 +92,10 @@ library ControllerHelperUtil {
      * @return _vaultId and tokenId
      */
     function mintAndLp(address _controller, address _nonfungiblePositionManager, address _wPowerPerp, address _wPowerPerpPool, address _weth, ControllerHelperDataType.MintAndLpParams calldata _mintAndLpParams, bool _isWethToken0) public returns (uint256, uint256) {
+        console.log('before withdraw weth');
         IWETH9(_weth).withdraw(_mintAndLpParams.collateralToDeposit);
-
+        console.log('before getAmounts to LP with %s collateralToDeposit', _mintAndLpParams.collateralToDeposit);
         (uint256 amount0Desired, uint256 amount1Desired) = getAmountsToLp(_wPowerPerpPool, _mintAndLpParams.collateralToLp, _mintAndLpParams.wPowerPerpAmount, _mintAndLpParams.lowerTick, _mintAndLpParams.upperTick, _isWethToken0);
-                
         uint256 _vaultId;
         uint256 amountToMint = (_isWethToken0) ? amount1Desired : amount0Desired;
         if (IWPowerPerp(_wPowerPerp).balanceOf(address(this)) < amountToMint) {
@@ -106,7 +106,7 @@ library ControllerHelperUtil {
                 0
             );
         }
-
+        console.log('ready to lpPowerPerpPool with amount0Desired %s amount1Desired %s', amount0Desired, amount1Desired);
         // LP amount0Desired and amount1Desired in Uni v3
         uint256 uniTokenId = lpWPowerPerpPool(
             _nonfungiblePositionManager,
@@ -121,7 +121,7 @@ library ControllerHelperUtil {
                 upperTick: _mintAndLpParams.upperTick
             })
         );
-
+        console.log('called lpWPowerPerpPool with uniTokenId %s', uniTokenId);
         return (_vaultId, uniTokenId);
     }
 
@@ -237,6 +237,8 @@ library ControllerHelperUtil {
             recipient: _params.recipient,
             deadline: block.timestamp
         });
+        console.log('try to mint ne LP with %s amount0Desired and %s amount1Desired on %s to %s', _params.amount0Desired, _params.amount1Desired);
+        console.log('on %s to %s', uint256(_params.lowerTick), uint256(_params.upperTick));
 
         (uint256 tokenId, , , ) = INonfungiblePositionManager(_nonfungiblePositionManager).mint(
             mintParams
