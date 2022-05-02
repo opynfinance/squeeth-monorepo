@@ -210,6 +210,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   const [shortLoading, setShortLoading] = useState(false)
   const [liqPrice, setLiqPrice] = useState(new BigNumber(0))
   const [neededCollat, setNeededCollat] = useState(new BigNumber(0))
+  const [collatError, setCollatError] = useState('')
 
   const classes = useStyles()
   const {
@@ -288,7 +289,9 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
       const amountToMintSell = totalSqueeth.minus(vault?.shortAmount ?? BIG_ZERO)
       if (amountToMintSell.isGreaterThanOrEqualTo(0)) {
         setSqthTradeAmount(amountToMintSell.toString())
+        setCollatError('')
       } else {
+        setCollatError('Add collateral through vault')
         setSqthTradeAmount('0')
       }
     })
@@ -476,6 +479,8 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                   existingLongError
                 ) : priceImpactWarning ? (
                   priceImpactWarning
+                ) : collatError?.length !== 0 ? (
+                  collatError
                 ) : (
                   <div className={classes.hint}>
                     <span>
@@ -494,7 +499,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                 )
               }
               id="open-short-eth-input"
-              error={!!existingLongError || !!priceImpactWarning || !!openError}
+              error={!!existingLongError || !!priceImpactWarning || !!openError || collatError?.length !== 0}
             />
           </div>
           <div className={classes.thirdHeading}>
@@ -542,6 +547,8 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
             hint={
               openError ? (
                 openError
+              ) : collatError?.length !== 0 ? (
+                collatError
               ) : existingLongError ? (
                 existingLongError
               ) : (
@@ -621,7 +628,8 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                   !!openError ||
                   !!existingLongError ||
                   (vault && vault.shortAmount.isZero()) ||
-                  !!vaultIdDontLoadedError
+                  !!vaultIdDontLoadedError ||
+                  collatError?.length !== 0
                 }
                 variant={shortOpenPriceImpactErrorState ? 'outlined' : 'contained'}
                 style={
