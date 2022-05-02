@@ -1,6 +1,6 @@
 import { ethers } from "hardhat"
 import { expect } from "chai";
-import { CastingTester } from "../../typechain";
+import { CastingTester } from "../../../typechain";
 
 describe("Casting Library tests", function () {
 

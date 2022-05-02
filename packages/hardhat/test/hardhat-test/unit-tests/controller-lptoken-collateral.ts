@@ -3,7 +3,7 @@ import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber } from "ethers";
 import { parseEther } from "ethers/lib/utils";
-import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester, IWETH9, LiquidationHelper, ABDKMath64x64 } from "../../typechain";
+import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester, IWETH9, LiquidationHelper, ABDKMath64x64 } from "../../../typechain";
 import { getSqrtPriceAndTickBySqueethPrice } from "../calculator";
 import { oracleScaleFactor, one } from "../utils";
 

@@ -1,7 +1,7 @@
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber } from "ethers";
-import { ABDKTester, ABDKMath64x64 } from "../../typechain";
+import { ABDKTester, ABDKMath64x64 } from "../../../typechain";
 import { isSimilar } from "../utils";
 
 

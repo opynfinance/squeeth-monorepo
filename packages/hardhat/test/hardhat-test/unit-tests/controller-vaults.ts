@@ -3,7 +3,7 @@ import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber, providers } from "ethers";
 import { one, oracleScaleFactor } from "../utils";
-import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester, ABDKMath64x64 } from "../../typechain";
+import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, VaultLibTester, ABDKMath64x64 } from "../../../typechain";
 import { getSqrtPriceAndTickBySqueethPrice } from "../calculator";
 
 // use the same price to make sure we're not paying funding (at first)

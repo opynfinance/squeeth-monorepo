@@ -16,7 +16,7 @@ import {
 } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json'
 import { convertToken0PriceToSqrtX96Price, tickToPrice1e18 } from '../calculator'
 import { getNow, isSimilar } from '../utils'
-import { Oracle, MockWPowerPerp, OracleTester, WETH9, ISwapRouter, IUniswapV3Pool } from "../../typechain";
+import { Oracle, MockWPowerPerp, OracleTester, WETH9, ISwapRouter, IUniswapV3Pool } from "../../../typechain";
 
 describe("Oracle", function () {
   const squeethPriceInETH = 2000; // can sell 1 squeeth for 2000 eth

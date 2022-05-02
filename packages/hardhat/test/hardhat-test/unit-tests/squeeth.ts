@@ -2,7 +2,7 @@ import { ethers } from "hardhat"
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import { constants } from "ethers";
-import { WPowerPerp } from "../../typechain";
+import { WPowerPerp } from "../../../typechain";
 
 describe("WPowerPerp", function () {
   let wsqueeth: WPowerPerp;

@@ -16,7 +16,7 @@ import {
 import { Contract } from "ethers";
 import { convertToken0PriceToSqrtX96Price } from '../calculator'
 import { isSimilar } from '../utils'
-import { Oracle, MockErc20 } from "../../typechain";
+import { Oracle, MockErc20 } from "../../../typechain";
 
 describe("Oracle", function () {
   const ethRawPrice = 2000; // target eth price in USD

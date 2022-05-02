@@ -3,7 +3,7 @@ import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber, providers, utils } from "ethers";
 import { getNow, isSimilar, one, oracleScaleFactor } from "../utils";
-import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, ABDKMath64x64} from "../../typechain";
+import { Controller, MockWPowerPerp, MockShortPowerPerp, MockOracle, MockUniswapV3Pool, MockErc20, MockUniPositionManager, ABDKMath64x64} from "../../../typechain";
 
 const squeethETHPrice = BigNumber.from('3030').mul(one).div(oracleScaleFactor)
 const ethUSDPrice = BigNumber.from('3000').mul(one)

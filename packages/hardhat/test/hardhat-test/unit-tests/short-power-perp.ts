@@ -2,7 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-wit
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { constants } from "ethers";
-import { ShortPowerPerp, ControllerAccessTester} from "../../typechain";
+import { ShortPowerPerp, ControllerAccessTester} from "../../../typechain";
 
 describe("ShortPowerPerp", function () {
   let shortSqueeth: ShortPowerPerp;
