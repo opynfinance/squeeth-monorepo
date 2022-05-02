@@ -228,14 +228,12 @@ const PositionCard: React.FC = () => {
   }, [firstValidVault, shortVaults, liquidations])
 
   const isDollarValueLoading = useAppMemo(() => {
-    if (positionType === PositionType.LONG) {
-      return loading || longGain.isLessThanOrEqualTo(-100) || !longGain.isFinite()
-    } else if (positionType === PositionType.SHORT) {
-      return loading || shortGain.isLessThanOrEqualTo(-100) || !shortGain.isFinite()
+    if (positionType === PositionType.LONG || positionType === PositionType.SHORT) {
+      return loading
     } else {
       return null
     }
-  }, [positionType, loading, longGain, shortGain])
+  }, [positionType, loading])
 
   const getPositionBasedValue = useAppCallback(
     (
