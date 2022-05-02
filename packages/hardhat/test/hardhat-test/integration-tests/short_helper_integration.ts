@@ -3,7 +3,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-wit
 import { ethers, getNamedAccounts } from "hardhat"
 import { expect } from "chai";
 import { Contract, providers, constants } from "ethers";
-import { Controller, ShortPowerPerp, WPowerPerp, ShortHelper, WETH9, IUniswapV3Pool } from "../../typechain";
+import { Controller, ShortPowerPerp, WPowerPerp, ShortHelper, WETH9, IUniswapV3Pool } from "../../../typechain";
 
 import { deployUniswapV3, deploySqueethCoreContracts, addSqueethLiquidity, deployWETHAndDai } from '../setup'
 import { getNow, one, oracleScaleFactor } from "../utils";

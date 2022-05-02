@@ -1,7 +1,7 @@
 import { ethers, getNamedAccounts } from "hardhat"
 import { expect } from "chai";
 import { Contract } from "ethers";
-import { Controller, Oracle, WETH9, WPowerPerp } from "../../typechain";
+import { Controller, Oracle, WETH9, WPowerPerp } from "../../../typechain";
 import { isSimilar } from '../utils'
 import { deployUniswapV3, deploySqueethCoreContracts, addSqueethLiquidity, deployWETHAndDai } from '../setup'
 

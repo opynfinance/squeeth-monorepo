@@ -18,7 +18,7 @@ import {
   abi as QUOTER_ABI,
   bytecode as QUOTER_BYTECODE,
 } from "@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json"
-import { Controller, Oracle, ShortPowerPerp, WETH9, WPowerPerp, MockErc20, INonfungiblePositionManager, ABDKMath64x64 } from "../typechain";
+import { Controller, Oracle, ShortPowerPerp, WETH9, WPowerPerp, MockErc20, INonfungiblePositionManager, ABDKMath64x64 } from "../../typechain";
 import { convertToken0PriceToSqrtX96Price, convertToken1PriceToSqrtX96Price } from "./calculator";
 import { getNow } from './utils'
 

@@ -3,7 +3,7 @@ import BigNumberJs from 'bignumber.js'
 import { Contract, BigNumber, constants, utils } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import { expect } from "chai";
-import { Controller, INonfungiblePositionManager, MockErc20, VaultLibTester, ShortPowerPerp, WETH9, WPowerPerp, IUniswapV3Factory } from "../../typechain";
+import { Controller, INonfungiblePositionManager, MockErc20, VaultLibTester, ShortPowerPerp, WETH9, WPowerPerp, IUniswapV3Factory } from "../../../typechain";
 import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addSqueethLiquidity, addWethDaiLiquidity, createUniPool } from '../setup'
 import { isSimilar, getNow, one, oracleScaleFactor } from "../utils";
 import { getSqrtPriceAndTickBySqueethPrice } from "../calculator";

@@ -1,0 +1,22 @@
+[default]
+src = 'contracts'
+test = 'test/foundry-test'
+out = 'artifacts/contracts'
+libs = ['lib']
+solc_version = '0.7.6'                                          
+# auto_detect_solc = true                                       
+optimizer = true                                             
+optimizer_runs = 200                                         
+remappings = [
+    '@ensdomains/=node_modules/@ensdomains/',
+    '@openzeppelin/=node_modules/@openzeppelin/',
+    '@uniswap/=node_modules/@uniswap/',
+    'base64-sol/=node_modules/base64-sol/',
+    'contracts/=node_modules/@uniswap/lib/contracts/',
+    'eth-gas-reporter/=node_modules/eth-gas-reporter/',
+    'hardhat-deploy/=node_modules/hardhat-deploy/',
+    'hardhat/=node_modules/hardhat/',
+    '@std=lib/forge-std/src/'
+]
+
+# See more config options https://github.com/foundry-rs/foundry/tree/master/config
