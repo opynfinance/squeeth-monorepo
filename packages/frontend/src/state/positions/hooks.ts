@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useAtom, useAtomValue, atom } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 import { useQuery } from '@apollo/client'
@@ -53,6 +54,7 @@ import useAppMemo from '@hooks/useAppMemo'
 import useAppCallback from '@hooks/useAppCallback'
 
 export const useSwaps = () => {
+  const [swapData, setSwapData] = useState<swaps | swapsRopsten | undefined>(undefined)
   const [networkId] = useAtom(networkIdAtom)
   const [address] = useAtom(addressAtom)
   const setSwaps = useUpdateAtom(swapsAtom)
@@ -83,7 +85,13 @@ export const useSwaps = () => {
     }
   }, [data?.swaps, setSwaps])
 
-  return { data, refetch, loading, error, startPolling, stopPolling }
+  useAppEffect(() => {
+    if (data && data.swaps && data.swaps.length > 0) {
+      setSwapData(data)
+    }
+  }, [data])
+
+  return { data: swapData, refetch, loading, error, startPolling, stopPolling }
 }
 
 export const useComputeSwaps = () => {
@@ -126,6 +134,7 @@ export const useMintedSoldSort = () => {
   const { openShortSqueeth } = useVaultHistory(vaultId)
   const positionType = useAtomValue(positionTypeAtom)
   const { squeethAmount } = useComputeSwaps()
+
   //when the squeethAmount < 0 and the abs amount is greater than openShortSqueeth, that means there is manually sold short position
   return useAppMemo(() => {
     return positionType === PositionType.SHORT && squeethAmount.abs().isGreaterThan(openShortSqueeth)
@@ -146,6 +155,7 @@ export const useMintedDebt = () => {
   const mintedDebt = useAppMemo(() => {
     return mintedSqueeth.minus(mintedSoldShort).minus(lpDebt)
   }, [mintedSqueeth, mintedSoldShort, lpDebt])
+
   return mintedDebt
 }
 
