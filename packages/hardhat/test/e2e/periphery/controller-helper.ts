@@ -367,10 +367,12 @@ describe("ControllerHelper: mainnet fork", function () {
       const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
       const collateralToDeposit = debtInEth.mul(2)
       await controller.connect(depositor).mintWPowerPerpAmount(0, mintWSqueethAmount, 0, {value: collateralToDeposit})
-      // Get before context
       const vaultId = (await shortSqueeth.nextId()).sub(1);
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
+      // Get before context
       const vaultBefore = await controller.vaults(vaultId)
+      const depositorEthBalanceBefore = await ethers.provider.getBalance(depositor.address)
+      // Set up for full range LP with half collateral flashloaned
       const collateralToMint = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
       const collateralToFlashloan = collateralToMint.div(2)
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
@@ -387,32 +389,41 @@ describe("ControllerHelper: mainnet fork", function () {
         lpLowerTick: -887220,
         lpUpperTick: 887220
       }
-      console.log('test', flashloanWMintDepositNftParams)
+      // Look at transasction
       const tx = await controllerHelper.connect(depositor).flashloanWMintDepositNft(flashloanWMintDepositNftParams, {value: collateralToLp.add(collateralToMint)})
-
+      const depositorEthBalanceAfter = await ethers.provider.getBalance(depositor.address)
       const receipt = await tx.wait()
       const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
-
+      // Get after context
       const vaultAfter = await controller.vaults(vaultId)
       const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
       const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
+      const ownerOfUniNFT = await (positionManager as INonfungiblePositionManager).ownerOf(tokenId); 
       const position = await (positionManager as INonfungiblePositionManager).positions(tokenId)
-      console.log('collateralToMint', collateralToMint.toString())
-      console.log('vaultBefore.collateralAmount', vaultBefore.collateralAmount.toString())
-      console.log('vaultBefore.shortAmount', vaultBefore.shortAmount.toString())
-      console.log('vaultBefore.NftCollateralId', vaultBefore.NftCollateralId.toString())
-      console.log('vaultAfter.collateralAmount', vaultAfter.collateralAmount.toString())
-      console.log('vaultAfter.shortAmount', vaultAfter.shortAmount.toString())
-      console.log('vaultAfter.NftCollateralId', vaultAfter.NftCollateralId.toString())
-      console.log('mintWSqueethAmount', mintWSqueethAmount.toString())
-      //console.log('collateralToMint', collateralToMint.toString())
-      console.log('gasSpent', gasSpent.toString())
+
+      // console.log('collateralToMint', collateralToMint.toString())
+      // console.log('vaultBefore.collateralAmount', vaultBefore.collateralAmount.toString())
+      // console.log('vaultBefore.shortAmount', vaultBefore.shortAmount.toString())
+      // console.log('vaultBefore.NftCollateralId', vaultBefore.NftCollateralId.toString())
+      // console.log('vaultAfter.collateralAmount', vaultAfter.collateralAmount.toString())
+      // console.log('vaultAfter.shortAmount', vaultAfter.shortAmount.toString())
+      // console.log('vaultAfter.NftCollateralId', vaultAfter.NftCollateralId.toString())
+      // console.log('mintWSqueethAmount', mintWSqueethAmount.toString())
+      // console.log('collateralToMint', collateralToMint.toString())
+      // console.log('collateralToFlashloan', collateralToFlashloan.toString())
+      // console.log('gasSpent', gasSpent.toString())
+      // console.log('ownerOfUniNFT', ownerOfUniNFT.toString())
+      // console.log('controller', controller.address.toString())
+      // console.log('depositorEthBalanceBefore', depositorEthBalanceBefore.toString())
+      // console.log('depositorEthBalanceAfter', depositorEthBalanceAfter.toString())
 
       expect(BigNumber.from(vaultAfter.NftCollateralId).eq(tokenId)).to.be.true;
       expect(position.tickLower === -887220).to.be.true
       expect(position.tickUpper === 887220).to.be.true
-      expect(vaultAfter.shortAmount.sub(vaultBefore.shortAmount).sub(mintWSqueethAmount).abs().lte(10)).to.be.true
+      expect(ownerOfUniNFT === controller.address).to.be.true
+      expect(vaultAfter.shortAmount.sub(vaultBefore.shortAmount).sub(mintWSqueethAmount).abs().lte(100)).to.be.true
       expect(vaultAfter.collateralAmount.sub(vaultBefore.collateralAmount).sub((collateralToMint.sub(collateralToFlashloan))).eq(0)).to.be.true
+      expect(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).sub(gasSpent).sub((collateralToMint.sub(collateralToFlashloan))).lte(1)).to.be.true
     })
 
     it("open short in new vault, mint, LP oSQTH only, deposit LP NFT, no eth added", async () => {
@@ -425,13 +436,13 @@ describe("ControllerHelper: mainnet fork", function () {
       const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
       const collateralToDeposit = debtInEth.mul(4)
       await controller.connect(depositor).mintWPowerPerpAmount(0, mintWSqueethAmount, 0, {value: collateralToDeposit})
-
-
-      // Mint full range into vault with no added eth
       const vaultId = (await shortSqueeth.nextId()).sub(1);
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
+      // Get before context
+      const vaultBefore = await controller.vaults(vaultId)
+      const depositorEthBalanceBefore = await ethers.provider.getBalance(depositor.address)
 
-
+      // Set up for full range LP with half collateral flashloaned
       const flashloanWMintDepositNftParams = {
         vaultId: vaultId.toString(),
         wPowerPerpAmount: mintWSqueethAmount.toString(),
@@ -445,27 +456,43 @@ describe("ControllerHelper: mainnet fork", function () {
         lpUpperTick: 0
       }
 
-      await controllerHelper.connect(depositor).flashloanWMintDepositNft(flashloanWMintDepositNftParams)
-
+      const tx = await controllerHelper.connect(depositor).flashloanWMintDepositNft(flashloanWMintDepositNftParams)
+      const depositorEthBalanceAfter = await ethers.provider.getBalance(depositor.address)
+      const receipt = await tx.wait()
+      const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
+      // Get after context
       const vaultAfter = await controller.vaults(vaultId)
       const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
       const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
+      const ownerOfUniNFT = await (positionManager as INonfungiblePositionManager).ownerOf(tokenId); 
       const position = await (positionManager as INonfungiblePositionManager).positions(tokenId)
 
-
-      console.log('vaultAfter.collateralAmount', vaultAfter.collateralAmount.toString())
-      console.log('vaultAfter.shortAmount', vaultAfter.shortAmount.toString())
-      console.log('vaultAfter.NftCollateralId', vaultAfter.NftCollateralId.toString())
-
+      // console.log('vaultBefore.collateralAmount', vaultBefore.collateralAmount.toString())
+      // console.log('vaultBefore.shortAmount', vaultBefore.shortAmount.toString())
+      // console.log('vaultBefore.NftCollateralId', vaultBefore.NftCollateralId.toString())
+      // console.log('vaultAfter.collateralAmount', vaultAfter.collateralAmount.toString())
+      // console.log('vaultAfter.shortAmount', vaultAfter.shortAmount.toString())
+      // console.log('vaultAfter.NftCollateralId', vaultAfter.NftCollateralId.toString())
+      // console.log('mintWSqueethAmount', mintWSqueethAmount.toString())
+      // console.log('gasSpent', gasSpent.toString())
+      // console.log('ownerOfUniNFT', ownerOfUniNFT.toString())
+      // console.log('controller', controller.address.toString())
+      // console.log('depositorEthBalanceBefore', depositorEthBalanceBefore.toString())
+      // console.log('depositorEthBalanceAfter', depositorEthBalanceAfter.toString())
+      // console.log('mintWSqueethAmount.mul(2)',mintWSqueethAmount.mul(2).toString())
+      // Rounding can be off
+      expect(vaultAfter.shortAmount.sub(mintWSqueethAmount.mul(2)).abs().lte(10)).to.be.true
+      //expect(vaultAfter.collateralAmount.eq(collateralToMint.sub(collateralToFlashloan))).to.be.true
 
       expect(BigNumber.from(vaultAfter.NftCollateralId).eq(tokenId)).to.be.true;
       expect(position.tickLower === -887220).to.be.true
       expect(position.tickUpper === 0).to.be.true
-      console.log('mintWSqueethAmount.mul(2)',mintWSqueethAmount.mul(2).toString())
-      // Rounding can be off
-      expect(vaultAfter.shortAmount.sub(mintWSqueethAmount.mul(2)).abs().lte(10)).to.be.true
-      //expect(vaultAfter.collateralAmount.eq(collateralToMint.sub(collateralToFlashloan))).to.be.true
+      expect(ownerOfUniNFT === controller.address).to.be.true
+      expect(vaultAfter.shortAmount.sub(vaultBefore.shortAmount).sub(mintWSqueethAmount).abs().lte(10)).to.be.true
+      expect(vaultAfter.collateralAmount.sub(vaultBefore.collateralAmount).eq(0)).to.be.true
+      expect(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).sub(gasSpent).lte(1)).to.be.true
     })
+    
 
     it("open short in new vault, mint, LP oSQTH only, deposit LP NFT, some eth added", async () => {
       // New vault with 1.5x collateral
@@ -477,11 +504,13 @@ describe("ControllerHelper: mainnet fork", function () {
       const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
       const collateralToDeposit = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
       await controller.connect(depositor).mintWPowerPerpAmount(0, mintWSqueethAmount, 0, {value: collateralToDeposit})
-
-
-      // Mint full range into vault with no added eth
       const vaultId = (await shortSqueeth.nextId()).sub(1);
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
+      // Get before context
+      const vaultBefore = await controller.vaults(vaultId)
+      const depositorEthBalanceBefore = await ethers.provider.getBalance(depositor.address)
+      // Mint full range into vault with no added eth
+
 
 
       const flashloanWMintDepositNftParams = {
@@ -497,11 +526,16 @@ describe("ControllerHelper: mainnet fork", function () {
         lpUpperTick: 0
       }
 
-      await controllerHelper.connect(depositor).flashloanWMintDepositNft(flashloanWMintDepositNftParams, {value: collateralToDeposit})
 
+      const tx = await controllerHelper.connect(depositor).flashloanWMintDepositNft(flashloanWMintDepositNftParams, {value: collateralToDeposit})
+      const depositorEthBalanceAfter = await ethers.provider.getBalance(depositor.address)
+      const receipt = await tx.wait()
+      const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
+      // Get after context
       const vaultAfter = await controller.vaults(vaultId)
       const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
       const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
+      const ownerOfUniNFT = await (positionManager as INonfungiblePositionManager).ownerOf(tokenId); 
       const position = await (positionManager as INonfungiblePositionManager).positions(tokenId)
 
 
@@ -513,8 +547,12 @@ describe("ControllerHelper: mainnet fork", function () {
       expect(BigNumber.from(vaultAfter.NftCollateralId).eq(tokenId)).to.be.true;
       expect(position.tickLower === -887220).to.be.true
       expect(position.tickUpper === 0).to.be.true
+      expect(ownerOfUniNFT === controller.address).to.be.true
       expect(vaultAfter.shortAmount.sub(mintWSqueethAmount.mul(2)).abs().lte(10)).to.be.true
       expect(vaultAfter.collateralAmount.eq(collateralToDeposit.mul(2))).to.be.true
+      expect(vaultAfter.collateralAmount.sub(vaultBefore.collateralAmount).sub(collateralToDeposit).eq(0)).to.be.true
+      expect(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).sub(gasSpent).sub(collateralToDeposit).lte(1)).to.be.true
+ 
     })
 
 
