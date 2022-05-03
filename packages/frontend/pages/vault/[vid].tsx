@@ -327,6 +327,7 @@ const Component: React.FC = () => {
   const { getApproved, approve } = useERC721(nftManager)
   const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
+  const [minCollateral, setMinCollateral] = useState<string | undefined>(undefined)
   const [collateral, setCollateral] = useState('0')
   const [lpNftCollatPercent, setLpNftCollatPercent] = useState(0)
   const collateralBN = new BigNumber(collateral)
@@ -343,6 +344,19 @@ const Component: React.FC = () => {
   const { vault, loading: isVaultLoading, updateVault } = useVault(Number(vid))
   const { existingCollatPercent, existingLiqPrice } = useVaultData(vault as any)
   const [collatPercent, setCollatPercent] = useAtom(collatPercentAtom)
+
+  useEffect(() => {
+    ; (async () => {
+      if (vault) {
+        const debt = await getDebtAmount(vault.shortAmount)
+        const collateralWithMinRatio = debt.times(1.5).minus(vault.collateralAmount).toNumber()
+        const minCollateral = vault.collateralAmount.minus(MIN_COLLATERAL_AMOUNT).negated().toNumber()
+        setMinCollateral(Math.max(collateralWithMinRatio, minCollateral).toString())
+      } else {
+        setMinCollateral(collateral)
+      }
+    })()
+  }, [vault])
 
   useEffect(() => {
     getTwapEthPrice().then((price) => {
@@ -805,15 +819,15 @@ const Component: React.FC = () => {
                         id="collat-max-btn"
                         size="small"
                         color="primary"
-                        onClick={() =>
-                          collateralBN.isPositive()
-                            ? updateCollateral(toTokenAmount(balance ?? BIG_ZERO, 18).toString())
-                            : updateCollateral(
-                              vault
-                                ? vault?.collateralAmount.minus(MIN_COLLATERAL_AMOUNT).negated().toString()
-                                : collateral,
-                            )
-                        }
+                        onClick={() => {
+                          if (collateralBN.isPositive()) {
+                            updateCollateral(toTokenAmount(balance ?? BIG_ZERO, 18).toString())
+                          } else {
+                            if (minCollateral) {
+                              updateCollateral(minCollateral)
+                            }
+                          }
+                        }}
                         variant="text"
                       >
                         Max
@@ -822,7 +836,7 @@ const Component: React.FC = () => {
 
                     <NumberInput
                       id="collat-amount-input"
-                      min={vault?.collateralAmount.minus(MIN_COLLATERAL_AMOUNT).negated().toString()}
+                      min={minCollateral || '0'}
                       step={0.1}
                       placeholder="Collateral"
                       onChange={(v) => updateCollateral(v)}
