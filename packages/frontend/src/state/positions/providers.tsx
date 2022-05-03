@@ -20,6 +20,7 @@ interface ComputeSwapsContextValue {
   soldSqueeth: BigNumber
   totalUSDFromBuy: BigNumber
   totalUSDFromSell: BigNumber
+  loading: Boolean
 }
 
 export const ComputeSwapsContext = createContext<ComputeSwapsContextValue | null>(null)
@@ -28,7 +29,7 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const setPositionType = useUpdateAtom(positionTypeAtom)
   const { getUsdAmt } = useUsdAmount()
-  const { data } = useSwaps()
+  const { data, loading } = useSwaps()
   const { oSqueeth } = useAtomValue(addressesAtom)
   const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
@@ -106,12 +107,13 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
   const value = useMemo(
     () => ({
       ...computedSwaps,
+      loading,
       squeethAmount:
         computedSwaps.squeethAmount.isGreaterThan(0) && computedSwaps.squeethAmount.isGreaterThan(oSqueethBal)
           ? oSqueethBal
           : computedSwaps.squeethAmount.absoluteValue(),
     }),
-    [computedSwaps, oSqueethBal],
+    [computedSwaps, oSqueethBal, loading],
   )
 
   return <ComputeSwapsContext.Provider value={value}>{children}</ComputeSwapsContext.Provider>
