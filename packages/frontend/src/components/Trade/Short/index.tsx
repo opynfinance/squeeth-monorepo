@@ -986,6 +986,8 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
               onChange={(event: React.ChangeEvent<{ value: unknown }>) => {
                 if (event.target.value === CloseType.FULL) {
                   setShortCloseMax()
+                } else {
+                  setSqthTradeAmount('0')
                 }
                 setCollatPercent(200)
                 return setCloseType(event.target.value as CloseType)
