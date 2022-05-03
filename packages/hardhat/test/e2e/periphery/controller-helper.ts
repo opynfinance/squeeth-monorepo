@@ -870,7 +870,6 @@ describe("ControllerHelper: mainnet fork", function () {
   describe("Rebalance with vault", async () => {
 
       beforeEach("Mint and LP full range" , async () => {
-        const depositorEthBalanceBefore = await ethers.provider.getBalance(depositor.address)
         // Mint 50 squeeth in new vault
         const normFactor = await controller.getExpectedNormalizationFactor()
         const mintWSqueethAmount = ethers.utils.parseUnits('50')
@@ -893,17 +892,8 @@ describe("ControllerHelper: mainnet fork", function () {
           upperTick: 887220
         }
         // Batch mint new full range LP
-        const tx = await controllerHelper.connect(depositor).batchMintLp(params, {value: collateralAmount.add(collateralToLp)});
-        const receipt = await tx.wait()
-        const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
-        const depositorEthBalanceAfter = await ethers.provider.getBalance(depositor.address)
-        // console.log('target amounts')
-        // console.log('collateral amount', collateralAmount.toString())
-        // console.log('collateralToLp', collateralToLp.toString())
-        // console.log('wPowerPerpAmount: ', mintWSqueethAmount.toString())
-        // console.log('depositorEthBalanceBefore', depositorEthBalanceBefore.toString())
-        // console.log('depositorEthBalanceAfter', depositorEthBalanceAfter.toString())
-        // console.log('gasSpent', gasSpent.toString())
+        controllerHelper.connect(depositor).batchMintLp(params, {value: collateralAmount.add(collateralToLp)});
+
 
        })
 
@@ -984,6 +974,34 @@ describe("ControllerHelper: mainnet fork", function () {
       const vaultAfter = await controller.vaults(vaultId);
       const tokenIdAfter = vaultAfter.NftCollateralId;
       const positionAfter = await (positionManager as INonfungiblePositionManager).positions(tokenIdAfter)
+      const slot0_ = await wSqueethPool.slot0()
+      const currentTick_ = slot0_[1]
+
+      // (,int24 currentTick,,,,,) = IUniswapV3Pool(_wPowerPerpPool).slot0();
+      // const [amount0_ amount1_] = controllerHelperUtil.connect(depositor).getAmountsFromLiquidity(
+
+      // (amount0Desired, amount1Desired) = _isWethToken0 ? (_collateralToLp, _wPowerPerpAmount) : (_wPowerPerpAmount, _collateralToLp);
+      // uint128 maxLiquidity = LiquidityAmounts.getLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0Desired, amount1Desired);
+      console.log('currentTick_',currentTick_)
+      console.log('positionBefore.tickLower',positionBefore.tickLower)
+      console.log('positionBefore.tickUpper', positionBefore.tickUpper)
+      console.log('positionBefore.liquidity', positionBefore.liquidity.toString())
+
+      const amts = await controllerHelper.connect(depositor).getUniswapPoolAmounts(
+        currentTick_,
+        positionBefore.tickLower,
+        positionBefore.tickUpper,
+        positionBefore.liquidity
+        );
+
+      const [wethAmountInLP, wSqueethAmountInLp] = (isWethToken0) ? [amts[0], amts[1]] : [amts[1], amts[0]]
+      console.log('wethAmountInLP', wethAmountInLP.toString())
+      console.log('wSqueethAmountInLp',wSqueethAmountInLp.toString() )
+
+      // const wPowerPerpAmountInLPAfter = (isWethToken0) ? amount1After : amount0After;
+      // const wethAmountInLPAfter = (isWethToken0) ? amount0After : amount1After;
+      // console.log('1', wPowerPerpAmountInLPAfter)
+      // console.log('2', wethAmountInLPAfter)
 
       // console.log('vaultAfter.NftCollaterald',vaultAfter.NftCollateralId.toString())
       // console.log('printed positions', positionAfter)

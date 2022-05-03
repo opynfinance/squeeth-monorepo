@@ -65,6 +65,26 @@ library ControllerHelperUtil {
         return (_wPowerPerpAmount, wethAmount);
     }
 
+    /**
+     * @notice Get amounts in uniswap v3 pool
+     */
+    function getUniswapPoolAmounts(
+        int24 _currentTick,
+        int24 _tickLower,
+        int24 _tickUpper,
+        uint128 _liquidity
+    ) public view returns (uint256 amount0, uint256 amount1) {
+        console.log('_liquidity %s', uint256(_liquidity));
+      (uint256 amount0, uint256 amount1) = LiquidityAmounts.getAmountsForLiquidity(
+         TickMathExternal.getSqrtRatioAtTick(_currentTick),
+         TickMathExternal.getSqrtRatioAtTick(_tickLower),
+         TickMathExternal.getSqrtRatioAtTick(_tickUpper),
+          _liquidity
+        );
+        console.log('amount0 %s amount1 %s', amount0, amount1);
+    }
+
+
     function getAmountsToLp(address _wPowerPerpPool, uint256 _collateralToLp, uint256 _wPowerPerpAmount, int24 _lowerTick, int24 _upperTick, bool _isWethToken0) public view returns (uint256, uint256) {
         uint256 amount0Desired; 
         uint256 amount1Desired;
