@@ -725,17 +725,6 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
     setIsVaultApproved(vault.operator?.toLowerCase() === shortHelper?.toLowerCase())
   }, [shortHelper, vault])
 
-  console.log(
-    {
-      shortVaults,
-      vault,
-      amount: amount.toString(),
-      collatAmt: vault?.collateralAmount.toString(),
-      shortAmount: vault?.shortAmount.toString(),
-    },
-    'Hello',
-  )
-
   useAppEffect(() => {
     if (vault) {
       const _collat: BigNumber = vault?.collateralAmount ?? new BigNumber(0)
