@@ -292,11 +292,11 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
 
   useAppEffect(() => {
     if (open && tradeType === TradeType.LONG) {
-      getBuyQuoteForETH(new BigNumber(sqthTradeAmount), slippageAmount).then((val) => {
+      getBuyQuoteForETH(new BigNumber(ethTradeAmount), slippageAmount).then((val) => {
         setQuote(val)
       })
     }
-  }, [slippageAmount, sqthTradeAmount, getBuyQuoteForETH, open, setQuote, tradeType])
+  }, [slippageAmount, ethTradeAmount, getBuyQuoteForETH, open, setQuote, tradeType])
 
   const handleEthChange = useAppCallback(
     (value: string) => {
