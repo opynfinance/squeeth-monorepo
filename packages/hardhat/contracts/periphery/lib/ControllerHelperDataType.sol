@@ -32,10 +32,12 @@ library ControllerHelperDataType {
     enum RebalanceVaultNftType {
         IncreaseLpLiquidity,
         DecreaseLpLiquidity,
-        MintIntoVault,
+        DepositIntoVault,
         WithdrawFromVault,
         MintNewLp,
-        generalSwap
+        generalSwap,
+        CollectFees, 
+        DepositExistingNft
     }
     
     /// @dev params for flashswapWBurnBuyLong()
@@ -188,7 +190,7 @@ library ControllerHelperDataType {
     }
 
     /// @dev struct for minting into vault
-    struct MintIntoVault {
+    struct DepositIntoVault {
         uint256 wPowerPerpToMint;   // wPowerPerp amount to mint
         uint256 collateralToDeposit;    // collateral amount to deposit
     }
@@ -205,5 +207,16 @@ library ControllerHelperDataType {
         address tokenOut;
         uint256 amountIn;
         uint256 limitPriceEthPerPowerPerp;
+    }
+
+    /// @dev struct for collecting fees owed from a uniswap NFT
+    struct CollectFeesParams {
+        uint256 tokenId;
+        uint128 amount0Max;
+        uint128 amount1Max;
+    }
+    /// @dev struct for re-depositing and existing uniswap NFT to a vault
+    struct DepositExistingNftParams {
+        uint256 tokenId;
     }
 }
