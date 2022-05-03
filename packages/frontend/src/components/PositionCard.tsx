@@ -252,7 +252,7 @@ const PositionCard: React.FC = () => {
         return longReturnValue
       }
       if (positionType === PositionType.SHORT) {
-        if (!shortBignumber.isFinite() || longBignumber.isEqualTo(0)) return loadingMsg
+        if (!shortBignumber.isFinite() || shortBignumber.isEqualTo(0)) return loadingMsg
         return shortReturnValue
       }
       return none
