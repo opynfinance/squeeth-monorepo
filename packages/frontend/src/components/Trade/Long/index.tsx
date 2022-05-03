@@ -652,12 +652,12 @@ const CloseLong: React.FC<BuyProps> = () => {
     //if it's insufficient amount them set it to it's maximum
     if (squeethAmount.lt(amount)) {
       setSqthTradeAmount(squeethAmount.toString())
-      getSellQuoteForETH(squeethAmount).then((val) => {
-        setEthTradeAmount(val.amountIn.toString())
-        setConfirmedAmount(val.amountIn.toFixed(6).toString())
+      getSellQuote(squeethAmount).then((val) => {
+        setEthTradeAmount(val.amountOut.toString())
+        setConfirmedAmount(val.amountOut.toFixed(6).toString())
       })
     }
-  }, [squeethAmount, amount, getSellQuoteForETH, setConfirmedAmount, setEthTradeAmount, setSqthTradeAmount])
+  }, [squeethAmount, amount, getSellQuote, setConfirmedAmount, setEthTradeAmount, setSqthTradeAmount])
 
   // let openError: string | undefined
   let closeError: string | undefined
