@@ -74,7 +74,7 @@ export default function ShortSqueeth() {
               <InfoIcon fontSize="small" className={classes.infoIcon} />
             </Tooltip>
             {isPositionLoading ||
-            shortGain.isLessThanOrEqualTo(-100) ||
+            shortUnrealizedPNL.eth.isEqualTo(0) ||
             !shortGain.isFinite() ||
             shortUnrealizedPNL.loading ? (
               <Typography variant="body1">Loading</Typography>
