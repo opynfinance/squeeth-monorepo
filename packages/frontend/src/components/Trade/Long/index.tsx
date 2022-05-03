@@ -654,7 +654,7 @@ const CloseLong: React.FC<BuyProps> = () => {
       setSqthTradeAmount(squeethAmount.toString())
       getSellQuote(squeethAmount).then((val) => {
         setEthTradeAmount(val.amountOut.toString())
-        setConfirmedAmount(val.amountOut.toFixed(6).toString())
+        setConfirmedAmount(squeethAmount.toFixed(6))
       })
     }
   }, [squeethAmount, amount, getSellQuote, setConfirmedAmount, setEthTradeAmount, setSqthTradeAmount])
