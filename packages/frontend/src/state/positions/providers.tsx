@@ -102,10 +102,6 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
     } else setPositionType(PositionType.NONE)
   }, [computedSwaps.squeethAmount, oSqueethBal, setPositionType])
 
-  useAppEffect(() => {
-    refetch()
-  }, [computedSwaps.squeethAmount, refetch])
-
   const value = useAppMemo(
     () => ({
       ...computedSwaps,
