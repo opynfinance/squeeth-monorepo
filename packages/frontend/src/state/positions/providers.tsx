@@ -2,7 +2,6 @@ import BigNumber from 'bignumber.js'
 import { createContext } from 'react'
 import { useAtomValue } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
-import { useEffect, useMemo } from 'react'
 import { BIG_ZERO, OSQUEETH_DECIMALS } from '@constants/index'
 import { addressesAtom, isWethToken0Atom, positionTypeAtom, swapsAtom } from './atoms'
 import { useUsdAmount } from '@hooks/useUsdAmount'
@@ -10,6 +9,7 @@ import { PositionType } from '../../types'
 import useAppMemo from '@hooks/useAppMemo'
 import { FC } from 'react'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
+import useAppEffect from '@hooks/useAppEffect'
 interface ComputeSwapsContextValue {
   squeethAmount: BigNumber
   wethAmount: BigNumber
@@ -29,7 +29,7 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
   const { getUsdAmt } = useUsdAmount()
   const data = useAtomValue(swapsAtom)
   const { oSqueeth } = useAtomValue(addressesAtom)
-  const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
+  const { value: oSqueethBal, refetch } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
   const computedSwaps = useAppMemo(
     () =>
@@ -94,7 +94,7 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
     [isWethToken0, data?.swaps, getUsdAmt],
   )
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (computedSwaps.squeethAmount.isGreaterThan(0) && oSqueethBal?.isGreaterThan(0)) {
       setPositionType(PositionType.LONG)
     } else if (computedSwaps.squeethAmount.isLessThan(0)) {
@@ -102,7 +102,11 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
     } else setPositionType(PositionType.NONE)
   }, [computedSwaps.squeethAmount, oSqueethBal, setPositionType])
 
-  const value = useMemo(
+  useAppEffect(() => {
+    refetch()
+  }, [computedSwaps.squeethAmount, refetch])
+
+  const value = useAppMemo(
     () => ({
       ...computedSwaps,
       squeethAmount:
