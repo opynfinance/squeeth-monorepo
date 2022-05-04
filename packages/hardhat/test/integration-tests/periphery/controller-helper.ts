@@ -667,6 +667,7 @@ describe("Controller helper integration test", function () {
       const tokenIndexBefore = await (positionManager as INonfungiblePositionManager).totalSupply();
       const params = {
         recipient: depositor.address,
+        wPowerPerpPool: wSqueethPool.address,
         vaultId: 0,
         wPowerPerpAmount: mintWSqueethAmount,
         collateralToDeposit: collateralAmount,
@@ -743,6 +744,7 @@ describe("Controller helper integration test", function () {
   
       const params = {
         recipient: depositor.address,
+        wPowerPerpPool: wSqueethPool.address,
         vaultId: vaultId,
         wPowerPerpAmount: mintWSqueethAmount, 
         collateralToDeposit: collateralAmount,
@@ -1524,6 +1526,7 @@ describe("Controller helper integration test", function () {
       const squeethDesired = wPowerPerpAmountInLP.sub(10).add(squeethAmountOut)
 
       const params = {
+        wPowerPerpPool: wSqueethPool.address,
         tokenId: oldTokenId,
         ethAmountToLp: BigNumber.from(0),
         liquidity: oldPosition.liquidity,
