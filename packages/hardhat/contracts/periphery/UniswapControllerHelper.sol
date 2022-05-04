@@ -101,9 +101,6 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
             })
         );
 
-        //console.log("amountOut", amountOut);
-        //console.log("_amountOutMinimum", _amountOutMinimum);
-
         //slippage limit check
         require(amountOut >= _amountOutMinimum);
 
@@ -142,9 +139,6 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
             })
         );
 
-        //console.log("amountIn", amountIn);
-        //console.log("_amountInMaximum", _amountInMaximum);
-
         //slippage limit check
         require(amountIn <= _amountInMaximum);
     }
@@ -169,13 +163,6 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
         bytes memory _callData,
         uint8 _callSource
     ) internal virtual {}
-
-    // function _flashCallback(
-    //     uint256 _fee0,
-    //     uint256 _fee1,
-    //     bytes memory _callData,
-    //     uint8 _callSource
-    // ) internal virtual {}
 
     /**
      * @notice internal function for exact-in swap on uniswap (specify exact amount to pay)
