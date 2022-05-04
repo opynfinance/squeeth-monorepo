@@ -596,6 +596,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         ControllerHelperDiamondStorage.getAddressAtSlot(0),
                         ControllerHelperDiamondStorage.getAddressAtSlot(6),
                         ControllerHelperDiamondStorage.getAddressAtSlot(4),
+                        ControllerHelperDiamondStorage.getAddressAtSlot(3),
                         vaultId,
                         increaseLiquidityParam,
                         isWethToken0
