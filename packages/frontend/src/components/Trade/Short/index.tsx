@@ -731,7 +731,16 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   }, [vaultId, shortHelper, firstValidVault, shortVaults])
 
   useAppEffect(() => {
-    if (shortVaults.length) {
+
+    if (amount.isEqualTo(0)) {
+      setExistingCollat(new BigNumber(0))
+      setNeededCollat(new BigNumber(0))
+      setWithdrawCollat(new BigNumber(0))
+    }
+  }, [amount])
+
+  useAppEffect(() => {
+    if (shortVaults.length && !amount.isEqualTo(0)) {
       const _collat: BigNumber = vault?.collateralAmount ?? new BigNumber(0)
       setExistingCollat(_collat)
       const restOfShort = new BigNumber(vault?.shortAmount ?? new BigNumber(0)).minus(amount)
@@ -986,6 +995,8 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
               onChange={(event: React.ChangeEvent<{ value: unknown }>) => {
                 if (event.target.value === CloseType.FULL) {
                   setShortCloseMax()
+                } else {
+                  setSqthTradeAmount('0')
                 }
                 setCollatPercent(200)
                 return setCloseType(event.target.value as CloseType)

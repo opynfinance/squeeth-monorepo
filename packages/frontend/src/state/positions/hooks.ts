@@ -198,12 +198,12 @@ export const useShortDebt = () => {
 
 export const useLongSqthBal = () => {
   const { oSqueeth } = useAtomValue(addressesAtom)
-  const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
+  const { value: oSqueethBal, loading, error, refetch } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
   const mintedDebt = useMintedDebt()
   const longSqthBal = useAppMemo(() => {
     return mintedDebt.gt(0) ? oSqueethBal.minus(mintedDebt) : oSqueethBal
   }, [oSqueethBal, mintedDebt])
-  return longSqthBal
+  return { longSqthBal, loading, error, refetch }
 }
 
 export const useLpDebt = () => {
