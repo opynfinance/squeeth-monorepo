@@ -292,11 +292,11 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
 
   useAppEffect(() => {
     if (open && tradeType === TradeType.LONG) {
-      getBuyQuoteForETH(new BigNumber(sqthTradeAmount), slippageAmount).then((val) => {
+      getBuyQuoteForETH(new BigNumber(ethTradeAmount), slippageAmount).then((val) => {
         setQuote(val)
       })
     }
-  }, [slippageAmount, sqthTradeAmount, getBuyQuoteForETH, open, setQuote, tradeType])
+  }, [slippageAmount, ethTradeAmount, getBuyQuoteForETH, open, setQuote, tradeType])
 
   const handleEthChange = useAppCallback(
     (value: string) => {
@@ -652,12 +652,12 @@ const CloseLong: React.FC<BuyProps> = () => {
     //if it's insufficient amount them set it to it's maximum
     if (squeethAmount.lt(amount)) {
       setSqthTradeAmount(squeethAmount.toString())
-      getSellQuoteForETH(squeethAmount).then((val) => {
-        setEthTradeAmount(val.amountIn.toString())
-        setConfirmedAmount(val.amountIn.toFixed(6).toString())
+      getSellQuote(squeethAmount).then((val) => {
+        setEthTradeAmount(val.amountOut.toString())
+        setConfirmedAmount(squeethAmount.toFixed(6))
       })
     }
-  }, [squeethAmount, amount, getSellQuoteForETH, setConfirmedAmount, setEthTradeAmount, setSqthTradeAmount])
+  }, [squeethAmount, amount, getSellQuote, setConfirmedAmount, setEthTradeAmount, setSqthTradeAmount])
 
   // let openError: string | undefined
   let closeError: string | undefined

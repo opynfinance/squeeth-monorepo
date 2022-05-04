@@ -2,7 +2,6 @@ import BigNumber from 'bignumber.js'
 import { createContext } from 'react'
 import { useAtomValue } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
-import { useEffect } from 'react'
 import { BIG_ZERO, OSQUEETH_DECIMALS } from '@constants/index'
 import { addressesAtom, isWethToken0Atom, positionTypeAtom } from './atoms'
 import { useUsdAmount } from '@hooks/useUsdAmount'
@@ -32,7 +31,7 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
   const { getUsdAmt } = useUsdAmount()
   const { data, loading } = useSwaps()
   const { oSqueeth } = useAtomValue(addressesAtom)
-  const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
+  const { value: oSqueethBal, refetch } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
   const computedSwaps = useAppMemo(
     () =>
@@ -104,6 +103,10 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
       setPositionType(PositionType.SHORT)
     } else setPositionType(PositionType.NONE)
   }, [computedSwaps.squeethAmount, oSqueethBal, setPositionType])
+
+  useAppEffect(() => {
+    refetch()
+  }, [computedSwaps.squeethAmount, refetch])
 
   const value = useAppMemo(
     () => ({

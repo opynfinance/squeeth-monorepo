@@ -727,7 +727,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   useAppEffect(() => {
     if (!vaultId) return
 
-    setIsVaultApproved(shortVaults[firstValidVault].operator?.toLowerCase() === shortHelper?.toLowerCase())
+    setIsVaultApproved(shortVaults[firstValidVault]?.operator?.toLowerCase() === shortHelper?.toLowerCase())
   }, [vaultId, shortHelper, firstValidVault, shortVaults])
 
   useAppEffect(() => {
