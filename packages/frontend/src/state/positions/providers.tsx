@@ -11,6 +11,7 @@ import { useSwaps } from './hooks'
 import useAppMemo from '@hooks/useAppMemo'
 import { FC } from 'react'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
+import useAppEffect from '@hooks/useAppEffect'
 interface ComputeSwapsContextValue {
   squeethAmount: BigNumber
   wethAmount: BigNumber
@@ -96,7 +97,7 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
     [isWethToken0, data?.swaps, getUsdAmt],
   )
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (computedSwaps.squeethAmount.isGreaterThan(0) && oSqueethBal?.isGreaterThan(0)) {
       setPositionType(PositionType.LONG)
     } else if (computedSwaps.squeethAmount.isLessThan(0)) {
