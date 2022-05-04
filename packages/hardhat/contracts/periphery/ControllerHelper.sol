@@ -805,26 +805,28 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 (ControllerHelperDataType.FlashSellLongWMintParams)
             );
 
-            uint256 vaultId = ControllerHelperUtil.mintIntoVault(
-                ControllerHelperDiamondStorage.getAddressAtSlot(0),
-                ControllerHelperDiamondStorage.getAddressAtSlot(5),
-                data.vaultId,
-                data.wPowerPerpAmountToMint,
-                data.collateralAmount
-            );
+            if (data.wPowerPerpAmountToMint > 0 || data.collateralAmount > 0) {
+                uint256 vaultId = ControllerHelperUtil.mintIntoVault(
+                    ControllerHelperDiamondStorage.getAddressAtSlot(0),
+                    ControllerHelperDiamondStorage.getAddressAtSlot(5),
+                    data.vaultId,
+                    data.wPowerPerpAmountToMint,
+                    data.collateralAmount
+                );
+
+                // this is a newly open vault, transfer to the user
+                if (data.vaultId == 0)
+                    IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).safeTransferFrom(
+                        address(this),
+                        _caller,
+                        vaultId
+                    );
+            }
 
             IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).transfer(
                 ControllerHelperDiamondStorage.getAddressAtSlot(3),
                 _amountToPay
             );
-
-            // this is a newly open vault, transfer to the user
-            if (data.vaultId == 0)
-                IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).safeTransferFrom(
-                    address(this),
-                    _caller,
-                    vaultId
-                );
         } else if (
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH
