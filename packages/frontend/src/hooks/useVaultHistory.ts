@@ -38,7 +38,6 @@ export const useVaultHistoryQuery = (vaultId: number) => {
   }, [startPolling])
 
   useAppEffect(() => {
-    console.log({ isPolling, prevHistory: prevVaultHistory?.length, currentVault: vaultHistory?.length })
     if (isPolling && prevVaultHistory?.length !== vaultHistory?.length) {
       stopPolling()
       setIsPolling(false)
