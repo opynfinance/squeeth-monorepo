@@ -348,8 +348,13 @@ const Component: React.FC = () => {
   useEffect(() => {
     ; (async () => {
       if (vault) {
+        let collateralAmount = vault.collateralAmount
+        if (currentLpNftId) {
+          const { collateral: uniCollat } = await getUniNFTCollatDetail(currentLpNftId)
+          collateralAmount = collateralAmount.plus(uniCollat)
+        }
         const debt = await getDebtAmount(vault.shortAmount)
-        const collateralWithMinRatio = debt.times(1.5).minus(vault.collateralAmount).toNumber()
+        const collateralWithMinRatio = debt.times(1.5).minus(collateralAmount).toNumber()
         const minCollateral = vault.collateralAmount.minus(MIN_COLLATERAL_AMOUNT).negated().toNumber()
         setMinCollateral(Math.max(collateralWithMinRatio, minCollateral).toString())
       } else {
@@ -1076,7 +1081,7 @@ const Component: React.FC = () => {
                     )}
                   </div>
 
-                  {(currentLpNftId || isLPNFTAction) && uniTokenToDeposit ? (
+                  {currentLpNftId || isLPNFTAction ? (
                     <>
                       <div className={classes.collatContainer}>
                         <TextField
@@ -1111,7 +1116,7 @@ const Component: React.FC = () => {
                     </>
                   ) : null}
                   <div className={classes.managerActions} style={{ marginTop: '16px' }}>
-                    {isLPDeposited && uniTokenToDeposit ? (
+                    {isLPDeposited ? (
                       <RemoveButton
                         id="remove-lp-nft-submit-tx-btn"
                         className={classes.actionBtn}
