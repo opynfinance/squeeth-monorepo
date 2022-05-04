@@ -95,7 +95,7 @@ library ControllerHelperUtil {
 
         (uint256 amount0Desired, uint256 amount1Desired) = getAmountsToLp(_mintAndLpParams.wPowerPerpPool, _mintAndLpParams.collateralToLp, _mintAndLpParams.wPowerPerpAmount, _mintAndLpParams.lowerTick, _mintAndLpParams.upperTick, _isWethToken0);
                 
-        uint256 _vaultId;
+        uint256 _vaultId = _mintAndLpParams.vaultId;
         uint256 amountToMint = (_isWethToken0) ? amount1Desired : amount0Desired;
         if (IWPowerPerp(_wPowerPerp).balanceOf(address(this)) < amountToMint) {
             amountToMint = amountToMint.sub(IWPowerPerp(_wPowerPerp).balanceOf(address(this)));
