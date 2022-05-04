@@ -253,10 +253,9 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   const isLong = useAtomValue(isLongAtom)
   const { firstValidVault, vaultId } = useFirstValidVault()
   const { squeethAmount: shortSqueethAmount } = useComputeSwaps()
-  const [isVaultHistoryUpdating, setVaultHistoryUpdating] = useAtom(vaultHistoryUpdatingAtom)
   const [isVaultManagerPolling, setVaultManagerPolling] = useAtom(vaultManagerPollingAtom)
   const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager(isVaultManagerPolling)
-  const vaultHistoryQuery = useVaultHistoryQuery(vaultId, isVaultHistoryUpdating)
+  const vaultHistoryQuery = useVaultHistoryQuery(vaultId)
 
   useAppEffect(() => {
     getSellQuote(amount, slippageAmount).then(setQuote)
@@ -307,8 +306,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
           setTradeCompleted(true)
           resetEthTradeAmount()
           setVaultManagerPolling(true)
-          setVaultHistoryUpdating(true)
-          vaultHistoryQuery.refetch({ vaultId })
+          vaultHistoryQuery.refetch()
           updateVault()
         })
       }
@@ -320,18 +318,18 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
     vaultIDLoading,
     vaultId,
     isVaultApproved,
+    setIsTxFirstStep,
+    updateOperator,
     shortHelper,
+    openShort,
     amount,
     collateral,
-    openShort,
-    resetEthTradeAmount,
-    setIsTxFirstStep,
-    setTradeCompleted,
     setTradeSuccess,
-    setVaultHistoryUpdating,
-    updateOperator,
-    updateVault,
+    setTradeCompleted,
+    resetEthTradeAmount,
+    setVaultManagerPolling,
     vaultHistoryQuery,
+    updateVault,
   ])
 
   useAppEffect(() => {
@@ -710,8 +708,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const vault = vaultQuery.data
   const setCollatRatio = useUpdateAtom(collatRatioAtom)
   const ethPrice = useETHPrice()
-  const [isVaultHistoryUpdating, setVaultHistoryUpdating] = useAtom(vaultHistoryUpdatingAtom)
-  const vaultHistoryQuery = useVaultHistoryQuery(vaultId, isVaultHistoryUpdating)
+  const vaultHistoryQuery = useVaultHistoryQuery(vaultId)
 
   useAppEffect(() => {
     if (vault) {
@@ -792,9 +789,8 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
           setIsVaultApproved(false)
           vaultQuery.refetch({ vaultID: vault!.id })
           setVaultManagerPolling(true)
-          setVaultHistoryUpdating(true)
           updateVault()
-          vaultHistoryQuery.refetch({ vaultId })
+          vaultHistoryQuery.refetch()
         })
       }
     } catch (e) {
@@ -811,7 +807,6 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
     setIsTxFirstStep,
     setTradeCompleted,
     setTradeSuccess,
-    setVaultHistoryUpdating,
     setVaultManagerPolling,
     shortHelper,
     updateOperator,
