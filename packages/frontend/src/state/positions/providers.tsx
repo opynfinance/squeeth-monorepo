@@ -2,7 +2,7 @@ import BigNumber from 'bignumber.js'
 import { createContext } from 'react'
 import { useAtomValue } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
-import { useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import { BIG_ZERO, OSQUEETH_DECIMALS } from '@constants/index'
 import { addressesAtom, isWethToken0Atom, positionTypeAtom } from './atoms'
 import { useUsdAmount } from '@hooks/useUsdAmount'
@@ -104,7 +104,7 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
     } else setPositionType(PositionType.NONE)
   }, [computedSwaps.squeethAmount, oSqueethBal, setPositionType])
 
-  const value = useMemo(
+  const value = useAppMemo(
     () => ({
       ...computedSwaps,
       loading,
