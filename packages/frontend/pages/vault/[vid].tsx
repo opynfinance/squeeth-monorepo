@@ -356,7 +356,15 @@ const Component: React.FC = () => {
         const debt = await getDebtAmount(vault.shortAmount)
         const collateralWithMinRatio = debt.times(1.5).minus(collateralAmount).toNumber()
         const minCollateral = vault.collateralAmount.minus(MIN_COLLATERAL_AMOUNT).negated().toNumber()
-        setMinCollateral(Math.max(collateralWithMinRatio, minCollateral).toString())
+        if (collateralWithMinRatio < 0 && minCollateral < 0) {
+          setMinCollateral(Math.max(collateralWithMinRatio, minCollateral).toString())
+        } else if (collateralWithMinRatio >= 0 && minCollateral < 0) {
+          setMinCollateral(minCollateral.toString())
+        } else if (collateralWithMinRatio < 0 && minCollateral >= 0) {
+          setMinCollateral(collateralWithMinRatio.toString())
+        } else {
+          setMinCollateral('0')
+        }
       } else {
         setMinCollateral(collateral)
       }
@@ -1081,7 +1089,7 @@ const Component: React.FC = () => {
                     )}
                   </div>
 
-                  {currentLpNftId || isLPNFTAction ? (
+                  {(currentLpNftId || isLPNFTAction) && (isLPDeposited || uniTokenToDeposit) ? (
                     <>
                       <div className={classes.collatContainer}>
                         <TextField
