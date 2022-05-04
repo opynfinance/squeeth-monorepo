@@ -150,7 +150,8 @@ describe("Controller helper integration test", function () {
         collateralAmount: collateralAmount.toString(),
         wPowerPerpAmountToMint: mintWSqueethAmount.toString(),
         minToReceive: ethToReceive.toString(),
-        wPowerPerpAmountToSell: BigNumber.from(0)
+        wPowerPerpAmountToSell: BigNumber.from(0),
+        poolFee: 3000
       }
 
       const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
@@ -205,7 +206,8 @@ describe("Controller helper integration test", function () {
         collateralAmount: ethAmountOutFromSwap.toString(), // deposit 100% of proceeds of swap as collateral
         wPowerPerpAmountToMint: mintWSqueethAmount.toString(),
         minToReceive: BigNumber.from(0),
-        wPowerPerpAmountToSell: BigNumber.from(0)
+        wPowerPerpAmountToSell: BigNumber.from(0),
+        poolFee: 3000
       }
       // flash mint with zero additional eth
 
@@ -266,7 +268,8 @@ describe("Controller helper integration test", function () {
         collateralAmount: collatToDeposit.toString(), // deposit 100% of proceeds of swap as collateral
         wPowerPerpAmountToMint: mintWSqueethAmount.toString(),
         minToReceive: BigNumber.from(0),
-        wPowerPerpAmountToSell: BigNumber.from(0)
+        wPowerPerpAmountToSell: BigNumber.from(0),
+        poolFee: 3000
       }
       // flash mint with zero additional eth
       
@@ -323,7 +326,8 @@ describe("Controller helper integration test", function () {
         collateralAmount: BigNumber.from(0), // deposit 100% of proceeds of swap as collateral
         wPowerPerpAmountToMint: mintWSqueethAmount.toString(),
         minToReceive: BigNumber.from(0),
-        wPowerPerpAmountToSell: BigNumber.from(0)
+        wPowerPerpAmountToSell: BigNumber.from(0),
+        poolFee: 3000
       }
 
       const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
@@ -373,7 +377,8 @@ describe("Controller helper integration test", function () {
         wPowerPerpAmountToBurn: vaultBefore.shortAmount.toString(),
         wPowerPerpAmountToBuy: squeethToBuy.toString(),
         collateralToWithdraw: vaultBefore.collateralAmount.toString(),
-        maxToPay: vaultBefore.collateralAmount.toString()
+        maxToPay: vaultBefore.collateralAmount.toString(),
+        poolFee: 3000
       }
 
       await controllerHelper.connect(depositor).flashswapWBurnBuyLong(params);
@@ -424,7 +429,8 @@ describe("Controller helper integration test", function () {
         wPowerPerpAmountToBurn: shortToCover.toString(),
         wPowerPerpAmountToBuy: 0,
         collateralToWithdraw: collateralToWithdraw.toString(),  //need to withdraw some collateral to hit the target cr
-        maxToPay: ethToPay.toString()
+        maxToPay: ethToPay.toString(),
+        poolFee: 3000
       }
 
       const tx = await controllerHelper.connect(depositor).flashswapWBurnBuyLong(params, {value: ethToAttach});
@@ -476,7 +482,8 @@ describe("Controller helper integration test", function () {
         wPowerPerpAmountToBurn: shortToCover.toString(),
         wPowerPerpAmountToBuy: 0,
         collateralToWithdraw: collateralToWithdraw.toString(),  //need to withdraw some collateral to hit the target cr
-        maxToPay: ethToPay.toString()
+        maxToPay: ethToPay.toString(),
+        poolFee: 3000
       }
 
       const tx = await controllerHelper.connect(depositor).flashswapWBurnBuyLong(params);
@@ -523,7 +530,8 @@ describe("Controller helper integration test", function () {
         wPowerPerpAmountToBurn: vaultBefore.shortAmount.toString(),
         wPowerPerpAmountToBuy: squeethToBuy.toString(),
         collateralToWithdraw: vaultBefore.collateralAmount.toString(),
-        maxToPay: vaultBefore.collateralAmount.add(ethToAttach).toString()
+        maxToPay: vaultBefore.collateralAmount.add(ethToAttach).toString(),
+        poolFee: 3000
       }
 
       const tx = await controllerHelper.connect(depositor).flashswapWBurnBuyLong(params, {value: ethToAttach});
@@ -564,7 +572,8 @@ describe("Controller helper integration test", function () {
         wPowerPerpAmountToBurn: vaultBefore.shortAmount.toString(),
         wPowerPerpAmountToBuy: BigNumber.from(0),
         collateralToWithdraw: vaultBefore.collateralAmount.toString(),
-        maxToPay: ethAmountToSwap.toString()
+        maxToPay: ethAmountToSwap.toString(),
+        poolFee: 3000
       }
       // ** May be good to have some explicit revert msgs here
       const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
@@ -623,7 +632,8 @@ describe("Controller helper integration test", function () {
         wPowerPerpAmountToBurn: vaultBefore.shortAmount.toString(),
         wPowerPerpAmountToBuy: squeethToBuy,
         collateralToWithdraw: vaultBefore.collateralAmount.toString(),
-        maxToPay: vaultBefore.collateralAmount.toString()
+        maxToPay: vaultBefore.collateralAmount.toString(),
+        poolFee: 3000
       }
       // ** May be good to have some explicit revert msgs here
       await controllerHelper.connect(depositor).flashswapWBurnBuyLong(params);
@@ -657,6 +667,7 @@ describe("Controller helper integration test", function () {
       const tokenIndexBefore = await (positionManager as INonfungiblePositionManager).totalSupply();
       const params = {
         recipient: depositor.address,
+        wPowerPerpPool: wSqueethPool.address,
         vaultId: 0,
         wPowerPerpAmount: mintWSqueethAmount,
         collateralToDeposit: collateralAmount,
@@ -733,6 +744,7 @@ describe("Controller helper integration test", function () {
   
       const params = {
         recipient: depositor.address,
+        wPowerPerpPool: wSqueethPool.address,
         vaultId: vaultId,
         wPowerPerpAmount: mintWSqueethAmount, 
         collateralToDeposit: collateralAmount,
@@ -852,7 +864,8 @@ describe("Controller helper integration test", function () {
         wPowerPerpAmountToMint: mintWSqueethAmount,
         collateralAmount: collateralAmount,
         wPowerPerpAmountToSell: longBalance,
-        minToReceive: BigNumber.from(0)
+        minToReceive: BigNumber.from(0),
+        poolFee: 3000
       }
       await wSqueeth.connect(depositor).approve(controllerHelper.address, longBalance)
 
@@ -932,7 +945,8 @@ describe("Controller helper integration test", function () {
         wPowerPerpAmountToMint: mintWSqueethAmount,
         collateralAmount: collateralAmount,
         wPowerPerpAmountToSell: longBalance,
-        minToReceive: BigNumber.from(0)
+        minToReceive: BigNumber.from(0),
+        poolFee: 3000
       }
       await wSqueeth.connect(depositor).approve(controllerHelper.address, longBalance)
       const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
@@ -1040,7 +1054,8 @@ describe("Controller helper integration test", function () {
         collateralToWithdraw: vaultBefore.collateralAmount, 
         limitPriceEthPerPowerPerp,
         amount0Min: BigNumber.from(0), 
-        amount1Min:BigNumber.from(0)
+        amount1Min:BigNumber.from(0),
+        poolFee: 3000
       })
 
       const positionAfter = await (positionManager as INonfungiblePositionManager).positions(tokenId);
@@ -1161,7 +1176,8 @@ describe("Controller helper integration test", function () {
         collateralToWithdraw: vaultBefore.collateralAmount, 
         limitPriceEthPerPowerPerp, 
         amount0Min: BigNumber.from(0), 
-        amount1Min:BigNumber.from(0)
+        amount1Min:BigNumber.from(0),
+        poolFee: 3000
       })
 
       const positionAfter = await (positionManager as INonfungiblePositionManager).positions(tokenId);
@@ -1284,7 +1300,8 @@ describe("Controller helper integration test", function () {
         collateralToWithdraw: vaultBefore.collateralAmount, 
         limitPriceEthPerPowerPerp, 
         amount0Min: BigNumber.from(0), 
-        amount1Min:BigNumber.from(0)
+        amount1Min:BigNumber.from(0),
+        poolFee: 3000
       })
 
       const positionAfter = await (positionManager as INonfungiblePositionManager).positions(tokenId);
@@ -1398,7 +1415,8 @@ describe("Controller helper integration test", function () {
         liquidityPercentage: BigNumber.from(1).mul(BigNumber.from(10).pow(18)),
         amount0Min: 0,
         amount1Min: 0,
-        limitPriceEthPerPowerPerp: limitPriceEthPerPowerPerp
+        limitPriceEthPerPowerPerp: limitPriceEthPerPowerPerp,
+        poolFee: 3000
       }
 
       await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controllerHelper.address, tokenId);
@@ -1508,6 +1526,7 @@ describe("Controller helper integration test", function () {
       const squeethDesired = wPowerPerpAmountInLP.sub(10).add(squeethAmountOut)
 
       const params = {
+        wPowerPerpPool: wSqueethPool.address,
         tokenId: oldTokenId,
         ethAmountToLp: BigNumber.from(0),
         liquidity: oldPosition.liquidity,
@@ -1520,8 +1539,7 @@ describe("Controller helper integration test", function () {
         amount1Min: BigNumber.from(0),
         lowerTick: isWethToken0 ? -887220 : newTick,
         upperTick: isWethToken0 ? newTick : 887220,
-        //rebalanceToken0: false,
-        //rebalanceToken1: false
+        poolFee: 3000
       }
 
       await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controllerHelper.address, oldTokenId);
