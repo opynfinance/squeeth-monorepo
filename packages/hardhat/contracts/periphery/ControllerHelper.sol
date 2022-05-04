@@ -379,7 +379,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         );
 
         (uint256 wethAmountDesired, uint256 wPowerPerpAmountDesired) = ControllerHelperUtil.getAmountsToLp(
-            ControllerHelperDiamondStorage.getAddressAtSlot(3),
+            _params.wPowerPerpPool,
             _params.wethAmountDesired,
             _params.wPowerPerpAmountDesired,
             _params.lowerTick,
