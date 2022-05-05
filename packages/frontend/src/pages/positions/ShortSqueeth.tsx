@@ -46,48 +46,28 @@ export default function ShortSqueeth() {
         <div className={classes.innerPositionData}>
           <div style={{ width: '50%' }}>
             <Typography variant="caption" component="span" color="textSecondary">
-              Position
+              oSQTH Amount
             </Typography>
             {isPositionLoading ? (
               <Typography variant="body1">Loading</Typography>
             ) : (
-              <>
-                <Typography variant="body1" id="pos-page-short-osqth-bal">
-                  {squeethAmount.toFixed(8) + ' oSQTH'}
-                </Typography>{' '}
-                <Typography variant="body2" color="textSecondary">
-                  {isPnLLoading && buyQuote.times(toTokenAmount(index, 18).sqrt()).isEqualTo(0)
-                    ? 'Loading'
-                    : '$' + buyQuote.times(toTokenAmount(index, 18).sqrt()).toFixed(2)}
-                </Typography>
-              </>
+              <Typography variant="body1" id="pos-page-short-osqth-bal">
+                {squeethAmount.toFixed(8) + ' oSQTH'}
+              </Typography>
             )}
           </div>
           <div style={{ width: '50%' }}>
-            <Typography variant="caption" color="textSecondary">
-              Unrealized P&L
+            <Typography variant="caption" component="span" color="textSecondary">
+              Position Value
             </Typography>
-            <Tooltip
-              title={Tooltips.UnrealizedPnL}
-              // title={isLong ? Tooltips.UnrealizedPnL : `${Tooltips.UnrealizedPnL}. ${Tooltips.ShortCollateral}`}
-            >
-              <InfoIcon fontSize="small" className={classes.infoIcon} />
-            </Tooltip>
-            {isPositionLoading ||
-            shortGain.isLessThanOrEqualTo(-100) ||
-            !shortGain.isFinite() ||
-            shortUnrealizedPNL.loading ? (
+            {isPositionLoading ? (
               <Typography variant="body1">Loading</Typography>
             ) : (
-              <>
-                <Typography variant="body1" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
-                  $ {shortUnrealizedPNL.usd.toFixed(2)} ({shortUnrealizedPNL.eth.toFixed(5)} ETH)
-                  {/* $ {shortUnrealizedPNL.usd.toFixed(2)} ({wethAmount.minus(buyQuote).toFixed(5)} ETH) */}
-                </Typography>
-                <Typography variant="caption" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
-                  {(shortGain || 0).toFixed(2)}%
-                </Typography>
-              </>
+              <Typography variant="body1">
+                {isPnLLoading && buyQuote.times(toTokenAmount(index, 18).sqrt()).isEqualTo(0)
+                  ? 'Loading'
+                  : '$' + buyQuote.times(toTokenAmount(index, 18).sqrt()).toFixed(2)}
+              </Typography>
             )}
           </div>
         </div>

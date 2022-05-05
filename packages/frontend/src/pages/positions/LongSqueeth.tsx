@@ -29,7 +29,7 @@ export default function LongSqueeth() {
         <div className={classes.innerPositionData}>
           <div style={{ width: '50%' }}>
             <Typography variant="caption" component="span" color="textSecondary">
-              Position
+              oSQTH Amount
             </Typography>
             <Typography variant="body1">
               {isPositionLoading && squeethAmount.isEqualTo(0) ? (
@@ -39,7 +39,12 @@ export default function LongSqueeth() {
               )}{' '}
               &nbsp; oSQTH
             </Typography>
-            <Typography variant="body2" color="textSecondary">
+          </div>
+          <div style={{ width: '50%' }}>
+            <Typography variant="caption" component="span" color="textSecondary">
+              Position Value
+            </Typography>
+            <Typography variant="body1">
               $
               {isPnLLoading && sellQuote.amountOut.times(toTokenAmount(index, 18).sqrt()).isEqualTo(0)
                 ? 'Loading'
