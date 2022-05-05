@@ -669,8 +669,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                             IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).balanceOf(address(this)),
                             withdrawFromVaultParams.collateralToWithdraw
                         );
-                    }
-                    else {
+                    } else {
                         ControllerHelperUtil.withdrawFromVault(
                             ControllerHelperDiamondStorage.getAddressAtSlot(0),
                             ControllerHelperDiamondStorage.getAddressAtSlot(5),
