@@ -183,7 +183,7 @@ library ControllerHelperDataType {
     /// @dev struct for minting more wPowerPerp and add in LP, or increasing more WETH in LP, or both
     struct IncreaseLpLiquidityParam {
         uint256 tokenId;    // Uni v3 NFT token id
-        uint256 wPowerPerpAmountToMint; // wPowerPerp amount to mint
+        uint256 wPowerPerpAmountToLp; // wPowerPerp amount to LP
         uint256 collateralToDeposit;    // collateral to deposit into vault
         uint256 wethAmountToLp; // WETH amount to LP
         uint256 amount0Min; // amount min to get for LPing of asset0
