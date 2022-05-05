@@ -48,6 +48,7 @@ const useStyles = makeStyles((theme) =>
     innerPositionData: {
       display: 'flex',
       width: '100%',
+      justifyContent: 'space-between',
     },
     positionTitle: {
       width: '30%',

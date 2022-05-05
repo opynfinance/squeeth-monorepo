@@ -8,12 +8,15 @@ import { toTokenAmount } from '@utils/calculations'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import { indexAtom } from 'src/state/controller/atoms'
 import { Tooltips } from '../../constants'
+import { isToHidePnLAtom } from 'src/state/positions/atoms'
+import { HidePnLText } from '@components/HidePnLText'
 
 export default function LongSqueeth() {
   const classes = useStyles()
   const { loading: isPositionLoading } = useLPPositionsQuery()
   const { squeethAmount } = useComputeSwaps()
   const isPnLLoading = useAtomValue(loadingAtom)
+  const isToHidePnL = useAtomValue(isToHidePnLAtom)
   const { sellQuote } = useBuyAndSellQuote()
   const index = useAtomValue(indexAtom)
   const longGain = useLongGain()
@@ -51,45 +54,49 @@ export default function LongSqueeth() {
                 : sellQuote.amountOut.times(toTokenAmount(index, 18).sqrt()).toFixed(2)}
             </Typography>
           </div>
-          <div style={{ width: '50%' }}>
-            <Typography variant="caption" color="textSecondary">
-              Unrealized P&L
-            </Typography>
-            <Tooltip title={Tooltips.UnrealizedPnL}>
-              <InfoIcon fontSize="small" className={classes.infoIcon} />
-            </Tooltip>
-            {isPnLLoading || longUnrealizedPNL.loading ? (
-              <Typography variant="body1">Loading</Typography>
-            ) : (
-              <>
-                <Typography variant="body1" className={longGain.isLessThan(0) ? classes.red : classes.green}>
-                  $ {longUnrealizedPNL.usd.toFixed(2)} ({longUnrealizedPNL.eth.toFixed(5)} ETH)
-                  {/* ${sellQuote.amountOut.minus(wethAmount.abs()).times(toTokenAmount(index, 18).sqrt()).toFixed(2)}{' '}
+        </div>
+        {isToHidePnL ? (
+          <HidePnLText />
+        ) : (
+          <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
+            <div style={{ width: '50%' }}>
+              <Typography variant="caption" color="textSecondary">
+                Unrealized P&L
+              </Typography>
+              <Tooltip title={Tooltips.UnrealizedPnL}>
+                <InfoIcon fontSize="small" className={classes.infoIcon} />
+              </Tooltip>
+              {isPnLLoading || longUnrealizedPNL.loading ? (
+                <Typography variant="body1">Loading</Typography>
+              ) : (
+                <>
+                  <Typography variant="body1" className={longGain.isLessThan(0) ? classes.red : classes.green}>
+                    $ {longUnrealizedPNL.usd.toFixed(2)} ({longUnrealizedPNL.eth.toFixed(5)} ETH)
+                    {/* ${sellQuote.amountOut.minus(wethAmount.abs()).times(toTokenAmount(index, 18).sqrt()).toFixed(2)}{' '}
               ({sellQuote.amountOut.minus(wethAmount.abs()).toFixed(5)} ETH) */}
-                </Typography>
-                <Typography variant="caption" className={longGain.isLessThan(0) ? classes.red : classes.green}>
-                  {(longGain || 0).toFixed(2)}%
-                </Typography>
-              </>
-            )}
+                  </Typography>
+                  <Typography variant="caption" className={longGain.isLessThan(0) ? classes.red : classes.green}>
+                    {(longGain || 0).toFixed(2)}%
+                  </Typography>
+                </>
+              )}
+            </div>
+            <div style={{ width: '50%' }}>
+              <Typography variant="caption" component="span" color="textSecondary">
+                Realized P&L
+              </Typography>
+              <Tooltip
+                title={Tooltips.RealizedPnL}
+                // title={isLong ? Tooltips.RealizedPnL : `${Tooltips.RealizedPnL}. ${Tooltips.ShortCollateral}`}
+              >
+                <InfoIcon fontSize="small" className={classes.infoIcon} />
+              </Tooltip>
+              <Typography variant="body1" className={longRealizedPNL.gte(0) ? classes.green : classes.red}>
+                $ {isPnLLoading && longRealizedPNL.isEqualTo(0) ? 'Loading' : longRealizedPNL.toFixed(2)}
+              </Typography>
+            </div>
           </div>
-        </div>
-        <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
-          <div style={{ width: '50%' }}>
-            <Typography variant="caption" component="span" color="textSecondary">
-              Realized P&L
-            </Typography>
-            <Tooltip
-              title={Tooltips.RealizedPnL}
-              // title={isLong ? Tooltips.RealizedPnL : `${Tooltips.RealizedPnL}. ${Tooltips.ShortCollateral}`}
-            >
-              <InfoIcon fontSize="small" className={classes.infoIcon} />
-            </Tooltip>
-            <Typography variant="body1" className={longRealizedPNL.gte(0) ? classes.green : classes.red}>
-              $ {isPnLLoading && longRealizedPNL.isEqualTo(0) ? 'Loading' : longRealizedPNL.toFixed(2)}
-            </Typography>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   )
