@@ -9,6 +9,7 @@ import React, { memo, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 
 import { Tooltips } from '@constants/enums'
+import { LinkWrapper } from '@components/LinkWrapper'
 import { PositionType, TradeType } from '../types'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { usePrevious } from 'react-use'
@@ -21,7 +22,7 @@ import {
   useSwaps,
 } from 'src/state/positions/hooks'
 import { useETHPrice } from '@hooks/useETHPrice'
-import { isLPAtom, positionTypeAtom, swapsAtom } from 'src/state/positions/atoms'
+import { isLPAtom, positionTypeAtom, swapsAtom, isToHidePnLAtom } from 'src/state/positions/atoms'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import {
   actualTradeTypeAtom,
@@ -43,6 +44,7 @@ import { useVaultData } from '@hooks/useVaultData'
 import useAppEffect from '@hooks/useAppEffect'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppMemo from '@hooks/useAppMemo'
+import { HidePnLText } from './HidePnLText'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -60,12 +62,20 @@ const useStyles = makeStyles((theme) =>
     },
     header: {
       display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: '5px',
+    },
+    posTypeChange: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
     },
     title: {
       padding: theme.spacing(0.4, 1),
       fontSize: '.7rem',
       borderRadius: theme.spacing(0.5),
-      marginLeft: theme.spacing(2),
+      // marginLeft: theme.spacing(2),
     },
     positionTitle: {
       color: (props: any): any =>
@@ -109,14 +119,12 @@ const useStyles = makeStyles((theme) =>
             : 'rgba(255, 255, 255, 0.08)'
         return `linear-gradient(to right, ${positionColor} 0%,${postColor} 75%)`
       },
+      marginTop: ({ isToHidePnL }) => (isToHidePnL ? '-64px' : '0'),
     },
     assetDiv: {
       display: 'flex',
       justifyContent: 'space-between',
       flexWrap: 'wrap',
-    },
-    unit: {
-      marginLeft: theme.spacing(0.5),
     },
     red: {
       color: theme.palette.error.main,
@@ -146,18 +154,20 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       justifyContent: 'center',
     },
+    postAmount: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '5px',
+    },
     arrow: {
       color: theme.palette.grey[600],
-      marginLeft: theme.spacing(1),
-    },
-    postTradeAmt: {
-      marginLeft: theme.spacing(1),
     },
     link: {
       color: theme.palette.primary.main,
       textDecoration: 'underline',
       fontWeight: 600,
       fontSize: 14,
+      width: '100%',
     },
     infoIcon: {
       fontSize: '10px',
@@ -180,6 +190,7 @@ const PositionCard: React.FC = () => {
   const longUnrealizedPNL = useLongUnrealizedPNL()
   const shortUnrealizedPNL = useShortUnrealizedPNL()
   const loading = useAtomValue(loadingAtom)
+  const isToHidePnL = useAtomValue(isToHidePnLAtom)
 
   const pType = useAtomValue(positionTypeAtom)
   const { startPolling, stopPolling } = useSwaps()
@@ -208,7 +219,7 @@ const PositionCard: React.FC = () => {
   const [postTradeAmt, setPostTradeAmt] = useState(new BigNumber(0))
   const [postPosition, setPostPosition] = useState(PositionType.NONE)
   const positionType = useAppMemo(() => (isPositionLoading ? PositionType.NONE : pType), [pType, isPositionLoading])
-  const classes = useStyles({ positionType, postPosition })
+  const classes = useStyles({ positionType, postPosition, isToHidePnL })
 
   useAppEffect(() => {
     if (tradeSuccess && prevSwapsData?.length === swaps?.length) {
@@ -251,13 +262,14 @@ const PositionCard: React.FC = () => {
 
   const getRealizedPNLBasedValue = useAppCallback(
     (long: any, short: any, none: any, loadingMsg?: any) => {
+      if (isToHidePnL) return none
       if (loadingMsg && loading) return loadingMsg
       if (longRealizedPNL.isEqualTo(0) && shortRealizedPNL.isEqualTo(0)) return none
       if (positionType === PositionType.LONG) return long
       if (positionType === PositionType.SHORT) return short
       return none
     },
-    [positionType, loading, longRealizedPNL, shortRealizedPNL],
+    [isToHidePnL, positionType, loading, longRealizedPNL, shortRealizedPNL],
   )
 
   useAppEffect(() => {
@@ -301,22 +313,31 @@ const PositionCard: React.FC = () => {
       {!fullyLiquidated ? (
         <div>
           <div className={classes.header}>
-            <Typography variant="caption" component="span" style={{ fontWeight: 500 }} color="textSecondary">
-              MY POSITION
+            <Typography
+              variant="h6"
+              component="span"
+              style={{ fontWeight: 500, fontSize: '1rem' }}
+              color="textSecondary"
+            >
+              My Position
             </Typography>
-            <span className={clsx(classes.title, classes.positionTitle)}>{positionType.toUpperCase()}</span>
-            {postPosition === positionType ||
-            (tradeType === TradeType.LONG && positionType === PositionType.SHORT) ||
-            (tradeType === TradeType.SHORT && positionType === PositionType.LONG) ? null : (
-              <>
-                <ArrowRightAltIcon className={classes.arrow} />
-                <span className={clsx(classes.title, classes.postpositionTitle)}>{postPosition.toUpperCase()}</span>
-              </>
-            )}
+            <div className={classes.posTypeChange}>
+              <span className={clsx(classes.title, classes.positionTitle)}>{positionType.toUpperCase()}</span>
+
+              {postPosition === positionType ||
+              (tradeType === TradeType.LONG && positionType === PositionType.SHORT) ||
+              (tradeType === TradeType.SHORT && positionType === PositionType.LONG) ? null : (
+                <>
+                  <ArrowRightAltIcon className={classes.arrow} />
+                  <span className={clsx(classes.title, classes.postpositionTitle)}>{postPosition.toUpperCase()}</span>
+                </>
+              )}
+            </div>
           </div>
+
           <div className={classes.assetDiv}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div className={classes.postAmount}>
                 <Typography component="span" style={{ fontWeight: 600 }} id="position-card-before-trade-balance">
                   {getPositionBasedValue(squeethAmount.toFixed(6), squeethAmount.toFixed(6), '0', '0')}
                 </Typography>
@@ -336,15 +357,14 @@ const PositionCard: React.FC = () => {
                           ? '#49D273'
                           : '#f5475c',
                       }}
-                      className={classes.postTradeAmt}
                       id="position-card-post-trade-balance"
                     >
                       {postTradeAmt.lte(0) ? 0 : postTradeAmt.toFixed(6)}
                     </Typography>
                   </>
                 )}
-                <Typography color="textSecondary" component="span" variant="body2" className={classes.unit}>
-                  oSQTH
+                <Typography color="textSecondary" component="span" variant="body2">
+                  oSQTH &nbsp;
                 </Typography>
               </div>
               {isDollarValueLoading ? (
@@ -352,80 +372,103 @@ const PositionCard: React.FC = () => {
                   Loading
                 </Typography>
               ) : (
-                <Typography variant="caption" color="textSecondary" style={{ marginTop: '.5em' }}>
-                  $ {getPositionBasedValue(sellQuote.amountOut, buyQuote, new BigNumber(0)).times(ethPrice).toFixed(2)}
+                <Typography variant="caption" color="textSecondary">
+                  ≈ ${' '}
+                  {getPositionBasedValue(sellQuote.amountOut, buyQuote, new BigNumber(0)).times(ethPrice).toFixed(2)}
                 </Typography>
               )}
             </div>
-            <div>
+
+            {positionType === PositionType.SHORT ? (
+              <Typography variant="caption" className={classes.link} id="pos-card-manage-vault-link">
+                <Link href={`vault/${vaultId}`}>Manage Vault</Link>
+              </Typography>
+            ) : null}
+
+            {isLP ? (
+              <Typography className={classes.link}>
+                <Link href="h1">Manage LP</Link>
+              </Typography>
+            ) : null}
+
+            {isToHidePnL ? (
+              <HidePnLText />
+            ) : (
               <div>
                 <div>
                   <div>
+                    <div>
+                      <Typography variant="caption" color="textSecondary" style={{ fontWeight: 500 }}>
+                        Unrealized P&L
+                      </Typography>
+                      <Tooltip
+                        title={Tooltips.UnrealizedPnL}
+                        // title={isLong ? Tooltips.UnrealizedPnL : `${Tooltips.UnrealizedPnL}. ${Tooltips.ShortCollateral}`}
+                      >
+                        <InfoIcon fontSize="small" className={classes.infoIcon} />
+                      </Tooltip>
+                    </div>
+                    <div className={classes.pnl} id="unrealized-pnl-value">
+                      {!pnlLoading ? (
+                        <>
+                          <Typography
+                            className={pnlClass(positionType, longGain, shortGain, classes)}
+                            style={{ fontWeight: 600 }}
+                            id="unrealized-pnl-usd-value"
+                          >
+                            {getPositionBasedValue(
+                              `$${longUnrealizedPNL.usd.toFixed(2)}`,
+                              `$${shortUnrealizedPNL.usd.toFixed(2)}`,
+                              '--',
+                              'Loading',
+                            )}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            className={pnlClass(positionType, longGain, shortGain, classes)}
+                            style={{ marginLeft: '4px' }}
+                            id="unrealized-pnl-perct-value"
+                          >
+                            {getPositionBasedValue(
+                              `(${longGain.toFixed(2)}%)`,
+                              `(${shortGain.toFixed(2)}%)`,
+                              null,
+                              ' ',
+                            )}
+                          </Typography>
+                        </>
+                      ) : (
+                        'Loading'
+                      )}
+                    </div>
+                  </div>
+                  <div>
                     <Typography variant="caption" color="textSecondary" style={{ fontWeight: 500 }}>
-                      Unrealized P&L
+                      Realized P&L
                     </Typography>
                     <Tooltip
-                      title={Tooltips.UnrealizedPnL}
-                      // title={isLong ? Tooltips.UnrealizedPnL : `${Tooltips.UnrealizedPnL}. ${Tooltips.ShortCollateral}`}
+                      title={Tooltips.RealizedPnL}
+                      // title={isLong ? Tooltips.RealizedPnL : `${Tooltips.RealizedPnL}. ${Tooltips.ShortCollateral}`}
                     >
                       <InfoIcon fontSize="small" className={classes.infoIcon} />
                     </Tooltip>
                   </div>
-                  <div className={classes.pnl} id="unrealized-pnl-value">
-                    {!pnlLoading ? (
-                      <>
-                        <Typography
-                          className={pnlClass(positionType, longGain, shortGain, classes)}
-                          style={{ fontWeight: 600 }}
-                          id="unrealized-pnl-usd-value"
-                        >
-                          {getPositionBasedValue(
-                            `$${longUnrealizedPNL.usd.toFixed(2)}`,
-                            `$${shortUnrealizedPNL.usd.toFixed(2)}`,
-                            '--',
-                            'Loading',
-                          )}
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          className={pnlClass(positionType, longGain, shortGain, classes)}
-                          style={{ marginLeft: '4px' }}
-                          id="unrealized-pnl-perct-value"
-                        >
-                          {getPositionBasedValue(`(${longGain.toFixed(2)}%)`, `(${shortGain.toFixed(2)}%)`, null, ' ')}
-                        </Typography>
-                      </>
-                    ) : (
-                      'Loading'
-                    )}
+                  <div className={classes.pnl} id="realized-pnl-value">
+                    <Typography
+                      className={pnlClass(positionType, longRealizedPNL, shortRealizedPNL, classes)}
+                      style={{ fontWeight: 600 }}
+                    >
+                      {getRealizedPNLBasedValue(
+                        `$${longRealizedPNL.toFixed(2)}`,
+                        `$${shortRealizedPNL.toFixed(2)}`,
+                        '--',
+                        'Loading',
+                      )}
+                    </Typography>
                   </div>
                 </div>
-                <div>
-                  <Typography variant="caption" color="textSecondary" style={{ fontWeight: 500 }}>
-                    Realized P&L
-                  </Typography>
-                  <Tooltip
-                    title={Tooltips.RealizedPnL}
-                    // title={isLong ? Tooltips.RealizedPnL : `${Tooltips.RealizedPnL}. ${Tooltips.ShortCollateral}`}
-                  >
-                    <InfoIcon fontSize="small" className={classes.infoIcon} />
-                  </Tooltip>
-                </div>
-                <div className={classes.pnl} id="realized-pnl-value">
-                  <Typography
-                    className={pnlClass(positionType, longRealizedPNL, shortRealizedPNL, classes)}
-                    style={{ fontWeight: 600 }}
-                  >
-                    {getRealizedPNLBasedValue(
-                      `$${longRealizedPNL.toFixed(2)}`,
-                      `$${shortRealizedPNL.toFixed(2)}`,
-                      '--',
-                      'Loading',
-                    )}
-                  </Typography>
-                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       ) : (
@@ -442,16 +485,6 @@ const PositionCard: React.FC = () => {
       <Typography variant="caption" color="textSecondary">
         {fetchingNew ? 'Fetching latest position' : ' '}
       </Typography>
-      {positionType === PositionType.SHORT ? (
-        <Typography className={classes.link} id="pos-card-manage-vault-link">
-          <Link href={`vault/${vaultId}`}>Manage Vault</Link>
-        </Typography>
-      ) : null}
-      {isLP ? (
-        <Typography className={classes.link}>
-          <Link href="lp">Manage LP</Link>
-        </Typography>
-      ) : null}
     </div>
   )
 }
