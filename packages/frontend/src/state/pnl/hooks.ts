@@ -74,6 +74,47 @@ export function useBuyAndSellQuote() {
   return { buyQuote, sellQuote }
 }
 
+export function useCurrentLongPositionValue() {
+  const { squeethAmount } = useComputeSwaps()
+  const getWSqueethPositionValue = useGetWSqueethPositionValue()
+  const [positionValue, setPositionValue] = useAtom(longPositionValueAtom)
+  const positionType = useAtomValue(positionTypeAtom)
+
+  useAppEffect(() => {
+    console.log(positionType, squeethAmount.toString())
+    if (squeethAmount.isZero() || positionType != PositionType.LONG) {
+      setPositionValue(BIG_ZERO)
+      return
+    }
+
+    const squeethPositionValueInUSD = getWSqueethPositionValue(squeethAmount)
+    setPositionValue(squeethPositionValueInUSD)
+  }, [squeethAmount, positionType, getWSqueethPositionValue, setPositionValue])
+
+  return positionValue
+}
+
+export function useCurrentShortPositionValue() {
+  const { squeethAmount } = useComputeSwaps()
+  const getWSqueethPositionValue = useGetWSqueethPositionValue()
+  const { vaultId } = useFirstValidVault()
+  const { existingCollat } = useVaultData(vaultId)
+  const index = useAtomValue(indexAtom)
+  const [positionValue, setPositionValue] = useAtom(shortPositionValueAtom)
+  const positionType = useAtomValue(positionTypeAtom)
+
+  useAppEffect(() => {
+    if (squeethAmount.isZero() || existingCollat.isZero() || index.isZero() || positionType != PositionType.SHORT) {
+      setPositionValue(BIG_ZERO)
+      return
+    }
+
+    const squeethPositionValueInUSD = getWSqueethPositionValue(squeethAmount)
+    setPositionValue(squeethPositionValueInUSD.plus(existingCollat.times(toTokenAmount(index, 18).sqrt())))
+  }, [squeethAmount, existingCollat, index, setPositionValue, positionType, getWSqueethPositionValue])
+
+  return positionValue
+}
 export function useLongGain() {
   const { totalUSDFromBuy } = useComputeSwaps()
   const sellQuote = useAtomValue(sellQuoteAtom)
