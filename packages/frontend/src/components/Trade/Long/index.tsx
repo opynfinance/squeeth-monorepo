@@ -685,7 +685,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   const sellAndClose = useAppCallback(async () => {
     setSellLoading(true)
     try {
-      if (squeethAllowance.lt(amount)) {
+      if (squeethAllowance.lt(amount) && !hasJustApprovedSqueeth) {
         setIsTxFirstStep(true)
         await squeethApprove(() => {
           setHasJustApprovedSqueeth(true)
@@ -930,7 +930,7 @@ const CloseLong: React.FC<BuyProps> = () => {
                   'Unsupported Network'
                 ) : sellLoading || transactionInProgress ? (
                   <CircularProgress color="primary" size="1.5rem" />
-                ) : squeethAllowance.lt(amount) ? (
+                ) : squeethAllowance.lt(amount) && !hasJustApprovedSqueeth ? (
                   'Approve oSQTH (1/2)'
                 ) : longClosePriceImpactErrorState ? (
                   'Sell Anyway'
