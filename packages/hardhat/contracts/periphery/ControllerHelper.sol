@@ -894,7 +894,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         uint24 _poolFee,
         bool burnExactRemoved
     ) private {
-      if (burnExactRemoved) {
+        if (burnExactRemoved) {
             // remove exact _wPowerPerpAmount amount withdraw from LP
             ControllerHelperUtil.withdrawFromVault(
                 ControllerHelperDiamondStorage.getAddressAtSlot(0),
