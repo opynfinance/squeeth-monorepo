@@ -196,8 +196,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             _params.wPowerPerpAmountToBurn,
             _params.collateralToWithdraw,
             _params.limitPriceEthPerPowerPerp,
+            _params.poolFee,
             _params.burnExactRemoved
-            _params.poolFee
         );
 
         ControllerHelperUtil.sendBack(
@@ -567,8 +567,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 data.wPowerPerpAmountToBurn,
                 data.collateralToWithdraw.add(data.collateralToFlashloan),
                 data.limitPriceEthPerPowerPerp,
+                data.poolFee,
                 data.burnExactRemoved
-                data.poolFee
             );
         } else if (
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
@@ -891,7 +891,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         uint256 _wPowerPerpAmountToBurn,
         uint256 _collateralToWithdraw,
         uint256 _limitPriceEthPerPowerPerp,
-        uint24 _poolFee
+        uint24 _poolFee,
         bool burnExactRemoved
     ) private {
       if (burnExactRemoved) {
