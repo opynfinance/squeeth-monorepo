@@ -28,6 +28,13 @@ import {
   abi as POOL_ABI,
   bytecode as POOL_BYTECODE,
 } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json'
+
+import {
+  abi as QUOTER_ABI,
+  bytecode as QUOTER_BYTECODE,
+} from "@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json"
+
+
 import { createNoSubstitutionTemplateLiteral } from "typescript";
 
 BigNumberJs.set({EXPONENTIAL_AT: 30})
@@ -66,6 +73,7 @@ describe("ControllerHelper: mainnet fork", function () {
   let ethUsdcPool: Contract
   let controllerHelper: ControllerHelper
   let shortSqueeth: ShortPowerPerp
+  let quoter: Contract
 
   this.beforeAll("Setup mainnet fork contracts", async () => {
     depositor = await impersonateAddress("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045");
@@ -87,6 +95,7 @@ describe("ControllerHelper: mainnet fork", function () {
     shortSqueeth = (await ethers.getContractAt("ShortPowerPerp", "0xa653e22A963ff0026292Cc8B67941c0ba7863a38")) as ShortPowerPerp
     wSqueethPool = await ethers.getContractAt(POOL_ABI, "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C")
     ethUsdcPool = await ethers.getContractAt(POOL_ABI, "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8");
+    quoter = await ethers.getContractAt(QUOTER_ABI, "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6");
 
     const TickMathExternal = await ethers.getContractFactory("TickMathExternal")
     const TickMathExternalLib = (await TickMathExternal.deploy());
@@ -1017,4 +1026,307 @@ describe("ControllerHelper: mainnet fork", function () {
     })
 
   })
+
+  describe("Rebalance LP in vault to just weth", async () => {
+    before("Mint new full range LP outside of vault" , async () => {
+      // Mint 50 squeeth in new vault
+      const normFactor = await controller.getExpectedNormalizationFactor()
+      const mintWSqueethAmount = ethers.utils.parseUnits('50')
+      const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
+      const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
+      const scaledEthPrice = ethPrice.div(10000)
+      const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
+      const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
+      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, true)
+      const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
+      const params = {
+        recipient: depositor.address,
+        vaultId: 0,
+        wPowerPerpAmount: mintWSqueethAmount,
+        collateralToDeposit: collateralAmount,
+        collateralToLp: collateralToLp,
+        amount0Min: 0,
+        amount1Min: 0,
+        lowerTick: -887220,
+        upperTick: 887220
+      }
+      // Batch mint new full range LP
+      await controllerHelper.connect(depositor).batchMintLp(params, {value: collateralAmount.add(collateralToLp)});
+     })
+
+      
+  it("Close vault LP and open new one-siced LP with just eth ", async () => {
+    // Get vault and LP info
+    const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
+    const depositorEthBalanceBefore = await ethers.provider.getBalance(depositor.address)
+    const vaultId = (await shortSqueeth.nextId()).sub(1);
+    const tokenIndex = await (positionManager as INonfungiblePositionManager).totalSupply();
+    const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndex.sub(1));
+    const positionBefore = await (positionManager as INonfungiblePositionManager).positions(tokenId)
+    const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16)
+    // Get current LPpositions 
+    const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
+      tokenId: tokenId,
+      liquidity: positionBefore.liquidity,
+      amount0Min: 0,
+      amount1Min: 0,
+      deadline: Math.floor(await getNow(ethers.provider) + 8640000),
+    })
+    const wPowerPerpAmountInLPBefore = (isWethToken0) ? amount1 : amount0;
+    const wethAmountInLPBefore = (isWethToken0) ? amount0 : amount1;
+    // deposit nft to vault (approve first)
+    await shortSqueeth.connect(depositor).approve(controller.address, vaultId);
+    await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
+    await (positionManager as INonfungiblePositionManager).connect(depositor).setApprovalForAll(controller.address, true) // approval for controller 
+    await (positionManager as INonfungiblePositionManager).connect(depositor).setApprovalForAll(controllerHelper.address, true) // approve controllerHelper
+    // Deposit nft to vault
+    await controller.connect(depositor).depositUniPositionToken(vaultId, tokenId)
+    const vaultBefore = await controller.vaults(vaultId);
+    // Setup for mint of new LP
+    const slot0 = await wSqueethPool.slot0()
+    const currentTick = slot0[1]
+    // Range above current tick
+
+    const newTickLower = isWethToken0 ? 60*((currentTick - currentTick%60)/60 + 1): 60*((currentTick - currentTick%60)/60 - 2)
+    const newTickUpper = isWethToken0 ? 60*((currentTick - currentTick%60)/60 + 2): 60*((currentTick - currentTick%60)/60 - 1)
+
+
+    //const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
+    const amount0Min = BigNumber.from(0);
+    const amount1Min = BigNumber.from(0);
+    // Estimate proceeds from liquidating squeeth in LP
+    const ethAmountOutFromSwap = await quoter.connect(depositor).callStatic.quoteExactInputSingle(wSqueeth.address,
+      weth.address,
+      3000,
+      wPowerPerpAmountInLPBefore,
+      0)
+    // Estimate of new LP with 0.01 weth
+    const wethAmountToLP = wethAmountInLPBefore.add(ethAmountOutFromSwap).sub(ethers.utils.parseUnits('0.01'))
+    console.log("ethAmountOutFromSwap", ethAmountOutFromSwap.toString())
+    console.log("isWethToken0", isWethToken0)
+    console.log('currenTick', currentTick)
+    console.log("newTickLower", newTickLower)
+    console.log("newTickUpper", newTickUpper)
+
+    const abiCoder = new ethers.utils.AbiCoder
+    const params = [
+      {
+        // Liquidate LP
+        rebalanceVaultNftType: BigNumber.from(1), // DecreaseLpLiquidity:
+        // DecreaseLpLiquidityParams: [tokenId, liquidity, liquidityPercentage, amount0Min, amount1Min]
+        data: abiCoder.encode(["uint256", 'uint256', 'uint256', 'uint128', 'uint128'],
+         [tokenId, positionBefore.liquidity, BigNumber.from(100).mul(BigNumber.from(10).pow(16)), BigNumber.from(0), BigNumber.from(0)])
+        },
+        {
+        // Sell all oSQTH
+          rebalanceVaultNftType: BigNumber.from(5), // generalSwap:
+          // GeneralSwap: [tokenIn, tokenOut, amountIn, limitPriceEthPerPowerPerp]
+          data: abiCoder.encode(["address", 'address', 'uint256', 'uint256'],
+           [wSqueeth.address, weth.address, wPowerPerpAmountInLPBefore, BigNumber.from(0)])
+          },
+       {
+         // Mint new LP 
+         rebalanceVaultNftType:  BigNumber.from(4), // MintNewLP
+         // lpWPowerPerpPool: [recipient, vaultId, wPowerPerpAmount, collateralToDeposit, collateralToLP, amount0Min, amount1Min, lowerTick, upperTick ]
+         data: abiCoder.encode(["address", "uint256", 'uint256','uint256', 'uint256', 'uint256', 'uint256', 'int24', 'int24'],
+          [controllerHelper.address, vaultId, BigNumber.from(0), BigNumber.from(0), wethAmountToLP, amount0Min, amount1Min, newTickLower, newTickUpper])
+       }
+    ]
+    const flashLoanAmount = ethers.utils.parseUnits('50')
+    await controllerHelper.connect(depositor).rebalanceVaultNft(vaultId, flashLoanAmount, params);
+    const depositorSqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
+    const depositorEthBalanceAfter = await ethers.provider.getBalance(depositor.address)
+
+    // Get new vault and LP info
+    const vaultAfter = await controller.vaults(vaultId);
+    const tokenIdAfter = vaultAfter.NftCollateralId;
+    const positionAfter = await (positionManager as INonfungiblePositionManager).positions(tokenIdAfter)
+    const [amount0After, amount1After] = await (positionManager as INonfungiblePositionManager).connect(controllerSigner).callStatic.decreaseLiquidity({
+      tokenId: tokenIdAfter,
+      liquidity: positionAfter.liquidity,
+      amount0Min: 0,
+      amount1Min: 0,
+      deadline: Math.floor(await getNow(ethers.provider) + 8640000),
+    })
+    const wPowerPerpAmountInLPAfter = (isWethToken0) ? amount1After : amount0After;
+    const wethAmountInLPAfter = (isWethToken0) ? amount0After : amount1After;
+    // Changes
+    const depositorEthdiff = depositorEthBalanceAfter.sub(depositorEthBalanceBefore)
+    const depositorSqueethdiff = depositorSqueethBalanceAfter.sub(depositorSqueethBalanceBefore)
+    const vaultEthDiff = vaultAfter.collateralAmount.sub(vaultBefore.collateralAmount)
+    const vaultSqueethDiff = vaultAfter.shortAmount.sub(vaultBefore.shortAmount)
+    const lpEthDiff = wethAmountInLPAfter.sub(wethAmountInLPBefore)
+    const lpSqueethDiff = wPowerPerpAmountInLPAfter.sub(wPowerPerpAmountInLPBefore)
+    // Assertions
+    console.log('currentTick', currentTick)
+    console.log('positionAfter.TickLower', positionAfter.tickLower)
+    console.log('positionAfter.TickUpper', positionAfter.tickUpper)
+    console.log('wPowerPerpAmountInLPAfter', wPowerPerpAmountInLPAfter.toString())
+    console.log('wethAmountInLPAfter', wethAmountInLPAfter.toString())
+    console.log('lpSqueethDiff', lpSqueethDiff.toString())
+    console.log('lpEthDiff', lpEthDiff.toString())
+
+    expect(positionAfter.tickLower === newTickLower).to.be.true
+    expect(positionAfter.tickUpper === newTickUpper).to.be.true
+    expect(vaultAfter.shortAmount.eq(vaultBefore.shortAmount)).to.be.true
+    expect(vaultAfter.collateralAmount.eq(vaultBefore.collateralAmount)).to.be.true
+    expect(vaultAfter.NftCollateralId==vaultBefore.NftCollateralId).to.be.false
+    expect(wPowerPerpAmountInLPAfter.eq(BigNumber.from(0))).to.be.true
+
+  })
+})
+
+describe("Rebalance LP in vault to just oSQTH", async () => {
+  before("Mint new full range LP outside of vault" , async () => {
+    // Mint 50 squeeth in new vault
+    const normFactor = await controller.getExpectedNormalizationFactor()
+    const mintWSqueethAmount = ethers.utils.parseUnits('50')
+    const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
+    const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
+    const scaledEthPrice = ethPrice.div(10000)
+    const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
+    const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
+    const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, true)
+    const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
+    const params = {
+      recipient: depositor.address,
+      vaultId: 0,
+      wPowerPerpAmount: mintWSqueethAmount,
+      collateralToDeposit: collateralAmount,
+      collateralToLp: collateralToLp,
+      amount0Min: 0,
+      amount1Min: 0,
+      lowerTick: -887220,
+      upperTick: 887220
+    }
+    // Batch mint new full range LP
+    await controllerHelper.connect(depositor).batchMintLp(params, {value: collateralAmount.add(collateralToLp)});
+   })
+
+    
+it("Close vault LP and open new one-siced LP with just oSQTH ", async () => {
+  // Get vault and LP info
+  const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
+  const depositorEthBalanceBefore = await ethers.provider.getBalance(depositor.address)
+  const vaultId = (await shortSqueeth.nextId()).sub(1);
+  const tokenIndex = await (positionManager as INonfungiblePositionManager).totalSupply();
+  const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndex.sub(1));
+  const positionBefore = await (positionManager as INonfungiblePositionManager).positions(tokenId)
+  const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16)
+  // Get current LPpositions 
+  const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
+    tokenId: tokenId,
+    liquidity: positionBefore.liquidity,
+    amount0Min: 0,
+    amount1Min: 0,
+    deadline: Math.floor(await getNow(ethers.provider) + 8640000),
+  })
+  const wPowerPerpAmountInLPBefore = (isWethToken0) ? amount1 : amount0;
+  const wethAmountInLPBefore = (isWethToken0) ? amount0 : amount1;
+  // deposit nft to vault (approve first)
+  await shortSqueeth.connect(depositor).approve(controller.address, vaultId);
+  await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
+  await (positionManager as INonfungiblePositionManager).connect(depositor).setApprovalForAll(controller.address, true) // approval for controller 
+  await (positionManager as INonfungiblePositionManager).connect(depositor).setApprovalForAll(controllerHelper.address, true) // approve controllerHelper
+  // Deposit nft to vault
+  await controller.connect(depositor).depositUniPositionToken(vaultId, tokenId)
+  const vaultBefore = await controller.vaults(vaultId);
+  // Setup for mint of new LP
+  const slot0 = await wSqueethPool.slot0()
+  const currentTick = slot0[1]
+  // Range above current tick
+
+  const newTickLower = isWethToken0 ? 60*((currentTick - currentTick%60)/60 -2): 60*((currentTick - currentTick%60)/60  + 1)
+  const newTickUpper = isWethToken0 ? 60*((currentTick - currentTick%60)/60 -1): 60*((currentTick - currentTick%60)/60 + 2)
+
+
+  //const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
+  const amount0Min = BigNumber.from(0);
+  const amount1Min = BigNumber.from(0);
+  // Estimate proceeds from liquidating weth in LP
+  const wPowerPerpAmountOutFromSwap = await quoter.connect(depositor).callStatic.quoteExactInputSingle(weth.address,
+    wSqueeth.address,
+    3000,
+    wethAmountInLPBefore,
+    0)
+  // Estimate of new LP with 0.01 wPowerPerp safety margin
+  const wPowerPerpAmountToLp = wPowerPerpAmountInLPBefore.add(wPowerPerpAmountOutFromSwap).sub(ethers.utils.parseUnits('0.01'))
+  console.log("wPowerPerpAmountOutFromSwap", wPowerPerpAmountOutFromSwap.toString())
+  console.log("wPowerPerpAmountToLP", wPowerPerpAmountToLp)
+  console.log("isWethToken0", isWethToken0)
+  console.log('currenTick', currentTick)
+  console.log("newTickLower", newTickLower)
+  console.log("newTickUpper", newTickUpper)
+
+  const abiCoder = new ethers.utils.AbiCoder
+  const params = [
+    {
+      // Liquidate LP
+      rebalanceVaultNftType: BigNumber.from(1), // DecreaseLpLiquidity:
+      // DecreaseLpLiquidityParams: [tokenId, liquidity, liquidityPercentage, amount0Min, amount1Min]
+      data: abiCoder.encode(["uint256", 'uint256', 'uint256', 'uint128', 'uint128'],
+       [tokenId, positionBefore.liquidity, BigNumber.from(100).mul(BigNumber.from(10).pow(16)), BigNumber.from(0), BigNumber.from(0)])
+      },
+      {
+      // Sell all weth for oSQTH
+        rebalanceVaultNftType: BigNumber.from(5), // generalSwap:
+        // GeneralSwap: [tokenIn, tokenOut, amountIn, limitPriceEthPerPowerPerp]
+        data: abiCoder.encode(["address", 'address', 'uint256', 'uint256'],
+         [weth.address, wSqueeth.address, wethAmountInLPBefore, BigNumber.from(0)])
+        },
+     {
+       // Mint new LP 
+       rebalanceVaultNftType:  BigNumber.from(4), // MintNewLP
+       // lpWPowerPerpPool: [recipient, vaultId, wPowerPerpAmount, collateralToDeposit, collateralToLP, amount0Min, amount1Min, lowerTick, upperTick ]
+       data: abiCoder.encode(["address", "uint256", 'uint256','uint256', 'uint256', 'uint256', 'uint256', 'int24', 'int24'],
+        [controllerHelper.address, vaultId, wPowerPerpAmountToLp, BigNumber.from(0),  BigNumber.from(0), amount0Min, amount1Min, newTickLower, newTickUpper])
+     }
+  ]
+  const flashLoanAmount = ethers.utils.parseUnits('50')
+  await controllerHelper.connect(depositor).rebalanceVaultNft(vaultId, flashLoanAmount, params);
+  const depositorSqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
+  const depositorEthBalanceAfter = await ethers.provider.getBalance(depositor.address)
+
+  // Get new vault and LP info
+  const vaultAfter = await controller.vaults(vaultId);
+  const tokenIdAfter = vaultAfter.NftCollateralId;
+  const positionAfter = await (positionManager as INonfungiblePositionManager).positions(tokenIdAfter)
+  const [amount0After, amount1After] = await (positionManager as INonfungiblePositionManager).connect(controllerSigner).callStatic.decreaseLiquidity({
+    tokenId: tokenIdAfter,
+    liquidity: positionAfter.liquidity,
+    amount0Min: 0,
+    amount1Min: 0,
+    deadline: Math.floor(await getNow(ethers.provider) + 8640000),
+  })
+  const wPowerPerpAmountInLPAfter = (isWethToken0) ? amount1After : amount0After;
+  const wethAmountInLPAfter = (isWethToken0) ? amount0After : amount1After;
+  // Changes
+  const depositorEthdiff = depositorEthBalanceAfter.sub(depositorEthBalanceBefore)
+  const depositorSqueethdiff = depositorSqueethBalanceAfter.sub(depositorSqueethBalanceBefore)
+  const vaultEthDiff = vaultAfter.collateralAmount.sub(vaultBefore.collateralAmount)
+  const vaultSqueethDiff = vaultAfter.shortAmount.sub(vaultBefore.shortAmount)
+  const lpEthDiff = wethAmountInLPAfter.sub(wethAmountInLPBefore)
+  const lpSqueethDiff = wPowerPerpAmountInLPAfter.sub(wPowerPerpAmountInLPBefore)
+  // Assertions
+  console.log('currentTick', currentTick)
+  console.log('positionAfter.TickLower', positionAfter.tickLower)
+  console.log('positionAfter.TickUpper', positionAfter.tickUpper)
+  console.log('wPowerPerpAmountInLPAfter', wPowerPerpAmountInLPAfter.toString())
+  console.log('wethAmountInLPAfter', wethAmountInLPAfter.toString())
+  console.log('lpSqueethDiff', lpSqueethDiff.toString())
+  console.log('lpEthDiff', lpEthDiff.toString())
+
+  expect(positionAfter.tickLower === newTickLower).to.be.true
+  expect(positionAfter.tickUpper === newTickUpper).to.be.true
+  expect(vaultAfter.shortAmount.eq(vaultBefore.shortAmount)).to.be.true
+  expect(vaultAfter.collateralAmount.eq(vaultBefore.collateralAmount)).to.be.true
+  expect(vaultAfter.NftCollateralId==vaultBefore.NftCollateralId).to.be.false
+  expect(wethAmountInLPAfter.eq(BigNumber.from(0))).to.be.true
+
+})
+})
+
+
+
+
 })

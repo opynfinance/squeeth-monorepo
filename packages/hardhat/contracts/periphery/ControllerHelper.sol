@@ -717,7 +717,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         data[i].data,
                         (ControllerHelperDataType.GeneralSwap)
                     );
-
+                    console.log('before general swap exactIn');
                     _exactInFlashSwap(
                         swapParams.tokenIn,
                         swapParams.tokenOut,
@@ -727,6 +727,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         uint8(ControllerHelperDataType.CALLBACK_SOURCE.GENERAL_SWAP),
                         ""
                     );
+                    console.log('after general swap exactIn');
                 } else if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.CollectFees
                 ) {
