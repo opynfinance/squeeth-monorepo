@@ -228,7 +228,7 @@ const config: HardhatUserConfig = {
   },
   gasReporter: {
     currency: "USD",
-    gasPrice: 0,
+    gasPrice: 100,
     coinmarketcap: process.env.COINMARKETCAP,
     enabled: process.env.REPORT_GAS === "true",
   },
