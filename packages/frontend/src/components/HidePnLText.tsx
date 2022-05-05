@@ -2,7 +2,7 @@ import Typography from '@material-ui/core/Typography'
 import { LinkWrapper } from './LinkWrapper'
 import { positionTypeAtom } from 'src/state/positions/atoms'
 import { useAtomValue } from 'jotai'
-import { PositionType } from '@types/index'
+import { PositionType } from 'src/types'
 
 export const HidePnLText: React.FC = () => {
   const positionType = useAtomValue(positionTypeAtom)
