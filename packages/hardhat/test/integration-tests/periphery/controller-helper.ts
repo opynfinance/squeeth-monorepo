@@ -1055,6 +1055,7 @@ describe("Controller helper integration test", function () {
         limitPriceEthPerPowerPerp,
         amount0Min: BigNumber.from(0), 
         amount1Min:BigNumber.from(0),
+        burnExactRemoved: false,
         poolFee: 3000
       })
 
@@ -1177,6 +1178,7 @@ describe("Controller helper integration test", function () {
         limitPriceEthPerPowerPerp, 
         amount0Min: BigNumber.from(0), 
         amount1Min:BigNumber.from(0),
+        burnExactRemoved: false,
         poolFee: 3000
       })
 
@@ -1301,6 +1303,7 @@ describe("Controller helper integration test", function () {
         limitPriceEthPerPowerPerp, 
         amount0Min: BigNumber.from(0), 
         amount1Min:BigNumber.from(0),
+        burnExactRemoved: false,
         poolFee: 3000
       })
 
