@@ -824,10 +824,9 @@ describe("Controller helper integration test", function () {
 
       // Closest 60 tick width above or below current tick (60 is minimum tick width for 30bps pool)
 
-      const newTickLower = isWethToken0 ? 60*((currentTick - currentTick%60)/60 - 10): 60*((currentTick - currentTick%60)/60 + 10)
-      const newTickUpper = isWethToken0 ? 60*((currentTick - currentTick%60)/60 - 20): 60*((currentTick - currentTick%60)/60 + 20)
-      console.log('newTickLower',newTickLower.toString())
-      console.log('newTickUpper',newTickUpper.toString())
+      const newTickLower = isWethToken0 ? 60*((currentTick - currentTick%60)/60 - 2): 60*((currentTick - currentTick%60)/60 + 1)
+      const newTickUpper = isWethToken0 ? 60*((currentTick - currentTick%60)/60 - 1): 60*((currentTick - currentTick%60)/60 + 2)
+
       console.log('currentTick', currentTick.toString())
       const params = {
         recipient: depositor.address,
@@ -838,7 +837,7 @@ describe("Controller helper integration test", function () {
         amount0Min: amount0Min,
         amount1Min: amount1Min,
         lowerTick: newTickLower,
-        upperTick: newTickUpper,
+        upperTick: newTickUpper
       }
       const tx = await controllerHelper.connect(depositor).batchMintLp(params, {value: collateralAmount});
 
@@ -967,25 +966,25 @@ describe("Controller helper integration test", function () {
       const wPowerPerpAmountInLP = (isWethToken0) ? amount1 : amount0;
       const wethAmountInLP = (isWethToken0) ? amount0 : amount1;
 
-      // console.log('position.tickLower', position.tickLower.toString())
-      // console.log('position.tickUpper', position.tickUpper.toString())
+      // console.log('position.tickLower', position.tickLower)
+      // console.log('position.tickUpper', position.tickUpper)
       // console.log('ownerOfUniNFT', ownerOfUniNFT)
       // console.log('depositor.address', depositor.address)
-      // console.log('wPowerPerpAmountInLP',wPowerPerpAmountInLP.toString())
-      // console.log('wethAmountInLP',wethAmountInLP.toString())
-      // console.log('vaultBefore.shortAmount',vaultBefore.shortAmount.toString())
-      // console.log('vaultBefore.collateralAmount',vaultBefore.collateralAmount.toString())
-      // console.log('vaultAfter.shortAmount',vaultAfter.shortAmount.toString())
-      // console.log('vaultAfter.collateralAmount',vaultAfter.collateralAmount.toString())
-      // console.log('depositorEthBalanceBefore',depositorEthBalanceBefore.toString())
-      // console.log('depositorEthBalanceAfter',depositorEthBalanceAfter.toString())
-      // console.log('collateralAmount',collateralAmount.toString())
-      // console.log('gasSpent',gasSpent.toString())
-      // console.log('depositorEthBalanceAfter',depositorEthBalanceAfter.toString())
-      // console.log('collateralToLp',collateralToLp.toString())
-      // console.log('mintWSqueethAmount',mintWSqueethAmount.toString())
-      // console.log('tokenIndexBefore',tokenIndexBefore.toString())
-      // console.log('tokenIndexAfter',tokenIndexAfter.toString())
+      // console.log('wPowerPerpAmountInLP',wPowerPerpAmountInLP)
+      // console.log('wethAmountInLP',wethAmountInLP)
+      // console.log('vaultBefore.shortAmount',vaultBefore.shortAmount)
+      // console.log('vaultBefore.collateralAmount',vaultBefore.collateralAmount)
+      // console.log('vaultAfter.shortAmount',vaultAfter.shortAmount)
+      // console.log('vaultAfter.collateralAmount',vaultAfter.collateralAmount)
+      // console.log('depositorEthBalanceBefore',depositorEthBalanceBefore)
+      // console.log('depositorEthBalanceAfter',depositorEthBalanceAfter)
+      // console.log('collateralAmount',collateralAmount)
+      // console.log('gasSpent',gasSpent)
+      // console.log('depositorEthBalanceAfter',depositorEthBalanceAfter)
+      // console.log('collateralToLp',collateralToLp)
+      // console.log('mintWSqueethAmount',mintWSqueethAmount)
+      // console.log('tokenIndexBefore',tokenIndexBefore)
+      // console.log('tokenIndexAfter',tokenIndexAfter)
 
       expect(position.tickLower === newTickLower).to.be.true
       expect(position.tickUpper === newTickUpper).to.be.true
