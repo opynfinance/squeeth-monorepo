@@ -86,17 +86,16 @@ library ControllerHelperUtil {
      * @notice minth amount of wPowerPerp and LP in weth/wPowerPerp pool
      * @param _controller wPowerPerp controller address
      * @param _nonfungiblePositionManager Uni NonFungiblePositionManager address
-     * @param _wPowerPerpPool wPowerPerp Uni v3 pool
      * @param _mintAndLpParams ControllerHelperDataType.MintAndLpParams struct
      * @param _isWethToken0 bool variable indicate if Weth token is token0 in Uniswap v3 weth/wPowerPerp pool
      * @return _vaultId and tokenId
      */
-    function mintAndLp(address _controller, address _nonfungiblePositionManager, address _wPowerPerp, address _wPowerPerpPool, address _weth, ControllerHelperDataType.MintAndLpParams calldata _mintAndLpParams, bool _isWethToken0) public returns (uint256, uint256) {
+    function mintAndLp(address _controller, address _nonfungiblePositionManager, address _wPowerPerp, address _weth, ControllerHelperDataType.MintAndLpParams calldata _mintAndLpParams, bool _isWethToken0) public returns (uint256, uint256) {
         IWETH9(_weth).withdraw(_mintAndLpParams.collateralToDeposit);
 
-        (uint256 amount0Desired, uint256 amount1Desired) = getAmountsToLp(_wPowerPerpPool, _mintAndLpParams.collateralToLp, _mintAndLpParams.wPowerPerpAmount, _mintAndLpParams.lowerTick, _mintAndLpParams.upperTick, _isWethToken0);
+        (uint256 amount0Desired, uint256 amount1Desired) = getAmountsToLp(_mintAndLpParams.wPowerPerpPool, _mintAndLpParams.collateralToLp, _mintAndLpParams.wPowerPerpAmount, _mintAndLpParams.lowerTick, _mintAndLpParams.upperTick, _isWethToken0);
                 
-        uint256 _vaultId;
+        uint256 _vaultId = _mintAndLpParams.vaultId;
         uint256 amountToMint = (_isWethToken0) ? amount1Desired : amount0Desired;
         if (IWPowerPerp(_wPowerPerp).balanceOf(address(this)) < amountToMint) {
             amountToMint = amountToMint.sub(IWPowerPerp(_wPowerPerp).balanceOf(address(this)));
@@ -110,7 +109,7 @@ library ControllerHelperUtil {
         // LP amount0Desired and amount1Desired in Uni v3
         uint256 uniTokenId = lpWPowerPerpPool(
             _nonfungiblePositionManager,
-            _wPowerPerpPool,
+            _mintAndLpParams.wPowerPerpPool,
             ControllerHelperDataType.LpWPowerPerpPool({
                 recipient: _mintAndLpParams.recipient,
                 amount0Desired: amount0Desired,

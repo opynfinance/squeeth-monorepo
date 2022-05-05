@@ -47,6 +47,7 @@ library ControllerHelperDataType {
         uint256 wPowerPerpAmountToBuy;  // wPowerPerp amount to buy
         uint256 collateralToWithdraw;   // collateral to withdraw from vault
         uint256 maxToPay;   // max to pay for flashswapping WETH to wPowerPerp
+        uint24 poolFee;
     }
 
     /// @dev params for flashswapSellLongWMint()
@@ -56,6 +57,7 @@ library ControllerHelperDataType {
         uint256 collateralAmount;   // collateral amount to deposit into vault
         uint256 wPowerPerpAmountToSell; // wPowerPerp amount to sell
         uint256 minToReceive;   // minimum to receive for selling wPowerPerp
+        uint24 poolFee;
     }
 
     /// @dev data struct for callback initiated in _closeShortWithAmountsFromLp()
@@ -76,11 +78,13 @@ library ControllerHelperDataType {
         uint256 limitPriceEthPerPowerPerp; // price limit for swapping between wPowerPerp and ETH (ETH per 1 wPowerPerp)
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
+        uint24 poolFee;
     }
 
     /// @dev params for batchMintLp()
     struct MintAndLpParams {
         address recipient;  // recipient address
+        address wPowerPerpPool; // Uni v3 ETH/WPowerPerp pool
         uint256 vaultId;    // vault ID
         uint256 wPowerPerpAmount;   // wPowerPerp amount to mint
         uint256 collateralToDeposit;    // collateral to deposit into vault
@@ -117,6 +121,7 @@ library ControllerHelperDataType {
         uint256 limitPriceEthPerPowerPerp; // price limit for swapping between wPowerPerp and ETH (ETH per 1 wPowerPerp)
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
+        uint24 poolFee;
     }
 
     /// @dev params for _closeUniLp() 
@@ -136,10 +141,12 @@ library ControllerHelperDataType {
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
         uint256 limitPriceEthPerPowerPerp; // price limit for selling wPowerPerp
+        uint24 poolFee;
     }
 
     /// @dev params for rebalanceWithoutVault()
     struct RebalanceWithoutVault {
+        address wPowerPerpPool; // Uni v3 ETH/WPowerPerp pool
         uint256 tokenId;    // Uni token ID
         uint256 liquidity;  // LP liquidity amount
         uint256 wPowerPerpAmountDesired;    // wPowerPerp amount to LP
@@ -151,6 +158,7 @@ library ControllerHelperDataType {
         uint256 amount1Min; // amount min to get when closing LP for asset1
         int24 lowerTick;    // LP lower tick
         int24 upperTick;    // LP upper tick
+        uint24 poolFee;
     }
 
     /// @dev params for ControllerHelperUtil.lpWPowerPerpPool()
@@ -207,6 +215,7 @@ library ControllerHelperDataType {
         address tokenOut;
         uint256 amountIn;
         uint256 limitPriceEthPerPowerPerp;
+        uint24 poolFee;
     }
 
     /// @dev struct for collecting fees owed from a uniswap NFT
