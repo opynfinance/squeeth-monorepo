@@ -894,7 +894,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         bool burnExactRemoved
     ) private {
         if (burnExactRemoved) {
-            // remove exact _wPowerPerpAmount amount withdraw from LP 
+            // remove exact _wPowerPerpAmount amount withdraw from LP
             ControllerHelperUtil.withdrawFromVault(
                 ControllerHelperDiamondStorage.getAddressAtSlot(0),
                 ControllerHelperDiamondStorage.getAddressAtSlot(5),
@@ -904,16 +904,16 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             );
         } else {
             if (_wPowerPerpAmount < _wPowerPerpAmountToBurn) {
-            // swap needed wPowerPerp amount to close short position
-            _exactOutFlashSwap(
-                ControllerHelperDiamondStorage.getAddressAtSlot(5),
-                ControllerHelperDiamondStorage.getAddressAtSlot(4),
-                poolFee,
-                _wPowerPerpAmountToBurn.sub(_wPowerPerpAmount),
-                _limitPriceEthPerPowerPerp.mul(_wPowerPerpAmountToBurn.sub(_wPowerPerpAmount)).div(1e18),
-                uint8(ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP_BURN),
-                abi.encodePacked(_vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw)
-            );
+                // swap needed wPowerPerp amount to close short position
+                _exactOutFlashSwap(
+                    ControllerHelperDiamondStorage.getAddressAtSlot(5),
+                    ControllerHelperDiamondStorage.getAddressAtSlot(4),
+                    poolFee,
+                    _wPowerPerpAmountToBurn.sub(_wPowerPerpAmount),
+                    _limitPriceEthPerPowerPerp.mul(_wPowerPerpAmountToBurn.sub(_wPowerPerpAmount)).div(1e18),
+                    uint8(ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP_BURN),
+                    abi.encodePacked(_vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw)
+                );
             } else {
                 // if LP have more wPowerPerp amount that amount to burn in vault, sell remaining amount for WETH
                 ControllerHelperUtil.withdrawFromVault(
