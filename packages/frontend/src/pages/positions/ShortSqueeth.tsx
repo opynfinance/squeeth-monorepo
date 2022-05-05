@@ -15,6 +15,8 @@ import { indexAtom } from 'src/state/controller/atoms'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import { Tooltips } from '../../constants'
 import { useVaultData } from '@hooks/useVaultData'
+import { HidePnLText } from '@components/HidePnLText'
+import { isToHidePnLAtom } from 'src/state/positions/atoms'
 
 export default function ShortSqueeth() {
   const classes = useStyles()
@@ -33,6 +35,7 @@ export default function ShortSqueeth() {
   const shortGain = useShortGain()
   const shortUnrealizedPNL = useShortUnrealizedPNL()
   const shortRealizedPNL = useShortRealizedPnl()
+  const isToHidePnL = useAtomValue(isToHidePnLAtom)
 
   return (
     <div className={classes.position}>
@@ -93,19 +96,46 @@ export default function ShortSqueeth() {
             </Typography>
           </div>
         </div>
-        <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
-          <div style={{ width: '50%' }}>
-            <Typography variant="caption" component="span" color="textSecondary">
-              Realized P&L
-            </Typography>
-            <Tooltip title={Tooltips.RealizedPnL}>
-              <InfoIcon fontSize="small" className={classes.infoIcon} />
-            </Tooltip>
-            <Typography variant="body1" className={shortRealizedPNL.gte(0) ? classes.green : classes.red}>
-              $ {isPnLLoading && shortRealizedPNL.isEqualTo(0) ? 'Loading' : shortRealizedPNL.toFixed(2)}
-            </Typography>
+        {isToHidePnL ? (
+          <HidePnLText />
+        ) : (
+          <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
+            <div style={{ width: '50%' }}>
+              <Typography variant="caption" color="textSecondary">
+                Unrealized P&L
+              </Typography>
+              <Tooltip title={Tooltips.UnrealizedPnL}>
+                <InfoIcon fontSize="small" className={classes.infoIcon} />
+              </Tooltip>
+              {isPositionLoading ||
+              shortGain.isLessThanOrEqualTo(-100) ||
+              !shortGain.isFinite() ||
+              shortUnrealizedPNL.loading ? (
+                <Typography variant="body1">Loading</Typography>
+              ) : (
+                <>
+                  <Typography variant="body1" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
+                    $ {shortUnrealizedPNL.usd.toFixed(2)} ({shortUnrealizedPNL.eth.toFixed(5)} ETH)
+                  </Typography>
+                  <Typography variant="caption" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
+                    {(shortGain || 0).toFixed(2)}%
+                  </Typography>
+                </>
+              )}
+            </div>
+            <div style={{ width: '50%' }}>
+              <Typography variant="caption" component="span" color="textSecondary">
+                Realized P&L
+              </Typography>
+              <Tooltip title={Tooltips.RealizedPnL}>
+                <InfoIcon fontSize="small" className={classes.infoIcon} />
+              </Tooltip>
+              <Typography variant="body1" className={shortRealizedPNL.gte(0) ? classes.green : classes.red}>
+                $ {isPnLLoading && shortRealizedPNL.isEqualTo(0) ? 'Loading' : shortRealizedPNL.toFixed(2)}
+              </Typography>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
