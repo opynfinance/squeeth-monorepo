@@ -803,7 +803,11 @@ const Component: React.FC = () => {
                         onClick={() =>
                           collateralBN.isPositive()
                             ? updateCollateral(toTokenAmount(balance ?? BIG_ZERO, 18).toString())
-                            : updateCollateral(vault ? vault?.collateralAmount.negated().toString() : collateral)
+                            : updateCollateral(
+                                vault
+                                  ? vault?.collateralAmount.minus(MIN_COLLATERAL_AMOUNT).negated().toString()
+                                  : collateral,
+                              )
                         }
                         variant="text"
                       >
@@ -813,7 +817,7 @@ const Component: React.FC = () => {
 
                     <NumberInput
                       id="collat-amount-input"
-                      min={vault?.collateralAmount.negated().toString()}
+                      min={vault?.collateralAmount.minus(MIN_COLLATERAL_AMOUNT).negated().toString()}
                       step={0.1}
                       placeholder="Collateral"
                       onChange={(v) => updateCollateral(v)}

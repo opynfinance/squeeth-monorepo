@@ -18,7 +18,7 @@ workflows:
             - compile
       - coverage:
           requires:
-            - compile
+            - e2e-test
           context: BUILD_KEYS
       - contract-size:
           requires:
@@ -28,7 +28,7 @@ workflows:
             - compile
       - e2e-test:
           requires:
-            - compile
+            - unit-test-contracts
       - checkout-and-install-frontend
       - unit-test-frontend:
           requires:
