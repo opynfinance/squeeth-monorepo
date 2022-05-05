@@ -50,7 +50,7 @@ export function calcShortGain({ shortUnrealizedPNL, usdAmount, wethAmount, unisw
   return shortUnrealizedPNL.div(usdAmount.plus(wethAmount.times(uniswapEthPrice).absoluteValue())).times(100)
 }
 
-const queryClient = new QueryClient({
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: Infinity,
@@ -95,7 +95,12 @@ export async function calcETHCollateralPnl(
  * @param isLong
  * @returns array of swaps that add up to the user's squeethAmount
  */
-const getRelevantSwaps = (squeethAmount: BigNumber, swaps: swaps_swaps[], isWethToken0: boolean, isLong = false) => {
+export const getRelevantSwaps = (
+  squeethAmount: BigNumber,
+  swaps: swaps_swaps[],
+  isWethToken0: boolean,
+  isLong = false,
+) => {
   let totalSqueeth = BIG_ZERO
   const relevantSwaps = []
   for (let index = swaps.length - 1; index >= 0; index--) {
@@ -187,7 +192,7 @@ const historicPriceQueryKeys = {
   historicPrice: (timestamp: string) => [`userPrice_${timestamp}`],
 }
 
-async function getEthPriceAtTransactionTime(timestamp: string) {
+export async function getEthPriceAtTransactionTime(timestamp: string) {
   try {
     const timeInMilliseconds = new Date(Number(timestamp) * 1000).setUTCSeconds(0, 0)
     const currentTimeInMilliseconds = Date.now()

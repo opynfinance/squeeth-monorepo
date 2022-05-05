@@ -14,3 +14,4 @@ export const sellQuoteAtom = atom({
 export const longGainAtom = atom(BIG_ZERO)
 export const shortGainAtom = atom(BIG_ZERO)
 export const loadingAtom = atom(true)
+export const calculatingPNLAtom = atom(false)

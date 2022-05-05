@@ -3,10 +3,9 @@ import { createContext } from 'react'
 import { useAtomValue } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 import { BIG_ZERO, OSQUEETH_DECIMALS } from '@constants/index'
-import { addressesAtom, isWethToken0Atom, positionTypeAtom } from './atoms'
+import { addressesAtom, isWethToken0Atom, positionTypeAtom, swapsAtom } from './atoms'
 import { useUsdAmount } from '@hooks/useUsdAmount'
 import { PositionType } from '../../types'
-import { useSwaps } from './hooks'
 import useAppMemo from '@hooks/useAppMemo'
 import { FC } from 'react'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
@@ -28,7 +27,7 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const setPositionType = useUpdateAtom(positionTypeAtom)
   const { getUsdAmt } = useUsdAmount()
-  const { data } = useSwaps()
+  const data = useAtomValue(swapsAtom)
   const { oSqueeth } = useAtomValue(addressesAtom)
   const { value: oSqueethBal, refetch } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
@@ -102,10 +101,6 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
       setPositionType(PositionType.SHORT)
     } else setPositionType(PositionType.NONE)
   }, [computedSwaps.squeethAmount, oSqueethBal, setPositionType])
-
-  useAppEffect(() => {
-    refetch()
-  }, [computedSwaps.squeethAmount, refetch])
 
   const value = useAppMemo(
     () => ({

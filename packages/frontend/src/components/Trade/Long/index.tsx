@@ -29,7 +29,7 @@ import {
   useGetWSqueethPositionValue,
   useSell,
 } from 'src/state/squeethPool/hooks'
-import { useComputeSwaps, useShortDebt } from 'src/state/positions/hooks'
+import { useComputeSwaps, useLongSqthBal, useShortDebt } from 'src/state/positions/hooks'
 import {
   confirmedAmountAtom,
   ethTradeAmountAtom,
@@ -271,6 +271,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   const slippageAmount = useAtomValue(slippageAmountAtom)
   const ethPrice = useETHPrice()
   const tradeType = useAtomValue(tradeTypeAtom)
+  const { refetch: refetchSqthBal } = useLongSqthBal()
 
   const connected = useAtomValue(connectedWalletAtom)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
@@ -376,12 +377,21 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
 
         resetEthTradeAmount()
         resetSqthTradeAmount()
+        refetchSqthBal()
       })
     } catch (e) {
       console.log(e)
       setBuyLoading(false)
     }
-  }, [buyAndRefund, ethTradeAmount, resetEthTradeAmount, resetSqthTradeAmount, setTradeCompleted, setTradeSuccess])
+  }, [
+    buyAndRefund,
+    ethTradeAmount,
+    resetEthTradeAmount,
+    resetSqthTradeAmount,
+    setTradeCompleted,
+    setTradeSuccess,
+    refetchSqthBal,
+  ])
 
   return (
     <div id="open-long-card">
@@ -641,6 +651,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   const connected = useAtomValue(connectedWalletAtom)
   const selectWallet = useSelectWallet()
   const { squeethAmount } = useComputeSwaps()
+  const { refetch: refetchSqthBal } = useLongSqthBal()
 
   const shortDebt = useShortDebt()
   const isShort = shortDebt.gt(0)
@@ -699,6 +710,7 @@ const CloseLong: React.FC<BuyProps> = () => {
 
           resetEthTradeAmount()
           resetSqthTradeAmount()
+          refetchSqthBal()
         })
       }
     } catch (e) {

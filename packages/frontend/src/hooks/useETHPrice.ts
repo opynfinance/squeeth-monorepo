@@ -1,5 +1,6 @@
 import BigNumber from 'bignumber.js'
 import { useQuery, useQueryClient } from 'react-query'
+import axios from 'axios'
 
 import { toTokenAmount } from '@utils/calculations'
 import { indexAtom } from 'src/state/controller/atoms'
@@ -44,10 +45,9 @@ export const getETHPriceCoingecko = async (): Promise<BigNumber> => {
 
 export const getHistoricEthPrice = async (dateString: string): Promise<BigNumber> => {
   const pair = 'ETH/USD'
+  const url = `/api/twelvedata?path=time_series&start_date=${dateString}&end_date=${dateString}&symbol=${pair}&interval=1min`
 
-  const response = await fetch(
-    `/api/twelvedata?path=time_series&start_date=${dateString}&end_date=${dateString}&symbol=${pair}&interval=1min`,
-  ).then((res) => res.json())
+  const response = await (await axios.get(url)).data
 
   if (response.status === 'error') {
     throw new Error(response.status)

@@ -8,13 +8,12 @@ import { Position } from '@uniswap/v3-sdk'
 
 import { networkIdAtom, addressAtom, connectedWalletAtom } from '../wallet/atoms'
 import { swaps, swapsVariables } from '@queries/uniswap/__generated__/swaps'
-import SWAPS_QUERY, { SWAPS_SUBSCRIPTION } from '@queries/uniswap/swapsQuery'
-import SWAPS_ROPSTEN_QUERY, { SWAPS_ROPSTEN_SUBSCRIPTION } from '@queries/uniswap/swapsRopstenQuery'
+import SWAPS_QUERY from '@queries/uniswap/swapsQuery'
+import SWAPS_ROPSTEN_QUERY from '@queries/uniswap/swapsRopstenQuery'
 import { VAULT_QUERY } from '@queries/squeeth/vaultsQuery'
 import { BIG_ZERO, OSQUEETH_DECIMALS } from '@constants/index'
 import {
   addressesAtom,
-  firstValidVaultAtom,
   isWethToken0Atom,
   positionTypeAtom,
   managerAtom,
@@ -60,7 +59,7 @@ export const useSwaps = () => {
   const [address] = useAtom(addressAtom)
   const setSwaps = useUpdateAtom(swapsAtom)
   const { squeethPool, oSqueeth, shortHelper, swapRouter, crabStrategy } = useAtomValue(addressesAtom)
-  const { subscribeToMore, data, refetch, loading, error, startPolling, stopPolling } = useQuery<
+  const { data, refetch, loading, error, startPolling, stopPolling } = useQuery<
     swaps | swapsRopsten,
     swapsVariables | swapsRopstenVariables
   >(networkId === Networks.MAINNET ? SWAPS_QUERY : SWAPS_ROPSTEN_QUERY, {
@@ -79,32 +78,6 @@ export const useSwaps = () => {
     },
     fetchPolicy: 'cache-and-network',
   })
-
-  useAppEffect(() => {
-    subscribeToMore({
-      document: networkId === Networks.MAINNET ? SWAPS_SUBSCRIPTION : SWAPS_ROPSTEN_SUBSCRIPTION,
-      variables: {
-        origin: address || '',
-        orderDirection: 'asc',
-        recipient_not: crabStrategy,
-        ...(networkId === Networks.MAINNET
-          ? {
-              tokenAddress: oSqueeth,
-            }
-          : {
-              poolAddress: squeethPool,
-              recipients: [shortHelper, address || '', swapRouter],
-            }),
-      },
-      updateQuery(prev, { subscriptionData }) {
-        if (!subscriptionData.data) return prev
-        const newSwaps = subscriptionData.data.swaps
-        return {
-          swaps: newSwaps,
-        }
-      },
-    })
-  }, [address, crabStrategy, networkId, oSqueeth, shortHelper, squeethPool, swapRouter, subscribeToMore])
 
   useAppEffect(() => {
     if (data?.swaps) {
@@ -494,14 +467,11 @@ export const useUpdateVaultData = () => {
 
 export const useFirstValidVault = () => {
   const { vaults: shortVaults } = useVaultManager()
-  const [firstValidVault, setFirstValidVault] = useAtom(firstValidVaultAtom)
-  useAppEffect(() => {
-    for (let i = 0; i < shortVaults.length; i++) {
-      if (shortVaults[i]?.collateralAmount.isGreaterThan(0)) {
-        setFirstValidVault(i)
-      }
-    }
-  }, [shortVaults, setFirstValidVault])
 
-  return { firstValidVault, vaultId: shortVaults[firstValidVault]?.id || 0 }
+  if (shortVaults) {
+    const index = shortVaults.findIndex((vault) => vault.collateralAmount.isGreaterThan(0))
+    return { firstValidVault: index, vaultId: Number(shortVaults[index]?.id) || 0 }
+  }
+
+  return { firstValidVault: 0, vaultId: 0 }
 }

@@ -61,13 +61,13 @@ export default function Positions() {
   } = useCrabPosition(address || '')
 
   const vaultExists = useAppMemo(() => {
-    return shortVaults.length && shortVaults[firstValidVault]?.collateralAmount?.isGreaterThan(0)
+    return shortVaults?.length && shortVaults[firstValidVault]?.collateralAmount?.isGreaterThan(0)
   }, [firstValidVault, shortVaults])
 
   const { liquidations } = useVaultLiquidations(Number(vaultId))
 
   const fullyLiquidated = useAppMemo(() => {
-    return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
+    return shortVaults?.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
   }, [firstValidVault, shortVaults, liquidations?.length])
 
   return (
@@ -106,9 +106,9 @@ export default function Positions() {
 
         {positionType === PositionType.SHORT && <ShortSqueeth />}
 
-        {lpedSqueeth.isGreaterThan(0) && !fullyLiquidated && <LPedSqueeth vaultExists={vaultExists} />}
+        {lpedSqueeth.isGreaterThan(0) && !fullyLiquidated && <LPedSqueeth vaultExists={Boolean(vaultExists)} />}
 
-        {mintedDebt.isGreaterThan(0) && !fullyLiquidated && <MintedSqueeth vaultExists={vaultExists} />}
+        {mintedDebt.isGreaterThan(0) && !fullyLiquidated && <MintedSqueeth vaultExists={Boolean(vaultExists)} />}
 
         {liquidations.length > 0 && <ShortSqueethLiquidated />}
 

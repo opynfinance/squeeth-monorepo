@@ -1,6 +1,7 @@
 import BigNumber from 'bignumber.js'
 import { useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
+import { useUpdateAtom } from 'jotai/utils'
 
 import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
 import { readyAtom } from 'src/state/squeethPool/atoms'
@@ -11,8 +12,8 @@ import {
   existingCollatPercentAtom,
   existingLiqPriceAtom,
   vaultAtom,
+  vaultManagerPollingAtom,
 } from 'src/state/positions/atoms'
-// import { normFactorAtom } from 'src/state/controller/atoms'
 import useAppEffect from './useAppEffect'
 import useAppCallback from './useAppCallback'
 
@@ -29,12 +30,14 @@ export const useVaultData = (vid: number) => {
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
   const ready = useAtomValue(readyAtom)
   const connected = useAtomValue(connectedWalletAtom)
+  const setVaultManagerPolling = useUpdateAtom(vaultManagerPollingAtom)
   // const address = useAtomValue(addressAtom)
 
   const updateVault = useAppCallback(async () => {
     if (!connected || !ready) return
 
     const _vault = await getVault(vid)
+    setVaultManagerPolling(true)
 
     if (!_vault) return
 
@@ -61,6 +64,7 @@ export const useVaultData = (vid: number) => {
     setExistingCollatPercent,
     setExistingLiqPrice,
     setVault,
+    setVaultManagerPolling,
     vid,
   ])
 

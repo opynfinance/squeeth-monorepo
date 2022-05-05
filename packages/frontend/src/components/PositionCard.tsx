@@ -7,6 +7,7 @@ import clsx from 'clsx'
 import Link from 'next/link'
 import React, { memo, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
+import { useUpdateAtom } from 'jotai/utils'
 
 import { Tooltips } from '@constants/enums'
 import { PositionType, TradeType } from '../types'
@@ -38,7 +39,7 @@ import {
   useShortGain,
   useShortUnrealizedPNL,
 } from 'src/state/pnl/hooks'
-import { loadingAtom } from 'src/state/pnl/atoms'
+import { calculatingPNLAtom, loadingAtom } from 'src/state/pnl/atoms'
 import { useVaultData } from '@hooks/useVaultData'
 import useAppEffect from '@hooks/useAppEffect'
 import useAppCallback from '@hooks/useAppCallback'
@@ -179,6 +180,7 @@ const PositionCard: React.FC = () => {
   const { buyQuote, sellQuote } = useBuyAndSellQuote()
   const longUnrealizedPNL = useLongUnrealizedPNL()
   const shortUnrealizedPNL = useShortUnrealizedPNL()
+  const setCalculatingPNL = useUpdateAtom(calculatingPNLAtom)
   const loading = useAtomValue(loadingAtom)
 
   const pType = useAtomValue(positionTypeAtom)
@@ -215,16 +217,18 @@ const PositionCard: React.FC = () => {
       //if trade success and number of swaps is still the same, start swaps polling
       startPolling(500)
       setFetchingNew(true)
+      setCalculatingPNL(true)
     } else {
       setTradeCompleted(false)
       setTradeSuccess(false)
       stopPolling()
       setFetchingNew(false)
+      setCalculatingPNL(false)
     }
   }, [swaps, prevSwapsData, tradeSuccess, setTradeCompleted, startPolling, stopPolling, setTradeSuccess])
 
   const fullyLiquidated = useAppMemo(() => {
-    return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
+    return shortVaults?.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
   }, [firstValidVault, shortVaults, liquidations])
 
   const isDollarValueLoading = useAppMemo(() => {
