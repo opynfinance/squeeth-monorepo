@@ -3,7 +3,7 @@ import { createContext } from 'react'
 import { useAtomValue } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 import { BIG_ZERO, OSQUEETH_DECIMALS } from '@constants/index'
-import { addressesAtom, isWethToken0Atom, positionTypeAtom } from './atoms'
+import { addressesAtom, isWethToken0Atom, positionTypeAtom, isToHidePnLAtom } from './atoms'
 import { useUsdAmount } from '@hooks/useUsdAmount'
 import { PositionType } from '../../types'
 import { useSwaps } from './hooks'
@@ -27,6 +27,7 @@ export const ComputeSwapsContext = createContext<ComputeSwapsContextValue | null
 export const ComputeSwapsProvider: FC = ({ children }) => {
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const setPositionType = useUpdateAtom(positionTypeAtom)
+  const setIsToHidePnL = useUpdateAtom(isToHidePnLAtom)
   const { getUsdAmt } = useUsdAmount()
   const { data } = useSwaps()
   const { oSqueeth } = useAtomValue(addressesAtom)
@@ -98,9 +99,20 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
   useAppEffect(() => {
     if (computedSwaps.squeethAmount.isGreaterThan(0) && oSqueethBal?.isGreaterThan(0)) {
       setPositionType(PositionType.LONG)
+      // check if user osqth wallet balance is equal to the accumulated amount from tx history
+      // if it's not the same, it's likely that they do smt on crab acution or otc or lp etc so dont show the pnl for them
+      if (!computedSwaps.squeethAmount.isEqualTo(oSqueethBal)) {
+        setIsToHidePnL(true)
+      } else {
+        setIsToHidePnL(false)
+      }
     } else if (computedSwaps.squeethAmount.isLessThan(0)) {
+      setIsToHidePnL(true)
       setPositionType(PositionType.SHORT)
-    } else setPositionType(PositionType.NONE)
+    } else {
+      setIsToHidePnL(false)
+      setPositionType(PositionType.NONE)
+    }
   }, [computedSwaps.squeethAmount, oSqueethBal, setPositionType])
 
   useAppEffect(() => {
