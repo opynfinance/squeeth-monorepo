@@ -3,10 +3,8 @@ import { useAtomValue } from 'jotai'
 import { useComputeSwaps, useLongRealizedPnl, useLPPositionsQuery } from 'src/state/positions/hooks'
 import { loadingAtom } from 'src/state/pnl/atoms'
 import useStyles from './useStyles'
-import { useBuyAndSellQuote, useLongGain, useLongUnrealizedPNL } from 'src/state/pnl/hooks'
-import { toTokenAmount } from '@utils/calculations'
+import { useLongGain, useCurrentLongPositionValue, useLongUnrealizedPNL } from 'src/state/pnl/hooks'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
-import { indexAtom } from 'src/state/controller/atoms'
 import { Tooltips } from '../../constants'
 
 export default function LongSqueeth() {
@@ -14,11 +12,10 @@ export default function LongSqueeth() {
   const { loading: isPositionLoading } = useLPPositionsQuery()
   const { squeethAmount } = useComputeSwaps()
   const isPnLLoading = useAtomValue(loadingAtom)
-  const { sellQuote } = useBuyAndSellQuote()
-  const index = useAtomValue(indexAtom)
   const longGain = useLongGain()
   const longUnrealizedPNL = useLongUnrealizedPNL()
   const longRealizedPNL = useLongRealizedPnl()
+  const longPositionValue = useCurrentLongPositionValue()
 
   return (
     <div className={classes.position}>
@@ -40,10 +37,7 @@ export default function LongSqueeth() {
               &nbsp; oSQTH
             </Typography>
             <Typography variant="body2" color="textSecondary">
-              $
-              {isPnLLoading && sellQuote.amountOut.times(toTokenAmount(index, 18).sqrt()).isEqualTo(0)
-                ? 'Loading'
-                : sellQuote.amountOut.times(toTokenAmount(index, 18).sqrt()).toFixed(2)}
+              ${isPnLLoading && longPositionValue.isEqualTo(0) ? 'Loading' : longPositionValue.toFixed(2)}
             </Typography>
           </div>
           <div style={{ width: '50%' }}>
