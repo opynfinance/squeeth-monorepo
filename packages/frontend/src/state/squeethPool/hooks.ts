@@ -183,7 +183,7 @@ export const useGetWSqueethPositionValue = () => {
     (amount: BigNumber | number) => {
       return new BigNumber(amount).times(squeethInitialPrice).times(ethPrice)
     },
-    [ethPrice?.toString(), squeethInitialPrice?.toString()],
+    [ethPrice, squeethInitialPrice],
   )
 
   return getWSqueethPositionValue
