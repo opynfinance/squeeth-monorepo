@@ -202,7 +202,6 @@ const PositionCard: React.FC = () => {
   const actualTradeType = useAtomValue(actualTradeTypeAtom)
   const tradeAmountInput = useAtomValue(sqthTradeAmountAtom)
   const tradeType = useAtomValue(tradeTypeAtom)
-  const ethPrice = useETHPrice()
   const prevSwapsData = usePrevious(swaps)
   const tradeAmount = useAppMemo(() => new BigNumber(tradeAmountInput), [tradeAmountInput])
   const [fetchingNew, setFetchingNew] = useState(false)
