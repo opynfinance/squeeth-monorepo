@@ -116,7 +116,7 @@ const getRelevantSwaps = (squeethAmount: BigNumber, swaps: swaps_swaps[], isWeth
 export async function calcDollarShortUnrealizedpnl(
   swaps: swaps_swaps[],
   isWethToken0: boolean,
-  buyQuote: BigNumber,
+  positionValue: BigNumber,
   uniswapEthPrice: BigNumber,
   squeethAmount: BigNumber,
   ethCollateralPnl: BigNumber,
@@ -138,7 +138,7 @@ export async function calcDollarShortUnrealizedpnl(
     return acc
   }, Promise.resolve({ totalWethInUSD: BIG_ZERO, priceError: false }))
 
-  const usd = totalWethInUSD.minus(buyQuote.times(uniswapEthPrice)).plus(ethCollateralPnl)
+  const usd = totalWethInUSD.minus(positionValue).plus(ethCollateralPnl)
 
   return {
     usd,
@@ -150,11 +150,7 @@ export async function calcDollarShortUnrealizedpnl(
 export async function calcDollarLongUnrealizedpnl(
   swaps: swaps_swaps[],
   isWethToken0: boolean,
-  sellQuote: {
-    amountOut: BigNumber
-    minimumAmountOut: BigNumber
-    priceImpact: string
-  },
+  positionValue: BigNumber,
   uniswapEthPrice: BigNumber,
   squeethAmount: BigNumber,
 ) {
@@ -175,7 +171,7 @@ export async function calcDollarLongUnrealizedpnl(
     return acc
   }, Promise.resolve({ totalUSDWethAmount: BIG_ZERO, priceError: false }))
 
-  const usdValue = !priceError ? sellQuote.amountOut.times(uniswapEthPrice).minus(totalUSDWethAmount) : BIG_ZERO
+  const usdValue = !priceError ? positionValue.minus(totalUSDWethAmount) : BIG_ZERO
   return {
     usd: usdValue,
     eth: !usdValue.isZero() ? usdValue.div(uniswapEthPrice) : BIG_ZERO,
