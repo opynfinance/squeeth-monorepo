@@ -824,8 +824,8 @@ describe("Controller helper integration test", function () {
 
       // Closest 60 tick width above or below current tick (60 is minimum tick width for 30bps pool)
 
-      const newTickLower = isWethToken0 ? 60*((currentTick - currentTick%60)/60 - 1): 60*((currentTick - currentTick%60)/60 + 1)
-      const newTickUpper = isWethToken0 ? 60*((currentTick - currentTick%60)/60 - 2): 60*((currentTick - currentTick%60)/60 + 2)
+      const newTickLower = isWethToken0 ? 60*((currentTick - currentTick%60)/60 - 10): 60*((currentTick - currentTick%60)/60 + 10)
+      const newTickUpper = isWethToken0 ? 60*((currentTick - currentTick%60)/60 - 20): 60*((currentTick - currentTick%60)/60 + 20)
       console.log('newTickLower',newTickLower.toString())
       console.log('newTickUpper',newTickUpper.toString())
       console.log('currentTick', currentTick.toString())
