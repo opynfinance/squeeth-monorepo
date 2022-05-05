@@ -135,11 +135,15 @@ describe("ControllerHelper: mainnet fork", function () {
       const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
       const position = await (positionManager as INonfungiblePositionManager).positions(tokenId)
 
+      console.log("depositorSqueethBalanceAfter", depositorSqueethBalanceAfter.toString())
+      console.log("depositorSqueethBalanceBefore", depositorSqueethBalanceBefore.toString())
+      console.log("depositorSqueethBalanceAfter-depositorSqueethBalanceBefore", depositorSqueethBalanceAfter.sub(depositorSqueethBalanceBefore).toString())
+
       expect(BigNumber.from(vaultAfter.NftCollateralId).eq(tokenId)).to.be.true;
       expect(position.tickLower === -887220).to.be.true
       expect(position.tickUpper === 887220).to.be.true
       expect(vaultAfter.shortAmount.sub(mintWSqueethAmount).lte(1)).to.be.true
-      expect(depositorSqueethBalanceAfter.sub(depositorSqueethBalanceBefore).lte(1)).to.be.true
+      expect(depositorSqueethBalanceAfter.sub(depositorSqueethBalanceBefore).lte(2)).to.be.true
       expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
     })
 
@@ -182,9 +186,8 @@ describe("ControllerHelper: mainnet fork", function () {
       expect(BigNumber.from(vaultAfter.NftCollateralId).eq(tokenId)).to.be.true;
       expect(position.tickLower === -887220).to.be.true
       expect(position.tickUpper === 887220).to.be.true
-      console.log(vaultAfter.shortAmount.toString(), mintWSqueethAmount.toString())
-      // expect(vaultAfter.shortAmount.sub(mintWSqueethAmount).abs().lte(100)).to.be.true
-      expect(depositorSqueethBalanceAfter.sub(depositorSqueethBalanceBefore).lte(1)).to.be.true
+      // expect(vaultAfter.shortAmount.sub(mintWSqueethAmount).abs().lte(10)).to.be.true
+      expect(depositorSqueethBalanceAfter.sub(depositorSqueethBalanceBefore).lte(10)).to.be.true
       expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
     })
 
@@ -252,7 +255,7 @@ describe("ControllerHelper: mainnet fork", function () {
   
         expect(BigNumber.from(vaultAfter.NftCollateralId).eq(tokenId)).to.be.true;
         expect(vaultAfter.shortAmount.sub(mintWSqueethAmount.add(vaultBefore.shortAmount)).abs().lte(10)).to.be.true
-        expect(depositorSqueethBalanceAfter.sub(depositorSqueethBalanceBefore).lte(1)).to.be.true
+        expect(depositorSqueethBalanceAfter.sub(depositorSqueethBalanceBefore).lte(10)).to.be.true
         expect(vaultAfter.collateralAmount.eq(vaultBefore.collateralAmount)).to.be.true
       })
     })
@@ -309,7 +312,7 @@ describe("ControllerHelper: mainnet fork", function () {
       console.log(depositorSqueethBalanceAfter.toString(), "squeeth after")
       console.log(depositorSqueethBalanceBefore.toString(), "squeeth before")
       
-      expect(depositorSqueethBalanceAfter.sub(depositorSqueethBalanceBefore).lte(1)).to.be.true
+      expect(depositorSqueethBalanceAfter.sub(depositorSqueethBalanceBefore).lte(10)).to.be.true
       expect(vaultAfter.collateralAmount.eq(collateralToMint.sub(collateralToFlashloan))).to.be.true
     })
 
@@ -352,7 +355,7 @@ describe("ControllerHelper: mainnet fork", function () {
       expect(position.tickLower === -887220).to.be.true
       expect(position.tickUpper === 887220).to.be.true
       expect(vaultAfter.shortAmount.sub(mintWSqueethAmount).lte(1)).to.be.true
-      expect(depositorSqueethBalanceAfter.sub(depositorSqueethBalanceBefore).lte(1)).to.be.true
+      expect(depositorSqueethBalanceAfter.sub(depositorSqueethBalanceBefore).lte(10)).to.be.true
 
       expect(vaultAfter.collateralAmount.sub(collateralToMint.div(2)).lte(1)).to.be.true
     })
@@ -434,7 +437,8 @@ describe("ControllerHelper: mainnet fork", function () {
         collateralToWithdraw: BigNumber.from(0),
         limitPriceEthPerPowerPerp: limitPriceEthPerPowerPerp.toString(),
         amount0Min: 0,
-        amount1Min: 0
+        amount1Min: 0,
+        poolFee: 3000
       }
 
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address);
@@ -526,7 +530,8 @@ describe("ControllerHelper: mainnet fork", function () {
         collateralToWithdraw: BigNumber.from(0),
         limitPriceEthPerPowerPerp: limitPriceEthPerPowerPerp.toString(),
         amount0Min: 0,
-        amount1Min: 0
+        amount1Min: 0,
+        poolFee: 3000
       }
 
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address);

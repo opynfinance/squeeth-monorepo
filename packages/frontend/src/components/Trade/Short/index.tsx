@@ -731,7 +731,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   useAppEffect(() => {
     const contractShort = vault?.shortAmount?.isFinite() ? vault?.shortAmount : new BigNumber(0)
     setFinalShortAmount(contractShort)
-  }, [vault])
+  }, [vault, vault?.shortAmount])
 
   // useAppEffect(() => {
   //   if (shortVaults[firstValidVault]?.shortAmount && shortVaults[firstValidVault]?.shortAmount.lt(amount)) {
@@ -744,11 +744,19 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
     if (!vaultId) return
 
     setIsVaultApproved(vault?.operator?.toLowerCase() === shortHelper?.toLowerCase())
-  }, [shortHelper, vault, vaultId])
+  }, [vaultId, shortHelper, vault])
 
   useAppEffect(() => {
-    if (vault) {
-      const _collat: BigNumber = vault.collateralAmount ?? new BigNumber(0)
+    if (amount.isEqualTo(0)) {
+      setExistingCollat(new BigNumber(0))
+      setNeededCollat(new BigNumber(0))
+      setWithdrawCollat(new BigNumber(0))
+    }
+  }, [amount])
+
+  useAppEffect(() => {
+    if (vault && !amount.isEqualTo(0)) {
+      const _collat: BigNumber = vault?.collateralAmount ?? new BigNumber(0)
       setExistingCollat(_collat)
       const restOfShort = new BigNumber(vault.shortAmount ?? new BigNumber(0)).minus(amount)
 
@@ -992,6 +1000,8 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
               onChange={(event: React.ChangeEvent<{ value: unknown }>) => {
                 if (event.target.value === CloseType.FULL) {
                   setShortCloseMax()
+                } else {
+                  setSqthTradeAmount('0')
                 }
                 setCollatPercent(200)
                 return setCloseType(event.target.value as CloseType)
