@@ -707,6 +707,7 @@ const CloseLong: React.FC<BuyProps> = () => {
     }
   }, [
     amount,
+    hasJustApprovedSqueeth,
     resetEthTradeAmount,
     resetSqthTradeAmount,
     sell,
