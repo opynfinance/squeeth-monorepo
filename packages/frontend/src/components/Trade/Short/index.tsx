@@ -55,6 +55,7 @@ import useAppEffect from '@hooks/useAppEffect'
 import useAppCallback from '@hooks/useAppCallback'
 import { useVaultHistoryQuery } from '@hooks/useVaultHistory'
 import useAppMemo from '@hooks/useAppMemo'
+import floatifyBigNums from '@utils/floatifyBigNums'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -731,13 +732,21 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   }, [vaultId, shortHelper, firstValidVault, shortVaults])
 
   useAppEffect(() => {
-
     if (amount.isEqualTo(0)) {
       setExistingCollat(new BigNumber(0))
       setNeededCollat(new BigNumber(0))
       setWithdrawCollat(new BigNumber(0))
     }
   }, [amount])
+
+  console.log(
+    floatifyBigNums({
+      collateralAmount: vault?.collateralAmount,
+      shortAmount: vault?.shortAmount,
+      collatPercent,
+      amount,
+    }),
+  )
 
   useAppEffect(() => {
     if (shortVaults.length && !amount.isEqualTo(0)) {
@@ -746,20 +755,42 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
       const restOfShort = new BigNumber(vault?.shortAmount ?? new BigNumber(0)).minus(amount)
 
       getDebtAmount(new BigNumber(restOfShort)).then((debt) => {
-        const _neededCollat = debt.times(collatPercent / 100)
-        setNeededCollat(_neededCollat)
-        setWithdrawCollat(_neededCollat.gt(0) ? _collat.minus(neededCollat) : _collat)
+        const _neededCollat = _collat.minus(withdrawCollat)
+        const collatPercent = _neededCollat.div(debt).toNumber() * 100
+        setCollatPercent(Math.max(150, collatPercent))
       })
     }
   }, [
     amount,
     shortVaults?.length,
-    collatPercent,
     vault?.collateralAmount,
     vault?.shortAmount,
     getDebtAmount,
     neededCollat,
+    withdrawCollat,
   ])
+
+  // useAppEffect(() => {
+  //   if (shortVaults.length && !amount.isEqualTo(0)) {
+  //     const _collat: BigNumber = vault?.collateralAmount ?? new BigNumber(0)
+  //     setExistingCollat(_collat)
+  //     const restOfShort = new BigNumber(vault?.shortAmount ?? new BigNumber(0)).minus(amount)
+
+  //     getDebtAmount(new BigNumber(restOfShort)).then((debt) => {
+  //       const _neededCollat = debt.times(collatPercent / 100)
+  //       setNeededCollat(_neededCollat)
+  //       setWithdrawCollat(_neededCollat.gt(0) ? _collat.minus(neededCollat) : _collat)
+  //     })
+  //   }
+  // }, [
+  //   amount,
+  //   shortVaults?.length,
+  //   collatPercent,
+  //   vault?.collateralAmount,
+  //   vault?.shortAmount,
+  //   getDebtAmount,
+  //   neededCollat,
+  // ])
 
   useAppEffect(() => {
     if (transactionInProgress) {
@@ -1018,7 +1049,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
             <div className={classes.thirdHeading}>
               <TextField
                 size="small"
-                value={collatPercent}
+                value={collatPercent.toFixed(2)}
                 type="number"
                 style={{ width: 300 }}
                 onChange={(event) => setCollatPercent(Number(event.target.value))}
@@ -1048,6 +1079,32 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
               />
             </div>
           )}
+
+          <div className={classes.thirdHeading}>
+            <TextField
+              size="small"
+              disabled={closeType === CloseType.FULL}
+              value={Number(withdrawCollat.toFixed(4))}
+              type="number"
+              style={{ width: 300 }}
+              onChange={(event) => setWithdrawCollat(new BigNumber(event.target.value))}
+              id="filled-basic"
+              label="Collateral you redeem"
+              variant="outlined"
+              FormHelperTextProps={{ classes: { root: classes.formHelperText } }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Typography variant="caption">ETH</Typography>
+                  </InputAdornment>
+                ),
+              }}
+              inputProps={{
+                min: '0',
+              }}
+            />
+          </div>
+
           <TradeDetails
             actionTitle="Spend"
             amount={sellCloseQuote.amountIn.toFixed(6)}
