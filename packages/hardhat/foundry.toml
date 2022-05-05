@@ -18,5 +18,6 @@ remappings = [
     'hardhat/=node_modules/hardhat/',
     '@std=lib/forge-std/src/'
 ]
+cache = true                                                  # whether to cache builds or not
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
