@@ -20,7 +20,6 @@ import {
   useShortRealizedPnl,
   useSwaps,
 } from 'src/state/positions/hooks'
-import { useETHPrice } from '@hooks/useETHPrice'
 import { isLPAtom, positionTypeAtom, swapsAtom } from 'src/state/positions/atoms'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import {
@@ -32,10 +31,11 @@ import {
   tradeTypeAtom,
 } from 'src/state/trade/atoms'
 import {
-  useBuyAndSellQuote,
   useLongGain,
-  useLongUnrealizedPNL,
   useShortGain,
+  useCurrentLongPositionValue,
+  useCurrentShortPositionValue,
+  useLongUnrealizedPNL,
   useShortUnrealizedPNL,
 } from 'src/state/pnl/hooks'
 import { loadingAtom } from 'src/state/pnl/atoms'
@@ -176,9 +176,10 @@ const pnlClass = (positionType: string, long: number | BigNumber, short: number 
 const PositionCard: React.FC = () => {
   const shortGain = useShortGain()
   const longGain = useLongGain()
-  const { buyQuote, sellQuote } = useBuyAndSellQuote()
   const longUnrealizedPNL = useLongUnrealizedPNL()
   const shortUnrealizedPNL = useShortUnrealizedPNL()
+  const longPositionValue = useCurrentLongPositionValue()
+  const shortPositionValue = useCurrentShortPositionValue()
   const loading = useAtomValue(loadingAtom)
 
   const pType = useAtomValue(positionTypeAtom)
@@ -353,7 +354,7 @@ const PositionCard: React.FC = () => {
                 </Typography>
               ) : (
                 <Typography variant="caption" color="textSecondary" style={{ marginTop: '.5em' }}>
-                  $ {getPositionBasedValue(sellQuote.amountOut, buyQuote, new BigNumber(0)).times(ethPrice).toFixed(2)}
+                  $ {getPositionBasedValue(longPositionValue, shortPositionValue, new BigNumber(0)).toFixed(2)}
                 </Typography>
               )}
             </div>
