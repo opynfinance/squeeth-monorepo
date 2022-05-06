@@ -55,7 +55,6 @@ import useAppEffect from '@hooks/useAppEffect'
 import useAppCallback from '@hooks/useAppCallback'
 import { useVaultHistoryQuery } from '@hooks/useVaultHistory'
 import useAppMemo from '@hooks/useAppMemo'
-import floatifyBigNums from '@utils/floatifyBigNums'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -738,15 +737,6 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
       setWithdrawCollat(new BigNumber(0))
     }
   }, [amount])
-
-  // console.log(
-  //   floatifyBigNums({
-  //     collateralAmount: vault?.collateralAmount,
-  //     shortAmount: vault?.shortAmount,
-  //     collatPercent,
-  //     amount,
-  //   }),
-  // )
 
   useAppEffect(() => {
     if (amount.isEqualTo(0)) {
