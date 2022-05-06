@@ -12,7 +12,7 @@ import {
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
-import React, { memo, useState } from 'react'
+import React, { memo, useCallback, useEffect, useState } from 'react'
 
 import { CloseType, Tooltips, Links } from '@constants/enums'
 import useShortHelper from '@hooks/contracts/useShortHelper'
@@ -662,6 +662,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const [buyLoading, setBuyLoading] = useState(false)
   const [withdrawCollat, setWithdrawCollat] = useState(new BigNumber(0))
   const [neededCollat, setNeededCollat] = useState(new BigNumber(0))
+  const [debtAmount, setDebtAmount] = useState(BIG_ZERO)
   const [closeType, setCloseType] = useState(CloseType.FULL)
   const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
 
@@ -733,42 +734,68 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
 
   useAppEffect(() => {
     if (amount.isEqualTo(0)) {
-      setExistingCollat(new BigNumber(0))
       setNeededCollat(new BigNumber(0))
       setWithdrawCollat(new BigNumber(0))
     }
   }, [amount])
 
-  console.log(
-    floatifyBigNums({
-      collateralAmount: vault?.collateralAmount,
-      shortAmount: vault?.shortAmount,
-      collatPercent,
-      amount,
-    }),
+  // console.log(
+  //   floatifyBigNums({
+  //     collateralAmount: vault?.collateralAmount,
+  //     shortAmount: vault?.shortAmount,
+  //     collatPercent,
+  //     amount,
+  //   }),
+  // )
+
+  useAppEffect(() => {
+    if (amount.isEqualTo(0)) {
+      setExistingCollat(BIG_ZERO)
+    } else {
+      setExistingCollat(vault?.collateralAmount ?? BIG_ZERO)
+    }
+  }, [amount, vault?.collateralAmount])
+
+  useAppEffect(() => {
+    const restOfShort = new BigNumber(vault?.shortAmount ?? new BigNumber(0)).minus(amount)
+
+    getDebtAmount(restOfShort).then((debt) => {
+      setDebtAmount(debt)
+    })
+  }, [vault?.shortAmount, amount, getDebtAmount])
+
+  const handleWithdrawCollatChange = (newWithdrawCollat: BigNumber) => {
+    setWithdrawCollat(newWithdrawCollat)
+
+    if (amount.isZero()) {
+      return
+    }
+
+    const newNeededCollat = existingCollat.minus(newWithdrawCollat)
+    setNeededCollat(newNeededCollat)
+
+    setCollatPercent(Math.max(0, newNeededCollat.div(debtAmount).toNumber() * 100))
+  }
+
+  const handleCollatPercentChange = useAppCallback(
+    (newCollatPercent: number) => {
+      setCollatPercent(newCollatPercent)
+
+      if (amount.isZero()) {
+        return
+      }
+
+      const newNeededCollat = debtAmount.times(newCollatPercent / 100)
+      setNeededCollat(newNeededCollat)
+
+      setWithdrawCollat(newNeededCollat.gt(0) ? existingCollat.minus(newNeededCollat) : existingCollat)
+    },
+    [amount, debtAmount, existingCollat],
   )
 
   useAppEffect(() => {
-    if (shortVaults.length && !amount.isEqualTo(0)) {
-      const _collat: BigNumber = vault?.collateralAmount ?? new BigNumber(0)
-      setExistingCollat(_collat)
-      const restOfShort = new BigNumber(vault?.shortAmount ?? new BigNumber(0)).minus(amount)
-
-      getDebtAmount(new BigNumber(restOfShort)).then((debt) => {
-        const _neededCollat = _collat.minus(withdrawCollat)
-        const collatPercent = _neededCollat.div(debt).toNumber() * 100
-        setCollatPercent(Math.max(150, collatPercent))
-      })
-    }
-  }, [
-    amount,
-    shortVaults?.length,
-    vault?.collateralAmount,
-    vault?.shortAmount,
-    getDebtAmount,
-    neededCollat,
-    withdrawCollat,
-  ])
+    handleCollatPercentChange(collatPercent)
+  }, [debtAmount, collatPercent, handleCollatPercentChange])
 
   // useAppEffect(() => {
   //   if (shortVaults.length && !amount.isEqualTo(0)) {
@@ -1029,7 +1056,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                 } else {
                   setSqthTradeAmount('0')
                 }
-                setCollatPercent(200)
+                handleCollatPercentChange(200)
                 return setCloseType(event.target.value as CloseType)
               }}
               displayEmpty
@@ -1049,10 +1076,10 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
             <div className={classes.thirdHeading}>
               <TextField
                 size="small"
-                value={collatPercent.toFixed(2)}
+                value={Number(collatPercent.toFixed(2))}
                 type="number"
                 style={{ width: 300 }}
-                onChange={(event) => setCollatPercent(Number(event.target.value))}
+                onChange={(event) => handleCollatPercentChange(Number(event.target.value))}
                 id="filled-basic"
                 label="Collateral Ratio"
                 variant="outlined"
@@ -1073,7 +1100,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
               />
               <CollatRange
                 className={classes.thirdHeading}
-                onCollatValueChange={(val) => setCollatPercent(val)}
+                onCollatValueChange={(val) => handleCollatPercentChange(val)}
                 collatValue={collatPercent}
                 id="close-short-collat-ratio"
               />
@@ -1087,7 +1114,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
               value={Number(withdrawCollat.toFixed(4))}
               type="number"
               style={{ width: 300 }}
-              onChange={(event) => setWithdrawCollat(new BigNumber(event.target.value))}
+              onChange={(event) => handleWithdrawCollatChange(new BigNumber(event.target.value))}
               id="filled-basic"
               label="Collateral you redeem"
               variant="outlined"
@@ -1139,12 +1166,6 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
             id="close-short-trade-details"
           />
           <div className={classes.divider}>
-            <TradeInfoItem
-              label="Collateral you redeem"
-              value={withdrawCollat.isPositive() ? withdrawCollat.toFixed(4) : 0}
-              unit="ETH"
-              id="close-short-collateral-to-redeem"
-            />
             <TradeInfoItem
               label="Current Collateral ratio"
               value={existingCollatPercent}
