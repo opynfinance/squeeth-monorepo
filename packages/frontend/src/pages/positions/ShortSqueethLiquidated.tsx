@@ -6,7 +6,7 @@ import useStyles from './useStyles'
 
 export default function ShortSqueethLiquidated() {
   const classes = useStyles()
-  const { vaultId, validVault } = useFirstValidVault()
+  const { validVault, vaultId } = useFirstValidVault()
   const { loading: isPositionLoading } = useLPPositionsQuery()
   const { existingCollat, existingCollatPercent } = useVaultData(validVault)
 

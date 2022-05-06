@@ -149,7 +149,7 @@ export const useShortRealizedPnl = () => {
 
 export const useMintedSoldSort = () => {
   const { vaultId } = useFirstValidVault()
-  const { openShortSqueeth } = useVaultHistory(vaultId)
+  const { openShortSqueeth } = useVaultHistory(Number(vaultId))
   const positionType = useAtomValue(positionTypeAtom)
   const { squeethAmount } = useComputeSwaps()
 
@@ -163,7 +163,7 @@ export const useMintedSoldSort = () => {
 
 export const useMintedDebt = () => {
   const { vaultId } = useFirstValidVault()
-  const { mintedSqueeth } = useVaultHistory(vaultId)
+  const { mintedSqueeth } = useVaultHistory(Number(vaultId))
   const lpDebt = useLpDebt()
   const mintedSoldShort = useMintedSoldSort()
 
@@ -433,14 +433,11 @@ export const useVaultQuery = (vaultId: number) => {
 export const useFirstValidVault = () => {
   const { vaults: shortVaults, loading } = useVaultManager()
 
-  if (shortVaults) {
-    const index = shortVaults.findIndex((vault) => vault.collateralAmount.isGreaterThan(0))
-    return {
-      isVaultLoading: loading,
-      vaultId: Number(shortVaults[index]?.id) || 0,
-      validVault: shortVaults[index],
-    }
-  }
+  const vault = shortVaults?.find((vault) => vault.collateralAmount.isGreaterThan(0))
 
-  return { isVaultLoading: loading, vaultId: 0, validVault: undefined }
+  return {
+    isVaultLoading: loading,
+    vaultId: vault?.id || 0,
+    validVault: vault,
+  }
 }

@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useQuery } from '@apollo/client'
 import BigNumber from 'bignumber.js'
-import { usePrevious } from 'react-use'
 import { useAtomValue } from 'jotai'
 
 import { toTokenAmount } from '@utils/calculations'
@@ -12,6 +11,7 @@ import { squeethClient } from '../../utils/apollo-client'
 import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
 import useAppEffect from '@hooks/useAppEffect'
 import useAppMemo from '@hooks/useAppMemo'
+import { usePrevious } from 'react-use'
 
 /**
  * get user vaults.
@@ -22,7 +22,7 @@ import useAppMemo from '@hooks/useAppMemo'
 export const useVaultManager = () => {
   const address = useAtomValue(addressAtom)
   const networkId = useAtomValue(networkIdAtom)
-  const [poll, setPoll] = useState(false)
+  const [isPolling, setIsPolling] = useState(false)
 
   const { data, loading, subscribeToMore, startPolling, stopPolling } = useQuery<Vaults>(VAULTS_QUERY, {
     client: squeethClient[networkId],
@@ -32,28 +32,30 @@ export const useVaultManager = () => {
     },
   })
 
-  const beginVaultUpdate = useCallback(() => setPoll(true), [])
-
   const currentVault = data?.vaults.find((vault) => new BigNumber(vault.collateralAmount).isGreaterThan(0))
   const prevVault = usePrevious(currentVault)
 
+  const updateVault = useCallback(() => {
+    setIsPolling(true)
+  }, [])
+
   useAppEffect(() => {
-    if (poll && !prevVault && !currentVault) {
+    if (isPolling && !prevVault && !currentVault) {
       startPolling(500)
     } else if (
-      poll &&
+      isPolling &&
       (new BigNumber(prevVault?.shortAmount).isEqualTo(new BigNumber(currentVault?.shortAmount)) ||
         new BigNumber(prevVault?.collateralAmount).isEqualTo(new BigNumber(currentVault?.collateralAmount)))
     ) {
       startPolling(500)
     } else {
       stopPolling()
-      setPoll(false)
+      setIsPolling(false)
     }
   }, [
     currentVault?.shortAmount.toString(),
     currentVault?.collateralAmount.toString(),
-    poll,
+    isPolling,
     prevVault?.shortAmount.toString(),
     prevVault?.collateralAmount.toString(),
     startPolling,
@@ -87,7 +89,7 @@ export const useVaultManager = () => {
     }))
 
   return useAppMemo(
-    () => ({ vaults: vaultsData, loading, beginVaultUpdate }),
-    [beginVaultUpdate, loading, data?.vaults],
+    () => ({ vaults: vaultsData, loading: loading || isPolling, updateVault }),
+    [vaultsData, loading, isPolling, updateVault],
   )
 }

@@ -25,8 +25,8 @@ import { indexAtom } from '../controller/atoms'
 import useAppEffect from '@hooks/useAppEffect'
 
 export function useEthCollateralPnl() {
-  const { isVaultLoading, validVault, vaultId } = useFirstValidVault()
-  const { vaultHistory, loading: vaultHistoryLoading } = useVaultHistoryQuery(vaultId)
+  const { validVault, isVaultLoading, vaultId } = useFirstValidVault()
+  const { vaultHistory, loading: vaultHistoryLoading } = useVaultHistoryQuery(Number(vaultId))
   const { existingCollat } = useVaultData(validVault)
 
   const index = useAtomValue(indexAtom)

@@ -13,7 +13,7 @@ interface Props {
 
 export default function MintedSqueeth({ vaultExists }: Props) {
   const classes = useStyles()
-  const { isVaultLoading, vaultId, validVault } = useFirstValidVault()
+  const { validVault, vaultId, isVaultLoading } = useFirstValidVault()
   const { loading: isPositionLoading } = useLPPositionsQuery()
   const { existingCollat, existingLiqPrice, existingCollatPercent } = useVaultData(validVault)
   const mintedDebt = useMintedDebt()

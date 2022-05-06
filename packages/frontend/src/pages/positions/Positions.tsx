@@ -42,7 +42,7 @@ export default function Positions() {
   const activePositions = useAtomValue(activePositionsAtom)
 
   const { squeethAmount } = useComputeSwaps()
-  const { vaultId, validVault } = useFirstValidVault()
+  const { validVault: vault, vaultId } = useFirstValidVault()
   const lpedSqueeth = useLpDebt()
   const mintedDebt = useMintedDebt()
   const shortDebt = useShortDebt()
@@ -59,14 +59,14 @@ export default function Positions() {
   } = useCrabPosition(address || '')
 
   const vaultExists = useAppMemo(() => {
-    return Boolean(validVault && validVault.collateralAmount.isGreaterThan(0))
-  }, [validVault])
+    return Boolean(vault && vault.collateralAmount?.isGreaterThan(0))
+  }, [vault])
 
   const { liquidations } = useVaultLiquidations(Number(vaultId))
 
   const fullyLiquidated = useAppMemo(() => {
-    return Boolean(validVault && validVault.shortAmount?.isZero() && liquidations.length > 0)
-  }, [validVault, liquidations?.length])
+    return vault && vault.shortAmount?.isZero() && liquidations.length > 0
+  }, [vault, liquidations?.length])
 
   return (
     <div>

@@ -251,16 +251,15 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const collateral = useAppMemo(() => new BigNumber(ethTradeAmount), [ethTradeAmount])
   const isLong = useAtomValue(isLongAtom)
+
+  const { updateVault, vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
+  const { validVault: vault, vaultId } = useFirstValidVault()
+  const _totalCollateral = vault ? vault.collateralAmount.plus(collateral) : collateral
   const { squeethAmount: shortSqueethAmount } = useComputeSwaps()
   const [isVaultHistoryUpdating, setVaultHistoryUpdating] = useAtom(vaultHistoryUpdatingAtom)
-
-  const { vaultId, validVault: vault } = useFirstValidVault()
-  const vaultHistoryQuery = useVaultHistoryQuery(vaultId, isVaultHistoryUpdating)
-  const { beginVaultUpdate, vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
   const { existingCollatPercent } = useVaultData(vault)
   const [collatPercent, setCollatPercent] = useState(existingCollatPercent > 0 ? existingCollatPercent : 200)
-
-  const _totalCollateral = vault ? vault.collateralAmount.plus(collateral) : collateral
+  const vaultHistoryQuery = useVaultHistoryQuery(Number(vaultId), isVaultHistoryUpdating)
 
   useAppEffect(() => {
     getSellQuote(amount, slippageAmount).then(setQuote)
@@ -298,10 +297,10 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   }, [collatPercent, _totalCollateral, collateral, getShortAmountFromDebt, setSqthTradeAmount, vault?.shortAmount])
 
   useAppEffect(() => {
-    if (!vaultId || !vault) return
+    if (!vault) return
 
-    setIsVaultApproved(vault?.operator?.toLowerCase() === shortHelper?.toLowerCase())
-  }, [vaultId, shortHelper, vault])
+    setIsVaultApproved(vault.operator?.toLowerCase() === shortHelper?.toLowerCase())
+  }, [shortHelper, vault])
 
   const depositAndShort = useAppCallback(async () => {
     setShortLoading(true)
@@ -312,11 +311,11 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
       }
       if (vaultId && !isVaultApproved) {
         setIsTxFirstStep(true)
-        await updateOperator(vaultId, shortHelper, () => {
+        await updateOperator(Number(vaultId), shortHelper, () => {
           setIsVaultApproved(true)
         })
       } else {
-        await openShort(vaultId, amount, collateral, () => {
+        await openShort(Number(vaultId), amount, collateral, () => {
           setIsTxFirstStep(false)
           setConfirmedAmount(amount.toFixed(6).toString())
           setTradeSuccess(true)
@@ -324,7 +323,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
           resetEthTradeAmount()
           setVaultHistoryUpdating(true)
           vaultHistoryQuery.refetch({ vaultId })
-          beginVaultUpdate()
+          updateVault()
         })
       }
     } catch (e) {
@@ -332,21 +331,21 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
       setShortLoading(false)
     }
   }, [
-    vaultIDLoading,
-    vaultId,
-    isVaultApproved,
-    shortHelper,
     amount,
+    updateVault,
     collateral,
+    isVaultApproved,
     openShort,
     resetEthTradeAmount,
     setIsTxFirstStep,
     setTradeCompleted,
     setTradeSuccess,
     setVaultHistoryUpdating,
+    shortHelper,
     updateOperator,
-    beginVaultUpdate,
     vaultHistoryQuery,
+    vaultIDLoading,
+    vaultId,
   ])
 
   useAppEffect(() => {
@@ -366,7 +365,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
         setNeededCollat(_neededCollat)
       })
     }
-  }, [amount, vault, open, tradeType, getDebtAmount, collatPercent])
+  }, [amount, collatPercent, shortVaults, open, tradeType, getDebtAmount, vault])
 
   const ethPrice = useETHPrice()
   const setCollatRatio = useUpdateAtom(collatRatioAtom)
@@ -388,7 +387,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
       openError = 'Insufficient ETH balance'
     } else if (amount.isGreaterThan(0) && collateral.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) {
       openError = `Minimum collateral is ${MIN_COLLATERAL_AMOUNT} ETH`
-    } else if (shortVaults?.length && vaultId === 0 && vault?.shortAmount.gt(0)) {
+    } else if (vault && vaultId === 0 && vault?.shortAmount.gt(0)) {
       vaultIdDontLoadedError = 'Loading Vault...'
     }
     if (
@@ -720,17 +719,19 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
 
   const { loading: isPositionFinishedCalc } = useLPPositionsQuery()
-  const { beginVaultUpdate, vaults: shortVaults } = useVaultManager()
-  const { vaultId, validVault: vault } = useFirstValidVault()
+  const { updateVault } = useVaultManager()
+  const { validVault: vault, vaultId } = useFirstValidVault()
   const { existingCollatPercent } = useVaultData(vault)
   const setCollatRatio = useUpdateAtom(collatRatioAtom)
   const ethPrice = useETHPrice()
   const [isVaultHistoryUpdating, setVaultHistoryUpdating] = useAtom(vaultHistoryUpdatingAtom)
-  const vaultHistoryQuery = useVaultHistoryQuery(vaultId, isVaultHistoryUpdating)
+  const vaultHistoryQuery = useVaultHistoryQuery(Number(vaultId), isVaultHistoryUpdating)
 
   useAppEffect(() => {
-    const contractShort = vault?.shortAmount?.isFinite() ? vault?.shortAmount : new BigNumber(0)
-    setFinalShortAmount(contractShort)
+    if (vault) {
+      const contractShort = vault?.shortAmount?.isFinite() ? vault?.shortAmount : new BigNumber(0)
+      setFinalShortAmount(contractShort)
+    }
   }, [vault, vault?.shortAmount])
 
   // useAppEffect(() => {
@@ -741,7 +742,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   // }, [vault?.shortAmount.toString(), amount.toString()])
 
   useAppEffect(() => {
-    if (!vaultId) return
+    if (!vault) return
 
     setIsVaultApproved(vault?.operator?.toLowerCase() === shortHelper?.toLowerCase())
   }, [vaultId, shortHelper, vault])
@@ -766,7 +767,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
         setWithdrawCollat(_neededCollat.gt(0) ? _collat.minus(neededCollat) : _collat)
       })
     }
-  }, [amount, vault, collatPercent, getDebtAmount, neededCollat])
+  }, [amount, collatPercent, getDebtAmount, neededCollat, vault])
 
   useAppEffect(() => {
     if (transactionInProgress) {
@@ -780,7 +781,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
     try {
       if (vaultId && !isVaultApproved) {
         setIsTxFirstStep(true)
-        await updateOperator(vaultId, shortHelper, () => {
+        await updateOperator(Number(vaultId), shortHelper, () => {
           setIsVaultApproved(true)
         })
       } else {
@@ -788,15 +789,16 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
         const restOfShort = new BigNumber(vault?.shortAmount ?? new BigNumber(0)).minus(amount)
         const _debt: BigNumber = await getDebtAmount(new BigNumber(restOfShort))
         const neededCollat = _debt.times(collatPercent / 100)
-        await closeShort(vaultId, amount, _collat.minus(neededCollat), async () => {
+        await closeShort(Number(vaultId), amount, _collat.minus(neededCollat), async () => {
           setIsTxFirstStep(false)
           setConfirmedAmount(amount.toFixed(6).toString())
           setTradeSuccess(true)
           setTradeCompleted(true)
           resetSqthTradeAmount()
           setIsVaultApproved(false)
+          // vaultQuery.refetch({ vaultID: vault!.id })
           setVaultHistoryUpdating(true)
-          beginVaultUpdate()
+          updateVault()
           vaultHistoryQuery.refetch({ vaultId })
         })
       }
@@ -805,22 +807,23 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
       setBuyLoading(false)
     }
   }, [
-    vaultId,
     amount,
-    isVaultApproved,
-    collatPercent,
+    updateVault,
     closeShort,
+    collatPercent,
     getDebtAmount,
+    isVaultApproved,
     resetSqthTradeAmount,
     setIsTxFirstStep,
     setTradeCompleted,
     setTradeSuccess,
+    setVaultHistoryUpdating,
     shortHelper,
     updateOperator,
-    vault,
-    beginVaultUpdate,
-    setVaultHistoryUpdating,
+    vault?.collateralAmount,
+    vault?.shortAmount,
     vaultHistoryQuery,
+    vaultId,
   ])
 
   const setShortCloseMax = useAppCallback(() => {
@@ -853,7 +856,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
     if (
       !open &&
       amount.isGreaterThan(0) &&
-      shortVaults?.length &&
+      vault &&
       amount.lt(finalShortAmount) &&
       neededCollat.isLessThan(MIN_COLLATERAL_AMOUNT)
     ) {

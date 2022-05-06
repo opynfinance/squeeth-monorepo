@@ -12,9 +12,9 @@ interface Props {
 
 export default function LPedSqueeth({ vaultExists }: Props) {
   const classes = useStyles()
-  const { isVaultLoading, vaultId, validVault } = useFirstValidVault()
+  const { validVault: vault, vaultId, isVaultLoading } = useFirstValidVault()
   const lpedSqueeth = useLpDebt()
-  const { existingCollat, existingLiqPrice, existingCollatPercent } = useVaultData(validVault)
+  const { existingCollat, existingLiqPrice, existingCollatPercent } = useVaultData(vault)
 
   return (
     <div className={classes.position}>

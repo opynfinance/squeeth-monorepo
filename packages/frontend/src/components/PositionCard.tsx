@@ -185,7 +185,7 @@ const PositionCard: React.FC = () => {
   const swapsData = useAtomValue(swapsAtom)
   const swaps = swapsData.swaps
   const { squeethAmount } = useComputeSwaps()
-  const { vaultId, validVault: vault } = useFirstValidVault()
+  const { validVault: vault, vaultId } = useFirstValidVault()
   const { existingCollat } = useVaultData(vault)
   const { loading: isPositionLoading } = useLPPositionsQuery()
   const isLP = useAtomValue(isLPAtom)

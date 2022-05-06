@@ -18,7 +18,7 @@ import { useVaultData } from '@hooks/useVaultData'
 
 export default function ShortSqueeth() {
   const classes = useStyles()
-  const { isVaultLoading, vaultId, validVault } = useFirstValidVault()
+  const { validVault, vaultId, isVaultLoading } = useFirstValidVault()
   const { existingCollat, existingLiqPrice, existingCollatPercent } = useVaultData(validVault)
   const { loading: isPositionLoading } = useLPPositionsQuery()
   const { squeethAmount, loading: swapsLoading } = useComputeSwaps()
