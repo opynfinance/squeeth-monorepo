@@ -135,10 +135,6 @@ describe("ControllerHelper: mainnet fork", function () {
       const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
       const position = await (positionManager as INonfungiblePositionManager).positions(tokenId)
 
-      console.log("depositorSqueethBalanceAfter", depositorSqueethBalanceAfter.toString())
-      console.log("depositorSqueethBalanceBefore", depositorSqueethBalanceBefore.toString())
-      console.log("depositorSqueethBalanceAfter-depositorSqueethBalanceBefore", depositorSqueethBalanceAfter.sub(depositorSqueethBalanceBefore).toString())
-
       expect(BigNumber.from(vaultAfter.NftCollateralId).eq(tokenId)).to.be.true;
       expect(position.tickLower === -887220).to.be.true
       expect(position.tickUpper === 887220).to.be.true
@@ -246,12 +242,6 @@ describe("ControllerHelper: mainnet fork", function () {
         const position = await (positionManager as INonfungiblePositionManager).positions(tokenId)
 
         const depositorSqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
-        console.log(vaultAfter.shortAmount.toString(), "short")
-        console.log(mintWSqueethAmount.toString(), "mint")
-        console.log(vaultAfter.collateralAmount.toString(), "collateral")
-        console.log(collateralToMint.toString(), "collateral to mint")
-        console.log(depositorSqueethBalanceAfter.toString(), "squeeth after")
-        console.log(depositorSqueethBalanceBefore.toString(), "squeeth before")
   
         expect(BigNumber.from(vaultAfter.NftCollateralId).eq(tokenId)).to.be.true;
         expect(vaultAfter.shortAmount.sub(mintWSqueethAmount.add(vaultBefore.shortAmount)).abs().lte(10)).to.be.true
@@ -303,15 +293,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const depositorSqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
 
       expect(BigNumber.from(vaultAfter.NftCollateralId).eq(tokenId)).to.be.true;
-      console.log(vaultAfter.shortAmount.toString(), "short")
-      console.log(mintWSqueethAmount.toString(), "mint")
-      console.log(vaultAfter.collateralAmount.toString(), "collateral")
-      console.log(collateralToMint.toString(), "collateral to mint")
-      console.log(collateralToFlashloan.toString(), "flashloan")
-      expect(vaultAfter.shortAmount.sub(mintWSqueethAmount).abs().lte(10)).to.be.true
-      console.log(depositorSqueethBalanceAfter.toString(), "squeeth after")
-      console.log(depositorSqueethBalanceBefore.toString(), "squeeth before")
-      
+      expect(vaultAfter.shortAmount.sub(mintWSqueethAmount).abs().lte(10)).to.be.true      
       expect(depositorSqueethBalanceAfter.sub(depositorSqueethBalanceBefore).lte(10)).to.be.true
       expect(vaultAfter.collateralAmount.eq(collateralToMint.sub(collateralToFlashloan))).to.be.true
     })
