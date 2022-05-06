@@ -51,3 +51,7 @@ yarn-error.log*
 
 # asdf config
 **/.tool-versions
+
+
+packages/hardhat/out/
+packages/hardhat/cache/
