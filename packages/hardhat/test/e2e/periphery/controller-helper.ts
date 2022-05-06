@@ -438,7 +438,8 @@ describe("ControllerHelper: mainnet fork", function () {
         limitPriceEthPerPowerPerp: limitPriceEthPerPowerPerp.toString(),
         amount0Min: 0,
         amount1Min: 0,
-        poolFee: 3000
+        poolFee: 3000,
+        burnExactRemoved: false
       }
 
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address);
@@ -531,7 +532,8 @@ describe("ControllerHelper: mainnet fork", function () {
         limitPriceEthPerPowerPerp: limitPriceEthPerPowerPerp.toString(),
         amount0Min: 0,
         amount1Min: 0,
-        poolFee: 3000
+        poolFee: 3000,
+        burnExactRemoved: false
       }
 
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address);
