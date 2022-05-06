@@ -18,15 +18,10 @@ import { useVaultData } from '@hooks/useVaultData'
 
 export default function ShortSqueeth() {
   const classes = useStyles()
-  const { vaultId } = useFirstValidVault()
-  const {
-    existingCollat,
-    existingLiqPrice,
-    existingCollatPercent,
-    isVaultLoading: isVaultDataLoading,
-  } = useVaultData(vaultId)
+  const { validVault, vaultId, isVaultLoading } = useFirstValidVault()
+  const { existingCollat, existingLiqPrice, existingCollatPercent } = useVaultData(validVault)
   const { loading: isPositionLoading } = useLPPositionsQuery()
-  const { squeethAmount } = useComputeSwaps()
+  const { squeethAmount, loading: swapsLoading } = useComputeSwaps()
   const isPnLLoading = useAtomValue(loadingAtom)
   const { buyQuote } = useBuyAndSellQuote()
   const index = useAtomValue(indexAtom)
@@ -100,7 +95,7 @@ export default function ShortSqueeth() {
               <InfoIcon fontSize="small" className={classes.infoIcon} />
             </Tooltip>
             <Typography variant="body1">
-              {isVaultDataLoading && existingLiqPrice.isEqualTo(0) ? 'Loading' : '$' + existingLiqPrice.toFixed(2)}
+              {isVaultLoading && existingLiqPrice.isEqualTo(0) ? 'Loading' : '$' + existingLiqPrice.toFixed(2)}
             </Typography>
           </div>
           <div style={{ width: '50%' }}>
@@ -108,7 +103,7 @@ export default function ShortSqueeth() {
               Collateral (Amt / Ratio)
             </Typography>
             <Typography variant="body1">
-              {isVaultDataLoading && existingCollat.isEqualTo(0) ? 'Loading' : existingCollat.toFixed(4)} ETH (
+              {isVaultLoading && existingCollat.isEqualTo(0) ? 'Loading' : existingCollat.toFixed(4)} ETH (
               {existingCollatPercent}%)
             </Typography>
           </div>
@@ -122,7 +117,7 @@ export default function ShortSqueeth() {
               <InfoIcon fontSize="small" className={classes.infoIcon} />
             </Tooltip>
             <Typography variant="body1" className={shortRealizedPNL.gte(0) ? classes.green : classes.red}>
-              $ {isPnLLoading && shortRealizedPNL.isEqualTo(0) ? 'Loading' : shortRealizedPNL.toFixed(2)}
+              $ {swapsLoading ? 'Loading' : shortRealizedPNL.toFixed(2)}
             </Typography>
           </div>
         </div>

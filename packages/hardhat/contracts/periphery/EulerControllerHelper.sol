@@ -2,8 +2,6 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import "hardhat/console.sol";
-
 // interface
 import {IERC20Detailed} from "../interfaces/IERC20Detailed.sol";
 
@@ -64,8 +62,6 @@ contract EulerControllerHelper is IDeferredLiquidityCheck {
     function onDeferredLiquidityCheck(bytes memory encodedData) external override {
         // sanity checks
         require(msg.sender == euler);
-
-        console.log("msg.sender", msg.sender);
 
         FlashloanCallbackData memory data = abi.decode(encodedData, (FlashloanCallbackData));
 
