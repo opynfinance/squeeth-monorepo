@@ -12,7 +12,7 @@ import { Tooltips } from '../../constants'
 export default function LongSqueeth() {
   const classes = useStyles()
   const { loading: isPositionLoading } = useLPPositionsQuery()
-  const { squeethAmount } = useComputeSwaps()
+  const { squeethAmount, loading: swapsLoading } = useComputeSwaps()
   const isPnLLoading = useAtomValue(loadingAtom)
   const { sellQuote } = useBuyAndSellQuote()
   const index = useAtomValue(indexAtom)
@@ -81,7 +81,7 @@ export default function LongSqueeth() {
               <InfoIcon fontSize="small" className={classes.infoIcon} />
             </Tooltip>
             <Typography variant="body1" className={longRealizedPNL.gte(0) ? classes.green : classes.red}>
-              $ {isPnLLoading && longRealizedPNL.isEqualTo(0) ? 'Loading' : longRealizedPNL.toFixed(2)}
+              $ {swapsLoading ? 'Loading' : longRealizedPNL.toFixed(2)}
             </Typography>
           </div>
         </div>
