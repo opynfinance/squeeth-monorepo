@@ -55,3 +55,22 @@ export const getHistoricEthPrice = async (dateString: string): Promise<BigNumber
 
   return new BigNumber(Number(response.values[0].close))
 }
+
+export const getHistoricEthPrices = async (timestamps: number[]) => {
+  const timestampStr = timestamps.join(',')
+  const pair = 'ETH/USD'
+
+  const response = await (
+    await fetch(
+      `/api/historicalprice?timestamps=${timestampStr}&pair=${pair}&interval=1min&timezone=${
+        Intl.DateTimeFormat().resolvedOptions().timeZone
+      }`,
+    )
+  ).json()
+
+  if (response.status === 'error') {
+    throw new Error(response.message)
+  }
+
+  return response
+}

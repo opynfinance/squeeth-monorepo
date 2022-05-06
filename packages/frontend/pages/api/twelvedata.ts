@@ -1,3 +1,4 @@
+import axios from 'axios'
 import type { NextApiRequest, NextApiResponse } from 'next'
 
 const TWELVE_DATA_API = 'https://api.twelvedata.com'
@@ -14,10 +15,11 @@ const handleRequest = async (req: NextApiRequest, res: NextApiResponse) => {
     return
   }
 
-  const jsonResponse = await (
-    await fetch(`${TWELVE_DATA_API}/${path}?${queryString}&apikey=${process.env.NEXT_PUBLIC_TWELVEDATA_APIKEY}`)
-  ).json()
-  res.status(200).json(jsonResponse)
+  const jsonResponse = await axios.get(
+    `${TWELVE_DATA_API}/${path}?${queryString}&apikey=${process.env.NEXT_PUBLIC_TWELVEDATA_APIKEY}`,
+  )
+
+  res.status(200).json(jsonResponse.data)
 }
 
 export default handleRequest
