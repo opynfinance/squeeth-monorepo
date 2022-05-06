@@ -678,9 +678,6 @@ describe("Controller helper integration test", function () {
         upperTick: 887220
       }
       const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
-
-      console.log("collateralToLp", collateralToLp.toString())
-
       const tx = await controllerHelper.connect(depositor).batchMintLp(params, {value: collateralAmount.add(collateralToLp)});
       const depositorEthBalanceAfter = await provider.getBalance(depositor.address)
       const receipt = await tx.wait()
@@ -714,7 +711,6 @@ describe("Controller helper integration test", function () {
       expect(vaultAfter.collateralAmount.eq(collateralAmount)).to.be.true
       //uniswap rounding of LP often gives 1 wei less than expected (uniswap takes the 1 wei, but only gives credit for 1 wei less in the LP share)
       expect((depositorEthBalanceBefore.sub(depositorEthBalanceAfter).sub(collateralAmount).sub(wethAmountInLP).sub(gasSpent)).abs().lte(1)).to.be.true
-      console.log(vaultAfter.shortAmount.toString(), wPowerPerpAmountInLP.toString())
       //not sure why there is a shortfall here, maybe rounding, testing less than 5bps difference from expected
       expect((vaultAfter.shortAmount.sub(wPowerPerpAmountInLP)).mul(one).div(wPowerPerpAmountInLP).abs().lte(BigNumber.from(10).pow(14).mul(5))).to.be.true
 
@@ -789,18 +785,13 @@ describe("Controller helper integration test", function () {
       expect(vaultBefore.collateralAmount.eq(BigNumber.from(0))).to.be.true
       expect(vaultAfter.collateralAmount.eq(collateralAmount)).to.be.true
       //uniswap rounding of LP often gives some wei less than expected (uniswap takes the wei, but only gives credit for less wei in the LP share)
-      //console.log((depositorEthBalanceBefore.sub(depositorEthBalanceAfter).sub(collateralAmount).sub(wethAmountInLP).sub(gasSpent)).toString())
       expect((depositorEthBalanceBefore.sub(depositorEthBalanceAfter).sub(collateralAmount).sub(wethAmountInLP).sub(gasSpent)).abs().lte(1)).to.be.true
-      //console.log(vaultAfter.shortAmount.sub(wPowerPerpAmountInLP).toString())
-      console.log(vaultAfter.shortAmount.toString(), wPowerPerpAmountInLP.toString())
 
       //not sure why there is a shortfall here, maybe rounding, testing less than 5bps difference from expected
       expect((vaultAfter.shortAmount.sub(wPowerPerpAmountInLP)).mul(one).div(wPowerPerpAmountInLP).abs().lte(BigNumber.from(10).pow(14).mul(5))).to.be.true
-      //console.log(wethAmountInLP.sub(collateralToLp).mul(one).div(collateralToLp).toString())
 
       //not sure why there is a shortfall here, maybe rounding, testing less than 5bps difference from expected
       expect(wethAmountInLP.sub(collateralToLp).mul(one).div(collateralToLp).abs().lte(BigNumber.from(10).pow(14).mul(5))).to.be.true
-      //console.log(wPowerPerpAmountInLP.sub(mintWSqueethAmount).mul(one).div(mintWSqueethAmount).toString())
       expect(wPowerPerpAmountInLP.sub(mintWSqueethAmount).mul(one).div(mintWSqueethAmount).abs().lte(BigNumber.from(10).pow(14).mul(5))).to.be.true
   
     })
