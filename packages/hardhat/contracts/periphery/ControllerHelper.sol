@@ -196,7 +196,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             _params.wPowerPerpAmountToBurn,
             _params.collateralToWithdraw,
             _params.limitPriceEthPerPowerPerp,
-            _params.poolFee
+            _params.poolFee,
+            _params.burnExactRemoved
         );
 
         ControllerHelperUtil.sendBack(
@@ -566,7 +567,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 data.wPowerPerpAmountToBurn,
                 data.collateralToWithdraw.add(data.collateralToFlashloan),
                 data.limitPriceEthPerPowerPerp,
-                data.poolFee
+                data.poolFee,
+                data.burnExactRemoved
             );
         } else if (
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
@@ -596,6 +598,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         ControllerHelperDiamondStorage.getAddressAtSlot(0),
                         ControllerHelperDiamondStorage.getAddressAtSlot(6),
                         ControllerHelperDiamondStorage.getAddressAtSlot(4),
+                        ControllerHelperDiamondStorage.getAddressAtSlot(3),
                         vaultId,
                         increaseLiquidityParam,
                         isWethToken0
@@ -659,13 +662,23 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         (ControllerHelperDataType.withdrawFromVault)
                     );
 
-                    ControllerHelperUtil.withdrawFromVault(
-                        ControllerHelperDiamondStorage.getAddressAtSlot(0),
-                        ControllerHelperDiamondStorage.getAddressAtSlot(5),
-                        vaultId,
-                        withdrawFromVaultParams.wPowerPerpToBurn,
-                        withdrawFromVaultParams.collateralToWithdraw
-                    );
+                    if (withdrawFromVaultParams.burnExactRemoved) {
+                        ControllerHelperUtil.withdrawFromVault(
+                            ControllerHelperDiamondStorage.getAddressAtSlot(0),
+                            ControllerHelperDiamondStorage.getAddressAtSlot(5),
+                            vaultId,
+                            IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).balanceOf(address(this)),
+                            withdrawFromVaultParams.collateralToWithdraw
+                        );
+                    } else {
+                        ControllerHelperUtil.withdrawFromVault(
+                            ControllerHelperDiamondStorage.getAddressAtSlot(0),
+                            ControllerHelperDiamondStorage.getAddressAtSlot(5),
+                            vaultId,
+                            withdrawFromVaultParams.wPowerPerpToBurn,
+                            withdrawFromVaultParams.collateralToWithdraw
+                        );
+                    }
                 } else if (data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.MintNewLp) {
                     // this will execute in the use case of fully closing old LP position, and creating new one
                     ControllerHelperDataType.MintAndLpParams memory mintAndLpParams = abi.decode(
@@ -889,40 +902,52 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         uint256 _wPowerPerpAmountToBurn,
         uint256 _collateralToWithdraw,
         uint256 _limitPriceEthPerPowerPerp,
-        uint24 _poolFee
+        uint24 _poolFee,
+        bool burnExactRemoved
     ) private {
-        if (_wPowerPerpAmount < _wPowerPerpAmountToBurn) {
-            // swap needed wPowerPerp amount to close short position
-            _exactOutFlashSwap(
-                ControllerHelperDiamondStorage.getAddressAtSlot(5),
-                ControllerHelperDiamondStorage.getAddressAtSlot(4),
-                _poolFee,
-                _wPowerPerpAmountToBurn.sub(_wPowerPerpAmount),
-                _limitPriceEthPerPowerPerp.mul(_wPowerPerpAmountToBurn.sub(_wPowerPerpAmount)).div(1e18),
-                uint8(ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP_BURN),
-                abi.encodePacked(_vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw)
-            );
-        } else {
-            // if LP have more wPowerPerp amount that amount to burn in vault, sell remaining amount for WETH
+        if (burnExactRemoved) {
+            // remove exact _wPowerPerpAmount amount withdraw from LP
             ControllerHelperUtil.withdrawFromVault(
                 ControllerHelperDiamondStorage.getAddressAtSlot(0),
                 ControllerHelperDiamondStorage.getAddressAtSlot(5),
                 _vaultId,
-                _wPowerPerpAmountToBurn,
+                _wPowerPerpAmount,
                 _collateralToWithdraw
             );
-
-            uint256 wPowerPerpExcess = _wPowerPerpAmount.sub(_wPowerPerpAmountToBurn);
-            if (wPowerPerpExcess > 0) {
-                _exactInFlashSwap(
-                    ControllerHelperDiamondStorage.getAddressAtSlot(4),
+        } else {
+            if (_wPowerPerpAmount < _wPowerPerpAmountToBurn) {
+                // swap needed wPowerPerp amount to close short position
+                _exactOutFlashSwap(
                     ControllerHelperDiamondStorage.getAddressAtSlot(5),
+                    ControllerHelperDiamondStorage.getAddressAtSlot(4),
                     _poolFee,
-                    wPowerPerpExcess,
-                    _limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18),
-                    uint8(ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
-                    ""
+                    _wPowerPerpAmountToBurn.sub(_wPowerPerpAmount),
+                    _limitPriceEthPerPowerPerp.mul(_wPowerPerpAmountToBurn.sub(_wPowerPerpAmount)).div(1e18),
+                    uint8(ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP_BURN),
+                    abi.encodePacked(_vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw)
                 );
+            } else {
+                // if LP have more wPowerPerp amount that amount to burn in vault, sell remaining amount for WETH
+                ControllerHelperUtil.withdrawFromVault(
+                    ControllerHelperDiamondStorage.getAddressAtSlot(0),
+                    ControllerHelperDiamondStorage.getAddressAtSlot(5),
+                    _vaultId,
+                    _wPowerPerpAmountToBurn,
+                    _collateralToWithdraw
+                );
+
+                uint256 wPowerPerpExcess = _wPowerPerpAmount.sub(_wPowerPerpAmountToBurn);
+                if (wPowerPerpExcess > 0) {
+                    _exactInFlashSwap(
+                        ControllerHelperDiamondStorage.getAddressAtSlot(4),
+                        ControllerHelperDiamondStorage.getAddressAtSlot(5),
+                        _poolFee,
+                        wPowerPerpExcess,
+                        _limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18),
+                        uint8(ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
+                        ""
+                    );
+                }
             }
         }
 

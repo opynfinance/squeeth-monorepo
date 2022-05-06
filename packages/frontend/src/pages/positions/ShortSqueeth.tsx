@@ -21,7 +21,7 @@ export default function ShortSqueeth() {
   const { validVault, vaultId, isVaultLoading } = useFirstValidVault()
   const { existingCollat, existingLiqPrice, existingCollatPercent } = useVaultData(validVault)
   const { loading: isPositionLoading } = useLPPositionsQuery()
-  const { squeethAmount } = useComputeSwaps()
+  const { squeethAmount, loading: swapsLoading } = useComputeSwaps()
   const isPnLLoading = useAtomValue(loadingAtom)
   const { buyQuote } = useBuyAndSellQuote()
   const index = useAtomValue(indexAtom)
@@ -117,7 +117,7 @@ export default function ShortSqueeth() {
               <InfoIcon fontSize="small" className={classes.infoIcon} />
             </Tooltip>
             <Typography variant="body1" className={shortRealizedPNL.gte(0) ? classes.green : classes.red}>
-              $ {isPnLLoading && shortRealizedPNL.isEqualTo(0) ? 'Loading' : shortRealizedPNL.toFixed(2)}
+              $ {swapsLoading ? 'Loading' : shortRealizedPNL.toFixed(2)}
             </Typography>
           </div>
         </div>
