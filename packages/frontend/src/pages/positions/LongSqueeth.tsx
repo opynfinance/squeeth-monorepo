@@ -73,7 +73,7 @@ export default function LongSqueeth() {
           <div style={{ width: '50%' }}>
             <div className={classes.pnlTitle}>
               <Typography variant="caption" component="span" color="textSecondary">
-                Unrealized P&L
+                Realized P&L
               </Typography>
               <PnLTooltip pnlType={PnLType.Realized} />
             </div>
