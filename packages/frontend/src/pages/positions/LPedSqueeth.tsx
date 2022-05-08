@@ -12,14 +12,9 @@ interface Props {
 
 export default function LPedSqueeth({ vaultExists }: Props) {
   const classes = useStyles()
-  const { vaultId } = useFirstValidVault()
+  const { validVault: vault, vaultId, isVaultLoading } = useFirstValidVault()
   const lpedSqueeth = useLpDebt()
-  const {
-    existingCollat,
-    existingLiqPrice,
-    existingCollatPercent,
-    isVaultLoading: isVaultDataLoading,
-  } = useVaultData(vaultId)
+  const { existingCollat, existingLiqPrice, existingCollatPercent } = useVaultData(vault)
 
   return (
     <div className={classes.position}>
@@ -51,7 +46,7 @@ export default function LPedSqueeth({ vaultExists }: Props) {
                 <InfoIcon fontSize="small" className={classes.infoIcon} />
               </Tooltip>
               <Typography variant="body1">
-                ${isVaultDataLoading && existingLiqPrice.isEqualTo(0) ? 'Loading' : existingLiqPrice.toFixed(2)}
+                ${isVaultLoading && existingLiqPrice.isEqualTo(0) ? 'Loading' : existingLiqPrice.toFixed(2)}
               </Typography>
             </div>
           ) : null}
@@ -60,7 +55,7 @@ export default function LPedSqueeth({ vaultExists }: Props) {
               Collateral (Amt / Ratio)
             </Typography>
             <Typography variant="body1">
-              {isVaultDataLoading && existingCollat.isEqualTo(0) ? 'Loading' : existingCollat.toFixed(4)} ETH
+              {isVaultLoading && existingCollat.isEqualTo(0) ? 'Loading' : existingCollat.toFixed(4)} ETH
               {new BigNumber(existingCollatPercent).isFinite() ? ' (' + existingCollatPercent + ' %)' : null}
             </Typography>
           </div>

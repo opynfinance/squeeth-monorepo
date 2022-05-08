@@ -25,7 +25,7 @@ import { indexAtom } from '../controller/atoms'
 import useAppEffect from '@hooks/useAppEffect'
 
 export function useEthCollateralPnl() {
-  const { vaultId } = useFirstValidVault()
+  const { validVault, isVaultLoading, vaultId } = useFirstValidVault()
   const { vaultHistory, loading: vaultHistoryLoading } = useVaultHistoryQuery(vaultId)
   const { existingCollat, isVaultLoading } = useVaultData(vaultId)
   const isToHidePnL = useAtomValue(isToHidePnLAtom)
@@ -112,8 +112,8 @@ export function useShortGain() {
   const { squeethAmount, totalUSDFromSell } = useComputeSwaps()
   const [shortGain, setShortGain] = useAtom(shortGainAtom)
   const shortUnrealizedPNL = useAtomValue(shortUnrealizedPNLAtom)
-  const { vaultId } = useFirstValidVault()
-  const { existingCollat } = useVaultData(vaultId)
+  const { validVault } = useFirstValidVault()
+  const { existingCollat } = useVaultData(validVault)
   const index = useAtomValue(indexAtom)
   const isToHidePnL = useAtomValue(isToHidePnLAtom)
 

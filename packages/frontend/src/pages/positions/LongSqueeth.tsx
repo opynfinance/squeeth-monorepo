@@ -14,7 +14,7 @@ import { HidePnLText } from '@components/HidePnLText'
 export default function LongSqueeth() {
   const classes = useStyles()
   const { loading: isPositionLoading } = useLPPositionsQuery()
-  const { squeethAmount } = useComputeSwaps()
+  const { squeethAmount, loading: swapsLoading } = useComputeSwaps()
   const isPnLLoading = useAtomValue(loadingAtom)
   const isToHidePnL = useAtomValue(isToHidePnLAtom)
   const { sellQuote } = useBuyAndSellQuote()

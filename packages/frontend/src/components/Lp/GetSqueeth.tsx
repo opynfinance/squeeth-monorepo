@@ -84,8 +84,8 @@ const Mint: React.FC = () => {
   const normalizationFactor = useAtomValue(normFactorAtom)
   const openDepositAndMint = useOpenDepositAndMint()
   const getShortAmountFromDebt = useGetShortAmountFromDebt()
-  const { vaultId } = useFirstValidVault()
-  const { existingCollat, existingCollatPercent } = useVaultData(vaultId)
+  const { validVault, vaultId } = useFirstValidVault()
+  const { existingCollat, existingCollatPercent } = useVaultData(validVault)
 
   const { dispatch } = useLPState()
 
@@ -101,7 +101,7 @@ const Mint: React.FC = () => {
     setLoading(true)
     try {
       if (vaultIDLoading) return
-      await openDepositAndMint(vaultId, mintAmount, collatAmountBN)
+      await openDepositAndMint(Number(vaultId), mintAmount, collatAmountBN)
       dispatch({ type: LPActions.GO_TO_PROVIDE_LIQUIDITY })
     } catch (e) {
       console.log(e)

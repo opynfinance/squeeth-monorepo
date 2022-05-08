@@ -225,10 +225,11 @@ export function initOnboard(subscriptions: any, networkId: Networks) {
 
       wallets: [
         { walletName: 'metamask', preferred: true },
-        { walletName: 'coinbase', preferred: false },
+        { walletName: 'coinbase', preferred: true },
         {
           walletName: 'walletLink',
           rpcUrl: RPC_URL,
+          preferred: true,
         },
         {
           walletName: 'walletConnect',

@@ -158,7 +158,7 @@ export const useShortRealizedPnl = () => {
 
 export const useMintedSoldSort = () => {
   const { vaultId } = useFirstValidVault()
-  const { openShortSqueeth } = useVaultHistory(vaultId)
+  const { openShortSqueeth } = useVaultHistory(Number(vaultId))
   const positionType = useAtomValue(positionTypeAtom)
   const { squeethAmount } = useComputeSwaps()
 
@@ -172,7 +172,7 @@ export const useMintedSoldSort = () => {
 
 export const useMintedDebt = () => {
   const { vaultId } = useFirstValidVault()
-  const { mintedSqueeth } = useVaultHistory(vaultId)
+  const { mintedSqueeth } = useVaultHistory(Number(vaultId))
   const lpDebt = useLpDebt()
   const mintedSoldShort = useMintedSoldSort()
 
@@ -438,70 +438,15 @@ export const useVaultQuery = (vaultId: number) => {
 
   return { ...query, data: vaultData }
 }
-export const useUpdateVaultData = () => {
-  const connected = useAtomValue(connectedWalletAtom)
-  const setVault = useUpdateAtom(vaultAtom)
-  const setExistingCollat = useUpdateAtom(existingCollatAtom)
-  const setExistingCollatPercent = useUpdateAtom(existingCollatPercentAtom)
-  const setCollatPercent = useUpdateAtom(collatPercentAtom)
-  const setExistingLiqPrice = useUpdateAtom(existingLiqPriceAtom)
-  const setVaultLoading = useUpdateAtom(isVaultLoadingAtom)
-  const ready = useAtomValue(readyAtom)
-  const { vaultId } = useFirstValidVault()
-  const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
-  const getVault = useGetVault()
-
-  const updateVault = useAppCallback(async () => {
-    if (!connected || !ready) return
-
-    const _vault = await getVault(vaultId)
-
-    if (!_vault) return
-
-    setVault(_vault)
-    setExistingCollat(_vault.collateralAmount)
-
-    getCollatRatioAndLiqPrice(
-      _vault.collateralAmount,
-      _vault.shortAmount,
-      _vault.NFTCollateralId ? Number(_vault.NFTCollateralId) : undefined,
-    ).then(({ collateralPercent, liquidationPrice }) => {
-      setExistingCollatPercent(collateralPercent)
-      setCollatPercent(collateralPercent)
-      setExistingLiqPrice(new BigNumber(liquidationPrice))
-      setVaultLoading(false)
-    })
-  }, [
-    connected,
-    getCollatRatioAndLiqPrice,
-    getVault,
-    ready,
-    setCollatPercent,
-    setExistingCollat,
-    setExistingCollatPercent,
-    setExistingLiqPrice,
-    setVault,
-    setVaultLoading,
-    vaultId,
-  ])
-
-  useAppEffect(() => {
-    updateVault()
-  }, [connected, ready, vaultId, updateVault])
-
-  return updateVault
-}
 
 export const useFirstValidVault = () => {
-  const { vaults: shortVaults } = useVaultManager()
-  const [firstValidVault, setFirstValidVault] = useAtom(firstValidVaultAtom)
-  useAppEffect(() => {
-    for (let i = 0; i < shortVaults.length; i++) {
-      if (shortVaults[i]?.collateralAmount.isGreaterThan(0)) {
-        setFirstValidVault(i)
-      }
-    }
-  }, [shortVaults, setFirstValidVault])
+  const { vaults: shortVaults, loading } = useVaultManager()
 
-  return { firstValidVault, vaultId: shortVaults[firstValidVault]?.id || 0 }
+  const vault = shortVaults?.find((vault) => vault.collateralAmount.isGreaterThan(0))
+
+  return {
+    isVaultLoading: loading,
+    vaultId: vault?.id || 0,
+    validVault: vault,
+  }
 }
