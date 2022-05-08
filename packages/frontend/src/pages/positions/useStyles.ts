@@ -85,6 +85,10 @@ const useStyles = makeStyles((theme) =>
     dotIcon: {
       marginRight: '1em',
     },
+    pnlTitle: {
+      display: 'flex',
+      alignItems: 'center',
+    },
   }),
 )
 

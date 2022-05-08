@@ -1,13 +1,13 @@
-import { Tooltip, Typography } from '@material-ui/core'
+import Typography from '@material-ui/core/Typography'
 import { useAtomValue } from 'jotai'
 import { useComputeSwaps, useLongRealizedPnl, useLPPositionsQuery } from 'src/state/positions/hooks'
 import { loadingAtom } from 'src/state/pnl/atoms'
 import useStyles from './useStyles'
 import { useBuyAndSellQuote, useLongGain, useLongUnrealizedPNL } from 'src/state/pnl/hooks'
 import { toTokenAmount } from '@utils/calculations'
-import InfoIcon from '@material-ui/icons/InfoOutlined'
 import { indexAtom } from 'src/state/controller/atoms'
-import { Tooltips } from '../../constants'
+import { PnLType } from '../../types'
+import { PnLTooltip } from '@components/PnLTooltip'
 
 export default function LongSqueeth() {
   const classes = useStyles()
@@ -47,12 +47,12 @@ export default function LongSqueeth() {
             </Typography>
           </div>
           <div style={{ width: '50%' }}>
-            <Typography variant="caption" color="textSecondary">
-              Unrealized P&L
-            </Typography>
-            <Tooltip title={Tooltips.UnrealizedPnL}>
-              <InfoIcon fontSize="small" className={classes.infoIcon} />
-            </Tooltip>
+            <div className={classes.pnlTitle}>
+              <Typography variant="caption" component="span" color="textSecondary">
+                Unrealized P&L
+              </Typography>
+              <PnLTooltip pnlType={PnLType.Unrealized} />
+            </div>
             {isPnLLoading || longUnrealizedPNL.loading ? (
               <Typography variant="body1">Loading</Typography>
             ) : (
@@ -71,15 +71,12 @@ export default function LongSqueeth() {
         </div>
         <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
           <div style={{ width: '50%' }}>
-            <Typography variant="caption" component="span" color="textSecondary">
-              Realized P&L
-            </Typography>
-            <Tooltip
-              title={Tooltips.RealizedPnL}
-              // title={isLong ? Tooltips.RealizedPnL : `${Tooltips.RealizedPnL}. ${Tooltips.ShortCollateral}`}
-            >
-              <InfoIcon fontSize="small" className={classes.infoIcon} />
-            </Tooltip>
+            <div className={classes.pnlTitle}>
+              <Typography variant="caption" component="span" color="textSecondary">
+                Unrealized P&L
+              </Typography>
+              <PnLTooltip pnlType={PnLType.Realized} />
+            </div>
             <Typography variant="body1" className={longRealizedPNL.gte(0) ? classes.green : classes.red}>
               $ {swapsLoading ? 'Loading' : longRealizedPNL.toFixed(2)}
             </Typography>
