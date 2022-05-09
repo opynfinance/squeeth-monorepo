@@ -12,44 +12,29 @@ type CrabPositionType = {
   depositedEth: BigNumber
   depositedUsd: BigNumber
   loading: boolean
-  minCurrentEth: BigNumber
-  minCurrentUsd: BigNumber
   pnlWMidPriceInUSD: BigNumber
   pnlWMidPriceInPerct: BigNumber
   currentCrabPositionValue: BigNumber
   currentCrabPositionValueInETH: BigNumber
-  isCrabUsingMidPrice: boolean
-  minPnL: BigNumber
-  minPnlUsd: BigNumber
 }
 
 const CrabPosition: React.FC<CrabPositionType> = ({
   depositedEth,
   depositedUsd,
   loading,
-  minCurrentEth,
-  minCurrentUsd,
   pnlWMidPriceInPerct,
   pnlWMidPriceInUSD,
   currentCrabPositionValue,
   currentCrabPositionValueInETH,
-  isCrabUsingMidPrice,
-  minPnL,
-  minPnlUsd,
 }) => {
   const classes = useStyles()
-
-  const currentValueInUSD = isCrabUsingMidPrice ? currentCrabPositionValue : minCurrentUsd
-  const currentValueInETH = isCrabUsingMidPrice ? currentCrabPositionValueInETH : minCurrentEth
-  const pnl = isCrabUsingMidPrice ? pnlWMidPriceInPerct : minPnlUsd
-  const pnlInPerct = isCrabUsingMidPrice ? pnlWMidPriceInUSD : minPnL
 
   const getPnlClassName = () => {
     if (loading) {
       return ''
     }
 
-    return currentValueInUSD.gte(0) ? classes.green : classes.red
+    return currentCrabPositionValue.gte(0) ? classes.green : classes.red
   }
 
   const collatRatio = useAtomValue(crabStrategyCollatRatioAtom)
@@ -88,9 +73,9 @@ const CrabPosition: React.FC<CrabPositionType> = ({
             <Typography variant="caption" component="span" color="textSecondary">
               Current Position
             </Typography>
-            <Typography variant="body1">{!loading ? `$ ${currentValueInUSD.toFixed(2)}` : 'Loading'}</Typography>
+            <Typography variant="body1">{!loading ? `$ ${currentCrabPositionValue.toFixed(2)}` : 'Loading'}</Typography>
             <Typography variant="body2" color="textSecondary">
-              {!loading ? `${currentValueInETH.toFixed(6)}  ETH` : 'Loading'}
+              {!loading ? `${currentCrabPositionValueInETH.toFixed(6)}  ETH` : 'Loading'}
             </Typography>
           </div>
         </div>
@@ -103,10 +88,10 @@ const CrabPosition: React.FC<CrabPositionType> = ({
               <InfoIcon fontSize="small" className={classes.infoIcon} />
             </Tooltip>
             <Typography variant="body1" className={getPnlClassName()} id="pos-page-crab-pnl-amount">
-              {!loading ? '$' + `${pnlInPerct.toFixed(2)}` : 'Loading'}
+              {!loading ? '$' + `${pnlWMidPriceInUSD.toFixed(2)}` : 'Loading'}
             </Typography>
             <Typography variant="caption" className={getPnlClassName()}>
-              {!loading ? `${pnl.toFixed(2)}` + '%' : 'Loading'}
+              {!loading ? `${pnlWMidPriceInPerct.toFixed(2)}` + '%' : 'Loading'}
             </Typography>
           </div>
         </div>

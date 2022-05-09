@@ -23,7 +23,6 @@ import {
 } from 'src/state/positions/hooks'
 import { activePositionsAtom, positionTypeAtom } from 'src/state/positions/atoms'
 import { poolAtom } from 'src/state/squeethPool/atoms'
-import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import { indexAtom } from 'src/state/controller/atoms'
 import useAppMemo from '@hooks/useAppMemo'
 import useStyles from './useStyles'
@@ -34,7 +33,6 @@ import ShortSqueeth from './ShortSqueeth'
 import LPedSqueeth from './LPedSqueeth'
 import MintedSqueeth from './MintedSqueeth'
 import ShortSqueethLiquidated from './ShortSqueethLiquidated'
-import { isCrabUsingMidPriceAtom } from 'src/state/crab/atoms'
 import { useCurrentCrabPositionValue } from 'src/state/crab/hooks'
 import { pnl, pnlInPerct } from 'src/lib/pnl'
 
@@ -43,7 +41,6 @@ export default function Positions() {
   const pool = useAtomValue(poolAtom)
   const address = useAtomValue(addressAtom)
   const positionType = useAtomValue(positionTypeAtom)
-  const isCrabUsingMidPrice = useAtomValue(isCrabUsingMidPriceAtom)
   const activePositions = useAtomValue(activePositionsAtom)
 
   const { squeethAmount } = useComputeSwaps()
@@ -53,15 +50,7 @@ export default function Positions() {
   const shortDebt = useShortDebt()
   const index = useAtomValue(indexAtom)
   usePositionsAndFeesComputation()
-  const {
-    depositedEth,
-    depositedUsd,
-    minCurrentEth,
-    minCurrentUsd,
-    minPnL,
-    minPnlUsd,
-    loading: crabLoading,
-  } = useCrabPosition(address || '')
+  const { depositedEth, depositedUsd, loading: crabLoading } = useCrabPosition(address || '')
   const { currentCrabPositionValue, currentCrabPositionValueInETH } = useCurrentCrabPositionValue()
   const pnlWMidPriceInUSD = pnl(currentCrabPositionValue, depositedUsd)
   const pnlWMidPriceInPerct = pnlInPerct(currentCrabPositionValue, depositedUsd)
@@ -123,15 +112,10 @@ export default function Positions() {
             depositedEth={depositedEth}
             depositedUsd={depositedUsd}
             loading={crabLoading}
-            minCurrentEth={minCurrentEth}
-            minCurrentUsd={minCurrentUsd}
             pnlWMidPriceInUSD={pnlWMidPriceInUSD}
             pnlWMidPriceInPerct={pnlWMidPriceInPerct}
             currentCrabPositionValue={currentCrabPositionValue}
             currentCrabPositionValueInETH={currentCrabPositionValueInETH}
-            isCrabUsingMidPrice={isCrabUsingMidPrice}
-            minPnL={minPnL}
-            minPnlUsd={minPnlUsd}
           />
         )}
 

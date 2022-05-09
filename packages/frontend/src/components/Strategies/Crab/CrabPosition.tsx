@@ -6,7 +6,6 @@ import { Typography, Tooltip, Box } from '@material-ui/core'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import { Tooltips } from '@constants/enums'
 import { addressAtom } from 'src/state/wallet/atoms'
-import { isCrabUsingMidPriceAtom } from 'src/state/crab/atoms'
 import { useCurrentCrabPositionValue } from 'src/state/crab/hooks'
 import { pnlInPerct } from 'src/lib/pnl'
 
@@ -33,13 +32,11 @@ const useStyles = makeStyles((theme) =>
 
 const CrabPosition: React.FC = () => {
   const address = useAtomValue(addressAtom)
-  const isCrabUsingMidPrice = useAtomValue(isCrabUsingMidPriceAtom)
-  const { minCurrentUsd, minPnL, loading, depositedUsd } = useCrabPosition(address || '')
+  const { loading, depositedUsd } = useCrabPosition(address || '')
   const { currentCrabPositionValue } = useCurrentCrabPositionValue()
 
   const classes = useStyles()
-  const pnl = isCrabUsingMidPrice ? pnlInPerct(currentCrabPositionValue, depositedUsd) : minPnL
-  const crabPositionValue = isCrabUsingMidPrice ? currentCrabPositionValue : minCurrentUsd
+  const pnl = pnlInPerct(currentCrabPositionValue, depositedUsd)
 
   if (loading) {
     return (
@@ -49,7 +46,7 @@ const CrabPosition: React.FC = () => {
     )
   }
 
-  if (crabPositionValue.isZero()) {
+  if (currentCrabPositionValue.isZero()) {
     return null
   }
 
@@ -60,7 +57,7 @@ const CrabPosition: React.FC = () => {
       </Typography>
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <Typography variant="h6" id="crab-pos-bal">
-          {loading ? 'Loading' : `${crabPositionValue.toFixed(2)} USD`}
+          {loading ? 'Loading' : `${currentCrabPositionValue.toFixed(2)} USD`}
         </Typography>
         {!loading && pnl.isFinite() ? (
           <Typography
