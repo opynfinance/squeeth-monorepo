@@ -16,7 +16,7 @@ export default function MintedSqueeth({ vaultExists }: Props) {
   const { validVault, vaultId, isVaultLoading } = useFirstValidVault()
   const { loading: isPositionLoading } = useLPPositionsQuery()
   const { existingCollat, existingLiqPrice, existingCollatPercent } = useVaultData(validVault)
-  const mintedDebt = useMintedDebt()
+  const { mintedDebt } = useMintedDebt(Number(vaultId))
 
   return (
     <div className={classes.position}>

@@ -23,7 +23,6 @@ import {
 } from 'src/state/positions/hooks'
 import { activePositionsAtom, positionTypeAtom } from 'src/state/positions/atoms'
 import { poolAtom } from 'src/state/squeethPool/atoms'
-import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import { indexAtom } from 'src/state/controller/atoms'
 import useAppMemo from '@hooks/useAppMemo'
 import useStyles from './useStyles'
@@ -45,7 +44,7 @@ export default function Positions() {
   const { squeethAmount } = useComputeSwaps()
   const { validVault: vault, vaultId } = useFirstValidVault()
   const lpedSqueeth = useLpDebt()
-  const mintedDebt = useMintedDebt()
+  const { mintedDebt } = useMintedDebt(Number(vaultId))
   const shortDebt = useShortDebt()
   const index = useAtomValue(indexAtom)
   usePositionsAndFeesComputation()
