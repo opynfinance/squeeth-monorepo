@@ -68,6 +68,7 @@ import {
 } from 'src/state/positions/hooks'
 import { useVaultData } from '@hooks/useVaultData'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
+import useVault from '@hooks/useVault'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -339,8 +340,9 @@ const Component: React.FC = () => {
   const [txLoading, setTxLoading] = useState(false)
   const [uniTokenToDeposit, setUniTokenToDeposit] = useState(0)
 
-  const { validVault: vault, isVaultLoading } = useFirstValidVault()
-  const { existingCollatPercent, existingLiqPrice } = useVaultData(vault)
+  // const { validVault: vault, isVaultLoading } = useFirstValidVault()
+  const { vault, loading: isVaultLoading } = useVault(Number(vid))
+  const { existingCollatPercent, existingLiqPrice } = useVaultData(vault as any)
   const { updateVault } = useVaultManager()
   const [collatPercent, setCollatPercent] = useAtom(collatPercentAtom)
 
@@ -815,10 +817,10 @@ const Component: React.FC = () => {
                           collateralBN.isPositive()
                             ? updateCollateral(toTokenAmount(balance ?? BIG_ZERO, 18).toString())
                             : updateCollateral(
-                                vault
-                                  ? vault?.collateralAmount.minus(MIN_COLLATERAL_AMOUNT).negated().toString()
-                                  : collateral,
-                              )
+                              vault
+                                ? vault?.collateralAmount.minus(MIN_COLLATERAL_AMOUNT).negated().toString()
+                                : collateral,
+                            )
                         }
                         variant="text"
                       >
@@ -938,8 +940,8 @@ const Component: React.FC = () => {
                           shortAmountBN.isPositive()
                             ? updateShort(maxToMint.toString())
                             : vault?.shortAmount.isGreaterThan(oSqueethBal)
-                            ? updateShort(oSqueethBal.negated().toString())
-                            : updateShort(vault?.shortAmount ? vault?.shortAmount.negated().toString() : '0')
+                              ? updateShort(oSqueethBal.negated().toString())
+                              : updateShort(vault?.shortAmount ? vault?.shortAmount.negated().toString() : '0')
                         }
                         variant="text"
                       >
@@ -962,8 +964,8 @@ const Component: React.FC = () => {
                             Balance{' '}
                             <span id="vault-debt-input-osqth-balance">
                               {oSqueethBal?.isGreaterThan(0) &&
-                              positionType === PositionType.LONG &&
-                              oSqueethBal.minus(squeethAmount).isGreaterThan(0)
+                                positionType === PositionType.LONG &&
+                                oSqueethBal.minus(squeethAmount).isGreaterThan(0)
                                 ? oSqueethBal.minus(squeethAmount).toFixed(6)
                                 : oSqueethBal.toFixed(6)}
                             </span>{' '}
