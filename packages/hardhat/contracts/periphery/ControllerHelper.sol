@@ -499,7 +499,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 }),
                 isWethToken0
             );
-            
+
             // deposit Uni NFT token in vault
             INonfungiblePositionManager(ControllerHelperDiamondStorage.getAddressAtSlot(6)).approve(
                 ControllerHelperDiamondStorage.getAddressAtSlot(0),

@@ -937,7 +937,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const amount0Min = BigNumber.from(0);
       const amount1Min = BigNumber.from(0);
       // random additional proceeds from swap
-      const surpriseProceeds = ethers.utils.parseUnits('0.05')
+      const surpriseProceeds = ethers.utils.parseUnits('0.01')
       // Setup rebalanceVaultNft call
       const abiCoder = new ethers.utils.AbiCoder
       const rebalanceVaultNftParams = [
@@ -1086,7 +1086,7 @@ describe("ControllerHelper: mainnet fork", function () {
      })
 
       
-  it("Close vault LP and open new one-siced LP with just eth ", async () => {
+  it("Close vault LP and open new one-sided LP with just eth ", async () => {
     // Get vault and LP info
     const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
     const depositorEthBalanceBefore = await ethers.provider.getBalance(depositor.address)
@@ -1117,8 +1117,8 @@ describe("ControllerHelper: mainnet fork", function () {
     const slot0 = await wSqueethPool.slot0()
     const currentTick = slot0[1]
     // Range above current tick
-    const newTickLower = isWethToken0 ? 60*((currentTick - currentTick%60)/60 + 1): 60*((currentTick - currentTick%60)/60 - 2)
-    const newTickUpper = isWethToken0 ? 60*((currentTick - currentTick%60)/60 + 2): 60*((currentTick - currentTick%60)/60 - 1)
+    const newTickLower = isWethToken0 ? 60*((currentTick - currentTick%60)/60 + 10): 60*((currentTick - currentTick%60)/60 - 20)
+    const newTickUpper = isWethToken0 ? 60*((currentTick - currentTick%60)/60 + 20): 60*((currentTick - currentTick%60)/60 - 10)
     //const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
     const amount0Min = BigNumber.from(0);
     const amount1Min = BigNumber.from(0);
@@ -1130,6 +1130,7 @@ describe("ControllerHelper: mainnet fork", function () {
       0)
     // Estimate of new LP with 0.01 weth safety margin
     const safetyEth = ethers.utils.parseUnits('0.01')
+    const safetyWPowerPerp = ethers.utils.parseUnits('0.01')
     const wethAmountToLP = wethAmountInLPBefore.add(ethAmountOutFromSwap).sub(safetyEth)
     // Setup rebalanceVaultNft call
     const abiCoder = new ethers.utils.AbiCoder
@@ -1146,7 +1147,7 @@ describe("ControllerHelper: mainnet fork", function () {
           rebalanceVaultNftType: BigNumber.from(5), // generalSwap:
           // GeneralSwap: [tokenIn, tokenOut, amountIn, limitPriceEthPerPowerPerp]
           data: abiCoder.encode(["address", 'address', 'uint256', 'uint256', 'uint24'],
-           [wSqueeth.address, weth.address, wPowerPerpAmountInLPBefore, BigNumber.from(0), 3000])
+           [wSqueeth.address, weth.address, wPowerPerpAmountInLPBefore.sub(safetyWPowerPerp), BigNumber.from(0), 3000])
           },
        {
          // Mint new LP 
