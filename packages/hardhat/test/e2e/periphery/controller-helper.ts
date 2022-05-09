@@ -891,9 +891,9 @@ describe("ControllerHelper: mainnet fork", function () {
         }
         // Batch mint new full range LP
         await controllerHelper.connect(depositor).batchMintLp(batchMintLpParams, {value: collateralAmount.add(collateralToLp)});
-        console.log('squeethPrice', squeethPrice.toString())
-        console.log('collateralAmount', collateralAmount.toString())
-        console.log('mintWSqueethAmount', mintWSqueethAmount.toString())
+        // console.log('squeethPrice', squeethPrice.toString())
+        // console.log('collateralAmount', collateralAmount.toString())
+        // console.log('mintWSqueethAmount', mintWSqueethAmount.toString())
        })
 
         
