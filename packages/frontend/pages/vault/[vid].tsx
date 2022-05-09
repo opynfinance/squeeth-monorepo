@@ -65,6 +65,7 @@ import {
   useShortDebt,
   usePositionsAndFeesComputation,
   useVaultQuery,
+  useFirstValidVault,
 } from 'src/state/positions/hooks'
 import { useVaultData } from '@hooks/useVaultData'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
@@ -325,6 +326,7 @@ const Component: React.FC = () => {
   const lpedSqueeth = useLpDebt()
   const { getApproved, approve } = useERC721(nftManager)
   const { value: oSqueethBal, refetch: refetchTokenBalance } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
+  const { vaultId } = useFirstValidVault()
 
   const [collateral, setCollateral] = useState('0')
   const [lpNftCollatPercent, setLpNftCollatPercent] = useState(0)
@@ -722,7 +724,7 @@ const Component: React.FC = () => {
                   </Tooltip>
                 </Typography>
                 <Typography className={classes.overviewValue} id="vault-shorted-debt-bal">
-                  {shortDebt?.gt(0) ? shortDebt.toFixed(6) : 0}
+                  {shortDebt?.gt(0) && vaultId === vid ? shortDebt.toFixed(6) : 0}
                 </Typography>
               </div>
               <div className={classes.debtItem}>
@@ -745,7 +747,7 @@ const Component: React.FC = () => {
                   </Tooltip>
                 </Typography>
                 <Typography className={classes.overviewValue} id="vault-lped-debt-bal">
-                  {lpedSqueeth?.gt(0) ? lpedSqueeth.toFixed(6) : 0}
+                  {lpedSqueeth?.gt(0) && vaultId === vid ? lpedSqueeth.toFixed(6) : 0}
                 </Typography>
               </div>
             </div>
