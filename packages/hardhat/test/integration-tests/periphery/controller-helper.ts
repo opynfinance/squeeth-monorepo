@@ -796,6 +796,207 @@ describe("Controller helper integration test", function () {
   
     })
 
+    it("Batch mint and LP - existing vault >0 LP collateral with >0 ETH collateral added, one sided LP with just oSQTH", async () => {
+
+      // Make empty vault
+      await controller.connect(depositor).mintWPowerPerpAmount(0, 0, 0, {value: 0})
+      const vaultId = (await shortSqueeth.nextId()).sub(1);
+      await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
+      // Get before context
+      const normFactor = await controller.getExpectedNormalizationFactor()
+      const mintWSqueethAmount = ethers.utils.parseUnits('15')
+      const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
+      const ethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 420, true)
+      const scaledEthPrice = ethPrice.div(10000)
+      const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
+      const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
+      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, true)
+      const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
+      const vaultBefore = await controller.vaults(vaultId)
+      const tokenIndexBefore = await (positionManager as INonfungiblePositionManager).totalSupply();
+      const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
+      const slot0 = await wSqueethPool.slot0()
+      const currentTick = slot0[1]
+      // Set up for mint
+      const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
+      const amount0Min = BigNumber.from(0);
+      const amount1Min = BigNumber.from(0);
+
+      // Closest 60 tick width above or below current tick (60 is minimum tick width for 30bps pool)
+
+      const newTickLower = isWethToken0 ? 60*((currentTick - currentTick%60)/60 - 2): 60*((currentTick - currentTick%60)/60 + 1)
+      const newTickUpper = isWethToken0 ? 60*((currentTick - currentTick%60)/60 - 1): 60*((currentTick - currentTick%60)/60 + 2)
+
+      console.log('currentTick', currentTick.toString())
+      const params = {
+        recipient: depositor.address,
+        wPowerPerpPool: wSqueethPool.address,
+        vaultId: vaultId,
+        wPowerPerpAmount: mintWSqueethAmount, 
+        collateralToDeposit: collateralAmount,
+        collateralToLp: BigNumber.from(0),
+        amount0Min: amount0Min,
+        amount1Min: amount1Min,
+        lowerTick: newTickLower,
+        upperTick: newTickUpper
+      }
+      const tx = await controllerHelper.connect(depositor).batchMintLp(params, {value: collateralAmount});
+
+
+      // Look at transaction
+      const receipt = await tx.wait()
+      const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
+      // Get after context
+      const depositorEthBalanceAfter = await provider.getBalance(depositor.address)
+      const vaultAfter = await controller.vaults(vaultId)
+      const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
+      const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
+      const ownerOfUniNFT = await (positionManager as INonfungiblePositionManager).ownerOf(tokenId); 
+      const position = await (positionManager as INonfungiblePositionManager).positions(tokenId)
+  
+      await (positionManager as INonfungiblePositionManager).connect(depositor).approve(positionManager.address, tokenId); 
+      const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
+        tokenId: tokenId,
+        liquidity: position.liquidity,
+        amount0Min: 0,
+        amount1Min: 0,
+        deadline: Math.floor(await getNow(ethers.provider) + 8640000),
+      })
+      const wPowerPerpAmountInLP = (isWethToken0) ? amount1 : amount0;
+      const wethAmountInLP = (isWethToken0) ? amount0 : amount1;
+
+      // console.log('position.tickLower', position.tickLower.toString())
+      // console.log('position.tickUpper', position.tickUpper.toString())
+      // console.log('ownerOfUniNFT', ownerOfUniNFT)
+      // console.log('depositor.address', depositor.address)
+      // console.log('wPowerPerpAmountInLP',wPowerPerpAmountInLP.toString())
+      // console.log('wethAmountInLP',wethAmountInLP.toString())
+      // console.log('vaultBefore.shortAmount',vaultBefore.shortAmount.toString())
+      // console.log('vaultBefore.collateralAmount',vaultBefore.collateralAmount.toString())
+      // console.log('vaultAfter.shortAmount',vaultAfter.shortAmount.toString())
+      // console.log('vaultAfter.collateralAmount',vaultAfter.collateralAmount.toString())
+      // console.log('depositorEthBalanceBefore',depositorEthBalanceBefore.toString())
+      // console.log('depositorEthBalanceAfter',depositorEthBalanceAfter.toString())
+      // console.log('collateralAmount',collateralAmount.toString())
+      // console.log('gasSpent',gasSpent.toString())
+      // console.log('depositorEthBalanceAfter',depositorEthBalanceAfter.toString())
+      // console.log('collateralToLp',collateralToLp.toString())
+      // console.log('mintWSqueethAmount',mintWSqueethAmount.toString())
+      // console.log('tokenIndexBefore',tokenIndexBefore.toString())
+      // console.log('tokenIndexAfter',tokenIndexAfter.toString())
+
+      expect(position.tickLower === newTickLower).to.be.true
+      expect(position.tickUpper === newTickUpper).to.be.true
+      expect(ownerOfUniNFT === depositor.address).to.be.true
+      expect(tokenIndexAfter.sub(tokenIndexBefore).eq(BigNumber.from(1))).to.be.true
+      expect(vaultBefore.shortAmount.eq(BigNumber.from(0))).to.be.true
+      expect(vaultBefore.collateralAmount.eq(BigNumber.from(0))).to.be.true
+      expect(vaultAfter.collateralAmount.eq(collateralAmount)).to.be.true
+      // One side LP - weth should be zero
+      expect(wPowerPerpAmountInLP.sub(mintWSqueethAmount).abs().lte(10)).to.be.true
+      expect(wethAmountInLP.eq(BigNumber.from(0))).to.be.true
+      //uniswap rounding of LP often gives some wei less than expected (uniswap takes the wei, but only gives credit for less wei in the LP share)
+      expect((depositorEthBalanceBefore.sub(depositorEthBalanceAfter).sub(collateralAmount).sub(wethAmountInLP).sub(gasSpent)).abs().lte(1)).to.be.true
+      expect((vaultAfter.shortAmount.sub(wPowerPerpAmountInLP)).abs().lte(1)).to.be.true
+  
+    })
+
+    it("Batch mint and LP - existing vault >0 LP collateral with >0 ETH collateral added, one sided LP with just weth", async () => {
+
+      // Make empty vault
+      await controller.connect(depositor).mintWPowerPerpAmount(0, 0, 0, {value: 0})
+      const vaultId = (await shortSqueeth.nextId()).sub(1);
+      await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
+      // // Get before context
+      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, true)
+      const collateralToLp = ethers.utils.parseUnits('15').mul(squeethPrice).div(one)
+      const vaultBefore = await controller.vaults(vaultId)
+      const tokenIndexBefore = await (positionManager as INonfungiblePositionManager).totalSupply();
+      const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
+      const slot0 = await wSqueethPool.slot0()
+      const currentTick = slot0[1]
+      // Set up for mint
+      const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
+      const amount0Min = BigNumber.from(0);
+      const amount1Min = BigNumber.from(0);
+
+      // Closest 60 tick width above or below current tick
+      const newTickLower = isWethToken0 ? 60*((currentTick - currentTick%60)/60 + 1): 60*((currentTick - currentTick%60)/60 - 2)
+      const newTickUpper = isWethToken0 ? 60*((currentTick - currentTick%60)/60 + 2): 60*((currentTick - currentTick%60)/60 - 1)
+      // Mint parameters for new tick
+      const params = {
+        recipient: depositor.address,
+        wPowerPerpPool: wSqueethPool.address,
+        vaultId: vaultId,
+        wPowerPerpAmount: BigNumber.from(0), 
+        collateralToDeposit: BigNumber.from(0),
+        collateralToLp: collateralToLp,
+        amount0Min: amount0Min,
+        amount1Min: amount1Min,
+        lowerTick: newTickLower,
+        upperTick: newTickUpper,
+      }
+
+      // console.log('test show params', params);
+      const tx = await controllerHelper.connect(depositor).batchMintLp(params, {value: collateralToLp});
+      // Look at transaction
+      const receipt = await tx.wait()
+      const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
+      // Get after context
+      const depositorEthBalanceAfter = await provider.getBalance(depositor.address)
+      const vaultAfter = await controller.vaults(vaultId)
+      const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
+      const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
+      const ownerOfUniNFT = await (positionManager as INonfungiblePositionManager).ownerOf(tokenId); 
+      const position = await (positionManager as INonfungiblePositionManager).positions(tokenId)
+  
+      await (positionManager as INonfungiblePositionManager).connect(depositor).approve(positionManager.address, tokenId); 
+      const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
+        tokenId: tokenId,
+        liquidity: position.liquidity,
+        amount0Min: 0,
+        amount1Min: 0,
+        deadline: Math.floor(await getNow(ethers.provider) + 8640000),
+      })
+      const wPowerPerpAmountInLP = (isWethToken0) ? amount1 : amount0;
+      const wethAmountInLP = (isWethToken0) ? amount0 : amount1;
+
+      // console.log('position.tickLower', position.tickLower)
+      // console.log('position.tickUpper', position.tickUpper)
+      // console.log('ownerOfUniNFT', ownerOfUniNFT)
+      // console.log('depositor.address', depositor.address)
+      // console.log('wPowerPerpAmountInLP',wPowerPerpAmountInLP)
+      // console.log('wethAmountInLP',wethAmountInLP)
+      // console.log('vaultBefore.shortAmount',vaultBefore.shortAmount)
+      // console.log('vaultBefore.collateralAmount',vaultBefore.collateralAmount)
+      // console.log('vaultAfter.shortAmount',vaultAfter.shortAmount)
+      // console.log('vaultAfter.collateralAmount',vaultAfter.collateralAmount)
+      // console.log('depositorEthBalanceBefore',depositorEthBalanceBefore)
+      // console.log('depositorEthBalanceAfter',depositorEthBalanceAfter)
+      // console.log('collateralAmount',collateralAmount)
+      // console.log('gasSpent',gasSpent)
+      // console.log('depositorEthBalanceAfter',depositorEthBalanceAfter)
+      // console.log('collateralToLp',collateralToLp)
+      // console.log('mintWSqueethAmount',mintWSqueethAmount)
+      // console.log('tokenIndexBefore',tokenIndexBefore)
+      // console.log('tokenIndexAfter',tokenIndexAfter)
+
+      expect(position.tickLower === newTickLower).to.be.true
+      expect(position.tickUpper === newTickUpper).to.be.true
+      expect(ownerOfUniNFT === depositor.address).to.be.true
+      expect(tokenIndexAfter.sub(tokenIndexBefore).eq(BigNumber.from(1))).to.be.true
+      expect(vaultBefore.shortAmount.eq(BigNumber.from(0))).to.be.true
+      expect(vaultBefore.collateralAmount.eq(BigNumber.from(0))).to.be.true
+      expect(vaultAfter.collateralAmount.eq(BigNumber.from(0))).to.be.true
+      // One side LP - weth should be zero
+      expect(wethAmountInLP.sub(collateralToLp).abs().lte(10)).to.be.true
+      expect(wPowerPerpAmountInLP.eq(0)).to.be.true
+      expect((depositorEthBalanceBefore.sub(depositorEthBalanceAfter).sub(wethAmountInLP).sub(gasSpent)).abs().lte(1)).to.be.true
+      // expect(wethAmountInLP.sub(collateralToLp).mul(one).div(collateralToLp).eq(0)).to.be.true
+      expect(wethAmountInLP.sub(collateralToLp).abs().lte(10)).to.be.true
+      console.log('weth rec',wethAmountInLP.sub(collateralToLp).toString())
+    })
+
   })
 
   describe("Sell long and flash mint short", async () => {
