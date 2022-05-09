@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useAtom, useAtomValue, atom } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 import { useQuery } from '@apollo/client'
@@ -54,6 +55,7 @@ import useAppMemo from '@hooks/useAppMemo'
 import useAppCallback from '@hooks/useAppCallback'
 
 export const useSwaps = () => {
+  const [swapData, setSwapData] = useState<swaps | swapsRopsten | undefined>(undefined)
   const [networkId] = useAtom(networkIdAtom)
   const [address] = useAtom(addressAtom)
   const setSwaps = useUpdateAtom(swapsAtom)
@@ -110,7 +112,13 @@ export const useSwaps = () => {
     }
   }, [data?.swaps, setSwaps])
 
-  return { data, refetch, loading, error, startPolling, stopPolling }
+  useAppEffect(() => {
+    if (data && data.swaps && data.swaps.length > 0) {
+      setSwapData(data)
+    }
+  }, [data])
+
+  return { data: swapData, refetch, loading, error, startPolling, stopPolling }
 }
 
 export const useComputeSwaps = () => {
@@ -150,9 +158,10 @@ export const useShortRealizedPnl = () => {
 
 export const useMintedSoldSort = () => {
   const { vaultId } = useFirstValidVault()
-  const { openShortSqueeth } = useVaultHistory(vaultId)
+  const { openShortSqueeth } = useVaultHistory(Number(vaultId))
   const positionType = useAtomValue(positionTypeAtom)
   const { squeethAmount } = useComputeSwaps()
+
   //when the squeethAmount < 0 and the abs amount is greater than openShortSqueeth, that means there is manually sold short position
   return useAppMemo(() => {
     return positionType === PositionType.SHORT && squeethAmount.abs().isGreaterThan(openShortSqueeth)
@@ -163,7 +172,7 @@ export const useMintedSoldSort = () => {
 
 export const useMintedDebt = () => {
   const { vaultId } = useFirstValidVault()
-  const { mintedSqueeth } = useVaultHistory(vaultId)
+  const { mintedSqueeth } = useVaultHistory(Number(vaultId))
   const lpDebt = useLpDebt()
   const mintedSoldShort = useMintedSoldSort()
 
@@ -173,6 +182,7 @@ export const useMintedDebt = () => {
   const mintedDebt = useAppMemo(() => {
     return mintedSqueeth.minus(mintedSoldShort).minus(lpDebt)
   }, [mintedSqueeth, mintedSoldShort, lpDebt])
+
   return mintedDebt
 }
 
@@ -188,12 +198,12 @@ export const useShortDebt = () => {
 
 export const useLongSqthBal = () => {
   const { oSqueeth } = useAtomValue(addressesAtom)
-  const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
+  const { value: oSqueethBal, loading, error, refetch } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
   const mintedDebt = useMintedDebt()
   const longSqthBal = useAppMemo(() => {
     return mintedDebt.gt(0) ? oSqueethBal.minus(mintedDebt) : oSqueethBal
   }, [oSqueethBal, mintedDebt])
-  return longSqthBal
+  return { longSqthBal, loading, error, refetch }
 }
 
 export const useLpDebt = () => {
@@ -428,70 +438,15 @@ export const useVaultQuery = (vaultId: number) => {
 
   return { ...query, data: vaultData }
 }
-export const useUpdateVaultData = () => {
-  const connected = useAtomValue(connectedWalletAtom)
-  const setVault = useUpdateAtom(vaultAtom)
-  const setExistingCollat = useUpdateAtom(existingCollatAtom)
-  const setExistingCollatPercent = useUpdateAtom(existingCollatPercentAtom)
-  const setCollatPercent = useUpdateAtom(collatPercentAtom)
-  const setExistingLiqPrice = useUpdateAtom(existingLiqPriceAtom)
-  const setVaultLoading = useUpdateAtom(isVaultLoadingAtom)
-  const ready = useAtomValue(readyAtom)
-  const { vaultId } = useFirstValidVault()
-  const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
-  const getVault = useGetVault()
-
-  const updateVault = useAppCallback(async () => {
-    if (!connected || !ready) return
-
-    const _vault = await getVault(vaultId)
-
-    if (!_vault) return
-
-    setVault(_vault)
-    setExistingCollat(_vault.collateralAmount)
-
-    getCollatRatioAndLiqPrice(
-      _vault.collateralAmount,
-      _vault.shortAmount,
-      _vault.NFTCollateralId ? Number(_vault.NFTCollateralId) : undefined,
-    ).then(({ collateralPercent, liquidationPrice }) => {
-      setExistingCollatPercent(collateralPercent)
-      setCollatPercent(collateralPercent)
-      setExistingLiqPrice(new BigNumber(liquidationPrice))
-      setVaultLoading(false)
-    })
-  }, [
-    connected,
-    getCollatRatioAndLiqPrice,
-    getVault,
-    ready,
-    setCollatPercent,
-    setExistingCollat,
-    setExistingCollatPercent,
-    setExistingLiqPrice,
-    setVault,
-    setVaultLoading,
-    vaultId,
-  ])
-
-  useAppEffect(() => {
-    updateVault()
-  }, [connected, ready, vaultId, updateVault])
-
-  return updateVault
-}
 
 export const useFirstValidVault = () => {
-  const { vaults: shortVaults } = useVaultManager()
-  const [firstValidVault, setFirstValidVault] = useAtom(firstValidVaultAtom)
-  useAppEffect(() => {
-    for (let i = 0; i < shortVaults.length; i++) {
-      if (shortVaults[i]?.collateralAmount.isGreaterThan(0)) {
-        setFirstValidVault(i)
-      }
-    }
-  }, [shortVaults, setFirstValidVault])
+  const { vaults: shortVaults, loading } = useVaultManager()
 
-  return { firstValidVault, vaultId: shortVaults[firstValidVault]?.id || 0 }
+  const vault = shortVaults?.find((vault) => vault.collateralAmount.isGreaterThan(0))
+
+  return {
+    isVaultLoading: loading,
+    vaultId: vault?.id || 0,
+    validVault: vault,
+  }
 }

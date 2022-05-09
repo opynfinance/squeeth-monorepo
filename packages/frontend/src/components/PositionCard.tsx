@@ -22,7 +22,6 @@ import {
 } from 'src/state/positions/hooks'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { isLPAtom, positionTypeAtom, swapsAtom } from 'src/state/positions/atoms'
-import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import {
   actualTradeTypeAtom,
   isOpenPositionAtom,
@@ -186,9 +185,8 @@ const PositionCard: React.FC = () => {
   const swapsData = useAtomValue(swapsAtom)
   const swaps = swapsData.swaps
   const { squeethAmount } = useComputeSwaps()
-  const { vaults: shortVaults } = useVaultManager()
-  const { firstValidVault, vaultId } = useFirstValidVault()
-  const { existingCollat } = useVaultData(vaultId)
+  const { validVault: vault, vaultId } = useFirstValidVault()
+  const { existingCollat } = useVaultData(vault)
   const { loading: isPositionLoading } = useLPPositionsQuery()
   const isLP = useAtomValue(isLPAtom)
   const isOpenPosition = useAtomValue(isOpenPositionAtom)
@@ -224,39 +222,29 @@ const PositionCard: React.FC = () => {
   }, [swaps, prevSwapsData, tradeSuccess, setTradeCompleted, startPolling, stopPolling, setTradeSuccess])
 
   const fullyLiquidated = useAppMemo(() => {
-    return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
-  }, [firstValidVault, shortVaults, liquidations])
+    return vault && vault.shortAmount?.isZero() && liquidations.length > 0
+  }, [vault, liquidations])
 
   const isDollarValueLoading = useAppMemo(() => {
-    if (positionType === PositionType.LONG) {
-      return loading || longGain.isLessThanOrEqualTo(-100) || !longGain.isFinite()
-    } else if (positionType === PositionType.SHORT) {
-      return loading || shortGain.isLessThanOrEqualTo(-100) || !shortGain.isFinite()
+    if (positionType === PositionType.LONG || positionType === PositionType.SHORT) {
+      return loading
     } else {
       return null
     }
-  }, [positionType, loading, longGain, shortGain])
+  }, [positionType, loading])
 
   const getPositionBasedValue = useAppCallback(
     (long: any, short: any, none: any, loadingMsg?: any) => {
       if (loadingMsg && (loading || isPositionLoading)) return loadingMsg
       if (positionType === PositionType.LONG) {
-        //if it's showing -100% it is still loading
-        if (longGain.isLessThanOrEqualTo(-100) || !longGain.isFinite()) {
-          return loadingMsg
-        }
         return long
       }
       if (positionType === PositionType.SHORT) {
-        //if it's showing -100% it is still loading
-        if (shortGain.isLessThanOrEqualTo(-100) || !shortGain.isFinite()) {
-          return loadingMsg
-        }
         return short
       }
       return none
     },
-    [isPositionLoading, loading, positionType, longGain, shortGain],
+    [isPositionLoading, loading, positionType],
   )
 
   const getRealizedPNLBasedValue = useAppCallback(

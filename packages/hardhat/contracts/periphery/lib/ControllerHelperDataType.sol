@@ -32,10 +32,12 @@ library ControllerHelperDataType {
     enum RebalanceVaultNftType {
         IncreaseLpLiquidity,
         DecreaseLpLiquidity,
-        MintIntoVault,
+        DepositIntoVault,
         WithdrawFromVault,
         MintNewLp,
-        generalSwap
+        generalSwap,
+        CollectFees, 
+        DepositExistingNft
     }
     
     /// @dev params for flashswapWBurnBuyLong()
@@ -45,6 +47,7 @@ library ControllerHelperDataType {
         uint256 wPowerPerpAmountToBuy;  // wPowerPerp amount to buy
         uint256 collateralToWithdraw;   // collateral to withdraw from vault
         uint256 maxToPay;   // max to pay for flashswapping WETH to wPowerPerp
+        uint24 poolFee;
     }
 
     /// @dev params for flashswapSellLongWMint()
@@ -54,6 +57,7 @@ library ControllerHelperDataType {
         uint256 collateralAmount;   // collateral amount to deposit into vault
         uint256 wPowerPerpAmountToSell; // wPowerPerp amount to sell
         uint256 minToReceive;   // minimum to receive for selling wPowerPerp
+        uint24 poolFee;
     }
 
     /// @dev data struct for callback initiated in _closeShortWithAmountsFromLp()
@@ -74,11 +78,14 @@ library ControllerHelperDataType {
         uint256 limitPriceEthPerPowerPerp; // price limit for swapping between wPowerPerp and ETH (ETH per 1 wPowerPerp)
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
+        uint24 poolFee;
+        bool burnExactRemoved;
     }
 
     /// @dev params for batchMintLp()
     struct MintAndLpParams {
         address recipient;  // recipient address
+        address wPowerPerpPool; // Uni v3 ETH/WPowerPerp pool
         uint256 vaultId;    // vault ID
         uint256 wPowerPerpAmount;   // wPowerPerp amount to mint
         uint256 collateralToDeposit;    // collateral to deposit into vault
@@ -115,6 +122,8 @@ library ControllerHelperDataType {
         uint256 limitPriceEthPerPowerPerp; // price limit for swapping between wPowerPerp and ETH (ETH per 1 wPowerPerp)
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
+        uint24 poolFee;
+        bool burnExactRemoved;
     }
 
     /// @dev params for _closeUniLp() 
@@ -134,12 +143,13 @@ library ControllerHelperDataType {
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
         uint256 limitPriceEthPerPowerPerp; // price limit for selling wPowerPerp
+        uint24 poolFee;
     }
 
     /// @dev params for rebalanceWithoutVault()
     struct RebalanceWithoutVault {
+        address wPowerPerpPool; // Uni v3 ETH/WPowerPerp pool
         uint256 tokenId;    // Uni token ID
-        uint256 ethAmountToLp;  // amount of WETH to lp
         uint256 liquidity;  // LP liquidity amount
         uint256 wPowerPerpAmountDesired;    // wPowerPerp amount to LP
         uint256 wethAmountDesired;  // WETH amount to LP
@@ -150,12 +160,12 @@ library ControllerHelperDataType {
         uint256 amount1Min; // amount min to get when closing LP for asset1
         int24 lowerTick;    // LP lower tick
         int24 upperTick;    // LP upper tick
+        uint24 poolFee;
     }
 
     /// @dev params for ControllerHelperUtil.lpWPowerPerpPool()
     struct LpWPowerPerpPool {
         address recipient;  // recipient address
-        uint256 ethAmount;  // ETH amount to LP
         uint256 amount0Desired; // amount to LP for asset0
         uint256 amount1Desired; // amount to LP for asset1
         uint256 amount0Min; // amount min to LP for asset0
@@ -173,7 +183,7 @@ library ControllerHelperDataType {
     /// @dev struct for minting more wPowerPerp and add in LP, or increasing more WETH in LP, or both
     struct IncreaseLpLiquidityParam {
         uint256 tokenId;    // Uni v3 NFT token id
-        uint256 wPowerPerpAmountToMint; // wPowerPerp amount to mint
+        uint256 wPowerPerpAmountToLp; // wPowerPerp amount to LP
         uint256 collateralToDeposit;    // collateral to deposit into vault
         uint256 wethAmountToLp; // WETH amount to LP
         uint256 amount0Min; // amount min to get for LPing of asset0
@@ -190,7 +200,7 @@ library ControllerHelperDataType {
     }
 
     /// @dev struct for minting into vault
-    struct MintIntoVault {
+    struct DepositIntoVault {
         uint256 wPowerPerpToMint;   // wPowerPerp amount to mint
         uint256 collateralToDeposit;    // collateral amount to deposit
     }
@@ -199,6 +209,7 @@ library ControllerHelperDataType {
     struct withdrawFromVault {  
         uint256 wPowerPerpToBurn;   // wPowerPerp amount to burn
         uint256 collateralToWithdraw;   // collateral to withdraw
+        bool burnExactRemoved;   // if true, will burn the ControllerHelper oSQTH balance
     }
 
     /// @dev struct for swapping from tokenIn to tokenOut
@@ -207,5 +218,17 @@ library ControllerHelperDataType {
         address tokenOut;
         uint256 amountIn;
         uint256 limitPriceEthPerPowerPerp;
+        uint24 poolFee;
+    }
+
+    /// @dev struct for collecting fees owed from a uniswap NFT
+    struct CollectFeesParams {
+        uint256 tokenId;
+        uint128 amount0Max;
+        uint128 amount1Max;
+    }
+    /// @dev struct for re-depositing and existing uniswap NFT to a vault
+    struct DepositExistingNftParams {
+        uint256 tokenId;
     }
 }

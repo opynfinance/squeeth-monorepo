@@ -1,5 +1,6 @@
 import { CircularProgress, createStyles, makeStyles, Typography } from '@material-ui/core'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
+import RefreshOutlined from '@material-ui/icons/RefreshOutlined'
 import BigNumber from 'bignumber.js'
 import React, { useState } from 'react'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
@@ -28,7 +29,7 @@ import {
   useGetWSqueethPositionValue,
   useSell,
 } from 'src/state/squeethPool/hooks'
-import { useComputeSwaps, useLongSqthBal, useShortDebt } from 'src/state/positions/hooks'
+import { useComputeSwaps, useShortDebt } from 'src/state/positions/hooks'
 import {
   confirmedAmountAtom,
   ethTradeAmountAtom,
@@ -45,7 +46,7 @@ import { TradeType } from '../../../types'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from 'src/state/controller/atoms'
 import useAppEffect from '@hooks/useAppEffect'
 import useAppCallback from '@hooks/useAppCallback'
-import { useMemo } from 'react'
+import useAppMemo from '@hooks/useAppMemo'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -276,7 +277,6 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   const isShort = useAtomValue(isShortAtom)
   const selectWallet = useSelectWallet()
   const { squeethAmount } = useComputeSwaps()
-  const longSqthBal = useLongSqthBal()
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 
@@ -292,11 +292,11 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
 
   useAppEffect(() => {
     if (open && tradeType === TradeType.LONG) {
-      getBuyQuoteForETH(new BigNumber(sqthTradeAmount), slippageAmount).then((val) => {
+      getBuyQuoteForETH(new BigNumber(ethTradeAmount), slippageAmount).then((val) => {
         setQuote(val)
       })
     }
-  }, [slippageAmount, sqthTradeAmount, getBuyQuoteForETH, open, setQuote, tradeType])
+  }, [slippageAmount, ethTradeAmount, getBuyQuoteForETH, open, setQuote, tradeType])
 
   const handleEthChange = useAppCallback(
     (value: string) => {
@@ -504,7 +504,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                         <>
                           <ArrowRightAltIcon className={classes.arrowIcon} />
                           <span id="open-long-osqth-post-trade-balance">
-                            {longSqthBal.plus(new BigNumber(sqthTradeAmount)).toFixed(6)}
+                            {squeethAmount.plus(new BigNumber(sqthTradeAmount)).toFixed(6)}
                           </span>{' '}
                         </>
                       ) : null}{' '}
@@ -632,7 +632,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
   const slippageAmount = useAtomValue(slippageAmountAtom)
   const ethPrice = useETHPrice()
-  const amount = useMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
+  const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const altTradeAmount = new BigNumber(ethTradeAmount)
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter)
   const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
@@ -640,8 +640,8 @@ const CloseLong: React.FC<BuyProps> = () => {
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const connected = useAtomValue(connectedWalletAtom)
   const selectWallet = useSelectWallet()
+  const { squeethAmount } = useComputeSwaps()
 
-  const longSqthBal = useLongSqthBal()
   const shortDebt = useShortDebt()
   const isShort = shortDebt.gt(0)
 
@@ -650,14 +650,14 @@ const CloseLong: React.FC<BuyProps> = () => {
 
   useAppEffect(() => {
     //if it's insufficient amount them set it to it's maximum
-    if (longSqthBal.lt(amount)) {
-      setSqthTradeAmount(longSqthBal.toString())
-      getSellQuoteForETH(longSqthBal).then((val) => {
-        setEthTradeAmount(val.amountIn.toString())
-        setConfirmedAmount(val.amountIn.toFixed(6).toString())
+    if (squeethAmount.lt(amount)) {
+      setSqthTradeAmount(squeethAmount.toString())
+      getSellQuote(squeethAmount).then((val) => {
+        setEthTradeAmount(val.amountOut.toString())
+        setConfirmedAmount(squeethAmount.toFixed(6))
       })
     }
-  }, [longSqthBal, amount, getSellQuoteForETH, setConfirmedAmount, setEthTradeAmount, setSqthTradeAmount])
+  }, [squeethAmount, amount, getSellQuote, setConfirmedAmount, setEthTradeAmount, setSqthTradeAmount])
 
   // let openError: string | undefined
   let closeError: string | undefined
@@ -665,7 +665,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   let priceImpactWarning: string | undefined
 
   if (connected) {
-    if (longSqthBal.lt(amount)) {
+    if (squeethAmount.lt(amount)) {
       closeError = 'Insufficient oSQTH balance'
     }
     // if (amount.gt(balance)) {
@@ -680,12 +680,12 @@ const CloseLong: React.FC<BuyProps> = () => {
   }
 
   const longClosePriceImpactErrorState =
-    priceImpactWarning && !closeError && !sellLoading && !longSqthBal.isZero() && !isShort
+    priceImpactWarning && !closeError && !sellLoading && !squeethAmount.isZero() && !isShort
 
   const sellAndClose = useAppCallback(async () => {
     setSellLoading(true)
     try {
-      if (squeethAllowance.lt(amount)) {
+      if (squeethAllowance.lt(amount) && !hasJustApprovedSqueeth) {
         setIsTxFirstStep(true)
         await squeethApprove(() => {
           setHasJustApprovedSqueeth(true)
@@ -707,6 +707,7 @@ const CloseLong: React.FC<BuyProps> = () => {
     }
   }, [
     amount,
+    hasJustApprovedSqueeth,
     resetEthTradeAmount,
     resetSqthTradeAmount,
     sell,
@@ -820,7 +821,7 @@ const CloseLong: React.FC<BuyProps> = () => {
             label="Amount"
             tooltip="Amount of oSqueeth you want to close"
             actionTxt="Max"
-            onActionClicked={() => handleSqthChange(longSqthBal.toString())}
+            onActionClicked={() => handleSqthChange(squeethAmount.toString())}
             unit="oSQTH"
             convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
             error={!!existingShortError || !!priceImpactWarning || !!closeError}
@@ -836,12 +837,12 @@ const CloseLong: React.FC<BuyProps> = () => {
                 <div className={classes.hint}>
                   <span className={classes.hintTextContainer}>
                     <span className={classes.hintTitleText}>Position</span>{' '}
-                    <span id="close-long-osqth-before-trade-balance">{longSqthBal.toFixed(6)}</span>{' '}
+                    <span id="close-long-osqth-before-trade-balance">{squeethAmount.toFixed(6)}</span>{' '}
                   </span>
                   {quote.amountOut.gt(0) ? (
                     <>
                       <ArrowRightAltIcon className={classes.arrowIcon} />
-                      <span id="close-long-osqth-post-trade-balance">{longSqthBal.minus(amount).toFixed(6)}</span>
+                      <span id="close-long-osqth-post-trade-balance">{squeethAmount.minus(amount).toFixed(6)}</span>
                     </>
                   ) : null}{' '}
                   <span style={{ marginLeft: '4px' }}>oSQTH</span>
@@ -916,7 +917,7 @@ const CloseLong: React.FC<BuyProps> = () => {
                   transactionInProgress ||
                   !!closeError ||
                   !!existingShortError ||
-                  longSqthBal.isZero() ||
+                  squeethAmount.isZero() ||
                   sqthTradeAmount === '0'
                 }
                 style={
@@ -930,7 +931,7 @@ const CloseLong: React.FC<BuyProps> = () => {
                   'Unsupported Network'
                 ) : sellLoading || transactionInProgress ? (
                   <CircularProgress color="primary" size="1.5rem" />
-                ) : squeethAllowance.lt(amount) ? (
+                ) : squeethAllowance.lt(amount) && !hasJustApprovedSqueeth ? (
                   'Approve oSQTH (1/2)'
                 ) : longClosePriceImpactErrorState ? (
                   'Sell Anyway'

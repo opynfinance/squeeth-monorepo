@@ -6,5 +6,6 @@ module.exports = {
     '^src(.*)$': '<rootDir>/src$1',
     '^@utils(.*)$': '<rootDir>/src/utils$1',
     '^@hooks(.*)$': '<rootDir>/src/hooks$1',
+    '^@components(.*)$': '<rootDir>/src/components$1',
   },
 }

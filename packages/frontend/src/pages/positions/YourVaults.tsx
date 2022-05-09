@@ -1,5 +1,5 @@
-import LabelWithTooltip from '../LabelWithTooltip'
-import SqueethCard from '../SqueethCard'
+import LabelWithTooltip from '@components/LabelWithTooltip'
+import SqueethCard from '@components/SqueethCard'
 import useYourVaults from '../../hooks/useYourVaults'
 import { Grid, Typography } from '@material-ui/core'
 import { toTokenAmount } from '../../utils/calculations'
