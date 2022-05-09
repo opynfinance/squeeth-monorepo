@@ -3,8 +3,6 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import "hardhat/console.sol";
-
 // interface
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
@@ -132,8 +130,8 @@ library ControllerHelperUtil {
      * @param _increaseLiquidityParam ControllerHelperDataType.IncreaseLpLiquidityParam struct
      * @param _isWethToken0 bool variable indicate if Weth token is token0 in Uniswap v3 weth/wPowerPerp pool
      */
-    function increaseLpLiquidity(address _controller, address _nonfungiblePositionManager, address _wPowerPerpPool, uint256 _vaultId, ControllerHelperDataType.IncreaseLpLiquidityParam memory _increaseLiquidityParam, bool _isWethToken0) public {
-        if (_increaseLiquidityParam.wPowerPerpAmountToMint > 0) {
+    function increaseLpLiquidity(address _controller, address _nonfungiblePositionManager, address _wPowerPerp, address _wPowerPerpPool, uint256 _vaultId, ControllerHelperDataType.IncreaseLpLiquidityParam memory _increaseLiquidityParam, bool _isWethToken0) public {
+        if (_increaseLiquidityParam.wPowerPerpAmountToLp > 0) {
             (
                 ,
                 ,
@@ -148,20 +146,24 @@ library ControllerHelperUtil {
                 ,
                 
             ) = INonfungiblePositionManager(_nonfungiblePositionManager).positions(_increaseLiquidityParam.tokenId);
-            (uint256 amount0Desired, uint256 amount1Desired) = getAmountsToLp(_wPowerPerpPool, _increaseLiquidityParam.collateralToDeposit, _increaseLiquidityParam.wPowerPerpAmountToMint, tickLower, tickUpper, _isWethToken0);
+            (uint256 amount0Desired, uint256 amount1Desired) = getAmountsToLp(_wPowerPerpPool, _increaseLiquidityParam.collateralToDeposit, _increaseLiquidityParam.wPowerPerpAmountToLp, tickLower, tickUpper, _isWethToken0);
 
-            (_increaseLiquidityParam.wPowerPerpAmountToMint, _increaseLiquidityParam.wethAmountToLp) = (_isWethToken0) ? (amount1Desired, amount0Desired) : (amount0Desired, amount1Desired);
-            IController(_controller).mintWPowerPerpAmount{value: _increaseLiquidityParam.collateralToDeposit}(
-                _vaultId,
-                _isWethToken0 ? amount1Desired : amount0Desired,
-                0
-            );
+            (_increaseLiquidityParam.wPowerPerpAmountToLp, _increaseLiquidityParam.wethAmountToLp) = (_isWethToken0) ? (amount1Desired, amount0Desired) : (amount0Desired, amount1Desired);
+            uint256 wPowerPerpBalance = IWPowerPerp(_wPowerPerp).balanceOf(address(this));
+
+            if (wPowerPerpBalance < _increaseLiquidityParam.wPowerPerpAmountToLp) {
+                IController(_controller).mintWPowerPerpAmount{value: _increaseLiquidityParam.collateralToDeposit}(
+                    _vaultId,
+                    _increaseLiquidityParam.wPowerPerpAmountToLp.sub(wPowerPerpBalance),
+                    0
+                );
+            }
         }
 
         INonfungiblePositionManager.IncreaseLiquidityParams memory uniIncreaseParams = INonfungiblePositionManager.IncreaseLiquidityParams({
             tokenId: _increaseLiquidityParam.tokenId,
-            amount0Desired: (_isWethToken0) ? _increaseLiquidityParam.wethAmountToLp : _increaseLiquidityParam.wPowerPerpAmountToMint,
-            amount1Desired: (_isWethToken0) ? _increaseLiquidityParam.wPowerPerpAmountToMint : _increaseLiquidityParam.wethAmountToLp,
+            amount0Desired: (_isWethToken0) ? _increaseLiquidityParam.wethAmountToLp : _increaseLiquidityParam.wPowerPerpAmountToLp,
+            amount1Desired: (_isWethToken0) ? _increaseLiquidityParam.wPowerPerpAmountToLp : _increaseLiquidityParam.wethAmountToLp,
             amount0Min: _increaseLiquidityParam.amount0Min,
             amount1Min: _increaseLiquidityParam.amount1Min,
             deadline: block.timestamp

@@ -79,6 +79,7 @@ library ControllerHelperDataType {
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
         uint24 poolFee;
+        bool burnExactRemoved;
     }
 
     /// @dev params for batchMintLp()
@@ -122,6 +123,7 @@ library ControllerHelperDataType {
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
         uint24 poolFee;
+        bool burnExactRemoved;
     }
 
     /// @dev params for _closeUniLp() 
@@ -181,7 +183,7 @@ library ControllerHelperDataType {
     /// @dev struct for minting more wPowerPerp and add in LP, or increasing more WETH in LP, or both
     struct IncreaseLpLiquidityParam {
         uint256 tokenId;    // Uni v3 NFT token id
-        uint256 wPowerPerpAmountToMint; // wPowerPerp amount to mint
+        uint256 wPowerPerpAmountToLp; // wPowerPerp amount to LP
         uint256 collateralToDeposit;    // collateral to deposit into vault
         uint256 wethAmountToLp; // WETH amount to LP
         uint256 amount0Min; // amount min to get for LPing of asset0
@@ -207,6 +209,7 @@ library ControllerHelperDataType {
     struct withdrawFromVault {  
         uint256 wPowerPerpToBurn;   // wPowerPerp amount to burn
         uint256 collateralToWithdraw;   // collateral to withdraw
+        bool burnExactRemoved;   // if true, will burn the ControllerHelper oSQTH balance
     }
 
     /// @dev struct for swapping from tokenIn to tokenOut

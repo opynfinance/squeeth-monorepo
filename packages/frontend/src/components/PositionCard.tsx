@@ -21,7 +21,6 @@ import {
   useSwaps,
 } from 'src/state/positions/hooks'
 import { isLPAtom, positionTypeAtom, swapsAtom } from 'src/state/positions/atoms'
-import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import {
   actualTradeTypeAtom,
   isOpenPositionAtom,
@@ -187,9 +186,8 @@ const PositionCard: React.FC = () => {
   const swapsData = useAtomValue(swapsAtom)
   const swaps = swapsData.swaps
   const { squeethAmount } = useComputeSwaps()
-  const { vaults: shortVaults } = useVaultManager()
-  const { firstValidVault, vaultId } = useFirstValidVault()
-  const { existingCollat } = useVaultData(vaultId)
+  const { validVault: vault, vaultId } = useFirstValidVault()
+  const { existingCollat } = useVaultData(vault)
   const { loading: isPositionLoading } = useLPPositionsQuery()
   const isLP = useAtomValue(isLPAtom)
   const isOpenPosition = useAtomValue(isOpenPositionAtom)
@@ -224,8 +222,8 @@ const PositionCard: React.FC = () => {
   }, [swaps, prevSwapsData, tradeSuccess, setTradeCompleted, startPolling, stopPolling, setTradeSuccess])
 
   const fullyLiquidated = useAppMemo(() => {
-    return shortVaults.length && shortVaults[firstValidVault]?.shortAmount?.isZero() && liquidations.length > 0
-  }, [firstValidVault, shortVaults, liquidations])
+    return vault && vault.shortAmount?.isZero() && liquidations.length > 0
+  }, [vault, liquidations])
 
   const isDollarValueLoading = useAppMemo(() => {
     if (positionType === PositionType.LONG || positionType === PositionType.SHORT) {

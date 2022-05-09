@@ -6,7 +6,7 @@ import { BIG_ZERO, TWELVEDATA_NO_PRICEDATA_DURATION } from '../constants/'
 import { swaps_swaps } from '../queries/uniswap/__generated__/swaps'
 import { VaultHistory_vaultHistories } from '../queries/squeeth/__generated__/VaultHistory'
 import { toTokenAmount } from '@utils/calculations'
-import { getHistoricEthPrice } from '@hooks/useETHPrice'
+import { getHistoricEthPrice, getHistoricEthPrices } from '@hooks/useETHPrice'
 import { getETHWithinOneDayPrices } from '@utils/ethPriceCharts'
 import { Action } from '../../types/global_apollo'
 
@@ -63,27 +63,27 @@ export async function calcETHCollateralPnl(
   uniswapEthPrice: BigNumber,
   currentVaultEthBalance: BigNumber,
 ) {
-  const { deposits, withdrawals, priceError } = data?.length
-    ? await data?.reduce(async (prevPromise, vaultHistory: VaultHistory_vaultHistories) => {
-        const acc = await prevPromise
+  const vaultHistories = await getVaultHistoriesWithEthPrice(data || [])
+  const { deposits, withdrawals, priceError } = vaultHistories.reduce(
+    (acc, vaultHistory) => {
+      const ethPriceAtTimeOfAction = vaultHistory.ethPrice
 
-        const ethPriceAtTimeOfAction = await getEthPriceAtTransactionTime(vaultHistory.timestamp)
-
-        if (ethPriceAtTimeOfAction?.isZero()) {
-          acc.priceError = true
-        }
-        if (vaultHistory.action === Action.DEPOSIT_COLLAT) {
-          acc.deposits = acc.deposits.plus(
-            new BigNumber(toTokenAmount(vaultHistory.ethCollateralAmount, 18)).times(ethPriceAtTimeOfAction),
-          )
-        } else if (vaultHistory.action === Action.WITHDRAW_COLLAT) {
-          acc.withdrawals = acc.withdrawals.plus(
-            new BigNumber(toTokenAmount(vaultHistory.ethCollateralAmount, 18)).times(ethPriceAtTimeOfAction),
-          )
-        }
-        return acc
-      }, Promise.resolve({ deposits: BIG_ZERO, withdrawals: BIG_ZERO, priceError: false }))
-    : { deposits: BIG_ZERO, withdrawals: BIG_ZERO, priceError: true }
+      if (ethPriceAtTimeOfAction?.isZero()) {
+        acc.priceError = true
+      }
+      if (vaultHistory.action === Action.DEPOSIT_COLLAT) {
+        acc.deposits = acc.deposits.plus(
+          new BigNumber(toTokenAmount(vaultHistory.ethCollateralAmount, 18)).times(ethPriceAtTimeOfAction),
+        )
+      } else if (vaultHistory.action === Action.WITHDRAW_COLLAT) {
+        acc.withdrawals = acc.withdrawals.plus(
+          new BigNumber(toTokenAmount(vaultHistory.ethCollateralAmount, 18)).times(ethPriceAtTimeOfAction),
+        )
+      }
+      return acc
+    },
+    { deposits: BIG_ZERO, withdrawals: BIG_ZERO, priceError: false },
+  )
 
   return !priceError ? currentVaultEthBalance.times(uniswapEthPrice).minus(deposits.minus(withdrawals)) : BIG_ZERO
 }
@@ -120,6 +120,38 @@ export function pnl(currentValue: BigNumber, cost: BigNumber): BigNumber {
 export function pnlInPerct(currentValue: BigNumber, cost: BigNumber): BigNumber {
   return currentValue.dividedBy(cost).minus(1).times(100)
 }
+  
+const getSwapsWithEthPrice = async (swaps: swaps_swaps[]) => {
+  const timestamps = swaps.map((s) => Number(s.timestamp) * 1000)
+
+  // Don't fetch if already fetched
+  const ethPriceMap = await queryClient.fetchQuery(timestamps, () => getHistoricEthPrices(timestamps), {
+    staleTime: Infinity,
+  })
+
+  const swapsWithEthPrice = swaps.map((s) => ({
+    ...s,
+    ethPrice: new BigNumber(ethPriceMap[Number(s.timestamp) * 1000]),
+  }))
+
+  return swapsWithEthPrice
+}
+
+const getVaultHistoriesWithEthPrice = async (vaultHistories: VaultHistory_vaultHistories[]) => {
+  const timestamps = vaultHistories.map((v) => Number(v.timestamp) * 1000)
+
+  // Don't fetch if already fetched
+  const ethPriceMap = await queryClient.fetchQuery(timestamps, () => getHistoricEthPrices(timestamps), {
+    staleTime: Infinity,
+  })
+
+  const historyWithEthPrice = vaultHistories.map((v) => ({
+    ...v,
+    ethPrice: new BigNumber(ethPriceMap[Number(v.timestamp) * 1000]),
+  }))
+
+  return historyWithEthPrice
+}
 
 export async function calcDollarShortUnrealizedpnl(
   swaps: swaps_swaps[],
@@ -130,21 +162,24 @@ export async function calcDollarShortUnrealizedpnl(
   ethCollateralPnl: BigNumber,
 ) {
   const relevantSwaps = getRelevantSwaps(squeethAmount, swaps, isWethToken0)
+  const relevantSwapsWithEthPrice = await getSwapsWithEthPrice(relevantSwaps)
 
-  const { totalWethInUSD, priceError } = await relevantSwaps.reduce(async (prevPromise, swap: any, index) => {
-    const acc = await prevPromise
-    const wethAmt = new BigNumber(isWethToken0 ? swap.amount0 : swap.amount1)
+  const { totalWethInUSD, priceError } = relevantSwapsWithEthPrice.reduce(
+    (acc, swap, index) => {
+      const wethAmt = new BigNumber(isWethToken0 ? swap.amount0 : swap.amount1)
 
-    const ethPriceWhenOpened = await getEthPriceAtTransactionTime(swap.timestamp)
+      const ethPriceWhenOpened = swap.ethPrice
 
-    if (ethPriceWhenOpened?.isZero()) {
-      acc.priceError = true
-    }
+      if (ethPriceWhenOpened?.isZero()) {
+        acc.priceError = true
+      }
 
-    acc.totalWethInUSD = acc.totalWethInUSD.plus(wethAmt.negated().times(ethPriceWhenOpened))
+      acc.totalWethInUSD = acc.totalWethInUSD.plus(wethAmt.negated().times(ethPriceWhenOpened))
 
-    return acc
-  }, Promise.resolve({ totalWethInUSD: BIG_ZERO, priceError: false }))
+      return acc
+    },
+    { totalWethInUSD: BIG_ZERO, priceError: false },
+  )
 
   const usd = totalWethInUSD.minus(positionValue).plus(ethCollateralPnl)
 
@@ -163,21 +198,24 @@ export async function calcDollarLongUnrealizedpnl(
   squeethAmount: BigNumber,
 ) {
   const relevantSwaps = getRelevantSwaps(squeethAmount, swaps, isWethToken0, true)
+  const relevantSwapsWithEthPrice = await getSwapsWithEthPrice(relevantSwaps)
 
-  const { totalUSDWethAmount, priceError } = await relevantSwaps.reduce(async (prevPromise, swap: any) => {
-    const acc = await prevPromise
-    const wethAmt = new BigNumber(isWethToken0 ? swap.amount0 : swap.amount1)
+  const { totalUSDWethAmount, priceError } = relevantSwapsWithEthPrice.reduce(
+    (acc, swap) => {
+      const wethAmt = new BigNumber(isWethToken0 ? swap.amount0 : swap.amount1)
 
-    const ethPriceWhenOpened = await getEthPriceAtTransactionTime(swap.timestamp)
+      const ethPriceWhenOpened = swap.ethPrice
 
-    if (ethPriceWhenOpened?.isZero()) {
-      acc.priceError = true
-    }
+      if (ethPriceWhenOpened?.isZero()) {
+        acc.priceError = true
+      }
 
-    acc.totalUSDWethAmount = acc.totalUSDWethAmount.plus(wethAmt.times(ethPriceWhenOpened ?? BIG_ZERO))
+      acc.totalUSDWethAmount = acc.totalUSDWethAmount.plus(wethAmt.times(ethPriceWhenOpened ?? BIG_ZERO))
 
-    return acc
-  }, Promise.resolve({ totalUSDWethAmount: BIG_ZERO, priceError: false }))
+      return acc
+    },
+    { totalUSDWethAmount: BIG_ZERO, priceError: false },
+  )
 
   const usdValue = !priceError ? positionValue.minus(totalUSDWethAmount) : BIG_ZERO
   return {
@@ -191,6 +229,9 @@ const historicPriceQueryKeys = {
   historicPrice: (timestamp: string) => [`userPrice_${timestamp}`],
 }
 
+/**
+ * @deprecated
+ */
 async function getEthPriceAtTransactionTime(timestamp: string) {
   try {
     const timeInMilliseconds = new Date(Number(timestamp) * 1000).setUTCSeconds(0, 0)
