@@ -75,6 +75,7 @@ export enum Tooltips {
   FundingDaily = 'Daily funding is calculated as ln(mark / index) * 17.5. Mark and Index spot values are taken at points in the past and scaled to one day.',
   FundingMonthly = 'Monthly Funding is calculated as (Daily Funding * 30)',
   FundingAnnual = 'Annual Funding is calculated as (Daily Funding * 365.25)',
+  VaultCollatRatio = `You'll be adjusting the collateral ratio for the whole vault and not just this trade.`,
 }
 
 export enum Links {
