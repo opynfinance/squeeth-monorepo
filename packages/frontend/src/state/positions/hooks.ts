@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useAtom, useAtomValue, atom } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 import { useQuery } from '@apollo/client'
 import { useContext } from 'react'
 import BigNumber from 'bignumber.js'
 import { Position } from '@uniswap/v3-sdk'
+import { usePrevious } from 'react-use'
 
 import { networkIdAtom, addressAtom, connectedWalletAtom } from '../wallet/atoms'
 import { swaps, swapsVariables } from '@queries/uniswap/__generated__/swaps'
@@ -14,7 +15,6 @@ import { VAULT_QUERY } from '@queries/squeeth/vaultsQuery'
 import { BIG_ZERO, OSQUEETH_DECIMALS } from '@constants/index'
 import {
   addressesAtom,
-  firstValidVaultAtom,
   isWethToken0Atom,
   positionTypeAtom,
   managerAtom,
@@ -27,12 +27,6 @@ import {
   depositedWethAtom,
   withdrawnSqueethAtom,
   withdrawnWethAtom,
-  vaultAtom,
-  existingCollatPercentAtom,
-  existingCollatAtom,
-  existingLiqPriceAtom,
-  collatPercentAtom,
-  isVaultLoadingAtom,
   swapsAtom,
 } from './atoms'
 import { positions, positionsVariables } from '@queries/uniswap/__generated__/positions'
@@ -170,9 +164,8 @@ export const useMintedSoldSort = () => {
   }, [positionType, squeethAmount, openShortSqueeth])
 }
 
-export const useMintedDebt = () => {
-  const { vaultId } = useFirstValidVault()
-  const { mintedSqueeth } = useVaultHistory(Number(vaultId))
+export const useMintedDebt = (vaultId: number) => {
+  const { mintedSqueeth, refetch } = useVaultHistory(vaultId)
   const lpDebt = useLpDebt()
   const mintedSoldShort = useMintedSoldSort()
 
@@ -183,7 +176,7 @@ export const useMintedDebt = () => {
     return mintedSqueeth.minus(mintedSoldShort).minus(lpDebt)
   }, [mintedSqueeth, mintedSoldShort, lpDebt])
 
-  return mintedDebt
+  return { mintedDebt, updatedMintedDebt: refetch }
 }
 
 export const useShortDebt = () => {
@@ -199,7 +192,8 @@ export const useShortDebt = () => {
 export const useLongSqthBal = () => {
   const { oSqueeth } = useAtomValue(addressesAtom)
   const { value: oSqueethBal, loading, error, refetch } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
-  const mintedDebt = useMintedDebt()
+  const { vaultId } = useFirstValidVault()
+  const { mintedDebt } = useMintedDebt(Number(vaultId))
   const longSqthBal = useAppMemo(() => {
     return mintedDebt.gt(0) ? oSqueethBal.minus(mintedDebt) : oSqueethBal
   }, [oSqueethBal, mintedDebt])
@@ -413,6 +407,8 @@ export const usePositionsAndFeesComputation = () => {
 
 export const useVaultQuery = (vaultId: number) => {
   const networkId = useAtomValue(networkIdAtom)
+  const [pollingCollateral, setIsPollingCollateral] = useState(false)
+  const [pollingDebt, setPollingDebt] = useState(false)
 
   const query = useQuery<Vault>(VAULT_QUERY, {
     client: squeethClient[networkId],
@@ -422,8 +418,42 @@ export const useVaultQuery = (vaultId: number) => {
     },
   })
 
+  const currentVault = query.data?.vault
+  const prevVault = usePrevious(currentVault)
+
+  const refetchCollateral = useCallback(() => {
+    setIsPollingCollateral(true)
+  }, [])
+
+  const refetchDebt = useCallback(() => {
+    setPollingDebt(true)
+  }, [])
+
+  useAppEffect(() => {
+    console.log({ pollingCollateral, currentVault, prevVault })
+    if (
+      pollingCollateral &&
+      new BigNumber(prevVault?.collateralAmount).isEqualTo(new BigNumber(currentVault?.collateralAmount))
+    ) {
+      query.startPolling(500)
+    } else {
+      query.stopPolling()
+      setIsPollingCollateral(false)
+    }
+  }, [currentVault?.collateralAmount.toString(), pollingCollateral, prevVault?.collateralAmount.toString()])
+
+  useAppEffect(() => {
+    console.log({ pollingDebt, currentVault, prevVault })
+    if (pollingDebt && new BigNumber(prevVault?.shortAmount).isEqualTo(new BigNumber(currentVault?.shortAmount))) {
+      query.startPolling(500)
+    } else {
+      query.stopPolling()
+      setPollingDebt(false)
+    }
+  }, [currentVault?.shortAmount.toString(), pollingDebt, prevVault?.shortAmount.toString()])
+
   const vaultData = useAppMemo(() => {
-    if (query.data) {
+    if (query.data?.vault) {
       const vault = query.data.vault
 
       return {
@@ -434,9 +464,9 @@ export const useVaultQuery = (vaultId: number) => {
         operator: vault?.operator,
       }
     }
-  }, [query.data])
+  }, [query.data?.vault])
 
-  return { ...query, data: vaultData }
+  return { ...query, data: vaultData, refetchCollateral, refetchDebt }
 }
 
 export const useFirstValidVault = () => {

@@ -64,7 +64,7 @@ import {
   useMintedDebt,
   useShortDebt,
   usePositionsAndFeesComputation,
-  useFirstValidVault,
+  useVaultQuery,
 } from 'src/state/positions/hooks'
 import { useVaultData } from '@hooks/useVaultData'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
@@ -319,12 +319,12 @@ const Component: React.FC = () => {
   const { oSqueeth, nftManager, controller } = useAtomValue(addressesAtom)
   const positionType = useAtomValue(positionTypeAtom)
   const { squeethAmount } = useComputeSwaps()
-  const mintedDebt = useMintedDebt()
+  const { mintedDebt, updatedMintedDebt } = useMintedDebt(Number(vid))
   const shortDebt = useShortDebt()
 
   const lpedSqueeth = useLpDebt()
   const { getApproved, approve } = useERC721(nftManager)
-  const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
+  const { value: oSqueethBal, refetch: refetchTokenBalance } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
   const [collateral, setCollateral] = useState('0')
   const [lpNftCollatPercent, setLpNftCollatPercent] = useState(0)
@@ -339,9 +339,14 @@ const Component: React.FC = () => {
   const [txLoading, setTxLoading] = useState(false)
   const [uniTokenToDeposit, setUniTokenToDeposit] = useState(0)
 
-  const { validVault: vault, isVaultLoading } = useFirstValidVault()
+  const {
+    data: vault,
+    loading: isVaultLoading,
+    refetch: updateSingleVault,
+    refetchCollateral,
+    refetchDebt,
+  } = useVaultQuery(Number(vid))
   const { existingCollatPercent, existingLiqPrice } = useVaultData(vault)
-  const { updateVault } = useVaultManager()
   const [collatPercent, setCollatPercent] = useAtom(collatPercentAtom)
 
   useEffect(() => {
@@ -467,7 +472,7 @@ const Component: React.FC = () => {
     setTxLoading(true)
     try {
       await depositCollateral(Number(vault.id), collatAmount, () => {
-        updateVault()
+        refetchCollateral()
       })
       updateNftCollateral(BIG_ZERO, BIG_ZERO, currentLpNftId)
     } catch (e) {
@@ -482,7 +487,7 @@ const Component: React.FC = () => {
     setTxLoading(true)
     try {
       await withdrawCollateral(Number(vault.id), collatAmount.abs(), () => {
-        updateVault()
+        refetchCollateral()
       })
 
       updateNftCollateral(BIG_ZERO, BIG_ZERO, currentLpNftId)
@@ -498,7 +503,9 @@ const Component: React.FC = () => {
     setTxLoading(true)
     try {
       await openDepositAndMint(Number(vault.id), sAmount, new BigNumber(0), () => {
-        updateVault()
+        refetchDebt()
+        refetchTokenBalance()
+        updatedMintedDebt()
       })
       updateNftCollateral(BIG_ZERO, BIG_ZERO, currentLpNftId)
     } catch (e) {
@@ -513,7 +520,10 @@ const Component: React.FC = () => {
     setTxLoading(true)
     try {
       await burnAndRedeem(Number(vault.id), sAmount.abs(), new BigNumber(0), () => {
-        updateVault()
+        refetchDebt()
+        refetchTokenBalance()
+        updatedMintedDebt()
+        updateShort('0')
       })
       updateNftCollateral(BIG_ZERO, BIG_ZERO, currentLpNftId)
     } catch (e) {
@@ -528,7 +538,7 @@ const Component: React.FC = () => {
     setTxLoading(true)
     try {
       await depositUniPositionToken(Number(vault.id), tokenId, () => {
-        updateVault()
+        updateSingleVault()
       })
       setAction(VaultAction.WITHDRAW_UNI_POSITION)
     } catch (e) {
@@ -543,9 +553,7 @@ const Component: React.FC = () => {
     setTxLoading(true)
     setAction(VaultAction.WITHDRAW_UNI_POSITION)
     try {
-      await withdrawUniPositionToken(Number(vault.id), () => {
-        updateVault()
-      })
+      await withdrawUniPositionToken(Number(vault.id))
       // reset to default action, shld check if this nft got approved with history
       // cuz now there is no nft selected
       setAction(VaultAction.ADD_COLLATERAL)
