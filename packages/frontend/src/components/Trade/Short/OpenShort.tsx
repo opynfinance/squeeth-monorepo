@@ -8,7 +8,7 @@ import {
   Tooltip,
 } from '@material-ui/core'
 import { useAtom, useAtomValue } from 'jotai'
-import { useEffect, useMemo, useState } from 'react'
+import { useState } from 'react'
 import debounce from 'lodash.debounce'
 import BigNumber from 'bignumber.js'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
@@ -35,7 +35,7 @@ import { useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
 import { BIG_ZERO, MIN_COLLATERAL_AMOUNT } from '@constants/index'
 import { connectedWalletAtom, isTransactionFirstStepAtom } from 'src/state/wallet/atoms'
-import { addressesAtom, isLongAtom } from 'src/state/positions/atoms'
+import { addressesAtom, isLongAtom, vaultHistoryUpdatingAtom } from 'src/state/positions/atoms'
 import { useComputeSwaps, useFirstValidVault } from 'src/state/positions/hooks'
 import { useVaultData } from '@hooks/useVaultData'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
@@ -44,8 +44,10 @@ import TradeInfoItem from '../TradeInfoItem'
 import UniswapData from '../UniswapData'
 import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
 import Cancelled from '../Cancelled'
-import { normFactorAtom } from 'src/state/controller/atoms'
 import useAppEffect from '@hooks/useAppEffect'
+import useAppCallback from '@hooks/useAppCallback'
+import useAppMemo from '@hooks/useAppMemo'
+import { useVaultHistoryQuery } from '@hooks/useVaultHistory'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -113,7 +115,7 @@ const useStyles = makeStyles((theme) =>
 
 export const OpenShortPosition = ({ open }: { open: boolean }) => {
   const classes = useStyles()
-  const [collatPercent, setCollatPercent] = useState(150)
+  const [collatPercent, setCollatPercent] = useState(200)
   const [neededCollat, setNeededCollat] = useState(new BigNumber(0))
   const [minToReceive, setMinToReceive] = useState(new BigNumber(0))
   const [confirmedAmount, setConfirmedAmount] = useState('0')
@@ -140,33 +142,34 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
   const integrateETHInput = useIntergrateEthInput()
   const flashSwapAndMint = useFlashSwapAndMint()
   const getDebtAmount = useGetDebtAmount()
-  const { firstValidVault, vaultId } = useFirstValidVault()
-  const { vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
+  const { vaultId, validVault: vault } = useFirstValidVault()
   const { squeethAmount: shortSqueethAmount } = useComputeSwaps()
-  const { existingCollatPercent } = useVaultData(vaultId)
-  const normalizationFactor = useAtomValue(normFactorAtom)
   const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
   const { cancelled, confirmed, failed, transactionData, resetTxCancelled, resetTransactionData } =
     useTransactionStatus()
+  const [isVaultHistoryUpdating, setVaultHistoryUpdating] = useAtom(vaultHistoryUpdatingAtom)
+  const { updateVault, loading: vaultIDLoading } = useVaultManager()
+  const vaultHistoryQuery = useVaultHistoryQuery(Number(vaultId), isVaultHistoryUpdating)
+  const { existingCollatPercent } = useVaultData(vault)
   const updateOperator = useUpdateOperator()
 
-  const amount = new BigNumber(sqthTradeAmount)
-  const collateral = new BigNumber(ethTradeAmount)
+  const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
+  const collateral = useAppMemo(() => new BigNumber(ethTradeAmount), [ethTradeAmount])
 
   let inputError = ''
   let priceImpactWarning: string | undefined
   let vaultIdDontLoadedError: string | undefined
 
   useAppEffect(() => {
-    if (shortVaults.length) {
-      const restOfShort = new BigNumber(shortVaults[firstValidVault].shortAmount).minus(amount)
+    if (vault) {
+      const restOfShort = new BigNumber(vault?.shortAmount).minus(amount)
 
-      getDebtAmount(new BigNumber(restOfShort)).then((debt) => {
+      getDebtAmount(restOfShort).then((debt) => {
         const _neededCollat = debt.times(collatPercent / 100)
         setNeededCollat(_neededCollat)
       })
     }
-  }, [amount, collatPercent, firstValidVault, getDebtAmount, shortVaults])
+  }, [amount, collatPercent, getDebtAmount, vault])
 
   if (connected) {
     if (new BigNumber(quote.priceImpact).gt(3)) {
@@ -176,17 +179,17 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
       inputError = 'Insufficient ETH balance'
     } else if (
       amount.isGreaterThan(0) &&
-      collateral.plus(shortVaults[firstValidVault]?.collateralAmount || BIG_ZERO).lt(MIN_COLLATERAL_AMOUNT)
+      collateral.plus(vault?.collateralAmount || BIG_ZERO).lt(MIN_COLLATERAL_AMOUNT)
     ) {
       inputError = `Minimum collateral is ${MIN_COLLATERAL_AMOUNT} ETH`
-    } else if (shortVaults.length && vaultId === 0 && shortVaults[firstValidVault]?.shortAmount.gt(0)) {
+    } else if (vault && vaultId === 0 && vault?.shortAmount.gt(0)) {
       vaultIdDontLoadedError = 'Loading Vault...'
     }
     if (
       !open &&
       amount.isGreaterThan(0) &&
-      shortVaults.length &&
-      amount.lt(shortVaults[firstValidVault].shortAmount) &&
+      vault &&
+      amount.lt(vault.shortAmount) &&
       neededCollat.isLessThan(MIN_COLLATERAL_AMOUNT)
     ) {
       inputError = `You must have at least ${MIN_COLLATERAL_AMOUNT} ETH collateral unless you fully close out your position. Either fully close your position, or close out less`
@@ -196,45 +199,45 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
     }
   }
 
-  useAppEffect(() => {
-    const rSqueeth = normalizationFactor.multipliedBy(amount || 1).dividedBy(10000)
-    const liqp = collateral.dividedBy(rSqueeth.multipliedBy(1.5))
-    if (liqp.toString() || liqp.toString() !== '0') setLiqPrice(liqp)
-  }, [amount, collateral, normalizationFactor])
-
-  const onSqthChange = async (value: string) => {
-    const [quote, debt] = await Promise.all([getSellQuote(new BigNumber(value)), getDebtAmount(new BigNumber(value))])
-
-    const result = debt.times(new BigNumber(collatPercent / 100)).minus(quote.amountOut)
-    setTotalCollateralAmount(debt.times(new BigNumber(collatPercent / 100)))
-    setMsgValue(result)
-    setEthTradeAmount(result.toFixed(6))
-    setQuote(quote)
-  }
-  const handleSqthChange = useMemo(() => debounce(onSqthChange, 500), [getSellQuote, getDebtAmount, collatPercent])
-
-  const onEthChange = async (value: string) => {
-    setMsgValue(new BigNumber(value))
-    const { squeethAmount, ethBorrow, quote } = await integrateETHInput(
-      new BigNumber(value),
-      collatPercent / 100,
-      slippageAmount,
-    )
-    setSqthTradeAmount(squeethAmount.isZero() ? squeethAmount.toString() : squeethAmount.toFixed(6))
-    setMinToReceive(ethBorrow)
-    setQuote(quote)
-    if (!squeethAmount.isZero()) {
-      const debt = await getDebtAmount(squeethAmount)
+  const onSqthChange = useAppCallback(
+    async (value: string) => {
+      const [quote, debt] = await Promise.all([getSellQuote(new BigNumber(value)), getDebtAmount(new BigNumber(value))])
+      const result = debt.times(new BigNumber(collatPercent / 100)).minus(quote.amountOut)
       setTotalCollateralAmount(debt.times(new BigNumber(collatPercent / 100)))
-    }
-  }
+      setMsgValue(result)
+      setEthTradeAmount(result.toFixed(6))
+      setQuote(quote)
+    },
+    [collatPercent, getDebtAmount, getSellQuote, setEthTradeAmount, setQuote],
+  )
+  const handleSqthChange = useAppMemo(() => debounce(onSqthChange, 500), [onSqthChange])
 
-  const handleEthChange = useMemo(
-    () => debounce(onEthChange, 500),
-    [integrateETHInput, collatPercent, slippageAmount.toString()],
+  const onEthChange = useAppCallback(
+    async (value: string) => {
+      console.log({ value, collatPercent, slippageAmount: slippageAmount.toString() })
+
+      setMsgValue(new BigNumber(value))
+      const { squeethAmount, ethBorrow, quote, liqPrice } = await integrateETHInput(
+        new BigNumber(value),
+        collatPercent / 100,
+        slippageAmount,
+      )
+
+      setLiqPrice(liqPrice)
+      setSqthTradeAmount(squeethAmount.isZero() ? squeethAmount.toString() : squeethAmount.toFixed(6))
+      setMinToReceive(ethBorrow)
+      setQuote(quote)
+      if (!squeethAmount.isZero()) {
+        const debt = await getDebtAmount(squeethAmount)
+        setTotalCollateralAmount(debt.times(new BigNumber(collatPercent / 100)))
+      }
+    },
+    [collatPercent, getDebtAmount, integrateETHInput, setQuote, setSqthTradeAmount, slippageAmount],
   )
 
-  useEffect(() => {
+  const handleEthChange = useAppMemo(() => debounce(onEthChange, 500), [onEthChange])
+
+  useAppEffect(() => {
     if (lastTypedInput === 'sqth') {
       onSqthChange(sqthTradeAmount)
     }
@@ -242,19 +245,19 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
     if (lastTypedInput === 'eth') {
       onEthChange(ethTradeAmount)
     }
-  }, [collatPercent, ethTradeAmount, lastTypedInput, sqthTradeAmount])
+  }, [ethTradeAmount, lastTypedInput, onEthChange, onSqthChange, sqthTradeAmount])
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (failed) setShortLoading(false)
   }, [failed])
 
-  useEffect(() => {
-    if (!vaultId || !shortVaults?.length) return
+  useAppEffect(() => {
+    if (!vaultId || !vault) return
 
-    setIsVaultApproved(shortVaults[firstValidVault]?.operator?.toLowerCase() === controllerHelper?.toLowerCase())
-  }, [controllerHelper, firstValidVault, shortVaults[firstValidVault]?.operator, vaultId])
+    setIsVaultApproved(vault?.operator?.toLowerCase() === controllerHelper?.toLowerCase())
+  }, [controllerHelper, vault, vaultId])
 
-  const handleSubmit = async () => {
+  const handleSubmit = useAppCallback(async () => {
     setShortLoading(true)
     try {
       if (vaultIDLoading) {
@@ -263,26 +266,46 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
       }
       if (vaultId && !isVaultApproved) {
         setIsTxFirstStep(true)
-        await updateOperator(vaultId, controllerHelper, () => {
+        await updateOperator(Number(vaultId), controllerHelper, () => {
           setIsVaultApproved(true)
           setShortLoading(false)
         })
       } else {
-        await flashSwapAndMint(vaultId, totalCollateralAmount, amount, minToReceive, msgValue, () => {
+        await flashSwapAndMint(Number(vaultId), totalCollateralAmount, amount, minToReceive, msgValue, () => {
           setIsTxFirstStep(false)
           setConfirmedAmount(amount.toFixed(6).toString())
-          setShortLoading(false)
           setTradeSuccess(true)
           setTradeCompleted(true)
           resetEthTradeAmount()
+          setVaultHistoryUpdating(true)
+          vaultHistoryQuery.refetch({ vaultId })
           setCollatPercent(150)
+          updateVault()
         })
       }
     } catch (e) {
       console.log(e)
       setShortLoading(false)
     }
-  }
+  }, [
+    amount,
+    controllerHelper,
+    flashSwapAndMint,
+    isVaultApproved,
+    minToReceive,
+    msgValue,
+    resetEthTradeAmount,
+    setIsTxFirstStep,
+    setTradeCompleted,
+    setTradeSuccess,
+    setVaultHistoryUpdating,
+    totalCollateralAmount,
+    updateOperator,
+    updateVault,
+    vaultHistoryQuery,
+    vaultIDLoading,
+    vaultId,
+  ])
 
   const shortOpenPriceImpactErrorState = priceImpactWarning && !shortLoading && !(collatPercent < 150) && !inputError
 
