@@ -124,7 +124,7 @@ export function useCurrentShortPositionValue() {
 
 export function useLongGain() {
   const [longGain, setLongGain] = useAtom(longGainAtom)
-  const longUnrealizedPNL = useAtomValue(longUnrealizedPNLAtom)
+  const { totalUSDFromBuy } = useComputeSwaps()
   const longPositionValue = useAtomValue(longPositionValueAtom)
   const positionType = useAtomValue(positionTypeAtom)
   const setLoading = useUpdateAtom(loadingAtom)
@@ -133,35 +133,36 @@ export function useLongGain() {
     if (longPositionValue.isZero() && positionType != PositionType.LONG) {
       setLongGain(BIG_ZERO)
       setLoading(false)
-
       return
     }
-    const _gain = longUnrealizedPNL.usd.dividedBy(longPositionValue).times(100)
+
+    // (a - b) / b === a / b - 1
+    const _gain = longPositionValue.dividedBy(totalUSDFromBuy).minus(1).times(100)
     setLongGain(_gain)
     setLoading(false)
-  }, [setLoading, longUnrealizedPNL.usd, positionType, longPositionValue, setLongGain])
+  }, [setLoading, positionType, longPositionValue, totalUSDFromBuy, setLongGain])
 
   return longGain
 }
 
 export function useShortGain() {
   const [shortGain, setShortGain] = useAtom(shortGainAtom)
-  const shortUnrealizedPNL = useAtomValue(shortUnrealizedPNLAtom)
   const shortPositionValue = useAtomValue(shortPositionValueAtom)
   const positionType = useAtomValue(positionTypeAtom)
   const setLoading = useUpdateAtom(loadingAtom)
+  const { totalUSDFromBuy } = useComputeSwaps()
 
   useAppEffect(() => {
     if (shortPositionValue.isZero() && positionType != PositionType.SHORT) {
       setShortGain(BIG_ZERO)
       setLoading(false)
-
       return
     }
-    const _gain = shortUnrealizedPNL.usd.dividedBy(shortPositionValue).times(100)
+    // (a - b) / b === a / b - 1
+    const _gain = shortPositionValue.dividedBy(totalUSDFromBuy).minus(1).times(100)
     setShortGain(_gain)
     setLoading(false)
-  }, [setLoading, shortUnrealizedPNL.usd, shortPositionValue, positionType, setShortGain])
+  }, [setLoading, shortPositionValue, totalUSDFromBuy, positionType, setShortGain])
 
   return shortGain
 }
