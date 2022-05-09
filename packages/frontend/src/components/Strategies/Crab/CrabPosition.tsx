@@ -8,6 +8,7 @@ import { Tooltips } from '@constants/enums'
 import { addressAtom } from 'src/state/wallet/atoms'
 import { isCrabUsingMidPriceAtom } from 'src/state/crab/atoms'
 import { useCurrentCrabPositionValue } from 'src/state/crab/hooks'
+import { pnlInPerct } from 'src/lib/pnl'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -37,7 +38,7 @@ const CrabPosition: React.FC = () => {
   const { currentCrabPositionValue } = useCurrentCrabPositionValue()
 
   const classes = useStyles()
-  const pnl = isCrabUsingMidPrice ? depositedUsd : minPnL
+  const pnl = isCrabUsingMidPrice ? pnlInPerct(currentCrabPositionValue, depositedUsd) : minPnL
   const crabPositionValue = isCrabUsingMidPrice ? currentCrabPositionValue : minCurrentUsd
 
   if (loading) {

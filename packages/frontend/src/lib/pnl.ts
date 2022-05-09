@@ -120,7 +120,7 @@ export function pnl(currentValue: BigNumber, cost: BigNumber): BigNumber {
 export function pnlInPerct(currentValue: BigNumber, cost: BigNumber): BigNumber {
   return currentValue.dividedBy(cost).minus(1).times(100)
 }
-  
+
 const getSwapsWithEthPrice = async (swaps: swaps_swaps[]) => {
   const timestamps = swaps.map((s) => Number(s.timestamp) * 1000)
 
