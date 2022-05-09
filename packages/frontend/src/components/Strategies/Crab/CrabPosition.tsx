@@ -6,6 +6,8 @@ import { Typography, Tooltip, Box } from '@material-ui/core'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import { Tooltips } from '@constants/enums'
 import { addressAtom } from 'src/state/wallet/atoms'
+import { isCrabUsingMidPriceAtom } from 'src/state/crab/atoms'
+import { useCurrentCrabPositionValue } from 'src/state/crab/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -30,8 +32,13 @@ const useStyles = makeStyles((theme) =>
 
 const CrabPosition: React.FC = () => {
   const address = useAtomValue(addressAtom)
-  const { minCurrentUsd, minPnL, loading } = useCrabPosition(address || '')
+  const isCrabUsingMidPrice = useAtomValue(isCrabUsingMidPriceAtom)
+  const { minCurrentUsd, minPnL, loading, depositedUsd } = useCrabPosition(address || '')
+  const { currentCrabPositionValue } = useCurrentCrabPositionValue()
+
   const classes = useStyles()
+  const pnl = isCrabUsingMidPrice ? depositedUsd : minPnL
+  const crabPositionValue = isCrabUsingMidPrice ? currentCrabPositionValue : minCurrentUsd
 
   if (loading) {
     return (
@@ -41,7 +48,7 @@ const CrabPosition: React.FC = () => {
     )
   }
 
-  if (minCurrentUsd.isZero()) {
+  if (crabPositionValue.isZero()) {
     return null
   }
 
@@ -51,14 +58,16 @@ const CrabPosition: React.FC = () => {
         Position
       </Typography>
       <div style={{ display: 'flex', alignItems: 'center' }}>
-        <Typography variant="h6" id="crab-pos-bal">{loading ? 'Loading' : `${minCurrentUsd.toFixed(2)} USD`}</Typography>
-        {!loading && minPnL.isFinite() ? (
+        <Typography variant="h6" id="crab-pos-bal">
+          {loading ? 'Loading' : `${crabPositionValue.toFixed(2)} USD`}
+        </Typography>
+        {!loading && pnl.isFinite() ? (
           <Typography
             variant="body2"
             style={{ marginLeft: '4px', fontWeight: 600 }}
-            className={minPnL.isNegative() ? classes.red : classes.green}
+            className={pnl.isNegative() ? classes.red : classes.green}
           >
-            ({minPnL.toFixed(2)} %)
+            ({pnl.toFixed(2)} %)
           </Typography>
         ) : null}
         <Tooltip title={Tooltips.CrabPnL}>

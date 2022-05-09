@@ -12,7 +12,7 @@ import { crabLoadingAtom, currentEthValueAtom } from 'src/state/crab/atoms'
 /*
   depositedEth = Sum of deposited ethAmount - Sum of withdrawn ethAmount
   depositedUsd = Sum of deposited ethUsed - Sum of withdrawn ethUsd
-  minCurrentEth = currentEth * indexPrice
+  minCurrentEth = currentEth 
   minCurrentUsd = currentEth * indexPrice
   minPnlUsd = minCurrentUsd - depositedUsd
   minPnL = minPnlUsd / depositedUsd * 100

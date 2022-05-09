@@ -34,12 +34,16 @@ import ShortSqueeth from './ShortSqueeth'
 import LPedSqueeth from './LPedSqueeth'
 import MintedSqueeth from './MintedSqueeth'
 import ShortSqueethLiquidated from './ShortSqueethLiquidated'
+import { isCrabUsingMidPriceAtom } from 'src/state/crab/atoms'
+import { useCurrentCrabPositionValue } from 'src/state/crab/hooks'
+import { pnl, pnlInPerct } from 'src/lib/pnl'
 
 export default function Positions() {
   const classes = useStyles()
   const pool = useAtomValue(poolAtom)
   const address = useAtomValue(addressAtom)
   const positionType = useAtomValue(positionTypeAtom)
+  const isCrabUsingMidPrice = useAtomValue(isCrabUsingMidPriceAtom)
   const activePositions = useAtomValue(activePositionsAtom)
 
   const { squeethAmount } = useComputeSwaps()
@@ -59,6 +63,9 @@ export default function Positions() {
     minPnlUsd,
     loading: crabLoading,
   } = useCrabPosition(address || '')
+  const { currentCrabPositionValue, currentCrabPositionValueInETH } = useCurrentCrabPositionValue()
+  const pnlWMidPriceInUSD = pnl(currentCrabPositionValue, depositedUsd)
+  const pnlWMidPriceInPerct = pnlInPerct(currentCrabPositionValue, depositedUsd)
 
   const vaultExists = useAppMemo(() => {
     return shortVaults.length && shortVaults[firstValidVault]?.collateralAmount?.isGreaterThan(0)
@@ -119,6 +126,11 @@ export default function Positions() {
             loading={crabLoading}
             minCurrentEth={minCurrentEth}
             minCurrentUsd={minCurrentUsd}
+            pnlWMidPriceInUSD={pnlWMidPriceInUSD}
+            pnlWMidPriceInPerct={pnlWMidPriceInPerct}
+            currentCrabPositionValue={currentCrabPositionValue}
+            currentCrabPositionValueInETH={currentCrabPositionValueInETH}
+            isCrabUsingMidPrice={isCrabUsingMidPrice}
             minPnL={minPnL}
             minPnlUsd={minPnlUsd}
           />
