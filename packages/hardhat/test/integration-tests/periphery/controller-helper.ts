@@ -830,6 +830,7 @@ describe("Controller helper integration test", function () {
       console.log('currentTick', currentTick.toString())
       const params = {
         recipient: depositor.address,
+        wPowerPerpPool: wSqueethPool.address,
         vaultId: vaultId,
         wPowerPerpAmount: mintWSqueethAmount, 
         collateralToDeposit: collateralAmount,
@@ -925,6 +926,7 @@ describe("Controller helper integration test", function () {
       // Mint parameters for new tick
       const params = {
         recipient: depositor.address,
+        wPowerPerpPool: wSqueethPool.address,
         vaultId: vaultId,
         wPowerPerpAmount: BigNumber.from(0), 
         collateralToDeposit: BigNumber.from(0),

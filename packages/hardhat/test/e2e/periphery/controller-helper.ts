@@ -890,6 +890,7 @@ describe("ControllerHelper: mainnet fork", function () {
         const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
         const params = {
           recipient: depositor.address,
+          wPowerPerpPool: wSqueethPool.address,
           vaultId: 0,
           wPowerPerpAmount: mintWSqueethAmount,
           collateralToDeposit: collateralAmount,
@@ -957,9 +958,9 @@ describe("ControllerHelper: mainnet fork", function () {
          {
            // Mint new LP (add 0.01 oSQTH noise since exact value will not be known)
            rebalanceVaultNftType:  BigNumber.from(4), // MintNewLP
-           // lpWPowerPerpPool: [recipient, vaultId, wPowerPerpAmount, collateralToDeposit, collateralToLP, amount0Min, amount1Min, lowerTick, upperTick ]
-           data: abiCoder.encode(["address", "uint256", 'uint256','uint256', 'uint256', 'uint256', 'uint256', 'int24', 'int24'],
-            [controllerHelper.address, vaultId, wPowerPerpAmountInLPBefore.add(surpriseProceeds), BigNumber.from(0), wethAmountInLPBefore, amount0Min, amount1Min, newTickLower, newTickUpper])
+           // lpWPowerPerpPool: [recipient, wPowerPerpPool, vaultId, wPowerPerpAmount, collateralToDeposit, collateralToLP, amount0Min, amount1Min, lowerTick, upperTick ]
+           data: abiCoder.encode(["address", "address", "uint256", 'uint256','uint256', 'uint256', 'uint256', 'uint256', 'int24', 'int24'],
+            [controllerHelper.address, wSqueethPool.address, vaultId, wPowerPerpAmountInLPBefore.add(surpriseProceeds), BigNumber.from(0), wethAmountInLPBefore, amount0Min, amount1Min, newTickLower, newTickUpper])
          }
       ]
       // Flashloan to cover complete removal of LP (rearrange collateral ratio formula for 1.5 and add 0.05 ETH)
@@ -1001,8 +1002,6 @@ describe("ControllerHelper: mainnet fork", function () {
       expect(positionAfter.tickUpper === newTickUpper).to.be.true
       expect(vaultAfter.collateralAmount.eq(vaultBefore.collateralAmount)).to.be.true
       expect(vaultAfter.NftCollateralId==vaultBefore.NftCollateralId).to.be.false
-      // Vault changes by same amount as LP
-      expect(vaultSqueethDiff.sub(lpSqueethDiff).abs().lte(1)).to.be.true
       // Squeeth preserving
       expect(depositorSqueethdiff.sub(vaultSqueethDiff).add(lpSqueethDiff).abs().lte(10)).to.be.true
     })
@@ -1066,6 +1065,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
       const params = {
         recipient: depositor.address,
+        wPowerPerpPool: wSqueethPool.address,
         vaultId: 0,
         wPowerPerpAmount: mintWSqueethAmount,
         collateralToDeposit: collateralAmount,
@@ -1147,18 +1147,21 @@ describe("ControllerHelper: mainnet fork", function () {
         // Sell all oSQTH
           rebalanceVaultNftType: BigNumber.from(5), // generalSwap:
           // GeneralSwap: [tokenIn, tokenOut, amountIn, limitPriceEthPerPowerPerp]
-          data: abiCoder.encode(["address", 'address', 'uint256', 'uint256'],
-           [wSqueeth.address, weth.address, wPowerPerpAmountInLPBefore, BigNumber.from(0)])
+          data: abiCoder.encode(["address", 'address', 'uint256', 'uint256', 'uint24'],
+           [wSqueeth.address, weth.address, wPowerPerpAmountInLPBefore, BigNumber.from(0), 3000])
           },
        {
          // Mint new LP 
          rebalanceVaultNftType:  BigNumber.from(4), // MintNewLP
-         // lpWPowerPerpPool: [recipient, vaultId, wPowerPerpAmount, collateralToDeposit, collateralToLP, amount0Min, amount1Min, lowerTick, upperTick ]
-         data: abiCoder.encode(["address", "uint256", 'uint256','uint256', 'uint256', 'uint256', 'uint256', 'int24', 'int24'],
-          [controllerHelper.address, vaultId, BigNumber.from(0), BigNumber.from(0), wethAmountToLP, amount0Min, amount1Min, newTickLower, newTickUpper])
+         // lpWPowerPerpPool: [recipient, wPowerPerpPool, vaultId, wPowerPerpAmount, collateralToDeposit, collateralToLP, amount0Min, amount1Min, lowerTick, upperTick ]
+         data: abiCoder.encode(["address", "address", "uint256", 'uint256','uint256', 'uint256', 'uint256', 'uint256', 'int24', 'int24'],
+          [controllerHelper.address, wSqueethPool.address, vaultId, BigNumber.from(0), BigNumber.from(0), wethAmountToLP, amount0Min, amount1Min, newTickLower, newTickUpper])
        }
     ]
-    const flashLoanAmount = ethers.utils.parseUnits('50')
+    // Flashloan to cover complete removal of LP (rearrange collateral ratio formula for 1.5 and add 0.05 ETH)
+    const normFactor = await controller.getExpectedNormalizationFactor()
+    const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
+    const flashLoanAmount = (vaultBefore.shortAmount).mul(normFactor).mul(ethPrice).mul(3).div(one.mul(one).mul(10000).mul(2)).sub(vaultBefore.collateralAmount).add(ethers.utils.parseUnits('0.05'))
     await controllerHelper.connect(depositor).rebalanceVaultNft(vaultId, flashLoanAmount, params);
     const depositorSqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
     const depositorEthBalanceAfter = await ethers.provider.getBalance(depositor.address)
@@ -1217,6 +1220,7 @@ describe("Rebalance LP in vault to just oSQTH", async () => {
     const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
     const params = {
       recipient: depositor.address,
+      wPowerPerpPool: wSqueethPool.address,
       vaultId: 0,
       wPowerPerpAmount: mintWSqueethAmount,
       collateralToDeposit: collateralAmount,
@@ -1297,19 +1301,22 @@ it("Close vault LP and open new one-siced LP with just oSQTH ", async () => {
       {
       // Sell all weth for oSQTH
         rebalanceVaultNftType: BigNumber.from(5), // generalSwap:
-        // GeneralSwap: [tokenIn, tokenOut, amountIn, limitPriceEthPerPowerPerp]
-        data: abiCoder.encode(["address", 'address', 'uint256', 'uint256'],
-         [weth.address, wSqueeth.address, wethAmountInLPBefore, BigNumber.from(0)])
+        // GeneralSwap: [tokenIn, tokenOut, amountIn, limitPriceEthPerPowerPerp, poolFee]
+        data: abiCoder.encode(["address", 'address', 'uint256', 'uint256','uint24'],
+         [weth.address, wSqueeth.address, wethAmountInLPBefore, BigNumber.from(0), 3000])
         },
      {
        // Mint new LP 
        rebalanceVaultNftType:  BigNumber.from(4), // MintNewLP
-       // lpWPowerPerpPool: [recipient, vaultId, wPowerPerpAmount, collateralToDeposit, collateralToLP, amount0Min, amount1Min, lowerTick, upperTick ]
-       data: abiCoder.encode(["address", "uint256", 'uint256','uint256', 'uint256', 'uint256', 'uint256', 'int24', 'int24'],
-        [controllerHelper.address, vaultId, wPowerPerpAmountToLp, BigNumber.from(0),  BigNumber.from(0), amount0Min, amount1Min, newTickLower, newTickUpper])
+       // lpWPowerPerpPool: [recipient, wPowerPerpPool, vaultId, wPowerPerpAmount, collateralToDeposit, collateralToLP, amount0Min, amount1Min, lowerTick, upperTick ]
+       data: abiCoder.encode(["address", "address", "uint256", 'uint256','uint256', 'uint256', 'uint256', 'uint256', 'int24', 'int24'],
+        [controllerHelper.address, wSqueethPool.address, vaultId, wPowerPerpAmountToLp, BigNumber.from(0),  BigNumber.from(0), amount0Min, amount1Min, newTickLower, newTickUpper])
      }
   ]
-  const flashLoanAmount = ethers.utils.parseUnits('50')
+  // Flashloan to cover complete removal of LP (rearrange collateral ratio formula for 1.5 and add 0.05 ETH)
+  const normFactor = await controller.getExpectedNormalizationFactor()
+  const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
+  const flashLoanAmount = (vaultBefore.shortAmount).mul(normFactor).mul(ethPrice).mul(3).div(one.mul(one).mul(10000).mul(2)).sub(vaultBefore.collateralAmount).add(ethers.utils.parseUnits('0.05'))
   await controllerHelper.connect(depositor).rebalanceVaultNft(vaultId, flashLoanAmount, params);
   const depositorSqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
   const depositorEthBalanceAfter = await ethers.provider.getBalance(depositor.address)
