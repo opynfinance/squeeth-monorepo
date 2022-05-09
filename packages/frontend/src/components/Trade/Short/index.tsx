@@ -12,7 +12,7 @@ import {
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
-import React, { memo, useState } from 'react'
+import React, { memo, useEffect, useState } from 'react'
 
 import { CloseType, Tooltips, Links } from '@constants/enums'
 import useShortHelper from '@hooks/contracts/useShortHelper'
@@ -35,7 +35,7 @@ import { collatRatioAtom } from 'src/state/ethPriceCharts/atoms'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
 import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
 import { useGetDebtAmount, useGetShortAmountFromDebt, useUpdateOperator } from 'src/state/controller/hooks'
-import { useComputeSwaps, useFirstValidVault, useLPPositionsQuery, useVaultQuery } from 'src/state/positions/hooks'
+import { useComputeSwaps, useFirstValidVault, useLPPositionsQuery } from 'src/state/positions/hooks'
 import {
   ethTradeAmountAtom,
   quoteAtom,
@@ -672,6 +672,8 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
     resetTxCancelled,
   } = useTransactionStatus()
 
+  const [liqPrice, setLiqPrice] = useState(BIG_ZERO)
+
   const { closeShort } = useShortHelper()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const { shortHelper } = useAtomValue(addressesAtom)
@@ -696,6 +698,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const { data } = useWalletBalance()
   const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
+  const normalizationFactor = useAtomValue(normFactorAtom)
 
   const { loading: isPositionFinishedCalc } = useLPPositionsQuery()
   const { updateVault } = useVaultManager()
@@ -712,6 +715,12 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
       setFinalShortAmount(contractShort)
     }
   }, [vault, vault?.shortAmount])
+
+  useAppEffect(() => {
+    const rSqueeth = normalizationFactor.multipliedBy(amount || 1).dividedBy(10000)
+    const liqp = withdrawCollat.dividedBy(rSqueeth.multipliedBy(1.5))
+    setLiqPrice(liqp)
+  }, [amount, collatPercent, withdrawCollat, normalizationFactor])
 
   // useAppEffect(() => {
   //   if (shortVaults[firstValidVault]?.shortAmount && shortVaults[firstValidVault]?.shortAmount.lt(amount)) {
@@ -868,6 +877,10 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
       setCloseType(CloseType.FULL)
     }
   }, [finalShortAmount, setSqthTradeAmount])
+
+  useEffect(() => {
+    setShortCloseMax()
+  }, [setShortCloseMax])
 
   // let openError: string | undefined
   let closeError: string | undefined
@@ -1151,6 +1164,14 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
             id="close-short-trade-details"
           />
           <div className={classes.divider}>
+            <TradeInfoItem
+              label="Liquidation Price"
+              value={liqPrice.toFixed(2)}
+              unit="USDC"
+              tooltip={`${Tooltips.LiquidationPrice}. ${Tooltips.Twap}`}
+              priceType="twap"
+              id="close-short-liquidation-price"
+            />
             <TradeInfoItem
               label="Current Collateral ratio"
               value={existingCollatPercent}
