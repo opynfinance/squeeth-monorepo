@@ -113,6 +113,14 @@ const getRelevantSwaps = (squeethAmount: BigNumber, swaps: swaps_swaps[], isWeth
   return relevantSwaps
 }
 
+export function pnl(currentValue: BigNumber, cost: BigNumber): BigNumber {
+  return currentValue.minus(cost)
+}
+
+export function pnlInPerct(currentValue: BigNumber, cost: BigNumber): BigNumber {
+  return currentValue.dividedBy(cost).minus(1).times(100)
+}
+
 export async function calcDollarShortUnrealizedpnl(
   swaps: swaps_swaps[],
   isWethToken0: boolean,
