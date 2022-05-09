@@ -924,8 +924,8 @@ describe("ControllerHelper: mainnet fork", function () {
       // Deposit nft to vault
       await controller.connect(depositor).depositUniPositionToken(vaultId, tokenId)
       // Withdraw some ETH from vault (so not purely collateralized with ETH)
-      const collateralDeficit = wethAmountInLPBefore
-      await controller.connect(depositor).withdraw(vaultId, collateralDeficit)
+      const withdrawFromVault = wethAmountInLPBefore
+      await controller.connect(depositor).withdraw(vaultId, withdrawFromVault)
       const vaultBefore = await controller.vaults(vaultId);
       // Setup for mint of new LP
       const slot0 = await wSqueethPool.slot0()
@@ -1007,9 +1007,8 @@ describe("ControllerHelper: mainnet fork", function () {
       // console.log('lpEthDiff', lpEthDiff.toString())
       // console.log('vaultEthDiff', vaultEthDiff.toString())
       // console.log('gasSpent', gasSpent.toString())
-      expect(wPowerPerpAmountInLPAfter.sub(wPowerPerpAmountInLPBefore).sub(surpriseProceeds).abs().lte(10)).to.be.true
       // Difference is gas from withdrawal of collateralDeficit
-      expect(depositorEthDiff.sub(collateralDeficit).add(lpEthDiff).add(gasSpent).abs().lte(ethers.utils.parseUnits('0.05'))).to.be.true
+      expect(depositorEthDiff.add(lpEthDiff).add(vaultEthDiff).sub(withdrawFromVault).add(gasSpent).abs().lte(ethers.utils.parseUnits('0.05'))).to.be.true
     })
   })
 
