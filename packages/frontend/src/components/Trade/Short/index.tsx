@@ -113,6 +113,7 @@ const useStyles = makeStyles((theme) =>
       marginLeft: theme.spacing(1),
     },
     infoIcon: {
+      fontSize: '1rem',
       marginLeft: theme.spacing(0.5),
       color: theme.palette.text.secondary,
     },
@@ -197,6 +198,11 @@ const useStyles = makeStyles((theme) =>
     },
     displayNone: {
       display: 'none',
+    },
+    vaultCollatInfo: {
+      display: 'flex',
+      alignItems: 'center',
+      pointerEvents: 'auto',
     },
   }),
 )
@@ -509,7 +515,16 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
               style={{ width: 300 }}
               onChange={(event) => setCollatPercent(Number(event.target.value))}
               id="filled-basic"
-              label="Collateral Ratio"
+              label={
+                <div className={classes.vaultCollatInfo}>
+                  <span>Vault Collateral Ratio</span>
+                  {existingCollatPercent > 0 ? (
+                    <Tooltip title={Tooltips.VaultCollatRatio}>
+                      <InfoOutlinedIcon className={classes.infoIcon} />
+                    </Tooltip>
+                  ) : null}
+                </div>
+              }
               variant="outlined"
               error={collatPercent < 150}
               helperText="At risk of liquidation at 150%"

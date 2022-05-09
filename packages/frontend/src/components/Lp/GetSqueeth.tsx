@@ -1,5 +1,6 @@
-import { CircularProgress, InputAdornment, TextField, Typography } from '@material-ui/core'
+import { CircularProgress, InputAdornment, TextField, Typography, Tooltip } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
+import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
 import { motion } from 'framer-motion'
 import React, { useState } from 'react'
@@ -68,6 +69,16 @@ const useStyles = makeStyles((theme) =>
     },
     mintContainer: {
       marginTop: theme.spacing(3),
+    },
+    vaultCollatInfo: {
+      display: 'flex',
+      alignItems: 'center',
+      pointerEvents: 'auto',
+    },
+    infoIcon: {
+      fontSize: '1rem',
+      marginLeft: theme.spacing(0.5),
+      color: theme.palette.text.secondary,
     },
   }),
 )
@@ -190,7 +201,16 @@ const Mint: React.FC = () => {
           style={{ width: 300 }}
           onChange={(event: any) => setCollatPercent(Number(event.target.value))}
           id="filled-basic"
-          label="Collateral Ratio"
+          label={
+            <div className={classes.vaultCollatInfo}>
+              <span>Vault Collateral Ratio</span>
+              {existingCollatPercent > 0 ? (
+                <Tooltip title={Tooltips.VaultCollatRatio}>
+                  <InfoOutlinedIcon className={classes.infoIcon} />
+                </Tooltip>
+              ) : null}
+            </div>
+          }
           variant="outlined"
           error={collatPercent < 150}
           helperText={minCollRatioError}
