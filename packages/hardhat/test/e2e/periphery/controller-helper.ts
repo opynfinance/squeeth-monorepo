@@ -930,9 +930,9 @@ describe("ControllerHelper: mainnet fork", function () {
       // Setup for mint of new LP
       const slot0 = await wSqueethPool.slot0()
       const currentTick = slot0[1]
-      // Closest 60 tick width around current tick (60 is minimum tick width for 30bps pool)
-      const newTickLower = 60*((currentTick - currentTick%60)/60 - 1)
-      const newTickUpper = 60*((currentTick - currentTick%60)/60 + 1)
+      // Closest 600 tick width around current tick (60 is minimum tick width for 30bps pool)
+      const newTickLower = 60*((currentTick - currentTick%60)/60 - 10)
+      const newTickUpper = 60*((currentTick - currentTick%60)/60 + 10)
       //const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
       const amount0Min = BigNumber.from(0);
       const amount1Min = BigNumber.from(0);
@@ -993,22 +993,22 @@ describe("ControllerHelper: mainnet fork", function () {
       expect(vaultAfter.NftCollateralId==vaultBefore.NftCollateralId).to.be.false
       // Squeeth preserving
       expect(depositorSqueethDiff.sub(vaultSqueethDiff).add(lpSqueethDiff).abs().lte(10)).to.be.true
-      console.log('newTickLower', newTickLower)
-      console.log('newTickUpper', newTickUpper)
-      console.log('currentTick', currentTick)
-      console.log('wethAmountInLPAfter', wethAmountInLPAfter.toString())
-      console.log('wethAmountInLPBefore', wethAmountInLPBefore.toString())
-      console.log('wPowerPerpAmountInLPAfter', wPowerPerpAmountInLPAfter.toString())
-      console.log('wPowerPerpAmountInLPBefore', wPowerPerpAmountInLPBefore.toString())
-      console.log('depositorEthBalanceBefore', depositorEthBalanceBefore.toString())
-      console.log('depositorEthBalanceAfter', depositorEthBalanceAfter.toString())
-      console.log('collateralDeficit', collateralDeficit.toString())
-      console.log('depositorEthDiff', depositorEthDiff.toString())
-      console.log('lpEthDiff', lpEthDiff.toString())
-      console.log('vaultEthDiff', vaultEthDiff.toString())
-      console.log('gasSpent', gasSpent.toString())
+      // console.log('newTickLower', newTickLower)
+      // console.log('newTickUpper', newTickUpper)
+      // console.log('currentTick', currentTick)
+      // console.log('wethAmountInLPAfter', wethAmountInLPAfter.toString())
+      // console.log('wethAmountInLPBefore', wethAmountInLPBefore.toString())
+      // console.log('wPowerPerpAmountInLPAfter', wPowerPerpAmountInLPAfter.toString())
+      // console.log('wPowerPerpAmountInLPBefore', wPowerPerpAmountInLPBefore.toString())
+      // console.log('depositorEthBalanceBefore', depositorEthBalanceBefore.toString())
+      // console.log('depositorEthBalanceAfter', depositorEthBalanceAfter.toString())
+      // console.log('collateralDeficit', collateralDeficit.toString())
+      // console.log('depositorEthDiff', depositorEthDiff.toString())
+      // console.log('lpEthDiff', lpEthDiff.toString())
+      // console.log('vaultEthDiff', vaultEthDiff.toString())
+      // console.log('gasSpent', gasSpent.toString())
       expect(wPowerPerpAmountInLPAfter.sub(wPowerPerpAmountInLPBefore).sub(surpriseProceeds).abs().lte(10)).to.be.true
-      console.log('depositorEthDiff.sub(collateralDeficit).sub(vaultEthDiff).add(gasSpent)',depositorEthDiff.sub(collateralDeficit).add(lpEthDiff).add(gasSpent).toString())
+      // Difference is gas from withdrawal of collateralDeficit
       expect(depositorEthDiff.sub(collateralDeficit).add(lpEthDiff).add(gasSpent).abs().lte(ethers.utils.parseUnits('0.05'))).to.be.true
     })
   })
@@ -1194,24 +1194,21 @@ describe("ControllerHelper: mainnet fork", function () {
     expect(vaultAfter.collateralAmount.eq(vaultBefore.collateralAmount)).to.be.true
     expect(vaultAfter.NftCollateralId==vaultBefore.NftCollateralId).to.be.false
     expect(wPowerPerpAmountInLPAfter.eq(BigNumber.from(0))).to.be.true
-    console.log('newTickLower', newTickLower)
-    console.log('newTickUpper', newTickUpper)
-    console.log('currentTick', currentTick)
-    console.log('wethAmountInLPAfter', wethAmountInLPAfter.toString())
-    console.log('wethAmountInLPBefore', wethAmountInLPBefore.toString())
-    console.log('wPowerPerpAmountInLPAfter', wPowerPerpAmountInLPAfter.toString())
-    console.log('wPowerPerpAmountInLPBefore', wPowerPerpAmountInLPBefore.toString())
-    console.log('depositorEthBalanceBefore', depositorEthBalanceBefore.toString())
-    console.log('depositorEthBalanceAfter', depositorEthBalanceAfter.toString())
-    console.log('depositorEthDiff', depositorEthDiff.toString())
-    console.log('lpEthDiff', lpEthDiff.toString())
-    console.log('vaultEthDiff', vaultEthDiff.toString())
-    console.log('gasSpent', gasSpent.toString())
-    console.log('ethAmountOutFromSwap', ethAmountOutFromSwap.toString())
-    console.log('safetyEth', safetyEth.toString())
-
-    console.log('wethAmountInLPAfter %s, ethAmountInLPBefore %s, ethAmountOutFromSwap %s', wethAmountInLPAfter, wethAmountInLPBefore, ethAmountOutFromSwap)
-    console.log('check', lpEthDiff.sub(ethAmountOutFromSwap.add(safetyEth)).toString())
+    // console.log('newTickLower', newTickLower)
+    // console.log('newTickUpper', newTickUpper)
+    // console.log('currentTick', currentTick)
+    // console.log('wethAmountInLPAfter', wethAmountInLPAfter.toString())
+    // console.log('wethAmountInLPBefore', wethAmountInLPBefore.toString())
+    // console.log('wPowerPerpAmountInLPAfter', wPowerPerpAmountInLPAfter.toString())
+    // console.log('wPowerPerpAmountInLPBefore', wPowerPerpAmountInLPBefore.toString())
+    // console.log('depositorEthBalanceBefore', depositorEthBalanceBefore.toString())
+    // console.log('depositorEthBalanceAfter', depositorEthBalanceAfter.toString())
+    // console.log('depositorEthDiff', depositorEthDiff.toString())
+    // console.log('lpEthDiff', lpEthDiff.toString())
+    // console.log('vaultEthDiff', vaultEthDiff.toString())
+    // console.log('gasSpent', gasSpent.toString())
+    // console.log('ethAmountOutFromSwap', ethAmountOutFromSwap.toString())
+    // console.log('safetyEth', safetyEth.toString())
     expect(lpEthDiff.sub(ethAmountOutFromSwap).add(safetyEth).abs().lte(10)).to.be.true
   })
 })

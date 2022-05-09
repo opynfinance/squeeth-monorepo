@@ -3,8 +3,6 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import 'hardhat/console.sol';
-
 // interface
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
@@ -98,19 +96,14 @@ library ControllerHelperUtil {
         uint256 _vaultId = _mintAndLpParams.vaultId;
         uint256 amountToMint = (_isWethToken0) ? amount1Desired : amount0Desired;
         if (IWPowerPerp(_wPowerPerp).balanceOf(address(this)) < amountToMint) {
-            console.log('try to mint');
             amountToMint = amountToMint.sub(IWPowerPerp(_wPowerPerp).balanceOf(address(this)));
             _vaultId = IController(_controller).mintWPowerPerpAmount{value: _mintAndLpParams.collateralToDeposit}(
                 _mintAndLpParams.vaultId,
                 amountToMint,
                 0
             );
-            console.log('minted');
         }
         // LP amount0Desired and amount1Desired in Uni v3
-        console.log('ready to LP');
-        console.log('current weth balance', IWETH9(_weth).balanceOf(address(this)));
-        console.log('current wPowerPerp balance',  IWPowerPerp(_wPowerPerp).balanceOf(address(this)));
         uint256 uniTokenId = lpWPowerPerpPool(
             _nonfungiblePositionManager,
             _mintAndLpParams.wPowerPerpPool,
@@ -230,12 +223,6 @@ library ControllerHelperUtil {
         address _wPowerPerpPool,
         ControllerHelperDataType.LpWPowerPerpPool memory _params
     ) public returns (uint256) {
-        console.log('constructing mint params');
-        console.log('amount0Desired', _params.amount0Desired);
-        console.log('amount1Desired', _params.amount1Desired);
-        console.log('amount0Min', _params.amount0Min);
-        console.log('amount0Min', _params.amount1Min);
-        console.log('recipient', _params.recipient);
         INonfungiblePositionManager.MintParams memory mintParams = INonfungiblePositionManager.MintParams({
             token0: IUniswapV3Pool(_wPowerPerpPool).token0(),
             token1: IUniswapV3Pool(_wPowerPerpPool).token1(),
@@ -249,12 +236,9 @@ library ControllerHelperUtil {
             recipient: _params.recipient,
             deadline: block.timestamp
         });
-        console.log('balance of eth is %s ', IWETH9(IUniswapV3Pool(_wPowerPerpPool).token0()).balanceOf(address(this)));
-        console.log('minting LP with %s amount0Desired and %s amount1Desired' , mintParams.amount0Desired, mintParams.amount1Desired);
         (uint256 tokenId, , , ) = INonfungiblePositionManager(_nonfungiblePositionManager).mint(
             mintParams
         );
-        console.log('minted LP');
         return tokenId;
     }
 
