@@ -860,7 +860,7 @@ describe("ControllerHelper: mainnet fork", function () {
       expect(positionAfter.liquidity.eq(positionBefore.liquidity)).to.be.true
       expect(vaultAfter.NftCollateralId==vaultBefore.NftCollateralId).to.be.true
       expect(depositorSqueethBalanceAfter.gt(depositorSqueethBalanceBefore)).to.be.true
-      expect(depositorEthBalanceAfter.add(gasSpent).gt(depositorEthBalanceBefore)).to.be.true
+      expect(depositorEthBalanceAfter.add(gasSpent).gt(depositorEthBalanceBefore)).to.be.true 
 
     })
   })
