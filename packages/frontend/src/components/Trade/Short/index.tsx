@@ -296,7 +296,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
         setSqthTradeAmount(amountToMintSell.toString())
         setCollatError('')
       } else {
-        setCollatError('Add collateral through vault')
+        setCollatError('Reduce your collateralization ratio to mint and sell more oSQTH')
         setSqthTradeAmount('0')
       }
     })
