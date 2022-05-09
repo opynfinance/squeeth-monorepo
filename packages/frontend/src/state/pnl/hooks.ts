@@ -103,8 +103,8 @@ export function useCurrentLongPositionValue() {
 export function useCurrentShortPositionValue() {
   const { squeethAmount } = useComputeSwaps()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
-  const { vaultId } = useFirstValidVault()
-  const { existingCollat } = useVaultData(vaultId)
+  const { validVault: vault } = useFirstValidVault()
+  const { existingCollat } = useVaultData(vault)
   const index = useAtomValue(indexAtom)
   const [positionValue, setPositionValue] = useAtom(shortPositionValueAtom)
   const positionType = useAtomValue(positionTypeAtom)
