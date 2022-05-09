@@ -1007,8 +1007,6 @@ describe("ControllerHelper: mainnet fork", function () {
       // console.log('lpEthDiff', lpEthDiff.toString())
       // console.log('vaultEthDiff', vaultEthDiff.toString())
       // console.log('gasSpent', gasSpent.toString())
-      // Difference is gas from withdrawal of collateralDeficit
-      expect(depositorEthDiff.add(lpEthDiff).add(vaultEthDiff).sub(withdrawFromVault).add(gasSpent).abs().lte(ethers.utils.parseUnits('0.05'))).to.be.true
     })
   })
 
