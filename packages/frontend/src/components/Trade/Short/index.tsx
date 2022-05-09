@@ -28,14 +28,14 @@ import UniswapData from '@components/Trade/UniswapData'
 import { BIG_ZERO, MIN_COLLATERAL_AMOUNT } from '../../../constants'
 import { connectedWalletAtom, isTransactionFirstStepAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet, useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
-import { addressesAtom, isLongAtom, vaultHistoryUpdatingAtom } from 'src/state/positions/atoms'
+import { addressesAtom, isLongAtom } from 'src/state/positions/atoms'
 import { useAtom, useAtomValue } from 'jotai'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { collatRatioAtom } from 'src/state/ethPriceCharts/atoms'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
 import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
 import { useGetDebtAmount, useGetShortAmountFromDebt, useUpdateOperator } from 'src/state/controller/hooks'
-import { useComputeSwaps, useFirstValidVault, useLPPositionsQuery, useVaultQuery } from 'src/state/positions/hooks'
+import { useComputeSwaps, useFirstValidVault, useLPPositionsQuery } from 'src/state/positions/hooks'
 import {
   ethTradeAmountAtom,
   quoteAtom,
@@ -253,9 +253,8 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   const isLong = useAtomValue(isLongAtom)
   const { validVault: vault, vaultId } = useFirstValidVault()
   const { squeethAmount: shortSqueethAmount } = useComputeSwaps()
-  const [isVaultHistoryUpdating, setVaultHistoryUpdating] = useAtom(vaultHistoryUpdatingAtom)
   const { updateVault, vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
-  const vaultHistoryQuery = useVaultHistoryQuery(Number(vaultId), isVaultHistoryUpdating)
+  const vaultHistoryQuery = useVaultHistoryQuery(Number(vaultId))
 
   useAppEffect(() => {
     getSellQuote(amount, slippageAmount).then(setQuote)
@@ -305,8 +304,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
           setTradeSuccess(true)
           setTradeCompleted(true)
           resetEthTradeAmount()
-          setVaultHistoryUpdating(true)
-          vaultHistoryQuery.refetch({ vaultId })
+          vaultHistoryQuery.refetch()
           updateVault()
         })
       }
@@ -324,7 +322,6 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
     setIsTxFirstStep,
     setTradeCompleted,
     setTradeSuccess,
-    setVaultHistoryUpdating,
     shortHelper,
     updateOperator,
     vaultHistoryQuery,
@@ -702,8 +699,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const { existingCollatPercent } = useVaultData(vault)
   const setCollatRatio = useUpdateAtom(collatRatioAtom)
   const ethPrice = useETHPrice()
-  const [isVaultHistoryUpdating, setVaultHistoryUpdating] = useAtom(vaultHistoryUpdatingAtom)
-  const vaultHistoryQuery = useVaultHistoryQuery(Number(vaultId), isVaultHistoryUpdating)
+  const vaultHistoryQuery = useVaultHistoryQuery(Number(vaultId))
 
   useAppEffect(() => {
     if (vault) {
@@ -774,10 +770,8 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
           setTradeCompleted(true)
           resetSqthTradeAmount()
           setIsVaultApproved(false)
-          // vaultQuery.refetch({ vaultID: vault!.id })
-          setVaultHistoryUpdating(true)
           updateVault()
-          vaultHistoryQuery.refetch({ vaultId })
+          vaultHistoryQuery.refetch()
         })
       }
     } catch (e) {
@@ -795,7 +789,6 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
     setIsTxFirstStep,
     setTradeCompleted,
     setTradeSuccess,
-    setVaultHistoryUpdating,
     shortHelper,
     updateOperator,
     vault?.collateralAmount,
