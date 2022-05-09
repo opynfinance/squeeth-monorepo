@@ -946,6 +946,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const amount1Min = BigNumber.from(0);
       // random additional proceeds from swap
       const surpriseProceeds = ethers.utils.parseUnits('0.05')
+      // Setup rebalanceVaultNft call
       const abiCoder = new ethers.utils.AbiCoder
       const params = [
         {
@@ -963,17 +964,11 @@ describe("ControllerHelper: mainnet fork", function () {
             [controllerHelper.address, wSqueethPool.address, vaultId, wPowerPerpAmountInLPBefore.add(surpriseProceeds), BigNumber.from(0), wethAmountInLPBefore, amount0Min, amount1Min, newTickLower, newTickUpper])
          }
       ]
-      // Flashloan to cover complete removal of LP (rearrange collateral ratio formula for 1.5 and add 0.05 ETH)
+      // Flashloan to cover complete removal of LP (rearrange collateral ratio formula for 1.5 and add 0.1 ETH safety margin)
       const normFactor = await controller.getExpectedNormalizationFactor()
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, true)
-      // console.log('normFactor', normFactor.toString())
-      // console.log('ethPrice', ethPrice.toString())
-      // console.log('squeethPrice', squeethPrice.toString())
-      // console.log('vaultBefore.shortAmount', vaultBefore.shortAmount.toString())
-      // console.log('vaultBefore.collateralAmount', vaultBefore.collateralAmount.toString())
-      const flashLoanAmount = (vaultBefore.shortAmount).mul(normFactor).mul(ethPrice).mul(3).div(one.mul(one).mul(10000).mul(2)).sub(vaultBefore.collateralAmount).add(ethers.utils.parseUnits('0.05'))
-      // console.log('flashLoanAmount', flashLoanAmount.toString())
+      const flashLoanAmount = (vaultBefore.shortAmount).mul(normFactor).mul(ethPrice).mul(3).div(one.mul(one).mul(10000).mul(2)).sub(vaultBefore.collateralAmount).add(ethers.utils.parseUnits('0.1'))
       await controllerHelper.connect(depositor).rebalanceVaultNft(vaultId, flashLoanAmount, params);
       const depositorSqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
       const depositorEthBalanceAfter = await ethers.provider.getBalance(depositor.address)
@@ -1111,11 +1106,8 @@ describe("ControllerHelper: mainnet fork", function () {
     const slot0 = await wSqueethPool.slot0()
     const currentTick = slot0[1]
     // Range above current tick
-
     const newTickLower = isWethToken0 ? 60*((currentTick - currentTick%60)/60 + 1): 60*((currentTick - currentTick%60)/60 - 2)
     const newTickUpper = isWethToken0 ? 60*((currentTick - currentTick%60)/60 + 2): 60*((currentTick - currentTick%60)/60 - 1)
-
-
     //const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
     const amount0Min = BigNumber.from(0);
     const amount1Min = BigNumber.from(0);
@@ -1128,12 +1120,7 @@ describe("ControllerHelper: mainnet fork", function () {
     // Estimate of new LP with 0.01 weth safety margin
     const safetyEth = ethers.utils.parseUnits('0.01')
     const wethAmountToLP = wethAmountInLPBefore.add(ethAmountOutFromSwap).sub(safetyEth)
-    console.log("ethAmountOutFromSwap", ethAmountOutFromSwap.toString())
-    console.log("isWethToken0", isWethToken0)
-    console.log('currenTick', currentTick)
-    console.log("newTickLower", newTickLower)
-    console.log("newTickUpper", newTickUpper)
-
+    // Setup rebalanceVaultNft call
     const abiCoder = new ethers.utils.AbiCoder
     const params = [
       {
@@ -1144,7 +1131,7 @@ describe("ControllerHelper: mainnet fork", function () {
          [tokenId, positionBefore.liquidity, BigNumber.from(100).mul(BigNumber.from(10).pow(16)), BigNumber.from(0), BigNumber.from(0)])
         },
         {
-        // Sell all oSQTH
+        // Sell all oSQTH for ETH
           rebalanceVaultNftType: BigNumber.from(5), // generalSwap:
           // GeneralSwap: [tokenIn, tokenOut, amountIn, limitPriceEthPerPowerPerp]
           data: abiCoder.encode(["address", 'address', 'uint256', 'uint256', 'uint24'],
@@ -1158,14 +1145,15 @@ describe("ControllerHelper: mainnet fork", function () {
           [controllerHelper.address, wSqueethPool.address, vaultId, BigNumber.from(0), BigNumber.from(0), wethAmountToLP, amount0Min, amount1Min, newTickLower, newTickUpper])
        }
     ]
-    // Flashloan to cover complete removal of LP (rearrange collateral ratio formula for 1.5 and add 0.05 ETH)
+    // Flashloan to cover complete removal of LP (rearrange collateral ratio formula for 1.5 and add 0.1 ETH safety margin)
     const normFactor = await controller.getExpectedNormalizationFactor()
     const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
-    const flashLoanAmount = (vaultBefore.shortAmount).mul(normFactor).mul(ethPrice).mul(3).div(one.mul(one).mul(10000).mul(2)).sub(vaultBefore.collateralAmount).add(ethers.utils.parseUnits('0.05'))
+    const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, true)
+    const flashLoanAmount = (vaultBefore.shortAmount).mul(normFactor).mul(ethPrice).mul(3).div(one.mul(one).mul(10000).mul(2)).sub(vaultBefore.collateralAmount).add(ethers.utils.parseUnits('0.1'))
+    // Rebalance vault
     await controllerHelper.connect(depositor).rebalanceVaultNft(vaultId, flashLoanAmount, params);
     const depositorSqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
     const depositorEthBalanceAfter = await ethers.provider.getBalance(depositor.address)
-
     // Get new vault and LP info
     const vaultAfter = await controller.vaults(vaultId);
     const tokenIdAfter = vaultAfter.NftCollateralId;
@@ -1187,16 +1175,6 @@ describe("ControllerHelper: mainnet fork", function () {
     const lpEthDiff = wethAmountInLPAfter.sub(wethAmountInLPBefore)
     const lpSqueethDiff = wPowerPerpAmountInLPAfter.sub(wPowerPerpAmountInLPBefore)
     // Assertions
-    console.log('currentTick', currentTick)
-    console.log('positionAfter.TickLower', positionAfter.tickLower)
-    console.log('positionAfter.TickUpper', positionAfter.tickUpper)
-    console.log('wPowerPerpAmountInLPAfter', wPowerPerpAmountInLPAfter.toString())
-    console.log('wethAmountInLPAfter', wethAmountInLPAfter.toString())
-    console.log('lpSqueethDiff', lpSqueethDiff.toString())
-    console.log('vaultSqueethDiff', vaultSqueethDiff.toString())
-    console.log('lpEthDiff', lpEthDiff.toString())
-    console.log('depositorSqueethDiff', depositorSqueethdiff.toString())
-
     expect(positionAfter.tickLower === newTickLower).to.be.true
     expect(positionAfter.tickUpper === newTickUpper).to.be.true
     expect(vaultAfter.shortAmount.eq(vaultBefore.shortAmount)).to.be.true
@@ -1244,7 +1222,7 @@ it("Close vault LP and open new one-siced LP with just oSQTH ", async () => {
   const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndex.sub(1));
   const positionBefore = await (positionManager as INonfungiblePositionManager).positions(tokenId)
   const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16)
-  // Get current LPpositions 
+  // Get current LP positions 
   const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
     tokenId: tokenId,
     liquidity: positionBefore.liquidity,
@@ -1266,12 +1244,9 @@ it("Close vault LP and open new one-siced LP with just oSQTH ", async () => {
   const slot0 = await wSqueethPool.slot0()
   const currentTick = slot0[1]
   // Range above current tick
-
   const newTickLower = isWethToken0 ? 60*((currentTick - currentTick%60)/60 -2): 60*((currentTick - currentTick%60)/60  + 1)
   const newTickUpper = isWethToken0 ? 60*((currentTick - currentTick%60)/60 -1): 60*((currentTick - currentTick%60)/60 + 2)
-
-
-  //const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
+  // No minimum
   const amount0Min = BigNumber.from(0);
   const amount1Min = BigNumber.from(0);
   // Estimate proceeds from liquidating weth in LP
@@ -1282,13 +1257,7 @@ it("Close vault LP and open new one-siced LP with just oSQTH ", async () => {
     0)
   // Estimate of new LP with 0.01 wPowerPerp safety margin
   const wPowerPerpAmountToLp = wPowerPerpAmountInLPBefore.add(wPowerPerpAmountOutFromSwap).sub(ethers.utils.parseUnits('0.01'))
-  // console.log("wPowerPerpAmountOutFromSwap", wPowerPerpAmountOutFromSwap.toString())
-  // console.log("wPowerPerpAmountToLP", wPowerPerpAmountToLp)
-  // console.log("isWethToken0", isWethToken0)
-  // console.log('currenTick', currentTick)
-  // console.log("newTickLower", newTickLower)
-  // console.log("newTickUpper", newTickUpper)
-
+  // Setup rebalanceVaultNft call
   const abiCoder = new ethers.utils.AbiCoder
   const params = [
     {
@@ -1313,14 +1282,14 @@ it("Close vault LP and open new one-siced LP with just oSQTH ", async () => {
         [controllerHelper.address, wSqueethPool.address, vaultId, wPowerPerpAmountToLp, BigNumber.from(0),  BigNumber.from(0), amount0Min, amount1Min, newTickLower, newTickUpper])
      }
   ]
-  // Flashloan to cover complete removal of LP (rearrange collateral ratio formula for 1.5 and add 0.05 ETH)
+  // Flashloan to cover complete removal of LP (rearrange collateral ratio formula for 1.5 and add 1 ETH safety margin)
   const normFactor = await controller.getExpectedNormalizationFactor()
   const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
-  const flashLoanAmount = (vaultBefore.shortAmount).mul(normFactor).mul(ethPrice).mul(3).div(one.mul(one).mul(10000).mul(2)).sub(vaultBefore.collateralAmount).add(ethers.utils.parseUnits('0.05'))
+  const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, true)
+  const flashLoanAmount = (vaultBefore.shortAmount).mul(normFactor).mul(ethPrice).mul(3).div(one.mul(one).mul(10000).mul(2)).sub(vaultBefore.collateralAmount).add(ethers.utils.parseUnits('0.1'))
   await controllerHelper.connect(depositor).rebalanceVaultNft(vaultId, flashLoanAmount, params);
   const depositorSqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
   const depositorEthBalanceAfter = await ethers.provider.getBalance(depositor.address)
-
   // Get new vault and LP info
   const vaultAfter = await controller.vaults(vaultId);
   const tokenIdAfter = vaultAfter.NftCollateralId;
@@ -1351,7 +1320,6 @@ it("Close vault LP and open new one-siced LP with just oSQTH ", async () => {
   // console.log('lpSqueethDiff', lpSqueethDiff.toString())
   // console.log('lpEthDiff', lpEthDiff.toString())
   // console.log('depositorSqueethDiff', depositorSqueethdiff.toString())
-
   expect(positionAfter.tickLower === newTickLower).to.be.true
   expect(positionAfter.tickUpper === newTickUpper).to.be.true
   expect(vaultAfter.shortAmount.eq(vaultBefore.shortAmount)).to.be.true
