@@ -151,10 +151,6 @@ export function useShortGain() {
   const positionType = useAtomValue(positionTypeAtom)
   const setLoading = useUpdateAtom(loadingAtom)
   const { totalUSDFromBuy } = useComputeSwaps()
-  const shortUnrealizedPNL = useAtomValue(shortUnrealizedPNLAtom)
-  const { validVault } = useFirstValidVault()
-  const { existingCollat } = useVaultData(validVault)
-  const index = useAtomValue(indexAtom)
 
   useAppEffect(() => {
     if (shortPositionValue.isZero() && positionType != PositionType.SHORT) {
