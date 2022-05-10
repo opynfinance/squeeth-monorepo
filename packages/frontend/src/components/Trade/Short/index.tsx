@@ -728,8 +728,6 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
       finalShortAmount.minus(amount),
       vault?.NFTCollateralId ? Number(vault.NFTCollateralId) : undefined,
     ).then(({ liquidationPrice }) => {
-      console.log(vault?.NFTCollateralId)
-      console.log(floatifyBigNums({ liquidationPrice, amount: finalShortAmount.minus(amount) }))
       setLiqPrice(liquidationPrice)
     })
   }, [amount, neededCollat, finalShortAmount, vault?.NFTCollateralId, getCollatRatioAndLiqPrice])
