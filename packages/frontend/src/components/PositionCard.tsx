@@ -7,9 +7,6 @@ import Link from 'next/link'
 import React, { memo, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 
-import { Tooltips } from '@constants/enums'
-import { LinkWrapper } from '@components/LinkWrapper'
-import { PositionType, TradeType } from '../types'
 import { PnLType, PositionType, TradeType } from '../types'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { usePrevious } from 'react-use'
@@ -23,7 +20,6 @@ import {
 } from 'src/state/positions/hooks'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { isLPAtom, positionTypeAtom, swapsAtom, isToHidePnLAtom } from 'src/state/positions/atoms'
-import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import {
   actualTradeTypeAtom,
   isOpenPositionAtom,
@@ -391,7 +387,7 @@ const PositionCard: React.FC = () => {
               </Typography>
             ) : null}
 
-            {isToHidePnL ? (
+            {isToHidePnL || (tradeType === TradeType.SHORT && positionType != PositionType.LONG) ? (
               <HidePnLText />
             ) : (
               <div>
@@ -401,12 +397,7 @@ const PositionCard: React.FC = () => {
                       <Typography variant="caption" color="textSecondary" style={{ fontWeight: 500 }}>
                         Unrealized P&L
                       </Typography>
-                      <Tooltip
-                        title={Tooltips.UnrealizedPnL}
-                        // title={isLong ? Tooltips.UnrealizedPnL : `${Tooltips.UnrealizedPnL}. ${Tooltips.ShortCollateral}`}
-                      >
-                        <InfoIcon fontSize="small" className={classes.infoIcon} />
-                      </Tooltip>
+                      <PnLTooltip pnlType={PnLType.Unrealized} />
                     </div>
                     <div className={classes.pnl} id="unrealized-pnl-value">
                       {!pnlLoading ? (
@@ -442,12 +433,11 @@ const PositionCard: React.FC = () => {
                       )}
                     </div>
                   </div>
-                  <div>
                   <div className={classes.pnlTitle}>
                     <Typography variant="caption" color="textSecondary" style={{ fontWeight: 500 }}>
                       Realized P&L
                     </Typography>
-                    <PnLTooltip pnlType={PnLType.Unrealized} />
+                    <PnLTooltip pnlType={PnLType.Realized} />
                   </div>
                   <div className={classes.pnl} id="realized-pnl-value">
                     <Typography
