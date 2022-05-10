@@ -16,6 +16,7 @@ import {
   shortUnrealizedPNLAtom,
 } from './atoms'
 import {
+  isToHidePnLAtom,
   isWethToken0Atom,
   positionTypeAtom,
   longPositionValueAtom,
@@ -31,9 +32,10 @@ import { indexAtom } from '../controller/atoms'
 import useAppEffect from '@hooks/useAppEffect'
 
 export function useEthCollateralPnl() {
-  const { validVault, isVaultLoading, vaultId } = useFirstValidVault()
-  const { vaultHistory, loading: vaultHistoryLoading } = useVaultHistoryQuery(Number(vaultId))
+  const { vaultId, validVault, isVaultLoading } = useFirstValidVault()
+  const { vaultHistory, loading: vaultHistoryLoading } = useVaultHistoryQuery(vaultId)
   const { existingCollat } = useVaultData(validVault)
+  const isToHidePnL = useAtomValue(isToHidePnLAtom)
 
   const index = useAtomValue(indexAtom)
 
@@ -43,6 +45,7 @@ export function useEthCollateralPnl() {
   useAppEffect(() => {
     ;(async () => {
       if (
+        !isToHidePnL &&
         vaultHistory?.length &&
         !index.isZero() &&
         !existingCollat.isZero() &&
@@ -52,9 +55,20 @@ export function useEthCollateralPnl() {
       ) {
         const result = await calcETHCollateralPnl(vaultHistory, toTokenAmount(index, 18).sqrt(), existingCollat)
         setEthCollateralPnl(result)
+      } else {
+        setEthCollateralPnl(BIG_ZERO)
       }
     })()
-  }, [existingCollat, index, setEthCollateralPnl, swapsData?.swaps, vaultHistory, isVaultLoading, vaultHistoryLoading])
+  }, [
+    isToHidePnL,
+    existingCollat,
+    index,
+    setEthCollateralPnl,
+    swapsData?.swaps,
+    vaultHistory,
+    isVaultLoading,
+    vaultHistoryLoading,
+  ])
 
   return ethCollateralPnl
 }
@@ -141,7 +155,7 @@ export function useLongGain() {
     setLongGain(_gain)
     setLoading(false)
   }, [setLoading, positionType, longPositionValue, totalUSDFromBuy, setLongGain])
-
+  
   return longGain
 }
 
@@ -163,7 +177,6 @@ export function useShortGain() {
     setShortGain(_gain)
     setLoading(false)
   }, [setLoading, shortPositionValue, totalUSDFromBuy, positionType, setShortGain])
-
   return shortGain
 }
 
@@ -172,7 +185,7 @@ export function useLongUnrealizedPNL() {
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const positionType = useAtomValue(positionTypeAtom)
   const longPositionValue = useAtomValue(longPositionValueAtom)
-
+  const isToHidePnL = useAtomValue(isToHidePnLAtom)
   const [longUnrealizedPNL, setLongUnrealizedPNL] = useAtom(longUnrealizedPNLAtom)
   const index = useAtomValue(indexAtom)
 
@@ -182,6 +195,7 @@ export function useLongUnrealizedPNL() {
   useAppEffect(() => {
     ;(async () => {
       if (
+        !isToHidePnL &&
         swaps?.length &&
         !index.isZero() &&
         !longPositionValue.isZero() &&
@@ -197,10 +211,19 @@ export function useLongUnrealizedPNL() {
         )
         setLongUnrealizedPNL((prevState) => ({ ...prevState, ...pnl }))
       } else {
-        setLongUnrealizedPNL((prevState) => ({ ...prevState, loading: true }))
+        setLongUnrealizedPNL({ usd: BIG_ZERO, eth: BIG_ZERO, loading: true })
       }
     })()
-  }, [index, isWethToken0, swaps, squeethAmount, positionType, setLongUnrealizedPNL, longPositionValue])
+  }, [
+    isToHidePnL,
+    index,
+    isWethToken0,
+    swaps,
+    squeethAmount,
+    positionType,
+    setLongUnrealizedPNL,
+    longPositionValue,
+  ])
 
   return longUnrealizedPNL
 }
@@ -214,6 +237,7 @@ export function useShortUnrealizedPNL() {
   const shortPositionValue = useAtomValue(shortPositionValueAtom)
   const [shortUnrealizedPNL, setShortUnrealizedPNL] = useAtom(shortUnrealizedPNLAtom)
   const index = useAtomValue(indexAtom)
+  const isToHidePnL = useAtomValue(isToHidePnLAtom)
 
   const { loading: swapsLoading } = useSwaps()
   const swapsData = useAtomValue(swapsAtom)
@@ -222,6 +246,7 @@ export function useShortUnrealizedPNL() {
   useAppEffect(() => {
     ;(async () => {
       if (
+        !isToHidePnL &&
         swaps?.length &&
         !shortPositionValue.isZero() &&
         !index.isZero() &&
@@ -242,11 +267,12 @@ export function useShortUnrealizedPNL() {
           ...pnl,
         })
       } else {
-        setShortUnrealizedPNL((prevState) => ({ ...prevState, loading: true }))
+        setShortUnrealizedPNL({ usd: BIG_ZERO, eth: BIG_ZERO, loading: true })
       }
     })()
   }, [
     shortPositionValue,
+    isToHidePnL,
     ethCollateralPnl,
     index,
     isWethToken0,

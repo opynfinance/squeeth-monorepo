@@ -13,6 +13,10 @@ import { useCurrentShortPositionValue, useShortGain, useShortUnrealizedPNL } fro
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import { Tooltips } from '../../constants'
 import { useVaultData } from '@hooks/useVaultData'
+import { HidePnLText } from '@components/HidePnLText'
+import { isToHidePnLAtom } from 'src/state/positions/atoms'
+import { PnLType } from '../../types'
+import { PnLTooltip } from '@components/PnLTooltip'
 
 export default function ShortSqueeth() {
   const classes = useStyles()
@@ -25,6 +29,7 @@ export default function ShortSqueeth() {
   const shortGain = useShortGain()
   const shortUnrealizedPNL = useShortUnrealizedPNL()
   const shortRealizedPNL = useShortRealizedPnl()
+  const isToHidePnL = useAtomValue(isToHidePnLAtom)
 
   return (
     <div className={classes.position}>
@@ -38,7 +43,7 @@ export default function ShortSqueeth() {
         <div className={classes.innerPositionData}>
           <div style={{ width: '50%' }}>
             <Typography variant="caption" component="span" color="textSecondary">
-              Position
+              oSQTH Amount
             </Typography>
             {isPositionLoading ? (
               <Typography variant="body1">Loading</Typography>
@@ -54,27 +59,17 @@ export default function ShortSqueeth() {
             )}
           </div>
           <div style={{ width: '50%' }}>
-            <Typography variant="caption" color="textSecondary">
-              Unrealized P&L
+            <Typography variant="caption" component="span" color="textSecondary">
+              Position Value
             </Typography>
-            <Tooltip
-              title={Tooltips.UnrealizedPnL}
-              // title={isLong ? Tooltips.UnrealizedPnL : `${Tooltips.UnrealizedPnL}. ${Tooltips.ShortCollateral}`}
-            >
-              <InfoIcon fontSize="small" className={classes.infoIcon} />
-            </Tooltip>
             {isPositionLoading || shortUnrealizedPNL.loading ? (
               <Typography variant="body1">Loading</Typography>
             ) : (
-              <>
-                <Typography variant="body1" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
-                  $ {shortUnrealizedPNL.usd.toFixed(2)} ({shortUnrealizedPNL.eth.toFixed(5)} ETH)
-                  {/* $ {shortUnrealizedPNL.usd.toFixed(2)} ({wethAmount.minus(buyQuote).toFixed(5)} ETH) */}
-                </Typography>
-                <Typography variant="caption" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
-                  {(shortGain || 0).toFixed(2)}%
-                </Typography>
-              </>
+              <Typography variant="body1">
+                {isPnLLoading && buyQuote.times(toTokenAmount(index, 18).sqrt()).isEqualTo(0)
+                  ? 'Loading'
+                  : '$' + buyQuote.times(toTokenAmount(index, 18).sqrt()).toFixed(2)}
+              </Typography>
             )}
           </div>
         </div>
@@ -100,19 +95,43 @@ export default function ShortSqueeth() {
             </Typography>
           </div>
         </div>
-        <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
-          <div style={{ width: '50%' }}>
-            <Typography variant="caption" component="span" color="textSecondary">
-              Realized P&L
-            </Typography>
-            <Tooltip title={Tooltips.RealizedPnL}>
-              <InfoIcon fontSize="small" className={classes.infoIcon} />
-            </Tooltip>
-            <Typography variant="body1" className={shortRealizedPNL.gte(0) ? classes.green : classes.red}>
-              $ {swapsLoading ? 'Loading' : shortRealizedPNL.toFixed(2)}
-            </Typography>
+        {isToHidePnL ? (
+          <HidePnLText />
+        ) : (
+          <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
+            <div style={{ width: '50%' }}>
+              <div className={classes.pnlTitle}>
+                <Typography variant="caption" component="span" color="textSecondary">
+                  Unrealized P&L
+                </Typography>
+                <PnLTooltip pnlType={PnLType.Unrealized} />
+              </div>
+              {isPositionLoading || shortUnrealizedPNL.loading ? (
+                <Typography variant="body1">Loading</Typography>
+              ) : (
+                <>
+                  <Typography variant="body1" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
+                    $ {shortUnrealizedPNL.usd.toFixed(2)} ({shortUnrealizedPNL.eth.toFixed(5)} ETH)
+                  </Typography>
+                  <Typography variant="caption" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
+                    {(shortGain || 0).toFixed(2)}%
+                  </Typography>
+                </>
+              )}
+            </div>
+            <div style={{ width: '50%' }}>
+              <div className={classes.pnlTitle}>
+                <Typography variant="caption" component="span" color="textSecondary">
+                  Realized P&L
+                </Typography>
+                <PnLTooltip pnlType={PnLType.Realized} />
+              </div>
+              <Typography variant="body1" className={shortRealizedPNL.gte(0) ? classes.green : classes.red}>
+                $ {swapsLoading ? 'Loading' : shortRealizedPNL.toFixed(2)}
+              </Typography>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
