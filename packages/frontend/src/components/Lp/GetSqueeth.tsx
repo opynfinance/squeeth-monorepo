@@ -270,7 +270,7 @@ const Mint: React.FC = () => {
             !supportedNetwork ||
             (connected && collatAmountBN.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) ||
             loading ||
-            (collatAmount === '0' && collatPercent > existingCollatPercent)
+            (collatAmount === '0' && collatPercent >= existingCollatPercent)
           }
         >
           {!supportedNetwork ? (

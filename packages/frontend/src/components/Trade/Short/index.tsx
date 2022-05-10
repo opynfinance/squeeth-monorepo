@@ -651,7 +651,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                 className={classes.amountInput}
                 disabled={
                   !supportedNetwork ||
-                  (ethTradeAmount === '0' && collatPercent > existingCollatPercent) ||
+                  (ethTradeAmount === '0' && collatPercent >= existingCollatPercent) ||
                   shortLoading ||
                   transactionInProgress ||
                   collatPercent < 150 ||
