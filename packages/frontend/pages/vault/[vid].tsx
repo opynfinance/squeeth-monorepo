@@ -68,6 +68,7 @@ import {
 } from 'src/state/positions/hooks'
 import { useVaultData } from '@hooks/useVaultData'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
+import useVault from '@hooks/useVault'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -339,9 +340,8 @@ const Component: React.FC = () => {
   const [txLoading, setTxLoading] = useState(false)
   const [uniTokenToDeposit, setUniTokenToDeposit] = useState(0)
 
-  const { validVault: vault, isVaultLoading } = useFirstValidVault()
-  const { existingCollatPercent, existingLiqPrice } = useVaultData(vault)
-  const { updateVault } = useVaultManager()
+  const { vault, loading: isVaultLoading, updateVault } = useVault(Number(vid))
+  const { existingCollatPercent, existingLiqPrice } = useVaultData(vault as any)
   const [collatPercent, setCollatPercent] = useAtom(collatPercentAtom)
 
   useEffect(() => {
@@ -466,9 +466,8 @@ const Component: React.FC = () => {
 
     setTxLoading(true)
     try {
-      await depositCollateral(Number(vault.id), collatAmount, () => {
-        updateVault()
-      })
+      await depositCollateral(Number(vault.id), collatAmount)
+      updateVault()
       updateNftCollateral(BIG_ZERO, BIG_ZERO, currentLpNftId)
     } catch (e) {
       console.log(e)
@@ -481,9 +480,8 @@ const Component: React.FC = () => {
 
     setTxLoading(true)
     try {
-      await withdrawCollateral(Number(vault.id), collatAmount.abs(), () => {
-        updateVault()
-      })
+      await withdrawCollateral(Number(vault.id), collatAmount.abs())
+      updateVault()
 
       updateNftCollateral(BIG_ZERO, BIG_ZERO, currentLpNftId)
     } catch (e) {
@@ -497,9 +495,8 @@ const Component: React.FC = () => {
 
     setTxLoading(true)
     try {
-      await openDepositAndMint(Number(vault.id), sAmount, new BigNumber(0), () => {
-        updateVault()
-      })
+      await openDepositAndMint(Number(vault.id), sAmount, new BigNumber(0))
+      updateVault()
       updateNftCollateral(BIG_ZERO, BIG_ZERO, currentLpNftId)
     } catch (e) {
       console.log(e)
@@ -512,9 +509,8 @@ const Component: React.FC = () => {
 
     setTxLoading(true)
     try {
-      await burnAndRedeem(Number(vault.id), sAmount.abs(), new BigNumber(0), () => {
-        updateVault()
-      })
+      await burnAndRedeem(Number(vault.id), sAmount.abs(), new BigNumber(0))
+      updateVault()
       updateNftCollateral(BIG_ZERO, BIG_ZERO, currentLpNftId)
     } catch (e) {
       console.log(e)
@@ -527,9 +523,8 @@ const Component: React.FC = () => {
 
     setTxLoading(true)
     try {
-      await depositUniPositionToken(Number(vault.id), tokenId, () => {
-        updateVault()
-      })
+      await depositUniPositionToken(Number(vault.id), tokenId)
+      updateVault()
       setAction(VaultAction.WITHDRAW_UNI_POSITION)
     } catch (e) {
       console.log(e)
@@ -543,9 +538,8 @@ const Component: React.FC = () => {
     setTxLoading(true)
     setAction(VaultAction.WITHDRAW_UNI_POSITION)
     try {
-      await withdrawUniPositionToken(Number(vault.id), () => {
-        updateVault()
-      })
+      await withdrawUniPositionToken(Number(vault.id))
+      updateVault()
       // reset to default action, shld check if this nft got approved with history
       // cuz now there is no nft selected
       setAction(VaultAction.ADD_COLLATERAL)
@@ -815,10 +809,10 @@ const Component: React.FC = () => {
                           collateralBN.isPositive()
                             ? updateCollateral(toTokenAmount(balance ?? BIG_ZERO, 18).toString())
                             : updateCollateral(
-                                vault
-                                  ? vault?.collateralAmount.minus(MIN_COLLATERAL_AMOUNT).negated().toString()
-                                  : collateral,
-                              )
+                              vault
+                                ? vault?.collateralAmount.minus(MIN_COLLATERAL_AMOUNT).negated().toString()
+                                : collateral,
+                            )
                         }
                         variant="text"
                       >
@@ -938,8 +932,8 @@ const Component: React.FC = () => {
                           shortAmountBN.isPositive()
                             ? updateShort(maxToMint.toString())
                             : vault?.shortAmount.isGreaterThan(oSqueethBal)
-                            ? updateShort(oSqueethBal.negated().toString())
-                            : updateShort(vault?.shortAmount ? vault?.shortAmount.negated().toString() : '0')
+                              ? updateShort(oSqueethBal.negated().toString())
+                              : updateShort(vault?.shortAmount ? vault?.shortAmount.negated().toString() : '0')
                         }
                         variant="text"
                       >
@@ -962,8 +956,8 @@ const Component: React.FC = () => {
                             Balance{' '}
                             <span id="vault-debt-input-osqth-balance">
                               {oSqueethBal?.isGreaterThan(0) &&
-                              positionType === PositionType.LONG &&
-                              oSqueethBal.minus(squeethAmount).isGreaterThan(0)
+                                positionType === PositionType.LONG &&
+                                oSqueethBal.minus(squeethAmount).isGreaterThan(0)
                                 ? oSqueethBal.minus(squeethAmount).toFixed(6)
                                 : oSqueethBal.toFixed(6)}
                             </span>{' '}
