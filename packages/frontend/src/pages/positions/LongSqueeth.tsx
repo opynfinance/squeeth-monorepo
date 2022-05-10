@@ -6,7 +6,6 @@ import useStyles from './useStyles'
 import { useBuyAndSellQuote, useLongGain, useLongUnrealizedPNL } from 'src/state/pnl/hooks'
 import { toTokenAmount } from '@utils/calculations'
 import { indexAtom } from 'src/state/controller/atoms'
-import { Tooltips } from '../../constants'
 import { isToHidePnLAtom } from 'src/state/positions/atoms'
 import { HidePnLText } from '@components/HidePnLText'
 import { PnLType } from '../../types'
@@ -83,12 +82,12 @@ export default function LongSqueeth() {
               )}
             </div>
             <div style={{ width: '50%' }}>
-            <div className={classes.pnlTitle}>
-              <Typography variant="caption" component="span" color="textSecondary">
-                Realized P&L
-              </Typography>
-              <PnLTooltip pnlType={PnLType.Realized} />
-            </div>
+              <div className={classes.pnlTitle}>
+                <Typography variant="caption" component="span" color="textSecondary">
+                  Realized P&L
+                </Typography>
+                <PnLTooltip pnlType={PnLType.Realized} />
+              </div>
               <Typography variant="body1" className={longRealizedPNL.gte(0) ? classes.green : classes.red}>
                 $ {swapsLoading ? 'Loading' : longRealizedPNL.toFixed(2)}
               </Typography>

@@ -104,7 +104,7 @@ export default function ShortSqueeth() {
                 </Typography>
                 <PnLTooltip pnlType={PnLType.Unrealized} />
               </div>
-              {isPositionLoading ? (
+              {isPositionLoading || shortUnrealizedPNL.loading ? (
                 <Typography variant="body1">Loading</Typography>
               ) : (
                 <>
