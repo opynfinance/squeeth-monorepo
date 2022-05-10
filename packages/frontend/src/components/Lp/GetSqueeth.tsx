@@ -260,7 +260,10 @@ const Mint: React.FC = () => {
           className={classes.amountInput}
           style={{ width: '100%' }}
           disabled={
-            !supportedNetwork || (connected && collatAmountBN.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) || loading
+            !supportedNetwork ||
+            (connected && collatAmountBN.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) ||
+            loading ||
+            (collatAmount === '0' && collatPercent > existingCollatPercent)
           }
         >
           {!supportedNetwork ? (
