@@ -103,7 +103,6 @@ library ControllerHelperUtil {
                 0
             );
         }
-
         // LP amount0Desired and amount1Desired in Uni v3
         uint256 uniTokenId = lpWPowerPerpPool(
             _nonfungiblePositionManager,
@@ -118,7 +117,6 @@ library ControllerHelperUtil {
                 upperTick: _mintAndLpParams.upperTick
             })
         );
-
         return (_vaultId, uniTokenId);
     }
 
@@ -238,11 +236,9 @@ library ControllerHelperUtil {
             recipient: _params.recipient,
             deadline: block.timestamp
         });
-
         (uint256 tokenId, , , ) = INonfungiblePositionManager(_nonfungiblePositionManager).mint(
             mintParams
         );
-
         return tokenId;
     }
 
