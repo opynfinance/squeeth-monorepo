@@ -17,6 +17,8 @@ import { Tooltips } from '../../constants'
 import { useVaultData } from '@hooks/useVaultData'
 import { HidePnLText } from '@components/HidePnLText'
 import { isToHidePnLAtom } from 'src/state/positions/atoms'
+import { PnLType } from '../../types'
+import { PnLTooltip } from '@components/PnLTooltip'
 
 export default function ShortSqueeth() {
   const classes = useStyles()
@@ -96,16 +98,13 @@ export default function ShortSqueeth() {
         ) : (
           <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
             <div style={{ width: '50%' }}>
-              <Typography variant="caption" color="textSecondary">
-                Unrealized P&L
-              </Typography>
-              <Tooltip title={Tooltips.UnrealizedPnL}>
-                <InfoIcon fontSize="small" className={classes.infoIcon} />
-              </Tooltip>
-              {isPositionLoading ||
-              shortGain.isLessThanOrEqualTo(-100) ||
-              !shortGain.isFinite() ||
-              shortUnrealizedPNL.loading ? (
+              <div className={classes.pnlTitle}>
+                <Typography variant="caption" component="span" color="textSecondary">
+                  Unrealized P&L
+                </Typography>
+                <PnLTooltip pnlType={PnLType.Unrealized} />
+              </div>
+              {isPositionLoading ? (
                 <Typography variant="body1">Loading</Typography>
               ) : (
                 <>
@@ -119,14 +118,14 @@ export default function ShortSqueeth() {
               )}
             </div>
             <div style={{ width: '50%' }}>
-              <Typography variant="caption" component="span" color="textSecondary">
-                Realized P&L
-              </Typography>
-              <Tooltip title={Tooltips.RealizedPnL}>
-                <InfoIcon fontSize="small" className={classes.infoIcon} />
-              </Tooltip>
+              <div className={classes.pnlTitle}>
+                <Typography variant="caption" component="span" color="textSecondary">
+                  Realized P&L
+                </Typography>
+                <PnLTooltip pnlType={PnLType.Realized} />
+              </div>
               <Typography variant="body1" className={shortRealizedPNL.gte(0) ? classes.green : classes.red}>
-                $ {isPnLLoading && shortRealizedPNL.isEqualTo(0) ? 'Loading' : shortRealizedPNL.toFixed(2)}
+                $ {swapsLoading ? 'Loading' : shortRealizedPNL.toFixed(2)}
               </Typography>
             </div>
           </div>

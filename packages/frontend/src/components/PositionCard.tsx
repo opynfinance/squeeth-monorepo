@@ -1,7 +1,6 @@
-import { Tooltip, Typography } from '@material-ui/core'
+import Typography from '@material-ui/core/Typography'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
-import InfoIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
 import Link from 'next/link'
@@ -11,6 +10,7 @@ import { useAtom, useAtomValue } from 'jotai'
 import { Tooltips } from '@constants/enums'
 import { LinkWrapper } from '@components/LinkWrapper'
 import { PositionType, TradeType } from '../types'
+import { PnLType, PositionType, TradeType } from '../types'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { usePrevious } from 'react-use'
 import {
@@ -45,6 +45,7 @@ import useAppEffect from '@hooks/useAppEffect'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppMemo from '@hooks/useAppMemo'
 import { HidePnLText } from './HidePnLText'
+import { PnLTooltip } from '@components/PnLTooltip'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -169,9 +170,9 @@ const useStyles = makeStyles((theme) =>
       fontSize: 14,
       width: '100%',
     },
-    infoIcon: {
-      fontSize: '10px',
-      marginLeft: theme.spacing(0.5),
+    pnlTitle: {
+      display: 'flex',
+      alignItems: 'center',
     },
   }),
 )
@@ -442,15 +443,11 @@ const PositionCard: React.FC = () => {
                     </div>
                   </div>
                   <div>
+                  <div className={classes.pnlTitle}>
                     <Typography variant="caption" color="textSecondary" style={{ fontWeight: 500 }}>
                       Realized P&L
                     </Typography>
-                    <Tooltip
-                      title={Tooltips.RealizedPnL}
-                      // title={isLong ? Tooltips.RealizedPnL : `${Tooltips.RealizedPnL}. ${Tooltips.ShortCollateral}`}
-                    >
-                      <InfoIcon fontSize="small" className={classes.infoIcon} />
-                    </Tooltip>
+                    <PnLTooltip pnlType={PnLType.Unrealized} />
                   </div>
                   <div className={classes.pnl} id="realized-pnl-value">
                     <Typography
