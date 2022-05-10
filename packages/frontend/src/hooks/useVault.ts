@@ -1,5 +1,5 @@
 import { Vault } from '../types'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useGetVault } from 'src/state/controller/hooks'
 
 const useVault = (vid: number) => {
@@ -14,7 +14,11 @@ const useVault = (vid: number) => {
     })
   }, [getVault, vid])
 
-  return { vault, loading }
+  const updateVault = useCallback(() => {
+    getVault(vid).then((v) => setVault(v ?? undefined))
+  }, [getVault, vid])
+
+  return { vault, loading, updateVault }
 }
 
 export default useVault
