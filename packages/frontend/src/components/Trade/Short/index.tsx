@@ -60,7 +60,6 @@ import useAppEffect from '@hooks/useAppEffect'
 import useAppCallback from '@hooks/useAppCallback'
 import { useVaultHistoryQuery } from '@hooks/useVaultHistory'
 import useAppMemo from '@hooks/useAppMemo'
-import floatifyBigNums from '@utils/floatifyBigNums'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
