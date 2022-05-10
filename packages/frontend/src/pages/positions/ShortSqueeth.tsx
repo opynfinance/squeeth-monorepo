@@ -15,6 +15,8 @@ import { indexAtom } from 'src/state/controller/atoms'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import { Tooltips } from '../../constants'
 import { useVaultData } from '@hooks/useVaultData'
+import { PnLType } from '../../types'
+import { PnLTooltip } from '@components/PnLTooltip'
 
 export default function ShortSqueeth() {
   const classes = useStyles()
@@ -59,15 +61,12 @@ export default function ShortSqueeth() {
             )}
           </div>
           <div style={{ width: '50%' }}>
-            <Typography variant="caption" color="textSecondary">
-              Unrealized P&L
-            </Typography>
-            <Tooltip
-              title={Tooltips.UnrealizedPnL}
-              // title={isLong ? Tooltips.UnrealizedPnL : `${Tooltips.UnrealizedPnL}. ${Tooltips.ShortCollateral}`}
-            >
-              <InfoIcon fontSize="small" className={classes.infoIcon} />
-            </Tooltip>
+            <div className={classes.pnlTitle}>
+              <Typography variant="caption" component="span" color="textSecondary">
+                Unrealized P&L
+              </Typography>
+              <PnLTooltip pnlType={PnLType.Unrealized} />
+            </div>
             {isPositionLoading ||
             shortGain.isLessThanOrEqualTo(-100) ||
             !shortGain.isFinite() ||
@@ -110,12 +109,12 @@ export default function ShortSqueeth() {
         </div>
         <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
           <div style={{ width: '50%' }}>
-            <Typography variant="caption" component="span" color="textSecondary">
-              Realized P&L
-            </Typography>
-            <Tooltip title={Tooltips.RealizedPnL}>
-              <InfoIcon fontSize="small" className={classes.infoIcon} />
-            </Tooltip>
+            <div className={classes.pnlTitle}>
+              <Typography variant="caption" component="span" color="textSecondary">
+                Realized P&L
+              </Typography>
+              <PnLTooltip pnlType={PnLType.Realized} />
+            </div>
             <Typography variant="body1" className={shortRealizedPNL.gte(0) ? classes.green : classes.red}>
               $ {swapsLoading ? 'Loading' : shortRealizedPNL.toFixed(2)}
             </Typography>
