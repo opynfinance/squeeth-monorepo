@@ -3,6 +3,8 @@ import 'hardhat/console.sol';
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
+import 'hardhat/console.sol';
+
 // interface
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
@@ -158,7 +160,7 @@ library ControllerHelperUtil {
                 );
             }
         }
-
+        console.log('constructing IncreaseLiquidity params');
         INonfungiblePositionManager.IncreaseLiquidityParams memory uniIncreaseParams = INonfungiblePositionManager.IncreaseLiquidityParams({
             tokenId: _increaseLiquidityParam.tokenId,
             amount0Desired: (_isWethToken0) ? _increaseLiquidityParam.wethAmountToLp : _increaseLiquidityParam.wPowerPerpAmountToLp,
@@ -167,7 +169,8 @@ library ControllerHelperUtil {
             amount1Min: _increaseLiquidityParam.amount1Min,
             deadline: block.timestamp
         });
-
+        console.log('_increaseLiquidityParam.wethAmountToLp', _increaseLiquidityParam.wethAmountToLp);
+        console.log('_increaseLiquidityParam.wPowerPerpAmountToLp', _increaseLiquidityParam.wPowerPerpAmountToLp);
         INonfungiblePositionManager(_nonfungiblePositionManager).increaseLiquidity(uniIncreaseParams);
     }
 
