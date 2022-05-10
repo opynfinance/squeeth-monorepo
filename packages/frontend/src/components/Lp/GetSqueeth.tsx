@@ -134,7 +134,12 @@ const Mint: React.FC = () => {
 
   useAppEffect(() => {
     let isMounted = true
-    if (collatAmountBN.isNaN() || collatAmountBN.isZero()) {
+
+    if (
+      (collatAmountBN.isNaN() && (collatPercent >= existingCollatPercent || existingCollatPercent === 0)) ||
+      (collatAmountBN.isZero() && (collatPercent >= existingCollatPercent || existingCollatPercent === 0))
+    ) {
+      //if no collateral is being inputted and user is not trying to only adjust vault collateral
       if (isMounted) setMintAmount(new BigNumber(0))
       return
     }
@@ -146,7 +151,7 @@ const Mint: React.FC = () => {
     return () => {
       isMounted = false
     }
-  }, [collatPercent, collatAmount.toString(), _totalCollateral.toString()])
+  }, [collatPercent, collatAmount.toString(), _totalCollateral.toString(), existingCollatPercent])
 
   useAppEffect(() => {
     if (collatPercent < 150) {
@@ -159,18 +164,6 @@ const Mint: React.FC = () => {
       setMintMinCollatError('Minimum collateral is 6.9 ETH')
     }
   }, [balance?.toString(), connected, existingCollat.toString(), collatAmountBN.toString(), collatPercent])
-
-  // const liqPrice = useAppMemo(() => {
-  //   const rSqueeth = normalizationFactor.multipliedBy(mintAmount.toNumber() || new BigNumber(1)).dividedBy(10000)
-
-  //   return _totalCollateral.div(rSqueeth.multipliedBy(1.5))
-  // }, [
-  //   mintAmount.toString(),
-  //   collatPercent,
-  //   collatAmount.toString(),
-  //   normalizationFactor.toString(),
-  //   _totalCollateral.toString(),
-  // ])
 
   useAppEffect(() => {
     getCollatRatioAndLiqPrice(_totalCollateral, mintAmount.plus(vault?.shortAmount ?? BIG_ZERO)).then(
