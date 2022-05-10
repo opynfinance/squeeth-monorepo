@@ -583,7 +583,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).withdraw(_amount);
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).deposit{value: _amount}(vaultId);
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).withdrawUniPositionToken(vaultId);
-
             for (uint256 i; i < data.length; i++) {
                 if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.IncreaseLpLiquidity
@@ -695,7 +694,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         mintAndLpParams,
                         isWethToken0
                     );
-
                     // deposit Uni NFT token in vault
                     IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).depositUniPositionToken(
                         vaultId,
@@ -708,7 +706,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         data[i].data,
                         (ControllerHelperDataType.GeneralSwap)
                     );
-
                     _exactInFlashSwap(
                         swapParams.tokenIn,
                         swapParams.tokenOut,
