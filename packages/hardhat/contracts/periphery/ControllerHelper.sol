@@ -3,6 +3,8 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
+import 'hardhat/console.sol';
+
 // interface
 import {IWETH9} from "../interfaces/IWETH9.sol";
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
@@ -581,8 +583,10 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
 
             // deposit collateral into vault and withdraw LP NFT
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).withdraw(_amount);
+            console.log("depositing %s eth  ", _amount);
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).deposit{value: _amount}(vaultId);
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).withdrawUniPositionToken(vaultId);
+            console.log('ready for rebal');
             for (uint256 i; i < data.length; i++) {
                 if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.IncreaseLpLiquidity
@@ -592,6 +596,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         data[i].data,
                         (ControllerHelperDataType.IncreaseLpLiquidityParam)
                     );
+                    console.log('increaseLiquidityParam.wPowerPerpAmountToLp', increaseLiquidityParam.wPowerPerpAmountToLp);
+                    console.log('increaseLiquidityParam.wethAmountToLp', increaseLiquidityParam.wethAmountToLp);
 
                     ControllerHelperUtil.increaseLpLiquidity(
                         ControllerHelperDiamondStorage.getAddressAtSlot(0),
