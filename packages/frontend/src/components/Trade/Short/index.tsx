@@ -34,7 +34,12 @@ import { useETHPrice } from '@hooks/useETHPrice'
 import { collatRatioAtom } from 'src/state/ethPriceCharts/atoms'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
 import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
-import { useGetDebtAmount, useGetShortAmountFromDebt, useUpdateOperator } from 'src/state/controller/hooks'
+import {
+  useGetCollatRatioAndLiqPrice,
+  useGetDebtAmount,
+  useGetShortAmountFromDebt,
+  useUpdateOperator,
+} from 'src/state/controller/hooks'
 import { useComputeSwaps, useFirstValidVault, useLPPositionsQuery } from 'src/state/positions/hooks'
 import {
   ethTradeAmountAtom,
@@ -55,6 +60,7 @@ import useAppEffect from '@hooks/useAppEffect'
 import useAppCallback from '@hooks/useAppCallback'
 import { useVaultHistoryQuery } from '@hooks/useVaultHistory'
 import useAppMemo from '@hooks/useAppMemo'
+import floatifyBigNums from '@utils/floatifyBigNums'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -661,6 +667,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const [debtAmount, setDebtAmount] = useState(BIG_ZERO)
   const [closeType, setCloseType] = useState(CloseType.FULL)
   const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
+  const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
 
   const classes = useStyles()
   const {
@@ -698,7 +705,6 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const { data } = useWalletBalance()
   const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
-  const normalizationFactor = useAtomValue(normFactorAtom)
 
   const { loading: isPositionFinishedCalc } = useLPPositionsQuery()
   const { updateVault } = useVaultManager()
@@ -717,10 +723,16 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   }, [vault, vault?.shortAmount])
 
   useAppEffect(() => {
-    const rSqueeth = normalizationFactor.multipliedBy(amount || 1).dividedBy(10000)
-    const liqp = withdrawCollat.dividedBy(rSqueeth.multipliedBy(1.5))
-    setLiqPrice(liqp)
-  }, [amount, collatPercent, withdrawCollat, normalizationFactor])
+    getCollatRatioAndLiqPrice(
+      neededCollat,
+      finalShortAmount.minus(amount),
+      vault?.NFTCollateralId ? Number(vault.NFTCollateralId) : undefined,
+    ).then(({ liquidationPrice }) => {
+      console.log(vault?.NFTCollateralId)
+      console.log(floatifyBigNums({ liquidationPrice, amount: finalShortAmount.minus(amount) }))
+      setLiqPrice(liquidationPrice)
+    })
+  }, [amount, neededCollat, finalShortAmount, vault?.NFTCollateralId, getCollatRatioAndLiqPrice])
 
   // useAppEffect(() => {
   //   if (shortVaults[firstValidVault]?.shortAmount && shortVaults[firstValidVault]?.shortAmount.lt(amount)) {
@@ -733,7 +745,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
     if (!vault) return
 
     setIsVaultApproved(vault?.operator?.toLowerCase() === shortHelper?.toLowerCase())
-  }, [vaultId, shortHelper, vault])
+  }, [shortHelper, vault])
 
   useAppEffect(() => {
     if (amount.isEqualTo(0)) {
@@ -1165,7 +1177,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
           />
           <div className={classes.divider}>
             <TradeInfoItem
-              label="Liquidation Price"
+              label="New Liquidation Price"
               value={liqPrice.toFixed(2)}
               unit="USDC"
               tooltip={`${Tooltips.LiquidationPrice}. ${Tooltips.Twap}`}
