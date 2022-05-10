@@ -34,7 +34,12 @@ import { useETHPrice } from '@hooks/useETHPrice'
 import { collatRatioAtom } from 'src/state/ethPriceCharts/atoms'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
 import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
-import { useGetDebtAmount, useGetShortAmountFromDebt, useUpdateOperator } from 'src/state/controller/hooks'
+import {
+  useGetCollatRatioAndLiqPrice,
+  useGetDebtAmount,
+  useGetShortAmountFromDebt,
+  useUpdateOperator,
+} from 'src/state/controller/hooks'
 import { useComputeSwaps, useFirstValidVault, useLPPositionsQuery } from 'src/state/positions/hooks'
 import {
   ethTradeAmountAtom,
@@ -47,7 +52,6 @@ import {
   tradeTypeAtom,
 } from 'src/state/trade/atoms'
 import { toTokenAmount } from '@utils/calculations'
-import { normFactorAtom } from 'src/state/controller/atoms'
 import { TradeType } from '../../../types'
 import Cancelled from '../Cancelled'
 import { useVaultData } from '@hooks/useVaultData'
@@ -244,9 +248,9 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
 
   const updateOperator = useUpdateOperator()
   const getShortAmountFromDebt = useGetShortAmountFromDebt()
+  const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
   const getDebtAmount = useGetDebtAmount()
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
-  const normalizationFactor = useAtomValue(normFactorAtom)
 
   const [quote, setQuote] = useAtom(quoteAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
@@ -276,10 +280,12 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   }, [existingCollatPercent])
 
   useAppEffect(() => {
-    const rSqueeth = normalizationFactor.multipliedBy(amount || 1).dividedBy(10000)
-    const liqp = _totalCollateral.dividedBy(rSqueeth.multipliedBy(1.5))
-    if (liqp.toString() || liqp.toString() !== '0') setLiqPrice(liqp)
-  }, [amount, collatPercent, _totalCollateral, normalizationFactor])
+    getCollatRatioAndLiqPrice(_totalCollateral, amount.plus(vault?.shortAmount ?? BIG_ZERO)).then(
+      ({ liquidationPrice }) => {
+        setLiqPrice(liquidationPrice)
+      },
+    )
+  }, [_totalCollateral, amount, getCollatRatioAndLiqPrice, vault?.shortAmount])
 
   // useAppEffect(() => {
   //   if (!open && shortVaults.length && shortVaults[firstValidVault].shortAmount.lt(amount)) {

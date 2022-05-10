@@ -21,7 +21,11 @@ import { useAtomValue } from 'jotai'
 import { addressesAtom, existingCollatAtom, existingCollatPercentAtom } from 'src/state/positions/atoms'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
-import { useGetShortAmountFromDebt, useOpenDepositAndMint } from 'src/state/controller/hooks'
+import {
+  useGetCollatRatioAndLiqPrice,
+  useGetShortAmountFromDebt,
+  useOpenDepositAndMint,
+} from 'src/state/controller/hooks'
 import { useFirstValidVault } from 'src/state/positions/hooks'
 import { useVaultData } from '@hooks/useVaultData'
 import { normFactorAtom } from 'src/state/controller/atoms'
@@ -95,6 +99,7 @@ const Mint: React.FC = () => {
   const normalizationFactor = useAtomValue(normFactorAtom)
   const openDepositAndMint = useOpenDepositAndMint()
   const getShortAmountFromDebt = useGetShortAmountFromDebt()
+  const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
   const { validVault: vault, vaultId } = useFirstValidVault()
   const { existingCollat, existingCollatPercent } = useVaultData(vault)
 
@@ -107,6 +112,7 @@ const Mint: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [mintMinCollatError, setMintMinCollatError] = useState('')
   const [minCollRatioError, setMinCollRatioError] = useState('')
+  const [liqPrice, setLiqPrice] = useState(BIG_ZERO)
 
   const _totalCollateral = vault ? vault.collateralAmount.plus(collatAmountBN) : collatAmountBN
 
@@ -154,17 +160,25 @@ const Mint: React.FC = () => {
     }
   }, [balance?.toString(), connected, existingCollat.toString(), collatAmountBN.toString(), collatPercent])
 
-  const liqPrice = useAppMemo(() => {
-    const rSqueeth = normalizationFactor.multipliedBy(mintAmount.toNumber() || new BigNumber(1)).dividedBy(10000)
+  // const liqPrice = useAppMemo(() => {
+  //   const rSqueeth = normalizationFactor.multipliedBy(mintAmount.toNumber() || new BigNumber(1)).dividedBy(10000)
 
-    return _totalCollateral.div(rSqueeth.multipliedBy(1.5))
-  }, [
-    mintAmount.toString(),
-    collatPercent,
-    collatAmount.toString(),
-    normalizationFactor.toString(),
-    _totalCollateral.toString(),
-  ])
+  //   return _totalCollateral.div(rSqueeth.multipliedBy(1.5))
+  // }, [
+  //   mintAmount.toString(),
+  //   collatPercent,
+  //   collatAmount.toString(),
+  //   normalizationFactor.toString(),
+  //   _totalCollateral.toString(),
+  // ])
+
+  useAppEffect(() => {
+    getCollatRatioAndLiqPrice(_totalCollateral, mintAmount.plus(vault?.shortAmount ?? BIG_ZERO)).then(
+      ({ liquidationPrice }) => {
+        setLiqPrice(liquidationPrice)
+      },
+    )
+  }, [_totalCollateral, mintAmount, getCollatRatioAndLiqPrice, vault?.shortAmount])
 
   return (
     <div className={classes.mintContainer}>
