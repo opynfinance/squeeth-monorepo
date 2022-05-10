@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: BUSL-1.1
-
+import 'hardhat/console.sol';
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
@@ -278,7 +278,6 @@ library ControllerHelperUtil {
     function sendBack(address _weth, address _wPowerPerp) public {
         IWETH9(_weth).withdraw(IWETH9(_weth).balanceOf(address(this)));
         payable(msg.sender).sendValue(address(this).balance);
-
         uint256 wPowerPerpBalance = IWPowerPerp(_wPowerPerp).balanceOf(address(this));
         if (wPowerPerpBalance > 0) {
             IWPowerPerp(_wPowerPerp).transfer(msg.sender, wPowerPerpBalance);
