@@ -1,20 +1,15 @@
 import BigNumber from 'bignumber.js'
-import { useState } from 'react'
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtom } from 'jotai'
 
-import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
-import { readyAtom } from 'src/state/squeethPool/atoms'
-import { useGetCollatRatioAndLiqPrice, useGetVault } from 'src/state/controller/hooks'
+import { useGetCollatRatioAndLiqPrice } from 'src/state/controller/hooks'
 import {
   collatPercentAtom,
   existingCollatAtom,
   existingCollatPercentAtom,
   existingLiqPriceAtom,
-  vaultAtom,
 } from 'src/state/positions/atoms'
 // import { normFactorAtom } from 'src/state/controller/atoms'
 import useAppEffect from './useAppEffect'
-import useAppCallback from './useAppCallback'
 
 interface IVault {
   id: string

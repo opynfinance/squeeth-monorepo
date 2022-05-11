@@ -48,6 +48,7 @@ const useStyles = makeStyles((theme) =>
     innerPositionData: {
       display: 'flex',
       width: '100%',
+      justifyContent: 'space-between',
     },
     positionTitle: {
       width: '30%',
@@ -84,6 +85,10 @@ const useStyles = makeStyles((theme) =>
     },
     dotIcon: {
       marginRight: '1em',
+    },
+    pnlTitle: {
+      display: 'flex',
+      alignItems: 'center',
     },
   }),
 )
