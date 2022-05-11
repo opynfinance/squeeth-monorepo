@@ -356,7 +356,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
     }
 
     console.log(currentImpliedFunding, dailyHistoricalFunding.funding * 1.75)
-    if (currentImpliedFunding >= 1.75 * dailyHistoricalFunding.funding && Number(ethTradeAmount) > 0) {
+    if (currentImpliedFunding >= 1.3 * dailyHistoricalFunding.funding && Number(ethTradeAmount) > 0) {
       const fundingPercent = (currentImpliedFunding / dailyHistoricalFunding.funding - 1) * 100
       highVolError = `Funding ${fundingPercent.toFixed(0)}% above yesterday. Consider buying later`
     }
