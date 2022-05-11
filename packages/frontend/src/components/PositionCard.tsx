@@ -18,7 +18,6 @@ import {
   useShortRealizedPnl,
   useSwaps,
 } from 'src/state/positions/hooks'
-import { useETHPrice } from '@hooks/useETHPrice'
 import { isLPAtom, positionTypeAtom, swapsAtom, isToHidePnLAtom } from 'src/state/positions/atoms'
 import {
   actualTradeTypeAtom,
@@ -29,10 +28,11 @@ import {
   tradeTypeAtom,
 } from 'src/state/trade/atoms'
 import {
-  useBuyAndSellQuote,
   useLongGain,
-  useLongUnrealizedPNL,
   useShortGain,
+  useCurrentLongPositionValue,
+  useCurrentShortPositionValue,
+  useLongUnrealizedPNL,
   useShortUnrealizedPNL,
 } from 'src/state/pnl/hooks'
 import { loadingAtom } from 'src/state/pnl/atoms'
@@ -183,9 +183,10 @@ const pnlClass = (positionType: string, long: number | BigNumber, short: number 
 const PositionCard: React.FC = () => {
   const shortGain = useShortGain()
   const longGain = useLongGain()
-  const { buyQuote, sellQuote } = useBuyAndSellQuote()
   const longUnrealizedPNL = useLongUnrealizedPNL()
   const shortUnrealizedPNL = useShortUnrealizedPNL()
+  const longPositionValue = useCurrentLongPositionValue()
+  const shortPositionValue = useCurrentShortPositionValue()
   const loading = useAtomValue(loadingAtom)
   const isToHidePnL = useAtomValue(isToHidePnLAtom)
 
@@ -208,7 +209,6 @@ const PositionCard: React.FC = () => {
   const actualTradeType = useAtomValue(actualTradeTypeAtom)
   const tradeAmountInput = useAtomValue(sqthTradeAmountAtom)
   const tradeType = useAtomValue(tradeTypeAtom)
-  const ethPrice = useETHPrice()
   const prevSwapsData = usePrevious(swaps)
   const tradeAmount = useAppMemo(() => new BigNumber(tradeAmountInput), [tradeAmountInput])
   const [fetchingNew, setFetchingNew] = useState(false)
@@ -368,9 +368,8 @@ const PositionCard: React.FC = () => {
                   Loading
                 </Typography>
               ) : (
-                <Typography variant="caption" color="textSecondary">
-                  ≈ ${' '}
-                  {getPositionBasedValue(sellQuote.amountOut, buyQuote, new BigNumber(0)).times(ethPrice).toFixed(2)}
+                <Typography variant="caption" color="textSecondary" style={{ marginTop: '.5em' }}>
+                  ≈ $ {getPositionBasedValue(longPositionValue, shortPositionValue, new BigNumber(0)).toFixed(2)}
                 </Typography>
               )}
             </div>

@@ -12,31 +12,22 @@ type CrabPositionType = {
   depositedEth: BigNumber
   depositedUsd: BigNumber
   loading: boolean
-  minCurrentEth: BigNumber
-  minCurrentUsd: BigNumber
-  minPnL: BigNumber
-  minPnlUsd: BigNumber
+  pnlWMidPriceInUSD: BigNumber
+  pnlWMidPriceInPerct: BigNumber
+  currentCrabPositionValue: BigNumber
+  currentCrabPositionValueInETH: BigNumber
 }
 
 const CrabPosition: React.FC<CrabPositionType> = ({
   depositedEth,
   depositedUsd,
   loading,
-  minCurrentEth,
-  minCurrentUsd,
-  minPnL,
-  minPnlUsd,
+  pnlWMidPriceInPerct,
+  pnlWMidPriceInUSD,
+  currentCrabPositionValue,
+  currentCrabPositionValueInETH,
 }) => {
   const classes = useStyles()
-
-  const getPnlClassName = () => {
-    if (loading) {
-      return ''
-    }
-
-    return minPnlUsd.gte(0) ? classes.green : classes.red
-  }
-
   const collatRatio = useAtomValue(crabStrategyCollatRatioAtom)
   const setStrategyData = useSetStrategyData()
   const calculateCurrentValue = useCalculateCurrentValue()
@@ -73,9 +64,9 @@ const CrabPosition: React.FC<CrabPositionType> = ({
             <Typography variant="caption" component="span" color="textSecondary">
               Current Position
             </Typography>
-            <Typography variant="body1">{!loading ? `$ ${minCurrentUsd.toFixed(2)}` : 'Loading'}</Typography>
+            <Typography variant="body1">{!loading ? `$ ${currentCrabPositionValue.toFixed(2)}` : 'Loading'}</Typography>
             <Typography variant="body2" color="textSecondary">
-              {!loading ? `${minCurrentEth.toFixed(6)}  ETH` : 'Loading'}
+              {!loading ? `${currentCrabPositionValueInETH.toFixed(6)}  ETH` : 'Loading'}
             </Typography>
           </div>
         </div>
@@ -87,11 +78,15 @@ const CrabPosition: React.FC<CrabPositionType> = ({
             <Tooltip title={Tooltips.CrabPnL}>
               <InfoIcon fontSize="small" className={classes.infoIcon} />
             </Tooltip>
-            <Typography variant="body1" className={getPnlClassName()} id="pos-page-crab-pnl-amount">
-              {!loading ? '$' + `${minPnlUsd.toFixed(2)}` : 'Loading'}
+            <Typography
+              variant="body1"
+              className={pnlWMidPriceInUSD.isLessThan(0) ? classes.red : classes.green}
+              id="pos-page-crab-pnl-amount"
+            >
+              {!loading ? '$' + `${pnlWMidPriceInUSD.toFixed(2)}` : 'Loading'}
             </Typography>
-            <Typography variant="caption" className={getPnlClassName()}>
-              {!loading ? `${minPnL.toFixed(2)}` + '%' : 'Loading'}
+            <Typography variant="caption" className={pnlWMidPriceInPerct.isLessThan(0) ? classes.red : classes.green}>
+              {!loading ? `${pnlWMidPriceInPerct.toFixed(2)}` + '%' : 'Loading'}
             </Typography>
           </div>
         </div>

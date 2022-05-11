@@ -1,6 +1,6 @@
 import BigNumber from 'bignumber.js'
-import { useState } from 'react'
 import { useAtom } from 'jotai'
+import { useState } from 'react'
 
 import { useGetCollatRatioAndLiqPrice } from 'src/state/controller/hooks'
 import { collatPercentAtom, existingCollatPercentAtom, existingLiqPriceAtom } from 'src/state/positions/atoms'

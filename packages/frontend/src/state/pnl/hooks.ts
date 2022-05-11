@@ -15,9 +15,16 @@ import {
   shortGainAtom,
   shortUnrealizedPNLAtom,
 } from './atoms'
-import { isToHidePnLAtom, isWethToken0Atom, positionTypeAtom, swapsAtom } from '../positions/atoms'
+import {
+  isToHidePnLAtom,
+  isWethToken0Atom,
+  positionTypeAtom,
+  longPositionValueAtom,
+  shortPositionValueAtom,
+  swapsAtom,
+} from '../positions/atoms'
 import { readyAtom } from '../squeethPool/atoms'
-import { useGetBuyQuote, useGetSellQuote } from '../squeethPool/hooks'
+import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValue } from '../squeethPool/hooks'
 import { BIG_ZERO } from '@constants/index'
 import { PositionType } from '../../types'
 import { useVaultData } from '@hooks/useVaultData'
@@ -66,6 +73,7 @@ export function useEthCollateralPnl() {
   return ethCollateralPnl
 }
 
+/* depreciated */
 export function useBuyAndSellQuote() {
   const { loading: positionsLoading } = useSwaps()
   const { squeethAmount } = useComputeSwaps()
@@ -87,49 +95,86 @@ export function useBuyAndSellQuote() {
   return { buyQuote, sellQuote }
 }
 
-export function useLongGain() {
-  const { totalUSDFromBuy } = useComputeSwaps()
-  const sellQuote = useAtomValue(sellQuoteAtom)
-  const loading = useAtomValue(loadingAtom)
-  const [longGain, setLongGain] = useAtom(longGainAtom)
-  const longUnrealizedPNL = useAtomValue(longUnrealizedPNLAtom)
-  const isToHidePnL = useAtomValue(isToHidePnLAtom)
+export function useCurrentLongPositionValue() {
+  const { squeethAmount } = useComputeSwaps()
+  const getWSqueethPositionValue = useGetWSqueethPositionValue()
+  const [positionValue, setPositionValue] = useAtom(longPositionValueAtom)
+  const positionType = useAtomValue(positionTypeAtom)
 
   useAppEffect(() => {
-    if (isToHidePnL || (sellQuote.amountOut.isZero() && !loading)) {
-      setLongGain(BIG_ZERO)
+    if (squeethAmount.isZero() || positionType != PositionType.LONG) {
+      setPositionValue(BIG_ZERO)
       return
     }
 
-    const _gain = longUnrealizedPNL.usd.dividedBy(totalUSDFromBuy).times(100)
+    const squeethPositionValueInUSD = getWSqueethPositionValue(squeethAmount)
+    setPositionValue(squeethPositionValueInUSD)
+  }, [squeethAmount, positionType, getWSqueethPositionValue, setPositionValue])
+
+  return positionValue
+}
+
+export function useCurrentShortPositionValue() {
+  const { squeethAmount } = useComputeSwaps()
+  const getWSqueethPositionValue = useGetWSqueethPositionValue()
+
+  const [positionValue, setPositionValue] = useAtom(shortPositionValueAtom)
+  const positionType = useAtomValue(positionTypeAtom)
+
+  useAppEffect(() => {
+    if (squeethAmount.isZero() || positionType != PositionType.SHORT) {
+      setPositionValue(BIG_ZERO)
+      return
+    }
+
+    const squeethPositionValueInUSD = getWSqueethPositionValue(squeethAmount)
+    setPositionValue(squeethPositionValueInUSD)
+  }, [squeethAmount, setPositionValue, positionType, getWSqueethPositionValue])
+
+  return positionValue
+}
+
+export function useLongGain() {
+  const [longGain, setLongGain] = useAtom(longGainAtom)
+  const { totalUSDFromBuy } = useComputeSwaps()
+  const longPositionValue = useAtomValue(longPositionValueAtom)
+  const positionType = useAtomValue(positionTypeAtom)
+  const setLoading = useUpdateAtom(loadingAtom)
+
+  useAppEffect(() => {
+    if (longPositionValue.isZero() && positionType != PositionType.LONG) {
+      setLongGain(BIG_ZERO)
+      setLoading(false)
+      return
+    }
+
+    // (a - b) / b === a / b - 1
+    const _gain = longPositionValue.dividedBy(totalUSDFromBuy).minus(1).times(100)
     setLongGain(_gain)
-  }, [isToHidePnL, loading, longUnrealizedPNL.usd, sellQuote.amountOut, totalUSDFromBuy, setLongGain])
+    setLoading(false)
+  }, [setLoading, positionType, longPositionValue, totalUSDFromBuy, setLongGain])
 
   return longGain
 }
 
 export function useShortGain() {
-  const { squeethAmount, totalUSDFromSell } = useComputeSwaps()
   const [shortGain, setShortGain] = useAtom(shortGainAtom)
-  const shortUnrealizedPNL = useAtomValue(shortUnrealizedPNLAtom)
-  const { validVault } = useFirstValidVault()
-  const { existingCollat } = useVaultData(validVault)
-  const index = useAtomValue(indexAtom)
-  const isToHidePnL = useAtomValue(isToHidePnLAtom)
+  const shortPositionValue = useAtomValue(shortPositionValueAtom)
+  const positionType = useAtomValue(positionTypeAtom)
+  const setLoading = useUpdateAtom(loadingAtom)
+  const { totalUSDFromBuy } = useComputeSwaps()
 
   useAppEffect(() => {
-    if (isToHidePnL || squeethAmount.isZero() || shortUnrealizedPNL.usd.isZero()) {
+    if (shortPositionValue.isZero() && positionType != PositionType.SHORT) {
       setShortGain(BIG_ZERO)
+      setLoading(false)
       return
     }
-
-    const _gain = shortUnrealizedPNL.usd
-      .dividedBy(totalUSDFromSell.plus(existingCollat.times(toTokenAmount(index, 18).sqrt())))
-      .times(100)
-
+    // (a - b) / b === a / b - 1
+    const _gain = shortPositionValue.dividedBy(totalUSDFromBuy).minus(1).times(100)
     setShortGain(_gain)
-  }, [isToHidePnL, index, existingCollat, shortUnrealizedPNL.usd, squeethAmount, totalUSDFromSell, setShortGain])
-
+    setLoading(false)
+  }, [setLoading, shortPositionValue, totalUSDFromBuy, positionType, setShortGain])
   return shortGain
 }
 
@@ -137,7 +182,7 @@ export function useLongUnrealizedPNL() {
   const { squeethAmount } = useComputeSwaps()
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const positionType = useAtomValue(positionTypeAtom)
-  const sellQuote = useAtomValue(sellQuoteAtom)
+  const longPositionValue = useAtomValue(longPositionValueAtom)
   const isToHidePnL = useAtomValue(isToHidePnLAtom)
   const [longUnrealizedPNL, setLongUnrealizedPNL] = useAtom(longUnrealizedPNLAtom)
   const index = useAtomValue(indexAtom)
@@ -150,15 +195,15 @@ export function useLongUnrealizedPNL() {
       if (
         !isToHidePnL &&
         swaps?.length &&
-        !sellQuote.amountOut.isZero() &&
         !index.isZero() &&
+        !longPositionValue.isZero() &&
         !squeethAmount.isZero() &&
         positionType === PositionType.LONG
       ) {
         const pnl = await calcDollarLongUnrealizedpnl(
           swaps,
           isWethToken0,
-          sellQuote,
+          longPositionValue,
           toTokenAmount(index, 18).sqrt(),
           squeethAmount,
         )
@@ -167,17 +212,7 @@ export function useLongUnrealizedPNL() {
         setLongUnrealizedPNL({ usd: BIG_ZERO, eth: BIG_ZERO, loading: true })
       }
     })()
-  }, [
-    isToHidePnL,
-    index,
-    isWethToken0,
-    sellQuote.amountOut,
-    swaps,
-    squeethAmount,
-    positionType,
-    setLongUnrealizedPNL,
-    sellQuote,
-  ])
+  }, [isToHidePnL, index, isWethToken0, swaps, squeethAmount, positionType, setLongUnrealizedPNL, longPositionValue])
 
   return longUnrealizedPNL
 }
@@ -186,8 +221,9 @@ export function useShortUnrealizedPNL() {
   const { squeethAmount } = useComputeSwaps()
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const positionType = useAtomValue(positionTypeAtom)
-  const buyQuote = useAtomValue(buyQuoteAtom)
   const ethCollateralPnl = useEthCollateralPnl()
+
+  const shortPositionValue = useAtomValue(shortPositionValueAtom)
   const [shortUnrealizedPNL, setShortUnrealizedPNL] = useAtom(shortUnrealizedPNLAtom)
   const index = useAtomValue(indexAtom)
   const isToHidePnL = useAtomValue(isToHidePnLAtom)
@@ -201,7 +237,7 @@ export function useShortUnrealizedPNL() {
       if (
         !isToHidePnL &&
         swaps?.length &&
-        !buyQuote.isZero() &&
+        !shortPositionValue.isZero() &&
         !index.isZero() &&
         !ethCollateralPnl.isZero() &&
         !squeethAmount.isZero() &&
@@ -211,7 +247,7 @@ export function useShortUnrealizedPNL() {
         const pnl = await calcDollarShortUnrealizedpnl(
           swaps,
           isWethToken0,
-          buyQuote,
+          shortPositionValue,
           toTokenAmount(index, 18).sqrt(),
           squeethAmount,
           ethCollateralPnl,
@@ -224,8 +260,8 @@ export function useShortUnrealizedPNL() {
       }
     })()
   }, [
+    shortPositionValue,
     isToHidePnL,
-    buyQuote,
     ethCollateralPnl,
     index,
     isWethToken0,

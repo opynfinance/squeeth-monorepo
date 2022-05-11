@@ -15,6 +15,10 @@ import {
   isTimeHedgeAvailableAtom,
   isPriceHedgeAvailableAtom,
   currentEthLoadingAtom,
+  currentCrabPositionValueAtom,
+  currentCrabPositionValueInETHAtom,
+  crabPositionValueLoadingAtom,
+  crabLoadingAtom,
 } from './atoms'
 import { addressesAtom } from '../positions/atoms'
 import {
@@ -31,13 +35,20 @@ import { useGetCollatRatioAndLiqPrice, useGetVault } from '../controller/hooks'
 import db from '@utils/firestore'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import BigNumber from 'bignumber.js'
-import { useGetBuyQuote, useGetSellQuote } from '../squeethPool/hooks'
+import {
+  useGetBuyQuote,
+  useGetSellQuote,
+  useGetWSqueethPositionValue,
+  useGetWSqueethPositionValueInETH,
+} from '../squeethPool/hooks'
 import { fromTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
 import { addressAtom } from '../wallet/atoms'
 import { currentImpliedFundingAtom } from '../controller/atoms'
 import { crabStrategyContractAtom } from '../contracts/atoms'
 import useAppCallback from '@hooks/useAppCallback'
+import { BIG_ZERO } from '@constants/index'
+import useAppEffect from '@hooks/useAppEffect'
 
 export const useSetStrategyData = () => {
   const setMaxCap = useUpdateAtom(maxCapAtom)
@@ -131,13 +142,53 @@ export const useCalculateCurrentValue = () => {
     } else {
       setCurrentEthLoading(false)
     }
-  }, [calculateEthWillingToPay, contract, slippage, userCrabBalance, setCurrentEthValue, setCurrentEthLoading, vault?.id])
+  }, [
+    calculateEthWillingToPay,
+    contract,
+    slippage,
+    userCrabBalance,
+    setCurrentEthValue,
+    setCurrentEthLoading,
+    vault?.id,
+  ])
 
   // useEffect(() => {
   //   calculateCurrentValue()
   // }, [calculateCurrentValue])
 
   return calculateCurrentValue
+}
+
+export const useCurrentCrabPositionValue = () => {
+  const { crabStrategy } = useAtomValue(addressesAtom)
+  const crabLoading = useAtomValue(crabLoadingAtom)
+
+  const [isCrabPositionValueLoading, setIsCrabPositionValueLoading] = useAtom(crabPositionValueLoadingAtom)
+  const [currentCrabPositionValue, setCurrentCrabPositionValue] = useAtom(currentCrabPositionValueAtom)
+  const [currentCrabPositionValueInETH, setCurrentCrabPositionValueInETH] = useAtom(currentCrabPositionValueInETHAtom)
+  const { value: userCrabBalance } = useTokenBalance(crabStrategy, 15, 18)
+  const getWSqueethPositionValue = useGetWSqueethPositionValue()
+  const getWSqueethPositionValueInETH = useGetWSqueethPositionValueInETH()
+  const contract = useAtomValue(crabStrategyContractAtom)
+
+  useAppEffect(() => {
+    ;(async () => {
+      setIsCrabPositionValueLoading(true)
+      const squeethDebt = await getWsqueethFromCrabAmount(userCrabBalance, contract)
+      if (!squeethDebt || crabLoading) {
+        setCurrentCrabPositionValue(BIG_ZERO)
+        setCurrentCrabPositionValueInETH(BIG_ZERO)
+        return
+      }
+      const crabPositionValueInUSD = getWSqueethPositionValue(squeethDebt)
+      const crabPositionValueInETH = getWSqueethPositionValueInETH(squeethDebt)
+      setCurrentCrabPositionValue(crabPositionValueInUSD)
+      setCurrentCrabPositionValueInETH(crabPositionValueInETH)
+      setIsCrabPositionValueLoading(false)
+    })()
+  }, [crabStrategy, userCrabBalance, contract, crabLoading])
+
+  return { currentCrabPositionValue, currentCrabPositionValueInETH, isCrabPositionValueLoading }
 }
 
 export const useCalculateETHtoBorrowFromUniswap = () => {

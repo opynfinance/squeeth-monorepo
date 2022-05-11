@@ -33,6 +33,8 @@ import ShortSqueeth from './ShortSqueeth'
 import LPedSqueeth from './LPedSqueeth'
 import MintedSqueeth from './MintedSqueeth'
 import ShortSqueethLiquidated from './ShortSqueethLiquidated'
+import { useCurrentCrabPositionValue } from 'src/state/crab/hooks'
+import { pnl, pnlInPerct } from 'src/lib/pnl'
 
 export default function Positions() {
   const classes = useStyles()
@@ -48,15 +50,20 @@ export default function Positions() {
   const shortDebt = useShortDebt()
   const index = useAtomValue(indexAtom)
   usePositionsAndFeesComputation()
-  const {
-    depositedEth,
-    depositedUsd,
-    minCurrentEth,
-    minCurrentUsd,
-    minPnL,
-    minPnlUsd,
-    loading: crabLoading,
-  } = useCrabPosition(address || '')
+  const { depositedEth, depositedUsd, loading: isCrabPositonLoading } = useCrabPosition(address || '')
+  const { currentCrabPositionValue, currentCrabPositionValueInETH, isCrabPositionValueLoading } =
+    useCurrentCrabPositionValue()
+
+  const isCrabloading = useAppMemo(() => {
+    return isCrabPositonLoading || isCrabPositionValueLoading
+  }, [isCrabPositonLoading, isCrabPositionValueLoading])
+
+  const pnlWMidPriceInUSD = useAppMemo(() => {
+    return pnl(currentCrabPositionValue, depositedUsd)
+  }, [currentCrabPositionValue, depositedUsd])
+  const pnlWMidPriceInPerct = useAppMemo(() => {
+    return pnlInPerct(currentCrabPositionValue, depositedUsd)
+  }, [currentCrabPositionValue, depositedUsd])
 
   const vaultExists = useAppMemo(() => {
     return Boolean(vault && vault.collateralAmount?.isGreaterThan(0))
@@ -114,11 +121,11 @@ export default function Positions() {
           <CrabPosition
             depositedEth={depositedEth}
             depositedUsd={depositedUsd}
-            loading={crabLoading}
-            minCurrentEth={minCurrentEth}
-            minCurrentUsd={minCurrentUsd}
-            minPnL={minPnL}
-            minPnlUsd={minPnlUsd}
+            loading={isCrabloading}
+            pnlWMidPriceInUSD={pnlWMidPriceInUSD}
+            pnlWMidPriceInPerct={pnlWMidPriceInPerct}
+            currentCrabPositionValue={currentCrabPositionValue}
+            currentCrabPositionValueInETH={currentCrabPositionValueInETH}
           />
         )}
 
