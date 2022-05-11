@@ -18,6 +18,8 @@ export const profitableMovePercentAtom = atom(0)
 export const crabStrategySlippageAtom = atom(0.5)
 export const isTimeHedgeAvailableAtom = atom(false)
 export const isPriceHedgeAvailableAtom = atom(false)
+export const crabPositionValueLoadingAtom = atom(true)
+
 export const crabLoadingAtom = atom((get) => {
   const loading = get(loadingAtom)
   const ready = get(readyAtom)

@@ -17,6 +17,7 @@ import {
   currentEthLoadingAtom,
   currentCrabPositionValueAtom,
   currentCrabPositionValueInETHAtom,
+  crabPositionValueLoadingAtom,
 } from './atoms'
 import { addressesAtom } from '../positions/atoms'
 import {
@@ -159,6 +160,7 @@ export const useCalculateCurrentValue = () => {
 
 export const useCurrentCrabPositionValue = () => {
   const { crabStrategy } = useAtomValue(addressesAtom)
+  const [isCrabPositionValueLoading, setIsCrabPositionValueLoading] = useAtom(crabPositionValueLoadingAtom)
   const [currentCrabPositionValue, setCurrentCrabPositionValue] = useAtom(currentCrabPositionValueAtom)
   const [currentCrabPositionValueInETH, setCurrentCrabPositionValueInETH] = useAtom(currentCrabPositionValueInETHAtom)
   const { value: userCrabBalance } = useTokenBalance(crabStrategy, 15, 18)
@@ -178,10 +180,11 @@ export const useCurrentCrabPositionValue = () => {
       const crabPositionValueInETH = getWSqueethPositionValueInETH(squeethDebt)
       setCurrentCrabPositionValue(crabPositionValueInUSD)
       setCurrentCrabPositionValueInETH(crabPositionValueInETH)
+      setIsCrabPositionValueLoading(false)
     })()
-  }, [userCrabBalance, contract])
+  }, [crabStrategy, userCrabBalance, contract])
 
-  return { currentCrabPositionValue, currentCrabPositionValueInETH }
+  return { currentCrabPositionValue, currentCrabPositionValueInETH, isCrabPositionValueLoading }
 }
 
 export const useCalculateETHtoBorrowFromUniswap = () => {

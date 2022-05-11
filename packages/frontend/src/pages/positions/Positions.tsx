@@ -50,10 +50,13 @@ export default function Positions() {
   const shortDebt = useShortDebt()
   const index = useAtomValue(indexAtom)
   usePositionsAndFeesComputation()
-  const { depositedEth, depositedUsd, loading: crabLoading } = useCrabPosition(address || '')
-  const { currentCrabPositionValue, currentCrabPositionValueInETH } = useCurrentCrabPositionValue()
-  const pnlWMidPriceInUSD = pnl(currentCrabPositionValue, depositedUsd)
-  const pnlWMidPriceInPerct = pnlInPerct(currentCrabPositionValue, depositedUsd)
+  const { depositedEth, depositedUsd, loading: isCrabPositonLoading } = useCrabPosition(address || '')
+  const { currentCrabPositionValue, currentCrabPositionValueInETH, isCrabPositionValueLoading } =
+    useCurrentCrabPositionValue()
+
+  const isCrabloading = useAppMemo(() => {
+    return isCrabPositonLoading || isCrabPositionValueLoading
+  }, [isCrabPositonLoading, isCrabPositionValueLoading])
 
   const vaultExists = useAppMemo(() => {
     return Boolean(vault && vault.collateralAmount?.isGreaterThan(0))
@@ -111,7 +114,7 @@ export default function Positions() {
           <CrabPosition
             depositedEth={depositedEth}
             depositedUsd={depositedUsd}
-            loading={crabLoading}
+            loading={isCrabloading}
             pnlWMidPriceInUSD={pnlWMidPriceInUSD}
             pnlWMidPriceInPerct={pnlWMidPriceInPerct}
             currentCrabPositionValue={currentCrabPositionValue}

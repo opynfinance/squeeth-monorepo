@@ -32,11 +32,15 @@ const useStyles = makeStyles((theme) =>
 
 const CrabPosition: React.FC = () => {
   const address = useAtomValue(addressAtom)
-  const { loading, depositedUsd } = useCrabPosition(address || '')
-  const { currentCrabPositionValue } = useCurrentCrabPositionValue()
+  const { loading: isCrabPositonLoading, depositedUsd } = useCrabPosition(address || '')
+  const { currentCrabPositionValue, isCrabPositionValueLoading } = useCurrentCrabPositionValue()
 
   const classes = useStyles()
   const pnl = pnlInPerct(currentCrabPositionValue, depositedUsd)
+
+  const loading = useAppMemo(() => {
+    return isCrabPositonLoading || isCrabPositionValueLoading
+  }, [isCrabPositonLoading, isCrabPositionValueLoading])
 
   if (loading) {
     return (
