@@ -34,7 +34,7 @@ import { useFlashSwapAndMint } from 'src/state/controllerhelper/hooks'
 import { useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
 import { BIG_ZERO, MIN_COLLATERAL_AMOUNT } from '@constants/index'
-import { connectedWalletAtom, isTransactionFirstStepAtom } from 'src/state/wallet/atoms'
+import { connectedWalletAtom, isTransactionFirstStepAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { addressesAtom, isLongAtom, vaultHistoryUpdatingAtom } from 'src/state/positions/atoms'
 import { useComputeSwaps, useFirstValidVault } from 'src/state/positions/hooks'
 import { useVaultData } from '@hooks/useVaultData'
@@ -130,6 +130,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
   const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
   const [quote, setQuote] = useAtom(quoteAtom)
   const connected = useAtomValue(connectedWalletAtom)
+  const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const isLong = useAtomValue(isLongAtom)
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
@@ -508,12 +509,14 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
                 onClick={handleSubmit}
                 className={classes.amountInput}
                 disabled={
+                  !supportedNetwork ||
                   shortLoading ||
                   Boolean(inputError) ||
                   Boolean(vaultIdDontLoadedError) ||
                   amount.isZero() ||
                   collateral.isZero() ||
-                  collatPercent < 150
+                  collatPercent < 150 ||
+                  (vault && vault.shortAmount.isZero())
                 }
                 variant={shortOpenPriceImpactErrorState ? 'outlined' : 'contained'}
                 style={
@@ -523,7 +526,9 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
                 }
                 id="open-short-submit-tx-btn"
               >
-                {shortLoading ? (
+                {!supportedNetwork ? (
+                  'Unsupported Network'
+                ) : shortLoading ? (
                   <CircularProgress color="primary" size="1.5rem" />
                 ) : (
                   <>
