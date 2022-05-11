@@ -319,7 +319,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             address(this),
             _params.tokenId
         );
-
+        console.log('after transfer of nft to contract');
         // close LP NFT and get Weth and WPowerPerp amounts
         (uint256 wPowerPerpAmountInLp, ) = ControllerHelperUtil.closeUniLp(
             nonfungiblePositionManager,
@@ -332,6 +332,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             }),
             isWethToken0
         );
+        console.log('after closeUniLp');
 
         ControllerHelperUtil.checkClosedLp(
             msg.sender,
@@ -341,6 +342,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             _params.tokenId,
             1e18
         );
+        console.log('after checkClosedLp');
 
         (uint256 wethAmountDesired, uint256 wPowerPerpAmountDesired) = ControllerHelperUtil.getAmountsToLp(
             _params.wPowerPerpPool,
@@ -350,9 +352,11 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             _params.upperTick,
             isWethToken0
         );
+        console.log('after getAmountsToLp');
         if (!isWethToken0) (wethAmountDesired, wPowerPerpAmountDesired) = (wPowerPerpAmountDesired, wethAmountDesired);
 
         if (wPowerPerpAmountDesired > wPowerPerpAmountInLp) {
+            console.log('wPowerPerpAmountDesired > wPowerPerpAmountInLp');
             // if the new position target a higher wPowerPerp amount, swap WETH to reach the desired amount (WETH new position is lower than current WETH in LP)
             _exactOutFlashSwap(
                 weth,
@@ -364,9 +368,11 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 ""
             );
         } else if (wPowerPerpAmountDesired < wPowerPerpAmountInLp) {
+            console.log('wPowerPerpAmountDesired < wPowerPerpAmountInLp');
             // if the new position target lower wPowerPerp amount, swap excess to WETH (position target higher WETH amount)
             uint256 wPowerPerpExcess = wPowerPerpAmountInLp.sub(wPowerPerpAmountDesired);
-
+            console.log('wPowerPerpExcess %s', wPowerPerpExcess);
+            console.log('limit %s', _params.limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18));
             _exactInFlashSwap(
                 wPowerPerp,
                 weth,
@@ -798,6 +804,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         ) {
             IERC20(_tokenIn).transfer(_pool, _amountToPay);
         }
+        console.log('end of loop');
     }
 
     /**

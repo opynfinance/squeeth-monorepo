@@ -950,7 +950,7 @@ describe("ControllerHelper: mainnet fork", function () {
           },
          {
            // Mint new LP (add 0.01 oSQTH noise since exact value will not be known)
-           rebalanceVaultNftType:  BigNumber.from(4), // MintNewLP
+           rebalanceVaultNftType: BigNumber.from(4), // MintNewLP
            // lpWPowerPerpPool: [recipient, wPowerPerpPool, vaultId, wPowerPerpAmount, collateralToDeposit, collateralToLP, amount0Min, amount1Min, lowerTick, upperTick ]
            data: abiCoder.encode(["address", "address", "uint256", 'uint256','uint256', 'uint256', 'uint256', 'uint256', 'int24', 'int24'],
             [controllerHelper.address, wSqueethPool.address, vaultId, wPowerPerpAmountInLPBefore.add(surpriseProceeds), BigNumber.from(0), wethAmountInLPBefore, amount0Min, amount1Min, newTickLower, newTickUpper])
@@ -1240,7 +1240,7 @@ describe("Rebalance LP in vault to just oSQTH", async () => {
    })
 
     
-it("Close vault LP and open new one-siced LP with just oSQTH ", async () => {
+it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
   // Get vault and LP info
   const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
   const depositorEthBalanceBefore = await ethers.provider.getBalance(depositor.address)
