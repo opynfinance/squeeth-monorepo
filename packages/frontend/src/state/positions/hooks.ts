@@ -437,7 +437,7 @@ export const useFirstValidVault = () => {
 
   return {
     isVaultLoading: loading,
-    vaultId: vault?.id || 0,
+    vaultId: Number(vault?.id) || 0,
     validVault: vault,
   }
 }
