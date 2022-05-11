@@ -27,21 +27,16 @@ export const useIntergrateEthInput = () => {
         },
       }
 
-      let start = 0.8
-      let end = 1.5
+      let start = 0
+      let end = 3
 
       let prevState = { ...emptyState }
-      let counter = 0
 
       if (ethDeposited.isZero() || desiredCollatRatio <= 1.5) return emptyState
 
       while (start <= end) {
-        counter++
-
-        if (counter === 100) break
-
         const middle = (start + end) / 2
-        const extimatedOsqthPrice = new BigNumber(middle)
+        const estimatedOsqthPrice = new BigNumber(middle)
           .multipliedBy(normFactor)
           .times(ethPrice.div(new BigNumber(10000)))
 
@@ -49,14 +44,16 @@ export const useIntergrateEthInput = () => {
           new BigNumber(desiredCollatRatio)
             .times(normFactor)
             .times(ethPrice.div(new BigNumber(10000)))
-            .minus(extimatedOsqthPrice),
+            .minus(estimatedOsqthPrice),
         )
 
         const quote = await getSellQuote(oSQTH_mint_guess, slippage)
         const ethBorrow = quote.minimumAmountOut
         const totalCollat = ethDeposited.plus(ethBorrow)
-        const collatRatioAndLiqPrice = await getCollatRatioAndLiqPrice(totalCollat, oSQTH_mint_guess)
-        const { collateralPercent: collatRatio, liquidationPrice: liqPrice } = collatRatioAndLiqPrice
+        const { collateralPercent: collatRatio, liquidationPrice: liqPrice } = await getCollatRatioAndLiqPrice(
+          totalCollat,
+          oSQTH_mint_guess,
+        )
 
         prevState = { ethBorrow, collatRatio, squeethAmount: oSQTH_mint_guess, quote, liqPrice }
 
