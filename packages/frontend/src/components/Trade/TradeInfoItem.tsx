@@ -5,6 +5,7 @@ import AccessTimeIcon from '@material-ui/icons/AccessTime'
 import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import React, { useMemo } from 'react'
+import clsx from 'clsx'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -54,12 +55,13 @@ type tradeType = {
   unit?: string
   frontUnit?: string
   label: string
+  id?: string
   tooltip?: React.ReactNode
   color?: 'primary' | 'red' | 'green'
   priceType?: string
 }
 
-const TradeInfoItem: React.FC<tradeType> = ({ value, unit, frontUnit, label, tooltip, color, priceType }) => {
+const TradeInfoItem: React.FC<tradeType> = ({ value, unit, id, frontUnit, label, tooltip, color, priceType }) => {
   const classes = useStyles()
   const clrClass = useMemo(() => {
     if (color === 'primary') return classes.primary
@@ -70,7 +72,7 @@ const TradeInfoItem: React.FC<tradeType> = ({ value, unit, frontUnit, label, too
   }, [color])
 
   return (
-    <div className={classes.txItem}>
+    <div className={classes.txItem} id={id}>
       <Typography variant="body1" className={classes.txLabel}>
         {label}
         {tooltip ? (
@@ -89,7 +91,11 @@ const TradeInfoItem: React.FC<tradeType> = ({ value, unit, frontUnit, label, too
         <Typography component="span" variant="caption" className={classes.txUnit}>
           {frontUnit}
         </Typography>
-        <Typography component="span" style={{ marginLeft: '8px', fontSize: '.9rem' }} className={clrClass}>
+        <Typography
+          component="span"
+          style={{ marginLeft: '8px', fontSize: '.9rem' }}
+          className={clsx(clrClass, 'trade-info-item-value')}
+        >
           {value}
         </Typography>
         <Typography component="span" variant="caption" className={classes.txUnit}>

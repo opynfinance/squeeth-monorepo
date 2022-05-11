@@ -1,8 +1,7 @@
 import { Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 
 import { LinkButton } from '../Button'
 
@@ -86,7 +85,8 @@ type NumberInputType = {
   max?: string
   onChange: (value: string) => void
   step?: number
-  hint?: string // Used for error as well
+  hint?: string | React.ReactNode // Used for error as well
+  id?: string
   error?: boolean
   actionTxt?: string
   onActionClicked?: () => void
@@ -106,6 +106,7 @@ const NumberInput: React.FC<NumberInputType> = ({
   placeholder,
   unit,
   hint,
+  id,
   error,
   actionTxt,
   onActionClicked,
@@ -146,6 +147,7 @@ const NumberInput: React.FC<NumberInputType> = ({
       <div className={!error ? classes.container : clsx(classes.container, classes.error)}>
         <div className={classes.inputContainer}>
           <input
+            id={id}
             className={classes.input}
             value={value}
             onChange={(event) => onValueChange(event.target.value)}

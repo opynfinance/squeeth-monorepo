@@ -18,7 +18,7 @@ workflows:
             - compile
       - coverage:
           requires:
-            - compile
+            - e2e-test
           context: BUILD_KEYS
       - contract-size:
           requires:
@@ -28,7 +28,11 @@ workflows:
             - compile
       - e2e-test:
           requires:
-            - compile
+            - unit-test-contracts
+      - checkout-and-install-frontend
+      - unit-test-frontend:
+          requires:
+            - checkout-and-install-frontend
 
 jobs:
   checkout-and-install:
@@ -170,3 +174,37 @@ jobs:
           name: Mainnet E2E Test 
           command: |
             ./ci/e2e.sh	
+
+  checkout-and-install-frontend:
+    working_directory: ~/squeeth/packages/frontend
+    docker:
+      - image: circleci/node:16.6.0
+    steps:
+      - checkout:
+          path: ~/squeeth
+      - restore_cache:
+          key: dependency-frontend-cache-{{ checksum "package.json" }}
+      - run:
+          name: Install packages
+          command: yarn install
+      - save_cache: 
+          key: dependency-frontend-cache-{{ checksum "package.json" }}
+          paths:
+            - node_modules
+      - save_cache:
+          key: squeeth-frontend-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - ~/squeeth
+  
+  unit-test-frontend:
+    working_directory: ~/squeeth/packages/frontend
+    docker:
+      - image: circleci/node:16.6.0
+    steps:
+      - checkout:
+          path: ~/squeeth
+      - restore_cache:
+          key: squeeth-frontend-{{ .Environment.CIRCLE_SHA1 }}
+      - run: 
+          name: Unit tests
+          command: yarn test:ci

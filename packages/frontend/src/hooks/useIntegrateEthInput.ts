@@ -18,6 +18,7 @@ export const useIntergrateEthInput = () => {
       const emptyState = {
         squeethAmount: new BigNumber(0),
         ethBorrow: new BigNumber(0),
+        liqPrice: new BigNumber(0),
         collatRatio: 0,
         quote: {
           amountOut: new BigNumber(0),
@@ -26,16 +27,16 @@ export const useIntergrateEthInput = () => {
         },
       }
 
-      let start = 0.8
-      let end = 1.5
+      let start = 0
+      let end = 3
 
       let prevState = { ...emptyState }
 
-      if (ethDeposited.isZero() || desiredCollatRatio < 1.5) return emptyState
+      if (ethDeposited.isZero() || desiredCollatRatio <= 1.5) return emptyState
 
       while (start <= end) {
         const middle = (start + end) / 2
-        const extimatedOsqthPrice = new BigNumber(middle)
+        const estimatedOsqthPrice = new BigNumber(middle)
           .multipliedBy(normFactor)
           .times(ethPrice.div(new BigNumber(10000)))
 
@@ -43,16 +44,18 @@ export const useIntergrateEthInput = () => {
           new BigNumber(desiredCollatRatio)
             .times(normFactor)
             .times(ethPrice.div(new BigNumber(10000)))
-            .minus(extimatedOsqthPrice),
+            .minus(estimatedOsqthPrice),
         )
 
         const quote = await getSellQuote(oSQTH_mint_guess, slippage)
         const ethBorrow = quote.minimumAmountOut
         const totalCollat = ethDeposited.plus(ethBorrow)
-        const collatRatioAndLiqPrice = await getCollatRatioAndLiqPrice(totalCollat, oSQTH_mint_guess)
-        const collatRatio = collatRatioAndLiqPrice.collateralPercent
+        const { collateralPercent: collatRatio, liquidationPrice: liqPrice } = await getCollatRatioAndLiqPrice(
+          totalCollat,
+          oSQTH_mint_guess,
+        )
 
-        prevState = { ethBorrow, collatRatio, squeethAmount: oSQTH_mint_guess, quote }
+        prevState = { ethBorrow, collatRatio, squeethAmount: oSQTH_mint_guess, quote, liqPrice }
 
         if ((collatRatio / 100).toFixed(2) === desiredCollatRatio.toFixed(2)) {
           break

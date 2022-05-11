@@ -1,21 +1,28 @@
-import { BIG_ZERO } from '../constants'
-import { useEffect, useMemo, useState } from 'react'
-import { useUserCrabTxHistory } from './useUserCrabTxHistory'
-import { CrabStrategyTxType } from '../types'
+import { BIG_ZERO } from '../../constants'
+import { useEffect, useState } from 'react'
+import { useUserCrabTxHistory } from '../useUserCrabTxHistory'
+import { CrabStrategyTxType } from '../../types'
 import { toTokenAmount } from '@utils/calculations'
-import { crabLoadingAtom, currentEthValueAtom } from 'src/state/crab/atoms'
 import { useAtomValue } from 'jotai'
-import { useTokenBalance } from './contracts/useTokenBalance'
-import { addressesAtom } from 'src/state/positions/atoms'
 import { indexAtom } from 'src/state/controller/atoms'
-import useAppCallback from './useAppCallback'
+import useAppCallback from '../useAppCallback'
+import useAppMemo from '../useAppMemo'
+import { crabLoadingAtom, crabPositionValueLoadingAtom, currentEthValueAtom } from 'src/state/crab/atoms'
 
+/*
+  depositedEth = Sum of deposited ethAmount - Sum of withdrawn ethAmount
+  depositedUsd = Sum of deposited ethUsed - Sum of withdrawn ethUsd
+  minCurrentEth = currentEth 
+  minCurrentUsd = currentEth * indexPrice
+  minPnlUsd = minCurrentUsd - depositedUsd
+  minPnL = minPnlUsd / depositedUsd * 100
+*/
 export const useCrabPosition = (user: string) => {
   const crabLoading = useAtomValue(crabLoadingAtom)
+  const isCrabPositionValueLoading = useAtomValue(crabPositionValueLoadingAtom)
   const currentEthValue = useAtomValue(currentEthValueAtom)
 
-  const { crabStrategy } = useAtomValue(addressesAtom)
-  const { loading, data } = useUserCrabTxHistory(user)
+  const { loading: txHistoryLoading, data: txHistoryData } = useUserCrabTxHistory(user)
 
   const index = useAtomValue(indexAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
@@ -25,14 +32,10 @@ export const useCrabPosition = (user: string) => {
   const [minPnlUsd, setMinPnlUsd] = useState(BIG_ZERO)
   const [minPnL, setMinPnL] = useState(BIG_ZERO)
 
-  const depositedDepedancy = data
-    ?.map((item) => `${item.ethAmount.toString()}:${item.lpAmount.toString()}:${item.ethUsdValue.toString()}`)
-    .join(' ')
+  const { depositedEth, usdAmount: depositedUsd } = useAppMemo(() => {
+    if (txHistoryLoading || !txHistoryData) return { depositedEth: BIG_ZERO, usdAmount: BIG_ZERO }
 
-  const { depositedEth, usdAmount: depositedUsd } = useMemo(() => {
-    if (loading || !data) return { depositedEth: BIG_ZERO, usdAmount: BIG_ZERO }
-
-    const { depositedEth, usdAmount } = data?.reduce(
+    const { depositedEth, usdAmount } = txHistoryData?.reduce(
       (acc, tx) => {
         if (tx.type === CrabStrategyTxType.FLASH_DEPOSIT) {
           acc.depositedEth = acc.depositedEth.plus(tx.ethAmount)
@@ -55,7 +58,7 @@ export const useCrabPosition = (user: string) => {
     )
 
     return { depositedEth, usdAmount }
-  }, [depositedDepedancy, loading])
+  }, [txHistoryData, txHistoryLoading])
 
   const calculateCurrentValue = useAppCallback(async () => {
     const minCurrentUsd = currentEthValue.times(ethIndexPrice)
@@ -69,9 +72,9 @@ export const useCrabPosition = (user: string) => {
   }, [currentEthValue, depositedUsd, ethIndexPrice])
 
   useEffect(() => {
-    if (crabLoading || loading) return
+    if (crabLoading || txHistoryLoading || isCrabPositionValueLoading) return
     calculateCurrentValue()
-  }, [calculateCurrentValue, crabLoading, loading])
+  }, [calculateCurrentValue, crabLoading, isCrabPositionValueLoading, txHistoryLoading])
 
   return {
     depositedEth,
@@ -80,6 +83,31 @@ export const useCrabPosition = (user: string) => {
     minCurrentUsd,
     minPnL,
     minPnlUsd,
-    loading: crabLoading || loading,
+    loading: crabLoading || txHistoryLoading,
   }
 }
+
+/*
+AC:
+loading
+  should be true if either transaction history or crab is loading.
+  should be false if both of them are loaded
+
+depositedEth and depositedUsd
+  should be zero if transaction history is loading.
+  should be caculated as correct values if transaction history is loaded
+
+minCurrentEth and minCurrentUsd
+  should be zero if either transaction history or crab is loading.
+  should be caculated as correct values if both of them are loaded
+
+minPnL and minPnlUsd
+  same as above
+
+
+Dependencies:
+  crabLoadingAtom
+  currentEthValueAtom
+  indexAtom
+  useUserCrabTxHistory
+*/

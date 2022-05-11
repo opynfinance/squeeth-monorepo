@@ -38,7 +38,12 @@ export const useOpenDepositAndMint = () => {
    * @param vaultType
    * @returns
    */
-  const openDepositAndMint = (vaultId: number, amount: BigNumber, collatAmount: BigNumber) => {
+  const openDepositAndMint = (
+    vaultId: number,
+    amount: BigNumber,
+    collatAmount: BigNumber,
+    onTxConfirmed?: () => void,
+  ) => {
     if (!contract || !address) return
 
     const _amount = fromTokenAmount(amount, OSQUEETH_DECIMALS).toFixed(0)
@@ -48,6 +53,7 @@ export const useOpenDepositAndMint = () => {
         from: address,
         value: ethAmt,
       }),
+      onTxConfirmed,
     )
   }
 
@@ -63,7 +69,7 @@ export const useDepositCollateral = () => {
    * @param vaultId
    * @param collatAmount
    */
-  const depositCollateral = (vaultId: number, collatAmount: BigNumber) => {
+  const depositCollateral = (vaultId: number, collatAmount: BigNumber, onTxConfirmed?: () => void) => {
     if (!contract || !address) return
 
     const ethAmt = fromTokenAmount(collatAmount, 18)
@@ -72,6 +78,7 @@ export const useDepositCollateral = () => {
         from: address,
         value: ethAmt.toFixed(0),
       }),
+      onTxConfirmed,
     )
   }
   return depositCollateral
@@ -87,7 +94,7 @@ export const useWithdrawCollateral = () => {
    * @param collatAmount
    * @returns
    */
-  const withdrawCollateral = (vaultId: number, collatAmount: BigNumber) => {
+  const withdrawCollateral = (vaultId: number, collatAmount: BigNumber, onTxConfirmed?: () => void) => {
     if (!contract || !address) return
 
     const ethAmt = fromTokenAmount(collatAmount, 18)
@@ -95,6 +102,7 @@ export const useWithdrawCollateral = () => {
       contract.methods.withdraw(vaultId, ethAmt.toFixed(0)).send({
         from: address,
       }),
+      onTxConfirmed,
     )
   }
 
@@ -111,7 +119,7 @@ export const useBurnAndRedeem = () => {
    * @param collatAmount - Amount of collat to remove
    * @returns
    */
-  const burnAndRedeem = (vaultId: number, amount: BigNumber, collatAmount: BigNumber) => {
+  const burnAndRedeem = (vaultId: number, amount: BigNumber, collatAmount: BigNumber, onTxConfirmed?: () => void) => {
     if (!contract || !address) return
 
     const _amount = fromTokenAmount(amount, OSQUEETH_DECIMALS)
@@ -120,6 +128,7 @@ export const useBurnAndRedeem = () => {
       contract.methods.burnWPowerPerpAmount(vaultId, _amount.toFixed(0), ethAmt.toFixed(0)).send({
         from: address,
       }),
+      onTxConfirmed,
     )
   }
   return burnAndRedeem
@@ -288,13 +297,14 @@ export const useDepositUnuPositionToken = () => {
   const address = useAtomValue(addressAtom)
   const contract = useAtomValue(controllerContractAtom)
   const handleTransaction = useHandleTransaction()
-  const depositUniPositionToken = async (vaultId: number, uniTokenId: number) => {
+  const depositUniPositionToken = async (vaultId: number, uniTokenId: number, onTxConfirmed?: () => void) => {
     if (!contract || !address) return
 
     await handleTransaction(
       contract.methods.depositUniPositionToken(vaultId, uniTokenId).send({
         from: address,
       }),
+      onTxConfirmed,
     )
   }
   return depositUniPositionToken
@@ -304,12 +314,13 @@ export const useWithdrawUniPositionToken = () => {
   const address = useAtomValue(addressAtom)
   const contract = useAtomValue(controllerContractAtom)
   const handleTransaction = useHandleTransaction()
-  const withdrawUniPositionToken = async (vaultId: number) => {
+  const withdrawUniPositionToken = async (vaultId: number, onTxConfirmed?: () => void) => {
     if (!contract || !address) return
     await handleTransaction(
       contract.methods.withdrawUniPositionToken(vaultId).send({
         from: address,
       }),
+      onTxConfirmed,
     )
   }
   return withdrawUniPositionToken

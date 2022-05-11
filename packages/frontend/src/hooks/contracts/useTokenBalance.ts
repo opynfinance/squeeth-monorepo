@@ -1,16 +1,22 @@
 import BigNumber from 'bignumber.js'
 import { useEffect, useState } from 'react'
+import { usePrevious } from 'react-use'
 import { Contract } from 'web3-eth-contract'
 import { useQuery } from 'react-query'
 import { useAtomValue } from 'jotai'
 
 import erc20Abi from '../../abis/erc20.json'
 import { toTokenAmount } from '@utils/calculations'
-// import { useIntervalAsync } from '@hooks/useIntervalAsync'
 import { addressAtom, connectedWalletAtom, web3Atom } from 'src/state/wallet/atoms'
-
+interface TokenQueryKeyParams {
+  token: string
+  connected: boolean
+  address: string | null
+  decimals: number
+  refetchIntervalSec: number
+}
 const tokenBalanceQueryKeys = {
-  userTokenBalance: (token: string) => ['userTokenBalance', token],
+  userTokenBalance: (params: TokenQueryKeyParams) => ['userTokenBalance', params],
 }
 /**
  * get token balance.
@@ -20,6 +26,7 @@ const tokenBalanceQueryKeys = {
  */
 export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals = 18) => {
   const [contract, setContract] = useState<Contract>()
+  const [poll, setPoll] = useState(false)
 
   const web3 = useAtomValue(web3Atom)
   const address = useAtomValue(addressAtom)
@@ -31,16 +38,28 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals
   }, [web3, token])
 
   const balanceQuery = useQuery(
-    tokenBalanceQueryKeys.userTokenBalance(token),
+    tokenBalanceQueryKeys.userTokenBalance({ address, connected, decimals, refetchIntervalSec, token }),
     () => updateBalance(token, connected, contract, address, decimals),
     {
       enabled: Boolean(token) && Boolean(connected) && Boolean(contract),
-      refetchInterval: refetchIntervalSec * 15000,
-      staleTime: 15000,
+      refetchInterval: poll ? 500 : refetchIntervalSec * 15000,
     },
   )
 
-  return { value: balanceQuery.data ?? new BigNumber(0), loading: !balanceQuery.data }
+  const prevBalance = usePrevious(balanceQuery.data?.toString())
+
+  useEffect(() => {
+    if (poll && prevBalance !== balanceQuery.data?.toString()) {
+      setPoll(false)
+    }
+  }, [balanceQuery.data?.toString(), poll, prevBalance])
+
+  return {
+    value: balanceQuery.data ?? new BigNumber(0),
+    loading: balanceQuery.isLoading || balanceQuery.isRefetching || poll,
+    error: balanceQuery.error || balanceQuery.isRefetchError || !balanceQuery.data,
+    refetch: () => setPoll(true),
+  }
 }
 
 async function updateBalance(

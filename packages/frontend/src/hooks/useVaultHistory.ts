@@ -1,10 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useQuery, NetworkStatus } from '@apollo/client'
-
 import { BIG_ZERO } from '@constants/index'
 
 import VAULT_HISTORY_QUERY, { VAULT_HISTORY_SUBSCRIPTION } from '../queries/squeeth/vaultHistoryQuery'
-import { VaultHistory, VaultHistoryVariables } from '../queries/squeeth/__generated__/VaultHistory'
+import {
+  VaultHistory,
+  VaultHistoryVariables,
+  VaultHistory_vaultHistories,
+} from '../queries/squeeth/__generated__/VaultHistory'
 import { squeethClient } from '@utils/apollo-client'
 import { Action } from '@constants/index'
 import { toTokenAmount } from '@utils/calculations'
@@ -13,10 +16,13 @@ import { useAtomValue } from 'jotai'
 import { usePrevious } from 'react-use'
 import { vaultHistoryUpdatingAtom } from 'src/state/positions/atoms'
 import { useUpdateAtom } from 'jotai/utils'
+import useAppEffect from './useAppEffect'
+import useAppMemo from './useAppMemo'
 
 export const useVaultHistoryQuery = (vaultId: number, poll = false) => {
   const address = useAtomValue(addressAtom)
   const networkId = useAtomValue(networkIdAtom)
+  const [vaultHistories, setVaultHistories] = useState<VaultHistory_vaultHistories[]>([])
   const setVaultHistoryUpdating = useUpdateAtom(vaultHistoryUpdatingAtom)
 
   const { data, loading, refetch, subscribeToMore, startPolling, stopPolling, networkStatus } = useQuery<
@@ -33,16 +39,22 @@ export const useVaultHistoryQuery = (vaultId: number, poll = false) => {
   const vaultHistory = data?.vaultHistories
   const prevVaultHistory = usePrevious(vaultHistory)
 
-  useEffect(() => {
+  useAppEffect(() => {
+    if (vaultHistory && vaultHistory.length > 0) {
+      setVaultHistories(vaultHistory)
+    }
+  }, [vaultHistory])
+
+  useAppEffect(() => {
     if (poll && prevVaultHistory?.length === vaultHistory?.length) {
       startPolling(500)
     } else {
       setVaultHistoryUpdating(false)
       stopPolling()
     }
-  }, [poll, prevVaultHistory?.length, startPolling, stopPolling, vaultHistory?.length])
+  }, [poll, prevVaultHistory, startPolling, stopPolling, vaultHistory, setVaultHistoryUpdating])
 
-  useEffect(() => {
+  useAppEffect(() => {
     subscribeToMore({
       document: VAULT_HISTORY_SUBSCRIPTION,
       variables: {
@@ -58,7 +70,7 @@ export const useVaultHistoryQuery = (vaultId: number, poll = false) => {
   }, [address, vaultId, subscribeToMore, data?.vaultHistories.length])
 
   return {
-    vaultHistory,
+    vaultHistory: vaultHistories,
     loading: loading || poll || networkStatus === NetworkStatus.refetch,
     refetch,
   }
@@ -70,7 +82,7 @@ export const useVaultHistory = (vaultId: number) => {
   //accumulated four actions, mintedSqueeth doesn't take minted squeeth sold into account
   //only consider first valid vault
   //mintedSqueeth + openShortSqueeth = shortAmount in the vault
-  const { mintedSqueeth, burnedSqueeth, openShortSqueeth, closeShortSqueeth } = useMemo(
+  const { mintedSqueeth, burnedSqueeth, openShortSqueeth, closeShortSqueeth } = useAppMemo(
     () =>
       vaultHistory?.reduce(
         (acc, s) => {
@@ -121,7 +133,7 @@ export const useVaultHistory = (vaultId: number) => {
         openShortSqueeth: BIG_ZERO,
         closeShortSqueeth: BIG_ZERO,
       },
-    [vaultHistory?.length],
+    [vaultHistory],
   )
   // console.log(vaultHistory, toTokenAmount(mintedSqueeth, 18).toString(), toTokenAmount(openShortSqueeth, 18).toString())
   return {

@@ -65,7 +65,6 @@ function ShortChart({
   vault,
   longAmount,
   setCustomLong,
-  showPercentage,
 }: {
   vault?: Vaults
   longAmount: number

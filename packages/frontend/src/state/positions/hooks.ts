@@ -1,11 +1,12 @@
+import { useState } from 'react'
 import { useAtom, useAtomValue, atom } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 import { useQuery } from '@apollo/client'
-import { useContext, useEffect, useMemo } from 'react'
+import { useContext } from 'react'
 import BigNumber from 'bignumber.js'
 import { Position } from '@uniswap/v3-sdk'
 
-import { networkIdAtom, addressAtom, connectedWalletAtom } from '../wallet/atoms'
+import { networkIdAtom, addressAtom } from '../wallet/atoms'
 import { swaps, swapsVariables } from '@queries/uniswap/__generated__/swaps'
 import SWAPS_QUERY, { SWAPS_SUBSCRIPTION } from '@queries/uniswap/swapsQuery'
 import SWAPS_ROPSTEN_QUERY, { SWAPS_ROPSTEN_SUBSCRIPTION } from '@queries/uniswap/swapsRopstenQuery'
@@ -13,7 +14,6 @@ import { VAULT_QUERY } from '@queries/squeeth/vaultsQuery'
 import { BIG_ZERO, OSQUEETH_DECIMALS } from '@constants/index'
 import {
   addressesAtom,
-  firstValidVaultAtom,
   isWethToken0Atom,
   positionTypeAtom,
   managerAtom,
@@ -36,7 +36,6 @@ import {
 } from './atoms'
 import { positions, positionsVariables } from '@queries/uniswap/__generated__/positions'
 import POSITIONS_QUERY, { POSITIONS_SUBSCRIPTION } from '@queries/uniswap/positionsQuery'
-import { useUsdAmount } from '@hooks/useUsdAmount'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { toTokenAmount } from '@utils/calculations'
@@ -50,8 +49,12 @@ import { useVaultHistory } from '@hooks/useVaultHistory'
 import { swapsRopsten, swapsRopstenVariables } from '@queries/uniswap/__generated__/swapsRopsten'
 import { Vault } from '@queries/squeeth/__generated__/Vault'
 import { ComputeSwapsContext } from './providers'
+import useAppEffect from '@hooks/useAppEffect'
+import useAppMemo from '@hooks/useAppMemo'
+import useAppCallback from '@hooks/useAppCallback'
 
 export const useSwaps = () => {
+  const [swapData, setSwapData] = useState<swaps | swapsRopsten | undefined>(undefined)
   const [networkId] = useAtom(networkIdAtom)
   const [address] = useAtom(addressAtom)
   const setSwaps = useUpdateAtom(swapsAtom)
@@ -76,39 +79,45 @@ export const useSwaps = () => {
     fetchPolicy: 'cache-and-network',
   })
 
-  // useEffect(() => {
-  //   subscribeToMore({
-  //     document: networkId === Networks.MAINNET ? SWAPS_SUBSCRIPTION : SWAPS_ROPSTEN_SUBSCRIPTION,
-  //     variables: {
-  //       origin: address || '',
-  //       orderDirection: 'asc',
-  //       recipient_not: crabStrategy,
-  //       ...(networkId === Networks.MAINNET
-  //         ? {
-  //             tokenAddress: oSqueeth,
-  //           }
-  //         : {
-  //             poolAddress: squeethPool,
-  //             recipients: [shortHelper, address || '', swapRouter],
-  //           }),
-  //     },
-  //     updateQuery(prev, { subscriptionData }) {
-  //       if (!subscriptionData.data) return prev
-  //       const newSwaps = subscriptionData.data.swaps
-  //       return {
-  //         swaps: newSwaps,
-  //       }
-  //     },
-  //   })
-  // }, [address, crabStrategy, networkId, oSqueeth, shortHelper, squeethPool, swapRouter, subscribeToMore])
+  useAppEffect(() => {
+    subscribeToMore({
+      document: networkId === Networks.MAINNET ? SWAPS_SUBSCRIPTION : SWAPS_ROPSTEN_SUBSCRIPTION,
+      variables: {
+        origin: address || '',
+        orderDirection: 'asc',
+        recipient_not: crabStrategy,
+        ...(networkId === Networks.MAINNET
+          ? {
+              tokenAddress: oSqueeth,
+            }
+          : {
+              poolAddress: squeethPool,
+              recipients: [shortHelper, address || '', swapRouter],
+            }),
+      },
+      updateQuery(prev, { subscriptionData }) {
+        if (!subscriptionData.data) return prev
+        const newSwaps = subscriptionData.data.swaps
+        return {
+          swaps: newSwaps,
+        }
+      },
+    })
+  }, [address, crabStrategy, networkId, oSqueeth, shortHelper, squeethPool, swapRouter, subscribeToMore])
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (data?.swaps) {
       setSwaps({ swaps: data.swaps })
     }
-  }, [data?.swaps.length])
+  }, [data?.swaps, setSwaps])
 
-  return { data, refetch, loading, error, startPolling, stopPolling }
+  useAppEffect(() => {
+    if (data && data.swaps && data.swaps.length > 0) {
+      setSwapData(data)
+    }
+  }, [data])
+
+  return { data: swapData, refetch, loading, error, startPolling, stopPolling }
 }
 
 export const useComputeSwaps = () => {
@@ -123,19 +132,19 @@ export const useComputeSwaps = () => {
 
 export const useLongRealizedPnl = () => {
   const { boughtSqueeth, soldSqueeth, totalUSDFromBuy, totalUSDFromSell } = useComputeSwaps()
-  return useMemo(() => {
+  return useAppMemo(() => {
     if (!soldSqueeth.gt(0)) return BIG_ZERO
     const costForOneSqth = !totalUSDFromBuy.isEqualTo(0) ? totalUSDFromBuy.div(boughtSqueeth) : BIG_ZERO
     const realizedForOneSqth = !totalUSDFromSell.isEqualTo(0) ? totalUSDFromSell.div(soldSqueeth) : BIG_ZERO
     const pnlForOneSqth = realizedForOneSqth.minus(costForOneSqth)
 
     return pnlForOneSqth.multipliedBy(soldSqueeth)
-  }, [boughtSqueeth.toString(), soldSqueeth.toString(), totalUSDFromBuy.toString(), totalUSDFromSell.toString()])
+  }, [boughtSqueeth, soldSqueeth, totalUSDFromBuy, totalUSDFromSell])
 }
 
 export const useShortRealizedPnl = () => {
   const { boughtSqueeth, soldSqueeth, totalUSDFromBuy, totalUSDFromSell } = useComputeSwaps()
-  return useMemo(() => {
+  return useAppMemo(() => {
     if (!boughtSqueeth.gt(0)) return BIG_ZERO
 
     const costForOneSqth = !totalUSDFromSell.isEqualTo(0) ? totalUSDFromSell.div(soldSqueeth) : BIG_ZERO
@@ -143,65 +152,67 @@ export const useShortRealizedPnl = () => {
     const pnlForOneSqth = realizedForOneSqth.minus(costForOneSqth)
 
     return pnlForOneSqth.multipliedBy(boughtSqueeth)
-  }, [boughtSqueeth.toString(), totalUSDFromBuy.toString(), soldSqueeth.toString(), totalUSDFromSell.toString()])
+  }, [boughtSqueeth, totalUSDFromBuy, soldSqueeth, totalUSDFromSell])
 }
 
 export const useMintedSoldSort = () => {
   const { vaultId } = useFirstValidVault()
-  const { openShortSqueeth } = useVaultHistory(vaultId)
+  const { openShortSqueeth } = useVaultHistory(Number(vaultId))
   const positionType = useAtomValue(positionTypeAtom)
   const { squeethAmount } = useComputeSwaps()
+
   //when the squeethAmount < 0 and the abs amount is greater than openShortSqueeth, that means there is manually sold short position
-  return useMemo(() => {
+  return useAppMemo(() => {
     return positionType === PositionType.SHORT && squeethAmount.abs().isGreaterThan(openShortSqueeth)
       ? squeethAmount.abs().minus(openShortSqueeth)
       : new BigNumber(0)
-  }, [positionType, squeethAmount?.toString(), openShortSqueeth.toString()])
+  }, [positionType, squeethAmount, openShortSqueeth])
 }
 
 export const useMintedDebt = () => {
   const { vaultId } = useFirstValidVault()
-  const { mintedSqueeth } = useVaultHistory(vaultId)
+  const { mintedSqueeth } = useVaultHistory(Number(vaultId))
   const lpDebt = useLpDebt()
   const mintedSoldShort = useMintedSoldSort()
 
   //mintedSqueeth balance from vault histroy - mintedSold short position = existing mintedDebt in vault, but
   //LPed amount wont be taken into account from vault history, so will need to be deducted here and added the withdrawn amount back
   //if there is LP Debt, shld be deducted from minted Debt
-  const mintedDebt = useMemo(() => {
+  const mintedDebt = useAppMemo(() => {
     return mintedSqueeth.minus(mintedSoldShort).minus(lpDebt)
-  }, [mintedSqueeth.toString(), mintedSoldShort?.toString(), lpDebt.toString()])
+  }, [mintedSqueeth, mintedSoldShort, lpDebt])
+
   return mintedDebt
 }
 
 export const useShortDebt = () => {
   const positionType = useAtomValue(positionTypeAtom)
   const { squeethAmount } = useComputeSwaps()
-  const shortDebt = useMemo(() => {
+  const shortDebt = useAppMemo(() => {
     return positionType === PositionType.SHORT ? squeethAmount : new BigNumber(0)
-  }, [positionType, squeethAmount.toString()])
+  }, [positionType, squeethAmount])
 
   return shortDebt.absoluteValue()
 }
 
 export const useLongSqthBal = () => {
   const { oSqueeth } = useAtomValue(addressesAtom)
-  const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
+  const { value: oSqueethBal, loading, error, refetch } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
   const mintedDebt = useMintedDebt()
-  const longSqthBal = useMemo(() => {
+  const longSqthBal = useAppMemo(() => {
     return mintedDebt.gt(0) ? oSqueethBal.minus(mintedDebt) : oSqueethBal
-  }, [oSqueethBal?.toString(), mintedDebt.toString()])
-  return longSqthBal
+  }, [oSqueethBal, mintedDebt])
+  return { longSqthBal, loading, error, refetch }
 }
 
 export const useLpDebt = () => {
   const depositedSqueeth = useAtomValue(depositedSqueethAtom)
   const withdrawnSqueeth = useAtomValue(withdrawnSqueethAtom)
-  const lpDebt = useMemo(() => {
+  const lpDebt = useAppMemo(() => {
     return depositedSqueeth.minus(withdrawnSqueeth).isGreaterThan(0)
       ? depositedSqueeth.minus(withdrawnSqueeth)
       : new BigNumber(0)
-  }, [depositedSqueeth.toString(), withdrawnSqueeth.toString()])
+  }, [depositedSqueeth, withdrawnSqueeth])
 
   return lpDebt
 }
@@ -218,7 +229,7 @@ export const useLPPositionsQuery = () => {
     fetchPolicy: 'cache-and-network',
   })
 
-  useEffect(() => {
+  useAppEffect(() => {
     subscribeToMore({
       document: POSITIONS_SUBSCRIPTION,
       variables: {
@@ -251,7 +262,7 @@ export const useLPPositionsAndFees = () => {
   const ethPrice = useETHPrice()
   const [positionFees, setPositionFees] = useAtom(positionFeesAtom)
 
-  useEffect(() => {
+  useAppEffect(() => {
     ;(async function handlePositionFees() {
       if (!pool || !squeethInitialPrice.toNumber() || !ethPrice.toNumber() || !data) return []
 
@@ -302,7 +313,18 @@ export const useLPPositionsAndFees = () => {
 
       setPositionFees(await Promise.all(positionFeesP))
     })()
-  }, [ethPrice.toString(), squeethInitialPrice.toString(), data?.positions?.length])
+  }, [
+    ethPrice,
+    squeethInitialPrice,
+    data?.positions,
+    address,
+    data,
+    getWSqueethPositionValue,
+    isWethToken0,
+    manager.methods,
+    pool,
+    setPositionFees,
+  ])
 
   return positionFees
 }
@@ -322,7 +344,7 @@ export const usePositionsAndFeesComputation = () => {
   const positionAndFees = useLPPositionsAndFees()
   const { loading: gphLoading } = useLPPositionsQuery()
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (positionAndFees && !gphLoading) {
       setLoading(true)
       // Promise.all(positionAndFees).then((values: any[]) => {
@@ -371,7 +393,21 @@ export const usePositionsAndFeesComputation = () => {
         setLoading(false)
       // })
     }
-  }, [gphLoading, isWethToken0, positionAndFees.length])
+  }, [
+    gphLoading,
+    isWethToken0,
+    positionAndFees,
+    activePositions.length,
+    setActivePositions,
+    setClosedPositions,
+    setDepositedSqueeth,
+    setDepositedWeth,
+    setLoading,
+    setSqueethLiquidity,
+    setWethLiquidity,
+    setWithdrawnSqueeth,
+    setWithdrawnWeth,
+  ])
 }
 
 export const useVaultQuery = (vaultId: number) => {
@@ -385,7 +421,7 @@ export const useVaultQuery = (vaultId: number) => {
     },
   })
 
-  const vaultData = useMemo(() => {
+  const vaultData = useAppMemo(() => {
     if (query.data) {
       const vault = query.data.vault
 
@@ -401,59 +437,15 @@ export const useVaultQuery = (vaultId: number) => {
 
   return { ...query, data: vaultData }
 }
-export const useUpdateVaultData = () => {
-  const connected = useAtomValue(connectedWalletAtom)
-  const setVault = useUpdateAtom(vaultAtom)
-  const setExistingCollat = useUpdateAtom(existingCollatAtom)
-  const setExistingCollatPercent = useUpdateAtom(existingCollatPercentAtom)
-  const setCollatPercent = useUpdateAtom(collatPercentAtom)
-  const setExistingLiqPrice = useUpdateAtom(existingLiqPriceAtom)
-  const setVaultLoading = useUpdateAtom(isVaultLoadingAtom)
-  const ready = useAtomValue(readyAtom)
-  const { vaultId } = useFirstValidVault()
-  const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
-  const getVault = useGetVault()
-
-  const updateVault = async () => {
-    if (!connected || !ready) return
-
-    const _vault = await getVault(vaultId)
-
-    if (!_vault) return
-
-    setVault(_vault)
-    setExistingCollat(_vault.collateralAmount)
-
-    getCollatRatioAndLiqPrice(
-      _vault.collateralAmount,
-      _vault.shortAmount,
-      _vault.NFTCollateralId ? Number(_vault.NFTCollateralId) : undefined,
-    ).then(({ collateralPercent, liquidationPrice }) => {
-      setExistingCollatPercent(collateralPercent)
-      setCollatPercent(collateralPercent)
-      setExistingLiqPrice(new BigNumber(liquidationPrice))
-      setVaultLoading(false)
-    })
-  }
-
-  useEffect(() => {
-    updateVault()
-  }, [connected, ready, vaultId])
-
-  return updateVault
-}
 
 export const useFirstValidVault = () => {
-  const { vaults: shortVaults } = useVaultManager()
-  const [firstValidVault, setFirstValidVault] = useAtom(firstValidVaultAtom)
-  const lastShortVault = shortVaults.length - 1
-  useEffect(() => {
-    for (let i = 0; i < shortVaults.length; i++) {
-      if (shortVaults[i]?.collateralAmount.isGreaterThan(0)) {
-        setFirstValidVault(i)
-      }
-    }
-  }, [shortVaults.length, shortVaults[lastShortVault]?.collateralAmount.toString()])
+  const { vaults: shortVaults, loading } = useVaultManager()
 
-  return { firstValidVault, vaultId: shortVaults[firstValidVault]?.id || 0 }
+  const vault = shortVaults?.find((vault) => vault.collateralAmount.isGreaterThan(0))
+
+  return {
+    isVaultLoading: loading,
+    vaultId: Number(vault?.id) || 0,
+    validVault: vault,
+  }
 }

@@ -4,7 +4,7 @@ import CapDetails from '@components/Strategies/Crab/CapDetails'
 import CrabStrategyHistory from '@components/Strategies/Crab/StrategyHistory'
 import StrategyInfo from '@components/Strategies/Crab/StrategyInfo'
 import StrategyInfoItem from '@components/Strategies/StrategyInfoItem'
-import { Typography, Tab, Tabs } from '@material-ui/core'
+import { Typography, Tab, Tabs, Box } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
@@ -16,7 +16,7 @@ import bull from '../public/images/bull.gif'
 import bear from '../public/images/bear.gif'
 import CrabTrade from '@components/Strategies/Crab/CrabTrade'
 import { useAtomValue } from 'jotai'
-import { addressAtom } from 'src/state/wallet/atoms'
+import { addressAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
 import {
   crabStrategyCollatRatioAtom,
@@ -116,12 +116,15 @@ const Strategies: React.FC = () => {
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 
   const address = useAtomValue(addressAtom)
+  const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const selectWallet = useSelectWallet()
 
   useEffect(() => {
     setStrategyData()
-  }, [collatRatio])
+  }, [collatRatio, setStrategyData])
+
   useEffect(() => {
+    console.log('Calculating initial values')
     calculateCurrentValue()
   }, [calculateCurrentValue])
 
@@ -240,15 +243,17 @@ const Strategies: React.FC = () => {
                 <StrategyInfo />
                 <CrabStrategyHistory />
               </div>
-              <div className={classes.tradeForm}>
-                {!!address ? (
-                  <CrabTrade maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
-                ) : (
-                  <div className={classes.connectWalletDiv}>
-                    <LinkButton onClick={() => selectWallet()}>Connect Wallet</LinkButton>
-                  </div>
-                )}
-              </div>
+              {supportedNetwork && (
+                <div className={classes.tradeForm}>
+                  {!!address ? (
+                    <CrabTrade maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
+                  ) : (
+                    <div className={classes.connectWalletDiv}>
+                      <LinkButton onClick={() => selectWallet()}>Connect Wallet</LinkButton>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}

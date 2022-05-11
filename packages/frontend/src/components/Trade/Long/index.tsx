@@ -1,7 +1,8 @@
 import { CircularProgress, createStyles, makeStyles, Typography } from '@material-ui/core'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
+import RefreshOutlined from '@material-ui/icons/RefreshOutlined'
 import BigNumber from 'bignumber.js'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
 
 import { BIG_ZERO, Links } from '../../../constants'
@@ -14,7 +15,7 @@ import Confirmed, { ConfirmType } from '../Confirmed'
 import Cancelled from '../Cancelled'
 import TradeInfoItem from '../TradeInfoItem'
 import UniswapData from '../UniswapData'
-import { connectedWalletAtom, isTransactionFirstStepAtom } from 'src/state/wallet/atoms'
+import { connectedWalletAtom, isTransactionFirstStepAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet, useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
 import { useAtom, useAtomValue } from 'jotai'
 import { addressesAtom, isShortAtom } from 'src/state/positions/atoms'
@@ -28,7 +29,7 @@ import {
   useGetWSqueethPositionValue,
   useSell,
 } from 'src/state/squeethPool/hooks'
-import { useComputeSwaps, useLongSqthBal, useShortDebt } from 'src/state/positions/hooks'
+import { useComputeSwaps, useShortDebt } from 'src/state/positions/hooks'
 import {
   confirmedAmountAtom,
   ethTradeAmountAtom,
@@ -39,11 +40,13 @@ import {
   tradeCompletedAtom,
   tradeSuccessAtom,
   tradeTypeAtom,
-  transactionHashAtom,
 } from 'src/state/trade/atoms'
 import { toTokenAmount } from '@utils/calculations'
 import { TradeType } from '../../../types'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from 'src/state/controller/atoms'
+import useAppEffect from '@hooks/useAppEffect'
+import useAppCallback from '@hooks/useAppCallback'
+import useAppMemo from '@hooks/useAppMemo'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -270,10 +273,10 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   const tradeType = useAtomValue(tradeTypeAtom)
 
   const connected = useAtomValue(connectedWalletAtom)
+  const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const isShort = useAtomValue(isShortAtom)
   const selectWallet = useSelectWallet()
   const { squeethAmount } = useComputeSwaps()
-  const longSqthBal = useLongSqthBal()
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 
@@ -287,15 +290,15 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (open && tradeType === TradeType.LONG) {
-      getBuyQuoteForETH(new BigNumber(sqthTradeAmount), slippageAmount).then((val) => {
+      getBuyQuoteForETH(new BigNumber(ethTradeAmount), slippageAmount).then((val) => {
         setQuote(val)
       })
     }
-  }, [slippageAmount.toString(), sqthTradeAmount])
+  }, [slippageAmount, ethTradeAmount, getBuyQuoteForETH, open, setQuote, tradeType])
 
-  const handleEthChange = useCallback(
+  const handleEthChange = useAppCallback(
     (value: string) => {
       setEthTradeAmount(value)
       setInputQuoteLoading(true)
@@ -307,10 +310,18 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
         setInputQuoteLoading(false)
       })
     },
-    [getBuyQuoteForETH, getWSqueethPositionValue, slippageAmount.toString()],
+    [
+      getBuyQuoteForETH,
+      getWSqueethPositionValue,
+      slippageAmount,
+      setConfirmedAmount,
+      setEthTradeAmount,
+      setInputQuoteLoading,
+      setSqthTradeAmount,
+    ],
   )
 
-  const handleSqthChange = useCallback(
+  const handleSqthChange = useAppCallback(
     (value: string) => {
       setSqthTradeAmount(value)
       setInputQuoteLoading(true)
@@ -321,7 +332,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
         setInputQuoteLoading(false)
       })
     },
-    [getBuyQuote, slippageAmount.toString()],
+    [getBuyQuote, slippageAmount, setEthTradeAmount, setInputQuoteLoading, setSqthTradeAmount],
   )
 
   let openError: string | undefined
@@ -350,13 +361,13 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
 
   const longOpenPriceImpactErrorState = priceImpactWarning && !buyLoading && !openError && !isShort
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (transactionInProgress) {
       setBuyLoading(false)
     }
   }, [transactionInProgress])
 
-  const transact = useCallback(async () => {
+  const transact = useAppCallback(async () => {
     setBuyLoading(true)
     try {
       await buyAndRefund(new BigNumber(ethTradeAmount), () => {
@@ -370,10 +381,10 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
       console.log(e)
       setBuyLoading(false)
     }
-  }, [buyAndRefund, ethTradeAmount])
+  }, [buyAndRefund, ethTradeAmount, resetEthTradeAmount, resetSqthTradeAmount, setTradeCompleted, setTradeSuccess])
 
   return (
-    <div>
+    <div id="open-long-card">
       {confirmed ? (
         <div>
           <Confirmed
@@ -383,6 +394,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
           />
           <div className={classes.buttonDiv}>
             <PrimaryButton
+              id="open-long-close-btn"
               variant="contained"
               onClick={() => {
                 resetTransactionData()
@@ -416,7 +428,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
           {activeStep === 0 ? (
             <>
               <div className={classes.settingsContainer}>
-                <Typography variant="caption" className={classes.explainer} component="div">
+                <Typography variant="caption" className={classes.explainer} component="div" id="open-long-header-box">
                   Pay ETH to buy squeeth ERC20
                 </Typography>
                 <span className={classes.settingsButton}>
@@ -446,17 +458,22 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                     highVolError
                   ) : (
                     <div className={classes.hint}>
-                      <span>{`Balance ${balance.toFixed(4)}`}</span>
+                      <span>
+                        Balance <span id="open-long-eth-before-trade-balance">{balance.toFixed(4)}</span>
+                      </span>
                       {new BigNumber(ethTradeAmount).toNumber() ? (
                         <>
                           <ArrowRightAltIcon className={classes.arrowIcon} />
-                          <span>{new BigNumber(balance).minus(new BigNumber(ethTradeAmount)).toFixed(6)}</span>
+                          <span id="open-long-eth-post-trade-balance">
+                            {new BigNumber(balance).minus(new BigNumber(ethTradeAmount)).toFixed(6)}
+                          </span>
                         </>
                       ) : null}{' '}
                       <span style={{ marginLeft: '4px' }}>ETH</span>
                     </div>
                   )
                 }
+                id="open-long-eth-input"
               />
               <PrimaryInput
                 value={sqthTradeAmount}
@@ -481,18 +498,21 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                     <div className={classes.hint}>
                       <span className={classes.hintTextContainer}>
                         <span className={classes.hintTitleText}>Balance </span>
-                        <span>{squeethAmount.toFixed(4)}</span>
+                        <span id="open-long-osqth-before-trade-balance">{squeethAmount.toFixed(4)}</span>
                       </span>
                       {quote.amountOut.gt(0) ? (
                         <>
                           <ArrowRightAltIcon className={classes.arrowIcon} />
-                          <span>{longSqthBal.plus(new BigNumber(sqthTradeAmount)).toFixed(6)}</span>
+                          <span id="open-long-osqth-post-trade-balance">
+                            {squeethAmount.plus(new BigNumber(sqthTradeAmount)).toFixed(6)}
+                          </span>{' '}
                         </>
                       ) : null}{' '}
                       <span style={{ marginLeft: '4px' }}>oSQTH</span>
                     </div>
                   )
                 }
+                id="open-long-osqth-input"
               />
 
               <div className={classes.divider}>
@@ -501,6 +521,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                   value={Number((squeethExposure * 4).toFixed(2)).toLocaleString()}
                   tooltip="The value of your position if ETH goes up 2x, not including funding"
                   frontUnit="$"
+                  id="open-short-eth-up-2x"
                 />
                 {/* if ETH down 50%, squeeth down 75%, so multiply amount by 0.25 to get what would remain  */}
                 <TradeInfoItem
@@ -508,6 +529,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                   value={Number((squeethExposure * 0.25).toFixed(2)).toLocaleString()}
                   tooltip="The value of your position if ETH goes down 50%, not including funding"
                   frontUnit="$"
+                  id="open-short-eth-down-50%"
                 />
                 <div style={{ marginTop: '10px' }}>
                   <UniswapData
@@ -526,6 +548,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                     className={classes.amountInput}
                     disabled={!!buyLoading}
                     style={{ width: '300px' }}
+                    id="open-long-connect-wallet-btn"
                   >
                     {'Connect Wallet'}
                   </PrimaryButton>
@@ -534,14 +557,24 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                     variant={longOpenPriceImpactErrorState || !!highVolError ? 'outlined' : 'contained'}
                     onClick={transact}
                     className={classes.amountInput}
-                    disabled={!!buyLoading || transactionInProgress || !!openError || !!existingShortError}
+                    disabled={
+                      !supportedNetwork ||
+                      !!buyLoading ||
+                      transactionInProgress ||
+                      !!openError ||
+                      !!existingShortError ||
+                      sqthTradeAmount === '0'
+                    }
                     style={
                       longOpenPriceImpactErrorState || !!highVolError
                         ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
                         : { width: '300px' }
                     }
+                    id="open-long-submit-tx-btn"
                   >
-                    {buyLoading || transactionInProgress ? (
+                    {!supportedNetwork ? (
+                      'Unsupported Network'
+                    ) : buyLoading || transactionInProgress ? (
                       <CircularProgress color="primary" size="1.5rem" />
                     ) : longOpenPriceImpactErrorState ? (
                       'Buy Anyway'
@@ -599,31 +632,32 @@ const CloseLong: React.FC<BuyProps> = () => {
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
   const slippageAmount = useAtomValue(slippageAmountAtom)
   const ethPrice = useETHPrice()
-  const amount = new BigNumber(sqthTradeAmount)
+  const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const altTradeAmount = new BigNumber(ethTradeAmount)
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter)
   const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
 
+  const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const connected = useAtomValue(connectedWalletAtom)
   const selectWallet = useSelectWallet()
+  const { squeethAmount } = useComputeSwaps()
 
-  const longSqthBal = useLongSqthBal()
   const shortDebt = useShortDebt()
   const isShort = shortDebt.gt(0)
 
   const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
   const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
 
-  useEffect(() => {
+  useAppEffect(() => {
     //if it's insufficient amount them set it to it's maximum
-    if (longSqthBal.lt(amount)) {
-      setSqthTradeAmount(longSqthBal.toString())
-      getSellQuoteForETH(longSqthBal).then((val) => {
-        setEthTradeAmount(val.amountIn.toString())
-        setConfirmedAmount(val.amountIn.toFixed(6).toString())
+    if (squeethAmount.lt(amount)) {
+      setSqthTradeAmount(squeethAmount.toString())
+      getSellQuote(squeethAmount).then((val) => {
+        setEthTradeAmount(val.amountOut.toString())
+        setConfirmedAmount(squeethAmount.toFixed(6))
       })
     }
-  }, [longSqthBal.toString()])
+  }, [squeethAmount, amount, getSellQuote, setConfirmedAmount, setEthTradeAmount, setSqthTradeAmount])
 
   // let openError: string | undefined
   let closeError: string | undefined
@@ -631,7 +665,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   let priceImpactWarning: string | undefined
 
   if (connected) {
-    if (longSqthBal.lt(amount)) {
+    if (squeethAmount.lt(amount)) {
       closeError = 'Insufficient oSQTH balance'
     }
     // if (amount.gt(balance)) {
@@ -646,12 +680,12 @@ const CloseLong: React.FC<BuyProps> = () => {
   }
 
   const longClosePriceImpactErrorState =
-    priceImpactWarning && !closeError && !sellLoading && !longSqthBal.isZero() && !isShort
+    priceImpactWarning && !closeError && !sellLoading && !squeethAmount.isZero() && !isShort
 
-  const sellAndClose = useCallback(async () => {
+  const sellAndClose = useAppCallback(async () => {
     setSellLoading(true)
     try {
-      if (squeethAllowance.lt(amount)) {
+      if (squeethAllowance.lt(amount) && !hasJustApprovedSqueeth) {
         setIsTxFirstStep(true)
         await squeethApprove(() => {
           setHasJustApprovedSqueeth(true)
@@ -672,30 +706,31 @@ const CloseLong: React.FC<BuyProps> = () => {
       setSellLoading(false)
     }
   }, [
-    amount.toString(),
+    amount,
+    hasJustApprovedSqueeth,
     resetEthTradeAmount,
     resetSqthTradeAmount,
     sell,
     setIsTxFirstStep,
     setTradeCompleted,
     setTradeSuccess,
-    squeethAllowance.toString(),
+    squeethAllowance,
     squeethApprove,
   ])
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (transactionInProgress) {
       setSellLoading(false)
     }
   }, [transactionInProgress])
 
-  useEffect(() => {
+  useAppEffect(() => {
     getSellQuote(new BigNumber(sqthTradeAmount), slippageAmount).then((val) => {
       setQuote(val)
     })
-  }, [slippageAmount.toString(), sqthTradeAmount])
+  }, [slippageAmount, sqthTradeAmount, getSellQuote, setQuote])
 
-  const handleSqthChange = useCallback(
+  const handleSqthChange = useAppCallback(
     (value: string) => {
       setInputQuoteLoading(true)
       setSqthTradeAmount(value)
@@ -705,10 +740,10 @@ const CloseLong: React.FC<BuyProps> = () => {
         setInputQuoteLoading(false)
       })
     },
-    [getSellQuote, slippageAmount.toString()],
+    [getSellQuote, slippageAmount, setConfirmedAmount, setEthTradeAmount, setInputQuoteLoading, setSqthTradeAmount],
   )
 
-  const handleEthChange = useCallback(
+  const handleEthChange = useAppCallback(
     (value: string) => {
       setInputQuoteLoading(true)
       setEthTradeAmount(value)
@@ -718,11 +753,18 @@ const CloseLong: React.FC<BuyProps> = () => {
         setInputQuoteLoading(false)
       })
     },
-    [getSellQuoteForETH, slippageAmount.toString()],
+    [
+      getSellQuoteForETH,
+      slippageAmount,
+      setConfirmedAmount,
+      setEthTradeAmount,
+      setInputQuoteLoading,
+      setSqthTradeAmount,
+    ],
   )
 
   return (
-    <div>
+    <div id="close-long-card">
       {confirmed && !isTxFirstStep ? (
         <div>
           <Confirmed
@@ -732,6 +774,7 @@ const CloseLong: React.FC<BuyProps> = () => {
           />
           <div className={classes.buttonDiv}>
             <PrimaryButton
+              id="close-long-close-btn"
               variant="contained"
               onClick={() => {
                 resetTransactionData()
@@ -762,7 +805,7 @@ const CloseLong: React.FC<BuyProps> = () => {
         </div>
       ) : (
         <div>
-          <div className={classes.settingsContainer}>
+          <div className={classes.settingsContainer} id="close-long-header-box">
             <Typography variant="caption" className={classes.explainer} component="div">
               Sell squeeth ERC20 to get ETH
             </Typography>
@@ -778,7 +821,7 @@ const CloseLong: React.FC<BuyProps> = () => {
             label="Amount"
             tooltip="Amount of oSqueeth you want to close"
             actionTxt="Max"
-            onActionClicked={() => handleSqthChange(longSqthBal.toString())}
+            onActionClicked={() => handleSqthChange(squeethAmount.toString())}
             unit="oSQTH"
             convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
             error={!!existingShortError || !!priceImpactWarning || !!closeError}
@@ -793,18 +836,20 @@ const CloseLong: React.FC<BuyProps> = () => {
               ) : (
                 <div className={classes.hint}>
                   <span className={classes.hintTextContainer}>
-                    <span className={classes.hintTitleText}>Position</span> <span>{longSqthBal.toFixed(6)}</span>
+                    <span className={classes.hintTitleText}>Position</span>{' '}
+                    <span id="close-long-osqth-before-trade-balance">{squeethAmount.toFixed(6)}</span>{' '}
                   </span>
                   {quote.amountOut.gt(0) ? (
                     <>
                       <ArrowRightAltIcon className={classes.arrowIcon} />
-                      <span>{longSqthBal.minus(amount).toFixed(6)}</span>
+                      <span id="close-long-osqth-post-trade-balance">{squeethAmount.minus(amount).toFixed(6)}</span>
                     </>
                   ) : null}{' '}
                   <span style={{ marginLeft: '4px' }}>oSQTH</span>
                 </div>
               )
             }
+            id="close-long-osqth-input"
           />
           <PrimaryInput
             value={ethTradeAmount}
@@ -824,17 +869,22 @@ const CloseLong: React.FC<BuyProps> = () => {
                 priceImpactWarning
               ) : (
                 <div className={classes.hint}>
-                  <span>{`Balance ${balance}`}</span>
+                  <span>
+                    Balance <span id="close-long-eth-before-trade-balance">{balance}</span>{' '}
+                  </span>{' '}
                   {amount.toNumber() ? (
                     <>
                       <ArrowRightAltIcon className={classes.arrowIcon} />
-                      <span>{new BigNumber(balance).plus(altTradeAmount).toFixed(4)}</span>
+                      <span id="close-long-eth-post-trade-balance">
+                        {new BigNumber(balance).plus(altTradeAmount).toFixed(4)}
+                      </span>
                     </>
                   ) : null}{' '}
                   <span style={{ marginLeft: '4px' }}>ETH</span>
                 </div>
               )
             }
+            id="close-long-eth-input"
           />
           <div className={classes.divider}>
             <UniswapData
@@ -852,6 +902,7 @@ const CloseLong: React.FC<BuyProps> = () => {
                 className={classes.amountInput}
                 disabled={!!sellLoading}
                 style={{ width: '300px' }}
+                id="close-long-connect-wallet-btn"
               >
                 {'Connect Wallet'}
               </PrimaryButton>
@@ -861,17 +912,26 @@ const CloseLong: React.FC<BuyProps> = () => {
                 onClick={sellAndClose}
                 className={classes.amountInput}
                 disabled={
-                  !!sellLoading || transactionInProgress || !!closeError || !!existingShortError || longSqthBal.isZero()
+                  !supportedNetwork ||
+                  !!sellLoading ||
+                  transactionInProgress ||
+                  !!closeError ||
+                  !!existingShortError ||
+                  squeethAmount.isZero() ||
+                  sqthTradeAmount === '0'
                 }
                 style={
                   longClosePriceImpactErrorState
                     ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
                     : { width: '300px' }
                 }
+                id="close-long-submit-tx-btn"
               >
-                {sellLoading || transactionInProgress ? (
+                {!supportedNetwork ? (
+                  'Unsupported Network'
+                ) : sellLoading || transactionInProgress ? (
                   <CircularProgress color="primary" size="1.5rem" />
-                ) : squeethAllowance.lt(amount) ? (
+                ) : squeethAllowance.lt(amount) && !hasJustApprovedSqueeth ? (
                   'Approve oSQTH (1/2)'
                 ) : longClosePriceImpactErrorState ? (
                   'Sell Anyway'

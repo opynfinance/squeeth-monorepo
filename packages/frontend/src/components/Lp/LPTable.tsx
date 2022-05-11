@@ -6,7 +6,7 @@ import { Pool } from '@uniswap/v3-sdk'
 import BigNumber from 'bignumber.js'
 import Link from 'next/link'
 import * as React from 'react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useAtomValue } from 'jotai'
 
 import { SecondaryTab, SecondaryTabs } from '../../components/Tabs'

@@ -6,6 +6,9 @@ import { Typography, Tooltip, Box } from '@material-ui/core'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import { Tooltips } from '@constants/enums'
 import { addressAtom } from 'src/state/wallet/atoms'
+import { useCurrentCrabPositionValue } from 'src/state/crab/hooks'
+import { pnlInPerct } from 'src/lib/pnl'
+import useAppMemo from '@hooks/useAppMemo'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -30,8 +33,17 @@ const useStyles = makeStyles((theme) =>
 
 const CrabPosition: React.FC = () => {
   const address = useAtomValue(addressAtom)
-  const { minCurrentUsd, minPnL, loading } = useCrabPosition(address || '')
+  const { loading: isCrabPositonLoading, depositedUsd } = useCrabPosition(address || '')
+  const { currentCrabPositionValue, isCrabPositionValueLoading } = useCurrentCrabPositionValue()
+
   const classes = useStyles()
+  const pnl = useAppMemo(() => {
+    return pnlInPerct(currentCrabPositionValue, depositedUsd)
+  }, [currentCrabPositionValue, depositedUsd])
+
+  const loading = useAppMemo(() => {
+    return isCrabPositonLoading || isCrabPositionValueLoading
+  }, [isCrabPositonLoading, isCrabPositionValueLoading])
 
   if (loading) {
     return (
@@ -41,7 +53,8 @@ const CrabPosition: React.FC = () => {
     )
   }
 
-  if (minCurrentUsd.isZero()) {
+
+  if (currentCrabPositionValue.isZero() || depositedUsd.isZero()) {
     return null
   }
 
@@ -50,16 +63,17 @@ const CrabPosition: React.FC = () => {
       <Typography color="primary" variant="subtitle1">
         Position
       </Typography>
-
       <div style={{ display: 'flex', alignItems: 'center' }}>
-        <Typography variant="h6">{loading ? 'Loading' : `${minCurrentUsd.toFixed(2)} USD`}</Typography>
-        {!loading && minPnL.isFinite() ? (
+        <Typography variant="h6" id="crab-pos-bal">
+          {loading ? 'Loading' : `${currentCrabPositionValue.toFixed(2)} USD`}
+        </Typography>
+        {!loading && pnl.isFinite() ? (
           <Typography
             variant="body2"
             style={{ marginLeft: '4px', fontWeight: 600 }}
-            className={minPnL.isNegative() ? classes.red : classes.green}
+            className={pnl.isNegative() ? classes.red : classes.green}
           >
-            ({minPnL.toFixed(2)} %)
+            ({pnl.toFixed(2)} %)
           </Typography>
         ) : null}
         <Tooltip title={Tooltips.CrabPnL}>

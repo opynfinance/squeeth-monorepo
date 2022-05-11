@@ -1,8 +1,7 @@
 import { Contract } from 'web3-eth-contract'
 import { Token, CurrencyAmount } from '@uniswap/sdk-core'
 import { Pool, Route, Trade } from '@uniswap/v3-sdk'
-import { useUpdateAtom, useResetAtom } from 'jotai/utils'
-import { useEffect, useCallback } from 'react'
+import { useUpdateAtom } from 'jotai/utils'
 import { useAtomValue } from 'jotai'
 import BigNumber from 'bignumber.js'
 import { ethers } from 'ethers'
@@ -23,8 +22,10 @@ import {
   squeethPriceeAtom,
   readyAtom,
 } from './atoms'
-import { transactionHashAtom } from '../trade/atoms'
+// import { transactionHashAtom } from '../trade/atoms'
 import { swapRouterContractAtom, squeethPoolContractAtom } from '../contracts/atoms'
+import useAppEffect from '@hooks/useAppEffect'
+import useAppCallback from '@hooks/useAppCallback'
 
 const getImmutables = async (squeethContract: Contract) => {
   const [token0, token1, fee, tickSpacing, maxLiquidityPerTick] = await Promise.all([
@@ -66,8 +67,8 @@ export const useUpdateSqueethPoolData = () => {
   const setSqueethToken = useUpdateAtom(squeethTokenAtom)
   const contract = useAtomValue(squeethPoolContractAtom)
   const { ticks } = useUniswapTicks()
-  useEffect(() => {
-    ; (async () => {
+  useAppEffect(() => {
+    ;(async () => {
       const { token0, token1, fee } = await getImmutables(contract!)
 
       const state = await getPoolState(contract!)
@@ -108,7 +109,7 @@ export const useGetBuyQuoteForETH = () => {
   const wethToken = useAtomValue(wethTokenAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
   //If I input an exact amount of ETH I want to spend, tells me how much Squeeth I'd purchase
-  const getBuyQuoteForETH = useCallback(
+  const getBuyQuoteForETH = useAppCallback(
     async (ETHAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
       const emptyState = {
         amountOut: new BigNumber(0),
@@ -159,7 +160,7 @@ export const useUpdateSqueethPrices = () => {
   const pool = useAtomValue(poolAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const getBuyQuoteForETH = useGetBuyQuoteForETH()
-  useEffect(() => {
+  useAppEffect(() => {
     if (!squeethToken?.address || !pool) return
     getBuyQuoteForETH(new BigNumber(1))
       .then((val) => {
@@ -178,11 +179,11 @@ export const useUpdateSqueethPrices = () => {
 export const useGetWSqueethPositionValue = () => {
   const ethPrice = useETHPrice()
   const squeethInitialPrice = useAtomValue(squeethInitialPriceAtom)
-  const getWSqueethPositionValue = useCallback(
+  const getWSqueethPositionValue = useAppCallback(
     (amount: BigNumber | number) => {
       return new BigNumber(amount).times(squeethInitialPrice).times(ethPrice)
     },
-    [ethPrice?.toString(), squeethInitialPrice?.toString()],
+    [ethPrice, squeethInitialPrice],
   )
 
   return getWSqueethPositionValue
@@ -202,7 +203,7 @@ export const useGetBuyQuote = () => {
   const wethToken = useAtomValue(wethTokenAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
   //If I input an exact amount of squeeth I want to buy, tells me how much ETH I need to pay to purchase that squeeth
-  const getBuyQuote = useCallback(
+  const getBuyQuote = useAppCallback(
     async (squeethAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
       const emptyState = {
         amountIn: new BigNumber(0),
@@ -357,7 +358,7 @@ export const useBuyAndRefund = () => {
   const swapRouterContract = useAtomValue(swapRouterContractAtom)
   const buyAndRefundData = useBuyAndRefundData()
 
-  const buyAndRefund = useCallback(
+  const buyAndRefund = useAppCallback(
     async (amount: BigNumber, onTxConfirmed?: () => void) => {
       const callData = await buyAndRefundData(amount)
 
@@ -382,7 +383,7 @@ export const useGetSellQuote = () => {
   const squeethToken = useAtomValue(squeethTokenAtom)
   const wethToken = useAtomValue(wethTokenAtom)
   //I input an exact amount of squeeth I want to sell, tells me how much ETH I'd receive
-  const getSellQuote = useCallback(
+  const getSellQuote = useAppCallback(
     async (squeethAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
       const emptyState = {
         amountOut: new BigNumber(0),
@@ -430,7 +431,7 @@ export const useGetSellParam = () => {
   const squeethToken = useAtomValue(squeethTokenAtom)
   const wethToken = useAtomValue(wethTokenAtom)
   const getSellQuote = useGetSellQuote()
-  const getSellParam = useCallback(
+  const getSellParam = useAppCallback(
     async (amount: BigNumber) => {
       const amountMin = fromTokenAmount((await getSellQuote(amount)).minimumAmountOut, 18)
 
@@ -501,7 +502,7 @@ export const useGetSellQuoteForETH = () => {
   const squeethToken = useAtomValue(squeethTokenAtom)
   const wethToken = useAtomValue(wethTokenAtom)
   //I input an exact amount of ETH I want to receive, tells me how much squeeth I'd need to sell
-  const getSellQuoteForETH = useCallback(
+  const getSellQuoteForETH = useAppCallback(
     async (ETHAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
       const emptyState = {
         amountIn: new BigNumber(0),

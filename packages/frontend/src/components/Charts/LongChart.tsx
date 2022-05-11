@@ -13,7 +13,7 @@ import InfoIcon from '@material-ui/icons/InfoOutlined'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import { atom, useAtom, useAtomValue } from 'jotai'
-import React, { useMemo, memo } from 'react'
+import React, { memo } from 'react'
 
 import ComparisonChart from '../../../public/images/ComparisonChart.svg'
 import { graphOptions } from '../../constants/diagram'
@@ -24,6 +24,7 @@ import FundingChart from './FundingChart'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { daysAtom, useLongChartData } from 'src/state/ethPriceCharts/atoms'
 import LegendBox from '@components/LegendBox'
+import useAppMemo from '@hooks/useAppMemo'
 enum ChartType {
   PNL = 'LONG PNL',
   // Price = 'Price Chart',
@@ -119,7 +120,7 @@ function LongChart() {
   const squeethIsLive = query.data?.squeethIsLive
 
   // plot line data
-  const lineSeries = useMemo(() => {
+  const lineSeries = useAppMemo(() => {
     if (!longEthPNL || !longSeries || longSeries.length === 0 || !positionSizeSeries || !squeethIsLive) return
 
     const liveIndex = Math.max(
@@ -141,9 +142,9 @@ function LongChart() {
       ]
     if (mode === ChartType.PositionSize) return [{ data: positionSizeSeries, legend: 'Position Size' }]
     return []
-  }, [longEthPNL?.length, longSeries?.length, mode, positionSizeSeries?.length, squeethIsLive?.length])
+  }, [longEthPNL, longSeries, mode, positionSizeSeries, squeethIsLive])
 
-  const chartOptions = useMemo(() => {
+  const chartOptions = useAppMemo(() => {
     // if (mode === ChartType.Funding || mode === ChartType.PositionSize)
     if (mode === ChartType.PositionSize)
       return {
@@ -165,11 +166,11 @@ function LongChart() {
     }
   }, [mode])
 
-  const startTimestamp = useMemo(() => (longSeries && longSeries.length > 0 ? longSeries[0].time : 0), [longSeries])
+  const startTimestamp = useAppMemo(() => (longSeries && longSeries.length > 0 ? longSeries[0].time : 0), [longSeries])
 
-  const endTimestamp = useMemo(
+  const endTimestamp = useAppMemo(
     () => (longSeries && longSeries.length > 0 ? longSeries[longSeries.length - 1].time : 0),
-    [longSeries?.length],
+    [longSeries],
   )
 
   return (
