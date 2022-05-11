@@ -358,7 +358,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             address(this),
             _params.tokenId
         );
-
+        console.log('after transfer of nft to contract');
         // close LP NFT and get Weth and WPowerPerp amounts
         (uint256 wPowerPerpAmountInLp, ) = ControllerHelperUtil.closeUniLp(
             ControllerHelperDiamondStorage.getAddressAtSlot(6),
@@ -371,6 +371,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             }),
             isWethToken0
         );
+        console.log('after closeUniLp');
 
         ControllerHelperUtil.checkClosedLp(
             msg.sender,
@@ -380,6 +381,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             _params.tokenId,
             1e18
         );
+        console.log('after checkClosedLp');
 
         (uint256 wethAmountDesired, uint256 wPowerPerpAmountDesired) = ControllerHelperUtil.getAmountsToLp(
             _params.wPowerPerpPool,
@@ -389,9 +391,11 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             _params.upperTick,
             isWethToken0
         );
+        console.log('after getAmountsToLp');
         if (!isWethToken0) (wethAmountDesired, wPowerPerpAmountDesired) = (wPowerPerpAmountDesired, wethAmountDesired);
 
         if (wPowerPerpAmountDesired > wPowerPerpAmountInLp) {
+            console.log('wPowerPerpAmountDesired > wPowerPerpAmountInLp');
             // if the new position target a higher wPowerPerp amount, swap WETH to reach the desired amount (WETH new position is lower than current WETH in LP)
             _exactOutFlashSwap(
                 ControllerHelperDiamondStorage.getAddressAtSlot(5),
@@ -403,9 +407,11 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 ""
             );
         } else if (wPowerPerpAmountDesired < wPowerPerpAmountInLp) {
+            console.log('wPowerPerpAmountDesired < wPowerPerpAmountInLp');
             // if the new position target lower wPowerPerp amount, swap excess to WETH (position target higher WETH amount)
             uint256 wPowerPerpExcess = wPowerPerpAmountInLp.sub(wPowerPerpAmountDesired);
-
+            console.log('wPowerPerpExcess %s', wPowerPerpExcess);
+            console.log('limit %s', _params.limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18));
             _exactInFlashSwap(
                 ControllerHelperDiamondStorage.getAddressAtSlot(4),
                 ControllerHelperDiamondStorage.getAddressAtSlot(5),
@@ -431,7 +437,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 upperTick: _params.upperTick
             })
         );
-
+        console.log('before sendBack');
         ControllerHelperUtil.sendBack(
             ControllerHelperDiamondStorage.getAddressAtSlot(5),
             ControllerHelperDiamondStorage.getAddressAtSlot(4)
@@ -847,13 +853,16 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH
         ) {
+            console.log('arrived at callback');
             IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).transfer(
                 ControllerHelperDiamondStorage.getAddressAtSlot(3),
                 _amountToPay
             );
-
+            console.log('transferred back to pool');
             if (address(this).balance > 0)
+                console.log('transferring positive balance');
                 IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: address(this).balance}();
+                console.log('transferred balance');
         } else if (
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP
@@ -889,6 +898,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         ) {
             IERC20(_tokenIn).transfer(ControllerHelperDiamondStorage.getAddressAtSlot(3), _amountToPay);
         }
+        console.log('end of loop');
     }
 
     /**
