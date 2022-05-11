@@ -247,6 +247,8 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
+const FUNDING_MOVE_THRESHOLD = 1.3
+
 const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   const [buyLoading, setBuyLoading] = useState(false)
   const getBuyQuoteForETH = useGetBuyQuoteForETH()
@@ -355,8 +357,10 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
       priceImpactWarning = 'High Price Impact'
     }
 
-    console.log(currentImpliedFunding, dailyHistoricalFunding.funding * 1.75)
-    if (currentImpliedFunding >= 1.3 * dailyHistoricalFunding.funding && Number(ethTradeAmount) > 0) {
+    if (
+      currentImpliedFunding >= FUNDING_MOVE_THRESHOLD * dailyHistoricalFunding.funding &&
+      Number(ethTradeAmount) > 0
+    ) {
       const fundingPercent = (currentImpliedFunding / dailyHistoricalFunding.funding - 1) * 100
       highVolError = `Funding ${fundingPercent.toFixed(0)}% above yesterday. Consider buying later`
     }
