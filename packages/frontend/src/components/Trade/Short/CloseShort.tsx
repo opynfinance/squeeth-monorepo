@@ -24,25 +24,22 @@ import CollatRange from '@components/CollatRange'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import UniswapData from '@components/Trade/UniswapData'
 import {
-  ethTradeAmountAtom,
-  quoteAtom,
   sellCloseQuoteAtom,
   slippageAmountAtom,
   sqthTradeAmountAtom,
   tradeCompletedAtom,
   tradeSuccessAtom,
-  tradeTypeAtom,
 } from 'src/state/trade/atoms'
 import useAppCallback from '@hooks/useAppCallback'
 import { MIN_COLLATERAL_AMOUNT, BIG_ZERO } from '@constants/index'
-import { connectedWalletAtom, isTransactionFirstStepAtom } from 'src/state/wallet/atoms'
+import { connectedWalletAtom, isTransactionFirstStepAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet, useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
 import { addressesAtom, isLongAtom, vaultHistoryUpdatingAtom } from 'src/state/positions/atoms'
-import { useFirstValidVault, useVaultQuery } from 'src/state/positions/hooks'
+import { useFirstValidVault } from 'src/state/positions/hooks'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import { useGetDebtAmount, useUpdateOperator } from 'src/state/controller/hooks'
-import { useGetBuyQuote } from 'src/state/squeethPool/hooks'
+import { useGetBuyQuote, useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
 import { useFlashSwapAndBurn } from 'src/state/controllerhelper/hooks'
 import { useVaultData } from '@hooks/useVaultData'
 import { useETHPrice } from '@hooks/useETHPrice'
@@ -51,6 +48,8 @@ import { useResetAtom, useUpdateAtom } from 'jotai/utils'
 import Confirmed, { ConfirmType } from '../Confirmed'
 import Cancelled from '../Cancelled'
 import useAppEffect from '@hooks/useAppEffect'
+import { useVaultHistoryQuery } from '@hooks/useVaultHistory'
+import useAppMemo from '@hooks/useAppMemo'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -120,17 +119,6 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const errorMap = {
-  closeError: 'Close amount exceeds position',
-  closeAltError: `You must have at least ${MIN_COLLATERAL_AMOUNT} ETH collateral unless you fully close out your position. Either fully close your position, or close out less`,
-  priceImpactWarning: 'High Price Impact',
-  openError: `Minimum collateral is ${MIN_COLLATERAL_AMOUNT} ETH`,
-  existingLongError: 'Close your long position to open a short',
-  vaultNotLoadedError: 'Loading Vault...',
-  insufficientETHBalance: 'Insufficient ETH Balance',
-}
-type formError = keyof typeof errorMap | false
-
 export const CloseShort = () => {
   const classes = useStyles()
   const [collatPercent, setCollatPercent] = useState(200)
@@ -146,10 +134,11 @@ export const CloseShort = () => {
   const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
   const { controllerHelper } = useAtomValue(addressesAtom)
   const slippageAmount = useAtomValue(slippageAmountAtom)
-  const amount = new BigNumber(sqthTradeAmount)
+  const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const connected = useAtomValue(connectedWalletAtom)
   const isLong = useAtomValue(isLongAtom)
-  const tradeType = useAtomValue(tradeTypeAtom)
+  const supportedNetwork = useAtomValue(supportedNetworkAtom)
+  const { updateVault } = useVaultManager()
   const [sellCloseQuote, setSellCloseQuote] = useAtom(sellCloseQuoteAtom)
   const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
@@ -157,11 +146,10 @@ export const CloseShort = () => {
 
   const { cancelled, confirmed, transactionData, resetTransactionData, resetTxCancelled } = useTransactionStatus()
   const updateOperator = useUpdateOperator()
-  const { vaults: shortVaults, refetch: refetchVaults } = useVaultManager(isVaultHistoryUpdating)
-  const { vaultId, firstValidVault } = useFirstValidVault()
-  const { existingCollatPercent } = useVaultData(vaultId)
-  const vaultQuery = useVaultQuery(vaultId)
-  const vault = vaultQuery.data
+  const { validVault: vault, vaultId } = useFirstValidVault()
+  const { existingCollatPercent } = useVaultData(vault)
+  const vaultHistoryQuery = useVaultHistoryQuery(Number(vaultId), isVaultHistoryUpdating)
+
   const { data } = useWalletBalance()
   const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
   const getDebtAmount = useGetDebtAmount()
@@ -169,25 +157,17 @@ export const CloseShort = () => {
   const flashSwapAndBurn = useFlashSwapAndBurn()
   const selectWallet = useSelectWallet()
   const ethPrice = useETHPrice()
-
-  const setShortCloseMax = useAppCallback(() => {
-    if (finalShortAmount.isGreaterThan(0)) {
-      setSqthTradeAmount(finalShortAmount.toString())
-      onSqthChange(finalShortAmount.toString())
-      setCollatPercent(150)
-      setCloseType(CloseType.FULL)
-    }
-  }, [finalShortAmount])
+  const getWSqueethPositionValue = useGetWSqueethPositionValue()
 
   useAppEffect(() => {
     if (vault) {
       const contractShort = vault?.shortAmount?.isFinite() ? vault?.shortAmount : new BigNumber(0)
       setFinalShortAmount(contractShort)
     }
-  }, [vault?.shortAmount])
+  }, [vault, vault?.shortAmount])
 
-  useEffect(() => {
-    if (shortVaults.length) {
+  useAppEffect(() => {
+    if (vault) {
       const _collat: BigNumber = vault?.collateralAmount ?? new BigNumber(0)
       const restOfShort = new BigNumber(vault?.shortAmount ?? new BigNumber(0)).minus(amount)
 
@@ -197,13 +177,7 @@ export const CloseShort = () => {
         setWithdrawCollat(_neededCollat.gt(0) ? _collat.minus(neededCollat) : _collat)
       })
     }
-  }, [
-    amount.toString(),
-    shortVaults?.length,
-    collatPercent,
-    vault?.collateralAmount.toString(),
-    vault?.shortAmount.toString(),
-  ])
+  }, [amount, collatPercent, getDebtAmount, neededCollat, vault])
 
   let closeError: string | undefined
   let existingLongError: string | undefined
@@ -212,10 +186,10 @@ export const CloseShort = () => {
   let insufficientETHBalance: string | undefined
 
   useEffect(() => {
-    if (!vaultId) return
+    if (!vaultId || !vault) return
 
-    setIsVaultApproved(shortVaults[firstValidVault].operator?.toLowerCase() === controllerHelper?.toLowerCase())
-  }, [vaultId])
+    setIsVaultApproved(vault.operator?.toLowerCase() === controllerHelper?.toLowerCase())
+  }, [controllerHelper, vault, vaultId])
 
   if (connected) {
     if (
@@ -232,7 +206,7 @@ export const CloseShort = () => {
     }
     if (
       amount.isGreaterThan(0) &&
-      shortVaults.length &&
+      vault &&
       amount.lt(finalShortAmount) &&
       neededCollat.isLessThan(MIN_COLLATERAL_AMOUNT)
     ) {
@@ -252,8 +226,8 @@ export const CloseShort = () => {
     !(collatPercent < 150) &&
     !closeError &&
     !existingLongError &&
-    shortVaults.length &&
-    !shortVaults[firstValidVault].shortAmount.isZero()
+    vault &&
+    !vault.shortAmount.isZero()
 
   useAppEffect(() => {
     if (finalShortAmount.isGreaterThan(0)) {
@@ -264,14 +238,17 @@ export const CloseShort = () => {
       setCollatPercent(150)
       setCloseType(CloseType.FULL)
     }
-  }, [tradeType, open, finalShortAmount])
+  }, [finalShortAmount, getBuyQuote, setSellCloseQuote, setSqthTradeAmount, slippageAmount])
 
-  const onSqthChange = (v: string) => {
-    getBuyQuote(new BigNumber(v), slippageAmount).then((quote: any) => {
-      setSellCloseQuote(quote)
-    })
-  }
-  const handleSqthChange = useMemo(() => debounce(onSqthChange, 500), [getBuyQuote, slippageAmount])
+  const onSqthChange = useAppCallback(
+    (v: string) => {
+      getBuyQuote(new BigNumber(v), slippageAmount).then((quote: any) => {
+        setSellCloseQuote(quote)
+      })
+    },
+    [getBuyQuote, setSellCloseQuote, slippageAmount],
+  )
+  const handleSqthChange = useMemo(() => debounce(onSqthChange, 500), [onSqthChange])
   const handleCloseShort = async () => {
     setCloseLoading(true)
     try {
@@ -299,8 +276,8 @@ export const CloseShort = () => {
             resetSqthTradeAmount()
             setIsVaultApproved(false)
             setVaultHistoryUpdating(true)
-            refetchVaults()
-            vaultQuery.refetch({ vaultID: vault!.id })
+            updateVault()
+            vaultHistoryQuery.refetch({ vaultId })
           },
         )
       }
@@ -309,6 +286,15 @@ export const CloseShort = () => {
       setCloseLoading(false)
     }
   }
+
+  const setShortCloseMax = useAppCallback(() => {
+    if (finalShortAmount.isGreaterThan(0)) {
+      setSqthTradeAmount(finalShortAmount.toString())
+      onSqthChange(finalShortAmount.toString())
+      setCollatPercent(150)
+      setCloseType(CloseType.FULL)
+    }
+  }, [finalShortAmount, onSqthChange, setSqthTradeAmount])
 
   return (
     <>
@@ -374,6 +360,11 @@ export const CloseShort = () => {
                 onActionClicked={setShortCloseMax}
                 actionTxt="Max"
                 unit="oSQTH"
+                convertedValue={
+                  !amount.isNaN()
+                    ? getWSqueethPositionValue(amount).toFixed(2).toLocaleString()
+                    : Number(0).toLocaleString()
+                }
                 error={!!existingLongError || !!priceImpactWarning || !!closeError || !!insufficientETHBalance}
                 hint={
                   closeError ? (
@@ -462,7 +453,7 @@ export const CloseShort = () => {
                 unit="ETH"
                 value={Number(ethPrice.times(sellCloseQuote.amountIn).toFixed(2)).toLocaleString()}
                 hint={
-                  connected && shortVaults.length && shortVaults[firstValidVault].shortAmount.gt(0) ? (
+                  connected && vault && vault.shortAmount.gt(0) ? (
                     existingLongError
                   ) : priceImpactWarning ? (
                     priceImpactWarning
@@ -524,12 +515,13 @@ export const CloseShort = () => {
                   onClick={handleCloseShort}
                   className={classes.amountInput}
                   disabled={
+                    !supportedNetwork ||
                     sqthTradeAmount === '0' ||
                     closeLoading ||
                     collatPercent < 150 ||
                     !!closeError ||
                     !!existingLongError ||
-                    (shortVaults.length && shortVaults[firstValidVault].shortAmount.isZero()) ||
+                    (vault && vault.shortAmount.isZero()) ||
                     !!vaultIdDontLoadedError ||
                     !!insufficientETHBalance
                   }
@@ -539,7 +531,9 @@ export const CloseShort = () => {
                       : { width: '300px' }
                   }
                 >
-                  {closeLoading ? (
+                  {!supportedNetwork ? (
+                    'Unsupported Network'
+                  ) : closeLoading ? (
                     <CircularProgress color="primary" size="1.5rem" />
                   ) : (
                     <>
