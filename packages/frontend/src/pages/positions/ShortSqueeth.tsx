@@ -9,9 +9,7 @@ import useStyles from './useStyles'
 import Link from 'next/link'
 import { useAtomValue } from 'jotai'
 import { loadingAtom } from 'src/state/crab/atoms'
-import { useBuyAndSellQuote, useShortGain, useShortUnrealizedPNL } from 'src/state/pnl/hooks'
-import { toTokenAmount } from '@utils/calculations'
-import { indexAtom } from 'src/state/controller/atoms'
+import { useCurrentShortPositionValue, useShortGain, useShortUnrealizedPNL } from 'src/state/pnl/hooks'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import { Tooltips } from '../../constants'
 import { useVaultData } from '@hooks/useVaultData'
@@ -27,8 +25,7 @@ export default function ShortSqueeth() {
   const { loading: isPositionLoading } = useLPPositionsQuery()
   const { squeethAmount, loading: swapsLoading } = useComputeSwaps()
   const isPnLLoading = useAtomValue(loadingAtom)
-  const { buyQuote } = useBuyAndSellQuote()
-  const index = useAtomValue(indexAtom)
+  const shortPositionValue = useCurrentShortPositionValue()
   const shortGain = useShortGain()
   const shortUnrealizedPNL = useShortUnrealizedPNL()
   const shortRealizedPNL = useShortRealizedPnl()
@@ -64,9 +61,7 @@ export default function ShortSqueeth() {
               <Typography variant="body1">Loading</Typography>
             ) : (
               <Typography variant="body1">
-                {isPnLLoading && buyQuote.times(toTokenAmount(index, 18).sqrt()).isEqualTo(0)
-                  ? 'Loading'
-                  : '$' + buyQuote.times(toTokenAmount(index, 18).sqrt()).toFixed(2)}
+                {isPnLLoading && shortPositionValue.isEqualTo(0) ? 'Loading' : '$' + shortPositionValue.toFixed(2)}
               </Typography>
             )}
           </div>
