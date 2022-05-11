@@ -47,6 +47,7 @@ import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from 'src/state
 import useAppEffect from '@hooks/useAppEffect'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppMemo from '@hooks/useAppMemo'
+import BreakEven from './BreakEven'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -538,6 +539,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                   frontUnit="$"
                   id="open-short-eth-down-50%"
                 />
+                <BreakEven />
                 <div style={{ marginTop: '10px' }}>
                   <UniswapData
                     slippage={isNaN(Number(slippageAmount)) ? '0' : slippageAmount.toString()}
