@@ -173,6 +173,7 @@ export const useCurrentCrabPositionValue = () => {
 
   useAppEffect(() => {
     ;(async () => {
+      setIsCrabPositionValueLoading(true)
       const squeethDebt = await getWsqueethFromCrabAmount(userCrabBalance, contract)
       if (!squeethDebt || crabLoading) {
         setCurrentCrabPositionValue(BIG_ZERO)
