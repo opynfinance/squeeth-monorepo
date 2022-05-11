@@ -369,7 +369,7 @@ const PositionCard: React.FC = () => {
                 </Typography>
               ) : (
                 <Typography variant="caption" color="textSecondary" style={{ marginTop: '.5em' }}>
-                  $ {getPositionBasedValue(longPositionValue, shortPositionValue, new BigNumber(0)).toFixed(2)}
+                  ≈ ${getPositionBasedValue(longPositionValue, shortPositionValue, new BigNumber(0)).toFixed(2)}
                 </Typography>
               )}
             </div>
