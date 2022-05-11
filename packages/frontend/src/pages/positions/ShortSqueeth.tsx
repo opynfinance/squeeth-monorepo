@@ -48,27 +48,20 @@ export default function ShortSqueeth() {
             {isPositionLoading ? (
               <Typography variant="body1">Loading</Typography>
             ) : (
-              <>
-                <Typography variant="body1" id="pos-page-short-osqth-bal">
-                  {squeethAmount.toFixed(8) + ' oSQTH'}
-                </Typography>{' '}
-                <Typography variant="body2" color="textSecondary">
-                  {isPnLLoading && shortPositionValue.isEqualTo(0) ? 'Loading' : '$' + shortPositionValue.toFixed(2)}
-                </Typography>
-              </>
+              <Typography variant="body1" id="pos-page-short-osqth-bal">
+                {squeethAmount.toFixed(8) + ' oSQTH'}
+              </Typography>
             )}
           </div>
           <div style={{ width: '50%' }}>
             <Typography variant="caption" component="span" color="textSecondary">
               Position Value
             </Typography>
-            {isPositionLoading || shortUnrealizedPNL.loading ? (
+            {isPositionLoading ? (
               <Typography variant="body1">Loading</Typography>
             ) : (
               <Typography variant="body1">
-                {isPnLLoading && buyQuote.times(toTokenAmount(index, 18).sqrt()).isEqualTo(0)
-                  ? 'Loading'
-                  : '$' + buyQuote.times(toTokenAmount(index, 18).sqrt()).toFixed(2)}
+                {isPnLLoading && shortPositionValue.isEqualTo(0) ? 'Loading' : '$' + shortPositionValue.toFixed(2)}
               </Typography>
             )}
           </div>

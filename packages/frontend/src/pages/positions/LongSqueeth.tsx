@@ -46,7 +46,7 @@ export default function LongSqueeth() {
             <Typography variant="caption" component="span" color="textSecondary">
               Position Value
             </Typography>
-            <Typography variant="body2" color="textSecondary">
+            <Typography variant="body1">
               ${isPnLLoading && longPositionValue.isEqualTo(0) ? 'Loading' : longPositionValue.toFixed(2)}
             </Typography>
           </div>
