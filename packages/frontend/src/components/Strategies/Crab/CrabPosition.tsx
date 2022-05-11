@@ -8,6 +8,7 @@ import { Tooltips } from '@constants/enums'
 import { addressAtom } from 'src/state/wallet/atoms'
 import { useCurrentCrabPositionValue } from 'src/state/crab/hooks'
 import { pnlInPerct } from 'src/lib/pnl'
+import useAppMemo from '@hooks/useAppMemo'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -36,7 +37,9 @@ const CrabPosition: React.FC = () => {
   const { currentCrabPositionValue, isCrabPositionValueLoading } = useCurrentCrabPositionValue()
 
   const classes = useStyles()
-  const pnl = pnlInPerct(currentCrabPositionValue, depositedUsd)
+  const pnl = useAppMemo(() => {
+    return pnlInPerct(currentCrabPositionValue, depositedUsd)
+  }, [currentCrabPositionValue, depositedUsd])
 
   const loading = useAppMemo(() => {
     return isCrabPositonLoading || isCrabPositionValueLoading
@@ -50,7 +53,8 @@ const CrabPosition: React.FC = () => {
     )
   }
 
-  if (currentCrabPositionValue.isZero()) {
+
+  if (currentCrabPositionValue.isZero() || depositedUsd.isZero()) {
     return null
   }
 

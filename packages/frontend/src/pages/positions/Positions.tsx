@@ -58,6 +58,13 @@ export default function Positions() {
     return isCrabPositonLoading || isCrabPositionValueLoading
   }, [isCrabPositonLoading, isCrabPositionValueLoading])
 
+  const pnlWMidPriceInUSD = useAppMemo(() => {
+    return pnl(currentCrabPositionValue, depositedUsd)
+  }, [currentCrabPositionValue, depositedUsd])
+  const pnlWMidPriceInPerct = useAppMemo(() => {
+    return pnlInPerct(currentCrabPositionValue, depositedUsd)
+  }, [currentCrabPositionValue, depositedUsd])
+
   const vaultExists = useAppMemo(() => {
     return Boolean(vault && vault.collateralAmount?.isGreaterThan(0))
   }, [vault])

@@ -118,6 +118,7 @@ export function pnl(currentValue: BigNumber, cost: BigNumber): BigNumber {
 }
 
 export function pnlInPerct(currentValue: BigNumber, cost: BigNumber): BigNumber {
+  if (cost.isEqualTo(0)) return BIG_ZERO
   return currentValue.dividedBy(cost).minus(1).times(100)
 }
 
