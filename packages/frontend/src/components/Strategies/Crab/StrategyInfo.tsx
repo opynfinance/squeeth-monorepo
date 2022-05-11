@@ -59,10 +59,10 @@ export const StrategyInfo: React.FC = () => {
 
   return (
     <div className={classes.container}>
-      {/* <Typography variant="h5" color="primary" className={classes.chartTitle}>
+      <Typography variant="h5" color="primary" className={classes.chartTitle}>
         Historical PnL Simulation
-      </Typography> */}
-      {/* <CrabStrategyChart vault={Vaults.Short} longAmount={0} /> */}
+      </Typography>
+      <CrabStrategyChart vault={Vaults.Short} longAmount={0} />
       <Typography variant="h5" color="primary" className={classes.title}>
         1 Day Profitability
       </Typography>
