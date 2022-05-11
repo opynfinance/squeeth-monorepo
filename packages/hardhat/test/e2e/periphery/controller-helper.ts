@@ -1249,7 +1249,7 @@ describe("Rebalance LP in vault to just oSQTH", async () => {
    })
 
     
-it("Close vault LP and open new one-siced LP with just oSQTH ", async () => {
+it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
   // Get vault and LP info
   const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
   const depositorEthBalanceBefore = await ethers.provider.getBalance(depositor.address)
