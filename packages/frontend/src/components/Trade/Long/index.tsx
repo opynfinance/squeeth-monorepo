@@ -354,8 +354,11 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
     if (new BigNumber(quote.priceImpact).gt(3)) {
       priceImpactWarning = 'High Price Impact'
     }
-    if (currentImpliedFunding >= 1.75 * dailyHistoricalFunding.funding) {
-      highVolError = `Current implied funding is 75% higher than the last ${dailyHistoricalFunding.period} hours. Consider if you want to purchase now or later`
+
+    console.log(currentImpliedFunding, dailyHistoricalFunding.funding * 1.75)
+    if (currentImpliedFunding >= 1.75 * dailyHistoricalFunding.funding && Number(ethTradeAmount) > 0) {
+      const fundingPercent = (currentImpliedFunding / dailyHistoricalFunding.funding - 1) * 100
+      highVolError = `Funding ${fundingPercent.toFixed(0)}% above yesterday. Consider buying later`
     }
   }
 
