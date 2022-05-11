@@ -18,6 +18,7 @@ import {
   currentCrabPositionValueAtom,
   currentCrabPositionValueInETHAtom,
   crabPositionValueLoadingAtom,
+  crabLoadingAtom,
 } from './atoms'
 import { addressesAtom } from '../positions/atoms'
 import {
@@ -160,6 +161,8 @@ export const useCalculateCurrentValue = () => {
 
 export const useCurrentCrabPositionValue = () => {
   const { crabStrategy } = useAtomValue(addressesAtom)
+  const crabLoading = useAtomValue(crabLoadingAtom)
+
   const [isCrabPositionValueLoading, setIsCrabPositionValueLoading] = useAtom(crabPositionValueLoadingAtom)
   const [currentCrabPositionValue, setCurrentCrabPositionValue] = useAtom(currentCrabPositionValueAtom)
   const [currentCrabPositionValueInETH, setCurrentCrabPositionValueInETH] = useAtom(currentCrabPositionValueInETHAtom)
@@ -171,7 +174,7 @@ export const useCurrentCrabPositionValue = () => {
   useAppEffect(() => {
     ;(async () => {
       const squeethDebt = await getWsqueethFromCrabAmount(userCrabBalance, contract)
-      if (!squeethDebt) {
+      if (!squeethDebt || crabLoading) {
         setCurrentCrabPositionValue(BIG_ZERO)
         setCurrentCrabPositionValueInETH(BIG_ZERO)
         return
@@ -182,7 +185,7 @@ export const useCurrentCrabPositionValue = () => {
       setCurrentCrabPositionValueInETH(crabPositionValueInETH)
       setIsCrabPositionValueLoading(false)
     })()
-  }, [crabStrategy, userCrabBalance, contract])
+  }, [crabStrategy, userCrabBalance, contract, crabLoading])
 
   return { currentCrabPositionValue, currentCrabPositionValueInETH, isCrabPositionValueLoading }
 }
