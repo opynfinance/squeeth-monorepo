@@ -117,21 +117,19 @@ export function useCurrentLongPositionValue() {
 export function useCurrentShortPositionValue() {
   const { squeethAmount } = useComputeSwaps()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
-  const { validVault: vault } = useFirstValidVault()
-  const { existingCollat } = useVaultData(vault)
-  const index = useAtomValue(indexAtom)
+
   const [positionValue, setPositionValue] = useAtom(shortPositionValueAtom)
   const positionType = useAtomValue(positionTypeAtom)
 
   useAppEffect(() => {
-    if (squeethAmount.isZero() || existingCollat.isZero() || index.isZero() || positionType != PositionType.SHORT) {
+    if (squeethAmount.isZero() || positionType != PositionType.SHORT) {
       setPositionValue(BIG_ZERO)
       return
     }
 
     const squeethPositionValueInUSD = getWSqueethPositionValue(squeethAmount)
-    setPositionValue(squeethPositionValueInUSD.plus(existingCollat.times(toTokenAmount(index, 18).sqrt())))
-  }, [squeethAmount, existingCollat, index, setPositionValue, positionType, getWSqueethPositionValue])
+    setPositionValue(squeethPositionValueInUSD)
+  }, [squeethAmount, setPositionValue, positionType, getWSqueethPositionValue])
 
   return positionValue
 }
@@ -155,7 +153,7 @@ export function useLongGain() {
     setLongGain(_gain)
     setLoading(false)
   }, [setLoading, positionType, longPositionValue, totalUSDFromBuy, setLongGain])
-  
+
   return longGain
 }
 
@@ -214,16 +212,7 @@ export function useLongUnrealizedPNL() {
         setLongUnrealizedPNL({ usd: BIG_ZERO, eth: BIG_ZERO, loading: true })
       }
     })()
-  }, [
-    isToHidePnL,
-    index,
-    isWethToken0,
-    swaps,
-    squeethAmount,
-    positionType,
-    setLongUnrealizedPNL,
-    longPositionValue,
-  ])
+  }, [isToHidePnL, index, isWethToken0, swaps, squeethAmount, positionType, setLongUnrealizedPNL, longPositionValue])
 
   return longUnrealizedPNL
 }
