@@ -345,9 +345,6 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   let highVolError: string | undefined
 
   if (connected) {
-    // if (longSqthBal.lt(amount)) {
-    //   closeError = 'Insufficient oSQTH balance'
-    // }
     if (new BigNumber(ethTradeAmount).gt(balance)) {
       openError = 'Insufficient ETH balance'
     }

@@ -1,5 +1,6 @@
-import { CircularProgress, InputAdornment, TextField, Typography } from '@material-ui/core'
+import { CircularProgress, InputAdornment, TextField, Typography, Tooltip } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
+import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
 import { motion } from 'framer-motion'
 import React, { useState } from 'react'
@@ -20,7 +21,11 @@ import { useAtomValue } from 'jotai'
 import { addressesAtom, existingCollatAtom, existingCollatPercentAtom } from 'src/state/positions/atoms'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
-import { useGetShortAmountFromDebt, useOpenDepositAndMint } from 'src/state/controller/hooks'
+import {
+  useGetCollatRatioAndLiqPrice,
+  useGetShortAmountFromDebt,
+  useOpenDepositAndMint,
+} from 'src/state/controller/hooks'
 import { useFirstValidVault } from 'src/state/positions/hooks'
 import { useVaultData } from '@hooks/useVaultData'
 import { normFactorAtom } from 'src/state/controller/atoms'
@@ -69,6 +74,16 @@ const useStyles = makeStyles((theme) =>
     mintContainer: {
       marginTop: theme.spacing(3),
     },
+    vaultCollatInfo: {
+      display: 'flex',
+      alignItems: 'center',
+      pointerEvents: 'auto',
+    },
+    infoIcon: {
+      fontSize: '1rem',
+      marginLeft: theme.spacing(0.5),
+      color: theme.palette.text.secondary,
+    },
   }),
 )
 
@@ -84,18 +99,22 @@ const Mint: React.FC = () => {
   const normalizationFactor = useAtomValue(normFactorAtom)
   const openDepositAndMint = useOpenDepositAndMint()
   const getShortAmountFromDebt = useGetShortAmountFromDebt()
-  const { validVault, vaultId } = useFirstValidVault()
-  const { existingCollat, existingCollatPercent } = useVaultData(validVault)
+  const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
+  const { validVault: vault, vaultId } = useFirstValidVault()
+  const { existingCollat, existingCollatPercent } = useVaultData(vault)
 
   const { dispatch } = useLPState()
 
   const [mintAmount, setMintAmount] = useState(new BigNumber(0))
   const [collatAmount, setCollatAmount] = useState('0')
   const collatAmountBN = new BigNumber(collatAmount)
-  const [collatPercent, setCollatPercent] = useState(200)
+  const [collatPercent, setCollatPercent] = useState(existingCollatPercent > 0 ? existingCollatPercent : 200)
   const [loading, setLoading] = useState(false)
   const [mintMinCollatError, setMintMinCollatError] = useState('')
   const [minCollRatioError, setMinCollRatioError] = useState('')
+  const [liqPrice, setLiqPrice] = useState(BIG_ZERO)
+
+  const _totalCollateral = vault ? vault.collateralAmount.plus(collatAmountBN) : collatAmountBN
 
   const mint = async () => {
     setLoading(true)
@@ -110,19 +129,29 @@ const Mint: React.FC = () => {
   }
 
   useAppEffect(() => {
+    setCollatPercent(existingCollatPercent > 0 ? existingCollatPercent : 200)
+  }, [existingCollatPercent])
+
+  useAppEffect(() => {
     let isMounted = true
-    if (collatAmountBN.isNaN() || collatAmountBN.isZero()) {
+
+    if (
+      (collatAmountBN.isNaN() && (collatPercent >= existingCollatPercent || existingCollatPercent === 0)) ||
+      (collatAmountBN.isZero() && (collatPercent >= existingCollatPercent || existingCollatPercent === 0))
+    ) {
+      //if no collateral is being inputted and user is not trying to only adjust vault collateral
       if (isMounted) setMintAmount(new BigNumber(0))
       return
     }
-    const debt = collatAmountBN.times(100).div(collatPercent)
-    getShortAmountFromDebt(debt).then((s) => {
-      if (isMounted) setMintAmount(s)
+    const debt = _totalCollateral.times(100).div(collatPercent)
+    getShortAmountFromDebt(debt).then((totalSqueeth) => {
+      const _mintAmount = totalSqueeth.minus(vault?.shortAmount ?? BIG_ZERO)
+      if (isMounted) setMintAmount(_mintAmount)
     })
     return () => {
       isMounted = false
     }
-  }, [collatPercent, collatAmount.toString()])
+  }, [collatPercent, collatAmount.toString(), _totalCollateral.toString(), existingCollatPercent])
 
   useAppEffect(() => {
     if (collatPercent < 150) {
@@ -136,11 +165,13 @@ const Mint: React.FC = () => {
     }
   }, [balance?.toString(), connected, existingCollat.toString(), collatAmountBN.toString(), collatPercent])
 
-  const liqPrice = useAppMemo(() => {
-    const rSqueeth = normalizationFactor.multipliedBy(mintAmount.toNumber() || new BigNumber(1)).dividedBy(10000)
-
-    return collatAmountBN.div(rSqueeth.multipliedBy(1.5))
-  }, [mintAmount.toString(), collatPercent, collatAmount.toString(), normalizationFactor.toString()])
+  useAppEffect(() => {
+    getCollatRatioAndLiqPrice(_totalCollateral, mintAmount.plus(vault?.shortAmount ?? BIG_ZERO)).then(
+      ({ liquidationPrice }) => {
+        setLiqPrice(liquidationPrice)
+      },
+    )
+  }, [_totalCollateral, mintAmount, getCollatRatioAndLiqPrice, vault?.shortAmount])
 
   return (
     <div className={classes.mintContainer}>
@@ -177,9 +208,18 @@ const Mint: React.FC = () => {
           style={{ width: 300 }}
           onChange={(event: any) => setCollatPercent(Number(event.target.value))}
           id="filled-basic"
-          label="Collateral Ratio"
+          label={
+            <div className={classes.vaultCollatInfo}>
+              <span>Vault Collateral Ratio</span>
+              {existingCollatPercent > 0 ? (
+                <Tooltip title={Tooltips.VaultCollatRatio}>
+                  <InfoOutlinedIcon className={classes.infoIcon} />
+                </Tooltip>
+              ) : null}
+            </div>
+          }
           variant="outlined"
-          error={!!minCollRatioError}
+          error={collatPercent < 150}
           helperText={minCollRatioError}
           InputProps={{
             endAdornment: (
@@ -194,8 +234,11 @@ const Mint: React.FC = () => {
         />
       </div>
       <div className={classes.thirdHeading}></div>
-      <CollatRange onCollatValueChange={(val) => setCollatPercent(val)} collatValue={collatPercent} />
-
+      <CollatRange
+        onCollatValueChange={(val) => setCollatPercent(val)}
+        collatValue={collatPercent}
+        existingCollatPercent={existingCollatPercent}
+      />
       <TradeDetails
         actionTitle="Mint"
         amount={mintAmount.toFixed(6)}
@@ -224,7 +267,10 @@ const Mint: React.FC = () => {
           className={classes.amountInput}
           style={{ width: '100%' }}
           disabled={
-            !supportedNetwork || (connected && collatAmountBN.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) || loading
+            !supportedNetwork ||
+            (connected && collatAmountBN.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)) ||
+            loading ||
+            (collatAmount === '0' && collatPercent >= existingCollatPercent)
           }
         >
           {!supportedNetwork ? (

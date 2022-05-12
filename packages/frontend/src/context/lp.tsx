@@ -93,7 +93,7 @@ const LPProvider: React.FC = ({ children }) => {
     if (oSqueethBal.isZero() || lpState.step === Steps.PROVIDE_LIQUIDITY) return
 
     dispatch({ type: LPActions.GO_TO_PROVIDE_LIQUIDITY })
-  }, [oSqueethBal, lpState.step])
+  }, [oSqueethBal])
 
   return <LPContext.Provider value={{ lpState, dispatch }}>{children}</LPContext.Provider>
 }
