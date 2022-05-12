@@ -20,7 +20,6 @@ import {
   managerAtom,
   activePositionsAtom,
   closedPositionsAtom,
-  lpPositionsLoadingAtom,
   squeethLiquidityAtom,
   wethLiquidityAtom,
   depositedSqueethAtom,
@@ -221,7 +220,6 @@ export const useLpDebt = () => {
 export const useLPPositionsQuery = () => {
   const { squeethPool } = useAtomValue(addressesAtom)
   const address = useAtomValue(addressAtom)
-  const lpPositionsLoading = useAtomValue(lpPositionsLoadingAtom)
   const { data, refetch, loading, subscribeToMore } = useQuery<positions, positionsVariables>(POSITIONS_QUERY, {
     variables: {
       poolAddress: squeethPool?.toLowerCase(),
@@ -247,7 +245,7 @@ export const useLPPositionsQuery = () => {
     })
   }, [address, squeethPool, subscribeToMore])
 
-  return { data, refetch, loading: loading || lpPositionsLoading }
+  return { data, refetch, loading }
 }
 
 const MAX_UNIT = '0xffffffffffffffffffffffffffffffff'
@@ -334,7 +332,6 @@ export const usePositionsAndFeesComputation = () => {
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const [activePositions, setActivePositions] = useAtom(activePositionsAtom)
   const setClosedPositions = useUpdateAtom(closedPositionsAtom)
-  const setLoading = useUpdateAtom(lpPositionsLoadingAtom)
   const setDepositedSqueeth = useUpdateAtom(depositedSqueethAtom)
   const setDepositedWeth = useUpdateAtom(depositedWethAtom)
   const setWithdrawnSqueeth = useUpdateAtom(withdrawnSqueethAtom)
@@ -347,7 +344,6 @@ export const usePositionsAndFeesComputation = () => {
 
   useAppEffect(() => {
     if (positionAndFees && !gphLoading) {
-      setLoading(true)
       // Promise.all(positionAndFees).then((values: any[]) => {
       setActivePositions(positionAndFees.filter((p) => p.amount0.gt(0) || p.amount1.gt(0)))
       setClosedPositions(positionAndFees.filter((p) => p.amount0.isZero() && p.amount1.isZero()))
@@ -381,18 +377,6 @@ export const usePositionsAndFeesComputation = () => {
       setWithdrawnWeth(withWeth)
       setSqueethLiquidity(sqthLiq)
       setWethLiquidity(wethLiq)
-      if (
-        !(
-          depSqth.isEqualTo(0) &&
-          depWeth.isEqualTo(0) &&
-          withSqth.isEqualTo(0) &&
-          sqthLiq.isEqualTo(0) &&
-          wethLiq.isEqualTo(0)
-        ) ||
-        activePositions.length === 0
-      )
-        setLoading(false)
-      // })
     }
   }, [
     gphLoading,
@@ -403,7 +387,6 @@ export const usePositionsAndFeesComputation = () => {
     setClosedPositions,
     setDepositedSqueeth,
     setDepositedWeth,
-    setLoading,
     setSqueethLiquidity,
     setWethLiquidity,
     setWithdrawnSqueeth,
