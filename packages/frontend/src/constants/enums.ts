@@ -77,6 +77,7 @@ export enum Tooltips {
   FundingMonthly = 'Monthly Funding is calculated as (Daily Funding * 30)',
   FundingAnnual = 'Annual Funding is calculated as (Daily Funding * 365.25)',
   ControllerHelperOperator = `The wrapper contract helps you put on short positions and LP positions in one step instead of many. <a href="https://www.opyn.co/">Learn more</a>.`,
+  VaultCollatRatio = `You'll be adjusting the collateral ratio for the whole vault and not just this trade.`,
 }
 
 export enum Links {

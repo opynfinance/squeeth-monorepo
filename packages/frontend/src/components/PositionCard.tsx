@@ -231,7 +231,7 @@ const PositionCard: React.FC = () => {
   }, [swaps, prevSwapsData, tradeSuccess, setTradeCompleted, startPolling, stopPolling, setTradeSuccess])
 
   const fullyLiquidated = useAppMemo(() => {
-    return vault && vault.shortAmount?.isZero() && liquidations.length > 0
+    return Boolean(vault && vault.shortAmount.isZero() && liquidations.length > 0)
   }, [vault, liquidations])
 
   const isDollarValueLoading = useAppMemo(() => {
