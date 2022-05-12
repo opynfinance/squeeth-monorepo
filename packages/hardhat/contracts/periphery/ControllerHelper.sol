@@ -553,7 +553,11 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                     );
                     console.log('increaseLiquidityParam.wPowerPerpAmountToLp', increaseLiquidityParam.wPowerPerpAmountToLp);
                     console.log('increaseLiquidityParam.wethAmountToLp', increaseLiquidityParam.wethAmountToLp);
-
+                    console.log('increaseLiquidityParam.collateralToDeposit', increaseLiquidityParam.collateralToDeposit);
+                    console.log('increaseLiquidityParam.amount0Min', increaseLiquidityParam.amount0Min);
+                    console.log('increaseLiquidityParam.amount1Min', increaseLiquidityParam.amount1Min);
+                    console.log('weth balance',IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).balanceOf(address(this)));
+                    console.log('wPowerPerp balance', IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).balanceOf(address(this)));
                     ControllerHelperUtil.increaseLpLiquidity(
                         controller,
                         nonfungiblePositionManager,
