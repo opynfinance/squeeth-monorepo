@@ -47,6 +47,7 @@ import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from 'src/state
 import useAppEffect from '@hooks/useAppEffect'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppMemo from '@hooks/useAppMemo'
+import BreakEven from './BreakEven'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -247,6 +248,8 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
+const FUNDING_MOVE_THRESHOLD = 1.3
+
 const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   const [buyLoading, setBuyLoading] = useState(false)
   const getBuyQuoteForETH = useGetBuyQuoteForETH()
@@ -351,8 +354,13 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
     if (new BigNumber(quote.priceImpact).gt(3)) {
       priceImpactWarning = 'High Price Impact'
     }
-    if (currentImpliedFunding >= 1.75 * dailyHistoricalFunding.funding) {
-      highVolError = `Current implied funding is 75% higher than the last ${dailyHistoricalFunding.period} hours. Consider if you want to purchase now or later`
+
+    if (
+      currentImpliedFunding >= FUNDING_MOVE_THRESHOLD * dailyHistoricalFunding.funding &&
+      Number(ethTradeAmount) > 0
+    ) {
+      const fundingPercent = (currentImpliedFunding / dailyHistoricalFunding.funding - 1) * 100
+      highVolError = `Funding ${fundingPercent.toFixed(0)}% above yesterday. Consider buying later`
     }
   }
 
@@ -528,6 +536,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                   frontUnit="$"
                   id="open-short-eth-down-50%"
                 />
+                <BreakEven />
                 <div style={{ marginTop: '10px' }}>
                   <UniswapData
                     slippage={isNaN(Number(slippageAmount)) ? '0' : slippageAmount.toString()}

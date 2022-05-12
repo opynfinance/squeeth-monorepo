@@ -52,6 +52,7 @@ import {
   tradeTypeAtom,
 } from 'src/state/trade/atoms'
 import { toTokenAmount } from '@utils/calculations'
+import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from 'src/state/controller/atoms'
 import { TradeType } from '../../../types'
 import Cancelled from '../Cancelled'
 import { useVaultData } from '@hooks/useVaultData'
@@ -213,6 +214,7 @@ const useStyles = makeStyles((theme) =>
 
 export const collatPercentAtom = atomWithStorage('collatPercent', 0)
 const collatPercentFamily = atomFamily((initialValue: number) => atomWithStorage('collatPercent', initialValue))
+const FUNDING_MOVE_THRESHOLD = 0.7
 
 const OpenShort: React.FC<SellType> = ({ open }) => {
   const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
@@ -254,6 +256,8 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
   const getDebtAmount = useGetDebtAmount()
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
+  const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
+  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 
   const [quote, setQuote] = useAtom(quoteAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
@@ -397,6 +401,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   let existingLongError: string | undefined
   let priceImpactWarning: string | undefined
   let vaultIdDontLoadedError: string | undefined
+  let lowVolError: string | undefined
 
   if (connected) {
     if (vault && (vault.shortAmount.lt(amount) || vault.shortAmount.isZero())) {
@@ -411,6 +416,11 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
       openError = `Minimum collateral is ${MIN_COLLATERAL_AMOUNT} ETH`
     } else if (vault && vaultId === 0 && vault?.shortAmount.gt(0)) {
       vaultIdDontLoadedError = 'Loading Vault...'
+    }
+    console.log(currentImpliedFunding, FUNDING_MOVE_THRESHOLD * dailyHistoricalFunding.funding, Number(amount) > 0)
+    if (currentImpliedFunding <= FUNDING_MOVE_THRESHOLD * dailyHistoricalFunding.funding && Number(amount) > 0) {
+      const fundingPercent = (1 - currentImpliedFunding / dailyHistoricalFunding.funding) * 100
+      lowVolError = `Funding is ${fundingPercent.toFixed(0)}% below yesterday. Consider buying later`
     }
     if (
       !open &&
@@ -502,6 +512,8 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                   priceImpactWarning
                 ) : collatError?.length !== 0 ? (
                   collatError
+                ) : lowVolError ? (
+                  lowVolError
                 ) : (
                   <div className={classes.hint}>
                     <span>
@@ -520,7 +532,9 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                 )
               }
               id="open-short-eth-input"
-              error={!!existingLongError || !!priceImpactWarning || !!openError || collatError?.length !== 0}
+              error={
+                !!existingLongError || !!priceImpactWarning || !!openError || collatError?.length !== 0 || !!lowVolError
+              }
             />
           </div>
           <div className={classes.thirdHeading}>
