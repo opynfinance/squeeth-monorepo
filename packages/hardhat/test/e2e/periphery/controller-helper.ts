@@ -1386,7 +1386,7 @@ it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
      })
   
       
-  it("Deposit nft, mint, increase liquidity with no eth added", async () => {
+  it("Deposit nft, withdraw collateral from vault, mint, increase liquidity with no eth added", async () => {
     // Get vault and LP info
     const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
     const depositorEthBalanceBefore = await ethers.provider.getBalance(depositor.address)
@@ -1451,7 +1451,12 @@ it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
     const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
     const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, true)
     const flashLoanAmount = vaultBefore.collateralAmount
-    const tx = await controllerHelper.connect(depositor).rebalanceVaultNft(vaultId, flashLoanAmount, rebalanceVaultNftParams);
+    console.log('vaultBefore.collateralAmount', vaultBefore.collateralAmount.toString())
+    console.log('wethAmountToLp', wethAmountToLp.toString())
+    console.log('wPowerPerpAmountToLp', wPowerPerpAmountToLp.toString())
+    console.log('ready to rebalanceVaultNft')
+    const tx = await controllerHelper.connect(depositor).rebalanceVaultNft(vaultId, flashLoanAmount, rebalanceVaultNftParams, {value: ethers.utils.parseUnits('0.05') });
+    console.log('rebalanceVaultNft success')
     const receipt = await tx.wait()
     const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
     const depositorSqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)

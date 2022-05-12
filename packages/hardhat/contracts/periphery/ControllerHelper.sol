@@ -589,10 +589,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
 
             // deposit collateral into vault and withdraw LP NFT
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).withdraw(_amount);
-            console.log("depositing %s eth  ", _amount);
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).deposit{value: _amount}(vaultId);
             IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).withdrawUniPositionToken(vaultId);
-            console.log('ready for rebal');
             for (uint256 i; i < data.length; i++) {
                 if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.IncreaseLpLiquidity
@@ -604,7 +602,11 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                     );
                     console.log('increaseLiquidityParam.wPowerPerpAmountToLp', increaseLiquidityParam.wPowerPerpAmountToLp);
                     console.log('increaseLiquidityParam.wethAmountToLp', increaseLiquidityParam.wethAmountToLp);
-
+                    console.log('increaseLiquidityParam.collateralToDeposit', increaseLiquidityParam.collateralToDeposit);
+                    console.log('increaseLiquidityParam.amount0Min', increaseLiquidityParam.amount0Min);
+                    console.log('increaseLiquidityParam.amount1Min', increaseLiquidityParam.amount1Min);
+                    console.log('weth balance',IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).balanceOf(address(this)));
+                    console.log('wPowerPerp balance', IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).balanceOf(address(this)));
                     ControllerHelperUtil.increaseLpLiquidity(
                         ControllerHelperDiamondStorage.getAddressAtSlot(0),
                         ControllerHelperDiamondStorage.getAddressAtSlot(6),
@@ -614,7 +616,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         increaseLiquidityParam,
                         isWethToken0
                     );
-
+                    console.log('success!');
                     IController(ControllerHelperDiamondStorage.getAddressAtSlot(0)).depositUniPositionToken(
                         vaultId,
                         increaseLiquidityParam.tokenId
@@ -860,7 +862,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             );
             console.log('transferred back to pool');
             if (address(this).balance > 0)
-                console.log('transferring positive balance');
                 IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: address(this).balance}();
                 console.log('transferred balance');
         } else if (
