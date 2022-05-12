@@ -215,8 +215,6 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
 
   const onEthChange = useAppCallback(
     async (value: string) => {
-      console.log({ value, collatPercent, slippageAmount: slippageAmount.toString() })
-
       setMsgValue(new BigNumber(value))
       const { squeethAmount, ethBorrow, quote, liqPrice } = await integrateETHInput(
         new BigNumber(value),
@@ -538,7 +536,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
                       ? 'Open Short anyway'
                       : 'Allow wrapper to manage vault (1/2)'}
                     {!isVaultApproved ? (
-                      <Tooltip style={{ marginLeft: '2px' }} title={Tooltips.Operator}>
+                      <Tooltip style={{ marginLeft: '2px' }} title={Tooltips.ControllerHelperOperator}>
                         <InfoOutlinedIcon fontSize="small" />
                       </Tooltip>
                     ) : null}
