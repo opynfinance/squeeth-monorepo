@@ -342,8 +342,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             _params.tokenId,
             1e18
         );
-        console.log('after checkClosedLp');
-
         (uint256 wethAmountDesired, uint256 wPowerPerpAmountDesired) = ControllerHelperUtil.getAmountsToLp(
             _params.wPowerPerpPool,
             _params.wethAmountDesired,
@@ -352,7 +350,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             _params.upperTick,
             isWethToken0
         );
-        console.log('after getAmountsToLp');
         if (!isWethToken0) (wethAmountDesired, wPowerPerpAmountDesired) = (wPowerPerpAmountDesired, wethAmountDesired);
 
         if (wPowerPerpAmountDesired > wPowerPerpAmountInLp) {

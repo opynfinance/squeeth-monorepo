@@ -960,7 +960,8 @@ describe("ControllerHelper: mainnet fork", function () {
       const normFactor = await controller.getExpectedNormalizationFactor()
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, true)
-      const flashLoanAmount = (vaultBefore.shortAmount).mul(normFactor).mul(ethPrice).mul(3).div(one.mul(one).mul(10000).mul(2)).sub(vaultBefore.collateralAmount).add(ethers.utils.parseUnits('0.1'))
+      const flashLoanAmount_ = (vaultBefore.shortAmount).mul(normFactor).mul(ethPrice).mul(3).div(one.mul(one).mul(10000).mul(2)).sub(vaultBefore.collateralAmount).add(ethers.utils.parseUnits('0.1'))
+      const flashLoanAmount = flashLoanAmount_.lte(0) ? BigNumber.from(0) : flashLoanAmount_
       const tx = await controllerHelper.connect(depositor).rebalanceVaultNft(vaultId, flashLoanAmount, rebalanceVaultNftParams);
       const receipt = await tx.wait()
       const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
@@ -1158,7 +1159,9 @@ describe("ControllerHelper: mainnet fork", function () {
     const normFactor = await controller.getExpectedNormalizationFactor()
     const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
     const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, true)
-    const flashLoanAmount = (vaultBefore.shortAmount).mul(normFactor).mul(ethPrice).mul(3).div(one.mul(one).mul(10000).mul(2)).sub(vaultBefore.collateralAmount).add(ethers.utils.parseUnits('0.1'))
+    const flashLoanAmount_ = (vaultBefore.shortAmount).mul(normFactor).mul(ethPrice).mul(3).div(one.mul(one).mul(10000).mul(2)).sub(vaultBefore.collateralAmount).add(ethers.utils.parseUnits('0.1'))
+    const flashLoanAmount = flashLoanAmount_.lte(0) ? BigNumber.from(0) : flashLoanAmount_
+
     // Rebalance vault
     const tx = await controllerHelper.connect(depositor).rebalanceVaultNft(vaultId, flashLoanAmount, rebalanceVaultNftParams)
     const receipt = await tx.wait()
@@ -1313,7 +1316,8 @@ it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
   const normFactor = await controller.getExpectedNormalizationFactor()
   const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
   const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, true)
-  const flashLoanAmount = (vaultBefore.shortAmount).mul(normFactor).mul(ethPrice).mul(3).div(one.mul(one).mul(10000).mul(2)).sub(vaultBefore.collateralAmount).add(ethers.utils.parseUnits('0.1'))
+  const flashLoanAmount_ = (vaultBefore.shortAmount).mul(normFactor).mul(ethPrice).mul(3).div(one.mul(one).mul(10000).mul(2)).sub(vaultBefore.collateralAmount).add(ethers.utils.parseUnits('0.1'))
+  const flashLoanAmount = flashLoanAmount_.lte(0) ? BigNumber.from(0) : flashLoanAmount_
   await controllerHelper.connect(depositor).rebalanceVaultNft(vaultId, flashLoanAmount, rebalanceVaultNftParams);
   const depositorSqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
   const depositorEthBalanceAfter = await ethers.provider.getBalance(depositor.address)
