@@ -12,7 +12,7 @@ import {
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
-import React, { memo, useEffect, useState } from 'react'
+import React, { memo, useEffect, useMemo, useState } from 'react'
 
 import { CloseType, Tooltips, Links } from '@constants/enums'
 import useShortHelper from '@hooks/contracts/useShortHelper'
@@ -842,8 +842,16 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
     setCollatPercent(Math.max(0, newNeededCollat.div(debtAmount).toNumber() * 100))
   }
 
+  const maxAllowedCollatPercent = useAppMemo(() => {
+    return Math.max(0, existingCollat.div(debtAmount).toNumber() * 100)
+  }, [debtAmount, existingCollat])
+
   const handleCollatPercentChange = useAppCallback(
-    (newCollatPercent: number) => {
+    (newCollatPercentParam: number) => {
+      const newCollatPercent = maxAllowedCollatPercent
+        ? Math.min(newCollatPercentParam, maxAllowedCollatPercent)
+        : newCollatPercentParam
+
       setCollatPercent(newCollatPercent)
 
       if (amount.isZero()) {
@@ -855,7 +863,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
 
       setWithdrawCollat(newNeededCollat.gt(0) ? existingCollat.minus(newNeededCollat) : existingCollat)
     },
-    [amount, debtAmount, existingCollat],
+    [amount, debtAmount, existingCollat, maxAllowedCollatPercent],
   )
 
   useAppEffect(() => {
@@ -1172,6 +1180,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                 onCollatValueChange={(val) => handleCollatPercentChange(val)}
                 collatValue={collatPercent}
                 id="close-short-collat-ratio"
+                maxAllowedValue={maxAllowedCollatPercent}
               />
             </div>
           )}
