@@ -1167,7 +1167,9 @@ describe("ControllerHelper: mainnet fork", function () {
     const normFactor = await controller.getExpectedNormalizationFactor()
     const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
     const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, true)
-    const flashLoanAmount = (vaultBefore.shortAmount).mul(normFactor).mul(ethPrice).mul(3).div(one.mul(one).mul(10000).mul(2)).sub(vaultBefore.collateralAmount).add(ethers.utils.parseUnits('0.1'))
+    const flashLoanAmount_ = (vaultBefore.shortAmount).mul(normFactor).mul(ethPrice).mul(3).div(one.mul(one).mul(10000).mul(2)).sub(vaultBefore.collateralAmount).add(ethers.utils.parseUnits('0.1'))
+    const flashLoanAmount = flashLoanAmount_.lte(0) ? BigNumber.from(0) : flashLoanAmount_
+
     // Rebalance vault
     const tx = await controllerHelper.connect(depositor).rebalanceLpInVault(vaultId, flashLoanAmount, rebalanceLpInVaultParams)
     const receipt = await tx.wait()
