@@ -1963,7 +1963,7 @@ describe("Controller helper integration test", function () {
       const amount0Min = BigNumber.from(0);
       const amount1Min = BigNumber.from(0);
 
-      const newTick = isWethToken0 ? 60*((currentTick - currentTick%60)/60 - 1): 60*((currentTick - currentTick%60)/60 + 1)
+      const newTick = isWethToken0 ? 60*((currentTick - currentTick%60)/60 - 10): 60*((currentTick - currentTick%60)/60 + 10)
 
       const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
       const positionBefore = await (positionManager as INonfungiblePositionManager).positions(tokenId);
@@ -1979,7 +1979,7 @@ describe("Controller helper integration test", function () {
       const wPowerPerpAmountInLP = (isWethToken0) ? amount1 : amount0;
       const wethAmountInLP = (isWethToken0) ? amount0 : amount1;
       //uniswap LPing often will give 1 wei less than expected, with the price of oSQTH need to do more than 1 wei due to rounding up the amount owed 
-      const squeethDesired = wPowerPerpAmountInLP.sub(10)
+      const squeethDesired = wPowerPerpAmountInLP.sub(ethers.utils.parseUnits('0.01'))
 
       const params = {
         wPowerPerpPool: wSqueethPool.address,
@@ -1990,7 +1990,7 @@ describe("Controller helper integration test", function () {
         wethAmountDesired: ethers.utils.parseUnits('0'),
         amount0DesiredMin: BigNumber.from(0),
         amount1DesiredMin: BigNumber.from(0),
-        limitPriceEthPerPowerPerp,
+        limitPriceEthPerPowerPerp: BigNumber.from(0),
         amount0Min: BigNumber.from(0),
         amount1Min: BigNumber.from(0),
         lowerTick: isWethToken0 ? -887220 : newTick,
