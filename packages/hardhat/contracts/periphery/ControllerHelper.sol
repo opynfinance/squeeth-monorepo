@@ -381,8 +381,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             _params.tokenId,
             1e18
         );
-        console.log('after checkClosedLp');
-
         (uint256 wethAmountDesired, uint256 wPowerPerpAmountDesired) = ControllerHelperUtil.getAmountsToLp(
             _params.wPowerPerpPool,
             _params.wethAmountDesired,
@@ -391,7 +389,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             _params.upperTick,
             isWethToken0
         );
-        console.log('after getAmountsToLp');
         if (!isWethToken0) (wethAmountDesired, wPowerPerpAmountDesired) = (wPowerPerpAmountDesired, wethAmountDesired);
 
         if (wPowerPerpAmountDesired > wPowerPerpAmountInLp) {
@@ -437,8 +434,9 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 upperTick: _params.upperTick
             })
         );
-        console.log('before sendBack');
-        ControllerHelperUtil.sendBack(
+            console.log('weth balance',IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).balanceOf(address(this)));
+            console.log('wPowerPerp balance', IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).balanceOf(address(this)));
+            ControllerHelperUtil.sendBack(
             ControllerHelperDiamondStorage.getAddressAtSlot(5),
             ControllerHelperDiamondStorage.getAddressAtSlot(4)
         );
