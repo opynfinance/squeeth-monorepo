@@ -38,6 +38,7 @@ export enum Tooltips {
   ImplVol = 'Implied Volatility (IV) is a market forecast of ETH price movement implied by squeeth',
   UnrealizedPnL = 'Total profit / loss if you were to fully close your position at the current oSQTH price on Uniswap. Resets if you close your position or change position sides (long to short, or vice versa)',
   RealizedPnL = 'Total realized profit / loss for this position through partial closes. Resets if you fully close your position or change position sides (long to short, or vice versa)',
+  PnLExplanation = 'Squeeth performance is affected by implied volatility, funding, ETH price, and price impact.',
   ShortCollateral = 'Takes ETH collateral into account.',
   Mark = 'The price squeeth is trading at. Because squeeth has convexity, Mark should be greater than ETH^2',
   Last30MinAvgFunding = 'Historical daily funding based on the last 30min. Calculated using a 30min TWAP of Mark - Index',
@@ -75,6 +76,7 @@ export enum Tooltips {
   FundingDaily = 'Daily funding is calculated as ln(mark / index) * 17.5. Mark and Index spot values are taken at points in the past and scaled to one day.',
   FundingMonthly = 'Monthly Funding is calculated as (Daily Funding * 30)',
   FundingAnnual = 'Annual Funding is calculated as (Daily Funding * 365.25)',
+  VaultCollatRatio = `You'll be adjusting the collateral ratio for the whole vault and not just this trade.`,
 }
 
 export enum Links {

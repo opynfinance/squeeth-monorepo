@@ -113,6 +113,15 @@ const getRelevantSwaps = (squeethAmount: BigNumber, swaps: swaps_swaps[], isWeth
   return relevantSwaps
 }
 
+export function pnl(currentValue: BigNumber, cost: BigNumber): BigNumber {
+  return currentValue.minus(cost)
+}
+
+export function pnlInPerct(currentValue: BigNumber, cost: BigNumber): BigNumber {
+  if (cost.isEqualTo(0)) return BIG_ZERO
+  return currentValue.dividedBy(cost).minus(1).times(100)
+}
+
 const getSwapsWithEthPrice = async (swaps: swaps_swaps[]) => {
   const timestamps = swaps.map((s) => Number(s.timestamp) * 1000)
 
@@ -148,7 +157,7 @@ const getVaultHistoriesWithEthPrice = async (vaultHistories: VaultHistory_vaultH
 export async function calcDollarShortUnrealizedpnl(
   swaps: swaps_swaps[],
   isWethToken0: boolean,
-  buyQuote: BigNumber,
+  positionValue: BigNumber,
   uniswapEthPrice: BigNumber,
   squeethAmount: BigNumber,
   ethCollateralPnl: BigNumber,
@@ -173,7 +182,7 @@ export async function calcDollarShortUnrealizedpnl(
     { totalWethInUSD: BIG_ZERO, priceError: false },
   )
 
-  const usd = totalWethInUSD.minus(buyQuote.times(uniswapEthPrice)).plus(ethCollateralPnl)
+  const usd = totalWethInUSD.minus(positionValue).plus(ethCollateralPnl)
 
   return {
     usd,
@@ -185,11 +194,7 @@ export async function calcDollarShortUnrealizedpnl(
 export async function calcDollarLongUnrealizedpnl(
   swaps: swaps_swaps[],
   isWethToken0: boolean,
-  sellQuote: {
-    amountOut: BigNumber
-    minimumAmountOut: BigNumber
-    priceImpact: string
-  },
+  positionValue: BigNumber,
   uniswapEthPrice: BigNumber,
   squeethAmount: BigNumber,
 ) {
@@ -213,7 +218,7 @@ export async function calcDollarLongUnrealizedpnl(
     { totalUSDWethAmount: BIG_ZERO, priceError: false },
   )
 
-  const usdValue = !priceError ? sellQuote.amountOut.times(uniswapEthPrice).minus(totalUSDWethAmount) : BIG_ZERO
+  const usdValue = !priceError ? positionValue.minus(totalUSDWethAmount) : BIG_ZERO
   return {
     usd: usdValue,
     eth: !usdValue.isZero() ? usdValue.div(uniswapEthPrice) : BIG_ZERO,

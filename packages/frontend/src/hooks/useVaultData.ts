@@ -1,20 +1,10 @@
 import BigNumber from 'bignumber.js'
+import { useAtom } from 'jotai'
 import { useState } from 'react'
-import { useAtom, useAtomValue } from 'jotai'
 
-import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
-import { readyAtom } from 'src/state/squeethPool/atoms'
-import { useGetCollatRatioAndLiqPrice, useGetVault } from 'src/state/controller/hooks'
-import {
-  collatPercentAtom,
-  existingCollatAtom,
-  existingCollatPercentAtom,
-  existingLiqPriceAtom,
-  vaultAtom,
-} from 'src/state/positions/atoms'
-// import { normFactorAtom } from 'src/state/controller/atoms'
+import { useGetCollatRatioAndLiqPrice } from 'src/state/controller/hooks'
+import { collatPercentAtom, existingCollatPercentAtom, existingLiqPriceAtom } from 'src/state/positions/atoms'
 import useAppEffect from './useAppEffect'
-import useAppCallback from './useAppCallback'
 
 interface IVault {
   id: string
@@ -26,7 +16,7 @@ interface IVault {
 
 export const useVaultData = (vault: IVault | undefined) => {
   const [existingCollatPercent, setExistingCollatPercent] = useAtom(existingCollatPercentAtom)
-  const [existingCollat, setExistingCollat] = useAtom(existingCollatAtom)
+  const [existingCollat, setExistingCollat] = useState(new BigNumber(0))
   const [existingLiqPrice, setExistingLiqPrice] = useAtom(existingLiqPriceAtom)
   const [collatPercent, setCollatPercent] = useAtom(collatPercentAtom)
 
