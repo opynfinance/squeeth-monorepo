@@ -530,7 +530,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 _amount.add(data.collateralToWithdraw)
             );
 
-            // if openeded new vault, transfer vault NFT to user
+            // if opened new vault, transfer vault NFT to user
             if (data.vaultId == 0)
                 IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).safeTransferFrom(
                     address(this),
