@@ -135,6 +135,11 @@ describe("ControllerHelper: mainnet fork", function () {
         lowerTick: -887220,
         upperTick: 887220
       }
+      console.log('flashloanWMintDepositNftParams.wPowerPerpAmount',flashloanWMintDepositNftParams.wPowerPerpAmount.toString() )
+      console.log('flashloanWMintDepositNftParams.collateralToDeposit',flashloanWMintDepositNftParams.collateralToDeposit.toString() )
+      console.log('flashloanWMintDepositNftParams.collateralToFlashloan',flashloanWMintDepositNftParams.collateralToFlashloan.toString() )
+      console.log('flashloanWMintDepositNftParams.collateralToLp',flashloanWMintDepositNftParams.collateralToLp.toString() )
+      console.log('flashloanWMintDepositNftParams.collateralToDeposit',flashloanWMintDepositNftParams.collateralToDeposit.toString() )
 
       const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
@@ -337,6 +342,11 @@ describe("ControllerHelper: mainnet fork", function () {
         lowerTick: -887220,
         upperTick: 887220
       }
+      console.log('flashloanWMintDepositNftParams.wPowerPerpAmount',flashloanWMintDepositNftParams.wPowerPerpAmount.toString() )
+      console.log('flashloanWMintDepositNftParams.collateralToDeposit',flashloanWMintDepositNftParams.collateralToDeposit.toString() )
+      console.log('flashloanWMintDepositNftParams.collateralToFlashloan',flashloanWMintDepositNftParams.collateralToFlashloan.toString() )
+      console.log('flashloanWMintDepositNftParams.collateralToLp',flashloanWMintDepositNftParams.collateralToLp.toString() )
+      console.log('flashloanWMintDepositNftParams.collateralToDeposit',flashloanWMintDepositNftParams.collateralToDeposit.toString() )
 
       await controllerHelper.connect(depositor).flashloanWMintLpDepositNft(flashloanWMintDepositNftParams, {value: collateralToLp.add(collateralToMint.div(2)).add(ethers.utils.parseUnits('0.01'))})
 
