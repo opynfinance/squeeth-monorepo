@@ -1561,7 +1561,7 @@ it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
     console.log('wethAmountToLp', wethAmountToLp.toString())
     console.log('wPowerPerpAmountToLp', wPowerPerpAmountToLp.toString())
     console.log('ready to rebalanceVaultNft')
-    const tx = await controllerHelper.connect(depositor).rebalanceVaultNft(vaultId, flashLoanAmount, rebalanceVaultNftParams, {value: ethers.utils.parseUnits('0.05') });
+    const tx = await controllerHelper.connect(depositor).rebalanceVaultNft(vaultId, flashLoanAmount, rebalanceVaultNftParams);
     console.log('rebalanceVaultNft success')
     const receipt = await tx.wait()
     const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
