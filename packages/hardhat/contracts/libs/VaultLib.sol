@@ -1,6 +1,6 @@
 //SPDX-License-Identifier: GPL-2.0-or-later
 
-import 'hardhat/console.sol';
+import "hardhat/console.sol";
 
 pragma solidity =0.7.6;
 
@@ -135,7 +135,7 @@ library VaultLib {
         );
 
         bool isDust = totalCollateral < _minCollateral;
-        if (isDust) console.log('totalCollateral %s minCollateral %s', totalCollateral, _minCollateral);
+        if (isDust) console.log("totalCollateral %s minCollateral %s", totalCollateral, _minCollateral);
         bool isAboveWater = totalCollateral.mul(CR_DENOMINATOR) >= debtValueInETH.mul(CR_NUMERATOR);
         return (isAboveWater, isDust);
     }

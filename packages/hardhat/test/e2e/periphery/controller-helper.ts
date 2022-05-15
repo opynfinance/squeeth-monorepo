@@ -134,6 +134,11 @@ describe("ControllerHelper: mainnet fork", function () {
         lowerTick: -887220,
         upperTick: 887220
       }
+      console.log('flashloanWMintDepositNftParams.wPowerPerpAmount',flashloanWMintDepositNftParams.wPowerPerpAmount.toString() )
+      console.log('flashloanWMintDepositNftParams.collateralToDeposit',flashloanWMintDepositNftParams.collateralToDeposit.toString() )
+      console.log('flashloanWMintDepositNftParams.collateralToFlashloan',flashloanWMintDepositNftParams.collateralToFlashloan.toString() )
+      console.log('flashloanWMintDepositNftParams.collateralToLp',flashloanWMintDepositNftParams.collateralToLp.toString() )
+      console.log('flashloanWMintDepositNftParams.collateralToDeposit',flashloanWMintDepositNftParams.collateralToDeposit.toString() )
 
       const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
@@ -324,7 +329,6 @@ describe("ControllerHelper: mainnet fork", function () {
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
       const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
       const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
-      
       const flashloanWMintDepositNftParams = {
         wPowerPerpPool: wSqueethPool.address,
         vaultId: 0,
@@ -338,6 +342,11 @@ describe("ControllerHelper: mainnet fork", function () {
         lowerTick: -887220,
         upperTick: 887220
       }
+      console.log('flashloanWMintDepositNftParams.wPowerPerpAmount',flashloanWMintDepositNftParams.wPowerPerpAmount.toString() )
+      console.log('flashloanWMintDepositNftParams.collateralToDeposit',flashloanWMintDepositNftParams.collateralToDeposit.toString() )
+      console.log('flashloanWMintDepositNftParams.collateralToFlashloan',flashloanWMintDepositNftParams.collateralToFlashloan.toString() )
+      console.log('flashloanWMintDepositNftParams.collateralToLp',flashloanWMintDepositNftParams.collateralToLp.toString() )
+      console.log('flashloanWMintDepositNftParams.collateralToDeposit',flashloanWMintDepositNftParams.collateralToDeposit.toString() )
 
       await controllerHelper.connect(depositor).flashloanWMintLpDepositNft(flashloanWMintDepositNftParams, {value: collateralToLp.add(collateralToMint.div(2)).add(ethers.utils.parseUnits('0.01'))})
 

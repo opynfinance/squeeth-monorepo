@@ -97,6 +97,7 @@ library ControllerHelperUtil {
         uint256 amountToMint = (_isWethToken0) ? amount1Desired : amount0Desired;
         if (IWPowerPerp(_wPowerPerp).balanceOf(address(this)) < amountToMint) {
             amountToMint = amountToMint.sub(IWPowerPerp(_wPowerPerp).balanceOf(address(this)));
+            console.log('depositing %s', _mintAndLpParams.collateralToDeposit);
             _vaultId = IController(_controller).mintWPowerPerpAmount{value: _mintAndLpParams.collateralToDeposit}(
                 _mintAndLpParams.vaultId,
                 amountToMint,
