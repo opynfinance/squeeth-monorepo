@@ -3,7 +3,7 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import 'hardhat/console.sol';
+import "hardhat/console.sol";
 
 // interface
 import {IWETH9} from "../interfaces/IWETH9.sol";
@@ -319,7 +319,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             address(this),
             _params.tokenId
         );
-        console.log('after transfer of nft to contract');
+        console.log("after transfer of nft to contract");
         // close LP NFT and get Weth and WPowerPerp amounts
         (uint256 wPowerPerpAmountInLp, ) = ControllerHelperUtil.closeUniLp(
             nonfungiblePositionManager,
@@ -332,7 +332,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             }),
             isWethToken0
         );
-        console.log('after closeUniLp');
+        console.log("after closeUniLp");
 
         ControllerHelperUtil.checkClosedLp(
             msg.sender,
@@ -353,7 +353,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         if (!isWethToken0) (wethAmountDesired, wPowerPerpAmountDesired) = (wPowerPerpAmountDesired, wethAmountDesired);
 
         if (wPowerPerpAmountDesired > wPowerPerpAmountInLp) {
-            console.log('wPowerPerpAmountDesired > wPowerPerpAmountInLp');
+            console.log("wPowerPerpAmountDesired > wPowerPerpAmountInLp");
             // if the new position target a higher wPowerPerp amount, swap WETH to reach the desired amount (WETH new position is lower than current WETH in LP)
             _exactOutFlashSwap(
                 weth,
@@ -365,11 +365,11 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 ""
             );
         } else if (wPowerPerpAmountDesired < wPowerPerpAmountInLp) {
-            console.log('wPowerPerpAmountDesired < wPowerPerpAmountInLp');
+            console.log("wPowerPerpAmountDesired < wPowerPerpAmountInLp");
             // if the new position target lower wPowerPerp amount, swap excess to WETH (position target higher WETH amount)
             uint256 wPowerPerpExcess = wPowerPerpAmountInLp.sub(wPowerPerpAmountDesired);
-            console.log('wPowerPerpExcess %s', wPowerPerpExcess);
-            console.log('limit %s', _params.limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18));
+            console.log("wPowerPerpExcess %s", wPowerPerpExcess);
+            console.log("limit %s", _params.limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18));
             _exactInFlashSwap(
                 wPowerPerp,
                 weth,
@@ -548,10 +548,19 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         data[i].data,
                         (ControllerHelperDataType.IncreaseLpLiquidityParam)
                     );
-                    console.log('increaseLiquidityParam.wPowerPerpAmountToLp', increaseLiquidityParam.wPowerPerpAmountToLp);
-                    console.log('increaseLiquidityParam.wethAmountToLp', increaseLiquidityParam.wethAmountToLp);
-                    console.log('weth balance',IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).balanceOf(address(this)));
-                    console.log('wPowerPerp balance', IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).balanceOf(address(this)));
+                    console.log(
+                        "increaseLiquidityParam.wPowerPerpAmountToLp",
+                        increaseLiquidityParam.wPowerPerpAmountToLp
+                    );
+                    console.log("increaseLiquidityParam.wethAmountToLp", increaseLiquidityParam.wethAmountToLp);
+                    console.log(
+                        "weth balance",
+                        IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).balanceOf(address(this))
+                    );
+                    console.log(
+                        "wPowerPerp balance",
+                        IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).balanceOf(address(this))
+                    );
                     ControllerHelperUtil.increaseLpLiquidity(
                         controller,
                         nonfungiblePositionManager,
@@ -566,7 +575,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 } else if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.DecreaseLpLiquidity
                 ) {
-                    console.log('decrease lp liquidity');
+                    console.log("decrease lp liquidity");
                     // decrease liquidity in LP
                     ControllerHelperDataType.DecreaseLpLiquidityParams memory decreaseLiquidityParam = abi.decode(
                         data[i].data,
@@ -601,7 +610,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         data[i].data,
                         (ControllerHelperDataType.DepositIntoVault)
                     );
-                    console.log('deposit into vault');
+                    console.log("deposit into vault");
                     ControllerHelperUtil.mintIntoVault(
                         controller,
                         weth,
@@ -617,7 +626,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         data[i].data,
                         (ControllerHelperDataType.withdrawFromVault)
                     );
-                    console.log('withdraw from vault');
+                    console.log("withdraw from vault");
                     if (withdrawFromVaultParams.burnExactRemoved) {
                         ControllerHelperUtil.withdrawFromVault(
                             controller,
@@ -803,7 +812,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         ) {
             IERC20(_tokenIn).transfer(_pool, _amountToPay);
         }
-        console.log('end of loop');
+        console.log("end of loop");
     }
 
     /**
