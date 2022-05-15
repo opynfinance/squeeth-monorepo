@@ -138,7 +138,6 @@ describe("ControllerHelper: mainnet fork", function () {
       console.log('flashloanWMintDepositNftParams.collateralToDeposit',flashloanWMintDepositNftParams.collateralToDeposit.toString() )
       console.log('flashloanWMintDepositNftParams.collateralToFlashloan',flashloanWMintDepositNftParams.collateralToFlashloan.toString() )
       console.log('flashloanWMintDepositNftParams.collateralToLp',flashloanWMintDepositNftParams.collateralToLp.toString() )
-      console.log('flashloanWMintDepositNftParams.collateralToDeposit',flashloanWMintDepositNftParams.collateralToDeposit.toString() )
 
       const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
@@ -162,7 +161,7 @@ describe("ControllerHelper: mainnet fork", function () {
       // this is testing that the vault is minted with ~ the correct amount of oSQTH even if way too much is specified on f/e, which is what we want
       const vaultId = (await shortSqueeth.nextId());
       const normFactor = await controller.getExpectedNormalizationFactor()
-      const mintWSqueethAmount = ethers.utils.parseUnits('30')
+      const mintWSqueethAmount = ethers.utils.parseUnits('50')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
