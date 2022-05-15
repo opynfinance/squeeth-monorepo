@@ -566,9 +566,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                     );
                     console.log('increaseLiquidityParam.wPowerPerpAmountToLp', increaseLiquidityParam.wPowerPerpAmountToLp);
                     console.log('increaseLiquidityParam.wethAmountToLp', increaseLiquidityParam.wethAmountToLp);
-                    console.log('increaseLiquidityParam.collateralToDeposit', increaseLiquidityParam.collateralToDeposit);
-                    console.log('increaseLiquidityParam.amount0Min', increaseLiquidityParam.amount0Min);
-                    console.log('increaseLiquidityParam.amount1Min', increaseLiquidityParam.amount1Min);
                     console.log('weth balance',IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).balanceOf(address(this)));
                     console.log('wPowerPerp balance', IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).balanceOf(address(this)));
                     ControllerHelperUtil.increaseLpLiquidity(
@@ -585,6 +582,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 } else if (
                     data[i].rebalanceLpInVaultType == ControllerHelperDataType.RebalanceVaultNftType.DecreaseLpLiquidity
                 ) {
+                    console.log('decrease lp liquidity');
                     // decrease liquidity in LP
                     ControllerHelperDataType.DecreaseLpLiquidityParams memory decreaseLiquidityParam = abi.decode(
                         data[i].data,
@@ -635,7 +633,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         data[i].data,
                         (ControllerHelperDataType.withdrawFromVaultParams)
                     );
-
+                    console.log('withdraw from vault');
                     if (withdrawFromVaultParams.burnExactRemoved) {
                         ControllerHelperUtil.burnWithdrawFromVault(
                             controller,
