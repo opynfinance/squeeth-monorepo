@@ -139,7 +139,6 @@ describe("ControllerHelper: mainnet fork", function () {
       console.log('flashloanWMintDepositNftParams.collateralToDeposit',flashloanWMintDepositNftParams.collateralToDeposit.toString() )
       console.log('flashloanWMintDepositNftParams.collateralToFlashloan',flashloanWMintDepositNftParams.collateralToFlashloan.toString() )
       console.log('flashloanWMintDepositNftParams.collateralToLp',flashloanWMintDepositNftParams.collateralToLp.toString() )
-      console.log('flashloanWMintDepositNftParams.collateralToDeposit',flashloanWMintDepositNftParams.collateralToDeposit.toString() )
 
       const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
