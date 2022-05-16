@@ -29,7 +29,6 @@ type CollatRangeType = {
   collatValue: number
   onCollatValueChange: (val: number) => void
   className?: string
-  existingCollatPercent?: number
 }
 
 const marks = [
@@ -47,17 +46,10 @@ const marks = [
   },
 ]
 
-const CollatRange: React.FC<CollatRangeType> = ({
-  id,
-  collatValue,
-  onCollatValueChange,
-  className,
-  existingCollatPercent = 0,
-}) => {
+const CollatRange: React.FC<CollatRangeType> = ({ id, collatValue, onCollatValueChange, className }) => {
   const classes = useStyles()
 
   const minCollatRatio = 150
-  const totalCollatPercent = existingCollatPercent + collatValue
 
   const changeSlider = (val: number[]) => {
     if (val[1] < minCollatRatio) return
@@ -86,7 +78,7 @@ const CollatRange: React.FC<CollatRangeType> = ({
 
   return (
     <div className={classes.container} id={id}>
-      {totalCollatPercent === 150 && <div style={{ color: 'red' }}></div>}
+      {collatValue === 150 && <div style={{ color: 'red' }}></div>}
       <Slider
         value={[minCollatRatio, collatValue]}
         ThumbComponent={ThumbComponent}
@@ -104,12 +96,12 @@ const CollatRange: React.FC<CollatRangeType> = ({
         id={id + '-slider'}
       />
       <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-        <Collapse in={totalCollatPercent === 150}>
+        <Collapse in={collatValue === 150}>
           <Alert severity="error" id={id + '-alert-text'}>
             You will get liquidated
           </Alert>
         </Collapse>
-        <Collapse in={totalCollatPercent !== 150 && totalCollatPercent < 175}>
+        <Collapse in={collatValue !== 150 && collatValue < 175}>
           <Alert severity="warning" id={id + '-alert-text'}>
             Collateral ratio is risky. You will get liquidated at 150%.
           </Alert>
