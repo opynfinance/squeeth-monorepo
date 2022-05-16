@@ -108,7 +108,9 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
         setIsToHidePnL(false)
       }
     } else if (computedSwaps.squeethAmount.isLessThan(0)) {
-      setIsToHidePnL(true)
+      if (oSqueethBal.isGreaterThan(0)) {
+        setIsToHidePnL(true)
+      }
       setPositionType(PositionType.SHORT)
     } else {
       setIsToHidePnL(false)

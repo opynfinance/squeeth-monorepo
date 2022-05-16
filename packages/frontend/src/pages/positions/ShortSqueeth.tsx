@@ -104,11 +104,37 @@ export default function ShortSqueeth() {
               ) : (
                 <>
                   <Typography variant="body1" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
-                    $ {shortUnrealizedPNL.usd.toFixed(2)} ({shortUnrealizedPNL.eth.toFixed(5)} ETH)
+                    $ {shortUnrealizedPNL.usd.toFixed(2)} ({(shortGain || 0).toFixed(2)}%)
                   </Typography>
-                  <Typography variant="caption" className={shortGain.isLessThan(0) ? classes.red : classes.green}>
-                    {(shortGain || 0).toFixed(2)}%
-                  </Typography>
+                  <div style={{ display: 'flex', flexDirection: 'column', marginTop: '4px' }}>
+                    <Typography variant="caption" component="span" color="textSecondary">
+                      Breakdown
+                    </Typography>
+                    <div style={{ display: 'flex' }}>
+                      <Typography variant="caption" component="span" style={{ marginRight: '4px' }}>
+                        Short oSQTH P&L:
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        component="span"
+                        className={shortUnrealizedPNL.shortUsdPnL.isLessThan(0) ? classes.red : classes.green}
+                      >
+                        $ {shortUnrealizedPNL.shortUsdPnL.toFixed(2)}
+                      </Typography>
+                    </div>
+                    <div style={{ display: 'flex' }}>
+                      <Typography variant="caption" component="span" style={{ marginRight: '4px' }}>
+                        ETH collat P&L:
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        component="span"
+                        className={shortUnrealizedPNL.collatUsdPnL.isLessThan(0) ? classes.red : classes.green}
+                      >
+                        $ {shortUnrealizedPNL.collatUsdPnL.toFixed(2)}
+                      </Typography>
+                    </div>
+                  </div>
                 </>
               )}
             </div>

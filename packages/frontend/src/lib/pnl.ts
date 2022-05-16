@@ -187,7 +187,9 @@ export async function calcDollarShortUnrealizedpnl(
   return {
     usd,
     eth: usd.div(uniswapEthPrice),
+    shortUsdPnL: totalWethInUSD.minus(positionValue),
     loading: priceError,
+    collatUsdPnL: ethCollateralPnl,
   }
 }
 
