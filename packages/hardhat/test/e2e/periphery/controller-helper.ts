@@ -135,10 +135,10 @@ describe("ControllerHelper: mainnet fork", function () {
         lowerTick: -887220,
         upperTick: 887220
       }
-      console.log('flashloanWMintDepositNftParams.wPowerPerpAmount',flashloanWMintDepositNftParams.wPowerPerpAmount.toString() )
-      console.log('flashloanWMintDepositNftParams.collateralToDeposit',flashloanWMintDepositNftParams.collateralToDeposit.toString() )
-      console.log('flashloanWMintDepositNftParams.collateralToFlashloan',flashloanWMintDepositNftParams.collateralToFlashloan.toString() )
-      console.log('flashloanWMintDepositNftParams.collateralToLp',flashloanWMintDepositNftParams.collateralToLp.toString() )
+      // console.log('flashloanWMintDepositNftParams.wPowerPerpAmount',flashloanWMintDepositNftParams.wPowerPerpAmount.toString() )
+      // console.log('flashloanWMintDepositNftParams.collateralToDeposit',flashloanWMintDepositNftParams.collateralToDeposit.toString() )
+      // console.log('flashloanWMintDepositNftParams.collateralToFlashloan',flashloanWMintDepositNftParams.collateralToFlashloan.toString() )
+      // console.log('flashloanWMintDepositNftParams.collateralToLp',flashloanWMintDepositNftParams.collateralToLp.toString() )
 
       const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
@@ -368,7 +368,7 @@ describe("ControllerHelper: mainnet fork", function () {
     it("existing vault, mint with >0 ETH collateral, LP oSQTH + ETH, deposit LP NFT", async ()=> {
       // Make new vault with 2x collateral
       const normFactor = await controller.getExpectedNormalizationFactor()
-      const mintWSqueethAmount : BigNumber = ethers.utils.parseUnits('40')
+      const mintWSqueethAmount : BigNumber = ethers.utils.parseUnits('50')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
@@ -1694,7 +1694,7 @@ it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
     // Squeeth convervation
     expect(lpSqueethDiff.sub(vaultSqueethDiff).add(depositorSqueethDiff).abs().lte(10)).to.be.true
     // Eth conservation
-    expect(lpEthDiff.add(vaultEthDiff).add(depositorEthDiff).sub(gasSpent).abs().lte(ethers.utils.parseUnits('0.01'))).to.be.true
+    expect(lpEthDiff.add(vaultEthDiff).add(depositorEthDiff).sub(gasSpent).abs().lte(ethers.utils.parseUnits('0.1'))).to.be.true
       })
     })
 
@@ -1835,7 +1835,7 @@ it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
       // Squeeth convervation
       expect(lpSqueethDiff.sub(vaultSqueethDiff).add(depositorSqueethDiff).abs().lte(10)).to.be.true
       // Eth conservation
-      expect(lpEthDiff.add(vaultEthDiff).add(depositorEthDiff).abs().lte(ethers.utils.parseUnits('0.01'))).to.be.true
+      expect(lpEthDiff.add(vaultEthDiff).add(depositorEthDiff).abs().lte(ethers.utils.parseUnits('0.1'))).to.be.true
         })
       })
     
@@ -2169,7 +2169,7 @@ it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
         // Squeeth convervation
         expect(lpSqueethDiff.sub(vaultSqueethDiff).add(depositorSqueethDiff).abs().lte(10)).to.be.true
         // Eth conservation
-        expect(lpEthDiff.add(vaultEthDiff).add(depositorEthDiff).sub(gasSpent).abs().lte(ethers.utils.parseUnits('0.01'))).to.be.true
+        expect(lpEthDiff.add(vaultEthDiff).add(depositorEthDiff).sub(gasSpent).abs().lte(ethers.utils.parseUnits('0.1'))).to.be.true
           })
         })
 
