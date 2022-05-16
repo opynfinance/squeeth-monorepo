@@ -8,7 +8,7 @@ export default function middleware(request: NextRequest) {
   request.nextUrl.searchParams.set('country', country!)
   request.nextUrl.searchParams.set('restricted', 'false')
 
-  return NextResponse.redirect(request.nextUrl)
+  return NextResponse.next()
 
   // if (country && BLOCKED_COUNTRIES.includes(country)) {
   //   response.cookie('restricted', `true,${country}`)
