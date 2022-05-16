@@ -425,12 +425,17 @@ describe("ControllerHelper: mainnet fork", function () {
       const amount1Min = BigNumber.from(0);
 
       const newTick = isWethToken0 ? 60*((currentTick - currentTick%60)/60 - 10): 60*((currentTick - currentTick%60)/60 + 10)
-      
+      console.log('vaultBefore.shortAmount', vaultBefore.shortAmount.toString())
+      console.log('vaultBefore.collateralAmount', vaultBefore.collateralAmount.toString())
+      console.log('mintWSqueethAmount', mintWSqueethAmount.toString())
+      console.log('collateralToDeposit', collateralToDeposit.toString())
+      console.log('currentTick', currentTick)
+      console.log('newTick', newTick)
       const flashloanWMintDepositNftParams = {
         vaultId: vaultId,
         wPowerPerpAmount: mintWSqueethAmount,
         collateralToDeposit: BigNumber.from(0),
-        collateralToFlashloan: debtInEth,
+        collateralToFlashloan: collateralToDeposit,
         collateralToLp: BigNumber.from(0),
         collateralToWithdraw: 0,
         lpAmount0Min: amount0Min,
@@ -1565,28 +1570,28 @@ it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
     const lpSqueethDiff = wPowerPerpAmountInLPAfter.sub(wPowerPerpAmountInLPBefore)
     // Assertions
     // console.log('currentTick', currentTick)
-    // console.log('positionAfter.TickLower', positionAfter.tickLower)
-    // console.log('positionAfter.TickUpper', positionAfter.tickUpper)
-    // console.log('wPowerPerpAmountInLPBefore', wPowerPerpAmountInLPBefore.toString())
-    // console.log('wethAmountInLPBefore', wethAmountInLPBefore.toString())
-    // console.log('wPowerPerpAmountInLPAfter', wPowerPerpAmountInLPAfter.toString())
-    // console.log('wethAmountInLPAfter', wethAmountInLPAfter.toString())
-    // console.log('vaultSqueethDiff',vaultSqueethDiff.toString() )
-    // console.log('vaultEthDiff',vaultEthDiff.toString() )
-    // console.log('lpSqueethDiff', lpSqueethDiff.toString())
-    // console.log('lpEthDiff', lpEthDiff.toString())
-    // console.log('depositorSqueethDiff', depositorSqueethDiff.toString())
-    // console.log('vaultBefore.collateralAmount', vaultBefore.collateralAmount.toString())
-    // console.log('vaultBefore.shortAmount', vaultBefore.shortAmount.toString())
-    // console.log('vaultAfter.collateralAmount', vaultAfter.collateralAmount.toString())
-    // console.log('vaultAfter.shortAmount', vaultAfter.shortAmount.toString())
-    // console.log('wethAmountToLp',wethAmountToLp.toString())
-    // console.log('flashloanAmount',flashLoanAmount.toString())
-    // console.log('wPowerPerpAmountInLPBefore', wPowerPerpAmountInLPBefore.toString())
-    // console.log('wPowerPerpAmountToLp', wPowerPerpAmountToLp.toString())
-    // console.log('depositorEthDiff', depositorEthDiff.toString())
-    // console.log('depositorSqueethDiff', depositorSqueethDiff.toString())
-    // console.log('gasSpent', gasSpent.toString())
+    console.log('positionAfter.TickLower', positionAfter.tickLower)
+    console.log('positionAfter.TickUpper', positionAfter.tickUpper)
+    console.log('wPowerPerpAmountInLPBefore', wPowerPerpAmountInLPBefore.toString())
+    console.log('wethAmountInLPBefore', wethAmountInLPBefore.toString())
+    console.log('wPowerPerpAmountInLPAfter', wPowerPerpAmountInLPAfter.toString())
+    console.log('wethAmountInLPAfter', wethAmountInLPAfter.toString())
+    console.log('vaultSqueethDiff',vaultSqueethDiff.toString() )
+    console.log('vaultEthDiff',vaultEthDiff.toString() )
+    console.log('lpSqueethDiff', lpSqueethDiff.toString())
+    console.log('lpEthDiff', lpEthDiff.toString())
+    console.log('depositorSqueethDiff', depositorSqueethDiff.toString())
+    console.log('vaultBefore.collateralAmount', vaultBefore.collateralAmount.toString())
+    console.log('vaultBefore.shortAmount', vaultBefore.shortAmount.toString())
+    console.log('vaultAfter.collateralAmount', vaultAfter.collateralAmount.toString())
+    console.log('vaultAfter.shortAmount', vaultAfter.shortAmount.toString())
+    console.log('wethAmountToLp',wethAmountToLp.toString())
+    console.log('flashloanAmount',flashLoanAmount.toString())
+    console.log('wPowerPerpAmountInLPBefore', wPowerPerpAmountInLPBefore.toString())
+    console.log('wPowerPerpAmountToLp', wPowerPerpAmountToLp.toString())
+    console.log('depositorEthDiff', depositorEthDiff.toString())
+    console.log('depositorSqueethDiff', depositorSqueethDiff.toString())
+    console.log('gasSpent', gasSpent.toString())
 
     // expect(positionAfter.tickLower === newTickLower).to.be.true
     expect(vaultSqueethDiff.sub(wPowerPerpAmountToLp).eq(0)).to.be.true
@@ -1597,7 +1602,7 @@ it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
     // Squeeth convervation
     expect(lpSqueethDiff.sub(vaultSqueethDiff).add(depositorSqueethDiff).abs().lte(10)).to.be.true
     // Eth conservation
-    expect(lpEthDiff.add(vaultEthDiff).add(depositorEthDiff).sub(gasSpent).abs().lte(ethers.utils.parseUnits('0.1'))).to.be.true
+    expect((lpEthDiff.add(vaultEthDiff).add(depositorEthDiff).sub(gasSpent)).abs().lte(ethers.utils.parseUnits('0.1'))).to.be.true
       })
     })
 
@@ -1614,6 +1619,9 @@ it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
         const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
         const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, true)
         const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
+        console.log('collateralToLp', collateralToLp.toString())
+        console.log('collateralAmount', collateralAmount.toString())
+        console.log('mintWSqueethAmount', mintWSqueethAmount.toString())
         const batchMintLpParams = {
           recipient: depositor.address,
           wPowerPerpPool: wSqueethPool.address,
@@ -2049,7 +2057,7 @@ it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
         // Squeeth convervation
         expect(lpSqueethDiff.sub(vaultSqueethDiff).add(depositorSqueethDiff).abs().lte(10)).to.be.true
         // Eth conservation
-        expect(lpEthDiff.add(vaultEthDiff).add(depositorEthDiff).sub(gasSpent).abs().lte(ethers.utils.parseUnits('0.1'))).to.be.true
+        expect((lpEthDiff.add(vaultEthDiff).add(depositorEthDiff).sub(gasSpent)).abs().lte(ethers.utils.parseUnits('0.1'))).to.be.true
           })
         })
 
