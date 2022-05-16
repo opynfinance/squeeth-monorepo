@@ -136,9 +136,7 @@ describe("ControllerHelper: mainnet fork", function () {
       }
 
       const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
-      console.log('before flashloanWMintDepositNft')
       await controllerHelper.connect(depositor).flashloanWMintDepositNft(flashloanWMintDepositNftParams, {value: collateralToLp.add(ethers.utils.parseUnits('0.01').add(flashloanFee))})
-      console.log('finished flashloanWMintDepositNft')
       const depositorSqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
       const vaultAfter = await controller.vaults(vaultId)
       const tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
@@ -647,7 +645,7 @@ describe("ControllerHelper: mainnet fork", function () {
 
     before("open short amount more than amount in LP position" , async () => {
       const normFactor = await controller.getExpectedNormalizationFactor()
-      const mintWSqueethAmount = ethers.utils.parseUnits('35')
+      const mintWSqueethAmount = ethers.utils.parseUnits('55')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
