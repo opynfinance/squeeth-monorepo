@@ -3,6 +3,8 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
+import "hardhat/console.sol";
+
 // interface
 import {IWETH9} from "../interfaces/IWETH9.sol";
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
@@ -775,8 +777,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
     function _swapCallback(
         address _caller,
         address _tokenIn,
-        address, /*_tokenOut*/
-        uint24, /*_fee*/
+        address _tokenOut,
+        uint24 _fee,
         uint256 _amountToPay,
         bytes memory _callData,
         uint8 _callSource
@@ -799,7 +801,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             );
 
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).transfer(
-                ControllerHelperDiamondStorage.getAddressAtSlot(3),
+                _getPool(_tokenIn, _tokenOut, _fee),
                 _amountToPay
             );
             IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).transfer(
@@ -834,7 +836,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             }
 
             IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).transfer(
-                ControllerHelperDiamondStorage.getAddressAtSlot(3),
+                _getPool(_tokenIn, _tokenOut, _fee),
                 _amountToPay
             );
         } else if (
@@ -842,7 +844,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH
         ) {
             IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).transfer(
-                ControllerHelperDiamondStorage.getAddressAtSlot(3),
+                _getPool(_tokenIn, _tokenOut, _fee),
                 _amountToPay
             );
 
@@ -853,9 +855,10 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP
         ) {
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).transfer(
-                ControllerHelperDiamondStorage.getAddressAtSlot(3),
+                _getPool(_tokenIn, _tokenOut, _fee),
                 _amountToPay
             );
+            return;
         } else if (
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP_BURN
@@ -874,14 +877,14 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             );
 
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).transfer(
-                ControllerHelperDiamondStorage.getAddressAtSlot(3),
+                _getPool(_tokenIn, _tokenOut, _fee),
                 _amountToPay
             );
         } else if (
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.GENERAL_SWAP
         ) {
-            IERC20(_tokenIn).transfer(ControllerHelperDiamondStorage.getAddressAtSlot(3), _amountToPay);
+            IERC20(_tokenIn).transfer(_getPool(_tokenIn, _tokenOut, _fee), _amountToPay);
         }
     }
 

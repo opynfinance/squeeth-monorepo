@@ -7,6 +7,7 @@ pragma abicoder v2;
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3FlashCallback.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {IERC20Detailed} from "../interfaces/IERC20Detailed.sol";
 
 // lib
 import "@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol";
@@ -58,7 +59,7 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
         (address tokenIn, address tokenOut, uint24 fee) = data.path.decodeFirstPool();
 
         //ensure that callback comes from uniswap pool
-        CallbackValidation.verifyCallback(factory, tokenIn, tokenOut, fee);
+        address pool = address(CallbackValidation.verifyCallback(factory, tokenIn, tokenOut, fee));
 
         //determine the amount that needs to be repaid as part of the flashswap
         uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
@@ -153,11 +154,11 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
      * param _callSource function call source
      */
     function _swapCallback(
-        address, /*_caller*/
-        address, /*_tokenIn*/
-        address, /*_tokenOut*/
-        uint24, /*_fee*/
-        uint256, /*_amountToPay*/
+        address _caller,
+        address _tokenIn,
+        address _tokenOut,
+        uint24 _fee,
+        uint256 _amountToPay,
         bytes memory _callData,
         uint8 _callSource
     ) internal virtual {}
@@ -182,7 +183,7 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
         bool zeroForOne = tokenIn < tokenOut;
 
         //swap on uniswap, including data to trigger call back for flashswap
-        (int256 amount0, int256 amount1) = _getPool(tokenIn, tokenOut, fee).swap(
+        (int256 amount0, int256 amount1) = IUniswapV3Pool(_getPool(tokenIn, tokenOut, fee)).swap(
             _recipient,
             zeroForOne,
             _amountIn.toInt256(),
@@ -217,7 +218,7 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
         bool zeroForOne = tokenIn < tokenOut;
 
         //swap on uniswap, including data to trigger call back for flashswap
-        (int256 amount0Delta, int256 amount1Delta) = _getPool(tokenIn, tokenOut, fee).swap(
+        (int256 amount0Delta, int256 amount1Delta) = IUniswapV3Pool(_getPool(tokenIn, tokenOut, fee)).swap(
             _recipient,
             zeroForOne,
             -_amountOut.toInt256(),
@@ -249,7 +250,7 @@ contract UniswapControllerHelper is IUniswapV3SwapCallback {
         address tokenA,
         address tokenB,
         uint24 fee
-    ) private view returns (IUniswapV3Pool) {
-        return IUniswapV3Pool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee)));
+    ) internal view returns (address) {
+        return PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee));
     }
 }
