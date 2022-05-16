@@ -7,7 +7,6 @@ pragma abicoder v2;
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3FlashCallback.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {IERC20Detailed} from "../interfaces/IERC20Detailed.sol";
 
 // lib
 import "@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol";
