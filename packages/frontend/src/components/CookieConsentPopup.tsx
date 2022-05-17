@@ -1,6 +1,8 @@
 import CookieConsent from 'react-cookie-consent'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
+import { useCookies } from 'react-cookie'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -18,9 +20,13 @@ const useStyles = makeStyles((theme) =>
 )
 const CookieConsentPopup = () => {
   const classes = useStyles()
+  const router = useRouter()
+  const [cookies, setCookie] = useCookies(['restricted'])
+
+  console.log(router.query, 'hello')
   return (
     <CookieConsent
-      cookieName="restricted2"
+      cookieName="restricted"
       style={{
         background: '#424242',
         color: '#ffffff',
@@ -47,7 +53,9 @@ const CookieConsentPopup = () => {
         backgroundColor: '#424242',
         padding: '.75em 3em',
       }}
-      onAccept={() => console.log('accept cookie')}
+      onAccept={() =>
+        setCookie('restricted', router.query.restricted === 'true' ? `true,${router.query.country}` : 'false')
+      }
       expires={150}
       enableDeclineButton
       flipButtons
