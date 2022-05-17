@@ -21,6 +21,7 @@ import { useUpdateSqueethPrices, useUpdateSqueethPoolData } from 'src/state/sque
 import { useInitController } from 'src/state/controller/hooks'
 import { ComputeSwapsProvider } from 'src/state/positions/providers'
 import { useSwaps } from 'src/state/positions/hooks'
+import CookieConsentPopup from '@components/CookieConsentPopup'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
 
@@ -115,6 +116,7 @@ const TradeApp = ({ Component, pageProps }: any) => {
           </ComputeSwapsProvider>
         </ThemeProvider>
       </ApolloProvider>
+      <CookieConsentPopup />
     </React.Fragment>
   )
 }
