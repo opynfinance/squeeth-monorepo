@@ -26,7 +26,6 @@ const RestrictUserProvider: React.FC = ({ children }) => {
   const [state, setState] = useState({
     isRestricted: false,
   })
-  const router = useRouter()
 
   const handleRestrictUser = useCallback((isRestricted: boolean) => {
     setState((prevState) => ({
@@ -36,15 +35,14 @@ const RestrictUserProvider: React.FC = ({ children }) => {
   }, [])
 
   useAppEffect(() => {
-    if (
-      router.query?.restricted?.includes('true') ||
-      (cookies?.restricted?.split(',')[0] === 'true' && networkId !== Networks.ROPSTEN)
-    ) {
+    if (!cookies?.restricted && networkId !== Networks.ROPSTEN) {
+      handleRestrictUser(true)
+    } else if (cookies?.restricted?.split(',')[0] === 'true' && networkId !== Networks.ROPSTEN) {
       handleRestrictUser(true)
     } else {
       handleRestrictUser(false)
     }
-  }, [cookies?.restricted, handleRestrictUser, networkId, router.query?.restricted])
+  }, [cookies?.restricted, handleRestrictUser, networkId])
 
   return (
     <restrictUserContext.Provider value={{ handleRestrictUser, isRestricted: state.isRestricted }}>
