@@ -13,6 +13,7 @@ export default function middleware(request: NextRequest) {
     } else {
       const response = NextResponse.next()
       response.clearCookie('restricted')
+      return response
     }
   }
 
