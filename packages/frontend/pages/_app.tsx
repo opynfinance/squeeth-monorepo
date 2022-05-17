@@ -117,7 +117,7 @@ const TradeApp = ({ Component, pageProps }: any) => {
           </ComputeSwapsProvider>
         </ThemeProvider>
       </ApolloProvider>
-      {!router.query.restricted.includes('true') && <CookieConsentPopup />}
+      {!router.query?.restricted?.includes('true') && <CookieConsentPopup />}
     </React.Fragment>
   )
 }

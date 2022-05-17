@@ -37,14 +37,14 @@ const RestrictUserProvider: React.FC = ({ children }) => {
 
   useAppEffect(() => {
     if (
-      router.query.restricted === 'true' ||
+      router.query?.restricted?.includes('true') ||
       (cookies?.restricted?.split(',')[0] === 'true' && networkId !== Networks.ROPSTEN)
     ) {
       handleRestrictUser(true)
     } else {
       handleRestrictUser(false)
     }
-  }, [cookies?.restricted, handleRestrictUser, networkId, router.query.restricted])
+  }, [cookies?.restricted, handleRestrictUser, networkId, router.query?.restricted])
 
   return (
     <restrictUserContext.Provider value={{ handleRestrictUser, isRestricted: state.isRestricted }}>

@@ -23,7 +23,6 @@ const CookieConsentPopup = () => {
   const router = useRouter()
   const [cookies, setCookie] = useCookies(['restricted'])
 
-  console.log(router.query, 'hello')
   return (
     <CookieConsent
       cookieName="restricted"
@@ -54,7 +53,7 @@ const CookieConsentPopup = () => {
         padding: '.75em 3em',
       }}
       onAccept={() =>
-        setCookie('restricted', router.query.restricted === 'true' ? `true,${router.query.country}` : 'false')
+        setCookie('restricted', router.query?.restricted === 'true' ? `true,${router.query?.country}` : 'false')
       }
       expires={150}
       enableDeclineButton
