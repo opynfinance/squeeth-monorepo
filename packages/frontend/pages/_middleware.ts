@@ -7,8 +7,13 @@ export default function middleware(request: NextRequest) {
   const url = request.nextUrl
   const isRestricted = BLOCKED_COUNTRIES.includes(country ?? '')
 
-  if (request.cookies.restricted && request.cookies.restricted === 'false' && !isRestricted) {
-    return NextResponse.next()
+  if (request.cookies.restricted && request.cookies.restricted === 'false') {
+    if (!isRestricted) {
+      return NextResponse.next()
+    } else {
+      const response = NextResponse.next()
+      response.clearCookie('restricted')
+    }
   }
 
   if (url.searchParams.has('country') && url.searchParams.get('country') === country) {
