@@ -6,22 +6,14 @@ export default function middleware(request: NextRequest) {
   const country = request.geo?.country
   const url = request.nextUrl
 
-  url.searchParams.set('country', country!)
-  url.searchParams.set('restricted', 'false')
-  let redirect = false
-
-  if (url.searchParams.get('country') && !redirect) {
-    redirect = true
-    return NextResponse.redirect(request.nextUrl)
-  } else {
+  if (url.searchParams.has('country')) {
     return NextResponse.next()
   }
 
-  // if (country && BLOCKED_COUNTRIES.includes(country)) {
-  //   response.cookie('restricted', `true,${country}`)
-  // } else {
-  //   response.cookie('restricted', 'false')
-  // }
+  const isRestricted = BLOCKED_COUNTRIES.includes(country ?? '')
 
-  // return response
+  url.searchParams.set('country', country!)
+  url.searchParams.set('restricted', String(isRestricted))
+
+  return NextResponse.redirect(url)
 }
