@@ -56,6 +56,11 @@ export enum TradeType {
   LONG,
   SHORT,
 }
+
+export enum PnLType {
+  Unrealized = 'Unrealized',
+  Realized = 'Realized',
+}
 export interface NFTManagers extends positions_positions {
   fees0?: BigNumber
   fees1?: BigNumber

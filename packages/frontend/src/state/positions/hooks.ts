@@ -6,7 +6,7 @@ import { useContext } from 'react'
 import BigNumber from 'bignumber.js'
 import { Position } from '@uniswap/v3-sdk'
 
-import { networkIdAtom, addressAtom, connectedWalletAtom } from '../wallet/atoms'
+import { networkIdAtom, addressAtom } from '../wallet/atoms'
 import { swaps, swapsVariables } from '@queries/uniswap/__generated__/swaps'
 import SWAPS_QUERY, { SWAPS_SUBSCRIPTION } from '@queries/uniswap/swapsQuery'
 import SWAPS_ROPSTEN_QUERY, { SWAPS_ROPSTEN_SUBSCRIPTION } from '@queries/uniswap/swapsRopstenQuery'
@@ -14,7 +14,6 @@ import { VAULT_QUERY } from '@queries/squeeth/vaultsQuery'
 import { BIG_ZERO, OSQUEETH_DECIMALS } from '@constants/index'
 import {
   addressesAtom,
-  firstValidVaultAtom,
   isWethToken0Atom,
   positionTypeAtom,
   managerAtom,
@@ -27,12 +26,6 @@ import {
   depositedWethAtom,
   withdrawnSqueethAtom,
   withdrawnWethAtom,
-  vaultAtom,
-  existingCollatPercentAtom,
-  existingCollatAtom,
-  existingLiqPriceAtom,
-  collatPercentAtom,
-  isVaultLoadingAtom,
   swapsAtom,
 } from './atoms'
 import { positions, positionsVariables } from '@queries/uniswap/__generated__/positions'
@@ -42,8 +35,7 @@ import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { toTokenAmount } from '@utils/calculations'
 import { squeethClient } from '@utils/apollo-client'
 import { PositionType, Networks } from '../../types'
-import { poolAtom, readyAtom, squeethInitialPriceAtom } from '../squeethPool/atoms'
-import { useGetCollatRatioAndLiqPrice, useGetVault } from '../controller/hooks'
+import { poolAtom, squeethInitialPriceAtom } from '../squeethPool/atoms'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { useGetWSqueethPositionValue } from '../squeethPool/hooks'
 import { useVaultHistory } from '@hooks/useVaultHistory'
@@ -52,7 +44,6 @@ import { Vault } from '@queries/squeeth/__generated__/Vault'
 import { ComputeSwapsContext } from './providers'
 import useAppEffect from '@hooks/useAppEffect'
 import useAppMemo from '@hooks/useAppMemo'
-import useAppCallback from '@hooks/useAppCallback'
 
 export const useSwaps = () => {
   const [swapData, setSwapData] = useState<swaps | swapsRopsten | undefined>(undefined)
@@ -446,7 +437,7 @@ export const useFirstValidVault = () => {
 
   return {
     isVaultLoading: loading,
-    vaultId: vault?.id || 0,
+    vaultId: Number(vault?.id) || 0,
     validVault: vault,
   }
 }

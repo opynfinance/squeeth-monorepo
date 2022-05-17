@@ -1,4 +1,4 @@
-import { Tooltip } from '@material-ui/core'
+import { Tooltip, useTheme } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Typography from '@material-ui/core/Typography'
 import AccessTimeIcon from '@material-ui/icons/AccessTime'
@@ -57,19 +57,20 @@ type tradeType = {
   label: string
   id?: string
   tooltip?: React.ReactNode
-  color?: 'primary' | 'red' | 'green'
+  color?: 'primary' | 'red' | 'green' | string
   priceType?: string
 }
 
 const TradeInfoItem: React.FC<tradeType> = ({ value, unit, id, frontUnit, label, tooltip, color, priceType }) => {
   const classes = useStyles()
-  const clrClass = useMemo(() => {
-    if (color === 'primary') return classes.primary
-    if (color === 'green') return classes.green
-    if (color === 'red') return classes.red
-    return ''
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [color])
+  const theme = useTheme()
+
+  const colorCode = useMemo(() => {
+    if (color === 'primary') return theme.palette.primary.main
+    if (color === 'green') return theme.palette.success.main
+    if (color === 'red') return theme.palette.error.main
+    return color
+  }, [color, theme.palette.error.main, theme.palette.primary.main, theme.palette.success.main])
 
   return (
     <div className={classes.txItem} id={id}>
@@ -93,8 +94,8 @@ const TradeInfoItem: React.FC<tradeType> = ({ value, unit, id, frontUnit, label,
         </Typography>
         <Typography
           component="span"
-          style={{ marginLeft: '8px', fontSize: '.9rem' }}
-          className={clsx(clrClass, 'trade-info-item-value')}
+          style={{ marginLeft: '8px', fontSize: '.9rem', color: colorCode }}
+          className={'trade-info-item-value'}
         >
           {value}
         </Typography>
