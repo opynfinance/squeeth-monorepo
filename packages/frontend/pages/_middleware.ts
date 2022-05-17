@@ -11,7 +11,7 @@ export default function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  if (url.searchParams.has('country')) {
+  if (url.searchParams.has('country') && url.searchParams.get('country') === country) {
     return NextResponse.next()
   }
 
