@@ -1,9 +1,11 @@
-import React, { useContext, useState, useCallback, useEffect } from 'react'
+import React, { useContext, useState, useCallback } from 'react'
 import { useCookies } from 'react-cookie'
 import { useAtomValue } from 'jotai'
+import { useRouter } from 'next/router'
 
 import { Networks } from '../types'
 import { networkIdAtom } from 'src/state/wallet/atoms'
+import useAppEffect from '@hooks/useAppEffect'
 
 type restrictUserContextType = {
   isRestricted: boolean
@@ -24,6 +26,7 @@ const RestrictUserProvider: React.FC = ({ children }) => {
   const [state, setState] = useState({
     isRestricted: false,
   })
+  const router = useRouter()
 
   const handleRestrictUser = useCallback((isRestricted: boolean) => {
     setState((prevState) => ({
@@ -32,13 +35,16 @@ const RestrictUserProvider: React.FC = ({ children }) => {
     }))
   }, [])
 
-  useEffect(() => {
-    if (cookies?.restricted?.split(',')[0] === 'true' && networkId !== Networks.ROPSTEN) {
+  useAppEffect(() => {
+    if (
+      router.query.restricted === 'true' ||
+      (cookies?.restricted?.split(',')[0] === 'true' && networkId !== Networks.ROPSTEN)
+    ) {
       handleRestrictUser(true)
     } else {
       handleRestrictUser(false)
     }
-  }, [handleRestrictUser, cookies?.restricted, networkId])
+  }, [cookies?.restricted, handleRestrictUser, networkId, router.query.restricted])
 
   return (
     <restrictUserContext.Provider value={{ handleRestrictUser, isRestricted: state.isRestricted }}>
