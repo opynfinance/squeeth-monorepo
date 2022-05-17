@@ -73,7 +73,7 @@ const CookieConsentPopup = () => {
           <p>
             We use cookies to recognize visitors and analyze front end traffic. To learn more about these methods,
             including how to disable them, view our{' '}
-            <Link href="/">
+            <Link href="/cookie-policy">
               <a className={classes.link}>Cookie Policy</a>
             </Link>
             .
