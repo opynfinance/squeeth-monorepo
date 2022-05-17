@@ -11,13 +11,11 @@ export default function middleware(request: NextRequest) {
     if (!isRestricted) {
       return NextResponse.next()
     } else {
-      const response = NextResponse.next()
-      response.clearCookie('restricted')
-      return response
+      return NextResponse.next().clearCookie('restricted')
     }
   }
 
-  if (url.searchParams.has('country') && url.searchParams.get('country') === country) {
+  if (url.searchParams.has('country') && url.searchParams.get('country') === String(country)) {
     return NextResponse.next()
   }
 
