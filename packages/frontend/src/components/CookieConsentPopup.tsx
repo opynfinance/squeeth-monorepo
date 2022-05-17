@@ -5,6 +5,10 @@ import { useCookies } from 'react-cookie'
 import { useState } from 'react'
 import Button from '@material-ui/core/Button'
 import Dialog from '@material-ui/core/Dialog'
+import { useAtomValue } from 'jotai'
+
+import { networkIdAtom } from 'src/state/wallet/atoms'
+import { Networks } from '../types/index'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -48,6 +52,8 @@ const CookieConsentPopup = () => {
   const classes = useStyles()
   const router = useRouter()
   const [cookies, setCookie] = useCookies(['restricted'])
+  const path = router.pathname
+  const networkId = useAtomValue(networkIdAtom)
 
   const [open, setOpen] = useState(!router.query?.restricted?.includes('true'))
 
@@ -55,7 +61,7 @@ const CookieConsentPopup = () => {
     if (cookies?.restricted) setOpen(false)
   }
 
-  return (
+  return !cookies?.restricted && networkId !== Networks.ROPSTEN ? (
     <Dialog
       open={open}
       onClose={handleClose}
@@ -80,17 +86,23 @@ const CookieConsentPopup = () => {
             onClick={() => {
               setCookie('restricted', router.query?.restricted === 'true' ? `true,${router.query?.country}` : 'false')
               setOpen(false)
+              router.push(path, undefined, { shallow: true })
             }}
           >
             I Accept
           </Button>
-          <Button className={classes.declineButton} onClick={() => setOpen(false)}>
+          <Button
+            className={classes.declineButton}
+            onClick={() => {
+              setOpen(false)
+            }}
+          >
             Decline
           </Button>
         </div>
       </div>
     </Dialog>
-  )
+  ) : null
 }
 
 export default CookieConsentPopup
