@@ -87,6 +87,7 @@ const MemoizedInit = memo(Init)
 const TradeApp = ({ Component, pageProps }: any) => {
   const networkId = useAtomValue(networkIdAtom)
   const client = useMemo(() => uniswapClient[networkId] || uniswapClient[1], [networkId])
+  const router = useRouter()
 
   return (
     <React.Fragment>
@@ -116,7 +117,7 @@ const TradeApp = ({ Component, pageProps }: any) => {
           </ComputeSwapsProvider>
         </ThemeProvider>
       </ApolloProvider>
-      <CookieConsentPopup />
+      {!router.query.restricted.includes('true') && <CookieConsentPopup />}
     </React.Fragment>
   )
 }
