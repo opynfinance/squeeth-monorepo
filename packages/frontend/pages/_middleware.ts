@@ -5,12 +5,15 @@ const BLOCKED_COUNTRIES = ['US', 'BY', 'CU', 'IR', 'IQ', 'CI', 'LR', 'KP', 'SD',
 export default function middleware(request: NextRequest) {
   const country = request.geo?.country
   const url = request.nextUrl
+  const isRestricted = BLOCKED_COUNTRIES.includes(country ?? '')
+
+  if (request.cookies.restricted && request.cookies.restricted === 'false' && !isRestricted) {
+    return NextResponse.next()
+  }
 
   if (url.searchParams.has('country')) {
     return NextResponse.next()
   }
-
-  const isRestricted = BLOCKED_COUNTRIES.includes(country ?? '')
 
   url.searchParams.set('country', country!)
   url.searchParams.set('restricted', String(isRestricted))
