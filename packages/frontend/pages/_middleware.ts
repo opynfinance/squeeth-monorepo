@@ -8,9 +8,11 @@ export default function middleware(request: NextRequest) {
 
   url.searchParams.set('country', country!)
   url.searchParams.set('restricted', 'false')
+  let redirect = false
 
-  if (url.searchParams.get('country')) {
-    return NextResponse.rewrite(request.nextUrl)
+  if (url.searchParams.get('country') && !redirect) {
+    redirect = true
+    return NextResponse.redirect(request.nextUrl)
   } else {
     return NextResponse.next()
   }
