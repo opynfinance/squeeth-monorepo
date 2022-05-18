@@ -8,19 +8,47 @@ import { networkIdAtom } from 'src/state/wallet/atoms'
 import { Networks } from '../types/index'
 import CookieConsent from 'react-cookie-consent'
 
-const useStyles = makeStyles(() =>
+const useStyles = makeStyles((theme) =>
   createStyles({
     buttonWrapper: {
       display: 'flex',
       justifyContent: 'center',
+      gap: 30,
       width: '100%',
-      paddingBottom: '1em',
+      paddingBottom: '1.2rem',
       flexWrap: 'wrap',
     },
 
     link: {
       color: '#2ce6f9',
       textDecoration: 'underline',
+    },
+    container: {
+      background: '#283944',
+      color: '#ffffff',
+      borderRadius: '8px',
+      border: '2px solid #2ce6f9',
+      boxShadow: '#393a3a 0px 5px 20px',
+      width: '40%',
+      left: '30px',
+      bottom: '40px',
+      overflow: 'hidden',
+      [theme.breakpoints.down('sm')]: {
+        width: '50%',
+      },
+      [theme.breakpoints.down('xs')]: {
+        width: '100%',
+        left: 0,
+        bottom: 0,
+        borderBottomLeftRadius: 0,
+        borderBottomRightRadius: 0,
+      },
+      alignItems: 'baseline',
+      display: 'flex',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      position: 'fixed',
+      zIndex: 999,
     },
     textContainer: {
       display: 'flex',
@@ -58,18 +86,15 @@ const CookieConsentPopup = () => {
 
   return networkId !== Networks.ROPSTEN && path !== '/cookie-policy' ? (
     <CookieConsent
-      location="bottom"
+      location="none"
       buttonText="I Accept"
       cookieName="opyn_geo"
-      style={{
-        background: '#283944',
-        color: '#ffffff',
-        borderRadius: '5px',
-        border: '1px solid #2ce6f9',
-        width: '40%',
-      }}
+      containerClasses={classes.container}
+      disableStyles={true}
+      disableButtonStyles={true}
       buttonStyle={{
         backgroundColor: '#2b8e99',
+        border: '1px solid #2b8e99',
         color: '#ffffff',
         padding: '.75em 2em',
         borderRadius: 10,
@@ -88,7 +113,7 @@ const CookieConsentPopup = () => {
         router.push(path, undefined, { shallow: true })
         setCookie('opyn_geo', router.query?.restricted === 'true' ? `true,${router.query?.country}` : 'false')
       }}
-      contentStyle={{ flex: '1 0 0' }}
+      contentStyle={{ flex: '1 0 0', padding: '1.2rem 1rem' }}
       buttonWrapperClasses={classes.buttonWrapper}
       expires={Infinity}
     >
