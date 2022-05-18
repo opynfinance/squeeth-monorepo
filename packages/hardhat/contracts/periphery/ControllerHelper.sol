@@ -798,10 +798,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             );
 
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).transfer(_pool, _amountToPay);
-            IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).transfer(
-                _caller,
-                data.wPowerPerpAmountToBuy
-            );
         } else if (
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.FLASH_SELL_LONG_W_MINT
