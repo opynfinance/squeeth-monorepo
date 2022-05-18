@@ -11,7 +11,7 @@ export default function middleware(request: NextRequest) {
     if (!isRestricted) {
       return NextResponse.next()
     } else {
-      return NextResponse.next().clearCookie('restricted')
+      return NextResponse.redirect(url).clearCookie('restricted')
     }
   }
 
