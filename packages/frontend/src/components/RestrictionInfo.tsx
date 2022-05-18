@@ -40,14 +40,14 @@ const RestrictionInfo = () => {
   const classes = useStyles()
   const [cookies] = useCookies(['opyn_geo'])
   const router = useRouter()
-  return (
+  return router.query?.restricted === 'true' ? (
     <Box className={classes.restrictedInfo}>
       <p>
         <span>
           This app is not available in{' '}
           {cookies?.opyn_geo
             ? restrictedCountries[cookies?.opyn_geo.split(',')[1]]
-            : router.query?.country
+            : router.query?.country && router.query?.country !== 'undefined'
             ? router.query?.country
             : 'your country'}
           . More details can be found in our
@@ -62,7 +62,7 @@ const RestrictionInfo = () => {
         </Link>
       </p>
     </Box>
-  )
+  ) : null
 }
 
 export default RestrictionInfo
