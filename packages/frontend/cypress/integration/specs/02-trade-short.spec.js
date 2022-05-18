@@ -144,10 +144,6 @@ describe('Trade on trade page', () => {
           .type('250.', { delay: 200, force: true })
           .should('have.value', '250.0')
       })
-      it('should display liquidation error if no existing collateral and collateral ratio is below 150%', () => {
-        cy.get('.open-short-collat-ratio-input-box input').clear().type('100', { delay: 200, force: true })
-        cy.findByText('At risk of liquidation at 150%')
-      })
     })
 
     context('open short position', () => {
@@ -155,7 +151,6 @@ describe('Trade on trade page', () => {
         cy.get('#trade-card').parent().scrollTo('top')
         cy.get('#open-short-eth-input').should('be.visible')
         cy.get('#open-short-eth-input').clear().type('8.', { force: true, delay: 200 }).should('have.value', '8.0')
-        cy.get('.open-short-collat-ratio-input-box input').clear().type('250.', { delay: 200, force: true })
 
         cy.get('#open-short-trade-details .trade-details-amount').then((val) => {
           openShortOsqthInput = new BigNumber(val.text())
@@ -231,14 +226,6 @@ describe('Trade on trade page', () => {
         cy.get('#long-card-btn').click({ force: true })
         cy.get('#open-btn').click({ force: true })
         cy.get('#open-long-eth-input-box').should('contain.text', 'Close your short position to open a long')
-      })
-
-      it('should adjust collateral ratio', () => {
-        cy.get('#short-card-btn').click({ force: true })
-        cy.get('#close-btn').click({ force: true })
-        cy.get('#open-btn').click({ force: true })
-
-        cy.get('#open-short-collat-ratio-info .trade-info-item-value').should('have.text', '250')
       })
     })
   })

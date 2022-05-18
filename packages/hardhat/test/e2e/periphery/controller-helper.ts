@@ -112,7 +112,7 @@ describe("ControllerHelper: mainnet fork", function () {
     it("open short, mint, LP oSQTH + ETH, deposit LP NFT and withdraw ETH collateral", async ()=> {
       const vaultId = (await shortSqueeth.nextId());
       const normFactor = await controller.getExpectedNormalizationFactor()
-      const mintWSqueethAmount = ethers.utils.parseUnits('30')
+      const mintWSqueethAmount = ethers.utils.parseUnits('50')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
@@ -310,7 +310,7 @@ describe("ControllerHelper: mainnet fork", function () {
     it("open short, mint with >0 ETH collateral, LP oSQTH + ETH, deposit LP NFT", async ()=> {
       const vaultId = (await shortSqueeth.nextId());
       const normFactor = await controller.getExpectedNormalizationFactor()
-      const mintWSqueethAmount = ethers.utils.parseUnits('30')
+      const mintWSqueethAmount = ethers.utils.parseUnits('50')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
@@ -651,7 +651,7 @@ describe("ControllerHelper: mainnet fork", function () {
   describe("Close LP position in vault: LP have less wPowerPerp than needed amount to burn", async () => {
     before("open first short position and LP" , async () => {
       const normFactor = await controller.getExpectedNormalizationFactor()
-      const mintWSqueethAmountToLp : BigNumber = ethers.utils.parseUnits('30')
+      const mintWSqueethAmountToLp : BigNumber = ethers.utils.parseUnits('50')
       const mintRSqueethAmount = mintWSqueethAmountToLp.mul(normFactor).div(one)
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
