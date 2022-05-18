@@ -77,7 +77,6 @@ const CookieConsentPopup = () => {
       setDeclineCookie={false}
       enableDeclineButton
       flipButtons
-      debug
       declineButtonStyle={{
         border: '1px solid #2b8e99',
         color: '#2ce6f9',
