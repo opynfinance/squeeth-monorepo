@@ -797,10 +797,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 data.collateralToWithdraw
             );
 
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).transfer(
-                _pool,
-                _amountToPay
-            );
+            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).transfer(_pool, _amountToPay);
             IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).transfer(
                 _caller,
                 data.wPowerPerpAmountToBuy
@@ -832,18 +829,12 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                     );
             }
 
-            IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).transfer(
-                _pool,
-                _amountToPay
-            );
+            IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).transfer(_pool, _amountToPay);
         } else if (
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH
         ) {
-            IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).transfer(
-                _pool,
-                _amountToPay
-            );
+            IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).transfer(_pool, _amountToPay);
 
             if (address(this).balance > 0)
                 IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).deposit{value: address(this).balance}();
@@ -851,10 +842,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP
         ) {
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).transfer(
-                _pool,
-                _amountToPay
-            );
+            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).transfer(_pool, _amountToPay);
             return;
         } else if (
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
@@ -873,10 +861,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 data.collateralToWithdraw
             );
 
-            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).transfer(
-                _pool,
-                _amountToPay
-            );
+            IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).transfer(_pool, _amountToPay);
         } else if (
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.GENERAL_SWAP
