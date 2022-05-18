@@ -9,6 +9,17 @@ const useStyles = makeStyles((theme) =>
     listItem: {
       scrollMarginTop: '100px',
     },
+    tableStyle: { border: '1px solid #fff', padding: '.5em' },
+    tableContainer: {
+      display: 'block',
+      maxWidth: '100%',
+      margin: '0 auto',
+      overflowX: 'auto',
+
+      [theme.breakpoints.down('xs')]: {
+        whiteSpace: 'nowrap',
+      },
+    },
   }),
 )
 
@@ -75,6 +86,31 @@ const CookiePolicy = () => {
             Interface might not even be available to you simply because of technical limitations.
           </p>
           {/* Add table here */}
+
+          <div>
+            <table className={classes.tableContainer} style={{ borderCollapse: 'collapse', border: '2px solid #fff' }}>
+              <thead className={classes.tableStyle}>
+                <tr>
+                  <th className={classes.tableStyle}>Tracker name</th>
+                  <th className={classes.tableStyle}>Description of purpose</th>
+                  <th className={classes.tableStyle}>
+                    If tracker is a cookie, is it a persistent or session cookie? When do persistent cookies expire?
+                  </th>
+                  <th className={classes.tableStyle}>
+                    If tracker is a cookie, 1st party or 3rd party, indicate legal name and URL for cookie policy.
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className={classes.tableStyle}>opyn-geo</td>
+                  <td className={classes.tableStyle}>Geographic information</td>
+                  <td className={classes.tableStyle}>session</td>
+                  <td className={classes.tableStyle}>first party</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
           <h3>Analytics</h3>
           <p>
             Analytics trackers collect or use information about your use of the Interface, which helps us improve the
