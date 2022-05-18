@@ -22,11 +22,15 @@ const useStyles = makeStyles((theme) =>
       fontSize: '1rem',
     },
     subTopics: {
+      display: 'block',
       height: '90vh',
       borderRight: '1px solid white',
       paddingTop: '3em ',
       position: 'sticky',
       top: '9%',
+      [theme.breakpoints.down('xs')]: {
+        display: 'none',
+      },
     },
     list: {
       width: '95%',
