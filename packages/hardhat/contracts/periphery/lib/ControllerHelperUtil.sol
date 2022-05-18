@@ -144,7 +144,7 @@ library ControllerHelperUtil {
                 ,
                 
             ) = INonfungiblePositionManager(_nonfungiblePositionManager).positions(_increaseLiquidityParam.tokenId);
-            (uint256 amount0Desired, uint256 amount1Desired) = getAmountsToLp(_wPowerPerpPool, _increaseLiquidityParam.collateralToDeposit, _increaseLiquidityParam.wPowerPerpAmountToLp, tickLower, tickUpper, _isWethToken0);
+            (uint256 amount0Desired, uint256 amount1Desired) = getAmountsToLp(_wPowerPerpPool, _increaseLiquidityParam.wethAmountToLp, _increaseLiquidityParam.wPowerPerpAmountToLp, tickLower, tickUpper, _isWethToken0);
 
             (_increaseLiquidityParam.wPowerPerpAmountToLp, _increaseLiquidityParam.wethAmountToLp) = (_isWethToken0) ? (amount1Desired, amount0Desired) : (amount0Desired, amount1Desired);
             uint256 wPowerPerpBalance = IWPowerPerp(_wPowerPerp).balanceOf(address(this));
