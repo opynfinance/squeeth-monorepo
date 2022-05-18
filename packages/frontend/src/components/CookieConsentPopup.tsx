@@ -10,7 +10,7 @@ import { useAtomValue } from 'jotai'
 import { networkIdAtom } from 'src/state/wallet/atoms'
 import { Networks } from '../types/index'
 
-const useStyles = makeStyles((theme) =>
+const useStyles = makeStyles(() =>
   createStyles({
     buttonWrapper: {
       display: 'flex',
@@ -57,14 +57,10 @@ const CookieConsentPopup = () => {
 
   const [open, setOpen] = useState(!router.query?.restricted?.includes('true'))
 
-  const handleClose = () => {
-    if (cookies?.restricted) setOpen(false)
-  }
-
   return !cookies?.restricted && networkId !== Networks.ROPSTEN ? (
     <Dialog
       open={open}
-      onClose={handleClose}
+      onClose={() => {}}
       aria-labelledby="modal-modal-title"
       aria-describedby="modal-modal-description"
     >
@@ -84,9 +80,9 @@ const CookieConsentPopup = () => {
           <Button
             className={classes.button}
             onClick={() => {
+              router.push(path, undefined, { shallow: true })
               setCookie('restricted', router.query?.restricted === 'true' ? `true,${router.query?.country}` : 'false')
               setOpen(false)
-              router.push(path, undefined, { shallow: true })
             }}
           >
             I Accept
