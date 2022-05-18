@@ -17,12 +17,15 @@ const initialState: restrictUserContextType = {
   handleRestrictUser: () => null,
 }
 
+const restrictedCountries = ['US', 'BY', 'CU', 'IR', 'IQ', 'CI', 'LR', 'KP', 'SD', 'SY', 'ZW']
+
 const restrictUserContext = React.createContext<restrictUserContextType>(initialState)
 const useRestrictUser = () => useContext(restrictUserContext)
 
 const RestrictUserProvider: React.FC = ({ children }) => {
   const networkId = useAtomValue(networkIdAtom)
   const [cookies] = useCookies(['opyn_geo'])
+  const router = useRouter()
   const [state, setState] = useState({
     isRestricted: false,
   })
@@ -36,13 +39,17 @@ const RestrictUserProvider: React.FC = ({ children }) => {
 
   useAppEffect(() => {
     if (!cookies?.opyn_geo && networkId !== Networks.ROPSTEN) {
-      handleRestrictUser(true)
+      if (!restrictedCountries.includes(String(router.query?.country))) {
+        handleRestrictUser(false)
+      } else {
+        handleRestrictUser(true)
+      }
     } else if (cookies?.opyn_geo?.split(',')[0] === 'true' && networkId !== Networks.ROPSTEN) {
       handleRestrictUser(true)
     } else {
       handleRestrictUser(false)
     }
-  }, [cookies?.opyn_geo, handleRestrictUser, networkId])
+  }, [cookies?.opyn_geo, handleRestrictUser, networkId, router.query?.country])
 
   return (
     <restrictUserContext.Provider value={{ handleRestrictUser, isRestricted: state.isRestricted }}>
