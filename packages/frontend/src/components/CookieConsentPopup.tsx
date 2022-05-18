@@ -98,6 +98,7 @@ const CookieConsentPopup = () => {
         color: '#ffffff',
         padding: '.75em 2em',
         borderRadius: 10,
+        cursor: 'pointer',
       }}
       setDeclineCookie={false}
       enableDeclineButton
@@ -108,6 +109,7 @@ const CookieConsentPopup = () => {
         borderRadius: 10,
         backgroundColor: '#283944',
         padding: '.75em 2em',
+        cursor: 'pointer',
       }}
       onAccept={() => {
         router.push(path, undefined, { shallow: true })
