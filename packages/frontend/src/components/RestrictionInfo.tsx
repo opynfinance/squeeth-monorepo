@@ -3,6 +3,7 @@ import Box from '@material-ui/core/Box'
 import NorthEastOutlinedIcon from '@material-ui/icons/CallMade'
 import Link from 'next/link'
 import { useCookies } from 'react-cookie'
+import { useRouter } from 'next/router'
 
 const useStyles = makeStyles(() =>
   createStyles({
@@ -38,13 +39,18 @@ const restrictedCountries: Record<string, string> = {
 const RestrictionInfo = () => {
   const classes = useStyles()
   const [cookies] = useCookies(['restricted'])
+  const router = useRouter()
   return (
     <Box className={classes.restrictedInfo}>
       <p>
         <span>
           This app is not available in{' '}
-          {cookies?.restricted ? restrictedCountries[cookies?.restricted.split(',')[1]] : 'your country'}. More details
-          can be found in our
+          {cookies?.restricted
+            ? restrictedCountries[cookies?.restricted.split(',')[1]]
+            : router.query?.country
+            ? router.query?.country
+            : 'your country'}
+          . More details can be found in our
         </span>
         <Link href="/terms-of-service">
           <a target="_blank"> Terms of service. </a>
