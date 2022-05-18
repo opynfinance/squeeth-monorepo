@@ -51,13 +51,13 @@ const useStyles = makeStyles(() =>
 const CookieConsentPopup = () => {
   const classes = useStyles()
   const router = useRouter()
-  const [cookies, setCookie] = useCookies(['restricted'])
+  const [cookies, setCookie] = useCookies(['opyn_geo'])
   const path = router.pathname
   const networkId = useAtomValue(networkIdAtom)
 
   const [open, setOpen] = useState(!router.query?.restricted?.includes('true'))
 
-  return !cookies?.restricted && networkId !== Networks.ROPSTEN && path !== '/cookie-policy' ? (
+  return !cookies?.opyn_geo && networkId !== Networks.ROPSTEN && path !== '/cookie-policy' ? (
     <Dialog
       open={open}
       onClose={() => {}}
@@ -83,7 +83,7 @@ const CookieConsentPopup = () => {
             className={classes.button}
             onClick={() => {
               router.push(path, undefined, { shallow: true })
-              setCookie('restricted', router.query?.restricted === 'true' ? `true,${router.query?.country}` : 'false')
+              setCookie('opyn_geo', router.query?.restricted === 'true' ? `true,${router.query?.country}` : 'false')
               setOpen(false)
             }}
           >

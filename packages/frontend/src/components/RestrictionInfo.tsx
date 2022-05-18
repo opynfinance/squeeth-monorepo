@@ -38,15 +38,15 @@ const restrictedCountries: Record<string, string> = {
 
 const RestrictionInfo = () => {
   const classes = useStyles()
-  const [cookies] = useCookies(['restricted'])
+  const [cookies] = useCookies(['opyn_geo'])
   const router = useRouter()
   return (
     <Box className={classes.restrictedInfo}>
       <p>
         <span>
           This app is not available in{' '}
-          {cookies?.restricted
-            ? restrictedCountries[cookies?.restricted.split(',')[1]]
+          {cookies?.opyn_geo
+            ? restrictedCountries[cookies?.opyn_geo.split(',')[1]]
             : router.query?.country
             ? router.query?.country
             : 'your country'}

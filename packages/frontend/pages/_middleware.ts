@@ -7,11 +7,11 @@ export default function middleware(request: NextRequest) {
   const url = request.nextUrl
   const isRestricted = BLOCKED_COUNTRIES.includes(country ?? '')
 
-  if (request.cookies.restricted && request.cookies.restricted === 'false') {
+  if (request.cookies.opyn_geo && request.cookies.opyn_geo === 'false') {
     if (!isRestricted) {
       return NextResponse.next()
     } else {
-      return NextResponse.redirect(url).clearCookie('restricted')
+      return NextResponse.redirect(url).clearCookie('opyn_geo')
     }
   }
 
