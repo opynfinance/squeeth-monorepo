@@ -1,85 +1,73 @@
-import ReactMarkdown from 'markdown-to-jsx'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import Box from '@material-ui/core/Box'
-import Link from '@material-ui/core/Link'
-import Typography from '@material-ui/core/Typography'
 
 import Nav from '@components/Nav'
 import { getMarkdown } from '@utils/markdown'
+import CookiePolicy from '../src/components/CookiePolicy'
+import Link from 'next/link'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
       width: '90%',
-      margin: '7em auto 3em',
+      margin: '3em ',
       maxWidth: '900px',
+      marginBottom: '0',
       paddingBottom: '1em',
     },
     subHeading: {
       fontWeight: theme.typography.fontWeightBold,
     },
+    main: {
+      display: 'flex',
+      fontSize: '1rem',
+    },
+    subTopics: {
+      height: '90vh',
+      borderRight: '1px solid white',
+      paddingTop: '3em ',
+      position: 'sticky',
+      top: '9%',
+    },
+    list: {
+      width: '95%',
+    },
+    listItem: {
+      marginBottom: '1em',
+      '&:hover,&:focus': {
+        color: '#2ce6f9',
+        textDecoration: 'underline',
+      },
+    },
   }),
 )
 
-function MarkdownListItem(props: any) {
-  return <Box component="li" sx={{ mt: 1, fontSize: 15 }} {...props} />
-}
-
-const options = {
-  overrides: {
-    h1: {
-      component: Typography,
-      props: {
-        gutterBottom: true,
-        variant: 'h4',
-        component: 'h1',
-      },
-    },
-    h2: {
-      component: Typography,
-      props: { gutterBottom: true, component: 'h2' },
-    },
-    h3: {
-      component: Typography,
-      props: { gutterBottom: true, variant: 'h5', component: 'div' },
-    },
-    h4: {
-      component: Typography,
-      props: {
-        gutterBottom: true,
-        variant: 'h6',
-        paragraph: true,
-      },
-    },
-    h5: {
-      component: Typography,
-      props: {
-        gutterBottom: true,
-        // variant: 'h6',
-        paragraph: true,
-        fontSize: 10,
-        fontWeight: 600,
-      },
-    },
-    p: {
-      component: Typography,
-      props: { paragraph: true },
-    },
-    a: { component: Link },
-    li: {
-      component: MarkdownListItem,
-    },
-  },
-}
-
-const CookiePolicy = (props: any) => {
+const CP = () => {
   const classes = useStyles()
   return (
     <>
       <Nav />
-      <main>
+      <main className={classes.main}>
+        <div className={classes.subTopics}>
+          <ul className={classes.list}>
+            <li className={classes.listItem}>
+              <Link href="#what-is-a-tracker">
+                <a>What is a Tracker</a>
+              </Link>
+            </li>
+            <li className={classes.listItem}>
+              <Link href="#what-do-trackers-do">
+                <a> What Trackers Does the Interface Use</a>
+              </Link>
+            </li>
+            <li className={classes.listItem}>
+              <Link href="#how-do-i-manage">
+                <a> How Do I Manage Trackers?</a>
+              </Link>
+            </li>
+          </ul>
+        </div>
         <div className={classes.container}>
-          <ReactMarkdown options={options}>{props.file}</ReactMarkdown>
+          <CookiePolicy />
         </div>
       </main>
     </>
@@ -92,4 +80,4 @@ export async function getStaticProps() {
   return { props: { file } }
 }
 
-export default CookiePolicy
+export default CP
