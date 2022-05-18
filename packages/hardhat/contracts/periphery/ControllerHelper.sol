@@ -775,8 +775,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
     function _swapCallback(
         address _caller,
         address _tokenIn,
-        address _tokenOut,
-        uint24 _fee,
+        address _pool,
         uint256 _amountToPay,
         bytes memory _callData,
         uint8 _callSource
@@ -799,7 +798,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             );
 
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).transfer(
-                _getPool(_tokenIn, _tokenOut, _fee),
+                _pool,
                 _amountToPay
             );
             IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).transfer(
@@ -834,7 +833,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             }
 
             IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).transfer(
-                _getPool(_tokenIn, _tokenOut, _fee),
+                _pool,
                 _amountToPay
             );
         } else if (
@@ -842,7 +841,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH
         ) {
             IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).transfer(
-                _getPool(_tokenIn, _tokenOut, _fee),
+                _pool,
                 _amountToPay
             );
 
@@ -853,7 +852,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP
         ) {
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).transfer(
-                _getPool(_tokenIn, _tokenOut, _fee),
+                _pool,
                 _amountToPay
             );
             return;
@@ -875,14 +874,14 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             );
 
             IWETH9(ControllerHelperDiamondStorage.getAddressAtSlot(5)).transfer(
-                _getPool(_tokenIn, _tokenOut, _fee),
+                _pool,
                 _amountToPay
             );
         } else if (
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.GENERAL_SWAP
         ) {
-            IERC20(_tokenIn).transfer(_getPool(_tokenIn, _tokenOut, _fee), _amountToPay);
+            IERC20(_tokenIn).transfer(_pool, _amountToPay);
         }
     }
 
