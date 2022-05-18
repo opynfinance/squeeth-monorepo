@@ -57,7 +57,7 @@ const CookieConsentPopup = () => {
 
   const [open, setOpen] = useState(!router.query?.restricted?.includes('true'))
 
-  return !cookies?.restricted && networkId !== Networks.ROPSTEN ? (
+  return !cookies?.restricted && networkId !== Networks.ROPSTEN && path !== '/cookie-policy' ? (
     <Dialog
       open={open}
       onClose={() => {}}
@@ -70,7 +70,9 @@ const CookieConsentPopup = () => {
             We use cookies to recognize visitors and analyze front end traffic. To learn more about these methods,
             including how to disable them, view our{' '}
             <Link href="/cookie-policy">
-              <a className={classes.link}>Cookie Policy</a>
+              <a rel="noreferrer" target="_blank" className={classes.link}>
+                Cookie Policy
+              </a>
             </Link>
             .
           </p>
