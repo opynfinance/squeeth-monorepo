@@ -490,7 +490,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                     wPowerPerpPool: ControllerHelperDiamondStorage.getAddressAtSlot(3),
                     vaultId: data.vaultId,
                     wPowerPerpAmount: data.wPowerPerpAmount,
-                    collateralToDeposit: data.collateralToDeposit.add(data.collateralToFlashloan),
+                    collateralToDeposit: data.collateralToDeposit,
                     collateralToLp: data.collateralToLp,
                     amount0Min: data.lpAmount0Min,
                     amount1Min: data.lpAmount1Min,
@@ -706,6 +706,11 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         data[i].data,
                         (ControllerHelperDataType.GeneralSwap)
                     );
+
+                    // make sure not to fail
+                    uint256 currentBalance = IERC20(swapParams.tokenIn).balanceOf(address(this));
+                    if (currentBalance < swapParams.amountIn) swapParams.amountIn = currentBalance;
+
                     _exactInFlashSwap(
                         swapParams.tokenIn,
                         swapParams.tokenOut,
