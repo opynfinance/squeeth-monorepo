@@ -50,7 +50,10 @@ const CookiePolicy = () => {
         We may change this Cookie Policy at any time. Check the “last updated” date at the top of this page to see when
         this Cookie Policy was last revised. Any change becomes effective when we post the revised Cookie Policy on or
         through our Interface. If you have any questions, please contact us by email at{' '}
-        <a href="mailto: legal@opyn.co">legal@opyn.co</a>.
+        <a className={classes.links} href="mailto: legal@opyn.co">
+          legal@opyn.co
+        </a>
+        .
       </p>
 
       <ol>
