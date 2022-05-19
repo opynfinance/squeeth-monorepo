@@ -155,9 +155,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         external
         payable
     {
-        require(
-            IShortPowerPerp(shortPowerPerp).ownerOf(_params.vaultId) == msg.sender
-        );
+        _checkAccess(_params.vaultId);
 
         INonfungiblePositionManager(nonfungiblePositionManager).safeTransferFrom(
             msg.sender,
@@ -210,9 +208,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         external
         payable
     {
-        require(
-            IShortPowerPerp(shortPowerPerp).ownerOf(_params.vaultId) == msg.sender
-        );
+        _checkAccess(_params.vaultId);
 
         wrapInternal(msg.value);
         _flashLoan(
@@ -234,10 +230,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
      */
     function batchMintLp(ControllerHelperDataType.MintAndLpParams calldata _params) external payable {
         if (_params.vaultId != 0)
-            require(
-                IShortPowerPerp(shortPowerPerp).ownerOf(_params.vaultId) ==
-                    msg.sender
-            );
+            _checkAccess(_params.vaultId);
         require(msg.value == _params.collateralToDeposit.add(_params.collateralToLp));
 
         wrapInternal(msg.value);
@@ -253,7 +246,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
 
         // if openeded new vault, transfer vault NFT to user
         if (_params.vaultId == 0)
-            IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).safeTransferFrom(
+            IShortPowerPerp(shortPowerPerp).safeTransferFrom(
                 address(this),
                 msg.sender,
                 vaultId
@@ -275,10 +268,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         payable
     {
         if (_params.vaultId != 0)
-            require(
-                IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_params.vaultId) ==
-                    msg.sender
-            );
+            _checkAccess(_params.vaultId);
 
         wrapInternal(msg.value);
         _flashLoan(
@@ -448,7 +438,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         ControllerHelperDataType.RebalanceVaultNftParams[] calldata _params
     ) external payable {
         // check ownership
-        require(IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).ownerOf(_vaultId) == msg.sender);
+        _checkAccess(_vaultId);
 
         wrapInternal(msg.value);
         _flashLoan(
@@ -527,7 +517,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
 
             // if openeded new vault, transfer vault NFT to user
             if (data.vaultId == 0)
-                IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).safeTransferFrom(
+                IShortPowerPerp(shortPowerPerp).safeTransferFrom(
                     address(this),
                     _initiator,
                     vaultId
@@ -829,7 +819,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
 
                 // this is a newly open vault, transfer to the user
                 if (data.vaultId == 0)
-                    IShortPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(2)).safeTransferFrom(
+                    IShortPowerPerp(shortPowerPerp).safeTransferFrom(
                         address(this),
                         _caller,
                         vaultId
