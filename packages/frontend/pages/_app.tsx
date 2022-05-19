@@ -19,7 +19,7 @@ import { useOnboard } from 'src/state/wallet/hooks'
 import { networkIdAtom } from 'src/state/wallet/atoms'
 import { useUpdateSqueethPrices, useUpdateSqueethPoolData } from 'src/state/squeethPool/hooks'
 import { useInitController } from 'src/state/controller/hooks'
-import { ComputeSwapsProvider } from 'src/state/positions/providers'
+import { ComputeSwapsProvider } from 'src/state/positions/hooks'
 import { useSwaps } from 'src/state/positions/hooks'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
