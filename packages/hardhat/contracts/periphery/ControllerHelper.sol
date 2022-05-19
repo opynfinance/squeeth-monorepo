@@ -454,7 +454,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         );
     }
 
-    function _checkAccess(uint256 vaultId) internal {
+    function _checkAccess(uint256 vaultId) internal view {
         require(
             IShortPowerPerp(shortPowerPerp).ownerOf(vaultId) == msg.sender
         );
