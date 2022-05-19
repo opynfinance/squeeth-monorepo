@@ -27,9 +27,14 @@ const useStyles = makeStyles((theme) =>
       position: 'sticky',
       top: '0px',
       zIndex: 30,
-      //background: theme.palette.background.default,
+      backgroundColor: theme.palette.background.default,
       borderBottom: `1px solid ${theme.palette.background.stone}`,
-      backdropFilter: 'blur(30px)',
+
+      /* if backdrop support: very transparent and blurred */
+      '@supports ((-webkit-backdrop-filter: blur(30px)) or (backdrop-filter: blur(30px)))': {
+        backgroundColor: 'unset',
+        backdropFilter: 'blur(30px)',
+      },
     },
     logo: {
       marginRight: 'auto',
