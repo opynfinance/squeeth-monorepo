@@ -30,7 +30,7 @@ const useStyles = makeStyles((theme) =>
       border: '2px solid #2ce6f9',
       boxShadow: '#393a3a 0px 5px 20px',
       width: '40%',
-      left: '30px',
+      right: '30px',
       bottom: '40px',
       overflow: 'hidden',
       [theme.breakpoints.down('sm')]: {
@@ -38,7 +38,7 @@ const useStyles = makeStyles((theme) =>
       },
       [theme.breakpoints.down('xs')]: {
         width: '100%',
-        left: 0,
+        right: 0,
         bottom: 0,
         borderBottomLeftRadius: 0,
         borderBottomRightRadius: 0,
