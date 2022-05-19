@@ -121,8 +121,9 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         external
         payable
     {
-        if (_params.vaultId != 0)
+        if (_params.vaultId != 0){
             _checkAccess(_params.vaultId);
+        }
 
         wrapInternal(msg.value);
         IWPowerPerp(wPowerPerp).transferFrom(
@@ -229,8 +230,9 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
      * @param _params ControllerHelperDataType.MintAndLpParams struct
      */
     function batchMintLp(ControllerHelperDataType.MintAndLpParams calldata _params) external payable {
-        if (_params.vaultId != 0)
+        if (_params.vaultId != 0){
             _checkAccess(_params.vaultId);
+        }
         require(msg.value == _params.collateralToDeposit.add(_params.collateralToLp));
 
         wrapInternal(msg.value);
@@ -267,8 +269,9 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         external
         payable
     {
-        if (_params.vaultId != 0)
+        if (_params.vaultId != 0){
             _checkAccess(_params.vaultId);
+        }
 
         wrapInternal(msg.value);
         _flashLoan(
@@ -464,6 +467,22 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         );
     }
 
+    /**
+     * @notice approve controller to transfer uniswap nft and deposit in vault
+     * @param _vaultId vault ID
+     * @param _tokenId uniswap nft token id
+     */
+    function _approveDepositNft(uint256 _vaultId, uint256 _tokenId) internal {
+        INonfungiblePositionManager(nonfungiblePositionManager).approve(
+            controller,
+            _tokenId
+        );
+        IController(controller).depositUniPositionToken(
+            _vaultId,
+            _tokenId
+        );
+    }
+
     function _flashCallback(
         address _initiator,
         address, /*_asset*/
@@ -501,7 +520,9 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             );
 
             // deposit Uni NFT token in vault
-            INonfungiblePositionManager(nonfungiblePositionManager).approve(
+             _approveDepositNft(vaultId, uniTokenId);
+
+/*             INonfungiblePositionManager(nonfungiblePositionManager).approve(
                 controller,
                 uniTokenId
             );
@@ -509,7 +530,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 vaultId,
                 uniTokenId
             );
-
+ */
             ControllerHelperUtil.withdrawFromVault(
                 controller,
                 weth,
@@ -741,7 +762,9 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         data[i].data,
                         (ControllerHelperDataType.DepositExistingNftParams)
                     );
-                    INonfungiblePositionManager(nonfungiblePositionManager).approve(
+
+                    _approveDepositNft(vaultId, depositExistingNftParams.tokenId);
+/*                     INonfungiblePositionManager(nonfungiblePositionManager).approve(
                         controller,
                         depositExistingNftParams.tokenId
                     );
@@ -749,7 +772,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                     IController(controller).depositUniPositionToken(
                         vaultId,
                         depositExistingNftParams.tokenId
-                    );
+                    ); */
                 }
             }
 
