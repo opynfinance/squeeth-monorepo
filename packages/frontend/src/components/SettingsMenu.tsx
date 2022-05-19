@@ -151,6 +151,7 @@ const SettingMenu = () => {
               className={classes.legalLinks}
               onMouseOver={() => handleMouseOver('pp', true)}
               onMouseOut={() => handleMouseOver('pp', false)}
+              style={{ marginBottom: '.75em' }}
             >
               <Typography style={{ display: 'flex', alignItems: 'center' }}>
                 <InfoOutlinedIcon style={{ marginRight: '.25em' }} />
@@ -164,6 +165,28 @@ const SettingMenu = () => {
                 </Link>
               </Typography>
               <Link href="/privacy-policy">
+                <a target="_blank">
+                  <NorthEastOutlinedIcon />
+                </a>
+              </Link>
+            </ListItem>
+            <ListItem
+              className={classes.legalLinks}
+              onMouseOver={() => handleMouseOver('cp', true)}
+              onMouseOut={() => handleMouseOver('cp', false)}
+            >
+              <Typography style={{ display: 'flex', alignItems: 'center' }}>
+                <InfoOutlinedIcon style={{ marginRight: '.25em' }} />
+                <Link href="/cookie-policy">
+                  <a
+                    target="_blank"
+                    style={{ textDecoration: isOver && currentlyOver === 'cp' ? 'underline' : 'none' }}
+                  >
+                    Opyn Cookie Policy
+                  </a>
+                </Link>
+              </Typography>
+              <Link href="/cookie-policy">
                 <a target="_blank">
                   <NorthEastOutlinedIcon />
                 </a>
