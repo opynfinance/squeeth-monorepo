@@ -30,8 +30,8 @@ task("addSqueethLiquidity", "Add liquidity to wsqueeth pool")
   const { deployer } = await getNamedAccounts();
   const { positionManager, uniswapFactory } = await getUniswapDeployments(ethers, deployer, network.name)
 
-  const controller = await ethers.getContractAt("Controller", deployer);
-  const wsqueeth = await ethers.getContractAt("WPowerPerp", deployer);
+  const controller = await ethers.getContract("Controller", deployer);
+  const wsqueeth = await ethers.getContract("WPowerPerp", deployer);
   const weth = await getWETH(ethers, deployer, network.name)
 
   const isWethToken0 = parseInt(weth.address, 16) < parseInt(wsqueeth.address, 16)
