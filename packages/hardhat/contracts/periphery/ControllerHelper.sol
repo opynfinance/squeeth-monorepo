@@ -473,10 +473,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
      * @param _tokenId uniswap nft token id
      */
     function _approveDepositNft(uint256 _vaultId, uint256 _tokenId) internal {
-        INonfungiblePositionManager(nonfungiblePositionManager).approve(
-            controller,
-            _tokenId
-        );
         IController(controller).depositUniPositionToken(
             _vaultId,
             _tokenId
@@ -522,15 +518,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             // deposit Uni NFT token in vault
              _approveDepositNft(vaultId, uniTokenId);
 
-/*             INonfungiblePositionManager(nonfungiblePositionManager).approve(
-                controller,
-                uniTokenId
-            );
-            IController(controller).depositUniPositionToken(
-                vaultId,
-                uniTokenId
-            );
- */
             ControllerHelperUtil.withdrawFromVault(
                 controller,
                 weth,
@@ -764,15 +751,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                     );
 
                     _approveDepositNft(vaultId, depositExistingNftParams.tokenId);
-/*                     INonfungiblePositionManager(nonfungiblePositionManager).approve(
-                        controller,
-                        depositExistingNftParams.tokenId
-                    );
-
-                    IController(controller).depositUniPositionToken(
-                        vaultId,
-                        depositExistingNftParams.tokenId
-                    ); */
                 }
             }
 
