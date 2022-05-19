@@ -490,7 +490,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                     wPowerPerpPool: ControllerHelperDiamondStorage.getAddressAtSlot(3),
                     vaultId: data.vaultId,
                     wPowerPerpAmount: data.wPowerPerpAmount,
-                    collateralToDeposit: data.collateralToDeposit.add(data.collateralToFlashloan),
+                    collateralToDeposit: data.collateralToDeposit,
                     collateralToLp: data.collateralToLp,
                     amount0Min: data.lpAmount0Min,
                     amount1Min: data.lpAmount1Min,
