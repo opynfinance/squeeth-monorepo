@@ -706,6 +706,11 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         data[i].data,
                         (ControllerHelperDataType.GeneralSwap)
                     );
+
+                    // make sure not to fail
+                    uint256 currentBalance = IERC20(swapParams.tokenIn).balanceOf(address(this));
+                    if (currentBalance < swapParams.amountIn) swapParams.amountIn = currentBalance;
+
                     _exactInFlashSwap(
                         swapParams.tokenIn,
                         swapParams.tokenOut,
