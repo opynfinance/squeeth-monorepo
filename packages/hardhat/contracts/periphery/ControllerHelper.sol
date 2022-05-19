@@ -454,12 +454,15 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         );
     }
 
+    /**
+     * @notice checks if the msg.sender is the owener of the vault
+     * @param _vaultId vault ID
+     */
     function _checkAccess(uint256 vaultId) internal view {
         require(
             IShortPowerPerp(shortPowerPerp).ownerOf(vaultId) == msg.sender
         );
     }
-
 
     function _flashCallback(
         address _initiator,
