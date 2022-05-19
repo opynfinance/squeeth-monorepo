@@ -46,7 +46,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         UniswapControllerHelper(_uniswapFactory)
         EulerControllerHelper(_exec, _euler, IController(_controller).weth(), _dToken)
     {
-
         controller = _controller;
         shortPowerPerp = IController(_controller).shortPowerPerp();
         wPowerPerpPool = IController(_controller).wPowerPerpPool();
@@ -89,7 +88,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         external
         payable
     {
-
         _checkAccess(_params.vaultId);
 
         require(_params.maxToPay <= _params.collateralToWithdraw.add(msg.value));
@@ -106,10 +104,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             abi.encode(_params)
         );
 
-        ControllerHelperUtil.sendBack(
-            weth,
-            wPowerPerp
-        );
+        ControllerHelperUtil.sendBack(weth, wPowerPerp);
     }
 
     /**
@@ -121,16 +116,12 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         external
         payable
     {
-        if (_params.vaultId != 0){
+        if (_params.vaultId != 0) {
             _checkAccess(_params.vaultId);
         }
 
         wrapInternal(msg.value);
-        IWPowerPerp(wPowerPerp).transferFrom(
-            msg.sender,
-            address(this),
-            _params.wPowerPerpAmountToSell
-        );
+        IWPowerPerp(wPowerPerp).transferFrom(msg.sender, address(this), _params.wPowerPerpAmountToSell);
         // flashswap and mint short position
         _exactInFlashSwap(
             wPowerPerp,
@@ -141,10 +132,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             uint8(ControllerHelperDataType.CALLBACK_SOURCE.FLASH_SELL_LONG_W_MINT),
             abi.encode(_params)
         );
-        ControllerHelperUtil.sendBack(
-            weth,
-            wPowerPerp
-        );
+        ControllerHelperUtil.sendBack(weth, wPowerPerp);
     }
 
     /**
@@ -199,10 +187,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             _params.burnExactRemoved
         );
 
-        ControllerHelperUtil.sendBack(
-            weth,
-            wPowerPerp
-        );
+        ControllerHelperUtil.sendBack(weth, wPowerPerp);
     }
 
     function flashloanCloseVaultLpNft(ControllerHelperDataType.FlashloanCloseVaultLpNftParam calldata _params)
@@ -219,10 +204,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             abi.encode(_params)
         );
 
-        ControllerHelperUtil.sendBack(
-            weth,
-            wPowerPerp
-        );
+        ControllerHelperUtil.sendBack(weth, wPowerPerp);
     }
 
     /**
@@ -230,7 +212,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
      * @param _params ControllerHelperDataType.MintAndLpParams struct
      */
     function batchMintLp(ControllerHelperDataType.MintAndLpParams calldata _params) external payable {
-        if (_params.vaultId != 0){
+        if (_params.vaultId != 0) {
             _checkAccess(_params.vaultId);
         }
         require(msg.value == _params.collateralToDeposit.add(_params.collateralToLp));
@@ -247,17 +229,9 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         );
 
         // if openeded new vault, transfer vault NFT to user
-        if (_params.vaultId == 0)
-            IShortPowerPerp(shortPowerPerp).safeTransferFrom(
-                address(this),
-                msg.sender,
-                vaultId
-            );
+        if (_params.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), msg.sender, vaultId);
 
-        ControllerHelperUtil.sendBack(
-            weth,
-            wPowerPerp
-        );
+        ControllerHelperUtil.sendBack(weth, wPowerPerp);
     }
 
     /**
@@ -269,7 +243,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         external
         payable
     {
-        if (_params.vaultId != 0){
+        if (_params.vaultId != 0) {
             _checkAccess(_params.vaultId);
         }
 
@@ -281,10 +255,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             abi.encode(_params)
         );
 
-        ControllerHelperUtil.sendBack(
-            weth,
-            wPowerPerp
-        );
+        ControllerHelperUtil.sendBack(weth, wPowerPerp);
     }
 
     /**
@@ -332,10 +303,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             );
         }
 
-        ControllerHelperUtil.sendBack(
-            weth,
-            wPowerPerp
-        );
+        ControllerHelperUtil.sendBack(weth, wPowerPerp);
     }
 
     /**
@@ -423,10 +391,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             })
         );
 
-        ControllerHelperUtil.sendBack(
-            weth,
-            wPowerPerp
-        );
+        ControllerHelperUtil.sendBack(weth, wPowerPerp);
     }
 
     /**
@@ -451,10 +416,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             abi.encode(_vaultId, _params)
         );
 
-        ControllerHelperUtil.sendBack(
-            weth,
-            wPowerPerp
-        );
+        ControllerHelperUtil.sendBack(weth, wPowerPerp);
     }
 
     /**
@@ -462,21 +424,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
      * @param _vaultId vault ID
      */
     function _checkAccess(uint256 _vaultId) internal view {
-        require(
-            IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId) == msg.sender
-        );
-    }
-
-    /**
-     * @notice approve controller to transfer uniswap nft and deposit in vault
-     * @param _vaultId vault ID
-     * @param _tokenId uniswap nft token id
-     */
-    function _approveDepositNft(uint256 _vaultId, uint256 _tokenId) internal {
-        IController(controller).depositUniPositionToken(
-            _vaultId,
-            _tokenId
-        );
+        require(IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId) == msg.sender);
     }
 
     function _flashCallback(
@@ -516,7 +464,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             );
 
             // deposit Uni NFT token in vault
-             _approveDepositNft(vaultId, uniTokenId);
+            IController(controller).depositUniPositionToken(vaultId, uniTokenId);
 
             ControllerHelperUtil.withdrawFromVault(
                 controller,
@@ -527,12 +475,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             );
 
             // if openeded new vault, transfer vault NFT to user
-            if (data.vaultId == 0)
-                IShortPowerPerp(shortPowerPerp).safeTransferFrom(
-                    address(this),
-                    _initiator,
-                    vaultId
-                );
+            if (data.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), _initiator, vaultId);
         } else if (
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.FLASHLOAN_CLOSE_VAULT_LP_NFT
@@ -611,10 +554,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         isWethToken0
                     );
 
-                    IController(controller).depositUniPositionToken(
-                        vaultId,
-                        increaseLiquidityParam.tokenId
-                    );
+                    IController(controller).depositUniPositionToken(vaultId, increaseLiquidityParam.tokenId);
                 } else if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.DecreaseLpLiquidity
                 ) {
@@ -703,10 +643,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         isWethToken0
                     );
                     // deposit Uni NFT token in vault
-                    IController(controller).depositUniPositionToken(
-                        vaultId,
-                        tokenId
-                    );
+                    IController(controller).depositUniPositionToken(vaultId, tokenId);
                 } else if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.generalSwap
                 ) {
@@ -739,9 +676,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                             amount1Max: collectFeesParams.amount0Max
                         });
 
-                    INonfungiblePositionManager(nonfungiblePositionManager).collect(
-                        collectParams
-                    );
+                    INonfungiblePositionManager(nonfungiblePositionManager).collect(collectParams);
                 } else if (
                     data[i].rebalanceVaultNftType == ControllerHelperDataType.RebalanceVaultNftType.DepositExistingNft
                 ) {
@@ -750,18 +685,12 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         (ControllerHelperDataType.DepositExistingNftParams)
                     );
 
-                    _approveDepositNft(vaultId, depositExistingNftParams.tokenId);
+                    IController(controller).depositUniPositionToken(vaultId, depositExistingNftParams.tokenId);
                 }
             }
 
             // remove flashloan amount in ETH from vault + any amount of collateral user want to withdraw (sum <= vault.collateralAmount)
-            ControllerHelperUtil.withdrawFromVault(
-                controller,
-                weth,
-                vaultId,
-                0,
-                _amount
-            );
+            ControllerHelperUtil.withdrawFromVault(controller, weth, vaultId, 0, _amount);
         }
     }
 
@@ -799,10 +728,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             );
 
             IWETH9(weth).transfer(_pool, _amountToPay);
-            IWPowerPerp(wPowerPerp).transfer(
-                _caller,
-                data.wPowerPerpAmountToBuy
-            );
+            IWPowerPerp(wPowerPerp).transfer(_caller, data.wPowerPerpAmountToBuy);
         } else if (
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.FLASH_SELL_LONG_W_MINT
@@ -823,11 +749,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
 
                 // this is a newly open vault, transfer to the user
                 if (data.vaultId == 0)
-                    IShortPowerPerp(shortPowerPerp).safeTransferFrom(
-                        address(this),
-                        _caller,
-                        vaultId
-                    );
+                    IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), _caller, vaultId);
             }
 
             IWPowerPerp(wPowerPerp).transfer(_pool, _amountToPay);
@@ -837,8 +759,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         ) {
             IWPowerPerp(wPowerPerp).transfer(_pool, _amountToPay);
 
-            if (address(this).balance > 0)
-                IWETH9(weth).deposit{value: address(this).balance}();
+            if (address(this).balance > 0) IWETH9(weth).deposit{value: address(this).balance}();
         } else if (
             ControllerHelperDataType.CALLBACK_SOURCE(_callSource) ==
             ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP
