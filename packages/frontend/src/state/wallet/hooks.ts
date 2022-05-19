@@ -124,13 +124,13 @@ export const useTransactionStatus = () => {
 }
 
 const balanceQueryKeys = {
-  userWalletBalance: () => ['userWalletBalance'],
+  userWalletBalance: (address: string) => ['userWalletBalance', { address }],
 }
 export const useWalletBalance = () => {
   const [address] = useAtom(addressAtom)
   const [web3] = useAtom(web3Atom)
 
-  return useQuery(balanceQueryKeys.userWalletBalance(), () => getBalance(web3, address), {
+  return useQuery(balanceQueryKeys.userWalletBalance(address ?? ''), () => getBalance(web3, address), {
     enabled: Boolean(address),
     refetchInterval: 30000,
   })
