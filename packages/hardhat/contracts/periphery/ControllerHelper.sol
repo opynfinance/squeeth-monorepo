@@ -661,7 +661,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         swapParams.tokenOut,
                         swapParams.poolFee,
                         swapParams.amountIn,
-                        swapParams.limitPriceEthPerPowerPerp.mul(swapParams.amountIn).div(1e18),
+                        swapParams.limitPrice.mul(swapParams.amountIn).div(1e18),
                         uint8(ControllerHelperDataType.CALLBACK_SOURCE.GENERAL_SWAP),
                         ""
                     );

@@ -143,7 +143,7 @@ library ControllerHelperDataType {
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
         uint256 limitPriceEthPerPowerPerp; // price limit for selling wPowerPerp
-        uint24 poolFee;
+        uint24 poolFee; // Uniswap pool fee (e.g. 3000 = 30bps)
     }
 
     /// @dev params for rebalanceWithoutVault()
@@ -160,7 +160,7 @@ library ControllerHelperDataType {
         uint256 amount1Min; // amount min to get when closing LP for asset1
         int24 lowerTick;    // LP lower tick
         int24 upperTick;    // LP upper tick
-        uint24 poolFee;
+        uint24 poolFee;     // Uniswap pool fee (e.g. 3000 = 30bps)
     }
 
     /// @dev params for ControllerHelperUtil.lpWPowerPerpPool()
@@ -214,11 +214,11 @@ library ControllerHelperDataType {
 
     /// @dev struct for swapping from tokenIn to tokenOut
     struct GeneralSwap {
-        address tokenIn;
-        address tokenOut;
-        uint256 amountIn;
-        uint256 limitPriceEthPerPowerPerp;
-        uint24 poolFee;
+        address tokenIn; // token to swap in
+        address tokenOut; // token to swap out
+        uint256 amountIn; // amount to swap in
+        uint256 limitPrice; // limit price in units of tokenOut per unit of tokenIn
+        uint24 poolFee; // Uniswap pool fee (e.g. 3000 = 30bps)
     }
 
     /// @dev struct for collecting fees owed from a uniswap NFT
