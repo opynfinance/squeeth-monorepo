@@ -2,6 +2,7 @@ import { atom } from 'jotai'
 import BigNumber from 'bignumber.js'
 
 export const mockedCrabLoadingAtom = atom(true)
+export const mockedCrabPositionValueLoadingAtom = atom(true)
 
 export const mockedCurrentEthValueAtom = atom(new BigNumber(31.502381757505464))
 

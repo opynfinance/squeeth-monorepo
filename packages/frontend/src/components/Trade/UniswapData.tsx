@@ -1,6 +1,14 @@
-import { Accordion, AccordionDetails, AccordionSummary, createStyles, makeStyles, Typography } from '@material-ui/core'
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  createStyles,
+  makeStyles,
+  Typography,
+  useTheme,
+} from '@material-ui/core'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
-import React from 'react'
+import React, { useMemo } from 'react'
 
 import { UNI_POOL_FEES } from '../../constants'
 import TradeInfoItem from './TradeInfoItem'
@@ -39,7 +47,15 @@ const useStyles = makeStyles((theme) =>
 
 const UniswapData: React.FC<UniswapDataType> = ({ slippage, priceImpact, minReceived, minReceivedUnit, isMaxSent }) => {
   const classes = useStyles()
+  const theme = useTheme()
   const [expanded, setExpanded] = React.useState(false)
+
+  const priceImpactColor = useMemo(() => {
+    const priceImpactNum = Number(priceImpact)
+    if (priceImpactNum > 2) return theme.palette.error.main
+    if (priceImpactNum < 1) return theme.palette.success.main
+    return theme.palette.warning.main
+  }, [priceImpact, theme.palette.error.main, theme.palette.success.main, theme.palette.warning.main])
 
   return (
     <div className={classes.container}>
@@ -62,16 +78,7 @@ const UniswapData: React.FC<UniswapDataType> = ({ slippage, priceImpact, minRece
                 <Typography variant="caption" color="textSecondary" className={classes.pi}>
                   Price impact:{' '}
                 </Typography>
-                <Typography
-                  variant="caption"
-                  style={
-                    Number(priceImpact) > 3
-                      ? { color: '#f5475c' }
-                      : Number(priceImpact) < 1
-                      ? { color: '#49D273' }
-                      : { color: '#fff' }
-                  }
-                >
+                <Typography variant="caption" style={{ color: priceImpactColor, fontWeight: 600 }}>
                   {priceImpact}%
                 </Typography>
               </>
@@ -81,7 +88,7 @@ const UniswapData: React.FC<UniswapDataType> = ({ slippage, priceImpact, minRece
         <AccordionDetails classes={{ root: classes.detailsRoot }}>
           <div style={{ width: '100%' }}>
             <TradeInfoItem label="Allowed Slippage" value={slippage} unit="%" />
-            <TradeInfoItem label="Price Impact" value={priceImpact} unit="%" />
+            <TradeInfoItem label="Price Impact" value={priceImpact} unit="%" color={priceImpactColor} />
             <TradeInfoItem
               label={isMaxSent ? 'Maxmium sent' : 'Min received'}
               value={minReceived}
