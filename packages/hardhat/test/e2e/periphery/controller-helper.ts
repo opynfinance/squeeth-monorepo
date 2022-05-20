@@ -122,7 +122,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
       const flashloanFee = collateralToMint.mul(9).div(1000)
       const flashloanWMintDepositNftParams = {
-        uniPoolAddress: wSqueethPool.address,
+        wPowerPerpPool: wSqueethPool.address,
         vaultId: 0,
         wPowerPerpAmount: mintWSqueethAmount.toString(),
         collateralToDeposit: collateralToMint.toString(),
@@ -167,7 +167,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
       const flashloanFee = collateralToMint.mul(9).div(1000)
       const flashloanWMintDepositNftParams = {
-        uniPoolAddress: wSqueethPool.address,
+        wPowerPerpPool: wSqueethPool.address,
         vaultId: 0,
         wPowerPerpAmount: mintWSqueethAmount.mul(2).toString(),
         collateralToDeposit: collateralToMint.mul(2).toString(),
@@ -231,7 +231,7 @@ describe("ControllerHelper: mainnet fork", function () {
         const newTick = isWethToken0 ? 60*((currentTick - currentTick%60)/60 - 1): 60*((currentTick - currentTick%60)/60 + 1)
 
         const flashloanWMintDepositNftParams = {
-          uniPoolAddress: wSqueethPool.address,
+          wPowerPerpPool: wSqueethPool.address,
           vaultId: vaultId,
           wPowerPerpAmount: mintWSqueethAmount.toString(),
           collateralToDeposit: collateralToMint.toString(),
@@ -284,7 +284,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const newTick = isWethToken0 ? 60*((currentTick - currentTick%60)/60 - 1): 60*((currentTick - currentTick%60)/60 + 1)
       
       const flashloanWMintDepositNftParams = {
-        uniPoolAddress: wSqueethPool.address,
+        wPowerPerpPool: wSqueethPool.address,
         vaultId: 0,
         wPowerPerpAmount: mintWSqueethAmount.toString(),
         collateralToDeposit: collateralToMint.toString(),
@@ -326,7 +326,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
       
       const flashloanWMintDepositNftParams = {
-        uniPoolAddress: wSqueethPool.address,
+        wPowerPerpPool: wSqueethPool.address,
         vaultId: 0,
         wPowerPerpAmount: mintWSqueethAmount.toString(),
         collateralToDeposit: collateralToMint.toString(),
@@ -377,7 +377,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
       const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
       const flashloanWMintDepositNftParams = {
-        uniPoolAddress: wSqueethPool.address,
+        wPowerPerpPool: wSqueethPool.address,
         vaultId: vaultId,
         wPowerPerpAmount: mintWSqueethAmount.toString(),
         collateralToDeposit: collateralToMint.toString(),
@@ -452,7 +452,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const newTick = isWethToken0 ? 60*((currentTick - currentTick%60)/60 - 10): 60*((currentTick - currentTick%60)/60 + 10)
       
       const flashloanWMintDepositNftParams = {
-        uniPoolAddress: wSqueethPool.address,
+        wPowerPerpPool: wSqueethPool.address,
         vaultId: vaultId,
         wPowerPerpAmount: mintWSqueethAmount,
         collateralToDeposit: debtInEth,
@@ -520,7 +520,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const depositorEthBalanceBefore = await ethers.provider.getBalance(depositor.address)
       // Mint full range into vault with no added eth
       const flashloanWMintDepositNftParams = {
-        uniPoolAddress: wSqueethPool.address,
+        wPowerPerpPool: wSqueethPool.address,
         vaultId: vaultId.toString(),
         wPowerPerpAmount: mintWSqueethAmount.toString(),
         collateralToDeposit: collateralToDeposit.add(debtInEth).toString(),
@@ -764,7 +764,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, true)
       const collateralToLp = mintWSqueethAmount.mul(squeethPrice).div(one)
       const flashloanWMintDepositNftParams = {
-        uniPoolAddress: wSqueethPool.address,
+        wPowerPerpPool: wSqueethPool.address,
         vaultId: 0,
         wPowerPerpAmount: mintWSqueethAmount.toString(),
         collateralToDeposit: collateralToFlashloan.toString(),

@@ -448,7 +448,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 weth,
                 ControllerHelperDataType.MintAndLpParams({
                     recipient: address(this),
-                    wPowerPerpPool: data.uniPoolAddress,
+                    wPowerPerpPool: data.wPowerPerpPool,
                     vaultId: data.vaultId,
                     wPowerPerpAmount: data.wPowerPerpAmount,
                     collateralToDeposit: data.collateralToDeposit,
@@ -546,7 +546,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         controller,
                         nonfungiblePositionManager,
                         wPowerPerp,
-                        increaseLiquidityParam.uniPoolAddress,
+                        increaseLiquidityParam.wPowerPerpPool,
                         vaultId,
                         increaseLiquidityParam,
                         isWethToken0
