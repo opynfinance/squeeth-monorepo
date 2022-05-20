@@ -128,7 +128,7 @@ library ControllerHelperDataType {
     }
 
     /// @dev params for _closeUniLp() 
-    struct closeUniLpParams {
+    struct CloseUniLpParams {
         uint256 tokenId;    // Uni NFT id
         uint256 liquidity;  // LP liquidity amount
         uint256 liquidityPercentage; // percentage of liquidity to burn in LP position in decimals with 18 precision(e.g 60% = 0.6 = 6e17)
@@ -137,7 +137,7 @@ library ControllerHelperDataType {
     }
 
     /// @dev params for sellAll()
-    struct ReduceLiquidityAndSell {
+    struct ReduceLiquidityAndSellParams {
         uint256 tokenId;    // Uni token ID
         uint256 liquidity;  // LP liquidity amount
         uint256 liquidityPercentage; // percentage of liquidity to burn in LP position in decimals with 18 precision(e.g 60% = 0.6 = 6e17)
@@ -148,7 +148,7 @@ library ControllerHelperDataType {
     }
 
     /// @dev params for rebalanceWithoutVault()
-    struct RebalanceWithoutVault {
+    struct RebalanceWithoutVaultParams {
         address wPowerPerpPool; // Uni v3 ETH/WPowerPerp pool
         uint256 tokenId;    // Uni token ID
         uint256 liquidity;  // LP liquidity amount
@@ -165,7 +165,7 @@ library ControllerHelperDataType {
     }
 
     /// @dev params for ControllerHelperUtil.lpWPowerPerpPool()
-    struct LpWPowerPerpPool {
+    struct LpWPowerPerpPoolParams {
         address recipient;  // recipient address
         uint256 amount0Desired; // amount desired to LP for asset0
         uint256 amount1Desired; // amount desired to LP for asset1
@@ -182,7 +182,7 @@ library ControllerHelperDataType {
     }
 
     /// @dev struct for minting more wPowerPerp and add in LP, or increasing more WETH in LP, or both
-    struct IncreaseLpLiquidityParam {
+    struct IncreaseLpLiquidityParams {
         address wPowerPerpPool;     // Uni v3 pool address to increase liquidity in
         uint256 tokenId;    // Uni v3 NFT token id
         uint256 wPowerPerpAmountToLp; // wPowerPerp amount to LP
@@ -202,20 +202,20 @@ library ControllerHelperDataType {
     }
 
     /// @dev struct for minting into vault
-    struct DepositIntoVault {
+    struct DepositIntoVaultParams {
         uint256 wPowerPerpToMint;   // wPowerPerp amount to mint
         uint256 collateralToDeposit;    // collateral amount to deposit
     }
 
     /// @dev struct for withdrawing from vault
-    struct withdrawFromVault {  
+    struct withdrawFromVaultParams {  
         uint256 wPowerPerpToBurn;   // wPowerPerp amount to burn
         uint256 collateralToWithdraw;   // collateral to withdraw
         bool burnExactRemoved;   // if true, will burn the ControllerHelper oSQTH balance
     }
 
     /// @dev struct for swapping from tokenIn to tokenOut
-    struct GeneralSwap {
+    struct GeneralSwapParams {
         address tokenIn;
         address tokenOut;
         uint256 amountIn;
