@@ -685,11 +685,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         data[i].data,
                         (ControllerHelperDataType.GeneralSwapParams)
                     );
-
-                    // make sure not to fail
-                    uint256 currentBalance = IERC20(swapParams.tokenIn).balanceOf(address(this));
-                    if (currentBalance < swapParams.amountIn) swapParams.amountIn = currentBalance;
-
+                    console.log('squeeth available',IWPowerPerp(ControllerHelperDiamondStorage.getAddressAtSlot(4)).balanceOf(address(this)));
+                    console.log('amount in', swapParams.amountIn);
                     _exactInFlashSwap(
                         swapParams.tokenIn,
                         swapParams.tokenOut,
