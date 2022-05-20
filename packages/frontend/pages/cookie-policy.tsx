@@ -1,7 +1,6 @@
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 
 import Nav from '@components/Nav'
-import { getMarkdown } from '@utils/markdown'
 import CookiePolicy from '../src/components/CookiePolicy'
 import Link from 'next/link'
 
@@ -76,12 +75,6 @@ const CP = () => {
       </main>
     </>
   )
-}
-
-export async function getStaticProps() {
-  const file = getMarkdown('cookie-policy')
-
-  return { props: { file } }
 }
 
 export default CP
