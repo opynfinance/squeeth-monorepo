@@ -178,7 +178,7 @@ library ControllerHelperUtil {
      * @param _wPowerPerpToMint amount of wPowerPerp to mint
      * @param _collateralToDeposit amount of collateral to deposit
      */
-    function mintIntoVault(address _controller, address _weth, uint256 _vaultId, uint256 _wPowerPerpToMint, uint256 _collateralToDeposit) public returns (uint256) {
+    function mintDepositInVault(address _controller, address _weth, uint256 _vaultId, uint256 _wPowerPerpToMint, uint256 _collateralToDeposit) public returns (uint256) {
         if (_collateralToDeposit > 0) IWETH9(_weth).withdraw(_collateralToDeposit);
 
         uint256 vaultId = _vaultId;
@@ -202,7 +202,7 @@ library ControllerHelperUtil {
      * @param _wPowerPerpToBurn amount of wPowerPerp to burn
      * @param _collateralToWithdraw amount of collateral to withdraw
      */
-    function withdrawFromVault(address _controller, address _weth, uint256 _vaultId, uint256 _wPowerPerpToBurn, uint256 _collateralToWithdraw) public {
+    function burnWithdrawFromVault(address _controller, address _weth, uint256 _vaultId, uint256 _wPowerPerpToBurn, uint256 _collateralToWithdraw) public {
         IController(_controller).burnWPowerPerpAmount(
             _vaultId,
             _wPowerPerpToBurn,

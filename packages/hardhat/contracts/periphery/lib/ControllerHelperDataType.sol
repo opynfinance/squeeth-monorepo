@@ -22,9 +22,9 @@ library ControllerHelperDataType {
         SWAP_EXACTIN_WPOWERPERP_ETH,
         SWAP_EXACTOUT_ETH_WPOWERPERP,
         SWAP_EXACTOUT_ETH_WPOWERPERP_BURN,
-        FLASHLOAN_W_MINT_DEPOSIT_NFT,
+        FLASHLOAN_W_MINT_LP_DEPOSIT_NFT,
         FLASHLOAN_CLOSE_VAULT_LP_NFT,
-        FLASHLOAN_REBALANCE_VAULT_NFT,
+        FLASHLOAN_REBALANCE_LP_IN_VAULT,
         GENERAL_SWAP
     }
 
@@ -82,7 +82,7 @@ library ControllerHelperDataType {
         bool burnExactRemoved;
     }
 
-    /// @dev params for batchMintLp()
+    /// @dev params for wMintLp()
     struct MintAndLpParams {
         address recipient;  // recipient address
         address wPowerPerpPool; // Uni v3 ETH/WPowerPerp pool
@@ -97,7 +97,7 @@ library ControllerHelperDataType {
     }
 
     /// @dev params for flashloanWMintDepositNft()
-    struct FlashloanWMintDepositNftParams {
+    struct FlashloanWMintLpDepositNftParams {
         address wPowerPerpPool; // address on Uni v3 pool to LP in
         uint256 vaultId; // vault ID (could be zero)
         uint256 wPowerPerpAmount; // wPowerPerp amount to mint
@@ -147,8 +147,8 @@ library ControllerHelperDataType {
         uint24 poolFee;
     }
 
-    /// @dev params for rebalanceWithoutVault()
-    struct RebalanceWithoutVaultParams {
+    /// @dev params for rebalanceLpWithoutVault()
+    struct RebalanceLpWithoutVaultParams {
         address wPowerPerpPool; // Uni v3 ETH/WPowerPerp pool
         uint256 tokenId;    // Uni token ID
         uint256 liquidity;  // LP liquidity amount
@@ -175,9 +175,9 @@ library ControllerHelperDataType {
         int24 upperTick;    // LP upper tick
     }
 
-    /// @dev params for rebalanceVaultNft()
-    struct RebalanceVaultNftParams {
-        RebalanceVaultNftType rebalanceVaultNftType;
+    /// @dev params for rebalanceLpInVault()
+    struct RebalanceLpInVaultParams {
+        RebalanceVaultNftType rebalanceLpInVaultType;
         bytes data;
     }
 

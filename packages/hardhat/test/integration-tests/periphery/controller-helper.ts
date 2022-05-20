@@ -678,7 +678,7 @@ describe("Controller helper integration test", function () {
         upperTick: 887220
       }
       const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
-      const tx = await controllerHelper.connect(depositor).batchMintLp(params, {value: collateralAmount.add(collateralToLp)});
+      const tx = await controllerHelper.connect(depositor).wMintLp(params, {value: collateralAmount.add(collateralToLp)});
       const depositorEthBalanceAfter = await provider.getBalance(depositor.address)
       const receipt = await tx.wait()
       const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
@@ -752,7 +752,7 @@ describe("Controller helper integration test", function () {
       }
       const depositorEthBalanceBefore = await provider.getBalance(depositor.address)
 
-      const tx = await controllerHelper.connect(depositor).batchMintLp(params, {value: collateralAmount.add(collateralToLp)});
+      const tx = await controllerHelper.connect(depositor).wMintLp(params, {value: collateralAmount.add(collateralToLp)});
       const depositorEthBalanceAfter = await provider.getBalance(depositor.address)
 
       const receipt = await tx.wait()
@@ -840,7 +840,7 @@ describe("Controller helper integration test", function () {
         lowerTick: newTickLower,
         upperTick: newTickUpper
       }
-      const tx = await controllerHelper.connect(depositor).batchMintLp(params, {value: collateralAmount});
+      const tx = await controllerHelper.connect(depositor).wMintLp(params, {value: collateralAmount});
 
 
       // Look at transaction
@@ -938,7 +938,7 @@ describe("Controller helper integration test", function () {
       }
 
       // console.log('test show params', params);
-      const tx = await controllerHelper.connect(depositor).batchMintLp(params, {value: collateralToLp});
+      const tx = await controllerHelper.connect(depositor).wMintLp(params, {value: collateralToLp});
       // Look at transaction
       const receipt = await tx.wait()
       const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
@@ -1738,7 +1738,7 @@ describe("Controller helper integration test", function () {
       }
 
       await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controllerHelper.address, oldTokenId);
-      await controllerHelper.connect(depositor).rebalanceWithoutVault(params);
+      await controllerHelper.connect(depositor).rebalanceLpWithoutVault(params);
 
       tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
       const newTokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
