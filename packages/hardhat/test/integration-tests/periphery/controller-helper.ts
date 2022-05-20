@@ -147,7 +147,7 @@ describe("Controller helper integration test", function () {
       const ethToReceive = (mintWSqueethAmount.mul(squeethPrice).div(one)).mul(one.sub(slippage)).div(one)
       const params = {
         vaultId: 0,
-        collateralAmount: collateralAmount.toString(),
+        collateralToDeposit: collateralAmount.toString(),
         wPowerPerpAmountToMint: mintWSqueethAmount.toString(),
         minToReceive: ethToReceive.toString(),
         wPowerPerpAmountToSell: BigNumber.from(0),
@@ -203,7 +203,7 @@ describe("Controller helper integration test", function () {
 
       const params = {
         vaultId: vaultId.toString(),
-        collateralAmount: ethAmountOutFromSwap.toString(), // deposit 100% of proceeds of swap as collateral
+        collateralToDeposit: ethAmountOutFromSwap.toString(), // deposit 100% of proceeds of swap as collateral
         wPowerPerpAmountToMint: mintWSqueethAmount.toString(),
         minToReceive: BigNumber.from(0),
         wPowerPerpAmountToSell: BigNumber.from(0),
@@ -265,7 +265,7 @@ describe("Controller helper integration test", function () {
 
       const params = {
         vaultId: vaultId.toString(),
-        collateralAmount: collatToDeposit.toString(), // deposit 100% of proceeds of swap as collateral
+        collateralToDeposit: collatToDeposit.toString(), // deposit 100% of proceeds of swap as collateral
         wPowerPerpAmountToMint: mintWSqueethAmount.toString(),
         minToReceive: BigNumber.from(0),
         wPowerPerpAmountToSell: BigNumber.from(0),
@@ -323,7 +323,7 @@ describe("Controller helper integration test", function () {
 
       const params = {
         vaultId: vaultId.toString(),
-        collateralAmount: BigNumber.from(0), // deposit 100% of proceeds of swap as collateral
+        collateralToDeposit: BigNumber.from(0), // deposit 100% of proceeds of swap as collateral
         wPowerPerpAmountToMint: mintWSqueethAmount.toString(),
         minToReceive: BigNumber.from(0),
         wPowerPerpAmountToSell: BigNumber.from(0),
@@ -1054,7 +1054,7 @@ describe("Controller helper integration test", function () {
       const params = {
         vaultId: 0,
         wPowerPerpAmountToMint: mintWSqueethAmount,
-        collateralAmount: collateralAmount,
+        collateralToDeposit: collateralAmount,
         wPowerPerpAmountToSell: longBalance,
         minToReceive: BigNumber.from(0),
         poolFee: 3000
@@ -1135,7 +1135,7 @@ describe("Controller helper integration test", function () {
       const params = {
         vaultId: 0,
         wPowerPerpAmountToMint: mintWSqueethAmount,
-        collateralAmount: collateralAmount,
+        collateralToDeposit: collateralAmount,
         wPowerPerpAmountToSell: longBalance,
         minToReceive: BigNumber.from(0),
         poolFee: 3000

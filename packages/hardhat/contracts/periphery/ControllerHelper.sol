@@ -453,10 +453,10 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                     wPowerPerpAmount: data.wPowerPerpAmount,
                     collateralToDeposit: data.collateralToDeposit,
                     collateralToLp: data.collateralToLp,
-                    amount0Min: data.lpAmount0Min,
-                    amount1Min: data.lpAmount1Min,
-                    lowerTick: data.lpLowerTick,
-                    upperTick: data.lpUpperTick
+                    amount0Min: data.amount0Min,
+                    amount1Min: data.amount1Min,
+                    lowerTick: data.lowerTick,
+                    upperTick: data.upperTick
                 }),
                 isWethToken0
             );
@@ -740,13 +740,13 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 (ControllerHelperDataType.FlashSellLongWMintParams)
             );
 
-            if (data.wPowerPerpAmountToMint > 0 || data.collateralAmount > 0) {
+            if (data.wPowerPerpAmountToMint > 0 || data.collateralToDeposit > 0) {
                 uint256 vaultId = ControllerHelperUtil.mintIntoVault(
                     controller,
                     weth,
                     data.vaultId,
                     data.wPowerPerpAmountToMint,
-                    data.collateralAmount
+                    data.collateralToDeposit
                 );
 
                 // this is a newly open vault, transfer to the user
