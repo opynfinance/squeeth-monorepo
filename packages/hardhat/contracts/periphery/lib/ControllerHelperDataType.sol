@@ -100,7 +100,7 @@ library ControllerHelperDataType {
     struct FlashloanWMintDepositNftParams {
         uint256 vaultId; // vault ID (could be zero)
         uint256 wPowerPerpAmount; // wPowerPerp amount to mint
-        uint256 collateralToDeposit; // ETH collateral amount to deposit in vault (could be zero)
+        uint256 collateralToDeposit; // ETH collateral amount to deposit in vault (including the flashloaned amount to use as collateral in vault)
         uint256 collateralToFlashloan; // ETH amount to flashloan and use for deposit into vault
         uint256 collateralToLp; // ETH collateral amount to use for LPing (could be zero)
         uint256 collateralToWithdraw; // ETH amount to withdraw from vault (if collateralToLp>0, this should be = collateralToLp+fee or 50% of collateralToLP and sender include the rest in msg.value)
