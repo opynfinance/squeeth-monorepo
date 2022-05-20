@@ -391,7 +391,8 @@ describe("Controller", function () {
 
       it("Should revert when trying to use mint to deposit to a vault where msg.sender is not owner or operator", async() => {
         const depositAmount = ethers.utils.parseUnits('45')
-
+        const vaultId = await shortSqueeth.nextId()
+        await controller.connect(seller1).mintPowerPerpAmount(0, 0, 0) // putting vaultId = 0 to open vault
         await expect(controller.connect(random).deposit(vaultId,{value: depositAmount})).to.be.revertedWith(
           'C20'
         )
