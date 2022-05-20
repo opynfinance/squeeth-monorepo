@@ -30,7 +30,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
     bool private immutable isWethToken0;
     address private immutable controller;
     address private immutable shortPowerPerp;
-    address private immutable wPowerPerpPool;
     address private immutable wPowerPerp;
     address private immutable weth;
     address private immutable nonfungiblePositionManager;
@@ -48,7 +47,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
     {
         controller = _controller;
         shortPowerPerp = IController(_controller).shortPowerPerp();
-        wPowerPerpPool = IController(_controller).wPowerPerpPool();
         wPowerPerp = IController(_controller).wPowerPerp();
         weth = IController(_controller).weth();
         nonfungiblePositionManager = _nonfungiblePositionManager;
@@ -450,7 +448,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 weth,
                 ControllerHelperDataType.MintAndLpParams({
                     recipient: address(this),
-                    wPowerPerpPool: wPowerPerpPool,
+                    wPowerPerpPool: data.uniPoolAddress,
                     vaultId: data.vaultId,
                     wPowerPerpAmount: data.wPowerPerpAmount,
                     collateralToDeposit: data.collateralToDeposit,
@@ -548,7 +546,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         controller,
                         nonfungiblePositionManager,
                         wPowerPerp,
-                        wPowerPerpPool,
+                        increaseLiquidityParam.uniPoolAddress,
                         vaultId,
                         increaseLiquidityParam,
                         isWethToken0

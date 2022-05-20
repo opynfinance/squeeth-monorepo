@@ -98,6 +98,7 @@ library ControllerHelperDataType {
 
     /// @dev params for flashloanWMintDepositNft()
     struct FlashloanWMintDepositNftParams {
+        address uniPoolAddress; // address on Uni v3 pool to LP in
         uint256 vaultId; // vault ID (could be zero)
         uint256 wPowerPerpAmount; // wPowerPerp amount to mint
         uint256 collateralToDeposit; // ETH collateral amount to deposit in vault (including the flashloaned amount to use as collateral in vault)
@@ -182,6 +183,7 @@ library ControllerHelperDataType {
 
     /// @dev struct for minting more wPowerPerp and add in LP, or increasing more WETH in LP, or both
     struct IncreaseLpLiquidityParam {
+        address uniPoolAddress;     // Uni v3 pool address to increase liquidity in
         uint256 tokenId;    // Uni v3 NFT token id
         uint256 wPowerPerpAmountToLp; // wPowerPerp amount to LP
         uint256 collateralToDeposit;    // collateral to deposit into vault
