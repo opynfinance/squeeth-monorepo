@@ -543,11 +543,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         data[i].data,
                         (ControllerHelperDataType.IncreaseLpLiquidityParam)
                     );
-                    console.log("weth balance",IWETH9(weth).balanceOf(address(this)));
-                    console.log(
-                        "wPowerPerp balance",
-                        IWPowerPerp(wPowerPerp).balanceOf(address(this))
-                    );
+                    console.log("weth balance", IWETH9(weth).balanceOf(address(this)));
+                    console.log("wPowerPerp balance", IWPowerPerp(wPowerPerp).balanceOf(address(this)));
                     ControllerHelperUtil.increaseLpLiquidity(
                         controller,
                         nonfungiblePositionManager,
@@ -653,8 +650,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         data[i].data,
                         (ControllerHelperDataType.GeneralSwap)
                     );
-                    console.log('squeeth available',IWPowerPerp(wPowerPerp).balanceOf(address(this)));
-                    console.log('amount in', swapParams.amountIn);
+                    console.log("squeeth available", IWPowerPerp(wPowerPerp).balanceOf(address(this)));
+                    console.log("amount in", swapParams.amountIn);
                     _exactInFlashSwap(
                         swapParams.tokenIn,
                         swapParams.tokenOut,
