@@ -135,7 +135,6 @@ library VaultLib {
         );
 
         bool isDust = totalCollateral < _minCollateral;
-        if (isDust) console.log("totalCollateral %s minCollateral %s", totalCollateral, _minCollateral);
         bool isAboveWater = totalCollateral.mul(CR_DENOMINATOR) >= debtValueInETH.mul(CR_NUMERATOR);
         return (isAboveWater, isDust);
     }

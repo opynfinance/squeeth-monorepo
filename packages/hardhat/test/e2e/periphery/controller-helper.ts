@@ -409,7 +409,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
       const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
-      const collateralToDeposit = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
+      const collateralToDeposit = debtInEth.mul(2)
       await controller.connect(depositor).mintWPowerPerpAmount(0, mintWSqueethAmount, 0, {value: collateralToDeposit})
       const vaultId = (await shortSqueeth.nextId()).sub(1);
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address)
@@ -425,18 +425,12 @@ describe("ControllerHelper: mainnet fork", function () {
       const amount1Min = BigNumber.from(0);
 
       const newTick = isWethToken0 ? 60*((currentTick - currentTick%60)/60 - 10): 60*((currentTick - currentTick%60)/60 + 10)
-      console.log('debtInEth', debtInEth.toString())
-      console.log('vaultBefore.shortAmount', vaultBefore.shortAmount.toString())
-      console.log('vaultBefore.collateralAmount', vaultBefore.collateralAmount.toString())
-      console.log('mintWSqueethAmount', mintWSqueethAmount.toString())
-      console.log('collateralToDeposit', collateralToDeposit.toString())
-      console.log('currentTick', currentTick)
-      console.log('newTick', newTick)
+      
       const flashloanWMintDepositNftParams = {
-        vaultId: 0,
+        vaultId: vaultId,
         wPowerPerpAmount: mintWSqueethAmount,
-        collateralToDeposit: collateralToDeposit,
-        collateralToFlashloan: BigNumber.from(0),
+        collateralToDeposit: debtInEth,
+        collateralToFlashloan: debtInEth,
         collateralToLp: BigNumber.from(0),
         collateralToWithdraw: 0,
         lpAmount0Min: amount0Min,
@@ -445,7 +439,9 @@ describe("ControllerHelper: mainnet fork", function () {
         lpUpperTick: isWethToken0 ? newTick : 887220,
     }
       // Set up for one-sided LP with oSQTH only with half collateral flashloaned
-      const tx = await controllerHelper.connect(depositor).flashloanWMintDepositNft(flashloanWMintDepositNftParams, {value: collateralToDeposit})
+
+
+      const tx = await controllerHelper.connect(depositor).flashloanWMintDepositNft(flashloanWMintDepositNftParams)
       const depositorEthBalanceAfter = await ethers.provider.getBalance(depositor.address)
       const receipt = await tx.wait()
       const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
@@ -455,6 +451,21 @@ describe("ControllerHelper: mainnet fork", function () {
       const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
       const ownerOfUniNFT = await (positionManager as INonfungiblePositionManager).ownerOf(tokenId); 
       const position = await (positionManager as INonfungiblePositionManager).positions(tokenId)
+
+      // console.log('vaultBefore.collateralAmount', vaultBefore.collateralAmount.toString())
+      // console.log('vaultBefore.shortAmount', vaultBefore.shortAmount.toString())
+      // console.log('vaultBefore.NftCollateralId', vaultBefore.NftCollateralId.toString())
+      // console.log('vaultAfter.collateralAmount', vaultAfter.collateralAmount.toString())
+      // console.log('vaultAfter.shortAmount', vaultAfter.shortAmount.toString())
+      // console.log('vaultAfter.NftCollateralId', vaultAfter.NftCollateralId.toString())
+      // console.log('mintWSqueethAmount', mintWSqueethAmount.toString())
+      // console.log('gasSpent', gasSpent.toString())
+      // console.log('ownerOfUniNFT', ownerOfUniNFT.toString())
+      // console.log('controller', controller.address.toString())
+      // console.log('depositorEthBalanceBefore', depositorEthBalanceBefore.toString())
+      // console.log('depositorEthBalanceAfter', depositorEthBalanceAfter.toString())
+      // console.log('mintWSqueethAmount.mul(2)',mintWSqueethAmount.mul(2).toString())
+      // Rounding can be off
 
       expect(BigNumber.from(vaultAfter.NftCollateralId).eq(tokenId)).to.be.true;
       expect(position.tickLower === (isWethToken0 ? -887220 : newTick)).to.be.true
