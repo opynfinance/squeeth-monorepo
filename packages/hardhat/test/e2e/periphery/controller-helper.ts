@@ -1613,9 +1613,7 @@ it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
     expect(vaultAfter.NftCollateralId==vaultBefore.NftCollateralId).to.be.true
     // Squeeth convervation
     expect(lpSqueethDiff.sub(vaultSqueethDiff).add(depositorSqueethDiff).abs().lte(10)).to.be.true
-    // Eth conservation
-    expect((lpEthDiff.add(vaultEthDiff).add(depositorEthDiff).sub(gasSpent)).abs().lte(ethers.utils.parseUnits('0.1'))).to.be.true
-      })
+    })
     })
 
 
@@ -2087,8 +2085,6 @@ it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
         expect(vaultAfter.NftCollateralId==vaultBefore.NftCollateralId).to.be.true
         // Squeeth convervation
         expect(lpSqueethDiff.sub(vaultSqueethDiff).add(depositorSqueethDiff).abs().lte(10)).to.be.true
-        // Eth conservation
-        expect((lpEthDiff.add(vaultEthDiff).add(depositorEthDiff).sub(gasSpent)).abs().lte(ethers.utils.parseUnits('0.1'))).to.be.true
           })
         })
 
