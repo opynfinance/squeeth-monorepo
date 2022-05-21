@@ -2009,8 +2009,13 @@ it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
         // - Withdraw some eth (WithdrawFromVault)
         // - Mint some squeeth (DepositIntoVault)
         // - Increase LP liquidity (IncreaseLpLiquidity)
-    
+        console.log('wPowerPerpAmountToLp', wPowerPerpAmountToLp.toString())
+        console.log('wethAmountToLp', wethAmountToLp.toString())
+        console.log('wPowerPerpAmountInLPBefore', wPowerPerpAmountInLPBefore.toString())
+        console.log('wethAmountInLPBefore', wethAmountInLPBefore.toString())
+        
         const rebalanceVaultNftParams = [
+
           {
             // Withdraw from vault
             rebalanceVaultNftType: BigNumber.from(3), // WithdrawFromVault
@@ -2019,7 +2024,7 @@ it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
              [BigNumber.from(0), wethAmountToLp.div(2), false ])
             },
           {
-            // Deposit into vault (no deposit)
+            // Deposit into vault (mint, no deposit)
             rebalanceVaultNftType: BigNumber.from(2), // DepositIntoVault
             // DepsositIntoVault: [wPowerPerpToMint, collateralToDeposit]
             data: abiCoder.encode(["uint256", 'uint256'],
@@ -2038,7 +2043,7 @@ it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
         const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
         const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, true)
         const flashLoanAmount = vaultBefore.collateralAmount
-        const tx = await controllerHelper.connect(depositor).rebalanceVaultNft(vaultId, flashLoanAmount, rebalanceVaultNftParams, {value: wethAmountToLp.div(2)});
+        const tx = await controllerHelper.connect(depositor).rebalanceVaultNft(vaultId, flashLoanAmount, rebalanceVaultNftParams, {value: wethAmountToLp.div(2).add(ethers.utils.parseUnits('0.01'))});
         const receipt = await tx.wait()
         const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
         const depositorSqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
