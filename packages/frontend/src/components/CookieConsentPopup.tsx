@@ -81,7 +81,7 @@ const CookieConsentPopup = () => {
   const classes = useStyles()
   const router = useRouter()
   const [, setCookie] = useCookies(['opyn_geo'])
-  const path = router.pathname
+  const path = router.asPath.split('?')[0]
   const networkId = useAtomValue(networkIdAtom)
 
   return networkId !== Networks.ROPSTEN && path !== '/cookie-policy' ? (
@@ -112,8 +112,12 @@ const CookieConsentPopup = () => {
         cursor: 'pointer',
       }}
       onAccept={() => {
-        router.push(path, undefined, { shallow: true })
-        setCookie('opyn_geo', router.query?.restricted === 'true' ? `true,${router.query?.country}` : 'false')
+        setTimeout(() => {
+          router.push(path, undefined, { shallow: true })
+        }, 0)
+        setCookie('opyn_geo', router.query?.restricted === 'true' ? `true,${router.query?.country}` : 'false', {
+          path: '/',
+        })
       }}
       contentStyle={{ flex: '1 0 0', padding: '1.2rem 1rem' }}
       buttonWrapperClasses={classes.buttonWrapper}
