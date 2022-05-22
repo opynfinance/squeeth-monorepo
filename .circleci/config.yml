@@ -10,9 +10,9 @@ workflows:
       - hardhat-compile:
           requires:
             - checkout-and-install
-      - forge-compile:
-          requires:
-            - checkout-and-install
+      # - forge-compile:
+      #     requires:
+      #       - checkout-and-install
       - lint:
           requires:
             - hardhat-compile
@@ -50,9 +50,9 @@ jobs:
       - run:
           name: Install packages
           command: yarn install
-      - run:
-          name: Foundry install
-          command: curl -L https://foundry.paradigm.xyz | bash && source /home/circleci/.bashrc && foundryup
+      # - run:
+      #     name: Foundry install
+      #     command: curl -L https://foundry.paradigm.xyz | bash && source /home/circleci/.bashrc && foundryup
       - save_cache: 
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
