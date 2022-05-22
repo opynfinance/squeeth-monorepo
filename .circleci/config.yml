@@ -52,8 +52,7 @@ jobs:
           command: yarn install
       - run:
           name: Foundry install
-          command: curl -L https://foundry.paradigm.xyz | bash
-          command: foundryup
+          command: curl -L https://foundry.paradigm.xyz | bash && foundryup
       - save_cache: 
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
