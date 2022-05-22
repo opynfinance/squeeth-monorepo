@@ -16,5 +16,8 @@ jobs:
         with:
           version: nightly
 
+      - name: Remappings
+        run: cd packages/hardhat && forge remappings > remappings.txt
+        
       - name: Run tests
         run: cd packages/hardhat && forge test -vvv
