@@ -82,16 +82,17 @@ jobs:
          key: artifacts-cache-{{ .Environment.CIRCLE_SHA1 }}
          paths:
            - artifacts
-    forge-compile: 
-      working_directory: ~/squeeth/packages/hardhat
-      docker:
-        - image: circleci/node:16.6.0
-      steps:
-        - checkout:
-            path: ~/squeeth
-        - run:
-          name: Forge compile
-          command: forge compile
+
+  forge-compile: 
+    working_directory: ~/squeeth/packages/hardhat
+    docker:
+      - image: circleci/node:16.6.0
+    steps:
+      - checkout:
+          path: ~/squeeth
+      - run:
+        name: Forge compile
+        command: forge compile
 
   lint:
     working_directory: ~/squeeth/packages/hardhat
