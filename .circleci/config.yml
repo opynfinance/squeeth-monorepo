@@ -47,6 +47,9 @@ jobs:
       - run:
           name: Install packages
           command: yarn install
+      - run:
+          name: Foundry install
+          command: curl -L https://foundry.paradigm.xyz | bash
       - save_cache: 
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
