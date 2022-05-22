@@ -52,7 +52,7 @@ jobs:
           command: yarn install
       - run:
           name: Foundry install
-          command: curl -L https://foundry.paradigm.xyz | bash && foundryup
+          command: curl -L https://foundry.paradigm.xyz | bash && source /home/circleci/.bashrc && foundryup
       - save_cache: 
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
