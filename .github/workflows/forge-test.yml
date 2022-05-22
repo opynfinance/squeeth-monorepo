@@ -16,8 +16,14 @@ jobs:
         with:
           version: nightly
 
+      - name: Install Dependencies
+        run: cd packages/hardhat && yarn
+
+      - name: Setup
+        run: cd packages/hardhat && yarn forge-setup
+
       - name: Remappings
         run: cd packages/hardhat && forge remappings > remappings.txt
         
       - name: Run tests
-        run: cd packages/hardhat && forge test -vvv
+        run: cd packages/hardhat && yarn forge-test
