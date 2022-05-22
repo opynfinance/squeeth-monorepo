@@ -1,10 +1,10 @@
 on: [push]
 
-name: test
+name: Foundry
 
 jobs:
   check:
-    name: Foundry project
+    name: Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -17,4 +17,4 @@ jobs:
           version: nightly
 
       - name: Run tests
-        run: forge test -vvv
+        run: cd packages/hardhat && forge test -vvv
