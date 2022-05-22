@@ -340,15 +340,28 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             1e18
         );
 
-        (uint256 wethAmountDesired, uint256 wPowerPerpAmountDesired) = ControllerHelperUtil.getAmountsToLp(
-            _params.wPowerPerpPool,
-            _params.wethAmountDesired,
-            _params.wPowerPerpAmountDesired,
-            _params.lowerTick,
-            _params.upperTick,
-            isWethToken0
-        );
-        if (!isWethToken0) (wethAmountDesired, wPowerPerpAmountDesired) = (wPowerPerpAmountDesired, wethAmountDesired);
+        uint256 wethAmountDesired;
+        uint256 wPowerPerpAmountDesired;
+
+        if (isWethToken0) {
+            (wethAmountDesired, wPowerPerpAmountDesired) = ControllerHelperUtil.getAmountsToLp(
+                _params.wPowerPerpPool,
+                _params.wethAmountDesired,
+                _params.wPowerPerpAmountDesired,
+                _params.lowerTick,
+                _params.upperTick,
+                isWethToken0
+            );
+        } else {
+            (wPowerPerpAmountDesired, wethAmountDesired) = ControllerHelperUtil.getAmountsToLp(
+                _params.wPowerPerpPool,
+                _params.wethAmountDesired,
+                _params.wPowerPerpAmountDesired,
+                _params.lowerTick,
+                _params.upperTick,
+                isWethToken0
+            );
+        }
 
         if (wPowerPerpAmountDesired > wPowerPerpAmountInLp) {
             // if the new position target a higher wPowerPerp amount, swap WETH to reach the desired amount (WETH new position is lower than current WETH in LP)
