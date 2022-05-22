@@ -19,5 +19,6 @@ remappings = [
     '@std=lib/forge-std/src/'
 ]
 cache = true                                                  # whether to cache builds or not
+fuzz_runs = 5000
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
