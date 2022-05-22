@@ -25,70 +25,70 @@ describe("ABDKMath64x64 testing", function () {
     
     it("mul should revert if x * y is above MAX_64x64 due to overflow", async () => {
         // max = 2^127 - 1
-        await expect(abdkTester.testMul(two.pow(96),two.pow(96))).to.be.revertedWith("MUL-OVUF")
+        await expect(abdkTester.mulTest(two.pow(96),two.pow(96))).to.be.revertedWith("MUL-OVUF")
     })
 
     it("mul should revert if x * y below MIN_64x64 from underflow", async () => {
         // min = -2^127
-        await expect(abdkTester.testNegMul(two.pow(96),two.pow(96))).to.be.revertedWith("MUL-OVUF")
+        await expect(abdkTester.negMulTest(two.pow(96),two.pow(96))).to.be.revertedWith("MUL-OVUF")
     })
     
     it("mulu should revert if x<0", async () => {
         const x = two.mul(-1)
-        await expect(abdkTester.testMulu(x,two)).to.be.revertedWith("MULU-X0")
+        await expect(abdkTester.muluTest(x,two)).to.be.revertedWith("MULU-X0")
     })
 
     // it("mulu should revert if overflows uint128", async () => {
     //     const x = two.pow(65)
     //     const y = two.pow(256).sub(1)
-    //     await expect(abdkTester.testMulu(x,y)).to.be.revertedWith("MULU-OF2")
+    //     await expect(abdkTester.muluTest(x,y)).to.be.revertedWith("MULU-OF2")
     // })
 
     it("mulu should revert if overflows int128", async () => {
         const x = two.pow(100)
         const y = two.pow(240)
-        await expect(abdkTester.testMulu(x,y)).to.be.revertedWith("MULU-OF1")
+        await expect(abdkTester.muluTest(x,y)).to.be.revertedWith("MULU-OF1")
     })
 
     it("divu should revert if y = 0", async () => {
-        await expect(abdkTester.testDivu(1,0)).to.be.revertedWith("DIVU-INF")
+        await expect(abdkTester.divuTest(1,0)).to.be.revertedWith("DIVU-INF")
     })
 
     it("divu should revert when result x>2^128 and result > 2^128", async () => {
         const x = two.pow(255)
         const y = two.pow(1)
 
-        await expect(abdkTester.testDivu(x,y)).to.be.revertedWith("DIVUU-OF1")
+        await expect(abdkTester.divuTest(x,y)).to.be.revertedWith("DIVUU-OF1")
     })
 
     it("divu should revert when calculating division for x=2^127 with y=2^64, reverting when casting uint128 to int128 above MAX_64x64", async () => {
         const x = two.pow(127)
         const y = two.pow(64)
 
-        await expect(abdkTester.testDivu(x,y)).to.be.revertedWith("DIVU-OF")
+        await expect(abdkTester.divuTest(x,y)).to.be.revertedWith("DIVU-OF")
     })
 
     it("divu should revert when calculating division for x=2^127 with y=2^64, reverting when overflowing uint128", async () => {
         const x = two.pow(128)
         const y = two.pow(64)
 
-        await expect(abdkTester.testDivu(x,y)).to.be.revertedWith("DIVUU-OF2")
+        await expect(abdkTester.divuTest(x,y)).to.be.revertedWith("DIVUU-OF2")
     })
 
     it("log_2 should revert when calling with a negative x", async () => {
-        await expect(abdkTester.testLog_2(-1)).to.be.revertedWith("LOG_2-X0")
+        await expect(abdkTester.log_2Test(-1)).to.be.revertedWith("LOG_2-X0")
     })
 
     it("exp_2 should revert when calling with larger than 2^70", async () => {
         const x = two.pow(70).add(1)
         
-        await expect(abdkTester.testExp_2(x)).to.be.revertedWith("EXP_2-OF")
+        await expect(abdkTester.exp_2Test((x))).to.be.revertedWith("EXP_2-OF")
     })
 
     it("exp_2 should return 0 when calling with less than -2^70", async () => {
         const x = two.pow(70).add(1)
         
-        const result = await abdkTester.testExp_2(x.mul(-1))
+        const result = await abdkTester.exp_2Test((x.mul(-1)))
         expect(result.eq(0)).to.be.true
     })
 
@@ -96,7 +96,7 @@ describe("ABDKMath64x64 testing", function () {
 
   describe("ABDK calculates as expected", async () => {    
     it("mulu should return 0 if y = 0", async () => {
-        const result = await abdkTester.testMulu(1,0)
+        const result = await abdkTester.muluTest(1,0)
         expect(result.eq(0)).to.be.true
     })
 
@@ -107,7 +107,7 @@ describe("ABDKMath64x64 testing", function () {
 
         const expectedResult = y.mul(11).div(10)
 
-        const result = await abdkTester.testMulu(x,y)
+        const result = await abdkTester.muluTest(x,y)
 
         expect(isSimilar(result.toString(),expectedResult.toString())).to.be.true
     })
@@ -118,7 +118,7 @@ describe("ABDKMath64x64 testing", function () {
         const x64 = two.pow(64)
         const expectedResult = x.mul(x64).div(y)
 
-        const result = await abdkTester.testDivu(x,y)
+        const result = await abdkTester.divuTest(x,y)
         expect(result.eq(expectedResult)).to.be.true
     })
 
@@ -128,7 +128,7 @@ describe("ABDKMath64x64 testing", function () {
         const x64 = two.pow(64)
         const expectedResult = x.mul(x64).div(y)
 
-        const result = await abdkTester.testDivu(x,y)
+        const result = await abdkTester.divuTest(x,y)
         expect(result.eq(expectedResult)).to.be.true
     })
 
@@ -138,7 +138,7 @@ describe("ABDKMath64x64 testing", function () {
         const x64 = two.pow(64)
         const expectedResult = x.mul(x64).div(y)
 
-        const result = await abdkTester.testDivu(x,y)
+        const result = await abdkTester.divuTest(x,y)
         expect(result.eq(expectedResult)).to.be.true
     })
 
@@ -148,7 +148,7 @@ describe("ABDKMath64x64 testing", function () {
         const x64 = two.pow(64)
         const expectedResult = x.mul(x64).div(y)
 
-        const result = await abdkTester.testDivu(x,y)
+        const result = await abdkTester.divuTest(x,y)
         expect(result.eq(expectedResult)).to.be.true
     })
 
@@ -158,7 +158,7 @@ describe("ABDKMath64x64 testing", function () {
         const x64 = two.pow(64)
         const expectedResult = x.mul(x64).div(y)
 
-        const result = await abdkTester.testDivu(x,y)
+        const result = await abdkTester.divuTest(x,y)
         expect(result.eq(expectedResult)).to.be.true
     })
 
@@ -170,7 +170,7 @@ describe("ABDKMath64x64 testing", function () {
         const expectedResultIn1e18 = ethers.utils.parseUnits(expectedResult)
         const expectedResulInX64 = expectedResultIn1e18.mul(two.pow(64)).div(ethers.utils.parseUnits("1"))
 
-        const result = await abdkTester.testLog_2(x)        
+        const result = await abdkTester.log_2Test(x)        
         
         expect(isSimilar(result.toString(),expectedResulInX64.toString())).to.be.true
     })
