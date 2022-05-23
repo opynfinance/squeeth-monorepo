@@ -7,6 +7,7 @@ import { useAtomValue } from 'jotai'
 import { networkIdAtom } from 'src/state/wallet/atoms'
 import { Networks } from '../types/index'
 import CookieConsent from 'react-cookie-consent'
+import { BLOCKED_COUNTRIES } from '../constants/index'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -77,12 +78,15 @@ const useStyles = makeStyles((theme) =>
     title: { margin: '.5em 0' },
   }),
 )
+
 const CookieConsentPopup = () => {
   const classes = useStyles()
   const router = useRouter()
   const [, setCookie] = useCookies(['opyn_geo'])
   const path = router.asPath.split('?')[0]
   const networkId = useAtomValue(networkIdAtom)
+
+  const isRestricted = BLOCKED_COUNTRIES.includes(String(router.query?.country) ?? '')
 
   return networkId !== Networks.ROPSTEN && path !== '/cookie-policy' ? (
     <CookieConsent
@@ -115,13 +119,9 @@ const CookieConsentPopup = () => {
         setTimeout(() => {
           router.push(path, undefined, { shallow: true })
         }, 0)
-        setCookie(
-          'opyn_geo',
-          router.query?.restricted === 'true' ? `true,${router.query?.country}` : `false,${router.query?.country}`,
-          {
-            path: '/',
-          },
-        )
+        setCookie('opyn_geo', isRestricted ? `true,${router.query?.country}` : `false,${router.query?.country}`, {
+          path: '/',
+        })
       }}
       contentStyle={{ flex: '1 0 0', padding: '1.2rem 1rem' }}
       buttonWrapperClasses={classes.buttonWrapper}
