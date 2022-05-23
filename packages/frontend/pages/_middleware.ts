@@ -19,8 +19,10 @@ export default function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  url.searchParams.set('country', country!)
-  url.searchParams.set('restricted', String(isRestricted))
+  if (!request.cookies.opyn_geo) {
+    url.searchParams.set('country', country!)
+    url.searchParams.set('restricted', String(isRestricted))
+  }
 
   return NextResponse.redirect(url)
 }
