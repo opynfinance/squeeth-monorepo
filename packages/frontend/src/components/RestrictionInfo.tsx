@@ -4,6 +4,7 @@ import NorthEastOutlinedIcon from '@material-ui/icons/CallMade'
 import Link from 'next/link'
 import { useCookies } from 'react-cookie'
 import { useRouter } from 'next/router'
+import { BLOCKED_COUNTRIES } from '@constants/index'
 
 const useStyles = makeStyles(() =>
   createStyles({
@@ -40,7 +41,8 @@ const RestrictionInfo = () => {
   const classes = useStyles()
   const [cookies] = useCookies(['opyn_geo'])
   const router = useRouter()
-  return router.query?.restricted === 'true' ? (
+  const isRestricted = BLOCKED_COUNTRIES.includes(String(router.query?.country) ?? '')
+  return isRestricted ? (
     <Box className={classes.restrictedInfo}>
       <p>
         <span>
