@@ -627,23 +627,15 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         (ControllerHelperDataType.withdrawFromVaultParams)
                     );
 
-                    if (withdrawFromVaultParams.burnExactRemoved) {
-                        ControllerHelperUtil.burnWithdrawFromVault(
-                            controller,
-                            weth,
-                            vaultId,
-                            IWPowerPerp(wPowerPerp).balanceOf(address(this)),
-                            withdrawFromVaultParams.collateralToWithdraw
-                        );
-                    } else {
-                        ControllerHelperUtil.burnWithdrawFromVault(
-                            controller,
-                            weth,
-                            vaultId,
-                            withdrawFromVaultParams.wPowerPerpToBurn,
-                            withdrawFromVaultParams.collateralToWithdraw
-                        );
-                    }
+                    uint256 currentBalance = IWPowerPerp(wPowerPerp).balanceOf(address(this));
+                    if (currentBalance < withdrawFromVaultParams.wPowerPerpToBurn) withdrawFromVaultParams.wPowerPerpToBurn = currentBalance;
+                    ControllerHelperUtil.burnWithdrawFromVault(
+                        controller,
+                        weth,
+                        vaultId,
+                        withdrawFromVaultParams.wPowerPerpToBurn,
+                        withdrawFromVaultParams.collateralToWithdraw
+                    );
                 } else if (data[i].rebalanceLpInVaultType == ControllerHelperDataType.RebalanceVaultNftType.MintNewLp) {
                     // this will execute in the use case of fully closing old LP position, and creating new one
                     ControllerHelperDataType.MintAndLpParams memory mintAndLpParams = abi.decode(
