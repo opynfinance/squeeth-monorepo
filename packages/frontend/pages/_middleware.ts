@@ -9,7 +9,7 @@ export default function middleware(request: NextRequest) {
 
   if (request.cookies.opyn_geo && request.cookies.opyn_geo === 'false') {
     if (!isRestricted) {
-      return NextResponse.rewrite(url)
+      return NextResponse.next()
     } else {
       return NextResponse.redirect(url).clearCookie('opyn_geo')
     }
@@ -19,10 +19,8 @@ export default function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  if (!request.cookies.opyn_geo) {
-    url.searchParams.set('country', country!)
-    url.searchParams.set('restricted', String(isRestricted))
-  }
+  url.searchParams.set('country', country!)
+  url.searchParams.set('restricted', String(isRestricted))
 
   return NextResponse.redirect(url)
 }
