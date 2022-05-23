@@ -1150,8 +1150,8 @@ describe("ControllerHelper: mainnet fork", function () {
         },
         {
         // Sell all oSQTH for ETH
-          rebalanceLpInVaultType: BigNumber.from(5), // generalSwap:
-          // GeneralSwap: [tokenIn, tokenOut, amountIn, limitPriceEthPerPowerPerp]
+          rebalanceVaultNftType: BigNumber.from(5), // generalSwap:
+          // GeneralSwap: [tokenIn, tokenOut, amountIn, limitPrice]
           data: abiCoder.encode(["address", 'address', 'uint256', 'uint256', 'uint24'],
            [wSqueeth.address, weth.address, wPowerPerpAmountInLPBefore.sub(safetyWPowerPerp), BigNumber.from(0), 3000])
           },
@@ -1305,8 +1305,8 @@ it("Close vault LP and open new one-siced LP with just oSQTH ", async () => {
       },
       {
       // Sell all weth for oSQTH
-        rebalanceLpInVaultType: BigNumber.from(5), // generalSwap:
-        // GeneralSwap: [tokenIn, tokenOut, amountIn, limitPriceEthPerPowerPerp, poolFee]
+        rebalanceVaultNftType: BigNumber.from(5), // generalSwap:
+        // GeneralSwap: [tokenIn, tokenOut, amountIn, limitPrice, poolFee]
         data: abiCoder.encode(["address", 'address', 'uint256', 'uint256','uint24'],
          [weth.address, wSqueeth.address, wethAmountInLPBefore, BigNumber.from(0), 3000])
         },
