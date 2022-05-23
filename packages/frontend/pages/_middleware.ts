@@ -9,7 +9,7 @@ export default function middleware(request: NextRequest) {
 
   if (request.cookies.opyn_geo && request.cookies.opyn_geo === 'false') {
     if (!isRestricted) {
-      return NextResponse.next()
+      return NextResponse.rewrite(url)
     } else {
       return NextResponse.redirect(url).clearCookie('opyn_geo')
     }
