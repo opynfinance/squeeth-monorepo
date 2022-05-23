@@ -112,7 +112,7 @@ describe("ControllerHelper: mainnet fork", function () {
     it("open short, mint, LP oSQTH + ETH, deposit LP NFT and withdraw ETH collateral", async ()=> {
       const vaultId = (await shortSqueeth.nextId());
       const normFactor = await controller.getExpectedNormalizationFactor()
-      const mintWSqueethAmount = ethers.utils.parseUnits('30')
+      const mintWSqueethAmount = ethers.utils.parseUnits('50')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
@@ -124,7 +124,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const flashloanWMintDepositNftParams = {
         vaultId: 0,
         wPowerPerpAmount: mintWSqueethAmount.toString(),
-        collateralToDeposit: BigNumber.from(0),
+        collateralToDeposit: collateralToMint.toString(),
         collateralToFlashloan: collateralToMint.toString(),
         collateralToLp: collateralToLp.toString(),
         collateralToWithdraw: 0,
@@ -168,7 +168,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const flashloanWMintDepositNftParams = {
         vaultId: 0,
         wPowerPerpAmount: mintWSqueethAmount.mul(2).toString(),
-        collateralToDeposit: BigNumber.from(0),
+        collateralToDeposit: collateralToMint.mul(2).toString(),
         collateralToFlashloan: collateralToMint.mul(2).toString(),
         collateralToLp: collateralToLp.toString(),
         collateralToWithdraw: 0,
@@ -283,7 +283,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const flashloanWMintDepositNftParams = {
         vaultId: 0,
         wPowerPerpAmount: mintWSqueethAmount.toString(),
-        collateralToDeposit: collateralToMint.sub(collateralToFlashloan).toString(),
+        collateralToDeposit: collateralToMint.toString(),
         collateralToFlashloan: collateralToFlashloan.toString(),
         collateralToLp: BigNumber.from(0),
         collateralToWithdraw: 0,
@@ -310,7 +310,7 @@ describe("ControllerHelper: mainnet fork", function () {
     it("open short, mint with >0 ETH collateral, LP oSQTH + ETH, deposit LP NFT", async ()=> {
       const vaultId = (await shortSqueeth.nextId());
       const normFactor = await controller.getExpectedNormalizationFactor()
-      const mintWSqueethAmount = ethers.utils.parseUnits('30')
+      const mintWSqueethAmount = ethers.utils.parseUnits('50')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
@@ -324,7 +324,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const flashloanWMintDepositNftParams = {
         vaultId: 0,
         wPowerPerpAmount: mintWSqueethAmount.toString(),
-        collateralToDeposit: collateralToMint.sub(collateralToFlashloan).toString(),
+        collateralToDeposit: collateralToMint.toString(),
         collateralToFlashloan: collateralToFlashloan.toString(),
         collateralToLp: collateralToLp.toString(),
         collateralToWithdraw: 0,
@@ -374,7 +374,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const flashloanWMintDepositNftParams = {
         vaultId: vaultId,
         wPowerPerpAmount: mintWSqueethAmount.toString(),
-        collateralToDeposit: collateralToMint.sub(collateralToFlashloan).toString(),
+        collateralToDeposit: collateralToMint.toString(),
         collateralToFlashloan: collateralToFlashloan.toString(),
         collateralToLp: collateralToLp.toString(),
         collateralToWithdraw: 0,
@@ -448,7 +448,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const flashloanWMintDepositNftParams = {
         vaultId: vaultId,
         wPowerPerpAmount: mintWSqueethAmount,
-        collateralToDeposit: BigNumber.from(0),
+        collateralToDeposit: debtInEth,
         collateralToFlashloan: debtInEth,
         collateralToLp: BigNumber.from(0),
         collateralToWithdraw: 0,
@@ -515,7 +515,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const flashloanWMintDepositNftParams = {
         vaultId: vaultId.toString(),
         wPowerPerpAmount: mintWSqueethAmount.toString(),
-        collateralToDeposit: collateralToDeposit.toString(),
+        collateralToDeposit: collateralToDeposit.add(debtInEth).toString(),
         collateralToFlashloan: debtInEth.toString(),
         collateralToLp: BigNumber.from(0),
         collateralToWithdraw: 0,
@@ -651,7 +651,7 @@ describe("ControllerHelper: mainnet fork", function () {
   describe("Close LP position in vault: LP have less wPowerPerp than needed amount to burn", async () => {
     before("open first short position and LP" , async () => {
       const normFactor = await controller.getExpectedNormalizationFactor()
-      const mintWSqueethAmountToLp : BigNumber = ethers.utils.parseUnits('30')
+      const mintWSqueethAmountToLp : BigNumber = ethers.utils.parseUnits('50')
       const mintRSqueethAmount = mintWSqueethAmountToLp.mul(normFactor).div(one)
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
@@ -758,7 +758,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const flashloanWMintDepositNftParams = {
         vaultId: 0,
         wPowerPerpAmount: mintWSqueethAmount.toString(),
-        collateralToDeposit: 0,
+        collateralToDeposit: collateralToFlashloan.toString(),
         collateralToFlashloan: collateralToFlashloan.toString(),
         collateralToLp: collateralToLp.toString(),
         collateralToWithdraw: 0,

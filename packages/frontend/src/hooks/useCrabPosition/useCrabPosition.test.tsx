@@ -1,13 +1,14 @@
 import { renderHook } from '@testing-library/react-hooks'
 import { useCrabPosition } from './useCrabPosition'
 import { Wrapper, writeAtom } from '@utils/atomTester'
-import { mockedCrabLoadingAtom, mockedUserCrabTxHistoryData } from './mocks'
+import { mockedCrabLoadingAtom, mockedUserCrabTxHistoryData, mockedCrabPositionValueLoadingAtom } from './mocks'
 import { useUserCrabTxHistory } from '@hooks/useUserCrabTxHistory'
 import { act } from 'react-dom/test-utils'
 
 jest.mock('src/state/crab/atoms', () => ({
   crabLoadingAtom: jest.requireActual('./mocks').mockedCrabLoadingAtom,
   currentEthValueAtom: jest.requireActual('./mocks').mockedCurrentEthValueAtom,
+  crabPositionValueLoadingAtom: jest.requireActual('./mocks').mockedCrabPositionValueLoadingAtom,
 }))
 
 jest.mock('src/state/controller/atoms', () => ({
@@ -24,6 +25,7 @@ afterEach(() => {
   // Reset crab loading
   act(() => {
     writeAtom(mockedCrabLoadingAtom, true)
+    writeAtom(mockedCrabPositionValueLoadingAtom, true)
   })
 })
 
@@ -128,6 +130,7 @@ describe('useCrabPosition', () => {
 
       act(() => {
         writeAtom(mockedCrabLoadingAtom, false)
+        writeAtom(mockedCrabPositionValueLoadingAtom, false)
       })
       rerender()
 
@@ -170,6 +173,7 @@ describe('useCrabPosition', () => {
 
       act(() => {
         writeAtom(mockedCrabLoadingAtom, false)
+        writeAtom(mockedCrabPositionValueLoadingAtom, false)
       })
       rerender()
 
