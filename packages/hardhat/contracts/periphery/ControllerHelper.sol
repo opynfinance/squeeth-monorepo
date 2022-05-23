@@ -607,6 +607,10 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         (ControllerHelperDataType.DepositIntoVaultParams)
                     );
 
+                    // make sure not to fail
+                    uint256 currentBalance = IWETH9(weth).balanceOf(address(this));
+                    if (currentBalance < depositIntoVaultParams.collateralToDeposit) depositIntoVaultParams.collateralToDeposit = currentBalance;
+
                     ControllerHelperUtil.mintDepositInVault(
                         controller,
                         weth,
