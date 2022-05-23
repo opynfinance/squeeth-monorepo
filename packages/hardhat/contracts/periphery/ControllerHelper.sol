@@ -341,7 +341,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             _params.tokenId,
             1e18
         );
-        console.log('after checkClosedLp');
+        console.log("after checkClosedLp");
 
         uint256 wethAmountDesired;
         uint256 wPowerPerpAmountDesired;
