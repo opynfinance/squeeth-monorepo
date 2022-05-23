@@ -609,7 +609,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
 
                     // make sure not to fail
                     uint256 currentBalance = IWETH9(weth).balanceOf(address(this));
-                    if (currentBalance < depositIntoVaultParams.collateralToDeposit) depositIntoVaultParams.collateralToDeposit = currentBalance;
+                    if (currentBalance < depositIntoVaultParams.collateralToDeposit)
+                        depositIntoVaultParams.collateralToDeposit = currentBalance;
 
                     ControllerHelperUtil.mintDepositInVault(
                         controller,
@@ -628,7 +629,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                     );
 
                     uint256 currentBalance = IWPowerPerp(wPowerPerp).balanceOf(address(this));
-                    if (currentBalance < withdrawFromVaultParams.wPowerPerpToBurn) withdrawFromVaultParams.wPowerPerpToBurn = currentBalance;
+                    if (currentBalance < withdrawFromVaultParams.wPowerPerpToBurn)
+                        withdrawFromVaultParams.wPowerPerpToBurn = currentBalance;
                     ControllerHelperUtil.burnWithdrawFromVault(
                         controller,
                         weth,
