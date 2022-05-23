@@ -1999,7 +1999,7 @@ describe("Controller helper integration test", function () {
       }
 
       await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controllerHelper.address, oldTokenId);
-      await controllerHelper.connect(depositor).rebalanceWithoutVault(params);
+      await controllerHelper.connect(depositor).rebalanceLpWithoutVault(params);
 
       tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
       const newTokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
@@ -2135,7 +2135,7 @@ describe("Controller helper integration test", function () {
       }
 
       await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controllerHelper.address, oldTokenId);
-      await controllerHelper.connect(depositor).rebalanceWithoutVault(params);
+      await controllerHelper.connect(depositor).rebalanceLpWithoutVault(params);
 
       tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
       const newTokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
@@ -2272,7 +2272,7 @@ describe("Controller helper integration test", function () {
       }
 
       await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controllerHelper.address, oldTokenId);
-      await controllerHelper.connect(depositor).rebalanceWithoutVault(params);
+      await controllerHelper.connect(depositor).rebalanceLpWithoutVault(params);
       tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
       const newTokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
       const newPosition = await (positionManager as INonfungiblePositionManager).positions(newTokenId);
@@ -2414,7 +2414,7 @@ describe("Controller helper integration test", function () {
   
         await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controllerHelper.address, oldTokenId);
         // console.log('before rebalanceWithoutVault')
-        await controllerHelper.connect(depositor).rebalanceWithoutVault(params);
+        await controllerHelper.connect(depositor).rebalanceLpWithoutVault(params);
         // console.log('after rebalanceWithoutVault')
         const depositorEthBalanceAfter = await provider.getBalance(depositor.address)
 
