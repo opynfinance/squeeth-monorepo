@@ -114,7 +114,7 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
       setIsToHidePnL(false)
       setPositionType(PositionType.NONE)
     }
-  }, [computedSwaps.squeethAmount, oSqueethBal, setPositionType])
+  }, [computedSwaps.squeethAmount, oSqueethBal, setPositionType, setIsToHidePnL])
 
   useAppEffect(() => {
     refetch()
