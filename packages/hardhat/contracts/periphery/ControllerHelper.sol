@@ -22,6 +22,7 @@ import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {ControllerHelperDataType} from "./lib/ControllerHelperDataType.sol";
 import {ControllerHelperUtil} from "./lib/ControllerHelperUtil.sol";
+import {VaultLib} from "../libs/VaultLib.sol";
 
 contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IERC721Receiver {
     using SafeMath for uint256;
@@ -441,6 +442,21 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         require(IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId) == msg.sender);
     }
 
+    function _getVaultDetails(uint256 vaultId)
+        internal
+        view
+        returns (
+            address,
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        VaultLib.Vault memory vault = IController(controller).vaults(vaultId);
+
+        return (vault.operator, vault.NftCollateralId, vault.collateralAmount, vault.shortAmount);
+    }
+
     function _flashCallback(
         address _initiator,
         address, /*_asset*/
@@ -608,6 +624,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                     );
 
                     // make sure not to fail
+                    // a user can ensure that the entire weth balance is deposited by using a sufficiently large depositIntoVaultParams.collateralToDeposit
                     uint256 currentBalance = IWETH9(weth).balanceOf(address(this));
                     if (currentBalance < depositIntoVaultParams.collateralToDeposit)
                         depositIntoVaultParams.collateralToDeposit = currentBalance;
@@ -629,15 +646,28 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                     );
 
                     uint256 currentBalance = IWPowerPerp(wPowerPerp).balanceOf(address(this));
-                    if (currentBalance < withdrawFromVaultParams.wPowerPerpToBurn)
-                        withdrawFromVaultParams.wPowerPerpToBurn = currentBalance;
-                    ControllerHelperUtil.burnWithdrawFromVault(
-                        controller,
-                        weth,
-                        vaultId,
-                        withdrawFromVaultParams.wPowerPerpToBurn,
-                        withdrawFromVaultParams.collateralToWithdraw
-                    );
+
+                    if (withdrawFromVaultParams.burnExactRemoved) {
+                        (, , , uint256 shortAmount) = _getVaultDetails(vaultId);
+                        if (shortAmount < currentBalance) currentBalance = shortAmount;
+                        ControllerHelperUtil.burnWithdrawFromVault(
+                            controller,
+                            weth,
+                            vaultId,
+                            currentBalance,
+                            withdrawFromVaultParams.collateralToWithdraw
+                        );
+                    } else {
+                        if (currentBalance < withdrawFromVaultParams.wPowerPerpToBurn)
+                            withdrawFromVaultParams.wPowerPerpToBurn = currentBalance;
+                        ControllerHelperUtil.burnWithdrawFromVault(
+                            controller,
+                            weth,
+                            vaultId,
+                            withdrawFromVaultParams.wPowerPerpToBurn,
+                            withdrawFromVaultParams.collateralToWithdraw
+                        );
+                    }
                 } else if (data[i].rebalanceLpInVaultType == ControllerHelperDataType.RebalanceVaultNftType.MintNewLp) {
                     // this will execute in the use case of fully closing old LP position, and creating new one
                     ControllerHelperDataType.MintAndLpParams memory mintAndLpParams = abi.decode(
@@ -823,7 +853,10 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         bool burnExactRemoved
     ) private {
         if (burnExactRemoved) {
-            // remove exact _wPowerPerpAmount amount withdraw from LP
+            // remove exact _wPowerPerpAmount amount withdrawn from LP, unless amount is > short amount in vault
+            (, , , uint256 shortAmount) = _getVaultDetails(_vaultId);
+            if (shortAmount < _wPowerPerpAmount) _wPowerPerpAmount = shortAmount;
+
             ControllerHelperUtil.burnWithdrawFromVault(
                 controller,
                 weth,
