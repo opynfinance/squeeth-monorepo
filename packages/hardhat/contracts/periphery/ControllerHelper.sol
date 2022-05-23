@@ -442,19 +442,22 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         require(IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId) == msg.sender);
     }
 
-    function _getVaultDetails(uint256 vaultId)
+    /**
+     * @notice gets the shortAmount that has been minted from a vault
+     * @param _vaultId vault ID
+     * @return short amount from vault
+     */
+
+    function _getVaultShortAmount(uint256 _vaultId)
         internal
         view
         returns (
-            address,
-            uint256,
-            uint256,
             uint256
         )
     {
-        VaultLib.Vault memory vault = IController(controller).vaults(vaultId);
+        VaultLib.Vault memory vault = IController(controller).vaults(_vaultId);
 
-        return (vault.operator, vault.NftCollateralId, vault.collateralAmount, vault.shortAmount);
+        return vault.shortAmount;
     }
 
     function _flashCallback(
@@ -648,7 +651,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                     uint256 currentBalance = IWPowerPerp(wPowerPerp).balanceOf(address(this));
 
                     if (withdrawFromVaultParams.burnExactRemoved) {
-                        (, , , uint256 shortAmount) = _getVaultDetails(vaultId);
+                        uint256 shortAmount = _getVaultShortAmount(vaultId);
                         if (shortAmount < currentBalance) currentBalance = shortAmount;
                         ControllerHelperUtil.burnWithdrawFromVault(
                             controller,
@@ -854,7 +857,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
     ) private {
         if (burnExactRemoved) {
             // remove exact _wPowerPerpAmount amount withdrawn from LP, unless amount is > short amount in vault
-            (, , , uint256 shortAmount) = _getVaultDetails(_vaultId);
+            uint256 shortAmount = _getVaultShortAmount(_vaultId);
             if (shortAmount < _wPowerPerpAmount) _wPowerPerpAmount = shortAmount;
 
             ControllerHelperUtil.burnWithdrawFromVault(
