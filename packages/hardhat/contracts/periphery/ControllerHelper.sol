@@ -448,13 +448,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
      * @return short amount from vault
      */
 
-    function _getVaultShortAmount(uint256 _vaultId)
-        internal
-        view
-        returns (
-            uint256
-        )
-    {
+    function _getVaultShortAmount(uint256 _vaultId) internal view returns (uint256) {
         VaultLib.Vault memory vault = IController(controller).vaults(_vaultId);
 
         return vault.shortAmount;
