@@ -215,7 +215,7 @@ library ControllerHelperDataType {
     }
 
     /// @dev struct for swapping from tokenIn to tokenOut
-    struct GeneralSwap {
+    struct GeneralSwapParams {
         address tokenIn; // token to swap in
         address tokenOut; // token to swap out
         uint256 amountIn; // amount to swap in
