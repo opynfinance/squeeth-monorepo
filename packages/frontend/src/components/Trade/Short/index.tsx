@@ -1,4 +1,4 @@
-import { CircularProgress } from '@material-ui/core'
+import { Box, CircularProgress } from '@material-ui/core'
 import {
   createStyles,
   InputAdornment,
@@ -12,7 +12,7 @@ import {
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
-import React, { memo, useEffect, useMemo, useState } from 'react'
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react'
 
 import { CloseType, Tooltips, Links } from '@constants/enums'
 import useShortHelper from '@hooks/contracts/useShortHelper'
@@ -60,6 +60,7 @@ import useAppEffect from '@hooks/useAppEffect'
 import useAppCallback from '@hooks/useAppCallback'
 import { useVaultHistoryQuery } from '@hooks/useVaultHistory'
 import useAppMemo from '@hooks/useAppMemo'
+import { squeethInitialPriceAtom } from 'src/state/squeethPool/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -720,6 +721,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const quote = useAtomValue(quoteAtom)
   const [sellCloseQuote, setSellCloseQuote] = useAtom(sellCloseQuoteAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
+  const [ethTradeAmount, setEthTradeAmount] = useState('')
   const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
 
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
@@ -732,11 +734,12 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const { loading: isPositionFinishedCalc } = useLPPositionsQuery()
   const { updateVault } = useVaultManager()
   const { validVault: vault, vaultId } = useFirstValidVault()
-  const { existingCollatPercent } = useVaultData(vault)
+  const { existingCollatPercent, existingLiqPrice } = useVaultData(vault)
   const setCollatRatio = useUpdateAtom(collatRatioAtom)
   const ethPrice = useETHPrice()
   const [isVaultHistoryUpdating, setVaultHistoryUpdating] = useAtom(vaultHistoryUpdatingAtom)
   const vaultHistoryQuery = useVaultHistoryQuery(Number(vaultId), isVaultHistoryUpdating)
+  const squeethInitialPrice = useAtomValue(squeethInitialPriceAtom)
 
   useAppEffect(() => {
     if (vault) {
@@ -988,6 +991,28 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
     setSqthTradeAmount(v)
   }
 
+  const ignoreEffect = useRef(false)
+  const handleEthAmountInput = (v: string) => {
+    const newSqthTradeAmount = new BigNumber(v).dividedBy(squeethInitialPrice).toString()
+    ignoreEffect.current = true
+    setSqthTradeAmount(newSqthTradeAmount)
+    setEthTradeAmount(v)
+    setTimeout(() => {
+      ignoreEffect.current = false
+    })
+  }
+
+  useEffect(() => {
+    if (ignoreEffect.current) {
+      return
+    }
+    setEthTradeAmount(squeethInitialPrice.multipliedBy(sqthTradeAmount).toString())
+  }, [sqthTradeAmount, squeethInitialPrice])
+
+  const finalShortEth = useMemo(() => {
+    return squeethInitialPrice.multipliedBy(finalShortAmount)
+  }, [finalShortAmount, squeethInitialPrice])
+
   return (
     <div id="close-short-card">
       {confirmed && !isTxFirstStep ? (
@@ -1043,8 +1068,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
               isFullClose={closeType === CloseType.FULL}
               value={sqthTradeAmount}
               onChange={(v) => handleAmountInput(v)}
-              label="Amount"
-              tooltip={Tooltips.SellCloseAmount}
+              label="Debt to buy back and burn"
               actionTxt="Max"
               onActionClicked={setShortCloseMax}
               unit="oSQTH"
@@ -1079,6 +1103,52 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                       </>
                     ) : null}{' '}
                     <span style={{ marginLeft: '4px' }}>oSQTH</span>
+                  </div>
+                )
+              }
+              id="close-short-osqth-input"
+            />
+          </div>
+          <div className={classes.thirdHeading}>
+            <PrimaryInput
+              isFullClose={closeType === CloseType.FULL}
+              value={ethTradeAmount}
+              onChange={(v) => handleEthAmountInput(v)}
+              label="Collateral to remove"
+              actionTxt="Max"
+              onActionClicked={setShortCloseMax}
+              unit="ETH"
+              error={!!existingLongError || !!priceImpactWarning || !!closeError || !!insufficientETHBalance}
+              isLoading={isPositionFinishedCalc}
+              convertedValue={
+                !amount.isNaN()
+                  ? getWSqueethPositionValue(amount).toFixed(2).toLocaleString()
+                  : Number(0).toLocaleString()
+              }
+              hint={
+                closeError ? (
+                  closeError
+                ) : existingLongError ? (
+                  existingLongError
+                ) : priceImpactWarning ? (
+                  priceImpactWarning
+                ) : insufficientETHBalance ? (
+                  insufficientETHBalance
+                ) : (
+                  <div className={classes.hint}>
+                    <span className={classes.hintTextContainer}>
+                      <span className={classes.hintTitleText}>Position</span>{' '}
+                      <span id="close-short-osqth-before-trade-balance">{finalShortEth.toFixed(6)}</span>{' '}
+                    </span>
+                    {amount.toNumber() ? (
+                      <>
+                        <ArrowRightAltIcon className={classes.arrowIcon} />
+                        <span id="close-short-osqth-post-trade-balance">
+                          {finalShortEth?.minus(ethTradeAmount).toFixed(6)}
+                        </span>
+                      </>
+                    ) : null}{' '}
+                    <span style={{ marginLeft: '4px' }}>ETH</span>
                   </div>
                 )
               }
@@ -1172,7 +1242,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
             />
           </div>
 
-          <TradeDetails
+          {/* <TradeDetails
             actionTitle="Spend"
             amount={sellCloseQuote.amountIn.toFixed(6)}
             unit="ETH"
@@ -1204,9 +1274,25 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
               )
             }
             id="close-short-trade-details"
-          />
+          /> */}
           <div className={classes.divider}>
-            <TradeInfoItem
+            <Box display="flex" justifyContent="space-between">
+              <Typography variant="body2">Liquidation Price</Typography>
+              <Box display="flex" alignItems="center">
+                <div>${existingLiqPrice.toFixed(2)}</div>
+                <ArrowRightAltIcon className={classes.arrowIcon} />
+                <div>${liqPrice.toFixed(2)}</div>
+              </Box>
+            </Box>
+            <Box display="flex" justifyContent="space-between" mt={1}>
+              <Typography variant="body2">Vault Collateral Ratio</Typography>
+              <Box display="flex" alignItems="center">
+                <div>{existingCollatPercent.toFixed(2)}%</div>
+                <ArrowRightAltIcon className={classes.arrowIcon} />
+                <div>{collatPercent.toFixed(2)}%</div>
+              </Box>
+            </Box>
+            {/* <TradeInfoItem
               label="New Liquidation Price"
               value={liqPrice.toFixed(2)}
               unit="USDC"
@@ -1220,7 +1306,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
               unit="%"
               tooltip={Tooltips.CurrentCollRatio}
               id="close-short-collateral-ratio"
-            />
+            /> */}
             <div style={{ marginTop: '10px' }}>
               <UniswapData
                 slippage={isNaN(Number(slippageAmount)) ? '0' : slippageAmount.toString()}
