@@ -115,10 +115,13 @@ const CookieConsentPopup = () => {
         setTimeout(() => {
           router.push(path, undefined, { shallow: true })
         }, 0)
-        router.query?.restricted !== 'true' &&
-          setCookie('opyn_geo', router.query?.restricted === 'true' ? `true,${router.query?.country}` : 'false', {
+        setCookie(
+          'opyn_geo',
+          router.query?.restricted === 'true' ? `true,${router.query?.country}` : `false,${router.query?.country}`,
+          {
             path: '/',
-          })
+          },
+        )
       }}
       contentStyle={{ flex: '1 0 0', padding: '1.2rem 1rem' }}
       buttonWrapperClasses={classes.buttonWrapper}
