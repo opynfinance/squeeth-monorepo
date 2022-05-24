@@ -206,6 +206,7 @@ export const [ComputeSwapsProvider, useComputeSwaps] = constate(() => {
 
   useAppEffect(() => {
     refetch()
+    console.log('refetching.....')
   }, [computedSwaps.squeethAmount, refetch])
 
   const value = useAppMemo(
