@@ -961,50 +961,6 @@ describe("ControllerHelper: mainnet fork", function () {
     })
   })
 
-  describe("Remove ETH from vault and increase liquidity" , async () => {
-    before("open first short position and LP" , async () => {
-      const normFactor = await controller.getExpectedNormalizationFactor()
-      const mintWSqueethAmountToLp : BigNumber = ethers.utils.parseUnits('30')
-      const mintRSqueethAmount = mintWSqueethAmountToLp.mul(normFactor).div(one)
-      const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
-      const scaledEthPrice = ethPrice.div(10000)
-      const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
-      const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01')).add(debtInEth.mul(2))
-      const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
-      const collateralToLp = mintWSqueethAmountToLp.mul(squeethPrice).div(one)
-
-      await controller.connect(depositor).mintWPowerPerpAmount(0, mintWSqueethAmountToLp, 0, {value: collateralAmount})
-
-      const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
-      const token0 = isWethToken0 ? weth.address : wSqueeth.address
-      const token1 = isWethToken0 ? wSqueeth.address : weth.address
-
-      const mintParam = {
-        token0,
-        token1,
-        fee: 3000,
-        tickLower: -887220,// int24 min tick used when selecting full range
-        tickUpper: 887220,// int24 max tick used when selecting full range
-        amount0Desired: isWethToken0 ? collateralToLp : mintWSqueethAmountToLp,
-        amount1Desired: isWethToken0 ? mintWSqueethAmountToLp : collateralToLp,
-        amount0Min: 0,
-        amount1Min: 0,
-        recipient: depositor.address,
-        deadline: Math.floor(await getNow(ethers.provider) + 8640000),// uint256
-      }
-
-      await weth.connect(depositor).deposit({value: collateralToLp})
-      await weth.connect(depositor).approve(positionManager.address, ethers.constants.MaxUint256)
-      await wSqueeth.connect(depositor).approve(positionManager.address, ethers.constants.MaxUint256)  
-      await (positionManager as INonfungiblePositionManager).connect(depositor).mint(mintParam)
-    })
-
-    it("Withdraw collateral from vault and increase ETH in LP", async () => {
-      
-    })
-
-  })
-
   describe("Rebalance LP in vault to just weth", async () => {
     before("Mint new full range LP outside of vault" , async () => {
       // Mint 50 squeeth in new vault
@@ -1339,8 +1295,6 @@ it("Mint more oSQTH, withdraw half eth from LP, deposit some eth into vault and 
   // Deposit nft to vault
   await controller.connect(depositor).depositUniPositionToken(vaultId, tokenId)
   const vaultBefore = await controller.vaults(vaultId);
-  // Estimate proceeds from liquidating squeeth in LP
-
   // Estimate of new LP with 0.01 weth safety margin
   const safetyEth = ethers.utils.parseUnits('0.01')
   const wethAmountToDeposit =  wethAmountInLPBefore.div(4).sub(safetyEth)
@@ -1397,7 +1351,6 @@ it("Mint more oSQTH, withdraw half eth from LP, deposit some eth into vault and 
   const vaultSqueethDiff = vaultAfter.shortAmount.sub(vaultBefore.shortAmount)
   const lpEthDiff = wethAmountInLPAfter.sub(wethAmountInLPBefore)
   const lpSqueethDiff = wPowerPerpAmountInLPAfter.sub(wPowerPerpAmountInLPBefore)
-
 
   // Assertions
   expect(flashLoanAmount.gt(BigNumber.from(0))).to.be.true
