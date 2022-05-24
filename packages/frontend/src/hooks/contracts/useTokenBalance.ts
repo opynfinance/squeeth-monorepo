@@ -61,6 +61,7 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals
     loading: balanceQuery.isLoading || balanceQuery.isRefetching || poll,
     error: balanceQuery.error || balanceQuery.isRefetchError || !balanceQuery.data,
     refetch,
+    queryRefetch: balanceQuery.refetch,
   }
 }
 

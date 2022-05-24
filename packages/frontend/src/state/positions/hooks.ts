@@ -120,7 +120,7 @@ export const [ComputeSwapsProvider, useComputeSwaps] = constate(() => {
   const { getUsdAmt } = useUsdAmount()
   const { data, loading } = useSwaps()
   const { oSqueeth } = useAtomValue(addressesAtom)
-  const { value: oSqueethBal, refetch } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
+  const { value: oSqueethBal, queryRefetch } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
   const computedSwaps = useAppMemo(
     () =>
@@ -204,10 +204,11 @@ export const [ComputeSwapsProvider, useComputeSwaps] = constate(() => {
     }
   }, [computedSwaps.squeethAmount, oSqueethBal, setPositionType, setIsToHidePnL])
 
+  console.log('refetching ....')
+
   useAppEffect(() => {
-    refetch()
-    console.log('refetching.....')
-  }, [computedSwaps.squeethAmount, refetch])
+    queryRefetch()
+  }, [computedSwaps.squeethAmount, queryRefetch])
 
   const value = useAppMemo(
     () => ({
