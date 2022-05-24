@@ -1784,9 +1784,8 @@ it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
       // Flashloan to cover complete removal of LP (rearrange collateral ratio formula for 1.5 and add 0.1 ETH safety margin)
       const normFactor = await controller.getExpectedNormalizationFactor()
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
-      const flashLoanAmount_ = (vaultBefore.shortAmount).mul(normFactor).mul(ethPrice).mul(3).div(one.mul(one).mul(10000).mul(2)).sub(vaultBefore.collateralAmount).add(ethers.utils.parseUnits('0.1'))
-      const flashLoanAmount = flashLoanAmount_.lte(0) ? BigNumber.from(0) : flashLoanAmount_
-      await controllerHelper.connect(depositor).rebalanceLpInVault(vaultId, flashLoanAmount, rebalanceLpInVaultParams);
+      const flashLoanAmount = (vaultBefore.shortAmount).mul(normFactor).mul(ethPrice).mul(3).div(one.mul(one).mul(10000).mul(2)).sub(vaultBefore.collateralAmount).add(ethers.utils.parseUnits('0.1'))
+      await controllerHelper.connect(depositor).rebalanceLpInVault(vaultId, flashLoanAmount, rebalanceLpInVaultParams)
       const depositorSqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
       const depositorEthBalanceAfter = await ethers.provider.getBalance(depositor.address)
       // Get new vault and LP info
@@ -1822,7 +1821,7 @@ it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
     
       describe("Rebalance LP in vault: reduce oSQTH > debt, burn, withdraw >0 eth", async () => {
         
-        before("Flashmint new LP with 200 oSQTH", async () => {
+        before("Flashmint new LP with 200 oSQTH and withdraw all eth collateral", async () => {
           const normFactor = await controller.getExpectedNormalizationFactor()
           const mintWSqueethAmount = ethers.utils.parseUnits('200')
           const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
@@ -1849,7 +1848,9 @@ it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
           // Burn half of short amount
           const wPowerPerpToBurn = mintWSqueethAmount.div(2)
           const vaultId = (await shortSqueeth.nextId()).sub(1);
-          await controller.connect(depositor).burnPowerPerpAmount(vaultId, wPowerPerpToBurn, BigNumber.from(0))
+          // Withdraw all vault collateral
+          const collateralToWithdraw = collateralToDeposit
+          await controller.connect(depositor).burnPowerPerpAmount(vaultId, wPowerPerpToBurn, collateralToWithdraw)
         })
         
       it("Withdraw oSQTH > vault debt from LP, burn, swap remainder, withdraw >0 eth", async () => {
@@ -1915,7 +1916,10 @@ it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
         // Flashloan to cover complete removal of LP (rearrange collateral ratio formula for 1.5 and add 0.1 ETH safety margin)
         const normFactor = await controller.getExpectedNormalizationFactor()
         const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
-        const flashLoanAmount = (vaultBefore.shortAmount).mul(normFactor).mul(ethPrice).mul(3).div(one.mul(one).mul(10000).mul(2)).sub(vaultBefore.collateralAmount).add(ethers.utils.parseUnits('0.1'))
+        const debtValueInEth = (vaultBefore.shortAmount.mul(ethPrice).mul(normFactor).div(one).div(one)).div(10000)
+        // flashloan amount to cover withdrawn LP
+        const flashLoanAmount = (debtValueInEth.mul(3).div(2)).sub(vaultBefore.collateralAmount).add(ethers.utils.parseUnits('0.01'))
+        
         await controllerHelper.connect(depositor).rebalanceLpInVault(vaultId, flashLoanAmount, rebalanceLpInVaultParams);
         const depositorSqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
         const depositorEthBalanceAfter = await ethers.provider.getBalance(depositor.address)
@@ -2006,6 +2010,11 @@ it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
         await (positionManager as INonfungiblePositionManager).connect(depositor).setApprovalForAll(controllerHelper.address, true) // approve controllerHelper
         // Deposit nft to vault
         await controller.connect(depositor).depositUniPositionToken(vaultId, tokenId)
+        const vault = await controller.vaults(vaultId);
+        // Withdraw some collateral from vault
+        await controller.connect(depositor).burnPowerPerpAmount(vaultId, 0, vault.collateralAmount.sub(wethAmountInLPBefore.div(2)).sub(ethers.utils.parseUnits('0.01')))
+
+        // Withdraw all eth collateral
         const vaultBefore = await controller.vaults(vaultId);
         // Double up LP
         const wPowerPerpAmountToLp = wPowerPerpAmountInLPBefore
@@ -2027,7 +2036,7 @@ it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
              [BigNumber.from(0), wethAmountToWithdraw, false ])
             },
           {
-            // Deposit into vault (mint, no deposit)
+            // Mint amount to LP
             rebalanceLpInVaultType: BigNumber.from(2), // DepositIntoVault
             // DepsositIntoVault: [wPowerPerpToMint, collateralToDeposit]
             data: abiCoder.encode(["uint256", 'uint256'],
@@ -2045,7 +2054,9 @@ it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
         const normFactor = await controller.getExpectedNormalizationFactor()
         const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
         const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 1, true)
-        const flashLoanAmount = vaultBefore.collateralAmount
+        const debtValueInEth = ((vaultBefore.shortAmount.add(wPowerPerpAmountToLp)).mul(ethPrice).mul(normFactor).div(one).div(one)).div(10000)
+        // flashloan amount to cover withdrawn LP
+        const flashLoanAmount = (debtValueInEth.mul(3).div(2)).sub(vaultBefore.collateralAmount).add(wethAmountToWithdraw).add(ethers.utils.parseUnits('0.02'))
         const tx = await controllerHelper.connect(depositor).rebalanceLpInVault(vaultId, flashLoanAmount, rebalanceLpInVaultParams, {value: wethAmountToLp.div(2).add(ethers.utils.parseUnits('0.01'))});
         const receipt = await tx.wait()
         const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
@@ -2096,6 +2107,8 @@ it("Close vault LP and open new one-sided LP with just oSQTH ", async () => {
         // console.log('gasSpent', gasSpent.toString())
 
         // Assertions
+        // Flashloan positive
+        expect(flashLoanAmount.gt(0)).to.be.true
         // Target eth withdrawn from vault
         expect((vaultEthDiff.add(wethAmountToWithdraw)).abs().lte(10)).to.be.true
         // Target squeeth minted
