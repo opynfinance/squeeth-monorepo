@@ -211,7 +211,7 @@ library ControllerHelperDataType {
     struct withdrawFromVaultParams {  
         uint256 wPowerPerpToBurn;   // wPowerPerp amount to burn
         uint256 collateralToWithdraw;   // collateral to withdraw
-        bool burnExactRemoved;   // if true, will burn the ControllerHelper oSQTH balance
+        bool burnExactRemoved; // if true, will burn the ControllerHelper oSQTH balance, to a maximum of the vault short amount
     }
 
     /// @dev struct for swapping from tokenIn to tokenOut
