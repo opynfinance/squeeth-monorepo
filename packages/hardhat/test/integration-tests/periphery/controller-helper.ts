@@ -827,7 +827,6 @@ describe("Controller helper integration test", function () {
       const newTickLower = isWethToken0 ? 60*((currentTick - currentTick%60)/60 - 2): 60*((currentTick - currentTick%60)/60 + 1)
       const newTickUpper = isWethToken0 ? 60*((currentTick - currentTick%60)/60 - 1): 60*((currentTick - currentTick%60)/60 + 2)
 
-      console.log('currentTick', currentTick.toString())
       const params = {
         recipient: depositor.address,
         wPowerPerpPool: wSqueethPool.address,
@@ -864,26 +863,6 @@ describe("Controller helper integration test", function () {
       })
       const wPowerPerpAmountInLP = (isWethToken0) ? amount1 : amount0;
       const wethAmountInLP = (isWethToken0) ? amount0 : amount1;
-
-      // console.log('position.tickLower', position.tickLower.toString())
-      // console.log('position.tickUpper', position.tickUpper.toString())
-      // console.log('ownerOfUniNFT', ownerOfUniNFT)
-      // console.log('depositor.address', depositor.address)
-      // console.log('wPowerPerpAmountInLP',wPowerPerpAmountInLP.toString())
-      // console.log('wethAmountInLP',wethAmountInLP.toString())
-      // console.log('vaultBefore.shortAmount',vaultBefore.shortAmount.toString())
-      // console.log('vaultBefore.collateralAmount',vaultBefore.collateralAmount.toString())
-      // console.log('vaultAfter.shortAmount',vaultAfter.shortAmount.toString())
-      // console.log('vaultAfter.collateralAmount',vaultAfter.collateralAmount.toString())
-      // console.log('depositorEthBalanceBefore',depositorEthBalanceBefore.toString())
-      // console.log('depositorEthBalanceAfter',depositorEthBalanceAfter.toString())
-      // console.log('collateralAmount',collateralAmount.toString())
-      // console.log('gasSpent',gasSpent.toString())
-      // console.log('depositorEthBalanceAfter',depositorEthBalanceAfter.toString())
-      // console.log('collateralToLp',collateralToLp.toString())
-      // console.log('mintWSqueethAmount',mintWSqueethAmount.toString())
-      // console.log('tokenIndexBefore',tokenIndexBefore.toString())
-      // console.log('tokenIndexAfter',tokenIndexAfter.toString())
 
       expect(position.tickLower === newTickLower).to.be.true
       expect(position.tickUpper === newTickUpper).to.be.true
@@ -937,7 +916,6 @@ describe("Controller helper integration test", function () {
         upperTick: newTickUpper,
       }
 
-      // console.log('test show params', params);
       const tx = await controllerHelper.connect(depositor).wMintLp(params, {value: collateralToLp});
       // Look at transaction
       const receipt = await tx.wait()
@@ -994,7 +972,6 @@ describe("Controller helper integration test", function () {
       expect((depositorEthBalanceBefore.sub(depositorEthBalanceAfter).sub(wethAmountInLP).sub(gasSpent)).abs().lte(1)).to.be.true
       // expect(wethAmountInLP.sub(collateralToLp).mul(one).div(collateralToLp).eq(0)).to.be.true
       expect(wethAmountInLP.sub(collateralToLp).abs().lte(10)).to.be.true
-      console.log('weth rec',wethAmountInLP.sub(collateralToLp).toString())
     })
 
   })
@@ -2108,17 +2085,12 @@ describe("Controller helper integration test", function () {
       const wethAmountInLP = (isWethToken0) ? amount0 : amount1;
       // uniswap LPing often will give 1 wei less than expected, with the price of oSQTH need to do more than 1 wei due to rounding up the amount owed 
       const wPowerPerpDesired = wPowerPerpAmountInLP.sub(ethers.utils.parseUnits('0.01'))
-      console.log('wPowerPerpDesired', wPowerPerpDesired.toString())
-      console.log('wPowerPerpAmountInLP', wPowerPerpAmountInLP.toString())
-      console.log('wethAmountInLP', wethAmountInLP.toString())
-
       // weth needed to by additional oSQTH
       const wethAmountOut = await quoter.connect(tester).callStatic.quoteExactInputSingle(wSqueeth.address,
         weth.address,
         3000,
         wPowerPerpAmountInLP.sub(wPowerPerpDesired),
         0)
-      console.log('wethAmountOut', wethAmountOut.toString())
       const params = {
         wPowerPerpPool: wSqueethPool.address,
         tokenId: oldTokenId,
@@ -2155,18 +2127,9 @@ describe("Controller helper integration test", function () {
 
       const wPowerPerpAmountInNewLp = (isWethToken0) ? amount1New : amount0New;
       const wethAmountInNewLp = (isWethToken0) ? amount0New : amount1New;
-
-      console.log('wethAmountOut', wethAmountOut.toString())
-
       const depositorEthBalanceAfter = await ethers.provider.getBalance(depositor.address)
-
-
       // Changes
       const depositorEthDiff = depositorEthBalanceAfter.sub(depositorEthBalanceBefore)
-      console.log('depositorEthDiff', depositorEthDiff.toString())
-      console.log('gasSpent', gasSpent.toString())
-
-
       expect(ownerOfUniNFT === depositor.address).to.be.true;
       expect(wPowerPerpAmountInNewLp.sub(wPowerPerpDesired).lte(10)).to.be.true
       expect(wethAmountInNewLp.eq(BigNumber.from(0))).to.be.true
@@ -2236,7 +2199,6 @@ describe("Controller helper integration test", function () {
 
 
     it("rebalance to only eth (sell excess oSQTH)", async () => {
-      console.log('starting new test')
       let tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
       const oldTokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
       const oldPosition = await (positionManager as INonfungiblePositionManager).positions(oldTokenId);
@@ -2324,14 +2286,6 @@ describe("Controller helper integration test", function () {
       const depositorSqueethDiff = depositorSqueethBalanceAfter.sub(depositorSqueethBalanceBefore)
       const vaultSqueethDiff = wPowerPerpAmountInNewLp.sub(wPowerPerpAmountInLp)
       const vaultEthDiff = wethAmountInNewLp.sub(wethAmountInLp)
-      console.log('wPowerPerpAmountInLP', wPowerPerpAmountInLp.toString())
-      console.log('wethAmountInLp', wethAmountInLp.toString())
-      console.log('wPowerPerpAmountInNewLp', wPowerPerpAmountInNewLp.toString())
-      console.log('wethAmountInNewLp', wethAmountInNewLp.toString())
-      console.log('depositorEthDiff', depositorEthDiff.toString())
-      console.log('depositorSqueethDiff', depositorSqueethDiff.toString())
-      console.log('wethAmountOut', wethAmountOut.toString())   
-      console.log('gasSpent', gasSpent.toString())
       expect(ownerOfUniNFT === depositor.address).to.be.true;
       expect(wPowerPerpAmountInNewLp.sub(wPowerPerpDesired).lte(10)).to.be.true
       expect(wethAmountInNewLp.eq(BigNumber.from(0))).to.be.true
@@ -2401,7 +2355,6 @@ describe("Controller helper integration test", function () {
   
   
       it("rebalance to decrease WETH amount and LP only oSQTH (sell excess weth)", async () => {
-        console.log('starting new test')
         let tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
         const oldTokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
         const oldPosition = await (positionManager as INonfungiblePositionManager).positions(oldTokenId);
@@ -2433,20 +2386,15 @@ describe("Controller helper integration test", function () {
     })
         const wPowerPerpAmountInLp = (isWethToken0) ? amount1 : amount0;
         const wethAmountInLp = (isWethToken0) ? amount0 : amount1;
-        console.log('wPowerPerpAmountInLP', wPowerPerpAmountInLp.toString())
+        // expected amount from swap
 
-        console.log('wethAmountInLP', wethAmountInLp.toString())
         const wethAmountOut = await quoter.connect(tester).callStatic.quoteExactInputSingle(wSqueeth.address,
         weth.address,
         3000,
         wPowerPerpAmountInLp,
         0)
-        // amount received from swap
-        console.log('wethAmountOut', wethAmountOut.toString())
         
-
         //uniswap LPing often will give 1 wei less than expected, with the price of oSQTH need to do more than 1 wei due to rounding up the amount owed 
-  
         const params = {
           wPowerPerpPool: wSqueethPool.address,
           tokenId: oldTokenId,
@@ -2465,12 +2413,10 @@ describe("Controller helper integration test", function () {
         }
   
         await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controllerHelper.address, oldTokenId);
-        // console.log('before rebalanceWithoutVault')
         const tx = await  controllerHelper.connect(depositor).rebalanceLpWithoutVault(params);
         const receipt = await tx.wait()
         const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
 
-        // console.log('after rebalanceWithoutVault')
         const depositorEthBalanceAfter = await provider.getBalance(depositor.address)
 
 
