@@ -1483,42 +1483,32 @@ describe("Controller helper integration test", function () {
       const limitPriceEthPerPowerPerp = squeethPrice.mul(one.sub(slippage)).div(one);
 
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address);
-      await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controllerHelper.address, tokenId); 
-      await controllerHelper.connect(depositor).closeShortWithUserNft({
+      await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controllerHelper.address, tokenId);
+      
+      const tx = await controllerHelper.connect(depositor).closeShortWithUserNft({
         vaultId, 
         tokenId,
         liquidity: positionBefore.liquidity,
         liquidityPercentage: liquidityPercentage,
         wPowerPerpAmountToBurn: mintWSqueethAmount, 
         collateralToWithdraw: BigNumber.from(0), 
-        limitPriceEthPerPowerPerp, 
+        limitPriceEthPerPowerPerp: limitPriceEthPerPowerPerp, 
         amount0Min: BigNumber.from(0), 
         amount1Min:BigNumber.from(0),
         burnExactRemoved: true,
         poolFee: 3000
       })
-
+      const receipt = await tx.wait()
+      const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
+      // State after
       const positionAfter = await (positionManager as INonfungiblePositionManager).positions(tokenId);
       const vaultAfter = await controller.vaults(vaultId);
       const depositorEthBalanceAfter = await provider.getBalance(depositor.address)
-
+      const depositorEthDiff = depositorEthBalanceAfter.sub(depositorEthBalanceBefore)
       expect(positionAfter.liquidity.eq(BigNumber.from(0))).to.be.true
-      console.log('vaultAfter.shortAmount', vaultAfter.shortAmount.toString())
       expect(vaultAfter.shortAmount.abs().lte(10)).to.be.true
       expect(vaultAfter.collateralAmount.eq(vaultBefore.collateralAmount)).to.be.true
-
-      if(wPowerPerpAmountToWithdraw.lt(mintWSqueethAmount)) {
-        const ethToBuySqueeth = (mintWSqueethAmount.sub(wPowerPerpAmountToWithdraw)).mul(squeethPrice).div(one); 
-        const remainingETHFromLp = wethAmountToWithdraw.sub(ethToBuySqueeth);
-
-        expect(Number(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).sub(vaultBefore.collateralAmount.add(remainingETHFromLp)).div(one).toString()) <= 0.01).to.be.true
-      }
-      else if (wPowerPerpAmountToWithdraw.gt(mintWSqueethAmount)) {
-        const wPowerPerpAmountToSell = wPowerPerpAmountToWithdraw.sub(mintWSqueethAmount);
-        const ethToGet = wPowerPerpAmountToSell.mul(squeethPrice).div(one);
-
-        expect(Number(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).sub((ethToGet).add(wethAmountToWithdraw)).div(one).toString()) <= 0.01).to.be.true
-      }
+      expect((depositorEthDiff.sub(wethAmountInLP).add(gasSpent)).abs().lte(ethers.utils.parseUnits('0.01'))).to.be.true
 
     })
   })
@@ -1843,14 +1833,14 @@ describe("Controller helper integration test", function () {
       const wPowerPerpAmountInLP = (isWethToken0) ? amount1 : amount0;
       const wethAmountInLP = (isWethToken0) ? amount0 : amount1;
       //uniswap LPing often will give 1 wei less than expected, with the price of oSQTH need to do more than 1 wei due to rounding up the amount owed 
-      const squeethDesired = wPowerPerpAmountInLP.sub(10).add(squeethAmountOut)
+      const wPowerPerpDesired = wPowerPerpAmountInLP.sub(10).add(squeethAmountOut)
 
       const params = {
         wPowerPerpPool: wSqueethPool.address,
         tokenId: oldTokenId,
         ethAmountToLp: BigNumber.from(0),
         liquidity: oldPosition.liquidity,
-        wPowerPerpAmountDesired: squeethDesired,
+        wPowerPerpAmountDesired: wPowerPerpDesired,
         wethAmountDesired: ethers.utils.parseUnits('0'),
         amount0DesiredMin: BigNumber.from(0),
         amount1DesiredMin: BigNumber.from(0),
@@ -1882,7 +1872,7 @@ describe("Controller helper integration test", function () {
       const wethAmountInNewLp = (isWethToken0) ? amount0New : amount1New;
 
       expect(ownerOfUniNFT === depositor.address).to.be.true;
-      expect(wPowerPerpAmountInNewLp.sub(squeethDesired).lte(10)).to.be.true
+      expect(wPowerPerpAmountInNewLp.sub(wPowerPerpDesired).lte(10)).to.be.true
       expect(wethAmountInNewLp.eq(BigNumber.from(0))).to.be.true
     })
 
@@ -1979,14 +1969,14 @@ describe("Controller helper integration test", function () {
       const wPowerPerpAmountInLP = (isWethToken0) ? amount1 : amount0;
       const wethAmountInLP = (isWethToken0) ? amount0 : amount1;
       //uniswap LPing often will give 1 wei less than expected, with the price of oSQTH need to do more than 1 wei due to rounding up the amount owed 
-      const squeethDesired = wPowerPerpAmountInLP.sub(ethers.utils.parseUnits('0.01'))
+      const wPowerPerpDesired = wPowerPerpAmountInLP.sub(ethers.utils.parseUnits('0.01'))
 
       const params = {
         wPowerPerpPool: wSqueethPool.address,
         tokenId: oldTokenId,
         ethAmountToLp: BigNumber.from(0),
         liquidity: oldPosition.liquidity,
-        wPowerPerpAmountDesired: squeethDesired,
+        wPowerPerpAmountDesired: wPowerPerpDesired,
         wethAmountDesired: ethers.utils.parseUnits('0'),
         amount0DesiredMin: BigNumber.from(0),
         amount1DesiredMin: BigNumber.from(0),
@@ -2018,7 +2008,7 @@ describe("Controller helper integration test", function () {
       const wethAmountInNewLp = (isWethToken0) ? amount0New : amount1New;
 
       expect(ownerOfUniNFT === depositor.address).to.be.true;
-      expect(wPowerPerpAmountInNewLp.sub(squeethDesired).lte(10)).to.be.true
+      expect(wPowerPerpAmountInNewLp.sub(wPowerPerpDesired).lte(10)).to.be.true
       expect(wethAmountInNewLp.eq(BigNumber.from(0))).to.be.true
     })
 
@@ -2103,6 +2093,8 @@ describe("Controller helper integration test", function () {
 
       const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
       const positionBefore = await (positionManager as INonfungiblePositionManager).positions(tokenId);
+      const depositorEthBalanceBefore = await ethers.provider.getBalance(depositor.address)
+
 
       await (positionManager as INonfungiblePositionManager).connect(depositor).approve(positionManager.address, tokenId); 
       const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
@@ -2114,15 +2106,25 @@ describe("Controller helper integration test", function () {
       })
       const wPowerPerpAmountInLP = (isWethToken0) ? amount1 : amount0;
       const wethAmountInLP = (isWethToken0) ? amount0 : amount1;
-      //uniswap LPing often will give 1 wei less than expected, with the price of oSQTH need to do more than 1 wei due to rounding up the amount owed 
-      const squeethDesired = wPowerPerpAmountInLP.sub(ethers.utils.parseUnits('0.01'))
+      // uniswap LPing often will give 1 wei less than expected, with the price of oSQTH need to do more than 1 wei due to rounding up the amount owed 
+      const wPowerPerpDesired = wPowerPerpAmountInLP.sub(ethers.utils.parseUnits('0.01'))
+      console.log('wPowerPerpDesired', wPowerPerpDesired.toString())
+      console.log('wPowerPerpAmountInLP', wPowerPerpAmountInLP.toString())
+      console.log('wethAmountInLP', wethAmountInLP.toString())
 
+      // weth needed to by additional oSQTH
+      const wethAmountOut = await quoter.connect(tester).callStatic.quoteExactInputSingle(wSqueeth.address,
+        weth.address,
+        3000,
+        wPowerPerpAmountInLP.sub(wPowerPerpDesired),
+        0)
+      console.log('wethAmountOut', wethAmountOut.toString())
       const params = {
         wPowerPerpPool: wSqueethPool.address,
         tokenId: oldTokenId,
         ethAmountToLp: BigNumber.from(0),
         liquidity: oldPosition.liquidity,
-        wPowerPerpAmountDesired: squeethDesired,
+        wPowerPerpAmountDesired: wPowerPerpDesired,
         wethAmountDesired: ethers.utils.parseUnits('0'),
         amount0DesiredMin: BigNumber.from(0),
         amount1DesiredMin: BigNumber.from(0),
@@ -2135,8 +2137,9 @@ describe("Controller helper integration test", function () {
       }
 
       await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controllerHelper.address, oldTokenId);
-      await controllerHelper.connect(depositor).rebalanceLpWithoutVault(params);
-
+      const tx = await  controllerHelper.connect(depositor).rebalanceLpWithoutVault(params);
+      const receipt = await tx.wait()
+      const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
       tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
       const newTokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
       const newPosition = await (positionManager as INonfungiblePositionManager).positions(newTokenId);
@@ -2153,9 +2156,21 @@ describe("Controller helper integration test", function () {
       const wPowerPerpAmountInNewLp = (isWethToken0) ? amount1New : amount0New;
       const wethAmountInNewLp = (isWethToken0) ? amount0New : amount1New;
 
+      console.log('wethAmountOut', wethAmountOut.toString())
+
+      const depositorEthBalanceAfter = await ethers.provider.getBalance(depositor.address)
+
+
+      // Changes
+      const depositorEthDiff = depositorEthBalanceAfter.sub(depositorEthBalanceBefore)
+      console.log('depositorEthDiff', depositorEthDiff.toString())
+      console.log('gasSpent', gasSpent.toString())
+
+
       expect(ownerOfUniNFT === depositor.address).to.be.true;
-      expect(wPowerPerpAmountInNewLp.sub(squeethDesired).lte(10)).to.be.true
+      expect(wPowerPerpAmountInNewLp.sub(wPowerPerpDesired).lte(10)).to.be.true
       expect(wethAmountInNewLp.eq(BigNumber.from(0))).to.be.true
+      expect(wethAmountInLP.add(wethAmountOut).sub(gasSpent).sub(depositorEthDiff).lte(ethers.utils.parseUnits('0.01'))).to.be.true
     })
 
 
@@ -2240,6 +2255,9 @@ describe("Controller helper integration test", function () {
 
       const tokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
       const positionBefore = await (positionManager as INonfungiblePositionManager).positions(tokenId);
+      const depositorEthBalanceBefore = await ethers.provider.getBalance(depositor.address)
+      const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
+
 
       await (positionManager as INonfungiblePositionManager).connect(depositor).approve(positionManager.address, tokenId); 
       const [amount0, amount1] = await (positionManager as INonfungiblePositionManager).connect(depositor).callStatic.decreaseLiquidity({
@@ -2252,14 +2270,21 @@ describe("Controller helper integration test", function () {
       const wPowerPerpAmountInLp = (isWethToken0) ? amount1 : amount0;
       const wethAmountInLp = (isWethToken0) ? amount0 : amount1;
       //uniswap LPing often will give 1 wei less than expected, with the price of oSQTH need to do more than 1 wei due to rounding up the amount owed 
-      const squeethDesired = wPowerPerpAmountInLp.div(2)
+      const wPowerPerpDesired = wPowerPerpAmountInLp.div(2)
+
+      // Proceeds of sale of LP wPowerPerp
+      const wethAmountOut = await quoter.connect(tester).callStatic.quoteExactInputSingle(wSqueeth.address,
+        weth.address,
+        3000,
+        wPowerPerpAmountInLp.sub(wPowerPerpDesired),
+        0)
 
       const params = {
         wPowerPerpPool: wSqueethPool.address,
         tokenId: oldTokenId,
         ethAmountToLp: BigNumber.from(0),
         liquidity: oldPosition.liquidity,
-        wPowerPerpAmountDesired: squeethDesired,
+        wPowerPerpAmountDesired: wPowerPerpDesired,
         wethAmountDesired: ethers.utils.parseUnits('0'),
         amount0DesiredMin: BigNumber.from(0),
         amount1DesiredMin: BigNumber.from(0),
@@ -2272,7 +2297,14 @@ describe("Controller helper integration test", function () {
       }
 
       await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controllerHelper.address, oldTokenId);
-      await controllerHelper.connect(depositor).rebalanceLpWithoutVault(params);
+      const tx = await  controllerHelper.connect(depositor).rebalanceLpWithoutVault(params);
+      const receipt = await tx.wait()
+      const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
+
+      const depositorEthBalanceAfter = await provider.getBalance(depositor.address)
+      const depositorSqueethBalanceAfter= await wSqueeth.balanceOf(depositor.address)
+
+
       tokenIndexAfter = await (positionManager as INonfungiblePositionManager).totalSupply();
       const newTokenId = await (positionManager as INonfungiblePositionManager).tokenByIndex(tokenIndexAfter.sub(1));
       const newPosition = await (positionManager as INonfungiblePositionManager).positions(newTokenId);
@@ -2288,14 +2320,24 @@ describe("Controller helper integration test", function () {
 
       const wPowerPerpAmountInNewLp = (isWethToken0) ? amount1New : amount0New;
       const wethAmountInNewLp = (isWethToken0) ? amount0New : amount1New;
-      // console.log('wPowerPerpAmountInLP',wPowerPerpAmountInLp.toString())
-      // console.log('wethAmountInLp', wethAmountInLp.toString())
-      // console.log('wPowerPerpAmountInNewLp',wPowerPerpAmountInNewLp.toString())
-      // console.log('wethAmountInNewLp', wethAmountInNewLp.toString())
+      const depositorEthDiff = depositorEthBalanceAfter.sub(depositorEthBalanceBefore)
+      const depositorSqueethDiff = depositorSqueethBalanceAfter.sub(depositorSqueethBalanceBefore)
+      const vaultSqueethDiff = wPowerPerpAmountInNewLp.sub(wPowerPerpAmountInLp)
+      const vaultEthDiff = wethAmountInNewLp.sub(wethAmountInLp)
+      console.log('wPowerPerpAmountInLP', wPowerPerpAmountInLp.toString())
+      console.log('wethAmountInLp', wethAmountInLp.toString())
+      console.log('wPowerPerpAmountInNewLp', wPowerPerpAmountInNewLp.toString())
+      console.log('wethAmountInNewLp', wethAmountInNewLp.toString())
+      console.log('depositorEthDiff', depositorEthDiff.toString())
+      console.log('depositorSqueethDiff', depositorSqueethDiff.toString())
+      console.log('wethAmountOut', wethAmountOut.toString())   
+      console.log('gasSpent', gasSpent.toString())
       expect(ownerOfUniNFT === depositor.address).to.be.true;
-      expect(wPowerPerpAmountInNewLp.sub(squeethDesired).lte(10)).to.be.true
+      expect(wPowerPerpAmountInNewLp.sub(wPowerPerpDesired).lte(10)).to.be.true
       expect(wethAmountInNewLp.eq(BigNumber.from(0))).to.be.true
       expect(wPowerPerpAmountInNewLp.sub(wPowerPerpAmountInLp.div(2)).abs().lte(10)).to.be.true
+      // Depositor gets weth in LP + weth proceeds from selling squeeth
+      expect((depositorEthDiff.sub(wethAmountInLp).sub(wethAmountOut).add(gasSpent)).abs().lte(ethers.utils.parseUnits('0.01'))).to.be.true
     })
 
 
@@ -2391,8 +2433,18 @@ describe("Controller helper integration test", function () {
     })
         const wPowerPerpAmountInLp = (isWethToken0) ? amount1 : amount0;
         const wethAmountInLp = (isWethToken0) ? amount0 : amount1;
-        // console.log('wPowerPerpAmountInLP', wPowerPerpAmountInLp.toString())
-        // console.log('wethAmountInLP', wethAmountInLp.toString())
+        console.log('wPowerPerpAmountInLP', wPowerPerpAmountInLp.toString())
+
+        console.log('wethAmountInLP', wethAmountInLp.toString())
+        const wethAmountOut = await quoter.connect(tester).callStatic.quoteExactInputSingle(wSqueeth.address,
+        weth.address,
+        3000,
+        wPowerPerpAmountInLp,
+        0)
+        // amount received from swap
+        console.log('wethAmountOut', wethAmountOut.toString())
+        
+
         //uniswap LPing often will give 1 wei less than expected, with the price of oSQTH need to do more than 1 wei due to rounding up the amount owed 
   
         const params = {
@@ -2414,7 +2466,10 @@ describe("Controller helper integration test", function () {
   
         await (positionManager as INonfungiblePositionManager).connect(depositor).approve(controllerHelper.address, oldTokenId);
         // console.log('before rebalanceWithoutVault')
-        await controllerHelper.connect(depositor).rebalanceLpWithoutVault(params);
+        const tx = await  controllerHelper.connect(depositor).rebalanceLpWithoutVault(params);
+        const receipt = await tx.wait()
+        const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
+
         // console.log('after rebalanceWithoutVault')
         const depositorEthBalanceAfter = await provider.getBalance(depositor.address)
 
@@ -2434,6 +2489,7 @@ describe("Controller helper integration test", function () {
   
         const wPowerPerpAmountInNewLp = (isWethToken0) ? amount1New : amount0New;
         const wethAmountInNewLp = (isWethToken0) ? amount0New : amount1New;
+        const depositorEthDiff = depositorEthBalanceAfter.sub(depositorEthBalanceBefore)
         // console.log('wPowerPerpAmountInLP',wPowerPerpAmountInLp.toString())
         // console.log('wethAmountInLp', wethAmountInLp.toString())
         // console.log('wPowerPerpAmountInNewLp',wPowerPerpAmountInNewLp.toString())
@@ -2441,11 +2497,16 @@ describe("Controller helper integration test", function () {
         // console.log('depositor address', depositor.address);
         // console.log('depositorEthBalanceBefore', depositorEthBalanceBefore.toString());
         // console.log('depositorEthBalanceAfter', depositorEthBalanceAfter.toString());
+        // console.log('depositorEthDiff', depositorEthBalanceAfter.sub(depositorEthBalanceBefore).toString());
+        // console.log('wethAmountOut', wethAmountOut.toString());
+        // console.log('gasSpent', gasSpent.toString())
         expect(ownerOfUniNFT === depositor.address).to.be.true;
         // Sold all wPowerPerp in LP
         expect(wPowerPerpAmountInNewLp.lte(10)).to.be.true
         // weth stays the same
         expect((wethAmountInNewLp.sub(wethAmountInLp)).abs().lte(10)).to.be.true
+        // squeeth sold for approximately the right amount of eth
+        expect((depositorEthDiff.sub(wethAmountOut).sub(gasSpent)).lte(ethers.utils.parseUnits('0.01'))).to.be.true
       })
   
   
