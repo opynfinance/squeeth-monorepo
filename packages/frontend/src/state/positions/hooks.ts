@@ -46,7 +46,6 @@ import useAppEffect from '@hooks/useAppEffect'
 import useAppMemo from '@hooks/useAppMemo'
 
 export const useSwaps = () => {
-  const [swapData, setSwapData] = useState<swaps | swapsRopsten | undefined>(undefined)
   const [networkId] = useAtom(networkIdAtom)
   const [address] = useAtom(addressAtom)
   const setSwaps = useUpdateAtom(swapsAtom)
@@ -99,17 +98,13 @@ export const useSwaps = () => {
 
   useAppEffect(() => {
     if (data?.swaps) {
-      setSwaps({ swaps: data.swaps })
+      setSwaps({ swaps: data?.swaps })
+    } else {
+      setSwaps({ swaps: [] })
     }
   }, [data?.swaps, setSwaps])
 
-  useAppEffect(() => {
-    if (data && data.swaps && data.swaps.length > 0) {
-      setSwapData(data)
-    }
-  }, [data])
-
-  return { data: swapData, refetch, loading, error, startPolling, stopPolling }
+  return { data, refetch, loading, error, startPolling, stopPolling }
 }
 
 export const useComputeSwaps = () => {
