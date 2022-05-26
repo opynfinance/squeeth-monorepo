@@ -36,7 +36,7 @@ const RestrictUserProvider: React.FC = ({ children }) => {
   }, [])
 
   useEffect(() => {
-    if (isRestricted && networkId !== Networks.ROPSTEN) {
+    if (isRestricted && networkId === Networks.MAINNET) {
       handleRestrictUser(true)
     } else {
       handleRestrictUser(false)
