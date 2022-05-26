@@ -74,7 +74,7 @@ export const useVaultManager = () => {
         return { vaults: newVaults }
       },
     })
-  }, [address, subscribeToMore, data?.vaults.length])
+  }, [address, subscribeToMore, data?.vaults])
 
   const vaultsData = data?.vaults
     .filter((v) => {
@@ -88,8 +88,16 @@ export const useVaultManager = () => {
       operator,
     }))
 
+  const allVaultsData = data?.vaults.map(({ id, NftCollateralId, collateralAmount, shortAmount, operator }) => ({
+    id,
+    NFTCollateralId: NftCollateralId,
+    collateralAmount: toTokenAmount(new BigNumber(collateralAmount), 18),
+    shortAmount: toTokenAmount(new BigNumber(shortAmount), OSQUEETH_DECIMALS),
+    operator,
+  }))
+
   return useAppMemo(
-    () => ({ vaults: vaultsData, loading: loading || isPolling, updateVault }),
-    [vaultsData, loading, isPolling, updateVault],
+    () => ({ allVaults: allVaultsData, vaults: vaultsData, loading: loading || isPolling, updateVault }),
+    [data?.vaults, vaultsData, loading, isPolling, updateVault],
   )
 }

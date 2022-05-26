@@ -634,7 +634,6 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                   collatPercent < 150 ||
                   !!openError ||
                   !!existingLongError ||
-                  (vault && vault.shortAmount.isZero()) ||
                   !!vaultIdDontLoadedError
                 }
                 variant={shortOpenPriceImpactErrorState ? 'outlined' : 'contained'}

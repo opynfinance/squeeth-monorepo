@@ -425,14 +425,34 @@ export const useVaultQuery = (vaultId: number) => {
   return { ...query, data: vaultData }
 }
 
+// check if there is no vault opened and can be reused
+// if there is an opened vault, then use the existing one
+// if there is no opened vault and had vaults in history then use the latest one to reopen a position
+// if there is no opened vault and had no vaults in history, then use 0 to open a new vault to create a position
 export const useFirstValidVault = () => {
-  const { vaults: shortVaults, loading } = useVaultManager()
+  const { vaults: shortVaults, loading, allVaults } = useVaultManager()
+  let validVault
+  let validVaultID
+  const firstValidVault = shortVaults?.find((vault) => vault.collateralAmount.isGreaterThan(0))
 
-  const vault = shortVaults?.find((vault) => vault.collateralAmount.isGreaterThan(0))
-
+  if (Number(firstValidVault?.id)) {
+    validVaultID = Number(firstValidVault?.id)
+    validVault = firstValidVault
+  } else {
+    if (allVaults && allVaults?.length) {
+      const theValidVault = allVaults
+        ?.slice()
+        .reverse()
+        .find((vault) => vault.collateralAmount.isEqualTo(0))
+      validVaultID = Number(theValidVault?.id)
+      validVault = theValidVault
+    } else {
+      validVaultID = 0
+    }
+  }
   return {
     isVaultLoading: loading,
-    vaultId: Number(vault?.id) || 0,
-    validVault: vault,
+    vaultId: validVaultID || 0,
+    validVault: validVault,
   }
 }
