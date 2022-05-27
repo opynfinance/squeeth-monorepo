@@ -400,6 +400,7 @@ export const useDailyHistoricalFunding = () => {
   const data = useQuery([address, networkId, 'DailyHistoricalFunding'], () => getDailyHistoricalFunding(contract), {
     enabled: Boolean(contract),
     onError: (error: any) => {
+      // This query will initially fail on ropsten cos of this error, the below line ensures a refetch when that happens
       if (error?.message.includes(`Returned values aren't valid, did it run Out of Gas?`)) data.refetch()
     },
   })
@@ -419,6 +420,7 @@ export const useCurrentImpliedFunding = () => {
   const query = useQuery([address, networkId, 'CurrentImpliedFunding'], () => getCurrentImpliedFunding(contract), {
     enabled: Boolean(contract),
     onError: (error: any) => {
+      // This query will initially fail on ropsten cos of this error, the below line ensures a refetch when that happens
       if (error?.message.includes(`Returned values aren't valid, did it run Out of Gas?`)) query.refetch()
     },
     onSuccess: (data) => {
