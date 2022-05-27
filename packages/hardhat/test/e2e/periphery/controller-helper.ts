@@ -263,7 +263,7 @@ describe("ControllerHelper: mainnet fork", function () {
     it("open short in new vault, mint, LP oSQTH only, deposit LP NFT", async () => {
       const vaultId = (await shortSqueeth.nextId());
       const normFactor = await controller.getExpectedNormalizationFactor()
-      const mintWSqueethAmount = ethers.utils.parseUnits('40')
+      const mintWSqueethAmount = ethers.utils.parseUnits('100')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
@@ -472,7 +472,7 @@ describe("ControllerHelper: mainnet fork", function () {
     it("open short in new vault, mint, LP oSQTH only, deposit LP NFT, some eth added", async () => {
       // New vault with 1.5x collateral
       const normFactor = await controller.getExpectedNormalizationFactor()
-      const mintWSqueethAmount : BigNumber = ethers.utils.parseUnits('40')
+      const mintWSqueethAmount : BigNumber = ethers.utils.parseUnits('100')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
@@ -1168,8 +1168,8 @@ it("Mint more oSQTH, withdraw half eth from LP, deposit some eth into vault and 
   const vaultBefore = await controller.vaults(vaultId);
   // Estimate proceeds from liquidating squeeth in LP
 
-  // Estimate of new LP with 0.01 weth safety margin
-  const safetyEth = ethers.utils.parseUnits('0.01')
+  // Estimate of new LP with 0.05 weth safety margin
+  const safetyEth = ethers.utils.parseUnits('0.05')
   const wethAmountToDeposit =  wethAmountInLPBefore.div(4).sub(safetyEth)
   const wethAmountToWithdraw =  wethAmountInLPBefore.div(4).sub(safetyEth)
   const wPowerPerpAmountToMint = ethers.utils.parseUnits('1')
