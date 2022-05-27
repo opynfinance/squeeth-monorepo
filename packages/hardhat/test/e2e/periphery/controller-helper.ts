@@ -432,13 +432,16 @@ describe("ControllerHelper: mainnet fork", function () {
 
       const newTick = isWethToken0 ? 60*((currentTick - currentTick%60)/60 - 10): 60*((currentTick - currentTick%60)/60 + 10)
       
+      // Flashloan to cover complete removal of LP (rearrange collateral ratio formula for 1.5 and add 0.1 ETH safety margin)
+      const flashLoanAmount = (vaultBefore.shortAmount.add(mintWSqueethAmount)).mul(normFactor).mul(ethPrice).mul(3).div(one.mul(one).mul(10000).mul(2)).sub(vaultBefore.collateralAmount).add(ethers.utils.parseUnits('0.1'))
+
       const flashloanWMintDepositNftParams = {
         wPowerPerpPool: wSqueethPool.address,
         vaultId: vaultId,
         wPowerPerpAmount: mintWSqueethAmount,
-        collateralToDeposit: debtInEth,
-        collateralToFlashloan: debtInEth,
-        collateralToLp: BigNumber.from(0),
+        collateralToDeposit: flashLoanAmount,
+        collateralToFlashloan: flashLoanAmount,
+        collateralToLp: 0,
         collateralToWithdraw: 0,
         amount0Min: amount0Min,
         amount1Min: amount1Min,
@@ -761,12 +764,13 @@ describe("ControllerHelper: mainnet fork", function () {
       await weth.connect(owner).approve(uniswapRouter.address, constants.MaxUint256)
 
       await uniswapRouter.connect(owner).exactInputSingle(swapParamBuy)
+
       const ownerSqueethBalanceAfterTrade1 = await wSqueeth.balanceOf(owner.address)
       const ownerWethBalanceAfterTrade1 = await weth.balanceOf(owner.address)
 
       expect(ownerWethBalanceBeforeTrade1.sub(ownerWethBalanceAfterTrade1).eq(ethToSell)).to.be.true
-
-      const wSqueethToSell = ownerSqueethBalanceAfterTrade1.sub(ownerSqueethBalanceBeforeTrade1)
+      // 
+      const wSqueethToSell = ownerSqueethBalanceAfterTrade1.sub(ownerSqueethBalanceBeforeTrade1).sub(ethers.utils.parseUnits('0.01'))
       const swapParamSell = {
         tokenIn: wSqueeth.address,
         tokenOut: weth.address,
@@ -815,6 +819,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
       const depositorEthBalanceBefore = await ethers.provider.getBalance(depositor.address)
       const tx = await controllerHelper.connect(depositor).rebalanceLpInVault(vaultId, collateralToFlashloan, rebalanceLpInVaultParams);
+
       const receipt = await tx.wait()
       const gasSpent = receipt.gasUsed.mul(receipt.effectiveGasPrice)
       const depositorSqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
