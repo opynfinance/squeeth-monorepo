@@ -28,7 +28,8 @@ function MyApp({ Component, pageProps }: any) {
   useRenderCounter('9', '0')
 
   const router = useRouter()
-  useOnboard()
+  const networkId = useAtomValue(networkIdAtom)
+  const client = useMemo(() => uniswapClient[networkId] || uniswapClient[1], [networkId])
 
   React.useEffect(() => {
     // Remove the server-side injected CSS.
@@ -66,7 +67,9 @@ function MyApp({ Component, pageProps }: any) {
     <CookiesProvider>
       <RestrictUserProvider>
         <QueryClientProvider client={queryClient}>
-          <TradeApp Component={Component} pageProps={pageProps} />
+          <ApolloProvider client={client}>
+            <TradeApp Component={Component} pageProps={pageProps} />
+          </ApolloProvider>
           <ReactQueryDevtools initialIsOpen={false} />
         </QueryClientProvider>
       </RestrictUserProvider>
@@ -75,6 +78,7 @@ function MyApp({ Component, pageProps }: any) {
 }
 
 const Init = () => {
+  useOnboard()
   useUpdateSqueethPrices()
   useUpdateSqueethPoolData()
   useInitController()
@@ -84,9 +88,6 @@ const Init = () => {
 const MemoizedInit = memo(Init)
 
 const TradeApp = ({ Component, pageProps }: any) => {
-  const networkId = useAtomValue(networkIdAtom)
-  const client = useMemo(() => uniswapClient[networkId] || uniswapClient[1], [networkId])
-
   return (
     <React.Fragment>
       <Head>
@@ -105,16 +106,15 @@ const TradeApp = ({ Component, pageProps }: any) => {
         <link rel="icon" href="/favicon.ico" />
         <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width" />
       </Head>
-      <ApolloProvider client={client}>
-        <MemoizedInit />
-        <ThemeProvider theme={getTheme(Mode.DARK)}>
-          {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
-          <CssBaseline />
-          <ComputeSwapsProvider>
-            <Component {...pageProps} />
-          </ComputeSwapsProvider>
-        </ThemeProvider>
-      </ApolloProvider>
+
+      <MemoizedInit />
+      <ThemeProvider theme={getTheme(Mode.DARK)}>
+        {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
+        <CssBaseline />
+        <ComputeSwapsProvider>
+          <Component {...pageProps} />
+        </ComputeSwapsProvider>
+      </ThemeProvider>
     </React.Fragment>
   )
 }

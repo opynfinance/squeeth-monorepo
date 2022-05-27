@@ -24,6 +24,7 @@ import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {ControllerHelperDataType} from "./lib/ControllerHelperDataType.sol";
 import {ControllerHelperUtil} from "./lib/ControllerHelperUtil.sol";
+import {VaultLib} from "../libs/VaultLib.sol";
 
 contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IERC721Receiver {
     using SafeMath for uint256;
@@ -442,6 +443,18 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         require(IShortPowerPerp(shortPowerPerp).ownerOf(_vaultId) == msg.sender);
     }
 
+    /**
+     * @notice gets the shortAmount that has been minted from a vault
+     * @param _vaultId vault ID
+     * @return short amount from vault
+     */
+
+    function _getVaultShortAmount(uint256 _vaultId) internal view returns (uint256) {
+        VaultLib.Vault memory vault = IController(controller).vaults(_vaultId);
+
+        return vault.shortAmount;
+    }
+
     function _flashCallback(
         address _initiator,
         address, /*_asset*/
@@ -608,6 +621,12 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         (ControllerHelperDataType.DepositIntoVaultParams)
                     );
 
+                    // make sure not to fail
+                    // a user can ensure that the entire weth balance is deposited by using a sufficiently large depositIntoVaultParams.collateralToDeposit
+                    uint256 currentBalance = IWETH9(weth).balanceOf(address(this));
+                    if (currentBalance < depositIntoVaultParams.collateralToDeposit)
+                        depositIntoVaultParams.collateralToDeposit = currentBalance;
+
                     ControllerHelperUtil.mintDepositInVault(
                         controller,
                         weth,
@@ -623,15 +642,22 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         data[i].data,
                         (ControllerHelperDataType.withdrawFromVaultParams)
                     );
+
+                    uint256 currentBalance = IWPowerPerp(wPowerPerp).balanceOf(address(this));
+
                     if (withdrawFromVaultParams.burnExactRemoved) {
+                        uint256 shortAmount = _getVaultShortAmount(vaultId);
+                        if (shortAmount < currentBalance) currentBalance = shortAmount;
                         ControllerHelperUtil.burnWithdrawFromVault(
                             controller,
                             weth,
                             vaultId,
-                            IWPowerPerp(wPowerPerp).balanceOf(address(this)),
+                            currentBalance,
                             withdrawFromVaultParams.collateralToWithdraw
                         );
                     } else {
+                        if (currentBalance < withdrawFromVaultParams.wPowerPerpToBurn)
+                            withdrawFromVaultParams.wPowerPerpToBurn = currentBalance;
                         ControllerHelperUtil.burnWithdrawFromVault(
                             controller,
                             weth,
@@ -820,7 +846,10 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         bool burnExactRemoved
     ) private {
         if (burnExactRemoved) {
-            // remove exact _wPowerPerpAmount amount withdraw from LP
+            // remove exact _wPowerPerpAmount amount withdrawn from LP, unless amount is > short amount in vault
+            uint256 shortAmount = _getVaultShortAmount(_vaultId);
+            if (shortAmount < _wPowerPerpAmount) _wPowerPerpAmount = shortAmount;
+
             ControllerHelperUtil.burnWithdrawFromVault(
                 controller,
                 weth,
