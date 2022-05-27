@@ -43,11 +43,11 @@ import {
 } from 'src/state/trade/atoms'
 import { toTokenAmount } from '@utils/calculations'
 import { TradeType } from '../../../types'
-import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from 'src/state/controller/atoms'
 import useAppEffect from '@hooks/useAppEffect'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppMemo from '@hooks/useAppMemo'
 import BreakEven from './BreakEven'
+import { useCurrentImpliedFunding, useDailyHistoricalFunding } from 'src/state/controller/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -280,8 +280,8 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   const isShort = useAtomValue(isShortAtom)
   const selectWallet = useSelectWallet()
   const { squeethAmount } = useComputeSwaps()
-  const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
-  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
+  const { dailyHistoricalFunding } = useDailyHistoricalFunding()
+  const { currentImpliedFunding } = useCurrentImpliedFunding()
 
   const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)

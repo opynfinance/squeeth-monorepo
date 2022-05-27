@@ -31,7 +31,7 @@ import {
   getWsqueethFromCrabAmount,
   getCurrentProfitableMovePercent,
 } from './utils'
-import { useGetCollatRatioAndLiqPrice, useGetVault } from '../controller/hooks'
+import { useCurrentImpliedFunding, useGetCollatRatioAndLiqPrice, useGetVault } from '../controller/hooks'
 import db from '@utils/firestore'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import BigNumber from 'bignumber.js'
@@ -44,7 +44,6 @@ import {
 import { fromTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
 import { addressAtom } from '../wallet/atoms'
-import { currentImpliedFundingAtom } from '../controller/atoms'
 import { crabStrategyContractAtom } from '../contracts/atoms'
 import useAppCallback from '@hooks/useAppCallback'
 import { BIG_ZERO } from '@constants/index'
@@ -341,7 +340,7 @@ export const useSetStrategyCap = () => {
 
 export const useSetProfitableMovePercent = () => {
   const [profitableMovePercent, setProfitableMovePercent] = useAtom(profitableMovePercentAtom)
-  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
+  const { currentImpliedFunding } = useCurrentImpliedFunding()
   const contract = useAtomValue(crabStrategyContractAtom)
 
   useEffect(() => {

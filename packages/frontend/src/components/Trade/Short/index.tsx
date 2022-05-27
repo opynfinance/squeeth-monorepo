@@ -35,6 +35,8 @@ import { collatRatioAtom } from 'src/state/ethPriceCharts/atoms'
 import { atomFamily, atomWithStorage, useResetAtom, useUpdateAtom } from 'jotai/utils'
 import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
 import {
+  useCurrentImpliedFunding,
+  useDailyHistoricalFunding,
   useGetCollatRatioAndLiqPrice,
   useGetDebtAmount,
   useGetShortAmountFromDebt,
@@ -52,7 +54,7 @@ import {
   tradeTypeAtom,
 } from 'src/state/trade/atoms'
 import { toTokenAmount } from '@utils/calculations'
-import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, normFactorAtom } from 'src/state/controller/atoms'
+import { currentImpliedFundingAtom, normFactorAtom } from 'src/state/controller/atoms'
 import { TradeType } from '../../../types'
 import Cancelled from '../Cancelled'
 import { useVaultData } from '@hooks/useVaultData'
@@ -256,8 +258,8 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
   const getDebtAmount = useGetDebtAmount()
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
-  const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
-  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
+  const { dailyHistoricalFunding } = useDailyHistoricalFunding()
+  const { currentImpliedFunding } = useCurrentImpliedFunding()
 
   const [quote, setQuote] = useAtom(quoteAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)

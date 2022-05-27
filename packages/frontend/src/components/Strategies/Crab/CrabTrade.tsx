@@ -34,6 +34,7 @@ import {
 import { useUserCrabTxHistory } from '@hooks/useUserCrabTxHistory'
 import { usePrevious } from 'react-use'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
+import { useCurrentImpliedFunding, useDailyHistoricalFunding } from 'src/state/controller/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -105,8 +106,8 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
   const ready = useAtomValue(readyAtom)
   const { isRestricted } = useRestrictUser()
 
-  const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
-  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
+  const { dailyHistoricalFunding } = useDailyHistoricalFunding()
+  const { currentImpliedFunding } = useCurrentImpliedFunding()
 
   const address = useAtomValue(addressAtom)
   const { data, startPolling, stopPolling } = useUserCrabTxHistory(address ?? '')
