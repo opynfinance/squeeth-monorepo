@@ -1,5 +1,6 @@
 import { useAtom, useAtomValue } from 'jotai'
 import BigNumber from 'bignumber.js'
+import { useQuery } from 'react-query'
 
 import { addressAtom, networkIdAtom, web3Atom } from '../wallet/atoms'
 import { OSQUEETH_DECIMALS, SWAP_EVENT_TOPIC, TWAP_PERIOD } from '../../constants'
@@ -27,6 +28,7 @@ import {
 import { useGetETHandOSQTHAmount } from '../nftmanager/hooks'
 import { controllerContractAtom } from '../contracts/atoms'
 import { ETH_USDC_POOL, SQUEETH_UNI_POOL } from '@constants/address'
+import { useUpdateAtom } from 'jotai/utils'
 
 export const useOpenDepositAndMint = () => {
   const address = useAtomValue(addressAtom)
@@ -390,30 +392,41 @@ const useIndex = () => {
   return index
 }
 
-const useDailyHistoricalFunding = () => {
+export const useDailyHistoricalFunding = () => {
   const address = useAtomValue(addressAtom)
   const networkId = useAtomValue(networkIdAtom)
-  const [dailyHistoricalFunding, setDailyHistoricalFunding] = useAtom(dailyHistoricalFundingAtom)
   const contract = useAtomValue(controllerContractAtom)
-  useEffect(() => {
-    if (!contract) return
-    getDailyHistoricalFunding(contract).then(setDailyHistoricalFunding)
-  }, [address, networkId, contract, setDailyHistoricalFunding])
 
-  return dailyHistoricalFunding
+  const data = useQuery([address, networkId, 'DailyHistoricalFunding'], () => getDailyHistoricalFunding(contract), {
+    enabled: Boolean(contract),
+    onError: (error: any) => {
+      if (error?.message.includes(`Returned values aren't valid, did it run Out of Gas?`)) data.refetch()
+    },
+  })
+
+  return {
+    dailyHistoricalFunding: data?.data ?? { funding: 0, period: 0 },
+    loading: data?.isLoading || data?.isFetching,
+  }
 }
 
-const useCurrentImpliedFunding = () => {
+export const useCurrentImpliedFunding = () => {
   const address = useAtomValue(addressAtom)
   const networkId = useAtomValue(networkIdAtom)
-  const [currentImpliedFunding, setCurrentImpliedFunding] = useAtom(currentImpliedFundingAtom)
+  const setCurrentImpliedFunding = useUpdateAtom(currentImpliedFundingAtom)
   const contract = useAtomValue(controllerContractAtom)
-  useEffect(() => {
-    if (!contract) return
-    getCurrentImpliedFunding(contract).then(setCurrentImpliedFunding)
-  }, [address, networkId, setCurrentImpliedFunding, contract])
 
-  return currentImpliedFunding
+  const query = useQuery([address, networkId, 'CurrentImpliedFunding'], () => getCurrentImpliedFunding(contract), {
+    enabled: Boolean(contract),
+    onError: (error: any) => {
+      if (error?.message.includes(`Returned values aren't valid, did it run Out of Gas?`)) query.refetch()
+    },
+    onSuccess: (data) => {
+      setCurrentImpliedFunding(data)
+    },
+  })
+
+  return { currentImpliedFunding: query?.data ?? 0, loading: query.isLoading || query.isFetching }
 }
 
 const useMark = () => {
@@ -454,6 +467,5 @@ export const useInitController = () => {
   useIndex()
   useMark()
   useCurrentImpliedFunding()
-  useDailyHistoricalFunding()
   useNormFactor()
 }
