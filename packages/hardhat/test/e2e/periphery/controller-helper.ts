@@ -526,7 +526,7 @@ describe("ControllerHelper: mainnet fork", function () {
   describe("Close LP position in vault: LP have more wPowerPerp than needed amount to burn", async () => {
     before("open first short position and LP" , async () => {
       const normFactor = await controller.getExpectedNormalizationFactor()
-      const mintWSqueethAmountToLp : BigNumber = ethers.utils.parseUnits('50')
+      const mintWSqueethAmountToLp : BigNumber = ethers.utils.parseUnits('100')
       const mintRSqueethAmount = mintWSqueethAmountToLp.mul(normFactor).div(one)
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
@@ -563,7 +563,7 @@ describe("ControllerHelper: mainnet fork", function () {
 
     before("open short amount more than amount in LP position" , async () => {
       const normFactor = await controller.getExpectedNormalizationFactor()
-      const mintWSqueethAmount = ethers.utils.parseUnits('100')
+      const mintWSqueethAmount = ethers.utils.parseUnits('99')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
@@ -608,7 +608,6 @@ describe("ControllerHelper: mainnet fork", function () {
 
       await controller.connect(depositor).updateOperator(vaultId, controllerHelper.address);
       await controllerHelper.connect(depositor).flashloanCloseVaultLpNft(flashloanCloseVaultLpNftParam);
-
       const positionAfter = await (positionManager as INonfungiblePositionManager).positions(uniTokenId);
       const vaultAfter = await controller.vaults(vaultId); 
 
@@ -631,9 +630,7 @@ describe("ControllerHelper: mainnet fork", function () {
       const collateralAmount = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
       const collateralToLp = mintWSqueethAmountToLp.mul(squeethPrice).div(one)
-
       await controller.connect(depositor).mintWPowerPerpAmount(0, mintWSqueethAmountToLp, 0, {value: collateralAmount})
-
       const isWethToken0 : boolean = parseInt(weth.address, 16) < parseInt(wSqueeth.address, 16) 
       const token0 = isWethToken0 ? weth.address : wSqueeth.address
       const token1 = isWethToken0 ? wSqueeth.address : weth.address
@@ -660,7 +657,7 @@ describe("ControllerHelper: mainnet fork", function () {
 
     before("open short amount more than amount in LP position" , async () => {
       const normFactor = await controller.getExpectedNormalizationFactor()
-      const mintWSqueethAmount = ethers.utils.parseUnits('55')
+      const mintWSqueethAmount = ethers.utils.parseUnits('51')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
