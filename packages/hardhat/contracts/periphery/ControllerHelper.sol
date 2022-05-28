@@ -3,8 +3,6 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import "hardhat/console.sol";
-
 // interface
 import {IWETH9} from "../interfaces/IWETH9.sol";
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
@@ -342,7 +340,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             _params.tokenId,
             1e18
         );
-        console.log("after checkClosedLp");
 
         uint256 wethAmountDesired;
         uint256 wPowerPerpAmountDesired;
@@ -512,7 +509,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 _calldata,
                 (ControllerHelperDataType.FlashloanCloseVaultLpNftParam)
             );
-
             IWETH9(weth).withdraw(_amount);
             IController(controller).deposit{value: _amount}(data.vaultId);
 
@@ -538,7 +534,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 data.tokenId,
                 data.liquidityPercentage
             );
-
             // close short position using amounts collected from closing LP, withdraw collateralToWithdraw + deposited collateralToFlashloan
             _closeShortWithAmountsFromLp(
                 data.vaultId,
