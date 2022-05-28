@@ -582,7 +582,9 @@ describe("ControllerHelper: mainnet fork", function () {
       const vaultBefore = await controller.vaults(vaultId); 
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
-      const debtInEth = vaultBefore.shortAmount.mul(scaledEthPrice).div(one)
+      const normFactor = await controller.getExpectedNormalizationFactor()
+      const scaledShortAmount = vaultBefore.shortAmount.mul(normFactor).div(one)
+      const debtInEth = scaledShortAmount.mul(scaledEthPrice).div(one)
       const collateralToFlashloan = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
       const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
@@ -677,7 +679,9 @@ describe("ControllerHelper: mainnet fork", function () {
       const vaultBefore = await controller.vaults(vaultId); 
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
-      const debtInEth = vaultBefore.shortAmount.mul(scaledEthPrice).div(one)
+      const normFactor = await controller.getExpectedNormalizationFactor()
+      const scaledShortAmount = vaultBefore.shortAmount.mul(normFactor).div(one)
+      const debtInEth = scaledShortAmount.mul(scaledEthPrice).div(one)
       const collateralToFlashloan = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
       const squeethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 420, true)
       const slippage = BigNumber.from(3).mul(BigNumber.from(10).pow(16))
@@ -793,7 +797,9 @@ describe("ControllerHelper: mainnet fork", function () {
       const vaultBefore = await controller.vaults(vaultId); 
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
-      const debtInEth = vaultBefore.shortAmount.mul(scaledEthPrice).div(one)
+      const normFactor = await controller.getExpectedNormalizationFactor()
+      const scaledShortAmount = vaultBefore.shortAmount.mul(normFactor).div(one)
+      const debtInEth = scaledShortAmount.mul(scaledEthPrice).div(one)
       const collateralToFlashloan = debtInEth.mul(3).div(2).add(ethers.utils.parseUnits('0.01'))
       const positionBefore = await (positionManager as INonfungiblePositionManager).positions(uniTokenId);
 
