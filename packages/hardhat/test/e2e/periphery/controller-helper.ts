@@ -563,7 +563,7 @@ describe("ControllerHelper: mainnet fork", function () {
 
     before("open short amount more than amount in LP position" , async () => {
       const normFactor = await controller.getExpectedNormalizationFactor()
-      const mintWSqueethAmount = ethers.utils.parseUnits('99')
+      const mintWSqueethAmount = ethers.utils.parseUnits('90')
       const mintRSqueethAmount = mintWSqueethAmount.mul(normFactor).div(one)
       const ethPrice = await oracle.getTwap(ethUsdcPool.address, weth.address, usdc.address, 420, true)
       const scaledEthPrice = ethPrice.div(10000)
