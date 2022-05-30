@@ -1,11 +1,11 @@
-import { Hidden, IconButton, Tooltip } from '@material-ui/core'
+import { Hidden, Tooltip } from '@material-ui/core'
 import Card from '@material-ui/core/Card'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Typography from '@material-ui/core/Typography'
 import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
-import ExpandMoreIcon from '@material-ui/icons/NavigateNext'
 import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown'
+import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp'
 import Image from 'next/image'
 import { useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
@@ -479,14 +479,7 @@ const SqueethInfo: React.FC = () => {
       </div>
       <div>
         {/* hard coded width layout to align with the prev line */}
-        <div className={classes.squeethInfoSubGroup}>
-          <button className={classes.advancedDetails} onClick={() => setShowAdvanced((prevState) => !prevState)}>
-            <Typography color="textSecondary" variant="body2">
-              Advanced details
-            </Typography>
-            {!showAdvanced ? <ExpandMoreIcon htmlColor="#fff" /> : <KeyboardArrowDownIcon htmlColor="#fff" />}
-          </button>
-        </div>
+
         {showAdvanced ? (
           <div className={classes.squeethInfoSubGroup}>
             <div className={classes.infoItem}>
@@ -535,6 +528,15 @@ const SqueethInfo: React.FC = () => {
             </div>
           </div>
         ) : null}
+        <div className={classes.squeethInfoSubGroup}>
+          <button className={classes.advancedDetails} onClick={() => setShowAdvanced((prevState) => !prevState)}>
+            <Typography color="textSecondary" variant="body2">
+              Advanced details
+            </Typography>
+
+            {!showAdvanced ? <KeyboardArrowDownIcon htmlColor="#fff" /> : <KeyboardArrowUpIcon htmlColor="#fff" />}
+          </button>
+        </div>
       </div>
     </div>
   )
