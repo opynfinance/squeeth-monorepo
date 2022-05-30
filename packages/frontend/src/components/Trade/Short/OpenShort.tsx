@@ -13,7 +13,7 @@ import debounce from 'lodash.debounce'
 import BigNumber from 'bignumber.js'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
-import { useResetAtom, useUpdateAtom } from 'jotai/utils'
+import { atomFamily, atomWithStorage, useResetAtom, useUpdateAtom } from 'jotai/utils'
 
 import { TradeSettings } from '@components/TradeSettings'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
@@ -31,7 +31,7 @@ import { PrimaryButton } from '@components/Button'
 import { useGetSellQuote } from 'src/state/squeethPool/hooks'
 import { useIntergrateEthInput } from '@hooks/useIntegrateEthInput'
 import { useFlashSwapAndMint } from 'src/state/controllerhelper/hooks'
-import { useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
+import { useSelectWallet, useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
 import { BIG_ZERO, MIN_COLLATERAL_AMOUNT } from '@constants/index'
 import { connectedWalletAtom, isTransactionFirstStepAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
@@ -39,7 +39,7 @@ import { addressesAtom, isLongAtom, vaultHistoryUpdatingAtom } from 'src/state/p
 import { useComputeSwaps, useFirstValidVault } from 'src/state/positions/hooks'
 import { useVaultData } from '@hooks/useVaultData'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
-import { useGetDebtAmount, useUpdateOperator } from 'src/state/controller/hooks'
+import { useGetCollatRatioAndLiqPrice, useGetDebtAmount, useUpdateOperator } from 'src/state/controller/hooks'
 import TradeInfoItem from '../TradeInfoItem'
 import UniswapData from '../UniswapData'
 import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
@@ -48,6 +48,7 @@ import useAppEffect from '@hooks/useAppEffect'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppMemo from '@hooks/useAppMemo'
 import { useVaultHistoryQuery } from '@hooks/useVaultHistory'
+import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from 'src/state/controller/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -113,10 +114,11 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-export const OpenShortPosition = ({ open }: { open: boolean }) => {
+const collatPercentFamily = atomFamily((initialValue: number) => atomWithStorage('collatPercent', initialValue))
+const FUNDING_MOVE_THRESHOLD = 0.7
+
+export const OpenShortPosition = () => {
   const classes = useStyles()
-  const [collatPercent, setCollatPercent] = useState(200)
-  const [neededCollat, setNeededCollat] = useState(new BigNumber(0))
   const [minToReceive, setMinToReceive] = useState(new BigNumber(0))
   const [confirmedAmount, setConfirmedAmount] = useState('0')
   const [liqPrice, setLiqPrice] = useState(new BigNumber(0))
@@ -125,6 +127,9 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
   const [totalCollateralAmount, setTotalCollateralAmount] = useState(new BigNumber(0))
   const [lastTypedInput, setLastTypedInput] = useState<'eth' | 'sqth' | null>(null)
   const [isVaultApproved, setIsVaultApproved] = useState(true)
+
+  const collatPercentAtom = collatPercentFamily(200)
+  const [collatPercent, setCollatPercent] = useAtom(collatPercentAtom)
   const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
   const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
@@ -136,6 +141,9 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
   const slippageAmount = useAtomValue(slippageAmountAtom)
   const { controllerHelper } = useAtomValue(addressesAtom)
+  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
+  const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
+  const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
 
   const { data } = useWalletBalance()
   const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
@@ -145,7 +153,6 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
   const getDebtAmount = useGetDebtAmount()
   const { vaultId, validVault: vault } = useFirstValidVault()
   const { squeethAmount: shortSqueethAmount } = useComputeSwaps()
-  const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
   const { cancelled, confirmed, failed, transactionData, resetTxCancelled, resetTransactionData } =
     useTransactionStatus()
   const [isVaultHistoryUpdating, setVaultHistoryUpdating] = useAtom(vaultHistoryUpdatingAtom)
@@ -153,6 +160,8 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
   const vaultHistoryQuery = useVaultHistoryQuery(Number(vaultId), isVaultHistoryUpdating)
   const { existingCollatPercent } = useVaultData(vault)
   const updateOperator = useUpdateOperator()
+  const selectWallet = useSelectWallet()
+  const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
 
   const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const collateral = useAppMemo(() => new BigNumber(ethTradeAmount), [ethTradeAmount])
@@ -160,17 +169,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
   let inputError = ''
   let priceImpactWarning: string | undefined
   let vaultIdDontLoadedError: string | undefined
-
-  useAppEffect(() => {
-    if (vault) {
-      const restOfShort = new BigNumber(vault?.shortAmount).minus(amount)
-
-      getDebtAmount(restOfShort).then((debt) => {
-        const _neededCollat = debt.times(collatPercent / 100)
-        setNeededCollat(_neededCollat)
-      })
-    }
-  }, [amount, collatPercent, getDebtAmount, vault])
+  let lowVolError: string | undefined
 
   if (connected) {
     if (new BigNumber(quote.priceImpact).gt(3)) {
@@ -186,14 +185,9 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
     } else if (vault && vaultId === 0 && vault?.shortAmount.gt(0)) {
       vaultIdDontLoadedError = 'Loading Vault...'
     }
-    if (
-      !open &&
-      amount.isGreaterThan(0) &&
-      vault &&
-      amount.lt(vault.shortAmount) &&
-      neededCollat.isLessThan(MIN_COLLATERAL_AMOUNT)
-    ) {
-      inputError = `You must have at least ${MIN_COLLATERAL_AMOUNT} ETH collateral unless you fully close out your position. Either fully close your position, or close out less`
+    if (currentImpliedFunding <= FUNDING_MOVE_THRESHOLD * dailyHistoricalFunding.funding && Number(amount) > 0) {
+      const fundingPercent = (1 - currentImpliedFunding / dailyHistoricalFunding.funding) * 100
+      lowVolError = `Funding is ${fundingPercent.toFixed(0)}% below yesterday. Consider buying later`
     }
     if (isLong) {
       inputError = 'Close your long position to open a short'
@@ -208,8 +202,14 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
       setMsgValue(result)
       setEthTradeAmount(result.toFixed(6))
       setQuote(quote)
+
+      getCollatRatioAndLiqPrice(debt.times(new BigNumber(collatPercent / 100)), new BigNumber(value)).then(
+        ({ liquidationPrice }) => {
+          setLiqPrice(liquidationPrice)
+        },
+      )
     },
-    [collatPercent, getDebtAmount, getSellQuote, setEthTradeAmount, setQuote],
+    [collatPercent, getCollatRatioAndLiqPrice, getDebtAmount, getSellQuote, setEthTradeAmount, setQuote],
   )
   const handleSqthChange = useAppMemo(() => debounce(onSqthChange, 500), [onSqthChange])
 
@@ -237,6 +237,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
   const handleEthChange = useAppMemo(() => debounce(onEthChange, 500), [onEthChange])
 
   useAppEffect(() => {
+    // To decide what onChange function to run
     if (lastTypedInput === 'sqth') {
       onSqthChange(sqthTradeAmount)
     }
@@ -247,6 +248,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
   }, [ethTradeAmount, lastTypedInput, onEthChange, onSqthChange, sqthTradeAmount])
 
   useAppEffect(() => {
+    //stop loading if transaction failed
     if (failed) setShortLoading(false)
   }, [failed])
 
@@ -278,7 +280,7 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
           resetEthTradeAmount()
           setVaultHistoryUpdating(true)
           vaultHistoryQuery.refetch({ vaultId })
-          setCollatPercent(150)
+          localStorage.removeItem('collatPercent')
           updateVault()
         })
       }
@@ -378,6 +380,8 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
                   inputError
                 ) : priceImpactWarning ? (
                   priceImpactWarning
+                ) : lowVolError ? (
+                  lowVolError
                 ) : (
                   <div className={classes.hint}>
                     <span>
@@ -495,9 +499,9 @@ export const OpenShortPosition = ({ open }: { open: boolean }) => {
             {!connected ? (
               <PrimaryButton
                 variant="contained"
-                // onClick={selectWallet}
+                onClick={selectWallet}
                 className={classes.amountInput}
-                // style={{ width: '300px' }}
+                style={{ width: '300px' }}
                 id="open-short-connect-wallet-btn"
               >
                 Connect Wallet
