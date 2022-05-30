@@ -1,5 +1,4 @@
 //SPDX-License-Identifier: BUSL-1.1
-
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
@@ -25,11 +24,11 @@ library ControllerHelperUtil {
     /**
      * @notice fully or partially close Uni v3 LP
      * @param _nonfungiblePositionManager Uni NonFungiblePositionManager address
-     * @param _params ControllerHelperDataType.closeUniLpParams struct 
+     * @param _params ControllerHelperDataType.CloseUniLpParams struct 
      * @param _isWethToken0 bool variable indicate if Weth token is token0 in Uniswap v3 weth/wPowerPerp pool
      * @return withdraw wPowerPerp and WETH amounts
      */
-    function closeUniLp(address _nonfungiblePositionManager, ControllerHelperDataType.closeUniLpParams memory _params, bool _isWethToken0) public returns (uint256, uint256) {
+    function closeUniLp(address _nonfungiblePositionManager, ControllerHelperDataType.CloseUniLpParams memory _params, bool _isWethToken0) public returns (uint256, uint256) {
         INonfungiblePositionManager.DecreaseLiquidityParams memory decreaseParams = INonfungiblePositionManager
             .DecreaseLiquidityParams({
                 tokenId: _params.tokenId,
@@ -107,7 +106,7 @@ library ControllerHelperUtil {
         uint256 uniTokenId = lpWPowerPerpPool(
             _nonfungiblePositionManager,
             _mintAndLpParams.wPowerPerpPool,
-            ControllerHelperDataType.LpWPowerPerpPool({
+            ControllerHelperDataType.LpWPowerPerpPoolParams({
                 recipient: _mintAndLpParams.recipient,
                 amount0Desired: amount0Desired,
                 amount1Desired: amount1Desired,
@@ -125,10 +124,10 @@ library ControllerHelperUtil {
      * @param _controller controller address
      * @param _nonfungiblePositionManager Uni NonFungiblePositionManager address
      * @param _vaultId vault Id
-     * @param _increaseLiquidityParam ControllerHelperDataType.IncreaseLpLiquidityParam struct
+     * @param _increaseLiquidityParam ControllerHelperDataType.IncreaseLpLiquidityParams struct
      * @param _isWethToken0 bool variable indicate if Weth token is token0 in Uniswap v3 weth/wPowerPerp pool
      */
-    function increaseLpLiquidity(address _controller, address _nonfungiblePositionManager, address _wPowerPerp, address _wPowerPerpPool, uint256 _vaultId, ControllerHelperDataType.IncreaseLpLiquidityParam memory _increaseLiquidityParam, bool _isWethToken0) public {
+    function increaseLpLiquidity(address _controller, address _nonfungiblePositionManager, address _wPowerPerp, address _wPowerPerpPool, uint256 _vaultId, ControllerHelperDataType.IncreaseLpLiquidityParams memory _increaseLiquidityParam, bool _isWethToken0) public {
         if (_increaseLiquidityParam.wPowerPerpAmountToLp > 0) {
             (
                 ,
@@ -178,7 +177,7 @@ library ControllerHelperUtil {
      * @param _wPowerPerpToMint amount of wPowerPerp to mint
      * @param _collateralToDeposit amount of collateral to deposit
      */
-    function mintIntoVault(address _controller, address _weth, uint256 _vaultId, uint256 _wPowerPerpToMint, uint256 _collateralToDeposit) public returns (uint256) {
+    function mintDepositInVault(address _controller, address _weth, uint256 _vaultId, uint256 _wPowerPerpToMint, uint256 _collateralToDeposit) public returns (uint256) {
         if (_collateralToDeposit > 0) IWETH9(_weth).withdraw(_collateralToDeposit);
 
         uint256 vaultId = _vaultId;
@@ -202,7 +201,7 @@ library ControllerHelperUtil {
      * @param _wPowerPerpToBurn amount of wPowerPerp to burn
      * @param _collateralToWithdraw amount of collateral to withdraw
      */
-    function withdrawFromVault(address _controller, address _weth, uint256 _vaultId, uint256 _wPowerPerpToBurn, uint256 _collateralToWithdraw) public {
+    function burnWithdrawFromVault(address _controller, address _weth, uint256 _vaultId, uint256 _wPowerPerpToBurn, uint256 _collateralToWithdraw) public {
         IController(_controller).burnWPowerPerpAmount(
             _vaultId,
             _wPowerPerpToBurn,
@@ -216,12 +215,12 @@ library ControllerHelperUtil {
      * @notice LP into Uniswap V3 pool
      * @param _nonfungiblePositionManager Uni NonFungiblePositionManager address
      * @param _wPowerPerpPool wPowerpPerp pool address in Uni v3
-     * @param _params ControllerHelperDataType.LpWPowerPerpPool struct
+     * @param _params ControllerHelperDataType.LpWPowerPerpPoolParams struct
      */
     function lpWPowerPerpPool(
         address _nonfungiblePositionManager,
         address _wPowerPerpPool,
-        ControllerHelperDataType.LpWPowerPerpPool memory _params
+        ControllerHelperDataType.LpWPowerPerpPoolParams memory _params
     ) public returns (uint256) {
         INonfungiblePositionManager.MintParams memory mintParams = INonfungiblePositionManager.MintParams({
             token0: IUniswapV3Pool(_wPowerPerpPool).token0(),
@@ -278,7 +277,6 @@ library ControllerHelperUtil {
     function sendBack(address _weth, address _wPowerPerp) public {
         IWETH9(_weth).withdraw(IWETH9(_weth).balanceOf(address(this)));
         payable(msg.sender).sendValue(address(this).balance);
-
         uint256 wPowerPerpBalance = IWPowerPerp(_wPowerPerp).balanceOf(address(this));
         if (wPowerPerpBalance > 0) {
             IWPowerPerp(_wPowerPerp).transfer(msg.sender, wPowerPerpBalance);
