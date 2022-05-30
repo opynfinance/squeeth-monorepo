@@ -3,6 +3,8 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
+import "hardhat/console.sol";
+
 // interface
 import {IWETH9} from "../interfaces/IWETH9.sol";
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
@@ -319,7 +321,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             address(this),
             _params.tokenId
         );
-
         // close LP NFT and get Weth and WPowerPerp amounts
         (uint256 wPowerPerpAmountInLp, ) = ControllerHelperUtil.closeUniLp(
             nonfungiblePositionManager,
@@ -341,6 +342,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             _params.tokenId,
             1e18
         );
+        console.log("after checkClosedLp");
 
         uint256 wethAmountDesired;
         uint256 wPowerPerpAmountDesired;
@@ -379,7 +381,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         } else if (wPowerPerpAmountDesired < wPowerPerpAmountInLp) {
             // if the new position target lower wPowerPerp amount, swap excess to WETH (position target higher WETH amount)
             uint256 wPowerPerpExcess = wPowerPerpAmountInLp.sub(wPowerPerpAmountDesired);
-
             _exactInFlashSwap(
                 wPowerPerp,
                 weth,
@@ -690,11 +691,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         data[i].data,
                         (ControllerHelperDataType.GeneralSwapParams)
                     );
-
-                    // make sure not to fail
-                    uint256 currentBalance = IERC20(swapParams.tokenIn).balanceOf(address(this));
-                    if (currentBalance < swapParams.amountIn) swapParams.amountIn = currentBalance;
-
                     _exactInFlashSwap(
                         swapParams.tokenIn,
                         swapParams.tokenOut,

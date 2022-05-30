@@ -65,7 +65,6 @@ export const managerAtom = atom((get) => {
 })
 export const activePositionsAtom = atom<any[]>([])
 export const closedPositionsAtom = atom<any[]>([])
-export const lpPositionsLoadingAtom = atom(false)
 export const squeethLiquidityAtom = atom(BIG_ZERO)
 export const wethLiquidityAtom = atom(BIG_ZERO)
 export const depositedSqueethAtom = atom(BIG_ZERO)
