@@ -40,7 +40,6 @@ task("addLiquidatableVault", "Add a short position with a 150% collateralization
     const debtInEth = mintRSqueethAmount.mul(scaledEthPrice).div(one)
     const collateralToDeposit = debtInEth.mul(1.5)
 
-    const tx = await controller.mintWPowerPerpAmount(0, debtAmount, 0, {value: collateralToDeposit}) 
-    await ethers.provider.waitForTransaction(tx.hash, 1)
-    console.log(`Added 150% collateralization vault with ID: `, tx.value)
+    const vaultId = await controller.mintWPowerPerpAmount(0, debtAmount, 0, {value: collateralToDeposit}) 
+    console.log(`Added 150% collateralization vault with ID: `, vaultId)
   });
