@@ -1,4 +1,7 @@
 import { Contract } from "ethers"
+import {
+  abi as POOL_ABI,
+} from '@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json'
 
 export const networkNameToUniRouter = (name: string) => {
   switch (name) {
@@ -51,6 +54,33 @@ export const networkNameToWeth = (name: string) => {
   }
 }
 
+export const networkNameToOracle = (name: string) => {
+  switch (name) {
+    case 'mainnet': return '0x65D66c76447ccB45dAf1e8044e918fA786A483A1'
+    case 'ropsten': return '0xBD9F4bE886653177D22fA9c79FD0DFc41407fC89'
+    case 'rinkebyArbitrum': return '0xe790Afe86c0bdc4Dd7C6CBb7dB087552Ec85F6fB'
+    default: return undefined
+  }
+}
+
+export const networkNameToController = (name: string) => {
+  switch (name) {
+    case 'mainnet': return '0x64187ae08781B09368e6253F9E94951243A493D5'
+    case 'ropsten': return '0x59F0c781a6eC387F09C40FAA22b7477a2950d209'
+    case 'rinkebyArbitrum': return '0x6FBbc7eBd7E421839915e8e4fAcC9947dC32F4dE'
+    default: return undefined
+  }
+}
+
+export const networkNameToEthUSDCPool = (name: string) => {
+  switch (name) {
+    case 'mainnet': return '0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8'
+    case 'ropsten': return '0x8356AbC730a218c24446C2c85708F373f354F0D8'
+    case 'rinkebyArbitrum': return '0xe7715b01a0B16E3e38A7d9b78F6Bd2b163D7f319'
+    default: return undefined
+  }
+}
+
 export const getWETH = async (ethers: any, deployer: string, networkName: string)=> {
   const wethAddr = networkNameToWeth(networkName)
   if (wethAddr === undefined) {
@@ -58,7 +88,37 @@ export const getWETH = async (ethers: any, deployer: string, networkName: string
     return ethers.getContract("WETH9", deployer);
   } 
   // get contract instance at address
-  return ethers.getContract('WETH9', wethAddr)
+  return ethers.getContractAt('WETH9', wethAddr)
+}
+
+export const getOracle = async (ethers: any, deployer: string, networkName: string)=> {
+  const oracleAddr = networkNameToOracle(networkName)
+  if (oracleAddr === undefined) {
+    // get from deployed network
+    return ethers.getContract("Oracle", deployer);
+  } 
+  // get contract instance at address
+  return ethers.getContractAt('Oracle', oracleAddr)
+}
+
+export const getController = async (ethers: any, deployer: string, networkName: string)=> {
+  const controllerAddr = networkNameToController(networkName)
+  if (controllerAddr === undefined) {
+    // get from deployed network
+    return ethers.getContract("Controller", deployer);
+  } 
+  // get contract instance at address
+  return ethers.getContractAt('Controller', controllerAddr)
+}
+
+export const getEthUSDCPool = async (ethers: any, deployer: string, networkName: string)=> {
+  const ethUSDCPoolAddress = networkNameToEthUSDCPool(networkName)
+  if (ethUSDCPoolAddress === undefined) {
+    // get from deployed network
+    return ethers.getContract(POOL_ABI, deployer);
+  } 
+  // get contract instance at address
+  return ethers.getContractAt(POOL_ABI, ethUSDCPoolAddress)
 }
 
 export const getUSDC = async (ethers: any, deployer: string, networkName: string)=> {
@@ -68,7 +128,7 @@ export const getUSDC = async (ethers: any, deployer: string, networkName: string
     return ethers.getContract("MockErc20", deployer);
   } 
   // get contract instance at address
-  return ethers.getContract('MockErc20', usdcAddress)
+  return ethers.getContractAt('MockErc20', usdcAddress)
 }
 
 /**
