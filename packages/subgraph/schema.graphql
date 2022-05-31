@@ -89,3 +89,21 @@ type CrabAuction @entity {
   owner: Bytes!
   timestamp: BigInt!
 }
+
+enum TransactionType {
+  MINT_OSQTH
+  BURN_OSQTH
+  ADD_COLLAT
+  REMOVE_COLLAT
+  TRANSFER_OSQTH
+  TRANSFER_VAULT
+}
+
+type TransactionHistory @entity {
+  id: ID!
+  timestamp: BigInt!
+  transactionType: TransactionType!
+  owner: Account!
+  oSqthAmount: BigInt!
+  ethAmount: BigInt!
+}
