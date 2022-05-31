@@ -20,6 +20,7 @@ import './tasks/buySqueeth'
 import './tasks/buyWeth'
 import './tasks/increaseSlot'
 import './tasks/addLiquidatableVault'
+import './tasks/checkVaultStatus'
 
 // Load env variables
 dotenv.config()
