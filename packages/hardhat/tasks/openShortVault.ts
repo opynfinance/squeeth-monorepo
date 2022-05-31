@@ -6,9 +6,9 @@ export const one = BigNumber.from(10).pow(18)
 
 // Example execution
 /**
- npx hardhat addLiquidatableVault --input 50 --network ropsten
+ npx hardhat openShortVault --input 50 --network ropsten
  */
-task("addLiquidatableVault", "Add a short position with a 150% collateralization ratio")
+task("openShortVault", "Add a short position with a 150% collateralization ratio")
   .addParam('input', 'amount squeeth to mint', 50, types.string)
   .setAction(async ({ input: squeethToMint }, hre) => {
 
