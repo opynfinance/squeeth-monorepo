@@ -68,14 +68,14 @@ jobs:
       - run:
           name: Compile Contracts
           command: npx hardhat compile
-      # - save_cache: 
-      #    key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
-      #    paths:
-      #      - typechain
-      # - save_cache: 
-      #    key: artifacts-cache-{{ .Environment.CIRCLE_SHA1 }}
-      #    paths:
-      #      - artifacts
+      - save_cache: 
+         key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
+         paths:
+           - typechain
+      - save_cache: 
+         key: artifacts-cache-{{ .Environment.CIRCLE_SHA1 }}
+         paths:
+           - artifacts
 
   lint:
     working_directory: ~/squeeth/packages/hardhat
