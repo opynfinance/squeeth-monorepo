@@ -19,12 +19,12 @@ import { addressesAtom, isShortAtom } from 'src/state/positions/atoms'
 import { useComputeSwaps, useShortDebt } from 'src/state/positions/hooks'
 import {
   useAutoRoutedBuyAndRefund,
+  useAutoRoutedSell,
   useGetBuyQuote,
   useGetBuyQuoteForETH,
   useGetSellQuote,
   useGetSellQuoteForETH,
   useGetWSqueethPositionValue,
-  useSell,
 } from 'src/state/squeethPool/hooks'
 import {
   confirmedAmountAtom,
@@ -621,7 +621,8 @@ const CloseLong: React.FC<BuyProps> = () => {
     resetTransactionData,
   } = useTransactionStatus()
   const { swapRouter, oSqueeth } = useAtomValue(addressesAtom)
-  const sell = useSell()
+  // const sell = useSell()
+  const sell = useAutoRoutedSell()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const getSellQuoteForETH = useGetSellQuoteForETH()
   const getSellQuote = useGetSellQuote()
