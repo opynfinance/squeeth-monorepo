@@ -19,7 +19,7 @@ import { BIG_ZERO } from '../../../constants'
 import { readyAtom } from 'src/state/squeethPool/atoms'
 import {
   crabStrategySlippageAtom,
-  currentEthValueAtom,
+  currentCrabPositionValueInETHAtom,
   isPriceHedgeAvailableAtom,
   isTimeHedgeAvailableAtom,
 } from 'src/state/crab/atoms'
@@ -29,7 +29,6 @@ import {
   useCalculateEthWillingToPay,
   useFlashWithdrawEth,
   useSetStrategyData,
-  useCalculateCurrentValue,
 } from 'src/state/crab/hooks'
 import { useUserCrabTxHistory } from '@hooks/useUserCrabTxHistory'
 import { usePrevious } from 'react-use'
@@ -86,13 +85,12 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
   const [borrowEth, setBorrowEth] = useState(new BigNumber(0))
 
   const connected = useAtomValue(connectedWalletAtom)
-  const currentEthValue = useAtomValue(currentEthValueAtom)
+  const currentEthValue = useAtomValue(currentCrabPositionValueInETHAtom)
   const isTimeHedgeAvailable = useAtomValue(isTimeHedgeAvailableAtom)
   const isPriceHedgeAvailable = useAtomValue(isPriceHedgeAvailableAtom)
   const [slippage, setSlippage] = useAtom(crabStrategySlippageAtom)
   const { data: balance } = useWalletBalance()
   const setStrategyData = useSetStrategyData()
-  const calculateCurrentValue = useCalculateCurrentValue()
   const flashWithdrawEth = useFlashWithdrawEth()
   const calculateEthWillingToPay = useCalculateEthWillingToPay()
   const calculateETHtoBorrowFromUniswap = useCalculateETHtoBorrowFromUniswap()
@@ -190,7 +188,6 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
       await flashDeposit(ethAmount, slippage, () => {
         setTxLoading(false)
         setStrategyData()
-        calculateCurrentValue()
       })
     } catch (e) {
       console.log(e)
@@ -204,7 +201,6 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
       await flashWithdrawEth(withdrawAmount, slippage, () => {
         setTxLoading(false)
         setStrategyData()
-        calculateCurrentValue()
       })
     } catch (e) {
       console.log(e)
@@ -276,8 +272,8 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
                   depositError
                     ? depositError
                     : warning
-                    ? warning
-                    : `Balance ${toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(6)} ETH`
+                      ? warning
+                      : `Balance ${toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(6)} ETH`
                 }
                 convertedValue={ethIndexPrice.times(ethAmount).toFixed(2)}
                 onActionClicked={() => setEthAmount(toTokenAmount(balance ?? BIG_ZERO, 18))}
