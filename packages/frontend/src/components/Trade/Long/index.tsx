@@ -1,27 +1,24 @@
-import { CircularProgress, createStyles, makeStyles, Typography } from '@material-ui/core'
-import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
-import RefreshOutlined from '@material-ui/icons/RefreshOutlined'
-import BigNumber from 'bignumber.js'
-import React, { useState } from 'react'
-import { useResetAtom, useUpdateAtom } from 'jotai/utils'
-
-import { BIG_ZERO, Links } from '../../../constants'
-import { useUserAllowance } from '@hooks/contracts/useAllowance'
 import { PrimaryButton } from '@components/Button'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
 import { UniswapIframe } from '@components/Modal/UniswapIframe'
 import { TradeSettings } from '@components/TradeSettings'
-import Confirmed, { ConfirmType } from '../Confirmed'
-import Cancelled from '../Cancelled'
-import TradeInfoItem from '../TradeInfoItem'
-import UniswapData from '../UniswapData'
-import { connectedWalletAtom, isTransactionFirstStepAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
-import { useSelectWallet, useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
-import { useAtom, useAtomValue } from 'jotai'
-import { addressesAtom, isShortAtom } from 'src/state/positions/atoms'
+import { useUserAllowance } from '@hooks/contracts/useAllowance'
+import useAppCallback from '@hooks/useAppCallback'
+import useAppEffect from '@hooks/useAppEffect'
+import useAppMemo from '@hooks/useAppMemo'
 import { useETHPrice } from '@hooks/useETHPrice'
+import { CircularProgress, createStyles, makeStyles, Typography } from '@material-ui/core'
+import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
+import { toTokenAmount } from '@utils/calculations'
+import BigNumber from 'bignumber.js'
+import { useAtom, useAtomValue } from 'jotai'
+import { useResetAtom, useUpdateAtom } from 'jotai/utils'
+import React, { useState } from 'react'
+import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from 'src/state/controller/atoms'
+import { addressesAtom, isShortAtom } from 'src/state/positions/atoms'
+import { useComputeSwaps, useShortDebt } from 'src/state/positions/hooks'
 import {
-  useBuyAndRefund,
+  useAutoRoutedBuyAndRefund,
   useGetBuyQuote,
   useGetBuyQuoteForETH,
   useGetSellQuote,
@@ -29,7 +26,6 @@ import {
   useGetWSqueethPositionValue,
   useSell,
 } from 'src/state/squeethPool/hooks'
-import { useComputeSwaps, useShortDebt } from 'src/state/positions/hooks'
 import {
   confirmedAmountAtom,
   ethTradeAmountAtom,
@@ -41,12 +37,14 @@ import {
   tradeSuccessAtom,
   tradeTypeAtom,
 } from 'src/state/trade/atoms'
-import { toTokenAmount } from '@utils/calculations'
+import { connectedWalletAtom, isTransactionFirstStepAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
+import { useSelectWallet, useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
+import { BIG_ZERO, Links } from '../../../constants'
 import { TradeType } from '../../../types'
-import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from 'src/state/controller/atoms'
-import useAppEffect from '@hooks/useAppEffect'
-import useAppCallback from '@hooks/useAppCallback'
-import useAppMemo from '@hooks/useAppMemo'
+import Cancelled from '../Cancelled'
+import Confirmed, { ConfirmType } from '../Confirmed'
+import TradeInfoItem from '../TradeInfoItem'
+import UniswapData from '../UniswapData'
 import BreakEven from './BreakEven'
 
 const useStyles = makeStyles((theme) =>
@@ -266,7 +264,8 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
     resetTxCancelled,
     resetTransactionData,
   } = useTransactionStatus()
-  const buyAndRefund = useBuyAndRefund()
+  // const buyAndRefund = useBuyAndRefund()
+  const buyAndRefund = useAutoRoutedBuyAndRefund()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const [confirmedAmount, setConfirmedAmount] = useAtom(confirmedAmountAtom)
   const [inputQuoteLoading, setInputQuoteLoading] = useAtom(inputQuoteLoadingAtom)
