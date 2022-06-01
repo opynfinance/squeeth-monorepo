@@ -381,11 +381,11 @@ export const useBuyAndRefund = () => {
 export const useAutoRoutedBuyAndRefund = () => {
   const networkId = useAtomValue(networkIdAtom)
   const address = useAtomValue(addressAtom)
-  const wethToken = useAtomValue(wethTokenAtom)
+  // const wethToken = useAtomValue(wethTokenAtom)
   const { swapRouter } = useAtomValue(addressesAtom)
   const web3 = useAtomValue(web3Atom)
   const contract = useAtomValue(squeethPoolContractAtom)
-
+  // const squeethToken = useAtomValue(squeethTokenAtom)
   /*
     --- ROUTE PARAMETERS ---
     amount: CurrencyAmount,
@@ -555,6 +555,69 @@ export const useSell = () => {
     return result
   }
   return sell
+}
+
+export const useAutoRoutedSell = () => {
+  const networkId = useAtomValue(networkIdAtom)
+  const address = useAtomValue(addressAtom)
+  // const wethToken = useAtomValue(wethTokenAtom)
+  const { swapRouter } = useAtomValue(addressesAtom)
+  const web3 = useAtomValue(web3Atom)
+  const contract = useAtomValue(squeethPoolContractAtom)
+  // const squeethToken = useAtomValue(squeethTokenAtom)
+  /*
+    --- ROUTE PARAMETERS ---
+    amount: CurrencyAmount,
+    quoteCurrency: Currency,
+    tradeType: TradeType,
+    swapConfig?: SwapConfig,
+    partialRoutingConfig?: Partial<AlphaRouterConfig> = {}
+  */
+  const autoRoutedSell = useAppCallback(
+    async (amount: BigNumber, onTxConfirmed?: () => void) => {
+      // Initializing the AlphaRouter
+      const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
+      const chainId = networkId as any as ChainId
+      const router = new AlphaRouter({ chainId: chainId, provider: provider })
+
+      // Call Route
+      // TODO: Change to not be hardcoded addresses
+      const squeethToken = new Token(
+        chainId,
+        '0xa4222f78d23593e82Aa74742d25D06720DCa4ab7',
+        OSQUEETH_DECIMALS,
+        'oSQTH',
+        'oSqueeth',
+      )
+      const wethToken = new Token(
+        chainId,
+        '0xc778417e063141139fce010982780140aa0cd5ab',
+        WETH_DECIMALS,
+        'WETH',
+        'Wrapped Ether',
+      )
+
+      const rawAmount = CurrencyAmount.fromRawAmount(
+        squeethToken!,
+        fromTokenAmount(amount, OSQUEETH_DECIMALS).toFixed(0),
+      )
+      const route = await router.route(rawAmount, wethToken, TradeType.EXACT_INPUT)
+      const transaction = {
+        data: route?.methodParameters?.calldata,
+        to: swapRouter,
+        value: route?.methodParameters?.value,
+        from: address,
+        gasPrice: route?.gasPriceWei,
+      }
+
+      // Submitting a Transaction
+      const result = await web3.givenProvider.sendTransaction(transaction)
+      return result
+    },
+    [address],
+  )
+
+  return autoRoutedSell
 }
 
 export const useGetSellQuoteForETH = () => {
