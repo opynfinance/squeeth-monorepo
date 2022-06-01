@@ -1,10 +1,10 @@
-import { DEFAULT_SLIPPAGE, OSQUEETH_DECIMALS, UNI_POOL_FEES } from '@constants/index'
+import { DEFAULT_SLIPPAGE, OSQUEETH_DECIMALS, UNI_POOL_FEES, WETH_DECIMALS } from '@constants/index'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
 import { useETHPrice } from '@hooks/useETHPrice'
 import useUniswapTicks from '@hooks/useUniswapTicks'
 import { CurrencyAmount, Token, TradeType } from '@uniswap/sdk-core'
-import { AlphaRouter } from '@uniswap/smart-order-router'
+import { AlphaRouter, ChainId } from '@uniswap/smart-order-router'
 import { Pool, Route, Trade } from '@uniswap/v3-sdk'
 import { fromTokenAmount, parseSlippageInput } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
@@ -384,6 +384,7 @@ export const useAutoRoutedBuyAndRefund = () => {
   const wethToken = useAtomValue(wethTokenAtom)
   const { swapRouter } = useAtomValue(addressesAtom)
   const web3 = useAtomValue(web3Atom)
+  const contract = useAtomValue(squeethPoolContractAtom)
 
   /*
     --- ROUTE PARAMETERS ---
@@ -396,16 +397,35 @@ export const useAutoRoutedBuyAndRefund = () => {
   const autoRoutedBuyAndRefund = useAppCallback(
     async (amount: BigNumber, onTxConfirmed?: () => void) => {
       // Initializing the AlphaRouter
-      const router = new AlphaRouter({ chainId: networkId, provider: web3.givenProvider })
+      const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
+      const chainId = networkId as any as ChainId
+      const router = new AlphaRouter({ chainId: chainId, provider: provider })
 
       // Call Route
-      const route = await router.route(amount, wethToken, TradeType.EXACT_INPUT)
+      // TODO: Change to not be hardcoded addresses
+      const squeethToken = new Token(
+        chainId,
+        '0xa4222f78d23593e82Aa74742d25D06720DCa4ab7',
+        OSQUEETH_DECIMALS,
+        'oSQTH',
+        'oSqueeth',
+      )
+      const wethToken = new Token(
+        chainId,
+        '0xc778417e063141139fce010982780140aa0cd5ab',
+        WETH_DECIMALS,
+        'WETH',
+        'Wrapped Ether',
+      )
+
+      const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(amount, WETH_DECIMALS).toFixed(0))
+      const route = await router.route(rawAmount, squeethToken, TradeType.EXACT_INPUT)
       const transaction = {
-        data: route.methodParameters.calldata,
+        data: route?.methodParameters?.calldata,
         to: swapRouter,
-        value: route.methodParameters.value,
+        value: route?.methodParameters?.value,
         from: address,
-        gasPrice: route.gasPriceWei,
+        gasPrice: route?.gasPriceWei,
       }
 
       // Submitting a Transaction
