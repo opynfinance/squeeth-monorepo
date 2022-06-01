@@ -5,6 +5,7 @@
   "scripts": {
     "codegen": "graph codegen",
     "build": "graph build",
+    "test": "graph test",
     "deploy": "yarn prepare:mainnet && graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ opynfinance/squeeth",
     "create-local": "graph create --node http://localhost:8020/ opynfinance/squeeth",
     "remove-local": "graph remove --node http://localhost:8020/ opynfinance/squeeth",
@@ -15,7 +16,8 @@
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "^0.25.1",
-    "@graphprotocol/graph-ts": "^0.24.1"
+    "@graphprotocol/graph-ts": "^0.27.0",
+    "matchstick-as": "^0.5.0"
   },
   "devDependencies": {
     "mustache": "^4.2.0"

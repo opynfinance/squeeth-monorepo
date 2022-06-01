@@ -461,11 +461,11 @@ function getTransactionDetail(
   return vaultHistory as VaultHistory;
 }
 
-const saveTransactionHistory = (
+function saveTransactionHistory(
   event: ethereum.Event,
-  callback: (transactionHistory: TransactionHistory) => void
-) => {
-  const transactionHistory = new TransactionHistory(
+  fn: (transactionHistory: TransactionHistory) => void
+): void {
+  let transactionHistory = new TransactionHistory(
     `${event.transaction.hash.toHex()}-${event.logIndex}`
   );
 
@@ -474,7 +474,7 @@ const saveTransactionHistory = (
   transactionHistory.ethAmount = BigInt.zero();
   transactionHistory.oSqthPrice = BigInt.zero();
 
-  callback(transactionHistory);
+  fn(transactionHistory);
 
   transactionHistory.save();
-};
+}
