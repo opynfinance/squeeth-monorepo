@@ -1,31 +1,31 @@
-import { Contract } from 'web3-eth-contract'
-import { Token, CurrencyAmount } from '@uniswap/sdk-core'
+import { DEFAULT_SLIPPAGE, OSQUEETH_DECIMALS, UNI_POOL_FEES } from '@constants/index'
+import useAppCallback from '@hooks/useAppCallback'
+import useAppEffect from '@hooks/useAppEffect'
+import { useETHPrice } from '@hooks/useETHPrice'
+import useUniswapTicks from '@hooks/useUniswapTicks'
+import { CurrencyAmount, Token, TradeType } from '@uniswap/sdk-core'
+import { AlphaRouter } from '@uniswap/smart-order-router'
 import { Pool, Route, Trade } from '@uniswap/v3-sdk'
-import { useUpdateAtom } from 'jotai/utils'
-import { useAtomValue } from 'jotai'
+import { fromTokenAmount, parseSlippageInput } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
 import { ethers } from 'ethers'
-
+import { useAtomValue } from 'jotai'
+import { useUpdateAtom } from 'jotai/utils'
+import { Contract } from 'web3-eth-contract'
 import routerABI from '../../abis/swapRouter.json'
+// import { transactionHashAtom } from '../trade/atoms'
+import { squeethPoolContractAtom, swapRouterContractAtom } from '../contracts/atoms'
 import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
 import { addressAtom, networkIdAtom, web3Atom } from '../wallet/atoms'
-import useUniswapTicks from '@hooks/useUniswapTicks'
-import { DEFAULT_SLIPPAGE, OSQUEETH_DECIMALS, UNI_POOL_FEES } from '@constants/index'
-import { fromTokenAmount, parseSlippageInput } from '@utils/calculations'
-import { useETHPrice } from '@hooks/useETHPrice'
 import { useHandleTransaction } from '../wallet/hooks'
 import {
   poolAtom,
-  wethTokenAtom,
-  squeethTokenAtom,
+  readyAtom,
   squeethInitialPriceAtom,
   squeethPriceeAtom,
-  readyAtom,
+  squeethTokenAtom,
+  wethTokenAtom,
 } from './atoms'
-// import { transactionHashAtom } from '../trade/atoms'
-import { swapRouterContractAtom, squeethPoolContractAtom } from '../contracts/atoms'
-import useAppEffect from '@hooks/useAppEffect'
-import useAppCallback from '@hooks/useAppCallback'
 
 const getImmutables = async (squeethContract: Contract) => {
   const [token0, token1, fee, tickSpacing, maxLiquidityPerTick] = await Promise.all([
@@ -376,6 +376,46 @@ export const useBuyAndRefund = () => {
   )
 
   return buyAndRefund
+}
+
+export const useAutoRoutedBuyAndRefund = () => {
+  const networkId = useAtomValue(networkIdAtom)
+  const address = useAtomValue(addressAtom)
+  const wethToken = useAtomValue(wethTokenAtom)
+  const { swapRouter } = useAtomValue(addressesAtom)
+  const web3 = useAtomValue(web3Atom)
+
+  /*
+    --- ROUTE PARAMETERS ---
+    amount: CurrencyAmount,
+    quoteCurrency: Currency,
+    tradeType: TradeType,
+    swapConfig?: SwapConfig,
+    partialRoutingConfig?: Partial<AlphaRouterConfig> = {}
+  */
+  const autoRoutedBuyAndRefund = useAppCallback(
+    async (amount: BigNumber, onTxConfirmed?: () => void) => {
+      // Initializing the AlphaRouter
+      const router = new AlphaRouter({ chainId: networkId, provider: web3.givenProvider })
+
+      // Call Route
+      const route = await router.route(amount, wethToken, TradeType.EXACT_INPUT)
+      const transaction = {
+        data: route.methodParameters.calldata,
+        to: swapRouter,
+        value: route.methodParameters.value,
+        from: address,
+        gasPrice: route.gasPriceWei,
+      }
+
+      // Submitting a Transaction
+      const result = await web3.givenProvider.sendTransaction(transaction)
+      return result
+    },
+    [address],
+  )
+
+  return autoRoutedBuyAndRefund
 }
 
 export const useGetSellQuote = () => {
