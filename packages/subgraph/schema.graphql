@@ -106,4 +106,5 @@ type TransactionHistory @entity {
   owner: Account!
   oSqthAmount: BigInt!
   ethAmount: BigInt!
+  oSqthPrice: BigInt!
 }

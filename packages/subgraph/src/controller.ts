@@ -4,6 +4,7 @@ import {
   Bytes,
   log,
   dataSource,
+  ethereum,
 } from "@graphprotocol/graph-ts";
 import {
   Controller,
@@ -121,17 +122,11 @@ export function handleBurnShort(event: BurnShort): void {
   );
   vaultTransaction.save();
 
-  const transactionHistory = new TransactionHistory(
-    event.transaction.hash.toHex()
-  );
-
-  transactionHistory.timestamp = event.block.timestamp;
-  transactionHistory.transactionType = "BURN_OSQTH";
-  transactionHistory.owner = vault.owner;
-  transactionHistory.oSqthAmount = event.params.amount;
-  transactionHistory.ethAmount = BigInt.zero();
-
-  transactionHistory.save();
+  saveTransactionHistory(event, (transactionHistory) => {
+    transactionHistory.transactionType = "BURN_OSQTH";
+    transactionHistory.owner = vault.owner;
+    transactionHistory.oSqthAmount = event.params.amount;
+  });
 }
 
 export function handleDepositCollateral(event: DepositCollateral): void {
@@ -169,17 +164,11 @@ export function handleDepositCollateral(event: DepositCollateral): void {
     dayStatSnapshot.totalCollateralAmount.plus(event.params.amount);
   dayStatSnapshot.save();
 
-  const transactionHistory = new TransactionHistory(
-    event.transaction.hash.toHex()
-  );
-
-  transactionHistory.timestamp = event.block.timestamp;
-  transactionHistory.transactionType = "ADD_COLLAT";
-  transactionHistory.owner = vault.owner;
-  transactionHistory.oSqthAmount = BigInt.zero();
-  transactionHistory.ethAmount = event.params.amount;
-
-  transactionHistory.save();
+  saveTransactionHistory(event, (transactionHistory) => {
+    transactionHistory.transactionType = "ADD_COLLAT";
+    transactionHistory.owner = vault.owner;
+    transactionHistory.ethAmount = event.params.amount;
+  });
 }
 
 export function handleDepositUniPositionToken(
@@ -276,17 +265,11 @@ export function handleMintShort(event: MintShort): void {
   );
   vaultTransaction.save();
 
-  const transactionHistory = new TransactionHistory(
-    event.transaction.hash.toHex()
-  );
-
-  transactionHistory.timestamp = event.block.timestamp;
-  transactionHistory.transactionType = "MINT_OSQTH";
-  transactionHistory.owner = vault.owner;
-  transactionHistory.oSqthAmount = event.params.amount;
-  transactionHistory.ethAmount = BigInt.zero();
-
-  transactionHistory.save();
+  saveTransactionHistory(event, (transactionHistory) => {
+    transactionHistory.transactionType = "MINT_OSQTH";
+    transactionHistory.owner = vault.owner;
+    transactionHistory.oSqthAmount = event.params.amount;
+  });
 }
 
 export function handleNormalizationFactorUpdated(
@@ -371,17 +354,11 @@ export function handleWithdrawCollateral(event: WithdrawCollateral): void {
     dayStatSnapshot.totalCollateralAmount.minus(event.params.amount);
   dayStatSnapshot.save();
 
-  const transactionHistory = new TransactionHistory(
-    event.transaction.hash.toHex()
-  );
-
-  transactionHistory.timestamp = event.block.timestamp;
-  transactionHistory.transactionType = "REMOVE_COLLAT";
-  transactionHistory.owner = vault.owner;
-  transactionHistory.oSqthAmount = BigInt.zero();
-  transactionHistory.ethAmount = event.params.amount;
-
-  transactionHistory.save();
+  saveTransactionHistory(event, (transactionHistory) => {
+    transactionHistory.transactionType = "REMOVE_COLLAT";
+    transactionHistory.owner = vault.owner;
+    transactionHistory.ethAmount = event.params.amount;
+  });
 }
 
 export function handleWithdrawUniPositionToken(
@@ -483,3 +460,21 @@ function getTransactionDetail(
 
   return vaultHistory as VaultHistory;
 }
+
+const saveTransactionHistory = (
+  event: ethereum.Event,
+  callback: (transactionHistory: TransactionHistory) => void
+) => {
+  const transactionHistory = new TransactionHistory(
+    `${event.transaction.hash.toHex()}-${event.logIndex}`
+  );
+
+  transactionHistory.timestamp = event.block.timestamp;
+  transactionHistory.oSqthAmount = BigInt.zero();
+  transactionHistory.ethAmount = BigInt.zero();
+  transactionHistory.oSqthPrice = BigInt.zero();
+
+  callback(transactionHistory);
+
+  transactionHistory.save();
+};
