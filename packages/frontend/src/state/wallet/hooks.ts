@@ -21,6 +21,9 @@ import {
 import { BIG_ZERO, EtherscanPrefix } from '../../constants/'
 import { Networks } from '../../types'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useApolloClient } from '@apollo/client'
+import useAppCallback from '@hooks/useAppCallback'
+import useAppEffect from '@hooks/useAppEffect'
 
 export const useSelectWallet = () => {
   const [onboard] = useAtom(onboardAtom)
@@ -38,14 +41,16 @@ export const useDiscconectWallet = () => {
   const [onboard] = useAtom(onboardAtom)
   const setAddress = useUpdateAtom(addressAtom)
   const queryClient = useQueryClient()
-  //   const setBalance = useUpdateAtom(balanceAtom)
+  const apolloClient = useApolloClient()
+
   const disconnectWallet = () => {
     if (!onboard) return
     onboard.walletReset()
     window.localStorage.setItem('walletAddress', '')
     setAddress(null)
     queryClient.setQueryData('userWalletBalance', BIG_ZERO)
-    // setBalance(BIG_ZERO)
+    queryClient.removeQueries()
+    apolloClient.clearStore()
   }
 
   return disconnectWallet
@@ -119,13 +124,13 @@ export const useTransactionStatus = () => {
 }
 
 const balanceQueryKeys = {
-  userWalletBalance: () => ['userWalletBalance'],
+  userWalletBalance: (address: string) => ['userWalletBalance', { address }],
 }
 export const useWalletBalance = () => {
   const [address] = useAtom(addressAtom)
   const [web3] = useAtom(web3Atom)
 
-  return useQuery(balanceQueryKeys.userWalletBalance(), () => getBalance(web3, address), {
+  return useQuery(balanceQueryKeys.userWalletBalance(address ?? ''), () => getBalance(web3, address), {
     enabled: Boolean(address),
     refetchInterval: 30000,
   })
@@ -139,12 +144,19 @@ export const useOnboard = () => {
   const setWeb3 = useUpdateAtom(web3Atom)
   const setSigner = useUpdateAtom(signerAtom)
   const setNotify = useUpdateAtom(notifyAtom)
+  const queryClient = useQueryClient()
+  const apolloClient = useApolloClient()
+  const { refetch: refetchWalletBalance } = useWalletBalance()
 
-  const onNetworkChange = useCallback(
+  const onNetworkChange = useAppCallback(
     (updateNetwork: number) => {
       if (updateNetwork in Networks) {
         setNetworkId(updateNetwork)
         setSupportedNetwork(true)
+        queryClient.refetchQueries()
+        apolloClient.resetStore()
+        refetchWalletBalance()
+
         if (onboard !== null) {
           const network = updateNetwork === 1337 ? 31337 : updateNetwork
           // localStorage.setItem('networkId', network.toString())
@@ -159,10 +171,10 @@ export const useOnboard = () => {
         console.log('Unsupported network')
       }
     },
-    [setNetworkId, setSupportedNetwork, onboard, address],
+    [setNetworkId, setSupportedNetwork, queryClient, apolloClient, refetchWalletBalance, onboard, address],
   )
 
-  const onWalletUpdate = useCallback(
+  const onWalletUpdate = useAppCallback(
     (wallet: any) => {
       if (wallet.provider) {
         window.localStorage.setItem('selectedWallet', wallet.name)
@@ -175,7 +187,7 @@ export const useOnboard = () => {
     [setSigner, setWeb3],
   )
 
-  useEffect(() => {
+  useAppEffect(() => {
     const onboard = initOnboard(
       {
         address: setAddress,
