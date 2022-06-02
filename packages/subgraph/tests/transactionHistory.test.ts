@@ -1,6 +1,6 @@
 import { assert, test } from "matchstick-as";
 import { handleBurnShort, handleOpenVault } from "../src/controller";
-import { createBurnShort, createOpenVault } from "./eventCreators";
+import { createBurnShort, createOpenVault } from "./utils";
 
 test("BurnShort creates transaction history", () => {
   let sender = "0x02a248876233fd78b97ecf1e18114b8eb22ba603";

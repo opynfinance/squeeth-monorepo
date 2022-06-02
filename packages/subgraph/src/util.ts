@@ -1,5 +1,6 @@
-import { Address } from "@graphprotocol/graph-ts";
-import { Account } from "../generated/schema";
+import { BigInt } from "@graphprotocol/graph-ts";
+import { Address, ethereum } from "@graphprotocol/graph-ts";
+import { Account, TransactionHistory } from "../generated/schema";
 import {
   MAINNET_SHORT_HELPER_ADDR,
   ROPSTEN_SHORT_HELPER_ADDR,
@@ -28,4 +29,22 @@ export function loadOrCreateAccount(accountId: string): Account {
     account.vaultCount = BIGINT_ZERO;
   }
   return account as Account;
+}
+
+export function saveTransactionHistory(
+  event: ethereum.Event,
+  fn: (transactionHistory: TransactionHistory) => void
+): void {
+  let transactionHistory = new TransactionHistory(
+    `${event.transaction.hash.toHex()}-${event.logIndex}`
+  );
+
+  transactionHistory.timestamp = event.block.timestamp;
+  transactionHistory.oSqthAmount = BigInt.zero();
+  transactionHistory.ethAmount = BigInt.zero();
+  transactionHistory.oSqthPrice = BigInt.zero();
+
+  fn(transactionHistory);
+
+  transactionHistory.save();
 }

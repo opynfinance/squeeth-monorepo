@@ -5,9 +5,9 @@ import { BurnShort, OpenVault } from "../generated/Controller/Controller";
 function createParameters(
   paramsMap: Map<string, ethereum.Value>
 ): ethereum.EventParam[] {
-  const parameters = new Array();
+  const parameters = [];
 
-  Array.from(paramsMap.keys()).forEach((key) => {
+  Object.keys(paramsMap).forEach((key) => {
     const value = paramsMap.get(key);
 
     parameters.push(new ethereum.EventParam(key, value));
