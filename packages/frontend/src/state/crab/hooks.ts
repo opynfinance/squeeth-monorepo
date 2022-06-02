@@ -149,7 +149,7 @@ export const useCurrentCrabPositionValue = () => {
       setCurrentCrabPositionValueInETH(crabPositionValueInETH)
       setIsCrabPositionValueLoading(false)
     })()
-  }, [crabStrategy, userCrabBalance, contract, setCurrentEthLoading])
+  }, [crabStrategy, userCrabBalance, contract, setCurrentEthLoading, getWSqueethPositionValueInETH])
 
   return { currentCrabPositionValue, currentCrabPositionValueInETH, isCrabPositionValueLoading }
 }
