@@ -381,11 +381,11 @@ export const useBuyAndRefund = () => {
 export const useAutoRoutedBuyAndRefund = () => {
   const networkId = useAtomValue(networkIdAtom)
   const address = useAtomValue(addressAtom)
-  // const wethToken = useAtomValue(wethTokenAtom)
+  const wethToken = useAtomValue(wethTokenAtom)
   const { swapRouter } = useAtomValue(addressesAtom)
   const web3 = useAtomValue(web3Atom)
-  const contract = useAtomValue(squeethPoolContractAtom)
-  // const squeethToken = useAtomValue(squeethTokenAtom)
+  // const contract = useAtomValue(squeethPoolContractAtom)
+  const squeethToken = useAtomValue(squeethTokenAtom)
   /*
     --- ROUTE PARAMETERS ---
     amount: CurrencyAmount,
@@ -402,24 +402,8 @@ export const useAutoRoutedBuyAndRefund = () => {
       const router = new AlphaRouter({ chainId: chainId, provider: provider })
 
       // Call Route
-      // TODO: Change to not be hardcoded addresses
-      const squeethToken = new Token(
-        chainId,
-        '0xa4222f78d23593e82Aa74742d25D06720DCa4ab7',
-        OSQUEETH_DECIMALS,
-        'oSQTH',
-        'oSqueeth',
-      )
-      const wethToken = new Token(
-        chainId,
-        '0xc778417e063141139fce010982780140aa0cd5ab',
-        WETH_DECIMALS,
-        'WETH',
-        'Wrapped Ether',
-      )
-
       const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(amount, WETH_DECIMALS).toFixed(0))
-      const route = await router.route(rawAmount, squeethToken, TradeType.EXACT_INPUT)
+      const route = await router.route(rawAmount, squeethToken!, TradeType.EXACT_INPUT)
       const transaction = {
         data: route?.methodParameters?.calldata,
         to: swapRouter,
@@ -560,11 +544,11 @@ export const useSell = () => {
 export const useAutoRoutedSell = () => {
   const networkId = useAtomValue(networkIdAtom)
   const address = useAtomValue(addressAtom)
-  // const wethToken = useAtomValue(wethTokenAtom)
-  const { swapRouter } = useAtomValue(addressesAtom)
+  const wethToken = useAtomValue(wethTokenAtom)
+  const { swapRouter, oSqueeth, weth } = useAtomValue(addressesAtom)
   const web3 = useAtomValue(web3Atom)
   const contract = useAtomValue(squeethPoolContractAtom)
-  // const squeethToken = useAtomValue(squeethTokenAtom)
+  const squeethToken = useAtomValue(squeethTokenAtom)
   /*
     --- ROUTE PARAMETERS ---
     amount: CurrencyAmount,
@@ -579,29 +563,13 @@ export const useAutoRoutedSell = () => {
       const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
       const chainId = networkId as any as ChainId
       const router = new AlphaRouter({ chainId: chainId, provider: provider })
-
+      
       // Call Route
-      // TODO: Change to not be hardcoded addresses
-      const squeethToken = new Token(
-        chainId,
-        '0xa4222f78d23593e82Aa74742d25D06720DCa4ab7',
-        OSQUEETH_DECIMALS,
-        'oSQTH',
-        'oSqueeth',
-      )
-      const wethToken = new Token(
-        chainId,
-        '0xc778417e063141139fce010982780140aa0cd5ab',
-        WETH_DECIMALS,
-        'WETH',
-        'Wrapped Ether',
-      )
-
       const rawAmount = CurrencyAmount.fromRawAmount(
         squeethToken!,
         fromTokenAmount(amount, OSQUEETH_DECIMALS).toFixed(0),
       )
-      const route = await router.route(rawAmount, wethToken, TradeType.EXACT_INPUT)
+      const route = await router.route(rawAmount, wethToken!, TradeType.EXACT_INPUT)
       const transaction = {
         data: route?.methodParameters?.calldata,
         to: swapRouter,
