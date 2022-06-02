@@ -1,7 +1,7 @@
 import {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {DeployFunction} from 'hardhat-deploy/types';
 import { BigNumber } from 'ethers';
-import { getUniswapDeployments, getWETH } from '../tasks/utils'
+import { getUniswapDeployments, getWETH, getController, getExec, getEuler, getDwethToken} from '../tasks/utils'
 import { getPoolAddress } from '../test/setup';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -12,17 +12,31 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   if (network.name === 'hardhat') return;
 
+  await deploy("TickMathExternal", { from: deployer, log: true })
+  const tickMathExternal = await ethers.getContract("TickMathExternal", deployer)
+
+  await deploy("SqrtPriceMathPartial", { from: deployer, log: true })
+  const sqrtPriceMathPartial = await ethers.getContract("SqrtPriceMathPartial", deployer)
+
   // deploy ControllerHelperUtil lib
-  await deploy("ControllerHelperUtil", { from: deployer, log: true})
+  await deploy("ControllerHelperUtil", { from: deployer, log: true, libraries: { TickMathExternal: tickMathExternal.address, SqrtPriceMathPartial: sqrtPriceMathPartial.address }})
   const controllerHelperUtil = await ethers.getContract("ControllerHelperUtil", deployer)
 
-  const controllerAddress = "0x59F0c781a6eC387F09C40FAA22b7477a2950d209";
-  const nftPositionManagerAddress = "0x8c7c1f786da4dee7d4bb49697a9b0c0c8fb328e0";
-  const uniswapFactoryAddress = "0xa9C2f675FF8290494675dF5CFc2733319EaeeFDc";
-  const aaveAddressProviderAddress = "0x0000000000000000000000000000000000000000";
+  const controller = await getController(ethers, deployer, network.name);
+  console.log("controller", controller.address)
+  const { positionManager, uniswapFactory } = await getUniswapDeployments(ethers, deployer, network.name)
+  console.log("positionManager", positionManager.address)
+  console.log("uniswapFactory", uniswapFactory.address)
+
+  const exec = await getExec(ethers, deployer, network.name)
+  const euler = await getEuler(ethers, deployer, network.name)
+  const dWethToken = await getDwethToken(ethers, deployer, network.name)
+  console.log("exec", exec)
+  console.log("euler", euler)
+  console.log("dWethToken", dWethToken)
 
   // deploy controller helper
-  await deploy("ControllerHelper", { from: deployer, log: true, libraries: { ControllerHelperUtil: controllerHelperUtil.address }, args: [controllerAddress, nftPositionManagerAddress, uniswapFactoryAddress, aaveAddressProviderAddress]});
+  await deploy("ControllerHelper", { from: deployer, log: true, libraries: { ControllerHelperUtil: controllerHelperUtil.address }, args: [controller.address, positionManager.address, uniswapFactory.address, exec, euler, dWethToken]});
   const controllerHelper = await ethers.getContract("ControllerHelper", deployer);
   
   console.log(`Successfully deploy ControllerHelper ${controllerHelper.address}`)
