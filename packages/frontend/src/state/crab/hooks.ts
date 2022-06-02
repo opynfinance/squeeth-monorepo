@@ -121,43 +121,6 @@ export const useCalculateEthWillingToPay = () => {
   return calculateEthWillingToPay
 }
 
-// export const useCalculateCurrentValue = () => {
-//   const { crabStrategy } = useAtomValue(addressesAtom)
-//   const vault = useAtomValue(crabStrategyVaultAtom)
-//   const slippage = useAtomValue(crabStrategySlippageAtom)
-//   const setCurrentEthValue = useUpdateAtom(currentCrabPositionValueInETHAtom)
-//   const setCurrentEthLoading = useUpdateAtom(currentEthLoadingAtom)
-//   const { value: userCrabBalance } = useTokenBalance(crabStrategy, 5, 18)
-//   const contract = useAtomValue(crabStrategyContractAtom)
-//   const calculateEthWillingToPay = useCalculateEthWillingToPay()
-
-//   const calculateCurrentValue = useAppCallback(async () => {
-//     if (!vault) return
-//     const collat = await getCollateralFromCrabAmount(userCrabBalance, contract, vault)
-//     const { amountIn: ethToPay } = await calculateEthWillingToPay(userCrabBalance, slippage)
-//     if (collat?.gt(0)) {
-//       setCurrentEthValue(collat.minus(ethToPay))
-//       if (ethToPay.gt(0)) setCurrentEthLoading(false)
-//     } else {
-//       setCurrentEthLoading(false)
-//     }
-//   }, [
-//     calculateEthWillingToPay,
-//     contract,
-//     slippage,
-//     userCrabBalance,
-//     setCurrentEthValue,
-//     setCurrentEthLoading,
-//     vault?.id,
-//   ])
-
-//   // useEffect(() => {
-//   //   calculateCurrentValue()
-//   // }, [calculateCurrentValue])
-
-//   return calculateCurrentValue
-// }
-
 export const useCurrentCrabPositionValue = () => {
   const { crabStrategy } = useAtomValue(addressesAtom)
 
