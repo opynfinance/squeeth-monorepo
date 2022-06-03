@@ -7,6 +7,7 @@ import { controllerHelperContractAtom } from '../contracts/atoms'
 import { addressAtom } from '../wallet/atoms'
 import { useHandleTransaction } from '../wallet/hooks'
 import useAppCallback from '@hooks/useAppCallback'
+import { UNI_POOL_FEES } from '../../constants/index'
 
 export const useFlashSwapAndMint = () => {
   const handleTransaction = useHandleTransaction()
@@ -45,6 +46,7 @@ export const useFlashSwapAndMint = () => {
             wPowerPerpAmountToMint,
             minToReceive: _minToReceive,
             wPowerPerpAmountToSell: '0',
+            poolFee: UNI_POOL_FEES,
           })
           .send({
             from: address,
@@ -54,7 +56,7 @@ export const useFlashSwapAndMint = () => {
       )
       return result
     },
-    [address, contract],
+    [address, contract, handleTransaction],
   )
   return flashSwapAndMint
 }
