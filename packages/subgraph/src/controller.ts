@@ -37,7 +37,7 @@ import {
   VaultHistory,
   TransactionHistory,
 } from "../generated/schema";
-import { loadOrCreateAccount, saveTransactionHistory } from "./util";
+import { createTransactionHistory, loadOrCreateAccount } from "./util";
 
 import {
   BIGINT_ONE,
@@ -122,11 +122,10 @@ export function handleBurnShort(event: BurnShort): void {
   );
   vaultTransaction.save();
 
-  saveTransactionHistory(event, (transactionHistory) => {
-    transactionHistory.transactionType = "BURN_OSQTH";
-    transactionHistory.owner = vault.owner;
-    transactionHistory.oSqthAmount = event.params.amount;
-  });
+  const transactionHistory = createTransactionHistory("BURN_OSQTH", event);
+  transactionHistory.owner = vault.owner;
+  transactionHistory.oSqthAmount = event.params.amount;
+  transactionHistory.save();
 }
 
 export function handleDepositCollateral(event: DepositCollateral): void {
@@ -164,11 +163,10 @@ export function handleDepositCollateral(event: DepositCollateral): void {
     dayStatSnapshot.totalCollateralAmount.plus(event.params.amount);
   dayStatSnapshot.save();
 
-  saveTransactionHistory(event, (transactionHistory) => {
-    transactionHistory.transactionType = "ADD_COLLAT";
-    transactionHistory.owner = vault.owner;
-    transactionHistory.ethAmount = event.params.amount;
-  });
+  const transactionHistory = createTransactionHistory("DEPOSIT_COLLAT", event);
+  transactionHistory.owner = vault.owner;
+  transactionHistory.ethAmount = event.params.amount;
+  transactionHistory.save();
 }
 
 export function handleDepositUniPositionToken(
@@ -265,11 +263,10 @@ export function handleMintShort(event: MintShort): void {
   );
   vaultTransaction.save();
 
-  saveTransactionHistory(event, (transactionHistory) => {
-    transactionHistory.transactionType = "MINT_OSQTH";
-    transactionHistory.owner = vault.owner;
-    transactionHistory.oSqthAmount = event.params.amount;
-  });
+  const transactionHistory = createTransactionHistory("MINT_OSQTH", event);
+  transactionHistory.owner = vault.owner;
+  transactionHistory.oSqthAmount = event.params.amount;
+  transactionHistory.save();
 }
 
 export function handleNormalizationFactorUpdated(
@@ -354,11 +351,10 @@ export function handleWithdrawCollateral(event: WithdrawCollateral): void {
     dayStatSnapshot.totalCollateralAmount.minus(event.params.amount);
   dayStatSnapshot.save();
 
-  saveTransactionHistory(event, (transactionHistory) => {
-    transactionHistory.transactionType = "REMOVE_COLLAT";
-    transactionHistory.owner = vault.owner;
-    transactionHistory.ethAmount = event.params.amount;
-  });
+  const transactionHistory = createTransactionHistory("WITHDRAW_COLLAT", event);
+  transactionHistory.owner = vault.owner;
+  transactionHistory.ethAmount = event.params.amount;
+  transactionHistory.save();
 }
 
 export function handleWithdrawUniPositionToken(

@@ -31,20 +31,19 @@ export function loadOrCreateAccount(accountId: string): Account {
   return account as Account;
 }
 
-export function saveTransactionHistory(
-  event: ethereum.Event,
-  fn: (transactionHistory: TransactionHistory) => void
-): void {
+export function createTransactionHistory(
+  transactionType: string,
+  event: ethereum.Event
+): TransactionHistory {
   let transactionHistory = new TransactionHistory(
-    `${event.transaction.hash.toHex()}-${event.logIndex}`
+    `${event.transaction.hash.toHex()}-${transactionType}`
   );
 
   transactionHistory.timestamp = event.block.timestamp;
+  transactionHistory.transactionType = transactionType;
   transactionHistory.oSqthAmount = BigInt.zero();
   transactionHistory.ethAmount = BigInt.zero();
   transactionHistory.oSqthPrice = BigInt.zero();
 
-  fn(transactionHistory);
-
-  transactionHistory.save();
+  return transactionHistory;
 }
