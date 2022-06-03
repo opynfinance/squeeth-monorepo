@@ -558,9 +558,9 @@ export const useAutoRoutedSell = () => {
   const networkId = useAtomValue(networkIdAtom)
   const address = useAtomValue(addressAtom)
   const wethToken = useAtomValue(wethTokenAtom)
-  const { swapRouter, oSqueeth, weth } = useAtomValue(addressesAtom)
+  const { swapRouter } = useAtomValue(addressesAtom)
   const web3 = useAtomValue(web3Atom)
-  const contract = useAtomValue(squeethPoolContractAtom)
+  const signer = useAtomValue(signerAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
   /*
     --- ROUTE PARAMETERS ---
@@ -582,17 +582,21 @@ export const useAutoRoutedSell = () => {
         squeethToken!,
         fromTokenAmount(amount, OSQUEETH_DECIMALS).toFixed(0),
       )
-      const route = await router.route(rawAmount, wethToken!, TradeType.EXACT_INPUT)
+      const route = await router.route(rawAmount, wethToken!, TradeType.EXACT_INPUT, {
+        recipient: address!,
+        slippageTolerance: new Percent(5, 100),
+        deadline: Math.floor(Date.now()/1000 +1800)
+      })
       const transaction = {
         data: route?.methodParameters?.calldata,
         to: swapRouter,
         value: route?.methodParameters?.value,
         from: address,
-        gasPrice: route?.gasPriceWei,
+        gasPrice: new BigNumber(route?.gasPriceWei.toString() || 0).multipliedBy(1.2).toFixed(0),
       }
 
       // Submitting a Transaction
-      const result = await web3.givenProvider.sendTransaction(transaction)
+      const result = await signer.sendTransaction(transaction)
       return result
     },
     [address],
