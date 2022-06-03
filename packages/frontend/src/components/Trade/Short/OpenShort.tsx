@@ -13,7 +13,7 @@ import debounce from 'lodash.debounce'
 import BigNumber from 'bignumber.js'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
-import { atomFamily, atomWithStorage, useResetAtom, useUpdateAtom } from 'jotai/utils'
+import { useResetAtom, useUpdateAtom } from 'jotai/utils'
 
 import { TradeSettings } from '@components/TradeSettings'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
@@ -117,7 +117,6 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const collatPercentFamily = atomFamily((initialValue: number) => atomWithStorage('collatPercent', initialValue))
 const FUNDING_MOVE_THRESHOLD = 0.7
 
 export const OpenShortPosition = () => {
@@ -132,9 +131,9 @@ export const OpenShortPosition = () => {
   const [CRError, setCRError] = useState('')
   const [minCR, setMinCR] = useState(BIG_ZERO)
   const [newCollat, setNewCollat] = useState(BIG_ZERO)
+  const [existingLiqPrice, setExistingLiqPrice] = useState(BIG_ZERO)
 
-  const collatPercentAtom = collatPercentFamily(200)
-  const [collatPercent, setCollatPercent] = useAtom(collatPercentAtom)
+  const [collatPercent, setCollatPercent] = useState(200)
   const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
   const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
@@ -249,6 +248,16 @@ export const OpenShortPosition = () => {
     ],
   )
   const handleSqthChange = useAppMemo(() => debounce(onSqthChange, 500), [onSqthChange])
+
+  useAppEffect(() => {
+    if (!vault || vaultId === 0) return
+
+    getCollatRatioAndLiqPrice(vault?.collateralAmount, new BigNumber(vault?.shortAmount)).then(
+      ({ liquidationPrice }) => {
+        setExistingLiqPrice(liquidationPrice)
+      },
+    )
+  }, [getCollatRatioAndLiqPrice, vault, vaultId])
 
   useAppEffect(() => {
     //stop loading if transaction failed
@@ -460,7 +469,10 @@ export const OpenShortPosition = () => {
               collatValue={collatPercent}
             />
             <VaultCard
-              liqPrice={{ existing: 0, after: liqPrice.toFixed(2) }}
+              liqPrice={{
+                existing: existingLiqPrice.gt(0) ? existingLiqPrice.toFixed(2) : 0,
+                after: liqPrice.toFixed(2),
+              }}
               collatRatio={{ existing: existingCollatPercent, after: collatPercent }}
               vaultCollat={{
                 existing: vault?.collateralAmount.toFixed(2) ?? '0',
