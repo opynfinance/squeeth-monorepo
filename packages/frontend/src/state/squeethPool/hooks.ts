@@ -3,20 +3,20 @@ import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
 import { useETHPrice } from '@hooks/useETHPrice'
 import useUniswapTicks from '@hooks/useUniswapTicks'
-import { CurrencyAmount, Token, TradeType } from '@uniswap/sdk-core'
+import { CurrencyAmount, Ether, Percent, Token, TradeType } from '@uniswap/sdk-core'
 import { AlphaRouter, ChainId } from '@uniswap/smart-order-router'
 import { Pool, Route, Trade } from '@uniswap/v3-sdk'
 import { fromTokenAmount, parseSlippageInput } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
 import { ethers } from 'ethers'
-import { useAtomValue } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 import { Contract } from 'web3-eth-contract'
 import routerABI from '../../abis/swapRouter.json'
 // import { transactionHashAtom } from '../trade/atoms'
 import { squeethPoolContractAtom, swapRouterContractAtom } from '../contracts/atoms'
 import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
-import { addressAtom, networkIdAtom, web3Atom } from '../wallet/atoms'
+import { addressAtom, networkIdAtom, signerAtom, web3Atom } from '../wallet/atoms'
 import { useHandleTransaction } from '../wallet/hooks'
 import {
   poolAtom,
@@ -379,11 +379,13 @@ export const useBuyAndRefund = () => {
 }
 
 export const useAutoRoutedBuyAndRefund = () => {
+  console.log('auto: Inside function')
   const networkId = useAtomValue(networkIdAtom)
   const address = useAtomValue(addressAtom)
   const wethToken = useAtomValue(wethTokenAtom)
   const { swapRouter } = useAtomValue(addressesAtom)
   const web3 = useAtomValue(web3Atom)
+  const signer = useAtomValue(signerAtom)
   // const contract = useAtomValue(squeethPoolContractAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
   /*
@@ -400,20 +402,31 @@ export const useAutoRoutedBuyAndRefund = () => {
       const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
       const chainId = networkId as any as ChainId
       const router = new AlphaRouter({ chainId: chainId, provider: provider })
+      console.log('auto: Route initialised', router)
 
       // Call Route
+      console.log(wethToken!.address, amount.toString())
       const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(amount, WETH_DECIMALS).toFixed(0))
-      const route = await router.route(rawAmount, squeethToken!, TradeType.EXACT_INPUT)
+      console.log('auto: Going to buy', rawAmount.toSignificant(18))
+      const route = await router.route(rawAmount, squeethToken!, TradeType.EXACT_OUTPUT,  {
+        recipient: address!,
+        slippageTolerance: new Percent(5, 100),
+        deadline: Math.floor(Date.now()/1000 +1800)
+      })
+      console.log('auto: Found route', route)
+
       const transaction = {
         data: route?.methodParameters?.calldata,
         to: swapRouter,
-        value: route?.methodParameters?.value,
+        value: fromTokenAmount(amount, WETH_DECIMALS).toFixed(0),
         from: address,
-        gasPrice: route?.gasPriceWei,
-      }
+        gasPrice: new BigNumber(route?.gasPriceWei.toString() || 0).toFixed(0),
+      };
 
       // Submitting a Transaction
-      const result = await web3.givenProvider.sendTransaction(transaction)
+      console.log('auto: Sending tx', transaction)
+      const result = await signer.sendTransaction(transaction)
+      console.log('auto: All good!!!', result)
       return result
     },
     [address],
