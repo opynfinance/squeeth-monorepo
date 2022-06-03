@@ -18,6 +18,8 @@ import { squeethPoolContractAtom, swapRouterContractAtom } from '../contracts/at
 import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
 import { addressAtom, networkIdAtom, signerAtom, web3Atom } from '../wallet/atoms'
 import { useHandleTransaction } from '../wallet/hooks'
+import wethAbi from '../../abis/weth.json'
+
 import {
   poolAtom,
   readyAtom,
@@ -379,11 +381,11 @@ export const useBuyAndRefund = () => {
 }
 
 export const useAutoRoutedBuyAndRefund = () => {
-  console.log('auto: Inside function')
+  console.log('auto: Inside func')
   const networkId = useAtomValue(networkIdAtom)
   const address = useAtomValue(addressAtom)
   const wethToken = useAtomValue(wethTokenAtom)
-  const { swapRouter } = useAtomValue(addressesAtom)
+  const { swapRouter2, weth } = useAtomValue(addressesAtom)
   const web3 = useAtomValue(web3Atom)
   const signer = useAtomValue(signerAtom)
   // const contract = useAtomValue(squeethPoolContractAtom)
@@ -403,6 +405,8 @@ export const useAutoRoutedBuyAndRefund = () => {
       const chainId = networkId as any as ChainId
       const router = new AlphaRouter({ chainId: chainId, provider: provider })
       console.log('auto: Route initialised', router)
+      console.log('swap router', swapRouter2)
+      console.log('network id', networkId)
 
       // Call Route
       console.log(wethToken!.address, amount.toString())
@@ -413,14 +417,17 @@ export const useAutoRoutedBuyAndRefund = () => {
         slippageTolerance: new Percent(5, 100),
         deadline: Math.floor(Date.now()/1000 +1800)
       })
-      console.log('auto: Found route', route)
+      console.log('auto: Found route!!', route)
+
+      const wethContract = new web3.eth.Contract(wethAbi as any, weth)
+      await wethContract.methods.approve(swapRouter2, fromTokenAmount(amount, WETH_DECIMALS).toFixed(0))
 
       const transaction = {
         data: route?.methodParameters?.calldata,
-        to: swapRouter,
+        to: swapRouter2,
         value: fromTokenAmount(amount, WETH_DECIMALS).toFixed(0),
         from: address,
-        gasPrice: new BigNumber(route?.gasPriceWei.toString() || 0).toFixed(0),
+        gasPrice: new BigNumber(route?.gasPriceWei.toString() || 0).multipliedBy(1.2).toFixed(0),
       };
 
       // Submitting a Transaction
