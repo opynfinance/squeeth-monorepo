@@ -29,7 +29,6 @@ import { Tooltips, Links } from '@constants/enums'
 import CollatRange from '@components/CollatRange'
 import { PrimaryButton } from '@components/Button'
 import { useGetSellQuote } from 'src/state/squeethPool/hooks'
-import { useIntergrateEthInput } from '@hooks/useIntegrateEthInput'
 import { useFlashSwapAndMint } from 'src/state/controllerhelper/hooks'
 import { useSelectWallet, useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
@@ -40,7 +39,6 @@ import { useComputeSwaps, useFirstValidVault } from 'src/state/positions/hooks'
 import { useVaultData } from '@hooks/useVaultData'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import { useGetCollatRatioAndLiqPrice, useGetDebtAmount, useUpdateOperator } from 'src/state/controller/hooks'
-import TradeInfoItem from '../TradeInfoItem'
 import UniswapData from '../UniswapData'
 import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
 import Cancelled from '../Cancelled'
@@ -49,6 +47,11 @@ import useAppCallback from '@hooks/useAppCallback'
 import useAppMemo from '@hooks/useAppMemo'
 import { useVaultHistoryQuery } from '@hooks/useVaultHistory'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from 'src/state/controller/atoms'
+import VaultCard from './VaultCard'
+import ConfirmApproval from './ConfirmApproval'
+import TradeDetails from '../TradeDetails'
+import { useETHPrice } from '@hooks/useETHPrice'
+import TradeInfoItem from '@components/Trade/TradeInfoItem'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -119,14 +122,16 @@ const FUNDING_MOVE_THRESHOLD = 0.7
 
 export const OpenShortPosition = () => {
   const classes = useStyles()
-  const [minToReceive, setMinToReceive] = useState(new BigNumber(0))
   const [confirmedAmount, setConfirmedAmount] = useState('0')
   const [liqPrice, setLiqPrice] = useState(new BigNumber(0))
   const [shortLoading, setShortLoading] = useState(false)
   const [msgValue, setMsgValue] = useState(new BigNumber(0))
   const [totalCollateralAmount, setTotalCollateralAmount] = useState(new BigNumber(0))
-  const [lastTypedInput, setLastTypedInput] = useState<'eth' | 'sqth' | null>(null)
   const [isVaultApproved, setIsVaultApproved] = useState(true)
+  const [openConfirm, setOpenConfirm] = useState(false)
+  const [CRError, setCRError] = useState('')
+  const [minCR, setMinCR] = useState(BIG_ZERO)
+  const [newCollat, setNewCollat] = useState(BIG_ZERO)
 
   const collatPercentAtom = collatPercentFamily(200)
   const [collatPercent, setCollatPercent] = useAtom(collatPercentAtom)
@@ -148,7 +153,6 @@ export const OpenShortPosition = () => {
   const { data } = useWalletBalance()
   const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
   const getSellQuote = useGetSellQuote()
-  const integrateETHInput = useIntergrateEthInput()
   const flashSwapAndMint = useFlashSwapAndMint()
   const getDebtAmount = useGetDebtAmount()
   const { vaultId, validVault: vault } = useFirstValidVault()
@@ -162,6 +166,7 @@ export const OpenShortPosition = () => {
   const updateOperator = useUpdateOperator()
   const selectWallet = useSelectWallet()
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
+  const ethPrice = useETHPrice()
 
   const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const collateral = useAppMemo(() => new BigNumber(ethTradeAmount), [ethTradeAmount])
@@ -179,7 +184,7 @@ export const OpenShortPosition = () => {
       inputError = 'Insufficient ETH balance'
     } else if (
       amount.isGreaterThan(0) &&
-      collateral.plus(vault?.collateralAmount || BIG_ZERO).lt(MIN_COLLATERAL_AMOUNT)
+      newCollat.plus(vault?.collateralAmount || BIG_ZERO).lt(MIN_COLLATERAL_AMOUNT)
     ) {
       inputError = `Minimum collateral is ${MIN_COLLATERAL_AMOUNT} ETH`
     } else if (vault && vaultId === 0 && vault?.shortAmount.gt(0)) {
@@ -196,12 +201,34 @@ export const OpenShortPosition = () => {
 
   const onSqthChange = useAppCallback(
     async (value: string) => {
-      const [quote, debt] = await Promise.all([getSellQuote(new BigNumber(value)), getDebtAmount(new BigNumber(value))])
-      const result = debt.times(new BigNumber(collatPercent / 100)).minus(quote.amountOut)
-      setTotalCollateralAmount(debt.times(new BigNumber(collatPercent / 100)))
-      setMsgValue(result)
-      setEthTradeAmount(result.toFixed(6))
+      const [quote, debt, existingDebt] = await Promise.all([
+        getSellQuote(new BigNumber(value), slippageAmount),
+        getDebtAmount(new BigNumber(value)),
+        getDebtAmount(new BigNumber(vault?.shortAmount ?? BIG_ZERO)),
+      ])
       setQuote(quote)
+      const totalDebt = existingDebt.plus(debt)
+      setMinCR(
+        BigNumber.max(
+          (vault?.collateralAmount ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt) ?? BIG_ZERO,
+          1.5,
+        ),
+      )
+
+      const newCollat = new BigNumber(collatPercent / 100).multipliedBy(totalDebt).minus(vault?.collateralAmount ?? 0)
+      setNewCollat(newCollat)
+      setEthTradeAmount(newCollat.minus(quote.minimumAmountOut).toFixed(6))
+
+      if (newCollat.gt(quote.minimumAmountOut)) {
+        setMsgValue(newCollat.minus(quote.minimumAmountOut))
+      } else if (newCollat.lt(0)) {
+        setCRError('This CR is Invalid')
+        return
+      } else if (newCollat.lt(quote.amountOut)) {
+        setMsgValue(new BigNumber(0))
+      }
+
+      setTotalCollateralAmount(quote.amountOut.plus(newCollat.minus(quote.minimumAmountOut)))
 
       getCollatRatioAndLiqPrice(debt.times(new BigNumber(collatPercent / 100)), new BigNumber(value)).then(
         ({ liquidationPrice }) => {
@@ -209,43 +236,19 @@ export const OpenShortPosition = () => {
         },
       )
     },
-    [collatPercent, getCollatRatioAndLiqPrice, getDebtAmount, getSellQuote, setEthTradeAmount, setQuote],
+    [
+      collatPercent,
+      getCollatRatioAndLiqPrice,
+      getDebtAmount,
+      getSellQuote,
+      setEthTradeAmount,
+      setQuote,
+      slippageAmount,
+      vault?.collateralAmount,
+      vault?.shortAmount,
+    ],
   )
   const handleSqthChange = useAppMemo(() => debounce(onSqthChange, 500), [onSqthChange])
-
-  const onEthChange = useAppCallback(
-    async (value: string) => {
-      setMsgValue(new BigNumber(value))
-      const { squeethAmount, ethBorrow, quote, liqPrice } = await integrateETHInput(
-        new BigNumber(value),
-        collatPercent / 100,
-        slippageAmount,
-      )
-
-      setLiqPrice(liqPrice)
-      setSqthTradeAmount(squeethAmount.isZero() ? squeethAmount.toString() : squeethAmount.toFixed(6))
-      setMinToReceive(ethBorrow)
-      setQuote(quote)
-      if (!squeethAmount.isZero()) {
-        const debt = await getDebtAmount(squeethAmount)
-        setTotalCollateralAmount(debt.times(new BigNumber(collatPercent / 100)))
-      }
-    },
-    [collatPercent, getDebtAmount, integrateETHInput, setQuote, setSqthTradeAmount, slippageAmount],
-  )
-
-  const handleEthChange = useAppMemo(() => debounce(onEthChange, 500), [onEthChange])
-
-  useAppEffect(() => {
-    // To decide what onChange function to run
-    if (lastTypedInput === 'sqth') {
-      onSqthChange(sqthTradeAmount)
-    }
-
-    if (lastTypedInput === 'eth') {
-      onEthChange(ethTradeAmount)
-    }
-  }, [ethTradeAmount, lastTypedInput, onEthChange, onSqthChange, sqthTradeAmount])
 
   useAppEffect(() => {
     //stop loading if transaction failed
@@ -258,21 +261,40 @@ export const OpenShortPosition = () => {
     setIsVaultApproved(vault?.operator?.toLowerCase() === controllerHelper?.toLowerCase())
   }, [controllerHelper, vault, vaultId])
 
+  const handleConfirmApproval = async () => {
+    try {
+      setShortLoading(true)
+      setIsTxFirstStep(true)
+      setOpenConfirm(false)
+      await updateOperator(Number(vaultId), controllerHelper, () => {
+        setIsVaultApproved(true)
+        setShortLoading(false)
+      })
+    } catch (error) {
+      setShortLoading(false)
+    }
+  }
+
+  const handleCollatRatioChange = (value: string) => {
+    if (new BigNumber(Number(value) / 100).lt(minCR ?? BIG_ZERO)) {
+      setCRError(`Minimum CR is ${minCR.times(100).toFixed(1)}%`)
+      return
+    }
+    setCRError('')
+    setCollatPercent(Number(value))
+  }
+
   const handleSubmit = useAppCallback(async () => {
-    setShortLoading(true)
     try {
       if (vaultIDLoading) {
         setShortLoading(false)
         return
       }
-      if (vaultId && !isVaultApproved) {
-        setIsTxFirstStep(true)
-        await updateOperator(Number(vaultId), controllerHelper, () => {
-          setIsVaultApproved(true)
-          setShortLoading(false)
-        })
+      if (!isVaultApproved) {
+        setOpenConfirm(true)
       } else {
-        await flashSwapAndMint(Number(vaultId), totalCollateralAmount, amount, minToReceive, msgValue, () => {
+        setShortLoading(true)
+        await flashSwapAndMint(Number(vaultId), totalCollateralAmount, amount, quote.amountOut, msgValue, () => {
           setIsTxFirstStep(false)
           setConfirmedAmount(amount.toFixed(6).toString())
           setTradeSuccess(true)
@@ -290,28 +312,36 @@ export const OpenShortPosition = () => {
     }
   }, [
     amount,
-    controllerHelper,
     flashSwapAndMint,
     isVaultApproved,
-    minToReceive,
     msgValue,
+    quote.amountOut,
     resetEthTradeAmount,
     setIsTxFirstStep,
     setTradeCompleted,
     setTradeSuccess,
     setVaultHistoryUpdating,
     totalCollateralAmount,
-    updateOperator,
     updateVault,
     vaultHistoryQuery,
     vaultIDLoading,
     vaultId,
   ])
 
+  useAppEffect(() => {
+    onSqthChange(sqthTradeAmount)
+  }, [onSqthChange, sqthTradeAmount, collatPercent])
+
   const shortOpenPriceImpactErrorState = priceImpactWarning && !shortLoading && !(collatPercent < 150) && !inputError
 
   return (
     <>
+      <ConfirmApproval
+        openConfirm={openConfirm}
+        title="Approve New Wrapper"
+        handleClose={() => setOpenConfirm((prevState) => !prevState)}
+        handleConfirmApproval={handleConfirmApproval}
+      />
       {confirmed && !isTxFirstStep ? (
         <div>
           <Confirmed
@@ -354,7 +384,7 @@ export const OpenShortPosition = () => {
         <>
           <div className={classes.settingsContainer}>
             <Typography variant="caption" className={classes.explainer} id="open-short-header-box" component="div">
-              Mint and sell squeeth to receive funding
+              Short Squeeth to earn funding.
             </Typography>
             <span className={classes.settingsButton}>
               <TradeSettings />
@@ -362,19 +392,89 @@ export const OpenShortPosition = () => {
           </div>
           <form>
             <PrimaryInput
-              name="eth"
-              value={ethTradeAmount}
+              name="sqth"
+              id="open-short-sqth-input"
+              value={sqthTradeAmount}
               onChange={(val) => {
-                setEthTradeAmount(val)
-                setLastTypedInput('eth')
-                handleEthChange(val)
+                setSqthTradeAmount(val)
+                handleSqthChange(val)
               }}
-              label="Collateral"
-              actionTxt="Max"
-              unit="ETH"
+              label="Sell"
+              unit="oSQTH"
               tooltip={Tooltips.SellOpenAmount}
-              onActionClicked={() => setEthTradeAmount(balance.toString())}
-              error={Boolean(inputError) || Boolean(priceImpactWarning)}
+              hint={
+                inputError ? (
+                  <span style={{ color: '#f5475c' }}>{inputError}</span>
+                ) : (
+                  <div className={classes.hint}>
+                    <span className={classes.hintTextContainer}>
+                      <span className={classes.hintTitleText}>Position</span>
+                      <span id="open-short-osqth-before-trade-balance">{shortSqueethAmount.toFixed(4)}</span>
+                    </span>
+                    {quote.amountOut.gt(0) ? (
+                      <>
+                        <ArrowRightAltIcon className={classes.arrowIcon} />
+                        <span id="open-short-osqth-post-trade-balance">
+                          {shortSqueethAmount.plus(amount).toFixed(4)}
+                        </span>
+                      </>
+                    ) : null}{' '}
+                    <span style={{ marginLeft: '4px' }}>oSQTH</span>
+                  </div>
+                )
+              }
+              // id="open-short-trade-details"
+            />
+            <div className={classes.thirdHeading}>
+              <TextField
+                size="small"
+                value={collatPercent}
+                type="number"
+                style={{ width: 300 }}
+                onChange={(event) => {
+                  handleCollatRatioChange(event.target.value)
+                }}
+                id="filled-basic"
+                label="Collateral ratio for vault"
+                variant="outlined"
+                error={collatPercent < 150 || CRError !== ''}
+                helperText={CRError !== '' ? CRError : 'At risk of liquidation at 150%'}
+                FormHelperTextProps={{ classes: { root: classes.formHelperText } }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Typography variant="caption">%</Typography>
+                    </InputAdornment>
+                  ),
+                }}
+                inputProps={{
+                  min: '0',
+                }}
+              />
+            </div>
+            <div className={classes.thirdHeading}></div>
+            <CollatRange
+              onCollatValueChange={(val) => {
+                handleCollatRatioChange(String(val))
+              }}
+              collatValue={collatPercent}
+            />
+            <VaultCard
+              liqPrice={{ existing: 0, after: liqPrice.toFixed(2) }}
+              collatRatio={{ existing: existingCollatPercent, after: collatPercent }}
+              vaultCollat={{
+                existing: vault?.collateralAmount.toFixed(2) ?? '0',
+                after: vault?.collateralAmount
+                  ? vault?.collateralAmount.plus(newCollat).toFixed(2)
+                  : newCollat.toFixed(2),
+              }}
+              vaultId={vaultId}
+            />
+            <TradeDetails
+              actionTitle="Collateral to deposit"
+              amount={ethTradeAmount}
+              unit="ETH"
+              value={!collateral.isNaN() ? collateral.times(ethPrice).toFixed(2).toLocaleString() : '0'}
               hint={
                 inputError ? (
                   inputError
@@ -401,91 +501,14 @@ export const OpenShortPosition = () => {
               }
               id="open-short-eth-input"
             />
-            <div className={classes.thirdHeading}>
-              <TextField
-                size="small"
-                value={collatPercent}
-                type="number"
-                style={{ width: 300 }}
-                onChange={(event) => {
-                  setCollatPercent(Number(event.target.value))
-                }}
-                id="filled-basic"
-                label="Collateral Ratio"
-                variant="outlined"
-                error={collatPercent < 150}
-                helperText="At risk of liquidation at 150%"
-                FormHelperTextProps={{ classes: { root: classes.formHelperText } }}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <Typography variant="caption">%</Typography>
-                    </InputAdornment>
-                  ),
-                }}
-                inputProps={{
-                  min: '0',
-                }}
-              />
-            </div>
-            <div className={classes.thirdHeading}></div>
-            <CollatRange
-              onCollatValueChange={(val) => {
-                setCollatPercent(val)
-              }}
-              collatValue={collatPercent}
-            />
-            <PrimaryInput
-              name="sqth"
-              id="open-short-sqth-input"
-              value={sqthTradeAmount}
-              onChange={(val) => {
-                setSqthTradeAmount(val)
-                setLastTypedInput('sqth')
-                handleSqthChange(val)
-              }}
-              label="Sell"
-              unit="oSQTH"
-              tooltip={Tooltips.SellOpenAmount}
-              hint={
-                inputError ? (
-                  inputError
-                ) : (
-                  <div className={classes.hint}>
-                    <span className={classes.hintTextContainer}>
-                      <span className={classes.hintTitleText}>Position</span>
-                      <span id="open-short-osqth-before-trade-balance">{shortSqueethAmount.toFixed(4)}</span>
-                    </span>
-                    {quote.amountOut.gt(0) ? (
-                      <>
-                        <ArrowRightAltIcon className={classes.arrowIcon} />
-                        <span id="open-short-osqth-post-trade-balance">
-                          {shortSqueethAmount.plus(amount).toFixed(4)}
-                        </span>
-                      </>
-                    ) : null}{' '}
-                    <span style={{ marginLeft: '4px' }}>oSQTH</span>
-                  </div>
-                )
-              }
-              // id="open-short-trade-details"
-            />
+
             <div className={classes.divider}>
               <TradeInfoItem
-                label="Liquidation Price"
-                value={liqPrice.toFixed(2)}
-                unit="USDC"
-                tooltip={`${Tooltips.LiquidationPrice}. ${Tooltips.Twap}`}
-                priceType="twap"
+                label="Collateral from sale"
+                value={quote.minimumAmountOut.toFixed(2)}
+                unit="ETH"
+                tooltip={Tooltips.SaleProceeds}
                 id="open-short-liquidation-price"
-              />
-
-              <TradeInfoItem
-                label="Current Collateral ratio"
-                value={existingCollatPercent}
-                unit="%"
-                tooltip={Tooltips.CurrentCollRatio}
-                id="open-short-collat-ratio"
               />
               <div style={{ marginTop: '10px' }}>
                 <UniswapData
@@ -538,7 +561,7 @@ export const OpenShortPosition = () => {
                       ? 'Open Short'
                       : shortOpenPriceImpactErrorState && isVaultApproved
                       ? 'Open Short anyway'
-                      : 'Allow wrapper to manage vault (1/2)'}
+                      : 'Approve Squeethy 1 Click Wrapper'}
                     {!isVaultApproved ? (
                       <Tooltip style={{ marginLeft: '2px' }} title={Tooltips.ControllerHelperOperator}>
                         <InfoOutlinedIcon fontSize="small" />
