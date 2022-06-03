@@ -1,16 +1,20 @@
 import { Transfer } from "../generated/WPowerPerp/WPowerPerp";
-import { saveTransactionHistory } from "./util";
+import { createTransactionHistory } from "./util";
 
-export function handleTransfer(event: Transfer) {
-  saveTransactionHistory(event, (transactionHistory) => {
-    transactionHistory.transactionType = "TRANSFER_OSQTH";
-    transactionHistory.owner = event.params.from.toString();
-    transactionHistory.oSqthAmount = event.params.value.neg();
-  });
+export function handleTransfer(event: Transfer): void {
+  const senderTransactionHistory = createTransactionHistory(
+    "SEND_OSQTH",
+    event
+  );
+  senderTransactionHistory.owner = event.params.from.toHex();
+  senderTransactionHistory.oSqthAmount = event.params.value;
+  senderTransactionHistory.save();
 
-  saveTransactionHistory(event, (transactionHistory) => {
-    transactionHistory.transactionType = "TRANSFER_OSQTH";
-    transactionHistory.owner = event.params.to.toString();
-    transactionHistory.oSqthAmount = event.params.value;
-  });
+  const receiverTransactionHistory = createTransactionHistory(
+    "RECEIVE_OSQTH",
+    event
+  );
+  receiverTransactionHistory.owner = event.params.to.toHex();
+  receiverTransactionHistory.oSqthAmount = event.params.value;
+  receiverTransactionHistory.save();
 }
