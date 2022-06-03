@@ -1,5 +1,6 @@
 import { createStyles, makeStyles, Card } from '@material-ui/core'
 import AccountBalanceIcon from '@material-ui/icons/AccountBalance'
+import RemoveIcon from '@material-ui/icons/Remove'
 import Image from 'next/image'
 
 import Arrow from '../../../../public/images/gradient-arrow.svg'
@@ -50,8 +51,13 @@ type VaultCardType = {
     existing: number | string
     after: number | string
   }
+  vaultCollat: {
+    existing: number | string
+    after: number | string
+  }
+  vaultId: number
 }
-const VaultCard = ({ collatRatio, liqPrice }: VaultCardType) => {
+const VaultCard = ({ collatRatio, liqPrice, vaultCollat, vaultId }: VaultCardType) => {
   const classes = useStyles()
   return (
     <Card className={classes.vaultCardContainer}>
@@ -72,12 +78,23 @@ const VaultCard = ({ collatRatio, liqPrice }: VaultCardType) => {
       <div className={classes.subComponent}>
         <p className={classes.valueTitle}>Vault Collateralization Ratio</p>
         <div className={classes.valueContainer}>
-          <span>{collatRatio.existing}%</span>
+          <span>{vaultId !== 0 ? `${collatRatio.existing}%` : <RemoveIcon />}</span>
 
           <span className={classes.arrow}>
             <Image src={Arrow} alt="Collateral Ratio Arrow" />
           </span>
           <span>{collatRatio.after}%</span>
+        </div>
+      </div>
+      <div className={classes.subComponent}>
+        <p className={classes.valueTitle}>Vault Collateral</p>
+        <div className={classes.valueContainer}>
+          <span>{vaultId !== 0 ? `${vaultCollat.existing} ETH` : <RemoveIcon />}</span>
+
+          <span className={classes.arrow}>
+            <Image src={Arrow} alt="Vault Collateral Arrow" />
+          </span>
+          <span>{vaultCollat.after} ETH</span>
         </div>
       </div>
     </Card>
