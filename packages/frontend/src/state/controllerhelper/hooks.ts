@@ -35,7 +35,7 @@ export const useFlashSwapAndMint = () => {
 
       const wPowerPerpAmountToMint = fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0)
       const collateralAmount = fromTokenAmount(ethCollateralDeposit, 18).toFixed(0)
-      const _minToReceive = fromTokenAmount(minToReceive, 18).toString()
+      const _minToReceive = fromTokenAmount(minToReceive, 18).toFixed(0)
       const value = fromTokenAmount(msgValue, 18).toFixed(0)
 
       const result = await handleTransaction(
