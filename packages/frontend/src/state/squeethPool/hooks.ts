@@ -388,36 +388,24 @@ export const useAutoRoutedBuyAndRefund = () => {
   const { swapRouter2, weth } = useAtomValue(addressesAtom)
   const web3 = useAtomValue(web3Atom)
   const signer = useAtomValue(signerAtom)
-  // const contract = useAtomValue(squeethPoolContractAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
-  /*
-    --- ROUTE PARAMETERS ---
-    amount: CurrencyAmount,
-    quoteCurrency: Currency,
-    tradeType: TradeType,
-    swapConfig?: SwapConfig,
-    partialRoutingConfig?: Partial<AlphaRouterConfig> = {}
-  */
+
   const autoRoutedBuyAndRefund = useAppCallback(
-    async (amount: BigNumber, onTxConfirmed?: () => void) => {
+    async (amount: BigNumber) => {
       // Initializing the AlphaRouter
       const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
       const chainId = networkId as any as ChainId
       const router = new AlphaRouter({ chainId: chainId, provider: provider })
-      console.log('auto: Route initialised', router)
-      console.log('swap router', swapRouter2)
-      console.log('network id', networkId)
 
       // Call Route
       console.log(wethToken!.address, amount.toString())
       const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(amount, WETH_DECIMALS).toFixed(0))
       console.log('auto: Going to buy', rawAmount.toSignificant(18))
-      const route = await router.route(rawAmount, squeethToken!, TradeType.EXACT_OUTPUT,  {
+      const route = await router.route(rawAmount, squeethToken!, TradeType.EXACT_INPUT,  {
         recipient: address!,
         slippageTolerance: new Percent(5, 100),
         deadline: Math.floor(Date.now()/1000 +1800)
       })
-      console.log('auto: Found route!!', route)
 
       const wethContract = new web3.eth.Contract(wethAbi as any, weth)
       await wethContract.methods.approve(swapRouter2, fromTokenAmount(amount, WETH_DECIMALS).toFixed(0))
@@ -431,9 +419,7 @@ export const useAutoRoutedBuyAndRefund = () => {
       };
 
       // Submitting a Transaction
-      console.log('auto: Sending tx', transaction)
       const result = await signer.sendTransaction(transaction)
-      console.log('auto: All good!!!', result)
       return result
     },
     [address],
