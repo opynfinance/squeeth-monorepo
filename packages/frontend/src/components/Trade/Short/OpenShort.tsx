@@ -133,7 +133,6 @@ export const OpenShortPosition = () => {
   const [newCollat, setNewCollat] = useState(BIG_ZERO)
   const [existingLiqPrice, setExistingLiqPrice] = useState(BIG_ZERO)
 
-  const [collatPercent, setCollatPercent] = useState(200)
   const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
   const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
@@ -166,6 +165,7 @@ export const OpenShortPosition = () => {
   const selectWallet = useSelectWallet()
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
   const ethPrice = useETHPrice()
+  const [collatPercent, setCollatPercent] = useState(existingCollatPercent ? existingCollatPercent : 200)
 
   const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const collateral = useAppMemo(() => new BigNumber(ethTradeAmount), [ethTradeAmount])
@@ -203,7 +203,7 @@ export const OpenShortPosition = () => {
       const [quote, debt, existingDebt] = await Promise.all([
         getSellQuote(new BigNumber(value), slippageAmount),
         getDebtAmount(new BigNumber(value)),
-        getDebtAmount(new BigNumber(vault?.shortAmount ?? BIG_ZERO)),
+        getDebtAmount(vault?.shortAmount ?? BIG_ZERO),
       ])
       setQuote(quote)
       const totalDebt = existingDebt.plus(debt)
