@@ -1,4 +1,9 @@
-import { Address, BigInt, dataSource } from "@graphprotocol/graph-ts";
+import {
+  Address,
+  BigInt,
+  BigDecimal,
+  dataSource,
+} from "@graphprotocol/graph-ts";
 import { getShortHelperAddr } from "./util";
 
 export const BIGINT_ONE = BigInt.fromI32(1);
@@ -18,3 +23,8 @@ export const RA_SHORT_HELPER_ADDR = Address.fromString(
 );
 
 export const SHORT_HELPER_ADDR = getShortHelperAddr(dataSource.network());
+export const TOKEN_DECIMALS = BigInt.fromI32(18);
+export const ZERO_BI = BigInt.fromI32(0);
+export const ONE_BI = BigInt.fromI32(1);
+export const ZERO_BD = BigDecimal.fromString("0");
+export const ONE_BD = BigDecimal.fromString("1");
