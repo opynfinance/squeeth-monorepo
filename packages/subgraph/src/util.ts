@@ -1,4 +1,4 @@
-import { BigInt } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { Address, ethereum } from "@graphprotocol/graph-ts";
 import { Account, TransactionHistory } from "../generated/schema";
 import {
@@ -43,7 +43,7 @@ export function createTransactionHistory(
   transactionHistory.transactionType = transactionType;
   transactionHistory.oSqthAmount = BigInt.zero();
   transactionHistory.ethAmount = BigInt.zero();
-  transactionHistory.oSqthPrice = BigInt.zero();
+  transactionHistory.oSqthPrice = BigDecimal.zero();
 
   return transactionHistory;
 }
