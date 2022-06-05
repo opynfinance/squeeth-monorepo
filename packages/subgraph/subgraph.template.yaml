@@ -127,3 +127,53 @@ dataSources:
         - event: ExecuteBuyAuction(indexed address,uint256,uint256,bool)
           handler: handleExecuteBuyAuction 
       file: ./src/crabstrategy.ts
+  - kind: ethereum/contract
+    name: NonfungiblePositionManager
+    network: ropsten
+    source:
+      address: "0x8c7C1F786dA4DEe7d4bB49697A9B0C0c8Fb328e0"
+      abi: NonfungiblePositionManager
+      startBlock: 8845990
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/position-manager.ts
+      entities:
+        - TransactionHistory
+      abis:
+        - name: NonfungiblePositionManager
+          file: ./abis/NonfungiblePositionManager.json
+        - name: Pool
+          file: ./abis/pool.json
+        - name: Factory
+          file: ./abis/factory.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: IncreaseLiquidity(indexed uint256,uint128,uint256,uint256)
+          handler: handleIncreaseLiquidity
+        - event: DecreaseLiquidity(indexed uint256,uint128,uint256,uint256)
+          handler: handleDecreaseLiquidity
+        - event: Collect(indexed uint256,address,uint256,uint256)
+          handler: handleCollect
+  - kind: ethereum/contract
+    name: Pool
+    network: ropsten
+    source:
+      address: "0x921c384F79de1BAe96d6f33E3E5b8d0B2B34cb68"
+      abi: Pool
+      startBlock: 8845990
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/core.ts
+      entities:
+        - TransactionHistory
+      abis:
+        - name: Pool
+          file: ./abis/pool.json
+      eventHandlers:
+        - event: Swap(indexed address,indexed address,int256,int256,uint160,uint128,int24)
+          handler: handleSwap
