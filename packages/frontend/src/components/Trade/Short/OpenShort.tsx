@@ -213,17 +213,16 @@ export const OpenShortPosition = () => {
           1.5,
         ),
       )
-
       const newCollat = new BigNumber(collatPercent / 100).multipliedBy(totalDebt).minus(vault?.collateralAmount ?? 0)
       setNewCollat(newCollat)
-      setEthTradeAmount(newCollat.minus(quote.minimumAmountOut).toFixed(6))
 
       if (newCollat.gt(quote.minimumAmountOut)) {
+        setEthTradeAmount(newCollat.minus(quote.minimumAmountOut).toFixed(6))
         setMsgValue(newCollat.minus(quote.minimumAmountOut))
       } else if (newCollat.lt(0)) {
-        setCRError('This CR is Invalid')
         return
       } else if (newCollat.lt(quote.amountOut)) {
+        setEthTradeAmount('0')
         setMsgValue(new BigNumber(0))
       }
 
@@ -287,9 +286,9 @@ export const OpenShortPosition = () => {
   const handleCollatRatioChange = (value: string) => {
     if (new BigNumber(Number(value) / 100).lt(minCR ?? BIG_ZERO)) {
       setCRError(`Minimum CR is ${minCR.times(100).toFixed(1)}%`)
-      return
+    } else {
+      setCRError('')
     }
-    setCRError('')
     setCollatPercent(Number(value))
   }
 
@@ -467,6 +466,7 @@ export const OpenShortPosition = () => {
                 handleCollatRatioChange(String(val))
               }}
               collatValue={collatPercent}
+              minCollatRatio={Number(minCR)}
             />
             <VaultCard
               liqPrice={{
@@ -553,7 +553,8 @@ export const OpenShortPosition = () => {
                   amount.isZero() ||
                   collateral.isZero() ||
                   collatPercent < 150 ||
-                  (vault && vault.shortAmount.isZero())
+                  (vault && vault.shortAmount.isZero()) ||
+                  CRError !== ''
                 }
                 variant={shortOpenPriceImpactErrorState ? 'outlined' : 'contained'}
                 style={
