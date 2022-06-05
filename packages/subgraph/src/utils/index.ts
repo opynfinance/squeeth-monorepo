@@ -1,5 +1,5 @@
 /* eslint-disable prefer-const */
-import { BigInt, BigDecimal, ethereum } from "@graphprotocol/graph-ts";
+import { BigInt, BigDecimal } from "@graphprotocol/graph-ts";
 import { ONE_BI, ZERO_BI, ZERO_BD } from "../constants";
 
 export function exponentToBigDecimal(decimals: BigInt): BigDecimal {

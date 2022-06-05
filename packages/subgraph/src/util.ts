@@ -39,6 +39,7 @@ export function createTransactionHistory(
     `${event.transaction.hash.toHex()}-${transactionType}`
   );
 
+  transactionHistory.sender = event.transaction.from;
   transactionHistory.timestamp = event.block.timestamp;
   transactionHistory.transactionType = transactionType;
   transactionHistory.oSqthAmount = BigInt.zero();

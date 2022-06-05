@@ -10,7 +10,6 @@ import { createTransactionHistory } from "../util";
 
 export function handleIncreaseLiquidity(event: IncreaseLiquidity): void {
   const transactionHistory = createTransactionHistory("ADD_LIQUIDITY", event);
-  transactionHistory.owner = event.transaction.from.toString();
   transactionHistory.oSqthAmount = event.params.amount0;
   transactionHistory.ethAmount = event.params.amount1;
   transactionHistory.oSqthPrice = BigDecimal.zero();
@@ -23,7 +22,6 @@ export function handleDecreaseLiquidity(event: DecreaseLiquidity): void {
     "REMOVE_LIQUIDITY",
     event
   );
-  transactionHistory.owner = event.transaction.from.toString();
   transactionHistory.oSqthAmount = event.params.amount0;
   transactionHistory.ethAmount = event.params.amount1;
   transactionHistory.oSqthPrice = BigDecimal.zero();
@@ -33,7 +31,6 @@ export function handleDecreaseLiquidity(event: DecreaseLiquidity): void {
 
 export function handleCollect(event: Collect): void {
   const transactionHistory = createTransactionHistory("COLLECT_FEE", event);
-  transactionHistory.owner = event.transaction.from.toString();
   transactionHistory.oSqthAmount = event.params.amount0;
   transactionHistory.ethAmount = event.params.amount1;
   transactionHistory.oSqthPrice = BigDecimal.zero();

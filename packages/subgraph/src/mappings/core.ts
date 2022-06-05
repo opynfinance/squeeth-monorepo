@@ -24,7 +24,7 @@ export function handleSwap(event: SwapEvent): void {
     transactionHistory.transactionType = "BUY_OSQTH";
   }
 
-  transactionHistory.owner = event.transaction.from.toString();
+  transactionHistory.sender = event.transaction.from;
   transactionHistory.oSqthAmount = event.params.amount0;
   transactionHistory.ethAmount = event.params.amount1;
   transactionHistory.timestamp = event.block.timestamp;

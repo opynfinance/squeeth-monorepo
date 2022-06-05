@@ -109,6 +109,7 @@ type TransactionHistory @entity {
   timestamp: BigInt!
   transactionType: TransactionType!
   owner: Account!
+  sender: Bytes!
   oSqthAmount: BigInt!
   ethAmount: BigInt!
   oSqthPrice: BigDecimal!
