@@ -21,6 +21,7 @@ import {
   useAutoRoutedBuyAndRefund,
   useAutoRoutedSell,
   useBuyAndRefund,
+  useSell,
   useGetBuyQuote,
   useGetBuyQuoteForETH,
   useGetSellQuote,
@@ -622,7 +623,7 @@ const CloseLong: React.FC<BuyProps> = () => {
     resetTxCancelled,
     resetTransactionData,
   } = useTransactionStatus()
-  const { swapRouter, oSqueeth } = useAtomValue(addressesAtom)
+  const { swapRouter2, oSqueeth } = useAtomValue(addressesAtom)
   // const sell = useSell()
   const sell = useAutoRoutedSell()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
@@ -642,7 +643,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   const ethPrice = useETHPrice()
   const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const altTradeAmount = new BigNumber(ethTradeAmount)
-  const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter)
+  const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter2)
   const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
 
   const supportedNetwork = useAtomValue(supportedNetworkAtom)

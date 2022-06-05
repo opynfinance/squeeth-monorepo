@@ -13,12 +13,12 @@ import { useAtom, useAtomValue } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 import { Contract } from 'web3-eth-contract'
 import routerABI from '../../abis/swapRouter.json'
-// import { transactionHashAtom } from '../trade/atoms'
 import { squeethPoolContractAtom, swapRouterContractAtom } from '../contracts/atoms'
 import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
 import { addressAtom, networkIdAtom, signerAtom, web3Atom } from '../wallet/atoms'
 import { useHandleTransaction } from '../wallet/hooks'
 import wethAbi from '../../abis/weth.json'
+import squeethAbi from '../../abis/squeeth.json'
 
 import {
   poolAtom,
@@ -28,6 +28,7 @@ import {
   squeethTokenAtom,
   wethTokenAtom,
 } from './atoms'
+import { useUserAllowance } from '@hooks/contracts/useAllowance'
 
 const getImmutables = async (squeethContract: Contract) => {
   const [token0, token1, fee, tickSpacing, maxLiquidityPerTick] = await Promise.all([
@@ -381,7 +382,6 @@ export const useBuyAndRefund = () => {
 }
 
 export const useAutoRoutedBuyAndRefund = () => {
-  console.log('auto: Inside func')
   const networkId = useAtomValue(networkIdAtom)
   const address = useAtomValue(addressAtom)
   const wethToken = useAtomValue(wethTokenAtom)
@@ -398,9 +398,7 @@ export const useAutoRoutedBuyAndRefund = () => {
       const router = new AlphaRouter({ chainId: chainId, provider: provider })
 
       // Call Route
-      console.log(wethToken!.address, amount.toString())
       const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(amount, WETH_DECIMALS).toFixed(0))
-      console.log('auto: Going to buy', rawAmount.toSignificant(18))
       const route = await router.route(rawAmount, squeethToken!, TradeType.EXACT_INPUT,  {
         recipient: address!,
         slippageTolerance: new Percent(5, 100),
@@ -551,20 +549,13 @@ export const useAutoRoutedSell = () => {
   const networkId = useAtomValue(networkIdAtom)
   const address = useAtomValue(addressAtom)
   const wethToken = useAtomValue(wethTokenAtom)
-  const { swapRouter } = useAtomValue(addressesAtom)
+  const { swapRouter2 } = useAtomValue(addressesAtom)
   const web3 = useAtomValue(web3Atom)
   const signer = useAtomValue(signerAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
-  /*
-    --- ROUTE PARAMETERS ---
-    amount: CurrencyAmount,
-    quoteCurrency: Currency,
-    tradeType: TradeType,
-    swapConfig?: SwapConfig,
-    partialRoutingConfig?: Partial<AlphaRouterConfig> = {}
-  */
+
   const autoRoutedSell = useAppCallback(
-    async (amount: BigNumber, onTxConfirmed?: () => void) => {
+    async (amount: BigNumber) => {
       // Initializing the AlphaRouter
       const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
       const chainId = networkId as any as ChainId
@@ -580,10 +571,11 @@ export const useAutoRoutedSell = () => {
         slippageTolerance: new Percent(5, 100),
         deadline: Math.floor(Date.now()/1000 +1800)
       })
+
       const transaction = {
         data: route?.methodParameters?.calldata,
-        to: swapRouter,
-        value: route?.methodParameters?.value,
+        to: swapRouter2,
+        value: fromTokenAmount(amount, OSQUEETH_DECIMALS).toFixed(0),
         from: address,
         gasPrice: new BigNumber(route?.gasPriceWei.toString() || 0).multipliedBy(1.2).toFixed(0),
       }
