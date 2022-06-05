@@ -100,7 +100,7 @@ const CollatRange: React.FC<CollatRangeType> = ({
         max={300}
         id={id + '-slider'}
       />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '.75em' }}>
         <Collapse in={collatValue === 150}>
           <Alert severity="error" id={id + '-alert-text'}>
             You will get liquidated
