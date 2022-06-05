@@ -415,8 +415,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
     }
   }
 
-  const shortOpenPriceImpactErrorState =
-    priceImpactWarning && !shortLoading && !(collatPercent < 150) && !openError && !existingLongError
+  const shortOpenPriceImpactErrorState = priceImpactWarning && !shortLoading && !(collatPercent < 150) && !openError
 
   const shortOpenLongOpenErrorState =
     existingLongError && !shortLoading && !(collatPercent < 150) && !openError && !priceImpactWarning
@@ -880,13 +879,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   }
 
   const shortClosePriceImpactErrorState =
-    priceImpactWarning &&
-    !buyLoading &&
-    !(collatPercent < 150) &&
-    !closeError &&
-    !existingLongError &&
-    vault &&
-    !vault.shortAmount.isZero()
+    priceImpactWarning && !buyLoading && !(collatPercent < 150) && !closeError && vault && !vault.shortAmount.isZero()
 
   const shortCloseLongOpenErrorState =
     existingLongError &&

@@ -364,7 +364,8 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
     }
   }
 
-  const longOpenPriceImpactErrorState = priceImpactWarning && !buyLoading && !openError && !isShort
+  const longOpenPriceImpactErrorState = priceImpactWarning && !buyLoading && !openError
+  const longOpenShortOpenErrorState = isShort && !buyLoading && !openError && !priceImpactWarning
 
   useAppEffect(() => {
     if (transactionInProgress) {
@@ -560,7 +561,11 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                   </PrimaryButton>
                 ) : (
                   <PrimaryButton
-                    variant={longOpenPriceImpactErrorState || !!highVolError ? 'outlined' : 'contained'}
+                    variant={
+                      longOpenPriceImpactErrorState || !!highVolError || longOpenShortOpenErrorState
+                        ? 'outlined'
+                        : 'contained'
+                    }
                     onClick={transact}
                     className={classes.amountInput}
                     disabled={
@@ -568,11 +573,10 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                       !!buyLoading ||
                       transactionInProgress ||
                       !!openError ||
-                      !!existingShortError ||
                       sqthTradeAmount === '0'
                     }
                     style={
-                      longOpenPriceImpactErrorState || !!highVolError
+                      longOpenPriceImpactErrorState || !!highVolError || longOpenShortOpenErrorState
                         ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
                         : { width: '300px' }
                     }
@@ -582,7 +586,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                       'Unsupported Network'
                     ) : buyLoading || transactionInProgress ? (
                       <CircularProgress color="primary" size="1.5rem" />
-                    ) : longOpenPriceImpactErrorState ? (
+                    ) : longOpenPriceImpactErrorState || longOpenShortOpenErrorState ? (
                       'Buy Anyway'
                     ) : (
                       'Buy'
@@ -685,8 +689,10 @@ const CloseLong: React.FC<BuyProps> = () => {
     }
   }
 
-  const longClosePriceImpactErrorState =
-    priceImpactWarning && !closeError && !sellLoading && !squeethAmount.isZero() && !isShort
+  const longClosePriceImpactErrorState = priceImpactWarning && !closeError && !sellLoading && !squeethAmount.isZero()
+
+  const longCloseShortOpenErrorState =
+    isShort && !closeError && !sellLoading && !squeethAmount.isZero() && !priceImpactWarning
 
   const sellAndClose = useAppCallback(async () => {
     setSellLoading(true)
@@ -914,7 +920,7 @@ const CloseLong: React.FC<BuyProps> = () => {
               </PrimaryButton>
             ) : (
               <PrimaryButton
-                variant={longClosePriceImpactErrorState ? 'outlined' : 'contained'}
+                variant={longClosePriceImpactErrorState || longCloseShortOpenErrorState ? 'outlined' : 'contained'}
                 onClick={sellAndClose}
                 className={classes.amountInput}
                 disabled={
@@ -922,12 +928,11 @@ const CloseLong: React.FC<BuyProps> = () => {
                   !!sellLoading ||
                   transactionInProgress ||
                   !!closeError ||
-                  !!existingShortError ||
                   squeethAmount.isZero() ||
                   sqthTradeAmount === '0'
                 }
                 style={
-                  longClosePriceImpactErrorState
+                  longClosePriceImpactErrorState || longCloseShortOpenErrorState
                     ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
                     : { width: '300px' }
                 }
@@ -939,7 +944,7 @@ const CloseLong: React.FC<BuyProps> = () => {
                   <CircularProgress color="primary" size="1.5rem" />
                 ) : squeethAllowance.lt(amount) && !hasJustApprovedSqueeth ? (
                   'Approve oSQTH (1/2)'
-                ) : longClosePriceImpactErrorState ? (
+                ) : longClosePriceImpactErrorState || longCloseShortOpenErrorState ? (
                   'Sell Anyway'
                 ) : hasJustApprovedSqueeth ? (
                   'Sell to close (2/2)'
