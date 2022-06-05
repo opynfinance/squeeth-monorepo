@@ -97,6 +97,11 @@ enum TransactionType {
   REMOVE_COLLAT
   TRANSFER_OSQTH
   TRANSFER_VAULT
+  BUY_OSQTH
+  SELL_OSQTH
+  ADD_LIQUIDITY
+  REMOVE_LIQUIDITY
+  COLLECT_FEE
 }
 
 type TransactionHistory @entity {
@@ -106,5 +111,5 @@ type TransactionHistory @entity {
   owner: Account!
   oSqthAmount: BigInt!
   ethAmount: BigInt!
-  oSqthPrice: BigInt!
+  oSqthPrice: BigDecimal!
 }
