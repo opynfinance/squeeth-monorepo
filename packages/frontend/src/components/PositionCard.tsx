@@ -48,6 +48,7 @@ const useStyles = makeStyles((theme) =>
     container: {
       padding: theme.spacing(2),
       width: '420px',
+      alignSelf: 'flex-start',
       // background: theme.palette.background.lightStone,
       borderRadius: theme.spacing(1),
       display: 'flex',
