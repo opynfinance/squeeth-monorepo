@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useAtom, useAtomValue, atom } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 import { useQuery } from '@apollo/client'
@@ -82,7 +81,7 @@ export const useSwaps = () => {
             }
           : {
               poolAddress: squeethPool,
-              recipients: [shortHelper, address || '', swapRouter],
+              recipients: [shortHelper, address || '', swapRouter, controllerHelper],
             }),
       },
       updateQuery(prev, { subscriptionData }) {
@@ -93,7 +92,17 @@ export const useSwaps = () => {
         }
       },
     })
-  }, [address, crabStrategy, networkId, oSqueeth, shortHelper, squeethPool, swapRouter, subscribeToMore])
+  }, [
+    address,
+    crabStrategy,
+    networkId,
+    oSqueeth,
+    shortHelper,
+    squeethPool,
+    swapRouter,
+    subscribeToMore,
+    controllerHelper,
+  ])
 
   useAppEffect(() => {
     if (data?.swaps) {
