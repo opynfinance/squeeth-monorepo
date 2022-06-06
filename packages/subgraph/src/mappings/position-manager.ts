@@ -11,7 +11,6 @@ export function handleIncreaseLiquidity(event: IncreaseLiquidity): void {
   const transactionHistory = createTransactionHistory("ADD_LIQUIDITY", event);
   transactionHistory.oSqthAmount = event.params.amount0;
   transactionHistory.ethAmount = event.params.amount1;
-  transactionHistory.oSqthPrice = BigDecimal.zero();
 
   transactionHistory.save();
 }
@@ -23,7 +22,6 @@ export function handleDecreaseLiquidity(event: DecreaseLiquidity): void {
   );
   transactionHistory.oSqthAmount = event.params.amount0;
   transactionHistory.ethAmount = event.params.amount1;
-  transactionHistory.oSqthPrice = BigDecimal.zero();
 
   transactionHistory.save();
 }
@@ -32,7 +30,6 @@ export function handleCollect(event: Collect): void {
   const transactionHistory = createTransactionHistory("COLLECT_FEE", event);
   transactionHistory.oSqthAmount = event.params.amount0;
   transactionHistory.ethAmount = event.params.amount1;
-  transactionHistory.oSqthPrice = BigDecimal.zero();
 
   transactionHistory.save();
 }
