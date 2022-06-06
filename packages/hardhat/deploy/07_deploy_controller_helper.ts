@@ -28,9 +28,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("positionManager", positionManager.address)
   console.log("uniswapFactory", uniswapFactory.address)
 
-  const exec = await getExec(ethers, deployer, network.name)
-  const euler = await getEuler(ethers, deployer, network.name)
-  const dWethToken = await getDwethToken(ethers, deployer, network.name)
+  const exec = await getExec(deployer, network.name)
+  const euler = await getEuler(deployer, network.name)
+  const dWethToken = await getDwethToken(deployer, network.name)
   console.log("exec", exec)
   console.log("euler", euler)
   console.log("dWethToken", dWethToken)
