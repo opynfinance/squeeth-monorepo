@@ -7,6 +7,7 @@ import { controllerHelperContractAtom } from '../contracts/atoms'
 import { addressAtom } from '../wallet/atoms'
 import { useHandleTransaction } from '../wallet/hooks'
 import useAppCallback from '@hooks/useAppCallback'
+import { UNI_POOL_FEES } from '../../constants/index'
 
 export const useFlashSwapAndMint = () => {
   const handleTransaction = useHandleTransaction()
@@ -33,18 +34,19 @@ export const useFlashSwapAndMint = () => {
       if (!contract || !address) return
 
       const wPowerPerpAmountToMint = fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0)
-      const collateralAmount = fromTokenAmount(ethCollateralDeposit, 18).toFixed(0)
-      const _minToReceive = fromTokenAmount(minToReceive, 18).toString()
+      const collateralToDeposit = fromTokenAmount(ethCollateralDeposit, 18).toFixed(0)
+      const _minToReceive = fromTokenAmount(minToReceive, 18).toFixed(0)
       const value = fromTokenAmount(msgValue, 18).toFixed(0)
 
       const result = await handleTransaction(
         contract.methods
           .flashswapSellLongWMint({
             vaultId,
-            collateralAmount,
+            collateralToDeposit,
             wPowerPerpAmountToMint,
             minToReceive: _minToReceive,
             wPowerPerpAmountToSell: '0',
+            poolFee: UNI_POOL_FEES,
           })
           .send({
             from: address,
@@ -54,7 +56,7 @@ export const useFlashSwapAndMint = () => {
       )
       return result
     },
-    [address, contract],
+    [address, contract, handleTransaction],
   )
   return flashSwapAndMint
 }

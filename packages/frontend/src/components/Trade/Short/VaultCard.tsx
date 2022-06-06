@@ -1,0 +1,106 @@
+import { createStyles, makeStyles, Card } from '@material-ui/core'
+import AccountBalanceIcon from '@material-ui/icons/AccountBalance'
+import RemoveIcon from '@material-ui/icons/Remove'
+import Image from 'next/image'
+
+import Arrow from '../../../../public/images/gradient-arrow.svg'
+
+const useStyles = makeStyles(() =>
+  createStyles({
+    vaultCardContainer: {
+      width: '300px',
+      margin: 'auto',
+      backgroundColor: 'rgba(255, 255, 255, 0.12)',
+      marginBottom: '1.5em',
+      padding: '1em',
+      textAlign: 'left',
+    },
+    title: {
+      display: 'flex',
+      alignItems: 'center',
+    },
+    vault: {
+      marginLeft: '.5em',
+      fontWeight: 'bold',
+    },
+    valueTitle: {
+      opacity: 0.75,
+      margin: '0',
+      marginBottom: '.5em',
+    },
+    valueContainer: {
+      display: 'flex',
+      alignItems: 'center',
+      fontWeight: 'bold',
+    },
+    arrow: {
+      margin: '0 1em',
+    },
+    subComponent: {
+      marginTop: '1em',
+    },
+  }),
+)
+
+type VaultCardType = {
+  collatRatio: {
+    existing: number | string
+    after: number | string
+  }
+  liqPrice: {
+    existing: number | string
+    after: number | string
+  }
+  vaultCollat: {
+    existing: number | string
+    after: number | string
+  }
+  vaultId: number
+  id?: string
+}
+const VaultCard = ({ collatRatio, liqPrice, id, vaultCollat, vaultId }: VaultCardType) => {
+  const classes = useStyles()
+  return (
+    <Card className={classes.vaultCardContainer} id={id}>
+      <div className={classes.title}>
+        <AccountBalanceIcon fontSize="inherit" />
+        <span className={classes.vault}>Vault</span>
+      </div>
+      <div className={classes.subComponent}>
+        <p className={classes.valueTitle}>Liquidation Price</p>
+        <div className={classes.valueContainer}>
+          <span className="prev-liq-price">${liqPrice.existing}</span>
+
+          <span className={classes.arrow}>
+            <Image src={Arrow} alt="Liquidation Arrow" />
+          </span>
+
+          <span className="current-liq-price">${liqPrice.after}</span>
+        </div>
+      </div>
+      <div className={classes.subComponent}>
+        <p className={classes.valueTitle}>Vault Collateralization Ratio</p>
+        <div className={classes.valueContainer}>
+          <span className="prev-collat-ratio">{vaultId !== 0 ? `${collatRatio.existing}%` : <RemoveIcon />}</span>
+
+          <span className={classes.arrow}>
+            <Image src={Arrow} alt="Collateral Ratio Arrow" />
+          </span>
+          <span className="current-collat-ratio">{collatRatio.after}%</span>
+        </div>
+      </div>
+      <div className={classes.subComponent}>
+        <p className={classes.valueTitle}>Vault Collateral</p>
+        <div className={classes.valueContainer}>
+          <span className="prev-vault-collat">{vaultId !== 0 ? `${vaultCollat.existing} ETH` : <RemoveIcon />}</span>
+
+          <span className={classes.arrow}>
+            <Image src={Arrow} alt="Vault Collateral Arrow" />
+          </span>
+          <span className="current-vault-collat">{vaultCollat.after} ETH</span>
+        </div>
+      </div>
+    </Card>
+  )
+}
+export default VaultCard

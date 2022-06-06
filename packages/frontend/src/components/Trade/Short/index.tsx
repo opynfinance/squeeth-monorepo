@@ -1196,7 +1196,7 @@ type SellType = {
 }
 
 const Short: React.FC<SellType> = ({ open }) => {
-  return open ? <OpenShortPosition open={open} /> : <Close />
+  return open ? <OpenShortPosition /> : <Close />
 }
 
 export default memo(Short)

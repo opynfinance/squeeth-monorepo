@@ -14,7 +14,7 @@ import { useEthPriceMap } from 'src/state/ethPriceCharts/atoms'
 const bigZero = new BigNumber(0)
 
 export const useTransactionHistory = () => {
-  const { squeethPool, shortHelper, swapRouter } = useAtomValue(addressesAtom)
+  const { squeethPool, shortHelper, swapRouter, controllerHelper } = useAtomValue(addressesAtom)
   const address = useAtomValue(addressAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const ethPriceMap = useEthPriceMap()
@@ -26,7 +26,7 @@ export const useTransactionHistory = () => {
       poolAddress: squeethPool,
       owner: address,
       origin: address || '',
-      recipients: [shortHelper, address || '', swapRouter],
+      recipients: [shortHelper, address || '', swapRouter, controllerHelper],
       orderDirection: 'desc',
     },
     fetchPolicy: 'cache-and-network',
