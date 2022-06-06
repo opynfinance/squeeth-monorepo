@@ -90,6 +90,7 @@ export const useFlashSwapAndBurn = () => {
             wPowerPerpAmountToBurn,
             maxToPay: _maxToPay,
             wPowerPerpAmountToBuy: '0',
+            poolFee: UNI_POOL_FEES,
           })
           .send({
             from: address,
@@ -99,7 +100,7 @@ export const useFlashSwapAndBurn = () => {
       )
       return result
     },
-    [address, contract],
+    [address, contract, handleTransaction],
   )
   return flashSwapAndBurn
 }
