@@ -112,7 +112,10 @@ type TransactionHistory @entity {
   sender: Bytes!
   oSqthAmount: BigInt!
   ethAmount: BigInt!
-  oSqthPrice: BigDecimal!
+  oSqthPriceInETH: BigDecimal!
+  ethPriceInUSD: BigDecimal!
+  ethUSDCSqrtPrice: BigInt!
+  ethOSQTHSqrtPrice: BigInt!
 }
 
 type Pool @entity {
