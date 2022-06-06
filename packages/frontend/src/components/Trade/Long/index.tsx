@@ -377,7 +377,6 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
     setBuyLoading(true)
     try {
       await buyAndRefund(new BigNumber(ethTradeAmount), () => {
-        console.log("start buy")
         setTradeSuccess(true)
         setTradeCompleted(true)
 
