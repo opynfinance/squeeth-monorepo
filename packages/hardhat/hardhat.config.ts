@@ -19,6 +19,8 @@ import './tasks/addWethLiquidity'
 import './tasks/buySqueeth'
 import './tasks/buyWeth'
 import './tasks/increaseSlot'
+import './tasks/openShortVault'
+import './tasks/checkVaultStatus'
 
 // Load env variables
 dotenv.config()
