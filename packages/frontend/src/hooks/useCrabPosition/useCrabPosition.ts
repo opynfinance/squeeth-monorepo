@@ -7,7 +7,7 @@ import { useAtomValue } from 'jotai'
 import { indexAtom } from 'src/state/controller/atoms'
 import useAppCallback from '../useAppCallback'
 import useAppMemo from '../useAppMemo'
-import { crabLoadingAtom, crabPositionValueLoadingAtom, currentEthValueAtom } from 'src/state/crab/atoms'
+import { crabLoadingAtom, crabPositionValueLoadingAtom, currentCrabPositionValueInETHAtom } from 'src/state/crab/atoms'
 
 /*
   depositedEth = Sum of deposited ethAmount - Sum of withdrawn ethAmount
@@ -20,7 +20,7 @@ import { crabLoadingAtom, crabPositionValueLoadingAtom, currentEthValueAtom } fr
 export const useCrabPosition = (user: string) => {
   const crabLoading = useAtomValue(crabLoadingAtom)
   const isCrabPositionValueLoading = useAtomValue(crabPositionValueLoadingAtom)
-  const currentEthValue = useAtomValue(currentEthValueAtom)
+  const currentEthValue = useAtomValue(currentCrabPositionValueInETHAtom)
 
   const { loading: txHistoryLoading, data: txHistoryData } = useUserCrabTxHistory(user)
 

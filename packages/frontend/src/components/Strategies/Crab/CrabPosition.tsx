@@ -53,7 +53,6 @@ const CrabPosition: React.FC = () => {
     )
   }
 
-
   if (currentCrabPositionValue.isZero() || depositedUsd.isZero()) {
     return null
   }
