@@ -1,5 +1,4 @@
 import { Contract } from "ethers"
-import { ethers } from "hardhat"
 
 export const networkNameToUniRouter = (name: string) => {
   switch (name) {
@@ -114,7 +113,7 @@ export const getController = async(ethers: any, deployer: string, networkName: s
   return ethers.getContractAt('Controller', controllerAddr)
 }
 
-export const getExec = async(ethers: any, deployer: string, networkName: string) => {
+export const getExec = async(deployer: string, networkName: string) => {
   const execAddr = networkNameToController(networkName)
   if (execAddr === undefined) {
     return ''
@@ -123,7 +122,7 @@ export const getExec = async(ethers: any, deployer: string, networkName: string)
   return execAddr;
 }
 
-export const getEuler = async(ethers: any, deployer: string, networkName: string) => {
+export const getEuler = async(deployer: string, networkName: string) => {
   const eulerAddr = networkNameToController(networkName)
   if (eulerAddr === undefined) {
     return ''
@@ -132,7 +131,7 @@ export const getEuler = async(ethers: any, deployer: string, networkName: string
   return eulerAddr
 }
 
-export const getDwethToken = async(ethers: any, deployer: string, networkName: string) => {
+export const getDwethToken = async(deployer: string, networkName: string) => {
   const dWethAddr = networkNameToDweth(networkName)
   if (dWethAddr === undefined) {
     return ''
