@@ -34,7 +34,7 @@ export const useFlashSwapAndMint = () => {
       if (!contract || !address) return
 
       const wPowerPerpAmountToMint = fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0)
-      const collateralAmount = fromTokenAmount(ethCollateralDeposit, 18).toFixed(0)
+      const collateralToDeposit = fromTokenAmount(ethCollateralDeposit, 18).toFixed(0)
       const _minToReceive = fromTokenAmount(minToReceive, 18).toFixed(0)
       const value = fromTokenAmount(msgValue, 18).toFixed(0)
 
@@ -42,7 +42,7 @@ export const useFlashSwapAndMint = () => {
         contract.methods
           .flashswapSellLongWMint({
             vaultId,
-            collateralAmount,
+            collateralToDeposit,
             wPowerPerpAmountToMint,
             minToReceive: _minToReceive,
             wPowerPerpAmountToSell: '0',
