@@ -184,7 +184,8 @@ export const OpenShortPosition = () => {
       amount.isGreaterThan(0) &&
       newCollat.plus(vault?.collateralAmount || BIG_ZERO).lt(MIN_COLLATERAL_AMOUNT)
     ) {
-      inputError = `Minimum collateral is ${MIN_COLLATERAL_AMOUNT} ETH`
+      inputError = 'need to sell more oSQTH or raise your CR'
+      // inputError = `Minimum collateral is ${MIN_COLLATERAL_AMOUNT} ETH`
     } else if (vault && vaultId === 0 && vault?.shortAmount.gt(0)) {
       vaultIdDontLoadedError = 'Loading Vault...'
     }
