@@ -343,7 +343,7 @@ export const OpenShortPosition = () => {
         handleConfirmApproval={handleConfirmApproval}
       />
       {confirmed && !isTxFirstStep ? (
-        <div>
+        <div id="open-short-confirmed-card">
           <Confirmed
             confirmationMessage={`Opened ${confirmedAmount} Squeeth Short Position`}
             txnHash={transactionData?.hash ?? ''}
@@ -359,7 +359,7 @@ export const OpenShortPosition = () => {
               style={{ width: '300px' }}
               id="open-short-close-btn"
             >
-              {'Close'}
+              Close
             </PrimaryButton>
           </div>
         </div>
@@ -434,7 +434,7 @@ export const OpenShortPosition = () => {
                 onChange={(event) => {
                   handleCollatRatioChange(event.target.value)
                 }}
-                id="filled-basic"
+                id="open-short-collat-ratio-input"
                 label="Collateral ratio for vault"
                 variant="outlined"
                 error={collatPercent < 150 || CRError !== ''}
@@ -503,7 +503,7 @@ export const OpenShortPosition = () => {
                   </div>
                 )
               }
-              id="open-short-eth-input"
+              id="open-short-eth-display"
             />
 
             <div className={classes.divider}>

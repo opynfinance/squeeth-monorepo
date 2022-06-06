@@ -189,7 +189,7 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
         </div>
       ) : (
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <Typography variant="caption" color={error ? 'error' : 'textSecondary'}>
+          <Typography variant="caption" color={error ? 'error' : 'textSecondary'} id="open-long-eth-input-hint">
             {hint || ''}
           </Typography>
           {actionTxt && onActionClicked ? (

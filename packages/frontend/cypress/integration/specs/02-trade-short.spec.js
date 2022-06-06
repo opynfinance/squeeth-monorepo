@@ -23,6 +23,8 @@ describe('Trade on trade page', () => {
   })
 
   let openShortOsqthInput
+  let newVaultCollateral
+  let collateralToDeposit
   let openShortOsqthBeforeTradeBal
   let posCardBeforeShortTradeBal
 
@@ -46,56 +48,80 @@ describe('Trade on trade page', () => {
       })
 
       it('it is on open short card', () => {
-        cy.get('#open-short-header-box').should('contain.text', 'Mint & sell squeeth for premium')
+        cy.get('#open-short-header-box').should('contain.text', 'Short Squeeth to earn funding.')
       })
     })
 
-    context('input checks', () => {
+    context('input and vault card checks', () => {
       it('inputs should be zero by default and tx button is disabled', () => {
-        cy.get('#open-short-eth-input').should('have.value', '0')
-        cy.get('#open-short-trade-details .trade-details-amount').should('contain.text', '0')
+        cy.get('#open-short-sqth-input').should('have.value', '0')
+
+        cy.get('#trade-card').parent().scrollTo('bottom')
+        cy.get('#open-short-eth-display .collateral-to-deposit').should('contain.text', '0')
         cy.get('#open-short-submit-tx-btn').should('be.disabled')
       })
 
+      it('vault card existing state', () => {
+        cy.get('#open-short-vault-card .prev-liq-price').should('contain.text', '$0')
+        cy.get('#open-short-vault-card .current-liq-price').should('contain.text', '$0.00')
+        cy.get('#open-short-vault-card .current-collat-ratio').should('contain.text', '200%')
+        cy.get('#open-short-vault-card .current-vault-collat').should('contain.text', '0.00 ETH')
+      })
+
       it('open short input should be more than minimum collateral amount', () => {
-        cy.get('#open-short-eth-input').clear().type('6.9', { delay: 200, force: true }).should('have.value', '6.90')
-        cy.get('#open-short-eth-input').invoke('val').then(parseFloat).should('be.at.least', MIN_COLLATERAL_AMOUNT)
+        cy.get('#trade-card').parent().scrollTo('top')
+        cy.get('#open-short-sqth-input').clear().type('2', { delay: 200, force: true }).should('have.value', '20')
+
+        cy.get('#trade-card').parent().scrollTo('bottom')
+        cy.get('#open-short-vault-card .current-vault-collat')
+          .invoke('text')
+          .then(parseFloat)
+          .should('be.at.least', MIN_COLLATERAL_AMOUNT)
       })
 
       it('zero input amount', () => {
         cy.get('#trade-card').parent().scrollTo('top')
-        cy.get('#open-short-eth-input').should('be.visible')
-        cy.get('#open-short-eth-input').clear().type('0', { delay: 200, force: true }).should('have.value', '0')
-        cy.get('#open-short-trade-details .trade-details-amount').should('contain.text', '0')
+        cy.get('#open-short-sqth-input').should('be.visible')
+        cy.get('#open-short-sqth-input').clear().type('0', { delay: 200, force: true }).should('have.value', '0')
+
+        cy.get('#trade-card').parent().scrollTo('bottom')
+        cy.get('#open-short-eth-display').should('contain.text', '0')
       })
 
       it('invalid input amount', () => {
         cy.get('#trade-card').parent().scrollTo('top')
-        cy.get('#open-short-eth-input').should('be.visible')
-        cy.get('#open-short-eth-input').clear().type('\\', { delay: 200, force: true }).should('have.value', '0')
-        cy.get('#open-short-trade-details .trade-details-amount').should('contain.text', '0')
+        cy.get('#open-short-sqth-input').should('be.visible')
+        cy.get('#open-short-sqth-input').clear().type('\\', { delay: 200, force: true }).should('have.value', '0')
+
+        cy.get('#trade-card').parent().scrollTo('bottom')
+        cy.get('#open-short-eth-display').should('contain.text', '0')
       })
     })
 
     context('can enter an amount into osqth input, check position card & input box balances', () => {
       it('can enter an amount into eth input', () => {
         cy.get('#trade-card').parent().scrollTo('top')
-        cy.get('#open-short-eth-input').should('be.visible')
-        cy.get('#open-short-eth-input').clear().type('8.', { force: true, delay: 200 }).should('have.value', '8.0')
-        cy.get('#open-short-trade-details .trade-details-amount').invoke('text').then(parseFloat).should('not.equal', 0)
-        cy.get('#open-short-trade-details .trade-details-amount').then((val) => {
-          openShortOsqthInput = new BigNumber(val.text())
-        })
-      })
+        cy.get('#open-short-sqth-input').should('be.visible')
+        cy.get('#open-short-sqth-input').clear().type('3', { force: true, delay: 200 }).should('have.value', '30')
+        cy.get('#open-short-osqth-before-trade-balance').should('contain.text', '0.0000')
+        cy.get('#open-short-osqth-post-trade-balance').should(($span) => {
+          const text = $span.text()
+          openShortOsqthInput = Number(text).toFixed(4)
 
-      // post = before + input
-      // a = input box oSQTH before trade balance
-      // a-post = a + input
-      it('input box oSQTH post trade balance should be the same as before-trade + input when input changes', () => {
-        cy.get('#open-short-osqth-before-trade-balance').then((bal) => {
-          cy.get('#open-short-osqth-post-trade-balance')
-            .then((v) => Number(v.text()).toFixed(4))
-            .should('eq', openShortOsqthInput.plus(Number(bal.text())).toFixed(4))
+          expect(text).to.eq('30.0000')
+        })
+
+        cy.get('#trade-card').parent().scrollTo('bottom')
+
+        cy.get('#open-short-vault-card .current-vault-collat').should(($span) => {
+          const text = $span.text()
+          const ethValue = text.split(' ')[0]
+          newVaultCollateral = new BigNumber(ethValue)
+        })
+        cy.get('#open-short-eth-display .collateral-to-deposit').then(($p) => {
+          const text = $p.text()
+          collateralToDeposit = Number(text)
+          expect(Number(text)).to.be.greaterThan(0)
         })
       })
 
@@ -105,7 +131,7 @@ describe('Trade on trade page', () => {
         cy.get('#position-card-before-trade-balance').then((bal) => {
           cy.get('#position-card-post-trade-balance')
             .then((v) => Number(v.text()).toFixed(4))
-            .should('eq', openShortOsqthInput.plus(Number(bal.text())).toFixed(4))
+            .should('eq', Number(openShortOsqthInput + Number(bal.text())).toFixed(4))
         })
       })
 
@@ -134,12 +160,13 @@ describe('Trade on trade page', () => {
         cy.get('#open-short-eth-before-trade-balance').then((bal) => {
           cy.get('#open-short-eth-post-trade-balance')
             .then((v) => Number(v.text()).toFixed(4))
-            .should('eq', (Number(bal.text()) - 8).toFixed(4))
+            .should('eq', (Number(bal.text()) - collateralToDeposit).toFixed(4))
         })
       })
 
       it('can adjust collateral ratio', () => {
-        cy.get('.open-short-collat-ratio-input-box input')
+        cy.get('#trade-card').parent().scrollTo('top')
+        cy.get('#open-short-collat-ratio-input')
           .clear()
           .type('250.', { delay: 200, force: true })
           .should('have.value', '250.0')
@@ -149,10 +176,10 @@ describe('Trade on trade page', () => {
     context('open short position', () => {
       it('can open short position for osqth, and tx succeeds', () => {
         cy.get('#trade-card').parent().scrollTo('top')
-        cy.get('#open-short-eth-input').should('be.visible')
-        cy.get('#open-short-eth-input').clear().type('8.', { force: true, delay: 200 }).should('have.value', '8.0')
+        cy.get('#open-short-sqth-input').should('be.visible')
+        cy.get('#open-short-sqth-input').clear().type('2', { force: true, delay: 200 }).should('have.value', '20')
 
-        cy.get('#open-short-trade-details .trade-details-amount').then((val) => {
+        cy.get('#open-short-osqth-post-trade-balance').then((val) => {
           openShortOsqthInput = new BigNumber(val.text())
         })
 
@@ -165,14 +192,21 @@ describe('Trade on trade page', () => {
         })
 
         cy.get('#open-short-submit-tx-btn').then((btn) => {
-          if (btn.text().includes('Allow wrapper')) {
+          if (btn.text().includes('Approve Squeethy')) {
             cy.get('#open-short-submit-tx-btn').click({ force: true })
+
+            cy.get('#confirm-approval-modal').should('be.visible')
+
+            cy.get('#confirm-approval-check-box').check().should('be.checked')
+
+            cy.get('#confirm-approval-modal-submit-btn').click({ force: true })
+
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
             cy.get('#open-short-submit-tx-btn').click({ force: true })
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
-          } else if (btn.text().includes('Deposit and sell')) {
+          } else if (btn.text().includes('Open Short')) {
             cy.get('#open-short-submit-tx-btn').click({ force: true })
             trade.confirmMetamaskTransaction()
             trade.waitForTransactionSuccess()
@@ -181,15 +215,15 @@ describe('Trade on trade page', () => {
       })
 
       it('there is open short tx finished card after tx succeeds with correct closing value', () => {
-        cy.get('#open-short-card').should('contain.text', 'Close').should('contain.text', 'Opened')
+        cy.get('#open-short-confirmed-card').should('contain.text', 'Close').should('contain.text', 'Opened')
         cy.get('#conf-msg').should('contain.text', openShortOsqthInput.toFixed(6))
         cy.get('#open-short-close-btn').click({ force: true })
       })
 
       it('return to open short card successfully with all values update to 0', () => {
-        cy.get('#open-short-header-box').should('contain.text', 'Mint & sell squeeth for premium')
-        cy.get('#open-short-eth-input').should('have.value', '0')
-        cy.get('#open-short-trade-details .trade-details-amount').should('contain.text', '0')
+        cy.get('#open-short-header-box').should('contain.text', 'Short Squeeth to earn funding.')
+        cy.get('#open-short-sqth-input').should('contain.text', '')
+        cy.get('#open-short-collat-ratio-input').should('have.value', '250')
         cy.get('#open-short-submit-tx-btn').should('be.disabled')
       })
 
@@ -198,13 +232,13 @@ describe('Trade on trade page', () => {
         cy.get('#position-card-before-trade-balance')
           .wait(30000)
           .then((v) => Number(parseFloat(v.text()).toFixed(4)))
-          .should('be.approximately', Number(posCardBeforeShortTradeBal.plus(openShortOsqthInput)), 0.0002)
+          .should('be.approximately', Number(posCardBeforeShortTradeBal.plus(openShortOsqthInput)), 20)
       })
 
       it('input box before trade update to new osqth balance', () => {
         cy.get('#open-short-osqth-before-trade-balance')
           .then((v) => Number(parseFloat(v.text()).toFixed(4)))
-          .should('be.approximately', Number(openShortOsqthBeforeTradeBal.plus(openShortOsqthInput)), 0.0002)
+          .should('be.approximately', Number(openShortOsqthBeforeTradeBal.plus(openShortOsqthInput)), 20)
       })
 
       it('position card update to the same value as input box before trade balance and not equal 0', () => {
@@ -225,12 +259,12 @@ describe('Trade on trade page', () => {
       it('should have "close your short position" first error in long oSQTH input when user have short oSQTH', () => {
         cy.get('#long-card-btn').click({ force: true })
         cy.get('#open-btn').click({ force: true })
-        cy.get('#open-long-eth-input-box').should('contain.text', 'Close your short position to open a long')
+        cy.get('#open-long-eth-input-hint').should('contain.text', 'Close your short position to open a long')
       })
     })
   })
 
-  context(`when have short oSQTH balance, the default trade card would be short`, () => {
+  context.skip(`when have short oSQTH balance, the default trade card would be short`, () => {
     // issue #278
     it.skip('reload to see if by default is short & open trade cards', () => {
       cy.reload()
@@ -240,7 +274,6 @@ describe('Trade on trade page', () => {
       cy.get('#open-short-header-box').should('contain.text', 'Mint & sell squeeth for premium')
     })
   })
-
   let closeShortBeforeTradeBal
   let maxBtnShortCloseInput
   let fullShortCloseInput

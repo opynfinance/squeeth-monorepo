@@ -31,7 +31,13 @@ const ConfirmApproval = ({
   const [checked, setCheck] = useState(false)
   return (
     <>
-      <Modal open={openConfirm} handleClose={handleClose} title={title} showCloseButton={false}>
+      <Modal
+        id="confirm-approval-modal"
+        open={openConfirm}
+        handleClose={handleClose}
+        title={title}
+        showCloseButton={false}
+      >
         <ul style={{ width: '90%', alignSelf: 'flex-start' }}>
           <li style={{ marginBottom: '2em' }}>
             When you open a short position, the wrapper maximizes capital efficiency by using ETH earned from selling
@@ -49,7 +55,12 @@ const ConfirmApproval = ({
           <FormControlLabel
             style={{ fontSize: '.75rem' }}
             control={
-              <Checkbox name="checkedC" checked={checked} onChange={() => setCheck((prevState) => !prevState)} />
+              <Checkbox
+                id="confirm-approval-check-box"
+                name="checkedC"
+                checked={checked}
+                onChange={() => setCheck((prevState) => !prevState)}
+              />
             }
             label="I understand these of changes"
           />
@@ -59,6 +70,7 @@ const ConfirmApproval = ({
           disabled={!checked}
           style={{ width: '90%', background: '#d9d9d9' }}
           onClick={handleConfirmApproval}
+          id="confirm-approval-modal-submit-btn"
         >
           Confirm Approval
         </Button>

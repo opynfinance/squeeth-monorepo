@@ -56,14 +56,15 @@ type ConfirmedProps = {
   confirmationMessage: string
   txnHash: string
   confirmType: ConfirmType
+  id?: string
 }
 
-const Confirmed: React.FC<ConfirmedProps> = ({ confirmationMessage, txnHash, confirmType }) => {
+const Confirmed: React.FC<ConfirmedProps> = ({ confirmationMessage, id, txnHash, confirmType }) => {
   const classes = useStyles()
   const networkId = useAtomValue(networkIdAtom)
 
   return (
-    <div>
+    <div id={id}>
       <div>
         <Typography variant="body1" className={classes.confMsg} id="conf-msg">
           {' '}
