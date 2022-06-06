@@ -4,11 +4,11 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: Controller
-    network: {{network}}
+    network: ropsten
     source:
-      address: "{{Controller}}"
+      address: "0x59F0c781a6eC387F09C40FAA22b7477a2950d209"
       abi: Controller
-      startBlock: {{Controller-start-block}}
+      startBlock: 11808049
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -78,11 +78,11 @@ dataSources:
       file: ./src/controller.ts
   - kind: ethereum/contract
     name: CrabStrategy
-    network: {{network}}
+    network: ropsten
     source:
-      address: "{{CrabStrategyDeployment}}"
+      address: "0xbffBD99cFD9d77c49595dFe8eB531715906ca4Cf"
       abi: CrabStrategy
-      startBlock: {{CrabStrategyDeployment-start-block}}
+      startBlock: 11808056
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -121,11 +121,11 @@ dataSources:
         - event: FlashDepositCallback(indexed address,uint256,uint256)
           handler: handleFlashDepositCallback
         - event: FlashWithdrawCallback(indexed address,uint256,uint256)
-          handler: handleFlashWithdrawCallback 
+          handler: handleFlashWithdrawCallback
         - event: ExecuteSellAuction(indexed address,uint256,uint256,bool)
           handler: handleExecuteSellAuction
         - event: ExecuteBuyAuction(indexed address,uint256,uint256,bool)
-          handler: handleExecuteBuyAuction 
+          handler: handleExecuteBuyAuction
       file: ./src/crabstrategy.ts
   - kind: ethereum/contract
     name: NonfungiblePositionManager
@@ -133,7 +133,7 @@ dataSources:
     source:
       address: "0x8c7C1F786dA4DEe7d4bB49697A9B0C0c8Fb328e0"
       abi: NonfungiblePositionManager
-      startBlock: 8845990
+      startBlock: 11027000
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -158,22 +158,48 @@ dataSources:
         - event: Collect(indexed uint256,address,uint256,uint256)
           handler: handleCollect
   - kind: ethereum/contract
-    name: Pool
+    name: OSQTHPool
     network: ropsten
     source:
       address: "0x921c384F79de1BAe96d6f33E3E5b8d0B2B34cb68"
       abi: Pool
-      startBlock: 8845990
+      startBlock: 11027000
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
       language: wasm/assemblyscript
       file: ./src/mappings/core.ts
       entities:
+        - Pool
         - TransactionHistory
       abis:
         - name: Pool
           file: ./abis/pool.json
       eventHandlers:
+        - event: Initialize(uint160,int24)
+          handler: handleInitialize
         - event: Swap(indexed address,indexed address,int256,int256,uint160,uint128,int24)
-          handler: handleSwap
+          handler: handleOSQTHSwap
+  - kind: ethereum/contract
+    name: USDCPool
+    network: ropsten
+    source:
+      address: "0x8356AbC730a218c24446C2c85708F373f354F0D8"
+      abi: Pool
+      startBlock: 11027000
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/core.ts
+      entities:
+        - Pool
+        - TransactionHistory
+      abis:
+        - name: Pool
+          file: ./abis/pool.json
+      eventHandlers:
+        - event: Initialize(uint160,int24)
+          handler: handleInitialize
+        - event: Swap(indexed address,indexed address,int256,int256,uint160,uint128,int24)
+          handler: handleUSDCSwap
