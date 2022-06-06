@@ -32,6 +32,7 @@
         "@testing-library/react-hooks": "^8.0.0",
         "@thanpolas/univ3prices": "^3.0.2",
         "@uniswap/sdk-core": "^3.0.1",
+        "@uniswap/smart-order-router": "^2.5.30",
         "@uniswap/v3-sdk": "^3.3.2",
         "axios": "^0.24.0",
         "bignumber.js": "^9.0.1",
