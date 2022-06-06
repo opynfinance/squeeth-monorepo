@@ -17,6 +17,20 @@ export enum Action {
   WITHDRAW_COLLAT = 'WITHDRAW_COLLAT',
 }
 
+export enum TransactionType {
+  BURN_OSQTH = 'BURN_OSQTH',
+  DEPOSIT_COLLAT = 'DEPOSIT_COLLAT',
+  MINT_OSQTH = 'MINT_OSQTH',
+  RECEIVE_OSQTH = 'RECEIVE_OSQTH',
+  SEND_OSQTH = 'SEND_OSQTH',
+  WITHDRAW_COLLAT = 'WITHDRAW_COLLAT',
+  BUY_OSQTH = 'BUY_OSQTH',
+  SELL_OSQTH = 'SELL_OSQTH',
+  ADD_LIQUIDITY = 'ADD_LIQUIDITY',
+  REMOVE_LIQUIDITY = 'REMOVE_LIQUIDITY',
+  COLLECT_FEE = 'COLLECT_FEE',
+}
+
 //==============================================================
 // END Enums and Input Objects
 //==============================================================

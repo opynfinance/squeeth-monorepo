@@ -3,6 +3,8 @@
 // @generated
 // This file was automatically generated and should not be edited.
 
+import { Action } from "./../../../../types/global_apollo";
+
 // ====================================================
 // GraphQL subscription operation: subscriptionVaultHistory
 // ====================================================
@@ -14,7 +16,7 @@ export interface subscriptionVaultHistory_vaultHistories {
   totalEthCollateralAmount: any;
   oSqthAmount: any;
   ethCollateralAmount: any;
-  action: string;
+  action: Action;
   vaultId: any;
 }
 
