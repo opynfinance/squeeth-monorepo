@@ -131,7 +131,6 @@ export const OpenShortPosition = () => {
   const [CRError, setCRError] = useState('')
   const [minCR, setMinCR] = useState(BIG_ZERO)
   const [newCollat, setNewCollat] = useState(BIG_ZERO)
-  const [existingLiqPrice, setExistingLiqPrice] = useState(BIG_ZERO)
 
   const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
@@ -160,7 +159,7 @@ export const OpenShortPosition = () => {
   const [isVaultHistoryUpdating, setVaultHistoryUpdating] = useAtom(vaultHistoryUpdatingAtom)
   const { updateVault, loading: vaultIDLoading } = useVaultManager()
   const vaultHistoryQuery = useVaultHistoryQuery(Number(vaultId), isVaultHistoryUpdating)
-  const { existingCollatPercent } = useVaultData(vault)
+  const { existingCollatPercent, existingLiqPrice } = useVaultData(vault)
   const updateOperator = useUpdateOperator()
   const selectWallet = useSelectWallet()
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
@@ -205,21 +204,28 @@ export const OpenShortPosition = () => {
         getDebtAmount(new BigNumber(value)),
         getDebtAmount(vault?.shortAmount ?? BIG_ZERO),
       ])
-      setQuote(quote)
+
+      getCollatRatioAndLiqPrice(debt.times(new BigNumber(collatPercent / 100)), new BigNumber(value)).then(
+        ({ liquidationPrice }) => {
+          setLiqPrice(liquidationPrice)
+        },
+      )
       const totalDebt = existingDebt.plus(debt)
+      const newCollat = new BigNumber(collatPercent / 100).multipliedBy(totalDebt).minus(vault?.collateralAmount ?? 0)
+      setNewCollat(newCollat)
+      setQuote(quote)
       setMinCR(
         BigNumber.max(
           (vault?.collateralAmount ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt) ?? BIG_ZERO,
           1.5,
         ),
       )
-      const newCollat = new BigNumber(collatPercent / 100).multipliedBy(totalDebt).minus(vault?.collateralAmount ?? 0)
-      setNewCollat(newCollat)
 
       if (newCollat.gt(quote.minimumAmountOut)) {
         setEthTradeAmount(newCollat.minus(quote.minimumAmountOut).toFixed(6))
         setMsgValue(newCollat.minus(quote.minimumAmountOut))
-      } else if (newCollat.lt(0)) {
+      } else if (newCollat.lte(0)) {
+        setEthTradeAmount('0')
         return
       } else if (newCollat.lt(quote.amountOut)) {
         setEthTradeAmount('0')
@@ -227,12 +233,6 @@ export const OpenShortPosition = () => {
       }
 
       setTotalCollateralAmount(quote.amountOut.plus(newCollat.minus(quote.minimumAmountOut)))
-
-      getCollatRatioAndLiqPrice(debt.times(new BigNumber(collatPercent / 100)), new BigNumber(value)).then(
-        ({ liquidationPrice }) => {
-          setLiqPrice(liquidationPrice)
-        },
-      )
     },
     [
       collatPercent,
@@ -247,16 +247,6 @@ export const OpenShortPosition = () => {
     ],
   )
   const handleSqthChange = useAppMemo(() => debounce(onSqthChange, 500), [onSqthChange])
-
-  useAppEffect(() => {
-    if (!vault || vaultId === 0) return
-
-    getCollatRatioAndLiqPrice(vault?.collateralAmount, new BigNumber(vault?.shortAmount)).then(
-      ({ liquidationPrice }) => {
-        setExistingLiqPrice(liquidationPrice)
-      },
-    )
-  }, [getCollatRatioAndLiqPrice, vault, vaultId])
 
   useAppEffect(() => {
     //stop loading if transaction failed
@@ -466,7 +456,6 @@ export const OpenShortPosition = () => {
                 handleCollatRatioChange(String(val))
               }}
               collatValue={collatPercent}
-              minCollatRatio={Number(minCR)}
             />
             <VaultCard
               liqPrice={{
@@ -481,6 +470,7 @@ export const OpenShortPosition = () => {
                   : newCollat.toFixed(2),
               }}
               vaultId={vaultId}
+              id="open-short-vault-card"
             />
             <TradeDetails
               actionTitle="Collateral to deposit"
