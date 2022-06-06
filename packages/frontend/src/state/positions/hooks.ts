@@ -19,19 +19,12 @@ import {
   managerAtom,
   activePositionsAtom,
   closedPositionsAtom,
-  lpPositionsLoadingAtom,
   squeethLiquidityAtom,
   wethLiquidityAtom,
   depositedSqueethAtom,
   depositedWethAtom,
   withdrawnSqueethAtom,
   withdrawnWethAtom,
-  vaultAtom,
-  existingCollatPercentAtom,
-  existingCollatAtom,
-  existingLiqPriceAtom,
-  collatPercentAtom,
-  isVaultLoadingAtom,
   swapsAtom,
 } from './atoms'
 import { positions, positionsVariables } from '@queries/uniswap/__generated__/positions'
@@ -41,8 +34,7 @@ import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { toTokenAmount } from '@utils/calculations'
 import { squeethClient } from '@utils/apollo-client'
 import { PositionType, Networks } from '../../types'
-import { poolAtom, readyAtom, squeethInitialPriceAtom } from '../squeethPool/atoms'
-import { useGetCollatRatioAndLiqPrice, useGetVault } from '../controller/hooks'
+import { poolAtom, squeethInitialPriceAtom } from '../squeethPool/atoms'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { useGetWSqueethPositionValue } from '../squeethPool/hooks'
 import { useVaultHistory } from '@hooks/useVaultHistory'
@@ -51,10 +43,8 @@ import { Vault } from '@queries/squeeth/__generated__/Vault'
 import { ComputeSwapsContext } from './providers'
 import useAppEffect from '@hooks/useAppEffect'
 import useAppMemo from '@hooks/useAppMemo'
-import useAppCallback from '@hooks/useAppCallback'
 
 export const useSwaps = () => {
-  const [swapData, setSwapData] = useState<swaps | swapsRopsten | undefined>(undefined)
   const [networkId] = useAtom(networkIdAtom)
   const [address] = useAtom(addressAtom)
   const setSwaps = useUpdateAtom(swapsAtom)
@@ -107,17 +97,13 @@ export const useSwaps = () => {
 
   useAppEffect(() => {
     if (data?.swaps) {
-      setSwaps({ swaps: data.swaps })
+      setSwaps({ swaps: data?.swaps })
+    } else {
+      setSwaps({ swaps: [] })
     }
   }, [data?.swaps, setSwaps])
 
-  useAppEffect(() => {
-    if (data && data.swaps && data.swaps.length > 0) {
-      setSwapData(data)
-    }
-  }, [data])
-
-  return { data: swapData, refetch, loading, error, startPolling, stopPolling }
+  return { data, refetch, loading, error, startPolling, stopPolling }
 }
 
 export const useComputeSwaps = () => {
@@ -220,7 +206,6 @@ export const useLpDebt = () => {
 export const useLPPositionsQuery = () => {
   const { squeethPool } = useAtomValue(addressesAtom)
   const address = useAtomValue(addressAtom)
-  const lpPositionsLoading = useAtomValue(lpPositionsLoadingAtom)
   const { data, refetch, loading, subscribeToMore } = useQuery<positions, positionsVariables>(POSITIONS_QUERY, {
     variables: {
       poolAddress: squeethPool?.toLowerCase(),
@@ -246,7 +231,7 @@ export const useLPPositionsQuery = () => {
     })
   }, [address, squeethPool, subscribeToMore])
 
-  return { data, refetch, loading: loading || lpPositionsLoading }
+  return { data, refetch, loading }
 }
 
 const MAX_UNIT = '0xffffffffffffffffffffffffffffffff'
@@ -333,7 +318,6 @@ export const usePositionsAndFeesComputation = () => {
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const [activePositions, setActivePositions] = useAtom(activePositionsAtom)
   const setClosedPositions = useUpdateAtom(closedPositionsAtom)
-  const setLoading = useUpdateAtom(lpPositionsLoadingAtom)
   const setDepositedSqueeth = useUpdateAtom(depositedSqueethAtom)
   const setDepositedWeth = useUpdateAtom(depositedWethAtom)
   const setWithdrawnSqueeth = useUpdateAtom(withdrawnSqueethAtom)
@@ -346,7 +330,6 @@ export const usePositionsAndFeesComputation = () => {
 
   useAppEffect(() => {
     if (positionAndFees && !gphLoading) {
-      setLoading(true)
       // Promise.all(positionAndFees).then((values: any[]) => {
       setActivePositions(positionAndFees.filter((p) => p.amount0.gt(0) || p.amount1.gt(0)))
       setClosedPositions(positionAndFees.filter((p) => p.amount0.isZero() && p.amount1.isZero()))
@@ -380,18 +363,6 @@ export const usePositionsAndFeesComputation = () => {
       setWithdrawnWeth(withWeth)
       setSqueethLiquidity(sqthLiq)
       setWethLiquidity(wethLiq)
-      if (
-        !(
-          depSqth.isEqualTo(0) &&
-          depWeth.isEqualTo(0) &&
-          withSqth.isEqualTo(0) &&
-          sqthLiq.isEqualTo(0) &&
-          wethLiq.isEqualTo(0)
-        ) ||
-        activePositions.length === 0
-      )
-        setLoading(false)
-      // })
     }
   }, [
     gphLoading,
@@ -402,7 +373,6 @@ export const usePositionsAndFeesComputation = () => {
     setClosedPositions,
     setDepositedSqueeth,
     setDepositedWeth,
-    setLoading,
     setSqueethLiquidity,
     setWethLiquidity,
     setWithdrawnSqueeth,

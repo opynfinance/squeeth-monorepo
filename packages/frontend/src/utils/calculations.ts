@@ -2,7 +2,7 @@ import { Percent } from '@uniswap/sdk-core'
 import { Pool } from '@uniswap/v3-sdk'
 import BigNumber from 'bignumber.js'
 
-import { DEFAULT_SLIPPAGE } from '../constants'
+import { BIG_ZERO, DEFAULT_SLIPPAGE, FUNDING_PERIOD } from '../constants'
 import { CollateralStatus } from '../types'
 
 export function toTokenAmount(amount: BigNumber | number | string, decimals: number): BigNumber {
@@ -37,6 +37,22 @@ export function getCollatPercentStatus(collatPercent: number) {
   return CollateralStatus.SAFE
 }
 
-export const mergeQuery = (existing = [], incoming: any[]) => {
-  return incoming.length === 0 ? existing : incoming
+/**
+ * For the given params it returns breakeven ETH price.
+ *
+ * Calculation is done with the help of https://docs.google.com/spreadsheets/d/1k1Y_WZ4Of9Prsn5hpHX2BXfdPuUg24X_KBrgYvV8Yw4/edit#gid=0
+ */
+export function getBreakEvenForLongSqueeth(
+  markPrice: BigNumber,
+  indexPrice: BigNumber,
+  normFactor: BigNumber,
+  days: number,
+) {
+  const markToIndexRatio = markPrice.div(indexPrice)
+  const indexToMarkRatio = indexPrice.div(markPrice)
+
+  const newNormFactor = normFactor.toNumber() * Math.pow(indexToMarkRatio.toNumber(), days / FUNDING_PERIOD)
+  console.log(newNormFactor, markToIndexRatio.toString(), toTokenAmount(markPrice, 18).toString())
+  const breakEven = Math.sqrt(toTokenAmount(indexPrice, 18).multipliedBy(normFactor).div(newNormFactor).toNumber())
+  return breakEven
 }

@@ -327,6 +327,7 @@ export const useWithdrawUniPositionToken = () => {
 }
 
 const useNormFactor = () => {
+  const networkId = useAtomValue(networkIdAtom)
   const contract = useAtomValue(controllerContractAtom)
   const [normFactor, setNormFactor] = useAtom(normFactorAtom)
   useEffect(() => {
@@ -348,7 +349,7 @@ const useNormFactor = () => {
             console.log('normFactor error')
           })
       })
-  }, [contract])
+  }, [contract, setNormFactor, networkId])
 
   return normFactor
 }
@@ -363,7 +364,7 @@ const useIndex = () => {
   useEffect(() => {
     if (!contract) return
     getIndex(1, contract).then(setIndex)
-  }, [address])
+  }, [address, networkId, contract, setIndex])
 
   // setup index listender
   useEffect(() => {
@@ -389,24 +390,26 @@ const useIndex = () => {
 
 const useDailyHistoricalFunding = () => {
   const address = useAtomValue(addressAtom)
+  const networkId = useAtomValue(networkIdAtom)
   const [dailyHistoricalFunding, setDailyHistoricalFunding] = useAtom(dailyHistoricalFundingAtom)
   const contract = useAtomValue(controllerContractAtom)
   useEffect(() => {
     if (!contract) return
     getDailyHistoricalFunding(contract).then(setDailyHistoricalFunding)
-  }, [address])
+  }, [address, networkId, contract, setDailyHistoricalFunding])
 
   return dailyHistoricalFunding
 }
 
 const useCurrentImpliedFunding = () => {
   const address = useAtomValue(addressAtom)
+  const networkId = useAtomValue(networkIdAtom)
   const [currentImpliedFunding, setCurrentImpliedFunding] = useAtom(currentImpliedFundingAtom)
   const contract = useAtomValue(controllerContractAtom)
   useEffect(() => {
     if (!contract) return
     getCurrentImpliedFunding(contract).then(setCurrentImpliedFunding)
-  }, [address])
+  }, [address, networkId, setCurrentImpliedFunding, contract])
 
   return currentImpliedFunding
 }
@@ -421,7 +424,7 @@ const useMark = () => {
   useEffect(() => {
     if (!contract) return
     getMark(1, contract).then(setMark)
-  }, [address])
+  }, [address, networkId, contract, setMark])
 
   // setup mark listener
   useEffect(() => {

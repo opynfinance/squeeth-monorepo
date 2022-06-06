@@ -2,8 +2,6 @@ import { ApolloClient, InMemoryCache, split, HttpLink } from '@apollo/client'
 import { getMainDefinition } from '@apollo/client/utilities'
 import { WebSocketLink } from '@apollo/client/link/ws'
 
-import { mergeQuery } from './calculations'
-
 const httpLinkMN = new HttpLink({
   uri: 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3',
 })
@@ -71,17 +69,7 @@ const splitLink = (wsLink: any, httpLink: any) => {
   )
 }
 
-const uniswapCache = new InMemoryCache({
-  typePolicies: {
-    Query: {
-      fields: {
-        swaps: {
-          merge: mergeQuery,
-        },
-      },
-    },
-  },
-})
+const uniswapCache = new InMemoryCache()
 const mainnet = new ApolloClient({
   link: typeof window !== 'undefined' ? splitLink(wsLinkMN, httpLinkMN) : undefined,
   cache: uniswapCache,
@@ -99,20 +87,7 @@ export const uniswapClient = {
   421611: mainnet, // Should be replaced with arbitrum subgraph
 }
 
-const squeethCache = new InMemoryCache({
-  typePolicies: {
-    Query: {
-      fields: {
-        vaultHistories: {
-          merge: mergeQuery,
-        },
-        vaults: {
-          merge: mergeQuery,
-        },
-      },
-    },
-  },
-})
+const squeethCache = new InMemoryCache()
 
 const squeethMainnet = new ApolloClient({
   link: typeof window !== 'undefined' ? splitLink(wsLinkMNSqueeth, httpLinkMNSqueeth) : undefined,

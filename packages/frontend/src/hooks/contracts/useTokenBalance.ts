@@ -1,5 +1,5 @@
 import BigNumber from 'bignumber.js'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { usePrevious } from 'react-use'
 import { Contract } from 'web3-eth-contract'
 import { useQuery } from 'react-query'
@@ -54,11 +54,13 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals
     }
   }, [balanceQuery.data?.toString(), poll, prevBalance])
 
+  const refetch = useCallback(() => setPoll(true), [])
+
   return {
     value: balanceQuery.data ?? new BigNumber(0),
     loading: balanceQuery.isLoading || balanceQuery.isRefetching || poll,
     error: balanceQuery.error || balanceQuery.isRefetchError || !balanceQuery.data,
-    refetch: () => setPoll(true),
+    refetch,
   }
 }
 
