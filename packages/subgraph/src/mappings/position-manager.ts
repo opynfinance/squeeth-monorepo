@@ -1,11 +1,10 @@
 /* eslint-disable prefer-const */
+import { BigDecimal } from "@graphprotocol/graph-ts";
 import {
   Collect,
   DecreaseLiquidity,
   IncreaseLiquidity,
 } from "../../generated/NonfungiblePositionManager/NonfungiblePositionManager";
-import { TransactionHistory } from "../../generated/schema";
-import { BigDecimal } from "@graphprotocol/graph-ts";
 import { createTransactionHistory } from "../util";
 
 export function handleIncreaseLiquidity(event: IncreaseLiquidity): void {

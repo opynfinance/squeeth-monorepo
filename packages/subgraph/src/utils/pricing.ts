@@ -4,13 +4,11 @@ import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { exponentToBigDecimal, safeDiv } from "../utils/index";
 
 let Q192 = 2 ** 192;
-export function sqrtPriceX96ToOSQTHTokenPrices(
-  sqrtPriceX96: BigInt
-): BigDecimal[] {
+export function sqrtPriceX96ToTokenPrices(sqrtPriceX96: BigInt): BigDecimal[] {
   let num = sqrtPriceX96.times(sqrtPriceX96).toBigDecimal();
   let denom = BigDecimal.fromString(Q192.toString());
-  let price1 = num
-    .div(denom)
+
+  let price1 = safeDiv(num, denom)
     .times(exponentToBigDecimal(TOKEN_DECIMALS))
     .div(exponentToBigDecimal(TOKEN_DECIMALS));
 

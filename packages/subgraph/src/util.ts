@@ -45,6 +45,5 @@ export function createTransactionHistory(
   transactionHistory.oSqthAmount = BigInt.zero();
   transactionHistory.ethAmount = BigInt.zero();
   transactionHistory.oSqthPrice = BigDecimal.zero();
-
   return transactionHistory;
 }
