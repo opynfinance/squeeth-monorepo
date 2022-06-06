@@ -37,9 +37,10 @@ export interface ModalProps {
   open: boolean
   handleClose?: () => void
   showCloseButton?: boolean
+  id?: string
 }
 
-export const Modal: React.FC<ModalProps> = ({ open, handleClose, title, children, showCloseButton = true }) => {
+export const Modal: React.FC<ModalProps> = ({ id, open, handleClose, title, children, showCloseButton = true }) => {
   const classes = useStyles()
 
   return (
@@ -52,6 +53,7 @@ export const Modal: React.FC<ModalProps> = ({ open, handleClose, title, children
       onClose={handleClose}
       aria-labelledby="alert-dialog-title"
       aria-describedby="alert-dialog-description"
+      id={id}
     >
       <DialogTitle className={classes.dialogTitle} id="alert-dialog-title">
         <h2 className={classes.title}>{title}</h2>
