@@ -134,7 +134,7 @@ export const OpenShortPosition = () => {
 
   const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
-  const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
+  const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
   const [quote, setQuote] = useAtom(quoteAtom)
   const connected = useAtomValue(connectedWalletAtom)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
@@ -298,8 +298,9 @@ export const OpenShortPosition = () => {
           setConfirmedAmount(amount.toFixed(6).toString())
           setTradeSuccess(true)
           setTradeCompleted(true)
-          resetEthTradeAmount()
+          resetSqthTradeAmount()
           setVaultHistoryUpdating(true)
+          setShortLoading(false)
           vaultHistoryQuery.refetch({ vaultId })
           localStorage.removeItem('collatPercent')
           updateVault()
@@ -315,7 +316,7 @@ export const OpenShortPosition = () => {
     isVaultApproved,
     msgValue,
     quote.amountOut,
-    resetEthTradeAmount,
+    resetSqthTradeAmount,
     setIsTxFirstStep,
     setTradeCompleted,
     setTradeSuccess,
