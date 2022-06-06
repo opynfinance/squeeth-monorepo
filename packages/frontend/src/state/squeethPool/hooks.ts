@@ -13,12 +13,12 @@ import { useAtom, useAtomValue } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 import { Contract } from 'web3-eth-contract'
 import routerABI from '../../abis/swapRouter.json'
-import { squeethPoolContractAtom, swapRouterContractAtom } from '../contracts/atoms'
+import router2ABI from '../../abis/swapRouter2.json'
+import { squeethPoolContractAtom, swapRouter2ContractAtom, swapRouterContractAtom } from '../contracts/atoms'
 import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
 import { addressAtom, networkIdAtom, signerAtom, web3Atom } from '../wallet/atoms'
 import { useHandleTransaction } from '../wallet/hooks'
 import wethAbi from '../../abis/weth.json'
-import squeethAbi from '../../abis/squeeth.json'
 
 import {
   poolAtom,
@@ -28,7 +28,6 @@ import {
   squeethTokenAtom,
   wethTokenAtom,
 } from './atoms'
-import { useUserAllowance } from '@hooks/contracts/useAllowance'
 
 const getImmutables = async (squeethContract: Contract) => {
   const [token0, token1, fee, tickSpacing, maxLiquidityPerTick] = await Promise.all([
@@ -391,7 +390,7 @@ export const useAutoRoutedBuyAndRefund = () => {
   const squeethToken = useAtomValue(squeethTokenAtom)
 
   const autoRoutedBuyAndRefund = useAppCallback(
-    async (amount: BigNumber) => {
+    async (amount: BigNumber, onTxConfirmed?: () => void) => {
       // Initializing the AlphaRouter
       const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
       const chainId = networkId as any as ChainId
@@ -553,9 +552,11 @@ export const useAutoRoutedSell = () => {
   const web3 = useAtomValue(web3Atom)
   const signer = useAtomValue(signerAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
+  const handleTransaction = useHandleTransaction()
+  const swapRouter2Contract = useAtomValue(swapRouter2ContractAtom)
 
   const autoRoutedSell = useAppCallback(
-    async (amount: BigNumber) => {
+    async (amount: BigNumber, onTxConfirmed?: () => void) => {
       // Initializing the AlphaRouter
       const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
       const chainId = networkId as any as ChainId
@@ -566,22 +567,28 @@ export const useAutoRoutedSell = () => {
         squeethToken!,
         fromTokenAmount(amount, OSQUEETH_DECIMALS).toFixed(0),
       )
+
+      const slippageTolerance = new Percent(5, 100)
       const route = await router.route(rawAmount, wethToken!, TradeType.EXACT_INPUT, {
         recipient: address!,
-        slippageTolerance: new Percent(5, 100),
+        slippageTolerance: slippageTolerance,
         deadline: Math.floor(Date.now()/1000 +1800)
       })
 
-      const transaction = {
-        data: route?.methodParameters?.calldata,
-        to: swapRouter2,
-        value: fromTokenAmount(amount, OSQUEETH_DECIMALS).toFixed(0),
-        from: address,
-        gasPrice: new BigNumber(route?.gasPriceWei.toString() || 0).multipliedBy(1.2).toFixed(0),
-      }
-
-      // Submitting a Transaction
-      const result = await signer.sendTransaction(transaction)
+      const minimumAmountOut = new BigNumber(route?.trade.minimumAmountOut(slippageTolerance).toFixed(18) || 0)
+      console.log("minimum amount out", minimumAmountOut.toString())
+      console.log("minimum amount out token version", fromTokenAmount(minimumAmountOut!, 18).toString())
+      const swapIface = new ethers.utils.Interface(router2ABI)
+      const encodedUnwrapCall = swapIface.encodeFunctionData('unwrapWETH9', [fromTokenAmount(minimumAmountOut, 18).toString(), address])
+      const result = await handleTransaction(
+        swapRouter2Contract?.methods.multicall([encodedUnwrapCall]).send({
+            to: swapRouter2,
+            value: fromTokenAmount(amount, OSQUEETH_DECIMALS).toFixed(0),
+            from: address,
+            gasPrice: new BigNumber(route?.gasPriceWei.toString() || 0).multipliedBy(1.2).toFixed(0),
+        }),
+        onTxConfirmed,
+      )
       return result
     },
     [address],
