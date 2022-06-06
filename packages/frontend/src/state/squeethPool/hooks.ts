@@ -581,7 +581,7 @@ export const useAutoRoutedSell = () => {
       const swapIface = new ethers.utils.Interface(router2ABI)
       const encodedUnwrapCall = swapIface.encodeFunctionData('unwrapWETH9', [fromTokenAmount(minimumAmountOut, 18).toString(), address])
       const result = await handleTransaction(
-        swapRouter2Contract?.methods.multicall([encodedUnwrapCall]).send({
+        swapRouter2Contract?.methods.multicall([encodedUnwrapCall, route?.methodParameters?.calldata]).send({
             to: swapRouter2,
             value: fromTokenAmount(amount, OSQUEETH_DECIMALS).toFixed(0),
             from: address,
