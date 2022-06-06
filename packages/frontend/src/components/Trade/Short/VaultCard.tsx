@@ -56,11 +56,12 @@ type VaultCardType = {
     after: number | string
   }
   vaultId: number
+  id?: string
 }
-const VaultCard = ({ collatRatio, liqPrice, vaultCollat, vaultId }: VaultCardType) => {
+const VaultCard = ({ collatRatio, liqPrice, id, vaultCollat, vaultId }: VaultCardType) => {
   const classes = useStyles()
   return (
-    <Card className={classes.vaultCardContainer}>
+    <Card className={classes.vaultCardContainer} id={id}>
       <div className={classes.title}>
         <AccountBalanceIcon fontSize="inherit" />
         <span className={classes.vault}>Vault</span>
@@ -68,33 +69,35 @@ const VaultCard = ({ collatRatio, liqPrice, vaultCollat, vaultId }: VaultCardTyp
       <div className={classes.subComponent}>
         <p className={classes.valueTitle}>Liquidation Price</p>
         <div className={classes.valueContainer}>
-          <span>${liqPrice.existing}</span>
+          <span className="prev-liq-price">${liqPrice.existing}</span>
+
           <span className={classes.arrow}>
             <Image src={Arrow} alt="Liquidation Arrow" />
           </span>
-          <span>${liqPrice.after}</span>
+
+          <span className="current-liq-price">${liqPrice.after}</span>
         </div>
       </div>
       <div className={classes.subComponent}>
         <p className={classes.valueTitle}>Vault Collateralization Ratio</p>
         <div className={classes.valueContainer}>
-          <span>{vaultId !== 0 ? `${collatRatio.existing}%` : <RemoveIcon />}</span>
+          <span className="prev-collat-ratio">{vaultId !== 0 ? `${collatRatio.existing}%` : <RemoveIcon />}</span>
 
           <span className={classes.arrow}>
             <Image src={Arrow} alt="Collateral Ratio Arrow" />
           </span>
-          <span>{collatRatio.after}%</span>
+          <span className="current-collat-ratio">{collatRatio.after}%</span>
         </div>
       </div>
       <div className={classes.subComponent}>
         <p className={classes.valueTitle}>Vault Collateral</p>
         <div className={classes.valueContainer}>
-          <span>{vaultId !== 0 ? `${vaultCollat.existing} ETH` : <RemoveIcon />}</span>
+          <span className="prev-vault-collat">{vaultId !== 0 ? `${vaultCollat.existing} ETH` : <RemoveIcon />}</span>
 
           <span className={classes.arrow}>
             <Image src={Arrow} alt="Vault Collateral Arrow" />
           </span>
-          <span>{vaultCollat.after} ETH</span>
+          <span className="current-vault-collat">{vaultCollat.after} ETH</span>
         </div>
       </div>
     </Card>
