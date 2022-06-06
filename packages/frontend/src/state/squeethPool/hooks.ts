@@ -388,6 +388,8 @@ export const useAutoRoutedBuyAndRefund = () => {
   const web3 = useAtomValue(web3Atom)
   const signer = useAtomValue(signerAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
+  const swapRouter2Contract = useAtomValue(swapRouter2ContractAtom)
+  const handleTransaction = useHandleTransaction()
 
   const autoRoutedBuyAndRefund = useAppCallback(
     async (amount: BigNumber, onTxConfirmed?: () => void) => {
@@ -407,16 +409,15 @@ export const useAutoRoutedBuyAndRefund = () => {
       const wethContract = new web3.eth.Contract(wethAbi as any, weth)
       await wethContract.methods.approve(swapRouter2, fromTokenAmount(amount, WETH_DECIMALS).toFixed(0))
 
-      const transaction = {
-        data: route?.methodParameters?.calldata,
-        to: swapRouter2,
-        value: fromTokenAmount(amount, WETH_DECIMALS).toFixed(0),
-        from: address,
-        gasPrice: new BigNumber(route?.gasPriceWei.toString() || 0).multipliedBy(1.2).toFixed(0),
-      };
-
-      // Submitting a Transaction
-      const result = await signer.sendTransaction(transaction)
+      const result = await handleTransaction(
+        swapRouter2Contract?.methods.multicall([route?.methodParameters?.calldata]).send({
+            to: swapRouter2,
+            value: fromTokenAmount(amount, WETH_DECIMALS).toFixed(0),
+            from: address,
+            gasPrice: new BigNumber(route?.gasPriceWei.toString() || 0).multipliedBy(1.2).toFixed(0),
+        }),
+        onTxConfirmed,
+      )
       return result
     },
     [address],
