@@ -29,7 +29,6 @@ type CollatRangeType = {
   collatValue: number
   onCollatValueChange: (val: number) => void
   className?: string
-  minCollatRatio: number
 }
 
 const marks = [
@@ -47,14 +46,10 @@ const marks = [
   },
 ]
 
-const CollatRange: React.FC<CollatRangeType> = ({
-  id,
-  collatValue,
-  onCollatValueChange,
-  className,
-  minCollatRatio = 150,
-}) => {
+const CollatRange: React.FC<CollatRangeType> = ({ id, collatValue, onCollatValueChange, className }) => {
   const classes = useStyles()
+
+  const minCollatRatio = 150
 
   const changeSlider = (val: number[]) => {
     if (val[1] < minCollatRatio) return
