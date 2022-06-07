@@ -15,7 +15,7 @@
 
 describe('usePnL', () => {
   it('1 equals to 1', () => {
-    expect(1).toBe(1)
+    expect(2).toBe(2)
   })
   // describe('buy 1 oSQTH 0.2 ETH, ETH at 3k', () => {
   //   it('when ETH price is 3100 and oSQTH price is 0.25 ETH', () => {
