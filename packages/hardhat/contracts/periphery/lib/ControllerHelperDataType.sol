@@ -47,7 +47,7 @@ library ControllerHelperDataType {
         uint256 wPowerPerpAmountToBuy;  // wPowerPerp amount to buy
         uint256 collateralToWithdraw;   // collateral to withdraw from vault
         uint256 maxToPay;   // max to pay for flashswapping WETH to wPowerPerp
-        uint24 poolFee;
+        uint24 poolFee;     // uniswap pool fee
     }
 
     /// @dev params for flashswapSellLongWMint()
@@ -56,8 +56,8 @@ library ControllerHelperDataType {
         uint256 wPowerPerpAmountToMint; // wPowerPerp amount to mint
         uint256 collateralToDeposit;   // collateral amount to deposit into vault
         uint256 wPowerPerpAmountToSell; // wPowerPerp amount to sell
-        uint256 minToReceive;   // minimum to receive for selling wPowerPerp
-        uint24 poolFee;
+        uint256 minToReceive;   // minimum to receive for selling wPowerPerpAmountToSell
+        uint24 poolFee;     // uniswap pool fee
     }
 
     /// @dev data struct for callback initiated in _closeShortWithAmountsFromLp()
@@ -78,8 +78,8 @@ library ControllerHelperDataType {
         uint256 limitPriceEthPerPowerPerp; // price limit for swapping between wPowerPerp and ETH (ETH per 1 wPowerPerp)
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
-        uint24 poolFee;
-        bool burnExactRemoved;
+        uint24 poolFee;      // uniswap pool fee
+        bool burnExactRemoved;      // flag to set burning exact amount removed from LP or the current contract balance
     }
 
     /// @dev params for wMintLp()
@@ -123,13 +123,13 @@ library ControllerHelperDataType {
         uint256 limitPriceEthPerPowerPerp; // price limit for swapping between wPowerPerp and ETH (ETH per 1 wPowerPerp)
         uint128 amount0Min; // minimum amount of token0 to get from closing Uni LP
         uint128 amount1Min; // minimum amount of token1 to get from closing Uni LP
-        uint24 poolFee;
-        bool burnExactRemoved;
+        uint24 poolFee;     // uniswap pool fee
+        bool burnExactRemoved;  // flag to set burning exact amount removed from LP or the current contract balance
     }
 
     /// @dev params for _closeUniLp() 
     struct CloseUniLpParams {
-        uint256 tokenId;    // Uni NFT id
+        uint256 tokenId;    // Uni v3 NFT id
         uint256 liquidity;  // LP liquidity amount
         uint256 liquidityPercentage; // percentage of liquidity to burn in LP position in decimals with 18 precision(e.g 60% = 0.6 = 6e17)
         uint128 amount0Min; // amount min of asset0 to get when closing LP position
@@ -229,8 +229,9 @@ library ControllerHelperDataType {
         uint128 amount0Max;
         uint128 amount1Max;
     }
+
     /// @dev struct for re-depositing and existing uniswap NFT to a vault
     struct DepositExistingNftParams {
-        uint256 tokenId;
+        uint256 tokenId;    // Uni v3 NFT id
     }
 }
