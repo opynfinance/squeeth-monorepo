@@ -214,7 +214,7 @@ library ControllerHelperDataType {
         bool burnExactRemoved; // if true, will burn the ControllerHelper oSQTH balance, to a maximum of the vault short amount
     }
 
-    /// @dev struct for swapping from wPowerPerp to weth or weth to wPowerPerp. WILL CAUSE LOSS OF FUNDS IF NOT USED CORRECTLY.
+    /// @dev struct for swapping from wPowerPerp to weth or weth to wPowerPerp
     struct GeneralSwapParams {
         address tokenIn; // token to swap in. Must be either weth or wPowerPerp
         address tokenOut; // token to swap out. Must be either weth or wPowerPerp
