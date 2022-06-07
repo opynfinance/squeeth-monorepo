@@ -4,11 +4,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: Controller
-    network: ropsten
+    file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: Controller
+    network: {{network}}
     source:
-      address: "0x59F0c781a6eC387F09C40FAA22b7477a2950d209"
+      address: "{{Controller}}"
       abi: Controller
-      startBlock: 11808049
+      startBlock: {{Controller-start-block}}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -78,11 +82,11 @@ dataSources:
       file: ./src/controller.ts
   - kind: ethereum/contract
     name: CrabStrategy
-    network: ropsten
+    network: {{network}}
     source:
-      address: "0xbffBD99cFD9d77c49595dFe8eB531715906ca4Cf"
+      address: "{{CrabStrategyDeployment}}"
       abi: CrabStrategy
-      startBlock: 11808056
+      startBlock: {{CrabStrategyDeployment-start-block}}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -129,11 +133,11 @@ dataSources:
       file: ./src/crabstrategy.ts
   - kind: ethereum/contract
     name: NonfungiblePositionManager
-    network: ropsten
+    network: {{network}}
     source:
-      address: "0x8c7C1F786dA4DEe7d4bB49697A9B0C0c8Fb328e0"
+      address: "{{NonfungiblePositionManagerDeployment}}"
       abi: NonfungiblePositionManager
-      startBlock: 11027000
+      startBlock: {{NonfungiblePositionManagerDeployment-start-block}}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -159,11 +163,11 @@ dataSources:
           handler: handleCollect
   - kind: ethereum/contract
     name: OSQTHPool
-    network: ropsten
+    network: {{network}}
     source:
-      address: "0x921c384F79de1BAe96d6f33E3E5b8d0B2B34cb68"
+      address: "{{OSQTHPool}}"
       abi: Pool
-      startBlock: 11027000
+      startBlock: {{OSQTHPool-start-block}}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -182,11 +186,11 @@ dataSources:
           handler: handleOSQTHSwap
   - kind: ethereum/contract
     name: USDCPool
-    network: ropsten
+    network: {{network}}
     source:
-      address: "0x8356AbC730a218c24446C2c85708F373f354F0D8"
+      address: "{{USDCPool}}"
       abi: Pool
-      startBlock: 11027000
+      startBlock: {{USDCPool-start-block}}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
