@@ -89,7 +89,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
     {
         _checkAccess(_params.vaultId);
 
-        require(_params.maxToPay <= _params.collateralToWithdraw.add(msg.value));
+        //require(_params.maxToPay <= _params.collateralToWithdraw.add(msg.value));
 
         wrapInternal(msg.value);
 
@@ -366,12 +366,13 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
 
         if (wPowerPerpAmountDesired > wPowerPerpAmountInLp) {
             // if the new position target a higher wPowerPerp amount, swap WETH to reach the desired amount (WETH new position is lower than current WETH in LP)
+            uint256 wPowerPerpShortfall = wPowerPerpAmountDesired.sub(wPowerPerpAmountInLp);
             _exactOutFlashSwap(
                 weth,
                 wPowerPerp,
                 _params.poolFee,
-                wPowerPerpAmountDesired.sub(wPowerPerpAmountInLp),
-                _params.limitPriceEthPerPowerPerp.mul(wPowerPerpAmountDesired.sub(wPowerPerpAmountInLp)).div(1e18),
+                wPowerPerpShortfall,
+                _params.limitPriceEthPerPowerPerp.mul(wPowerPerpShortfall).div(1e18),
                 uint8(ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP),
                 ""
             );
@@ -449,9 +450,10 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
      */
 
     function _getVaultShortAmount(uint256 _vaultId) internal view returns (uint256) {
-        VaultLib.Vault memory vault = IController(controller).vaults(_vaultId);
+        //VaultLib.Vault memory vault = IController(controller).vaults(_vaultId);
+        return IController(controller).vaults(_vaultId).shortAmount;
 
-        return vault.shortAmount;
+        //return vault.shortAmount;
     }
 
     function _flashCallback(
