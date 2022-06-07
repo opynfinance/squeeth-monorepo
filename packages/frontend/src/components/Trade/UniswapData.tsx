@@ -19,6 +19,7 @@ type UniswapDataType = {
   minReceived: string
   minReceivedUnit: string
   isMaxSent?: boolean
+  pools: Array<any>
 }
 
 const useStyles = makeStyles((theme) =>
@@ -45,7 +46,7 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const UniswapData: React.FC<UniswapDataType> = ({ slippage, priceImpact, minReceived, minReceivedUnit, isMaxSent }) => {
+const UniswapData: React.FC<UniswapDataType> = ({ slippage, priceImpact, minReceived, minReceivedUnit, isMaxSent, pools }) => {
   const classes = useStyles()
   const theme = useTheme()
   const [expanded, setExpanded] = React.useState(false)
@@ -56,6 +57,8 @@ const UniswapData: React.FC<UniswapDataType> = ({ slippage, priceImpact, minRece
     if (priceImpactNum < 1) return theme.palette.success.main
     return theme.palette.warning.main
   }, [priceImpact, theme.palette.error.main, theme.palette.success.main, theme.palette.warning.main])
+
+  const poolData = pools? pools.map(poolInfo => <TradeInfoItem label={"Pool LP Fee (Uni " + poolInfo[0] +")"} value={poolInfo[1] / 10000} unit="%" tooltip="Pool selected by Uniswap Auto Router by optimizing swap price via split routes, multiple hops, and gas" />) : null
 
   return (
     <div className={classes.container}>
@@ -94,7 +97,7 @@ const UniswapData: React.FC<UniswapDataType> = ({ slippage, priceImpact, minRece
               value={minReceived}
               unit={minReceivedUnit}
             />
-            <TradeInfoItem label="Uniswap V3 LP Fee" value={UNI_POOL_FEES / 10000} unit="%" />
+            {poolData}
           </div>
         </AccordionDetails>
       </Accordion>
