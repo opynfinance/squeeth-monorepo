@@ -4,7 +4,7 @@ import useAppEffect from '@hooks/useAppEffect'
 import { useETHPrice } from '@hooks/useETHPrice'
 import useUniswapTicks from '@hooks/useUniswapTicks'
 import { CurrencyAmount, Ether, Percent, Token, TradeType } from '@uniswap/sdk-core'
-import { AlphaRouter, ChainId } from '@uniswap/smart-order-router'
+import { AlphaRouter, ChainId, SwapRoute } from '@uniswap/smart-order-router'
 import { Pool, Route, Trade } from '@uniswap/v3-sdk'
 import { fromTokenAmount, parseSlippageInput } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
@@ -113,7 +113,6 @@ export const useGetBuyQuoteForETH = () => {
   const networkId = useAtomValue(networkIdAtom)
   const web3 = useAtomValue(web3Atom)
   const address = useAtomValue(addressAtom)
-  const V2_DEFAULT_FEE_TIER = 3000
 
   //If I input an exact amount of ETH I want to spend, tells me how much Squeeth I'd purchase
   const getBuyQuoteForETH = useAppCallback(
@@ -138,16 +137,6 @@ export const useGetBuyQuoteForETH = () => {
       })
 
       if (!route) return null
-
-      const poolsUsed = []
-      const swaps = route.trade.swaps
-      for (let i = 0; i < swaps.length; i++) {
-        const poolsInRoute = swaps[i].route.pools
-        for (let j = 0; j < poolsInRoute.length; j++) {
-          const pool = poolsInRoute[j]
-          poolsUsed.push(pool instanceof Pair ? ["V2", V2_DEFAULT_FEE_TIER] : ["V3", pool.fee])
-        }
-      }
       
       try {
         return {
@@ -156,7 +145,7 @@ export const useGetBuyQuoteForETH = () => {
             route!.trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(OSQUEETH_DECIMALS),
           ),
           priceImpact: route!.trade.priceImpact.toFixed(2),
-          pools: poolsUsed
+          pools: getPoolInfo(route)
         }
       } catch (e) {
         console.log(e)
@@ -655,4 +644,18 @@ export const useGetSellQuoteForETH = () => {
   )
 
   return getSellQuoteForETH
+}
+
+function getPoolInfo(route: SwapRoute) {
+  const V2_DEFAULT_FEE_TIER = 3000
+  const poolsUsed = []
+      const swaps = route.trade.swaps
+      for (let i = 0; i < swaps.length; i++) {
+        const poolsInRoute = swaps[i].route.pools
+        for (let j = 0; j < poolsInRoute.length; j++) {
+          const pool = poolsInRoute[j]
+          poolsUsed.push(pool instanceof Pair ? ["V2", V2_DEFAULT_FEE_TIER] : ["V3", pool.fee])
+        }
+      }
+  return poolsUsed
 }
