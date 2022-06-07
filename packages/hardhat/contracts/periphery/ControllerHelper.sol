@@ -432,6 +432,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             abi.encode(_vaultId, _params)
         );
 
+        require(INonfungiblePositionManager(nonfungiblePositionManager).balanceOf(address(this)) == 0);
+
         ControllerHelperUtil.sendBack(weth, wPowerPerp);
     }
 
