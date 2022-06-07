@@ -109,7 +109,7 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
   error = false,
   isLoading = false,
   isFullClose = false,
-  loadingMessage = 'Fetching price data',
+  loadingMessage = 'Fetching best price',
 }) => {
   const classes = useStyles()
 
