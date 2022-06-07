@@ -122,11 +122,12 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         wrapInternal(msg.value);
         IWPowerPerp(wPowerPerp).transferFrom(msg.sender, address(this), _params.wPowerPerpAmountToSell);
         // flashswap and mint short position
+        uint256 totalAmountIn = _params.wPowerPerpAmountToMint.add(_params.wPowerPerpAmountToSell);
         _exactInFlashSwap(
             wPowerPerp,
             weth,
             _params.poolFee,
-            _params.wPowerPerpAmountToMint.add(_params.wPowerPerpAmountToSell),
+            totalAmountIn,
             _params.minToReceive,
             uint8(ControllerHelperDataType.CALLBACK_SOURCE.FLASH_SELL_LONG_W_MINT),
             abi.encode(_params)
@@ -691,8 +692,11 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         (ControllerHelperDataType.GeneralSwapParams)
                     );
 
-                    // generalSwap only functions for wPowerPerp to weth or weth to wPowerPerp trades.
-
+                    require(
+                        (swapParams.tokenIn == weth && swapParams.tokenOut == wPowerPerp) ||
+                            (swapParams.tokenIn == wPowerPerp && swapParams.tokenOut == weth)
+                    );
+                    
                     _exactInFlashSwap(
                         swapParams.tokenIn,
                         swapParams.tokenOut,
@@ -862,12 +866,14 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         } else {
             if (_wPowerPerpAmount < _wPowerPerpAmountToBurn) {
                 // swap needed wPowerPerp amount to close short position
+                uint256 wPowerPerpDeficit = _wPowerPerpAmountToBurn.sub(_wPowerPerpAmount);
+
                 _exactOutFlashSwap(
                     weth,
                     wPowerPerp,
                     _poolFee,
-                    _wPowerPerpAmountToBurn.sub(_wPowerPerpAmount),
-                    _limitPriceEthPerPowerPerp.mul(_wPowerPerpAmountToBurn.sub(_wPowerPerpAmount)).div(1e18),
+                    wPowerPerpDeficit,
+                    _limitPriceEthPerPowerPerp.mul(wPowerPerpDeficit).div(1e18),
                     uint8(ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP_BURN),
                     abi.encodePacked(_vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw)
                 );
