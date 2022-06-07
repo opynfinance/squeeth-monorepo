@@ -3,8 +3,6 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import "hardhat/console.sol";
-
 // interface
 import {IWETH9} from "../interfaces/IWETH9.sol";
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
@@ -342,7 +340,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             _params.tokenId,
             1e18
         );
-        console.log("after checkClosedLp");
 
         uint256 wethAmountDesired;
         uint256 wPowerPerpAmountDesired;
@@ -431,6 +428,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             uint8(ControllerHelperDataType.CALLBACK_SOURCE.FLASHLOAN_REBALANCE_LP_IN_VAULT),
             abi.encode(_vaultId, _params)
         );
+
+        require(INonfungiblePositionManager(nonfungiblePositionManager).balanceOf(address(this)) == 0);
 
         ControllerHelperUtil.sendBack(weth, wPowerPerp);
     }
