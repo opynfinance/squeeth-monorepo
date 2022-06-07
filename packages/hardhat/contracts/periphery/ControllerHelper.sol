@@ -690,6 +690,10 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         data[i].data,
                         (ControllerHelperDataType.GeneralSwapParams)
                     );
+
+                    // generalSwap only functions for wPowerPerp to weth or weth to wPowerPerp trades.  
+                    // WILL CAUSE LOSS OF FUNDS IF USED WITH ANY OTHER TOKENS
+
                     _exactInFlashSwap(
                         swapParams.tokenIn,
                         swapParams.tokenOut,
