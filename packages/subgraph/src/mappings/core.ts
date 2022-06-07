@@ -16,7 +16,7 @@ import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { createTransactionHistory } from "../util";
 
 export function handleInitialize(event: Initialize): void {
-  // update pool sqrt price and tick
+  // update pool sqrt price
   let pool = new Pool(event.address.toHexString());
 
   pool.sqrtPrice = event.params.sqrtPriceX96;

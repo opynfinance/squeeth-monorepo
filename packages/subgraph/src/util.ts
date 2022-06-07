@@ -7,13 +7,19 @@ import {
   LOCALHOST_SHORT_HELPER_ADDR,
   RA_SHORT_HELPER_ADDR,
   BIGINT_ZERO,
-  ONE_BI,
-  ZERO_BI,
   USDC_WETH_POOL,
   ZERO_BD,
   OSQTH_WETH_POOL,
   TOKEN_DECIMALS_USDC,
   TOKEN_DECIMALS_18,
+  MAINNET_USDC_WETH_POOL,
+  LOCALHOST_USDC_WETH_POOL,
+  ROPSTEN_USDC_WETH_POOL,
+  RA_USDC_WETH_POOL,
+  MAINNET_OSQTH_WETH_POOL,
+  ROPSTEN_OSQTH_WETH_POOL,
+  LOCALHOST_OSQTH_WETH_POOL,
+  RA_OSQTH_WETH_POOL,
 } from "./constants";
 import { sqrtPriceX96ToTokenPrices } from "./utils/pricing";
 
@@ -34,6 +40,30 @@ export function getShortHelperAddr(networkName: string): Address {
     addr = LOCALHOST_SHORT_HELPER_ADDR;
   } else if (networkName == "rinkebyArbitrum") {
     addr = RA_SHORT_HELPER_ADDR;
+  }
+  return addr;
+}
+
+export function getUSDCPoolAddr(networkName: string): string {
+  let addr = MAINNET_USDC_WETH_POOL;
+  if (networkName == "ropsten") {
+    addr = ROPSTEN_USDC_WETH_POOL;
+  } else if (networkName == "localhost") {
+    addr = LOCALHOST_USDC_WETH_POOL;
+  } else if (networkName == "rinkebyArbitrum") {
+    addr = RA_USDC_WETH_POOL;
+  }
+  return addr;
+}
+
+export function getoSQTHPoolAddr(networkName: string): string {
+  let addr = MAINNET_OSQTH_WETH_POOL;
+  if (networkName == "ropsten") {
+    addr = ROPSTEN_OSQTH_WETH_POOL;
+  } else if (networkName == "localhost") {
+    addr = LOCALHOST_OSQTH_WETH_POOL;
+  } else if (networkName == "rinkebyArbitrum") {
+    addr = RA_OSQTH_WETH_POOL;
   }
   return addr;
 }
