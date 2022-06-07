@@ -692,7 +692,10 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         (ControllerHelperDataType.GeneralSwapParams)
                     );
 
-                    require( (swapParams.tokenIn == weth && swapParams.tokenOut == wPowerPerp) || (swapParams.tokenIn == wPowerPerp && swapParams.tokenOut == weth) );
+                    require(
+                        (swapParams.tokenIn == weth && swapParams.tokenOut == wPowerPerp) ||
+                            (swapParams.tokenIn == wPowerPerp && swapParams.tokenOut == weth)
+                    );
 
                     _exactInFlashSwap(
                         swapParams.tokenIn,
