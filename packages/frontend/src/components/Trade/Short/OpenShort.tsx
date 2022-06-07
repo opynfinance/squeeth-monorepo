@@ -184,7 +184,7 @@ export const OpenShortPosition = () => {
       amount.isGreaterThan(0) &&
       newCollat.plus(vault?.collateralAmount || BIG_ZERO).lt(MIN_COLLATERAL_AMOUNT)
     ) {
-      inputError = 'need to sell more oSQTH or raise your CR'
+      inputError = 'You need to sell more oSQTH or raise your CR.'
       // inputError = `Minimum collateral is ${MIN_COLLATERAL_AMOUNT} ETH`
     } else if (vault && vaultId === 0 && vault?.shortAmount.gt(0)) {
       vaultIdDontLoadedError = 'Loading Vault...'
@@ -568,7 +568,15 @@ export const OpenShortPosition = () => {
                       ? 'Open Short anyway'
                       : 'Approve Squeethy 1 Click Wrapper'}
                     {!isVaultApproved ? (
-                      <Tooltip style={{ marginLeft: '2px' }} title={Tooltips.ControllerHelperOperator}>
+                      <Tooltip
+                        style={{ marginLeft: '2px' }}
+                        title={
+                          <span>
+                            The wrapper contract helps you put on short positions and LP positions in one step instead
+                            of many.<a href="https://www.opyn.co/">Learn more</a>
+                          </span>
+                        }
+                      >
                         <InfoOutlinedIcon fontSize="small" />
                       </Tooltip>
                     ) : null}
