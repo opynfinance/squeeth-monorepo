@@ -264,7 +264,7 @@ describe('Trade on trade page', () => {
     })
   })
 
-  context.skip(`when have short oSQTH balance, the default trade card would be short`, () => {
+  context(`when have short oSQTH balance, the default trade card would be short`, () => {
     // issue #278
     it.skip('reload to see if by default is short & open trade cards', () => {
       cy.reload()
