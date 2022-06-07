@@ -297,7 +297,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   useAppEffect(() => {
     if (open && tradeType === TradeType.LONG) {
       getBuyQuoteForETH(new BigNumber(ethTradeAmount), slippageAmount).then((val) => {
-        setQuote(val)
+        if (val) setQuote(val)
       })
     }
   }, [slippageAmount, ethTradeAmount, getBuyQuoteForETH, open, setQuote, tradeType])
@@ -308,10 +308,12 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
       setInputQuoteLoading(true)
 
       getBuyQuoteForETH(new BigNumber(value), slippageAmount).then((val) => {
-        setSqthTradeAmount(val.amountOut.toString())
-        setConfirmedAmount(val.amountOut.toFixed(6).toString())
-        setSqueethExposure(Number(getWSqueethPositionValue(val.amountOut)))
-        setInputQuoteLoading(false)
+        if (val) {
+          setSqthTradeAmount(val.amountOut.toString())
+          setConfirmedAmount(val.amountOut.toFixed(6).toString())
+          setSqueethExposure(Number(getWSqueethPositionValue(val.amountOut)))
+          setInputQuoteLoading(false)
+        }
       })
     },
     [

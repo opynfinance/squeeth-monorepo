@@ -150,6 +150,8 @@ export const useGetBuyQuoteForETH = () => {
   const networkId = useAtomValue(networkIdAtom)
   const web3 = useAtomValue(web3Atom)
   const address = useAtomValue(addressAtom)
+  const cachedRoute = useAtomValue(routeAtom)
+  const setCachedRoute = useUpdateAtom(routeAtom)
 
   //If I input an exact amount of ETH I want to spend, tells me how much Squeeth I'd purchase
   const getBuyQuoteForETH = useAppCallback(
@@ -159,19 +161,22 @@ export const useGetBuyQuoteForETH = () => {
         minimumAmountOut: new BigNumber(0),
         priceImpact: '0',
       }
+      
+      if (!ETHAmount || ETHAmount.eq(0)) return emptyState
 
-      if (!ETHAmount) return emptyState
+      const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
+      const chainId = networkId as any as ChainId
+      const router = new AlphaRouter({ chainId: chainId, provider: provider })
+      const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, WETH_DECIMALS).toFixed(0))
+      const route = await router.route(rawAmount, squeethToken!, TradeType.EXACT_INPUT,  {
+        recipient: address!,
+        slippageTolerance: new Percent(5, 100),
+        deadline: Math.floor(Date.now()/1000 +1800)
+      })
+
+      if (!route) return null
 
       try {
-        const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
-        const chainId = networkId as any as ChainId
-        const router = new AlphaRouter({ chainId: chainId, provider: provider })
-        const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, WETH_DECIMALS).toFixed(0))
-        const route = await router.route(rawAmount, squeethToken!, TradeType.EXACT_INPUT,  {
-          recipient: address!,
-          slippageTolerance: new Percent(5, 100),
-          deadline: Math.floor(Date.now()/1000 +1800)
-        })
         return {
           amountOut: new BigNumber(route!.quote.toSignificant(OSQUEETH_DECIMALS)),
           minimumAmountOut: new BigNumber(
@@ -182,10 +187,9 @@ export const useGetBuyQuoteForETH = () => {
       } catch (e) {
         console.log(e)
       }
-
       return emptyState
     },
-    [pool, wethToken?.address, squeethToken?.address],
+    [],
   )
 
   return getBuyQuoteForETH
@@ -254,7 +258,6 @@ export const useGetBuyQuote = () => {
       if (!squeethAmount || !pool) return emptyState
 
       try {
-        console.log("HIIIII IM in the wrong one")
         //WETH is input token, squeeth is output token. I'm using WETH to buy Squeeth
         const route = new Route([pool], wethToken!, squeethToken!)
         //getting the amount of ETH I need to put in to get an exact amount of squeeth I inputted out
