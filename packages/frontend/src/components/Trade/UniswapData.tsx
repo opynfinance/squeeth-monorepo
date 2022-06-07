@@ -10,7 +10,6 @@ import {
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import React, { useMemo } from 'react'
 
-import { UNI_POOL_FEES } from '../../constants'
 import TradeInfoItem from './TradeInfoItem'
 
 type UniswapDataType = {
