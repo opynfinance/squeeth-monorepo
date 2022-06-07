@@ -150,7 +150,7 @@ export const useGetBuyQuoteForETH = () => {
   const networkId = useAtomValue(networkIdAtom)
   const web3 = useAtomValue(web3Atom)
   const address = useAtomValue(addressAtom)
-  
+
   //If I input an exact amount of ETH I want to spend, tells me how much Squeeth I'd purchase
   const getBuyQuoteForETH = useAppCallback(
     async (ETHAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
@@ -470,6 +470,9 @@ export const useGetSellQuote = () => {
   const pool = useAtomValue(poolAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
   const wethToken = useAtomValue(wethTokenAtom)
+  const networkId = useAtomValue(networkIdAtom)
+  const address = useAtomValue(addressAtom)
+  const web3 = useAtomValue(web3Atom)
   //I input an exact amount of squeeth I want to sell, tells me how much ETH I'd receive
   const getSellQuote = useAppCallback(
     async (squeethAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
@@ -481,28 +484,45 @@ export const useGetSellQuote = () => {
       if (!squeethAmount || !pool) return emptyState
 
       try {
-        //squeeth is input token, WETH is output token. I'm selling squeeth for WETH
-        const route = new Route([pool], squeethToken!, wethToken!)
-        //getting the amount of ETH I'd receive for inputting the amount of squeeth I want to sell
-        const rawAmount = CurrencyAmount.fromRawAmount(
-          squeethToken!,
-          fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0),
-        )
-
-        if (rawAmount.equalTo(0)) {
-          return emptyState
-        }
-
-        const trade = await Trade.exactIn(route, rawAmount)
-
-        //the amount of ETH I'm receiving
+        const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
+        const chainId = networkId as any as ChainId
+        const router = new AlphaRouter({ chainId: chainId, provider: provider })
+        const rawAmount = CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0))
+        const route = await router.route(rawAmount, wethToken!, TradeType.EXACT_INPUT,  {
+          recipient: address!,
+          slippageTolerance: new Percent(5, 100),
+          deadline: Math.floor(Date.now()/1000 +1800)
+        })
         return {
-          amountOut: new BigNumber(trade.outputAmount.toSignificant(18)),
+          amountOut: new BigNumber(route!.quote?.toSignificant(WETH_DECIMALS)),
           minimumAmountOut: new BigNumber(
-            trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(18),
+            route!.trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(WETH_DECIMALS),
           ),
-          priceImpact: trade.priceImpact.toFixed(2),
+          priceImpact: route!.trade.priceImpact.toFixed(2),
         }
+
+        // //squeeth is input token, WETH is output token. I'm selling squeeth for WETH
+        // const route = new Route([pool], squeethToken!, wethToken!)
+        // //getting the amount of ETH I'd receive for inputting the amount of squeeth I want to sell
+        // const rawAmount = CurrencyAmount.fromRawAmount(
+        //   squeethToken!,
+        //   fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0),
+        // )
+
+        // if (rawAmount.equalTo(0)) {
+        //   return emptyState
+        // }
+
+        // const trade = await Trade.exactIn(route, rawAmount)
+
+        // //the amount of ETH I'm receiving
+        // return {
+        //   amountOut: new BigNumber(trade.outputAmount.toSignificant(18)),
+        //   minimumAmountOut: new BigNumber(
+        //     trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(18),
+        //   ),
+        //   priceImpact: trade.priceImpact.toFixed(2),
+        // }
       } catch (e) {
         console.log(e)
       }
