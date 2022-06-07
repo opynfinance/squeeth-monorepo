@@ -466,6 +466,7 @@ export const useGetSellQuote = () => {
             route!.trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(WETH_DECIMALS),
           ),
           priceImpact: route!.trade.priceImpact.toFixed(2),
+          pools: getPoolInfo(route)
         }
       } catch (e) {
         console.log(e)

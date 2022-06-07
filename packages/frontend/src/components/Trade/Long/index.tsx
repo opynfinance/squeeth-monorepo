@@ -914,7 +914,7 @@ const CloseLong: React.FC<BuyProps> = () => {
               priceImpact={quote.priceImpact}
               minReceived={quote.minimumAmountOut.toFixed(4)}
               minReceivedUnit="ETH" 
-              pools={[]}            
+              pools={quote.pools}            
             />
           </div>
           <div className={classes.buttonDiv}>
@@ -968,7 +968,12 @@ const CloseLong: React.FC<BuyProps> = () => {
             <Typography variant="caption" className={classes.caption} component="div">
               <a href={Links.UniswapSwap} target="_blank" rel="noreferrer">
                 {' '}
-                Trades on Uniswap V3 🦄{' '}
+                Trades on Uniswap 
+              </a>
+
+              <a href={Links.AutoRouter} target="_blank" rel="noreferrer">
+                {' '}
+                via Auto Router 🦄{' '}
               </a>
             </Typography>
           </div>
