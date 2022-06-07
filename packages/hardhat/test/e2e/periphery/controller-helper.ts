@@ -433,7 +433,13 @@ describe("ControllerHelper: mainnet fork", function () {
       const newTick = isWethToken0 ? 60*((currentTick - currentTick%60)/60 - 10): 60*((currentTick - currentTick%60)/60 + 10)
       
       // Flashloan to cover complete removal of LP (rearrange collateral ratio formula for 1.5 and add 0.1 ETH safety margin)
-      const flashLoanAmount = (vaultBefore.shortAmount.add(mintWSqueethAmount)).mul(normFactor).mul(ethPrice).mul(3).div(one.mul(one).mul(10000).mul(2)).sub(vaultBefore.collateralAmount).add(ethers.utils.parseUnits('0.1'))
+      const flashLoanAmount = (vaultBefore.shortAmount.add(mintWSqueethAmount)).mul(normFactor).mul(ethPrice).mul(3).div(one.mul(one).mul(10000).mul(2)).sub(vaultBefore.collateralAmount).add(ethers.utils.parseUnits('0.5'))
+      console.log('flashloanAmount', flashLoanAmount.toString())
+      console.log('vaultBefore.shortAmount', vaultBefore.shortAmount.toString())
+      console.log('vaultBefore.collateralAmount', vaultBefore.collateralAmount.toString())
+      console.log('mintWSqueethAmount', mintWSqueethAmount.toString())
+      console.log('normFactor', normFactor.toString())
+      console.log('ethPrice', ethPrice.toString())
 
       const flashloanWMintDepositNftParams = {
         wPowerPerpPool: wSqueethPool.address,
