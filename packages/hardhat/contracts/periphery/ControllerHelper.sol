@@ -379,13 +379,12 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         } else if (wPowerPerpAmountDesired < wPowerPerpAmountInLp) {
             // if the new position target lower wPowerPerp amount, swap excess to WETH (position target higher WETH amount)
             uint256 wPowerPerpExcess = wPowerPerpAmountInLp.sub(wPowerPerpAmountDesired);
-            uint256 minAmountOut = _params.limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18);
             _exactInFlashSwap(
                 wPowerPerp,
                 weth,
                 _params.poolFee,
                 wPowerPerpExcess,
-                minAmountOut,
+                _params.limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18),
                 uint8(ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
                 ""
             );
@@ -864,7 +863,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         } else {
             if (_wPowerPerpAmount < _wPowerPerpAmountToBurn) {
                 // swap needed wPowerPerp amount to close short position
-                uint256 wPowerPerpExcess = _wPowerPerpAmountToBurn.sub(_wPowerPerpAmount);
+                uint256 wPowerPerpDeficit = _wPowerPerpAmountToBurn.sub(_wPowerPerpAmount);
 
                 _exactOutFlashSwap(
                     weth,
