@@ -9,14 +9,15 @@ import { Pool, Route, Trade } from '@uniswap/v3-sdk'
 import { fromTokenAmount, parseSlippageInput } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
 import { ethers } from 'ethers'
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtomValue } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 import { Contract } from 'web3-eth-contract'
 import routerABI from '../../abis/swapRouter.json'
 import router2ABI from '../../abis/swapRouter2.json'
 import { squeethPoolContractAtom, swapRouter2ContractAtom, swapRouterContractAtom } from '../contracts/atoms'
 import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
-import { addressAtom, networkIdAtom, signerAtom, web3Atom } from '../wallet/atoms'
+import { addressAtom, networkIdAtom, web3Atom } from '../wallet/atoms'
+import {routeAtom} from '../squeethPool/atoms'
 import { useHandleTransaction } from '../wallet/hooks'
 import wethAbi from '../../abis/weth.json'
 
@@ -60,6 +61,42 @@ async function getPoolState(squeethContract: Contract) {
 
   return PoolState
 }
+
+// export const useUpdateAutoRouter = () => {
+//   const networkId = useAtomValue(networkIdAtom)
+//   const web3 = useAtomValue(web3Atom)
+//   const address = useAtomValue(addressAtom)
+//   const wethToken = useAtomValue(wethTokenAtom)
+//   const squeethToken = useAtomValue(squeethTokenAtom)
+//   const setAutoRouterRoute = useUpdateAtom(routeAtom)
+
+//   const updateAutoRouter = useAppCallback(
+//     async (isInputETH: boolean, amount: BigNumber) => {
+//         const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
+//         const chainId = networkId as any as ChainId
+//         const router = new AlphaRouter({ chainId: chainId, provider: provider })
+
+//         const inputToken = isInputETH ? wethToken : squeethToken
+//         const outputToken = isInputETH ? squeethToken : wethToken
+
+//         try {
+//           const rawAmount = CurrencyAmount.fromRawAmount(inputToken!, fromTokenAmount(amount, 18).toFixed(0))
+//           const route = await router.route(rawAmount, outputToken!, TradeType.EXACT_INPUT,  {
+//             recipient: address!,
+//             slippageTolerance: new Percent(5, 100),
+//             deadline: Math.floor(Date.now()/1000 +1800)
+//           })
+//           setAutoRouterRoute(route)
+//           return route
+//         } catch(e) {
+//           console.log(e)
+//         }
+//       },
+//       [],
+//     )
+//     return updateAutoRouter
+// }
+
 
 export const useUpdateSqueethPoolData = () => {
   const isWethToken0 = useAtomValue(isWethToken0Atom)
@@ -110,6 +147,10 @@ export const useGetBuyQuoteForETH = () => {
   const pool = useAtomValue(poolAtom)
   const wethToken = useAtomValue(wethTokenAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
+  const networkId = useAtomValue(networkIdAtom)
+  const web3 = useAtomValue(web3Atom)
+  const address = useAtomValue(addressAtom)
+  
   //If I input an exact amount of ETH I want to spend, tells me how much Squeeth I'd purchase
   const getBuyQuoteForETH = useAppCallback(
     async (ETHAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
@@ -119,27 +160,24 @@ export const useGetBuyQuoteForETH = () => {
         priceImpact: '0',
       }
 
-      if (!ETHAmount || !pool) return emptyState
+      if (!ETHAmount) return emptyState
 
       try {
-        //WETH is input token, squeeth is output token. I'm using WETH to buy Squeeth
-        const route = new Route([pool], wethToken!, squeethToken!)
-        //getting the amount of squeeth I'd get out for putting in an exact amount of ETH
-        const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toString())
-
-        if (rawAmount.equalTo(0)) {
-          return emptyState
-        }
-
-        const trade = await Trade.exactIn(route, rawAmount)
-
-        //the amount of squeeth I'm getting out
+        const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
+        const chainId = networkId as any as ChainId
+        const router = new AlphaRouter({ chainId: chainId, provider: provider })
+        const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, WETH_DECIMALS).toFixed(0))
+        const route = await router.route(rawAmount, squeethToken!, TradeType.EXACT_INPUT,  {
+          recipient: address!,
+          slippageTolerance: new Percent(5, 100),
+          deadline: Math.floor(Date.now()/1000 +1800)
+        })
         return {
-          amountOut: new BigNumber(trade.outputAmount.toSignificant(OSQUEETH_DECIMALS)),
+          amountOut: new BigNumber(route!.quote.toSignificant(OSQUEETH_DECIMALS)),
           minimumAmountOut: new BigNumber(
-            trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(OSQUEETH_DECIMALS),
+            route!.trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(OSQUEETH_DECIMALS),
           ),
-          priceImpact: trade.priceImpact.toFixed(2),
+          priceImpact: route!.trade.priceImpact.toFixed(2),
         }
       } catch (e) {
         console.log(e)
@@ -216,6 +254,7 @@ export const useGetBuyQuote = () => {
       if (!squeethAmount || !pool) return emptyState
 
       try {
+        console.log("HIIIII IM in the wrong one")
         //WETH is input token, squeeth is output token. I'm using WETH to buy Squeeth
         const route = new Route([pool], wethToken!, squeethToken!)
         //getting the amount of ETH I need to put in to get an exact amount of squeeth I inputted out
@@ -386,10 +425,10 @@ export const useAutoRoutedBuyAndRefund = () => {
   const wethToken = useAtomValue(wethTokenAtom)
   const { swapRouter2, weth } = useAtomValue(addressesAtom)
   const web3 = useAtomValue(web3Atom)
-  const signer = useAtomValue(signerAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
   const swapRouter2Contract = useAtomValue(swapRouter2ContractAtom)
   const handleTransaction = useHandleTransaction()
+  // const route = useAtomValue(routeAtom)
 
   const autoRoutedBuyAndRefund = useAppCallback(
     async (amount: BigNumber, onTxConfirmed?: () => void) => {
@@ -406,6 +445,7 @@ export const useAutoRoutedBuyAndRefund = () => {
         deadline: Math.floor(Date.now()/1000 +1800)
       })
 
+      // console.log("route we got", route)
       const wethContract = new web3.eth.Contract(wethAbi as any, weth)
       await wethContract.methods.approve(swapRouter2, fromTokenAmount(amount, WETH_DECIMALS).toFixed(0))
 
@@ -551,7 +591,6 @@ export const useAutoRoutedSell = () => {
   const wethToken = useAtomValue(wethTokenAtom)
   const { swapRouter2 } = useAtomValue(addressesAtom)
   const web3 = useAtomValue(web3Atom)
-  const signer = useAtomValue(signerAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
   const handleTransaction = useHandleTransaction()
   const swapRouter2Contract = useAtomValue(swapRouter2ContractAtom)
