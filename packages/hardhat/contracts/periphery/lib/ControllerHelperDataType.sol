@@ -214,12 +214,12 @@ library ControllerHelperDataType {
         bool burnExactRemoved; // if true, will burn the ControllerHelper oSQTH balance, to a maximum of the vault short amount
     }
 
-    /// @dev struct for swapping from tokenIn to tokenOut
+    /// @dev struct for swapping from wPowerPerp to weth or weth to wPowerPerp
     struct GeneralSwapParams {
-        address tokenIn; // token to swap in
-        address tokenOut; // token to swap out
+        address tokenIn; // token to swap in. Must be either weth or wPowerPerp
+        address tokenOut; // token to swap out. Must be either weth or wPowerPerp
         uint256 amountIn; // amount to swap in
-        uint256 limitPrice; // limit price in units of tokenOut per unit of tokenIn
+        uint256 limitPrice; // limit price in units of tokenOut per unit of tokenIn. Notice that this is not always a ETH per wPowerPerp limit price, like is used elsewhere
         uint24 poolFee; // Uniswap pool fee (e.g. 3000 = 30bps)
     }
 
