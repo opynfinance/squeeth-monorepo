@@ -127,7 +127,6 @@ export const CloseShort = () => {
   const [collatPercent, setCollatPercent] = useState(200)
   const [closeType, setCloseType] = useState(CloseType.FULL)
   const [closeLoading, setCloseLoading] = useState(false)
-  const [finalShortAmount, setFinalShortAmount] = useState(new BigNumber(0))
   const [withdrawCollat, setWithdrawCollat] = useState(new BigNumber(0))
   const [isVaultApproved, setIsVaultApproved] = useState(true)
   const [confirmedAmount, setConfirmedAmount] = useState('')
@@ -166,13 +165,6 @@ export const CloseShort = () => {
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
 
-  useAppEffect(() => {
-    if (vault) {
-      const contractShort = vault?.shortAmount?.isFinite() ? vault?.shortAmount : new BigNumber(0)
-      setFinalShortAmount(contractShort)
-    }
-  }, [vault, vault?.shortAmount])
-
   let closeError: string | undefined
   let existingLongError: string | undefined
   let priceImpactWarning: string | undefined
@@ -187,7 +179,7 @@ export const CloseShort = () => {
 
   if (connected) {
     if (
-      (finalShortAmount.lt(0) && finalShortAmount.lt(amount)) ||
+      (vault?.shortAmount && vault?.shortAmount.lt(0) && vault?.shortAmount.lt(amount)) ||
       (vault?.shortAmount && amount.gt(vault.shortAmount))
     ) {
       closeError = 'Close amount exceeds position'
@@ -195,18 +187,19 @@ export const CloseShort = () => {
     if (new BigNumber(sellCloseQuote.priceImpact).gt(3)) {
       priceImpactWarning = 'High Price Impact'
     }
-    if (vaultId === 0 && finalShortAmount.gt(0)) {
+    if (vaultId === 0 && vault?.shortAmount.gt(0)) {
       vaultIdDontLoadedError = 'Loading Vault...'
     }
     if (
       amount.isGreaterThan(0) &&
       vault &&
-      amount.lt(finalShortAmount) &&
+      vault?.shortAmount &&
+      amount.lt(vault?.shortAmount) &&
       newCollat.isLessThan(MIN_COLLATERAL_AMOUNT)
     ) {
       closeError = `You must have at least ${MIN_COLLATERAL_AMOUNT} ETH collateral unless you fully close out your position. Either fully close your position, or close out less`
     }
-    if (isLong && !finalShortAmount.isGreaterThan(0)) {
+    if (isLong && !vault?.shortAmount.isGreaterThan(0)) {
       existingLongError = 'Close your long position to open a short'
     }
     if (sellCloseQuote.amountIn.gt(balance)) {
@@ -224,15 +217,15 @@ export const CloseShort = () => {
     !vault.shortAmount.isZero()
 
   useAppEffect(() => {
-    if (finalShortAmount.isGreaterThan(0)) {
-      setSqthTradeAmount(finalShortAmount.toString())
-      getBuyQuote(finalShortAmount, slippageAmount).then((quote: any) => {
+    if (vault?.shortAmount && vault?.shortAmount.isGreaterThan(0)) {
+      setSqthTradeAmount(vault?.shortAmount.toString())
+      getBuyQuote(vault?.shortAmount, slippageAmount).then((quote: any) => {
         setSellCloseQuote(quote)
       })
       setCollatPercent(150)
       setCloseType(CloseType.FULL)
     }
-  }, [finalShortAmount, getBuyQuote, setSellCloseQuote, setSqthTradeAmount, slippageAmount])
+  }, [vault?.shortAmount, getBuyQuote, setSellCloseQuote, setSqthTradeAmount, slippageAmount])
 
   const onSqthChange = useAppCallback(
     async (v: string) => {
@@ -317,13 +310,13 @@ export const CloseShort = () => {
   }
 
   const setShortCloseMax = useAppCallback(() => {
-    if (finalShortAmount.isGreaterThan(0)) {
-      setSqthTradeAmount(finalShortAmount.toString())
-      onSqthChange(finalShortAmount.toString())
+    if (vault?.shortAmount && vault?.shortAmount.isGreaterThan(0)) {
+      setSqthTradeAmount(vault?.shortAmount.toString())
+      onSqthChange(vault?.shortAmount.toString())
       setCollatPercent(150)
       setCloseType(CloseType.FULL)
     }
-  }, [finalShortAmount, onSqthChange, setSqthTradeAmount])
+  }, [vault?.shortAmount, onSqthChange, setSqthTradeAmount])
 
   useAppEffect(() => {
     onSqthChange(sqthTradeAmount)
@@ -418,12 +411,12 @@ export const CloseShort = () => {
                     <div className={classes.hint}>
                       <span className={classes.hintTextContainer}>
                         <span className={classes.hintTitleText}>Position</span>{' '}
-                        <span>{finalShortAmount.toFixed(6)}</span>
+                        <span>{(vault?.shortAmount ?? BIG_ZERO).toFixed(6)}</span>
                       </span>
                       {amount.toNumber() ? (
                         <>
                           <ArrowRightAltIcon className={classes.arrowIcon} />
-                          <span>{finalShortAmount?.minus(amount).toFixed(6)}</span>
+                          <span>{(vault?.shortAmount.minus(amount) ?? BIG_ZERO).toFixed(6)}</span>
                         </>
                       ) : null}{' '}
                       <span style={{ marginLeft: '4px' }}>oSQTH</span>
