@@ -122,11 +122,12 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         wrapInternal(msg.value);
         IWPowerPerp(wPowerPerp).transferFrom(msg.sender, address(this), _params.wPowerPerpAmountToSell);
         // flashswap and mint short position
+        uint256 totalAmountIn = _params.wPowerPerpAmountToMint.add(_params.wPowerPerpAmountToSell);
         _exactInFlashSwap(
             wPowerPerp,
             weth,
             _params.poolFee,
-            _params.wPowerPerpAmountToMint.add(_params.wPowerPerpAmountToSell),
+            totalAmountIn,
             _params.minToReceive,
             uint8(ControllerHelperDataType.CALLBACK_SOURCE.FLASH_SELL_LONG_W_MINT),
             abi.encode(_params)
@@ -378,12 +379,13 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         } else if (wPowerPerpAmountDesired < wPowerPerpAmountInLp) {
             // if the new position target lower wPowerPerp amount, swap excess to WETH (position target higher WETH amount)
             uint256 wPowerPerpExcess = wPowerPerpAmountInLp.sub(wPowerPerpAmountDesired);
+            uint256 minAmountOut = _params.limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18);
             _exactInFlashSwap(
                 wPowerPerp,
                 weth,
                 _params.poolFee,
                 wPowerPerpExcess,
-                _params.limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18),
+                minAmountOut,
                 uint8(ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTIN_WPOWERPERP_ETH),
                 ""
             );
@@ -862,12 +864,14 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         } else {
             if (_wPowerPerpAmount < _wPowerPerpAmountToBurn) {
                 // swap needed wPowerPerp amount to close short position
+                uint256 wPowerPerpExcess = _wPowerPerpAmountToBurn.sub(_wPowerPerpAmount);
+
                 _exactOutFlashSwap(
                     weth,
                     wPowerPerp,
                     _poolFee,
-                    _wPowerPerpAmountToBurn.sub(_wPowerPerpAmount),
-                    _limitPriceEthPerPowerPerp.mul(_wPowerPerpAmountToBurn.sub(_wPowerPerpAmount)).div(1e18),
+                    wPowerPerpExcess,
+                    _limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18),
                     uint8(ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP_BURN),
                     abi.encodePacked(_vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw)
                 );
