@@ -663,8 +663,10 @@ const CloseLong: React.FC<BuyProps> = () => {
     if (squeethAmount.lt(amount)) {
       setSqthTradeAmount(squeethAmount.toString())
       getSellQuote(squeethAmount).then((val) => {
-        setEthTradeAmount(val.amountOut.toString())
-        setConfirmedAmount(squeethAmount.toFixed(6))
+        if (val) {
+          setEthTradeAmount(val.amountOut.toString())
+          setConfirmedAmount(squeethAmount.toFixed(6))
+        }
       })
     }
   }, [squeethAmount, amount, getSellQuote, setConfirmedAmount, setEthTradeAmount, setSqthTradeAmount])
@@ -736,7 +738,9 @@ const CloseLong: React.FC<BuyProps> = () => {
 
   useAppEffect(() => {
     getSellQuote(new BigNumber(sqthTradeAmount), slippageAmount).then((val) => {
-      setQuote(val)
+      if (val) {
+        setQuote(val)
+      }
     })
   }, [slippageAmount, sqthTradeAmount, getSellQuote, setQuote])
 
@@ -745,9 +749,11 @@ const CloseLong: React.FC<BuyProps> = () => {
       setInputQuoteLoading(true)
       setSqthTradeAmount(value)
       getSellQuote(new BigNumber(value), slippageAmount).then((val) => {
-        if (value !== '0') setConfirmedAmount(Number(value).toFixed(6))
-        setEthTradeAmount(val.amountOut.toString())
-        setInputQuoteLoading(false)
+        if (val) {
+          if (value !== '0') setConfirmedAmount(Number(value).toFixed(6))
+          setEthTradeAmount(val.amountOut.toString())
+          setInputQuoteLoading(false)
+        }
       })
     },
     [getSellQuote, slippageAmount, setConfirmedAmount, setEthTradeAmount, setInputQuoteLoading, setSqthTradeAmount],
