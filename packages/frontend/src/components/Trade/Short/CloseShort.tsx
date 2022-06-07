@@ -38,7 +38,7 @@ import { toTokenAmount } from '@utils/calculations'
 import { addressesAtom, isLongAtom, vaultHistoryUpdatingAtom } from 'src/state/positions/atoms'
 import { useFirstValidVault } from 'src/state/positions/hooks'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
-import { useGetDebtAmount, useUpdateOperator } from 'src/state/controller/hooks'
+import { useGetCollatRatioAndLiqPrice, useGetDebtAmount, useUpdateOperator } from 'src/state/controller/hooks'
 import { useGetBuyQuote, useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
 import { useFlashSwapAndBurn } from 'src/state/controllerhelper/hooks'
 import { useVaultData } from '@hooks/useVaultData'
@@ -50,12 +50,17 @@ import Cancelled from '../Cancelled'
 import useAppEffect from '@hooks/useAppEffect'
 import { useVaultHistoryQuery } from '@hooks/useVaultHistory'
 import useAppMemo from '@hooks/useAppMemo'
+import VaultCard from './VaultCard'
+import ConfirmApproval from './ConfirmApproval'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
     settingsContainer: {
       display: 'flex',
-      justify: 'space-between',
+      justifyContent: 'space-between',
+      textAlign: 'left',
+      margin: '0 auto',
+      width: '300px',
     },
     settingsButton: {
       marginTop: theme.spacing(2),
@@ -64,9 +69,7 @@ const useStyles = makeStyles((theme) =>
     },
     explainer: {
       marginTop: theme.spacing(2),
-      paddingLeft: theme.spacing(1),
       paddingRight: theme.spacing(1),
-      marginLeft: theme.spacing(1),
       width: '200px',
       justifyContent: 'left',
     },
@@ -125,10 +128,13 @@ export const CloseShort = () => {
   const [closeType, setCloseType] = useState(CloseType.FULL)
   const [closeLoading, setCloseLoading] = useState(false)
   const [finalShortAmount, setFinalShortAmount] = useState(new BigNumber(0))
-  const [neededCollat, setNeededCollat] = useState(new BigNumber(0))
   const [withdrawCollat, setWithdrawCollat] = useState(new BigNumber(0))
   const [isVaultApproved, setIsVaultApproved] = useState(true)
   const [confirmedAmount, setConfirmedAmount] = useState('')
+  const [liqPrice, setLiqPrice] = useState(BIG_ZERO)
+  const [newCollat, setNewCollat] = useState(BIG_ZERO)
+  const [openConfirm, setOpenConfirm] = useState(false)
+
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
   const [isVaultHistoryUpdating, setVaultHistoryUpdating] = useAtom(vaultHistoryUpdatingAtom)
   const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
@@ -147,7 +153,7 @@ export const CloseShort = () => {
   const { cancelled, confirmed, transactionData, resetTransactionData, resetTxCancelled } = useTransactionStatus()
   const updateOperator = useUpdateOperator()
   const { validVault: vault, vaultId } = useFirstValidVault()
-  const { existingCollatPercent } = useVaultData(vault)
+  const { existingCollatPercent, existingLiqPrice } = useVaultData(vault)
   const vaultHistoryQuery = useVaultHistoryQuery(Number(vaultId), isVaultHistoryUpdating)
 
   const { data } = useWalletBalance()
@@ -158,6 +164,7 @@ export const CloseShort = () => {
   const selectWallet = useSelectWallet()
   const ethPrice = useETHPrice()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
+  const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
 
   useAppEffect(() => {
     if (vault) {
@@ -165,19 +172,6 @@ export const CloseShort = () => {
       setFinalShortAmount(contractShort)
     }
   }, [vault, vault?.shortAmount])
-
-  useAppEffect(() => {
-    if (vault) {
-      const _collat: BigNumber = vault?.collateralAmount ?? new BigNumber(0)
-      const restOfShort = new BigNumber(vault?.shortAmount ?? new BigNumber(0)).minus(amount)
-
-      getDebtAmount(new BigNumber(restOfShort)).then((debt) => {
-        const _neededCollat = debt.times(collatPercent / 100)
-        setNeededCollat(_neededCollat)
-        setWithdrawCollat(_neededCollat.gt(0) ? _collat.minus(neededCollat) : _collat)
-      })
-    }
-  }, [amount, collatPercent, getDebtAmount, neededCollat, vault])
 
   let closeError: string | undefined
   let existingLongError: string | undefined
@@ -208,7 +202,7 @@ export const CloseShort = () => {
       amount.isGreaterThan(0) &&
       vault &&
       amount.lt(finalShortAmount) &&
-      neededCollat.isLessThan(MIN_COLLATERAL_AMOUNT)
+      newCollat.isLessThan(MIN_COLLATERAL_AMOUNT)
     ) {
       closeError = `You must have at least ${MIN_COLLATERAL_AMOUNT} ETH collateral unless you fully close out your position. Either fully close your position, or close out less`
     }
@@ -241,24 +235,58 @@ export const CloseShort = () => {
   }, [finalShortAmount, getBuyQuote, setSellCloseQuote, setSqthTradeAmount, slippageAmount])
 
   const onSqthChange = useAppCallback(
-    (v: string) => {
-      getBuyQuote(new BigNumber(v), slippageAmount).then((quote: any) => {
-        setSellCloseQuote(quote)
-      })
+    async (v: string) => {
+      if (new BigNumber(v).lte(0)) return setNewCollat(BIG_ZERO)
+
+      const [quote, debt] = await Promise.all([
+        getBuyQuote(new BigNumber(v), slippageAmount),
+        getDebtAmount(vault?.shortAmount.minus(new BigNumber(v)) ?? BIG_ZERO),
+      ])
+      const _collat = vault?.collateralAmount ?? BIG_ZERO
+      const newCollat = new BigNumber(collatPercent / 100).multipliedBy(debt)
+      setSellCloseQuote(quote)
+      getCollatRatioAndLiqPrice(newCollat, vault?.shortAmount.minus(new BigNumber(v)) ?? BIG_ZERO).then(
+        ({ liquidationPrice }) => {
+          setLiqPrice(liquidationPrice)
+        },
+      )
+      setWithdrawCollat(newCollat.gt(0) ? _collat.minus(newCollat) : _collat)
+      setNewCollat(newCollat)
     },
-    [getBuyQuote, setSellCloseQuote, slippageAmount],
+    [
+      collatPercent,
+      getBuyQuote,
+      getCollatRatioAndLiqPrice,
+      getDebtAmount,
+      setSellCloseQuote,
+      slippageAmount,
+      vault?.collateralAmount,
+      vault?.shortAmount,
+    ],
   )
   const handleSqthChange = useMemo(() => debounce(onSqthChange, 500), [onSqthChange])
+
+  const handleConfirmApproval = async () => {
+    try {
+      setCloseLoading(true)
+      setIsTxFirstStep(true)
+      setOpenConfirm(false)
+      await updateOperator(Number(vaultId), controllerHelper, () => {
+        setIsVaultApproved(true)
+        setCloseLoading(false)
+      })
+    } catch (error) {
+      setCloseLoading(false)
+    }
+  }
+
   const handleCloseShort = async () => {
-    setCloseLoading(true)
     try {
       if (vaultId && !isVaultApproved) {
-        setIsTxFirstStep(true)
-        await updateOperator(vaultId, controllerHelper, () => {
-          setIsVaultApproved(true)
-          setCloseLoading(false)
-        })
+        setOpenConfirm(true)
+        return
       } else {
+        setCloseLoading(true)
         await flashSwapAndBurn(
           vaultId,
           amount,
@@ -278,6 +306,7 @@ export const CloseShort = () => {
             setVaultHistoryUpdating(true)
             updateVault()
             vaultHistoryQuery.refetch({ vaultId })
+            setCloseLoading(false)
           },
         )
       }
@@ -296,8 +325,18 @@ export const CloseShort = () => {
     }
   }, [finalShortAmount, onSqthChange, setSqthTradeAmount])
 
+  useAppEffect(() => {
+    onSqthChange(sqthTradeAmount)
+  }, [onSqthChange, sqthTradeAmount, collatPercent])
+
   return (
     <>
+      <ConfirmApproval
+        openConfirm={openConfirm}
+        title="Approve New Wrapper"
+        handleClose={() => setOpenConfirm((prevState) => !prevState)}
+        handleConfirmApproval={handleConfirmApproval}
+      />
       {confirmed && !isTxFirstStep ? (
         <div>
           <Confirmed
@@ -337,10 +376,10 @@ export const CloseShort = () => {
           </div>
         </div>
       ) : (
-        <div>
+        <div style={{ width: '90%', margin: '0 auto', minWidth: '300px' }}>
           <div className={classes.settingsContainer}>
             <Typography variant="caption" className={classes.explainer} component="div">
-              Burn oSQTH & close position
+              Buy back oSQTH and close position using vault collateral
             </Typography>
             <span className={classes.settingsButton}>
               <TradeSettings />
@@ -394,7 +433,7 @@ export const CloseShort = () => {
               />
             </div>
 
-            <div style={{ width: '100%', padding: '0 25px 5px 25px' }}>
+            <div style={{ width: '100%', maxWidth: '300px', margin: '0 auto' }}>
               <Select
                 label="Type of Close"
                 value={closeType}
@@ -443,6 +482,19 @@ export const CloseShort = () => {
                   onCollatValueChange={(val) => setCollatPercent(val)}
                   collatValue={collatPercent}
                 />
+                <VaultCard
+                  liqPrice={{
+                    existing: existingLiqPrice.gt(0) ? existingLiqPrice.toFixed(2) : 0,
+                    after: liqPrice.toFixed(2),
+                  }}
+                  collatRatio={{ existing: existingCollatPercent, after: collatPercent }}
+                  vaultCollat={{
+                    existing: vault?.collateralAmount.toFixed(2) ?? '0',
+                    after: newCollat.toFixed(2),
+                  }}
+                  vaultId={vaultId}
+                  id="close-short-vault-card"
+                />
               </div>
             )}
 
@@ -479,7 +531,13 @@ export const CloseShort = () => {
             <div className={classes.divider}>
               <TradeInfoItem
                 label="Collateral you redeem"
-                value={withdrawCollat.isPositive() ? withdrawCollat.toFixed(4) : 0}
+                value={
+                  closeType === CloseType.FULL
+                    ? (vault?.collateralAmount ?? BIG_ZERO).toFixed(4)
+                    : withdrawCollat.isPositive()
+                    ? withdrawCollat.toFixed(4)
+                    : 0
+                }
                 unit="ETH"
               />
               <TradeInfoItem
