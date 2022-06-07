@@ -20,7 +20,7 @@ import { sqrtPriceX96ToTokenPrices } from "./utils/pricing";
 export function bigExponent(base: i32, exp: i32): BigInt {
   let base_BI = BigInt.fromI32(base);
   let bd = base_BI;
-  for (let i = 0; i < exp; i++) {
+  for (let i = 1; i < exp; i++) {
     bd = bd.times(base_BI);
   }
   return bd;

@@ -10,7 +10,7 @@ export function sqrtPriceX96ToTokenPrices(
   token1Decimal: BigInt
 ): BigDecimal[] {
   let num = sqrtPriceX96.times(sqrtPriceX96).toBigDecimal();
-  let denom = Q192.toBigDecimal();
+  let denom = BigDecimal.fromString(Q192.toString());
 
   let price1 = num
     .div(denom)
