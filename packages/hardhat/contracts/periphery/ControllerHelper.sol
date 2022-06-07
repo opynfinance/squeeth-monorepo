@@ -512,7 +512,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 _calldata,
                 (ControllerHelperDataType.FlashloanCloseVaultLpNftParam)
             );
-
             IWETH9(weth).withdraw(_amount);
             IController(controller).deposit{value: _amount}(data.vaultId);
 
@@ -538,7 +537,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                 data.tokenId,
                 data.liquidityPercentage
             );
-
             // close short position using amounts collected from closing LP, withdraw collateralToWithdraw + deposited collateralToFlashloan
             _closeShortWithAmountsFromLp(
                 data.vaultId,
