@@ -150,8 +150,6 @@ export const useGetBuyQuoteForETH = () => {
   const networkId = useAtomValue(networkIdAtom)
   const web3 = useAtomValue(web3Atom)
   const address = useAtomValue(addressAtom)
-  const cachedRoute = useAtomValue(routeAtom)
-  const setCachedRoute = useUpdateAtom(routeAtom)
 
   //If I input an exact amount of ETH I want to spend, tells me how much Squeeth I'd purchase
   const getBuyQuoteForETH = useAppCallback(
@@ -161,7 +159,7 @@ export const useGetBuyQuoteForETH = () => {
         minimumAmountOut: new BigNumber(0),
         priceImpact: '0',
       }
-      
+
       if (!ETHAmount || ETHAmount.eq(0)) return emptyState
 
       const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
@@ -208,7 +206,7 @@ export const useUpdateSqueethPrices = () => {
     if (!squeethToken?.address || !pool) return
     getBuyQuoteForETH(new BigNumber(1))
       .then((val) => {
-        setSqueethPrice(val.amountOut)
+        if (val) setSqueethPrice(val.amountOut)
         setSqueethInitialPrice(
           new BigNumber(
             !isWethToken0 ? pool?.token0Price.toSignificant(18) || 0 : pool?.token1Price.toSignificant(18) || 0,
@@ -347,7 +345,7 @@ export const useGetBuyParamForETH = () => {
       recipient: address,
       deadline: Math.floor(Date.now() / 1000 + 86400), // uint256
       amountIn: fromTokenAmount(amount, 18),
-      amountOutMinimum: fromTokenAmount(quote.minimumAmountOut, OSQUEETH_DECIMALS).toString(),
+      amountOutMinimum: fromTokenAmount(quote!.minimumAmountOut, OSQUEETH_DECIMALS).toString(),
       sqrtPriceLimitX96: 0,
     }
   }
