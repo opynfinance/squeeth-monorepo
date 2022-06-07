@@ -17,9 +17,9 @@ import router2ABI from '../../abis/swapRouter2.json'
 import { squeethPoolContractAtom, swapRouter2ContractAtom, swapRouterContractAtom } from '../contracts/atoms'
 import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
 import { addressAtom, networkIdAtom, web3Atom } from '../wallet/atoms'
-import {routeAtom} from '../squeethPool/atoms'
 import { useHandleTransaction } from '../wallet/hooks'
 import wethAbi from '../../abis/weth.json'
+import { Pair } from '@uniswap/v2-sdk'
 
 import {
   poolAtom,
@@ -113,6 +113,7 @@ export const useGetBuyQuoteForETH = () => {
   const networkId = useAtomValue(networkIdAtom)
   const web3 = useAtomValue(web3Atom)
   const address = useAtomValue(addressAtom)
+  const V2_DEFAULT_FEE_TIER = 3000
 
   //If I input an exact amount of ETH I want to spend, tells me how much Squeeth I'd purchase
   const getBuyQuoteForETH = useAppCallback(
@@ -121,6 +122,7 @@ export const useGetBuyQuoteForETH = () => {
         amountOut: new BigNumber(0),
         minimumAmountOut: new BigNumber(0),
         priceImpact: '0',
+        pools: []
       }
 
       if (!ETHAmount || ETHAmount.eq(0)) return emptyState
@@ -128,7 +130,7 @@ export const useGetBuyQuoteForETH = () => {
       const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
       const chainId = networkId as any as ChainId
       const router = new AlphaRouter({ chainId: chainId, provider: provider })
-      const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, WETH_DECIMALS).toFixed(0))
+      const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toFixed(0))
       const route = await router.route(rawAmount, squeethToken!, TradeType.EXACT_INPUT,  {
         recipient: address!,
         slippageTolerance: new Percent(5, 100),
@@ -137,6 +139,16 @@ export const useGetBuyQuoteForETH = () => {
 
       if (!route) return null
 
+      const poolsUsed = []
+      const swaps = route.trade.swaps
+      for (let i = 0; i < swaps.length; i++) {
+        const poolsInRoute = swaps[i].route.pools
+        for (let j = 0; j < poolsInRoute.length; j++) {
+          const pool = poolsInRoute[j]
+          poolsUsed.push(pool instanceof Pair ? ["V2", V2_DEFAULT_FEE_TIER] : ["V3", pool.fee])
+        }
+      }
+      
       try {
         return {
           amountOut: new BigNumber(route!.quote.toSignificant(OSQUEETH_DECIMALS)),
@@ -144,6 +156,7 @@ export const useGetBuyQuoteForETH = () => {
             route!.trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(OSQUEETH_DECIMALS),
           ),
           priceImpact: route!.trade.priceImpact.toFixed(2),
+          pools: poolsUsed
         }
       } catch (e) {
         console.log(e)
