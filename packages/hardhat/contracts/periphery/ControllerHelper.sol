@@ -869,8 +869,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                     weth,
                     wPowerPerp,
                     _poolFee,
-                    wPowerPerpExcess,
-                    _limitPriceEthPerPowerPerp.mul(wPowerPerpExcess).div(1e18),
+                    wPowerPerpDeficit,
+                    _limitPriceEthPerPowerPerp.mul(wPowerPerpDeficit).div(1e18),
                     uint8(ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP_BURN),
                     abi.encodePacked(_vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw)
                 );
