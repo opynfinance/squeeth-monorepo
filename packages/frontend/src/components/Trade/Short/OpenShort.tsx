@@ -302,7 +302,6 @@ export const OpenShortPosition = () => {
           setVaultHistoryUpdating(true)
           setShortLoading(false)
           vaultHistoryQuery.refetch({ vaultId })
-          localStorage.removeItem('collatPercent')
           updateVault()
         })
       }
