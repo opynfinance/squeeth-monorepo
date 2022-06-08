@@ -237,7 +237,7 @@ export const OpenShortPosition = () => {
         setMsgValue(new BigNumber(0))
       }
 
-      setTotalCollateralAmount(quote.minimumAmountOut.plus(newCollat.minus(quote.amountOut)))
+      setTotalCollateralAmount(quote.minimumAmountOut.plus(newCollat.minus(quote.minimumAmountOut)))
     },
     [
       collatPercent,
@@ -308,7 +308,6 @@ export const OpenShortPosition = () => {
           setVaultHistoryUpdating(true)
           setShortLoading(false)
           vaultHistoryQuery.refetch({ vaultId })
-          localStorage.removeItem('collatPercent')
           updateVault()
         })
       }
