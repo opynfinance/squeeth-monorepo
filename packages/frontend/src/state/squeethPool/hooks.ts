@@ -72,7 +72,7 @@ export const useUpdateSqueethPoolData = () => {
   const contract = useAtomValue(squeethPoolContractAtom)
   const { ticks } = useUniswapTicks()
   useAppEffect(() => {
-    ;(async () => {
+    ; (async () => {
       const { token0, token1, fee } = await getImmutables(contract!)
 
       const state = await getPoolState(contract!)
@@ -226,9 +226,9 @@ export const useGetWSqueethPositionValue = () => {
 
 export const useGetWSqueethPositionValueInETH = () => {
   const squeethInitialPrice = useAtomValue(squeethInitialPriceAtom)
-  const getWSqueethPositionValueInETH = (amount: BigNumber | number) => {
+  const getWSqueethPositionValueInETH = useAppCallback((amount: BigNumber | number) => {
     return new BigNumber(amount).times(squeethInitialPrice)
-  }
+  }, [squeethInitialPrice])
 
   return getWSqueethPositionValueInETH
 }
