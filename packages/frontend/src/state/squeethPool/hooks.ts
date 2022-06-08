@@ -472,6 +472,7 @@ export const useGetSellQuote = () => {
         amountOut: new BigNumber(0),
         minimumAmountOut: new BigNumber(0),
         priceImpact: '0',
+        pools: []
       }
       if (!squeethAmount || squeethAmount.eq(0)) return emptyState
 
