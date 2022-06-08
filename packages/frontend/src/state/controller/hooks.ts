@@ -27,6 +27,7 @@ import {
 import { useGetETHandOSQTHAmount } from '../nftmanager/hooks'
 import { controllerContractAtom } from '../contracts/atoms'
 import { ETH_USDC_POOL, SQUEETH_UNI_POOL } from '@constants/address'
+import useAppCallback from '@hooks/useAppCallback'
 
 export const useOpenDepositAndMint = () => {
   const address = useAtomValue(addressAtom)
@@ -231,13 +232,16 @@ export const useGetUniNFTCollatDetail = () => {
   const getETHandOSQTHAmount = useGetETHandOSQTHAmount()
   const getTwapEthPrice = useGetTwapEthPrice()
 
-  const getUniNFTCollatDetail = async (uniId: number) => {
-    const ethPrice = await getTwapEthPrice()
-    const { wethAmount, oSqthAmount, position } = await getETHandOSQTHAmount(uniId)
-    const sqthValueInEth = oSqthAmount.multipliedBy(normFactor).multipliedBy(ethPrice).div(INDEX_SCALE)
+  const getUniNFTCollatDetail = useAppCallback(
+    async (uniId: number) => {
+      const ethPrice = await getTwapEthPrice()
+      const { wethAmount, oSqthAmount, position } = await getETHandOSQTHAmount(uniId)
+      const sqthValueInEth = oSqthAmount.multipliedBy(normFactor).multipliedBy(ethPrice).div(INDEX_SCALE)
 
-    return { collateral: sqthValueInEth.plus(wethAmount), position }
-  }
+      return { collateral: sqthValueInEth.plus(wethAmount), position }
+    },
+    [normFactor, getETHandOSQTHAmount, getTwapEthPrice],
+  )
 
   return getUniNFTCollatDetail
 }
