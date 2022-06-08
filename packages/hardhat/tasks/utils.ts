@@ -114,7 +114,7 @@ export const getController = async(ethers: any, deployer: string, networkName: s
 }
 
 export const getExec = async(deployer: string, networkName: string) => {
-  const execAddr = networkNameToController(networkName)
+  const execAddr = networkNameToExec(networkName)
   if (execAddr === undefined) {
     return ''
   } 
@@ -123,7 +123,7 @@ export const getExec = async(deployer: string, networkName: string) => {
 }
 
 export const getEuler = async(deployer: string, networkName: string) => {
-  const eulerAddr = networkNameToController(networkName)
+  const eulerAddr = networkNameToEuler(networkName)
   if (eulerAddr === undefined) {
     return ''
   } 
