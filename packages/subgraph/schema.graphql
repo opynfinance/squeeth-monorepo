@@ -109,7 +109,24 @@ type TransactionHistory @entity {
   timestamp: BigInt!
   transactionType: TransactionType!
   owner: Account!
+  sender: Bytes!
   oSqthAmount: BigInt!
   ethAmount: BigInt!
-  oSqthPrice: BigInt!
+  oSqthPriceInETH: BigDecimal!
+  ethPriceInUSD: BigDecimal!
+  ethUSDCSqrtPrice: BigInt!
+  ethOSQTHSqrtPrice: BigInt!
+}
+
+type Pool @entity {
+  # pool address
+  id: ID!
+  # creation
+  createdAtTimestamp: BigInt!
+  # current price tracker
+  sqrtPrice: BigInt!
+  # token0 per token1
+  token0Price: BigDecimal
+  # token1 per token0
+  token1Price: BigDecimal
 }

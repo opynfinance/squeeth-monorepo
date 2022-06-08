@@ -4,6 +4,10 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: Controller
+    file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: Controller
     network: {{network}}
     source:
       address: "{{Controller}}"
@@ -121,9 +125,85 @@ dataSources:
         - event: FlashDepositCallback(indexed address,uint256,uint256)
           handler: handleFlashDepositCallback
         - event: FlashWithdrawCallback(indexed address,uint256,uint256)
-          handler: handleFlashWithdrawCallback 
+          handler: handleFlashWithdrawCallback
         - event: ExecuteSellAuction(indexed address,uint256,uint256,bool)
           handler: handleExecuteSellAuction
         - event: ExecuteBuyAuction(indexed address,uint256,uint256,bool)
-          handler: handleExecuteBuyAuction 
+          handler: handleExecuteBuyAuction
       file: ./src/crabstrategy.ts
+  - kind: ethereum/contract
+    name: NonfungiblePositionManager
+    network: {{network}}
+    source:
+      address: "{{NonfungiblePositionManagerDeployment}}"
+      abi: NonfungiblePositionManager
+      startBlock: {{NonfungiblePositionManagerDeployment-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/position-manager.ts
+      entities:
+        - TransactionHistory
+      abis:
+        - name: NonfungiblePositionManager
+          file: ./abis/NonfungiblePositionManager.json
+        - name: Pool
+          file: ./abis/pool.json
+        - name: Factory
+          file: ./abis/factory.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: IncreaseLiquidity(indexed uint256,uint128,uint256,uint256)
+          handler: handleIncreaseLiquidity
+        - event: DecreaseLiquidity(indexed uint256,uint128,uint256,uint256)
+          handler: handleDecreaseLiquidity
+        - event: Collect(indexed uint256,address,uint256,uint256)
+          handler: handleCollect
+  - kind: ethereum/contract
+    name: OSQTHPool
+    network: {{network}}
+    source:
+      address: "{{OSQTHPool}}"
+      abi: Pool
+      startBlock: {{OSQTHPool-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/core.ts
+      entities:
+        - Pool
+        - TransactionHistory
+      abis:
+        - name: Pool
+          file: ./abis/pool.json
+      eventHandlers:
+        - event: Initialize(uint160,int24)
+          handler: handleInitialize
+        - event: Swap(indexed address,indexed address,int256,int256,uint160,uint128,int24)
+          handler: handleOSQTHSwap
+  - kind: ethereum/contract
+    name: USDCPool
+    network: {{network}}
+    source:
+      address: "{{USDCPool}}"
+      abi: Pool
+      startBlock: {{USDCPool-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/core.ts
+      entities:
+        - Pool
+        - TransactionHistory
+      abis:
+        - name: Pool
+          file: ./abis/pool.json
+      eventHandlers:
+        - event: Initialize(uint160,int24)
+          handler: handleInitialize
+        - event: Swap(indexed address,indexed address,int256,int256,uint160,uint128,int24)
+          handler: handleUSDCSwap
