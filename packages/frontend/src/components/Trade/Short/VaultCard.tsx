@@ -3,6 +3,7 @@ import AccountBalanceIcon from '@material-ui/icons/AccountBalance'
 import RemoveIcon from '@material-ui/icons/Remove'
 import Image from 'next/image'
 
+import { MIN_COLLATERAL_AMOUNT } from 'src/constants/'
 import Arrow from '../../../../public/images/gradient-arrow.svg'
 
 const useStyles = makeStyles(() =>
@@ -39,6 +40,10 @@ const useStyles = makeStyles(() =>
     subComponent: {
       marginTop: '1em',
     },
+    errorMsg: {
+      fontSize: '.75rem',
+      color: 'rgb(245, 71, 92)',
+    },
   }),
 )
 
@@ -55,10 +60,13 @@ type VaultCardType = {
     existing: number | string
     after: number | string
   }
+  error: {
+    vaultCollat: string
+  }
   vaultId: number
   id?: string
 }
-const VaultCard = ({ collatRatio, liqPrice, id, vaultCollat, vaultId }: VaultCardType) => {
+const VaultCard = ({ collatRatio, liqPrice, id, vaultCollat, vaultId, error }: VaultCardType) => {
   const classes = useStyles()
   return (
     <Card className={classes.vaultCardContainer} id={id}>
@@ -99,6 +107,9 @@ const VaultCard = ({ collatRatio, liqPrice, id, vaultCollat, vaultId }: VaultCar
           </span>
           <span className="current-vault-collat">{vaultCollat.after} ETH</span>
         </div>
+        {error?.vaultCollat !== '' && (
+          <span className={classes.errorMsg}>{`Minimum vault collateral is ${MIN_COLLATERAL_AMOUNT} ETH`}</span>
+        )}
       </div>
     </Card>
   )
