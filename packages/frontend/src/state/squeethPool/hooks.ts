@@ -30,7 +30,7 @@ import {
   squeethTokenAtom,
   wethTokenAtom,
 } from './atoms'
-import { BaseProvider } from '@ethersproject/providers/src.ts/base-provider.js' 
+import { BaseProvider } from '@ethersproject/providers'
 
 const getImmutables = async (squeethContract: Contract) => {
   const [token0, token1, fee, tickSpacing, maxLiquidityPerTick] = await Promise.all([
@@ -546,7 +546,7 @@ const useSellAndUnwrapData = () => {
     const minimumAmountOut = fromTokenAmount((await getSellQuote(amount))!.minimumAmountOut, 18)
     const swapIface = new ethers.utils.Interface(routerABI)
     const encodedSwapCall = swapIface.encodeFunctionData('exactInputSingle', [tupleInput])
-    const encodedUnwrapCall = swapIface.encodeFunctionData('unwrapWETH9', [
+    const encodedUnwrapCall = swapIface.encodeFunctionData('unwrapWETH9(uint256,address)', [
       fromTokenAmount(minimumAmountOut, 18).toString(),
       address,
     ])
@@ -611,7 +611,7 @@ export const useAutoRoutedSell = () => {
       console.log("minimum amount out", minimumAmountOut.toString())
       console.log("minimum amount out token version", fromTokenAmount(minimumAmountOut!, 18).toString())
       const swapIface = new ethers.utils.Interface(router2ABI)
-      const encodedUnwrapCall = swapIface.encodeFunctionData('unwrapWETH9', [fromTokenAmount(minimumAmountOut, 18).toString(), address])
+      const encodedUnwrapCall = swapIface.encodeFunctionData('unwrapWETH9(uint256,address)', [fromTokenAmount(minimumAmountOut, 18).toString(), address])
       const result = await handleTransaction(
         swapRouter2Contract?.methods.multicall([encodedUnwrapCall, route?.methodParameters?.calldata]).send({
             to: swapRouter2,

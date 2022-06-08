@@ -985,6 +985,19 @@
                 "internalType": "uint256",
                 "name": "amountMinimum",
                 "type": "uint256"
+            }
+        ],
+        "name": "unwrapWETH9",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "amountMinimum",
+                "type": "uint256"
             },
             {
                 "internalType": "address",
