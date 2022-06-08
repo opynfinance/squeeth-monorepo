@@ -9,7 +9,6 @@ import { useRouter } from 'next/router'
 import React, { memo, useEffect, useMemo } from 'react'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { ReactQueryDevtools } from 'react-query/devtools'
-import { CookiesProvider } from 'react-cookie'
 import { useAtomValue } from 'jotai'
 
 import { RestrictUserProvider } from '@context/restrict-user'
@@ -64,16 +63,14 @@ function MyApp({ Component, pageProps }: any) {
   }, [router.events, siteID])
 
   return (
-    <CookiesProvider>
-      <RestrictUserProvider>
-        <QueryClientProvider client={queryClient}>
-          <ApolloProvider client={client}>
-            <TradeApp Component={Component} pageProps={pageProps} />
-          </ApolloProvider>
-          <ReactQueryDevtools initialIsOpen={false} />
-        </QueryClientProvider>
-      </RestrictUserProvider>
-    </CookiesProvider>
+    <RestrictUserProvider>
+      <QueryClientProvider client={queryClient}>
+        <ApolloProvider client={client}>
+          <TradeApp Component={Component} pageProps={pageProps} />
+        </ApolloProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
+    </RestrictUserProvider>
   )
 }
 
