@@ -1,6 +1,11 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { Address, ethereum } from "@graphprotocol/graph-ts";
-import { Account, Pool, TransactionHistory } from "../generated/schema";
+import {
+  Account,
+  Pool,
+  Position,
+  TransactionHistory,
+} from "../generated/schema";
 import {
   MAINNET_SHORT_HELPER_ADDR,
   ROPSTEN_SHORT_HELPER_ADDR,
@@ -20,6 +25,7 @@ import {
   ROPSTEN_OSQTH_WETH_POOL,
   LOCALHOST_OSQTH_WETH_POOL,
   RA_OSQTH_WETH_POOL,
+  ZERO_BI,
 } from "./constants";
 import { sqrtPriceX96ToTokenPrices } from "./utils/pricing";
 
@@ -78,7 +84,24 @@ export function loadOrCreateAccount(accountId: string): Account {
   return account as Account;
 }
 
-function getETHUSDCPrice(): BigDecimal[] {
+export function loadOrCreatePosition(userAddr: string): Position {
+  let position = Position.load(userAddr);
+  // if no position, create new entity
+  if (position == null) {
+    position = new Position(userAddr);
+    position.positionType = "NEUTRAL";
+    position.positionBalance = ZERO_BI;
+    position.isLP = false;
+    position.lpBalance = ZERO_BI;
+    position.unrealizedCost = ZERO_BI;
+    position.realizedUnitCost = ZERO_BI;
+    position.realizedUnitGain = ZERO_BI;
+    position.realizedTokenAmount = ZERO_BI;
+  }
+  return position as Position;
+}
+
+export function getETHUSDCPrice(): BigDecimal[] {
   let usdcPool = Pool.load(USDC_WETH_POOL);
   if (usdcPool == null) {
     return [ZERO_BD, ZERO_BD, ZERO_BD];

@@ -1,5 +1,5 @@
 /* eslint-disable prefer-const */
-import { Pool } from "../../generated/schema";
+import { Pool, Position } from "../../generated/schema";
 import {
   Swap as USDCSwapEvent,
   Initialize,
@@ -13,7 +13,11 @@ import {
   USDC_WETH_POOL,
 } from "../constants";
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
-import { createTransactionHistory } from "../util";
+import {
+  createTransactionHistory,
+  getETHUSDCPrice,
+  loadOrCreatePosition,
+} from "../util";
 
 export function handleInitialize(event: Initialize): void {
   // update pool sqrt price
@@ -39,8 +43,10 @@ export function handleInitialize(event: Initialize): void {
 
 export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
   let osqthPool = Pool.load(event.address.toHexString());
-  let usdcPool = Pool.load(USDC_WETH_POOL);
-  if (osqthPool == null || usdcPool == null) {
+  const position = loadOrCreatePosition(event.transaction.from.toHex());
+  let usdcPrices = getETHUSDCPrice();
+
+  if (osqthPool == null) {
     return;
   }
 
@@ -59,17 +65,40 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
   osqthPool.save();
 
   let transactionType = "";
+  let positionBalance = position.positionBalance;
   // selling
   if (event.params.amount0.gt(BIGINT_ZERO)) {
     transactionType = "SELL_OSQTH";
   }
 
+  // buying
   if (event.params.amount0.lt(BIGINT_ZERO)) {
     transactionType = "BUY_OSQTH";
   }
 
-  const transactionHistory = createTransactionHistory(transactionType, event);
+  // amount0 > 0, so need to subtract it from position balance
+  // amount0 < 0, so need to subtract it from position balance to add it as positive number
+  positionBalance = positionBalance.minus(event.params.amount0);
+  // event.params.amount0 > 0, current accumulated cost - this tx osqth amount * osqth price in eth * eth in usd
+  // event.params.amount0 < 0, current accumulated cost + this tx osqth amount * osqth price in eth * eth in usd
+  position.unrealizedCost = position.unrealizedCost.minus(
+    event.params.amount0
+      .times(BigInt.fromString(osqthPrices[0].toString()))
+      .times(BigInt.fromString(usdcPrices[1].toString()))
+  );
 
+  // > 0, long; < 0 short; = 0 neutral
+  if (positionBalance.gt(BIGINT_ZERO)) {
+    position.positionType = "LONG";
+  } else if (positionBalance.lt(BIGINT_ZERO)) {
+    position.positionType = "SHORT";
+  } else {
+    position.positionType = "NEUTRAL";
+  }
+
+  position.positionBalance = positionBalance;
+
+  const transactionHistory = createTransactionHistory(transactionType, event);
   transactionHistory.timestamp = event.block.timestamp;
   transactionHistory.transactionType;
   transactionHistory.sender = event.transaction.from;
@@ -77,6 +106,7 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
   transactionHistory.ethAmount = event.params.amount1;
   transactionHistory.oSqthPriceInETH = osqthPrices[0];
 
+  position.save();
   transactionHistory.save();
 }
 
