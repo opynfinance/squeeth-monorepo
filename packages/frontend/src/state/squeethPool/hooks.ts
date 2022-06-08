@@ -602,7 +602,7 @@ export const useAutoRoutedSell = () => {
 
       const slippageTolerance = new Percent(5, 100)
       const route = await router.route(rawAmount, wethToken!, TradeType.EXACT_INPUT, {
-        recipient: address!,
+        recipient: swapRouter2,
         slippageTolerance: slippageTolerance,
         deadline: Math.floor(Date.now()/1000 +1800)
       })
@@ -613,11 +613,8 @@ export const useAutoRoutedSell = () => {
       const swapIface = new ethers.utils.Interface(router2ABI)
       const encodedUnwrapCall = swapIface.encodeFunctionData('unwrapWETH9(uint256,address)', [fromTokenAmount(minimumAmountOut, 18).toString(), address])
       const result = await handleTransaction(
-        swapRouter2Contract?.methods.multicall([encodedUnwrapCall, route?.methodParameters?.calldata]).send({
-            to: swapRouter2,
-            value: fromTokenAmount(amount, OSQUEETH_DECIMALS).toFixed(0),
+        swapRouter2Contract?.methods.multicall([route?.methodParameters?.calldata, encodedUnwrapCall]).send({
             from: address,
-            gasPrice: new BigNumber(route?.gasPriceWei.toString() || 0).multipliedBy(1.2).toFixed(0),
         }),
         onTxConfirmed,
       )
