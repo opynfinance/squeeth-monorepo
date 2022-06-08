@@ -130,3 +130,26 @@ type Pool @entity {
   # token1 per token0
   token1Price: BigDecimal
 }
+
+enum PositionType {
+  LONG
+  SHORT
+  NEUTRAL
+}
+
+type Position @entity {
+  # user address
+  id: ID!
+  positionType: PositionType!
+  positionBalance: BigInt!
+  isLP: Boolean!
+  lpBalance: BigInt!
+  # USD value spent (Execution price)
+  unrealizedCost: BigInt!
+  # Avg spent per token
+  realizedUnitCost: BigInt!
+  # Avg value got per token
+  realizedUnitGain: BigInt!
+  # no of token realised
+  realizedTokenAmount: BigInt!
+}
