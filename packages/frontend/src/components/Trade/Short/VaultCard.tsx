@@ -60,7 +60,7 @@ type VaultCardType = {
     existing: number | string
     after: number | string
   }
-  error: {
+  error?: {
     vaultCollat: string
   }
   vaultId: number
