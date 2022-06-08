@@ -30,7 +30,7 @@ import {
   squeethTokenAtom,
   wethTokenAtom,
 } from './atoms'
-import { BaseProvider } from '@ethersproject/providers'
+import { BaseProvider } from '@ethersproject/providers/src.ts/base-provider.js' 
 
 const getImmutables = async (squeethContract: Contract) => {
   const [token0, token1, fee, tickSpacing, maxLiquidityPerTick] = await Promise.all([
