@@ -38,7 +38,12 @@ import { addressesAtom, isLongAtom, vaultHistoryUpdatingAtom } from 'src/state/p
 import { useComputeSwaps, useFirstValidVault } from 'src/state/positions/hooks'
 import { useVaultData } from '@hooks/useVaultData'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
-import { useGetCollatRatioAndLiqPrice, useGetDebtAmount, useUpdateOperator } from 'src/state/controller/hooks'
+import {
+  useGetCollatRatioAndLiqPrice,
+  useGetDebtAmount,
+  useGetUniNFTCollatDetail,
+  useUpdateOperator,
+} from 'src/state/controller/hooks'
 import UniswapData from '../UniswapData'
 import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
 import Cancelled from '../Cancelled'
@@ -164,6 +169,7 @@ export const OpenShortPosition = () => {
   const selectWallet = useSelectWallet()
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
   const ethPrice = useETHPrice()
+  const getUniNFTCollatDetail = useGetUniNFTCollatDetail()
   const [collatPercent, setCollatPercent] = useState(existingCollatPercent ? existingCollatPercent : 200)
 
   const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
@@ -185,7 +191,6 @@ export const OpenShortPosition = () => {
       newCollat.plus(vault?.collateralAmount || BIG_ZERO).lt(MIN_COLLATERAL_AMOUNT)
     ) {
       inputError = 'You need to sell more oSQTH or raise your CR.'
-      // inputError = `Minimum collateral is ${MIN_COLLATERAL_AMOUNT} ETH`
     } else if (vault && vaultId === 0 && vault?.shortAmount.gt(0)) {
       vaultIdDontLoadedError = 'Loading Vault...'
     }
@@ -200,10 +205,11 @@ export const OpenShortPosition = () => {
 
   const onSqthChange = useAppCallback(
     async (value: string) => {
-      const [quote, debt, existingDebt] = await Promise.all([
+      const [quote, debt, existingDebt, NFTCollat] = await Promise.all([
         getSellQuote(new BigNumber(value), slippageAmount),
         getDebtAmount(new BigNumber(value)),
         getDebtAmount(vault?.shortAmount ?? BIG_ZERO),
+        vault?.NFTCollateralId && getUniNFTCollatDetail(vault?.NFTCollateralId),
       ])
 
       getCollatRatioAndLiqPrice(debt.times(new BigNumber(collatPercent / 100)), new BigNumber(value)).then(
@@ -212,19 +218,17 @@ export const OpenShortPosition = () => {
         },
       )
       const totalDebt = existingDebt.plus(debt)
-      const newCollat = new BigNumber(collatPercent / 100).multipliedBy(totalDebt).minus(vault?.collateralAmount ?? 0)
+      const totalExistingCollat = (vault?.collateralAmount ?? BIG_ZERO).plus(NFTCollat?.collateral ?? BIG_ZERO)
+      const newCollat = new BigNumber(collatPercent / 100).multipliedBy(totalDebt).minus(totalExistingCollat ?? 0)
       setNewCollat(newCollat)
       setQuote(quote)
       setMinCR(
-        BigNumber.max(
-          (vault?.collateralAmount ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt) ?? BIG_ZERO,
-          1.5,
-        ),
+        BigNumber.max((totalExistingCollat ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt) ?? BIG_ZERO, 1.5),
       )
 
-      if (newCollat.gt(quote.minimumAmountOut)) {
-        setEthTradeAmount(newCollat.minus(quote.minimumAmountOut).toFixed(6))
-        setMsgValue(newCollat.minus(quote.minimumAmountOut))
+      if (quote.minimumAmountOut && newCollat.gt(quote.minimumAmountOut)) {
+        setEthTradeAmount(newCollat.minus(quote.amountOut).toFixed(6))
+        setMsgValue(newCollat.minus(quote.amountOut))
       } else if (newCollat.lte(0)) {
         setEthTradeAmount('0')
         return
@@ -233,16 +237,18 @@ export const OpenShortPosition = () => {
         setMsgValue(new BigNumber(0))
       }
 
-      setTotalCollateralAmount(quote.amountOut.plus(newCollat.minus(quote.minimumAmountOut)))
+      setTotalCollateralAmount(quote.minimumAmountOut.plus(newCollat.minus(quote.amountOut)))
     },
     [
       collatPercent,
       getCollatRatioAndLiqPrice,
       getDebtAmount,
       getSellQuote,
+      getUniNFTCollatDetail,
       setEthTradeAmount,
       setQuote,
       slippageAmount,
+      vault?.NFTCollateralId,
       vault?.collateralAmount,
       vault?.shortAmount,
     ],
@@ -293,7 +299,7 @@ export const OpenShortPosition = () => {
         setOpenConfirm(true)
       } else {
         setShortLoading(true)
-        await flashSwapAndMint(Number(vaultId), totalCollateralAmount, amount, quote.amountOut, msgValue, () => {
+        await flashSwapAndMint(Number(vaultId), totalCollateralAmount, amount, quote.minimumAmountOut, msgValue, () => {
           setIsTxFirstStep(false)
           setConfirmedAmount(amount.toFixed(6).toString())
           setTradeSuccess(true)
@@ -314,7 +320,7 @@ export const OpenShortPosition = () => {
     flashSwapAndMint,
     isVaultApproved,
     msgValue,
-    quote.amountOut,
+    quote.minimumAmountOut,
     resetSqthTradeAmount,
     setIsTxFirstStep,
     setTradeCompleted,
@@ -434,7 +440,7 @@ export const OpenShortPosition = () => {
                   handleCollatRatioChange(event.target.value)
                 }}
                 id="open-short-collat-ratio-input"
-                label="Collateral ratio for vault"
+                label="Collateral ratio for vault after trade"
                 variant="outlined"
                 error={collatPercent < 150 || CRError !== ''}
                 helperText={CRError !== '' ? CRError : 'At risk of liquidation at 150%'}
@@ -459,6 +465,9 @@ export const OpenShortPosition = () => {
               collatValue={collatPercent}
             />
             <VaultCard
+              error={{
+                vaultCollat: inputError.includes('You need to sell more oSQTH') ? inputError : '',
+              }}
               liqPrice={{
                 existing: existingLiqPrice.gt(0) ? existingLiqPrice.toFixed(2) : 0,
                 after: liqPrice.toFixed(2),
@@ -507,10 +516,9 @@ export const OpenShortPosition = () => {
 
             <div className={classes.divider}>
               <TradeInfoItem
-                label="Collateral from sale"
-                value={quote.minimumAmountOut.toFixed(2)}
+                label="Collateral from sale to deposit"
+                value={quote.amountOut.toFixed(2)}
                 unit="ETH"
-                tooltip={Tooltips.SaleProceeds}
                 id="open-short-liquidation-price"
               />
               <div style={{ marginTop: '10px' }}>
