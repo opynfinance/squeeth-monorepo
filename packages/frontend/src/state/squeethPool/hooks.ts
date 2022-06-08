@@ -1,5 +1,4 @@
 import { DEFAULT_SLIPPAGE, OSQUEETH_DECIMALS, UNI_POOL_FEES, WETH_DECIMALS } from '@constants/index'
-import { WETH, OSQUEETH } from '@constants/address'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
 import { useETHPrice } from '@hooks/useETHPrice'
@@ -9,7 +8,7 @@ import { AlphaRouter, ChainId, SwapRoute } from '@uniswap/smart-order-router'
 import { Pool, Route, Trade } from '@uniswap/v3-sdk'
 import { fromTokenAmount, parseSlippageInput } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
-import { ethers, getDefaultProvider } from 'ethers'
+import { ethers } from 'ethers'
 import { useAtomValue } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 import { Contract } from 'web3-eth-contract'
@@ -30,7 +29,8 @@ import {
   squeethTokenAtom,
   wethTokenAtom,
 } from './atoms'
-import { BaseProvider } from '@ethersproject/providers'
+// import { BaseProvider } from '@ethersproject/providers'
+// import {BaseProvider} from '@ethers
 
 const getImmutables = async (squeethContract: Contract) => {
   const [token0, token1, fee, tickSpacing, maxLiquidityPerTick] = await Promise.all([
@@ -158,7 +158,7 @@ export const useGetBuyQuoteForETH = () => {
       try {
         const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
         const chainId = networkId as any as ChainId
-        const router = new AlphaRouter({ chainId: chainId, provider: (provider as BaseProvider) })
+        const router = new AlphaRouter({ chainId: chainId, provider: (provider as any) })
         const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toFixed(0))
         const route = await router.route(rawAmount, squeethToken!, TradeType.EXACT_INPUT,  {
           recipient: address!,
@@ -428,7 +428,7 @@ export const useAutoRoutedBuyAndRefund = () => {
       // Initializing the AlphaRouter
       const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
       const chainId = networkId as any as ChainId
-      const router = new AlphaRouter({ chainId: chainId, provider: (provider as BaseProvider) })
+      const router = new AlphaRouter({ chainId: chainId, provider: (provider as any) })
 
       // Call Route
       const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(amount, WETH_DECIMALS).toFixed(0))
@@ -478,7 +478,7 @@ export const useGetSellQuote = () => {
 
       const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
       const chainId = networkId as any as ChainId
-      const router = new AlphaRouter({ chainId: chainId, provider: (provider as BaseProvider) })
+      const router = new AlphaRouter({ chainId: chainId, provider: (provider as any) })
       const rawAmount = CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0))
       const route = await router.route(rawAmount, wethToken!, TradeType.EXACT_INPUT,  {
         recipient: address!,
@@ -592,7 +592,7 @@ export const useAutoRoutedSell = () => {
       // Initializing the AlphaRouter
       const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
       const chainId = networkId as any as ChainId
-      const router = new AlphaRouter({ chainId: chainId, provider: (provider as BaseProvider) })
+      const router = new AlphaRouter({ chainId: chainId, provider: (provider as any) })
       
       // Call Route
       const rawAmount = CurrencyAmount.fromRawAmount(
