@@ -9,6 +9,7 @@ export const sellQuoteAtom = atom({
   amountOut: BIG_ZERO,
   minimumAmountOut: BIG_ZERO,
   priceImpact: '0',
+  pools: []
 })
 
 export const longGainAtom = atom(BIG_ZERO)

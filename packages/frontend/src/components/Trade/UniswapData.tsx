@@ -18,7 +18,7 @@ type UniswapDataType = {
   minReceived: string
   minReceivedUnit: string
   isMaxSent?: boolean
-  pools: Array<any>
+  pools?: Array<any>
 }
 
 const useStyles = makeStyles((theme) =>
