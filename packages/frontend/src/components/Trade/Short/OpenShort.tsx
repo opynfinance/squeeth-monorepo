@@ -237,7 +237,7 @@ export const OpenShortPosition = () => {
         setMsgValue(new BigNumber(0))
       }
 
-      setTotalCollateralAmount(quote.minimumAmountOut.plus(newCollat.minus(quote.amountOut)))
+      setTotalCollateralAmount(quote.minimumAmountOut.plus(newCollat.minus(quote.minimumAmountOut)))
     },
     [
       collatPercent,
