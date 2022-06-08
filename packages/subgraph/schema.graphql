@@ -89,3 +89,44 @@ type CrabAuction @entity {
   owner: Bytes!
   timestamp: BigInt!
 }
+
+enum TransactionType {
+  MINT_OSQTH
+  BURN_OSQTH
+  DEPOSIT_COLLAT
+  WITHDRAW_COLLAT
+  SEND_OSQTH
+  RECEIVE_OSQTH
+  BUY_OSQTH
+  SELL_OSQTH
+  ADD_LIQUIDITY
+  REMOVE_LIQUIDITY
+  COLLECT_FEE
+}
+
+type TransactionHistory @entity {
+  id: ID!
+  timestamp: BigInt!
+  transactionType: TransactionType!
+  owner: Account!
+  sender: Bytes!
+  oSqthAmount: BigInt!
+  ethAmount: BigInt!
+  oSqthPriceInETH: BigDecimal!
+  ethPriceInUSD: BigDecimal!
+  ethUSDCSqrtPrice: BigInt!
+  ethOSQTHSqrtPrice: BigInt!
+}
+
+type Pool @entity {
+  # pool address
+  id: ID!
+  # creation
+  createdAtTimestamp: BigInt!
+  # current price tracker
+  sqrtPrice: BigInt!
+  # token0 per token1
+  token0Price: BigDecimal
+  # token1 per token0
+  token1Price: BigDecimal
+}

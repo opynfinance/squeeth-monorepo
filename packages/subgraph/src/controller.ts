@@ -4,6 +4,7 @@ import {
   Bytes,
   log,
   dataSource,
+  ethereum,
 } from "@graphprotocol/graph-ts";
 import {
   Controller,
@@ -34,8 +35,9 @@ import {
   HourStatSnapshot,
   DayStatSnapshot,
   VaultHistory,
+  TransactionHistory,
 } from "../generated/schema";
-import { loadOrCreateAccount } from "./util";
+import { createTransactionHistory, loadOrCreateAccount } from "./util";
 
 import {
   BIGINT_ONE,
@@ -119,6 +121,11 @@ export function handleBurnShort(event: BurnShort): void {
     BIGINT_ZERO
   );
   vaultTransaction.save();
+
+  const transactionHistory = createTransactionHistory("BURN_OSQTH", event);
+  transactionHistory.owner = vault.owner;
+  transactionHistory.oSqthAmount = event.params.amount;
+  transactionHistory.save();
 }
 
 export function handleDepositCollateral(event: DepositCollateral): void {
@@ -155,6 +162,11 @@ export function handleDepositCollateral(event: DepositCollateral): void {
   dayStatSnapshot.totalCollateralAmount =
     dayStatSnapshot.totalCollateralAmount.plus(event.params.amount);
   dayStatSnapshot.save();
+
+  const transactionHistory = createTransactionHistory("DEPOSIT_COLLAT", event);
+  transactionHistory.owner = vault.owner;
+  transactionHistory.ethAmount = event.params.amount;
+  transactionHistory.save();
 }
 
 export function handleDepositUniPositionToken(
@@ -250,6 +262,11 @@ export function handleMintShort(event: MintShort): void {
     BIGINT_ZERO
   );
   vaultTransaction.save();
+
+  const transactionHistory = createTransactionHistory("MINT_OSQTH", event);
+  transactionHistory.owner = vault.owner;
+  transactionHistory.oSqthAmount = event.params.amount;
+  transactionHistory.save();
 }
 
 export function handleNormalizationFactorUpdated(
@@ -333,6 +350,11 @@ export function handleWithdrawCollateral(event: WithdrawCollateral): void {
   dayStatSnapshot.totalCollateralAmount =
     dayStatSnapshot.totalCollateralAmount.minus(event.params.amount);
   dayStatSnapshot.save();
+
+  const transactionHistory = createTransactionHistory("WITHDRAW_COLLAT", event);
+  transactionHistory.owner = vault.owner;
+  transactionHistory.ethAmount = event.params.amount;
+  transactionHistory.save();
 }
 
 export function handleWithdrawUniPositionToken(
