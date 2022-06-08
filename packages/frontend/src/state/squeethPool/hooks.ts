@@ -1,4 +1,5 @@
 import { DEFAULT_SLIPPAGE, OSQUEETH_DECIMALS, UNI_POOL_FEES, WETH_DECIMALS } from '@constants/index'
+import { WETH, OSQUEETH } from '@constants/address'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
 import { useETHPrice } from '@hooks/useETHPrice'
@@ -107,12 +108,42 @@ export const useUpdateSqueethPoolData = () => {
   }, [isWethToken0, networkId, ticks?.length, contract])
 }
 
+export const useSetTokens = () => {
+  const networkId = useAtomValue(networkIdAtom)
+  const setWethToken = useUpdateAtom(wethTokenAtom)
+  const setSqueethToken = useUpdateAtom(squeethTokenAtom)
+  const {weth, oSqueeth} = useAtomValue(addressesAtom)
+  const setTokens = useAppEffect(() => {
+    ;(async () => {
+      const wethToken = new Token(
+        networkId,
+        weth,
+        WETH_DECIMALS,
+        'WETH',
+        'Wrapped Ether',
+      )
+      const squeethToken = new Token(
+        networkId,
+        oSqueeth,
+        OSQUEETH_DECIMALS,
+        'SQE',
+        'oSqueeth',
+      )
+
+      setWethToken(wethToken)
+      setSqueethToken(squeethToken)
+    })()
+  }, )
+  return setTokens
+}
+
 export const useGetBuyQuoteForETH = () => {
-  const wethToken = useAtomValue(wethTokenAtom)
-  const squeethToken = useAtomValue(squeethTokenAtom)
+  const pool = useAtomValue(poolAtom)
   const networkId = useAtomValue(networkIdAtom)
   const web3 = useAtomValue(web3Atom)
   const address = useAtomValue(addressAtom)
+  const wethToken = useAtomValue(wethTokenAtom)
+  const squeethToken = useAtomValue(squeethTokenAtom)
 
   //If I input an exact amount of ETH I want to spend, tells me how much Squeeth I'd purchase
   const getBuyQuoteForETH = useAppCallback(
@@ -123,22 +154,19 @@ export const useGetBuyQuoteForETH = () => {
         priceImpact: '0',
         pools: []
       }
-
-      if (!ETHAmount || ETHAmount.eq(0)) return emptyState
-
-      const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
-      const chainId = networkId as any as ChainId
-      const router = new AlphaRouter({ chainId: chainId, provider: provider })
-      const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toFixed(0))
-      const route = await router.route(rawAmount, squeethToken!, TradeType.EXACT_INPUT,  {
-        recipient: address!,
-        slippageTolerance: new Percent(5, 100),
-        deadline: Math.floor(Date.now()/1000 +1800)
-      })
-
-      if (!route) return null
       
       try {
+        const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
+        const chainId = networkId as any as ChainId
+        const router = new AlphaRouter({ chainId: chainId, provider: provider })
+        const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toFixed(0))
+        const route = await router.route(rawAmount, squeethToken!, TradeType.EXACT_INPUT,  {
+          recipient: address!,
+          slippageTolerance: new Percent(5, 100),
+          deadline: Math.floor(Date.now()/1000 +1800)
+        })
+
+      if (!route) return null
         return {
           amountOut: new BigNumber(route!.quote.toSignificant(OSQUEETH_DECIMALS)),
           minimumAmountOut: new BigNumber(
@@ -152,7 +180,7 @@ export const useGetBuyQuoteForETH = () => {
       }
       return emptyState
     },
-    [],
+    [pool, wethToken?.address, squeethToken?.address],
   )
 
   return getBuyQuoteForETH
@@ -394,7 +422,6 @@ export const useAutoRoutedBuyAndRefund = () => {
   const squeethToken = useAtomValue(squeethTokenAtom)
   const swapRouter2Contract = useAtomValue(swapRouter2ContractAtom)
   const handleTransaction = useHandleTransaction()
-  // const route = useAtomValue(routeAtom)
 
   const autoRoutedBuyAndRefund = useAppCallback(
     async (amount: BigNumber, onTxConfirmed?: () => void) => {
@@ -411,7 +438,6 @@ export const useAutoRoutedBuyAndRefund = () => {
         deadline: Math.floor(Date.now()/1000 +1800)
       })
 
-      // console.log("route we got", route)
       const wethContract = new web3.eth.Contract(wethAbi as any, weth)
       await wethContract.methods.approve(swapRouter2, fromTokenAmount(amount, WETH_DECIMALS).toFixed(0))
 
@@ -433,6 +459,7 @@ export const useAutoRoutedBuyAndRefund = () => {
 }
 
 export const useGetSellQuote = () => {
+  const pool = useAtomValue(poolAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
   const wethToken = useAtomValue(wethTokenAtom)
   const networkId = useAtomValue(networkIdAtom)
@@ -474,7 +501,7 @@ export const useGetSellQuote = () => {
 
       return emptyState
     },
-    [],
+    [pool, wethToken?.address, squeethToken?.address],
   )
   return getSellQuote
 }
