@@ -22,7 +22,7 @@ const useRestrictUser = () => useContext(restrictUserContext)
 const RestrictUserProvider: React.FC = ({ children }) => {
   const router = useRouter()
   const networkId = useAtomValue(networkIdAtom)
-  const userLocation = router.query?.country
+  const userLocation = router.query?.ct
   const isRestricted = BLOCKED_COUNTRIES.includes(String(userLocation))
   const [state, setState] = useState({
     isRestricted: false,
