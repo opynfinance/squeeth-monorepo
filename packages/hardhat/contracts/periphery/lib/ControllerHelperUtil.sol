@@ -26,7 +26,7 @@ library ControllerHelperUtil {
      * @param _nonfungiblePositionManager Uni NonFungiblePositionManager address
      * @param _params ControllerHelperDataType.CloseUniLpParams struct 
      * @param _isWethToken0 bool variable indicate if Weth token is token0 in Uniswap v3 weth/wPowerPerp pool
-     * @return withdraw wPowerPerp and WETH amounts
+     * @return withdrawn wPowerPerp and WETH amounts
      */
     function closeUniLp(address _nonfungiblePositionManager, ControllerHelperDataType.CloseUniLpParams memory _params, bool _isWethToken0) public returns (uint256, uint256) {
         INonfungiblePositionManager.DecreaseLiquidityParams memory decreaseParams = INonfungiblePositionManager
@@ -62,6 +62,16 @@ library ControllerHelperUtil {
         return (_wPowerPerpAmount, wethAmount);
     }
 
+    /**
+     * @notice get exact amount0 and amount1 that will be LPed on Uni v3 pool, based on initial _collateralToLp and _wPowerPerpAmount
+     * @param _wPowerPerpPool wPowerPerp Uni v3 pool (oSQTH/ETH pool)
+     * @param _collateralToLp amount of ETH collateral to LP
+     * @param _wPowerPerpAmount amount of wPowerPerp to LP
+     * @param _lowerTick LP position lower tick
+     * @param _upperTick LP position upper tick
+     * @param _isWethToken0 bool variable indicate if Weth token is token0 in Uniswap v3 weth/wPowerPerp pool
+     * @return exact amount0 and amount1 to be LPed
+     */
     function getAmountsToLp(address _wPowerPerpPool, uint256 _collateralToLp, uint256 _wPowerPerpAmount, int24 _lowerTick, int24 _upperTick, bool _isWethToken0) public view returns (uint256, uint256) {
         uint256 amount0Desired; 
         uint256 amount1Desired;

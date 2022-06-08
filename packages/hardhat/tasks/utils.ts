@@ -51,6 +51,38 @@ export const networkNameToWeth = (name: string) => {
   }
 }
 
+export const networkNameToController = (name: string) => {
+  switch (name) {
+    case 'mainnet': return '0x64187ae08781B09368e6253F9E94951243A493D5'
+    case 'ropsten': return '0x59F0c781a6eC387F09C40FAA22b7477a2950d209'
+    default: return undefined
+  }
+}
+
+export const networkNameToExec = (name: string) => {
+  switch (name) {
+    case 'mainnet': return '0x59828FdF7ee634AaaD3f58B19fDBa3b03E2D9d80'
+    case 'ropsten': return '0xF7B8611008Ed073Ef348FE130671688BBb20409d'
+    default: return undefined
+  }
+}
+
+export const networkNameToEuler = (name: string) => {
+  switch (name) {
+    case 'mainnet': return '0x27182842E098f60e3D576794A5bFFb0777E025d3'
+    case 'ropsten': return '0xfC3DD73e918b931be7DEfd0cc616508391bcc001'
+    default: return undefined
+  }
+}
+
+export const networkNameToDweth = (name: string) => {
+  switch (name) {
+    case 'mainnet': return '0x62e28f054efc24b26A794F5C1249B6349454352C'
+    case 'ropsten': return '0x682b4c36a6D4749Ced8C3abF47AefDFC57A17754'
+    default: return undefined
+  }
+}
+
 export const getWETH = async (ethers: any, deployer: string, networkName: string)=> {
   const wethAddr = networkNameToWeth(networkName)
   if (wethAddr === undefined) {
@@ -58,7 +90,7 @@ export const getWETH = async (ethers: any, deployer: string, networkName: string
     return ethers.getContract("WETH9", deployer);
   } 
   // get contract instance at address
-  return ethers.getContract('WETH9', wethAddr)
+  return ethers.getContractAt('WETH9', wethAddr)
 }
 
 export const getUSDC = async (ethers: any, deployer: string, networkName: string)=> {
@@ -68,7 +100,44 @@ export const getUSDC = async (ethers: any, deployer: string, networkName: string
     return ethers.getContract("MockErc20", deployer);
   } 
   // get contract instance at address
-  return ethers.getContract('MockErc20', usdcAddress)
+  return ethers.getContractAt('MockErc20', usdcAddress)
+}
+
+export const getController = async(ethers: any, deployer: string, networkName: string) => {
+  const controllerAddr = networkNameToController(networkName)
+  if (controllerAddr === undefined) {
+    // get from deployed network
+    return ethers.getContract("Controller", deployer);
+  } 
+  // get contract instance at address
+  return ethers.getContractAt('Controller', controllerAddr)
+}
+
+export const getExec = async(deployer: string, networkName: string) => {
+  const execAddr = networkNameToController(networkName)
+  if (execAddr === undefined) {
+    return ''
+  } 
+  // get contract instance at address
+  return execAddr;
+}
+
+export const getEuler = async(deployer: string, networkName: string) => {
+  const eulerAddr = networkNameToController(networkName)
+  if (eulerAddr === undefined) {
+    return ''
+  } 
+  // get contract instance at address
+  return eulerAddr
+}
+
+export const getDwethToken = async(deployer: string, networkName: string) => {
+  const dWethAddr = networkNameToDweth(networkName)
+  if (dWethAddr === undefined) {
+    return ''
+  } 
+  // get contract instance at address
+  return dWethAddr
 }
 
 /**
@@ -87,7 +156,7 @@ export const getUniswapDeployments = async(ethers: any, deployer: string, networ
   if (networkNameToUniFactory(networkName) === undefined) {
     uniswapFactory = await ethers.getContract("UniswapV3Factory", deployer);
   } else {
-    uniswapFactory = await ethers.getContract('IUniswapV3Factory', networkNameToUniFactory(networkName))
+    uniswapFactory = await ethers.getContractAt('IUniswapV3Factory', networkNameToUniFactory(networkName))
   }
   
   // Get Uniswap Factory
@@ -95,7 +164,7 @@ export const getUniswapDeployments = async(ethers: any, deployer: string, networ
   if (networkNameToUniRouter(networkName) === undefined) {
     swapRouter = await ethers.getContract("SwapRouter", deployer);
   } else {
-    swapRouter = await ethers.getContract('ISwapRouter', networkNameToUniRouter(networkName))
+    swapRouter = await ethers.getContractAt('ISwapRouter', networkNameToUniRouter(networkName))
   }
 
   // Get Position Manager
@@ -103,7 +172,7 @@ export const getUniswapDeployments = async(ethers: any, deployer: string, networ
   if (networkNameToPositionManager(networkName) === undefined) {
     positionManager = await ethers.getContract("NonfungiblePositionManager", deployer);
   } else {
-    positionManager = await ethers.getContract('INonfungiblePositionManager', networkNameToPositionManager(networkName))
+    positionManager = await ethers.getContractAt('INonfungiblePositionManager', networkNameToPositionManager(networkName))
   }
 
   return { positionManager, swapRouter, uniswapFactory }
