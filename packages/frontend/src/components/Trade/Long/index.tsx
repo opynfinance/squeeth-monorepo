@@ -22,6 +22,7 @@ import {
   useAutoRoutedSell,
   useBuyAndRefund,
   useSell,
+  useAutoRoutedGetSellQuote,
   useGetBuyQuote,
   useGetBuyQuoteForETH,
   useGetSellQuote,
@@ -635,7 +636,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   const sell = useAutoRoutedSell()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const getSellQuoteForETH = useGetSellQuoteForETH()
-  const getSellQuote = useGetSellQuote()
+  const getSellQuote = useAutoRoutedGetSellQuote()
   const { data } = useWalletBalance()
   const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
 

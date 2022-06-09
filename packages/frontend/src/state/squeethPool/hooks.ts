@@ -463,7 +463,7 @@ export const useAutoRoutedBuyAndRefund = () => {
   return autoRoutedBuyAndRefund
 }
 
-export const useGetSellQuote = () => {
+export const useAutoRoutedGetSellQuote = () => {
   const pool = useAtomValue(poolAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
   const wethToken = useAtomValue(wethTokenAtom)
@@ -516,7 +516,7 @@ export const useGetSellQuote = () => {
   return getSellQuote
 }
 
-export const useGetShortSellQuote = () => {
+export const useGetSellQuote = () => {
   const pool = useAtomValue(poolAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
   const wethToken = useAtomValue(wethTokenAtom)
