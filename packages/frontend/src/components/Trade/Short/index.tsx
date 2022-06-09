@@ -33,7 +33,7 @@ import { useAtom, useAtomValue } from 'jotai'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { collatRatioAtom } from 'src/state/ethPriceCharts/atoms'
 import { atomFamily, atomWithStorage, useResetAtom, useUpdateAtom } from 'jotai/utils'
-import { useGetBuyQuote, useGetShortSellQuote, useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
+import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
 import {
   useGetCollatRatioAndLiqPrice,
   useGetDebtAmount,
@@ -240,7 +240,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   const { openShort } = useShortHelper()
 
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
-  const getSellQuote = useGetShortSellQuote()
+  const getSellQuote = useGetSellQuote()
   const { data } = useWalletBalance()
   const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
 
