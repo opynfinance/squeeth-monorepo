@@ -491,7 +491,7 @@ export const useGetSellQuote = () => {
         deadline: Math.floor(Date.now()/1000 +1800)
       })
 
-      if (!route) return null
+      if (!route) return emptyState
 
       const realizedLpFeePercent = computeRealizedLPFeePercent(route!.trade)
       const priceImpact = route!.trade.priceImpact.subtract(realizedLpFeePercent).multiply(-1)
@@ -504,6 +504,56 @@ export const useGetSellQuote = () => {
           ),
           priceImpact: priceImpact.toFixed(2),
           pools: getPoolInfo(route)
+        }
+      } catch (e) {
+        console.log(e)
+      }
+
+      return emptyState
+    },
+    [pool, wethToken?.address, squeethToken?.address],
+  )
+  return getSellQuote
+}
+
+export const useGetShortSellQuote = () => {
+  const pool = useAtomValue(poolAtom)
+  const squeethToken = useAtomValue(squeethTokenAtom)
+  const wethToken = useAtomValue(wethTokenAtom)
+  //I input an exact amount of squeeth I want to sell, tells me how much ETH I'd receive
+  const getSellQuote = useAppCallback(
+    async (squeethAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
+      const emptyState = {
+        amountOut: new BigNumber(0),
+        minimumAmountOut: new BigNumber(0),
+        priceImpact: '0',
+        pools: []
+      }
+      if (!squeethAmount || !pool) return emptyState
+
+      try {
+        //squeeth is input token, WETH is output token. I'm selling squeeth for WETH
+        const route = new Route([pool], squeethToken!, wethToken!)
+        //getting the amount of ETH I'd receive for inputting the amount of squeeth I want to sell
+        const rawAmount = CurrencyAmount.fromRawAmount(
+          squeethToken!,
+          fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0),
+        )
+
+        if (rawAmount.equalTo(0)) {
+          return emptyState
+        }
+
+        const trade = await Trade.exactIn(route, rawAmount)
+
+        //the amount of ETH I'm receiving
+        return {
+          amountOut: new BigNumber(trade.outputAmount.toSignificant(18)),
+          minimumAmountOut: new BigNumber(
+            trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(18),
+          ),
+          priceImpact: trade.priceImpact.toFixed(2),
+          pools: []
         }
       } catch (e) {
         console.log(e)
