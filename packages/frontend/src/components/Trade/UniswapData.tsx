@@ -60,9 +60,9 @@ const UniswapData: React.FC<UniswapDataType> = ({ slippage, priceImpact, minRece
   const poolData = useMemo(() => 
     (pools && pools?.length > 1) ?
       pools.map((poolInfo, index) => 
-        <TradeInfoItem label={"Pool " + (index + 1) + " LP Fee (Uni " + poolInfo[0] +")"} value={poolInfo[1] / 10000} unit="%" tooltip="Pool selected by Uniswap Auto Router by optimizing swap price via split routes, multiple hops, and gas" />) : 
-    pools ?    
-      pools.map((poolInfo, index) => <TradeInfoItem label={"Pool LP Fee (Uni " + poolInfo[0] +")"} value={poolInfo[1] / 10000} unit="%" tooltip="Pool selected by Uniswap Auto Router by optimizing swap price via split routes, multiple hops, and gas" />) : 
+      <TradeInfoItem label={poolInfo[2] + "% in " + poolInfo[0] + " Pool " + (index + 1)} value={poolInfo[1] / 10000} unit="%" tooltip="Pool selected by Uniswap Auto Router by optimizing swap price via split routes, multiple hops, and gas" />) : 
+      pools ?    
+      pools.map((poolInfo, index) => <TradeInfoItem label={"LP Fee (" + poolInfo[0] +")"} value={poolInfo[1] / 10000} unit="%" tooltip="Pool selected by Uniswap Auto Router by optimizing swap price via split routes, multiple hops, and gas" />) : 
     null, [pools])
 
    return (
