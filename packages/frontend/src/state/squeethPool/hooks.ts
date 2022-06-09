@@ -608,8 +608,6 @@ export const useAutoRoutedSell = () => {
       })
 
       const minimumAmountOut = new BigNumber(route?.trade.minimumAmountOut(slippageTolerance).toFixed(18) || 0)
-      console.log("minimum amount out", minimumAmountOut.toString())
-      console.log("minimum amount out token version", fromTokenAmount(minimumAmountOut!, 18).toString())
       const swapIface = new ethers.utils.Interface(router2ABI)
       const encodedUnwrapCall = swapIface.encodeFunctionData('unwrapWETH9(uint256,address)', [fromTokenAmount(minimumAmountOut, 18).toString(), address])
       const result = await handleTransaction(
