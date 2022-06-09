@@ -137,13 +137,26 @@ enum PositionType {
   NEUTRAL
 }
 
+type LPposition @entity {
+  # user address
+  id: ID!
+  lpedoSQTHAmount: BigInt!
+  lpedETHAmount: BigInt!
+  # USD value spent (Execution price)
+  unrealizedLPCost: BigInt!
+  # Avg spent per token
+  realizedLPUnitCost: BigInt!
+  # Avg value got per token
+  realizedLPUnitGain: BigInt!
+  # no of token realised
+  realizedLPTokenAmount: BigInt!
+}
+
 type Position @entity {
   # user address
   id: ID!
   positionType: PositionType!
   positionBalance: BigInt!
-  isLP: Boolean!
-  lpBalance: BigInt!
   # USD value spent (Execution price)
   unrealizedCost: BigInt!
   # Avg spent per token
