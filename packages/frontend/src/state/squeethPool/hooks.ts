@@ -178,7 +178,7 @@ export const useGetBuyQuoteForETH = () => {
             route!.trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(OSQUEETH_DECIMALS),
           ),
           priceImpact: priceImpact.toFixed(2),
-          pools: getPoolInfo(route)
+          pools: getPoolInfo(route, ETHAmount)
         }
       } catch (e) {
         console.log(e)
@@ -503,7 +503,7 @@ export const useAutoRoutedGetSellQuote = () => {
             route!.trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(WETH_DECIMALS),
           ),
           priceImpact: priceImpact.toFixed(2),
-          pools: getPoolInfo(route)
+          pools: getPoolInfo(route, squeethAmount)
         }
       } catch (e) {
         console.log(e)
@@ -729,7 +729,7 @@ export const useGetSellQuoteForETH = () => {
   return getSellQuoteForETH
 }
 
-function getPoolInfo(route: SwapRoute) {
+function getPoolInfo(route: SwapRoute, overallInputAmount: BigNumber) {
   const V2_DEFAULT_FEE_TIER = 3000
   const poolsUsed = []
       const swaps = route.trade.swaps
@@ -737,7 +737,9 @@ function getPoolInfo(route: SwapRoute) {
         const poolsInRoute = swaps[i].route.pools
         for (let j = 0; j < poolsInRoute.length; j++) {
           const pool = poolsInRoute[j]
-          poolsUsed.push(pool instanceof Pair ? ["V2", V2_DEFAULT_FEE_TIER] : ["V3", pool.fee])
+          const portion = swaps[i].inputAmount.divide(route.trade.inputAmount)
+          const percent = new Percent(portion.numerator, portion.denominator)
+          poolsUsed.push(pool instanceof Pair ? ["V2", V2_DEFAULT_FEE_TIER, percent.toSignificant(2)] : ["V3", pool.fee, percent.toSignificant(2)])
         }
       }
   return poolsUsed
