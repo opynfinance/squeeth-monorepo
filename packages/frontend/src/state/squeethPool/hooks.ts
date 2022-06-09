@@ -491,7 +491,7 @@ export const useGetSellQuote = () => {
         deadline: Math.floor(Date.now()/1000 +1800)
       })
 
-      if (!route) return emptyState
+      if (!route) return null
 
       const realizedLpFeePercent = computeRealizedLPFeePercent(route!.trade)
       const priceImpact = route!.trade.priceImpact.subtract(realizedLpFeePercent).multiply(-1)
