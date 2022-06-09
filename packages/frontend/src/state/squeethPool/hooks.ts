@@ -29,6 +29,7 @@ import {
   squeethTokenAtom,
   wethTokenAtom,
 } from './atoms'
+import { computeRealizedLPFeePercent } from './price'
 // import { BaseProvider } from '@ethersproject/providers'
 // import {BaseProvider} from '@ethers
 
@@ -167,12 +168,16 @@ export const useGetBuyQuoteForETH = () => {
         })
 
       if (!route) return null
+
+      const realizedLpFeePercent = computeRealizedLPFeePercent(route!.trade)
+      const priceImpact = route!.trade.priceImpact.subtract(realizedLpFeePercent).multiply(-1)
+
         return {
           amountOut: new BigNumber(route!.quote.toSignificant(OSQUEETH_DECIMALS)),
           minimumAmountOut: new BigNumber(
             route!.trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(OSQUEETH_DECIMALS),
           ),
-          priceImpact: route!.trade.priceImpact.toFixed(2),
+          priceImpact: priceImpact.toFixed(2),
           pools: getPoolInfo(route)
         }
       } catch (e) {
@@ -486,14 +491,18 @@ export const useGetSellQuote = () => {
         deadline: Math.floor(Date.now()/1000 +1800)
       })
 
-      if (!route) return emptyState
+      if (!route) return null
+
+      const realizedLpFeePercent = computeRealizedLPFeePercent(route!.trade)
+      const priceImpact = route!.trade.priceImpact.subtract(realizedLpFeePercent).multiply(-1)
+
       try {
         return {
           amountOut: new BigNumber(route!.quote?.toSignificant(WETH_DECIMALS)),
           minimumAmountOut: new BigNumber(
             route!.trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(WETH_DECIMALS),
           ),
-          priceImpact: route!.trade.priceImpact.toFixed(2),
+          priceImpact: priceImpact.toFixed(2),
           pools: getPoolInfo(route)
         }
       } catch (e) {
