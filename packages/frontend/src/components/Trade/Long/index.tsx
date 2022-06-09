@@ -1,35 +1,34 @@
-import { CircularProgress, createStyles, makeStyles, Typography } from '@material-ui/core'
-import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
-import RefreshOutlined from '@material-ui/icons/RefreshOutlined'
-import BigNumber from 'bignumber.js'
-import React, { useState } from 'react'
-import { useResetAtom, useUpdateAtom } from 'jotai/utils'
-
-import { BIG_ZERO, Links } from '../../../constants'
-import { useUserAllowance } from '@hooks/contracts/useAllowance'
 import { PrimaryButton } from '@components/Button'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
 import { UniswapIframe } from '@components/Modal/UniswapIframe'
 import { TradeSettings } from '@components/TradeSettings'
-import Confirmed, { ConfirmType } from '../Confirmed'
-import Cancelled from '../Cancelled'
-import TradeInfoItem from '../TradeInfoItem'
-import UniswapData from '../UniswapData'
-import { connectedWalletAtom, isTransactionFirstStepAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
-import { useSelectWallet, useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
-import { useAtom, useAtomValue } from 'jotai'
-import { addressesAtom, isShortAtom } from 'src/state/positions/atoms'
+import { useUserAllowance } from '@hooks/contracts/useAllowance'
+import useAppCallback from '@hooks/useAppCallback'
+import useAppEffect from '@hooks/useAppEffect'
+import useAppMemo from '@hooks/useAppMemo'
 import { useETHPrice } from '@hooks/useETHPrice'
+import { CircularProgress, createStyles, makeStyles, Typography } from '@material-ui/core'
+import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
+import { toTokenAmount } from '@utils/calculations'
+import BigNumber from 'bignumber.js'
+import { useAtom, useAtomValue } from 'jotai'
+import { useResetAtom, useUpdateAtom } from 'jotai/utils'
+import React, { useState } from 'react'
+import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from 'src/state/controller/atoms'
+import { addressesAtom, isShortAtom } from 'src/state/positions/atoms'
+import { useComputeSwaps, useShortDebt } from 'src/state/positions/hooks'
 import {
+  useAutoRoutedBuyAndRefund,
+  useAutoRoutedSell,
   useBuyAndRefund,
+  useSell,
+  useAutoRoutedGetSellQuote,
   useGetBuyQuote,
   useGetBuyQuoteForETH,
   useGetSellQuote,
   useGetSellQuoteForETH,
   useGetWSqueethPositionValue,
-  useSell,
 } from 'src/state/squeethPool/hooks'
-import { useComputeSwaps, useShortDebt } from 'src/state/positions/hooks'
 import {
   confirmedAmountAtom,
   ethTradeAmountAtom,
@@ -41,12 +40,14 @@ import {
   tradeSuccessAtom,
   tradeTypeAtom,
 } from 'src/state/trade/atoms'
-import { toTokenAmount } from '@utils/calculations'
+import { connectedWalletAtom, isTransactionFirstStepAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
+import { useSelectWallet, useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
+import { BIG_ZERO, Links } from '../../../constants'
 import { TradeType } from '../../../types'
-import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from 'src/state/controller/atoms'
-import useAppEffect from '@hooks/useAppEffect'
-import useAppCallback from '@hooks/useAppCallback'
-import useAppMemo from '@hooks/useAppMemo'
+import Cancelled from '../Cancelled'
+import Confirmed, { ConfirmType } from '../Confirmed'
+import TradeInfoItem from '../TradeInfoItem'
+import UniswapData from '../UniswapData'
 import BreakEven from './BreakEven'
 
 const useStyles = makeStyles((theme) =>
@@ -266,7 +267,8 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
     resetTxCancelled,
     resetTransactionData,
   } = useTransactionStatus()
-  const buyAndRefund = useBuyAndRefund()
+  // const buyAndRefund = useBuyAndRefund()
+  const buyAndRefund = useAutoRoutedBuyAndRefund()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const [confirmedAmount, setConfirmedAmount] = useAtom(confirmedAmountAtom)
   const [inputQuoteLoading, setInputQuoteLoading] = useAtom(inputQuoteLoadingAtom)
@@ -296,7 +298,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   useAppEffect(() => {
     if (open && tradeType === TradeType.LONG) {
       getBuyQuoteForETH(new BigNumber(ethTradeAmount), slippageAmount).then((val) => {
-        setQuote(val)
+        if (val) setQuote(val)
       })
     }
   }, [slippageAmount, ethTradeAmount, getBuyQuoteForETH, open, setQuote, tradeType])
@@ -307,10 +309,12 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
       setInputQuoteLoading(true)
 
       getBuyQuoteForETH(new BigNumber(value), slippageAmount).then((val) => {
-        setSqthTradeAmount(val.amountOut.toString())
-        setConfirmedAmount(val.amountOut.toFixed(6).toString())
-        setSqueethExposure(Number(getWSqueethPositionValue(val.amountOut)))
-        setInputQuoteLoading(false)
+        if (val) {
+          setSqthTradeAmount(val.amountOut.toString())
+          setConfirmedAmount(val.amountOut.toFixed(6).toString())
+          setSqueethExposure(Number(getWSqueethPositionValue(val.amountOut)))
+          setInputQuoteLoading(false)
+        }
       })
     },
     [
@@ -543,6 +547,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                     priceImpact={quote.priceImpact}
                     minReceived={quote.minimumAmountOut.toFixed(6)}
                     minReceivedUnit="oSQTH"
+                    pools = {quote.pools}
                   />
                 </div>
               </div>
@@ -592,7 +597,12 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                 <Typography variant="caption" className={classes.caption} component="div">
                   <a href={Links.UniswapSwap} target="_blank" rel="noreferrer">
                     {' '}
-                    Trades on Uniswap V3 🦄{' '}
+                    Trades on Uniswap 
+                  </a>
+
+                  <a href={Links.AutoRouter} target="_blank" rel="noreferrer">
+                    {' '}
+                    via Auto Router 🦄{' '}
                   </a>
                 </Typography>
               </div>
@@ -621,11 +631,12 @@ const CloseLong: React.FC<BuyProps> = () => {
     resetTxCancelled,
     resetTransactionData,
   } = useTransactionStatus()
-  const { swapRouter, oSqueeth } = useAtomValue(addressesAtom)
-  const sell = useSell()
+  const { swapRouter2, oSqueeth } = useAtomValue(addressesAtom)
+  // const sell = useSell()
+  const sell = useAutoRoutedSell()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const getSellQuoteForETH = useGetSellQuoteForETH()
-  const getSellQuote = useGetSellQuote()
+  const getSellQuote = useAutoRoutedGetSellQuote()
   const { data } = useWalletBalance()
   const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
 
@@ -640,7 +651,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   const ethPrice = useETHPrice()
   const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const altTradeAmount = new BigNumber(ethTradeAmount)
-  const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter)
+  const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter2)
   const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
 
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
@@ -659,8 +670,10 @@ const CloseLong: React.FC<BuyProps> = () => {
     if (squeethAmount.lt(amount)) {
       setSqthTradeAmount(squeethAmount.toString())
       getSellQuote(squeethAmount).then((val) => {
-        setEthTradeAmount(val.amountOut.toString())
-        setConfirmedAmount(squeethAmount.toFixed(6))
+        if (val) {
+          setEthTradeAmount(val.amountOut.toString())
+          setConfirmedAmount(squeethAmount.toFixed(6))
+        }
       })
     }
   }, [squeethAmount, amount, getSellQuote, setConfirmedAmount, setEthTradeAmount, setSqthTradeAmount])
@@ -732,7 +745,9 @@ const CloseLong: React.FC<BuyProps> = () => {
 
   useAppEffect(() => {
     getSellQuote(new BigNumber(sqthTradeAmount), slippageAmount).then((val) => {
-      setQuote(val)
+      if (val) {
+        setQuote(val)
+      }
     })
   }, [slippageAmount, sqthTradeAmount, getSellQuote, setQuote])
 
@@ -741,9 +756,11 @@ const CloseLong: React.FC<BuyProps> = () => {
       setInputQuoteLoading(true)
       setSqthTradeAmount(value)
       getSellQuote(new BigNumber(value), slippageAmount).then((val) => {
-        if (value !== '0') setConfirmedAmount(Number(value).toFixed(6))
-        setEthTradeAmount(val.amountOut.toString())
-        setInputQuoteLoading(false)
+        if (val) {
+          if (value !== '0') setConfirmedAmount(Number(value).toFixed(6))
+          setEthTradeAmount(val.amountOut.toString())
+          setInputQuoteLoading(false)
+        }
       })
     },
     [getSellQuote, slippageAmount, setConfirmedAmount, setEthTradeAmount, setInputQuoteLoading, setSqthTradeAmount],
@@ -897,7 +914,8 @@ const CloseLong: React.FC<BuyProps> = () => {
               slippage={isNaN(Number(slippageAmount)) ? '0' : slippageAmount.toString()}
               priceImpact={quote.priceImpact}
               minReceived={quote.minimumAmountOut.toFixed(4)}
-              minReceivedUnit="ETH"
+              minReceivedUnit="ETH" 
+              pools={quote.pools}            
             />
           </div>
           <div className={classes.buttonDiv}>
@@ -951,7 +969,12 @@ const CloseLong: React.FC<BuyProps> = () => {
             <Typography variant="caption" className={classes.caption} component="div">
               <a href={Links.UniswapSwap} target="_blank" rel="noreferrer">
                 {' '}
-                Trades on Uniswap V3 🦄{' '}
+                Trades on Uniswap 
+              </a>
+
+              <a href={Links.AutoRouter} target="_blank" rel="noreferrer">
+                {' '}
+                via Auto Router 🦄{' '}
               </a>
             </Typography>
           </div>

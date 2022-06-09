@@ -53,6 +53,13 @@ export const SWAP_ROUTER: Address = {
   31337: '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9',
 }
 
+export const SWAP_ROUTER_02: Address = {
+  1: '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
+  3: '',
+  421611: '',
+  31337: '',
+}
+
 export const SQUEETH_UNI_POOL: Address = {
   1: '0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C',
   3: '0x921c384F79de1BAe96d6f33E3E5b8d0B2B34cb68',
