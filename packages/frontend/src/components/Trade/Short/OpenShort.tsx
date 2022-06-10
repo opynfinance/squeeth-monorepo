@@ -212,14 +212,17 @@ export const OpenShortPosition = () => {
         vault?.NFTCollateralId && getUniNFTCollatDetail(vault?.NFTCollateralId),
       ])
 
-      getCollatRatioAndLiqPrice(debt.times(new BigNumber(collatPercent / 100)), new BigNumber(value)).then(
-        ({ liquidationPrice }) => {
-          setLiqPrice(liquidationPrice)
-        },
-      )
       const totalDebt = existingDebt.plus(debt)
       const totalExistingCollat = (vault?.collateralAmount ?? BIG_ZERO).plus(NFTCollat?.collateral ?? BIG_ZERO)
       const newCollat = new BigNumber(collatPercent / 100).multipliedBy(totalDebt).minus(totalExistingCollat ?? 0)
+      getCollatRatioAndLiqPrice(
+        new BigNumber(collatPercent / 100).multipliedBy(totalDebt),
+        new BigNumber(value).plus(vault?.shortAmount ?? BIG_ZERO),
+        vault?.NFTCollateralId,
+      ).then(({ liquidationPrice }) => {
+        setLiqPrice(liquidationPrice)
+      })
+
       setNewCollat(newCollat)
       setQuote(quote)
       setMinCR(
@@ -406,7 +409,7 @@ export const OpenShortPosition = () => {
               }}
               label="Sell"
               unit="oSQTH"
-              tooltip={Tooltips.SellOpenAmount}
+              // tooltip={Tooltips.SellOpenAmount}
               hint={
                 inputError ? (
                   <span style={{ color: '#f5475c' }}>{inputError}</span>
@@ -514,13 +517,16 @@ export const OpenShortPosition = () => {
               id="open-short-eth-display"
             />
 
+            <TradeDetails
+              actionTitle="Collateral from sale to deposit"
+              amount={quote.amountOut.toFixed(2)}
+              unit="ETH"
+              value={!quote.amountOut.isNaN() ? quote.amountOut.times(ethPrice).toFixed(2).toLocaleString() : '0'}
+              hint=""
+              id="open-short-collateral-from-sale"
+            />
+
             <div className={classes.divider}>
-              <TradeInfoItem
-                label="Collateral from sale to deposit"
-                value={quote.amountOut.toFixed(2)}
-                unit="ETH"
-                id="open-short-liquidation-price"
-              />
               <div style={{ marginTop: '10px' }}>
                 <UniswapData
                   slippage={isNaN(Number(slippageAmount)) ? '0' : slippageAmount.toString()}
