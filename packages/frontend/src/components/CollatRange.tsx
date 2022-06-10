@@ -32,21 +32,6 @@ type CollatRangeType = {
   minCR?: number
 }
 
-const marks = [
-  {
-    value: 150,
-    label: 'DANGER',
-  },
-  {
-    value: 200,
-    label: 'RISKY',
-  },
-  {
-    value: 225,
-    label: 'SAFE',
-  },
-]
-
 const CollatRange: React.FC<CollatRangeType> = ({ id, collatValue, onCollatValueChange, className, minCR = 150 }) => {
   const classes = useStyles()
 
@@ -92,7 +77,32 @@ const CollatRange: React.FC<CollatRangeType> = ({ id, collatValue, onCollatValue
         className={className}
         marks={
           minCollatRatio < 200
-            ? marks
+            ? [
+                {
+                  value: 150,
+                  label: (
+                    <span
+                      style={{
+                        ...(minCollatRatio > 175
+                          ? { left: '35px', position: 'absolute', bottom: '-30px' }
+                          : minCollatRatio > 160
+                          ? { left: '16px', position: 'absolute', bottom: '-30px' }
+                          : {}),
+                      }}
+                    >
+                      DANGER
+                    </span>
+                  ),
+                },
+                {
+                  value: 200,
+                  label: 'RISKY',
+                },
+                {
+                  value: 225,
+                  label: 'SAFE',
+                },
+              ]
             : minCollatRatio < 225
             ? [
                 {
