@@ -205,7 +205,13 @@ export const OpenShortPosition = () => {
   }
 
   const minCR = useAppMemo(
-    () => BigNumber.max((totalExistingCollat ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt) ?? BIG_ZERO, 1.5),
+    () =>
+      BigNumber.max(
+        (totalExistingCollat ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt).isFinite()
+          ? (totalExistingCollat ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt)
+          : BIG_ZERO,
+        1.5,
+      ),
     [quote.amountOut, totalDebt, totalExistingCollat],
   )
   const onSqthChange = useAppCallback(
