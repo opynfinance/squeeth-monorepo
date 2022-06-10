@@ -29,7 +29,7 @@ type CollatRangeType = {
   collatValue: number
   onCollatValueChange: (val: number) => void
   className?: string
-  minCR: number
+  minCR?: number
 }
 
 const marks = [
@@ -47,11 +47,10 @@ const marks = [
   },
 ]
 
-const CollatRange: React.FC<CollatRangeType> = ({ id, collatValue, onCollatValueChange, className, minCR }) => {
+const CollatRange: React.FC<CollatRangeType> = ({ id, collatValue, onCollatValueChange, className, minCR = 150 }) => {
   const classes = useStyles()
 
   const minCollatRatio = isNaN(minCR) || minCR < 150 ? 150 : minCR
-  console.log({ minCollatRatio, minCR })
   const changeSlider = (val: number[]) => {
     if (val[1] < minCollatRatio) return
 
@@ -98,41 +97,20 @@ const CollatRange: React.FC<CollatRangeType> = ({ id, collatValue, onCollatValue
             ? [
                 {
                   value: 200,
-                  label: 'RISKY',
+                  label: <span style={{ color: '#fbc02d', position: 'absolute', left: '-25px' }}>RISKY</span>,
                 },
                 {
                   value: 225,
-                  label: 'SAFE',
+                  label: <span style={{ color: '#49D273', marginLeft: '1em' }}>SAFE</span>,
                 },
               ]
             : [
                 {
                   value: 225,
-                  label: 'SAFE',
+                  label: <span style={{ color: '#49D273' }}>SAFE</span>,
                 },
               ]
         }
-        // marks={
-        //   minCollatRatio >= 225
-        //     ? [
-        //         {
-        //           value: 225,
-        //           label: 'SAFE',
-        //         },
-        //       ]
-        //     : minCollatRatio >= 200
-        //     ? [
-        //         {
-        //           value: 200,
-        //           label: 'RISKY',
-        //         },
-        //         {
-        //           value: 225,
-        //           label: 'SAFE',
-        //         },
-        //       ]
-        //     : marks
-        // }
         min={minCollatRatio}
         max={minCollatRatio * 2}
         id={id + '-slider'}
