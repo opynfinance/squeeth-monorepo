@@ -86,6 +86,7 @@ export enum Links {
   GitBook = 'https://opyn.gitbook.io/squeeth/',
   UniswapSwap = 'https://app.uniswap.org/#/swap?inputCurrency=ETH&outputCurrency=0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B',
   CrabFAQ = 'https://opyn.gitbook.io/squeeth/resources/squeeth-strategies-faq',
+  AutoRouter = 'https://uniswap.org/blog/auto-router'
 }
 
 export const UniswapIFrameOpen = {

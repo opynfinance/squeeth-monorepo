@@ -148,7 +148,7 @@ const WalletButton: React.FC = () => {
           <Button variant="outlined" color="primary" onClick={disconnectWallet} className={classes.walletBtn}>
             <Circle networkId={networkId} />
             <div className={classes.account} id="wallet-address">
-              <Davatar size={20} address={address || ''} />
+              {/* <Davatar size={20} address={address || ''} /> */}
               <span>{ensName || shortAddress}</span>
             </div>
           </Button>

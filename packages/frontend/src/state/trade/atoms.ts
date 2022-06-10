@@ -10,6 +10,7 @@ const quoteEmptyState = {
   amountOut: BIG_ZERO,
   minimumAmountOut: BIG_ZERO,
   priceImpact: '0',
+  pools: Array<Array<any>>()
 }
 
 const sellCloseEmptyState = {

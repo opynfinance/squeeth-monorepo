@@ -1,31 +1,37 @@
-import { Contract } from 'web3-eth-contract'
-import { Token, CurrencyAmount } from '@uniswap/sdk-core'
+import { DEFAULT_SLIPPAGE, OSQUEETH_DECIMALS, UNI_POOL_FEES, WETH_DECIMALS } from '@constants/index'
+import useAppCallback from '@hooks/useAppCallback'
+import useAppEffect from '@hooks/useAppEffect'
+import { useETHPrice } from '@hooks/useETHPrice'
+import useUniswapTicks from '@hooks/useUniswapTicks'
+import { CurrencyAmount, Ether, Percent, Token, TradeType } from '@uniswap/sdk-core'
+import { AlphaRouter, ChainId, SwapRoute } from '@uniswap/smart-order-router'
 import { Pool, Route, Trade } from '@uniswap/v3-sdk'
-import { useUpdateAtom } from 'jotai/utils'
-import { useAtomValue } from 'jotai'
+import { fromTokenAmount, parseSlippageInput } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
 import { ethers } from 'ethers'
-
+import { useAtomValue } from 'jotai'
+import { useUpdateAtom } from 'jotai/utils'
+import { Contract } from 'web3-eth-contract'
 import routerABI from '../../abis/swapRouter.json'
+import router2ABI from '../../abis/swapRouter2.json'
+import { squeethPoolContractAtom, swapRouter2ContractAtom, swapRouterContractAtom } from '../contracts/atoms'
 import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
 import { addressAtom, networkIdAtom, web3Atom } from '../wallet/atoms'
-import useUniswapTicks from '@hooks/useUniswapTicks'
-import { DEFAULT_SLIPPAGE, OSQUEETH_DECIMALS, UNI_POOL_FEES } from '@constants/index'
-import { fromTokenAmount, parseSlippageInput } from '@utils/calculations'
-import { useETHPrice } from '@hooks/useETHPrice'
 import { useHandleTransaction } from '../wallet/hooks'
+import wethAbi from '../../abis/weth.json'
+import { Pair } from '@uniswap/v2-sdk'
+
 import {
   poolAtom,
-  wethTokenAtom,
-  squeethTokenAtom,
+  readyAtom,
   squeethInitialPriceAtom,
   squeethPriceeAtom,
-  readyAtom,
+  squeethTokenAtom,
+  wethTokenAtom,
 } from './atoms'
-// import { transactionHashAtom } from '../trade/atoms'
-import { swapRouterContractAtom, squeethPoolContractAtom } from '../contracts/atoms'
-import useAppEffect from '@hooks/useAppEffect'
-import useAppCallback from '@hooks/useAppCallback'
+import { computeRealizedLPFeePercent } from './price'
+// import { BaseProvider } from '@ethersproject/providers'
+// import {BaseProvider} from '@ethers
 
 const getImmutables = async (squeethContract: Contract) => {
   const [token0, token1, fee, tickSpacing, maxLiquidityPerTick] = await Promise.all([
@@ -68,7 +74,7 @@ export const useUpdateSqueethPoolData = () => {
   const contract = useAtomValue(squeethPoolContractAtom)
   const { ticks } = useUniswapTicks()
   useAppEffect(() => {
-    ; (async () => {
+    ;(async () => {
       const { token0, token1, fee } = await getImmutables(contract!)
 
       const state = await getPoolState(contract!)
@@ -104,10 +110,43 @@ export const useUpdateSqueethPoolData = () => {
   }, [isWethToken0, networkId, ticks?.length, contract])
 }
 
+export const useSetTokens = () => {
+  const networkId = useAtomValue(networkIdAtom)
+  const setWethToken = useUpdateAtom(wethTokenAtom)
+  const setSqueethToken = useUpdateAtom(squeethTokenAtom)
+  const {weth, oSqueeth} = useAtomValue(addressesAtom)
+  const setTokens = useAppEffect(() => {
+    ;(async () => {
+      const wethToken = new Token(
+        networkId,
+        weth,
+        WETH_DECIMALS,
+        'WETH',
+        'Wrapped Ether',
+      )
+      const squeethToken = new Token(
+        networkId,
+        oSqueeth,
+        OSQUEETH_DECIMALS,
+        'SQE',
+        'oSqueeth',
+      )
+
+      setWethToken(wethToken)
+      setSqueethToken(squeethToken)
+    })()
+  }, )
+  return setTokens
+}
+
 export const useGetBuyQuoteForETH = () => {
   const pool = useAtomValue(poolAtom)
+  const networkId = useAtomValue(networkIdAtom)
+  const web3 = useAtomValue(web3Atom)
+  const address = useAtomValue(addressAtom)
   const wethToken = useAtomValue(wethTokenAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
+
   //If I input an exact amount of ETH I want to spend, tells me how much Squeeth I'd purchase
   const getBuyQuoteForETH = useAppCallback(
     async (ETHAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
@@ -115,34 +154,35 @@ export const useGetBuyQuoteForETH = () => {
         amountOut: new BigNumber(0),
         minimumAmountOut: new BigNumber(0),
         priceImpact: '0',
+        pools: []
       }
-
-      if (!ETHAmount || !pool) return emptyState
-
       try {
-        //WETH is input token, squeeth is output token. I'm using WETH to buy Squeeth
-        const route = new Route([pool], wethToken!, squeethToken!)
-        //getting the amount of squeeth I'd get out for putting in an exact amount of ETH
-        const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toString())
+        const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
+        const chainId = networkId as any as ChainId
+        const router = new AlphaRouter({ chainId: chainId, provider: (provider as any) })
+        const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toFixed(0))
+        const route = await router.route(rawAmount, squeethToken!, TradeType.EXACT_INPUT,  {
+          recipient: address!,
+          slippageTolerance: new Percent(5, 100),
+          deadline: Math.floor(Date.now()/1000 +1800)
+        })
 
-        if (rawAmount.equalTo(0)) {
-          return emptyState
-        }
+      if (!route) return null
 
-        const trade = await Trade.exactIn(route, rawAmount)
+      const realizedLpFeePercent = computeRealizedLPFeePercent(route!.trade)
+      const priceImpact = route!.trade.priceImpact.subtract(realizedLpFeePercent).multiply(-1)
 
-        //the amount of squeeth I'm getting out
         return {
-          amountOut: new BigNumber(trade.outputAmount.toSignificant(OSQUEETH_DECIMALS)),
+          amountOut: new BigNumber(route!.quote.toSignificant(OSQUEETH_DECIMALS)),
           minimumAmountOut: new BigNumber(
-            trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(OSQUEETH_DECIMALS),
+            route!.trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(OSQUEETH_DECIMALS),
           ),
-          priceImpact: trade.priceImpact.toFixed(2),
+          priceImpact: priceImpact.toFixed(2),
+          pools: getPoolInfo(route, ETHAmount)
         }
       } catch (e) {
         console.log(e)
       }
-
       return emptyState
     },
     [pool, wethToken?.address, squeethToken?.address],
@@ -164,7 +204,7 @@ export const useUpdateSqueethPrices = () => {
     if (!squeethToken?.address || !pool) return
     getBuyQuoteForETH(new BigNumber(1))
       .then((val) => {
-        setSqueethPrice(val.amountOut)
+        if (val) setSqueethPrice(val.amountOut)
         setSqueethInitialPrice(
           new BigNumber(
             !isWethToken0 ? pool?.token0Price.toSignificant(18) || 0 : pool?.token1Price.toSignificant(18) || 0,
@@ -191,9 +231,9 @@ export const useGetWSqueethPositionValue = () => {
 
 export const useGetWSqueethPositionValueInETH = () => {
   const squeethInitialPrice = useAtomValue(squeethInitialPriceAtom)
-  const getWSqueethPositionValueInETH = useAppCallback((amount: BigNumber | number) => {
+  const getWSqueethPositionValueInETH = (amount: BigNumber | number) => {
     return new BigNumber(amount).times(squeethInitialPrice)
-  }, [squeethInitialPrice])
+  }
 
   return getWSqueethPositionValueInETH
 }
@@ -303,7 +343,7 @@ export const useGetBuyParamForETH = () => {
       recipient: address,
       deadline: Math.floor(Date.now() / 1000 + 86400), // uint256
       amountIn: fromTokenAmount(amount, 18),
-      amountOutMinimum: fromTokenAmount(quote.minimumAmountOut, OSQUEETH_DECIMALS).toString(),
+      amountOutMinimum: fromTokenAmount(quote!.minimumAmountOut, OSQUEETH_DECIMALS).toString(),
       sqrtPriceLimitX96: 0,
     }
   }
@@ -378,6 +418,104 @@ export const useBuyAndRefund = () => {
   return buyAndRefund
 }
 
+export const useAutoRoutedBuyAndRefund = () => {
+  const networkId = useAtomValue(networkIdAtom)
+  const address = useAtomValue(addressAtom)
+  const wethToken = useAtomValue(wethTokenAtom)
+  const { swapRouter2, weth } = useAtomValue(addressesAtom)
+  const web3 = useAtomValue(web3Atom)
+  const squeethToken = useAtomValue(squeethTokenAtom)
+  const swapRouter2Contract = useAtomValue(swapRouter2ContractAtom)
+  const handleTransaction = useHandleTransaction()
+
+  const autoRoutedBuyAndRefund = useAppCallback(
+    async (amount: BigNumber, onTxConfirmed?: () => void) => {
+      // Initializing the AlphaRouter
+      const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
+      const chainId = networkId as any as ChainId
+      const router = new AlphaRouter({ chainId: chainId, provider: (provider as any) })
+
+      // Call Route
+      const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(amount, WETH_DECIMALS).toFixed(0))
+      const route = await router.route(rawAmount, squeethToken!, TradeType.EXACT_INPUT,  {
+        recipient: address!,
+        slippageTolerance: new Percent(5, 100),
+        deadline: Math.floor(Date.now()/1000 +1800)
+      })
+
+      const wethContract = new web3.eth.Contract(wethAbi as any, weth)
+      await wethContract.methods.approve(swapRouter2, fromTokenAmount(amount, WETH_DECIMALS).toFixed(0))
+
+      const result = await handleTransaction(
+        swapRouter2Contract?.methods.multicall([route?.methodParameters?.calldata]).send({
+            to: swapRouter2,
+            value: fromTokenAmount(amount, WETH_DECIMALS).toFixed(0),
+            from: address,
+            gasPrice: new BigNumber(route?.gasPriceWei.toString() || 0).multipliedBy(1.2).toFixed(0),
+        }),
+        onTxConfirmed,
+      )
+      return result
+    },
+    [address],
+  )
+
+  return autoRoutedBuyAndRefund
+}
+
+export const useAutoRoutedGetSellQuote = () => {
+  const pool = useAtomValue(poolAtom)
+  const squeethToken = useAtomValue(squeethTokenAtom)
+  const wethToken = useAtomValue(wethTokenAtom)
+  const networkId = useAtomValue(networkIdAtom)
+  const web3 = useAtomValue(web3Atom)
+  const address = useAtomValue(addressAtom)
+  //I input an exact amount of squeeth I want to sell, tells me how much ETH I'd receive
+  const getSellQuote = useAppCallback(
+    async (squeethAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
+      const emptyState = {
+        amountOut: new BigNumber(0),
+        minimumAmountOut: new BigNumber(0),
+        priceImpact: '0',
+        pools: []
+      }
+      if (!squeethAmount || squeethAmount.eq(0)) return emptyState
+
+      const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
+      const chainId = networkId as any as ChainId
+      const router = new AlphaRouter({ chainId: chainId, provider: (provider as any) })
+      const rawAmount = CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0))
+      const route = await router.route(rawAmount, wethToken!, TradeType.EXACT_INPUT,  {
+        recipient: address!,
+        slippageTolerance: new Percent(5, 100),
+        deadline: Math.floor(Date.now()/1000 +1800)
+      })
+
+      if (!route) return null
+
+      const realizedLpFeePercent = computeRealizedLPFeePercent(route!.trade)
+      const priceImpact = route!.trade.priceImpact.subtract(realizedLpFeePercent).multiply(-1)
+
+      try {
+        return {
+          amountOut: new BigNumber(route!.quote?.toSignificant(WETH_DECIMALS)),
+          minimumAmountOut: new BigNumber(
+            route!.trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(WETH_DECIMALS),
+          ),
+          priceImpact: priceImpact.toFixed(2),
+          pools: getPoolInfo(route, squeethAmount)
+        }
+      } catch (e) {
+        console.log(e)
+      }
+
+      return emptyState
+    },
+    [pool, wethToken?.address, squeethToken?.address],
+  )
+  return getSellQuote
+}
+
 export const useGetSellQuote = () => {
   const pool = useAtomValue(poolAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
@@ -389,6 +527,7 @@ export const useGetSellQuote = () => {
         amountOut: new BigNumber(0),
         minimumAmountOut: new BigNumber(0),
         priceImpact: '0',
+        pools: []
       }
       if (!squeethAmount || !pool) return emptyState
 
@@ -414,6 +553,7 @@ export const useGetSellQuote = () => {
             trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(18),
           ),
           priceImpact: trade.priceImpact.toFixed(2),
+          pools: []
         }
       } catch (e) {
         console.log(e)
@@ -433,7 +573,7 @@ export const useGetSellParam = () => {
   const getSellQuote = useGetSellQuote()
   const getSellParam = useAppCallback(
     async (amount: BigNumber) => {
-      const amountMin = fromTokenAmount((await getSellQuote(amount)).minimumAmountOut, 18)
+      const amountMin = fromTokenAmount((await getSellQuote(amount))!.minimumAmountOut, 18)
 
       return {
         tokenIn: squeethToken?.address,
@@ -462,11 +602,10 @@ const useSellAndUnwrapData = () => {
     const exactInputParam = await getSellParam(amount)
     exactInputParam.recipient = swapRouter
     const tupleInput = Object.values(exactInputParam).map((v) => v?.toString() || '')
-
-    const { minimumAmountOut } = await getSellQuote(amount)
+    const minimumAmountOut = fromTokenAmount((await getSellQuote(amount))!.minimumAmountOut, 18)
     const swapIface = new ethers.utils.Interface(routerABI)
     const encodedSwapCall = swapIface.encodeFunctionData('exactInputSingle', [tupleInput])
-    const encodedUnwrapCall = swapIface.encodeFunctionData('unwrapWETH9', [
+    const encodedUnwrapCall = swapIface.encodeFunctionData('unwrapWETH9(uint256,address)', [
       fromTokenAmount(minimumAmountOut, 18).toString(),
       address,
     ])
@@ -495,6 +634,53 @@ export const useSell = () => {
     return result
   }
   return sell
+}
+
+export const useAutoRoutedSell = () => {
+  const networkId = useAtomValue(networkIdAtom)
+  const address = useAtomValue(addressAtom)
+  const wethToken = useAtomValue(wethTokenAtom)
+  const { swapRouter2 } = useAtomValue(addressesAtom)
+  const web3 = useAtomValue(web3Atom)
+  const squeethToken = useAtomValue(squeethTokenAtom)
+  const handleTransaction = useHandleTransaction()
+  const swapRouter2Contract = useAtomValue(swapRouter2ContractAtom)
+
+  const autoRoutedSell = useAppCallback(
+    async (amount: BigNumber, onTxConfirmed?: () => void) => {
+      // Initializing the AlphaRouter
+      const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
+      const chainId = networkId as any as ChainId
+      const router = new AlphaRouter({ chainId: chainId, provider: (provider as any) })
+      
+      // Call Route
+      const rawAmount = CurrencyAmount.fromRawAmount(
+        squeethToken!,
+        fromTokenAmount(amount, OSQUEETH_DECIMALS).toFixed(0),
+      )
+
+      const slippageTolerance = new Percent(5, 100)
+      const route = await router.route(rawAmount, wethToken!, TradeType.EXACT_INPUT, {
+        recipient: swapRouter2,
+        slippageTolerance: slippageTolerance,
+        deadline: Math.floor(Date.now()/1000 +1800)
+      })
+
+      const minimumAmountOut = new BigNumber(route?.trade.minimumAmountOut(slippageTolerance).toFixed(18) || 0)
+      const swapIface = new ethers.utils.Interface(router2ABI)
+      const encodedUnwrapCall = swapIface.encodeFunctionData('unwrapWETH9(uint256,address)', [fromTokenAmount(minimumAmountOut, 18).toString(), address])
+      const result = await handleTransaction(
+        swapRouter2Contract?.methods.multicall([route?.methodParameters?.calldata, encodedUnwrapCall]).send({
+            from: address,
+        }),
+        onTxConfirmed,
+      )
+      return result
+    },
+    [address],
+  )
+
+  return autoRoutedSell
 }
 
 export const useGetSellQuoteForETH = () => {
@@ -541,4 +727,20 @@ export const useGetSellQuoteForETH = () => {
   )
 
   return getSellQuoteForETH
+}
+
+function getPoolInfo(route: SwapRoute, overallInputAmount: BigNumber) {
+  const V2_DEFAULT_FEE_TIER = 3000
+  const poolsUsed = []
+      const swaps = route.trade.swaps
+      for (let i = 0; i < swaps.length; i++) {
+        const poolsInRoute = swaps[i].route.pools
+        for (let j = 0; j < poolsInRoute.length; j++) {
+          const pool = poolsInRoute[j]
+          const portion = swaps[i].inputAmount.divide(route.trade.inputAmount)
+          const percent = new Percent(portion.numerator, portion.denominator)
+          poolsUsed.push(pool instanceof Pair ? ["V2", V2_DEFAULT_FEE_TIER, percent.toSignificant(2)] : ["V3", pool.fee, percent.toSignificant(2)])
+        }
+      }
+  return poolsUsed
 }
