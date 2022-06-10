@@ -56,7 +56,6 @@ import VaultCard from './VaultCard'
 import ConfirmApproval from './ConfirmApproval'
 import TradeDetails from '../TradeDetails'
 import { useETHPrice } from '@hooks/useETHPrice'
-import TradeInfoItem from '@components/Trade/TradeInfoItem'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -205,9 +204,9 @@ export const OpenShortPosition = () => {
     }
   }
 
-  const minCR = BigNumber.max(
-    (totalExistingCollat ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt) ?? BIG_ZERO,
-    1.5,
+  const minCR = useAppMemo(
+    () => BigNumber.max((totalExistingCollat ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt) ?? BIG_ZERO, 1.5),
+    [quote.amountOut, totalDebt, totalExistingCollat],
   )
   const onSqthChange = useAppCallback(
     async (value: string, collatPercent: number) => {
