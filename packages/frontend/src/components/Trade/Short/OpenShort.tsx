@@ -538,7 +538,7 @@ export const OpenShortPosition = () => {
             />
 
             <TradeDetails
-              actionTitle="Collateral from sale to deposit"
+              actionTitle="Expected sale proceeds to deposit"
               amount={quote.amountOut.toFixed(2)}
               unit="ETH"
               value={!quote.amountOut.isNaN() ? quote.amountOut.times(ethPrice).toFixed(2).toLocaleString() : '0'}
