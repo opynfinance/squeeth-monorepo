@@ -134,8 +134,10 @@ export const OpenShortPosition = () => {
   const [isVaultApproved, setIsVaultApproved] = useState(true)
   const [openConfirm, setOpenConfirm] = useState(false)
   const [CRError, setCRError] = useState('')
-  const [minCR, setMinCR] = useState(BIG_ZERO)
+  // const [minCR, setMinCR] = useState(BIG_ZERO)
   const [newCollat, setNewCollat] = useState(BIG_ZERO)
+  const [totalExistingCollat, setTotalExistingCollat] = useState(BIG_ZERO)
+  const [totalDebt, setTotalDebt] = useState(BIG_ZERO)
 
   const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
@@ -203,8 +205,12 @@ export const OpenShortPosition = () => {
     }
   }
 
+  const minCR = BigNumber.max(
+    (totalExistingCollat ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt) ?? BIG_ZERO,
+    1.5,
+  )
   const onSqthChange = useAppCallback(
-    async (value: string) => {
+    async (value: string, collatPercent: number) => {
       const [quote, debt, existingDebt, NFTCollat] = await Promise.all([
         getSellQuote(new BigNumber(value), slippageAmount),
         getDebtAmount(new BigNumber(value)),
@@ -225,7 +231,9 @@ export const OpenShortPosition = () => {
 
       setNewCollat(newCollat)
       setQuote(quote)
-      setMinCR((totalExistingCollat ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt) ?? BIG_ZERO)
+      setTotalExistingCollat(totalExistingCollat)
+      setTotalDebt(totalDebt)
+      // setMinCR((totalExistingCollat ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt) ?? BIG_ZERO)
 
       if (quote.minimumAmountOut && newCollat.gt(quote.minimumAmountOut)) {
         setEthTradeAmount(newCollat.minus(quote.amountOut).toFixed(6))
@@ -241,7 +249,6 @@ export const OpenShortPosition = () => {
       setTotalCollateralAmount(quote.minimumAmountOut.plus(newCollat.minus(quote.minimumAmountOut)))
     },
     [
-      collatPercent,
       getCollatRatioAndLiqPrice,
       getDebtAmount,
       getSellQuote,
@@ -281,7 +288,19 @@ export const OpenShortPosition = () => {
     }
   }
 
+  useAppEffect(() => {
+    const timeout = setTimeout(() => {
+      if (new BigNumber(collatPercent / 100).lt(minCR ?? BIG_ZERO)) {
+        setCollatPercent(Number(minCR.times(100).toFixed(1)))
+        setCRError('')
+      }
+    }, 1000)
+
+    return () => clearTimeout(timeout)
+  }, [collatPercent, minCR])
+
   const handleCollatRatioChange = (value: string) => {
+    onSqthChange(sqthTradeAmount, Number(value))
     if (new BigNumber(Number(value) / 100).lt(minCR ?? BIG_ZERO)) {
       setCRError(`Minimum CR is ${minCR.times(100).toFixed(1)}%`)
     } else {
@@ -333,10 +352,6 @@ export const OpenShortPosition = () => {
     vaultIDLoading,
     vaultId,
   ])
-
-  useAppEffect(() => {
-    onSqthChange(sqthTradeAmount)
-  }, [onSqthChange, sqthTradeAmount, collatPercent])
 
   const shortOpenPriceImpactErrorState = priceImpactWarning && !shortLoading && !(collatPercent < 150) && !inputError
 
@@ -403,7 +418,7 @@ export const OpenShortPosition = () => {
               value={sqthTradeAmount}
               onChange={(val) => {
                 setSqthTradeAmount(val)
-                handleSqthChange(val)
+                handleSqthChange(val, collatPercent)
               }}
               label="Sell"
               unit="oSQTH"
@@ -467,6 +482,7 @@ export const OpenShortPosition = () => {
                   setCRError('')
                 }
                 setCollatPercent(val)
+                onSqthChange(sqthTradeAmount, val)
               }}
               collatValue={collatPercent}
               minCR={Number(minCR.times(100).toFixed(1))}
