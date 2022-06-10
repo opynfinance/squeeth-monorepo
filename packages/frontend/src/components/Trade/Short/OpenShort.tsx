@@ -225,9 +225,7 @@ export const OpenShortPosition = () => {
 
       setNewCollat(newCollat)
       setQuote(quote)
-      setMinCR(
-        BigNumber.max((totalExistingCollat ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt) ?? BIG_ZERO, 1.5),
-      )
+      setMinCR((totalExistingCollat ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt) ?? BIG_ZERO)
 
       if (quote.minimumAmountOut && newCollat.gt(quote.minimumAmountOut)) {
         setEthTradeAmount(newCollat.minus(quote.amountOut).toFixed(6))
@@ -463,9 +461,15 @@ export const OpenShortPosition = () => {
             <div className={classes.thirdHeading}></div>
             <CollatRange
               onCollatValueChange={(val) => {
-                handleCollatRatioChange(String(val))
+                if (new BigNumber(val / 100).lt(minCR ?? BIG_ZERO)) {
+                  setCRError(`Minimum CR is ${minCR.times(100).toFixed(1)}%`)
+                } else {
+                  setCRError('')
+                }
+                setCollatPercent(val)
               }}
               collatValue={collatPercent}
+              minCR={Number(minCR.times(100).toFixed(1))}
             />
             <VaultCard
               error={{

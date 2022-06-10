@@ -29,6 +29,7 @@ type CollatRangeType = {
   collatValue: number
   onCollatValueChange: (val: number) => void
   className?: string
+  minCR: number
 }
 
 const marks = [
@@ -46,11 +47,11 @@ const marks = [
   },
 ]
 
-const CollatRange: React.FC<CollatRangeType> = ({ id, collatValue, onCollatValueChange, className }) => {
+const CollatRange: React.FC<CollatRangeType> = ({ id, collatValue, onCollatValueChange, className, minCR }) => {
   const classes = useStyles()
 
-  const minCollatRatio = 150
-
+  const minCollatRatio = isNaN(minCR) || minCR < 150 ? 150 : minCR
+  console.log({ minCollatRatio, minCR })
   const changeSlider = (val: number[]) => {
     if (val[1] < minCollatRatio) return
 
@@ -90,9 +91,50 @@ const CollatRange: React.FC<CollatRangeType> = ({ id, collatValue, onCollatValue
           track: sliderClass,
         }}
         className={className}
-        marks={marks}
-        min={150}
-        max={300}
+        marks={
+          minCollatRatio < 200
+            ? marks
+            : minCollatRatio < 225
+            ? [
+                {
+                  value: 200,
+                  label: 'RISKY',
+                },
+                {
+                  value: 225,
+                  label: 'SAFE',
+                },
+              ]
+            : [
+                {
+                  value: 225,
+                  label: 'SAFE',
+                },
+              ]
+        }
+        // marks={
+        //   minCollatRatio >= 225
+        //     ? [
+        //         {
+        //           value: 225,
+        //           label: 'SAFE',
+        //         },
+        //       ]
+        //     : minCollatRatio >= 200
+        //     ? [
+        //         {
+        //           value: 200,
+        //           label: 'RISKY',
+        //         },
+        //         {
+        //           value: 225,
+        //           label: 'SAFE',
+        //         },
+        //       ]
+        //     : marks
+        // }
+        min={minCollatRatio}
+        max={minCollatRatio * 2}
         id={id + '-slider'}
       />
       <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '.75em' }}>
