@@ -490,7 +490,6 @@ export const OpenShortPosition = () => {
                 onSqthChange(sqthTradeAmount, val)
               }}
               collatValue={collatPercent}
-              minCR={Number(minCR.times(100).toFixed(1))}
             />
             <VaultCard
               error={{

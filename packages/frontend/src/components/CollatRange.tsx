@@ -29,13 +29,28 @@ type CollatRangeType = {
   collatValue: number
   onCollatValueChange: (val: number) => void
   className?: string
-  minCR?: number
 }
 
-const CollatRange: React.FC<CollatRangeType> = ({ id, collatValue, onCollatValueChange, className, minCR = 150 }) => {
+const marks = [
+  {
+    value: 150,
+    label: 'DANGER',
+  },
+  {
+    value: 200,
+    label: 'RISKY',
+  },
+  {
+    value: 225,
+    label: 'SAFE',
+  },
+]
+
+const CollatRange: React.FC<CollatRangeType> = ({ id, collatValue, onCollatValueChange, className }) => {
   const classes = useStyles()
 
-  const minCollatRatio = isNaN(minCR) || minCR < 150 ? 150 : minCR
+  const minCollatRatio = 150
+
   const changeSlider = (val: number[]) => {
     if (val[1] < minCollatRatio) return
 
@@ -75,57 +90,12 @@ const CollatRange: React.FC<CollatRangeType> = ({ id, collatValue, onCollatValue
           track: sliderClass,
         }}
         className={className}
-        marks={
-          minCollatRatio < 200
-            ? [
-                {
-                  value: 150,
-                  label: (
-                    <span
-                      style={{
-                        ...(minCollatRatio > 175
-                          ? { left: '35px', position: 'absolute', bottom: '-30px' }
-                          : minCollatRatio > 160
-                          ? { left: '16px', position: 'absolute', bottom: '-30px' }
-                          : {}),
-                      }}
-                    >
-                      DANGER
-                    </span>
-                  ),
-                },
-                {
-                  value: 200,
-                  label: 'RISKY',
-                },
-                {
-                  value: 225,
-                  label: 'SAFE',
-                },
-              ]
-            : minCollatRatio < 225
-            ? [
-                {
-                  value: 200,
-                  label: <span style={{ color: '#fbc02d', position: 'absolute', left: '-25px' }}>RISKY</span>,
-                },
-                {
-                  value: 225,
-                  label: <span style={{ color: '#49D273', marginLeft: '1em' }}>SAFE</span>,
-                },
-              ]
-            : [
-                {
-                  value: 225,
-                  label: <span style={{ color: '#49D273' }}>SAFE</span>,
-                },
-              ]
-        }
-        min={minCollatRatio}
-        max={minCollatRatio * 2}
+        marks={marks}
+        min={150}
+        max={300}
         id={id + '-slider'}
       />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '.75em' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
         <Collapse in={collatValue === 150}>
           <Alert severity="error" id={id + '-alert-text'}>
             You will get liquidated
