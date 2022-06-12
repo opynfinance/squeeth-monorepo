@@ -134,35 +134,43 @@ type Pool @entity {
 enum PositionType {
   LONG
   SHORT
+  LP
   NEUTRAL
+  CRAB
 }
 
-type LPposition @entity {
-  # user address
+type PositionBalance @entity {
+  # user address - position type
   id: ID!
-  lpedoSQTHAmount: BigInt!
-  lpedETHAmount: BigInt!
-  # USD value spent (Execution price)
-  unrealizedLPCost: BigInt!
-  # Avg spent per token
-  realizedLPUnitCost: BigInt!
-  # Avg value got per token
-  realizedLPUnitGain: BigInt!
-  # no of token realised
-  realizedLPTokenAmount: BigInt!
+  # user address
+  owner: Position!
+  positionType: PositionType!
+  # current osqth amount the user put in this position
+  osqthBalance: BigInt!
+  # current eth amount the user put in this position
+  ethBalance: BigInt!
+  # eth spent in USD value (Execution price)
+  unrealizedETHCost: BigInt!
+  # osqth spent in USD value (Execution price)
+  unrealizedOSQTHCost: BigInt!
+
+  # Avg spent per osqth
+  realizedOSQTHUnitCost: BigInt!
+  # Avg value got per osqth
+  realizedOSQTHUnitGain: BigInt!
+  # no of oSQTH realised
+  realizedOSQTHAmount: BigInt!
+  # Avg spent per eth
+  realizedETHUnitCost: BigInt!
+  # Avg spent per eth
+  realizedETHUnitGain: BigInt!
+  # no of eth realised
+  realizedETHAmount: BigInt!
 }
 
 type Position @entity {
   # user address
   id: ID!
-  positionType: PositionType!
-  positionBalance: BigInt!
-  # USD value spent (Execution price)
-  unrealizedCost: BigInt!
-  # Avg spent per token
-  realizedUnitCost: BigInt!
-  # Avg value got per token
-  realizedUnitGain: BigInt!
-  # no of token realised
-  realizedTokenAmount: BigInt!
+  # position balance user has
+  positionBalances: [PositionBalance!]! @derivedFrom(field: "owner")
 }
