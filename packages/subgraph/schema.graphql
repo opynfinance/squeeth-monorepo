@@ -11,6 +11,7 @@ type Account @entity {
   id: ID!
   vaults: [Vault!]! @derivedFrom(field: "owner")
   vaultCount: BigInt!
+  positions: [Position!]! @derivedFrom(field: "owner")
 }
 
 type Liquidation @entity {
@@ -139,11 +140,11 @@ enum PositionType {
   CRAB
 }
 
-type PositionBalance @entity {
+type Position @entity {
   # user address - position type
   id: ID!
   # user address
-  owner: Position!
+  owner: Account!
   positionType: PositionType!
   # current osqth amount the user put in this position
   osqthBalance: BigInt!
@@ -166,11 +167,4 @@ type PositionBalance @entity {
   realizedETHUnitGain: BigInt!
   # no of eth realised
   realizedETHAmount: BigInt!
-}
-
-type Position @entity {
-  # user address
-  id: ID!
-  # position balance user has
-  positionBalances: [PositionBalance!]! @derivedFrom(field: "owner")
 }

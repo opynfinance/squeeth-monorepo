@@ -162,6 +162,26 @@ dataSources:
         - event: Collect(indexed uint256,address,uint256,uint256)
           handler: handleCollect
   - kind: ethereum/contract
+    name: WPowerPerp
+    network: {{network}}
+    source:
+      address: "{{WPowerPerp}}"
+      abi: Pool
+      startBlock: {{WPowerPerp-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/wPowerPerp.ts
+      entities:
+        - TransactionHistory
+      abis:
+        - name: WPowerPerp
+          file: ./abis/WPowerPerp.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+  - kind: ethereum/contract
     name: OSQTHPool
     network: {{network}}
     source:
