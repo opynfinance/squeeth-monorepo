@@ -85,8 +85,8 @@ export function loadOrCreateAccount(accountId: string): Account {
 }
 
 export function loadOrCreatePosition(
-  userAddr: string,
-  positionType: string
+  positionType: string,
+  userAddr: string
 ): Position {
   let position = Position.load(`${userAddr}-${positionType}`);
   // if no position, create new entity

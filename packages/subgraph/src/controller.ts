@@ -37,7 +37,11 @@ import {
   VaultHistory,
   TransactionHistory,
 } from "../generated/schema";
-import { createTransactionHistory, loadOrCreateAccount } from "./util";
+import {
+  createTransactionHistory,
+  loadOrCreateAccount,
+  loadOrCreatePosition,
+} from "./util";
 
 import {
   BIGINT_ONE,
@@ -167,6 +171,8 @@ export function handleDepositCollateral(event: DepositCollateral): void {
   transactionHistory.owner = vault.owner;
   transactionHistory.ethAmount = event.params.amount;
   transactionHistory.save();
+
+  const position = loadOrCreatePosition("SHORT", vault.owner);
 }
 
 export function handleDepositUniPositionToken(
