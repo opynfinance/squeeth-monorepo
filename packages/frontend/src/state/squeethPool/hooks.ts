@@ -231,10 +231,12 @@ export const useGetWSqueethPositionValue = () => {
 
 export const useGetWSqueethPositionValueInETH = () => {
   const squeethInitialPrice = useAtomValue(squeethInitialPriceAtom)
-  const getWSqueethPositionValueInETH = (amount: BigNumber | number) => {
-    return new BigNumber(amount).times(squeethInitialPrice)
-  }
-
+  const getWSqueethPositionValueInETH = useAppCallback(
+    (amount: BigNumber | number) => {
+      return new BigNumber(amount).times(squeethInitialPrice)
+    },
+    [squeethInitialPrice],
+  )
   return getWSqueethPositionValueInETH
 }
 
