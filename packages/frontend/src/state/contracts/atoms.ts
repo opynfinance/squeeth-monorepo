@@ -6,6 +6,7 @@ import controllerAbi from '../../abis/controller.json'
 import crabStrategyAbi from '../../abis/crabStrategy.json'
 import positionManagerAbi from '../../abis/NFTpositionmanager.json'
 import routerABI from '../../abis/swapRouter.json'
+import router2ABI from '../../abis/swapRouter2.json'
 import uniABI from '../../abis/uniswapPool.json'
 import shortAbi from '../../abis/shortHelper.json'
 import { addressesAtom } from '../positions/atoms'
@@ -43,7 +44,7 @@ export const swapRouter2ContractAtom = atom<Contract | null>((get) => {
   const web3 = get(web3Atom)
   const { swapRouter2 } = get(addressesAtom)
   if (!web3) return null
-  return getContract(web3, swapRouter2, routerABI)
+  return getContract(web3, swapRouter2, router2ABI)
 })
 
 export const squeethPoolContractAtom = atom<Contract | null>((get) => {
