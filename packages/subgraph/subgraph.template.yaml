@@ -104,6 +104,7 @@ dataSources:
         - FlashWithdrawCallback
         - ExecuteSellAuction
         - ExecuteBuyAuction
+        - Position
       abis:
         - name: CrabStrategy
           file: ./abis/CrabStrategyDeployment.json
@@ -144,6 +145,7 @@ dataSources:
       language: wasm/assemblyscript
       file: ./src/mappings/position-manager.ts
       entities:
+        - Position
         - TransactionHistory
       abis:
         - name: NonfungiblePositionManager
@@ -174,6 +176,7 @@ dataSources:
       language: wasm/assemblyscript
       file: ./src/wPowerPerp.ts
       entities:
+        - Position
         - TransactionHistory
       abis:
         - name: WPowerPerp
@@ -195,6 +198,7 @@ dataSources:
       file: ./src/mappings/core.ts
       entities:
         - Pool
+        - Position
         - TransactionHistory
       abis:
         - name: Pool
