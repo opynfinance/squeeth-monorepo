@@ -84,17 +84,28 @@ export function loadOrCreateAccount(accountId: string): Account {
   return account as Account;
 }
 
-export function loadOrCreatePosition(userAddr: string): Position {
-  let position = Position.load(userAddr);
+export function loadOrCreatePosition(
+  userAddr: string,
+  positionType: string
+): Position {
+  let position = Position.load(`${userAddr}-${positionType}`);
   // if no position, create new entity
   if (position == null) {
-    position = new Position(userAddr);
-    position.positionType = "NEUTRAL";
-    position.positionBalance = ZERO_BI;
-    position.unrealizedCost = ZERO_BI;
-    position.realizedUnitCost = ZERO_BI;
-    position.realizedUnitGain = ZERO_BI;
-    position.realizedTokenAmount = ZERO_BI;
+    position = new Position(`${userAddr}-${positionType}`);
+    position.owner = userAddr;
+    position.positionType = positionType;
+
+    position.osqthBalance = BIGINT_ZERO;
+    position.ethBalance = BIGINT_ZERO;
+    position.unrealizedETHCost = BIGINT_ZERO;
+    position.unrealizedOSQTHCost = BIGINT_ZERO;
+
+    position.realizedOSQTHUnitCost = BIGINT_ZERO;
+    position.realizedOSQTHUnitGain = BIGINT_ZERO;
+    position.realizedOSQTHAmount = BIGINT_ZERO;
+    position.realizedETHUnitCost = BIGINT_ZERO;
+    position.realizedETHUnitGain = BIGINT_ZERO;
+    position.realizedETHAmount = BIGINT_ZERO;
   }
   return position as Position;
 }
