@@ -10,10 +10,9 @@ type Vault @entity {
 type Account @entity {
   # user address
   id: ID!
-  # position balance user has
-  positionBalances: [PositionBalance!]! @derivedFrom(field: "owner")
   vaults: [Vault!]! @derivedFrom(field: "owner")
   vaultCount: BigInt!
+  # position balance user has
   positions: [Position!]! @derivedFrom(field: "owner")
 }
 
