@@ -91,8 +91,6 @@ export function loadOrCreatePosition(userAddr: string): Position {
     position = new Position(userAddr);
     position.positionType = "NEUTRAL";
     position.positionBalance = ZERO_BI;
-    position.isLP = false;
-    position.lpBalance = ZERO_BI;
     position.unrealizedCost = ZERO_BI;
     position.realizedUnitCost = ZERO_BI;
     position.realizedUnitGain = ZERO_BI;
