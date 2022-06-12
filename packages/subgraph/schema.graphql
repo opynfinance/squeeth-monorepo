@@ -138,7 +138,6 @@ enum PositionType {
   LONG
   SHORT
   LP
-  CRAB
 }
 
 type Position @entity {
@@ -147,25 +146,22 @@ type Position @entity {
   # user address
   owner: Account!
   positionType: PositionType!
-  # current osqth amount the user put in this position
-  osqthBalance: BigInt!
-  # current eth amount the user put in this position
-  ethBalance: BigInt!
-  # eth spent in USD value (Execution price)
-  unrealizedETHCost: BigInt!
-  # osqth spent in USD value (Execution price)
-  unrealizedOSQTHCost: BigInt!
 
-  # Avg spent per osqth
-  realizedOSQTHUnitCost: BigInt!
+  # current osqth amount the user put in this position
+  osqthBalance: BigDecimal!
+  # current eth amount the user put in this position
+  ethBalance: BigDecimal!
+  # eth spent in USD value (Execution price), can get avg spent per eth with ethBalance
+  unrealizedETHCost: BigDecimal!
+  # osqth spent in USD value (Execution price), can get avg spent per osqth with osqthBalance
+  unrealizedOSQTHCost: BigDecimal!
+
   # Avg value got per osqth
-  realizedOSQTHUnitGain: BigInt!
+  realizedOSQTHUnitGain: BigDecimal!
   # no of oSQTH realised
-  realizedOSQTHAmount: BigInt!
-  # Avg spent per eth
-  realizedETHUnitCost: BigInt!
-  # Avg spent per eth
-  realizedETHUnitGain: BigInt!
+  realizedOSQTHAmount: BigDecimal!
+  # Avg value got per eth
+  realizedETHUnitGain: BigDecimal!
   # no of eth realised
-  realizedETHAmount: BigInt!
+  realizedETHAmount: BigDecimal!
 }

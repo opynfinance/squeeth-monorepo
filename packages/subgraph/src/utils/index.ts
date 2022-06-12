@@ -18,3 +18,13 @@ export function safeDiv(amount0: BigDecimal, amount1: BigDecimal): BigDecimal {
     return amount0.div(amount1);
   }
 }
+
+export function convertTokenToDecimal(
+  tokenAmount: BigInt,
+  exchangeDecimals: BigInt
+): BigDecimal {
+  if (exchangeDecimals == ZERO_BI) {
+    return tokenAmount.toBigDecimal();
+  }
+  return tokenAmount.toBigDecimal().div(exponentToBigDecimal(exchangeDecimals));
+}

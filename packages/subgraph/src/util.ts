@@ -95,17 +95,15 @@ export function loadOrCreatePosition(
     position.owner = userAddr;
     position.positionType = positionType;
 
-    position.osqthBalance = BIGINT_ZERO;
-    position.ethBalance = BIGINT_ZERO;
-    position.unrealizedETHCost = BIGINT_ZERO;
-    position.unrealizedOSQTHCost = BIGINT_ZERO;
+    position.osqthBalance = ZERO_BD;
+    position.ethBalance = ZERO_BD;
+    position.unrealizedETHCost = ZERO_BD;
+    position.unrealizedOSQTHCost = ZERO_BD;
 
-    position.realizedOSQTHUnitCost = BIGINT_ZERO;
-    position.realizedOSQTHUnitGain = BIGINT_ZERO;
-    position.realizedOSQTHAmount = BIGINT_ZERO;
-    position.realizedETHUnitCost = BIGINT_ZERO;
-    position.realizedETHUnitGain = BIGINT_ZERO;
-    position.realizedETHAmount = BIGINT_ZERO;
+    position.realizedOSQTHUnitGain = ZERO_BD;
+    position.realizedOSQTHAmount = ZERO_BD;
+    position.realizedETHUnitGain = ZERO_BD;
+    position.realizedETHAmount = ZERO_BD;
   }
   return position as Position;
 }
@@ -124,10 +122,12 @@ export function getETHUSDCPrice(): BigDecimal[] {
   return [usdcPool.sqrtPrice.toBigDecimal(), usdcPrices[0], usdcPrices[1]];
 }
 
-function getoSQTHETHPrice(): BigDecimal[] {
+export function getoSQTHETHPrice(): BigDecimal[] {
   let osqthPool = Pool.load(OSQTH_WETH_POOL);
+  let usdcPrices = getETHUSDCPrice();
+
   if (osqthPool == null) {
-    return [ZERO_BD, ZERO_BD, ZERO_BD];
+    return [ZERO_BD, ZERO_BD, ZERO_BD, ZERO_BD];
   }
   let osqthPrices = sqrtPriceX96ToTokenPrices(
     osqthPool.sqrtPrice,
@@ -135,7 +135,12 @@ function getoSQTHETHPrice(): BigDecimal[] {
     TOKEN_DECIMALS_18
   );
 
-  return [osqthPool.sqrtPrice.toBigDecimal(), osqthPrices[0], osqthPrices[1]];
+  return [
+    osqthPool.sqrtPrice.toBigDecimal(),
+    osqthPrices[0],
+    osqthPrices[1],
+    osqthPrices[0].times(usdcPrices[1]),
+  ];
 }
 
 export function createTransactionHistory(
