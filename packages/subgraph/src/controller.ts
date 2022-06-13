@@ -5,6 +5,7 @@ import {
   log,
   dataSource,
   ethereum,
+  BigDecimal,
 } from "@graphprotocol/graph-ts";
 import {
   Controller,
@@ -39,6 +40,7 @@ import {
 } from "../generated/schema";
 import {
   createTransactionHistory,
+  getETHUSDCPrice,
   loadOrCreateAccount,
   loadOrCreatePosition,
 } from "./util";
@@ -167,12 +169,20 @@ export function handleDepositCollateral(event: DepositCollateral): void {
     dayStatSnapshot.totalCollateralAmount.plus(event.params.amount);
   dayStatSnapshot.save();
 
-  const transactionHistory = createTransactionHistory("DEPOSIT_COLLAT", event);
+  let transactionHistory = createTransactionHistory("DEPOSIT_COLLAT", event);
   transactionHistory.owner = vault.owner;
   transactionHistory.ethAmount = event.params.amount;
   transactionHistory.save();
 
-  const position = loadOrCreatePosition("SHORT", vault.owner);
+  let usdcPrices = getETHUSDCPrice();
+  let amount = BigDecimal.fromString(event.params.amount.toString());
+
+  let position = loadOrCreatePosition(vault.owner, "SHORT");
+  position.ethBalance = position.ethBalance.plus(amount);
+  position.unrealizedETHCost = position.unrealizedETHCost.plus(
+    amount.times(usdcPrices[1])
+  );
+  position.save();
 }
 
 export function handleDepositUniPositionToken(
@@ -361,6 +371,18 @@ export function handleWithdrawCollateral(event: WithdrawCollateral): void {
   transactionHistory.owner = vault.owner;
   transactionHistory.ethAmount = event.params.amount;
   transactionHistory.save();
+
+  let usdcPrices = getETHUSDCPrice();
+  let amount = BigDecimal.fromString(event.params.amount.toString());
+
+  let position = loadOrCreatePosition(vault.owner, "SHORT");
+  position.ethBalance = position.ethBalance.minus(amount);
+  position.realizedETHUnitGain = position.realizedETHUnitGain
+    .times(position.realizedETHAmount)
+    .plus(amount.times(usdcPrices[1]))
+    .div(position.realizedETHAmount.plus(amount));
+  position.realizedETHAmount = position.realizedETHAmount.plus(amount);
+  position.save();
 }
 
 export function handleWithdrawUniPositionToken(
