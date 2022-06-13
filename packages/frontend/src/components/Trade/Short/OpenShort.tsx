@@ -225,7 +225,9 @@ export const OpenShortPosition = () => {
 
       const totalDebt = existingDebt.plus(debt)
       const totalExistingCollat = (vault?.collateralAmount ?? BIG_ZERO).plus(NFTCollat?.collateral ?? BIG_ZERO)
-      const newCollat = new BigNumber(collatPercent / 100).multipliedBy(totalDebt).minus(totalExistingCollat ?? 0)
+      const newCollat = new BigNumber(collatPercent / 100)
+        .multipliedBy(totalDebt ?? BIG_ZERO)
+        .minus(totalExistingCollat ?? 0)
       getCollatRatioAndLiqPrice(
         new BigNumber(collatPercent / 100).multipliedBy(totalDebt),
         new BigNumber(value).plus(vault?.shortAmount ?? BIG_ZERO),
