@@ -62,6 +62,7 @@ function updateLPposition(
   longPosition.save();
 }
 
+// selling to remove lp
 export function handleIncreaseLiquidity(event: IncreaseLiquidity): void {
   const transactionHistory = createTransactionHistory("ADD_LIQUIDITY", event);
   transactionHistory.oSqthAmount = event.params.amount0;
@@ -74,6 +75,7 @@ export function handleIncreaseLiquidity(event: IncreaseLiquidity): void {
   account.save();
 }
 
+// buying to remove lp
 export function handleDecreaseLiquidity(event: DecreaseLiquidity): void {
   const transactionHistory = createTransactionHistory(
     "REMOVE_LIQUIDITY",
