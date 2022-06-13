@@ -323,7 +323,7 @@ export const CloseShort = () => {
   }, [onSqthChange, sqthTradeAmount, collatPercent])
 
   return (
-    <>
+    <div id="close-short-card">
       <ConfirmApproval
         openConfirm={openConfirm}
         title="Approve New Wrapper"
@@ -371,7 +371,7 @@ export const CloseShort = () => {
       ) : (
         <div style={{ width: '90%', margin: '0 auto', minWidth: '300px' }}>
           <div className={classes.settingsContainer}>
-            <Typography variant="caption" className={classes.explainer} component="div">
+            <Typography variant="caption" className={classes.explainer} component="div" id="close-short-header-box">
               Buy back oSQTH and close position using vault collateral
             </Typography>
             <span className={classes.settingsButton}>
@@ -411,18 +411,23 @@ export const CloseShort = () => {
                     <div className={classes.hint}>
                       <span className={classes.hintTextContainer}>
                         <span className={classes.hintTitleText}>Position</span>{' '}
-                        <span>{(vault?.shortAmount ?? BIG_ZERO).toFixed(6)}</span>
+                        <span id="close-short-osqth-before-trade-balance">
+                          {(vault?.shortAmount ?? BIG_ZERO).toFixed(6)}
+                        </span>
                       </span>
                       {amount.toNumber() ? (
                         <>
                           <ArrowRightAltIcon className={classes.arrowIcon} />
-                          <span>{(vault?.shortAmount.minus(amount) ?? BIG_ZERO).toFixed(6)}</span>
+                          <span id="close-short-osqth-post-trade-balance">
+                            {(vault?.shortAmount.minus(amount) ?? BIG_ZERO).toFixed(6)}
+                          </span>
                         </>
                       ) : null}{' '}
                       <span style={{ marginLeft: '4px' }}>oSQTH</span>
                     </div>
                   )
                 }
+                id="close-short-osqth-input"
               />
             </div>
 
@@ -440,9 +445,14 @@ export const CloseShort = () => {
                 displayEmpty
                 inputProps={{ 'aria-label': 'Without label' }}
                 style={{ padding: '5px 0px', width: '100%', textAlign: 'left' }}
+                id="close-short-type-select"
               >
-                <MenuItem value={CloseType.FULL}>Full Close</MenuItem>
-                <MenuItem value={CloseType.PARTIAL}>Partial Close</MenuItem>
+                <MenuItem value={CloseType.FULL} id="close-short-full-close">
+                  Full Close
+                </MenuItem>
+                <MenuItem id="close-short-partial-close" value={CloseType.PARTIAL}>
+                  Partial Close
+                </MenuItem>
               </Select>
             </div>
             {closeType === CloseType.PARTIAL && (
@@ -453,7 +463,7 @@ export const CloseShort = () => {
                   type="number"
                   style={{ width: 300 }}
                   onChange={(event) => setCollatPercent(Number(event.target.value))}
-                  id="filled-basic"
+                  id="close-short-collat-ratio-input"
                   label="Collateral Ratio"
                   variant="outlined"
                   error={collatPercent < 150}
@@ -519,6 +529,7 @@ export const CloseShort = () => {
                     </div>
                   )
                 }
+                id="close-short-trade-details"
               />
             </div>
             <div className={classes.divider}>
@@ -538,6 +549,7 @@ export const CloseShort = () => {
                 value={existingCollatPercent}
                 unit="%"
                 tooltip={Tooltips.CurrentCollRatio}
+                id="close-short-collateral-ratio"
               />
               <div style={{ marginTop: '10px' }}>
                 <UniswapData
@@ -581,6 +593,7 @@ export const CloseShort = () => {
                       ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
                       : { width: '300px' }
                   }
+                  id="close-short-submit-tx-btn"
                 >
                   {!supportedNetwork ? (
                     'Unsupported Network'
@@ -613,6 +626,6 @@ export const CloseShort = () => {
           </form>
         </div>
       )}
-    </>
+    </div>
   )
 }
