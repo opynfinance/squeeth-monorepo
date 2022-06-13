@@ -94,11 +94,11 @@ export function loadOrCreatePosition(userAddr: string): Position {
 
     position.osqthBalance = ZERO_BD;
     position.ethBalance = ZERO_BD;
-    position.unrealizedOSQTHUnitCost = ZERO_BD;
-    position.unrealizedETHUnitCost = ZERO_BD;
+    position.unrealizedOSQTHCost = ZERO_BD;
+    position.unrealizedETHCost = ZERO_BD;
 
-    position.unrealizedOSQTHUnitCost = ZERO_BD;
-    position.unrealizedETHUnitCost = ZERO_BD;
+    position.realizedOSQTHUnitCost = ZERO_BD;
+    position.realizedETHUnitCost = ZERO_BD;
     position.realizedOSQTHUnitGain = ZERO_BD;
     position.realizedETHUnitGain = ZERO_BD;
     position.realizedOSQTHAmount = ZERO_BD;

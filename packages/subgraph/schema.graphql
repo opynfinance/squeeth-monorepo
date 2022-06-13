@@ -152,15 +152,15 @@ type Position @entity {
   osqthBalance: BigDecimal!
   # current eth amount the user put in this position
   ethBalance: BigDecimal!
-  # avg osqth spent in USD value for unrealized position (Execution price)
-  unrealizedOSQTHUnitCost: BigDecimal!
-  # avg eth spent in USD value for unrealized position (Execution price)
-  unrealizedETHUnitCost: BigDecimal!
+  # osqth spent in USD value for unrealized position (Execution price)
+  unrealizedOSQTHCost: BigDecimal!
+  # eth spent in USD value for unrealized position (Execution price)
+  unrealizedETHCost: BigDecimal!
 
   # Avg value spent per osqth for realized position
   realizedOSQTHUnitCost: BigDecimal!
   # Avg value spent per eth for realized position
-  realizedETGUnitCost: BigDecimal!
+  realizedETHUnitCost: BigDecimal!
   # Avg value got per osqth
   realizedOSQTHUnitGain: BigDecimal!
   # Avg value got per eth
