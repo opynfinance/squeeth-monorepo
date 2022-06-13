@@ -56,7 +56,6 @@ import VaultCard from './VaultCard'
 import ConfirmApproval from './ConfirmApproval'
 import TradeDetails from '../TradeDetails'
 import { useETHPrice } from '@hooks/useETHPrice'
-import TradeInfoItem from '@components/Trade/TradeInfoItem'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -134,8 +133,10 @@ export const OpenShortPosition = () => {
   const [isVaultApproved, setIsVaultApproved] = useState(true)
   const [openConfirm, setOpenConfirm] = useState(false)
   const [CRError, setCRError] = useState('')
-  const [minCR, setMinCR] = useState(BIG_ZERO)
+  // const [minCR, setMinCR] = useState(BIG_ZERO)
   const [newCollat, setNewCollat] = useState(BIG_ZERO)
+  const [totalExistingCollat, setTotalExistingCollat] = useState(BIG_ZERO)
+  const [totalDebt, setTotalDebt] = useState(BIG_ZERO)
 
   const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
@@ -203,8 +204,18 @@ export const OpenShortPosition = () => {
     }
   }
 
+  const minCR = useAppMemo(
+    () =>
+      BigNumber.max(
+        (totalExistingCollat ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt).isFinite()
+          ? (totalExistingCollat ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt)
+          : BIG_ZERO,
+        1.5,
+      ),
+    [quote.amountOut, totalDebt, totalExistingCollat],
+  )
   const onSqthChange = useAppCallback(
-    async (value: string) => {
+    async (value: string, collatPercent: number) => {
       const [quote, debt, existingDebt, NFTCollat] = await Promise.all([
         getSellQuote(new BigNumber(value), slippageAmount),
         getDebtAmount(new BigNumber(value)),
@@ -212,19 +223,22 @@ export const OpenShortPosition = () => {
         vault?.NFTCollateralId && getUniNFTCollatDetail(vault?.NFTCollateralId),
       ])
 
-      getCollatRatioAndLiqPrice(debt.times(new BigNumber(collatPercent / 100)), new BigNumber(value)).then(
-        ({ liquidationPrice }) => {
-          setLiqPrice(liquidationPrice)
-        },
-      )
       const totalDebt = existingDebt.plus(debt)
       const totalExistingCollat = (vault?.collateralAmount ?? BIG_ZERO).plus(NFTCollat?.collateral ?? BIG_ZERO)
       const newCollat = new BigNumber(collatPercent / 100).multipliedBy(totalDebt).minus(totalExistingCollat ?? 0)
+      getCollatRatioAndLiqPrice(
+        new BigNumber(collatPercent / 100).multipliedBy(totalDebt),
+        new BigNumber(value).plus(vault?.shortAmount ?? BIG_ZERO),
+        vault?.NFTCollateralId,
+      ).then(({ liquidationPrice }) => {
+        setLiqPrice(liquidationPrice)
+      })
+
       setNewCollat(newCollat)
       setQuote(quote)
-      setMinCR(
-        BigNumber.max((totalExistingCollat ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt) ?? BIG_ZERO, 1.5),
-      )
+      setTotalExistingCollat(totalExistingCollat)
+      setTotalDebt(totalDebt)
+      // setMinCR((totalExistingCollat ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt) ?? BIG_ZERO)
 
       if (quote.minimumAmountOut && newCollat.gt(quote.minimumAmountOut)) {
         setEthTradeAmount(newCollat.minus(quote.amountOut).toFixed(6))
@@ -240,7 +254,6 @@ export const OpenShortPosition = () => {
       setTotalCollateralAmount(quote.minimumAmountOut.plus(newCollat.minus(quote.minimumAmountOut)))
     },
     [
-      collatPercent,
       getCollatRatioAndLiqPrice,
       getDebtAmount,
       getSellQuote,
@@ -280,7 +293,19 @@ export const OpenShortPosition = () => {
     }
   }
 
+  useAppEffect(() => {
+    const timeout = setTimeout(() => {
+      if (new BigNumber(collatPercent / 100).lt(minCR ?? BIG_ZERO)) {
+        setCollatPercent(Number(minCR.times(100).toFixed(1)))
+        setCRError('')
+      }
+    }, 1000)
+
+    return () => clearTimeout(timeout)
+  }, [collatPercent, minCR])
+
   const handleCollatRatioChange = (value: string) => {
+    onSqthChange(sqthTradeAmount, Number(value))
     if (new BigNumber(Number(value) / 100).lt(minCR ?? BIG_ZERO)) {
       setCRError(`Minimum CR is ${minCR.times(100).toFixed(1)}%`)
     } else {
@@ -332,10 +357,6 @@ export const OpenShortPosition = () => {
     vaultIDLoading,
     vaultId,
   ])
-
-  useAppEffect(() => {
-    onSqthChange(sqthTradeAmount)
-  }, [onSqthChange, sqthTradeAmount, collatPercent])
 
   const shortOpenPriceImpactErrorState = priceImpactWarning && !shortLoading && !(collatPercent < 150) && !inputError
 
@@ -402,11 +423,11 @@ export const OpenShortPosition = () => {
               value={sqthTradeAmount}
               onChange={(val) => {
                 setSqthTradeAmount(val)
-                handleSqthChange(val)
+                handleSqthChange(val, collatPercent)
               }}
               label="Sell"
               unit="oSQTH"
-              tooltip={Tooltips.SellOpenAmount}
+              // tooltip={Tooltips.SellOpenAmount}
               hint={
                 inputError ? (
                   <span style={{ color: '#f5475c' }}>{inputError}</span>
@@ -460,7 +481,13 @@ export const OpenShortPosition = () => {
             <div className={classes.thirdHeading}></div>
             <CollatRange
               onCollatValueChange={(val) => {
-                handleCollatRatioChange(String(val))
+                if (new BigNumber(val / 100).lt(minCR ?? BIG_ZERO)) {
+                  setCRError(`Minimum CR is ${minCR.times(100).toFixed(1)}%`)
+                } else {
+                  setCRError('')
+                }
+                setCollatPercent(val)
+                onSqthChange(sqthTradeAmount, val)
               }}
               collatValue={collatPercent}
             />
@@ -514,13 +541,16 @@ export const OpenShortPosition = () => {
               id="open-short-eth-display"
             />
 
+            <TradeDetails
+              actionTitle="Expected sale proceeds to deposit"
+              amount={quote.amountOut.toFixed(2)}
+              unit="ETH"
+              value={!quote.amountOut.isNaN() ? quote.amountOut.times(ethPrice).toFixed(2).toLocaleString() : '0'}
+              hint=""
+              id="open-short-collateral-from-sale"
+            />
+
             <div className={classes.divider}>
-              <TradeInfoItem
-                label="Collateral from sale to deposit"
-                value={quote.amountOut.toFixed(2)}
-                unit="ETH"
-                id="open-short-liquidation-price"
-              />
               <div style={{ marginTop: '10px' }}>
                 <UniswapData
                   slippage={isNaN(Number(slippageAmount)) ? '0' : slippageAmount.toString()}

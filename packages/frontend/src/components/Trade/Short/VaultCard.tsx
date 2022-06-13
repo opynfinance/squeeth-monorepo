@@ -2,6 +2,7 @@ import { createStyles, makeStyles, Card } from '@material-ui/core'
 import AccountBalanceIcon from '@material-ui/icons/AccountBalance'
 import RemoveIcon from '@material-ui/icons/Remove'
 import Image from 'next/image'
+import clsx from 'clsx'
 
 import { MIN_COLLATERAL_AMOUNT } from 'src/constants/'
 import Arrow from '../../../../public/images/gradient-arrow.svg'
@@ -44,6 +45,9 @@ const useStyles = makeStyles(() =>
       fontSize: '.75rem',
       color: 'rgb(245, 71, 92)',
     },
+    vaultItems: {
+      flexBasis: '30%',
+    },
   }),
 )
 
@@ -77,35 +81,39 @@ const VaultCard = ({ collatRatio, liqPrice, id, vaultCollat, vaultId, error }: V
       <div className={classes.subComponent}>
         <p className={classes.valueTitle}>Liquidation Price</p>
         <div className={classes.valueContainer}>
-          <span className="prev-liq-price">${liqPrice.existing}</span>
+          <span className={clsx(classes.vaultItems, 'prev-liq-price')}>${liqPrice.existing}</span>
 
-          <span className={classes.arrow}>
+          <span className={clsx(classes.vaultItems, classes.arrow)}>
             <Image src={Arrow} alt="Liquidation Arrow" />
           </span>
 
-          <span className="current-liq-price">${liqPrice.after}</span>
+          <span className={clsx(classes.vaultItems, 'current-liq-price')}>${liqPrice.after}</span>
         </div>
       </div>
       <div className={classes.subComponent}>
         <p className={classes.valueTitle}>Vault Collateralization Ratio</p>
         <div className={classes.valueContainer}>
-          <span className="prev-collat-ratio">{vaultId !== 0 ? `${collatRatio.existing}%` : <RemoveIcon />}</span>
+          <span className={clsx(classes.vaultItems, 'prev-collat-ratio')}>
+            {vaultId !== 0 ? `${collatRatio.existing}%` : <RemoveIcon />}
+          </span>
 
-          <span className={classes.arrow}>
+          <span className={clsx(classes.vaultItems, classes.arrow)}>
             <Image src={Arrow} alt="Collateral Ratio Arrow" />
           </span>
-          <span className="current-collat-ratio">{collatRatio.after}%</span>
+          <span className={clsx(classes.vaultItems, 'current-collat-ratio')}>{collatRatio.after}%</span>
         </div>
       </div>
       <div className={classes.subComponent}>
         <p className={classes.valueTitle}>Vault Collateral</p>
         <div className={classes.valueContainer}>
-          <span className="prev-vault-collat">{vaultId !== 0 ? `${vaultCollat.existing} ETH` : <RemoveIcon />}</span>
+          <span className={clsx(classes.vaultItems, 'prev-vault-collat')}>
+            {vaultId !== 0 ? `${vaultCollat.existing} ETH` : <RemoveIcon />}
+          </span>
 
-          <span className={classes.arrow}>
+          <span className={clsx(classes.vaultItems, classes.arrow)}>
             <Image src={Arrow} alt="Vault Collateral Arrow" />
           </span>
-          <span className="current-vault-collat">{vaultCollat.after} ETH</span>
+          <span className={clsx(classes.vaultItems, 'current-vault-collat')}>{vaultCollat.after} ETH</span>
         </div>
         {error?.vaultCollat !== '' && (
           <span className={classes.errorMsg}>{`Minimum vault collateral is ${MIN_COLLATERAL_AMOUNT} ETH`}</span>

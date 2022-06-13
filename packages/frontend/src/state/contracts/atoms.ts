@@ -39,6 +39,14 @@ export const swapRouterContractAtom = atom<Contract | null>((get) => {
   if (!web3) return null
   return getContract(web3, swapRouter, routerABI)
 })
+
+export const swapRouter2ContractAtom = atom<Contract | null>((get) => {
+  const web3 = get(web3Atom)
+  const { swapRouter2 } = get(addressesAtom)
+  if (!web3) return null
+  return getContract(web3, swapRouter2, routerABI)
+})
+
 export const squeethPoolContractAtom = atom<Contract | null>((get) => {
   const web3 = get(web3Atom)
   const { squeethPool } = get(addressesAtom)
