@@ -188,7 +188,7 @@ type LPPosition @entity {
   # Avg value spent per osqth for realized position
   realizedOSQTHUnitCost: BigDecimal!
   # Avg value spent per eth for realized position
-  realizedETGUnitCost: BigDecimal!
+  realizedETHUnitCost: BigDecimal!
   # Avg value got per osqth
   realizedOSQTHUnitGain: BigDecimal!
   # Avg value got per eth

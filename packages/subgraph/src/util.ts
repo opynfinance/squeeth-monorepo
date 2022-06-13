@@ -2,6 +2,7 @@ import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { Address, ethereum } from "@graphprotocol/graph-ts";
 import {
   Account,
+  LPPosition,
   Pool,
   Position,
   TransactionHistory,
@@ -103,11 +104,47 @@ export function clearPosition(userAddr: string): Position {
   return position as Position;
 }
 
+export function loadOrCreateLPPosition(userAddr: string): LPPosition {
+  let lpPosition = LPPosition.load(userAddr);
+  // if no position, create new entity
+  if (lpPosition == null) {
+    lpPosition = new lpPosition(userAddr);
+    lpPosition.owner = userAddr;
+
+    lpPosition.unrealizedOSQTHAmount = ZERO_BD;
+    lpPosition.unrealizedETHAmount = ZERO_BD;
+    lpPosition.unrealizedOSQTHUnitCost = ZERO_BD;
+    lpPosition.unrealizedETHUnitCost = ZERO_BD;
+
+    lpPosition.realizedOSQTHUnitCost = ZERO_BD;
+    lpPosition.realizedETHUnitCost = ZERO_BD;
+    lpPosition.realizedOSQTHUnitGain = ZERO_BD;
+    lpPosition.realizedETHUnitGain = ZERO_BD;
+    lpPosition.realizedOSQTHAmount = ZERO_BD;
+    lpPosition.realizedETHAmount = ZERO_BD;
+  }
+  return lpPosition as LPPosition;
+}
+
 export function loadOrCreatePosition(userAddr: string): Position {
   let position = Position.load(userAddr);
   // if no position, create new entity
   if (position == null) {
-    position = clearPosition(userAddr);
+    position = new Position(userAddr);
+    position.owner = userAddr;
+    position.positionType = "NONE";
+
+    position.unrealizedOSQTHAmount = ZERO_BD;
+    position.unrealizedETHAmount = ZERO_BD;
+    position.unrealizedOSQTHUnitCost = ZERO_BD;
+    position.unrealizedETHUnitCost = ZERO_BD;
+
+    position.realizedOSQTHUnitCost = ZERO_BD;
+    position.realizedETHUnitCost = ZERO_BD;
+    position.realizedOSQTHUnitGain = ZERO_BD;
+    position.realizedETHUnitGain = ZERO_BD;
+    position.realizedOSQTHAmount = ZERO_BD;
+    position.realizedETHAmount = ZERO_BD;
   }
   return position as Position;
 }

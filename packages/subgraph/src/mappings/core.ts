@@ -114,11 +114,13 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
         position.realizedOSQTHAmount
       );
     }
+  }
 
-    // buying
-    if (amount0.lt(ZERO_BD)) {
-      transactionType = "BUY_OSQTH";
-    }
+  // buying
+  if (amount0.lt(ZERO_BD)) {
+    transactionType = "BUY_OSQTH";
+  } else if (amount0.gt(ZERO_BD)) {
+    transactionType = "SELL_OSQTH";
   }
 
   const transactionHistory = createTransactionHistory(transactionType, event);
