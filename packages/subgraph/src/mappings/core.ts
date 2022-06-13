@@ -11,13 +11,17 @@ import {
   TOKEN_DECIMALS_18,
   TOKEN_DECIMALS_USDC,
   USDC_WETH_POOL,
+  ZERO_BD,
 } from "../constants";
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import {
+  clearPosition,
   createTransactionHistory,
   getETHUSDCPrice,
+  loadOrCreateAccount,
   loadOrCreatePosition,
 } from "../util";
+import { convertTokenToDecimal } from "../utils";
 
 export function handleInitialize(event: Initialize): void {
   // update pool sqrt price
@@ -43,9 +47,9 @@ export function handleInitialize(event: Initialize): void {
 
 export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
   let osqthPool = Pool.load(event.address.toHexString());
+  const account = loadOrCreateAccount(event.transaction.from.toHex());
   const position = loadOrCreatePosition(event.transaction.from.toHex());
   let usdcPrices = getETHUSDCPrice();
-
   if (osqthPool == null) {
     return;
   }
@@ -65,38 +69,63 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
   osqthPool.save();
 
   let transactionType = "";
-  let positionBalance = position.positionBalance;
-  // selling
-  if (event.params.amount0.gt(BIGINT_ZERO)) {
-    transactionType = "SELL_OSQTH";
-  }
-
-  // buying
-  if (event.params.amount0.lt(BIGINT_ZERO)) {
-    transactionType = "BUY_OSQTH";
-  }
-
-  // amount0 > 0, so need to subtract it from position balance
-  // amount0 < 0, so need to subtract it from position balance to add it as positive number
-  positionBalance = positionBalance.minus(event.params.amount0);
-  // event.params.amount0 > 0, current accumulated cost - this tx osqth amount * osqth price in eth * eth in usd
-  // event.params.amount0 < 0, current accumulated cost + this tx osqth amount * osqth price in eth * eth in usd
-  position.unrealizedCost = position.unrealizedCost.minus(
-    event.params.amount0
-      .times(BigInt.fromString(osqthPrices[0].toString()))
-      .times(BigInt.fromString(usdcPrices[1].toString()))
+  // amount0 > 0, selling, so need to subtract it from position balance
+  // amount0 < 0, buying, so need to subtract it from position balance to add it as positive number
+  const amount0 = convertTokenToDecimal(
+    event.params.amount0,
+    TOKEN_DECIMALS_18
   );
-
-  // > 0, long; < 0 short; = 0 neutral
-  if (positionBalance.gt(BIGINT_ZERO)) {
-    position.positionType = "LONG";
-  } else if (positionBalance.lt(BIGINT_ZERO)) {
-    position.positionType = "SHORT";
+  const oldosqthUnrealizedAmount = position.unrealizedOSQTHAmount;
+  position.unrealizedOSQTHAmount = oldosqthUnrealizedAmount.minus(amount0);
+  if (position.unrealizedOSQTHAmount.equals(ZERO_BD)) {
+    clearPosition(event.transaction.from.toHex());
   } else {
-    position.positionType = "NEUTRAL";
-  }
+    // > 0, long; < 0 short; = 0 none
+    if (position.unrealizedOSQTHAmount.gt(ZERO_BD)) {
+      position.positionType = "LONG";
+    } else if (position.unrealizedOSQTHAmount.lt(ZERO_BD)) {
+      position.positionType = "SHORT";
+    }
 
-  position.positionBalance = positionBalance;
+    const osqthPriceInUSD = osqthPrices[0].times(usdcPrices[1]);
+    // event.params.amount0 > 0, selling, current accumulated cost - this tx osqth amount * osqth price in eth * eth in usd
+    // event.params.amount0 < 0, buying, current accumulated cost + this tx osqth amount * osqth price in eth * eth in usd
+    const unrealizedOSQTHCost = position.unrealizedOSQTHUnitCost
+      .times(oldosqthUnrealizedAmount)
+      .minus(amount0.times(osqthPriceInUSD));
+    position.unrealizedOSQTHUnitCost = unrealizedOSQTHCost.div(
+      position.unrealizedOSQTHAmount
+    );
+
+    // selling, updating realizedOSQTHAmount & realizedOSQTHUnitGain & realizedOSQTHUnitCost
+    if (amount0.gt(ZERO_BD)) {
+      transactionType = "SELL_OSQTH";
+      const oldosqthRealizedAmount = position.realizedOSQTHAmount;
+      position.realizedOSQTHAmount = oldosqthRealizedAmount.plus(amount0);
+      const newRealizedOSQTHGain = position.realizedOSQTHUnitGain
+        .times(oldosqthRealizedAmount)
+        .plus(amount0.times(osqthPriceInUSD));
+      position.realizedOSQTHUnitGain = newRealizedOSQTHGain.div(
+        position.realizedOSQTHAmount
+      );
+
+      const newRealizedOSQTHCost = position.realizedOSQTHUnitCost
+        .times(oldosqthRealizedAmount)
+        .plus(
+          event.params.amount0
+            .toBigDecimal()
+            .times(position.unrealizedOSQTHUnitCost)
+        );
+      position.realizedOSQTHUnitCost = newRealizedOSQTHCost.div(
+        position.realizedOSQTHAmount
+      );
+    }
+
+    // buying
+    if (amount0.lt(ZERO_BD)) {
+      transactionType = "BUY_OSQTH";
+    }
+  }
 
   const transactionHistory = createTransactionHistory(transactionType, event);
   transactionHistory.timestamp = event.block.timestamp;
@@ -106,6 +135,7 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
   transactionHistory.ethAmount = event.params.amount1;
   transactionHistory.oSqthPriceInETH = osqthPrices[0];
 
+  account.save();
   position.save();
   transactionHistory.save();
 }

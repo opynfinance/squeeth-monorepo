@@ -149,13 +149,13 @@ type Position @entity {
   positionType: PositionType!
 
   # current osqth amount the user put in this position
-  osqthBalance: BigDecimal!
+  unrealizedOSQTHAmount: BigDecimal!
   # current eth amount the user put in this position
-  ethBalance: BigDecimal!
-  # osqth spent in USD value for unrealized position (Execution price)
-  unrealizedOSQTHCost: BigDecimal!
-  # eth spent in USD value for unrealized position (Execution price)
-  unrealizedETHCost: BigDecimal!
+  unrealizedETHAmount: BigDecimal!
+  # avg osqth spent in USD value for unrealized position (Execution price)
+  unrealizedOSQTHUnitCost: BigDecimal!
+  # avg eth spent in USD value for unrealized position (Execution price)
+  unrealizedETHUnitCost: BigDecimal!
 
   # Avg value spent per osqth for realized position
   realizedOSQTHUnitCost: BigDecimal!
@@ -177,9 +177,9 @@ type LPPosition @entity {
   owner: Account!
 
   # current osqth amount the user put in this position
-  osqthBalance: BigDecimal!
+  unrealizedOSQTHAmount: BigDecimal!
   # current eth amount the user put in this position
-  ethBalance: BigDecimal!
+  unrealizedETHAmount: BigDecimal!
   # avg osqth spent in USD value for unrealized position (Execution price)
   unrealizedOSQTHUnitCost: BigDecimal!
   # avg eth spent in USD value for unrealized position (Execution price)

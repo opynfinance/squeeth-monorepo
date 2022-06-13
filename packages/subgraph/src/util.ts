@@ -84,25 +84,30 @@ export function loadOrCreateAccount(accountId: string): Account {
   return account as Account;
 }
 
+export function clearPosition(userAddr: string): Position {
+  let position = Position.load(userAddr);
+  position.owner = userAddr;
+  position.positionType = "NONE";
+
+  position.unrealizedOSQTHAmount = ZERO_BD;
+  position.unrealizedETHAmount = ZERO_BD;
+  position.unrealizedOSQTHUnitCost = ZERO_BD;
+  position.unrealizedETHUnitCost = ZERO_BD;
+
+  position.realizedOSQTHUnitCost = ZERO_BD;
+  position.realizedETHUnitCost = ZERO_BD;
+  position.realizedOSQTHUnitGain = ZERO_BD;
+  position.realizedETHUnitGain = ZERO_BD;
+  position.realizedOSQTHAmount = ZERO_BD;
+  position.realizedETHAmount = ZERO_BD;
+  return position as Position;
+}
+
 export function loadOrCreatePosition(userAddr: string): Position {
   let position = Position.load(userAddr);
   // if no position, create new entity
   if (position == null) {
-    position = new Position(userAddr);
-    position.owner = userAddr;
-    position.positionType = "NONE";
-
-    position.osqthBalance = ZERO_BD;
-    position.ethBalance = ZERO_BD;
-    position.unrealizedOSQTHCost = ZERO_BD;
-    position.unrealizedETHCost = ZERO_BD;
-
-    position.realizedOSQTHUnitCost = ZERO_BD;
-    position.realizedETHUnitCost = ZERO_BD;
-    position.realizedOSQTHUnitGain = ZERO_BD;
-    position.realizedETHUnitGain = ZERO_BD;
-    position.realizedOSQTHAmount = ZERO_BD;
-    position.realizedETHAmount = ZERO_BD;
+    position = clearPosition(userAddr);
   }
   return position as Position;
 }
