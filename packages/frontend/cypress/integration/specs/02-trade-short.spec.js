@@ -72,7 +72,7 @@ describe('Trade on trade page', () => {
         cy.get('#trade-card').parent().scrollTo('top')
         cy.get('#open-short-sqth-input').clear().type('2', { delay: 200, force: true }).should('have.value', '20')
 
-        cy.get('#trade-card').parent().scrollTo('bottom')
+        cy.get('#trade-card').parent().wait(10000).scrollTo('bottom')
         cy.get('#open-short-vault-card .current-vault-collat')
           .invoke('text')
           .then(parseFloat)
@@ -159,7 +159,7 @@ describe('Trade on trade page', () => {
       it('input box eth post trade balance should be the same as before-trade - input when input changes', () => {
         cy.get('#open-short-eth-before-trade-balance').then(($span) => {
           cy.get('#open-short-eth-post-trade-balance')
-            .then((v) => Number(v.text()))
+            .then((v) => v.text())
             .should('equal', (Number($span.text()) - collateralToDeposit).toFixed(4))
         })
       })
@@ -477,7 +477,8 @@ describe('Trade on trade page', () => {
         })
 
         it('there is close short tx finished card after tx succeeds with correct closing value', () => {
-          cy.get('#close-short-card').should('contain.text', 'Close').should('contain.text', 'Closed')
+          cy.get('#conf-msg').should('contain.text', 'Closed')
+          cy.get('#conf-msg').should('contain.text', 'Squeeth Short Position')
           cy.get('#conf-msg').should('contain.text', (0.01).toFixed(6))
           cy.get('#close-short-close-btn').click({ force: true })
         })
