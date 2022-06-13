@@ -76,7 +76,7 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
   const oldosqthUnrealizedAmount = position.unrealizedOSQTHAmount;
   position.unrealizedOSQTHAmount = oldosqthUnrealizedAmount.minus(amount0);
   if (position.unrealizedOSQTHAmount.equals(ZERO_BD)) {
-    clearPosition(event.transaction.from.toHex());
+    clearPosition(event.transaction.from.toHex(), position);
   } else {
     // > 0, long; < 0 short; = 0 none
     if (position.unrealizedOSQTHAmount.gt(ZERO_BD)) {

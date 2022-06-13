@@ -85,8 +85,7 @@ export function loadOrCreateAccount(accountId: string): Account {
   return account as Account;
 }
 
-export function clearPosition(userAddr: string): Position {
-  let position = Position.load(userAddr);
+export function clearPosition(userAddr: string, position: Position): Position {
   position.owner = userAddr;
   position.positionType = "NONE";
 
@@ -108,7 +107,7 @@ export function loadOrCreateLPPosition(userAddr: string): LPPosition {
   let lpPosition = LPPosition.load(userAddr);
   // if no position, create new entity
   if (lpPosition == null) {
-    lpPosition = new lpPosition(userAddr);
+    lpPosition = new LPPosition(userAddr);
     lpPosition.owner = userAddr;
 
     lpPosition.unrealizedOSQTHAmount = ZERO_BD;
@@ -131,20 +130,7 @@ export function loadOrCreatePosition(userAddr: string): Position {
   // if no position, create new entity
   if (position == null) {
     position = new Position(userAddr);
-    position.owner = userAddr;
-    position.positionType = "NONE";
-
-    position.unrealizedOSQTHAmount = ZERO_BD;
-    position.unrealizedETHAmount = ZERO_BD;
-    position.unrealizedOSQTHUnitCost = ZERO_BD;
-    position.unrealizedETHUnitCost = ZERO_BD;
-
-    position.realizedOSQTHUnitCost = ZERO_BD;
-    position.realizedETHUnitCost = ZERO_BD;
-    position.realizedOSQTHUnitGain = ZERO_BD;
-    position.realizedETHUnitGain = ZERO_BD;
-    position.realizedOSQTHAmount = ZERO_BD;
-    position.realizedETHAmount = ZERO_BD;
+    position = clearPosition(userAddr, position);
   }
   return position as Position;
 }
