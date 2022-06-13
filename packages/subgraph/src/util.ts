@@ -84,16 +84,13 @@ export function loadOrCreateAccount(accountId: string): Account {
   return account as Account;
 }
 
-export function loadOrCreatePosition(
-  positionType: string,
-  userAddr: string
-): Position {
+export function loadOrCreatePosition(userAddr: string): Position {
   let position = Position.load(userAddr);
   // if no position, create new entity
   if (position == null) {
     position = new Position(userAddr);
     position.owner = userAddr;
-    position.positionType = positionType;
+    position.positionType = "NONE";
 
     position.osqthBalance = ZERO_BD;
     position.ethBalance = ZERO_BD;
