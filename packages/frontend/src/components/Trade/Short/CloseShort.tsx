@@ -259,6 +259,16 @@ export const CloseShort = () => {
   )
   const handleSqthChange = useMemo(() => debounce(onSqthChange, 500), [onSqthChange])
 
+  useAppEffect(() => {
+    if (amount.lte(0)) {
+      setSellCloseQuote({
+        amountIn: BIG_ZERO,
+        maximumAmountIn: BIG_ZERO,
+        priceImpact: '0',
+      })
+    }
+  }, [amount, setSellCloseQuote])
+
   const handleConfirmApproval = async () => {
     try {
       setCloseLoading(true)
@@ -285,9 +295,7 @@ export const CloseShort = () => {
           amount,
           withdrawCollat,
           sellCloseQuote.maximumAmountIn,
-          sellCloseQuote.maximumAmountIn.gt(withdrawCollat)
-            ? sellCloseQuote.maximumAmountIn.minus(withdrawCollat)
-            : BIG_ZERO,
+          sellCloseQuote.amountIn.gt(withdrawCollat) ? sellCloseQuote.amountIn.minus(withdrawCollat) : BIG_ZERO,
           async () => {
             setIsTxFirstStep(false)
             setCloseLoading(false)
@@ -346,6 +354,7 @@ export const CloseShort = () => {
               }}
               className={classes.amountInput}
               style={{ width: '300px' }}
+              id="close-short-close-btn"
             >
               {'Close'}
             </PrimaryButton>
@@ -494,6 +503,9 @@ export const CloseShort = () => {
                   vaultCollat={{
                     existing: vault?.collateralAmount.toFixed(2) ?? '0',
                     after: newCollat.toFixed(2),
+                  }}
+                  error={{
+                    vaultCollat: closeError && closeError !== '' ? closeError : '',
                   }}
                   vaultId={vaultId}
                   id="close-short-vault-card"
