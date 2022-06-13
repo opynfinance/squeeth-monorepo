@@ -41,7 +41,9 @@ const TradeDetails: React.FC<TradeDetailsType> = ({ actionTitle, amount, id, uni
       <div className={classes.squeethExp}>
         <div>
           <Typography variant="caption">{actionTitle}</Typography>
-          <Typography className={clsx(classes.squeethExpTxt, 'collateral-to-deposit')}>{amount}</Typography>
+          <Typography className={clsx(classes.squeethExpTxt, 'collateral-to-deposit', 'trade-details-amount')}>
+            {amount}
+          </Typography>
         </div>
         <div>
           <Typography variant="caption">${value}</Typography>
