@@ -4,13 +4,15 @@ import {
   DecreaseLiquidity,
   IncreaseLiquidity,
 } from "../../generated/NonfungiblePositionManager/NonfungiblePositionManager";
-import { Position } from "../../generated/schema";
+import { LPPosition, Position } from "../../generated/schema";
 import { ONE_BI, TOKEN_DECIMALS_18, ZERO_BD, ZERO_BI } from "../constants";
 import {
+  initLPPosition,
   createTransactionHistory,
   getETHUSDCPrice,
   getoSQTHETHPrice,
   loadOrCreateAccount,
+  loadOrCreateLPPosition,
   loadOrCreatePosition,
 } from "../util";
 import { convertTokenToDecimal } from "../utils";
@@ -20,46 +22,41 @@ function updateLPposition(
   userAddr: string,
   eventAmount0: BigInt,
   eventAmount1: BigInt
-) {
-  let usdcPrices = getETHUSDCPrice();
-  let osqthPrices = getoSQTHETHPrice();
+): LPPosition {
+  const usdcPrices = getETHUSDCPrice();
+  const osqthPrices = getoSQTHETHPrice();
 
-  const lpPosition = loadOrCreatePosition("LP", userAddr);
-  let amount0 = convertTokenToDecimal(eventAmount0, TOKEN_DECIMALS_18);
-  let amount1 = convertTokenToDecimal(eventAmount1, TOKEN_DECIMALS_18);
-  lpPosition.osqthBalance = lpPosition.osqthBalance.plus(amount0);
-  lpPosition.ethBalance = lpPosition.ethBalance.plus(amount1);
+  let lpPosition = loadOrCreateLPPosition(userAddr);
+  const amount0 = convertTokenToDecimal(eventAmount0, TOKEN_DECIMALS_18);
+  const amount1 = convertTokenToDecimal(eventAmount1, TOKEN_DECIMALS_18);
+  const oldUnrealizedOSQTHAmount = lpPosition.unrealizedOSQTHAmount;
+  const oldUnrealizedETHAmount = lpPosition.unrealizedETHAmount;
+  lpPosition.unrealizedOSQTHAmount =
+    lpPosition.unrealizedOSQTHAmount.plus(amount0);
+  lpPosition.unrealizedETHAmount = lpPosition.unrealizedETHAmount.plus(amount1);
 
-  if (lpPosition.osqthBalance == ZERO_BD && lpPosition.ethBalance == ZERO_BD) {
-    lpPosition.unrealizedOSQTHCost = ZERO_BD;
-    lpPosition.unrealizedETHCost = ZERO_BD;
+  if (
+    lpPosition.unrealizedOSQTHAmount == ZERO_BD &&
+    lpPosition.unrealizedETHAmount == ZERO_BD
+  ) {
+    lpPosition = initLPPosition(userAddr, lpPosition);
   } else {
-    lpPosition.unrealizedOSQTHCost = lpPosition.unrealizedOSQTHCost.plus(
-      lpPosition.osqthBalance.times(osqthPrices[3])
+    const unrealizedOSQTHCost = lpPosition.unrealizedOSQTHUnitCost
+      .times(oldUnrealizedOSQTHAmount)
+      .plus(amount0.times(osqthPrices[3]));
+    lpPosition.unrealizedOSQTHUnitCost = unrealizedOSQTHCost.div(
+      lpPosition.unrealizedOSQTHAmount
     );
-    lpPosition.unrealizedETHCost = lpPosition.unrealizedETHCost.plus(
-      lpPosition.ethBalance.times(usdcPrices[1])
+
+    const unrealizedETHCost = lpPosition.unrealizedETHUnitCost
+      .times(oldUnrealizedETHAmount)
+      .plus(amount1.times(usdcPrices[1]));
+    lpPosition.unrealizedOSQTHUnitCost = unrealizedETHCost.div(
+      lpPosition.unrealizedETHAmount
     );
   }
 
-  const longPosition = Position.load(`${userAddr}-${"LONG"}`);
-  if (longPosition != null) {
-    longPosition.osqthBalance = longPosition.osqthBalance.minus(amount0);
-    longPosition.unrealizedOSQTHCost = longPosition.unrealizedOSQTHCost.minus(
-      amount0.times(osqthPrices[3])
-    );
-    const newRealizedOSQTHGain = longPosition.realizedOSQTHAmount
-      .times(longPosition.realizedOSQTHUnitGain)
-      .plus(osqthPrices[3].times(amount0));
-    longPosition.realizedOSQTHUnitGain = newRealizedOSQTHGain.div(
-      longPosition.realizedOSQTHAmount.plus(amount0)
-    );
-    longPosition.realizedOSQTHAmount =
-      longPosition.realizedOSQTHAmount.plus(amount0);
-  }
-
-  lpPosition.save();
-  longPosition.save();
+  return lpPosition as LPPosition;
 }
 
 // selling to remove lp
@@ -69,9 +66,61 @@ export function handleIncreaseLiquidity(event: IncreaseLiquidity): void {
   transactionHistory.ethAmount = event.params.amount1;
   transactionHistory.save();
 
-  let userAddr = event.transaction.from.toHex();
+  const osqthPrices = getoSQTHETHPrice();
+  const osqthPriceInUSD = osqthPrices[3];
+  const userAddr = event.transaction.from.toHex();
   const account = loadOrCreateAccount(userAddr);
-  updateLPposition(userAddr, event.params.amount0, event.params.amount1);
+
+  const lpPosition = updateLPposition(
+    userAddr,
+    event.params.amount0,
+    event.params.amount1
+  );
+  const amount0 = convertTokenToDecimal(
+    event.params.amount0,
+    TOKEN_DECIMALS_18
+  );
+
+  // if long & lp
+  const longPosition = Position.load(userAddr);
+  if (longPosition == null) {
+    return;
+  } else if (longPosition != null && longPosition.positionType === "LONG") {
+    lpPosition.isLongAndLP = true;
+    // updateing unrealized long positions
+    const oldosqthUnrealizedAmount = longPosition.unrealizedOSQTHAmount;
+    longPosition.unrealizedOSQTHAmount =
+      oldosqthUnrealizedAmount.minus(amount0);
+    if (longPosition.unrealizedOSQTHAmount.equals(ZERO_BD)) {
+      longPosition.positionType = "NONE";
+    }
+    const unrealizedOSQTHCost = longPosition.unrealizedOSQTHUnitCost
+      .times(oldosqthUnrealizedAmount)
+      .minus(amount0.times(osqthPriceInUSD));
+    longPosition.unrealizedOSQTHUnitCost = unrealizedOSQTHCost.div(
+      longPosition.unrealizedOSQTHAmount
+    );
+
+    // updateing realized long positions
+    const oldosqthRealizedAmount = longPosition.realizedOSQTHAmount;
+    longPosition.realizedOSQTHAmount = oldosqthRealizedAmount.plus(amount0);
+    const newRealizedOSQTHGain = longPosition.realizedOSQTHUnitGain
+      .times(oldosqthRealizedAmount)
+      .plus(amount0.times(osqthPriceInUSD));
+    longPosition.realizedOSQTHUnitGain = newRealizedOSQTHGain.div(
+      longPosition.realizedOSQTHAmount
+    );
+
+    const newRealizedOSQTHCost = longPosition.realizedOSQTHUnitCost
+      .times(oldosqthRealizedAmount)
+      .plus(amount0.times(longPosition.unrealizedOSQTHUnitCost));
+    longPosition.realizedOSQTHUnitCost = newRealizedOSQTHCost.div(
+      longPosition.realizedOSQTHAmount
+    );
+  }
+
+  lpPosition.save();
+  longPosition.save();
   account.save();
 }
 
@@ -83,28 +132,59 @@ export function handleDecreaseLiquidity(event: DecreaseLiquidity): void {
   );
   transactionHistory.oSqthAmount = event.params.amount0;
   transactionHistory.ethAmount = event.params.amount1;
-
   transactionHistory.save();
 
+  const osqthPrices = getoSQTHETHPrice();
+  const osqthPriceInUSD = osqthPrices[3];
   let userAddr = event.transaction.from.toHex();
-  const account = loadOrCreateAccount(userAddr);
-  updateLPposition(
+  const lpPosition = updateLPposition(
     userAddr,
     event.params.amount0.times(ZERO_BI.minus(ONE_BI)),
     event.params.amount1.times(ZERO_BI.minus(ONE_BI))
   );
-  account.save();
+  const amount0 = convertTokenToDecimal(
+    event.params.amount0.times(ZERO_BI.minus(ONE_BI)),
+    TOKEN_DECIMALS_18
+  );
+
+  const longPosition = Position.load(userAddr);
+  if (longPosition == null) {
+    return;
+  }
+  if (lpPosition.isLongAndLP == true) {
+    // updateing unrealized long positions
+    const oldosqthUnrealizedAmount = longPosition.unrealizedOSQTHAmount;
+    longPosition.unrealizedOSQTHAmount =
+      oldosqthUnrealizedAmount.minus(amount0);
+    if (longPosition.unrealizedOSQTHAmount.equals(ZERO_BD)) {
+      longPosition.positionType = "NONE";
+    }
+    const unrealizedOSQTHCost = longPosition.unrealizedOSQTHUnitCost
+      .times(oldosqthUnrealizedAmount)
+      .minus(amount0.times(osqthPriceInUSD));
+    longPosition.unrealizedOSQTHUnitCost = unrealizedOSQTHCost.div(
+      longPosition.unrealizedOSQTHAmount
+    );
+  }
+
+  lpPosition.save();
+  longPosition.save();
 }
 
 export function handleCollect(event: Collect): void {
   const transactionHistory = createTransactionHistory("COLLECT_FEE", event);
   transactionHistory.oSqthAmount = event.params.amount0;
   transactionHistory.ethAmount = event.params.amount1;
-
   transactionHistory.save();
 
   let userAddr = event.transaction.from.toHex();
   const account = loadOrCreateAccount(userAddr);
-  updateLPposition(userAddr, event.params.amount0, event.params.amount1);
+  const lpPosition = updateLPposition(
+    userAddr,
+    event.params.amount0,
+    event.params.amount1
+  );
+
+  lpPosition.save();
   account.save();
 }

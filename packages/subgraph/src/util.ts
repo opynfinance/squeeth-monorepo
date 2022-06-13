@@ -85,7 +85,7 @@ export function loadOrCreateAccount(accountId: string): Account {
   return account as Account;
 }
 
-export function clearPosition(userAddr: string, position: Position): Position {
+export function initPosition(userAddr: string, position: Position): Position {
   position.owner = userAddr;
   position.positionType = "NONE";
 
@@ -103,24 +103,33 @@ export function clearPosition(userAddr: string, position: Position): Position {
   return position as Position;
 }
 
+export function initLPPosition(
+  userAddr: string,
+  lpPosition: LPPosition
+): LPPosition {
+  lpPosition.owner = userAddr;
+  lpPosition.isLongAndLP = false;
+
+  lpPosition.unrealizedOSQTHAmount = ZERO_BD;
+  lpPosition.unrealizedETHAmount = ZERO_BD;
+  lpPosition.unrealizedOSQTHUnitCost = ZERO_BD;
+  lpPosition.unrealizedETHUnitCost = ZERO_BD;
+
+  lpPosition.realizedOSQTHUnitCost = ZERO_BD;
+  lpPosition.realizedETHUnitCost = ZERO_BD;
+  lpPosition.realizedOSQTHUnitGain = ZERO_BD;
+  lpPosition.realizedETHUnitGain = ZERO_BD;
+  lpPosition.realizedOSQTHAmount = ZERO_BD;
+  lpPosition.realizedETHAmount = ZERO_BD;
+  return lpPosition as LPPosition;
+}
+
 export function loadOrCreateLPPosition(userAddr: string): LPPosition {
   let lpPosition = LPPosition.load(userAddr);
   // if no position, create new entity
   if (lpPosition == null) {
     lpPosition = new LPPosition(userAddr);
-    lpPosition.owner = userAddr;
-
-    lpPosition.unrealizedOSQTHAmount = ZERO_BD;
-    lpPosition.unrealizedETHAmount = ZERO_BD;
-    lpPosition.unrealizedOSQTHUnitCost = ZERO_BD;
-    lpPosition.unrealizedETHUnitCost = ZERO_BD;
-
-    lpPosition.realizedOSQTHUnitCost = ZERO_BD;
-    lpPosition.realizedETHUnitCost = ZERO_BD;
-    lpPosition.realizedOSQTHUnitGain = ZERO_BD;
-    lpPosition.realizedETHUnitGain = ZERO_BD;
-    lpPosition.realizedOSQTHAmount = ZERO_BD;
-    lpPosition.realizedETHAmount = ZERO_BD;
+    lpPosition = initLPPosition(userAddr, lpPosition);
   }
   return lpPosition as LPPosition;
 }
@@ -130,7 +139,7 @@ export function loadOrCreatePosition(userAddr: string): Position {
   // if no position, create new entity
   if (position == null) {
     position = new Position(userAddr);
-    position = clearPosition(userAddr, position);
+    position = initPosition(userAddr, position);
   }
   return position as Position;
 }

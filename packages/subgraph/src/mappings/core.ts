@@ -13,7 +13,7 @@ import {
   ZERO_BD,
 } from "../constants";
 import {
-  clearPosition,
+  initPosition,
   createTransactionHistory,
   getETHUSDCPrice,
   loadOrCreateAccount,
@@ -45,18 +45,19 @@ export function handleInitialize(event: Initialize): void {
 
 export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
   let osqthPool = Pool.load(event.address.toHexString());
-  const account = loadOrCreateAccount(event.transaction.from.toHex());
-  const position = loadOrCreatePosition(event.transaction.from.toHex());
-  let usdcPrices = getETHUSDCPrice();
   if (osqthPool == null) {
     return;
   }
+
+  const account = loadOrCreateAccount(event.transaction.from.toHex());
+  let position = loadOrCreatePosition(event.transaction.from.toHex());
+  const usdcPrices = getETHUSDCPrice();
 
   // token0 osqth
   // token1 weth
   // token0 per token1
   osqthPool.sqrtPrice = event.params.sqrtPriceX96;
-  let osqthPrices = sqrtPriceX96ToTokenPrices(
+  const osqthPrices = sqrtPriceX96ToTokenPrices(
     osqthPool.sqrtPrice,
     TOKEN_DECIMALS_18,
     TOKEN_DECIMALS_18
@@ -76,7 +77,7 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
   const oldosqthUnrealizedAmount = position.unrealizedOSQTHAmount;
   position.unrealizedOSQTHAmount = oldosqthUnrealizedAmount.minus(amount0);
   if (position.unrealizedOSQTHAmount.equals(ZERO_BD)) {
-    clearPosition(event.transaction.from.toHex(), position);
+    position = initPosition(event.transaction.from.toHex(), position);
   } else {
     // > 0, long; < 0 short; = 0 none
     if (position.unrealizedOSQTHAmount.gt(ZERO_BD)) {
