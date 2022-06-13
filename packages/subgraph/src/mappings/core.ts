@@ -7,13 +7,11 @@ import {
 import { Swap as OSQTHSwapEvent } from "../../generated/OSQTHPool/Pool";
 import { sqrtPriceX96ToTokenPrices } from "../utils/pricing";
 import {
-  BIGINT_ZERO,
   TOKEN_DECIMALS_18,
   TOKEN_DECIMALS_USDC,
   USDC_WETH_POOL,
   ZERO_BD,
 } from "../constants";
-import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import {
   clearPosition,
   createTransactionHistory,
@@ -111,11 +109,7 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
 
       const newRealizedOSQTHCost = position.realizedOSQTHUnitCost
         .times(oldosqthRealizedAmount)
-        .plus(
-          event.params.amount0
-            .toBigDecimal()
-            .times(position.unrealizedOSQTHUnitCost)
-        );
+        .plus(amount0.times(position.unrealizedOSQTHUnitCost));
       position.realizedOSQTHUnitCost = newRealizedOSQTHCost.div(
         position.realizedOSQTHAmount
       );
