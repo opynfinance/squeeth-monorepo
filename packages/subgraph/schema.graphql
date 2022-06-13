@@ -14,6 +14,8 @@ type Account @entity {
   vaultCount: BigInt!
   # position balance user has
   positions: [Position!]! @derivedFrom(field: "owner")
+  # lp position balance user has
+  lppositions: [LPPosition!]! @derivedFrom(field: "owner")
 }
 
 type Liquidation @entity {
@@ -137,13 +139,12 @@ type Pool @entity {
 enum PositionType {
   LONG
   SHORT
-  LP
+  NONE
 }
 
 type Position @entity {
-  # user address - position type
-  id: ID!
   # user address
+  id: ID!
   owner: Account!
   positionType: PositionType!
 
@@ -151,17 +152,49 @@ type Position @entity {
   osqthBalance: BigDecimal!
   # current eth amount the user put in this position
   ethBalance: BigDecimal!
-  # eth spent in USD value (Execution price), can get avg spent per eth with ethBalance
-  unrealizedETHCost: BigDecimal!
-  # osqth spent in USD value (Execution price), can get avg spent per osqth with osqthBalance
-  unrealizedOSQTHCost: BigDecimal!
+  # avg osqth spent in USD value for unrealized position (Execution price)
+  unrealizedOSQTHUnitCost: BigDecimal!
+  # avg eth spent in USD value for unrealized position (Execution price)
+  unrealizedETHUnitCost: BigDecimal!
 
+  # Avg value spent per osqth for realized position
+  realizedOSQTHUnitCost: BigDecimal!
+  # Avg value spent per eth for realized position
+  realizedETGUnitCost: BigDecimal!
   # Avg value got per osqth
   realizedOSQTHUnitGain: BigDecimal!
-  # no of oSQTH realised
-  realizedOSQTHAmount: BigDecimal!
   # Avg value got per eth
   realizedETHUnitGain: BigDecimal!
+  # no of oSQTH realised
+  realizedOSQTHAmount: BigDecimal!
+  # no of eth realised
+  realizedETHAmount: BigDecimal!
+}
+
+type LPPosition @entity {
+  # user address
+  id: ID!
+  owner: Account!
+
+  # current osqth amount the user put in this position
+  osqthBalance: BigDecimal!
+  # current eth amount the user put in this position
+  ethBalance: BigDecimal!
+  # avg osqth spent in USD value for unrealized position (Execution price)
+  unrealizedOSQTHUnitCost: BigDecimal!
+  # avg eth spent in USD value for unrealized position (Execution price)
+  unrealizedETHUnitCost: BigDecimal!
+
+  # Avg value spent per osqth for realized position
+  realizedOSQTHUnitCost: BigDecimal!
+  # Avg value spent per eth for realized position
+  realizedETGUnitCost: BigDecimal!
+  # Avg value got per osqth
+  realizedOSQTHUnitGain: BigDecimal!
+  # Avg value got per eth
+  realizedETHUnitGain: BigDecimal!
+  # no of oSQTH realised
+  realizedOSQTHAmount: BigDecimal!
   # no of eth realised
   realizedETHAmount: BigDecimal!
 }
