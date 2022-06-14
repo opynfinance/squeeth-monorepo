@@ -41,7 +41,7 @@ const ConfirmApproval = ({
         <ul style={{ width: '90%', alignSelf: 'flex-start' }}>
           <li style={{ marginBottom: '2em' }}>
             When you open a short position, the wrapper maximizes capital efficiency by using ETH earned from selling
-            oSQTH as collaterl back the vault.
+            oSQTH as collateral back the vault.
           </li>
           <li style={{ marginBottom: '2em' }}>
             When you close a short position, the wrapper maximizes capital efficiency by using collateral from your
@@ -62,7 +62,7 @@ const ConfirmApproval = ({
                 onChange={() => setCheck((prevState) => !prevState)}
               />
             }
-            label="I understand these of changes"
+            label="Makes sense to me, let's squeeth!"
           />
         </ul>
         <Button
@@ -72,7 +72,7 @@ const ConfirmApproval = ({
           onClick={handleConfirmApproval}
           id="confirm-approval-modal-submit-btn"
         >
-          Confirm Approval
+          Approve and get Squeethy
         </Button>
       </Modal>
     </>
