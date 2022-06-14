@@ -76,7 +76,7 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
   );
 
   let unrealizedAmount0 = amount0;
-  const osqthPriceInUSD = osqthPrices[0].times(usdcPrices[1]);
+  const osqthPriceInUSD = osqthPrices[1].times(usdcPrices[1]);
   const oldosqthUnrealizedAmount = position.currentOSQTHAmount;
   position.currentOSQTHAmount = oldosqthUnrealizedAmount.minus(amount0);
 
