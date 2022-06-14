@@ -244,29 +244,23 @@ export function buyOrSellETH(userAddr: string, amount: BigDecimal): void {
 
   let position = loadOrCreatePosition(userAddr);
 
-  // Buy
-  if (amount.gt(ZERO_BD)) {
-    let oldBoughtAmount = position.currentETHAmount.plus(
-      position.realizedETHAmount
-    );
-    let oldRealizedETHGain =
-      position.realizedETHUnitGain.times(oldBoughtAmount);
-
-    position.realizedETHUnitGain = oldRealizedETHGain
-      .plus(amount.times(usdcPrices[1]))
-      .div(oldBoughtAmount.plus(amount));
-  }
-
   // Sell
   if (amount.lt(ZERO_BD)) {
     let absAmount = amount.neg();
-    let oldRealizedETHCost = position.realizedETHUnitCost.times(
-      position.realizedETHAmount
-    );
 
+    let oldRealizedETHAmount = position.realizedETHAmount;
     position.realizedETHAmount = position.realizedETHAmount.plus(absAmount);
-    position.realizedETHUnitCost = oldRealizedETHCost
+
+    let oldRealizedETHGain =
+      position.realizedETHUnitGain.times(oldRealizedETHAmount);
+    position.realizedETHUnitGain = oldRealizedETHGain
       .plus(absAmount.times(usdcPrices[1]))
+      .div(position.realizedETHAmount);
+
+    let oldRealizedETHCost =
+      position.realizedETHUnitCost.times(oldRealizedETHAmount);
+    position.realizedETHUnitCost = oldRealizedETHCost
+      .plus(amount.times(usdcPrices[1]))
       .div(position.realizedETHAmount);
   }
 
@@ -293,29 +287,25 @@ export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
 
   let position = loadOrCreatePosition(userAddr);
 
-  // Buy
-  if (amount.gt(ZERO_BD)) {
-    let oldBoughtAmount = position.currentOSQTHAmount.plus(
-      position.realizedOSQTHAmount
-    );
-    let oldRealizedOSQTHCost =
-      position.realizedOSQTHUnitCost.times(oldBoughtAmount);
-
-    position.realizedOSQTHUnitCost = oldRealizedOSQTHCost
-      .plus(amount.times(osqthPrices[3]))
-      .div(oldBoughtAmount.plus(amount));
-  }
-
   // Sell
   if (amount.lt(ZERO_BD)) {
     let absAmount = amount.neg();
-    let oldRealizedOSQTHGain = position.realizedOSQTHUnitCost.times(
-      position.realizedOSQTHUnitGain
-    );
 
+    let oldRealizedOSQTHAmount = position.realizedOSQTHAmount;
     position.realizedOSQTHAmount = position.realizedOSQTHAmount.plus(absAmount);
+
+    let oldRealizedOSQTHGain = position.realizedOSQTHUnitGain.times(
+      oldRealizedOSQTHAmount
+    );
     position.realizedOSQTHUnitGain = oldRealizedOSQTHGain
       .plus(absAmount.times(osqthPrices[3]))
+      .div(position.realizedOSQTHAmount);
+
+    let oldRealizedOSQTHCost = position.realizedOSQTHUnitCost.times(
+      oldRealizedOSQTHAmount
+    );
+    position.realizedOSQTHUnitCost = oldRealizedOSQTHCost
+      .plus(amount.times(osqthPrices[3]))
       .div(position.realizedOSQTHAmount);
   }
 
