@@ -1,4 +1,4 @@
-import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { Address, ethereum } from "@graphprotocol/graph-ts";
 import {
   Account,
@@ -26,7 +26,6 @@ import {
   ROPSTEN_OSQTH_WETH_POOL,
   LOCALHOST_OSQTH_WETH_POOL,
   RA_OSQTH_WETH_POOL,
-  ZERO_BI,
   MAINNET_OSQTH,
   ROPSTEN_OSQTH,
   LOCALHOST_OSQTH,
@@ -290,9 +289,7 @@ export function buyOrSellETH(userAddr: string, amount: BigDecimal): void {
 // buy: amount > 0
 // sell amount < 0
 export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
-  let usdcPrices = getETHUSDCPrice();
   let osqthPrices = getoSQTHETHPrice();
-  let osqthPrice = osqthPrices[1].times(usdcPrices[1]);
 
   let position = loadOrCreatePosition(userAddr);
 
@@ -305,7 +302,7 @@ export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
       position.realizedOSQTHUnitGain.times(oldBoughtAmount);
 
     position.realizedOSQTHUnitGain = oldRealizedOSQTHGain
-      .plus(amount.times(osqthPrice))
+      .plus(amount.times(osqthPrices[3]))
       .div(oldBoughtAmount.plus(amount));
   }
 
@@ -318,7 +315,7 @@ export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
 
     position.realizedOSQTHAmount = position.realizedOSQTHAmount.plus(absAmount);
     position.realizedOSQTHUnitCost = oldRealizedOSQTHCost
-      .plus(absAmount.times(osqthPrice))
+      .plus(absAmount.times(osqthPrices[3]))
       .div(position.realizedOSQTHAmount);
   }
 
@@ -329,7 +326,7 @@ export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
 
   position.currentOSQTHAmount = position.currentOSQTHAmount.plus(amount);
   position.unrealizedOSQTHUnitCost = oldUnrealizedOSQTHCost
-    .plus(amount.times(osqthPrice))
+    .plus(amount.times(osqthPrices[3]))
     .div(position.currentOSQTHAmount);
 
   // > 0, long; < 0 short; = 0 none

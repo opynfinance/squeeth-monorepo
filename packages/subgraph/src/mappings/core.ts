@@ -124,13 +124,9 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
     transactionType = "SELL_OSQTH";
   }
 
-  const transactionHistory = createTransactionHistory(transactionType, event);
-  transactionHistory.timestamp = event.block.timestamp;
-  transactionHistory.transactionType;
-  transactionHistory.sender = event.transaction.from;
+  let transactionHistory = createTransactionHistory(transactionType, event);
   transactionHistory.oSqthAmount = event.params.amount0;
   transactionHistory.ethAmount = event.params.amount1;
-  transactionHistory.oSqthPriceInETH = osqthPrices[0];
 
   account.save();
   position.save();

@@ -1,14 +1,5 @@
+import { BigInt, Bytes, BigDecimal } from "@graphprotocol/graph-ts";
 import {
-  Address,
-  BigInt,
-  Bytes,
-  log,
-  dataSource,
-  ethereum,
-  BigDecimal,
-} from "@graphprotocol/graph-ts";
-import {
-  Controller,
   BurnShort,
   DepositCollateral,
   DepositUniPositionToken,
@@ -36,14 +27,11 @@ import {
   HourStatSnapshot,
   DayStatSnapshot,
   VaultHistory,
-  TransactionHistory,
 } from "../generated/schema";
 import {
   buyOrSellETH,
   createTransactionHistory,
-  getETHUSDCPrice,
   loadOrCreateAccount,
-  loadOrCreatePosition,
 } from "./util";
 
 import {
@@ -129,7 +117,7 @@ export function handleBurnShort(event: BurnShort): void {
   );
   vaultTransaction.save();
 
-  const transactionHistory = createTransactionHistory("BURN_OSQTH", event);
+  let transactionHistory = createTransactionHistory("BURN_OSQTH", event);
   transactionHistory.owner = vault.owner;
   transactionHistory.oSqthAmount = event.params.amount;
   transactionHistory.save();
@@ -275,7 +263,7 @@ export function handleMintShort(event: MintShort): void {
   );
   vaultTransaction.save();
 
-  const transactionHistory = createTransactionHistory("MINT_OSQTH", event);
+  let transactionHistory = createTransactionHistory("MINT_OSQTH", event);
   transactionHistory.owner = vault.owner;
   transactionHistory.oSqthAmount = event.params.amount;
   transactionHistory.save();
@@ -363,7 +351,7 @@ export function handleWithdrawCollateral(event: WithdrawCollateral): void {
     dayStatSnapshot.totalCollateralAmount.minus(event.params.amount);
   dayStatSnapshot.save();
 
-  const transactionHistory = createTransactionHistory("WITHDRAW_COLLAT", event);
+  let transactionHistory = createTransactionHistory("WITHDRAW_COLLAT", event);
   transactionHistory.owner = vault.owner;
   transactionHistory.ethAmount = event.params.amount;
   transactionHistory.save();

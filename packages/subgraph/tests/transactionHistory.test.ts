@@ -1,4 +1,4 @@
-import { assert, clearStore, log, logStore, test } from "matchstick-as";
+import { assert, clearStore, test } from "matchstick-as";
 import {
   handleBurnShort,
   handleDepositCollateral,
