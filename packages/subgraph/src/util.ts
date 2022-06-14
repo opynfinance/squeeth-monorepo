@@ -249,6 +249,9 @@ export function buyOrSellETH(userAddr: string, amount: BigDecimal): void {
     .plus(amount.times(usdcPrices[1]))
     .div(position.currentETHAmount);
 
+  // Because it will only be used in depositing and withdrawing in short position
+  position.positionType = "SHORT";
+
   position.save();
 }
 
