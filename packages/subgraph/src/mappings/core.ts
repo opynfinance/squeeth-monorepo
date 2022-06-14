@@ -98,7 +98,6 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
 
     // selling, updating realizedOSQTHAmount & realizedOSQTHUnitGain & realizedOSQTHUnitCost
     if (amount0.gt(ZERO_BD)) {
-      transactionType = "SELL_OSQTH";
       const oldosqthRealizedAmount = position.realizedOSQTHAmount;
       position.realizedOSQTHAmount = oldosqthRealizedAmount.plus(amount0);
       const newRealizedOSQTHGain = position.realizedOSQTHUnitGain
