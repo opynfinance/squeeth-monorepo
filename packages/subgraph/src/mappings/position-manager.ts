@@ -60,7 +60,7 @@ function updateLPposition(
 
 // selling to remove lp
 export function handleIncreaseLiquidity(event: IncreaseLiquidity): void {
-  const transactionHistory = createTransactionHistory("ADD_LIQUIDITY", event);
+  let transactionHistory = createTransactionHistory("ADD_LIQUIDITY", event);
   transactionHistory.oSqthAmount = event.params.amount0;
   transactionHistory.ethAmount = event.params.amount1;
   transactionHistory.save();
@@ -124,10 +124,7 @@ export function handleIncreaseLiquidity(event: IncreaseLiquidity): void {
 
 // buying to remove lp
 export function handleDecreaseLiquidity(event: DecreaseLiquidity): void {
-  const transactionHistory = createTransactionHistory(
-    "REMOVE_LIQUIDITY",
-    event
-  );
+  let transactionHistory = createTransactionHistory("REMOVE_LIQUIDITY", event);
   transactionHistory.oSqthAmount = event.params.amount0;
   transactionHistory.ethAmount = event.params.amount1;
   transactionHistory.save();
@@ -169,7 +166,7 @@ export function handleDecreaseLiquidity(event: DecreaseLiquidity): void {
 }
 
 export function handleCollect(event: Collect): void {
-  const transactionHistory = createTransactionHistory("COLLECT_FEE", event);
+  let transactionHistory = createTransactionHistory("COLLECT_FEE", event);
   transactionHistory.oSqthAmount = event.params.amount0;
   transactionHistory.ethAmount = event.params.amount1;
   transactionHistory.save();
