@@ -39,6 +39,7 @@ import {
   TransactionHistory,
 } from "../generated/schema";
 import {
+  buyOrSellETH,
   createTransactionHistory,
   getETHUSDCPrice,
   loadOrCreateAccount,
@@ -174,15 +175,10 @@ export function handleDepositCollateral(event: DepositCollateral): void {
   transactionHistory.ethAmount = event.params.amount;
   transactionHistory.save();
 
-  let usdcPrices = getETHUSDCPrice();
-  let amount = BigDecimal.fromString(event.params.amount.toString());
-
-  let position = loadOrCreatePosition(vault.owner, "SHORT");
-  position.ethBalance = position.ethBalance.plus(amount);
-  position.unrealizedETHCost = position.unrealizedETHCost.plus(
-    amount.times(usdcPrices[1])
+  buyOrSellETH(
+    vault.owner,
+    BigDecimal.fromString(event.params.amount.toString())
   );
-  position.save();
 }
 
 export function handleDepositUniPositionToken(
@@ -372,17 +368,10 @@ export function handleWithdrawCollateral(event: WithdrawCollateral): void {
   transactionHistory.ethAmount = event.params.amount;
   transactionHistory.save();
 
-  let usdcPrices = getETHUSDCPrice();
-  let amount = BigDecimal.fromString(event.params.amount.toString());
-
-  let position = loadOrCreatePosition(vault.owner, "SHORT");
-  position.ethBalance = position.ethBalance.minus(amount);
-  position.realizedETHUnitGain = position.realizedETHUnitGain
-    .times(position.realizedETHAmount)
-    .plus(amount.times(usdcPrices[1]))
-    .div(position.realizedETHAmount.plus(amount));
-  position.realizedETHAmount = position.realizedETHAmount.plus(amount);
-  position.save();
+  buyOrSellETH(
+    vault.owner,
+    BigDecimal.fromString(event.params.amount.toString()).neg()
+  );
 }
 
 export function handleWithdrawUniPositionToken(

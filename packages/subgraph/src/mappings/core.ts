@@ -74,15 +74,15 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
     event.params.amount0,
     TOKEN_DECIMALS_18
   );
-  const oldosqthUnrealizedAmount = position.unrealizedOSQTHAmount;
-  position.unrealizedOSQTHAmount = oldosqthUnrealizedAmount.minus(amount0);
-  if (position.unrealizedOSQTHAmount.equals(ZERO_BD)) {
+  const oldosqthUnrealizedAmount = position.currentOSQTHAmount;
+  position.currentOSQTHAmount = oldosqthUnrealizedAmount.minus(amount0);
+  if (position.currentOSQTHAmount.equals(ZERO_BD)) {
     position = initPosition(event.transaction.from.toHex(), position);
   } else {
     // > 0, long; < 0 short; = 0 none
-    if (position.unrealizedOSQTHAmount.gt(ZERO_BD)) {
+    if (position.currentOSQTHAmount.gt(ZERO_BD)) {
       position.positionType = "LONG";
-    } else if (position.unrealizedOSQTHAmount.lt(ZERO_BD)) {
+    } else if (position.currentOSQTHAmount.lt(ZERO_BD)) {
       position.positionType = "SHORT";
     }
 
@@ -93,7 +93,7 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
       .times(oldosqthUnrealizedAmount)
       .minus(amount0.times(osqthPriceInUSD));
     position.unrealizedOSQTHUnitCost = unrealizedOSQTHCost.div(
-      position.unrealizedOSQTHAmount
+      position.currentOSQTHAmount
     );
 
     // selling, updating realizedOSQTHAmount & realizedOSQTHUnitGain & realizedOSQTHUnitCost

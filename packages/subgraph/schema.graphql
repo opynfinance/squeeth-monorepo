@@ -149,9 +149,9 @@ type Position @entity {
   positionType: PositionType!
 
   # current osqth amount the user put in this position
-  unrealizedOSQTHAmount: BigDecimal!
+  currentOSQTHAmount: BigDecimal!
   # current eth amount the user put in this position
-  unrealizedETHAmount: BigDecimal!
+  currentETHAmount: BigDecimal!
   # avg osqth spent in USD value for unrealized position (Execution price)
   unrealizedOSQTHUnitCost: BigDecimal!
   # avg eth spent in USD value for unrealized position (Execution price)
@@ -178,9 +178,9 @@ type LPPosition @entity {
   isLongAndLP: Boolean!
 
   # current osqth amount the user put in this position
-  unrealizedOSQTHAmount: BigDecimal!
+  currentOSQTHAmount: BigDecimal!
   # current eth amount the user put in this position
-  unrealizedETHAmount: BigDecimal!
+  currentETHAmount: BigDecimal!
   # avg osqth spent in USD value for unrealized position (Execution price)
   unrealizedOSQTHUnitCost: BigDecimal!
   # avg eth spent in USD value for unrealized position (Execution price)

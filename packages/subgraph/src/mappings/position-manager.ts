@@ -29,30 +29,29 @@ function updateLPposition(
   let lpPosition = loadOrCreateLPPosition(userAddr);
   const amount0 = convertTokenToDecimal(eventAmount0, TOKEN_DECIMALS_18);
   const amount1 = convertTokenToDecimal(eventAmount1, TOKEN_DECIMALS_18);
-  const oldUnrealizedOSQTHAmount = lpPosition.unrealizedOSQTHAmount;
-  const oldUnrealizedETHAmount = lpPosition.unrealizedETHAmount;
-  lpPosition.unrealizedOSQTHAmount =
-    lpPosition.unrealizedOSQTHAmount.plus(amount0);
-  lpPosition.unrealizedETHAmount = lpPosition.unrealizedETHAmount.plus(amount1);
+  const oldcurrentOSQTHAmount = lpPosition.currentOSQTHAmount;
+  const oldcurrentETHAmount = lpPosition.currentETHAmount;
+  lpPosition.currentOSQTHAmount = lpPosition.currentOSQTHAmount.plus(amount0);
+  lpPosition.currentETHAmount = lpPosition.currentETHAmount.plus(amount1);
 
   if (
-    lpPosition.unrealizedOSQTHAmount == ZERO_BD &&
-    lpPosition.unrealizedETHAmount == ZERO_BD
+    lpPosition.currentOSQTHAmount == ZERO_BD &&
+    lpPosition.currentETHAmount == ZERO_BD
   ) {
     lpPosition = initLPPosition(userAddr, lpPosition);
   } else {
     const unrealizedOSQTHCost = lpPosition.unrealizedOSQTHUnitCost
-      .times(oldUnrealizedOSQTHAmount)
+      .times(oldcurrentOSQTHAmount)
       .plus(amount0.times(osqthPrices[3]));
     lpPosition.unrealizedOSQTHUnitCost = unrealizedOSQTHCost.div(
-      lpPosition.unrealizedOSQTHAmount
+      lpPosition.currentOSQTHAmount
     );
 
     const unrealizedETHCost = lpPosition.unrealizedETHUnitCost
-      .times(oldUnrealizedETHAmount)
+      .times(oldcurrentETHAmount)
       .plus(amount1.times(usdcPrices[1]));
     lpPosition.unrealizedOSQTHUnitCost = unrealizedETHCost.div(
-      lpPosition.unrealizedETHAmount
+      lpPosition.currentETHAmount
     );
   }
 
@@ -88,17 +87,16 @@ export function handleIncreaseLiquidity(event: IncreaseLiquidity): void {
   } else if (longPosition != null && longPosition.positionType === "LONG") {
     lpPosition.isLongAndLP = true;
     // updateing unrealized long positions
-    const oldosqthUnrealizedAmount = longPosition.unrealizedOSQTHAmount;
-    longPosition.unrealizedOSQTHAmount =
-      oldosqthUnrealizedAmount.minus(amount0);
-    if (longPosition.unrealizedOSQTHAmount.equals(ZERO_BD)) {
+    const oldosqthUnrealizedAmount = longPosition.currentOSQTHAmount;
+    longPosition.currentOSQTHAmount = oldosqthUnrealizedAmount.minus(amount0);
+    if (longPosition.currentOSQTHAmount.equals(ZERO_BD)) {
       longPosition.positionType = "NONE";
     }
     const unrealizedOSQTHCost = longPosition.unrealizedOSQTHUnitCost
       .times(oldosqthUnrealizedAmount)
       .minus(amount0.times(osqthPriceInUSD));
     longPosition.unrealizedOSQTHUnitCost = unrealizedOSQTHCost.div(
-      longPosition.unrealizedOSQTHAmount
+      longPosition.currentOSQTHAmount
     );
 
     // updateing realized long positions
@@ -153,17 +151,16 @@ export function handleDecreaseLiquidity(event: DecreaseLiquidity): void {
   }
   if (lpPosition.isLongAndLP == true) {
     // updateing unrealized long positions
-    const oldosqthUnrealizedAmount = longPosition.unrealizedOSQTHAmount;
-    longPosition.unrealizedOSQTHAmount =
-      oldosqthUnrealizedAmount.minus(amount0);
-    if (longPosition.unrealizedOSQTHAmount.equals(ZERO_BD)) {
+    const oldosqthUnrealizedAmount = longPosition.currentOSQTHAmount;
+    longPosition.currentOSQTHAmount = oldosqthUnrealizedAmount.minus(amount0);
+    if (longPosition.currentOSQTHAmount.equals(ZERO_BD)) {
       longPosition.positionType = "NONE";
     }
     const unrealizedOSQTHCost = longPosition.unrealizedOSQTHUnitCost
       .times(oldosqthUnrealizedAmount)
       .minus(amount0.times(osqthPriceInUSD));
     longPosition.unrealizedOSQTHUnitCost = unrealizedOSQTHCost.div(
-      longPosition.unrealizedOSQTHAmount
+      longPosition.currentOSQTHAmount
     );
   }
 
