@@ -8,7 +8,8 @@ export const TRANSACTION_HISTORIES_QUERY = gql`
       timestamp
       ethAmount
       oSqthAmount
-      oSqthPrice
+      oSqthPriceInETH
+      ethPriceInUSD
     }
   }
 `
