@@ -48,7 +48,6 @@ import { crabStrategyContractAtom } from '../contracts/atoms'
 import useAppCallback from '@hooks/useAppCallback'
 import { BIG_ZERO } from '@constants/index'
 import useAppEffect from '@hooks/useAppEffect'
-import floatifyBigNums from '@utils/floatifyBigNums'
 
 export const useSetStrategyData = () => {
   const setMaxCap = useUpdateAtom(maxCapAtom)
