@@ -48,6 +48,7 @@ import { crabStrategyContractAtom } from '../contracts/atoms'
 import useAppCallback from '@hooks/useAppCallback'
 import { BIG_ZERO } from '@constants/index'
 import useAppEffect from '@hooks/useAppEffect'
+import floatifyBigNums from '@utils/floatifyBigNums'
 
 export const useSetStrategyData = () => {
   const setMaxCap = useUpdateAtom(maxCapAtom)
@@ -133,6 +134,11 @@ export const useCurrentCrabPositionValue = () => {
   const contract = useAtomValue(crabStrategyContractAtom)
   const setCurrentEthLoading = useUpdateAtom(currentEthLoadingAtom)
   const vault = useAtomValue(crabStrategyVaultAtom)
+  const setStrategyData = useSetStrategyData()
+
+  useEffect(() => {
+    setStrategyData()
+  }, [])
 
   useAppEffect(() => {
     ;(async () => {
@@ -142,6 +148,14 @@ export const useCurrentCrabPositionValue = () => {
         getWsqueethFromCrabAmount(userCrabBalance, contract),
       ])
       setCurrentEthLoading(false)
+
+      console.log(
+        floatifyBigNums({
+          squeethCollateral,
+          squeethDebt,
+          vault,
+        }),
+      )
 
       if (!squeethDebt || !squeethCollateral) {
         setCurrentCrabPositionValue(BIG_ZERO)
