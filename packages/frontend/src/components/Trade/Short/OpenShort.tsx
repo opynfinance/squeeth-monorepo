@@ -207,12 +207,13 @@ export const OpenShortPosition = () => {
   const minCR = useAppMemo(
     () =>
       BigNumber.max(
-        (totalExistingCollat ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt).isFinite()
+        amount.gt(0) && (totalExistingCollat ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt).isFinite()
           ? (totalExistingCollat ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt)
           : BIG_ZERO,
         1.5,
       ),
-    [quote.amountOut, totalDebt, totalExistingCollat],
+
+    [quote.amountOut, totalDebt, totalExistingCollat, amount],
   )
   const onSqthChange = useAppCallback(
     async (value: string, collatPercent: number) => {
@@ -463,7 +464,7 @@ export const OpenShortPosition = () => {
                 label="Collateral ratio for vault after trade"
                 variant="outlined"
                 error={collatPercent < 150 || CRError !== ''}
-                helperText={CRError !== '' ? CRError : 'At risk of liquidation at 150%'}
+                helperText={`Min Collateralization Ratio: ${minCR.times(100).toFixed(1)}%`}
                 FormHelperTextProps={{ classes: { root: classes.formHelperText } }}
                 InputProps={{
                   endAdornment: (
@@ -476,8 +477,16 @@ export const OpenShortPosition = () => {
                   min: '0',
                 }}
               />
-              <p style={{ textAlign: 'left', width: '300px', margin: '0 auto', fontSize: '.75rem' }}>
-                Min Collateral Ration: {minCR.times(100).toFixed(1)}%
+              <p
+                style={{
+                  textAlign: 'left',
+                  width: '300px',
+                  margin: '0 auto',
+                  fontSize: '.75rem',
+                  color: 'rgba(255,255,255,0.5)',
+                }}
+              >
+                {CRError !== '' ? CRError : 'At risk of liquidation at 150%'}
               </p>
             </div>
             <div className={classes.thirdHeading}></div>
