@@ -16,7 +16,8 @@ export interface TransactionHistories_transactionHistories {
   timestamp: any;
   ethAmount: any;
   oSqthAmount: any;
-  oSqthPrice: any;
+  oSqthPriceInETH: any;
+  ethPriceInUSD: any;
 }
 
 export interface TransactionHistories {
