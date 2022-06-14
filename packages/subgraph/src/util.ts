@@ -298,10 +298,10 @@ export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
     let oldBoughtAmount = position.currentOSQTHAmount.plus(
       position.realizedOSQTHAmount
     );
-    let oldRealizedOSQTHGain =
-      position.realizedOSQTHUnitGain.times(oldBoughtAmount);
+    let oldRealizedOSQTHCost =
+      position.realizedOSQTHUnitCost.times(oldBoughtAmount);
 
-    position.realizedOSQTHUnitGain = oldRealizedOSQTHGain
+    position.realizedOSQTHUnitCost = oldRealizedOSQTHCost
       .plus(amount.times(osqthPrices[3]))
       .div(oldBoughtAmount.plus(amount));
   }
@@ -309,12 +309,12 @@ export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
   // Sell
   if (amount.lt(ZERO_BD)) {
     let absAmount = amount.neg();
-    let oldRealizedOSQTHCost = position.realizedOSQTHUnitCost.times(
-      position.realizedOSQTHAmount
+    let oldRealizedOSQTHGain = position.realizedOSQTHUnitCost.times(
+      position.realizedOSQTHUnitGain
     );
 
     position.realizedOSQTHAmount = position.realizedOSQTHAmount.plus(absAmount);
-    position.realizedOSQTHUnitCost = oldRealizedOSQTHCost
+    position.realizedOSQTHUnitGain = oldRealizedOSQTHGain
       .plus(absAmount.times(osqthPrices[3]))
       .div(position.realizedOSQTHAmount);
   }
@@ -335,7 +335,7 @@ export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
   } else if (position.currentOSQTHAmount.lt(ZERO_BD)) {
     position.positionType = "SHORT";
   } else {
-    position.positionType = "NONE";
+    initPosition(userAddr, position);
   }
 
   position.save();
