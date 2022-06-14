@@ -48,19 +48,23 @@ function updateLPposition(
   ) {
     lpPosition = initLPPosition(userAddr, lpPosition);
   } else {
-    const unrealizedOSQTHCost = lpPosition.unrealizedOSQTHUnitCost
-      .times(oldcurrentOSQTHAmount)
-      .plus(amount0.times(osqthPrices[3]));
-    lpPosition.unrealizedOSQTHUnitCost = unrealizedOSQTHCost.div(
-      lpPosition.currentOSQTHAmount
-    );
+    if (!lpPosition.currentOSQTHAmount.equals(ZERO_BD)) {
+      const unrealizedOSQTHCost = lpPosition.unrealizedOSQTHUnitCost
+        .times(oldcurrentOSQTHAmount)
+        .plus(amount0.times(osqthPrices[3]));
+      lpPosition.unrealizedOSQTHUnitCost = unrealizedOSQTHCost.div(
+        lpPosition.currentOSQTHAmount
+      );
+    }
 
-    const unrealizedETHCost = lpPosition.unrealizedETHUnitCost
-      .times(oldcurrentETHAmount)
-      .plus(amount1.times(usdcPrices[1]));
-    lpPosition.unrealizedOSQTHUnitCost = unrealizedETHCost.div(
-      lpPosition.currentETHAmount
-    );
+    if (!lpPosition.currentETHAmount.equals(ZERO_BD)) {
+      const unrealizedETHCost = lpPosition.unrealizedETHUnitCost
+        .times(oldcurrentETHAmount)
+        .plus(amount1.times(usdcPrices[1]));
+      lpPosition.unrealizedOSQTHUnitCost = unrealizedETHCost.div(
+        lpPosition.currentETHAmount
+      );
+    }
   }
 
   return lpPosition as LPPosition;
