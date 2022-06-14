@@ -238,7 +238,6 @@ export const OpenShortPosition = () => {
       setQuote(quote)
       setTotalExistingCollat(totalExistingCollat)
       setTotalDebt(totalDebt)
-      // setMinCR((totalExistingCollat ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt) ?? BIG_ZERO)
 
       if (quote.minimumAmountOut && newCollat.gt(quote.minimumAmountOut)) {
         setEthTradeAmount(newCollat.minus(quote.amountOut).toFixed(6))
@@ -477,12 +476,16 @@ export const OpenShortPosition = () => {
                   min: '0',
                 }}
               />
+              <p style={{ textAlign: 'left', width: '300px', margin: '0 auto', fontSize: '.75rem' }}>
+                Min Collateral Ration: {minCR.times(100).toFixed(1)}%
+              </p>
             </div>
             <div className={classes.thirdHeading}></div>
             <CollatRange
               onCollatValueChange={(val) => {
                 if (new BigNumber(val / 100).lt(minCR ?? BIG_ZERO)) {
                   setCRError(`Minimum CR is ${minCR.times(100).toFixed(1)}%`)
+                  return
                 } else {
                   setCRError('')
                 }
@@ -516,11 +519,11 @@ export const OpenShortPosition = () => {
               value={!collateral.isNaN() ? collateral.times(ethPrice).toFixed(2).toLocaleString() : '0'}
               hint={
                 inputError ? (
-                  inputError
+                  <span style={{ color: '#f5475c' }}>{inputError}</span>
                 ) : priceImpactWarning ? (
-                  priceImpactWarning
+                  <span style={{ color: '#f5475c' }}>{priceImpactWarning}</span>
                 ) : lowVolError ? (
-                  lowVolError
+                  <span style={{ color: '#f5475c' }}> {lowVolError}</span>
                 ) : (
                   <div className={classes.hint}>
                     <span>
@@ -543,7 +546,7 @@ export const OpenShortPosition = () => {
 
             <TradeDetails
               actionTitle="Expected sale proceeds to deposit"
-              amount={quote.amountOut.toFixed(2)}
+              amount={quote.amountOut.toFixed(6)}
               unit="ETH"
               value={!quote.amountOut.isNaN() ? quote.amountOut.times(ethPrice).toFixed(2).toLocaleString() : '0'}
               hint=""
@@ -583,7 +586,7 @@ export const OpenShortPosition = () => {
                   collateral.isZero() ||
                   collatPercent < 150 ||
                   (vault && vault.shortAmount.isZero()) ||
-                  CRError !== ''
+                  new BigNumber(collatPercent / 100).lt(minCR ?? BIG_ZERO)
                 }
                 variant={shortOpenPriceImpactErrorState ? 'outlined' : 'contained'}
                 style={
