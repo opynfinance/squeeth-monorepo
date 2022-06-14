@@ -6,16 +6,16 @@ export function calculatePnL(
   oSqthPrice: BigNumber,
   ethPrice: BigNumber,
 ) {
-  const realizedETHAmount = new BigNumber(positions.realizedETHAmount)
-  const realizedETHUnitCost = new BigNumber(positions.realizedETHUnitCost)
-  const realizedETHUnitGain = new BigNumber(positions.realizedETHUnitGain)
-  const realizedOSQTHAmount = new BigNumber(positions.realizedOSQTHAmount)
-  const realizedOSQTHUnitCost = new BigNumber(positions.realizedOSQTHUnitCost)
-  const realizedOSQTHUnitGain = new BigNumber(positions.realizedOSQTHUnitGain)
-  const unrealizedETHUnitCost = new BigNumber(positions.unrealizedETHUnitCost)
-  const unrealizedOSQTHUnitCost = new BigNumber(positions.unrealizedOSQTHUnitCost)
-  const currentETHAmount = new BigNumber(positions.currentETHAmount)
-  const currentOSQTHAmount = new BigNumber(positions.currentOSQTHAmount)
+  const realizedETHAmount = new BigNumber(positions?.realizedETHAmount)
+  const realizedETHUnitCost = new BigNumber(positions?.realizedETHUnitCost)
+  const realizedETHUnitGain = new BigNumber(positions?.realizedETHUnitGain)
+  const realizedOSQTHAmount = new BigNumber(positions?.realizedOSQTHAmount)
+  const realizedOSQTHUnitCost = new BigNumber(positions?.realizedOSQTHUnitCost)
+  const realizedOSQTHUnitGain = new BigNumber(positions?.realizedOSQTHUnitGain)
+  const unrealizedETHUnitCost = new BigNumber(positions?.unrealizedETHUnitCost)
+  const unrealizedOSQTHUnitCost = new BigNumber(positions?.unrealizedOSQTHUnitCost)
+  const currentETHAmount = new BigNumber(positions?.currentETHAmount).abs()
+  const currentOSQTHAmount = new BigNumber(positions?.currentOSQTHAmount).abs()
 
   const currentPositionValue = oSqthPrice.times(currentOSQTHAmount).plus(currentETHAmount.times(ethPrice))
   const unrealizedCost = unrealizedOSQTHUnitCost

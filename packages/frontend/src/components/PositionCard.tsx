@@ -11,7 +11,7 @@ import { PnLType, PositionType, TradeType } from '../types'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { usePrevious } from 'react-use'
 import { useComputeSwaps, useFirstValidVault, useLPPositionsQuery, useSwaps } from 'src/state/positions/hooks'
-import { isLPAtom, positionTypeAtom, swapsAtom, isToHidePnLAtom } from 'src/state/positions/atoms'
+import { isLPAtom, positionTypeAtom, swapsAtom } from 'src/state/positions/atoms'
 import {
   actualTradeTypeAtom,
   isOpenPositionAtom,
@@ -20,8 +20,6 @@ import {
   tradeSuccessAtom,
   tradeTypeAtom,
 } from 'src/state/trade/atoms'
-import { useCurrentLongPositionValue, useCurrentShortPositionValue } from 'src/state/pnl/hooks'
-import { loadingAtom } from 'src/state/pnl/atoms'
 import { useVaultData } from '@hooks/useVaultData'
 import useAppEffect from '@hooks/useAppEffect'
 import useAppMemo from '@hooks/useAppMemo'
@@ -167,12 +165,16 @@ const pnlClass = (positionType: PositionType, num: BigNumber, classes: any) => {
 }
 
 const PositionCard: React.FC = () => {
-  const longPositionValue = useCurrentLongPositionValue()
-  const shortPositionValue = useCurrentShortPositionValue()
-  const loading = useAtomValue(loadingAtom)
-  const isToHidePnL = useAtomValue(isToHidePnLAtom)
-
-  const positionType = useAtomValue(positionTypeAtom)
+  const {
+    positionType,
+    realizedPnL,
+    unrealizedPnL,
+    loading: isPnLLoading,
+    realizedPnLInPerct,
+    unrealizedPnLInPerct,
+    currentOSQTHAmount,
+    currentPositionValue,
+  } = usePositionNPnL()
   const { startPolling, stopPolling } = useSwaps()
   const swapsData = useAtomValue(swapsAtom)
   const swaps = swapsData.swaps
@@ -194,7 +196,7 @@ const PositionCard: React.FC = () => {
   const [fetchingNew, setFetchingNew] = useState(false)
   const [postTradeAmt, setPostTradeAmt] = useState(new BigNumber(0))
   const [postPosition, setPostPosition] = useState(PositionType.NONE)
-  const classes = useStyles({ positionType, postPosition, isToHidePnL })
+  const classes = useStyles({ positionType, postPosition })
 
   useAppEffect(() => {
     if (tradeSuccess && prevSwapsData?.length === swaps?.length) {
@@ -240,15 +242,6 @@ const PositionCard: React.FC = () => {
     setPostPosition(_postPosition)
   }, [actualTradeType, isOpenPosition, isPositionLoading, positionType, squeethAmount, tradeAmount])
 
-  const {
-    realizedPnL,
-    unrealizedPnL,
-    loading: isPnLLoading,
-    realizedPnLInPerct,
-    unrealizedPnLInPerct,
-    currentOSQTHAmount,
-    currentPositionValue,
-  } = usePositionNPnL()
   return (
     <div className={clsx(classes.container, classes.posBg)}>
       {!fullyLiquidated ? (
