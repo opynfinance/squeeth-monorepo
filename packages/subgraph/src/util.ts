@@ -208,7 +208,7 @@ export function createTransactionHistory(
 
 // buy: amount > 0
 // sell amount < 0
-export function buyOrSellETH(userAddr: string, amount: BigDecimal) {
+export function buyOrSellETH(userAddr: string, amount: BigDecimal): void {
   let usdcPrices = getETHUSDCPrice();
 
   let position = loadOrCreatePosition(userAddr);
@@ -254,7 +254,7 @@ export function buyOrSellETH(userAddr: string, amount: BigDecimal) {
 
 // buy: amount > 0
 // sell amount < 0
-export function buyOrSellSQTH(userAddr: string, amount: BigDecimal) {
+export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
   let usdcPrices = getETHUSDCPrice();
   let osqthPrices = getoSQTHETHPrice();
   let osqthPrice = osqthPrices[1].times(usdcPrices[1]);
