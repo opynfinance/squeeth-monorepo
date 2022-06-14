@@ -1,4 +1,4 @@
-import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { Address, ethereum } from "@graphprotocol/graph-ts";
 import {
   Account,
@@ -26,6 +26,14 @@ import {
   ROPSTEN_OSQTH_WETH_POOL,
   LOCALHOST_OSQTH_WETH_POOL,
   RA_OSQTH_WETH_POOL,
+  MAINNET_OSQTH,
+  ROPSTEN_OSQTH,
+  LOCALHOST_OSQTH,
+  RA_OSQTH,
+  MAINNET_WETH,
+  ROPSTEN_WETH,
+  LOCALHOST_WETH,
+  RA_WETH,
 } from "./constants";
 import { sqrtPriceX96ToTokenPrices } from "./utils/pricing";
 
@@ -70,6 +78,30 @@ export function getoSQTHPoolAddr(networkName: string): string {
     addr = LOCALHOST_OSQTH_WETH_POOL;
   } else if (networkName == "rinkebyArbitrum") {
     addr = RA_OSQTH_WETH_POOL;
+  }
+  return addr;
+}
+
+export function getoSQTHTokenAddr(networkName: string): string {
+  let addr = MAINNET_OSQTH;
+  if (networkName == "ropsten") {
+    addr = ROPSTEN_OSQTH;
+  } else if (networkName == "localhost") {
+    addr = LOCALHOST_OSQTH;
+  } else if (networkName == "rinkebyArbitrum") {
+    addr = RA_OSQTH;
+  }
+  return addr;
+}
+
+export function getWETHTokenAddr(networkName: string): string {
+  let addr = MAINNET_WETH;
+  if (networkName == "ropsten") {
+    addr = ROPSTEN_WETH;
+  } else if (networkName == "localhost") {
+    addr = LOCALHOST_WETH;
+  } else if (networkName == "rinkebyArbitrum") {
+    addr = RA_WETH;
   }
   return addr;
 }

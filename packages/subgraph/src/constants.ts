@@ -4,7 +4,13 @@ import {
   BigDecimal,
   dataSource,
 } from "@graphprotocol/graph-ts";
-import { getoSQTHPoolAddr, getShortHelperAddr, getUSDCPoolAddr } from "./util";
+import {
+  getoSQTHPoolAddr,
+  getoSQTHTokenAddr,
+  getShortHelperAddr,
+  getUSDCPoolAddr,
+  getWETHTokenAddr,
+} from "./util";
 
 export const BIGINT_ONE = BigInt.fromI32(1);
 export const BIGINT_ZERO = BigInt.fromI32(0);
@@ -40,9 +46,29 @@ export const LOCALHOST_OSQTH_WETH_POOL =
 export const RA_OSQTH_WETH_POOL =
   "0x0567A9C01990a4C7EE096F077A05CeEbA87db07f".toLowerCase();
 
+export const MAINNET_OSQTH =
+  "0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B".toLowerCase();
+export const ROPSTEN_OSQTH =
+  "0xa4222f78d23593e82Aa74742d25D06720DCa4ab7".toLowerCase();
+export const LOCALHOST_OSQTH =
+  "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318".toLowerCase();
+export const RA_OSQTH =
+  "0xEC0db8766bc003C14861af996e411beA6Bf800aB".toLowerCase();
+
+export const MAINNET_WETH =
+  "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2".toLowerCase();
+export const ROPSTEN_WETH =
+  "0xc778417e063141139fce010982780140aa0cd5ab".toLowerCase();
+export const LOCALHOST_WETH =
+  "0x5FbDB2315678afecb367f032d93F642f64180aa3".toLowerCase();
+export const RA_WETH =
+  "0xB47e6A5f8b33b3F17603C83a0535A9dcD7E32681".toLowerCase();
+
 export const SHORT_HELPER_ADDR = getShortHelperAddr(dataSource.network());
 export const OSQTH_WETH_POOL = getoSQTHPoolAddr(dataSource.network());
 export const USDC_WETH_POOL = getUSDCPoolAddr(dataSource.network());
+export const OSQTH_TOKEN_ADDR = getoSQTHTokenAddr(dataSource.network());
+export const WETH_TOKEN_ADDR = getWETHTokenAddr(dataSource.network());
 export const TOKEN_DECIMALS_18 = BigInt.fromI32(18);
 export const TOKEN_DECIMALS_USDC = BigInt.fromI32(6);
 export const ZERO_BI = BigInt.fromI32(0);
