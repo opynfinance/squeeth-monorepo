@@ -61,7 +61,7 @@ function updateLPposition(
       const unrealizedETHCost = lpPosition.unrealizedETHUnitCost
         .times(oldcurrentETHAmount)
         .plus(amount1.times(usdcPrices[1]));
-      lpPosition.unrealizedOSQTHUnitCost = unrealizedETHCost.div(
+      lpPosition.unrealizedETHUnitCost = unrealizedETHCost.div(
         lpPosition.currentETHAmount
       );
     }
