@@ -126,14 +126,12 @@ const FUNDING_MOVE_THRESHOLD = 0.7
 export const OpenShortPosition = () => {
   const classes = useStyles()
   const [confirmedAmount, setConfirmedAmount] = useState('0')
-  const [liqPrice, setLiqPrice] = useState(new BigNumber(0))
   const [shortLoading, setShortLoading] = useState(false)
   const [msgValue, setMsgValue] = useState(new BigNumber(0))
   const [totalCollateralAmount, setTotalCollateralAmount] = useState(new BigNumber(0))
   const [isVaultApproved, setIsVaultApproved] = useState(true)
   const [openConfirm, setOpenConfirm] = useState(false)
   const [CRError, setCRError] = useState('')
-  // const [minCR, setMinCR] = useState(BIG_ZERO)
   const [newCollat, setNewCollat] = useState(BIG_ZERO)
   const [totalExistingCollat, setTotalExistingCollat] = useState(BIG_ZERO)
   const [totalDebt, setTotalDebt] = useState(BIG_ZERO)
@@ -172,6 +170,7 @@ export const OpenShortPosition = () => {
   const ethPrice = useETHPrice()
   const getUniNFTCollatDetail = useGetUniNFTCollatDetail()
   const [collatPercent, setCollatPercent] = useState(existingCollatPercent ? existingCollatPercent : 200)
+  const [liqPrice, setLiqPrice] = useState(existingLiqPrice.gt(0) ? existingLiqPrice : new BigNumber(0))
 
   const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const collateral = useAppMemo(() => new BigNumber(ethTradeAmount), [ethTradeAmount])
