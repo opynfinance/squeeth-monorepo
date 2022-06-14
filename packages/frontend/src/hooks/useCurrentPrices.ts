@@ -10,7 +10,7 @@ export default function useCurrentPrices() {
   const address = useAtomValue(addressAtom)
   const networkId = useAtomValue(networkIdAtom)
 
-  const { data: { pools } = {} } = useQuery<pools>(POOLS_QUERY, {
+  const { data: { pools } = {}, loading } = useQuery<pools>(POOLS_QUERY, {
     client: squeethClient[networkId],
     skip: !address,
   })
@@ -19,5 +19,6 @@ export default function useCurrentPrices() {
   return {
     ethPrice: ethPrice,
     oSqthPrice: pools ? new BigNumber(pools[1]?.token1Price).times(ethPrice) : new BigNumber(0),
+    loading,
   }
 }

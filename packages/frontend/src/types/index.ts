@@ -47,9 +47,9 @@ export type NormHistory = {
 }
 
 export enum PositionType {
-  NONE = 'None',
-  LONG = 'Long',
-  SHORT = 'Short',
+  NONE = 'NONE',
+  LONG = 'LONG',
+  SHORT = 'SHORT',
 }
 
 export enum TradeType {

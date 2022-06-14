@@ -30,7 +30,7 @@ describe('usePnL', () => {
 
   //     mockCurrentPrices({ ethPrice: new BigNumber(3100), oSqthPrice: new BigNumber(0.25) })
 
-  //     const { result } = renderHook(() => usePnL())
+  //     const { result } = renderHook(() => usePositionNPnL())
 
   //     expect(result.current.unrealizePnL.toNumber()).toBe(175)
   //   })
@@ -47,7 +47,7 @@ describe('usePnL', () => {
 
   //     mockCurrentPrices({ ethPrice: new BigNumber(2900), oSqthPrice: new BigNumber(0.15) })
 
-  //     const { result } = renderHook(() => usePnL())
+  //     const { result } = renderHook(() => usePositionNPnL())
 
   //     expect(result.current.unrealizePnL.toNumber()).toBe(-165)
   //   })
@@ -70,7 +70,7 @@ describe('usePnL', () => {
 
   //     mockCurrentPrices({ ethPrice: new BigNumber(3100), oSqthPrice: new BigNumber(0.25) })
 
-  //     const { result } = renderHook(() => usePnL())
+  //     const { result } = renderHook(() => usePositionNPnL())
 
   //     expect(result.current.realizePnL.toNumber()).toBe(87.5)
   //     expect(result.current.unrealizePnL.toNumber()).toBe(87.5)
@@ -96,7 +96,7 @@ describe('usePnL', () => {
 
   //       mockCurrentPrices({ ethPrice: new BigNumber(3100), oSqthPrice: new BigNumber(0.25) })
 
-  //       const { result } = renderHook(() => usePnL())
+  //       const { result } = renderHook(() => usePositionNPnL())
 
   //       expect(result.current.realizePnL.toNumber()).toBe(175)
   //       expect(result.current.unrealizePnL.toNumber()).toBe(0)
@@ -128,7 +128,7 @@ describe('usePnL', () => {
 
   //       mockCurrentPrices({ ethPrice: new BigNumber(2900), oSqthPrice: new BigNumber(0.2) })
 
-  //       const { result } = renderHook(() => usePnL())
+  //       const { result } = renderHook(() => usePositionNPnL())
 
   //       expect(result.current.realizePnL.toNumber()).toBe(-429)
   //       expect(result.current.unrealizePnL.toNumber()).toBe(0)
