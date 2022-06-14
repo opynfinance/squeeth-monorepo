@@ -126,14 +126,12 @@ const FUNDING_MOVE_THRESHOLD = 0.7
 export const OpenShortPosition = () => {
   const classes = useStyles()
   const [confirmedAmount, setConfirmedAmount] = useState('0')
-  const [liqPrice, setLiqPrice] = useState(new BigNumber(0))
   const [shortLoading, setShortLoading] = useState(false)
   const [msgValue, setMsgValue] = useState(new BigNumber(0))
   const [totalCollateralAmount, setTotalCollateralAmount] = useState(new BigNumber(0))
   const [isVaultApproved, setIsVaultApproved] = useState(true)
   const [openConfirm, setOpenConfirm] = useState(false)
   const [CRError, setCRError] = useState('')
-  // const [minCR, setMinCR] = useState(BIG_ZERO)
   const [newCollat, setNewCollat] = useState(BIG_ZERO)
   const [totalExistingCollat, setTotalExistingCollat] = useState(BIG_ZERO)
   const [totalDebt, setTotalDebt] = useState(BIG_ZERO)
@@ -172,6 +170,7 @@ export const OpenShortPosition = () => {
   const ethPrice = useETHPrice()
   const getUniNFTCollatDetail = useGetUniNFTCollatDetail()
   const [collatPercent, setCollatPercent] = useState(existingCollatPercent ? existingCollatPercent : 200)
+  const [liqPrice, setLiqPrice] = useState(existingLiqPrice.gt(0) ? existingLiqPrice : new BigNumber(0))
 
   const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const collateral = useAppMemo(() => new BigNumber(ethTradeAmount), [ethTradeAmount])
@@ -207,12 +206,13 @@ export const OpenShortPosition = () => {
   const minCR = useAppMemo(
     () =>
       BigNumber.max(
-        (totalExistingCollat ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt).isFinite()
+        amount.gt(0) && (totalExistingCollat ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt).isFinite()
           ? (totalExistingCollat ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt)
           : BIG_ZERO,
         1.5,
       ),
-    [quote.amountOut, totalDebt, totalExistingCollat],
+
+    [quote.amountOut, totalDebt, totalExistingCollat, amount],
   )
   const onSqthChange = useAppCallback(
     async (value: string, collatPercent: number) => {
@@ -240,7 +240,6 @@ export const OpenShortPosition = () => {
       setQuote(quote)
       setTotalExistingCollat(totalExistingCollat)
       setTotalDebt(totalDebt)
-      // setMinCR((totalExistingCollat ?? BIG_ZERO).plus(quote.amountOut).dividedBy(totalDebt) ?? BIG_ZERO)
 
       if (quote.minimumAmountOut && newCollat.gt(quote.minimumAmountOut)) {
         setEthTradeAmount(newCollat.minus(quote.amountOut).toFixed(6))
@@ -466,7 +465,7 @@ export const OpenShortPosition = () => {
                 label="Collateral ratio for vault after trade"
                 variant="outlined"
                 error={collatPercent < 150 || CRError !== ''}
-                helperText={CRError !== '' ? CRError : 'At risk of liquidation at 150%'}
+                helperText={`Min Collateralization Ratio: ${minCR.times(100).toFixed(1)}%`}
                 FormHelperTextProps={{ classes: { root: classes.formHelperText } }}
                 InputProps={{
                   endAdornment: (
@@ -479,12 +478,24 @@ export const OpenShortPosition = () => {
                   min: '0',
                 }}
               />
+              <p
+                style={{
+                  textAlign: 'left',
+                  width: '300px',
+                  margin: '0 auto',
+                  fontSize: '.75rem',
+                  color: 'rgba(255,255,255,0.5)',
+                }}
+              >
+                {CRError !== '' ? CRError : 'At risk of liquidation at 150%'}
+              </p>
             </div>
             <div className={classes.thirdHeading}></div>
             <CollatRange
               onCollatValueChange={(val) => {
                 if (new BigNumber(val / 100).lt(minCR ?? BIG_ZERO)) {
                   setCRError(`Minimum CR is ${minCR.times(100).toFixed(1)}%`)
+                  return
                 } else {
                   setCRError('')
                 }
@@ -518,11 +529,11 @@ export const OpenShortPosition = () => {
               value={!collateral.isNaN() ? collateral.times(ethPrice).toFixed(2).toLocaleString() : '0'}
               hint={
                 inputError ? (
-                  inputError
+                  <span style={{ color: '#f5475c' }}>{inputError}</span>
                 ) : priceImpactWarning ? (
-                  priceImpactWarning
+                  <span style={{ color: '#f5475c' }}>{priceImpactWarning}</span>
                 ) : lowVolError ? (
-                  lowVolError
+                  <span style={{ color: '#f5475c' }}> {lowVolError}</span>
                 ) : (
                   <div className={classes.hint}>
                     <span>
@@ -545,7 +556,7 @@ export const OpenShortPosition = () => {
 
             <TradeDetails
               actionTitle="Expected sale proceeds to deposit"
-              amount={quote.amountOut.toFixed(2)}
+              amount={quote.amountOut.toFixed(6)}
               unit="ETH"
               value={!quote.amountOut.isNaN() ? quote.amountOut.times(ethPrice).toFixed(2).toLocaleString() : '0'}
               hint=""
@@ -585,7 +596,7 @@ export const OpenShortPosition = () => {
                   collateral.isZero() ||
                   collatPercent < 150 ||
                   (vault && vault.shortAmount.isZero()) ||
-                  CRError !== ''
+                  new BigNumber(collatPercent / 100).lt(minCR ?? BIG_ZERO)
                 }
                 variant={shortOpenPriceImpactErrorState ? 'outlined' : 'contained'}
                 style={

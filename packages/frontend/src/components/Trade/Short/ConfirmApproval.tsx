@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import Button from '@material-ui/core/Button'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
+import LockOpenIcon from '@material-ui/icons/LockOpen'
+import LockOutlinedIcon from '@material-ui/icons/LockOutlined'
+import AccountBalanceIcon from '@material-ui/icons/AccountBalance'
 import Checkbox from '@material-ui/core/Checkbox'
 import { createStyles, makeStyles } from '@material-ui/core'
 
@@ -13,6 +16,18 @@ const useStyles = makeStyles(() =>
     },
     label: {
       color: 'rgba(0, 0, 0, 0.5)',
+    },
+    subTopics: {
+      color: '#2ce6f9',
+      margin: 0.5,
+      fontSize: '1rem',
+      fontWeight: 'bold',
+      marginTop: ' .5em',
+    },
+    subHeaderSection: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
     },
   }),
 )
@@ -37,19 +52,48 @@ const ConfirmApproval = ({
         handleClose={handleClose}
         title={title}
         showCloseButton={false}
+        buttonComp={
+          <Button
+            classes={{ disabled: classes.disabledButton, ...(!checked ? { label: classes.label } : {}) }}
+            disabled={!checked}
+            style={{ width: '90%', background: '#d9d9d9', margin: '0 auto' }}
+            onClick={handleConfirmApproval}
+            id="confirm-approval-modal-submit-btn"
+          >
+            Approve and get Squeethy!
+          </Button>
+        }
       >
-        <ul style={{ width: '90%', alignSelf: 'flex-start' }}>
-          <li style={{ marginBottom: '2em' }}>
-            When you open a short position, the wrapper maximizes capital efficiency by using ETH earned from selling
-            oSQTH as collaterl back the vault.
+        <ul style={{ width: '90%', alignSelf: 'flex-start', listStyle: 'none' }}>
+          <li style={{ marginBottom: '1em' }}>
+            <div className={classes.subHeaderSection}>
+              <LockOpenIcon fontSize="large" />
+              <p className={classes.subTopics}>OPEN SHORT</p>
+            </div>
+            <p style={{ margin: 0 }}>
+              When you open a short position, the wrapper maximizes capital efficiency by using ETH earned from selling
+              oSQTH as collateral back the vault.
+            </p>
           </li>
-          <li style={{ marginBottom: '2em' }}>
-            When you close a short position, the wrapper maximizes capital efficiency by using collateral from your
-            vault to buy back and burn oSQTH
+          <li style={{ marginBottom: '1em' }}>
+            <div className={classes.subHeaderSection}>
+              <LockOutlinedIcon fontSize="large" />
+              <p className={classes.subTopics}>CLOSE SHORT</p>
+            </div>
+            <p style={{ margin: 0 }}>
+              When you close a short position, the wrapper maximizes capital efficiency by using collateral from your
+              vault to buy back and burn oSQTH
+            </p>
           </li>
-          <li style={{ marginBottom: '2em' }}>
-            {`When you open or close a short position, you are adjusting the vault's collateralization ratio, not the
+          <li style={{ marginBottom: '1em' }}>
+            <div className={classes.subHeaderSection}>
+              <AccountBalanceIcon fontSize="large" />
+              <p className={classes.subTopics}>VAULT COLLATERALIZATION RATIO</p>
+            </div>
+            <p style={{ margin: 0 }}>
+              {`When you open or close a short position, you are adjusting the vault's collateralization ratio, not the
             collateralization ratio for the trade.`}
+            </p>
           </li>
 
           <FormControlLabel
@@ -62,18 +106,9 @@ const ConfirmApproval = ({
                 onChange={() => setCheck((prevState) => !prevState)}
               />
             }
-            label="I understand these of changes"
+            label="Makes sense to me, let's squeeth!"
           />
         </ul>
-        <Button
-          classes={{ disabled: classes.disabledButton, ...(!checked ? { label: classes.label } : {}) }}
-          disabled={!checked}
-          style={{ width: '90%', background: '#d9d9d9' }}
-          onClick={handleConfirmApproval}
-          id="confirm-approval-modal-submit-btn"
-        >
-          Confirm Approval
-        </Button>
       </Modal>
     </>
   )
