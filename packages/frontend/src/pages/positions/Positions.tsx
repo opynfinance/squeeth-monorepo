@@ -28,8 +28,7 @@ import useAppMemo from '@hooks/useAppMemo'
 import useStyles from './useStyles'
 import CrabPosition from './CrabPosition'
 import YourVaults from './YourVaults'
-import LongSqueeth from './LongSqueeth'
-import ShortSqueeth from './ShortSqueeth'
+import SqueethPosition from './SqueethPosition'
 import LPedSqueeth from './LPedSqueeth'
 import MintedSqueeth from './MintedSqueeth'
 import ShortSqueethLiquidated from './ShortSqueethLiquidated'
@@ -107,9 +106,7 @@ export default function Positions() {
           </div>
         ) : null}
 
-        {positionType === PositionType.LONG && <LongSqueeth />}
-
-        {positionType === PositionType.SHORT && <ShortSqueeth />}
+        {positionType != PositionType.NONE && <SqueethPosition />}
 
         {lpedSqueeth.isGreaterThan(0) && !fullyLiquidated && <LPedSqueeth vaultExists={vaultExists} />}
 

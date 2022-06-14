@@ -20,6 +20,7 @@ import { useUpdateSqueethPrices, useUpdateSqueethPoolData } from 'src/state/sque
 import { useInitController } from 'src/state/controller/hooks'
 import { ComputeSwapsProvider } from 'src/state/positions/providers'
 import { useSwaps } from 'src/state/positions/hooks'
+import useAccounts from '@hooks/useAccounts'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
 
@@ -80,6 +81,7 @@ const Init = () => {
   useUpdateSqueethPoolData()
   useInitController()
   useSwaps()
+  useAccounts()
   return null
 }
 const MemoizedInit = memo(Init)
