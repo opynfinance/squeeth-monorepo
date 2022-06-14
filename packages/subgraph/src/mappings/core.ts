@@ -124,9 +124,13 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
     const unrealizedOSQTHCost = position.unrealizedOSQTHUnitCost
       .times(oldosqthUnrealizedAmount)
       .plus(unrealizedAmount0.times(osqthPriceInUSD));
-    position.unrealizedOSQTHUnitCost = unrealizedOSQTHCost.div(
+
+    const unrealizedOSQTHUnitCost = unrealizedOSQTHCost.div(
       position.currentOSQTHAmount
     );
+    if (position.currentOSQTHAmount.lt(ZERO_BD)) {
+      position.unrealizedOSQTHUnitCost = unrealizedOSQTHUnitCost.neg();
+    }
 
     // > 0, long; < 0 short; = 0 none
     if (position.currentOSQTHAmount.gt(ZERO_BD)) {

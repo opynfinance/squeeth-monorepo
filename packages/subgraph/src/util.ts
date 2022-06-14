@@ -206,7 +206,7 @@ export function getoSQTHETHPrice(): BigDecimal[] {
     osqthPool.sqrtPrice.toBigDecimal(),
     osqthPrices[0],
     osqthPrices[1],
-    osqthPrices[0].times(usdcPrices[1]),
+    osqthPrices[1].times(usdcPrices[1]),
   ];
 }
 
@@ -232,7 +232,7 @@ export function createTransactionHistory(
   transactionHistory.ethOSQTHSqrtPrice = BigInt.fromString(
     osqthPrices[0].toString()
   );
-  transactionHistory.oSqthPriceInETH = osqthPrices[1];
+  transactionHistory.oSqthPriceInETH = osqthPrices[2];
 
   return transactionHistory;
 }
