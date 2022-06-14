@@ -73,14 +73,16 @@ function updateLPposition(
 function isOSQTHETHPool(address: Address, tokenId: BigInt): boolean {
   let contract = NonfungiblePositionManager.bind(address);
   let positionCall = contract.try_positions(tokenId);
-  let positionResult = positionCall.value;
-
-  if (
-    positionResult.value2.toHexString().toLowerCase() == OSQTH_TOKEN_ADDR &&
-    positionResult.value3.toHexString().toLowerCase() == WETH_TOKEN_ADDR
-  ) {
-    return true;
+  if (!positionCall.reverted) {
+    let positionResult = positionCall.value;
+    if (
+      positionResult.value2.toHexString().toLowerCase() == OSQTH_TOKEN_ADDR &&
+      positionResult.value3.toHexString().toLowerCase() == WETH_TOKEN_ADDR
+    ) {
+      return true;
+    }
   }
+
   return false;
 }
 // selling to remove lp
