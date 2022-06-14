@@ -297,5 +297,14 @@ export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
     .plus(amount.times(osqthPrice))
     .div(position.currentOSQTHAmount);
 
+  // > 0, long; < 0 short; = 0 none
+  if (position.currentOSQTHAmount.gt(ZERO_BD)) {
+    position.positionType = "LONG";
+  } else if (position.currentOSQTHAmount.lt(ZERO_BD)) {
+    position.positionType = "SHORT";
+  } else {
+    position.positionType = "NONE";
+  }
+
   position.save();
 }
