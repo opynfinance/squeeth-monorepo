@@ -1,13 +1,10 @@
-import BigNumber from 'bignumber.js'
 import { calculatePnL } from 'src/lib'
-import { PositionType } from 'types/global_apollo'
 import useAccounts from './useAccounts'
 import useCurrentPrices from './useCurrentPrices'
 
 export default function usePositionNPnL() {
   const { ethPrice, oSqthPrice, loading: isCurrentPriceLoading } = useCurrentPrices()
   const { positions, lpPosition, positionType, loading: isPositionsLoading } = useAccounts()
-
 
   const {
     currentPositionValue,
