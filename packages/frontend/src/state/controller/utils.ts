@@ -21,7 +21,7 @@ export const calculateLiquidationPriceForLP = (
   normFactor: BigNumber,
   impliedVol: number,
 ) => {
-  const liquidity = toTokenAmount(position.liquidity.toString(), 18)
+  const liquidity = toTokenAmount(position?.liquidity.toString(), 18)
 
   const ETH_LOWER_BOUND = 500
   const ETH_UPPER_BOUND = 30000
