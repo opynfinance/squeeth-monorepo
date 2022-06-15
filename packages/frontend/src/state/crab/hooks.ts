@@ -29,7 +29,6 @@ import {
   getCollateralFromCrabAmount,
   getWsqueethFromCrabAmount,
   getCurrentProfitableMovePercent,
-  getNetFromCrabAmount,
 } from './utils'
 import { useGetCollatRatioAndLiqPrice, useGetVault } from '../controller/hooks'
 import db from '@utils/firestore'
@@ -144,17 +143,32 @@ export const useCurrentCrabPositionValue = () => {
   useAppEffect(() => {
     ;(async () => {
       setIsCrabPositionValueLoading(true)
-      const net = await getNetFromCrabAmount(userCrabBalance, contract)
-      setIsCrabPositionValueLoading(false)
+      const [squeethCollateral, squeethDebt] = await Promise.all([
+        getCollateralFromCrabAmount(userCrabBalance, contract, vault),
+        getWsqueethFromCrabAmount(userCrabBalance, contract),
+      ])
+      setCurrentEthLoading(false)
 
-      if (!net) {
+      console.log(
+        floatifyBigNums({
+          squeethCollateral,
+          squeethDebt,
+          vault,
+        }),
+      )
+
+      if (!squeethDebt || !squeethCollateral) {
         setCurrentCrabPositionValue(BIG_ZERO)
         setCurrentCrabPositionValueInETH(BIG_ZERO)
         return
       }
 
-      setCurrentCrabPositionValue(getWSqueethPositionValue(net))
-      setCurrentCrabPositionValueInETH(getWSqueethPositionValueInETH(net))
+      const crabPositionValueInUSD = getWSqueethPositionValue(squeethCollateral.minus(squeethDebt))
+      const crabPositionValueInETH = getWSqueethPositionValueInETH(squeethCollateral.minus(squeethDebt))
+
+      setCurrentCrabPositionValue(crabPositionValueInUSD)
+      setCurrentCrabPositionValueInETH(crabPositionValueInETH)
+      setIsCrabPositionValueLoading(false)
     })()
   }, [crabStrategy, userCrabBalance, contract, setCurrentEthLoading, getWSqueethPositionValueInETH])
 
