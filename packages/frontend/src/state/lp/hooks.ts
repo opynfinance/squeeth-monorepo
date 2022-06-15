@@ -2,7 +2,7 @@ import { tickToPrice } from '@uniswap/v3-sdk'
 
 import { fromTokenAmount } from '@utils/calculations'
 import { useAtom, useAtomValue } from 'jotai'
-import { addressesAtom } from '../positions/atoms'
+import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
 import BigNumber from 'bignumber.js'
 import { BIG_ZERO, OSQUEETH_DECIMALS } from '@constants/index'
 import { controllerContractAtom, controllerHelperHelperContractAtom, nftManagerContractAtom } from '../contracts/atoms'
@@ -13,6 +13,7 @@ import { Price, Token } from '@uniswap/sdk-core'
 import { useHandleTransaction } from '../wallet/hooks'
 import { squeethPriceeAtom, wethPriceAtom } from '../squeethPool/atoms'
 import ethers from 'ethers'
+import { useGetSellQuote } from '../squeethPool/hooks'
 
 // Close position with flashloan
 export const useClosePosition = () => {
@@ -86,22 +87,7 @@ export const useOpenPosition = () => {
 
       // Closest 60 tick width above or below current tick (60 is minimum tick width for 30bps pool)
 
-      // Closest valid lower tick
-      const lowerTickBelow = lowerTickInput - (lowerTickInput % 60)
-      const lowerTickAbove = lowerTickInput + (lowerTickInput % 60)
-      const lowerTick =
-        Math.abs(lowerTickAbove - lowerTickInput) < Math.abs(lowerTickBelow - lowerTickInput)
-          ? lowerTickAbove
-          : lowerTickBelow
-
-      // TODO: ensure we're not hitting a bound for a tick
-      // Closest valid upper tick
-      const upperTickBelow = upperTickInput - (upperTickInput % 60)
-      const upperTickAbove = upperTickInput + (upperTickInput % 60)
-      const upperTick =
-        Math.abs(upperTickAbove - upperTickInput) < Math.abs(upperTickBelow - upperTickInput)
-          ? upperTickAbove
-          : upperTickBelow
+      const [lowerTick, upperTick] = validTicks(lowerTickInput, upperTickInput)
 
       const params = {
         recipient: address,
@@ -178,4 +164,134 @@ export function getTickToPrice(baseToken?: Token, quoteToken?: Token, tick?: num
     return undefined
   }
   return tickToPrice(baseToken, quoteToken, tick)
+}
+
+export function validTicks(lowerTickInput: number, upperTickInput: number) {
+  // Closest valid lower tick
+  const lowerTickBelow = lowerTickInput - (lowerTickInput % 60)
+  const lowerTickAbove = lowerTickInput + (lowerTickInput % 60)
+  const lowerTick =
+    Math.abs(lowerTickAbove - lowerTickInput) < Math.abs(lowerTickBelow - lowerTickInput)
+      ? lowerTickAbove
+      : lowerTickBelow
+
+  // TODO: ensure we're not hitting a bound for a tick
+  // Closest valid upper tick
+  const upperTickBelow = upperTickInput - (upperTickInput % 60)
+  const upperTickAbove = upperTickInput + (upperTickInput % 60)
+  const upperTick =
+    Math.abs(upperTickAbove - upperTickInput) < Math.abs(upperTickBelow - upperTickInput)
+      ? upperTickAbove
+      : upperTickBelow
+  return [lowerTick, upperTick]
+}
+
+// Rebalance via general swap
+export const useRebalanceGeneralSwap = () => {
+  const address = useAtomValue(addressAtom)
+  const controllerHelperContract = useAtomValue(controllerHelperHelperContractAtom)
+  const { controllerHelper, weth, oSqueeth, squeethPool } = useAtomValue(addressesAtom)
+  const controllerContract = useAtomValue(controllerContractAtom)
+  const handleTransaction = useHandleTransaction()
+  const ethPrice = useAtomValue(wethPriceAtom)
+  const positionManager = useAtomValue(nftManagerContractAtom)
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
+  const getSellQuote = useGetSellQuote()
+  const rebalanceGeneralSwap = useAppCallback(
+    async (vaultId: BigNumber, lowerTickInput: number, upperTickInput: number, onTxConfirmed?: () => void) => {
+      if (!controllerContract || !controllerHelperContract || !address || !positionManager) return
+      const one = new BigNumber(10).pow(18)
+      const uniTokenId = (await controllerContract?.methods.vaults(vaultId)).NftCollateralId
+      const positionBefore = await positionManager.methods.positions(uniTokenId)
+      const vaultBefore = await controllerContract?.methods.vaults(vaultId)
+      const scaledEthPrice = ethPrice.div(10000)
+      const debtInEth = vaultBefore.shortAmount.mul(scaledEthPrice).div(one)
+      const collateralToFlashloan = debtInEth.mul(3).div(2).add(0.01)
+      const tokenIndex = await positionManager.methods.totalSupply()
+      const tokenId = await positionManager.methods.tokenByIndex(tokenIndex.sub(1))
+      const amount0Min = new BigNumber(0)
+      const amount1Min = new BigNumber(0)
+      const safetyWPowerPerp = ethers.utils.parseUnits('0.01')
+
+      const [lowerTick, upperTick] = validTicks(lowerTickInput, upperTickInput)
+
+      // Get current LPpositions
+      const [amount0, amount1] = await positionManager.methods.decreaseLiquidity({
+        tokenId: tokenId,
+        liquidity: positionBefore.liquidity,
+        amount0Min: 0,
+        amount1Min: 0,
+        deadline: Math.floor(Date.now() / 1000 + 1800),
+      })
+      const wPowerPerpAmountInLPBefore = isWethToken0 ? amount1 : amount0
+      const wethAmountInLPBefore = isWethToken0 ? amount0 : amount1
+
+      // Estimate proceeds from liquidating squeeth in LP
+      const ethAmountOutFromSwap = getSellQuote(wPowerPerpAmountInLPBefore)
+
+      // Estimate of new LP with 0.01 weth safety margin
+      const safetyEth = ethers.utils.parseUnits('0.01')
+      const wethAmountToLP = wethAmountInLPBefore.add(ethAmountOutFromSwap).sub(safetyEth)
+
+      const abiCoder = new ethers.utils.AbiCoder()
+      const rebalanceLpInVaultParams = [
+        {
+          // Liquidate LP
+          rebalanceLpInVaultType: new BigNumber(1), // DecreaseLpLiquidity:
+          // DecreaseLpLiquidityParams: [tokenId, liquidity, liquidityPercentage, amount0Min, amount1Min]
+          data: abiCoder.encode(
+            ['uint256', 'uint256', 'uint256', 'uint128', 'uint128'],
+            [
+              tokenId,
+              positionBefore.liquidity,
+              new BigNumber(100).multipliedBy(new BigNumber(10).pow(16)).toString(),
+              new BigNumber(0).toString(),
+              new BigNumber(0).toString(),
+            ],
+          ),
+        },
+        {
+          // Sell all oSQTH for ETH
+          rebalanceLpInVaultType: new BigNumber(5), // GeneralSwap:
+          // GeneralSwap: [tokenIn, tokenOut, amountIn, limitPrice]
+          data: abiCoder.encode(
+            ['address', 'address', 'uint256', 'uint256', 'uint24'],
+            [oSqueeth, weth, wPowerPerpAmountInLPBefore.sub(safetyWPowerPerp), new BigNumber(0).toString(), 3000],
+          ),
+        },
+        {
+          // Mint new LP
+          rebalanceLpInVaultType: new BigNumber(4).toString(), // MintNewLP
+          // lpWPowerPerpPool: [recipient, wPowerPerpPool, vaultId, wPowerPerpAmount, collateralToDeposit, collateralToLP, amount0Min, amount1Min, lowerTick, upperTick ]
+          data: abiCoder.encode(
+            ['address', 'address', 'uint256', 'uint256', 'uint256', 'uint256', 'uint256', 'uint256', 'int24', 'int24'],
+            [
+              controllerHelper,
+              squeethPool,
+              vaultId,
+              new BigNumber(0).toString(),
+              new BigNumber(0).toString(),
+              wethAmountToLP,
+              amount0Min,
+              amount1Min,
+              lowerTick,
+              upperTick,
+            ],
+          ),
+        },
+      ]
+
+      await controllerContract.methods.updateOperator(vaultId, controllerHelper)
+      return handleTransaction(
+        await controllerHelperContract.methods
+          .rebalanceLpInVault(vaultId, collateralToFlashloan, rebalanceLpInVaultParams)
+          .send({
+            from: address,
+          }),
+        onTxConfirmed,
+      )
+    },
+    [],
+  )
+  return rebalanceGeneralSwap
 }
