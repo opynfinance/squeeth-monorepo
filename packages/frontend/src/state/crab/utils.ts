@@ -2,6 +2,7 @@ import { Contract } from 'web3-eth-contract'
 import BigNumber from 'bignumber.js'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { Vault } from '../../types'
+import floatifyBigNums from '@utils/floatifyBigNums'
 
 export const checkTimeHedge = async (contract: Contract | null) => {
   if (!contract) return null
@@ -58,6 +59,25 @@ export const getWsqueethFromCrabAmount = async (crabAmount: BigNumber, contract:
 
   const result = await contract.methods.getWsqueethFromCrabAmount(fromTokenAmount(crabAmount, 18).toFixed(0)).call()
   return toTokenAmount(result.toString(), 18)
+}
+
+export const getNetFromCrabAmount = async (crabAmount: BigNumber, contract: Contract | null) => {
+  if (!contract) return null
+
+  try {
+    const [vaultDetailsResult, totalSupplyResult] = await Promise.all([
+      contract.methods.getVaultDetails().call(),
+      contract.methods.totalSupply().call(),
+    ])
+
+    const totalSupply = toTokenAmount(totalSupplyResult, 18)
+    const collateral = toTokenAmount(vaultDetailsResult[2], 18)
+    const debt = toTokenAmount(vaultDetailsResult[3], 18)
+
+    return collateral.minus(debt).times(crabAmount).div(totalSupply)
+  } catch {
+    return null
+  }
 }
 
 export const setStrategyCap = async (amount: BigNumber, contract: Contract | null, address: string | null) => {
