@@ -135,6 +135,11 @@ export const useCurrentCrabPositionValue = () => {
   const vault = useAtomValue(crabStrategyVaultAtom)
   const getBuyQuote = useGetBuyQuote()
   const ethPrice = useETHPrice()
+  const setStrategyData = useSetStrategyData()
+
+  useEffect(() => {
+    setStrategyData()
+  }, [])
 
   useAppEffect(() => {
     ;(async () => {
@@ -161,7 +166,7 @@ export const useCurrentCrabPositionValue = () => {
       setIsCrabPositionValueLoading(false)
       setCurrentEthLoading(false)
     })()
-  }, [userCrabBalance, contract, setCurrentEthLoading, setIsCrabPositionValueLoading, getBuyQuote, ethPrice])
+  }, [userCrabBalance, contract, setCurrentEthLoading, setIsCrabPositionValueLoading, getBuyQuote, ethPrice, vault])
 
   return { currentCrabPositionValue, currentCrabPositionValueInETH, isCrabPositionValueLoading }
 }
