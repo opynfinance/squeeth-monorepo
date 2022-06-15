@@ -130,6 +130,9 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
     );
     if (position.currentOSQTHAmount.lt(ZERO_BD)) {
       position.unrealizedOSQTHUnitCost = unrealizedOSQTHUnitCost.neg();
+    } else {
+      position.unrealizedOSQTHUnitCost = unrealizedOSQTHUnitCost;
+    }
     }
 
     // > 0, long; < 0 short; = 0 none
