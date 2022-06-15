@@ -238,10 +238,15 @@ export function createTransactionHistory(
 
 // buy: amount > 0
 // sell amount < 0
-export function buyOrSellETH(userAddr: string, amount: BigDecimal): void {
+export function buyOrSellETH(
+  userAddr: string,
+  amount: BigDecimal,
+  isLpPosition: boolean
+): void {
   let usdcPrices = getETHUSDCPrice();
 
   let position = loadOrCreatePosition(userAddr);
+  if (isLpPosition) position = loadOrCreateLPPosition(userAddr);
 
   // Sell
   if (amount.lt(ZERO_BD)) {
@@ -278,10 +283,15 @@ export function buyOrSellETH(userAddr: string, amount: BigDecimal): void {
 
 // buy: amount > 0
 // sell amount < 0
-export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
+export function buyOrSellSQTH(
+  userAddr: string,
+  amount: BigDecimal,
+  isLpPosition: boolean
+): void {
   let osqthPrices = getoSQTHETHPrice();
 
   let position = loadOrCreatePosition(userAddr);
+  if (isLpPosition) position = loadOrCreateLPPosition(userAddr);
 
   // Sell
   if (amount.lt(ZERO_BD)) {

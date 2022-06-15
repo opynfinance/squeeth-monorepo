@@ -71,7 +71,7 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
 
   // event.params.amount0 > 0, selling
   // event.params.amount0 < 0, buying
-  buyOrSellSQTH(event.transaction.from.toHex(), amount0.neg());
+  buyOrSellSQTH(event.transaction.from.toHex(), amount0.neg(), false);
 
   let transactionType = "";
   if (amount0.lt(ZERO_BD)) {

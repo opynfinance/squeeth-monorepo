@@ -165,7 +165,8 @@ export function handleDepositCollateral(event: DepositCollateral): void {
 
   buyOrSellETH(
     vault.owner,
-    BigDecimal.fromString(event.params.amount.toString())
+    BigDecimal.fromString(event.params.amount.toString()),
+    false
   );
 }
 
@@ -358,7 +359,8 @@ export function handleWithdrawCollateral(event: WithdrawCollateral): void {
 
   buyOrSellETH(
     vault.owner,
-    BigDecimal.fromString(event.params.amount.toString()).neg()
+    BigDecimal.fromString(event.params.amount.toString()).neg(),
+    false
   );
 }
 
