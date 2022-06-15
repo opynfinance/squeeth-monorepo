@@ -166,7 +166,6 @@ export const useCurrentCrabPositionValue = () => {
 
       setIsCrabPositionValueLoading(false)
       setCurrentEthLoading(false)
-      console.log('qwerqwer')
     })()
   }, [crabStrategy, userCrabBalance, contract, setCurrentEthLoading, getBuyQuote, getWSqueethPositionValueInETH])
 
