@@ -190,6 +190,10 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         ControllerHelperUtil.sendBack(weth, wPowerPerp);
     }
 
+    /**
+     * @notice close short position with vault Uniswap v3 LP NFT
+     * @param _params ControllerHelperDataType.FlashloanCloseVaultLpNftParam struct
+     */
     function flashloanCloseVaultLpNft(ControllerHelperDataType.FlashloanCloseVaultLpNftParam calldata _params)
         external
         payable
@@ -228,14 +232,14 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             isWethToken0
         );
 
-        // if openeded new vault, transfer vault NFT to user
+        // transfer vault NFT to user if this is a new vault
         if (_params.vaultId == 0) IShortPowerPerp(shortPowerPerp).safeTransferFrom(address(this), msg.sender, vaultId);
 
         ControllerHelperUtil.sendBack(weth, wPowerPerp);
     }
 
     /**
-     * @notice FLash mint short position, LP in Uni v3, use LP NFT as collateral and withdraw ETH collateral to repay flashloan
+     * @notice flash mint short position, LP in Uni v3, use LP NFT as collateral and withdraw ETH collateral to repay flashloan
      * @dev sender can specify the amount of ETH collateral to withdraw in case vault.collateralAmount > ETH to repay for loan
      * @param _params ControllerHelperDataType.FlashloanWMintLpDepositNftParams struct
      */
@@ -307,7 +311,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
     }
 
     /**
-     * @notice Rebalance LP nft through trading
+     * @notice rebalance LP nft held outside of vault 
      * @param _params ControllerHelperDataType.RebalanceLpWithoutVaultParams struct
      */
     function rebalanceLpWithoutVault(ControllerHelperDataType.RebalanceLpWithoutVaultParams calldata _params)
@@ -409,7 +413,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
     }
 
     /**
-     * @notice Rebalance, increase and decrease LP liquidity through minting/burning wPowerPerp in vault
+     * @notice rebalance, increase/decrease LP liquidity through trading and/or minting/burning wPowerPerp in vault
      * @param _vaultId vault ID
      * @param _collateralToFlashloan collateral amount to flashloan and deposit into vault to be able to withdraw Uni LP NFT
      * @param _params array of ControllerHelperDataType.RebalanceLpInVaultParams structs
@@ -448,13 +452,19 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
      * @param _vaultId vault ID
      * @return short amount from vault
      */
-
     function _getVaultShortAmount(uint256 _vaultId) internal view returns (uint256) {
         VaultLib.Vault memory vault = IController(controller).vaults(_vaultId);
 
         return vault.shortAmount;
     }
 
+    /**
+     * @notice flash loan callback function
+     * @dev this function will be called by flashloan callback function onDeferredLiquidityCheck()
+     * @param _initiator address of original function caller
+     * @param _callData arbitrary data attached to callback
+     * @param _callSource identifier for which function triggered callback from CALLBACK_SOURCE enum
+     */
     function _flashCallback(
         address _initiator,
         address, /*_asset*/
@@ -638,14 +648,14 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                     // this will execute if the use case is to burn wPowerPerp, withdraw collateral or burn + withdraw
                     data[i].rebalanceLpInVaultType == ControllerHelperDataType.RebalanceVaultNftType.WithdrawFromVault
                 ) {
-                    ControllerHelperDataType.withdrawFromVaultParams memory withdrawFromVaultParams = abi.decode(
+                    ControllerHelperDataType.WithdrawFromVaultParams memory WithdrawFromVaultParams = abi.decode(
                         data[i].data,
-                        (ControllerHelperDataType.withdrawFromVaultParams)
+                        (ControllerHelperDataType.WithdrawFromVaultParams)
                     );
 
                     uint256 currentBalance = IWPowerPerp(wPowerPerp).balanceOf(address(this));
 
-                    if (withdrawFromVaultParams.burnExactRemoved) {
+                    if (WithdrawFromVaultParams.burnExactRemoved) {
                         uint256 shortAmount = _getVaultShortAmount(vaultId);
                         if (shortAmount < currentBalance) currentBalance = shortAmount;
                         ControllerHelperUtil.burnWithdrawFromVault(
@@ -653,20 +663,20 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                             weth,
                             vaultId,
                             currentBalance,
-                            withdrawFromVaultParams.collateralToWithdraw
+                            WithdrawFromVaultParams.collateralToWithdraw
                         );
                     } else {
-                        if (currentBalance < withdrawFromVaultParams.wPowerPerpToBurn)
-                            withdrawFromVaultParams.wPowerPerpToBurn = currentBalance;
+                        if (currentBalance < WithdrawFromVaultParams.wPowerPerpToBurn)
+                            WithdrawFromVaultParams.wPowerPerpToBurn = currentBalance;
                         ControllerHelperUtil.burnWithdrawFromVault(
                             controller,
                             weth,
                             vaultId,
-                            withdrawFromVaultParams.wPowerPerpToBurn,
-                            withdrawFromVaultParams.collateralToWithdraw
+                            WithdrawFromVaultParams.wPowerPerpToBurn,
+                            WithdrawFromVaultParams.collateralToWithdraw
                         );
                     }
-                } else if (data[i].rebalanceLpInVaultType == ControllerHelperDataType.RebalanceVaultNftType.MintNewLp) {
+                } else if (data[i].rebalanceLpInVaultType == ControllerHelperDataType.RebalanceVaultNftType.MintAndLp) {
                     // this will execute in the use case of fully closing old LP position, and creating new one
                     ControllerHelperDataType.MintAndLpParams memory mintAndLpParams = abi.decode(
                         data[i].data,
@@ -685,7 +695,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                     // deposit Uni NFT token in vault
                     IController(controller).depositUniPositionToken(vaultId, tokenId);
                 } else if (
-                    data[i].rebalanceLpInVaultType == ControllerHelperDataType.RebalanceVaultNftType.generalSwap
+                    data[i].rebalanceLpInVaultType == ControllerHelperDataType.RebalanceVaultNftType.GeneralSwap
                 ) {
                     ControllerHelperDataType.GeneralSwapParams memory swapParams = abi.decode(
                         data[i].data,
@@ -744,6 +754,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
      * @notice uniswap flash swap callback function
      * @dev this function will be called by flashswap callback function uniswapV3SwapCallback()
      * @param _caller address of original function caller
+     * @param _amountToPay amount to pay back for flashswap
+     * @param _pool Uniswap pool address 
      * @param _amountToPay amount to pay back for flashswap
      * @param _callData arbitrary data attached to callback
      * @param _callSource identifier for which function triggered callback
@@ -842,6 +854,16 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         if (_amount > 0) IWETH9(weth).deposit{value: _amount}();
     }
 
+    /**
+     * @notice close short position using uniswap LP assets
+     * @param _vaultId vault id
+     * @param _wPowerPerpAmount amount to remove from LP
+     * @param _wPowerPerpAmountToBurn amount to burn from vault
+     * @param _collateralToWithdraw collateral to withdraw from vault
+     * @param _limitPriceEthPerPowerPerp limit price to trade excess/deficit wPowerPerp 
+     * @param _poolFee uniswap pool fee
+     * @param burnExactRemoved if true, burn exact amount removed from vault
+     */
     function _closeShortWithAmountsFromLp(
         uint256 _vaultId,
         uint256 _wPowerPerpAmount,

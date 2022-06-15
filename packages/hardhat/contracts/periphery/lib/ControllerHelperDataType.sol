@@ -34,8 +34,8 @@ library ControllerHelperDataType {
         DecreaseLpLiquidity,
         DepositIntoVault,
         WithdrawFromVault,
-        MintNewLp,
-        generalSwap,
+        MintAndLp,
+        GeneralSwap,
         CollectFees, 
         DepositExistingNft
     }
@@ -177,8 +177,8 @@ library ControllerHelperDataType {
 
     /// @dev params for rebalanceLpInVault()
     struct RebalanceLpInVaultParams {
-        RebalanceVaultNftType rebalanceLpInVaultType;
-        bytes data;
+        RebalanceVaultNftType rebalanceLpInVaultType; // rebalance action number from RebalanceVaultNftType enum
+        bytes data; // packed parameters for rebalance actions
     }
 
     /// @dev struct for minting more wPowerPerp and add in LP, or increasing more WETH in LP, or both
@@ -208,7 +208,7 @@ library ControllerHelperDataType {
     }
 
     /// @dev struct for withdrawing from vault
-    struct withdrawFromVaultParams {  
+    struct WithdrawFromVaultParams {  
         uint256 wPowerPerpToBurn;   // wPowerPerp amount to burn
         uint256 collateralToWithdraw;   // collateral to withdraw
         bool burnExactRemoved; // if true, will burn the ControllerHelper oSQTH balance, to a maximum of the vault short amount
@@ -225,9 +225,9 @@ library ControllerHelperDataType {
 
     /// @dev struct for collecting fees owed from a uniswap NFT
     struct CollectFeesParams {
-        uint256 tokenId;
-        uint128 amount0Max;
-        uint128 amount1Max;
+        uint256 tokenId;    // Uni v3 NFT id
+        uint128 amount0Max; // maximum amount of asset0 to collect from fees
+        uint128 amount1Max; // maximum amount of asset1 to collect from fees
     }
 
     /// @dev struct for re-depositing and existing uniswap NFT to a vault
