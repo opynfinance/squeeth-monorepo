@@ -13,11 +13,10 @@ import {
   ZERO_BD,
 } from "../constants";
 import {
-  initPosition,
   createTransactionHistory,
-  getETHUSDCPrice,
   loadOrCreateAccount,
   loadOrCreatePosition,
+  buyOrSellSQTH,
 } from "../util";
 import { convertTokenToDecimal } from "../utils";
 
@@ -51,8 +50,6 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
 
   const account = loadOrCreateAccount(event.transaction.from.toHex());
   let position = loadOrCreatePosition(event.transaction.from.toHex());
-  const usdcPrices = getETHUSDCPrice();
-
   // token0 osqth
   // token1 weth
   // token0 per token1
@@ -67,91 +64,21 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
   osqthPool.token1Price = osqthPrices[1];
   osqthPool.save();
 
-  let transactionType = "";
-  // amount0 > 0, selling, so need to subtract it from position balance
-  // amount0 < 0, buying, so need to subtract it from position balance to add it as positive number
   const amount0 = convertTokenToDecimal(
     event.params.amount0,
     TOKEN_DECIMALS_18
   );
 
-  let unrealizedAmount0 = amount0;
-  const osqthPriceInUSD = osqthPrices[1].times(usdcPrices[1]);
-  const oldosqthUnrealizedAmount = position.currentOSQTHAmount;
-  position.currentOSQTHAmount = oldosqthUnrealizedAmount.minus(amount0);
+  // event.params.amount0 > 0, selling
+  // event.params.amount0 < 0, buying
+  buyOrSellSQTH(event.transaction.from.toHex(), amount0.neg());
 
-  if (position.currentOSQTHAmount.equals(ZERO_BD)) {
-    position = initPosition(event.transaction.from.toHex(), position);
-  } else {
-    const realizedamount0 = amount0.lt(ZERO_BD) ? amount0.neg() : amount0;
-    const oldosqthRealizedAmount = position.realizedOSQTHAmount;
-    position.realizedOSQTHAmount = oldosqthRealizedAmount.plus(realizedamount0);
-
-    // selling, updating realizedOSQTHAmount & realizedOSQTHUnitGain
-    if (amount0.gt(ZERO_BD)) {
-      unrealizedAmount0 = unrealizedAmount0.neg();
-    }
-
-    // buying, updating realizedOSQTHAmount & realizedOSQTHUnitCost
-    if (amount0.lt(ZERO_BD)) {
-      unrealizedAmount0 = unrealizedAmount0.neg();
-
-      const newRealizedOSQTHCost = position.realizedOSQTHUnitCost
-        .times(oldosqthRealizedAmount)
-        .plus(amount0.times(osqthPriceInUSD));
-      position.realizedOSQTHUnitCost = newRealizedOSQTHCost.div(
-        position.realizedOSQTHAmount
-      );
-
-      // long buying
-      if (position.positionType === "LONG") {
-        unrealizedAmount0 = unrealizedAmount0.neg();
-      }
-    }
-
-    // buying, updating realizedOSQTHAmount & realizedOSQTHUnitGain
-    if (amount0.gt(ZERO_BD)) {
-      const newRealizedOSQTHGain = position.realizedOSQTHUnitGain
-        .times(oldosqthRealizedAmount)
-        .plus(amount0.times(osqthPriceInUSD));
-      position.realizedOSQTHUnitGain = newRealizedOSQTHGain.div(
-        position.realizedOSQTHAmount
-      );
-
-      // long selling
-      if (position.positionType === "LONG") {
-        unrealizedAmount0 = unrealizedAmount0.neg();
-      }
-    }
-
-    // event.params.amount0 > 0, selling
-    // event.params.amount0 < 0, buying
-    // short selling & long buying, opening position, current accumulated unrealized cost + this tx osqth amount * osqth price in eth * eth in usd
-    // short buying & long selling, closing position, current accumulated unrealized cost - this tx osqth amount * osqth price in eth * eth in usd
-    const unrealizedOSQTHCost = position.unrealizedOSQTHUnitCost
-      .times(oldosqthUnrealizedAmount)
-      .plus(unrealizedAmount0.times(osqthPriceInUSD));
-
-    const unrealizedOSQTHUnitCost = unrealizedOSQTHCost.div(
-      position.currentOSQTHAmount
-    );
-
-    // > 0, long; < 0 short; = 0 none
-    if (position.currentOSQTHAmount.gt(ZERO_BD)) {
-      position.unrealizedOSQTHUnitCost = unrealizedOSQTHUnitCost;
-      position.positionType = "LONG";
-    } else if (position.currentOSQTHAmount.lt(ZERO_BD)) {
-      position.unrealizedOSQTHUnitCost = unrealizedOSQTHUnitCost.neg();
-      position.positionType = "SHORT";
-    }
-  }
-
+  let transactionType = "";
   if (amount0.lt(ZERO_BD)) {
     transactionType = "BUY_OSQTH";
   } else if (amount0.gt(ZERO_BD)) {
     transactionType = "SELL_OSQTH";
   }
-
   let transactionHistory = createTransactionHistory(transactionType, event);
   transactionHistory.oSqthAmount = event.params.amount0;
   transactionHistory.ethAmount = event.params.amount1;
