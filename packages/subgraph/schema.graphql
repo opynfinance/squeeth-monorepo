@@ -170,7 +170,6 @@ type LPPosition @entity {
   # user address
   id: ID!
   owner: Account!
-  isLongAndLP: Boolean!
 
   # current osqth amount the user put in this position
   currentOSQTHAmount: BigDecimal!
