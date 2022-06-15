@@ -10,6 +10,8 @@ type Vault @entity {
 type Account @entity {
   # user address
   id: ID!
+  # all user debt accross diff vaults
+  accShortAmount: BigInt!
   vaults: [Vault!]! @derivedFrom(field: "owner")
   vaultCount: BigInt!
   # position balance user has

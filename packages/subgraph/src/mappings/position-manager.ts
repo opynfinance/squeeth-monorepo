@@ -7,6 +7,7 @@ import {
 } from "../../generated/NonfungiblePositionManager/NonfungiblePositionManager";
 import { LPPosition, Position, Vault } from "../../generated/schema";
 import {
+  ONE_BD,
   ONE_BI,
   OSQTH_TOKEN_ADDR,
   TOKEN_DECIMALS_18,
@@ -20,6 +21,9 @@ import {
   loadOrCreateAccount,
   buyOrSellLPSQTH,
   buyOrSellLPETH,
+  loadOrCreatePosition,
+  buyOrSellETH,
+  buyOrSellSQTH,
 } from "../util";
 import { convertTokenToDecimal } from "../utils";
 import { Address, BigInt, log } from "@graphprotocol/graph-ts";
@@ -61,25 +65,29 @@ export function handleIncreaseLiquidity(event: IncreaseLiquidity): void {
   transactionHistory.save();
 
   const userAddr = event.transaction.from.toHex();
-  const account = loadOrCreateAccount(userAddr);
-
   updateLPposition(userAddr, event.params.amount0, event.params.amount1);
 
-  // const amount0 = convertTokenToDecimal(
-  //   event.params.amount0,
-  //   TOKEN_DECIMALS_18
-  // );
-  // const amount1 = convertTokenToDecimal(
-  //   event.params.amount1,
-  //   TOKEN_DECIMALS_18
-  // );
+  const amount0 = convertTokenToDecimal(
+    event.params.amount0,
+    TOKEN_DECIMALS_18
+  );
+  const amount1 = convertTokenToDecimal(
+    event.params.amount1,
+    TOKEN_DECIMALS_18
+  );
 
-  // // if long & lp
   // const longPosition = Position.load(userAddr);
   // // const longPosition = Vault.load(userAddr);
   // buyOrSellSQTH(userAddr, amount0);
   // buyOrSellETH(userAddr, amount1);
-  account.save();
+
+  const position = loadOrCreatePosition(userAddr);
+  const account = loadOrCreateAccount(userAddr);
+  // // if long & lp, selling osqth and eth for lp
+  if (position.currentOSQTHAmount.gt(account.accShortAmount.toBigDecimal())) {
+    buyOrSellSQTH(userAddr, amount0.times(ZERO_BD.minus(ONE_BD)));
+    buyOrSellETH(userAddr, amount1.times(ZERO_BD.minus(ONE_BD)));
+  }
 }
 
 // buying to remove lp
@@ -100,15 +108,23 @@ export function handleDecreaseLiquidity(event: DecreaseLiquidity): void {
     event.params.amount0.times(ZERO_BI.minus(ONE_BI)),
     event.params.amount1.times(ZERO_BI.minus(ONE_BI))
   );
-  // const amount0 = convertTokenToDecimal(
-  //   event.params.amount0.times(ZERO_BI.minus(ONE_BI)),
-  //   TOKEN_DECIMALS_18
-  // );
+  const amount0 = convertTokenToDecimal(
+    event.params.amount0.times(ZERO_BI.minus(ONE_BI)),
+    TOKEN_DECIMALS_18
+  );
 
-  // const longPosition = Position.load(userAddr);
-  // if (longPosition == null) {
-  //   return;
-  // }
+  const amount1 = convertTokenToDecimal(
+    event.params.amount1,
+    TOKEN_DECIMALS_18
+  );
+
+  const position = loadOrCreatePosition(userAddr);
+  const account = loadOrCreateAccount(userAddr);
+  // if long & lp, buying back osqth and eth for removing lp token
+  if (position.currentOSQTHAmount.gt(account.accShortAmount.toBigDecimal())) {
+    buyOrSellSQTH(userAddr, amount0);
+    buyOrSellETH(userAddr, amount1);
+  }
 }
 
 export function handleCollect(event: Collect): void {
@@ -120,8 +136,5 @@ export function handleCollect(event: Collect): void {
   transactionHistory.save();
 
   let userAddr = event.transaction.from.toHex();
-  const account = loadOrCreateAccount(userAddr);
   updateLPposition(userAddr, event.params.amount0, event.params.amount1);
-
-  account.save();
 }

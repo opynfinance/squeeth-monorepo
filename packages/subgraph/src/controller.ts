@@ -27,6 +27,7 @@ import {
   HourStatSnapshot,
   DayStatSnapshot,
   VaultHistory,
+  Account,
 } from "../generated/schema";
 import {
   buyOrSellETH,
@@ -92,6 +93,10 @@ export function handleBurnShort(event: BurnShort): void {
 
   vault.shortAmount = vault.shortAmount.minus(event.params.amount);
   vault.save();
+
+  const account = loadOrCreateAccount(vault.owner);
+  account.accShortAmount = account.accShortAmount.minus(event.params.amount);
+  account.save();
 
   let timestamp = event.block.timestamp;
   let transactionHash = event.transaction.hash.toHex();
@@ -193,6 +198,12 @@ export function handleLiquidate(event: Liquidate): void {
   );
   vault.save();
 
+  const account = loadOrCreateAccount(vault.owner);
+  account.accShortAmount = account.accShortAmount.minus(
+    event.params.debtAmount
+  );
+  account.save();
+
   let timestamp = event.block.timestamp;
   let transactionHash = event.transaction.hash.toHex();
   //update vault history
@@ -237,6 +248,10 @@ export function handleMintShort(event: MintShort): void {
 
   vault.shortAmount = vault.shortAmount.plus(event.params.amount);
   vault.save();
+
+  const account = loadOrCreateAccount(vault.owner);
+  account.accShortAmount = account.accShortAmount.plus(event.params.amount);
+  account.save();
 
   let timestamp = event.block.timestamp;
   let transactionHash = event.transaction.hash.toHex();
@@ -285,12 +300,14 @@ export function handleNormalizationFactorUpdated(
 export function handleOpenVault(event: OpenVault): void {
   const account = loadOrCreateAccount(event.transaction.from.toHex());
   account.vaultCount = account.vaultCount.plus(BIGINT_ONE);
+  account.accShortAmount = BIGINT_ZERO;
   account.save();
 
   const vault = new Vault(event.params.vaultId.toString());
   vault.owner = event.transaction.from.toHex();
   vault.collateralAmount = BIGINT_ZERO;
   vault.shortAmount = BIGINT_ZERO;
+
   vault.save();
 }
 
