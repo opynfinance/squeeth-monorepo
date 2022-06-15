@@ -238,15 +238,10 @@ export function createTransactionHistory(
 
 // buy: amount > 0
 // sell amount < 0
-export function buyOrSellETH(
-  userAddr: string,
-  amount: BigDecimal,
-  isLpPosition: boolean
-): void {
+export function buyOrSellETH(userAddr: string, amount: BigDecimal): void {
   let usdcPrices = getETHUSDCPrice();
 
   let position = loadOrCreatePosition(userAddr);
-  if (isLpPosition) position = loadOrCreateLPPosition(userAddr);
 
   // Sell
   if (amount.lt(ZERO_BD)) {
@@ -283,15 +278,10 @@ export function buyOrSellETH(
 
 // buy: amount > 0
 // sell amount < 0
-export function buyOrSellSQTH(
-  userAddr: string,
-  amount: BigDecimal,
-  isLpPosition: boolean
-): void {
+export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
   let osqthPrices = getoSQTHETHPrice();
 
   let position = loadOrCreatePosition(userAddr);
-  if (isLpPosition) position = loadOrCreateLPPosition(userAddr);
 
   // Sell
   if (amount.lt(ZERO_BD)) {
@@ -331,6 +321,103 @@ export function buyOrSellSQTH(
     position.currentETHAmount.equals(ZERO_BD)
   ) {
     initPosition(userAddr, position);
+  }
+
+  position.save();
+}
+
+// buy: amount > 0
+// sell amount < 0
+export function buyOrSellLPETH(userAddr: string, amount: BigDecimal): void {
+  let usdcPrices = getETHUSDCPrice();
+  let position = loadOrCreateLPPosition(userAddr);
+
+  // Sell
+  if (amount.lt(ZERO_BD)) {
+    let absAmount = amount.neg();
+
+    let oldRealizedETHAmount = position.realizedETHAmount;
+    position.realizedETHAmount = position.realizedETHAmount.plus(absAmount);
+
+    let oldRealizedETHGain =
+      position.realizedETHUnitGain.times(oldRealizedETHAmount);
+    position.realizedETHUnitGain = oldRealizedETHGain
+      .plus(absAmount.times(usdcPrices[1]))
+      .div(position.realizedETHAmount);
+
+    let oldRealizedETHCost =
+      position.realizedETHUnitCost.times(oldRealizedETHAmount);
+    position.realizedETHUnitCost = oldRealizedETHCost
+      .plus(amount.times(usdcPrices[1]))
+      .div(position.realizedETHAmount);
+  }
+
+  // Unrealized PnL calculation
+  let oldUnrealizedETHCost = position.unrealizedETHUnitCost.times(
+    position.currentETHAmount
+  );
+
+  position.currentETHAmount = position.currentETHAmount.plus(amount);
+  position.unrealizedETHUnitCost = oldUnrealizedETHCost
+    .plus(amount.times(usdcPrices[1]))
+    .div(position.currentETHAmount);
+
+  // = 0 none
+  if (
+    position.currentOSQTHAmount.equals(ZERO_BD) &&
+    position.currentETHAmount.equals(ZERO_BD)
+  ) {
+    initLPPosition(userAddr, position);
+  }
+
+  position.save();
+}
+
+// buy: amount > 0
+// sell amount < 0
+export function buyOrSellLPSQTH(userAddr: string, amount: BigDecimal): void {
+  let osqthPrices = getoSQTHETHPrice();
+
+  let position = loadOrCreateLPPosition(userAddr);
+
+  // Sell
+  if (amount.lt(ZERO_BD)) {
+    let absAmount = amount.neg();
+
+    let oldRealizedOSQTHAmount = position.realizedOSQTHAmount;
+    position.realizedOSQTHAmount = position.realizedOSQTHAmount.plus(absAmount);
+
+    let oldRealizedOSQTHGain = position.realizedOSQTHUnitGain.times(
+      oldRealizedOSQTHAmount
+    );
+    position.realizedOSQTHUnitGain = oldRealizedOSQTHGain
+      .plus(absAmount.times(osqthPrices[3]))
+      .div(position.realizedOSQTHAmount);
+
+    let oldRealizedOSQTHCost = position.realizedOSQTHUnitCost.times(
+      oldRealizedOSQTHAmount
+    );
+    position.realizedOSQTHUnitCost = oldRealizedOSQTHCost
+      .plus(amount.times(osqthPrices[3]))
+      .div(position.realizedOSQTHAmount);
+  }
+
+  // Unrealized PnL calculation
+  let oldUnrealizedOSQTHCost = position.unrealizedOSQTHUnitCost.times(
+    position.currentOSQTHAmount
+  );
+
+  position.currentOSQTHAmount = position.currentOSQTHAmount.plus(amount);
+  position.unrealizedOSQTHUnitCost = oldUnrealizedOSQTHCost
+    .plus(amount.times(osqthPrices[3]))
+    .div(position.currentOSQTHAmount);
+
+  // = 0 none
+  if (
+    position.currentOSQTHAmount.equals(ZERO_BD) &&
+    position.currentETHAmount.equals(ZERO_BD)
+  ) {
+    initLPPosition(userAddr, position);
   }
 
   position.save();

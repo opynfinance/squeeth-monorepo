@@ -17,13 +17,9 @@ import {
 import {
   initLPPosition,
   createTransactionHistory,
-  getETHUSDCPrice,
-  getoSQTHETHPrice,
   loadOrCreateAccount,
-  loadOrCreateLPPosition,
-  loadOrCreatePosition,
-  buyOrSellSQTH,
-  buyOrSellETH,
+  buyOrSellLPSQTH,
+  buyOrSellLPETH,
 } from "../util";
 import { convertTokenToDecimal } from "../utils";
 import { Address, BigInt, log } from "@graphprotocol/graph-ts";
@@ -32,12 +28,12 @@ function updateLPposition(
   userAddr: string,
   eventAmount0: BigInt,
   eventAmount1: BigInt
-) {
+): void {
   const amount0 = convertTokenToDecimal(eventAmount0, TOKEN_DECIMALS_18);
   const amount1 = convertTokenToDecimal(eventAmount1, TOKEN_DECIMALS_18);
 
-  buyOrSellSQTH(userAddr, amount0, true);
-  buyOrSellETH(userAddr, amount1, true);
+  buyOrSellLPSQTH(userAddr, amount0);
+  buyOrSellLPETH(userAddr, amount1);
 }
 
 function isOSQTHETHPool(address: Address, tokenId: BigInt): boolean {
@@ -81,8 +77,8 @@ export function handleIncreaseLiquidity(event: IncreaseLiquidity): void {
   // // if long & lp
   // const longPosition = Position.load(userAddr);
   // // const longPosition = Vault.load(userAddr);
-  // buyOrSellSQTH(userAddr, amount0, false);
-  // buyOrSellETH(userAddr, amount1, false);
+  // buyOrSellSQTH(userAddr, amount0);
+  // buyOrSellETH(userAddr, amount1);
   account.save();
 }
 

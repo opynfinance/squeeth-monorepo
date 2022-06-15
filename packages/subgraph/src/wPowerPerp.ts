@@ -17,6 +17,6 @@ export function handleTransfer(event: Transfer): void {
   receiverTransactionHistory.save();
 
   let amount = BigDecimal.fromString(event.params.value.toString());
-  buyOrSellSQTH(event.params.from.toHex(), amount.neg(), false);
-  buyOrSellSQTH(event.params.to.toHex(), amount, false);
+  buyOrSellSQTH(event.params.from.toHex(), amount.neg());
+  buyOrSellSQTH(event.params.to.toHex(), amount);
 }
