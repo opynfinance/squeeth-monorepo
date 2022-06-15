@@ -129,5 +129,9 @@ export function handleCollect(event: Collect): void {
   transactionHistory.save();
 
   let userAddr = event.transaction.from.toHex();
-  updateLPposition(userAddr, event.params.amount0, event.params.amount1);
+  updateLPposition(
+    userAddr,
+    event.params.amount0.neg(),
+    event.params.amount1.neg()
+  );
 }
