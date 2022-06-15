@@ -1,5 +1,5 @@
 /* eslint-disable prefer-const */
-import { Pool, Position } from "../../generated/schema";
+import { Pool } from "../../generated/schema";
 import {
   Swap as USDCSwapEvent,
   Initialize,

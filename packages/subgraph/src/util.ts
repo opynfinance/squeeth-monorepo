@@ -138,7 +138,6 @@ export function initLPPosition(
   lpPosition: LPPosition
 ): LPPosition {
   lpPosition.owner = userAddr;
-  lpPosition.isLongAndLP = false;
 
   lpPosition.currentOSQTHAmount = ZERO_BD;
   lpPosition.currentETHAmount = ZERO_BD;
@@ -239,27 +238,33 @@ export function createTransactionHistory(
 // buy: amount > 0
 // sell amount < 0
 export function buyOrSellETH(userAddr: string, amount: BigDecimal): void {
+  if (amount.equals(ZERO_BD)) return;
   let usdcPrices = getETHUSDCPrice();
-
   let position = loadOrCreatePosition(userAddr);
+
+  // Buy
+  if (amount.gt(ZERO_BD)) {
+    let oldBoughtAmount = position.currentETHAmount.plus(
+      position.realizedETHAmount
+    );
+    let oldRealizedETHCost =
+      position.realizedETHUnitCost.times(oldBoughtAmount);
+
+    position.realizedETHUnitCost = oldRealizedETHCost
+      .plus(amount.times(usdcPrices[1]))
+      .div(oldBoughtAmount.plus(amount));
+  }
 
   // Sell
   if (amount.lt(ZERO_BD)) {
     let absAmount = amount.neg();
+    let oldRealizedETHGain = position.realizedETHUnitGain.times(
+      position.realizedETHAmount
+    );
 
-    let oldRealizedETHAmount = position.realizedETHAmount;
     position.realizedETHAmount = position.realizedETHAmount.plus(absAmount);
-
-    let oldRealizedETHGain =
-      position.realizedETHUnitGain.times(oldRealizedETHAmount);
     position.realizedETHUnitGain = oldRealizedETHGain
       .plus(absAmount.times(usdcPrices[1]))
-      .div(position.realizedETHAmount);
-
-    let oldRealizedETHCost =
-      position.realizedETHUnitCost.times(oldRealizedETHAmount);
-    position.realizedETHUnitCost = oldRealizedETHCost
-      .plus(amount.times(usdcPrices[1]))
       .div(position.realizedETHAmount);
   }
 
@@ -269,9 +274,21 @@ export function buyOrSellETH(userAddr: string, amount: BigDecimal): void {
   );
 
   position.currentETHAmount = position.currentETHAmount.plus(amount);
-  position.unrealizedETHUnitCost = oldUnrealizedETHCost
-    .plus(amount.times(usdcPrices[1]))
-    .div(position.currentETHAmount);
+  // = 0 none
+  if (
+    position.currentOSQTHAmount.equals(ZERO_BD) &&
+    position.currentETHAmount.equals(ZERO_BD)
+  ) {
+    position = initPosition(userAddr, position);
+    position.save();
+    return;
+  } else if (position.currentETHAmount.equals(ZERO_BD)) {
+    position.unrealizedETHUnitCost = ZERO_BD;
+  } else {
+    position.unrealizedETHUnitCost = oldUnrealizedETHCost
+      .plus(amount.times(usdcPrices[1]))
+      .div(position.currentETHAmount);
+  }
 
   position.save();
 }
@@ -279,29 +296,34 @@ export function buyOrSellETH(userAddr: string, amount: BigDecimal): void {
 // buy: amount > 0
 // sell amount < 0
 export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
+  if (amount.equals(ZERO_BD)) return;
   let osqthPrices = getoSQTHETHPrice();
 
   let position = loadOrCreatePosition(userAddr);
 
+  // Buy
+  if (amount.gt(ZERO_BD)) {
+    let oldBoughtAmount = position.currentOSQTHAmount.plus(
+      position.realizedOSQTHAmount
+    );
+    let oldRealizedOSQTHCost =
+      position.realizedOSQTHUnitCost.times(oldBoughtAmount);
+
+    position.realizedOSQTHUnitCost = oldRealizedOSQTHCost
+      .plus(amount.times(osqthPrices[3]))
+      .div(oldBoughtAmount.plus(amount));
+  }
+
   // Sell
   if (amount.lt(ZERO_BD)) {
     let absAmount = amount.neg();
-
-    let oldRealizedOSQTHAmount = position.realizedOSQTHAmount;
-    position.realizedOSQTHAmount = position.realizedOSQTHAmount.plus(absAmount);
-
-    let oldRealizedOSQTHGain = position.realizedOSQTHUnitGain.times(
-      oldRealizedOSQTHAmount
+    let oldRealizedOSQTHGain = position.realizedOSQTHUnitCost.times(
+      position.realizedOSQTHUnitGain
     );
+
+    position.realizedOSQTHAmount = position.realizedOSQTHAmount.plus(absAmount);
     position.realizedOSQTHUnitGain = oldRealizedOSQTHGain
       .plus(absAmount.times(osqthPrices[3]))
-      .div(position.realizedOSQTHAmount);
-
-    let oldRealizedOSQTHCost = position.realizedOSQTHUnitCost.times(
-      oldRealizedOSQTHAmount
-    );
-    position.realizedOSQTHUnitCost = oldRealizedOSQTHCost
-      .plus(amount.times(osqthPrices[3]))
       .div(position.realizedOSQTHAmount);
   }
 
@@ -311,16 +333,20 @@ export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
   );
 
   position.currentOSQTHAmount = position.currentOSQTHAmount.plus(amount);
-  position.unrealizedOSQTHUnitCost = oldUnrealizedOSQTHCost
-    .plus(amount.times(osqthPrices[3]))
-    .div(position.currentOSQTHAmount);
-
   // = 0 none
   if (
     position.currentOSQTHAmount.equals(ZERO_BD) &&
     position.currentETHAmount.equals(ZERO_BD)
   ) {
-    initPosition(userAddr, position);
+    position = initPosition(userAddr, position);
+    position.save();
+    return;
+  } else if (position.currentOSQTHAmount.equals(ZERO_BD)) {
+    position.unrealizedOSQTHUnitCost = ZERO_BD;
+  } else {
+    position.unrealizedOSQTHUnitCost = oldUnrealizedOSQTHCost
+      .plus(amount.times(osqthPrices[3]))
+      .div(position.currentOSQTHAmount);
   }
 
   position.save();
@@ -329,26 +355,33 @@ export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
 // buy: amount > 0
 // sell amount < 0
 export function buyOrSellLPETH(userAddr: string, amount: BigDecimal): void {
+  if (amount.equals(ZERO_BD)) return;
   let usdcPrices = getETHUSDCPrice();
   let position = loadOrCreateLPPosition(userAddr);
+
+  // Buy
+  if (amount.gt(ZERO_BD)) {
+    let oldBoughtAmount = position.currentETHAmount.plus(
+      position.realizedETHAmount
+    );
+    let oldRealizedETHCost =
+      position.realizedETHUnitCost.times(oldBoughtAmount);
+
+    position.realizedETHUnitCost = oldRealizedETHCost
+      .plus(amount.times(usdcPrices[1]))
+      .div(oldBoughtAmount.plus(amount));
+  }
 
   // Sell
   if (amount.lt(ZERO_BD)) {
     let absAmount = amount.neg();
+    let oldRealizedETHGain = position.realizedETHUnitGain.times(
+      position.realizedETHAmount
+    );
 
-    let oldRealizedETHAmount = position.realizedETHAmount;
     position.realizedETHAmount = position.realizedETHAmount.plus(absAmount);
-
-    let oldRealizedETHGain =
-      position.realizedETHUnitGain.times(oldRealizedETHAmount);
     position.realizedETHUnitGain = oldRealizedETHGain
       .plus(absAmount.times(usdcPrices[1]))
-      .div(position.realizedETHAmount);
-
-    let oldRealizedETHCost =
-      position.realizedETHUnitCost.times(oldRealizedETHAmount);
-    position.realizedETHUnitCost = oldRealizedETHCost
-      .plus(amount.times(usdcPrices[1]))
       .div(position.realizedETHAmount);
   }
 
@@ -358,16 +391,20 @@ export function buyOrSellLPETH(userAddr: string, amount: BigDecimal): void {
   );
 
   position.currentETHAmount = position.currentETHAmount.plus(amount);
-  position.unrealizedETHUnitCost = oldUnrealizedETHCost
-    .plus(amount.times(usdcPrices[1]))
-    .div(position.currentETHAmount);
-
   // = 0 none
   if (
     position.currentOSQTHAmount.equals(ZERO_BD) &&
     position.currentETHAmount.equals(ZERO_BD)
   ) {
-    initLPPosition(userAddr, position);
+    position = initLPPosition(userAddr, position);
+    position.save();
+    return;
+  } else if (position.currentETHAmount.equals(ZERO_BD)) {
+    position.unrealizedETHUnitCost = ZERO_BD;
+  } else {
+    position.unrealizedETHUnitCost = oldUnrealizedETHCost
+      .plus(amount.times(usdcPrices[1]))
+      .div(position.currentETHAmount);
   }
 
   position.save();
@@ -376,29 +413,34 @@ export function buyOrSellLPETH(userAddr: string, amount: BigDecimal): void {
 // buy: amount > 0
 // sell amount < 0
 export function buyOrSellLPSQTH(userAddr: string, amount: BigDecimal): void {
+  if (amount.equals(ZERO_BD)) return;
   let osqthPrices = getoSQTHETHPrice();
 
   let position = loadOrCreateLPPosition(userAddr);
 
+  // Buy
+  if (amount.gt(ZERO_BD)) {
+    let oldBoughtAmount = position.currentOSQTHAmount.plus(
+      position.realizedOSQTHAmount
+    );
+    let oldRealizedOSQTHCost =
+      position.realizedOSQTHUnitCost.times(oldBoughtAmount);
+
+    position.realizedOSQTHUnitCost = oldRealizedOSQTHCost
+      .plus(amount.times(osqthPrices[3]))
+      .div(oldBoughtAmount.plus(amount));
+  }
+
   // Sell
   if (amount.lt(ZERO_BD)) {
     let absAmount = amount.neg();
-
-    let oldRealizedOSQTHAmount = position.realizedOSQTHAmount;
-    position.realizedOSQTHAmount = position.realizedOSQTHAmount.plus(absAmount);
-
-    let oldRealizedOSQTHGain = position.realizedOSQTHUnitGain.times(
-      oldRealizedOSQTHAmount
+    let oldRealizedOSQTHGain = position.realizedOSQTHUnitCost.times(
+      position.realizedOSQTHUnitGain
     );
+
+    position.realizedOSQTHAmount = position.realizedOSQTHAmount.plus(absAmount);
     position.realizedOSQTHUnitGain = oldRealizedOSQTHGain
       .plus(absAmount.times(osqthPrices[3]))
-      .div(position.realizedOSQTHAmount);
-
-    let oldRealizedOSQTHCost = position.realizedOSQTHUnitCost.times(
-      oldRealizedOSQTHAmount
-    );
-    position.realizedOSQTHUnitCost = oldRealizedOSQTHCost
-      .plus(amount.times(osqthPrices[3]))
       .div(position.realizedOSQTHAmount);
   }
 
@@ -408,16 +450,20 @@ export function buyOrSellLPSQTH(userAddr: string, amount: BigDecimal): void {
   );
 
   position.currentOSQTHAmount = position.currentOSQTHAmount.plus(amount);
-  position.unrealizedOSQTHUnitCost = oldUnrealizedOSQTHCost
-    .plus(amount.times(osqthPrices[3]))
-    .div(position.currentOSQTHAmount);
-
   // = 0 none
   if (
     position.currentOSQTHAmount.equals(ZERO_BD) &&
     position.currentETHAmount.equals(ZERO_BD)
   ) {
-    initLPPosition(userAddr, position);
+    position = initLPPosition(userAddr, position);
+    position.save();
+    return;
+  } else if (position.currentOSQTHAmount.equals(ZERO_BD)) {
+    position.unrealizedOSQTHUnitCost = ZERO_BD;
+  } else {
+    position.unrealizedOSQTHUnitCost = oldUnrealizedOSQTHCost
+      .plus(amount.times(osqthPrices[3]))
+      .div(position.currentOSQTHAmount);
   }
 
   position.save();
