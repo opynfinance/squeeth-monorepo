@@ -70,6 +70,8 @@ export const getNetFromCrabAmount = async (crabAmount: BigNumber, contract: Cont
       contract.methods.totalSupply().call(),
     ])
 
+    console.log(floatifyBigNums(vaultDetailsResult))
+
     const totalSupply = toTokenAmount(totalSupplyResult, 18)
     const collateral = toTokenAmount(vaultDetailsResult[2], 18)
     const debt = toTokenAmount(vaultDetailsResult[3], 18)
