@@ -9,3 +9,13 @@ export const POOLS_QUERY = gql`
     }
   }
 `
+
+export const POOLS_SUBSCRIPTION = gql`
+  subscription subscriptionPools {
+    pools(first: 5) {
+      id
+      token0Price
+      token1Price
+    }
+  }
+`

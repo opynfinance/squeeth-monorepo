@@ -21,3 +21,6 @@ export const wethPriceAtom = atom((get) => {
 export const squeethInitialPriceAtom = atom(BIG_ZERO)
 export const squeethPriceeAtom = atom(BIG_ZERO)
 export const readyAtom = atom(false)
+
+export const ethPoolPriceAtom = atom(BIG_ZERO)
+export const osqthPoolPriceAtom = atom(BIG_ZERO)
