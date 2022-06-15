@@ -118,7 +118,6 @@ export function loadOrCreateAccount(accountId: string): Account {
 
 export function initPosition(userAddr: string, position: Position): Position {
   position.owner = userAddr;
-  position.positionType = "NONE";
 
   position.currentOSQTHAmount = ZERO_BD;
   position.currentETHAmount = ZERO_BD;
@@ -274,9 +273,6 @@ export function buyOrSellETH(userAddr: string, amount: BigDecimal): void {
     .plus(amount.times(usdcPrices[1]))
     .div(position.currentETHAmount);
 
-  // Because it will only be used in depositing and withdrawing in short position
-  position.positionType = "SHORT";
-
   position.save();
 }
 
@@ -319,12 +315,11 @@ export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
     .plus(amount.times(osqthPrices[3]))
     .div(position.currentOSQTHAmount);
 
-  // > 0, long; < 0 short; = 0 none
-  if (position.currentOSQTHAmount.gt(ZERO_BD)) {
-    position.positionType = "LONG";
-  } else if (position.currentOSQTHAmount.lt(ZERO_BD)) {
-    position.positionType = "SHORT";
-  } else {
+  // = 0 none
+  if (
+    position.currentOSQTHAmount.equals(ZERO_BD) &&
+    position.currentETHAmount.equals(ZERO_BD)
+  ) {
     initPosition(userAddr, position);
   }
 
