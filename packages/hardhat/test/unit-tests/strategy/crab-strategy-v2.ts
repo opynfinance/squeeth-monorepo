@@ -595,4 +595,37 @@ describe("Crab Strategy V2", function () {
       expect(isSimilar(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).toString(), expectedEthToWithdraw.toString())).to.be.true
     })
   })
+
+  describe("Migrate vault to new strategy", async () => {
+    const strategyCap = ethers.utils.parseUnits("100")
+    const ethToDeposit = BigNumber.from(60).mul(one)
+
+    it("Should revert if non owner tries to migrate", async () => {
+      await expect(crabStrategy.connect(random).transferVault(depositor.address)).to.be.revertedWith("Ownable: caller is not the owner")
+    })
+
+    it("Should migrate and disable deposit/withdraw if owner transfers the vault", async () => {
+      await crabStrategy.connect(owner).setStrategyCap(strategyCap)
+      await crabStrategy.connect(depositor).deposit({ value: ethToDeposit })
+      const depositorCrabBefore = (await crabStrategy.balanceOf(depositor.address))
+      const depositorSqueethBalanceBefore = await squeeth.balanceOf(depositor.address)
+
+      // Transfer here
+      await expect(crabStrategy.connect(owner).transferVault(random.address)).to.emit(crabStrategy, 'VaultTransferred')
+      const nftBalAfter = await shortSqueeth.balanceOf(crabStrategy.address)
+      const nftBalForRandom = await shortSqueeth.balanceOf(random.address)
+
+      const newCap = await crabStrategy.strategyCap()
+      expect(nftBalAfter.eq(0)).to.be.true
+      expect(nftBalForRandom.eq(1)).to.be.true
+      expect(newCap.eq(0)).to.be.true
+
+      // Try to withdraw
+      await squeeth.connect(depositor).approve(crabStrategy.address, depositorSqueethBalanceBefore)
+      await expect(crabStrategy.connect(depositor).withdraw(depositorCrabBefore)).to.be.revertedWith('C3')
+
+      // Try to deposit
+      await expect(crabStrategy.connect(depositor).deposit({ value: ethToDeposit })).to.be.revertedWith('Deposit exceeds strategy cap')
+    })
+  })
 })

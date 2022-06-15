@@ -10,7 +10,7 @@ import {IOracle} from "../interfaces/IOracle.sol";
 import {IWETH9} from "../interfaces/IWETH9.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IController} from "../interfaces/IController.sol";
-import {IShortPowerPerp} from "../interfaces/IShortPowerPerp.sol"
+import {IShortPowerPerp} from "../interfaces/IShortPowerPerp.sol";
 
 // contract
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -203,7 +203,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
       IShortPowerPerp(powerTokenController.shortPowerPerp()).safeTransferFrom(address(this), _newStrategy, vaultId);
       _setStrategyCap(0);
 
-      emit VaultTransferred(_newStrategy, vaultId)
+      emit VaultTransferred(_newStrategy, vaultId);
     }
 
     /**

@@ -74,6 +74,8 @@ const config: HardhatUserConfig = {
       accounts: {
         accountsBalance: '1000000000000000000000000000'
       },
+      // IMPORTANT: SHOULD BE REMOVED AND FIXED BEFORE MERGING
+      allowUnlimitedContractSize: true,
     },
     localhost: {
       url: "http://localhost:8545",
