@@ -134,13 +134,8 @@ export const useCurrentCrabPositionValue = () => {
   const contract = useAtomValue(crabStrategyContractAtom)
   const setCurrentEthLoading = useUpdateAtom(currentEthLoadingAtom)
   const vault = useAtomValue(crabStrategyVaultAtom)
-  const setStrategyData = useSetStrategyData()
   const getBuyQuote = useGetBuyQuote()
   const ethPrice = useETHPrice()
-
-  useEffect(() => {
-    setStrategyData()
-  }, [])
 
   useAppEffect(() => {
     ;(async () => {
