@@ -136,17 +136,10 @@ type Pool @entity {
   token1Price: BigDecimal
 }
 
-enum PositionType {
-  LONG
-  SHORT
-  NONE
-}
-
 type Position @entity {
   # user address
   id: ID!
   owner: Account!
-  positionType: PositionType!
 
   # current osqth amount the user put in this position
   currentOSQTHAmount: BigDecimal!
