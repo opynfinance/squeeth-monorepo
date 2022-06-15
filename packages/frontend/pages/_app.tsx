@@ -21,6 +21,7 @@ import { useInitController } from 'src/state/controller/hooks'
 import { ComputeSwapsProvider } from 'src/state/positions/providers'
 import { useSwaps } from 'src/state/positions/hooks'
 import useAccounts from '@hooks/useAccounts'
+import useCurrentPrices from '@hooks/useCurrentPrices'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
 
@@ -76,6 +77,7 @@ function MyApp({ Component, pageProps }: any) {
 }
 
 const Init = () => {
+  useCurrentPrices()
   useOnboard()
   useUpdateSqueethPrices()
   useUpdateSqueethPoolData()
