@@ -34,12 +34,7 @@ import { useGetCollatRatioAndLiqPrice, useGetVault } from '../controller/hooks'
 import db from '@utils/firestore'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import BigNumber from 'bignumber.js'
-import {
-  useGetBuyQuote,
-  useGetSellQuote,
-  useGetWSqueethPositionValue,
-  useGetWSqueethPositionValueInETH,
-} from '../squeethPool/hooks'
+import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValueInETH } from '../squeethPool/hooks'
 import { fromTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
 import { addressAtom } from '../wallet/atoms'
@@ -133,9 +128,9 @@ export const useCurrentCrabPositionValue = () => {
   const contract = useAtomValue(crabStrategyContractAtom)
   const setCurrentEthLoading = useUpdateAtom(currentEthLoadingAtom)
   const vault = useAtomValue(crabStrategyVaultAtom)
-  const getBuyQuote = useGetBuyQuote()
   const ethPrice = useETHPrice()
   const setStrategyData = useSetStrategyData()
+  const getWSqueethPositionValueInETH = useGetWSqueethPositionValueInETH()
 
   useEffect(() => {
     setStrategyData()
@@ -155,7 +150,7 @@ export const useCurrentCrabPositionValue = () => {
         return
       }
 
-      const { amountIn: ethDebt } = await getBuyQuote(squeethDebt)
+      const ethDebt = getWSqueethPositionValueInETH(squeethDebt)
 
       const crabPositionValueInETH = collateral.minus(ethDebt)
       const crabPositionValueInUSD = crabPositionValueInETH.times(ethPrice)
@@ -166,7 +161,15 @@ export const useCurrentCrabPositionValue = () => {
       setIsCrabPositionValueLoading(false)
       setCurrentEthLoading(false)
     })()
-  }, [userCrabBalance, contract, setCurrentEthLoading, setIsCrabPositionValueLoading, getBuyQuote, ethPrice, vault])
+  }, [
+    userCrabBalance,
+    contract,
+    setCurrentEthLoading,
+    setIsCrabPositionValueLoading,
+    getWSqueethPositionValueInETH,
+    ethPrice,
+    vault,
+  ])
 
   return { currentCrabPositionValue, currentCrabPositionValueInETH, isCrabPositionValueLoading }
 }
