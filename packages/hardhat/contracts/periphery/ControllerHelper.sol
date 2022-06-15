@@ -462,7 +462,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
      * @notice flash loan callback function
      * @dev this function will be called by flashloan callback function onDeferredLiquidityCheck()
      * @param _initiator address of original function caller
-     * @param _callData arbitrary data attached to callback
+     * @param _calldata arbitrary data attached to callback
      * @param _callSource identifier for which function triggered callback from CALLBACK_SOURCE enum
      */
     function _flashCallback(
