@@ -311,7 +311,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
     }
 
     /**
-     * @notice rebalance LP nft held outside of vault 
+     * @notice rebalance LP nft held outside of vault
      * @param _params ControllerHelperDataType.RebalanceLpWithoutVaultParams struct
      */
     function rebalanceLpWithoutVault(ControllerHelperDataType.RebalanceLpWithoutVaultParams calldata _params)
@@ -755,7 +755,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
      * @dev this function will be called by flashswap callback function uniswapV3SwapCallback()
      * @param _caller address of original function caller
      * @param _amountToPay amount to pay back for flashswap
-     * @param _pool Uniswap pool address 
+     * @param _pool Uniswap pool address
      * @param _amountToPay amount to pay back for flashswap
      * @param _callData arbitrary data attached to callback
      * @param _callSource identifier for which function triggered callback
@@ -860,7 +860,7 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
      * @param _wPowerPerpAmount amount to remove from LP
      * @param _wPowerPerpAmountToBurn amount to burn from vault
      * @param _collateralToWithdraw collateral to withdraw from vault
-     * @param _limitPriceEthPerPowerPerp limit price to trade excess/deficit wPowerPerp 
+     * @param _limitPriceEthPerPowerPerp limit price to trade excess/deficit wPowerPerp
      * @param _poolFee uniswap pool fee
      * @param burnExactRemoved if true, burn exact amount removed from vault
      */
