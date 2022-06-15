@@ -130,7 +130,6 @@ export const useCurrentCrabPositionValue = () => {
   const [currentCrabPositionValue, setCurrentCrabPositionValue] = useAtom(currentCrabPositionValueAtom)
   const [currentCrabPositionValueInETH, setCurrentCrabPositionValueInETH] = useAtom(currentCrabPositionValueInETHAtom)
   const { value: userCrabBalance } = useTokenBalance(crabStrategy, 15, 18)
-  const getWSqueethPositionValueInETH = useGetWSqueethPositionValueInETH()
   const contract = useAtomValue(crabStrategyContractAtom)
   const setCurrentEthLoading = useUpdateAtom(currentEthLoadingAtom)
   const vault = useAtomValue(crabStrategyVaultAtom)
@@ -162,7 +161,7 @@ export const useCurrentCrabPositionValue = () => {
       setIsCrabPositionValueLoading(false)
       setCurrentEthLoading(false)
     })()
-  }, [crabStrategy, userCrabBalance, contract, setCurrentEthLoading, getBuyQuote, getWSqueethPositionValueInETH])
+  }, [userCrabBalance, contract, setCurrentEthLoading, setIsCrabPositionValueLoading, getBuyQuote, ethPrice])
 
   return { currentCrabPositionValue, currentCrabPositionValueInETH, isCrabPositionValueLoading }
 }
