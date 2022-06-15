@@ -12,6 +12,7 @@ import { normFactorAtom } from '../controller/atoms'
 import { Price, Token } from '@uniswap/sdk-core'
 import { useHandleTransaction } from '../wallet/hooks'
 import { squeethPriceeAtom, wethPriceAtom } from '../squeethPool/atoms'
+import ethers from 'ethers'
 
 // Close position with flashloan
 export const useClosePosition = () => {
@@ -93,6 +94,7 @@ export const useOpenPosition = () => {
           ? lowerTickAbove
           : lowerTickBelow
 
+      // TODO: ensure we're not hitting a bound for a tick
       // Closest valid upper tick
       const upperTickBelow = upperTickInput - (upperTickInput % 60)
       const upperTickAbove = upperTickInput + (upperTickInput % 60)
@@ -127,6 +129,48 @@ export const useOpenPosition = () => {
     [],
   )
   return openPosition
+}
+
+// Collect fees
+export const useCollectFees = () => {
+  const address = useAtomValue(addressAtom)
+  const controllerHelperContract = useAtomValue(controllerHelperHelperContractAtom)
+  const { controllerHelper } = useAtomValue(addressesAtom)
+  const controllerContract = useAtomValue(controllerContractAtom)
+  const handleTransaction = useHandleTransaction()
+  const ethPrice = useAtomValue(wethPriceAtom)
+  const positionManager = useAtomValue(nftManagerContractAtom)
+  const collectFees = useAppCallback(async (vaultId: BigNumber, onTxConfirmed?: () => void) => {
+    if (!controllerContract || !controllerHelperContract || !address || !positionManager) return
+    const one = new BigNumber(10).pow(18)
+    const uniTokenId = (await controllerContract?.methods.vaults(vaultId)).NftCollateralId
+    const vaultBefore = await controllerContract?.methods.vaults(vaultId)
+    const scaledEthPrice = ethPrice.div(10000)
+    const debtInEth = vaultBefore.shortAmount.mul(scaledEthPrice).div(one)
+    const collateralToFlashloan = debtInEth.mul(3).div(2).add(0.01)
+    const amount0Max = new BigNumber(2).multipliedBy(new BigNumber(10).pow(18)).minus(1)
+    const amount1Max = new BigNumber(2).multipliedBy(new BigNumber(10).pow(18)).minus(1)
+
+    const abiCoder = new ethers.utils.AbiCoder()
+    const rebalanceLpInVaultParams = [
+      {
+        rebalanceLpInVaultType: new BigNumber(6),
+        // CollectFees
+        data: abiCoder.encode(['uint256', 'uint128', 'uint128'], [uniTokenId, amount0Max, amount1Max]),
+      },
+    ]
+
+    await controllerContract.methods.updateOperator(vaultId, controllerHelper)
+    return handleTransaction(
+      await controllerHelperContract.methods
+        .rebalanceLpInVault(vaultId, collateralToFlashloan, rebalanceLpInVaultParams)
+        .send({
+          from: address,
+        }),
+      onTxConfirmed,
+    )
+  }, [])
+  return collectFees
 }
 
 export function getTickToPrice(baseToken?: Token, quoteToken?: Token, tick?: number): Price<Token, Token> | undefined {
