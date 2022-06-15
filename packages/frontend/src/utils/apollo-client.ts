@@ -15,7 +15,7 @@ const httpLinkRPSqueeth = new HttpLink({
 })
 
 const httpLinkMNSqueeth = new HttpLink({
-  uri: 'https://api.thegraph.com/subgraphs/name/opynfinance/squeeth',
+  uri: 'https://api.thegraph.com/subgraphs/name/yichiehliu/squeeth_mainnet',
 })
 
 const wsLinkRP =
@@ -51,7 +51,7 @@ const wsLinkRPSqueeth =
 const wsLinkMNSqueeth =
   typeof window !== 'undefined'
     ? new WebSocketLink({
-        uri: 'wss://api.thegraph.com/subgraphs/name/opynfinance/squeeth',
+        uri: 'wss://api.thegraph.com/subgraphs/name/yichiehliu/squeeth_mainnet',
         options: {
           reconnect: true,
         },
