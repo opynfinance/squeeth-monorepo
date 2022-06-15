@@ -197,13 +197,13 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
     /**
      * @notice Tranfer vault NFT to new contract
-     * @dev strategy cap is set to 0 to avoid future deposits. 
+     * @dev strategy cap is set to 0 to avoid future deposits.
      */
     function transferVault(address _newStrategy) external onlyOwner {
-      IShortPowerPerp(powerTokenController.shortPowerPerp()).safeTransferFrom(address(this), _newStrategy, vaultId);
-      _setStrategyCap(0);
+        IShortPowerPerp(powerTokenController.shortPowerPerp()).safeTransferFrom(address(this), _newStrategy, vaultId);
+        _setStrategyCap(0);
 
-      emit VaultTransferred(_newStrategy, vaultId);
+        emit VaultTransferred(_newStrategy, vaultId);
     }
 
     /**
@@ -213,7 +213,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @param _capAmount the maximum strategy collateral in ETH, checked on deposits
      */
     function setStrategyCap(uint256 _capAmount) external onlyOwner {
-       _setStrategyCap(_capAmount);
+        _setStrategyCap(_capAmount);
     }
 
     function _setStrategyCap(uint256 _capAmount) internal {
