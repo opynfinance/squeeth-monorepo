@@ -145,7 +145,6 @@ export const useCurrentCrabPositionValue = () => {
     ;(async () => {
       setIsCrabPositionValueLoading(true)
       const net = await getNetFromCrabAmount(userCrabBalance, contract)
-      setIsCrabPositionValueLoading(false)
 
       if (!net) {
         setCurrentCrabPositionValue(BIG_ZERO)
@@ -153,9 +152,11 @@ export const useCurrentCrabPositionValue = () => {
         return
       }
 
-      setCurrentEthLoading(false)
       setCurrentCrabPositionValue(getWSqueethPositionValue(net))
       setCurrentCrabPositionValueInETH(getWSqueethPositionValueInETH(net))
+
+      setCurrentEthLoading(false)
+      setIsCrabPositionValueLoading(false)
     })()
   }, [crabStrategy, userCrabBalance, contract, setCurrentEthLoading, getWSqueethPositionValueInETH])
 
