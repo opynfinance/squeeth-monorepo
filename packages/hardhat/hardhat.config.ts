@@ -57,7 +57,7 @@ const UNISWAP_SETTING = {
   settings: {
     optimizer: {
       enabled: true,
-      runs: 800,
+      runs: 1, // Need to change back to 800 once we remove code
     },
   },
 };
@@ -74,8 +74,6 @@ const config: HardhatUserConfig = {
       accounts: {
         accountsBalance: '1000000000000000000000000000'
       },
-      // IMPORTANT: SHOULD BE REMOVED AND FIXED BEFORE MERGING
-      allowUnlimitedContractSize: true,
     },
     localhost: {
       url: "http://localhost:8545",
