@@ -149,6 +149,8 @@ export const useUpdateOperator = () => {
     await handleTransaction(
       contract.methods.updateOperator(vaultId, operator).send({
         from: address,
+        maxPriorityFeePerGas: null,
+        maxFeePerGas: null,
       }),
       onTxConfirmed,
     )

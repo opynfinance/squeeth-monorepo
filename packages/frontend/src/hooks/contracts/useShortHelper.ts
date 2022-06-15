@@ -40,6 +40,8 @@ export const useShortHelper = () => {
       contract.methods.openShort(vaultId, _amount.toFixed(0), 0, _exactInputParams).send({
         from: address,
         value: ethAmt.toString(), // Already scaled to 14 so multiplied with 10000
+        maxPriorityFeePerGas: null,
+        maxFeePerGas: null,
       }),
       onTxConfirmed,
     )
@@ -67,6 +69,8 @@ export const useShortHelper = () => {
       contract.methods.closeShort(vaultId, _amount.toString(), _withdrawAmt.toFixed(0), _exactOutputParams).send({
         from: address,
         value: _exactOutputParams.amountInMaximum,
+        maxPriorityFeePerGas: null,
+        maxFeePerGas: null,
       }),
       onTxConfirmed,
     )
