@@ -179,6 +179,10 @@ type LPPosition @entity {
   unrealizedOSQTHUnitCost: BigDecimal!
   # avg eth spent in USD value for unrealized position (Execution price)
   unrealizedETHUnitCost: BigDecimal!
+  # collected eth fees
+  collectedFeesETHAmount: BigDecimal!
+  # collected osqth fees
+  collectedFeesOSQTHAmount: BigDecimal!
 
   # Avg value spent per osqth for realized position
   realizedOSQTHUnitCost: BigDecimal!

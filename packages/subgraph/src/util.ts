@@ -150,6 +150,8 @@ export function initLPPosition(
   lpPosition.realizedETHUnitGain = ZERO_BD;
   lpPosition.realizedOSQTHAmount = ZERO_BD;
   lpPosition.realizedETHAmount = ZERO_BD;
+  lpPosition.collectedFeesETHAmount = ZERO_BD;
+  lpPosition.collectedFeesOSQTHAmount = ZERO_BD;
   return lpPosition as LPPosition;
 }
 
