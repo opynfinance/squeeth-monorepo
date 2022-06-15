@@ -153,7 +153,6 @@ export const useCurrentCrabPositionValue = () => {
         return
       }
 
-      setCurrentEthLoading(false)
       setCurrentCrabPositionValue(getWSqueethPositionValue(net))
       setCurrentCrabPositionValueInETH(getWSqueethPositionValueInETH(net))
     })()
