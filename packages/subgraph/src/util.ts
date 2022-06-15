@@ -280,11 +280,7 @@ export function buyOrSellETH(userAddr: string, amount: BigDecimal): void {
     position.currentETHAmount.equals(ZERO_BD)
   ) {
     position = initPosition(userAddr, position);
-    position.save();
-    return;
-  } else if (position.currentETHAmount.equals(ZERO_BD)) {
-    position.unrealizedETHUnitCost = ZERO_BD;
-  } else {
+  } else if (!position.currentETHAmount.equals(ZERO_BD)) {
     position.unrealizedETHUnitCost = oldUnrealizedETHCost
       .plus(amount.times(usdcPrices[1]))
       .div(position.currentETHAmount);
@@ -339,11 +335,7 @@ export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
     position.currentETHAmount.equals(ZERO_BD)
   ) {
     position = initPosition(userAddr, position);
-    position.save();
-    return;
-  } else if (position.currentOSQTHAmount.equals(ZERO_BD)) {
-    position.unrealizedOSQTHUnitCost = ZERO_BD;
-  } else {
+  } else if (!position.currentOSQTHAmount.equals(ZERO_BD)) {
     position.unrealizedOSQTHUnitCost = oldUnrealizedOSQTHCost
       .plus(amount.times(osqthPrices[3]))
       .div(position.currentOSQTHAmount);
@@ -397,11 +389,7 @@ export function buyOrSellLPETH(userAddr: string, amount: BigDecimal): void {
     position.currentETHAmount.equals(ZERO_BD)
   ) {
     position = initLPPosition(userAddr, position);
-    position.save();
-    return;
-  } else if (position.currentETHAmount.equals(ZERO_BD)) {
-    position.unrealizedETHUnitCost = ZERO_BD;
-  } else {
+  } else if (!position.currentETHAmount.equals(ZERO_BD)) {
     position.unrealizedETHUnitCost = oldUnrealizedETHCost
       .plus(amount.times(usdcPrices[1]))
       .div(position.currentETHAmount);
@@ -456,11 +444,7 @@ export function buyOrSellLPSQTH(userAddr: string, amount: BigDecimal): void {
     position.currentETHAmount.equals(ZERO_BD)
   ) {
     position = initLPPosition(userAddr, position);
-    position.save();
-    return;
-  } else if (position.currentOSQTHAmount.equals(ZERO_BD)) {
-    position.unrealizedOSQTHUnitCost = ZERO_BD;
-  } else {
+  } else if (!position.currentOSQTHAmount.equals(ZERO_BD)) {
     position.unrealizedOSQTHUnitCost = oldUnrealizedOSQTHCost
       .plus(amount.times(osqthPrices[3]))
       .div(position.currentOSQTHAmount);
