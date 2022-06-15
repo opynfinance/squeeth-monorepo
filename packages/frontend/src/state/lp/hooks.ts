@@ -1,18 +1,66 @@
 import { tickToPrice } from '@uniswap/v3-sdk'
 
 import { fromTokenAmount } from '@utils/calculations'
-import { useAtomValue } from 'jotai'
-import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
+import { useAtom, useAtomValue } from 'jotai'
+import { addressesAtom } from '../positions/atoms'
 import BigNumber from 'bignumber.js'
 import { BIG_ZERO, OSQUEETH_DECIMALS } from '@constants/index'
-import { controllerHelperHelperContractAtom } from '../contracts/atoms'
+import { controllerContractAtom, controllerHelperHelperContractAtom, nftManagerContractAtom } from '../contracts/atoms'
 import useAppCallback from '@hooks/useAppCallback'
 import { addressAtom } from '../wallet/atoms'
 import { normFactorAtom } from '../controller/atoms'
 import { Price, Token } from '@uniswap/sdk-core'
-import JSBI from 'jsbi'
 import { useHandleTransaction } from '../wallet/hooks'
-const PRICE_FIXED_DIGITS = 8
+import { squeethPriceeAtom, wethPriceAtom } from '../squeethPool/atoms'
+
+// Close position with flashloan
+export const useClosePosition = () => {
+  const address = useAtomValue(addressAtom)
+  const controllerHelperContract = useAtomValue(controllerHelperHelperContractAtom)
+  const { controllerHelper } = useAtomValue(addressesAtom)
+  const controllerContract = useAtomValue(controllerContractAtom)
+  const handleTransaction = useHandleTransaction()
+  const squeethPrice = useAtomValue(squeethPriceeAtom)
+  const ethPrice = useAtomValue(wethPriceAtom)
+  const positionManager = useAtomValue(nftManagerContractAtom)
+  const closePosition = useAppCallback(async (vaultId: BigNumber, onTxConfirmed?: () => void) => {
+    if (!controllerContract || !controllerHelperContract || !address || !positionManager) return
+    const one = new BigNumber(10).pow(18)
+    const uniTokenId = (await controllerContract?.methods.vaults(vaultId)).NftCollateralId
+    const vaultBefore = await controllerContract?.methods.vaults(vaultId)
+    const scaledEthPrice = ethPrice.div(10000)
+    const debtInEth = vaultBefore.shortAmount.mul(scaledEthPrice).div(one)
+    const collateralToFlashloan = debtInEth.mul(3).div(2).add(0.01)
+    const slippage = new BigNumber(3).multipliedBy(new BigNumber(10).pow(16))
+    const limitPriceEthPerPowerPerp = squeethPrice.multipliedBy(one.minus(slippage)).div(one)
+    const positionBefore = await positionManager.methods.positions(uniTokenId)
+
+    const flashloanCloseVaultLpNftParam = {
+      vaultId: vaultId,
+      tokenId: uniTokenId,
+      liquidity: positionBefore.liquidity,
+      liquidityPercentage: 1,
+      wPowerPerpAmountToBurn: vaultBefore.shortAmount.toString(),
+      collateralToFlashloan: collateralToFlashloan.toString(),
+      collateralToWithdraw: 0,
+      limitPriceEthPerPowerPerp: limitPriceEthPerPowerPerp.toString(),
+      amount0Min: 0,
+      amount1Min: 0,
+      poolFee: 3000,
+      burnExactRemoved: false,
+    }
+
+    await controllerContract.methods.updateOperator(vaultId, controllerHelper)
+
+    return handleTransaction(
+      await controllerHelperContract.methods.flashloanCloseVaultLpNft(flashloanCloseVaultLpNftParam).send({
+        from: address,
+      }),
+      onTxConfirmed,
+    )
+  }, [])
+  return closePosition
+}
 
 // Opening a mint and LP position
 export const useOpenPosition = () => {
@@ -66,8 +114,10 @@ export const useOpenPosition = () => {
         upperTick: upperTick,
       }
 
+      if (!contract || !address) return null
+
       return handleTransaction(
-        contract!.methods.wMintLp(params, { value: collateralAmount }).send({
+        contract.methods.wMintLp(params, { value: collateralAmount }).send({
           from: address,
           value: fromTokenAmount(ethAmount, 18),
         }),
