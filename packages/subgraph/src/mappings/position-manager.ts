@@ -5,7 +5,6 @@ import {
   IncreaseLiquidity,
   NonfungiblePositionManager,
 } from "../../generated/NonfungiblePositionManager/NonfungiblePositionManager";
-import { LPPosition, Position, Vault } from "../../generated/schema";
 import {
   ONE_BD,
   ONE_BI,
@@ -16,7 +15,6 @@ import {
   ZERO_BI,
 } from "../constants";
 import {
-  initLPPosition,
   createTransactionHistory,
   loadOrCreateAccount,
   buyOrSellLPSQTH,
@@ -26,7 +24,7 @@ import {
   buyOrSellSQTH,
 } from "../util";
 import { convertTokenToDecimal } from "../utils";
-import { Address, BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt } from "@graphprotocol/graph-ts";
 
 function updateLPposition(
   userAddr: string,
@@ -76,17 +74,12 @@ export function handleIncreaseLiquidity(event: IncreaseLiquidity): void {
     TOKEN_DECIMALS_18
   );
 
-  // const longPosition = Position.load(userAddr);
-  // // const longPosition = Vault.load(userAddr);
-  // buyOrSellSQTH(userAddr, amount0);
-  // buyOrSellETH(userAddr, amount1);
-
   const position = loadOrCreatePosition(userAddr);
   const account = loadOrCreateAccount(userAddr);
   // // if long & lp, selling osqth and eth for lp
   if (position.currentOSQTHAmount.gt(account.accShortAmount.toBigDecimal())) {
-    buyOrSellSQTH(userAddr, amount0.times(ZERO_BD.minus(ONE_BD)));
-    buyOrSellETH(userAddr, amount1.times(ZERO_BD.minus(ONE_BD)));
+    buyOrSellSQTH(userAddr, amount0.neg());
+    buyOrSellETH(userAddr, amount1.neg());
   }
 }
 
@@ -105,11 +98,11 @@ export function handleDecreaseLiquidity(event: DecreaseLiquidity): void {
   let userAddr = event.transaction.from.toHex();
   updateLPposition(
     userAddr,
-    event.params.amount0.times(ZERO_BI.minus(ONE_BI)),
-    event.params.amount1.times(ZERO_BI.minus(ONE_BI))
+    event.params.amount0.neg(),
+    event.params.amount1.neg()
   );
   const amount0 = convertTokenToDecimal(
-    event.params.amount0.times(ZERO_BI.minus(ONE_BI)),
+    event.params.amount0,
     TOKEN_DECIMALS_18
   );
 
