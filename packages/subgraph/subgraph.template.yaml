@@ -168,7 +168,7 @@ dataSources:
     network: {{network}}
     source:
       address: "{{WPowerPerp}}"
-      abi: Pool
+      abi: WPowerPerp
       startBlock: {{WPowerPerp-start-block}}
     mapping:
       kind: ethereum/events
