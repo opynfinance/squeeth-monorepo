@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, BigNumber, providers } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import BigNumberJs from 'bignumber.js'
-import { WETH9, MockErc20, Controller, Oracle, WPowerPerp, CrabStrategy, ISwapRouter } from "../../../typechain";
+import { WETH9, MockErc20, Controller, Oracle, WPowerPerp, CrabStrategyV2, ISwapRouter } from "../../../typechain";
 import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addWethDaiLiquidity, addSqueethLiquidity } from '../../setup'
 import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../../utils"
 
@@ -36,7 +36,7 @@ describe("Crab V2 integration test: crab vault full liquidation and shutdown of 
   let controller: Controller
   let wSqueethPool: Contract
   let wSqueeth: WPowerPerp
-  let crabStrategy: CrabStrategy
+  let crabStrategy: CrabStrategyV2
   let ethDaiPool: Contract
 
   this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async () => {
@@ -75,7 +75,7 @@ describe("Crab V2 integration test: crab vault full liquidation and shutdown of 
     ethDaiPool = squeethDeployments.ethDaiPool
 
     const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
-    crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, uniswapFactory.address, wSqueethPool.address, hedgeTimeThreshold, hedgePriceThreshold, auctionTime, minPriceMultiplier, maxPriceMultiplier)) as CrabStrategy;
+    crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, uniswapFactory.address, wSqueethPool.address, hedgeTimeThreshold, hedgePriceThreshold, auctionTime, minPriceMultiplier, maxPriceMultiplier)) as CrabStrategyV2;
 
     const strategyCap = ethers.utils.parseUnits("1000")
     await crabStrategy.connect(owner).setStrategyCap(strategyCap)

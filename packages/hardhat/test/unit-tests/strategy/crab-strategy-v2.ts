@@ -2,7 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-wit
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber, providers } from "ethers";
-import { MockController, WETH9, MockShortPowerPerp, MockUniswapV3Pool, MockOracle, MockWPowerPerp, CrabStrategy, MockErc20 } from "../../../typechain";
+import { MockController, WETH9, MockShortPowerPerp, MockUniswapV3Pool, MockOracle, MockWPowerPerp, CrabStrategyV2, MockErc20 } from "../../../typechain";
 import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../../utils"
 
 describe("Crab Strategy V2", function () {
@@ -25,7 +25,7 @@ describe("Crab Strategy V2", function () {
   let shortSqueeth: MockShortPowerPerp;
   let controller: MockController;
   let oracle: MockOracle;
-  let crabStrategy: CrabStrategy;
+  let crabStrategy: CrabStrategyV2;
   let usdc: MockErc20;
 
   this.beforeAll("Prepare accounts", async () => {
@@ -233,7 +233,7 @@ describe("Crab Strategy V2", function () {
 
     it("Deployment", async function () {
       const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
-      crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, random.address, wSqueethEthPool.address, hedgeTimeTolerance, hedgePriceTolerance, auctionTime, minAuctionSlippage, maxAuctionSlippage)) as CrabStrategy;
+      crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, random.address, wSqueethEthPool.address, hedgeTimeTolerance, hedgePriceTolerance, auctionTime, minAuctionSlippage, maxAuctionSlippage)) as CrabStrategyV2;
     });
   });
 
