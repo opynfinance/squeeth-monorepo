@@ -83,36 +83,43 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
   if (position.currentOSQTHAmount.equals(ZERO_BD)) {
     position = initPosition(event.transaction.from.toHex(), position);
   } else {
-    // short buying & long selling, updating realizedOSQTHAmount & realizedOSQTHUnitGain & realizedOSQTHUnitCost
-    if (
-      (amount0.gt(ZERO_BD) && position.positionType === "LONG") ||
-      (amount0.lt(ZERO_BD) && position.positionType === "SHORT")
-    ) {
-      const realizedamount0 = amount0.lt(ZERO_BD) ? amount0.neg() : amount0;
-      const oldosqthRealizedAmount = position.realizedOSQTHAmount;
-      position.realizedOSQTHAmount =
-        oldosqthRealizedAmount.plus(realizedamount0);
+    const realizedamount0 = amount0.lt(ZERO_BD) ? amount0.neg() : amount0;
+    const oldosqthRealizedAmount = position.realizedOSQTHAmount;
+    position.realizedOSQTHAmount = oldosqthRealizedAmount.plus(realizedamount0);
 
+    // selling, updating realizedOSQTHAmount & realizedOSQTHUnitGain
+    if (amount0.gt(ZERO_BD)) {
+      unrealizedAmount0 = unrealizedAmount0.neg();
+    }
+
+    // buying, updating realizedOSQTHAmount & realizedOSQTHUnitCost
+    if (amount0.lt(ZERO_BD)) {
+      unrealizedAmount0 = unrealizedAmount0.neg();
+
+      const newRealizedOSQTHCost = position.realizedOSQTHUnitCost
+        .times(oldosqthRealizedAmount)
+        .plus(amount0.times(osqthPriceInUSD));
+      position.realizedOSQTHUnitCost = newRealizedOSQTHCost.div(
+        position.realizedOSQTHAmount
+      );
+
+      // long buying
+      if (position.positionType === "LONG") {
+        unrealizedAmount0 = unrealizedAmount0.neg();
+      }
+    }
+
+    // buying, updating realizedOSQTHAmount & realizedOSQTHUnitGain
+    if (amount0.gt(ZERO_BD)) {
       const newRealizedOSQTHGain = position.realizedOSQTHUnitGain
         .times(oldosqthRealizedAmount)
-        .plus(realizedamount0.times(osqthPriceInUSD));
+        .plus(amount0.times(osqthPriceInUSD));
       position.realizedOSQTHUnitGain = newRealizedOSQTHGain.div(
         position.realizedOSQTHAmount
       );
 
-      const newRealizedOSQTHCost = position.realizedOSQTHUnitCost
-        .times(oldosqthRealizedAmount)
-        .plus(realizedamount0.times(position.unrealizedOSQTHUnitCost));
-      position.realizedOSQTHUnitCost = newRealizedOSQTHCost.div(
-        position.realizedOSQTHAmount
-      );
       // long selling
-      if (amount0.gt(ZERO_BD)) {
-        unrealizedAmount0 = unrealizedAmount0.neg();
-      }
-    } else {
-      // long buying
-      if (amount0.lt(ZERO_BD)) {
+      if (position.positionType === "LONG") {
         unrealizedAmount0 = unrealizedAmount0.neg();
       }
     }
@@ -128,17 +135,13 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
     const unrealizedOSQTHUnitCost = unrealizedOSQTHCost.div(
       position.currentOSQTHAmount
     );
-    if (position.currentOSQTHAmount.lt(ZERO_BD)) {
-      position.unrealizedOSQTHUnitCost = unrealizedOSQTHUnitCost.neg();
-    } else {
-      position.unrealizedOSQTHUnitCost = unrealizedOSQTHUnitCost;
-    }
-    }
 
     // > 0, long; < 0 short; = 0 none
     if (position.currentOSQTHAmount.gt(ZERO_BD)) {
+      position.unrealizedOSQTHUnitCost = unrealizedOSQTHUnitCost;
       position.positionType = "LONG";
     } else if (position.currentOSQTHAmount.lt(ZERO_BD)) {
+      position.unrealizedOSQTHUnitCost = unrealizedOSQTHUnitCost.neg();
       position.positionType = "SHORT";
     }
   }
