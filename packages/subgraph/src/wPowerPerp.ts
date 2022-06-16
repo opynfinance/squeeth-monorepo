@@ -5,7 +5,7 @@ import { buyOrSellSQTH, createTransactionHistory } from "./util";
 export function handleTransfer(event: Transfer): void {
   let senderTransactionHistory = createTransactionHistory("SEND_OSQTH", event);
   senderTransactionHistory.owner = Address.fromString(
-    event.params.from.toHex()
+    event.transaction.from.toHex()
   );
   senderTransactionHistory.oSqthAmount = event.params.value;
   senderTransactionHistory.save();
@@ -21,6 +21,6 @@ export function handleTransfer(event: Transfer): void {
   receiverTransactionHistory.save();
 
   let amount = BigDecimal.fromString(event.params.value.toString());
-  buyOrSellSQTH(event.params.from.toHex(), amount.neg());
+  buyOrSellSQTH(event.transaction.from.toHex(), amount.neg());
   buyOrSellSQTH(event.params.to.toHex(), amount);
 }
