@@ -5,7 +5,9 @@ import Image from 'next/image'
 import clsx from 'clsx'
 
 import { MIN_COLLATERAL_AMOUNT } from 'src/constants/'
-import Arrow from '../../../../public/images/gradient-arrow.svg'
+import IncreaseArrow from '../../../../public/images/gradient-arrow.svg'
+import DecreaseArrow from '../../../../public/images/gradient-arrow-dec.svg'
+import BigNumber from 'bignumber.js'
 
 const useStyles = makeStyles(() =>
   createStyles({
@@ -84,7 +86,11 @@ const VaultCard = ({ collatRatio, liqPrice, id, vaultCollat, vaultId, error }: V
           <span className={clsx(classes.vaultItems, 'prev-liq-price')}>${liqPrice.existing}</span>
 
           <span className={clsx(classes.vaultItems, classes.arrow)}>
-            <Image src={Arrow} alt="Liquidation Arrow" />
+            {new BigNumber(liqPrice.after).lt(new BigNumber(liqPrice.existing)) ? (
+              <Image src={DecreaseArrow} alt="Liquidation Arrow" />
+            ) : (
+              <Image src={IncreaseArrow} alt="Liquidation Arrow" />
+            )}
           </span>
 
           <span className={clsx(classes.vaultItems, 'current-liq-price')}>${liqPrice.after}</span>
@@ -98,7 +104,11 @@ const VaultCard = ({ collatRatio, liqPrice, id, vaultCollat, vaultId, error }: V
           </span>
 
           <span className={clsx(classes.vaultItems, classes.arrow)}>
-            <Image src={Arrow} alt="Collateral Ratio Arrow" />
+            {new BigNumber(collatRatio.after).lt(new BigNumber(collatRatio.existing)) ? (
+              <Image src={DecreaseArrow} alt="Collateral Ratio Arrow" />
+            ) : (
+              <Image src={IncreaseArrow} alt="Collateral Ratio Arrow" />
+            )}
           </span>
           <span className={clsx(classes.vaultItems, 'current-collat-ratio')}>{collatRatio.after}%</span>
         </div>
@@ -111,7 +121,11 @@ const VaultCard = ({ collatRatio, liqPrice, id, vaultCollat, vaultId, error }: V
           </span>
 
           <span className={clsx(classes.vaultItems, classes.arrow)}>
-            <Image src={Arrow} alt="Vault Collateral Arrow" />
+            {new BigNumber(vaultCollat.after).lt(new BigNumber(vaultCollat.existing)) ? (
+              <Image src={DecreaseArrow} alt="Vault Collateral Arrow" />
+            ) : (
+              <Image src={IncreaseArrow} alt="Vault Collateral Arrow" />
+            )}
           </span>
           <span className={clsx(classes.vaultItems, 'current-vault-collat')}>{vaultCollat.after} ETH</span>
         </div>
