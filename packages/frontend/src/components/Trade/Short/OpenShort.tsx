@@ -28,7 +28,7 @@ import {
 import { Tooltips, Links } from '@constants/enums'
 import CollatRange from '@components/CollatRange'
 import { PrimaryButton } from '@components/Button'
-import { useGetSellQuote } from 'src/state/squeethPool/hooks'
+import { useGetSellQuote, useExactOutSellQuote } from 'src/state/squeethPool/hooks'
 import { useFlashSwapAndMint } from 'src/state/controllerhelper/hooks'
 import { useSelectWallet, useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
@@ -56,6 +56,7 @@ import VaultCard from './VaultCard'
 import ConfirmApproval from './ConfirmApproval'
 import TradeDetails from '../TradeDetails'
 import { useETHPrice } from '@hooks/useETHPrice'
+import useDebounce from '@utils/useDebounce'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -135,10 +136,13 @@ export const OpenShortPosition = () => {
   const [newCollat, setNewCollat] = useState(BIG_ZERO)
   const [totalExistingCollat, setTotalExistingCollat] = useState(BIG_ZERO)
   const [totalDebt, setTotalDebt] = useState(BIG_ZERO)
+  const [exactOutAmount, setExactOutAmount] = useState(BIG_ZERO)
+  const [loadingSaleProceeds, setLoadingSaleProceeds] = useState(false)
 
   const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
   const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
+  const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
   const [quote, setQuote] = useAtom(quoteAtom)
   const connected = useAtomValue(connectedWalletAtom)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
@@ -154,6 +158,7 @@ export const OpenShortPosition = () => {
   const { data } = useWalletBalance()
   const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
   const getSellQuote = useGetSellQuote()
+  const getExactOutSellQuote = useExactOutSellQuote()
   const flashSwapAndMint = useFlashSwapAndMint()
   const getDebtAmount = useGetDebtAmount()
   const { vaultId, validVault: vault } = useFirstValidVault()
@@ -174,6 +179,7 @@ export const OpenShortPosition = () => {
 
   const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const collateral = useAppMemo(() => new BigNumber(ethTradeAmount), [ethTradeAmount])
+  const debouncedAmount = useDebounce(amount, 600)
 
   let inputError = ''
   let priceImpactWarning: string | undefined
@@ -214,43 +220,48 @@ export const OpenShortPosition = () => {
 
     [quote.amountOut, totalDebt, totalExistingCollat, amount],
   )
+
   const onSqthChange = useAppCallback(
     async (value: string, collatPercent: number) => {
-      const [quote, debt, existingDebt, NFTCollat] = await Promise.all([
-        getSellQuote(new BigNumber(value), slippageAmount),
-        getDebtAmount(new BigNumber(value)),
-        getDebtAmount(vault?.shortAmount ?? BIG_ZERO),
-        vault?.NFTCollateralId && getUniNFTCollatDetail(vault?.NFTCollateralId),
-      ])
+      try {
+        const [quote, debt, existingDebt, NFTCollat] = await Promise.all([
+          getSellQuote(new BigNumber(value), slippageAmount),
+          getDebtAmount(new BigNumber(value)),
+          getDebtAmount(vault?.shortAmount ?? BIG_ZERO),
+          vault?.NFTCollateralId && getUniNFTCollatDetail(vault?.NFTCollateralId),
+        ])
 
-      const totalDebt = existingDebt.plus(debt)
-      const totalExistingCollat = (vault?.collateralAmount ?? BIG_ZERO).plus(NFTCollat?.collateral ?? BIG_ZERO)
-      const newCollat = new BigNumber(collatPercent / 100).multipliedBy(totalDebt).minus(totalExistingCollat ?? 0)
-      getCollatRatioAndLiqPrice(
-        new BigNumber(collatPercent / 100).multipliedBy(totalDebt),
-        new BigNumber(value).plus(vault?.shortAmount ?? BIG_ZERO),
-        vault?.NFTCollateralId,
-      ).then(({ liquidationPrice }) => {
-        setLiqPrice(liquidationPrice)
-      })
+        const totalDebt = existingDebt.plus(debt)
+        const totalExistingCollat = (vault?.collateralAmount ?? BIG_ZERO).plus(NFTCollat?.collateral ?? BIG_ZERO)
+        const newCollat = new BigNumber(collatPercent / 100).multipliedBy(totalDebt).minus(totalExistingCollat ?? 0)
+        getCollatRatioAndLiqPrice(
+          new BigNumber(collatPercent / 100).multipliedBy(totalDebt),
+          new BigNumber(value).plus(vault?.shortAmount ?? BIG_ZERO),
+          vault?.NFTCollateralId,
+        ).then(({ liquidationPrice }) => {
+          setLiqPrice(liquidationPrice)
+        })
 
-      setNewCollat(newCollat)
-      setQuote(quote)
-      setTotalExistingCollat(totalExistingCollat)
-      setTotalDebt(totalDebt)
+        setNewCollat(newCollat)
+        setQuote(quote)
+        setTotalExistingCollat(totalExistingCollat)
+        setTotalDebt(totalDebt)
 
-      if (quote.minimumAmountOut && newCollat.gt(quote.minimumAmountOut)) {
-        setEthTradeAmount(newCollat.minus(quote.amountOut).toFixed(6))
-        setMsgValue(newCollat.minus(quote.amountOut))
-      } else if (newCollat.lte(0)) {
-        setEthTradeAmount('0')
-        return
-      } else if (newCollat.lt(quote.amountOut)) {
-        setEthTradeAmount('0')
-        setMsgValue(new BigNumber(0))
+        if (quote.minimumAmountOut && newCollat.gt(quote.minimumAmountOut)) {
+          setEthTradeAmount(newCollat.minus(quote.amountOut).toFixed(6))
+          setMsgValue(newCollat.minus(quote.amountOut))
+        } else if (newCollat.lte(0)) {
+          setEthTradeAmount('0')
+          return
+        } else if (newCollat.lt(quote.amountOut)) {
+          setEthTradeAmount('0')
+          setMsgValue(new BigNumber(0))
+        }
+
+        setTotalCollateralAmount(quote.minimumAmountOut.plus(newCollat.minus(quote.minimumAmountOut)))
+      } catch (error: any) {
+        console.log(error?.message)
       }
-
-      setTotalCollateralAmount(quote.minimumAmountOut.plus(newCollat.minus(quote.minimumAmountOut)))
     },
     [
       getCollatRatioAndLiqPrice,
@@ -266,6 +277,20 @@ export const OpenShortPosition = () => {
     ],
   )
   const handleSqthChange = useAppMemo(() => debounce(onSqthChange, 500), [onSqthChange])
+
+  useAppEffect(() => {
+    if (!debouncedAmount || debouncedAmount.lte(0)) return setExactOutAmount(BIG_ZERO)
+    setLoadingSaleProceeds(true)
+    getExactOutSellQuote(new BigNumber(debouncedAmount))
+      .then((val) => {
+        setExactOutAmount(val)
+        setLoadingSaleProceeds(false)
+      })
+      .catch((e) => {
+        setLoadingSaleProceeds(false)
+        setExactOutAmount(quote.amountOut)
+      })
+  }, [debouncedAmount, getExactOutSellQuote, quote.amountOut])
 
   useAppEffect(() => {
     //stop loading if transaction failed
@@ -329,6 +354,9 @@ export const OpenShortPosition = () => {
           setTradeSuccess(true)
           setTradeCompleted(true)
           resetSqthTradeAmount()
+          resetEthTradeAmount()
+          setCRError('')
+          setCollatPercent(existingCollatPercent ? existingCollatPercent : 200)
           setVaultHistoryUpdating(true)
           setShortLoading(false)
           vaultHistoryQuery.refetch({ vaultId })
@@ -341,10 +369,12 @@ export const OpenShortPosition = () => {
     }
   }, [
     amount,
+    existingCollatPercent,
     flashSwapAndMint,
     isVaultApproved,
     msgValue,
     quote.minimumAmountOut,
+    resetEthTradeAmount,
     resetSqthTradeAmount,
     setIsTxFirstStep,
     setTradeCompleted,
@@ -554,11 +584,13 @@ export const OpenShortPosition = () => {
 
             <TradeDetails
               actionTitle="Expected sale proceeds to deposit"
-              amount={quote.amountOut.toFixed(6)}
+              amount={exactOutAmount.toFixed(6)}
               unit="ETH"
-              value={!quote.amountOut.isNaN() ? quote.amountOut.times(ethPrice).toFixed(2).toLocaleString() : '0'}
+              value={!exactOutAmount.isNaN() ? exactOutAmount.times(ethPrice).toFixed(2).toLocaleString() : '0'}
               hint=""
               id="open-short-collateral-from-sale"
+              isLoading={loadingSaleProceeds}
+              loadingMessage="Fetching expected proceeds"
             />
 
             <div className={classes.divider}>
