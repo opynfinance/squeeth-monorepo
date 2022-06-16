@@ -1,4 +1,4 @@
-import { tickToPrice } from '@uniswap/v3-sdk'
+import { FeeAmount, nearestUsableTick, TickMath, tickToPrice, TICK_SPACINGS } from '@uniswap/v3-sdk'
 
 import { fromTokenAmount } from '@utils/calculations'
 import { useAtom, useAtomValue } from 'jotai'
@@ -11,12 +11,21 @@ import { addressAtom } from '../wallet/atoms'
 import { normFactorAtom } from '../controller/atoms'
 import { Price, Token } from '@uniswap/sdk-core'
 import { useHandleTransaction } from '../wallet/hooks'
-import { squeethPriceeAtom, wethPriceAtom } from '../squeethPool/atoms'
+import { squeethPriceeAtom, squeethTokenAtom, wethPriceAtom, wethTokenAtom } from '../squeethPool/atoms'
 import ethers from 'ethers'
 import { useGetSellQuote } from '../squeethPool/hooks'
+import { useUpdateAtom } from 'jotai/utils'
+import { lowerTickAtom, upperTickAtom } from './atoms'
+import { useMemo } from 'react'
 
-// CONSTANTS
+/*** CONSTANTS ***/
 const one = new BigNumber(10).pow(18)
+export enum Bound {
+  LOWER = 'LOWER',
+  UPPER = 'UPPER',
+}
+
+/*** ACTIONS ***/
 
 // Close position with flashloan
 export const useClosePosition = () => {
@@ -477,4 +486,66 @@ export const useRebalanceGeneralSwap = () => {
     [],
   )
   return rebalanceGeneralSwap
+}
+
+/*** GETTERS ***/
+// Get next tick price
+export const useGetNextTickPrice = () => {
+  const setLowerTick = useUpdateAtom(lowerTickAtom)
+  const setUpperTick = useUpdateAtom(upperTickAtom)
+  const lowerTick = useAtomValue(lowerTickAtom)
+  const upperTick = useAtomValue(upperTickAtom)
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
+  const squeethToken = useAtomValue(squeethTokenAtom)
+  const wethToken = useAtomValue(wethTokenAtom)
+  const getNextTickPrice = useAppCallback(async (getHigherTick: boolean, isUpperTick: boolean) => {
+    const atLimit = useIsTickAtLimit(3000, lowerTick.toNumber(), upperTick.toNumber())
+
+    if (isUpperTick) {
+      const newUpperTick = !getHigherTick
+        ? upperTick.minus(TICK_SPACINGS[3000])
+        : !atLimit
+        ? upperTick.plus(TICK_SPACINGS[3000])
+        : null
+      if (newUpperTick) {
+        setUpperTick(newUpperTick)
+        return isWethToken0
+          ? tickToPrice(wethToken!, squeethToken!, newUpperTick.toNumber())
+          : tickToPrice(squeethToken!, wethToken!, newUpperTick.toNumber())
+      }
+    } else {
+      const newLowerTick = getHigherTick
+        ? lowerTick.plus(TICK_SPACINGS[3000])
+        : !atLimit
+        ? lowerTick.minus(TICK_SPACINGS[3000])
+        : null
+      if (newLowerTick) {
+        setLowerTick(newLowerTick)
+        return isWethToken0
+          ? tickToPrice(wethToken!, squeethToken!, newLowerTick.toNumber())
+          : tickToPrice(squeethToken!, wethToken!, newLowerTick.toNumber())
+      }
+    }
+  }, [])
+  return getNextTickPrice
+}
+
+export default function useIsTickAtLimit(
+  feeAmount: FeeAmount | undefined,
+  tickLower: number | undefined,
+  tickUpper: number | undefined,
+) {
+  return useMemo(
+    () => ({
+      [Bound.LOWER]:
+        feeAmount && tickLower
+          ? tickLower === nearestUsableTick(TickMath.MIN_TICK, TICK_SPACINGS[feeAmount as FeeAmount])
+          : undefined,
+      [Bound.UPPER]:
+        feeAmount && tickUpper
+          ? tickUpper === nearestUsableTick(TickMath.MAX_TICK, TICK_SPACINGS[feeAmount as FeeAmount])
+          : undefined,
+    }),
+    [feeAmount, tickLower, tickUpper],
+  )
 }
