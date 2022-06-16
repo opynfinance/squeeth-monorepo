@@ -56,7 +56,7 @@ const ConfirmApproval = ({
           <Button
             classes={{ disabled: classes.disabledButton, ...(!checked ? { label: classes.label } : {}) }}
             disabled={!checked}
-            style={{ width: '90%', background: '#d9d9d9', margin: '0 auto' }}
+            style={{ width: '90%', background: '#d9d9d9', margin: '0 auto', marginBottom: '2rem' }}
             onClick={handleConfirmApproval}
             id="confirm-approval-modal-submit-btn"
           >
@@ -65,34 +65,34 @@ const ConfirmApproval = ({
         }
       >
         <ul style={{ width: '90%', alignSelf: 'flex-start', listStyle: 'none' }}>
-          <li style={{ marginBottom: '1em' }}>
+          <li style={{ marginBottom: '1.5rem' }}>
             <div className={classes.subHeaderSection}>
               <LockOpenIcon fontSize="large" />
               <p className={classes.subTopics}>OPEN SHORT</p>
             </div>
-            <p style={{ margin: 0 }}>
+            <p style={{ margin: 0, textAlign: 'center' }}>
               When you open a short position, the wrapper maximizes capital efficiency by using ETH earned from selling
               oSQTH as collateral back the vault.
             </p>
           </li>
-          <li style={{ marginBottom: '1em' }}>
+          <li style={{ marginBottom: '1.5rem' }}>
             <div className={classes.subHeaderSection}>
               <LockOutlinedIcon fontSize="large" />
               <p className={classes.subTopics}>CLOSE SHORT</p>
             </div>
-            <p style={{ margin: 0 }}>
+            <p style={{ margin: 0, textAlign: 'center' }}>
               When you close a short position, the wrapper maximizes capital efficiency by using collateral from your
               vault to buy back and burn oSQTH
             </p>
           </li>
-          <li style={{ marginBottom: '1em' }}>
+          <li style={{ marginBottom: '1.5rem' }}>
             <div className={classes.subHeaderSection}>
               <AccountBalanceIcon fontSize="large" />
               <p className={classes.subTopics}>VAULT COLLATERALIZATION RATIO</p>
             </div>
-            <p style={{ margin: 0 }}>
-              {`When you open or close a short position, you are adjusting the vault's collateralization ratio, not the
-            collateralization ratio for the trade.`}
+            <p style={{ margin: 0, textAlign: 'center' }}>
+              When you open or close a short position, you are adjusting the vault&#39;s collateralization ratio, not
+              the collateralization ratio for the trade.
             </p>
           </li>
 
