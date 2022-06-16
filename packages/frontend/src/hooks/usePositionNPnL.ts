@@ -16,6 +16,8 @@ export default function usePositionNPnL() {
     realizedPnLInPerct,
   } = calculatePnL(positions, oSqthPrice, ethPrice)
   const {
+    currentOSQTHAmount: lpedoSQTHAmount,
+    currentETHAmount: lpedETHAmount,
     unrealizedPnL: lpUnrealizedPnL,
     unrealizedPnLInPerct: lpUnrealizedPnLInPerct,
     realizedPnL: lpRealizedPnL,
@@ -32,6 +34,8 @@ export default function usePositionNPnL() {
     unrealizedPnLInPerct,
     realizedPnL,
     realizedPnLInPerct,
+    lpedoSQTHAmount,
+    lpedETHAmount,
     lpUnrealizedPnL,
     lpUnrealizedPnLInPerct,
     lpRealizedPnL,
