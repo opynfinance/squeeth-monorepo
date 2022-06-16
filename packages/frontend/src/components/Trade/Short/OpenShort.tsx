@@ -189,6 +189,9 @@ export const OpenShortPosition = () => {
   useAppEffect(() => {
     setCollatPercent(existingCollatPercent ? existingCollatPercent : 200)
   }, [existingCollatPercent])
+  useAppEffect(() => {
+    setLiqPrice(existingLiqPrice.gt(0) ? existingLiqPrice : new BigNumber(0))
+  }, [existingLiqPrice])
 
   if (connected) {
     if (new BigNumber(quote.priceImpact).gt(3)) {
