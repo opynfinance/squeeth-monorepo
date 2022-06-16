@@ -10,6 +10,7 @@ import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../../utils"
 
 BigNumberJs.set({ EXPONENTIAL_AT: 30 })
 
+
 const calcPriceMulAndAuctionPrice = (isNegativeTargetHedge: boolean, maxPriceMultiplier: BigNumber, minPriceMultiplier: BigNumber, auctionExecution: BigNumber, currentWSqueethPrice: BigNumber): [BigNumber, BigNumber] => {
   let priceMultiplier: BigNumber
   let auctionWSqueethEthPrice: BigNumber
@@ -136,7 +137,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
 
     await crabStrategy.connect(depositor).flashDeposit(ethToDeposit, { value: msgvalue })
 
-    /*
+    
     const normFactor = await controller.normalizationFactor()
     const currentScaledSquethPrice = (await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 300, false))
     const feeRate = await controller.feeRate()
@@ -163,11 +164,11 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
     expect(depositorSqueethBalance.eq(depositorSqueethBalanceBefore)).to.be.true
     expect(strategyContractSqueeth.eq(BigNumber.from(0))).to.be.true
     expect(lastHedgeTime.eq(timeStamp)).to.be.true
-    */
+    
   })
 
   describe("Sell auction", async () => {
-    it("should hedge by selling WSqueeth for ETH and update timestamp and price at hedge", async () => {
+    xit("should hedge by selling WSqueeth for ETH and update timestamp and price at hedge", async () => {
       // change pool price for auction to be sell auction
       const ethToDeposit = ethers.utils.parseUnits('1000')
       const wSqueethToMint = ethers.utils.parseUnits('1000')
@@ -192,43 +193,71 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
 
       //expect(await crabStrategy.checkPriceHedge(auctionTriggerTimer)).to.be.false;
       expect((await crabStrategy.checkTimeHedge())[0]).to.be.true;
+      console.log("vault id is", await crabStrategy.vaultId());
 
       let currentWSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false)
+      console.log(currentWSqueethPrice.toString());
       const strategyVault = await controller.vaults(await crabStrategy.vaultId());
+      console.log("strategyVault ", strategyVault.toString());
       const ethDelta = strategyVault.collateralAmount
+      console.log("ethDelta ", ethDelta.toString());
       const normFactor = await controller.normalizationFactor()
+      console.log("normFactor ", normFactor.toString());
       const currentScaledSquethPrice = (await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 300, false))
+      console.log("currentScaledSquethPrice ", currentScaledSquethPrice.toString());
       const feeRate = await controller.feeRate()
       const ethFeePerWSqueeth = currentScaledSquethPrice.mul(feeRate).div(10000)
+      console.log("ethFeePerWSqueeth ", ethFeePerWSqueeth.toString());
 
       const strategyDebt = strategyVault.shortAmount
+      console.log("strategyDebt ", strategyDebt.toString());
       const initialWSqueethDelta = wmul(strategyDebt.mul(2), currentWSqueethPrice)
+      console.log("initialWSqueethDelta ", initialWSqueethDelta.toString());
       const targetHedge = wdiv(initialWSqueethDelta.sub(ethDelta), currentWSqueethPrice.add(ethFeePerWSqueeth))
+      console.log("targetHedge ", targetHedge.toString());
       const isSellAuction = targetHedge.isNegative()
+      console.log("isSellAuction ", isSellAuction.toString());
       const auctionExecution = (auctionTimeElapsed.gte(BigNumber.from(auctionTime))) ? one : wdiv(auctionTimeElapsed, BigNumber.from(auctionTime))
+      console.log("auctionExecution ", auctionExecution.toString());
       const result = calcPriceMulAndAuctionPrice(isSellAuction, maxPriceMultiplier, minPriceMultiplier, auctionExecution, currentWSqueethPrice)
+      console.log("result ", result.toString());
       const expectedAuctionWSqueethEthPrice = result[1]
+      console.log("expectedAuctionWSqueethEthPrice ", expectedAuctionWSqueethEthPrice.toString());
       const finalWSqueethDelta = wmul(strategyDebt.mul(2), expectedAuctionWSqueethEthPrice)
+      console.log("finalWSqueethDelta ", finalWSqueethDelta.toString());
       const secondTargetHedge = wdiv(finalWSqueethDelta.sub(ethDelta), expectedAuctionWSqueethEthPrice.add(ethFeePerWSqueeth))
+      console.log("secondTargetHedge ", secondTargetHedge.toString());
       const expectedEthProceeds = wmul(secondTargetHedge.abs(), expectedAuctionWSqueethEthPrice)
+      console.log("expectedEthProceeds ", expectedEthProceeds.toString());
       const expectedEthDeposited = expectedEthProceeds.sub(wmul(ethFeePerWSqueeth, secondTargetHedge.abs()))
+      console.log("expectedEthDeposited ", expectedEthDeposited.toString());
 
       expect(isSellAuction).to.be.true
 
       const senderWsqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
+      console.log("senderWsqueethBalanceBefore ", senderWsqueethBalanceBefore.toString());
 
       await crabStrategy.connect(depositor).timeHedge(isSellAuction, expectedAuctionWSqueethEthPrice, { value: expectedEthProceeds.add(1) })
 
       const hedgeBlockNumber = await provider.getBlockNumber()
+      console.log("hedgeBlockNumber ", hedgeBlockNumber.toString());
       const hedgeBlock = await provider.getBlock(hedgeBlockNumber)
+      console.log("hedgeBlock ", hedgeBlock.toString());
 
       currentWSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false)
+      console.log("currentWSqueethPrice ", currentWSqueethPrice.toString());
       const senderWsqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address)
+      console.log("senderWsqueethBalanceAfter ", senderWsqueethBalanceAfter.toString());
       const strategyVaultAfter = await controller.vaults(await crabStrategy.vaultId());
+      console.log("strategyVaultAfter ", strategyVaultAfter.toString());
       const strategyCollateralAmountAfter = strategyVaultAfter.collateralAmount
+      console.log("strategyCollateralAmountAfter ", strategyCollateralAmountAfter.toString());
       const strategyDebtAmountAfter = strategyVaultAfter.shortAmount
+      console.log("strategyDebtAmountAfter ", strategyDebtAmountAfter.toString());
       const timeAtLastHedgeAfter = await crabStrategy.timeAtLastHedge()
+      console.log("timeAtLastHedgeAfter ", timeAtLastHedgeAfter.toString());
       const priceAtLastHedgeAfter = await crabStrategy.priceAtLastHedge()
+      console.log("priceAtLastHedgeAfter ", priceAtLastHedgeAfter.toString());
 
       expect(senderWsqueethBalanceAfter.gt(senderWsqueethBalanceBefore)).to.be.true
       expect(isSimilar(senderWsqueethBalanceAfter.sub(senderWsqueethBalanceBefore).toString(), secondTargetHedge.abs().toString())).to.be.true
@@ -236,6 +265,67 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
       expect(isSimilar(strategyCollateralAmountAfter.sub(ethDelta).toString(), expectedEthDeposited.toString())).to.be.true
       expect(timeAtLastHedgeAfter.eq(hedgeBlock.timestamp)).to.be.true
       expect(priceAtLastHedgeAfter.eq(currentWSqueethPrice)).to.be.true
+    })
+    it("should hedge via OTC", async () => {
+
+
+        //printDelta(collateralAmount, debtAmount, oSQTHprice);
+        let strategyVaultBefore =  await controller.vaults(await crabStrategy.vaultId());
+        console.log(strategyVaultBefore.collateralAmount.toString());
+        console.log(strategyVaultBefore.shortAmount.toString());
+        let oSQTHPriceBefore =  await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false);
+        console.log(oSQTHPriceBefore.toString());
+        let oSQTHdelta = wmul(strategyVaultBefore.shortAmount.mul(2), oSQTHPriceBefore);
+        let delta = strategyVaultBefore.collateralAmount.sub(oSQTHdelta);
+        console.log("delta is " , delta.toString());
+        
+
+
+        const ethToDeposit = ethers.utils.parseUnits('1000')
+        const wSqueethToMint = ethers.utils.parseUnits('1000')
+        const currentBlockTimestamp = (await provider.getBlock(await provider.getBlockNumber())).timestamp
+        await controller.connect(owner).mintWPowerPerpAmount("0", wSqueethToMint, "0", { value: ethToDeposit })
+        await buyWeth(swapRouter, wSqueeth, weth, owner.address, (await wSqueeth.balanceOf(owner.address)), currentBlockTimestamp + 10)
+
+        await provider.send("evm_increaseTime", [86400+ auctionTime / 2])
+        await provider.send("evm_mine", [])
+
+
+        let oSQTHPriceAfter =  await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false);
+        console.log(oSQTHPriceAfter.toString());
+        let newOSQTHdelta = wmul(strategyVaultBefore.shortAmount.mul(2), oSQTHPriceAfter);
+        let newDelta = strategyVaultBefore.collateralAmount.sub(newOSQTHdelta);
+        console.log("new Delta is " , newDelta.toString());
+        let toSell = wdiv(newDelta, oSQTHPriceAfter);
+        console.log("quantity of oSQTH sell is", toSell);
+        let toGET = wmul(toSell, oSQTHPriceAfter);
+        console.log("quantity of ETH to get is", toGET);
+
+        let afterOSQTHdelta = wmul(strategyVaultBefore.shortAmount.add(toSell).mul(2), oSQTHPriceAfter)
+        let afterTradeDelta = strategyVaultBefore.collateralAmount.add(toGET).sub(afterOSQTHdelta);
+        console.log("after trade delta would be", afterTradeDelta);//div by 10*18 
+
+        // do the hedge and check after the above two traded quantities
+
+        expect((await crabStrategy.checkTimeHedge())[0]).to.be.true;
+
+        // find the amount of oSQTH to sell
+        const strategyVault = await controller.vaults(await crabStrategy.vaultId());
+        console.log("strategyVault ", strategyVault.toString());
+        const strategyDebt = strategyVault.shortAmount
+        const ethDelta = strategyVault.collateralAmount
+        let currentWSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false)
+        console.log(currentWSqueethPrice.toString());
+        const currentScaledSquethPrice = (await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 300, false))
+        console.log("currentScaledSquethPrice ", currentScaledSquethPrice.toString());
+        const feeRate = await controller.feeRate()
+        const ethFeePerWSqueeth = currentScaledSquethPrice.mul(feeRate).div(10000)
+
+        const initialWSqueethDelta = wmul(strategyDebt.mul(2), currentWSqueethPrice)
+        console.log("initialWSqueethDelta ", initialWSqueethDelta.toString());
+        const targetHedge = wdiv(initialWSqueethDelta.sub(ethDelta), currentWSqueethPrice.add(ethFeePerWSqueeth))
+        console.log("targetHedge ", targetHedge.toString());
+
     })
   })
 })
