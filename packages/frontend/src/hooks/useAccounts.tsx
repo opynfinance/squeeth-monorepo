@@ -30,7 +30,6 @@ const initPosition = {
 export default function useAccounts() {
   const address = useAtomValue(addressAtom)
   const networkId = useAtomValue(networkIdAtom)
-  const [positionType, setPositionType] = useAtom(positionTypeAtom)
 
   const { data: { accounts } = {}, loading } = useQuery<accounts, accountsVariables>(ACCOUNTS_QUERY, {
     variables: { ownerId: address! },
@@ -38,14 +37,10 @@ export default function useAccounts() {
     skip: !address,
   })
 
-  useAppEffect(() => {
-    setPositionType(accounts ? accounts[0]?.positions[0].positionType : PositionType.NONE)
-  }, [accounts, setPositionType])
-
   return {
+    accShortAmount: accounts ? accounts[0]?.accShortAmount : new BigNumber(0),
     positions: (accounts ? accounts[0]?.positions[0] : initPosition) as accounts_accounts_positions,
     lpPosition: (accounts ? accounts[0]?.lppositions[0] : initPosition) as accounts_accounts_lppositions,
-    positionType: positionType,
     loading,
   }
 }
