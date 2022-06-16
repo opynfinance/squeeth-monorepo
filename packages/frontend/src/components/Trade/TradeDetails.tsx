@@ -1,4 +1,4 @@
-import { createStyles, makeStyles, Typography } from '@material-ui/core'
+import { CircularProgress, createStyles, makeStyles, Typography } from '@material-ui/core'
 import React, { ReactNode } from 'react'
 import clsx from 'clsx'
 
@@ -9,6 +9,8 @@ type TradeDetailsType = {
   value: string
   id?: string
   hint: ReactNode
+  isLoading?: boolean
+  loadingMessage?: string
 }
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -33,7 +35,16 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const TradeDetails: React.FC<TradeDetailsType> = ({ actionTitle, amount, id, unit, value, hint }) => {
+const TradeDetails: React.FC<TradeDetailsType> = ({
+  actionTitle,
+  amount,
+  id,
+  unit,
+  value,
+  hint,
+  loadingMessage,
+  isLoading,
+}) => {
   const classes = useStyles()
 
   return (
@@ -50,9 +61,19 @@ const TradeDetails: React.FC<TradeDetailsType> = ({ actionTitle, amount, id, uni
           <Typography className={clsx(classes.squeethExpTxt)}>{unit}</Typography>
         </div>
       </div>
-      <Typography variant="caption" color="textSecondary">
-        {hint}
-      </Typography>
+
+      {isLoading ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <Typography variant="caption" color="textSecondary">
+            {loadingMessage ? loadingMessage : 'Loading'}
+          </Typography>
+          <CircularProgress color="primary" size="1rem" />
+        </div>
+      ) : (
+        <Typography variant="caption" color="textSecondary">
+          {hint}
+        </Typography>
+      )}
     </div>
   )
 }
