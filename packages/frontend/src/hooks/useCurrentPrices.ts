@@ -23,27 +23,28 @@ export default function useCurrentPrices() {
     skip: !address,
   })
 
-  useAppEffect(() => {
-    subscribeToMore({
-      document: POOLS_SUBSCRIPTION,
-      variables: {
-        client: squeethClient[networkId],
-        skip: !address,
-      },
-      updateQuery(prev, { subscriptionData }) {
-        if (!subscriptionData.data) return prev
-        const newPools = subscriptionData.data.pools
-        return {
-          pools: newPools,
-        }
-      },
-    })
-  }, [address, networkId, subscribeToMore])
+  // useAppEffect(() => {
+  //   subscribeToMore({
+  //     document: POOLS_SUBSCRIPTION,
+  //     variables: {
+  //       client: squeethClient[networkId],
+  //       skip: !address,
+  //     },
+  //     updateQuery(prev, { subscriptionData }) {
+  //       console.log(subscriptionData)
+  //       if (!subscriptionData.data) return prev
+  //       const newPools = subscriptionData.data.pools
+  //       return {
+  //         pools: newPools,
+  //       }
+  //     },
+  //   })
+  // }, [address, networkId, subscribeToMore])
 
   useAppEffect(() => {
     if (pools) {
       setETHPoolPrice(new BigNumber(pools[0]?.token0Price))
-      setOSQTHPoolPrice(new BigNumber(pools[1]?.token1Price.times(pools[0]?.token0Price)))
+      setOSQTHPoolPrice(new BigNumber(pools[1]?.token1Price).times(new BigNumber(pools[0]?.token0Price)))
     }
   }, [pools, setETHPoolPrice, setOSQTHPoolPrice])
 
