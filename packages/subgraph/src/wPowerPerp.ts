@@ -12,9 +12,7 @@ export function handleTransfer(event: Transfer): void {
   }
 
   let senderTransactionHistory = createTransactionHistory("SEND_OSQTH", event);
-  senderTransactionHistory.owner = Address.fromString(
-    event.transaction.from.toHex()
-  );
+  senderTransactionHistory.owner = event.transaction.from;
   senderTransactionHistory.oSqthAmount = event.params.value;
   senderTransactionHistory.save();
 
@@ -22,14 +20,14 @@ export function handleTransfer(event: Transfer): void {
     "RECEIVE_OSQTH",
     event
   );
-  receiverTransactionHistory.owner = Address.fromString(
-    event.transaction.to.toHex()
-  );
-  receiverTransactionHistory.oSqthAmount = event.params.value;
-  receiverTransactionHistory.save();
-
   let amount = BigDecimal.fromString(event.params.value.toString());
+  let receipt = event.transaction.to;
+  if (receipt) {
+    receiverTransactionHistory.owner = receipt;
+    receiverTransactionHistory.oSqthAmount = event.params.value;
+    receiverTransactionHistory.save();
+    buyOrSellSQTH(receipt.toHexString(), amount);
+  }
 
   buyOrSellSQTH(event.transaction.from.toHex(), amount.neg());
-  buyOrSellSQTH(event.transaction.to.toHex(), amount);
 }

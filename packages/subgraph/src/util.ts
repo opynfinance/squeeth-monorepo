@@ -241,7 +241,7 @@ export function createTransactionHistory(
 // buy: amount > 0
 // sell amount < 0
 export function buyOrSellETH(userAddr: string, amount: BigDecimal): void {
-  if (amount.equals(ZERO_BD)) return;
+  if (amount.equals(ZERO_BD) || userAddr == null) return;
 
   let usdcPrices = getETHUSDCPrice();
   let position = loadOrCreatePosition(userAddr);
@@ -295,7 +295,7 @@ export function buyOrSellETH(userAddr: string, amount: BigDecimal): void {
 // buy: amount > 0
 // sell amount < 0
 export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
-  if (amount.equals(ZERO_BD)) return;
+  if (amount.equals(ZERO_BD) || userAddr == null) return;
   let osqthPrices = getoSQTHETHPrice();
 
   let position = loadOrCreatePosition(userAddr);
@@ -357,7 +357,7 @@ export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
 // buy: amount > 0
 // sell amount < 0
 export function buyOrSellLPETH(userAddr: string, amount: BigDecimal): void {
-  if (amount.equals(ZERO_BD)) return;
+  if (amount.equals(ZERO_BD) || userAddr == null) return;
   let usdcPrices = getETHUSDCPrice();
   let position = loadOrCreateLPPosition(userAddr);
 
@@ -411,7 +411,7 @@ export function buyOrSellLPETH(userAddr: string, amount: BigDecimal): void {
 // buy: amount > 0
 // sell amount < 0
 export function buyOrSellLPSQTH(userAddr: string, amount: BigDecimal): void {
-  if (amount.equals(ZERO_BD)) return;
+  if (amount.equals(ZERO_BD) || userAddr == null) return;
   let osqthPrices = getoSQTHETHPrice();
 
   let position = loadOrCreateLPPosition(userAddr);
