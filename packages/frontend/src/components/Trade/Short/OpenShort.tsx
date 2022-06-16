@@ -186,6 +186,10 @@ export const OpenShortPosition = () => {
   let vaultIdDontLoadedError: string | undefined
   let lowVolError: string | undefined
 
+  useAppEffect(() => {
+    setCollatPercent(existingCollatPercent ? existingCollatPercent : 200)
+  }, [existingCollatPercent])
+
   if (connected) {
     if (new BigNumber(quote.priceImpact).gt(3)) {
       priceImpactWarning = 'High Price Impact'
@@ -235,7 +239,7 @@ export const OpenShortPosition = () => {
         const totalExistingCollat = (vault?.collateralAmount ?? BIG_ZERO).plus(NFTCollat?.collateral ?? BIG_ZERO)
         const newCollat = new BigNumber(collatPercent / 100).multipliedBy(totalDebt).minus(totalExistingCollat ?? 0)
         getCollatRatioAndLiqPrice(
-          new BigNumber(collatPercent / 100).multipliedBy(totalDebt),
+          newCollat.plus(vault?.collateralAmount ?? BIG_ZERO),
           new BigNumber(value).plus(vault?.shortAmount ?? BIG_ZERO),
           vault?.NFTCollateralId,
         ).then(({ liquidationPrice }) => {
