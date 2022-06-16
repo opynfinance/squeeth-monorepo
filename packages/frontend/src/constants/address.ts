@@ -55,7 +55,6 @@ export const SWAP_ROUTER: Address = {
 
 export const SWAP_ROUTER_02: Address = {
   1: '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
-  //https://ropsten.etherscan.io/address/0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45#code
   3: '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
   421611: '',
   31337: '',
