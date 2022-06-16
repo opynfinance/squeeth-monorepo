@@ -3,8 +3,6 @@
 // @generated
 // This file was automatically generated and should not be edited.
 
-import { PositionType } from "./../../../../types/global_apollo";
-
 // ====================================================
 // GraphQL query operation: accounts
 // ====================================================
@@ -12,7 +10,6 @@ import { PositionType } from "./../../../../types/global_apollo";
 export interface accounts_accounts_positions {
   __typename: "Position";
   id: string;
-  positionType: PositionType;
   currentOSQTHAmount: any;
   currentETHAmount: any;
   unrealizedOSQTHUnitCost: any;
@@ -43,6 +40,7 @@ export interface accounts_accounts_lppositions {
 export interface accounts_accounts {
   __typename: "Account";
   id: string;
+  accShortAmount: any;
   positions: accounts_accounts_positions[];
   lppositions: accounts_accounts_lppositions[];
 }

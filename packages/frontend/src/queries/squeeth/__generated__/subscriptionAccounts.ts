@@ -3,8 +3,6 @@
 // @generated
 // This file was automatically generated and should not be edited.
 
-import { PositionType } from "./../../../../types/global_apollo";
-
 // ====================================================
 // GraphQL subscription operation: subscriptionAccounts
 // ====================================================
@@ -12,7 +10,6 @@ import { PositionType } from "./../../../../types/global_apollo";
 export interface subscriptionAccounts_accounts_positions {
   __typename: "Position";
   id: string;
-  positionType: PositionType;
   currentOSQTHAmount: any;
   currentETHAmount: any;
   unrealizedOSQTHUnitCost: any;
@@ -43,6 +40,7 @@ export interface subscriptionAccounts_accounts_lppositions {
 export interface subscriptionAccounts_accounts {
   __typename: "Account";
   id: string;
+  accShortAmount: any;
   positions: subscriptionAccounts_accounts_positions[];
   lppositions: subscriptionAccounts_accounts_lppositions[];
 }

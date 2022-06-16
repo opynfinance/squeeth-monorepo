@@ -4,9 +4,9 @@ export const ACCOUNTS_QUERY = gql`
   query accounts($ownerId: ID!) {
     accounts(where: { id: $ownerId }) {
       id
+      accShortAmount
       positions {
         id
-        positionType
         currentOSQTHAmount
         currentETHAmount
         unrealizedOSQTHUnitCost
@@ -39,9 +39,9 @@ export const ACCOUNTS_SUBSCRIPTION = gql`
   subscription subscriptionAccounts($ownerId: ID!) {
     accounts(where: { id: $ownerId }) {
       id
+      accShortAmount
       positions {
         id
-        positionType
         currentOSQTHAmount
         currentETHAmount
         unrealizedOSQTHUnitCost
