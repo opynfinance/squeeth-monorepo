@@ -303,8 +303,7 @@ export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
   // When position side chages, reset PnLs and calculate with remaining amount
   let newAmount = position.currentOSQTHAmount.plus(amount);
   if (position.currentOSQTHAmount.times(newAmount).lt(ZERO_BD)) {
-    position.currentOSQTHAmount = ZERO_BD;
-    position.realizedOSQTHAmount = ZERO_BD;
+    initPosition(userAddr, position);
     amount = newAmount;
   }
 
