@@ -23,7 +23,7 @@ export function handleTransfer(event: Transfer): void {
     event
   );
   receiverTransactionHistory.owner = Address.fromString(
-    event.params.to.toHex()
+    event.transaction.to.toHex()
   );
   receiverTransactionHistory.oSqthAmount = event.params.value;
   receiverTransactionHistory.save();
@@ -31,5 +31,5 @@ export function handleTransfer(event: Transfer): void {
   let amount = BigDecimal.fromString(event.params.value.toString());
 
   buyOrSellSQTH(event.transaction.from.toHex(), amount.neg());
-  buyOrSellSQTH(event.params.to.toHex(), amount);
+  buyOrSellSQTH(event.transaction.to.toHex(), amount);
 }
