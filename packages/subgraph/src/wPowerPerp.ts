@@ -1,7 +1,12 @@
-import { BigDecimal, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, log } from "@graphprotocol/graph-ts";
 import { Pool } from "../generated/schema";
 import { Transfer } from "../generated/WPowerPerp/WPowerPerp";
-import { CONTROLLER_ADDR, SHORT_HELPER_ADDR } from "./constants";
+import {
+  CONTROLLER_ADDR,
+  SHORT_HELPER_ADDR,
+  SWAPROUTER2_ADDR,
+  SWAPROUTER_ADDR,
+} from "./constants";
 import { buyOrSellSQTH, createTransactionHistory } from "./util";
 
 export function handleTransfer(event: Transfer): void {
@@ -9,7 +14,9 @@ export function handleTransfer(event: Transfer): void {
   if (
     pool != null ||
     event.transaction.to == SHORT_HELPER_ADDR ||
-    event.transaction.to == CONTROLLER_ADDR
+    event.transaction.to == CONTROLLER_ADDR ||
+    event.transaction.to == SWAPROUTER_ADDR ||
+    event.transaction.to == SWAPROUTER2_ADDR
   ) {
     return;
   }

@@ -34,6 +34,23 @@ export const RA_CONTROLLER_ADDR = Address.fromString(
   "0x6FBbc7eBd7E421839915e8e4fAcC9947dC32F4dE"
 );
 
+export const MAINNET_SWAPROUTER_ADDR = Address.fromString(
+  "0xE592427A0AEce92De3Edee1F18E0157C05861564"
+);
+export const ROPSTEN_SWAPROUTER_ADDR = Address.fromString(
+  "0x528a19A3e88861E7298C86fE5490B8Ec007a4204"
+);
+export const LOCALHOST_SWAPROUTER_ADDR = Address.fromString(
+  "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+);
+export const RA_SWAPROUTER_ADDR = Address.fromString(
+  "0xE592427A0AEce92De3Edee1F18E0157C05861564"
+);
+
+export const MAINNET_ROPSTEN_SWAPROUTER2_ADDR = Address.fromString(
+  "0xE592427A0AEce92De3Edee1F18E0157C05861564"
+);
+
 export const MAINNET_USDC_WETH_POOL =
   "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8".toLowerCase();
 export const ROPSTEN_USDC_WETH_POOL =
@@ -142,12 +159,36 @@ export function getControllerAddr(networkName: string): Address {
   return addr;
 }
 
+export function getSwapRouterAddr(networkName: string): Address {
+  let addr = MAINNET_SWAPROUTER_ADDR;
+  if (networkName == "ropsten") {
+    addr = ROPSTEN_SWAPROUTER_ADDR;
+  } else if (networkName == "localhost") {
+    addr = LOCALHOST_SWAPROUTER_ADDR;
+  } else if (networkName == "rinkebyArbitrum") {
+    addr = RA_SWAPROUTER_ADDR;
+  }
+  return addr;
+}
+
+export function getSwapRouter2Addr(networkName: string): Address {
+  let addr = MAINNET_ROPSTEN_SWAPROUTER2_ADDR;
+  if (networkName == "ropsten") {
+    addr = ROPSTEN_SWAPROUTER_ADDR;
+  } else {
+    addr = Address.fromString("");
+  }
+  return addr;
+}
+
 export const SHORT_HELPER_ADDR = getShortHelperAddr(dataSource.network());
 export const OSQTH_WETH_POOL = getoSQTHPoolAddr(dataSource.network());
 export const USDC_WETH_POOL = getUSDCPoolAddr(dataSource.network());
 export const OSQTH_TOKEN_ADDR = getoSQTHTokenAddr(dataSource.network());
 export const WETH_TOKEN_ADDR = getWETHTokenAddr(dataSource.network());
 export const CONTROLLER_ADDR = getControllerAddr(dataSource.network());
+export const SWAPROUTER_ADDR = getSwapRouterAddr(dataSource.network());
+export const SWAPROUTER2_ADDR = getSwapRouter2Addr(dataSource.network());
 export const TOKEN_DECIMALS_18 = BigInt.fromI32(18);
 export const TOKEN_DECIMALS_USDC = BigInt.fromI32(6);
 export const ZERO_BI = BigInt.fromI32(0);
