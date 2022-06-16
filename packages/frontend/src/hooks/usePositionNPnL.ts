@@ -2,11 +2,14 @@ import { PositionType } from '../types/index'
 import { calculatePnL } from 'src/lib'
 import useAccounts from './useAccounts'
 import useCurrentPrices from './useCurrentPrices'
+import useAppEffect from './useAppEffect'
+import { positionTypeAtom } from '../state/positions/atoms'
+import { useAtom } from 'jotai'
 
 export default function usePositionNPnL() {
   const { ethPrice, oSqthPrice, loading: isCurrentPriceLoading } = useCurrentPrices()
   const { positions, lpPosition, loading: isPositionsLoading, accShortAmount } = useAccounts()
-  let positionType = PositionType.NONE
+  const [positionType, setPositionType] = useAtom(positionTypeAtom)
 
   const {
     currentPositionValue,
@@ -26,19 +29,21 @@ export default function usePositionNPnL() {
     realizedPnLInPerct: lpRealizedPnLInPerct,
   } = calculatePnL(lpPosition, oSqthPrice, ethPrice)
 
-  if (currentOSQTHAmount.gt(accShortAmount)) {
-    positionType = PositionType.LONG
-  } else if (currentOSQTHAmount.lt(accShortAmount)) {
-    positionType = PositionType.SHORT
-  } else {
-    positionType = PositionType.NONE
-  }
+  useAppEffect(() => {
+    if (currentOSQTHAmount.gt(accShortAmount)) {
+      setPositionType(PositionType.LONG)
+    } else if (currentOSQTHAmount.lt(accShortAmount)) {
+      setPositionType(PositionType.SHORT)
+    } else {
+      setPositionType(PositionType.NONE)
+    }
+  }, [currentOSQTHAmount, accShortAmount, setPositionType])
 
   return {
     currentPositionValue,
     currentETHAmount,
     currentOSQTHAmount: currentOSQTHAmount.abs(),
-    positionType,
+    positionType: positionType,
     loading: isCurrentPriceLoading || isPositionsLoading,
     unrealizedPnL,
     unrealizedPnLInPerct,
