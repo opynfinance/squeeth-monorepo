@@ -221,7 +221,7 @@ export function createTransactionHistory(
 
   let osqthPrices = getoSQTHETHPrice();
   let usdcPrices = getETHUSDCPrice();
-  transactionHistory.sender = event.transaction.from;
+  transactionHistory.owner = event.transaction.from;
   transactionHistory.timestamp = event.block.timestamp;
   transactionHistory.transactionType = transactionType;
   transactionHistory.oSqthAmount = BigInt.zero();

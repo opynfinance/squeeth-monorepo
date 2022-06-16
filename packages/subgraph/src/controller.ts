@@ -1,4 +1,4 @@
-import { BigInt, Bytes, BigDecimal } from "@graphprotocol/graph-ts";
+import { BigInt, Bytes, BigDecimal, Address } from "@graphprotocol/graph-ts";
 import {
   BurnShort,
   DepositCollateral,
@@ -123,7 +123,7 @@ export function handleBurnShort(event: BurnShort): void {
   vaultTransaction.save();
 
   let transactionHistory = createTransactionHistory("BURN_OSQTH", event);
-  transactionHistory.owner = vault.owner;
+  transactionHistory.owner = Address.fromString(vault.owner);
   transactionHistory.oSqthAmount = event.params.amount;
   transactionHistory.save();
 }
@@ -164,7 +164,7 @@ export function handleDepositCollateral(event: DepositCollateral): void {
   dayStatSnapshot.save();
 
   let transactionHistory = createTransactionHistory("DEPOSIT_COLLAT", event);
-  transactionHistory.owner = vault.owner;
+  transactionHistory.owner = Address.fromString(vault.owner);
   transactionHistory.ethAmount = event.params.amount;
   transactionHistory.save();
 
@@ -279,7 +279,7 @@ export function handleMintShort(event: MintShort): void {
   vaultTransaction.save();
 
   let transactionHistory = createTransactionHistory("MINT_OSQTH", event);
-  transactionHistory.owner = vault.owner;
+  transactionHistory.owner = Address.fromString(vault.owner);
   transactionHistory.oSqthAmount = event.params.amount;
   transactionHistory.save();
 }
@@ -369,7 +369,7 @@ export function handleWithdrawCollateral(event: WithdrawCollateral): void {
   dayStatSnapshot.save();
 
   let transactionHistory = createTransactionHistory("WITHDRAW_COLLAT", event);
-  transactionHistory.owner = vault.owner;
+  transactionHistory.owner = Address.fromString(vault.owner);
   transactionHistory.ethAmount = event.params.amount;
   transactionHistory.save();
 
