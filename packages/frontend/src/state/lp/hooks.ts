@@ -186,6 +186,122 @@ export function validTicks(lowerTickInput: number, upperTickInput: number) {
   return [lowerTick, upperTick]
 }
 
+// Rebalance via vault
+export const useRebalanceVault = () => {
+  const address = useAtomValue(addressAtom)
+  const controllerHelperContract = useAtomValue(controllerHelperHelperContractAtom)
+  const { controllerHelper, weth, oSqueeth, squeethPool } = useAtomValue(addressesAtom)
+  const controllerContract = useAtomValue(controllerContractAtom)
+  const handleTransaction = useHandleTransaction()
+  const ethPrice = useAtomValue(wethPriceAtom)
+  const positionManager = useAtomValue(nftManagerContractAtom)
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
+  const getSellQuote = useGetSellQuote()
+  const rebalanceVault = useAppCallback(
+    async (vaultId: BigNumber, lowerTickInput: number, upperTickInput: number, onTxConfirmed?: () => void) => {
+      if (!controllerContract || !controllerHelperContract || !address || !positionManager) return
+      const one = new BigNumber(10).pow(18)
+      const uniTokenId = (await controllerContract?.methods.vaults(vaultId)).NftCollateralId
+      const positionBefore = await positionManager.methods.positions(uniTokenId)
+      const vaultBefore = await controllerContract?.methods.vaults(vaultId)
+      const scaledEthPrice = ethPrice.div(10000)
+      const debtInEth = vaultBefore.shortAmount.mul(scaledEthPrice).div(one)
+      const collateralToFlashloan = debtInEth.mul(3).div(2).add(0.01)
+      const tokenIndex = await positionManager.methods.totalSupply()
+      const tokenId = await positionManager.methods.tokenByIndex(tokenIndex.sub(1))
+      const amount0Min = new BigNumber(0)
+      const amount1Min = new BigNumber(0)
+      const safetyWPowerPerp = ethers.utils.parseUnits('0.01')
+
+      const [lowerTick, upperTick] = validTicks(lowerTickInput, upperTickInput)
+
+      // Get current LPpositions
+      const [amount0, amount1] = await positionManager.methods.decreaseLiquidity({
+        tokenId: tokenId,
+        liquidity: positionBefore.liquidity,
+        amount0Min: 0,
+        amount1Min: 0,
+        deadline: Math.floor(Date.now() / 1000 + 1800),
+      })
+      const wPowerPerpAmountInLPBefore = isWethToken0 ? amount1 : amount0
+      const wethAmountInLPBefore = isWethToken0 ? amount0 : amount1
+
+      // Estimate proceeds from liquidating squeeth in LP
+      const ethAmountOutFromSwap = getSellQuote(wPowerPerpAmountInLPBefore)
+
+      // Estimate of new LP with 0.01 weth safety margin
+      const safetyEth = ethers.utils.parseUnits('0.01')
+      const wethAmountToLP = wethAmountInLPBefore.add(ethAmountOutFromSwap).sub(safetyEth)
+
+      const abiCoder = new ethers.utils.AbiCoder()
+      const rebalanceLpInVaultParams = [
+        {
+          // Liquidate LP
+          rebalanceLpInVaultType: new BigNumber(1), // DecreaseLpLiquidity:
+          // DecreaseLpLiquidityParams: [tokenId, liquidity, liquidityPercentage, amount0Min, amount1Min]
+          data: abiCoder.encode(
+            ['uint256', 'uint256', 'uint256', 'uint128', 'uint128'],
+            [
+              tokenId,
+              positionBefore.liquidity,
+              new BigNumber(100).multipliedBy(new BigNumber(10).pow(16)).toString(),
+              new BigNumber(0).toString(),
+              new BigNumber(0).toString(),
+            ],
+          ),
+        },
+        {
+          // Deposit into vault and mint
+          rebalanceLpInVaultType: new BigNumber(2).toString(), // DepositIntoVault
+          // DepsositIntoVault: [wPowerPerpToMint, collateralToDeposit]
+          data: abiCoder.encode(['uint256', 'uint256'], [wPowerPerpAmountInLPBefore, wethAmountInLPBefore]),
+        },
+        {
+          // Withdraw from vault
+          rebalanceLpInVaultType: new BigNumber(3), // WithdrawFromVault
+          // withdrawFromVault: [wPowerPerpToBurn, collateralToWithdraw, burnExactRemoved ]
+          data: abiCoder.encode(
+            ['uint256', 'uint256', 'bool'],
+            [wPowerPerpAmountInLPBefore, wethAmountInLPBefore, false],
+          ),
+        },
+        {
+          // Mint new LP
+          rebalanceLpInVaultType: new BigNumber(4).toString(), // MintNewLP
+          // lpWPowerPerpPool: [recipient, wPowerPerpPool, vaultId, wPowerPerpAmount, collateralToDeposit, collateralToLP, amount0Min, amount1Min, lowerTick, upperTick ]
+          data: abiCoder.encode(
+            ['address', 'address', 'uint256', 'uint256', 'uint256', 'uint256', 'uint256', 'uint256', 'int24', 'int24'],
+            [
+              controllerHelper,
+              squeethPool,
+              vaultId,
+              new BigNumber(0).toString(),
+              new BigNumber(0).toString(),
+              wethAmountToLP,
+              amount0Min,
+              amount1Min,
+              lowerTick,
+              upperTick,
+            ],
+          ),
+        },
+      ]
+
+      await controllerContract.methods.updateOperator(vaultId, controllerHelper)
+      return handleTransaction(
+        await controllerHelperContract.methods
+          .rebalanceLpInVault(vaultId, collateralToFlashloan, rebalanceLpInVaultParams)
+          .send({
+            from: address,
+          }),
+        onTxConfirmed,
+      )
+    },
+    [],
+  )
+  return rebalanceVault
+}
+
 // Rebalance via general swap
 export const useRebalanceGeneralSwap = () => {
   const address = useAtomValue(addressAtom)
