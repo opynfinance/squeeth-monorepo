@@ -22,6 +22,7 @@ import {
   loadOrCreatePosition,
   buyOrSellETH,
   buyOrSellSQTH,
+  loadOrCreateLPPosition,
 } from "../util";
 import { convertTokenToDecimal } from "../utils";
 import { Address, BigInt } from "@graphprotocol/graph-ts";
@@ -129,5 +130,23 @@ export function handleCollect(event: Collect): void {
   transactionHistory.save();
 
   let userAddr = event.transaction.from.toHex();
-  updateLPposition(userAddr, event.params.amount0, event.params.amount1);
+  let position = loadOrCreateLPPosition(userAddr);
+  const amount0 = convertTokenToDecimal(
+    event.params.amount0,
+    TOKEN_DECIMALS_18
+  );
+
+  const amount1 = convertTokenToDecimal(
+    event.params.amount1,
+    TOKEN_DECIMALS_18
+  );
+  position.collectedFeesOSQTHAmount = amount0;
+  position.collectedFeesETHAmount = amount1;
+  position.save();
+
+  updateLPposition(
+    userAddr,
+    event.params.amount0.neg(),
+    event.params.amount1.neg()
+  );
 }
