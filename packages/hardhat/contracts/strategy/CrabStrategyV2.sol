@@ -55,6 +55,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     address public immutable oracle;
     address public immutable ethQuoteCurrencyPool;
     address public immutable quoteCurrency;
+    address public immutable timelock;
 
     /// @dev strategy will only allow hedging if collateral to trade is at least a set percentage of the total strategy collateral
     uint256 public deltaHedgeThreshold = 1e15;
@@ -142,6 +143,11 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     event SetMaxPriceMultiplier(uint256 newMaxPriceMultiplier);
     event VaultTransferred(address indexed newStrategy, uint256 vaultId);
 
+    modifier onlyTimelock() {
+        require(msg.sender == timelock, "Caller is not timelock");
+        _;
+    }
+
     /**
      * @notice strategy constructor
      * @dev this will open a vault in the power token contract and store the vault ID
@@ -162,6 +168,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         address _weth,
         address _uniswapFactory,
         address _ethWSqueethPool,
+        address _timelock,
         uint256 _hedgeTimeThreshold,
         uint256 _hedgePriceThreshold,
         uint256 _auctionTime,
@@ -169,6 +176,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 _maxPriceMultiplier
     ) StrategyBase(_wSqueethController, _weth, "Crab Strategy v2", "Crabv2") StrategyFlashSwap(_uniswapFactory) {
         require(_oracle != address(0), "invalid oracle address");
+        require(_timelock != address(0), "invalid timelock address");
         require(_ethWSqueethPool != address(0), "invalid ETH:WSqueeth address");
         require(_hedgeTimeThreshold > 0, "invalid hedge time threshold");
         require(_hedgePriceThreshold > 0, "invalid hedge price threshold");
@@ -186,6 +194,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         maxPriceMultiplier = _maxPriceMultiplier;
         ethQuoteCurrencyPool = IController(_wSqueethController).ethQuoteCurrencyPool();
         quoteCurrency = IController(_wSqueethController).quoteCurrency();
+        timelock = _timelock;
     }
 
     /**
@@ -199,10 +208,11 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @notice Tranfer vault NFT to new contract
      * @dev strategy cap is set to 0 to avoid future deposits.
      */
-    function transferVault(address _newStrategy) external onlyOwner {
+    function transferVault(address _newStrategy) external onlyTimelock {
         IShortPowerPerp(powerTokenController.shortPowerPerp()).safeTransferFrom(address(this), _newStrategy, vaultId);
-        setStrategyCap(0);
+        strategyCap = 0;
 
+        emit SetStrategyCap(0);
         emit VaultTransferred(_newStrategy, vaultId);
     }
 
