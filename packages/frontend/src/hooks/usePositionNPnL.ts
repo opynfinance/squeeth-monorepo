@@ -4,7 +4,7 @@ import useCurrentPrices from './useCurrentPrices'
 
 export default function usePositionNPnL() {
   const { ethPrice, oSqthPrice, loading: isCurrentPriceLoading } = useCurrentPrices()
-  const { positions, lpPosition, positionType, loading: isPositionsLoading } = useAccounts()
+  const { positions, lpPosition, loading: isPositionsLoading, accShortAmount } = useAccounts()
 
   const {
     currentPositionValue,
@@ -28,7 +28,6 @@ export default function usePositionNPnL() {
     currentPositionValue,
     currentETHAmount,
     currentOSQTHAmount,
-    positionType,
     loading: isCurrentPriceLoading || isPositionsLoading,
     unrealizedPnL,
     unrealizedPnLInPerct,
