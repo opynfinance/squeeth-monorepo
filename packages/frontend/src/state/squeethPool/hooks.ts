@@ -1,4 +1,4 @@
-import { DEFAULT_SLIPPAGE, OSQUEETH_DECIMALS, UNI_POOL_FEES, WETH_DECIMALS } from '@constants/index'
+import { BIG_ZERO, DEFAULT_SLIPPAGE, OSQUEETH_DECIMALS, UNI_POOL_FEES, WETH_DECIMALS } from '@constants/index'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
 import { useETHPrice } from '@hooks/useETHPrice'
@@ -20,6 +20,8 @@ import { addressAtom, networkIdAtom, web3Atom } from '../wallet/atoms'
 import { useHandleTransaction } from '../wallet/hooks'
 import wethAbi from '../../abis/weth.json'
 import { Pair } from '@uniswap/v2-sdk'
+import { Protocol } from '@uniswap/router-sdk'
+import JSBI from 'jsbi'
 
 import {
   poolAtom,
@@ -564,6 +566,36 @@ export const useGetSellQuote = () => {
     [pool, wethToken?.address, squeethToken?.address],
   )
   return getSellQuote
+}
+
+export const useExactOutSellQuote = () => {
+  const pool = useAtomValue(poolAtom)
+  const squeethToken = useAtomValue(squeethTokenAtom)
+  const wethToken = useAtomValue(wethTokenAtom)
+  const web3 = useAtomValue(web3Atom)
+  const networkId = useAtomValue(networkIdAtom)
+
+  const getExactOutSellQuote = useAppCallback(
+    async (squeethAmount: BigNumber) => {
+      const emptyState = BIG_ZERO
+      if (!squeethAmount || !pool) return emptyState
+
+      const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
+      const router = new AlphaRouter({ chainId: Number(networkId), provider: provider as any })
+
+      const rawAmount = CurrencyAmount.fromRawAmount(squeethToken!, JSBI.BigInt(fromTokenAmount(squeethAmount, 18)))
+
+      const swapRoute = await router.route(rawAmount, wethToken!, TradeType.EXACT_OUTPUT, /*swapConfig=*/ undefined, {
+        protocols: [Protocol.V2, Protocol.V3],
+      })
+
+      if (!swapRoute) throw new Error('Failed to generate client side quote')
+
+      return new BigNumber(swapRoute.trade.inputAmount.toSignificant(18))
+    },
+    [pool, wethToken?.address, squeethToken?.address],
+  )
+  return getExactOutSellQuote
 }
 
 export const useGetSellParam = () => {
