@@ -37,7 +37,7 @@ export default function usePositionNPnL() {
   return {
     currentPositionValue,
     currentETHAmount,
-    currentOSQTHAmount,
+    currentOSQTHAmount: currentOSQTHAmount.abs(),
     positionType,
     loading: isCurrentPriceLoading || isPositionsLoading,
     unrealizedPnL,

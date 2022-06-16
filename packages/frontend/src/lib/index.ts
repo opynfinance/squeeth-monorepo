@@ -16,7 +16,7 @@ export function calculatePnL(
   const realizedOSQTHUnitGain = new BigNumber(positions?.realizedOSQTHUnitGain)
   const unrealizedETHUnitCost = new BigNumber(positions?.unrealizedETHUnitCost)
   const unrealizedOSQTHUnitCost = new BigNumber(positions?.unrealizedOSQTHUnitCost)
-  const currentETHAmount = toTokenAmount(positions?.currentETHAmount, WETH_DECIMALS).abs()
+  const currentETHAmount = toTokenAmount(positions?.currentETHAmount, WETH_DECIMALS)
   const currentOSQTHAmount = toTokenAmount(positions?.currentOSQTHAmount, OSQUEETH_DECIMALS).abs()
 
   const currentPositionValue = oSqthPrice.times(currentOSQTHAmount).plus(currentETHAmount.times(ethPrice))
@@ -38,7 +38,7 @@ export function calculatePnL(
   return {
     currentPositionValue,
     currentETHAmount,
-    currentOSQTHAmount,
+    currentOSQTHAmount: toTokenAmount(positions?.currentOSQTHAmount, OSQUEETH_DECIMALS),
     unrealizedPnL,
     unrealizedPnLInPerct,
     realizedPnL,
