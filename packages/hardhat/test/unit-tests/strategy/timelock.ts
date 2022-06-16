@@ -36,11 +36,6 @@ describe("Timelock", async function () {
   // })
 
   describe("Deployment", async () => {
-    it("Should revert if admin is 0", async () => {
-      const timelockContract = await ethers.getContractFactory("MockTimelock")
-      await expect(timelockContract.deploy(ethers.constants.AddressZero, threeDays)).to.be.revertedWith("Timelock::constructor: Address can't be 0")
-    })
-
     it("Should revert if delay is less than minimum delay", async () => {
       const timelockContract = await ethers.getContractFactory("MockTimelock")
       await expect(timelockContract.deploy(owner.address, 24 * 60 * 60)).to.be.revertedWith("Timelock::constructor: Delay must exceed minimum delay.")
@@ -102,9 +97,9 @@ describe("Timelock", async function () {
     })
 
     // Need to be implemented
-    it("Should queue properly", async () => {
-      const blockNumber = await provider.getBlockNumber()
-      const block = await provider.getBlock(blockNumber)
-    })
+    // it("Should queue properly", async () => {
+    //   const blockNumber = await provider.getBlockNumber()
+    //   const block = await provider.getBlock(blockNumber)
+    // })
   })
 })

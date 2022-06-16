@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
-pragma solidity =0.7.6;
+pragma solidity =0.8.10;
 
-import "./base/StrategyMath.sol";
+import "./SafeMath.sol";
 
 contract Timelock {
-    using StrategyMath for uint;
+    using SafeMath for uint;
 
     event NewAdmin(address indexed newAdmin);
     event NewPendingAdmin(address indexed newPendingAdmin);
@@ -24,8 +24,7 @@ contract Timelock {
     mapping (bytes32 => bool) public queuedTransactions;
 
 
-    constructor(address admin_, uint delay_) {
-        require(admin_ != address(0), "Timelock::constructor: Address can't be 0");
+    constructor(address admin_, uint delay_) public {
         require(delay_ >= MINIMUM_DELAY, "Timelock::constructor: Delay must exceed minimum delay.");
         require(delay_ <= MAXIMUM_DELAY, "Timelock::setDelay: Delay must not exceed maximum delay.");
 
@@ -33,10 +32,7 @@ contract Timelock {
         delay = delay_;
     }
 
-    /**
-     * @notice fallback function to accept eth
-     */
-    receive() external payable { }
+    fallback() external payable { }
 
     function setDelay(uint delay_) public {
         require(msg.sender == address(this), "Timelock::setDelay: Call must come from Timelock.");
@@ -100,6 +96,7 @@ contract Timelock {
             callData = abi.encodePacked(bytes4(keccak256(bytes(signature))), data);
         }
 
+        // solium-disable-next-line security/no-call-value
         (bool success, bytes memory returnData) = target.call{value: value}(callData);
         require(success, "Timelock::executeTransaction: Transaction execution reverted.");
 
@@ -109,6 +106,7 @@ contract Timelock {
     }
 
     function getBlockTimestamp() internal view returns (uint) {
+        // solium-disable-next-line security/no-block-members
         return block.timestamp;
     }
 }

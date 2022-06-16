@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
-pragma solidity =0.7.6;
+pragma solidity =0.8.10;
 
-import {Timelock} from "../strategy/Timelock.sol";
+import {Timelock} from "../strategy/timelock/Timelock.sol";
 
 contract MockTimelock is Timelock {
 
