@@ -617,7 +617,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 traderAmount
     );
 
-    function _execOrder(uint256 managerSellAmount, uint256 maxSellerPrice, OrderData memory _order) internal {
+    function _execOrder(uint256 managerSellAmount, uint256 managerBuyPrice, OrderData memory _order) internal {
         bytes32 structHash = keccak256(
             abi.encode(
                 _CRAB_BALANCE_TYPEHASH,
@@ -644,8 +644,8 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         //adjust if manager is giving better price
         // TODO test this a lot
         uint256 sellerPrice = _order.managerAmount.div(_order.traderAmount);
-        if(maxSellerPrice > sellerPrice) {
-            _order.managerAmount = _order.traderAmount.mul(maxSellerPrice);
+        if(managerBuyPrice > sellerPrice) {
+            _order.managerAmount = _order.traderAmount.mul(managerBuyPrice);
         }
 
         IERC20(_order.traderToken).transferFrom(_order.trader, address(this), _order.traderAmount);
