@@ -1,21 +1,23 @@
 import BigNumber from 'bignumber.js'
 import { accounts_accounts_lppositions, accounts_accounts_positions } from '@queries/squeeth/__generated__/accounts'
+import { OSQUEETH_DECIMALS, WETH_DECIMALS } from '@constants/index'
+import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 
 export function calculatePnL(
   positions: accounts_accounts_positions | accounts_accounts_lppositions,
   oSqthPrice: BigNumber,
   ethPrice: BigNumber,
 ) {
-  const realizedETHAmount = new BigNumber(positions?.realizedETHAmount)
+  const realizedETHAmount = toTokenAmount(positions?.realizedETHAmount, OSQUEETH_DECIMALS)
   const realizedETHUnitCost = new BigNumber(positions?.realizedETHUnitCost)
   const realizedETHUnitGain = new BigNumber(positions?.realizedETHUnitGain)
-  const realizedOSQTHAmount = new BigNumber(positions?.realizedOSQTHAmount)
+  const realizedOSQTHAmount = toTokenAmount(positions?.realizedOSQTHAmount, WETH_DECIMALS)
   const realizedOSQTHUnitCost = new BigNumber(positions?.realizedOSQTHUnitCost)
   const realizedOSQTHUnitGain = new BigNumber(positions?.realizedOSQTHUnitGain)
   const unrealizedETHUnitCost = new BigNumber(positions?.unrealizedETHUnitCost)
   const unrealizedOSQTHUnitCost = new BigNumber(positions?.unrealizedOSQTHUnitCost)
-  const currentETHAmount = new BigNumber(positions?.currentETHAmount).abs()
-  const currentOSQTHAmount = new BigNumber(positions?.currentOSQTHAmount).abs()
+  const currentETHAmount = toTokenAmount(positions?.currentETHAmount, WETH_DECIMALS).abs()
+  const currentOSQTHAmount = toTokenAmount(positions?.currentOSQTHAmount, OSQUEETH_DECIMALS).abs()
 
   const currentPositionValue = oSqthPrice.times(currentOSQTHAmount).plus(currentETHAmount.times(ethPrice))
   const unrealizedCost = unrealizedOSQTHUnitCost
