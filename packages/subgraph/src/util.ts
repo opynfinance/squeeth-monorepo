@@ -245,14 +245,6 @@ export function buyOrSellETH(userAddr: string, amount: BigDecimal): void {
   let usdcPrices = getETHUSDCPrice();
   let position = loadOrCreatePosition(userAddr);
 
-  // When position side chages, reset PnLs and calculate with remaining amount
-  let newAmount = position.currentETHAmount.plus(amount);
-  if (position.currentETHAmount.times(newAmount).lt(ZERO_BD)) {
-    position.currentETHAmount = ZERO_BD;
-    position.realizedETHAmount = ZERO_BD;
-    amount = newAmount;
-  }
-
   // Buy
   if (amount.gt(ZERO_BD)) {
     let oldBoughtAmount = position.currentETHAmount.plus(
@@ -369,14 +361,6 @@ export function buyOrSellLPETH(userAddr: string, amount: BigDecimal): void {
   let usdcPrices = getETHUSDCPrice();
   let position = loadOrCreateLPPosition(userAddr);
 
-  // When position side chages, reset PnLs and calculate with remaining amount
-  let newAmount = position.currentETHAmount.plus(amount);
-  if (position.currentETHAmount.times(newAmount).lt(ZERO_BD)) {
-    position.currentETHAmount = ZERO_BD;
-    position.realizedETHAmount = ZERO_BD;
-    amount = newAmount;
-  }
-
   // Buy
   if (amount.gt(ZERO_BD)) {
     let oldBoughtAmount = position.currentETHAmount.plus(
@@ -431,14 +415,6 @@ export function buyOrSellLPSQTH(userAddr: string, amount: BigDecimal): void {
   let osqthPrices = getoSQTHETHPrice();
 
   let position = loadOrCreateLPPosition(userAddr);
-
-  // When position side chages, reset PnLs and calculate with remaining amount
-  let newAmount = position.currentOSQTHAmount.plus(amount);
-  if (position.currentOSQTHAmount.times(newAmount).lt(ZERO_BD)) {
-    position.currentOSQTHAmount = ZERO_BD;
-    position.realizedOSQTHAmount = ZERO_BD;
-    amount = newAmount;
-  }
 
   // Buy
   if (amount.gt(ZERO_BD)) {
