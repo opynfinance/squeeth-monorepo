@@ -4,13 +4,6 @@ import {
   BigDecimal,
   dataSource,
 } from "@graphprotocol/graph-ts";
-import {
-  getoSQTHPoolAddr,
-  getoSQTHTokenAddr,
-  getShortHelperAddr,
-  getUSDCPoolAddr,
-  getWETHTokenAddr,
-} from "./util";
 
 export const BIGINT_ONE = BigInt.fromI32(1);
 export const BIGINT_ZERO = BigInt.fromI32(0);
@@ -26,6 +19,19 @@ export const LOCALHOST_SHORT_HELPER_ADDR = Address.fromString(
 );
 export const RA_SHORT_HELPER_ADDR = Address.fromString(
   "0x5A30a1E3873A2B5Fc9DB9b2b52491C4b6086FAe0"
+);
+
+export const MAINNET_CONTROLLER_ADDR = Address.fromString(
+  "0x64187ae08781B09368e6253F9E94951243A493D5"
+);
+export const ROPSTEN_CONTROLLER_ADDR = Address.fromString(
+  "0x59F0c781a6eC387F09C40FAA22b7477a2950d209"
+);
+export const LOCALHOST_CONTROLLER_ADDR = Address.fromString(
+  "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853"
+);
+export const RA_CONTROLLER_ADDR = Address.fromString(
+  "0x6FBbc7eBd7E421839915e8e4fAcC9947dC32F4dE"
 );
 
 export const MAINNET_USDC_WETH_POOL =
@@ -64,11 +70,84 @@ export const LOCALHOST_WETH =
 export const RA_WETH =
   "0xB47e6A5f8b33b3F17603C83a0535A9dcD7E32681".toLowerCase();
 
+export function getShortHelperAddr(networkName: string): Address {
+  let addr = MAINNET_SHORT_HELPER_ADDR;
+  if (networkName == "ropsten") {
+    addr = ROPSTEN_SHORT_HELPER_ADDR;
+  } else if (networkName == "localhost") {
+    addr = LOCALHOST_SHORT_HELPER_ADDR;
+  } else if (networkName == "rinkebyArbitrum") {
+    addr = RA_SHORT_HELPER_ADDR;
+  }
+  return addr;
+}
+
+export function getUSDCPoolAddr(networkName: string): string {
+  let addr = MAINNET_USDC_WETH_POOL;
+  if (networkName == "ropsten") {
+    addr = ROPSTEN_USDC_WETH_POOL;
+  } else if (networkName == "localhost") {
+    addr = LOCALHOST_USDC_WETH_POOL;
+  } else if (networkName == "rinkebyArbitrum") {
+    addr = RA_USDC_WETH_POOL;
+  }
+  return addr;
+}
+
+export function getoSQTHPoolAddr(networkName: string): string {
+  let addr = MAINNET_OSQTH_WETH_POOL;
+  if (networkName == "ropsten") {
+    addr = ROPSTEN_OSQTH_WETH_POOL;
+  } else if (networkName == "localhost") {
+    addr = LOCALHOST_OSQTH_WETH_POOL;
+  } else if (networkName == "rinkebyArbitrum") {
+    addr = RA_OSQTH_WETH_POOL;
+  }
+  return addr;
+}
+
+export function getoSQTHTokenAddr(networkName: string): string {
+  let addr = MAINNET_OSQTH;
+  if (networkName == "ropsten") {
+    addr = ROPSTEN_OSQTH;
+  } else if (networkName == "localhost") {
+    addr = LOCALHOST_OSQTH;
+  } else if (networkName == "rinkebyArbitrum") {
+    addr = RA_OSQTH;
+  }
+  return addr;
+}
+
+export function getWETHTokenAddr(networkName: string): string {
+  let addr = MAINNET_WETH;
+  if (networkName == "ropsten") {
+    addr = ROPSTEN_WETH;
+  } else if (networkName == "localhost") {
+    addr = LOCALHOST_WETH;
+  } else if (networkName == "rinkebyArbitrum") {
+    addr = RA_WETH;
+  }
+  return addr;
+}
+
+export function getControllerAddr(networkName: string): Address {
+  let addr = MAINNET_CONTROLLER_ADDR;
+  if (networkName == "ropsten") {
+    addr = ROPSTEN_CONTROLLER_ADDR;
+  } else if (networkName == "localhost") {
+    addr = LOCALHOST_CONTROLLER_ADDR;
+  } else if (networkName == "rinkebyArbitrum") {
+    addr = RA_CONTROLLER_ADDR;
+  }
+  return addr;
+}
+
 export const SHORT_HELPER_ADDR = getShortHelperAddr(dataSource.network());
 export const OSQTH_WETH_POOL = getoSQTHPoolAddr(dataSource.network());
 export const USDC_WETH_POOL = getUSDCPoolAddr(dataSource.network());
 export const OSQTH_TOKEN_ADDR = getoSQTHTokenAddr(dataSource.network());
 export const WETH_TOKEN_ADDR = getWETHTokenAddr(dataSource.network());
+export const CONTROLLER_ADDR = getControllerAddr(dataSource.network());
 export const TOKEN_DECIMALS_18 = BigInt.fromI32(18);
 export const TOKEN_DECIMALS_USDC = BigInt.fromI32(6);
 export const ZERO_BI = BigInt.fromI32(0);

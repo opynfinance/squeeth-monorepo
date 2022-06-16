@@ -8,32 +8,12 @@ import {
   TransactionHistory,
 } from "../generated/schema";
 import {
-  MAINNET_SHORT_HELPER_ADDR,
-  ROPSTEN_SHORT_HELPER_ADDR,
-  LOCALHOST_SHORT_HELPER_ADDR,
-  RA_SHORT_HELPER_ADDR,
   BIGINT_ZERO,
   USDC_WETH_POOL,
   ZERO_BD,
   OSQTH_WETH_POOL,
   TOKEN_DECIMALS_USDC,
   TOKEN_DECIMALS_18,
-  MAINNET_USDC_WETH_POOL,
-  LOCALHOST_USDC_WETH_POOL,
-  ROPSTEN_USDC_WETH_POOL,
-  RA_USDC_WETH_POOL,
-  MAINNET_OSQTH_WETH_POOL,
-  ROPSTEN_OSQTH_WETH_POOL,
-  LOCALHOST_OSQTH_WETH_POOL,
-  RA_OSQTH_WETH_POOL,
-  MAINNET_OSQTH,
-  ROPSTEN_OSQTH,
-  LOCALHOST_OSQTH,
-  RA_OSQTH,
-  MAINNET_WETH,
-  ROPSTEN_WETH,
-  LOCALHOST_WETH,
-  RA_WETH,
 } from "./constants";
 import { sqrtPriceX96ToTokenPrices } from "./utils/pricing";
 
@@ -44,66 +24,6 @@ export function bigExponent(base: i32, exp: i32): BigInt {
     bd = bd.times(base_BI);
   }
   return bd;
-}
-
-export function getShortHelperAddr(networkName: string): Address {
-  let addr = MAINNET_SHORT_HELPER_ADDR;
-  if (networkName == "ropsten") {
-    addr = ROPSTEN_SHORT_HELPER_ADDR;
-  } else if (networkName == "localhost") {
-    addr = LOCALHOST_SHORT_HELPER_ADDR;
-  } else if (networkName == "rinkebyArbitrum") {
-    addr = RA_SHORT_HELPER_ADDR;
-  }
-  return addr;
-}
-
-export function getUSDCPoolAddr(networkName: string): string {
-  let addr = MAINNET_USDC_WETH_POOL;
-  if (networkName == "ropsten") {
-    addr = ROPSTEN_USDC_WETH_POOL;
-  } else if (networkName == "localhost") {
-    addr = LOCALHOST_USDC_WETH_POOL;
-  } else if (networkName == "rinkebyArbitrum") {
-    addr = RA_USDC_WETH_POOL;
-  }
-  return addr;
-}
-
-export function getoSQTHPoolAddr(networkName: string): string {
-  let addr = MAINNET_OSQTH_WETH_POOL;
-  if (networkName == "ropsten") {
-    addr = ROPSTEN_OSQTH_WETH_POOL;
-  } else if (networkName == "localhost") {
-    addr = LOCALHOST_OSQTH_WETH_POOL;
-  } else if (networkName == "rinkebyArbitrum") {
-    addr = RA_OSQTH_WETH_POOL;
-  }
-  return addr;
-}
-
-export function getoSQTHTokenAddr(networkName: string): string {
-  let addr = MAINNET_OSQTH;
-  if (networkName == "ropsten") {
-    addr = ROPSTEN_OSQTH;
-  } else if (networkName == "localhost") {
-    addr = LOCALHOST_OSQTH;
-  } else if (networkName == "rinkebyArbitrum") {
-    addr = RA_OSQTH;
-  }
-  return addr;
-}
-
-export function getWETHTokenAddr(networkName: string): string {
-  let addr = MAINNET_WETH;
-  if (networkName == "ropsten") {
-    addr = ROPSTEN_WETH;
-  } else if (networkName == "localhost") {
-    addr = LOCALHOST_WETH;
-  } else if (networkName == "rinkebyArbitrum") {
-    addr = RA_WETH;
-  }
-  return addr;
 }
 
 export function loadOrCreateAccount(accountId: string): Account {
