@@ -165,7 +165,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
   })
 
   describe("Sell auction", async () => {
-    it("should revert time hedging if the time threshold has not been reached", async () => {
+    xit("should revert time hedging if the time threshold has not been reached", async () => {
       const timeAtLastHedge = await crabStrategy.timeAtLastHedge()
 
       // set next block timestamp
