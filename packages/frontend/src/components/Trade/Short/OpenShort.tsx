@@ -364,6 +364,7 @@ export const OpenShortPosition = () => {
           setVaultHistoryUpdating(true)
           setShortLoading(false)
           vaultHistoryQuery.refetch({ vaultId })
+          setNewCollat(BIG_ZERO)
           updateVault()
         })
       }
