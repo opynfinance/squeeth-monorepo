@@ -34,12 +34,7 @@ import { useGetCollatRatioAndLiqPrice, useGetVault } from '../controller/hooks'
 import db from '@utils/firestore'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import BigNumber from 'bignumber.js'
-import {
-  useGetBuyQuote,
-  useGetSellQuote,
-  useGetWSqueethPositionValue,
-  useGetWSqueethPositionValueInETH,
-} from '../squeethPool/hooks'
+import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValueInETH } from '../squeethPool/hooks'
 import { fromTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
 import { addressAtom } from '../wallet/atoms'
@@ -48,6 +43,8 @@ import { crabStrategyContractAtom } from '../contracts/atoms'
 import useAppCallback from '@hooks/useAppCallback'
 import { BIG_ZERO } from '@constants/index'
 import useAppEffect from '@hooks/useAppEffect'
+import floatifyBigNums from '@utils/floatifyBigNums'
+import { useETHPrice } from '@hooks/useETHPrice'
 
 export const useSetStrategyData = () => {
   const setMaxCap = useUpdateAtom(maxCapAtom)
@@ -128,28 +125,51 @@ export const useCurrentCrabPositionValue = () => {
   const [currentCrabPositionValue, setCurrentCrabPositionValue] = useAtom(currentCrabPositionValueAtom)
   const [currentCrabPositionValueInETH, setCurrentCrabPositionValueInETH] = useAtom(currentCrabPositionValueInETHAtom)
   const { value: userCrabBalance } = useTokenBalance(crabStrategy, 15, 18)
-  const getWSqueethPositionValue = useGetWSqueethPositionValue()
-  const getWSqueethPositionValueInETH = useGetWSqueethPositionValueInETH()
   const contract = useAtomValue(crabStrategyContractAtom)
   const setCurrentEthLoading = useUpdateAtom(currentEthLoadingAtom)
+  const vault = useAtomValue(crabStrategyVaultAtom)
+  const ethPrice = useETHPrice()
+  const setStrategyData = useSetStrategyData()
+  const getWSqueethPositionValueInETH = useGetWSqueethPositionValueInETH()
+
+  useEffect(() => {
+    setStrategyData()
+  }, [])
 
   useAppEffect(() => {
-    ; (async () => {
+    ;(async () => {
       setIsCrabPositionValueLoading(true)
-      const squeethDebt = await getWsqueethFromCrabAmount(userCrabBalance, contract)
-      if (!squeethDebt) {
+      const [collateral, squeethDebt] = await Promise.all([
+        getCollateralFromCrabAmount(userCrabBalance, contract, vault),
+        getWsqueethFromCrabAmount(userCrabBalance, contract),
+      ])
+
+      if (!squeethDebt || !collateral) {
         setCurrentCrabPositionValue(BIG_ZERO)
         setCurrentCrabPositionValueInETH(BIG_ZERO)
         return
       }
-      setCurrentEthLoading(false)
-      const crabPositionValueInUSD = getWSqueethPositionValue(squeethDebt)
-      const crabPositionValueInETH = getWSqueethPositionValueInETH(squeethDebt)
+
+      const ethDebt = getWSqueethPositionValueInETH(squeethDebt)
+
+      const crabPositionValueInETH = collateral.minus(ethDebt)
+      const crabPositionValueInUSD = crabPositionValueInETH.times(ethPrice)
+
       setCurrentCrabPositionValue(crabPositionValueInUSD)
       setCurrentCrabPositionValueInETH(crabPositionValueInETH)
+
       setIsCrabPositionValueLoading(false)
+      setCurrentEthLoading(false)
     })()
-  }, [crabStrategy, userCrabBalance, contract, setCurrentEthLoading, getWSqueethPositionValueInETH])
+  }, [
+    userCrabBalance,
+    contract,
+    setCurrentEthLoading,
+    setIsCrabPositionValueLoading,
+    getWSqueethPositionValueInETH,
+    ethPrice,
+    vault,
+  ])
 
   return { currentCrabPositionValue, currentCrabPositionValueInETH, isCrabPositionValueLoading }
 }

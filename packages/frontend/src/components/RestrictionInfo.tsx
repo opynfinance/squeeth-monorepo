@@ -38,7 +38,7 @@ const restrictedCountries: Record<string, string> = {
 const RestrictionInfo = () => {
   const classes = useStyles()
   const router = useRouter()
-  const userLocation = router.query?.country
+  const userLocation = router.query?.ct
   return (
     <Box className={classes.restrictedInfo}>
       <p>

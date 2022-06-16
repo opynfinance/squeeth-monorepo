@@ -4,11 +4,11 @@ export default function middleware(request: NextRequest) {
   const country = request.geo?.country
   const url = request.nextUrl
 
-  if (url.searchParams.has('country') && url.searchParams.get('country') === String(country)) {
+  if (url.searchParams.has('ct') && url.searchParams.get('ct') === String(country)) {
     return NextResponse.next()
   }
 
-  url.searchParams.set('country', country!)
+  url.searchParams.set('ct', country!)
 
   return NextResponse.redirect(url)
 }
