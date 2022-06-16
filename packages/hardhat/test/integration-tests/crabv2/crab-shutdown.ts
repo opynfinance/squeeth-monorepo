@@ -80,7 +80,10 @@ describe("Crab V2 integration test: Shutdown of Squeeth Power Perp contracts", f
     const TimelockContract = await ethers.getContractFactory("MockTimelock");
     timelock = (await TimelockContract.deploy(owner.address, 3 * 24 * 60 * 60)) as MockTimelock;
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 95d0cfb4 (Add integration tests)
     const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
     crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, uniswapFactory.address, wSqueethPool.address, timelock.address, hedgeTimeThreshold, hedgePriceThreshold, auctionTime, minPriceMultiplier, maxPriceMultiplier)) as CrabStrategyV2;
 

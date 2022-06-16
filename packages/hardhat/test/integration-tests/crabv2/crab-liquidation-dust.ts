@@ -39,7 +39,10 @@ describe("Crab V2 integration test: crab vault dust liquidation with excess coll
   let crabStrategy: CrabStrategyV2
   let ethDaiPool: Contract
   let timelock: MockTimelock
+<<<<<<< HEAD
 
+=======
+>>>>>>> 95d0cfb4 (Add integration tests)
 
   this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async () => {
     const accounts = await ethers.getSigners();

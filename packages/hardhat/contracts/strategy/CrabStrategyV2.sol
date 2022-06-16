@@ -55,6 +55,8 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
     /// @dev twap period to use for hedge calculations
     uint32 public hedgingTwapPeriod = 420 seconds;
+    /// @dev true if CrabV2 was initialized
+    bool public isInitialized; 
 
     /// @dev typehash for signed orders
     bytes32 private constant _CRAB_BALANCE_TYPEHASH =
@@ -151,6 +153,11 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         _;
     }
 
+    modifier afterInitialization() {
+        require(isInitialized, "Contract not yet initialized");
+        _;
+    }
+
     /**
      * @notice strategy constructor
      * @dev this will open a vault in the power token contract and store the vault ID
@@ -212,10 +219,43 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     }
 
     /**
+     * @notice initializes the collateral ratio upon the first migration
+     */
+     function initialize(uint256 wSqueethToMint) external payable { 
+        uint256 amount = msg.value;
+        uint256 ethFee = 0; // TODO: does this need to change? 
+
+        (uint256 strategyDebt, uint256 strategyCollateral) = _syncStrategyState();
+        _checkStrategyCap(amount, strategyCollateral);
+
+        uint256 depositorCrabAmount = _calcSharesToMint(amount.sub(ethFee), strategyCollateral, totalSupply());
+
+        require((strategyDebt == 0 && strategyCollateral == 0), "C5");
+        // store hedge data as strategy is delta neutral at this point
+        // only execute this upon first deposit
+        uint256 wSqueethEthPrice = IOracle(oracle).getTwap(
+            ethWSqueethPool,
+            wPowerPerp,
+            weth,
+            hedgingTwapPeriod,
+            true
+        );
+        timeAtLastHedge = block.timestamp;
+        priceAtLastHedge = wSqueethEthPrice;
+
+        // mint wSqueeth and send it to msg.sender
+        _mintWPowerPerp(msg.sender, wSqueethToMint, amount, false);
+        // mint LP to depositor
+        _mintStrategyToken(msg.sender, depositorCrabAmount);
+
+         isInitialized = true;
+     }
+
+    /**
      * @notice Tranfer vault NFT to new contract
      * @dev strategy cap is set to 0 to avoid future deposits.
      */
-    function transferVault(address _newStrategy) external onlyTimelock {
+    function transferVault(address _newStrategy) external onlyTimelock afterInitialization {
         IShortPowerPerp(powerTokenController.shortPowerPerp()).safeTransferFrom(address(this), _newStrategy, vaultId);
         _setStrategyCap(0);
 
@@ -247,7 +287,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @notice called to redeem the net value of a vault post shutdown
      * @dev needs to be called 1 time before users can exit the strategy using withdrawShutdown
      */
-    function redeemShortShutdown() external {
+    function redeemShortShutdown() external afterInitialization {
         hasRedeemedInShutdown = true;
         powerTokenController.redeemShort(vaultId);
     }
@@ -259,7 +299,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @dev the difference between _ethToDeposit and msg.value provides the minimum that a user can receive for their sold wSqueeth
      * @param _ethToDeposit total ETH that will be deposited in to the strategy which is a combination of msg.value and flash swap proceeds
      */
-    function flashDeposit(uint256 _ethToDeposit) external payable nonReentrant {
+    function flashDeposit(uint256 _ethToDeposit) external payable afterInitialization nonReentrant {
         (uint256 cachedStrategyDebt, uint256 cachedStrategyCollateral) = _syncStrategyState();
         _checkStrategyCap(_ethToDeposit, cachedStrategyCollateral);
 
@@ -268,20 +308,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
             cachedStrategyDebt,
             cachedStrategyCollateral
         );
-
-        if (cachedStrategyDebt == 0 && cachedStrategyCollateral == 0) {
-            // store hedge data as strategy is delta neutral at this point
-            // only execute this upon first deposit
-            uint256 wSqueethEthPrice = IOracle(oracle).getTwap(
-                ethWSqueethPool,
-                wPowerPerp,
-                weth,
-                hedgingTwapPeriod,
-                true
-            );
-            timeAtLastHedge = block.timestamp;
-            priceAtLastHedge = wSqueethEthPrice;
-        }
 
         _exactInFlashSwap(
             wPowerPerp,
@@ -302,7 +328,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @param _crabAmount strategy token amount to burn
      * @param _maxEthToPay maximum ETH to pay to buy back the owed wSqueeth debt
      */
-    function flashWithdraw(uint256 _crabAmount, uint256 _maxEthToPay) external nonReentrant {
+    function flashWithdraw(uint256 _crabAmount, uint256 _maxEthToPay) external afterInitialization nonReentrant {
         uint256 exactWSqueethNeeded = _getDebtFromStrategyAmount(_crabAmount);
 
         _exactOutFlashSwap(
@@ -322,7 +348,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @notice deposit ETH into strategy
      * @dev provide ETH, return wSqueeth and strategy token
      */
-    function deposit() external payable nonReentrant {
+    function deposit() external payable afterInitialization nonReentrant {
         uint256 amount = msg.value;
 
         (uint256 wSqueethToMint, uint256 depositorCrabAmount) = _deposit(msg.sender, amount, false);
@@ -335,7 +361,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @dev provide strategy tokens and wSqueeth, returns eth
      * @param _crabAmount amount of strategy token to burn
      */
-    function withdraw(uint256 _crabAmount) external nonReentrant {
+    function withdraw(uint256 _crabAmount) external afterInitialization nonReentrant {
         uint256 wSqueethAmount = _getDebtFromStrategyAmount(_crabAmount);
         uint256 ethToWithdraw = _withdraw(msg.sender, _crabAmount, wSqueethAmount, false);
 
@@ -349,7 +375,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @notice called to exit a vault if the Squeeth Power Perp contracts are shutdown
      * @param _crabAmount amount of strategy token to burn
      */
-    function withdrawShutdown(uint256 _crabAmount) external nonReentrant {
+    function withdrawShutdown(uint256 _crabAmount) external afterInitialization nonReentrant {
         require(powerTokenController.isShutDown(), "Squeeth contracts not shut down");
         require(hasRedeemedInShutdown, "Crab must redeemShortShutdown");
 
@@ -523,20 +549,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         (uint256 wSqueethToMint, uint256 ethFee) = _calcWsqueethToMintAndFee(_amount, strategyDebt, strategyCollateral);
 
         uint256 depositorCrabAmount = _calcSharesToMint(_amount.sub(ethFee), strategyCollateral, totalSupply());
-
-        if (strategyDebt == 0 && strategyCollateral == 0) {
-            // store hedge data as strategy is delta neutral at this point
-            // only execute this upon first deposit
-            uint256 wSqueethEthPrice = IOracle(oracle).getTwap(
-                ethWSqueethPool,
-                wPowerPerp,
-                weth,
-                hedgingTwapPeriod,
-                true
-            );
-            timeAtLastHedge = block.timestamp;
-            priceAtLastHedge = wSqueethEthPrice;
-        }
 
         // mint wSqueeth and send it to msg.sender
         _mintWPowerPerp(_depositor, wSqueethToMint, _amount, _isFlashDeposit);
@@ -768,23 +780,9 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 wSqueethToMint;
         uint256 feeAdjustment = _calcFeeAdjustment();
 
-        if (_strategyDebtAmount == 0 && _strategyCollateralAmount == 0) {
-            require(totalSupply() == 0, "Crab contracts shut down");
-
-            uint256 wSqueethEthPrice = IOracle(oracle).getTwap(
-                ethWSqueethPool,
-                wPowerPerp,
-                weth,
-                hedgingTwapPeriod,
-                true
-            );
-            uint256 squeethDelta = wSqueethEthPrice.wmul(2e18);
-            wSqueethToMint = _depositedAmount.wdiv(squeethDelta.add(feeAdjustment));
-        } else {
-            wSqueethToMint = _depositedAmount.wmul(_strategyDebtAmount).wdiv(
-                _strategyCollateralAmount.add(_strategyDebtAmount.wmul(feeAdjustment))
-            );
-        }
+        wSqueethToMint = _depositedAmount.wmul(_strategyDebtAmount).wdiv(
+            _strategyCollateralAmount.add(_strategyDebtAmount.wmul(feeAdjustment))
+        );
 
         uint256 fee = wSqueethToMint.wmul(feeAdjustment);
 
