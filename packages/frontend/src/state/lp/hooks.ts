@@ -15,6 +15,9 @@ import { squeethPriceeAtom, wethPriceAtom } from '../squeethPool/atoms'
 import ethers from 'ethers'
 import { useGetSellQuote } from '../squeethPool/hooks'
 
+// CONSTANTS
+const one = new BigNumber(10).pow(18)
+
 // Close position with flashloan
 export const useClosePosition = () => {
   const address = useAtomValue(addressAtom)
@@ -117,6 +120,71 @@ export const useOpenPosition = () => {
   return openPosition
 }
 
+// Opening a mint and LP position and depositing
+export const useOpenPositionDeposit = () => {
+  const { squeethPool } = useAtomValue(addressesAtom)
+  const normalizationFactor = useAtomValue(normFactorAtom)
+  const address = useAtomValue(addressAtom)
+  const contract = useAtomValue(controllerHelperHelperContractAtom)
+  const handleTransaction = useHandleTransaction()
+  const normFactor = useAtomValue(normFactorAtom)
+  const ethPrice = useAtomValue(wethPriceAtom)
+  const squeethPrice = useAtomValue(squeethPriceeAtom)
+  const openPositionDeposit = useAppCallback(
+    async (
+      ethAmount: BigNumber,
+      squeethToMint: BigNumber,
+      lowerTickInput: number,
+      upperTickInput: number,
+      onTxConfirmed?: () => void,
+    ) => {
+      const mintWSqueethAmount = fromTokenAmount(squeethToMint, OSQUEETH_DECIMALS).multipliedBy(normalizationFactor)
+      const mintRSqueethAmount = mintWSqueethAmount.multipliedBy(normFactor).div(one)
+      const scaledEthPrice = ethPrice.div(10000)
+      const debtInEth = mintRSqueethAmount.multipliedBy(scaledEthPrice).div(one)
+
+      // Do we want to hardcode a 150% collateralization ratio?
+      const collateralToMint = debtInEth.multipliedBy(3).div(2).plus(0.01)
+      const collateralToLp = mintWSqueethAmount.multipliedBy(squeethPrice).div(one)
+      const flashloanFee = collateralToMint.multipliedBy(9).div(1000)
+
+      // Closest 60 tick width above or below current tick (60 is minimum tick width for 30bps pool)
+
+      const [lowerTick, upperTick] = validTicks(lowerTickInput, upperTickInput)
+
+      const flashloanWMintDepositNftParams = {
+        wPowerPerpPool: squeethPool,
+        vaultId: 0,
+        wPowerPerpAmount: mintWSqueethAmount.toString(),
+        collateralToDeposit: collateralToMint.toString(),
+        collateralToFlashloan: collateralToMint.toString(),
+        collateralToLp: collateralToLp.toString(),
+        collateralToWithdraw: 0,
+        amount0Min: 0,
+        amount1Min: 0,
+        lowerTick: lowerTick,
+        upperTick: upperTick,
+      }
+
+      if (!contract || !address) return null
+
+      return handleTransaction(
+        contract.methods
+          .flashloanWMintLpDepositNft(flashloanWMintDepositNftParams, {
+            value: collateralToLp.plus(flashloanFee).plus(0.01).toString(),
+          })
+          .send({
+            from: address,
+            value: fromTokenAmount(ethAmount, 18),
+          }),
+        onTxConfirmed,
+      )
+    },
+    [],
+  )
+  return openPositionDeposit
+}
+
 // Collect fees
 export const useCollectFees = () => {
   const address = useAtomValue(addressAtom)
@@ -128,7 +196,6 @@ export const useCollectFees = () => {
   const positionManager = useAtomValue(nftManagerContractAtom)
   const collectFees = useAppCallback(async (vaultId: BigNumber, onTxConfirmed?: () => void) => {
     if (!controllerContract || !controllerHelperContract || !address || !positionManager) return
-    const one = new BigNumber(10).pow(18)
     const uniTokenId = (await controllerContract?.methods.vaults(vaultId)).NftCollateralId
     const vaultBefore = await controllerContract?.methods.vaults(vaultId)
     const scaledEthPrice = ethPrice.div(10000)
