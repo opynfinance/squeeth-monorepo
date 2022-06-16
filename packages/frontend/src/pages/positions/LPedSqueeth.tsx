@@ -1,10 +1,11 @@
 import { useVaultData } from '@hooks/useVaultData'
 import { Link, Tooltip, Typography } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
-import { useFirstValidVault, useLpDebt } from 'src/state/positions/hooks'
+import { useFirstValidVault } from 'src/state/positions/hooks'
 import useStyles from './useStyles'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import { Tooltips } from '../../constants'
+import usePositionNPnL from '@hooks/usePositionNPnL'
 
 interface Props {
   vaultExists: boolean
@@ -13,8 +14,8 @@ interface Props {
 export default function LPedSqueeth({ vaultExists }: Props) {
   const classes = useStyles()
   const { validVault: vault, vaultId, isVaultLoading } = useFirstValidVault()
-  const lpedSqueeth = useLpDebt()
   const { existingCollat, existingLiqPrice, existingCollatPercent } = useVaultData(vault)
+  const { lpedoSQTHAmount } = usePositionNPnL()
 
   return (
     <div className={classes.position}>
@@ -31,7 +32,7 @@ export default function LPedSqueeth({ vaultExists }: Props) {
               Amount
             </Typography>
             <Typography variant="body1">
-              <span id="pos-page-lped-osqth-bal">{lpedSqueeth.toFixed(8)}</span>
+              <span id="pos-page-lped-osqth-bal">{lpedoSQTHAmount.toFixed(8)}</span>
               &nbsp; oSQTH
             </Typography>
           </div>
