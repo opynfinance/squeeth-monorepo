@@ -112,6 +112,7 @@ export function loadOrCreateAccount(accountId: string): Account {
   if (account == null) {
     account = new Account(accountId);
     account.vaultCount = BIGINT_ZERO;
+    account.accShortAmount = BIGINT_ZERO;
   }
   return account as Account;
 }
