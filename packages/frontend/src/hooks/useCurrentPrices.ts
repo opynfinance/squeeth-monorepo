@@ -1,5 +1,5 @@
 import { useQuery } from '@apollo/client'
-import { POOLS_QUERY, POOLS_SUBSCRIPTION } from '@queries/squeeth/poolsQuery'
+import { POOLS_QUERY /* POOLS_SUBSCRIPTION */ } from '@queries/squeeth/poolsQuery'
 import { pools } from '@queries/squeeth/__generated__/pools'
 import { squeethClient } from '@utils/apollo-client'
 import { BigNumber } from 'bignumber.js'
@@ -17,7 +17,7 @@ export default function useCurrentPrices() {
   const {
     data: { pools } = {},
     loading,
-    subscribeToMore,
+    // subscribeToMore,
   } = useQuery<pools>(POOLS_QUERY, {
     client: squeethClient[networkId],
     skip: !address,
