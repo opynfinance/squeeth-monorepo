@@ -4,7 +4,7 @@ import { fromTokenAmount } from '@utils/calculations'
 import { useAtom, useAtomValue } from 'jotai'
 import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
 import BigNumber from 'bignumber.js'
-import { BIG_ZERO, OSQUEETH_DECIMALS } from '@constants/index'
+import { BIG_ZERO, INDEX_SCALE, OSQUEETH_DECIMALS } from '@constants/index'
 import { controllerContractAtom, controllerHelperHelperContractAtom, nftManagerContractAtom } from '../contracts/atoms'
 import useAppCallback from '@hooks/useAppCallback'
 import { addressAtom } from '../wallet/atoms'
@@ -133,7 +133,6 @@ export const useOpenPosition = () => {
 // Opening a mint and LP position and depositing
 export const useOpenPositionDeposit = () => {
   const { squeethPool } = useAtomValue(addressesAtom)
-  const normalizationFactor = useAtomValue(normFactorAtom)
   const address = useAtomValue(addressAtom)
   const contract = useAtomValue(controllerHelperHelperContractAtom)
   const handleTransaction = useHandleTransaction()
@@ -141,24 +140,21 @@ export const useOpenPositionDeposit = () => {
   const ethPrice = useAtomValue(wethPriceAtom)
   const squeethPrice = useAtomValue(squeethPriceeAtom)
   const openPositionDeposit = useAppCallback(
-    async (
-      ethAmount: BigNumber,
-      squeethToMint: BigNumber,
-      lowerTickInput: number,
-      upperTickInput: number,
-      onTxConfirmed?: () => void,
-    ) => {
-      const mintWSqueethAmount = fromTokenAmount(squeethToMint, OSQUEETH_DECIMALS).multipliedBy(normalizationFactor)
-      const mintRSqueethAmount = mintWSqueethAmount.multipliedBy(normFactor).div(one)
-      const scaledEthPrice = ethPrice.div(10000)
-      const debtInEth = mintRSqueethAmount.multipliedBy(scaledEthPrice).div(one)
+    async (squeethToMint: BigNumber, lowerTickInput: number, upperTickInput: number, onTxConfirmed?: () => void) => {
+      // const mintWSqueethAmount = fromTokenAmount(squeethToMint, OSQUEETH_DECIMALS).multipliedBy(normalizationFactor)
+      // const mintRSqueethAmount = mintWSqueethAmount.multipliedBy(normFactor).div(one)
+      // console.log('scaledEthPrice', ethPrice.toString())
+      // const debtInEth = mintRSqueethAmount.multipliedBy(ethPrice)
+      // const ethAmt = fromTokenAmount(ethAmount, 18).toFixed(0)
+
+      const mintWSqueethAmount = fromTokenAmount(squeethToMint, OSQUEETH_DECIMALS)
+      const ethDebt = mintWSqueethAmount.multipliedBy(normFactor).multipliedBy(ethPrice)
 
       // Do we want to hardcode a 150% collateralization ratio?
-      const collateralToMint = debtInEth.multipliedBy(3).div(2).plus(0.01)
-      const collateralToLp = mintWSqueethAmount.multipliedBy(squeethPrice).div(one)
-      const flashloanFee = collateralToMint.multipliedBy(9).div(1000)
+      const collateralToMint = ethDebt.multipliedBy(3).div(2)
+      const collateralToLp = mintWSqueethAmount.multipliedBy(squeethPrice)
 
-      // Closest 60 tick width above or below current tick (60 is minimum tick width for 30bps pool)
+      const flashloanFee = collateralToMint.multipliedBy(9).div(1000)
 
       const lowerTick = nearestUsableTick(lowerTickInput, 3000)
       const upperTick = nearestUsableTick(upperTickInput, 3000)
@@ -166,28 +162,23 @@ export const useOpenPositionDeposit = () => {
       const flashloanWMintDepositNftParams = {
         wPowerPerpPool: squeethPool,
         vaultId: 0,
-        wPowerPerpAmount: mintWSqueethAmount.toString(),
-        collateralToDeposit: collateralToMint.toString(),
-        collateralToFlashloan: collateralToMint.toString(),
-        collateralToLp: collateralToLp.toString(),
+        wPowerPerpAmount: mintWSqueethAmount.toFixed(0),
+        collateralToDeposit: collateralToMint.toFixed(0),
+        collateralToFlashloan: collateralToMint.toFixed(0),
+        collateralToLp: collateralToLp.toFixed(0),
         collateralToWithdraw: 0,
         amount0Min: 0,
         amount1Min: 0,
         lowerTick: lowerTick,
         upperTick: upperTick,
       }
-
       if (!contract || !address) return null
 
       return handleTransaction(
-        contract.methods
-          .flashloanWMintLpDepositNft(flashloanWMintDepositNftParams, {
-            value: collateralToLp.plus(flashloanFee).plus(0.01).toString(),
-          })
-          .send({
-            from: address,
-            value: fromTokenAmount(ethAmount, 18),
-          }),
+        contract.methods.flashloanWMintLpDepositNft(flashloanWMintDepositNftParams).send({
+          from: address,
+          value: collateralToLp.plus(flashloanFee).toFixed(0),
+        }),
         onTxConfirmed,
       )
     },
