@@ -56,6 +56,8 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
     /// @dev twap period to use for hedge calculations
     uint32 public hedgingTwapPeriod = 420 seconds;
+    /// @dev true if CrabV2 was initialized
+    bool isInitialized; 
 
     /// @dev typehash for signed orders
     bytes32 private constant _CRAB_BALANCE_TYPEHASH =
