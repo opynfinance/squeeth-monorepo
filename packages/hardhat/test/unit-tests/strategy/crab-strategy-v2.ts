@@ -2,7 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-wit
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber, providers } from "ethers";
-import { MockController, WETH9, MockShortPowerPerp, MockUniswapV3Pool, MockOracle, MockWPowerPerp, CrabStrategyV2, MockErc20 } from "../../../typechain";
+import { MockController, WETH9, MockShortPowerPerp, MockUniswapV3Pool, MockOracle, MockWPowerPerp, CrabStrategyV2, MockErc20, MockTimelock } from "../../../typechain";
 import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../../utils"
 
 describe("Crab Strategy V2", function () {
@@ -27,6 +27,7 @@ describe("Crab Strategy V2", function () {
   let oracle: MockOracle;
   let crabStrategy: CrabStrategyV2;
   let usdc: MockErc20;
+  let timelock: MockTimelock;
 
   this.beforeAll("Prepare accounts", async () => {
     const accounts = await ethers.getSigners();
@@ -61,6 +62,9 @@ describe("Crab Strategy V2", function () {
     const ControllerContract = await ethers.getContractFactory("MockController");
     controller = (await ControllerContract.deploy()) as MockController;
 
+    const TimelockContract = await ethers.getContractFactory("MockTimelock");
+    timelock = (await TimelockContract.deploy(owner.address, 3 * 24 * 60 * 60)) as MockTimelock;
+
     await controller.connect(owner).init(shortSqueeth.address, squeeth.address, ethUSDPool.address, usdc.address);
   })
 
@@ -74,11 +78,13 @@ describe("Crab Strategy V2", function () {
         ethers.constants.AddressZero,
         random.address,
         wSqueethEthPool.address,
+        timelock.address,
         hedgeTimeTolerance,
         hedgePriceTolerance,
         auctionTime,
         minAuctionSlippage,
-        maxAuctionSlippage)).to.be.revertedWith("invalid weth address");
+        maxAuctionSlippage
+      )).to.be.revertedWith("invalid weth address");
     });
 
     it("Should revert if controller is address 0", async function () {
@@ -89,6 +95,7 @@ describe("Crab Strategy V2", function () {
         weth.address,
         random.address,
         wSqueethEthPool.address,
+        timelock.address,
         hedgeTimeTolerance,
         hedgePriceTolerance,
         auctionTime,
@@ -104,6 +111,7 @@ describe("Crab Strategy V2", function () {
         weth.address,
         random.address,
         wSqueethEthPool.address,
+        timelock.address,
         hedgeTimeTolerance,
         hedgePriceTolerance,
         auctionTime,
@@ -119,6 +127,7 @@ describe("Crab Strategy V2", function () {
         weth.address,
         ethers.constants.AddressZero,
         wSqueethEthPool.address,
+        timelock.address,
         hedgeTimeTolerance,
         hedgePriceTolerance,
         auctionTime, minAuctionSlippage,
@@ -133,6 +142,7 @@ describe("Crab Strategy V2", function () {
         weth.address,
         random.address,
         ethers.constants.AddressZero,
+        timelock.address,
         hedgeTimeTolerance,
         hedgePriceTolerance,
         auctionTime,
@@ -148,6 +158,7 @@ describe("Crab Strategy V2", function () {
         weth.address,
         random.address,
         wSqueethEthPool.address,
+        timelock.address,
         0,
         hedgePriceTolerance,
         auctionTime,
@@ -163,6 +174,7 @@ describe("Crab Strategy V2", function () {
         weth.address,
         random.address,
         wSqueethEthPool.address,
+        timelock.address,
         hedgeTimeTolerance,
         0,
         auctionTime,
@@ -178,6 +190,7 @@ describe("Crab Strategy V2", function () {
         weth.address,
         random.address,
         wSqueethEthPool.address,
+        timelock.address,
         hedgeTimeTolerance,
         hedgePriceTolerance,
         0,
@@ -193,6 +206,7 @@ describe("Crab Strategy V2", function () {
         weth.address,
         random.address,
         wSqueethEthPool.address,
+        timelock.address,
         hedgeTimeTolerance,
         hedgePriceTolerance,
         auctionTime,
@@ -208,6 +222,7 @@ describe("Crab Strategy V2", function () {
         weth.address,
         random.address,
         wSqueethEthPool.address,
+        timelock.address,
         hedgeTimeTolerance,
         hedgePriceTolerance,
         auctionTime,
@@ -223,6 +238,7 @@ describe("Crab Strategy V2", function () {
         weth.address,
         random.address,
         wSqueethEthPool.address,
+        timelock.address,
         hedgeTimeTolerance,
         hedgePriceTolerance,
         auctionTime,
@@ -230,10 +246,26 @@ describe("Crab Strategy V2", function () {
         ethers.utils.parseUnits('0.99'))).to.be.revertedWith("max price multiplier too low");
     });
 
+    it("Should revert if timelock address is 0", async function () {
+      const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
+      await expect(CrabStrategyContract.deploy(
+        controller.address,
+        oracle.address,
+        weth.address,
+        random.address,
+        wSqueethEthPool.address,
+        ethers.constants.AddressZero,
+        hedgeTimeTolerance,
+        hedgePriceTolerance,
+        auctionTime,
+        minAuctionSlippage,
+        maxAuctionSlippage)).to.be.revertedWith("invalid timelock address");
+    });
+
 
     it("Deployment", async function () {
       const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
-      crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, random.address, wSqueethEthPool.address, hedgeTimeTolerance, hedgePriceTolerance, auctionTime, minAuctionSlippage, maxAuctionSlippage)) as CrabStrategyV2;
+      crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, random.address, wSqueethEthPool.address, timelock.address, hedgeTimeTolerance, hedgePriceTolerance, auctionTime, minAuctionSlippage, maxAuctionSlippage)) as CrabStrategyV2;
     });
   });
 
@@ -593,6 +625,43 @@ describe("Crab Strategy V2", function () {
       expect(strategyCollateralAfter.eq(strategyCollateralBefore.sub(expectedEthToWithdraw))).to.be.true
       expect(strategyDebtAfter.eq(strategyDebtBefore.sub(depositorSqueethBalanceBefore))).to.be.true
       expect(isSimilar(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).toString(), expectedEthToWithdraw.toString())).to.be.true
+    })
+  })
+
+  describe("Migrate vault to new strategy", async () => {
+    const strategyCap = ethers.utils.parseUnits("100")
+    const ethToDeposit = BigNumber.from(60).mul(one)
+
+    it("Should revert if non owner tries to migrate", async () => {
+      await expect(crabStrategy.connect(random).transferVault(depositor.address)).to.be.revertedWith("Caller is not timelock")
+    })
+
+    it("Should revert if owner tries to migrate directly", async () => {
+      await expect(crabStrategy.connect(owner).transferVault(depositor.address)).to.be.revertedWith("Caller is not timelock")
+    })
+
+    it("Should migrate and disable deposit/withdraw if transfer is called by timelock", async () => {
+      await crabStrategy.connect(owner).setStrategyCap(strategyCap)
+      await crabStrategy.connect(depositor).deposit({ value: ethToDeposit })
+      const depositorCrabBefore = (await crabStrategy.balanceOf(depositor.address))
+      const depositorSqueethBalanceBefore = await squeeth.balanceOf(depositor.address)
+
+      // Transfer here
+      await timelock.connect(owner).executeVaultTransfer(crabStrategy.address, random.address)
+      const nftBalAfter = await shortSqueeth.balanceOf(crabStrategy.address)
+      const nftBalForRandom = await shortSqueeth.balanceOf(random.address)
+
+      const newCap = await crabStrategy.strategyCap()
+      expect(nftBalAfter.eq(0)).to.be.true
+      expect(nftBalForRandom.eq(1)).to.be.true
+      expect(newCap.eq(0)).to.be.true
+
+      // Try to withdraw
+      await squeeth.connect(depositor).approve(crabStrategy.address, depositorSqueethBalanceBefore)
+      await expect(crabStrategy.connect(depositor).withdraw(depositorCrabBefore)).to.be.revertedWith('C3')
+
+      // Try to deposit
+      await expect(crabStrategy.connect(depositor).deposit({ value: ethToDeposit })).to.be.revertedWith('Deposit exceeds strategy cap')
     })
   })
 })
