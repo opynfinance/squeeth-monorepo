@@ -134,6 +134,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     event SetDeltaHedgeThreshold(uint256 newDeltaHedgeThreshold);
     event SetHedgingTwapPeriod(uint32 newHedgingTwapPeriod);
     event SetHedgeTimeThreshold(uint256 newHedgeTimeThreshold);
+    event SetHedgePriceThreshold(uint256 newHedgePriceThreshold);
     event SetAuctionTime(uint256 newAuctionTime);
     event SetMinPriceMultiplier(uint256 newMinPriceMultiplier);
     event SetMaxPriceMultiplier(uint256 newMaxPriceMultiplier);
@@ -389,6 +390,18 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         hedgeTimeThreshold = _hedgeTimeThreshold;
 
         emit SetHedgeTimeThreshold(_hedgeTimeThreshold);
+    }
+
+    /**
+     * @notice owner can set the hedge time threshold in percent, scaled by 1e18 that determines the deviation in wPowerPerp price that can trigger a rebalance
+     * @param _hedgePriceThreshold the hedge price threshold, in percent, scaled by 1e18
+     */
+    function setHedgePriceThreshold(uint256 _hedgePriceThreshold) external onlyOwner {
+        require(_hedgePriceThreshold > 0, "invalid hedge price threshold");
+
+        hedgePriceThreshold = _hedgePriceThreshold;
+
+        emit SetHedgePriceThreshold(_hedgePriceThreshold);
     }
 
     /**
@@ -648,11 +661,13 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this))); 
             // if last param is false, transfer happens again
             _mintWPowerPerp(_order.trader, _order.managerAmount, _order.traderAmount, true);
+            priceAtLastHedge = _order.managerAmount.div(_order.traderAmount);
             emit ExecuteSellAuction(_order.trader, _order.managerAmount, _order.traderAmount, true);
         } else {
             // oSQTH in, WETH out
             _burnWPowerPerp(_order.trader, _order.traderAmount, _order.managerAmount, true); 
             // if last param is false, transfer happens again
+            priceAtLastHedge = _order.traderAmount.div(_order.managerAmount);
             emit ExecuteBuyAuction(_order.trader, _order.traderAmount, _order.managerAmount, true);
         }
 
@@ -667,14 +682,19 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
     }
 
-    function hedgeOTC(uint256 managerSellAmount, uint256 sellerPrice , Order[] memory _orders) external onlyOwner {
+    function hedgeOTC(uint256 managerSellAmount, uint256 managerBuyPrice , Order[] memory _orders) external onlyOwner {
+        (bool isTimeHedgeAllowed, uint256 auctionTriggerTime) = _isTimeHedge();
+        require(isTimeHedgeAllowed || _isPriceHedge() , "Try hedging after time theshold");
+
+        timeAtLastHedge = block.timestamp;
+
         uint256 remainingAmount = managerSellAmount;
         for (uint i=0; i < _orders.length; i++) {
             if(remainingAmount > _orders[i].managerAmount) {
                 remainingAmount = remainingAmount.sub(_orders[i].managerAmount);
-                _execOrder(remainingAmount, sellerPrice, _orders[i]);
+                _execOrder(remainingAmount, managerBuyPrice, _orders[i]);
             } else {
-                _execOrder(remainingAmount, sellerPrice, _orders[i]);
+                _execOrder(remainingAmount, managerBuyPrice, _orders[i]);
                 break;
             }
         }
@@ -899,7 +919,23 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
         return (block.timestamp >= auctionTriggerTime, auctionTriggerTime);
     }
+    /**
+     * @notice check if hedging based on price threshold is allowed
+     * @return true if hedging is allowed
+     */
+    function _isPriceHedge() internal view returns (bool) {
+        uint256 wSqueethEthPrice = IOracle(oracle).getTwap(
+            ethWSqueethPool,
+            wPowerPerp,
+            weth,
+            hedgingTwapPeriod,
+            true
+        );
+        uint256 cachedRatio = wSqueethEthPrice.wdiv(priceAtLastHedge);
+        uint256 priceThreshold = cachedRatio > 1e18 ? (cachedRatio).sub(1e18) : uint256(1e18).sub(cachedRatio);
 
+        return priceThreshold >= hedgePriceThreshold;
+    }
 
     /**
      * @notice calculate auction price based on auction direction, start time and wSqueeth price
