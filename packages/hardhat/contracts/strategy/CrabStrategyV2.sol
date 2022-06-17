@@ -210,9 +210,8 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      */
     function transferVault(address _newStrategy) external onlyTimelock {
         IShortPowerPerp(powerTokenController.shortPowerPerp()).safeTransferFrom(address(this), _newStrategy, vaultId);
-        strategyCap = 0;
+        _setStrategyCap(0);
 
-        emit SetStrategyCap(0);
         emit VaultTransferred(_newStrategy, vaultId);
     }
 
@@ -223,6 +222,16 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @param _capAmount the maximum strategy collateral in ETH, checked on deposits
      */
     function setStrategyCap(uint256 _capAmount) external onlyOwner {
+        _setStrategyCap(_capAmount);
+    }
+
+    /**
+     * @notice set strategy cap amount
+     * @dev deposits are rejected if it would put the strategy above the cap amount
+     * @dev strategy collateral can be above the cap amount due to hedging activities
+     * @param _capAmount the maximum strategy collateral in ETH, checked on deposits
+     */
+    function _setStrategyCap(uint256 _capAmount) internal {
         strategyCap = _capAmount;
         emit SetStrategyCap(_capAmount);
     }

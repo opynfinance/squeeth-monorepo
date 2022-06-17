@@ -4,24 +4,23 @@ pragma solidity =0.8.10;
 import {Timelock} from "../strategy/timelock/Timelock.sol";
 
 contract MockTimelock is Timelock {
+    constructor(address _admin, uint256 _delay) Timelock(_admin, _delay) {}
 
-	constructor(address _admin, uint _delay) Timelock(_admin, _delay) { }
+    function executeVaultTransfer(address crab, address newStrategy) public returns (bool) {
+        (bool success, bytes memory result) = crab.call(abi.encodeWithSignature("transferVault(address)", newStrategy));
 
-	function executeVaultTransfer(address crab, address newStrategy) public returns(bool) {
-		(bool success, bytes memory result) = crab.call(abi.encodeWithSignature("transferVault(address)", newStrategy));
+        return success;
+    }
 
-		return success;
-	}
+    function mockSetDelay(uint256 _delay) external {
+        delay = _delay;
+    }
 
-	function mockSetDelay(uint _delay) external {
-		delay = _delay;
-	}
+    function mockSetPendingAdmin(address _pendingAdmin) external {
+        pendingAdmin = _pendingAdmin;
+    }
 
-	function mockSetPendingAdmin(address _pendingAdmin) external {
-		pendingAdmin = _pendingAdmin;
-	}
-
-	function mockSetAdmin(address _admin) external {
-		admin = _admin;
-	}
+    function mockSetAdmin(address _admin) external {
+        admin = _admin;
+    }
 }
