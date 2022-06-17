@@ -5,7 +5,6 @@ pragma abicoder v2;
 
 import "hardhat/console.sol";
 
-
 // interface
 import {IController} from "../interfaces/IController.sol";
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
@@ -51,9 +50,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     uint256 private constant ONE = 1e18;
     uint256 private constant ONE_ONE = 1e36;
 
-    
-    uint256 public OTC_PRICE_TOLERANCE  = 5e16; // 5%
-
+    uint256 public OTC_PRICE_TOLERANCE = 5e16; // 5%
 
     /// @dev twap period to use for hedge calculations
     uint32 public hedgingTwapPeriod = 420 seconds;
@@ -380,8 +377,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         emit SetOTCPriceTolerance(_otcPriceTolerance);
     }
 
-
-
     /**
      * @notice check if a user deposit puts the strategy above the cap
      * @dev reverts if a deposit amount puts strategy over the cap
@@ -616,8 +611,12 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         );
     }
 
-    function hedgeOTC(uint256 managerSellAmount, uint256 managerBuyPrice , Order[] memory _orders) external onlyOwner {
-        require( _isTimeHedge()|| _isPriceHedge() , "C3");
+    function hedgeOTC(
+        uint256 managerSellAmount,
+        uint256 managerBuyPrice,
+        Order[] memory _orders
+    ) external onlyOwner {
+        require(_isTimeHedge() || _isPriceHedge(), "C3");
         _checkOTCPrice(managerBuyPrice, _orders[0].managerToken);
         // TODO add check that all orders have same managerToken/traderToken
 
@@ -642,32 +641,25 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         }
     }
 
-
     /**
-     * @notice checks that the proposed sale price is within a tolerance of the current Uniswap twap
+     * @notice check that the proposed sale price is within a tolerance of the current Uniswap twap
      * @param price clearing price provided by manager
      * @param tokenToSell token to be sold
      */
     function _checkOTCPrice(uint256 price, address tokenToSell) internal view {
-            // Get twap
-            uint256 wSqueethEthPrice = IOracle(oracle).getTwap(
-                ethWSqueethPool,
-                wPowerPerp,
-                weth,
-                hedgingTwapPeriod,
-                true
-            );
-            // invert price if we are selling oSQTH
-            uint256 twapPrice = (tokenToSell == wPowerPerp)? ONE_ONE.div(wSqueethEthPrice): wSqueethEthPrice;
-                
-            uint256 priceLower = twapPrice.mul((ONE.sub(otcPriceTolerance))).div(ONE);
-            console.log("price is %s", price);
-            console.log("twapPrice is %s", twapPrice);
-            console.log("tokenToSell is %s", tokenToSell );
-            console.log("weth is %s and squeeth is %s", weth, wPowerPerp);
-            console.log("priceLower", priceLower);
-            // Check that clearing sale price is at least twap*(1 - otcPriceTolerance%)
-            require(price >= priceLower, "C4");
+        // Get twap
+        uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, hedgingTwapPeriod, true);
+        // invert price if we are selling wPowerPerp
+        uint256 twapPrice = (tokenToSell == wPowerPerp) ? ONE_ONE.div(wSqueethEthPrice) : wSqueethEthPrice;
+
+        uint256 priceLower = twapPrice.mul((ONE.sub(otcPriceTolerance))).div(ONE);
+        console.log("price is %s", price);
+        console.log("twapPrice is %s", twapPrice);
+        console.log("tokenToSell is %s", tokenToSell);
+        console.log("weth is %s and squeeth is %s", weth, wPowerPerp);
+        console.log("priceLower", priceLower);
+        // Check that clearing sale price is at least twap*(1 - otcPriceTolerance%)
+        require(price >= priceLower, "C4");
     }
 
     /**
