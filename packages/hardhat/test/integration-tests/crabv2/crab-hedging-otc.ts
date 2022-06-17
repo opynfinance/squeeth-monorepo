@@ -1,14 +1,18 @@
-import { ethers } from "hardhat"
+import { ethers, network } from "hardhat"
 import { expect } from "chai";
 import BigNumberJs from 'bignumber.js'
 
-import { Contract, BigNumber, providers } from "ethers";
+import { Contract, BigNumber, providers, Signer } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
-import { WETH9, MockErc20, Controller, Oracle, WPowerPerp, CrabStrategyV2 } from "../../../typechain";
+import { WETH9, MockErc20, Controller, Oracle, WPowerPerp, CrabStrategyV2, IERC20 } from "../../../typechain";
 import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addWethDaiLiquidity, addSqueethLiquidity, buyWSqueeth, buyWeth } from '../../setup'
 import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../../utils"
 
 BigNumberJs.set({ EXPONENTIAL_AT: 30 })
+
+import * as sigUtil from 'eth-sig-util'
+import * as ethUtil from 'ethereumjs-util'
+
 
 
 const calcPriceMulAndAuctionPrice = (isNegativeTargetHedge: boolean, maxPriceMultiplier: BigNumber, minPriceMultiplier: BigNumber, auctionExecution: BigNumber, currentWSqueethPrice: BigNumber): [BigNumber, BigNumber] => {
@@ -305,27 +309,52 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
         let afterTradeDelta = strategyVaultBefore.collateralAmount.add(toGET).sub(afterOSQTHdelta);
         console.log("after trade delta would be", afterTradeDelta);//div by 10*18 
 
-        // do the hedge and check after the above two traded quantities
 
         expect((await crabStrategy.checkTimeHedge())[0]).to.be.true;
 
-        // find the amount of oSQTH to sell
-        const strategyVault = await controller.vaults(await crabStrategy.vaultId());
-        console.log("strategyVault ", strategyVault.toString());
-        const strategyDebt = strategyVault.shortAmount
-        const ethDelta = strategyVault.collateralAmount
-        let currentWSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false)
-        console.log(currentWSqueethPrice.toString());
-        const currentScaledSquethPrice = (await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 300, false))
-        console.log("currentScaledSquethPrice ", currentScaledSquethPrice.toString());
-        const feeRate = await controller.feeRate()
-        const ethFeePerWSqueeth = currentScaledSquethPrice.mul(feeRate).div(10000)
+        // do the hedge and check after the above two traded quantities
+        // first prepare the order hash
+        console.log("eth balance of random is ", await provider.getBalance(random.address) );
+        await weth.connect(random).deposit({value: toGET.mul(10)});
+        await weth.connect(random).approve(crabStrategy.address, toGET.mul(10));
+        console.log("Weth balance of random is ", await weth.balanceOf(random.address) );
+        let orderHash = {
+            bidId: 0,
+            trader: random.address,
+            traderToken: weth.address,
+            traderAmount: toGET,
+            managerToken: wSqueeth.address,
+            managerAmount: toSell,
+            nonce: 0
+        }
+        console.log("chaid is",network.config.chainId);
+        let signature = await random._signTypedData(
+                {
+                    name: "CrabOTC",
+                    version: "2",
+                    chainId: network.config.chainId,
+                    verifyingContract: crabStrategy.address,
+                },
+                {Order: [
+                    {type: "uint256", name: "bidId"}, // TODO is this number of uint256
+                    {type: "address", name: "trader"},
+                    {type: "address", name: "traderToken"},
+                    {type: "uint256", name: "traderAmount"},
+                    {type: "address", name: "managerToken"},
+                    {type: "uint256", name: "managerAmount"},
+                    {type: "uint256", name: "nonce"},
+                ]},
+                orderHash,
+            );
+        const { r, s, v } = ethers.utils.splitSignature(signature)
+        console.log(r,s,v);
+        let signedOrder = {
+            ...orderHash,
+            r,s,v: String(v)
+        }
 
-        const initialWSqueethDelta = wmul(strategyDebt.mul(2), currentWSqueethPrice)
-        console.log("initialWSqueethDelta ", initialWSqueethDelta.toString());
-        const targetHedge = wdiv(initialWSqueethDelta.sub(ethDelta), currentWSqueethPrice.add(ethFeePerWSqueeth))
-        console.log("targetHedge ", targetHedge.toString());
-
+        await crabStrategy.connect(owner).hedgeOTC(toSell, 0 ,[signedOrder]);
+        console.log('here');
     })
   })
 })
