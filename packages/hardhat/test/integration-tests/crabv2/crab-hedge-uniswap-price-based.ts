@@ -25,7 +25,7 @@ const calcPriceMulAndAuctionPrice = (isNegativeTargetHedge: boolean, maxPriceMul
   return [priceMultiplier, auctionWSqueethEthPrice]
 }
 
-describe("Crab V2 flashswap integration test: uniswap price based hedging", function () {
+describe.skip("Crab V2 flashswap integration test: uniswap price based hedging", function () {
   const startingEthPrice = 3000
   const startingEthPrice1e18 = BigNumber.from(startingEthPrice).mul(one) // 3000 * 1e18
   const scaledStartingSqueethPrice1e18 = startingEthPrice1e18.mul(11).div(10).div(oracleScaleFactor) // 0.303 * 1e18

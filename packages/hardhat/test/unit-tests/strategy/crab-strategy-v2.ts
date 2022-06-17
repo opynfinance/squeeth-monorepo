@@ -347,66 +347,6 @@ describe("Crab Strategy V2", function () {
       expect(hedgePriceThresholdInContract.eq(hedgePriceTolerance)).to.be.true
     })
 
-    it('should revert if non owner tries to change the auction time', async () => {
-      await expect(crabStrategy.connect(random).setAuctionTime(newAuctionTime)).to.be.revertedWith("Ownable: caller is not the owner")
-    })
-
-    it('should revert if owner tries to change the auction time to 0', async () => {
-      await expect(crabStrategy.connect(owner).setAuctionTime(0)).to.be.revertedWith("invalid auction time")
-    })
-
-    it('should allow owner to change the auction time', async () => {
-      await crabStrategy.connect(owner).setAuctionTime(newAuctionTime)
-      const auctionTimeInContract = await crabStrategy.auctionTime()
-      expect(auctionTimeInContract.eq(newAuctionTime)).to.be.true
-    })
-
-    it('should allow owner to change the auction time back', async () => {
-      await crabStrategy.connect(owner).setAuctionTime(auctionTime)
-      const auctionTimeInContract = await crabStrategy.auctionTime()
-      expect(auctionTimeInContract.eq(auctionTime)).to.be.true
-    })
-
-    it('should revert if non owner tries to change the min price multiplier', async () => {
-      await expect(crabStrategy.connect(random).setMinPriceMultiplier(newMinAuctionSlippage)).to.be.revertedWith("Ownable: caller is not the owner")
-    })
-
-    it('should revert if owner tries to change the min price multiplier to too high of a value', async () => {
-      await expect(crabStrategy.connect(owner).setMinPriceMultiplier(revertMinAuctionSlippage)).to.be.revertedWith("min price multiplier too high")
-    })
-
-    it('should allow owner to change the min price multiplier', async () => {
-      await crabStrategy.connect(owner).setMinPriceMultiplier(newMinAuctionSlippage)
-      const newMinAuctionSlippageInContract = await crabStrategy.minPriceMultiplier()
-      expect(newMinAuctionSlippageInContract.eq(newMinAuctionSlippage)).to.be.true
-    })
-
-    it('should allow owner to change the min price multiplier back', async () => {
-      await crabStrategy.connect(owner).setMinPriceMultiplier(minAuctionSlippage)
-      const newMinAuctionSlippageInContract = await crabStrategy.minPriceMultiplier()
-      expect(newMinAuctionSlippageInContract.eq(minAuctionSlippage)).to.be.true
-    })
-
-    it('should revert if non owner tries to change the max price multiplier', async () => {
-      await expect(crabStrategy.connect(random).setMaxPriceMultiplier(newMaxAuctionSlippage)).to.be.revertedWith("Ownable: caller is not the owner")
-    })
-
-    it('should revert if owner tries to change the max price multiplier to too low of a value', async () => {
-      await expect(crabStrategy.connect(owner).setMaxPriceMultiplier(revertMaxAuctionSlippage)).to.be.revertedWith("max price multiplier too low")
-    })
-
-    it('should allow owner to change the max price multiplier', async () => {
-      await crabStrategy.connect(owner).setMaxPriceMultiplier(newMaxAuctionSlippage)
-      const newMaxAuctionSlippageInContract = await crabStrategy.maxPriceMultiplier()
-      expect(newMaxAuctionSlippageInContract.eq(newMaxAuctionSlippage)).to.be.true
-    })
-
-    it('should allow owner to change the max price multiplier back', async () => {
-      await crabStrategy.connect(owner).setMaxPriceMultiplier(maxAuctionSlippage)
-      const newMaxAuctionSlippageInContract = await crabStrategy.maxPriceMultiplier()
-      expect(newMaxAuctionSlippageInContract.eq(maxAuctionSlippage)).to.be.true
-    })
-
     it('should revert if non owner tries to change the delta hedge threshold', async () => {
       await expect(crabStrategy.connect(random).setDeltaHedgeThreshold(newDeltaHedgeThreshold)).to.be.revertedWith("Ownable: caller is not the owner")
     })
