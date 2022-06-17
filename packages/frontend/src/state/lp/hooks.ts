@@ -99,7 +99,8 @@ export const useOpenPosition = () => {
 
       // Closest 60 tick width above or below current tick (60 is minimum tick width for 30bps pool)
 
-      const [lowerTick, upperTick] = validTicks(lowerTickInput, upperTickInput)
+      const lowerTick = nearestUsableTick(lowerTickInput, 3000)
+      const upperTick = nearestUsableTick(upperTickInput, 3000)
 
       const params = {
         recipient: address,
@@ -159,7 +160,8 @@ export const useOpenPositionDeposit = () => {
 
       // Closest 60 tick width above or below current tick (60 is minimum tick width for 30bps pool)
 
-      const [lowerTick, upperTick] = validTicks(lowerTickInput, upperTickInput)
+      const lowerTick = nearestUsableTick(lowerTickInput, 3000)
+      const upperTick = nearestUsableTick(upperTickInput, 3000)
 
       const flashloanWMintDepositNftParams = {
         wPowerPerpPool: squeethPool,
@@ -242,26 +244,6 @@ export function getTickToPrice(baseToken?: Token, quoteToken?: Token, tick?: num
   return tickToPrice(baseToken, quoteToken, tick)
 }
 
-export function validTicks(lowerTickInput: number, upperTickInput: number) {
-  // Closest valid lower tick
-  const lowerTickBelow = lowerTickInput - (lowerTickInput % 60)
-  const lowerTickAbove = lowerTickInput + (lowerTickInput % 60)
-  const lowerTick =
-    Math.abs(lowerTickAbove - lowerTickInput) < Math.abs(lowerTickBelow - lowerTickInput)
-      ? lowerTickAbove
-      : lowerTickBelow
-
-  // TODO: ensure we're not hitting a bound for a tick
-  // Closest valid upper tick
-  const upperTickBelow = upperTickInput - (upperTickInput % 60)
-  const upperTickAbove = upperTickInput + (upperTickInput % 60)
-  const upperTick =
-    Math.abs(upperTickAbove - upperTickInput) < Math.abs(upperTickBelow - upperTickInput)
-      ? upperTickAbove
-      : upperTickBelow
-  return [lowerTick, upperTick]
-}
-
 // Rebalance via vault
 export const useRebalanceVault = () => {
   const address = useAtomValue(addressAtom)
@@ -289,7 +271,8 @@ export const useRebalanceVault = () => {
       const amount1Min = new BigNumber(0)
       const safetyWPowerPerp = ethers.utils.parseUnits('0.01')
 
-      const [lowerTick, upperTick] = validTicks(lowerTickInput, upperTickInput)
+      const lowerTick = nearestUsableTick(lowerTickInput, 3000)
+      const upperTick = nearestUsableTick(upperTickInput, 3000)
 
       // Get current LPpositions
       const [amount0, amount1] = await positionManager.methods.decreaseLiquidity({
@@ -405,7 +388,8 @@ export const useRebalanceGeneralSwap = () => {
       const amount1Min = new BigNumber(0)
       const safetyWPowerPerp = ethers.utils.parseUnits('0.01')
 
-      const [lowerTick, upperTick] = validTicks(lowerTickInput, upperTickInput)
+      const lowerTick = nearestUsableTick(lowerTickInput, 3000)
+      const upperTick = nearestUsableTick(upperTickInput, 3000)
 
       // Get current LPpositions
       const [amount0, amount1] = await positionManager.methods.decreaseLiquidity({
