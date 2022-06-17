@@ -14,7 +14,7 @@ import {
     buyWSqueeth,
     buyWeth,
 } from "../../setup";
-import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../../utils";
+import { signTypedData, isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../../utils";
 
 BigNumberJs.set({ EXPONENTIAL_AT: 30 });
 
@@ -377,48 +377,54 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 bidId: 0,
                 trader: random.address,
                 traderToken: weth.address,
-                traderAmount: toGET,
+                traderAmount: toGET.div(2),
                 managerToken: wSqueeth.address,
-                managerAmount: toSell,
+                managerAmount: toSell.div(2),
                 nonce: 0,
             };
-            console.log("chaid is", network.config.chainId);
-            console.log(orderHash);
-            let signature = await random._signTypedData(
-                {
-                    name: "CrabOTC",
-                    version: "2",
-                    chainId: network.config.chainId,
-                    verifyingContract: crabStrategy.address,
-                },
-                {
-                    Order: [
-                        { type: "uint256", name: "bidId" },
-                        { type: "address", name: "trader" },
-                        { type: "address", name: "traderToken" },
-                        { type: "uint256", name: "traderAmount" },
-                        { type: "address", name: "managerToken" },
-                        { type: "uint256", name: "managerAmount" },
-                        { type: "uint256", name: "nonce" },
-                    ],
-                },
-                orderHash
-            );
-            const { r, s, v } = ethers.utils.splitSignature(signature);
-            console.log(r, s, v);
-            let signedOrder = {
-                ...orderHash,
-                r,
-                s,
-                v: String(v),
+            console.log(orderHash.traderAmount.toString(), orderHash.managerAmount.toString());
+            let orderHash1 = {
+                bidId: 0,
+                trader: random.address,
+                traderToken: weth.address,
+                traderAmount: toGET.div(2),
+                managerToken: wSqueeth.address,
+                managerAmount: toSell.div(2),
+                nonce: 1,
             };
+
+            let domainData = {
+                name: "CrabOTC",
+                version: "2",
+                chainId: network.config.chainId,
+                verifyingContract: crabStrategy.address,
+            };
+            let typeData = {
+                Order: [
+                    { type: "uint256", name: "bidId" },
+                    { type: "address", name: "trader" },
+                    { type: "address", name: "traderToken" },
+                    { type: "uint256", name: "traderAmount" },
+                    { type: "address", name: "managerToken" },
+                    { type: "uint256", name: "managerAmount" },
+                    { type: "uint256", name: "nonce" },
+                ],
+            };
+            let signedOrder = await signTypedData(random, domainData, typeData, orderHash)
+            let signedOrder1 = await signTypedData(random, domainData, typeData, orderHash1);
+
 
             let managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
             console.log(managerBuyPrice);
 
-            await crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder]);
+            await crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder, signedOrder1]);
             let strategyVaultAfter = await controller.vaults(await crabStrategy.vaultId());
-            expect(strategyVaultAfter.shortAmount).eq(strategyVaultBefore.shortAmount.add(toSell));
+            expect(
+                isSimilar(
+                    strategyVaultAfter.shortAmount.toString(),
+                    strategyVaultBefore.shortAmount.add(toSell).toString()
+                )
+            ).to.be.true;
             expect(strategyVaultAfter.collateralAmount).eq(strategyVaultBefore.collateralAmount.add(toGET));
         });
     });
