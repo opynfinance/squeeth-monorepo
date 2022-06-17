@@ -12,6 +12,7 @@ BigNumberJs.set({ EXPONENTIAL_AT: 30 })
 
 import * as sigUtil from 'eth-sig-util'
 import * as ethUtil from 'ethereumjs-util'
+import { createImportSpecifier } from "typescript";
 
 
 
@@ -312,8 +313,6 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
 
         expect((await crabStrategy.checkTimeHedge())[0]).to.be.true;
 
-        // do the hedge and check after the above two traded quantities
-        // first prepare the order hash
         console.log("eth balance of random is ", await provider.getBalance(random.address) );
         await weth.connect(random).deposit({value: toGET});
         await weth.connect(random).approve(crabStrategy.address, toGET);
@@ -328,6 +327,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             nonce: 0
         }
         console.log("chaid is",network.config.chainId);
+        console.log(orderHash);
         let signature = await random._signTypedData(
                 {
                     name: "CrabOTC",
@@ -336,7 +336,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                     verifyingContract: crabStrategy.address,
                 },
                 {Order: [
-                    {type: "uint256", name: "bidId"}, // TODO is this number of uint256
+                    {type: "uint256", name: "bidId"},
                     {type: "address", name: "trader"},
                     {type: "address", name: "traderToken"},
                     {type: "uint256", name: "traderAmount"},
@@ -354,7 +354,9 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
         }
 
         await crabStrategy.connect(owner).hedgeOTC(toSell, 0 ,[signedOrder]);
-        console.log('here');
+        let strategyVaultAfter =  await controller.vaults(await crabStrategy.vaultId());
+        expect(strategyVaultAfter.shortAmount).eq(strategyVaultBefore.shortAmount.add(toSell));
+        expect(strategyVaultAfter.collateralAmount).eq(strategyVaultBefore.collateralAmount.add(toGET));
     })
   })
 })

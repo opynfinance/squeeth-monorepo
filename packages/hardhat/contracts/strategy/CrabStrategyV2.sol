@@ -29,8 +29,6 @@ import {EIP712} from "@openzeppelin/contracts/drafts/EIP712.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 
-import "hardhat/console.sol";
-
 /**
  * @dev CrabStrategyV2 contract
  * @notice Contract for Crab strategy
@@ -587,7 +585,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
     bytes32 private constant _CRAB_BALANCE_TYPEHASH =
     keccak256(
-        "Order(uint256 bidId,address trader,address traderToken,uint256 tradeAmount,address managerToken, uint256 managerAmount ,uint256 nonce)"
+        "Order(uint256 bidId,address trader,address traderToken,uint256 traderAmount,address managerToken,uint256 managerAmount,uint256 nonce)"
     );
     mapping(address => Counters.Counter) private _nonces;
 
@@ -605,15 +603,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     function DOMAIN_SEPARATOR() external view returns (bytes32) {
         return _domainSeparatorV4();
     }
-
-    // hedge function should be upgradeable , take a look at controller Helper
-    //struct RebalanceLpInVaultParams {
-     //   RebalanceVaultNftType rebalanceLpInVaultType;
-     //   bytes data;
-     // calldata
-    ///}
-
-    // then work on upgradability
 
     event HedgeOTC(
         address trader,
@@ -636,9 +625,8 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         );
 
         bytes32 hash = _hashTypedDataV4(structHash);
-        console.log(string(abi.encodePacked(hash)));
         address offerSigner = ECDSA.recover(hash, _order.v, _order.r, _order.s);
-        //require(offerSigner == _order.trader, "Invalid offer signature");
+        require(offerSigner == _order.trader, "Invalid offer signature");
 
         //adjust managerAmount and TraderAmount for partial fills
         // TODO test this a lot
@@ -650,7 +638,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         // TODO test this a lot
         uint256 sellerPrice = _order.managerAmount.div(_order.traderAmount);
         if(managerBuyPrice > sellerPrice) {
-            _order.managerAmount = _order.traderAmount.mul(managerBuyPrice);
+            _order.traderAmount = _order.managerAmount.div(managerBuyPrice);
         }
 
         IERC20(_order.traderToken).transferFrom(_order.trader, address(this), _order.traderAmount);
