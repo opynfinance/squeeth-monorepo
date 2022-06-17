@@ -39,6 +39,8 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     uint32 public constant POWER_PERP_PERIOD = 420 seconds;
     /// @dev twap period to use for hedge calculations
     uint32 public hedgingTwapPeriod = 420 seconds;
+    /// @dev true if CrabV2 was initialized
+    bool isInitialized; 
 
     /// @dev enum to differentiate between uniswap swap callback function source
     enum FLASH_SOURCE {
