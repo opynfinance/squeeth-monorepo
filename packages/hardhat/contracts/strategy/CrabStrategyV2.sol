@@ -641,15 +641,15 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         address offerSigner = ECDSA.recover(hash, _order.v, _order.r, _order.s);
         require(offerSigner == _order.trader, "Invalid offer signature");
 
+        uint256 sellerPrice = _order.managerAmount.div(_order.traderAmount);
         //adjust managerAmount and TraderAmount for partial fills
         // TODO test this a lot
         if(managerSellAmount < _order.managerAmount) {
-            _order.managerAmount = managerSellAmount;
             _order.traderAmount = _order.traderAmount.mul(managerSellAmount.div(_order.managerAmount));
+            _order.managerAmount = managerSellAmount;
         }
         //adjust if manager is giving better price
         // TODO test this a lot
-        uint256 sellerPrice = _order.managerAmount.div(_order.traderAmount);
         if(managerBuyPrice > sellerPrice) {
             _order.traderAmount = _order.managerAmount.div(managerBuyPrice);
         }
