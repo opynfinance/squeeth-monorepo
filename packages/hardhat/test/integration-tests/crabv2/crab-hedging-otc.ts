@@ -315,8 +315,8 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
         // do the hedge and check after the above two traded quantities
         // first prepare the order hash
         console.log("eth balance of random is ", await provider.getBalance(random.address) );
-        await weth.connect(random).deposit({value: toGET.mul(10)});
-        await weth.connect(random).approve(crabStrategy.address, toGET.mul(10));
+        await weth.connect(random).deposit({value: toGET});
+        await weth.connect(random).approve(crabStrategy.address, toGET);
         console.log("Weth balance of random is ", await weth.balanceOf(random.address) );
         let orderHash = {
             bidId: 0,
