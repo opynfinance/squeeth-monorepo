@@ -49,7 +49,6 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
   }
 
   const account = loadOrCreateAccount(event.transaction.from.toHex());
-  let position = loadOrCreatePosition(event.transaction.from.toHex());
   // token0 osqth
   // token1 weth
   // token0 per token1
@@ -84,7 +83,6 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
   transactionHistory.ethAmount = event.params.amount1;
 
   account.save();
-  position.save();
   transactionHistory.save();
 }
 
