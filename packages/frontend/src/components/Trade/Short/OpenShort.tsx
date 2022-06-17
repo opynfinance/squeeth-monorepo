@@ -518,14 +518,13 @@ export const OpenShortPosition = () => {
                   <span style={{ display: 'flex' }}>
                     Min Collateralization Ratio: {minCR.times(100).toFixed(1)}%
                     <Tooltip
-                      style={{ marginLeft: '4px', alignSelf: 'center' }}
                       title={`Minimum vault collateralization ratio ${minCR
                         .times(100)
                         .toFixed(
                           1,
                         )}% is based on trade size. You could withdraw eth from vault or sell more oSQTH to lower CR.`}
                     >
-                      <InfoOutlinedIcon fontSize="small" />
+                      <InfoOutlinedIcon style={{ fontSize: '14px', marginLeft: '4px', alignSelf: 'center' }} />
                     </Tooltip>
                   </span>
                 }
