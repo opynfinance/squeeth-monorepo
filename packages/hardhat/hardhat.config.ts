@@ -62,16 +62,6 @@ const UNISWAP_SETTING = {
   },
 };
 
-const COMPOUND_SETTING = {
-  version: "0.8.10",
-  settings: {
-    optimizer: {
-      enabled: true,
-      runs: 800,
-    },
-  },
-};
-
 const config: HardhatUserConfig = {
   defaultNetwork,
   networks: {
@@ -84,8 +74,6 @@ const config: HardhatUserConfig = {
       accounts: {
         accountsBalance: '1000000000000000000000000000'
       },
-      // IMPORTANT: SHOULD BE REMOVED AND FIXED BEFORE MERGING
-      allowUnlimitedContractSize: true,
     },
     localhost: {
       url: "http://localhost:8545",
