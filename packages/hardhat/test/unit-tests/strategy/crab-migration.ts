@@ -72,6 +72,10 @@ describe("Crab Migration", function () {
             expect(crabV1BalanceAfter.sub(crabV1BalanceBefore)).to.be.equal(deposit2Amount);
             expect(d2SharesDeposited).to.be.equal(deposit2Amount);
         })
+
+        it("should not be able to claim until strategy has been migrated", async () => { 
+            await expect(crabMigration.connect(d1).claimV2Shares()).to.be.revertedWith("M3");
+        })
     })
 
 
