@@ -11,6 +11,14 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import {CrabStrategyV2} from "./CrabStrategyV2.sol";
 import {CrabStrategy} from "./CrabStrategy.sol";
 
+/** 
+ * Migration Error Codes:
+ * M1: Not Owner
+ * M2: Migration already happened
+ * M3: Migration has not yet happened
+ */
+
+
 /**
  * @dev CrabMigration contract
  * @notice Contract for Migrating from Crab v1 to Crab v2
@@ -27,17 +35,17 @@ import {CrabStrategy} from "./CrabStrategy.sol";
      CrabStrategyV2 public crabV2; 
      
      modifier onlyOwner() {
-        require(msg.sender == owner, "Not owner");
+        require(msg.sender == owner, "M1");
         _;
     }
 
      modifier beforeMigration() {
-        require(!isMigrated, "Migration already happened");
+        require(!isMigrated, "M2");
         _;
     }
 
      modifier afterMigration() {
-        require(isMigrated, "Migration hasn't happened yet");
+        require(isMigrated, "M3");
         _;
     }
 
@@ -69,6 +77,7 @@ import {CrabStrategy} from "./CrabStrategy.sol";
       * the v2 contract at the same collateral ratio as the v1 contract. 
       */
      function batchMigrate() external onlyOwner beforeMigration { 
+         // 1. flash floan eth from euler eq to amt 
 
      }
 
