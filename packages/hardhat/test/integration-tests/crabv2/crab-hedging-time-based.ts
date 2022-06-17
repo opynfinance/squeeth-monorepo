@@ -431,7 +431,6 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
 
       const auctionTimeElapsed = BigNumber.from(hedgeBlockTimestamp).sub(auctionTriggerTimer)
 
-      expect(await crabStrategy.checkPriceHedge(auctionTriggerTimer)).to.be.false;
       expect((await crabStrategy.checkTimeHedge())[0]).to.be.true;
 
       let currentWSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false)
@@ -512,7 +511,6 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
 
       const auctionTimeElapsed = BigNumber.from(hedgeBlockTimestamp).sub(auctionTriggerTimer)
 
-      expect(await crabStrategy.checkPriceHedge(auctionTriggerTimer)).to.be.false;
       expect((await crabStrategy.checkTimeHedge())[0]).to.be.true;
 
       const currentWSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false)
@@ -549,7 +547,6 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
 
       const auctionTimeElapsed = BigNumber.from(hedgeBlockTimestamp).sub(auctionTriggerTimer)
 
-      expect(await crabStrategy.checkPriceHedge(auctionTriggerTimer)).to.be.false;
       expect((await crabStrategy.checkTimeHedge())[0]).to.be.true;
 
       const currentWSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false)
@@ -587,7 +584,6 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
 
       const auctionTimeElapsed = BigNumber.from(hedgeBlockTimestamp).sub(auctionTriggerTimer)
 
-      expect(await crabStrategy.checkPriceHedge(auctionTriggerTimer)).to.be.false;
       expect((await crabStrategy.checkTimeHedge())[0]).to.be.true;
 
       const currentWSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false)
@@ -629,7 +625,6 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
 
       const auctionTimeElapsed = BigNumber.from(hedgeBlockTimestamp).sub(auctionTriggerTimer)
 
-      expect(await crabStrategy.checkPriceHedge(auctionTriggerTimer)).to.be.false;
       expect((await crabStrategy.checkTimeHedge())[0]).to.be.true;
 
       let currentWSqueethPrice = await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false)

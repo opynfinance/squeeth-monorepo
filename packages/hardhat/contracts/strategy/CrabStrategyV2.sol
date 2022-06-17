@@ -107,15 +107,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 minWSqueeth,
         uint256 minEth
     );
-    event PriceHedgeOnUniswap(
-        address indexed hedger,
-        uint256 hedgeTimestamp,
-        uint256 auctionTriggerTimestamp,
-        uint256 minWSqueeth,
-        uint256 minEth
-    );
     event TimeHedge(address indexed hedger, bool auctionType, uint256 hedgerPrice, uint256 auctionTriggerTimestamp);
-    event PriceHedge(address indexed hedger, bool auctionType, uint256 hedgerPrice, uint256 auctionTriggerTimestamp);
     event Hedge(
         address indexed hedger,
         bool auctionType,
@@ -355,43 +347,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     }
 
     /**
-     * @notice hedge startegy based on time threshold with uniswap arbing
-     * @dev this function atomically hedges on uniswap and provides a bounty to the caller based on the difference
-     * @dev between uniswap execution price and the price of the hedging auction
-     * @param _minWSqueeth minimum WSqueeth amount the caller willing to receive if hedge auction is selling WSqueeth
-     * @param _minEth minimum ETH amount the caller is willing to receive if hedge auction is buying WSqueeth
-     */
-    function timeHedgeOnUniswap(uint256 _minWSqueeth, uint256 _minEth) external {
-        (bool isTimeHedgeAllowed, uint256 auctionTriggerTime) = _isTimeHedge();
-
-        require(isTimeHedgeAllowed, "Time hedging is not allowed");
-
-        _hedgeOnUniswap(auctionTriggerTime, _minWSqueeth, _minEth);
-
-        emit TimeHedgeOnUniswap(msg.sender, block.timestamp, auctionTriggerTime, _minWSqueeth, _minEth);
-    }
-
-    /**
-     * @notice hedge startegy based on price threshold with uniswap arbing
-     * @dev this function atomically hedges on uniswap and provides a bounty to the caller based on the difference
-     * @dev between uniswap execution price and the price of the hedging auction
-     * @param _auctionTriggerTime the time when the price deviation threshold was exceeded and when the auction started
-     * @param _minWSqueeth minimum WSqueeth amount the caller willing to receive if hedge auction is selling WSqueeth
-     * @param _minEth minimum ETH amount the caller is willing to receive if hedge auction is buying WSqueeth
-     */
-    function priceHedgeOnUniswap(
-        uint256 _auctionTriggerTime,
-        uint256 _minWSqueeth,
-        uint256 _minEth
-    ) external payable {
-        require(_isPriceHedge(_auctionTriggerTime), "Price hedging not allowed");
-
-        _hedgeOnUniswap(_auctionTriggerTime, _minWSqueeth, _minEth);
-
-        emit PriceHedgeOnUniswap(msg.sender, block.timestamp, _auctionTriggerTime, _minWSqueeth, _minEth);
-    }
-
-    /**
      * @notice strategy hedging based on time threshold
      * @dev need to attach msg.value if buying WSqueeth
      * @param _isStrategySellingWSqueeth sell or buy auction, true for sell auction
@@ -405,33 +360,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         _hedge(auctionTriggerTime, _isStrategySellingWSqueeth, _limitPrice);
 
         emit TimeHedge(msg.sender, _isStrategySellingWSqueeth, _limitPrice, auctionTriggerTime);
-    }
-
-    /**
-     * @notice strategy hedging based on price threshold
-     * @dev need to attach msg.value if buying WSqueeth
-     * @param _auctionTriggerTime the time when the price deviation threshold was exceeded and when the auction started
-     * @param _isStrategySellingWSqueeth specify the direction of the trade that you expect, this choice impacts the limit price chosen
-     * @param _limitPrice the min or max price that you will trade at, depending on if buying or selling
-     */
-    function priceHedge(
-        uint256 _auctionTriggerTime,
-        bool _isStrategySellingWSqueeth,
-        uint256 _limitPrice
-    ) external payable nonReentrant {
-        require(_isPriceHedge(_auctionTriggerTime), "Price hedging not allowed");
-        _hedge(_auctionTriggerTime, _isStrategySellingWSqueeth, _limitPrice);
-
-        emit PriceHedge(msg.sender, _isStrategySellingWSqueeth, _limitPrice, _auctionTriggerTime);
-    }
-
-    /**
-     * @notice check if hedging based on price threshold is allowed
-     * @param _auctionTriggerTime the time when the price deviation threshold was exceeded and when the auction started
-     * @return true if hedging is allowed
-     */
-    function checkPriceHedge(uint256 _auctionTriggerTime) external view returns (bool) {
-        return _isPriceHedge(_auctionTriggerTime);
     }
 
     /**
@@ -538,45 +466,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     }
 
     /**
-     * @notice get current auction details
-     * @param _auctionTriggerTime timestamp where auction started
-     * @return if strategy is selling wSqueeth, wSqueeth amount to auction, ETH proceeds, auction price, if auction direction has switched
-     */
-    function getAuctionDetails(uint256 _auctionTriggerTime)
-        external
-        view
-        returns (
-            bool,
-            uint256,
-            uint256,
-            uint256,
-            bool
-        )
-    {
-        (uint256 strategyDebt, uint256 ethDelta) = _syncStrategyState();
-        uint256 currentWSqueethPrice = IOracle(oracle).getTwap(
-            ethWSqueethPool,
-            wPowerPerp,
-            weth,
-            hedgingTwapPeriod,
-            true
-        );
-        uint256 feeAdjustment = _calcFeeAdjustment();
-        (bool isSellingAuction, ) = _checkAuctionType(strategyDebt, ethDelta, currentWSqueethPrice, feeAdjustment);
-        uint256 auctionWSqueethEthPrice = _getAuctionPrice(_auctionTriggerTime, currentWSqueethPrice, isSellingAuction);
-        (bool isStillSellingAuction, uint256 wSqueethToAuction) = _checkAuctionType(
-            strategyDebt,
-            ethDelta,
-            auctionWSqueethEthPrice,
-            feeAdjustment
-        );
-        bool isAuctionDirectionChanged = isSellingAuction != isStillSellingAuction;
-        uint256 ethProceeds = wSqueethToAuction.wmul(auctionWSqueethEthPrice);
-
-        return (isSellingAuction, wSqueethToAuction, ethProceeds, auctionWSqueethEthPrice, isAuctionDirectionChanged);
-    }
-
-    /**
      * @notice check if a user deposit puts the strategy above the cap
      * @dev reverts if a deposit amount puts strategy over the cap
      * @dev it is possible for the strategy to be over the cap from trading/hedging activities, but withdrawals are still allowed
@@ -646,41 +535,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
             if (proceeds > 0) {
                 payable(_caller).sendValue(proceeds);
             }
-        } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_HEDGE_SELL) {
-            //strategy is selling wSqueeth for ETH
-            FlashHedgeData memory data = abi.decode(_callData, (FlashHedgeData));
-
-            // convert WETH to ETH as Uniswap uses WETH
-            IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
-            //mint wSqueeth to pay hedger and repay flash swap, deposit ETH
-            _executeSellAuction(_caller, data.ethProceeds, data.wSqueethAmount, data.ethProceeds, true);
-
-            //determine excess wSqueeth that the auction would have sold but is not needed to repay flash swap
-            uint256 wSqueethProfit = data.wSqueethAmount.sub(_amountToPay);
-
-            //minimum profit check for hedger
-            require(wSqueethProfit >= data.minWSqueeth, "profit is less than min wSqueeth");
-
-            //repay flash swap and transfer profit to hedger
-            IWPowerPerp(wPowerPerp).transfer(ethWSqueethPool, _amountToPay);
-            IWPowerPerp(wPowerPerp).transfer(_caller, wSqueethProfit);
-        } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_HEDGE_BUY) {
-            //strategy is buying wSqueeth for ETH
-            FlashHedgeData memory data = abi.decode(_callData, (FlashHedgeData));
-
-            //withdraw ETH to pay hedger and repay flash swap, burn wSqueeth
-            _executeBuyAuction(_caller, data.wSqueethAmount, data.ethProceeds, true);
-
-            //determine excess ETH that the auction would have paid but is not needed to repay flash swap
-            uint256 ethProfit = data.ethProceeds.sub(_amountToPay);
-
-            //minimum profit check for hedger
-            require(ethProfit >= data.minEth, "profit is less than min ETH");
-
-            //repay flash swap and transfer profit to hedger
-            IWETH9(weth).deposit{value: _amountToPay}();
-            IWETH9(weth).transfer(ethWSqueethPool, _amountToPay);
-            payable(_caller).sendValue(ethProfit);
         }
     }
 
@@ -793,49 +647,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
             wSqueethToAuction,
             ethProceeds
         );
-    }
-
-    /**
-     * @notice execute arb between auction price and uniswap price
-     * @param _auctionTriggerTime auction starting time
-     * @param _minWSqueeth minimum WSqueeth amount the caller willing to receive if hedge auction is selling WSqueeth
-     * @param _minEth minimum ETH amount the caller is willing to receive if hedge auction is buying WSqueeth
-     */
-    function _hedgeOnUniswap(
-        uint256 _auctionTriggerTime,
-        uint256 _minWSqueeth,
-        uint256 _minEth
-    ) internal {
-        (
-            bool isSellingAuction,
-            uint256 wSqueethToAuction,
-            uint256 ethProceeds,
-            uint256 auctionWSqueethEthPrice
-        ) = _startAuction(_auctionTriggerTime);
-
-        if (isSellingAuction) {
-            _exactOutFlashSwap(
-                wPowerPerp,
-                weth,
-                IUniswapV3Pool(ethWSqueethPool).fee(),
-                ethProceeds,
-                wSqueethToAuction,
-                uint8(FLASH_SOURCE.FLASH_HEDGE_SELL),
-                abi.encodePacked(wSqueethToAuction, ethProceeds, _minWSqueeth, _minEth)
-            );
-        } else {
-            _exactOutFlashSwap(
-                weth,
-                wPowerPerp,
-                IUniswapV3Pool(ethWSqueethPool).fee(),
-                wSqueethToAuction,
-                ethProceeds,
-                uint8(FLASH_SOURCE.FLASH_HEDGE_BUY),
-                abi.encodePacked(wSqueethToAuction, ethProceeds, _minWSqueeth, _minEth)
-            );
-        }
-
-        emit HedgeOnUniswap(msg.sender, isSellingAuction, auctionWSqueethEthPrice, wSqueethToAuction, ethProceeds);
     }
 
     /**
