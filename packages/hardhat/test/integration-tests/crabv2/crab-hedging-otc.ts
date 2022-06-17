@@ -353,7 +353,10 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             r,s,v: String(v)
         }
 
-        await crabStrategy.connect(owner).hedgeOTC(toSell, 0 ,[signedOrder]);
+        let managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
+        console.log(managerBuyPrice);
+
+        await crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder]);
         let strategyVaultAfter =  await controller.vaults(await crabStrategy.vaultId());
         expect(strategyVaultAfter.shortAmount).eq(strategyVaultBefore.shortAmount.add(toSell));
         expect(strategyVaultAfter.collateralAmount).eq(strategyVaultBefore.collateralAmount.add(toGET));

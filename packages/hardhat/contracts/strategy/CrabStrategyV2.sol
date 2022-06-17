@@ -105,13 +105,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     event FlashWithdraw(address indexed withdrawer, uint256 crabAmount, uint256 wSqueethAmount);
     event FlashDepositCallback(address indexed depositor, uint256 flashswapDebt, uint256 excess);
     event FlashWithdrawCallback(address indexed withdrawer, uint256 flashswapDebt, uint256 excess);
-    event TimeHedgeOnUniswap(
-        address indexed hedger,
-        uint256 hedgeTimestamp,
-        uint256 auctionTriggerTimestamp,
-        uint256 minWSqueeth,
-        uint256 minEth
-    );
     event TimeHedge(address indexed hedger, bool auctionType, uint256 hedgerPrice, uint256 auctionTriggerTimestamp);
     event Hedge(
         address indexed hedger,
@@ -121,15 +114,8 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 wSqueethHedgeTargetAmount,
         uint256 ethHedgetargetAmount
     );
-    event HedgeOnUniswap(
-        address indexed hedger,
-        bool auctionType,
-        uint256 auctionPrice,
-        uint256 wSqueethHedgeTargetAmount,
-        uint256 ethHedgetargetAmount
-    );
-    event ExecuteSellAuction(address indexed buyer, uint256 wSqueethSold, uint256 ethBought, bool isHedgingOnUniswap);
-    event ExecuteBuyAuction(address indexed seller, uint256 wSqueethBought, uint256 ethSold, bool isHedgingOnUniswap);
+    event ExecuteSellAuction(address indexed buyer, uint256 wSqueethSold, uint256 ethBought);
+    event ExecuteBuyAuction(address indexed seller, uint256 wSqueethBought, uint256 ethSold);
     event SetStrategyCap(uint256 newCapAmount);
     event SetDeltaHedgeThreshold(uint256 newDeltaHedgeThreshold);
     event SetHedgingTwapPeriod(uint32 newHedgingTwapPeriod);
@@ -396,8 +382,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @notice owner can set the hedge time threshold in percent, scaled by 1e18 that determines the deviation in wPowerPerp price that can trigger a rebalance
      * @param _hedgePriceThreshold the hedge price threshold, in percent, scaled by 1e18
      */
-    function setHedgePriceThreshold(uint256 _hedgePriceThreshold) external onlyOwner {
-        require(_hedgePriceThreshold > 0, "invalid hedge price threshold");
+    function setHedgePriceThreshold(uint256 _hedgePriceThreshold) external onlyOwner { require(_hedgePriceThreshold > 0, "invalid hedge price threshold");
 
         hedgePriceThreshold = _hedgePriceThreshold;
 
@@ -623,7 +608,9 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 traderAmount
     );
 
-    function _execOrder(uint256 managerSellAmount, uint256 managerBuyPrice, Order memory _order) internal {
+    function _execOrder(uint256 managerSellAmount, uint256 managerBuyPrice, uint256 sellerPrice, Order memory _order) internal {
+        require(managerBuyPrice > 0, "C0");
+        require(managerBuyPrice >= sellerPrice, "C1");
         bytes32 structHash = keccak256(
             abi.encode(
                 _CRAB_BALANCE_TYPEHASH,
@@ -641,18 +628,14 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         address offerSigner = ECDSA.recover(hash, _order.v, _order.r, _order.s);
         require(offerSigner == _order.trader, "Invalid offer signature");
 
-        uint256 sellerPrice = _order.managerAmount.div(_order.traderAmount);
         //adjust managerAmount and TraderAmount for partial fills
         // TODO test this a lot
         if(managerSellAmount < _order.managerAmount) {
-            _order.traderAmount = _order.traderAmount.mul(managerSellAmount.div(_order.managerAmount));
             _order.managerAmount = managerSellAmount;
         }
         //adjust if manager is giving better price
         // TODO test this a lot
-        if(managerBuyPrice > sellerPrice) {
-            _order.traderAmount = _order.managerAmount.div(managerBuyPrice);
-        }
+        _order.traderAmount = _order.managerAmount.mul(1e18).div(managerBuyPrice);
 
         IERC20(_order.traderToken).transferFrom(_order.trader, address(this), _order.traderAmount);
 
@@ -662,13 +645,13 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
             // if last param is false, transfer happens again
             _mintWPowerPerp(_order.trader, _order.managerAmount, _order.traderAmount, true);
             priceAtLastHedge = _order.managerAmount.div(_order.traderAmount);
-            emit ExecuteSellAuction(_order.trader, _order.managerAmount, _order.traderAmount, true);
+            emit ExecuteSellAuction(_order.trader, _order.managerAmount, _order.traderAmount);
         } else {
             // oSQTH in, WETH out
             _burnWPowerPerp(_order.trader, _order.traderAmount, _order.managerAmount, true); 
             // if last param is false, transfer happens again
             priceAtLastHedge = _order.traderAmount.div(_order.managerAmount);
-            emit ExecuteBuyAuction(_order.trader, _order.traderAmount, _order.managerAmount, true);
+            emit ExecuteBuyAuction(_order.trader, _order.traderAmount, _order.managerAmount);
         }
 
         IERC20(_order.managerToken).transfer(_order.trader, _order.managerAmount);
@@ -684,17 +667,24 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
     function hedgeOTC(uint256 managerSellAmount, uint256 managerBuyPrice , Order[] memory _orders) external onlyOwner {
         (bool isTimeHedgeAllowed, uint256 auctionTriggerTime) = _isTimeHedge();
-        require(isTimeHedgeAllowed || _isPriceHedge() , "Try hedging after time theshold");
+        require(isTimeHedgeAllowed || _isPriceHedge() , "C3");
 
         timeAtLastHedge = block.timestamp;
 
         uint256 remainingAmount = managerSellAmount;
+        uint256 prevPrice = 0;
+        uint256 currentPrice = 0;
         for (uint i=0; i < _orders.length; i++) {
+            currentPrice = _orders[i].managerAmount.mul(1e18).div(_orders[i].traderAmount);
+            
+            require(currentPrice >= prevPrice, "C2");
+            prevPrice = currentPrice;
+
             if(remainingAmount > _orders[i].managerAmount) {
                 remainingAmount = remainingAmount.sub(_orders[i].managerAmount);
-                _execOrder(remainingAmount, managerBuyPrice, _orders[i]);
+                _execOrder(remainingAmount, managerBuyPrice, currentPrice, _orders[i]);
             } else {
-                _execOrder(remainingAmount, managerBuyPrice, _orders[i]);
+                _execOrder(remainingAmount, managerBuyPrice, currentPrice, _orders[i]);
                 break;
             }
         }
@@ -725,12 +715,12 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
             require(auctionWSqueethEthPrice <= _limitPrice, "Auction price > max price");
             require(msg.value >= ethProceeds, "Low ETH amount received");
 
-            _executeSellAuction(msg.sender, msg.value, wSqueethToAuction, ethProceeds, false);
+            _executeSellAuction(msg.sender, msg.value, wSqueethToAuction, ethProceeds);
         } else {
             require(msg.value == 0, "ETH attached for buy auction");
             // Receiving wSqueeth and paying ETH
             require(auctionWSqueethEthPrice >= _limitPrice, "Auction price < min price");
-            _executeBuyAuction(msg.sender, wSqueethToAuction, ethProceeds, false);
+            _executeBuyAuction(msg.sender, wSqueethToAuction, ethProceeds);
         }
 
         emit Hedge(
@@ -750,28 +740,23 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @param _buyerAmount buyer ETH amount sent
      * @param _wSqueethToSell wSqueeth amount to sell
      * @param _ethToBuy ETH amount to buy
-     * @param _isHedgingOnUniswap true if arbing with uniswap price
      */
     function _executeSellAuction(
         address _buyer,
         uint256 _buyerAmount,
         uint256 _wSqueethToSell,
-        uint256 _ethToBuy,
-        bool _isHedgingOnUniswap
+        uint256 _ethToBuy
     ) internal {
-        if (_isHedgingOnUniswap) {
-            _mintWPowerPerp(_buyer, _wSqueethToSell, _ethToBuy, true);
-        } else {
-            _mintWPowerPerp(_buyer, _wSqueethToSell, _ethToBuy, false);
 
-            uint256 remainingEth = _buyerAmount.sub(_ethToBuy);
+        _mintWPowerPerp(_buyer, _wSqueethToSell, _ethToBuy, false);
 
-            if (remainingEth > 0) {
-                payable(_buyer).sendValue(remainingEth);
-            }
+        uint256 remainingEth = _buyerAmount.sub(_ethToBuy);
+
+        if (remainingEth > 0) {
+            payable(_buyer).sendValue(remainingEth);
         }
 
-        emit ExecuteSellAuction(_buyer, _wSqueethToSell, _ethToBuy, _isHedgingOnUniswap);
+        emit ExecuteSellAuction(_buyer, _wSqueethToSell, _ethToBuy);
     }
 
     /**
@@ -780,21 +765,15 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @param _seller seller address
      * @param _wSqueethToBuy wSqueeth amount to buy
      * @param _ethToSell ETH amount to sell
-     * @param _isHedgingOnUniswap true if arbing with uniswap price
      */
     function _executeBuyAuction(
         address _seller,
         uint256 _wSqueethToBuy,
-        uint256 _ethToSell,
-        bool _isHedgingOnUniswap
+        uint256 _ethToSell
     ) internal {
-        _burnWPowerPerp(_seller, _wSqueethToBuy, _ethToSell, _isHedgingOnUniswap);
-
-        if (!_isHedgingOnUniswap) {
-            payable(_seller).sendValue(_ethToSell);
-        }
-
-        emit ExecuteBuyAuction(_seller, _wSqueethToBuy, _ethToSell, _isHedgingOnUniswap);
+        _burnWPowerPerp(_seller, _wSqueethToBuy, _ethToSell, false);
+        payable(_seller).sendValue(_ethToSell);
+        emit ExecuteBuyAuction(_seller, _wSqueethToBuy, _ethToSell);
     }
 
     /**
