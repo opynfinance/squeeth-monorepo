@@ -586,8 +586,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     }
 
     function hedgeOTC(uint256 managerSellAmount, uint256 managerBuyPrice , Order[] memory _orders) external onlyOwner {
-        (bool isTimeHedgeAllowed, uint256 auctionTriggerTime) = _isTimeHedge();
-        require(isTimeHedgeAllowed || _isPriceHedge() , "C3");
+        require( _isTimeHedge()|| _isPriceHedge() , "C3");
 
         timeAtLastHedge = block.timestamp;
 
@@ -682,12 +681,9 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     /**
      * @notice check if hedging based on time threshold is allowed
      * @return true if time hedging is allowed
-     * @return auction trigger timestamp
      */
-    function _isTimeHedge() internal view returns (bool, uint256) {
-        uint256 auctionTriggerTime = timeAtLastHedge.add(hedgeTimeThreshold);
-
-        return (block.timestamp >= auctionTriggerTime, auctionTriggerTime);
+    function _isTimeHedge() internal view returns (bool) {
+        return (block.timestamp >= timeAtLastHedge.add(hedgeTimeThreshold));
     }
     /**
      * @notice check if hedging based on price threshold is allowed
