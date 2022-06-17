@@ -623,7 +623,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 traderAmount
     );
 
-    function _execOrder(uint256 managerSellAmount, uint256 managerBuyPrice, Order memory _order) internal {
+    function _execOrder(Order memory _order) internal {
         bytes32 structHash = keccak256(
             abi.encode(
                 _CRAB_BALANCE_TYPEHASH,
@@ -640,19 +640,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         bytes32 hash = _hashTypedDataV4(structHash);
         address offerSigner = ECDSA.recover(hash, _order.v, _order.r, _order.s);
         require(offerSigner == _order.trader, "Invalid offer signature");
-
-        //adjust managerAmount and TraderAmount for partial fills
-        // TODO test this a lot
-        if(managerSellAmount < _order.managerAmount) {
-            _order.managerAmount = managerSellAmount;
-            _order.traderAmount = _order.traderAmount.mul(managerSellAmount.div(_order.managerAmount));
-        }
-        //adjust if manager is giving better price
-        // TODO test this a lot
-        uint256 sellerPrice = _order.managerAmount.div(_order.traderAmount);
-        if(managerBuyPrice > sellerPrice) {
-            _order.traderAmount = _order.managerAmount.div(managerBuyPrice);
-        }
 
         IERC20(_order.traderToken).transferFrom(_order.trader, address(this), _order.traderAmount);
 
@@ -682,21 +669,14 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
     }
 
-    function hedgeOTC(uint256 managerSellAmount, uint256 managerBuyPrice , Order[] memory _orders) external onlyOwner {
+    function hedgeOTC(Order[] memory _orders) external onlyOwner {
         (bool isTimeHedgeAllowed, uint256 auctionTriggerTime) = _isTimeHedge();
         require(isTimeHedgeAllowed || _isPriceHedge() , "Try hedging after time theshold");
 
         timeAtLastHedge = block.timestamp;
 
-        uint256 remainingAmount = managerSellAmount;
         for (uint i=0; i < _orders.length; i++) {
-            if(remainingAmount > _orders[i].managerAmount) {
-                remainingAmount = remainingAmount.sub(_orders[i].managerAmount);
-                _execOrder(remainingAmount, managerBuyPrice, _orders[i]);
-            } else {
-                _execOrder(remainingAmount, managerBuyPrice, _orders[i]);
-                break;
-            }
+            _execOrder(_orders[i]);
         }
     }
 
