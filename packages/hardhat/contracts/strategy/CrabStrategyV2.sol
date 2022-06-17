@@ -3,6 +3,9 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
+import "hardhat/console.sol";
+
+
 // interface
 import {IController} from "../interfaces/IController.sol";
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
@@ -587,6 +590,8 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
     function hedgeOTC(uint256 managerSellAmount, uint256 managerBuyPrice , Order[] memory _orders) external onlyOwner {
         require( _isTimeHedge()|| _isPriceHedge() , "C3");
+        _checkOTCPrice(managerBuyPrice, _orders[0].managerToken);
+        // TODO add check that all orders have same managerToken/traderToken
 
         timeAtLastHedge = block.timestamp;
 
@@ -609,7 +614,33 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         }
     }
 
-    
+
+    function _checkOTCPrice(uint256 price, address tokenToSell) internal view {
+            uint256 OTC_PRICE_TOLERANCE = 5e16; // 5%
+            uint256 ONE = 1e18;
+            uint256 ONE_ONE = 1e36;
+            // Get twap
+            uint256 wSqueethEthPrice = IOracle(oracle).getTwap(
+                ethWSqueethPool,
+                wPowerPerp,
+                weth,
+                hedgingTwapPeriod,
+                true
+            );
+            // invert price if we are selling oSQTH
+            uint256 twapPrice = (tokenToSell == wPowerPerp)? ONE_ONE.div(wSqueethEthPrice): wSqueethEthPrice;
+                
+            uint256 lowerPriceMultiplier = (ONE.sub(OTC_PRICE_TOLERANCE));
+            uint256 priceLower = twapPrice.mul(lowerPriceMultiplier).div(ONE);
+            console.log("price is %s", price);
+            console.log("twapPrice is %s", twapPrice);
+            console.log("tokenToSell is %s", tokenToSell );
+            console.log("weth is %s and squeeth is %s", weth, wPowerPerp);
+            console.log("lowerPriceMultiplier", lowerPriceMultiplier);
+            console.log("priceLower", priceLower);
+            // Check that clearing sale price is at least twap -5%
+            require(price >= priceLower, "C4");
+    }
 
     /**
      * @notice sync strategy debt and collateral amount from vault
