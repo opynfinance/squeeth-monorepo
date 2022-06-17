@@ -14,7 +14,7 @@ import {
     buyWSqueeth,
     buyWeth,
 } from "../../setup";
-import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../../utils";
+import { signTypedData, isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../../utils";
 
 BigNumberJs.set({ EXPONENTIAL_AT: 30 });
 
@@ -34,6 +34,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
     let owner: SignerWithAddress;
     let depositor: SignerWithAddress;
     let random: SignerWithAddress;
+    let trader: SignerWithAddress;
     let feeRecipient: SignerWithAddress;
     let dai: MockErc20;
     let weth: WETH9;
@@ -49,10 +50,11 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
 
     this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async () => {
         const accounts = await ethers.getSigners();
-        const [_owner, _depositor, _random, _feeRecipient] = accounts;
+        const [_owner, _depositor, _random, _feeRecipient, _trader] = accounts;
         owner = _owner;
         depositor = _depositor;
         random = _random;
+        trader = _trader;
         feeRecipient = _feeRecipient;
         provider = ethers.provider;
 
@@ -314,7 +316,123 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             expect(timeAtLastHedgeAfter.eq(hedgeBlock.timestamp)).to.be.true;
             expect(priceAtLastHedgeAfter.eq(currentWSqueethPrice)).to.be.true;
         });
-        it("should hedge via OTC", async () => {
+        it("should hedge via OTC using multiple orders while sell oSQTH", async () => {
+            //printDelta(collateralAmount, debtAmount, oSQTHprice);
+            let strategyVaultBefore = await controller.vaults(await crabStrategy.vaultId());
+            console.log(strategyVaultBefore.collateralAmount.toString());
+            console.log(strategyVaultBefore.shortAmount.toString());
+            let oSQTHPriceBefore = await oracle.getTwap(
+                wSqueethPool.address,
+                wSqueeth.address,
+                weth.address,
+                600,
+                false
+            );
+            console.log(oSQTHPriceBefore.toString());
+            let oSQTHdelta = wmul(strategyVaultBefore.shortAmount.mul(2), oSQTHPriceBefore);
+            let delta = strategyVaultBefore.collateralAmount.sub(oSQTHdelta);
+            console.log("delta is ", delta.toString());
+
+            const ethToDeposit = ethers.utils.parseUnits("1000");
+            const wSqueethToMint = ethers.utils.parseUnits("1000");
+            const currentBlockTimestamp = (await provider.getBlock(await provider.getBlockNumber())).timestamp;
+            await controller.connect(owner).mintWPowerPerpAmount("0", wSqueethToMint, "0", { value: ethToDeposit });
+            await buyWeth(
+                swapRouter,
+                wSqueeth,
+                weth,
+                owner.address,
+                await wSqueeth.balanceOf(owner.address),
+                currentBlockTimestamp + 10
+            );
+
+            await provider.send("evm_increaseTime", [86400 + auctionTime / 2]);
+            await provider.send("evm_mine", []);
+
+            let oSQTHPriceAfter = await oracle.getTwap(
+                wSqueethPool.address,
+                wSqueeth.address,
+                weth.address,
+                600,
+                false
+            );
+            console.log(oSQTHPriceAfter.toString());
+            let newOSQTHdelta = wmul(strategyVaultBefore.shortAmount.mul(2), oSQTHPriceAfter);
+            let newDelta = strategyVaultBefore.collateralAmount.sub(newOSQTHdelta);
+            console.log("new Delta is ", newDelta.toString());
+            let toSell = wdiv(newDelta, oSQTHPriceAfter);
+            console.log("quantity of oSQTH sell is", toSell);
+            let toGET = wmul(toSell, oSQTHPriceAfter);
+            console.log("quantity of ETH to get is", toGET);
+
+            let afterOSQTHdelta = wmul(strategyVaultBefore.shortAmount.add(toSell).mul(2), oSQTHPriceAfter);
+            let afterTradeDelta = strategyVaultBefore.collateralAmount.add(toGET).sub(afterOSQTHdelta);
+            console.log("after trade delta would be", afterTradeDelta); //div by 10*18
+
+            //expect((await crabStrategy.checkTimeHedge())[0]).to.be.true;
+
+            console.log("eth balance of random is ", await provider.getBalance(random.address));
+            await weth.connect(random).deposit({ value: toGET });
+            await weth.connect(random).approve(crabStrategy.address, toGET);
+            await weth.connect(trader).deposit({ value: toGET });
+            await weth.connect(trader).approve(crabStrategy.address, toGET);
+            console.log("Weth balance of random is ", await weth.balanceOf(random.address));
+            let orderHash = {
+                bidId: 0,
+                trader: random.address,
+                traderToken: weth.address,
+                traderAmount: toGET.div(2),
+                managerToken: wSqueeth.address,
+                managerAmount: toSell.div(2),
+                nonce: 0,
+            };
+            console.log(orderHash.traderAmount.toString(), orderHash.managerAmount.toString());
+            let orderHash1 = {
+                bidId: 0,
+                trader: trader.address,
+                traderToken: weth.address,
+                traderAmount: toGET.div(2),
+                managerToken: wSqueeth.address,
+                managerAmount: toSell.div(2),
+                nonce: 0,
+            };
+
+            let domainData = {
+                name: "CrabOTC",
+                version: "2",
+                chainId: network.config.chainId,
+                verifyingContract: crabStrategy.address,
+            };
+            let typeData = {
+                Order: [
+                    { type: "uint256", name: "bidId" },
+                    { type: "address", name: "trader" },
+                    { type: "address", name: "traderToken" },
+                    { type: "uint256", name: "traderAmount" },
+                    { type: "address", name: "managerToken" },
+                    { type: "uint256", name: "managerAmount" },
+                    { type: "uint256", name: "nonce" },
+                ],
+            };
+            let signedOrder = await signTypedData(random, domainData, typeData, orderHash)
+            let signedOrder1 = await signTypedData(trader, domainData, typeData, orderHash1);
+
+
+            let managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
+            console.log(managerBuyPrice);
+
+            await crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder, signedOrder1]);
+            let strategyVaultAfter = await controller.vaults(await crabStrategy.vaultId());
+            expect(
+                isSimilar(
+                    strategyVaultAfter.shortAmount.toString(),
+                    strategyVaultBefore.shortAmount.add(toSell).toString()
+                )
+            ).to.be.true;
+            expect(strategyVaultAfter.collateralAmount).eq(strategyVaultBefore.collateralAmount.add(toGET));
+        });
+
+        it("should hedge via OTC using one order while selling oSQTH", async () => {
             //printDelta(collateralAmount, debtAmount, oSQTHprice);
             let strategyVaultBefore = await controller.vaults(await crabStrategy.vaultId());
             console.log(strategyVaultBefore.collateralAmount.toString());
@@ -380,45 +498,41 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 traderAmount: toGET,
                 managerToken: wSqueeth.address,
                 managerAmount: toSell,
-                nonce: 0,
+                nonce: 1,
             };
-            console.log("chaid is", network.config.chainId);
-            console.log(orderHash);
-            let signature = await random._signTypedData(
-                {
-                    name: "CrabOTC",
-                    version: "2",
-                    chainId: network.config.chainId,
-                    verifyingContract: crabStrategy.address,
-                },
-                {
-                    Order: [
-                        { type: "uint256", name: "bidId" },
-                        { type: "address", name: "trader" },
-                        { type: "address", name: "traderToken" },
-                        { type: "uint256", name: "traderAmount" },
-                        { type: "address", name: "managerToken" },
-                        { type: "uint256", name: "managerAmount" },
-                        { type: "uint256", name: "nonce" },
-                    ],
-                },
-                orderHash
-            );
-            const { r, s, v } = ethers.utils.splitSignature(signature);
-            console.log(r, s, v);
-            let signedOrder = {
-                ...orderHash,
-                r,
-                s,
-                v: String(v),
+            console.log(orderHash.traderAmount.toString(), orderHash.managerAmount.toString());
+
+            let domainData = {
+                name: "CrabOTC",
+                version: "2",
+                chainId: network.config.chainId,
+                verifyingContract: crabStrategy.address,
             };
+            let typeData = {
+                Order: [
+                    { type: "uint256", name: "bidId" },
+                    { type: "address", name: "trader" },
+                    { type: "address", name: "traderToken" },
+                    { type: "uint256", name: "traderAmount" },
+                    { type: "address", name: "managerToken" },
+                    { type: "uint256", name: "managerAmount" },
+                    { type: "uint256", name: "nonce" },
+                ],
+            };
+            let signedOrder = await signTypedData(random, domainData, typeData, orderHash)
+
 
             let managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
             console.log(managerBuyPrice);
 
             await crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder]);
             let strategyVaultAfter = await controller.vaults(await crabStrategy.vaultId());
-            expect(strategyVaultAfter.shortAmount).eq(strategyVaultBefore.shortAmount.add(toSell));
+            expect(
+                isSimilar(
+                    strategyVaultAfter.shortAmount.toString(),
+                    strategyVaultBefore.shortAmount.add(toSell).toString()
+                )
+            ).to.be.true;
             expect(strategyVaultAfter.collateralAmount).eq(strategyVaultBefore.collateralAmount.add(toGET));
         });
     });

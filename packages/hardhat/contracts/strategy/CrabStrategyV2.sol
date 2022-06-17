@@ -642,8 +642,8 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
             prevTradePair = tradePair;
 
             if (remainingAmount > _orders[i].managerAmount) {
-                remainingAmount = remainingAmount.sub(_orders[i].managerAmount);
                 _execOrder(remainingAmount, managerBuyPrice, currentPrice, _orders[i]);
+                remainingAmount = remainingAmount.sub(_orders[i].managerAmount);
             } else {
                 _execOrder(remainingAmount, managerBuyPrice, currentPrice, _orders[i]);
                 break;
