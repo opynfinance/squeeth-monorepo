@@ -50,7 +50,8 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     uint256 private constant ONE = 1e18;
     uint256 private constant ONE_ONE = 1e36;
 
-    uint256 public OTC_PRICE_TOLERANCE = 5e16; // 5%
+    // @dev OTC price must be within this distance of the uniswap twap price
+    uint256 public otcPriceTolerance = 5e16; // 5%
 
     /// @dev twap period to use for hedge calculations
     uint32 public hedgingTwapPeriod = 420 seconds;
@@ -625,11 +626,20 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 remainingAmount = managerSellAmount;
         uint256 prevPrice = 0;
         uint256 currentPrice = 0;
+        bytes memory tradePair;
+        bytes memory prevTradePair;
         for (uint256 i = 0; i < _orders.length; i++) {
+            tradePair = abi.encode(_orders[i].traderToken, _orders[i].managerToken);
             currentPrice = _orders[i].managerAmount.mul(1e18).div(_orders[i].traderAmount);
-
             require(currentPrice >= prevPrice, "C2");
+            if (i > 0) {
+                require(
+                    keccak256(tradePair) == keccak256(prevTradePair),
+                    "All orders must have the same buy/sell token."
+                );
+            }
             prevPrice = currentPrice;
+            prevTradePair = tradePair;
 
             if (remainingAmount > _orders[i].managerAmount) {
                 remainingAmount = remainingAmount.sub(_orders[i].managerAmount);
@@ -659,7 +669,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         console.log("weth is %s and squeeth is %s", weth, wPowerPerp);
         console.log("priceLower", priceLower);
         // Check that clearing sale price is at least twap*(1 - otcPriceTolerance%)
-        require(price >= priceLower, "C4");
+        require(price >= priceLower, "Price too low relative to Uniswap twap.");
     }
 
     /**
