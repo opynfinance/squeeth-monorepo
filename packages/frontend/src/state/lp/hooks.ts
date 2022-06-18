@@ -34,31 +34,38 @@ export const useClosePosition = () => {
   const controllerHelperContract = useAtomValue(controllerHelperHelperContractAtom)
   const { controllerHelper } = useAtomValue(addressesAtom)
   const controllerContract = useAtomValue(controllerContractAtom)
-  const handleTransaction = useHandleTransaction()
-  const squeethPrice = useAtomValue(squeethPriceeAtom)
-  const ethPrice = useAtomValue(wethPriceAtom)
   const positionManager = useAtomValue(nftManagerContractAtom)
+  const handleTransaction = useHandleTransaction()
+  const getTwapSqueethPrice = useGetTwapSqueethPrice()
+  const getDebtAmount = useGetDebtAmount()
   const closePosition = useAppCallback(async (vaultId: BigNumber, onTxConfirmed?: () => void) => {
-    if (!controllerContract || !controllerHelperContract || !address || !positionManager) return
-    const one = new BigNumber(10).pow(18)
     const uniTokenId = (await controllerContract?.methods.vaults(vaultId)).NftCollateralId
     const vaultBefore = await controllerContract?.methods.vaults(vaultId)
-    const scaledEthPrice = ethPrice.div(10000)
-    const debtInEth = vaultBefore.shortAmount.mul(scaledEthPrice).div(one)
-    const collateralToFlashloan = debtInEth.mul(3).div(2).add(0.01)
+    if (
+      !controllerContract ||
+      !controllerHelperContract ||
+      !address ||
+      !positionManager ||
+      !vaultBefore ||
+      !vaultBefore.shortAmount
+    )
+      return
+    const debtInEth = await getDebtAmount(vaultBefore.shortAmount)
+    const collateralToFlashloan = debtInEth.multipliedBy(1.5)
+    // What should we set as slippage
     const slippage = new BigNumber(3).multipliedBy(new BigNumber(10).pow(16))
+    const squeethPrice = await getTwapSqueethPrice()
     const limitPriceEthPerPowerPerp = squeethPrice.multipliedBy(one.minus(slippage)).div(one)
     const positionBefore = await positionManager.methods.positions(uniTokenId)
-
     const flashloanCloseVaultLpNftParam = {
       vaultId: vaultId,
       tokenId: uniTokenId,
       liquidity: positionBefore.liquidity,
-      liquidityPercentage: 1,
-      wPowerPerpAmountToBurn: vaultBefore.shortAmount.toString(),
-      collateralToFlashloan: collateralToFlashloan.toString(),
+      liquidityPercentage: fromTokenAmount(1, 18).toFixed(0),
+      wPowerPerpAmountToBurn: vaultBefore.shortAmount.toFixed(0),
+      collateralToFlashloan: collateralToFlashloan.toFixed(0),
       collateralToWithdraw: 0,
-      limitPriceEthPerPowerPerp: limitPriceEthPerPowerPerp.toString(),
+      limitPriceEthPerPowerPerp: limitPriceEthPerPowerPerp.toFixed(0),
       amount0Min: 0,
       amount1Min: 0,
       poolFee: 3000,
