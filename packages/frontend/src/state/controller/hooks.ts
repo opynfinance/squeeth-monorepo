@@ -213,7 +213,6 @@ export const useGetTwapEthPrice = () => {
 export const useGetTwapSqueethPrice = () => {
   const { squeethPool, oSqueeth, weth } = useAtomValue(addressesAtom)
   const { getTwapSafe } = useOracle()
-  console.log(squeethPool, oSqueeth, weth)
   const getTwapSqueethPrice = useCallback(
     async () => await getTwapSafe(squeethPool, oSqueeth, weth, TWAP_PERIOD),
     [oSqueeth, weth, getTwapSafe, squeethPool],
