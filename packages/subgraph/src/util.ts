@@ -224,6 +224,7 @@ export function handleOSQTHChange(
   if (amount.equals(ZERO_BD) || userAddr == null) return;
 
   let position = loadOrCreatePosition(userAddr);
+  let account = loadOrCreateAccount(userAddr);
 
   // When position side chages, reset PnLs and calculate with remaining amount
   let newAmount = position.currentOSQTHAmount.plus(amount);
@@ -233,9 +234,12 @@ export function handleOSQTHChange(
   }
 
   let absAmount = amount.lt(ZERO_BD) ? amount.neg() : amount;
+  let osqthAmountWithShortDebt = position.currentOSQTHAmount.minus(
+    BigDecimal.fromString(account.accShortAmount.toString())
+  );
   let isLong =
-    position.currentOSQTHAmount.gt(ZERO_BD) ||
-    (position.currentOSQTHAmount.equals(ZERO_BD) && amount.gt(ZERO_BD));
+    osqthAmountWithShortDebt.gt(ZERO_BD) ||
+    (osqthAmountWithShortDebt.equals(ZERO_BD) && amount.gt(ZERO_BD));
 
   if (isLong) {
     // Buy long
