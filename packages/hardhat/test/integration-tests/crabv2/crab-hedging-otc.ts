@@ -535,6 +535,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             expect(strategyVaultAfter.collateralAmount).eq(strategyVaultBefore.collateralAmount.add(toGET));
         });
         it("should hedge via OTC using one order while buying oSQTH delta negative", async () => {
+            let trader = random;
             // oSQTH price before
             let oSQTHPriceBefore = await oracle.getTwap(
                 wSqueethPool.address,
@@ -558,7 +559,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const currentBlockTimestamp = (await provider.getBlock(await provider.getBlockNumber())).timestamp;
 
             // trader amount to sell
-            await controller.connect(random).mintWPowerPerpAmount("0", wSqueethToMint, "0", { value: ethToDeposit });
+            await controller.connect(trader).mintWPowerPerpAmount("0", wSqueethToMint, "0", { value: ethToDeposit });
 
             // do the trade to offset delta
             await buyWSqueeth(
@@ -600,20 +601,20 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
 
 
             // get the pre trade balances for the trader
-            let oSQTHTraderBalanceBefore = await wSqueeth.balanceOf(random.address);
-            let wethTraderBalanceBefore = await weth.balanceOf(random.address);
+            let oSQTHTraderBalanceBefore = await wSqueeth.balanceOf(trader.address);
+            let wethTraderBalanceBefore = await weth.balanceOf(trader.address);
 
             // make the approvals for the trade and prepare the trade
-            await wSqueeth.connect(random).approve(crabStrategy.address, toGET);
+            await wSqueeth.connect(trader).approve(crabStrategy.address, toGET);
 
             let orderHash = {
                 bidId: 0,
-                trader: random.address,
+                trader: trader.address,
                 traderToken: wSqueeth.address,
                 traderAmount: toGET,
                 managerToken: weth.address,
                 managerAmount: toSell,
-                nonce: (await crabStrategy.nonces(random.address)),
+                nonce: (await crabStrategy.nonces(trader.address)),
             };
             console.log(orderHash.traderAmount.toString(), orderHash.managerAmount.toString());
 
@@ -635,7 +636,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 ],
             };
             // Do the trade
-            let signedOrder = await signTypedData(random, domainData, typeData, orderHash)
+            let signedOrder = await signTypedData(trader, domainData, typeData, orderHash)
             let managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
             console.log(managerBuyPrice);
             await crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder]);
@@ -653,8 +654,8 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
 
 
             // check trader balances
-            let oSQTHTraderBalanceAfter = await wSqueeth.balanceOf(random.address);
-            let wethTraderBalanceAfter = await weth.balanceOf(random.address);
+            let oSQTHTraderBalanceAfter = await wSqueeth.balanceOf(trader.address);
+            let wethTraderBalanceAfter = await weth.balanceOf(trader.address);
             expect(oSQTHTraderBalanceAfter).eq(oSQTHTraderBalanceBefore.sub(toGET));
             expect(wethTraderBalanceAfter).eq(wethTraderBalanceBefore.add(toSell));
         });
