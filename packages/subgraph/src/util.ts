@@ -254,9 +254,11 @@ export function handleOSQTHChange(
       let oldRealizedOSQTHCost =
         position.realizedOSQTHUnitCost.times(totalAmount);
 
-      position.realizedOSQTHUnitCost = oldRealizedOSQTHCost
-        .plus(amount.times(osqthPriceInUSD))
-        .div(totalAmount.plus(amount));
+      if (!totalAmount.plus(amount).equals(ZERO_BD)) {
+        position.realizedOSQTHUnitCost = oldRealizedOSQTHCost
+          .plus(amount.times(osqthPriceInUSD))
+          .div(totalAmount.plus(amount));
+      }
     }
 
     // Sell long
@@ -267,9 +269,11 @@ export function handleOSQTHChange(
 
       position.realizedOSQTHAmount =
         position.realizedOSQTHAmount.plus(absAmount);
-      position.realizedOSQTHUnitGain = oldRealizedOSQTHGain
-        .plus(absAmount.times(osqthPriceInUSD))
-        .div(position.realizedOSQTHAmount);
+      if (!position.realizedOSQTHAmount.equals(ZERO_BD)) {
+        position.realizedOSQTHUnitGain = oldRealizedOSQTHGain
+          .plus(absAmount.times(osqthPriceInUSD))
+          .div(position.realizedOSQTHAmount);
+      }
     }
   } else {
     // Buy short
@@ -279,9 +283,11 @@ export function handleOSQTHChange(
       );
 
       position.realizedOSQTHAmount = position.realizedOSQTHAmount.plus(amount);
-      position.realizedOSQTHUnitGain = oldRealizedOSQTHGain
-        .plus(amount.times(osqthPriceInUSD))
-        .div(position.realizedOSQTHAmount);
+      if (!position.realizedOSQTHAmount.equals(ZERO_BD)) {
+        position.realizedOSQTHUnitGain = oldRealizedOSQTHGain
+          .plus(amount.times(osqthPriceInUSD))
+          .div(position.realizedOSQTHAmount);
+      }
     }
 
     // sell short
@@ -297,9 +303,11 @@ export function handleOSQTHChange(
       let oldRealizedOSQTHCost =
         position.realizedOSQTHUnitCost.times(totalAmount);
 
-      position.realizedOSQTHUnitCost = oldRealizedOSQTHCost
-        .plus(amount.times(osqthPriceInUSD))
-        .div(totalAmount.plus(amount));
+      if (!totalAmount.plus(amount).equals(ZERO_BD)) {
+        position.realizedOSQTHUnitCost = oldRealizedOSQTHCost
+          .plus(amount.times(osqthPriceInUSD))
+          .div(totalAmount.plus(amount));
+      }
     }
   }
 
