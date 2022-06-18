@@ -17,6 +17,7 @@ import { useGetSellQuote } from '../squeethPool/hooks'
 import { useUpdateAtom } from 'jotai/utils'
 import { lowerTickAtom, upperTickAtom } from './atoms'
 import { useMemo } from 'react'
+import { useGetDebtAmount, useGetTwapEthPrice, useGetTwapSqueethPrice } from '../controller/hooks'
 
 /*** CONSTANTS ***/
 const one = new BigNumber(10).pow(18)
@@ -136,24 +137,17 @@ export const useOpenPositionDeposit = () => {
   const address = useAtomValue(addressAtom)
   const contract = useAtomValue(controllerHelperHelperContractAtom)
   const handleTransaction = useHandleTransaction()
-  const normFactor = useAtomValue(normFactorAtom)
-  const ethPrice = useAtomValue(wethPriceAtom)
-  const squeethPrice = useAtomValue(squeethPriceeAtom)
+  const getTwapSqueethPrice = useGetTwapSqueethPrice()
+  const getDebtAmount = useGetDebtAmount()
   const openPositionDeposit = useAppCallback(
     async (squeethToMint: BigNumber, lowerTickInput: number, upperTickInput: number, onTxConfirmed?: () => void) => {
-      // const mintWSqueethAmount = fromTokenAmount(squeethToMint, OSQUEETH_DECIMALS).multipliedBy(normalizationFactor)
-      // const mintRSqueethAmount = mintWSqueethAmount.multipliedBy(normFactor).div(one)
-      // console.log('scaledEthPrice', ethPrice.toString())
-      // const debtInEth = mintRSqueethAmount.multipliedBy(ethPrice)
-      // const ethAmt = fromTokenAmount(ethAmount, 18).toFixed(0)
-
+      const squeethPrice = await getTwapSqueethPrice()
+      console.log('squeeth price', squeethPrice.toString())
       const mintWSqueethAmount = fromTokenAmount(squeethToMint, OSQUEETH_DECIMALS)
-      const ethDebt = mintWSqueethAmount.multipliedBy(normFactor).multipliedBy(ethPrice)
-
+      const ethDebt = await getDebtAmount(mintWSqueethAmount)
       // Do we want to hardcode a 150% collateralization ratio?
       const collateralToMint = ethDebt.multipliedBy(3).div(2)
       const collateralToLp = mintWSqueethAmount.multipliedBy(squeethPrice)
-
       const flashloanFee = collateralToMint.multipliedBy(9).div(1000)
 
       const lowerTick = nearestUsableTick(lowerTickInput, 3000)
@@ -172,6 +166,8 @@ export const useOpenPositionDeposit = () => {
         lowerTick: lowerTick,
         upperTick: upperTick,
       }
+
+      console.log('flashloanWMintDepositNftParams from hooks', flashloanWMintDepositNftParams)
       if (!contract || !address) return null
 
       return handleTransaction(
