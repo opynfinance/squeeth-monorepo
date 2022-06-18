@@ -27,8 +27,13 @@ import {
   HourStatSnapshot,
   DayStatSnapshot,
   VaultHistory,
+  Account,
 } from "../generated/schema";
-import { buyOrSellETH, loadOrCreateAccount } from "./util";
+import {
+  buyOrSellETH,
+  createTransactionHistory,
+  loadOrCreateAccount,
+} from "./util";
 
 import {
   BIGINT_ONE,
@@ -36,7 +41,6 @@ import {
   SHORT_HELPER_ADDR,
   EMPTY_ADDR,
 } from "./constants";
-import { createTransactionHistory } from "./utils/transactionHistory";
 
 // Note: If a handler doesn't require existing field values, it is faster
 // _not_ to load the entity from the store. Instead, create it fresh with

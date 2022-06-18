@@ -12,9 +12,13 @@ import {
   USDC_WETH_POOL,
   ZERO_BD,
 } from "../constants";
-import { loadOrCreateAccount, buyOrSellSQTH } from "../util";
+import {
+  createTransactionHistory,
+  loadOrCreateAccount,
+  loadOrCreatePosition,
+  buyOrSellSQTH,
+} from "../util";
 import { convertTokenToDecimal } from "../utils";
-import { createTransactionHistory } from "../utils/transactionHistory";
 
 export function handleInitialize(event: Initialize): void {
   // update pool sqrt price

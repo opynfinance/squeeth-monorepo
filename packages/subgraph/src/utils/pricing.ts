@@ -1,15 +1,7 @@
 /* eslint-disable prefer-const */
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { exponentToBigDecimal, safeDiv } from "../utils/index";
-
-export function bigExponent(base: i32, exp: i32): BigInt {
-  let base_BI = BigInt.fromI32(base);
-  let bd = base_BI;
-  for (let i = 1; i < exp; i++) {
-    bd = bd.times(base_BI);
-  }
-  return bd;
-}
+import { bigExponent } from "../util";
 
 let Q192 = bigExponent(2, 192);
 export function sqrtPriceX96ToTokenPrices(
