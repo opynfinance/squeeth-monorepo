@@ -5,6 +5,11 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract MockCrab is ERC20 { 
 
+    address operator;
+    uint256 vaultId;
+    uint256 collateral; 
+    uint256 short;
+
     constructor(
         string memory _name,
         string memory _symbol,
@@ -19,5 +24,15 @@ contract MockCrab is ERC20 {
 
     function burn(address _account, uint256 _amount) external {
         _burn(_account, _amount);
+    }
+
+    function setVaultDetails(uint256 _vaultId, uint256 _collateral, uint256 _short) external {
+        vaultId = _vaultId;
+        collateral = _collateral;
+        short = _short;
+    }
+
+    function getVaultDetails() external view returns (address, uint256, uint256, uint256) {
+        return (operator, vaultId, collateral, short);
     }
 }

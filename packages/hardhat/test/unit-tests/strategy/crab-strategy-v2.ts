@@ -177,6 +177,7 @@ describe("Crab Strategy V2", function () {
     it("Deployment", async function () {
       const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
       crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, random.address, wSqueethEthPool.address, timelock.address, hedgeTimeTolerance, hedgePriceTolerance)) as CrabStrategyV2;
+      await crabStrategy.initialize();
     });
   });
 

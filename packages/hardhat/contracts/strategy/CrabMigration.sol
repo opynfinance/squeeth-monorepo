@@ -6,7 +6,7 @@ pragma abicoder v2;
 // interface
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import {IEuler, IEulerDToken} from "../interfaces/IEuler.sol";
+import {IEulerExec, IEulerDToken} from "../interfaces/IEuler.sol";
 
 // contract
 import {CrabStrategyV2} from "./CrabStrategyV2.sol";
@@ -35,7 +35,7 @@ import {CrabStrategy} from "./CrabStrategy.sol";
      address public owner;
      CrabStrategy public crabV1;
      CrabStrategyV2 public crabV2; 
-     IEuler public euler; 
+     IEulerExec public euler; 
      // TODO: figure out what is this address 
      address immutable EULER_MAINNET;
      address immutable dToken; 
@@ -64,9 +64,9 @@ import {CrabStrategy} from "./CrabStrategy.sol";
      constructor (address payable _crabV1, address payable _crabV2, address _euler, address _weth, address _dToken) { 
          crabV1 = CrabStrategy(_crabV1);
          crabV2 = CrabStrategyV2 (_crabV2);
-         euler = IEuler(_euler);
+         euler = IEulerExec(_euler);
          owner = msg.sender;
-         EULER_MAINNET = _euler;
+         EULER_MAINNET = _dToken;
          weth = _weth;
          dToken = _dToken; 
      }
@@ -97,10 +97,10 @@ import {CrabStrategy} from "./CrabStrategy.sol";
 
      function onDeferredLiquidityCheck(bytes memory encodedData) external {
 
-         require(msg.sender == address(euler), "M4");
-        // Borrow 10 tokens (assuming 18 decimals):
+        require(msg.sender == address(euler), "M4");
+        // 1. Borrow weth
         uint256 crabV1Balance = crabV1.balanceOf(address(this));
-        uint256 crabV1Supply = crabV1.supply();
+        uint256 crabV1Supply = crabV1.totalSupply();
         (address _, uint256 id, uint256 totalCollateral, uint256 totalShort) = crabV1.getVaultDetails();
         uint256 amountEthToBorrow = crabV1Balance * totalCollateral / crabV1Supply;
 
