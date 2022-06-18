@@ -346,7 +346,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             expect(timeAtLastHedgeAfter.eq(hedgeBlock.timestamp)).to.be.true;
             expect(priceAtLastHedgeAfter.eq(currentWSqueethPrice)).to.be.true;
         });
-        it("should hedge via OTC using multiple orders while sell oSQTH", async () => {
+        it("should hedge via OTC using multiple orders while sell oSQTH and updated timeAtLastHedge", async () => {
             const strategyVaultBefore = await controller.vaults(await crabStrategy.vaultId());
             // vault state before
             let deltaStart = await delta(strategyVaultBefore);
@@ -395,7 +395,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 traderAmount: toGET.div(2),
                 managerToken: wSqueeth.address,
                 managerAmount: toSell.div(2),
-                nonce: await crabStrategy.nonces(random.address),
+                nonce: await crabStrategy.nonces(trader.address),
             };
 
             let domainData = {
@@ -451,6 +451,12 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             expect(wethTraderBalanceAfter).eq(wethTraderBalanceBefore.sub(toGET.div(2)));
             expect(oSQTHTraderBalanceAfter_2).eq(oSQTHTraderBalanceBefore_2.add(toSell.div(2)));
             expect(wethTraderBalanceAfter_2).eq(wethTraderBalanceBefore_2.sub(toGET.div(2)));
+
+            // get hedgeBlock to be updated
+            const hedgeBlockNumber = await provider.getBlockNumber();
+            const hedgeBlock = await provider.getBlock(hedgeBlockNumber);
+            const timeAtLastHedge = await crabStrategy.timeAtLastHedge();
+            expect(timeAtLastHedge.eq(hedgeBlock.timestamp)).to.be.true;
         });
         it("should hedge via OTC using one order while selling oSQTH", async () => {
             // TODO comment and organize like below test
@@ -672,6 +678,113 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             let wethTraderBalanceAfter = await weth.balanceOf(trader.address);
             expect(oSQTHTraderBalanceAfter).eq(oSQTHTraderBalanceBefore.sub(toGET));
             expect(wethTraderBalanceAfter).eq(wethTraderBalanceBefore.add(toSell));
+        });
+        it("allows manager to trader fewer quantity than sum of orders", async () => {
+            const strategyVaultBefore = await controller.vaults(await crabStrategy.vaultId());
+            // vault state before
+            let deltaStart = await delta(strategyVaultBefore);
+            expect(deltaStart.toNumber()).eql(0);
+            // trader amount to sell oSQTH to change the deltas
+            await mintAndSell();
+
+            // Calculate new Delta and the trades to make
+            let newDelta = await delta(strategyVaultBefore);
+            let oSQTHPriceAfter = await getOSQTHPrice(); 
+            let toSell = wdiv(newDelta, oSQTHPriceAfter);
+            let toGET = wmul(toSell, oSQTHPriceAfter);
+            console.log(oSQTHPriceAfter.toString());
+            console.log("new Delta is ", newDelta.toString());
+            console.log("quantity of oSQTH sell is", toSell);
+            console.log("quantity of ETH to get is", toGET);
+
+            // make the approvals for the trade
+            console.log("eth balance of random is ", await provider.getBalance(random.address));
+            await weth.connect(random).deposit({ value: toGET });
+            await weth.connect(random).approve(crabStrategy.address, toGET);
+            await weth.connect(trader).deposit({ value: toGET });
+            await weth.connect(trader).approve(crabStrategy.address, toGET);
+
+            // get the pre trade balances for the trader
+            let oSQTHTraderBalanceBefore = await wSqueeth.balanceOf(trader.address);
+            let wethTraderBalanceBefore = await weth.balanceOf(trader.address);
+            let oSQTHTraderBalanceBefore_2 = await wSqueeth.balanceOf(random.address);
+            let wethTraderBalanceBefore_2 = await weth.balanceOf(random.address);
+
+            // and prepare the trade
+            console.log("Weth balance of random is ", await weth.balanceOf(random.address));
+            let orderHash = {
+                bidId: 0,
+                trader: random.address,
+                traderToken: weth.address,
+                traderAmount: toGET.div(2),
+                managerToken: wSqueeth.address,
+                managerAmount: toSell.div(2),
+                nonce: await crabStrategy.nonces(random.address),
+            };
+            // quantity is full and not half. hence more quantity for this case, but manager trades less
+            let orderHash1 = {
+                bidId: 0,
+                trader: trader.address,
+                traderToken: weth.address,
+                traderAmount: toGET,
+                managerToken: wSqueeth.address,
+                managerAmount: toSell,
+                nonce: await crabStrategy.nonces(trader.address),
+            };
+
+            let domainData = {
+                name: "CrabOTC",
+                version: "2",
+                chainId: network.config.chainId,
+                verifyingContract: crabStrategy.address,
+            };
+            let typeData = {
+                Order: [
+                    { type: "uint256", name: "bidId" },
+                    { type: "address", name: "trader" },
+                    { type: "address", name: "traderToken" },
+                    { type: "uint256", name: "traderAmount" },
+                    { type: "address", name: "managerToken" },
+                    { type: "uint256", name: "managerAmount" },
+                    { type: "uint256", name: "nonce" },
+                ],
+            };
+            let signedOrder = await signTypedData(random, domainData, typeData, orderHash);
+            let signedOrder1 = await signTypedData(trader, domainData, typeData, orderHash1);
+            let managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
+
+            // Do the trade
+            await crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder, signedOrder1]);
+
+            console.log(orderHash.traderAmount.toString(), orderHash.managerAmount.toString());
+            console.log(managerBuyPrice);
+
+            // check the delta and the vaults traded quantities
+            let strategyVaultAfter = await controller.vaults(await crabStrategy.vaultId());
+            // TODO do work out the checks for reduce amount
+            expect(strategyVaultAfter.collateralAmount).eq(strategyVaultBefore.collateralAmount.add(toGET));
+            expect(strategyVaultAfter.shortAmount.toString()).eq(
+                strategyVaultBefore.shortAmount.add(toSell).toString()
+            );
+            expect((await delta(strategyVaultAfter)).toNumber()).to.eqls(0);
+            console.log("before and after for the vaults");
+            console.log(strategyVaultBefore.collateralAmount.toString(), strategyVaultBefore.shortAmount.toString());
+            console.log(
+                strategyVaultAfter.collateralAmount.toString(),
+                strategyVaultAfter.shortAmount.toString(),
+                oSQTHPriceAfter.toString()
+            );
+            // check the delta and the vaults traded quantities
+
+            // check trader balances
+            let oSQTHTraderBalanceAfter = await wSqueeth.balanceOf(trader.address);
+            let wethTraderBalanceAfter = await weth.balanceOf(trader.address);
+            let oSQTHTraderBalanceAfter_2 = await wSqueeth.balanceOf(random.address);
+            let wethTraderBalanceAfter_2 = await weth.balanceOf(random.address);
+            expect(oSQTHTraderBalanceAfter).eq(oSQTHTraderBalanceBefore.add(toSell.div(2)));
+            expect(wethTraderBalanceAfter).eq(wethTraderBalanceBefore.sub(toGET.div(2)));
+            expect(oSQTHTraderBalanceAfter_2).eq(oSQTHTraderBalanceBefore_2.add(toSell.div(2)));
+            expect(wethTraderBalanceAfter_2).eq(wethTraderBalanceBefore_2.sub(toGET.div(2)));
         });
     });
 });
