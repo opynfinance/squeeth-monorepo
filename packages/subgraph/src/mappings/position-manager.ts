@@ -15,7 +15,6 @@ import {
   ZERO_BI,
 } from "../constants";
 import {
-  createTransactionHistory,
   loadOrCreateAccount,
   buyOrSellLPSQTH,
   buyOrSellLPETH,
@@ -26,6 +25,7 @@ import {
 } from "../util";
 import { convertTokenToDecimal } from "../utils";
 import { Address, BigInt } from "@graphprotocol/graph-ts";
+import { createTransactionHistory } from "../utils/transactionHistory";
 
 function updateLPposition(
   userAddr: string,

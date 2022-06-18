@@ -7,7 +7,8 @@ import {
   SWAPROUTER2_ADDR,
   SWAPROUTER_ADDR,
 } from "./constants";
-import { buyOrSellSQTH, createTransactionHistory } from "./util";
+import { buyOrSellSQTH } from "./util";
+import { createTransactionHistory } from "./utils/transactionHistory";
 
 export function handleTransfer(event: Transfer): void {
   let pool = Pool.load(event.address.toHexString());

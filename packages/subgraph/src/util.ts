@@ -1,12 +1,5 @@
-import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
-import { ethereum } from "@graphprotocol/graph-ts";
-import {
-  Account,
-  LPPosition,
-  Pool,
-  Position,
-  TransactionHistory,
-} from "../generated/schema";
+import { BigDecimal } from "@graphprotocol/graph-ts";
+import { Account, LPPosition, Pool, Position } from "../generated/schema";
 import {
   BIGINT_ZERO,
   USDC_WETH_POOL,
@@ -16,15 +9,6 @@ import {
   TOKEN_DECIMALS_18,
 } from "./constants";
 import { sqrtPriceX96ToTokenPrices } from "./utils/pricing";
-
-export function bigExponent(base: i32, exp: i32): BigInt {
-  let base_BI = BigInt.fromI32(base);
-  let bd = base_BI;
-  for (let i = 1; i < exp; i++) {
-    bd = bd.times(base_BI);
-  }
-  return bd;
-}
 
 export function loadOrCreateAccount(accountId: string): Account {
   let account = Account.load(accountId);
@@ -131,33 +115,6 @@ export function getoSQTHETHPrice(): BigDecimal[] {
     osqthPrices[1],
     osqthPrices[1].times(usdcPrices[1]),
   ];
-}
-
-export function createTransactionHistory(
-  transactionType: string,
-  event: ethereum.Event
-): TransactionHistory {
-  let transactionHistory = new TransactionHistory(
-    `${event.transaction.hash.toHex()}-${transactionType}`
-  );
-
-  let osqthPrices = getoSQTHETHPrice();
-  let usdcPrices = getETHUSDCPrice();
-  transactionHistory.owner = event.transaction.from;
-  transactionHistory.timestamp = event.block.timestamp;
-  transactionHistory.transactionType = transactionType;
-  transactionHistory.oSqthAmount = BigInt.zero();
-  transactionHistory.ethAmount = BigInt.zero();
-  transactionHistory.ethUSDCSqrtPrice = BigInt.fromString(
-    usdcPrices[0].toString()
-  );
-  transactionHistory.ethPriceInUSD = usdcPrices[1];
-  transactionHistory.ethOSQTHSqrtPrice = BigInt.fromString(
-    osqthPrices[0].toString()
-  );
-  transactionHistory.oSqthPriceInETH = osqthPrices[2];
-
-  return transactionHistory;
 }
 
 // buy: amount > 0
