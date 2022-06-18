@@ -174,6 +174,36 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
     });
 
     describe("Sell auction", async () => {
+        const getOSQTHPrice = () => oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false);
+        const mintAndSell = async () => {
+            const ethToDeposit = ethers.utils.parseUnits("1000");
+            const wSqueethToMint = ethers.utils.parseUnits("1000");
+            const currentBlockTimestamp = (await provider.getBlock(await provider.getBlockNumber())).timestamp;
+            await controller.connect(owner).mintWPowerPerpAmount("0", wSqueethToMint, "0", { value: ethToDeposit });
+            await buyWeth(
+                swapRouter,
+                wSqueeth,
+                weth,
+                owner.address,
+                await wSqueeth.balanceOf(owner.address),
+                currentBlockTimestamp + 10
+            );
+
+            await provider.send("evm_increaseTime", [86400 + auctionTime / 2]);
+            await provider.send("evm_mine", []);
+        };
+        const delta = async (vault: any) => {
+            // oSQTH price before
+            let oSQTHPriceBefore = await getOSQTHPrice();
+            let oSQTHdelta = wmul(vault.shortAmount.mul(2), oSQTHPriceBefore);
+            let delta = vault.collateralAmount.sub(oSQTHdelta);
+            console.log("oSQTHPrice is ", oSQTHPriceBefore.toString());
+            console.log("collateral Amount is ", vault.collateralAmount.toString());
+            console.log("shortAmoun ti", vault.shortAmount.toString());
+            console.log("delta is ", delta.toString());
+
+            return delta;
+        };
         xit("should hedge by selling WSqueeth for ETH and update timestamp and price at hedge", async () => {
             // change pool price for auction to be sell auction
             const ethToDeposit = ethers.utils.parseUnits("1000");
@@ -317,61 +347,22 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             expect(priceAtLastHedgeAfter.eq(currentWSqueethPrice)).to.be.true;
         });
         it("should hedge via OTC using multiple orders while sell oSQTH", async () => {
-            // oSQTH price before
-            let oSQTHPriceBefore = await oracle.getTwap(
-                wSqueethPool.address,
-                wSqueeth.address,
-                weth.address,
-                600,
-                false
-            );
-            console.log(oSQTHPriceBefore.toString());
-
+            const strategyVaultBefore = await controller.vaults(await crabStrategy.vaultId());
             // vault state before
-            let strategyVaultBefore = await controller.vaults(await crabStrategy.vaultId());
-            let oSQTHdelta = wmul(strategyVaultBefore.shortAmount.mul(2), oSQTHPriceBefore);
-            let delta = strategyVaultBefore.collateralAmount.sub(oSQTHdelta);
-            console.log(strategyVaultBefore.collateralAmount.toString());
-            console.log(strategyVaultBefore.shortAmount.toString());
-            console.log("delta is ", delta.toString());
-
+            let deltaStart = await delta(strategyVaultBefore);
+            expect(deltaStart.toNumber()).eql(0);
             // trader amount to sell oSQTH to change the deltas
-            const ethToDeposit = ethers.utils.parseUnits("1000");
-            const wSqueethToMint = ethers.utils.parseUnits("1000");
-            const currentBlockTimestamp = (await provider.getBlock(await provider.getBlockNumber())).timestamp;
-            await controller.connect(owner).mintWPowerPerpAmount("0", wSqueethToMint, "0", { value: ethToDeposit });
-            await buyWeth(
-                swapRouter,
-                wSqueeth,
-                weth,
-                owner.address,
-                await wSqueeth.balanceOf(owner.address),
-                currentBlockTimestamp + 10
-            );
-
-            await provider.send("evm_increaseTime", [86400 + auctionTime / 2]);
-            await provider.send("evm_mine", []);
+            await mintAndSell();
 
             // Calculate new Delta and the trades to make
-            let oSQTHPriceAfter = await oracle.getTwap(
-                wSqueethPool.address,
-                wSqueeth.address,
-                weth.address,
-                600,
-                false
-            );
-            let newOSQTHdelta = wmul(strategyVaultBefore.shortAmount.mul(2), oSQTHPriceAfter);
-            let newDelta = strategyVaultBefore.collateralAmount.sub(newOSQTHdelta);
+            let newDelta = await delta(strategyVaultBefore);
+            let oSQTHPriceAfter = await getOSQTHPrice(); 
             let toSell = wdiv(newDelta, oSQTHPriceAfter);
             let toGET = wmul(toSell, oSQTHPriceAfter);
             console.log(oSQTHPriceAfter.toString());
             console.log("new Delta is ", newDelta.toString());
             console.log("quantity of oSQTH sell is", toSell);
             console.log("quantity of ETH to get is", toGET);
-
-            let afterOSQTHdelta = wmul(strategyVaultBefore.shortAmount.add(toSell).mul(2), oSQTHPriceAfter);
-            let afterTradeDelta = strategyVaultBefore.collateralAmount.add(toGET).sub(afterOSQTHdelta);
-            console.log("after trade delta would be", afterTradeDelta); //div by 10*18
 
             // make the approvals for the trade
             console.log("eth balance of random is ", await provider.getBalance(random.address));
@@ -436,14 +427,12 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
 
             // check the delta and the vaults traded quantities
             let strategyVaultAfter = await controller.vaults(await crabStrategy.vaultId());
-            let divError = 1 // this is 1 in decimal of 18 , this adds to us getting less oSQTH
+            let divError = 1; // this is 1 in decimal of 18 , this adds to us getting less oSQTH
             expect(strategyVaultAfter.collateralAmount).eq(strategyVaultBefore.collateralAmount.add(toGET));
             expect(strategyVaultAfter.shortAmount.add(divError).toString()).eq(
                 strategyVaultBefore.shortAmount.add(toSell).toString()
             );
-            let afterOSQTHdeltaReal = wmul(strategyVaultAfter.shortAmount.mul(2), oSQTHPriceAfter);
-            let afterTradeDeltaReal = strategyVaultAfter.collateralAmount.sub(afterOSQTHdeltaReal);
-            expect(afterTradeDeltaReal.toNumber()).to.eqls(0);
+            expect((await delta(strategyVaultAfter)).toNumber()).to.eqls(0);
             console.log("before and after for the vaults");
             console.log(strategyVaultBefore.collateralAmount.toString(), strategyVaultBefore.shortAmount.toString());
             console.log(
@@ -464,7 +453,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             expect(wethTraderBalanceAfter_2).eq(wethTraderBalanceBefore_2.sub(toGET.div(2)));
         });
         it("should hedge via OTC using one order while selling oSQTH", async () => {
-            //printDelta(collateralAmount, debtAmount, oSQTHprice);
+            // TODO comment and organize like below test
             let strategyVaultBefore = await controller.vaults(await crabStrategy.vaultId());
             console.log(strategyVaultBefore.collateralAmount.toString());
             console.log(strategyVaultBefore.shortAmount.toString());
