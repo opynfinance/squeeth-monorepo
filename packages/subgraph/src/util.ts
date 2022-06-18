@@ -1,5 +1,5 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
-import { Address, ethereum } from "@graphprotocol/graph-ts";
+import { ethereum } from "@graphprotocol/graph-ts";
 import {
   Account,
   LPPosition,
@@ -73,6 +73,7 @@ export function initLPPosition(
   lpPosition.realizedETHAmount = ZERO_BD;
   lpPosition.collectedFeesETHAmount = ZERO_BD;
   lpPosition.collectedFeesOSQTHAmount = ZERO_BD;
+
   return lpPosition as LPPosition;
 }
 
@@ -117,6 +118,7 @@ export function getoSQTHETHPrice(): BigDecimal[] {
   if (osqthPool == null) {
     return [ZERO_BD, ZERO_BD, ZERO_BD, ZERO_BD];
   }
+
   let osqthPrices = sqrtPriceX96ToTokenPrices(
     osqthPool.sqrtPrice,
     TOKEN_DECIMALS_18,
@@ -212,13 +214,16 @@ export function buyOrSellETH(userAddr: string, amount: BigDecimal): void {
   position.save();
 }
 
-// buy: amount > 0
-// sell amount < 0
-export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
+// buy sqth: amount > 0
+// sell sqth: amount < 0
+export function handleOSQTHChange(
+  userAddr: string,
+  amount: BigDecimal,
+  osqthPriceInUSD: BigDecimal
+): void {
   if (amount.equals(ZERO_BD) || userAddr == null) return;
 
   let position = loadOrCreatePosition(userAddr);
-  let osqthPrices = getoSQTHETHPrice();
 
   // When position side chages, reset PnLs and calculate with remaining amount
   let newAmount = position.currentOSQTHAmount.plus(amount);
@@ -242,7 +247,7 @@ export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
         position.realizedOSQTHUnitCost.times(totalAmount);
 
       position.realizedOSQTHUnitCost = oldRealizedOSQTHCost
-        .plus(amount.times(osqthPrices[3]))
+        .plus(amount.times(osqthPriceInUSD))
         .div(totalAmount.plus(amount));
     }
 
@@ -255,7 +260,7 @@ export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
       position.realizedOSQTHAmount =
         position.realizedOSQTHAmount.plus(absAmount);
       position.realizedOSQTHUnitGain = oldRealizedOSQTHGain
-        .plus(absAmount.times(osqthPrices[3]))
+        .plus(absAmount.times(osqthPriceInUSD))
         .div(position.realizedOSQTHAmount);
     }
   } else {
@@ -267,7 +272,7 @@ export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
 
       position.realizedOSQTHAmount = position.realizedOSQTHAmount.plus(amount);
       position.realizedOSQTHUnitGain = oldRealizedOSQTHGain
-        .plus(amount.times(osqthPrices[3]))
+        .plus(amount.times(osqthPriceInUSD))
         .div(position.realizedOSQTHAmount);
     }
 
@@ -280,7 +285,7 @@ export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
         position.realizedOSQTHUnitCost.times(totalAmount);
 
       position.realizedOSQTHUnitCost = oldRealizedOSQTHCost
-        .plus(amount.times(osqthPrices[3]))
+        .plus(amount.times(osqthPriceInUSD))
         .div(totalAmount.plus(amount));
     }
   }
@@ -299,11 +304,17 @@ export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
     position = initPosition(userAddr, position);
   } else if (!position.currentOSQTHAmount.equals(ZERO_BD)) {
     position.unrealizedOSQTHUnitCost = oldUnrealizedOSQTHCost
-      .plus(amount.times(osqthPrices[3]))
+      .plus(amount.times(osqthPriceInUSD))
       .div(position.currentOSQTHAmount);
   }
 
   position.save();
+}
+
+export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
+  let osqthPrices = getoSQTHETHPrice();
+
+  handleOSQTHChange(userAddr, amount, osqthPrices[3]);
 }
 
 // buy: amount > 0
