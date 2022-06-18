@@ -226,22 +226,26 @@ export function handleOSQTHChange(
   let position = loadOrCreatePosition(userAddr);
   let account = loadOrCreateAccount(userAddr);
 
-  // When position side chages, reset PnLs and calculate with remaining amount
+  // When position type chages, reset PnLs and calculate with remaining amount
   let newAmount = position.currentOSQTHAmount.plus(amount);
-  if (position.currentOSQTHAmount.times(newAmount).lt(ZERO_BD)) {
+  let positionBalanceBeforeTrade = position.currentOSQTHAmount.minus(
+    BigDecimal.fromString(account.accShortAmount.toString())
+  );
+  let positionBalanceAfterTrade = newAmount.minus(
+    BigDecimal.fromString(account.accShortAmount.toString())
+  );
+
+  if (newAmount.times(positionBalanceAfterTrade).lt(ZERO_BD)) {
     position = initPosition(userAddr, position);
     amount = newAmount;
   }
 
   let absAmount = amount.lt(ZERO_BD) ? amount.neg() : amount;
-  let osqthAmountWithShortDebt = position.currentOSQTHAmount.minus(
-    BigDecimal.fromString(account.accShortAmount.toString())
-  );
-  let isLong =
-    osqthAmountWithShortDebt.gt(ZERO_BD) ||
-    (osqthAmountWithShortDebt.equals(ZERO_BD) && amount.gt(ZERO_BD));
+  let isLongBeforeTrade =
+    positionBalanceBeforeTrade.gt(ZERO_BD) ||
+    (positionBalanceBeforeTrade.equals(ZERO_BD) && amount.gt(ZERO_BD));
 
-  if (isLong) {
+  if (isLongBeforeTrade) {
     // Buy long
     if (amount.gt(ZERO_BD)) {
       let totalAmount = position.currentOSQTHAmount.plus(
