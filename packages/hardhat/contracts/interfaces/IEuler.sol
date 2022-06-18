@@ -3,12 +3,11 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-interface IEuler {
+interface IEulerExec {
     function deferLiquidityCheck(address account, bytes memory data) external;
 }
 
-interface IEulerDToken { 
-    function borrow (uint256, uint256) external; 
-    function repay (uint256, uint256) external; 
-
+interface IEulerDToken {
+    function borrow(uint256 subAccountId, uint256 amount) external;
+    function repay(uint256 subAccountId, uint256 amount) external;
 }

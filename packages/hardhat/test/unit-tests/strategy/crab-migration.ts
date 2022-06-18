@@ -2,7 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-wit
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber, providers } from "ethers";
-import { MockCrab, CrabMigration} from "../../../typechain";
+import { MockCrab, CrabMigration, MockErc20, WETH9, MockEulerDToken, MockEuler} from "../../../typechain";
 import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../../utils"
 
 describe("Crab Migration", function () {
@@ -10,6 +10,10 @@ describe("Crab Migration", function () {
     let crabStrategyV1: MockCrab;
     let crabStrategyV2: MockCrab;
     let crabMigration: CrabMigration;
+
+    let weth: MockErc20;
+    let dToken: MockEulerDToken;
+    let euler: MockEuler;
 
     let provider: providers.JsonRpcProvider;
     let owner: SignerWithAddress;
@@ -19,6 +23,7 @@ describe("Crab Migration", function () {
 
     const deposit1Amount = ethers.utils.parseEther("10.0");
     const deposit2Amount = ethers.utils.parseEther("90.0");
+    const collateral = deposit1Amount.add(deposit2Amount);
 
     this.beforeAll("Prepare accounts", async () => {
         const accounts = await ethers.getSigners();
@@ -29,6 +34,19 @@ describe("Crab Migration", function () {
         owner = _owner
         provider = ethers.provider
     })
+
+    this.beforeAll("Setup mock contracts", async () => { 
+        const MockErc20Contract = await ethers.getContractFactory("MockErc20");
+        weth = (await MockErc20Contract.deploy("WETH", "WETH", 18)) as MockErc20;
+
+        const MockEulerDTokenContract = await ethers.getContractFactory("MockEulerDToken");
+        dToken = (await MockEulerDTokenContract.deploy(weth.address)) as MockEulerDToken;
+
+        const MockEulerContract = await ethers.getContractFactory("MockEuler");
+        euler = (await MockEulerContract.deploy()) as MockEuler;
+
+        await weth.mint(dToken.address, collateral);
+    })
     
     this.beforeAll("Setup Mock Crabs", async () => {
         const CrabContract = await ethers.getContractFactory("MockCrab");
@@ -37,11 +55,13 @@ describe("Crab Migration", function () {
 
         await crabStrategyV1.mint(d1.address, deposit1Amount);
         await crabStrategyV1.mint(d2.address, deposit2Amount);
+
+        await crabStrategyV1.setVaultDetails(1, collateral, collateral.div(2));
     })
 
     this.beforeAll("Deploy Migration Crab", async () => { 
         const MigrationContract = await ethers.getContractFactory("CrabMigration");
-        crabMigration = (await MigrationContract.deploy(crabStrategyV1.address, crabStrategyV2.address));
+        crabMigration = (await MigrationContract.deploy(crabStrategyV1.address, crabStrategyV2.address, euler.address, weth.address, dToken.address));
     })
 
     describe("Test Migration", async() => { 
