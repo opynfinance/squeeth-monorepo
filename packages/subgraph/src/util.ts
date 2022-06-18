@@ -268,7 +268,7 @@ export function handleOSQTHChange(
         .div(position.realizedOSQTHAmount);
     }
   } else {
-    // Sell short
+    // Buy short
     if (amount.gt(ZERO_BD)) {
       let oldRealizedOSQTHGain = position.realizedOSQTHAmount.times(
         position.realizedOSQTHUnitGain
@@ -280,11 +280,16 @@ export function handleOSQTHChange(
         .div(position.realizedOSQTHAmount);
     }
 
-    // Buy short
+    // sell short
     if (amount.lt(ZERO_BD)) {
       let totalAmount = position.currentOSQTHAmount.minus(
         position.realizedOSQTHAmount
       );
+
+      if (totalAmount.lt(ZERO_BD)) {
+        totalAmount = totalAmount.neg();
+      }
+
       let oldRealizedOSQTHCost =
         position.realizedOSQTHUnitCost.times(totalAmount);
 
