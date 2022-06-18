@@ -598,6 +598,8 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         } else {
             // oSQTH in, WETH out
             _burnWPowerPerp(_order.trader, _order.traderAmount, _order.managerAmount, true);
+            //wrap it
+            IWETH9(weth).deposit{value: _order.managerAmount}();
             // if last param is false, transfer happens again
             priceAtLastHedge = _order.traderAmount.div(_order.managerAmount);
         }
