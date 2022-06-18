@@ -33,7 +33,12 @@ import { useFlashSwapAndMint } from 'src/state/controllerhelper/hooks'
 import { useSelectWallet, useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
 import { BIG_ZERO, MIN_COLLATERAL_AMOUNT } from '@constants/index'
-import { connectedWalletAtom, isTransactionFirstStepAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
+import {
+  connectedWalletAtom,
+  isTransactionFirstStepAtom,
+  networkIdAtom,
+  supportedNetworkAtom,
+} from 'src/state/wallet/atoms'
 import { addressesAtom, isLongAtom, vaultHistoryUpdatingAtom } from 'src/state/positions/atoms'
 import { useComputeSwaps, useFirstValidVault } from 'src/state/positions/hooks'
 import { useVaultData } from '@hooks/useVaultData'
@@ -57,6 +62,7 @@ import ConfirmApproval from './ConfirmApproval'
 import TradeDetails from '../TradeDetails'
 import { useETHPrice } from '@hooks/useETHPrice'
 import useDebounce from '@utils/useDebounce'
+import { Networks } from '../../../types'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -154,6 +160,7 @@ export const OpenShortPosition = () => {
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
+  const networkId = useAtomValue(networkIdAtom)
 
   const { data } = useWalletBalance()
   const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
@@ -231,8 +238,7 @@ export const OpenShortPosition = () => {
   const onSqthChange = useAppCallback(
     async (value: string, collatPercent: number) => {
       try {
-        const [quote, debt, existingDebt, NFTCollat] = await Promise.all([
-          getSellQuote(new BigNumber(value), slippageAmount),
+        const [debt, existingDebt, NFTCollat] = await Promise.all([
           getDebtAmount(new BigNumber(value)),
           getDebtAmount(vault?.shortAmount ?? BIG_ZERO),
           vault?.NFTCollateralId && getUniNFTCollatDetail(vault?.NFTCollateralId),
@@ -250,20 +256,8 @@ export const OpenShortPosition = () => {
         })
 
         setNewCollat(newCollat)
-        setQuote(quote)
         setTotalExistingCollat(totalExistingCollat)
         setTotalDebt(totalDebt)
-
-        if (quote.minimumAmountOut && newCollat.gt(quote.minimumAmountOut)) {
-          setEthTradeAmount(newCollat.minus(quote.amountOut).toFixed(6))
-          setMsgValue(newCollat.minus(quote.amountOut))
-        } else if (newCollat.lte(0)) {
-          setEthTradeAmount('0')
-          return
-        } else if (newCollat.lt(quote.amountOut)) {
-          setEthTradeAmount('0')
-          setMsgValue(new BigNumber(0))
-        }
 
         setTotalCollateralAmount(quote.minimumAmountOut.plus(newCollat.minus(quote.minimumAmountOut)))
       } catch (error: any) {
@@ -273,31 +267,50 @@ export const OpenShortPosition = () => {
     [
       getCollatRatioAndLiqPrice,
       getDebtAmount,
-      getSellQuote,
       getUniNFTCollatDetail,
-      setEthTradeAmount,
-      setQuote,
-      slippageAmount,
+      quote.minimumAmountOut,
       vault?.NFTCollateralId,
       vault?.collateralAmount,
       vault?.shortAmount,
     ],
   )
+
   const handleSqthChange = useAppMemo(() => debounce(onSqthChange, 500), [onSqthChange])
 
   useAppEffect(() => {
     if (!debouncedAmount || debouncedAmount.lte(0)) return setExactOutAmount(BIG_ZERO)
     setLoadingSaleProceeds(true)
-    getExactOutSellQuote(new BigNumber(debouncedAmount))
-      .then((val) => {
-        setExactOutAmount(val)
-        setLoadingSaleProceeds(false)
-      })
-      .catch((e) => {
-        setLoadingSaleProceeds(false)
+
+    if (networkId === Networks.MAINNET) {
+      getExactOutSellQuote(new BigNumber(debouncedAmount))
+        .then((val) => {
+          setExactOutAmount(val)
+          setLoadingSaleProceeds(false)
+        })
+        .catch((e) => {
+          setLoadingSaleProceeds(false)
+          setExactOutAmount(quote.amountOut)
+        })
+    } else {
+      getSellQuote(new BigNumber(debouncedAmount), slippageAmount).then((quote) => {
         setExactOutAmount(quote.amountOut)
+        setQuote(quote)
+        setLoadingSaleProceeds(false)
       })
-  }, [debouncedAmount, getExactOutSellQuote, quote.amountOut])
+    }
+  }, [debouncedAmount, getExactOutSellQuote, getSellQuote, networkId, quote.amountOut, slippageAmount, setQuote])
+
+  useAppEffect(() => {
+    if (quote.minimumAmountOut && newCollat.gt(quote.minimumAmountOut)) {
+      setEthTradeAmount(newCollat.minus(quote.amountOut).toFixed(6))
+      setMsgValue(newCollat.minus(quote.amountOut))
+    } else if (newCollat.lte(0)) {
+      setEthTradeAmount('0')
+    } else if (newCollat.lt(quote.amountOut)) {
+      setEthTradeAmount('0')
+      setMsgValue(new BigNumber(0))
+    }
+  }, [newCollat, quote.amountOut, quote.minimumAmountOut, setEthTradeAmount])
 
   useAppEffect(() => {
     //stop loading if transaction failed
@@ -501,7 +514,18 @@ export const OpenShortPosition = () => {
                 label="Collateral ratio for vault after trade"
                 variant="outlined"
                 error={collatPercent < 150 || CRError !== ''}
-                helperText={`Min Collateralization Ratio: ${minCR.times(100).toFixed(1)}%`}
+                helperText={
+                  <span style={{ display: 'flex' }}>
+                    Min Collateralization Ratio: {minCR.times(100).toFixed(1)}%
+                    <Tooltip
+                      title={`Minimum vault collateralization ratio ${
+                        minCR.gt(1.5) ? minCR.times(100).toFixed(1) + '%' : ''
+                      } is based on trade size. You could withdraw ETH from vault or sell more oSQTH to get vault collateralization ratio lower.`}
+                    >
+                      <InfoOutlinedIcon style={{ fontSize: '14px', marginLeft: '4px', alignSelf: 'center' }} />
+                    </Tooltip>
+                  </span>
+                }
                 FormHelperTextProps={{ classes: { root: classes.formHelperText } }}
                 InputProps={{
                   endAdornment: (
@@ -657,11 +681,29 @@ export const OpenShortPosition = () => {
                       : 'Approve Squeethy 1 Click Wrapper'}
                     {!isVaultApproved ? (
                       <Tooltip
-                        style={{ marginLeft: '2px' }}
+                        leaveDelay={1000}
+                        interactive={true}
+                        placement="bottom"
+                        PopperProps={{
+                          disablePortal: true,
+                          onClick: (e) => {
+                            e.stopPropagation()
+                          },
+                          style: { marginLeft: '2px', textTransform: 'capitalize', cursor: 'default' },
+                        }}
                         title={
                           <span>
                             The wrapper contract helps you put on short positions and LP positions in one step instead
-                            of many.<a href="https://www.opyn.co/">Learn more</a>
+                            of many.
+                            <a
+                              href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq"
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ color: '#2ce6f9', textDecoration: 'underline' }}
+                            >
+                              {' '}
+                              Learn more.
+                            </a>
                           </span>
                         }
                       >

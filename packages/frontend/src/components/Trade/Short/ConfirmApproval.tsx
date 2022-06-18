@@ -72,7 +72,7 @@ const ConfirmApproval = ({
             </div>
             <p style={{ margin: 0, textAlign: 'center' }}>
               When you open a short position, the wrapper maximizes capital efficiency by using ETH earned from selling
-              oSQTH as collateral back the vault.
+              oSQTH as collateral back into the vault.
             </p>
           </li>
           <li style={{ marginBottom: '1.5rem' }}>
@@ -91,7 +91,8 @@ const ConfirmApproval = ({
               <p className={classes.subTopics}>VAULT COLLATERALIZATION RATIO</p>
             </div>
             <p style={{ margin: 0, textAlign: 'center' }}>
-              When you open or close a short position, you are adjusting the vault&#39;s collateralization ratio, not
+              When you open or close a short position, you are adjusting the vault&#39;s collateralization ratio,{' '}
+              <strong style={{ fontWeight: 600 }}>NOT </strong>
               the collateralization ratio for the trade.
             </p>
           </li>
