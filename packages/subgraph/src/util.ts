@@ -212,7 +212,9 @@ export function buyOrSellETH(userAddr: string, amount: BigDecimal): void {
   position.save();
 }
 
-export function handleOSQTHChange(userAddr: string, amount: BigDecimal): void {
+// buy: amount > 0
+// sell amount < 0
+export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
   if (amount.equals(ZERO_BD) || userAddr == null) return;
 
   let position = loadOrCreatePosition(userAddr);
@@ -263,10 +265,9 @@ export function handleOSQTHChange(userAddr: string, amount: BigDecimal): void {
         position.realizedOSQTHUnitGain
       );
 
-      position.realizedOSQTHAmount =
-        position.realizedOSQTHAmount.plus(absAmount);
+      position.realizedOSQTHAmount = position.realizedOSQTHAmount.plus(amount);
       position.realizedOSQTHUnitGain = oldRealizedOSQTHGain
-        .plus(absAmount.times(osqthPrices[3]))
+        .plus(amount.times(osqthPrices[3]))
         .div(position.realizedOSQTHAmount);
     }
 
@@ -281,82 +282,6 @@ export function handleOSQTHChange(userAddr: string, amount: BigDecimal): void {
       position.realizedOSQTHUnitCost = oldRealizedOSQTHCost
         .plus(amount.times(osqthPrices[3]))
         .div(totalAmount.plus(amount));
-    }
-  }
-}
-
-// buy: amount > 0
-// sell amount < 0
-export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
-  if (amount.equals(ZERO_BD) || userAddr == null) return;
-  let osqthPrices = getoSQTHETHPrice();
-
-  let position = loadOrCreatePosition(userAddr);
-
-  // When position side chages, reset PnLs and calculate with remaining amount
-  let newAmount = position.currentOSQTHAmount.plus(amount);
-  if (position.currentOSQTHAmount.times(newAmount).lt(ZERO_BD)) {
-    position = initPosition(userAddr, position);
-    amount = newAmount;
-  }
-
-  let isLong =
-    position.currentOSQTHAmount.gt(ZERO_BD) ||
-    (position.currentOSQTHAmount.equals(ZERO_BD) && amount.gt(ZERO_BD));
-
-  if (isLong) {
-    // Buy long
-    if (amount.gt(ZERO_BD)) {
-      let oldBoughtAmount = position.currentOSQTHAmount.plus(
-        position.realizedOSQTHAmount
-      );
-      let oldRealizedOSQTHCost =
-        position.realizedOSQTHUnitCost.times(oldBoughtAmount);
-
-      position.realizedOSQTHUnitCost = oldRealizedOSQTHCost
-        .plus(amount.times(osqthPrices[3]))
-        .div(oldBoughtAmount.plus(amount));
-    }
-
-    // Sell long
-    if (amount.lt(ZERO_BD)) {
-      let absAmount = amount.neg();
-      let oldRealizedOSQTHGain = position.realizedOSQTHUnitCost.times(
-        position.realizedOSQTHUnitGain
-      );
-
-      position.realizedOSQTHAmount =
-        position.realizedOSQTHAmount.plus(absAmount);
-      position.realizedOSQTHUnitGain = oldRealizedOSQTHGain
-        .plus(absAmount.times(osqthPrices[3]))
-        .div(position.realizedOSQTHAmount);
-    }
-  } else {
-    // Buy short
-    if (amount.lt(ZERO_BD)) {
-      let oldBoughtAmount = position.currentOSQTHAmount.plus(
-        position.realizedOSQTHAmount
-      );
-      let oldRealizedOSQTHCost =
-        position.realizedOSQTHUnitCost.times(oldBoughtAmount);
-
-      position.realizedOSQTHUnitCost = oldRealizedOSQTHCost
-        .plus(amount.times(osqthPrices[3]))
-        .div(oldBoughtAmount.plus(amount));
-    }
-
-    // Sell short
-    if (amount.gt(ZERO_BD)) {
-      let absAmount = amount.neg();
-      let oldRealizedOSQTHGain = position.realizedOSQTHUnitCost.times(
-        position.realizedOSQTHUnitGain
-      );
-
-      position.realizedOSQTHAmount =
-        position.realizedOSQTHAmount.plus(absAmount);
-      position.realizedOSQTHUnitGain = oldRealizedOSQTHGain
-        .plus(absAmount.times(osqthPrices[3]))
-        .div(position.realizedOSQTHAmount);
     }
   }
 
