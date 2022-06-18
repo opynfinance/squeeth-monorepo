@@ -312,9 +312,13 @@ export function handleOSQTHChange(
   ) {
     position = initPosition(userAddr, position);
   } else if (!position.currentOSQTHAmount.equals(ZERO_BD)) {
+    let currentOSQTHAmount = position.currentOSQTHAmount;
+    if (currentOSQTHAmount.lt(ZERO_BD)) {
+      currentOSQTHAmount = position.currentOSQTHAmount.neg();
+    }
     position.unrealizedOSQTHUnitCost = oldUnrealizedOSQTHCost
       .plus(amount.times(osqthPriceInUSD))
-      .div(position.currentOSQTHAmount);
+      .div(currentOSQTHAmount);
   }
 
   position.save();
