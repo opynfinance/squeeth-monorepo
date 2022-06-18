@@ -633,7 +633,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         for (uint256 i = 0; i < _orders.length; i++) {
             tradePair = abi.encode(_orders[i].traderToken, _orders[i].managerToken);
             currentPrice = _orders[i].managerAmount.mul(1e18).div(_orders[i].traderAmount);
-            require(currentPrice >= prevPrice, "C2");
+            require(currentPrice >= prevPrice, "Orders are not arranged properly");
             if (i > 0) {
                 require(
                     keccak256(tradePair) == keccak256(prevTradePair),
