@@ -84,60 +84,6 @@ export const useClosePosition = () => {
   return closePosition
 }
 
-// Opening a mint and LP position
-export const useOpenPosition = () => {
-  const { squeethPool } = useAtomValue(addressesAtom)
-  const normalizationFactor = useAtomValue(normFactorAtom)
-  const address = useAtomValue(addressAtom)
-  const contract = useAtomValue(controllerHelperHelperContractAtom)
-  const handleTransaction = useHandleTransaction()
-  const openPosition = useAppCallback(
-    async (
-      ethAmount: BigNumber,
-      squeethToMint: BigNumber,
-      collateralAmount: BigNumber,
-      vaultId: BigNumber,
-      lowerTickInput: number,
-      upperTickInput: number,
-      onTxConfirmed?: () => void,
-    ) => {
-      const amount0Min = BIG_ZERO
-      const amount1Min = BIG_ZERO
-      const mintWSqueethAmount = fromTokenAmount(squeethToMint, OSQUEETH_DECIMALS).multipliedBy(normalizationFactor)
-
-      // Closest 60 tick width above or below current tick (60 is minimum tick width for 30bps pool)
-
-      const lowerTick = nearestUsableTick(lowerTickInput, 3000)
-      const upperTick = nearestUsableTick(upperTickInput, 3000)
-
-      const params = {
-        recipient: address,
-        wPowerPerpPool: squeethPool,
-        vaultId: vaultId,
-        wPowerPerpAmount: mintWSqueethAmount,
-        collateralToDeposit: collateralAmount,
-        collateralToLp: BIG_ZERO,
-        amount0Min: amount0Min,
-        amount1Min: amount1Min,
-        lowerTick: lowerTick,
-        upperTick: upperTick,
-      }
-
-      if (!contract || !address) return null
-
-      return handleTransaction(
-        contract.methods.wMintLp(params, { value: collateralAmount }).send({
-          from: address,
-          value: fromTokenAmount(ethAmount, 18),
-        }),
-        onTxConfirmed,
-      )
-    },
-    [],
-  )
-  return openPosition
-}
-
 // Opening a mint and LP position and depositing
 export const useOpenPositionDeposit = () => {
   const { squeethPool } = useAtomValue(addressesAtom)
