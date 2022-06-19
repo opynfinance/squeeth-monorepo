@@ -225,148 +225,6 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             };
             return { typeData, domainData };
         };
-        xit("should hedge by selling WSqueeth for ETH and update timestamp and price at hedge", async () => {
-            // change pool price for auction to be sell auction
-            const ethToDeposit = ethers.utils.parseUnits("1000");
-            const wSqueethToMint = ethers.utils.parseUnits("1000");
-            const currentBlockTimestamp = (await provider.getBlock(await provider.getBlockNumber())).timestamp;
-            await controller.connect(owner).mintWPowerPerpAmount("0", wSqueethToMint, "0", { value: ethToDeposit });
-            await buyWeth(
-                swapRouter,
-                wSqueeth,
-                weth,
-                owner.address,
-                await wSqueeth.balanceOf(owner.address),
-                currentBlockTimestamp + 10
-            );
-
-            await provider.send("evm_increaseTime", [86400 + auctionTime / 2]);
-            await provider.send("evm_mine", []);
-            const timeAtLastHedge = await crabStrategy.timeAtLastHedge();
-
-            const auctionTriggerTimer = timeAtLastHedge.add(hedgeTimeThreshold);
-
-            // set next block timestamp
-            const currentBlockNumber = await provider.getBlockNumber();
-            const currentBlock = await provider.getBlock(currentBlockNumber);
-            const hedgeBlockTimestamp = currentBlock.timestamp + 100;
-            await provider.send("evm_setNextBlockTimestamp", [hedgeBlockTimestamp]);
-
-            const auctionTimeElapsed = BigNumber.from(hedgeBlockTimestamp).sub(auctionTriggerTimer);
-
-            //expect(await crabStrategy.checkPriceHedge(auctionTriggerTimer)).to.be.false;
-            expect((await crabStrategy.checkTimeHedge())[0]).to.be.true;
-            console.log("vault id is", await crabStrategy.vaultId());
-
-            let currentWSqueethPrice = await oracle.getTwap(
-                wSqueethPool.address,
-                wSqueeth.address,
-                weth.address,
-                600,
-                false
-            );
-            console.log(currentWSqueethPrice.toString());
-            const strategyVault = await controller.vaults(await crabStrategy.vaultId());
-            console.log("strategyVault ", strategyVault.toString());
-            const ethDelta = strategyVault.collateralAmount;
-            console.log("ethDelta ", ethDelta.toString());
-            const normFactor = await controller.normalizationFactor();
-            console.log("normFactor ", normFactor.toString());
-            const currentScaledSquethPrice = await oracle.getTwap(
-                wSqueethPool.address,
-                wSqueeth.address,
-                weth.address,
-                300,
-                false
-            );
-            console.log("currentScaledSquethPrice ", currentScaledSquethPrice.toString());
-            const feeRate = await controller.feeRate();
-            const ethFeePerWSqueeth = currentScaledSquethPrice.mul(feeRate).div(10000);
-            console.log("ethFeePerWSqueeth ", ethFeePerWSqueeth.toString());
-
-            const strategyDebt = strategyVault.shortAmount;
-            console.log("strategyDebt ", strategyDebt.toString());
-            const initialWSqueethDelta = wmul(strategyDebt.mul(2), currentWSqueethPrice);
-            console.log("initialWSqueethDelta ", initialWSqueethDelta.toString());
-            const targetHedge = wdiv(initialWSqueethDelta.sub(ethDelta), currentWSqueethPrice.add(ethFeePerWSqueeth));
-            console.log("targetHedge ", targetHedge.toString());
-            const isSellAuction = targetHedge.isNegative();
-            console.log("isSellAuction ", isSellAuction.toString());
-            const auctionExecution = auctionTimeElapsed.gte(BigNumber.from(auctionTime))
-                ? one
-                : wdiv(auctionTimeElapsed, BigNumber.from(auctionTime));
-            console.log("auctionExecution ", auctionExecution.toString());
-            const result = calcPriceMulAndAuctionPrice(
-                isSellAuction,
-                maxPriceMultiplier,
-                minPriceMultiplier,
-                auctionExecution,
-                currentWSqueethPrice
-            );
-            console.log("result ", result.toString());
-            const expectedAuctionWSqueethEthPrice = result[1];
-            console.log("expectedAuctionWSqueethEthPrice ", expectedAuctionWSqueethEthPrice.toString());
-            const finalWSqueethDelta = wmul(strategyDebt.mul(2), expectedAuctionWSqueethEthPrice);
-            console.log("finalWSqueethDelta ", finalWSqueethDelta.toString());
-            const secondTargetHedge = wdiv(
-                finalWSqueethDelta.sub(ethDelta),
-                expectedAuctionWSqueethEthPrice.add(ethFeePerWSqueeth)
-            );
-            console.log("secondTargetHedge ", secondTargetHedge.toString());
-            const expectedEthProceeds = wmul(secondTargetHedge.abs(), expectedAuctionWSqueethEthPrice);
-            console.log("expectedEthProceeds ", expectedEthProceeds.toString());
-            const expectedEthDeposited = expectedEthProceeds.sub(wmul(ethFeePerWSqueeth, secondTargetHedge.abs()));
-            console.log("expectedEthDeposited ", expectedEthDeposited.toString());
-
-            expect(isSellAuction).to.be.true;
-
-            const senderWsqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address);
-            console.log("senderWsqueethBalanceBefore ", senderWsqueethBalanceBefore.toString());
-
-            await crabStrategy
-                .connect(depositor)
-                .timeHedge(isSellAuction, expectedAuctionWSqueethEthPrice, { value: expectedEthProceeds.add(1) });
-
-            const hedgeBlockNumber = await provider.getBlockNumber();
-            console.log("hedgeBlockNumber ", hedgeBlockNumber.toString());
-            const hedgeBlock = await provider.getBlock(hedgeBlockNumber);
-            console.log("hedgeBlock ", hedgeBlock.toString());
-
-            currentWSqueethPrice = await oracle.getTwap(
-                wSqueethPool.address,
-                wSqueeth.address,
-                weth.address,
-                600,
-                false
-            );
-            console.log("currentWSqueethPrice ", currentWSqueethPrice.toString());
-            const senderWsqueethBalanceAfter = await wSqueeth.balanceOf(depositor.address);
-            console.log("senderWsqueethBalanceAfter ", senderWsqueethBalanceAfter.toString());
-            const strategyVaultAfter = await controller.vaults(await crabStrategy.vaultId());
-            console.log("strategyVaultAfter ", strategyVaultAfter.toString());
-            const strategyCollateralAmountAfter = strategyVaultAfter.collateralAmount;
-            console.log("strategyCollateralAmountAfter ", strategyCollateralAmountAfter.toString());
-            const strategyDebtAmountAfter = strategyVaultAfter.shortAmount;
-            console.log("strategyDebtAmountAfter ", strategyDebtAmountAfter.toString());
-            const timeAtLastHedgeAfter = await crabStrategy.timeAtLastHedge();
-            console.log("timeAtLastHedgeAfter ", timeAtLastHedgeAfter.toString());
-            const priceAtLastHedgeAfter = await crabStrategy.priceAtLastHedge();
-            console.log("priceAtLastHedgeAfter ", priceAtLastHedgeAfter.toString());
-
-            expect(senderWsqueethBalanceAfter.gt(senderWsqueethBalanceBefore)).to.be.true;
-            expect(
-                isSimilar(
-                    senderWsqueethBalanceAfter.sub(senderWsqueethBalanceBefore).toString(),
-                    secondTargetHedge.abs().toString()
-                )
-            ).to.be.true;
-            expect(isSimilar(strategyDebtAmountAfter.sub(strategyDebt).toString(), secondTargetHedge.abs().toString()))
-                .to.be.true;
-            expect(isSimilar(strategyCollateralAmountAfter.sub(ethDelta).toString(), expectedEthDeposited.toString()))
-                .to.be.true;
-            expect(timeAtLastHedgeAfter.eq(hedgeBlock.timestamp)).to.be.true;
-            expect(priceAtLastHedgeAfter.eq(currentWSqueethPrice)).to.be.true;
-        });
         it("should hedge via OTC using multiple orders while sell oSQTH and updated timeAtLastHedge", async () => {
             const strategyVaultBefore = await controller.vaults(await crabStrategy.vaultId());
             // vault state before
@@ -1261,7 +1119,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             await expect(
                 crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder])
             ).to.be.revertedWith("Manager Price Price should be greater than 0");
-            
+
             //reverting this back to one percent
             await crabStrategy.connect(owner).setHedgePriceThreshold(BigNumber.from(10).pow(16).mul(1));
         });
@@ -1323,7 +1181,9 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             let managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
 
             // Do the trade
-            await expect(crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder, signedOrder1])).to.be.revertedWith('Orders are not arranged properly');
+            await expect(
+                crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder, signedOrder1])
+            ).to.be.revertedWith("Orders are not arranged properly");
         });
     });
 });
