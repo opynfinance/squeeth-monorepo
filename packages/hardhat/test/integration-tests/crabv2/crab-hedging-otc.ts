@@ -1006,5 +1006,133 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             let dlt = await delta(await controller.vaults(await crabStrategy.vaultId()));
             expect(dlt.toNumber()).to.be.greaterThan(0);
         });
+        it("allows manager to give buy at a greater price and specify a quantity lesser than the same of order amounts", async () => {
+            const strategyVaultBefore = await controller.vaults(await crabStrategy.vaultId());
+            // vault state before
+            let deltaStart = await delta(strategyVaultBefore);
+            // -1 is almost 0, -1/10^18
+            expect(deltaStart.toNumber()).greaterThan(0);
+            // trader amount to sell oSQTH to change the deltas
+            await mintAndSell();
+
+            // Calculate new Delta and the trades to make
+            let newDelta = await delta(strategyVaultBefore);
+            let oSQTHPriceAfter = await getOSQTHPrice(); 
+            let toSell = wdiv(newDelta, oSQTHPriceAfter);
+            let toGET = wmul(toSell, oSQTHPriceAfter);
+            console.log(oSQTHPriceAfter.toString());
+            console.log("new Delta is ", newDelta.toString());
+            console.log("quantity of oSQTH sell is", toSell);
+            console.log("quantity of ETH to get is", toGET);
+
+            // make the approvals for the trade
+            console.log("eth balance of random is ", await provider.getBalance(random.address));
+            await weth.connect(random).deposit({ value: toGET });
+            await weth.connect(random).approve(crabStrategy.address, toGET);
+            await weth.connect(trader).deposit({ value: toGET });
+            await weth.connect(trader).approve(crabStrategy.address, toGET);
+
+            // get the pre trade balances for the trader
+            let oSQTHTraderBalanceBefore = await wSqueeth.balanceOf(random.address);
+            let wethTraderBalanceBefore = await weth.balanceOf(random.address);
+            let oSQTHTraderBalanceBefore_2 = await wSqueeth.balanceOf(trader.address);
+            let wethTraderBalanceBefore_2 = await weth.balanceOf(trader.address);
+
+            // and prepare the trade
+            console.log("Weth balance of random is ", await weth.balanceOf(random.address));
+            let traderNonce = await crabStrategy.nonces(trader.address);
+            let orderHash = {
+                bidId: 0,
+                trader: random.address,
+                traderToken: weth.address,
+                traderAmount: toGET.div(2),
+                managerToken: wSqueeth.address,
+                managerAmount: toSell.div(2),
+                nonce: await crabStrategy.nonces(random.address),
+            };
+            // quantity is full and not half. hence more quantity for this case, but manager trades less
+            let orderHash1 = {
+                bidId: 0,
+                trader: trader.address,
+                traderToken: weth.address,
+                traderAmount: toGET.div(2),
+                managerToken: wSqueeth.address,
+                managerAmount: toSell.div(2),
+                nonce: traderNonce,
+            };
+
+            let domainData = {
+                name: "CrabOTC",
+                version: "2",
+                chainId: network.config.chainId,
+                verifyingContract: crabStrategy.address,
+            };
+            let typeData = {
+                Order: [
+                    { type: "uint256", name: "bidId" },
+                    { type: "address", name: "trader" },
+                    { type: "address", name: "traderToken" },
+                    { type: "uint256", name: "traderAmount" },
+                    { type: "address", name: "managerToken" },
+                    { type: "uint256", name: "managerAmount" },
+                    { type: "uint256", name: "nonce" },
+                ],
+            };
+            let signedOrder = await signTypedData(random, domainData, typeData, orderHash);
+            let signedOrder1 = await signTypedData(trader, domainData, typeData, orderHash1);
+            let managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
+
+            // Do the trade with 4 percent more price
+            managerBuyPrice = managerBuyPrice.mul(104).div(100);
+            // and only 90% of the total trader quantities. so we swap 50% with the first order and 40% with the next
+            let newToSell = toSell.mul(90).div(100);
+            let firstToGet = wdiv(toSell, managerBuyPrice);
+            let secondToGet = wdiv(newToSell, managerBuyPrice);
+            console.log("change in to sell amount", toSell, newToSell)
+            
+            await crabStrategy.connect(owner).hedgeOTC(newToSell, managerBuyPrice, [signedOrder, signedOrder1]);
+
+            console.log('after order');
+            console.log(orderHash.traderAmount.toString(), orderHash.managerAmount.toString());
+            console.log(managerBuyPrice);
+
+            // check the delta and the vaults traded quantities
+            let strategyVaultAfter = await controller.vaults(await crabStrategy.vaultId());
+            // TODO do work out the checks for reduce amount
+            console.log("before and after for the vaults");
+            console.log(strategyVaultBefore.collateralAmount.toString(), strategyVaultBefore.shortAmount.toString());
+            console.log(
+                strategyVaultAfter.collateralAmount.toString(),
+                strategyVaultAfter.shortAmount.toString(),
+                oSQTHPriceAfter.toString()
+            );
+            let error = 1; // this is in decimals 18 so technically 0
+            // we traded full collateral sell amount and in return got lesser than oSQTH that desired, hence delta will turn negative
+            let afterTradeDelta = (await delta(strategyVaultAfter)).toNumber();
+            console.log('after trade detla is ', afterTradeDelta );
+            expect(afterTradeDelta < newDelta).to.be.true
+            expect(strategyVaultAfter.collateralAmount.add(error)).eq(strategyVaultBefore.collateralAmount.add(secondToGet), "new collateral amounts dont match");
+            expect(strategyVaultAfter.shortAmount.toString()).eq(
+                strategyVaultBefore.shortAmount.add(newToSell).toString()
+            );
+            // check the delta and the vaults traded quantities
+            let oSQTHTraderBalanceAfter = await wSqueeth.balanceOf(random.address);
+            let wethTraderBalanceAfter = await weth.balanceOf(random.address);
+            let oSQTHTraderBalanceAfter_2 = await wSqueeth.balanceOf(trader.address);
+            let wethTraderBalanceAfter_2 = await weth.balanceOf(trader.address);
+            expect(oSQTHTraderBalanceAfter).eq(oSQTHTraderBalanceBefore.add(toSell.div(2))); // he gets the full managerAmount
+            expect(wethTraderBalanceAfter.sub(error)).eq(wethTraderBalanceBefore.sub(firstToGet.div(2))); // he gets half of the new price benefits
+            
+            let difference = toSell.mul(10).div(100);
+            let second_trader_receives =toSell.div(2).sub(difference);  // he gets the full - 10% as manager is trading only 90 % 
+            expect(oSQTHTraderBalanceAfter_2).eq(oSQTHTraderBalanceBefore_2.add(second_trader_receives));
+            expect(wethTraderBalanceBefore_2.sub(wethTraderBalanceAfter_2)).eq(wdiv(second_trader_receives, managerBuyPrice));
+
+            
+            // trader amount to sell oSQTH to change the deltas
+            await mintAndSell("50");
+            let dlt = await delta(await controller.vaults(await crabStrategy.vaultId()));
+            expect(dlt.toNumber()).to.be.greaterThan(0);
+        });
     });
 });
