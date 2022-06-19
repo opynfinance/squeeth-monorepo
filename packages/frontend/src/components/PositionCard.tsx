@@ -280,7 +280,7 @@ const PositionCard: React.FC = () => {
             <div>
               <div className={classes.postAmount}>
                 <Typography component="span" style={{ fontWeight: 600 }} id="position-card-before-trade-balance">
-                  {currentOSQTHAmount.toFixed(6)}
+                  {currentOSQTHAmount.isNaN() ? 0 : currentOSQTHAmount.toFixed(6)}
                 </Typography>
 
                 {(tradeType === TradeType.SHORT && positionType === PositionType.LONG) ||
@@ -308,7 +308,7 @@ const PositionCard: React.FC = () => {
               </div>
 
               <Typography variant="caption" color="textSecondary" style={{ marginTop: '.5em' }}>
-                ≈ $ {currentPositionValue.toFixed(2)}
+                ≈ $ {currentPositionValue.isNaN() ? 0 : currentPositionValue.toFixed(2)}
               </Typography>
             </div>
 
@@ -329,7 +329,7 @@ const PositionCard: React.FC = () => {
                           style={{ fontWeight: 600 }}
                           id="unrealized-pnl-usd-value"
                         >
-                          {unrealizedPnL.toFixed(2)}
+                          {unrealizedPnL.isNaN() ? 0 : unrealizedPnL.toFixed(2)}
                         </Typography>
                         <Typography
                           variant="caption"
@@ -337,7 +337,7 @@ const PositionCard: React.FC = () => {
                           style={{ marginLeft: '4px' }}
                           id="unrealized-pnl-perct-value"
                         >
-                          ({unrealizedPnLInPerct.toFixed(2)}%)
+                          ({unrealizedPnLInPerct.isNaN() ? 0 : unrealizedPnLInPerct.toFixed(2)}%)
                         </Typography>
                       </>
                     ) : (
@@ -353,7 +353,7 @@ const PositionCard: React.FC = () => {
                 </div>
                 <div className={classes.pnl} id="realized-pnl-value">
                   <Typography className={pnlClass(positionType, realizedPnL, classes)} style={{ fontWeight: 600 }}>
-                    {realizedPnL.toFixed(2)}
+                    {realizedPnL.isNaN() ? 0 : realizedPnL.toFixed(2)}
                   </Typography>
                   <Typography
                     variant="caption"
@@ -361,7 +361,7 @@ const PositionCard: React.FC = () => {
                     style={{ marginLeft: '4px' }}
                     id="unrealized-pnl-perct-value"
                   >
-                    ({realizedPnLInPerct.toFixed(2)}%)
+                    ({realizedPnLInPerct.isNaN() ? 0 : realizedPnLInPerct.toFixed(2)}%)
                   </Typography>
                 </div>
               </div>
