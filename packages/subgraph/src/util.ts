@@ -312,9 +312,18 @@ export function handleOSQTHChange(
   }
 
   // Unrealized PnL calculation
+  let absCurrentOSQTHAmountBeforeTrade = position.currentOSQTHAmount.gt(ZERO_BD)
+    ? position.currentOSQTHAmount
+    : position.currentOSQTHAmount.neg();
   let oldUnrealizedOSQTHCost = position.unrealizedOSQTHUnitCost.times(
-    position.currentOSQTHAmount
+    absCurrentOSQTHAmountBeforeTrade
   );
+
+  let absCurrentOSQTHAmountAfterTrade = position.currentOSQTHAmount
+    .plus(amount)
+    .gt(ZERO_BD)
+    ? position.currentOSQTHAmount.plus(amount)
+    : position.currentOSQTHAmount.plus(amount).neg();
 
   position.currentOSQTHAmount = position.currentOSQTHAmount.plus(amount);
   // = 0 none
@@ -324,13 +333,9 @@ export function handleOSQTHChange(
   ) {
     position = initPosition(userAddr, position);
   } else if (!position.currentOSQTHAmount.equals(ZERO_BD)) {
-    let currentOSQTHAmount = position.currentOSQTHAmount;
-    if (currentOSQTHAmount.lt(ZERO_BD)) {
-      currentOSQTHAmount = position.currentOSQTHAmount.neg();
-    }
     position.unrealizedOSQTHUnitCost = oldUnrealizedOSQTHCost
       .plus(amount.times(osqthPriceInUSD))
-      .div(currentOSQTHAmount);
+      .div(absCurrentOSQTHAmountAfterTrade);
   }
 
   position.save();
