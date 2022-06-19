@@ -23,6 +23,7 @@ import NFTpositionManagerABI from '../../abis/NFTpositionmanager.json'
 import { swaps } from '@queries/uniswap/__generated__/swaps'
 import { swapsRopsten } from '@queries/uniswap/__generated__/swapsRopsten'
 import { accounts_accounts } from '@queries/squeeth/__generated__/accounts'
+import BigNumber from 'bignumber.js'
 
 export const positionTypeAtom = atom(PositionType.NONE)
 export const isLongAtom = atom((get) => {
@@ -90,8 +91,25 @@ export const swapsAtom = atom<swaps | swapsRopsten>({ swaps: [] })
 export const longPositionValueAtom = atom(BIG_ZERO)
 export const shortPositionValueAtom = atom(BIG_ZERO)
 
+export const initPosition = {
+  currentOSQTHAmount: new BigNumber(0),
+  currentETHAmount: new BigNumber(0),
+  unrealizedOSQTHUnitCost: new BigNumber(0),
+  unrealizedETHUnitCost: new BigNumber(0),
+  realizedOSQTHUnitCost: new BigNumber(0),
+  realizedETHUnitCost: new BigNumber(0),
+  realizedOSQTHUnitGain: new BigNumber(0),
+  realizedETHUnitGain: new BigNumber(0),
+  realizedOSQTHAmount: new BigNumber(0),
+  realizedETHAmount: new BigNumber(0),
+}
+
 export const accountAtom = atom<accounts_accounts[] | undefined>(undefined)
-export const positionAtom = atom({
+
+export const positionAtom = atom<any>(initPosition)
+export const lpPositionAtom = atom<any>(initPosition)
+export const accShortAmountAtom = atom(BIG_ZERO)
+export const calculatedPositionAtom = atom({
   currentPositionValue: BIG_ZERO,
   currentETHAmount: BIG_ZERO,
   currentOSQTHAmount: BIG_ZERO,
@@ -101,7 +119,7 @@ export const positionAtom = atom({
   realizedPnLInPerct: BIG_ZERO,
 })
 
-export const lpPositionAtom = atom({
+export const calculatedLPPositionAtom = atom({
   lpedPositionValue: BIG_ZERO,
   lpedETHAmount: BIG_ZERO,
   lpedoSQTHAmount: BIG_ZERO,
