@@ -29,7 +29,7 @@ import {
   useGetWSqueethPositionValue,
   useSell,
 } from 'src/state/squeethPool/hooks'
-import { useComputeSwaps, useShortDebt } from 'src/state/positions/hooks'
+import { useShortDebt } from 'src/state/positions/hooks'
 import {
   confirmedAmountAtom,
   ethTradeAmountAtom,
@@ -48,6 +48,7 @@ import useAppEffect from '@hooks/useAppEffect'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppMemo from '@hooks/useAppMemo'
 import BreakEven from './BreakEven'
+import usePositionNPnL from '@hooks/usePositionNPnL'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -279,7 +280,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const isShort = useAtomValue(isShortAtom)
   const selectWallet = useSelectWallet()
-  const { squeethAmount } = useComputeSwaps()
+  const { currentOSQTHAmount: squeethAmount } = usePositionNPnL()
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 
@@ -646,7 +647,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const connected = useAtomValue(connectedWalletAtom)
   const selectWallet = useSelectWallet()
-  const { squeethAmount } = useComputeSwaps()
+  const { currentOSQTHAmount: squeethAmount } = usePositionNPnL()
 
   const shortDebt = useShortDebt()
   const isShort = shortDebt.gt(0)

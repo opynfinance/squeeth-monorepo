@@ -40,7 +40,7 @@ import {
   useGetShortAmountFromDebt,
   useUpdateOperator,
 } from 'src/state/controller/hooks'
-import { useComputeSwaps, useFirstValidVault, useLPPositionsQuery } from 'src/state/positions/hooks'
+import { useFirstValidVault, useLPPositionsQuery } from 'src/state/positions/hooks'
 import {
   ethTradeAmountAtom,
   quoteAtom,
@@ -272,7 +272,8 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
 
   const { updateVault, vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
   const { validVault: vault, vaultId } = useFirstValidVault()
-  const { squeethAmount: shortSqueethAmount } = useComputeSwaps()
+  const { currentOSQTHAmount: shortSqueethAmount } = usePositionNPnL()
+
   const [isVaultHistoryUpdating, setVaultHistoryUpdating] = useAtom(vaultHistoryUpdatingAtom)
   const { existingCollatPercent } = useVaultData(vault)
   const collatPercentAtom = collatPercentFamily(200)

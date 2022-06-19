@@ -43,6 +43,7 @@ import { Vault } from '@queries/squeeth/__generated__/Vault'
 import { ComputeSwapsContext } from './providers'
 import useAppEffect from '@hooks/useAppEffect'
 import useAppMemo from '@hooks/useAppMemo'
+import usePositionNPnL from '@hooks/usePositionNPnL'
 
 export const useSwaps = () => {
   const [networkId] = useAtom(networkIdAtom)
@@ -116,36 +117,38 @@ export const useComputeSwaps = () => {
   return context
 }
 
-export const useLongRealizedPnl = () => {
-  const { boughtSqueeth, soldSqueeth, totalUSDFromBuy, totalUSDFromSell } = useComputeSwaps()
-  return useAppMemo(() => {
-    if (!soldSqueeth.gt(0)) return BIG_ZERO
-    const costForOneSqth = !totalUSDFromBuy.isEqualTo(0) ? totalUSDFromBuy.div(boughtSqueeth) : BIG_ZERO
-    const realizedForOneSqth = !totalUSDFromSell.isEqualTo(0) ? totalUSDFromSell.div(soldSqueeth) : BIG_ZERO
-    const pnlForOneSqth = realizedForOneSqth.minus(costForOneSqth)
+// depreciated
+// export const useLongRealizedPnl = () => {
+//   const { boughtSqueeth, soldSqueeth, totalUSDFromBuy, totalUSDFromSell } = useComputeSwaps()
+//   return useAppMemo(() => {
+//     if (!soldSqueeth.gt(0)) return BIG_ZERO
+//     const costForOneSqth = !totalUSDFromBuy.isEqualTo(0) ? totalUSDFromBuy.div(boughtSqueeth) : BIG_ZERO
+//     const realizedForOneSqth = !totalUSDFromSell.isEqualTo(0) ? totalUSDFromSell.div(soldSqueeth) : BIG_ZERO
+//     const pnlForOneSqth = realizedForOneSqth.minus(costForOneSqth)
 
-    return pnlForOneSqth.multipliedBy(soldSqueeth)
-  }, [boughtSqueeth, soldSqueeth, totalUSDFromBuy, totalUSDFromSell])
-}
+//     return pnlForOneSqth.multipliedBy(soldSqueeth)
+//   }, [boughtSqueeth, soldSqueeth, totalUSDFromBuy, totalUSDFromSell])
+// }
 
-export const useShortRealizedPnl = () => {
-  const { boughtSqueeth, soldSqueeth, totalUSDFromBuy, totalUSDFromSell } = useComputeSwaps()
-  return useAppMemo(() => {
-    if (!boughtSqueeth.gt(0)) return BIG_ZERO
+// depreciated
+// export const useShortRealizedPnl = () => {
+//   const { boughtSqueeth, soldSqueeth, totalUSDFromBuy, totalUSDFromSell } = useComputeSwaps()
+//   return useAppMemo(() => {
+//     if (!boughtSqueeth.gt(0)) return BIG_ZERO
 
-    const costForOneSqth = !totalUSDFromSell.isEqualTo(0) ? totalUSDFromSell.div(soldSqueeth) : BIG_ZERO
-    const realizedForOneSqth = !totalUSDFromBuy.isEqualTo(0) ? totalUSDFromBuy.div(boughtSqueeth) : BIG_ZERO
-    const pnlForOneSqth = realizedForOneSqth.minus(costForOneSqth)
+//     const costForOneSqth = !totalUSDFromSell.isEqualTo(0) ? totalUSDFromSell.div(soldSqueeth) : BIG_ZERO
+//     const realizedForOneSqth = !totalUSDFromBuy.isEqualTo(0) ? totalUSDFromBuy.div(boughtSqueeth) : BIG_ZERO
+//     const pnlForOneSqth = realizedForOneSqth.minus(costForOneSqth)
 
-    return pnlForOneSqth.multipliedBy(boughtSqueeth)
-  }, [boughtSqueeth, totalUSDFromBuy, soldSqueeth, totalUSDFromSell])
-}
+//     return pnlForOneSqth.multipliedBy(boughtSqueeth)
+//   }, [boughtSqueeth, totalUSDFromBuy, soldSqueeth, totalUSDFromSell])
+// }
 
 export const useMintedSoldSort = () => {
   const { vaultId } = useFirstValidVault()
   const { openShortSqueeth } = useVaultHistory(Number(vaultId))
   const positionType = useAtomValue(positionTypeAtom)
-  const { squeethAmount } = useComputeSwaps()
+  const { currentOSQTHAmount: squeethAmount } = usePositionNPnL()
 
   //when the squeethAmount < 0 and the abs amount is greater than openShortSqueeth, that means there is manually sold short position
   return useAppMemo(() => {
@@ -173,7 +176,7 @@ export const useMintedDebt = () => {
 
 export const useShortDebt = () => {
   const positionType = useAtomValue(positionTypeAtom)
-  const { squeethAmount } = useComputeSwaps()
+  const { currentOSQTHAmount: squeethAmount } = usePositionNPnL()
   const shortDebt = useAppMemo(() => {
     return positionType === PositionType.SHORT ? squeethAmount : new BigNumber(0)
   }, [positionType, squeethAmount])

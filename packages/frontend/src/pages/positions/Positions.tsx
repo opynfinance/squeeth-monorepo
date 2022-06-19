@@ -14,7 +14,6 @@ import { toTokenAmount } from '@utils/calculations'
 import { useCrabPosition } from '@hooks/useCrabPosition'
 import { addressAtom } from 'src/state/wallet/atoms'
 import {
-  useComputeSwaps,
   useFirstValidVault,
   useLpDebt,
   useMintedDebt,
@@ -34,6 +33,7 @@ import MintedSqueeth from './MintedSqueeth'
 import ShortSqueethLiquidated from './ShortSqueethLiquidated'
 import { useCurrentCrabPositionValue } from 'src/state/crab/hooks'
 import { pnl, pnlInPerct } from 'src/lib/pnl'
+import usePositionNPnL from '@hooks/usePositionNPnL'
 
 export default function Positions() {
   const classes = useStyles()
@@ -42,7 +42,7 @@ export default function Positions() {
   const positionType = useAtomValue(positionTypeAtom)
   const activePositions = useAtomValue(activePositionsAtom)
 
-  const { squeethAmount } = useComputeSwaps()
+  const { currentOSQTHAmount: squeethAmount } = usePositionNPnL()
   const { validVault: vault, vaultId } = useFirstValidVault()
   const lpedSqueeth = useLpDebt()
   const mintedDebt = useMintedDebt()

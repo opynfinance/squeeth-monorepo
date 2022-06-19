@@ -59,7 +59,6 @@ import {
   useWithdrawUniPositionToken,
 } from 'src/state/controller/hooks'
 import {
-  useComputeSwaps,
   useLpDebt,
   useMintedDebt,
   useShortDebt,
@@ -69,6 +68,7 @@ import {
 import { useVaultData } from '@hooks/useVaultData'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import useVault from '@hooks/useVault'
+import usePositionNPnL from '@hooks/usePositionNPnL'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -319,7 +319,7 @@ const Component: React.FC = () => {
   const { liquidations } = useVaultLiquidations(Number(vid))
   const { oSqueeth, nftManager, controller } = useAtomValue(addressesAtom)
   const positionType = useAtomValue(positionTypeAtom)
-  const { squeethAmount } = useComputeSwaps()
+  const { currentOSQTHAmount: squeethAmount } = usePositionNPnL()
   const mintedDebt = useMintedDebt()
   const shortDebt = useShortDebt()
 
@@ -346,7 +346,7 @@ const Component: React.FC = () => {
   const [collatPercent, setCollatPercent] = useAtom(collatPercentAtom)
 
   useEffect(() => {
-    ; (async () => {
+    ;(async () => {
       if (vault) {
         let collateralAmount = vault.collateralAmount
         if (currentLpNftId) {
@@ -959,8 +959,8 @@ const Component: React.FC = () => {
                           shortAmountBN.isPositive()
                             ? updateShort(maxToMint.toString())
                             : vault?.shortAmount.isGreaterThan(oSqueethBal)
-                              ? updateShort(oSqueethBal.negated().toString())
-                              : updateShort(vault?.shortAmount ? vault?.shortAmount.negated().toString() : '0')
+                            ? updateShort(oSqueethBal.negated().toString())
+                            : updateShort(vault?.shortAmount ? vault?.shortAmount.negated().toString() : '0')
                         }
                         variant="text"
                       >
@@ -983,8 +983,8 @@ const Component: React.FC = () => {
                             Balance{' '}
                             <span id="vault-debt-input-osqth-balance">
                               {oSqueethBal?.isGreaterThan(0) &&
-                                positionType === PositionType.LONG &&
-                                oSqueethBal.minus(squeethAmount).isGreaterThan(0)
+                              positionType === PositionType.LONG &&
+                              oSqueethBal.minus(squeethAmount).isGreaterThan(0)
                                 ? oSqueethBal.minus(squeethAmount).toFixed(6)
                                 : oSqueethBal.toFixed(6)}
                             </span>{' '}

@@ -200,11 +200,9 @@ const PositionCard: React.FC = () => {
 
   useAppEffect(() => {
     if (tradeSuccess && prevSqueethAmount?.isEqualTo(currentOSQTHAmount)) {
-      console.log('currentOSQTHAmount', currentOSQTHAmount, prevSqueethAmount)
       startPolling(500)
       setFetchingNew(true)
     } else {
-      console.log('stop polling', currentOSQTHAmount, prevSqueethAmount)
       setTradeCompleted(false)
       stopPolling()
       setTradeSuccess(false)
