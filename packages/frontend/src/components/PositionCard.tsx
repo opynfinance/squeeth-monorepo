@@ -191,7 +191,6 @@ const PositionCard: React.FC = () => {
   const actualTradeType = useAtomValue(actualTradeTypeAtom)
   const tradeAmountInput = useAtomValue(sqthTradeAmountAtom)
   const tradeType = useAtomValue(tradeTypeAtom)
-  const prevSwapsData = usePrevious(swaps)
   const tradeAmount = useAppMemo(() => new BigNumber(tradeAmountInput), [tradeAmountInput])
   const [fetchingNew, setFetchingNew] = useState(false)
   const [postTradeAmt, setPostTradeAmt] = useState(new BigNumber(0))
@@ -199,17 +198,15 @@ const PositionCard: React.FC = () => {
   const classes = useStyles({ positionType, postPosition })
 
   useAppEffect(() => {
-    if (tradeSuccess && prevSwapsData?.length === swaps?.length) {
-      //if trade success and number of swaps is still the same, start swaps polling
-      startPolling(500)
+    if (tradeSuccess) {
+      refetch()
       setFetchingNew(true)
     } else {
       setTradeCompleted(false)
       setTradeSuccess(false)
-      stopPolling()
       setFetchingNew(false)
     }
-  }, [swaps, prevSwapsData, tradeSuccess, setTradeCompleted, startPolling, stopPolling, setTradeSuccess])
+  }, [tradeSuccess, setTradeCompleted, setTradeSuccess, refetch])
 
   const fullyLiquidated = useAppMemo(() => {
     return Boolean(vault && vault.shortAmount.isZero() && liquidations.length > 0)
