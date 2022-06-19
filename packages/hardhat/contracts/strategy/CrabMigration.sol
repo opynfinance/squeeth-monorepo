@@ -61,12 +61,12 @@ import {CrabStrategy} from "./CrabStrategy.sol";
      * @param _crabV1 address of crab v1
      * @param _crabV2 address of crab v2 
      */
-     constructor (address payable _crabV1, address payable _crabV2, address _euler, address _weth, address _dToken) { 
+     constructor (address payable _crabV1, address payable _crabV2, address _weth, address _eulerExec, address _dToken, address _eulerMainnet) { 
          crabV1 = CrabStrategy(_crabV1);
          crabV2 = CrabStrategyV2 (_crabV2);
-         euler = IEulerExec(_euler);
+         euler = IEulerExec(_eulerExec);
          owner = msg.sender;
-         EULER_MAINNET = _dToken;
+         EULER_MAINNET = _eulerMainnet;
          weth = _weth;
          dToken = _dToken; 
      }
@@ -97,7 +97,7 @@ import {CrabStrategy} from "./CrabStrategy.sol";
 
      function onDeferredLiquidityCheck(bytes memory encodedData) external {
 
-        require(msg.sender == address(euler), "M4");
+        // require(msg.sender == address(dToken), "M4");
         // 1. Borrow weth
         uint256 crabV1Balance = crabV1.balanceOf(address(this));
         uint256 crabV1Supply = crabV1.totalSupply();
