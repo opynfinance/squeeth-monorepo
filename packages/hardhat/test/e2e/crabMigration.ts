@@ -26,8 +26,8 @@ describe("Crab Migration", function () {
     const dTokenAddress = "0x62e28f054efc24b26A794F5C1249B6349454352C";
     const wethAddress = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
     const crabV1Address = "0xf205ad80BB86ac92247638914265887A8BAa437D";
-    const d1Address = "0x7ba50e6f1fc2bddfaad95b6bb9947949a588a038";
-    const d2Address = "0x8b08a0a2e1bb7160fa0263abd28cd2d22f18943c";
+    const crabV1Whale = "0x7ba50e6f1fc2bddfaad95b6bb9947949a588a038";
+    const crabV1Whale2 = "0x8b08a0a2e1bb7160fa0263abd28cd2d22f18943c";
     const squeethControllerAddress = "0x64187ae08781B09368e6253F9E94951243A493D5";
     const oracleAddress = "0x65D66c76447ccB45dAf1e8044e918fA786A483A1";
     const uniswapFactoryAddress = "0x1F98431c8aD98523631AE4a59f267346ea31F984";
@@ -52,9 +52,24 @@ describe("Crab Migration", function () {
         eulerExec = await ethers.getContractAt("IEulerExec", eulerExecAddress);
         crabStrategyV1 = await ethers.getContractAt("CrabStrategy", crabV1Address);
 
-        // deposit1Amount = await crabStrategyV1.balanceOf(d1Address);
-        // deposit2Amount = await crabStrategyV1.balanceOf(d2Address);
-    })
+        deposit1Amount = await crabStrategyV1.balanceOf(crabV1Whale);
+        deposit2Amount = await crabStrategyV1.balanceOf(crabV1Whale2);
+
+        // Send Crab shares to d1
+        await provider.send('hardhat_impersonateAccount', [crabV1Whale]);
+        const signer1 = await ethers.provider.getSigner(crabV1Whale);
+        await crabStrategyV1.connect(signer1).transfer(d1.address, deposit1Amount);
+        await provider.send('evm_mine', []);
+        await provider.send('hardhat_stopImpersonatingAccount', [crabV1Whale]);
+
+        // Send Crab shares to d2
+        await provider.send('hardhat_impersonateAccount', [crabV1Whale2]);
+        const signer2 = await ethers.provider.getSigner(crabV1Whale2);
+        await crabStrategyV1.connect(signer2).transfer(d2.address, deposit2Amount);
+        await provider.send('evm_mine', []);
+        await provider.send('hardhat_stopImpersonatingAccount', [crabV1Whale2]);
+
+    })    
     
     this.beforeAll("Deploy Crab 2", async () => {
         const CrabContract = await ethers.getContractFactory("CrabStrategyV2");
@@ -74,12 +89,12 @@ describe("Crab Migration", function () {
 
     this.beforeAll("Deploy Crab Migration", async () => { 
         const MigrationContract = await ethers.getContractFactory("CrabMigration");
-        crabMigration = (await MigrationContract.deploy(crabV1Address, crabStrategyV2.address, eulerMainnetAddress, wethAddress, dTokenAddress));
+        crabMigration = (await MigrationContract.deploy(crabV1Address, crabStrategyV2.address, wethAddress, eulerExecAddress, dTokenAddress, eulerMainnetAddress));
     })
 
     describe("Test Migration", async() => { 
 
-        xit("d1 deposits crabV1 shares", async () => { 
+        it("d1 deposits crabV1 shares", async () => { 
             const crabV1BalanceBefore = await crabStrategyV1.balanceOf(crabMigration.address); 
 
             await crabStrategyV1.connect(d1).approve(crabMigration.address, deposit1Amount);
@@ -93,7 +108,7 @@ describe("Crab Migration", function () {
             expect(d1SharesDeposited).to.be.equal(deposit1Amount);
         })
 
-        xit("d2 deposits crabV1 shares", async () => { 
+        it("d2 deposits crabV1 shares", async () => { 
             const crabV1BalanceBefore = await crabStrategyV1.balanceOf(crabMigration.address); 
 
             await crabStrategyV1.connect(d2).approve(crabMigration.address, deposit2Amount);
@@ -106,8 +121,12 @@ describe("Crab Migration", function () {
             expect(d2SharesDeposited).to.be.equal(deposit2Amount);
         })
 
-        xit("should not be able to claim until strategy has been migrated", async () => { 
+        it("should not be able to claim until strategy has been migrated", async () => { 
             await expect(crabMigration.connect(d1).claimV2Shares()).to.be.revertedWith("M3");
+        })
+
+        it("batch migrate", async () => { 
+           await crabMigration.batchMigrate();
         })
     })
 
