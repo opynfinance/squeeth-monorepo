@@ -9,9 +9,8 @@ import { useAtom, useAtomValue } from 'jotai'
 
 import { PnLType, PositionType, TradeType } from '../types'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
-import { usePrevious } from 'react-use'
-import { useComputeSwaps, useFirstValidVault, useLPPositionsQuery, useSwaps } from 'src/state/positions/hooks'
-import { isLPAtom, positionTypeAtom, swapsAtom } from 'src/state/positions/atoms'
+import { useFirstValidVault, useLPPositionsQuery } from 'src/state/positions/hooks'
+import { isLPAtom } from 'src/state/positions/atoms'
 import {
   actualTradeTypeAtom,
   isOpenPositionAtom,
@@ -25,6 +24,7 @@ import useAppEffect from '@hooks/useAppEffect'
 import useAppMemo from '@hooks/useAppMemo'
 import { PnLTooltip } from '@components/PnLTooltip'
 import usePositionNPnL from '@hooks/usePositionNPnL'
+import useAccounts from '@hooks/useAccounts'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -165,6 +165,7 @@ const pnlClass = (positionType: PositionType, num: BigNumber, classes: any) => {
 }
 
 const PositionCard: React.FC = () => {
+  const { refetch } = useAccounts()
   const {
     positionType,
     realizedPnL,
@@ -175,10 +176,7 @@ const PositionCard: React.FC = () => {
     currentOSQTHAmount,
     currentPositionValue,
   } = usePositionNPnL()
-  const { startPolling, stopPolling } = useSwaps()
-  const swapsData = useAtomValue(swapsAtom)
-  const swaps = swapsData.swaps
-  const { squeethAmount } = useComputeSwaps()
+
   const { validVault: vault, vaultId } = useFirstValidVault()
   const { existingCollat } = useVaultData(vault)
   const { loading: isPositionLoading } = useLPPositionsQuery()
@@ -219,16 +217,16 @@ const PositionCard: React.FC = () => {
     let _postPosition = PositionType.NONE
     if (actualTradeType === TradeType.LONG && positionType !== PositionType.SHORT) {
       if (isOpenPosition) {
-        _postTradeAmt = squeethAmount.plus(tradeAmount)
+        _postTradeAmt = currentOSQTHAmount.plus(tradeAmount)
       } else {
-        _postTradeAmt = squeethAmount.minus(tradeAmount)
+        _postTradeAmt = currentOSQTHAmount.minus(tradeAmount)
       }
       if (_postTradeAmt.gt(0)) _postPosition = PositionType.LONG
     } else if (actualTradeType === TradeType.SHORT && positionType !== PositionType.LONG) {
       if (isOpenPosition) {
-        _postTradeAmt = squeethAmount.isGreaterThan(0) ? squeethAmount.plus(tradeAmount) : tradeAmount
+        _postTradeAmt = currentOSQTHAmount.isGreaterThan(0) ? currentOSQTHAmount.plus(tradeAmount) : tradeAmount
       } else {
-        _postTradeAmt = squeethAmount.isGreaterThan(0) ? squeethAmount.minus(tradeAmount) : new BigNumber(0)
+        _postTradeAmt = currentOSQTHAmount.isGreaterThan(0) ? currentOSQTHAmount.minus(tradeAmount) : new BigNumber(0)
       }
       if (_postTradeAmt.gt(0)) {
         _postPosition = PositionType.SHORT
@@ -237,7 +235,7 @@ const PositionCard: React.FC = () => {
 
     setPostTradeAmt(_postTradeAmt)
     setPostPosition(_postPosition)
-  }, [actualTradeType, isOpenPosition, isPositionLoading, positionType, squeethAmount, tradeAmount])
+  }, [actualTradeType, isOpenPosition, isPositionLoading, positionType, currentOSQTHAmount, tradeAmount])
 
   return (
     <div className={clsx(classes.container, classes.posBg)}>
