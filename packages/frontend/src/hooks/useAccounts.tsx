@@ -1,28 +1,23 @@
 import { useQuery } from '@apollo/client'
 import { ACCOUNTS_QUERY } from '@queries/squeeth/accountsQuery'
-import {
-  accounts,
-  accountsVariables,
-  accounts_accounts_positions,
-  accounts_accounts_lppositions,
-} from '@queries/squeeth/__generated__/accounts'
+import { accounts, accountsVariables } from '@queries/squeeth/__generated__/accounts'
 import { squeethClient } from '@utils/apollo-client'
-import BigNumber from 'bignumber.js'
 import { useAtom, useAtomValue } from 'jotai'
-import { accountAtom, lpPositionAtom, positionAtom, initPosition, accShortAmountAtom } from 'src/state/positions/atoms'
+import { useUpdateAtom } from 'jotai/utils'
+
+import { accountAtom, lpPositionAtom, positionAtom, accShortAmountAtom } from 'src/state/positions/atoms'
 import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
-import { PositionType } from 'src/types'
 import useAppEffect from './useAppEffect'
 
 export default function useAccounts() {
   const address = useAtomValue(addressAtom)
   const networkId = useAtomValue(networkIdAtom)
-  const [account, setAccount] = useAtom(accountAtom)
+  const setAccount = useUpdateAtom(accountAtom)
   const [position, setPosition] = useAtom(positionAtom)
   const [lpposition, setLPposition] = useAtom(lpPositionAtom)
   const [accShortAmount, setAccShortAmountAtom] = useAtom(accShortAmountAtom)
 
-  const { data, loading, refetch } = useQuery<accounts, accountsVariables>(ACCOUNTS_QUERY, {
+  const { data, loading, refetch, startPolling, stopPolling } = useQuery<accounts, accountsVariables>(ACCOUNTS_QUERY, {
     variables: { ownerId: address! },
     client: squeethClient[networkId],
     skip: !address,
@@ -33,8 +28,15 @@ export default function useAccounts() {
     setLPposition(data?.accounts[0].lppositions[0])
     setPosition(data?.accounts[0].positions[0])
     setAccShortAmountAtom(data?.accounts[0]?.accShortAmount)
-  }, [data?.accounts, setAccShortAmountAtom, setAccount, setLPposition, setPosition])
-
+  }, [
+    data?.accounts,
+    data?.accounts[0].positions[0],
+    data?.accounts[0].lppositions[0],
+    setAccShortAmountAtom,
+    setAccount,
+    setLPposition,
+    setPosition,
+  ])
 
   return {
     accShortAmount: accShortAmount,
@@ -42,5 +44,7 @@ export default function useAccounts() {
     lpPositions: lpposition,
     loading,
     refetch,
+    startPolling,
+    stopPolling,
   }
 }

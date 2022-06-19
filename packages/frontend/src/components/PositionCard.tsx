@@ -6,11 +6,13 @@ import clsx from 'clsx'
 import Link from 'next/link'
 import React, { memo, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
+import { usePrevious } from 'react-use'
 
 import { PnLType, PositionType, TradeType } from '../types'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { useFirstValidVault, useLPPositionsQuery } from 'src/state/positions/hooks'
 import { isLPAtom } from 'src/state/positions/atoms'
+
 import {
   actualTradeTypeAtom,
   isOpenPositionAtom,
@@ -165,7 +167,7 @@ const pnlClass = (positionType: PositionType, num: BigNumber, classes: any) => {
 }
 
 const PositionCard: React.FC = () => {
-  const { refetch } = useAccounts()
+  const { startPolling, stopPolling } = useAccounts()
   const {
     positionType,
     realizedPnL,
@@ -176,6 +178,7 @@ const PositionCard: React.FC = () => {
     currentOSQTHAmount,
     currentPositionValue,
   } = usePositionNPnL()
+  const prevSqueethAmount = usePrevious(currentOSQTHAmount)
 
   const { validVault: vault, vaultId } = useFirstValidVault()
   const { existingCollat } = useVaultData(vault)
@@ -196,15 +199,26 @@ const PositionCard: React.FC = () => {
   const classes = useStyles({ positionType, postPosition })
 
   useAppEffect(() => {
-    if (tradeSuccess) {
-      refetch()
+    if (tradeSuccess && prevSqueethAmount?.isEqualTo(currentOSQTHAmount)) {
+      console.log('currentOSQTHAmount', currentOSQTHAmount, prevSqueethAmount)
+      startPolling(500)
       setFetchingNew(true)
     } else {
+      console.log('stop polling', currentOSQTHAmount, prevSqueethAmount)
       setTradeCompleted(false)
+      stopPolling()
       setTradeSuccess(false)
       setFetchingNew(false)
     }
-  }, [tradeSuccess, setTradeCompleted, setTradeSuccess, refetch])
+  }, [
+    tradeSuccess,
+    setTradeCompleted,
+    setTradeSuccess,
+    prevSqueethAmount,
+    currentOSQTHAmount,
+    startPolling,
+    stopPolling,
+  ])
 
   const fullyLiquidated = useAppMemo(() => {
     return Boolean(vault && vault.shortAmount.isZero() && liquidations.length > 0)
