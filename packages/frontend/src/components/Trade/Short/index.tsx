@@ -60,6 +60,7 @@ import useAppEffect from '@hooks/useAppEffect'
 import useAppCallback from '@hooks/useAppCallback'
 import { useVaultHistoryQuery } from '@hooks/useVaultHistory'
 import useAppMemo from '@hooks/useAppMemo'
+import usePositionNPnL from '@hooks/usePositionNPnL'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
