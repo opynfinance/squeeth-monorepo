@@ -3,15 +3,24 @@ import { calculatePnL } from 'src/lib'
 import useAccounts from './useAccounts'
 import useCurrentPrices from './useCurrentPrices'
 import useAppEffect from './useAppEffect'
-import { lpPositionAtom, positionAtom, positionTypeAtom } from '../state/positions/atoms'
-import { useAtom } from 'jotai'
+import {
+  accShortAmountAtom,
+  calculatedLPPositionAtom,
+  calculatedPositionAtom,
+  lpPositionAtom,
+  positionAtom,
+  positionTypeAtom,
+} from '../state/positions/atoms'
+import { useAtom, useAtomValue } from 'jotai'
 
 export default function usePositionNPnL() {
   const { ethPrice, oSqthPrice, loading: isCurrentPriceLoading } = useCurrentPrices()
-  const { positions, lpPositions, loading: isPositionsLoading, accShortAmount, refetch } = useAccounts()
   const [positionType, setPositionType] = useAtom(positionTypeAtom)
-  const [position, setPosition] = useAtom(positionAtom)
-  const [lpPosition, setLPPosition] = useAtom(lpPositionAtom)
+  const positions = useAtomValue(positionAtom)
+  const lpPositions = useAtomValue(lpPositionAtom)
+  const accShortAmount = useAtomValue(accShortAmountAtom)
+  const [position, setPosition] = useAtom(calculatedPositionAtom)
+  const [lpPosition, setLPPosition] = useAtom(calculatedLPPositionAtom)
 
   useAppEffect(() => {
     const {
@@ -70,7 +79,7 @@ export default function usePositionNPnL() {
     currentETHAmount: position?.currentETHAmount,
     currentOSQTHAmount: position?.currentOSQTHAmount.abs(),
     positionType: positionType,
-    loading: isCurrentPriceLoading || isPositionsLoading,
+    loading: isCurrentPriceLoading,
     unrealizedPnL: position?.unrealizedPnL,
     unrealizedPnLInPerct: position?.unrealizedPnLInPerct,
     realizedPnL: position?.realizedPnL,
@@ -82,6 +91,5 @@ export default function usePositionNPnL() {
     lpUnrealizedPnLInPerct: lpPosition?.lpUnrealizedPnLInPerct,
     lpRealizedPnL: lpPosition?.lpRealizedPnL,
     lpRealizedPnLInPerct: lpPosition?.lpRealizedPnLInPerct,
-    refetch,
   }
 }
