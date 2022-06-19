@@ -305,7 +305,7 @@ export function handleOSQTHChange(
 
       if (!totalAmount.plus(amount).equals(ZERO_BD)) {
         position.realizedOSQTHUnitCost = oldRealizedOSQTHCost
-          .plus(amount.times(osqthPriceInUSD))
+          .plus(absAmount.times(osqthPriceInUSD))
           .div(totalAmount.plus(amount));
       }
     }
@@ -334,7 +334,7 @@ export function handleOSQTHChange(
     position = initPosition(userAddr, position);
   } else if (!position.currentOSQTHAmount.equals(ZERO_BD)) {
     position.unrealizedOSQTHUnitCost = oldUnrealizedOSQTHCost
-      .plus(amount.times(osqthPriceInUSD))
+      .plus(absAmount.times(osqthPriceInUSD))
       .div(absCurrentOSQTHAmountAfterTrade);
   }
 
