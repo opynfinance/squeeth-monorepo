@@ -9,7 +9,7 @@ import {
 import { squeethClient } from '@utils/apollo-client'
 import BigNumber from 'bignumber.js'
 import { useAtom, useAtomValue } from 'jotai'
-import { positionTypeAtom } from 'src/state/positions/atoms'
+import { accountAtom } from 'src/state/positions/atoms'
 import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
 import { PositionType } from 'src/types'
 import useAppEffect from './useAppEffect'
@@ -30,17 +30,24 @@ const initPosition = {
 export default function useAccounts() {
   const address = useAtomValue(addressAtom)
   const networkId = useAtomValue(networkIdAtom)
+  const [account, setAccount] = useAtom(accountAtom)
 
-  const { data: { accounts } = {}, loading } = useQuery<accounts, accountsVariables>(ACCOUNTS_QUERY, {
+  const { data, loading, refetch } = useQuery<accounts, accountsVariables>(ACCOUNTS_QUERY, {
     variables: { ownerId: address! },
     client: squeethClient[networkId],
     skip: !address,
   })
 
+  useAppEffect(() => {
+    setAccount(data?.accounts)
+  }, [data?.accounts, setAccount])
+
+
   return {
-    accShortAmount: accounts ? accounts[0]?.accShortAmount : new BigNumber(0),
-    positions: (accounts ? accounts[0]?.positions[0] : initPosition) as accounts_accounts_positions,
-    lpPosition: (accounts ? accounts[0]?.lppositions[0] : initPosition) as accounts_accounts_lppositions,
+    accShortAmount: account ? account[0]?.accShortAmount : new BigNumber(0),
+    positions: (account ? account[0]?.positions[0] : initPosition) as accounts_accounts_positions,
+    lpPositions: (account ? account[0]?.lppositions[0] : initPosition) as accounts_accounts_lppositions,
     loading,
+    refetch,
   }
 }

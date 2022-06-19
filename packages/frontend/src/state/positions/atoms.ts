@@ -22,6 +22,7 @@ import { BIG_ZERO } from '@constants/index'
 import NFTpositionManagerABI from '../../abis/NFTpositionmanager.json'
 import { swaps } from '@queries/uniswap/__generated__/swaps'
 import { swapsRopsten } from '@queries/uniswap/__generated__/swapsRopsten'
+import { accounts_accounts } from '@queries/squeeth/__generated__/accounts'
 
 export const positionTypeAtom = atom(PositionType.NONE)
 export const isLongAtom = atom((get) => {
@@ -88,3 +89,24 @@ export const isToHidePnLAtom = atom(false)
 export const swapsAtom = atom<swaps | swapsRopsten>({ swaps: [] })
 export const longPositionValueAtom = atom(BIG_ZERO)
 export const shortPositionValueAtom = atom(BIG_ZERO)
+
+export const accountAtom = atom<accounts_accounts[] | undefined>(undefined)
+export const positionAtom = atom({
+  currentPositionValue: BIG_ZERO,
+  currentETHAmount: BIG_ZERO,
+  currentOSQTHAmount: BIG_ZERO,
+  unrealizedPnL: BIG_ZERO,
+  unrealizedPnLInPerct: BIG_ZERO,
+  realizedPnL: BIG_ZERO,
+  realizedPnLInPerct: BIG_ZERO,
+})
+
+export const lpPositionAtom = atom({
+  lpedPositionValue: BIG_ZERO,
+  lpedETHAmount: BIG_ZERO,
+  lpedoSQTHAmount: BIG_ZERO,
+  lpUnrealizedPnL: BIG_ZERO,
+  lpUnrealizedPnLInPerct: BIG_ZERO,
+  lpRealizedPnL: BIG_ZERO,
+  lpRealizedPnLInPerct: BIG_ZERO,
+})
