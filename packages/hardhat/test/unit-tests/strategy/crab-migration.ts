@@ -61,7 +61,7 @@ describe("Crab Migration", function () {
 
     this.beforeAll("Deploy Migration Crab", async () => { 
         const MigrationContract = await ethers.getContractFactory("CrabMigration");
-        crabMigration = (await MigrationContract.deploy(crabStrategyV1.address, crabStrategyV2.address, euler.address, weth.address, dToken.address));
+        crabMigration = (await MigrationContract.deploy(crabStrategyV1.address, crabStrategyV2.address, weth.address, euler.address, dToken.address, euler.address));
     })
 
     describe("Test Migration", async() => { 
@@ -70,12 +70,26 @@ describe("Crab Migration", function () {
             const crabV1BalanceBefore = await crabStrategyV1.balanceOf(crabMigration.address); 
 
             await crabStrategyV1.connect(d1).approve(crabMigration.address, deposit1Amount);
-            await crabMigration.connect(d1).depositV1Shares(deposit1Amount);
+            await crabMigration.connect(d1).depositV1Shares(deposit1Amount.div(2));
 
             const crabV1BalanceAfter = await crabStrategyV1.balanceOf(crabMigration.address);
             const d1SharesDeposited  = await crabMigration.sharesDeposited(d1.address);
 
             expect(crabV1BalanceBefore).to.be.equal('0');
+            expect(crabV1BalanceAfter).to.be.equal(deposit1Amount.div(2));
+            expect(d1SharesDeposited).to.be.equal(deposit1Amount.div(2));
+        })
+
+        it("d1 deposits more crabV1 shares", async () => { 
+            const crabV1BalanceBefore = await crabStrategyV1.balanceOf(crabMigration.address); 
+
+            await crabStrategyV1.connect(d1).approve(crabMigration.address, deposit1Amount);
+            await crabMigration.connect(d1).depositV1Shares(deposit1Amount.div(2));
+
+            const crabV1BalanceAfter = await crabStrategyV1.balanceOf(crabMigration.address);
+            const d1SharesDeposited  = await crabMigration.sharesDeposited(d1.address);
+
+            expect(crabV1BalanceBefore).to.be.equal(deposit1Amount.div(2));
             expect(crabV1BalanceAfter).to.be.equal(deposit1Amount);
             expect(d1SharesDeposited).to.be.equal(deposit1Amount);
         })
