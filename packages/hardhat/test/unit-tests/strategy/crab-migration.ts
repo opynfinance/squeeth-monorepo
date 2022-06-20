@@ -61,7 +61,7 @@ describe("Crab Migration", function () {
 
     this.beforeAll("Deploy Migration Crab", async () => { 
         const MigrationContract = await ethers.getContractFactory("CrabMigration");
-        crabMigration = (await MigrationContract.deploy(crabStrategyV1.address, crabStrategyV2.address, weth.address, euler.address, dToken.address, euler.address));
+        crabMigration = (await MigrationContract.connect(owner).deploy(crabStrategyV1.address, crabStrategyV2.address, weth.address, euler.address, dToken.address, euler.address));
     })
 
     describe("Test Migration", async() => { 
@@ -109,6 +109,15 @@ describe("Crab Migration", function () {
 
         it("should not be able to claim until strategy has been migrated", async () => { 
             await expect(crabMigration.connect(d1).claimV2Shares()).to.be.revertedWith("M3");
+        })
+
+        it("random should not be able to call onDeferredLiquidity()", async () => { 
+            const data = "0x0000000000000000000000000000000000000000"
+            await expect((crabMigration.connect(random).onDeferredLiquidityCheck(data))).to.be.revertedWith("M4");
+        })
+
+        it("random should not be able to migrate shares", async () => { 
+            await expect(crabMigration.connect(random).batchMigrate()).to.be.revertedWith("M1");
         })
     })
 
