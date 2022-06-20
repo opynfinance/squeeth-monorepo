@@ -1,11 +1,11 @@
-import { Hidden, IconButton, Tooltip } from '@material-ui/core'
+import { Hidden, Tooltip } from '@material-ui/core'
 import Card from '@material-ui/core/Card'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Typography from '@material-ui/core/Typography'
 import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
-import ExpandLessIcon from '@material-ui/icons/NavigateBefore'
-import ExpandMoreIcon from '@material-ui/icons/NavigateNext'
+import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown'
+import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp'
 import Image from 'next/image'
 import { useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
@@ -472,76 +472,64 @@ const SqueethInfo: React.FC = () => {
         </div>
       </div>
       <div>
-        <div className={classes.squeethInfoSubGroup}>
-          {/* hard coded width layout to align with the prev line */}
-          {!showAdvanced ? (
-            <>
-              <button className={classes.advancedDetails} onClick={() => setShowAdvanced(true)}>
+        {/* hard coded width layout to align with the prev line */}
+
+        {showAdvanced ? (
+          <div className={classes.squeethInfoSubGroup}>
+            <div className={classes.infoItem}>
+              <div className={classes.infoLabel}>
                 <Typography color="textSecondary" variant="body2">
-                  Advanced details
+                  ETH&sup2; Price
                 </Typography>
-                <ExpandMoreIcon htmlColor="#fff" />
-              </button>
-            </>
-          ) : (
-            <>
-              <div className={classes.infoItem}>
-                <div className={classes.infoLabel}>
-                  <Typography color="textSecondary" variant="body2">
-                    ETH&sup2; Price
-                  </Typography>
-                  <Tooltip title={Tooltips.SpotPrice}>
-                    <FiberManualRecordIcon fontSize="small" className={classes.infoIcon} />
-                  </Tooltip>
-                </div>
-                <Typography>${Number(toTokenAmount(index, 18).toFixed(0)).toLocaleString() || 'loading'}</Typography>
+                <Tooltip title={Tooltips.SpotPrice}>
+                  <FiberManualRecordIcon fontSize="small" className={classes.infoIcon} />
+                </Tooltip>
               </div>
-              <div className={classes.infoItem}>
-                <div className={classes.infoLabel}>
-                  <Typography color="textSecondary" variant="body2">
-                    Mark Price
-                  </Typography>
-                  <Tooltip title={`${Tooltips.Mark}. ${Tooltips.SpotPrice}`}>
-                    <FiberManualRecordIcon fontSize="small" className={classes.infoIcon} />
-                  </Tooltip>
-                </div>
-                <Typography>${Number(toTokenAmount(mark, 18).toFixed(0)).toLocaleString() || 'loading'}</Typography>
+              <Typography>${Number(toTokenAmount(index, 18).toFixed(0)).toLocaleString() || 'loading'}</Typography>
+            </div>
+            <div className={classes.infoItem}>
+              <div className={classes.infoLabel}>
+                <Typography color="textSecondary" variant="body2">
+                  Mark Price
+                </Typography>
+                <Tooltip title={`${Tooltips.Mark}. ${Tooltips.SpotPrice}`}>
+                  <FiberManualRecordIcon fontSize="small" className={classes.infoIcon} />
+                </Tooltip>
               </div>
-              <div className={classes.infoItem}>
-                <div className={classes.infoLabel}>
-                  <Typography color="textSecondary" variant="body2">
-                    Implied Volatility
-                  </Typography>
-                  <Tooltip title={Tooltips.ImplVol}>
-                    <InfoIcon fontSize="small" className={classes.infoIcon} />
-                  </Tooltip>
-                </div>
-                <Typography>{(impliedVol * 100).toFixed(2)}%</Typography>
+              <Typography>${Number(toTokenAmount(mark, 18).toFixed(0)).toLocaleString() || 'loading'}</Typography>
+            </div>
+            <div className={classes.infoItem}>
+              <div className={classes.infoLabel}>
+                <Typography color="textSecondary" variant="body2">
+                  Implied Volatility
+                </Typography>
+                <Tooltip title={Tooltips.ImplVol}>
+                  <InfoIcon fontSize="small" className={classes.infoIcon} />
+                </Tooltip>
               </div>
-              <div className={classes.infoItem}>
-                <div className={classes.infoLabel}>
-                  <Typography color="textSecondary" variant="body2">
-                    Norm Factor
-                  </Typography>
-                  <Tooltip title={Tooltips.NormFactor}>
-                    <InfoIcon fontSize="small" className={classes.infoIcon} />
-                  </Tooltip>
-                </div>
-                <Typography>{normFactor.toFixed(4)}</Typography>
+              <Typography>{(impliedVol * 100).toFixed(2)}%</Typography>
+            </div>
+            <div className={classes.infoItem}>
+              <div className={classes.infoLabel}>
+                <Typography color="textSecondary" variant="body2">
+                  Norm Factor
+                </Typography>
+                <Tooltip title={Tooltips.NormFactor}>
+                  <InfoIcon fontSize="small" className={classes.infoIcon} />
+                </Tooltip>
               </div>
+              <Typography>{normFactor.toFixed(4)}</Typography>
+            </div>
+          </div>
+        ) : null}
+        <div className={classes.squeethInfoSubGroup}>
+          <button className={classes.advancedDetails} onClick={() => setShowAdvanced((prevState) => !prevState)}>
+            <Typography color="textSecondary" variant="body2">
+              Advanced details
+            </Typography>
 
-              <IconButton
-                style={{ position: 'absolute', right: 0 }}
-                className={classes.arrowBtn}
-                onClick={() => setShowAdvanced(false)}
-              >
-                <ExpandLessIcon />
-              </IconButton>
-
-              {/*  */}
-              {/* <div className={classes.infoItem}></div> */}
-            </>
-          )}
+            {!showAdvanced ? <KeyboardArrowDownIcon htmlColor="#fff" /> : <KeyboardArrowUpIcon htmlColor="#fff" />}
+          </button>
         </div>
       </div>
     </div>

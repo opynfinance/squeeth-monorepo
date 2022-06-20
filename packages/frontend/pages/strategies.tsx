@@ -24,9 +24,9 @@ import {
   maxCapAtom,
   timeAtLastHedgeAtom,
 } from 'src/state/crab/atoms'
-import { useCalculateCurrentValue, useSetProfitableMovePercent, useSetStrategyData } from 'src/state/crab/hooks'
-import { indexAtom } from 'src/state/controller/atoms'
 import { useCurrentImpliedFunding, useDailyHistoricalFunding } from 'src/state/controller/hooks'
+import { useCurrentCrabPositionValue, useSetProfitableMovePercent, useSetStrategyData } from 'src/state/crab/hooks'
+import { indexAtom } from 'src/state/controller/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -110,7 +110,7 @@ const Strategies: React.FC = () => {
   const timeAtLastHedge = useAtomValue(timeAtLastHedgeAtom)
   const profitableMovePercent = useSetProfitableMovePercent()
   const setStrategyData = useSetStrategyData()
-  const calculateCurrentValue = useCalculateCurrentValue()
+  useCurrentCrabPositionValue()
 
   const index = useAtomValue(indexAtom)
   const { dailyHistoricalFunding } = useDailyHistoricalFunding()
@@ -123,11 +123,6 @@ const Strategies: React.FC = () => {
   useEffect(() => {
     setStrategyData()
   }, [collatRatio, setStrategyData])
-
-  useEffect(() => {
-    console.log('Calculating initial values')
-    calculateCurrentValue()
-  }, [calculateCurrentValue])
 
   useMemo(() => {
     if (selectedIdx === 0) return Vaults.ETHBull
