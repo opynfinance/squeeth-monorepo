@@ -70,6 +70,25 @@ describe("Crab Migration", function () {
         await provider.send('hardhat_stopImpersonatingAccount', [crabV1Whale2]);
 
     })    
+
+    // this.beforeAll("Deploy Crab 1", async () => {
+    //     const CrabContract = await ethers.getContractFactory("CrabStrategy");
+    //     crabStrategyV1 = (await CrabContract.deploy(
+    //                         squeethControllerAddress, 
+    //                         oracleAddress, 
+    //                         wethAddress, 
+    //                         uniswapFactoryAddress, 
+    //                         wethOsqthPoolAddress, 
+    //                         random.address,
+    //                         1,
+    //                         1,
+    //                         1,
+    //                         1,
+    //                         ethers.utils.parseEther("10.0")));
+        
+    //     await crabStrategyV1.setStrategyCap(ethers.utils.parseEther("1000.0"));
+
+    // })
     
     this.beforeAll("Deploy Crab 2", async () => {
         const CrabContract = await ethers.getContractFactory("CrabStrategyV2");
@@ -85,6 +104,8 @@ describe("Crab Migration", function () {
                             1,
                             1,
                             ethers.utils.parseEther("10.0")));
+        
+        await crabStrategyV2.setStrategyCap(ethers.utils.parseEther("1000.0"));
     })
 
     this.beforeAll("Deploy Crab Migration", async () => { 
