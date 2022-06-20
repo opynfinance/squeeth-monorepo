@@ -82,5 +82,38 @@ describe("handleOSQTHChange", () => {
 
   test("opens long (5 sqth, sqthPrice: $10), partically close long (3 sqth, sqthPrice: $12), and fully close (2 sqth, sqthPrice: $9)", () => {
     let position = loadOrCreatePosition(userAddr);
+
+    handleOSQTHChange(
+      userAddr,
+      BigDecimal.fromString("5"),
+      BigDecimal.fromString("10")
+    );
+
+    handleOSQTHChange(
+      userAddr,
+      BigDecimal.fromString("-3"),
+      BigDecimal.fromString("12")
+    );
+
+    handleOSQTHChange(
+      userAddr,
+      BigDecimal.fromString("-2"),
+      BigDecimal.fromString("9")
+    );
+
+    assert.fieldEquals("Position", position.id, "currentOSQTHAmount", "0");
+    assert.fieldEquals(
+      "Position",
+      position.id,
+      "unrealizedOSQTHUnitCost",
+      "-0.4"
+    ); // -4/10
+    assert.fieldEquals(
+      "Position",
+      position.id,
+      "realizedOSQTHUnitGain",
+      "10.8"
+    ); // 54/5
+    assert.fieldEquals("Position", position.id, "realizedOSQTHAmount", "5");
   });
 });
