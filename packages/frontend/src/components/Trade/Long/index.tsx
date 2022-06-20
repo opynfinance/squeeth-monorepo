@@ -309,6 +309,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
       setInputQuoteLoading(true)
 
       getBuyQuoteForETH(new BigNumber(value), slippageAmount).then((val) => {
+        console.log({ val })
         if (val) {
           setSqthTradeAmount(val.amountOut.toString())
           setConfirmedAmount(val.amountOut.toFixed(6).toString())
@@ -631,7 +632,7 @@ const CloseLong: React.FC<BuyProps> = () => {
     resetTxCancelled,
     resetTransactionData,
   } = useTransactionStatus()
-  const { swapRouter2, oSqueeth } = useAtomValue(addressesAtom)
+  const { swapRouter2, oSqueeth, swapRouter } = useAtomValue(addressesAtom)
   // const sell = useSell()
   const sell = useAutoRoutedSell()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
@@ -651,7 +652,10 @@ const CloseLong: React.FC<BuyProps> = () => {
   const ethPrice = useETHPrice()
   const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const altTradeAmount = new BigNumber(ethTradeAmount)
-  const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter2)
+  const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(
+    oSqueeth,
+    swapRouter2 === '' ? swapRouter : swapRouter2,
+  )
   const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
 
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
