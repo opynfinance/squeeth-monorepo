@@ -212,7 +212,18 @@ const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       UNISWAP_SETTING,
-    ]
+    ],
+    overrides: {
+      "contracts/mocks/MockTimelock.sol": {
+        version: "0.8.10",
+      },
+      "contracts/strategy/timelock/Timelock.sol": {
+        version: "0.8.10",
+      },
+      "contracts/strategy/timelock/SafeMath.sol": {
+        version: "0.8.10",
+      }
+    }
   },
   ovm: {
     solcVersion: "0.7.6",
