@@ -70,25 +70,6 @@ describe("Crab Migration", function () {
         await provider.send('hardhat_stopImpersonatingAccount', [crabV1Whale2]);
 
     })    
-
-    // this.beforeAll("Deploy Crab 1", async () => {
-    //     const CrabContract = await ethers.getContractFactory("CrabStrategy");
-    //     crabStrategyV1 = (await CrabContract.deploy(
-    //                         squeethControllerAddress, 
-    //                         oracleAddress, 
-    //                         wethAddress, 
-    //                         uniswapFactoryAddress, 
-    //                         wethOsqthPoolAddress, 
-    //                         random.address,
-    //                         1,
-    //                         1,
-    //                         1,
-    //                         1,
-    //                         ethers.utils.parseEther("10.0")));
-        
-    //     await crabStrategyV1.setStrategyCap(ethers.utils.parseEther("1000.0"));
-
-    // })
     
     this.beforeAll("Deploy Crab 2", async () => {
         const CrabContract = await ethers.getContractFactory("CrabStrategyV2");
@@ -147,7 +128,46 @@ describe("Crab Migration", function () {
         })
 
         it("batch migrate", async () => { 
+            const crabV1SharesBalanceBefore = await crabStrategyV1.balanceOf(crabMigration.address);
+            const crabV1SupplyBefore = await crabStrategyV1.totalSupply();
+            const crabV2SupplyBefore = await crabStrategyV2.totalSupply();
+            const crabV1VaultDetailsBefore = await crabStrategyV1.getVaultDetails();
+            const crabV2VaultDetailsBefore = await crabStrategyV2.getVaultDetails();
+  
            await crabMigration.batchMigrate();
+
+            // 1. check crab V1 shares in Migration before and after
+           const crabV1SharesBalanceAfter = await crabStrategyV1.balanceOf(crabMigration.address);
+           expect(crabV1SharesBalanceAfter).to.be.equal('0');
+
+            // 2. check that crab v1 total supply has gone down and crab v2 total supply has increased by same amt
+           const crabV1SupplyAfter = await crabStrategyV1.totalSupply();
+           const changeInCrabV1Supply = crabV1SupplyBefore.sub(crabV1SupplyAfter);
+           const crabV2SupplyAfter = await crabStrategyV2.totalSupply();
+           const changeInCrabV2Supply = crabV2SupplyAfter.sub(crabV2SupplyBefore);
+           
+           expect(changeInCrabV1Supply).to.be.equal(crabV1SharesBalanceBefore);
+           expect(crabV2SupplyBefore).to.be.equal('0');
+        //    expect(changeInCrabV2Supply).to.be.equal(changeInCrabV1Supply);
+
+           // 3. check that eth taken out of crab v1 matches eth deposited into crab v2
+           const crabV1VaultDetailsAfter = await crabStrategyV1.getVaultDetails();
+           const crabV2VaultDetailsAfter = await crabStrategyV2.getVaultDetails();
+
+           const ethAmountRemovedFromCrabV1 = crabV1VaultDetailsBefore[2].sub(crabV1VaultDetailsAfter[2])
+           const ethAmountDepositedToCrabV2 = crabV2VaultDetailsAfter[2].sub(crabV2VaultDetailsBefore[2]);
+
+           expect(ethAmountDepositedToCrabV2).to.be.equal(ethAmountRemovedFromCrabV1);
+
+           // 4. check that oSqth amt minted in crab v1 matches oSqth amt minted in crab v2
+
+           const oSqthDebtPaidCrabV1 = crabV1VaultDetailsBefore[3].sub(crabV1VaultDetailsAfter[3])
+           const oSqthMintedCrabV2 = crabV2VaultDetailsAfter[3].sub(crabV2VaultDetailsBefore[3]);
+
+           expect(oSqthDebtPaidCrabV1).to.be.equal(oSqthMintedCrabV2);
+
+           // 5. check that crab v2 is now initialized
+
         })
     })
 

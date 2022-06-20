@@ -13,6 +13,7 @@ import "hardhat/console.sol";
 // contract
 import {CrabStrategyV2} from "./CrabStrategyV2.sol";
 import {CrabStrategy} from "./CrabStrategy.sol";
+import {StrategyMath} from "./base/StrategyMath.sol";
 
 /** 
  * Migration Error Codes:
@@ -33,6 +34,7 @@ import {CrabStrategy} from "./CrabStrategy.sol";
  contract CrabMigration { 
 
      using SafeERC20 for IERC20;
+     using StrategyMath for uint256;
 
      mapping (address => uint256) public sharesDeposited; 
      bool public isMigrated;
@@ -107,7 +109,7 @@ import {CrabStrategy} from "./CrabStrategy.sol";
         uint256 crabV1Balance = crabV1.balanceOf(address(this));
         uint256 crabV1Supply = crabV1.totalSupply();
         (address _, uint256 id, uint256 totalCollateral, uint256 totalShort) = crabV1.getVaultDetails();
-        uint256 amountEthToBorrow = crabV1Balance * totalCollateral / crabV1Supply;
+        uint256 amountEthToBorrow = totalCollateral.wmul(crabV1Balance.wdiv(crabV1Supply));
 
         IEulerDToken(dToken).borrow(0, amountEthToBorrow);
         weth.withdraw(amountEthToBorrow);
