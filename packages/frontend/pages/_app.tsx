@@ -14,7 +14,7 @@ import { useAtomValue } from 'jotai'
 import { RestrictUserProvider } from '@context/restrict-user'
 import getTheme, { Mode } from '../src/theme'
 import { uniswapClient } from '@utils/apollo-client'
-import { useOnboard } from 'src/state/wallet/hooks'
+import { useInitOnboard } from 'src/state/wallet/hooks'
 import { networkIdAtom } from 'src/state/wallet/atoms'
 import { useUpdateSqueethPrices, useUpdateSqueethPoolData } from 'src/state/squeethPool/hooks'
 import { useInitController } from 'src/state/controller/hooks'
@@ -75,7 +75,6 @@ function MyApp({ Component, pageProps }: any) {
 }
 
 const Init = () => {
-  useOnboard()
   useUpdateSqueethPrices()
   useUpdateSqueethPoolData()
   useInitController()
@@ -85,6 +84,8 @@ const Init = () => {
 const MemoizedInit = memo(Init)
 
 const TradeApp = ({ Component, pageProps }: any) => {
+  useInitOnboard()
+
   return (
     <React.Fragment>
       <Head>
