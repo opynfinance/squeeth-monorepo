@@ -1,6 +1,5 @@
 import { PositionType } from '../types/index'
 import { calculatePnL } from 'src/lib'
-import useAccounts from './useAccounts'
 import useCurrentPrices from './useCurrentPrices'
 import useAppEffect from './useAppEffect'
 import {
