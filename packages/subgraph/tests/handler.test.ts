@@ -27,7 +27,7 @@ describe("handleOSQTHChange", () => {
     );
   });
 
-  test("opens long (5 sqth, sqthPrice: $10) and partically close long (2 sqth, sqthPrice: $11)", () => {
+  test("opens long (5 sqth, sqthPrice: $10) and partically close long (3 sqth, sqthPrice: $12)", () => {
     let userAddr = "0x02a248876233fd78b97ecf1e18114b8eb22ba603";
     let position = loadOrCreatePosition(userAddr);
 
