@@ -43,16 +43,11 @@ export const useSelectWallet = () => {
 
 export const useDiscconectWallet = () => {
   const [onboard] = useAtom(onboardAtom)
-  // const setAddress = useUpdateAtom(addressAtom)
-  // const queryClient = useQueryClient()
-  // const apolloClient = useApolloClient()
 
   const disconnectWallet = () => {
     if (!onboard) return
 
     onboard.walletReset()
-    // queryClient.refetchQueries()
-    // apolloClient.resetStore()
   }
 
   return disconnectWallet
@@ -186,6 +181,7 @@ export function useInitOnboard() {
     setNotify(initNotify(networkId))
   }, [apolloClient, networkId, queryClient, setNotify])
 
+  // autoconnect to wallet on app load
   useAppEffect(() => {
     ;(async function autoConnect() {
       const previouslySelectedWallet = window.localStorage.getItem('selectedWallet')
@@ -209,7 +205,6 @@ export function initNotify(networkId: Networks) {
 }
 
 export function initOnboardSdk(subscriptions: Subscriptions, networkId: Networks) {
-  const DOMAIN = process.env.NEXT_PUBLIC_VERCEL_URL ?? 'http://localhost:3000'
   const network = networkId === 1 ? 'mainnet' : 'ropsten'
   const RPC_URL =
     networkId === Networks.LOCAL
@@ -229,11 +224,6 @@ export function initOnboardSdk(subscriptions: Subscriptions, networkId: Networks
     blockPollingInterval: 4000,
     subscriptions,
     walletSelect: {
-      agreement: {
-        version: '1.0.0',
-        termsUrl: `${DOMAIN}/terms-of-service`,
-        privacyUrl: `${DOMAIN}/privacy-policy`,
-      },
       description: `<div>
           <p> By connecting a wallet, you agree to the Opyn user <a href="/terms-of-service" style="color: #2CE6F9;" target="_blank">Terms of Service</a> and acknowledge that you have read and understand the Opyn <a href="/privacy-policy" style="color: #2CE6F9;" target="_blank">Privacy Policy</a>.</p>
           </div > `,
