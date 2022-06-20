@@ -1229,5 +1229,41 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder])
             ).to.be.revertedWith("Manager Buy Price should be atleast Seller Price");
         });
+        it("manager buy price should be greater than 0", async () => {
+            // set the time to 1 hr from prev hedge
+            await provider.send("evm_increaseTime", [84600 + 3600]);
+            let trader = random;
+
+            // Calculate new Delta and the trades to make
+            let toGet = ethers.utils.parseUnits("3.125");
+            let toSell = ethers.utils.parseUnits("1");
+            console.log("quantity of oSQTH to buy is", toGet);
+            console.log("quantity of ETH to sell is", toSell);
+
+            // make the approvals for the trade and prepare the trade
+            await wSqueeth.connect(trader).approve(crabStrategy.address, toGet);
+
+            let orderHash = {
+                bidId: 0,
+                trader: trader.address,
+                traderToken: wSqueeth.address,
+                traderAmount: toGet,
+                managerToken: weth.address,
+                managerAmount: toSell,
+                nonce: await crabStrategy.nonces(trader.address),
+            };
+            console.log(orderHash.traderAmount.toString(), orderHash.managerAmount.toString());
+            const { typeData, domainData } = getTypeAndDomainData();
+            // Do the trade
+            let signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
+            let managerBuyPrice = 0;
+            console.log(managerBuyPrice);
+            await expect(
+                crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder])
+            ).to.be.revertedWith("Manager Price Price should be greater than 0");
+            
+            //reverting this back to one percent
+            await crabStrategy.connect(owner).setHedgePriceThreshold(BigNumber.from(10).pow(16).mul(1));
+        });
     });
 });

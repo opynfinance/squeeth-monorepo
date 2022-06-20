@@ -559,7 +559,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 sellerPrice,
         Order memory _order
     ) internal {
-        require(managerBuyPrice > 0, "C0");
         require(managerBuyPrice >= sellerPrice, "Manager Buy Price should be atleast Seller Price");
         bytes32 structHash = keccak256(
             abi.encode(
@@ -619,6 +618,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 managerBuyPrice,
         Order[] memory _orders
     ) external onlyOwner {
+        require(managerBuyPrice > 0, "Manager Price Price should be greater than 0");
         require(_isTimeHedge() || _isPriceHedge(), "Time or Price is not within range");
         _checkOTCPrice(managerBuyPrice, _orders[0].managerToken);
         // TODO add check that all orders have same managerToken/traderToken
