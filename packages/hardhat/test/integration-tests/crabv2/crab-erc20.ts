@@ -3,13 +3,13 @@ import { expect } from "chai";
 import { Contract, BigNumber, providers } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import BigNumberJs from 'bignumber.js'
-import { WETH9, MockErc20, Controller, Oracle, WPowerPerp, CrabStrategyV2, ISwapRouter, MockTimelock, Timelock } from "../../../typechain";
+import { WETH9, MockErc20, Controller, Oracle, WPowerPerp, CrabStrategyV2, ISwapRouter, MockTimelock } from "../../../typechain";
 import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addWethDaiLiquidity, addSqueethLiquidity } from '../../setup'
 import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../../utils"
 
 BigNumberJs.set({ EXPONENTIAL_AT: 30 })
 
-describe("Crab v2 Integration test: Timelock", function () {
+describe("Crab V2 integration test: ERC20 deposit and withdrawals", function () {
   const startingEthPrice = 3000
   const startingEthPrice1e18 = BigNumber.from(startingEthPrice).mul(one) // 3000 * 1e18
   const scaledStartingSqueethPrice1e18 = startingEthPrice1e18.mul(11).div(10).div(oracleScaleFactor) // 0.3 * 1e18
@@ -21,15 +21,11 @@ describe("Crab v2 Integration test: Timelock", function () {
   const auctionTime = 3600
   const minPriceMultiplier = ethers.utils.parseUnits('0.95')
   const maxPriceMultiplier = ethers.utils.parseUnits('1.05')
-  const abi = new ethers.utils.AbiCoder();
-  const signature = 'transferVault(address)';
-  const twoDays = 2 * 24 * 60 * 60
 
   let provider: providers.JsonRpcProvider;
   let owner: SignerWithAddress;
   let depositor: SignerWithAddress;
   let depositor2: SignerWithAddress;
-  let depositor3: SignerWithAddress;
   let liquidator: SignerWithAddress;
   let feeRecipient: SignerWithAddress;
   let dai: MockErc20
@@ -43,17 +39,16 @@ describe("Crab v2 Integration test: Timelock", function () {
   let wSqueeth: WPowerPerp
   let crabStrategy: CrabStrategyV2
   let ethDaiPool: Contract
-  let timelock: Timelock;
+  let timelock: MockTimelock;
 
   this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async () => {
     const accounts = await ethers.getSigners();
-    const [_owner, _depositor, _depositor2, _liquidator, _feeRecipient, _depositor3] = accounts;
+    const [_owner, _depositor, _depositor2, _liquidator, _feeRecipient] = accounts;
     owner = _owner;
     depositor = _depositor;
     depositor2 = _depositor2;
     liquidator = _liquidator;
     feeRecipient = _feeRecipient;
-    depositor3 = _depositor3;
     provider = ethers.provider
 
     const { dai: daiToken, weth: wethToken } = await deployWETHAndDai()
@@ -85,8 +80,8 @@ describe("Crab v2 Integration test: Timelock", function () {
     await controller.connect(owner).setFeeRecipient(feeRecipient.address);
     await controller.connect(owner).setFeeRate(100)
 
-    const TimelockContract = await ethers.getContractFactory("Timelock");
-    timelock = (await TimelockContract.deploy(owner.address, twoDays)) as Timelock;
+    const TimelockContract = await ethers.getContractFactory("MockTimelock");
+    timelock = (await TimelockContract.deploy(owner.address, 3 * 24 * 60 * 60)) as MockTimelock;
 
     const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
     crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, uniswapFactory.address, wSqueethPool.address, timelock.address, swapRouter.address, hedgeTimeThreshold, hedgePriceThreshold, auctionTime, minPriceMultiplier, maxPriceMultiplier)) as CrabStrategyV2;
@@ -163,47 +158,25 @@ describe("Crab v2 Integration test: Timelock", function () {
     expect(lastHedgeTime.eq(timeStamp)).to.be.true
   })
 
-  before("Deposit into strategy", async () => {
-    await crabStrategy.connect(depositor3).deposit({ value: ethers.utils.parseUnits('1') })
-  })
+  describe("Deposit USDC into strategy", async () => {
+    const usdcAmount = startingEthPrice1e18
+    const ethToDeposit = ethers.utils.parseUnits('1.5')
 
-  describe("Transfer vault with timelock", async () => {
-    let txHash = ''
-    let eta = 0
-    let currentBlockNumber = 0
-    let currentBlockTimestamp = 0
-    let data = ''
-
-    this.beforeAll(async () => {
-      currentBlockNumber = await provider.getBlockNumber()
-      const currentBlock = await provider.getBlock(currentBlockNumber)
-      eta = currentBlock.timestamp + twoDays + 300
-      currentBlockTimestamp = currentBlock.timestamp
-
-      data = abi.encode(['address'], [depositor2.address]);
-
-      txHash = ethers.utils.keccak256(abi.encode(['address', 'uint256', 'string', 'bytes', 'uint256'],
-        [crabStrategy.address, '0', signature, data, eta]))
-      await timelock.connect(owner).queueTransaction(crabStrategy.address, 0, signature, data, eta)
-    });
-
-    it("Should transfer vault", async () => {
-      await provider.send("evm_setNextBlockTimestamp", [eta + 100])
-
-      expect(await timelock.connect(owner).executeTransaction(crabStrategy.address, 0, signature, data, eta)).to.emit(crabStrategy.address, "VaultTransferred")
-      expect((await crabStrategy.strategyCap()).eq(0)).to.be.true
+    beforeEach(async () => {
+      await dai.mint(depositor2.address, usdcAmount.toString())
+      await dai.connect(depositor2).approve(crabStrategy.address, usdcAmount.toString())
     })
 
-    it("Should not allow user to deposit post vault transfer", async () => {
-      await expect(crabStrategy.connect(depositor2).deposit({ value: ethers.utils.parseUnits('1') })).to.be.revertedWith("Deposit exceeds strategy cap")
+    it("Should fail if it minimum ETH is not swapped in ERC20 transfer", async () => {
+      await expect(crabStrategy.connect(depositor2).flashDepositERC20(ethToDeposit, usdcAmount, ethers.utils.parseEther('1'), 3000, dai.address)).to.be.revertedWith("Too little received")
     })
 
-    it("Should not allow user to withdraw post vault transfer", async () => {
-      const depositorCrabBefore = (await crabStrategy.balanceOf(depositor3.address))
-      const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor3.address)
+    it("Should deposit USDC into strategy", async () => {
+      const usdcBalanceBefore = await dai.balanceOf(depositor2.address)
 
-      await wSqueeth.connect(depositor3).approve(crabStrategy.address, depositorSqueethBalanceBefore)
-      await expect(crabStrategy.connect(depositor).withdraw(depositorCrabBefore)).to.be.revertedWith("C20")
+      await expect(crabStrategy.connect(depositor2).flashDepositERC20(ethToDeposit, usdcAmount, 0, 3000, dai.address)).to.emit(crabStrategy, "FlashDepositERC20")
+      const usdcBalanceAfter = await dai.balanceOf(depositor2.address)
+      expect(usdcBalanceBefore.sub(usdcAmount)).to.be.equal(usdcBalanceAfter)
     })
   })
 })

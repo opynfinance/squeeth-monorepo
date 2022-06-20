@@ -2,7 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-wit
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber, providers } from "ethers";
-import { MockController, WETH9, MockShortPowerPerp, MockUniswapV3Pool, MockOracle, MockWPowerPerp, CrabStrategyV2, MockErc20, MockTimelock } from "../../../typechain";
+import { MockController, WETH9, MockShortPowerPerp, MockUniswapV3Pool, MockOracle, MockWPowerPerp, CrabStrategyV2, MockErc20, MockTimelock, MockSwapRouter } from "../../../typechain";
 import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../../utils"
 
 describe("Crab Strategy V2", function () {
@@ -28,6 +28,7 @@ describe("Crab Strategy V2", function () {
   let crabStrategy: CrabStrategyV2;
   let usdc: MockErc20;
   let timelock: MockTimelock;
+  let swapRouter: MockSwapRouter;
 
   this.beforeAll("Prepare accounts", async () => {
     const accounts = await ethers.getSigners();
@@ -65,6 +66,9 @@ describe("Crab Strategy V2", function () {
     const TimelockContract = await ethers.getContractFactory("MockTimelock");
     timelock = (await TimelockContract.deploy(owner.address, 3 * 24 * 60 * 60)) as MockTimelock;
 
+    const MockSwapRouterContract = await ethers.getContractFactory("MockSwapRouter");
+    swapRouter = (await MockSwapRouterContract.deploy()) as MockTimelock;
+
     await controller.connect(owner).init(shortSqueeth.address, squeeth.address, ethUSDPool.address, usdc.address);
   })
 
@@ -79,6 +83,7 @@ describe("Crab Strategy V2", function () {
         random.address,
         wSqueethEthPool.address,
         timelock.address,
+        swapRouter.address,
         hedgeTimeTolerance,
         hedgePriceTolerance,
         auctionTime,
@@ -96,6 +101,7 @@ describe("Crab Strategy V2", function () {
         random.address,
         wSqueethEthPool.address,
         timelock.address,
+        swapRouter.address,
         hedgeTimeTolerance,
         hedgePriceTolerance,
         auctionTime,
@@ -112,6 +118,7 @@ describe("Crab Strategy V2", function () {
         random.address,
         wSqueethEthPool.address,
         timelock.address,
+        swapRouter.address,
         hedgeTimeTolerance,
         hedgePriceTolerance,
         auctionTime,
@@ -128,6 +135,7 @@ describe("Crab Strategy V2", function () {
         ethers.constants.AddressZero,
         wSqueethEthPool.address,
         timelock.address,
+        swapRouter.address,
         hedgeTimeTolerance,
         hedgePriceTolerance,
         auctionTime, minAuctionSlippage,
@@ -143,6 +151,7 @@ describe("Crab Strategy V2", function () {
         random.address,
         ethers.constants.AddressZero,
         timelock.address,
+        swapRouter.address,
         hedgeTimeTolerance,
         hedgePriceTolerance,
         auctionTime,
@@ -159,6 +168,7 @@ describe("Crab Strategy V2", function () {
         random.address,
         wSqueethEthPool.address,
         timelock.address,
+        swapRouter.address,
         0,
         hedgePriceTolerance,
         auctionTime,
@@ -175,6 +185,7 @@ describe("Crab Strategy V2", function () {
         random.address,
         wSqueethEthPool.address,
         timelock.address,
+        swapRouter.address,
         hedgeTimeTolerance,
         0,
         auctionTime,
@@ -191,6 +202,7 @@ describe("Crab Strategy V2", function () {
         random.address,
         wSqueethEthPool.address,
         timelock.address,
+        swapRouter.address,
         hedgeTimeTolerance,
         hedgePriceTolerance,
         0,
@@ -207,6 +219,7 @@ describe("Crab Strategy V2", function () {
         random.address,
         wSqueethEthPool.address,
         timelock.address,
+        swapRouter.address,
         hedgeTimeTolerance,
         hedgePriceTolerance,
         auctionTime,
@@ -223,6 +236,7 @@ describe("Crab Strategy V2", function () {
         random.address,
         wSqueethEthPool.address,
         timelock.address,
+        swapRouter.address,
         hedgeTimeTolerance,
         hedgePriceTolerance,
         auctionTime,
@@ -239,6 +253,7 @@ describe("Crab Strategy V2", function () {
         random.address,
         wSqueethEthPool.address,
         timelock.address,
+        swapRouter.address,
         hedgeTimeTolerance,
         hedgePriceTolerance,
         auctionTime,
@@ -255,6 +270,7 @@ describe("Crab Strategy V2", function () {
         random.address,
         wSqueethEthPool.address,
         ethers.constants.AddressZero,
+        swapRouter.address,
         hedgeTimeTolerance,
         hedgePriceTolerance,
         auctionTime,
@@ -265,7 +281,7 @@ describe("Crab Strategy V2", function () {
 
     it("Deployment", async function () {
       const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
-      crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, random.address, wSqueethEthPool.address, timelock.address, hedgeTimeTolerance, hedgePriceTolerance, auctionTime, minAuctionSlippage, maxAuctionSlippage)) as CrabStrategyV2;
+      crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, random.address, wSqueethEthPool.address, timelock.address, swapRouter.address, hedgeTimeTolerance, hedgePriceTolerance, auctionTime, minAuctionSlippage, maxAuctionSlippage)) as CrabStrategyV2;
     });
   });
 
