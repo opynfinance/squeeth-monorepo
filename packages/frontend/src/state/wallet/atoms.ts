@@ -5,6 +5,7 @@ import { API } from 'bnc-onboard/dist/src/interfaces'
 
 import { Networks } from '../../types'
 import { atomWithReset, atomWithStorage } from 'jotai/utils'
+import { BIG_ZERO } from '../../constants'
 
 const useAlchemy = process.env.NEXT_PUBLIC_USE_ALCHEMY
 const usePokt = process.env.NEXT_PUBLIC_USE_POKT
@@ -66,5 +67,7 @@ export const connectedWalletAtom = atom((get) => {
   const networkId = get(networkIdAtom)
   return Boolean(address && networkId)
 })
+
+export const walletBalanceAtom = atom(BIG_ZERO)
 
 export const isTransactionFirstStepAtom = atom(false)
