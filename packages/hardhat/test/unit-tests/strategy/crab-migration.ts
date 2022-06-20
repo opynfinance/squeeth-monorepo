@@ -119,6 +119,10 @@ describe("Crab Migration", function () {
         it("random should not be able to migrate shares", async () => { 
             await expect(crabMigration.connect(random).batchMigrate()).to.be.revertedWith("M1");
         })
+
+        it("batchMigrate", async () => { 
+            await crabMigration.connect(owner).batchMigrate();
+        })
     })
 
 
