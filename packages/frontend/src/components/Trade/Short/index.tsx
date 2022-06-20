@@ -398,7 +398,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
     } else if (vault && vaultId === 0 && vault?.shortAmount.gt(0)) {
       vaultIdDontLoadedError = 'Loading Vault...'
     }
-    console.log(currentImpliedFunding, FUNDING_MOVE_THRESHOLD * dailyHistoricalFunding.funding, Number(amount) > 0)
+
     if (currentImpliedFunding <= FUNDING_MOVE_THRESHOLD * dailyHistoricalFunding.funding && Number(amount) > 0) {
       const fundingPercent = (1 - currentImpliedFunding / dailyHistoricalFunding.funding) * 100
       lowVolError = `Funding is ${fundingPercent.toFixed(0)}% below yesterday. Consider buying later`

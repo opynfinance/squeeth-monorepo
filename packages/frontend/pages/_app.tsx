@@ -30,6 +30,8 @@ function MyApp({ Component, pageProps }: any) {
   const networkId = useAtomValue(networkIdAtom)
   const client = useMemo(() => uniswapClient[networkId] || uniswapClient[1], [networkId])
 
+  console.log({ networkId })
+
   React.useEffect(() => {
     // Remove the server-side injected CSS.
     const jssStyles = document.querySelector('#jss-server-side')
