@@ -30,8 +30,8 @@ export default function useAccounts() {
     setAccShortAmountAtom(data?.accounts[0]?.accShortAmount)
   }, [
     data?.accounts,
-    data?.accounts[0].positions[0],
-    data?.accounts[0].lppositions[0],
+    data?.accounts[0]?.positions[0],
+    data?.accounts[0]?.lppositions[0],
     setAccShortAmountAtom,
     setAccount,
     setLPposition,
