@@ -190,6 +190,32 @@ describe("Crab Migration", function () {
             const expectedSharesSent = deposit1Amount.mul(totalV2SharesReceived).div(totalDepositAmount);
             expect(expectedSharesSent).to.be.equal(sharesSent);
         })
+
+        it("d2 claims shares", async () => { 
+            const constractSharesBefore = await crabStrategyV2.balanceOf(crabMigration.address);
+            const d2SharesBefore = await crabStrategyV2.balanceOf(d2.address);
+
+            await crabMigration.connect(d2).claimV2Shares();
+
+            // 1. check that shares sent from migration contract equals shares received by user
+            const constractSharesAfter = await crabStrategyV2.balanceOf(crabMigration.address);
+            const d2SharesAfter = await crabStrategyV2.balanceOf(d2.address);
+            const sharesSent = constractSharesBefore.sub(constractSharesAfter);
+
+            expect(d2SharesBefore).to.be.equal('0');
+            expect(d2SharesAfter.sub(d2SharesBefore)).to.be.equal(sharesSent); 
+            // expect(constractSharesAfter).to.be.equal('0');    // TODO: 1 is left 
+
+            // 2. check that the right amount of shares have been sent. 
+            const totalV2SharesReceived = await crabMigration.totalCrabV2SharesReceived();
+            const totalDepositAmount = deposit1Amount.add(deposit2Amount);
+            const expectedSharesSent = deposit2Amount.mul(totalV2SharesReceived).div(totalDepositAmount);
+            expect(expectedSharesSent).to.be.equal(sharesSent);
+        })
+
+        it("d1 should not be able to deposit after migration", async () => { 
+            await expect(crabMigration.connect(d1).depositV1Shares(deposit1Amount)).to.be.revertedWith("M2");
+        })
     })
 
 
