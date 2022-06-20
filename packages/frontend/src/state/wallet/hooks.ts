@@ -49,8 +49,8 @@ export const useDiscconectWallet = () => {
     window.localStorage.setItem('walletAddress', '')
     setAddress(null)
     queryClient.setQueryData('userWalletBalance', BIG_ZERO)
-    queryClient.removeQueries()
-    apolloClient.clearStore()
+    queryClient.refetchQueries()
+    apolloClient.resetStore()
   }
 
   return disconnectWallet
@@ -208,7 +208,7 @@ export const useOnboard = () => {
         console.log('Connected to wallet', success)
       })
     }
-  }, [networkId])
+  }, [networkId, setAddress, setNotify, setOnboard])
 }
 const useAlchemy = process.env.NEXT_PUBLIC_USE_ALCHEMY
 const usePokt = process.env.NEXT_PUBLIC_USE_POKT
