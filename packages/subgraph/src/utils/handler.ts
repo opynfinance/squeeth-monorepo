@@ -37,6 +37,20 @@ export function handleOSQTHChange(
     positionBalanceBeforeTrade.gt(ZERO_BD) ||
     (positionBalanceBeforeTrade.equals(ZERO_BD) && amount.gt(ZERO_BD));
 
+  let absCurrentOSQTHAmountBeforeTrade = position.currentOSQTHAmount.gt(ZERO_BD)
+    ? position.currentOSQTHAmount
+    : position.currentOSQTHAmount.neg();
+
+  let absCurrentOSQTHAmountAfterTrade = position.currentOSQTHAmount
+    .plus(amount)
+    .gt(ZERO_BD)
+    ? position.currentOSQTHAmount.plus(amount)
+    : position.currentOSQTHAmount.plus(amount).neg();
+
+  let oldUnrealizedOSQTHCost = position.unrealizedOSQTHUnitCost.times(
+    absCurrentOSQTHAmountBeforeTrade
+  );
+
   if (isLongBeforeTrade) {
     // Buy long
     if (amount.gt(ZERO_BD)) {
@@ -50,6 +64,13 @@ export function handleOSQTHChange(
         position.realizedOSQTHUnitCost = oldRealizedOSQTHCost
           .plus(amount.times(osqthPriceInUSD))
           .div(totalAmount.plus(amount));
+      }
+
+      // Unrealized PnL calculation
+      if (!newAmount.equals(ZERO_BD)) {
+        position.unrealizedOSQTHUnitCost = oldUnrealizedOSQTHCost
+          .plus(absAmount.times(osqthPriceInUSD))
+          .div(absCurrentOSQTHAmountAfterTrade);
       }
     }
 
@@ -66,6 +87,13 @@ export function handleOSQTHChange(
           .plus(absAmount.times(osqthPriceInUSD))
           .div(position.realizedOSQTHAmount);
       }
+
+      // Unrealized PnL calculation
+      if (!newAmount.equals(ZERO_BD)) {
+        position.unrealizedOSQTHUnitCost = oldUnrealizedOSQTHCost
+          .minus(absAmount.times(osqthPriceInUSD))
+          .div(absCurrentOSQTHAmountAfterTrade);
+      }
     }
   } else {
     // Buy short
@@ -79,6 +107,13 @@ export function handleOSQTHChange(
         position.realizedOSQTHUnitGain = oldRealizedOSQTHGain
           .plus(amount.times(osqthPriceInUSD))
           .div(position.realizedOSQTHAmount);
+      }
+
+      // Unrealized PnL calculation
+      if (!newAmount.equals(ZERO_BD)) {
+        position.unrealizedOSQTHUnitCost = oldUnrealizedOSQTHCost
+          .plus(absAmount.times(osqthPriceInUSD))
+          .div(absCurrentOSQTHAmountAfterTrade);
       }
     }
 
@@ -100,22 +135,15 @@ export function handleOSQTHChange(
           .plus(absAmount.times(osqthPriceInUSD))
           .div(totalAmount.plus(amount));
       }
+
+      // Unrealized PnL calculation
+      if (!newAmount.equals(ZERO_BD)) {
+        position.unrealizedOSQTHUnitCost = oldUnrealizedOSQTHCost
+          .minus(absAmount.times(osqthPriceInUSD))
+          .div(absCurrentOSQTHAmountAfterTrade);
+      }
     }
   }
-
-  // Unrealized PnL calculation
-  let absCurrentOSQTHAmountBeforeTrade = position.currentOSQTHAmount.gt(ZERO_BD)
-    ? position.currentOSQTHAmount
-    : position.currentOSQTHAmount.neg();
-  let oldUnrealizedOSQTHCost = position.unrealizedOSQTHUnitCost.times(
-    absCurrentOSQTHAmountBeforeTrade
-  );
-
-  let absCurrentOSQTHAmountAfterTrade = position.currentOSQTHAmount
-    .plus(amount)
-    .gt(ZERO_BD)
-    ? position.currentOSQTHAmount.plus(amount)
-    : position.currentOSQTHAmount.plus(amount).neg();
 
   position.currentOSQTHAmount = position.currentOSQTHAmount.plus(amount);
   // = 0 none
@@ -124,10 +152,6 @@ export function handleOSQTHChange(
     position.currentETHAmount.equals(ZERO_BD)
   ) {
     position = initPosition(userAddr, position);
-  } else if (!position.currentOSQTHAmount.equals(ZERO_BD)) {
-    position.unrealizedOSQTHUnitCost = oldUnrealizedOSQTHCost
-      .plus(absAmount.times(osqthPriceInUSD))
-      .div(absCurrentOSQTHAmountAfterTrade);
   }
 
   position.save();

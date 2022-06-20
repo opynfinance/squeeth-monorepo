@@ -6,7 +6,7 @@ import {
   SHORT_HELPER_ADDR,
   SWAPROUTER2_ADDR,
   SWAPROUTER_ADDR,
-} from "./constants";
+} from "./addresses";
 import { buyOrSellSQTH, createTransactionHistory } from "./util";
 
 export function handleTransfer(event: Transfer): void {
