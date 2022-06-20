@@ -1132,5 +1132,68 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder])
             ).to.be.revertedWith("Price too low relative to Uniswap twap.");
         });
+        it("reverts when order sign is invalid", async () => {
+            let trader = random;
+            // oSQTH price before
+            let oSQTHPriceBefore = await oracle.getTwap(
+                wSqueethPool.address,
+                wSqueeth.address,
+                weth.address,
+                600,
+                false
+            );
+            console.log(oSQTHPriceBefore.toString());
+
+            // vault state before
+            let strategyVaultBefore = await controller.vaults(await crabStrategy.vaultId());
+
+            const ethToDeposit = ethers.utils.parseUnits("1000");
+            const wSqueethToMint = ethers.utils.parseUnits("1000");
+            const currentBlockTimestamp = (await provider.getBlock(await provider.getBlockNumber())).timestamp;
+            // trader amount to sell
+            await controller.connect(trader).mintWPowerPerpAmount("0", wSqueethToMint, "0", { value: ethToDeposit });
+            // do the trade to offset delta
+            await buyWSqueeth(swapRouter, wSqueeth, weth, owner.address, ethToDeposit, currentBlockTimestamp + 10);
+
+            await provider.send("evm_increaseTime", [86400 + auctionTime / 2]);
+
+            let oSQTHPriceAfter = await oracle.getTwap(
+                wSqueethPool.address,
+                wSqueeth.address,
+                weth.address,
+                600,
+                false
+            );
+
+            // Calculate new Delta and the trades to make
+            let newOSQTHdelta = wmul(strategyVaultBefore.shortAmount.mul(2), oSQTHPriceAfter);
+            let newDelta = strategyVaultBefore.collateralAmount.sub(newOSQTHdelta);
+
+            let toGET = wdiv(newDelta.abs(), oSQTHPriceAfter);
+            let toSell = wmul(toGET, oSQTHPriceAfter);
+
+            // make the approvals for the trade and prepare the trade
+            await wSqueeth.connect(trader).approve(crabStrategy.address, toGET);
+
+            let orderHash = {
+                bidId: 0,
+                trader: trader.address,
+                traderToken: wSqueeth.address,
+                traderAmount: toGET,
+                managerToken: weth.address,
+                managerAmount: toSell,
+                nonce: await crabStrategy.nonces(trader.address),
+            };
+            console.log(orderHash.traderAmount.toString(), orderHash.managerAmount.toString());
+
+            const { typeData, domainData } = getTypeAndDomainData();
+            // Do the trade with wrong order
+            let signedOrder = await signTypedData(depositor, domainData, typeData, orderHash);
+            let managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
+            console.log(managerBuyPrice);
+            await expect(
+                crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder])
+            ).to.be.revertedWith("Invalid offer signature");
+        });
     });
 });
