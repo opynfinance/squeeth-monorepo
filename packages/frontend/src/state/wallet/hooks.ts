@@ -4,8 +4,7 @@ import BigNumber from 'bignumber.js'
 import Notify from 'bnc-notify'
 import Onboard from 'bnc-onboard'
 import Web3 from 'web3'
-import { ethers } from 'ethers'
-import { useQuery, useQueryClient } from 'react-query'
+import { useQueryClient } from 'react-query'
 
 import {
   onboardAtom,
@@ -13,24 +12,29 @@ import {
   notifyAtom,
   networkIdAtom,
   supportedNetworkAtom,
-  signerAtom,
   web3Atom,
   transactionDataAtom,
   transactionLoadingAtom,
+  walletBalanceAtom,
 } from './atoms'
-import { BIG_ZERO, EtherscanPrefix } from '../../constants/'
+import { EtherscanPrefix } from '../../constants/'
 import { Networks } from '../../types'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useApolloClient } from '@apollo/client'
-import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
+import { Subscriptions } from 'bnc-onboard/dist/src/interfaces'
 
 export const useSelectWallet = () => {
   const [onboard] = useAtom(onboardAtom)
+
   const onWalletSelect = async () => {
     if (!onboard) return
     onboard.walletSelect().then(async (success) => {
-      if (success) await onboard.walletCheck()
+      if (success) {
+        await onboard.walletCheck()
+        const wallet = onboard.getState().wallet
+        window.localStorage.setItem('selectedWallet', wallet.name ?? '')
+      }
     })
   }
 
@@ -39,18 +43,16 @@ export const useSelectWallet = () => {
 
 export const useDiscconectWallet = () => {
   const [onboard] = useAtom(onboardAtom)
-  const setAddress = useUpdateAtom(addressAtom)
-  const queryClient = useQueryClient()
-  const apolloClient = useApolloClient()
+  // const setAddress = useUpdateAtom(addressAtom)
+  // const queryClient = useQueryClient()
+  // const apolloClient = useApolloClient()
 
   const disconnectWallet = () => {
     if (!onboard) return
+
     onboard.walletReset()
-    window.localStorage.setItem('walletAddress', '')
-    setAddress(null)
-    queryClient.setQueryData('userWalletBalance', BIG_ZERO)
-    queryClient.refetchQueries()
-    apolloClient.resetStore()
+    // queryClient.refetchQueries()
+    // apolloClient.resetStore()
   }
 
   return disconnectWallet
@@ -59,7 +61,6 @@ export const useDiscconectWallet = () => {
 export const useHandleTransaction = () => {
   const [notify] = useAtom(notifyAtom)
   const [networkId] = useAtom(networkIdAtom)
-  const { refetch } = useWalletBalance()
   const setTransactionData = useUpdateAtom(transactionDataAtom)
 
   const handleTransaction = useCallback(
@@ -74,11 +75,8 @@ export const useHandleTransaction = () => {
           if (networkId === Networks.LOCAL) return
           setTransactionData(transaction)
 
-          if (transaction.status === 'confirmed') {
-            if (onTxConfirmed) {
-              onTxConfirmed()
-            }
-            refetch()
+          if (transaction.status === 'confirmed' && onTxConfirmed) {
+            onTxConfirmed()
           }
 
           return {
@@ -89,7 +87,7 @@ export const useHandleTransaction = () => {
 
       return tx
     },
-    [networkId, notify, refetch, setTransactionData],
+    [networkId, notify, setTransactionData],
   )
 
   return handleTransaction
@@ -123,96 +121,95 @@ export const useTransactionStatus = () => {
   )
 }
 
-const balanceQueryKeys = {
-  userWalletBalance: (address: string) => ['userWalletBalance', { address }],
-}
 export const useWalletBalance = () => {
-  const [address] = useAtom(addressAtom)
-  const [web3] = useAtom(web3Atom)
+  const walletBalance = useAtomValue(walletBalanceAtom)
 
-  return useQuery(balanceQueryKeys.userWalletBalance(address ?? ''), () => getBalance(web3, address), {
-    enabled: Boolean(address),
-    refetchInterval: 30000,
-  })
+  return { data: new BigNumber(walletBalance ?? '0') }
 }
 
-export const useOnboard = () => {
-  const setSupportedNetwork = useUpdateAtom(supportedNetworkAtom)
-  const [networkId, setNetworkId] = useAtom(networkIdAtom)
-  const [onboard, setOnboard] = useAtom(onboardAtom)
-  const [address, setAddress] = useAtom(addressAtom)
-  const setWeb3 = useUpdateAtom(web3Atom)
-  const setSigner = useUpdateAtom(signerAtom)
-  const setNotify = useUpdateAtom(notifyAtom)
+export function useInitOnboard() {
   const queryClient = useQueryClient()
   const apolloClient = useApolloClient()
-  const { refetch: refetchWalletBalance } = useWalletBalance()
 
-  const onNetworkChange = useAppCallback(
-    (updateNetwork: number) => {
-      if (updateNetwork in Networks) {
-        setNetworkId(updateNetwork)
-        setSupportedNetwork(true)
-        queryClient.refetchQueries()
-        apolloClient.resetStore()
-        refetchWalletBalance()
-
-        if (onboard !== null) {
-          const network = updateNetwork === 1337 ? 31337 : updateNetwork
-          // localStorage.setItem('networkId', network.toString())
-          onboard.config({
-            networkId: network,
-          })
-        }
-      } else {
-        setSupportedNetwork(false)
-        if (address === null || onboard === null) return
-        onboard.walletCheck()
-        console.log('Unsupported network')
-      }
-    },
-    [setNetworkId, setSupportedNetwork, queryClient, apolloClient, refetchWalletBalance, onboard, address],
-  )
-
-  const onWalletUpdate = useAppCallback(
-    (wallet: any) => {
-      if (wallet.provider) {
-        window.localStorage.setItem('selectedWallet', wallet.name)
-        const provider = new ethers.providers.Web3Provider(wallet.provider)
-        provider.pollingInterval = 30000
-        setWeb3(new Web3(wallet.provider))
-        setSigner(provider.getSigner())
-      }
-    },
-    [setSigner, setWeb3],
-  )
+  const [networkId, setNetworkId] = useAtom(networkIdAtom)
+  const [onboard, setOnboard] = useAtom(onboardAtom)
+  const setAddress = useUpdateAtom(addressAtom)
+  const setSupportedNetwork = useUpdateAtom(supportedNetworkAtom)
+  const setWeb3 = useUpdateAtom(web3Atom)
+  const setWalletBalance = useUpdateAtom(walletBalanceAtom)
+  const setNotify = useUpdateAtom(notifyAtom)
 
   useAppEffect(() => {
-    const onboard = initOnboard(
+    const onboard = initOnboardSdk(
       {
-        address: setAddress,
-        network: onNetworkChange,
-        wallet: onWalletUpdate,
+        address: (address) => {
+          if (address) {
+            setAddress(address)
+          } else {
+            setAddress(null)
+          }
+        },
+        balance: (balance) => {
+          setWalletBalance(new BigNumber(balance))
+        },
+        network: (networkId) => {
+          const network = networkId === 1337 ? 31337 : Boolean(networkId) ? networkId : Networks.MAINNET
+          setNetworkId(network)
+
+          if (network in Networks) {
+            setSupportedNetwork(true)
+          } else {
+            setSupportedNetwork(false)
+            console.log('Unsupported network')
+          }
+        },
+        wallet: (wallet) => {
+          if (wallet.name) {
+            window.localStorage.setItem('selectedWallet', wallet.name ?? '')
+            setWeb3(new Web3(wallet.provider))
+          } else {
+            window.localStorage.setItem('selectedWallet', '')
+            setWeb3(null)
+          }
+        },
       },
       networkId,
     )
 
     setOnboard(onboard)
+  }, [networkId, setAddress, setNetworkId, setOnboard, setSupportedNetwork, setWalletBalance, setWeb3])
+
+  // sync all queries with networkID
+  useAppEffect(() => {
+    queryClient.refetchQueries()
+    apolloClient.resetStore()
     setNotify(initNotify(networkId))
+  }, [apolloClient, networkId, queryClient, setNotify])
 
-    // removed it for whitelist checking
-    const previouslySelectedWallet = window.localStorage.getItem('selectedWallet')
+  useAppEffect(() => {
+    ;(async function autoConnect() {
+      const previouslySelectedWallet = window.localStorage.getItem('selectedWallet')
 
-    if (previouslySelectedWallet && onboard) {
-      onboard.walletSelect(previouslySelectedWallet).then((success) => {
-        console.log('Connected to wallet', success)
-      })
-    }
-  }, [networkId, setAddress, setNotify, setOnboard])
+      if (previouslySelectedWallet && onboard) {
+        await onboard.walletSelect(previouslySelectedWallet)
+      }
+    })()
+  }, [onboard])
 }
+
 const useAlchemy = process.env.NEXT_PUBLIC_USE_ALCHEMY
 const usePokt = process.env.NEXT_PUBLIC_USE_POKT
-export function initOnboard(subscriptions: any, networkId: Networks) {
+
+export function initNotify(networkId: Networks) {
+  return Notify({
+    dappId: process.env.NEXT_PUBLIC_BLOCKNATIVE_DAPP_ID, // [String] The API key created by step one above
+    networkId: networkId, // [Integer] The Ethereum network ID your Dapp uses.
+    darkMode: true, // (default: false)
+  })
+}
+
+export function initOnboardSdk(subscriptions: Subscriptions, networkId: Networks) {
+  const DOMAIN = process.env.NEXT_PUBLIC_VERCEL_URL ?? 'http://localhost:3000'
   const network = networkId === 1 ? 'mainnet' : 'ropsten'
   const RPC_URL =
     networkId === Networks.LOCAL
@@ -224,13 +221,19 @@ export function initOnboard(subscriptions: any, networkId: Networks) {
       : usePokt === 'true'
       ? `https://eth-${network}.gateway.pokt.network/v1/lb/${process.env.NEXT_PUBLIC_POKT_ID}`
       : `https://${network}.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY}`
+
   return Onboard({
     dappId: process.env.NEXT_PUBLIC_BLOCKNATIVE_DAPP_ID,
     networkId: networkId,
     darkMode: true,
-    blockPollingInterval: 30000,
-    subscriptions: subscriptions,
+    blockPollingInterval: 4000,
+    subscriptions,
     walletSelect: {
+      agreement: {
+        version: '1.0.0',
+        termsUrl: `${DOMAIN}/terms-of-service`,
+        privacyUrl: `${DOMAIN}/privacy-policy`,
+      },
       description: `<div>
           <p> By connecting a wallet, you agree to the Opyn user <a href="/terms-of-service" style="color: #2CE6F9;" target="_blank">Terms of Service</a> and acknowledge that you have read and understand the Opyn <a href="/privacy-policy" style="color: #2CE6F9;" target="_blank">Privacy Policy</a>.</p>
           </div > `,
@@ -267,30 +270,12 @@ export function initOnboard(subscriptions: any, networkId: Networks) {
         },
       ],
     },
-    // walletCheck: [networkCheckResult],
     walletCheck: [
       { checkName: 'derivationPath' },
       { checkName: 'connect' },
       { checkName: 'accounts' },
       { checkName: 'network' },
+      { checkName: 'balance', minimumBalance: '0' },
     ],
   })
-}
-
-export function initNotify(networkId: Networks) {
-  return Notify({
-    dappId: process.env.NEXT_PUBLIC_BLOCKNATIVE_DAPP_ID, // [String] The API key created by step one above
-    networkId: networkId, // [Integer] The Ethereum network ID your Dapp uses.
-    darkMode: true, // (default: false)
-  })
-}
-
-async function getBalance(web3: Web3, address: string | null) {
-  try {
-    if (!address) return
-    const balance = await web3.eth.getBalance(address)
-    return new BigNumber(balance)
-  } catch {
-    return new BigNumber(0)
-  }
 }
