@@ -246,7 +246,7 @@ export function handleOSQTHChange(
     (positionBalanceBeforeTrade.equals(ZERO_BD) && amount.gt(ZERO_BD));
 
   if (isLongBeforeTrade) {
-    // Buy long
+    // Buying with long position
     if (amount.gt(ZERO_BD)) {
       let totalAmount = position.currentOSQTHAmount.plus(
         position.realizedOSQTHAmount
@@ -261,7 +261,7 @@ export function handleOSQTHChange(
       }
     }
 
-    // Sell long
+    // selling with long position
     if (amount.lt(ZERO_BD)) {
       let oldRealizedOSQTHGain = position.realizedOSQTHAmount.times(
         position.realizedOSQTHUnitGain
@@ -276,7 +276,7 @@ export function handleOSQTHChange(
       }
     }
   } else {
-    // Buy short
+    // Buying with short position
     if (amount.gt(ZERO_BD)) {
       let oldRealizedOSQTHGain = position.realizedOSQTHAmount.times(
         position.realizedOSQTHUnitGain
@@ -290,7 +290,7 @@ export function handleOSQTHChange(
       }
     }
 
-    // sell short
+    // selling with short position
     if (amount.lt(ZERO_BD)) {
       let totalAmount = position.currentOSQTHAmount.minus(
         position.realizedOSQTHAmount
