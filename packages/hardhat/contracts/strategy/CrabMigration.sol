@@ -82,8 +82,6 @@ import {StrategyMath} from "./base/StrategyMath.sol";
      }
 
 
-    
-
      /** 
      * @notice allows users to deposit their crab v1 shares in the pool for migration
      */
@@ -112,7 +110,7 @@ import {StrategyMath} from "./base/StrategyMath.sol";
      }
 
      function onDeferredLiquidityCheck(bytes memory encodedData) external {
-        // require(msg.sender == address(dToken), "M4"); 
+        // require(msg.sender == address(dToken), "M4"); // TODO: which contract sends this?
         // 1. Borrow weth
         uint256 crabV1Balance = crabV1.balanceOf(address(this));
         uint256 crabV1Supply = crabV1.totalSupply();
