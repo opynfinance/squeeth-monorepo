@@ -48,6 +48,7 @@ const useStyles = makeStyles((theme) =>
     container: {
       padding: theme.spacing(2),
       width: '420px',
+      alignSelf: 'flex-start',
       // background: theme.palette.background.lightStone,
       borderRadius: theme.spacing(1),
       display: 'flex',
@@ -190,7 +191,7 @@ const PositionCard: React.FC = () => {
   const loading = useAtomValue(loadingAtom)
   const isToHidePnL = useAtomValue(isToHidePnLAtom)
 
-  const pType = useAtomValue(positionTypeAtom)
+  const positionType = useAtomValue(positionTypeAtom)
   const { startPolling, stopPolling } = useSwaps()
   const swapsData = useAtomValue(swapsAtom)
   const swaps = swapsData.swaps
@@ -214,7 +215,6 @@ const PositionCard: React.FC = () => {
   const [fetchingNew, setFetchingNew] = useState(false)
   const [postTradeAmt, setPostTradeAmt] = useState(new BigNumber(0))
   const [postPosition, setPostPosition] = useState(PositionType.NONE)
-  const positionType = useAppMemo(() => (isPositionLoading ? PositionType.NONE : pType), [pType, isPositionLoading])
   const classes = useStyles({ positionType, postPosition, isToHidePnL })
 
   useAppEffect(() => {
@@ -244,7 +244,7 @@ const PositionCard: React.FC = () => {
 
   const getPositionBasedValue = useAppCallback(
     (long: any, short: any, none: any, loadingMsg?: any) => {
-      if (loadingMsg && (loading || isPositionLoading)) return loadingMsg
+      if (loadingMsg && loading) return loadingMsg
       if (positionType === PositionType.LONG) {
         return long
       }
@@ -253,7 +253,7 @@ const PositionCard: React.FC = () => {
       }
       return none
     },
-    [isPositionLoading, loading, positionType],
+    [loading, positionType],
   )
 
   const getRealizedPNLBasedValue = useAppCallback(

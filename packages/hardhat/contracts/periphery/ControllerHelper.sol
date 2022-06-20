@@ -122,11 +122,12 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         wrapInternal(msg.value);
         IWPowerPerp(wPowerPerp).transferFrom(msg.sender, address(this), _params.wPowerPerpAmountToSell);
         // flashswap and mint short position
+        uint256 totalAmountIn = _params.wPowerPerpAmountToMint.add(_params.wPowerPerpAmountToSell);
         _exactInFlashSwap(
             wPowerPerp,
             weth,
             _params.poolFee,
-            _params.wPowerPerpAmountToMint.add(_params.wPowerPerpAmountToSell),
+            totalAmountIn,
             _params.minToReceive,
             uint8(ControllerHelperDataType.CALLBACK_SOURCE.FLASH_SELL_LONG_W_MINT),
             abi.encode(_params)
@@ -319,7 +320,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             address(this),
             _params.tokenId
         );
-
         // close LP NFT and get Weth and WPowerPerp amounts
         (uint256 wPowerPerpAmountInLp, ) = ControllerHelperUtil.closeUniLp(
             nonfungiblePositionManager,
@@ -379,7 +379,6 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         } else if (wPowerPerpAmountDesired < wPowerPerpAmountInLp) {
             // if the new position target lower wPowerPerp amount, swap excess to WETH (position target higher WETH amount)
             uint256 wPowerPerpExcess = wPowerPerpAmountInLp.sub(wPowerPerpAmountDesired);
-
             _exactInFlashSwap(
                 wPowerPerp,
                 weth,
@@ -430,6 +429,8 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
             uint8(ControllerHelperDataType.CALLBACK_SOURCE.FLASHLOAN_REBALANCE_LP_IN_VAULT),
             abi.encode(_vaultId, _params)
         );
+
+        require(INonfungiblePositionManager(nonfungiblePositionManager).balanceOf(address(this)) == 0);
 
         ControllerHelperUtil.sendBack(weth, wPowerPerp);
     }
@@ -691,9 +692,10 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
                         (ControllerHelperDataType.GeneralSwapParams)
                     );
 
-                    // make sure not to fail
-                    uint256 currentBalance = IERC20(swapParams.tokenIn).balanceOf(address(this));
-                    if (currentBalance < swapParams.amountIn) swapParams.amountIn = currentBalance;
+                    require(
+                        (swapParams.tokenIn == weth && swapParams.tokenOut == wPowerPerp) ||
+                            (swapParams.tokenIn == wPowerPerp && swapParams.tokenOut == weth)
+                    );
 
                     _exactInFlashSwap(
                         swapParams.tokenIn,
@@ -864,12 +866,14 @@ contract ControllerHelper is UniswapControllerHelper, EulerControllerHelper, IER
         } else {
             if (_wPowerPerpAmount < _wPowerPerpAmountToBurn) {
                 // swap needed wPowerPerp amount to close short position
+                uint256 wPowerPerpDeficit = _wPowerPerpAmountToBurn.sub(_wPowerPerpAmount);
+
                 _exactOutFlashSwap(
                     weth,
                     wPowerPerp,
                     _poolFee,
-                    _wPowerPerpAmountToBurn.sub(_wPowerPerpAmount),
-                    _limitPriceEthPerPowerPerp.mul(_wPowerPerpAmountToBurn.sub(_wPowerPerpAmount)).div(1e18),
+                    wPowerPerpDeficit,
+                    _limitPriceEthPerPowerPerp.mul(wPowerPerpDeficit).div(1e18),
                     uint8(ControllerHelperDataType.CALLBACK_SOURCE.SWAP_EXACTOUT_ETH_WPOWERPERP_BURN),
                     abi.encodePacked(_vaultId, _wPowerPerpAmountToBurn, _collateralToWithdraw)
                 );

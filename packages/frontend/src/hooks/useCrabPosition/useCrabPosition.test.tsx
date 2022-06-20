@@ -7,7 +7,7 @@ import { act } from 'react-dom/test-utils'
 
 jest.mock('src/state/crab/atoms', () => ({
   crabLoadingAtom: jest.requireActual('./mocks').mockedCrabLoadingAtom,
-  currentEthValueAtom: jest.requireActual('./mocks').mockedCurrentEthValueAtom,
+  currentCrabPositionValueInETHAtom: jest.requireActual('./mocks').mockedCurrentEthValueAtom,
   crabPositionValueLoadingAtom: jest.requireActual('./mocks').mockedCrabPositionValueLoadingAtom,
 }))
 

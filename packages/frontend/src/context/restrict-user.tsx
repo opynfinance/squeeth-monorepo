@@ -1,9 +1,10 @@
 import React, { useContext, useState, useCallback, useEffect } from 'react'
-import { useCookies } from 'react-cookie'
 import { useAtomValue } from 'jotai'
+import { useRouter } from 'next/router'
 
 import { Networks } from '../types'
 import { networkIdAtom } from 'src/state/wallet/atoms'
+import { BLOCKED_COUNTRIES } from '../constants/index'
 
 type restrictUserContextType = {
   isRestricted: boolean
@@ -19,8 +20,10 @@ const restrictUserContext = React.createContext<restrictUserContextType>(initial
 const useRestrictUser = () => useContext(restrictUserContext)
 
 const RestrictUserProvider: React.FC = ({ children }) => {
+  const router = useRouter()
   const networkId = useAtomValue(networkIdAtom)
-  const [cookies] = useCookies(['restricted'])
+  const userLocation = router.query?.ct
+  const isRestricted = BLOCKED_COUNTRIES.includes(String(userLocation))
   const [state, setState] = useState({
     isRestricted: false,
   })
@@ -33,12 +36,12 @@ const RestrictUserProvider: React.FC = ({ children }) => {
   }, [])
 
   useEffect(() => {
-    if (cookies?.restricted?.split(',')[0] === 'true' && networkId !== Networks.ROPSTEN) {
+    if (isRestricted && networkId === Networks.MAINNET) {
       handleRestrictUser(true)
     } else {
       handleRestrictUser(false)
     }
-  }, [handleRestrictUser, cookies?.restricted, networkId])
+  }, [handleRestrictUser, networkId, isRestricted])
 
   return (
     <restrictUserContext.Provider value={{ handleRestrictUser, isRestricted: state.isRestricted }}>

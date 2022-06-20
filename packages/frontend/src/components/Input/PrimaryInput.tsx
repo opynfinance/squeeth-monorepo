@@ -109,7 +109,7 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
   error = false,
   isLoading = false,
   isFullClose = false,
-  loadingMessage = 'Fetching price data',
+  loadingMessage = 'Fetching best price',
 }) => {
   const classes = useStyles()
 
@@ -177,7 +177,7 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
           <Typography className={classes.unit}>{unit}</Typography>
         </div>
       </div>
-      {isLoading && !error ? (
+      {isLoading && (!error || hint === 'Insufficient ETH balance') ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
           <Typography variant="caption" color={error ? 'error' : 'textSecondary'}>
             {loadingMessage}
