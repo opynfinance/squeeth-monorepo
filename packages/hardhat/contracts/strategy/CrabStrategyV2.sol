@@ -57,7 +57,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     /// @dev twap period to use for hedge calculations
     uint32 public hedgingTwapPeriod = 420 seconds;
     /// @dev true if CrabV2 was initialized
-    bool isInitialized; 
+    bool public isInitialized; 
 
     /// @dev typehash for signed orders
     bytes32 private constant _CRAB_BALANCE_TYPEHASH =
@@ -278,20 +278,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
             cachedStrategyDebt,
             cachedStrategyCollateral
         );
-
-        if (cachedStrategyDebt == 0 && cachedStrategyCollateral == 0) {
-            // store hedge data as strategy is delta neutral at this point
-            // only execute this upon first deposit
-            uint256 wSqueethEthPrice = IOracle(oracle).getTwap(
-                ethWSqueethPool,
-                wPowerPerp,
-                weth,
-                hedgingTwapPeriod,
-                true
-            );
-            timeAtLastHedge = block.timestamp;
-            priceAtLastHedge = wSqueethEthPrice;
-        }
 
         _exactInFlashSwap(
             wPowerPerp,
@@ -522,20 +508,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         (uint256 wSqueethToMint, uint256 ethFee) = _calcWsqueethToMintAndFee(_amount, strategyDebt, strategyCollateral);
 
         uint256 depositorCrabAmount = _calcSharesToMint(_amount.sub(ethFee), strategyCollateral, totalSupply());
-
-        if (strategyDebt == 0 && strategyCollateral == 0) {
-            // store hedge data as strategy is delta neutral at this point
-            // only execute this upon first deposit
-            uint256 wSqueethEthPrice = IOracle(oracle).getTwap(
-                ethWSqueethPool,
-                wPowerPerp,
-                weth,
-                hedgingTwapPeriod,
-                true
-            );
-            timeAtLastHedge = block.timestamp;
-            priceAtLastHedge = wSqueethEthPrice;
-        }
 
         // mint wSqueeth and send it to msg.sender
         _mintWPowerPerp(_depositor, wSqueethToMint, _amount, _isFlashDeposit);

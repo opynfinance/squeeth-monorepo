@@ -140,7 +140,7 @@ describe("Crab Migration", function () {
            const crabV1SharesBalanceAfter = await crabStrategyV1.balanceOf(crabMigration.address);
            expect(crabV1SharesBalanceAfter).to.be.equal('0');
 
-            // 2. check that crab v1 total supply has gone down and crab v2 total supply has increased by same amt
+            // 2. check that crab v1 total supply has gone down and crab v2 total supply has increased
            const crabV1SupplyAfter = await crabStrategyV1.totalSupply();
            const changeInCrabV1Supply = crabV1SupplyBefore.sub(crabV1SupplyAfter);
            const crabV2SupplyAfter = await crabStrategyV2.totalSupply();
@@ -160,14 +160,35 @@ describe("Crab Migration", function () {
            expect(ethAmountDepositedToCrabV2).to.be.equal(ethAmountRemovedFromCrabV1);
 
            // 4. check that oSqth amt minted in crab v1 matches oSqth amt minted in crab v2
-
            const oSqthDebtPaidCrabV1 = crabV1VaultDetailsBefore[3].sub(crabV1VaultDetailsAfter[3])
            const oSqthMintedCrabV2 = crabV2VaultDetailsAfter[3].sub(crabV2VaultDetailsBefore[3]);
 
            expect(oSqthDebtPaidCrabV1).to.be.equal(oSqthMintedCrabV2);
 
            // 5. check that crab v2 is now initialized
+           const isInitialized = await crabStrategyV2.isInitialized();
+           expect(isInitialized).to.be.true;
+        })
 
+        it("d1 claims shares", async () => { 
+            const constractSharesBefore = await crabStrategyV2.balanceOf(crabMigration.address);
+            const d1SharesBefore = await crabStrategyV2.balanceOf(d1.address);
+
+            await crabMigration.connect(d1).claimV2Shares();
+
+            // 1. check that shares sent from migration contract equals shares received by user
+            const constractSharesAfter = await crabStrategyV2.balanceOf(crabMigration.address);
+            const d1SharesAfter = await crabStrategyV2.balanceOf(d1.address);
+            const sharesSent = constractSharesBefore.sub(constractSharesAfter);
+
+            expect(d1SharesBefore).to.be.equal('0');
+            expect(d1SharesAfter.sub(d1SharesBefore)).to.be.equal(sharesSent);     
+
+            // 2. check that the right amount of shares have been sent. 
+            const totalV2SharesReceived = await crabMigration.totalCrabV2SharesReceived();
+            const totalDepositAmount = deposit1Amount.add(deposit2Amount);
+            const expectedSharesSent = deposit1Amount.mul(totalV2SharesReceived).div(totalDepositAmount);
+            expect(expectedSharesSent).to.be.equal(sharesSent);
         })
     })
 
