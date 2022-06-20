@@ -44,6 +44,8 @@ import {StrategyMath} from "./base/StrategyMath.sol";
      WETH9 weth; 
 
      address public owner;
+     uint256 public totalCrabV1SharesMigrated; 
+     uint256 public totalCrabV2SharesReceived;
      address immutable EULER_MAINNET;
      address immutable dToken; 
      address immutable wPowerPerp; 
@@ -87,6 +89,7 @@ import {StrategyMath} from "./base/StrategyMath.sol";
      */
      function depositV1Shares(uint256 amount) external beforeMigration { 
          sharesDeposited[msg.sender] = amount;
+         totalCrabV1SharesMigrated += amount;
          crabV1.transferFrom(msg.sender, address(this), amount);
 
      }
@@ -96,10 +99,15 @@ import {StrategyMath} from "./base/StrategyMath.sol";
       * the v2 contract at the same collateral ratio as the v1 contract. 
       */
      function batchMigrate() external onlyOwner beforeMigration { 
-         // 1. flash floan eth from euler eq to amt 
-        bytes memory data;
+        // 1. update isMigrated
+        isMigrated = true;
 
+         // 2. flash floan eth from euler eq to amt 
+        bytes memory data;
         euler.deferLiquidityCheck(address(this), data);
+
+        // 3. record totalV2Shares
+        totalCrabV2SharesReceived = crabV2.balanceOf(address(this));
 
      }
 
@@ -133,12 +141,16 @@ import {StrategyMath} from "./base/StrategyMath.sol";
       * @notice allows users to claim their amount of crab v2 shares
       */
      function claimV2Shares() external afterMigration { 
-         uint256 amount = sharesDeposited[msg.sender];
+         uint256 amountV1Deposited = sharesDeposited[msg.sender];
          sharesDeposited[msg.sender] = 0;
-         crabV2.transfer(msg.sender, amount);
+         uint256 crabV2TotalShares = crabV2.balanceOf(address(this));
+         uint256 amountV2ToTransfer = amountV1Deposited * totalCrabV2SharesReceived / totalCrabV1SharesMigrated;
+         crabV2.transfer(msg.sender, amountV2ToTransfer);
      }
 
-     /**  */
+     /** 
+      * @notice allows users to claim 
+      */
      function claimAndWithdraw() external afterMigration { 
 
      }
