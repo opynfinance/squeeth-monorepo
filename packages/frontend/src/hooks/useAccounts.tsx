@@ -23,10 +23,12 @@ export default function useAccounts() {
     skip: !address,
   })
 
+  console.log(data)
+
   useAppEffect(() => {
     setAccount(data?.accounts)
-    setLPposition(data?.accounts[0].lppositions[0])
-    setPosition(data?.accounts[0].positions[0])
+    setLPposition(data?.accounts[0]?.lppositions[0])
+    setPosition(data?.accounts[0]?.positions[0])
     setAccShortAmountAtom(data?.accounts[0]?.accShortAmount)
   }, [
     data?.accounts,

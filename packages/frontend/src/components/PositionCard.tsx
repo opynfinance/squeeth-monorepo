@@ -329,7 +329,7 @@ const PositionCard: React.FC = () => {
                           style={{ fontWeight: 600 }}
                           id="unrealized-pnl-usd-value"
                         >
-                          {unrealizedPnL.isNaN() ? 0 : unrealizedPnL.toFixed(2)}
+                          {unrealizedPnL.isNaN() ? '--' : unrealizedPnL.toFixed(2)}
                         </Typography>
                         <Typography
                           variant="caption"
@@ -337,7 +337,7 @@ const PositionCard: React.FC = () => {
                           style={{ marginLeft: '4px' }}
                           id="unrealized-pnl-perct-value"
                         >
-                          ({unrealizedPnLInPerct.isNaN() ? 0 : unrealizedPnLInPerct.toFixed(2)}%)
+                          {unrealizedPnLInPerct.isNaN() ? null : unrealizedPnLInPerct.toFixed(2) + '%'}
                         </Typography>
                       </>
                     ) : (
@@ -351,19 +351,24 @@ const PositionCard: React.FC = () => {
                   </Typography>
                   <PnLTooltip pnlType={PnLType.Realized} />
                 </div>
-                <div className={classes.pnl} id="realized-pnl-value">
-                  <Typography className={pnlClass(positionType, realizedPnL, classes)} style={{ fontWeight: 600 }}>
-                    {realizedPnL.isNaN() ? 0 : realizedPnL.toFixed(2)}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    className={pnlClass(positionType, realizedPnLInPerct, classes)}
-                    style={{ marginLeft: '4px' }}
-                    id="unrealized-pnl-perct-value"
-                  >
-                    ({realizedPnLInPerct.isNaN() ? 0 : realizedPnLInPerct.toFixed(2)}%)
-                  </Typography>
-                </div>
+
+                {!isPnLLoading ? (
+                  <div className={classes.pnl} id="realized-pnl-value">
+                    <Typography className={pnlClass(positionType, realizedPnL, classes)} style={{ fontWeight: 600 }}>
+                      {realizedPnL.isNaN() ? '--' : realizedPnL.toFixed(2)}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      className={pnlClass(positionType, realizedPnLInPerct, classes)}
+                      style={{ marginLeft: '4px' }}
+                      id="unrealized-pnl-perct-value"
+                    >
+                      {realizedPnLInPerct.isNaN() ? null : realizedPnLInPerct.toFixed(2) + '%'}
+                    </Typography>
+                  </div>
+                ) : (
+                  'Loading'
+                )}
               </div>
             </div>
           </div>
