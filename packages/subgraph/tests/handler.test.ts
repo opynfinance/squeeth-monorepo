@@ -102,18 +102,8 @@ describe("handleOSQTHChange", () => {
     );
 
     assert.fieldEquals("Position", position.id, "currentOSQTHAmount", "0");
-    assert.fieldEquals(
-      "Position",
-      position.id,
-      "unrealizedOSQTHUnitCost",
-      "-0.4"
-    ); // -4/10
-    assert.fieldEquals(
-      "Position",
-      position.id,
-      "realizedOSQTHUnitGain",
-      "10.8"
-    ); // 54/5
-    assert.fieldEquals("Position", position.id, "realizedOSQTHAmount", "5");
+    assert.fieldEquals("Position", position.id, "unrealizedOSQTHUnitCost", "0");
+    assert.fieldEquals("Position", position.id, "realizedOSQTHUnitGain", "0");
+    assert.fieldEquals("Position", position.id, "realizedOSQTHAmount", "0");
   });
 });
