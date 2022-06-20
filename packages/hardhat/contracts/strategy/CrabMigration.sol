@@ -7,6 +7,8 @@ pragma abicoder v2;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import {IEulerExec, IEulerDToken} from "../interfaces/IEuler.sol";
+import {WETH9} from "../external/WETH9.sol";
+import "hardhat/console.sol";
 
 // contract
 import {CrabStrategyV2} from "./CrabStrategyV2.sol";
@@ -18,6 +20,8 @@ import {CrabStrategy} from "./CrabStrategy.sol";
  * M2: Migration already happened
  * M3: Migration has not yet happened
  * M4: msg.sender is not Euler
+ * M5: msg.sender 
+ * M6: msg. sender cannot send ETH
  */
 
 
@@ -32,14 +36,15 @@ import {CrabStrategy} from "./CrabStrategy.sol";
 
      mapping (address => uint256) public sharesDeposited; 
      bool public isMigrated;
-     address public owner;
      CrabStrategy public crabV1;
      CrabStrategyV2 public crabV2; 
      IEulerExec public euler; 
-     // TODO: figure out what is this address 
+     WETH9 weth; 
+
+     address public owner;
      address immutable EULER_MAINNET;
      address immutable dToken; 
-     address immutable weth; 
+     address immutable wPowerPerp; 
      
      modifier onlyOwner() {
         require(msg.sender == owner, "M1");
@@ -67,8 +72,9 @@ import {CrabStrategy} from "./CrabStrategy.sol";
          euler = IEulerExec(_eulerExec);
          owner = msg.sender;
          EULER_MAINNET = _eulerMainnet;
-         weth = _weth;
+         weth = WETH9(_weth);
          dToken = _dToken; 
+         wPowerPerp = crabV2.wPowerPerp();
      }
 
 
@@ -96,8 +102,7 @@ import {CrabStrategy} from "./CrabStrategy.sol";
      }
 
      function onDeferredLiquidityCheck(bytes memory encodedData) external {
-
-        // require(msg.sender == address(dToken), "M4");
+        // require(msg.sender == address(dToken), "M4"); 
         // 1. Borrow weth
         uint256 crabV1Balance = crabV1.balanceOf(address(this));
         uint256 crabV1Supply = crabV1.totalSupply();
@@ -105,14 +110,20 @@ import {CrabStrategy} from "./CrabStrategy.sol";
         uint256 amountEthToBorrow = crabV1Balance * totalCollateral / crabV1Supply;
 
         IEulerDToken(dToken).borrow(0, amountEthToBorrow);
+        weth.withdraw(amountEthToBorrow);
 
-        // ... do whatever you need with the borrowed tokens ...
         // 2. mint osqth in crab v2 
+        uint256 wSqueethToMint = crabV1.getWsqueethFromCrabAmount(crabV1Balance);
+        crabV2.initialize{value: amountEthToBorrow}(wSqueethToMint);
+
         // 3. call withdraw from crab v1
+        IERC20(wPowerPerp).approve(address(crabV1), type(uint).max);
+        crabV1.approve(address(crabV1), crabV1Balance);
+        crabV1.withdraw(crabV1Balance);
 
-        // Repay the 10 tokens:
-
-        IERC20(weth).approve(EULER_MAINNET, type(uint).max);
+        // 4. Repay the weth:
+        weth.deposit{value: amountEthToBorrow}();
+        weth.approve(EULER_MAINNET, type(uint).max);
         IEulerDToken(dToken).repay(0, amountEthToBorrow);
     }
 
@@ -129,4 +140,11 @@ import {CrabStrategy} from "./CrabStrategy.sol";
      function claimAndWithdraw() external afterMigration { 
 
      }
+
+    /**
+     * @notice receive function to allow ETH transfer to this contract
+     */
+    receive() external payable {
+        require(msg.sender == address(weth) || msg.sender == address(crabV1), "M6");
+    }
  }
