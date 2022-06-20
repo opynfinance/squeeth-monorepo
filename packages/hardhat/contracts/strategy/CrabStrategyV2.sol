@@ -560,7 +560,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         Order memory _order
     ) internal {
         require(managerBuyPrice > 0, "C0");
-        require(managerBuyPrice >= sellerPrice, "C1");
+        require(managerBuyPrice >= sellerPrice, "Manager Buy Price should be atleast Seller Price");
         bytes32 structHash = keccak256(
             abi.encode(
                 _CRAB_BALANCE_TYPEHASH,
