@@ -9,6 +9,7 @@ contract MockCrab is ERC20 {
     uint256 vaultId;
     uint256 collateral; 
     uint256 short;
+    address public wPowerPerp;
 
     constructor(
         string memory _name,

@@ -72,7 +72,7 @@ const config: HardhatUserConfig = {
         auto: true
       },
       forking: {
-        enabled: process.env.FORK === 'true',
+        enabled: process.env.FORK === 'false',
         url: `https://eth-mainnet.alchemyapi.io/v2/SR-wBhpxMirgFtp4OGeJoWKO1ObmVeFg`,
       },
       accounts: {
