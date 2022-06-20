@@ -44,6 +44,13 @@ export const MAINNET_ROPSTEN_SWAPROUTER2_ADDR = Address.fromString(
   "0xE592427A0AEce92De3Edee1F18E0157C05861564"
 );
 
+export const MAINNET_NFT_MANAGER_ADDR = Address.fromString(
+  "0xC36442b4a4522E871399CD717aBDD847Ab11FE88"
+);
+export const ROPSTEN_NFT_MANAGER_ADDR = Address.fromString(
+  "0x8c7c1f786da4dee7d4bb49697a9b0c0c8fb328e0"
+);
+
 export const MAINNET_USDC_WETH_POOL =
   "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8".toLowerCase();
 export const ROPSTEN_USDC_WETH_POOL =
@@ -174,6 +181,14 @@ export function getSwapRouter2Addr(networkName: string): Address {
   return addr;
 }
 
+export function getNFTManagerAddr(networkName: string): Address {
+  let addr = MAINNET_NFT_MANAGER_ADDR;
+  if (networkName == "ropsten") {
+    addr = ROPSTEN_NFT_MANAGER_ADDR;
+  }
+  return addr;
+}
+
 export const SHORT_HELPER_ADDR = getShortHelperAddr(dataSource.network());
 export const OSQTH_WETH_POOL = getoSQTHPoolAddr(dataSource.network());
 export const USDC_WETH_POOL = getUSDCPoolAddr(dataSource.network());
@@ -182,3 +197,4 @@ export const WETH_TOKEN_ADDR = getWETHTokenAddr(dataSource.network());
 export const CONTROLLER_ADDR = getControllerAddr(dataSource.network());
 export const SWAPROUTER_ADDR = getSwapRouterAddr(dataSource.network());
 export const SWAPROUTER2_ADDR = getSwapRouter2Addr(dataSource.network());
+export const NFT_MANAGER_ADDR = getNFTManagerAddr(dataSource.network());

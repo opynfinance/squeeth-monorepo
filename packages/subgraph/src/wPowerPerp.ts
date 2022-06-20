@@ -3,6 +3,7 @@ import { Pool } from "../generated/schema";
 import { Transfer } from "../generated/WPowerPerp/WPowerPerp";
 import {
   CONTROLLER_ADDR,
+  NFT_MANAGER_ADDR,
   SHORT_HELPER_ADDR,
   SWAPROUTER2_ADDR,
   SWAPROUTER_ADDR,
@@ -16,7 +17,8 @@ export function handleTransfer(event: Transfer): void {
     event.transaction.to == SHORT_HELPER_ADDR ||
     event.transaction.to == CONTROLLER_ADDR ||
     event.transaction.to == SWAPROUTER_ADDR ||
-    event.transaction.to == SWAPROUTER2_ADDR
+    event.transaction.to == SWAPROUTER2_ADDR ||
+    event.transaction.to == NFT_MANAGER_ADDR
   ) {
     return;
   }
