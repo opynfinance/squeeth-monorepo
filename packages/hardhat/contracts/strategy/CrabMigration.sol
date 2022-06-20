@@ -20,9 +20,8 @@ import {StrategyMath} from "./base/StrategyMath.sol";
  * M1: Not Owner
  * M2: Migration already happened
  * M3: Migration has not yet happened
- * M4: msg.sender is not Euler
- * M5: msg.sender 
- * M6: msg. sender cannot send ETH
+ * M4: msg.sender is not Euler Mainnet Contract
+ * M5: msg. sender cannot send ETH
  */
 
 
@@ -86,7 +85,7 @@ import {StrategyMath} from "./base/StrategyMath.sol";
      * @notice allows users to deposit their crab v1 shares in the pool for migration
      */
      function depositV1Shares(uint256 amount) external beforeMigration { 
-         sharesDeposited[msg.sender] = amount;
+         sharesDeposited[msg.sender] += amount;
          totalCrabV1SharesMigrated += amount;
          crabV1.transferFrom(msg.sender, address(this), amount);
 
@@ -110,7 +109,8 @@ import {StrategyMath} from "./base/StrategyMath.sol";
      }
 
      function onDeferredLiquidityCheck(bytes memory encodedData) external {
-        // require(msg.sender == address(dToken), "M4"); // TODO: which contract sends this?
+        require(msg.sender == EULER_MAINNET, "M4"); 
+
         // 1. Borrow weth
         uint256 crabV1Balance = crabV1.balanceOf(address(this));
         uint256 crabV1Supply = crabV1.totalSupply();
@@ -157,6 +157,6 @@ import {StrategyMath} from "./base/StrategyMath.sol";
      * @notice receive function to allow ETH transfer to this contract
      */
     receive() external payable {
-        require(msg.sender == address(weth) || msg.sender == address(crabV1), "M6");
+        require(msg.sender == address(weth) || msg.sender == address(crabV1), "M5");
     }
  }
