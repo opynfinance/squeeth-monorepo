@@ -71,6 +71,10 @@ const config: HardhatUserConfig = {
       mining: {
         auto: true
       },
+      forking: {
+        enabled: process.env.FORK === 'true',
+        url: `https://eth-mainnet.alchemyapi.io/v2/SR-wBhpxMirgFtp4OGeJoWKO1ObmVeFg`,
+      },
       accounts: {
         accountsBalance: '1000000000000000000000000000'
       },
