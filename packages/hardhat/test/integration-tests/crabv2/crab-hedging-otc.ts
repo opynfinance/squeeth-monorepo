@@ -167,7 +167,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
         expect(lastHedgeTime.eq(timeStamp)).to.be.true;
     });
 
-    describe("Sell auction", async () => {
+    describe("Hedging", async () => {
         const getOSQTHPrice = () => oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false);
         const mintAndSell = async (toMint="1000") => {
             const ethToDeposit = ethers.utils.parseUnits("1000");
@@ -1127,12 +1127,66 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             let second_trader_receives =toSell.div(2).sub(difference);  // he gets the full - 10% as manager is trading only 90 % 
             expect(oSQTHTraderBalanceAfter_2).eq(oSQTHTraderBalanceBefore_2.add(second_trader_receives));
             expect(wethTraderBalanceBefore_2.sub(wethTraderBalanceAfter_2)).eq(wdiv(second_trader_receives, managerBuyPrice));
-
-            
-            // trader amount to sell oSQTH to change the deltas
-            await mintAndSell("50");
-            let dlt = await delta(await controller.vaults(await crabStrategy.vaultId()));
-            expect(dlt.toNumber()).to.be.greaterThan(0);
         });
+        it("should revert on heding too quickly after the previous hedge and when price is within threshold", async () => {
+            // this sets the price Threshold to 5% which ensures that the revert is not happening due to price
+            await crabStrategy.connect(owner).setHedgePriceThreshold(BigNumber.from(10).pow(16).mul(5))
+
+            // set the time to 1 hr from prev hedge
+            let lastHedge = await crabStrategy.timeAtLastHedge();
+            const currentBlockNumber = await provider.getBlockNumber();
+            const currentBlock = await provider.getBlock(currentBlockNumber);
+            await provider.send("evm_setNextBlockTimestamp", [lastHedge.toNumber()+3600]);
+            await provider.send("evm_mine", []);
+
+            console.log('current time', currentBlock.timestamp);
+            console.log('last time hedge', lastHedge.toNumber());
+
+
+            let trader = random;
+
+            // Calculate new Delta and the trades to make
+            let toGet = ethers.utils.parseUnits("1")
+            let toSell = ethers.utils.parseUnits("1")
+            console.log("quantity of oSQTH to buy is", toGet);
+            console.log("quantity of ETH to sell is", toSell);
+
+            // make the approvals for the trade and prepare the trade
+            await wSqueeth.connect(trader).approve(crabStrategy.address, toGet);
+
+            let orderHash = {
+                bidId: 0,
+                trader: trader.address,
+                traderToken: wSqueeth.address,
+                traderAmount: toGet,
+                managerToken: weth.address,
+                managerAmount: toSell,
+                nonce: await crabStrategy.nonces(trader.address),
+            };
+            console.log(orderHash.traderAmount.toString(), orderHash.managerAmount.toString());
+
+            let domainData = {
+                name: "CrabOTC",
+                version: "2",
+                chainId: network.config.chainId,
+                verifyingContract: crabStrategy.address,
+            };
+            let typeData = {
+                Order: [
+                    { type: "uint256", name: "bidId" },
+                    { type: "address", name: "trader" },
+                    { type: "address", name: "traderToken" },
+                    { type: "uint256", name: "traderAmount" },
+                    { type: "address", name: "managerToken" },
+                    { type: "uint256", name: "managerAmount" },
+                    { type: "uint256", name: "nonce" },
+                ],
+            };
+            // Do the trade
+            let signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
+            let managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
+            console.log(managerBuyPrice);
+            await expect(crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder])).to.be.revertedWith('Time or Price is not within range');
+        })
     });
 });

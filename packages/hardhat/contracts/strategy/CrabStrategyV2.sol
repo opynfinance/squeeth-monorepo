@@ -594,14 +594,14 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
             // if last param is false, transfer happens again
             _mintWPowerPerp(_order.trader, _order.managerAmount, _order.traderAmount, true);
-            priceAtLastHedge = _order.managerAmount.div(_order.traderAmount);
+            priceAtLastHedge = _order.traderAmount.mul(1e18).div(_order.managerAmount);
         } else {
             // oSQTH in, WETH out
             _burnWPowerPerp(_order.trader, _order.traderAmount, _order.managerAmount, true);
             //wrap it
             IWETH9(weth).deposit{value: _order.managerAmount}();
             // if last param is false, transfer happens again
-            priceAtLastHedge = _order.traderAmount.div(_order.managerAmount);
+            priceAtLastHedge = _order.managerAmount.mul(1e18).div(_order.traderAmount);
         }
 
         IERC20(_order.managerToken).transfer(_order.trader, _order.managerAmount);
@@ -619,7 +619,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 managerBuyPrice,
         Order[] memory _orders
     ) external onlyOwner {
-        require(_isTimeHedge() || _isPriceHedge(), "C3");
+        require(_isTimeHedge() || _isPriceHedge(), "Time or Price is not within range");
         _checkOTCPrice(managerBuyPrice, _orders[0].managerToken);
         // TODO add check that all orders have same managerToken/traderToken
 
