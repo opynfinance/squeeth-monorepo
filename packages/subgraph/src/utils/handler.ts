@@ -96,7 +96,7 @@ export function handleOSQTHChange(
       }
     }
   } else {
-    // Buy short
+    // buying with short position
     if (amount.gt(ZERO_BD)) {
       let oldRealizedOSQTHGain = position.realizedOSQTHAmount.times(
         position.realizedOSQTHUnitGain
@@ -112,34 +112,30 @@ export function handleOSQTHChange(
       // Unrealized PnL calculation
       if (!newAmount.equals(ZERO_BD)) {
         position.unrealizedOSQTHUnitCost = oldUnrealizedOSQTHCost
-          .plus(absAmount.times(osqthPriceInUSD))
+          .minus(absAmount.times(osqthPriceInUSD))
           .div(absCurrentOSQTHAmountAfterTrade);
       }
     }
 
-    // sell short
+    // selling with short position
     if (amount.lt(ZERO_BD)) {
-      let totalAmount = position.currentOSQTHAmount.minus(
+      let totalAmount = absCurrentOSQTHAmountBeforeTrade.plus(
         position.realizedOSQTHAmount
       );
-
-      if (totalAmount.lt(ZERO_BD)) {
-        totalAmount = totalAmount.neg();
-      }
 
       let oldRealizedOSQTHCost =
         position.realizedOSQTHUnitCost.times(totalAmount);
 
-      if (!totalAmount.plus(amount).equals(ZERO_BD)) {
+      if (!totalAmount.plus(absAmount).equals(ZERO_BD)) {
         position.realizedOSQTHUnitCost = oldRealizedOSQTHCost
           .plus(absAmount.times(osqthPriceInUSD))
-          .div(totalAmount.plus(amount));
+          .div(totalAmount.plus(absAmount));
       }
 
       // Unrealized PnL calculation
       if (!newAmount.equals(ZERO_BD)) {
         position.unrealizedOSQTHUnitCost = oldUnrealizedOSQTHCost
-          .minus(absAmount.times(osqthPriceInUSD))
+          .plus(absAmount.times(osqthPriceInUSD))
           .div(absCurrentOSQTHAmountAfterTrade);
       }
     }
