@@ -205,6 +205,26 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
 
             return delta;
         };
+        const getTypeAndDomainData = () => {
+            const typeData = {
+                Order: [
+                    { type: "uint256", name: "bidId" },
+                    { type: "address", name: "trader" },
+                    { type: "address", name: "traderToken" },
+                    { type: "uint256", name: "traderAmount" },
+                    { type: "address", name: "managerToken" },
+                    { type: "uint256", name: "managerAmount" },
+                    { type: "uint256", name: "nonce" },
+                ],
+            };
+            const domainData = {
+                name: "CrabOTC",
+                version: "2",
+                chainId: network.config.chainId,
+                verifyingContract: crabStrategy.address,
+            };
+            return { typeData, domainData };
+        };
         xit("should hedge by selling WSqueeth for ETH and update timestamp and price at hedge", async () => {
             // change pool price for auction to be sell auction
             const ethToDeposit = ethers.utils.parseUnits("1000");
@@ -399,23 +419,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 nonce: await crabStrategy.nonces(trader.address),
             };
 
-            let domainData = {
-                name: "CrabOTC",
-                version: "2",
-                chainId: network.config.chainId,
-                verifyingContract: crabStrategy.address,
-            };
-            let typeData = {
-                Order: [
-                    { type: "uint256", name: "bidId" },
-                    { type: "address", name: "trader" },
-                    { type: "address", name: "traderToken" },
-                    { type: "uint256", name: "traderAmount" },
-                    { type: "address", name: "managerToken" },
-                    { type: "uint256", name: "managerAmount" },
-                    { type: "uint256", name: "nonce" },
-                ],
-            };
+            const { typeData, domainData } = getTypeAndDomainData();
             let signedOrder = await signTypedData(random, domainData, typeData, orderHash);
             let signedOrder1 = await signTypedData(trader, domainData, typeData, orderHash1);
             let managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
@@ -529,23 +533,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             };
             console.log(orderHash.traderAmount.toString(), orderHash.managerAmount.toString());
 
-            let domainData = {
-                name: "CrabOTC",
-                version: "2",
-                chainId: network.config.chainId,
-                verifyingContract: crabStrategy.address,
-            };
-            let typeData = {
-                Order: [
-                    { type: "uint256", name: "bidId" },
-                    { type: "address", name: "trader" },
-                    { type: "address", name: "traderToken" },
-                    { type: "uint256", name: "traderAmount" },
-                    { type: "address", name: "managerToken" },
-                    { type: "uint256", name: "managerAmount" },
-                    { type: "uint256", name: "nonce" },
-                ],
-            };
+            const { typeData, domainData } = getTypeAndDomainData();
             let signedOrder = await signTypedData(random, domainData, typeData, orderHash);
 
             let managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
@@ -636,23 +624,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             };
             console.log(orderHash.traderAmount.toString(), orderHash.managerAmount.toString());
 
-            let domainData = {
-                name: "CrabOTC",
-                version: "2",
-                chainId: network.config.chainId,
-                verifyingContract: crabStrategy.address,
-            };
-            let typeData = {
-                Order: [
-                    { type: "uint256", name: "bidId" },
-                    { type: "address", name: "trader" },
-                    { type: "address", name: "traderToken" },
-                    { type: "uint256", name: "traderAmount" },
-                    { type: "address", name: "managerToken" },
-                    { type: "uint256", name: "managerAmount" },
-                    { type: "uint256", name: "nonce" },
-                ],
-            };
+            const { typeData, domainData } = getTypeAndDomainData();
             // Do the trade
             let signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
             let managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
@@ -733,23 +705,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 nonce: await crabStrategy.nonces(trader.address),
             };
 
-            let domainData = {
-                name: "CrabOTC",
-                version: "2",
-                chainId: network.config.chainId,
-                verifyingContract: crabStrategy.address,
-            };
-            let typeData = {
-                Order: [
-                    { type: "uint256", name: "bidId" },
-                    { type: "address", name: "trader" },
-                    { type: "address", name: "traderToken" },
-                    { type: "uint256", name: "traderAmount" },
-                    { type: "address", name: "managerToken" },
-                    { type: "uint256", name: "managerAmount" },
-                    { type: "uint256", name: "nonce" },
-                ],
-            };
+            const { typeData, domainData } = getTypeAndDomainData();
             let signedOrder = await signTypedData(random, domainData, typeData, orderHash);
             let signedOrder1 = await signTypedData(trader, domainData, typeData, orderHash1);
             let managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
@@ -840,23 +796,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 nonce: await crabStrategy.nonces(trader.address),
             };
 
-            let domainData = {
-                name: "CrabOTC",
-                version: "2",
-                chainId: network.config.chainId,
-                verifyingContract: crabStrategy.address,
-            };
-            let typeData = {
-                Order: [
-                    { type: "uint256", name: "bidId" },
-                    { type: "address", name: "trader" },
-                    { type: "address", name: "traderToken" },
-                    { type: "uint256", name: "traderAmount" },
-                    { type: "address", name: "managerToken" },
-                    { type: "uint256", name: "managerAmount" },
-                    { type: "uint256", name: "nonce" },
-                ],
-            };
+            const { typeData, domainData } = getTypeAndDomainData();
             let signedOrder = await signTypedData(random, domainData, typeData, orderHash);
             let signedOrder1 = await signTypedData(trader, domainData, typeData, orderHash1);
             let managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
@@ -951,23 +891,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 nonce: traderNonce,
             };
 
-            let domainData = {
-                name: "CrabOTC",
-                version: "2",
-                chainId: network.config.chainId,
-                verifyingContract: crabStrategy.address,
-            };
-            let typeData = {
-                Order: [
-                    { type: "uint256", name: "bidId" },
-                    { type: "address", name: "trader" },
-                    { type: "address", name: "traderToken" },
-                    { type: "uint256", name: "traderAmount" },
-                    { type: "address", name: "managerToken" },
-                    { type: "uint256", name: "managerAmount" },
-                    { type: "uint256", name: "nonce" },
-                ],
-            };
+            const { typeData, domainData } = getTypeAndDomainData();
             let signedOrder = await signTypedData(random, domainData, typeData, orderHash);
             let signedOrder1 = await signTypedData(trader, domainData, typeData, orderHash1);
             let managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
@@ -1074,24 +998,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 managerAmount: toSell.div(2),
                 nonce: traderNonce,
             };
-
-            let domainData = {
-                name: "CrabOTC",
-                version: "2",
-                chainId: network.config.chainId,
-                verifyingContract: crabStrategy.address,
-            };
-            let typeData = {
-                Order: [
-                    { type: "uint256", name: "bidId" },
-                    { type: "address", name: "trader" },
-                    { type: "address", name: "traderToken" },
-                    { type: "uint256", name: "traderAmount" },
-                    { type: "address", name: "managerToken" },
-                    { type: "uint256", name: "managerAmount" },
-                    { type: "uint256", name: "nonce" },
-                ],
-            };
+            const { typeData, domainData } = getTypeAndDomainData();
             let signedOrder = await signTypedData(random, domainData, typeData, orderHash);
             let signedOrder1 = await signTypedData(trader, domainData, typeData, orderHash1);
             let managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
@@ -1183,23 +1090,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             };
             console.log(orderHash.traderAmount.toString(), orderHash.managerAmount.toString());
 
-            let domainData = {
-                name: "CrabOTC",
-                version: "2",
-                chainId: network.config.chainId,
-                verifyingContract: crabStrategy.address,
-            };
-            let typeData = {
-                Order: [
-                    { type: "uint256", name: "bidId" },
-                    { type: "address", name: "trader" },
-                    { type: "address", name: "traderToken" },
-                    { type: "uint256", name: "traderAmount" },
-                    { type: "address", name: "managerToken" },
-                    { type: "uint256", name: "managerAmount" },
-                    { type: "uint256", name: "nonce" },
-                ],
-            };
+            const { typeData, domainData } = getTypeAndDomainData();
             // Do the trade
             let signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
             let managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
@@ -1210,7 +1101,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
         });
         it("should revert when the hedge trade oSQTH price is beyond threshold", async () => {
             // set the time to 1 hr from prev hedge
-            await provider.send("evm_increaseTime", [84600+3600]);
+            await provider.send("evm_increaseTime", [84600 + 3600]);
             let trader = random;
 
             // Calculate new Delta and the trades to make
@@ -1232,24 +1123,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 nonce: await crabStrategy.nonces(trader.address),
             };
             console.log(orderHash.traderAmount.toString(), orderHash.managerAmount.toString());
-
-            let domainData = {
-                name: "CrabOTC",
-                version: "2",
-                chainId: network.config.chainId,
-                verifyingContract: crabStrategy.address,
-            };
-            let typeData = {
-                Order: [
-                    { type: "uint256", name: "bidId" },
-                    { type: "address", name: "trader" },
-                    { type: "address", name: "traderToken" },
-                    { type: "uint256", name: "traderAmount" },
-                    { type: "address", name: "managerToken" },
-                    { type: "uint256", name: "managerAmount" },
-                    { type: "uint256", name: "nonce" },
-                ],
-            };
+            const { typeData, domainData } = getTypeAndDomainData();
             // Do the trade
             let signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
             let managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
