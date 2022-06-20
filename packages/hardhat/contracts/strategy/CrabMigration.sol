@@ -147,10 +147,10 @@ import {StrategyMath} from "./base/StrategyMath.sol";
      }
 
      /** 
-      * @notice allows users to claim 
+      * @notice allows users to claim crabV2 shares and flash withdraw from crabV2
       */
      function claimAndWithdraw() external afterMigration { 
-
+        
      }
 
     /**
