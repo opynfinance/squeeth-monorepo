@@ -1208,5 +1208,55 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder])
             ).to.be.revertedWith("Time or Price is not within range");
         });
+        it("should revert when the hedge trade oSQTH price is beyond threshold", async () => {
+            // set the time to 1 hr from prev hedge
+            await provider.send("evm_increaseTime", [84600+3600]);
+            let trader = random;
+
+            // Calculate new Delta and the trades to make
+            let toGet = ethers.utils.parseUnits("3.5");
+            let toSell = ethers.utils.parseUnits("1");
+            console.log("quantity of oSQTH to buy is", toGet);
+            console.log("quantity of ETH to sell is", toSell);
+
+            // make the approvals for the trade and prepare the trade
+            await wSqueeth.connect(trader).approve(crabStrategy.address, toGet);
+
+            let orderHash = {
+                bidId: 0,
+                trader: trader.address,
+                traderToken: wSqueeth.address,
+                traderAmount: toGet,
+                managerToken: weth.address,
+                managerAmount: toSell,
+                nonce: await crabStrategy.nonces(trader.address),
+            };
+            console.log(orderHash.traderAmount.toString(), orderHash.managerAmount.toString());
+
+            let domainData = {
+                name: "CrabOTC",
+                version: "2",
+                chainId: network.config.chainId,
+                verifyingContract: crabStrategy.address,
+            };
+            let typeData = {
+                Order: [
+                    { type: "uint256", name: "bidId" },
+                    { type: "address", name: "trader" },
+                    { type: "address", name: "traderToken" },
+                    { type: "uint256", name: "traderAmount" },
+                    { type: "address", name: "managerToken" },
+                    { type: "uint256", name: "managerAmount" },
+                    { type: "uint256", name: "nonce" },
+                ],
+            };
+            // Do the trade
+            let signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
+            let managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
+            console.log(managerBuyPrice);
+            await expect(
+                crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder])
+            ).to.be.revertedWith("Price too low relative to Uniswap twap.");
+        });
     });
 });
