@@ -1,18 +1,12 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { ethereum } from "@graphprotocol/graph-ts";
 import { Pool, TransactionHistory } from "../generated/schema";
-import {
-  USDC_WETH_POOL,
-  ZERO_BD,
-  OSQTH_WETH_POOL,
-  TOKEN_DECIMALS_USDC,
-  TOKEN_DECIMALS_18,
-} from "./constants";
+import { ZERO_BD, TOKEN_DECIMALS_USDC, TOKEN_DECIMALS_18 } from "./constants";
+import { USDC_WETH_POOL, OSQTH_WETH_POOL } from "./addresses";
 import { handleOSQTHChange } from "./utils/handler";
 import {
   initLPPosition,
   initPosition,
-  loadOrCreateAccount,
   loadOrCreateLPPosition,
   loadOrCreatePosition,
 } from "./utils/loadInit";

@@ -6,19 +6,11 @@ import {
 } from "../../generated/USDCPool/Pool";
 import { Swap as OSQTHSwapEvent } from "../../generated/OSQTHPool/Pool";
 import { sqrtPriceX96ToTokenPrices } from "../utils/pricing";
-import {
-  TOKEN_DECIMALS_18,
-  TOKEN_DECIMALS_USDC,
-  USDC_WETH_POOL,
-  ZERO_BD,
-} from "../constants";
-import {
-  createTransactionHistory,
-  loadOrCreateAccount,
-  loadOrCreatePosition,
-  buyOrSellSQTH,
-} from "../util";
+import { TOKEN_DECIMALS_18, TOKEN_DECIMALS_USDC, ZERO_BD } from "../constants";
+import { createTransactionHistory, buyOrSellSQTH } from "../util";
 import { convertTokenToDecimal } from "../utils";
+import { USDC_WETH_POOL } from "../addresses";
+import { loadOrCreateAccount } from "../utils/loadInit";
 
 export function handleInitialize(event: Initialize): void {
   // update pool sqrt price

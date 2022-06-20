@@ -1,6 +1,7 @@
 import { BigDecimal } from "@graphprotocol/graph-ts";
 import { assert, clearStore, test } from "matchstick-as";
 import { handleOSQTHChange } from "../src/utils/handler";
+// import { handleOSQTHChange } from "../src/utils/handler";
 import { loadOrCreatePosition } from "../src/utils/loadInit";
 
 test("handleOSQTHChange handles long position", () => {

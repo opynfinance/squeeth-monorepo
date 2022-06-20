@@ -9,7 +9,7 @@ export function loadOrCreateAccount(accountId: string): Account {
     account.vaultCount = BIGINT_ZERO;
     account.accShortAmount = BIGINT_ZERO;
   }
-  return account as Account;
+  return account;
 }
 
 export function initPosition(userAddr: string, position: Position): Position {
@@ -26,7 +26,7 @@ export function initPosition(userAddr: string, position: Position): Position {
   position.realizedETHUnitGain = ZERO_BD;
   position.realizedOSQTHAmount = ZERO_BD;
   position.realizedETHAmount = ZERO_BD;
-  return position as Position;
+  return position;
 }
 
 export function initLPPosition(
@@ -49,7 +49,7 @@ export function initLPPosition(
   lpPosition.collectedFeesETHAmount = ZERO_BD;
   lpPosition.collectedFeesOSQTHAmount = ZERO_BD;
 
-  return lpPosition as LPPosition;
+  return lpPosition;
 }
 
 export function loadOrCreateLPPosition(userAddr: string): LPPosition {
@@ -59,7 +59,7 @@ export function loadOrCreateLPPosition(userAddr: string): LPPosition {
     lpPosition = new LPPosition(userAddr);
     lpPosition = initLPPosition(userAddr, lpPosition);
   }
-  return lpPosition as LPPosition;
+  return lpPosition;
 }
 
 export function loadOrCreatePosition(userAddr: string): Position {
@@ -69,5 +69,5 @@ export function loadOrCreatePosition(userAddr: string): Position {
     position = new Position(userAddr);
     position = initPosition(userAddr, position);
   }
-  return position as Position;
+  return position;
 }

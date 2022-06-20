@@ -5,27 +5,22 @@ import {
   IncreaseLiquidity,
   NonfungiblePositionManager,
 } from "../../generated/NonfungiblePositionManager/NonfungiblePositionManager";
-import {
-  ONE_BD,
-  ONE_BI,
-  OSQTH_TOKEN_ADDR,
-  TOKEN_DECIMALS_18,
-  WETH_TOKEN_ADDR,
-  ZERO_BD,
-  ZERO_BI,
-} from "../constants";
+import { TOKEN_DECIMALS_18 } from "../constants";
 import {
   createTransactionHistory,
-  loadOrCreateAccount,
   buyOrSellLPSQTH,
   buyOrSellLPETH,
-  loadOrCreatePosition,
   buyOrSellETH,
   buyOrSellSQTH,
-  loadOrCreateLPPosition,
 } from "../util";
 import { convertTokenToDecimal } from "../utils";
 import { Address, BigInt } from "@graphprotocol/graph-ts";
+import { OSQTH_TOKEN_ADDR, WETH_TOKEN_ADDR } from "../addresses";
+import {
+  loadOrCreateAccount,
+  loadOrCreateLPPosition,
+  loadOrCreatePosition,
+} from "../utils/loadInit";
 
 function updateLPposition(
   userAddr: string,
