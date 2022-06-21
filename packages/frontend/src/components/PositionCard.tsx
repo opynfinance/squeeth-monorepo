@@ -337,7 +337,7 @@ const PositionCard: React.FC = () => {
                           style={{ marginLeft: '4px' }}
                           id="unrealized-pnl-perct-value"
                         >
-                          {unrealizedPnLInPerct.isNaN() ? null : unrealizedPnLInPerct.toFixed(2) + '%'}
+                          ({unrealizedPnLInPerct.isNaN() ? null : unrealizedPnLInPerct.toFixed(2) + '%'})
                         </Typography>
                       </>
                     ) : (
@@ -363,7 +363,7 @@ const PositionCard: React.FC = () => {
                       style={{ marginLeft: '4px' }}
                       id="unrealized-pnl-perct-value"
                     >
-                      {realizedPnLInPerct.isNaN() ? null : realizedPnLInPerct.toFixed(2) + '%'}
+                      ({realizedPnLInPerct.isNaN() ? null : realizedPnLInPerct.toFixed(2) + '%'})
                     </Typography>
                   </div>
                 ) : (
