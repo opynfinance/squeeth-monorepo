@@ -572,6 +572,8 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const signedOrder = await signTypedData(random, domainData, typeData, orderHash);
             const signedOrder1 = await signTypedData(trader, domainData, typeData, orderHash1);
             const managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
+            const managerBuyPrice1 = signedOrder1.managerAmount.mul(one).div(signedOrder1.traderAmount);
+            console.log('cheacasdfas', managerBuyPrice, managerBuyPrice1);
 
             // Do the trade
             await crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder, signedOrder1]);

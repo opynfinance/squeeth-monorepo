@@ -173,6 +173,7 @@ describe("Crab Strategy V2", function () {
         weth.address,
         random.address,
         wSqueethEthPool.address,
+        timelock.address,
         hedgeTimeTolerance,
         0,
         auctionTime,
