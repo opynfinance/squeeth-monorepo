@@ -3,7 +3,7 @@ import { ethereum } from "@graphprotocol/graph-ts";
 import { Pool, TransactionHistory } from "../generated/schema";
 import { ZERO_BD, TOKEN_DECIMALS_USDC, TOKEN_DECIMALS_18 } from "./constants";
 import { USDC_WETH_POOL, OSQTH_WETH_POOL } from "./addresses";
-import { handleOSQTHChange } from "./utils/handler";
+import { handleETHChange, handleOSQTHChange } from "./utils/handler";
 import {
   initLPPosition,
   initPosition,
@@ -87,55 +87,9 @@ export function createTransactionHistory(
 // buy: amount > 0
 // sell amount < 0
 export function buyOrSellETH(userAddr: string, amount: BigDecimal): void {
-  if (amount.equals(ZERO_BD) || userAddr == null) return;
-
   let usdcPrices = getETHUSDCPrice();
-  let position = loadOrCreatePosition(userAddr);
 
-  // Buy
-  if (amount.gt(ZERO_BD)) {
-    let oldBoughtAmount = position.currentETHAmount.plus(
-      position.realizedETHAmount
-    );
-    let oldRealizedETHCost =
-      position.realizedETHUnitCost.times(oldBoughtAmount);
-
-    position.realizedETHUnitCost = oldRealizedETHCost
-      .plus(amount.times(usdcPrices[1]))
-      .div(oldBoughtAmount.plus(amount));
-  }
-
-  // Sell
-  if (amount.lt(ZERO_BD)) {
-    let absAmount = amount.neg();
-    let oldRealizedETHGain = position.realizedETHUnitGain.times(
-      position.realizedETHAmount
-    );
-
-    position.realizedETHAmount = position.realizedETHAmount.plus(absAmount);
-    position.realizedETHUnitGain = oldRealizedETHGain
-      .plus(absAmount.times(usdcPrices[1]))
-      .div(position.realizedETHAmount);
-  }
-
-  // Unrealized PnL calculation
-  let oldUnrealizedETHCost = position.unrealizedETHUnitCost.times(
-    position.currentETHAmount
-  );
-  position.currentETHAmount = position.currentETHAmount.plus(amount);
-  // = 0 none
-  if (
-    position.currentOSQTHAmount.equals(ZERO_BD) &&
-    position.currentETHAmount.equals(ZERO_BD)
-  ) {
-    position = initPosition(userAddr, position);
-  } else if (!position.currentETHAmount.equals(ZERO_BD)) {
-    position.unrealizedETHUnitCost = oldUnrealizedETHCost
-      .plus(amount.times(usdcPrices[1]))
-      .div(position.currentETHAmount);
-  }
-
-  position.save();
+  handleETHChange(userAddr, amount, usdcPrices[1]);
 }
 
 export function buyOrSellSQTH(userAddr: string, amount: BigDecimal): void {
