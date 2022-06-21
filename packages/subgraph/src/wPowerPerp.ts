@@ -7,6 +7,7 @@ import {
   SHORT_HELPER_ADDR,
   SWAPROUTER2_ADDR,
   SWAPROUTER_ADDR,
+  CRAB_STRATEGY_ADDR,
 } from "./addresses";
 import { buyOrSellSQTH, createTransactionHistory } from "./util";
 
@@ -18,7 +19,8 @@ export function handleTransfer(event: Transfer): void {
     event.transaction.to == CONTROLLER_ADDR ||
     event.transaction.to == SWAPROUTER_ADDR ||
     event.transaction.to == SWAPROUTER2_ADDR ||
-    event.transaction.to == NFT_MANAGER_ADDR
+    event.transaction.to == NFT_MANAGER_ADDR ||
+    event.transaction.to == CRAB_STRATEGY_ADDR
   ) {
     return;
   }

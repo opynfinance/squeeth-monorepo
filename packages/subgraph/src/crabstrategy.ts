@@ -13,6 +13,7 @@ import {
   ExecuteBuyAuction,
 } from "../generated/CrabStrategy/CrabStrategy";
 import { CrabAuction, CrabStrategyTx } from "../generated/schema";
+import { buyOrSellETH, buyOrSellSQTH } from "./util";
 
 function loadOrCreateTx(id: string): CrabStrategyTx {
   const strategy = CrabStrategyTx.load(id);
@@ -76,6 +77,17 @@ export function handleHedgeOnUniswap(event: HedgeOnUniswap): void {
   strategyTx.isSellingSqueeth = event.params.auctionType;
   strategyTx.owner = event.params.hedger;
   strategyTx.timestamp = event.block.timestamp;
+  if (strategyTx.isSellingSqueeth == true) {
+    buyOrSellSQTH(
+      event.params.hedger.toHex(),
+      event.params.wSqueethHedgeTargetAmount.toBigDecimal()
+    );
+  } else {
+    buyOrSellSQTH(
+      event.params.hedger.toHex(),
+      event.params.wSqueethHedgeTargetAmount.neg().toBigDecimal()
+    );
+  }
   strategyTx.save();
 }
 
@@ -89,6 +101,17 @@ export function handleHedge(event: Hedge): void {
   strategyTx.hedgerPrice = event.params.hedgerPrice;
   strategyTx.owner = event.params.hedger;
   strategyTx.timestamp = event.block.timestamp;
+  if (strategyTx.isSellingSqueeth == true) {
+    buyOrSellSQTH(
+      event.params.hedger.toHex(),
+      event.params.wSqueethHedgeTargetAmount.toBigDecimal()
+    );
+  } else {
+    buyOrSellSQTH(
+      event.params.hedger.toHex(),
+      event.params.wSqueethHedgeTargetAmount.neg().toBigDecimal()
+    );
+  }
   strategyTx.save();
 }
 

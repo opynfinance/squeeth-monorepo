@@ -51,6 +51,13 @@ export const ROPSTEN_NFT_MANAGER_ADDR = Address.fromString(
   "0x8c7c1f786da4dee7d4bb49697a9b0c0c8fb328e0"
 );
 
+export const MAINNET_CRAB_STRATEGY_ADDR = Address.fromString(
+  "0xf205ad80bb86ac92247638914265887a8baa437d"
+);
+export const ROPSTEN_CRAB_STRATEGY_ADDR = Address.fromString(
+  "0xbffBD99cFD9d77c49595dFe8eB531715906ca4Cf"
+);
+
 export const MAINNET_USDC_WETH_POOL =
   "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8".toLowerCase();
 export const ROPSTEN_USDC_WETH_POOL =
@@ -189,6 +196,14 @@ export function getNFTManagerAddr(networkName: string): Address {
   return addr;
 }
 
+export function getCrabStrategyAddr(networkName: string): Address {
+  let addr = MAINNET_CRAB_STRATEGY_ADDR;
+  if (networkName == "ropsten") {
+    addr = ROPSTEN_CRAB_STRATEGY_ADDR;
+  }
+  return addr;
+}
+
 export const SHORT_HELPER_ADDR = getShortHelperAddr(dataSource.network());
 export const OSQTH_WETH_POOL = getoSQTHPoolAddr(dataSource.network());
 export const USDC_WETH_POOL = getUSDCPoolAddr(dataSource.network());
@@ -198,3 +213,4 @@ export const CONTROLLER_ADDR = getControllerAddr(dataSource.network());
 export const SWAPROUTER_ADDR = getSwapRouterAddr(dataSource.network());
 export const SWAPROUTER2_ADDR = getSwapRouter2Addr(dataSource.network());
 export const NFT_MANAGER_ADDR = getNFTManagerAddr(dataSource.network());
+export const CRAB_STRATEGY_ADDR = getCrabStrategyAddr(dataSource.network());
