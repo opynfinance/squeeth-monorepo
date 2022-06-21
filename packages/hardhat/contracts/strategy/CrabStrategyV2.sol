@@ -552,10 +552,15 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     }
 
     /**
-     * @dev get current nonce of the address
-     * @param owner address of signer
-     * @return current the current nonce of the address
-     */
+     * @notice user can increment their own nonce to cancel previous orders
+     * @return new nonce for user
+     */    
+     function incrementNonce() external returns (uint256 current) {
+        Counters.Counter storage nonce = _nonces[msg.sender];
+        nonce.increment();
+        current = nonce.current();
+    }
+
     function nonces(address owner) external view returns (uint256) {
         return _nonces[owner].current();
     }
