@@ -14,12 +14,17 @@ export enum Vaults {
 }
 
 export enum TransactionType {
-  BUY = 'Bought',
-  SELL = 'Sold',
-  MINT_SHORT = 'Minted and sold',
-  BURN_SHORT = 'Bought back and burned',
-  ADD_LIQUIDITY = 'Added Liquidity',
-  REMOVE_LIQUIDITY = 'Removed Liquidity',
+  ADD_LIQUIDITY = 'Add Liquidity',
+  BURN_OSQTH = 'Burn oSQTH',
+  BUY_OSQTH = 'Buy oSQTH',
+  COLLECT_FEE = 'Collect Fee',
+  DEPOSIT_COLLAT = 'Deposit Collateral',
+  MINT_OSQTH = 'Mint oSQTH',
+  RECEIVE_OSQTH = 'Receive oSQTH',
+  REMOVE_LIQUIDITY = 'Remove Liquidity',
+  SELL_OSQTH = 'Sell oSQTH',
+  SEND_OSQTH = 'Send oSQTH',
+  WITHDRAW_COLLAT = 'Withdraw Collateral',
   CRAB_FLASH_DEPOSIT = 'Flash deposit in crab',
   CRAB_FLASH_WITHDRAW = 'Flash withdraw in crab',
 }

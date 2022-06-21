@@ -83,40 +83,49 @@ const History: React.FC = () => {
             </>
           ) : (
             <>
-              <div className={classes.txItemVal}>
-                <Typography
-                  variant="body2"
-                  className={
-                    tx.transactionType === TransactionType.BUY ||
-                    tx.transactionType === TransactionType.BURN_SHORT ||
-                    tx.transactionType === TransactionType.REMOVE_LIQUIDITY
-                      ? classes.green
-                      : classes.red
-                  }
-                >
-                  {tx.squeethAmount.toFixed(8)}&nbsp; oSQTH
-                </Typography>
-                <Typography variant="caption" color="textSecondary">
-                  ${tx.squeethAmount.times(ethPrice).times(ethPrice).div(10000).times(normalizationFactor).toFixed(2)}
-                </Typography>
-              </div>
-              <div className={classes.txItemVal}>
-                <Typography
-                  variant="body2"
-                  className={
-                    tx.transactionType === TransactionType.BUY ||
-                    tx.transactionType === TransactionType.BURN_SHORT ||
-                    tx.transactionType === TransactionType.ADD_LIQUIDITY
-                      ? classes.red
-                      : classes.green
-                  }
-                >
-                  {tx.ethAmount.toFixed(4)}&nbsp; WETH
-                </Typography>
-                <Typography variant="caption" color="textSecondary">
-                  ${getUsdAmt(tx.ethAmount, tx.timestamp).toFixed(2)}
-                </Typography>
-              </div>
+              {!tx.squeethAmount.eq(0) ? (
+                <div className={classes.txItemVal}>
+                  <Typography
+                    variant="body2"
+                    className={
+                      tx.transactionType === TransactionType.BUY_OSQTH ||
+                      tx.transactionType === TransactionType.COLLECT_FEE ||
+                      tx.transactionType === TransactionType.MINT_OSQTH ||
+                      tx.transactionType === TransactionType.RECEIVE_OSQTH ||
+                      tx.transactionType === TransactionType.REMOVE_LIQUIDITY
+                        ? classes.green
+                        : classes.red
+                    }
+                  >
+                    {tx.squeethAmount.toFixed(8)}&nbsp; oSQTH
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    ${tx.squeethAmount.times(ethPrice).times(ethPrice).div(10000).times(normalizationFactor).toFixed(2)}
+                  </Typography>
+                </div>
+              ) : (
+                <div className={classes.txItemVal} />
+              )}
+              {!tx.ethAmount.eq(0) ? (
+                <div className={classes.txItemVal}>
+                  <Typography
+                    variant="body2"
+                    className={
+                      tx.transactionType === TransactionType.BUY_OSQTH ||
+                      tx.transactionType === TransactionType.ADD_LIQUIDITY
+                        ? classes.red
+                        : classes.green
+                    }
+                  >
+                    {tx.ethAmount.toFixed(4)}&nbsp; WETH
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    ${getUsdAmt(tx.ethAmount, tx.timestamp).toFixed(2)}
+                  </Typography>
+                </div>
+              ) : (
+                <div className={classes.txItemVal} />
+              )}
             </>
           )}
 
