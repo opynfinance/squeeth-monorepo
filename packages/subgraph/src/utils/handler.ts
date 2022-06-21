@@ -6,10 +6,6 @@ import {
   loadOrCreatePosition,
 } from "./loadInit";
 
-// buy sqth: amount > 0
-// sell sqth: amount < 0
-// buy sqth: amount > 0
-// sell sqth: amount < 0
 export function handleOSQTHChange(
   userAddr: string,
   amount: BigDecimal,
