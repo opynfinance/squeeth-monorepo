@@ -12,23 +12,22 @@ import {IOracle} from "../interfaces/IOracle.sol";
 import {IWETH9} from "../interfaces/IWETH9.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IController} from "../interfaces/IController.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // contract
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {StrategyBase} from "./base/StrategyBase.sol";
 import {StrategyFlashSwap} from "./base/StrategyFlashSwap.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {EIP712} from "@openzeppelin/contracts/drafts/EIP712.sol";
 
 // lib
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 // StrategyMath licensed under AGPL-3.0-only
 import {StrategyMath} from "./base/StrategyMath.sol";
 import {Power2Base} from "../libs/Power2Base.sol";
-
 import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
 import {ECDSA} from "@openzeppelin/contracts/cryptography/ECDSA.sol";
-import {EIP712} from "@openzeppelin/contracts/drafts/EIP712.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @dev CrabStrategyV2 contract
@@ -55,6 +54,12 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
     /// @dev twap period to use for hedge calculations
     uint32 public hedgingTwapPeriod = 420 seconds;
+
+    /// @dev typehash for signed orders
+    bytes32 private constant _CRAB_BALANCE_TYPEHASH =
+        keccak256(
+            "Order(uint256 bidId,address trader,address traderToken,uint256 traderAmount,address managerToken,uint256 managerAmount,uint256 nonce)"
+        );
 
     /// @dev enum to differentiate between uniswap swap callback function source
     enum FLASH_SOURCE {
@@ -92,6 +97,9 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     /// @dev set to true when redeemShortShutdown has been called
     bool private hasRedeemedInShutdown;
 
+    /// @dev store the current nonce for each address
+    mapping(address => Counters.Counter) private _nonces;
+
     struct FlashDepositData {
         uint256 totalDeposit;
     }
@@ -105,6 +113,19 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 ethProceeds;
         uint256 minWSqueeth;
         uint256 minEth;
+    }
+
+    struct Order {
+        uint256 bidId;
+        address trader;
+        address traderToken;
+        uint256 traderAmount;
+        address managerToken;
+        uint256 managerAmount;
+        uint256 nonce;
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
     }
 
     event Deposit(address indexed depositor, uint256 wSqueethAmount, uint256 lpAmount);
@@ -369,7 +390,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @notice owner can set a threshold, scaled by 1e18 that determines the maximum discount of a clearing sale price to the current uniswap twap price
      * @param _otcPriceTolerance the OTC price tolerance, in percent, scaled by 1e18
      */
-    function setOTCPriceTolerance(uint32 _otcPriceTolerance) external onlyOwner {
+    function setOTCPriceTolerance(uint256 _otcPriceTolerance) external onlyOwner {
         // Tolerance cannot be more than 20%
         require(_otcPriceTolerance <= 2e17, "price tolerance is too high");
 
@@ -519,40 +540,40 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         return ethToWithdraw;
     }
 
-    struct Order {
-        uint256 bidId;
-        address trader;
-        address traderToken;
-        uint256 traderAmount;
-        address managerToken;
-        uint256 managerAmount;
-        uint256 nonce;
-        uint8 v;
-        bytes32 r;
-        bytes32 s;
-    }
-
-    bytes32 private constant _CRAB_BALANCE_TYPEHASH =
-        keccak256(
-            "Order(uint256 bidId,address trader,address traderToken,uint256 traderAmount,address managerToken,uint256 managerAmount,uint256 nonce)"
-        );
-    mapping(address => Counters.Counter) private _nonces;
-
+    /**
+     * @dev increment current nonce of the address
+     * @param owner address of signer
+     * @return current the current nonce of the address
+     */
     function _useNonce(address owner) internal returns (uint256 current) {
         Counters.Counter storage nonce = _nonces[owner];
         current = nonce.current();
         nonce.increment();
     }
 
+    /**
+     * @dev get current nonce of the address
+     * @param owner address of signer
+     * @return current the current nonce of the address
+     */
     function nonces(address owner) external view returns (uint256) {
         return _nonces[owner].current();
     }
 
+    /**
+     * @dev view function to get the domain seperator used in signing
+     */
     // solhint-disable-next-line func-name-mixedcase
     function DOMAIN_SEPARATOR() external view returns (bytes32) {
         return _domainSeparatorV4();
     }
 
+    /**
+     * @dev check the signer and swap tokens in the order
+     * @param managerSellAmount quantity the manager wants to sell
+     * @param managerBuyPrice the price at which the manager is buying
+     * @param _order a signed order to swap tokens
+     */
     function _execOrder(
         uint256 managerSellAmount,
         uint256 managerBuyPrice,
@@ -613,6 +634,12 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         );
     }
 
+    /**
+     * @dev hedge function to reduce delta using an array of signed orders
+     * @param managerSellAmount quantity the manager wants to sell
+     * @param managerBuyPrice the price at which the manager is buying
+     * @param _orders an array of signed order to swap tokens
+     */
     function hedgeOTC(
         uint256 managerSellAmount,
         uint256 managerBuyPrice,
@@ -798,27 +825,5 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      */
     function _calcEthToWithdraw(uint256 _crabRatio, uint256 _strategyCollateralAmount) internal pure returns (uint256) {
         return _strategyCollateralAmount.wmul(_crabRatio);
-    }
-
-    /**
-     * @notice determine target hedge and auction type (selling/buying auction)
-     * @dev target hedge is the amount of WSqueeth the auction needs to sell or buy to be eth delta neutral
-     * @param _wSqueethDelta WSqueeth delta
-     * @param _ethDelta ETH delta
-     * @param _wSqueethEthPrice WSqueeth/ETH price
-     * @param _feeAdjustment the fee adjustment, the amount of ETH owed per wSqueeth minted
-     * @return target hedge in wSqueeth
-     * @return auction type: true if auction is selling WSqueeth, false if buying WSqueeth
-     */
-    function _getTargetHedgeAndAuctionType(
-        uint256 _wSqueethDelta,
-        uint256 _ethDelta,
-        uint256 _wSqueethEthPrice,
-        uint256 _feeAdjustment
-    ) internal pure returns (uint256, bool) {
-        return
-            (_wSqueethDelta > _ethDelta)
-                ? ((_wSqueethDelta.sub(_ethDelta)).wdiv(_wSqueethEthPrice), false)
-                : ((_ethDelta.sub(_wSqueethDelta)).wdiv(_wSqueethEthPrice.add(_feeAdjustment)), true);
     }
 }

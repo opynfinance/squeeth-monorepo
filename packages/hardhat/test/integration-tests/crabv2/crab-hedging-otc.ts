@@ -1185,5 +1185,21 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder, signedOrder1])
             ).to.be.revertedWith("Orders are not arranged properly");
         });
+        it("should allow manager to set thresholds", async ()=> {
+            await crabStrategy.connect(owner).setDeltaHedgeThreshold(123);
+            expect(await crabStrategy.deltaHedgeThreshold()).to.eq(123);
+          
+            await expect(crabStrategy.connect(owner).setHedgingTwapPeriod(120)).to.be.revertedWith('twap period is too short');
+            await crabStrategy.connect(owner).setHedgingTwapPeriod(190);
+            expect(await crabStrategy.hedgingTwapPeriod()).to.eq(190);
+
+            await expect(crabStrategy.connect(owner).setHedgeTimeThreshold(0)).to.be.revertedWith('invalid hedge time threshold');
+            await crabStrategy.connect(owner).setHedgeTimeThreshold(9000);
+            expect(await crabStrategy.hedgeTimeThreshold()).to.eq(9000);
+
+            await expect(crabStrategy.connect(owner).setOTCPriceTolerance(BigNumber.from(10).pow(17).mul(3))).to.be.revertedWith('price tolerance is too high');
+            await crabStrategy.connect(owner).setOTCPriceTolerance(BigNumber.from(10).pow(17));
+            expect((await crabStrategy.otcPriceTolerance()).eq(BigNumber.from(10).pow(17))).to.be.true;
+        })
     });
 });
