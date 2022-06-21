@@ -152,3 +152,58 @@ export function handleOSQTHChange(
 
   position.save();
 }
+
+export function handleETHChange(
+  userAddr: string,
+  amount: BigDecimal,
+  ethPriceInUSD: BigDecimal
+): void {
+  if (amount.equals(ZERO_BD) || userAddr == null) return;
+
+  let position = loadOrCreatePosition(userAddr);
+
+  // Buy
+  if (amount.gt(ZERO_BD)) {
+    let oldBoughtAmount = position.currentETHAmount.plus(
+      position.realizedETHAmount
+    );
+    let oldRealizedETHCost =
+      position.realizedETHUnitCost.times(oldBoughtAmount);
+
+    position.realizedETHUnitCost = oldRealizedETHCost
+      .plus(amount.times(ethPriceInUSD))
+      .div(oldBoughtAmount.plus(amount));
+  }
+
+  // Sell
+  if (amount.lt(ZERO_BD)) {
+    let absAmount = amount.neg();
+    let oldRealizedETHGain = position.realizedETHUnitGain.times(
+      position.realizedETHAmount
+    );
+
+    position.realizedETHAmount = position.realizedETHAmount.plus(absAmount);
+    position.realizedETHUnitGain = oldRealizedETHGain
+      .plus(absAmount.times(ethPriceInUSD))
+      .div(position.realizedETHAmount);
+  }
+
+  // Unrealized PnL calculation
+  let oldUnrealizedETHCost = position.unrealizedETHUnitCost.times(
+    position.currentETHAmount
+  );
+  position.currentETHAmount = position.currentETHAmount.plus(amount);
+  // = 0 none
+  if (
+    position.currentOSQTHAmount.equals(ZERO_BD) &&
+    position.currentETHAmount.equals(ZERO_BD)
+  ) {
+    position = initPosition(userAddr, position);
+  } else if (!position.currentETHAmount.equals(ZERO_BD)) {
+    position.unrealizedETHUnitCost = oldUnrealizedETHCost
+      .plus(amount.times(ethPriceInUSD))
+      .div(position.currentETHAmount);
+  }
+
+  position.save();
+}
