@@ -97,10 +97,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             wSqueethPool.address,
             timelock.address,
             hedgeTimeThreshold,
-            hedgePriceThreshold,
-            auctionTime,
-            minPriceMultiplier,
-            maxPriceMultiplier
+            hedgePriceThreshold
         )) as CrabStrategyV2;
 
         const strategyCap = ethers.utils.parseUnits("1000");

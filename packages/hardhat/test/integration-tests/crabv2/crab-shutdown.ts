@@ -82,7 +82,7 @@ describe("Crab V2 integration test: Shutdown of Squeeth Power Perp contracts", f
 
 
     const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
-    crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, uniswapFactory.address, wSqueethPool.address, timelock.address, hedgeTimeThreshold, hedgePriceThreshold, auctionTime, minPriceMultiplier, maxPriceMultiplier)) as CrabStrategyV2;
+    crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, uniswapFactory.address, wSqueethPool.address, timelock.address, hedgeTimeThreshold, hedgePriceThreshold)) as CrabStrategyV2;
 
     const strategyCap = ethers.utils.parseUnits("1000")
     await crabStrategy.connect(owner).setStrategyCap(strategyCap)

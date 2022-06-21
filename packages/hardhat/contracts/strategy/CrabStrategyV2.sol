@@ -53,6 +53,9 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     // @dev OTC price must be within this distance of the uniswap twap price
     uint256 public otcPriceTolerance = 5e16; // 5%
 
+    // @dev OTC price tolerance cannot exceed 20%
+    uint256 public maxOTCPriceTolerance = 2e17; // 20%
+
     /// @dev twap period to use for hedge calculations
     uint32 public hedgingTwapPeriod = 420 seconds;
 
@@ -84,10 +87,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     uint256 public hedgePriceThreshold;
     /// @dev hedge auction duration (seconds)
     uint256 public auctionTime;
-    /// @dev start auction price multiplier for hedge buy auction and reserve price for hedge sell auction (scaled 1e18)
-    uint256 public minPriceMultiplier;
-    /// @dev start auction price multiplier for hedge sell auction and reserve price for hedge buy auction (scaled 1e18)
-    uint256 public maxPriceMultiplier;
 
     /// @dev timestamp when last hedge executed
     uint256 public timeAtLastHedge;
@@ -106,13 +105,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
     struct FlashWithdrawData {
         uint256 crabAmount;
-    }
-
-    struct FlashHedgeData {
-        uint256 wSqueethAmount;
-        uint256 ethProceeds;
-        uint256 minWSqueeth;
-        uint256 minEth;
     }
 
     struct Order {
@@ -158,9 +150,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @param _ethWSqueethPool eth:wSqueeth uniswap pool address
      * @param _hedgeTimeThreshold hedge time threshold (seconds)
      * @param _hedgePriceThreshold hedge price threshold (0.1*1e18 = 10%)
-     * @param _auctionTime auction duration (seconds)
-     * @param _minPriceMultiplier minimum auction price multiplier (0.9*1e18 = min auction price is 90% of twap)
-     * @param _maxPriceMultiplier maximum auction price multiplier (1.1*1e18 = max auction price is 110% of twap)
      */
     constructor(
         address _wSqueethController,
@@ -170,10 +159,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         address _ethWSqueethPool,
         address _timelock,
         uint256 _hedgeTimeThreshold,
-        uint256 _hedgePriceThreshold,
-        uint256 _auctionTime,
-        uint256 _minPriceMultiplier,
-        uint256 _maxPriceMultiplier
+        uint256 _hedgePriceThreshold
     )
         StrategyBase(_wSqueethController, _weth, "Crab Strategy v2", "Crabv2")
         StrategyFlashSwap(_uniswapFactory)
@@ -184,18 +170,11 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         require(_ethWSqueethPool != address(0), "invalid ETH:WSqueeth address");
         require(_hedgeTimeThreshold > 0, "invalid hedge time threshold");
         require(_hedgePriceThreshold > 0, "invalid hedge price threshold");
-        require(_auctionTime > 0, "invalid auction time");
-        require(_minPriceMultiplier < 1e18, "min price multiplier too high");
-        require(_minPriceMultiplier > 0, "invalid min price multiplier");
-        require(_maxPriceMultiplier > 1e18, "max price multiplier too low");
 
         oracle = _oracle;
         ethWSqueethPool = _ethWSqueethPool;
         hedgeTimeThreshold = _hedgeTimeThreshold;
         hedgePriceThreshold = _hedgePriceThreshold;
-        auctionTime = _auctionTime;
-        minPriceMultiplier = _minPriceMultiplier;
-        maxPriceMultiplier = _maxPriceMultiplier;
         ethQuoteCurrencyPool = IController(_wSqueethController).ethQuoteCurrencyPool();
         quoteCurrency = IController(_wSqueethController).quoteCurrency();
         timelock = _timelock;
@@ -409,7 +388,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      */
     function setOTCPriceTolerance(uint256 _otcPriceTolerance) external onlyOwner {
         // Tolerance cannot be more than 20%
-        require(_otcPriceTolerance <= 2e17, "price tolerance is too high");
+        require(_otcPriceTolerance <= maxOTCPriceTolerance, "price tolerance is too high");
 
         otcPriceTolerance = _otcPriceTolerance;
 
@@ -559,22 +538,22 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
     /**
      * @dev increment current nonce of the address
-     * @param owner address of signer
+     * @param _owner address of signer
      * @return current the current nonce of the address
      */
-    function _useNonce(address owner) internal returns (uint256 current) {
-        Counters.Counter storage nonce = _nonces[owner];
+    function _useNonce(address _owner) internal returns (uint256 current) {
+        Counters.Counter storage nonce = _nonces[_owner];
         current = nonce.current();
         nonce.increment();
     }
 
     /**
      * @dev get current nonce of the address
-     * @param owner address of signer
+     * @param _owner address of signer
      * @return current the current nonce of the address
      */
-    function nonces(address owner) external view returns (uint256) {
-        return _nonces[owner].current();
+    function nonces(address _owner) external view returns (uint256) {
+        return _nonces[_owner].current();
     }
 
     /**
@@ -587,17 +566,17 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
     /**
      * @dev check the signer and swap tokens in the order
-     * @param managerSellAmount quantity the manager wants to sell
-     * @param managerBuyPrice the price at which the manager is buying
+     * @param _managerSellAmount quantity the manager wants to sell
+     * @param _managerBuyPrice the price at which the manager is buying
      * @param _order a signed order to swap tokens
      */
     function _execOrder(
-        uint256 managerSellAmount,
-        uint256 managerBuyPrice,
-        uint256 sellerPrice,
+        uint256 _managerSellAmount,
+        uint256 _managerBuyPrice,
+        uint256 _sellerPrice,
         Order memory _order
     ) internal {
-        require(managerBuyPrice >= sellerPrice, "Manager Buy Price should be atleast Seller Price");
+        require(_managerBuyPrice >= _sellerPrice, "Manager Buy Price should be atleast Seller Price");
         bytes32 structHash = keccak256(
             abi.encode(
                 _CRAB_BALANCE_TYPEHASH,
@@ -616,11 +595,11 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         require(offerSigner == _order.trader, "Invalid offer signature");
 
         //adjust managerAmount and TraderAmount for partial fills
-        if (managerSellAmount < _order.managerAmount) {
-            _order.managerAmount = managerSellAmount;
+        if (_managerSellAmount < _order.managerAmount) {
+            _order.managerAmount = _managerSellAmount;
         }
         //adjust if manager is giving better price
-        _order.traderAmount = _order.managerAmount.mul(1e18).div(managerBuyPrice);
+        _order.traderAmount = _order.managerAmount.mul(1e18).div(_managerBuyPrice);
 
         IERC20(_order.traderToken).transferFrom(_order.trader, address(this), _order.traderAmount);
 
@@ -645,28 +624,28 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
             _order.trader, // market maker
             _order.managerAmount, // token out
             _order.traderAmount, // token in
-            sellerPrice
+            _sellerPrice
         );
     }
 
     /**
      * @dev hedge function to reduce delta using an array of signed orders
-     * @param managerSellAmount quantity the manager wants to sell
-     * @param managerBuyPrice the price at which the manager is buying
+     * @param _managerSellAmount quantity the manager wants to sell
+     * @param _managerBuyPrice the price at which the manager is buying
      * @param _orders an array of signed order to swap tokens
      */
     function hedgeOTC(
-        uint256 managerSellAmount,
-        uint256 managerBuyPrice,
+        uint256 _managerSellAmount,
+        uint256 _managerBuyPrice,
         Order[] memory _orders
     ) external onlyOwner {
-        require(managerBuyPrice > 0, "Manager Price should be greater than 0");
+        require(_managerBuyPrice > 0, "Manager Price should be greater than 0");
         require(_isTimeHedge() || _isPriceHedge(), "Time or Price is not within range");
-        _checkOTCPrice(managerBuyPrice, _orders[0].managerToken);
+        _checkOTCPrice(_managerBuyPrice, _orders[0].managerToken);
 
         timeAtLastHedge = block.timestamp;
 
-        uint256 remainingAmount = managerSellAmount;
+        uint256 remainingAmount = _managerSellAmount;
         uint256 prevPrice = 0;
         uint256 currentPrice = 0;
         bytes memory tradePair;
@@ -685,10 +664,10 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
             prevTradePair = tradePair;
 
             if (remainingAmount > _orders[i].managerAmount) {
-                _execOrder(remainingAmount, managerBuyPrice, currentPrice, _orders[i]);
+                _execOrder(remainingAmount, _managerBuyPrice, currentPrice, _orders[i]);
                 remainingAmount = remainingAmount.sub(_orders[i].managerAmount);
             } else {
-                _execOrder(remainingAmount, managerBuyPrice, currentPrice, _orders[i]);
+                _execOrder(remainingAmount, _managerBuyPrice, currentPrice, _orders[i]);
                 break;
             }
         }
@@ -696,18 +675,18 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
     /**
      * @notice check that the proposed sale price is within a tolerance of the current Uniswap twap
-     * @param price clearing price provided by manager
-     * @param tokenToSell token to be sold
+     * @param _price clearing price provided by manager
+     * @param _tokenToSell token to be sold
      */
-    function _checkOTCPrice(uint256 price, address tokenToSell) internal view {
+    function _checkOTCPrice(uint256 _price, address _tokenToSell) internal view {
         // Get twap
         uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, hedgingTwapPeriod, true);
         // invert price if we are selling wPowerPerp
-        uint256 twapPrice = (tokenToSell == wPowerPerp) ? ONE_ONE.div(wSqueethEthPrice) : wSqueethEthPrice;
+        uint256 twapPrice = (_tokenToSell == wPowerPerp) ? ONE_ONE.div(wSqueethEthPrice) : wSqueethEthPrice;
 
         uint256 priceLower = twapPrice.mul((ONE.sub(otcPriceTolerance))).div(ONE);
         // Check that clearing sale price is at least twap*(1 - otcPriceTolerance%)
-        require(price >= priceLower, "Price too low relative to Uniswap twap.");
+        require(_price >= priceLower, "Price too low relative to Uniswap twap.");
     }
 
     /**

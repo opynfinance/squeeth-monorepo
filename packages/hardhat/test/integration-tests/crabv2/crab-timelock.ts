@@ -110,10 +110,7 @@ describe("Crab v2 Integration test: Timelock", function () {
             wSqueethPool.address,
             timelock.address,
             hedgeTimeThreshold,
-            hedgePriceThreshold,
-            auctionTime,
-            minPriceMultiplier,
-            maxPriceMultiplier
+            hedgePriceThreshold
         )) as CrabStrategyV2;
 
         const strategyCap = ethers.utils.parseUnits("1000");

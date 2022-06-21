@@ -80,10 +80,7 @@ describe("Crab Strategy V2", function () {
         wSqueethEthPool.address,
         timelock.address,
         hedgeTimeTolerance,
-        hedgePriceTolerance,
-        auctionTime,
-        minAuctionSlippage,
-        maxAuctionSlippage)).to.be.revertedWith("invalid weth address");
+        hedgePriceTolerance)).to.be.revertedWith("invalid weth address");
     });
 
     it("Should revert if controller is address 0", async function () {
