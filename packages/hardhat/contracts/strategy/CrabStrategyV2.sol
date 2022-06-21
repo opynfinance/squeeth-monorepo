@@ -720,11 +720,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 twapPrice = (tokenToSell == wPowerPerp) ? ONE_ONE.div(wSqueethEthPrice) : wSqueethEthPrice;
 
         uint256 priceLower = twapPrice.mul((ONE.sub(otcPriceTolerance))).div(ONE);
-        console.log("price is %s", price);
-        console.log("twapPrice is %s", twapPrice);
-        console.log("tokenToSell is %s", tokenToSell);
-        console.log("weth is %s and squeeth is %s", weth, wPowerPerp);
-        console.log("priceLower", priceLower);
         // Check that clearing sale price is at least twap*(1 - otcPriceTolerance%)
         require(price >= priceLower, "Price too low relative to Uniswap twap.");
     }
