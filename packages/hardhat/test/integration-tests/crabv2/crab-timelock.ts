@@ -1,18 +1,16 @@
 import { ethers } from "hardhat"
 import { expect } from "chai";
-import { Contract, BigNumber, providers } from "ethers";
+import { Contract, providers } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import BigNumberJs from 'bignumber.js'
 import { WETH9, MockErc20, Controller, Oracle, WPowerPerp, CrabStrategyV2, ISwapRouter, MockTimelock, Timelock } from "../../../typechain";
 import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addWethDaiLiquidity, addSqueethLiquidity } from '../../setup'
-import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../../utils"
+import { oracleScaleFactor } from "../../utils"
 
 BigNumberJs.set({ EXPONENTIAL_AT: 30 })
 
 describe("Crab v2 Integration test: Timelock", function () {
   const startingEthPrice = 3000
-  const startingEthPrice1e18 = BigNumber.from(startingEthPrice).mul(one) // 3000 * 1e18
-  const scaledStartingSqueethPrice1e18 = startingEthPrice1e18.mul(11).div(10).div(oracleScaleFactor) // 0.3 * 1e18
   const scaledStartingSqueethPrice = startingEthPrice * 1.1 / oracleScaleFactor.toNumber() // 0.3
 
 
@@ -98,71 +96,9 @@ describe("Crab v2 Integration test: Timelock", function () {
   })
 
   this.beforeAll("Seed pool liquidity", async () => {
-    await provider.send("evm_increaseTime", [300])
-    await provider.send("evm_mine", [])
-
-    // add liquidity
-    await addWethDaiLiquidity(
-      startingEthPrice,
-      ethers.utils.parseUnits('100'), // eth amount
-      owner.address,
-      dai,
-      weth,
-      positionManager
-    )
-
-    await provider.send("evm_increaseTime", [600])
-    await provider.send("evm_mine", [])
-
-    await addSqueethLiquidity(
-      scaledStartingSqueethPrice,
-      '1000000',
-      '2000000',
-      owner.address,
-      wSqueeth,
-      weth,
-      positionManager,
-      controller
-    )
-
-    await provider.send("evm_increaseTime", [600])
+    await provider.send("evm_increaseTime", [1500])
     await provider.send("evm_mine", [])
   })
-
-  this.beforeAll("Deposit into strategy", async () => {
-    const ethToDeposit = ethers.utils.parseUnits('20')
-    const msgvalue = ethers.utils.parseUnits('10.2')
-    const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
-
-    await crabStrategy.connect(depositor).flashDeposit(ethToDeposit, { value: msgvalue })
-
-    const currentScaledSquethPrice = (await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 300, false))
-    const feeRate = await controller.feeRate()
-    const ethFeePerWSqueeth = currentScaledSquethPrice.mul(feeRate).div(10000)
-    const squeethDelta = scaledStartingSqueethPrice1e18.mul(2);
-    const debtToMint = wdiv(ethToDeposit, (squeethDelta.add(ethFeePerWSqueeth)));
-    const expectedEthDeposit = ethToDeposit.sub(debtToMint.mul(ethFeePerWSqueeth).div(one))
-
-    const totalSupply = (await crabStrategy.totalSupply())
-    const depositorCrab = (await crabStrategy.balanceOf(depositor.address))
-    const strategyVault = await controller.vaults(await crabStrategy.vaultId());
-    const debtAmount = strategyVault.shortAmount
-    const depositorSqueethBalance = await wSqueeth.balanceOf(depositor.address)
-    const strategyContractSqueeth = await wSqueeth.balanceOf(crabStrategy.address)
-    const lastHedgeTime = await crabStrategy.timeAtLastHedge()
-    const currentBlockNumber = await provider.getBlockNumber()
-    const currentBlock = await provider.getBlock(currentBlockNumber)
-    const timeStamp = currentBlock.timestamp
-    const collateralAmount = await strategyVault.collateralAmount
-
-    expect(isSimilar(totalSupply.toString(), (expectedEthDeposit).toString())).to.be.true
-    expect(isSimilar(depositorCrab.toString(), expectedEthDeposit.toString())).to.be.true
-    expect(isSimilar(debtAmount.toString(), debtToMint.toString())).to.be.true
-    expect(depositorSqueethBalance.eq(depositorSqueethBalanceBefore)).to.be.true
-    expect(strategyContractSqueeth.eq(BigNumber.from(0))).to.be.true
-    expect(lastHedgeTime.eq(timeStamp)).to.be.true
-  })
-
   before("Deposit into strategy", async () => {
     await crabStrategy.connect(depositor3).deposit({ value: ethers.utils.parseUnits('1') })
   })
