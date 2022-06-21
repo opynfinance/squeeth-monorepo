@@ -11,6 +11,7 @@ import {
   positionTypeAtom,
 } from '../state/positions/atoms'
 import { useAtom, useAtomValue } from 'jotai'
+import BigNumber from 'bignumber.js'
 
 export default function usePositionNPnL() {
   const { ethPrice, oSqthPrice, loading: isCurrentPriceLoading } = useCurrentPrices()
@@ -30,7 +31,7 @@ export default function usePositionNPnL() {
       unrealizedPnLInPerct,
       realizedPnL,
       realizedPnLInPerct,
-    } = calculatePnL(positions, oSqthPrice, ethPrice)
+    } = calculatePnL(accShortAmount, positions, oSqthPrice, ethPrice)
     setPosition({
       currentPositionValue,
       currentETHAmount,
@@ -40,28 +41,7 @@ export default function usePositionNPnL() {
       realizedPnL,
       realizedPnLInPerct,
     })
-  }, [positions, oSqthPrice, ethPrice, setPosition])
-
-  useAppEffect(() => {
-    const {
-      currentPositionValue: lpedPositionValue,
-      currentOSQTHAmount: lpedoSQTHAmount,
-      currentETHAmount: lpedETHAmount,
-      unrealizedPnL: lpUnrealizedPnL,
-      unrealizedPnLInPerct: lpUnrealizedPnLInPerct,
-      realizedPnL: lpRealizedPnL,
-      realizedPnLInPerct: lpRealizedPnLInPerct,
-    } = calculatePnL(lpPositions, oSqthPrice, ethPrice)
-    setLPPosition({
-      lpedPositionValue,
-      lpedETHAmount,
-      lpedoSQTHAmount,
-      lpUnrealizedPnL,
-      lpUnrealizedPnLInPerct,
-      lpRealizedPnL,
-      lpRealizedPnLInPerct,
-    })
-  }, [lpPositions, oSqthPrice, ethPrice, setLPPosition])
+  }, [accShortAmount, positions, oSqthPrice, ethPrice, setPosition])
 
   useAppEffect(() => {
     if (position.currentOSQTHAmount.gt(accShortAmount)) {
@@ -72,6 +52,27 @@ export default function usePositionNPnL() {
       setPositionType(PositionType.NONE)
     }
   }, [position?.currentOSQTHAmount, accShortAmount, setPositionType])
+
+  useAppEffect(() => {
+    const {
+      currentPositionValue: lpedPositionValue,
+      currentOSQTHAmount: lpedoSQTHAmount,
+      currentETHAmount: lpedETHAmount,
+      unrealizedPnL: lpUnrealizedPnL,
+      unrealizedPnLInPerct: lpUnrealizedPnLInPerct,
+      realizedPnL: lpRealizedPnL,
+      realizedPnLInPerct: lpRealizedPnLInPerct,
+    } = calculatePnL(new BigNumber(0), lpPositions, oSqthPrice, ethPrice)
+    setLPPosition({
+      lpedPositionValue,
+      lpedETHAmount,
+      lpedoSQTHAmount,
+      lpUnrealizedPnL,
+      lpUnrealizedPnLInPerct,
+      lpRealizedPnL,
+      lpRealizedPnLInPerct,
+    })
+  }, [lpPositions, oSqthPrice, ethPrice, setLPPosition])
 
   return {
     currentPositionValue: position?.currentPositionValue,

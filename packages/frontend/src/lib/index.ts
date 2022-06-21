@@ -4,6 +4,7 @@ import { OSQUEETH_DECIMALS, WETH_DECIMALS } from '@constants/index'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 
 export function calculatePnL(
+  accShortAmount: BigNumber,
   positions: accounts_accounts_positions | accounts_accounts_lppositions,
   oSqthPrice: BigNumber,
   ethPrice: BigNumber,
@@ -23,7 +24,12 @@ export function calculatePnL(
   const unrealizedCost = unrealizedOSQTHUnitCost
     .times(currentOSQTHAmount)
     .plus(unrealizedETHUnitCost.times(currentETHAmount))
-  const unrealizedPnL = currentPositionValue.minus(unrealizedCost)
+
+  // long: close - open, short: open - close
+  const unrealizedPnL = currentOSQTHAmount.lt(accShortAmount)
+    ? currentPositionValue.minus(unrealizedCost).negated()
+    : currentPositionValue.minus(unrealizedCost)
+
   const unrealizedPnLInPerct = safeDiv(unrealizedPnL, unrealizedCost)
 
   const realizedGain = realizedETHAmount
@@ -32,7 +38,11 @@ export function calculatePnL(
   const realizedCost = realizedETHAmount
     .times(realizedETHUnitCost)
     .plus(realizedOSQTHAmount.times(realizedOSQTHUnitCost))
-  const realizedPnL = realizedGain.minus(realizedCost)
+
+  // long: close - open, short: open - close
+  const realizedPnL = currentOSQTHAmount.lt(accShortAmount)
+    ? realizedGain.minus(realizedCost).negated()
+    : realizedGain.minus(realizedCost)
   const realizedPnLInPerct = safeDiv(realizedPnL, realizedCost)
 
   return {
