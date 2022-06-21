@@ -81,10 +81,6 @@ describe("Crab V2 integration test: flash deposit - deposit - withdraw", functio
 
     const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
     crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, uniswapFactory.address, wSqueethPool.address, timelock.address, hedgeTimeThreshold, hedgePriceThreshold, auctionTime, minPriceMultiplier, maxPriceMultiplier)) as CrabStrategyV2;
-<<<<<<< HEAD
-=======
-
->>>>>>> 95d0cfb4 (Add integration tests)
   })
 
   this.beforeAll("Seed pool liquidity", async () => {

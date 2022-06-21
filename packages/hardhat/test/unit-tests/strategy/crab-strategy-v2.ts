@@ -261,10 +261,6 @@ describe("Crab Strategy V2", function () {
         minAuctionSlippage,
         maxAuctionSlippage)).to.be.revertedWith("invalid timelock address");
     });
-<<<<<<< HEAD
-=======
-
->>>>>>> 7c9458fc (Add timelock)
 
     it("Deployment", async function () {
       const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
