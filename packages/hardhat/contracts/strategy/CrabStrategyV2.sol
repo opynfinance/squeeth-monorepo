@@ -630,12 +630,10 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         require(offerSigner == _order.trader, "Invalid offer signature");
 
         //adjust managerAmount and TraderAmount for partial fills
-        // TODO test this a lot
         if (managerSellAmount < _order.managerAmount) {
             _order.managerAmount = managerSellAmount;
         }
         //adjust if manager is giving better price
-        // TODO test this a lot
         _order.traderAmount = _order.managerAmount.mul(1e18).div(managerBuyPrice);
 
         IERC20(_order.traderToken).transferFrom(_order.trader, address(this), _order.traderAmount);
@@ -676,10 +674,9 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 managerBuyPrice,
         Order[] memory _orders
     ) external onlyOwner {
-        require(managerBuyPrice > 0, "Manager Price Price should be greater than 0");
+        require(managerBuyPrice > 0, "Manager Price should be greater than 0");
         require(_isTimeHedge() || _isPriceHedge(), "Time or Price is not within range");
         _checkOTCPrice(managerBuyPrice, _orders[0].managerToken);
-        // TODO add check that all orders have same managerToken/traderToken
 
         timeAtLastHedge = block.timestamp;
 
