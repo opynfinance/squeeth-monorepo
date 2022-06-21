@@ -25,11 +25,11 @@ contract StrategySwap {
     /// using the DAI/WETH9 0.3% pool by calling `exactInputSingle` in the swap router.
     /// @dev The calling address must approve this contract to spend at least `amountIn` worth of its DAI for this function to succeed.
     /// @return amountOut The amount of WETH9 received.
-    function _swapExactInputSingle(address _tokenIn, address _tokenOut, uint256 _amountIn, uint256 _minAmountOut, uint24 _fee) internal returns (uint256 amountOut) {
+    function _swapExactInputSingle(address _tokenIn, address _tokenOut, address _from, address _to, uint256 _amountIn, uint256 _minAmountOut, uint24 _fee) internal returns (uint256 amountOut) {
         // msg.sender must approve this contract
 
         // Transfer the specified amount of DAI to this contract.
-       	TransferHelper.safeTransferFrom(_tokenIn, msg.sender, address(this), _amountIn);
+       	TransferHelper.safeTransferFrom(_tokenIn, _from, address(this), _amountIn);
 
 		//IERC20(_tokenIn).transferFrom(msg.sender, address(this), _amountIn);
         // Approve the router to spend DAI.
@@ -42,7 +42,7 @@ contract StrategySwap {
                 tokenIn: _tokenIn,
                 tokenOut: _tokenOut,
                 fee: _fee,
-                recipient: address(this),
+                recipient: _to,
                 deadline: block.timestamp,
                 amountIn: _amountIn,
                 amountOutMinimum: _minAmountOut,

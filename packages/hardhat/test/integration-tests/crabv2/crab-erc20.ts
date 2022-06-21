@@ -179,4 +179,37 @@ describe("Crab V2 integration test: ERC20 deposit and withdrawals", function () 
       expect(usdcBalanceBefore.sub(usdcAmount)).to.be.equal(usdcBalanceAfter)
     })
   })
+
+  describe("Withdraw USDC from strategy", async () => {
+    const usdcAmount = startingEthPrice1e18
+    const ethToDeposit = ethers.utils.parseUnits('1.5')
+    let crabBalance = BigNumber.from(0)
+
+    beforeEach("Deposit into strategy", async () => {
+      await dai.mint(depositor2.address, usdcAmount.toString())
+      await dai.connect(depositor2).approve(crabStrategy.address, usdcAmount.toString())
+      await crabStrategy.connect(depositor2).flashDepositERC20(ethToDeposit, usdcAmount, 0, 3000, dai.address)
+      crabBalance = await crabStrategy.balanceOf(depositor2.address)
+    })
+
+    afterEach("Clean up deposit", async () => {
+      const _crb = await crabStrategy.balanceOf(depositor2.address)
+      if (_crb.gt(0)) {
+        await crabStrategy.connect(depositor2).flashWithdraw(_crb, ethToDeposit)
+      }
+    })
+
+    it("Should fail if it minimum USDC out is not swapped in ERC20 transfer", async () => {
+      await expect(crabStrategy.connect(depositor2).flashWithdrawERC20(crabBalance, ethToDeposit, 3000, dai.address, usdcAmount.mul(2))).to.be.revertedWith("Too little received")
+    })
+
+    it("Should deposit USDC into strategy", async () => {
+      const usdcBalanceBefore = await dai.balanceOf(depositor2.address)
+
+      const minUsdToGet = usdcAmount.div(2)
+      await expect(crabStrategy.connect(depositor2).flashWithdrawERC20(crabBalance, ethToDeposit.mul(2), 3000, dai.address, minUsdToGet)).to.emit(crabStrategy, "FlashWithdrawERC20Callback")
+      const usdcBalanceAfter = await dai.balanceOf(depositor2.address)
+      expect(usdcBalanceAfter.gte(usdcBalanceBefore.add(minUsdToGet))).to.be.true
+    })
+  })
 })
