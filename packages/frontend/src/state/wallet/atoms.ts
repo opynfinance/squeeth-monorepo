@@ -4,7 +4,7 @@ import { API as NotifyAPI, TransactionData } from 'bnc-notify'
 import { API } from 'bnc-onboard/dist/src/interfaces'
 
 import { Networks } from '../../types'
-import { atomWithReset, atomWithStorage } from 'jotai/utils'
+import { atomWithReset } from 'jotai/utils'
 import { BIG_ZERO } from '../../constants'
 
 const useAlchemy = process.env.NEXT_PUBLIC_USE_ALCHEMY
@@ -31,7 +31,7 @@ export const transactionLoadingAtom = atom((get) => {
 })
 export const cancelTransactionAtom = atomWithReset<boolean>(false)
 export const addressAtom = atom<string | null>(null)
-export const networkIdAtom = atomWithStorage('networkId', Networks.MAINNET)
+export const networkIdAtom = atom(Networks.MAINNET)
 
 const defaultWeb3Atom = atom<any | null>(null)
 
