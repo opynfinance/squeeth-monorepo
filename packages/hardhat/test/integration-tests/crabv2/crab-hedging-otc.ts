@@ -4,7 +4,7 @@ import { ethers, network } from "hardhat";
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import { BigNumber, Contract, providers } from "ethers";
-import { Controller, CrabStrategyV2, MockErc20, MockTimelock, Oracle, WETH9, WPowerPerp } from "../../../typechain";
+import { Controller, CrabStrategyV2, MockErc20, Timelock, Oracle, WETH9, WPowerPerp } from "../../../typechain";
 import {
     addSqueethLiquidity,
     addWethDaiLiquidity,
@@ -47,7 +47,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
     let wSqueeth: WPowerPerp;
     let crabStrategy: CrabStrategyV2;
     let ethDaiPool: Contract;
-    let timelock: MockTimelock;
+    let timelock: Timelock;
 
     this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async () => {
         const accounts = await ethers.getSigners();
@@ -85,8 +85,8 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
         wSqueethPool = squeethDeployments.wsqueethEthPool;
         ethDaiPool = squeethDeployments.ethDaiPool;
 
-        const TimelockContract = await ethers.getContractFactory("MockTimelock");
-        timelock = (await TimelockContract.deploy(owner.address, 3 * 24 * 60 * 60)) as MockTimelock;
+        const TimelockContract = await ethers.getContractFactory("Timelock");
+        timelock = (await TimelockContract.deploy(owner.address, 3 * 24 * 60 * 60)) as Timelock;
 
         const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
         crabStrategy = (await CrabStrategyContract.deploy(

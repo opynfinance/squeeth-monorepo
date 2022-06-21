@@ -10,16 +10,12 @@ import {
     Oracle,
     WPowerPerp,
     CrabStrategyV2,
-    ISwapRouter,
-    MockTimelock,
     Timelock,
 } from "../../../typechain";
 import {
     deployUniswapV3,
     deploySqueethCoreContracts,
     deployWETHAndDai,
-    addWethDaiLiquidity,
-    addSqueethLiquidity,
 } from "../../setup";
 import { oracleScaleFactor } from "../../utils";
 
@@ -31,9 +27,6 @@ describe("Crab v2 Integration test: Timelock", function () {
 
     const hedgeTimeThreshold = 86400; // 24h
     const hedgePriceThreshold = ethers.utils.parseUnits("0.01");
-    const auctionTime = 3600;
-    const minPriceMultiplier = ethers.utils.parseUnits("0.95");
-    const maxPriceMultiplier = ethers.utils.parseUnits("1.05");
     const abi = new ethers.utils.AbiCoder();
     const signature = "transferVault(address)";
     const twoDays = 2 * 24 * 60 * 60;
