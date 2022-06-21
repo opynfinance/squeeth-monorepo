@@ -93,10 +93,7 @@ describe("Crab Strategy V2", function () {
         wSqueethEthPool.address,
         timelock.address,
         hedgeTimeTolerance,
-        hedgePriceTolerance,
-        auctionTime,
-        minAuctionSlippage,
-        maxAuctionSlippage)).to.be.revertedWith("invalid controller address");
+        hedgePriceTolerance)).to.be.revertedWith("invalid controller address");
     });
 
     it("Should revert if oracle is address 0", async function () {
@@ -109,10 +106,7 @@ describe("Crab Strategy V2", function () {
         wSqueethEthPool.address,
         timelock.address,
         hedgeTimeTolerance,
-        hedgePriceTolerance,
-        auctionTime,
-        minAuctionSlippage,
-        maxAuctionSlippage)).to.be.revertedWith("invalid oracle address");
+        hedgePriceTolerance)).to.be.revertedWith("invalid oracle address");
     });
 
     it("Should revert if uniswap factory is address 0", async function () {
@@ -125,9 +119,7 @@ describe("Crab Strategy V2", function () {
         wSqueethEthPool.address,
         timelock.address,
         hedgeTimeTolerance,
-        hedgePriceTolerance,
-        auctionTime, minAuctionSlippage,
-        maxAuctionSlippage)).to.be.revertedWith("invalid factory address");
+        hedgePriceTolerance)).to.be.revertedWith("invalid factory address");
     });
 
     it("Should revert if wSqueethEth pool is address 0", async function () {
@@ -140,10 +132,7 @@ describe("Crab Strategy V2", function () {
         ethers.constants.AddressZero,
         timelock.address,
         hedgeTimeTolerance,
-        hedgePriceTolerance,
-        auctionTime,
-        minAuctionSlippage,
-        maxAuctionSlippage)).to.be.revertedWith("invalid ETH:WSqueeth address");
+        hedgePriceTolerance)).to.be.revertedWith("invalid ETH:WSqueeth address");
     });
 
     it("Should revert if hedge time tolerrance is 0", async function () {
@@ -156,10 +145,7 @@ describe("Crab Strategy V2", function () {
         wSqueethEthPool.address,
         timelock.address,
         0,
-        hedgePriceTolerance,
-        auctionTime,
-        minAuctionSlippage,
-        maxAuctionSlippage)).to.be.revertedWith("invalid hedge time threshold");
+        hedgePriceTolerance)).to.be.revertedWith("invalid hedge time threshold");
     });
 
     it("Should revert if hedge price tolerance is 0", async function () {
@@ -172,74 +158,7 @@ describe("Crab Strategy V2", function () {
         wSqueethEthPool.address,
         timelock.address,
         hedgeTimeTolerance,
-        0,
-        auctionTime,
-        minAuctionSlippage,
-        maxAuctionSlippage)).to.be.revertedWith("invalid hedge price threshold");
-    });
-
-    it("Should revert if invalid auction time is 0", async function () {
-      const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
-      await expect(CrabStrategyContract.deploy(
-        controller.address,
-        oracle.address,
-        weth.address,
-        random.address,
-        wSqueethEthPool.address,
-        timelock.address,
-        hedgeTimeTolerance,
-        hedgePriceTolerance,
-        0,
-        minAuctionSlippage,
-        maxAuctionSlippage)).to.be.revertedWith("invalid auction time");
-    });
-
-    it("Should revert if min auction slippage > 1e18 ", async function () {
-      const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
-      await expect(CrabStrategyContract.deploy(
-        controller.address,
-        oracle.address,
-        weth.address,
-        random.address,
-        wSqueethEthPool.address,
-        timelock.address,
-        hedgeTimeTolerance,
-        hedgePriceTolerance,
-        auctionTime,
-        ethers.utils.parseUnits('1.01'),
-        maxAuctionSlippage)).to.be.revertedWith("min price multiplier too high");
-    });
-
-    it("Should revert if min price multiplier is 0", async function () {
-      const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
-      await expect(CrabStrategyContract.deploy(
-        controller.address,
-        oracle.address,
-        weth.address,
-        random.address,
-        wSqueethEthPool.address,
-        timelock.address,
-        hedgeTimeTolerance,
-        hedgePriceTolerance,
-        auctionTime,
-        0,
-        maxAuctionSlippage)).to.be.revertedWith("invalid min price multiplier");
-    });
-
-    it("Should revert if max price multplier < 1e18", async function () {
-      const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
-      await expect(CrabStrategyContract.deploy(
-        controller.address,
-        oracle.address,
-        weth.address,
-        random.address,
-        wSqueethEthPool.address,
-        timelock.address,
-        hedgeTimeTolerance,
-        hedgePriceTolerance,
-        auctionTime,
-        minAuctionSlippage,
-        ethers.utils.parseUnits('0.99'))).to.be.revertedWith("max price multiplier too low");
+        0)).to.be.revertedWith("invalid hedge price threshold");
     });
 
     it("Should revert if timelock address is 0", async function () {
@@ -252,15 +171,12 @@ describe("Crab Strategy V2", function () {
         wSqueethEthPool.address,
         ethers.constants.AddressZero,
         hedgeTimeTolerance,
-        hedgePriceTolerance,
-        auctionTime,
-        minAuctionSlippage,
-        maxAuctionSlippage)).to.be.revertedWith("invalid timelock address");
+        hedgePriceTolerance)).to.be.revertedWith("invalid timelock address");
     });
 
     it("Deployment", async function () {
       const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
-      crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, random.address, wSqueethEthPool.address, timelock.address, hedgeTimeTolerance, hedgePriceTolerance, auctionTime, minAuctionSlippage, maxAuctionSlippage)) as CrabStrategyV2;
+      crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, random.address, wSqueethEthPool.address, timelock.address, hedgeTimeTolerance, hedgePriceTolerance)) as CrabStrategyV2;
     });
   });
 
@@ -372,20 +288,6 @@ describe("Crab Strategy V2", function () {
       await crabStrategy.connect(owner).setHedgePriceThreshold(hedgePriceTolerance)
       const hedgePriceThresholdInContract = await crabStrategy.hedgePriceThreshold()
       expect(hedgePriceThresholdInContract.eq(hedgePriceTolerance)).to.be.true
-    })
-
-    it('should revert if non owner tries to change the delta hedge threshold', async () => {
-      await expect(crabStrategy.connect(random).setDeltaHedgeThreshold(newDeltaHedgeThreshold)).to.be.revertedWith("Ownable: caller is not the owner")
-    })
-
-    it('should allow owner to change the delta hedge threshold and then change it back', async () => {
-      const deltaHedgeThresholdBefore = await crabStrategy.deltaHedgeThreshold()
-      await crabStrategy.connect(owner).setDeltaHedgeThreshold(newDeltaHedgeThreshold)
-      const newDeltaHedgeThresholdInContract = await crabStrategy.deltaHedgeThreshold()
-      expect(newDeltaHedgeThresholdInContract.eq(newDeltaHedgeThreshold)).to.be.true
-      await crabStrategy.connect(owner).setDeltaHedgeThreshold(deltaHedgeThresholdBefore)
-      const newDeltaHedgeThresholdInContractRevert = await crabStrategy.deltaHedgeThreshold()
-      expect(newDeltaHedgeThresholdInContractRevert.eq(deltaHedgeThresholdBefore)).to.be.true
     })
 
     it('should revert if non owner tries to change the delta hedge threshold', async () => {
