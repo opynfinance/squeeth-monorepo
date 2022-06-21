@@ -1039,9 +1039,6 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             ).to.be.revertedWith("Orders are not arranged properly");
         });
         it("should allow manager to set thresholds", async () => {
-            await crabStrategy.connect(owner).setDeltaHedgeThreshold(123);
-            expect(await crabStrategy.deltaHedgeThreshold()).to.eq(123);
-
             await expect(crabStrategy.connect(owner).setHedgingTwapPeriod(120)).to.be.revertedWith(
                 "twap period is too short"
             );

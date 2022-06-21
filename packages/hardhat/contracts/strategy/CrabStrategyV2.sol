@@ -78,8 +78,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     address public immutable quoteCurrency;
     address public immutable timelock;
 
-    /// @dev strategy will only allow hedging if collateral to trade is at least a set percentage of the total strategy collateral
-    uint256 public deltaHedgeThreshold = 1e15;
     /// @dev time difference to trigger a hedge (seconds)
     uint256 public hedgeTimeThreshold;
     /// @dev price movement to trigger a hedge (0.1*1e18 = 10%)
@@ -139,7 +137,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     event FlashWithdrawCallback(address indexed withdrawer, uint256 flashswapDebt, uint256 excess);
     event HedgeOTC(address trader, uint256 managerAmount, uint256 traderAmount, uint256 sellerPrice);
     event SetStrategyCap(uint256 newCapAmount);
-    event SetDeltaHedgeThreshold(uint256 newDeltaHedgeThreshold);
     event SetHedgingTwapPeriod(uint32 newHedgingTwapPeriod);
     event SetHedgeTimeThreshold(uint256 newHedgeTimeThreshold);
     event SetHedgePriceThreshold(uint256 newHedgePriceThreshold);
@@ -368,17 +365,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      */
     function getWsqueethFromCrabAmount(uint256 _crabAmount) external view returns (uint256) {
         return _getDebtFromStrategyAmount(_crabAmount);
-    }
-
-    /**
-     * @notice owner can set the delta hedge threshold as a percent scaled by 1e18 of ETH collateral
-     * @dev the strategy will not allow a hedge if the trade size is below this threshold
-     * @param _deltaHedgeThreshold minimum hedge size in a percent of ETH collateral
-     */
-    function setDeltaHedgeThreshold(uint256 _deltaHedgeThreshold) external onlyOwner {
-        deltaHedgeThreshold = _deltaHedgeThreshold;
-
-        emit SetDeltaHedgeThreshold(_deltaHedgeThreshold);
     }
 
     /**
