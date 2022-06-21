@@ -107,50 +107,50 @@ describe("handleOSQTHChange", () => {
     assert.fieldEquals("Position", position.id, "realizedOSQTHAmount", "0");
   });
 
-  // test("opens short (5 sqth, sqthPrice: $10)", () => {
-  //   let position = loadOrCreatePosition(userAddr);
+  test("opens short (5 sqth, sqthPrice: $10)", () => {
+    let position = loadOrCreatePosition(userAddr);
 
-  //   handleOSQTHChange(
-  //     userAddr,
-  //     BigDecimal.fromString("-5"),
-  //     BigDecimal.fromString("10")
-  //   );
+    handleOSQTHChange(
+      userAddr,
+      BigDecimal.fromString("-5"),
+      BigDecimal.fromString("10")
+    );
 
-  //   assert.fieldEquals("Position", position.id, "currentOSQTHAmount", "-5");
-  //   assert.fieldEquals(
-  //     "Position",
-  //     position.id,
-  //     "unrealizedOSQTHUnitCost",
-  //     "10"
-  //   );
-  //   assert.fieldEquals("Position", position.id, "realizedOSQTHUnitCost", "-10");
-  // });
+    assert.fieldEquals("Position", position.id, "currentOSQTHAmount", "-5");
+    assert.fieldEquals(
+      "Position",
+      position.id,
+      "unrealizedOSQTHUnitCost",
+      "10"
+    );
+    assert.fieldEquals("Position", position.id, "realizedOSQTHUnitCost", "-10");
+  });
 
-  // test("opens short (5 sqth, sqthPrice: $10) and partially close short (3 sqth, $8)", () => {
-  //   let position = loadOrCreatePosition(userAddr);
+  test("opens short (5 sqth, sqthPrice: $10) and partially close short (3 sqth, $8)", () => {
+    let position = loadOrCreatePosition(userAddr);
 
-  //   handleOSQTHChange(
-  //     userAddr,
-  //     BigDecimal.fromString("-5"),
-  //     BigDecimal.fromString("10")
-  //   );
+    handleOSQTHChange(
+      userAddr,
+      BigDecimal.fromString("-5"),
+      BigDecimal.fromString("10")
+    );
 
-  //   handleOSQTHChange(
-  //     userAddr,
-  //     BigDecimal.fromString("3"),
-  //     BigDecimal.fromString("8")
-  //   );
+    handleOSQTHChange(
+      userAddr,
+      BigDecimal.fromString("3"),
+      BigDecimal.fromString("8")
+    );
 
-  //   assert.fieldEquals("Position", position.id, "currentOSQTHAmount", "-2");
-  //   assert.fieldEquals(
-  //     "Position",
-  //     position.id,
-  //     "unrealizedOSQTHUnitCost",
-  //     "13"
-  //   ); // -26/-2
-  //   assert.fieldEquals("Position", position.id, "realizedOSQTHUnitGain", "-8");
-  //   assert.fieldEquals("Position", position.id, "realizedOSQTHAmount", "3");
-  // });
+    assert.fieldEquals("Position", position.id, "currentOSQTHAmount", "-2");
+    assert.fieldEquals(
+      "Position",
+      position.id,
+      "unrealizedOSQTHUnitCost",
+      "13"
+    ); // -26/-2
+    assert.fieldEquals("Position", position.id, "realizedOSQTHUnitGain", "-8");
+    assert.fieldEquals("Position", position.id, "realizedOSQTHAmount", "3");
+  });
 });
 
 describe("handleETHChange", () => {
