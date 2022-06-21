@@ -76,6 +76,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     address public immutable oracle;
     address public immutable ethQuoteCurrencyPool;
     address public immutable quoteCurrency;
+    address public immutable timelock;
 
     /// @dev strategy will only allow hedging if collateral to trade is at least a set percentage of the total strategy collateral
     uint256 public deltaHedgeThreshold = 1e15;
