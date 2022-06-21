@@ -13,6 +13,7 @@ import {IWETH9} from "../interfaces/IWETH9.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IController} from "../interfaces/IController.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IShortPowerPerp} from "../interfaces/IShortPowerPerp.sol";
 
 // contract
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -75,6 +76,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     address public immutable oracle;
     address public immutable ethQuoteCurrencyPool;
     address public immutable quoteCurrency;
+    address public immutable timelock;
 
     /// @dev strategy will only allow hedging if collateral to trade is at least a set percentage of the total strategy collateral
     uint256 public deltaHedgeThreshold = 1e15;
@@ -142,6 +144,12 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     event SetHedgeTimeThreshold(uint256 newHedgeTimeThreshold);
     event SetHedgePriceThreshold(uint256 newHedgePriceThreshold);
     event SetOTCPriceTolerance(uint256 otcPriceTolerance);
+    event VaultTransferred(address indexed newStrategy, uint256 vaultId);
+
+    modifier onlyTimelock() {
+        require(msg.sender == timelock, "Caller is not timelock");
+        _;
+    }
 
     /**
      * @notice strategy constructor
@@ -163,6 +171,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         address _weth,
         address _uniswapFactory,
         address _ethWSqueethPool,
+        address _timelock,
         uint256 _hedgeTimeThreshold,
         uint256 _hedgePriceThreshold,
         uint256 _auctionTime,
@@ -174,6 +183,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         EIP712("CrabOTC", "2")
     {
         require(_oracle != address(0), "invalid oracle address");
+        require(_timelock != address(0), "invalid timelock address");
         require(_ethWSqueethPool != address(0), "invalid ETH:WSqueeth address");
         require(_hedgeTimeThreshold > 0, "invalid hedge time threshold");
         require(_hedgePriceThreshold > 0, "invalid hedge price threshold");
@@ -191,6 +201,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         maxPriceMultiplier = _maxPriceMultiplier;
         ethQuoteCurrencyPool = IController(_wSqueethController).ethQuoteCurrencyPool();
         quoteCurrency = IController(_wSqueethController).quoteCurrency();
+        timelock = _timelock;
     }
 
     /**
@@ -201,14 +212,34 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     }
 
     /**
+     * @notice Tranfer vault NFT to new contract
+     * @dev strategy cap is set to 0 to avoid future deposits.
+     */
+    function transferVault(address _newStrategy) external onlyTimelock {
+        IShortPowerPerp(powerTokenController.shortPowerPerp()).safeTransferFrom(address(this), _newStrategy, vaultId);
+        _setStrategyCap(0);
+
+        emit VaultTransferred(_newStrategy, vaultId);
+    }
+
+    /**
      * @notice owner can set the strategy cap in ETH collateral terms
      * @dev deposits are rejected if it would put the strategy above the cap amount
      * @dev strategy collateral can be above the cap amount due to hedging activities
      * @param _capAmount the maximum strategy collateral in ETH, checked on deposits
      */
     function setStrategyCap(uint256 _capAmount) external onlyOwner {
-        strategyCap = _capAmount;
+        _setStrategyCap(_capAmount);
+    }
 
+    /**
+     * @notice set strategy cap amount
+     * @dev deposits are rejected if it would put the strategy above the cap amount
+     * @dev strategy collateral can be above the cap amount due to hedging activities
+     * @param _capAmount the maximum strategy collateral in ETH, checked on deposits
+     */
+    function _setStrategyCap(uint256 _capAmount) internal {
+        strategyCap = _capAmount;
         emit SetStrategyCap(_capAmount);
     }
 
