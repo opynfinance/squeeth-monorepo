@@ -163,7 +163,7 @@ import {StrategyMath} from "./base/StrategyMath.sol";
         
         sharesDeposited[msg.sender] = amountV1Deposited - _amountToWithdraw;
         uint256 crabV2TotalShares = crabV2.balanceOf(address(this));
-        uint256 amountV2ToWithdraw = _amountToWithdraw.wmul(crabV2TotalShares).wdiv(totalCrabV1SharesMigrated);
+        uint256 amountV2ToWithdraw = _amountToWithdraw.wmul(totalCrabV2SharesReceived).wdiv(totalCrabV1SharesMigrated);
         crabV2.flashWithdraw(amountV2ToWithdraw, _maxEthToPay);
 
         // Pay user's ETH back

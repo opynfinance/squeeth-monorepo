@@ -209,7 +209,8 @@ describe("Crab Migration", function () {
 
 
             const totalDepositAmount = deposit1Amount.add(deposit2Amount);
-            const expectedSharesWithdraw = d2sharesToMigrate.mul(constractSharesBefore).div(totalDepositAmount);
+            const totalV2SharesReceived = await crabMigration.totalCrabV2SharesReceived();
+            const expectedSharesWithdraw = d2sharesToMigrate.mul(totalV2SharesReceived).div(totalDepositAmount);
             expect(d2sharesInMigrationAfter).to.be.equal(d2sharesInMigrationBefore.sub(d2sharesToMigrate))
             expect(constractSharesAfter).to.be.equal(constractSharesBefore.sub(expectedSharesWithdraw))
         })
