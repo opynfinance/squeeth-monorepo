@@ -783,7 +783,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         wSqueethToMint = _depositedAmount.wmul(_strategyDebtAmount).wdiv(
             _strategyCollateralAmount.add(_strategyDebtAmount.wmul(feeAdjustment))
         );
-
         uint256 fee = wSqueethToMint.wmul(feeAdjustment);
 
         return (wSqueethToMint, fee);

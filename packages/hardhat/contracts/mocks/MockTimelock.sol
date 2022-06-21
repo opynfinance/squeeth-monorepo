@@ -19,11 +19,7 @@ contract MockTimelock is Timelock {
     function mockSetPendingAdmin(address _pendingAdmin) external {
         pendingAdmin = _pendingAdmin;
     }
-
-	function mockSetPendingAdmin(address _pendingAdmin) external {
-		pendingAdmin = _pendingAdmin;
-	}
-
+    
 	function mockSetAdmin(address _admin) external {
 		admin = _admin;
 	}

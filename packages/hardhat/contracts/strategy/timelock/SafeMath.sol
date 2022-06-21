@@ -188,8 +188,4 @@ library SafeMath {
         require(b != 0, errorMessage);
         return a % b;
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 2292c8c7 (Add version)

@@ -109,8 +109,4 @@ contract Timelock {
         // solium-disable-next-line security/no-block-members
         return block.timestamp;
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 2292c8c7 (Add version)
