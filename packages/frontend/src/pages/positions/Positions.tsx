@@ -13,13 +13,7 @@ import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { toTokenAmount } from '@utils/calculations'
 import { useCrabPosition } from '@hooks/useCrabPosition'
 import { addressAtom } from 'src/state/wallet/atoms'
-import {
-  useFirstValidVault,
-  useLpDebt,
-  useMintedDebt,
-  useShortDebt,
-  usePositionsAndFeesComputation,
-} from 'src/state/positions/hooks'
+import { useFirstValidVault, useLpDebt, useShortDebt, usePositionsAndFeesComputation } from 'src/state/positions/hooks'
 import { activePositionsAtom, positionTypeAtom } from 'src/state/positions/atoms'
 import { poolAtom } from 'src/state/squeethPool/atoms'
 import { indexAtom } from 'src/state/controller/atoms'
@@ -45,7 +39,6 @@ export default function Positions() {
   const { currentOSQTHAmount: squeethAmount } = usePositionNPnL()
   const { validVault: vault, vaultId } = useFirstValidVault()
   const lpedSqueeth = useLpDebt()
-  const mintedDebt = useMintedDebt()
   const shortDebt = useShortDebt()
   const index = useAtomValue(indexAtom)
   usePositionsAndFeesComputation()
@@ -96,11 +89,7 @@ export default function Positions() {
           </div>
         </div>
 
-        {shortDebt.isZero() &&
-        depositedEth.isZero() &&
-        squeethAmount.isZero() &&
-        mintedDebt.isZero() &&
-        lpedSqueeth.isZero() ? (
+        {shortDebt.isZero() && depositedEth.isZero() && squeethAmount.isZero() && lpedSqueeth.isZero() ? (
           <div className={classes.empty}>
             <Typography>No active positions</Typography>
           </div>
@@ -109,8 +98,6 @@ export default function Positions() {
         {positionType != PositionType.NONE && <SqueethPosition />}
 
         {lpedSqueeth.isGreaterThan(0) && !fullyLiquidated && <LPedSqueeth vaultExists={vaultExists} />}
-
-        {mintedDebt.isGreaterThan(0) && !fullyLiquidated && <MintedSqueeth vaultExists={vaultExists} />}
 
         {liquidations.length > 0 && <ShortSqueethLiquidated />}
 

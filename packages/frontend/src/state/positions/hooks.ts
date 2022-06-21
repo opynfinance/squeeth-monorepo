@@ -144,36 +144,6 @@ export const useComputeSwaps = () => {
 //   }, [boughtSqueeth, totalUSDFromBuy, soldSqueeth, totalUSDFromSell])
 // }
 
-export const useMintedSoldSort = () => {
-  const { vaultId } = useFirstValidVault()
-  const { openShortSqueeth } = useVaultHistory(Number(vaultId))
-  const positionType = useAtomValue(positionTypeAtom)
-  const { currentOSQTHAmount: squeethAmount } = usePositionNPnL()
-
-  //when the squeethAmount < 0 and the abs amount is greater than openShortSqueeth, that means there is manually sold short position
-  return useAppMemo(() => {
-    return positionType === PositionType.SHORT && squeethAmount.abs().isGreaterThan(openShortSqueeth)
-      ? squeethAmount.abs().minus(openShortSqueeth)
-      : new BigNumber(0)
-  }, [positionType, squeethAmount, openShortSqueeth])
-}
-
-export const useMintedDebt = () => {
-  const { vaultId } = useFirstValidVault()
-  const { mintedSqueeth } = useVaultHistory(Number(vaultId))
-  const lpDebt = useLpDebt()
-  const mintedSoldShort = useMintedSoldSort()
-
-  //mintedSqueeth balance from vault histroy - mintedSold short position = existing mintedDebt in vault, but
-  //LPed amount wont be taken into account from vault history, so will need to be deducted here and added the withdrawn amount back
-  //if there is LP Debt, shld be deducted from minted Debt
-  const mintedDebt = useAppMemo(() => {
-    return mintedSqueeth.minus(mintedSoldShort).minus(lpDebt)
-  }, [mintedSqueeth, mintedSoldShort, lpDebt])
-
-  return mintedDebt
-}
-
 export const useShortDebt = () => {
   const positionType = useAtomValue(positionTypeAtom)
   const { currentOSQTHAmount: squeethAmount } = usePositionNPnL()
@@ -182,16 +152,6 @@ export const useShortDebt = () => {
   }, [positionType, squeethAmount])
 
   return shortDebt.absoluteValue()
-}
-
-export const useLongSqthBal = () => {
-  const { oSqueeth } = useAtomValue(addressesAtom)
-  const { value: oSqueethBal, loading, error, refetch } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
-  const mintedDebt = useMintedDebt()
-  const longSqthBal = useAppMemo(() => {
-    return mintedDebt.gt(0) ? oSqueethBal.minus(mintedDebt) : oSqueethBal
-  }, [oSqueethBal, mintedDebt])
-  return { longSqthBal, loading, error, refetch }
 }
 
 export const useLpDebt = () => {

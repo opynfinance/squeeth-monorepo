@@ -58,13 +58,7 @@ import {
   useWithdrawCollateral,
   useWithdrawUniPositionToken,
 } from 'src/state/controller/hooks'
-import {
-  useLpDebt,
-  useMintedDebt,
-  useShortDebt,
-  usePositionsAndFeesComputation,
-  useFirstValidVault,
-} from 'src/state/positions/hooks'
+import { useLpDebt, useShortDebt, usePositionsAndFeesComputation, useFirstValidVault } from 'src/state/positions/hooks'
 import { useVaultData } from '@hooks/useVaultData'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import useVault from '@hooks/useVault'
@@ -320,7 +314,6 @@ const Component: React.FC = () => {
   const { oSqueeth, nftManager, controller } = useAtomValue(addressesAtom)
   const positionType = useAtomValue(positionTypeAtom)
   const { currentOSQTHAmount: squeethAmount } = usePositionNPnL()
-  const mintedDebt = useMintedDebt()
   const shortDebt = useShortDebt()
 
   const lpedSqueeth = useLpDebt()
@@ -738,18 +731,7 @@ const Component: React.FC = () => {
                   {shortDebt?.gt(0) ? shortDebt.toFixed(6) : 0}
                 </Typography>
               </div>
-              <div className={classes.debtItem}>
-                <Typography className={classes.overviewTitle}>
-                  <span>Minted Debt (oSQTH)</span>
-                  <Tooltip title={Tooltips.MintedDebt}>
-                    <InfoIcon className={classes.infoIcon} />
-                  </Tooltip>
-                </Typography>
 
-                <Typography className={classes.overviewValue} id="vault-minted-debt-bal">
-                  {mintedDebt.gt(0) ? mintedDebt.toFixed(6) : 0}
-                </Typography>
-              </div>
               <div className={classes.debtItem}>
                 <Typography className={classes.overviewTitle}>
                   <span>LPed Debt (oSQTH)</span>
