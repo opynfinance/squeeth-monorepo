@@ -15,7 +15,7 @@ export default function LPedSqueeth({ vaultExists }: Props) {
   const classes = useStyles()
   const { validVault: vault, vaultId, isVaultLoading } = useFirstValidVault()
   const { existingCollat, existingLiqPrice, existingCollatPercent } = useVaultData(vault)
-  const { lpedoSQTHAmount } = usePositionNPnL()
+  const { lpedoSQTHAmount, lpedPositionValue, loading: isPnLLoading } = usePositionNPnL()
 
   return (
     <div className={classes.position}>
@@ -36,31 +36,40 @@ export default function LPedSqueeth({ vaultExists }: Props) {
               &nbsp; oSQTH
             </Typography>
           </div>
-        </div>
-        <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
-          {new BigNumber(existingLiqPrice).isFinite() ? (
-            <div style={{ width: '50%' }}>
-              <Typography variant="caption" component="span" color="textSecondary">
-                Liquidation Price
-              </Typography>
-              <Tooltip title={Tooltips.LiquidationPrice}>
-                <InfoIcon fontSize="small" className={classes.infoIcon} />
-              </Tooltip>
-              <Typography variant="body1">
-                ${isVaultLoading && existingLiqPrice.isEqualTo(0) ? 'Loading' : existingLiqPrice.toFixed(2)}
-              </Typography>
-            </div>
-          ) : null}
+
           <div style={{ width: '50%' }}>
             <Typography variant="caption" component="span" color="textSecondary">
-              Collateral (Amt / Ratio)
+              Position Value
             </Typography>
-            <Typography variant="body1">
-              {isVaultLoading && existingCollat.isEqualTo(0) ? 'Loading' : existingCollat.toFixed(4)} ETH
-              {new BigNumber(existingCollatPercent).isFinite() ? ' (' + existingCollatPercent + ' %)' : null}
-            </Typography>
+            <Typography variant="body1">${isPnLLoading ? 'Loading' : lpedPositionValue.toFixed(2)}</Typography>
           </div>
         </div>
+        {vaultExists ? (
+          <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
+            {new BigNumber(existingLiqPrice).isFinite() ? (
+              <div style={{ width: '50%' }}>
+                <Typography variant="caption" component="span" color="textSecondary">
+                  Liquidation Price
+                </Typography>
+                <Tooltip title={Tooltips.LiquidationPrice}>
+                  <InfoIcon fontSize="small" className={classes.infoIcon} />
+                </Tooltip>
+                <Typography variant="body1">
+                  ${isVaultLoading && existingLiqPrice.isEqualTo(0) ? 'Loading' : existingLiqPrice.toFixed(2)}
+                </Typography>
+              </div>
+            ) : null}
+            <div style={{ width: '50%' }}>
+              <Typography variant="caption" component="span" color="textSecondary">
+                Collateral (Amt / Ratio)
+              </Typography>
+              <Typography variant="body1">
+                {isVaultLoading && existingCollat.isEqualTo(0) ? 'Loading' : existingCollat.toFixed(4)} ETH
+                {new BigNumber(existingCollatPercent).isFinite() ? ' (' + existingCollatPercent + ' %)' : null}
+              </Typography>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   )

@@ -31,11 +31,7 @@ export default function SqueethPosition() {
               oSQTH Amount
             </Typography>
             <Typography variant="body1">
-              {currentOSQTHAmount.isEqualTo(0) ? (
-                'Loading'
-              ) : (
-                <span id="pos-page-long-osqth-bal">{currentOSQTHAmount.toFixed(8)}</span>
-              )}{' '}
+              {isPnLLoading ? 'Loading' : <span id="pos-page-long-osqth-bal">{currentOSQTHAmount.toFixed(8)}</span>}{' '}
               &nbsp; oSQTH
             </Typography>
           </div>
@@ -43,9 +39,7 @@ export default function SqueethPosition() {
             <Typography variant="caption" component="span" color="textSecondary">
               Position Value
             </Typography>
-            <Typography variant="body1">
-              ${isPnLLoading && currentPositionValue.isEqualTo(0) ? 'Loading' : currentPositionValue.toFixed(2)}
-            </Typography>
+            <Typography variant="body1">${isPnLLoading ? 'Loading' : currentPositionValue.toFixed(2)}</Typography>
           </div>
         </div>
 
