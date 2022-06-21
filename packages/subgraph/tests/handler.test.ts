@@ -185,7 +185,7 @@ describe("handleOSQTHChange", () => {
       position.id,
       "realizedOSQTHUnitGain",
       "-9.333333333333333333333333333333333"
-    ); // 28/3
+    ); // -28/3
     assert.fieldEquals("Position", position.id, "realizedOSQTHAmount", "3");
   });
 });
