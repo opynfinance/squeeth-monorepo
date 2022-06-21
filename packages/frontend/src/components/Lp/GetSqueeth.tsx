@@ -96,7 +96,6 @@ const Mint: React.FC = () => {
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const { loading: vaultIDLoading } = useVaultManager()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
-  const normalizationFactor = useAtomValue(normFactorAtom)
   const openDepositAndMint = useOpenDepositAndMint()
   const getShortAmountFromDebt = useGetShortAmountFromDebt()
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
