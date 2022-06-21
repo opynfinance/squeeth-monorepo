@@ -37,7 +37,6 @@ import {
 } from 'src/state/controller/atoms'
 import { usePositionsAndFeesComputation } from 'src/state/positions/hooks'
 import { actualTradeTypeAtom, ethTradeAmountAtom, sqthTradeAmountAtom, tradeTypeAtom } from 'src/state/trade/atoms'
-// import { positionTypeAtom } from 'src/state/positions/atoms'
 import { useResetAtom } from 'jotai/utils'
 import {
   isTransactionFirstStepAtom,

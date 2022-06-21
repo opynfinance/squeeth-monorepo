@@ -7,7 +7,7 @@ import InfoIcon from '@material-ui/icons/InfoOutlined'
 import { Tooltips } from '@constants/enums'
 import { addressAtom } from 'src/state/wallet/atoms'
 import { useCurrentCrabPositionValue } from 'src/state/crab/hooks'
-import { pnlInPerct } from 'src/lib/pnl'
+import { pnlInPerct } from 'src/lib/index'
 import useAppMemo from '@hooks/useAppMemo'
 
 const useStyles = makeStyles((theme) =>

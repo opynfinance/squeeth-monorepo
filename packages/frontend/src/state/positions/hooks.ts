@@ -1,17 +1,12 @@
-import { useState } from 'react'
 import { useAtom, useAtomValue, atom } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 import { useQuery } from '@apollo/client'
-import { useContext } from 'react'
 import BigNumber from 'bignumber.js'
 import { Position } from '@uniswap/v3-sdk'
 
 import { networkIdAtom, addressAtom } from '../wallet/atoms'
-import { swaps, swapsVariables } from '@queries/uniswap/__generated__/swaps'
-import SWAPS_QUERY, { SWAPS_SUBSCRIPTION } from '@queries/uniswap/swapsQuery'
-import SWAPS_ROPSTEN_QUERY, { SWAPS_ROPSTEN_SUBSCRIPTION } from '@queries/uniswap/swapsRopstenQuery'
 import { VAULT_QUERY } from '@queries/squeeth/vaultsQuery'
-import { BIG_ZERO, OSQUEETH_DECIMALS } from '@constants/index'
+import { OSQUEETH_DECIMALS } from '@constants/index'
 import {
   addressesAtom,
   isWethToken0Atom,
@@ -25,124 +20,20 @@ import {
   depositedWethAtom,
   withdrawnSqueethAtom,
   withdrawnWethAtom,
-  swapsAtom,
 } from './atoms'
 import { positions, positionsVariables } from '@queries/uniswap/__generated__/positions'
 import POSITIONS_QUERY, { POSITIONS_SUBSCRIPTION } from '@queries/uniswap/positionsQuery'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
-import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { toTokenAmount } from '@utils/calculations'
 import { squeethClient } from '@utils/apollo-client'
-import { PositionType, Networks } from '../../types'
+import { PositionType } from '../../types'
 import { poolAtom, squeethInitialPriceAtom } from '../squeethPool/atoms'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { useGetWSqueethPositionValue } from '../squeethPool/hooks'
-import { useVaultHistory } from '@hooks/useVaultHistory'
-import { swapsRopsten, swapsRopstenVariables } from '@queries/uniswap/__generated__/swapsRopsten'
 import { Vault } from '@queries/squeeth/__generated__/Vault'
-import { ComputeSwapsContext } from './providers'
 import useAppEffect from '@hooks/useAppEffect'
 import useAppMemo from '@hooks/useAppMemo'
 import usePositionNPnL from '@hooks/usePositionNPnL'
-
-export const useSwaps = () => {
-  const [networkId] = useAtom(networkIdAtom)
-  const [address] = useAtom(addressAtom)
-  const setSwaps = useUpdateAtom(swapsAtom)
-  const { squeethPool, oSqueeth, shortHelper, swapRouter, crabStrategy } = useAtomValue(addressesAtom)
-  const { subscribeToMore, data, refetch, loading, error, startPolling, stopPolling } = useQuery<
-    swaps | swapsRopsten,
-    swapsVariables | swapsRopstenVariables
-  >(networkId === Networks.MAINNET ? SWAPS_QUERY : SWAPS_ROPSTEN_QUERY, {
-    variables: {
-      origin: address || '',
-      orderDirection: 'asc',
-      recipient_not: crabStrategy,
-      ...(networkId === Networks.MAINNET
-        ? {
-            tokenAddress: oSqueeth,
-          }
-        : {
-            poolAddress: squeethPool,
-            recipients: [shortHelper, address || '', swapRouter],
-          }),
-    },
-    fetchPolicy: 'cache-and-network',
-  })
-
-  useAppEffect(() => {
-    subscribeToMore({
-      document: networkId === Networks.MAINNET ? SWAPS_SUBSCRIPTION : SWAPS_ROPSTEN_SUBSCRIPTION,
-      variables: {
-        origin: address || '',
-        orderDirection: 'asc',
-        recipient_not: crabStrategy,
-        ...(networkId === Networks.MAINNET
-          ? {
-              tokenAddress: oSqueeth,
-            }
-          : {
-              poolAddress: squeethPool,
-              recipients: [shortHelper, address || '', swapRouter],
-            }),
-      },
-      updateQuery(prev, { subscriptionData }) {
-        if (!subscriptionData.data) return prev
-        const newSwaps = subscriptionData.data.swaps
-        return {
-          swaps: newSwaps,
-        }
-      },
-    })
-  }, [address, crabStrategy, networkId, oSqueeth, shortHelper, squeethPool, swapRouter, subscribeToMore])
-
-  useAppEffect(() => {
-    if (data?.swaps) {
-      setSwaps({ swaps: data?.swaps })
-    } else {
-      setSwaps({ swaps: [] })
-    }
-  }, [data?.swaps, setSwaps])
-
-  return { data, refetch, loading, error, startPolling, stopPolling }
-}
-
-export const useComputeSwaps = () => {
-  const context = useContext(ComputeSwapsContext)
-
-  if (!context) {
-    throw new Error('useComputeSwaps must be used inside ComputeSwapsProvider')
-  }
-
-  return context
-}
-
-// depreciated
-// export const useLongRealizedPnl = () => {
-//   const { boughtSqueeth, soldSqueeth, totalUSDFromBuy, totalUSDFromSell } = useComputeSwaps()
-//   return useAppMemo(() => {
-//     if (!soldSqueeth.gt(0)) return BIG_ZERO
-//     const costForOneSqth = !totalUSDFromBuy.isEqualTo(0) ? totalUSDFromBuy.div(boughtSqueeth) : BIG_ZERO
-//     const realizedForOneSqth = !totalUSDFromSell.isEqualTo(0) ? totalUSDFromSell.div(soldSqueeth) : BIG_ZERO
-//     const pnlForOneSqth = realizedForOneSqth.minus(costForOneSqth)
-
-//     return pnlForOneSqth.multipliedBy(soldSqueeth)
-//   }, [boughtSqueeth, soldSqueeth, totalUSDFromBuy, totalUSDFromSell])
-// }
-
-// depreciated
-// export const useShortRealizedPnl = () => {
-//   const { boughtSqueeth, soldSqueeth, totalUSDFromBuy, totalUSDFromSell } = useComputeSwaps()
-//   return useAppMemo(() => {
-//     if (!boughtSqueeth.gt(0)) return BIG_ZERO
-
-//     const costForOneSqth = !totalUSDFromSell.isEqualTo(0) ? totalUSDFromSell.div(soldSqueeth) : BIG_ZERO
-//     const realizedForOneSqth = !totalUSDFromBuy.isEqualTo(0) ? totalUSDFromBuy.div(boughtSqueeth) : BIG_ZERO
-//     const pnlForOneSqth = realizedForOneSqth.minus(costForOneSqth)
-
-//     return pnlForOneSqth.multipliedBy(boughtSqueeth)
-//   }, [boughtSqueeth, totalUSDFromBuy, soldSqueeth, totalUSDFromSell])
-// }
 
 export const useShortDebt = () => {
   const positionType = useAtomValue(positionTypeAtom)

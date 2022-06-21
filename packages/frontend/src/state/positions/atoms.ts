@@ -20,8 +20,6 @@ import {
 import { networkIdAtom, web3Atom } from '../wallet/atoms'
 import { BIG_ZERO } from '@constants/index'
 import NFTpositionManagerABI from '../../abis/NFTpositionmanager.json'
-import { swaps } from '@queries/uniswap/__generated__/swaps'
-import { swapsRopsten } from '@queries/uniswap/__generated__/swapsRopsten'
 import { accounts_accounts } from '@queries/squeeth/__generated__/accounts'
 import BigNumber from 'bignumber.js'
 
@@ -87,7 +85,6 @@ export const collatPercentAtom = atom(0)
 export const isVaultLoadingAtom = atom(true)
 export const vaultHistoryUpdatingAtom = atom(false)
 export const isToHidePnLAtom = atom(false)
-export const swapsAtom = atom<swaps | swapsRopsten>({ swaps: [] })
 export const longPositionValueAtom = atom(BIG_ZERO)
 export const shortPositionValueAtom = atom(BIG_ZERO)
 

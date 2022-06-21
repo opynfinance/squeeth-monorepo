@@ -20,8 +20,6 @@ import { useUpdateSqueethPrices, useUpdateSqueethPoolData } from 'src/state/sque
 import { useInitController } from 'src/state/controller/hooks'
 import useAccounts from '@hooks/useAccounts'
 import useCurrentPrices from '@hooks/useCurrentPrices'
-import { useSwaps } from 'src/state/positions/hooks'
-import { ComputeSwapsProvider } from 'src/state/positions/providers'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
 
@@ -82,7 +80,6 @@ const Init = () => {
   useUpdateSqueethPrices()
   useUpdateSqueethPoolData()
   useInitController()
-  useSwaps()
   useAccounts()
   return null
 }
@@ -112,9 +109,7 @@ const TradeApp = ({ Component, pageProps }: any) => {
       <ThemeProvider theme={getTheme(Mode.DARK)}>
         {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
         <CssBaseline />
-        <ComputeSwapsProvider>
-          <Component {...pageProps} />
-        </ComputeSwapsProvider>
+        <Component {...pageProps} />
       </ThemeProvider>
     </React.Fragment>
   )

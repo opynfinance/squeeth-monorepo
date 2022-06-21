@@ -23,10 +23,9 @@ import CrabPosition from './CrabPosition'
 import YourVaults from './YourVaults'
 import SqueethPosition from './SqueethPosition'
 import LPedSqueeth from './LPedSqueeth'
-import MintedSqueeth from './MintedSqueeth'
 import ShortSqueethLiquidated from './ShortSqueethLiquidated'
 import { useCurrentCrabPositionValue } from 'src/state/crab/hooks'
-import { pnl, pnlInPerct } from 'src/lib/pnl'
+import { pnl, pnlInPerct } from 'src/lib/index'
 import usePositionNPnL from '@hooks/usePositionNPnL'
 
 export default function Positions() {

@@ -1,7 +1,16 @@
 import BigNumber from 'bignumber.js'
 import { accounts_accounts_lppositions, accounts_accounts_positions } from '@queries/squeeth/__generated__/accounts'
-import { OSQUEETH_DECIMALS, WETH_DECIMALS } from '@constants/index'
-import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
+import { BIG_ZERO, OSQUEETH_DECIMALS, WETH_DECIMALS } from '@constants/index'
+import { toTokenAmount } from '@utils/calculations'
+
+export function pnl(currentValue: BigNumber, cost: BigNumber): BigNumber {
+  return currentValue.minus(cost)
+}
+
+export function pnlInPerct(currentValue: BigNumber, cost: BigNumber): BigNumber {
+  if (cost.isEqualTo(0)) return BIG_ZERO
+  return currentValue.dividedBy(cost).minus(1).times(100)
+}
 
 export function calculatePnL(
   accShortAmount: BigNumber,
