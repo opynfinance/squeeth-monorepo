@@ -9,7 +9,6 @@ import {
 } from '@material-ui/core'
 import { useAtom, useAtomValue } from 'jotai'
 import { useState } from 'react'
-import debounce from 'lodash.debounce'
 import BigNumber from 'bignumber.js'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
@@ -275,7 +274,12 @@ export const OpenShortPosition = () => {
     ],
   )
 
-  const handleSqthChange = useAppMemo(() => debounce(onSqthChange, 500), [onSqthChange])
+  const handleSqthChange = useAppCallback(
+    (val: string, collatPercent: number) => {
+      onSqthChange(val, collatPercent)
+    },
+    [onSqthChange],
+  )
 
   useAppEffect(() => {
     if (!debouncedAmount || debouncedAmount.lte(0)) return setExactOutAmount(BIG_ZERO)
