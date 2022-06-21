@@ -24,7 +24,7 @@ export const useTransactionHistory = () => {
       usdValue: ethAmount.abs().times(s.ethPriceInUSD),
       timestamp: s.timestamp,
       transactionType: TransactionType[s.transactionType],
-      txId: s.id,
+      txId: s.id.split('-')[0],
       ethPriceAtDeposit: s.ethPriceInUSD,
     }
   })
