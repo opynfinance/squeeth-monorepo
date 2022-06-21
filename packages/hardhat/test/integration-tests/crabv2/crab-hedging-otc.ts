@@ -1265,5 +1265,65 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             //reverting this back to one percent
             await crabStrategy.connect(owner).setHedgePriceThreshold(BigNumber.from(10).pow(16).mul(1));
         });
+        it("should hedge via OTC using multiple orders while sell oSQTH and updated timeAtLastHedge", async () => {
+            const strategyVaultBefore = await controller.vaults(await crabStrategy.vaultId());
+            // vault state before
+            let deltaStart = await delta(strategyVaultBefore);
+            // trader amount to sell oSQTH to change the deltas
+            await mintAndSell();
+
+            // Calculate new Delta and the trades to make
+            let newDelta = await delta(strategyVaultBefore);
+            let oSQTHPriceAfter = await getOSQTHPrice();
+            let toSell = wdiv(newDelta, oSQTHPriceAfter);
+            let toGET = wmul(toSell, oSQTHPriceAfter);
+            console.log(oSQTHPriceAfter.toString());
+            console.log("new Delta is ", newDelta.toString());
+            console.log("quantity of oSQTH sell is", toSell);
+            console.log("quantity of ETH to get is", toGET);
+
+            // make the approvals for the trade
+            console.log("eth balance of random is ", await provider.getBalance(random.address));
+            await weth.connect(random).deposit({ value: toGET });
+            await weth.connect(random).approve(crabStrategy.address, toGET);
+            await weth.connect(trader).deposit({ value: toGET });
+            await weth.connect(trader).approve(crabStrategy.address, toGET);
+
+            // get the pre trade balances for the trader
+            let oSQTHTraderBalanceBefore = await wSqueeth.balanceOf(trader.address);
+            let wethTraderBalanceBefore = await weth.balanceOf(trader.address);
+            let oSQTHTraderBalanceBefore_2 = await wSqueeth.balanceOf(random.address);
+            let wethTraderBalanceBefore_2 = await weth.balanceOf(random.address);
+
+            // and prepare the trade
+            console.log("Weth balance of random is ", await weth.balanceOf(random.address));
+            let orderHash = {
+                bidId: 0,
+                trader: random.address,
+                traderToken: weth.address,
+                traderAmount: toGET.div(2),
+                managerToken: wSqueeth.address,
+                managerAmount: toSell.div(2),
+                nonce: await crabStrategy.nonces(random.address),
+            };
+            // manager gives out less, hence this is better price. But ordered last. So should revert
+            let orderHash1 = {
+                bidId: 0,
+                trader: trader.address,
+                traderToken: weth.address,
+                traderAmount: toGET.div(2),
+                managerToken: wSqueeth.address,
+                managerAmount: toSell.div(2).sub(1000),
+                nonce: await crabStrategy.nonces(trader.address),
+            };
+
+            const { typeData, domainData } = getTypeAndDomainData();
+            let signedOrder = await signTypedData(random, domainData, typeData, orderHash);
+            let signedOrder1 = await signTypedData(trader, domainData, typeData, orderHash1);
+            let managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
+
+            // Do the trade
+            await expect(crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder, signedOrder1])).to.be.revertedWith('Orders are not arranged properly');
+        });
     });
 });
