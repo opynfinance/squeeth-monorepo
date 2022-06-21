@@ -3,8 +3,6 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import "hardhat/console.sol";
-
 // interface
 import {IController} from "../interfaces/IController.sol";
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
@@ -68,9 +66,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     /// @dev enum to differentiate between uniswap swap callback function source
     enum FLASH_SOURCE {
         FLASH_DEPOSIT,
-        FLASH_WITHDRAW,
-        FLASH_HEDGE_SELL,
-        FLASH_HEDGE_BUY
+        FLASH_WITHDRAW
     }
 
     /// @dev ETH:WSqueeth uniswap pool
@@ -547,6 +543,16 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         nonce.increment();
     }
 
+    /*
+     * @notice user can increment their own nonce to cancel previous orders
+     * @return new nonce for user
+     */
+    function incrementNonce() external returns (uint256 current) {
+        Counters.Counter storage nonce = _nonces[msg.sender];
+        nonce.increment();
+        current = nonce.current();
+    }
+
     /**
      * @dev get current nonce of the address
      * @param _owner address of signer
@@ -649,20 +655,17 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 remainingAmount = _managerSellAmount;
         uint256 prevPrice = 0;
         uint256 currentPrice = 0;
+
+        bytes32 firstTradePair = keccak256(abi.encode(_orders[0].traderToken, _orders[0].managerToken));
         bytes memory tradePair;
-        bytes memory prevTradePair;
         for (uint256 i = 0; i < _orders.length; i++) {
             tradePair = abi.encode(_orders[i].traderToken, _orders[i].managerToken);
             currentPrice = _orders[i].managerAmount.mul(1e18).div(_orders[i].traderAmount);
             require(currentPrice >= prevPrice, "Orders are not arranged properly");
             if (i > 0) {
-                require(
-                    keccak256(tradePair) == keccak256(prevTradePair),
-                    "All orders must have the same buy/sell token."
-                );
+                require(keccak256(tradePair) == firstTradePair, "All orders must have the same buy/sell token.");
             }
             prevPrice = currentPrice;
-            prevTradePair = tradePair;
 
             if (remainingAmount > _orders[i].managerAmount) {
                 _execOrder(remainingAmount, _clearingPrice, currentPrice, _orders[i]);
@@ -775,6 +778,22 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 priceThreshold = cachedRatio > 1e18 ? (cachedRatio).sub(1e18) : uint256(1e18).sub(cachedRatio);
 
         return priceThreshold >= hedgePriceThreshold;
+    }
+
+    /**
+     * @notice check if hedging based on price threshold is allowed
+     * @return true if hedging is allowed
+     */
+    function checkPriceHedge() external view returns (bool) {
+        return _isPriceHedge();
+    }
+
+    /**
+     * @notice check if hedging based on time threshold is allowed
+     * @return true if hedging is allowed
+     */
+    function checkTimeHedge() external view returns (bool) {
+        return _isTimeHedge();
     }
 
     /**
