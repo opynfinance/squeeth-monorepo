@@ -1,9 +1,9 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
-import { createUniPool } from '../test/setup'
+import { createUniPool } from '../test/hardhat-test/setup'
 
 import { getUSDC, getWETH, getUniswapDeployments } from '../tasks/utils'
-import { oracleScaleFactor } from '../test/utils';
+import { oracleScaleFactor } from '../test/hardhat-test/utils';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { getNamedAccounts, ethers, network } = hre;

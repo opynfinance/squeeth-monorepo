@@ -1,0 +1,29 @@
+on: [push]
+
+name: Foundry
+
+jobs:
+  check:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Dependencies
+        run: cd packages/hardhat && yarn
+
+      - name: Setup
+        run: cd packages/hardhat && yarn forge-setup
+
+      - name: Remappings
+        run: cd packages/hardhat && forge remappings > remappings.txt
+        
+      - name: Run tests
+        run: cd packages/hardhat && yarn forge-test

@@ -7,25 +7,28 @@ workflows:
   build-test-report:
     jobs:
       - checkout-and-install
-      - compile:
+      - hardhat-compile:
           requires:
             - checkout-and-install
+      # - forge-compile:
+      #     requires:
+      #       - checkout-and-install
       - lint:
           requires:
-            - compile
+            - hardhat-compile
       - unit-test-contracts:
           requires:
-            - compile
+            - hardhat-compile
       - coverage:
           requires:
             - e2e-test
           context: BUILD_KEYS
       - contract-size:
           requires:
-            - compile
+            - hardhat-compile
       - deploy-test:
           requires:
-            - compile
+            - hardhat-compile
       - e2e-test:
           requires:
             - unit-test-contracts
@@ -47,6 +50,9 @@ jobs:
       - run:
           name: Install packages
           command: yarn install
+      # - run:
+      #     name: Foundry install
+      #     command: curl -L https://foundry.paradigm.xyz | bash && source /home/circleci/.bashrc && foundryup
       - save_cache: 
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
@@ -56,7 +62,7 @@ jobs:
           paths:
             - ~/squeeth
 
-  compile:
+  hardhat-compile:
     working_directory: ~/squeeth/packages/hardhat
     docker:
       - image: circleci/node:16.6.0
@@ -66,7 +72,7 @@ jobs:
       - restore_cache:
           key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
       - run:
-          name: Compile Contracts
+          name: hardhat-compile Contracts
           command: npx hardhat compile
       - save_cache: 
          key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
@@ -76,6 +82,17 @@ jobs:
          key: artifacts-cache-{{ .Environment.CIRCLE_SHA1 }}
          paths:
            - artifacts
+
+  forge-compile: 
+    working_directory: ~/squeeth/packages/hardhat
+    docker:
+      - image: circleci/node:16.6.0
+    steps:
+      - checkout:
+          path: ~/squeeth
+      - run:
+          name: Forge compile
+          command: forge compile
 
   lint:
     working_directory: ~/squeeth/packages/hardhat

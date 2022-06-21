@@ -39,6 +39,7 @@
     "hardhat-contract-sizer": "^2.0.3",
     "hardhat-deploy": "^0.8.6",
     "hardhat-gas-reporter": "^1.0.4",
+    "hardhat-preprocessor": "^0.1.4",
     "hardhat-prettier": "^0.0.1",
     "node-watch": "^0.7.0",
     "prettier": "^2.3.2",
@@ -50,6 +51,10 @@
     "typechain": "^5.1.2"
   },
   "scripts": {
+    "forge-setup": "make clean && make forge-install && make forge-update",
+    "forge-build": "make forge-build",
+    "forge-test": "make forge-test",
+    "forge-remappings": "forge remappings > remappings.txt",
     "chain": "hardhat node --network hardhat --no-deploy",
     "test": "TS_NODE_TRANSPILE_ONLY=1 npx hardhat test --network hardhat",
     "compile": "hardhat compile",

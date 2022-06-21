@@ -1,7 +1,7 @@
 import {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {DeployFunction} from 'hardhat-deploy/types';
 import { getUniswapDeployments, getWETH } from '../tasks/utils'
-import { getPoolAddress } from '../test/setup';
+import { getPoolAddress } from '../test/hardhat-test/setup';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, ethers, network } = hre;

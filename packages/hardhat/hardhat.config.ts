@@ -11,6 +11,7 @@ import "@eth-optimism/hardhat-ovm";
 import "@nomiclabs/hardhat-ethers";
 import { HardhatUserConfig } from "hardhat/config";
 import * as dotenv from 'dotenv'
+import "hardhat-preprocessor";
 
 // Import Tasks
 import "./tasks/default";
@@ -234,7 +235,33 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_KEY
-  }
+  },
+  paths: {
+    cache: "./cache_hardhat", // Use a different cache for Hardhat than Foundry
+  },
+  // This fully resolves paths for imports in the ./lib directory for Hardhat
+  // preprocess: {
+  //   eachLine: (hre) => ({
+  //     transform: (line: string) => {
+  //       if (line.match(/^\s*import /i)) {
+  //         getRemappings().forEach(([find:, replace]) => {
+  //           if (line.match('"' + find)) {
+  //             line = line.replace('"' + find, '"' + replace);
+  //           }
+  //         });
+  //       }
+  //       return line;
+  //     },
+  //   }),
+  // },
 };
+
+function getRemappings() {
+  return fs
+    .readFileSync("remappings.txt", "utf8")
+    .split("\n")
+    .filter(Boolean) // remove empty lines
+    .map((line: string) => line.trim().split("="));
+}
 
 export default config;
