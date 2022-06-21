@@ -945,7 +945,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount).mul(99).div(100);
             await expect(
                 crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder])
-            ).to.be.revertedWith("Manager Buy Price should be atleast Seller Price");
+            ).to.be.revertedWith("Clearing Price should be at least Seller Price");
         });
         it("manager buy price should be greater than 0", async () => {
             // set the time to 1 hr from prev hedge

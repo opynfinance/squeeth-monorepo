@@ -566,17 +566,18 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
     /**
      * @dev check the signer and swap tokens in the order
-     * @param _managerSellAmount quantity the manager wants to sell
-     * @param _managerBuyPrice the price at which the manager is buying
+     * @param _remainingAmount quantity the manager wants to sell
+     * @param _clearingPrice the price at which the manager is buying
+     * @param _orderPrice the selling price of each order
      * @param _order a signed order to swap tokens
      */
     function _execOrder(
-        uint256 _managerSellAmount,
-        uint256 _managerBuyPrice,
-        uint256 _sellerPrice,
+        uint256 _remainingAmount,
+        uint256 _clearingPrice,
+        uint256 _orderPrice,
         Order memory _order
     ) internal {
-        require(_managerBuyPrice >= _sellerPrice, "Manager Buy Price should be atleast Seller Price");
+        require(_clearingPrice >= _orderPrice, "Clearing Price should be at least Seller Price");
         bytes32 structHash = keccak256(
             abi.encode(
                 _CRAB_BALANCE_TYPEHASH,
@@ -595,11 +596,11 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         require(offerSigner == _order.trader, "Invalid offer signature");
 
         //adjust managerAmount and TraderAmount for partial fills
-        if (_managerSellAmount < _order.managerAmount) {
-            _order.managerAmount = _managerSellAmount;
+        if (_remainingAmount < _order.managerAmount) {
+            _order.managerAmount = _remainingAmount;
         }
         //adjust if manager is giving better price
-        _order.traderAmount = _order.managerAmount.mul(1e18).div(_managerBuyPrice);
+        _order.traderAmount = _order.managerAmount.mul(1e18).div(_clearingPrice);
 
         IERC20(_order.traderToken).transferFrom(_order.trader, address(this), _order.traderAmount);
 
@@ -624,24 +625,24 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
             _order.trader, // market maker
             _order.managerAmount, // token out
             _order.traderAmount, // token in
-            _sellerPrice
+            _orderPrice
         );
     }
 
     /**
      * @dev hedge function to reduce delta using an array of signed orders
      * @param _managerSellAmount quantity the manager wants to sell
-     * @param _managerBuyPrice the price at which the manager is buying
+     * @param _clearingPrice the price at which the manager is buying
      * @param _orders an array of signed order to swap tokens
      */
     function hedgeOTC(
         uint256 _managerSellAmount,
-        uint256 _managerBuyPrice,
+        uint256 _clearingPrice,
         Order[] memory _orders
     ) external onlyOwner {
-        require(_managerBuyPrice > 0, "Manager Price should be greater than 0");
+        require(_clearingPrice > 0, "Manager Price should be greater than 0");
         require(_isTimeHedge() || _isPriceHedge(), "Time or Price is not within range");
-        _checkOTCPrice(_managerBuyPrice, _orders[0].managerToken);
+        _checkOTCPrice(_clearingPrice, _orders[0].managerToken);
 
         timeAtLastHedge = block.timestamp;
 
@@ -664,10 +665,10 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
             prevTradePair = tradePair;
 
             if (remainingAmount > _orders[i].managerAmount) {
-                _execOrder(remainingAmount, _managerBuyPrice, currentPrice, _orders[i]);
+                _execOrder(remainingAmount, _clearingPrice, currentPrice, _orders[i]);
                 remainingAmount = remainingAmount.sub(_orders[i].managerAmount);
             } else {
-                _execOrder(remainingAmount, _managerBuyPrice, currentPrice, _orders[i]);
+                _execOrder(remainingAmount, _clearingPrice, currentPrice, _orders[i]);
                 break;
             }
         }
