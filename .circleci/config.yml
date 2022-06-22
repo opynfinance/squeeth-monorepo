@@ -39,6 +39,7 @@ jobs:
     working_directory: ~/squeeth/packages/hardhat
     docker:
       - image: circleci/node:16.6.0
+    resource_class: xlarge
     steps:
       - checkout:
           path: ~/squeeth
@@ -47,7 +48,7 @@ jobs:
       - run:
           name: Install packages
           command: yarn install
-      - save_cache: 
+      - save_cache:
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
             - node_modules
@@ -60,6 +61,7 @@ jobs:
     working_directory: ~/squeeth/packages/hardhat
     docker:
       - image: circleci/node:16.6.0
+    resource_class: xlarge
     steps:
       - checkout:
           path: ~/squeeth
@@ -68,19 +70,20 @@ jobs:
       - run:
           name: Compile Contracts
           command: npx hardhat compile
-      - save_cache: 
-         key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
-         paths:
-           - typechain
-      - save_cache: 
-         key: artifacts-cache-{{ .Environment.CIRCLE_SHA1 }}
-         paths:
-           - artifacts
+      - save_cache:
+          key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - typechain
+      - save_cache:
+          key: artifacts-cache-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - artifacts
 
   lint:
     working_directory: ~/squeeth/packages/hardhat
     docker:
       - image: circleci/node:16.6.0
+    resource_class: xlarge
     steps:
       - checkout:
           path: ~/squeeth
@@ -91,11 +94,12 @@ jobs:
       - run:
           name: Lint
           command: yarn lint:check
-  
+
   unit-test-contracts:
     working_directory: ~/squeeth/packages/hardhat
     docker:
       - image: circleci/node:16.6.0
+    resource_class: xlarge
     steps:
       - checkout:
           path: ~/squeeth
@@ -103,14 +107,15 @@ jobs:
           key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
       - restore_cache:
           key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
-      - run: 
+      - run:
           name: Unit tests
-          command: yarn test 
-    
+          command: yarn test
+
   deploy-test:
     working_directory: ~/squeeth/packages/hardhat
     docker:
       - image: circleci/node:16.6.0
+    resource_class: xlarge
     steps:
       - checkout:
           path: ~/squeeth
@@ -126,6 +131,7 @@ jobs:
     working_directory: ~/squeeth/packages/hardhat
     docker:
       - image: circleci/node:16.6.0
+    resource_class: xlarge
     steps:
       - checkout:
           path: ~/squeeth
@@ -133,9 +139,9 @@ jobs:
           key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
       - restore_cache:
           key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
-      - run: 
+      - run:
           name: Coverage
-          command: yarn coverage 
+          command: yarn coverage
       - coveralls/upload:
           path_to_lcov: ./coverage/lcov.info
       - store_artifacts:
@@ -147,6 +153,7 @@ jobs:
     working_directory: ~/squeeth/packages/hardhat
     docker:
       - image: circleci/node:16.6.0
+    resource_class: xlarge
     steps:
       - checkout:
           path: ~/squeeth
@@ -159,9 +166,10 @@ jobs:
           command: npx hardhat size-contracts
 
   e2e-test:
-    working_directory:  ~/squeeth/packages/hardhat
+    working_directory: ~/squeeth/packages/hardhat
     docker:
       - image: circleci/node:16.6.0
+    resource_class: xlarge
     steps:
       - restore_cache:
           key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
@@ -171,14 +179,15 @@ jobs:
           name: Set Env Variables
           command: echo "export INFURA_KEY=${INFURA_KEY}" >> $BASH_ENV
       - run:
-          name: Mainnet E2E Test 
+          name: Mainnet E2E Test
           command: |
-            ./ci/e2e.sh	
+            ./ci/e2e.sh
 
   checkout-and-install-frontend:
     working_directory: ~/squeeth/packages/frontend
     docker:
       - image: circleci/node:16.6.0
+    resource_class: xlarge
     steps:
       - checkout:
           path: ~/squeeth
@@ -187,7 +196,7 @@ jobs:
       - run:
           name: Install packages
           command: yarn install
-      - save_cache: 
+      - save_cache:
           key: dependency-frontend-cache-{{ checksum "package.json" }}
           paths:
             - node_modules
@@ -195,7 +204,7 @@ jobs:
           key: squeeth-frontend-{{ .Environment.CIRCLE_SHA1 }}
           paths:
             - ~/squeeth
-  
+
   unit-test-frontend:
     working_directory: ~/squeeth/packages/frontend
     docker:
@@ -205,6 +214,6 @@ jobs:
           path: ~/squeeth
       - restore_cache:
           key: squeeth-frontend-{{ .Environment.CIRCLE_SHA1 }}
-      - run: 
+      - run:
           name: Unit tests
           command: yarn test:ci
