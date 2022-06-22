@@ -42,7 +42,7 @@ export const wdiv = (x: BigNumber, y: BigNumber): BigNumber => {
 };
 
 export const signTypedData = async (signer: SignerWithAddress, domainData: any, type: any, data: any) => {
-    let signature2 = await signer._signTypedData(domainData, type, data);
+    const signature2 = await signer._signTypedData(domainData, type, data);
     const { r: r1, s: s1, v: v1 } = ethers.utils.splitSignature(signature2);
     return {
         ...data,

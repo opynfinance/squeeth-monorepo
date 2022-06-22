@@ -580,10 +580,10 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         Order memory _order
     ) internal {
         // Check order beats clearing price
-        if (_order.isBuying){
+        if (_order.isBuying) {
             require(_clearingPrice <= _order.price, "Clearing Price should be below bid price");
         } else {
-            require(_clearingPrice >= _orderPrice, "Clearing Price should be above offer price");
+            require(_clearingPrice >= _order.price, "Clearing Price should be above offer price");
         }
 
         bytes32 structHash = keccak256(
@@ -611,7 +611,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         // weth clearing price for the order
         uint256 wethAmount = _order.quantity.mul(_clearingPrice).div(1e18);
 
-        if (_order.isBuying){
+        if (_order.isBuying) {
             // trader sends weth and receives oSQTH
             IERC20(weth).transferFrom(_order.trader, address(this), wethAmount);
             _mintWPowerPerp(_order.trader, _order.quantity, wethAmount, false);
@@ -655,25 +655,25 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 prevPrice = 0;
         uint256 currentPrice = 0;
         bool isOrderBuying = _orders[0].isBuying;
-        require( _isHedgeBuying ^ isOrderBuying, "Orders must be buying when hedge is selling" );
+        require(_isHedgeBuying != isOrderBuying, "Orders must be buying when hedge is selling");
 
         for (uint256 i = 0; i < _orders.length; i++) {
             currentPrice = _orders[i].price;
-            require(_orders[i].isBuying == isOrderBuying, "All orders must be either buying or selling")
-            if (_isHedgeBuying){
+            require(_orders[i].isBuying == isOrderBuying, "All orders must be either buying or selling");
+            if (_isHedgeBuying) {
                 require(currentPrice >= prevPrice, "Orders are not arranged properly");
-                } else {
-                require(currentPrice <= prevPrice, "Orders are not arranged properly");                    
-                }
+            } else {
+                require(currentPrice <= prevPrice, "Orders are not arranged properly");
+            }
             prevPrice = currentPrice;
 
             _execOrder(remainingAmount, _clearingPrice, _orders[i]);
-          
-          if (remainingAmount >= _orders[i].quantity) {
-                remainingAmount = remainingAmount.sub(_orders[i].managerAmount);
-            }else {
+
+            if (remainingAmount >= _orders[i].quantity) {
+                remainingAmount = remainingAmount.sub(_orders[i].quantity);
+            } else {
                 break;
-            }  
+            }
         }
     }
 
@@ -682,15 +682,20 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @param _price clearing price provided by manager
      * @param _isHedgeBuying is crab buying or selling oSQTH
      */
-    function _checkOTCPrice(uint256 _price, address _isHedgeBuying) internal view {
+    function _checkOTCPrice(uint256 _price, bool _isHedgeBuying) internal view {
         // Get twap
         uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, hedgingTwapPeriod, true);
 
-        if {_isHedgeBuying}{
-            require(_price <= twapPrice.mul((ONE.add(otcPriceTolerance))).div(ONE), "Price too high relative to Uniswap twap.")
-        else {
-            require(_price >= twapPrice.mul((ONE.sub(otcPriceTolerance))).div(ONE), "Price too low relative to Uniswap twap.")
-
+        if (_isHedgeBuying) {
+            require(
+                _price <= wSqueethEthPrice.mul((ONE.add(otcPriceTolerance))).div(ONE),
+                "Price too high relative to Uniswap twap."
+            );
+        } else {
+            require(
+                _price >= wSqueethEthPrice.mul((ONE.sub(otcPriceTolerance))).div(ONE),
+                "Price too low relative to Uniswap twap."
+            );
         }
     }
 
