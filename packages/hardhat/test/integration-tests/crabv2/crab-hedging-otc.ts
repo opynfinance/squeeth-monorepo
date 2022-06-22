@@ -547,7 +547,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const strategyVaultBefore = await controller.vaults(await crabStrategy.vaultId());
             // vault state before
             const deltaStart = await delta(strategyVaultBefore);
-            expect(deltaStart.toNumber()).eql(0);
+            expect(deltaStart.toNumber()).be.closeTo(0, precision);
             // trader amount to sell oSQTH to change the deltas
             await mintAndSell();
 
@@ -704,7 +704,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const dlt = await delta(await controller.vaults(await crabStrategy.vaultId()));
             expect(dlt.toNumber()).to.be.greaterThan(0);
         });
-        it.only("allows manager to give buy at a greater price and specify a quantity lesser than the same of order amounts", async () => {
+        it("allows manager to give buy at a greater price and specify a quantity lesser than the same of order amounts", async () => {
             const precision = 4; // this is in decimals 18 so technically 0
             const strategyVaultBefore = await controller.vaults(await crabStrategy.vaultId());
             // vault state before
@@ -817,14 +817,13 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
 
             // make the approvals for the trade and prepare the trade
             await wSqueeth.connect(trader).approve(crabStrategy.address, toGet);
-
+            const oSQTHPrice = await getOSQTHPrice();
             const orderHash = {
                 bidId: 0,
                 trader: trader.address,
-                traderToken: wSqueeth.address,
-                traderAmount: toGet,
-                managerToken: weth.address,
-                managerAmount: toSell,
+                quantity: toSell,
+                price: oSQTHPrice,
+                isBuying: false,
                 expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(trader.address),
             };
@@ -832,9 +831,8 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const { typeData, domainData } = getTypeAndDomainData();
             // Do the trade
             const signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
-            const managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
             await expect(
-                crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder])
+                crabStrategy.connect(owner).hedgeOTC(toSell, oSQTHPrice, true, [signedOrder])
             ).to.be.revertedWith("Time or Price is not within range");
         });
         it("should revert when the hedge trade oSQTH price is beyond threshold", async () => {
@@ -845,27 +843,28 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             // Calculate new Delta and the trades to make
             const toGet = ethers.utils.parseUnits("3.5");
             const toSell = ethers.utils.parseUnits("1");
+            const oSQTHPrice = await getOSQTHPrice();
 
             // make the approvals for the trade and prepare the trade
             await wSqueeth.connect(trader).approve(crabStrategy.address, toGet);
+            const managerBuyPrice = oSQTHPrice.mul(130).div(100);
 
             const orderHash = {
                 bidId: 0,
                 trader: trader.address,
-                traderToken: wSqueeth.address,
-                traderAmount: toGet,
-                managerToken: weth.address,
-                managerAmount: toSell,
+                quantity: toSell,
+                price: managerBuyPrice,
+                isBuying: false,
                 expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(trader.address),
             };
             const { typeData, domainData } = getTypeAndDomainData();
             // Do the trade
             const signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
-            const managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
+            // manager cant siphon off money to market makers
             await expect(
-                crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder])
-            ).to.be.revertedWith("Price too low relative to Uniswap twap.");
+                crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, true, [signedOrder])
+            ).to.be.revertedWith("Price too high relative to Uniswap twap.");
         });
         it("reverts when order sign is invalid", async () => {
             const trader = random;
