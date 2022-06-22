@@ -9,6 +9,8 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import {IEulerExec, IEulerDToken} from "../interfaces/IEuler.sol";
 import {WETH9} from "../external/WETH9.sol";
 
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+
 // contract
 import {CrabStrategyV2} from "./CrabStrategyV2.sol";
 import {CrabStrategy} from "./CrabStrategy.sol";
@@ -21,6 +23,7 @@ import {StrategyMath} from "./base/StrategyMath.sol";
  * M3: Migration has not yet happened
  * M4: msg.sender is not Euler Mainnet Contract
  * M5: msg. sender cannot send ETH
+ * M6: Can't withdraw more than you own
  */
 
 /**
@@ -28,25 +31,27 @@ import {StrategyMath} from "./base/StrategyMath.sol";
  * @notice Contract for Migrating from Crab v1 to Crab v2
  * @author Opyn team
  */
-contract CrabMigration {
-    using SafeERC20 for IERC20;
-    using StrategyMath for uint256;
+ contract CrabMigration { 
 
-    mapping(address => uint256) public sharesDeposited;
-    bool public isMigrated;
-    CrabStrategy public crabV1;
-    CrabStrategyV2 public crabV2;
-    IEulerExec public euler;
-    WETH9 weth;
+     using SafeERC20 for IERC20;
+     using StrategyMath for uint256;
+     using Address for address payable;
 
-    address public owner;
-    uint256 public totalCrabV1SharesMigrated;
-    uint256 public totalCrabV2SharesReceived;
-    address immutable EULER_MAINNET;
-    address immutable dToken;
-    address immutable wPowerPerp;
+     mapping (address => uint256) public sharesDeposited; 
+     bool public isMigrated;
+     CrabStrategy public crabV1;
+     CrabStrategyV2 public crabV2; 
+     IEulerExec public euler; 
+     WETH9 weth; 
 
-    modifier onlyOwner() {
+     address public owner;
+     uint256 public totalCrabV1SharesMigrated; 
+     uint256 public totalCrabV2SharesReceived;
+     address immutable EULER_MAINNET;
+     address immutable dToken; 
+     address immutable wPowerPerp; 
+     
+     modifier onlyOwner() {
         require(msg.sender == owner, "M1");
         _;
     }
@@ -138,26 +143,44 @@ contract CrabMigration {
         IEulerDToken(dToken).repay(0, amountEthToBorrow);
     }
 
-    /**
-     * @notice allows users to claim their amount of crab v2 shares
-     */
-    function claimV2Shares() external afterMigration {
-        uint256 amountV1Deposited = sharesDeposited[msg.sender];
-        sharesDeposited[msg.sender] = 0;
-        uint256 crabV2TotalShares = crabV2.balanceOf(address(this));
-        uint256 amountV2ToTransfer = (amountV1Deposited * totalCrabV2SharesReceived) / totalCrabV1SharesMigrated;
-        crabV2.transfer(msg.sender, amountV2ToTransfer);
-    }
+     /**
+      * @notice allows users to claim their amount of crab v2 shares
+      */
+     function claimV2Shares() external afterMigration { 
+         uint256 amountV1Deposited = sharesDeposited[msg.sender];
+         sharesDeposited[msg.sender] = 0;
+         uint256 crabV2TotalShares = crabV2.balanceOf(address(this));
+         uint256 amountV2ToTransfer = amountV1Deposited * totalCrabV2SharesReceived / totalCrabV1SharesMigrated;
+         crabV2.transfer(msg.sender, amountV2ToTransfer);
+     }
 
-    /**
-     * @notice allows users to claim crabV2 shares and flash withdraw from crabV2
-     */
-    function claimAndWithdraw() external afterMigration {}
+      /** 
+      * @notice allows users to claim crabV2 shares and flash withdraw from crabV2
+      * 
+      * @param _amountToWithdraw Amount of shares to withdraw
+      * @param _maxEthToPay maximum ETH to pay to buy back the owed wSqueeth debt
+      */
+     function claimAndWithdraw(uint256 _amountToWithdraw, uint256 _maxEthToPay) external afterMigration { 
+        uint256 amountV1Deposited = sharesDeposited[msg.sender];
+        require(_amountToWithdraw <= amountV1Deposited, "M6");
+        
+        sharesDeposited[msg.sender] = amountV1Deposited - _amountToWithdraw;
+        uint256 crabV2TotalShares = crabV2.balanceOf(address(this));
+        uint256 amountV2ToWithdraw = _amountToWithdraw.wmul(totalCrabV2SharesReceived).wdiv(totalCrabV1SharesMigrated);
+        crabV2.flashWithdraw(amountV2ToWithdraw, _maxEthToPay);
+
+        // Pay user's ETH back
+        if (address(this).balance > 0) {
+            payable(msg.sender).sendValue(address(this).balance);
+        }
+
+        // TODO: WE may need to add an event to track this in UI
+     }
 
     /**
      * @notice receive function to allow ETH transfer to this contract
      */
     receive() external payable {
-        require(msg.sender == address(weth) || msg.sender == address(crabV1), "M5");
+        require(msg.sender == address(weth) || msg.sender == address(crabV1) || msg.sender == address(crabV2), "M5");
     }
 }
