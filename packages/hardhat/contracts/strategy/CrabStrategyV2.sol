@@ -636,7 +636,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @dev hedge function to reduce delta using an array of signed orders
      * @param _totalQuantity quantity the manager wants to trade
      * @param _clearingPrice clearing price in weth
-     * @param _isHedgeBuying direction of manager trade
+     * @param _isHedgeBuying direction of hedge trade
      * @param _orders an array of signed order to swap tokens
      */
     function hedgeOTC(
@@ -647,7 +647,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     ) external onlyOwner {
         require(_clearingPrice > 0, "Manager Price should be greater than 0");
         require(_isTimeHedge() || _isPriceHedge(), "Time or Price is not within range");
-        _checkOTCPrice(_clearingPrice, _isBuying);
+        _checkOTCPrice(_clearingPrice, _isHedgeBuying);
 
         timeAtLastHedge = block.timestamp;
 
@@ -655,12 +655,12 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 prevPrice = 0;
         uint256 currentPrice = 0;
         bool isOrderBuying = _orders[0].isBuying;
-        require( _isBuying ^ isOrderBuying, "Orders must be buying when hedge is selling" );
+        require( _isHedgeBuying ^ isOrderBuying, "Orders must be buying when hedge is selling" );
 
         for (uint256 i = 0; i < _orders.length; i++) {
             currentPrice = _orders[i].price;
             require(_orders[i].isBuying == isOrderBuying, "All orders must be either buying or selling")
-            if (_isBuying){
+            if (_isHedgeBuying){
                 require(currentPrice >= prevPrice, "Orders are not arranged properly");
                 } else {
                 require(currentPrice <= prevPrice, "Orders are not arranged properly");                    
@@ -680,13 +680,13 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     /**
      * @notice check that the proposed sale price is within a tolerance of the current Uniswap twap
      * @param _price clearing price provided by manager
-     * @param _isBuying is crab buying or selling oSQTH
+     * @param _isHedgeBuying is crab buying or selling oSQTH
      */
-    function _checkOTCPrice(uint256 _price, address _isBuying) internal view {
+    function _checkOTCPrice(uint256 _price, address _isHedgeBuying) internal view {
         // Get twap
         uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, hedgingTwapPeriod, true);
 
-        if {_isBuying}{
+        if {_isHedgeBuying}{
             require(_price <= twapPrice.mul((ONE.add(otcPriceTolerance))).div(ONE), "Price too high relative to Uniswap twap.")
         else {
             require(_price >= twapPrice.mul((ONE.sub(otcPriceTolerance))).div(ONE), "Price too low relative to Uniswap twap.")
