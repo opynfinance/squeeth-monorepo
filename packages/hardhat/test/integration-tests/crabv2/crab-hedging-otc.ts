@@ -704,12 +704,13 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const dlt = await delta(await controller.vaults(await crabStrategy.vaultId()));
             expect(dlt.toNumber()).to.be.greaterThan(0);
         });
-        it("allows manager to give buy at a greater price and specify a quantity lesser than the same of order amounts", async () => {
+        it.only("allows manager to give buy at a greater price and specify a quantity lesser than the same of order amounts", async () => {
+            const precision = 4; // this is in decimals 18 so technically 0
             const strategyVaultBefore = await controller.vaults(await crabStrategy.vaultId());
             // vault state before
             const deltaStart = await delta(strategyVaultBefore);
             // -1 is almost 0, -1/10^18
-            expect(deltaStart.toNumber()).greaterThan(0);
+            expect(deltaStart.toNumber()).greaterThanOrEqual(0);
             // trader amount to sell oSQTH to change the deltas
             await mintAndSell();
 
@@ -736,65 +737,65 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const orderHash = {
                 bidId: 0,
                 trader: random.address,
-                traderToken: weth.address,
-                traderAmount: toGET.div(2),
-                managerToken: wSqueeth.address,
-                managerAmount: toSell.div(2),
+                quantity: toSell.div(2), //0.06sqth
+                price: oSQTHPriceAfter,
+                isBuying: true,
                 expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(random.address),
             };
-            // quantity is full and not half. hence more quantity for this case, but manager trades less
             const orderHash1 = {
                 bidId: 0,
                 trader: trader.address,
-                traderToken: weth.address,
-                traderAmount: toGET.div(2),
-                managerToken: wSqueeth.address,
-                managerAmount: toSell.div(2),
+                quantity: toSell.div(2),
+                price: oSQTHPriceAfter,
+                isBuying: true,
                 expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
-
                 nonce: traderNonce,
             };
+
             const { typeData, domainData } = getTypeAndDomainData();
             const signedOrder = await signTypedData(random, domainData, typeData, orderHash);
             const signedOrder1 = await signTypedData(trader, domainData, typeData, orderHash1);
-            let managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
 
-            // Do the trade with 4 percent more price
-            managerBuyPrice = managerBuyPrice.mul(104).div(100);
+            // Do the trade with 4 percent lesser price
+            let managerBuyPrice = oSQTHPriceAfter.mul(96).div(100);
             // and only 90% of the total trader quantities. so we swap 50% with the first order and 40% with the next
             const newToSell = toSell.mul(90).div(100);
-            const firstToGet = wdiv(toSell, managerBuyPrice);
-            const secondToGet = wdiv(newToSell, managerBuyPrice);
+            const firstToGet = wmul(toSell, managerBuyPrice);
+            const secondToGet = wmul(newToSell, managerBuyPrice);
 
-            await crabStrategy.connect(owner).hedgeOTC(newToSell, managerBuyPrice, [signedOrder, signedOrder1]);
+            await crabStrategy.connect(owner).hedgeOTC(newToSell, managerBuyPrice, false, [signedOrder, signedOrder1]);
 
             // check the delta and the vaults traded quantities
             const strategyVaultAfter = await controller.vaults(await crabStrategy.vaultId());
-            const error = 1; // this is in decimals 18 so technically 0
             // we traded full collateral sell amount and in return got lesser than oSQTH that desired, hence delta will turn negative
             const afterTradeDelta = (await delta(strategyVaultAfter)).toNumber();
             expect(afterTradeDelta < newDelta).to.be.true;
-            expect(strategyVaultAfter.collateralAmount.add(error)).eq(
+            expect(strategyVaultAfter.collateralAmount).be.closeTo(
                 strategyVaultBefore.collateralAmount.add(secondToGet),
-                "new collateral amounts dont match"
+                precision
             );
-            expect(strategyVaultAfter.shortAmount.toString()).eq(
-                strategyVaultBefore.shortAmount.add(newToSell).toString()
+            expect(strategyVaultAfter.shortAmount).be.closeTo(
+                strategyVaultBefore.shortAmount.add(newToSell),
+                precision
             );
             // check the delta and the vaults traded quantities
             const oSQTHTraderBalanceAfter = await wSqueeth.balanceOf(random.address);
             const wethTraderBalanceAfter = await weth.balanceOf(random.address);
             const oSQTHTraderBalanceAfter_2 = await wSqueeth.balanceOf(trader.address);
             const wethTraderBalanceAfter_2 = await weth.balanceOf(trader.address);
-            expect(oSQTHTraderBalanceAfter).eq(oSQTHTraderBalanceBefore.add(toSell.div(2))); // he gets the full managerAmount
-            expect(wethTraderBalanceAfter.sub(error)).eq(wethTraderBalanceBefore.sub(firstToGet.div(2))); // he gets half of the new price benefits
+            expect(oSQTHTraderBalanceAfter).be.closeTo(oSQTHTraderBalanceBefore.add(toSell.div(2)), precision); // he gets the full managerAmount
+            expect(wethTraderBalanceAfter).be.closeTo(wethTraderBalanceBefore.sub(firstToGet.div(2)), precision); // he gets half of the new price benefits
 
             const difference = toSell.mul(10).div(100);
             const second_trader_receives = toSell.div(2).sub(difference); // he gets the full - 10% as manager is trading only 90 %
-            expect(oSQTHTraderBalanceAfter_2).eq(oSQTHTraderBalanceBefore_2.add(second_trader_receives));
-            expect(wethTraderBalanceBefore_2.sub(wethTraderBalanceAfter_2)).eq(
-                wdiv(second_trader_receives, managerBuyPrice)
+            expect(oSQTHTraderBalanceAfter_2).be.closeTo(
+                oSQTHTraderBalanceBefore_2.add(second_trader_receives),
+                precision
+            );
+            expect(wethTraderBalanceBefore_2.sub(wethTraderBalanceAfter_2)).be.closeTo(
+                wmul(second_trader_receives, managerBuyPrice),
+                precision
             );
         });
         it("should revert on heding too quickly after the previous hedge and when price is within threshold", async () => {
