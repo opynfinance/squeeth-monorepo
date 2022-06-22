@@ -12,7 +12,6 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 import BigNumber from 'bignumber.js'
-import debounce from 'lodash.debounce'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 
@@ -257,7 +256,12 @@ export const CloseShort = () => {
       vault?.shortAmount,
     ],
   )
-  const handleSqthChange = useMemo(() => debounce(onSqthChange, 500), [onSqthChange])
+  const handleSqthChange = useAppCallback(
+    (val: string) => {
+      onSqthChange(val)
+    },
+    [onSqthChange],
+  )
 
   useAppEffect(() => {
     if (amount.lte(0)) {
