@@ -4,7 +4,7 @@ import { Contract, BigNumber, providers, Signer } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import BigNumberJs from 'bignumber.js'
 import { randomBytes } from "ethers/lib/utils";
-import { WETH9, MockErc20, Controller, Oracle, WPowerPerp, CrabStrategyV2, ISwapRouter } from "../../../typechain";
+import { WETH9, MockErc20, Controller, Oracle, WPowerPerp, CrabStrategyV2, ISwapRouter, Timelock } from "../../../typechain";
 import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addWethDaiLiquidity, addSqueethLiquidity } from '../../setup'
 import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../../utils"
 
@@ -40,6 +40,7 @@ describe("Crab V2 integration test: Shutdown of Squeeth Power Perp contracts", f
   let crabStrategy: CrabStrategyV2
   let ethDaiPool: Contract
   let shutdownPrice: BigNumber
+  let timelock: Timelock
 
   this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async () => {
     const accounts = await ethers.getSigners();
@@ -76,8 +77,12 @@ describe("Crab V2 integration test: Shutdown of Squeeth Power Perp contracts", f
     wSqueethPool = squeethDeployments.wsqueethEthPool
     ethDaiPool = squeethDeployments.ethDaiPool
 
+    const TimelockContract = await ethers.getContractFactory("Timelock");
+    timelock = (await TimelockContract.deploy(owner.address, 3 * 24 * 60 * 60)) as Timelock;
+
+
     const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
-    crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, uniswapFactory.address, wSqueethPool.address, hedgeTimeThreshold, hedgePriceThreshold, auctionTime, minPriceMultiplier, maxPriceMultiplier)) as CrabStrategyV2;
+    crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, uniswapFactory.address, wSqueethPool.address, timelock.address, hedgeTimeThreshold, hedgePriceThreshold)) as CrabStrategyV2;
 
     const strategyCap = ethers.utils.parseUnits("1000")
     await crabStrategy.connect(owner).setStrategyCap(strategyCap)

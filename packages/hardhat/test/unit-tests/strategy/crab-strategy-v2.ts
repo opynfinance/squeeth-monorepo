@@ -2,7 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-wit
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber, providers } from "ethers";
-import { MockController, WETH9, MockShortPowerPerp, MockUniswapV3Pool, MockOracle, MockWPowerPerp, CrabStrategyV2, MockErc20 } from "../../../typechain";
+import { MockController, WETH9, MockShortPowerPerp, MockUniswapV3Pool, MockOracle, MockWPowerPerp, CrabStrategyV2, MockErc20, MockTimelock } from "../../../typechain";
 import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../../utils"
 
 describe("Crab Strategy V2", function () {
@@ -27,6 +27,7 @@ describe("Crab Strategy V2", function () {
   let oracle: MockOracle;
   let crabStrategy: CrabStrategyV2;
   let usdc: MockErc20;
+  let timelock: MockTimelock;
 
   this.beforeAll("Prepare accounts", async () => {
     const accounts = await ethers.getSigners();
@@ -61,6 +62,9 @@ describe("Crab Strategy V2", function () {
     const ControllerContract = await ethers.getContractFactory("MockController");
     controller = (await ControllerContract.deploy()) as MockController;
 
+    const TimelockContract = await ethers.getContractFactory("MockTimelock");
+    timelock = (await TimelockContract.deploy(owner.address, 3 * 24 * 60 * 60)) as MockTimelock;
+
     await controller.connect(owner).init(shortSqueeth.address, squeeth.address, ethUSDPool.address, usdc.address);
   })
 
@@ -74,11 +78,9 @@ describe("Crab Strategy V2", function () {
         ethers.constants.AddressZero,
         random.address,
         wSqueethEthPool.address,
+        timelock.address,
         hedgeTimeTolerance,
-        hedgePriceTolerance,
-        auctionTime,
-        minAuctionSlippage,
-        maxAuctionSlippage)).to.be.revertedWith("invalid weth address");
+        hedgePriceTolerance)).to.be.revertedWith("invalid weth address");
     });
 
     it("Should revert if controller is address 0", async function () {
@@ -89,11 +91,9 @@ describe("Crab Strategy V2", function () {
         weth.address,
         random.address,
         wSqueethEthPool.address,
+        timelock.address,
         hedgeTimeTolerance,
-        hedgePriceTolerance,
-        auctionTime,
-        minAuctionSlippage,
-        maxAuctionSlippage)).to.be.revertedWith("invalid controller address");
+        hedgePriceTolerance)).to.be.revertedWith("invalid controller address");
     });
 
     it("Should revert if oracle is address 0", async function () {
@@ -104,11 +104,9 @@ describe("Crab Strategy V2", function () {
         weth.address,
         random.address,
         wSqueethEthPool.address,
+        timelock.address,
         hedgeTimeTolerance,
-        hedgePriceTolerance,
-        auctionTime,
-        minAuctionSlippage,
-        maxAuctionSlippage)).to.be.revertedWith("invalid oracle address");
+        hedgePriceTolerance)).to.be.revertedWith("invalid oracle address");
     });
 
     it("Should revert if uniswap factory is address 0", async function () {
@@ -119,10 +117,9 @@ describe("Crab Strategy V2", function () {
         weth.address,
         ethers.constants.AddressZero,
         wSqueethEthPool.address,
+        timelock.address,
         hedgeTimeTolerance,
-        hedgePriceTolerance,
-        auctionTime, minAuctionSlippage,
-        maxAuctionSlippage)).to.be.revertedWith("invalid factory address");
+        hedgePriceTolerance)).to.be.revertedWith("invalid factory address");
     });
 
     it("Should revert if wSqueethEth pool is address 0", async function () {
@@ -133,11 +130,9 @@ describe("Crab Strategy V2", function () {
         weth.address,
         random.address,
         ethers.constants.AddressZero,
+        timelock.address,
         hedgeTimeTolerance,
-        hedgePriceTolerance,
-        auctionTime,
-        minAuctionSlippage,
-        maxAuctionSlippage)).to.be.revertedWith("invalid ETH:WSqueeth address");
+        hedgePriceTolerance)).to.be.revertedWith("invalid ETH:WSqueeth address");
     });
 
     it("Should revert if hedge time tolerrance is 0", async function () {
@@ -148,11 +143,9 @@ describe("Crab Strategy V2", function () {
         weth.address,
         random.address,
         wSqueethEthPool.address,
+        timelock.address,
         0,
-        hedgePriceTolerance,
-        auctionTime,
-        minAuctionSlippage,
-        maxAuctionSlippage)).to.be.revertedWith("invalid hedge time threshold");
+        hedgePriceTolerance)).to.be.revertedWith("invalid hedge time threshold");
     });
 
     it("Should revert if hedge price tolerance is 0", async function () {
@@ -163,14 +156,12 @@ describe("Crab Strategy V2", function () {
         weth.address,
         random.address,
         wSqueethEthPool.address,
+        timelock.address,
         hedgeTimeTolerance,
-        0,
-        auctionTime,
-        minAuctionSlippage,
-        maxAuctionSlippage)).to.be.revertedWith("invalid hedge price threshold");
+        0)).to.be.revertedWith("invalid hedge price threshold");
     });
 
-    it("Should revert if invalid auction time is 0", async function () {
+    it("Should revert if timelock address is 0", async function () {
       const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
       await expect(CrabStrategyContract.deploy(
         controller.address,
@@ -178,62 +169,14 @@ describe("Crab Strategy V2", function () {
         weth.address,
         random.address,
         wSqueethEthPool.address,
+        ethers.constants.AddressZero,
         hedgeTimeTolerance,
-        hedgePriceTolerance,
-        0,
-        minAuctionSlippage,
-        maxAuctionSlippage)).to.be.revertedWith("invalid auction time");
+        hedgePriceTolerance)).to.be.revertedWith("invalid timelock address");
     });
-
-    it("Should revert if min auction slippage > 1e18 ", async function () {
-      const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
-      await expect(CrabStrategyContract.deploy(
-        controller.address,
-        oracle.address,
-        weth.address,
-        random.address,
-        wSqueethEthPool.address,
-        hedgeTimeTolerance,
-        hedgePriceTolerance,
-        auctionTime,
-        ethers.utils.parseUnits('1.01'),
-        maxAuctionSlippage)).to.be.revertedWith("min price multiplier too high");
-    });
-
-    it("Should revert if min price multiplier is 0", async function () {
-      const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
-      await expect(CrabStrategyContract.deploy(
-        controller.address,
-        oracle.address,
-        weth.address,
-        random.address,
-        wSqueethEthPool.address,
-        hedgeTimeTolerance,
-        hedgePriceTolerance,
-        auctionTime,
-        0,
-        maxAuctionSlippage)).to.be.revertedWith("invalid min price multiplier");
-    });
-
-    it("Should revert if max price multplier < 1e18", async function () {
-      const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
-      await expect(CrabStrategyContract.deploy(
-        controller.address,
-        oracle.address,
-        weth.address,
-        random.address,
-        wSqueethEthPool.address,
-        hedgeTimeTolerance,
-        hedgePriceTolerance,
-        auctionTime,
-        minAuctionSlippage,
-        ethers.utils.parseUnits('0.99'))).to.be.revertedWith("max price multiplier too low");
-    });
-
 
     it("Deployment", async function () {
       const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
-      crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, random.address, wSqueethEthPool.address, hedgeTimeTolerance, hedgePriceTolerance, auctionTime, minAuctionSlippage, maxAuctionSlippage)) as CrabStrategyV2;
+      crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, random.address, wSqueethEthPool.address, timelock.address, hedgeTimeTolerance, hedgePriceTolerance)) as CrabStrategyV2;
     });
   });
 
@@ -345,80 +288,6 @@ describe("Crab Strategy V2", function () {
       await crabStrategy.connect(owner).setHedgePriceThreshold(hedgePriceTolerance)
       const hedgePriceThresholdInContract = await crabStrategy.hedgePriceThreshold()
       expect(hedgePriceThresholdInContract.eq(hedgePriceTolerance)).to.be.true
-    })
-
-    it('should revert if non owner tries to change the auction time', async () => {
-      await expect(crabStrategy.connect(random).setAuctionTime(newAuctionTime)).to.be.revertedWith("Ownable: caller is not the owner")
-    })
-
-    it('should revert if owner tries to change the auction time to 0', async () => {
-      await expect(crabStrategy.connect(owner).setAuctionTime(0)).to.be.revertedWith("invalid auction time")
-    })
-
-    it('should allow owner to change the auction time', async () => {
-      await crabStrategy.connect(owner).setAuctionTime(newAuctionTime)
-      const auctionTimeInContract = await crabStrategy.auctionTime()
-      expect(auctionTimeInContract.eq(newAuctionTime)).to.be.true
-    })
-
-    it('should allow owner to change the auction time back', async () => {
-      await crabStrategy.connect(owner).setAuctionTime(auctionTime)
-      const auctionTimeInContract = await crabStrategy.auctionTime()
-      expect(auctionTimeInContract.eq(auctionTime)).to.be.true
-    })
-
-    it('should revert if non owner tries to change the min price multiplier', async () => {
-      await expect(crabStrategy.connect(random).setMinPriceMultiplier(newMinAuctionSlippage)).to.be.revertedWith("Ownable: caller is not the owner")
-    })
-
-    it('should revert if owner tries to change the min price multiplier to too high of a value', async () => {
-      await expect(crabStrategy.connect(owner).setMinPriceMultiplier(revertMinAuctionSlippage)).to.be.revertedWith("min price multiplier too high")
-    })
-
-    it('should allow owner to change the min price multiplier', async () => {
-      await crabStrategy.connect(owner).setMinPriceMultiplier(newMinAuctionSlippage)
-      const newMinAuctionSlippageInContract = await crabStrategy.minPriceMultiplier()
-      expect(newMinAuctionSlippageInContract.eq(newMinAuctionSlippage)).to.be.true
-    })
-
-    it('should allow owner to change the min price multiplier back', async () => {
-      await crabStrategy.connect(owner).setMinPriceMultiplier(minAuctionSlippage)
-      const newMinAuctionSlippageInContract = await crabStrategy.minPriceMultiplier()
-      expect(newMinAuctionSlippageInContract.eq(minAuctionSlippage)).to.be.true
-    })
-
-    it('should revert if non owner tries to change the max price multiplier', async () => {
-      await expect(crabStrategy.connect(random).setMaxPriceMultiplier(newMaxAuctionSlippage)).to.be.revertedWith("Ownable: caller is not the owner")
-    })
-
-    it('should revert if owner tries to change the max price multiplier to too low of a value', async () => {
-      await expect(crabStrategy.connect(owner).setMaxPriceMultiplier(revertMaxAuctionSlippage)).to.be.revertedWith("max price multiplier too low")
-    })
-
-    it('should allow owner to change the max price multiplier', async () => {
-      await crabStrategy.connect(owner).setMaxPriceMultiplier(newMaxAuctionSlippage)
-      const newMaxAuctionSlippageInContract = await crabStrategy.maxPriceMultiplier()
-      expect(newMaxAuctionSlippageInContract.eq(newMaxAuctionSlippage)).to.be.true
-    })
-
-    it('should allow owner to change the max price multiplier back', async () => {
-      await crabStrategy.connect(owner).setMaxPriceMultiplier(maxAuctionSlippage)
-      const newMaxAuctionSlippageInContract = await crabStrategy.maxPriceMultiplier()
-      expect(newMaxAuctionSlippageInContract.eq(maxAuctionSlippage)).to.be.true
-    })
-
-    it('should revert if non owner tries to change the delta hedge threshold', async () => {
-      await expect(crabStrategy.connect(random).setDeltaHedgeThreshold(newDeltaHedgeThreshold)).to.be.revertedWith("Ownable: caller is not the owner")
-    })
-
-    it('should allow owner to change the delta hedge threshold and then change it back', async () => {
-      const deltaHedgeThresholdBefore = await crabStrategy.deltaHedgeThreshold()
-      await crabStrategy.connect(owner).setDeltaHedgeThreshold(newDeltaHedgeThreshold)
-      const newDeltaHedgeThresholdInContract = await crabStrategy.deltaHedgeThreshold()
-      expect(newDeltaHedgeThresholdInContract.eq(newDeltaHedgeThreshold)).to.be.true
-      await crabStrategy.connect(owner).setDeltaHedgeThreshold(deltaHedgeThresholdBefore)
-      const newDeltaHedgeThresholdInContractRevert = await crabStrategy.deltaHedgeThreshold()
-      expect(newDeltaHedgeThresholdInContractRevert.eq(deltaHedgeThresholdBefore)).to.be.true
     })
 
     it('should revert if non owner tries to change the delta hedge threshold', async () => {
@@ -593,6 +462,43 @@ describe("Crab Strategy V2", function () {
       expect(strategyCollateralAfter.eq(strategyCollateralBefore.sub(expectedEthToWithdraw))).to.be.true
       expect(strategyDebtAfter.eq(strategyDebtBefore.sub(depositorSqueethBalanceBefore))).to.be.true
       expect(isSimilar(depositorEthBalanceAfter.sub(depositorEthBalanceBefore).toString(), expectedEthToWithdraw.toString())).to.be.true
+    })
+  })
+
+  describe("Migrate vault to new strategy", async () => {
+    const strategyCap = ethers.utils.parseUnits("100")
+    const ethToDeposit = BigNumber.from(60).mul(one)
+
+    it("Should revert if non owner tries to migrate", async () => {
+      await expect(crabStrategy.connect(random).transferVault(depositor.address)).to.be.revertedWith("Caller is not timelock")
+    })
+
+    it("Should revert if owner tries to migrate directly", async () => {
+      await expect(crabStrategy.connect(owner).transferVault(depositor.address)).to.be.revertedWith("Caller is not timelock")
+    })
+
+    it("Should migrate and disable deposit/withdraw if transfer is called by timelock", async () => {
+      await crabStrategy.connect(owner).setStrategyCap(strategyCap)
+      await crabStrategy.connect(depositor).deposit({ value: ethToDeposit })
+      const depositorCrabBefore = (await crabStrategy.balanceOf(depositor.address))
+      const depositorSqueethBalanceBefore = await squeeth.balanceOf(depositor.address)
+
+      // Transfer here
+      await timelock.connect(owner).executeVaultTransfer(crabStrategy.address, random.address)
+      const nftBalAfter = await shortSqueeth.balanceOf(crabStrategy.address)
+      const nftBalForRandom = await shortSqueeth.balanceOf(random.address)
+
+      const newCap = await crabStrategy.strategyCap()
+      expect(nftBalAfter.eq(0)).to.be.true
+      expect(nftBalForRandom.eq(1)).to.be.true
+      expect(newCap.eq(0)).to.be.true
+
+      // Try to withdraw
+      await squeeth.connect(depositor).approve(crabStrategy.address, depositorSqueethBalanceBefore)
+      await expect(crabStrategy.connect(depositor).withdraw(depositorCrabBefore)).to.be.revertedWith('C3')
+
+      // Try to deposit
+      await expect(crabStrategy.connect(depositor).deposit({ value: ethToDeposit })).to.be.revertedWith('Deposit exceeds strategy cap')
     })
   })
 })
