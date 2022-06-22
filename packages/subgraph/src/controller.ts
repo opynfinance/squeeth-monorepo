@@ -30,9 +30,10 @@ import {
 } from "../generated/schema";
 import { buyOrSellETH, createTransactionHistory } from "./util";
 
-import { BIGINT_ONE, BIGINT_ZERO } from "./constants";
+import { BIGINT_ONE, BIGINT_ZERO, TOKEN_DECIMALS_18 } from "./constants";
 import { loadOrCreateAccount } from "./utils/loadInit";
 import { EMPTY_ADDR, SHORT_HELPER_ADDR } from "./addresses";
+import { convertTokenToDecimal } from "./utils";
 
 // Note: If a handler doesn't require existing field values, it is faster
 // _not_ to load the entity from the store. Instead, create it fresh with
@@ -160,10 +161,8 @@ export function handleDepositCollateral(event: DepositCollateral): void {
   transactionHistory.ethAmount = event.params.amount;
   transactionHistory.save();
 
-  buyOrSellETH(
-    vault.owner,
-    BigDecimal.fromString(event.params.amount.toString())
-  );
+  let amount = convertTokenToDecimal(event.params.amount, TOKEN_DECIMALS_18);
+  buyOrSellETH(vault.owner, amount);
 }
 
 export function handleDepositUniPositionToken(
@@ -365,10 +364,8 @@ export function handleWithdrawCollateral(event: WithdrawCollateral): void {
   transactionHistory.ethAmount = event.params.amount;
   transactionHistory.save();
 
-  buyOrSellETH(
-    vault.owner,
-    BigDecimal.fromString(event.params.amount.toString()).neg()
-  );
+  let amount = convertTokenToDecimal(event.params.amount, TOKEN_DECIMALS_18);
+  buyOrSellETH(vault.owner, amount.neg());
 }
 
 export function handleWithdrawUniPositionToken(

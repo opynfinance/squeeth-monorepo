@@ -1,5 +1,5 @@
 import { Address, BigDecimal, log } from "@graphprotocol/graph-ts";
-import { Pool } from "../generated/schema";
+import { Account, Pool } from "../generated/schema";
 import { Transfer } from "../generated/WPowerPerp/WPowerPerp";
 import {
   CONTROLLER_ADDR,
@@ -8,11 +8,18 @@ import {
   SWAPROUTER2_ADDR,
   SWAPROUTER_ADDR,
   CRAB_STRATEGY_ADDR,
+  OSQTH_WETH_POOL,
 } from "./addresses";
+import { TOKEN_DECIMALS_18 } from "./constants";
 import { buyOrSellSQTH, createTransactionHistory } from "./util";
+import { convertTokenToDecimal } from "./utils";
 
 export function handleTransfer(event: Transfer): void {
+  if (event.address.toHexString().toLowerCase() != OSQTH_WETH_POOL) {
+    return;
+  }
   let pool = Pool.load(event.address.toHexString());
+
   if (
     pool != null ||
     event.transaction.to == SHORT_HELPER_ADDR ||
@@ -34,7 +41,8 @@ export function handleTransfer(event: Transfer): void {
     "RECEIVE_OSQTH",
     event
   );
-  let amount = BigDecimal.fromString(event.params.value.toString());
+
+  let amount = convertTokenToDecimal(event.params.value, TOKEN_DECIMALS_18);
   let receipt = event.transaction.to;
   if (receipt) {
     receiverTransactionHistory.owner = receipt;
