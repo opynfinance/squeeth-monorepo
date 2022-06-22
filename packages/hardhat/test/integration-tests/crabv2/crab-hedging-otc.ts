@@ -279,11 +279,12 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
 
             // check the delta and the vaults traded quantities
             const strategyVaultAfter = await controller.vaults(await crabStrategy.vaultId());
-            let precision = 4 // the last of 18 digit precision
-            expect(strategyVaultAfter.collateralAmount).be.closeTo(strategyVaultBefore.collateralAmount.add(toGET), precision);
-            expect(strategyVaultAfter.shortAmount).be.closeTo(
-                strategyVaultBefore.shortAmount.add(toSell),precision
+            let precision = 4; // the last of 18 digit precision
+            expect(strategyVaultAfter.collateralAmount).be.closeTo(
+                strategyVaultBefore.collateralAmount.add(toGET),
+                precision
             );
+            expect(strategyVaultAfter.shortAmount).be.closeTo(strategyVaultBefore.shortAmount.add(toSell), precision);
             expect((await delta(strategyVaultAfter)).toNumber()).be.closeTo(0, precision);
             // check the delta and the vaults traded quantities
 
@@ -367,9 +368,11 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             await crabStrategy.connect(owner).hedgeOTC(toSell, oSQTHPriceAfter, false, [signedOrder]);
             const strategyVaultAfter = await controller.vaults(await crabStrategy.vaultId());
             let precision = 4;
-            expect(strategyVaultAfter.shortAmount).be.closeTo(
-                    strategyVaultBefore.shortAmount.add(toSell), precision);
-            expect(strategyVaultAfter.collateralAmount).be.closeTo(strategyVaultBefore.collateralAmount.add(toGET), precision);
+            expect(strategyVaultAfter.shortAmount).be.closeTo(strategyVaultBefore.shortAmount.add(toSell), precision);
+            expect(strategyVaultAfter.collateralAmount).be.closeTo(
+                strategyVaultBefore.collateralAmount.add(toGET),
+                precision
+            );
         });
         it("should hedge via OTC using one order while buying oSQTH delta negative", async () => {
             const trader = random;
@@ -418,7 +421,11 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
 
             const afterOSQTHdelta = wmul(strategyVaultBefore.shortAmount.sub(toGET).mul(2), oSQTHPriceAfter);
             const afterTradeDelta = strategyVaultBefore.collateralAmount.sub(toSell).sub(afterOSQTHdelta);
-            console.log(strategyVaultBefore.collateralAmount.sub(toSell).toString(),afterOSQTHdelta.toString(), afterTradeDelta.toString());
+            console.log(
+                strategyVaultBefore.collateralAmount.sub(toSell).toString(),
+                afterOSQTHdelta.toString(),
+                afterTradeDelta.toString()
+            );
 
             // get the pre trade balances for the trader
             const oSQTHTraderBalanceBefore = await wSqueeth.balanceOf(trader.address);
@@ -430,7 +437,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const orderHash = {
                 bidId: 0,
                 trader: trader.address,
-                quantity: toGET, 
+                quantity: toGET,
                 price: oSQTHPriceAfter,
                 isBuying: false,
                 expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
@@ -447,8 +454,11 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const afterOSQTHdeltaReal = wmul(strategyVaultAfter.shortAmount.mul(2), oSQTHPriceAfter);
             const afterTradeDeltaReal = strategyVaultAfter.collateralAmount.sub(afterOSQTHdeltaReal);
             let precision = 4;
-            expect(afterTradeDeltaReal.toNumber()).be.closeTo(0,precision);
-            expect(strategyVaultAfter.collateralAmount).be.closeTo(strategyVaultBefore.collateralAmount.sub(toSell), precision);
+            expect(afterTradeDeltaReal.toNumber()).be.closeTo(0, precision);
+            expect(strategyVaultAfter.collateralAmount).be.closeTo(
+                strategyVaultBefore.collateralAmount.sub(toSell),
+                precision
+            );
             expect(strategyVaultAfter.shortAmount).be.closeTo(strategyVaultBefore.shortAmount.sub(toGET), precision);
 
             // check trader balances
@@ -484,13 +494,11 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const oSQTHTraderBalanceBefore_2 = await wSqueeth.balanceOf(random.address);
             const wethTraderBalanceBefore_2 = await weth.balanceOf(random.address);
 
-
-
             // and prepare the trade
             const orderHash = {
                 bidId: 0,
                 trader: random.address,
-                quantity: toSell.div(2), 
+                quantity: toSell.div(2),
                 price: oSQTHPriceAfter,
                 isBuying: true,
                 expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
@@ -512,14 +520,15 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const signedOrder1 = await signTypedData(trader, domainData, typeData, orderHash1);
 
             // Do the trade
-            await crabStrategy.connect(owner).hedgeOTC(toSell, oSQTHPriceAfter , false, [signedOrder, signedOrder1]);
+            await crabStrategy.connect(owner).hedgeOTC(toSell, oSQTHPriceAfter, false, [signedOrder, signedOrder1]);
 
             // check the delta and the vaults traded quantities
             const strategyVaultAfter = await controller.vaults(await crabStrategy.vaultId());
-            expect(strategyVaultAfter.collateralAmount).be.closeTo(strategyVaultBefore.collateralAmount.add(toGET), precision);
-            expect(strategyVaultAfter.shortAmount).be.closeTo(
-                strategyVaultBefore.shortAmount.add(toSell), 4
+            expect(strategyVaultAfter.collateralAmount).be.closeTo(
+                strategyVaultBefore.collateralAmount.add(toGET),
+                precision
             );
+            expect(strategyVaultAfter.shortAmount).be.closeTo(strategyVaultBefore.shortAmount.add(toSell), 4);
             expect((await delta(strategyVaultAfter)).toNumber()).be.closeTo(0, precision);
             // check the delta and the vaults traded quantities
 
