@@ -93,6 +93,9 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     /// @dev store the current nonce for each address
     mapping(address => Counters.Counter) private _nonces;
 
+    /// @dev store the delegate address of the signer
+    mapping(address => address) public signerDelegate;
+
     struct FlashDepositData {
         uint256 totalDeposit;
     }
@@ -128,6 +131,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     event SetHedgePriceThreshold(uint256 newHedgePriceThreshold);
     event SetOTCPriceTolerance(uint256 otcPriceTolerance);
     event VaultTransferred(address indexed newStrategy, uint256 vaultId);
+    event DelegateToSigner(address indexed signer, address indexed delegate);
 
     modifier onlyTimelock() {
         require(msg.sender == timelock, "Caller is not timelock");
@@ -531,6 +535,16 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     }
 
     /**
+     * @notice delegate signing bid to another address
+     * @param _signer new signer address
+     */
+    function delegateToSigner(address _signer) external {
+        require(_signer != address(0), "Invalid signer address");
+        signerDelegate[msg.sender] = _signer;
+        emit DelegateToSigner(msg.sender, _signer);
+    }
+
+    /**
      * @dev increment current nonce of the address
      * @param _owner address of signer
      * @return current the current nonce of the address
@@ -600,9 +614,12 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         );
 
         bytes32 hash = _hashTypedDataV4(structHash);
-        address offerSigner = ECDSA.recover(hash, _order.v, _order.r, _order.s);
-        require(offerSigner == _order.trader, "Invalid offer signature");
         require(_order.expiry >= block.timestamp, "Order has expired");
+        address offerSigner = ECDSA.recover(hash, _order.v, _order.r, _order.s);
+        if (offerSigner != _order.trader) {
+            // check that signer was delegated by bidder to sign
+            require(signerDelegate[_order.trader] == offerSigner, "Invalid offer signature");
+        }
 
         //adjust quantity for partial fills
         if (_remainingAmount < _order.quantity) {
