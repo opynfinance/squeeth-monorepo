@@ -154,7 +154,6 @@ describe("Crab V2 flashswap integration test: crab vault liquidation", function 
     const lastHedgeTime = await crabStrategy.timeAtLastHedge()
     const collateralAmount = await strategyVault.collateralAmount
 
-    // expect(isSimilar(totalSupply.toString(), (expectedEthDeposit).toString())).to.be.true
     expect(isSimilar(depositorCrab.toString(), expectedEthDeposit.toString())).to.be.true
     expect(isSimilar(debtAmount.toString(), debtToMint.toString())).to.be.true
     expect(depositorSqueethBalance.eq(depositorSqueethBalanceBefore)).to.be.true
@@ -369,27 +368,27 @@ describe("Crab V2 flashswap integration test: crab vault liquidation", function 
 
       await crabStrategy.connect(depositor2).flashWithdraw(userCrabBalanceBefore, maxEthToPay)
 
-      // const strategyVaultAfter = await controller.vaults(await crabStrategy.vaultId());
-      // const userEthBalanceAfter = await provider.getBalance(depositor2.address)
-      // const userCrabBalanceAfter = await crabStrategy.balanceOf(depositor2.address);
-      // const strategyDebtAmountAfter = strategyVaultAfter.shortAmount
-      // const strategyCollateralAmountAfter = strategyVaultAfter.collateralAmount
+      const strategyVaultAfter = await controller.vaults(await crabStrategy.vaultId());
+      const userEthBalanceAfter = await provider.getBalance(depositor2.address)
+      const userCrabBalanceAfter = await crabStrategy.balanceOf(depositor2.address);
+      const strategyDebtAmountAfter = strategyVaultAfter.shortAmount
+      const strategyCollateralAmountAfter = strategyVaultAfter.collateralAmount
 
-      // const vaultId = await crabStrategy.vaultId();
-      // const isVaultSafe = await controller.isVaultSafe((await crabStrategy.vaultId()))
-      // expect(isVaultSafe).to.be.true
+      const vaultId = await crabStrategy.vaultId();
+      const isVaultSafe = await controller.isVaultSafe((await crabStrategy.vaultId()))
+      expect(isVaultSafe).to.be.true
 
-      // const vaultBefore = await controller.vaults(vaultId)
-      // const collateralAfter = vaultBefore.collateralAmount
-      // const debtAfter = vaultBefore.shortAmount
+      const vaultBefore = await controller.vaults(vaultId)
+      const collateralAfter = vaultBefore.collateralAmount
+      const debtAfter = vaultBefore.shortAmount
 
-      // expect(isSimilar(userEthBalanceAfter.sub(userEthBalanceBefore).toString(), ethToWithdraw.toString(), 2)).to.be.true
-      // expect(userCrabBalanceAfter.eq(BigNumber.from(0))).to.be.true
-      // expect(userCrabBalanceBefore.sub(userCrabBalanceAfter).eq(userCrabBalanceBefore)).to.be.true
-      // expect(collateralAfter.eq(strategyCollateralAmountBefore.sub(userCollateral))).to.be.true
-      // expect(strategyDebtAmountBefore.sub(debtAfter).eq(debtToRepay)).to.be.true
-      // expect(strategyDebtAmountAfter.eq(BigNumber.from(0))).to.be.true
-      // expect(strategyCollateralAmountAfter.eq(BigNumber.from(0))).to.be.true
+      expect(isSimilar(userEthBalanceAfter.sub(userEthBalanceBefore).toString(), ethToWithdraw.toString(), 2)).to.be.true
+      expect(userCrabBalanceAfter.eq(BigNumber.from(0))).to.be.true
+      expect(userCrabBalanceBefore.sub(userCrabBalanceAfter).eq(userCrabBalanceBefore)).to.be.true
+      expect(collateralAfter.eq(strategyCollateralAmountBefore.sub(userCollateral))).to.be.true
+      expect(strategyDebtAmountBefore.sub(debtAfter).eq(debtToRepay)).to.be.true
+      expect(strategyDebtAmountAfter.eq(BigNumber.from(0))).to.be.true
+      expect(strategyCollateralAmountAfter.eq(BigNumber.from(0))).to.be.true
     })
   })
 })
