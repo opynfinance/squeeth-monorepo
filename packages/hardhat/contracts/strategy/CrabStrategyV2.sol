@@ -330,7 +330,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      */
     function flashWithdraw(uint256 _crabAmount, uint256 _maxEthToPay) external afterInitialization nonReentrant {
         uint256 exactWSqueethNeeded = _getDebtFromStrategyAmount(_crabAmount);
-        console.log(exactWSqueethNeeded, "contract");
 
         _exactOutFlashSwap(
             weth,
@@ -780,7 +779,9 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     ) internal view returns (uint256, uint256) {
         uint256 wSqueethToMint;
         uint256 feeAdjustment = _calcFeeAdjustment();
-
+        bool isShutdown = (_strategyDebtAmount == 0 && _strategyCollateralAmount == 0) && (totalSupply() !=0);
+        require(!isShutdown, "Crab contracts shut down");
+    
         wSqueethToMint = _depositedAmount.wmul(_strategyDebtAmount).wdiv(
             _strategyCollateralAmount.add(_strategyDebtAmount.wmul(feeAdjustment))
         );
