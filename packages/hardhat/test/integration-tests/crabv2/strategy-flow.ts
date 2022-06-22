@@ -4,7 +4,7 @@ import { Contract, BigNumber, providers } from "ethers";
 import BigNumberJs from 'bignumber.js'
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
-import { WETH9, MockErc20, Controller, Oracle, WPowerPerp, CrabStrategyV2 } from "../../../typechain";
+import { WETH9, MockErc20, Controller, Oracle, WPowerPerp, CrabStrategyV2, Timelock } from "../../../typechain";
 import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addWethDaiLiquidity, addSqueethLiquidity } from '../../setup'
 import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../../utils"
 
@@ -37,6 +37,7 @@ describe("Crab V2 integration test: flash deposit - deposit - withdraw", functio
   let wSqueeth: WPowerPerp
   let crabStrategy: CrabStrategyV2
   let ethDaiPool: Contract
+  let timelock: Timelock
 
 
   this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async () => {
@@ -75,8 +76,11 @@ describe("Crab V2 integration test: flash deposit - deposit - withdraw", functio
     await controller.connect(owner).setFeeRecipient(feeRecipient.address);
     await controller.connect(owner).setFeeRate(100)
 
+    const TimelockContract = await ethers.getContractFactory("Timelock");
+    timelock = (await TimelockContract.deploy(owner.address, 3 * 24 * 60 * 60)) as Timelock;
+
     const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
-    crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, uniswapFactory.address, wSqueethPool.address, hedgeTimeThreshold, hedgePriceThreshold, auctionTime, minPriceMultiplier, maxPriceMultiplier)) as CrabStrategyV2;
+    crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, uniswapFactory.address, wSqueethPool.address, timelock.address, hedgeTimeThreshold, hedgePriceThreshold)) as CrabStrategyV2;
   })
 
   this.beforeAll("Seed pool liquidity", async () => {
