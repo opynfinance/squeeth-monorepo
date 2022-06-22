@@ -52,7 +52,7 @@
   },
   "scripts": {
     "chain": "hardhat node --network hardhat --no-deploy",
-    "test": "TS_NODE_TRANSPILE_ONLY=1 FORK=false npx hardhat test --network hardhat test/integration-tests/crabv2/*.ts",
+    "test": "TS_NODE_TRANSPILE_ONLY=1 FORK=false npx hardhat test --network hardhat test/unit-tests/*/*.ts",
     "compile": "hardhat compile",
     "deploy": "hardhat deploy",
     "postdeploy": "hardhat run scripts/publish.js",

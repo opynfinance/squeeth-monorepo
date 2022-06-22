@@ -442,7 +442,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     }
 
     /**
-<<<<<<< HEAD
      * @notice owner can set a threshold, scaled by 1e18 that determines the maximum discount of a clearing sale price to the current uniswap twap price
      * @param _otcPriceTolerance the OTC price tolerance, in percent, scaled by 1e18
      */
@@ -453,43 +452,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         otcPriceTolerance = _otcPriceTolerance;
 
         emit SetOTCPriceTolerance(_otcPriceTolerance);
-=======
-     * @notice owner can set the auction time, in seconds, that a hedge auction runs for
-     * @param _auctionTime the length of the hedge auction in seconds
-     */
-    function setAuctionTime(uint256 _auctionTime) external onlyOwner {
-        require(_auctionTime > 0, "invalid auction time");
-
-        auctionTime = _auctionTime;
-
-        emit SetAuctionTime(_auctionTime);
-    }
-
-    /**
-     * @notice owner can set the min price multiplier in a percentage scaled by 1e18 (9e17 is 90%)
-     * @dev the min price multiplier is multiplied by the TWAP price to get the intial auction price
-     * @param _minPriceMultiplier the min price multiplier, a percentage, scaled by 1e18
-     */
-    function setMinPriceMultiplier(uint256 _minPriceMultiplier) external onlyOwner {
-        require(_minPriceMultiplier < 1e18, "min price multiplier too high");
-
-        minPriceMultiplier = _minPriceMultiplier;
-
-        emit SetMinPriceMultiplier(_minPriceMultiplier);
-    }
-
-    /**
-     * @notice owner can set the max price multiplier in a percentage scaled by 1e18 (11e18 is 110%)
-     * @dev the max price multiplier is multiplied by the TWAP price to get the final auction price
-     * @param _maxPriceMultiplier the max price multiplier, a percentage, scaled by 1e18
-     */
-    function setMaxPriceMultiplier(uint256 _maxPriceMultiplier) external onlyOwner {
-        require(_maxPriceMultiplier > 1e18, "max price multiplier too low");
-
-        maxPriceMultiplier = _maxPriceMultiplier;
-
-        emit SetMaxPriceMultiplier(_maxPriceMultiplier);
->>>>>>> 0ece66af00897d39ec1f00b8897e9fbf26433802
     }
 
     /**
@@ -620,7 +582,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     }
 
     /**
-<<<<<<< HEAD
      * @dev increment current nonce of the address
      * @param owner address of signer
      * @return current the current nonce of the address
@@ -771,147 +732,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 priceLower = twapPrice.mul((ONE.sub(otcPriceTolerance))).div(ONE);
         // Check that clearing sale price is at least twap*(1 - otcPriceTolerance%)
         require(price >= priceLower, "Price too low relative to Uniswap twap.");
-=======
-     * @notice hedging function to adjust collateral and debt to be eth delta neutral
-     * @param _auctionTriggerTime timestamp where auction started
-     * @param _isStrategySellingWSqueeth auction type, true for sell auction
-     * @param _limitPrice hedger accepted auction price, should be the max price when auction is sell auction, min price when it is a buy auction
-     */
-    function _hedge(
-        uint256 _auctionTriggerTime,
-        bool _isStrategySellingWSqueeth,
-        uint256 _limitPrice
-    ) internal {
-        (
-            bool isSellingAuction,
-            uint256 wSqueethToAuction,
-            uint256 ethProceeds,
-            uint256 auctionWSqueethEthPrice
-        ) = _startAuction(_auctionTriggerTime);
-
-        require(_isStrategySellingWSqueeth == isSellingAuction, "wrong auction type");
-
-        if (isSellingAuction) {
-            // Receiving ETH and paying wSqueeth
-            require(auctionWSqueethEthPrice <= _limitPrice, "Auction price > max price");
-            require(msg.value >= ethProceeds, "Low ETH amount received");
-
-            _executeSellAuction(msg.sender, msg.value, wSqueethToAuction, ethProceeds, false);
-        } else {
-            require(msg.value == 0, "ETH attached for buy auction");
-            // Receiving wSqueeth and paying ETH
-            require(auctionWSqueethEthPrice >= _limitPrice, "Auction price < min price");
-            _executeBuyAuction(msg.sender, wSqueethToAuction, ethProceeds, false);
-        }
-
-        emit Hedge(
-            msg.sender,
-            _isStrategySellingWSqueeth,
-            _limitPrice,
-            auctionWSqueethEthPrice,
-            wSqueethToAuction,
-            ethProceeds
-        );
-    }
-
-    /**
-     * @notice execute sell auction based on the parameters calculated
-     * @dev if _isHedgingOnUniswap, wSqueeth minted is kept to repay flashswap, otherwise sent to seller
-     * @param _buyer buyer address
-     * @param _buyerAmount buyer ETH amount sent
-     * @param _wSqueethToSell wSqueeth amount to sell
-     * @param _ethToBuy ETH amount to buy
-     * @param _isHedgingOnUniswap true if arbing with uniswap price
-     */
-    function _executeSellAuction(
-        address _buyer,
-        uint256 _buyerAmount,
-        uint256 _wSqueethToSell,
-        uint256 _ethToBuy,
-        bool _isHedgingOnUniswap
-    ) internal {
-        if (_isHedgingOnUniswap) {
-            _mintWPowerPerp(_buyer, _wSqueethToSell, _ethToBuy, true);
-        } else {
-            _mintWPowerPerp(_buyer, _wSqueethToSell, _ethToBuy, false);
-
-            uint256 remainingEth = _buyerAmount.sub(_ethToBuy);
-
-            if (remainingEth > 0) {
-                payable(_buyer).sendValue(remainingEth);
-            }
-        }
-
-        emit ExecuteSellAuction(_buyer, _wSqueethToSell, _ethToBuy, _isHedgingOnUniswap);
-    }
-
-    /**
-     * @notice execute buy auction based on the parameters calculated
-     * @dev if _isHedgingOnUniswap, ETH proceeds are not sent to seller
-     * @param _seller seller address
-     * @param _wSqueethToBuy wSqueeth amount to buy
-     * @param _ethToSell ETH amount to sell
-     * @param _isHedgingOnUniswap true if arbing with uniswap price
-     */
-    function _executeBuyAuction(
-        address _seller,
-        uint256 _wSqueethToBuy,
-        uint256 _ethToSell,
-        bool _isHedgingOnUniswap
-    ) internal {
-        _burnWPowerPerp(_seller, _wSqueethToBuy, _ethToSell, _isHedgingOnUniswap);
-
-        if (!_isHedgingOnUniswap) {
-            payable(_seller).sendValue(_ethToSell);
-        }
-
-        emit ExecuteBuyAuction(_seller, _wSqueethToBuy, _ethToSell, _isHedgingOnUniswap);
-    }
-
-    /**
-     * @notice determine auction direction, price, and ensure auction hasn't switched directions
-     * @param _auctionTriggerTime auction starting time
-     * @return auction type
-     * @return WSqueeth amount to sell or buy
-     * @return ETH to sell/buy
-     * @return auction WSqueeth/ETH price
-     */
-    function _startAuction(uint256 _auctionTriggerTime)
-        internal
-        returns (
-            bool,
-            uint256,
-            uint256,
-            uint256
-        )
-    {
-        (uint256 strategyDebt, uint256 ethDelta) = _syncStrategyState();
-        uint256 currentWSqueethPrice = IOracle(oracle).getTwap(
-            ethWSqueethPool,
-            wPowerPerp,
-            weth,
-            hedgingTwapPeriod,
-            true
-        );
-        uint256 feeAdjustment = _calcFeeAdjustment();
-        (bool isSellingAuction, ) = _checkAuctionType(strategyDebt, ethDelta, currentWSqueethPrice, feeAdjustment);
-        uint256 auctionWSqueethEthPrice = _getAuctionPrice(_auctionTriggerTime, currentWSqueethPrice, isSellingAuction);
-        (bool isStillSellingAuction, uint256 wSqueethToAuction) = _checkAuctionType(
-            strategyDebt,
-            ethDelta,
-            auctionWSqueethEthPrice,
-            feeAdjustment
-        );
-
-        require(isSellingAuction == isStillSellingAuction, "auction direction changed");
-
-        uint256 ethProceeds = wSqueethToAuction.wmul(auctionWSqueethEthPrice);
-
-        timeAtLastHedge = block.timestamp;
-        priceAtLastHedge = currentWSqueethPrice;
-
-        return (isSellingAuction, wSqueethToAuction, ethProceeds, auctionWSqueethEthPrice);
->>>>>>> 0ece66af00897d39ec1f00b8897e9fbf26433802
     }
 
     /**
@@ -961,10 +781,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         wSqueethToMint = _depositedAmount.wmul(_strategyDebtAmount).wdiv(
             _strategyCollateralAmount.add(_strategyDebtAmount.wmul(feeAdjustment))
         );
-<<<<<<< HEAD
-=======
-
->>>>>>> 0ece66af00897d39ec1f00b8897e9fbf26433802
         uint256 fee = wSqueethToMint.wmul(feeAdjustment);
 
         return (wSqueethToMint, fee);
@@ -973,111 +789,24 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     /**
      * @notice check if hedging based on time threshold is allowed
      * @return true if time hedging is allowed
-<<<<<<< HEAD
      */
     function _isTimeHedge() internal view returns (bool) {
         return (block.timestamp >= timeAtLastHedge.add(hedgeTimeThreshold));
-=======
-     * @return auction trigger timestamp
-     */
-    function _isTimeHedge() internal view returns (bool, uint256) {
-        uint256 auctionTriggerTime = timeAtLastHedge.add(hedgeTimeThreshold);
-
-        return (block.timestamp >= auctionTriggerTime, auctionTriggerTime);
->>>>>>> 0ece66af00897d39ec1f00b8897e9fbf26433802
     }
 
     /**
      * @notice check if hedging based on price threshold is allowed
-<<<<<<< HEAD
      * @return true if hedging is allowed
      */
     function _isPriceHedge() internal view returns (bool) {
         uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, hedgingTwapPeriod, true);
         uint256 cachedRatio = wSqueethEthPrice.wdiv(priceAtLastHedge);
-=======
-     * @param _auctionTriggerTime timestamp where auction started
-     * @return true if hedging is allowed
-     */
-    function _isPriceHedge(uint256 _auctionTriggerTime) internal view returns (bool) {
-        if (_auctionTriggerTime < timeAtLastHedge) return false;
-        uint32 secondsToPriceHedgeTrigger = uint32(block.timestamp.sub(_auctionTriggerTime));
-        uint256 wSqueethEthPriceAtTriggerTime = IOracle(oracle).getHistoricalTwap(
-            ethWSqueethPool,
-            wPowerPerp,
-            weth,
-            secondsToPriceHedgeTrigger + hedgingTwapPeriod,
-            secondsToPriceHedgeTrigger
-        );
-        uint256 cachedRatio = wSqueethEthPriceAtTriggerTime.wdiv(priceAtLastHedge);
->>>>>>> 0ece66af00897d39ec1f00b8897e9fbf26433802
         uint256 priceThreshold = cachedRatio > 1e18 ? (cachedRatio).sub(1e18) : uint256(1e18).sub(cachedRatio);
 
         return priceThreshold >= hedgePriceThreshold;
     }
 
     /**
-<<<<<<< HEAD
-=======
-     * @notice calculate auction price based on auction direction, start time and wSqueeth price
-     * @param _auctionTriggerTime timestamp where auction started
-     * @param _wSqueethEthPrice WSqueeth/ETH price
-     * @param _isSellingAuction auction type (true for selling, false for buying auction)
-     * @return auction price
-     */
-    function _getAuctionPrice(
-        uint256 _auctionTriggerTime,
-        uint256 _wSqueethEthPrice,
-        bool _isSellingAuction
-    ) internal view returns (uint256) {
-        uint256 auctionCompletionRatio = block.timestamp.sub(_auctionTriggerTime) >= auctionTime
-            ? 1e18
-            : (block.timestamp.sub(_auctionTriggerTime)).wdiv(auctionTime);
-
-        uint256 priceMultiplier;
-        if (_isSellingAuction) {
-            priceMultiplier = maxPriceMultiplier.sub(
-                auctionCompletionRatio.wmul(maxPriceMultiplier.sub(minPriceMultiplier))
-            );
-        } else {
-            priceMultiplier = minPriceMultiplier.add(
-                auctionCompletionRatio.wmul(maxPriceMultiplier.sub(minPriceMultiplier))
-            );
-        }
-
-        return _wSqueethEthPrice.wmul(priceMultiplier);
-    }
-
-    /**
-     * @notice check the direction of auction and the target amount of wSqueeth to hedge
-     * @param _debt strategy debt
-     * @param _ethDelta ETH delta (amount of ETH in strategy)
-     * @param _wSqueethEthPrice WSqueeth/ETH price
-     * @param _feeAdjustment the fee adjustment, the amount of ETH owed per wSqueeth minted
-     * @return auction type(sell or buy) and auction initial target hedge in wSqueeth
-     */
-    function _checkAuctionType(
-        uint256 _debt,
-        uint256 _ethDelta,
-        uint256 _wSqueethEthPrice,
-        uint256 _feeAdjustment
-    ) internal view returns (bool, uint256) {
-        uint256 wSqueethDelta = _debt.wmul(2e18).wmul(_wSqueethEthPrice);
-
-        (uint256 targetHedge, bool isSellingAuction) = _getTargetHedgeAndAuctionType(
-            wSqueethDelta,
-            _ethDelta,
-            _wSqueethEthPrice,
-            _feeAdjustment
-        );
-
-        require(targetHedge.wmul(_wSqueethEthPrice).wdiv(_ethDelta) > deltaHedgeThreshold, "strategy is delta neutral");
-
-        return (isSellingAuction, targetHedge);
-    }
-
-    /**
->>>>>>> 0ece66af00897d39ec1f00b8897e9fbf26433802
      * @dev calculate amount of strategy token to mint for depositor
      * @param _amount amount of ETH deposited
      * @param _strategyCollateralAmount amount of strategy collateral
@@ -1115,29 +844,4 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     function _calcEthToWithdraw(uint256 _crabRatio, uint256 _strategyCollateralAmount) internal pure returns (uint256) {
         return _strategyCollateralAmount.wmul(_crabRatio);
     }
-<<<<<<< HEAD
-=======
-
-    /**
-     * @notice determine target hedge and auction type (selling/buying auction)
-     * @dev target hedge is the amount of WSqueeth the auction needs to sell or buy to be eth delta neutral
-     * @param _wSqueethDelta WSqueeth delta
-     * @param _ethDelta ETH delta
-     * @param _wSqueethEthPrice WSqueeth/ETH price
-     * @param _feeAdjustment the fee adjustment, the amount of ETH owed per wSqueeth minted
-     * @return target hedge in wSqueeth
-     * @return auction type: true if auction is selling WSqueeth, false if buying WSqueeth
-     */
-    function _getTargetHedgeAndAuctionType(
-        uint256 _wSqueethDelta,
-        uint256 _ethDelta,
-        uint256 _wSqueethEthPrice,
-        uint256 _feeAdjustment
-    ) internal pure returns (uint256, bool) {
-        return
-            (_wSqueethDelta > _ethDelta)
-                ? ((_wSqueethDelta.sub(_ethDelta)).wdiv(_wSqueethEthPrice), false)
-                : ((_ethDelta.sub(_wSqueethDelta)).wdiv(_wSqueethEthPrice.add(_feeAdjustment)), true);
-    }
->>>>>>> 0ece66af00897d39ec1f00b8897e9fbf26433802
 }
