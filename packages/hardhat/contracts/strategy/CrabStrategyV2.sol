@@ -60,7 +60,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     /// @dev typehash for signed orders
     bytes32 private constant _CRAB_BALANCE_TYPEHASH =
         keccak256(
-            "Order(uint256 bidId,address trader,address traderToken,uint256 traderAmount,address managerToken,uint256 managerAmount,uint256 expiry,uint256 nonce)"
+            "Order(uint256 bidId,address trader,uint256 quantity,uint256 price,bool isBuying,uint256 expiry,uint256 nonce)"
         );
 
     /// @dev enum to differentiate between uniswap swap callback function source
@@ -81,8 +81,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     uint256 public hedgeTimeThreshold;
     /// @dev price movement to trigger a hedge (0.1*1e18 = 10%)
     uint256 public hedgePriceThreshold;
-    /// @dev hedge auction duration (seconds)
-    uint256 public auctionTime;
 
     /// @dev timestamp when last hedge executed
     uint256 public timeAtLastHedge;
@@ -106,10 +104,9 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     struct Order {
         uint256 bidId;
         address trader;
-        address traderToken;
-        uint256 traderAmount;
-        address managerToken;
-        uint256 managerAmount;
+        uint256 quantity;
+        uint256 price;
+        bool isBuying;
         uint256 expiry;
         uint256 nonce;
         uint8 v;
@@ -124,7 +121,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     event FlashWithdraw(address indexed withdrawer, uint256 crabAmount, uint256 wSqueethAmount);
     event FlashDepositCallback(address indexed depositor, uint256 flashswapDebt, uint256 excess);
     event FlashWithdrawCallback(address indexed withdrawer, uint256 flashswapDebt, uint256 excess);
-    event HedgeOTC(address trader, uint256 managerAmount, uint256 traderAmount, uint256 sellerPrice);
+    event HedgeOTC(address trader, uint256 quantity, uint256 price, bool isBuying, uint256 clearingPrice);
     event SetStrategyCap(uint256 newCapAmount);
     event SetHedgingTwapPeriod(uint32 newHedgingTwapPeriod);
     event SetHedgeTimeThreshold(uint256 newHedgeTimeThreshold);
@@ -575,25 +572,28 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @dev check the signer and swap tokens in the order
      * @param _remainingAmount quantity the manager wants to sell
      * @param _clearingPrice the price at which the manager is buying
-     * @param _orderPrice the selling price of each order
      * @param _order a signed order to swap tokens
      */
     function _execOrder(
         uint256 _remainingAmount,
         uint256 _clearingPrice,
-        uint256 _orderPrice,
         Order memory _order
     ) internal {
-        require(_clearingPrice >= _orderPrice, "Clearing Price should be at least Seller Price");
+        // Check order beats clearing price
+        if (_order.isBuying){
+            require(_clearingPrice <= _order.price, "Clearing Price should beat offered price");
+        } else {
+            require(_clearingPrice >= _orderPrice, "Clearing Price should beat offered price");
+        }
+
         bytes32 structHash = keccak256(
             abi.encode(
                 _CRAB_BALANCE_TYPEHASH,
                 _order.bidId,
                 _order.trader,
-                _order.traderToken,
-                _order.traderAmount,
-                _order.managerToken,
-                _order.managerAmount,
+                _order.quantity,
+                _order.price,
+                _order.isBuying,
                 _order.expiry,
                 _useNonce(_order.trader)
             )
@@ -604,79 +604,71 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         require(offerSigner == _order.trader, "Invalid offer signature");
         require(_order.expiry >= block.timestamp, "Order has expired");
 
-        //adjust managerAmount and TraderAmount for partial fills
-        if (_remainingAmount < _order.managerAmount) {
-            _order.managerAmount = _remainingAmount;
+        //adjust quantity for partial fills
+        if (_remainingAmount < _order.quantity) {
+            _order.quantity = _remainingAmount;
         }
-        //adjust if manager is giving better price
-        _order.traderAmount = _order.managerAmount.mul(1e18).div(_clearingPrice);
+        // weth clearing price for the order
+        uint256 wethAmount = _order.quantity.mul(_clearingPrice).div(1e18);
 
-        IERC20(_order.traderToken).transferFrom(_order.trader, address(this), _order.traderAmount);
-
-        // if the trader is selling WETH to us i.e if we are selling oSQTH
-        if (_order.traderToken == weth) {
-            IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
-            // if last param is false, transfer happens again
-            _mintWPowerPerp(_order.trader, _order.managerAmount, _order.traderAmount, true);
-            priceAtLastHedge = _order.traderAmount.mul(1e18).div(_order.managerAmount);
+        if (_order.isBuying){
+            // trader sends weth and receives oSQTH
+            IERC20(weth).transferFrom(_order.trader, address(this), wethAmount);
+            _mintWPowerPerp(_order.trader, _order.quantity, wethAmount, true);
+            IERC20(wsqueeth).transfer(_order.trader, _order.quantity);
         } else {
-            // oSQTH in, WETH out
-            _burnWPowerPerp(_order.trader, _order.traderAmount, _order.managerAmount, true);
+            // trader sends oSQTH and receives weth
+            IERC20(wsqueeth).transferFrom(_order.trader, address(this), _order.quantity);
+            _burnWPowerPerp(_order.trader, _order.quantity, wethAmount, true);
             //wrap it
-            IWETH9(weth).deposit{value: _order.managerAmount}();
-            // if last param is false, transfer happens again
-            priceAtLastHedge = _order.managerAmount.mul(1e18).div(_order.traderAmount);
+            IWETH9(weth).deposit{value: wethAmount}();
+            IERC20(weth).transfer(_order.trader, wethAmount);
         }
-
-        IERC20(_order.managerToken).transfer(_order.trader, _order.managerAmount);
 
         emit HedgeOTC(
             _order.trader, // market maker
-            _order.managerAmount, // token out
-            _order.traderAmount, // token in
-            _orderPrice
+            _order.quantity, // order oSQTH quantity
+            _order.price, // order price
+            _order.isBuying, // order direction
+            _clearingPrice // executed price for order
         );
     }
 
     /**
      * @dev hedge function to reduce delta using an array of signed orders
-     * @param _managerSellAmount quantity the manager wants to sell
-     * @param _clearingPrice the price at which the manager is buying
+     * @param quantity quantity the manager wants to trade
+     * @param _clearingPrice clearing price in weth
+     * @param _isBuying direction of manager trade
      * @param _orders an array of signed order to swap tokens
      */
     function hedgeOTC(
-        uint256 _managerSellAmount,
+        uint256 _quantity,
         uint256 _clearingPrice,
+        bool _isBuying,
         Order[] memory _orders
     ) external onlyOwner {
         require(_clearingPrice > 0, "Manager Price should be greater than 0");
         require(_isTimeHedge() || _isPriceHedge(), "Time or Price is not within range");
-        _checkOTCPrice(_clearingPrice, _orders[0].managerToken);
+        _checkOTCPrice(_clearingPrice, _isBuying);
 
         timeAtLastHedge = block.timestamp;
 
-        uint256 remainingAmount = _managerSellAmount;
+        uint256 remainingAmount = _quantity;
         uint256 prevPrice = 0;
         uint256 currentPrice = 0;
 
-        bytes32 firstTradePair = keccak256(abi.encode(_orders[0].traderToken, _orders[0].managerToken));
-        bytes memory tradePair;
         for (uint256 i = 0; i < _orders.length; i++) {
-            tradePair = abi.encode(_orders[i].traderToken, _orders[i].managerToken);
-            currentPrice = _orders[i].managerAmount.mul(1e18).div(_orders[i].traderAmount);
-            require(currentPrice >= prevPrice, "Orders are not arranged properly");
-            if (i > 0) {
-                require(keccak256(tradePair) == firstTradePair, "All orders must have the same buy/sell token.");
-            }
+            currentPrice = _orders[i].price;
+            if (_isBuying){
+                require(currentPrice >= prevPrice, "Orders are not arranged properly");
+                } else {
+                require(currentPrice <= prevPrice, "Orders are not arranged properly");                    
+                }
             prevPrice = currentPrice;
 
-            if (remainingAmount > _orders[i].managerAmount) {
-                _execOrder(remainingAmount, _clearingPrice, currentPrice, _orders[i]);
-                remainingAmount = remainingAmount.sub(_orders[i].managerAmount);
-            } else {
-                _execOrder(remainingAmount, _clearingPrice, currentPrice, _orders[i]);
-                break;
-            }
+            _execOrder(remainingAmount, _clearingPrice, _orders[i]);
+
+            if (remainingAmount > _orders[i].quantity) { break };
         }
     }
 
@@ -685,15 +677,16 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @param _price clearing price provided by manager
      * @param _tokenToSell token to be sold
      */
-    function _checkOTCPrice(uint256 _price, address _tokenToSell) internal view {
+    function _checkOTCPrice(uint256 _price, address _isBuying) internal view {
         // Get twap
         uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, hedgingTwapPeriod, true);
-        // invert price if we are selling wPowerPerp
-        uint256 twapPrice = (_tokenToSell == wPowerPerp) ? ONE_ONE.div(wSqueethEthPrice) : wSqueethEthPrice;
 
-        uint256 priceLower = twapPrice.mul((ONE.sub(otcPriceTolerance))).div(ONE);
-        // Check that clearing sale price is at least twap*(1 - otcPriceTolerance%)
-        require(_price >= priceLower, "Price too low relative to Uniswap twap.");
+        if {_isBuying}{
+            require(_price <= twapPrice.mul((ONE.add(otcPriceTolerance))).div(ONE), "Price too high relative to Uniswap twap.")
+        else {
+            require(_price >= twapPrice.mul((ONE.sub(otcPriceTolerance))).div(ONE), "Price too low relative to Uniswap twap.")
+
+        }
     }
 
     /**
