@@ -1033,9 +1033,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
 
             await expect(
                 crabStrategy.connect(owner).setOTCPriceTolerance(BigNumber.from(10).pow(17).mul(3))
-            ).to.be.revertedWith("price tolerance is too high");
-            await crabStrategy.connect(owner).setOTCPriceTolerance(BigNumber.from(10).pow(17));
-            expect((await crabStrategy.otcPriceTolerance()).eq(BigNumber.from(10).pow(17))).to.be.true;
+            ).to.be.revertedWith("Caller is not timelock");
         });
     });
 });

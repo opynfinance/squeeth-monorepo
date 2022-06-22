@@ -380,7 +380,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @notice owner can set a threshold, scaled by 1e18 that determines the maximum discount of a clearing sale price to the current uniswap twap price
      * @param _otcPriceTolerance the OTC price tolerance, in percent, scaled by 1e18
      */
-    function setOTCPriceTolerance(uint256 _otcPriceTolerance) external onlyOwner {
+    function setOTCPriceTolerance(uint256 _otcPriceTolerance) external onlyTimelock {
         // Tolerance cannot be more than 20%
         require(_otcPriceTolerance <= maxOTCPriceTolerance, "price tolerance is too high");
 
