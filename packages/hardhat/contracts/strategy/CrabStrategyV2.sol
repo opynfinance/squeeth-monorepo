@@ -638,13 +638,13 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @dev hedge function to reduce delta using an array of signed orders
      * @param quantity quantity the manager wants to trade
      * @param _clearingPrice clearing price in weth
-     * @param _isBuying direction of manager trade
+     * @param _isHedgeBuying direction of manager trade
      * @param _orders an array of signed order to swap tokens
      */
     function hedgeOTC(
         uint256 _quantity,
         uint256 _clearingPrice,
-        bool _isBuying,
+        bool _isHedgeBuying,
         Order[] memory _orders
     ) external onlyOwner {
         require(_clearingPrice > 0, "Manager Price should be greater than 0");
@@ -656,9 +656,12 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 remainingAmount = _quantity;
         uint256 prevPrice = 0;
         uint256 currentPrice = 0;
+        bool isOrderBuying = _orders[0].isBuying;
+        require( _isBuying ^ isOrderBuying, "Orders must be buying when hedge is selling" );
 
         for (uint256 i = 0; i < _orders.length; i++) {
             currentPrice = _orders[i].price;
+            require(_orders[i].isBuying == isOrderBuying, "All orders must be buying or selling")
             if (_isBuying){
                 require(currentPrice >= prevPrice, "Orders are not arranged properly");
                 } else {
