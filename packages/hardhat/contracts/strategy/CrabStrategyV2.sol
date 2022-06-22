@@ -3,6 +3,8 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
+import "hardhat/console.sol";
+
 // interface
 import {IController} from "../interfaces/IController.sol";
 import {IWPowerPerp} from "../interfaces/IWPowerPerp.sol";
@@ -328,6 +330,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      */
     function flashWithdraw(uint256 _crabAmount, uint256 _maxEthToPay) external afterInitialization nonReentrant {
         uint256 exactWSqueethNeeded = _getDebtFromStrategyAmount(_crabAmount);
+        console.log(exactWSqueethNeeded, "contract");
 
         _exactOutFlashSwap(
             weth,
