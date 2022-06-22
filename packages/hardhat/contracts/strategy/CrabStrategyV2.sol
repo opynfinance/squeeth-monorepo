@@ -675,7 +675,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     /**
      * @notice check that the proposed sale price is within a tolerance of the current Uniswap twap
      * @param _price clearing price provided by manager
-     * @param _tokenToSell token to be sold
+     * @param _isBuying is crab buying or selling oSQTH
      */
     function _checkOTCPrice(uint256 _price, address _isBuying) internal view {
         // Get twap
