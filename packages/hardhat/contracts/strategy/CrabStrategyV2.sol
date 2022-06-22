@@ -60,7 +60,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     /// @dev typehash for signed orders
     bytes32 private constant _CRAB_BALANCE_TYPEHASH =
         keccak256(
-            "Order(uint256 bidId,address trader,address traderToken,uint256 traderAmount,address managerToken,uint256 managerAmount,uint256 nonce)"
+            "Order(uint256 bidId,address trader,address traderToken,uint256 traderAmount,address managerToken,uint256 managerAmount,uint256 expiry, uint256 nonce)"
         );
 
     /// @dev enum to differentiate between uniswap swap callback function source
@@ -110,6 +110,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 traderAmount;
         address managerToken;
         uint256 managerAmount;
+        uint256 expiry;
         uint256 nonce;
         uint8 v;
         bytes32 r;
@@ -593,6 +594,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
                 _order.traderAmount,
                 _order.managerToken,
                 _order.managerAmount,
+                _order.expiry,
                 _useNonce(_order.trader)
             )
         );
@@ -600,6 +602,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         bytes32 hash = _hashTypedDataV4(structHash);
         address offerSigner = ECDSA.recover(hash, _order.v, _order.r, _order.s);
         require(offerSigner == _order.trader, "Invalid offer signature");
+        require(_order.expiry >= block.timestamp, "Order has expired");
 
         //adjust managerAmount and TraderAmount for partial fills
         if (_remainingAmount < _order.managerAmount) {
