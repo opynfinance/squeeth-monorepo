@@ -211,6 +211,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                     { type: "uint256", name: "traderAmount" },
                     { type: "address", name: "managerToken" },
                     { type: "uint256", name: "managerAmount" },
+                    { type: "uint256", name: "expiry" },
                     { type: "uint256", name: "nonce" },
                 ],
             };
