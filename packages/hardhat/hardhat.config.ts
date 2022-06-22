@@ -57,7 +57,7 @@ const UNISWAP_SETTING = {
   settings: {
     optimizer: {
       enabled: true,
-      runs: 800,
+      runs: 1,
     },
   },
 };
@@ -67,6 +67,7 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       initialBaseFeePerGas: 0,
+      allowUnlimitedContractSize: true,
       saveDeployments: false, // only used in cicd to test deployments
       mining: {
         auto: true

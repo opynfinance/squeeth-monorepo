@@ -102,6 +102,7 @@ describe("Crab v2 Integration test: Timelock", function () {
             uniswapFactory.address,
             wSqueethPool.address,
             timelock.address,
+            swapRouter.address,
             hedgeTimeThreshold,
             hedgePriceThreshold
         )) as CrabStrategyV2;
