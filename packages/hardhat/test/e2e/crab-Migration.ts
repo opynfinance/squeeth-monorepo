@@ -81,10 +81,7 @@ describe("Crab Migration", function () {
                             wethOsqthPoolAddress, 
                             random.address,
                             1,
-                            1,
-                            1,
-                            1,
-                            ethers.utils.parseEther("10.0")));
+                            1));
         
         await crabStrategyV2.setStrategyCap(ethers.utils.parseEther("1000.0"));
     })
