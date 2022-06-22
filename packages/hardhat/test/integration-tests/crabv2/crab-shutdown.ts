@@ -119,7 +119,7 @@ describe("Crab V2 integration test: Shutdown of Squeeth Power Perp contracts", f
 
   })
 
-  this.beforeAll("Deposit into strategy", async () => {
+  this.beforeAll("Initialize strategy", async () => {
     const ethToDeposit = ethers.utils.parseUnits('20')
     const msgvalue = ethers.utils.parseUnits('20')
     const ethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600, true)
@@ -128,19 +128,20 @@ describe("Crab V2 integration test: Shutdown of Squeeth Power Perp contracts", f
     const debtToMint = wdiv(ethToDeposit, squeethDelta);
     const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
-    await crabStrategy.connect(depositor).deposit({ value: msgvalue })
+    await crabStrategy.connect(depositor).initialize(debtToMint, { value: msgvalue })
+
+    const lastHedgeTime = await crabStrategy.timeAtLastHedge()
+    const currentBlockNumber = await provider.getBlockNumber()
+    const currentBlock = await provider.getBlock(currentBlockNumber)
+    const timeStamp = currentBlock.timestamp
 
     const totalSupply = (await crabStrategy.totalSupply())
     const depositorCrab = (await crabStrategy.balanceOf(depositor.address))
     const [strategyOperatorBefore, strategyNftIdBefore, strategyCollateralAmountBefore, debtAmount] = await crabStrategy.getVaultDetails()
     const depositorSqueethBalance = await wSqueeth.balanceOf(depositor.address)
     const strategyContractSqueeth = await wSqueeth.balanceOf(crabStrategy.address)
-    const lastHedgeTime = await crabStrategy.timeAtLastHedge()
-    const currentBlockNumber = await provider.getBlockNumber()
-    const currentBlock = await provider.getBlock(currentBlockNumber)
-    const timeStamp = currentBlock.timestamp
 
-    expect(totalSupply.eq(ethToDeposit)).to.be.true
+
     expect(depositorCrab.eq(ethToDeposit)).to.be.true
     // these had to be adjusted - it seems the eth price is a bit different than expected maybe? but only in coverage???
     expect(isSimilar(debtAmount.toString(), debtToMint.toString(), 3)).to.be.true

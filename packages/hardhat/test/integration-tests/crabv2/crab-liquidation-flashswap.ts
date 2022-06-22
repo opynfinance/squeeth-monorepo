@@ -26,6 +26,7 @@ describe("Crab V2 flashswap integration test: crab vault liquidation", function 
   let owner: SignerWithAddress;
   let depositor: SignerWithAddress;
   let depositor2: SignerWithAddress;
+  let crabMigration: SignerWithAddress;
   let liquidator: SignerWithAddress;
   let feeRecipient: SignerWithAddress;
   let dai: MockErc20
@@ -43,12 +44,13 @@ describe("Crab V2 flashswap integration test: crab vault liquidation", function 
 
   this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async () => {
     const accounts = await ethers.getSigners();
-    const [_owner, _depositor, _depositor2, _liquidator, _feeRecipient] = accounts;
+    const [_owner, _depositor, _depositor2, _liquidator, _feeRecipient, _crabMigration] = accounts;
     owner = _owner;
     depositor = _depositor;
     depositor2 = _depositor2;
     liquidator = _liquidator;
     feeRecipient = _feeRecipient;
+    crabMigration = _crabMigration;
     provider = ethers.provider
 
     const { dai: daiToken, weth: wethToken } = await deployWETHAndDai()
@@ -124,19 +126,23 @@ describe("Crab V2 flashswap integration test: crab vault liquidation", function 
     await provider.send("evm_mine", [])
   })
 
-  this.beforeAll("Deposit into strategy", async () => {
+  this.beforeAll("Initialize strategy", async () => {
     const ethToDeposit = ethers.utils.parseUnits('20')
-    const msgvalue = ethers.utils.parseUnits('10.2')
     const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
-
-    await crabStrategy.connect(depositor).flashDeposit(ethToDeposit, { value: msgvalue })
-
     const currentScaledSquethPrice = (await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 300, false))
     const feeRate = await controller.feeRate()
     const ethFeePerWSqueeth = currentScaledSquethPrice.mul(feeRate).div(10000)
     const squeethDelta = scaledStartingSqueethPrice1e18.mul(2);
     const debtToMint = wdiv(ethToDeposit, (squeethDelta.add(ethFeePerWSqueeth)));
     const expectedEthDeposit = ethToDeposit.sub(debtToMint.mul(ethFeePerWSqueeth).div(one))
+
+    await crabStrategy.connect(crabMigration).initialize(debtToMint, { value: ethToDeposit });
+
+    const currentBlockNumber = await provider.getBlockNumber()
+    const currentBlock = await provider.getBlock(currentBlockNumber)
+    const timeStamp = currentBlock.timestamp
+
+    await crabStrategy.connect(crabMigration).transfer(depositor.address, expectedEthDeposit);
 
     const totalSupply = (await crabStrategy.totalSupply())
     const depositorCrab = (await crabStrategy.balanceOf(depositor.address))
@@ -145,12 +151,8 @@ describe("Crab V2 flashswap integration test: crab vault liquidation", function 
     const depositorSqueethBalance = await wSqueeth.balanceOf(depositor.address)
     const strategyContractSqueeth = await wSqueeth.balanceOf(crabStrategy.address)
     const lastHedgeTime = await crabStrategy.timeAtLastHedge()
-    const currentBlockNumber = await provider.getBlockNumber()
-    const currentBlock = await provider.getBlock(currentBlockNumber)
-    const timeStamp = currentBlock.timestamp
     const collateralAmount = await strategyVault.collateralAmount
 
-    expect(isSimilar(totalSupply.toString(), (expectedEthDeposit).toString())).to.be.true
     expect(isSimilar(depositorCrab.toString(), expectedEthDeposit.toString())).to.be.true
     expect(isSimilar(debtAmount.toString(), debtToMint.toString())).to.be.true
     expect(depositorSqueethBalance.eq(depositorSqueethBalanceBefore)).to.be.true

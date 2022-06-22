@@ -36,6 +36,7 @@ describe("Crab v2 Integration test: Timelock", function () {
     let depositor: SignerWithAddress;
     let depositor2: SignerWithAddress;
     let depositor3: SignerWithAddress;
+    let crabMigration: SignerWithAddress;
     let liquidator: SignerWithAddress;
     let feeRecipient: SignerWithAddress;
     let dai: MockErc20;
@@ -53,13 +54,14 @@ describe("Crab v2 Integration test: Timelock", function () {
 
     this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async () => {
         const accounts = await ethers.getSigners();
-        const [_owner, _depositor, _depositor2, _liquidator, _feeRecipient, _depositor3] = accounts;
+        const [_owner, _depositor, _depositor2, _liquidator, _feeRecipient, _depositor3, _crabMigration] = accounts;
         owner = _owner;
         depositor = _depositor;
         depositor2 = _depositor2;
         liquidator = _liquidator;
         feeRecipient = _feeRecipient;
         depositor3 = _depositor3;
+        crabMigration = _crabMigration;
         provider = ethers.provider;
 
         const { dai: daiToken, weth: wethToken } = await deployWETHAndDai();
@@ -116,8 +118,8 @@ describe("Crab v2 Integration test: Timelock", function () {
         await provider.send("evm_increaseTime", [1500]);
         await provider.send("evm_mine", []);
     });
-    before("Deposit into strategy", async () => {
-        await crabStrategy.connect(depositor3).deposit({ value: ethers.utils.parseUnits("1") });
+    before("Initialize strategy", async () => {
+        await crabStrategy.connect(crabMigration).initialize(ethers.utils.parseUnits("0.2"), { value: ethers.utils.parseUnits("1") });
     });
 
     describe("Transfer vault with timelock", async () => {
