@@ -581,9 +581,9 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     ) internal {
         // Check order beats clearing price
         if (_order.isBuying){
-            require(_clearingPrice <= _order.price, "Clearing Price should beat offered price");
+            require(_clearingPrice <= _order.price, "Clearing Price should be below bid price");
         } else {
-            require(_clearingPrice >= _orderPrice, "Clearing Price should beat offered price");
+            require(_clearingPrice >= _orderPrice, "Clearing Price should be above offer price");
         }
 
         bytes32 structHash = keccak256(
@@ -614,12 +614,10 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         if (_order.isBuying){
             // trader sends weth and receives oSQTH
             IERC20(weth).transferFrom(_order.trader, address(this), wethAmount);
-            _mintWPowerPerp(_order.trader, _order.quantity, wethAmount, true);
-            IERC20(wsqueeth).transfer(_order.trader, _order.quantity);
+            _mintWPowerPerp(_order.trader, _order.quantity, wethAmount, false);
         } else {
             // trader sends oSQTH and receives weth
-            IERC20(wsqueeth).transferFrom(_order.trader, address(this), _order.quantity);
-            _burnWPowerPerp(_order.trader, _order.quantity, wethAmount, true);
+            _burnWPowerPerp(_order.trader, _order.quantity, wethAmount, false);
             //wrap it
             IWETH9(weth).deposit{value: wethAmount}();
             IERC20(weth).transfer(_order.trader, wethAmount);
@@ -636,13 +634,13 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
     /**
      * @dev hedge function to reduce delta using an array of signed orders
-     * @param quantity quantity the manager wants to trade
+     * @param _totalQuantity quantity the manager wants to trade
      * @param _clearingPrice clearing price in weth
      * @param _isHedgeBuying direction of manager trade
      * @param _orders an array of signed order to swap tokens
      */
     function hedgeOTC(
-        uint256 _quantity,
+        uint256 _totalQuantity,
         uint256 _clearingPrice,
         bool _isHedgeBuying,
         Order[] memory _orders
@@ -653,7 +651,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
         timeAtLastHedge = block.timestamp;
 
-        uint256 remainingAmount = _quantity;
+        uint256 remainingAmount = _totalQuantity;
         uint256 prevPrice = 0;
         uint256 currentPrice = 0;
         bool isOrderBuying = _orders[0].isBuying;
@@ -661,7 +659,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
         for (uint256 i = 0; i < _orders.length; i++) {
             currentPrice = _orders[i].price;
-            require(_orders[i].isBuying == isOrderBuying, "All orders must be buying or selling")
+            require(_orders[i].isBuying == isOrderBuying, "All orders must be either buying or selling")
             if (_isBuying){
                 require(currentPrice >= prevPrice, "Orders are not arranged properly");
                 } else {
