@@ -256,6 +256,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 traderAmount: toGET.div(2),
                 managerToken: wSqueeth.address,
                 managerAmount: toSell.div(2),
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(random.address),
             };
             const orderHash1 = {
@@ -265,6 +266,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 traderAmount: toGET.div(2),
                 managerToken: wSqueeth.address,
                 managerAmount: toSell.div(2),
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(trader.address),
             };
 
@@ -357,6 +359,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 traderAmount: toGET,
                 managerToken: wSqueeth.address,
                 managerAmount: toSell,
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(random.address),
             };
 
@@ -436,6 +439,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 traderAmount: toGET,
                 managerToken: weth.address,
                 managerAmount: toSell,
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(trader.address),
             };
 
@@ -493,6 +497,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 traderAmount: toGET.div(2),
                 managerToken: wSqueeth.address,
                 managerAmount: toSell.div(2),
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(random.address),
             };
             // quantity is full and not half. hence more quantity for this case, but manager trades less
@@ -503,6 +508,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 traderAmount: toGET,
                 managerToken: wSqueeth.address,
                 managerAmount: toSell,
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(trader.address),
             };
 
@@ -568,6 +574,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 traderAmount: toGET.div(2),
                 managerToken: wSqueeth.address,
                 managerAmount: toSell.div(2),
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(random.address),
             };
             // quantity is full and not half. hence more quantity for this case, but manager trades less
@@ -578,6 +585,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 traderAmount: toGET.div(2),
                 managerToken: wSqueeth.address,
                 managerAmount: toSell.div(2),
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(trader.address),
             };
 
@@ -646,6 +654,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 traderAmount: toGET.div(2),
                 managerToken: wSqueeth.address,
                 managerAmount: toSell.div(2),
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(random.address),
             };
             // quantity is full and not half. hence more quantity for this case, but manager trades less
@@ -656,6 +665,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 traderAmount: toGET.div(2),
                 managerToken: wSqueeth.address,
                 managerAmount: toSell.div(2),
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: traderNonce,
             };
 
@@ -736,6 +746,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 traderAmount: toGET.div(2),
                 managerToken: wSqueeth.address,
                 managerAmount: toSell.div(2),
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(random.address),
             };
             // quantity is full and not half. hence more quantity for this case, but manager trades less
@@ -746,6 +757,8 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 traderAmount: toGET.div(2),
                 managerToken: wSqueeth.address,
                 managerAmount: toSell.div(2),
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
+
                 nonce: traderNonce,
             };
             const { typeData, domainData } = getTypeAndDomainData();
@@ -817,6 +830,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 traderAmount: toGet,
                 managerToken: weth.address,
                 managerAmount: toSell,
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(trader.address),
             };
 
@@ -847,6 +861,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 traderAmount: toGet,
                 managerToken: weth.address,
                 managerAmount: toSell,
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(trader.address),
             };
             const { typeData, domainData } = getTypeAndDomainData();
@@ -906,6 +921,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 traderAmount: toGET,
                 managerToken: weth.address,
                 managerAmount: toSell,
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(trader.address),
             };
 
@@ -937,6 +953,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 traderAmount: toGet,
                 managerToken: weth.address,
                 managerAmount: toSell,
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(trader.address),
             };
             const { typeData, domainData } = getTypeAndDomainData();
@@ -966,6 +983,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 traderAmount: toGet,
                 managerToken: weth.address,
                 managerAmount: toSell,
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(trader.address),
             };
             const { typeData, domainData } = getTypeAndDomainData();
@@ -1012,6 +1030,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 traderAmount: toGET.div(2),
                 managerToken: wSqueeth.address,
                 managerAmount: toSell.div(2),
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(random.address),
             };
             // manager gives out less, hence this is better price. But ordered last. So should revert
@@ -1022,6 +1041,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 traderAmount: toGET.div(2),
                 managerToken: wSqueeth.address,
                 managerAmount: toSell.div(2).sub(1000),
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(trader.address),
             };
 
