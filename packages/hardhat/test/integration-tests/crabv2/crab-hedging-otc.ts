@@ -866,7 +866,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, true, [signedOrder])
             ).to.be.revertedWith("Price too high relative to Uniswap twap.");
         });
-        it.only("reverts when order sign is invalid", async () => {
+        it("reverts when order sign is invalid", async () => {
             const trader = random;
             // vault state before
             const strategyVaultBefore = await controller.vaults(await crabStrategy.vaultId());
@@ -925,27 +925,26 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             // Calculate new Delta and the trades to make
             const toGet = ethers.utils.parseUnits("3.125");
             const toSell = ethers.utils.parseUnits("1");
+            const oSQTHPrice = await getOSQTHPrice();
 
             // make the approvals for the trade and prepare the trade
             await wSqueeth.connect(trader).approve(crabStrategy.address, toGet);
-
             const orderHash = {
                 bidId: 0,
                 trader: trader.address,
-                traderToken: wSqueeth.address,
-                traderAmount: toGet,
-                managerToken: weth.address,
-                managerAmount: toSell,
+                quantity: toSell,
+                price: oSQTHPrice,
+                isBuying: false,
                 expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(trader.address),
             };
             const { typeData, domainData } = getTypeAndDomainData();
             // Do the trade
             const signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
-            const managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount).mul(99).div(100);
+            const managerBuyPrice = oSQTHPrice.mul(99).div(100);
             await expect(
-                crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder])
-            ).to.be.revertedWith("Clearing Price should be at least Seller Price");
+                crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, true, [signedOrder])
+            ).to.be.revertedWith("Clearing Price should be above offer price");
         });
         it("manager buy price should be greater than 0", async () => {
             // set the time to 1 hr from prev hedge
