@@ -144,9 +144,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @param _ethWSqueethPool eth:wSqueeth uniswap pool address
      * @param _hedgeTimeThreshold hedge time threshold (seconds)
      * @param _hedgePriceThreshold hedge price threshold (0.1*1e18 = 10%)
-     * @param _auctionTime auction duration (seconds)
-     * @param _minPriceMultiplier minimum auction price multiplier (0.9*1e18 = min auction price is 90% of twap)
-     * @param _maxPriceMultiplier maximum auction price multiplier (1.1*1e18 = max auction price is 110% of twap)
      */
     constructor(
         address _wSqueethController,
