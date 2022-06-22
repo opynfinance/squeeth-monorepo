@@ -2,9 +2,8 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract StrategySwap {
     ISwapRouter public immutable swapRouter;
@@ -38,10 +37,10 @@ contract StrategySwap {
         // _from must approve this contract
 
         // Transfer the specified amount of tokenIn to this contract.
-        TransferHelper.safeTransferFrom(_tokenIn, _from, address(this), _amountIn);
+        IERC20(_tokenIn).transferFrom(_from, address(this), _amountIn);
 
         // Approve the router to spend tokenIn.
-        TransferHelper.safeApprove(_tokenIn, address(swapRouter), _amountIn);
+        IERC20(_tokenIn).approve(address(swapRouter), _amountIn);
 
         // We also set the sqrtPriceLimitx96 to be 0 to ensure we swap our exact input amount.
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
