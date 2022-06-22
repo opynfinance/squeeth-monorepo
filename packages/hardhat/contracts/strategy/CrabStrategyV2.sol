@@ -60,7 +60,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     /// @dev typehash for signed orders
     bytes32 private constant _CRAB_BALANCE_TYPEHASH =
         keccak256(
-            "Order(uint256 bidId,address trader,address traderToken,uint256 traderAmount,address managerToken,uint256 managerAmount,uint256 expiry, uint256 nonce)"
+            "Order(uint256 bidId,address trader,address traderToken,uint256 traderAmount,address managerToken,uint256 managerAmount,uint256 expiry,uint256 nonce)"
         );
 
     /// @dev enum to differentiate between uniswap swap callback function source
