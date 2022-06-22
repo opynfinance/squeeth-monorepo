@@ -866,17 +866,8 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, true, [signedOrder])
             ).to.be.revertedWith("Price too high relative to Uniswap twap.");
         });
-        it("reverts when order sign is invalid", async () => {
+        it.only("reverts when order sign is invalid", async () => {
             const trader = random;
-            // oSQTH price before
-            const oSQTHPriceBefore = await oracle.getTwap(
-                wSqueethPool.address,
-                wSqueeth.address,
-                weth.address,
-                600,
-                false
-            );
-
             // vault state before
             const strategyVaultBefore = await controller.vaults(await crabStrategy.vaultId());
 
@@ -911,10 +902,9 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const orderHash = {
                 bidId: 0,
                 trader: trader.address,
-                traderToken: wSqueeth.address,
-                traderAmount: toGET,
-                managerToken: weth.address,
-                managerAmount: toSell,
+                quantity: toSell,
+                price: oSQTHPriceAfter,
+                isBuying: false,
                 expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(trader.address),
             };
@@ -922,9 +912,8 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const { typeData, domainData } = getTypeAndDomainData();
             // Do the trade with wrong order
             const signedOrder = await signTypedData(depositor, domainData, typeData, orderHash);
-            const managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
             await expect(
-                crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder])
+                crabStrategy.connect(owner).hedgeOTC(toSell, oSQTHPriceAfter, true, [signedOrder])
             ).to.be.revertedWith("Invalid offer signature");
         });
         it("should revert when the manager Buy price is lesser than the traders price", async () => {
