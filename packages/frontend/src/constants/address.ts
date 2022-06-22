@@ -55,7 +55,7 @@ export const SWAP_ROUTER: Address = {
 
 export const SWAP_ROUTER_02: Address = {
   1: '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
-  3: '',
+  3: '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
   421611: '',
   31337: '',
 }
@@ -113,7 +113,7 @@ export const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
 //ControllerHelper
 export const CONTROLLER_HELPER: Address = {
-  1: '',
+  1: '0xfa86d43b41Fa7a759c606130cc81970A955ff816',
   3: '0x1561AD75Fc7382C33819e63A4787b6F362D8152f',
   421611: '',
   31337: '',

@@ -157,7 +157,7 @@ function LongChart() {
       return {
         ...graphOptions,
         localization: {
-          priceFormatter: (num: number) => num?.toFixed(2) + '%',
+          priceFormatter: (num: number) => (num ? num?.toFixed(2) + '%' : ''),
         },
       }
     return {

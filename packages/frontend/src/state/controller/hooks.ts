@@ -291,7 +291,7 @@ export const useGetCollatRatioAndLiqPrice = () => {
 
       return emptyState
     },
-    [contract, getDebtAmount, impliedVol, isWethToken0, normFactor.toString()],
+    [contract, getDebtAmount, impliedVol, isWethToken0, normFactor],
   )
 
   return getCollatRatioAndLiqPrice
