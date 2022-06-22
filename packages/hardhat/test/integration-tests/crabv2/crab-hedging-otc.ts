@@ -96,6 +96,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             uniswapFactory.address,
             wSqueethPool.address,
             timelock.address,
+            swapRouter.address,
             hedgeTimeThreshold,
             hedgePriceThreshold
         )) as CrabStrategyV2;

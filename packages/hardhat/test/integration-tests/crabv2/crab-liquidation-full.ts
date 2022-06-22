@@ -79,7 +79,7 @@ describe("Crab V2 integration test: crab vault full liquidation and shutdown of 
     timelock = (await TimelockContract.deploy(owner.address, 3 * 24 * 60 * 60)) as Timelock;
 
     const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
-    crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, uniswapFactory.address, wSqueethPool.address, timelock.address, hedgeTimeThreshold, hedgePriceThreshold)) as CrabStrategyV2;
+    crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, uniswapFactory.address, wSqueethPool.address, timelock.address, swapRouter.address, hedgeTimeThreshold, hedgePriceThreshold)) as CrabStrategyV2;
 
     const strategyCap = ethers.utils.parseUnits("1000")
     await crabStrategy.connect(owner).setStrategyCap(strategyCap)
