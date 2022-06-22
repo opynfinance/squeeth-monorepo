@@ -192,32 +192,41 @@ describe("Crab Migration", function () {
             expect(expectedSharesSent).to.be.equal(sharesSent);
         })
 
-        it("d2 claims shares", async () => {
+        it("Should not able to claim more than their share", async () => {
+            const d2sharesInMigrationBefore = await crabMigration.sharesDeposited(d2.address)
+
+            const d2sharesToMigrate = d2sharesInMigrationBefore.mul(2)
+            await expect(crabMigration.connect(d2).claimAndWithdraw(d2sharesToMigrate, ethers.constants.MaxInt256)).to.be.revertedWith("M6") // Set ETH slippage higher!
+        })
+
+        it("d2 Claim and flash withdraw 50 percent of tokens", async () => {
             const constractSharesBefore = await crabStrategyV2.balanceOf(crabMigration.address);
-            const d2SharesBefore = await crabStrategyV2.balanceOf(d2.address);
+            const d2sharesInMigrationBefore = await crabMigration.sharesDeposited(d2.address)
 
-            await crabMigration.connect(d2).claimV2Shares();
-
-            // 1. check that shares sent from migration contract equals shares received by user
+            const d2sharesToMigrate = wdiv(d2sharesInMigrationBefore, one.mul(2))
+            await crabMigration.connect(d2).claimAndWithdraw(d2sharesToMigrate, ethers.constants.MaxInt256) // Set ETH slippage higher!
+            const d2sharesInMigrationAfter = await crabMigration.sharesDeposited(d2.address)
             const constractSharesAfter = await crabStrategyV2.balanceOf(crabMigration.address);
-            const d2SharesAfter = await crabStrategyV2.balanceOf(d2.address);
-            const sharesSent = constractSharesBefore.sub(constractSharesAfter);
 
-            expect(d2SharesBefore).to.be.equal('0');
-            expect(d2SharesAfter.sub(d2SharesBefore)).to.be.equal(sharesSent);
-            // expect(constractSharesAfter).to.be.equal('0');    // TODO: 1 is left 
 
-            // 2. check that the right amount of shares have been sent. 
-            const totalV2SharesReceived = await crabMigration.totalCrabV2SharesReceived();
             const totalDepositAmount = deposit1Amount.add(deposit2Amount);
-            const expectedSharesSent = deposit2Amount.mul(totalV2SharesReceived).div(totalDepositAmount);
-            expect(expectedSharesSent).to.be.equal(sharesSent);
+            const totalV2SharesReceived = await crabMigration.totalCrabV2SharesReceived();
+            const expectedSharesWithdraw = d2sharesToMigrate.mul(totalV2SharesReceived).div(totalDepositAmount);
+            expect(d2sharesInMigrationAfter).to.be.equal(d2sharesInMigrationBefore.sub(d2sharesToMigrate))
+            expect(constractSharesAfter).to.be.equal(constractSharesBefore.sub(expectedSharesWithdraw))
+        })
+
+        it("d2 Claim and flash withdraw 100 percent of the tokens", async () => {
+            const d2sharesInMigrationBefore = await crabMigration.sharesDeposited(d2.address)
+
+            await crabMigration.connect(d2).claimAndWithdraw(d2sharesInMigrationBefore, ethers.constants.MaxInt256) // Set ETH slippage higher!
+            const d2sharesInMigrationAfter = await crabMigration.sharesDeposited(d2.address)
+
+            expect(d2sharesInMigrationAfter).to.be.equal("0")
         })
 
         it("d1 should not be able to deposit after migration", async () => {
             await expect(crabMigration.connect(d1).depositV1Shares(deposit1Amount)).to.be.revertedWith("M2");
         })
     })
-
-
 })
