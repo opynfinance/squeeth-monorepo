@@ -2,6 +2,7 @@
 
 pragma solidity =0.7.6;
 pragma abicoder v2;
+import "hardhat/console.sol";
 
 // interface
 import {IController} from "../interfaces/IController.sol";
@@ -614,6 +615,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         if (_order.isBuying) {
             // trader sends weth and receives oSQTH
             IERC20(weth).transferFrom(_order.trader, address(this), wethAmount);
+            IWETH9(weth).withdraw(wethAmount);
             _mintWPowerPerp(_order.trader, _order.quantity, wethAmount, false);
         } else {
             // trader sends oSQTH and receives weth
@@ -652,8 +654,8 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         timeAtLastHedge = block.timestamp;
 
         uint256 remainingAmount = _totalQuantity;
-        uint256 prevPrice = 0;
-        uint256 currentPrice = 0;
+        uint256 prevPrice = _orders[0].price;
+        uint256 currentPrice = _orders[0].price;
         bool isOrderBuying = _orders[0].isBuying;
         require(_isHedgeBuying != isOrderBuying, "Orders must be buying when hedge is selling");
 

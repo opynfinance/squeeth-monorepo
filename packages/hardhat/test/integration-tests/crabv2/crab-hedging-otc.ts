@@ -207,10 +207,9 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 Order: [
                     { type: "uint256", name: "bidId" },
                     { type: "address", name: "trader" },
-                    { type: "address", name: "traderToken" },
-                    { type: "uint256", name: "traderAmount" },
-                    { type: "address", name: "managerToken" },
-                    { type: "uint256", name: "managerAmount" },
+                    { type: "uint256", name: "quantity" },
+                    { type: "uint256", name: "price" },
+                    { type: "bool", name: "isBuying" },
                     { type: "uint256", name: "expiry" },
                     { type: "uint256", name: "nonce" },
                 ],
@@ -234,39 +233,39 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             // Calculate new Delta and the trades to make
             const newDelta = await delta(strategyVaultBefore);
             const oSQTHPriceAfter = await getOSQTHPrice();
-            const toSell = wdiv(newDelta, oSQTHPriceAfter);
-            const toGET = wmul(toSell, oSQTHPriceAfter);
+            const toSell = wdiv(newDelta, oSQTHPriceAfter); //0.12sqth to sell
+            const toGET = wmul(toSell, oSQTHPriceAfter); //0.04eth to get
+            console.log("to Sell, To Get", toSell.toString(), toGET.toString());
 
             // make the approvals for the trade
             await weth.connect(random).deposit({ value: toGET });
-            await weth.connect(random).approve(crabStrategy.address, toGET);
+            await weth.connect(random).approve(crabStrategy.address, toGET); //0.04eth
             await weth.connect(trader).deposit({ value: toGET });
-            await weth.connect(trader).approve(crabStrategy.address, toGET);
+            await weth.connect(trader).approve(crabStrategy.address, toGET); //0.04eth
 
             // get the pre trade balances for the trader
             const oSQTHTraderBalanceBefore = await wSqueeth.balanceOf(trader.address);
             const wethTraderBalanceBefore = await weth.balanceOf(trader.address);
             const oSQTHTraderBalanceBefore_2 = await wSqueeth.balanceOf(random.address);
             const wethTraderBalanceBefore_2 = await weth.balanceOf(random.address);
+            console.log(oSQTHPriceAfter);
 
             // and prepare the trade
             const orderHash = {
                 bidId: 0,
                 trader: random.address,
-                traderToken: weth.address,
-                traderAmount: toGET.div(2),
-                managerToken: wSqueeth.address,
-                managerAmount: toSell.div(2),
+                quantity: toSell.div(2), //0.06sqth
+                price: oSQTHPriceAfter,
+                isBuying: true,
                 expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(random.address),
             };
             const orderHash1 = {
                 bidId: 0,
                 trader: trader.address,
-                traderToken: weth.address,
-                traderAmount: toGET.div(2),
-                managerToken: wSqueeth.address,
-                managerAmount: toSell.div(2),
+                quantity: toSell.div(2),
+                price: oSQTHPriceAfter,
+                isBuying: true,
                 expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(trader.address),
             };
@@ -274,19 +273,18 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const { typeData, domainData } = getTypeAndDomainData();
             const signedOrder = await signTypedData(random, domainData, typeData, orderHash);
             const signedOrder1 = await signTypedData(trader, domainData, typeData, orderHash1);
-            const managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
 
             // Do the trade
-            await crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder, signedOrder1]);
+            await crabStrategy.connect(owner).hedgeOTC(toSell, oSQTHPriceAfter, false, [signedOrder, signedOrder1]);
 
             // check the delta and the vaults traded quantities
             const strategyVaultAfter = await controller.vaults(await crabStrategy.vaultId());
-            const divError = 1; // this is 1 in decimal of 18 , this adds to us getting less oSQTH
-            expect(strategyVaultAfter.collateralAmount).eq(strategyVaultBefore.collateralAmount.add(toGET));
-            expect(strategyVaultAfter.shortAmount.add(divError).toString()).eq(
-                strategyVaultBefore.shortAmount.add(toSell).toString()
+            let precision = 4 // the last of 18 digit precision
+            expect(strategyVaultAfter.collateralAmount).be.closeTo(strategyVaultBefore.collateralAmount.add(toGET), precision);
+            expect(strategyVaultAfter.shortAmount).be.closeTo(
+                strategyVaultBefore.shortAmount.add(toSell),precision
             );
-            expect((await delta(strategyVaultAfter)).toNumber()).to.eqls(0);
+            expect((await delta(strategyVaultAfter)).toNumber()).be.closeTo(0, precision);
             // check the delta and the vaults traded quantities
 
             // check trader balances
@@ -294,10 +292,10 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const wethTraderBalanceAfter = await weth.balanceOf(trader.address);
             const oSQTHTraderBalanceAfter_2 = await wSqueeth.balanceOf(random.address);
             const wethTraderBalanceAfter_2 = await weth.balanceOf(random.address);
-            expect(oSQTHTraderBalanceAfter).eq(oSQTHTraderBalanceBefore.add(toSell.div(2)));
-            expect(wethTraderBalanceAfter).eq(wethTraderBalanceBefore.sub(toGET.div(2)));
-            expect(oSQTHTraderBalanceAfter_2).eq(oSQTHTraderBalanceBefore_2.add(toSell.div(2)));
-            expect(wethTraderBalanceAfter_2).eq(wethTraderBalanceBefore_2.sub(toGET.div(2)));
+            expect(oSQTHTraderBalanceAfter).be.closeTo(oSQTHTraderBalanceBefore.add(toSell.div(2)), precision);
+            expect(wethTraderBalanceAfter).be.closeTo(wethTraderBalanceBefore.sub(toGET.div(2)), precision);
+            expect(oSQTHTraderBalanceAfter_2).be.closeTo(oSQTHTraderBalanceBefore_2.add(toSell.div(2)), precision);
+            expect(wethTraderBalanceAfter_2).be.closeTo(wethTraderBalanceBefore_2.sub(toGET.div(2)), precision);
 
             // get hedgeBlock to be updated
             const hedgeBlockNumber = await provider.getBlockNumber();
@@ -356,10 +354,9 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const orderHash = {
                 bidId: 0,
                 trader: random.address,
-                traderToken: weth.address,
-                traderAmount: toGET,
-                managerToken: wSqueeth.address,
-                managerAmount: toSell,
+                quantity: toSell,
+                price: oSQTHPriceAfter,
+                isBuying: true,
                 expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(random.address),
             };
@@ -367,17 +364,12 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const { typeData, domainData } = getTypeAndDomainData();
             const signedOrder = await signTypedData(random, domainData, typeData, orderHash);
 
-            const managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
-
-            await crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder]);
+            await crabStrategy.connect(owner).hedgeOTC(toSell, oSQTHPriceAfter, false, [signedOrder]);
             const strategyVaultAfter = await controller.vaults(await crabStrategy.vaultId());
-            expect(
-                isSimilar(
-                    strategyVaultAfter.shortAmount.toString(),
-                    strategyVaultBefore.shortAmount.add(toSell).toString()
-                )
-            ).to.be.true;
-            expect(strategyVaultAfter.collateralAmount).eq(strategyVaultBefore.collateralAmount.add(toGET));
+            let precision = 4;
+            expect(strategyVaultAfter.shortAmount).be.closeTo(
+                    strategyVaultBefore.shortAmount.add(toSell), precision);
+            expect(strategyVaultAfter.collateralAmount).be.closeTo(strategyVaultBefore.collateralAmount.add(toGET), precision);
         });
         it("should hedge via OTC using one order while buying oSQTH delta negative", async () => {
             const trader = random;
@@ -419,12 +411,14 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             // Calculate new Delta and the trades to make
             const newOSQTHdelta = wmul(strategyVaultBefore.shortAmount.mul(2), oSQTHPriceAfter);
             const newDelta = strategyVaultBefore.collateralAmount.sub(newOSQTHdelta);
+            console.log(newDelta);
 
             const toGET = wdiv(newDelta.abs(), oSQTHPriceAfter);
             const toSell = wmul(toGET, oSQTHPriceAfter);
 
             const afterOSQTHdelta = wmul(strategyVaultBefore.shortAmount.sub(toGET).mul(2), oSQTHPriceAfter);
             const afterTradeDelta = strategyVaultBefore.collateralAmount.sub(toSell).sub(afterOSQTHdelta);
+            console.log(strategyVaultBefore.collateralAmount.sub(toSell).toString(),afterOSQTHdelta.toString(), afterTradeDelta.toString());
 
             // get the pre trade balances for the trader
             const oSQTHTraderBalanceBefore = await wSqueeth.balanceOf(trader.address);
@@ -436,10 +430,9 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const orderHash = {
                 bidId: 0,
                 trader: trader.address,
-                traderToken: wSqueeth.address,
-                traderAmount: toGET,
-                managerToken: weth.address,
-                managerAmount: toSell,
+                quantity: toGET, 
+                price: oSQTHPriceAfter,
+                isBuying: false,
                 expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
                 nonce: await crabStrategy.nonces(trader.address),
             };
@@ -447,22 +440,22 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const { typeData, domainData } = getTypeAndDomainData();
             // Do the trade
             const signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
-            const managerBuyPrice = signedOrder.managerAmount.mul(one).div(signedOrder.traderAmount);
-            await crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, [signedOrder]);
+            await crabStrategy.connect(owner).hedgeOTC(toGET, oSQTHPriceAfter, true, [signedOrder]);
 
             // check the delta and the vaults traded quantities
             const strategyVaultAfter = await controller.vaults(await crabStrategy.vaultId());
             const afterOSQTHdeltaReal = wmul(strategyVaultAfter.shortAmount.mul(2), oSQTHPriceAfter);
             const afterTradeDeltaReal = strategyVaultAfter.collateralAmount.sub(afterOSQTHdeltaReal);
-            expect(afterTradeDeltaReal.toNumber()).to.eqls(0);
-            expect(strategyVaultAfter.collateralAmount).eq(strategyVaultBefore.collateralAmount.sub(toSell));
-            expect(strategyVaultAfter.shortAmount).eq(strategyVaultBefore.shortAmount.sub(toGET));
+            let precision = 4;
+            expect(afterTradeDeltaReal.toNumber()).be.closeTo(0,precision);
+            expect(strategyVaultAfter.collateralAmount).be.closeTo(strategyVaultBefore.collateralAmount.sub(toSell), precision);
+            expect(strategyVaultAfter.shortAmount).be.closeTo(strategyVaultBefore.shortAmount.sub(toGET), precision);
 
             // check trader balances
             const oSQTHTraderBalanceAfter = await wSqueeth.balanceOf(trader.address);
             const wethTraderBalanceAfter = await weth.balanceOf(trader.address);
-            expect(oSQTHTraderBalanceAfter).eq(oSQTHTraderBalanceBefore.sub(toGET));
-            expect(wethTraderBalanceAfter).eq(wethTraderBalanceBefore.add(toSell));
+            expect(oSQTHTraderBalanceAfter).be.closeTo(oSQTHTraderBalanceBefore.sub(toGET), precision);
+            expect(wethTraderBalanceAfter).be.closeTo(wethTraderBalanceBefore.add(toSell), precision);
         });
         it("allows manager to trader fewer quantity than sum of orders", async () => {
             const strategyVaultBefore = await controller.vaults(await crabStrategy.vaultId());
