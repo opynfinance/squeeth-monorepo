@@ -17,6 +17,7 @@ export function calculatePnL(
   positions: accounts_accounts_positions | accounts_accounts_lppositions,
   oSqthPrice: BigNumber,
   ethPrice: BigNumber,
+  longNShort: boolean,
 ) {
   const realizedETHAmount = new BigNumber(positions?.realizedETHAmount)
   const realizedETHUnitCost = new BigNumber(positions?.realizedETHUnitCost)
@@ -56,7 +57,7 @@ export function calculatePnL(
   const realizedPnLInPerct = safeDiv(realizedPnL, realizedCost)
 
   return {
-    currentPositionValue,
+    currentPositionValue: longNShort ? oSqthPrice.times(currentOSQTHAmount) : currentPositionValue,
     currentETHAmount,
     currentOSQTHAmount: new BigNumber(positions?.currentOSQTHAmount),
     unrealizedPnL,

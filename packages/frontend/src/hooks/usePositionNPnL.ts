@@ -31,7 +31,7 @@ export default function usePositionNPnL() {
       unrealizedPnLInPerct,
       realizedPnL,
       realizedPnLInPerct,
-    } = calculatePnL(accShortAmount, positions, oSqthPrice, ethPrice)
+    } = calculatePnL(accShortAmount, positions, oSqthPrice, ethPrice, true)
     setPosition({
       currentPositionValue,
       currentETHAmount,
@@ -62,7 +62,7 @@ export default function usePositionNPnL() {
       unrealizedPnLInPerct: lpUnrealizedPnLInPerct,
       realizedPnL: lpRealizedPnL,
       realizedPnLInPerct: lpRealizedPnLInPerct,
-    } = calculatePnL(new BigNumber(0), lpPositions, oSqthPrice, ethPrice)
+    } = calculatePnL(new BigNumber(0), lpPositions, oSqthPrice, ethPrice, false)
     setLPPosition({
       lpedPositionValue,
       lpedETHAmount,
