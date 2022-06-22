@@ -372,6 +372,75 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 precision
             );
         });
+        it("trader should be able to delegate his signer", async () => {
+            const strategyVaultBefore = await controller.vaults(await crabStrategy.vaultId());
+            const oSQTHPriceBefore = await oracle.getTwap(
+                wSqueethPool.address,
+                wSqueeth.address,
+                weth.address,
+                600,
+                false
+            );
+            const oSQTHdelta = wmul(strategyVaultBefore.shortAmount.mul(2), oSQTHPriceBefore);
+            const delta = strategyVaultBefore.collateralAmount.sub(oSQTHdelta);
+
+            const ethToDeposit = ethers.utils.parseUnits("1000");
+            const wSqueethToMint = ethers.utils.parseUnits("1000");
+            const currentBlockTimestamp = (await provider.getBlock(await provider.getBlockNumber())).timestamp;
+            await controller.connect(owner).mintWPowerPerpAmount("0", wSqueethToMint, "0", { value: ethToDeposit });
+            await buyWeth(
+                swapRouter,
+                wSqueeth,
+                weth,
+                owner.address,
+                await wSqueeth.balanceOf(owner.address),
+                currentBlockTimestamp + 10
+            );
+
+            await provider.send("evm_increaseTime", [86400 + auctionTime / 2]);
+            await provider.send("evm_mine", []);
+
+            const oSQTHPriceAfter = await oracle.getTwap(
+                wSqueethPool.address,
+                wSqueeth.address,
+                weth.address,
+                600,
+                false
+            );
+            const newOSQTHdelta = wmul(strategyVaultBefore.shortAmount.mul(2), oSQTHPriceAfter);
+            const newDelta = strategyVaultBefore.collateralAmount.sub(newOSQTHdelta);
+            const toSell = wdiv(newDelta, oSQTHPriceAfter);
+            const toGET = wmul(toSell, oSQTHPriceAfter);
+
+            const afterOSQTHdelta = wmul(strategyVaultBefore.shortAmount.add(toSell).mul(2), oSQTHPriceAfter);
+            const afterTradeDelta = strategyVaultBefore.collateralAmount.add(toGET).sub(afterOSQTHdelta);
+
+            await weth.connect(random).deposit({ value: toGET });
+            await weth.connect(random).approve(crabStrategy.address, toGET);
+            const orderHash = {
+                bidId: 0,
+                trader: random.address,
+                quantity: toSell,
+                price: oSQTHPriceAfter,
+                isBuying: true,
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
+                nonce: await crabStrategy.nonces(random.address),
+            };
+
+            await crabStrategy.connect(random).delegateToSigner(depositor.address);
+
+            const { typeData, domainData } = getTypeAndDomainData();
+            const signedOrder = await signTypedData(depositor, domainData, typeData, orderHash);
+
+            await crabStrategy.connect(owner).hedgeOTC(toSell, oSQTHPriceAfter, false, [signedOrder]);
+            const strategyVaultAfter = await controller.vaults(await crabStrategy.vaultId());
+            let precision = 4;
+            expect(strategyVaultAfter.shortAmount).be.closeTo(strategyVaultBefore.shortAmount.add(toSell), precision);
+            expect(strategyVaultAfter.collateralAmount).be.closeTo(
+                strategyVaultBefore.collateralAmount.add(toGET),
+                precision
+            );
+        });
         it("should hedge via OTC using one order while buying oSQTH delta negative", async () => {
             const trader = random;
             // oSQTH price before
@@ -903,7 +972,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
 
             const { typeData, domainData } = getTypeAndDomainData();
             // Do the trade with wrong order
-            const signedOrder = await signTypedData(depositor, domainData, typeData, orderHash);
+            const signedOrder = await signTypedData(owner, domainData, typeData, orderHash);
             await expect(
                 crabStrategy.connect(owner).hedgeOTC(toSell, oSQTHPriceAfter, true, [signedOrder])
             ).to.be.revertedWith("Invalid offer signature");
