@@ -136,7 +136,7 @@ describe("Crab V2 flashswap integration test: crab vault liquidation", function 
     const debtToMint = wdiv(ethToDeposit, (squeethDelta.add(ethFeePerWSqueeth)));
     const expectedEthDeposit = ethToDeposit.sub(debtToMint.mul(ethFeePerWSqueeth).div(one))
 
-    await crabStrategy.connect(crabMigration).initialize(debtToMint, { value: ethToDeposit });
+    await crabStrategy.connect(crabMigration).initialize(debtToMint, expectedEthDeposit, { value: ethToDeposit });
 
     const currentBlockNumber = await provider.getBlockNumber()
     const currentBlock = await provider.getBlock(currentBlockNumber)
@@ -153,6 +153,7 @@ describe("Crab V2 flashswap integration test: crab vault liquidation", function 
     const lastHedgeTime = await crabStrategy.timeAtLastHedge()
     const collateralAmount = await strategyVault.collateralAmount
 
+    expect(isSimilar(totalSupply.toString(),(expectedEthDeposit).toString())).to.be.true
     expect(isSimilar(depositorCrab.toString(), expectedEthDeposit.toString())).to.be.true
     expect(isSimilar(debtAmount.toString(), debtToMint.toString())).to.be.true
     expect(depositorSqueethBalance.eq(depositorSqueethBalanceBefore)).to.be.true
