@@ -1,5 +1,3 @@
-import { Address, BigDecimal, log } from "@graphprotocol/graph-ts";
-import { Account, Pool } from "../generated/schema";
 import { Transfer } from "../generated/WPowerPerp/WPowerPerp";
 import {
   CONTROLLER_ADDR,
