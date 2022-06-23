@@ -145,7 +145,7 @@ describe("Crab Migration", function () {
            
            expect(changeInCrabV1Supply).to.be.equal(crabV1SharesBalanceBefore);
            expect(crabV2SupplyBefore).to.be.equal('0');
-        //    expect(changeInCrabV2Supply).to.be.equal(changeInCrabV1Supply);
+           expect(changeInCrabV2Supply).to.be.equal(changeInCrabV1Supply);
 
            // 3. check that eth taken out of crab v1 matches eth deposited into crab v2
            const crabV1VaultDetailsAfter = await crabStrategyV1.getVaultDetails();
