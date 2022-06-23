@@ -1,7 +1,15 @@
 import { BigDecimal } from "@graphprotocol/graph-ts";
 import { assert, clearStore, test, describe, beforeEach } from "matchstick-as";
-import { handleETHChange, handleOSQTHChange } from "../src/utils/handler";
-import { loadOrCreatePosition } from "../src/utils/loadInit";
+import {
+  handleETHChange,
+  handleLPETHChange,
+  handleLPOSQTHChange,
+  handleOSQTHChange,
+} from "../src/utils/handler";
+import {
+  loadOrCreateLPPosition,
+  loadOrCreatePosition,
+} from "../src/utils/loadInit";
 
 let userAddr = "0x02a248876233fd78b97ecf1e18114b8eb22ba603";
 
@@ -313,5 +321,104 @@ describe("handleETHChange", () => {
     assert.fieldEquals("Position", position.id, "unrealizedETHUnitCost", "0");
     assert.fieldEquals("Position", position.id, "realizedETHUnitGain", "0");
     assert.fieldEquals("Position", position.id, "realizedETHAmount", "0");
+  });
+});
+
+describe("handleLPSQTHChange", () => {
+  test("add liquidity (5 sqth, sqthPrice: $10)", () => {
+    let position = loadOrCreateLPPosition(userAddr);
+
+    handleLPOSQTHChange(
+      userAddr,
+      BigDecimal.fromString("5"),
+      BigDecimal.fromString("10")
+    );
+
+    assert.fieldEquals("LPPosition", position.id, "currentOSQTHAmount", "5");
+    assert.fieldEquals(
+      "LPPosition",
+      position.id,
+      "unrealizedOSQTHUnitCost",
+      "10"
+    );
+    assert.fieldEquals(
+      "LPPosition",
+      position.id,
+      "realizedOSQTHUnitCost",
+      "10"
+    );
+  });
+
+  test("add liquidity (5 sqth, sqthPrice: $10) and remove liquidity (3 sqth, sqthPrice: $12)", () => {
+    let position = loadOrCreateLPPosition(userAddr);
+
+    handleLPOSQTHChange(
+      userAddr,
+      BigDecimal.fromString("5"),
+      BigDecimal.fromString("10")
+    );
+
+    handleLPOSQTHChange(
+      userAddr,
+      BigDecimal.fromString("-3"),
+      BigDecimal.fromString("12")
+    );
+
+    assert.fieldEquals("LPPosition", position.id, "currentOSQTHAmount", "2");
+    assert.fieldEquals(
+      "LPPosition",
+      position.id,
+      "unrealizedOSQTHUnitCost",
+      "7"
+    );
+    assert.fieldEquals(
+      "LPPosition",
+      position.id,
+      "realizedOSQTHUnitGain",
+      "12"
+    );
+    assert.fieldEquals("LPPosition", position.id, "realizedOSQTHAmount", "3");
+  });
+});
+
+describe("handleLPETHChange", () => {
+  test("add liquidity (5 eth, ethPrice: $10)", () => {
+    let position = loadOrCreateLPPosition(userAddr);
+
+    handleLPETHChange(
+      userAddr,
+      BigDecimal.fromString("5"),
+      BigDecimal.fromString("10")
+    );
+
+    assert.fieldEquals("LPPosition", position.id, "currentETHAmount", "5");
+    assert.fieldEquals(
+      "LPPosition",
+      position.id,
+      "unrealizedETHUnitCost",
+      "10"
+    );
+    assert.fieldEquals("LPPosition", position.id, "realizedETHUnitCost", "10");
+  });
+
+  test("add liquidity (5 eth, ethPrice: $10) and remove liquidity (3 eth, ethPrice: $12)", () => {
+    let position = loadOrCreateLPPosition(userAddr);
+
+    handleLPETHChange(
+      userAddr,
+      BigDecimal.fromString("5"),
+      BigDecimal.fromString("10")
+    );
+
+    handleLPETHChange(
+      userAddr,
+      BigDecimal.fromString("-3"),
+      BigDecimal.fromString("12")
+    );
+
+    assert.fieldEquals("LPPosition", position.id, "currentETHAmount", "2");
+    assert.fieldEquals("LPPosition", position.id, "unrealizedETHUnitCost", "7");
+    assert.fieldEquals("LPPosition", position.id, "realizedETHUnitGain", "12");
+    assert.fieldEquals("LPPosition", position.id, "realizedETHAmount", "3");
   });
 });
