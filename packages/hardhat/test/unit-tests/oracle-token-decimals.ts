@@ -48,7 +48,7 @@ describe("Oracle", function () {
         bytecode: FACTORY_BYTECODE
       }
     });
-    uniswapFactory = await ethers.getContract("UniswapV3Factory", deployer);
+    uniswapFactory = await ethers.getContractFactory("UniswapV3Factory", deployer);
     
   
     const MockErc20Contract = await ethers.getContractFactory("MockErc20");
