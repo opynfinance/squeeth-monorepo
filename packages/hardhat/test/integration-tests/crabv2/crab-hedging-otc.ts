@@ -193,7 +193,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             // oSQTH price before
             const oSQTHPriceBefore = await getOSQTHPrice();
             const oSQTHdelta = wmul(vault.shortAmount.mul(2), oSQTHPriceBefore);
-            const delta = vault.collateralAmount.sub(oSQTHdelta);
+            const delta:BigNumber = vault.collateralAmount.sub(oSQTHdelta);
 
             return delta;
         };
@@ -218,12 +218,12 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             return { typeData, domainData };
         };
         it("should hedge via OTC using multiple orders while sell oSQTH and updated timeAtLastHedge", async () => {
+            await mintAndSell();
             const strategyVaultBefore = await controller.vaults(await crabStrategyV2.vaultId());
             // vault state before
             const deltaStart = await delta(strategyVaultBefore);
-            expect(deltaStart.toNumber()).eql(0);
             // trader amount to sell oSQTH to change the deltas
-            await mintAndSell();
+            expect(deltaStart.isNegative()).to.be.false;
 
             // Calculate new Delta and the trades to make
             const newDelta = await delta(strategyVaultBefore);
