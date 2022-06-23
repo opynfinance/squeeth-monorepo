@@ -5,7 +5,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-wit
 import BigNumberJs from "bignumber.js";
 import { WETH9, MockErc20, Controller, Oracle, WPowerPerp, CrabStrategyV2, Timelock } from "../../../typechain";
 import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai } from "../../setup";
-import { oracleScaleFactor } from "../../utils";
+import { oracleScaleFactor, getCurrentBlockTime } from "../../utils";
 
 BigNumberJs.set({ EXPONENTIAL_AT: 30 });
 
@@ -157,34 +157,32 @@ describe("Crab v2 Integration test: Timelock", function () {
     });
     describe("Set OTC Tolerance with timelock", async () => {
         let txHash = "";
-        let eta = 0;
-        let currentBlockNumber = 0;
-        let currentBlockTimestamp = 0;
         let data = "";
+        let eta_tolerance = 0;
         let signature = "setOTCPriceTolerance(uint256)";
 
-        this.beforeAll(async () => {
-            currentBlockNumber = await provider.getBlockNumber();
-            const currentBlock = await provider.getBlock(currentBlockNumber);
-            eta = currentBlock.timestamp + twoDays + 300;
-            currentBlockTimestamp = currentBlock.timestamp;
-
+        it("Should revert before eta", async () => {
+            eta_tolerance = (await getCurrentBlockTime()) + twoDays + 300;
             data = abi.encode(["uint256"], [BigNumber.from(10).pow(17)]);
-
             txHash = ethers.utils.keccak256(
                 abi.encode(
                     ["address", "uint256", "string", "bytes", "uint256"],
-                    [crabStrategy.address, "0", signature, data, eta]
+                    [crabStrategy.address, "0", signature, data, eta_tolerance]
                 )
             );
-            await timelock.connect(owner).queueTransaction(crabStrategy.address, 0, signature, data, eta);
+
+            await timelock.connect(owner).queueTransaction(crabStrategy.address, 0, signature, data, eta_tolerance);
+            await provider.send("evm_setNextBlockTimestamp", [eta_tolerance - 500]);
+            await expect(
+                timelock.connect(owner).executeTransaction(crabStrategy.address, 0, signature, data, eta_tolerance)
+            ).to.revertedWith("Timelock::executeTransaction: Transaction hasn't surpassed time lock.");
         });
-
         it("Should be able to set OTC Price Tolerance", async () => {
-            await provider.send("evm_setNextBlockTimestamp", [eta + 500]);
-
+            await provider.send("evm_setNextBlockTimestamp", [eta_tolerance + 500]);
             expect(
-                await timelock.connect(owner).executeTransaction(crabStrategy.address, 0, signature, data, eta)
+                await timelock
+                    .connect(owner)
+                    .executeTransaction(crabStrategy.address, 0, signature, data, eta_tolerance)
             ).to.emit(crabStrategy.address, "SetOTCPriceTolerance");
             expect((await crabStrategy.otcPriceTolerance()).eq(BigNumber.from(10).pow(17))).to.be.true;
         });

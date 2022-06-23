@@ -51,3 +51,9 @@ export const signTypedData = async (signer: SignerWithAddress, domainData: any, 
         v: String(v1),
     };
 };
+
+export const getCurrentBlockTime = async () => {
+    const currentBlockNumber = await ethers.provider.getBlockNumber();
+    const currentBlock = await ethers.provider.getBlock(currentBlockNumber);
+    return currentBlock.timestamp;
+};
