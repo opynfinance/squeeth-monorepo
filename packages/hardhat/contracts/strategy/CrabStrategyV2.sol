@@ -17,7 +17,6 @@ import {IShortPowerPerp} from "../interfaces/IShortPowerPerp.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {StrategyBase} from "./base/StrategyBase.sol";
 import {StrategyFlashSwap} from "./base/StrategyFlashSwap.sol";
-import {StrategySwap} from "./base/StrategySwap.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {EIP712} from "@openzeppelin/contracts/drafts/EIP712.sol";
 
@@ -34,7 +33,7 @@ import {ECDSA} from "@openzeppelin/contracts/cryptography/ECDSA.sol";
  * @notice Contract for Crab strategy
  * @author Opyn team
  */
-contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, StrategySwap, ReentrancyGuard, Ownable, EIP712 {
+contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownable, EIP712 {
     using Counters for Counters.Counter;
     using StrategyMath for uint256;
     using Address for address payable;
@@ -100,10 +99,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, StrategySwap, Reentr
 
     struct FlashWithdrawData {
         uint256 crabAmount;
-        bool withdrawEth;
-        uint24 fee;
-        address tokenOut;
-        uint256 minAmountOut;
     }
 
     struct Order {
@@ -123,24 +118,10 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, StrategySwap, Reentr
     event Withdraw(address indexed withdrawer, uint256 crabAmount, uint256 wSqueethAmount, uint256 ethWithdrawn);
     event WithdrawShutdown(address indexed withdrawer, uint256 crabAmount, uint256 ethWithdrawn);
     event FlashDeposit(address indexed depositor, uint256 depositedAmount, uint256 tradedAmountOut);
-    event FlashDepositERC20(
-        address indexed depositor,
-        address depositedERC20,
-        uint256 depositedAmount,
-        uint256 depositedEthAmount,
-        uint256 tradedAmountOut
-    );
     event FlashWithdraw(address indexed withdrawer, uint256 crabAmount, uint256 wSqueethAmount);
     event FlashDepositCallback(address indexed depositor, uint256 flashswapDebt, uint256 excess);
     event FlashWithdrawCallback(address indexed withdrawer, uint256 flashswapDebt, uint256 excess);
     event HedgeOTC(address trader, uint256 quantity, uint256 price, bool isBuying, uint256 clearingPrice);
-    event FlashWithdrawERC20Callback(
-        address indexed withdrawer,
-        uint256 flashswapDebt,
-        uint256 excess,
-        uint256 excessAmtInERC20,
-        address withdrawnERC20
-    );
     event SetStrategyCap(uint256 newCapAmount);
     event SetHedgingTwapPeriod(uint32 newHedgingTwapPeriod);
     event SetHedgeTimeThreshold(uint256 newHedgeTimeThreshold);
@@ -177,7 +158,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, StrategySwap, Reentr
     )
         StrategyBase(_wSqueethController, _weth, "Crab Strategy v2", "Crabv2")
         StrategyFlashSwap(_uniswapFactory)
-        StrategySwap(_swapRouter)
         EIP712("CrabOTC", "2")
     {
         require(_oracle != address(0), "invalid oracle address");
@@ -251,33 +231,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, StrategySwap, Reentr
      * @param _ethToDeposit total ETH that will be deposited in to the strategy which is a combination of msg.value and flash swap proceeds
      */
     function flashDeposit(uint256 _ethToDeposit) external payable nonReentrant {
-        uint256 wSqueethToMint = _flashDeposit(_ethToDeposit, msg.value);
-
-        emit FlashDeposit(msg.sender, _ethToDeposit, wSqueethToMint);
-    }
-
-    function flashDepositERC20(
-        uint256 _ethToDeposit,
-        uint256 _amountIn,
-        uint256 _minEthToGet,
-        uint24 _fee,
-        address _tokenIn
-    ) external nonReentrant {
-        uint256 wethReceived = _swapExactInputSingle(
-            _tokenIn,
-            weth,
-            msg.sender,
-            address(this),
-            _amountIn,
-            _minEthToGet,
-            _fee
-        );
-        uint256 wSqueethToMint = _flashDeposit(_ethToDeposit, wethReceived);
-
-        emit FlashDepositERC20(msg.sender, _tokenIn, _amountIn, _ethToDeposit, wSqueethToMint);
-    }
-
-    function _flashDeposit(uint256 _ethToDeposit, uint256 _ethInContract) internal returns (uint256) {
         (uint256 cachedStrategyDebt, uint256 cachedStrategyCollateral) = _syncStrategyState();
         _checkStrategyCap(_ethToDeposit, cachedStrategyCollateral);
 
@@ -306,12 +259,12 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, StrategySwap, Reentr
             weth,
             IUniswapV3Pool(ethWSqueethPool).fee(),
             wSqueethToMint,
-            _ethToDeposit.sub(_ethInContract),
+            _ethToDeposit.sub(msg.value),
             uint8(FLASH_SOURCE.FLASH_DEPOSIT),
             abi.encodePacked(_ethToDeposit)
         );
 
-        return wSqueethToMint;
+        emit FlashDeposit(msg.sender, _ethToDeposit, wSqueethToMint);
     }
 
     /**
@@ -321,27 +274,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, StrategySwap, Reentr
      * @param _maxEthToPay maximum ETH to pay to buy back the owed wSqueeth debt
      */
     function flashWithdraw(uint256 _crabAmount, uint256 _maxEthToPay) external nonReentrant {
-        _flashWithdraw(_crabAmount, _maxEthToPay, true, uint24(0), address(0), uint256(0));
-    }
-
-    function flashWithdrawERC20(
-        uint256 _crabAmount,
-        uint256 _maxEthToPay,
-        uint24 _fee,
-        address _tokenOut,
-        uint256 _minAmountOut
-    ) external nonReentrant {
-        _flashWithdraw(_crabAmount, _maxEthToPay, false, _fee, _tokenOut, _minAmountOut);
-    }
-
-    function _flashWithdraw(
-        uint256 _crabAmount,
-        uint256 _maxEthToPay,
-        bool _withdrawEth,
-        uint24 _fee,
-        address _tokenOut,
-        uint256 _minAmountOut
-    ) internal {
         uint256 exactWSqueethNeeded = _getDebtFromStrategyAmount(_crabAmount);
 
         _exactOutFlashSwap(
@@ -351,7 +283,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, StrategySwap, Reentr
             exactWSqueethNeeded,
             _maxEthToPay,
             uint8(FLASH_SOURCE.FLASH_WITHDRAW),
-            abi.encode(_crabAmount, _withdrawEth, _fee, _tokenOut, _minAmountOut)
+            abi.encodePacked(_crabAmount)
         );
 
         emit FlashWithdraw(msg.sender, _crabAmount, exactWSqueethNeeded);
@@ -523,25 +455,10 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, StrategySwap, Reentr
             //excess ETH not used to repay flash swap is transferred to the user
             uint256 proceeds = ethToWithdraw.sub(_amountToPay);
 
-            if (data.withdrawEth) {
-                emit FlashWithdrawCallback(_caller, _amountToPay, proceeds);
+            emit FlashWithdrawCallback(_caller, _amountToPay, proceeds);
 
-                if (proceeds > 0) {
-                    payable(_caller).sendValue(proceeds);
-                }
-            } else {
-                IWETH9(weth).deposit{value: proceeds}();
-                uint256 tokenReceived = _swapExactInputSingle(
-                    weth,
-                    data.tokenOut,
-                    address(this),
-                    _caller,
-                    proceeds,
-                    data.minAmountOut,
-                    data.fee
-                );
-
-                emit FlashWithdrawERC20Callback(_caller, _amountToPay, proceeds, tokenReceived, data.tokenOut);
+            if (proceeds > 0) {
+                payable(_caller).sendValue(proceeds);
             }
         }
     }
