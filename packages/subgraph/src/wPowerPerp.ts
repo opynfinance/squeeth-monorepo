@@ -15,13 +15,7 @@ import { buyOrSellSQTH, createTransactionHistory } from "./util";
 import { convertTokenToDecimal } from "./utils";
 
 export function handleTransfer(event: Transfer): void {
-  if (event.address.toHexString().toLowerCase() != OSQTH_WETH_POOL) {
-    return;
-  }
-  let pool = Pool.load(event.address.toHexString());
-
   if (
-    pool != null ||
     event.transaction.to == SHORT_HELPER_ADDR ||
     event.transaction.to == CONTROLLER_ADDR ||
     event.transaction.to == SWAPROUTER_ADDR ||
