@@ -51,10 +51,10 @@ describe("Oracle", function () {
         bytecode: FACTORY_BYTECODE
       }
     });
-    const uniswapFactory = await ethers.getContractFactory("UniswapV3Factory", deployer);
+    const uniswapFactory = await ethers.getContract("UniswapV3Factory", deployer);
     
     await deploy("WETH9", { from: deployer });
-    weth = await ethers.getContractFactory("WETH9", deployer) as WETH9;
+    weth = await ethers.getContract("WETH9", deployer) as WETH9;
   
     const tx = await deploy("SwapRouter", {
       from: deployer,
@@ -77,7 +77,7 @@ describe("Oracle", function () {
       },
       args: [uniswapFactory.address, weth.address, tokenDescriptorAddress]
     });
-    positionManager = await ethers.getContractFactory("NonfungibleTokenPositionManager", deployer);
+    positionManager = await ethers.getContract("NonfungibleTokenPositionManager", deployer);
 
     // Create ETH/SQUEETH Pool with positionManager
     squeeth = (await (await ethers.getContractFactory("MockWPowerPerp")).deploy()) as MockWPowerPerp;
