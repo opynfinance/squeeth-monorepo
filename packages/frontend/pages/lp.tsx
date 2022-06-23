@@ -1,4 +1,4 @@
-import { createStyles, makeStyles } from '@material-ui/core'
+import { Button, createStyles, makeStyles } from '@material-ui/core'
 import Typography from '@material-ui/core/Typography'
 import Image from 'next/image'
 import React, { useState } from 'react'
@@ -15,6 +15,9 @@ import { SqueethTab, SqueethTabs } from '@components/Tabs'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useAtomValue } from 'jotai'
+import { useOpenPositionDeposit } from 'src/state/lp/hooks'
+import BigNumber from 'bignumber.js'
+import useAppCallback from '@hooks/useAppCallback'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -73,6 +76,13 @@ const useStyles = makeStyles((theme) =>
     chartNav: {
       border: `1px solid ${theme.palette.primary.main}30`,
     },
+    buttonTest: {
+      marginTop: theme.spacing(1),
+      backgroundColor: theme.palette.success.main,
+      '&:hover': {
+        backgroundColor: theme.palette.success.dark,
+      },
+    },
   }),
 )
 
@@ -82,6 +92,16 @@ export function LPCalculator() {
   const ethPrice = useETHPrice()
   const [lpType, setLpType] = useState(0)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
+  const openLPPosition = useOpenPositionDeposit()
+
+  const openPos = useAppCallback(async () => {
+    try {
+      await openLPPosition(new BigNumber(50), -887220, 887220, () => {})
+    } catch (e) {
+      console.log(e)
+    }
+  }, [])
+
 
   return (
     <div>
@@ -155,6 +175,19 @@ export function LPCalculator() {
                   contracts are experimental technology and we encourage caution only risking funds you can afford to
                   lose.
                 </Typography>
+                <Typography className={classes.heading} variant="subtitle1" color="primary">
+                  Testing One Click LP Hooks
+                </Typography>
+                <Button
+                  onClick={openPos}
+                  style={{
+                    width: '300px',
+                    color: 'gray',
+                    backgroundColor: '#a9fbf6',
+                  }}
+                >
+                  {'Open Mint and Deposit LP Position'}
+                </Button>
               </div>
             ) : (
               <div style={{ marginTop: '16px' }}>
