@@ -125,7 +125,7 @@ describe("Crab V2 integration test: crab vault full liquidation and shutdown of 
     const debtToMint = wdiv(ethToDeposit, squeethDelta);
     const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
-    await crabStrategy.connect(depositor).deposit({ value: msgvalue })
+    await crabStrategy.connect(depositor).initialize(debtToMint, ethToDeposit, { value: msgvalue })
 
     const totalSupply = (await crabStrategy.totalSupply())
     const depositorCrab = (await crabStrategy.balanceOf(depositor.address))
