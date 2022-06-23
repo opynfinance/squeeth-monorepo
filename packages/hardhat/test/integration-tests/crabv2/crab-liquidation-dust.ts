@@ -123,9 +123,6 @@ describe("Crab V2 integration test: crab vault dust liquidation with excess coll
     const ethPrice = await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 600, true)
     const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
-    await crabStrategy.connect(depositor).deposit({ value: msgvalue })
-    const [operator, nftId, collateralAmount, debtAmount] = await crabStrategy.getVaultDetails()
-
     const normFactor = await controller.normalizationFactor()
     const currentScaledEthPrice = (await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 300, false)).div(oracleScaleFactor)
     const feeRate = await controller.feeRate()
@@ -133,6 +130,9 @@ describe("Crab V2 integration test: crab vault dust liquidation with excess coll
     const squeethDelta = scaledStartingSqueethPrice1e18.mul(2);
     const debtToMint = wdiv(ethToDeposit, (squeethDelta.add(ethFeePerWSqueeth)));
     const expectedEthDeposit = ethToDeposit.sub(debtToMint.mul(ethFeePerWSqueeth).div(one))
+
+    await crabStrategy.connect(depositor).initialize(debtToMint, ethToDeposit, { value: msgvalue });
+    const [operator, nftId, collateralAmount, debtAmount] = await crabStrategy.getVaultDetails()
 
     const totalSupply = (await crabStrategy.totalSupply())
     const depositorCrab = (await crabStrategy.balanceOf(depositor.address))

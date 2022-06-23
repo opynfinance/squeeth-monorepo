@@ -57,7 +57,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     /// @dev twap period to use for hedge calculations
     uint32 public hedgingTwapPeriod = 420 seconds;
     /// @dev true if CrabV2 was initialized
-    bool public isInitialized; 
+    bool public isInitialized;
 
     /// @dev typehash for signed orders
     bytes32 private constant _CRAB_BALANCE_TYPEHASH =
@@ -191,35 +191,27 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     /**
      * @notice initializes the collateral ratio upon the first migration
      */
-     function initialize(uint256 wSqueethToMint) external payable { 
+    function initialize(uint256 wSqueethToMint, uint256 crabSharesToMint) external payable {
         uint256 amount = msg.value;
-        uint256 ethFee = 0; // TODO: does this need to change? 
+        uint256 ethFee = 0; // TODO: does this need to change?
 
         (uint256 strategyDebt, uint256 strategyCollateral) = _syncStrategyState();
         _checkStrategyCap(amount, strategyCollateral);
 
-        uint256 depositorCrabAmount = _calcSharesToMint(amount.sub(ethFee), strategyCollateral, totalSupply());
-
         require((strategyDebt == 0 && strategyCollateral == 0), "C5");
         // store hedge data as strategy is delta neutral at this point
         // only execute this upon first deposit
-        uint256 wSqueethEthPrice = IOracle(oracle).getTwap(
-            ethWSqueethPool,
-            wPowerPerp,
-            weth,
-            hedgingTwapPeriod,
-            true
-        );
+        uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, hedgingTwapPeriod, true);
         timeAtLastHedge = block.timestamp;
         priceAtLastHedge = wSqueethEthPrice;
 
         // mint wSqueeth and send it to msg.sender
         _mintWPowerPerp(msg.sender, wSqueethToMint, amount, false);
         // mint LP to depositor
-        _mintStrategyToken(msg.sender, depositorCrabAmount);
+        _mintStrategyToken(msg.sender, crabSharesToMint);
 
-         isInitialized = true;
-     }
+        isInitialized = true;
+    }
 
     /**
      * @notice Tranfer vault NFT to new contract
@@ -657,7 +649,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 _clearingPrice,
         bool _isHedgeBuying,
         Order[] memory _orders
-    ) external onlyOwner {
+    ) external onlyOwner afterInitialization {
         require(_clearingPrice > 0, "Manager Price should be greater than 0");
         require(_isTimeHedge() || _isPriceHedge(), "Time or Price is not within range");
         _checkOTCPrice(_clearingPrice, _isHedgeBuying);
@@ -755,6 +747,8 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     ) internal view returns (uint256, uint256) {
         uint256 wSqueethToMint;
         uint256 feeAdjustment = _calcFeeAdjustment();
+        bool isShutdown = (_strategyDebtAmount == 0 && _strategyCollateralAmount == 0) && (totalSupply() != 0);
+        require(!isShutdown, "Crab contracts shut down");
 
         wSqueethToMint = _depositedAmount.wmul(_strategyDebtAmount).wdiv(
             _strategyCollateralAmount.add(_strategyDebtAmount.wmul(feeAdjustment))

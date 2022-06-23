@@ -6,18 +6,18 @@ pragma abicoder v2;
 // interface
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract MockEulerDToken { 
-    
+contract MockEulerDToken {
     ERC20 weth;
 
-    constructor (address _weth) {
+    constructor(address _weth) {
         weth = ERC20(_weth);
     }
 
-    function borrow (uint256, uint256 amount) external {
+    function borrow(uint256, uint256 amount) external {
         weth.transfer(msg.sender, amount);
     }
-    function repay (uint256, uint256 amount) external { 
+
+    function repay(uint256, uint256 amount) external {
         weth.transferFrom(msg.sender, address(this), amount);
     }
 }

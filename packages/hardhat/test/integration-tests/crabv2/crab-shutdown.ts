@@ -128,7 +128,7 @@ describe("Crab V2 integration test: Shutdown of Squeeth Power Perp contracts", f
     const debtToMint = wdiv(ethToDeposit, squeethDelta);
     const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
-    await crabStrategy.connect(depositor).initialize(debtToMint, { value: msgvalue })
+    await crabStrategy.connect(depositor).initialize(debtToMint, ethToDeposit, { value: msgvalue })
 
     const lastHedgeTime = await crabStrategy.timeAtLastHedge()
     const currentBlockNumber = await provider.getBlockNumber()
