@@ -3,10 +3,10 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-
 contract MockEuler {
-    uint256 a; 
-    function deferLiquidityCheck(address account, bytes memory data) external { 
+    uint256 a;
+
+    function deferLiquidityCheck(address account, bytes memory data) external {
         a = 4;
     }
 }

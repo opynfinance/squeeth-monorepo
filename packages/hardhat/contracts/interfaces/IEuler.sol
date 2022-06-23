@@ -9,5 +9,6 @@ interface IEulerExec {
 
 interface IEulerDToken {
     function borrow(uint256 subAccountId, uint256 amount) external;
+
     function repay(uint256 subAccountId, uint256 amount) external;
 }
