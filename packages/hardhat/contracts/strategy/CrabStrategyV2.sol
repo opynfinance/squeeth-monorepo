@@ -655,7 +655,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 _clearingPrice,
         bool _isHedgeBuying,
         Order[] memory _orders
-    ) external onlyOwner {
+    ) external onlyOwner afterInitialization {
         require(_clearingPrice > 0, "Manager Price should be greater than 0");
         require(_isTimeHedge() || _isPriceHedge(), "Time or Price is not within range");
         _checkOTCPrice(_clearingPrice, _isHedgeBuying);
