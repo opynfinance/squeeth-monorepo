@@ -8,7 +8,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import {IEulerExec, IEulerDToken} from "../interfaces/IEuler.sol";
 import {WETH9} from "../external/WETH9.sol";
-import "hardhat/console.sol";
 
 // contract
 import {CrabStrategyV2} from "./CrabStrategyV2.sol";
@@ -124,7 +123,9 @@ contract CrabMigration {
 
         // 2. mint osqth in crab v2
         uint256 wSqueethToMint = crabV1.getWsqueethFromCrabAmount(crabV1Balance);
-        crabV2.initialize{value: amountEthToBorrow}(wSqueethToMint, totalCrabV1SharesMigrated);
+        uint256 timeAtLastHedge = crabV1.timeAtLastHedge();
+        uint256 priceAtLastHedge = crabV1.priceAtLastHedge();
+        crabV2.initialize{value: amountEthToBorrow}(wSqueethToMint, totalCrabV1SharesMigrated, timeAtLastHedge, priceAtLastHedge);
 
         // 3. call withdraw from crab v1
         IERC20(wPowerPerp).approve(address(crabV1), type(uint256).max);

@@ -324,7 +324,7 @@ describe("Crab Strategy V2", function () {
       const debtToMint = ethToDeposit.mul(one).div(squeethDelta.add(feeAdj));
       const expectedMintedWsqueeth = debtToMint.mul(normFactor)
 
-      await crabStrategy.connect(crabMigration).initialize( expectedMintedWsqueeth, ethToDeposit, { value: ethToDeposit });
+      await crabStrategy.connect(crabMigration).initialize( expectedMintedWsqueeth, ethToDeposit, 0, 0, { value: ethToDeposit });
 
       const totalSupply = (await crabStrategy.totalSupply())
       const migrationCrabV2Balance = (await crabStrategy.balanceOf(crabMigration.address))
