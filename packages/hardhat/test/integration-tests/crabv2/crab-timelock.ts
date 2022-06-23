@@ -119,7 +119,7 @@ describe("Crab v2 Integration test: Timelock", function () {
         await provider.send("evm_mine", []);
     });
     before("Initialize strategy", async () => {
-        await crabStrategy.connect(crabMigration).initialize(ethers.utils.parseUnits("0.2"), { value: ethers.utils.parseUnits("1") });
+        await crabStrategy.connect(crabMigration).initialize(ethers.utils.parseUnits("0.2"), ethers.utils.parseUnits("0.2"), { value: ethers.utils.parseUnits("1") });
     });
 
     describe("Transfer vault with timelock", async () => {
