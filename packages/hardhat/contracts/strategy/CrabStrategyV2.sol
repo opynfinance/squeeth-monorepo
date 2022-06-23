@@ -152,7 +152,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         address _uniswapFactory,
         address _ethWSqueethPool,
         address _timelock,
-        address _swapRouter,
         uint256 _hedgeTimeThreshold,
         uint256 _hedgePriceThreshold
     )

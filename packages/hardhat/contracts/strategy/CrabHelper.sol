@@ -4,7 +4,10 @@ import {ICrabStrategyV2} from "../interfaces/ICrabStrategyV2.sol";
 import {IWETH9} from "../interfaces/IWETH9.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {StrategyBase} from "./base/StrategyBase.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+
+import {StrategySwap} from "./helper/StrategySwap.sol";
 
 /**
  * @dev CrabHelper contract
@@ -12,6 +15,8 @@ import {StrategyBase} from "./base/StrategyBase.sol";
  * @author Opyn team
  */
 contract CrabHelper is StrategySwap, ReentrancyGuard {
+	using Address for address payable;
+
     address public immutable crab;
     address public immutable weth;
     address public immutable wPowerPerp;
@@ -21,7 +26,7 @@ contract CrabHelper is StrategySwap, ReentrancyGuard {
         address depositedERC20,
         uint256 depositedAmount,
         uint256 depositedEthAmount,
-        uint256 tradedAmountOut,
+        uint256 crabAmount,
         uint256 returnedEth
     );
 
@@ -30,7 +35,7 @@ contract CrabHelper is StrategySwap, ReentrancyGuard {
         address withdrawnERC20,
         uint256 withdrawnAmount,
         uint256 withdrawnEthAmount,
-        uint256 crabAmount,
+        uint256 crabAmount
     );
 
     constructor(address _crab, address _swapRouter) StrategySwap(_swapRouter) {
@@ -48,7 +53,7 @@ contract CrabHelper is StrategySwap, ReentrancyGuard {
         uint24 _fee,
         address _tokenIn
     ) external nonReentrant {
-        uint256 wethReceived = _swapExactInputSingle(
+        _swapExactInputSingle(
             _tokenIn,
             weth,
             msg.sender,
@@ -61,11 +66,11 @@ contract CrabHelper is StrategySwap, ReentrancyGuard {
         IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
         ICrabStrategyV2(crab).flashDeposit{value: address(this).balance}(_ethToDeposit);
 
-        uint256 oSqthAmount = IERC20(wPowerPerp).balanceOf(address(this));
+        uint256 crabAmount = IERC20(crab).balanceOf(address(this));
 
-        emit FlashDepositERC20(msg.sender, _tokenIn, _amountIn, _ethToDeposit, oSqthAmount, address(this).balance);
+        emit FlashDepositERC20(msg.sender, _tokenIn, _amountIn, _ethToDeposit, crabAmount, address(this).balance);
 
-        IERC20(wPowerPerp).transfer(msg.sender, oSqthAmount);
+        IERC20(crab).transfer(msg.sender, crabAmount);
 
         if (address(this).balance > 0) {
             payable(msg.sender).sendValue(address(this).balance);
@@ -79,8 +84,7 @@ contract CrabHelper is StrategySwap, ReentrancyGuard {
         uint256 _minAmountOut,
         uint24 _fee
     ) external nonReentrant {
-        ICrabStrategyV2(crab).transferFrom(msg.sender, address(this), _crabAmount);
-        ICrabStrategyV2(crab).approve(crab, _crabAmount);
+        IERC20(crab).transferFrom(msg.sender, address(this), _crabAmount);
 
         ICrabStrategyV2(crab).flashWithdraw(_crabAmount, _maxEthToPay);
 
@@ -96,6 +100,13 @@ contract CrabHelper is StrategySwap, ReentrancyGuard {
             _fee
         );
 
-        emit FlashWithdrawERC20Callback(msg.sender, _tokenOut, tokenReceived, ethBalance, _crabAmount);
+        emit FlashWithdrawERC20(msg.sender, _tokenOut, tokenReceived, ethBalance, _crabAmount);
+    }
+
+    /**
+     * @notice receive function to allow ETH transfer to this contract
+     */
+    receive() external payable {
+        require(msg.sender == weth || msg.sender == crab, "Cannot receive eth");
     }
 }
