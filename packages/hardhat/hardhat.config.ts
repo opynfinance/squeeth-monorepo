@@ -66,6 +66,7 @@ const config: HardhatUserConfig = {
   defaultNetwork,
   networks: {
     hardhat: {
+      allowUnlimitedContractSize: true,
       initialBaseFeePerGas: 0,
       saveDeployments: false, // only used in cicd to test deployments
       mining: {
