@@ -122,7 +122,7 @@ import {StrategyMath} from "./base/StrategyMath.sol";
 
         // 2. mint osqth in crab v2 
         uint256 wSqueethToMint = crabV1.getWsqueethFromCrabAmount(crabV1Balance);
-        crabV2.initialize{value: amountEthToBorrow}(wSqueethToMint);
+        crabV2.initialize{value: amountEthToBorrow}(wSqueethToMint, totalCrabV1SharesMigrated);
 
         // 3. call withdraw from crab v1
         IERC20(wPowerPerp).approve(address(crabV1), type(uint).max);

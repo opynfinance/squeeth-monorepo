@@ -191,14 +191,12 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     /**
      * @notice initializes the collateral ratio upon the first migration
      */
-     function initialize(uint256 wSqueethToMint) external payable { 
+     function initialize(uint256 wSqueethToMint, uint256 crabSharesToMint) external payable { 
         uint256 amount = msg.value;
         uint256 ethFee = 0; // TODO: does this need to change? 
 
         (uint256 strategyDebt, uint256 strategyCollateral) = _syncStrategyState();
         _checkStrategyCap(amount, strategyCollateral);
-
-        uint256 depositorCrabAmount = _calcSharesToMint(amount.sub(ethFee), strategyCollateral, totalSupply());
 
         require((strategyDebt == 0 && strategyCollateral == 0), "C5");
         // store hedge data as strategy is delta neutral at this point
@@ -216,7 +214,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         // mint wSqueeth and send it to msg.sender
         _mintWPowerPerp(msg.sender, wSqueethToMint, amount, false);
         // mint LP to depositor
-        _mintStrategyToken(msg.sender, depositorCrabAmount);
+        _mintStrategyToken(msg.sender, crabSharesToMint);
 
          isInitialized = true;
      }
@@ -755,6 +753,8 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     ) internal view returns (uint256, uint256) {
         uint256 wSqueethToMint;
         uint256 feeAdjustment = _calcFeeAdjustment();
+        bool isShutdown = (_strategyDebtAmount == 0 && _strategyCollateralAmount == 0) && (totalSupply() !=0);
+        require(!isShutdown, "Crab contracts shut down");
 
         wSqueethToMint = _depositedAmount.wmul(_strategyDebtAmount).wdiv(
             _strategyCollateralAmount.add(_strategyDebtAmount.wmul(feeAdjustment))
