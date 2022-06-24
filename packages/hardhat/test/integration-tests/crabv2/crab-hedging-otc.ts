@@ -34,6 +34,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
     let random: SignerWithAddress;
     let trader: SignerWithAddress;
     let feeRecipient: SignerWithAddress;
+    let crabMigration: SignerWithAddress;
     let dai: MockErc20;
     let weth: WETH9;
     let positionManager: Contract;
@@ -49,12 +50,13 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
 
     this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async () => {
         const accounts = await ethers.getSigners();
-        const [_owner, _depositor, _random, _feeRecipient, _trader] = accounts;
+        const [_owner, _depositor, _random, _feeRecipient, _trader, _crabMigration] = accounts;
         owner = _owner;
         depositor = _depositor;
         random = _random;
         trader = _trader;
         feeRecipient = _feeRecipient;
+        crabMigration = _crabMigration;
         provider = ethers.provider;
 
         const { dai: daiToken, weth: wethToken } = await deployWETHAndDai();
@@ -94,6 +96,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             uniswapFactory.address,
             wSqueethPool.address,
             timelock.address,
+            crabMigration.address,
             hedgeTimeThreshold,
             hedgePriceThreshold
         )) as CrabStrategyV2;
@@ -149,7 +152,8 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
         const debtToMint = wdiv(ethToDeposit, squeethDelta.add(ethFeePerWSqueeth));
         const expectedEthDeposit = ethToDeposit.sub(debtToMint.mul(ethFeePerWSqueeth).div(one));
 
-        await crabStrategyV2.connect(depositor).initialize(debtToMint, expectedEthDeposit, 1, 1, { value: ethToDeposit });
+        await crabStrategyV2.connect(crabMigration).initialize(debtToMint, expectedEthDeposit, 1, 1, { value: ethToDeposit });
+        await crabStrategyV2.connect(crabMigration).transfer(depositor.address, expectedEthDeposit);
 
         const totalSupply = await crabStrategyV2.totalSupply();
         const depositorCrab = await crabStrategyV2.balanceOf(depositor.address);
@@ -291,8 +295,8 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const hedgeBlockNumber = await provider.getBlockNumber();
             const hedgeBlock = await provider.getBlock(hedgeBlockNumber);
 
-            const timeAtLastHedge = await crabStrategy.timeAtLastHedge();
-            const priceAtLastHedge = await crabStrategy.priceAtLastHedge();
+            const timeAtLastHedge = await crabStrategyV2.timeAtLastHedge();
+            const priceAtLastHedge = await crabStrategyV2.priceAtLastHedge();
 
             expect(timeAtLastHedge.eq(hedgeBlock.timestamp)).to.be.true;
             expect(priceAtLastHedge).to.eq(oSQTHPriceAfter);

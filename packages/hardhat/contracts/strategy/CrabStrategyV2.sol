@@ -78,6 +78,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     address public immutable ethQuoteCurrencyPool;
     address public immutable quoteCurrency;
     address public immutable timelock;
+    address public immutable crabMigration;
 
     /// @dev time difference to trigger a hedge (seconds)
     uint256 public hedgeTimeThreshold;
@@ -159,6 +160,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         address _uniswapFactory,
         address _ethWSqueethPool,
         address _timelock,
+        address _crabMigration,
         uint256 _hedgeTimeThreshold,
         uint256 _hedgePriceThreshold
     )
@@ -169,6 +171,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         require(_oracle != address(0), "invalid oracle address");
         require(_timelock != address(0), "invalid timelock address");
         require(_ethWSqueethPool != address(0), "invalid ETH:WSqueeth address");
+        require (_crabMigration != address(0), "invalid crabMigration address");
         require(_hedgeTimeThreshold > 0, "invalid hedge time threshold");
         require(_hedgePriceThreshold > 0, "invalid hedge price threshold");
 
@@ -179,6 +182,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         ethQuoteCurrencyPool = IController(_wSqueethController).ethQuoteCurrencyPool();
         quoteCurrency = IController(_wSqueethController).quoteCurrency();
         timelock = _timelock;
+        crabMigration = _crabMigration;
     }
 
     /**
@@ -197,6 +201,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 timeAtLastHedge,
         uint256 priceAtLastHedge
     ) external payable {
+        require (msg.sender == crabMigration, "not Crab Migration contract");
         uint256 amount = msg.value;
         uint256 strategyDebt;
         uint256 strategyCollateral;

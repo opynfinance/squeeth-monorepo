@@ -79,6 +79,11 @@ describe("Crab Migration", function () {
 
     })
 
+    this.beforeAll("Deploy Crab Migration", async () => {
+        const MigrationContract = await ethers.getContractFactory("CrabMigration");
+        crabMigration = (await MigrationContract.deploy(crabV1Address, wethAddress, eulerExecAddress, dTokenAddress, eulerMainnetAddress)) as CrabMigration;
+    })
+
     this.beforeAll("Deploy Crab 2", async () => {
         const TimelockContract = await ethers.getContractFactory("Timelock");
         timelock = (await TimelockContract.deploy(owner.address, 3 * 24 * 60 * 60)) as Timelock;
@@ -90,15 +95,13 @@ describe("Crab Migration", function () {
             uniswapFactoryAddress,
             wethOsqthPoolAddress,
             timelock.address,
+            crabMigration.address,
             1,
             1)) as CrabStrategyV2;
         await crabStrategyV2.setStrategyCap(ethers.utils.parseEther("1000.0"));
+        await crabMigration.connect(owner).setCrabV2(crabStrategyV2.address);
     })
 
-    this.beforeAll("Deploy Crab Migration", async () => {
-        const MigrationContract = await ethers.getContractFactory("CrabMigration");
-        crabMigration = (await MigrationContract.deploy(crabV1Address, crabStrategyV2.address, wethAddress, eulerExecAddress, dTokenAddress, eulerMainnetAddress)) as CrabMigration;
-    })
 
     this.beforeEach("Set migration values", async () => {
         totalV2SharesReceived = await crabMigration.totalCrabV2SharesReceived();

@@ -19,12 +19,13 @@ import {StrategyMath} from "./base/StrategyMath.sol";
 
 /**
  * Migration Error Codes:
- * M1: Not Owner
+ * M1: Crab V2 Address already set
  * M2: Migration already happened
  * M3: Migration has not yet happened
  * M4: msg.sender is not Euler Mainnet Contract
  * M5: msg. sender cannot send ETH
  * M6: Can't withdraw more than you own
+ * M7: invalid crabV2 address
  */
 
 /**
@@ -65,24 +66,35 @@ contract CrabMigration is Ownable {
     /**
      * @notice migration constructor
      * @param _crabV1 address of crab v1
-     * @param _crabV2 address of crab v2
+     * @param _weth address of weth
+     * @param _eulerExec address of euler exec contract
+     * @param _dToken address of euler deposit token
+     * @param _eulerMainnet address of euler deployment on mainnet
      */
     constructor(
         address payable _crabV1,
-        address payable _crabV2,
         address _weth,
         address _eulerExec,
         address _dToken,
         address _eulerMainnet
     ) {
         crabV1 = CrabStrategy(_crabV1);
-        crabV2 = CrabStrategyV2(_crabV2);
         euler = IEulerExec(_eulerExec);
         EULER_MAINNET = _eulerMainnet;
         weth = WETH9(_weth);
         dToken = _dToken;
-        wPowerPerp = crabV2.wPowerPerp();
+        wPowerPerp = crabV1.wPowerPerp();
     }
+
+    /** 
+     * @notice set the crabV2 address
+     * @param _crabV2 address of crab v2 
+     */
+     function setCrabV2(address payable _crabV2) external onlyOwner {
+        require(address(crabV2) == address(0), "M1");
+        require(_crabV2 != address(0), "M7");
+        crabV2 = CrabStrategyV2(_crabV2);
+     }
 
     /**
      * @notice allows users to deposit their crab v1 shares in the pool for migration
