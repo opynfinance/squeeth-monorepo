@@ -10,6 +10,7 @@ import {IEulerExec, IEulerDToken} from "../interfaces/IEuler.sol";
 import {WETH9} from "../external/WETH9.sol";
 
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // contract
 import {CrabStrategyV2} from "./CrabStrategyV2.sol";
@@ -31,7 +32,7 @@ import {StrategyMath} from "./base/StrategyMath.sol";
  * @notice Contract for Migrating from Crab v1 to Crab v2
  * @author Opyn team
  */
-contract CrabMigration {
+contract CrabMigration is Ownable {
     using SafeERC20 for IERC20;
     using StrategyMath for uint256;
     using Address for address payable;
@@ -43,7 +44,6 @@ contract CrabMigration {
     IEulerExec public euler;
     WETH9 weth;
 
-    address public owner;
     uint256 public totalCrabV1SharesMigrated;
     uint256 public totalCrabV2SharesReceived;
     address immutable EULER_MAINNET;
@@ -51,11 +51,6 @@ contract CrabMigration {
     address immutable wPowerPerp;
 
     event ClaimAndWithdraw(address indexed user, uint256 crabAmount);
-
-    modifier onlyOwner() {
-        require(msg.sender == owner, "M1");
-        _;
-    }
 
     modifier beforeMigration() {
         require(!isMigrated, "M2");
@@ -83,7 +78,6 @@ contract CrabMigration {
         crabV1 = CrabStrategy(_crabV1);
         crabV2 = CrabStrategyV2(_crabV2);
         euler = IEulerExec(_eulerExec);
-        owner = msg.sender;
         EULER_MAINNET = _eulerMainnet;
         weth = WETH9(_weth);
         dToken = _dToken;

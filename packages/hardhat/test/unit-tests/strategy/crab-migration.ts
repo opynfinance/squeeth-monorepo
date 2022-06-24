@@ -117,7 +117,7 @@ describe("Crab Migration", function () {
         })
 
         it("random should not be able to migrate shares", async () => { 
-            await expect(crabMigration.connect(random).batchMigrate()).to.be.revertedWith("M1");
+            await expect(crabMigration.connect(random).batchMigrate()).to.be.revertedWith("Ownable: caller is not the owner");
         })
 
         it("batchMigrate", async () => { 
