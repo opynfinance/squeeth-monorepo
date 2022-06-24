@@ -202,6 +202,8 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 priceAtLastHedge
     ) external payable {
         require (msg.sender == crabMigration, "not Crab Migration contract");
+        require(!isInitialized, "Crab V2 already initialized");
+
         uint256 amount = msg.value;
         uint256 strategyDebt;
         uint256 strategyCollateral;

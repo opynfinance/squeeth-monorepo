@@ -366,6 +366,10 @@ describe("Crab Strategy V2", function () {
       await squeeth.connect(crabMigration).transfer(depositor.address, migrationSqueethBalance);
     })
 
+    it("Should not allow reinitialization of Crab v2", async () => { 
+      await expect(crabStrategy.connect(crabMigration).initialize(0, 0, 0, 0, {value: 0})).to.be.revertedWith("Crab V2 already initialized")
+    })
+
 
     it("Should deposit and mint correct LP when initial debt != 0 and return the correct amount of wSqueeth debt per crab strategy token", async () => {
       const normFactor = BigNumber.from(1)

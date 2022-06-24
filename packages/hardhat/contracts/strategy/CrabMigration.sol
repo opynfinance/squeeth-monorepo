@@ -164,7 +164,7 @@ contract CrabMigration is Ownable {
     /**
      * @notice allows users to claim their amount of crab v2 shares
      */
-    function claimV2Shares() external afterInitialized afterMigration {
+    function claimV2Shares() external afterMigration {
         uint256 amountV1Deposited = sharesDeposited[msg.sender];
         sharesDeposited[msg.sender] = 0;
         uint256 amountV2ToTransfer = amountV1Deposited.wmul(totalCrabV2SharesReceived).wdiv(totalCrabV1SharesMigrated);
@@ -177,7 +177,7 @@ contract CrabMigration is Ownable {
      * @param _amountToWithdraw V2 shares to claim
      * @param _maxEthToPay maximum ETH to pay to buy back the owed wSqueeth debt
      */
-    function claimAndWithdraw(uint256 _amountToWithdraw, uint256 _maxEthToPay) external afterInitialized afterMigration {
+    function claimAndWithdraw(uint256 _amountToWithdraw, uint256 _maxEthToPay) external afterMigration {
         uint256 amountV1toClaim = _getV1SharesForV2Share(_amountToWithdraw);
         uint256 amountV1Deposited = sharesDeposited[msg.sender];
         require(amountV1toClaim <= amountV1Deposited, "M6");
