@@ -149,7 +149,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
         const debtToMint = wdiv(ethToDeposit, squeethDelta.add(ethFeePerWSqueeth));
         const expectedEthDeposit = ethToDeposit.sub(debtToMint.mul(ethFeePerWSqueeth).div(one));
 
-        await crabStrategyV2.connect(depositor).initialize(debtToMint, expectedEthDeposit, { value: ethToDeposit });
+        await crabStrategyV2.connect(depositor).initialize(debtToMint, expectedEthDeposit, 1, 1, { value: ethToDeposit });
 
         const totalSupply = await crabStrategyV2.totalSupply();
         const depositorCrab = await crabStrategyV2.balanceOf(depositor.address);
@@ -158,16 +158,12 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
         const depositorSqueethBalance = await wSqueeth.balanceOf(depositor.address);
         const strategyContractSqueeth = await wSqueeth.balanceOf(crabStrategyV2.address);
         const lastHedgeTime = await crabStrategyV2.timeAtLastHedge();
-        const currentBlockNumber = await provider.getBlockNumber();
-        const currentBlock = await provider.getBlock(currentBlockNumber);
-        const timeStamp = currentBlock.timestamp;
         const collateralAmount = await strategyVault.collateralAmount;
 
         expect(isSimilar(totalSupply.toString(), expectedEthDeposit.toString())).to.be.true;
         expect(isSimilar(depositorCrab.toString(), expectedEthDeposit.toString())).to.be.true;
         expect(isSimilar(debtAmount.toString(), debtToMint.toString())).to.be.true;
         expect(strategyContractSqueeth.eq(BigNumber.from(0))).to.be.true;
-        expect(lastHedgeTime.eq(timeStamp)).to.be.true;
     });
 
     describe("Hedging", async () => {

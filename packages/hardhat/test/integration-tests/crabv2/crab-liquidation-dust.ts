@@ -131,7 +131,7 @@ describe("Crab V2 integration test: crab vault dust liquidation with excess coll
     const debtToMint = wdiv(ethToDeposit, (squeethDelta.add(ethFeePerWSqueeth)));
     const expectedEthDeposit = ethToDeposit.sub(debtToMint.mul(ethFeePerWSqueeth).div(one))
 
-    await crabStrategy.connect(depositor).initialize(debtToMint, ethToDeposit, { value: msgvalue });
+    await crabStrategy.connect(depositor).initialize(debtToMint, ethToDeposit, 0, 0, { value: msgvalue });
     const [operator, nftId, collateralAmount, debtAmount] = await crabStrategy.getVaultDetails()
 
     const totalSupply = (await crabStrategy.totalSupply())
@@ -140,16 +140,12 @@ describe("Crab V2 integration test: crab vault dust liquidation with excess coll
     const depositorSqueethBalance = await wSqueeth.balanceOf(depositor.address)
     const strategyContractSqueeth = await wSqueeth.balanceOf(crabStrategy.address)
     const lastHedgeTime = await crabStrategy.timeAtLastHedge()
-    const currentBlockNumber = await provider.getBlockNumber()
-    const currentBlock = await provider.getBlock(currentBlockNumber)
-    const timeStamp = currentBlock.timestamp
 
     expect(totalSupply.eq(ethToDeposit)).to.be.true
     expect(depositorCrab.eq(ethToDeposit)).to.be.true
     expect(isSimilar(debtAmount.toString(), debtToMint.toString())).to.be.true
     expect(isSimilar((depositorSqueethBalance.sub(depositorSqueethBalanceBefore)).toString(), (debtToMint).toString())).to.be.true
     expect(strategyContractSqueeth.eq(BigNumber.from(0))).to.be.true
-    expect(lastHedgeTime.eq(timeStamp)).to.be.true
 
   })
 

@@ -128,12 +128,7 @@ describe("Crab V2 integration test: Shutdown of Squeeth Power Perp contracts", f
     const debtToMint = wdiv(ethToDeposit, squeethDelta);
     const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
-    await crabStrategy.connect(depositor).initialize(debtToMint, ethToDeposit, { value: msgvalue })
-
-    const lastHedgeTime = await crabStrategy.timeAtLastHedge()
-    const currentBlockNumber = await provider.getBlockNumber()
-    const currentBlock = await provider.getBlock(currentBlockNumber)
-    const timeStamp = currentBlock.timestamp
+    await crabStrategy.connect(depositor).initialize(debtToMint, ethToDeposit, 0, 0, { value: msgvalue })
 
     const totalSupply = (await crabStrategy.totalSupply())
     const depositorCrab = (await crabStrategy.balanceOf(depositor.address))
@@ -147,7 +142,6 @@ describe("Crab V2 integration test: Shutdown of Squeeth Power Perp contracts", f
     expect(isSimilar(debtAmount.toString(), debtToMint.toString(), 3)).to.be.true
     expect(isSimilar((depositorSqueethBalance.sub(depositorSqueethBalanceBefore)).toString(), (debtToMint).toString(), 3)).to.be.true
     expect(strategyContractSqueeth.eq(BigNumber.from(0))).to.be.true
-    expect(lastHedgeTime.eq(timeStamp)).to.be.true
 
   })
 
