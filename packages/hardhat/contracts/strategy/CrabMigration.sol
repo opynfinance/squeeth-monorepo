@@ -218,12 +218,23 @@ contract CrabMigration is Ownable {
             crabV1.withdraw(crabV1Balance);
         } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_MIGRATE_V1_TO_V2) {
             FlashMigrateV1toV2 memory data = abi.decode(_calldata, (FlashMigrateV1toV2));
+            
+            uint256 balanceEth = address(this).balance;
+            console.log(balanceEth, "eth balance received from flashloan");
+
+            
             crabV2.deposit{value: _amount}();
             uint256 crabV1ToWithdraw = crabV1.balanceOf(_initiator);
 
             crabV1.transferFrom(_initiator, address(this), crabV1ToWithdraw);
+            uint256 balancePerp = IERC20(wPowerPerp).balanceOf(address(this));
+            console.log(balancePerp, "power perp balance received from minting");
+            
             IERC20(wPowerPerp).approve(address(crabV1), data.v1oSqthToPay);
             crabV1.withdraw(crabV1ToWithdraw);
+
+            balanceEth = address(this).balance;
+            console.log(balanceEth, "eth balance received from withdrawing from v1");
 
             // Flash deposit remaining ETH, if user said so. Else return back the ETH. If CR1 = CR2 ethToFlashDeposit should be 0
             if (data.ethToFlashDeposit > 0) {
@@ -314,6 +325,7 @@ contract CrabMigration is Ownable {
 
         console.log("isFLash", isFlashOnlyMigrate);
         console.log(ethNeededForV2,v1oSqthToPay,ethToGetFromV1);
+        console.log(v1oSqthToPay, "power perp balance needed from minting to pay to v1");
 
         // CR1 > CR2, Can mint more
         if (isFlashOnlyMigrate) {
@@ -350,10 +362,23 @@ contract CrabMigration is Ownable {
         uint256 v1TotalSupply = crabV1.totalSupply();
         (, , uint256 v1TotalCollateral, uint256 v1TotalShort) = crabV1.getVaultDetails();
         (, , uint256 v2TotalCollateral, uint256 v2TotalShort) = crabV2.getVaultDetails();
-        uint256 v1oSqthToPay = v1Shares.wdiv(v1TotalSupply).wmul(v1TotalShort);
-        uint256 ethNeededForV2 = v2TotalCollateral.wdiv(v2TotalShort).wmul(v1oSqthToPay);
+        console.log(v1TotalCollateral,v1TotalShort, "v1 c v1 debt");
+        console.log(v2TotalCollateral,v2TotalShort, "v2 c v2 debt");
+        
+        //uint256 v1oSqthToPay = v1Shares.wdiv(v1TotalSupply).wmul(v1TotalShort); //old
+        //uint256 ethNeededForV2 = v2TotalCollateral.wdiv(v2TotalShort).wmul(v1oSqthToPay); //old
+
+        uint256 v1oSqthToPay = v1TotalShort.wmul(v1Shares).wdiv(v1TotalSupply); //new
+        uint256 ethNeededForV2 = v2TotalCollateral.wmul(v1oSqthToPay).wdiv(v2TotalShort); //new
+        
         uint256 ethToGetFromV1 = v1Shares.wdiv(v1TotalSupply).wmul(v1TotalCollateral);
-        bool isFlashOnlyMigrate = v1TotalCollateral.wdiv(v1TotalShort) >= v2TotalCollateral.wdiv(v2TotalShort);
+        uint256 v1cr = v1TotalCollateral.rdiv(v1TotalShort);
+        uint256 v2cr = v2TotalCollateral.rdiv(v2TotalShort);
+        console.log(v1cr, "v1cr");
+        console.log(v1cr, "v2cr");
+
+        //bool isFlashOnlyMigrate = v1TotalCollateral.rdiv(v1TotalShort) >= v2TotalCollateral.rdiv(v2TotalShort);
+        bool isFlashOnlyMigrate = ethNeededForV2 <= ethToGetFromV1;
 
         return (isFlashOnlyMigrate, ethNeededForV2, v1oSqthToPay, ethToGetFromV1);
     }
