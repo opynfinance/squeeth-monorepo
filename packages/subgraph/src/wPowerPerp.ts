@@ -6,7 +6,6 @@ import {
   SWAPROUTER2_ADDR,
   SWAPROUTER_ADDR,
   CRAB_STRATEGY_ADDR,
-  OSQTH_WETH_POOL,
 } from "./addresses";
 import { TOKEN_DECIMALS_18 } from "./constants";
 import { buyOrSellSQTH, createTransactionHistory } from "./util";

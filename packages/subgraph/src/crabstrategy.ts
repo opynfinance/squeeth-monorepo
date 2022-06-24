@@ -14,7 +14,7 @@ import {
 } from "../generated/CrabStrategy/CrabStrategy";
 import { CrabAuction, CrabStrategyTx } from "../generated/schema";
 import { TOKEN_DECIMALS_18 } from "./constants";
-import { buyOrSellETH, buyOrSellSQTH } from "./util";
+import { buyOrSellSQTH } from "./util";
 import { convertTokenToDecimal } from "./utils";
 
 function loadOrCreateTx(id: string): CrabStrategyTx {

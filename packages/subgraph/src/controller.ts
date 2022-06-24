@@ -1,4 +1,4 @@
-import { BigInt, Bytes, BigDecimal, Address } from "@graphprotocol/graph-ts";
+import { BigInt, Bytes, Address } from "@graphprotocol/graph-ts";
 import {
   BurnShort,
   DepositCollateral,
