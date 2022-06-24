@@ -19,6 +19,8 @@ import {CrabStrategyV2} from "./CrabStrategyV2.sol";
 import {CrabStrategy} from "./CrabStrategy.sol";
 import {StrategyMath} from "./base/StrategyMath.sol";
 
+import "hardhat/console.sol";
+
 /**
  * Migration Error Codes:
  * M1: Crab V2 Address already set
@@ -309,6 +311,9 @@ contract CrabMigration is Ownable {
      */
     function flashMigrateFromV1toV2(uint256 _ethToFlashDeposit, uint256 _ethToBorrow, uint256 _withdrawMaxEthToPay) external afterMigration {
         (bool isFlashOnlyMigrate, uint256 ethNeededForV2, uint256 v1oSqthToPay, uint256 ethToGetFromV1) = _flashMigrationDetails(msg.sender);
+
+        console.log("isFLash", isFlashOnlyMigrate);
+        console.log(ethNeededForV2,v1oSqthToPay,ethToGetFromV1);
 
         // CR1 > CR2, Can mint more
         if (isFlashOnlyMigrate) {

@@ -2,7 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-wit
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber, providers } from "ethers";
-import { CrabStrategy, CrabStrategyV2, CrabMigration, IDToken, WETH9, IEulerExec, Timelock, Oracle } from "../../typechain";
+import { Controller, CrabStrategy, CrabStrategyV2, CrabMigration, IDToken, WETH9, IEulerExec, Timelock, Oracle } from "../../typechain";
 
 import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../utils"
 
@@ -380,8 +380,14 @@ describe("Crab Migration", function () {
             const expectedCollatToDeposit = crabV1SharesBefore.mul(collatV1).div(crabV1Supply)
             const expectedV2Shares = expectedCollatToDeposit.mul(crabV2Supply).div(collatV2)
 
+            console.log(collatV1.toString(),collatV2.toString())
+            console.log(shortV1.toString(),shortV2.toString())
+
             expect(wdiv(collatV1, shortV1)).to.be.equal(wdiv(collatV2, shortV2))
+            console.log("made it here)")
             await crabStrategyV1.connect(d3).approve(crabMigration.address, crabV1SharesBefore);
+            console.log("made it her2e)")
+
             await crabMigration.connect(d3).flashMigrateFromV1toV2(0, 0, 0);
 
             const crabV1SharesAfter = await crabStrategyV1.balanceOf(d3.address)
@@ -430,7 +436,7 @@ describe("Crab Migration", function () {
             expect(isFlashMigrate).to.be.false
             expect(ethToGetFromV1.gt(ethNeededForV2)).to.be.false
 
-            const oSqthPrice = await oracle.getTwap(wethOsqthPoolAddress, oSqthAddress, wethAddress, 1, false)
+            const oSqthPrice = await oracle.getTwap(wethOsqthPoolAddress, squeethAddress, wethAddress, 1, false)
 
             const numerator = ethToGetFromV1.sub(wmul(v1oSqthToPay, oSqthPrice).mul(101).div(100)) // 1% slippage
             const denominator = one.sub(wdiv(oSqthPrice.mul(101).div(100), wdiv(collatV2, shortV2)))
