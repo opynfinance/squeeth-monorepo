@@ -2,7 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-wit
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber, providers } from "ethers";
-import { CrabStrategy, CrabStrategyV2, CrabMigration, IEulerDToken, WETH9, MockEulerDToken, IEulerExec, Timelock } from "../../typechain";
+import { CrabStrategy, CrabStrategyV2, CrabMigration, IEulerDToken, WETH9, MockEulerDToken, IEulerExec, Timelock, Oracle } from "../../typechain";
 import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../utils"
 
 describe("Crab Migration", function () {
@@ -11,6 +11,7 @@ describe("Crab Migration", function () {
     let crabStrategyV1: CrabStrategy;
     let crabStrategyV2: CrabStrategyV2
     let crabMigration: CrabMigration;
+    let oracle: Oracle;
 
     let weth: WETH9;
     let dToken: IEulerDToken;
@@ -35,9 +36,12 @@ describe("Crab Migration", function () {
     const oracleAddress = "0x65D66c76447ccB45dAf1e8044e918fA786A483A1";
     const uniswapFactoryAddress = "0x1F98431c8aD98523631AE4a59f267346ea31F984";
     const wethOsqthPoolAddress = "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C";
+    const squeethAddress = "0xf1b99e3e573a1a9c5e6b2ce818b617f0e664e86b";
 
     let deposit1Amount: BigNumber
     let deposit2Amount: BigNumber
+    let totalV2SharesReceived: BigNumber
+    let totalCrabV1SharesMigrated: BigNumber
 
     this.beforeAll("Prepare accounts", async () => {
         const accounts = await ethers.getSigners();
@@ -54,6 +58,7 @@ describe("Crab Migration", function () {
         dToken = await ethers.getContractAt("IEulerDToken", dTokenAddress);
         eulerExec = await ethers.getContractAt("IEulerExec", eulerExecAddress);
         crabStrategyV1 = await ethers.getContractAt("CrabStrategy", crabV1Address);
+        oracle = await ethers.getContractAt("Oracle", oracleAddress);
 
         deposit1Amount = await crabStrategyV1.balanceOf(crabV1Whale);
         deposit2Amount = await crabStrategyV1.balanceOf(crabV1Whale2);
@@ -94,6 +99,20 @@ describe("Crab Migration", function () {
         const MigrationContract = await ethers.getContractFactory("CrabMigration");
         crabMigration = (await MigrationContract.deploy(crabV1Address, crabStrategyV2.address, wethAddress, eulerExecAddress, dTokenAddress, eulerMainnetAddress)) as CrabMigration;
     })
+
+    this.beforeEach("Set migration values", async () => {
+        totalV2SharesReceived = await crabMigration.totalCrabV2SharesReceived();
+        totalCrabV1SharesMigrated = await crabMigration.totalCrabV1SharesMigrated();
+    })
+
+    const getV2SqthAndEth = async (share: BigNumber) => {
+        const [, , eth, sqth] = await crabStrategyV2.getVaultDetails();
+        const supply = await crabStrategyV2.totalSupply();
+        const userEth = wdiv(wmul(share, eth), supply)
+        const userSqth = wdiv(wmul(share, sqth), supply)
+
+        return [userEth, userSqth]
+    }
 
     describe("Test Migration", async () => {
 
@@ -186,7 +205,7 @@ describe("Crab Migration", function () {
             expect(d1SharesAfter.sub(d1SharesBefore)).to.be.equal(sharesSent);
 
             // 2. check that the right amount of shares have been sent. 
-            const totalV2SharesReceived = await crabMigration.totalCrabV2SharesReceived();
+            totalV2SharesReceived = await crabMigration.totalCrabV2SharesReceived();
             const totalDepositAmount = deposit1Amount.add(deposit2Amount);
             const expectedSharesSent = deposit1Amount.mul(totalV2SharesReceived).div(totalDepositAmount);
             expect(expectedSharesSent).to.be.equal(sharesSent);
@@ -195,34 +214,55 @@ describe("Crab Migration", function () {
         it("Should not able to claim more than their share", async () => {
             const d2sharesInMigrationBefore = await crabMigration.sharesDeposited(d2.address)
 
-            const d2sharesToMigrate = d2sharesInMigrationBefore.mul(2)
-            await expect(crabMigration.connect(d2).claimAndWithdraw(d2sharesToMigrate, ethers.constants.MaxInt256)).to.be.revertedWith("M6") // Set ETH slippage higher!
+            const d2sharesV2ToMigrate = wdiv(wmul(d2sharesInMigrationBefore, totalCrabV1SharesMigrated), totalV2SharesReceived).add(1)
+
+            await expect(crabMigration.connect(d2).claimAndWithdraw(d2sharesV2ToMigrate, ethers.constants.MaxUint256)).to.be.revertedWith("M6") // Set ETH slippage higher!
         })
 
         it("d2 Claim and flash withdraw 50 percent of tokens", async () => {
             const constractSharesBefore = await crabStrategyV2.balanceOf(crabMigration.address);
-            const d2sharesInMigrationBefore = await crabMigration.sharesDeposited(d2.address)
+            const d2sharesInMigrationBefore = await crabMigration.sharesDeposited(d2.address);
+            const d2EthBalanceBefore = await provider.getBalance(d2.address);
 
-            const d2sharesToMigrate = wdiv(d2sharesInMigrationBefore, one.mul(2))
-            await crabMigration.connect(d2).claimAndWithdraw(d2sharesToMigrate, ethers.constants.MaxInt256) // Set ETH slippage higher!
+            const d2sharesV1ToMigrate = wdiv(d2sharesInMigrationBefore, one.mul(2))
+            const d2sharesV2ToMigrate = wdiv(wmul(d2sharesV1ToMigrate, totalCrabV1SharesMigrated), totalV2SharesReceived)
+
+            const [ethToGet, sqthToSell] = await getV2SqthAndEth(d2sharesV2ToMigrate);
+            const sqthPrice = await oracle.getTwap(wethOsqthPoolAddress, squeethAddress, wethAddress, 1, false)
+
+            const ethSpentToBuyBack = wdiv(wmul(wmul(sqthToSell, sqthPrice), BigNumber.from(105)), BigNumber.from(100))
+
+            await crabMigration.connect(d2).claimAndWithdraw(d2sharesV2ToMigrate, ethSpentToBuyBack) // Set ETH slippage higher!
             const d2sharesInMigrationAfter = await crabMigration.sharesDeposited(d2.address)
             const constractSharesAfter = await crabStrategyV2.balanceOf(crabMigration.address);
+            const d2EthBalanceAfter = await provider.getBalance(d2.address);
 
-
-            const totalDepositAmount = deposit1Amount.add(deposit2Amount);
-            const totalV2SharesReceived = await crabMigration.totalCrabV2SharesReceived();
-            const expectedSharesWithdraw = d2sharesToMigrate.mul(totalV2SharesReceived).div(totalDepositAmount);
-            expect(d2sharesInMigrationAfter).to.be.equal(d2sharesInMigrationBefore.sub(d2sharesToMigrate))
-            expect(constractSharesAfter).to.be.equal(constractSharesBefore.sub(expectedSharesWithdraw))
+            expect(d2sharesInMigrationAfter).to.be.equal(d2sharesInMigrationBefore.sub(d2sharesV1ToMigrate))
+            expect(constractSharesAfter).to.be.equal(constractSharesBefore.sub(d2sharesV2ToMigrate))
+            // Check if minimum ETH is returned
+            expect(d2EthBalanceAfter.sub(d2EthBalanceBefore).gte(ethToGet.sub(ethSpentToBuyBack))).to.be.true
         })
 
         it("d2 Claim and flash withdraw 100 percent of the tokens", async () => {
+            const constractSharesBefore = await crabStrategyV2.balanceOf(crabMigration.address);
             const d2sharesInMigrationBefore = await crabMigration.sharesDeposited(d2.address)
+            const d2sharesV2ToMigrate = wdiv(wmul(d2sharesInMigrationBefore, totalCrabV1SharesMigrated), totalV2SharesReceived)
+            const d2EthBalanceBefore = await provider.getBalance(d2.address);
 
-            await crabMigration.connect(d2).claimAndWithdraw(d2sharesInMigrationBefore, ethers.constants.MaxInt256) // Set ETH slippage higher!
+            const [ethToGet, sqthToSell] = await getV2SqthAndEth(d2sharesV2ToMigrate);
+            const sqthPrice = await oracle.getTwap(wethOsqthPoolAddress, squeethAddress, wethAddress, 1, false)
+            const ethSpentToBuyBack = wdiv(wmul(wmul(sqthToSell, sqthPrice), BigNumber.from(105)), BigNumber.from(100))
+
+
+            await crabMigration.connect(d2).claimAndWithdraw(d2sharesV2ToMigrate, ethSpentToBuyBack) // Set ETH slippage higher!
             const d2sharesInMigrationAfter = await crabMigration.sharesDeposited(d2.address)
+            const constractSharesAfter = await crabStrategyV2.balanceOf(crabMigration.address);
+            const d2EthBalanceAfter = await provider.getBalance(d2.address);
 
             expect(d2sharesInMigrationAfter).to.be.equal("0")
+            expect(constractSharesAfter).to.be.equal(constractSharesBefore.sub(d2sharesV2ToMigrate))
+            // Check if minimum ETH is returned
+            expect(d2EthBalanceAfter.sub(d2EthBalanceBefore).gte(ethToGet.sub(ethSpentToBuyBack))).to.be.true
         })
 
         it("d1 should not be able to deposit after migration", async () => {
