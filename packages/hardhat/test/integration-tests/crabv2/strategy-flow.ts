@@ -128,7 +128,7 @@ describe("Crab V2 integration test: flash deposit - deposit - withdraw", functio
     const debtToMint = wdiv(ethToDeposit, (squeethDelta.add(ethFeePerWSqueeth)));
     const expectedEthDeposit = ethToDeposit.sub(debtToMint.mul(ethFeePerWSqueeth).div(one))
 
-    await crabStrategy.connect(crabMigration).initialize(debtToMint, expectedEthDeposit, { value: ethToDeposit });
+    await crabStrategy.connect(crabMigration).initialize(debtToMint, expectedEthDeposit, 0, 0, { value: ethToDeposit });
   })
 
   describe("deposit above strategy cap", async () => {
