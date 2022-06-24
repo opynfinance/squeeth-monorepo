@@ -52,7 +52,6 @@ contract CrabMigration {
 
     event ClaimAndWithdraw(address indexed user, uint256 crabAmount);
 
-
     modifier onlyOwner() {
         require(msg.sender == owner, "M1");
         _;
@@ -183,7 +182,7 @@ contract CrabMigration {
     /**
      * @notice For input v2 shares returns the equivalent v1 shares
      */
-    function _getV1SharesForV2Share(uint256 _amountV2) internal view returns (uint256){
+    function _getV1SharesForV2Share(uint256 _amountV2) internal view returns (uint256) {
         return _amountV2.wmul(totalCrabV1SharesMigrated).wdiv(totalCrabV2SharesReceived);
     }
 
