@@ -155,7 +155,7 @@ contract CrabMigration {
     function claimV2Shares() external afterMigration {
         uint256 amountV1Deposited = sharesDeposited[msg.sender];
         sharesDeposited[msg.sender] = 0;
-        uint256 amountV2ToTransfer = (amountV1Deposited * totalCrabV2SharesReceived) / totalCrabV1SharesMigrated;
+        uint256 amountV2ToTransfer = amountV1Deposited.wmul(totalCrabV2SharesReceived).wdiv(totalCrabV1SharesMigrated);
         crabV2.transfer(msg.sender, amountV2ToTransfer);
     }
 
