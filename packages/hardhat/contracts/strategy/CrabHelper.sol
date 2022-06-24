@@ -1,3 +1,5 @@
+//SPDX-License-Identifier: BUSL-1.1
+
 pragma solidity =0.7.6;
 
 import {ICrabStrategyV2} from "../interfaces/ICrabStrategyV2.sol";
@@ -15,7 +17,7 @@ import {StrategySwap} from "./helper/StrategySwap.sol";
  * @author Opyn team
  */
 contract CrabHelper is StrategySwap, ReentrancyGuard {
-	using Address for address payable;
+    using Address for address payable;
 
     address public immutable crab;
     address public immutable weth;
@@ -30,7 +32,7 @@ contract CrabHelper is StrategySwap, ReentrancyGuard {
         uint256 returnedEth
     );
 
-	event FlashWithdrawERC20(
+    event FlashWithdrawERC20(
         address indexed withdrawer,
         address withdrawnERC20,
         uint256 withdrawnAmount,
@@ -53,15 +55,7 @@ contract CrabHelper is StrategySwap, ReentrancyGuard {
         uint24 _fee,
         address _tokenIn
     ) external nonReentrant {
-        _swapExactInputSingle(
-            _tokenIn,
-            weth,
-            msg.sender,
-            address(this),
-            _amountIn,
-            _minEthToGet,
-            _fee
-        );
+        _swapExactInputSingle(_tokenIn, weth, msg.sender, address(this), _amountIn, _minEthToGet, _fee);
 
         IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
         ICrabStrategyV2(crab).flashDeposit{value: address(this).balance}(_ethToDeposit);

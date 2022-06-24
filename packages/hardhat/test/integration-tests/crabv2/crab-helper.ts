@@ -181,7 +181,7 @@ describe("Crab V2 integration test: ERC20 deposit and withdrawals", function () 
       await expect(crabHelper.connect(depositor2).flashWithdrawERC20(crabBalance, ethToDeposit, dai.address, usdcAmount.mul(2), 3000)).to.be.revertedWith("Too little received")
     })
 
-    it("Should deposit USDC into strategy", async () => {
+    it("Should withdraw USDC from strategy", async () => {
       const usdcBalanceBefore = await dai.balanceOf(depositor2.address)
 
       const minUsdToGet = usdcAmount.div(2)
