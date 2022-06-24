@@ -196,10 +196,10 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @notice initializes the collateral ratio upon the first migration
      */
     function initialize(
-        uint256 wSqueethToMint,
-        uint256 crabSharesToMint,
-        uint256 timeAtLastHedge,
-        uint256 priceAtLastHedge
+        uint256 _wSqueethToMint,
+        uint256 _crabSharesToMint,
+        uint256 _timeAtLastHedge,
+        uint256 _priceAtLastHedge
     ) external payable {
         require(msg.sender == crabMigration, "not Crab Migration contract");
         require(!isInitialized, "Crab V2 already initialized");
@@ -211,16 +211,14 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         _checkStrategyCap(amount, strategyCollateral);
 
         require((strategyDebt == 0 && strategyCollateral == 0), "C5");
-        // store hedge data as strategy is delta neutral at this point
-        // only execute this upon first deposit
-        uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, hedgingTwapPeriod, true);
-        timeAtLastHedge = block.timestamp;
-        priceAtLastHedge = wSqueethEthPrice;
+        // store hedge data from crab v1
+        timeAtLastHedge = _timeAtLastHedge;
+        priceAtLastHedge = _priceAtLastHedge;
 
         // mint wSqueeth and send it to msg.sender
-        _mintWPowerPerp(msg.sender, wSqueethToMint, amount, false);
+        _mintWPowerPerp(msg.sender, _wSqueethToMint, amount, false);
         // mint LP to depositor
-        _mintStrategyToken(msg.sender, crabSharesToMint);
+        _mintStrategyToken(msg.sender, _crabSharesToMint);
 
         isInitialized = true;
     }

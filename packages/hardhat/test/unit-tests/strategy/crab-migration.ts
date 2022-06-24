@@ -61,7 +61,7 @@ describe("Crab Migration", function () {
 
     this.beforeAll("Deploy Migration Crab", async () => { 
         const MigrationContract = await ethers.getContractFactory("CrabMigration");
-        crabMigration = (await MigrationContract.connect(owner).deploy(crabStrategyV1.address, weth.address, euler.address, dToken.address, euler.address));
+        crabMigration = (await MigrationContract.connect(owner).deploy(crabStrategyV1.address, weth.address, euler.address, dToken.address, euler.address)) as CrabMigration;
         
     })
 
