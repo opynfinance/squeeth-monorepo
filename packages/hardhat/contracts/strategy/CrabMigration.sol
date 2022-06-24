@@ -26,6 +26,7 @@ import {StrategyMath} from "./base/StrategyMath.sol";
  * M5: msg. sender cannot send ETH
  * M6: Can't withdraw more than you own
  * M7: invalid crabV2 address
+ * M8: crab v2 address not yet set
  */
 
 /**
@@ -60,6 +61,11 @@ contract CrabMigration is Ownable {
 
     modifier afterMigration() {
         require(isMigrated, "M3");
+        _;
+    }
+
+    modifier afterInitialized() { 
+        require(address(crabV2) != address(0), "M8");
         _;
     }
 
@@ -99,7 +105,7 @@ contract CrabMigration is Ownable {
     /**
      * @notice allows users to deposit their crab v1 shares in the pool for migration
      */
-    function depositV1Shares(uint256 amount) external beforeMigration {
+    function depositV1Shares(uint256 amount) external afterInitialized beforeMigration{
         sharesDeposited[msg.sender] += amount;
         totalCrabV1SharesMigrated += amount;
         crabV1.transferFrom(msg.sender, address(this), amount);
@@ -109,7 +115,7 @@ contract CrabMigration is Ownable {
      * @notice the owner batch migrates all the crab v1 shares in this contract to crab v2 and initializes
      * the v2 contract at the same collateral ratio as the v1 contract.
      */
-    function batchMigrate() external onlyOwner beforeMigration {
+    function batchMigrate() external onlyOwner afterInitialized beforeMigration {
         // 1. update isMigrated
         isMigrated = true;
 
@@ -121,7 +127,7 @@ contract CrabMigration is Ownable {
         totalCrabV2SharesReceived = crabV2.balanceOf(address(this));
     }
 
-    function onDeferredLiquidityCheck(bytes memory encodedData) external {
+    function onDeferredLiquidityCheck(bytes memory encodedData) external afterInitialized {
         require(msg.sender == EULER_MAINNET, "M4");
 
         // 1. Borrow weth
@@ -158,7 +164,7 @@ contract CrabMigration is Ownable {
     /**
      * @notice allows users to claim their amount of crab v2 shares
      */
-    function claimV2Shares() external afterMigration {
+    function claimV2Shares() external afterInitialized afterMigration {
         uint256 amountV1Deposited = sharesDeposited[msg.sender];
         sharesDeposited[msg.sender] = 0;
         uint256 amountV2ToTransfer = amountV1Deposited.wmul(totalCrabV2SharesReceived).wdiv(totalCrabV1SharesMigrated);
@@ -171,7 +177,7 @@ contract CrabMigration is Ownable {
      * @param _amountToWithdraw V2 shares to claim
      * @param _maxEthToPay maximum ETH to pay to buy back the owed wSqueeth debt
      */
-    function claimAndWithdraw(uint256 _amountToWithdraw, uint256 _maxEthToPay) external afterMigration {
+    function claimAndWithdraw(uint256 _amountToWithdraw, uint256 _maxEthToPay) external afterInitialized afterMigration {
         uint256 amountV1toClaim = _getV1SharesForV2Share(_amountToWithdraw);
         uint256 amountV1Deposited = sharesDeposited[msg.sender];
         require(amountV1toClaim <= amountV1Deposited, "M6");
