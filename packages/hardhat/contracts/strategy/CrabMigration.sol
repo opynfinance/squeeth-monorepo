@@ -6,7 +6,7 @@ pragma abicoder v2;
 // interface
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import {IEulerExec, IEulerDToken} from "../interfaces/IEuler.sol";
+import {IEulerExec, IDToken} from "../interfaces/IEuler.sol";
 import {WETH9} from "../external/WETH9.sol";
 
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
@@ -136,7 +136,7 @@ contract CrabMigration is Ownable {
         (address _, uint256 id, uint256 totalCollateral, uint256 totalShort) = crabV1.getVaultDetails();
         uint256 amountEthToBorrow = totalCollateral.wmul(crabV1Balance.wdiv(crabV1Supply));
 
-        IEulerDToken(dToken).borrow(0, amountEthToBorrow);
+        IDToken(dToken).borrow(0, amountEthToBorrow);
         weth.withdraw(amountEthToBorrow);
 
         // 2. mint osqth in crab v2
@@ -158,7 +158,7 @@ contract CrabMigration is Ownable {
         // 4. Repay the weth:
         weth.deposit{value: amountEthToBorrow}();
         weth.approve(EULER_MAINNET, type(uint256).max);
-        IEulerDToken(dToken).repay(0, amountEthToBorrow);
+        IDToken(dToken).repay(0, amountEthToBorrow);
     }
 
     /**

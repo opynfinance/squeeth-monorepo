@@ -7,7 +7,7 @@ interface IEulerExec {
     function deferLiquidityCheck(address account, bytes memory data) external;
 }
 
-interface IEulerDToken {
+interface IDToken {
     function borrow(uint256 subAccountId, uint256 amount) external;
 
     function repay(uint256 subAccountId, uint256 amount) external;

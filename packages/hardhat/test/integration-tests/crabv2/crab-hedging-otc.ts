@@ -868,7 +868,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const oSQTHPrice = await getOSQTHPrice();
 
             // make the approvals for the trade and prepare the trade
-            await wSqueeth.connect(trader).approve(crabStrategy.address, toGet);
+            await wSqueeth.connect(trader).approve(crabStrategyV2.address, toGet);
 
             const orderHash = {
                 bidId: 0,
@@ -877,7 +877,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 price: oSQTHPrice,
                 isBuying: false,
                 expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
-                nonce: await crabStrategy.nonces(trader.address),
+                nonce: await crabStrategyV2.nonces(trader.address),
             };
             const { typeData, domainData } = getTypeAndDomainData();
             // expire the order
@@ -885,7 +885,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             // Do the trade
             const signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
             await expect(
-                crabStrategy.connect(owner).hedgeOTC(toSell, oSQTHPrice, true, [signedOrder])
+                crabStrategyV2.connect(owner).hedgeOTC(toSell, oSQTHPrice, true, [signedOrder])
             ).to.be.revertedWith("Order has expired");
         });
         it("reverts when order sign is invalid", async () => {

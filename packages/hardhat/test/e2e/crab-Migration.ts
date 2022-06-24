@@ -2,7 +2,8 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-wit
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber, providers } from "ethers";
-import { CrabStrategy, CrabStrategyV2, CrabMigration, IEulerDToken, WETH9, MockEulerDToken, IEulerExec, Timelock, Oracle } from "../../typechain";
+import { CrabStrategy, CrabStrategyV2, CrabMigration, IDToken, WETH9, IEulerExec, Timelock, Oracle } from "../../typechain";
+
 import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../utils"
 
 describe("Crab Migration", function () {
@@ -14,7 +15,7 @@ describe("Crab Migration", function () {
     let oracle: Oracle;
 
     let weth: WETH9;
-    let dToken: IEulerDToken;
+    let dToken: IDToken;
     let eulerExec: IEulerExec;
 
     let provider: providers.JsonRpcProvider;
@@ -55,7 +56,7 @@ describe("Crab Migration", function () {
 
     this.beforeAll("Setup environment", async () => {
         weth = await ethers.getContractAt("WETH9", wethAddress);
-        dToken = await ethers.getContractAt("IEulerDToken", dTokenAddress);
+        dToken = await ethers.getContractAt("IDToken", dTokenAddress);
         eulerExec = await ethers.getContractAt("IEulerExec", eulerExecAddress);
         crabStrategyV1 = await ethers.getContractAt("CrabStrategy", crabV1Address);
         oracle = await ethers.getContractAt("Oracle", oracleAddress);
