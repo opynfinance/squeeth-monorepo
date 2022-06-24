@@ -5,4 +5,4 @@
 echo "Starting E2E mainnet fork tests"
 echo "Using the current Infura key: " $INFURA_KEY
 
-$(npm bin)/hardhat node --fork https://mainnet.infura.io/v3/$INFURA_KEY --fork-block-number 14345140 --no-deploy --network hardhat > /dev/null 2>&1 & sleep 10 && MAINNET_FORK=true $(npm bin)/hardhat test ./test/e2e/*/**.ts
+$(npm bin)/hardhat node --fork https://mainnet.infura.io/v3/$INFURA_KEY --fork-block-number 14345140 --no-deploy --network hardhat > /dev/null 2>&1 & sleep 10 && MAINNET_FORK=true $(npm bin)/hardhat test ./test/e2e/**.ts ./test/e2e/*/**.ts
