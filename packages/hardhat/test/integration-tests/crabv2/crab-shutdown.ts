@@ -28,6 +28,7 @@ describe("Crab V2 integration test: Shutdown of Squeeth Power Perp contracts", f
   let depositor: SignerWithAddress;
   let depositor2: SignerWithAddress
   let random: SignerWithAddress;
+  let crabMigration: SignerWithAddress; 
   let dai: MockErc20
   let weth: WETH9
   let positionManager: Contract
@@ -44,11 +45,12 @@ describe("Crab V2 integration test: Shutdown of Squeeth Power Perp contracts", f
 
   this.beforeAll("Deploy uniswap protocol & setup uniswap pool", async () => {
     const accounts = await ethers.getSigners();
-    const [_owner, _depositor, _depositor2, _random] = accounts;
+    const [_owner, _depositor, _depositor2, _random, _crabMigration] = accounts;
     owner = _owner;
     depositor = _depositor;
     depositor2 = _depositor2;
     random = _random;
+    crabMigration = _crabMigration;
     provider = ethers.provider
 
     const { dai: daiToken, weth: wethToken } = await deployWETHAndDai()
@@ -82,7 +84,7 @@ describe("Crab V2 integration test: Shutdown of Squeeth Power Perp contracts", f
 
 
     const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
-    crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, uniswapFactory.address, wSqueethPool.address, timelock.address, hedgeTimeThreshold, hedgePriceThreshold)) as CrabStrategyV2;
+    crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, uniswapFactory.address, wSqueethPool.address, timelock.address, crabMigration.address, hedgeTimeThreshold, hedgePriceThreshold)) as CrabStrategyV2;
 
     const strategyCap = ethers.utils.parseUnits("1000")
     await crabStrategy.connect(owner).setStrategyCap(strategyCap)
@@ -128,7 +130,9 @@ describe("Crab V2 integration test: Shutdown of Squeeth Power Perp contracts", f
     const debtToMint = wdiv(ethToDeposit, squeethDelta);
     const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
-    await crabStrategy.connect(depositor).initialize(debtToMint, ethToDeposit, 0, 0, { value: msgvalue })
+    await crabStrategy.connect(crabMigration).initialize(debtToMint, ethToDeposit, 0, 0, { value: msgvalue })
+    await crabStrategy.connect(crabMigration).transfer(depositor.address, ethToDeposit);
+    await wSqueeth.connect(crabMigration).transfer(depositor.address, debtToMint);
 
     const totalSupply = (await crabStrategy.totalSupply())
     const depositorCrab = (await crabStrategy.balanceOf(depositor.address))

@@ -2,7 +2,8 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-wit
 import { ethers } from "hardhat"
 import { expect } from "chai";
 import { BigNumber, providers } from "ethers";
-import { CrabStrategy, CrabStrategyV2, CrabMigration, IEulerDToken, WETH9, MockEulerDToken, IEulerExec, Timelock, Oracle, Controller } from "../../typechain";
+import { CrabStrategy, CrabStrategyV2, CrabMigration, IDToken, WETH9, IEulerExec, Timelock, Oracle } from "../../typechain";
+
 import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../utils"
 
 describe("Crab Migration", function () {
@@ -15,7 +16,7 @@ describe("Crab Migration", function () {
     let oracle: Oracle;
 
     let weth: WETH9;
-    let dToken: IEulerDToken;
+    let dToken: IDToken;
     let eulerExec: IEulerExec;
 
     let provider: providers.JsonRpcProvider;
@@ -71,7 +72,7 @@ describe("Crab Migration", function () {
 
     this.beforeAll("Setup environment", async () => {
         weth = await ethers.getContractAt("WETH9", wethAddress);
-        dToken = await ethers.getContractAt("IEulerDToken", dTokenAddress);
+        dToken = await ethers.getContractAt("IDToken", dTokenAddress);
         eulerExec = await ethers.getContractAt("IEulerExec", eulerExecAddress);
         crabStrategyV1 = await ethers.getContractAt("CrabStrategy", crabV1Address);
         controller = await ethers.getContractAt("Controller", squeethControllerAddress);
@@ -121,6 +122,11 @@ describe("Crab Migration", function () {
         await provider.send('hardhat_stopImpersonatingAccount', [crabV1Whale5]);
     })
 
+    this.beforeAll("Deploy Crab Migration", async () => {
+        const MigrationContract = await ethers.getContractFactory("CrabMigration");
+        crabMigration = (await MigrationContract.deploy(crabV1Address, wethAddress, eulerExecAddress, dTokenAddress, eulerMainnetAddress)) as CrabMigration;
+    })
+
     this.beforeAll("Deploy Crab 2", async () => {
         const TimelockContract = await ethers.getContractFactory("Timelock");
         timelock = (await TimelockContract.deploy(owner.address, 3 * 24 * 60 * 60)) as Timelock;
@@ -132,15 +138,13 @@ describe("Crab Migration", function () {
             uniswapFactoryAddress,
             wethOsqthPoolAddress,
             timelock.address,
+            crabMigration.address,
             1,
             1)) as CrabStrategyV2;
         await crabStrategyV2.setStrategyCap(ethers.utils.parseEther("1000.0"));
+        await crabMigration.connect(owner).setCrabV2(crabStrategyV2.address);
     })
 
-    this.beforeAll("Deploy Crab Migration", async () => {
-        const MigrationContract = await ethers.getContractFactory("CrabMigration");
-        crabMigration = (await MigrationContract.deploy(crabV1Address, crabStrategyV2.address, wethAddress, eulerExecAddress, dTokenAddress, eulerMainnetAddress)) as CrabMigration;
-    })
 
     this.beforeEach("Set migration values", async () => {
         totalV2SharesReceived = await crabMigration.totalCrabV2SharesReceived();

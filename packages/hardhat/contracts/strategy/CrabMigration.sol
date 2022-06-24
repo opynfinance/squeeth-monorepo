@@ -6,10 +6,11 @@ pragma abicoder v2;
 // interface
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import {IEulerExec, IEulerDToken} from "../interfaces/IEuler.sol";
+import {IEulerExec, IDToken} from "../interfaces/IEuler.sol";
 import {WETH9} from "../external/WETH9.sol";
 
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
@@ -20,7 +21,7 @@ import {StrategyMath} from "./base/StrategyMath.sol";
 
 /**
  * Migration Error Codes:
- * M1: Not Owner
+ * M1: Crab V2 Address already set
  * M2: Migration already happened
  * M3: Migration has not yet happened
  * M4: msg.sender is not Euler Mainnet Contract
@@ -28,6 +29,8 @@ import {StrategyMath} from "./base/StrategyMath.sol";
  * M6: Can't withdraw more than you own
  * M7: Not enough ETH to repay the loan
  * M8: _ethToBorrow or _withdrawMaxEthToPay can't be 0
+ * M9: invalid crabV2 address
+ * M10: crab v2 address not yet set
  */
 
 /**
@@ -35,7 +38,7 @@ import {StrategyMath} from "./base/StrategyMath.sol";
  * @notice Contract for Migrating from Crab v1 to Crab v2
  * @author Opyn team
  */
-contract CrabMigration {
+contract CrabMigration is Ownable {
     using SafeERC20 for IERC20;
     using StrategyMath for uint256;
     using Address for address payable;
@@ -47,7 +50,6 @@ contract CrabMigration {
     IEulerExec public euler;
     WETH9 weth;
 
-    address public owner;
     uint256 public totalCrabV1SharesMigrated;
     uint256 public totalCrabV2SharesReceived;
     address immutable EULER_MAINNET;
@@ -80,11 +82,6 @@ contract CrabMigration {
 
     event ClaimAndWithdraw(address indexed user, uint256 crabAmount);
 
-    modifier onlyOwner() {
-        require(msg.sender == owner, "M1");
-        _;
-    }
-
     modifier beforeMigration() {
         require(!isMigrated, "M2");
         _;
@@ -95,33 +92,48 @@ contract CrabMigration {
         _;
     }
 
+    modifier afterInitialized() {
+        require(address(crabV2) != address(0), "M8");
+        _;
+    }
+
     /**
      * @notice migration constructor
      * @param _crabV1 address of crab v1
-     * @param _crabV2 address of crab v2
+     * @param _weth address of weth
+     * @param _eulerExec address of euler exec contract
+     * @param _dToken address of euler deposit token
+     * @param _eulerMainnet address of euler deployment on mainnet
      */
     constructor(
         address payable _crabV1,
-        address payable _crabV2,
         address _weth,
         address _eulerExec,
         address _dToken,
         address _eulerMainnet
     ) {
         crabV1 = CrabStrategy(_crabV1);
-        crabV2 = CrabStrategyV2(_crabV2);
         euler = IEulerExec(_eulerExec);
-        owner = msg.sender;
         EULER_MAINNET = _eulerMainnet;
         weth = WETH9(_weth);
         dToken = _dToken;
-        wPowerPerp = crabV2.wPowerPerp();
+        wPowerPerp = crabV1.wPowerPerp();
+    }
+
+    /**
+     * @notice set the crabV2 address
+     * @param _crabV2 address of crab v2
+     */
+    function setCrabV2(address payable _crabV2) external onlyOwner {
+        require(address(crabV2) == address(0), "M1");
+        require(_crabV2 != address(0), "M7");
+        crabV2 = CrabStrategyV2(_crabV2);
     }
 
     /**
      * @notice allows users to deposit their crab v1 shares in the pool for migration
      */
-    function depositV1Shares(uint256 amount) external beforeMigration {
+    function depositV1Shares(uint256 amount) external afterInitialized beforeMigration {
         sharesDeposited[msg.sender] += amount;
         totalCrabV1SharesMigrated += amount;
         crabV1.transferFrom(msg.sender, address(this), amount);
@@ -131,7 +143,7 @@ contract CrabMigration {
      * @notice the owner batch migrates all the crab v1 shares in this contract to crab v2 and initializes
      * the v2 contract at the same collateral ratio as the v1 contract.
      */
-    function batchMigrate() external onlyOwner beforeMigration {
+    function batchMigrate() external onlyOwner afterInitialized beforeMigration {
         // 1. update isMigrated
         isMigrated = true;
 
@@ -157,13 +169,13 @@ contract CrabMigration {
         totalCrabV2SharesReceived = crabV2.balanceOf(address(this));
     }
 
-     function onDeferredLiquidityCheck(bytes memory _encodedData) external {
+    function onDeferredLiquidityCheck(bytes memory encodedData) external afterInitialized {
         require(msg.sender == EULER_MAINNET, "M4");
 
-        FlashloanCallbackData memory data = abi.decode(_encodedData, (FlashloanCallbackData));
+        FlashloanCallbackData memory data = abi.decode(encodedData, (FlashloanCallbackData));
 
         // 1. Borrow weth
-        IEulerDToken(dToken).borrow(0, data.amountToBorrow);
+        IDToken(dToken).borrow(0, data.amountToBorrow);
         weth.withdraw(data.amountToBorrow);
 
         // 2. Callback
@@ -172,7 +184,7 @@ contract CrabMigration {
         // 3. Repay the weth:
         weth.deposit{value: data.amountToBorrow}();
         weth.approve(EULER_MAINNET, type(uint256).max);
-        IEulerDToken(dToken).repay(0, data.amountToBorrow);
+        IDToken(dToken).repay(0, data.amountToBorrow);
     }
 
     function _flashCallback(
@@ -183,13 +195,20 @@ contract CrabMigration {
     ) internal {
         if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.BATCH_MIGRATE) {
             // deferLiquidityCheck can be called by anyone
-            require(_initiator == owner, "M1");
+            require((_initiator == owner()), "M1");
 
             uint256 crabV1Balance = crabV1.balanceOf(address(this));
 
             // 2. mint osqth in crab v2
             uint256 wSqueethToMint = crabV1.getWsqueethFromCrabAmount(crabV1Balance);
-            crabV2.initialize{value: _amount}(wSqueethToMint);
+            uint256 timeAtLastHedge = crabV1.timeAtLastHedge();
+            uint256 priceAtLastHedge = crabV1.priceAtLastHedge();
+            crabV2.initialize{value: _amount}(
+                wSqueethToMint,
+                totalCrabV1SharesMigrated,
+                timeAtLastHedge,
+                priceAtLastHedge
+            );
 
             // 3. call withdraw from crab v1
             IERC20(wPowerPerp).approve(address(crabV1), type(uint256).max);

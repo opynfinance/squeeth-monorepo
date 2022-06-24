@@ -4,7 +4,6 @@ pragma abicoder v2;
 
 // interface
 import {IERC20Detailed} from "../interfaces/IERC20Detailed.sol";
-import {IEulerDToken} from "../interfaces/IEuler.sol";
 
 // lib
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
@@ -16,6 +15,12 @@ interface IDeferredLiquidityCheck {
 
 interface IExec {
     function deferLiquidityCheck(address account, bytes memory data) external;
+}
+
+interface IEulerDToken {
+    function borrow(uint256 subAccountId, uint256 amount) external;
+
+    function repay(uint256 subAccountId, uint256 amount) external;
 }
 
 contract EulerControllerHelper is IDeferredLiquidityCheck {

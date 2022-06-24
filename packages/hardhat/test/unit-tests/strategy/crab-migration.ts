@@ -61,10 +61,16 @@ describe("Crab Migration", function () {
 
     this.beforeAll("Deploy Migration Crab", async () => { 
         const MigrationContract = await ethers.getContractFactory("CrabMigration");
-        crabMigration = (await MigrationContract.connect(owner).deploy(crabStrategyV1.address, crabStrategyV2.address, weth.address, euler.address, dToken.address, euler.address));
+        crabMigration = (await MigrationContract.connect(owner).deploy(crabStrategyV1.address, weth.address, euler.address, dToken.address, euler.address));
+        
     })
 
     describe("Test Migration", async() => { 
+
+        it("should not allow deposits until crab v2 is set", async () => { 
+            await expect(crabMigration.connect(d1).depositV1Shares(1)).to.be.revertedWith("M8");
+            await crabMigration.connect(owner).setCrabV2(crabStrategyV2.address);
+        })
 
         it("d1 deposits crabV1 shares", async () => { 
             const crabV1BalanceBefore = await crabStrategyV1.balanceOf(crabMigration.address); 
@@ -117,7 +123,7 @@ describe("Crab Migration", function () {
         })
 
         it("random should not be able to migrate shares", async () => { 
-            await expect(crabMigration.connect(random).batchMigrate()).to.be.revertedWith("M1");
+            await expect(crabMigration.connect(random).batchMigrate()).to.be.revertedWith("Ownable: caller is not the owner");
         })
 
         it("batchMigrate", async () => { 

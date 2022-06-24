@@ -7,6 +7,6 @@ contract MockEuler {
     uint256 a;
 
     function deferLiquidityCheck(address account, bytes memory data) external {
-        a = 4;
+        a;
     }
 }

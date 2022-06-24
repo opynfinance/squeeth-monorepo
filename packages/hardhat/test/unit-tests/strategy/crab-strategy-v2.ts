@@ -78,6 +78,7 @@ describe("Crab Strategy V2", function () {
         random.address,
         wSqueethEthPool.address,
         timelock.address,
+        crabMigration.address,
         hedgeTimeTolerance,
         hedgePriceTolerance)).to.be.revertedWith("invalid weth address");
     });
@@ -91,6 +92,7 @@ describe("Crab Strategy V2", function () {
         random.address,
         wSqueethEthPool.address,
         timelock.address,
+        crabMigration.address,
         hedgeTimeTolerance,
         hedgePriceTolerance)).to.be.revertedWith("invalid controller address");
     });
@@ -104,6 +106,7 @@ describe("Crab Strategy V2", function () {
         random.address,
         wSqueethEthPool.address,
         timelock.address,
+        crabMigration.address,
         hedgeTimeTolerance,
         hedgePriceTolerance)).to.be.revertedWith("invalid oracle address");
     });
@@ -117,6 +120,7 @@ describe("Crab Strategy V2", function () {
         ethers.constants.AddressZero,
         wSqueethEthPool.address,
         timelock.address,
+        crabMigration.address,
         hedgeTimeTolerance,
         hedgePriceTolerance)).to.be.revertedWith("invalid factory address");
     });
@@ -130,6 +134,7 @@ describe("Crab Strategy V2", function () {
         random.address,
         ethers.constants.AddressZero,
         timelock.address,
+        crabMigration.address,
         hedgeTimeTolerance,
         hedgePriceTolerance)).to.be.revertedWith("invalid ETH:WSqueeth address");
     });
@@ -143,6 +148,7 @@ describe("Crab Strategy V2", function () {
         random.address,
         wSqueethEthPool.address,
         timelock.address,
+        crabMigration.address,
         0,
         hedgePriceTolerance)).to.be.revertedWith("invalid hedge time threshold");
     });
@@ -156,6 +162,7 @@ describe("Crab Strategy V2", function () {
         random.address,
         wSqueethEthPool.address,
         timelock.address,
+        crabMigration.address,
         hedgeTimeTolerance,
         0)).to.be.revertedWith("invalid hedge price threshold");
     });
@@ -169,13 +176,28 @@ describe("Crab Strategy V2", function () {
         random.address,
         wSqueethEthPool.address,
         ethers.constants.AddressZero,
+        crabMigration.address,
         hedgeTimeTolerance,
         hedgePriceTolerance)).to.be.revertedWith("invalid timelock address");
     });
 
+    it("Should revert if crab migration address is 0", async function () {
+      const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
+      await expect(CrabStrategyContract.deploy(
+        controller.address,
+        oracle.address,
+        weth.address,
+        random.address,
+        wSqueethEthPool.address,
+        timelock.address,
+        ethers.constants.AddressZero,
+        hedgeTimeTolerance,
+        hedgePriceTolerance)).to.be.revertedWith("invalid crabMigration address");
+    });
+
     it("Deployment", async function () {
       const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
-      crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, random.address, wSqueethEthPool.address, timelock.address, hedgeTimeTolerance, hedgePriceTolerance)) as CrabStrategyV2;
+      crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, random.address, wSqueethEthPool.address, timelock.address, crabMigration.address, hedgeTimeTolerance, hedgePriceTolerance)) as CrabStrategyV2;
     });
   });
 
@@ -342,6 +364,10 @@ describe("Crab Strategy V2", function () {
       // Send the crab shares and squeeth to the depositor
       await crabStrategy.connect(crabMigration).transfer(depositor.address, migrationCrabV2Balance);
       await squeeth.connect(crabMigration).transfer(depositor.address, migrationSqueethBalance);
+    })
+
+    it("Should not allow reinitialization of Crab v2", async () => { 
+      await expect(crabStrategy.connect(crabMigration).initialize(0, 0, 0, 0, {value: 0})).to.be.revertedWith("Crab V2 already initialized")
     })
 
 
