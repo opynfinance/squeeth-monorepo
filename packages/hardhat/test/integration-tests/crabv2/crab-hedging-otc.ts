@@ -760,8 +760,8 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             // check the delta and the vaults traded quantities
             const strategyVaultAfter = await controller.vaults(await crabStrategyV2.vaultId());
             // we traded full collateral sell amount and in return got lesser than oSQTH that desired, hence delta will turn negative
-            const afterTradeDelta = (await delta(strategyVaultAfter)).toNumber();
-            expect(afterTradeDelta < newDelta).to.be.true;
+            const afterTradeDelta = (await delta(strategyVaultAfter));
+            expect(afterTradeDelta.lt(newDelta)).to.be.true;
             expect(strategyVaultAfter.collateralAmount).be.closeTo(
                 strategyVaultBefore.collateralAmount.add(secondToGet),
                 precision
