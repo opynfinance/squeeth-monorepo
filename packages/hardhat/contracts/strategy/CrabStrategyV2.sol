@@ -191,7 +191,12 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     /**
      * @notice initializes the collateral ratio upon the first migration
      */
-    function initialize(uint256 wSqueethToMint, uint256 crabSharesToMint, uint256 timeAtLastHedge, uint256 priceAtLastHedge) external payable {
+    function initialize(
+        uint256 wSqueethToMint,
+        uint256 crabSharesToMint,
+        uint256 timeAtLastHedge,
+        uint256 priceAtLastHedge
+    ) external payable {
         uint256 amount = msg.value;
         uint256 strategyDebt;
         uint256 strategyCollateral;
