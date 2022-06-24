@@ -39,6 +39,8 @@ yarn test
 # run a specific test or on a different network
 npx hardhat test test/unit-tests/controller.ts --network localhost
 
+# Run E2E test
+INFURA_KEY=XXXX yarn test:e2e
 ```
 
 ### Run Coverage test

@@ -72,8 +72,9 @@ const config: HardhatUserConfig = {
         auto: true
       },
       forking: {
-        enabled: process.env.FORK === 'false',
-        url: `https://eth-mainnet.alchemyapi.io/v2/SR-wBhpxMirgFtp4OGeJoWKO1ObmVeFg`,
+        enabled: process.env.MAINNET_FORK === 'true',
+        url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.INFURA_KEY}`,
+        blockNumber: 14345140
       },
       accounts: {
         accountsBalance: '1000000000000000000000000000'
