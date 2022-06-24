@@ -171,7 +171,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         require(_oracle != address(0), "invalid oracle address");
         require(_timelock != address(0), "invalid timelock address");
         require(_ethWSqueethPool != address(0), "invalid ETH:WSqueeth address");
-        require (_crabMigration != address(0), "invalid crabMigration address");
+        require(_crabMigration != address(0), "invalid crabMigration address");
         require(_hedgeTimeThreshold > 0, "invalid hedge time threshold");
         require(_hedgePriceThreshold > 0, "invalid hedge price threshold");
 
@@ -201,7 +201,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 timeAtLastHedge,
         uint256 priceAtLastHedge
     ) external payable {
-        require (msg.sender == crabMigration, "not Crab Migration contract");
+        require(msg.sender == crabMigration, "not Crab Migration contract");
         require(!isInitialized, "Crab V2 already initialized");
 
         uint256 amount = msg.value;

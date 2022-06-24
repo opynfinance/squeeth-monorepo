@@ -64,7 +64,7 @@ contract CrabMigration is Ownable {
         _;
     }
 
-    modifier afterInitialized() { 
+    modifier afterInitialized() {
         require(address(crabV2) != address(0), "M8");
         _;
     }
@@ -92,20 +92,20 @@ contract CrabMigration is Ownable {
         wPowerPerp = crabV1.wPowerPerp();
     }
 
-    /** 
+    /**
      * @notice set the crabV2 address
-     * @param _crabV2 address of crab v2 
+     * @param _crabV2 address of crab v2
      */
-     function setCrabV2(address payable _crabV2) external onlyOwner {
+    function setCrabV2(address payable _crabV2) external onlyOwner {
         require(address(crabV2) == address(0), "M1");
         require(_crabV2 != address(0), "M7");
         crabV2 = CrabStrategyV2(_crabV2);
-     }
+    }
 
     /**
      * @notice allows users to deposit their crab v1 shares in the pool for migration
      */
-    function depositV1Shares(uint256 amount) external afterInitialized beforeMigration{
+    function depositV1Shares(uint256 amount) external afterInitialized beforeMigration {
         sharesDeposited[msg.sender] += amount;
         totalCrabV1SharesMigrated += amount;
         crabV1.transferFrom(msg.sender, address(this), amount);
