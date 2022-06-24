@@ -290,8 +290,12 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             // get hedgeBlock to be updated
             const hedgeBlockNumber = await provider.getBlockNumber();
             const hedgeBlock = await provider.getBlock(hedgeBlockNumber);
-            const timeAtLastHedge = await crabStrategyV2.timeAtLastHedge();
+
+            const timeAtLastHedge = await crabStrategy.timeAtLastHedge();
+            const priceAtLastHedge = await crabStrategy.priceAtLastHedge();
+
             expect(timeAtLastHedge.eq(hedgeBlock.timestamp)).to.be.true;
+            expect(priceAtLastHedge).to.eq(oSQTHPriceAfter);
         });
         it("should hedge via OTC using one order while selling oSQTH", async () => {
             // TODO comment and organize like below test
