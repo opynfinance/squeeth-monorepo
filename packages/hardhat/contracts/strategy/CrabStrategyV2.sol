@@ -655,6 +655,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         _checkOTCPrice(_clearingPrice, _isHedgeBuying);
 
         timeAtLastHedge = block.timestamp;
+        priceAtLastHedge = _clearingPrice;
 
         uint256 remainingAmount = _totalQuantity;
         uint256 prevPrice = _orders[0].price;

@@ -189,7 +189,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             // oSQTH price before
             const oSQTHPriceBefore = await getOSQTHPrice();
             const oSQTHdelta = wmul(vault.shortAmount.mul(2), oSQTHPriceBefore);
-            const delta:BigNumber = vault.collateralAmount.sub(oSQTHdelta);
+            const delta: BigNumber = vault.collateralAmount.sub(oSQTHdelta);
 
             return delta;
         };
@@ -224,14 +224,14 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             // Calculate new Delta and the trades to make
             const newDelta = await delta(strategyVaultBefore);
             const oSQTHPriceAfter = await getOSQTHPrice();
-            const toSell = wdiv(newDelta, oSQTHPriceAfter); //0.12sqth to sell
-            const toGET = wmul(toSell, oSQTHPriceAfter); //0.04eth to get
+            const toSell = wdiv(newDelta, oSQTHPriceAfter); // 0.12sqth to sell
+            const toGET = wmul(toSell, oSQTHPriceAfter); // 0.04eth to get
 
             // make the approvals for the trade
             await weth.connect(random).deposit({ value: toGET });
-            await weth.connect(random).approve(crabStrategyV2.address, toGET); //0.04eth
+            await weth.connect(random).approve(crabStrategyV2.address, toGET); // 0.04eth
             await weth.connect(trader).deposit({ value: toGET });
-            await weth.connect(trader).approve(crabStrategyV2.address, toGET); //0.04eth
+            await weth.connect(trader).approve(crabStrategyV2.address, toGET); // 0.04eth
 
             // get the pre trade balances for the trader
             const oSQTHTraderBalanceBefore = await wSqueeth.balanceOf(trader.address);
@@ -243,7 +243,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const orderHash = {
                 bidId: 0,
                 trader: random.address,
-                quantity: toSell.div(2), //0.06sqth
+                quantity: toSell.div(2), // 0.06sqth
                 price: oSQTHPriceAfter,
                 isBuying: true,
                 expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
@@ -268,7 +268,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
 
             // check the delta and the vaults traded quantities
             const strategyVaultAfter = await controller.vaults(await crabStrategyV2.vaultId());
-            let precision = 4; // the last of 18 digit precision
+            const precision = 4; // the last of 18 digit precision
             expect(strategyVaultAfter.collateralAmount).be.closeTo(
                 strategyVaultBefore.collateralAmount.add(toGET),
                 precision
@@ -356,7 +356,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
 
             await crabStrategyV2.connect(owner).hedgeOTC(toSell, oSQTHPriceAfter, false, [signedOrder]);
             const strategyVaultAfter = await controller.vaults(await crabStrategyV2.vaultId());
-            let precision = 4;
+            const precision = 4;
             expect(strategyVaultAfter.shortAmount).be.closeTo(strategyVaultBefore.shortAmount.add(toSell), precision);
             expect(strategyVaultAfter.collateralAmount).be.closeTo(
                 strategyVaultBefore.collateralAmount.add(toGET),
@@ -436,7 +436,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const strategyVaultAfter = await controller.vaults(await crabStrategyV2.vaultId());
             const afterOSQTHdeltaReal = wmul(strategyVaultAfter.shortAmount.mul(2), oSQTHPriceAfter);
             const afterTradeDeltaReal = strategyVaultAfter.collateralAmount.sub(afterOSQTHdeltaReal);
-            let precision = 4;
+            const precision = 4;
             expect(afterTradeDeltaReal.toNumber()).be.closeTo(0, precision);
             expect(strategyVaultAfter.collateralAmount).be.closeTo(
                 strategyVaultBefore.collateralAmount.sub(toSell),
@@ -451,7 +451,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             expect(wethTraderBalanceAfter).be.closeTo(wethTraderBalanceBefore.add(toSell), precision);
         });
         it("allows manager to trader fewer quantity than sum of orders", async () => {
-            let precision = 4;
+            const precision = 4;
             const strategyVaultBefore = await controller.vaults(await crabStrategyV2.vaultId());
             // vault state before
             const deltaStart = await delta(strategyVaultBefore);
@@ -526,7 +526,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             expect(wethTraderBalanceAfter_2).be.closeTo(wethTraderBalanceBefore_2.sub(toGET.div(2)), precision);
         });
         it("allows manager to trade more quantity than sum of orders", async () => {
-            let precision = 4;
+            const precision = 4;
             const strategyVaultBefore = await controller.vaults(await crabStrategyV2.vaultId());
             // vault state before
             const deltaStart = await delta(strategyVaultBefore);
@@ -556,7 +556,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const orderHash = {
                 bidId: 0,
                 trader: random.address,
-                quantity: toSell.div(2), //0.06sqth
+                quantity: toSell.div(2), // 0.06sqth
                 price: oSQTHPriceAfter,
                 isBuying: true,
                 expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
@@ -600,7 +600,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             expect(wethTraderBalanceAfter_2).be.closeTo(wethTraderBalanceBefore_2.sub(toGET.div(2)), precision);
         });
         it("allows manager to give buy at a greater price", async () => {
-            let precision = 4;
+            const precision = 4;
             const strategyVaultBefore = await controller.vaults(await crabStrategyV2.vaultId());
             // vault state before
             const deltaStart = await delta(strategyVaultBefore);
@@ -633,7 +633,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const orderHash = {
                 bidId: 0,
                 trader: random.address,
-                quantity: toSell.div(2), //0.06sqth
+                quantity: toSell.div(2), // 0.06sqth
                 price: oSQTHPriceAfter,
                 isBuying: true,
                 expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
@@ -654,7 +654,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const signedOrder1 = await signTypedData(trader, domainData, typeData, orderHash1);
 
             // Do the trade with 4 percent more price
-            let managerBuyPrice = oSQTHPriceAfter.mul(96).div(100);
+            const managerBuyPrice = oSQTHPriceAfter.mul(96).div(100);
             const newtoGET = wmul(toSell, managerBuyPrice);
 
             await crabStrategyV2.connect(owner).hedgeOTC(toSell, managerBuyPrice, false, [signedOrder, signedOrder1]);
@@ -720,7 +720,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const orderHash = {
                 bidId: 0,
                 trader: random.address,
-                quantity: toSell.div(2), //0.06sqth
+                quantity: toSell.div(2), // 0.06sqth
                 price: oSQTHPriceAfter,
                 isBuying: true,
                 expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
@@ -741,7 +741,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const signedOrder1 = await signTypedData(trader, domainData, typeData, orderHash1);
 
             // Do the trade with 4 percent lesser price
-            let managerBuyPrice = oSQTHPriceAfter.mul(96).div(100);
+            const managerBuyPrice = oSQTHPriceAfter.mul(96).div(100);
             // and only 90% of the total trader quantities. so we swap 50% with the first order and 40% with the next
             const newToSell = toSell.mul(90).div(100);
             const firstToGet = wmul(toSell, managerBuyPrice);
@@ -783,7 +783,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
         });
         it("should revert on heding too quickly after the previous hedge and when price is within threshold", async () => {
             // this sets the price Threshold to 5% which ensures that the revert is not happening due to price
-            await crabStrategyV2.connect(owner).setHedgePriceThreshold(BigNumber.from(10).pow(16).mul(5));
+            await crabStrategyV2.connect(owner).setHedgePriceThreshold(BigNumber.from(10).pow(16).mul(50));
 
             // set the time to 1 hr from prev hedge
             const lastHedge = await crabStrategyV2.timeAtLastHedge();
@@ -845,6 +845,8 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             // Do the trade
             const signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
             // manager cant siphon off money to market makers
+            // await crabStrategyV2.connect(owner).hedgeOTC(toSell, managerBuyPrice, true, [signedOrder])
+
             await expect(
                 crabStrategyV2.connect(owner).hedgeOTC(toSell, managerBuyPrice, true, [signedOrder])
             ).to.be.revertedWith("Price too high relative to Uniswap twap.");
