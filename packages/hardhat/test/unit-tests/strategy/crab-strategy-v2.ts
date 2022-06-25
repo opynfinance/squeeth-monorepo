@@ -64,6 +64,7 @@ describe("Crab Strategy V2", function () {
     const TimelockContract = await ethers.getContractFactory("MockTimelock");
     timelock = (await TimelockContract.deploy(owner.address, 3 * 24 * 60 * 60)) as MockTimelock;
 
+
     await controller.connect(owner).init(shortSqueeth.address, squeeth.address, ethUSDPool.address, usdc.address);
   })
 
