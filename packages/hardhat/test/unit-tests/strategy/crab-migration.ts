@@ -69,7 +69,19 @@ describe("Crab Migration", function () {
 
         it("should not allow deposits until crab v2 is set", async () => { 
             await expect(crabMigration.connect(d1).depositV1Shares(1)).to.be.revertedWith("M8");
-            await crabMigration.connect(owner).setCrabV2(crabStrategyV2.address);
+        })
+
+        it("should not allow 0 to be set as crab address", async () => {
+            await expect(crabMigration.connect(owner).setCrabV2(ethers.constants.AddressZero)).to.be.revertedWith("M9");
+        })
+
+        it("should set crabV2 with proper address", async () => {
+            await crabMigration.connect(owner).setCrabV2(crabStrategyV2.address)
+            expect(await crabMigration.crabV2()).to.be.equal(crabStrategyV2.address)
+        })
+
+        it("should not set crabV2 more than once", async () => {
+            await expect(crabMigration.connect(owner).setCrabV2(crabStrategyV2.address)).to.be.revertedWith("M1")
         })
 
         it("d1 deposits crabV1 shares", async () => { 

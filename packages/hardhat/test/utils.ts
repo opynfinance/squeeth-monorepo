@@ -1,4 +1,4 @@
-import { BigNumber } from "ethers";
+import { BigNumber, ContractReceipt, ContractTransaction } from "ethers";
 import { BigNumber as BigNumberJs } from "bignumber.js";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
@@ -51,3 +51,8 @@ export const signTypedData = async (signer: SignerWithAddress, domainData: any, 
         v: String(v1),
     };
 };
+
+export const getGasPaid = async (tx: ContractTransaction) => {
+    const receipt = await tx.wait();
+    return receipt.gasUsed.mul(receipt.effectiveGasPrice)
+}
