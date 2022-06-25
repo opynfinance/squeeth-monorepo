@@ -8,15 +8,13 @@ import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../../utils"
 describe("Crab Strategy V2", function () {
   const hedgeTimeTolerance = 86400  // 24h
   const hedgePriceTolerance = ethers.utils.parseUnits('0.15')
-  const auctionTime = 3600
-  const minAuctionSlippage = ethers.utils.parseUnits('0.95')
-  const maxAuctionSlippage = ethers.utils.parseUnits('1.05')
 
   let provider: providers.JsonRpcProvider;
   let owner: SignerWithAddress;
   let random: SignerWithAddress;
   let depositor: SignerWithAddress;
   let depositor2: SignerWithAddress;
+  let crabMigration: SignerWithAddress;
 
   let squeeth: MockWPowerPerp;
   let weth: WETH9;
@@ -31,11 +29,12 @@ describe("Crab Strategy V2", function () {
 
   this.beforeAll("Prepare accounts", async () => {
     const accounts = await ethers.getSigners();
-    const [_owner, _depositor, _random, _depositor2] = accounts;
+    const [_owner, _depositor, _random, _depositor2, _crabMigration] = accounts;
     depositor = _depositor
     depositor2 = _depositor2
     random = _random
     owner = _owner
+    crabMigration = _crabMigration
     provider = ethers.provider
   })
 
@@ -80,6 +79,7 @@ describe("Crab Strategy V2", function () {
         random.address,
         wSqueethEthPool.address,
         timelock.address,
+        crabMigration.address,
         hedgeTimeTolerance,
         hedgePriceTolerance)).to.be.revertedWith("invalid weth address");
     });
@@ -93,6 +93,7 @@ describe("Crab Strategy V2", function () {
         random.address,
         wSqueethEthPool.address,
         timelock.address,
+        crabMigration.address,
         hedgeTimeTolerance,
         hedgePriceTolerance)).to.be.revertedWith("invalid controller address");
     });
@@ -106,6 +107,7 @@ describe("Crab Strategy V2", function () {
         random.address,
         wSqueethEthPool.address,
         timelock.address,
+        crabMigration.address,
         hedgeTimeTolerance,
         hedgePriceTolerance)).to.be.revertedWith("invalid oracle address");
     });
@@ -119,6 +121,7 @@ describe("Crab Strategy V2", function () {
         ethers.constants.AddressZero,
         wSqueethEthPool.address,
         timelock.address,
+        crabMigration.address,
         hedgeTimeTolerance,
         hedgePriceTolerance)).to.be.revertedWith("invalid factory address");
     });
@@ -132,6 +135,7 @@ describe("Crab Strategy V2", function () {
         random.address,
         ethers.constants.AddressZero,
         timelock.address,
+        crabMigration.address,
         hedgeTimeTolerance,
         hedgePriceTolerance)).to.be.revertedWith("invalid ETH:WSqueeth address");
     });
@@ -145,6 +149,7 @@ describe("Crab Strategy V2", function () {
         random.address,
         wSqueethEthPool.address,
         timelock.address,
+        crabMigration.address,
         0,
         hedgePriceTolerance)).to.be.revertedWith("invalid hedge time threshold");
     });
@@ -158,6 +163,7 @@ describe("Crab Strategy V2", function () {
         random.address,
         wSqueethEthPool.address,
         timelock.address,
+        crabMigration.address,
         hedgeTimeTolerance,
         0)).to.be.revertedWith("invalid hedge price threshold");
     });
@@ -171,13 +177,28 @@ describe("Crab Strategy V2", function () {
         random.address,
         wSqueethEthPool.address,
         ethers.constants.AddressZero,
+        crabMigration.address,
         hedgeTimeTolerance,
         hedgePriceTolerance)).to.be.revertedWith("invalid timelock address");
     });
 
+    it("Should revert if crab migration address is 0", async function () {
+      const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
+      await expect(CrabStrategyContract.deploy(
+        controller.address,
+        oracle.address,
+        weth.address,
+        random.address,
+        wSqueethEthPool.address,
+        timelock.address,
+        ethers.constants.AddressZero,
+        hedgeTimeTolerance,
+        hedgePriceTolerance)).to.be.revertedWith("invalid crabMigration address");
+    });
+
     it("Deployment", async function () {
       const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
-      crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, random.address, wSqueethEthPool.address, timelock.address, hedgeTimeTolerance, hedgePriceTolerance)) as CrabStrategyV2;
+      crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, random.address, wSqueethEthPool.address, timelock.address, crabMigration.address, hedgeTimeTolerance, hedgePriceTolerance)) as CrabStrategyV2;
     });
   });
 
@@ -214,14 +235,6 @@ describe("Crab Strategy V2", function () {
 
     it('should revert non owner tries to set the strategy cap', async () => {
       await expect(crabStrategy.connect(random).setStrategyCap(strategyCap)).to.be.revertedWith("Ownable: caller is not the owner")
-    })
-
-    it('should revert if no cap is set (initially 0 cap)', async () => {
-      const strategyCap = await crabStrategy.strategyCap()
-      const ethToDeposit = 1
-      expect(strategyCap.eq(0)).to.be.true
-
-      await expect(crabStrategy.connect(depositor2).deposit({ value: 1 })).to.be.revertedWith("Deposit exceeds strategy cap");
     })
 
     it('should allow owner to increase the strategy cap', async () => {
@@ -321,30 +334,43 @@ describe("Crab Strategy V2", function () {
       await oracle.connect(random).setPrice(ethUSDPool.address, ethUSDPrice)  // usdc per 1 eth
     })
 
-    it("Should deposit and mint correct LP when initial debt = 0", async () => {
+    it('should revert deposits if crab not yet initialized', async () => {
+      await expect(crabStrategy.connect(depositor2).deposit({ value: 1 })).to.be.revertedWith("Contract not yet initialized");
+    })
+
+    it("Should initialize strategy", async () => {
       const normFactor = BigNumber.from(1)
       const ethToDeposit = BigNumber.from(60).mul(one)
       const squeethDelta = wSqueethEthPrice.mul(2);
-      // const feeAdj = ethUSDPrice.mul(100).div(10000)
-      const feeAdj = 0
+  
+      const feeAdj = 0;
       const debtToMint = ethToDeposit.mul(one).div(squeethDelta.add(feeAdj));
       const expectedMintedWsqueeth = debtToMint.mul(normFactor)
 
-      await crabStrategy.connect(depositor).deposit({ value: ethToDeposit });
+      await crabStrategy.connect(crabMigration).initialize( expectedMintedWsqueeth, ethToDeposit, 0, 0, { value: ethToDeposit });
 
       const totalSupply = (await crabStrategy.totalSupply())
-      const depositorCrab = (await crabStrategy.balanceOf(depositor.address))
+      const migrationCrabV2Balance = (await crabStrategy.balanceOf(crabMigration.address))
       const strategyVault = await controller.vaults(await crabStrategy.vaultId());
       const debtAmount = strategyVault.shortAmount
-      const depositorSqueethBalance = await squeeth.balanceOf(depositor.address)
+      const migrationSqueethBalance = await squeeth.balanceOf(crabMigration.address);
       const strategyContractSqueeth = await squeeth.balanceOf(crabStrategy.address)
 
       expect(totalSupply.eq(ethToDeposit)).to.be.true
-      expect(depositorCrab.eq(ethToDeposit)).to.be.true
+      expect(migrationCrabV2Balance.eq(ethToDeposit)).to.be.true
       expect(isSimilar(debtAmount.toString(), debtToMint.toString(), 10)).to.be.true
-      expect(isSimilar(depositorSqueethBalance.toString(), expectedMintedWsqueeth.toString(), 10)).to.be.true
+      expect(isSimilar(migrationSqueethBalance.toString(), expectedMintedWsqueeth.toString(), 10)).to.be.true
       expect(strategyContractSqueeth.eq(BigNumber.from(0))).to.be.true
+
+      // Send the crab shares and squeeth to the depositor
+      await crabStrategy.connect(crabMigration).transfer(depositor.address, migrationCrabV2Balance);
+      await squeeth.connect(crabMigration).transfer(depositor.address, migrationSqueethBalance);
     })
+
+    it("Should not allow reinitialization of Crab v2", async () => { 
+      await expect(crabStrategy.connect(crabMigration).initialize(0, 0, 0, 0, {value: 0})).to.be.revertedWith("Crab V2 already initialized")
+    })
+
 
     it("Should deposit and mint correct LP when initial debt != 0 and return the correct amount of wSqueeth debt per crab strategy token", async () => {
       const normFactor = BigNumber.from(1)
