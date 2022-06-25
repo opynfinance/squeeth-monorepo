@@ -1,4 +1,4 @@
-//INFURA_KEY=XXXXXXXXX yarn test:e2e
+// INFURA_KEY=XXXXXXXXX yarn test:e2e
 // INFURA_KEY=XXXXXXXX yarn test:e2e test/e2e/crab-Migration.ts
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
@@ -7,7 +7,7 @@ import { expect } from "chai";
 import { BigNumber, providers } from "ethers";
 import { Controller, CrabStrategy, CrabStrategyV2, CrabMigration, IDToken, WETH9, IEulerExec, Timelock, Oracle } from "../../typechain";
 
-import { isSimilar, wmul, wdiv, one, oracleScaleFactor } from "../utils"
+import { wmul, wdiv, one } from "../utils"
 
 describe("Crab Migration", function () {
     if (!process.env.MAINNET_FORK) return;
@@ -378,51 +378,11 @@ describe("Crab Migration", function () {
             [, , collatV2, shortV2] = await crabStrategyV2.getVaultDetails();
         }
 
-/*         it("Should migrate d3 when CR1 = CR2", async () => {
-            await initialize(d3.address)
-            const expectedCollatToDeposit = crabV1SharesBefore.mul(collatV1).div(crabV1Supply)
-            const expectedV2Shares = expectedCollatToDeposit.mul(crabV2Supply).div(collatV2)
-
-            const [isFlashMigrate, ethNeededForV2, v1oSqthToPay, ethToGetFromV1] = await crabMigration.flashMigrationDetails(d3.address)
-
-            console.log(isFlashMigrate.toString(), ethNeededForV2.toString(), v1oSqthToPay.toString(), ethToGetFromV1.toString(), "the things")
-
-            console.log(collatV1.toString(),collatV2.toString())
-            console.log(shortV1.toString(),shortV2.toString())
-
-            console.log(wdiv(collatV2, shortV2))
-            console.log(wdiv(collatV1, shortV1))
-
-            expect(wdiv(collatV1, shortV1)).to.be.equal(wdiv(collatV2, shortV2))
-            console.log("made it here)")
-            await crabStrategyV1.connect(d3).approve(crabMigration.address, crabV1SharesBefore);
-            console.log("made it her2e)")
-
-            await crabMigration.connect(d3).flashMigrateFromV1toV2(0, 0, 0);
-
-            const crabV1SharesAfter = await crabStrategyV1.balanceOf(d3.address)
-            const crabV2SharesAfter = await crabStrategyV2.balanceOf(d3.address)
-            const crabV1SharesInMigration = await crabStrategyV1.balanceOf(crabMigration.address)
-            const [, , collatV2After] = await crabStrategyV2.getVaultDetails();
-
-            expect(crabV1SharesAfter.eq(0)).to.be.true
-            expect(crabV1SharesInMigration.eq(0)).to.be.true
-            expect(isSimilar(expectedV2Shares.add(crabV2ShareBefore).toString(), crabV2SharesAfter.toString())).to.be.true
-            expect(isSimilar(collatV2.add(expectedCollatToDeposit).toString(), collatV2After.toString())).to.be.true
-        }) */
-
         it("Should migrate d4 when CR1 > CR2", async () => {
             await initialize(d4.address)
             await increaseCR1()
             const [isFlashMigrate, ethNeededForV2, v1oSqthToPay, ethToGetFromV1] = await crabMigration.flashMigrationDetails(d4.address)
-
-            console.log(isFlashMigrate.toString(), ethNeededForV2.toString(), v1oSqthToPay.toString(), ethToGetFromV1.toString(), "the things")
-
-            console.log(collatV1.toString(),collatV2.toString())
-            console.log(shortV1.toString(),shortV2.toString())
-
-            console.log(wdiv(collatV2, shortV2))
-            console.log(wdiv(collatV1, shortV1))
+            const crabV2SharesBefore = await crabStrategyV2.balanceOf(d4.address)
 
             expect(wdiv(collatV1, shortV1).gt(wdiv(collatV2, shortV2))).to.be.true
             expect(isFlashMigrate).to.be.true
@@ -432,31 +392,25 @@ describe("Crab Migration", function () {
             const ethToFlashDeposit = excessEth.mul(180).div(100) // 1.8 times Something smaller than 2
 
             await crabStrategyV1.connect(d4).approve(crabMigration.address, crabV1SharesBefore);
-            await crabMigration.connect(d4).flashMigrateFromV1toV2(ethToFlashDeposit, 0, 0);
+            await crabMigration.connect(d4).flashMigrateFromV1toV2(0, 0, 0);
 
             const crabV1SharesAfter = await crabStrategyV1.balanceOf(d4.address)
             const crabV2SharesAfter = await crabStrategyV2.balanceOf(d4.address)
             const crabV1SharesInMigration = await crabStrategyV1.balanceOf(crabMigration.address)
+            const crabV2ShraesInMigration = await crabStrategyV2.balanceOf(crabMigration.address)
             const userEthBalanceAfter = await provider.getBalance(d4.address)
 
             expect(crabV1SharesAfter.eq(0)).to.be.true
             expect(crabV1SharesInMigration.eq(0)).to.be.true
-            expect(crabV2SharesAfter.gte(crabV2SharesAfter)).to.be.true // There will lil more crab because of the flash deposit
+            expect(crabV2SharesAfter.gte(crabV2SharesBefore)).to.be.true // There will lil more crab because of the flash deposit
             expect(userEthBalanceAfter.gt(userEthBalance)).to.be.true // Unused ETH from flash deposit will be returned
+            expect(crabV2ShraesInMigration).to.be.equal('0')
         })
 
         it("Should migrate d5 when CR1 < CR2", async () => {
             await initialize(d5.address)
             await decreaseCR1()
             const [isFlashMigrate, ethNeededForV2, v1oSqthToPay, ethToGetFromV1] = await crabMigration.flashMigrationDetails(d5.address)
-
-            console.log(isFlashMigrate.toString(), ethNeededForV2.toString(), v1oSqthToPay.toString(), ethToGetFromV1.toString(), "the things")
-
-            console.log(collatV1.toString(),collatV2.toString())
-            console.log(shortV1.toString(),shortV2.toString())
-
-            console.log(wdiv(collatV2, shortV2).toString())
-            console.log(wdiv(collatV1, shortV1).toString())
 
 
             expect(wdiv(collatV1, shortV1).gt(wdiv(collatV2, shortV2))).to.be.false
@@ -481,9 +435,11 @@ describe("Crab Migration", function () {
 
             const crabV1SharesAfter = await crabStrategyV1.balanceOf(d5.address)
             const crabV1SharesInMigration = await crabStrategyV1.balanceOf(crabMigration.address)
+            const crabV2ShraesInMigration = await crabStrategyV2.balanceOf(crabMigration.address)
 
             expect(crabV1SharesAfter.eq(0)).to.be.true
             expect(crabV1SharesInMigration.eq(0)).to.be.true
+            expect(crabV2ShraesInMigration).to.be.equal('0')
         })
     })
 })

@@ -19,7 +19,6 @@ import {CrabStrategyV2} from "./CrabStrategyV2.sol";
 import {CrabStrategy} from "./CrabStrategy.sol";
 import {StrategyMath} from "./base/StrategyMath.sol";
 
-import "hardhat/console.sol";
 
 /**
  * Migration Error Codes:
@@ -220,21 +219,17 @@ contract CrabMigration is Ownable {
             FlashMigrateV1toV2 memory data = abi.decode(_calldata, (FlashMigrateV1toV2));
             
             uint256 balanceEth = address(this).balance;
-            console.log(balanceEth, "eth balance received from flashloan");
-
             
             crabV2.deposit{value: _amount}();
             uint256 crabV1ToWithdraw = crabV1.balanceOf(_initiator);
 
             crabV1.transferFrom(_initiator, address(this), crabV1ToWithdraw);
             uint256 balancePerp = IERC20(wPowerPerp).balanceOf(address(this));
-            console.log(balancePerp, "power perp balance received from minting");
             
             IERC20(wPowerPerp).approve(address(crabV1), data.v1oSqthToPay);
             crabV1.withdraw(crabV1ToWithdraw);
 
             balanceEth = address(this).balance;
-            console.log(balanceEth, "eth balance received from withdrawing from v1");
 
             // Flash deposit remaining ETH, if user said so. Else return back the ETH. If CR1 = CR2 ethToFlashDeposit should be 0
             if (data.ethToFlashDeposit > 0) {
@@ -268,6 +263,9 @@ contract CrabMigration is Ownable {
             if (data.ethToFlashDeposit > 0) {
                 crabV2.flashDeposit{value: address(this).balance - _amount}(data.ethToFlashDeposit);
             }
+
+            // Sent back the V2 tokens to the user
+            crabV2.transfer(_initiator, crabV2.balanceOf(address(this)));
 
             // Sent back the excess ETH
             if (address(this).balance > _amount) {
@@ -321,11 +319,7 @@ contract CrabMigration is Ownable {
     /**
      */
     function flashMigrateFromV1toV2(uint256 _ethToFlashDeposit, uint256 _ethToBorrow, uint256 _withdrawMaxEthToPay) external afterMigration {
-        (bool isFlashOnlyMigrate, uint256 ethNeededForV2, uint256 v1oSqthToPay, uint256 ethToGetFromV1) = _flashMigrationDetails(msg.sender);
-
-        console.log("isFLash", isFlashOnlyMigrate);
-        console.log(ethNeededForV2,v1oSqthToPay,ethToGetFromV1);
-        console.log(v1oSqthToPay, "power perp balance needed from minting to pay to v1");
+        (bool isFlashOnlyMigrate, uint256 ethNeededForV2, uint256 v1oSqthToPay, ) = _flashMigrationDetails(msg.sender);
 
         // CR1 > CR2, Can mint more
         if (isFlashOnlyMigrate) {
@@ -362,22 +356,12 @@ contract CrabMigration is Ownable {
         uint256 v1TotalSupply = crabV1.totalSupply();
         (, , uint256 v1TotalCollateral, uint256 v1TotalShort) = crabV1.getVaultDetails();
         (, , uint256 v2TotalCollateral, uint256 v2TotalShort) = crabV2.getVaultDetails();
-        console.log(v1TotalCollateral,v1TotalShort, "v1 c v1 debt");
-        console.log(v2TotalCollateral,v2TotalShort, "v2 c v2 debt");
-        
-        //uint256 v1oSqthToPay = v1Shares.wdiv(v1TotalSupply).wmul(v1TotalShort); //old
-        //uint256 ethNeededForV2 = v2TotalCollateral.wdiv(v2TotalShort).wmul(v1oSqthToPay); //old
 
         uint256 v1oSqthToPay = v1TotalShort.wmul(v1Shares).wdiv(v1TotalSupply); //new
-        uint256 ethNeededForV2 = v2TotalCollateral.wmul(v1oSqthToPay).wdiv(v2TotalShort); //new
+        uint256 ethNeededForV2rmul = v1oSqthToPay.wmul(v2TotalCollateral).rdiv(v2TotalShort); //new
+        uint256 ethNeededForV2 = ethNeededForV2rmul.ceil(10 ** 9) / (10**9);
         
         uint256 ethToGetFromV1 = v1Shares.wdiv(v1TotalSupply).wmul(v1TotalCollateral);
-        uint256 v1cr = v1TotalCollateral.rdiv(v1TotalShort);
-        uint256 v2cr = v2TotalCollateral.rdiv(v2TotalShort);
-        console.log(v1cr, "v1cr");
-        console.log(v1cr, "v2cr");
-
-        //bool isFlashOnlyMigrate = v1TotalCollateral.rdiv(v1TotalShort) >= v2TotalCollateral.rdiv(v2TotalShort);
         bool isFlashOnlyMigrate = ethNeededForV2 <= ethToGetFromV1;
 
         return (isFlashOnlyMigrate, ethNeededForV2, v1oSqthToPay, ethToGetFromV1);
