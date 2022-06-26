@@ -5,18 +5,25 @@ pragma solidity =0.7.6;
 import {ICrabStrategyV2} from "../interfaces/ICrabStrategyV2.sol";
 import {IWETH9} from "../interfaces/IWETH9.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IOracle} from "../interfaces/IOracle.sol";
+
+import {EIP712} from "@openzeppelin/contracts/drafts/EIP712.sol";
 
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 import {StrategySwap} from "./helper/StrategySwap.sol";
+// StrategyMath licensed under AGPL-3.0-only
+import {StrategyMath} from "./base/StrategyMath.sol";
+import {ECDSA} from "@openzeppelin/contracts/cryptography/ECDSA.sol";
+
 
 /**
  * @dev CrabHelper contract
  * @notice Contract for Crab helper functions
  * @author Opyn team
  */
-contract CrabHelper is StrategySwap, ReentrancyGuard {
+contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
     using Address for address payable;
 
     address public immutable crab;
@@ -95,6 +102,78 @@ contract CrabHelper is StrategySwap, ReentrancyGuard {
         );
 
         emit FlashWithdrawERC20(msg.sender, _tokenOut, tokenReceived, ethBalance, _crabAmount);
+    }
+
+    /// @dev typehash for signed orders
+    bytes32 private constant _CRAB_BALANCE_TYPEHASH =
+        keccak256(
+            "Order(uint256 bidId,address trader,uint256 quantity,uint256 price,bool isBuying,uint256 expiry,uint256 nonce)"
+        );
+
+    /**
+     * @notice view function to verify an order
+     * @param _order crab otc hedge order
+     * @return isValid true if order is good
+     */
+    function verifyOrder(Order memory _order) external view returns (bool) {
+        bytes32 structHash = keccak256(
+            abi.encode(
+                _CRAB_BALANCE_TYPEHASH,
+                _order.bidId,
+                _order.trader,
+                _order.quantity,
+                _order.price,
+                _order.isBuying,
+                _order.expiry,
+                crab.nonces(_order.trader)
+            )
+        );
+
+        bytes32 hash = _hashTypedDataV4(structHash);
+        address offerSigner = ECDSA.recover(hash, _order.v, _order.r, _order.s);
+        require(offerSigner == _order.trader, "Invalid offer signature");
+        require(_order.expiry >= block.timestamp, "Order has expired");
+
+        // weth price for the order
+        uint256 wethAmount = _order.quantity.mul(_order.price).div(1e18);
+
+        if (_order.isBuying) {
+            // check weth balance and allowance
+            require(IWETH9(weth).balanceOf(_order.trader) >= wethAmount, "Not enough weth balance for trade");
+            require(
+                IWETH9(weth).allowance(_order.trader, address(this)) >= wethAmount,
+                "Not enough weth allowance for trade"
+            );
+            // check allowance
+        } else {
+            // check wPowerPerp balance and allowance
+            require(
+                IWETH9(wPowerPerp).balanceOf(_order.trader) >= _order.quantity,
+                "Not enough wPowerPerp balance for trade"
+            );
+            require(
+                IWETH9(wPowerPerp).allowance(_order.trader, address(this)) >= _order.quantity,
+                "Not enough wPowerPerp balance for trade"
+            );
+        }
+        return true;
+    }
+
+    /**
+     * @notice view function for hedge size based on current state
+     * @return hedge amount, isSellingSqueeth
+     */
+    function getHedgeSize() external view returns (uint256, bool) {
+        // Get state and calculate hedge
+        (uint256 strategyDebt, uint256 ethDelta) = crab.syncStrategyState();
+        uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, crab, weth, hedgingTwapPeriod, true);
+
+        uint256 wSqueethDelta = strategyDebt.wmul(2e18).wmul(wSqueethEthPrice);
+
+        return
+            (wSqueethDelta > ethDelta)
+                ? ((wSqueethDelta.sub(ethDelta)).wdiv(wSqueethEthPrice), false)
+                : ((ethDelta.sub(wSqueethDelta)).wdiv(wSqueethEthPrice), true);
     }
 
     /**
