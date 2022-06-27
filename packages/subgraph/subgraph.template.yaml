@@ -4,10 +4,6 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: Controller
-    file: ./schema.graphql
-dataSources:
-  - kind: ethereum/contract
-    name: Controller
     network: {{network}}
     source:
       address: "{{Controller}}"
