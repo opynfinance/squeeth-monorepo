@@ -1,6 +1,9 @@
 //SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity =0.7.6;
+pragma abicoder v2;
+
+import "hardhat/console.sol";
 
 import {ICrabStrategyV2} from "../interfaces/ICrabStrategyV2.sol";
 import {IWETH9} from "../interfaces/IWETH9.sol";
@@ -25,6 +28,7 @@ import {ECDSA} from "@openzeppelin/contracts/cryptography/ECDSA.sol";
  */
 contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
     using Address for address payable;
+    using StrategyMath for uint256;
 
     address public immutable crab;
     address public immutable weth;
@@ -46,7 +50,7 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
         uint256 crabAmount
     );
 
-    constructor(address _crab, address _swapRouter) StrategySwap(_swapRouter) {
+    constructor(address _crab, address _swapRouter) StrategySwap(_swapRouter) EIP712("CrabOTC", "2") {
         require(_crab != address(0), "Invalid crab address");
 
         crab = _crab;
@@ -125,12 +129,14 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
                 _order.price,
                 _order.isBuying,
                 _order.expiry,
-                crab.nonces(_order.trader)
+                ICrabStrategyV2(crab).nonces(_order.trader)
             )
         );
 
         bytes32 hash = _hashTypedDataV4(structHash);
         address offerSigner = ECDSA.recover(hash, _order.v, _order.r, _order.s);
+        //console.log('offerSigner %s', offerSigner);
+        //console.log('current nonce', ICrabStrategyV2(crab).nonces(_order.trader));
         require(offerSigner == _order.trader, "Invalid offer signature");
         require(_order.expiry >= block.timestamp, "Order has expired");
 
@@ -153,7 +159,7 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
             );
             require(
                 IWETH9(wPowerPerp).allowance(_order.trader, address(this)) >= _order.quantity,
-                "Not enough wPowerPerp balance for trade"
+                "Not enough wPowerPerp allowance for trade"
             );
         }
         return true;
@@ -165,8 +171,8 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
      */
     function getHedgeSize() external view returns (uint256, bool) {
         // Get state and calculate hedge
-        (uint256 strategyDebt, uint256 ethDelta) = crab.syncStrategyState();
-        uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, crab, weth, hedgingTwapPeriod, true);
+        (uint256 strategyDebt, uint256 ethDelta) = ICrabStrategyV2(crab).syncStrategyState();
+        uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, hedgingTwapPeriod, true);
 
         uint256 wSqueethDelta = strategyDebt.wmul(2e18).wmul(wSqueethEthPrice);
 

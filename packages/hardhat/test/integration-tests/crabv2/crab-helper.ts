@@ -1,4 +1,4 @@
-import { ethers } from "hardhat"
+import { ethers, network } from "hardhat"
 import { expect } from "chai";
 import { Contract, BigNumber, providers } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
@@ -307,4 +307,215 @@ describe("Crab V2 integration test: ERC20 deposit and withdrawals", function () 
       expect(crabBalanceAfter).to.be.equal("0")
     })
   })
+
+
+  describe("View functions to validate orders and hedge size", async () => {
+    const usdcAmount = startingEthPrice1e18
+    const ethToDeposit = ethers.utils.parseUnits('1.5')
+    let crabBalance = BigNumber.from(0)
+
+    const getTypeAndDomainData = () => {
+      const typeData = {
+          Order: [
+              { type: "uint256", name: "bidId" },
+              { type: "address", name: "trader" },
+              { type: "uint256", name: "quantity" },
+              { type: "uint256", name: "price" },
+              { type: "bool", name: "isBuying" },
+              { type: "uint256", name: "expiry" },
+              { type: "uint256", name: "nonce" },
+          ],
+      };
+      const domainData = {
+          name: "CrabOTC",
+          version: "2",
+          chainId: network.config.chainId,
+          verifyingContract: crabHelper.address,
+      };
+      return { typeData, domainData };
+  };
+
+    beforeEach("Deposit into strategy", async () => {
+      await dai.mint(depositor2.address, usdcAmount.toString())
+      await dai.connect(depositor2).approve(crabHelper.address, usdcAmount.toString())
+      await crabHelper.connect(depositor2).flashDepositERC20(ethToDeposit, usdcAmount, 0, 3000, dai.address)
+      crabBalance = await crabStrategy.balanceOf(depositor2.address)
+    })
+
+    afterEach("Clean up deposit", async () => {
+      const _crb = await crabStrategy.balanceOf(depositor2.address)
+      if (_crb.gt(0)) {
+        await crabStrategy.connect(depositor2).flashWithdraw(_crb, ethToDeposit)
+      }
+    })
+
+
+    it("Should revert order if wrong signer", async () => {
+
+      // and prepare the trade
+      const orderHash = {
+                bidId: 0,
+                trader: depositor.address,
+                quantity: ethers.utils.parseUnits("10"),
+                price: ethers.utils.parseUnits("0.1"),
+                isBuying: true,
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
+                nonce: await crabStrategy.nonces(depositor2.address)
+            };
+      const { typeData, domainData } = getTypeAndDomainData();
+      const signedOrder = await signTypedData(depositor2, domainData, typeData, orderHash);
+      await expect( crabHelper.verifyOrder(signedOrder)).to.be.revertedWith("Invalid offer signature")
+
+    })
+
+    it("Should revert order if expired", async () => {
+
+      console.log("dssaaehare")
+      // and prepare the trade
+      const orderHash = {
+                bidId: 0,
+                trader: depositor2.address,
+                quantity: ethers.utils.parseUnits("10"),
+                price: ethers.utils.parseUnits("0.1"),
+                isBuying: true,
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp - 10,
+                nonce: await crabStrategy.nonces(depositor2.address)
+            };
+      const { typeData, domainData } = getTypeAndDomainData();
+      const signedOrder = await signTypedData(depositor2, domainData, typeData, orderHash);
+      await expect( crabHelper.verifyOrder(signedOrder)).to.be.revertedWith("Order has expired")
+
+    })
+
+
+    it("Should revert order if not enough weth balance", async () => {
+
+      // and prepare the trade
+      const orderHash = {
+                bidId: 0,
+                trader: depositor2.address,
+                quantity: ethers.utils.parseUnits("10"),
+                price: ethers.utils.parseUnits("0.1"),
+                isBuying: true,
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
+                nonce: await crabStrategy.nonces(depositor2.address)
+            };
+
+      const { typeData, domainData } = getTypeAndDomainData();
+      const signedOrder = await signTypedData(depositor2, domainData, typeData, orderHash);
+      await expect( crabHelper.verifyOrder(signedOrder)).to.be.revertedWith("Not enough weth balance for trade")
+
+    })
+
+    it("Should revert order if not enough weth allowance", async () => {
+      //await weth.connect(depositor2).approve(crabHelper.address, ethers.utils.parseUnits("1"))
+      await weth.connect(depositor2).deposit({ value: ethers.utils.parseUnits("1") });
+      //await weth.connect(random).approve(crabStrategyV2.address, toGET); //0.04eth      // and prepare the trade
+      const orderHash = {
+                bidId: 0,
+                trader: depositor2.address,
+                quantity: ethers.utils.parseUnits("10"),
+                price: ethers.utils.parseUnits("0.1"),
+                isBuying: true,
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
+                nonce: await crabStrategy.nonces(depositor2.address)
+            };
+
+      const { typeData, domainData } = getTypeAndDomainData();
+      const signedOrder = await signTypedData(depositor2, domainData, typeData, orderHash);
+      await expect( crabHelper.verifyOrder(signedOrder)).to.be.revertedWith("Not enough weth allowance for trade")
+
+    })
+
+    it("Should revert order if not enough wPowerPerp balance", async () => {
+
+      // and prepare the trade
+      const orderHash = {
+                bidId: 0,
+                trader: depositor2.address,
+                quantity: ethers.utils.parseUnits("10"),
+                price: ethers.utils.parseUnits("0.1"),
+                isBuying: false,
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
+                nonce: await crabStrategy.nonces(depositor2.address)
+            };
+
+      const { typeData, domainData } = getTypeAndDomainData();
+      const signedOrder = await signTypedData(depositor2, domainData, typeData, orderHash);
+      await expect( crabHelper.verifyOrder(signedOrder)).to.be.revertedWith("Not enough wPowerPerp balance for trade")
+
+    })
+
+    it("Should revert order if not enough wPowerPerp allowance", async () => {
+      await weth.connect(depositor2).approve(crabHelper.address, ethers.utils.parseUnits("10"))
+      await controller.connect(depositor2).mintWPowerPerpAmount("0", ethers.utils.parseUnits("10"), "0", { value: ethers.utils.parseUnits("10") });
+      // console.log('squeeth balance:', (await wSqueeth.balanceOf(depositor2.address)).toString())
+      const orderHash = {
+                bidId: 0,
+                trader: depositor2.address,
+                quantity: ethers.utils.parseUnits("10"),
+                price: ethers.utils.parseUnits("0.1"),
+                isBuying: false,
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
+                nonce: await crabStrategy.nonces(depositor2.address)
+            };
+
+      const { typeData, domainData } = getTypeAndDomainData();
+      const signedOrder = await signTypedData(depositor2, domainData, typeData, orderHash);
+      await expect( crabHelper.verifyOrder(signedOrder)).to.be.revertedWith("Not enough wPowerPerp allowance for trade")
+
+    })
+
+    it("Should verify valid sell order", async () => {
+      await wSqueeth.connect(depositor2).approve(crabHelper.address, ethers.utils.parseUnits("10"))
+      const orderHash = {
+                bidId: 0,
+                trader: depositor2.address,
+                quantity: ethers.utils.parseUnits("10"),
+                price: ethers.utils.parseUnits("0.1"),
+                isBuying: false,
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
+                nonce: await crabStrategy.nonces(depositor2.address)
+            };
+
+      const { typeData, domainData } = getTypeAndDomainData();
+      const signedOrder = await signTypedData(depositor2, domainData, typeData, orderHash);
+    const validOrder = await crabHelper.verifyOrder(signedOrder)
+    expect(validOrder).to.be.true
+
+    })
+
+
+    it("Should verify valid buy order", async () => {
+      //await weth.connect(depositor2).approve(crabHelper.address, ethers.utils.parseUnits("1"))
+      await weth.connect(depositor2).deposit({ value: ethers.utils.parseUnits("1") });
+      await weth.connect(depositor2).approve(crabHelper.address, ethers.utils.parseUnits("1") ); 
+      const orderHash = {
+                bidId: 0,
+                trader: depositor2.address,
+                quantity: ethers.utils.parseUnits("10"),
+                price: ethers.utils.parseUnits("0.1"),
+                isBuying: true,
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
+                nonce: await crabStrategy.nonces(depositor2.address)
+            };
+
+      const { typeData, domainData } = getTypeAndDomainData();
+      const signedOrder = await signTypedData(depositor2, domainData, typeData, orderHash);
+    const validOrder = await crabHelper.verifyOrder(signedOrder)
+    expect(validOrder).to.be.true
+
+    })
+
+
+    it("Should return correct hedge size", async () => {
+      const hedgeSize = await crabHelper.getHedgeSize()
+      console.log("hedgeSize[0]", hedgeSize[0])
+      console.log("hedgeSize[1]", hedgeSize[1])
+    })
+
+
+  })
+
+
 })
