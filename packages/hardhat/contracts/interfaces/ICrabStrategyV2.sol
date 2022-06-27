@@ -9,6 +9,13 @@ interface ICrabStrategyV2 {
 
     function weth() external view returns (address);
 
+    function ethWSqueethPool() external view returns (address);
+
+    function oracle() external view returns (address);
+
+    function hedgingTwapPeriod() external view returns (uint32);
+
+
     function flashDeposit(uint256 _ethToDeposit) external payable;
 
     function flashWithdraw(uint256 _crabAmount, uint256 _maxEthToPay) external;
