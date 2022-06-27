@@ -574,8 +574,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         return _syncStrategyState();
     }
 
-
-
     /**
      * @dev get current nonce of the address
      * @param _owner address of signer
