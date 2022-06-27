@@ -5,8 +5,6 @@ pragma solidity =0.7.6;
 pragma abicoder v2;
 
 interface ICrabStrategyV2 {
-
-
     function wPowerPerp() external view returns (address);
 
     function weth() external view returns (address);
