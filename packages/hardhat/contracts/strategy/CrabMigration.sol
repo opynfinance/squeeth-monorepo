@@ -229,6 +229,7 @@ contract CrabMigration is Ownable {
 
             // Sent back the V2 tokens to the user
             crabV2.transfer(_initiator, crabV2.balanceOf(address(this)));
+            IERC20(wPowerPerp).transfer(_initiator, IERC20(wPowerPerp).balanceOf(address(this)));
 
             // Sent back the excess ETH
             if (address(this).balance > _amount) {
@@ -236,6 +237,7 @@ contract CrabMigration is Ownable {
             }
         } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_MIGRATE_WITHDRAW_V1_TO_V2) {
             FlashMigrateAndBuyV1toV2 memory data = abi.decode(_calldata, (FlashMigrateAndBuyV1toV2));
+            (, , , uint256 v1Short) = crabV1.getVaultDetails();
 
             uint256 crabV1Balance = crabV1.balanceOf(_initiator);
             crabV1.transferFrom(_initiator, address(this), crabV1Balance);
@@ -245,7 +247,10 @@ contract CrabMigration is Ownable {
             IERC20(wPowerPerp).approve(address(crabV1), oSqthToPay);
 
             // Find crab amount for contract's sqth balance. Remaining crab sould be withdrawn using flash withdraw
-            uint256 crabV1ToWithdraw = oSqthToPay.wmul(crabV1Balance).wdiv(data.v1oSqthToPay);
+            uint256 crabV1ToWithdrawRmul = oSqthToPay.wmul(crabV1.totalSupply()).rdiv(v1Short);
+            uint256 crabV1ToWithdraw = crabV1ToWithdrawRmul.floor(10**9) / (10**9);
+            //uint256 crabV1ToWithdraw = oSqthToPay.wmul(crabV1.totalSupply()).wdiv(v1Short);
+
             crabV1.withdraw(crabV1ToWithdraw);
 
             crabV1.flashWithdraw(crabV1.balanceOf(address(this)), data.withdrawMaxEthToPay);
@@ -257,6 +262,7 @@ contract CrabMigration is Ownable {
 
             // Sent back the V2 tokens to the user
             crabV2.transfer(_initiator, crabV2.balanceOf(address(this)));
+            IERC20(wPowerPerp).transfer(_initiator, IERC20(wPowerPerp).balanceOf(address(this)));
 
             // Sent back the excess ETH
             if (address(this).balance > _amount) {

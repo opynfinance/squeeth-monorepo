@@ -76,6 +76,10 @@ library StrategyMath {
         z = mul(div(sub(add(a, m), 1), m), m);
     }
 
+    function floor(uint a, uint m) internal pure returns(uint z) {
+        z = mul(div(a, m), m);
+    }
+
     // This famous algorithm is called "exponentiation by squaring"
     // and calculates x^n with x as fixed-point and n as regular unsigned.
     //
