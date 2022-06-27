@@ -3,8 +3,6 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import "hardhat/console.sol";
-
 import {ICrabStrategyV2} from "../interfaces/ICrabStrategyV2.sol";
 import {IWETH9} from "../interfaces/IWETH9.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
