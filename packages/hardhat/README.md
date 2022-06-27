@@ -40,7 +40,7 @@ yarn test
 npx hardhat test test/unit-tests/controller.ts --network localhost
 
 # Run E2E test
-INFURA_KEY=XXXX yarn test:e2e
+ALCHEMY_KEY=XXXX yarn test:e2e
 ```
 
 ### Run Coverage test

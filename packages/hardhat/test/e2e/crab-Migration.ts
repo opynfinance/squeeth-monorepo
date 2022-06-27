@@ -1,5 +1,5 @@
-// INFURA_KEY=XXXXXXXXX yarn test:e2e
-// INFURA_KEY=XXXXXXXX yarn test:e2e test/e2e/crab-Migration.ts
+// ALCHEMY_KEY=XXXXXXXXX yarn test:e2e
+// ALCHEMY_KEY=XXXXXXXX yarn test:e2e test/e2e/crab-Migration.ts
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import { ethers } from "hardhat"
