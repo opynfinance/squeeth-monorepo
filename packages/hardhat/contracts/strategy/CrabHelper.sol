@@ -151,8 +151,6 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
 
         bytes32 hash = _hashTypedDataV4(structHash);
         address offerSigner = ECDSA.recover(hash, _order.v, _order.r, _order.s);
-        //console.log('offerSigner %s', offerSigner);
-        //console.log('current nonce', ICrabStrategyV2(crab).nonces(_order.trader));
         require(offerSigner == _order.trader, "Invalid offer signature");
         require(_order.expiry >= block.timestamp, "Order has expired");
 
