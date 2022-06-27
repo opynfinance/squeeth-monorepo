@@ -4,7 +4,7 @@ import { fromTokenAmount } from '@utils/calculations'
 import { useAtom, useAtomValue } from 'jotai'
 import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
 import BigNumber from 'bignumber.js'
-import { BIG_ZERO, INDEX_SCALE, OSQUEETH_DECIMALS } from '@constants/index'
+import { BIG_ZERO, INDEX_SCALE, OSQUEETH_DECIMALS, UNI_POOL_FEES } from '@constants/index'
 import { controllerContractAtom, controllerHelperHelperContractAtom, nftManagerContractAtom } from '../contracts/atoms'
 import useAppCallback from '@hooks/useAppCallback'
 import { addressAtom } from '../wallet/atoms'
@@ -101,7 +101,6 @@ export const useOpenPositionDeposit = () => {
       // Do we want to hardcode a 150% collateralization ratio?
       const collateralToMint = ethDebt.multipliedBy(3).div(2)
       const collateralToLp = mintWSqueethAmount.multipliedBy(squeethPrice)
-      const flashloanFee = collateralToMint.multipliedBy(9).div(1000)
 
       const lowerTick = nearestUsableTick(lowerTickInput, 3000)
       const upperTick = nearestUsableTick(upperTickInput, 3000)
@@ -126,7 +125,7 @@ export const useOpenPositionDeposit = () => {
       return handleTransaction(
         contract.methods.flashloanWMintLpDepositNft(flashloanWMintDepositNftParams).send({
           from: address,
-          value: collateralToLp.plus(flashloanFee).toFixed(0),
+          value: collateralToLp.toFixed(0),
         }),
         onTxConfirmed,
       )
