@@ -4,7 +4,7 @@ import { Contract, BigNumber, providers } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import BigNumberJs from 'bignumber.js'
 import { WETH9, MockErc20, Controller, Oracle, WPowerPerp, CrabStrategyV2, ISwapRouter, Timelock, CrabHelper, IWETH9 } from "../../../typechain";
-import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addWethDaiLiquidity, addSqueethLiquidity } from '../../setup'
+import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addWethDaiLiquidity, addSqueethLiquidity, buyWeth, buyWSqueeth } from '../../setup'
 import { isSimilar, wmul, wdiv, one, signTypedData, oracleScaleFactor } from "../../utils"
 
 BigNumberJs.set({ EXPONENTIAL_AT: 30 })
@@ -244,6 +244,35 @@ describe("Crab V2 integration test: ERC20 deposit and withdrawals", function () 
       return { typeData, domainData };
   };
 
+
+  const getOSQTHPrice = () => oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 600, false);
+  const mintAndSell = async (toMint = "1000") => {
+    const ethToDeposit = ethers.utils.parseUnits("1000");
+    const wSqueethToMint = ethers.utils.parseUnits(toMint);
+    const currentBlockTimestamp = (await provider.getBlock(await provider.getBlockNumber())).timestamp;
+    await controller.connect(owner).mintWPowerPerpAmount("0", wSqueethToMint, "0", { value: ethToDeposit });
+    await buyWeth(
+        swapRouter,
+        wSqueeth,
+        weth,
+        owner.address,
+        await wSqueeth.balanceOf(owner.address),
+        currentBlockTimestamp + 10
+    );
+
+    await provider.send("evm_increaseTime", [86400]);
+    await provider.send("evm_mine", []);
+};
+
+  const delta = async (vault: any) => {
+      // oSQTH price before
+      const oSQTHPriceBefore = await getOSQTHPrice();
+      const oSQTHdelta = wmul(vault.shortAmount.mul(2), oSQTHPriceBefore);
+      const delta:BigNumber = vault.collateralAmount.sub(oSQTHdelta);
+      return delta;
+  };
+
+
     beforeEach("Deposit into strategy", async () => {
       await dai.mint(depositor2.address, usdcAmount.toString())
       await dai.connect(depositor2).approve(crabHelper.address, usdcAmount.toString())
@@ -261,7 +290,7 @@ describe("Crab V2 integration test: ERC20 deposit and withdrawals", function () 
 
     it("Should revert order if wrong signer", async () => {
 
-      // and prepare the trade
+      // prepare the trade
       const orderHash = {
                 bidId: 0,
                 trader: depositor.address,
@@ -279,8 +308,7 @@ describe("Crab V2 integration test: ERC20 deposit and withdrawals", function () 
 
     it("Should revert order if expired", async () => {
 
-      console.log("dssaaehare")
-      // and prepare the trade
+      // prepare the trade
       const orderHash = {
                 bidId: 0,
                 trader: depositor2.address,
@@ -299,7 +327,7 @@ describe("Crab V2 integration test: ERC20 deposit and withdrawals", function () 
 
     it("Should revert order if not enough weth balance", async () => {
 
-      // and prepare the trade
+      // prepare the trade
       const orderHash = {
                 bidId: 0,
                 trader: depositor2.address,
@@ -317,9 +345,9 @@ describe("Crab V2 integration test: ERC20 deposit and withdrawals", function () 
     })
 
     it("Should revert order if not enough weth allowance", async () => {
-      //await weth.connect(depositor2).approve(crabHelper.address, ethers.utils.parseUnits("1"))
       await weth.connect(depositor2).deposit({ value: ethers.utils.parseUnits("1") });
-      //await weth.connect(random).approve(crabStrategyV2.address, toGET); //0.04eth      // and prepare the trade
+      
+      // prepare the trade
       const orderHash = {
                 bidId: 0,
                 trader: depositor2.address,
@@ -338,7 +366,7 @@ describe("Crab V2 integration test: ERC20 deposit and withdrawals", function () 
 
     it("Should revert order if not enough wPowerPerp balance", async () => {
 
-      // and prepare the trade
+      // prepare the trade
       const orderHash = {
                 bidId: 0,
                 trader: depositor2.address,
@@ -358,7 +386,7 @@ describe("Crab V2 integration test: ERC20 deposit and withdrawals", function () 
     it("Should revert order if not enough wPowerPerp allowance", async () => {
       await weth.connect(depositor2).approve(crabHelper.address, ethers.utils.parseUnits("10"))
       await controller.connect(depositor2).mintWPowerPerpAmount("0", ethers.utils.parseUnits("10"), "0", { value: ethers.utils.parseUnits("10") });
-      // console.log('squeeth balance:', (await wSqueeth.balanceOf(depositor2.address)).toString())
+      // prepare the trade
       const orderHash = {
                 bidId: 0,
                 trader: depositor2.address,
@@ -396,7 +424,6 @@ describe("Crab V2 integration test: ERC20 deposit and withdrawals", function () 
 
 
     it("Should verify valid buy order", async () => {
-      //await weth.connect(depositor2).approve(crabHelper.address, ethers.utils.parseUnits("1"))
       await weth.connect(depositor2).deposit({ value: ethers.utils.parseUnits("1") });
       await weth.connect(depositor2).approve(crabHelper.address, ethers.utils.parseUnits("1") ); 
       const orderHash = {
@@ -418,13 +445,27 @@ describe("Crab V2 integration test: ERC20 deposit and withdrawals", function () 
 
 
     it("Should return correct hedge size", async () => {
-      const hedgeSize = await crabHelper.getHedgeSize()
-      console.log("hedgeSize[0]", hedgeSize[0])
-      console.log("hedgeSize[1]", hedgeSize[1])
+
+      // current vault state
+      const strategyVaultBefore = await controller.vaults(await crabStrategy.vaultId());
+      // hedge size and direction from view function
+      const hedgeSize = await crabHelper.connect(depositor2).getHedgeSize()
+
+      const oSQTHPriceBefore = await getOSQTHPrice();
+      const oSQTHDelta = wmul(strategyVaultBefore.shortAmount.mul(2), oSQTHPriceBefore);
+
+      // compare hedge from view function with calculation directly from vault state and price
+      if (hedgeSize[1]){ 
+        const netDelta = strategyVaultBefore.collateralAmount.sub(oSQTHDelta)
+        expect(hedgeSize[0].eq((netDelta).mul(one).div(oSQTHPriceBefore))).to.be.true
+      } else {
+        const netDelta = oSQTHDelta.sub(strategyVaultBefore.collateralAmount)
+        expect(hedgeSize[0].eq(netDelta.mul(one).div(oSQTHPriceBefore))).to.be.true
+
+      }
+
     })
 
-
   })
-
 
 })

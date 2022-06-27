@@ -19,10 +19,12 @@ interface ICrabStrategyV2 {
     function flashDeposit(uint256 _ethToDeposit) external payable;
 
     function flashWithdraw(uint256 _crabAmount, uint256 _maxEthToPay) external;
+    
+    function syncStrategyState() external view returns (uint256, uint256); 
+
 
     function nonces(address _owner) external view returns (uint256);
 
-    function syncStrategyState() external view returns (uint256, uint256); 
 
 
 }

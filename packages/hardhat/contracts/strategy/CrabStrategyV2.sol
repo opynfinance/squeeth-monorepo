@@ -566,6 +566,17 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     }
 
     /**
+     * @notice sync strategy debt and collateral amount from vault
+     * @return synced debt amount
+     * @return synced collateral amount
+     */
+    function syncStrategyState() external view returns (uint256, uint256) {
+        return _syncStrategyState();
+    }
+
+
+
+    /**
      * @dev get current nonce of the address
      * @param _owner address of signer
      * @return current the current nonce of the address

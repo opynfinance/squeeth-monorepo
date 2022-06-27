@@ -192,7 +192,6 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
         // Get state and calculate hedge
         (uint256 strategyDebt, uint256 ethDelta) = ICrabStrategyV2(crab).syncStrategyState();
         uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, hedgingTwapPeriod, true);
-
         uint256 wSqueethDelta = strategyDebt.wmul(2e18).wmul(wSqueethEthPrice);
 
         return
