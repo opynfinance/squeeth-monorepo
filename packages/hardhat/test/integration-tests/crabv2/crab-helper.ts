@@ -264,6 +264,24 @@ describe("Crab V2 integration test: ERC20 deposit and withdrawals", function () 
     await provider.send("evm_mine", []);
 };
 
+const buyBackSqueeth = async (ethToSell= "100") => {
+  const wethAmount = ethers.utils.parseUnits(ethToSell);
+  await weth.connect(owner).deposit({ value: wethAmount})
+  const currentBlockTimestamp = (await provider.getBlock(await provider.getBlockNumber())).timestamp;
+  await buyWSqueeth(
+    swapRouter,
+    wSqueeth,
+    weth,
+    owner.address,
+    wethAmount,
+    currentBlockTimestamp + 10
+);
+await provider.send("evm_increaseTime", [86400]);
+await provider.send("evm_mine", []);
+
+};
+
+
   const delta = async (vault: any) => {
       // oSQTH price before
       const oSQTHPriceBefore = await getOSQTHPrice();
@@ -444,24 +462,42 @@ describe("Crab V2 integration test: ERC20 deposit and withdrawals", function () 
     })
 
 
-    it("Should return correct hedge size", async () => {
-
+    it("Should return correct hedge size for sell squeeth case", async () => {
       // current vault state
       const strategyVaultBefore = await controller.vaults(await crabStrategy.vaultId());
       // hedge size and direction from view function
-      const hedgeSize = await crabHelper.connect(depositor2).getHedgeSize()
-
+      const [hedgeSize, isSellingSqueeth] = await crabHelper.connect(depositor2).getHedgeSize()
       const oSQTHPriceBefore = await getOSQTHPrice();
       const oSQTHDelta = wmul(strategyVaultBefore.shortAmount.mul(2), oSQTHPriceBefore);
-
       // compare hedge from view function with calculation directly from vault state and price
-      if (hedgeSize[1]){ 
+      expect(isSellingSqueeth).to.be.true
+      if (isSellingSqueeth){ 
         const netDelta = strategyVaultBefore.collateralAmount.sub(oSQTHDelta)
-        expect(hedgeSize[0].eq((netDelta).mul(one).div(oSQTHPriceBefore))).to.be.true
+        expect(hedgeSize.sub((netDelta).mul(one).div(oSQTHPriceBefore)).lte(1)).to.be.true
       } else {
         const netDelta = oSQTHDelta.sub(strategyVaultBefore.collateralAmount)
-        expect(hedgeSize[0].eq(netDelta.mul(one).div(oSQTHPriceBefore))).to.be.true
+        expect(hedgeSize.sub(netDelta.mul(one).div(oSQTHPriceBefore)).lte(1)).to.be.true
+      }
 
+    })
+
+
+    it("Should return correct hedge size for buy squeeth case", async () => {
+      await buyBackSqueeth("1000")
+      // current vault state
+      const strategyVaultBefore = await controller.vaults(await crabStrategy.vaultId());
+      // hedge size and direction from view function
+      const [hedgeSize, isSellingSqueeth] = await crabHelper.connect(depositor2).getHedgeSize()
+      const oSQTHPriceBefore = await getOSQTHPrice();
+      const oSQTHDelta = wmul(strategyVaultBefore.shortAmount.mul(2), oSQTHPriceBefore);
+      // compare hedge from view function with calculation directly from vault state and price
+      expect(isSellingSqueeth).to.be.false
+      if (isSellingSqueeth){ 
+        const netDelta = strategyVaultBefore.collateralAmount.sub(oSQTHDelta)
+        expect(hedgeSize.sub((netDelta).mul(one).div(oSQTHPriceBefore)).lte(1)).to.be.true
+      } else {
+        const netDelta = oSQTHDelta.sub(strategyVaultBefore.collateralAmount)
+        expect(hedgeSize.sub(netDelta.mul(one).div(oSQTHPriceBefore)).lte(1)).to.be.true
       }
 
     })
