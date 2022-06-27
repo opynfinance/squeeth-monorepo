@@ -182,8 +182,6 @@ export function getSwapRouter2Addr(networkName: string): Address {
   let addr = MAINNET_ROPSTEN_SWAPROUTER2_ADDR;
   if (networkName == "ropsten") {
     addr = ROPSTEN_SWAPROUTER_ADDR;
-  } else {
-    addr = Address.fromString("");
   }
   return addr;
 }
