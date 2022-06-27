@@ -66,12 +66,14 @@ contract CrabMigration is Ownable {
     struct FlashMigrateV1toV2 {
         uint256 v1oSqthToPay;
         uint256 ethToFlashDeposit;
+        uint256 crabV1ToWithdraw;
     }
 
     struct FlashMigrateAndBuyV1toV2 {
         uint256 v1oSqthToPay;
         uint256 ethToFlashDeposit;
         uint256 withdrawMaxEthToPay;
+        uint256 crabV1ToWithdraw;
     }
 
     enum FLASH_SOURCE {
@@ -215,12 +217,11 @@ contract CrabMigration is Ownable {
             FlashMigrateV1toV2 memory data = abi.decode(_calldata, (FlashMigrateV1toV2));
 
             crabV2.deposit{value: _amount}();
-            uint256 crabV1ToWithdraw = crabV1.balanceOf(_initiator);
 
-            crabV1.transferFrom(_initiator, address(this), crabV1ToWithdraw);
+            crabV1.transferFrom(_initiator, address(this), data.crabV1ToWithdraw);
 
             IERC20(wPowerPerp).approve(address(crabV1), data.v1oSqthToPay);
-            crabV1.withdraw(crabV1ToWithdraw);
+            crabV1.withdraw(data.crabV1ToWithdraw);
 
             // Flash deposit remaining ETH, if user said so. Else return back the ETH. If CR1 = CR2 ethToFlashDeposit should be 0
             if (data.ethToFlashDeposit > 0) {
@@ -239,8 +240,7 @@ contract CrabMigration is Ownable {
             FlashMigrateAndBuyV1toV2 memory data = abi.decode(_calldata, (FlashMigrateAndBuyV1toV2));
             (, , , uint256 v1Short) = crabV1.getVaultDetails();
 
-            uint256 crabV1Balance = crabV1.balanceOf(_initiator);
-            crabV1.transferFrom(_initiator, address(this), crabV1Balance);
+            crabV1.transferFrom(_initiator, address(this), data.crabV1ToWithdraw);
             crabV2.deposit{value: _amount}();
 
             uint256 oSqthToPay = IERC20(wPowerPerp).balanceOf(address(this));
@@ -249,11 +249,10 @@ contract CrabMigration is Ownable {
             // Find crab amount for contract's sqth balance. Remaining crab sould be withdrawn using flash withdraw
             uint256 crabV1ToWithdrawRmul = oSqthToPay.wmul(crabV1.totalSupply()).rdiv(v1Short);
             uint256 crabV1ToWithdraw = crabV1ToWithdrawRmul.floor(10**9) / (10**9);
-            //uint256 crabV1ToWithdraw = oSqthToPay.wmul(crabV1.totalSupply()).wdiv(v1Short);
 
             crabV1.withdraw(crabV1ToWithdraw);
 
-            crabV1.flashWithdraw(crabV1.balanceOf(address(this)), data.withdrawMaxEthToPay);
+            crabV1.flashWithdraw(data.crabV1ToWithdraw - crabV1ToWithdraw, data.withdrawMaxEthToPay);
             require(address(this).balance >= _amount, "M7");
 
             if (data.ethToFlashDeposit > 0) {
@@ -308,7 +307,7 @@ contract CrabMigration is Ownable {
         return _amountV2.wmul(totalCrabV1SharesMigrated).wdiv(totalCrabV2SharesReceived);
     }
 
-    function flashMigrationDetails(address _user)
+    function flashMigrationDetails(uint256 _v1Shares)
         external
         view
         returns (
@@ -318,16 +317,17 @@ contract CrabMigration is Ownable {
             uint256
         )
     {
-        return _flashMigrationDetails(_user);
+        return _flashMigrationDetails(_v1Shares);
     }
 
     /**
      * @notice Used to migrate from crab V1 to crab V2 when CR1 >= CR2
      *
+     * @param _v1Shares V1 shares to migrate
      * @param _ethToFlashDeposit Flash deposit amount in crab v2 with excess ETH. If 0 will returned to sender
      */
-    function flashMigrateFromV1toV2(uint256 _ethToFlashDeposit) external afterMigration {
-        (bool isFlashOnlyMigrate, uint256 ethNeededForV2, uint256 v1oSqthToPay, ) = _flashMigrationDetails(msg.sender);
+    function flashMigrateFromV1toV2(uint256 _v1Shares, uint256 _ethToFlashDeposit) external afterMigration {
+        (bool isFlashOnlyMigrate, uint256 ethNeededForV2, uint256 v1oSqthToPay, ) = _flashMigrationDetails(_v1Shares);
 
         require(isFlashOnlyMigrate, "M11");
 
@@ -339,7 +339,11 @@ contract CrabMigration is Ownable {
                     amountToBorrow: ethNeededForV2,
                     callSource: uint8(FLASH_SOURCE.FLASH_MIGRATE_V1_TO_V2),
                     callData: abi.encode(
-                        FlashMigrateV1toV2({v1oSqthToPay: v1oSqthToPay, ethToFlashDeposit: _ethToFlashDeposit})
+                        FlashMigrateV1toV2({
+                            v1oSqthToPay: v1oSqthToPay,
+                            ethToFlashDeposit: _ethToFlashDeposit,
+                            crabV1ToWithdraw: _v1Shares
+                        })
                     )
                 })
             )
@@ -349,16 +353,18 @@ contract CrabMigration is Ownable {
     /**
      * @notice Used to migrate from crab V1 to crab V2 when CR1 < CR2
      *
+     * @param _v1Shares V1 shares to migrate
      * @param _ethToFlashDeposit Flash deposit amount in crab v2 with excess ETH. If 0 will returned to sender
      * @param _ethToBorrow Amount to flash loan to deposit in crab v2
      * @param _withdrawMaxEthToPay maximum ETH to pay to buy back the owed wSqueeth debt
      */
     function flashMigrateAndWithdrawFromV1toV2(
+        uint256 _v1Shares,
         uint256 _ethToFlashDeposit,
         uint256 _ethToBorrow,
         uint256 _withdrawMaxEthToPay
     ) external afterMigration {
-        (bool isFlashOnlyMigrate, , uint256 v1oSqthToPay, ) = _flashMigrationDetails(msg.sender);
+        (bool isFlashOnlyMigrate, , uint256 v1oSqthToPay, ) = _flashMigrationDetails(_v1Shares);
 
         require(!isFlashOnlyMigrate, "M12");
         require(_ethToBorrow > 0 && _withdrawMaxEthToPay > 0, "M8");
@@ -374,7 +380,8 @@ contract CrabMigration is Ownable {
                         FlashMigrateAndBuyV1toV2({
                             withdrawMaxEthToPay: _withdrawMaxEthToPay,
                             ethToFlashDeposit: _ethToFlashDeposit,
-                            v1oSqthToPay: v1oSqthToPay
+                            v1oSqthToPay: v1oSqthToPay,
+                            crabV1ToWithdraw: _v1Shares
                         })
                     )
                 })
@@ -382,7 +389,10 @@ contract CrabMigration is Ownable {
         );
     }
 
-    function _flashMigrationDetails(address _user)
+    /**
+     * @notice Get migration details for given amount of v1 shares
+     */
+    function _flashMigrationDetails(uint256 _v1Shares)
         internal
         view
         returns (
@@ -392,19 +402,14 @@ contract CrabMigration is Ownable {
             uint256
         )
     {
-        uint256 v1Shares = crabV1.balanceOf(_user);
-        uint256 v1TotalSupply = crabV1.totalSupply();
         (, , uint256 v1TotalCollateral, uint256 v1TotalShort) = crabV1.getVaultDetails();
         (, , uint256 v2TotalCollateral, uint256 v2TotalShort) = crabV2.getVaultDetails();
 
-        uint256 v1oSqthToPay = v1TotalShort.wmul(v1Shares).wdiv(v1TotalSupply); //new
-        uint256 ethNeededForV2rmul = v1oSqthToPay.wmul(v2TotalCollateral).rdiv(v2TotalShort); //new
-        uint256 ethNeededForV2 = ethNeededForV2rmul.ceil(10**9) / (10**9);
+        uint256 v1oSqthToPay = v1TotalShort.wmul(_v1Shares).wdiv(crabV1.totalSupply()); //new
+        uint256 ethNeededForV2 = v1oSqthToPay.wmul(v2TotalCollateral).rdiv(v2TotalShort).ceil(10**9) / (10**9);
+        uint256 ethToGetFromV1 = _v1Shares.wdiv(crabV1.totalSupply()).wmul(v1TotalCollateral);
 
-        uint256 ethToGetFromV1 = v1Shares.wdiv(v1TotalSupply).wmul(v1TotalCollateral);
-        bool isFlashOnlyMigrate = ethNeededForV2 <= ethToGetFromV1;
-
-        return (isFlashOnlyMigrate, ethNeededForV2, v1oSqthToPay, ethToGetFromV1);
+        return (ethNeededForV2 <= ethToGetFromV1, ethNeededForV2, v1oSqthToPay, ethToGetFromV1);
     }
 
     /**
