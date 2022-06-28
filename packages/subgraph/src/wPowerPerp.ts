@@ -13,18 +13,20 @@ import { convertTokenToDecimal } from "./utils";
 
 export function handleTransfer(event: Transfer): void {
   if (
-    event.transaction.to == SHORT_HELPER_ADDR ||
-    event.transaction.to == CONTROLLER_ADDR ||
-    event.transaction.to == SWAPROUTER_ADDR ||
-    event.transaction.to == SWAPROUTER2_ADDR ||
-    event.transaction.to == NFT_MANAGER_ADDR ||
-    event.transaction.to == CRAB_STRATEGY_ADDR
+    event.params.to == SHORT_HELPER_ADDR ||
+    event.params.to == CONTROLLER_ADDR ||
+    event.params.to == SWAPROUTER_ADDR ||
+    event.params.to == SWAPROUTER2_ADDR ||
+    event.params.to == NFT_MANAGER_ADDR ||
+    event.params.to == CRAB_STRATEGY_ADDR
   ) {
     return;
   }
 
+  let amount = convertTokenToDecimal(event.params.value, TOKEN_DECIMALS_18);
+
   let senderTransactionHistory = createTransactionHistory("SEND_OSQTH", event);
-  senderTransactionHistory.owner = event.transaction.from;
+  senderTransactionHistory.owner = event.params.from;
   senderTransactionHistory.oSqthAmount = event.params.value;
   senderTransactionHistory.save();
 
@@ -33,14 +35,10 @@ export function handleTransfer(event: Transfer): void {
     event
   );
 
-  let amount = convertTokenToDecimal(event.params.value, TOKEN_DECIMALS_18);
-  let receipt = event.transaction.to;
-  if (receipt) {
-    receiverTransactionHistory.owner = receipt;
-    receiverTransactionHistory.oSqthAmount = event.params.value;
-    receiverTransactionHistory.save();
-    buyOrSellSQTH(receipt.toHex(), amount);
-  }
+  receiverTransactionHistory.owner = event.params.to;
+  receiverTransactionHistory.oSqthAmount = event.params.value;
+  receiverTransactionHistory.save();
 
+  buyOrSellSQTH(event.params.to.toHex(), amount);
   buyOrSellSQTH(event.transaction.from.toHex(), amount.neg());
 }
