@@ -458,7 +458,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
             _deposit(_caller, data.totalDeposit, true);
 
             //repay the flash swap
-            IWPowerPerp(wPowerPerp).transfer(ethWSqueethPool, _amountToPay);
+            IERC20(wPowerPerp).safeTransfer(ethWSqueethPool, _amountToPay);
 
             emit FlashDepositCallback(_caller, _amountToPay, address(this).balance);
 
@@ -479,7 +479,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
             //use some amount of withdrawn ETH to repay flash swap
             IWETH9(weth).deposit{value: _amountToPay}();
-            IWETH9(weth).transfer(ethWSqueethPool, _amountToPay);
+            IERC20(weth).safeTransfer(ethWSqueethPool, _amountToPay);
 
             //excess ETH not used to repay flash swap is transferred to the user
             uint256 proceeds = ethToWithdraw.sub(_amountToPay);
