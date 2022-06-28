@@ -18,6 +18,7 @@ import { useUpdateAtom } from 'jotai/utils'
 import { lowerTickAtom, upperTickAtom } from './atoms'
 import { useMemo } from 'react'
 import { useGetDebtAmount, useGetTwapEthPrice, useGetTwapSqueethPrice } from '../controller/hooks'
+import { useFirstValidVault } from '../positions/hooks'
 
 /*** CONSTANTS ***/
 const one = new BigNumber(10).pow(18)
@@ -93,13 +94,13 @@ export const useOpenPositionDeposit = () => {
   const getTwapSqueethPrice = useGetTwapSqueethPrice()
   const getDebtAmount = useGetDebtAmount()
   const openPositionDeposit = useAppCallback(
-    async (squeethToMint: BigNumber, lowerTickInput: number, upperTickInput: number, onTxConfirmed?: () => void) => {
+    async (squeethToMint: BigNumber, lowerTickInput: number, upperTickInput: number, vaultID: number, onTxConfirmed?: () => void) => {
       const squeethPrice = await getTwapSqueethPrice()
       const mintWSqueethAmount = fromTokenAmount(squeethToMint, OSQUEETH_DECIMALS)
       const ethDebt = await getDebtAmount(mintWSqueethAmount)
       // Do we want to hardcode a 150% collateralization ratio?
-      const collateralToMint = ethDebt.multipliedBy(3).div(2)
       console.log('squeeth price', squeethPrice.toString())
+      const collateralToMint = ethDebt.multipliedBy(3).div(2)
       const collateralToLp = mintWSqueethAmount.multipliedBy(squeethPrice)
 
       const lowerTick = nearestUsableTick(lowerTickInput, 3000)
@@ -107,7 +108,7 @@ export const useOpenPositionDeposit = () => {
 
       const flashloanWMintDepositNftParams = {
         wPowerPerpPool: squeethPool,
-        vaultId: 0,
+        vaultId: vaultID,
         wPowerPerpAmount: mintWSqueethAmount.toFixed(0),
         collateralToDeposit: collateralToMint.toFixed(0),
         collateralToFlashloan: collateralToMint.toFixed(0),
