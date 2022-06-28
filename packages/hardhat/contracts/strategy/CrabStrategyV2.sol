@@ -27,6 +27,7 @@ import {StrategyMath} from "./base/StrategyMath.sol";
 import {Power2Base} from "../libs/Power2Base.sol";
 import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
 import {ECDSA} from "@openzeppelin/contracts/cryptography/ECDSA.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 /**
  * @dev CrabStrategyV2 contract
@@ -37,6 +38,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     using Counters for Counters.Counter;
     using StrategyMath for uint256;
     using Address for address payable;
+    using SafeERC20 for IERC20;
 
     /// @dev the cap in ETH for the strategy, above which deposits will be rejected
     uint256 public strategyCap;
@@ -627,7 +629,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
         if (_order.isBuying) {
             // trader sends weth and receives oSQTH
-            IERC20(weth).transferFrom(_order.trader, address(this), wethAmount);
+            IERC20(weth).safeTransferFrom(_order.trader, address(this), wethAmount);
             IWETH9(weth).withdraw(wethAmount);
             _mintWPowerPerp(_order.trader, _order.quantity, wethAmount, false);
         } else {
@@ -635,7 +637,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
             _burnWPowerPerp(_order.trader, _order.quantity, wethAmount, false);
             //wrap it
             IWETH9(weth).deposit{value: wethAmount}();
-            IERC20(weth).transfer(_order.trader, wethAmount);
+            IERC20(weth).safeTransfer(_order.trader, wethAmount);
         }
 
         emit HedgeOTC(
