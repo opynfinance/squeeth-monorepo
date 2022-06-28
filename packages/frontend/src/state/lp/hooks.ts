@@ -12,12 +12,12 @@ import { normFactorAtom } from '../controller/atoms'
 import { Price, Token } from '@uniswap/sdk-core'
 import { useHandleTransaction } from '../wallet/hooks'
 import { squeethPriceeAtom, squeethTokenAtom, wethPriceAtom, wethTokenAtom } from '../squeethPool/atoms'
-import ethers from 'ethers'
+import { ethers } from 'ethers'
 import { useGetSellQuote } from '../squeethPool/hooks'
 import { useUpdateAtom } from 'jotai/utils'
 import { lowerTickAtom, upperTickAtom } from './atoms'
 import { useMemo } from 'react'
-import { useGetDebtAmount, useGetTwapEthPrice, useGetTwapSqueethPrice } from '../controller/hooks'
+import { useGetDebtAmount, useGetTwapEthPrice, useGetTwapSqueethPrice, useGetVault } from '../controller/hooks'
 import { useFirstValidVault } from '../positions/hooks'
 
 /*** CONSTANTS ***/
@@ -145,9 +145,11 @@ export const useCollectFees = () => {
   const handleTransaction = useHandleTransaction()
   const positionManager = useAtomValue(nftManagerContractAtom)
   const getDebtAmount = useGetDebtAmount()
-  const collectFees = useAppCallback(async (vaultId: BigNumber, onTxConfirmed?: () => void) => {
-    const uniTokenId = (await controllerContract?.methods.vaults(vaultId)).NftCollateralId
-    const vaultBefore = await controllerContract?.methods.vaults(vaultId)
+  const getVault = useGetVault()
+  const collectFees = useAppCallback(async (vaultId: number, onTxConfirmed?: () => void) => {
+    const vaultBefore = await getVault(vaultId)
+    const uniTokenId = vaultBefore?.NFTCollateralId    
+    
     if (
       !controllerContract ||
       !controllerHelperContract ||
@@ -157,24 +159,27 @@ export const useCollectFees = () => {
       !vaultBefore.shortAmount
     )
       return
-    const debtInEth = await getDebtAmount(vaultBefore.shortAmount)
-    const collateralToFlashloan = debtInEth.multipliedBy(1.5)
-    const amount0Max = new BigNumber(2).multipliedBy(new BigNumber(10).pow(18)).minus(1)
-    const amount1Max = new BigNumber(2).multipliedBy(new BigNumber(10).pow(18)).minus(1)
 
+    const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
+    const debtInEth = await getDebtAmount(shortAmount)
+    const collateralToFlashloan = debtInEth.multipliedBy(1.5)
+    const amount0Max = new BigNumber(2).multipliedBy(new BigNumber(10).pow(18)).minus(1).toFixed(0)
+    const amount1Max = new BigNumber(2).multipliedBy(new BigNumber(10).pow(18)).minus(1).toFixed(0)
+    console.log([uniTokenId, amount0Max, amount1Max])
+    // console.log(amount0Max.toFixed(0))
     const abiCoder = new ethers.utils.AbiCoder()
     const rebalanceLpInVaultParams = [
       {
-        rebalanceLpInVaultType: new BigNumber(6),
+        rebalanceLpInVaultType: "6",
         // CollectFees
         data: abiCoder.encode(['uint256', 'uint128', 'uint128'], [uniTokenId, amount0Max, amount1Max]),
       },
     ]
-
+    console.log(collateralToFlashloan.toFixed(0))
     await controllerContract.methods.updateOperator(vaultId, controllerHelper)
     return handleTransaction(
       await controllerHelperContract.methods
-        .rebalanceLpInVault(vaultId, collateralToFlashloan, rebalanceLpInVaultParams)
+        .rebalanceLpInVault(vaultId, collateralToFlashloan.toFixed(0), rebalanceLpInVaultParams)
         .send({
           from: address,
         }),
