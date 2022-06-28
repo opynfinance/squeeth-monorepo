@@ -76,6 +76,7 @@ library StrategyMath {
         z = mul(div(sub(add(a, m), 1), m), m);
     }
 
+    // Floor A to a multiple m
     function floor(uint a, uint m) internal pure returns(uint z) {
         z = mul(div(a, m), m);
     }

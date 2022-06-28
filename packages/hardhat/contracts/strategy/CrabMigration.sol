@@ -225,7 +225,7 @@ contract CrabMigration is Ownable {
 
             // Flash deposit remaining ETH, if user said so. Else return back the ETH. If CR1 = CR2 ethToFlashDeposit should be 0
             if (data.ethToFlashDeposit > 0) {
-                crabV2.flashDeposit{value: address(this).balance - _amount}(data.ethToFlashDeposit);
+                crabV2.flashDeposit{value: address(this).balance.sub(_amount)}(data.ethToFlashDeposit);
             }
 
             // Sent back the V2 tokens to the user
@@ -234,7 +234,7 @@ contract CrabMigration is Ownable {
 
             // Sent back the excess ETH
             if (address(this).balance > _amount) {
-                payable(_initiator).sendValue(address(this).balance - _amount);
+                payable(_initiator).sendValue(address(this).balance.sub(_amount));
             }
         } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_MIGRATE_WITHDRAW_V1_TO_V2) {
             FlashMigrateAndBuyV1toV2 memory data = abi.decode(_calldata, (FlashMigrateAndBuyV1toV2));
@@ -252,11 +252,11 @@ contract CrabMigration is Ownable {
 
             crabV1.withdraw(crabV1ToWithdraw);
 
-            crabV1.flashWithdraw(data.crabV1ToWithdraw - crabV1ToWithdraw, data.withdrawMaxEthToPay);
+            crabV1.flashWithdraw(data.crabV1ToWithdraw.sub(crabV1ToWithdraw), data.withdrawMaxEthToPay);
             require(address(this).balance >= _amount, "M7");
 
             if (data.ethToFlashDeposit > 0) {
-                crabV2.flashDeposit{value: address(this).balance - _amount}(data.ethToFlashDeposit);
+                crabV2.flashDeposit{value: address(this).balance.sub(_amount)}(data.ethToFlashDeposit);
             }
 
             // Sent back the V2 tokens to the user
@@ -265,7 +265,7 @@ contract CrabMigration is Ownable {
 
             // Sent back the excess ETH
             if (address(this).balance > _amount) {
-                payable(_initiator).sendValue(address(this).balance - _amount);
+                payable(_initiator).sendValue(address(this).balance.sub(_amount));
             }
         }
     }
@@ -405,7 +405,7 @@ contract CrabMigration is Ownable {
         (, , uint256 v1TotalCollateral, uint256 v1TotalShort) = crabV1.getVaultDetails();
         (, , uint256 v2TotalCollateral, uint256 v2TotalShort) = crabV2.getVaultDetails();
 
-        uint256 v1oSqthToPay = v1TotalShort.wmul(_v1Shares).wdiv(crabV1.totalSupply()); //new
+        uint256 v1oSqthToPay = v1TotalShort.wmul(_v1Shares).wdiv(crabV1.totalSupply());
         uint256 ethNeededForV2 = v1oSqthToPay.wmul(v2TotalCollateral).rdiv(v2TotalShort).ceil(10**9) / (10**9);
         uint256 ethToGetFromV1 = _v1Shares.wdiv(crabV1.totalSupply()).wmul(v1TotalCollateral);
 

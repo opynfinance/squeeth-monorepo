@@ -1,4 +1,4 @@
-import { BigNumber, ContractReceipt, ContractTransaction } from "ethers";
+import { BigNumber, ContractTransaction } from "ethers";
 import { BigNumber as BigNumberJs } from "bignumber.js";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";

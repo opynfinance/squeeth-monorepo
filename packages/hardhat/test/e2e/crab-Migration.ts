@@ -755,7 +755,7 @@ describe("Crab Migration", function () {
                 expect(constractSharesAfter).to.be.equal('0')
             })
 
-            it("migrate d2 with CR1 > CR2", async () => {
+            it("migrate d2 with CR1 > CR2 with flash deposit", async () => {
                 let gasPaid = BigNumber.from(0)
                 await initialize(d2.address)
                 await increaseCR1(ethers.utils.parseEther('2'))
@@ -767,14 +767,29 @@ describe("Crab Migration", function () {
                 expect(ethToGetFromV1.gt(ethNeededForV2)).to.be.true
 
                 const excessEth = ethToGetFromV1.sub(ethNeededForV2)
+                const ethToFlashDeposit = excessEth.mul(195).div(100) // Something less than 200%
+
                 const depositShare = wdiv(ethNeededForV2, collatV2.add(ethNeededForV2))
+                const oSqthPrice = await oracle.getTwap(wethOsqthPoolAddress, squeethAddress, wethAddress, 1, false)
                 const expectedV2Shares = wdiv(wmul(depositShare, crabV2Supply), one.sub(depositShare))
+                const expectedSupply = crabV2Supply.add(expectedV2Shares)
+                const expectedCollat = collatV2.add(ethNeededForV2)
+                const expectedShort = wdiv(wmul(ethNeededForV2, shortV2), collatV2).add(shortV2)
+
+                const depositShareFromFlashDeposit = wdiv(ethToFlashDeposit, expectedCollat.add(ethToFlashDeposit))
+                const expectedV2SharesFlashDeposit = wdiv(wmul(depositShareFromFlashDeposit, expectedSupply), one.sub(depositShareFromFlashDeposit))
+
+                const oSqthToMintedFlash = wdiv(wmul(ethToFlashDeposit, expectedShort), expectedCollat);
+                const ethToReturned = wmul(oSqthToMintedFlash, oSqthPrice)
+
+                const expectedEth = excessEth.sub(ethToReturned)
+
 
                 const tx1 = await crabStrategyV1.connect(d2).approve(crabMigration.address, crabV1SharesBefore);
                 gasPaid = await getGasPaid(tx1)
 
-                const tx2 = await crabMigration.connect(d2).flashMigrateFromV1toV2(crabV1SharesBefore, 0);
-                gasPaid = gasPaid.add(await getGasPaid(tx2))
+                const tx2 = await crabMigration.connect(d2).flashMigrateFromV1toV2(crabV1SharesBefore, ethToFlashDeposit);
+                gasPaid = gasPaid.add(await getGasPaid(tx2));
 
                 const crabV1SharesAfter = await crabStrategyV1.balanceOf(d2.address)
                 const crabV2SharesAfter = await crabStrategyV2.balanceOf(d2.address)
@@ -783,13 +798,17 @@ describe("Crab Migration", function () {
                 const userEthBalanceAfter = await provider.getBalance(d2.address)
                 const squeethBalance = await oSqth.balanceOf(crabMigration.address)
 
+                const [, , collat, short] = await crabStrategyV2.getVaultDetails()
+                expect(await crabStrategyV2.totalSupply()).to.be.equal(expectedSupply.add(expectedV2SharesFlashDeposit))
+                expect(collat).to.be.equal(expectedCollat.add(ethToFlashDeposit))
+                expect(short).to.be.equal(expectedShort.add(oSqthToMintedFlash))
                 expect(crabV1SharesAfter).to.be.equal('0')
                 expect(crabV1SharesInMigration).to.be.equal('0')
                 expect(crabV2SharesBefore).to.be.equal('0')
-                expect(crabV2SharesAfter).to.be.equal(expectedV2Shares)
-                expect(userEthBalanceAfter).to.be.equal(userEthBalance.add(excessEth).sub(gasPaid))
+                expect(crabV2SharesAfter).to.be.equal(expectedV2Shares.add(expectedV2SharesFlashDeposit))
                 expect(crabV2SharesInMigration).to.be.equal('0')
                 expect(squeethBalance).to.be.equal('0')
+                expect(userEthBalanceAfter.gte(userEthBalance.add(expectedEth).sub(gasPaid))).to.be.true
             })
 
             it("migrate d3 with CR1 < CR2", async () => {
@@ -988,7 +1007,7 @@ describe("Crab Migration", function () {
                 const ethToFlashLoan = wdiv(numerator, denominator)
                 const expectedSqthFromV2 = wdiv(wmul(ethToFlashLoan, shortV2), collatV2)
                 const v1SqthToFlashWithdraw = v1oSqthToPay.sub(expectedSqthFromV2)
-                const maxEthToPay = wmul(v1SqthToFlashWithdraw, oSqthPrice).mul(1005).div(1000) // .1% slippage
+                const maxEthToPay = wmul(v1SqthToFlashWithdraw, oSqthPrice).mul(1005).div(1000) // .05% slippage
                 const ethToGetFromWithdraw = wdiv(wmul(expectedSqthFromV2, collatV1), shortV1)
                 const ethToGetFromFlashWithdraw = wdiv(wmul(v1SqthToFlashWithdraw, collatV1), shortV1).sub(maxEthToPay)
                 const expectedEth = ethToGetFromFlashWithdraw.add(ethToGetFromWithdraw).sub(ethToFlashLoan)
