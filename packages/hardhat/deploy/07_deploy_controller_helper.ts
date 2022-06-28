@@ -1,7 +1,7 @@
-import {HardhatRuntimeEnvironment} from 'hardhat/types';
-import {DeployFunction} from 'hardhat-deploy/types';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { DeployFunction } from 'hardhat-deploy/types';
 import { BigNumber } from 'ethers';
-import { getUniswapDeployments, getWETH, getController, getExec, getEuler, getDwethToken} from '../tasks/utils'
+import { getUniswapDeployments, getWETH, getController, getExec, getEuler, getDwethToken } from '../tasks/utils'
 import { getPoolAddress } from '../test/setup';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -10,7 +10,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const { deployer } = await getNamedAccounts();
 
-  if (network.name === 'hardhat') return;
+  console.log(network.name)
+  if (network.name === 'localhost') return;
+  if (network.name === "ropsten") {
+    return
+  }
 
   await deploy("TickMathExternal", { from: deployer, log: true })
   const tickMathExternal = await ethers.getContract("TickMathExternal", deployer)
@@ -19,7 +23,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const sqrtPriceMathPartial = await ethers.getContract("SqrtPriceMathPartial", deployer)
 
   // deploy ControllerHelperUtil lib
-  await deploy("ControllerHelperUtil", { from: deployer, log: true, libraries: { TickMathExternal: tickMathExternal.address, SqrtPriceMathPartial: sqrtPriceMathPartial.address }})
+  await deploy("ControllerHelperUtil", { from: deployer, log: true, libraries: { TickMathExternal: tickMathExternal.address, SqrtPriceMathPartial: sqrtPriceMathPartial.address } })
   const controllerHelperUtil = await ethers.getContract("ControllerHelperUtil", deployer)
 
   const controller = await getController(ethers, deployer, network.name);
@@ -36,9 +40,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("dWethToken", dWethToken)
 
   // deploy controller helper
-  await deploy("ControllerHelper", { from: deployer, log: true, libraries: { ControllerHelperUtil: controllerHelperUtil.address }, args: [controller.address, positionManager.address, uniswapFactory.address, exec, euler, dWethToken]});
+  await deploy("ControllerHelper", { from: deployer, log: true, libraries: { ControllerHelperUtil: controllerHelperUtil.address }, args: [controller.address, positionManager.address, uniswapFactory.address, exec, euler, dWethToken] });
   const controllerHelper = await ethers.getContract("ControllerHelper", deployer);
-  
+
   console.log(`Successfully deploy ControllerHelper ${controllerHelper.address}`)
 }
 

@@ -83,61 +83,78 @@ export const networkNameToDweth = (name: string) => {
   }
 }
 
-export const getWETH = async (ethers: any, deployer: string, networkName: string)=> {
+export const networkNameToCrab = (name: string) => {
+  switch (name) {
+    case 'mainnet': return '0xf205ad80BB86ac92247638914265887A8BAa437D'
+    case 'ropsten': return '0xbffBD99cFD9d77c49595dFe8eB531715906ca4Cf'
+    default: return undefined
+  }
+}
+
+export const getWETH = async (ethers: any, deployer: string, networkName: string) => {
   const wethAddr = networkNameToWeth(networkName)
   if (wethAddr === undefined) {
     // get from deployed network
     return ethers.getContract("WETH9", deployer);
-  } 
+  }
   // get contract instance at address
   return ethers.getContractAt('WETH9', wethAddr)
 }
 
-export const getUSDC = async (ethers: any, deployer: string, networkName: string)=> {
+export const getUSDC = async (ethers: any, deployer: string, networkName: string) => {
   const usdcAddress = networkNameToUSDC(networkName)
   if (usdcAddress === undefined) {
     // use to local deployment as USDC
     return ethers.getContract("MockErc20", deployer);
-  } 
+  }
   // get contract instance at address
   return ethers.getContractAt('MockErc20', usdcAddress)
 }
 
-export const getController = async(ethers: any, deployer: string, networkName: string) => {
+export const getController = async (ethers: any, deployer: string, networkName: string) => {
   const controllerAddr = networkNameToController(networkName)
   if (controllerAddr === undefined) {
     // get from deployed network
     return ethers.getContract("Controller", deployer);
-  } 
+  }
   // get contract instance at address
   return ethers.getContractAt('Controller', controllerAddr)
 }
 
-export const getExec = async(deployer: string, networkName: string) => {
+export const getExec = async (deployer: string, networkName: string) => {
   const execAddr = networkNameToExec(networkName)
   if (execAddr === undefined) {
     return ''
-  } 
+  }
   // get contract instance at address
   return execAddr;
 }
 
-export const getEuler = async(deployer: string, networkName: string) => {
+export const getEuler = async (deployer: string, networkName: string) => {
   const eulerAddr = networkNameToEuler(networkName)
   if (eulerAddr === undefined) {
     return ''
-  } 
+  }
   // get contract instance at address
   return eulerAddr
 }
 
-export const getDwethToken = async(deployer: string, networkName: string) => {
+export const getDwethToken = async (deployer: string, networkName: string) => {
   const dWethAddr = networkNameToDweth(networkName)
   if (dWethAddr === undefined) {
     return ''
-  } 
+  }
   // get contract instance at address
   return dWethAddr
+}
+
+export const getCrab = (networkName: string) => {
+  const crabAddress = networkNameToCrab(networkName)
+  if (crabAddress === undefined) {
+    return ''
+  }
+  // get contract instance at address
+  return crabAddress
 }
 
 /**
@@ -147,10 +164,11 @@ export const getDwethToken = async(deployer: string, networkName: string) => {
 export const hasUniswapDeployments = (networkName: string) => {
   if (networkName === 'mainnet') return true
   if (networkName === 'rinkebyArbitrum') return true
+  if (networkName === 'ropsten') return true
   return false
 }
 
-export const getUniswapDeployments = async(ethers: any, deployer: string, networkName: string) => {
+export const getUniswapDeployments = async (ethers: any, deployer: string, networkName: string) => {
   // Get Uniswap Factory
   let uniswapFactory: Contract
   if (networkNameToUniFactory(networkName) === undefined) {
@@ -158,7 +176,7 @@ export const getUniswapDeployments = async(ethers: any, deployer: string, networ
   } else {
     uniswapFactory = await ethers.getContractAt('IUniswapV3Factory', networkNameToUniFactory(networkName))
   }
-  
+
   // Get Uniswap Factory
   let swapRouter: Contract
   if (networkNameToUniRouter(networkName) === undefined) {
