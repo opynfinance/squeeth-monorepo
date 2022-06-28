@@ -95,11 +95,11 @@ export const useOpenPositionDeposit = () => {
   const openPositionDeposit = useAppCallback(
     async (squeethToMint: BigNumber, lowerTickInput: number, upperTickInput: number, onTxConfirmed?: () => void) => {
       const squeethPrice = await getTwapSqueethPrice()
-      console.log('squeeth price', squeethPrice.toString())
       const mintWSqueethAmount = fromTokenAmount(squeethToMint, OSQUEETH_DECIMALS)
       const ethDebt = await getDebtAmount(mintWSqueethAmount)
       // Do we want to hardcode a 150% collateralization ratio?
       const collateralToMint = ethDebt.multipliedBy(3).div(2)
+      console.log('squeeth price', squeethPrice.toString())
       const collateralToLp = mintWSqueethAmount.multipliedBy(squeethPrice)
 
       const lowerTick = nearestUsableTick(lowerTickInput, 3000)
@@ -130,7 +130,7 @@ export const useOpenPositionDeposit = () => {
         onTxConfirmed,
       )
     },
-    [],
+    [address, squeethPool, contract],
   )
   return openPositionDeposit
 }
