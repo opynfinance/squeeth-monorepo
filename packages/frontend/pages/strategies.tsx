@@ -26,6 +26,7 @@ import {
 } from 'src/state/crab/atoms'
 import { useCurrentCrabPositionValue, useSetProfitableMovePercent, useSetStrategyData } from 'src/state/crab/hooks'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
+import MigrationNotice from '@components/Strategies/Crab/MigrationNotice'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -44,16 +45,19 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       marginTop: theme.spacing(3),
     },
-    tradeForm: {
-      background: theme.palette.background.stone,
-      borderRadius: theme.spacing(2),
-      margin: theme.spacing(0, 'auto'),
+    tradeCard: {
       width: '350px',
-      position: 'sticky',
       maxHeight: '440px',
       minHeight: '350px',
       height: 'fit-content',
-      top: '100px',
+      position: 'sticky',
+      top: '75px',
+      margin: theme.spacing('-120px', '50px'),
+    },
+    tradeForm: {
+      background: theme.palette.background.stone,
+      borderRadius: theme.spacing(2),
+      marginTop: theme.spacing(4),
     },
     overview: {
       display: 'flex',
@@ -198,9 +202,8 @@ const Strategies: React.FC = () => {
                   <StrategyInfoItem
                     value={(dailyHistoricalFunding.funding * 100).toFixed(2)}
                     label="Historical Daily Funding (%)"
-                    tooltip={`${
-                      Tooltips.StrategyEarnFunding
-                    }. ${`Historical daily funding based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
+                    tooltip={`${Tooltips.StrategyEarnFunding
+                      }. ${`Historical daily funding based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
                   />
                 </div>
                 <div className={classes.overview}>
@@ -239,14 +242,17 @@ const Strategies: React.FC = () => {
                 <CrabStrategyHistory />
               </div>
               {supportedNetwork && (
-                <div className={classes.tradeForm}>
-                  {!!address ? (
-                    <CrabTrade maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
-                  ) : (
-                    <div className={classes.connectWalletDiv}>
-                      <LinkButton onClick={() => selectWallet()}>Connect Wallet</LinkButton>
-                    </div>
-                  )}
+                <div className={classes.tradeCard}>
+                  <MigrationNotice />
+                  <div className={classes.tradeForm}>
+                    {!!address ? (
+                      <CrabTrade maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
+                    ) : (
+                      <div className={classes.connectWalletDiv}>
+                        <LinkButton onClick={() => selectWallet()}>Connect Wallet</LinkButton>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

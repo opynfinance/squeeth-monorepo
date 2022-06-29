@@ -33,6 +33,7 @@ import {
 import { useUserCrabTxHistory } from '@hooks/useUserCrabTxHistory'
 import { usePrevious } from 'react-use'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
+import CrabMigration from './CrabMigrate'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -248,110 +249,118 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
             variant="fullWidth"
             className={classes.tabBackGround}
           >
-            <SecondaryTab id="crab-deposit-tab" label="Deposit" />
+            <SecondaryTab id="crab-deposit-tab" label="Queue Migration" />
             <SecondaryTab id="crab-withdraw-tab" label="Withdraw" />
           </SecondaryTabs>
-          <div className={classes.settingsButton}>
-            <TradeSettings
-              isCrab={true}
-              setCrabSlippage={(s) => setSlippage(s.toNumber())}
-              crabSlippage={new BigNumber(slippage)}
-            />
-          </div>
+          {depositOption === 0 ? null : (
+            <div className={classes.settingsButton}>
+              <TradeSettings
+                isCrab={true}
+                setCrabSlippage={(s) => setSlippage(s.toNumber())}
+                crabSlippage={new BigNumber(slippage)}
+              />
+            </div>
+          )}
           <div className={classes.tradeContainer}>
             {depositOption === 0 ? (
-              <PrimaryInput
-                id="crab-deposit-eth-input"
-                value={ethAmount.toString()}
-                onChange={(v) => setEthAmount(new BigNumber(v))}
-                label="Amount"
-                tooltip="ETH Amount to deposit"
-                actionTxt="Max"
-                unit="ETH"
-                hint={
-                  depositError
-                    ? depositError
-                    : warning
-                      ? warning
-                      : `Balance ${toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(6)} ETH`
-                }
-                convertedValue={ethIndexPrice.times(ethAmount).toFixed(2)}
-                onActionClicked={() => setEthAmount(toTokenAmount(balance ?? BIG_ZERO, 18))}
-                error={!!depositError}
-              />
+              <CrabMigration />
             ) : (
-              <PrimaryInput
-                id="crab-withdraw-eth-input"
-                value={withdrawAmount.toString()}
-                onChange={(v) => setWithdrawAmount(new BigNumber(v))}
-                label="Amount"
-                tooltip="Amount of ETH to withdraw"
-                actionTxt="Max"
-                unit="ETH"
-                convertedValue={ethIndexPrice.times(withdrawAmount).toFixed(2)}
-                hint={
-                  withdrawError ? (
-                    withdrawError
-                  ) : (
-                    <span>
-                      Position <span id="current-crab-eth-bal-input">{currentEthValue.toFixed(6)}</span> ETH
-                    </span>
-                  )
-                }
-                onActionClicked={() => setWithdrawAmount(currentEthValue)}
-                error={!!withdrawError}
-              />
-            )}
-            <TradeInfoItem
-              label="Slippage"
-              value={slippage.toString()}
-              tooltip="The strategy uses a uniswap flashswap to make a deposit. You can adjust slippage for this swap by clicking the gear icon"
-              unit="%"
-            />
-            {depositOption === 0 ? (
-              <TradeInfoItem
-                label="Price Impact"
-                value={depositPriceImpact}
-                unit="%"
-                color={Number(depositPriceImpact) > 3 ? 'red' : Number(depositPriceImpact) < 1 ? 'green' : undefined}
-              />
-            ) : (
-              <TradeInfoItem
-                label="Price Impact"
-                value={withdrawPriceImpact}
-                unit="%"
-                color={Number(withdrawPriceImpact) > 3 ? 'red' : Number(depositPriceImpact) < 1 ? 'green' : undefined}
-              />
-            )}
+              <>
+                {depositOption === 0 ? (
+                  <PrimaryInput
+                    id="crab-deposit-eth-input"
+                    value={ethAmount.toString()}
+                    onChange={(v) => setEthAmount(new BigNumber(v))}
+                    label="Amount"
+                    tooltip="ETH Amount to deposit"
+                    actionTxt="Max"
+                    unit="ETH"
+                    hint={
+                      depositError
+                        ? depositError
+                        : warning
+                          ? warning
+                          : `Balance ${toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(6)} ETH`
+                    }
+                    convertedValue={ethIndexPrice.times(ethAmount).toFixed(2)}
+                    onActionClicked={() => setEthAmount(toTokenAmount(balance ?? BIG_ZERO, 18))}
+                    error={!!depositError}
+                  />
+                ) : (
+                  <PrimaryInput
+                    id="crab-withdraw-eth-input"
+                    value={withdrawAmount.toString()}
+                    onChange={(v) => setWithdrawAmount(new BigNumber(v))}
+                    label="Amount"
+                    tooltip="Amount of ETH to withdraw"
+                    actionTxt="Max"
+                    unit="ETH"
+                    convertedValue={ethIndexPrice.times(withdrawAmount).toFixed(2)}
+                    hint={
+                      withdrawError ? (
+                        withdrawError
+                      ) : (
+                        <span>
+                          Position <span id="current-crab-eth-bal-input">{currentEthValue.toFixed(6)}</span> ETH
+                        </span>
+                      )
+                    }
+                    onActionClicked={() => setWithdrawAmount(currentEthValue)}
+                    error={!!withdrawError}
+                  />
+                )}
+                <TradeInfoItem
+                  label="Slippage"
+                  value={slippage.toString()}
+                  tooltip="The strategy uses a uniswap flashswap to make a deposit. You can adjust slippage for this swap by clicking the gear icon"
+                  unit="%"
+                />
+                {depositOption === 0 ? (
+                  <TradeInfoItem
+                    label="Price Impact"
+                    value={depositPriceImpact}
+                    unit="%"
+                    color={Number(depositPriceImpact) > 3 ? 'red' : Number(depositPriceImpact) < 1 ? 'green' : undefined}
+                  />
+                ) : (
+                  <TradeInfoItem
+                    label="Price Impact"
+                    value={withdrawPriceImpact}
+                    unit="%"
+                    color={Number(withdrawPriceImpact) > 3 ? 'red' : Number(depositPriceImpact) < 1 ? 'green' : undefined}
+                  />
+                )}
 
-            {depositOption === 0 ? (
-              <PrimaryButton
-                id="crab-deposit-btn"
-                variant={Number(depositPriceImpact) > 3 || !!warning ? 'outlined' : 'contained'}
-                onClick={() => deposit()}
-                disabled={txLoading || !!depositError}
-                style={
-                  Number(depositPriceImpact) > 3 || !!warning
-                    ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
-                    : { marginTop: '8px' }
-                }
-              >
-                {!txLoading ? 'Deposit' : <CircularProgress color="primary" size="1.5rem" />}
-              </PrimaryButton>
-            ) : (
-              <PrimaryButton
-                id="crab-withdraw-btn"
-                variant={Number(withdrawPriceImpact) > 3 ? 'outlined' : 'contained'}
-                style={
-                  Number(withdrawPriceImpact) > 3
-                    ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
-                    : { marginTop: '8px' }
-                }
-                onClick={() => withdraw()}
-                disabled={txLoading || !!withdrawError}
-              >
-                {!txLoading ? 'Withdraw' : <CircularProgress color="primary" size="1.5rem" />}
-              </PrimaryButton>
+                {depositOption === 0 ? (
+                  <PrimaryButton
+                    id="crab-deposit-btn"
+                    variant={Number(depositPriceImpact) > 3 || !!warning ? 'outlined' : 'contained'}
+                    onClick={() => deposit()}
+                    disabled={txLoading || !!depositError}
+                    style={
+                      Number(depositPriceImpact) > 3 || !!warning
+                        ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
+                        : { marginTop: '8px' }
+                    }
+                  >
+                    {!txLoading ? 'Deposit' : <CircularProgress color="primary" size="1.5rem" />}
+                  </PrimaryButton>
+                ) : (
+                  <PrimaryButton
+                    id="crab-withdraw-btn"
+                    variant={Number(withdrawPriceImpact) > 3 ? 'outlined' : 'contained'}
+                    style={
+                      Number(withdrawPriceImpact) > 3
+                        ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
+                        : { marginTop: '8px' }
+                    }
+                    onClick={() => withdraw()}
+                    disabled={txLoading || !!withdrawError}
+                  >
+                    {!txLoading ? 'Withdraw' : <CircularProgress color="primary" size="1.5rem" />}
+                  </PrimaryButton>
+                )}
+              </>
             )}
             <CrabPosition />
           </div>
