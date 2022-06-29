@@ -17,7 +17,7 @@ import useAppCallback from '@hooks/useAppCallback'
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
-      paddingTop: theme.spacing(2)
+      paddingTop: theme.spacing(2),
     },
     infoBox: {
       background: '#8282821A',
@@ -26,13 +26,13 @@ const useStyles = makeStyles((theme) =>
       padding: theme.spacing(1, 2),
       marginTop: theme.spacing(1),
       display: 'flex',
-      alignItems: 'top'
+      alignItems: 'top',
     },
     infoIcon: {
       color: theme.palette.text.secondary,
       fontSize: '14px',
-      marginTop: theme.spacing(0.5)
-    }
+      marginTop: theme.spacing(0.5),
+    },
   }),
 )
 
@@ -63,17 +63,20 @@ const CrabMigration: React.FC = () => {
     }
   }, [allowance, amount])
 
-  const executeAction = useCallback(async (action: MIGRATION_STEP) => {
-    if (action === MIGRATION_STEP.APPROVE) {
-      setLoadingTx(true)
-      try {
-        await approve(() => null)
-      } catch (e) {
-        console.log(e)
+  const executeAction = useCallback(
+    async (action: MIGRATION_STEP) => {
+      if (action === MIGRATION_STEP.APPROVE) {
+        setLoadingTx(true)
+        try {
+          await approve(() => null)
+        } catch (e) {
+          console.log(e)
+        }
+        setLoadingTx(false)
       }
-      setLoadingTx(false)
-    }
-  }, [approve, setLoadingTx])
+    },
+    [approve, setLoadingTx],
+  )
 
   const loading = useMemo(() => {
     return isLoadingAllowance || loadingTx
@@ -96,10 +99,19 @@ const CrabMigration: React.FC = () => {
         <InfoIcon className={classes.infoIcon} />
 
         <Typography color="textSecondary" variant="caption" style={{ marginLeft: '4px' }}>
-          Your funds are still participating in crab v1 and will be deposited in crab v2 upon launch. <LinkWrapper href="https://www.notion.so/opynopyn/Crab-Migration-FAQ-Draft-1b79e3c2b98641b08745d5cc72c94a5c"> Learn more.</LinkWrapper>
+          Your funds are still participating in crab v1 and will be deposited in crab v2 upon launch.{' '}
+          <LinkWrapper href="https://www.notion.so/opynopyn/Crab-Migration-FAQ-Draft-1b79e3c2b98641b08745d5cc72c94a5c">
+            {' '}
+            Learn more.
+          </LinkWrapper>
         </Typography>
       </div>
-      <PrimaryButton variant="contained" style={{ marginTop: '16px' }} disabled={loading} onClick={() => executeAction(action)}>
+      <PrimaryButton
+        variant="contained"
+        style={{ marginTop: '16px' }}
+        disabled={loading}
+        onClick={() => executeAction(action)}
+      >
         {loading ? <CircularProgress color="primary" size="1.5rem" /> : getAction(action)}
       </PrimaryButton>
     </div>
