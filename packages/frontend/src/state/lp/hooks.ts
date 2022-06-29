@@ -33,7 +33,6 @@ export enum Bound {
 export const useClosePosition = () => {
   const address = useAtomValue(addressAtom)
   const controllerHelperContract = useAtomValue(controllerHelperHelperContractAtom)
-  const { controllerHelper } = useAtomValue(addressesAtom)
   const controllerContract = useAtomValue(controllerContractAtom)
   const handleTransaction = useHandleTransaction()
   const getTwapSqueethPrice = useGetTwapSqueethPrice()
@@ -57,16 +56,13 @@ export const useClosePosition = () => {
       return
 
     const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
-    console.log("shortAmount", shortAmount)
     const debtInEth = await getDebtAmount(shortAmount)
     const collateralToFlashloan = debtInEth.multipliedBy(1.5)
-    // What should we set as slippage
     const slippage = new BigNumber(3).multipliedBy(new BigNumber(10).pow(16))
     const squeethPrice = await getTwapSqueethPrice()
-    console.log("squeethPrice", squeethPrice.toString())
     const limitPriceEthPerPowerPerp = squeethPrice.multipliedBy(one.minus(slippage))
+
     // const positionBefore = await positionManager.methods.positions(uniTokenId)
-    console.log("position", position.liquidity)
     const flashloanCloseVaultLpNftParam = {
       vaultId: vaultId.toFixed(0),
       tokenId: uniTokenId,
@@ -79,11 +75,8 @@ export const useClosePosition = () => {
       amount0Min: 0,
       amount1Min: 0,
       poolFee: 3000,
-      burnExactRemoved: false,
+      burnExactRemoved: true,
     }
-    console.log(flashloanCloseVaultLpNftParam)
-
-    // await controllerContract.methods.updateOperator(vaultId, controllerHelper)
 
     return handleTransaction(
       await controllerHelperContract.methods.flashloanCloseVaultLpNft(flashloanCloseVaultLpNftParam).send({
@@ -91,7 +84,7 @@ export const useClosePosition = () => {
       }),
       onTxConfirmed,
     )
-  }, [])
+  }, [address, controllerHelperContract, controllerContract])
   return closePosition
 }
 
