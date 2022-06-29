@@ -213,9 +213,13 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
     return <RestrictionInfo />
   }
 
+  const isApprovalCall = useMemo(() => {
+    return transactionData?.contractCall?.methodName === 'approve'
+  }, [transactionData])
+
   return (
     <>
-      {confirmed ? (
+      {confirmed && !isApprovalCall ? (
         <div className={classes.confirmedBox}>
           <Confirmed
             confirmationMessage={
