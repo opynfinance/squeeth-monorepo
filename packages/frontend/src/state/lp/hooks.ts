@@ -16,7 +16,7 @@ import { ethers } from 'ethers'
 import { useGetSellQuote } from '../squeethPool/hooks'
 import { useUpdateAtom } from 'jotai/utils'
 import { lowerTickAtom, upperTickAtom } from './atoms'
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useGetDebtAmount, useGetTwapEthPrice, useGetTwapSqueethPrice, useGetVault } from '../controller/hooks'
 import { useFirstValidVault } from '../positions/hooks'
 
@@ -35,35 +35,44 @@ export const useClosePosition = () => {
   const controllerHelperContract = useAtomValue(controllerHelperHelperContractAtom)
   const { controllerHelper } = useAtomValue(addressesAtom)
   const controllerContract = useAtomValue(controllerContractAtom)
-  const positionManager = useAtomValue(nftManagerContractAtom)
   const handleTransaction = useHandleTransaction()
   const getTwapSqueethPrice = useGetTwapSqueethPrice()
   const getDebtAmount = useGetDebtAmount()
-  const closePosition = useAppCallback(async (vaultId: BigNumber, onTxConfirmed?: () => void) => {
-    const uniTokenId = (await controllerContract?.methods.vaults(vaultId)).NftCollateralId
-    const vaultBefore = await controllerContract?.methods.vaults(vaultId)
+  const getVault = useGetVault()
+  const getPosition = useGetPosition()
+  const closePosition = useAppCallback(async (vaultId: number, onTxConfirmed?: () => void) => {
+    const vaultBefore = await getVault(vaultId)
+    console.log(vaultBefore)
+    const uniTokenId = vaultBefore?.NFTCollateralId 
+    const position = await getPosition(uniTokenId)
+
     if (
       !controllerContract ||
       !controllerHelperContract ||
       !address ||
-      !positionManager ||
+      !position ||
       !vaultBefore ||
       !vaultBefore.shortAmount
     )
       return
-    const debtInEth = await getDebtAmount(vaultBefore.shortAmount)
+
+    const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
+    console.log("shortAmount", shortAmount)
+    const debtInEth = await getDebtAmount(shortAmount)
     const collateralToFlashloan = debtInEth.multipliedBy(1.5)
     // What should we set as slippage
     const slippage = new BigNumber(3).multipliedBy(new BigNumber(10).pow(16))
     const squeethPrice = await getTwapSqueethPrice()
-    const limitPriceEthPerPowerPerp = squeethPrice.multipliedBy(one.minus(slippage)).div(one)
-    const positionBefore = await positionManager.methods.positions(uniTokenId)
+    console.log("squeethPrice", squeethPrice.toString())
+    const limitPriceEthPerPowerPerp = squeethPrice.multipliedBy(one.minus(slippage))
+    // const positionBefore = await positionManager.methods.positions(uniTokenId)
+    console.log("position", position.liquidity)
     const flashloanCloseVaultLpNftParam = {
-      vaultId: vaultId,
+      vaultId: vaultId.toFixed(0),
       tokenId: uniTokenId,
-      liquidity: positionBefore.liquidity,
+      liquidity: position.liquidity,
       liquidityPercentage: fromTokenAmount(1, 18).toFixed(0),
-      wPowerPerpAmountToBurn: vaultBefore.shortAmount.toFixed(0),
+      wPowerPerpAmountToBurn: shortAmount.toFixed(0),
       collateralToFlashloan: collateralToFlashloan.toFixed(0),
       collateralToWithdraw: 0,
       limitPriceEthPerPowerPerp: limitPriceEthPerPowerPerp.toFixed(0),
@@ -72,8 +81,9 @@ export const useClosePosition = () => {
       poolFee: 3000,
       burnExactRemoved: false,
     }
+    console.log(flashloanCloseVaultLpNftParam)
 
-    await controllerContract.methods.updateOperator(vaultId, controllerHelper)
+    // await controllerContract.methods.updateOperator(vaultId, controllerHelper)
 
     return handleTransaction(
       await controllerHelperContract.methods.flashloanCloseVaultLpNft(flashloanCloseVaultLpNftParam).send({
@@ -148,6 +158,7 @@ export const useCollectFees = () => {
   const getVault = useGetVault()
   const collectFees = useAppCallback(async (vaultId: number, onTxConfirmed?: () => void) => {
     const vaultBefore = await getVault(vaultId)
+    console.log(vaultBefore)
     const uniTokenId = vaultBefore?.NFTCollateralId    
     
     if (
@@ -161,25 +172,45 @@ export const useCollectFees = () => {
       return
 
     const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
+    console.log("shortAmount", shortAmount)
     const debtInEth = await getDebtAmount(shortAmount)
+    console.log("debtInEth", debtInEth)
     const collateralToFlashloan = debtInEth.multipliedBy(1.5)
+    console.log("collateralToFlashloan", collateralToFlashloan)
     const amount0Max = new BigNumber(2).multipliedBy(new BigNumber(10).pow(18)).minus(1).toFixed(0)
     const amount1Max = new BigNumber(2).multipliedBy(new BigNumber(10).pow(18)).minus(1).toFixed(0)
     console.log([uniTokenId, amount0Max, amount1Max])
     // console.log(amount0Max.toFixed(0))
     const abiCoder = new ethers.utils.AbiCoder()
+    // const rebalanceLpInVaultParams = [
+    //   {
+    //     rebalanceLpInVaultType: new BigNumber(6).toFixed(0),
+    //     // CollectFees
+    //     data: abiCoder.encode(['uint256', 'uint128', 'uint128'], [Number(uniTokenId), amount0Max, amount1Max]),
+    //   },
+    //   {
+    //     rebalanceLpInVaultType: new BigNumber(7).toFixed(0),
+    //     // DepositExistingNftParams
+    //     data: abiCoder.encode(["uint256"], [Number(uniTokenId)])
+    //   }
+    // ]
+    // console.log(rebalanceLpInVaultParams)
+    // await controllerContract.methods.updateOperator(vaultId, controllerHelper)
+
     const rebalanceLpInVaultParams = [
       {
-        rebalanceLpInVaultType: "6",
-        // CollectFees
-        data: abiCoder.encode(['uint256', 'uint128', 'uint128'], [uniTokenId, amount0Max, amount1Max]),
+       rebalanceLpInVaultType: new BigNumber(6).toFixed(0),
+       data: '0x00000000000000000000000000000000000000000000000000000000000311220000000000000000000000000000000000000000000000001bc16d674ec7ffff0000000000000000000000000000000000000000000000001bc16d674ec7ffff'
       },
+      {
+       rebalanceLpInVaultType: new BigNumber(7).toFixed(0),
+       data: '0x0000000000000000000000000000000000000000000000000000000000031122'
+      }
     ]
-    console.log(collateralToFlashloan.toFixed(0))
-    await controllerContract.methods.updateOperator(vaultId, controllerHelper)
+    console.log("hi")
     return handleTransaction(
       await controllerHelperContract.methods
-        .rebalanceLpInVault(vaultId, collateralToFlashloan.toFixed(0), rebalanceLpInVaultParams)
+        .rebalanceLpInVault("673", '0', rebalanceLpInVaultParams)
         .send({
           from: address,
         }),
@@ -476,4 +507,34 @@ export default function useIsTickAtLimit(
     }),
     [feeAmount, tickLower, tickUpper],
   )
+}
+
+export const useGetPosition = () => {
+  const contract = useAtomValue(nftManagerContractAtom)
+
+  const getPosition = useCallback(
+    async (uniTokenId: number) => {
+      if (!contract) return null
+      const position = await contract.methods.positions(uniTokenId).call()
+      const { nonce, operator, token0, token1, fee, tickLower, tickUpper, liquidity, feeGrowthInside0LastX128, feeGrowthInside1LastX128, tokensOwed0, tokensOwed1 } = position
+
+      return {
+        nonce,
+        operator,
+        token0,
+        token1,
+        fee,
+        tickLower,
+        tickUpper,
+        liquidity,
+        feeGrowthInside0LastX128,
+        feeGrowthInside1LastX128,
+        tokensOwed0,
+        tokensOwed1
+      }
+    },
+    [contract],
+  )
+
+  return getPosition
 }
