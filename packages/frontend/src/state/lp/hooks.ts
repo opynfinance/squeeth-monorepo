@@ -5,7 +5,7 @@ import { useAtom, useAtomValue } from 'jotai'
 import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
 import BigNumber from 'bignumber.js'
 import { BIG_ZERO, INDEX_SCALE, OSQUEETH_DECIMALS, UNI_POOL_FEES } from '@constants/index'
-import { controllerContractAtom, controllerHelperHelperContractAtom, nftManagerContractAtom } from '../contracts/atoms'
+import { controllerContractAtom, controllerHelperHelperContractAtom, nftManagerContractAtom, quoterContractAtom } from '../contracts/atoms'
 import useAppCallback from '@hooks/useAppCallback'
 import { addressAtom } from '../wallet/atoms'
 import { normFactorAtom } from '../controller/atoms'
@@ -13,7 +13,7 @@ import { Price, Token } from '@uniswap/sdk-core'
 import { useHandleTransaction } from '../wallet/hooks'
 import { squeethPriceeAtom, squeethTokenAtom, wethPriceAtom, wethTokenAtom } from '../squeethPool/atoms'
 import { ethers } from 'ethers'
-import { useGetSellQuote } from '../squeethPool/hooks'
+import { useGetBuyQuote, useGetSellQuote } from '../squeethPool/hooks'
 import { useUpdateAtom } from 'jotai/utils'
 import { lowerTickAtom, upperTickAtom } from './atoms'
 import { useCallback, useMemo } from 'react'
@@ -39,7 +39,11 @@ export const useClosePosition = () => {
   const getDebtAmount = useGetDebtAmount()
   const getVault = useGetVault()
   const getPosition = useGetPosition()
+  const getLimitEth = useGetLimitEth()
+  const getSellQuote = useGetSellQuote()
   const closePosition = useAppCallback(async (vaultId: number, onTxConfirmed?: () => void) => {
+    // const limitEth = await getLimitEth(new BigNumber(5))
+    // console.log("limitEth", limitEth)
     const vaultBefore = await getVault(vaultId)
     console.log(vaultBefore)
     const uniTokenId = vaultBefore?.NFTCollateralId 
@@ -60,23 +64,29 @@ export const useClosePosition = () => {
     const collateralToFlashloan = debtInEth.multipliedBy(1.5)
     const slippage = new BigNumber(3).multipliedBy(new BigNumber(10).pow(16))
     const squeethPrice = await getTwapSqueethPrice()
-    const limitPriceEthPerPowerPerp = squeethPrice.multipliedBy(one.minus(slippage))
+    // const limitPriceEthPerPowerPerp = squeethPrice.multipliedBy(one.minus(slippage))
+    const limitEth = await getLimitEth(shortAmount)
+    // console.log("limitEThQuote", limitEthQuote.amountOut.multipliedBy(new BigNumber(10).pow(14)).toFixed(0))
+    // console.log("limitEth", limitEth.toFixed(0))
+    console.log("limitPriceEthPerPowerPerp", limitEth)
+    console.log("squeethPrice", squeethPrice)
 
-    // const positionBefore = await positionManager.methods.positions(uniTokenId)
     const flashloanCloseVaultLpNftParam = {
-      vaultId: vaultId.toFixed(0),
+      vaultId: vaultId,
       tokenId: uniTokenId,
       liquidity: position.liquidity,
       liquidityPercentage: fromTokenAmount(1, 18).toFixed(0),
       wPowerPerpAmountToBurn: shortAmount.toFixed(0),
       collateralToFlashloan: collateralToFlashloan.toFixed(0),
       collateralToWithdraw: 0,
-      limitPriceEthPerPowerPerp: limitPriceEthPerPowerPerp.toFixed(0),
+      limitPriceEthPerPowerPerp: limitEth,
       amount0Min: 0,
       amount1Min: 0,
       poolFee: 3000,
       burnExactRemoved: true,
     }
+
+    console.log("flashloanCloseVaultLpNftParam", flashloanCloseVaultLpNftParam)
 
     return handleTransaction(
       await controllerHelperContract.methods.flashloanCloseVaultLpNft(flashloanCloseVaultLpNftParam).send({
@@ -100,6 +110,7 @@ export const useOpenPositionDeposit = () => {
     async (squeethToMint: BigNumber, lowerTickInput: number, upperTickInput: number, vaultID: number, onTxConfirmed?: () => void) => {
       const squeethPrice = await getTwapSqueethPrice()
       const mintWSqueethAmount = fromTokenAmount(squeethToMint, OSQUEETH_DECIMALS)
+      console.log("squeethPrice", squeethPrice.toString())
       const ethDebt = await getDebtAmount(mintWSqueethAmount)
       // Do we want to hardcode a 150% collateralization ratio?
       console.log('squeeth price', squeethPrice.toString())
@@ -531,3 +542,33 @@ export const useGetPosition = () => {
 
   return getPosition
 }
+
+export const useGetLimitEth = () => {
+  const contract = useAtomValue(quoterContractAtom)
+  const {weth, oSqueeth} = useAtomValue(addressesAtom)
+
+  const getLimitEth = useCallback(
+    async (mintWSqueethAmount: BigNumber) => {
+      console.log("mintWsqueethAmount", mintWSqueethAmount.toFixed(0))
+      console.log("osqueeth", oSqueeth)
+      console.log("weth", weth)
+      console.log("fee", 3000)
+      if (!contract) return null
+
+      const QuoteExactInputSingleParams = {
+        tokenIn: oSqueeth,
+        tokenOut: weth,
+        amountIn: mintWSqueethAmount.toFixed(0),
+        fee: 3000,
+        sqrtPriceLimitX96: 0
+      }
+
+      const limitEth = await contract.methods.quoteExactInputSingle(QuoteExactInputSingleParams).call()
+      return limitEth.amountOut
+    },
+    [contract, weth, oSqueeth],
+  )
+
+  return getLimitEth
+}
+
