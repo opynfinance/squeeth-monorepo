@@ -71,6 +71,11 @@ const config: HardhatUserConfig = {
       mining: {
         auto: true
       },
+      forking: {
+        enabled: process.env.MAINNET_FORK === 'true',
+        url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_KEY}`,
+        blockNumber: 14345140
+      },
       accounts: {
         accountsBalance: '1000000000000000000000000000'
       },
@@ -212,7 +217,18 @@ const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       UNISWAP_SETTING,
-    ]
+    ],
+    overrides: {
+      "contracts/mocks/MockTimelock.sol": {
+        version: "0.8.10",
+      },
+      "contracts/strategy/timelock/Timelock.sol": {
+        version: "0.8.10",
+      },
+      "contracts/strategy/timelock/SafeMath.sol": {
+        version: "0.8.10",
+      }
+    }
   },
   ovm: {
     solcVersion: "0.7.6",
