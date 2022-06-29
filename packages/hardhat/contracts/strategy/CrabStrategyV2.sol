@@ -52,7 +52,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     uint256 public otcPriceTolerance = 5e16; // 5%
 
     // @dev OTC price tolerance cannot exceed 20%
-    uint256 public maxOTCPriceTolerance = 2e17; // 20%
+    uint256 public constant maxOTCPriceTolerance = 2e17; // 20%
 
     /// @dev twap period to use for hedge calculations
     uint32 public hedgingTwapPeriod = 420 seconds;
@@ -210,7 +210,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
         _checkStrategyCap(amount, strategyCollateral);
 
-        require((strategyDebt == 0 && strategyCollateral == 0), "C5");
         // store hedge data from crab v1
         timeAtLastHedge = _timeAtLastHedge;
         priceAtLastHedge = _priceAtLastHedge;
@@ -623,7 +622,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
             _order.quantity = _remainingAmount;
         }
         // weth clearing price for the order
-        uint256 wethAmount = _order.quantity.mul(_clearingPrice).div(1e18);
+        uint256 wethAmount = _order.quantity.wmul(_clearingPrice);
 
         if (_order.isBuying) {
             // trader sends weth and receives oSQTH
@@ -704,12 +703,12 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
         if (_isHedgeBuying) {
             require(
-                _price <= wSqueethEthPrice.mul((ONE.add(otcPriceTolerance))).div(ONE),
+                _price <= wSqueethEthPrice.wmul((ONE.add(otcPriceTolerance))),
                 "Price too high relative to Uniswap twap."
             );
         } else {
             require(
-                _price >= wSqueethEthPrice.mul((ONE.sub(otcPriceTolerance))).div(ONE),
+                _price >= wSqueethEthPrice.wmul((ONE.sub(otcPriceTolerance))),
                 "Price too low relative to Uniswap twap."
             );
         }
