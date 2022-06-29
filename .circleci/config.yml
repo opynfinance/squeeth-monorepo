@@ -169,11 +169,10 @@ jobs:
           key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
       - run:
           name: Set Env Variables
-          command: echo "export INFURA_KEY=${INFURA_KEY}" >> $BASH_ENV
+          command: echo "export ALCHEMY_KEY=${ALCHEMY_KEY}" >> $BASH_ENV
       - run:
           name: Mainnet E2E Test 
-          command: |
-            ./ci/e2e.sh	
+          command: yarn test:e2e
 
   checkout-and-install-frontend:
     working_directory: ~/squeeth/packages/frontend
