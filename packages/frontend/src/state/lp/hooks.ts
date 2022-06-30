@@ -4,10 +4,10 @@ import { fromTokenAmount } from '@utils/calculations'
 import { useAtom, useAtomValue } from 'jotai'
 import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
 import BigNumber from 'bignumber.js'
-import { BIG_ZERO, INDEX_SCALE, OSQUEETH_DECIMALS, UNI_POOL_FEES } from '@constants/index'
+import { BIG_ZERO, INDEX_SCALE, OSQUEETH_DECIMALS, UNI_POOL_FEES, WETH_DECIMALS } from '@constants/index'
 import { controllerContractAtom, controllerHelperHelperContractAtom, nftManagerContractAtom, quoterContractAtom } from '../contracts/atoms'
 import useAppCallback from '@hooks/useAppCallback'
-import { addressAtom } from '../wallet/atoms'
+import { addressAtom, web3Atom } from '../wallet/atoms'
 import { normFactorAtom } from '../controller/atoms'
 import { Price, Token } from '@uniswap/sdk-core'
 import { useHandleTransaction } from '../wallet/hooks'
@@ -40,10 +40,7 @@ export const useClosePosition = () => {
   const getPosition = useGetPosition()
   const getLimitEth = useGetLimitEth()
   const closePosition = useAppCallback(async (vaultId: number, onTxConfirmed?: () => void) => {
-    // const limitEth = await getLimitEth(new BigNumber(5))
-    // console.log("limitEth", limitEth)
     const vaultBefore = await getVault(vaultId)
-    console.log(vaultBefore)
     const uniTokenId = vaultBefore?.NFTCollateralId 
     const position = await getPosition(uniTokenId)
 
@@ -147,19 +144,16 @@ export const useCollectFees = () => {
   const controllerHelperContract = useAtomValue(controllerHelperHelperContractAtom)
   const controllerContract = useAtomValue(controllerContractAtom)
   const handleTransaction = useHandleTransaction()
-  const positionManager = useAtomValue(nftManagerContractAtom)
   const getDebtAmount = useGetDebtAmount()
   const getVault = useGetVault()
   const collectFees = useAppCallback(async (vaultId: number, onTxConfirmed?: () => void) => {
     const vaultBefore = await getVault(vaultId)
-    console.log(vaultBefore)
     const uniTokenId = vaultBefore?.NFTCollateralId    
     
     if (
       !controllerContract ||
       !controllerHelperContract ||
       !address ||
-      !positionManager ||
       !vaultBefore ||
       !vaultBefore.shortAmount
     )
@@ -210,20 +204,26 @@ export const useRebalanceVault = () => {
   const { controllerHelper, squeethPool } = useAtomValue(addressesAtom)
   const controllerContract = useAtomValue(controllerContractAtom)
   const handleTransaction = useHandleTransaction()
-  const positionManager = useAtomValue(nftManagerContractAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)
+  const web3 = useAtomValue(web3Atom)
   const getSellQuote = useGetSellQuote()
   const getDebtAmount = useGetDebtAmount()
+  const getVault = useGetVault()
+  const getPosition = useGetPosition()
+  const getTotalSupply = useGetTotalSupply()
+  const getTokenByIndex = useGetTokenByIndex()
+  const getDecreaseLiquidity = useGetDecreaseLiquidity()
+  const getLimitEth = useGetLimitEth()
   const rebalanceVault = useAppCallback(
-    async (vaultId: BigNumber, lowerTickInput: number, upperTickInput: number, onTxConfirmed?: () => void) => {
-      if (!controllerContract || !controllerHelperContract || !address || !positionManager) return
-      const uniTokenId = (await controllerContract?.methods.vaults(vaultId)).NftCollateralId
-      const positionBefore = await positionManager.methods.positions(uniTokenId)
-      const vaultBefore = await controllerContract?.methods.vaults(vaultId)
-      const debtInEth = await getDebtAmount(vaultBefore.shortAmount)
+    async (vaultId: number, lowerTickInput: number, upperTickInput: number, onTxConfirmed?: () => void) => {
+      const vaultBefore = await getVault(vaultId)
+      const uniTokenId = vaultBefore?.NFTCollateralId 
+      const position = await getPosition(uniTokenId)
+      console.log(position)
+      if (!controllerContract || !controllerHelperContract || !address || !position || !vaultBefore ) return
+      const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
+      const debtInEth = await getDebtAmount(shortAmount)
       const collateralToFlashloan = debtInEth.multipliedBy(1.5)
-      const tokenIndex = await positionManager.methods.totalSupply()
-      const tokenId = await positionManager.methods.tokenByIndex(tokenIndex.sub(1))
       const amount0Min = new BigNumber(0)
       const amount1Min = new BigNumber(0)
 
@@ -231,33 +231,31 @@ export const useRebalanceVault = () => {
       const upperTick = nearestUsableTick(upperTickInput, 3000)
 
       // Get current LPpositions
-      const [amount0, amount1] = await positionManager.methods.decreaseLiquidity({
-        tokenId: tokenId,
-        liquidity: positionBefore.liquidity,
-        amount0Min: 0,
-        amount1Min: 0,
-        deadline: Math.floor(Date.now() / 1000 + 1800),
-      })
+      const { amount0, amount1 } = await getDecreaseLiquidity(uniTokenId, position.liquidity, 0, 0, Math.floor(Date.now() / 1000 + 86400))
+     
       const wPowerPerpAmountInLPBefore = isWethToken0 ? amount1 : amount0
       const wethAmountInLPBefore = isWethToken0 ? amount0 : amount1
 
       // Estimate proceeds from liquidating squeeth in LP
-      const ethAmountOutFromSwap = getSellQuote(wPowerPerpAmountInLPBefore)
+      const wPowerPerpAmountInLPBeforeVal = fromTokenAmount(wPowerPerpAmountInLPBefore, OSQUEETH_DECIMALS)
+      const ethAmountOutFromSwap = await getLimitEth(wPowerPerpAmountInLPBeforeVal)
 
-      // Estimate of new LP with 0.01 weth safety margin
-      const wethAmountToLP = wethAmountInLPBefore.add(ethAmountOutFromSwap)
+      // Estimate of new LP
+      const wethAmountInLPBeforeVal = fromTokenAmount(wethAmountInLPBefore, WETH_DECIMALS)
+      const wethAmountToLP = wethAmountInLPBeforeVal.plus(ethAmountOutFromSwap).toFixed(0)
+      console.log("wethAmountToLP", wethAmountToLP)
 
       const abiCoder = new ethers.utils.AbiCoder()
       const rebalanceLpInVaultParams = [
         {
           // Liquidate LP
-          rebalanceLpInVaultType: new BigNumber(1), // DecreaseLpLiquidity:
+          rebalanceLpInVaultType: new BigNumber(1).toFixed(0), // DecreaseLpLiquidity:
           // DecreaseLpLiquidityParams: [tokenId, liquidity, liquidityPercentage, amount0Min, amount1Min]
           data: abiCoder.encode(
             ['uint256', 'uint256', 'uint256', 'uint128', 'uint128'],
             [
-              tokenId,
-              positionBefore.liquidity,
+              uniTokenId,
+              position.liquidity,
               new BigNumber(100).multipliedBy(new BigNumber(10).pow(16)).toFixed(0),
               new BigNumber(0).toFixed(0),
               new BigNumber(0).toFixed(0),
@@ -266,13 +264,13 @@ export const useRebalanceVault = () => {
         },
         {
           // Deposit into vault and mint
-          rebalanceLpInVaultType: new BigNumber(2).toString(), // DepositIntoVault
+          rebalanceLpInVaultType: new BigNumber(2).toFixed(0), // DepositIntoVault
           // DepsositIntoVault: [wPowerPerpToMint, collateralToDeposit]
           data: abiCoder.encode(['uint256', 'uint256'], [wPowerPerpAmountInLPBefore, wethAmountInLPBefore]),
         },
         {
           // Withdraw from vault
-          rebalanceLpInVaultType: new BigNumber(3), // WithdrawFromVault
+          rebalanceLpInVaultType: new BigNumber(3).toFixed(0), // WithdrawFromVault
           // withdrawFromVault: [wPowerPerpToBurn, collateralToWithdraw, burnExactRemoved ]
           data: abiCoder.encode(
             ['uint256', 'uint256', 'bool'],
@@ -281,7 +279,7 @@ export const useRebalanceVault = () => {
         },
         {
           // Mint new LP
-          rebalanceLpInVaultType: new BigNumber(4).toString(), // MintNewLP
+          rebalanceLpInVaultType: new BigNumber(4).toFixed(0), // MintNewLP
           // lpWPowerPerpPool: [recipient, wPowerPerpPool, vaultId, wPowerPerpAmount, collateralToDeposit, collateralToLP, amount0Min, amount1Min, lowerTick, upperTick ]
           data: abiCoder.encode(
             ['address', 'address', 'uint256', 'uint256', 'uint256', 'uint256', 'uint256', 'uint256', 'int24', 'int24'],
@@ -292,8 +290,8 @@ export const useRebalanceVault = () => {
               new BigNumber(0).toFixed(0),
               new BigNumber(0).toFixed(0),
               wethAmountToLP,
-              amount0Min,
-              amount1Min,
+              amount0Min.toFixed(0),
+              amount1Min.toFixed(0),
               lowerTick,
               upperTick,
             ],
@@ -301,10 +299,11 @@ export const useRebalanceVault = () => {
         },
       ]
 
-      await controllerContract.methods.updateOperator(vaultId, controllerHelper)
+      console.log("collateralToFlashloan", collateralToFlashloan.toString())
+
       return handleTransaction(
         await controllerHelperContract.methods
-          .rebalanceLpInVault(vaultId, collateralToFlashloan, rebalanceLpInVaultParams)
+          .rebalanceLpInVault(vaultId, collateralToFlashloan.toFixed(0), rebalanceLpInVaultParams)
           .send({
             from: address,
           }),
@@ -335,22 +334,31 @@ export const useRebalanceGeneralSwap = () => {
       const vaultBefore = await controllerContract?.methods.vaults(vaultId)
       const debtInEth = await getDebtAmount(vaultBefore.shortAmount)
       const collateralToFlashloan = debtInEth.multipliedBy(1.5)
+      console.log("a")
       const tokenIndex = await positionManager.methods.totalSupply()
+      console.log("b")
       const tokenId = await positionManager.methods.tokenByIndex(tokenIndex.sub(1))
+      console.log("c")
       const amount0Min = new BigNumber(0)
       const amount1Min = new BigNumber(0)
 
       const lowerTick = nearestUsableTick(lowerTickInput, 3000)
       const upperTick = nearestUsableTick(upperTickInput, 3000)
-
+      console.log("tokenid", tokenId)
+      console.log("token index", tokenIndex)
+      console.log("beep")
       // Get current LPpositions
       const [amount0, amount1] = await positionManager.methods.decreaseLiquidity({
         tokenId: tokenId,
         liquidity: positionBefore.liquidity,
-        amount0Min: 0,
-        amount1Min: 0,
-        deadline: Math.floor(Date.now() / 1000 + 1800),
+        amount0Min: amount0Min,
+        amount1Min: amount1Min,
+        deadline: Math.floor(Date.now() / 1000) + 1800,
       })
+
+      // console.log("amount 0", amount0)
+      // console.log("amount 1", amount1)
+
       const wPowerPerpAmountInLPBefore = isWethToken0 ? amount1 : amount0
       const wethAmountInLPBefore = isWethToken0 ? amount0 : amount1
 
@@ -424,66 +432,6 @@ export const useRebalanceGeneralSwap = () => {
 }
 
 /*** GETTERS ***/
-// Get next tick price
-export const useGetNextTickPrice = () => {
-  const setLowerTick = useUpdateAtom(lowerTickAtom)
-  const setUpperTick = useUpdateAtom(upperTickAtom)
-  const lowerTick = useAtomValue(lowerTickAtom)
-  const upperTick = useAtomValue(upperTickAtom)
-  const isWethToken0 = useAtomValue(isWethToken0Atom)
-  const squeethToken = useAtomValue(squeethTokenAtom)
-  const wethToken = useAtomValue(wethTokenAtom)
-  const getNextTickPrice = useAppCallback(async (getHigherTick: boolean, isUpperTick: boolean) => {
-    const atLimit = useIsTickAtLimit(3000, lowerTick.toNumber(), upperTick.toNumber())
-
-    if (isUpperTick) {
-      const newUpperTick = !getHigherTick
-        ? upperTick.minus(TICK_SPACINGS[3000])
-        : !atLimit
-        ? upperTick.plus(TICK_SPACINGS[3000])
-        : null
-      if (newUpperTick) {
-        setUpperTick(newUpperTick)
-        return isWethToken0
-          ? tickToPrice(wethToken!, squeethToken!, newUpperTick.toNumber())
-          : tickToPrice(squeethToken!, wethToken!, newUpperTick.toNumber())
-      }
-    } else {
-      const newLowerTick = getHigherTick
-        ? lowerTick.plus(TICK_SPACINGS[3000])
-        : !atLimit
-        ? lowerTick.minus(TICK_SPACINGS[3000])
-        : null
-      if (newLowerTick) {
-        setLowerTick(newLowerTick)
-        return isWethToken0
-          ? tickToPrice(wethToken!, squeethToken!, newLowerTick.toNumber())
-          : tickToPrice(squeethToken!, wethToken!, newLowerTick.toNumber())
-      }
-    }
-  }, [])
-  return getNextTickPrice
-}
-
-export default function useIsTickAtLimit(
-  feeAmount: FeeAmount | undefined,
-  tickLower: number | undefined,
-  tickUpper: number | undefined,
-) {
-  return useMemo(
-    () => ({
-      [Bound.LOWER]:
-        feeAmount && tickLower
-          ? tickLower === nearestUsableTick(TickMath.MIN_TICK, TICK_SPACINGS[feeAmount as FeeAmount])
-          : undefined,
-      [Bound.UPPER]:
-        feeAmount && tickUpper
-          ? tickUpper === nearestUsableTick(TickMath.MAX_TICK, TICK_SPACINGS[feeAmount as FeeAmount])
-          : undefined,
-    }),
-    [feeAmount, tickLower, tickUpper],
-  )
-}
 
 export const useGetPosition = () => {
   const contract = useAtomValue(nftManagerContractAtom)
@@ -493,7 +441,7 @@ export const useGetPosition = () => {
       if (!contract) return null
       const position = await contract.methods.positions(uniTokenId).call()
       const { nonce, operator, token0, token1, fee, tickLower, tickUpper, liquidity, feeGrowthInside0LastX128, feeGrowthInside1LastX128, tokensOwed0, tokensOwed1 } = position
-
+      console.log("unitokenid", uniTokenId)
       return {
         nonce,
         operator,
@@ -514,6 +462,64 @@ export const useGetPosition = () => {
 
   return getPosition
 }
+
+export const useGetTotalSupply = () => {
+  const contract = useAtomValue(nftManagerContractAtom)
+
+  const getTotalSupply = useCallback(
+    async () => {
+      if (!contract) return null
+      const totalSupply = await contract.methods.totalSupply().call()
+
+      return totalSupply
+    },
+    [contract],
+  )
+
+  return getTotalSupply
+}
+
+export const useGetTokenByIndex = () => {
+  const contract = useAtomValue(nftManagerContractAtom)
+
+  const getTokenByIndex = useCallback(
+    async (index: BigNumber) => {
+      if (!contract) return null
+      const tokenByIndex = await contract.methods.tokenByIndex(index.toFixed(0)).call()
+
+      return tokenByIndex
+    },
+    [contract],
+  )
+
+  return getTokenByIndex
+}
+
+export const useGetDecreaseLiquidity = () => {
+  const contract = useAtomValue(nftManagerContractAtom)
+
+  const getDecreaseLiquiduity = useCallback(
+    async (tokenId: number, liquidity: number, amount0Min: number, amount1Min: number, deadline: number) => {
+      if (!contract) return null
+      const DecreaseLiquidityParams = {
+        tokenId,
+        liquidity,
+        amount0Min,
+        amount1Min,
+        deadline,
+      }
+      console.log("DecreaseLiquidityParams", DecreaseLiquidityParams)
+
+      const decreaseLiquidity = await contract.methods.decreaseLiquidity(DecreaseLiquidityParams).call()
+
+      return decreaseLiquidity
+    },
+    [contract],
+  )
+
+  return getDecreaseLiquiduity
+}
+
 
 export const useGetLimitEth = () => {
   const contract = useAtomValue(quoterContractAtom)
@@ -544,3 +550,8 @@ export const useGetLimitEth = () => {
   return getLimitEth
 }
 
+// export const getNow = async(provider: any) => {
+//   const blockNumBefore = await provider.getBlockNumber();
+//   const blockBefore = await provider.getBlock(blockNumBefore);
+//   return blockBefore.timestamp;
+// }
