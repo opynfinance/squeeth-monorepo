@@ -117,7 +117,10 @@ export function handleBurnShort(event: BurnShort): void {
 
   let transactionHistory = createTransactionHistory("BURN_OSQTH", event);
   transactionHistory.owner = Address.fromString(vault.owner);
-  transactionHistory.oSqthAmount = event.params.amount;
+  transactionHistory.oSqthAmount = convertTokenToDecimal(
+    event.params.amount,
+    TOKEN_DECIMALS_18
+  );
   transactionHistory.save();
 }
 
@@ -272,7 +275,10 @@ export function handleMintShort(event: MintShort): void {
 
   let transactionHistory = createTransactionHistory("MINT_OSQTH", event);
   transactionHistory.owner = Address.fromString(vault.owner);
-  transactionHistory.oSqthAmount = event.params.amount;
+  transactionHistory.oSqthAmount = convertTokenToDecimal(
+    event.params.amount,
+    TOKEN_DECIMALS_18
+  );
   transactionHistory.save();
 }
 
