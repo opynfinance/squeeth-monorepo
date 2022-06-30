@@ -9,7 +9,7 @@ const useStyles = makeStyles((theme) =>
       background: '#F5692E1A',
       border: '1px solid #F5692E',
       borderRadius: theme.spacing(2),
-      display: 'flex'
+      display: 'flex',
     },
   }),
 )
@@ -23,9 +23,10 @@ const MigrationNotice: React.FC = () => {
         <Typography variant="h6">🦀</Typography>
       </div>
       <div style={{ marginLeft: '8px' }}>
-        <Typography variant="body1">Queue Migration to Crab V2</Typography>
+        <Typography variant="body1">Early access to Crab V2</Typography>
         <Typography component="p" variant="caption" style={{ marginTop: '4px', lineHeight: 1.5 }} color="textSecondary">
-          Crab v2 launches soon and crab v1 will be deprecated. Queue migration now to be included at launch.
+          Crab v2 launches soon and crab v1 users can deposit their position to get included in the launch without any
+          cap restriction
         </Typography>
       </div>
     </div>

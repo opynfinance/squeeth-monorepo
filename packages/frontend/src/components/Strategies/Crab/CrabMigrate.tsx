@@ -54,7 +54,6 @@ const getAction = (action: MIGRATION_STEP) => {
 }
 
 const CrabMigration: React.FC = () => {
-  useInitCrabMigration()
   const classes = useStyles()
   const { crabMigration, crabStrategy } = useAtomValue(addressesAtom)
   const positionInEth = useAtomValue(currentCrabPositionValueInETHAtom)
