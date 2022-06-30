@@ -27,7 +27,7 @@ export function handleTransfer(event: Transfer): void {
 
   let senderTransactionHistory = createTransactionHistory("SEND_OSQTH", event);
   senderTransactionHistory.owner = event.params.from;
-  senderTransactionHistory.oSqthAmount = event.params.value;
+  senderTransactionHistory.oSqthAmount = amount;
   senderTransactionHistory.save();
 
   let receiverTransactionHistory = createTransactionHistory(
@@ -36,9 +36,9 @@ export function handleTransfer(event: Transfer): void {
   );
 
   receiverTransactionHistory.owner = event.params.to;
-  receiverTransactionHistory.oSqthAmount = event.params.value;
+  receiverTransactionHistory.oSqthAmount = amount;
   receiverTransactionHistory.save();
 
   buyOrSellSQTH(event.params.to.toHex(), amount);
-  buyOrSellSQTH(event.transaction.from.toHex(), amount.neg());
+  buyOrSellSQTH(event.params.from.toHex(), amount.neg());
 }

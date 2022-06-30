@@ -63,14 +63,13 @@ export function createTransactionHistory(
   let transactionHistory = new TransactionHistory(
     `${event.transaction.hash.toHex()}-${transactionType}`
   );
-
   let osqthPrices = getoSQTHETHPrice();
   let usdcPrices = getETHUSDCPrice();
   transactionHistory.owner = event.transaction.from;
   transactionHistory.timestamp = event.block.timestamp;
   transactionHistory.transactionType = transactionType;
-  transactionHistory.oSqthAmount = BigInt.zero();
-  transactionHistory.ethAmount = BigInt.zero();
+  transactionHistory.oSqthAmount = BigDecimal.zero();
+  transactionHistory.ethAmount = BigDecimal.zero();
   transactionHistory.ethUSDCSqrtPrice = BigInt.fromString(
     usdcPrices[0].toString()
   );

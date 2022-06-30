@@ -156,12 +156,13 @@ export function handleDepositCollateral(event: DepositCollateral): void {
     dayStatSnapshot.totalCollateralAmount.plus(event.params.amount);
   dayStatSnapshot.save();
 
+  let amount = convertTokenToDecimal(event.params.amount, TOKEN_DECIMALS_18);
+
   let transactionHistory = createTransactionHistory("DEPOSIT_COLLAT", event);
   transactionHistory.owner = Address.fromString(vault.owner);
-  transactionHistory.ethAmount = event.params.amount;
+  transactionHistory.ethAmount = amount;
   transactionHistory.save();
 
-  let amount = convertTokenToDecimal(event.params.amount, TOKEN_DECIMALS_18);
   buyOrSellETH(vault.owner, amount);
 }
 
@@ -359,12 +360,13 @@ export function handleWithdrawCollateral(event: WithdrawCollateral): void {
     dayStatSnapshot.totalCollateralAmount.minus(event.params.amount);
   dayStatSnapshot.save();
 
+  let amount = convertTokenToDecimal(event.params.amount, TOKEN_DECIMALS_18);
+
   let transactionHistory = createTransactionHistory("WITHDRAW_COLLAT", event);
   transactionHistory.owner = Address.fromString(vault.owner);
-  transactionHistory.ethAmount = event.params.amount;
+  transactionHistory.ethAmount = amount;
   transactionHistory.save();
 
-  let amount = convertTokenToDecimal(event.params.amount, TOKEN_DECIMALS_18);
   buyOrSellETH(vault.owner, amount.neg());
 }
 

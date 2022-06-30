@@ -116,8 +116,8 @@ type TransactionHistory @entity {
   timestamp: BigInt!
   transactionType: TransactionType!
   owner: Bytes!
-  oSqthAmount: BigInt!
-  ethAmount: BigInt!
+  oSqthAmount: BigDecimal!
+  ethAmount: BigDecimal!
   oSqthPriceInETH: BigDecimal!
   ethPriceInUSD: BigDecimal!
   ethUSDCSqrtPrice: BigInt!

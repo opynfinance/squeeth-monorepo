@@ -59,10 +59,14 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
     event.params.amount0,
     TOKEN_DECIMALS_18
   );
+  const amount1 = convertTokenToDecimal(
+    event.params.amount0,
+    TOKEN_DECIMALS_18
+  );
 
   // event.params.amount0 > 0, selling
   // event.params.amount0 < 0, buying
-  buyOrSellSQTH(event.transaction.from.toHex(), amount0.neg());
+  // buyOrSellSQTH(event.transaction.from.toHex(), amount0.neg());
 
   let transactionType = "";
   if (amount0.lt(ZERO_BD)) {
@@ -71,8 +75,8 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
     transactionType = "SELL_OSQTH";
   }
   let transactionHistory = createTransactionHistory(transactionType, event);
-  transactionHistory.oSqthAmount = event.params.amount0;
-  transactionHistory.ethAmount = event.params.amount1;
+  transactionHistory.oSqthAmount = amount0;
+  transactionHistory.ethAmount = amount1;
 
   account.save();
   transactionHistory.save();

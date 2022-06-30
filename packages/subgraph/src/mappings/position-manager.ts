@@ -53,13 +53,6 @@ function isOSQTHETHPool(address: Address, tokenId: BigInt): boolean {
 export function handleIncreaseLiquidity(event: IncreaseLiquidity): void {
   const isOSQTHNETHPool = isOSQTHETHPool(event.address, event.params.tokenId);
   if (!isOSQTHNETHPool) return;
-  const transactionHistory = createTransactionHistory("ADD_LIQUIDITY", event);
-  transactionHistory.oSqthAmount = event.params.amount0;
-  transactionHistory.ethAmount = event.params.amount1;
-  transactionHistory.save();
-
-  const userAddr = event.transaction.from.toHex();
-  updateLPposition(userAddr, event.params.amount0, event.params.amount1);
 
   const amount0 = convertTokenToDecimal(
     event.params.amount0,
@@ -69,6 +62,14 @@ export function handleIncreaseLiquidity(event: IncreaseLiquidity): void {
     event.params.amount1,
     TOKEN_DECIMALS_18
   );
+
+  const transactionHistory = createTransactionHistory("ADD_LIQUIDITY", event);
+  transactionHistory.oSqthAmount = amount0;
+  transactionHistory.ethAmount = amount1;
+  transactionHistory.save();
+
+  const userAddr = event.transaction.from.toHex();
+  updateLPposition(userAddr, event.params.amount0, event.params.amount1);
 
   const position = loadOrCreatePosition(userAddr);
   const account = loadOrCreateAccount(userAddr);
@@ -87,16 +88,6 @@ export function handleDecreaseLiquidity(event: DecreaseLiquidity): void {
     "REMOVE_LIQUIDITY",
     event
   );
-  transactionHistory.oSqthAmount = event.params.amount0;
-  transactionHistory.ethAmount = event.params.amount1;
-  transactionHistory.save();
-
-  let userAddr = event.transaction.from.toHex();
-  updateLPposition(
-    userAddr,
-    event.params.amount0.neg(),
-    event.params.amount1.neg()
-  );
   const amount0 = convertTokenToDecimal(
     event.params.amount0,
     TOKEN_DECIMALS_18
@@ -105,6 +96,17 @@ export function handleDecreaseLiquidity(event: DecreaseLiquidity): void {
   const amount1 = convertTokenToDecimal(
     event.params.amount1,
     TOKEN_DECIMALS_18
+  );
+
+  transactionHistory.oSqthAmount = amount0;
+  transactionHistory.ethAmount = amount1;
+  transactionHistory.save();
+
+  let userAddr = event.transaction.from.toHex();
+  updateLPposition(
+    userAddr,
+    event.params.amount0.neg(),
+    event.params.amount1.neg()
   );
 
   const position = loadOrCreatePosition(userAddr);
@@ -119,13 +121,7 @@ export function handleDecreaseLiquidity(event: DecreaseLiquidity): void {
 export function handleCollect(event: Collect): void {
   const isOSQTHNETHPool = isOSQTHETHPool(event.address, event.params.tokenId);
   if (!isOSQTHNETHPool) return;
-  const transactionHistory = createTransactionHistory("COLLECT_FEE", event);
-  transactionHistory.oSqthAmount = event.params.amount0;
-  transactionHistory.ethAmount = event.params.amount1;
-  transactionHistory.save();
 
-  let userAddr = event.transaction.from.toHex();
-  let position = loadOrCreateLPPosition(userAddr);
   const amount0 = convertTokenToDecimal(
     event.params.amount0,
     TOKEN_DECIMALS_18
@@ -135,6 +131,14 @@ export function handleCollect(event: Collect): void {
     event.params.amount1,
     TOKEN_DECIMALS_18
   );
+
+  const transactionHistory = createTransactionHistory("COLLECT_FEE", event);
+  transactionHistory.oSqthAmount = amount0;
+  transactionHistory.ethAmount = amount1;
+  transactionHistory.save();
+
+  let userAddr = event.transaction.from.toHex();
+  let position = loadOrCreateLPPosition(userAddr);
   position.collectedFeesOSQTHAmount = amount0;
   position.collectedFeesETHAmount = amount1;
   position.save();
