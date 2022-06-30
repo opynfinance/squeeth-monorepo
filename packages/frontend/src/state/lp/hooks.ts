@@ -35,12 +35,10 @@ export const useClosePosition = () => {
   const controllerHelperContract = useAtomValue(controllerHelperHelperContractAtom)
   const controllerContract = useAtomValue(controllerContractAtom)
   const handleTransaction = useHandleTransaction()
-  const getTwapSqueethPrice = useGetTwapSqueethPrice()
   const getDebtAmount = useGetDebtAmount()
   const getVault = useGetVault()
   const getPosition = useGetPosition()
   const getLimitEth = useGetLimitEth()
-  const getSellQuote = useGetSellQuote()
   const closePosition = useAppCallback(async (vaultId: number, onTxConfirmed?: () => void) => {
     // const limitEth = await getLimitEth(new BigNumber(5))
     // console.log("limitEth", limitEth)
@@ -62,14 +60,7 @@ export const useClosePosition = () => {
     const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
     const debtInEth = await getDebtAmount(shortAmount)
     const collateralToFlashloan = debtInEth.multipliedBy(1.5)
-    const slippage = new BigNumber(3).multipliedBy(new BigNumber(10).pow(16))
-    const squeethPrice = await getTwapSqueethPrice()
-    // const limitPriceEthPerPowerPerp = squeethPrice.multipliedBy(one.minus(slippage))
     const limitEth = await getLimitEth(shortAmount)
-    // console.log("limitEThQuote", limitEthQuote.amountOut.multipliedBy(new BigNumber(10).pow(14)).toFixed(0))
-    // console.log("limitEth", limitEth.toFixed(0))
-    console.log("limitPriceEthPerPowerPerp", limitEth)
-    console.log("squeethPrice", squeethPrice)
 
     const flashloanCloseVaultLpNftParam = {
       vaultId: vaultId,
@@ -154,7 +145,6 @@ export const useOpenPositionDeposit = () => {
 export const useCollectFees = () => {
   const address = useAtomValue(addressAtom)
   const controllerHelperContract = useAtomValue(controllerHelperHelperContractAtom)
-  const { controllerHelper } = useAtomValue(addressesAtom)
   const controllerContract = useAtomValue(controllerContractAtom)
   const handleTransaction = useHandleTransaction()
   const positionManager = useAtomValue(nftManagerContractAtom)
@@ -176,45 +166,27 @@ export const useCollectFees = () => {
       return
 
     const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
-    console.log("shortAmount", shortAmount)
     const debtInEth = await getDebtAmount(shortAmount)
-    console.log("debtInEth", debtInEth)
     const collateralToFlashloan = debtInEth.multipliedBy(1.5)
-    console.log("collateralToFlashloan", collateralToFlashloan)
     const amount0Max = new BigNumber(2).multipliedBy(new BigNumber(10).pow(18)).minus(1).toFixed(0)
     const amount1Max = new BigNumber(2).multipliedBy(new BigNumber(10).pow(18)).minus(1).toFixed(0)
-    console.log([uniTokenId, amount0Max, amount1Max])
-    // console.log(amount0Max.toFixed(0))
     const abiCoder = new ethers.utils.AbiCoder()
-    // const rebalanceLpInVaultParams = [
-    //   {
-    //     rebalanceLpInVaultType: new BigNumber(6).toFixed(0),
-    //     // CollectFees
-    //     data: abiCoder.encode(['uint256', 'uint128', 'uint128'], [Number(uniTokenId), amount0Max, amount1Max]),
-    //   },
-    //   {
-    //     rebalanceLpInVaultType: new BigNumber(7).toFixed(0),
-    //     // DepositExistingNftParams
-    //     data: abiCoder.encode(["uint256"], [Number(uniTokenId)])
-    //   }
-    // ]
-    // console.log(rebalanceLpInVaultParams)
-    // await controllerContract.methods.updateOperator(vaultId, controllerHelper)
-
     const rebalanceLpInVaultParams = [
       {
-       rebalanceLpInVaultType: new BigNumber(6).toFixed(0),
-       data: '0x00000000000000000000000000000000000000000000000000000000000311220000000000000000000000000000000000000000000000001bc16d674ec7ffff0000000000000000000000000000000000000000000000001bc16d674ec7ffff'
+        rebalanceLpInVaultType: new BigNumber(6).toFixed(0),
+        // CollectFees
+        data: abiCoder.encode(['uint256', 'uint128', 'uint128'], [Number(uniTokenId), amount0Max, amount1Max]),
       },
       {
-       rebalanceLpInVaultType: new BigNumber(7).toFixed(0),
-       data: '0x0000000000000000000000000000000000000000000000000000000000031122'
+        rebalanceLpInVaultType: new BigNumber(7).toFixed(0),
+        // DepositExistingNftParams
+        data: abiCoder.encode(["uint256"], [Number(uniTokenId)])
       }
     ]
-    console.log("hi")
+
     return handleTransaction(
       await controllerHelperContract.methods
-        .rebalanceLpInVault("673", '0', rebalanceLpInVaultParams)
+        .rebalanceLpInVault(vaultId, collateralToFlashloan.toFixed(0), rebalanceLpInVaultParams)
         .send({
           from: address,
         }),

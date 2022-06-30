@@ -11,6 +11,7 @@ import routerABI from '../../abis/swapRouter.json'
 import uniABI from '../../abis/uniswapPool.json'
 import shortAbi from '../../abis/shortHelper.json'
 import crabMigrationAbi from '../../abis/crabMigration.json'
+import quoterAbi from '../../abis/quoter.json'
 import { addressesAtom } from '../positions/atoms'
 import { web3Atom } from '../wallet/atoms'
 
@@ -40,6 +41,13 @@ export const nftManagerContractAtom = atom<Contract | null>((get) => {
   const { nftManager } = get(addressesAtom)
   if (!web3) return null
   return getContract(web3, nftManager, positionManagerAbi)
+})
+
+export const quoterContractAtom = atom<Contract | null>((get) => {
+  const web3 = get(web3Atom)
+  const { quoter } = get(addressesAtom)
+  if (!web3) return null
+  return getContract(web3, quoter, quoterAbi)
 })
 
 export const swapRouterContractAtom = atom<Contract | null>((get) => {
