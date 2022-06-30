@@ -34,6 +34,8 @@ import { useUserCrabTxHistory } from '@hooks/useUserCrabTxHistory'
 import { usePrevious } from 'react-use'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
 import CrabMigration from './CrabMigrate'
+import { useInitCrabMigration } from 'src/state/crabMigration/hooks'
+import { isQueuedAtom } from 'src/state/crabMigration/atom'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -74,13 +76,12 @@ type CrabTradeType = {
 }
 
 const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
+  useInitCrabMigration()
   const classes = useStyles()
   const [ethAmount, setEthAmount] = useState(new BigNumber(0))
   const [withdrawAmount, setWithdrawAmount] = useState(new BigNumber(0))
   const [depositOption, setDepositOption] = useState(0)
   const [txLoading, setTxLoading] = useState(false)
-  const [txLoaded, setTxLoaded] = useState(false)
-  const [txHash, setTxHash] = useState('')
   const [depositPriceImpact, setDepositPriceImpact] = useState('0')
   const [withdrawPriceImpact, setWithdrawPriceImpact] = useState('0')
   const [borrowEth, setBorrowEth] = useState(new BigNumber(0))
@@ -90,6 +91,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
   const isTimeHedgeAvailable = useAtomValue(isTimeHedgeAvailableAtom)
   const isPriceHedgeAvailable = useAtomValue(isPriceHedgeAvailableAtom)
   const [slippage, setSlippage] = useAtom(crabStrategySlippageAtom)
+  const isQueued = useAtomValue(isQueuedAtom)
   const { data: balance } = useWalletBalance()
   const setStrategyData = useSetStrategyData()
   const flashWithdrawEth = useFlashWithdrawEth()
@@ -253,7 +255,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
             variant="fullWidth"
             className={classes.tabBackGround}
           >
-            <SecondaryTab id="crab-deposit-tab" label="Queue Migration" />
+            <SecondaryTab id="crab-deposit-tab" label="V2 Early access" />
             <SecondaryTab id="crab-withdraw-tab" label="Withdraw" />
           </SecondaryTabs>
           {depositOption === 0 ? null : (
@@ -305,7 +307,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
                         withdrawError
                       ) : (
                         <span>
-                          Position <span id="current-crab-eth-bal-input">{currentEthValue.toFixed(6)}</span> ETH
+                          Position <span id="current-crab-eth-bal-input">{(isQueued ? BIG_ZERO : currentEthValue).toFixed(6)}</span> ETH
                         </span>
                       )
                     }
@@ -359,7 +361,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
                         : { marginTop: '8px' }
                     }
                     onClick={() => withdraw()}
-                    disabled={txLoading || !!withdrawError}
+                    disabled={txLoading || !!withdrawError || isQueued}
                   >
                     {!txLoading ? 'Withdraw' : <CircularProgress color="primary" size="1.5rem" />}
                   </PrimaryButton>

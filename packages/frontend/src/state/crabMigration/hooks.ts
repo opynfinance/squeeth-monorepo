@@ -6,13 +6,13 @@ import { useCallback, useEffect } from 'react'
 import { crabMigrationContractAtom } from '../contracts/atoms'
 import { addressAtom } from '../wallet/atoms'
 import { useHandleTransaction } from '../wallet/hooks'
-import { totalMigratedShares, userMigratedShares } from './atom'
+import { totalMigratedSharesAtom, userMigratedSharesAtom } from './atom'
 
 export const useInitCrabMigration = () => {
   const address = useAtomValue(addressAtom)
   const crabMigrationContract = useAtomValue(crabMigrationContractAtom)
-  const setTotalMigratedShares = useSetAtom(totalMigratedShares)
-  const setUserMigratedShares = useSetAtom(userMigratedShares)
+  const setTotalMigratedShares = useSetAtom(totalMigratedSharesAtom)
+  const setUserMigratedShares = useSetAtom(userMigratedSharesAtom)
 
   const updateMigrationData = useCallback(async () => {
     const p1 = crabMigrationContract?.methods.totalCrabV1SharesMigrated().call()
