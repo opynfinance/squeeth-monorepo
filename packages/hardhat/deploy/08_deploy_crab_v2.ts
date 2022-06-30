@@ -2,6 +2,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { getCrab, getDwethToken, getEuler, getExec, getUniswapDeployments, getWETH } from '../tasks/utils'
 import { getPoolAddress } from '../test/setup';
+import { one } from '../test/utils';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, ethers, network } = hre;
@@ -15,7 +16,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const wsqueeth = await ethers.getContract("WPowerPerp", deployer);
   const crabV1 = getCrab(network.name);
 
-  const { uniswapFactory } = await getUniswapDeployments(ethers, deployer, network.name)
+  const { uniswapFactory, } = await getUniswapDeployments(ethers, deployer, network.name)
 
   const squeethPoolAddr = await getPoolAddress(wsqueeth, weth, uniswapFactory)
 
@@ -24,7 +25,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     return
   }
 
-  console.log(crabV1, controller.address)
 
   const exec = await getExec(deployer, network.name)
   const euler = await getEuler(deployer, network.name)
@@ -41,7 +41,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       dWethToken,
       euler,
     ],
-    // skipIfAlreadyDeployed: true
+    skipIfAlreadyDeployed: true
   });
 
   console.log(`Successfully deploy CrabMigration`)
@@ -59,18 +59,30 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log(`Successfully deploy Timelock`)
 
-  // // Deploy Crabv2 contract
-  // await deploy("CrabStrategyV2", {
-  //   from: deployer,
-  //   log: true,
-  //   args: [
-  //     deployer,
-  //     172800,
-  //   ],
-  //   skipIfAlreadyDeployed: true
-  // });
+  const timelock = await ethers.getContract("Timelock", deployer);
+  const migration = await ethers.getContract("CrabMigration", deployer);
 
-  // console.log(`Successfully deploy Timelock`)
+  console.log(crabV1, controller.address, oracle.address, weth.address, uniswapFactory.address, squeethPoolAddr, timelock.address, migration.address, 1, one.toString())
+
+  // Deploy Crabv2 contract
+  await deploy("CrabStrategyV2", {
+    from: deployer,
+    log: true,
+    args: [
+      controller.address,
+      oracle.address,
+      weth.address,
+      uniswapFactory.address,
+      squeethPoolAddr,
+      timelock.address,
+      migration.address,
+      1,
+      one
+    ],
+    skipIfAlreadyDeployed: true
+  });
+
+  console.log(`Successfully deploy CrabStrategyV2`)
 }
 
 export default func;
