@@ -9,7 +9,7 @@ import {
   CircularProgress,
   Tooltip,
 } from '@material-ui/core'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 import BigNumber from 'bignumber.js'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
@@ -171,6 +171,7 @@ export const CloseShort = () => {
   let insufficientETHBalance: string | undefined
 
   useEffect(() => {
+    // set isVaultApproved if existing vault and operator is controllerhelper address
     if (!vaultId || !vault) return
 
     setIsVaultApproved(vault.operator?.toLowerCase() === controllerHelper?.toLowerCase())
@@ -216,6 +217,7 @@ export const CloseShort = () => {
     !vault.shortAmount.isZero()
 
   useAppEffect(() => {
+    // Sets quote data
     if (vault?.shortAmount && vault?.shortAmount.isGreaterThan(0)) {
       setSqthTradeAmount(vault?.shortAmount.toString())
       getBuyQuote(vault?.shortAmount, slippageAmount).then((quote: any) => {
@@ -242,8 +244,16 @@ export const CloseShort = () => {
           setLiqPrice(liquidationPrice)
         },
       )
-      setWithdrawCollat(newCollat.gt(0) ? _collat.minus(newCollat) : _collat)
-      setNewCollat(newCollat)
+      setWithdrawCollat(
+        vault?.collateralAmount && newCollat.gt(vault?.collateralAmount)
+          ? BIG_ZERO
+          : newCollat.gt(0)
+          ? _collat.minus(newCollat)
+          : _collat,
+      )
+      setNewCollat(
+        vault?.collateralAmount && newCollat.gt(vault?.collateralAmount) ? vault?.collateralAmount : newCollat,
+      )
     },
     [
       collatPercent,
@@ -329,10 +339,6 @@ export const CloseShort = () => {
       setCloseType(CloseType.FULL)
     }
   }, [vault?.shortAmount, onSqthChange, setSqthTradeAmount])
-
-  useAppEffect(() => {
-    onSqthChange(sqthTradeAmount)
-  }, [onSqthChange, sqthTradeAmount, collatPercent])
 
   return (
     <div id="close-short-card">
@@ -475,7 +481,10 @@ export const CloseShort = () => {
                   value={collatPercent}
                   type="number"
                   style={{ width: 300 }}
-                  onChange={(event) => setCollatPercent(Number(event.target.value))}
+                  onChange={(event) => {
+                    setCollatPercent(Number(event.target.value))
+                    onSqthChange(sqthTradeAmount)
+                  }}
                   id="close-short-collat-ratio-input"
                   label="Collateral Ratio"
                   variant="outlined"
@@ -495,7 +504,10 @@ export const CloseShort = () => {
                 />
                 <CollatRange
                   className={classes.thirdHeading}
-                  onCollatValueChange={(val) => setCollatPercent(val)}
+                  onCollatValueChange={(val) => {
+                    setCollatPercent(val)
+                    onSqthChange(sqthTradeAmount)
+                  }}
                   collatValue={collatPercent}
                 />
                 <VaultCard
