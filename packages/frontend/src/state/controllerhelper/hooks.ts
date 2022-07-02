@@ -79,7 +79,7 @@ export const useFlashSwapAndBurn = () => {
 
       const wPowerPerpAmountToBurn = fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0)
       const collateralToWithdraw = fromTokenAmount(collateralAmount, 18).toFixed(0)
-      const _maxToPay = fromTokenAmount(maxToPay, 18).toString()
+      const _maxToPay = fromTokenAmount(maxToPay, 18).toFixed(0)
       const value = fromTokenAmount(msgValue, 18).toFixed(0)
 
       const result = await handleTransaction(
