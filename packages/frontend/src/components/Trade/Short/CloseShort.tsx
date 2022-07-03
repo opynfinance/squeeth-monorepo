@@ -224,9 +224,10 @@ export const CloseShort = () => {
         setSellCloseQuote(quote)
       })
       setCollatPercent(150)
+      setWithdrawCollat(vault?.collateralAmount)
       setCloseType(CloseType.FULL)
     }
-  }, [vault?.shortAmount, getBuyQuote, setSellCloseQuote, setSqthTradeAmount, slippageAmount])
+  }, [vault?.shortAmount, getBuyQuote, setSellCloseQuote, setSqthTradeAmount, slippageAmount, vault?.collateralAmount])
 
   const onSqthChange = useAppCallback(
     async (v: string) => {
