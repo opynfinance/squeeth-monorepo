@@ -309,7 +309,9 @@ export const CloseShort = () => {
           amount,
           withdrawCollat,
           sellCloseQuote.maximumAmountIn,
-          sellCloseQuote.amountIn.gt(withdrawCollat) ? sellCloseQuote.amountIn.minus(withdrawCollat) : BIG_ZERO,
+          sellCloseQuote.maximumAmountIn.gt(withdrawCollat)
+            ? sellCloseQuote.maximumAmountIn.minus(withdrawCollat)
+            : BIG_ZERO,
           async () => {
             setIsTxFirstStep(false)
             setCloseLoading(false)
@@ -339,6 +341,8 @@ export const CloseShort = () => {
       setCloseType(CloseType.FULL)
     }
   }, [vault?.shortAmount, onSqthChange, setSqthTradeAmount])
+
+  console.log({ operator: vault?.operator, controllerHelper })
 
   return (
     <div id="close-short-card">
