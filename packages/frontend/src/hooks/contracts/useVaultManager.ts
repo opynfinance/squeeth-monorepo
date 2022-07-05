@@ -10,8 +10,8 @@ import { squeethClient } from '../../utils/apollo-client'
 import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
 import useAppEffect from '@hooks/useAppEffect'
 import useAppMemo from '@hooks/useAppMemo'
-import { usePrevious } from 'react-use'
 import { useCallback, useState } from 'react'
+import constate from 'constate'
 
 /**
  * get user vaults.
@@ -19,7 +19,7 @@ import { useCallback, useState } from 'react'
  * @param refetchIntervalSec refetch interval in seconds
  * @returns {Vault[]}
  */
-export const useVaultManager = () => {
+export const [VaultManagerProvider, useVaultManager] = constate(() => {
   const address = useAtomValue(addressAtom)
   const networkId = useAtomValue(networkIdAtom)
   const [waitingForUpdate, setWaitingForUpdate] = useState(false)
@@ -33,10 +33,9 @@ export const useVaultManager = () => {
   })
 
   const updateVault = useCallback(() => {
+    console.log('update vault to true')
     setWaitingForUpdate(true)
   }, [])
-
-  console.log({ waitingForUpdate })
 
   useAppEffect(() => {
     subscribeToMore({
@@ -65,7 +64,7 @@ export const useVaultManager = () => {
         return { vaults: newVaults }
       },
     })
-  }, [address, subscribeToMore, data?.vaults.length])
+  }, [address, subscribeToMore])
 
   const vaultsData = data?.vaults
     .filter((v) => {
@@ -83,4 +82,4 @@ export const useVaultManager = () => {
     () => ({ vaults: vaultsData, updateVault, loading: loading || waitingForUpdate }),
     [vaultsData, loading, waitingForUpdate, updateVault],
   )
-}
+})
