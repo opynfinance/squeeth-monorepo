@@ -33,7 +33,6 @@ export const [VaultManagerProvider, useVaultManager] = constate(() => {
   })
 
   const updateVault = useCallback(() => {
-    console.log('update vault to true')
     setWaitingForUpdate(true)
   }, [])
 
