@@ -233,11 +233,14 @@ export const CloseShort = () => {
     async (v: string) => {
       if (new BigNumber(v).lte(0)) return setNewCollat(BIG_ZERO)
 
+      // buy quote and debt of osqth that will be left after trade
       const [quote, debt] = await Promise.all([
         getBuyQuote(new BigNumber(v), slippageAmount),
         getDebtAmount(vault?.shortAmount.minus(new BigNumber(v)) ?? BIG_ZERO),
       ])
       const _collat = vault?.collateralAmount ?? BIG_ZERO
+
+      //collat after trade
       const newCollat = new BigNumber(collatPercent / 100).multipliedBy(debt)
       setSellCloseQuote(quote)
       getCollatRatioAndLiqPrice(newCollat, vault?.shortAmount.minus(new BigNumber(v)) ?? BIG_ZERO).then(
@@ -342,8 +345,6 @@ export const CloseShort = () => {
       setCloseType(CloseType.FULL)
     }
   }, [vault?.shortAmount, onSqthChange, setSqthTradeAmount])
-
-  console.log({ operator: vault?.operator, controllerHelper })
 
   return (
     <div id="close-short-card">
