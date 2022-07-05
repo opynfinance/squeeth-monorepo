@@ -10,6 +10,8 @@ import { squeethClient } from '../../utils/apollo-client'
 import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
 import useAppEffect from '@hooks/useAppEffect'
 import useAppMemo from '@hooks/useAppMemo'
+import { usePrevious } from 'react-use'
+import { useCallback, useState } from 'react'
 
 /**
  * get user vaults.
@@ -20,6 +22,7 @@ import useAppMemo from '@hooks/useAppMemo'
 export const useVaultManager = () => {
   const address = useAtomValue(addressAtom)
   const networkId = useAtomValue(networkIdAtom)
+  const [waitingForUpdate, setWaitingForUpdate] = useState(false)
 
   const { data, loading, subscribeToMore } = useQuery<Vaults>(VAULTS_QUERY, {
     client: squeethClient[networkId],
@@ -28,6 +31,12 @@ export const useVaultManager = () => {
       ownerId: address ?? '',
     },
   })
+
+  const updateVault = useCallback(() => {
+    setWaitingForUpdate(true)
+  }, [])
+
+  console.log({ waitingForUpdate })
 
   useAppEffect(() => {
     subscribeToMore({
@@ -38,6 +47,21 @@ export const useVaultManager = () => {
       updateQuery(prev, { subscriptionData }) {
         if (!subscriptionData.data) return prev
         const newVaults = subscriptionData.data.vaults
+
+        const prevVault = prev.vaults.find((vault) => new BigNumber(vault.collateralAmount).isGreaterThan(0))
+        const newVault = newVaults.find((vault) => new BigNumber(vault.collateralAmount).isGreaterThan(0))
+
+        if (
+          prevVault &&
+          newVault &&
+          new BigNumber(prevVault.shortAmount).isEqualTo(newVault.shortAmount) &&
+          new BigNumber(prevVault.collateralAmount).isEqualTo(newVault.shortAmount)
+        ) {
+          return prev
+        }
+
+        setWaitingForUpdate(false)
+
         return { vaults: newVaults }
       },
     })
@@ -55,5 +79,8 @@ export const useVaultManager = () => {
       operator,
     }))
 
-  return useAppMemo(() => ({ vaults: vaultsData, loading }), [vaultsData, loading])
+  return useAppMemo(
+    () => ({ vaults: vaultsData, updateVault, loading: loading || waitingForUpdate }),
+    [vaultsData, loading, waitingForUpdate, updateVault],
+  )
 }
