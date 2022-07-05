@@ -54,7 +54,7 @@ export const [VaultManagerProvider, useVaultManager] = constate(() => {
           prevVault &&
           newVault &&
           new BigNumber(prevVault.shortAmount).isEqualTo(newVault.shortAmount) &&
-          new BigNumber(prevVault.collateralAmount).isEqualTo(newVault.shortAmount)
+          new BigNumber(prevVault.collateralAmount).isEqualTo(newVault.collateralAmount)
         ) {
           return prev
         }
