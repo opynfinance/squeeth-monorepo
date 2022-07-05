@@ -1,4 +1,3 @@
-import { useCallback, useState } from 'react'
 import { useQuery } from '@apollo/client'
 import BigNumber from 'bignumber.js'
 import { useAtomValue } from 'jotai'
@@ -11,7 +10,6 @@ import { squeethClient } from '../../utils/apollo-client'
 import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
 import useAppEffect from '@hooks/useAppEffect'
 import useAppMemo from '@hooks/useAppMemo'
-import { usePrevious } from 'react-use'
 
 /**
  * get user vaults.
@@ -22,45 +20,14 @@ import { usePrevious } from 'react-use'
 export const useVaultManager = () => {
   const address = useAtomValue(addressAtom)
   const networkId = useAtomValue(networkIdAtom)
-  const [isPolling, setIsPolling] = useState(false)
 
-  const { data, loading, subscribeToMore, startPolling, stopPolling } = useQuery<Vaults>(VAULTS_QUERY, {
+  const { data, loading, subscribeToMore } = useQuery<Vaults>(VAULTS_QUERY, {
     client: squeethClient[networkId],
     fetchPolicy: 'cache-and-network',
     variables: {
       ownerId: address ?? '',
     },
   })
-
-  const currentVault = data?.vaults.find((vault) => new BigNumber(vault.collateralAmount).isGreaterThan(0))
-  const prevVault = usePrevious(currentVault)
-
-  const updateVault = useCallback(() => {
-    setIsPolling(true)
-  }, [])
-
-  useAppEffect(() => {
-    if (isPolling && !prevVault && !currentVault) {
-      startPolling(500)
-    } else if (
-      isPolling &&
-      (new BigNumber(prevVault?.shortAmount).isEqualTo(new BigNumber(currentVault?.shortAmount)) ||
-        new BigNumber(prevVault?.collateralAmount).isEqualTo(new BigNumber(currentVault?.collateralAmount)))
-    ) {
-      startPolling(500)
-    } else {
-      stopPolling()
-      setIsPolling(false)
-    }
-  }, [
-    currentVault?.shortAmount.toString(),
-    currentVault?.collateralAmount.toString(),
-    isPolling,
-    prevVault?.shortAmount.toString(),
-    prevVault?.collateralAmount.toString(),
-    startPolling,
-    stopPolling,
-  ])
 
   useAppEffect(() => {
     subscribeToMore({
@@ -69,7 +36,7 @@ export const useVaultManager = () => {
         ownerId: address ?? '',
       },
       updateQuery(prev, { subscriptionData }) {
-        if (!subscriptionData.data || subscriptionData.data.vaults.length === data?.vaults.length) return prev
+        if (!subscriptionData.data) return prev
         const newVaults = subscriptionData.data.vaults
         return { vaults: newVaults }
       },
@@ -88,8 +55,5 @@ export const useVaultManager = () => {
       operator,
     }))
 
-  return useAppMemo(
-    () => ({ vaults: vaultsData, loading: loading || isPolling, updateVault }),
-    [vaultsData, loading, isPolling, updateVault],
-  )
+  return useAppMemo(() => ({ vaults: vaultsData, loading }), [vaultsData, loading])
 }
