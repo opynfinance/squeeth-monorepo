@@ -452,6 +452,9 @@ export const useRebalanceGeneralSwap = () => {
       const uniTokenId = vaultBefore?.NFTCollateralId 
       const position = await getPosition(uniTokenId)
       if (!controllerContract || !controllerHelperContract || !address || !position || !vaultBefore) return
+      const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
+      const debtInEth = await getDebtAmount(shortAmount)
+      const collateralToFlashloan = debtInEth.multipliedBy(1.5)
 
       const amount0Min = new BigNumber(0)
       const amount1Min = new BigNumber(0)
@@ -484,7 +487,9 @@ export const useRebalanceGeneralSwap = () => {
 
       // Calculate difference new position
       const wethAmountInLPAfter = isWethToken0 ? newAmount0 : newAmount1
-      console.log("wethAmountInLPAfter", wethAmountInLPAfter)
+      console.log("wethAmountInLPAfter", wethAmountInLPAfter.toFixed(0))
+      const wPowerPerpAmountInLPAfter = isWethToken0 ? newAmount1 : newAmount0
+      console.log("wPowerPerpAmountInLPAfter", wPowerPerpAmountInLPAfter.toFixed(0))
       console.log("wethAmountToLP", wethAmountInLPAfter.toFixed(0))
       const needMoreWeth = new BigNumber(wethAmountInLPBefore).lt(new BigNumber(wethAmountInLPAfter))
       console.log("needMoreWeth", needMoreWeth)
@@ -553,7 +558,7 @@ export const useRebalanceGeneralSwap = () => {
               controllerHelper,
               squeethPool,
               vaultId,
-              0,
+              wPowerPerpAmountInLPAfter.toFixed(0),
               0,
               wethAmountInLPAfter.toFixed(0),
               amount0Min.toFixed(0),
@@ -566,7 +571,7 @@ export const useRebalanceGeneralSwap = () => {
       ]
       return handleTransaction(
         await controllerHelperContract.methods
-          .rebalanceLpInVault(vaultId, fromTokenAmount(100, WETH_DECIMALS).toFixed(0), rebalanceLpInVaultParams)
+          .rebalanceLpInVault(vaultId, collateralToFlashloan.toFixed(0), rebalanceLpInVaultParams)
           .send({
             from: address,
           }),
