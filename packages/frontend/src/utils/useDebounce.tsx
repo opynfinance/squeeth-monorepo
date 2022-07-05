@@ -1,10 +1,11 @@
 import BigNumber from 'bignumber.js'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import useAppEffect from '@hooks/useAppEffect'
 
 export default function useDebounce<T extends Number | BigNumber | String | Boolean>(value: T, delay: number) {
   // State and setters for debounced value
   const [debouncedValue, setDebouncedValue] = useState(value)
-  useEffect(
+  useAppEffect(
     () => {
       // Update debounced value after delay
       const handler = setTimeout(() => {
