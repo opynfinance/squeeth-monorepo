@@ -15,9 +15,15 @@ import { SqueethTab, SqueethTabs } from '@components/Tabs'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useAtomValue } from 'jotai'
-import { useOpenPositionDeposit } from 'src/state/lp/hooks'
+import { useClosePosition, useOpenPositionDeposit, useRebalanceVault, useRebalanceGeneralSwap, useRebalance } from 'src/state/lp/hooks'
+import { useCollectFees } from 'src/state/lp/hooks'
 import BigNumber from 'bignumber.js'
 import useAppCallback from '@hooks/useAppCallback'
+import { useFirstValidVault } from 'src/state/positions/hooks'
+import { useGetTwapSqueethPrice, useUpdateOperator } from 'src/state/controller/hooks'
+import { addressesAtom } from 'src/state/positions/atoms'
+import useAppEffect from '@hooks/useAppEffect'
+import { CONTROLLER_HELPER } from '@constants/address'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -87,21 +93,68 @@ const useStyles = makeStyles((theme) =>
 )
 
 export function LPCalculator() {
+  const [isVaultApproved, setIsVaultApproved] = useState(true)
   const classes = useStyles()
   const { isRestricted } = useRestrictUser()
   const ethPrice = useETHPrice()
   const [lpType, setLpType] = useState(0)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
+  const squeethPrice = useGetTwapSqueethPrice()
   const openLPPosition = useOpenPositionDeposit()
+  const closeLPPosition = useClosePosition()
+  const collectFees = useCollectFees()
+  const rebalanceVault = useRebalanceVault()
+  const rebalanceSwap = useRebalanceGeneralSwap()
+  const rebalance = useRebalance()
+  const { vaultId, validVault: vault } = useFirstValidVault()
 
   const openPos = useAppCallback(async () => {
     try {
-      await openLPPosition(new BigNumber(50), -887220, 887220, () => {})
+      await openLPPosition(new BigNumber(50), -887220, 887220, 0, () => {})
     } catch (e) {
       console.log(e)
     }
-  }, [])
+  }, [vaultId, squeethPrice])
 
+  const collFees = useAppCallback(async () => {
+    try {
+      await collectFees(Number(682), () => {})
+    } catch (e) {
+      console.log(e)
+    }
+  }, [vaultId])
+
+  const closePos = useAppCallback(async () => {
+    try {
+      await closeLPPosition(Number(682), () => {})
+    } catch (e) {
+      console.log(e)
+    }
+  }, [vaultId])
+
+  const rebalVault = useAppCallback(async () => {
+    try {
+      await rebalanceVault(Number(682), -887220, 887220, () => {})
+    } catch (e) {
+      console.log(e)
+    }
+  }, [vaultId])
+
+  const rebalSwap = useAppCallback(async () => {
+    try {
+      await rebalanceSwap(Number(682), -887220, 887220, () => {})
+    } catch (e) {
+      console.log(e)
+    }
+  }, [vaultId])
+
+  const rebal = useAppCallback(async () => {
+    try {
+      await rebalance(Number(682), -887220, 887220, () => {})
+    } catch (e) {
+      console.log(e)
+    }
+  }, [vaultId])
 
   return (
     <div>
@@ -188,6 +241,62 @@ export function LPCalculator() {
                 >
                   {'Open Mint and Deposit LP Position'}
                 </Button>
+
+                <Button
+                  onClick={collFees}
+                  style={{
+                    width: '300px',
+                    color: 'gray',
+                    backgroundColor: '#a9fbf6',
+                  }}
+                >
+                  {'Collect Fees'}
+                </Button>
+
+                <Button
+                  onClick={closePos}
+                  style={{
+                    width: '300px',
+                    color: 'gray',
+                    backgroundColor: '#a9fbf6',
+                  }}
+                >
+                  {'Close LP Position'}
+                </Button>
+
+                <Button
+                  onClick={rebalVault}
+                  style={{
+                    width: '300px',
+                    color: 'gray',
+                    backgroundColor: '#a9fbf6',
+                  }}
+                >
+                  {'Rebalance Vault Position'}
+                </Button>
+
+                <Button
+                  onClick={rebalSwap}
+                  style={{
+                    width: '300px',
+                    color: 'gray',
+                    backgroundColor: '#a9fbf6',
+                  }}
+                >
+                  {'Rebalance General Swap'}
+                </Button>
+
+                <Button
+                  onClick={rebal}
+                  style={{
+                    width: '300px',
+                    color: 'gray',
+                    backgroundColor: '#a9fbf6',
+                  }}
+                >
+                  {'Rebalance Easy'}
+                </Button>
+
               </div>
             ) : (
               <div style={{ marginTop: '16px' }}>
