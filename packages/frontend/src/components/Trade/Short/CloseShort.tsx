@@ -178,10 +178,7 @@ export const CloseShort = () => {
   }, [controllerHelper, vault, vaultId])
 
   if (connected) {
-    if (
-      (vault?.shortAmount && vault?.shortAmount.lt(0) && vault?.shortAmount.lt(amount)) ||
-      (vault?.shortAmount && amount.gt(vault.shortAmount))
-    ) {
+    if (vault?.shortAmount && amount.gt(vault.shortAmount)) {
       closeError = 'Close amount exceeds position'
     }
     if (new BigNumber(sellCloseQuote.priceImpact).gt(3)) {
