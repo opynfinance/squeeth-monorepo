@@ -169,7 +169,7 @@ export const OpenShortPosition = () => {
   const { cancelled, confirmed, failed, transactionData, resetTxCancelled, resetTransactionData } =
     useTransactionStatus()
   const [isVaultHistoryUpdating, setVaultHistoryUpdating] = useAtom(vaultHistoryUpdatingAtom)
-  const { updateVault, loading: vaultIDLoading } = useVaultManager()
+  const { loading: vaultIDLoading } = useVaultManager()
   const vaultHistoryQuery = useVaultHistoryQuery(Number(vaultId), isVaultHistoryUpdating)
   const { existingCollatPercent, existingLiqPrice } = useVaultData(vault)
   const updateOperator = useUpdateOperator()
@@ -383,7 +383,6 @@ export const OpenShortPosition = () => {
             setShortLoading(false)
             vaultHistoryQuery.refetch({ vaultId })
             setNewCollat(BIG_ZERO)
-            updateVault()
           },
         )
       }
@@ -405,7 +404,6 @@ export const OpenShortPosition = () => {
     setTradeCompleted,
     setTradeSuccess,
     setVaultHistoryUpdating,
-    updateVault,
     vaultHistoryQuery,
     vaultIDLoading,
     vaultId,

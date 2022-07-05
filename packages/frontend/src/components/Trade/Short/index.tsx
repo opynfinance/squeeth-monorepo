@@ -16,7 +16,6 @@ import React, { memo, useState } from 'react'
 
 import { CloseType, Tooltips, Links } from '@constants/enums'
 import useShortHelper from '@hooks/contracts/useShortHelper'
-import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import { PrimaryButton } from '@components/Button'
 import CollatRange from '@components/CollatRange'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
@@ -261,7 +260,6 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
 
   const { loading: isPositionFinishedCalc } = useLPPositionsQuery()
-  const { updateVault } = useVaultManager()
   const { validVault: vault, vaultId } = useFirstValidVault()
   const { existingCollatPercent } = useVaultData(vault)
   const setCollatRatio = useUpdateAtom(collatRatioAtom)
@@ -340,7 +338,6 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
           setIsVaultApproved(false)
           localStorage.removeItem('collatPercent')
           setVaultHistoryUpdating(true)
-          updateVault()
           vaultHistoryQuery.refetch({ vaultId })
         })
       }
@@ -350,7 +347,6 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
     }
   }, [
     amount,
-    updateVault,
     closeShort,
     collatPercent,
     getDebtAmount,
