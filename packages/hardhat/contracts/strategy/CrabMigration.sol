@@ -373,7 +373,7 @@ contract CrabMigration is Ownable {
      * @notice get migration details for given amount of V1 shares
      * @return bool for eth needed for V2 <= eth received from V1
      * @return eth needed for V2
-     * @return wPowerPerp to pay to close V1 
+     * @return wPowerPerp to pay to close V1
      * @return eth to receive from V1
      */
     function _flashMigrationDetails(uint256 _v1Shares)
