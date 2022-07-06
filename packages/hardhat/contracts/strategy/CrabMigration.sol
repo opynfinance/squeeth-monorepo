@@ -120,6 +120,7 @@ contract CrabMigration is Ownable {
         weth = WETH9(_weth);
         dToken = _dToken;
         wPowerPerp = crabV1.wPowerPerp();
+        weth.approve(EULER_MAINNET, type(uint256).max);
     }
 
     /**
@@ -185,7 +186,6 @@ contract CrabMigration is Ownable {
 
         // 4. Repay the weth:
         weth.deposit{value: data.amountToBorrow}();
-        weth.approve(EULER_MAINNET, type(uint256).max);
         IDToken(dToken).repay(0, data.amountToBorrow);
     }
 
