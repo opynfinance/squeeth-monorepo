@@ -92,7 +92,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     uint256 public otcPriceTolerance = 5e16; // 5%
 
     // @dev OTC price tolerance cannot exceed 20%
-    uint256 public maxOTCPriceTolerance = 2e17; // 20%
+    uint256 public immutable maxOTCPriceTolerance = 2e17; // 20%
 
     /// @dev twap period to use for hedge calculations
     uint32 public hedgingTwapPeriod = 420 seconds;
