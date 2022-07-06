@@ -173,7 +173,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         require(_ethWSqueethPool != address(0), "invalid ETH:WSqueeth address");
         require(_crabMigration != address(0), "invalid crabMigration address");
         require(_hedgeTimeThreshold > 0, "invalid hedge time threshold");
-        require( (_hedgePriceThreshold > 0) && (_hedgePriceThreshold <= ONE), "invalid hedge price threshold");
+        require((_hedgePriceThreshold > 0) && (_hedgePriceThreshold <= ONE), "invalid hedge price threshold");
 
         oracle = _oracle;
         ethWSqueethPool = _ethWSqueethPool;
@@ -397,7 +397,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @param _hedgePriceThreshold the hedge price threshold, in percent, scaled by 1e18
      */
     function setHedgePriceThreshold(uint256 _hedgePriceThreshold) external onlyOwner {
-        require( (_hedgePriceThreshold > 0) && (_hedgePriceThreshold <= ONE), "invalid hedge price threshold");
+        require((_hedgePriceThreshold > 0) && (_hedgePriceThreshold <= ONE), "invalid hedge price threshold");
 
         hedgePriceThreshold = _hedgePriceThreshold;
 
