@@ -102,7 +102,7 @@ contract CrabMigration is Ownable {
      * @param _crabV1 address of crab V1
      * @param _weth address of weth
      * @param _eulerExec address of euler exec contract
-     * @param _dToken address of euler deposit token
+     * @param _dToken address of euler liability token
      * @param _eulerMainnet address of euler deployment on mainnet
      */
     constructor(
