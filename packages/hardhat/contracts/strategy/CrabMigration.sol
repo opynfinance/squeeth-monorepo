@@ -196,12 +196,7 @@ contract CrabMigration is Ownable {
             uint256 wSqueethToMint = crabV1.getWsqueethFromCrabAmount(crabV1Balance);
             uint256 timeAtLastHedge = crabV1.timeAtLastHedge();
             uint256 priceAtLastHedge = crabV1.priceAtLastHedge();
-            crabV2.initialize{value: _amount}(
-                wSqueethToMint,
-                crabV1Balance,
-                timeAtLastHedge,
-                priceAtLastHedge
-            );
+            crabV2.initialize{value: _amount}(wSqueethToMint, crabV1Balance, timeAtLastHedge, priceAtLastHedge);
 
             // 3. call withdraw from crab v1
             IERC20(wPowerPerp).approve(address(crabV1), type(uint256).max);
