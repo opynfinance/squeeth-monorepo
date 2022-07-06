@@ -379,10 +379,6 @@ export const useRebalanceGeneralSwap = () => {
       const sqrtSqueethPrice = new BigNumber(sqrtPriceX96.toString()).div(x96)
       console.log("sqrtSqueethPrice", sqrtSqueethPrice.toString())
 
-      // Walls
-      const upperDifference = sqrtUpperPrice.minus(sqrtSqueethPrice)
-      const lowerDifference = sqrtSqueethPrice.minus(sqrtLowerPrice)
-      
       let newAmount0
       let newAmount1
       if (sqrtUpperPrice.lt(sqrtSqueethPrice)) {
@@ -414,8 +410,8 @@ export const useRebalanceGeneralSwap = () => {
       const tokenIn = needMoreWeth ? oSqueeth : weth
       const tokenOut = needMoreWeth ? weth : oSqueeth
 
-      const amountIn = needMoreWeth ? new BigNumber(wPowerPerpAmountInLPAfter).minus(new BigNumber(wPowerPerpAmountInLPBefore)).toFixed(0)
-                                    : new BigNumber(wethAmountInLPBefore).minus(new BigNumber(wethAmountInLPAfter)).toFixed(0)
+      const amountIn = needMoreWeth ? new BigNumber(wPowerPerpAmountInLPAfter).minus(new BigNumber(wPowerPerpAmountInLPBefore)).absoluteValue().toFixed(0)
+                                    : new BigNumber(wethAmountInLPBefore).minus(new BigNumber(wethAmountInLPAfter)).absoluteValue().toFixed(0)
       console.log("amountIn", amountIn)
 
       console.log("1st", [
