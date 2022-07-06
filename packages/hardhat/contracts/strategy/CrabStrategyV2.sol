@@ -65,9 +65,6 @@ import {ECDSA} from "@openzeppelin/contracts/cryptography/ECDSA.sol";
 
 */
 
- 
-
-
 /**
  * @dev CrabStrategyV2 contract
  * @notice Contract for Crab strategy
@@ -92,7 +89,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     uint256 public otcPriceTolerance = 5e16; // 5%
 
     // @dev OTC price tolerance cannot exceed 20%
-    uint256 public immutable maxOTCPriceTolerance = 2e17; // 20%
+    uint256 public constant maxOTCPriceTolerance = 2e17; // 20%
 
     /// @dev twap period to use for hedge calculations
     uint32 public hedgingTwapPeriod = 420 seconds;
@@ -746,15 +743,9 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, hedgingTwapPeriod, true);
 
         if (_isHedgeBuying) {
-            require(
-                _price <= wSqueethEthPrice.wmul((ONE.add(otcPriceTolerance))),
-                "E30"
-            );
+            require(_price <= wSqueethEthPrice.wmul((ONE.add(otcPriceTolerance))), "E30");
         } else {
-            require(
-                _price >= wSqueethEthPrice.wmul((ONE.sub(otcPriceTolerance))),
-                "E31"
-            );
+            require(_price >= wSqueethEthPrice.wmul((ONE.sub(otcPriceTolerance))), "E31");
         }
     }
 
