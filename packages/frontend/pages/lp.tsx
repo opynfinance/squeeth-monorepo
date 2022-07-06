@@ -15,7 +15,7 @@ import { SqueethTab, SqueethTabs } from '@components/Tabs'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useAtomValue } from 'jotai'
-import { useClosePosition, useOpenPositionDeposit, useRebalanceVault, useRebalanceGeneralSwap, useRebalance } from 'src/state/lp/hooks'
+import { useClosePosition, useOpenPositionDeposit, useRebalanceVault, useRebalanceGeneralSwap } from 'src/state/lp/hooks'
 import { useCollectFees } from 'src/state/lp/hooks'
 import BigNumber from 'bignumber.js'
 import useAppCallback from '@hooks/useAppCallback'
@@ -105,7 +105,6 @@ export function LPCalculator() {
   const collectFees = useCollectFees()
   const rebalanceVault = useRebalanceVault()
   const rebalanceSwap = useRebalanceGeneralSwap()
-  const rebalance = useRebalance()
   const { vaultId, validVault: vault } = useFirstValidVault()
 
   const openPos = useAppCallback(async () => {
@@ -142,19 +141,12 @@ export function LPCalculator() {
 
   const rebalSwap = useAppCallback(async () => {
     try {
-      await rebalanceSwap(Number(682), -887220, 887220, () => {})
+      await rebalanceSwap(Number(682), 0, 3000, () => {})
     } catch (e) {
       console.log(e)
     }
   }, [vaultId])
 
-  const rebal = useAppCallback(async () => {
-    try {
-      await rebalance(Number(682), -887220, 887220, () => {})
-    } catch (e) {
-      console.log(e)
-    }
-  }, [vaultId])
 
   return (
     <div>
@@ -284,17 +276,6 @@ export function LPCalculator() {
                   }}
                 >
                   {'Rebalance General Swap'}
-                </Button>
-
-                <Button
-                  onClick={rebal}
-                  style={{
-                    width: '300px',
-                    color: 'gray',
-                    backgroundColor: '#a9fbf6',
-                  }}
-                >
-                  {'Rebalance Easy'}
                 </Button>
 
               </div>
