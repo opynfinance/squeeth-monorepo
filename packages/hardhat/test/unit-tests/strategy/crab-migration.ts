@@ -12,7 +12,9 @@ describe("Crab Migration", function () {
     let crabMigration: CrabMigration;
 
     let weth: MockErc20;
+    let usdc: MockErc20;
     let dToken: MockEulerDToken;
+    let dTokenUsdc: MockEulerDToken;
     let euler: MockEuler;
 
     let provider: providers.JsonRpcProvider;
@@ -39,8 +41,14 @@ describe("Crab Migration", function () {
         const MockErc20Contract = await ethers.getContractFactory("MockErc20");
         weth = (await MockErc20Contract.deploy("WETH", "WETH", 18)) as MockErc20;
 
+        const MockNonWethErc20Contract = await ethers.getContractFactory("MockErc20");
+        usdc = (await MockNonWethErc20Contract.deploy("USDC", "USDC", 18)) as MockErc20;
+
         const MockEulerDTokenContract = await ethers.getContractFactory("MockEulerDToken");
         dToken = (await MockEulerDTokenContract.deploy(weth.address)) as MockEulerDToken;
+
+        const MockIncorrectEulerDTokenContract = await ethers.getContractFactory("MockEulerDToken");
+        dTokenUsdc = (await MockIncorrectEulerDTokenContract.deploy(usdc.address)) as MockEulerDToken;
 
         const MockEulerContract = await ethers.getContractFactory("MockEuler");
         euler = (await MockEulerContract.deploy()) as MockEuler;
@@ -59,11 +67,19 @@ describe("Crab Migration", function () {
         await crabStrategyV1.setVaultDetails(1, collateral, collateral.div(2));
     })
 
-    this.beforeAll("Deploy Migration Crab", async () => { 
-        const MigrationContract = await ethers.getContractFactory("CrabMigration");
-        crabMigration = (await MigrationContract.connect(owner).deploy(crabStrategyV1.address, weth.address, euler.address, dToken.address, euler.address)) as CrabMigration;
-        
+    describe("Deployment tests", async() => { 
+
+        it("should revert if deploying to a dToken that is not weth", async () => { 
+            const MigrationContract = await ethers.getContractFactory("CrabMigration");
+            await expect(MigrationContract.connect(owner).deploy(crabStrategyV1.address, weth.address, euler.address, dTokenUsdc.address, euler.address)).to.be.revertedWith("dToken address is wrong");
+            })
+
+        it("should deploy if correct dToken is specified", async () => { 
+            const MigrationContract = await ethers.getContractFactory("CrabMigration");
+            crabMigration = (await MigrationContract.connect(owner).deploy(crabStrategyV1.address, weth.address, euler.address, dToken.address, euler.address)) as CrabMigration;
+            })
     })
+  
 
     describe("Test Migration", async() => { 
 

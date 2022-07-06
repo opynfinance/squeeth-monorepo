@@ -22,6 +22,7 @@ describe("Crab Migration", function () {
 
     let weth: WETH9;
     let dToken: IDToken;
+    //let dTokenIncorrect: IDToken;
     let eulerExec: IEulerExec;
 
     let provider: providers.JsonRpcProvider;
@@ -40,6 +41,7 @@ describe("Crab Migration", function () {
     const eulerMainnetAddress = "0x27182842E098f60e3D576794A5bFFb0777E025d3";
     const eulerExecAddress = "0x59828FdF7ee634AaaD3f58B19fDBa3b03E2D9d80";
     const dTokenAddress = "0x62e28f054efc24b26A794F5C1249B6349454352C";
+    //const dTokenAddressIncorrect = "0xB6f48177a096563F861787cFAFE8243c44FEF592"; //dCVX token
     const wethAddress = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
     const crabV1Address = "0xf205ad80BB86ac92247638914265887A8BAa437D";
     const crabV1Whale = "0x7ba50e6f1fc2bddfaad95b6bb9947949a588a038";
@@ -75,6 +77,7 @@ describe("Crab Migration", function () {
     this.beforeAll("Setup environment", async () => {
         weth = await ethers.getContractAt("WETH9", wethAddress);
         dToken = await ethers.getContractAt("IDToken", dTokenAddress);
+        //dTokenIncorrect = await ethers.getContractAt("IDToken", dTokenAddressIncorrect);
         eulerExec = await ethers.getContractAt("IEulerExec", eulerExecAddress);
         crabStrategyV1 = await ethers.getContractAt("CrabStrategy", crabV1Address);
         controller = await ethers.getContractAt("Controller", squeethControllerAddress);
@@ -127,6 +130,13 @@ describe("Crab Migration", function () {
         await provider.send('evm_mine', []);
         await provider.send('hardhat_stopImpersonatingAccount', [crabV1Whale5]);
     })
+
+/*     this.beforeAll("Deploy Incorrect Crab Migration", async () => {
+        const MigrationContract = await ethers.getContractFactory("CrabMigration");
+        //await expect(MigrationContract.deploy(crabV1Address, wethAddress, eulerExecAddress, dTokenAddress, eulerMainnetAddress)).to.be.revertedWith("dToken address is wrong");
+        crabMigration = (await MigrationContract.deploy(crabV1Address, wethAddress, eulerExecAddress, dTokenAddress, eulerMainnetAddress)) as CrabMigration;
+
+    }) */
 
     this.beforeAll("Deploy Crab Migration", async () => {
         const MigrationContract = await ethers.getContractFactory("CrabMigration");
