@@ -135,7 +135,7 @@ describe("Crab Migration", function () {
         timelock = (await TimelockContract.deploy(owner.address, 3 * 24 * 60 * 60)) as Timelock;
         const CrabContract = await ethers.getContractFactory("CrabStrategyV2");
         crabStrategyV2 = (await CrabContract.deploy(
-            squeethControllerAddress,
+            squeethControllerAddress, 
             oracleAddress,
             wethAddress,
             uniswapFactoryAddress,
@@ -144,7 +144,6 @@ describe("Crab Migration", function () {
             crabMigration.address,
             1,
             1)) as CrabStrategyV2;
-        await crabStrategyV2.setStrategyCap(ethers.utils.parseEther("1000.0"));
         await crabMigration.connect(owner).setCrabV2(crabStrategyV2.address);
     })
 
@@ -207,7 +206,7 @@ describe("Crab Migration", function () {
             const crabV1VaultDetailsBefore = await crabStrategyV1.getVaultDetails();
             const crabV2VaultDetailsBefore = await crabStrategyV2.getVaultDetails();
 
-            await crabMigration.batchMigrate();
+            await crabMigration.batchMigrate(ethers.utils.parseEther("1000.0"));
 
             // 1. check crab V1 shares in Migration before and after
             const crabV1SharesBalanceAfter = await crabStrategyV1.balanceOf(crabMigration.address);
@@ -522,7 +521,6 @@ describe("Crab Migration", function () {
                     1,
                     1)) as CrabStrategyV2;
 
-                await crabStrategyV2.setStrategyCap(ethers.utils.parseEther("1000.0"));
                 await crabMigration.connect(owner).setCrabV2(crabStrategyV2.address);
             })
 
@@ -548,7 +546,7 @@ describe("Crab Migration", function () {
             })
 
             it("Batch migrate", async () => {
-                await crabMigration.batchMigrate()
+                await crabMigration.batchMigrate(ethers.utils.parseEther("1000.0"))
 
                 const crabV2SupplyAfter = await crabStrategyV2.totalSupply();
                 const crabV1SharesBalanceAfter = await crabStrategyV1.balanceOf(crabMigration.address);
@@ -703,7 +701,6 @@ describe("Crab Migration", function () {
                     1,
                     1)) as CrabStrategyV2;
 
-                await crabStrategyV2.setStrategyCap(ethers.utils.parseEther("1000.0"));
                 await crabMigration.connect(owner).setCrabV2(crabStrategyV2.address);
             })
 
@@ -729,7 +726,7 @@ describe("Crab Migration", function () {
             })
 
             it("Batch migrate", async () => {
-                await crabMigration.batchMigrate()
+                await crabMigration.batchMigrate(ethers.utils.parseEther("1000.0"))
 
                 const crabV2SupplyAfter = await crabStrategyV2.totalSupply();
                 const crabV1SharesBalanceAfter = await crabStrategyV1.balanceOf(crabMigration.address);
@@ -902,7 +899,6 @@ describe("Crab Migration", function () {
                     1,
                     1)) as CrabStrategyV2;
 
-                await crabStrategyV2.setStrategyCap(ethers.utils.parseEther("1000.0"));
                 await crabMigration.connect(owner).setCrabV2(crabStrategyV2.address);
             })
 
@@ -922,7 +918,7 @@ describe("Crab Migration", function () {
             })
 
             it("Batch migrate", async () => {
-                await crabMigration.batchMigrate()
+                await crabMigration.batchMigrate(ethers.utils.parseEther("1000.0"))
 
                 const crabV2SupplyAfter = await crabStrategyV2.totalSupply();
                 const crabV1SharesBalanceAfter = await crabStrategyV1.balanceOf(crabMigration.address);
