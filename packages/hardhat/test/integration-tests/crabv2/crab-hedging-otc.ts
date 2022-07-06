@@ -824,7 +824,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
             await expect(
                 crabStrategyV2.connect(owner).hedgeOTC(toSell, oSQTHPrice, true, [signedOrder])
-            ).to.be.revertedWith("Time or Price is not within range");
+            ).to.be.revertedWith("C22");
         });
         it("should revert when the hedge trade oSQTH price is beyond threshold", async () => {
             // set the time to 1 hr from prev hedge
@@ -886,7 +886,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
             await expect(
                 crabStrategyV2.connect(owner).hedgeOTC(toSell, oSQTHPrice, true, [signedOrder])
-            ).to.be.revertedWith("Order has expired");
+            ).to.be.revertedWith("C20");
         });
         it("reverts when order sign is invalid", async () => {
             const trader = random;
@@ -936,7 +936,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const signedOrder = await signTypedData(depositor, domainData, typeData, orderHash);
             await expect(
                 crabStrategyV2.connect(owner).hedgeOTC(toSell, oSQTHPriceAfter, true, [signedOrder])
-            ).to.be.revertedWith("Invalid offer signature");
+            ).to.be.revertedWith("C19");
         });
         it("should revert when the manager Buy price is lesser than the traders price", async () => {
             await crabStrategyV2.connect(owner).setHedgePriceThreshold(BigNumber.from(10).pow(16).mul(5));
@@ -966,7 +966,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const managerBuyPrice = oSQTHPrice.mul(99).div(100);
             await expect(
                 crabStrategyV2.connect(owner).hedgeOTC(toSell, managerBuyPrice, true, [signedOrder])
-            ).to.be.revertedWith("Clearing Price should be above offer price");
+            ).to.be.revertedWith("C18");
         });
         it("manager buy price should be greater than 0", async () => {
             // set the time to 1 hr from prev hedge
@@ -995,7 +995,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const managerBuyPrice = 0;
             await expect(
                 crabStrategyV2.connect(owner).hedgeOTC(toSell, managerBuyPrice, true, [signedOrder])
-            ).to.be.revertedWith("Manager Price should be greater than 0");
+            ).to.be.revertedWith("C21");
 
             // reverting this back to one percent
             await crabStrategyV2.connect(owner).setHedgePriceThreshold(BigNumber.from(10).pow(16).mul(1));
@@ -1046,24 +1046,24 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             // Do the trade
             await expect(
                 crabStrategyV2.connect(owner).hedgeOTC(toSell, oSQTHPriceAfter, false, [signedOrder, signedOrder1])
-            ).to.be.revertedWith("Orders are not arranged properly");
+            ).to.be.revertedWith("C25");
         });
         it("should allow manager to set thresholds", async () => {
             await expect(crabStrategyV2.connect(owner).setHedgingTwapPeriod(120)).to.be.revertedWith(
-                "twap period is too short"
+                "C14"
             );
             await crabStrategyV2.connect(owner).setHedgingTwapPeriod(190);
             expect(await crabStrategyV2.hedgingTwapPeriod()).to.eq(190);
 
             await expect(crabStrategyV2.connect(owner).setHedgeTimeThreshold(0)).to.be.revertedWith(
-                "invalid hedge time threshold"
+                "C7"
             );
             await crabStrategyV2.connect(owner).setHedgeTimeThreshold(9000);
             expect(await crabStrategyV2.hedgeTimeThreshold()).to.eq(9000);
 
             await expect(
                 crabStrategyV2.connect(owner).setOTCPriceTolerance(BigNumber.from(10).pow(17).mul(3))
-            ).to.be.revertedWith("price tolerance is too high");
+            ).to.be.revertedWith("C15");
             await crabStrategyV2.connect(owner).setOTCPriceTolerance(BigNumber.from(10).pow(17));
             expect((await crabStrategyV2.otcPriceTolerance()).eq(BigNumber.from(10).pow(17))).to.be.true;
         });

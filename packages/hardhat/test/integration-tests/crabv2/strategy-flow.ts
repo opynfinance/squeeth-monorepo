@@ -138,7 +138,7 @@ describe("Crab V2 integration test: flash deposit - deposit - withdraw", functio
 
       await expect(
         crabStrategy.connect(depositor).flashDeposit(ethToDeposit, { value: msgvalue })
-      ).to.be.revertedWith("Deposit exceeds strategy cap");
+      ).to.be.revertedWith("C16");
     })
   })
 

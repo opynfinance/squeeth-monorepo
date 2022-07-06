@@ -204,7 +204,7 @@ describe("Crab V2 integration test: Shutdown of Squeeth Power Perp contracts", f
 
     it("should NOT let user withdrawShutdown pre shutdown, pre redeemShortShutdown", async () => {
       const userCrabBalanceBefore = await crabStrategy.balanceOf(depositor.address);
-      await expect(crabStrategy.connect(depositor).withdrawShutdown(userCrabBalanceBefore)).to.be.revertedWith("Squeeth contracts not shut down")
+      await expect(crabStrategy.connect(depositor).withdrawShutdown(userCrabBalanceBefore)).to.be.revertedWith("C12")
     })
 
     it('shutdown contracts', async () => {
@@ -216,7 +216,7 @@ describe("Crab V2 integration test: Shutdown of Squeeth Power Perp contracts", f
 
     it("should NOT let user withdrawShutdown post shutdown, pre redeemShortShutdown", async () => {
       const userCrabBalanceBefore = await crabStrategy.balanceOf(depositor.address);
-      await expect(crabStrategy.connect(depositor).withdrawShutdown(userCrabBalanceBefore)).to.be.revertedWith("Crab must redeemShortShutdown")
+      await expect(crabStrategy.connect(depositor).withdrawShutdown(userCrabBalanceBefore)).to.be.revertedWith("C13")
     })
 
     it("anyone should be able to call redeemShortShutdown", async () => {
@@ -269,13 +269,13 @@ describe("Crab V2 integration test: Shutdown of Squeeth Power Perp contracts", f
       expect(collateralBefore.eq(BigNumber.from(0))).to.be.true
       expect(debtBefore.eq(BigNumber.from(0))).to.be.true
 
-      await expect(crabStrategy.connect(depositor2).flashDeposit(ethToDeposit, { value: msgvalue })).to.be.revertedWith("Crab contracts shut down")
+      await expect(crabStrategy.connect(depositor2).flashDeposit(ethToDeposit, { value: msgvalue })).to.be.revertedWith("C26")
     })
 
     it("should NOT let user deposit post shutdown", async () => {
       const msgvalue = ethers.utils.parseUnits('15')
 
-      await expect(crabStrategy.connect(depositor2).deposit({ value: msgvalue })).to.be.revertedWith("Crab contracts shut down")
+      await expect(crabStrategy.connect(depositor2).deposit({ value: msgvalue })).to.be.revertedWith("C26")
     })
 
     it("depositor should revert trying to flashWithdraw with AS due to amount of wSqueeth to buy being 0", async () => {

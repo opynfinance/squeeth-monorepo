@@ -251,7 +251,7 @@ describe("Crab V2 integration test: crab vault full liquidation and shutdown of 
       expect(collateralBefore.eq(BigNumber.from(0))).to.be.true
       expect(debtBefore.eq(BigNumber.from(0))).to.be.true
 
-      await expect(crabStrategy.connect(depositor2).flashDeposit(ethToDeposit, { value: msgvalue })).to.be.revertedWith("Crab contracts shut down")
+      await expect(crabStrategy.connect(depositor2).flashDeposit(ethToDeposit, { value: msgvalue })).to.be.revertedWith("C26")
     })
 
     it("should NOT let user deposit post liquidation", async () => {
@@ -270,7 +270,7 @@ describe("Crab V2 integration test: crab vault full liquidation and shutdown of 
       expect(collateralBefore.eq(BigNumber.from(0))).to.be.true
       expect(debtBefore.eq(BigNumber.from(0))).to.be.true
 
-      await expect(crabStrategy.connect(depositor2).deposit({ value: msgvalue })).to.be.revertedWith("Crab contracts shut down")
+      await expect(crabStrategy.connect(depositor2).deposit({ value: msgvalue })).to.be.revertedWith("C26")
     })
 
     it("depositor should revert trying to flashWithdraw with AS due to amount of wSqueeth to buy being 0", async () => {

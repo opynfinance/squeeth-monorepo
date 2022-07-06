@@ -29,6 +29,36 @@ import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
 import {ECDSA} from "@openzeppelin/contracts/cryptography/ECDSA.sol";
 
 /**
+ * Crab V2 Error Codes:
+ * C1: Caller is not timelock
+ * C2: Contract not yet initialized
+ * C3: Invalid oracle address
+ * C4: Invalid timelock address
+ * C5: Invalid ETH:WSqueeth address
+ * C6: Invalid crabMigration address
+ * C7: Invalid hedge time threshold
+ * C8: Invalid hedge price threshold
+ * C9: Cannot receive ETH
+ * C10: Caller not Crab Migration contract
+ * C11: Crab V2 already initialized
+ * C12: Squeeth contracts not shut down
+ * C13: Crab must redeemShortShutdown
+ * C14: Twap period is too short
+ * C15: Price tolerance is too high
+ * C16: Deposit exceeds strategy cap
+ * C17: Clearing Price should be below bid price
+ * C18: Clearing Price should be above offer price
+ * C19: Invalid offer signature
+ * C20: Order has expired
+ * C21: Manager Price should be greater than 0
+ * C22: Not a valid Time or Price hedge
+ * C23: Orders must take the opposite side of the hedge
+ * C24: All orders must be either buying or selling
+ * C25: Orders are not arranged properly
+ * C26: Crab contracts shut down
+ */
+
+/**
  * @dev CrabStrategyV2 contract
  * @notice Contract for Crab strategy
  * @author Opyn team
@@ -133,12 +163,12 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     event VaultTransferred(address indexed newStrategy, uint256 vaultId);
 
     modifier onlyTimelock() {
-        require(msg.sender == timelock, "Caller is not timelock");
+        require(msg.sender == timelock, "C1");
         _;
     }
 
     modifier afterInitialization() {
-        require(isInitialized, "Contract not yet initialized");
+        require(isInitialized, "C2");
         _;
     }
 
@@ -168,12 +198,12 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         StrategyFlashSwap(_uniswapFactory)
         EIP712("CrabOTC", "2")
     {
-        require(_oracle != address(0), "invalid oracle address");
-        require(_timelock != address(0), "invalid timelock address");
-        require(_ethWSqueethPool != address(0), "invalid ETH:WSqueeth address");
-        require(_crabMigration != address(0), "invalid crabMigration address");
-        require(_hedgeTimeThreshold > 0, "invalid hedge time threshold");
-        require(_hedgePriceThreshold > 0, "invalid hedge price threshold");
+        require(_oracle != address(0), "C3");
+        require(_timelock != address(0), "C4");
+        require(_ethWSqueethPool != address(0), "C5");
+        require(_crabMigration != address(0), "C6");
+        require(_hedgeTimeThreshold > 0, "C7");
+        require(_hedgePriceThreshold > 0, "C8");
 
         oracle = _oracle;
         ethWSqueethPool = _ethWSqueethPool;
@@ -189,7 +219,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @notice receive function to allow ETH transfer to this contract
      */
     receive() external payable {
-        require(msg.sender == weth || msg.sender == address(powerTokenController), "Cannot receive eth");
+        require(msg.sender == weth || msg.sender == address(powerTokenController), "C9");
     }
 
     /**
@@ -201,16 +231,13 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 _timeAtLastHedge,
         uint256 _priceAtLastHedge
     ) external payable {
-        require(msg.sender == crabMigration, "not Crab Migration contract");
-        require(!isInitialized, "Crab V2 already initialized");
+        require(msg.sender == crabMigration, "C10");
+        require(!isInitialized, "C11");
 
         uint256 amount = msg.value;
-        uint256 strategyDebt;
-        uint256 strategyCollateral;
 
-        _checkStrategyCap(amount, strategyCollateral);
+        _checkStrategyCap(amount, 0);
 
-        require((strategyDebt == 0 && strategyCollateral == 0), "C5");
         // store hedge data from crab v1
         timeAtLastHedge = _timeAtLastHedge;
         priceAtLastHedge = _priceAtLastHedge;
@@ -348,8 +375,8 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @param _crabAmount amount of strategy token to burn
      */
     function withdrawShutdown(uint256 _crabAmount) external afterInitialization nonReentrant {
-        require(powerTokenController.isShutDown(), "Squeeth contracts not shut down");
-        require(hasRedeemedInShutdown, "Crab must redeemShortShutdown");
+        require(powerTokenController.isShutDown(), "C12");
+        require(hasRedeemedInShutdown, "C13");
 
         uint256 strategyShare = _calcCrabRatio(_crabAmount, totalSupply());
         uint256 ethToWithdraw = _calcEthToWithdraw(strategyShare, address(this).balance);
@@ -373,7 +400,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @param _hedgingTwapPeriod the twap period, in seconds
      */
     function setHedgingTwapPeriod(uint32 _hedgingTwapPeriod) external onlyOwner {
-        require(_hedgingTwapPeriod >= 180, "twap period is too short");
+        require(_hedgingTwapPeriod >= 180, "C14");
 
         hedgingTwapPeriod = _hedgingTwapPeriod;
 
@@ -385,7 +412,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @param _hedgeTimeThreshold the hedge time threshold, in seconds
      */
     function setHedgeTimeThreshold(uint256 _hedgeTimeThreshold) external onlyOwner {
-        require(_hedgeTimeThreshold > 0, "invalid hedge time threshold");
+        require(_hedgeTimeThreshold > 0, "C7");
 
         hedgeTimeThreshold = _hedgeTimeThreshold;
 
@@ -397,7 +424,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @param _hedgePriceThreshold the hedge price threshold, in percent, scaled by 1e18
      */
     function setHedgePriceThreshold(uint256 _hedgePriceThreshold) external onlyOwner {
-        require(_hedgePriceThreshold > 0, "invalid hedge price threshold");
+        require(_hedgePriceThreshold > 0, "C8");
 
         hedgePriceThreshold = _hedgePriceThreshold;
 
@@ -410,7 +437,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      */
     function setOTCPriceTolerance(uint256 _otcPriceTolerance) external onlyOwner {
         // Tolerance cannot be more than 20%
-        require(_otcPriceTolerance <= maxOTCPriceTolerance, "price tolerance is too high");
+        require(_otcPriceTolerance <= maxOTCPriceTolerance, "C15");
 
         otcPriceTolerance = _otcPriceTolerance;
 
@@ -425,7 +452,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @param _strategyCollateral the updated strategy collateral
      */
     function _checkStrategyCap(uint256 _depositAmount, uint256 _strategyCollateral) internal view {
-        require(_strategyCollateral.add(_depositAmount) <= strategyCap, "Deposit exceeds strategy cap");
+        require(_strategyCollateral.add(_depositAmount) <= strategyCap, "C16");
     }
 
     /**
@@ -595,9 +622,9 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     ) internal {
         // Check order beats clearing price
         if (_order.isBuying) {
-            require(_clearingPrice <= _order.price, "Clearing Price should be below bid price");
+            require(_clearingPrice <= _order.price, "C17");
         } else {
-            require(_clearingPrice >= _order.price, "Clearing Price should be above offer price");
+            require(_clearingPrice >= _order.price, "C18");
         }
 
         bytes32 structHash = keccak256(
@@ -615,8 +642,8 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
         bytes32 hash = _hashTypedDataV4(structHash);
         address offerSigner = ECDSA.recover(hash, _order.v, _order.r, _order.s);
-        require(offerSigner == _order.trader, "Invalid offer signature");
-        require(_order.expiry >= block.timestamp, "Order has expired");
+        require(offerSigner == _order.trader, "C19");
+        require(_order.expiry >= block.timestamp, "C20");
 
         //adjust quantity for partial fills
         if (_remainingAmount < _order.quantity) {
@@ -660,8 +687,8 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         bool _isHedgeBuying,
         Order[] memory _orders
     ) external onlyOwner afterInitialization {
-        require(_clearingPrice > 0, "Manager Price should be greater than 0");
-        require(_isTimeHedge() || _isPriceHedge(), "Time or Price is not within range");
+        require(_clearingPrice > 0, "C21");
+        require(_isTimeHedge() || _isPriceHedge(), "C22");
         _checkOTCPrice(_clearingPrice, _isHedgeBuying);
 
         timeAtLastHedge = block.timestamp;
@@ -671,15 +698,15 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 prevPrice = _orders[0].price;
         uint256 currentPrice = _orders[0].price;
         bool isOrderBuying = _orders[0].isBuying;
-        require(_isHedgeBuying != isOrderBuying, "Orders must be buying when hedge is selling");
+        require(_isHedgeBuying != isOrderBuying, "C23");
 
         for (uint256 i = 0; i < _orders.length; i++) {
             currentPrice = _orders[i].price;
-            require(_orders[i].isBuying == isOrderBuying, "All orders must be either buying or selling");
+            require(_orders[i].isBuying == isOrderBuying, "C24");
             if (_isHedgeBuying) {
-                require(currentPrice >= prevPrice, "Orders are not arranged properly");
+                require(currentPrice >= prevPrice, "C25");
             } else {
-                require(currentPrice <= prevPrice, "Orders are not arranged properly");
+                require(currentPrice <= prevPrice, "C25");
             }
             prevPrice = currentPrice;
 
@@ -759,7 +786,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 wSqueethToMint;
         uint256 feeAdjustment = _calcFeeAdjustment();
         bool isShutdown = (_strategyDebtAmount == 0 && _strategyCollateralAmount == 0) && (totalSupply() != 0);
-        require(!isShutdown, "Crab contracts shut down");
+        require(!isShutdown, "C26");
 
         wSqueethToMint = _depositedAmount.wmul(_strategyDebtAmount).wdiv(
             _strategyCollateralAmount.add(_strategyDebtAmount.wmul(feeAdjustment))
