@@ -115,8 +115,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     address public immutable ethWSqueethPool;
     /// @dev strategy uniswap oracle
     address public immutable oracle;
-    address public immutable ethQuoteCurrencyPool;
-    address public immutable quoteCurrency;
     address public immutable timelock;
     address public immutable crabMigration;
 
@@ -221,7 +219,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         hedgeTimeThreshold = _hedgeTimeThreshold;
         hedgePriceThreshold = _hedgePriceThreshold;
         ethQuoteCurrencyPool = IController(_wSqueethController).ethQuoteCurrencyPool();
-        quoteCurrency = IController(_wSqueethController).quoteCurrency();
         timelock = _timelock;
         crabMigration = _crabMigration;
     }
