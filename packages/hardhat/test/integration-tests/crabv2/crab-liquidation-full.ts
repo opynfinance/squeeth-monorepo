@@ -82,11 +82,6 @@ describe("Crab V2 integration test: crab vault full liquidation and shutdown of 
 
     const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
     crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, uniswapFactory.address, wSqueethPool.address, timelock.address, crabMigration.address, hedgeTimeThreshold, hedgePriceThreshold)) as CrabStrategyV2;
-
-    const strategyCap = ethers.utils.parseUnits("1000")
-    await crabStrategy.connect(owner).setStrategyCap(strategyCap)
-    const strategyCapInContract = await crabStrategy.strategyCap()
-    expect(strategyCapInContract.eq(strategyCap)).to.be.true
   })
 
   this.beforeAll("Seed pool liquidity", async () => {
@@ -126,8 +121,13 @@ describe("Crab V2 integration test: crab vault full liquidation and shutdown of 
     const squeethDelta = ethPrice.mul(2).div(1e4);
     const debtToMint = wdiv(ethToDeposit, squeethDelta);
     const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
+    const strategyCap = ethers.utils.parseUnits("1000")
 
-    await crabStrategy.connect(crabMigration).initialize(debtToMint, ethToDeposit, 0, 0, { value: msgvalue })
+    await crabStrategy.connect(crabMigration).initialize(debtToMint, ethToDeposit, 0, 0, strategyCap, { value: msgvalue })
+    const strategyCapInContract = await crabStrategy.strategyCap()
+    expect(strategyCapInContract.eq(strategyCap)).to.be.true
+
+
     await crabStrategy.connect(crabMigration).transfer(depositor.address, ethToDeposit);
     await wSqueeth.connect(crabMigration).transfer(depositor.address, debtToMint);
 
