@@ -19,18 +19,16 @@ import {StrategyMath} from "./base/StrategyMath.sol";
 
 /**
  * Migration Error Codes:
- * M1: Crab V2 Address already set
- * M2: Migration already happened
- * M3: Migration has not yet happened
- * M4: msg.sender is not Euler Mainnet Contract
- * M5: msg. sender cannot send ETH
- * M6: Can't withdraw more than you own
- * M7: Not enough ETH to repay the loan
- * M8: _ethToBorrow or _withdrawMaxEthToPay can't be 0
- * M9: invalid crabV2 address
- * M10: crab v2 address not yet set
- * M11: Wrong migration function, use flashMigrateAndWithdrawFromV1toV2
- * M12: Wrong migration function, use flashMigrateFromV1toV2
+ * M1: Migration already happened
+ * M2: Migration has not yet happened
+ * M3: msg.sender is not Euler Mainnet Contract
+ * M4: msg. sender cannot send ETH
+ * M5: Can't withdraw more than you own
+ * M6: Not enough ETH to repay the loan
+ * M7: _ethToBorrow or _withdrawMaxEthToPay can't be 0
+ * M8: invalid crabV2 address
+ * M9: Wrong migration function, use flashMigrateAndWithdrawFromV1toV2
+ * M10: Wrong migration function, use flashMigrateFromV1toV2
  */
 
 /**
@@ -85,17 +83,17 @@ contract CrabMigration is Ownable {
     event ClaimAndWithdraw(address indexed user, uint256 crabAmount);
 
     modifier beforeMigration() {
-        require(!isMigrated, "M2");
+        require(!isMigrated, "M1");
         _;
     }
 
     modifier afterMigration() {
-        require(isMigrated, "M3");
+        require(isMigrated, "M2");
         _;
     }
 
     modifier afterInitialized() {
-        require(address(crabV2) != address(0), "M8");
+        require(address(crabV2) != address(0), "M7");
         _;
     }
 
@@ -127,8 +125,7 @@ contract CrabMigration is Ownable {
      * @param _crabV2 address of crab v2
      */
     function setCrabV2(address payable _crabV2) external onlyOwner {
-        require(address(crabV2) == address(0), "M1");
-        require(_crabV2 != address(0), "M9");
+        require(_crabV2 != address(0), "M8");
         crabV2 = CrabStrategyV2(_crabV2);
     }
 
@@ -172,7 +169,7 @@ contract CrabMigration is Ownable {
     }
 
     function onDeferredLiquidityCheck(bytes memory encodedData) external afterInitialized {
-        require(msg.sender == EULER_MAINNET, "M4");
+        require(msg.sender == EULER_MAINNET, "M3");
 
         FlashloanCallbackData memory data = abi.decode(encodedData, (FlashloanCallbackData));
 
@@ -252,7 +249,7 @@ contract CrabMigration is Ownable {
             crabV1.withdraw(crabV1ToWithdraw);
 
             crabV1.flashWithdraw(data.crabV1ToWithdraw.sub(crabV1ToWithdraw), data.withdrawMaxEthToPay);
-            require(address(this).balance >= _amount, "M7");
+            require(address(this).balance >= _amount, "M6");
 
             if (data.ethToFlashDeposit > 0) {
                 crabV2.flashDeposit{value: address(this).balance.sub(_amount)}(data.ethToFlashDeposit);
@@ -288,7 +285,7 @@ contract CrabMigration is Ownable {
     function claimAndWithdraw(uint256 _amountToWithdraw, uint256 _maxEthToPay) external afterMigration {
         uint256 amountV1toClaim = _getV1SharesForV2Share(_amountToWithdraw);
         uint256 amountV1Deposited = sharesDeposited[msg.sender];
-        require(amountV1toClaim <= amountV1Deposited, "M6");
+        require(amountV1toClaim <= amountV1Deposited, "M5");
 
         sharesDeposited[msg.sender] = amountV1Deposited.sub(amountV1toClaim);
         crabV2.flashWithdraw(_amountToWithdraw, _maxEthToPay);
@@ -328,7 +325,7 @@ contract CrabMigration is Ownable {
     function flashMigrateFromV1toV2(uint256 _v1Shares, uint256 _ethToFlashDeposit) external afterMigration {
         (bool isFlashOnlyMigrate, uint256 ethNeededForV2, uint256 v1oSqthToPay, ) = _flashMigrationDetails(_v1Shares);
 
-        require(isFlashOnlyMigrate, "M11");
+        require(isFlashOnlyMigrate, "M9");
 
         euler.deferLiquidityCheck(
             address(this),
@@ -365,8 +362,8 @@ contract CrabMigration is Ownable {
     ) external afterMigration {
         (bool isFlashOnlyMigrate, , uint256 v1oSqthToPay, ) = _flashMigrationDetails(_v1Shares);
 
-        require(!isFlashOnlyMigrate, "M12");
-        require(_ethToBorrow > 0 && _withdrawMaxEthToPay > 0, "M8");
+        require(!isFlashOnlyMigrate, "M10");
+        require(_ethToBorrow > 0 && _withdrawMaxEthToPay > 0, "M7");
 
         euler.deferLiquidityCheck(
             address(this),
@@ -415,6 +412,6 @@ contract CrabMigration is Ownable {
      * @notice receive function to allow ETH transfer to this contract
      */
     receive() external payable {
-        require(msg.sender == address(weth) || msg.sender == address(crabV1) || msg.sender == address(crabV2), "M5");
+        require(msg.sender == address(weth) || msg.sender == address(crabV1) || msg.sender == address(crabV2), "M4");
     }
 }
