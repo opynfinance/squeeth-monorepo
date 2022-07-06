@@ -120,7 +120,7 @@ contract CrabMigration is Ownable {
         weth = WETH9(_weth);
         dToken = _dToken;
         wPowerPerp = crabV1.wPowerPerp();
-        weth.approve(EULER_MAINNET, type(uint256).max);
+        WETH9(_weth).approve(_eulerMainnet, type(uint256).max);
     }
 
     /**
