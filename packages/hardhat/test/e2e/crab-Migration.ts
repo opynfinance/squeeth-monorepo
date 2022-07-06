@@ -50,8 +50,6 @@ describe("Crab Migration", function () {
     const wethOsqthPoolAddress = "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C";
     const squeethAddress = "0xf1b99e3e573a1a9c5e6b2ce818b617f0e664e86b";
 
-    let totalCrabV1SharesMigrated: BigNumber
-
     let deposit1Amount: BigNumber
     let deposit2Amount: BigNumber
     let deposit3Amount: BigNumber
@@ -145,11 +143,6 @@ describe("Crab Migration", function () {
             1)) as CrabStrategyV2;
         await crabStrategyV2.setStrategyCap(ethers.utils.parseEther("1000.0"));
         await crabMigration.connect(owner).setCrabV2(crabStrategyV2.address);
-    })
-
-
-    this.beforeEach("Set migration values", async () => {
-        totalCrabV1SharesMigrated = await crabMigration.totalCrabV1SharesMigrated();
     })
 
     const getV2SqthAndEth = async (share: BigNumber) => {

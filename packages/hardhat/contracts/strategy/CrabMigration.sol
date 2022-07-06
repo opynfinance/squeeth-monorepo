@@ -50,7 +50,6 @@ contract CrabMigration is Ownable {
     IEulerExec public euler;
     WETH9 weth;
 
-    uint256 public totalCrabV1SharesMigrated;
     address immutable EULER_MAINNET;
     address immutable dToken;
     address immutable wPowerPerp;
@@ -136,7 +135,6 @@ contract CrabMigration is Ownable {
      */
     function depositV1Shares(uint256 amount) external afterInitialized beforeMigration {
         sharesDeposited[msg.sender] += amount;
-        totalCrabV1SharesMigrated += amount;
         crabV1.transferFrom(msg.sender, address(this), amount);
     }
 
@@ -200,7 +198,7 @@ contract CrabMigration is Ownable {
             uint256 priceAtLastHedge = crabV1.priceAtLastHedge();
             crabV2.initialize{value: _amount}(
                 wSqueethToMint,
-                totalCrabV1SharesMigrated,
+                crabV1Balance,
                 timeAtLastHedge,
                 priceAtLastHedge
             );
@@ -271,9 +269,7 @@ contract CrabMigration is Ownable {
     function claimV2Shares() external afterMigration {
         uint256 amountV1Deposited = sharesDeposited[msg.sender];
         sharesDeposited[msg.sender] = 0;
-        // uint256 amountV2ToTransfer = amountV1Deposited.wmul(totalCrabV2SharesReceived).wdiv(totalCrabV1SharesMigrated);
-        uint256 amountV2ToTransfer = amountV1Deposited;
-        crabV2.transfer(msg.sender, amountV2ToTransfer);
+        crabV2.transfer(msg.sender, amountV1Deposited);
     }
 
     /**
