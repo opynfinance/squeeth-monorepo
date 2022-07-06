@@ -673,7 +673,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         bool isOrderBuying = _orders[0].isBuying;
         require(_isHedgeBuying != isOrderBuying, "Orders must be buying when hedge is selling");
 
-        for (uint256 i = 0; i < _orders.length; i++) {
+        for (uint256 i = 0; i < _orders.length; ++i) {
             currentPrice = _orders[i].price;
             require(_orders[i].isBuying == isOrderBuying, "All orders must be either buying or selling");
             if (_isHedgeBuying) {
