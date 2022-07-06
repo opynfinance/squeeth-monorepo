@@ -65,6 +65,8 @@ contract MockController {
         uint256 _amount,
         uint256 _withdrawAmount
     ) external {
+        require(_canModifyVault(_vaultId, msg.sender), "C3");
+
         if (_amount > 0) _removeShort(msg.sender, _vaultId, _amount);
         if (_withdrawAmount > 0) _withdrawCollateral(msg.sender, _vaultId, _withdrawAmount);
         if (_withdrawAmount > 0) payable(msg.sender).sendValue(_withdrawAmount);
