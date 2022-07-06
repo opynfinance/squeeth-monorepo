@@ -165,10 +165,7 @@ contract CrabMigration is Ownable {
                     caller: msg.sender,
                     amountToBorrow: amountEthToBorrow,
                     callSource: uint8(FLASH_SOURCE.BATCH_MIGRATE),
-                    callData: abi.encode(
-                        BatchMigrate({
-                            strategyCap: _strategyCap
-                        }))
+                    callData: abi.encode(BatchMigrate({strategyCap: _strategyCap}))
                 })
             )
         );
@@ -203,7 +200,7 @@ contract CrabMigration is Ownable {
     ) internal {
         if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.BATCH_MIGRATE) {
             BatchMigrate memory data = abi.decode(_calldata, (BatchMigrate));
-            
+
             uint256 crabV1Balance = crabV1.balanceOf(address(this));
 
             // 2. mint osqth in crab v2
