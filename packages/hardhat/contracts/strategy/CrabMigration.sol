@@ -87,7 +87,6 @@ contract CrabMigration is Ownable {
     event ClaimV2Shares(address indexed user, uint256 carbAmount);
     event FlashMigrate(address indexed user, uint256 crabV1Amount, uint256 crabV2Amount, uint256 excessEth);
 
-
     modifier beforeMigration() {
         require(!isMigrated, "M2");
         _;
@@ -274,7 +273,7 @@ contract CrabMigration is Ownable {
             // Sent back the V2 tokens to the user
             crabV2.transfer(_initiator, crabV2Amount);
             IERC20(wPowerPerp).transfer(_initiator, IERC20(wPowerPerp).balanceOf(address(this)));
-            
+
             uint256 excessEth = address(this).balance;
 
             emit FlashMigrate(_initiator, data.crabV1ToWithdraw, crabV2Amount, excessEth.sub(_amount));

@@ -124,7 +124,14 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     event FlashWithdraw(address indexed withdrawer, uint256 crabAmount, uint256 wSqueethAmount);
     event FlashDepositCallback(address indexed depositor, uint256 flashswapDebt, uint256 excess);
     event FlashWithdrawCallback(address indexed withdrawer, uint256 flashswapDebt, uint256 excess);
-    event HedgeOTCSingle(address trader, uint256 bidId, uint256 quantity, uint256 price, bool isBuying, uint256 clearingPrice);
+    event HedgeOTCSingle(
+        address trader,
+        uint256 bidId,
+        uint256 quantity,
+        uint256 price,
+        bool isBuying,
+        uint256 clearingPrice
+    );
     event HedgeOTC(uint256 bidId, uint256 quantity, bool isBuying, uint256 clearingPrice);
     event SetStrategyCap(uint256 newCapAmount);
     event SetHedgingTwapPeriod(uint32 newHedgingTwapPeriod);
