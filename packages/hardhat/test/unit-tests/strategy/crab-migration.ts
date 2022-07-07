@@ -68,11 +68,11 @@ describe("Crab Migration", function () {
     describe("Test Migration", async() => { 
 
         it("should not allow deposits until crab v2 is set", async () => { 
-            await expect(crabMigration.connect(d1).depositV1Shares(1)).to.be.revertedWith("M8");
+            await expect(crabMigration.connect(d1).depositV1Shares(1)).to.be.revertedWith("M7");
         })
 
         it("should not allow 0 to be set as crab address", async () => {
-            await expect(crabMigration.connect(owner).setCrabV2(ethers.constants.AddressZero)).to.be.revertedWith("M9");
+            await expect(crabMigration.connect(owner).setCrabV2(ethers.constants.AddressZero)).to.be.revertedWith("M8");
         })
 
         it("should set crabV2 with proper address", async () => {
@@ -80,9 +80,6 @@ describe("Crab Migration", function () {
             expect(await crabMigration.crabV2()).to.be.equal(crabStrategyV2.address)
         })
 
-        it("should not set crabV2 more than once", async () => {
-            await expect(crabMigration.connect(owner).setCrabV2(crabStrategyV2.address)).to.be.revertedWith("M1")
-        })
 
         it("d1 deposits crabV1 shares", async () => { 
             const crabV1BalanceBefore = await crabStrategyV1.balanceOf(crabMigration.address); 
@@ -126,12 +123,12 @@ describe("Crab Migration", function () {
         })
 
         it("should not be able to claim until strategy has been migrated", async () => { 
-            await expect(crabMigration.connect(d1).claimV2Shares()).to.be.revertedWith("M3");
+            await expect(crabMigration.connect(d1).claimV2Shares()).to.be.revertedWith("M2");
         })
 
         it("random should not be able to call onDeferredLiquidity()", async () => { 
             const data = "0x0000000000000000000000000000000000000000"
-            await expect((crabMigration.connect(random).onDeferredLiquidityCheck(data))).to.be.revertedWith("M4");
+            await expect((crabMigration.connect(random).onDeferredLiquidityCheck(data))).to.be.revertedWith("M3");
         })
 
         it("random should not be able to migrate shares", async () => { 
