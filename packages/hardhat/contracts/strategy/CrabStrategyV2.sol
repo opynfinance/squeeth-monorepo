@@ -114,7 +114,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     address public immutable oracle;
     address public immutable timelock;
     address public immutable crabMigration;
-
+    address public immutable ethQuoteCurrencyPool;
     /// @dev time difference to trigger a hedge (seconds)
     uint256 public hedgeTimeThreshold;
     /// @dev price movement to trigger a hedge (0.1*1e18 = 10%)
