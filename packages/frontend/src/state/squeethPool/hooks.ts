@@ -147,6 +147,7 @@ export const useGetBuyQuoteForETH = () => {
   const address = useAtomValue(addressAtom)
   const wethToken = useAtomValue(wethTokenAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
+  const slippageAmount = useAtomValue(slippageAmountAtom)
 
   //If I input an exact amount of ETH I want to spend, tells me how much Squeeth I'd purchase
   const getBuyQuoteForETH = useAppCallback(
@@ -158,13 +159,14 @@ export const useGetBuyQuoteForETH = () => {
         pools: []
       }
       try {
+        const slippageTolerance = slippageAmount ? slippageAmount : DEFAULT_SLIPPAGE
         const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
         const chainId = networkId as any as ChainId
         const router = new AlphaRouter({ chainId: chainId, provider: (provider as any) })
         const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toFixed(0))
         const route = await router.route(rawAmount, squeethToken!, TradeType.EXACT_INPUT,  {
           recipient: address!,
-          slippageTolerance: new Percent(5, 100),
+          slippageTolerance: parseSlippageInput(slippageTolerance.toString()),
           deadline: Math.floor(Date.now()/1000 +1800)
         })
 
@@ -186,7 +188,7 @@ export const useGetBuyQuoteForETH = () => {
       }
       return emptyState
     },
-    [pool, wethToken?.address, squeethToken?.address],
+    [pool, wethToken?.address, squeethToken?.address, slippageAmount],
   )
 
   return getBuyQuoteForETH
@@ -439,9 +441,6 @@ export const useAutoRoutedBuyAndRefund = () => {
       const chainId = networkId as any as ChainId
       const router = new AlphaRouter({ chainId: chainId, provider: (provider as any) })
       const slippageTolerance = slippageAmount ? slippageAmount : DEFAULT_SLIPPAGE
-      console.log("slippageAmount for buy", slippageAmount.toString())
-      console.log("default slippage for buy", DEFAULT_SLIPPAGE.toString())
-      console.log("selected slippage tolerance for buy", slippageTolerance.toString())
 
       // Call Route
       const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(amount, WETH_DECIMALS).toFixed(0))
@@ -478,6 +477,8 @@ export const useAutoRoutedGetSellQuote = () => {
   const networkId = useAtomValue(networkIdAtom)
   const web3 = useAtomValue(web3Atom)
   const address = useAtomValue(addressAtom)
+  const slippageAmount = useAtomValue(slippageAmountAtom)
+
   //I input an exact amount of squeeth I want to sell, tells me how much ETH I'd receive
   const getSellQuote = useAppCallback(
     async (squeethAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
@@ -489,13 +490,14 @@ export const useAutoRoutedGetSellQuote = () => {
       }
       if (!squeethAmount || squeethAmount.eq(0)) return emptyState
 
+      const slippageTolerance = slippageAmount ? slippageAmount : DEFAULT_SLIPPAGE
       const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
       const chainId = networkId as any as ChainId
       const router = new AlphaRouter({ chainId: chainId, provider: (provider as any) })
       const rawAmount = CurrencyAmount.fromRawAmount(squeethToken!, fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0))
       const route = await router.route(rawAmount, wethToken!, TradeType.EXACT_INPUT,  {
         recipient: address!,
-        slippageTolerance: new Percent(5, 100),
+        slippageTolerance: parseSlippageInput(slippageTolerance.toString()),
         deadline: Math.floor(Date.now()/1000 +1800)
       })
 
@@ -519,7 +521,7 @@ export const useAutoRoutedGetSellQuote = () => {
 
       return emptyState
     },
-    [pool, wethToken?.address, squeethToken?.address],
+    [pool, wethToken?.address, squeethToken?.address, slippageAmount],
   )
   return getSellQuote
 }
@@ -674,9 +676,6 @@ export const useAutoRoutedSell = () => {
         slippageTolerance: parseSlippageInput(slippageTolerance.toString()),
         deadline: Math.floor(Date.now()/1000 +1800)
       })
-      console.log("slippageAmount for sell", slippageAmount.toString())
-      console.log("default slippage for sell", DEFAULT_SLIPPAGE.toString())
-      console.log("selected slippage tolerance for sell", slippageTolerance.toString())
 
       const minimumAmountOut = new BigNumber(route?.trade.minimumAmountOut(parseSlippageInput(slippageTolerance.toString())).toFixed(18) || 0)
       const swapIface = new ethers.utils.Interface(router2ABI)
