@@ -22,6 +22,7 @@ describe("Crab V2 integration test: flash deposit - deposit - withdraw", functio
   const auctionTime = 3600
   const minPriceMultiplier = ethers.utils.parseUnits('0.95')
   const maxPriceMultiplier = ethers.utils.parseUnits('1.05')
+  let poolFee: BigNumber
 
   let provider: providers.JsonRpcProvider;
   let owner: SignerWithAddress;
@@ -74,6 +75,8 @@ describe("Crab V2 integration test: flash deposit - deposit - withdraw", functio
     // shortSqueeth = squeethDeployments.shortSqueeth
     wSqueethPool = squeethDeployments.wsqueethEthPool
     ethDaiPool = squeethDeployments.ethDaiPool
+
+    poolFee = await wSqueethPool.fee()
 
     await controller.connect(owner).setFeeRecipient(feeRecipient.address);
     await controller.connect(owner).setFeeRate(100)
@@ -137,7 +140,7 @@ describe("Crab V2 integration test: flash deposit - deposit - withdraw", functio
       const msgvalue = ethers.utils.parseUnits('10')
 
       await expect(
-        crabStrategy.connect(depositor).flashDeposit(ethToDeposit, { value: msgvalue })
+        crabStrategy.connect(depositor).flashDeposit(ethToDeposit, poolFee, { value: msgvalue })
       ).to.be.revertedWith("Deposit exceeds strategy cap");
     })
   })
@@ -155,7 +158,7 @@ describe("Crab V2 integration test: flash deposit - deposit - withdraw", functio
       const msgvalue = ethers.utils.parseUnits('10')
 
       await expect(
-        crabStrategy.connect(depositor).flashDeposit(ethToDeposit, { value: msgvalue })
+        crabStrategy.connect(depositor).flashDeposit(ethToDeposit, poolFee, { value: msgvalue })
       ).to.be.revertedWith("function call failed to execute");
     })
 
@@ -164,7 +167,7 @@ describe("Crab V2 integration test: flash deposit - deposit - withdraw", functio
       const msgvalue = ethers.utils.parseUnits('10.1')
       const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
-      await crabStrategy.connect(depositor).flashDeposit(ethToDeposit, { value: msgvalue })
+      await crabStrategy.connect(depositor).flashDeposit(ethToDeposit, poolFee,{ value: msgvalue })
 
       const normFactor = await controller.normalizationFactor()
       const currentScaledEthPrice = (await oracle.getTwap(ethDaiPool.address, weth.address, dai.address, 300, false)).div(oracleScaleFactor)
@@ -280,7 +283,7 @@ describe("Crab V2 integration test: flash deposit - deposit - withdraw", functio
       const maxEthToPay = ethToWithdraw.mul(9).div(10)
 
       await expect(
-        crabStrategy.connect(depositor).flashWithdraw(userCrabBalanceBefore, maxEthToPay)
+        crabStrategy.connect(depositor).flashWithdraw(userCrabBalanceBefore, maxEthToPay, poolFee)
       ).to.be.revertedWith("amount in greater than max");
     })
 
@@ -300,7 +303,7 @@ describe("Crab V2 integration test: flash deposit - deposit - withdraw", functio
       const ethToWithdraw = userCollateral.sub(ethCostOfDebtToRepay);
       const maxEthToPay = ethCostOfDebtToRepay.mul(11).div(10)
 
-      await crabStrategy.connect(depositor).flashWithdraw(userCrabBalanceBefore, maxEthToPay)
+      await crabStrategy.connect(depositor).flashWithdraw(userCrabBalanceBefore, maxEthToPay, poolFee)
 
       const userEthBalanceAfter = await provider.getBalance(depositor.address)
       const userCrabBalanceAfter = await crabStrategy.balanceOf(depositor.address);
