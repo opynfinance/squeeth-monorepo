@@ -45,10 +45,11 @@ contract CrabMigration is Ownable {
 
     mapping(address => uint256) public sharesDeposited;
     bool public isMigrated;
-    CrabStrategy public crabV1;
-    CrabStrategyV2 public crabV2;
-    IEulerExec public euler;
-    WETH9 weth;
+
+    address payable public  crabV1;
+    address payable public  crabV2;
+    address public immutable euler;
+    address public immutable weth;
 
     uint256 public totalCrabV1SharesMigrated;
     uint256 public totalCrabV2SharesReceived;
@@ -95,7 +96,7 @@ contract CrabMigration is Ownable {
     }
 
     modifier afterInitialized() {
-        require(address(crabV2) != address(0), "M8");
+        require(crabV2 != address(0), "M8");
         _;
     }
 
@@ -114,12 +115,12 @@ contract CrabMigration is Ownable {
         address _dToken,
         address _eulerMainnet
     ) {
-        crabV1 = CrabStrategy(_crabV1);
-        euler = IEulerExec(_eulerExec);
+        crabV1 = _crabV1;
+        euler = _eulerExec;
         EULER_MAINNET = _eulerMainnet;
-        weth = WETH9(_weth);
+        weth = _weth;
         dToken = _dToken;
-        wPowerPerp = crabV1.wPowerPerp();
+        wPowerPerp = CrabStrategy(crabV1).wPowerPerp();
     }
 
     /**
@@ -127,9 +128,9 @@ contract CrabMigration is Ownable {
      * @param _crabV2 address of crab v2
      */
     function setCrabV2(address payable _crabV2) external onlyOwner {
-        require(address(crabV2) == address(0), "M1");
+        require(crabV2 == address(0), "M1");
         require(_crabV2 != address(0), "M9");
-        crabV2 = CrabStrategyV2(_crabV2);
+        crabV2 = _crabV2;
     }
 
     /**
@@ -138,7 +139,7 @@ contract CrabMigration is Ownable {
     function depositV1Shares(uint256 amount) external afterInitialized beforeMigration {
         sharesDeposited[msg.sender] += amount;
         totalCrabV1SharesMigrated += amount;
-        crabV1.transferFrom(msg.sender, address(this), amount);
+        CrabStrategy(crabV1).transferFrom(msg.sender, address(this), amount);
     }
 
     /**
@@ -150,12 +151,12 @@ contract CrabMigration is Ownable {
         isMigrated = true;
 
         // 2. flash floan eth from euler eq to amt
-        uint256 crabV1Balance = crabV1.balanceOf(address(this));
-        uint256 crabV1Supply = crabV1.totalSupply();
-        (, , uint256 totalCollateral, ) = crabV1.getVaultDetails();
+        uint256 crabV1Balance = CrabStrategy(crabV1).balanceOf(address(this));
+        uint256 crabV1Supply = CrabStrategy(crabV1).totalSupply();
+        (, , uint256 totalCollateral, ) = CrabStrategy(crabV1).getVaultDetails();
         uint256 amountEthToBorrow = totalCollateral.wmul(crabV1Balance.wdiv(crabV1Supply));
         bytes memory data;
-        euler.deferLiquidityCheck(
+        IEulerExec(euler).deferLiquidityCheck(
             address(this),
             abi.encode(
                 FlashloanCallbackData({
@@ -168,7 +169,7 @@ contract CrabMigration is Ownable {
         );
 
         // 3. record totalV2Shares
-        totalCrabV2SharesReceived = crabV2.balanceOf(address(this));
+        totalCrabV2SharesReceived = CrabStrategyV2(crabV2).balanceOf(address(this));
     }
 
     function onDeferredLiquidityCheck(bytes memory encodedData) external afterInitialized {
@@ -178,14 +179,14 @@ contract CrabMigration is Ownable {
 
         // 1. Borrow weth
         IDToken(dToken).borrow(0, data.amountToBorrow);
-        weth.withdraw(data.amountToBorrow);
+        WETH9(weth).withdraw(data.amountToBorrow);
 
         // 2. Callback
         _flashCallback(data.caller, data.amountToBorrow, data.callSource, data.callData);
 
         // 4. Repay the weth:
-        weth.deposit{value: data.amountToBorrow}();
-        weth.approve(EULER_MAINNET, type(uint256).max);
+        WETH9(weth).deposit{value: data.amountToBorrow}();
+        WETH9(weth).approve(EULER_MAINNET, type(uint256).max);
         IDToken(dToken).repay(0, data.amountToBorrow);
     }
 
@@ -196,13 +197,13 @@ contract CrabMigration is Ownable {
         bytes memory _calldata
     ) internal {
         if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.BATCH_MIGRATE) {
-            uint256 crabV1Balance = crabV1.balanceOf(address(this));
+            uint256 crabV1Balance = CrabStrategy(crabV1).balanceOf(address(this));
 
             // 2. mint osqth in crab v2
-            uint256 wSqueethToMint = crabV1.getWsqueethFromCrabAmount(crabV1Balance);
-            uint256 timeAtLastHedge = crabV1.timeAtLastHedge();
-            uint256 priceAtLastHedge = crabV1.priceAtLastHedge();
-            crabV2.initialize{value: _amount}(
+            uint256 wSqueethToMint = CrabStrategy(crabV1).getWsqueethFromCrabAmount(crabV1Balance);
+            uint256 timeAtLastHedge = CrabStrategy(crabV1).timeAtLastHedge();
+            uint256 priceAtLastHedge = CrabStrategy(crabV1).priceAtLastHedge();
+            CrabStrategyV2(crabV2).initialize{value: _amount}(
                 wSqueethToMint,
                 totalCrabV1SharesMigrated,
                 timeAtLastHedge,
@@ -210,25 +211,25 @@ contract CrabMigration is Ownable {
             );
 
             // 3. call withdraw from crab v1
-            IERC20(wPowerPerp).approve(address(crabV1), type(uint256).max);
-            crabV1.withdraw(crabV1Balance);
+            IERC20(wPowerPerp).approve(crabV1, type(uint256).max);
+            CrabStrategy(crabV1).withdraw(crabV1Balance);
         } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_MIGRATE_V1_TO_V2) {
             FlashMigrateV1toV2 memory data = abi.decode(_calldata, (FlashMigrateV1toV2));
 
-            crabV2.deposit{value: _amount}();
+            CrabStrategyV2(crabV2).deposit{value: _amount}();
 
-            crabV1.transferFrom(_initiator, address(this), data.crabV1ToWithdraw);
+            CrabStrategy(crabV1).transferFrom(_initiator, address(this), data.crabV1ToWithdraw);
 
-            IERC20(wPowerPerp).approve(address(crabV1), data.v1oSqthToPay);
-            crabV1.withdraw(data.crabV1ToWithdraw);
+            IERC20(wPowerPerp).approve(crabV1, data.v1oSqthToPay);
+            CrabStrategy(crabV1).withdraw(data.crabV1ToWithdraw);
 
             // Flash deposit remaining ETH, if user said so. Else return back the ETH. If CR1 = CR2 ethToFlashDeposit should be 0
             if (data.ethToFlashDeposit > 0) {
-                crabV2.flashDeposit{value: address(this).balance.sub(_amount)}(data.ethToFlashDeposit);
+                CrabStrategyV2(crabV2).flashDeposit{value: address(this).balance.sub(_amount)}(data.ethToFlashDeposit);
             }
 
             // Sent back the V2 tokens to the user
-            crabV2.transfer(_initiator, crabV2.balanceOf(address(this)));
+            CrabStrategyV2(crabV2).transfer(_initiator, CrabStrategyV2(crabV2).balanceOf(address(this)));
             IERC20(wPowerPerp).transfer(_initiator, IERC20(wPowerPerp).balanceOf(address(this)));
 
             // Sent back the excess ETH
@@ -237,29 +238,29 @@ contract CrabMigration is Ownable {
             }
         } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_MIGRATE_WITHDRAW_V1_TO_V2) {
             FlashMigrateAndBuyV1toV2 memory data = abi.decode(_calldata, (FlashMigrateAndBuyV1toV2));
-            (, , , uint256 v1Short) = crabV1.getVaultDetails();
+            (, , , uint256 v1Short) = CrabStrategy(crabV1).getVaultDetails();
 
-            crabV1.transferFrom(_initiator, address(this), data.crabV1ToWithdraw);
-            crabV2.deposit{value: _amount}();
+            CrabStrategy(crabV1).transferFrom(_initiator, address(this), data.crabV1ToWithdraw);
+            CrabStrategyV2(crabV2).deposit{value: _amount}();
 
             uint256 oSqthToPay = IERC20(wPowerPerp).balanceOf(address(this));
-            IERC20(wPowerPerp).approve(address(crabV1), oSqthToPay);
+            IERC20(wPowerPerp).approve(crabV1, oSqthToPay);
 
             // Find crab amount for contract's sqth balance. Remaining crab sould be withdrawn using flash withdraw
-            uint256 crabV1ToWithdrawRmul = oSqthToPay.wmul(crabV1.totalSupply()).rdiv(v1Short);
+            uint256 crabV1ToWithdrawRmul = oSqthToPay.wmul(CrabStrategy(crabV1).totalSupply()).rdiv(v1Short);
             uint256 crabV1ToWithdraw = crabV1ToWithdrawRmul.floor(10**9) / (10**9);
 
-            crabV1.withdraw(crabV1ToWithdraw);
+            CrabStrategy(crabV1).withdraw(crabV1ToWithdraw);
 
-            crabV1.flashWithdraw(data.crabV1ToWithdraw.sub(crabV1ToWithdraw), data.withdrawMaxEthToPay);
+            CrabStrategy(crabV1).flashWithdraw(data.crabV1ToWithdraw.sub(crabV1ToWithdraw), data.withdrawMaxEthToPay);
             require(address(this).balance >= _amount, "M7");
 
             if (data.ethToFlashDeposit > 0) {
-                crabV2.flashDeposit{value: address(this).balance.sub(_amount)}(data.ethToFlashDeposit);
+                CrabStrategyV2(crabV2).flashDeposit{value: address(this).balance.sub(_amount)}(data.ethToFlashDeposit);
             }
 
             // Sent back the V2 tokens to the user
-            crabV2.transfer(_initiator, crabV2.balanceOf(address(this)));
+            CrabStrategyV2(crabV2).transfer(_initiator, CrabStrategyV2(crabV2).balanceOf(address(this)));
             IERC20(wPowerPerp).transfer(_initiator, IERC20(wPowerPerp).balanceOf(address(this)));
 
             // Sent back the excess ETH
@@ -276,7 +277,7 @@ contract CrabMigration is Ownable {
         uint256 amountV1Deposited = sharesDeposited[msg.sender];
         sharesDeposited[msg.sender] = 0;
         uint256 amountV2ToTransfer = amountV1Deposited.wmul(totalCrabV2SharesReceived).wdiv(totalCrabV1SharesMigrated);
-        crabV2.transfer(msg.sender, amountV2ToTransfer);
+        CrabStrategyV2(crabV2).transfer(msg.sender, amountV2ToTransfer);
     }
 
     /**
@@ -291,7 +292,7 @@ contract CrabMigration is Ownable {
         require(amountV1toClaim <= amountV1Deposited, "M6");
 
         sharesDeposited[msg.sender] = amountV1Deposited.sub(amountV1toClaim);
-        crabV2.flashWithdraw(_amountToWithdraw, _maxEthToPay);
+        CrabStrategyV2(crabV2).flashWithdraw(_amountToWithdraw, _maxEthToPay);
 
         emit ClaimAndWithdraw(msg.sender, _amountToWithdraw);
 
@@ -330,7 +331,7 @@ contract CrabMigration is Ownable {
 
         require(isFlashOnlyMigrate, "M11");
 
-        euler.deferLiquidityCheck(
+        IEulerExec(euler).deferLiquidityCheck(
             address(this),
             abi.encode(
                 FlashloanCallbackData({
@@ -368,7 +369,7 @@ contract CrabMigration is Ownable {
         require(!isFlashOnlyMigrate, "M12");
         require(_ethToBorrow > 0 && _withdrawMaxEthToPay > 0, "M8");
 
-        euler.deferLiquidityCheck(
+        IEulerExec(euler).deferLiquidityCheck(
             address(this),
             abi.encode(
                 FlashloanCallbackData({
@@ -401,12 +402,12 @@ contract CrabMigration is Ownable {
             uint256
         )
     {
-        (, , uint256 v1TotalCollateral, uint256 v1TotalShort) = crabV1.getVaultDetails();
-        (, , uint256 v2TotalCollateral, uint256 v2TotalShort) = crabV2.getVaultDetails();
+        (, , uint256 v1TotalCollateral, uint256 v1TotalShort) = CrabStrategy(crabV1).getVaultDetails();
+        (, , uint256 v2TotalCollateral, uint256 v2TotalShort) = CrabStrategyV2(crabV2).getVaultDetails();
 
-        uint256 v1oSqthToPay = v1TotalShort.wmul(_v1Shares).wdiv(crabV1.totalSupply());
+        uint256 v1oSqthToPay = v1TotalShort.wmul(_v1Shares).wdiv(CrabStrategy(crabV1).totalSupply());
         uint256 ethNeededForV2 = v1oSqthToPay.wmul(v2TotalCollateral).rdiv(v2TotalShort).ceil(10**9) / (10**9);
-        uint256 ethToGetFromV1 = _v1Shares.wdiv(crabV1.totalSupply()).wmul(v1TotalCollateral);
+        uint256 ethToGetFromV1 = _v1Shares.wdiv(CrabStrategy(crabV1).totalSupply()).wmul(v1TotalCollateral);
 
         return (ethNeededForV2 <= ethToGetFromV1, ethNeededForV2, v1oSqthToPay, ethToGetFromV1);
     }
@@ -415,6 +416,6 @@ contract CrabMigration is Ownable {
      * @notice receive function to allow ETH transfer to this contract
      */
     receive() external payable {
-        require(msg.sender == address(weth) || msg.sender == address(crabV1) || msg.sender == address(crabV2), "M5");
+        require(msg.sender == weth || msg.sender == crabV1 || msg.sender == crabV2, "M5");
     }
 }
