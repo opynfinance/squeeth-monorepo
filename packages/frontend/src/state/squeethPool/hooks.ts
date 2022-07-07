@@ -147,6 +147,7 @@ export const useGetBuyQuoteForETH = () => {
   const address = useAtomValue(addressAtom)
   const wethToken = useAtomValue(wethTokenAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
+  const slippageAmount = useAtomValue(slippageAmountAtom)
 
   //If I input an exact amount of ETH I want to spend, tells me how much Squeeth I'd purchase
   const getBuyQuoteForETH = useAppCallback(
@@ -187,7 +188,7 @@ export const useGetBuyQuoteForETH = () => {
       }
       return emptyState
     },
-    [pool, wethToken?.address, squeethToken?.address],
+    [pool, wethToken?.address, squeethToken?.address, slippageAmount],
   )
 
   return getBuyQuoteForETH
