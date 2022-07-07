@@ -68,6 +68,8 @@ const CrabMigration: React.FC = () => {
   useAppEffect(() => {
     if (allowance.gte(userCrabBalance)) {
       setAction(MIGRATION_STEP.MIGRATE)
+    } else {
+      setAction(MIGRATION_STEP.APPROVE)
     }
   }, [allowance, userCrabBalance])
 
