@@ -339,17 +339,6 @@ export const OpenShortPosition = () => {
     }
   }
 
-  useAppEffect(() => {
-    // resets collateralPercent if it is less than min CR
-    const timeout = setTimeout(() => {
-      if (new BigNumber(collatPercent / 100).lt(minCR ?? BIG_ZERO)) {
-        setCollatPercent(Number(minCR.times(100).toFixed(1)))
-      }
-    }, 1000)
-
-    return () => clearTimeout(timeout)
-  }, [collatPercent, minCR])
-
   const handleCollatRatioChange = (value: string) => {
     onSqthChange(sqthTradeAmount, Number(value))
     setCollatPercent(Number(value))
@@ -516,7 +505,7 @@ export const OpenShortPosition = () => {
                 id="open-short-collat-ratio-input"
                 label="Collateral ratio for vault after trade"
                 variant="outlined"
-                error={collatPercent < 150 || CRError !== ''}
+                error={new BigNumber(collatPercent / 100).lt(minCR ?? BIG_ZERO) || CRError !== ''}
                 helperText={
                   <span style={{ display: 'flex' }}>
                     Min Collateralization Ratio: {minCR.times(100).toFixed(1)}%
@@ -556,7 +545,7 @@ export const OpenShortPosition = () => {
             <div className={classes.thirdHeading}></div>
             <CollatRange
               onCollatValueChange={(val) => {
-                if (new BigNumber(val / 100).lt(minCR ?? BIG_ZERO)) return
+                // if (new BigNumber(val / 100).lt(minCR ?? BIG_ZERO)) return
                 setCollatPercent(val)
                 onSqthChange(sqthTradeAmount, val)
               }}
