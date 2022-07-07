@@ -221,7 +221,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
 
   return (
     <>
-      {!confirmed && !isApprovalCall ? (
+      {confirmed && !isApprovalCall ? (
         <div className={classes.confirmedBox}>
           <Confirmed
             confirmationMessage={
