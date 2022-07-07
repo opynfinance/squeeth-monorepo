@@ -221,12 +221,12 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
 
   return (
     <>
-      {confirmed && !isApprovalCall ? (
+      {!confirmed && !isApprovalCall ? (
         <div className={classes.confirmedBox}>
           <Confirmed
             confirmationMessage={
               depositOption === 0
-                ? `Deposited ${ethAmount.toFixed(4)} ETH`
+                ? `Woohoo! You're gauranteed a spot in crab v2 `
                 : `Withdrawn ${withdrawAmount.toFixed(4)} ETH`
             }
             txnHash={transactionData?.hash ?? ''}
