@@ -21,7 +21,6 @@ contract CrabHelper is StrategySwap, ReentrancyGuard {
 
     address public immutable crab;
     address public immutable weth;
-    address public immutable wPowerPerp;
 
     event FlashDepositERC20(
         address indexed depositor,
@@ -45,7 +44,6 @@ contract CrabHelper is StrategySwap, ReentrancyGuard {
 
         crab = _crab;
         weth = ICrabStrategyV2(_crab).weth();
-        wPowerPerp = ICrabStrategyV2(_crab).wPowerPerp();
     }
 
     function flashDepositERC20(
