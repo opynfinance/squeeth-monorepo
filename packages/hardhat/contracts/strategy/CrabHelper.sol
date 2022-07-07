@@ -52,13 +52,14 @@ contract CrabHelper is StrategySwap, ReentrancyGuard {
         uint256 _ethToDeposit,
         uint256 _amountIn,
         uint256 _minEthToGet,
-        uint24 _fee,
+        uint24 _erc20Fee,
+        uint24 _wPowerPerpFee,
         address _tokenIn
     ) external nonReentrant {
-        _swapExactInputSingle(_tokenIn, weth, msg.sender, address(this), _amountIn, _minEthToGet, _fee);
+        _swapExactInputSingle(_tokenIn, weth, msg.sender, address(this), _amountIn, _minEthToGet, _erc20Fee);
 
         IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
-        ICrabStrategyV2(crab).flashDeposit{value: address(this).balance}(_ethToDeposit);
+        ICrabStrategyV2(crab).flashDeposit{value: address(this).balance}(_ethToDeposit, _wPowerPerpFee);
 
         uint256 crabAmount = IERC20(crab).balanceOf(address(this));
 
@@ -76,11 +77,12 @@ contract CrabHelper is StrategySwap, ReentrancyGuard {
         uint256 _maxEthToPay,
         address _tokenOut,
         uint256 _minAmountOut,
-        uint24 _fee
+        uint24 _erc20Fee,
+        uint24 _wPowerPerpFee
     ) external nonReentrant {
         IERC20(crab).transferFrom(msg.sender, address(this), _crabAmount);
 
-        ICrabStrategyV2(crab).flashWithdraw(_crabAmount, _maxEthToPay);
+        ICrabStrategyV2(crab).flashWithdraw(_crabAmount, _maxEthToPay, _wPowerPerpFee);
 
         uint256 ethBalance = address(this).balance;
         IWETH9(weth).deposit{value: ethBalance}();
@@ -91,7 +93,7 @@ contract CrabHelper is StrategySwap, ReentrancyGuard {
             msg.sender,
             ethBalance,
             _minAmountOut,
-            _fee
+            _erc20Fee
         );
 
         emit FlashWithdrawERC20(msg.sender, _tokenOut, tokenReceived, ethBalance, _crabAmount);
