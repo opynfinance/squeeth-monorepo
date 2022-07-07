@@ -147,7 +147,6 @@ export const useGetBuyQuoteForETH = () => {
   const address = useAtomValue(addressAtom)
   const wethToken = useAtomValue(wethTokenAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
-  const slippageAmount = useAtomValue(slippageAmountAtom)
 
   //If I input an exact amount of ETH I want to spend, tells me how much Squeeth I'd purchase
   const getBuyQuoteForETH = useAppCallback(
@@ -169,6 +168,7 @@ export const useGetBuyQuoteForETH = () => {
           slippageTolerance: parseSlippageInput(slippageTolerance.toString()),
           deadline: Math.floor(Date.now()/1000 +1800)
         })
+        console.log("slippageTolerance", slippageTolerance.toString())
 
       if (!route) return null
 
@@ -188,7 +188,7 @@ export const useGetBuyQuoteForETH = () => {
       }
       return emptyState
     },
-    [pool, wethToken?.address, squeethToken?.address, slippageAmount],
+    [pool, wethToken?.address, squeethToken?.address],
   )
 
   return getBuyQuoteForETH
@@ -477,7 +477,6 @@ export const useAutoRoutedGetSellQuote = () => {
   const networkId = useAtomValue(networkIdAtom)
   const web3 = useAtomValue(web3Atom)
   const address = useAtomValue(addressAtom)
-  const slippageAmount = useAtomValue(slippageAmountAtom)
 
   //I input an exact amount of squeeth I want to sell, tells me how much ETH I'd receive
   const getSellQuote = useAppCallback(
@@ -500,6 +499,7 @@ export const useAutoRoutedGetSellQuote = () => {
         slippageTolerance: parseSlippageInput(slippageTolerance.toString()),
         deadline: Math.floor(Date.now()/1000 +1800)
       })
+      console.log("slippageTolerance", slippageTolerance.toString())
 
       if (!route) return null
 
@@ -521,7 +521,7 @@ export const useAutoRoutedGetSellQuote = () => {
 
       return emptyState
     },
-    [pool, wethToken?.address, squeethToken?.address, slippageAmount],
+    [pool, wethToken?.address, squeethToken?.address],
   )
   return getSellQuote
 }
