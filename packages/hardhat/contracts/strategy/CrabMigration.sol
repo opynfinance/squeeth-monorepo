@@ -211,7 +211,6 @@ contract CrabMigration is Ownable {
 
             // 3. call withdraw from crab v1
             IERC20(wPowerPerp).approve(address(crabV1), type(uint256).max);
-            crabV1.approve(address(crabV1), crabV1Balance);
             crabV1.withdraw(crabV1Balance);
         } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_MIGRATE_V1_TO_V2) {
             FlashMigrateV1toV2 memory data = abi.decode(_calldata, (FlashMigrateV1toV2));
