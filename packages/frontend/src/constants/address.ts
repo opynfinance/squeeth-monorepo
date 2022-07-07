@@ -110,7 +110,7 @@ export const CRAB_STRATEGY: Address = {
 }
 
 export const CRAB_MIGRATION: Address = {
-  1: '',
+  1: '0x1d1e0838d97996eD3f46b24f52533E3d09F02BcB',
   3: '0x1d1e0838d97996eD3f46b24f52533E3d09F02BcB',
   421611: '',
   31337: '',
