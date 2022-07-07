@@ -67,6 +67,24 @@ describe("Crab Migration", function () {
 
     describe("Test Migration", async() => { 
 
+        it("Should revert if address of euler deposit token is 0", async function () {
+            const MigrationContract = await ethers.getContractFactory("CrabMigration");
+            await expect(MigrationContract.connect(owner).deploy(
+                crabStrategyV1.address, weth.address, euler.address, ethers.constants.AddressZero, euler.address)).to.be.revertedWith("invalid _dToken address");
+        });
+
+        it("Should revert if address of euler deployment on mainnet is 0", async function () {
+            const MigrationContract = await ethers.getContractFactory("CrabMigration");
+            await expect(MigrationContract.connect(owner).deploy(
+                crabStrategyV1.address, weth.address, euler.address, dToken.address, ethers.constants.AddressZero)).to.be.revertedWith("invalid _eulerMainnet address");
+        });
+
+        it("Should revert if address of euler exec contract is 0", async function () {
+            const MigrationContract = await ethers.getContractFactory("CrabMigration");
+            await expect(MigrationContract.connect(owner).deploy(
+                crabStrategyV1.address, weth.address, ethers.constants.AddressZero, dToken.address, euler.address)).to.be.revertedWith("invalid _eulerExec address");
+        });
+
         it("should not allow deposits until crab v2 is set", async () => { 
             await expect(crabMigration.connect(d1).depositV1Shares(1)).to.be.revertedWith("M8");
         })
