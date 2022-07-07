@@ -212,7 +212,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
         _checkStrategyCap(amount, strategyCollateral);
 
-        require((strategyDebt == 0 && strategyCollateral == 0), "C5");        
+        require((strategyDebt == 0 && strategyCollateral == 0), "C5"); 
         // store hedge data from crab v1
         timeAtLastHedge = _timeAtLastHedge;
         priceAtLastHedge = _priceAtLastHedge;
@@ -377,6 +377,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      */
     function setHedgingTwapPeriod(uint32 _hedgingTwapPeriod) external onlyOwner {
         require(_hedgingTwapPeriod >= 180, "twap period is too short");
+        
         hedgingTwapPeriod = _hedgingTwapPeriod;
 
         emit SetHedgingTwapPeriod(_hedgingTwapPeriod);
@@ -388,6 +389,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      */
     function setHedgeTimeThreshold(uint256 _hedgeTimeThreshold) external onlyOwner {
         require(_hedgeTimeThreshold > 0, "invalid hedge time threshold");       
+        
         hedgeTimeThreshold = _hedgeTimeThreshold;
 
         emit SetHedgeTimeThreshold(_hedgeTimeThreshold);
@@ -399,6 +401,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      */
     function setHedgePriceThreshold(uint256 _hedgePriceThreshold) external onlyOwner {
         require(_hedgePriceThreshold > 0, "invalid hedge price threshold");        
+        
         hedgePriceThreshold = _hedgePriceThreshold;
 
         emit SetHedgePriceThreshold(_hedgePriceThreshold);
@@ -714,7 +717,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
             );
         }
     }
-    
+
     /**
      * @notice sync strategy debt and collateral amount from vault
      * @return synced debt amount
