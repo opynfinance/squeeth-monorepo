@@ -84,7 +84,7 @@ contract CrabMigration is Ownable {
 
     event ClaimAndWithdraw(address indexed user, uint256 crabAmount);
     event DepositV1Shares(address indexed user, uint256 crabV1Amount);
-    event ClaimV2Shares(address indexed user, uint256 carbAmount);
+    event ClaimV2Shares(address indexed user, uint256 crabAmount);
     event FlashMigrate(address indexed user, uint256 crabV1Amount, uint256 crabV2Amount, uint256 excessEth);
 
     modifier beforeMigration() {
