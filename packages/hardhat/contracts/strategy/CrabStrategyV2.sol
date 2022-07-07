@@ -187,7 +187,8 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @notice receive function to allow ETH transfer to this contract
      */
     receive() external payable {
-        require(msg.sender == weth || msg.sender == address(powerTokenController), "Cannot receive eth");    }
+        require(msg.sender == weth || msg.sender == address(powerTokenController), "Cannot receive eth");
+    }
 
     /**
      * @notice initializes the collateral ratio upon the first migration
@@ -212,6 +213,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         _checkStrategyCap(amount, strategyCollateral);
 
         require((strategyDebt == 0 && strategyCollateral == 0), "C5");        // store hedge data from crab v1
+        // store hedge data from crab v1
         timeAtLastHedge = _timeAtLastHedge;
         priceAtLastHedge = _priceAtLastHedge;
 
@@ -375,6 +377,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      */
     function setHedgingTwapPeriod(uint32 _hedgingTwapPeriod) external onlyOwner {
         require(_hedgingTwapPeriod >= 180, "twap period is too short");
+       
         hedgingTwapPeriod = _hedgingTwapPeriod;
 
         emit SetHedgingTwapPeriod(_hedgingTwapPeriod);
@@ -386,6 +389,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      */
     function setHedgeTimeThreshold(uint256 _hedgeTimeThreshold) external onlyOwner {
         require(_hedgeTimeThreshold > 0, "invalid hedge time threshold");
+        
         hedgeTimeThreshold = _hedgeTimeThreshold;
 
         emit SetHedgeTimeThreshold(_hedgeTimeThreshold);
@@ -397,6 +401,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      */
     function setHedgePriceThreshold(uint256 _hedgePriceThreshold) external onlyOwner {
         require(_hedgePriceThreshold > 0, "invalid hedge price threshold");
+        
         hedgePriceThreshold = _hedgePriceThreshold;
 
         emit SetHedgePriceThreshold(_hedgePriceThreshold);
@@ -409,6 +414,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     function setOTCPriceTolerance(uint256 _otcPriceTolerance) external onlyOwner {
         // tolerance cannot be more than 20%
         require(_otcPriceTolerance <= maxOTCPriceTolerance, "price tolerance is too high");
+
         otcPriceTolerance = _otcPriceTolerance;
 
         emit SetOTCPriceTolerance(_otcPriceTolerance);
@@ -422,7 +428,8 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @param _strategyCollateral the updated strategy collateral
      */
     function _checkStrategyCap(uint256 _depositAmount, uint256 _strategyCollateral) internal view {
-        require(_strategyCollateral.add(_depositAmount) <= strategyCap, "Deposit exceeds strategy cap");    }
+        require(_strategyCollateral.add(_depositAmount) <= strategyCap, "Deposit exceeds strategy cap");
+    }
 
     /**
      * @notice uniswap flash swap callback function
@@ -591,8 +598,10 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     ) internal {
         // Check order beats clearing price
         if (_order.isBuying) {
-            require(_clearingPrice <= _order.price, "Clearing Price should be below bid price");        } else {
-            require(_clearingPrice >= _order.price, "Clearing Price should be above offer price");        }
+            require(_clearingPrice <= _order.price, "Clearing Price should be below bid price");
+        } else {
+            require(_clearingPrice >= _order.price, "Clearing Price should be above offer price");
+        }
 
         bytes32 structHash = keccak256(
             abi.encode(
@@ -697,12 +706,17 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, hedgingTwapPeriod, true);
 
         if (_isHedgeBuying) {
-            require(_price <= wSqueethEthPrice.wmul((ONE.add(otcPriceTolerance))), "Price too high relative to Uniswap twap.");
+            require(
+                _price <= wSqueethEthPrice.mul((ONE.add(otcPriceTolerance))).div(ONE),
+                "Price too high relative to Uniswap twap."
+            );
         } else {
-            require(_price >= wSqueethEthPrice.wmul((ONE.sub(otcPriceTolerance))), "Price too low relative to Uniswap twap.");
+            require(
+                _price >= wSqueethEthPrice.mul((ONE.sub(otcPriceTolerance))).div(ONE),
+                "Price too low relative to Uniswap twap."
+            );
         }
     }
-
     /**
      * @notice sync strategy debt and collateral amount from vault
      * @return synced debt amount
