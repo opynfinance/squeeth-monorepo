@@ -88,7 +88,7 @@ export const useClosePosition = () => {
       }),
       onTxConfirmed,
     )
-  }, [address, controllerHelperContract, controllerContract])
+  }, [address, controllerHelperContract, controllerContract, handleTransaction, getDebtAmount, getVault, getPosition, getLimitEth])
   return closePosition
 }
 
@@ -140,7 +140,7 @@ export const useOpenPositionDeposit = () => {
         onTxConfirmed,
       )
     },
-    [address, squeethPool, contract],
+    [address, squeethPool, contract, handleTransaction, getTwapSqueethPrice, getDebtAmount],
   )
   return openPositionDeposit
 }
@@ -193,15 +193,8 @@ export const useCollectFees = () => {
         }),
       onTxConfirmed,
     )
-  }, [])
+  }, [address, controllerHelperContract, controllerContract, handleTransaction, getDebtAmount, getVault])
   return collectFees
-}
-
-export function getTickToPrice(baseToken?: Token, quoteToken?: Token, tick?: number): Price<Token, Token> | undefined {
-  if (!baseToken || !quoteToken || typeof tick !== 'number') {
-    return undefined
-  }
-  return tickToPrice(baseToken, quoteToken, tick)
 }
 
 // Rebalance via vault
@@ -338,8 +331,6 @@ export const useRebalanceGeneralSwap = () => {
   const getVault = useGetVault()
   const getDecreaseLiquidity = useGetDecreaseLiquidity()
   const getPosition = useGetPosition()
-  const getLimitEth = useGetLimitEth()
-  const getSqueethEquivalent = useGetSqueethEquivalent()
   const getTwapSqueethPrice = useGetTwapSqueethPrice()
   const squeethPoolContract = useAtomValue(squeethPoolContractAtom)
   const rebalanceGeneralSwap = useAppCallback(
@@ -491,7 +482,7 @@ export const useRebalanceGeneralSwap = () => {
         onTxConfirmed,
       )
     },
-    [],
+    [address, controllerHelperContract, controllerHelper, weth, oSqueeth, squeethPool, controllerContract, handleTransaction, isWethToken0, getDebtAmount, getVault, getDecreaseLiquidity, getPosition, getTwapSqueethPrice, squeethPoolContract],
   )
   return rebalanceGeneralSwap
 }
