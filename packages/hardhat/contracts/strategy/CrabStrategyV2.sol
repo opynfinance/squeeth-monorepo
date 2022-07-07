@@ -300,7 +300,11 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @param _crabAmount strategy token amount to burn
      * @param _maxEthToPay maximum ETH to pay to buy back the owed wSqueeth debt
      */
-    function flashWithdraw(uint256 _crabAmount, uint256 _maxEthToPay, uint24 _poolFee) external afterInitialization nonReentrant {
+    function flashWithdraw(
+        uint256 _crabAmount,
+        uint256 _maxEthToPay,
+        uint24 _poolFee
+    ) external afterInitialization nonReentrant {
         uint256 exactWSqueethNeeded = _getDebtFromStrategyAmount(_crabAmount);
 
         _exactOutFlashSwap(

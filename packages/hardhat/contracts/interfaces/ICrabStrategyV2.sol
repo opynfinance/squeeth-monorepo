@@ -11,5 +11,9 @@ interface ICrabStrategyV2 {
 
     function flashDeposit(uint256 _ethToDeposit, uint24 _poolFee) external payable;
 
-    function flashWithdraw(uint256 _crabAmount, uint256 _maxEthToPay, uint24 _poolFee) external;
+    function flashWithdraw(
+        uint256 _crabAmount,
+        uint256 _maxEthToPay,
+        uint24 _poolFee
+    ) external;
 }
