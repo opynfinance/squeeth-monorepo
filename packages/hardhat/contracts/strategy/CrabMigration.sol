@@ -46,8 +46,8 @@ contract CrabMigration is Ownable {
     mapping(address => uint256) public sharesDeposited;
     bool public isMigrated;
 
-    address payable public  crabV1;
-    address payable public  crabV2;
+    address payable public crabV1;
+    address payable public crabV2;
     address public immutable euler;
     address public immutable weth;
 
