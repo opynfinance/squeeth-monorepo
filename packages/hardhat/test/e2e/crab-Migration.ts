@@ -385,14 +385,14 @@ describe("Crab Migration", function () {
             await decreaseCR1(ethers.utils.parseEther('10'))
             await initialize(d5.address)
             await decreaseCR1(ethers.utils.parseEther('10'))
-            await expect(crabMigration.connect(d5).flashMigrateFromV1toV2(one, 0)).to.be.revertedWith("M11");
+            await expect(crabMigration.connect(d5).flashMigrateFromV1toV2(one, 0)).to.be.revertedWith("M9");
             await increaseCR1(ethers.utils.parseEther('10'))
         })
 
         it("Should fail if _ethToBorrow or _withdrawMaxEthToPay is passed as 0", async () => {
-            await expect(crabMigration.connect(d5).flashMigrateAndWithdrawFromV1toV2(one, one, 0, 0)).to.be.revertedWith("M10");
-            await expect(crabMigration.connect(d5).flashMigrateAndWithdrawFromV1toV2(one, one, one, 0)).to.be.revertedWith("M10");
-            await expect(crabMigration.connect(d5).flashMigrateAndWithdrawFromV1toV2(one, one, 0, one)).to.be.revertedWith("M10");
+            await expect(crabMigration.connect(d5).flashMigrateAndWithdrawFromV1toV2(one, one, 0, 0)).to.be.revertedWith("M7");
+            await expect(crabMigration.connect(d5).flashMigrateAndWithdrawFromV1toV2(one, one, one, 0)).to.be.revertedWith("M7");
+            await expect(crabMigration.connect(d5).flashMigrateAndWithdrawFromV1toV2(one, one, 0, one)).to.be.revertedWith("M7");
         })
 
         it("Should migrate d4 when CR1 > CR2", async () => {
