@@ -168,6 +168,20 @@ describe("Crab Strategy V2", function () {
         0)).to.be.revertedWith("invalid hedge price threshold");
     });
 
+    it("Should revert if hedge price tolerance is > 1e18", async function () {
+      const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
+      await expect(CrabStrategyContract.deploy(
+        controller.address,
+        oracle.address,
+        weth.address,
+        random.address,
+        wSqueethEthPool.address,
+        timelock.address,
+        crabMigration.address,
+        hedgeTimeTolerance,
+        one.add(1))).to.be.revertedWith("invalid hedge price threshold");
+    });
+
     it("Should revert if timelock address is 0", async function () {
       const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
       await expect(CrabStrategyContract.deploy(
@@ -290,6 +304,10 @@ describe("Crab Strategy V2", function () {
 
     it('should revert if owner tries to change the hedge price threshold to 0', async () => {
       await expect(crabStrategy.connect(owner).setHedgePriceThreshold(0)).to.be.revertedWith("invalid hedge price threshold")
+    })
+
+    it('should revert if owner tries to change the hedge price threshold to 1e18+1', async () => {
+      await expect(crabStrategy.connect(owner).setHedgePriceThreshold(one.add(1))).to.be.revertedWith("invalid hedge price threshold")
     })
 
     it('should allow owner to change the hedge price threshold', async () => {

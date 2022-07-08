@@ -88,7 +88,7 @@ describe("Crab Migration", function () {
         it("Should revert if address of crab v1 is 0", async function () {
             const MigrationContract = await ethers.getContractFactory("CrabMigration");
             await expect(MigrationContract.connect(owner).deploy(
-                ethers.constants.AddressZero, weth.address, euler.address, dToken.address, euler.address)).to.be.revertedWith("function call to a non-contract account");
+                ethers.constants.AddressZero, weth.address, euler.address, dToken.address, euler.address)).to.be.revertedWith("invalid _crabv1 address");
         });
 
         it("Should revert if address of weth is 0", async function () {
