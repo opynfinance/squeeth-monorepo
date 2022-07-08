@@ -222,7 +222,10 @@ contract CrabMigration is Ownable {
 
             // Flash deposit remaining ETH, if user said so. Else return back the ETH. If CR1 = CR2 ethToFlashDeposit should be 0
             if (data.ethToFlashDeposit > 0) {
-                CrabStrategyV2(crabV2).flashDeposit{value: address(this).balance.sub(_amount)}(data.ethToFlashDeposit, data.poolFee);
+                CrabStrategyV2(crabV2).flashDeposit{value: address(this).balance.sub(_amount)}(
+                    data.ethToFlashDeposit,
+                    data.poolFee
+                );
             }
 
             // Sent back the V2 tokens to the user
@@ -254,8 +257,8 @@ contract CrabMigration is Ownable {
 
             if (data.ethToFlashDeposit > 0) {
                 CrabStrategyV2(crabV2).flashDeposit{value: address(this).balance.sub(_amount)}(
-                  data.ethToFlashDeposit,
-                  data.poolFeeFlashDeposit
+                    data.ethToFlashDeposit,
+                    data.poolFeeFlashDeposit
                 );
             }
 
