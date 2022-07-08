@@ -202,10 +202,13 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 _wSqueethToMint,
         uint256 _crabSharesToMint,
         uint256 _timeAtLastHedge,
-        uint256 _priceAtLastHedge
+        uint256 _priceAtLastHedge,
+        uint256 _strategyCap
     ) external payable {
         require(msg.sender == crabMigration, "not Crab Migration contract");
         require(!isInitialized, "Crab V2 already initialized");
+
+        _setStrategyCap(_strategyCap);
 
         uint256 amount = msg.value;
         uint256 strategyDebt;
@@ -243,7 +246,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @dev strategy collateral can be above the cap amount due to hedging activities
      * @param _capAmount the maximum strategy collateral in ETH, checked on deposits
      */
-    function setStrategyCap(uint256 _capAmount) external onlyOwner {
+    function setStrategyCap(uint256 _capAmount) external onlyOwner afterInitialization {
         _setStrategyCap(_capAmount);
     }
 
@@ -274,7 +277,8 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @dev the difference between _ethToDeposit and msg.value provides the minimum that a user can receive for their sold wSqueeth
      * @param _ethToDeposit total ETH that will be deposited in to the strategy which is a combination of msg.value and flash swap proceeds
      */
-    function flashDeposit(uint256 _ethToDeposit, uint24 _poolFee) external payable afterInitialization nonReentrant {
+    function flashDeposit(uint256 _ethToDeposit, uint24 _poolFee) external payable nonReentrant {
+
         (uint256 cachedStrategyDebt, uint256 cachedStrategyCollateral) = _syncStrategyState();
         _checkStrategyCap(_ethToDeposit, cachedStrategyCollateral);
 
@@ -307,7 +311,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 _crabAmount,
         uint256 _maxEthToPay,
         uint24 _poolFee
-    ) external afterInitialization nonReentrant {
+    ) external nonReentrant {
         uint256 exactWSqueethNeeded = _getDebtFromStrategyAmount(_crabAmount);
 
         _exactOutFlashSwap(
@@ -327,7 +331,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @notice deposit ETH into strategy
      * @dev provide ETH, return wSqueeth and strategy token
      */
-    function deposit() external payable afterInitialization nonReentrant {
+    function deposit() external payable nonReentrant {
         uint256 amount = msg.value;
 
         (uint256 wSqueethToMint, uint256 depositorCrabAmount) = _deposit(msg.sender, amount, false);
@@ -340,7 +344,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @dev provide strategy tokens and wSqueeth, returns eth
      * @param _crabAmount amount of strategy token to burn
      */
-    function withdraw(uint256 _crabAmount) external afterInitialization nonReentrant {
+    function withdraw(uint256 _crabAmount) external nonReentrant {
         uint256 wSqueethAmount = _getDebtFromStrategyAmount(_crabAmount);
         uint256 ethToWithdraw = _withdraw(msg.sender, _crabAmount, wSqueethAmount, false);
 
@@ -354,7 +358,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @notice called to exit a vault if the Squeeth Power Perp contracts are shutdown
      * @param _crabAmount amount of strategy token to burn
      */
-    function withdrawShutdown(uint256 _crabAmount) external afterInitialization nonReentrant {
+    function withdrawShutdown(uint256 _crabAmount) external nonReentrant {
         require(powerTokenController.isShutDown(), "Squeeth contracts not shut down");
         require(hasRedeemedInShutdown, "Crab must redeemShortShutdown");
 

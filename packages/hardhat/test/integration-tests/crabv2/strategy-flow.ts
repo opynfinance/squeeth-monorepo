@@ -142,7 +142,6 @@ describe("Crab V2 integration test: flash deposit - deposit - withdraw", functio
 
   this.beforeAll("initialize contract", async () => { 
     const strategyCap = ethers.utils.parseUnits("20")
-    await crabStrategy.connect(owner).setStrategyCap(strategyCap)
 
     const ethToDeposit = ethers.utils.parseUnits('20')
 
@@ -154,7 +153,7 @@ describe("Crab V2 integration test: flash deposit - deposit - withdraw", functio
     const debtToMint = wdiv(ethToDeposit, (squeethDelta.add(ethFeePerWSqueeth)));
     const expectedEthDeposit = ethToDeposit.sub(debtToMint.mul(ethFeePerWSqueeth).div(one))
 
-    await crabStrategy.connect(crabMigration).initialize(debtToMint, expectedEthDeposit, 0, 0, { value: ethToDeposit });
+    await crabStrategy.connect(crabMigration).initialize(debtToMint, expectedEthDeposit, 0, 0, strategyCap, { value: ethToDeposit });
   })
 
   describe("deposit above strategy cap", async () => {
