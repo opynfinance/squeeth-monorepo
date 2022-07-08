@@ -129,7 +129,7 @@ describe("Crab Migration", function () {
             await expect(crabMigration.connect(d2).withdrawV1Shares(deposit2Amount.mul(2))).to.be.revertedWith("ds-math-sub-underflow");
         })
 
-        it("d2 deposits crabV1 shares", async () => { 
+        it("d2 withdraws 50% of crabV1 shares", async () => { 
             const crabV1BalanceBefore = await crabStrategyV1.balanceOf(crabMigration.address); 
 
             await crabMigration.connect(d2).withdrawV1Shares(deposit2Amount.div(2));
