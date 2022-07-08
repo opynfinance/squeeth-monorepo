@@ -168,7 +168,6 @@ export const useGetBuyQuoteForETH = () => {
           slippageTolerance: parseSlippageInput(slippageTolerance.toString()),
           deadline: Math.floor(Date.now()/1000 +1800)
         })
-        console.log("slippageTolerance", slippageTolerance.toString())
 
       if (!route) return null
 
@@ -499,7 +498,6 @@ export const useAutoRoutedGetSellQuote = () => {
         slippageTolerance: parseSlippageInput(slippageTolerance.toString()),
         deadline: Math.floor(Date.now()/1000 +1800)
       })
-      console.log("slippageTolerance", slippageTolerance.toString())
 
       if (!route) return null
 
