@@ -66,6 +66,7 @@ contract CrabMigration is Ownable {
         uint256 v1oSqthToPay;
         uint256 ethToFlashDeposit;
         uint256 crabV1ToWithdraw;
+        uint24 poolFee;
     }
 
     struct FlashMigrateAndBuyV1toV2 {
@@ -73,6 +74,7 @@ contract CrabMigration is Ownable {
         uint256 ethToFlashDeposit;
         uint256 withdrawMaxEthToPay;
         uint256 crabV1ToWithdraw;
+        uint24 poolFeeFlashDeposit;
     }
 
     enum FLASH_SOURCE {
@@ -220,7 +222,10 @@ contract CrabMigration is Ownable {
 
             // Flash deposit remaining ETH, if user said so. Else return back the ETH. If CR1 = CR2 ethToFlashDeposit should be 0
             if (data.ethToFlashDeposit > 0) {
-                CrabStrategyV2(crabV2).flashDeposit{value: address(this).balance.sub(_amount)}(data.ethToFlashDeposit);
+                CrabStrategyV2(crabV2).flashDeposit{value: address(this).balance.sub(_amount)}(
+                    data.ethToFlashDeposit,
+                    data.poolFee
+                );
             }
 
             // Sent back the V2 tokens to the user
@@ -251,7 +256,10 @@ contract CrabMigration is Ownable {
             require(address(this).balance >= _amount, "M7");
 
             if (data.ethToFlashDeposit > 0) {
-                CrabStrategyV2(crabV2).flashDeposit{value: address(this).balance.sub(_amount)}(data.ethToFlashDeposit);
+                CrabStrategyV2(crabV2).flashDeposit{value: address(this).balance.sub(_amount)}(
+                    data.ethToFlashDeposit,
+                    data.poolFeeFlashDeposit
+                );
             }
 
             // Sent back the V2 tokens to the user
@@ -280,12 +288,16 @@ contract CrabMigration is Ownable {
      * @param _amountToWithdraw V2 shares to claim
      * @param _maxEthToPay maximum ETH to pay to buy back the owed wSqueeth debt
      */
-    function claimAndWithdraw(uint256 _amountToWithdraw, uint256 _maxEthToPay) external afterMigration {
+    function claimAndWithdraw(
+        uint256 _amountToWithdraw,
+        uint256 _maxEthToPay,
+        uint24 _poolFee
+    ) external afterMigration {
         uint256 amountV1Deposited = sharesDeposited[msg.sender];
         require(_amountToWithdraw <= amountV1Deposited, "M6");
 
         sharesDeposited[msg.sender] = amountV1Deposited.sub(_amountToWithdraw);
-        CrabStrategyV2(crabV2).flashWithdraw(_amountToWithdraw, _maxEthToPay);
+        CrabStrategyV2(crabV2).flashWithdraw(_amountToWithdraw, _maxEthToPay, _poolFee);
 
         emit ClaimAndWithdraw(msg.sender, _amountToWithdraw);
 
@@ -312,7 +324,11 @@ contract CrabMigration is Ownable {
      * @param _v1Shares V1 shares to migrate
      * @param _ethToFlashDeposit Flash deposit amount in crab v2 with excess ETH. If 0 will returned to sender
      */
-    function flashMigrateFromV1toV2(uint256 _v1Shares, uint256 _ethToFlashDeposit) external afterMigration {
+    function flashMigrateFromV1toV2(
+        uint256 _v1Shares,
+        uint256 _ethToFlashDeposit,
+        uint24 _poolFee
+    ) external afterMigration {
         (bool isFlashOnlyMigrate, uint256 ethNeededForV2, uint256 v1oSqthToPay, ) = _flashMigrationDetails(_v1Shares);
 
         require(isFlashOnlyMigrate, "M11");
@@ -328,7 +344,8 @@ contract CrabMigration is Ownable {
                         FlashMigrateV1toV2({
                             v1oSqthToPay: v1oSqthToPay,
                             ethToFlashDeposit: _ethToFlashDeposit,
-                            crabV1ToWithdraw: _v1Shares
+                            crabV1ToWithdraw: _v1Shares,
+                            poolFee: _poolFee
                         })
                     )
                 })
@@ -343,12 +360,14 @@ contract CrabMigration is Ownable {
      * @param _ethToFlashDeposit Flash deposit amount in crab v2 with excess ETH. If 0 will returned to sender
      * @param _ethToBorrow Amount to flash loan to deposit in crab v2
      * @param _withdrawMaxEthToPay maximum ETH to pay to buy back the owed wSqueeth debt
+     * @param _poolFee specify the uniswap pool fee for the optional flash deposit into crab v2
      */
     function flashMigrateAndWithdrawFromV1toV2(
         uint256 _v1Shares,
         uint256 _ethToFlashDeposit,
         uint256 _ethToBorrow,
-        uint256 _withdrawMaxEthToPay
+        uint256 _withdrawMaxEthToPay,
+        uint24 _poolFee
     ) external afterMigration {
         (bool isFlashOnlyMigrate, , uint256 v1oSqthToPay, ) = _flashMigrationDetails(_v1Shares);
 
@@ -367,7 +386,8 @@ contract CrabMigration is Ownable {
                             withdrawMaxEthToPay: _withdrawMaxEthToPay,
                             ethToFlashDeposit: _ethToFlashDeposit,
                             v1oSqthToPay: v1oSqthToPay,
-                            crabV1ToWithdraw: _v1Shares
+                            crabV1ToWithdraw: _v1Shares,
+                            poolFeeFlashDeposit: _poolFee
                         })
                     )
                 })

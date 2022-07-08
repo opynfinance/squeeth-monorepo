@@ -28,7 +28,7 @@ workflows:
             - compile
       - e2e-test:
           requires:
-            - unit-test-contracts
+            - compile
       - checkout-and-install-frontend
       - unit-test-frontend:
           requires:
