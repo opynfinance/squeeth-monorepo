@@ -52,7 +52,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     uint256 public otcPriceTolerance = 5e16; // 5%
 
     // @dev OTC price tolerance cannot exceed 20%
-    uint256 public maxOTCPriceTolerance = 2e17; // 20%
+    uint256 public constant MAX_OTC_PRICE_TOLERANCE = 2e17; // 20%
 
     /// @dev twap period to use for hedge calculations
     uint32 public hedgingTwapPeriod = 420 seconds;
@@ -75,8 +75,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     address public immutable ethWSqueethPool;
     /// @dev strategy uniswap oracle
     address public immutable oracle;
-    address public immutable ethQuoteCurrencyPool;
-    address public immutable quoteCurrency;
     address public immutable timelock;
     address public immutable crabMigration;
 
@@ -173,14 +171,12 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         require(_ethWSqueethPool != address(0), "invalid ETH:WSqueeth address");
         require(_crabMigration != address(0), "invalid crabMigration address");
         require(_hedgeTimeThreshold > 0, "invalid hedge time threshold");
-        require(_hedgePriceThreshold > 0, "invalid hedge price threshold");
+        require((_hedgePriceThreshold > 0) && (_hedgePriceThreshold <= ONE), "invalid hedge price threshold");
 
         oracle = _oracle;
         ethWSqueethPool = _ethWSqueethPool;
         hedgeTimeThreshold = _hedgeTimeThreshold;
         hedgePriceThreshold = _hedgePriceThreshold;
-        ethQuoteCurrencyPool = IController(_wSqueethController).ethQuoteCurrencyPool();
-        quoteCurrency = IController(_wSqueethController).quoteCurrency();
         timelock = _timelock;
         crabMigration = _crabMigration;
     }
@@ -397,7 +393,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @param _hedgePriceThreshold the hedge price threshold, in percent, scaled by 1e18
      */
     function setHedgePriceThreshold(uint256 _hedgePriceThreshold) external onlyOwner {
-        require(_hedgePriceThreshold > 0, "invalid hedge price threshold");
+        require((_hedgePriceThreshold > 0) && (_hedgePriceThreshold <= ONE), "invalid hedge price threshold");
 
         hedgePriceThreshold = _hedgePriceThreshold;
 
@@ -410,7 +406,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      */
     function setOTCPriceTolerance(uint256 _otcPriceTolerance) external onlyOwner {
         // Tolerance cannot be more than 20%
-        require(_otcPriceTolerance <= maxOTCPriceTolerance, "price tolerance is too high");
+        require(_otcPriceTolerance <= MAX_OTC_PRICE_TOLERANCE, "price tolerance is too high");
 
         otcPriceTolerance = _otcPriceTolerance;
 
