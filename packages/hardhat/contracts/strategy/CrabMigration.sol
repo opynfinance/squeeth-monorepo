@@ -137,6 +137,7 @@ contract CrabMigration is Ownable {
      */
     function depositV1Shares(uint256 amount) external afterInitialized beforeMigration {
         sharesDeposited[msg.sender] += amount;
+
         CrabStrategy(crabV1).transferFrom(msg.sender, address(this), amount);
 
     }
@@ -180,7 +181,7 @@ contract CrabMigration is Ownable {
         // 2. Callback
         _flashCallback(data.caller, data.amountToBorrow, data.callSource, data.callData);
 
-        // 4. Repay the weth:
+        // 3. Repay the weth:
         WETH9(weth).deposit{value: data.amountToBorrow}();
         IDToken(dToken).repay(0, data.amountToBorrow);
     }
@@ -200,17 +201,7 @@ contract CrabMigration is Ownable {
             uint256 priceAtLastHedge = CrabStrategy(crabV1).priceAtLastHedge();
             CrabStrategyV2(crabV2).initialize{value: _amount}(
                 wSqueethToMint,
-                totalCrabV1SharesMigrated,
-                timeAtLastHedge,
-                priceAtLastHedge
-            );
-
-            uint256 wSqueethToMint = CrabStrategy(crabV1).getWsqueethFromCrabAmount(crabV1Balance);
-            uint256 timeAtLastHedge = CrabStrategy(crabV1).timeAtLastHedge();
-            uint256 priceAtLastHedge = CrabStrategy(crabV1).priceAtLastHedge();
-            CrabStrategyV2(crabV2).initialize{value: _amount}(
-                wSqueethToMint,
-                totalCrabV1SharesMigrated,
+                crabV1Balance,
                 timeAtLastHedge,
                 priceAtLastHedge
             );
