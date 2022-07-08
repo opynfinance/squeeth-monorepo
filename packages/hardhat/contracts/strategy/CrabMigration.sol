@@ -156,7 +156,7 @@ contract CrabMigration is Ownable {
      */
     function withdrawV1Shares(uint256 amount) external beforeMigration {
         sharesDeposited[msg.sender] = sharesDeposited[msg.sender].sub(amount);
-        crabV1.transfer(msg.sender, amount);
+        CrabStrategy(crabV1).transfer(msg.sender, amount);
 
         emit WithdrawV1Shares(msg.sender, amount);
     }
