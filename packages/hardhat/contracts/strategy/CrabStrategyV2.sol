@@ -10,7 +10,6 @@ import {IOracle} from "../interfaces/IOracle.sol";
 import {IWETH9} from "../interfaces/IWETH9.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IController} from "../interfaces/IController.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IShortPowerPerp} from "../interfaces/IShortPowerPerp.sol";
 
 // contract
@@ -623,7 +622,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
         if (_order.isBuying) {
             // trader sends weth and receives oSQTH
-            IERC20(weth).transferFrom(_order.trader, address(this), wethAmount);
+            IWETH9(weth).transferFrom(_order.trader, address(this), wethAmount);
             IWETH9(weth).withdraw(wethAmount);
             _mintWPowerPerp(_order.trader, _order.quantity, wethAmount, false);
         } else {
@@ -631,7 +630,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
             _burnWPowerPerp(_order.trader, _order.quantity, wethAmount, false);
             //wrap it
             IWETH9(weth).deposit{value: wethAmount}();
-            IERC20(weth).transfer(_order.trader, wethAmount);
+            IWETH9(weth).transfer(_order.trader, wethAmount);
         }
 
         emit HedgeOTC(
@@ -669,7 +668,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         bool isOrderBuying = _orders[0].isBuying;
         require(_isHedgeBuying != isOrderBuying, "Orders must be buying when hedge is selling");
 
-        for (uint256 i = 0; i < _orders.length; i++) {
+        for (uint256 i; i < _orders.length; ++i) {
             currentPrice = _orders[i].price;
             require(_orders[i].isBuying == isOrderBuying, "All orders must be either buying or selling");
             if (_isHedgeBuying) {
