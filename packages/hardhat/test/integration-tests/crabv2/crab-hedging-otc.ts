@@ -1007,6 +1007,37 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             // reverting this back to one percent
             await crabStrategyV2.connect(owner).setHedgePriceThreshold(BigNumber.from(10).pow(16).mul(1));
         });
+        it("market maker should be able to cancel an order by incrementing its nonce", async () => {
+            // set the time to 1 hr from prev hedge
+            await provider.send("evm_increaseTime", [84600 + 3600]);
+            const trader = random;
+            const nonce = 67345;
+
+            // Calculate new Delta and the trades to make
+            const toGet = ethers.utils.parseUnits("3.125");
+            const toSell = ethers.utils.parseUnits("1");
+
+            // make the approvals for the trade and prepare the trade
+            await wSqueeth.connect(trader).approve(crabStrategyV2.address, toGet);
+            await crabStrategyV2.connect(trader).setNonceTrue(nonce);
+
+            const orderHash = {
+                bidId: 0,
+                trader: trader.address,
+                quantity: toSell,
+                price: 1,
+                isBuying: false,
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
+                nonce: nonce,
+            };
+            const { typeData, domainData } = getTypeAndDomainData();
+            // Do the trade
+            const signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
+            const managerBuyPrice = 1;
+            await expect(
+                crabStrategyV2.connect(owner).hedgeOTC(toSell, managerBuyPrice, true, [signedOrder])
+            ).to.be.revertedWith("C27");
+        });
         it("nonce repeated", async () => {
             // set the time to 1 hr from prev hedge
             await provider.send("evm_increaseTime", [84600 + 3600]);

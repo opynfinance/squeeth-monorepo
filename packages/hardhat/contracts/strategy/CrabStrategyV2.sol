@@ -358,6 +358,14 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     }
 
     /**
+     * @notice set nonce to true
+     * @param _nonce the number to be set true
+     */
+    function setNonceTrue(uint256 _nonce) external {
+        nonces[msg.sender][_nonce] = true;
+    }
+
+    /**
      * @notice get wSqueeth debt amount associated with strategy token amount
      * @param _crabAmount strategy token amount
      * @return wSqueeth amount
