@@ -610,7 +610,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
             _order.quantity = _remainingAmount;
         }
         // weth clearing price for the order
-        uint256 wethAmount = _order.quantity.mul(_clearingPrice).div(1e18);
+        uint256 wethAmount = _order.quantity.mul(_clearingPrice).div(ONE);
 
         if (_order.isBuying) {
             // trader sends weth and receives oSQTH
@@ -660,7 +660,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         bool isOrderBuying = _orders[0].isBuying;
         require(_isHedgeBuying != isOrderBuying, "Orders must be buying when hedge is selling");
 
-        for (uint256 i = 0; i < _orders.length; i++) {
+        for (uint256 i = 0; i < _orders.length; ++i) {
             currentPrice = _orders[i].price;
             require(_orders[i].isBuying == isOrderBuying, "All orders must be either buying or selling");
             if (_isHedgeBuying) {
@@ -772,7 +772,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     function _isPriceHedge() internal view returns (bool) {
         uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, hedgingTwapPeriod, true);
         uint256 cachedRatio = wSqueethEthPrice.wdiv(priceAtLastHedge);
-        uint256 priceThreshold = cachedRatio > 1e18 ? (cachedRatio).sub(1e18) : uint256(1e18).sub(cachedRatio);
+        uint256 priceThreshold = cachedRatio > ONE ? (cachedRatio).sub(ONE) : uint256(ONE).sub(cachedRatio);
 
         return priceThreshold >= hedgePriceThreshold;
     }
@@ -807,7 +807,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     ) internal pure returns (uint256) {
         uint256 depositorShare = _amount.wdiv(_strategyCollateralAmount.add(_amount));
 
-        if (_crabTotalSupply != 0) return _crabTotalSupply.wmul(depositorShare).wdiv(uint256(1e18).sub(depositorShare));
+        if (_crabTotalSupply != 0) return _crabTotalSupply.wmul(depositorShare).wdiv(uint256(ONE).sub(depositorShare));
 
         return _amount;
     }
