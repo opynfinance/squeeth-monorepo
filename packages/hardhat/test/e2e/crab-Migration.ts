@@ -50,9 +50,6 @@ describe("Crab Migration", function () {
     const wethOsqthPoolAddress = "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C";
     const squeethAddress = "0xf1b99e3e573a1a9c5e6b2ce818b617f0e664e86b";
 
-    let totalV2SharesReceived: BigNumber
-    let totalCrabV1SharesMigrated: BigNumber
-
     let deposit1Amount: BigNumber
     let deposit2Amount: BigNumber
     let deposit3Amount: BigNumber
@@ -146,12 +143,6 @@ describe("Crab Migration", function () {
             1)) as CrabStrategyV2;
         await crabStrategyV2.setStrategyCap(ethers.utils.parseEther("1000.0"));
         await crabMigration.connect(owner).setCrabV2(crabStrategyV2.address);
-    })
-
-
-    this.beforeEach("Set migration values", async () => {
-        totalV2SharesReceived = await crabMigration.totalCrabV2SharesReceived();
-        totalCrabV1SharesMigrated = await crabMigration.totalCrabV1SharesMigrated();
     })
 
     const getV2SqthAndEth = async (share: BigNumber) => {
@@ -258,16 +249,15 @@ describe("Crab Migration", function () {
             expect(d1SharesAfter.sub(d1SharesBefore)).to.be.equal(sharesSent);
 
             // 2. check that the right amount of shares have been sent. 
-            totalV2SharesReceived = await crabMigration.totalCrabV2SharesReceived();
             const totalDepositAmount = deposit1Amount.add(deposit2Amount);
-            const expectedSharesSent = deposit1Amount.mul(totalV2SharesReceived).div(totalDepositAmount);
+            const expectedSharesSent = deposit1Amount;
             expect(expectedSharesSent).to.be.equal(sharesSent);
         })
 
         it("Should not able to claim more than their share", async () => {
             const d2sharesInMigrationBefore = await crabMigration.sharesDeposited(d2.address)
 
-            const d2sharesV2ToMigrate = wdiv(wmul(d2sharesInMigrationBefore, totalCrabV1SharesMigrated), totalV2SharesReceived).add(1)
+            const d2sharesV2ToMigrate = d2sharesInMigrationBefore.add(1);
 
             await expect(crabMigration.connect(d2).claimAndWithdraw(d2sharesV2ToMigrate, ethers.constants.MaxUint256)).to.be.revertedWith("M5") // Set ETH slippage higher!
         })
@@ -278,7 +268,7 @@ describe("Crab Migration", function () {
             const d2EthBalanceBefore = await provider.getBalance(d2.address);
 
             const d2sharesV1ToMigrate = wdiv(d2sharesInMigrationBefore, one.mul(2))
-            const d2sharesV2ToMigrate = wdiv(wmul(d2sharesV1ToMigrate, totalCrabV1SharesMigrated), totalV2SharesReceived)
+            const d2sharesV2ToMigrate = d2sharesV1ToMigrate
 
             const [ethToGet, sqthToSell] = await getV2SqthAndEth(d2sharesV2ToMigrate);
             const sqthPrice = await oracle.getTwap(wethOsqthPoolAddress, squeethAddress, wethAddress, 1, false)
@@ -298,8 +288,7 @@ describe("Crab Migration", function () {
 
         it("d2 Claim and flash withdraw 100 percent of the tokens", async () => {
             const constractSharesBefore = await crabStrategyV2.balanceOf(crabMigration.address);
-            const d2sharesInMigrationBefore = await crabMigration.sharesDeposited(d2.address)
-            const d2sharesV2ToMigrate = wdiv(wmul(d2sharesInMigrationBefore, totalCrabV1SharesMigrated), totalV2SharesReceived)
+            const d2sharesV2ToMigrate = await crabMigration.sharesDeposited(d2.address)
             const d2EthBalanceBefore = await provider.getBalance(d2.address);
 
             const [ethToGet, sqthToSell] = await getV2SqthAndEth(d2sharesV2ToMigrate);
