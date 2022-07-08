@@ -179,7 +179,7 @@ contract CrabMigration is Ownable {
         // 2. callback
         _flashCallback(data.caller, data.amountToBorrow, data.callSource, data.callData);
 
-        // 4. repay the weth
+        // 3. repay the weth
         weth.deposit{value: data.amountToBorrow}();
         IDToken(dToken).repay(0, data.amountToBorrow);
     }
