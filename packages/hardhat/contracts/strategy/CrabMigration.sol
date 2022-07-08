@@ -29,6 +29,7 @@ import {StrategyMath} from "./base/StrategyMath.sol";
  * M8: invalid crabV2 address
  * M9: Wrong migration function, use flashMigrateAndWithdrawFromV1toV2
  * M10: Wrong migration function, use flashMigrateFromV1toV2
+ * M11: Address for crabv2 not yet set
  */
 
 /**
@@ -91,7 +92,7 @@ contract CrabMigration is Ownable {
     }
 
     modifier afterInitialized() {
-        require(address(crabV2) != address(0), "M7");
+        require(address(crabV2) != address(0), "M11");
         _;
     }
 
