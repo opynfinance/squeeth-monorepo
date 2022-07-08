@@ -25,8 +25,11 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 // StrategyMath licensed under AGPL-3.0-only
 import {StrategyMath} from "./base/StrategyMath.sol";
 import {Power2Base} from "../libs/Power2Base.sol";
-import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
 import {ECDSA} from "@openzeppelin/contracts/cryptography/ECDSA.sol";
+
+/**
+ *  C27: Nonce already used.
+ */
 
 /**
  * @dev CrabStrategyV2 contract
@@ -34,7 +37,6 @@ import {ECDSA} from "@openzeppelin/contracts/cryptography/ECDSA.sol";
  * @author Opyn team
  */
 contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Ownable, EIP712 {
-    using Counters for Counters.Counter;
     using StrategyMath for uint256;
     using Address for address payable;
 
@@ -91,8 +93,8 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     /// @dev set to true when redeemShortShutdown has been called
     bool private hasRedeemedInShutdown;
 
-    /// @dev store the current nonce for each address
-    mapping(address => Counters.Counter) private _nonces;
+    /// @dev store the used flag for a nonce for each address
+    mapping(address => mapping(uint256 => bool)) public nonces;
 
     struct FlashDepositData {
         uint256 totalDeposit;
@@ -541,33 +543,13 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     }
 
     /**
-     * @dev increment current nonce of the address
-     * @param _owner address of signer
-     * @return current the current nonce of the address
+     * @dev set nonce flag of the trader to true
+     * @param _trader address of the signer
+     * @param _nonce number that is to be traded only once
      */
-    function _useNonce(address _owner) internal returns (uint256 current) {
-        Counters.Counter storage nonce = _nonces[_owner];
-        current = nonce.current();
-        nonce.increment();
-    }
-
-    /*
-     * @notice user can increment their own nonce to cancel previous orders
-     * @return new nonce for user
-     */
-    function incrementNonce() external returns (uint256 current) {
-        Counters.Counter storage nonce = _nonces[msg.sender];
-        nonce.increment();
-        current = nonce.current();
-    }
-
-    /**
-     * @dev get current nonce of the address
-     * @param _owner address of signer
-     * @return current the current nonce of the address
-     */
-    function nonces(address _owner) external view returns (uint256) {
-        return _nonces[_owner].current();
+    function _useNonce(address _trader, uint256 _nonce) internal {
+        require(!nonces[_trader][_nonce], "C27");
+        nonces[_trader][_nonce] = true;
     }
 
     /**
@@ -596,6 +578,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
             require(_clearingPrice >= _order.price, "Clearing Price should be above offer price");
         }
 
+        _useNonce(_order.trader, _order.nonce);
         bytes32 structHash = keccak256(
             abi.encode(
                 _CRAB_BALANCE_TYPEHASH,
@@ -605,7 +588,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
                 _order.price,
                 _order.isBuying,
                 _order.expiry,
-                _useNonce(_order.trader)
+                _order.nonce
             )
         );
 
