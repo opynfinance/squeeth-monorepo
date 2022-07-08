@@ -140,6 +140,15 @@ contract CrabMigration is Ownable {
     }
 
     /**
+     * @notice allows users to withdraw their crab v1 shares in the pool before migration
+     * @param amount amount of V1 shares to withdraw
+     */
+    function withdrawV1Shares(uint256 amount) external beforeMigration {
+        sharesDeposited[msg.sender] = sharesDeposited[msg.sender].sub(amount);
+        crabV1.transfer(msg.sender, amount);
+    }
+
+    /**
      * @notice the owner batch migrates all the crab v1 shares in this contract to crab v2 and initializes
      * the v2 contract at the same collateral ratio as the v1 contract.
      */

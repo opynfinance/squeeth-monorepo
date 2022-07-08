@@ -183,6 +183,36 @@ describe("Crab Migration", function () {
             expect(d2SharesDeposited).to.be.equal(deposit2Amount);
         })
 
+        it("d2 withdraws too many crabV1 shares", async () => {
+            await expect(crabMigration.connect(d2).withdrawV1Shares(deposit2Amount.mul(2))).to.be.revertedWith('ds-math-sub-underflow');
+        })
+
+        it("d2 withdraws 1/2 of their crabV1 shares", async () => {
+            const crabV1BalanceBefore = await crabStrategyV1.balanceOf(crabMigration.address);
+
+            await crabMigration.connect(d2).withdrawV1Shares(deposit2Amount.div(2));
+
+            const crabV1BalanceAfter = await crabStrategyV1.balanceOf(crabMigration.address);
+            const d2SharesDeposited = await crabMigration.sharesDeposited(d2.address);
+
+            expect(crabV1BalanceBefore.sub(crabV1BalanceAfter)).to.be.equal(deposit2Amount.div(2));
+            expect(d2SharesDeposited).to.be.equal(deposit2Amount.sub(deposit2Amount.div(2)));
+        })
+
+        it("d2 re-deposits their withdrawn shares", async () => {
+            const crabV1BalanceBefore = await crabStrategyV1.balanceOf(crabMigration.address);
+
+            await crabStrategyV1.connect(d2).approve(crabMigration.address, deposit2Amount.div(2));
+            await crabMigration.connect(d2).depositV1Shares(deposit2Amount.div(2));
+
+            const crabV1BalanceAfter = await crabStrategyV1.balanceOf(crabMigration.address);
+            const d2SharesDeposited = await crabMigration.sharesDeposited(d2.address);
+
+            expect(crabV1BalanceAfter.sub(crabV1BalanceBefore)).to.be.equal(deposit2Amount.div(2));
+            expect(d2SharesDeposited).to.be.equal(deposit2Amount);
+        })
+
+
         it("should not be able to claim until strategy has been migrated", async () => {
             await expect(crabMigration.connect(d1).claimV2Shares()).to.be.revertedWith("M3");
         })
@@ -310,6 +340,11 @@ describe("Crab Migration", function () {
         it("d1 should not be able to deposit after migration", async () => {
             await expect(crabMigration.connect(d1).depositV1Shares(deposit1Amount)).to.be.revertedWith("M2");
         })
+
+        it("d1 should not be able to withdraw after migration", async () => {
+            await expect(crabMigration.connect(d1).withdrawV1Shares(deposit1Amount)).to.be.revertedWith("M2");
+        })
+
     })
 
     describe("Individual claim after migration", () => {
