@@ -50,8 +50,6 @@ contract CrabMigration is Ownable {
     IEulerExec public euler;
     WETH9 weth;
 
-    uint256 public totalCrabV1SharesMigrated;
-    uint256 public totalCrabV2SharesReceived;
     address immutable EULER_MAINNET;
     address immutable dToken;
     address immutable wPowerPerp;
@@ -122,6 +120,7 @@ contract CrabMigration is Ownable {
         weth = WETH9(_weth);
         dToken = _dToken;
         wPowerPerp = crabV1.wPowerPerp();
+        WETH9(_weth).approve(_eulerMainnet, type(uint256).max);
     }
 
     /**
@@ -139,7 +138,6 @@ contract CrabMigration is Ownable {
      */
     function depositV1Shares(uint256 amount) external afterInitialized beforeMigration {
         sharesDeposited[msg.sender] += amount;
-        totalCrabV1SharesMigrated += amount;
         crabV1.transferFrom(msg.sender, address(this), amount);
     }
 
@@ -168,9 +166,6 @@ contract CrabMigration is Ownable {
                 })
             )
         );
-
-        // 3. record totalV2Shares
-        totalCrabV2SharesReceived = crabV2.balanceOf(address(this));
     }
 
     function onDeferredLiquidityCheck(bytes memory encodedData) external afterInitialized {
@@ -187,7 +182,6 @@ contract CrabMigration is Ownable {
 
         // 4. Repay the weth:
         weth.deposit{value: data.amountToBorrow}();
-        weth.approve(EULER_MAINNET, type(uint256).max);
         IDToken(dToken).repay(0, data.amountToBorrow);
     }
 
@@ -204,12 +198,7 @@ contract CrabMigration is Ownable {
             uint256 wSqueethToMint = crabV1.getWsqueethFromCrabAmount(crabV1Balance);
             uint256 timeAtLastHedge = crabV1.timeAtLastHedge();
             uint256 priceAtLastHedge = crabV1.priceAtLastHedge();
-            crabV2.initialize{value: _amount}(
-                wSqueethToMint,
-                totalCrabV1SharesMigrated,
-                timeAtLastHedge,
-                priceAtLastHedge
-            );
+            crabV2.initialize{value: _amount}(wSqueethToMint, crabV1Balance, timeAtLastHedge, priceAtLastHedge);
 
             // 3. call withdraw from crab v1
             IERC20(wPowerPerp).approve(address(crabV1), type(uint256).max);
@@ -280,8 +269,7 @@ contract CrabMigration is Ownable {
     function claimV2Shares() external afterMigration {
         uint256 amountV1Deposited = sharesDeposited[msg.sender];
         sharesDeposited[msg.sender] = 0;
-        uint256 amountV2ToTransfer = amountV1Deposited.wmul(totalCrabV2SharesReceived).wdiv(totalCrabV1SharesMigrated);
-        crabV2.transfer(msg.sender, amountV2ToTransfer);
+        crabV2.transfer(msg.sender, amountV1Deposited);
     }
 
     /**
@@ -295,24 +283,16 @@ contract CrabMigration is Ownable {
         uint256 _maxEthToPay,
         uint24 _poolFee
     ) external afterMigration {
-        uint256 amountV1toClaim = _getV1SharesForV2Share(_amountToWithdraw);
         uint256 amountV1Deposited = sharesDeposited[msg.sender];
-        require(amountV1toClaim <= amountV1Deposited, "M6");
+        require(_amountToWithdraw <= amountV1Deposited, "M6");
 
-        sharesDeposited[msg.sender] = amountV1Deposited.sub(amountV1toClaim);
+        sharesDeposited[msg.sender] = amountV1Deposited.sub(_amountToWithdraw);
         crabV2.flashWithdraw(_amountToWithdraw, _maxEthToPay, _poolFee);
 
         emit ClaimAndWithdraw(msg.sender, _amountToWithdraw);
 
         // Pay user's ETH back
         payable(msg.sender).sendValue(address(this).balance);
-    }
-
-    /**
-     * @notice For input v2 shares returns the equivalent v1 shares
-     */
-    function _getV1SharesForV2Share(uint256 _amountV2) internal view returns (uint256) {
-        return _amountV2.wmul(totalCrabV1SharesMigrated).wdiv(totalCrabV2SharesReceived);
     }
 
     function flashMigrationDetails(uint256 _v1Shares)
