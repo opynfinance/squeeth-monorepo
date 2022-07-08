@@ -139,7 +139,6 @@ contract CrabMigration is Ownable {
         sharesDeposited[msg.sender] += amount;
 
         CrabStrategy(crabV1).transferFrom(msg.sender, address(this), amount);
-
     }
 
     /**
