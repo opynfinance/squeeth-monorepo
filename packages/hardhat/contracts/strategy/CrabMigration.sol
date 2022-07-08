@@ -137,7 +137,6 @@ contract CrabMigration is Ownable {
      */
     function depositV1Shares(uint256 _amount) external afterInitialized beforeMigration {
         sharesDeposited[msg.sender] = sharesDeposited[msg.sender].add(_amount);
-        totalCrabV1SharesMigrated = totalCrabV1SharesMigrated.add(_amount);
         crabV1.transferFrom(msg.sender, address(this), _amount);
     }
 
