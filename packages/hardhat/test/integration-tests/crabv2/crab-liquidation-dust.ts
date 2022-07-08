@@ -21,6 +21,7 @@ describe("Crab V2 integration test: crab vault dust liquidation with excess coll
   const auctionTime = 3600
   const minPriceMultiplier = ethers.utils.parseUnits('0.95')
   const maxPriceMultiplier = ethers.utils.parseUnits('1.05')
+  let poolFee: BigNumber;
 
   let provider: providers.JsonRpcProvider;
   let owner: SignerWithAddress;
@@ -77,6 +78,8 @@ describe("Crab V2 integration test: crab vault dust liquidation with excess coll
     // shortSqueeth = squeethDeployments.shortSqueeth
     wSqueethPool = squeethDeployments.wsqueethEthPool
     ethDaiPool = squeethDeployments.ethDaiPool
+
+    poolFee = await wSqueethPool.fee()
 
     const TimelockContract = await ethers.getContractFactory("Timelock");
     timelock = (await TimelockContract.deploy(owner.address, 3 * 24 * 60 * 60)) as Timelock;
@@ -260,7 +263,7 @@ describe("Crab V2 integration test: crab vault dust liquidation with excess coll
       expect(strategyCollateralAmountBefore.eq(collateralBefore)).to.be.true
       expect(strategyDebtAmountBefore.eq(debtBefore)).to.be.true
 
-      await expect(crabStrategy.connect(depositor2).flashDeposit(ethToDeposit, { value: msgvalue })).to.be.revertedWith("AS")
+      await expect(crabStrategy.connect(depositor2).flashDeposit(ethToDeposit, poolFee, { value: msgvalue })).to.be.revertedWith("AS")
     })
 
     it("should let user deposit post liquidation, with only ETH, and mint no squeeth for them", async () => {
@@ -314,7 +317,7 @@ describe("Crab V2 integration test: crab vault dust liquidation with excess coll
       const ethToWithdraw = userCollateral.sub(ethCostOfDebtToRepay);
       const maxEthToPay = ethToWithdraw.mul(10).div(10)
 
-      await expect(crabStrategy.connect(depositor).flashWithdraw(userCrabBalanceBefore, maxEthToPay)).to.be.revertedWith("AS")
+      await expect(crabStrategy.connect(depositor).flashWithdraw(userCrabBalanceBefore, maxEthToPay, poolFee)).to.be.revertedWith("AS")
 
     })
 
