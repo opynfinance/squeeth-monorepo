@@ -135,7 +135,7 @@ contract CrabMigration is Ownable {
     /**
      * @notice allows users to deposit their crab v1 shares in the pool for migration
      */
-    function depositV1Shares(uint256 amount) external afterInitialized beforeMigration {
+    function depositV1Shares(uint256 amount) external beforeMigration {
         sharesDeposited[msg.sender] += amount;
         totalCrabV1SharesMigrated += amount;
         crabV1.transferFrom(msg.sender, address(this), amount);
