@@ -28,6 +28,7 @@ import { useGetETHandOSQTHAmount } from '../nftmanager/hooks'
 import { controllerContractAtom } from '../contracts/atoms'
 import { ETH_USDC_POOL, SQUEETH_UNI_POOL } from '@constants/address'
 import useAppCallback from '@hooks/useAppCallback'
+import useEthUsdcPrice from '@hooks/useEthUsdcPrice'
 
 export const useOpenDepositAndMint = () => {
   const address = useAtomValue(addressAtom)
@@ -183,19 +184,17 @@ export const useGetVault = () => {
 
 export const useGetDebtAmount = () => {
   const { ethUsdcPool, weth, usdc } = useAtomValue(addressesAtom)
-  const contract = useAtomValue(controllerContractAtom)
   const normFactor = useAtomValue(normFactorAtom)
   const { getTwapSafe } = useOracle()
+  const ethUsdcPrice = useEthUsdcPrice()
+
   const getDebtAmount = useCallback(
     async (shortAmount: BigNumber) => {
-      if (!contract) return new BigNumber(0)
-
-      const ethUsdcPrice = await getTwapSafe(ethUsdcPool, weth, usdc, TWAP_PERIOD)
       const _shortAmt = fromTokenAmount(shortAmount, OSQUEETH_DECIMALS)
       const ethDebt = new BigNumber(_shortAmt).div(INDEX_SCALE).multipliedBy(normFactor).multipliedBy(ethUsdcPrice)
       return toTokenAmount(ethDebt, 18)
     },
-    [contract, ethUsdcPool, getTwapSafe, normFactor?.toString(), usdc, weth],
+    [ethUsdcPool, getTwapSafe, normFactor?.toString(), usdc, weth],
   )
   return getDebtAmount
 }

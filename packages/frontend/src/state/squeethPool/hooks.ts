@@ -32,6 +32,7 @@ import {
   wethTokenAtom,
 } from './atoms'
 import { computeRealizedLPFeePercent } from './price'
+import { slippageAmountAtom } from '../trade/atoms'
 // import { BaseProvider } from '@ethersproject/providers'
 // import {BaseProvider} from '@ethers
 
@@ -430,6 +431,7 @@ export const useAutoRoutedBuyAndRefund = () => {
   const web3 = useAtomValue(web3Atom)
   const squeethToken = useAtomValue(squeethTokenAtom)
   const swapRouter2Contract = useAtomValue(swapRouter2ContractAtom)
+  const slippageAmount = useAtomValue(slippageAmountAtom)
   const handleTransaction = useHandleTransaction()
 
   const autoRoutedBuyAndRefund = useAppCallback(
@@ -438,12 +440,16 @@ export const useAutoRoutedBuyAndRefund = () => {
       const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
       const chainId = networkId as any as ChainId
       const router = new AlphaRouter({ chainId: chainId, provider: (provider as any) })
+      const slippageTolerance = slippageAmount ? slippageAmount : DEFAULT_SLIPPAGE
+      console.log("slippageAmount for buy", slippageAmount.toString())
+      console.log("default slippage for buy", DEFAULT_SLIPPAGE.toString())
+      console.log("selected slippage tolerance for buy", slippageTolerance.toString())
 
       // Call Route
       const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(amount, WETH_DECIMALS).toFixed(0))
       const route = await router.route(rawAmount, squeethToken!, TradeType.EXACT_INPUT,  {
         recipient: address!,
-        slippageTolerance: new Percent(5, 100),
+        slippageTolerance: parseSlippageInput(slippageTolerance.toString()),
         deadline: Math.floor(Date.now()/1000 +1800)
       })
 
@@ -461,7 +467,7 @@ export const useAutoRoutedBuyAndRefund = () => {
       )
       return result
     },
-    [address],
+    [address, slippageAmount],
   )
 
   return autoRoutedBuyAndRefund
@@ -679,6 +685,7 @@ export const useAutoRoutedSell = () => {
   const squeethToken = useAtomValue(squeethTokenAtom)
   const handleTransaction = useHandleTransaction()
   const swapRouter2Contract = useAtomValue(swapRouter2ContractAtom)
+  const slippageAmount = useAtomValue(slippageAmountAtom)
 
   const autoRoutedSell = useAppCallback(
     async (amount: BigNumber, onTxConfirmed?: () => void) => {
@@ -692,15 +699,18 @@ export const useAutoRoutedSell = () => {
         squeethToken!,
         fromTokenAmount(amount, OSQUEETH_DECIMALS).toFixed(0),
       )
-
-      const slippageTolerance = new Percent(5, 100)
+      
+      const slippageTolerance = slippageAmount ? slippageAmount : DEFAULT_SLIPPAGE
       const route = await router.route(rawAmount, wethToken!, TradeType.EXACT_INPUT, {
         recipient: swapRouter2,
-        slippageTolerance: slippageTolerance,
+        slippageTolerance: parseSlippageInput(slippageTolerance.toString()),
         deadline: Math.floor(Date.now()/1000 +1800)
       })
+      console.log("slippageAmount for sell", slippageAmount.toString())
+      console.log("default slippage for sell", DEFAULT_SLIPPAGE.toString())
+      console.log("selected slippage tolerance for sell", slippageTolerance.toString())
 
-      const minimumAmountOut = new BigNumber(route?.trade.minimumAmountOut(slippageTolerance).toFixed(18) || 0)
+      const minimumAmountOut = new BigNumber(route?.trade.minimumAmountOut(parseSlippageInput(slippageTolerance.toString())).toFixed(18) || 0)
       const swapIface = new ethers.utils.Interface(router2ABI)
       const encodedUnwrapCall = swapIface.encodeFunctionData('unwrapWETH9(uint256,address)', [fromTokenAmount(minimumAmountOut, 18).toString(), address])
       const result = await handleTransaction(
@@ -711,7 +721,7 @@ export const useAutoRoutedSell = () => {
       )
       return result
     },
-    [address],
+    [address, slippageAmount],
   )
 
   return autoRoutedSell
