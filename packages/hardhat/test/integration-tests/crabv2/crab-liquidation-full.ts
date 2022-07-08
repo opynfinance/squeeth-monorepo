@@ -21,6 +21,7 @@ describe("Crab V2 integration test: crab vault full liquidation and shutdown of 
   const auctionTime = 3600
   const minPriceMultiplier = ethers.utils.parseUnits('0.95')
   const maxPriceMultiplier = ethers.utils.parseUnits('1.05')
+  let poolFee: BigNumber
 
   let provider: providers.JsonRpcProvider;
   let owner: SignerWithAddress;
@@ -76,6 +77,8 @@ describe("Crab V2 integration test: crab vault full liquidation and shutdown of 
     // shortSqueeth = squeethDeployments.shortSqueeth
     wSqueethPool = squeethDeployments.wsqueethEthPool
     ethDaiPool = squeethDeployments.ethDaiPool
+
+    poolFee = await wSqueethPool.fee()
 
     const TimelockContract = await ethers.getContractFactory("Timelock");
     timelock = (await TimelockContract.deploy(owner.address, 3 * 24 * 60 * 60)) as Timelock;
@@ -251,7 +254,7 @@ describe("Crab V2 integration test: crab vault full liquidation and shutdown of 
       expect(collateralBefore.eq(BigNumber.from(0))).to.be.true
       expect(debtBefore.eq(BigNumber.from(0))).to.be.true
 
-      await expect(crabStrategy.connect(depositor2).flashDeposit(ethToDeposit, { value: msgvalue })).to.be.revertedWith("Crab contracts shut down")
+      await expect(crabStrategy.connect(depositor2).flashDeposit(ethToDeposit, poolFee, { value: msgvalue })).to.be.revertedWith("Crab contracts shut down")
     })
 
     it("should NOT let user deposit post liquidation", async () => {
@@ -286,7 +289,7 @@ describe("Crab V2 integration test: crab vault full liquidation and shutdown of 
       const ethToWithdraw = userCollateral.sub(ethCostOfDebtToRepay);
       const maxEthToPay = ethCostOfDebtToRepay.mul(11).div(10)
 
-      await expect(crabStrategy.connect(depositor).flashWithdraw(userCrabBalanceBefore, maxEthToPay)).to.be.revertedWith("AS")
+      await expect(crabStrategy.connect(depositor).flashWithdraw(userCrabBalanceBefore, maxEthToPay, poolFee)).to.be.revertedWith("AS")
 
     })
 

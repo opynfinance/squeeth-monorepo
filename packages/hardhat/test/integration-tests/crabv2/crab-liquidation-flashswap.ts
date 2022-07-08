@@ -21,6 +21,7 @@ describe("Crab V2 flashswap integration test: crab vault liquidation", function 
   const auctionTime = 3600
   const minPriceMultiplier = ethers.utils.parseUnits('0.95')
   const maxPriceMultiplier = ethers.utils.parseUnits('1.05')
+  let poolFee: BigNumber
 
   let provider: providers.JsonRpcProvider;
   let owner: SignerWithAddress;
@@ -78,6 +79,8 @@ describe("Crab V2 flashswap integration test: crab vault liquidation", function 
     // shortSqueeth = squeethDeployments.shortSqueeth
     wSqueethPool = squeethDeployments.wsqueethEthPool
     ethDaiPool = squeethDeployments.ethDaiPool
+
+    poolFee = await wSqueethPool.fee()
 
     await controller.connect(owner).setFeeRecipient(feeRecipient.address);
     await controller.connect(owner).setFeeRate(100)
@@ -274,7 +277,7 @@ describe("Crab V2 flashswap integration test: crab vault liquidation", function 
       const depositorCrabBefore = (await crabStrategy.balanceOf(depositor2.address))
       const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
 
-      await crabStrategy.connect(depositor2).flashDeposit(ethToDeposit, { value: msgvalue })
+      await crabStrategy.connect(depositor2).flashDeposit(ethToDeposit, poolFee, { value: msgvalue })
 
       const currentScaledSquethPrice = (await oracle.getTwap(wSqueethPool.address, wSqueeth.address, weth.address, 300, false))
       const feeRate = await controller.feeRate()
@@ -318,7 +321,7 @@ describe("Crab V2 flashswap integration test: crab vault liquidation", function 
       const ethToWithdraw = userCollateral.sub(ethCostOfDebtToRepay);
       const maxEthToPay = ethCostOfDebtToRepay.mul(101).div(100)
 
-      await crabStrategy.connect(depositor).flashWithdraw(userCrabBalanceBefore, maxEthToPay)
+      await crabStrategy.connect(depositor).flashWithdraw(userCrabBalanceBefore, maxEthToPay, poolFee)
 
       const userEthBalanceAfter = await provider.getBalance(depositor.address)
       const userCrabBalanceAfter = await crabStrategy.balanceOf(depositor.address);
@@ -356,7 +359,7 @@ describe("Crab V2 flashswap integration test: crab vault liquidation", function 
       const ethToWithdraw = userCollateral.sub(ethCostOfDebtToRepay);
       const maxEthToPay = ethCostOfDebtToRepay.mul(11).div(10)
 
-      await crabStrategy.connect(depositor2).flashWithdraw(userCrabBalanceBefore, maxEthToPay)
+      await crabStrategy.connect(depositor2).flashWithdraw(userCrabBalanceBefore, maxEthToPay, poolFee)
 
       const strategyVaultAfter = await controller.vaults(await crabStrategy.vaultId());
       const userEthBalanceAfter = await provider.getBalance(depositor2.address)
