@@ -237,7 +237,7 @@ describe("Crab Strategy V2", function () {
     })
   });
 
-  describe("set strategy cap", async () => {
+  describe("Check pre initialization strategy cap reverts", async () => {
     const strategyCap = ethers.utils.parseUnits("100")
     const wSqueethEthPrice = BigNumber.from('3030').mul(one).div(oracleScaleFactor)
     const ethUSDPrice = BigNumber.from('3000').mul(one)
@@ -251,16 +251,8 @@ describe("Crab Strategy V2", function () {
       await expect(crabStrategy.connect(random).setStrategyCap(strategyCap)).to.be.revertedWith("Ownable: caller is not the owner")
     })
 
-    it('should allow owner to increase the strategy cap', async () => {
-      await crabStrategy.connect(owner).setStrategyCap(strategyCap.mul(2))
-      const strategyCapInContract = await crabStrategy.strategyCap()
-      expect(strategyCapInContract.eq(strategyCap.mul(2))).to.be.true
-    })
-
-    it('should allow owner to reduce the strategy cap', async () => {
-      await crabStrategy.connect(owner).setStrategyCap(strategyCap)
-      const strategyCapInContract = await crabStrategy.strategyCap()
-      expect(strategyCapInContract.eq(strategyCap)).to.be.true
+    it('should revert if owner tries to increase the strategy cap before the contract is initialized', async () => {
+      await expect(crabStrategy.connect(owner).setStrategyCap(strategyCap)).to.be.revertedWith("Contract not yet initialized")
     })
   });
 
@@ -344,6 +336,7 @@ describe("Crab Strategy V2", function () {
   });
 
   describe("Deposit into strategy", async () => {
+    const strategyCap = ethers.utils.parseUnits("100")
     const wSqueethEthPrice = BigNumber.from('3030').mul(one).div(oracleScaleFactor)
     const ethUSDPrice = BigNumber.from('3000').mul(one)
 
@@ -352,8 +345,8 @@ describe("Crab Strategy V2", function () {
       await oracle.connect(random).setPrice(ethUSDPool.address, ethUSDPrice)  // usdc per 1 eth
     })
 
-    it('should revert deposits if crab not yet initialized', async () => {
-      await expect(crabStrategy.connect(depositor2).deposit({ value: 1 })).to.be.revertedWith("Contract not yet initialized");
+    it('should revert deposits if crab not yet initialized as the cap will be 0', async () => {
+      await expect(crabStrategy.connect(depositor2).deposit({ value: 1 })).to.be.revertedWith("Deposit exceeds strategy cap");
     })
 
     it("Should initialize strategy", async () => {
@@ -365,7 +358,7 @@ describe("Crab Strategy V2", function () {
       const debtToMint = ethToDeposit.mul(one).div(squeethDelta.add(feeAdj));
       const expectedMintedWsqueeth = debtToMint.mul(normFactor)
 
-      await crabStrategy.connect(crabMigration).initialize( expectedMintedWsqueeth, ethToDeposit, 0, 0, { value: ethToDeposit });
+      await crabStrategy.connect(crabMigration).initialize( expectedMintedWsqueeth, ethToDeposit, 0, 0, strategyCap, { value: ethToDeposit });
 
       const totalSupply = (await crabStrategy.totalSupply())
       const migrationCrabV2Balance = (await crabStrategy.balanceOf(crabMigration.address))
@@ -385,8 +378,23 @@ describe("Crab Strategy V2", function () {
       await squeeth.connect(crabMigration).transfer(depositor.address, migrationSqueethBalance);
     })
 
+    it('should revert non owner tries to set the strategy cap', async () => {
+      await expect(crabStrategy.connect(random).setStrategyCap(strategyCap)).to.be.revertedWith("Ownable: caller is not the owner")
+    })
+
+    it('should allow owner to increase the strategy cap', async () => {
+      await crabStrategy.connect(owner).setStrategyCap(strategyCap.mul(2))
+      const strategyCapInContract = await crabStrategy.strategyCap()
+      expect(strategyCapInContract.eq(strategyCap.mul(2))).to.be.true
+    })
+
+    it('should allow owner to reduce the strategy cap', async () => {
+      await crabStrategy.connect(owner).setStrategyCap(strategyCap)
+      const strategyCapInContract = await crabStrategy.strategyCap()
+      expect(strategyCapInContract.eq(strategyCap)).to.be.true
+    })
     it("Should not allow reinitialization of Crab v2", async () => { 
-      await expect(crabStrategy.connect(crabMigration).initialize(0, 0, 0, 0, {value: 0})).to.be.revertedWith("Crab V2 already initialized")
+      await expect(crabStrategy.connect(crabMigration).initialize(0, 0, 0, 0, 0, {value: 0})).to.be.revertedWith("Crab V2 already initialized")
     })
 
 

@@ -62,6 +62,10 @@ contract CrabMigration is Ownable {
         bytes callData;
     }
 
+    struct BatchMigrate {
+        uint256 strategyCap;
+    }
+
     struct FlashMigrateV1toV2 {
         uint256 v1oSqthToPay;
         uint256 ethToFlashDeposit;
@@ -84,6 +88,9 @@ contract CrabMigration is Ownable {
     }
 
     event ClaimAndWithdraw(address indexed user, uint256 crabAmount);
+    event DepositV1Shares(address indexed user, uint256 crabV1Amount);
+    event ClaimV2Shares(address indexed user, uint256 crabAmount);
+    event FlashMigrate(address indexed user, uint256 crabV1Amount, uint256 crabV2Amount, uint256 excessEth);
 
     modifier beforeMigration() {
         require(!isMigrated, "M2");
@@ -137,17 +144,19 @@ contract CrabMigration is Ownable {
     /**
      * @notice allows users to deposit their crab v1 shares in the pool for migration
      */
-    function depositV1Shares(uint256 amount) external afterInitialized beforeMigration {
+    function depositV1Shares(uint256 amount) external beforeMigration {
         sharesDeposited[msg.sender] += amount;
 
         CrabStrategy(crabV1).transferFrom(msg.sender, address(this), amount);
+
+        emit DepositV1Shares(msg.sender, amount);
     }
 
     /**
      * @notice the owner batch migrates all the crab v1 shares in this contract to crab v2 and initializes
      * the v2 contract at the same collateral ratio as the v1 contract.
      */
-    function batchMigrate() external onlyOwner afterInitialized beforeMigration {
+    function batchMigrate(uint256 _strategyCap) external onlyOwner afterInitialized beforeMigration {
         // 1. update isMigrated
         isMigrated = true;
 
@@ -156,7 +165,6 @@ contract CrabMigration is Ownable {
         uint256 crabV1Supply = CrabStrategy(crabV1).totalSupply();
         (, , uint256 totalCollateral, ) = CrabStrategy(crabV1).getVaultDetails();
         uint256 amountEthToBorrow = totalCollateral.wmul(crabV1Balance.wdiv(crabV1Supply));
-        bytes memory data;
         IEulerExec(euler).deferLiquidityCheck(
             address(this),
             abi.encode(
@@ -164,7 +172,7 @@ contract CrabMigration is Ownable {
                     caller: msg.sender,
                     amountToBorrow: amountEthToBorrow,
                     callSource: uint8(FLASH_SOURCE.BATCH_MIGRATE),
-                    callData: data
+                    callData: abi.encode(BatchMigrate({strategyCap: _strategyCap}))
                 })
             )
         );
@@ -194,6 +202,8 @@ contract CrabMigration is Ownable {
         bytes memory _calldata
     ) internal {
         if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.BATCH_MIGRATE) {
+            BatchMigrate memory data = abi.decode(_calldata, (BatchMigrate));
+
             uint256 crabV1Balance = CrabStrategy(crabV1).balanceOf(address(this));
 
             // 2. mint osqth in crab v2
@@ -204,7 +214,8 @@ contract CrabMigration is Ownable {
                 wSqueethToMint,
                 crabV1Balance,
                 timeAtLastHedge,
-                priceAtLastHedge
+                priceAtLastHedge,
+                data.strategyCap
             );
 
             // 3. call withdraw from crab v1
@@ -228,13 +239,18 @@ contract CrabMigration is Ownable {
                 );
             }
 
+            uint256 crabV2Amount = CrabStrategyV2(crabV2).balanceOf(address(this));
             // Sent back the V2 tokens to the user
-            CrabStrategyV2(crabV2).transfer(_initiator, CrabStrategyV2(crabV2).balanceOf(address(this)));
+            CrabStrategyV2(crabV2).transfer(_initiator, crabV2Amount);
             IERC20(wPowerPerp).transfer(_initiator, IERC20(wPowerPerp).balanceOf(address(this)));
 
+            uint256 excessEth = address(this).balance;
+
+            emit FlashMigrate(_initiator, data.crabV1ToWithdraw, crabV2Amount, excessEth.sub(_amount));
+
             // Sent back the excess ETH
-            if (address(this).balance > _amount) {
-                payable(_initiator).sendValue(address(this).balance.sub(_amount));
+            if (excessEth > _amount) {
+                payable(_initiator).sendValue(excessEth.sub(_amount));
             }
         } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_MIGRATE_WITHDRAW_V1_TO_V2) {
             FlashMigrateAndBuyV1toV2 memory data = abi.decode(_calldata, (FlashMigrateAndBuyV1toV2));
@@ -262,13 +278,19 @@ contract CrabMigration is Ownable {
                 );
             }
 
+            uint256 crabV2Amount = CrabStrategyV2(crabV2).balanceOf(address(this));
+
             // Sent back the V2 tokens to the user
-            CrabStrategyV2(crabV2).transfer(_initiator, CrabStrategyV2(crabV2).balanceOf(address(this)));
+            CrabStrategyV2(crabV2).transfer(_initiator, crabV2Amount);
             IERC20(wPowerPerp).transfer(_initiator, IERC20(wPowerPerp).balanceOf(address(this)));
 
+            uint256 excessEth = address(this).balance;
+
+            emit FlashMigrate(_initiator, data.crabV1ToWithdraw, crabV2Amount, excessEth.sub(_amount));
+
             // Sent back the excess ETH
-            if (address(this).balance > _amount) {
-                payable(_initiator).sendValue(address(this).balance.sub(_amount));
+            if (excessEth > _amount) {
+                payable(_initiator).sendValue(excessEth.sub(_amount));
             }
         }
     }
@@ -280,6 +302,7 @@ contract CrabMigration is Ownable {
         uint256 amountV1Deposited = sharesDeposited[msg.sender];
         sharesDeposited[msg.sender] = 0;
         CrabStrategyV2(crabV2).transfer(msg.sender, amountV1Deposited);
+        emit ClaimV2Shares(msg.sender, amountV1Deposited);
     }
 
     /**
