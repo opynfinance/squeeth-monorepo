@@ -52,7 +52,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     uint256 public otcPriceTolerance = 5e16; // 5%
 
     // @dev OTC price tolerance cannot exceed 20%
-    uint256 public maxOTCPriceTolerance = 2e17; // 20%
+    uint256 public constant MAX_OTC_PRICE_TOLERANCE = 2e17; // 20%
 
     /// @dev twap period to use for hedge calculations
     uint32 public hedgingTwapPeriod = 420 seconds;
@@ -75,8 +75,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     address public immutable ethWSqueethPool;
     /// @dev strategy uniswap oracle
     address public immutable oracle;
-    address public immutable ethQuoteCurrencyPool;
-    address public immutable quoteCurrency;
     address public immutable timelock;
     address public immutable crabMigration;
 
@@ -173,14 +171,12 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         require(_ethWSqueethPool != address(0), "invalid ETH:WSqueeth address");
         require(_crabMigration != address(0), "invalid crabMigration address");
         require(_hedgeTimeThreshold > 0, "invalid hedge time threshold");
-        require(_hedgePriceThreshold > 0, "invalid hedge price threshold");
+        require((_hedgePriceThreshold > 0) && (_hedgePriceThreshold <= ONE), "invalid hedge price threshold");
 
         oracle = _oracle;
         ethWSqueethPool = _ethWSqueethPool;
         hedgeTimeThreshold = _hedgeTimeThreshold;
         hedgePriceThreshold = _hedgePriceThreshold;
-        ethQuoteCurrencyPool = IController(_wSqueethController).ethQuoteCurrencyPool();
-        quoteCurrency = IController(_wSqueethController).quoteCurrency();
         timelock = _timelock;
         crabMigration = _crabMigration;
     }
@@ -397,7 +393,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @param _hedgePriceThreshold the hedge price threshold, in percent, scaled by 1e18
      */
     function setHedgePriceThreshold(uint256 _hedgePriceThreshold) external onlyOwner {
-        require(_hedgePriceThreshold > 0, "invalid hedge price threshold");
+        require((_hedgePriceThreshold > 0) && (_hedgePriceThreshold <= ONE), "invalid hedge price threshold");
 
         hedgePriceThreshold = _hedgePriceThreshold;
 
@@ -410,7 +406,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      */
     function setOTCPriceTolerance(uint256 _otcPriceTolerance) external onlyOwner {
         // Tolerance cannot be more than 20%
-        require(_otcPriceTolerance <= maxOTCPriceTolerance, "price tolerance is too high");
+        require(_otcPriceTolerance <= MAX_OTC_PRICE_TOLERANCE, "price tolerance is too high");
 
         otcPriceTolerance = _otcPriceTolerance;
 
@@ -623,7 +619,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
             _order.quantity = _remainingAmount;
         }
         // weth clearing price for the order
-        uint256 wethAmount = _order.quantity.mul(_clearingPrice).div(1e18);
+        uint256 wethAmount = _order.quantity.mul(_clearingPrice).div(ONE);
 
         if (_order.isBuying) {
             // trader sends weth and receives oSQTH
@@ -673,7 +669,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         bool isOrderBuying = _orders[0].isBuying;
         require(_isHedgeBuying != isOrderBuying, "Orders must be buying when hedge is selling");
 
-        for (uint256 i; i < _orders.length; i++) {
+        for (uint256 i; i < _orders.length; ++i) {
             currentPrice = _orders[i].price;
             require(_orders[i].isBuying == isOrderBuying, "All orders must be either buying or selling");
             if (_isHedgeBuying) {
@@ -785,7 +781,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     function _isPriceHedge() internal view returns (bool) {
         uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, hedgingTwapPeriod, true);
         uint256 cachedRatio = wSqueethEthPrice.wdiv(priceAtLastHedge);
-        uint256 priceThreshold = cachedRatio > 1e18 ? (cachedRatio).sub(1e18) : uint256(1e18).sub(cachedRatio);
+        uint256 priceThreshold = cachedRatio > ONE ? (cachedRatio).sub(ONE) : uint256(ONE).sub(cachedRatio);
 
         return priceThreshold >= hedgePriceThreshold;
     }
@@ -820,7 +816,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     ) internal pure returns (uint256) {
         uint256 depositorShare = _amount.wdiv(_strategyCollateralAmount.add(_amount));
 
-        if (_crabTotalSupply != 0) return _crabTotalSupply.wmul(depositorShare).wdiv(uint256(1e18).sub(depositorShare));
+        if (_crabTotalSupply != 0) return _crabTotalSupply.wmul(depositorShare).wdiv(uint256(ONE).sub(depositorShare));
 
         return _amount;
     }
