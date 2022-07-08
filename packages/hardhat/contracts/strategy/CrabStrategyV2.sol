@@ -77,7 +77,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     address public immutable oracle;
     address public immutable timelock;
     address public immutable crabMigration;
-    address public immutable ethQuoteCurrencyPool;
     /// @dev time difference to trigger a hedge (seconds)
     uint256 public hedgeTimeThreshold;
     /// @dev price movement to trigger a hedge (0.1*1e18 = 10%)
@@ -412,7 +411,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      */
     function setOTCPriceTolerance(uint256 _otcPriceTolerance) external onlyOwner {
         // tolerance cannot be more than 20%
-        require(_otcPriceTolerance <= maxOTCPriceTolerance, "price tolerance is too high");
+        require(_otcPriceTolerance <= MAX_OTC_PRICE_TOLERANCE, "price tolerance is too high");
 
         otcPriceTolerance = _otcPriceTolerance;
 
