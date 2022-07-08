@@ -82,6 +82,8 @@ contract CrabMigration is Ownable {
 
     event ClaimAndWithdraw(address indexed user, uint256 crabAmount);
 
+    event WithdrawV1Shares(address indexed user, uint256 crabV1Amount);
+
     modifier beforeMigration() {
         require(!isMigrated, "M2");
         _;
@@ -146,6 +148,8 @@ contract CrabMigration is Ownable {
     function withdrawV1Shares(uint256 amount) external beforeMigration {
         sharesDeposited[msg.sender] = sharesDeposited[msg.sender].sub(amount);
         crabV1.transfer(msg.sender, amount);
+
+        emit WithdrawV1Shares(msg.sender, amount);
     }
 
     /**
