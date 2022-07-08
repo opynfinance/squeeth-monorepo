@@ -23,7 +23,7 @@ export const useVaultData = (vault: IVault | undefined) => {
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
 
   useAppEffect(() => {
-    if (!vault) {
+    if (!vault?.id) {
       setExistingCollat(new BigNumber(0))
       setExistingCollatPercent(0)
       setCollatPercent(0)
@@ -48,7 +48,10 @@ export const useVaultData = (vault: IVault | undefined) => {
     setExistingCollat,
     setExistingCollatPercent,
     setExistingLiqPrice,
-    vault,
+    vault?.collateralAmount,
+    vault?.shortAmount,
+    vault?.NFTCollateralId,
+    vault?.id,
   ])
 
   return {
