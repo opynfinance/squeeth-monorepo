@@ -121,7 +121,15 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     event FlashWithdraw(address indexed withdrawer, uint256 crabAmount, uint256 wSqueethAmount);
     event FlashDepositCallback(address indexed depositor, uint256 flashswapDebt, uint256 excess);
     event FlashWithdrawCallback(address indexed withdrawer, uint256 flashswapDebt, uint256 excess);
-    event HedgeOTC(address trader, uint256 quantity, uint256 price, bool isBuying, uint256 clearingPrice);
+    event HedgeOTCSingle(
+        address trader,
+        uint256 bidId,
+        uint256 quantity,
+        uint256 price,
+        bool isBuying,
+        uint256 clearingPrice
+    );
+    event HedgeOTC(uint256 bidId, uint256 quantity, bool isBuying, uint256 clearingPrice);
     event SetStrategyCap(uint256 newCapAmount);
     event SetHedgingTwapPeriod(uint32 newHedgingTwapPeriod);
     event SetHedgeTimeThreshold(uint256 newHedgeTimeThreshold);
@@ -641,8 +649,9 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
             IWETH9(weth).transfer(_order.trader, wethAmount);
         }
 
-        emit HedgeOTC(
+        emit HedgeOTCSingle(
             _order.trader, // market maker
+            _order.bidId,
             _order.quantity, // order oSQTH quantity
             _order.price, // order price
             _order.isBuying, // order direction
@@ -694,6 +703,8 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
                 break;
             }
         }
+
+        emit HedgeOTC(_orders[0].bidId, _totalQuantity, _isHedgeBuying, _clearingPrice);
     }
 
     /**
