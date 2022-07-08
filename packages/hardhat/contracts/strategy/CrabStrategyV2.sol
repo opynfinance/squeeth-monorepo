@@ -268,7 +268,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @dev the difference between _ethToDeposit and msg.value provides the minimum that a user can receive for their sold wSqueeth
      * @param _ethToDeposit total ETH that will be deposited in to the strategy which is a combination of msg.value and flash swap proceeds
      */
-    function flashDeposit(uint256 _ethToDeposit) external payable afterInitialization nonReentrant {
+    function flashDeposit(uint256 _ethToDeposit, uint24 _poolFee) external payable afterInitialization nonReentrant {
         (uint256 cachedStrategyDebt, uint256 cachedStrategyCollateral) = _syncStrategyState();
         _checkStrategyCap(_ethToDeposit, cachedStrategyCollateral);
 
@@ -281,7 +281,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         _exactInFlashSwap(
             wPowerPerp,
             weth,
-            IUniswapV3Pool(ethWSqueethPool).fee(),
+            _poolFee,
             wSqueethToMint,
             _ethToDeposit.sub(msg.value),
             uint8(FLASH_SOURCE.FLASH_DEPOSIT),
@@ -297,13 +297,17 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @param _crabAmount strategy token amount to burn
      * @param _maxEthToPay maximum ETH to pay to buy back the owed wSqueeth debt
      */
-    function flashWithdraw(uint256 _crabAmount, uint256 _maxEthToPay) external afterInitialization nonReentrant {
+    function flashWithdraw(
+        uint256 _crabAmount,
+        uint256 _maxEthToPay,
+        uint24 _poolFee
+    ) external afterInitialization nonReentrant {
         uint256 exactWSqueethNeeded = _getDebtFromStrategyAmount(_crabAmount);
 
         _exactOutFlashSwap(
             weth,
             wPowerPerp,
-            IUniswapV3Pool(ethWSqueethPool).fee(),
+            _poolFee,
             exactWSqueethNeeded,
             _maxEthToPay,
             uint8(FLASH_SOURCE.FLASH_WITHDRAW),
@@ -443,9 +447,9 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      */
     function _strategyFlash(
         address _caller,
-        address, /*_tokenIn*/
-        address, /*_tokenOut*/
-        uint24, /*_fee*/
+        address _tokenIn,
+        address _tokenOut,
+        uint24 _fee,
         uint256 _amountToPay,
         bytes memory _callData,
         uint8 _callSource
@@ -460,8 +464,10 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
             //will revert if data.totalDeposit is > eth balance in contract
             _deposit(_caller, data.totalDeposit, true);
 
+            IUniswapV3Pool pool = _getPool(_tokenIn, _tokenOut, _fee);
+
             //repay the flash swap
-            IWPowerPerp(wPowerPerp).transfer(ethWSqueethPool, _amountToPay);
+            IWPowerPerp(wPowerPerp).transfer(address(pool), _amountToPay);
 
             emit FlashDepositCallback(_caller, _amountToPay, address(this).balance);
 
@@ -480,9 +486,11 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
                 true
             );
 
+            IUniswapV3Pool pool = _getPool(_tokenIn, _tokenOut, _fee);
+
             //use some amount of withdrawn ETH to repay flash swap
             IWETH9(weth).deposit{value: _amountToPay}();
-            IWETH9(weth).transfer(ethWSqueethPool, _amountToPay);
+            IWETH9(weth).transfer(address(pool), _amountToPay);
 
             //excess ETH not used to repay flash swap is transferred to the user
             uint256 proceeds = ethToWithdraw.sub(_amountToPay);
