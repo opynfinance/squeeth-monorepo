@@ -220,7 +220,7 @@ contract StrategyFlashSwap is IUniswapV3SwapCallback {
         address tokenA,
         address tokenB,
         uint24 fee
-    ) private view returns (IUniswapV3Pool) {
+    ) internal view returns (IUniswapV3Pool) {
         return IUniswapV3Pool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee)));
     }
 }

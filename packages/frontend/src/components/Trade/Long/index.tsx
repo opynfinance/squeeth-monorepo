@@ -380,6 +380,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
     setBuyLoading(true)
     try {
       await buyAndRefund(new BigNumber(ethTradeAmount), () => {
+        
         setTradeSuccess(true)
         setTradeCompleted(true)
 
@@ -390,7 +391,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
       console.log(e)
       setBuyLoading(false)
     }
-  }, [buyAndRefund, ethTradeAmount, resetEthTradeAmount, resetSqthTradeAmount, setTradeCompleted, setTradeSuccess])
+  }, [buyAndRefund, ethTradeAmount, resetEthTradeAmount, resetSqthTradeAmount, setTradeCompleted, setTradeSuccess, slippageAmount])
 
   return (
     <div id="open-long-card">
@@ -632,7 +633,6 @@ const CloseLong: React.FC<BuyProps> = () => {
     resetTransactionData,
   } = useTransactionStatus()
   const { swapRouter2, oSqueeth } = useAtomValue(addressesAtom)
-  // const sell = useSell()
   const sell = useAutoRoutedSell()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const getSellQuoteForETH = useGetSellQuoteForETH()

@@ -11,6 +11,7 @@ import {
     WPowerPerp,
     CrabStrategyV2,
     Timelock,
+    StrategyBase,
 } from "../../../typechain";
 import {
     deployUniswapV3,
@@ -108,11 +109,6 @@ describe("Crab v2 Integration test: Timelock", function () {
             hedgeTimeThreshold,
             hedgePriceThreshold
         )) as CrabStrategyV2;
-
-        const strategyCap = ethers.utils.parseUnits("1000");
-        await crabStrategy.connect(owner).setStrategyCap(strategyCap);
-        const strategyCapInContract = await crabStrategy.strategyCap();
-        expect(strategyCapInContract.eq(strategyCap)).to.be.true;
     });
 
     this.beforeAll("Seed pool liquidity", async () => {
@@ -120,7 +116,12 @@ describe("Crab v2 Integration test: Timelock", function () {
         await provider.send("evm_mine", []);
     });
     before("Initialize strategy", async () => {
-        await crabStrategy.connect(crabMigration).initialize(ethers.utils.parseUnits("0.2"), ethers.utils.parseUnits("0.2"), 0, 0, { value: ethers.utils.parseUnits("1") });
+        const strategyCap = ethers.utils.parseUnits("1000");
+
+        await crabStrategy.connect(crabMigration).initialize(ethers.utils.parseUnits("0.2"), ethers.utils.parseUnits("0.2"), 0, 0, strategyCap, { value: ethers.utils.parseUnits("1") });
+        const strategyCapInContract = await crabStrategy.strategyCap();
+        expect(strategyCapInContract.eq(strategyCap)).to.be.true;
+
     });
 
     describe("Transfer vault with timelock", async () => {
