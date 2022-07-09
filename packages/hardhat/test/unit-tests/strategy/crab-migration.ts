@@ -67,9 +67,35 @@ describe("Crab Migration", function () {
 
     describe("Test Migration", async() => { 
 
-        it("should not allow deposits until crab v2 is set", async () => { 
-            await expect(crabMigration.connect(d1).depositV1Shares(1)).to.be.revertedWith("M11");
-        })
+        it("Should revert if address of euler deposit token is 0", async function () {
+            const MigrationContract = await ethers.getContractFactory("CrabMigration");
+            await expect(MigrationContract.connect(owner).deploy(
+                crabStrategyV1.address, weth.address, euler.address, ethers.constants.AddressZero, euler.address)).to.be.revertedWith("invalid _dToken address");
+        });
+
+        it("Should revert if address of euler deployment on mainnet is 0", async function () {
+            const MigrationContract = await ethers.getContractFactory("CrabMigration");
+            await expect(MigrationContract.connect(owner).deploy(
+                crabStrategyV1.address, weth.address, euler.address, dToken.address, ethers.constants.AddressZero)).to.be.revertedWith("invalid _eulerMainnet address");
+        });
+
+        it("Should revert if address of euler exec contract is 0", async function () {
+            const MigrationContract = await ethers.getContractFactory("CrabMigration");
+            await expect(MigrationContract.connect(owner).deploy(
+                crabStrategyV1.address, weth.address, ethers.constants.AddressZero, dToken.address, euler.address)).to.be.revertedWith("invalid _eulerExec address");
+        });
+
+        it("Should revert if address of crab v1 is 0", async function () {
+            const MigrationContract = await ethers.getContractFactory("CrabMigration");
+            await expect(MigrationContract.connect(owner).deploy(
+                ethers.constants.AddressZero, weth.address, euler.address, dToken.address, euler.address)).to.be.revertedWith("invalid _crabv1 address");
+        });
+
+        it("Should revert if address of weth is 0", async function () {
+            const MigrationContract = await ethers.getContractFactory("CrabMigration");
+            await expect(MigrationContract.connect(owner).deploy(
+                crabStrategyV1.address, ethers.constants.AddressZero, euler.address, dToken.address, euler.address)).to.be.revertedWith("invalid _weth address");
+        });
 
         it("should not allow 0 to be set as crab address", async () => {
             await expect(crabMigration.connect(owner).setCrabV2(ethers.constants.AddressZero)).to.be.revertedWith("M8");
@@ -122,6 +148,23 @@ describe("Crab Migration", function () {
             expect(d2SharesDeposited).to.be.equal(deposit2Amount);
         })
 
+        it("d2 withdraws more shares than they have deposited crabV1 shares", async () => { 
+            await expect(crabMigration.connect(d2).withdrawV1Shares(deposit2Amount.mul(2))).to.be.revertedWith("ds-math-sub-underflow");
+        })
+
+        it("d2 withdraws 50% of crabV1 shares", async () => { 
+            const crabV1BalanceBefore = await crabStrategyV1.balanceOf(crabMigration.address); 
+
+            await crabMigration.connect(d2).withdrawV1Shares(deposit2Amount.div(2));
+
+            const crabV1BalanceAfter = await crabStrategyV1.balanceOf(crabMigration.address);
+            const d2SharesDeposited  = await crabMigration.sharesDeposited(d2.address);
+
+            expect(crabV1BalanceBefore.sub(crabV1BalanceAfter)).to.be.equal(deposit2Amount.div(2));
+            expect(d2SharesDeposited).to.be.equal(deposit2Amount.sub(deposit2Amount.div(2)));
+        })
+
+
         it("should not be able to claim until strategy has been migrated", async () => { 
             await expect(crabMigration.connect(d1).claimV2Shares()).to.be.revertedWith("M2");
         })
@@ -132,11 +175,11 @@ describe("Crab Migration", function () {
         })
 
         it("random should not be able to migrate shares", async () => { 
-            await expect(crabMigration.connect(random).batchMigrate()).to.be.revertedWith("Ownable: caller is not the owner");
+            await expect(crabMigration.connect(random).batchMigrate(1)).to.be.revertedWith("Ownable: caller is not the owner");
         })
 
         it("batchMigrate", async () => { 
-            await crabMigration.connect(owner).batchMigrate();
+            await crabMigration.connect(owner).batchMigrate(1);
         })
     })
 

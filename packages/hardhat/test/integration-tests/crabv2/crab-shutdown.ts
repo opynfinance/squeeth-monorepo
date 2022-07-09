@@ -22,7 +22,8 @@ describe("Crab V2 integration test: Shutdown of Squeeth Power Perp contracts", f
   const auctionTime = 3600
   const minPriceMultiplier = ethers.utils.parseUnits('0.95')
   const maxPriceMultiplier = ethers.utils.parseUnits('1.05')
-
+  let poolFee: BigNumber
+  
   let provider: providers.JsonRpcProvider;
   let owner: SignerWithAddress;
   let depositor: SignerWithAddress;
@@ -79,17 +80,14 @@ describe("Crab V2 integration test: Shutdown of Squeeth Power Perp contracts", f
     wSqueethPool = squeethDeployments.wsqueethEthPool
     ethDaiPool = squeethDeployments.ethDaiPool
 
+    poolFee = await wSqueethPool.fee()
+
     const TimelockContract = await ethers.getContractFactory("Timelock");
     timelock = (await TimelockContract.deploy(owner.address, 3 * 24 * 60 * 60)) as Timelock;
 
 
     const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
     crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, uniswapFactory.address, wSqueethPool.address, timelock.address, crabMigration.address, hedgeTimeThreshold, hedgePriceThreshold)) as CrabStrategyV2;
-
-    const strategyCap = ethers.utils.parseUnits("1000")
-    await crabStrategy.connect(owner).setStrategyCap(strategyCap)
-    const strategyCapInContract = await crabStrategy.strategyCap()
-    expect(strategyCapInContract.eq(strategyCap)).to.be.true
   })
 
   this.beforeAll("Seed pool liquidity", async () => {
@@ -129,8 +127,12 @@ describe("Crab V2 integration test: Shutdown of Squeeth Power Perp contracts", f
     const squeethDelta = ethPrice.mul(2).div(1e4);
     const debtToMint = wdiv(ethToDeposit, squeethDelta);
     const depositorSqueethBalanceBefore = await wSqueeth.balanceOf(depositor.address)
+    const strategyCap = ethers.utils.parseUnits("1000")
 
-    await crabStrategy.connect(crabMigration).initialize(debtToMint, ethToDeposit, 0, 0, { value: msgvalue })
+    await crabStrategy.connect(crabMigration).initialize(debtToMint, ethToDeposit, 0, 0, strategyCap, { value: msgvalue })
+    const strategyCapInContract = await crabStrategy.strategyCap()
+    expect(strategyCapInContract.eq(strategyCap)).to.be.true
+
     await crabStrategy.connect(crabMigration).transfer(depositor.address, ethToDeposit);
     await wSqueeth.connect(crabMigration).transfer(depositor.address, debtToMint);
 
@@ -269,7 +271,7 @@ describe("Crab V2 integration test: Shutdown of Squeeth Power Perp contracts", f
       expect(collateralBefore.eq(BigNumber.from(0))).to.be.true
       expect(debtBefore.eq(BigNumber.from(0))).to.be.true
 
-      await expect(crabStrategy.connect(depositor2).flashDeposit(ethToDeposit, { value: msgvalue })).to.be.revertedWith("Crab contracts shut down")
+      await expect(crabStrategy.connect(depositor2).flashDeposit(ethToDeposit, poolFee, { value: msgvalue })).to.be.revertedWith("Crab contracts shut down")
     })
 
     it("should NOT let user deposit post shutdown", async () => {
@@ -291,7 +293,7 @@ describe("Crab V2 integration test: Shutdown of Squeeth Power Perp contracts", f
       const ethToWithdraw = userCollateral.sub(ethCostOfDebtToRepay);
       const maxEthToPay = ethCostOfDebtToRepay.mul(11).div(10)
 
-      await expect(crabStrategy.connect(depositor).flashWithdraw(userCrabBalanceBefore, maxEthToPay)).to.be.revertedWith("AS")
+      await expect(crabStrategy.connect(depositor).flashWithdraw(userCrabBalanceBefore, maxEthToPay, poolFee)).to.be.revertedWith("AS")
 
     })
 
