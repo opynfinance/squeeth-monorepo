@@ -16,10 +16,9 @@ workflows:
       - unit-test-contracts:
           requires:
             - compile
-      - coverage:
+      - integration-test-contracts:
           requires:
-            - e2e-test
-          context: BUILD_KEYS
+            - compile
       - contract-size:
           requires:
             - compile
@@ -28,7 +27,7 @@ workflows:
             - compile
       - e2e-test:
           requires:
-            - unit-test-contracts
+            - compile
       - checkout-and-install-frontend
       - unit-test-frontend:
           requires:
@@ -105,7 +104,22 @@ jobs:
           key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
       - run: 
           name: Unit tests
-          command: yarn test 
+          command: yarn test:crab-unit
+  
+  integration-test-contracts:
+    working_directory: ~/squeeth/packages/hardhat
+    docker:
+      - image: circleci/node:16.6.0
+    steps:
+      - checkout:
+          path: ~/squeeth
+      - restore_cache:
+          key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
+      - run: 
+          name: Integration tests
+          command: yarn test:crab-integration
     
   deploy-test:
     working_directory: ~/squeeth/packages/hardhat
@@ -121,27 +135,6 @@ jobs:
       - run:
           name: Deploy
           command: npx hardhat deploy --network hardhat
-
-  coverage:
-    working_directory: ~/squeeth/packages/hardhat
-    docker:
-      - image: circleci/node:16.6.0
-    steps:
-      - checkout:
-          path: ~/squeeth
-      - restore_cache:
-          key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
-      - restore_cache:
-          key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
-      - run: 
-          name: Coverage
-          command: yarn coverage 
-      - coveralls/upload:
-          path_to_lcov: ./coverage/lcov.info
-      - store_artifacts:
-          path: /coverage
-      - store_artifacts:
-          path: /coverage.json
 
   contract-size:
     working_directory: ~/squeeth/packages/hardhat

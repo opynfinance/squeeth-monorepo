@@ -9,7 +9,11 @@ interface ICrabStrategyV2 {
 
     function weth() external view returns (address);
 
-    function flashDeposit(uint256 _ethToDeposit) external payable;
+    function flashDeposit(uint256 _ethToDeposit, uint24 _poolFee) external payable;
 
-    function flashWithdraw(uint256 _crabAmount, uint256 _maxEthToPay) external;
+    function flashWithdraw(
+        uint256 _crabAmount,
+        uint256 _maxEthToPay,
+        uint24 _poolFee
+    ) external;
 }

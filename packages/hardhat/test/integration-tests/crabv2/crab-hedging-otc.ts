@@ -100,11 +100,6 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             hedgeTimeThreshold,
             hedgePriceThreshold
         )) as CrabStrategyV2;
-
-        const strategyCap = ethers.utils.parseUnits("1000");
-        await crabStrategyV2.connect(owner).setStrategyCap(strategyCap);
-        const strategyCapInContract = await crabStrategyV2.strategyCap();
-        expect(strategyCapInContract.eq(strategyCap)).to.be.true;
     });
 
     this.beforeAll("Seed pool liquidity", async () => {
@@ -152,7 +147,13 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
         const debtToMint = wdiv(ethToDeposit, squeethDelta.add(ethFeePerWSqueeth));
         const expectedEthDeposit = ethToDeposit.sub(debtToMint.mul(ethFeePerWSqueeth).div(one));
 
-        await crabStrategyV2.connect(crabMigration).initialize(debtToMint, expectedEthDeposit, 1, 1, { value: ethToDeposit });
+        const strategyCap = ethers.utils.parseUnits("1000");
+
+        await crabStrategyV2.connect(crabMigration).initialize(debtToMint, expectedEthDeposit, 1, 1, strategyCap, { value: ethToDeposit });
+        
+        const strategyCapInContract = await crabStrategyV2.strategyCap();
+        expect(strategyCapInContract.eq(strategyCap)).to.be.true;
+
         await crabStrategyV2.connect(crabMigration).transfer(depositor.address, expectedEthDeposit);
 
         const totalSupply = await crabStrategyV2.totalSupply();
