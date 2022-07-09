@@ -354,13 +354,13 @@ export const useRebalanceGeneralSwap = () => {
       // Get current LP positions
       const { amount0, amount1 } = await getDecreaseLiquidity(uniTokenId, position.liquidity, 0, 0, Math.floor(Date.now() / 1000 + 86400))
 
+      console.log("iswethtoken0", isWethToken0)
       const wPowerPerpAmountInLPBefore = isWethToken0 ? amount1 : amount0
       console.log("wPowerPerpAmountInLPBefore", wPowerPerpAmountInLPBefore)
       const wethAmountInLPBefore = isWethToken0 ? amount0 : amount1
       console.log("wethAmountInLPBefore", wethAmountInLPBefore)
 
       const x96 = new BigNumber(2).pow(96)
-      const squeethPrice = new BigNumber(await getTwapSqueethPrice())
       const liquidity = new BigNumber(position.liquidity)
 
       // Calculate prices from ticks
@@ -368,41 +368,52 @@ export const useRebalanceGeneralSwap = () => {
       const sqrtUpperPrice = new BigNumber(TickMath.getSqrtRatioAtTick(upperTick).toString()).div(x96)
       const { sqrtPriceX96 } = await getPoolState(squeethPoolContract)
       const sqrtSqueethPrice = new BigNumber(sqrtPriceX96.toString()).div(x96)
+      console.log("sqrtLowerPrice", sqrtLowerPrice.toString())
+      console.log("sqrtUpperPrice", sqrtUpperPrice.toString())
       console.log("sqrtSqueethPrice", sqrtSqueethPrice.toString())
 
-      let newAmount0
-      let newAmount1
+      let newAmount0, newAmount1, amountIn, wethAmountInLPAfter, wPowerPerpAmountInLPAfter, needMoreWeth, tokenIn, tokenOut
       if (sqrtUpperPrice.lt(sqrtSqueethPrice)) {
         console.log("case 1")
+        // All weth position
         newAmount0 = 0
         newAmount1 = (liquidity.times(sqrtUpperPrice)).minus(liquidity.times(sqrtLowerPrice))
+        wethAmountInLPAfter = isWethToken0 ? newAmount0 : newAmount1
+        wPowerPerpAmountInLPAfter = isWethToken0 ? newAmount1 : newAmount0
+        amountIn = new BigNumber(wPowerPerpAmountInLPBefore).minus(new BigNumber(wPowerPerpAmountInLPAfter)).toFixed(0)
+        tokenIn = oSqueeth
+        tokenOut = weth
       } else if (sqrtSqueethPrice.lt(sqrtLowerPrice)) {
         console.log("case 2")
+        // All squeeth position
         newAmount0 = (liquidity.div(sqrtLowerPrice)).minus(liquidity.div(sqrtUpperPrice))
         newAmount1 = 0
+        wethAmountInLPAfter = isWethToken0 ? newAmount0 : newAmount1
+        wPowerPerpAmountInLPAfter = isWethToken0 ? newAmount1 : newAmount0
+        amountIn = wethAmountInLPBefore
+        tokenIn = weth
+        tokenOut = oSqueeth
       } else {
         console.log("case 3")
         // Calculate amounts of each asset to LP
         // x = L(sqrt(upperPrice) - sqrt(squeethPrice))) / sqrt(squeethPrice) * sqrt(upperPrice)
         // y = L(sqrt(squeethPrice) - sqrt(lowerPrice))
+        // Calculate difference new position
         newAmount0 = liquidity.times(sqrtUpperPrice.minus(sqrtSqueethPrice)).div((sqrtSqueethPrice.times(sqrtUpperPrice)))
         newAmount1 = liquidity.times(sqrtSqueethPrice.minus(sqrtLowerPrice))
+        wethAmountInLPAfter = isWethToken0 ? newAmount0 : newAmount1
+        wPowerPerpAmountInLPAfter = isWethToken0 ? newAmount1 : newAmount0
+        needMoreWeth = new BigNumber(wethAmountInLPBefore).lt(new BigNumber(wethAmountInLPAfter))
+        tokenIn = needMoreWeth ? oSqueeth : weth
+        tokenOut = needMoreWeth ? weth : oSqueeth
+        amountIn = amountIn = needMoreWeth ? new BigNumber(wPowerPerpAmountInLPAfter).minus(new BigNumber(wPowerPerpAmountInLPBefore)).toFixed(0)
+        : new BigNumber(wethAmountInLPBefore).minus(new BigNumber(wethAmountInLPAfter)).toFixed(0)
       }
-
-      // Calculate difference new position
-      const wethAmountInLPAfter = isWethToken0 ? newAmount0 : newAmount1
       console.log("wethAmountInLPAfter", wethAmountInLPAfter.toFixed(0))
-      const wPowerPerpAmountInLPAfter = isWethToken0 ? newAmount1 : newAmount0
       console.log("wPowerPerpAmountInLPAfter", wPowerPerpAmountInLPAfter.toFixed(0))
       console.log("wethAmountInLPAfter", wethAmountInLPAfter.toFixed(0))
-      const needMoreWeth = new BigNumber(wethAmountInLPBefore).lt(new BigNumber(wethAmountInLPAfter))
       console.log("needMoreWeth", needMoreWeth)
-
-      const tokenIn = needMoreWeth ? oSqueeth : weth
-      const tokenOut = needMoreWeth ? weth : oSqueeth
-
-      const amountIn = needMoreWeth ? new BigNumber(wPowerPerpAmountInLPAfter).minus(new BigNumber(wPowerPerpAmountInLPBefore)).absoluteValue().toFixed(0)
-                                    : new BigNumber(wethAmountInLPBefore).minus(new BigNumber(wethAmountInLPAfter)).absoluteValue().toFixed(0)
+      console.log("liquidity", liquidity.toString())
       console.log("amountIn", amountIn)
 
       console.log("1st", [
