@@ -124,6 +124,11 @@ contract CrabMigration is Ownable {
         address _dToken,
         address _eulerMainnet
     ) {
+        require(_eulerExec != address(0), "invalid _eulerExec address");
+        require(_dToken != address(0), "invalid _dToken address");
+        require(_eulerMainnet != address(0), "invalid _eulerMainnet address");
+        require(_weth != address(0), "invalid _weth address");
+        require(_crabV1 != address(0), "invalid _crabv1 address");
         crabV1 = _crabV1;
         euler = _eulerExec;
         EULER_MAINNET = _eulerMainnet;

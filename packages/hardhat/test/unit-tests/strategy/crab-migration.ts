@@ -67,6 +67,36 @@ describe("Crab Migration", function () {
 
     describe("Test Migration", async() => { 
 
+        it("Should revert if address of euler deposit token is 0", async function () {
+            const MigrationContract = await ethers.getContractFactory("CrabMigration");
+            await expect(MigrationContract.connect(owner).deploy(
+                crabStrategyV1.address, weth.address, euler.address, ethers.constants.AddressZero, euler.address)).to.be.revertedWith("invalid _dToken address");
+        });
+
+        it("Should revert if address of euler deployment on mainnet is 0", async function () {
+            const MigrationContract = await ethers.getContractFactory("CrabMigration");
+            await expect(MigrationContract.connect(owner).deploy(
+                crabStrategyV1.address, weth.address, euler.address, dToken.address, ethers.constants.AddressZero)).to.be.revertedWith("invalid _eulerMainnet address");
+        });
+
+        it("Should revert if address of euler exec contract is 0", async function () {
+            const MigrationContract = await ethers.getContractFactory("CrabMigration");
+            await expect(MigrationContract.connect(owner).deploy(
+                crabStrategyV1.address, weth.address, ethers.constants.AddressZero, dToken.address, euler.address)).to.be.revertedWith("invalid _eulerExec address");
+        });
+
+        it("Should revert if address of crab v1 is 0", async function () {
+            const MigrationContract = await ethers.getContractFactory("CrabMigration");
+            await expect(MigrationContract.connect(owner).deploy(
+                ethers.constants.AddressZero, weth.address, euler.address, dToken.address, euler.address)).to.be.revertedWith("invalid _crabv1 address");
+        });
+
+        it("Should revert if address of weth is 0", async function () {
+            const MigrationContract = await ethers.getContractFactory("CrabMigration");
+            await expect(MigrationContract.connect(owner).deploy(
+                crabStrategyV1.address, ethers.constants.AddressZero, euler.address, dToken.address, euler.address)).to.be.revertedWith("invalid _weth address");
+        });
+
         it("should not allow 0 to be set as crab address", async () => {
             await expect(crabMigration.connect(owner).setCrabV2(ethers.constants.AddressZero)).to.be.revertedWith("M9");
         })
