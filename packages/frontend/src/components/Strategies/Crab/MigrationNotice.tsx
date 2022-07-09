@@ -6,8 +6,7 @@ const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
       padding: theme.spacing(2),
-      background:
-        'linear-gradient(90deg, rgba(238,94,63,0.39821866246498594) 0%, rgba(255,186,236,0.4598433123249299) 35%, rgba(255,159,105,0.4402354691876751) 100%);',
+      background: 'rgba(238, 94, 63, 0.1);',
       border: '1px solid #ee5e3f',
       borderRadius: theme.spacing(2),
       display: 'flex',
