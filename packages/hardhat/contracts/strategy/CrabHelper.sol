@@ -92,7 +92,6 @@ contract CrabHelper is StrategySwap, ReentrancyGuard {
      * @param _minAmountOut min amount of ERC20 to receive
      * @param _erc20Fee pool fee for transfer ERC20/eth pool (3000 = 30bps)
      * @param _wPowerPerpFee pool fee for wPowerPerp/eth pool (3000 = 30bps)
-     * @param _tokenIn ERC20 token to pay
      */
     function flashWithdrawERC20(
         uint256 _crabAmount,

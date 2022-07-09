@@ -218,8 +218,9 @@ contract CrabMigration is Ownable {
      * @notice callback function for flash actions
      * @param _initiator address of original function caller
      * @param _amount  amount to pay back for flashswap
-     * @param _callData arbitrary data attached to callback
      * @param _callSource identifier for which function triggered callback
+     * @param _calldata arbitrary data attached to callback
+
      */
     function _flashCallback(
         address _initiator,
@@ -358,7 +359,7 @@ contract CrabMigration is Ownable {
 
     /**
      * @notice view details of flash migration for specified amount of V1 shares
-     * @param _v1Shares amount of crab V1 shares 
+     * @param _v1Shares amount of crab V1 shares
      */
     function flashMigrationDetails(uint256 _v1Shares)
         external

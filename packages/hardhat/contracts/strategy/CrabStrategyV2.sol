@@ -241,7 +241,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     /**
      * @notice transfer vault NFT to new contract
      * @dev strategy cap is set to 0 to avoid future deposits
-     * @param _newStraetgy new strategy contract address
+     * @param _newStrategy new strategy contract address
      */
     function transferVault(address _newStrategy) external onlyTimelock afterInitialization {
         IShortPowerPerp(powerTokenController.shortPowerPerp()).safeTransferFrom(address(this), _newStrategy, vaultId);
@@ -315,7 +315,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
      * @notice flash withdraw from strategy, providing strategy tokens, buying wSqueeth, burning and receiving ETH
      * @dev this function will execute a flash swap where it receives wSqueeth, burns, withdraws ETH and then repays the flash swap with ETH
      * @param _crabAmount strategy token amount to burn
-     * @param _maxEthToPay maximum ETH to pay to buy back the owed wSqueeth debt
+     * @param _maxEthToPay maximum ETH to pay to buy back the wSqueeth debt
      * @param _poolFee Uniswap pool fee
 
      */
@@ -482,25 +482,25 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
             // convert WETH to ETH as Uniswap uses WETH
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
 
-            //use user msg.value and unwrapped WETH from uniswap flash swap proceeds to deposit into strategy
-            //will revert if data.totalDeposit is > eth balance in contract
+            // use user msg.value and unwrapped WETH from uniswap flash swap proceeds to deposit into strategy
+            // will revert if data.totalDeposit is > eth balance in contract
             _deposit(_caller, data.totalDeposit, true);
 
             IUniswapV3Pool pool = _getPool(_tokenIn, _tokenOut, _fee);
 
-            //repay the flash swap
+            // repay the flash swap
             IWPowerPerp(wPowerPerp).transfer(address(pool), _amountToPay);
 
             emit FlashDepositCallback(_caller, _amountToPay, address(this).balance);
 
-            //return excess eth to the user that was not needed for slippage
+            // return excess eth to the user that was not needed for slippage
             if (address(this).balance > 0) {
                 payable(_caller).sendValue(address(this).balance);
             }
         } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_WITHDRAW) {
             FlashWithdrawData memory data = abi.decode(_callData, (FlashWithdrawData));
 
-            //use flash swap wSqueeth proceeds to withdraw ETH along with user crabAmount
+            // use flash swap wSqueeth proceeds to withdraw ETH along with user crabAmount
             uint256 ethToWithdraw = _withdraw(
                 _caller,
                 data.crabAmount,
@@ -510,11 +510,11 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
             IUniswapV3Pool pool = _getPool(_tokenIn, _tokenOut, _fee);
 
-            //use some amount of withdrawn ETH to repay flash swap
+            // use some amount of withdrawn ETH to repay flash swap
             IWETH9(weth).deposit{value: _amountToPay}();
             IWETH9(weth).transfer(address(pool), _amountToPay);
 
-            //excess ETH not used to repay flash swap is transferred to the user
+            // excess ETH not used to repay flash swap is transferred to the user
             uint256 proceeds = ethToWithdraw.sub(_amountToPay);
 
             emit FlashWithdrawCallback(_caller, _amountToPay, proceeds);
@@ -599,8 +599,8 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
     /**
      * @dev check the signer and swap tokens in the order
-     * @param _remainingAmount quantity the manager wants to sell
-     * @param _clearingPrice the price at which the manager is buying
+     * @param _remainingAmount quantity the manager wants to trade
+     * @param _clearingPrice the price at which all orders are traded
      * @param _order a signed order to swap tokens
      */
     function _execOrder(
@@ -608,7 +608,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         uint256 _clearingPrice,
         Order memory _order
     ) internal {
-        // Check order beats clearing price
+        // check that order beats clearing price
         if (_order.isBuying) {
             require(_clearingPrice <= _order.price, "Clearing Price should be below bid price");
         } else {
@@ -649,7 +649,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         } else {
             // trader sends oSQTH and receives weth
             _burnWPowerPerp(_order.trader, _order.quantity, wethAmount, false);
-            //wrap it
+            // wrap it
             IWETH9(weth).deposit{value: wethAmount}();
             IWETH9(weth).transfer(_order.trader, wethAmount);
         }
