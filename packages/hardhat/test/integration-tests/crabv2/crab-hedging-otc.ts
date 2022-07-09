@@ -1116,6 +1116,36 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
                 crabStrategyV2.connect(owner).hedgeOTC(toSell, oSQTHPriceAfter, false, [signedOrder, signedOrder1])
             ).to.be.revertedWith("Orders are not arranged properly");
         });
+        it("order signed for a different contract i.e EIP 712 attack", async () => {
+            // set the time to 1 hr from prev hedge
+            await provider.send("evm_increaseTime", [84600 + 3600]);
+            const trader = random;
+
+            // Calculate new Delta and the trades to make
+            const toGet = ethers.utils.parseUnits("3.125");
+            const toSell = ethers.utils.parseUnits("1");
+
+            // make the approvals for the trade and prepare the trade
+            await wSqueeth.connect(trader).approve(crabStrategyV2.address, toGet);
+
+            const orderHash = {
+                bidId: 0,
+                trader: trader.address,
+                quantity: toSell,
+                price: 1,
+                isBuying: false,
+                expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
+                nonce: 909090,
+            };
+            const { typeData, domainData } = getTypeAndDomainData();
+            domainData.verifyingContract = timelock.address;
+            // Do the trade
+            const signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
+            const managerBuyPrice = 1;
+            await expect(
+                crabStrategyV2.connect(owner).hedgeOTC(toSell, managerBuyPrice, true, [signedOrder])
+            ).to.be.revertedWith("Invalid offer signature");
+        });
         it("should allow manager to set thresholds", async () => {
             await expect(crabStrategyV2.connect(owner).setHedgingTwapPeriod(120)).to.be.revertedWith(
                 "twap period is too short"
