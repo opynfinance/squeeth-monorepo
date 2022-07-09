@@ -216,10 +216,10 @@ contract CrabMigration is Ownable {
 
     /**
      * @notice callback function for flash actions
-     * @param _initiator flash loan initiator
-     * @param _amount loan amount
-     * @param _callSource number for callback action
-     * @param _calldata data for callback action
+     * @param _initiator address of original function caller
+     * @param _amount  amount to pay back for flashswap
+     * @param _callData arbitrary data attached to callback
+     * @param _callSource identifier for which function triggered callback
      */
     function _flashCallback(
         address _initiator,
@@ -337,6 +337,7 @@ contract CrabMigration is Ownable {
      * @notice claim crab V2 shares and flash withdraw from crab V2
      * @param _amountToWithdraw V2 shares to claim
      * @param _maxEthToPay maximum ETH to pay to buy back the owed wSqueeth debt
+     * @param _poolFee Uniswap pool fee for flash withdraw
      */
     function claimAndWithdraw(
         uint256 _amountToWithdraw,
@@ -357,7 +358,7 @@ contract CrabMigration is Ownable {
 
     /**
      * @notice view details of flash migration for specified amount of V1 shares
-     * @param _v1Shares amount of crab V1 shares
+     * @param _v1Shares amount of crab V1 shares 
      */
     function flashMigrationDetails(uint256 _v1Shares)
         external
@@ -410,7 +411,7 @@ contract CrabMigration is Ownable {
     /**
      * @notice used to migrate from crab V1 to crab V2 when CR1 < CR2
      * @param _v1Shares V1 shares to migrate
-     * @param _ethToFlashDeposit flash deposit amount in crab v2 with excess ETH. If 0 will returned to sender
+     * @param _ethToFlashDeposit flash deposit amount in crab v2 with excess ETH (if 0 will returned to sender)
      * @param _ethToBorrow amount to flash loan to deposit in crab v2
      * @param _withdrawMaxEthToPay maximum ETH to pay to buy back the owed wSqueeth debt
      * @param _poolFee uniswap pool fee for the optional flash deposit into crab v2
@@ -450,6 +451,7 @@ contract CrabMigration is Ownable {
 
     /**
      * @notice get migration details for given amount of V1 shares
+     * @param _v1Shares amount of crab V1 shares
      */
     function _flashMigrationDetails(uint256 _v1Shares)
         internal
