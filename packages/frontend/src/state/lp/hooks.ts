@@ -44,7 +44,7 @@ export const useClosePosition = () => {
   const getDebtAmount = useGetDebtAmount()
   const getVault = useGetVault()
   const getPosition = useGetPosition()
-  const getLimitEth = useGetLimitEth()
+  const getQuote = useGetQuote()
   const closePosition = useAppCallback(async (vaultId: number, onTxConfirmed?: () => void) => {
     const vaultBefore = await getVault(vaultId)
     const uniTokenId = vaultBefore?.NFTCollateralId 
@@ -63,7 +63,7 @@ export const useClosePosition = () => {
     const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
     const debtInEth = await getDebtAmount(shortAmount)
     const collateralToFlashloan = debtInEth.multipliedBy(1.5)
-    const limitEth = await getLimitEth(shortAmount)
+    const limitEth = await getQuote(shortAmount, true)
 
     const flashloanCloseVaultLpNftParam = {
       vaultId: vaultId,
@@ -88,7 +88,7 @@ export const useClosePosition = () => {
       }),
       onTxConfirmed,
     )
-  }, [address, controllerHelperContract, controllerContract, handleTransaction, getDebtAmount, getVault, getPosition, getLimitEth])
+  }, [address, controllerHelperContract, controllerContract, handleTransaction, getDebtAmount, getVault, getPosition, getQuote])
   return closePosition
 }
 
@@ -213,7 +213,7 @@ export const useRebalanceVault = () => {
   const getTotalSupply = useGetTotalSupply()
   const getTokenByIndex = useGetTokenByIndex()
   const getDecreaseLiquidity = useGetDecreaseLiquidity()
-  const getLimitEth = useGetLimitEth()
+  const getQuote = useGetQuote()
   const rebalanceVault = useAppCallback(
     async (vaultId: number, lowerTickInput: number, upperTickInput: number, onTxConfirmed?: () => void) => {
       const vaultBefore = await getVault(vaultId)
@@ -240,7 +240,7 @@ export const useRebalanceVault = () => {
 
       // Estimate proceeds from liquidating squeeth in LP
       const wPowerPerpAmountInLPBeforeVal = fromTokenAmount(wPowerPerpAmountInLPBefore, OSQUEETH_DECIMALS)
-      const ethAmountOutFromSwap = await getLimitEth(wPowerPerpAmountInLPBeforeVal)
+      const ethAmountOutFromSwap = await getQuote(wPowerPerpAmountInLPBeforeVal, true)
       console.log("ethAmountOutFromSwap", ethAmountOutFromSwap)
 
       // Estimate of new LP
@@ -333,6 +333,7 @@ export const useRebalanceGeneralSwap = () => {
   const getPosition = useGetPosition()
   const getTwapSqueethPrice = useGetTwapSqueethPrice()
   const squeethPoolContract = useAtomValue(squeethPoolContractAtom)
+  const getQuote = useGetQuote()
   const rebalanceGeneralSwap = useAppCallback(
     async (vaultId: number, lowerTickInput: number, upperTickInput: number, onTxConfirmed?: () => void) => {
       const vaultBefore = await getVault(vaultId)
@@ -376,20 +377,18 @@ export const useRebalanceGeneralSwap = () => {
       if (sqrtUpperPrice.lt(sqrtSqueethPrice)) {
         console.log("case 1")
         // All weth position
-        newAmount0 = 0
-        newAmount1 = (liquidity.times(sqrtUpperPrice)).minus(liquidity.times(sqrtLowerPrice))
-        wethAmountInLPAfter = isWethToken0 ? newAmount0 : newAmount1
-        wPowerPerpAmountInLPAfter = isWethToken0 ? newAmount1 : newAmount0
-        amountIn = new BigNumber(wPowerPerpAmountInLPBefore).minus(new BigNumber(wPowerPerpAmountInLPAfter)).toFixed(0)
+        wPowerPerpAmountInLPAfter = 0
+        const ethAmountOut = await getQuote(new BigNumber(wPowerPerpAmountInLPBefore), true)
+        wethAmountInLPAfter = new BigNumber(ethAmountOut).plus(wethAmountInLPBefore)
+        amountIn = wPowerPerpAmountInLPBefore
         tokenIn = oSqueeth
         tokenOut = weth
       } else if (sqrtSqueethPrice.lt(sqrtLowerPrice)) {
         console.log("case 2")
         // All squeeth position
-        newAmount0 = (liquidity.div(sqrtLowerPrice)).minus(liquidity.div(sqrtUpperPrice))
-        newAmount1 = 0
-        wethAmountInLPAfter = isWethToken0 ? newAmount0 : newAmount1
-        wPowerPerpAmountInLPAfter = isWethToken0 ? newAmount1 : newAmount0
+        wethAmountInLPAfter = 0
+        const squeethAmountOut = await getQuote(new BigNumber(wethAmountInLPBefore), false)
+        wPowerPerpAmountInLPAfter = new BigNumber(squeethAmountOut).plus(wPowerPerpAmountInLPBefore)
         amountIn = wethAmountInLPBefore
         tokenIn = weth
         tokenOut = oSqueeth
@@ -587,29 +586,29 @@ export const useGetDecreaseLiquidity = () => {
 }
 
 
-export const useGetLimitEth = () => {
+export const useGetQuote = () => {
   const contract = useAtomValue(quoterContractAtom)
   const {weth, oSqueeth} = useAtomValue(addressesAtom)
 
-  const getLimitEth = useCallback(
-    async (mintWSqueethAmount: BigNumber) => {
+  const getQuote = useCallback(
+    async (amount: BigNumber, squeethIn: boolean) => {
       if (!contract) return null
 
       const QuoteExactInputSingleParams = {
-        tokenIn: oSqueeth,
-        tokenOut: weth,
-        amountIn: mintWSqueethAmount.toFixed(0),
+        tokenIn: squeethIn ? oSqueeth : weth,
+        tokenOut: squeethIn ? weth : oSqueeth,
+        amountIn: amount.toFixed(0),
         fee: 3000,
         sqrtPriceLimitX96: 0
       }
 
-      const limitEth = await contract.methods.quoteExactInputSingle(QuoteExactInputSingleParams).call()
-      return limitEth.amountOut
+      const quote = await contract.methods.quoteExactInputSingle(QuoteExactInputSingleParams).call()
+      return quote.amountOut
     },
     [contract, weth, oSqueeth],
   )
 
-  return getLimitEth
+  return getQuote
 }
 
 export const useGetSqueethEquivalent = () => {
