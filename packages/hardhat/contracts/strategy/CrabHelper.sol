@@ -30,6 +30,19 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
     address public immutable crab;
     address public immutable weth;
 
+    struct Order {
+        uint256 bidId;
+        address trader;
+        uint256 quantity;
+        uint256 price;
+        bool isBuying;
+        uint256 expiry;
+        uint256 nonce;
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
+    }
+
     event FlashDepositERC20(
         address indexed depositor,
         address depositedERC20,
@@ -117,6 +130,11 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
      * @return isValid true if order is good
      */
     function verifyOrder(Order memory _order) external view returns (bool) {
+
+        // check that nonce has not been used
+        require(_order.nonce[_order.trader][_order.nonce] == false);
+
+        // extract signer
         bytes32 structHash = keccak256(
             abi.encode(
                 _CRAB_BALANCE_TYPEHASH,
@@ -126,12 +144,13 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
                 _order.price,
                 _order.isBuying,
                 _order.expiry,
-                ICrabStrategyV2(crab).nonces(_order.trader)
+                _order.nonce
             )
         );
-
         bytes32 hash = _hashTypedDataV4(structHash);
         address offerSigner = ECDSA.recover(hash, _order.v, _order.r, _order.s);
+
+        // check signer and expiry
         require(offerSigner == _order.trader, "Invalid offer signature");
         require(_order.expiry >= block.timestamp, "Order has expired");
 
@@ -145,7 +164,6 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
                 IWETH9(weth).allowance(_order.trader, address(this)) >= wethAmount,
                 "Not enough weth allowance for trade"
             );
-            // check allowance
         } else {
             // check wPowerPerp balance and allowance
             require(
