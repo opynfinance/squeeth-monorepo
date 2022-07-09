@@ -18,11 +18,11 @@ describe("Crab Migration", function () {
     let controller: Controller;
     let oracle: Oracle;
     let oSqth: WPowerPerp;
-    let squeethPool: IUniswapV3Pool; 
+    let squeethPool: IUniswapV3Pool;
 
     let weth: WETH9;
     let dToken: IDToken;
-    //let dTokenIncorrect: IDToken;
+    let dTokenIncorrect: IDToken;
     let eulerExec: IEulerExec;
 
     let provider: providers.JsonRpcProvider;
@@ -41,7 +41,7 @@ describe("Crab Migration", function () {
     const eulerMainnetAddress = "0x27182842E098f60e3D576794A5bFFb0777E025d3";
     const eulerExecAddress = "0x59828FdF7ee634AaaD3f58B19fDBa3b03E2D9d80";
     const dTokenAddress = "0x62e28f054efc24b26A794F5C1249B6349454352C";
-    //const dTokenAddressIncorrect = "0xB6f48177a096563F861787cFAFE8243c44FEF592"; //dCVX token
+    const dTokenAddressIncorrect = "0xB6f48177a096563F861787cFAFE8243c44FEF592"; // dCVX token
     const wethAddress = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
     const crabV1Address = "0xf205ad80BB86ac92247638914265887A8BAa437D";
     const crabV1Whale = "0x7ba50e6f1fc2bddfaad95b6bb9947949a588a038";
@@ -77,7 +77,7 @@ describe("Crab Migration", function () {
     this.beforeAll("Setup environment", async () => {
         weth = await ethers.getContractAt("WETH9", wethAddress);
         dToken = await ethers.getContractAt("IDToken", dTokenAddress);
-        //dTokenIncorrect = await ethers.getContractAt("IDToken", dTokenAddressIncorrect);
+        dTokenIncorrect = await ethers.getContractAt("IDToken", dTokenAddressIncorrect);
         eulerExec = await ethers.getContractAt("IEulerExec", eulerExecAddress);
         crabStrategyV1 = await ethers.getContractAt("CrabStrategy", crabV1Address);
         controller = await ethers.getContractAt("Controller", squeethControllerAddress);
@@ -92,6 +92,8 @@ describe("Crab Migration", function () {
         deposit3Amount = await crabStrategyV1.balanceOf(crabV1Whale3);
         deposit4Amount = await crabStrategyV1.balanceOf(crabV1Whale4);
         deposit5Amount = await crabStrategyV1.balanceOf(crabV1Whale5);
+
+        // console.log(deposit1Amount.toString(), deposit2Amount.toString(), deposit3Amount.toString(), deposit4Amount.toString(), deposit5Amount.toString())
 
         // Send Crab shares to d1
         await provider.send('hardhat_impersonateAccount', [crabV1Whale]);
@@ -131,15 +133,14 @@ describe("Crab Migration", function () {
         await provider.send('hardhat_stopImpersonatingAccount', [crabV1Whale5]);
     })
 
-/*     this.beforeAll("Deploy Incorrect Crab Migration", async () => {
+    this.beforeAll("Deploy Incorrect Crab Migration", async () => {
         const MigrationContract = await ethers.getContractFactory("CrabMigration");
-        //await expect(MigrationContract.deploy(crabV1Address, wethAddress, eulerExecAddress, dTokenAddress, eulerMainnetAddress)).to.be.revertedWith("dToken address is wrong");
-        crabMigration = (await MigrationContract.deploy(crabV1Address, wethAddress, eulerExecAddress, dTokenAddress, eulerMainnetAddress)) as CrabMigration;
-
-    }) */
+        await expect(MigrationContract.deploy(crabV1Address, wethAddress, eulerExecAddress, dTokenAddressIncorrect, eulerMainnetAddress)).to.be.revertedWith("M13");
+    })
 
     this.beforeAll("Deploy Crab Migration", async () => {
         const MigrationContract = await ethers.getContractFactory("CrabMigration");
+
         crabMigration = (await MigrationContract.deploy(crabV1Address, wethAddress, eulerExecAddress, dTokenAddress, eulerMainnetAddress)) as CrabMigration;
     })
 
@@ -148,7 +149,7 @@ describe("Crab Migration", function () {
         timelock = (await TimelockContract.deploy(owner.address, 3 * 24 * 60 * 60)) as Timelock;
         const CrabContract = await ethers.getContractFactory("CrabStrategyV2");
         crabStrategyV2 = (await CrabContract.deploy(
-            squeethControllerAddress, 
+            squeethControllerAddress,
             oracleAddress,
             wethAddress,
             uniswapFactoryAddress,
@@ -429,9 +430,11 @@ describe("Crab Migration", function () {
         })
 
         it("Should fail if _ethToBorrow or _withdrawMaxEthToPay is passed as 0", async () => {
-            await expect(crabMigration.connect(d5).flashMigrateAndWithdrawFromV1toV2(one, one, 0, 0, squeethPoolFee)).to.be.revertedWith("M7");
-            await expect(crabMigration.connect(d5).flashMigrateAndWithdrawFromV1toV2(one, one, one, 0, squeethPoolFee)).to.be.revertedWith("M7");
-            await expect(crabMigration.connect(d5).flashMigrateAndWithdrawFromV1toV2(one, one, 0, one, squeethPoolFee)).to.be.revertedWith("M7");
+            await decreaseCR1(ethers.utils.parseEther('10'))
+            await expect(crabMigration.connect(d5).flashMigrateAndWithdrawFromV1toV2(one, one, 0, 0, squeethPoolFee)).to.be.revertedWith("M8");
+            await expect(crabMigration.connect(d5).flashMigrateAndWithdrawFromV1toV2(one, one, one, 0, squeethPoolFee)).to.be.revertedWith("M8");
+            await expect(crabMigration.connect(d5).flashMigrateAndWithdrawFromV1toV2(one, one, 0, one, squeethPoolFee)).to.be.revertedWith("M8");
+            await increaseCR1(ethers.utils.parseEther('10'))
         })
 
         it("Should migrate d4 when CR1 > CR2", async () => {

@@ -74,7 +74,7 @@ const config: HardhatUserConfig = {
       forking: {
         enabled: process.env.MAINNET_FORK === 'true',
         url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_KEY}`,
-        blockNumber: 14345140
+        blockNumber: 14845140
       },
       accounts: {
         accountsBalance: '1000000000000000000000000000'

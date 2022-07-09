@@ -8,7 +8,6 @@ interface IEulerExec {
 }
 
 interface IDToken {
-
     function underlyingAsset() external view returns (address);
 
     function borrow(uint256 subAccountId, uint256 amount) external;
