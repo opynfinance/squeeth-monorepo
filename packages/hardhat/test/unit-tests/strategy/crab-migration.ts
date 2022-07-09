@@ -68,7 +68,7 @@ describe("Crab Migration", function () {
     describe("Test Migration", async() => { 
 
         it("should not allow deposits until crab v2 is set", async () => { 
-            await expect(crabMigration.connect(d1).depositV1Shares(1)).to.be.revertedWith("M7");
+            await expect(crabMigration.connect(d1).depositV1Shares(1)).to.be.revertedWith("M11");
         })
 
         it("should not allow 0 to be set as crab address", async () => {
