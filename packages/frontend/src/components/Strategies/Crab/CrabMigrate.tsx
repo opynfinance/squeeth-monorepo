@@ -1,7 +1,7 @@
 import { PrimaryButton } from '@components/Button'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
-import { Typography } from '@material-ui/core'
+import { Step, Stepper, StepLabel } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { CircularProgress } from '@material-ui/core'
@@ -20,7 +20,7 @@ import TradeInfoItem from '@components/Trade/TradeInfoItem'
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
-      paddingTop: theme.spacing(2),
+      // paddingTop: theme.spacing(1),
     },
     infoBox: {
       background: '#8282821A',
@@ -37,7 +37,10 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(0.5),
     },
     position: {
-      marginTop: theme.spacing(2),
+      marginTop: theme.spacing(1),
+    },
+    stepper: {
+      backgroundColor: 'transparent',
     },
   }),
 )
@@ -48,9 +51,9 @@ enum MIGRATION_STEP {
 }
 
 const getAction = (action: MIGRATION_STEP) => {
-  if (action === MIGRATION_STEP.APPROVE) return 'Approve crab to migrate funds'
+  if (action === MIGRATION_STEP.APPROVE) return 'Approve crab to transfer funds upon v2 launch'
 
-  return 'Confirm Queue Migration'
+  return 'Confirm crab v2 commitment'
 }
 
 const CrabMigration: React.FC = () => {
@@ -64,6 +67,8 @@ const CrabMigration: React.FC = () => {
 
   const [action, setAction] = useState(MIGRATION_STEP.APPROVE)
   const [loadingTx, setLoadingTx] = useState(false)
+
+  const steps = ['Approve Crab Contract', 'Confirm Crab V2 Commitment']
 
   useAppEffect(() => {
     if (allowance.gte(userCrabBalance)) {
@@ -100,22 +105,36 @@ const CrabMigration: React.FC = () => {
 
   return (
     <div className={classes.container}>
-      <div className={classes.infoBox}>
+      <Stepper
+        className={classes.stepper}
+        activeStep={getAction(action) === 'Confirm crab v2 commitment' ? 1 : 0}
+        alternativeLabel
+      >
+        {steps.map((label) => (
+          <Step key={label}>
+            <StepLabel>{label}</StepLabel>
+          </Step>
+        ))}
+      </Stepper>
+      {/* <div className={classes.infoBox}>
         <InfoIcon className={classes.infoIcon} />
         <Typography color="textSecondary" variant="caption" style={{ marginLeft: '4px' }}>
-          Your position is still participating in crab v1 and will be migrated upon crab v2 launch. The migrated ETH
-          amount may be different than your current ETH amount since crab v1 will be active until then.{' '}
+          Your position is still participating in crab v1 until crab v2 drops. When crab v2 drops, your position will
+          automatically be transferred to crab v2.{' '}
           <LinkWrapper href="https://www.notion.so/opynopyn/Crab-Migration-FAQ-Draft-1b79e3c2b98641b08745d5cc72c94a5c">
             {' '}
             Learn more.
           </LinkWrapper>
         </Typography>
-      </div>
+      </div> */}
       <div className={classes.position}>
         <TradeInfoItem
           label="Crab Position"
           value={`${positionInEth.toFixed(4)} ETH`}
           unit={`$${positionInUsd.toFixed(1)}`}
+          tooltip={
+            ' Your position is still participating in crab v1 until crab v2 drops. When crab v2 drops, your position will automatically be transferred to crab v2.'
+          }
         />
         {/* <Typography variant="body2" color="textSecondary">
           Crab Position
