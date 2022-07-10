@@ -250,7 +250,6 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
 
         _checkStrategyCap(amount, 0);
 
-        require((strategyDebt == 0 && strategyCollateral == 0), "C5");
         // store hedge data from crab V1
         timeAtLastHedge = _timeAtLastHedge;
         priceAtLastHedge = _priceAtLastHedge;
