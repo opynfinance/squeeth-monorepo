@@ -39,6 +39,11 @@ contract CrabHelper is StrategySwap, ReentrancyGuard {
         uint256 crabAmount
     );
 
+    /**
+     * @notice constructor
+     * @param _crab address of crabV2 contract
+     * @param _swapRouter address of Uniswap swap router
+     */
     constructor(address _crab, address _swapRouter) StrategySwap(_swapRouter) {
         require(_crab != address(0), "Invalid crab address");
 
@@ -46,6 +51,15 @@ contract CrabHelper is StrategySwap, ReentrancyGuard {
         weth = ICrabStrategyV2(_crab).weth();
     }
 
+    /**
+     * @notice allows user to flash deposit into crab from an aribtrary ERC20
+     * @param _ethToDeposit amount of ETH to deposit
+     * @param _amountIn amount of ERC20 token to swap for weth
+     * @param _minEthToGet min amount of ETH to receive in the swap
+     * @param _erc20Fee pool fee for transfer ERC20/eth pool (3000 = 30bps)
+     * @param _wPowerPerpFee pool fee for wPowerPerp/eth pool (3000 = 30bps)
+     * @param _tokenIn ERC20 token to pay
+     */
     function flashDepositERC20(
         uint256 _ethToDeposit,
         uint256 _amountIn,
@@ -70,6 +84,15 @@ contract CrabHelper is StrategySwap, ReentrancyGuard {
         }
     }
 
+    /**
+     * @notice allows user to flash withdraw from crab to an aribtrary ERC20
+     * @param _crabAmount amount of crab shares to withdraw
+     * @param _maxEthToPay max eth to pay in swap for wPowerPerp
+     * @param _tokenOut ERC20 token to receive
+     * @param _minAmountOut min amount of ERC20 to receive
+     * @param _erc20Fee pool fee for transfer ERC20/eth pool (3000 = 30bps)
+     * @param _wPowerPerpFee pool fee for wPowerPerp/eth pool (3000 = 30bps)
+     */
     function flashWithdrawERC20(
         uint256 _crabAmount,
         uint256 _maxEthToPay,
