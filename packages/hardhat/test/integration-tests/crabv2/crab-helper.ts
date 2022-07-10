@@ -450,7 +450,7 @@ describe("Crab V2 integration test: ERC20 deposit and withdrawals", function () 
       const debtToMint = wdiv(ethToDeposit, squeethDelta.add(ethFeePerWSqueeth));
       const expectedEthDeposit = ethToDeposit.sub(debtToMint.mul(ethFeePerWSqueeth).div(one));
   
-      await crabStrategy.connect(crabMigration).initialize(debtToMint, expectedEthDeposit, 1, 1, { value: ethToDeposit });
+      await crabStrategy.connect(crabMigration).initialize(debtToMint, expectedEthDeposit, 1, 1, ethers.utils.parseUnits("1000"), { value: ethToDeposit });
   });
   
     const usdcAmount = startingEthPrice1e18
@@ -484,7 +484,7 @@ describe("Crab V2 integration test: ERC20 deposit and withdrawals", function () 
     const ethToDeposit = ethers.utils.parseUnits("1000");
     const wSqueethToMint = ethers.utils.parseUnits(toMint);
     const currentBlockTimestamp = (await provider.getBlock(await provider.getBlockNumber())).timestamp;
-    await controller.connect(owner).mintWPowerPerpAmount("0", wSqueethToMint, "0", { value: ethToDeposit });
+    await controller.connect(owner).mintWPowerPerpAmount("0", wSqueethToMint, "0",  { value: ethToDeposit });
     await buyWeth(
         swapRouter,
         wSqueeth,
@@ -1120,7 +1120,7 @@ describe("Crab V2 integration test: ERC20 deposit and withdrawals", function () 
       const debtToMint = wdiv(ethToDeposit, squeethDelta.add(ethFeePerWSqueeth));
       const expectedEthDeposit = ethToDeposit.sub(debtToMint.mul(ethFeePerWSqueeth).div(one));
   
-      await crabStrategy.connect(crabMigration).initialize(debtToMint, expectedEthDeposit, 1, 1, { value: ethToDeposit });
+      await crabStrategy.connect(crabMigration).initialize(debtToMint, expectedEthDeposit, 1, 1, ethers.utils.parseUnits("10000"), { value: ethToDeposit });
   });
   
     const usdcAmount = startingEthPrice1e18
@@ -1619,7 +1619,7 @@ describe("View functions to validate orders and hedge size", function () {
     const debtToMint = wdiv(ethToDeposit, squeethDelta.add(ethFeePerWSqueeth));
     const expectedEthDeposit = ethToDeposit.sub(debtToMint.mul(ethFeePerWSqueeth).div(one));
 
-    await crabStrategy.connect(crabMigration).initialize(debtToMint, expectedEthDeposit, 1, 1, { value: ethToDeposit });
+    await crabStrategy.connect(crabMigration).initialize(debtToMint, expectedEthDeposit, 1, 1, ethers.utils.parseUnits("10000"), { value: ethToDeposit });
 });
 
   const usdcAmount = startingEthPrice1e18
