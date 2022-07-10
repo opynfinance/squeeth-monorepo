@@ -66,7 +66,7 @@ const CrabPosition: React.FC = () => {
   return (
     <div className={classes.container}>
       <Typography color="primary" variant="subtitle1">
-        {isMigrated ? 'Position queued' : 'Position'}
+        {isMigrated ? 'Position committed to Crab V2' : 'Position'}
       </Typography>
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <Typography variant="h6" id="crab-pos-bal">

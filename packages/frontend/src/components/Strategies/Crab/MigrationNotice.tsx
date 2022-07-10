@@ -6,8 +6,8 @@ const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
       padding: theme.spacing(2),
-      background: '#F5692E1A',
-      border: '1px solid #F5692E',
+      background: 'rgba(238, 94, 63, 0.1);',
+      border: '1px solid #ee5e3f',
       borderRadius: theme.spacing(2),
       display: 'flex',
     },
@@ -23,10 +23,10 @@ const MigrationNotice: React.FC = () => {
         <Typography variant="h6">🦀</Typography>
       </div>
       <div style={{ marginLeft: '8px' }}>
-        <Typography variant="body1">Early access to Crab V2</Typography>
+        <Typography variant="body1">Crab V2 Early Access: Gaurantee your spot </Typography>
         <Typography component="p" variant="caption" style={{ marginTop: '4px', lineHeight: 1.5 }} color="textSecondary">
-          Crab v2 launches soon and crab v1 users can deposit their position to get included in the launch without any
-          cap restriction
+          As OG Day 1 crabbers, you get to commit to v2 before anyone else. Gaurantee your spot in crab v2 right when it
+          drops!
         </Typography>
       </div>
     </div>
