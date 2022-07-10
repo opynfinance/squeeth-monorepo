@@ -400,10 +400,6 @@ describe("Crab V2 integration test: ERC20 deposit and withdrawals", function () 
       const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
       crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, uniswapFactory.address, wSqueethPool.address, timelock.address, crabMigration.address, hedgeTimeThreshold, hedgePriceThreshold)) as CrabStrategyV2;
   
-      const strategyCap = ethers.utils.parseUnits("1000")
-      await crabStrategy.connect(owner).setStrategyCap(strategyCap)
-      const strategyCapInContract = await crabStrategy.strategyCap()
-      expect(strategyCapInContract.eq(strategyCap)).to.be.true
     })
   
     this.beforeAll("Seed pool liquidity", async () => {
@@ -1070,10 +1066,6 @@ describe("Crab V2 integration test: ERC20 deposit and withdrawals", function () 
       const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
       crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, uniswapFactory.address, wSqueethPool.address, timelock.address, crabMigration.address, hedgeTimeThreshold, hedgePriceThreshold)) as CrabStrategyV2;
   
-      const strategyCap = ethers.utils.parseUnits("1000")
-      await crabStrategy.connect(owner).setStrategyCap(strategyCap)
-      const strategyCapInContract = await crabStrategy.strategyCap()
-      expect(strategyCapInContract.eq(strategyCap)).to.be.true
     })
   
     this.beforeAll("Seed pool liquidity", async () => {
@@ -1569,10 +1561,6 @@ describe("View functions to validate orders and hedge size", function () {
     const CrabStrategyContract = await ethers.getContractFactory("CrabStrategyV2");
     crabStrategy = (await CrabStrategyContract.deploy(controller.address, oracle.address, weth.address, uniswapFactory.address, wSqueethPool.address, timelock.address, crabMigration.address, hedgeTimeThreshold, hedgePriceThreshold)) as CrabStrategyV2;
 
-    const strategyCap = ethers.utils.parseUnits("1000")
-    await crabStrategy.connect(owner).setStrategyCap(strategyCap)
-    const strategyCapInContract = await crabStrategy.strategyCap()
-    expect(strategyCapInContract.eq(strategyCap)).to.be.true
   })
 
   this.beforeAll("Seed pool liquidity", async () => {
