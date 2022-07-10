@@ -9,6 +9,12 @@ interface ICrabStrategyV2 {
 
     function weth() external view returns (address);
 
+    function ethWSqueethPool() external view returns (address);
+
+    function oracle() external view returns (address);
+
+    function hedgingTwapPeriod() external view returns (uint32);
+
     function flashDeposit(uint256 _ethToDeposit, uint24 _poolFee) external payable;
 
     function flashWithdraw(
@@ -16,4 +22,18 @@ interface ICrabStrategyV2 {
         uint256 _maxEthToPay,
         uint24 _poolFee
     ) external;
+
+    function getVaultDetails()
+        external
+        view
+        returns (
+            address,
+            uint256,
+            uint256,
+            uint256
+        );
+
+    function nonces(address _owner, uint256 nonce) external view returns (bool);
+
+
 }

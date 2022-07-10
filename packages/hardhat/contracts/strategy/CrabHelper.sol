@@ -29,6 +29,17 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
 
     address public immutable crab;
     address public immutable weth;
+    address public immutable wPowerPerp;
+    address public immutable ethWSqueethPool;
+    address public immutable oracle;
+    uint32 public immutable hedgingTwapPeriod;
+
+
+    /// @dev typehash for signed orders
+    bytes32 private constant _CRAB_ORDER_TYPEHASH =
+        keccak256(
+            "Order(uint256 bidId,address trader,uint256 quantity,uint256 price,bool isBuying,uint256 expiry,uint256 nonce)"
+        );
 
     struct Order {
         uint256 bidId;
@@ -65,6 +76,11 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
 
         crab = _crab;
         weth = ICrabStrategyV2(_crab).weth();
+        wPowerPerp = ICrabStrategyV2(_crab).wPowerPerp();
+        ethWSqueethPool = ICrabStrategyV2(_crab).ethWSqueethPool();
+        oracle = ICrabStrategyV2(_crab).oracle();
+        hedgingTwapPeriod = ICrabStrategyV2(_crab).hedgingTwapPeriod();
+
     }
 
     function flashDepositERC20(
@@ -118,12 +134,6 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
         emit FlashWithdrawERC20(msg.sender, _tokenOut, tokenReceived, ethBalance, _crabAmount);
     }
 
-    /// @dev typehash for signed orders
-    bytes32 private constant _CRAB_BALANCE_TYPEHASH =
-        keccak256(
-            "Order(uint256 bidId,address trader,uint256 quantity,uint256 price,bool isBuying,uint256 expiry,uint256 nonce)"
-        );
-
     /**
      * @notice view function to verify an order
      * @param _order crab otc hedge order
@@ -132,12 +142,12 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
     function verifyOrder(Order memory _order) external view returns (bool) {
 
         // check that nonce has not been used
-        require(_order.nonce[_order.trader][_order.nonce] == false);
+        require(ICrabStrategyV2(crab).nonces(_order.trader, _order.nonce) == false);
 
         // extract signer
         bytes32 structHash = keccak256(
             abi.encode(
-                _CRAB_BALANCE_TYPEHASH,
+                _CRAB_ORDER_TYPEHASH,
                 _order.bidId,
                 _order.trader,
                 _order.quantity,
