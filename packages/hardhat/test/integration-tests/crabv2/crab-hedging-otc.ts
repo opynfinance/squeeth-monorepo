@@ -1144,7 +1144,7 @@ describe("Crab V2 flashswap integration test: time based hedging", function () {
             const managerBuyPrice = 1;
             await expect(
                 crabStrategyV2.connect(owner).hedgeOTC(toSell, managerBuyPrice, true, [signedOrder])
-            ).to.be.revertedWith("Invalid offer signature");
+            ).to.be.revertedWith("C19");
         });
         it("should allow manager to set thresholds", async () => {
             await expect(crabStrategyV2.connect(owner).setHedgingTwapPeriod(120)).to.be.revertedWith(
