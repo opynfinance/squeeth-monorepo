@@ -109,7 +109,7 @@ describe("Crab Strategy V2", function () {
         timelock.address,
         crabMigration.address,
         hedgeTimeTolerance,
-        hedgePriceTolerance)).to.be.revertedWith("invalid oracle address");
+        hedgePriceTolerance)).to.be.revertedWith("C3");
     });
 
     it("Should revert if uniswap factory is address 0", async function () {
@@ -137,7 +137,7 @@ describe("Crab Strategy V2", function () {
         timelock.address,
         crabMigration.address,
         hedgeTimeTolerance,
-        hedgePriceTolerance)).to.be.revertedWith("invalid ETH:WSqueeth address");
+        hedgePriceTolerance)).to.be.revertedWith("C5");
     });
 
     it("Should revert if hedge time tolerrance is 0", async function () {
@@ -151,7 +151,7 @@ describe("Crab Strategy V2", function () {
         timelock.address,
         crabMigration.address,
         0,
-        hedgePriceTolerance)).to.be.revertedWith("invalid hedge time threshold");
+        hedgePriceTolerance)).to.be.revertedWith("C7");
     });
 
     it("Should revert if hedge price tolerance is 0", async function () {
@@ -165,7 +165,7 @@ describe("Crab Strategy V2", function () {
         timelock.address,
         crabMigration.address,
         hedgeTimeTolerance,
-        0)).to.be.revertedWith("invalid hedge price threshold");
+        0)).to.be.revertedWith("C8");
     });
 
     it("Should revert if hedge price tolerance is > 1e18", async function () {
@@ -179,7 +179,7 @@ describe("Crab Strategy V2", function () {
         timelock.address,
         crabMigration.address,
         hedgeTimeTolerance,
-        one.add(1))).to.be.revertedWith("invalid hedge price threshold");
+        one.add(1))).to.be.revertedWith("C8");
     });
 
     it("Should revert if timelock address is 0", async function () {
@@ -193,7 +193,7 @@ describe("Crab Strategy V2", function () {
         ethers.constants.AddressZero,
         crabMigration.address,
         hedgeTimeTolerance,
-        hedgePriceTolerance)).to.be.revertedWith("invalid timelock address");
+        hedgePriceTolerance)).to.be.revertedWith("C4");
     });
 
     it("Should revert if crab migration address is 0", async function () {
@@ -207,7 +207,7 @@ describe("Crab Strategy V2", function () {
         timelock.address,
         ethers.constants.AddressZero,
         hedgeTimeTolerance,
-        hedgePriceTolerance)).to.be.revertedWith("invalid crabMigration address");
+        hedgePriceTolerance)).to.be.revertedWith("C6");
     });
 
     it("Deployment", async function () {
@@ -233,7 +233,7 @@ describe("Crab Strategy V2", function () {
 
   describe("receive checks", async () => {
     it('should revert when sending eth to crab strategy contract from an EOA', async () => {
-      await expect(random.sendTransaction({ to: crabStrategy.address, value: 1 })).to.be.revertedWith('Cannot receive eth')
+      await expect(random.sendTransaction({ to: crabStrategy.address, value: 1 })).to.be.revertedWith('C9')
     })
   });
 
@@ -252,7 +252,7 @@ describe("Crab Strategy V2", function () {
     })
 
     it('should revert if owner tries to increase the strategy cap before the contract is initialized', async () => {
-      await expect(crabStrategy.connect(owner).setStrategyCap(strategyCap)).to.be.revertedWith("Contract not yet initialized")
+      await expect(crabStrategy.connect(owner).setStrategyCap(strategyCap)).to.be.revertedWith("C2")
     })
   });
 
@@ -275,7 +275,7 @@ describe("Crab Strategy V2", function () {
     })
 
     it('should revert if owner tries to change the hedge time threshold to 0', async () => {
-      await expect(crabStrategy.connect(owner).setHedgeTimeThreshold(0)).to.be.revertedWith("invalid hedge time threshold")
+      await expect(crabStrategy.connect(owner).setHedgeTimeThreshold(0)).to.be.revertedWith("C7")
     })
 
     it('should allow owner to change the hedge time threshold', async () => {
@@ -295,11 +295,11 @@ describe("Crab Strategy V2", function () {
     })
 
     it('should revert if owner tries to change the hedge price threshold to 0', async () => {
-      await expect(crabStrategy.connect(owner).setHedgePriceThreshold(0)).to.be.revertedWith("invalid hedge price threshold")
+      await expect(crabStrategy.connect(owner).setHedgePriceThreshold(0)).to.be.revertedWith("C8")
     })
 
     it('should revert if owner tries to change the hedge price threshold to 1e18+1', async () => {
-      await expect(crabStrategy.connect(owner).setHedgePriceThreshold(one.add(1))).to.be.revertedWith("invalid hedge price threshold")
+      await expect(crabStrategy.connect(owner).setHedgePriceThreshold(one.add(1))).to.be.revertedWith("C8")
     })
 
     it('should allow owner to change the hedge price threshold', async () => {
@@ -320,7 +320,7 @@ describe("Crab Strategy V2", function () {
 
 
     it('should revert if owner tries to change the twap period to too short of a value', async () => {
-      await expect(crabStrategy.connect(owner).setHedgingTwapPeriod(179)).to.be.revertedWith("twap period is too short")
+      await expect(crabStrategy.connect(owner).setHedgingTwapPeriod(179)).to.be.revertedWith("C14")
     })
 
     it('should allow owner to change the twap period and then change it back', async () => {
@@ -346,7 +346,7 @@ describe("Crab Strategy V2", function () {
     })
 
     it('should revert deposits if crab not yet initialized as the cap will be 0', async () => {
-      await expect(crabStrategy.connect(depositor2).deposit({ value: 1 })).to.be.revertedWith("Deposit exceeds strategy cap");
+      await expect(crabStrategy.connect(depositor2).deposit({ value: 1 })).to.be.revertedWith("C16");
     })
 
     it("Should initialize strategy", async () => {
@@ -394,7 +394,7 @@ describe("Crab Strategy V2", function () {
       expect(strategyCapInContract.eq(strategyCap)).to.be.true
     })
     it("Should not allow reinitialization of Crab v2", async () => { 
-      await expect(crabStrategy.connect(crabMigration).initialize(0, 0, 0, 0, 0, {value: 0})).to.be.revertedWith("Crab V2 already initialized")
+      await expect(crabStrategy.connect(crabMigration).initialize(0, 0, 0, 0, 0, {value: 0})).to.be.revertedWith("C11")
     })
 
 
@@ -437,7 +437,7 @@ describe("Crab Strategy V2", function () {
       const result = await crabStrategy.getVaultDetails()
       const ethToDeposit = strategyCap.sub(result[2]).add(1)
 
-      await expect(crabStrategy.connect(depositor2).deposit({ value: ethToDeposit })).to.be.revertedWith("Deposit exceeds strategy cap");
+      await expect(crabStrategy.connect(depositor2).deposit({ value: ethToDeposit })).to.be.revertedWith("C16");
     })
   })
 
@@ -523,11 +523,11 @@ describe("Crab Strategy V2", function () {
     const ethToDeposit = BigNumber.from(60).mul(one)
 
     it("Should revert if non owner tries to migrate", async () => {
-      await expect(crabStrategy.connect(random).transferVault(depositor.address)).to.be.revertedWith("Caller is not timelock")
+      await expect(crabStrategy.connect(random).transferVault(depositor.address)).to.be.revertedWith("C1")
     })
 
     it("Should revert if owner tries to migrate directly", async () => {
-      await expect(crabStrategy.connect(owner).transferVault(depositor.address)).to.be.revertedWith("Caller is not timelock")
+      await expect(crabStrategy.connect(owner).transferVault(depositor.address)).to.be.revertedWith("C1")
     })
 
     it("Should migrate and disable deposit/withdraw if transfer is called by timelock", async () => {
@@ -551,7 +551,7 @@ describe("Crab Strategy V2", function () {
       await expect(crabStrategy.connect(depositor).withdraw(depositorCrabBefore)).to.be.revertedWith('C3')
 
       // Try to deposit
-      await expect(crabStrategy.connect(depositor).deposit({ value: ethToDeposit })).to.be.revertedWith('Deposit exceeds strategy cap')
+      await expect(crabStrategy.connect(depositor).deposit({ value: ethToDeposit })).to.be.revertedWith('C16')
     })
   })
 })

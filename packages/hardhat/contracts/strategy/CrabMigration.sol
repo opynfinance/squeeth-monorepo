@@ -95,17 +95,17 @@ contract CrabMigration is Ownable {
     event WithdrawV1Shares(address indexed user, uint256 crabV1Amount);
 
     modifier beforeMigration() {
-        require(!isMigrated, "M2");
+        require(!isMigrated, "M1");
         _;
     }
 
     modifier afterMigration() {
-        require(isMigrated, "M3");
+        require(isMigrated, "M2");
         _;
     }
 
     modifier afterInitialized() {
-        require(crabV2 != address(0), "M8");
+        require(crabV2 != address(0), "M11");
         _;
     }
 
@@ -124,6 +124,11 @@ contract CrabMigration is Ownable {
         address _dToken,
         address _eulerMainnet
     ) {
+        require(_eulerExec != address(0), "invalid _eulerExec address");
+        require(_dToken != address(0), "invalid _dToken address");
+        require(_eulerMainnet != address(0), "invalid _eulerMainnet address");
+        require(_weth != address(0), "invalid _weth address");
+        require(_crabV1 != address(0), "invalid _crabv1 address");
         crabV1 = _crabV1;
         euler = _eulerExec;
         EULER_MAINNET = _eulerMainnet;
@@ -138,8 +143,7 @@ contract CrabMigration is Ownable {
      * @param _crabV2 address of crab V2
      */
     function setCrabV2(address payable _crabV2) external onlyOwner {
-        require(crabV2 == address(0), "M1");
-        require(_crabV2 != address(0), "M9");
+        require(_crabV2 != address(0), "M8");
         crabV2 = _crabV2;
     }
 
@@ -198,7 +202,7 @@ contract CrabMigration is Ownable {
      * @param encodedData callback data
      */
     function onDeferredLiquidityCheck(bytes memory encodedData) external afterInitialized {
-        require(msg.sender == EULER_MAINNET, "M4");
+        require(msg.sender == EULER_MAINNET, "M3");
 
         FlashloanCallbackData memory data = abi.decode(encodedData, (FlashloanCallbackData));
 
@@ -298,7 +302,7 @@ contract CrabMigration is Ownable {
             CrabStrategy(crabV1).withdraw(crabV1ToWithdraw);
 
             CrabStrategy(crabV1).flashWithdraw(data.crabV1ToWithdraw.sub(crabV1ToWithdraw), data.withdrawMaxEthToPay);
-            require(address(this).balance >= _amount, "M7");
+            require(address(this).balance >= _amount, "M6");
 
             if (data.ethToFlashDeposit > 0) {
                 CrabStrategyV2(crabV2).flashDeposit{value: address(this).balance.sub(_amount)}(
@@ -346,7 +350,7 @@ contract CrabMigration is Ownable {
         uint24 _poolFee
     ) external afterMigration {
         uint256 amountV1Deposited = sharesDeposited[msg.sender];
-        require(_amountToWithdraw <= amountV1Deposited, "M6");
+        require(_amountToWithdraw <= amountV1Deposited, "M5");
 
         sharesDeposited[msg.sender] = amountV1Deposited.sub(_amountToWithdraw);
         CrabStrategyV2(crabV2).flashWithdraw(_amountToWithdraw, _maxEthToPay, _poolFee);
@@ -387,7 +391,7 @@ contract CrabMigration is Ownable {
     ) external afterMigration {
         (bool isFlashOnlyMigrate, uint256 ethNeededForV2, uint256 v1oSqthToPay, ) = _flashMigrationDetails(_v1Shares);
 
-        require(isFlashOnlyMigrate, "M11");
+        require(isFlashOnlyMigrate, "M9");
 
         IEulerExec(euler).deferLiquidityCheck(
             address(this),
@@ -426,8 +430,8 @@ contract CrabMigration is Ownable {
     ) external afterMigration {
         (bool isFlashOnlyMigrate, , uint256 v1oSqthToPay, ) = _flashMigrationDetails(_v1Shares);
 
-        require(!isFlashOnlyMigrate, "M12");
-        require(_ethToBorrow > 0 && _withdrawMaxEthToPay > 0, "M8");
+        require(!isFlashOnlyMigrate, "M10");
+        require(_ethToBorrow > 0 && _withdrawMaxEthToPay > 0, "M7");
 
         IEulerExec(euler).deferLiquidityCheck(
             address(this),
@@ -478,6 +482,6 @@ contract CrabMigration is Ownable {
      * @notice receive function to allow ETH transfer to this contract
      */
     receive() external payable {
-        require(msg.sender == weth || msg.sender == crabV1 || msg.sender == crabV2, "M5");
+        require(msg.sender == weth || msg.sender == crabV1 || msg.sender == crabV2, "M4");
     }
 }

@@ -160,7 +160,7 @@ describe("Crab v2 Integration test: Timelock", function () {
         it("Should not allow user to deposit post vault transfer", async () => {
             await expect(
                 crabStrategy.connect(depositor2).deposit({ value: ethers.utils.parseUnits("1") })
-            ).to.be.revertedWith("Deposit exceeds strategy cap");
+            ).to.be.revertedWith("C16");
         });
 
         it("Should not allow user to withdraw post vault transfer", async () => {
