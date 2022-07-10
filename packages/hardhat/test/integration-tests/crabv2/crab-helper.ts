@@ -1,14 +1,24 @@
-import { ethers, network } from "hardhat"
+import BigNumberJs from "bignumber.js";
 import { expect } from "chai";
-import { Contract, BigNumber, providers } from "ethers";
+import { ethers, network } from "hardhat";
+
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
-import BigNumberJs from 'bignumber.js'
-import { WETH9, MockErc20, Controller, Oracle, WPowerPerp, CrabStrategyV2, ISwapRouter, Timelock, CrabHelper, IWETH9 } from "../../../typechain";
-import { deployUniswapV3, deploySqueethCoreContracts, deployWETHAndDai, addWethDaiLiquidity, addSqueethLiquidity, createUniPool, buyWeth, buyWSqueeth } from '../../setup'
-import { isSimilar, wmul, wdiv, one, oracleScaleFactor, signTypedData } from "../../utils"
+import { BigNumber, Contract, providers } from "ethers";
+import { Controller, CrabStrategyV2, MockErc20, Timelock, Oracle, WETH9, WPowerPerp, CrabHelper } from "../../../typechain";
+import {
+    addSqueethLiquidity,
+    addWethDaiLiquidity,
+    buyWeth,
+    buyWSqueeth,
+    deploySqueethCoreContracts,
+    deployUniswapV3,
+    deployWETHAndDai,
+    createUniPool
+} from "../../setup";
+import { isSimilar, one, oracleScaleFactor, signTypedData, wdiv, wmul } from "../../utils";
 
+BigNumberJs.set({ EXPONENTIAL_AT: 30 });
 
-BigNumberJs.set({ EXPONENTIAL_AT: 30 })
 
 describe("Crab V2 integration test: ERC20 deposit and withdrawals", function () {
   const startingEthPrice = 3000

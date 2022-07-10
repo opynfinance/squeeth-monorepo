@@ -34,7 +34,6 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
     address public immutable oracle;
     uint32 public immutable hedgingTwapPeriod;
 
-
     /// @dev typehash for signed orders
     bytes32 private constant _CRAB_ORDER_TYPEHASH =
         keccak256(
@@ -80,7 +79,6 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
         ethWSqueethPool = ICrabStrategyV2(_crab).ethWSqueethPool();
         oracle = ICrabStrategyV2(_crab).oracle();
         hedgingTwapPeriod = ICrabStrategyV2(_crab).hedgingTwapPeriod();
-
     }
 
     function flashDepositERC20(
@@ -140,7 +138,6 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
      * @return isValid true if order is good
      */
     function verifyOrder(Order memory _order) external view returns (bool) {
-
         // check that nonce has not been used
         require(ICrabStrategyV2(crab).nonces(_order.trader, _order.nonce) == false);
 

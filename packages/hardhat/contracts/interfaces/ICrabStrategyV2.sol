@@ -34,6 +34,4 @@ interface ICrabStrategyV2 {
         );
 
     function nonces(address _owner, uint256 nonce) external view returns (bool);
-
-
 }
