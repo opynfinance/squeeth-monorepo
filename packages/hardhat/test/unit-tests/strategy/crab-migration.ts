@@ -71,7 +71,7 @@ describe("Crab Migration", function () {
 
         it("should revert if deploying to a dToken that is not weth", async () => { 
             const MigrationContract = await ethers.getContractFactory("CrabMigration");
-            await expect(MigrationContract.connect(owner).deploy(crabStrategyV1.address, weth.address, euler.address, dTokenUsdc.address, euler.address)).to.be.revertedWith("dToken address is wrong");
+            await expect(MigrationContract.connect(owner).deploy(crabStrategyV1.address, weth.address, euler.address, dTokenUsdc.address, euler.address)).to.be.revertedWith("dToken underlying asset should be weth");
             })
 
         it("should deploy if correct dToken is specified", async () => { 
@@ -114,7 +114,7 @@ describe("Crab Migration", function () {
         });
 
         it("should not allow 0 to be set as crab address", async () => {
-            await expect(crabMigration.connect(owner).setCrabV2(ethers.constants.AddressZero)).to.be.revertedWith("M8");
+            await expect(crabMigration.connect(owner).setCrabV2(ethers.constants.AddressZero)).to.be.revertedWith("M9");
         })
 
         it("should set crabV2 with proper address", async () => {

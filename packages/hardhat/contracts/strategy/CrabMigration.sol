@@ -31,7 +31,6 @@ import {StrategyMath} from "./base/StrategyMath.sol";
  * M10: crabV2 address not yet set
  * M11: Wrong migration function, use flashMigrateAndWithdrawFromV1toV2
  * M12: Wrong migration function, use flashMigrateFromV1toV2
- * M13: dToken address is wrong
  */
 
 /**
@@ -130,7 +129,7 @@ contract CrabMigration is Ownable {
         require(_eulerMainnet != address(0), "invalid _eulerMainnet address");
         require(_weth != address(0), "invalid _weth address");
         require(_crabV1 != address(0), "invalid _crabv1 address");
-        require(IDToken(_dToken).underlyingAsset() == _weth, "dToken address is wrong");
+        require(IDToken(_dToken).underlyingAsset() == _weth, "dToken underlying asset should be weth");
 
         crabV1 = _crabV1;
         euler = _eulerExec;
@@ -146,7 +145,7 @@ contract CrabMigration is Ownable {
      * @param _crabV2 address of crab V2
      */
     function setCrabV2(address payable _crabV2) external onlyOwner {
-        require(_crabV2 != address(0), "M8");
+        require(_crabV2 != address(0), "M9");
         crabV2 = _crabV2;
     }
 
@@ -434,7 +433,7 @@ contract CrabMigration is Ownable {
         (bool isFlashOnlyMigrate, , uint256 v1oSqthToPay, ) = _flashMigrationDetails(_v1Shares);
 
         require(!isFlashOnlyMigrate, "M10");
-        require(_ethToBorrow > 0 && _withdrawMaxEthToPay > 0, "M7");
+        require(_ethToBorrow > 0 && _withdrawMaxEthToPay > 0, "M8");
 
         IEulerExec(euler).deferLiquidityCheck(
             address(this),

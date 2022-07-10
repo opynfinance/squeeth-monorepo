@@ -135,7 +135,7 @@ describe("Crab Migration", function () {
 
     this.beforeAll("Deploy Incorrect Crab Migration", async () => {
         const MigrationContract = await ethers.getContractFactory("CrabMigration");
-        await expect(MigrationContract.deploy(crabV1Address, wethAddress, eulerExecAddress, dTokenAddressIncorrect, eulerMainnetAddress)).to.be.revertedWith("M13");
+        await expect(MigrationContract.deploy(crabV1Address, wethAddress, eulerExecAddress, dTokenAddressIncorrect, eulerMainnetAddress)).to.be.revertedWith("dToken underlying asset should be weth");
     })
 
     this.beforeAll("Deploy Crab Migration", async () => {
