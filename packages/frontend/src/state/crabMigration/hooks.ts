@@ -11,16 +11,16 @@ import { totalMigratedSharesAtom, userMigratedSharesAtom } from './atom'
 export const useInitCrabMigration = () => {
   const address = useAtomValue(addressAtom)
   const crabMigrationContract = useAtomValue(crabMigrationContractAtom)
-  const setTotalMigratedShares = useSetAtom(totalMigratedSharesAtom)
+  //const setTotalMigratedShares = useSetAtom(totalMigratedSharesAtom)
   const setUserMigratedShares = useSetAtom(userMigratedSharesAtom)
 
   const updateMigrationData = useCallback(async () => {
-    const p1 = crabMigrationContract?.methods.totalCrabV1SharesMigrated().call()
+    // const p1 = crabMigrationContract?.methods.totalCrabV1SharesMigrated().call()
     const p2 = crabMigrationContract?.methods.sharesDeposited(address).call()
-    const [_totalShare, _userShare] = await Promise.all([p1, p2])
-    setTotalMigratedShares(toTokenAmount(_totalShare, 18))
+    const [_userShare] = await Promise.all([p2])
+    //setTotalMigratedShares(toTokenAmount(_totalShare, 18))
     setUserMigratedShares(toTokenAmount(_userShare, 18))
-  }, [address, crabMigrationContract?.methods, setTotalMigratedShares, setUserMigratedShares])
+  }, [address, crabMigrationContract?.methods, setUserMigratedShares])
 
   useEffect(() => {
     updateMigrationData()
