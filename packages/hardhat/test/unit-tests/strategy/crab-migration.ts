@@ -114,7 +114,7 @@ describe("Crab Migration", function () {
         });
 
         it("should not allow 0 to be set as crab address", async () => {
-            await expect(crabMigration.connect(owner).setCrabV2(ethers.constants.AddressZero)).to.be.revertedWith("M9");
+            await expect(crabMigration.connect(owner).setCrabV2(ethers.constants.AddressZero)).to.be.revertedWith("M7");
         })
 
         it("should set crabV2 with proper address", async () => {
