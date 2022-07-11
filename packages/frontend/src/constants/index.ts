@@ -18,6 +18,7 @@ export const TWAP_PERIOD = 420
 export const EtherscanPrefix = {
   1: 'https://etherscan.io/tx/',
   3: 'https://ropsten.etherscan.io/tx/',
+  5: 'https://goerli.etherscan.io/tx/',
   421611: 'https://rinkeby-explorer.arbitrum.io/tx/',
   31337: '/',
 }

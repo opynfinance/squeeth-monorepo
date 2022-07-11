@@ -26,6 +26,7 @@ declare module '@material-ui/core/Typography' {
 export enum Networks {
   MAINNET = 1,
   ROPSTEN = 3,
+  GOERLI = 5,
   ARBITRUM_RINKEBY = 421611,
   LOCAL = 31337,
 }
